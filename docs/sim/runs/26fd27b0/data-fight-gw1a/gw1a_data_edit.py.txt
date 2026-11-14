@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+# gw1a_data_edit.py <tree>: the five data/fight rows GW1a's stack left different from the kept 9 November tree (the EP's manifest
+# check, 2026-11-14): brake.json enabled, hitstop.json budgetAny.enabled, kick.json enabled, ladder.json chargePerSec 0.5 -> 2,
+# power.json dash.slip.enabled. Each takes the kept tree's value, with a note of what it was. One data grant: data-fight-gw1a.
+import sys, os, json
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+W = " On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off."
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    json.load(open(p, encoding="utf-8"))
+    print("edited", rel)
+
+
+edit("data/fight/brake.json", [
+    ('  "enabled": false,\n  "_enabled": "the one switch.', '  "enabled": true,\n  "_enabled": "the one switch.'),
+    ("and this file is not in a replay's data hash\",\n", "and this file is not in a replay's data hash." + W + "\",\n"),
+])
+edit("data/fight/kick.json", [
+    ('  "enabled": false,\n  "_enabled": "the kick and the coin turn', '  "enabled": true,\n  "_enabled": "the kick and the coin turn'),
+    ('Off, nothing runs and nothing is hashed",\n', "Off, nothing runs and nothing is hashed." + W + '",\n'),
+])
+edit("data/fight/hitstop.json", [
+    ('"budgetAny": {"enabled": false, "cutFloor": 1,', '"budgetAny": {"enabled": true, "cutFloor": 1,'),
+    ('  "_budgetAny": "Game Design\'s gauntlet-plan.md sections 7 and 8:', '  "_budgetAny": "On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off. Game Design\'s gauntlet-plan.md sections 7 and 8:'),
+])
+edit("data/fight/ladder.json", [
+    ('  "chargePerSec": 0.5,\n', '  "chargePerSec": 2,\n'),
+    ('  "_chargePerSec": "power per second while the fighter charges', '  "_chargePerSec": "2 since GW1a (sprint A1): the 9 November build Orb played had 2; it was 0.5. Power per second while the fighter charges'),
+])
+edit("data/fight/power.json", [
+    ('"slipMaxBh": 1.5, "slip": {"enabled": false,', '"slipMaxBh": 1.5, "slip": {"enabled": true,'),
+    ('  "_slip": "the slip\'s brake (Simulation,', '  "_slip": "On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off. The slip\'s brake (Simulation,'),
+])
+print("ok")

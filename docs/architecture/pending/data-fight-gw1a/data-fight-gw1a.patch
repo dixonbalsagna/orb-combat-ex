@@ -1,0 +1,75 @@
+diff --git a/data/fight/brake.json b/data/fight/brake.json
+index aba493d..5ab15c8 100644
+--- a/data/fight/brake.json
++++ b/data/fight/brake.json
+@@ -1,8 +1,8 @@
+ {
+   "_note": "The air brake (Game Design, docs/design/buildings.md section 7.2; sim/core/brake.gd; docs/architecture/brake-core.md). Speeds are a send's own speed, the launch's traversal factor divided out, in units a second.",
+   "schema": "fight.brake/1",
+-  "enabled": false,
+-  "_enabled": "the one switch. SimCore.newMatch copies it into S.brakeOn unless the match's setup has its own \"brake\". Off: no brake, no brake state hashed, no air_brake event, and this file is not in a replay's data hash",
++  "enabled": true,
++  "_enabled": "the one switch. SimCore.newMatch copies it into S.brakeOn unless the match's setup has its own \"brake\". Off: no brake, no brake state hashed, no air_brake event, and this file is not in a replay's data hash. On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off.",
+   "window": {
+     "minTicks": 8,
+     "maxTicks": 20,
+diff --git a/data/fight/hitstop.json b/data/fight/hitstop.json
+index 27a28c0..13530b8 100644
+--- a/data/fight/hitstop.json
++++ b/data/fight/hitstop.json
+@@ -19,8 +19,8 @@
+   "cutFloor": 2,
+   "cutDeepMul": 0.5,
+   "_cut": "Game Design's second step (rulings-2026-10-22.md 5b): over the budget, every stop under a decisive blow is x cutMul, rounded, at least cutFloor, until the share falls back under; over budget.deepShare, x cutDeepMul in place of cutMul, against stutter (7d: no ten-second block over 40% frozen). Decisive blows, the KO, launches and heavies are never cut (Game Design, 2026-11-13: the same list as budgetAny's), and a stop of 0 stays 0",
+-  "budgetAny": {"enabled": false, "cutFloor": 1, "neverCut": ["decisive", "ko", "launch", "launch_full", "heavy"]},
+-  "_budgetAny": "Game Design's gauntlet-plan.md sections 7 and 8: the budget applies to whichever table is live, the brawl's included. With this on, or a setup's \"hitstopBudget\", the window below counts every frozen tick even with hit-stop by weight off, and over it a hit's passed stop is x cutMul (x cutDeepMul over the deep line, the stutter cap), at least this cutFloor. The weights in neverCut (decisive, the KO, a launch's held moment, and a heavy, Game Design's of 2026-11-09) are never cut, and a blow that breaks a region or KOs keeps its stop. Blows name their weight with the budget on (DirMelee.weigh); a blow that names none is read by its exchange's kind (light, medium, heavy)",
++  "budgetAny": {"enabled": true, "cutFloor": 1, "neverCut": ["decisive", "ko", "launch", "launch_full", "heavy"]},
++  "_budgetAny": "On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off. Game Design's gauntlet-plan.md sections 7 and 8: the budget applies to whichever table is live, the brawl's included. With this on, or a setup's \"hitstopBudget\", the window below counts every frozen tick even with hit-stop by weight off, and over it a hit's passed stop is x cutMul (x cutDeepMul over the deep line, the stutter cap), at least this cutFloor. The weights in neverCut (decisive, the KO, a launch's held moment, and a heavy, Game Design's of 2026-11-09) are never cut, and a blow that breaks a region or KOs keeps its stop. Blows name their weight with the budget on (DirMelee.weigh); a blow that names none is read by its exchange's kind (light, medium, heavy)",
+   "budget": {
+     "share": 0.12,
+     "windowS": 10,
+diff --git a/data/fight/kick.json b/data/fight/kick.json
+index c4c32e1..1ac6e65 100644
+--- a/data/fight/kick.json
++++ b/data/fight/kick.json
+@@ -1,7 +1,7 @@
+ {
+   "schema": "fight.kick/1",
+-  "enabled": false,
+-  "_enabled": "the kick and the coin turn (docs/architecture/kick.md): a setup's \"kick\" overrides it for a match. Off, nothing runs and nothing is hashed",
++  "enabled": true,
++  "_enabled": "the kick and the coin turn (docs/architecture/kick.md): a setup's \"kick\" overrides it for a match. Off, nothing runs and nothing is hashed. On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off.",
+   "stickOn": 0.5,
+   "_stickOn": "how far the stick must be over for flat-out flight to count",
+   "startBelow": 0.5,
+diff --git a/data/fight/ladder.json b/data/fight/ladder.json
+index 8e604dd..e588938 100644
+--- a/data/fight/ladder.json
++++ b/data/fight/ladder.json
+@@ -2,8 +2,8 @@
+   "schema": "ladder/1",
+   "_about": "The game's power ladder: every fighter's, unless his own data/fighters/<id>/ladder.json says otherwise for a key (that file is optional and holds only his differences; docs/architecture/fighters-as-data.md). D1b: the power ladder, loaded by sim/core/fighter_data.gd into a LadderDef (f.ld). Power fills by fillPerSec up to 100; each threshold starts the next tier (four tiers until forms, F1). Per tier above 1: free-flight speed, damage and launch force x (1 + value x (tier - 1)). A power-up at ground level damages an area of radius (areaR + tier x areaRPerTier) x WS with damage areaDmg + tier x areaDmgPerTier.",
+   "fillPerSec": 0.05,
+-  "chargePerSec": 0.5,
+-  "_chargePerSec": "power per second while the fighter charges (Q10: it was a constant 9 in the sim; with fillPerSec 0.05 and thresholds 30, 65 and 100 the pace is about three form steps a fighter, the first at about 1:30, spec-wounds section 8b)",
++  "chargePerSec": 2,
++  "_chargePerSec": "2 since GW1a (sprint A1): the 9 November build Orb played had 2; it was 0.5. Power per second while the fighter charges (Q10: it was a constant 9 in the sim; with fillPerSec 0.05 and thresholds 30, 65 and 100 the pace is about three form steps a fighter, the first at about 1:30, spec-wounds section 8b)",
+   "takenPerDamage": 0.006,
+   "dealtPerDamage": 0.0037,
+   "_perDamage": "power for each point of damage a hit does: takenPerDamage to its victim, dealtPerDamage to its attacker, each from his own file (they were constants in sim/core/damage.gd, 0.01 and 0.006; Game Design took both to three quarters on 2026-10-05, with the first threshold at 35 from 30, to bring the acts later). In AI matches about nine tenths of the ladder comes from these two, a tenth from fillPerSec and none from charging, so they and the thresholds set when the acts begin (docs/architecture/brawl-wear-and-mood.md sections 5 and 6)",
+diff --git a/data/fight/power.json b/data/fight/power.json
+index 737b8d4..1e8bb8e 100644
+--- a/data/fight/power.json
++++ b/data/fight/power.json
+@@ -110,9 +110,9 @@
+   "launchTravel": 2.0,
+   "travel": {"min": 1.25, "max": 2.0},
+   "_travel": "a setup's \"travel\" (the page's ?travel= slider, for Orb's hands) tries another launchTravel, held to min and max. Game Design's lever is 1.5, then 1.25 (slam-and-pace.md section 2)",
+-  "dash": {"enabled": true, "anyRange": true, "firstTickMin": 1000.0, "fullByTicks": 12, "arriveEaseBh": 1.5, "closeSec": {"1000": 0.4, "3000": 0.8, "6000": 1.4}, "slipMaxBh": 1.5, "slip": {"enabled": false, "underTicks": 12, "speed": 1125.0, "easeTicks": 4}},
++  "dash": {"enabled": true, "anyRange": true, "firstTickMin": 1000.0, "fullByTicks": 12, "arriveEaseBh": 1.5, "closeSec": {"1000": 0.4, "3000": 0.8, "6000": 1.4}, "slipMaxBh": 1.5, "slip": {"enabled": true, "underTicks": 12, "speed": 1125.0, "easeTicks": 4}},
+   "_dash": "LT held (Game Design's overnight-2026-11-08.md (c)). With the energy model on and this on, or a setup's \"dash\": the held dash's top speed is the level's flat out at any range, with no ramp by the gap, and it rises fast: at least firstTickMin a second on its first tick, full by fullByTicks. arriveEaseBh is Encounter's, slipMaxBh Controls', closeSec QA's targets",
+-  "_slip": "the slip's brake (Simulation, the EP's brief of 2026-11-09; Game Design's (c): a tapped LT is still the slip). With the dash on and this on, or a setup's \"slip\": a dash let go before underTicks ticks eases from its speed on the release to speed over easeTicks ticks, by a smoothstep; held underTicks or longer, nothing changes. speed is the slip bound's 1.5 bh in 6 ticks (75 x 1.5 / 0.1 s). It works with Controls' dashHandover on: with the 12-tick lunge every tap is a 13-tick dash",
++  "_slip": "On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off. The slip's brake (Simulation, the EP's brief of 2026-11-09; Game Design's (c): a tapped LT is still the slip). With the dash on and this on, or a setup's \"slip\": a dash let go before underTicks ticks eases from its speed on the release to speed over easeTicks ticks, by a smoothstep; held underTicks or longer, nothing changes. speed is the slip bound's 1.5 bh in 6 ticks (75 x 1.5 / 0.1 s). It works with Controls' dashHandover on: with the 12-tick lunge every tap is a 13-tick dash",
+   "meteorSpeed": 7000.0,
+   "_meteorSpeed": "the meteor and the high arc are authored curves. They count as this for their crater, buildings and energy, and their trail burns in full for the whole curve (power-scale.md)"
+ }

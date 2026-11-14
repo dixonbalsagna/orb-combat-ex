@@ -1,0 +1,9 @@
+all_target_data: exit 0 in 163 s; 9 matches (184833 ticks)
+  all_target_data: REPRODUCES GW1a's target
+water_only: exit 0 in 154 s; 9 matches (184833 ticks)
+  water_only: differs
+combat_only: exit 0 in 151 s; 9 matches (187200 ticks)
+  combat_only: differs
+water_and_combat: exit 0 in 167 s; 9 matches (184833 ticks)
+  water_and_combat: REPRODUCES GW1a's target
+g2 done

@@ -1,0 +1,51 @@
+#!/bin/sh
+# g3_go.sh <scratchpad>: data-fight-gw1a (kick/gw1a_data_edit.py) on g3 = g1 + World.s water hunk (31f6a8bd) + Combat.s gw1a-rows (fd5c1895) =
+# HEAD 26fd27b0 + the EP's GW1a stack overlay (committed as the base). The golden without the grant (stash) and with it, each
+# against GW1a's target; parity against the target through gate.mjs; my checks; the other owners' checks that read these
+# switches; Rendering's 15. ONE Godot job at a time, below normal (a long run).
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; T="$NS/g3"; O="$NS/g3o"
+R="/c/Users/<user>/Documents/Claude Proj/Breakers-Like"
+TG="$R/docs/sim/runs/6a30b4c9/gw1a-target/golden-target.json"
+rm -rf "${NS:?}/g3o"; mkdir -p "$O" "$NS/g3app"; export APPDATA="$(cygpath -w "$NS/g3app")"
+cd "$T" || exit 1
+case "$(pwd -P)" in */scratchpad/g3) ;; *) echo refusing; exit 1 ;; esac
+run() { name="$1"; t="$2"; shift 2; s=$(date +%s); timeout "$t" "$G" --headless --path . --script "$@" > "$O/$name.txt" 2>&1; code=$?; echo "$name: exit $code in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR\|Parse Error' "$O/$name.txt"); $(grep -v 'WARNING\|at: \|^$\|ERROR: \|wait_to_finish' "$O/$name.txt" | tail -1 | cut -c1-150)"; grep -n "^FAIL\|^  FAIL" "$O/$name.txt" | head -8 | cut -c1-240; }
+git -c core.autocrlf=false diff --binary -- data/fight > "$O/data-fight-gw1a.patch"
+echo "data-fight-gw1a sha1 $(sha1sum "$O/data-fight-gw1a.patch" | cut -c1-40) sha256 $(sha256sum "$O/data-fight-gw1a.patch" | cut -c1-12) $(grep -c '^diff --git' "$O/data-fight-gw1a.patch") files"
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+node tools/validate.js --self-test > "$O/validate_self.txt" 2>&1; echo "validate self-test $?"
+node tools/validate.js > "$O/validate.txt" 2>&1; echo "validate $?; $(tail -1 "$O/validate.txt" | cut -c1-80)"
+node tools/lint-determinism.mjs > "$O/lint.txt" 2>&1; echo "lint $?"
+node tools/ratchet-two-fighter.mjs > "$O/ratchet.txt" 2>&1; echo "ratchet $?; $(tail -1 "$O/ratchet.txt")"
+cp sim/core/test/golden.json "$O/golden_main.json"
+echo "== the negative control: the stack without the grant"
+git stash -q || exit 1
+run golden_without 900 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$TG" && echo "  without the grant: REPRODUCES the target (the grant would not be needed)" || echo "  without the grant: differs from GW1a's target (expected)"
+cp "$O/golden_main.json" sim/core/test/golden.json
+git stash pop -q || exit 1
+git status --short | head -6
+echo "== with the grant"
+run golden 900 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$TG" && echo "  with the grant: REPRODUCES GW1a's target byte for byte" || echo "  with the grant: DIFFERS from GW1a's target"
+cp sim/core/test/golden.json "$O/golden_with.json"
+cp "$TG" sim/core/test/golden.json
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity.txt" 2>&1; echo "parity against GW1a's target through gate.mjs: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL" "$O/parity.txt" | head -8 | cut -c1-240
+cp "$O/golden_main.json" sim/core/test/golden.json
+s=$(date +%s); node tools/gate.mjs --verdict -- "$GW" --headless --path . --script res://sim/core/tools/power_check.gd > "$O/power.txt" 2>&1; echo "power_check through gate.mjs: exit $? in $(( $(date +%s) - s )) s; $(grep 'POWER' "$O/power.txt" | tail -1)"
+grep -n "^FAIL" "$O/power.txt" | head -8 | cut -c1-230
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/power_check.gd -- --negative-control > "$O/power_neg.txt" 2>&1; echo "power_check negative control: exit $?; $(grep 'POWER' "$O/power_neg.txt" | tail -1)"
+run kick 900 res://sim/core/tools/kick_check.gd
+run two_states 2400 res://sim/core/tools/two_states_check.gd -- --setups=default,power,dash,slip,fights
+echo "== the other owners' checks that read these switches (to list)"
+for c in floorlift_check beam_front_check strike_stages_check arrive_check; do run "d_$c" 2400 "res://sim/director/tools/$c.gd"; done
+run a_anim_check 2400 res://render/anim/tools/anim_check.gd
+run n_lan_check 1800 res://net/tools/lan_check.gd
+echo "== Rendering's checks"
+sh "$NS/n/rgates.sh" "$T" "$O" 2>&1 | tail -18
+echo g3 done

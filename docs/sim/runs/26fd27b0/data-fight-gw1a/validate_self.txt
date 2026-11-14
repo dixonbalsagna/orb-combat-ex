@@ -1,0 +1,4 @@
+FAIL  coverage: ui-modes.schema.json: at least three invalid cases
+      has 0
+self-test: 10099 of 10100 checks passed, 1 FAILED
+  parser 327 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 194; data cases 8355

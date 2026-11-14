@@ -1,0 +1,61 @@
+data-fight-gw1a sha1 0b9fcbc658229c0447bc84791e488e3ff2227aae sha256 f23ab2e54e6e 5 files
+import 0; parse errors 0
+validate self-test 1
+validate 0; 322 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+== the negative control: the stack without the grant
+golden_without: exit 0 in 157 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (187200 ticks), 2 replays in 151.5 s
+  without the grant: differs from GW1a's target (expected)
+ M data/fight/brake.json
+ M data/fight/hitstop.json
+ M data/fight/kick.json
+ M data/fight/ladder.json
+ M data/fight/power.json
+== with the grant
+golden: exit 0 in 161 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 156.7 s
+  with the grant: REPRODUCES GW1a's target byte for byte
+parity against GW1a's target through gate.mjs: exit 0 in 376 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+power_check through gate.mjs: exit 0 in 202 s; POWER: 0 check(s) failed
+power_check negative control: exit 0; POWER negative control: 0 check(s) failed
+kick: exit 0 in 41 s; script errors 0; KICK: 0 check(s) failed
+two_states: exit 0 in 256 s; script errors 0; PASS  0 failure(s)
+== the other owners' checks that read these switches (to list)
+d_floorlift_check: exit 0 in 37 s; script errors 0; FLOORLIFT: 0 check(s) failed
+d_beam_front_check: exit 1 in 7 s; script errors 0; FRONT: 4 check(s) failed
+31:FAIL  a sig pressed 18 ticks into the charge answers it as he fires (-1)
+33:FAIL  a sig pressed 38 ticks into the charge answers it as he fires (-1)
+84:FAIL  a fire-back starts a struggle
+85:FAIL  a late one meets nearer his hands
+d_strike_stages_check: exit 0 in 6 s; script errors 0; STRIKE STAGES: 0 check(s) failed
+d_arrive_check: exit 0 in 38 s; script errors 0; ARRIVE: 0 check(s) failed
+a_anim_check: exit 1 in 1240 s; script errors 1; anim check FAILED (13)
+327:FAIL  slope test: the ankle is 116.10 u off the ground with the feet placed and 116.10 without
+328:FAIL  the grip as five stages: the reach, the tie-up by grade, the pummel, the set and the cave, the end: ["PROTAGONIST: the leader\'s hips do not go down a stage at a time (32.0, 32.0, 32.0)", "PROTAGONIST: the one two behind does not 
+329:FAIL  the grapple's end as a throw: every send plays the thrower's own sequence clean and hands back: ["PROTAGONIST thrown_down: a pelvis moves 8.41 units in a tick (8 at most: a throw is a quick blow, and the snappy profile solves on t
+330:FAIL  follow-through: antihero su_heel: the pelvis steps at most 2.3 units a tick in the 13 ticks after the second blow's contact (2.4 without; at most 12 and 0.75 of the before)
+331:FAIL  solve carry: su_hammer: the striking upper arm turns at most 66 degrees a tick after the contact (49 without; at most 36 and no more than without)
+332:FAIL  zip view heavy exit 0: the way in is 3 ticks and was drawn on 3, the way out 11 and 11 (4 each at least, all drawn)
+333:FAIL  zip view heavy exit 1: the way in is 3 ticks and was drawn on 3, the way out 11 and 11 (4 each at least, all drawn)
+334:FAIL  zip view: the exits came out home, home and home
+n_lan_check: exit 0 in 111 s; script errors 0; LAN: 0 check(s) failed
+== Rendering's checks
+29:FAIL  with depth on Rendering's flashes are weighed by the pixels they cover at their fighter's depth (the camera is 2650 units from the plane: a head flash in the middle street is 0.54 of its size on the plane, one at the near
+flight_check: exit 1 in 194 s; FAIL lines 20; script errors 0; flight check FAILED (21)
+8:FAIL  seed 12345 tick 3231: building 239 shows 5 standing, 4 people there
+9:FAIL  seed 12345 tick 3232: building 239 shows 5 standing, 4 people there
+10:FAIL  seed 12345 tick 3233: building 239 shows 5 standing, 4 people there
+11:FAIL  seed 12345 tick 3234: building 239 shows 5 standing, 4 people there
+12:FAIL  seed 12345 tick 3235: building 239 shows 5 standing, 4 people there
+13:FAIL  seed 12345 tick 3236: building 239 shows 5 standing, 4 people there
+ground_check: exit 0 in 59 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 8 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 22 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 22 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 62 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 14 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 12 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 14 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 19 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+g3 done

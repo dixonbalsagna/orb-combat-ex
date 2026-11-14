@@ -1,0 +1,346 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+pair bake: 416 ms, 809 poses
+static scan: 9230 code lines in render/anim/ read the sim and never assign to it
+beat test: 16 cases on a stub exchange (parry forced)
+form test: 12 checks (full, short, live: gather, break, settle, end)
+hunch test: shoulder moved by [3.0, 2.1, 3.0, 2.1], the reach hunch brought it 2.4 units forward, 6 limbs and 18 regions in the socket table
+shape test: head flinch P 16.4 A 10.4 E 13.0 C 6.6, arms P 51.5 A 34.0 E 59.6 C 25.3
+entry test: the entry's start, middle and end are [0.001, 0.0, 0.0] rad from their poses
+ground test: bounce weights 1.00 (rock, hard) and 0.35 (sand, soft), the lip launch, the tumble brace (0.70 slow, 0.35 fast, 0.35 slow and worn) and its release, the tech flip
+intro test: the fall, the set and the tension are [0.0, 0.046] rad from their poses; reduced motion stands; the clock ends it
+intro real test: the animator follows the sim's own opening: [0.04, 0.06, 0.05, 0.0, 0.0] rad from the fall, set, fall, tension, tension poses
+last stand test: ["ls.ready_p", "ls.ready_a"] for the two shapes in play, the slump on expiry, reduced motion softer
+    late: seed 4 tick 160 light (BRAWL), A, the blow 46 ms ahead
+    late: seed 4 tick 171 medium (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 183 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 191 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 211 light (ZIP), A, the blow 29 ms ahead
+    late: seed 4 tick 252 heavy (ZIP), A, the blow 46 ms ahead
+    late: seed 4 tick 301 light (BRAWL), A, the blow 46 ms ahead
+    late: seed 4 tick 307 medium (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 316 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 325 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 334 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 345 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 354 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 365 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 376 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 438 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 446 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 454 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 462 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 470 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 516 heavy (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 525 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 534 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 543 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 552 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 561 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 579 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 585 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 590 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 4 tick 596 light (BRAWL), A, the blow 29 ms ahead
+    short: seed 4 tick 193 light (BRAWL): target 56 u ahead, short by 3.7 (need 28.1, lunge 7.0, step 16.0), legs knee_l dmg 8
+    short: seed 4 tick 329 light (BRAWL): target 48 u ahead, short by 26.0 (need 19.3, lunge 7.0, step 12.3), chest foot_l dmg 7
+    short: seed 4 tick 380 light (BRAWL): target 56 u ahead, short by 2.1 (need 25.5, lunge 7.0, step 16.0), legs knee_r dmg 9
+    short: seed 4 tick 456 light (BRAWL): target 57 u ahead, short by 4.3 (need 29.2, lunge 7.0, step 16.0), legs knee_r dmg 6
+    short: seed 4 tick 472 light (BRAWL): target 60 u ahead, short by 7.4 (need 31.5, lunge 7.0, step 16.0), gut knee_r dmg 6
+    short: seed 4 tick 563 light (BRAWL): target 58 u ahead, short by 5.5 (need 29.4, lunge 7.0, step 16.0), gut knee_l dmg 7
+    short: seed 4 tick 606 light (BRAWL): target 58 u ahead, short by 5.8 (need 30.4, lunge 7.0, step 16.0), legs knee_r dmg 4
+    short: seed 4 tick 646 light (BRAWL): target 57 u ahead, short by 3.2 (need 27.4, lunge 7.0, step 16.0), legs knee_r dmg 7
+    short: seed 4 tick 664 light (BRAWL): target 54 u ahead, short by 2.5 (need 26.0, lunge 7.0, step 16.0), gut knee_r dmg 7
+    short: seed 4 tick 673 light (BRAWL): target 56 u ahead, short by 2.3 (need 25.8, lunge 7.0, step 16.0), legs knee_l dmg 7
+    short: seed 4 tick 693 light (BRAWL): target 63 u ahead, short by 9.9 (need 34.4, lunge 7.0, step 16.0), gut knee_l dmg 6
+    short: seed 4 tick 703 light (BRAWL): target 66 u ahead, short by 15.2 (need 47.7, lunge 7.0, step 16.0), legs knee_r dmg 8
+    short: seed 4 tick 1288 light (BRAWL): target 61 u ahead, short by 8.4 (need 33.0, lunge 11.0, step 4.0), gut hand_r dmg 6
+    short: seed 4 tick 1413 light (BRAWL): target 56 u ahead, short by 2.0 (need 25.5, lunge 7.0, step 16.0), legs knee_r dmg 8
+    short: seed 4 tick 1423 light (BRAWL): target 58 u ahead, short by 3.9 (need 21.9, lunge 11.0, step 4.0), gut hand_l dmg 8
+    short: seed 4 tick 1441 light (BRAWL): target 58 u ahead, short by 5.4 (need 29.2, lunge 7.0, step 16.0), gut knee_l dmg 7
+    short: seed 4 tick 1459 light (BRAWL): target 58 u ahead, short by 4.3 (need 22.8, lunge 11.0, step 4.0), gut hand_r dmg 7
+    short: seed 4 tick 1478 light (BRAWL): target 61 u ahead, short by 5.9 (need 30.5, lunge 7.0, step 16.0), legs knee_l dmg 8
+    short: seed 4 tick 1654 light (BRAWL): target 58 u ahead, short by 3.2 (need 26.8, lunge 7.0, step 16.0), legs knee_l dmg 6
+    short: seed 4 tick 1799 light (BRAWL): target 53 u ahead, short by 3.7 (need 32.0, lunge 7.0, step 16.0), legs knee_l dmg 7
+    short: seed 4 tick 1817 light (BRAWL): target 63 u ahead, short by 10.2 (need 35.0, lunge 7.0, step 16.0), gut knee_l dmg 8
+    short: seed 4 tick 2388 light (BRAWL): target 60 u ahead, short by 4.5 (need 28.4, lunge 7.0, step 16.0), legs knee_r dmg 6
+    short: seed 4 tick 2434 light (BRAWL): target 59 u ahead, short by 9.1 (need 36.2, lunge 7.0, step 16.0), gut knee_l dmg 7
+    short: seed 4 tick 2733 light (BRAWL): target 60 u ahead, short by 4.3 (need 28.0, lunge 7.0, step 16.0), legs knee_r dmg 6
+    short: seed 4 tick 2963 light (CLEAN HIT): target 43 u ahead, short by 32.3 (need 17.6, lunge 9.0, step 8.6), jaw elbow_r dmg 26
+    short: seed 4 tick 3916 light (PRESSURE — GUARD HOLDS): target 59 u ahead, short by 5.4 (need 28.9, lunge 7.0, step 16.0), gut knee_l dmg 26
+    late: seed 4 tick 147 heavy (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 152 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 160 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 173 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 181 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 219 medium (ZIP), D, the blow 29 ms ahead
+    late: seed 4 tick 262 heavy (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 270 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 280 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 290 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 324 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 335 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 344 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 355 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 366 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 375 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 386 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 393 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 422 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 432 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 445 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 480 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 491 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 502 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 532 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 568 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 578 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 590 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 601 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 4 tick 610 light (BRAWL), D, the blow 29 ms ahead
+    short: seed 4 tick 346 light (BRAWL): target 57 u ahead, short by 2.3 (need 25.8, lunge 7.0, step 16.0), legs knee_r dmg 9
+    short: seed 4 tick 758 medium (BRAWL): target 61 u ahead, short by 5.9 (need 44.8, lunge 8.0, step 16.0), jaw head dmg 51
+    short: seed 4 tick 1039 heavy (ZIP): target 15 u ahead, short by 11.1 (need 0.0, lunge 0.0, step -30.0), chest foot_r dmg 41
+    short: seed 4 tick 1226 medium (ZIP): target 5 u ahead, short by 70.3 (need 0.0, lunge 0.0, step -20.0), chest hand_r dmg 20
+    short: seed 4 tick 1375 light (BRAWL): target 72 u ahead, short by 13.5 (need 32.6, lunge 11.0, step 4.0), chest hand_l dmg 6
+  contact solve: 1483 IK frames, 163 contacts within reach (worst gap 0.00 units), 33 beyond reach (the sim put the fighters farther apart than the arm, lunge and step-in reach), 86 facing flips
+  base variants played: { "relaxed": 3, "sprint": 111, "step": 798, "hover": 516, "dive": 3, "climb": 20 }
+  key sets played: { "pr.rising_knee": 3, "pm.fist_chop": 1, "pr.snap_round": 16, "pm.knee_hook": 16, "pr.side_kick": 2, "pr.overhand": 1, "pr.rising_palm": 1, "pk.bolt_flat": 3, "pr.rising_elbow": 3, "pk.bolt_sweep": 4, "pr.jab": 12, "pr.short_knee": 11, "pm.edge_crescent": 13, "pv.su_blade_fall": 4, "pk.bolt_flick": 4, "pr.palm_heel": 2, "pm.palm_rise": 1, "pm.palm_lift": 1, "pu.su_edge_step": 1, "pr.palm_push": 5, "pr.low_kick": 1, "pr.cross": 1, "pr.sweep": 1, "pu.su_blade_jaw": 1, "pr.knife_chop": 1, "pk.bolt_thrust": 2, "pr.front_kick": 1, "pr.uppercut": 2, "pr.short_elbow": 3, "pr.hook_kick": 1, "pr.hammer": 1, "pu.su_elbow_jaw": 2, "pu.su_edge_unwind": 1, "pr.stomp": 1, "pr.backfist": 1, "w1.cross": 14, "rm.forearm_drop": 9, "rk.bolt_fist": 2, "w1.jab": 19, "rm.gut_rise": 14, "rq.spear_fist": 3, "rm.short_uppercut": 4, "rk.bolt_sweep": 4, "rm.knee_hook": 2, "rq.jab_fist": 2, "w1.backfist": 2, "w1.sweep": 1, "w1.hook": 2, "w1.headbutt": 2, "w1.rising_knee": 1, "rm.fist_rise": 1, "w1.axe_kick": 2, "rk.bolt_blade": 1, "rk.bolt_flick": 2, "ru.su_elbow_heave": 1, "rb.rib_shot": 1, "rb.body_ram": 1, "w1.rising_elbow": 1, "w1.palm_heel": 1 }
+  step 3 cue sequences played: 25, last stand cues: 0
+  ragdoll step: 27.5 us a tick a fighter (7638 ticks), 0 contact catches smeared
+  blows: 216, announced under 4 ticks ahead (no wind-up possible): 198
+seed 4 mix: 4200 ticks, 2232 part frames, 536 contact frames, worst contact error 0.15956 rad, solve 393.7 us each (8402 solves), hash 4f7c6099f3657661
+  contact solve: 1483 IK frames, 163 contacts within reach (worst gap 0.00 units), 33 beyond reach (the sim put the fighters farther apart than the arm, lunge and step-in reach), 86 facing flips
+  base variants played: { "relaxed": 3, "sprint": 111, "step": 798, "hover": 516, "dive": 3, "climb": 20 }
+  ragdoll step: 27.0 us a tick a fighter (7638 ticks), 0 contact catches smeared
+  blows: 216, announced under 4 ticks ahead (no wind-up possible): 198
+seed 4 snappy: 4200 ticks, 2232 part frames, 536 contact frames, worst contact error 0.15956 rad, solve 386.4 us each (8402 solves), hash 4f7c6099f3657661
+  contact solve: 1479 IK frames, 162 contacts within reach (worst gap 0.00 units), 33 beyond reach (the sim put the fighters farther apart than the arm, lunge and step-in reach), 86 facing flips
+  base variants played: { "relaxed": 3, "sprint": 114, "step": 820, "hover": 523, "dive": 3, "climb": 21 }
+  ragdoll step: 24.8 us a tick a fighter (7638 ticks), 0 contact catches smeared
+  blows: 216, announced under 4 ticks ahead (no wind-up possible): 198
+seed 4 fluid: 4200 ticks, 2232 part frames, 536 contact frames, worst contact error 0.15956 rad, solve 367.4 us each (8402 solves), hash 4f7c6099f3657661
+    late: seed 12345 tick 380 heavy (GUARD BREAK), A, the blow 33 ms ahead
+    late: seed 12345 tick 1056 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1065 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1079 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1087 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1099 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1107 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1119 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1330 heavy (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1338 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1346 medium (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1356 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1364 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1372 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1379 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1389 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1394 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1404 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1411 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1428 light (BRAWL), D, the blow 46 ms ahead
+    late: seed 12345 tick 1433 medium (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1442 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1451 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1460 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1470 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1566 light (BRAWL), A, the blow 46 ms ahead
+    late: seed 12345 tick 1575 medium (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1619 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1661 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1669 light (BRAWL), A, the blow 29 ms ahead
+    short: seed 12345 tick 1083 light (BRAWL): target 52 u ahead, short by 3.5 (need 30.2, lunge 7.0, step 16.0), legs knee_r dmg 9
+    short: seed 12345 tick 1103 light (BRAWL): target 58 u ahead, short by 6.0 (need 30.0, lunge 7.0, step 16.0), gut knee_r dmg 8
+    short: seed 12345 tick 1366 light (BRAWL): target 54 u ahead, short by 3.5 (need 27.2, lunge 7.0, step 16.0), gut knee_r dmg 6
+    short: seed 12345 tick 1396 light (BRAWL): target 58 u ahead, short by 3.4 (need 27.2, lunge 7.0, step 16.0), legs knee_r dmg 6
+    short: seed 12345 tick 1435 light (BRAWL): target 58 u ahead, short by 3.5 (need 21.2, lunge 11.0, step 4.0), gut hand_l dmg 8
+    short: seed 12345 tick 1463 light (BRAWL): target 52 u ahead, short by 4.6 (need 35.6, lunge 7.0, step 16.0), legs knee_r dmg 7
+    short: seed 12345 tick 1682 light (BRAWL): target 66 u ahead, short by 16.6 (need 47.6, lunge 7.0, step 16.0), legs knee_r dmg 9
+    short: seed 12345 tick 1907 light (BRAWL): target 59 u ahead, short by 3.9 (need 28.0, lunge 7.0, step 16.0), legs knee_r dmg 6
+    short: seed 12345 tick 1933 light (BRAWL): target 56 u ahead, short by 2.9 (need 26.7, lunge 7.0, step 16.0), legs knee_l dmg 6
+    short: seed 12345 tick 1948 light (BRAWL): target 57 u ahead, short by 5.2 (need 29.0, lunge 7.0, step 16.0), gut knee_l dmg 6
+    short: seed 12345 tick 1955 light (BRAWL): target 58 u ahead, short by 2.5 (need 25.8, lunge 7.0, step 16.0), legs knee_r dmg 6
+    short: seed 12345 tick 1971 light (BRAWL): target 56 u ahead, short by 4.1 (need 27.7, lunge 7.0, step 16.0), gut knee_r dmg 6
+    short: seed 12345 tick 2079 light (BRAWL): target 58 u ahead, short by 5.6 (need 30.2, lunge 7.0, step 16.0), legs knee_r dmg 4
+    short: seed 12345 tick 2484 light (BRAWL): target 60 u ahead, short by 7.5 (need 32.8, lunge 7.0, step 16.0), legs knee_l dmg 3
+    short: seed 12345 tick 2637 light (BRAWL): target 53 u ahead, short by 2.0 (need 25.6, lunge 7.0, step 16.0), gut knee_l dmg 7
+    short: seed 12345 tick 2664 light (BRAWL): target 54 u ahead, short by 5.2 (need 30.9, lunge 7.0, step 16.0), gut knee_r dmg 7
+    short: seed 12345 tick 2709 light (BRAWL): target 55 u ahead, short by 2.8 (need 27.0, lunge 7.0, step 16.0), legs knee_l dmg 7
+    short: seed 12345 tick 2933 light (BRAWL): target 61 u ahead, short by 6.7 (need 31.1, lunge 7.0, step 16.0), legs knee_l dmg 4
+    short: seed 12345 tick 2969 light (BRAWL): target 58 u ahead, short by 3.3 (need 26.9, lunge 7.0, step 16.0), legs knee_r dmg 9
+    short: seed 12345 tick 3105 light (BRAWL): target 54 u ahead, short by 3.1 (need 26.6, lunge 7.0, step 16.0), gut knee_r dmg 6
+    short: seed 12345 tick 3129 light (BRAWL): target 63 u ahead, short by 10.3 (need 35.2, lunge 7.0, step 16.0), gut knee_l dmg 6
+    late: seed 12345 tick 146 light (PURSUIT — CAUGHT), A, the blow 33 ms ahead
+    late: seed 12345 tick 847 light (DODGE & READ), A, the blow 33 ms ahead
+    late: seed 12345 tick 924 light (DODGE & READ), A, the blow 33 ms ahead
+    late: seed 12345 tick 1056 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1064 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1069 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1077 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1089 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1097 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1109 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1117 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1129 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1135 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1356 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1364 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1372 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1381 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1396 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1404 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1418 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1449 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1459 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1468 light (BRAWL), A, the blow 29 ms ahead
+    late: seed 12345 tick 1496 light (ZIP), A, the blow 12 ms ahead
+    late: seed 12345 tick 1524 light (ZIP), A, the blow 12 ms ahead
+    late: seed 12345 tick 1556 heavy (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1566 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1590 heavy (ZIP), A, the blow 12 ms ahead
+    late: seed 12345 tick 1619 light (BRAWL), D, the blow 29 ms ahead
+    late: seed 12345 tick 1630 light (BRAWL), D, the blow 29 ms ahead
+    short: seed 12345 tick 1737 medium (ZIP): target 7 u ahead, short by 117.2 (need 0.0, lunge 0.0, step -30.0), chest foot_r dmg 25
+    short: seed 12345 tick 1998 medium (ZIP): target 5 u ahead, short by 143.9 (need 0.0, lunge 0.0, step -30.0), shins foot_r dmg 20
+    short: seed 12345 tick 2115 light (BRAWL): target 59 u ahead, short by 5.7 (need 29.1, lunge 7.0, step 16.0), gut knee_r dmg 7
+    short: seed 12345 tick 2630 light (BRAWL): target 69 u ahead, short by 13.2 (need 37.8, lunge 7.0, step 16.0), legs knee_l dmg 7
+  contact solve: 1555 IK frames, 191 contacts within reach (worst gap 0.00 units), 29 beyond reach (the sim put the fighters farther apart than the arm, lunge and step-in reach), 70 facing flips
+  base variants played: { "relaxed": 3, "sprint": 128, "step": 841, "hover": 366, "climb": 24, "dive": 10 }
+  key sets played: { "pr.driving_knee": 1, "pr.axe_kick": 1, "pr.overhand": 1, "pr.side_kick": 3, "pr.uppercut": 1, "pm.edge_crescent": 11, "pr.snap_round": 11, "pm.knee_hook": 23, "pr.jab": 19, "pr.short_knee": 14, "pk.bolt_flat": 1, "pk.bolt_thrust": 2, "pr.rising_palm": 3, "pk.bolt_sweep": 2, "pm.palm_heave": 3, "pr.palm_push": 1, "pr.shoulder_check": 2, "pr.rising_knee": 5, "pr.rising_elbow": 2, "pr.sweep": 1, "pr.palm_heel": 4, "pr.backfist": 3, "pm.palm_rise": 1, "pm.palm_lift": 4, "pk.bolt_flick": 1, "pr.low_kick": 2, "pr.short_elbow": 2, "pu.su_palm_heave": 1, "pv.palm_turn": 1, "pr.twin_spear": 1, "pr.spear_hand": 1, "pr.ridge_hand": 1, "pr.hook": 1, "w1.rising_elbow": 5, "w1.haymaker": 2, "w1.palm_heel": 2, "w1.snap_round": 2, "w1.cross": 18, "rm.forearm_drop": 9, "w1.jab": 21, "rm.gut_rise": 18, "w1.short_elbow": 2, "w1.rising_knee": 5, "rk.bolt_fist": 3, "w1.side_kick": 2, "rk.bolt_blade": 2, "rq.spear_fist": 1, "rk.bolt_flick": 1, "w1.hook": 3, "w1.axe_kick": 1, "rm.knee_hook": 2, "w1.sweep": 1, "w1.spear_hand": 2, "rm.short_uppercut": 3, "rq.jab_fist": 2, "rm.knee_lift": 2, "rk.bolt_sweep": 2, "w1.shoulder_check": 2, "rq.cross_fist": 1, "w1.twin_spear": 1 }
+  step 3 cue sequences played: 20, last stand cues: 0
+  ragdoll step: 25.4 us a tick a fighter (7608 ticks), 0 contact catches smeared
+  blows: 245, announced under 4 ticks ahead (no wind-up possible): 223
+seed 12345 mix: 4200 ticks, 2476 part frames, 544 contact frames, worst contact error 0.15002 rad, solve 356.9 us each (8402 solves), hash b2be9bea45160905
+  contact solve: 1555 IK frames, 191 contacts within reach (worst gap 0.00 units), 29 beyond reach (the sim put the fighters farther apart than the arm, lunge and step-in reach), 70 facing flips
+  base variants played: { "relaxed": 3, "sprint": 128, "step": 841, "hover": 366, "climb": 24, "dive": 10 }
+  ragdoll step: 25.1 us a tick a fighter (7608 ticks), 0 contact catches smeared
+  blows: 245, announced under 4 ticks ahead (no wind-up possible): 223
+seed 12345 snappy: 4200 ticks, 2476 part frames, 544 contact frames, worst contact error 0.15002 rad, solve 353.1 us each (8402 solves), hash b2be9bea45160905
+  contact solve: 1555 IK frames, 191 contacts within reach (worst gap 0.00 units), 29 beyond reach (the sim put the fighters farther apart than the arm, lunge and step-in reach), 70 facing flips
+  base variants played: { "relaxed": 3, "sprint": 130, "step": 853, "hover": 371, "climb": 24, "dive": 10 }
+  ragdoll step: 27.0 us a tick a fighter (7608 ticks), 0 contact catches smeared
+  blows: 245, announced under 4 ticks ahead (no wind-up possible): 223
+seed 12345 fluid: 4200 ticks, 2476 part frames, 544 contact frames, worst contact error 0.15004 rad, solve 391.3 us each (8402 solves), hash b2be9bea45160905
+wound test: broken arm hung on 120 of 120 calm frames, 0 blows by the broken limb, stance sag 0.267 against 0.888 fresh, chest range worn 0.047 fresh 0.020 (controlled)
+heavy arm test: a broken arm swings 0.29 rad where the same arm unbroken swings 0.86; the good arm is untouched
+ragdoll test: same state at one and two ticks a frame, 2116 active frames, reduced 3.64 of 10.34, ground-event stub 21.4 then 65.3 rad/s
+slope test: 7 foot samples on a crater wall, ankle height error 116.10 u with the feet placed (worst 162.4), 116.10 without
+hit test: head snap front 23.5 behind -24.7, force 0.3 gives 10.2 and 1.2 gives 34.1, worn 54.1 fresh 28.4, two in a row 32.8 then 22.5
+weight test: blow weights 0.29 0.71 1.29 for 20 50 90 damage; aim turns the arms 0.50 rad for 0.5
+defender test: next blow [0.1, true, 60.0, 0], a miss is found, the two shapes flinch 0.54 rad apart in total
+personality test: bounce 1.17 evasive against 0.18 defensive, breath 0.0185 tier 4 against 0.0132 tier 1, guard kicks 6.0 up -5.0 down, turn dip -1.40
+flight test: gait events found, the shudder of a nearby impact peaks at 1.09 u
+quality test: levels switch their layers, the gameplay hash is the same at high, low and minimal (8ffc7fee305d07f0)
+win test: the winner's beats ["win.stand", "win.survey", "win.survey", "emote.victory"], a KO falls ["react.stagger", "down.ko"]
+agency test: knockback mid-slide 0.765 rad, embed, taunt cut, charge held and ended on a fall, feint peel, reduced motion 0.51 of 0.85, off plays nothing
+flight lead test: head leads 1.00 along the velocity (the sim's own angle -0.31), let go after the launch, a knockback fold stood up to 45 degrees
+pair live test: PROTAGONIST plays as protagonist (19 lights, 22 heavies, 17 entries), RIVAL as antihero (15, 20, 15); 1399 own picks in 1500 ticks; the energy presses, taunts and swat start his own poses; the pair's waves baked in 416 ms (809 poses)
+  press styles in a 1500-tick AI match: { "speed": 119, "burst": 6, "tech": 2, "medium": 3, "heavy": 3, "super": 5 }
+flurry tiers, 28-tick gathers (protagonist): double_palm 0 ticks above 80, wrists 21.7 apart through the gather, 20.9 at the peak (); cross_arm_ram 0 ticks above 80, wrists 20.9 apart through the gather, 4.5 at the peak (); double_hammer 1 ticks above 80, wrists 21.6 apart through the gather, 21.7 at the peak (hand_r is above 80 (98), hand_l is above 80 (98))
+flurry tiers, 28-tick gathers (antihero): double_palm 0 ticks above 80, wrists 22.0 apart through the gather, 32.0 at the peak (); cross_arm_ram 0 ticks above 80, wrists 21.9 apart through the gather, 30.5 at the peak (); double_hammer 2 ticks above 80, wrists 21.6 apart through the gather, 21.7 at the peak (hand_r is above 80 (98), hand_l is above 80 (98))
+flurry tiers: protagonist: the burst at gaps 4 4 5 carries the arms 2.23 rad from guard against a plain mash's 2.84 (a slow burst is not narrowed), super lead 8 against medium 2 | antihero: the burst at gaps 4 4 5 carries the arms 2.09 rad from guard against a plain mash's 2.79 (a slow burst is not narrowed), super lead 8 against medium 2; held Y and B coil for the whole hold; the tiers are ordered X < Y < B in the data and on the body
+windups: 104 medium and heavy wind-ups judged on the real solve: no limb above 80 before the last 6 ticks, every contact solved; after a super-heavy's blow no hand is above 71 from 6 ticks on
+tier drives: 20 pieces of the super-heavy tier read as their drive (a pace, half a turn, one limb crossing, sunk then tall, risen then sunk, one turn)
+tell sinks: su_edge_step 7.9, su_blade_jaw 7.9, su_edge_unwind 9.2, su_ram 12.7, su_plate 10.0, su_hook 12.5, su_knee 8.5, su_heel -0.6, su_drive -0.0
+many bodies: 2 stand-ins about the pair for 300 ticks, waiting { "circle": 240, "guard": 97, "step_in": 64, "settle": 97 }, 0 joint violations
+march: a second heavy within 140 ticks marches 1.00, a lone one 0.00
+round 10: ease keeps the clock; cash-in 2 ticks; held hit hangs; air tech plays; interjection tell shown 26 ticks; chase dive starts and clears
+pieces: the common row, the new pieces, the cast poses, the cash-in row, the chase cue and the opening
+arms: wings 4 of 368 keys, the air tech's feet low, the mash's beat
+pulls: a beam's aim stays inside the limits; the three heavies' kicks need no big correction at their range
+guard: 169 free hands, worst 28.8 from the guard, 28 rows in the pass
+ragdoll variety: launches differ by 1.831 rad, the same one repeats exactly, the side of the hit picks fold or arch
+ragdoll weight: gain 1.00 to 2.50 by tier, 0.77 for a heavier body; a blow reaches the head, then the spine, then the legs
+ragdoll families: 6 families, the closest pair 0.30 rad apart (rms) in their most different joint; light pop 3.7 rad a second of motion (summed over the groups) for 0.69 s of flail scale, full send 9.5 for 1.23
+ragdoll oop: on, the body turns up to 0.55 rad out of its plane; off, none; no joint past a limit at the extremes
+air brake: laid out at 84 degrees, braced at 39, let go inside the ramp; none of it without the sim's event
+chain: face, slab, ceiling, slab, lodge: slam, rebound and climb play, the hand-off at tick 136, the largest turn in a tick 34.9 degrees (22.8 from the climb on)
+grapple: the partner pick and ten hold regions (C0), 24 throw poses clean (C1)
+charge cut: held while he stands, let go 0 ticks after he is carried at 718 u/s
+grip: the least and most spacing (units) that hold the gap, the clearance, g02 and g06, by grade behind, even, ahead: [grade, least, most] [[-1.0, 28.0, 36.0], [0.0, 28.0, 38.0], [1.0, 30.0, 38.0]]; the largest shortfall at 40 units 4.1
+recoil: P backflip turn -360.6 head -42 hand 21 | P tuck turn -360.5 head -36 hand 35 | P handspring turn -360.5 head -39 hand 6 | R backflip turn -360.5 head -36 hand 26 | R tuck turn -360.4 head -36 hand 35 | R handspring turn -360.4 head -39 hand 6; wall feet 0.92, handspring hands 5.9
+press-tick anticipation: P x lean 3.0 drop 1.6 rest 0.00 cleared 32 | P y lean 6.9 drop 5.4 rest 0.00 cleared 32 | P b lean 1.9 drop 6.5 rest 0.00 cleared 32 | R x lean 4.9 drop 0.2 rest 0.00 cleared 32 | R y lean 8.3 drop 3.0 rest 0.00 cleared 32 | R b lean 2.8 drop 7.7 rest 0.00 cleared 32
+beam shove: P 15 ticks: sink 10.0 lean 23.8 rest 0.00 cleared 22 | P 9 ticks: sink 7.5 lean 14.3 rest 0.00 cleared 16 | R 15 ticks: sink 10.1 lean 23.8 rest 0.00 cleared 22 | R 9 ticks: sink 7.4 lean 14.3 rest 0.00 cleared 16
+stick pre-read: P dir 1: shows 2.1, weight at rest 0.000 | P dir 2: shows 13.0, weight at rest 0.000 | P dir 3: shows 2.8, weight at rest 0.000 | P dir 4: shows 4.9, weight at rest 0.000 | R dir 1: shows 4.7, weight at rest 0.000 | R dir 2: shows 9.5, weight at rest 0.000 | R dir 3: shows 2.5, weight at rest 0.000 | R dir 4: shows 1.5, weight at rest 0.000
+lunge crouch: P light 6 ticks: crouch 3.9 at the end, rest 0.00, step 2.54 of 5.2 | P light 5 ticks: crouch 3.9 at the end, rest 0.00, step 2.54 of 5.2 | P heavy 10 ticks: crouch 10.5 at the end, rest 0.00, step 5.72 of 11.7 | P return 10 ticks: crouch 4.1 at the end, rest 0.00, step 2.27 of 4.6 | R light 6 ticks: crouch 5.3 at the end, rest 0.00, step 3.44 of 7.1 | R light 5 ticks: crouch 5.3 at the end, rest 0.00, step 3.44 of 7.1 | R heavy 10 ticks: crouch 10.4 at the end, rest 0.00, step 5.62 of 11.6 | R return 10 ticks: crouch 5.6 at the end, rest 0.00, step 3.02 of 6.3
+flight locomotion: P accel lean 0.56 (head forward 1.6), brake -1.13 then 0.07, flare 0.92, bank 1.00, hover 1.00 | R accel lean 0.52 (head forward 1.5), brake -1.05 then 0.02, flare 0.92, bank 1.00, hover 1.00
+ground locomotion: P walk foot swing 8.6, run 19.0, bob 1.4 | P soil kick 4.3 sink 4.8 | P rock kick 4.3 sink 4.1 | P sand kick 4.3 sink 6.1 | P rubble kick 4.3 sink 4.9 | P water kick 4.3 sink 7.3 | R walk foot swing 7.7, run 17.1, bob 1.0 | R soil kick 4.3 sink 4.8 | R rock kick 4.3 sink 4.1 | R sand kick 4.3 sink 6.1 | R rubble kick 4.3 sink 4.9 | R water kick 4.3 sink 7.3
+hit reactions: P 48 hits, 48 variants shown, the largest swing from plain 38.2 | R 48 hits, 47 variants shown, the largest swing from plain 40.3; 16 variants used (jolt, duck_under, turn_away, shrug, step_back, hop_back, arch_back, stumble_fwd, drop_head, stagger_side, gut_fold, shoulder_spin, knee_buckle, spin_off, arms_flung, slump)
+air recovery: P catch 51.5, step 7.85, tail 0.00 | R catch 52.1, step 7.93, tail 0.00
+air brake looks: 0 problems; P unwind 10 ticks (lean 0.72), tuck 8.1, plant 0.60 on landing; R unwind 10 ticks (lean 0.71), tuck 7.0, plant 0.60 on landing
+secondary motion: P run 2.8 stop 3.1 land 6.1/1.3 hit 4.8/2.6 step 0.084 top 0.37 tail 0.14 | R run 2.0 stop 2.2 land 4.4/0.7 hit 3.4/1.8 step 0.056 top 0.24 tail 0.05
+pop: P up+set swing 23.8 step 7.90 tail 0.00 | P up+reel swing 23.8 step 10.54 tail 0.00 | P up+slam swing 13.7 step 3.62 tail 0.00 | P up+spike swing 38.0 step 11.46 tail 0.00 | P up+burst swing 36.2 step 10.86 tail 0.00 | R up+set swing 24.8 step 8.06 tail 0.00 | R up+reel swing 24.8 step 10.67 tail 0.00 | R up+slam swing 12.0 step 3.02 tail 0.00 | R up+spike swing 39.4 step 11.22 tail 0.00 | R up+burst swing 37.8 step 11.29 tail 0.00
+struggle dig-in: P loser drop 5.4 back 6.8, winner lean 2.0 drop 0.0 | R loser drop 5.4 back 6.8, winner lean 2.0 drop 0.0
+grip stages: P leader hips even 32.0 one ahead 32.0 set 32.0; behind caves 32.0 to 32.0; grip gap 0.00 | R leader hips even 32.0 one ahead 32.0 set 32.0; behind caves 32.0 to 32.0; grip gap 0.00
+grip throws: P throw_across -> hurl | P throw_across past -> turn_throw | P thrown_up -> lift | P thrown_down -> drive_down | P reversal -> hurl | R throw_across -> sling | R throw_across past -> back_throw | R thrown_up -> jolt | R thrown_down -> spike | R reversal -> sling
+shake by weight: stops 2 0.48, 3 0.59, 5 0.76, 8 0.96, 12 1.18, 24 1.54; a flowing light 0.24, gone by tick 10 (0.000)
+incremental bake: the queue holds, orders and drains; the eager and lazy poses are identical; 0 pieces queued for one fighter
+missing-pose lookup: 55 waves, no shared ids; the lookup loaded one wave of two and none for an unknown id
+bake order: 418 ranked and 932 costed poses; ranked poses bake first by rank, a dear pose waits for its own slice, every pose is the eager pose; --no-bake-order keeps the old order
+pair_ready: 3 fighters read only their own key sets; the early ask loaded one wave of two and left the other fighter queued
+per-tick work: seed 1, 1200 ticks, hash 58337917170919 both ways, 34 launched samples
+pulled: { "60": [165, 0, 1], "own": [165, 0, 1] }
+lead-in: pelvis step and free upper-arm turn on the contact tick, with and without: stomp 4.1/13.2 34/142, stomp 3.9/13.0 24/142, su_ram 10.6/23.2 11/54, su_drive 1.8/10.4 12/59, rising_knee 2.7/25.7 6/40, haymaker -2.9/2.6 16/105, su_knee 5.0/27.3 8/39, su_knee_legs 3.4/23.1 35/143; contact tick off by at most 0.00 units; unlisted blows identical (0.0000)
+follow-through: biggest pelvis step in the 13 ticks after a mashed string's second contact, with and without: su_ram 7.8/18.3, su_drive 4.2/18.5, su_heel 2.3/2.4, su_blade_jaw 9.1/18.3; second contact tick off by at most 0.00 units; a lone unlisted blow identical (0.0000); 50 rows
+solve carry: the drive takes the pelvis this far past no drive (solve route / old route), and the striking hand drifts (with / none): su_ram 3.5/3.5 drift 0.0/0.0, su_fist_heave 3.5/1.6 drift 0.0/0.0, su_drive 3.5/3.5 drift 0.0/0.0, su_palm_arm 3.5/3.2 drift 0.1/0.1; striking upper arm worst turn after the contact, with and without: su_hook 30/50, su_plate 23/40, su_hammer 66/49
+bends: nine cells x two fighters at 60 Hz, { "wing": 49, "hyper": 0, "overfold": 0, "wrist70": 0, "wristjerk": 0, "uajerk": 117, "elbowflip": 45, "kneein": 0, "stageD": 1, "pull20": 0, "f_uajerk": 1, "f_elbowflip": 0, "f_wing": 8, "arrival_uajerk": 47, "arrival_elbowflip": 21 }
+styles: 18 style pairs, nearest 1.98 (protagonist ytap~ymash); the fighters 1.90 apart at the median; the nearest two buttons 3.75
+medium wind: 22 mediums on a rule, 9 held-only; roundhouse w7 4.1 with, 5.2 without; uppercut w8 26.9 with, 25.1 without; driving_knee w6 22.8 with, 28.8 without; stomp w4 -26.9 with, -26.1 without
+energy reach: protagonist: flick 12, sweep -46, lines -7 and -27 degrees; the run's heads no nearer than 18 | antihero: flick 6, sweep -48, lines -25 and -10 degrees; the run's heads no nearer than 21
+free arm: 26 pieces thrown left-handed
+fix30: antihero su_knee [+0: 1 deg, 0 frames over 30 | +10: 0 deg, 0 frames over 30 | +20: 0 deg, 0 frames over 30]; antihero su_edge_legs [+0: 22 deg, 0 frames over 30 | +10: 22 deg, 0 frames over 30 | +20: 22 deg, 0 frames over 30]; antihero su_plate_arm [+0: 0 deg, 0 frames over 30 | +10: 0 deg, 0 frames over 30 | +20: 0 deg, 0 frames over 30]; protagonist su_knee_legs [+0: 9 deg, 0 frames over 30 | +10: 9 deg, 0 frames over 30 | +20: 9 deg, 0 frames over 30]; protagonist su_elbow_jaw [+0: 6 deg, 0 frames over 30 | +10: 6 deg, 0 frames over 30 | +20: 6 deg, 0 frames over 30]; antihero su_heel [+0: 4 deg, 0 frames over 30 | +10: 3 deg, 0 frames over 30 | +12: 4 deg, 0 frames over 30]; protagonist bolt_flat [+0: 0 deg, 0 frames over 30 | +10: 0 deg, 0 frames over 30 | +20: 0 deg, 0 frames over 30]; protagonist bolt_thrust [+0: 0 deg, 0 frames over 30 | +10: 0 deg, 0 frames over 30 | +17: 0 deg, 0 frames over 30]; antihero bolt_fist [+0: 0 deg, 0 frames over 30 | +10: 2 deg, 0 frames over 30 | +19: 0 deg, 0 frames over 30]; antihero su_ram [+0: 0 deg, 0 frames over 30 | +10: 0 deg, 0 frames over 30 | +20: 0 deg, 0 frames over 30]
+plan limb: 2160 random limbs over 6 poses and 6 shapes, 1067 of them through the 72-plane search: the same numbers as the one-at-a-time version
+burst set: protagonist: 8 ticks (35 to 42), hands 23 apart and no higher than 58 | antihero: 8 ticks (35 to 42), hands 33 apart and no higher than 61
+cells: held X: burst 0.90 set; mashed Y 17 blows on the medium row; held B 23 hold ticks, coil 1.00
+strength map: 7 cases
+depth: line 0.0 deg, yaw 0.077 / -0.077, gap 150 units
+body tint: 1128 lane-colour vertices left out of the tint, 5868 tinted; the flash is untinted; a palette swap keeps the skin
+heave step (30-unit slack): su_elbow_heave: feet down to 0.4, pelvis up 0.0, short by 0.0 | su_fist_heave: feet down to 0.2, pelvis up 0.0, short by 0.0 | su_palm_heave: feet down to 0.1, pelvis up 0.0, short by 0.0 | su_ball_heave: feet down to 0.2, pelvis up 0.0, short by 0.0
+c2 cues: the stagger doubles him over by 21; miss gave_ground plays mi.gave_ground; miss reach plays mi.reach; miss dodge plays mi.dodge; a flurry blow's strength light, medium, heavy plays speed, medium, super
+zip view: strike 0: home//back tilt 0.01 depth 0 | strike 1: home//back tilt 0.01 depth 0 | strike 2: home//back tilt 0.01 depth 0 | strike 3: home//back tilt 0.01 depth 0 | heavy 0: home//back tilt 0.03 depth 0 | heavy 1: home//back tilt 0.03 depth 0; every end word (stopped, outrun, shot, countered, caught, down) has a look; a drop falls 24 ticks and recovers; the way in and out are drawn on every tick
+riposte: perfect_block light n20: load 2 ticks ahead, perfect_block heavy n40: load 3 ticks ahead, reversal light n20: load 2 ticks ahead; the block fades out over the data's ticks, press.sure and press.riposte exposed, the stagger fitted to n (20 and 40) for both builds, one tick a frame against two within 0.0000001
+  hand tips: the rival's heavy hand closes to a fist (1.70), his light blade and the Protagonist's heavy stay open, a beat's own tip wins
+  zip: speed, tech and heavy on both fighters play tell, in, reach, out; no joint past its limit on screen; every reading is drawn travelling at least 4 ticks each way, the heavy one smears
+  beat fields: grade sets a tech blow's hold and after-images, hand the side, charge a heavy's squash, closing the hold, and a chainStrike plays its own style
+  tech consistency: the same perfect tech cross from idle, in a string and at the end of a zip: worst difference 0.063 rad (antihero zip, 0 ticks after contact)
+  zip slice: an entry plays at zip speed over the way in, a far-side pass over or round, a missing entry falls back, a check holds the guard arm, a push drives with no snap
+  gestures: all ten intents play on both launch fighters over their idles (masked ones leave the legs), on the intro's tick clock too, a fighter or an intent with no entry is a silent skip
+flight loop: P arc over: rises to 0.48, level 0.14 at the blow, falls to -1.24, peak 1.24 | P arc under: down -0.94 at tick 5, level -0.45 at the blow, up to 0.63 late | P a bowed rush with no flight path: peak 0.96, the same with or without the loop row | R arc over: rises to 0.48, level 0.14 at the blow, falls to -1.24, peak 1.24 | R arc under: down -0.94 at tick 5, level -0.45 at the blow, up to 0.63 late | R a bowed rush with no flight path: peak 0.96, the same with or without the loop row
+flight blows: pl.skim_heel tell 10: contact error 0.07, first load tick [10] | pl.trail_backhand tell 6: contact error 0.11, first load tick [5] | rl.slide_knee tell 10: contact error 0.10, first load tick [10] | rl.trail_elbow tell 6: contact error 0.04, first load tick [5]
+SCRIPT ERROR: Invalid access to property or key 'ticks' on a base object of type 'Dictionary'.
+   at: MatchRecorder.before_step (res://render/core/match_recorder.gd:82)
+   GDScript backtrace (most recent call first):
+       [0] before_step (res://render/core/match_recorder.gd:82)
+       [1] tick (res://render/core/sim_host.gd:450)
+       [2] advance (res://render/core/sim_host.gd:239)
+       [3] frame (res://render/core/main.gd:849)
+       [4] _test_fight_view (res://render/anim/tools/anim_check.gd:6467)
+       [5] _run (res://render/anim/tools/anim_check.gd:7878)
+fight view: 0 problems; body 0: view 0.00309 rad, two swapped solves differ by 0.00309; body 1: view 0.00138 rad, two swapped solves differ by 0.00309; without the view: 2.30168 rad
+joint limits: 1103 poses and 5143 sequence frames inside the limits; a flipped thigh is brought in; the limited IK keeps 15 targets legal (worst 0.0000 rad); ragdoll hinges kept; live 4800 frames, 0 reach the screen past a limit (the sources alone leave 206 for the last pass)
+pieces23: 23 pieces resolve to their own key sets and are in no pick list; fist_drop, plate_hammer and palm_heave lower at once (highest hand 60 from 6 ticks on, both styles); the palm rises are open hands with feet down; nothing names them as a tell or a taunt
+["protagonist: nearest two stances 16.5 at rest, 14.1 after 60 ticks held (7.9 with the whole coil)", "antihero: nearest two stances 16.4 at rest, 13.6 after 60 ticks held (7.3 with the whole coil)"]
+stick class: 18 pieces resolve, are in no pick list, carry the class's timing; the charge stances read apart (four by four); every piece draws through the solve (highest hand after a drop 58)
+beam aim: each aim draws its own casting pose and the snap-beam its own for both fighters; a fighter with none casts as before
+water stance: depths [], no fighter read as airborne on the floor
+Anim check  10538 checks
+FAIL  slope test: the ankle is 116.10 u off the ground with the feet placed and 116.10 without
+FAIL  the grip as five stages: the reach, the tie-up by grade, the pummel, the set and the cave, the end: ["PROTAGONIST: the leader\'s hips do not go down a stage at a time (32.0, 32.0, 32.0)", "PROTAGONIST: the one two behind does not cave up (32.0 to 32.0)", "RIVAL: the leader\'s hips do not go down a stage at a time (32.0, 32.0, 32.0)", "RIVAL: the one two behind does not cave up (32.0 to 32.0)"]
+FAIL  the grapple's end as a throw: every send plays the thrower's own sequence clean and hands back: ["PROTAGONIST thrown_down: a pelvis moves 8.41 units in a tick (8 at most: a throw is a quick blow, and the snappy profile solves on twos)"]
+FAIL  follow-through: antihero su_heel: the pelvis steps at most 2.3 units a tick in the 13 ticks after the second blow's contact (2.4 without; at most 12 and 0.75 of the before)
+FAIL  solve carry: su_hammer: the striking upper arm turns at most 66 degrees a tick after the contact (49 without; at most 36 and no more than without)
+FAIL  zip view heavy exit 0: the way in is 3 ticks and was drawn on 3, the way out 11 and 11 (4 each at least, all drawn)
+FAIL  zip view heavy exit 1: the way in is 3 ticks and was drawn on 3, the way out 11 and 11 (4 each at least, all drawn)
+FAIL  zip view: the exits came out home, home and home
+FAIL  zip view: the three exits do not differ in via, pass or tilt (home//back, home//back, home//back)
+FAIL  zip view: a far-side pass is drawn 0.0 toward the camera, not 24.0 (the pass depth)
+FAIL  zip view countered: the end was done, 0 NaN, 0 violations
+FAIL  zip view caught: no zip of eight seeds against the hard AI ended caught (the punish)
+FAIL  standing on the water: the pair at [] deep holds the ground stance with the floor on and off: []
+
+anim check FAILED (13)
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+WARNING: 8178 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 13 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
