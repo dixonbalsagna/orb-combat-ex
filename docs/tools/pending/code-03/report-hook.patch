@@ -21,12 +21,12 @@ index fbe2402..36502a7 100644
 +## there is nothing to save or the file could not be written (the HUD then says so).
 +func _record_report(tags: String, note: String) -> String:
 +	return host.record_file("report", tags, note)
-diff --git a/b/render/core/match_recorder.gd b/render/core/match_recorder.gd
+diff --git a/render/core/match_recorder.gd b/render/core/match_recorder.gd
 new file mode 100644
-index 0000000..0ef3478
+index 0000000..23faf78
 --- /dev/null
 +++ b/render/core/match_recorder.gd
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,147 @@
 +class_name MatchRecorder
 +extends RefCounted
 +## The match as a replay, on a plain desktop build (register rows A-UI-02 and A-CODE-03, Tools, 2026-11-14). It was the black box of the private page (tools/preview/blackbox.mjs): a few lines of the
@@ -75,6 +75,13 @@ index 0000000..0ef3478
 +		ai["p%d" % (k + 1)] = S.fighters[k].ai != null
 +	replay = {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(_su), "seed": _seed, "setup": _su.duplicate(true), "ai": ai,
 +		"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
++	# A stamped build names itself in the replay, as SimReplay.recorder does (A-NET-05, the B1 review): SimReplay.buildId() exists once Simulation's replay-build park has landed, and answers "" in a tree with no
++	# build_info.json. Asked by name so this file compiles before and after that landing; before it a replay carries no build field, exactly as it did.
++	var sr := SimReplay.new()
++	if sr.has_method("buildId"):
++		var bid: String = str(sr.call("buildId"))
++		if bid != "":
++			replay["build"] = bid
 +	_last = []
 +	_last2 = []
 +	for _k in range(S.fighters.size()):
@@ -167,7 +174,7 @@ index 0000000..0ef3478
 +	by_time.sort_custom(func(a, b): return a.substr(a.find("-main-") + 6) < b.substr(b.find("-main-") + 6))
 +	while by_time.size() > KEEP:
 +		DirAccess.remove_absolute(dir.path_join(by_time.pop_front()))
-diff --git a/b/render/core/match_recorder.gd.uid b/render/core/match_recorder.gd.uid
+diff --git a/render/core/match_recorder.gd.uid b/render/core/match_recorder.gd.uid
 new file mode 100644
 index 0000000..e94cf9d
 --- /dev/null
@@ -227,12 +234,12 @@ index ae4749b..6da5f64 100644
 +		return {}
 +	var j = JSON.parse_string(FileAccess.get_file_as_string("res://build_info.json"))
 +	return j if j is Dictionary else {}
-diff --git a/b/render/tools/match_recorder_check.gd b/render/tools/match_recorder_check.gd
+diff --git a/render/tools/match_recorder_check.gd b/render/tools/match_recorder_check.gd
 new file mode 100644
-index 0000000..b067e83
+index 0000000..48e0e5b
 --- /dev/null
 +++ b/render/tools/match_recorder_check.gd
-@@ -0,0 +1,136 @@
+@@ -0,0 +1,140 @@
 +extends SceneTree
 +## The match as a replay on a desktop build (A-UI-02, Tools, 2026-11-14; render/core/match_recorder.gd). Headless, through the real SimHost: a solo match and a couch match are played with scripted intents, the report
 +## and the save are asked for, and the file each leaves in user://reports/ is read back and replayed with SimReplay.play: it must be there, hold the match's kind, mode, build, mark and replay, and reproduce to the
@@ -299,6 +306,10 @@ index 0000000..b067e83
 +	var rp: Dictionary = doc.get("replay", {})
 +	_ok(rp.get("format", "") == SimReplay.FORMAT and int(rp.get("ticks", 0)) == 420 and (rp.get("inputs", []) as Array).size() > 3, "the replay is SimReplay's, 420 ticks, with the presses in it (%d entries)" % (rp.get("inputs", []) as Array).size())
 +	_ok(str(rp.get("final", "")) == live_final, "its final hash is the live state's (the file was made between ticks)")
++	# A-NET-05: a stamped build's replay names its build (SimReplay.buildId, once Simulation's replay-build park has landed); a tree with no stamp, or before that landing, writes no field
++	var sr_probe := SimReplay.new()
++	var want_build: String = str(sr_probe.call("buildId")) if sr_probe.has_method("buildId") else ""
++	_ok(str(rp.get("build", "")) == want_build and (want_build != "" or not rp.has("build")), "the replay names the build exactly when the build is stamped (stamp '%s', replay '%s')" % [want_build, str(rp.get("build", "-"))])
 +	var played: Dictionary = SimReplay.play(rp)
 +	_ok(bool(played.ok) and str(played.final) == live_final, "SimReplay.play reproduces the match to the last tick (%s)" % str(played.get("reason", "")))
 +	# the same match saved again later: a second file, and the report mark of the first stays in the second's marks
@@ -369,7 +380,7 @@ index 0000000..b067e83
 +			DirAccess.remove_absolute("user://reports/" + n)
 +	print("match_recorder_check: %d checks, %d failed" % [checks, fails])
 +	quit(1 if fails > 0 else 0)
-diff --git a/b/render/tools/match_recorder_check.gd.uid b/render/tools/match_recorder_check.gd.uid
+diff --git a/render/tools/match_recorder_check.gd.uid b/render/tools/match_recorder_check.gd.uid
 new file mode 100644
 index 0000000..8458e98
 --- /dev/null
