@@ -436,7 +436,7 @@ jobs:
   # enet_check starts two more Godot processes (a host and a joiner) on 127.0.0.1, UDP ports 47100 and 47102, with no outside service. It is run here and never on Orb's PC (a socket there could raise a Windows Firewall prompt).
   # Each check's last Godot line is its verdict (PASS or FAIL); tools/gate.mjs then adds its own line about SCRIPT ERROR lines.
   net:
-    name: Network checks 1 of 2 (desync, spectator, delay, transport, rollback)
+    name: Network checks 1 of 2 (desync, spectator, delay, transport, rollback, swing)
     runs-on: ubuntu-24.04
     timeout-minutes: 45   # budget 30 min. The one job it came from took 40, 49 and 51 minutes on 2026-11-14 against a limit of 60 and was split in two (the EP's word): this half is expected near half of that
     steps:
@@ -493,11 +493,16 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --drop=150 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
       - name: Rollback check, the calm turn under rollback (rollbacks across the swap)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=calm --turn-at=300 --seeds=1 --ticks=600 --profiles=lan,p120,far'
+      # A swing under rollback (docs/net/rollback.md section 15): a forced flip of a swing and of the store, the rate bound, the digest on a field world
+      - name: Swing check (late inputs flip a swing, the line and store restore, the correction stays in the rate bound)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/swing_check.gd -- --right-stick'
+      - name: Swing check, negative control (each deliberate break must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/swing_check.gd -- --negative-control'
 
   # The second half of the network checks (split from the job above on 2026-11-14, when the one job took 49 minutes against its limit of 60): the second word, the two-PC compare, the LAN game side, the swing, the field world,
   # the kick, and the two-process ENet proofs (they open ports on 127.0.0.1, UDP 47100 and 47102, with no outside service: CI only, never on Orb's PC). The same steps as before, in the same order, none changed.
   net-2:
-    name: Network checks 2 of 2 (second word, two-PC, LAN, swing, field, kick, two-process ENet)
+    name: Network checks 2 of 2 (second word, two-PC, LAN, field, kick, two-process ENet)
     runs-on: ubuntu-24.04
     timeout-minutes: 45   # budget 30 min; not measured yet
     steps:
@@ -524,11 +529,6 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/lan_check.gd -- --ticks=1200'
       - name: LAN game side check, negative control
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/lan_check.gd -- --ticks=1200 --negative-control'
-      # A swing under rollback (docs/net/rollback.md section 15): a forced flip of a swing and of the store, the rate bound, the digest on a field world
-      - name: Swing check (late inputs flip a swing, the line and store restore, the correction stays in the rate bound)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/swing_check.gd -- --right-stick'
-      - name: Swing check, negative control (each deliberate break must be caught)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/swing_check.gd -- --negative-control'
       - name: Rollback check on a field world, negative control
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=field --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
       - name: Desync check on a field world (two seeds, because one injection can heal on a seed)
