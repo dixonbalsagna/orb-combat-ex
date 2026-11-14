@@ -318,3 +318,5 @@ Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These
 - **Data:** `launch.json` `wallCone` 20 (degrees) and `wallBy: "trueDistance"`. The depth window `lanes.json z_back` stays the outer limit.
 - **QA's row:** knocks aimed at a wall more than 20° off the blow's line, **0**.
 - **Encounter builds it after GW1a.**
+
+**The cone governs every launch, not only knocks (2026-11-15, Encounter's `pending/wall-cone/` finding).** The launch planner offers a candidate with a target (a BUILDING SMASH in any row, a MOUNTAINSIDE, any aimed send) only if its target lies **inside the same 20° cone around the blow's line,** in the ground plane, with the stick's lean in the line. Outside it, the candidate isn't offered. That's ruling (a)'s 20° bend applied to every send. Knocks were off in main and in Orb's 9 November build, so the planner's in-any-row smash is the likely source of the background ricochets: the bug half of Orb's ping-pong split. **A GW1b rider. QA's row:** launches aimed more than 20° off the blow's line, 0.
