@@ -1,0 +1,5 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+check on:  reason=build firstBadTick=-1 build=1234567 2026-11-01T10:00:00.000Z home=6a30b4c 2026-11-09T22:48:31.940Z
+check off: ok=true reason= final=d7065a6cb63308de (ticks 300)
+RB NEGATIVE CONTROL ok: refused with the check, runs to its last tick without it

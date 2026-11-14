@@ -1,17 +1,19 @@
 diff --git a/net/desync.gd b/net/desync.gd
-index 05a682d..cbbdba5 100644
+index 05a682d..f955f08 100644
 --- a/net/desync.gd
 +++ b/net/desync.gd
-@@ -159,6 +159,8 @@ static func replayOf(sess: NetSession, info: Dictionary, upto: int) -> Dictionar
- 	var rp := {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(setup),
- 		"seed": int(info.get("seed", 1)), "setup": setup.duplicate(true), "ai": info.get("ai", _noAi(sess.players)).duplicate(),
- 		"ticks": upto, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
-+	if SimReplay.buildId() != "":
-+		rp["build"] = SimReplay.buildId()   # A-NET-05: the build that made it, as SimReplay.recorder writes it
+@@ -156,9 +156,7 @@ static func _noAi(slots: int) -> Dictionary:
+ ## hash: SimReplay.play runs it, and replayState stops it at a tick. info is the match: {seed, setup, ai}.
+ static func replayOf(sess: NetSession, info: Dictionary, upto: int) -> Dictionary:
+ 	var setup: Dictionary = info.get("setup", {})
+-	var rp := {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(setup),
+-		"seed": int(info.get("seed", 1)), "setup": setup.duplicate(true), "ai": info.get("ai", _noAi(sess.players)).duplicate(),
+-		"ticks": upto, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
++	var rp := SimReplay.header(int(info.get("seed", 1)), setup, info.get("ai", _noAi(sess.players)), upto)   # SimReplay's one header (A-NET-05, the B1 review): the build that made it with the rest
  	var log: Array = sess.confirmedLog(upto)
  	log.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
  	for e in log:
-@@ -188,7 +190,7 @@ static func togglesOf(aiFrom: Dictionary, ai: Dictionary, upto: int, slotOf: Arr
+@@ -188,7 +186,7 @@ static func togglesOf(aiFrom: Dictionary, ai: Dictionary, upto: int, slotOf: Arr
  ## The state after `ticks` ticks of a replay (the caller disposes it with SimCore.dispose), or null if it does not run
  ## here (another format or other data).
  static func replayState(rp: Dictionary, ticks: int) -> SimState:
