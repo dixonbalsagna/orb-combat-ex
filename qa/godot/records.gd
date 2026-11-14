@@ -61,7 +61,9 @@ func _init() -> void:
 		dai.set("level", level)
 	for part in OS.get_environment("QA_FORCE").split(";", false):   # QA_FORCE=walk=1;visit=1: the tools switches of DirWalk and DirVisit (-1 the data, 0 off, 1 on), read once; the record carries them
 		var kv: PackedStringArray = part.split("=")
-		if kv.size() == 2:
+		if kv.size() == 2 and kv[0].strip_edges() == "drop":   # drop=1|0: Encounter's ownMove.dropOnPress (park stray-beams), set in the loaded data for the whole run: 1 a waiting stick beam is dropped by a new press, 0 the old wait
+			DirBeamPlay.frontCfg()["ownMove"]["dropOnPress"] = int(kv[1]) == 1
+		elif kv.size() == 2:
 			var sc = load({"walk": "res://sim/director/walk.gd", "visit": "res://sim/director/visit.gd"}.get(kv[0].strip_edges(), "res://sim/director/walk.gd"))
 			sc.call("setForce", int(kv[1]))
 	var recs: Array = []
@@ -118,6 +120,7 @@ func _human_step(S, hub: SimInputHub, mode: String, t: int, hs: Dictionary) -> v
 	var m8: int = t % 8
 	if m8 == 0 and not hs.x and xOk:
 		hs.x = true
+		hs.xT = t   # the tick of the human's last X press, for the stray-beam count (a press after a release)
 		hub.pad_button(0, "west", true)
 	elif hs.x and (m8 == 4 or not xOk):
 		hs.x = false
@@ -142,6 +145,11 @@ func _human_step(S, hub: SimInputHub, mode: String, t: int, hs: Dictionary) -> v
 			hs.rb = false
 			hub.pad_button(0, "rb", false)
 		var rsx: float = signf(dx) if (rbHold and ph >= 20 and ph < 92 and absf(dx) > 110.0) else 0.0
+		if rsx != 0.0:
+			hs.rsOn = true
+		elif hs.get("rsOn", false):
+			hs.rsOn = false
+			hs.relT = t   # the tick the right stick came back to rest: the release of the stick beam
 		hub.pad_stick_right(0, rsx, 0.0)
 	hub.set_humans(me.ai == null, foe.ai == null)
 	hub.set_struggle(0, SimDir.inStruggle(S, me))
@@ -203,6 +211,18 @@ func _qa_tick(S, rec: Dictionary, n: int) -> void:
 				beams.append({"t": n, "a": a, "ai": A.ai != null, "dai": D.ai != null, "rng": snappedf(absf(SimWrap.sdx(A.x, D.x)), 1.0), "dx": snappedf(SimWrap.sdx(A.x, D.x), 1.0), "dy": snappedf(D.y - A.y, 1.0), "dz": snappedf(float(D.z) - float(A.z), 1.0),
 					"ta": int(A.tier), "td": int(D.tier), "wide": false, "win": int(rec["_win"][a]), "out": "", "ot": -1, "dstate": str(D.state)})
 				rec["_win"][a] = -1
+			elif k == "stick_refused" and str(e.text) == "beam" and int(e.actor) == 0:   # a stick beam the game held or refused: the reason is its source (soon, late, ki, replaced)
+				var sr: Dictionary = rec.get("strayRef", {})
+				sr[str(e.get("source"))] = int(sr.get(str(e.get("source")), 0)) + 1
+				rec["strayRef"] = sr
+			elif k == "beam_stage" and int(e.actor) == 0:   # slot 0's stick beam was thrown: LATE when slot 0 pressed X after the stick came to rest and before now (EP brief 2026-11-13, stray-beams acceptance 3)
+				rec["strayFires"] = int(rec.get("strayFires", 0)) + 1
+				var hr: int = int(rec.get("_hsrel", -1))
+				if hr >= 0 and int(rec.get("_hsx", -1)) > hr and n - hr > 3:
+					rec["strayLate"] = int(rec.get("strayLate", 0)) + 1
+					var sg: Array = rec.get("strayGaps", [])
+					sg.append(n - hr)
+					rec["strayGaps"] = sg
 			elif k == "beam_wide" and not beams.is_empty():
 				beams[beams.size() - 1].wide = true
 			elif k == "beam_struggle" and str(e.text) == "start":
@@ -387,6 +407,8 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			_human_step(S, hub, hum, ticks, hs)
 			rec["humanB"] = int(hs.bn)
 			rec["humanRB"] = int(hs.rbn)
+			rec["_hsrel"] = int(hs.get("relT", -1))
+			rec["_hsx"] = int(hs.get("xT", -1))
 		else:
 			SimCore.step(S)
 		ticks += 1

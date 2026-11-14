@@ -58,3 +58,7 @@ NEEDS FROM EP: Tools: the preview `turn` switch also needs `interrupts.json` `ca
 RISKS: Event names for swings and the nudge are read from the pages and may differ in the code; the variety first values are mine.
 
 NEXT: Paused at --jobs=1 or nothing; full batches (`swingsoff`, `nocivs`, `stick` arms and the 30-match `plane_read`) when swings land.
+
+## Addendum: the claw gate on a clean copy (HEAD 9688e95f)
+
+`sim/input/test/strike_gate_test.gd` run once on a clean `git archive` export after the import: **262 checks, 0 failed**. This is Controls' pure-input gate (zero claw advantage on the real layout); the fight check through the sim still waits on the stick strikes being thrown (Encounter's hook), so `stick.claw` stays PENDING for that half.

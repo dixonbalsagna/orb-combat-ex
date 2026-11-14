@@ -1,0 +1,30 @@
+# stray_count.gd on Orb's 1646 file (build 6a30b4c9's tree + stray-beams park code hunks; ownMove.dropOnPress set at run time)
+## --drop=0
+FIRE t=4145 stage=2 release=4145 gap=0 presses between=[]
+FIRE t=4422 stage=2 release=4422 gap=0 presses between=[]
+REFUSED t=5186 source=soon
+FIRE t=5219 stage=1 release=5186 gap=33 presses between=[5211:heavy] LATE
+FIRE t=8111 stage=2 release=8111 gap=0 presses between=[]
+FIRE t=12119 stage=2 release=12119 gap=0 presses between=[]
+FIRE t=14527 stage=1 release=14527 gap=0 presses between=[]
+REFUSED t=16523 source=taken
+FIRE t=16752 stage=1 release=16752 gap=0 presses between=[]
+REFUSED t=16792 source=soon
+FIRE t=18515 stage=3 release=18515 gap=0 presses between=[]
+SUMMARY drop=false ticks=19388 stick beams 8, late after a new press 1, gaps [33], refusals by source {"soon":2,"taken":1}
+## --drop=1
+FIRE t=4145 stage=2 release=4145 gap=0 presses between=[]
+FIRE t=4422 stage=2 release=4422 gap=0 presses between=[]
+REFUSED t=5186 source=soon
+REFUSED t=5211 source=replaced
+FIRE t=8111 stage=2 release=8111 gap=0 presses between=[]
+FIRE t=12119 stage=2 release=12119 gap=0 presses between=[]
+REFUSED t=14527 source=soon
+FIRE t=16617 stage=2 release=16617 gap=0 presses between=[]
+FIRE t=16792 stage=1 release=16792 gap=0 presses between=[]
+REFUSED t=16869 source=soon
+REFUSED t=16889 source=replaced
+SUMMARY drop=true ticks=19388 stick beams 6, late after a new press 0, gaps [], refusals by source {"replaced":2,"soon":3}
+# Orb's 1625 file
+SUMMARY drop=false ticks=2040 stick beams 0, late after a new press 0, gaps [], refusals by source {}
+SUMMARY drop=true ticks=2040 stick beams 0, late after a new press 0, gaps [], refusals by source {}

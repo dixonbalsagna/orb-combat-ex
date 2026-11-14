@@ -2,7 +2,8 @@
 // bands.js calls rows(R, D, A, tools) once. Every row is PENDING while the records carry no swing_ or nudge events, which is the case on a build without DirSwing.
 // Reads rec.swings (qa/godot/records.gd): { t (tick), type, kind, src, text, amount, dur, actor }.
 //   swing_start: kind or src the cause, amount the degrees, dur the ticks it runs; swing_rest: the end; "jolt" in kind, or a swing of 15 degrees or less, is the small class (section 10).
-//   nudge_start: amount the degrees planned; nudge_line: a voice line played. The names follow simulation.md section 8 and encounter.md section 2; the rows are re-read when the code lands.
+//   The kept build of 2026-11-02 sends swing_start (kind the cause: launch, chase, form, brawl, small; amount signed degrees; dur ticks), swing_rest, swing_place and swing_nudge (a voice line, src line). A nudge turn is a swing_start of kind nudge.
+//   They exist only on a whole-ring field world: QA_PLANET gen=3 with cols=4800 (a slice has no frame, so no swing).
 // First values QA picked where the page gives none are named in the row's note.
 const S = require('../../prototype/tools/stats');
 
@@ -10,13 +11,13 @@ const sum = a => a.reduce((x, y) => x + y, 0);
 const mean = a => (a.length ? sum(a) / a.length : NaN);
 const BIG = 15;   // a swing of more than this many degrees is a big one; up to it, a jolt (section 10: the small class 2 to 15)
 
-const starts = r => (r.swings || []).filter(e => e.type === 'swing_start');
-const isJolt = e => /jolt/i.test(e.kind || '') || e.amount <= BIG;
+const starts = r => (r.swings || []).filter(e => e.type === 'swing_start' && e.kind !== 'nudge');   // amount is signed degrees: a negative one turns the other way
+const isJolt = e => /jolt|small/i.test(e.kind || '') || Math.abs(e.amount) <= BIG;
 const bigOf = r => starts(r).filter(e => !isJolt(e));
 const joltOf = r => starts(r).filter(isJolt);
 const causeOf = e => e.src || e.kind || '?';
-const nudgesOf = r => (r.swings || []).filter(e => e.type === 'nudge_start');
-const linesOf = r => (r.swings || []).filter(e => e.type === 'nudge_line');
+const nudgesOf = r => (r.swings || []).filter(e => e.type === 'swing_start' && e.kind === 'nudge');
+const linesOf = r => (r.swings || []).filter(e => e.type === 'swing_nudge');
 const ticksOf = r => sum(starts(r).map(e => e.dur));
 
 // Pearson r with a Fisher interval (95%); n under 4 has none.
@@ -30,16 +31,16 @@ function pearson(xs, ys) {
 }
 
 function rows(R, D, A, { fmt, wl }) {
-  const anyEv = D.some(r => (r.swings || []).length);
+  const anyEv = D.some(r => (r.swings || []).some(e => e.type !== 'arena_turn'));   // the calm turn alone is not a swing: a slice has no frame, so no swing
   const NEED = 'needs swing_start events (DirSwing, Encounter; docs/world/ring-any-angle/encounter.md section 2)';
   const NEEDN = 'needs nudge_start events (the nudge, game-design.md section 13)';
   const defs = [
-    ['swing.share', 'Swings: share of fight time spent swinging (10 to 15%, game-design.md section 11)'],
+    ['swing.share', 'Swings: share of fight time spent swinging (3 to 8%; Game Design 2026-11-02, it was 10 to 15%)'],
     ['swing.big', 'Big swings a match, mean (6 to 12)'],
     ['swing.jolts', 'Jolts a match, mean (20 to 40, section 10)'],
-    ['swing.cause.max', 'Matches where no cause is over 50% of the big swings (matches with at least 6 big swings; first value at least 90%)'],
+    ['swing.batch.launch', 'Batch cap on the big swings (see below)'],
     ['swing.causes3', 'Matches with at least three causes among the big swings (matches with at least 6; "most", so over 50%)'],
-    ['swing.size.bin', 'Matches where no 30 degree band of size holds over half of the big swings (matches with at least 6; first value at least 90%)'],
+    ['swing.batch.size', 'Batch cap on the size bands (see below)'],
     ['swing.biomes', 'Biomes seen in a match, swings on against the same seeds with swings off (clearly above: at least +1 with the interval above 0)'],
     ['swing.gap.min', 'The shortest gap between two swings, a match (reported)'],
     ['swing.toll.assoc', 'No positive association between the civilian toll and a match\'s big swing count or swing time (RL-215)'],
@@ -77,22 +78,29 @@ function rows(R, D, A, { fmt, wl }) {
 
   const n = D.length;
   const share = S.clusterShare(D, r => ticksOf(r), r => r.koAt * 60);
-  R.rate('swing.share', '§swing', defs[0][1], { v: share.p, ci: share.ci, lo: 0.10, hi: 0.15 });
+  R.rate('swing.share', '§swing', defs[0][1], { v: share.p, ci: share.ci, lo: 0.03, hi: 0.085, note: 'band 3 to 8%, and Game Design reads 8.1% as in (2026-11-02): the check allows to 8.5%; a result, never a target; the top of the band is one to watch' });
   R.point('swing.big', '§swing', defs[1][1], { v: mean(D.map(r => bigOf(r).length)), lo: 6, hi: 12 });
   R.point('swing.jolts', '§swing', defs[2][1], { v: mean(D.map(r => joltOf(r).length)), lo: 20, hi: 40 });
 
+  // Variety (Game Design 2026-11-02): per-match rows dropped (one match of mostly launches is a fight that launched a lot). Batch caps over the big swings: launch at most 50%, any other cause at most 40%, no 30 degree band of size over half.
+  // Kept per match: three or more causes in 90% of matches with six big swings. The batch shares are reported either way.
+  const allBig = D.flatMap(bigOf);
+  if (allBig.length >= 50) {
+    const causes = [...new Set(allBig.map(causeOf))], bins = [...new Set(allBig.map(e => Math.floor(Math.abs(e.amount) / 30)))];
+    const shareOf = f => S.clusterShare(D, r => bigOf(r).filter(f).length, r => bigOf(r).length);
+    const cs = causes.map(c => [c, shareOf(e => causeOf(e) === c)]).sort((a, b) => b[1].p - a[1].p), bs = bins.map(b => [b, shareOf(e => Math.floor(Math.abs(e.amount) / 30) === b)]).sort((a, b) => b[1].p - a[1].p);
+    const launch = cs.find(x => x[0] === 'launch'), others = cs.filter(x => x[0] !== 'launch');
+    R.info('swing.batch.shares', '§swing', 'Batch shares of the big swings: by cause, and by 30 degree band of size (reported)', cs.map(([c, v]) => `${c} ${(v.p * 100).toFixed(0)}%`).join(', ') + ' | ' + bs.map(([b, v]) => `${b * 30}-${b * 30 + 30} deg ${(v.p * 100).toFixed(0)}%`).join(', '), `${allBig.length} big swings in ${n} matches`);
+    R.add({ id: 'swing.batch.launch', ref: '§swing', what: 'Batch cap: launch swings at most 50% of the big swings', status: !launch || launch[1].p <= 0.5 ? 'PASS' : 'FAIL', value: launch ? `${(launch[1].p * 100).toFixed(1)}% [${(launch[1].ci[0] * 100).toFixed(1)}, ${(launch[1].ci[1] * 100).toFixed(1)}]` : 'none', band: 'at most 50%', note: '' });
+    const topO = others[0];
+    R.add({ id: 'swing.batch.other', ref: '§swing', what: 'Batch cap: any other cause at most 40% of the big swings', status: !topO || topO[1].p <= 0.4 ? 'PASS' : 'FAIL', value: topO ? `${topO[0]} ${(topO[1].p * 100).toFixed(1)}% [${(topO[1].ci[0] * 100).toFixed(1)}, ${(topO[1].ci[1] * 100).toFixed(1)}]` : 'none', band: 'at most 40%', note: '' });
+    R.add({ id: 'swing.batch.size', ref: '§swing', what: 'Batch cap: no 30 degree band of size over half of the big swings', status: bs[0][1].p <= 0.5 ? 'PASS' : 'FAIL', value: `${bs[0][0] * 30}-${bs[0][0] * 30 + 30} deg ${(bs[0][1].p * 100).toFixed(1)}% [${(bs[0][1].ci[0] * 100).toFixed(1)}, ${(bs[0][1].ci[1] * 100).toFixed(1)}]`, band: 'at most 50%', note: '' });
+  } else for (const id of ['swing.batch.launch', 'swing.batch.other', 'swing.batch.size']) R.pending(id, '§swing', 'Batch cap on the big swings (launch at most 50%, any other cause 40%, a size band 50%)', `under 50 big swings (${allBig.length})`);
   const many = D.filter(r => bigOf(r).length >= 6);
-  const whatNote = `${many.length} of ${n} matches have at least 6 big swings`;
   if (many.length >= 20) {
-    const maxShare = r => { const c = {}; for (const e of bigOf(r)) c[causeOf(e)] = (c[causeOf(e)] || 0) + 1; return Math.max(...Object.values(c)) / bigOf(r).length; };
-    const okC = many.filter(r => maxShare(r) <= 0.5).length;
-    R.rate('swing.cause.max', '§swing', defs[3][1], { v: okC / many.length, ci: wl(okC, many.length), lo: 0.9, note: whatNote });
     const ok3 = many.filter(r => new Set(bigOf(r).map(causeOf)).size >= 3).length;
-    R.rate('swing.causes3', '§swing', defs[4][1], { v: ok3 / many.length, ci: wl(ok3, many.length), lo: 0.5, note: whatNote });
-    const binMax = r => { const c = {}; for (const e of bigOf(r)) { const b = Math.floor(e.amount / 30); c[b] = (c[b] || 0) + 1; } return Math.max(...Object.values(c)) / bigOf(r).length; };
-    const okB = many.filter(r => binMax(r) <= 0.5).length;
-    R.rate('swing.size.bin', '§swing', defs[5][1], { v: okB / many.length, ci: wl(okB, many.length), lo: 0.9, note: whatNote });
-  } else for (const i of [3, 4, 5]) R.pending(defs[i][0], '§swing', defs[i][1], `under 20 matches with 6 big swings (${many.length} of ${n})`);
+    R.rate('swing.causes3', '§swing', defs[4][1], { v: ok3 / many.length, ci: wl(ok3, many.length), lo: 0.9, note: `${many.length} of ${n} matches have at least 6 big swings` });
+  } else R.pending('swing.causes3', '§swing', defs[4][1], `under 20 matches with 6 big swings (${many.length} of ${n})`);
 
   // biomes seen against the same seeds with swings off: the arm "swingsoff" (QA_ARM or a second run with the switch off)
   const off = A.swingsoff;
@@ -131,15 +139,15 @@ function rows(R, D, A, { fmt, wl }) {
   // the nudge
   const nud = D.flatMap(nudgesOf);
   if (!nud.length) { for (const i of [10, 11, 12, 13, 14]) R.pending(defs[i][0], '§swing', defs[i][1], NEEDN); } else {
-    const over6 = nud.filter(e => e.amount > 6).length;
-    R.add({ id: 'nudge.turn.place', ref: '§swing', what: defs[10][1], status: over6 ? 'FAIL' : 'PASS', value: `${over6} of ${nud.length} over 6; largest ${Math.max(...nud.map(e => e.amount)).toFixed(1)}`, band: 'none over 6', note: '' });
+    const over6 = nud.filter(e => Math.abs(e.amount) > 6).length;
+    R.add({ id: 'nudge.turn.place', ref: '§swing', what: defs[10][1], status: over6 ? 'FAIL' : 'PASS', value: `${over6} of ${nud.length} over 6; largest ${Math.max(...nud.map(e => Math.abs(e.amount))).toFixed(1)}`, band: 'none over 6', note: '' });
     let worst = 0;
-    for (const r of D) { const t = nudgesOf(r).sort((a, b) => a.t - b.t); for (let i = 0; i < t.length; i++) { let tot = 0; for (let j = i; j < t.length && t[j].t - t[i].t < 600; j++) tot += t[j].amount; worst = Math.max(worst, tot); } }
+    for (const r of D) { const t = nudgesOf(r).sort((a, b) => a.t - b.t); for (let i = 0; i < t.length; i++) { let tot = 0; for (let j = i; j < t.length && t[j].t - t[i].t < 600; j++) tot += Math.abs(t[j].amount); worst = Math.max(worst, tot); } }
     R.add({ id: 'nudge.turn.10s', ref: '§swing', what: defs[11][1], status: worst > 10 ? 'FAIL' : 'PASS', value: `${worst.toFixed(1)} degrees in the worst 10 s`, band: 'at most 10', note: 'planned degrees at each start' });
-    const fast = nud.filter(e => e.dur > 0 && e.amount / (e.dur / 60) > 3.0001).length;
+    const fast = nud.filter(e => e.dur > 0 && Math.abs(e.amount) / (e.dur / 60) > 3.0001).length;
     R.add({ id: 'nudge.rate', ref: '§swing', what: defs[12][1], status: fast ? 'FAIL' : 'PASS', value: `${fast} of ${nud.length} planned above 3 degrees a second`, band: 'none', note: 'planned degrees over planned ticks; the eased peak is Simulation\'s own check' });
     R.point('nudge.lines', '§swing', defs[13][1], { v: mean(D.map(r => linesOf(r).length)), lo: 2, hi: 5 });
-    const a1 = pearson(toll, D.map(r => sum(nudgesOf(r).map(e => e.amount)))), a2 = pearson(toll, D.map(r => nudgesOf(r).length));
+    const a1 = pearson(toll, D.map(r => sum(nudgesOf(r).map(e => Math.abs(e.amount))))), a2 = pearson(toll, D.map(r => nudgesOf(r).length));
     const okN = Number.isFinite(a1.r) && Number.isFinite(a2.r);
     if (okN) R.add({ id: 'nudge.toll.assoc', ref: '§swing', what: defs[14][1], status: a1.ci[0] > 0 || a2.ci[0] > 0 ? 'FAIL' : 'PASS', value: `strength r ${a1.r.toFixed(2)} [${a1.ci[0].toFixed(2)}, ${a1.ci[1].toFixed(2)}]; frequency r ${a2.r.toFixed(2)} [${a2.ci[0].toFixed(2)}, ${a2.ci[1].toFixed(2)}]`, band: 'neither interval wholly above 0', note: `${a1.n} matches` });
     else R.pending('nudge.toll.assoc', '§swing', defs[14][1], 'no spread in the toll or the nudge');

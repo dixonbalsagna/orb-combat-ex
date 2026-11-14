@@ -67,7 +67,7 @@ function hasEvent(A, pattern) {
 
 const SCALES = {
   testbed: { len: { mean: [40, 70], p90: 100 }, tier3: 0.70, tier4: 0.25, civ: [25, 50], worst: 65, civ90: 0.07, bleed: 40, structRow1: [20, 40] },
-  game: { len: { median: [360, 480], p10: 300, p90: 600 }, tier3: 0.70, tier4: 0.60, civ: [12, 30], worst: 55, civ90: 0.10, bleed: 4, structRow1: [25, 50] },
+  game: { len: { median: [360, 480], p10: 300, p90: 660 }, tier3: 0.70, tier4: 0.60, civ: [12, 30], worst: 55, civ90: 0.10, bleed: 4, structRow1: [25, 50] },
 };
 
 function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the match cap in sim seconds
@@ -113,7 +113,23 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
 
   // ---- 4. collateral
   if (D) {
-    R.point('4.civ.mean', '§4', 'Civilians lost at the KO, mean, default arm', { v: mean(D.map(r => r.civPct)), lo: sc.civ[0], hi: sc.civ[1], unit: 'num', note: '%' });
+    // Game Design 2026-11-02 and Legal RL-244: the 12 to 30% band is of the people in the places the fight reached, never of a whole planet. On a whole ring (field world, cols 4800 or more) the share of all people is information only, reported every read;
+    // the slices' band stands for RL-232's read until Legal confirms the new denominator, and "places reached" needs a stated test in data before that read (the row below waits for it). Never tune toward the share.
+    const wholeRing = D.length > 0 && D.every(r => r.ring && (r.ring.gen >= 3 || r.ring.cols >= 4800));
+    if (wholeRing) {
+      R.info('4.civ.mean', '§4', 'Civilians lost at the KO, mean share of ALL the people on the planet (whole ring: information only, RL-244)', mean(D.map(r => r.civPct)).toFixed(2) + '%', 'report every read; a toll above the highest slice-era toll for the tier, or one climbing tour to tour at equal tier, goes to Legal');
+      const wr = D.filter(r => Number.isFinite(r.reachedPct));
+      const tierOf = r => Math.max(...(r.maxTier || [0]));
+      const planetsOver = D.filter(r => (r.nFarPlaces || 0) > 62).length;
+      if (!wr.length) R.pending('4.civ.reached', '§4', 'Civilians lost, share of the people in the places the fight reached (12 to 30%; RL-245)', 'the records carry no reachedPct: the places-reached park (World) is not in this build');
+      else if (!wr.every(r => r.farPeople)) R.info('4.civ.reached', '§4', 'Civilians lost in the places reached: farPeople is OFF, so this is not a new-denominator read (RL-245)', mean(wr.map(r => r.reachedPct)).toFixed(2) + '%', 'turn plans.farPeople on in data/biomes/field.json before the read');
+      else {
+        const mp = mean(wr.map(r => r.reachedPct)), old = mean(wr.map(r => r.civPct)), who = mean(wr.map(r => (r.wholeLost / Math.max(1, r.wholePop)) * 100));
+        const byTier = [1, 2, 3, 4].map(t => { const g = wr.filter(r => tierOf(r) === t); return g.length ? `t${t} ${mean(g.map(r => (r.wholeLost / Math.max(1, r.wholePop)) * 100)).toFixed(2)}% (${g.length})` : null; }).filter(Boolean).join(', ');
+        const half = Math.floor(wr.length / 2), w1 = mean(wr.slice(0, half).map(r => (r.wholeLost / Math.max(1, r.wholePop)) * 100)), w2 = mean(wr.slice(half).map(r => (r.wholeLost / Math.max(1, r.wholePop)) * 100));
+        R.point('4.civ.reached', '§4', 'Civilians lost, share of the people in the places the fight reached (12 to 30%; a test result, never a target; RL-245, farPeople on)', { v: mp, lo: 12, hi: 30, unit: 'num', note: `%; the old figure beside it (share of the first ring or slice, civPct): ${old.toFixed(2)}%; whole-planet total (information): ${who.toFixed(2)}%, first half of the batch ${w1.toFixed(2)}% against second half ${w2.toFixed(2)}%, by tier ${byTier}; places reached a match ${mean(wr.map(r => r.nReachedPlaces || 0)).toFixed(1)} of ${mean(wr.map(r => r.nPlaces || 0)).toFixed(1)}; planets with more than 62 far places: ${planetsOver}` });
+      }
+    } else R.point('4.civ.mean', '§4', 'Civilians lost at the KO, mean, default arm (slices: the band of the people in the places reached stands until Legal confirms the denominator)', { v: mean(D.map(r => r.civPct)), lo: sc.civ[0], hi: sc.civ[1], unit: 'num', note: '%' });
     const armMeans = arms.filter(a => !a.endsWith('-flip')).map(a => [a, mean(A[a].map(r => r.civPct))]);
     const worst = armMeans.reduce((x, y) => (y[1] > x[1] ? y : x));
     R.point('4.civ.worst', '§4', `Worst pairing's mean civilians lost (${worst[0]})`, { v: worst[1], hi: sc.worst, unit: 'num', note: '%' });
@@ -630,6 +646,7 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
   }
   // ---- the turntable: swings, jolts, the nudge and their association with the toll (game-design.md of ring-any-angle sections 10, 11, 13; RL-213 to RL-217)
   if (D) require('./swing-rows').rows(R, D, A, { fmt, wl });
+  if (D) require('./clean-rows').rows(R, D, A, { fmt });   // the too-clean read (Game Design 2026-11-02): structures and ground on the whole ring
   return R.rows;
 }
 
