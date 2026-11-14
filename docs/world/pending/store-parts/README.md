@@ -9,10 +9,11 @@ Rendering's grant (`docs/rendering/pending/marks-baked/grant-world-store.patch`)
 ## What it does
 
 - `_scan(S, q, skip)` is the body of `heightDeltaX`, unchanged. It returns the marks' sum and leaves the deepest groove and the highest lip in two statics (`_pg`, `_pl`), set at the very end, after the flatten's field read, which may read the store again. `combine(sum, groove, lip)` is the formula and the floor/ceiling hold, written once. `heightDeltaX` is `combine(_scan(...), _pg, _pl)`: **no allocation on the height's hot path.**
-- `parts(S, q)` and `partsX(S, q, skip)` return a `PackedFloat64Array [sum, groove, lip]`:
+- `parts(S, q)` and `partsX(S, q, skip)` return a `PackedFloat64Array [sum, groove, lip, bowls]`:
   - **sum**: craters and merged marks (the profile out to two radii), a heap's cone, and, with `craters.json globe.flatten` on, the level floor's lift (it reads the field, so it is in the sum);
   - **groove**: the deepest groove (trench, scar, scorch; 0 for none);
-  - **lip**: the highest lip of a trench.
+  - **lip**: the highest lip of a trench;
+  - **bowls** (added 2026-11-14 for Rendering's marks-baked, EP): the **crater records' profile alone**, what a vertex stage that draws craters draws. A merged mark, a heap and the flatten lift are in the sum and not in the bowls, so `sum - bowls` is what the tiles must carry besides the grooves, and the split stays right when `globe.flatten`, heaps, merges or `repeats` get producers. With the shipped data bowls equals the sum. `combine` still takes the first three.
   Not clamped: `combine` holds the floor and the ceiling. A record another supersedes is skipped, as in `heightDelta`.
 - **Not a Vector3.** My first cut returned a Vector3 and it failed `field_crater_check` and `field_trench_check` (the store read -99.561 against -99.5612...): a Vector3 is 32-bit and the store's height is read at 64. Rendering: do not carry the parts in a Vector3 or Vector2 either, if the sum and the rest are subtracted at full precision (the tile bake's `heightDelta` less the sum).
 - A pure refactor: **the golden is byte for byte HEAD's** (`golden.gd` re-recorded in the scratch tree on the final code, identical to `sim/core/test/golden.json` on HEAD).
@@ -27,7 +28,7 @@ Rendering's grant (`docs/rendering/pending/marks-baked/grant-world-store.patch`)
 
 | Gate | Result |
 | :--- | :--- |
-| `GLOBE` (3 new rows: `heightDelta` is `combine(parts)` bit for bit at all 697 points of a crater + scar + heap, with and without a skip; all three parts are read; an empty store has none) | 0 failed |
+| `GLOBE` (5 new rows, two for the bowls: with a heap added the bowls are the sum without it, and a merged mark is in the sum and not in the bowls; negative control, bowls counting merges: 1 FAIL; 3 more: `heightDelta` is `combine(parts)` bit for bit at all 697 points of a crater + scar + heap, with and without a skip; all three parts are read; an empty store has none) | 0 failed |
 | `FIELDCRATER`, `FIELDTRENCH`, `STORE`, `CRATERS`, `CRATERFLATTEN` | 0 failed each |
 | golden (`sim/core/tools/golden.gd`) | identical to HEAD's |
 

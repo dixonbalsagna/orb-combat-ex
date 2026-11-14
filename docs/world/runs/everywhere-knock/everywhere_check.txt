@@ -1,0 +1,27 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   with everywhere on the planet holds 3899 buildings against 263 on the first ring alone
+  ok   the first ring's 263 buildings are the same, in the same slots, with the switch on
+  ok   S.world.pop0 is the first ring's (1799)
+  ok   each of the first ring's 7 places stands whole: 7 have more than their lanes' buildings and three quarters of their plan
+  ok   54 of 54 places have buildings (0 have none: []; a place wholly in the sea has none)
+  ok   the far places hold no people
+  ok   the lure buckets are the first ring's
+  ok   every building has its planet point (bDir: 11697 numbers)
+  ok   every planet point is a unit direction
+  ok   every far building stands within its place's radius and the lanes' depth beyond it (0 outside)
+  ok   every far building's pose is its planet point through the frame (0 off)
+  ok   every far building is inside a lot (0 are not; 1413 lots in all)
+  ok   no sampled far building stands in the sea (0 do)
+  ok   the back limit (3375) reaches the farthest lane's edge (3338)
+  ok   no building with its front face past the front limit is in the index (0 are)
+  ok   the limit is at work: 1590 far buildings in front of it are left out of the index
+  ok   the first ring loses none of its buildings from the index (0)
+  ok   with the footprint slope at 0.70, 312 of 3924 buildings are not laid (312 counted)
+  ok   the same setup lays the same state twice
+  ok   the index holds a building near the start to stage a knock beside
+  ok   a knock in reach of a building aims at the nearest indexed one it can reach (building 866 of 4 in reach; aimed at 866)
+  ok   a building toward the camera past the index front (building 1252, z -206, depth 367) is outside the index and is not aimed at
+EVERYWHERE: 0 check(s) failed
+WARNING: 13 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

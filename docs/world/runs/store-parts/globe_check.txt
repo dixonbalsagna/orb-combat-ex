@@ -52,6 +52,8 @@ floor, ceiling and the kinds
   ok    a groove crossed again is no deeper than its target
   ok    heightDelta is combine(parts) at all 697 points, and heightDeltaX(skip) is combine(partsX(skip))
   ok    the marks' sum, the groove and the lip are each read (249, 183, 165 points)
+  ok    the bowls part is the craters' profile alone: with the heap added it is the sum without it, and the heap is in the sum and not in the bowls (144 points)
+  ok    a merged mark is in the sum and not in the bowls (-40.0, 0.0)
   ok    an empty store has no parts
 a groove through a rim
   ok    across a trench through the rim of a 600-radius crater (rim 52.8), the ground never steps more than 9.0 in 8 units
@@ -80,5 +82,5 @@ two peers
   ok    the ground reads the same in all 4800 columns on both peers (0 differ)
   ok    ... and a third state that never rolled back (0 differ)
 GLOBE: 0 check(s) failed
-WARNING: 100 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+WARNING: 103 ObjectDB instances were leaked at exit (run with `--verbose` for details).
    at: cleanup (core/object/object.cpp:2536)
