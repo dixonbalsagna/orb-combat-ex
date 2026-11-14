@@ -28,6 +28,9 @@ extends SceneTree
 ##     the replay's "build" its id), the file name keeps the commit's first 8, and both play back on that build; a LAN save loaded from disk with another
 ##     build's id is refused as "build" before its first tick, with both ids, as a solo replay is, and so is a save with no stamp; the desync report's
 ##     re-run refuses it too;
+##   - the saved match's checkpoint hashes (SimHash, which walks every column) never run in the game's frame: with the fix, none on the game's
+##     thread, and both PCs' saved replays byte for byte the old path's (a hash on every run of a checkpoint tick, in the frame), in 1v1 and 2v2
+##     together on p120 (rollbacks re-run checkpoint ticks);
 ##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on, the dash and its slip's brake, and the page's travel of 1.5,
 ##     and a short match on each stays in step;
 ##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
@@ -42,6 +45,7 @@ extends SceneTree
 ## must be caught starting with the model off; a saved match with one input changed, and one whose dropped seat's toggle names the session's index
 ## instead of the sim's slot, must each fail to play back; and with SimReplay's build check left out (blindBuild), the foreign LAN save must play to its
 ## last tick, so the refusal is the build id's alone.
+## With the checkpoint hash taken from the present state instead of the checkpoint's copy, the saved replays must differ from the old path's.
 ## Each must be caught.
 ## Verdict line: LAN: N check(s) failed
 
@@ -438,6 +442,9 @@ func _init() -> void:
 		var blind: Dictionary = _stampRows(saveTo, true)
 		print("control, A-NET-05 with the build check left out: the foreign LAN save played %s (reason \"%s\", to tick %d of %d)" % [str(blind.foreignOk), blind.foreignWhy, blind.foreignTo, blind.ticks])
 		ok(bool(blind.foreignOk) and int(blind.foreignTo) == int(blind.ticks), "with the build check left out, the foreign LAN save must play to its last tick")
+		var lh: Dictionary = _hashRows(saveTo, false, true)
+		print("control, the checkpoint hash of the present state: the saved replays the old path's %s" % str(lh.same))
+		ok(not bool(lh.same), "a checkpoint hash of the present state must change the saved replays")
 		r = _run("lan", true, true, 0, true, false)
 		print("control, two fights, S not moved to the player's fight: %d frames held the wrong one" % r.wrongFight)
 		ok(r.wrongFight > 0, "with S not moved, a PC must be caught holding the wrong fight")
@@ -652,6 +659,12 @@ func _init() -> void:
 	ok(st.bareWhy == "build", "A-NET-05: a LAN save with no stamp is refused by a stamped build (%s)" % st.bareWhy)
 	ok(bool(st.reportRefuses), "A-NET-05: the desync report's re-run (NetDesync.replayState) refuses the foreign save")
 	print("  A-NET-05, stamp %s: files %s; own play %s; foreign %s at %d (build %s, home %s); no stamp %s" % [st.id, str(st.files), str(st.ownWhy), st.foreignWhy, st.foreignAt, st.foreignBuild, st.foreignHome, st.bareWhy])
+	for together in [false, true]:
+		var hr: Dictionary = _hashRows(saveTo, together, false)
+		var what: String = "2v2 together" if together else "1v1"
+		ok(bool(hr.same) and int(hr.n) > 5, "the saved match's hashes, %s p120: both PCs' replays byte for byte the old path's (%d checkpoints)" % [what, hr.n])
+		ok(int(hr.mainNew) == 0 and int(hr.mainOld) >= int(hr.n), "the saved match's hashes, %s p120: none on the game's thread with the fix (%d; the old path ran %d for %d checkpoints, %.1f ms each)" % [what, hr.mainNew, hr.mainOld, hr.n, hr.msOld])
+		print("  checkpoint hashes, %s p120: old path %d in the frame for %d checkpoints (%.1f ms each on this machine), the fix 0 in the frame (%d); replays the same %s" % [what, hr.mainOld, hr.n, hr.msOld, hr.mainNew, str(hr.same)])
 	var pre: String = NetLan.prefixOf("10.0.0.135")
 	ok(pre == "10.0.0.", "the /24 of an address (%s)" % pre)
 	ok(NetEnetTransport.allowed("10.0.0.7", pre) and not NetEnetTransport.allowed("10.238.114.20", pre) and not NetEnetTransport.allowed("10.0.01.7", pre) and not NetEnetTransport.allowed("203.0.113.5", pre), "the filter lets in only the /24")
@@ -751,6 +764,45 @@ func _stampRows(dir: String, blind: bool) -> Dictionary:
 	SimReplay._bid = null
 	NetLan.stampFor = {}
 	ticks = keepT
+	return out
+
+
+## The saved match's checkpoint hashes, the old path against the fix: the same p120 match (1v1, or 2v2 together) played twice to 1200 ticks, first
+## with NetSession.hashOld (every run, in the frame), then as shipped (once, on a worker thread), or with hashLive (the control); both PCs save each
+## time, and their replays are compared as text. Returns {same, n: checkpoints, mainOld, mainNew: hashes on the game's thread, msOld}.
+func _hashRows(dir: String, together: bool, live: bool) -> Dictionary:
+	var keepT: int = ticks
+	ticks = 1200
+	var texts: Array = []
+	var out := {"same": true, "n": 0, "mainOld": 0, "mainNew": 0, "msOld": 0.0}
+	for run in range(2):
+		NetSession.hashOld = run == 0
+		NetSession.hashLive = run == 1 and live
+		var r := _run("p120", true, true, 0, together, true, true, -1, true, [], true, together, -1, 0, {"pure": true, "saveDir": dir, "goneAt": -1, "dropAfter": 1000.0})
+		var mine: Array = []
+		var main: int = 0
+		var us: int = 0
+		for k in range(2):
+			var fn: String = r.lans[k].save("test")
+			var d = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(fn))) if fn != "" else null
+			DirAccess.remove_absolute(dir.path_join(fn))
+			mine.append(JSON.stringify(d.replay) if d is Dictionary else "")
+			if d is Dictionary:
+				out.n = maxi(int(out.n), (d.replay.checkpoints as Array).size())
+			main += r.lans[k].net.session.hashesMain
+			us += r.lans[k].net.session.hashUsMain
+		_close(r)
+		texts.append(mine)
+		if run == 0:
+			out.mainOld = main
+			out.msOld = us / 1000.0 / maxf(1.0, float(main))
+		else:
+			out.mainNew = main
+	NetSession.hashOld = false
+	NetSession.hashLive = false
+	ticks = keepT
+	for k in range(2):
+		out.same = out.same and texts[0][k] != "" and texts[0][k] == texts[1][k]
 	return out
 
 

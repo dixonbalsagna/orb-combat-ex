@@ -69,7 +69,15 @@ var takeoverRefused: int = 0  # takeovers of a slot this session doesn't have, r
 # desync detection (NetDesync): a digest of the confirmed state every checkEvery ticks, exchanged with the other peers
 var checkEvery: int = 60      # ticks between checkpoints; 0 turns detection off
 var hashChecks: bool = false  # also keep SimHash's gameplay hash at each checkpoint as it becomes final (hashFinal): a saved match's replay checkpoints (NetLan)
-var hashFinal: Array = []     # [tick, gameplay hash] of the state after that many ticks, at each final checkpoint, in order
+var hashFinal: Array = []     # [tick, gameplay hash] of the state after that many ticks, at each final checkpoint, in order (hashesDone() before reading)
+## SimHash walks every column of the planet (about 25 ms at medium, more at a bigger size), so it is never run in the game's frame: once a
+## checkpoint is final, its last run's copy (the snapshot the checkpoint already holds; SimHash reads a snapshot's own arrays) is hashed on
+## a worker thread, and that copy goes back to the pool only after its job. The hashes are the same values as before, in the same order.
+var hashJobs: Array = []      # [task id, snapshot] of each checkpoint hash still running
+var hashesMain: int = 0       # SimHash runs on the game's thread (0 with the fix), and their time in microseconds
+var hashUsMain: int = 0
+static var hashOld: bool = false    # tests only: hash on every run of a checkpoint tick, in the frame, as before the fix (the byte-for-byte row)
+static var hashLive: bool = false   # tests only (the control): hash the present state when a checkpoint becomes final, not its copy
 var logRollbacks: bool = false   # keep [frame, depth] of every rollback (rollbackLog), at most ROLLBACK_LOG of them (NetLan's saved match)
 var rollbackLog: Array = []
 const ROLLBACK_LOG: int = 20000
@@ -509,8 +517,11 @@ func _checkpoint(t: int) -> void:
 	if chkPend.has(t):
 		pool.put(chkPend[t][1])
 	chkPend[t] = [NetDesync.digest(S), NetSnapshot.take(S, pool)]
-	if hashChecks:
-		chkPend[t].append(SimHash.stateHash(S).gameplay)   # on every run of tick t: the last one's is the one that becomes final
+	if hashChecks and hashOld:
+		var u0: int = Time.get_ticks_usec()
+		chkPend[t].append(SimHash.stateHash(S).gameplay)   # the old path: on every run of tick t, in the frame; the last one's becomes final
+		hashUsMain += Time.get_ticks_usec() - u0
+		hashesMain += 1
 
 
 ## Checkpoint b has become final: its last run's digest is this peer's, to send and to compare.
@@ -527,14 +538,21 @@ func _confirmCheck(b: int) -> void:
 			pool.put(chkPend[t][1])
 			chkPend.erase(t)
 	chkMine[b] = e[0]
-	if hashChecks and e.size() > 2:
-		hashFinal.append([b, e[2]])
+	if hashChecks:
+		_reapHashes()
+		if e.size() > 2:
+			hashFinal.append([b, e[2]])
+		elif hashLive:
+			hashFinal.append([b, SimHash.stateHash(S).gameplay])   # the control: the present state, ticks after b
+			hashesMain += 1
+		else:
+			_hashLater(b, e[1])
 	if onCheck.is_valid():
 		onCheck.call(b, e[0])
 	if desync.is_empty():
 		chkSnaps[b] = e[1]
 	else:
-		pool.put(e[1])   # after a desync only its two snapshots are kept
+		_put(e[1])   # after a desync only its two snapshots are kept
 	chkOut.append([b, e[0]])
 	if chkOut.size() > 4:
 		chkOut.pop_front()
@@ -558,6 +576,7 @@ func _compareChecks() -> void:
 		if not chkRemote.has(t):
 			continue
 		if chkRemote[t] != chkMine[t]:
+			hashesDone()   # the report reads the checkpoint copies: no job is still walking one
 			desync = {"tick": t, "local": chkMine[t], "remote": chkRemote[t], "lastAgreed": agreedTo, "frame": frame,
 				"replay": NetDesync.replayOf(self, matchInfo, t), "snap": chkSnaps[t], "agreedSnap": chkSnaps.get(agreedTo)}
 			if onDesync.is_valid():
@@ -571,8 +590,46 @@ func _compareChecks() -> void:
 		chkRemote.erase(t)
 		for b in chkSnaps.keys():   # keep only the newest agreed snapshot and the ones after it
 			if b < t:
-				pool.put(chkSnaps[b])
+				_put(chkSnaps[b])
 				chkSnaps.erase(b)
+
+
+## Checkpoint b's gameplay hash, of its final run's copy, on a worker thread. Its slot in hashFinal holds the tick now and the hash once the
+## job is done.
+func _hashLater(b: int, snap: NetSnapshot) -> void:
+	var slot: Array = [b, ""]
+	hashFinal.append(slot)
+	var root: SimState = snap.root
+	var id: int = WorkerThreadPool.add_task(func() -> void: slot[1] = SimHash.stateHash(root).gameplay)
+	hashJobs.append([id, snap])
+
+
+## The jobs that have finished are let go of (a task is waited on once, which frees it).
+func _reapHashes() -> void:
+	var left: Array = []
+	for j in hashJobs:
+		if WorkerThreadPool.is_task_completed(int(j[0])):
+			WorkerThreadPool.wait_for_task_completion(int(j[0]))
+		else:
+			left.append(j)
+	hashJobs = left
+
+
+## Wait for every checkpoint hash still running: before hashFinal is read (a saved file), a desync report, and close.
+func hashesDone() -> void:
+	for j in hashJobs:
+		WorkerThreadPool.wait_for_task_completion(int(j[0]))
+	hashJobs.clear()
+
+
+## A checkpoint copy back to the pool, after its hash job if it has one (the pool hands its objects to the next save).
+func _put(snap: NetSnapshot) -> void:
+	for i in range(hashJobs.size()):
+		if hashJobs[i][1] == snap:
+			WorkerThreadPool.wait_for_task_completion(int(hashJobs[i][0]))
+			hashJobs.remove_at(i)
+			break
+	pool.put(snap)
 
 
 ## Every slot's confirmed inputs from tick `since` up to the confirmed frontier (at most `cap` ticks), for a spectator:
@@ -609,6 +666,7 @@ func confirmedLog(upto: int) -> Array:
 
 ## Free the saves and the pool (their objects can point at each other).
 func close() -> void:
+	hashesDone()
 	for b in snaps:
 		pool.put(snaps[b])
 	snaps.clear()

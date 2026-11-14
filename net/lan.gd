@@ -497,6 +497,7 @@ func save(reason: String) -> String:
 	var upto: int = sess.finalTo
 	var rp: Dictionary = NetDesync.replayOf(sess, {"seed": SEED, "setup": gameHost.setup_used, "ai": aiFor(args)}, upto)
 	var cps: Array = []
+	sess.hashesDone()   # the checkpoint hashes run on a worker thread (NetSession._hashLater)
 	for c in sess.hashFinal:
 		if int(c[0]) <= upto:
 			cps.append([int(c[0]), String(c[1])])
