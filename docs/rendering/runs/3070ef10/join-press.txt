@@ -1,0 +1,5 @@
+# A second player joining mid-match with A (Controls' question via the EP): the probe tg/join_probe.gd (scratch) on the EP's GW1a stack (a copy of s422, the 9 November data), through the real main: a computer match (seed 12345, player one on pad 8), 120 ticks, then pad 9 presses south (A); the host takes the players as its tick does; slot 1's first intent is read. With --fix the host lets go of the joined slot's device first (join_press.diff, by hand).
+before the join: slot 1 is the computer
+JOIN as it is: joined slots [1]; slot 1 is a player; its first intent's edges: context
+JOIN with the fix: joined slots [1]; slot 1 is a player; its first intent's edges: none
+# The hub records the joining press on the new slot (sim/input/hub.gd pad_button: _pad_slot, then .press); the host's take_players hands the slot over before the tick's intents. A menu-started match is clean: main forwards no pad input while an overlay is open (main.gd _pad_event).

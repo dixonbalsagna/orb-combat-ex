@@ -1,0 +1,46 @@
+# marks-baked onto World's store-parts, on main fd5c1895 (Combat: gw1a-rows parked (mixed and phrases on, as in Orb's 9 November ) + World's GW1c stack: globe-step2 (+ its Simulation grant), a-world-01 (+ grant), planet-sizes (+ Simulation's and the meteor grant), gw1c-world (+ fix), store-parts
+applied: globe-step2.diff
+applied: grant-simulation-field.patch
+applied: a-world-01.diff
+applied: grant-simulation-sim.patch
+applied: planet-sizes.diff
+applied: grant-simulation-sizes.patch
+applied: grant-rendering-meteor.patch
+applied: gw1c-world.diff
+applied: gw1c-world-fix.diff
+applied: store-parts.diff
+applied: feet_ground.diff
+applied: foot_slice.diff
+marks_baked.diff (store-parts): the line above counted CRLF line endings (git apply wrote them into spf); with both trees LF it is marks_baked.store-parts.diff db211955, 421 lines (look.gd, tile_field.gd, tile_ground.gd, feet_check.gd); was a7cf6a74, 7922 lines (render/core/look.gd render/core/planet_view.gd render/core/tile_field.gd render/core/tile_ground.gd render/tools/feet_check.gd )
+sp0 import 0 errors 0
+sp1 import 0 errors 0
+golden.json: sp1 byte-identical to sp0 (the feet parks move nothing)
+(sp0's golden is HEAD's)
+World's globe_check exit 0: GLOBE: 0 check(s) failed
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+## the feet gate (3%), --tiles, seeds 1 to 10, 1800 ticks
+exit 0
+ok   seed 1: 666 standing samples, 0 over 8 units, the worst 7.3
+ok   seed 2: 163 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 3: 373 standing samples, 0 over 8 units, the worst 1.3
+ok   seed 4: 510 standing samples, 0 over 8 units, the worst 5.2
+ok   seed 5: 77 standing samples, 0 over 8 units, the worst 0.8
+ok   seed 6: 88 standing samples, 0 over 8 units, the worst 0.8
+FAIL seed 7: 359 standing samples, 21 over 8 units, the worst 16.6
+ok   seed 8: 155 standing samples, 0 over 8 units, the worst 1.6
+ok   seed 9: 751 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 10: 94 standing samples, 0 over 8 units, the worst 4.1
+ok   10 seeds: 3236 standing samples, 21 over 8 units (0.6%, at most 3%), the worst 16.6 (at most 25)
+feet check passed
+## + rows-interp (rows_interp.py) on the same stack: the feet gate, seed 7 (the leftover above)
+import 0 errors 0
+exit 0
+ok   seed 7: 359 standing samples, 0 over 8 units, the worst 0.9
+ok   1 seeds: 359 standing samples, 0 over 8 units (0.0%, at most 3%), the worst 0.9 (at most 25)
+feet check passed

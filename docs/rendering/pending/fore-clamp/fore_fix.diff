@@ -1,0 +1,88 @@
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -71,6 +71,7 @@
+ var _chunks: Array = []
+ var _chunk_x: float = 1.0e18
+ var _prof := PackedFloat32Array()
++var _prof_rows := PackedFloat32Array()   # the profile and four rows of its lowest within 1, 2, 4 and 8 points either side (tile_fore's window)
+ var _prof_img: Image
+ var _prof_tex: ImageTexture
+ var _q := PackedFloat32Array()
+@@ -420,7 +421,8 @@
+ 	mat.set_shader_parameter("hts", field.hts)
+ 	mat.set_shader_parameter("ids", field.ids)
+ 	_prof.resize(64)
+-	_prof_img = Image.create_from_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
++	_prof_rows.resize(64 * 5)
++	_prof_img = Image.create_from_data(64, 5, false, Image.FORMAT_RF, _prof_rows.to_byte_array())
+ 	_prof_tex = ImageTexture.create_from_image(_prof_img)
+ 	mat.set_shader_parameter("plane_tex", _prof_tex)
+ 	water_mat = ShaderMaterial.new()
+@@ -704,6 +706,15 @@
+ 		var h: float = field.height_at(pd)
+ 		# A dent on the line is the sim's, not the tile's: on a field world it's in the store, and a read of the sim's ground here would cost a cold column every time a swing moves the frame.
+ 		_prof[k] = 0.0 if h < 0.0 else (h + minf(WorldStore.heightDelta(S, pd.x, pd.y, pd.z), 0.0) if field.field_world else minf(h, WorldTerrain.groundY(S, SimWrap.wrap(cam_x + along))))
+-	_prof_img.set_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
++	for k in range(64):
++		_prof_rows[k] = _prof[k]
++	for r in range(1, 5):
++		var w: int = 1 << (r - 1)
++		for k in range(64):
++			var lo: float = _prof[k]
++			for q in range(maxi(k - w, 0), mini(k + w, 63) + 1):
++				lo = minf(lo, _prof[q])
++			_prof_rows[r * 64 + k] = lo
++	_prof_img.set_data(64, 5, false, Image.FORMAT_RF, _prof_rows.to_byte_array())
+ 	_prof_tex.update(_prof_img)
+ 	mat.set_shader_parameter("plane_span", half)
+--- a/render/shaders/tile_read.gdshaderinc
++++ b/render/shaders/tile_read.gdshaderinc
+@@ -137,6 +137,11 @@
+ 	float t = min(p.y / fore_cam.z, 0.95);
+ 	float pu = clamp((p.x / (1.0 - t) + plane_span) / (2.0 * plane_span), 0.0, 1.0) * 63.0;
+ 	int ua = int(pu);
+-	float pl = mix(texelFetch(plane_tex, ivec2(ua, 0), 0).r, texelFetch(plane_tex, ivec2(min(ua + 1, 63), 0), 0).r, pu - float(ua));
+-	return min(y, mix(pl, fore_cam.y, t) - fore_drop * p.y);
++	// near the lens a vertex's step spans many of the profile's points (the read is at p.x / (1 - t)): read the lowest within a window that
++	// grows with that spread (rows 1 to 4: 1, 2, 4, 8 points either side; RenderTileGround._profile), so neighbours agree and nothing folds
++	int pr = clamp(int(floor(log2(1.0 / (1.0 - t)) + 0.5)), 0, 4);
++	float pl = mix(texelFetch(plane_tex, ivec2(ua, pr), 0).r, texelFetch(plane_tex, ivec2(min(ua + 1, 63), pr), 0).r, pu - float(ua));
++	// past where t stops (0.95 of the way to the lens) the line stops dropping too: the mesh runs on past the camera, and a vertex there held ever
++	// lower pulled the triangles reaching it into steep teeth along the frame's bottom edge
++	return min(y, mix(pl, fore_cam.y, t) - fore_drop * min(p.y, 0.95 * fore_cam.z));
+ }
+--- a/render/shaders/tile_vertex.gdshaderinc
++++ b/render/shaders/tile_vertex.gdshaderinc
+@@ -112,6 +112,9 @@
+ 	v_pv = vec2(strip_x + p.x, p.y);
+ 	v_back = clamp((z_front - p.y) / (z_front - z_band_back), 0.0, 1.0);
+ 	float y = tile_fore(h, p);   // the real bed under the sea and a lake: the water sheet lies over it (water_tile.gdshader)
++	if (y < h - 0.5) {
++		v_grad = vec2(0.0);   // held under the sight line: lit as the flat ground it is drawn as, not as the slope it was
++	}
+ 	v_h = y;
+ 	y -= skirt * mod(INSTANCE_CUSTOM.a, 16.0) * 1000.0 * 0.05;
+ 	float rr = globe_r + y;
+--- a/render/shaders/water.gdshaderinc
++++ b/render/shaders/water.gdshaderinc
+@@ -151,11 +151,19 @@
+ 	if (ww_n > 0) {
+ 		surf += max(water_drama(xw, z0).x, -0.6 * max(surf - h, 0.0));   // a ring (never below the floor)
+ 	}
+-	float ground = tile_fore(cb_n > 0 ? h + tile_bowls(dir) : h, p);   // a bowl below the water's top floods
++	float ground0 = cb_n > 0 ? h + tile_bowls(dir) : h;
++	float ground = tile_fore(ground0, p);   // a bowl below the water's top floods
+ 	v_ok = surf < fore_cam.y ? 1.0 : 0.0;   // a lens under the water's top doesn't draw the sheet: from below it's a flat wall across the frame
++	float surf0 = surf;
+ 	surf = tile_fore(surf, p);
+ 	v_under = 0.0;
+ 	v_depth = surf - ground;
++	if (surf0 > ground0 + 0.5 && surf < surf0 - 0.5) {
++		// wet, and held under the sight line: the bed and the top were held to the same line, which drew no water there (a river read as two bands with
++		// its bank between). The sheet stays a unit over its bed, with the depth it had for its colour. A dry place is never moved (that flooded the land).
++		surf = max(surf, ground + 1.0);
++		v_depth = max(surf - ground, surf0 - ground0);
++	}
+ 	float rr = globe_r + surf - skirt * mod(INSTANCE_CUSTOM.a, 16.0) * 1000.0 * 0.05;
+ 	vec4 bw = vec4(rr * dot(dir, hd), rr * dot(dir, pv) - globe_r, rr * dot(dir, sd), 1.0);
+ 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;

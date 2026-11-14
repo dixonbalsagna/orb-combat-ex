@@ -43,7 +43,23 @@ Both reduced clips improve, by 0.5 and 1, but neither passes: a sensitivity run 
 - **Signature:** the strata lines are much fainter. The facades, the lit houses and the near buildings, read washed toward the sky, close to fogged. That's the most visible part, and it would be the default look.
 - **Collapse:** the near terrain's bands step more softly; subtle.
 
-## If the facade haze is too much
+## The EP's decision (2026-11-14): HOLD as built; the two narrow arms
+
+Fogging near buildings in the default look is a taste reversal, not a fix. As built (0.3 facades) is on hold. Two narrower arms, both measured the same way (`docs/rendering/runs/e56d372c/calm-arms-flash.txt`, reduced mode, the default look):
+
+| | signature, reduced | collapse, reduced |
+|---|---|---|
+| before | 3.5 (4, 3) FAIL | 4 (4, 4) FAIL |
+| as built (0.3 facades) | 3 (3.5, 3) FAIL | 3 (4, 3.5) FAIL |
+| **A: the bands alone** (`calm_tones_a.diff` 860bbeda) | **3 (3, 3)**, over our 2.5 gate, no sensitivity run over 3 | 4 (4, 4) FAIL, unchanged |
+| **B: the bands + facades at 0.15 against a dark sky** (`calm_tones_b.diff` 0a5bcdd4) | 3 (3, 3), the same | 4 (4, 4) FAIL, unchanged |
+
+- **The bands carry signature's gain:** the strata and the rock steps on the mountainside behind the facade events.
+- **Collapse doesn't move with the bands alone,** nor with the facades at 0.15 against a dark sky. Its earlier drop to 3 came only with the 0.3 facade haze, so it came from facades in the collapse frames, or from the captures' run-to-run spread (tiles-on captures aren't byte-repeatable). The bands VFX and Camera named for collapse aren't, on their own, what reads there.
+- **The look, arm A** (`docs/rendering/img/lookgate/calm-ca-*`, uncommitted): the facades keep their colours. The mountainside's strata lines are fainter, and the near rocky ground steps more softly, greyer. Arm B adds a slight darkening toward the night sky on lit faces (`calm-cb-*`).
+- Arm A is the smallest change to the default look that buys signature its 0.5. It goes to Orb as a look question if the EP takes it, never framed around flashing.
+
+## If the facade haze is too much (the first build's notes)
 
 Two narrower versions, each measurable the same way:
 - only at night (when the world's light is low);

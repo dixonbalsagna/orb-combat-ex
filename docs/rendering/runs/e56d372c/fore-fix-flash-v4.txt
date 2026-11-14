@@ -1,0 +1,14 @@
+# v4 (the window, the drop cap, the water sheet kept over its held bed where wet). The before (lr1) readings are in fore-fix-flash-v2.txt. The foreground clamp fix's flash readings: Tools' capture-web + analyse-frames (WCAG 2.3.1, the combined rule) on the beamduel scene (the only one that reads the planet word), 900 ticks, seed 12345; before = lr1_site (main e56d372c + Camera + A-CODE-03 + look-recut), after = lcf_site (+ fore_fix.diff 353a4cb2). One capture at a time. The analyser's default scale; a scene the standard flash set doesn't have.
+lcf planet 12 normal: frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVE
+lcf planet 12 reduced: frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVE
+lcf planet 17 normal: An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see:
+lcf planet 17 reduced: An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see:
+lcf planet 7 normal: frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVE
+lcf planet 7 reduced: frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVE
+# the numbers (combined rule: primary / area threshold 15% lower / two-second memory), before (lr1, fore-fix-flash-v2.txt) and v4 (lcf):
+planet 12 normal  before FAIL 3.5 / 4.5 / 3.5     v4 FAIL 2.5 / 2.5 / 3.5
+planet 12 reduced before FAIL 4.5 / 4.5 / 2.5     v4 FAIL 3.5 / 3.5 / 2.5
+planet 17 normal  before PASS 1.5 / 1 / 1.5       v4 PASS 1 / 1 / 1.5
+planet 17 reduced before PASS 1.5 / 1.5 / 1.5     v4 PASS 1.5 / 2.5 / 1.5
+planet 7  normal  before FAIL 3.5 / 3.5 / 3       v4 OVER GATE 3 / 3 / 3
+planet 7  reduced before FAIL 3 / 4 / 3.5         v4 FAIL 3 / 4 / 3

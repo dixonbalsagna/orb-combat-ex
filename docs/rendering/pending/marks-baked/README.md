@@ -60,4 +60,18 @@ What's left (42):
 
 - **The grant** for `sim/world/store.gd` (`WorldStore.parts`); the EP has sent it to World.
 - **The web rebake cost,** in a quiet window (Performance; terrain plan step 4's measure). The footprint ask queues more tiles per mark than the first cut did; the probe counts rebakes (`RenderTileField.rebakes`) but times nothing.
-- **The look gate:** a side-by-side on Orb's replay where a groove or trench lies under a fighter, against the 9 November build. Also the flash readings on the tile ground (wave 2).
+- **The look gate:** done on Orb's replay against the 9 November build (`docs/rendering/runs/6a30b4c9/feet-orb-side-by-side.txt`; pictures uncommitted). Also the flash readings on the tile ground (wave 2).
+- **A look-gate item before the feet parks land (the EP, 2026-11-14):** in that side-by-side, a tower behind the fight shows dark gaps between floors for frames 108 to 111 (ticks 5,210 to 5,240), with the parks only.
+  - The sim is the same: VFX's `hash_check` gives identical final hashes with and without the feet parks (`runs/f61eb8c2/feet-hash.txt`).
+  - So it's drawing, unexplained so far. The likely cause is the beam's groove under the tower, now drawn, taking the tower's footing down with it ("a footing that moved sets its building again").
+  - To settle: the tower's footing and drawn base read at those ticks, with and without the parks.
+## The store-parts version (for when World's stack lands)
+
+**`marks_baked.store-parts.diff`** (sha1 db211955, 421 lines): this park re-cut onto World's store-parts. Land it **in place of `marks_baked.diff` and without `grant-world-store.patch`** once World's GW1c stack is on main. That stack is `globe-step2` (+ its Simulation grant), `a-world-01` (+ grant), `planet-sizes` (+ Simulation's and the meteor grant), `gw1c-world` (+ fix), then `store-parts`.
+
+- `WorldStore.parts` is now a `PackedFloat64Array` [sum, groove, lip], read in float64 throughout. The tiles carry `WorldStore.combine(sum, groove, lip) - sum`, World's one formula. The lift's ground takes off `parts[0]`.
+- **Proof on that stack** (`docs/rendering/runs/fd5c1895/marks-baked-store-parts.txt`, main fd5c1895 + World's stack + feet-ground + foot-slice + this):
+  - it imports clean, and `golden.json` is byte-identical to the stack without the feet parks;
+  - World's `globe_check` fails 0; the five ground checks pass; the render gates pass 20 of 20;
+  - **the feet gate passes at 3%: 21 of 3,236 (0.6%), the worst 16.6, all in seed 7.** That's without rows-interp. With `rows-interp/` added on the same stack, seed 7 is clean (0 of 359, the worst 0.9), and the other nine seeds were clean already (the worst 7.3).
+- **A dependency:** with the shipped data the sum is crater bowls only, the vertex stage's share. Before `globe.flatten`, heaps, merges or `repeats` get producers, the split needs a fourth part from World (the crater bowls alone), or the vertex stage must draw the rest. World's own note says to flip the flatten only after my look gate and a bake read.

@@ -1,0 +1,9 @@
+# The calm tones' two narrow arms, reduced mode (the default look): Tools' pixel clips, /index.html?flashcap=1. Before (calm-tones-flash.txt, lr1): signature-reduced 3.5, collapse-reduced 4. As first built (0.3 facades): 3 and 3.
+## ca (A: the bands alone; calm_tones_a.diff 860bbeda)
+collapse-reduced          1500        4    0         4        4     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a longer memory
+signature-reduced         1500        3    0         3        3     0/6     0  OVER GATE: the primary reading counts 3 (over our gate of 2.5)  n/a <-- NOT PASS
+pixel run: 2 of 2 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/L
+## cb (B: the bands + facades at 0.15 against a dark sky; calm_tones_b.diff 0a5bcdd4)
+collapse-reduced          1500        4    0         4        4     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a longer memory
+signature-reduced         1500        3    0         3        3     0/6     0  OVER GATE: the primary reading counts 3 (over our gate of 2.5)  n/a <-- NOT PASS
+pixel run: 2 of 2 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/L
