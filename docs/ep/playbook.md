@@ -49,6 +49,7 @@ Wave 2, after the engine decision:
 Then report to Orb: engine recommendation, open questions, P0 status.
 
 ## Machine notes
+- **Never run `tools/write-build-info.mjs` in the shared folder.** It writes a git-ignored build_info.json at the repo root by default; with it there, every session's parity gate fails and every fixture replay is refused, with nothing in `git status` to show why (stand-in's B1 review, 2026-11-14). Run it only inside a scratch export.
 
 - Godot 4.7.2 (checksum-verified): `C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2\`, not on PATH. Use `Godot_v4.7.2-stable_win64_console.exe` for command-line runs.
 - Python runs as `python` (not `python3`). Node 24 and the .NET 10 SDK are installed.
