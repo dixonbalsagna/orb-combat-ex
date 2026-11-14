@@ -95,6 +95,10 @@ The stand-in becomes the team's **design and review specialist** for A1 (Orb, 20
 
 ## The Fable reset plan
 
+**Updated 2026-11-14 (Orb):** a Fable reset clears the main weekly pool too, so a reset is a fresh week for both meters. The rule now: press one when all-models reaches about 85% or Fable about 90%, with A1 work queued; the stand-in carries a fuller specialist queue (the GW1a review, the S3 horde design, the energy build spec, the signature spec, the second adversarial round on the path). The 40% share above is replaced by this rule.
+
+The original plan, kept for the record:
+
 Orb has two Fable-only resets, valid to 8 March 2027. Unused, they're lost.
 - **Reset 1, during A1:** when the Fable meter reaches about 90% while the all-models meter is under about 60% and stand-in work is queued. Expected this week or next. Orb presses it, and the EP says when.
 - **Reset 2, during A3:** the fight's new rules (beam, signatures, stamina, the gravity well) are the heaviest design and review work on the path. Expected December or January. If A3 slips past mid-February, use it in whatever week the Fable meter fills first, before 8 March.
