@@ -1,7 +1,16 @@
 {
   "_about": "The reasons and the ratchet of tools/check-scripts-table.mjs (A-CODE-04, 2026-11-14). `reasons`: a check or test script that is NOT run in CI or in the landing gate on purpose, with why (a soak, a measurement for one owner's park, a tool that needs a window): { 'path': 'reason' }. A script with no reason, not in CI and not in the gate is UNREVIEWED; `unreviewedMax` is the number of those allowed, and it only goes down as owners wire their scripts into a workflow or give a reason (the EP routes the question to each owner). A script that is run has no reason.",
-  "unreviewedMax": 67,
+  "unreviewedMax": 55,
   "reasons": {
     "audio/tools/warm_async_check.gd": "Audio's answer (2026-11-14): its timing rows fail under load, so a shared runner would give false failures; run by hand on a quiet machine when the warm-up changes."
-  }
+  },
+  "ciGlobs": [
+    {
+      "glob": "sim/input/test/*_test.gd",
+      "except": [
+        "sim/input/test/b_no_beam_layouts_test.gd"
+      ],
+      "why": "Controls' answer (2026-11-14): 44 of the 45 run in CI, 3 at a time; the layout scan (245 s) stays in the landing gate and a nightly"
+    }
+  ]
 }

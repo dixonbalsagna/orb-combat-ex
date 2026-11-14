@@ -1,0 +1,21 @@
+// Self-test of the desktop audience check (Tools, 2026-11-14): the real workflow passes, and each way of breaking the rule is found.  node tools/check-desktop-audience-selftest.mjs
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { problems, jobsOf } from './check-desktop-audience.mjs';
+const real = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '.github', 'workflows', 'desktop-builds.yml'), 'utf8');
+let bad = 0, n = 0;
+const check = (name, ok, extra) => { n++; if (!ok) { bad++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
+const GATE = "if: inputs.audience == 'outside-testers'";
+const once = (a, b) => { if (real.split(a).length < 2) throw new Error('the real workflow no longer has: ' + a.slice(0, 60)); return real.replace(a, () => b); };
+check('the real workflow holds the rule', problems(real).length === 0, JSON.stringify(problems(real)));
+check('it has the jobs the rule is about', ['desktop', 'windows-bench', 'windows-still'].every((j) => jobsOf(real).some((x) => x.job === j)));
+check('an upload step with its gate removed is found', problems(once("      - " + GATE + "\n        uses: actions/upload-artifact", "      - uses: actions/upload-artifact")).some((m) => /upload-artifact step is not gated/.test(m)));
+check('a Windows job with its gate removed is found', problems(once("    " + GATE + "   # they download the Windows zip, which an owner-private run never uploads (Legal RL-262)\n  ", "  ").replace(/\n {4}if: inputs\.audience[^\n]*\n/g, '\n')).some((m) => /downloads an artifact/.test(m)));
+check('the recorded-yes step without its gate is found', problems(once("      - name: Refuse without Orb's recorded yes (Legal RL-203)\n        " + GATE + "\n", "      - name: Refuse without Orb's recorded yes (Legal RL-203)\n")).some((m) => /recorded-yes step/.test(m)));
+check('a default of outside-testers is found', problems(real.replace('default: owner-private', 'default: outside-testers')).some((m) => /default to owner-private/.test(m)));
+check('a missing audience input is found', problems(real.replace(/^      audience:/m, '      audiencex:')).some((m) => /no `audience` input/.test(m)));
+check('a publishing step is found', problems(real.replace('  windows-bench:\n', "  publish:\n    runs-on: ubuntu-24.04\n    steps:\n      - uses: softprops/action-gh-release@v2\n  windows-bench:\n")).some((m) => /publishing step/.test(m)));
+check('a job-level gate covers its steps', problems(real).length === 0 && jobsOf(real).find((j) => j.job === 'windows-still').header.some((l) => /outside-testers/.test(l)));
+console.log(`desktop audience selftest: ${n} checks, ${bad} failed`);
+process.exit(bad ? 1 : 0);

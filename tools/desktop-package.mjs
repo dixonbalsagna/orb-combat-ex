@@ -138,6 +138,26 @@ export function lockReduceFlashing(root) {
   return true;
 }
 
+/**
+ * The version number into the exports' own version fields (A-TOOLS-07, 2026-11-14): the Windows preset's file_version and product_version ("<major>.<minor>.<build>.0", the four-number form a Windows exe
+ * carries) and the macOS preset's version ("<major>.<minor>.<build>"), from tools/version.json, in <root>/export_presets.cfg. Only those keys, each once. Returns the lines it set (empty when they already held it).
+ */
+export function setVersionFields(root, version) {
+  const f = join(root, 'export_presets.cfg');
+  let txt = readFileSync(f, 'utf8');
+  const v = `${version.major}.${version.minor}.${version.build}`, w = `${v}.0`;
+  const set = [];
+  for (const [key, value] of [['application/file_version', w], ['application/product_version', w], ['application/version', v]]) {
+    const re = new RegExp(`^${key}=".*"[ \\t]*$`, 'm');
+    const n = (txt.match(new RegExp(`^${key}=".*"[ \\t]*$`, 'gm')) || []).length;
+    if (n !== 1) throw new Error(`${f}: expected ${key} once, found it ${n} times (the presets moved: tools/desktop-package.mjs setVersionFields is out of date)`);
+    const line = `${key}="${value}"`;
+    if (!txt.includes(`\n${line}`) && !txt.startsWith(line)) { txt = txt.replace(re, line); set.push(line); }
+  }
+  if (set.length) writeFileSync(f, txt);
+  return set;
+}
+
 // ---- the routes check (Legal RL-203 condition 3 and RL-204 condition 1): what a desktop build has no hostname test to rely on -------------------------------------------------------------------
 /** The six words that start a run with no flashing notice (ui/hud/ui_hud.gd BYPASS_WORDS), as reviewed. A seventh is a new rule. They are honoured off the web on purpose (a bench, a scripted shot); none writes the lock. */
 export const SIX_WORDS = ['bench', 'frames', 'shot', 'nonotice', 'flashcap', 'study'];
@@ -218,6 +238,14 @@ export function routeProblems(root, o = {}) {
     if (!p) out.push(`export_presets.cfg has no "${name}" preset`);
     else if (!p.exclude.includes('net/*')) out.push(`export_presets.cfg: the "${name}" preset does not exclude net/* (online play stays out of the package: RL-204 condition 1)`);
   }
+  // 6. Legal's RL-262 (both audiences): the feedback panel's Send step must not point at a public issue: ui/data/send.json `_target` is none, mailto or form, never github (a PUBLIC issue)
+  const send = read('ui/data/send.json');
+  if (send === null) out.push('ui/data/send.json is missing (the feedback target is read from it: RL-262)');
+  else {
+    let tgt = null;
+    try { tgt = JSON.parse(send)._target; } catch { out.push('ui/data/send.json is not valid JSON'); }
+    if (tgt !== null && !['none', 'mailto', 'form'].includes(String(tgt))) out.push(`ui/data/send.json: _target is "${tgt}": a desktop build's feedback goes nowhere public (none, mailto or form; RL-262)`);
+  }
   return out;
 }
 
@@ -231,6 +259,7 @@ function packedScripts(root, o = {}) {
     for (const e of readdirSync(join(root, d), { withFileTypes: true })) {
       const rel = d ? `${d}/${e.name}` : e.name;
       if (rx.some((r) => r.test(rel + (e.isDirectory() ? '/' : '')))) continue;
+      if (e.isDirectory() && existsSync(join(root, rel, '.gdignore'))) continue;   // the engine skips a folder with a .gdignore (homework/, art/): its scripts are not in the pack, and a local checkout holds kept builds there (A-TOOLS-01, 2026-11-14)
       if (e.isDirectory()) walkDir(rel); else if (e.name.endsWith('.gd')) files.push(rel);
     }
   };
@@ -390,6 +419,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       const refused = lockGuard(root);
       if (refused) throw new Error(refused.replace('ui/data/features.json', 'project.godot'));
       console.log(enableAstcImport(root) ? `${ASTC_KEY}=true set in ${root}/project.godot` : 'ETC2/ASTC import was already on');
+    } else if (cmd === 'version') {
+      const root = opt('--root') ? resolve(opt('--root')) : null;
+      if (!root) usage();
+      const refused = lockGuard(root);
+      if (refused) throw new Error(refused.replace('ui/data/features.json', 'export_presets.cfg'));
+      const set = setVersionFields(root, JSON.parse(readFileSync(join(root, 'tools', 'version.json'), 'utf8')));
+      console.log(set.length ? `version fields set in ${root}/export_presets.cfg: ${set.join(', ')}` : 'the version fields already held the version');
     } else if (cmd === 'lock') {
       const root = opt('--root') ? resolve(opt('--root')) : null;
       if (!root) usage();

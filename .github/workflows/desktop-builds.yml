@@ -1,6 +1,13 @@
 # Desktop builds for Windows, Linux and macOS (docs/tools/desktop-builds.md). By hand only (workflow_dispatch): exports the three desktop presets of a commit headless with the pinned Godot
 # and templates from setup-godot, packs each as a folder with README.txt, NOTICES.txt and build_info.json, proves what a Linux runner can prove, and uploads three artifacts.
-#   - DESKTOP TEST BUILDS ONLY (Legal RL-203, RL-204): a run needs Orb's yes naming desktop test builds RECORDED in the commit it builds (docs/ep/approvals/desktop-test-builds.txt, three lines: `date:`,
+#   - TWO AUDIENCES (Legal RL-262, docs/legal/desktop-build-rulings.md section 3; Tools, 2026-11-14): the input `audience`.
+#       owner-private (the default): a build for Orb and Orb 2 only. No approval file is needed and NOTHING IS UPLOADED: every upload step and the two Windows-runner jobs (which download the Windows zip) carry
+#         `if: inputs.audience == 'outside-testers'`, and tools/check-desktop-audience.mjs (in CI) fails when one does not. The run exports, packs, checks and plays the Linux bench; it proves the build
+#         can be made. The file for Orb is made on Orb's own PC with tools/desktop-package.mjs (RL-262 section 1) and moves by drive or private message, never by this run.
+#       outside-testers: everything below as before (the recorded yes, the lock, one-day files).
+#     Both audiences refuse a ref that is not a commit on main, a package check that fails (route scan, notices, no net/), and a feedback target that is a public issue (ui/data/send.json).
+#     "owner-private builds are made locally and never uploaded; only a locked outside-tester package, after Orb's recorded yes, may be kept as a run file, for one day (Legal RL-262)."
+#   - DESKTOP TEST BUILDS FOR OUTSIDE TESTERS (Legal RL-203, RL-204): a run needs Orb's yes naming desktop test builds RECORDED in the commit it builds (docs/ep/approvals/desktop-test-builds.txt, three lines: `date:`,
 #     `scope:` naming desktop test builds, `recorded-by:`; the input below must equal that date and the date must be at most 30 days old; CD-12), keeps its
 #     files ONE day, and the EP deletes the run once the testers have them. No link, post or mention anywhere. Nothing from a run is a release, a Legal pass or a store build.
 #   - This is the ONLY workflow that uploads a game binary (the Linux-only linux-export.yml was folded into it: the Linux export, bench and hash check are below, behind the same lock and route scan; CD-12).
@@ -23,9 +30,18 @@ on:
         description: 'Frames (= ticks at --fixed-fps 60) the Linux bench plays before it prints the gameplay hash'
         required: false
         default: '2400'
-      orbs_yes:
-        description: 'Date (YYYY-MM-DD) of Orb saying yes to desktop test builds (Legal RL-203). It must equal the date in docs/ep/approvals/desktop-test-builds.txt at the commit built; the run refuses otherwise.'
+      audience:
+        description: 'owner-private: for Orb and Orb 2, no approval file, nothing uploaded. outside-testers: needs Orb''s recorded yes, files kept one day (Legal RL-262).'
         required: true
+        type: choice
+        options:
+          - owner-private
+          - outside-testers
+        default: owner-private
+      orbs_yes:
+        description: 'outside-testers only: date (YYYY-MM-DD) of Orb saying yes to desktop test builds (Legal RL-203). It must equal the date in docs/ep/approvals/desktop-test-builds.txt at the commit built; the run refuses otherwise. Leave empty for owner-private.'
+        required: false
+        default: ''
         type: string
 
 permissions:
@@ -46,13 +62,31 @@ jobs:
     env:
       FRAMES: ${{ inputs.frames }}
       ORBS_YES: ${{ inputs.orbs_yes }}
+      AUDIENCE: ${{ inputs.audience }}
     steps:
+      - name: The audience is one of the two
+        run: |
+          case "${AUDIENCE}" in
+            owner-private) echo "owner-private: no approval file is needed and nothing will be uploaded (Legal RL-262)";;
+            outside-testers) echo "outside-testers: Orb's recorded yes is required and files are kept one day (Legal RL-203, RL-262)";;
+            *) echo "audience must be owner-private or outside-testers (got '${AUDIENCE}')"; exit 1;;
+          esac
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
-      # A recorded approval, not a date typed into a form (CD-12): a committed file of the commit being built names the yes, and the typed date must match it.
+      # Both audiences: only a commit on main is built (Legal RL-262 section 3). GitHub's compare says "identical" or "behind" when the commit is main's own or an ancestor of it.
+      - name: Refuse a commit that is not on main (RL-262)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          st=$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${sha}" --jq .status)
+          echo "the commit ${sha} against main: ${st}"
+          if [ "${st}" != "identical" ] && [ "${st}" != "behind" ]; then echo "only a commit on main is built (the compare says '${st}')"; exit 1; fi
+      # A recorded approval, not a date typed into a form (CD-12): a committed file of the commit being built names the yes, and the typed date must match it. Outside testers only: an owner-private run needs none (RL-262).
       - name: Refuse without Orb's recorded yes (Legal RL-203)
+        if: inputs.audience == 'outside-testers'
         run: |
           f=docs/ep/approvals/desktop-test-builds.txt
           if ! printf '%s' "${ORBS_YES}" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then echo "orbs_yes must be a date, YYYY-MM-DD"; exit 1; fi
@@ -75,10 +109,13 @@ jobs:
         run: |
           sha=$(git rev-parse HEAD)
           echo "sha=${sha}" >> "$GITHUB_OUTPUT"
-          echo "building ${sha}, Reduce flashing locked on, Orb's yes of ${ORBS_YES}"
+          echo "building ${sha} for ${AUDIENCE}, Reduce flashing locked on${ORBS_YES:+, Orb's yes of ${ORBS_YES}}"
       # The interim's terms hold for a download too: one word in this checkout's ui/data/features.json, before the import and every export below.
       - name: Lock Reduce flashing on
         run: node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"
+      # The version number (tools/version.json; A-TOOLS-07) into the Windows exe's version fields and the macOS app's version, on this checkout only; the game's own copy of it is build_info.json, written below
+      - name: Version number into the export presets (this checkout only)
+        run: node tools/desktop-package.mjs version --root "${GITHUB_WORKSPACE}"
       # Refuses unless the lock is true and the capture hook false, the route scan (Legal RL-195/196) is clean, the six bypass words are the reviewed ones and nothing a flag can set reaches the lock,
       # the option, the register or the debug key, no network class is packed, and net/ is excluded from the three desktop presets (online play is out: the README's privacy line depends on it).
       - name: Refuse unless the lock holds and no flag reaches normal mode (RL-203, RL-204)
@@ -158,7 +195,21 @@ jobs:
           node tools/desktop-package.mjs verify --platform windows --dir "${chk}/windows/orb-combat-ex-windows-x86_64" --commit "${sha}" "${flag}"
           node tools/desktop-package.mjs verify --platform linux --dir "${chk}/linux/orb-combat-ex-linux-x86_64" --commit "${sha}" "${flag}"
           node tools/desktop-package.mjs verify --platform macos --dir "${chk}/macos/orb-combat-ex-macos-universal" --commit "${sha}" "${flag}"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: What this run kept
+        run: |
+          {
+            echo "### Desktop build on ${{ steps.commit.outputs.sha }} for ${AUDIENCE}"
+            echo
+            if [ "${AUDIENCE}" = "owner-private" ]; then
+              echo "- owner-private: exported, packed and checked (route scan, notices, lock, the Linux bench's gameplay hash). **Nothing was uploaded** (Legal RL-262)."
+              echo "- The Windows runner jobs are skipped: they need the Windows zip, which this audience never uploads."
+              echo "- The file for Orb and Orb 2 is made on Orb's own PC with tools/desktop-package.mjs and moves by drive or private message."
+            else
+              echo "- outside-testers: Orb's recorded yes of ${ORBS_YES}; three packages kept for one day; the EP deletes the run once the testers have the files."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - if: inputs.audience == 'outside-testers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: orb-combat-ex-windows-x86_64-${{ steps.commit.outputs.sha }}
           path: |
@@ -166,7 +217,8 @@ jobs:
             ${{ runner.temp }}/dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 1
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - if: inputs.audience == 'outside-testers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: orb-combat-ex-linux-x86_64-${{ steps.commit.outputs.sha }}
           path: |
@@ -174,7 +226,8 @@ jobs:
             ${{ runner.temp }}/dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 1
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - if: inputs.audience == 'outside-testers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: orb-combat-ex-macos-universal-${{ steps.commit.outputs.sha }}
           path: |
@@ -186,6 +239,7 @@ jobs:
   # A Windows runner starts the Windows build (A-TOOLS-13, the A1 brief's amendment; Tools, 2026-11-14): the packed zip of the job above is unpacked and its exe plays the same bench match headless; its gameplay
   # hash must be the Linux build's. Behind the same lock as the job it needs (it never runs without it). Nothing here uploads anything.
   windows-bench:
+    if: inputs.audience == 'outside-testers'   # they download the Windows zip, which an owner-private run never uploads (Legal RL-262)
     name: Windows build plays the bench match and prints the Linux build's hash
     needs: desktop
     runs-on: windows-2025
@@ -219,6 +273,7 @@ jobs:
   # GPU, which a hosted runner has not), and ONE still of the screen is kept for a day. Never run on a runner before: if the window does not open or the still is one flat colour, the job fails and its summary says what
   # the game printed. The binary is not uploaded.
   windows-still:
+    if: inputs.audience == 'outside-testers'   # they download the Windows zip, which an owner-private run never uploads (Legal RL-262)
     name: Windows build opens a window and one still is taken
     needs: desktop
     runs-on: windows-2025

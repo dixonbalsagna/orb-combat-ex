@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, chmodSync 
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { activeNotice, readmeText, noticesText, lockReduceFlashing, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
+import { activeNotice, readmeText, noticesText, lockReduceFlashing, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -43,6 +43,21 @@ try {
     check('a notice with no flashing paragraph or no AI line is refused', (() => { try { activeNotice(t); return false; } catch (e) { return /no flashing notice/.test(e.message); } })());
     writeFileSync(join(t, 'n.json'), JSON.stringify({ draft: false, gate: { heading: 'h', blocks: [{ p: 'x' }], ai: 'a' } }));
     check('the notice file named by tools/site.json is the one read', activeNotice(t).gate.ai === 'a');
+  }
+
+  // the version into the exports' own fields (A-TOOLS-07)
+  {
+    const root = join(tmp, 'vtree'); mkdirSync(root, { recursive: true });
+    const cfg = join(root, 'export_presets.cfg');
+    const base = ['[preset.1]', 'name="Windows Desktop"', 'application/file_version=""', 'application/product_version=""', '[preset.3]', 'name="macOS"', 'application/short_version="0.1"', 'application/version="0.1"', ''].join(String.fromCharCode(10));
+    writeFileSync(cfg, base);
+    const set = setVersionFields(root, { major: 0, minor: 1, build: 7 });
+    const out = readFileSync(cfg, 'utf8');
+    check('version: the Windows fields take the four-number form and the macOS version the three-number one, nothing else changes', set.length === 3 && out.includes('application/file_version="0.1.7.0"') && out.includes('application/product_version="0.1.7.0"') && out.includes('application/version="0.1.7"') && out.includes('application/short_version="0.1"') && out.includes('name="macOS"'), out);
+    check('version: a second run changes nothing', setVersionFields(root, { major: 0, minor: 1, build: 7 }).length === 0);
+    check('version: the next build changes all three', setVersionFields(root, { major: 0, minor: 1, build: 8 }).length === 3 && readFileSync(cfg, 'utf8').includes('0.1.8.0'));
+    writeFileSync(cfg, base + 'application/version="x"' + String.fromCharCode(10));
+    check('version: a key found twice is refused (the presets moved)', (() => { try { setVersionFields(root, { major: 0, minor: 1, build: 7 }); return false; } catch (e) { return /expected application\/version once, found it 2 times/.test(e.message); } })());
   }
 
   // the lock edit
@@ -214,6 +229,10 @@ try {
     check('routes: the real tree, locked, with net/ excluded and a macOS preset, has no problem', base.length === 0, JSON.stringify(base));
     check('routes: the six words are the reviewed ones', SIX_WORDS.join(',') === 'bench,frames,shot,nonotice,flashcap,study');
     const hud = readFileSync(join(repo, 'ui', 'hud', 'ui_hud.gd'), 'utf8'), main = readFileSync(join(repo, 'render', 'core', 'main.gd'), 'utf8');
+    const sendReal = readFileSync(join(repo, 'ui', 'data', 'send.json'), 'utf8');
+    check('routes: a feedback target of github (a public issue) is refused (RL-262)', R({ files: { 'ui/data/send.json': sendReal.replace(/"_target":\s*"[a-z]*"/, '"_target": "github"') } }).some((m) => /_target is "github"/.test(m)));
+    check('routes: a feedback target of mailto or form is allowed', ['mailto', 'form'].every((t) => !R({ files: { 'ui/data/send.json': sendReal.replace(/"_target":\s*"[a-z]*"/, `"_target": "${t}"`) } }).some((m) => /_target/.test(m))));
+    check('routes: a missing send.json is found', R({ files: { 'ui/data/send.json': null } }).some((m) => /send.json is missing/.test(m)));
     check('routes: the lock not set in features.json is found', R({ files: { 'ui/data/features.json': features } }).some((m) => /lock_reduce_flashing is not true/.test(m)));
     check('routes: the capture hook on in features.json is found', R({ files: { 'ui/data/features.json': lockedFeatures.replace('"capture_hook": false', '"capture_hook": true') } }).some((m) => /capture_hook is not false/.test(m)));
     check('routes: a seventh bypass word is found', R({ files: { 'ui/hud/ui_hud.gd': hud.replace('"flashcap", "study"]', '"flashcap", "study", "nolock"]') } }).some((m) => /BYPASS_WORDS is \[.*nolock/.test(m)));

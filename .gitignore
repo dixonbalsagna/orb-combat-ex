@@ -56,3 +56,7 @@ docs/camera/img/vkeep/
 docs/camera/img/vkeep-energy/
 docs/controls/clips/thumbs.json
 docs/controls/clips/hitstop-ab.overlay.json
+
+# A tester's raw match file (a LAN or solo save) never goes under a tracked docs/*/runs/ folder (the EP, 2026-11-14): keep it in homework/ (git-ignored) or a scratch folder, and commit only the reading of it.
+docs/*/runs/**/solo-*.json
+docs/*/runs/**/lan-*-*.json

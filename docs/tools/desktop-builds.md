@@ -6,11 +6,17 @@ Owner: Tools. Brief: the EP, 2026-10-28 (ADR 0011, PC first). Re-cut on 2026-10-
 
 ## Starting it
 
-GitHub, **Actions**, **Desktop builds**, **Run workflow** (or `gh workflow run desktop-builds.yml -f orbs_yes=<date>`). Inputs:
+GitHub, **Actions**, **Desktop builds**, **Run workflow**. Two audiences (Legal RL-262, `docs/legal/desktop-build-rulings.md`; added 2026-11-14):
+
+- **`owner-private`** (the default): `gh workflow run desktop-builds.yml -f audience=owner-private`. For Orb and Orb 2 only. **No approval file is needed and nothing is uploaded**: the run exports, packs and checks the build (route scan, notices, lock, the Linux bench's gameplay hash) to prove it can be made, and its summary says nothing was kept. The Windows-runner jobs are skipped (they need the Windows zip, which this audience never uploads). The file for Orb and Orb 2 is made on Orb's own PC with `tools/desktop-package.mjs` and moves by drive or private message.
+- **`outside-testers`**: `gh workflow run desktop-builds.yml -f audience=outside-testers -f orbs_yes=<date>`. Needs Orb's recorded yes (below), keeps three packages one day, runs the Windows jobs.
+
+Both audiences refuse: a commit that is not on main, a package check that fails, and a feedback target that is a public issue (`ui/data/send.json`). `node tools/check-desktop-audience.mjs` (in CI) fails when an upload or download step is not gated to `outside-testers`. Inputs:
 
 | Input | Default | What it does |
 |---|---|---|
-| `orbs_yes` | none, required | The date (YYYY-MM-DD) of Orb's yes naming desktop test builds. The first step refuses a run without a date. |
+| `audience` | `owner-private` | `owner-private` or `outside-testers` (above). |
+| `orbs_yes` | empty | `outside-testers` only: the date (YYYY-MM-DD) of Orb's yes naming desktop test builds. The approval step refuses a run without a date that matches the recorded file. |
 | `ref` | the commit the workflow was started on | Any commit, branch or tag to build. |
 | `frames` | `2400` | Ticks the Linux bench plays before it prints the gameplay hash. |
 

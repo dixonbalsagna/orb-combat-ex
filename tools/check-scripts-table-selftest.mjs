@@ -1,6 +1,6 @@
 // Self-test of tools/check-scripts-table.mjs (A-CODE-04): the classification of check scripts into CI, gate, not run and unreviewed, and the ratchet. Pure; node only. CI runs it.
 //   node tools/check-scripts-table-selftest.mjs
-import { classify, markdown, namedInGate, namedInWorkflows, namedInWorldList, problems, PATTERN } from './check-scripts-table.mjs';
+import { classify, markdown, namedByCiGlobs, namedInGate, namedInWorkflows, namedInWorldList, problems, PATTERN } from './check-scripts-table.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -24,5 +24,10 @@ check('no ratchet number is a problem', problems(t, {}, {}).some((p) => /no unre
 const md = markdown(t, '2026-11-14');
 check('the markdown table has the counts, a row a folder and a row a script', /8 scripts/.test(md) && /\| sim\/world\/tools \| 2 \| 1 \| 0 \| 0 \| 1 \|/.test(md) && /\| render\/tools\/soak_check.gd \| NOT RUN \| a soak, run by hand \|/.test(md), md.slice(0, 600));
 
+const gl = [{ glob: 'sim/input/test/*_test.gd', except: ['sim/input/test/slow_test.gd'] }];
+const gs = ['sim/input/test/a_test.gd', 'sim/input/test/slow_test.gd', 'ui/tools/a_test.gd', 'sim/input/test/mash_probe.gd'];
+check('a folder glob written in a workflow names its own folder\'s scripts, minus the exceptions', (() => { const r = namedByCiGlobs(['xargs ... sim/input/test/*_test.gd'], gs, gl); return r.size === 1 && r.has('sim/input/test/a_test.gd'); })());
+check('a glob that no workflow writes names nothing', namedByCiGlobs(['nothing here'], gs, gl).size === 0);
+check('no ciGlobs names nothing', namedByCiGlobs(['x'], gs, undefined).size === 0);
 console.log(failed ? `check-scripts self-test: ${failed} of ${ran} FAILED` : `check-scripts self-test ok: ${ran} checks`);
 process.exit(failed ? 1 : 0);

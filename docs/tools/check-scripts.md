@@ -1,18 +1,18 @@
 # The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-14)
 
-262 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **130 run in CI**, 64 more run in the landing gate only, 1 are deliberately not run (reason given), **67 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
+262 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **186 run in CI**, 20 more run in the landing gate only, 1 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
 
 | Folder | Scripts | CI | Gate only | Not run | Unreviewed |
 | :--- | ---: | ---: | ---: | ---: | ---: |
 | audio/tools | 14 | 12 | 1 | 1 | 0 |
 | net/tools | 10 | 10 | 0 | 0 | 0 |
 | render/anim/tools | 3 | 0 | 1 | 0 | 2 |
-| render/camera/tests | 13 | 1 | 0 | 0 | 12 |
+| render/camera/tests | 13 | 13 | 0 | 0 | 0 |
 | render/tools | 24 | 4 | 15 | 0 | 5 |
 | render/vfx/tools | 2 | 2 | 0 | 0 | 0 |
 | sim/core/tools | 16 | 12 | 0 | 0 | 4 |
 | sim/director/tools | 43 | 5 | 1 | 0 | 37 |
-| sim/input/test | 45 | 0 | 45 | 0 | 0 |
+| sim/input/test | 45 | 44 | 1 | 0 | 0 |
 | sim/world/tools | 84 | 84 | 0 | 0 | 0 |
 | tools/l10n | 1 | 0 | 0 | 0 | 1 |
 | ui/tools | 7 | 0 | 1 | 0 | 6 |
@@ -49,18 +49,18 @@
 | render/anim/tools/bake_check.gd | UNREVIEWED |  |
 | render/anim/tools/socket_check.gd | UNREVIEWED |  |
 | render/camera/tests/chase_rush_check.gd | CI |  |
-| render/camera/tests/cross_ko_check.gd | UNREVIEWED |  |
-| render/camera/tests/flight_shots_check.gd | UNREVIEWED |  |
-| render/camera/tests/launch_shots_check.gd | UNREVIEWED |  |
-| render/camera/tests/peak_retry_check.gd | UNREVIEWED |  |
-| render/camera/tests/peak_shot_check.gd | UNREVIEWED |  |
-| render/camera/tests/split_share_check.gd | UNREVIEWED |  |
-| render/camera/tests/split_vision_check.gd | UNREVIEWED |  |
-| render/camera/tests/swing_fight_check.gd | UNREVIEWED |  |
-| render/camera/tests/swing_places_check.gd | UNREVIEWED |  |
-| render/camera/tests/swing_read_check.gd | UNREVIEWED |  |
-| render/camera/tests/swing_real_check.gd | UNREVIEWED |  |
-| render/camera/tests/swing_shot_check.gd | UNREVIEWED |  |
+| render/camera/tests/cross_ko_check.gd | CI |  |
+| render/camera/tests/flight_shots_check.gd | CI |  |
+| render/camera/tests/launch_shots_check.gd | CI |  |
+| render/camera/tests/peak_retry_check.gd | CI |  |
+| render/camera/tests/peak_shot_check.gd | CI |  |
+| render/camera/tests/split_share_check.gd | CI |  |
+| render/camera/tests/split_vision_check.gd | CI |  |
+| render/camera/tests/swing_fight_check.gd | CI |  |
+| render/camera/tests/swing_places_check.gd | CI |  |
+| render/camera/tests/swing_read_check.gd | CI |  |
+| render/camera/tests/swing_real_check.gd | CI |  |
+| render/camera/tests/swing_shot_check.gd | CI |  |
 | render/tools/after_check.gd | GATE |  |
 | render/tools/bark_check.gd | UNREVIEWED |  |
 | render/tools/city_check.gd | UNREVIEWED |  |
@@ -146,51 +146,51 @@
 | sim/director/tools/swing_check.gd | UNREVIEWED |  |
 | sim/director/tools/swing_legal_check.gd | UNREVIEWED |  |
 | sim/director/tools/walk_check.gd | UNREVIEWED |  |
-| sim/input/test/agency_input_test.gd | GATE |  |
-| sim/input/test/aim_test.gd | GATE |  |
+| sim/input/test/agency_input_test.gd | CI + gate |  |
+| sim/input/test/aim_test.gd | CI + gate |  |
 | sim/input/test/b_no_beam_layouts_test.gd | GATE |  |
-| sim/input/test/b_no_beam_test.gd | GATE |  |
-| sim/input/test/beam_aim_test.gd | GATE |  |
-| sim/input/test/brake_grapple_test.gd | GATE |  |
-| sim/input/test/brake_ready_test.gd | GATE |  |
-| sim/input/test/charge_lost_test.gd | GATE |  |
-| sim/input/test/charge_test.gd | GATE |  |
-| sim/input/test/chord_pick_test.gd | GATE |  |
-| sim/input/test/dash_handover_test.gd | GATE |  |
-| sim/input/test/dodge_held_test.gd | GATE |  |
-| sim/input/test/flight_strike_b_test.gd | GATE |  |
-| sim/input/test/full_send_haptic_test.gd | GATE |  |
-| sim/input/test/haptics_test.gd | GATE |  |
-| sim/input/test/hold_toggle_test.gd | GATE |  |
-| sim/input/test/hub_test.gd | GATE |  |
-| sim/input/test/impact_haptics_test.gd | GATE |  |
-| sim/input/test/inert_knock_test.gd | GATE |  |
-| sim/input/test/join_test.gd | GATE |  |
-| sim/input/test/layout_test.gd | GATE |  |
-| sim/input/test/left_hand_test.gd | GATE |  |
-| sim/input/test/mode_test.gd | GATE |  |
-| sim/input/test/pad_first_press_test.gd | GATE |  |
-| sim/input/test/params_cache_test.gd | GATE |  |
-| sim/input/test/press_read_test.gd | GATE |  |
-| sim/input/test/push_stick_test.gd | GATE |  |
-| sim/input/test/quick_read_test.gd | GATE |  |
-| sim/input/test/refusal_cue_test.gd | GATE |  |
-| sim/input/test/refusals_test.gd | GATE |  |
-| sim/input/test/remap_test.gd | GATE |  |
-| sim/input/test/stage_cue_test.gd | GATE |  |
-| sim/input/test/stage_haptics_test.gd | GATE |  |
-| sim/input/test/stall_keep_test.gd | GATE |  |
-| sim/input/test/stance_test.gd | GATE |  |
-| sim/input/test/stick_feel_test.gd | GATE |  |
-| sim/input/test/strike_gate_test.gd | GATE |  |
-| sim/input/test/strike_hub_test.gd | GATE |  |
-| sim/input/test/strike_read_test.gd | GATE |  |
-| sim/input/test/struggle_test.gd | GATE |  |
-| sim/input/test/t1_latency_test.gd | GATE |  |
-| sim/input/test/take_back_claw_test.gd | GATE |  |
-| sim/input/test/touch_full_test.gd | GATE |  |
-| sim/input/test/touch_glue_test.gd | GATE |  |
-| sim/input/test/touch_test.gd | GATE |  |
+| sim/input/test/b_no_beam_test.gd | CI + gate |  |
+| sim/input/test/beam_aim_test.gd | CI + gate |  |
+| sim/input/test/brake_grapple_test.gd | CI + gate |  |
+| sim/input/test/brake_ready_test.gd | CI + gate |  |
+| sim/input/test/charge_lost_test.gd | CI + gate |  |
+| sim/input/test/charge_test.gd | CI + gate |  |
+| sim/input/test/chord_pick_test.gd | CI + gate |  |
+| sim/input/test/dash_handover_test.gd | CI + gate |  |
+| sim/input/test/dodge_held_test.gd | CI + gate |  |
+| sim/input/test/flight_strike_b_test.gd | CI + gate |  |
+| sim/input/test/full_send_haptic_test.gd | CI + gate |  |
+| sim/input/test/haptics_test.gd | CI + gate |  |
+| sim/input/test/hold_toggle_test.gd | CI + gate |  |
+| sim/input/test/hub_test.gd | CI + gate |  |
+| sim/input/test/impact_haptics_test.gd | CI + gate |  |
+| sim/input/test/inert_knock_test.gd | CI + gate |  |
+| sim/input/test/join_test.gd | CI + gate |  |
+| sim/input/test/layout_test.gd | CI + gate |  |
+| sim/input/test/left_hand_test.gd | CI + gate |  |
+| sim/input/test/mode_test.gd | CI + gate |  |
+| sim/input/test/pad_first_press_test.gd | CI + gate |  |
+| sim/input/test/params_cache_test.gd | CI + gate |  |
+| sim/input/test/press_read_test.gd | CI + gate |  |
+| sim/input/test/push_stick_test.gd | CI + gate |  |
+| sim/input/test/quick_read_test.gd | CI + gate |  |
+| sim/input/test/refusal_cue_test.gd | CI + gate |  |
+| sim/input/test/refusals_test.gd | CI + gate |  |
+| sim/input/test/remap_test.gd | CI + gate |  |
+| sim/input/test/stage_cue_test.gd | CI + gate |  |
+| sim/input/test/stage_haptics_test.gd | CI + gate |  |
+| sim/input/test/stall_keep_test.gd | CI + gate |  |
+| sim/input/test/stance_test.gd | CI + gate |  |
+| sim/input/test/stick_feel_test.gd | CI + gate |  |
+| sim/input/test/strike_gate_test.gd | CI + gate |  |
+| sim/input/test/strike_hub_test.gd | CI + gate |  |
+| sim/input/test/strike_read_test.gd | CI + gate |  |
+| sim/input/test/struggle_test.gd | CI + gate |  |
+| sim/input/test/t1_latency_test.gd | CI + gate |  |
+| sim/input/test/take_back_claw_test.gd | CI + gate |  |
+| sim/input/test/touch_full_test.gd | CI + gate |  |
+| sim/input/test/touch_glue_test.gd | CI + gate |  |
+| sim/input/test/touch_test.gd | CI + gate |  |
 | sim/world/tools/after_check.gd | CI + gate |  |
 | sim/world/tools/arena_check.gd | CI + gate |  |
 | sim/world/tools/b_check.gd | CI + gate |  |

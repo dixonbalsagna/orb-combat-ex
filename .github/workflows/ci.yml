@@ -92,6 +92,8 @@ jobs:
       # The fighter-specific code ratchet (A-ENERGY-06; X-15): the energy, stamina, body and forms systems may not name a fighter by his id more often than the baseline (0 on 2026-11-14)
       - name: Godot QA tooling self-test (QA's batch readers and acceptance skeletons on synthetic records; no Godot; 33 checks)
         run: node qa/godot/selftest.js
+      - name: Desktop build audience rule (owner-private keeps nothing, every upload and download is gated to outside-testers; Legal RL-262)
+        run: node tools/check-desktop-audience-selftest.mjs && node tools/check-desktop-audience.mjs
       - name: Mode smoke runner self-test (a result is read as pass or fail; the game's data folder is moved off the real one; A-MODES-08)
         run: node tools/smoke/mode-smoke-selftest.mjs
       - name: Fighter-specific code ratchet self-test
@@ -262,6 +264,31 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/chase_tap_check.gd'
       - name: Chase rush check (a rush at a body in the air keeps the split open and the pane follows him, no flapping, the picture's step and jolt inside their limits)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/chase_rush_check.gd'
+      # Camera's checks (A-CAMERA-01; Camera's answer via the EP, 2026-11-14): about 215 s in all on a PC. split_sweep (633 s) runs nightly instead (.github/workflows/camera-nightly.yml).
+      - name: Camera cross ko check (a KO across the seam)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/cross_ko_check.gd'
+      - name: Camera flight shots check (the flight shots)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/flight_shots_check.gd'
+      - name: Camera launch shots check (the launch shots)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/launch_shots_check.gd'
+      - name: Camera peak retry check (the peak shot retry)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/peak_retry_check.gd'
+      - name: Camera peak shot check (the peak launch shot)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/peak_shot_check.gd'
+      - name: Camera split share check (the split share)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/split_share_check.gd'
+      - name: Camera split vision check (the split view)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/split_vision_check.gd'
+      - name: Camera swing places check (the swing places)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/swing_places_check.gd'
+      - name: Camera swing real check (the swing on the real ground)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/swing_real_check.gd'
+      - name: Camera swing shot check (the swing shot)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/swing_shot_check.gd'
+      - name: Camera swing read check (the swing read)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/swing_read_check.gd'
+      - name: Camera swing fight check (the swing in a fight (skips cleanly until the swing row lands))
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/swing_fight_check.gd'
 
   godot-sim:
     name: Godot headless checks 2 of 3 (power, press, records, cross-fight, field)
@@ -297,6 +324,11 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd'
       - name: Cross end check, negative control (a fallen body left standing must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd -- --negative-control'
+      # Controls' input tests (docs/controls/check-scripts-answers.md): all of sim/input/test except b_no_beam_layouts_test (245 s: the landing gate and a nightly), 44 scripts, 3 at a time; each through tools/gate.mjs so a
+      # SCRIPT ERROR under exit 0 fails it. xargs exits non-zero when any one fails. tools/check-scripts.json's ciGlobs makes the table count them.
+      - name: Controls input tests (44 of 45, 3 at a time; the 245 s layout scan stays in the landing gate)
+        run: |
+          ls sim/input/test/*_test.gd | grep -v b_no_beam_layouts_test | xargs -P 3 -I{} node tools/gate.mjs -- "$GODOT" --headless --path . --script res://{}
 
   godot-roll-render:
     name: Godot headless checks 3 of 3 (rollback, field rollback, render)

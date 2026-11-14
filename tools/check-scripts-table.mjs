@@ -30,6 +30,19 @@ export function namedInWorkflows(texts, scripts) {
   return new Set(scripts.filter((s) => all.includes(s)));
 }
 
+/** The scripts a workflow step runs by a folder glob (`dir/*_test.gd`): tools/check-scripts.json's ciGlobs lists { glob, except: [paths] }, and the glob must be written in a workflow (a dead entry names nothing). Pure. */
+export function namedByCiGlobs(texts, scripts, ciGlobs) {
+  const all = texts.join('\n');
+  const out = new Set();
+  for (const g of ciGlobs || []) {
+    if (!all.includes(g.glob)) continue;
+    const m = /^(.*)\/\*([A-Za-z0-9_]*)\.gd$/.exec(g.glob);
+    if (!m) continue;
+    for (const s of scripts) if (dirname(s) === m[1] && basename(s, '.gd').endsWith(m[2]) && !(g.except || []).includes(s)) out.add(s);
+  }
+  return out;
+}
+
 /** The scripts the world job runs: tools/world-checks.json's run list names them without folder or extension; they are in sim/world/tools. Pure. */
 export function namedInWorldList(list, scripts) {
   const names = new Set((list && list.run) || []);
@@ -87,8 +100,8 @@ function build(repo = ROOT) {
   const texts = existsSync(wf) ? readdirSync(wf).filter((n) => /\.ya?ml$/.test(n)).map((n) => readFileSync(join(wf, n), 'utf8')) : [];
   let list = null; try { list = JSON.parse(readFileSync(join(repo, 'tools', 'world-checks.json'), 'utf8')); } catch { /* none */ }
   const gateText = ['run-gate.sh', 'render-gates.sh'].map((n) => { try { return readFileSync(join(repo, 'docs', 'ep', 'gate', n), 'utf8'); } catch { return ''; } }).join('\n');
-  const ci = new Set([...namedInWorkflows(texts, scripts), ...namedInWorldList(list, scripts)]);
   const cfg = JSON.parse(readFileSync(CFG, 'utf8'));
+  const ci = new Set([...namedInWorkflows(texts, scripts), ...namedInWorldList(list, scripts), ...namedByCiGlobs(texts, scripts, cfg.ciGlobs)]);
   const t = classify(scripts, { ci, gate: namedInGate(gateText, scripts), reasons: cfg.reasons || {} });
   return { t, cfg };
 }
