@@ -1,0 +1,98 @@
+diff --git a/sim/director/tools/knock_wall_check.gd b/sim/director/tools/knock_wall_check.gd
+index 68bcbd5..a511b8b 100644
+--- a/sim/director/tools/knock_wall_check.gd
++++ b/sim/director/tools/knock_wall_check.gd
+@@ -9,12 +9,10 @@ var failed: int = 0
+ 
+ 
+ func _init() -> void:
+-	WorldPlan.everywhereOverride = 0   # (the field world as main shipped it: World's plans.everywhere, on in the 9 November data, lays every place and moves the street this check stages)
+ 	_rows()
+ 	_visit()
+ 	DirLaunch.setWallForce(-1)
+ 	DirVisit.setForce(-1)
+-	WorldPlan.everywhereOverride = -1
+ 	print("KNOCK WALL: %d check(s) failed" % failed)
+ 	quit(1 if failed > 0 else 0)
+ 
+@@ -32,11 +30,12 @@ func _start() -> SimState:
+ 	return S
+ 
+ 
+-## The standing building nearest the fighters' start, by depth first, so its face is close to the plane.
++## The standing building nearest the fighters' start, by depth first, so its face is close to the plane: one of the index, as a knock aims
++## (DirLaunch._wall reads WorldStructures.near; a building toward the camera past plans.indexFrontBH is not in it: World's everywhere_check rows).
+ func _front(S: SimState) -> int:
+ 	var best: int = -1
+ 	var bd: float = 1.0e18
+-	for i in range(S.buildings.size()):
++	for i in WorldStructures.near(S, S.fighters[0].x, 3000.0):
+ 		var b = S.buildings[i]
+ 		if not b.alive or WorldSettle.noTarget(b.landmark):
+ 			continue
+@@ -48,6 +47,29 @@ func _front(S: SimState) -> int:
+ 	return best
+ 
+ 
++## The wall a knock from A on D should aim at, as World's everywhere_check reads it: the indexed buildings ahead of him inside the knock's reach
++## and its depth window, nearest along the line first, the first of up to three that a flight reaches (DirLaunch._wallPlan); -1 with none.
++func _firstWall(S: SimState, A, D) -> int:
++	var wd: Dictionary = DirLaunch.data().knockBack.wall
++	var reach: float = minf(float(wd.reach), float(DirLaunch.data().knockBack.distBh[3]) * DirLaunch.BH * float(wd.distMul))
++	var s: float = SimMathx.jsign(SimWrap.sdx(A.x, D.x))
++	var cands: Array = []
++	for bi in WorldStructures.near(S, D.x, reach):
++		var q = S.buildings[bi]
++		if not q.alive or WorldSettle.noTarget(q.landmark):
++			continue
++		var dx: float = SimWrap.sdx(D.x, q.x)
++		var gap: float = absf(dx) - q.w * 0.5
++		var dz: float = float(q.z) - float(D.z)
++		if dx * s > 0.0 and gap > 0.0 and gap <= reach and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and D.y <= WorldStructures.baseY(S, q) + WorldStructures.curH(q):
++			cands.append([gap, bi])
++	cands.sort()
++	for ci in range(mini(cands.size(), 3)):
++		if DirLaunch._wallPlan(S, A, D, s, wd, S.buildings[int(cands[ci][1])], float(cands[ci][0])) != null:
++			return int(cands[ci][1])
++	return -1
++
++
+ ## Puts the target `gap` from the building's near side, with the attacker behind him, side -1 or 1 the way he'd go.
+ func _place(S: SimState, i: int, gap: float, side: float, behind: bool = false) -> void:
+ 	var b = S.buildings[i]
+@@ -77,8 +99,11 @@ func _rows() -> void:
+ 		var A = S.fighters[0]
+ 		var D = S.fighters[1]
+ 		A.tier = 4.0
++		var want: int = _firstWall(S, A, D)
+ 		DirLaunch.knock(S, A, D)
+ 		var aimed: bool = int(D.aimB) == i if String(row[0]) != "on, 1,200 away at tier 4" else int(D.aimB) >= 0   # at that range a nearer wall may take him
++		if String(row[0]) == "on, in reach":
++			aimed = want >= 0 and int(D.aimB) == want   # (the nearest indexed wall along the line his flight reaches: the staged one, or a nearer one in another row)
+ 		var hit: int = 0
+ 		var guard: int = 0
+ 		while D.state == "launched" and guard < 600:
+diff --git a/sim/director/tools/walk_check.gd b/sim/director/tools/walk_check.gd
+index 46fcd44..a690118 100644
+--- a/sim/director/tools/walk_check.gd
++++ b/sim/director/tools/walk_check.gd
+@@ -12,10 +12,8 @@ var names: Dictionary = {}
+ 
+ 
+ func _init() -> void:
+-	WorldPlan.everywhereOverride = 0   # (the field world as main shipped it: with plans.everywhere on, the buildings it walks to are another street)
+ 	_rows()
+ 	DirWalk.setForce(-1)
+-	WorldPlan.everywhereOverride = -1
+ 	print("WALK: %d check(s) failed" % failed)
+ 	quit(1 if failed > 0 else 0)
+ 
+@@ -105,7 +103,7 @@ func _rows() -> void:
+ 	var ids: Array = []
+ 	for i in range(S.buildings.size()):
+ 		var b = S.buildings[i]
+-		if b.alive and not WorldSettle.noTarget(b.landmark) and absf(WorldBrunt.faceZ(b)) <= 800.0:
++		if b.alive and not WorldSettle.noTarget(b.landmark) and absf(WorldBrunt.faceZ(b)) <= 800.0 and WorldStructures.inBand(S, float(b.z), float(b.d)):   # (one of the index, as a knock aims: World's everywhere_check rows)
+ 			ids.append(i)
+ 	SimCore.dispose(S)
+ 	var pick: Array = []

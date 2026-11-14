@@ -1,0 +1,9 @@
+index-stage: on main 4327cfbb + energy-on + gates-shipped + energy-on-pins + gw1a-pins; the two checks re-staged from the buildings index and their world pins taken off
+the 9 November target data:
+08:00:59 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+08:01:38 walk_check exit 0: WALK: 0 check(s) failed
+lane 7 done
+main's data:
+08:01:47 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+08:02:06 walk_check exit 0: WALK: 0 check(s) failed
+lane 8 done

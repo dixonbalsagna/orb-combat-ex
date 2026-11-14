@@ -1,0 +1,4 @@
+gate: <scratch>/g/gaidx/gw1a/d_knock_wall_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gaidx/gw1a/d_walk_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gaidx/main/d_knock_wall_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gaidx/main/d_walk_check.txt: no SCRIPT ERROR lines
