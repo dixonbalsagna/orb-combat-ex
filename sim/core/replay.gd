@@ -4,6 +4,9 @@ extends RefCounted
 ## twin of replay.js, format v4 (intent version 4). A replay is plain JSON-able data:
 ##   {format, v, intent, data, seed, setup, ai, ticks, inputs, toggles, checkpoints, final}
 ##   intent       SimIntent.VERSION: the intent schema the inputs are packed in. Another version is refused.
+##   build        buildId(): the build that made it (A-NET-05), written only by a build with a stamp. A replay from
+##                another build is refused before its first tick, with both ids for the sentence a player reads.
+## Every writer builds the header with header() (the recorder, the LAN save, the page's black box, the report hook).
 ##   data         dataHash(): the combat data and the roster data the match ran on (S4, D1a). It plays back only on the
 ##                same data.
 ##   setup        newMatch's setup (D1a): {"slots", "names", "flip"}, {} for the default match. Up to five slots
@@ -27,6 +30,10 @@ const LOW_BITS: int = 32             # a packed intent's low part in a replay's 
 const LOW_MASK: int = 0xFFFFFFFF
 const HIGH_MAX: int = 0x7FFFFFFF     # ... and the most its high part can be (63 bits in all: a packed intent is never negative)
 const CHECK_EVERY: int = 60
+const BUILD_FILE: String = "res://build_info.json"   # the stamp Tools' build tools write into an exported build
+
+static var _bid = null              # this build's id, read once (a check may set it, and set it back to null)
+static var blindBuild: bool = false # tests only: the build check left out
 
 var S: SimState
 var replay: Dictionary
@@ -40,9 +47,7 @@ static func recorder(S_: SimState, seed: int, ai: Dictionary = {}, setup: Dictio
 	var rec := SimReplay.new()
 	rec.S = S_
 	var all: Array = SimStage.bodies(S_) if S_.stage != null else S_.fighters   # two fights: all four slots
-	rec.replay = {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(setup), "seed": seed, "setup": setup.duplicate(true),
-		"ai": {"p1": all[0].ai != null, "p2": all[1].ai != null},
-		"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
+	rec.replay = header(seed, setup, {"p1": all[0].ai != null, "p2": all[1].ai != null})
 	for k in range(2, all.size()):   # one versus many, or two fights: the bodies past the pair (a 1v1's header is as it was)
 		rec.replay.ai["p%d" % (k + 1)] = all[k].ai != null
 	for k in range(all.size()):
@@ -110,12 +115,70 @@ func finish() -> Dictionary:
 	return replay
 
 
-## Re-run a replay and verify it. Returns {ok, firstBadTick (-1 if ok), reason, final}. reason is "" when ok; "format" for
-## another format, version or intent schema, or an input that is not a valid packed intent (it is not run); "data" when it
-## was recorded on other data (not run); "checkpoint" or "final" otherwise.
-static func play(rp: Dictionary) -> Dictionary:
+## A replay's header, the one every writer uses (the B1 review: the recorder, Netcode's LAN save, the page's black box and
+## the report hook, so none can drift): format, version, intent schema, the data hash of its setup, the seed, a copy of the
+## setup and of the AI flags (the state the match was started in), the ticks so far, empty lists, and the build that made
+## it when this build has a stamp (A-NET-05). Nothing about the match's play is in it yet.
+static func header(seed: int, setup: Dictionary, ai: Dictionary, ticks: int = 0) -> Dictionary:
+	var rp := {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(setup), "seed": seed, "setup": setup.duplicate(true),
+		"ai": ai.duplicate(), "ticks": ticks, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
+	if buildId() != "":
+		rp["build"] = buildId()   # a tree with no stamp writes nothing, so its replays are as they were
+	return rp
+
+
+## The id of the build this is (A-NET-05): the stamp in res://build_info.json, which Tools' build tools write into an
+## exported build: its "id" if it names one (the page's: the commit and the build's cache key), else "<commit> <date>". The
+## date is the COMMIT's (write-build-info.mjs, preview.mjs, stack-preview.mjs), so two builds of one commit with the same
+## inputs share an id; different data is still refused by the data hash, but different patched code at one commit is not.
+## A tree with no stamp (a dev tree, CI, a check) is "".
+static func buildId() -> String:
+	if _bid == null:
+		_bid = ""
+		if FileAccess.file_exists(BUILD_FILE):
+			var j = JSON.parse_string(FileAccess.get_file_as_string(BUILD_FILE))
+			if j is Dictionary:
+				if String(j.get("id", "")) != "":
+					_bid = String(j.id)
+				elif String(j.get("commit", "")) != "":
+					_bid = (String(j.commit) + " " + String(j.get("date", ""))).strip_edges()
+	return _bid
+
+
+## A replay's header against this build: "" when it may run; "format" for another format, version or intent schema;
+## "build" when another build made it, or a build with no stamp did and this one has one (a stamped build can't tell
+## such a file's code from its own). The build is asked before the version, so a later build's file is named as
+## another build's. home is this build's id: buildId() unless a check names one.
+static func _head(rp: Dictionary, home = null) -> String:
+	if rp.get("format", "") != FORMAT:
+		return "format"
+	if not blindBuild and String(rp.get("build", "")) != (buildId() if home == null else String(home)):
+		return "build"
+	if int(rp.get("v", 0)) != V or int(rp.get("intent", 0)) != SimIntent.VERSION:
+		return "format"
+	return ""
+
+
+## Whether a replay plays here, from its header alone (for a host that checks replays itself: the LAN save's
+## replayState, the page's black box): "" when it does, else play()'s reason, "format", "build" or "data". Nothing runs.
+static func refusal(rp: Dictionary, home = null) -> String:
+	var why: String = _head(rp, home)
+	if why != "":
+		return why
+	return "data" if rp.get("data", "") != dataHash(rp.get("setup", {})) else ""
+
+
+## Re-run a replay and verify it. Returns {ok, firstBadTick (-1 if ok), reason, final}. reason is "" when ok; "build" when
+## another build made it (A-NET-05; not run), with "build" (the replay's id, "" for a build with no stamp) and "home" (this
+## build's) for the sentence a player reads, which is UI's; "format" for another format, version or intent schema, or an
+## input that is not a valid packed intent (not run); "data" when it was recorded on other data (not run); "checkpoint" or
+## "final" otherwise. home: as _head's.
+static func play(rp: Dictionary, home = null) -> Dictionary:
 	var refuse := {"ok": false, "firstBadTick": -1, "reason": "format", "final": ""}
-	if rp.get("format", "") != FORMAT or int(rp.get("v", 0)) != V or int(rp.get("intent", 0)) != SimIntent.VERSION:
+	var why: String = _head(rp, home)
+	if why == "build":
+		return {"ok": false, "firstBadTick": -1, "reason": "build", "final": "", "build": String(rp.get("build", "")), "home": buildId() if home == null else String(home)}
+	if why != "":
 		return refuse
 	var packed: Array = []
 	var word2: bool = SimInputData.right_stick_on()

@@ -3530,6 +3530,57 @@ func _actRule() -> String:
 	return ""
 
 
+## A-NET-05: the build that made a replay (the B1 review's version). A stray stamp in a dev tree is named plainly. A dev
+## tree's recorder writes no build field, and its header is SimReplay.header()'s; a stamped build's writes its id and plays
+## its own replay, also through JSON; another build's replay, or one with no stamp, is refused before its first tick as
+## "build", with both ids (the sentence is UI's); a later build's file of another version is named as another build's;
+## a dev tree refuses a stamped build's replay; refusal() agrees with play(). The test stamp is held for one call only.
+func _replayBuild(rp: Dictionary, ai: Dictionary) -> String:
+	if SimReplay.buildId() != "":
+		return "build: this tree has a stamp (res://build_info.json, id %s): parity runs on a tree with none. The repo root's /build_info.json is git-ignored, so git status won't show it: delete it" % SimReplay.buildId()
+	if rp.has("build"):
+		return "build: a dev tree's replay carries a build field"
+	var hd: Dictionary = SimReplay.header(13, {}, ai)
+	var want: Array = ["format", "v", "intent", "data", "seed", "setup", "ai", "ticks", "inputs", "toggles", "checkpoints", "final"]
+	if hd.keys() != want or rp.keys() != want or hd.data != rp.data:
+		return "build: the recorder's header is not SimReplay.header()'s (%s against %s)" % [str(rp.keys()), str(hd.keys())]
+	var home: String = "6a30b4c 2026-11-09T22:48:31.940Z"
+	var foreign: Dictionary = rp.duplicate(true)
+	foreign["build"] = "1234567 2026-11-01T10:00:00.000Z"
+	var rb: Dictionary = SimReplay.play(foreign, home)
+	if rb.ok or rb.reason != "build" or int(rb.firstBadTick) != -1 or String(rb.get("build", "?")) != String(foreign.build) or String(rb.get("home", "?")) != home:
+		return "build: another build's replay gave %s (want refused as build, before its first tick, with both ids)" % str(rb)
+	var rn: Dictionary = SimReplay.play(rp, home)
+	if rn.reason != "build" or String(rn.get("build", "?")) != "":
+		return "build: a replay with no stamp was not refused by a stamped build (%s)" % str(rn)
+	var later: Dictionary = foreign.duplicate(true)
+	later["v"] = SimReplay.V + 1
+	if SimReplay.play(later, home).reason != "build":
+		return "build: a later build's replay of another version was not named as another build's"
+	if SimReplay.play(foreign).reason != "build":
+		return "build: a dev tree played a stamped build's replay"
+	var Sb := SimCore.createSim()
+	SimReplay._bid = home   # the stamp for this one call: the header is made at the recorder's start
+	var recb := SimReplay.recorder(Sb, 13, ai)
+	var hdb: Dictionary = SimReplay.header(13, {}, ai)
+	SimReplay._bid = null
+	for t in range(120):
+		recb.step([null, null])
+	var rpb: Dictionary = recb.finish()
+	SimCore.dispose(Sb)
+	var mine: Dictionary = SimReplay.play(rpb, home)
+	var mineJ: Dictionary = SimReplay.play(JSON.parse_string(JSON.stringify(rpb)), home)
+	if String(rpb.get("build", "")) != home or String(hdb.get("build", "")) != home or not mine.ok or not mineJ.ok:
+		return "build: a stamped build's own replay: build %s, header %s, played %s, through JSON %s" % [str(rpb.get("build", "")), str(hdb.get("build", "")), str(mine), str(mineJ)]
+	if SimReplay.refusal(foreign, home) != "build" or SimReplay.refusal(rpb, home) != "" or SimReplay.refusal(rp) != "" or SimReplay.refusal(rp, home) != "build":
+		return "build: SimReplay.refusal does not agree with play"
+	var bd: Dictionary = rpb.duplicate(true)
+	bd.data = "0"
+	if SimReplay.refusal(bd, home) != "data":
+		return "build: refusal does not name other data"
+	return ""
+
+
 ## SimReplay (S4): record a scripted two-human run, play it back and play its JSON round trip; a changed input and a
 ## replay from other combat data must both fail.
 func _replayModule() -> String:
@@ -3585,6 +3636,9 @@ func _replayModule() -> String:
 		bad.inputs[at] = [bad.inputs[at][0], bad.inputs[at][1]] + wrong
 		if SimReplay.play(bad).reason != "format":
 			return "an invalid input entry %s was not refused" % str(wrong)
+	var eb: String = _replayBuild(rp, src.ai)
+	if eb != "":
+		return eb
 	# the new fields travel: a recorded match whose human holds the top bits plays back through JSON
 	var S4 := SimCore.createSim()
 	var rec4 := SimReplay.recorder(S4, 31, {"p1": false, "p2": false})   # two human slots, the second idle: nobody strikes him
