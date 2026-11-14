@@ -1,0 +1,17 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   the vectors are for CODE_REV 1 (the file's 1)
+  ok   the made planet 7 is the vectors' (bb4620019a022f9881707904b653f52d): if this fails the planet's code changed, so update the vectors and bump WorldPlanetCache.CODE_REV
+  ok   the made planet 3 is the vectors' (e7f4543134e0493b139059996dabafcb): if this fails the planet's code changed, so update the vectors and bump WorldPlanetCache.CODE_REV
+  ok   the planet cache is on in field.json
+  ok   a made planet is written
+  ok   a repeat visit has the same planet: 54 places, digest bb4620019a022f9881707904b653f52d (3 ms here)
+  ok   every place and every grid cell is the same bits
+  ok   the ground at a point is the same from a cached planet
+  ok   the planet job is done at its start on a hit
+  ok   a flipped byte is a miss and the planet is built as before
+  ok   a stale height with a right checksum is a miss (the witness cells)
+  ok   another data hash finds nothing and builds
+PLANETCACHE: 0 check(s) failed
+WARNING: 31 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

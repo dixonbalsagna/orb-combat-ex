@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   an empty cache is a miss
+  ok   the bake is written (208152 bytes)
+  info the check itself (key, checksum, witnesses): 1 ms
+  ok   a repeat visit reads the bake back with the same hash (06334d3ce141b644) in 42 slices of 250 units
+  ok   the hash folded in as the nodes were baked is the hash of the finished bake
+  info bake 1589 ms, read back 2 ms (native, this machine)
+  ok   every bake node is the same bits as the uncached bake
+  ok   nodeFresh gives the cached bake's nodes (a fresh read of the planet's function agrees with the cache)
+  ok   and it does not read the held nodes: a corrupted held node is caught
+  ok   a read between bake nodes is the same after a hit
+  ok   a flipped byte is found by the checksum, a slice later, and the bake runs as before to the same hash
+  ok   a truncated file is a miss
+  ok   a stale witness value with a right checksum is found by the witnesses and the bake runs as before to the same hash
+  ok   the untouched file is a hit again
+  ok   another seed is a miss
+  ok   another data hash is a miss
+  ok   the switch off reads nothing
+  ok   at most 24 files are kept (24 now)
+FIELDCACHE: 0 check(s) failed
+WARNING: 115 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

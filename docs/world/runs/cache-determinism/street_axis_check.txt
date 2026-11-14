@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   front-street buildings find their lot (86 of 86)
+  ok   at the start a front street runs along the line: alongSin under 0.02 (worst 0.0010), lineSin over 0.99 (worst 1.0000)
+  ok   streets behind or in front of the line (255 buildings): lineSin points toward the street (its sign is the side) and they run near the line's own direction
+  ok   side is the sign of the building's depth (0 on the line, 1 toward the camera, -1 behind); lots found by row: { 1: 86, 3: 95, 2: 74 }
+  ok   turned by 0, 0.3, -0.7 and 1.2 rad the sines equal the strip reading of the street's own axes (172 reads, worst difference 0.00043)
+  ok   the sign follows the turn: a street turned one way reads positive, the other way negative ({ 0.3: -1, -0.7: 1, 1.2: -1 })
+  ok   a pure read: no hash moves and SimField's scratch is as it was
+  ok   the same state answers the same
+  ok   a world with no frame answers as a street along the line (found false)
+  ok   a building that is not there answers found false
+STREETAXIS: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

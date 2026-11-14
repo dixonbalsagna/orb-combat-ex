@@ -1,0 +1,11 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   planet 11 has 1420 lots
+  ok   3968 points read against single lots, from beside them to the far side of the planet
+  ok   no lot of the planet changes the ground beyond its reach (0 points did, to 0 units)
+  ok   every lot still sets the ground at its own centre (0 did not)
+  ok   a very big lot does not answer in a tube through the planet either (0 of 64 points did, to 0 units)
+  ok   and it still sets the ground at its own centre
+LOTREACH: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

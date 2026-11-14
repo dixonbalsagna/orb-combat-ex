@@ -1,0 +1,19 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    a setup without a planet is today's world (118 buildings, the city at x 50,000)
+  ok    a match on planet 7, touch 3: 133 buildings, 1800 people, 6 places held
+  ok    the fighters start astride the touch-down (x 76350 and 77250)
+  ok    biomeAt reads the slice's biomes (and a settlement's ground as village or city)
+  ok    every building has a place and a plan index, unique, inside the world
+  ok    every building stands on dry ground
+  ok    ran 1800 ticks (24 s of match) without an error; casualties 0.0, craters 1, structures lost 0
+  ok    the same planet, touch and seed play to the same hash twice (adf02e8bc466e7e5)
+  ok    planet 11, touch 2: 65 buildings, 1798 people; 600 ticks run
+GOLDEN KEYS (planet window 2):
+  planetSlice 7/3: slice hash d0f86ade
+  planetSlice 7/9: slice hash 2fa739f2
+  planetSlice 11/2: slice hash 81af5442
+  tick 0 of 7/3: gameplay hash 68b7c9e391a2e510
+  tick 0 of 11/2: gameplay hash c0721e8a2b630549
+  AI match 7/3 seed 1 after 1800 ticks: adf02e8bc466e7e5
+PLANETWORLD: 0 check(s) failed

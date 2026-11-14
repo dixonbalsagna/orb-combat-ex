@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   173 buildings share 62 lots (25 lone); every building is in one
+  ok   each building's laid point (bDir) is inside its lot, 0.000 units outside at the worst: the lots are centred where the buildings are laid
+  ok   the buildings of a lot stand on its plane (climbing with the street and leaning across it by at most the data's grades): 1 of 62 lots spread over a unit (largest 7.76; a neighbouring lot's blend may reach an edge building)
+  ok   a lot's blend never reaches another lot's centre (0 do)
+  ok   outside a lot and its blend the ground is the field's, no step over 400 units (0)
+  info the step between a lot's height at its end and the ground just past it along the street: median 35, 90th percentile 109, largest 309 units (a fighter is 75 tall)
+  ok   every building's dir is the planet point of its laid x and z (0 are more than a unit from it, largest 0.00)
+  info 96 of 173 buildings stand where the LINE's ground is over 50 units from their own (up to 810): the buried and floating ones of a strip-based base; a lot gives every reader the building's own ground
+  ok   a lot read is a pure function of the point
+FIELDLOT: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
