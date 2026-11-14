@@ -1,0 +1,68 @@
+--- a/sim/world/tools/everywhere_check.gd
++++ b/sim/world/tools/everywhere_check.gd
+@@ -173,6 +173,65 @@
+ 	# the same setup lays the same state
+ 	var again := _match(planet, touch, true)
+ 	ok(again.buildings.size() == nb and str(SimHash.stateHash(again).gameplay) == str(SimHash.stateHash(on).gameplay), "the same setup lays the same state twice")
++	# a knock in reach of a building aims at it (Encounter's GW1a finding: with everywhere on knock_wall_check's staged building was not the one aimed at). The knock aims at the nearest standing building of the INDEX
++	# on the side he goes (WorldStructures.near: a building whose front face is toward the camera past plans.indexFrontBH is not in it, as the view lowers it) whose flight reaches it, up to three tried; the
++	# check stages beside the nearest indexed building and asks for exactly that one
++	DirLaunch.setWallForce(1)
++	var K := SimCore.createSim()   # the staging knock_wall_check uses: seed 11, planet 7, touch 2, on the field world with every place laid
++	SimCore.newMatch(K, 11, {"p1": false, "p2": false}, {"planet": 7, "touch": 2, "planetGen": 3, "intro": false})
++	K.out.fx.clear()
++	var A = K.fighters[0]
++	var D = K.fighters[1]
++	var pick: int = -1
++	var pd: float = 1.0e18
++	for bi in WorldStructures.near(K, A.x, 3000.0):
++		var q = K.buildings[bi]
++		if q.alive and not WorldSettle.noTarget(q.landmark) and absf(WorldBrunt.faceZ(q)) * 100.0 + absf(SimWrap.sdx(A.x, q.x)) * 0.001 < pd:
++			pd = absf(WorldBrunt.faceZ(q)) * 100.0 + absf(SimWrap.sdx(A.x, q.x)) * 0.001
++			pick = bi
++	ok(pick >= 0, "the index holds a building near the start to stage a knock beside")
++	if pick >= 0:
++		var pb = K.buildings[pick]
++		D.x = SimWrap.wrap(pb.x - (pb.w * 0.5 + 80.0))
++		D.y = WorldTerrain.groundY(K, D.x)
++		D.z = 0.0
++		A.x = SimWrap.wrap(D.x - 58.0)
++		A.y = D.y
++		A.z = 0.0
++		A.face = 1.0
++		A.tier = 4.0
++		var wd: Dictionary = DirLaunch.data().knockBack.wall
++		var reach: float = minf(float(wd.reach), float(DirLaunch.data().knockBack.distBh[3]) * DirLaunch.BH * float(wd.distMul))
++		var cands: Array = []
++		for bi in WorldStructures.near(K, D.x, reach):
++			var q2 = K.buildings[bi]
++			if not q2.alive or WorldSettle.noTarget(q2.landmark):
++				continue
++			var dx: float = SimWrap.sdx(D.x, q2.x)
++			var gap: float = absf(dx) - q2.w * 0.5
++			var dz: float = float(q2.z) - float(D.z)
++			if dx > 0.0 and gap > 0.0 and gap <= reach and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and D.y <= WorldStructures.baseY(K, q2) + WorldStructures.curH(q2):
++				cands.append([gap, bi])
++		cands.sort()
++		var want: int = -1
++		for ci in range(mini(cands.size(), 3)):
++			if DirLaunch._wallPlan(K, A, D, 1.0, wd, K.buildings[int(cands[ci][1])], float(cands[ci][0])) != null:
++				want = int(cands[ci][1])
++				break
++		DirLaunch.knock(K, A, D)
++		ok(cands.size() > 0 and want >= 0 and int(D.aimB) == want, "a knock in reach of a building aims at the nearest indexed one it can reach (building %d of %d in reach; aimed at %d)" % [want, cands.size(), int(D.aimB)])
++		# the building toward the camera that the index leaves out is not aimed at, and is not in the index
++		var cam: int = -1
++		for bi2 in range(K.buildings.size()):
++			var q3 = K.buildings[bi2]
++			if q3.alive and not WorldSettle.noTarget(q3.landmark) and absf(WorldBrunt.faceZ(q3)) < 100.0 and not WorldStructures.near(K, q3.x, 60.0).has(bi2):
++				cam = bi2
++				break
++		if cam >= 0:
++			var q4 = K.buildings[cam]
++			ok(not WorldStructures.inBand(K, float(q4.z), float(q4.d)) and int(D.aimB) != cam, "a building toward the camera past the index front (building %d, z %.0f, depth %.0f) is outside the index and is not aimed at" % [cam, float(q4.z), float(q4.d)])
++	SimCore.dispose(K)
++	DirLaunch.setWallForce(-1)
+ 	WorldPlan.everywhereOverride = -1
+ 	print("EVERYWHERE: %d check(s) failed" % fails)
+ 	quit(0 if fails == 0 else 1)
