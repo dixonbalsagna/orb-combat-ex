@@ -44,3 +44,5 @@ Owner: Game Design. 2026-11-15, on World's park (`docs/world/pending/planet-size
 - **World:** the spawn condition in §1.
 - **Encounter:** `arcBySize`.
 - **QA:** places reached and buildings fallen, by size.
+
+**Confirmed for GW1c (2026-11-15):** "unchanged on medium, big and huge" means **today's absolute launch numbers**, the values medium flies now, on all three. Encounter has made `DirArc` absolute on every whole planet. Before that, big and huge would have flown the meteor 2 and 4 times higher, which is not what was ruled. Only tiny and small take `arcBySize`'s caps.

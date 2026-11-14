@@ -57,3 +57,13 @@ If the arms feel alike, the busier one wins: it's a horde.
 
 - **Questions for Orb:** not mine to ask. Orb gets two Horde questions now and the rest after the trial's clip, as the EP said. Row 28 (the count) and row 9 (the per-body pause) belong in that later set.
 - **The trial's arms, in order:** row G (113, with blows of 2 and 4) by default; the page's (240, with blows of 4 and 8); row D if there's room.
+
+## 4. After trials T4 to T6 (2026-11-15, Encounter's `docs/director/horde-trial.md`, 49 runs)
+
+| | Ruling | Reason |
+| :--- | :--- | :--- |
+| **The arm** | **G** (the lane gap 113, blows of 2, 4 and 2) | Same fairness as the 240 arm (32% and 31% lost) at twice the pace (70 wind-ups a minute against 36), so the busier one wins, as §1 said. **Row D is out:** one seed passed 45%, and it breaks "the body never refills" |
+| **Reading 11: twelve fodder in 3.8 to 5.6 s** | **The band moves, not the fodder: 4 to 8 s for twelve, alone** | Fodder are fodder. Felling them in a blow or two is the swarm fantasy, and the pressure is the pace and the bruisers and speedsters among them. Twelve in 10 to 20 s would need fodder about three times as tough, which turns them into a chore. The old band was set for a campaign stage under turns |
+| **Reading 10: two players, each about half the pressure** (8 to 14% lost; a seat with nobody in reach up to 38% of a wave) | **Inside today's five-body limit, for two players only:** the pack's **toughness × 1.5** and its **lane gap × 0.8** (90 at medium). Three at a time and the × 1.5 count stay. New data keys: `pack.twoPlayers.toughMul` 1.5, `pack.twoPlayers.gapMul` 0.8. **What it should read:** each of two medium pads loses 10 to 35%, nobody in reach at most 35% of a wave, and twelve fodder in 3 to 6 s between two | Two pads fell bodies twice as fast as the field refills, so places stand empty. Tougher bodies stay in reach longer and fill both seats' fights, and a shorter gap puts back the swings each player lost. Neither costs a body past the limit |
+
+**Orb's question 4, for the clip, with my recommendation:** "With a friend, should more than three weak fighters be on the field at once?" **Recommendation: not yet.** Three tougher, busier ones first, which fits inside today's limit. More at once means lifting the five-body limit (the design's §3.12), which is its own work, after the trial, if the clip says two players still want more.
