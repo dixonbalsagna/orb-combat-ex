@@ -1,0 +1,59 @@
+diff --git a/data/fighters/PROTAGONIST/meters.json b/data/fighters/PROTAGONIST/meters.json
+index 14609db..f04806f 100644
+--- a/data/fighters/PROTAGONIST/meters.json
++++ b/data/fighters/PROTAGONIST/meters.json
+@@ -43,8 +43,8 @@
+       "effects": [
+         {
+           "key": "regen_penalty",
+-          "perPoint": 0.01,
+-          "_note": "ki regen - perPoint x anguish, at most cap (balance-targets section 13: 0.01, at most -1)",
++          "perPoint": 0.0,
++          "_note": "0 since Orb's decision 6 (2026-11-13: the old meters change nothing in a fight; the code goes after Alpha). Was 0.01. ki regen - perPoint x anguish, at most cap (balance-targets section 13: 0.01, at most -1)",
+           "cap": 1.0
+         },
+         {
+@@ -56,7 +56,7 @@
+         {
+           "key": "comeback",
+           "cap": 0.5,
+-          "_note": "damage x (1 + cap x (1 - vitality)^2): stronger the closer to the brink (GD-B09)"
++          "_note": "damage x (1 + cap x (1 - vitality)^2): stronger the closer to the brink (GD-B09). Kept: a rule for every fighter (Orb's decision 6, 2026-11-13), stated in each fighter's meters.json"
+         }
+       ]
+     }
+diff --git a/data/fighters/RIVAL/meters.json b/data/fighters/RIVAL/meters.json
+index e154f61..dd64c80 100644
+--- a/data/fighters/RIVAL/meters.json
++++ b/data/fighters/RIVAL/meters.json
+@@ -61,19 +61,24 @@
+       "effects": [
+         {
+           "key": "regen_bonus",
+-          "perPoint": 0.01,
++          "perPoint": 0.0,
+           "cap": 1.0,
+-          "_note": "ki regen + perPoint x menace, at most cap (Game Design: 0.01, at most +1)"
++          "_note": "0 since Orb's decision 6 (2026-11-13: the old meters change nothing in a fight; the code goes after Alpha). Was 0.01. ki regen + perPoint x menace, at most cap (Game Design: 0.01, at most +1)"
+         },
+         {
+           "key": "damage_mul",
+-          "cap": 0.05,
+-          "_note": "x (1 + cap x menace / 100) (Game Design: +5% at full menace; was 15%)"
++          "cap": 0.0,
++          "_note": "0 since Orb's decision 6 (2026-11-13: the old meters change nothing in a fight; the code goes after Alpha). Was 0.05. x (1 + cap x menace / 100) (Game Design: +5% at full menace; was 15%)"
+         },
+         {
+           "key": "beam_power",
+-          "perPoint": 0.08,
+-          "_note": "beam clash power + perPoint x menace"
++          "perPoint": 0.0,
++          "_note": "0 since Orb's decision 6 (2026-11-13: the old meters change nothing in a fight; the code goes after Alpha). Was 0.08. beam clash power + perPoint x menace"
++        },
++        {
++          "key": "comeback",
++          "cap": 0.5,
++          "_note": "damage x (1 + cap x (1 - vitality)^2): stronger the closer to the brink (GD-B09). A rule for every fighter (Orb's decision 6, 2026-11-13): the same as the Protagonist's"
+         }
+       ]
+     }

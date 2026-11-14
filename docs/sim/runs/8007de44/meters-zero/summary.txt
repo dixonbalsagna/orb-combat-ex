@@ -1,0 +1,63 @@
+A-ENERGY-05: the first gate on a scratch export of bf6c4538 (kick/meters_zero_edit.py before the wired table's fix), then the parity re-run with the fix on 8007de44 (the park's final patches). One Godot job at a time, below normal.
+
+==== first gate (bf6c4538)
+#### mz
+meters-zero sha1 265984e17acfd603e156a3587560082a95f58974 sha256 b0a2a24b96da 3 files
+grant-narrative-meters sha1 3ca8eea1c7a76ee1d9bc9c442edaae84feeb445f sha256 045b45f1a5df 2 files
+import 0; parse errors 0
+validate self-test 0;   parser 326 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 193; data cases 8355
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+golden: exit 0 in 145 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (173718 ticks), 2 replays in 140.1 s
+  golden.json MOVED (expected: the rival's comeback)
+parity (against the regenerated golden) through gate.mjs: exit 1 in 319 s; golden check FAILED gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+24:FAIL  wired numbers change a match: PROTAGONIST/meters.json ["meters", "anguish", "effects", 0, "cap"]: no effect on probe kaiTick; RIVAL/meters.json ["meters", "menace", "effects", 0, "cap"]: no effect on probe vorrTick
+64:ok    the old meters change nothing; the comeback for both (decision 6)
+== negative control: HEAD's meters data back (the meters keep their effects, the rival has no comeback)
+parity with HEAD's meters (negative control): exit 1 in 405 s
+64:FAIL  the old meters change nothing; the comeback for both (decision 6): fighter 0: his meter at its ends changes the fight: at rest [42.56, 0.08333333333333, 13.5, 0.0], at 0 [42.56, 0.08333333333333, 13.5, 0.0], at 100 [42.56, 0.06666666666667, 13.5, 0.0] (damage, ki regain, beam power, roam)
+power_check through gate.mjs: exit 0 in 173 s; POWER: 0 check(s) failed
+two_states: exit 0 in 77 s; script errors 0; PASS  0 failure(s)
+rb_ai: exit 0 in 25 s; script errors 0; PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash comparisons (every 
+desync: exit 0 in 25 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+xproc: exit 0 in 56 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 9b41667289ebb46e, Easy 74e5b03fe0bba753, Medium 113783ab82a
+det: exit 0 in 164 s; script errors 0; determinism passed
+== Rendering's checks
+after_check: exit 0 in 15 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 60 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 14 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 55 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 49 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 61 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 69 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 9 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 13 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 24 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 23 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 15 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 13 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 17 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 13 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+gate done
+q done
+
+==== the parity re-run with the fix (8007de44)
+#### mz2
+meters-zero sha1 5ad4d852cdd7de21d1df2a896fb3ef8cbd72ab1a sha256 25ae18f3ecb6 3 files
+grant-narrative-meters sha1 3ca8eea1c7a76ee1d9bc9c442edaae84feeb445f sha256 045b45f1a5df 2 files
+import 0; parse errors 0
+validate self-test 0;   parser 326 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 193; data cases 8355
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+golden: exit 0 in 129 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (173718 ticks), 2 replays in 123.6 s
+  golden.json MOVED (expected: the rival's comeback)
+parity (against the regenerated golden) through gate.mjs: exit 0 in 333 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+64:ok    the old meters change nothing; the comeback for both (decision 6)
+== negative control: HEAD's meters data back (the meters keep their effects, the rival has no comeback)
+parity with HEAD's meters (negative control): exit 1 in 367 s
+64:FAIL  the old meters change nothing; the comeback for both (decision 6): fighter 0: his meter at its ends changes the fight: at rest [42.56, 0.08333333333333, 13.5, 0.0], at 0 [42.56, 0.08333333333333, 13.5, 0.0], at 100 [42.56, 0.06666666666667, 13.5, 0.0] (damage, ki regain, beam power, roam)
+gate done
+#### gp
