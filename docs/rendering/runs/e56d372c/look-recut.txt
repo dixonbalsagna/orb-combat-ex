@@ -1,0 +1,12 @@
+# The look defaults re-cut for the landing order, on main e56d372c (VFX: meteor-default grant parked for GW1a (the meteor trail on by defau) + Camera's a-camera-01.patch + Tools' A-CODE-03 (planet-entry-and-probe.patch, report-hook.patch)
+globe_default.after-camera-code03.diff 50f868f6, crater_look_default.after-camera-code03.diff ea942e4d: both apply
+import 0 errors 0
+golden.json byte-identical to main's
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+Tools' match_recorder_check exit 0: match_recorder_check: 16 checks, 0 failed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 

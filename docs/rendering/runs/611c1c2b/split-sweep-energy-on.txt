@@ -1,0 +1,11 @@
+# Camera's split_sweep (render/camera/tests/split_sweep.gd, in my render gate set) on main 611c1c2b + Simulation's energy-on (A-ENERGY-04), run twice
+# (in the gate set, then alone): the same 7 failures both times. It passes on main without energy-on in every gate run of today (runs/83a5b963/marks-baked.txt, ...).
+# My after-energy park changes after_check.gd only, which split_sweep does not use: the failures are energy-on's. Not in Simulation's table of broken checks.
+FAIL  real match 10 pitch 49 full (rig sees two humans): fighter 0 has been out of its pane for 1.20 s (mode split) at t=285.27 pos (5065.454, 479.626) sep 1.000 e 0.00 solo /0.00 slam -1 u -9685 sigma -1/-1 n (-0.999739, 0.022826)
+FAIL  crossing start: 1 brightness dips in the first 150 ticks
+FAIL  crossing start: a fighter within -0.092 of the screen edge
+FAIL  crossing start: the camera was outside the avenue on 2 of 9 closing ticks
+FAIL  crossing start staredown 72: 1 brightness dips in the first 150 ticks
+FAIL  crossing start staredown 72: a fighter within -0.207 of the screen edge
+FAIL  crossing start staredown 72: the camera was outside the avenue on 2 of 9 closing ticks
+split sweep FAILED (7)

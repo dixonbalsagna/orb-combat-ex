@@ -1,0 +1,33 @@
+# after_check under Simulation's A-ENERGY-04 (energy-on: the energy model and the dash on in main's data), on main 611c1c2b (Netcode: lan-hash README answers the web and threadless question (no sh)
+ar0 import 0 errors 0
+ar1 import 0 errors 0
+## after_check as on main, on main + energy-on
+exit 1
+ok    seed 7, 900 ticks: at most 0 after-images are drawn round a fighter on any tick ([0, 0]; the limit is 5), and VFX's tally takes one to be shown 5 ticks
+FAIL  the match has a rush in it: the five are reached (0), so the limit is tried
+ok    on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [0, 0])
+ok    eight alive round one fighter: 5 are drawn, and the three left out are the oldest
+ok    one within 24 units of its fighter is not drawn and takes no place: the five off him are all drawn (5)
+ok    a short beam's tail is where it always was (900 units at half a pixel a unit and wider views, bright), and a calm beam's at any size
+ok    a planet-crossing beam (32,058 units): its bright tail uncovers at most 1000 pixels a tick at any zoom (the cap is 1000; it was 34087 in one tick at 0.85 pixels a unit), only ever moves away, and its calm tail is where it always was
+after check FAILED (1)
+## re-scripted (after_rush), on main + energy-on
+exit 1
+ok    seed 7, 900 ticks; seed 8, 900 ticks; seed 9, 900 ticks; seed 10, 900 ticks; seed 11, 900 ticks; seed 12, 900 ticks: at most 3 after-images are drawn round a fighter on any tick ([2, 3]; the limit is 5), and VFX's tally takes one to be shown 5 ticks
+FAIL  a match has a rush in it: the five are reached (3, in none of 6 matches), so the limit is tried
+ok    on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [2, 3])
+ok    eight alive round one fighter: 5 are drawn, and the three left out are the oldest
+ok    one within 24 units of its fighter is not drawn and takes no place: the five off him are all drawn (5)
+ok    a short beam's tail is where it always was (900 units at half a pixel a unit and wider views, bright), and a calm beam's at any size
+ok    a planet-crossing beam (32,058 units): its bright tail uncovers at most 1000 pixels a tick at any zoom (the cap is 1000; it was 34087 in one tick at 0.85 pixels a unit), only ever moves away, and its calm tail is where it always was
+after check FAILED (1)
+## re-scripted, on main as it is
+exit 0
+ok    seed 7, 900 ticks: at most 5 after-images are drawn round a fighter on any tick ([1, 5]; the limit is 5), and VFX's tally takes one to be shown 5 ticks
+ok    a match has a rush in it: the five are reached (5, seed 7), so the limit is tried
+ok    on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [1, 5])
+ok    eight alive round one fighter: 5 are drawn, and the three left out are the oldest
+ok    one within 24 units of its fighter is not drawn and takes no place: the five off him are all drawn (5)
+ok    a short beam's tail is where it always was (900 units at half a pixel a unit and wider views, bright), and a calm beam's at any size
+ok    a planet-crossing beam (32,058 units): its bright tail uncovers at most 1000 pixels a tick at any zoom (the cap is 1000; it was 34087 in one tick at 0.85 pixels a unit), only ever moves away, and its calm tail is where it always was
+after check passed

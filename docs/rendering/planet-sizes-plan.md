@@ -1,37 +1,67 @@
-# The tile ground at five planet sizes: plan and cost (Rendering, A1)
+# The tile ground at five planet sizes: plan and cost (Rendering, A1 → GW1c)
 
-For the EP, on Orb's five sizes (World's parks: tiny, small, medium, big, huge; medium is today's to the byte) and the stand-in's planet design (`docs/ep/proposals/planet-a1-design.md` §3.2, §3.7). Order: after the clipping parks (feet-ground, marks-baked).
+For the EP, on Orb's five sizes: World's `docs/world/pending/planet-sizes/` and the stand-in's planet design (`docs/ep/proposals/planet-a1-design.md` §3.2, §3.7). A1's exit needs **small, medium and big drawn and measured**; tiny and huge may follow. Order: after the clipping parks (feet-ground, marks-baked), and on top of World's size park and Simulation's `setPlanet` grant (GW1c).
 
-## What's hard-coded to medium today
+## The sizes
 
-All of these are in `render/core/`:
-- **`tile_field.gd`**:
-  - `300` is World's lattice, in nodes to a face edge (`_field_node`, `WorldField.ensure` and `dirOf` calls);
-  - `1200` is its sub-node lattice, 4 × 300;
-  - `38400.0` is a face edge's arc at medium's radius, π/2 × 24,446 (the tile's reach in `ask_around`, `_start`, `_records_reach`, the near test).
-- **The level ladder:** `LEVEL0` 3 tiles to a face edge and `LEVELS` 5 give node spacings of 512 down to 32 units at medium only. At huge (4 × the radius) the same ladder gives 2,048 down to 128, so there's no 32-unit ground near the camera. At tiny it gives 136 down to 8, finer than any data.
-- **The tile key's bits:** level, then i and j at 7 bits each, which caps a level at 127 tiles to a face edge. Huge needs two more levels for the same near ground (3 × 2⁶ = 192), so the key must widen (i and j at 9 bits; 3 + 3 + 9 + 9 bits still fits an int).
-- **`planet_view.gd:570-575`:** the strip's copies round the planet, from `PLANET_NC`. Read from the match.
-- **`look.gd`:** far-city counts (`FAR_CITY`) for medium's places. They scale with World's place counts (the square root of the area).
+A column is 32 units, so the radius is columns × 32 / 2π and a face edge of World's cube is a quarter of the way round (columns × 8).
+
+| Size | Columns | Radius | Face edge | World's lattice (128 units a node) | A1 |
+|---|---:|---:|---:|---:|---|
+| tiny | 1,280 | 6,519 | 10,240 | 80 | may follow |
+| small | 2,560 | 13,038 | 20,480 | 160 | **drawn and measured** |
+| medium | 4,800 | 24,446 | 38,400 | 300 | **today's, byte for byte** |
+| big | 9,600 | 48,892 | 76,800 | 600 | **drawn and measured** |
+| huge | 19,200 | 97,784 | 153,600 | 1,200 | may follow |
+
+## What reads the size already, and what doesn't
+
+Already per match (no work beyond a check at each size):
+- the tile field's radius (`tile_field.gd:104`, `SimField.R`);
+- the far land's `planet_r` (`far_land.gd:132`, the planet's own `R`);
+- the planet's copies round the strip (`planet_view.gd:570-575`): they read `SimConst.PLANET_NC`, which becomes a per-match value with Simulation's `setPlanet`. They're computed per call, not cached.
+
+Hard-coded to medium, all in `render/core/tile_field.gd`:
+- `38400.0`, the face edge (lines 371, 447, 456, 624): becomes `PLANET_NC × COL / 4`;
+- `300`, World's lattice size (lines 515, 522): becomes the field's own node count;
+- **the level ladder:** `LEVEL0` 3 tiles to a face edge and `LEVELS` 5 give node spacings of 512 down to 32 units at medium only. The rule is to keep the finest spacing at 32 and the coarsest near 512, so the level count follows the size: tiny 3, small 4, medium 5, big 6, huge 7;
+- **the tile key** (level, then i and j at 7 bits each) caps a level at 127 tiles to a face edge. Big's finest level has 96 and huge's 192, so i and j widen to 9 bits (3 + 9 + 9 bits, well inside an int). Medium's keys keep their values.
+
+Elsewhere:
+- `look.gd`'s far cities follow World's place list, whose counts Game Design ruled by the square root of the area. Check at each size; there's no constant to change if they're read from the list.
+- `render/vfx/meteor.gd`'s radius is World's grant (`grant-rendering-meteor.patch`). That's VFX's path; the change is right.
 
 ## The work, in order
 
-1. **Read the size from the match,** as the sim does: the radius, World's lattice size and the level count from it. Keep the near ground's spacing (32 units at the finest level) and the far ground's (about 512 at level 0) by choosing `LEVEL0` and `LEVELS` per size, and widen the key. Medium must come out byte-identical, which the tile, sweep and ground checks and the render gates show.
-2. **Big and huge** should then draw correctly, since the tiles are rings round the camera. Check: the tile check and the feet check at each size, and a still of each against medium.
-3. **Tiny and small are a look question.** A tower 4,875 units tall on a planet of radius 6,519 reads as a spike on a ball, and the horizon curves hard. That's Art's relief cap (World's plan) and Orb's look, from stills, before either is offered.
-4. **The look gate per size:** a side-by-side for medium showing nothing changed, and a first still of each other size.
+1. **Size from the match:** the face edge, the lattice size, the level count and the wider key, all from `PLANET_NC` and the field. Medium must come out byte-identical; the tile, sweep and ground checks, the render gates and the feet check show it.
+2. **Small and big:** the tile check, the feet check and the render gates at each, through a test word that picks the size (World's setup key). A still of each against medium at the same seed and tick, through Tools' launcher.
+3. **Measured:** Performance's frame readings at small, medium and big, in a quiet window. My part is the scratch export and the size words. The tile pool (800 layers today) may need about 300 more at big for the sixth level's ring, about 2 MB; that shows in the reading.
+4. **Tiny and huge,** when Orb's answer comes:
+   - Tiny is a look question first. A tower 4,875 units tall on a radius of 6,519 reads as a spike on a ball, and the horizon curves hard. That's Art's relief cap (World's plan) and Orb's look, from stills, before it's offered.
+   - Huge needs the seventh level and World's lattice memory (below).
+5. **The look gate per size:** a side-by-side for medium showing nothing changed, and a first still of each other size. These are new pictures, not changes to the shipped look, so the stills go to the EP with the size words.
 
 ## Memory
 
-The ground lattice is the risk (11 MB at medium, 46 MB at big, 182 MB at huge with three planets kept), and it's World's (`WorldField.of`). The design page's fix is one planet's lattice from big upward, or a face reserved only when first read. The tile ground's own memory doesn't grow with the size: 800 layers of 28 × 28 heights and ids, about 5 MB at every size. GroundField's per-column rows grow with the columns: about 0.5 MB at medium, 1.8 MB at huge.
+- **The ground lattice is the risk,** and it's World's (`WorldField.of`): 11 MB at medium, 46 MB at big, 182 MB at huge with three planets kept. The design page's fix is one planet's lattice from big upward, or a face reserved only when first read.
+- **The tile ground's own memory** barely grows: about 5 MB at every size (800 layers of 28 × 28), plus about 2 MB of pool at big and 4 MB at huge.
+- **GroundField's per-column rows** grow with the columns: about 0.5 MB at medium, 1 MB at big, 2 MB at huge.
 
 ## Cost (tokens, estimates)
 
 | Step | Estimate |
 |---|---|
-| 1. The size read from the match, the ladder and the key | ~0.8M |
-| 2. Gates and the feet check at five sizes | ~1.2M |
-| 3 and 4. Stills and the look gate per size | ~1.5M |
-| **Total** | **~3.5M** |
+| 1. Size from the match, the ladder and the key (medium byte-identical) | ~0.8M |
+| 2. Small and big: checks, feet check, stills | ~0.8M |
+| 3. Performance's readings: exports and words | ~0.2M |
+| **A1's exit (small, medium, big)** | **~1.8M** |
+| 4. Tiny and huge: checks, stills, the look question | ~0.9M |
+| 5. Look gate pictures for all five | ~0.5M |
+| **All five** | **~3.2M** |
 
-It needs World's size parks on main first (the sim side), and Art's relief cap for tiny.
+It needs, on a scratch stack before step 1:
+- World's `planet-sizes` park;
+- Simulation's `setPlanet` grant (`grant-simulation-sizes.patch`);
+- the size's setup key.
+
+Tiny also needs Art's relief cap.

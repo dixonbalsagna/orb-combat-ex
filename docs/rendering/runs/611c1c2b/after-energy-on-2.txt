@@ -1,0 +1,29 @@
+# The after-energy park: after_check re-scripted (after_rush.diff 479239d6, 88 lines), on main 611c1c2b and on 611c1c2b + Simulation's energy-on (A-ENERGY-04)
+## after_check on ar1 (main + energy-on)
+exit 0
+ok    seed 7, 900 ticks; seed 8, 900 ticks; seed 9, 900 ticks; seed 10, 900 ticks; seed 11, 900 ticks; seed 12, 900 ticks; seed 13, 900 ticks; seed 14, 900 ticks; seed 15, 900 ticks; seed 16, 900 ticks: at most 5 after-images are drawn round a fighter on any tick ([5, 4]; the limit is 5), and VFX's tally takes one to be shown 5 
+ok    a match has a rush in it: the five are reached (5, seed 16), so the limit is tried
+ok    on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [5, 4])
+ok    eight alive round one fighter: 5 are drawn, and the three left out are the oldest
+ok    one within 24 units of its fighter is not drawn and takes no place: the five off him are all drawn (5)
+ok    a short beam's tail is where it always was (900 units at half a pixel a unit and wider views, bright), and a calm beam's at any size
+ok    a planet-crossing beam (32,058 units): its bright tail uncovers at most 1000 pixels a tick at any zoom (the cap is 1000; it was 34087 in one tick at 0.85 pixels a unit), only ever moves away, and its calm tail is where it always was
+after check passed
+## after_check on ar0 (main as it is)
+exit 0
+ok    seed 7, 900 ticks: at most 5 after-images are drawn round a fighter on any tick ([1, 5]; the limit is 5), and VFX's tally takes one to be shown 5 ticks
+ok    a match has a rush in it: the five are reached (5, seed 7), so the limit is tried
+ok    on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [1, 5])
+ok    eight alive round one fighter: 5 are drawn, and the three left out are the oldest
+ok    one within 24 units of its fighter is not drawn and takes no place: the five off him are all drawn (5)
+ok    a short beam's tail is where it always was (900 units at half a pixel a unit and wider views, bright), and a calm beam's at any size
+ok    a planet-crossing beam (32,058 units): its bright tail uncovers at most 1000 pixels a tick at any zoom (the cap is 1000; it was 34087 in one tick at 0.85 pixels a unit), only ever moves away, and its calm tail is where it always was
+after check passed
+## the five ground checks and the render gates on main + energy-on with the park
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 19 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 1 gatesdone 

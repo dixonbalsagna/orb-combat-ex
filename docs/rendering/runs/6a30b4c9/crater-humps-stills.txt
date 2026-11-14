@@ -1,0 +1,10 @@
+# The humps in a crater, the picture beside crater-humps-probe.txt: Orb's 16:46 play of 9 November replayed on its own build's web folder
+# (homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/web, the page words in the file: planet=7&meteor=loud&tiles=1 and the rest) through
+# Tools' blackbox-clip (one capture, below normal, timed): 13 stills, ticks 18560 to 18920 every 30, around the crater made at tick 18559
+# (radius 1992). The file carries no checkpoints, so the clip compared none (clip.json: recorded 0, compared 0): it is the replay path, not proof
+# bit for bit.
+# Stills (uncommitted, they show fighters): docs/rendering/img/lookgate/crater-humps-orb-t18560.jpg ... -t18920.jpg.
+# What they show: from tick 18710 the camera is down in the new bowl. Its far wall is drawn in the crater look's flat striped tones, and along
+# the wall's top and the slope before it runs a row of rounded green humps: the hills of the ground under the bowl, kept because a crater is
+# added to the ground rather than levelling it (the probe: 60 to 130 units over the floor beside them, three on one line). The picture and the
+# sim's ground agree; the cause is the crater's shape (World's), not the drawing.

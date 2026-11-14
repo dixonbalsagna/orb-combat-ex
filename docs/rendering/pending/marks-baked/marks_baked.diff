@@ -1,0 +1,373 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -594,6 +594,8 @@
+ const TILE_BAND := Vector3(-150.0, -30.0, 150.0)
+ ## The bowls the tile ground draws from World's store: how many, nearest the camera (the vertex stage's array), how often the choice is made again, and the seconds a new one takes to open.
+ const TILE_BOWLS: int = 16
++const BOWL_FEET_REACH: float = 300.0    # a bowl this far past its reach from a body is drawn before the nearest to the camera (4 body heights)
++const BOWL_FEET_LIFT: float = 30.0      # a body this near the ground stands in a bowl dug under it: drawn open at once
+ const TILE_BOWL_FRAMES: int = 15
+ const TILE_BOWL_OPEN: float = 0.25
+ ## Art's crater (docs/art/crater-look.md). CRATER_RINGS: depth of the lip, the outer wall's end, the inner wall's end; below .w of slope it's floor.
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -1515,6 +1515,8 @@
+ 
+ ## The tile ground's footings: every building once, then those near the camera again as finer tiles come, a few a frame. A footing that moved sets its building again.
+ func _tile_foot_slice(S: SimState, cam: Vector3) -> void:
++	if source != null:
++		return   # a second pane: the first stands the buildings for both (its _foot and _falls are shared; _bld_seen isn't)
+ 	var n: int = S.buildings.size()
+ 	if n == 0:
+ 		return
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -71,6 +71,12 @@
+ var _job_recs: bool = false
+ var _job_wet: bool = false
+ var _job_band: bool = false
++var _job_marks: bool = false        # the job's nodes take the store's grooves (a field world, level 1 and finer, a store with marks)
++var _marks_n: int = 0               # the store's records read for rebakes
++var _rebake: Array = []             # tile keys a new mark reaches, filled before any new tile
++var _rebake_set: Dictionary = {}
++var rebakes: int = 0                # for tools: the tiles baked again
++var _restale: bool = false          # a tile was stored after this frame's lift reads: read the bodies' columns again
+ var _has_pads: bool = false
+ var _urgent_until: int = 0
+ var _ask_list: Array = []            # tiles asked for ahead of the camera, level 1 first
+@@ -399,7 +405,15 @@
+ 			budget_us = maxi(budget_us, RenderLook.TILE_FILL_US * RenderLook.TILE_URGENT_X)
+ 	elif _frame < _ask_until and not _ask_list.is_empty():
+ 		budget_us = maxi(budget_us, RenderLook.TILE_ASK_US)
++	if field_world:
++		_marks_ask()
+ 	while Time.get_ticks_usec() - t0 < budget_us:
++		if _job_key < 0 and not _rebake.is_empty():
++			var rk: int = _rebake.pop_front()
++			_rebake_set.erase(rk)
++			if _layer.has(rk):
++				rebakes += 1
++				_start(rk)
+ 		if _job_key < 0:
+ 			var best: int = -1
+ 			var bd: float = INF
+@@ -426,6 +440,13 @@
+ 			_start(best)
+ 		if not _fill_job(t0, budget_us):
+ 			break
++	if _restale and _S != null and _S.frame != null and not _off.is_empty():
++		_restale = false
++		_bodies_off()
++		if _off_dirty:
++			_off_dirty = false
++			_off_img.set_data(OFF_N, 1, false, Image.FORMAT_RGF, _off.to_byte_array())
++			off_tex.update(_off_img)
+ 	_foot_slice(t0, budget_us)
+ 	_crater_slice()
+ 	fill_us = Time.get_ticks_usec() - t0
+@@ -439,6 +460,7 @@
+ 	_job_t.resize(TEX * TEX)
+ 	_job_any_wet = false
+ 	_job_c.resize(TEX * TEX * 4)
++	_job_marks = field_world and ((k >> 3) & 7) >= 1 and int(_S.storeN) > 0
+ 	if field_world:
+ 		_job_recs = _records_reach(k)
+ 		_job_wet = true   # level 0 too: in fast flight it lies under the fight for much of a crossing, and a lake without its water reads as a brown table
+@@ -539,6 +561,11 @@
+ 			if place_w > 0.0 and not _has_pads:
+ 				var col: float = px / SimConst.COL
+ 				h = lerpf(h, lerpf(float(_S.base[pc]), float(_S.base[(pc + 1) % SimConst.NC]), col - floor(col)), place_w)
++	if _job_marks:
++		# The store's grooves (scorch, trench): heightDelta less the craters' sum, which the vertex stage's bowls draw (A1 clipping).
++		var pt: Vector2 = WorldStore.parts(_S, dp[0], dp[1], dp[2])
++		if pt.y < 0.0:
++			h += minf(pt.x, pt.y) - pt.x
+ 	if _job_recs and _job_wet and place_w < 0.5:
+ 		wet = WorldField.recordWater(_S, dp[0], dp[1], dp[2], h)
+ 	if place_w > 0.5:
+@@ -556,7 +583,9 @@
+ 
+ 
+ func _store() -> void:
+-	var slot: int = _free_slot()
++	var slot: int = int(_layer.get(_job_key, -1))   # a rebake: the tile's own slot
++	if slot < 0:
++		slot = _free_slot()
+ 	if slot < 0:
+ 		_job_key = -1   # the view moved on while it was filling, and took the last layer
+ 		return
+@@ -573,6 +602,7 @@
+ 	ids.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RGBA8, _job_c), slot)
+ 	if ((_job_key >> 3) & 7) > 0 and _job_on_line():
+ 		stale_off()
++		_restale = true
+ 	_job_key = -1
+ 
+ 
+@@ -673,11 +703,7 @@
+ 			stale_off()
+ 	# The columns under every body first, whatever the budget: a fighter never stands on a column the table hasn't read
+ 	# (the start, a finer tile, the line turning), or his feet are drawn on the table's last value (A1 clipping).
+-	var bodies: Array = SimStage.bodies(_S) if _S.stage != null else _S.fighters
+-	for f in bodies:
+-		var fc: int = int(floor(SimWrap.wrap(float(f.x)) / SimConst.COL))
+-		for dc in [0, -1, 1]:
+-			_off_read(posmod(fc + dc, SimConst.NC))
++	_bodies_off()
+ 	var c0: int = int(floor(x / SimConst.COL)) - OFF_N / 2
+ 	var done: int = 0
+ 	for q in range(OFF_REACH):
+@@ -694,6 +720,54 @@
+ 		off_tex.update(_off_img)
+ 
+ 
++## The store's new records: a groove (scorch, trench) or a crater asks again for the tiles it reaches at level 1 and finer, read
++## at its point(s) and a half width either way (a crater: its reach). A crater too, since the tiles take the grooves less
++## the craters' sum. A rollback that shortens the store starts the count again.
++func _marks_ask() -> void:
++	var n: int = int(_S.storeN)
++	if n < _marks_n:
++		_marks_n = 0
++	while _marks_n < n:
++		var o: int = _marks_n * WorldStore.STRIDE
++		_marks_n += 1
++		var kd: int = int(_S.store[o])
++		var pts: Array = []
++		var reach: float = 0.0
++		if kd == WorldStore.KIND_SCORCH:
++			pts = [Vector3(_S.store[o + 1], _S.store[o + 2], _S.store[o + 3])]
++			reach = float(_S.store[o + 4])
++		elif kd == WorldStore.KIND_CRATER:
++			pts = [Vector3(_S.store[o + 1], _S.store[o + 2], _S.store[o + 3])]
++			reach = 2.0 * float(_S.store[o + 4])
++		elif kd == WorldStore.KIND_TRENCH:
++			var a := Vector3(_S.store[o + 1], _S.store[o + 2], _S.store[o + 3])
++			var b := Vector3(_S.store[o + 4], _S.store[o + 5], _S.store[o + 6])
++			pts = [a, (a + b).normalized(), b]
++			reach = float(_S.store[o + 8])
++		else:
++			continue
++		for q in pts:
++			var qn: Vector3 = (q as Vector3).normalized()
++			var t1: Vector3 = qn.cross(Vector3.UP if absf(qn.y) < 0.9 else Vector3.RIGHT).normalized()
++			var t2: Vector3 = qn.cross(t1)
++			var dr: float = reach / R
++			for sp in [qn, (qn + t1 * dr).normalized(), (qn - t1 * dr).normalized(), (qn + t2 * dr).normalized(), (qn - t2 * dr).normalized()]:
++				for L in range(1, LEVELS):
++					var k: int = key_at(sp, L)
++					if _layer.has(k) and not _rebake_set.has(k):
++						_rebake_set[k] = true
++						_rebake.append(k)
++
++
++## The columns under every body, read if they aren't yet (keep_off, and again after a tile is stored).
++func _bodies_off() -> void:
++	var bodies: Array = SimStage.bodies(_S) if _S.stage != null else _S.fighters
++	for f in bodies:
++		var fc: int = int(floor(SimWrap.wrap(float(f.x)) / SimConst.COL))
++		for dc in [0, -1, 1]:
++			_off_read(posmod(fc + dc, SimConst.NC))
++
++
+ ## One column of the table, if it isn't read for that column yet: the drawn ground there less the ground he stands on. False
+ ## when it was read already.
+ func _off_read(col: int) -> bool:
+@@ -706,7 +780,7 @@
+ 	var b: float = float(_S.base[col]) if not field_world else _stand_ground(col, d)
+ 	# Dry ground below sea level is drawn at the sea's level; past the shore he's on the water either way.
+ 	_off[idx * 2] = maxf(height_at(d), 0.0) - (b if b >= WorldWater.SHORE_WET else maxf(b, 0.0))
+-	_off[idx * 2 + 1] = b
++	_off[idx * 2 + 1] = b if not field_world else 0.5 * (SimField.col(_S, col) + SimField.col(_S, (col + 1) % SimConst.NC))   # the ground he stands on, for the fade: a body over it by TILE_LIFT_FROM is flying
+ 	_off_dirty = true
+ 	return true
+ 
+@@ -716,7 +790,7 @@
+ ## WorldStore.heightDelta there. The strip's deform is drawn by the rows, so it isn't in either.
+ func _stand_ground(col: int, d: Vector3) -> float:
+ 	var g: float = 0.5 * (SimField.col(_S, col) + SimField.col(_S, (col + 1) % SimConst.NC))
+-	return g - WorldStore.heightDelta(_S, d.x, d.y, d.z)
++	return g - WorldStore.parts(_S, d.x, d.y, d.z).x   # less the craters' sum only: the tiles carry the grooves (a groove not yet baked: he stands on the drawn, undug ground)
+ 
+ 
+ func _sim_ground(d: Vector3) -> float:
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -249,6 +249,17 @@
+ 	return clampi(RenderLook.TILE_FILL_US + int(RenderLook.TILE_FILL_ROOM * (float(RenderLook.TILE_FILL_TARGET_US) - _fill_dt)), RenderLook.TILE_FILL_US, RenderLook.TILE_FILL_MAX_US)
+ 
+ 
++## Is a bowl at q, radius r, under a body on the ground? Then it's drawn open at once: the sim digs it at once, and an opening
++## drawn under him has his feet in the ground for a quarter second (A1 clipping).
++func _under_feet(S: SimState, q: Vector3, r: float) -> bool:
++	for f in (SimStage.bodies(S) if S.stage != null else S.fighters):
++		if float(f.y) - WorldTerrain.groundY(S, float(f.x)) > RenderLook.BOWL_FEET_LIFT:
++			continue
++		if field.dir_at(float(f.x), float(f.z) if "z" in f else 0.0, S.frame).distance_to(q) * field.R < r * (1.0 + WorldCrater.RIM_OUT):
++			return true
++	return false
++
++
+ ## The bowls the vertex stage draws: World's store is append-only, so a frame reads only what's new, and the nearest few to the camera are chosen again now and then. A rollback that shortens the store starts the list again.
+ ## A bowl opens over TILE_BOWL_OPEN from when the render first saw it, by its own clock (_clock): the record's time is the sim's
+ ## clock, which stands at 0 through the opening, so the first-meteor landing's craters never opened while the fighters stood in
+@@ -263,19 +274,33 @@
+ 	while _cb_seen < S.storeN:
+ 		var o: int = _cb_seen * WorldStore.STRIDE
+ 		if int(S.store[o]) == WorldStore.KIND_CRATER:
+-			var made: float = _clock - RenderLook.TILE_BOWL_OPEN - 1.0 if _cb_fresh else _clock - maxf(S.T - float(S.store[o + 8]), 0.0)
++			var made: float = _clock - RenderLook.TILE_BOWL_OPEN - 1.0 if (_cb_fresh or _under_feet(S, Vector3(S.store[o + 1], S.store[o + 2], S.store[o + 3]), float(S.store[o + 4]))) else _clock - maxf(S.T - float(S.store[o + 8]), 0.0)
+ 			_cb.append([S.store[o + 1], S.store[o + 2], S.store[o + 3], S.store[o + 4], S.store[o + 5], S.store[o + 6], made])
+ 			fresh = true
+ 		_cb_seen += 1
+ 	_cb_fresh = false
++	# A bowl still opening snaps open once a body stands in it: the sim dug it at once (A1 clipping).
++	for e in _cb:
++		if float(e[6]) > _clock - RenderLook.TILE_BOWL_OPEN and _under_feet(S, Vector3(e[0], e[1], e[2]), float(e[3])):
++			e[6] = _clock - RenderLook.TILE_BOWL_OPEN - 1.0
++			fresh = true
+ 	_cb_due -= 1
+ 	if not fresh and _cb_due > 0:
+ 		return
+ 	_cb_due = RenderLook.TILE_BOWL_FRAMES
+ 	var near: Array = []
++	var feet: Array = []   # where the bodies stand: a bowl under one is drawn before any nearer the camera (A1 clipping)
++	for f in (SimStage.bodies(S) if S.stage != null else S.fighters):
++		feet.append(field.dir_at(float(f.x), float(f.z) if "z" in f else 0.0, S.frame))
+ 	for k in range(_cb.size()):
+ 		var e: Array = _cb[k]
+-		near.append([_pv.distance_squared_to(Vector3(e[0], e[1], e[2])), k])
++		var q := Vector3(e[0], e[1], e[2])
++		var dd: float = _pv.distance_squared_to(q)
++		for fd in feet:
++			if (fd as Vector3).distance_to(q) * field.R < 2.0 * float(e[3]) + RenderLook.BOWL_FEET_REACH:
++				dd -= 16.0   # before every bowl by distance alone (a squared chord is under 4)
++				break
++		near.append([dd, k])
+ 	near.sort()
+ 	var n: int = mini(near.size(), RenderLook.TILE_BOWLS)
+ 	_cb_a.resize(RenderLook.TILE_BOWLS)
+--- /dev/null
++++ b/render/tools/feet_check.gd
+@@ -0,0 +1,122 @@
++extends SceneTree
++## The feet check (Rendering, A1 clipping; the stand-in's planet design §6): a fighter's feet as drawn against the ground as drawn,
++## computer against computer on the tile ground, through the game's own main with its own setup (so the opening plays), every frame
++## for each fighter standing (his y within 1 unit of the sim's ground):
++##   the ground drawn under him: the finest tile (RenderTileField.height_at; it carries the store's grooves), the strip rows' offset
++##   (GroundField.offset_at), and the store's bowls read from the tile material itself (tile_bowls, opening included);
++##   his feet as drawn: the sim's y plus the lift the shared placement gives him (RenderTileField.lift, the shader's twin).
++## Passes when no sample is more than WORST units off either way and at most SHARE of them are more than OVER off.
++## Needs the tile ground on (the globe ground by default, or --tiles). A long gate: about 20 minutes, run it at below-normal priority.
++##   godot --headless --path . --script res://render/tools/feet_check.gd [-- --seeds=1,2,... --ticks=1800]
++
++var main: Node
++var seeds: Array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
++var ticks: int = 1800
++const OVER: float = 8.0
++const WORST: float = 25.0
++const SHARE: float = 0.03
++
++
++func _initialize() -> void:
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--seeds="):
++			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
++		elif a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++	var vpn := SubViewport.new()
++	vpn.size = Vector2i(1280, 720)
++	root.add_child(vpn)
++	main = load("res://render/main.tscn").instantiate()
++	main.manual = true
++	vpn.add_child(main)
++	_run.call_deferred()
++
++
++## tile_read.gdshaderinc tile_bowls, from the tile material's own uniforms.
++func _bowls(tg, d: Vector3) -> float:
++	var m: ShaderMaterial = tg.mat
++	var n: int = int(m.get_shader_parameter("cb_n"))
++	if n <= 0:
++		return 0.0
++	var A = m.get_shader_parameter("cb_a")
++	var B = m.get_shader_parameter("cb_b")
++	var now: float = float(m.get_shader_parameter("cb_now"))
++	var opn: float = float(m.get_shader_parameter("cb_open"))
++	var rim: Vector2 = m.get_shader_parameter("cb_rim")
++	var R: float = float(tg._reff)
++	var s: float = 0.0
++	for k in range(n):
++		var a: Vector4 = A[k]
++		var b: Vector4 = B[k]
++		var u: float = (d - Vector3(a.x, a.y, a.z)).length() * R / a.w
++		if u >= 1.0 + rim.y:
++			continue
++		var h: float = 0.0
++		if u < 1.0:
++			var t: float = 1.0 - u * u
++			h = -b.x * t * t
++			var lo: float = 1.0 - rim.x
++			if u > lo:
++				var q: float = (u - lo) / rim.x
++				h += b.y * q * q * (3.0 - 2.0 * q)
++		else:
++			var w: float = (u - 1.0) / rim.y
++			h = b.y * (1.0 - w * w * (3.0 - 2.0 * w))
++		var o: float = clampf((now - b.z) / opn, 0.0, 1.0)
++		s += h * o * o * (3.0 - 2.0 * o)
++	return s
++
++
++func _run() -> void:
++	await process_frame
++	main.started = true
++	if not RenderTileGround.on:
++		print("feet check FAILED: the tile ground is off (it needs the globe ground on, or --tiles)")
++		quit(1)
++		return
++	var n_all: int = 0
++	var n_over: int = 0
++	var worst: float = 0.0
++	for seed in seeds:
++		main.start_match(seed, {"p1": true, "p2": true})
++		while main.host.loading():
++			main.frame(1.0 / 60.0)
++		var S: SimState = main.host.S
++		var pane = main.pane
++		var P: PlanetView = pane.planet
++		var tf: RenderTileField = P.tile_field
++		var t_end: int = main.host.ticks + ticks
++		var n: int = 0
++		var over: int = 0
++		var w: float = 0.0
++		while main.host.ticks < t_end and not (S.game.ko != null and S.game.koT > 3.0):
++			main.frame(1.0 / 60.0)
++			if main.host.loading() or S != main.host.S:
++				break
++			var tg = pane._tiles
++			if tg == null or tf == null:
++				continue
++			var fr = RenderTileGround._shown_frame(S)
++			for F in S.fighters:
++				var x: float = float(F.x)
++				var foot: float = float(F.y)
++				var z: float = float(F.z) if "z" in F else 0.0
++				if absf(foot - WorldTerrain.groundY(S, x)) > 1.0:
++					continue
++				var d: Vector3 = tf.dir_at(x, z, fr)
++				var xw: float = SimWrap.wrap(x)
++				var col: int = int(xw / SimConst.COL) % SimConst.NC
++				var drawn: float = tf.height_at(d) + P.ground.offset_at(S, col, xw, z) + _bowls(tg, d)
++				var gap: float = absf(drawn - (foot + tf.lift(x, foot, z)))
++				n += 1
++				w = maxf(w, gap)
++				if gap > OVER:
++					over += 1
++		print("%s seed %d: %d standing samples, %d over %.0f units, the worst %.1f" % ["ok  " if (w <= WORST and float(over) <= SHARE * float(maxi(n, 1))) else "FAIL", seed, n, over, OVER, w])
++		n_all += n
++		n_over += over
++		worst = maxf(worst, w)
++	var ok: bool = worst <= WORST and float(n_over) <= SHARE * float(maxi(n_all, 1))
++	print("%s %d seeds: %d standing samples, %d over %.0f units (%.1f%%, at most %.0f%%), the worst %.1f (at most %.0f)" % ["ok  " if ok else "FAIL", seeds.size(), n_all, n_over, OVER, 100.0 * float(n_over) / float(maxi(n_all, 1)), 100.0 * SHARE, worst, WORST])
++	print("feet check %s" % ("passed" if ok else "FAILED"))
++	quit(0 if ok else 1)

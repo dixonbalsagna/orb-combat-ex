@@ -1,0 +1,14 @@
+# The feet check as a gate (render/tools/feet_check.gd 5de65e58) on main 83a5b963 + feet-ground + marks-baked, --tiles, seeds 1 to 10, 1800 ticks each
+exit 1
+FAIL seed 1: 1104 standing samples, 94 over 8 units, the worst 22.0
+FAIL seed 2: 163 standing samples, 9 over 8 units, the worst 15.1
+ok   seed 3: 345 standing samples, 0 over 8 units, the worst 5.0
+ok   seed 4: 679 standing samples, 0 over 8 units, the worst 6.1
+ok   seed 5: 77 standing samples, 0 over 8 units, the worst 2.1
+ok   seed 6: 88 standing samples, 0 over 8 units, the worst 2.1
+FAIL seed 7: 359 standing samples, 21 over 8 units, the worst 8.7
+ok   seed 8: 155 standing samples, 0 over 8 units, the worst 2.1
+ok   seed 9: 950 standing samples, 1 over 8 units, the worst 10.9
+ok   seed 10: 94 standing samples, 0 over 8 units, the worst 3.2
+FAIL 10 seeds: 4014 standing samples, 125 over 8 units (3.1%, at most 3%), the worst 22.0 (at most 25)
+feet check FAILED

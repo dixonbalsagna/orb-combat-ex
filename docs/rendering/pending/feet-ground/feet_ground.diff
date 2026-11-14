@@ -1,0 +1,76 @@
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -225,6 +225,7 @@
+ 		_tf_i = 0
+ 		_tf_first = true
+ 		ground.tile_field = tile_field
++		ground.rebuild(S)   # the rows were built before the tile field (_bs_share): a crater already made must be found to be the store's (GroundField.held), or the rows draw it twice
+ 		tile_field.ground = ground
+ 		for tm in trees.meshes:
+ 			tile_field.add_feet(tm[1])
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -671,23 +671,20 @@
+ 			_off_axis = ax
+ 			_off_stale_at = _frame
+ 			stale_off()
++	# The columns under every body first, whatever the budget: a fighter never stands on a column the table hasn't read
++	# (the start, a finer tile, the line turning), or his feet are drawn on the table's last value (A1 clipping).
++	var bodies: Array = SimStage.bodies(_S) if _S.stage != null else _S.fighters
++	for f in bodies:
++		var fc: int = int(floor(SimWrap.wrap(float(f.x)) / SimConst.COL))
++		for dc in [0, -1, 1]:
++			_off_read(posmod(fc + dc, SimConst.NC))
+ 	var c0: int = int(floor(x / SimConst.COL)) - OFF_N / 2
+ 	var done: int = 0
+ 	for q in range(OFF_REACH):
+ 		# Outward from the middle: the columns at the feet first.
+ 		var k: int = OFF_N / 2 + (q + 1) / 2 * (1 if q % 2 == 0 else -1)
+-		var col: int = posmod(c0 + k, SimConst.NC)
+-		var idx: int = col % OFF_N
+-		if _off_col[idx] == col:
++		if not _off_read(posmod(c0 + k, SimConst.NC)):
+ 			continue
+-		_off_col[idx] = col
+-		var cx: float = (float(col) + 0.5) * SimConst.COL
+-		var d: Vector3 = dir_at(cx, 0.0, _S.frame)
+-		var b: float = float(_S.base[col]) if not field_world else _sim_ground(d)
+-		# Dry ground below sea level is drawn at the sea's level; past the shore he's on the water either way.
+-		_off[idx * 2] = maxf(height_at(d), 0.0) - (b if b >= WorldWater.SHORE_WET else maxf(b, 0.0))
+-		_off[idx * 2 + 1] = b
+-		_off_dirty = true
+ 		done += 1
+ 		if done >= budget:
+ 			break
+@@ -695,6 +692,31 @@
+ 		_off_dirty = false
+ 		_off_img.set_data(OFF_N, 1, false, Image.FORMAT_RGF, _off.to_byte_array())
+ 		off_tex.update(_off_img)
++
++
++## One column of the table, if it isn't read for that column yet: the drawn ground there less the ground he stands on. False
++## when it was read already.
++func _off_read(col: int) -> bool:
++	var idx: int = col % OFF_N
++	if _off_col[idx] == col:
++		return false
++	_off_col[idx] = col
++	var cx: float = (float(col) + 0.5) * SimConst.COL
++	var d: Vector3 = dir_at(cx, 0.0, _S.frame)
++	var b: float = float(_S.base[col]) if not field_world else _stand_ground(col, d)
++	# Dry ground below sea level is drawn at the sea's level; past the shore he's on the water either way.
++	_off[idx * 2] = maxf(height_at(d), 0.0) - (b if b >= WorldWater.SHORE_WET else maxf(b, 0.0))
++	_off[idx * 2 + 1] = b
++	_off_dirty = true
++	return true
++
++
++## The ground a fighter stands on at the middle of column col, less the planet store's marks (the tile ground draws those
++## itself): the sim's own column read (SimField.col, as WorldTerrain.groundY has it, at the level a stand reads), less
++## WorldStore.heightDelta there. The strip's deform is drawn by the rows, so it isn't in either.
++func _stand_ground(col: int, d: Vector3) -> float:
++	var g: float = 0.5 * (SimField.col(_S, col) + SimField.col(_S, (col + 1) % SimConst.NC))
++	return g - WorldStore.heightDelta(_S, d.x, d.y, d.z)
+ 
+ 
+ func _sim_ground(d: Vector3) -> float:

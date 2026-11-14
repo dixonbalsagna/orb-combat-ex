@@ -1,0 +1,55 @@
+# marks-baked (A1 clipping, part 2) on main 83a5b963 (Tools: owner-private packages carry Orb's own owner-approved notice (ou), stacked on feet-ground (4aa3ecc4)
+marks_baked.diff 10a4a514, 373 lines (sim/world/store.gd: a grant; render/core/tile_field.gd, tile_ground.gd, look.gd)
+import 0 errors 0
+golden.json byte-identical to main's
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+## the feet probe on m1 (feet-ground + marks-baked), --tiles, seeds 1 to 10, 1800 ticks each
+  seed 1, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 73
+seed 1, 1800 frames: standing samples 1104; drawn vs stood over 8: 382 (worst 138.4); feet under the drawn ground over 8: 73 (worst 22.0; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 73); feet over it by 8: 21 (worst 21.8)
+  seed 2, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 5
+seed 2, 1800 frames: standing samples 163; drawn vs stood over 8: 78 (worst 107.6); feet under the drawn ground over 8: 5 (worst 9.9; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 5); feet over it by 8: 4 (worst 15.1)
+  seed 3, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 3, 1800 frames: standing samples 345; drawn vs stood over 8: 66 (worst 134.4); feet under the drawn ground over 8: 0 (worst 5.0; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 3.2)
+  seed 4, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 4, 1800 frames: standing samples 679; drawn vs stood over 8: 52 (worst 37.3); feet under the drawn ground over 8: 0 (worst 6.0; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 1.8)
+  seed 5, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 5, 1800 frames: standing samples 77; drawn vs stood over 8: 0 (worst 4.6); feet under the drawn ground over 8: 0 (worst 1.2; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 2.1)
+  seed 6, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 6, 1800 frames: standing samples 88; drawn vs stood over 8: 0 (worst 6.0); feet under the drawn ground over 8: 0 (worst 1.2; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 2.1)
+  seed 7, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 7, 1800 frames: standing samples 359; drawn vs stood over 8: 26 (worst 34.5); feet under the drawn ground over 8: 21 (worst 8.7; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 21); feet over it by 8: 0 (worst 2.0)
+  seed 8, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 8, 1800 frames: standing samples 155; drawn vs stood over 8: 0 (worst 6.0); feet under the drawn ground over 8: 0 (worst 1.2; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 2.1)
+  seed 9, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 9, 1800 frames: standing samples 950; drawn vs stood over 8: 34 (worst 106.4); feet under the drawn ground over 8: 0 (worst 7.5; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 1 (worst 10.9)
+  seed 10, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 10, 1800 frames: standing samples 94; drawn vs stood over 8: 0 (worst 5.8); feet under the drawn ground over 8: 0 (worst 3.2; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 2.8)
+ALL, of the rest: frame off 0; crater drawn otherwise 0; undrawn store mark 78
+ALL 10 seeds: standing samples 4014; drawn vs stood over 8: 638 (worst 138.4); feet under the drawn ground over 8: 99 (worst 22.0; first 600 frames 0; bowl opening 0, lift not read 0, rest 99); feet over it by 8: 26 (worst 21.8)
+## the render gates' summary
+open exit 0
+depth exit 0
+shape exit 0
+patch exit 0
+pane exit 0
+stage exit 0
+lane exit 0
+ground exit 0
+after exit 0
+sky exit 0
+flashreg exit 0
+hudwords exit 0
+seam exit 0
+detintro exit 0
+det exit 0
+flight exit 0
+city exit 0
+cue exit 0
+flash exit 0
+splitsweep exit 0
+gatesdone

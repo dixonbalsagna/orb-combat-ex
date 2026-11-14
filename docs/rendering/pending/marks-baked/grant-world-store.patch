@@ -1,0 +1,47 @@
+--- a/sim/world/store.gd
++++ b/sim/world/store.gd
+@@ -129,6 +129,44 @@
+ 	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner])
+ 
+ 
++## heightDelta's two halves at a unit direction, read only: x the craters' sum (bowls, rims and aprons), y the least of the
++## grooves (scorch and trench, 0 for none). heightDelta is y < 0 ? min(x, y) : x. For the tile ground (Rendering, A1): its vertex
++## stage draws the craters, and the tiles carry the rest.
++static func parts(S, qx: float, qy: float, qz: float) -> Vector2:
++	if int(S.storeN) == 0:
++		return Vector2.ZERO
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
++	if not ent.grid.has(key):
++		return Vector2.ZERO
++	var lst: PackedInt32Array = ent.grid[key]
++	var sum: float = 0.0
++	var groove: float = 0.0
++	for k in lst:
++		var o: int = k * STRIDE
++		var kd: int = int(S.store[o])
++		if kd == KIND_TRENCH:
++			groove = minf(groove, _trench(S, o, qx, qy, qz, R))
++			continue
++		if kd != KIND_CRATER and kd != KIND_SCORCH:
++			continue
++		var dx: float = (qx - S.store[o + 1]) * R
++		var dy: float = (qy - S.store[o + 2]) * R
++		var dz: float = (qz - S.store[o + 3]) * R
++		var d: float = sqrt(dx * dx + dy * dy + dz * dz)
++		if kd == KIND_CRATER:
++			var u: float = d / S.store[o + 4]
++			if u < 2.0:
++				sum += WorldCrater.profile(u, S.store[o + 5], S.store[o + 6])
++		else:
++			var us: float = d / S.store[o + 4]
++			if us < 1.0:
++				var ts: float = 1.0 - us * us
++				groove = minf(groove, -S.store[o + 5] * ts * ts)
++	return Vector2(sum, groove)
++
++
+ ## The height the store adds at a unit direction: the sum of every crater's bowl, rim and apron there.
+ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
+ 	if int(S.storeN) == 0:
