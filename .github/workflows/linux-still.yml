@@ -1,0 +1,115 @@
+# Spike S5 (Tools, 2026-11-14; the A1 path, "a CI job starts the Linux build under a virtual display and saves one still"): does the exported Linux game start on a runner with no screen, and what does it show?
+# By hand only (workflow_dispatch); nothing gates anything and nothing deploys. The job exports the "Linux" desktop preset of a commit with the pinned Godot and templates, starts the exported binary under
+# Xvfb (a virtual X display) with the Compatibility renderer on Mesa's software GL, waits, takes ONE still of the whole display and keeps it for a day. The binary is NOT uploaded (this workflow is
+# not one of the desktop workflows: the only one that uploads a game binary is desktop-builds.yml, behind its lock). Reduce flashing is locked on by the same one-word edit the desktop builds make, and
+# the route scan runs first, so the program that is started is the program the desktop builds would carry.
+# One page of the result (what was tried, what it cost, what the still shows): docs/tools/s5-linux-still.md. Run it: `gh workflow run linux-still.yml`.
+name: Linux still (spike S5)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit, branch or tag to build (empty: the commit this workflow was started on)'
+        required: false
+        default: ''
+      wait:
+        description: 'Seconds the game runs before the still is taken'
+        required: false
+        default: '25'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash   # GitHub's `bash` is `bash --noprofile --norc -eo pipefail {0}`
+
+jobs:
+  still:
+    name: Start the Linux build under a virtual display and save one still
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - uses: ./.github/actions/setup-godot
+        with:
+          linux-templates: 'true'
+      - name: Lock Reduce flashing on (the same one-word edit the desktop builds make)
+        run: node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"
+      - name: Refuse unless the lock holds and no flag reaches normal mode
+        run: node tools/desktop-package.mjs routes --root "${GITHUB_WORKSPACE}"
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Write build_info.json
+        run: node tools/write-build-info.mjs --commit "$(git rev-parse HEAD)"
+      - name: Export Linux (release, Compatibility, x86_64, pck embedded)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/export/linux"
+          "$GODOT" --headless --path . --export-release "Linux" "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
+          chmod +x "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
+          ls -l "${RUNNER_TEMP}/export/linux"
+      - name: A virtual display and the software GL it needs
+        run: |
+          start=$(date +%s)
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 libxcursor1 libxi6 libxrandr2 libxinerama1 libxkbcommon0 x11-utils imagemagick
+          echo "installed in $(( $(date +%s) - start )) s" | tee "${RUNNER_TEMP}/apt.txt"
+      - name: Start the game under Xvfb and take one still
+        env:
+          WAIT: ${{ inputs.wait || '25' }}
+        run: |
+          mkdir -p "${RUNNER_TEMP}/still"
+          cd "${RUNNER_TEMP}/export/linux"
+          Xvfb :99 -screen 0 1280x720x24 > "${RUNNER_TEMP}/xvfb.txt" 2>&1 &
+          xvfb_pid=$!
+          sleep 3
+          export DISPLAY=:99
+          start=$(date +%s)
+          ./orb-combat-ex.x86_64 --rendering-driver opengl3 --audio-driver Dummy > "${RUNNER_TEMP}/game.txt" 2>&1 &
+          game_pid=$!
+          sleep "${WAIT}"
+          alive=no
+          if kill -0 "${game_pid}" 2>/dev/null; then alive=yes; fi
+          import -window root "${RUNNER_TEMP}/still/linux-still.png" || true
+          kill "${game_pid}" 2>/dev/null || true
+          kill "${xvfb_pid}" 2>/dev/null || true
+          {
+            echo '### Linux build under a virtual display'
+            echo
+            echo "- the game was still running after ${WAIT} s: ${alive}"
+            echo "- start to still: $(( $(date +%s) - start )) s"
+            if [ -s "${RUNNER_TEMP}/still/linux-still.png" ]; then
+              echo "- the still: $(identify -format '%wx%h, mean brightness %[fx:mean], %k colours' "${RUNNER_TEMP}/still/linux-still.png")"
+            else
+              echo '- no still was written'
+            fi
+            echo
+            echo 'the first lines the game printed:'
+            echo '```'
+            head -n 25 "${RUNNER_TEMP}/game.txt"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY" "${RUNNER_TEMP}/still/summary.md"
+          # a window that opened and drew something: the game was running and the still is neither missing nor one flat colour
+          test "${alive}" = "yes"
+          test -s "${RUNNER_TEMP}/still/linux-still.png"
+          test "$(identify -format '%k' "${RUNNER_TEMP}/still/linux-still.png")" -gt 8
+      - name: Keep the still and the game's first lines (one day; the binary is not kept)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: linux-still
+          path: |
+            ${{ runner.temp }}/still/linux-still.png
+            ${{ runner.temp }}/still/summary.md
+            ${{ runner.temp }}/game.txt
+            ${{ runner.temp }}/xvfb.txt
+            ${{ runner.temp }}/apt.txt
+          retention-days: 1
+          if-no-files-found: warn

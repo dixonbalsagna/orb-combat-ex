@@ -149,5 +149,8 @@ try {
 } finally {
   try { rmSync(tmp, { recursive: true, force: true }); } catch { /* left in the system temp folder */ }
 }
+// a plain desktop build's own save (solo-, kind orb-solo-match) is a report file too (A-UI-02)
+ok(SAVED.test('solo-6a30b4c-main-20261114-101500-report.json') && SAVED.test('solo-6a30b4c9-main-20261114-101500-save.json') && SAVED.test('solo-unknown-main-20261114-101500-report-2.json') && !SAVED.test('solo-6a30b4c-old-2026111-101500-report.json'), 'the saved-file pattern takes a desktop build\'s solo- file (7 or 8 character commit, report or save, the -<n> suffix) and refuses a malformed one');
+
 console.log(bad ? `lan-clip selftest: ${bad} of ${n} FAILED` : `lan-clip selftest ok: ${n} checks`);
 process.exitCode = bad ? 1 : 0;

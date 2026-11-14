@@ -20,8 +20,8 @@ import { fileURLToPath } from 'node:url';
 
 export const TAKE_DOWN_LINE = 3;
 export const OUR_GATE = 2.5;
-/** The clips every night reads: both modes of each. The night-sky clip joins when the capture hook has its scene (tools/flash/sources.json carries the same id). */
-export const EXPECTED = ['clash-normal', 'clash-reduced', 'collapse-normal', 'collapse-reduced', 'signature-normal', 'signature-reduced'];
+/** The clips every night reads: both modes of each, the night-sky clash among them (tools/flash/sources.json nightClips carries the same id). */
+export const EXPECTED = ['clash-normal', 'clash-reduced', 'collapse-normal', 'collapse-reduced', 'signature-normal', 'signature-reduced', 'clash-night-normal', 'clash-night-reduced'];
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 

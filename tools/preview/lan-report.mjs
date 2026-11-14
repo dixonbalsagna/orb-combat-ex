@@ -21,7 +21,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '../..');
 // Netcode's saved\ file (agreed 2026-11-08): lan-<commit8>-<main|old>-<yyyymmdd-hhmmss>-<over|pause|quit|report>.json, kind "orb-lan-match": a black-box-shaped replay with marks, frames and net.
 // NetLan adds "-2", "-3" ... when two saves land in the same second (two quick presses), so an optional -<n> sits before .json; the later save has the larger n.
-export const SAVED = /^lan-([0-9a-f]{8})-(main|old)-(\d{8}-\d{6})-(over|pause|quit|report)(?:-(\d+))?\.json$/i;
+// A plain desktop build's own save (A-UI-02, 2026-11-14; render/core/match_recorder.gd) has the same shape under another prefix, solo-<commit>-main-<time>-<report|save>.json, kind "orb-solo-match", with the build's 7 or 8 character commit.
+export const SAVED = /^(?:lan|solo)-([0-9a-f]{7,8}|unknown)-(main|old)-(\d{8}-\d{6})-(over|pause|quit|report|save)(?:-(\d+))?\.json$/i;
 const savedKey = (name) => { const m = SAVED.exec(name); return m ? m[3] + '-' + String(Number(m[5] || 1)).padStart(6, '0') : ''; };   // the timestamp, then the suffix (none counts as 1, so "-2" is later)
 const KINDS = [
   { dir: 'saved', re: SAVED },
@@ -48,9 +49,10 @@ export function findFiles(root, depth = 3) {
 /** The newest kept web build of a commit: homework/Files/builds/orb-first-play-<commit8>-*\/web with an index.html, or null. */
 export function keptBuildFor(buildsDir, commit) {
   if (!commit) return null;
-  const c8 = String(commit).slice(0, 8);
+  const c8 = String(commit).slice(0, 8);   // 8 characters (a LAN file), or 7 (a desktop save: the stamp's short commit), which still names one kept folder
   let names; try { names = readdirSync(buildsDir); } catch { return null; }
-  const hits = names.filter((n) => n.startsWith(`orb-first-play-${c8}-`)).map((n) => join(buildsDir, n, 'web')).filter((p) => existsSync(join(p, 'index.html')));
+  const prefix = c8.length >= 8 ? `orb-first-play-${c8}-` : `orb-first-play-${c8}`;
+  const hits = names.filter((n) => n.startsWith(prefix)).map((n) => join(buildsDir, n, 'web')).filter((p) => existsSync(join(p, 'index.html')));
   hits.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
   return hits[0] || null;
 }

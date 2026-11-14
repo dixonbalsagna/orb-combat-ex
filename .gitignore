@@ -41,3 +41,6 @@ tools/capture/raw/
 
 # UI run stills from the demo that show grey-box fighters (in-progress character art never goes on a public page); text records stay tracked
 docs/ui/runs/397a7adf/**/*.png
+
+# Tools run stills (large, many show fighters); the few tracked earlier stay tracked
+docs/tools/img/

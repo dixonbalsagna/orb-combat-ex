@@ -6,10 +6,20 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EXPECTED, judge, readingOf, readSummaries, report } from './nightly-ci.mjs';
+import { requiredClips } from './clips.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
+
+// the night clips (CD-09 item 5): every night's expected clip exists in the required set, with its own page words, so a clip the reading expects can be captured
+{
+  const ids = new Map(requiredClips().map((c) => [c.id, c]));
+  check('every clip the night reads is in the required set (sources.json)', EXPECTED.every((id) => ids.has(id)), EXPECTED.filter((id) => !ids.has(id)).join());
+  const n = ids.get('clash-night-reduced');
+  check('the night clash is the clash scene under the page word sky=night, both modes', !!n && n.scenario === 'clash' && n.words === 'sky=night' && n.reduced === true && ids.get('clash-night-normal').reduced === false);
+  check('no other clip carries page words', [...ids.values()].filter((c) => c.words).map((c) => c.id).join() === 'clash-night-normal,clash-night-reduced');
+}
 
 const row = (id, primary, red = 0, area15 = primary, twoSec = primary) => ({ id, result: { general: { flashes: primary }, red: { flashes: red }, combined: { lower: area15, stricter: twoSec } } });
 const clean = () => EXPECTED.map((id) => row(id, 1.5));
@@ -56,7 +66,7 @@ try {
   mkdirSync(join(d, 'a')); mkdirSync(join(d, 'b'));
   writeFileSync(join(d, 'a', 'summary.json'), JSON.stringify(clean().slice(0, 3)));
   writeFileSync(join(d, 'b', 'summary.json'), JSON.stringify(clean().slice(3)));
-  check('summaries in sub-folders are read together', readSummaries(d).length === 6);
+  check('summaries in sub-folders are read together', readSummaries(d).length === EXPECTED.length);
   let r = spawnSync(process.execPath, [join(here, 'nightly-ci.mjs'), d], { encoding: 'utf8' });
   check('the command exits 0 on a clean night', r.status === 0 && /flash reading clean/.test(r.stdout), r.stdout + r.stderr);
   const bad = clean(); bad[0] = row('clash-normal', 4);

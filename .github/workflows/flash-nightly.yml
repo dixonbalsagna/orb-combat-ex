@@ -1,5 +1,5 @@
 # The scheduled flash reading of main (corrective item CD-09, register row A-LEGAL-08; Tools, 2026-11-14).
-# Every night a Web export of main is made on a runner and a fixed set of clips (the beam clash, the building collapse and the signature, each in normal and in reduced-flashing mode) is
+# Every night a Web export of main is made on a runner and a fixed set of clips (the beam clash, the building collapse, the signature and the beam clash under the night sky, each in normal and in reduced-flashing mode) is
 # captured in headless Chrome with software rendering and read with the release pass's analyser (tools/flash/run-pixels.mjs, wcag.js). tools/flash/nightly-ci.mjs turns the readings
 # into the night's verdict: a clip over the take-down line of 3 on ANY reading (the primary, the area-15% one, the two-second memory, or the red count read directly) turns that job red, and
 # so does a clip that could not be read (a missing clip is never a pass). GitHub emails the repository owner about a failed scheduled run; player-watch.yml also raises an alarm when the last
@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clip: [clash-normal, clash-reduced, collapse-normal, collapse-reduced, signature-normal, signature-reduced]
+        clip: [clash-normal, clash-reduced, collapse-normal, collapse-reduced, signature-normal, signature-reduced, clash-night-normal, clash-night-reduced]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

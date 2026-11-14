@@ -94,6 +94,14 @@ jobs:
         run: node tools/check-workflows-selftest.mjs
       - name: Workflow files parse
         run: node tools/check-workflows.mjs
+      # Every CI job has a written time budget, two thirds of its limit (tools/ci-budgets.json; A-TOOLS-08): a job without one, or a limit that differs from the file's, fails here
+      - name: CI job budgets (self-test)
+        run: node tools/ci-budgets-check.mjs --self-test
+      - name: CI job budgets (every job of ci.yml has a written budget within two thirds of its limit)
+        run: node tools/ci-budgets-check.mjs
+      # The build check from packed data for a desktop build (A-TOOLS-10): the embedded pack, each switch row against the commit
+      - name: Build check self-test (a desktop build's packed data against its commit)
+        run: node tools/preview/build-check-selftest.mjs
       # Platform's phone head block in export_presets.cfg must match docs/perf/web-shell/ (node built-ins, a fifth of a second).
       - name: The web export's phone head is current
         run: node docs/perf/tools/web-head.mjs --check
@@ -152,6 +160,10 @@ jobs:
         run: node tools/preview/stack-selftest.mjs
       - name: "Pack verify self-test (a built pack's data keys against the build's list: a held or off row that is on in the data is found; no Godot, no browser)"
         run: node tools/preview/pck-verify-selftest.mjs
+      - name: Switch diff self-test (the rows that still differ between main's data and a build's packed data; A-CODE-03, no Godot, no browser)
+        run: node tools/preview/switch-diff-selftest.mjs
+      - name: Build compare self-test (a build's source tree against its commit, by blob id; A-CODE-03, no Godot, no browser)
+        run: node tools/preview/build-compare-selftest.mjs
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
       - name: Clip identity self-test (a clip records its seed and pairing; two different matches are not shown side by side)
@@ -177,10 +189,13 @@ jobs:
   # checks. The sim job above does not set GODOT, so `npm test --prefix sim` skips its
   # godot stage there and the parity check runs once, here. The .godot/ import cache is
   # created on the runner only (it is gitignored and never committed).
+  # The Godot headless checks, in three jobs (A-TOOLS-08, 2026-11-14). They were one job that ran 43 to 63 minutes under a limit of 75 (runs 43553420852, 43554356718, 43569719695). Each job now has a written
+  # budget, two thirds of its limit, and a new check goes into the job its kind belongs to: 1 the parity, the replays, the states and the memos; 2 the field, the cross-fight and the power checks; 3 the rollback
+  # and the render checks. A step that matches no group of the split goes to job 3. Measured per step before the split (minutes): job 1 about 16 to 20, job 2 about 14 to 18, job 3 about 20 to 25.
   godot-parity:
-    name: Godot headless checks (parity, determinism, seam)
+    name: Godot headless checks 1 of 3 (parity, replays, states, memos, chase)
     runs-on: ubuntu-24.04
-    timeout-minutes: 75   # was 30: 2026-11-08 the job outran it (measured: flash 27-28, net 39, world 23-25+, godot-parity 30+ minutes); no check had failed
+    timeout-minutes: 45   # budget 30 min; measured 16-20 (two thirds of the limit): A-TOOLS-08, 2026-11-14; the one job it came from ran 43 to 63 minutes under a limit of 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -223,6 +238,19 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/chase_tap_check.gd'
       - name: Chase rush check (a rush at a body in the air keeps the split open and the pane follows him, no flapping, the picture's step and jolt inside their limits)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/chase_rush_check.gd'
+
+  godot-sim:
+    name: Godot headless checks 2 of 3 (power, press, records, cross-fight, field)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45   # budget 30 min; measured 14-18 (two thirds of the limit): A-TOOLS-08, 2026-11-14; the one job it came from ran 43 to 63 minutes under a limit of 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      # A fresh clone has no class cache: the import pass registers the class_name scripts.
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
       - name: Power check (one energy model, the shares of every launching move, flat-out flight, two runs one hash and a rollback across launches)
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd'
       - name: Power check, negative control (a send past what he has must be seen)
@@ -245,6 +273,19 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd'
       - name: Cross end check, negative control (a fallen body left standing must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd -- --negative-control'
+
+  godot-roll-render:
+    name: Godot headless checks 3 of 3 (rollback, field rollback, render)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45   # budget 30 min; measured 20-25 (two thirds of the limit): A-TOOLS-08, 2026-11-14; the one job it came from ran 43 to 63 minutes under a limit of 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      # A fresh clone has no class cache: the import pass registers the class_name scripts.
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
       - name: Two-fights rollback check (four slots, lan, p120 and far; Netcode two-fights)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far'
       - name: Two-fights rollback check, negative control
@@ -490,7 +531,7 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: [qa, sim, data, flash, godot-parity, net, world, site]
+    needs: [qa, sim, data, flash, godot-parity, godot-sim, godot-roll-render, net, world, site]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10

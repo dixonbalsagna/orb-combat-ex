@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** [{ id, scenario, seed, reduced, ticks, multi, slots (null for the default pair), label }] in the order of sources.json. */
+/** [{ id, scenario, seed, reduced, ticks, multi, slots (null for the default pair), label, words? (extra page words, a night clip's) }] in the order of sources.json. */
 export function requiredClips(sources, roster) {
   const src = sources || JSON.parse(readFileSync(join(here, 'sources.json'), 'utf8'));
   const ros = roster || JSON.parse(readFileSync(join(here, '..', '..', 'data', 'fighters', 'roster.json'), 'utf8'));
@@ -23,5 +23,8 @@ export function requiredClips(sources, roster) {
       }
     }
   }
+  // `nightClips` (CD-09 item 5, 2026-11-14): a scene of the list above played under other page words, both modes, one seed each. The beam clash under the night key of the sky (`sky=night`): the brightest
+  // thing in the game against the darkest sky. Not in `scenarios`: the headless register run and check-log.js know scenes, not page words.
+  for (const nc of src.nightClips || []) for (const reduced of [false, true]) jobs.push({ id: `${nc.id}-${reduced ? 'reduced' : 'normal'}`, scenario: nc.base, seed: nc.seed || 12345, reduced, ticks: nc.ticks, multi: false, slots: null, label: '', words: nc.words });
   return jobs;
 }

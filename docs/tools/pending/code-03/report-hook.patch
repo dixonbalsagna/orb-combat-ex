@@ -1,0 +1,375 @@
+diff --git a/render/core/main.gd b/render/core/main.gd
+index fbe2402..36502a7 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -187,6 +187,8 @@ func _ready() -> void:
+ 	ui_hud.settings_closed.connect(_release_overlay)
+ 	# The panel cut-in's border takes each fighter's lane colour from UI (it fires at the HUD's first advance).
+ 	ui_hud.lane_colors_changed.connect(_on_lane_colors)
++	if not OS.has_feature("web"):
++		ui_hud.lan_report_fn = _record_report   # A-UI-02: a solo or couch match is kept as a file in user://reports/ (MatchRecorder); the web page has its own download
+ 	# The pause menu's "hand player two back to the AI" entry.
+ 	ui_hud.player_two_leave_requested.connect(_on_player_two_leave)
+ 	ui_hud.form_prompt_shown.connect(_on_form_prompt)
+@@ -1777,3 +1779,9 @@ static func _dist(v) -> String:
+ 	if v.size() == 0:
+ 		return "n/a"
+ 	return "mean %.3f  p50 %.3f  p95 %.3f  p99 %.3f  max %.3f" % [_mean(v), _pct(v, 0.5), _pct(v, 0.95), _pct(v, 0.99), _pct(v, 1.0)]
++
++
++## The HUD's report and "Save this match" on a plain desktop build (A-UI-02, 2026-11-14): the match so far as a file in user://reports/ (SimHost.record_file, MatchRecorder). Nothing leaves the PC. The file's name, "" when
++## there is nothing to save or the file could not be written (the HUD then says so).
++func _record_report(tags: String, note: String) -> String:
++	return host.record_file("report", tags, note)
+diff --git a/b/render/core/match_recorder.gd b/render/core/match_recorder.gd
+new file mode 100644
+index 0000000..becba18
+--- /dev/null
++++ b/render/core/match_recorder.gd
+@@ -0,0 +1,137 @@
++class_name MatchRecorder
++extends RefCounted
++## The match as a replay, on a plain desktop build (register rows A-UI-02 and A-CODE-03, Tools, 2026-11-14). It was the black box of the private page (tools/preview/blackbox.mjs): a few lines of the
++## page's scratch copy of sim_host.gd. On a desktop build nothing recorded a solo or a couch match, so the one-press report and "Save this match" had nothing to save.
++##
++## It only READS what the host already has: the intents the host built for the tick, the seed, the AI flags, the setup, the AI toggles. It keeps them in SimReplay's own format ("meridian-replay", v4: the
++## inputs only where a slot's intent changed) and writes nothing to the sim, draws no random number and changes no tick: the sim is stepped by the very same SimCore.step with the very same inputs, and the
++## three hooks in SimHost sit beside the lines they read (arm after the setup is kept, before_step before SimCore.step, toggle before toggleAI). No hash is taken while the match runs (the final one is
++## taken when the file is saved), so it costs one pass over two or three intents a tick.
++##
++## save() writes one file for the player's own PC (user://reports/, nothing is sent anywhere): {kind "orb-solo-match", pc, slot, mode, build, reason, savedAt, tick, marks, replay}, the shape of a LAN save
++## (net/lan.gd) so the same report tools read it. The replay in it plays back with SimReplay.play, headless, to the last tick (tools/preview/blackbox-verify.mjs reads the file too).
++
++const KIND: String = "orb-solo-match"
++const DIR: String = "user://reports"
++const KEEP: int = 20                  # the newest files kept in the folder: the player's disk is not the game's to fill
++const MAX_TICKS: int = 60 * 60 * 30   # half an hour of match: a longer one stops being recorded (its replay is still valid as far as it goes)
++
++var armed: bool = false
++var done: bool = false                # the match is over (a KO) or its record is full: nothing more is recorded
++var replay: Dictionary = {}
++var marks: Array = []                 # [{tick, kind, tag, note, at}], one per report
++var _seed: int = 0
++var _su: Dictionary = {}
++var _last: Array = []                 # the last packed intent per slot (-1 for none), as SimReplay keeps it
++var _last2: Array = []                # the last second word per slot; always 0 with switches.rightStick off
++
++
++## A match starts (SimHost.start_match, after it keeps the setup): a match left before its end is dropped, the new one starts its own record.
++func arm(seed_: int, _ai: Dictionary, su_: Dictionary) -> void:
++	_seed = seed_
++	_su = su_.duplicate(true)
++	armed = true
++	done = false
++	replay = {}
++	marks = []
++
++
++## The record's header, from the state the match was started in (read before any toggle of this match, as SimReplay.recorder does).
++func _begin(S: SimState) -> void:
++	var ai: Dictionary = {}
++	for k in range(S.fighters.size()):
++		ai["p%d" % (k + 1)] = S.fighters[k].ai != null
++	replay = {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(_su), "seed": _seed, "setup": _su.duplicate(true), "ai": ai,
++		"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
++	_last = []
++	_last2 = []
++	for _k in range(S.fighters.size()):
++		_last.append(-1)
++		_last2.append(0)
++
++
++## An AI toggle (SimHost.toggle_ai), before it is made.
++func toggle(S: SimState, idx: int) -> void:
++	if not armed or done:
++		return
++	if replay.is_empty():
++		_begin(S)
++	replay.toggles.append([int(replay.ticks), idx])
++
++
++## The tick's intents, just before SimCore.step(S, inputs). Read only.
++func before_step(S: SimState, inputs: Array) -> void:
++	if not armed or done:
++		return
++	if replay.is_empty():
++		_begin(S)
++	if S.game.ko != null or int(replay.ticks) >= MAX_TICKS:   # the state now is the state after the last recorded tick: that is the match's final one
++		replay.final = SimHash.stateHash(S).gameplay
++		done = true
++		return
++	var word2: bool = SimInputData.right_stick_on()
++	for k in range(S.fighters.size()):
++		var i = inputs[k] if k < inputs.size() else null
++		var p: int = SimIntent.pack(i) if i != null else -1
++		var w: int = SimIntent.pack2(i) if word2 and i != null else 0
++		if p != _last[k] or w != _last2[k]:
++			_last[k] = p
++			_last2[k] = w
++			var entry: Array = [int(replay.ticks), k] + SimReplay.split(p)
++			if w != 0:
++				entry.append(w)
++			replay.inputs.append(entry)
++	replay.ticks = int(replay.ticks) + 1
++
++
++## The replay as it stands (a copy), with the final hash of the state after its last tick. Call it between ticks: the state is then the one after the last recorded step.
++func snapshot(S: SimState) -> Dictionary:
++	var rp: Dictionary = replay.duplicate(true)
++	if not done and not rp.is_empty():
++		rp.final = SimHash.stateHash(S).gameplay
++	return rp
++
++
++## The mode word of a match, from who holds the first two bodies now: one person against the computer ("solo"), two people ("couch"), or the computer alone ("solo", nobody to report for).
++static func mode_of(S: SimState) -> String:
++	var humans: int = 0
++	for k in range(mini(2, S.fighters.size())):
++		if S.fighters[k].ai == null:
++			humans += 1
++	return "couch" if humans >= 2 else "solo"
++
++
++## The match as a file in user://reports/. reason: report, save, over, quit. Returns the file's name ("" when there is nothing to save or the file could not be written).
++## `build` is res://build_info.json's content ({} when the build has none).
++func save(S: SimState, reason: String, tag: String, note: String, build: Dictionary, dir: String = DIR) -> String:
++	if not armed or replay.is_empty():
++		return ""
++	if reason == "report":
++		marks.append({"tick": int(replay.ticks), "kind": "report", "tag": tag.left(80), "note": note.left(2000), "at": Time.get_datetime_string_from_system()})
++	var rp: Dictionary = snapshot(S)
++	var commit: String = str(build.get("commit", "unknown")).left(8)
++	var dt: Dictionary = Time.get_datetime_dict_from_system()
++	var fname: String = "solo-%s-main-%04d%02d%02d-%02d%02d%02d-%s.json" % [commit, int(dt.year), int(dt.month), int(dt.day), int(dt.hour), int(dt.minute), int(dt.second), reason]
++	if DirAccess.make_dir_recursive_absolute(dir) != OK:
++		return ""
++	var doc := {"kind": KIND, "pc": "main", "slot": 0, "mode": mode_of(S), "build": build, "reason": reason, "savedAt": Time.get_datetime_string_from_system(), "tick": int(rp.get("ticks", 0)), "marks": marks.duplicate(true), "replay": rp}
++	var f := FileAccess.open(dir.path_join(fname), FileAccess.WRITE)
++	if f == null:
++		return ""
++	f.store_string(JSON.stringify(doc))
++	f.close()
++	_prune(dir)
++	return fname
++
++
++## The newest KEEP files stay; older ones of this kind go (only files this class writes: the "solo-" ones).
++static func _prune(dir: String) -> void:
++	var names: Array = []
++	for n in DirAccess.get_files_at(dir):
++		if n.begins_with("solo-") and n.ends_with(".json"):
++			names.append(n)
++	names.sort()   # the name carries the commit, then the time: sorted by time within a build
++	var by_time: Array = names.duplicate()
++	by_time.sort_custom(func(a, b): return a.substr(a.find("-main-") + 6) < b.substr(b.find("-main-") + 6))
++	while by_time.size() > KEEP:
++		DirAccess.remove_absolute(dir.path_join(by_time.pop_front()))
+diff --git a/b/render/core/match_recorder.gd.uid b/render/core/match_recorder.gd.uid
+new file mode 100644
+index 0000000..e94cf9d
+--- /dev/null
++++ b/render/core/match_recorder.gd.uid
+@@ -0,0 +1 @@
++uid://bkel5s8k1s0wq
+diff --git a/render/core/sim_host.gd b/render/core/sim_host.gd
+index ae4749b..6da5f64 100644
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -49,6 +49,7 @@ var fx_usec: int = 0            # cost of the last fx consume and camera step
+ var _prev := PackedFloat64Array()
+ var _cur := PackedFloat64Array()
+ var _skip_intro: int = 0        # skip_intro(): 0 not asked, 1 for the next pre-clock tick, 2 until the intro ends
++var recorder := MatchRecorder.new()   # the match as a replay, for the report and "Save this match" on a desktop build (render/core/match_recorder.gd): reads only
+ var setup_used: Dictionary = {} # the whole setup the last match started from (the hub's keys, then the caller's): a match input like the seed, so a reference sim or a replay starts from the same one
+ var _intro_mem: Dictionary = {} # the session's intro memory: a pair of roster ids -> {seed, n, avoid} (intro_record). Never saved, and never in the sim
+ const INTRO_AVOID: int = 5      # Narrative's rule: the last five scenarios a pair opened with
+@@ -101,6 +102,7 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
+ 		return
+ 	_skip_intro = 0
+ 	setup_used = su.duplicate(true)
++	recorder.arm(seed, ai, su)
+ 	if stepped_start:   # the match's start in pieces: the head now, the rest a piece a frame (load_step), the loading screen between them
+ 		match_job = SimCore.beginMatch(S, seed, ai, su)
+ 		_start_args = [su, remember]
+@@ -445,6 +447,7 @@ func tick(vw: float, vh: float) -> void:
+ 	elif not pre:
+ 		_skip_intro = 0
+ 	var t0: int = Time.get_ticks_usec()
++	recorder.before_step(S, inputs)   # reads the tick's intents; SimCore.step below gets the very same inputs
+ 	if SimCore.step(S, inputs):
+ 		hub.consumed()
+ 	elif pausing or pre:
+@@ -549,6 +552,7 @@ func release_all() -> void:
+ 
+ 
+ func toggle_ai(idx: int) -> void:
++	recorder.toggle(S, idx)
+ 	SimCore.toggleAI(S, idx)
+ 
+ 
+@@ -683,3 +687,16 @@ func _capture() -> PackedFloat64Array:
+ 
+ static func _wlerp(a: float, b: float, t: float) -> float:
+ 	return SimWrap.wrap(a + SimWrap.sdx(a, b) * t)
++
++
++## The match so far as a file in user://reports/ (MatchRecorder.save): reason report, save, over or quit; the file's name, or "" when there is nothing to save. Nothing leaves the PC.
++func record_file(reason: String, tag: String = "", note: String = "") -> String:
++	return recorder.save(S, reason, tag, note, _record_build_info())
++
++
++## res://build_info.json (the commit and its date, written before an export by tools/write-build-info.mjs), or {} when the build has none.
++static func _record_build_info() -> Dictionary:
++	if not FileAccess.file_exists("res://build_info.json"):
++		return {}
++	var j = JSON.parse_string(FileAccess.get_file_as_string("res://build_info.json"))
++	return j if j is Dictionary else {}
+diff --git a/b/render/tools/match_recorder_check.gd b/render/tools/match_recorder_check.gd
+new file mode 100644
+index 0000000..b067e83
+--- /dev/null
++++ b/render/tools/match_recorder_check.gd
+@@ -0,0 +1,136 @@
++extends SceneTree
++## The match as a replay on a desktop build (A-UI-02, Tools, 2026-11-14; render/core/match_recorder.gd). Headless, through the real SimHost: a solo match and a couch match are played with scripted intents, the report
++## and the save are asked for, and the file each leaves in user://reports/ is read back and replayed with SimReplay.play: it must be there, hold the match's kind, mode, build, mark and replay, and reproduce to the
++## last tick (the same final hash as the live state). Negative control: a replay with one recorded intent changed must not verify. Run from the repository root:
++##   godot --headless --path . --script res://render/tools/match_recorder_check.gd
++## Exit 0 when every check passes. The files the host's own save writes are removed again at the end.
++
++var fails: int = 0
++var checks: int = 0
++var _made: Array = []
++
++
++func _ok(cond: bool, what: String) -> void:
++	checks += 1
++	if not cond:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _initialize() -> void:
++	_run.call_deferred()
++
++
++## Play `ticks` ticks of a match on a host; the humans are the slots in `humans`, driven by scripted intents (the film_in channel of the host: each slot's intent for the next tick).
++func _play(host: SimHost, humans: Array, ticks: int) -> void:
++	for t in range(ticks):
++		for k in humans:
++			var i := SimIntent.new()
++			i.mx = 1.0 if (t / 90) % 2 == 0 else -1.0
++			i.light = (t + 7 * int(k)) % 25 == 0
++			i.heavy = (t + 11 * int(k)) % 140 == 0
++			host.film_in[int(k)] = i
++		host.advance(1.0 / 60.0, 1280.0, 720.0)
++	for k in humans:
++		host.film_in[int(k)] = null
++
++
++func _read(name: String) -> Dictionary:
++	var path: String = "user://reports/" + name
++	if not FileAccess.file_exists(path):
++		return {}
++	var j = JSON.parse_string(FileAccess.get_file_as_string(path))
++	return j if j is Dictionary else {}
++
++
++func _run() -> void:
++	DirAccess.make_dir_recursive_absolute("user://reports")
++	# nothing started: nothing to save
++	_ok(SimHost.new().record_file("report") == "", "a host with no match started has nothing to save and answers the empty name")
++
++	# a solo match: person one against the computer
++	var host := SimHost.new()
++	host.new_match(31, {"p1": false, "p2": true}, {"intro": false})
++	_play(host, [0], 420)
++	var live_final: String = SimHash.stateHash(host.S).gameplay
++	var name: String = host.record_file("report", "tag-a", "a note")
++	_made.append(name)
++	_ok(name != "" and name.begins_with("solo-") and name.ends_with("-report.json"), "the report press writes a file named solo-<commit>-main-<time>-report.json (%s)" % name)
++	var doc: Dictionary = _read(name)
++	_ok(doc.get("kind", "") == "orb-solo-match" and doc.get("mode", "") == "solo" and doc.get("pc", "") == "main", "it is an orb-solo-match, mode solo")
++	_ok(doc.get("build", null) is Dictionary and doc.get("reason", "") == "report" and int(doc.get("tick", -1)) == 420, "it carries the build, the reason and the tick (%s)" % str(doc.get("tick", "?")))
++	var marks: Array = doc.get("marks", [])
++	_ok(marks.size() == 1 and str(marks[0].get("kind", "")) == "report" and str(marks[0].get("tag", "")) == "tag-a" and str(marks[0].get("note", "")) == "a note" and int(marks[0].get("tick", -1)) == 420, "one report mark, at tick 420, with its tag and note")
++	var rp: Dictionary = doc.get("replay", {})
++	_ok(rp.get("format", "") == SimReplay.FORMAT and int(rp.get("ticks", 0)) == 420 and (rp.get("inputs", []) as Array).size() > 3, "the replay is SimReplay's, 420 ticks, with the presses in it (%d entries)" % (rp.get("inputs", []) as Array).size())
++	_ok(str(rp.get("final", "")) == live_final, "its final hash is the live state's (the file was made between ticks)")
++	var played: Dictionary = SimReplay.play(rp)
++	_ok(bool(played.ok) and str(played.final) == live_final, "SimReplay.play reproduces the match to the last tick (%s)" % str(played.get("reason", "")))
++	# the same match saved again later: a second file, and the report mark of the first stays in the second's marks
++	_play(host, [0], 60)
++	var name2: String = host.record_file("save")
++	_made.append(name2)
++	var doc2: Dictionary = _read(name2)
++	_ok(name2 != "" and name2.ends_with("-save.json") and int(doc2.get("tick", -1)) == 480 and (doc2.get("marks", []) as Array).size() == 1, "'Save this match' later writes a second file with 480 ticks, still holding the one mark")
++	_ok(bool(SimReplay.play(doc2.get("replay", {})).ok), "and that replay verifies too")
++
++	# negative control: a replay that has lost the second half of its recorded presses does not verify (and one with a press's intent swapped for a heavy plus signature does not either)
++	var bad: Dictionary = (doc2.get("replay", {}) as Dictionary).duplicate(true)
++	(bad.inputs as Array).resize((bad.inputs as Array).size() / 2)
++	var verdict: Dictionary = SimReplay.play(bad)
++	_ok(not bool(verdict.ok) or str(verdict.final) != str((doc2.get("replay", {}) as Dictionary).get("final", "")), "a replay missing the second half of its presses does not reproduce the match")
++	var swapped: Dictionary = (doc2.get("replay", {}) as Dictionary).duplicate(true)
++	var big := SimIntent.new()
++	big.heavy = true
++	big.sig = true
++	big.mx = -1.0
++	var sp: Array = SimReplay.split(SimIntent.pack(big))
++	for e in swapped.inputs:
++		if int(e[1]) == 0 and int(e[0]) > 30:
++			e[2] = sp[0]
++			e[3] = sp[1]
++	var verdict2: Dictionary = SimReplay.play(swapped)
++	_ok(not bool(verdict2.ok) or str(verdict2.final) != str((doc2.get("replay", {}) as Dictionary).get("final", "")), "a replay whose presses are all swapped for another intent does not reproduce the match")
++
++	# a couch match: two people
++	var host2 := SimHost.new()
++	host2.new_match(52, {"p1": false, "p2": false}, {"intro": false})
++	_play(host2, [0, 1], 300)
++	var name3: String = host2.record_file("report")
++	_made.append(name3)
++	var doc3: Dictionary = _read(name3)
++	_ok(name3 != "" and doc3.get("mode", "") == "couch", "a two-person match is mode couch")
++	_ok(bool(SimReplay.play(doc3.get("replay", {})).ok) and str((doc3.get("replay", {}) as Dictionary).get("final", "")) == SimHash.stateHash(host2.S).gameplay, "and its replay verifies to the live final hash")
++
++	# an AI toggle (a person hands the body back, or takes it) is in the replay and the replay still verifies
++	var host3 := SimHost.new()
++	host3.new_match(9, {"p1": false, "p2": true}, {"intro": false})
++	_play(host3, [0], 100)
++	host3.toggle_ai(1)
++	_play(host3, [0, 1], 100)
++	var name4: String = host3.record_file("report")
++	_made.append(name4)
++	var doc4: Dictionary = _read(name4)
++	_ok((doc4.get("replay", {}).get("toggles", []) as Array).size() == 1 and bool(SimReplay.play(doc4.get("replay", {})).ok), "an AI toggle during the match is recorded and the replay still verifies")
++
++	# the folder keeps the newest files only
++	var rec := MatchRecorder.new()
++	var dir: String = "user://reports_check"
++	DirAccess.make_dir_recursive_absolute(dir)
++	for n in range(MatchRecorder.KEEP + 5):
++		var f := FileAccess.open(dir.path_join("solo-aaaaaaaa-main-20260101-0000%02d-report.json" % n), FileAccess.WRITE)
++		f.store_string("{}")
++		f.close()
++	MatchRecorder._prune(dir)
++	var left: PackedStringArray = DirAccess.get_files_at(dir)
++	_ok(left.size() == MatchRecorder.KEEP and not left.has("solo-aaaaaaaa-main-20260101-000000-report.json") and left.has("solo-aaaaaaaa-main-20260101-000024-report.json"), "the folder keeps the newest %d files and drops the oldest (%d left)" % [MatchRecorder.KEEP, left.size()])
++	for n in left:
++		DirAccess.remove_absolute(dir.path_join(n))
++	DirAccess.remove_absolute(dir)
++	rec = null
++
++	for n in _made:
++		if n != "":
++			DirAccess.remove_absolute("user://reports/" + n)
++	print("match_recorder_check: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
+diff --git a/b/render/tools/match_recorder_check.gd.uid b/render/tools/match_recorder_check.gd.uid
+new file mode 100644
+index 0000000..8458e98
+--- /dev/null
++++ b/render/tools/match_recorder_check.gd.uid
+@@ -0,0 +1 @@
++uid://bywnvueqchg7f

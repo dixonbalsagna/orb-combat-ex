@@ -344,5 +344,8 @@
       "_why": "The training dummy (the reference fighter, in the roster as Simulation's dummy_roster.py puts him): AI matches of a launch fighter against him, full length, both modes; picked by tools/flash/pick-seeds.mjs (Legal's RL-131: a pairing new in a release at least 3 times, every fighter in at least 5 matches)."
     }
   ],
-  "_pairings": "The fixed list of AI matches the pixel gate must pass (Legal, RL-119). One entry for every unordered pair of distinct fighters in data/fighters/roster.json (slots in roster order; selftest.js fails when the roster has a pair this list lacks), each with seeds that between them show every fighter of the pair firing its signature (check-log.js checks it from the runs' events). Add an entry when a fighter joins the roster."
+  "_pairings": "The fixed list of AI matches the pixel gate must pass (Legal, RL-119). One entry for every unordered pair of distinct fighters in data/fighters/roster.json (slots in roster order; selftest.js fails when the roster has a pair this list lacks), each with seeds that between them show every fighter of the pair firing its signature (check-log.js checks it from the runs' events). Add an entry when a fighter joins the roster.",
+  "nightClips": [
+    { "id": "clash-night", "base": "clash", "words": "sky=night", "ticks": 1500, "why": "CD-09 item 5 (the live pin shipped night by place with no night clip, audit AC-038): the beam clash with the sky held at its night key (the page word sky=night, render/core/main.gd _sky_args). A clip id is clash-night-normal or clash-night-reduced; run-pixels adds the words to the capture address." }
+  ]
 }

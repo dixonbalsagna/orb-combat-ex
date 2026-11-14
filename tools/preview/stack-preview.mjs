@@ -61,11 +61,25 @@ export function templateZip(spec, repo) {
 const tail = (f, n = 1500) => { try { return readFileSync(f, 'utf8').slice(-n); } catch { return ''; } };
 
 /** The replay tree of a build: the sim, the data (with the page's switches flipped), the net code and the project, which is all SimReplay needs (blackbox-verify.mjs --tree <this folder>). 12 MB against the tree's 574. */
+/** The date of a commit (YYYY-MM-DD, its own date, never the clock), or "unknown" when git cannot say. */
+export function commitDate(repo, sha) {
+  try { const r = spawnSync('git', ['-C', repo, 'log', '-1', '--format=%cs', sha], { encoding: 'utf8' }); return r.status === 0 && /^\d{4}-\d{2}-\d{2}$/.test(r.stdout.trim()) ? r.stdout.trim() : 'unknown'; } catch { return 'unknown'; }
+}
+
+/**
+ * The stamp of a page build (res://build_info.json in its pack and in its replay tree): the commit, its date, how many parks are in it and an id that is the kept folder's own name (the commit's first 8
+ * and the first 8 of the build's cache key): unique to the build, a rebuild of the same commit included. SimReplay.buildId() uses "id" as it stands (A-NET-05, 2026-11-14). Pure.
+ */
+export function pageStamp(commit, date, parks, cacheKey) {
+  return { commit: String(commit).slice(0, 7), date, stack: parks, id: `${String(commit).slice(0, 8)}-${String(cacheKey).replace(/[^A-Za-z0-9]/g, '').slice(0, 8)}` };
+}
+
 export function writeReplayTree(tree, dest, r) {
   rmSync(dest, { recursive: true, force: true });
   mkdirSync(dest, { recursive: true });
   for (const x of ['sim', 'data', 'net', '.godot']) if (existsSync(join(tree, x))) cpSync(join(tree, x), join(dest, x), { recursive: true });
   cpSync(join(tree, 'project.godot'), join(dest, 'project.godot'));
+  if (existsSync(join(tree, 'build_info.json'))) cpSync(join(tree, 'build_info.json'), join(dest, 'build_info.json'));   // the build's stamp: a stamped save is played against it (A-NET-05)
   writeFileSync(join(dest, 'README.txt'), [`The replay tree of the build ${r.commit.slice(0, 8)}-${r.key} (the commit and the stack key of the page's stamp).`, 'Replay a saved match of that build exactly:', '  node tools/preview/blackbox-verify.mjs <orb-first-play-....json> --tree <this folder>', 'It holds only what the sim needs (sim, data with the page switches flipped, net, project.godot): no art, no render, no ui.', ''].join('\n'));
 }
 
@@ -106,7 +120,7 @@ export async function buildStackPreview(o) {
   mkdirSync(dir, { recursive: true });
   rmSync(web, { recursive: true, force: true });
   mkdirSync(web, { recursive: true });
-  writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify({ commit: r.commit.slice(0, 7), stack: parksIn.length })}\n`);
+  writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify(pageStamp(r.commit, commitDate(repo, r.commit), parksIn.length, key))}\n`);
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
   writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));

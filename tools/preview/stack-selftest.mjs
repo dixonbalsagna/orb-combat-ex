@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { templateZip } from './stack-preview.mjs';
+import { templateZip, pageStamp, commitDate } from './stack-preview.mjs';
 import { findPython, snapshotTree, loadManifest, patchFiles, ownerOfPath, readOwners, tryApply, applyStack, missingNeeds, flipAll, runValidate, attributeErrors, errorBlocks, stackKey, changesBetween, checkScratch, runStack, describeReport } from './stack.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -264,6 +264,15 @@ try {
   check('--list prints the parks in order with owners and what each does', c2.status === 0 && /p-alpha\s+alpha\s+ready\s+patch/.test(c2.stdout) && /p-overlay\s+beta\s+ready\s+overlay/.test(c2.stdout), c2.stdout + c2.stderr);
   check('the stack never runs in the repository: a --out inside it is refused', (() => { const c = cli('--repo', repo, '--manifest', join(tmp, 'stack.json'), '--rev', 'HEAD', '--out', join(repo, 'scratch'), '--no-godot'); return c.status === 2 && /scratch folder/.test(c.stderr); })());
 } finally { rmSync(tmp, { recursive: true, force: true }); }
+
+// the page's stamp (A-NET-05, 2026-11-14): the commit, its date, the parks, and an id that is the kept folder's own name
+{
+  const st = pageStamp('6a30b4c9c767ba58915d82bcee8d63a245c67176', '2026-11-09', 1, '6627cb9d70b784fa-ug+soundMoments');
+  check('the page stamp names the commit (7), its date, the parks and an id of commit 8 and cache key 8', st.commit === '6a30b4c' && st.date === '2026-11-09' && st.stack === 1 && st.id === '6a30b4c9-6627cb9d', JSON.stringify(st));
+  check('two builds of the same commit with another cache key have another id (a rebuild is its own build)', pageStamp('6a30b4c9c7', '2026-11-09', 1, 'aaaaaaaa11').id !== pageStamp('6a30b4c9c7', '2026-11-09', 1, 'bbbbbbbb22').id);
+  check('the id is the folder name the handover makes (orb-first-play-<commit8>-<key8>)', 'orb-first-play-' + st.id === 'orb-first-play-6a30b4c9-6627cb9d');
+  check('the date of a commit is its own, YYYY-MM-DD; of nothing it is unknown', /^\d{4}-\d{2}-\d{2}$/.test(commitDate(join(here, '..', '..'), 'HEAD')) && commitDate(join(here, '..', '..'), 'no-such-commit-xyz') === 'unknown');
+}
 
 console.log(failed ? `stack self-test FAILED (${failed})` : 'stack self-test ok');
 process.exit(failed ? 1 : 0);

@@ -1,0 +1,162 @@
+gen2               ON   DIFFERS FROM THE COMMIT
+biome              ON   DIFFERS FROM THE COMMIT
+water              ON   DIFFERS FROM THE COMMIT
+surface            ON   DIFFERS FROM THE COMMIT
+interrupts         ON   DIFFERS FROM THE COMMIT
+floor              ON   DIFFERS FROM THE COMMIT
+calmTurn           ON   DIFFERS FROM THE COMMIT
+turn               ON   DIFFERS FROM THE COMMIT
+rightStick         ON 
+quickRead          ON 
+hapticLadder       ON 
+specialsOff        ON 
+signatureRtOnly    ON 
+beamAim            ON 
+hapticRefused      ON 
+hapticIncoming     ON 
+webRumble          ON 
+settle             ON   DIFFERS FROM THE COMMIT
+splitShare         ON   DIFFERS FROM THE COMMIT
+chaseTap           ON   DIFFERS FROM THE COMMIT
+chargeArmour       ON   DIFFERS FROM THE COMMIT
+power              off
+powerPace          ON   DIFFERS FROM THE COMMIT
+waterWarm          ON   DIFFERS FROM THE COMMIT
+chargeClose        ON   DIFFERS FROM THE COMMIT
+pressWait          ON   DIFFERS FROM THE COMMIT
+oneRuleB           ON   DIFFERS FROM THE COMMIT
+beamAim2           ON   DIFFERS FROM THE COMMIT
+nodeWarm           ON 
+stickPend          ON   DIFFERS FROM THE COMMIT
+joltYield          ON   DIFFERS FROM THE COMMIT
+brawlShareCap      ON   DIFFERS FROM THE COMMIT
+swing              ON   DIFFERS FROM THE COMMIT
+everywhere         ON   DIFFERS FROM THE COMMIT
+arc                ON   DIFFERS FROM THE COMMIT
+ending             ON   DIFFERS FROM THE COMMIT
+follow             ON   DIFFERS FROM THE COMMIT
+lightStops         ON   DIFFERS FROM THE COMMIT
+grapple            ON   DIFFERS FROM THE COMMIT
+driver             ON   DIFFERS FROM THE COMMIT
+driverOnRb         ON   DIFFERS FROM THE COMMIT
+beamMove           ON   DIFFERS FROM THE COMMIT
+stallKeep          ON 
+hapticImpact       ON 
+dodgeHeld          ON   DIFFERS FROM THE COMMIT
+hapticStages       ON   DIFFERS FROM THE COMMIT
+refusedCue         ON   DIFFERS FROM THE COMMIT
+strikeStages       ON   DIFFERS FROM THE COMMIT
+beamMoveAi         ON   DIFFERS FROM THE COMMIT
+pushMode           ON   DIFFERS FROM THE COMMIT
+pushUi             ON   DIFFERS FROM THE COMMIT
+pushUi2            ON   DIFFERS FROM THE COMMIT
+wallPush           off
+wallPushAi         off
+slamTurn           off
+cityHold           off
+flightStrikes      ON   DIFFERS FROM THE COMMIT
+aimCuts            off
+stickLungeLight    ON   DIFFERS FROM THE COMMIT
+flickKeep          ON   DIFFERS FROM THE COMMIT
+flickRun           ON   DIFFERS FROM THE COMMIT
+fullSend           ON   DIFFERS FROM THE COMMIT
+chordPick          ON   DIFFERS FROM THE COMMIT
+bNoBeam            ON   DIFFERS FROM THE COMMIT
+bNoBeamKeepRt      ON   DIFFERS FROM THE COMMIT
+arrive             ON   DIFFERS FROM THE COMMIT
+slip               ON   DIFFERS FROM THE COMMIT
+dashHandover       ON   DIFFERS FROM THE COMMIT
+carryRound         ON   DIFFERS FROM THE COMMIT
+paceMatch          ON   DIFFERS FROM THE COMMIT
+inertKnock         ON   DIFFERS FROM THE COMMIT
+sideFromBlowOnly   ON   DIFFERS FROM THE COMMIT
+chargeLostCue      ON   DIFFERS FROM THE COMMIT
+menusRail          ON   DIFFERS FROM THE COMMIT
+hitstopAny         ON   DIFFERS FROM THE COMMIT
+airBrake           ON   DIFFERS FROM THE COMMIT
+stances            ON   DIFFERS FROM THE COMMIT
+phrases            ON   DIFFERS FROM THE COMMIT
+vsHuman            ON   DIFFERS FROM THE COMMIT
+firstMeteor        ON   DIFFERS FROM THE COMMIT
+beamFront          ON   DIFFERS FROM THE COMMIT
+kick               ON   DIFFERS FROM THE COMMIT
+mixed              ON   DIFFERS FROM THE COMMIT
+struggle           ON   DIFFERS FROM THE COMMIT
+soundTug           ON   DIFFERS FROM THE COMMIT
+soundMoments       ON   DIFFERS FROM THE COMMIT
+soundCarry         ON   DIFFERS FROM THE COMMIT
+PROBLEM row gen2: data/biomes/climate.json gen: the pack holds 2, the commit 1
+PROBLEM row biome: data/combat/launch_biome.json biome.enabled: the pack holds true, the commit false
+PROBLEM row water: data/biomes/water.json enabled: the pack holds true, the commit false
+PROBLEM row surface: data/biomes/water.json surface.enabled: the pack holds true, the commit false
+PROBLEM row interrupts: data/director/interrupts.json water.enabled: the pack holds true, the commit false
+PROBLEM row floor: data/biomes/water.json floor.enabled: the pack holds true, the commit false
+PROBLEM row calmTurn: data/director/interrupts.json calmTurn.enabled: the pack holds true, the commit false
+PROBLEM row turn: data/biomes/rings.json turn.on: the pack holds 1, the commit 0
+PROBLEM row settle: data/biomes/contact.json settle.enabled: the pack holds true, the commit false
+PROBLEM row splitShare: data/camera/swing.json splitShare: the pack holds 0.7, the commit 0
+PROBLEM row chaseTap: data/director/interrupts.json chase.tap.enabled: the pack holds true, the commit false
+PROBLEM row chargeArmour: data/director/stick.json armour.enabled: the pack holds true, the commit false
+PROBLEM row powerPace: data/fight/ladder.json chargePerSec: the pack holds 2, the commit 0.5
+PROBLEM row waterWarm: data/biomes/water.json flowWarm.cols: the pack holds 48, the commit 0
+PROBLEM row chargeClose: data/director/interrupts.json brawl.chargeClose.enabled: the pack holds true, the commit false
+PROBLEM row pressWait: data/director/interrupts.json brawl.pressWait.enabled: the pack holds true, the commit false
+PROBLEM row oneRuleB: data/director/interrupts.json brawl.oneRuleB.enabled: the pack holds true, the commit false
+PROBLEM row beamAim2: data/director/interrupts.json beamPlays.front.aim.enabled: the pack holds true, the commit false
+PROBLEM row stickPend: data/director/stick.json pendFollow.enabled: the pack holds true, the commit false
+PROBLEM row joltYield: data/director/swing.json jolt.yieldToLaunch: the pack holds true, the commit false
+PROBLEM row brawlShareCap: data/director/swing.json brawl.shareCap.enabled: the pack holds true, the commit false
+PROBLEM row swing: data/director/swing.json enabled: the pack holds true, the commit false
+PROBLEM row everywhere: data/biomes/field.json plans.everywhere: the pack holds true, the commit false
+PROBLEM row arc: data/director/launch.json arc.enabled: the pack holds true, the commit false
+PROBLEM row ending: data/director/interrupts.json ending.enabled: the pack holds true, the commit false
+PROBLEM row follow: data/director/interrupts.json bands.follow.enabled: the pack holds true, the commit false
+PROBLEM row lightStops: data/director/stick.json lightStops: the pack holds false, the commit true
+PROBLEM row grapple: data/director/interrupts.json grapple.enabled: the pack holds true, the commit false
+PROBLEM row driver: data/director/interrupts.json blast.driver.enabled: the pack holds true, the commit false
+PROBLEM row driverOnRb: data/input/timing.json switches.driverOnRb: the pack holds true, the commit false
+PROBLEM row beamMove: data/director/interrupts.json beamPlays.front.ownMove.enabled: the pack holds true, the commit false
+PROBLEM row dodgeHeld: data/input/timing.json switches.dodgeHeld: the pack holds true, the commit false
+PROBLEM row hapticStages: data/input/timing.json switches.hapticStages: the pack holds true, the commit false
+PROBLEM row refusedCue: data/director/interrupts.json press.refusedCue: the pack holds true, the commit false
+PROBLEM row strikeStages: data/director/stick.json strikeStages.enabled: the pack holds true, the commit false
+PROBLEM row beamMoveAi: data/director/interrupts.json beamPlays.front.ownMove.ai: the pack holds true, the commit false
+PROBLEM row pushMode: data/director/interrupts.json beamStruggle.pushMode.enabled: the pack holds true, the commit false
+PROBLEM row pushUi: ui/data/options.json options.struggle_push.default: the pack holds "stick", the commit "face"
+PROBLEM row pushUi2: ui/data/options.json options.struggle_push_p2.default: the pack holds "stick", the commit "face"
+PROBLEM row flightStrikes: data/director/interrupts.json zip.flightStrikes.enabled: the pack holds true, the commit false
+PROBLEM row flightStrikes: data/input/timing.json switches.flightStrikeB: the pack holds true, the commit false
+PROBLEM row flightStrikes: data/input/timing.json switches.dodgeHeld: the pack holds true, the commit false
+PROBLEM row stickLungeLight: data/director/stick.json lungeLight.enabled: the pack holds true, the commit false
+PROBLEM row flickKeep: data/director/stick.json flickKeep.enabled: the pack holds true, the commit false
+PROBLEM row flickKeep: data/director/stick.json pendFollow.enabled: the pack holds true, the commit false
+PROBLEM row flickKeep: data/input/timing.json switches.flickKept: the pack holds true, the commit false
+PROBLEM row flickRun: data/director/stick.json flickRun.enabled: the pack holds true, the commit false
+PROBLEM row fullSend: data/director/stick.json fullSend.enabled: the pack holds true, the commit false
+PROBLEM row fullSend: ui/data/features.json features.slam_hint: the pack holds true, the commit false
+PROBLEM row chordPick: data/input/timing.json switches.chordPick: the pack holds true, the commit false
+PROBLEM row bNoBeam: data/input/timing.json switches.bNoBeam: the pack holds true, the commit false
+PROBLEM row bNoBeamKeepRt: data/input/timing.json switches.bNoBeamKeepRt: the pack holds true, the commit false
+PROBLEM row arrive: data/director/interrupts.json bands.arrive.enabled: the pack holds true, the commit false
+PROBLEM row slip: data/fight/power.json dash.slip.enabled: the pack holds true, the commit false
+PROBLEM row dashHandover: data/input/timing.json switches.dashHandover: the pack holds true, the commit false
+PROBLEM row carryRound: data/director/interrupts.json carryRound.enabled: the pack holds true, the commit false
+PROBLEM row paceMatch: data/director/ai.json levels.easy.brawl.paceMatch.enabled: the pack holds true, the commit false
+PROBLEM row inertKnock: data/input/timing.json switches.inertKnock: the pack holds true, the commit false
+PROBLEM row sideFromBlowOnly: data/director/launch.json sideFromBlowOnly: the pack holds true, the commit false
+PROBLEM row chargeLostCue: data/input/timing.json switches.chargeLostCue: the pack holds true, the commit false
+PROBLEM row menusRail: ui/data/features.json features.menus_rail: the pack holds true, the commit false
+PROBLEM row hitstopAny: data/fight/hitstop.json budgetAny.enabled: the pack holds true, the commit false
+PROBLEM row airBrake: data/fight/brake.json enabled: the pack holds true, the commit false
+PROBLEM row stances: data/director/interrupts.json stances.enabled: the pack holds true, the commit false
+PROBLEM row phrases: data/combat/phrases.json enabled: the pack holds true, the commit false
+PROBLEM row vsHuman: data/director/ai.json vsHuman.enabled: the pack holds true, the commit false
+PROBLEM row firstMeteor: data/director/launch.json arc.firstMeteor: the pack holds true, the commit false
+PROBLEM row beamFront: data/director/interrupts.json beamPlays.front.enabled: the pack holds true, the commit false
+PROBLEM row kick: data/fight/kick.json enabled: the pack holds true, the commit false
+PROBLEM row mixed: data/combat/mixed.json enabled: the pack holds true, the commit false
+PROBLEM row struggle: data/director/interrupts.json beamStruggle.enabled: the pack holds true, the commit false
+PROBLEM row soundTug: audio/data/tug_cues.json enabled: the pack holds true, the commit false
+PROBLEM row soundMoments: audio/data/moment_cues.json enabled: the pack holds true, the commit false
+PROBLEM row soundCarry: audio/data/carry_cues.json enabled: the pack holds true, the commit false
+build check of index.pck against commit 6a30b4c9: 87 data rows read from the pack, 81 ON, 6 off, 74 problem(s)

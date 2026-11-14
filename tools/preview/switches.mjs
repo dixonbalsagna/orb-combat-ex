@@ -66,6 +66,8 @@ export const SWITCHES = [
   { id: 'chargeArmour', file: 'data/director/stick.json', path: ['armour', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
     probe: '"chargeArmour": DirStick.armourOn()', probeIf: { file: 'sim/director/stick.gd', text: 'static func armourOn' },
     what: 'a charged attack has the armour of B (Encounter, docs/director/pending/charge-armour; Orb: charged attacks should be much harder to interrupt, especially by light attacks): data/director/stick.json armour.enabled. Needs the right hand. Waits for the park' },
+  { id: 'power', file: 'data/fight/power.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+    what: 'the one energy model (Simulation\'s sim/core/power.gd; Game Design\'s power-scale.md; register row A-ENERGY-04): data/fight/power.json enabled. Orb\'s 9 November build ran it ON through a code patch of the page (the setup key "power": true) while the data said off; now it is a data row like the others, so the build\'s data is what the game ran on and a pack verify can read it. The page word ?power=0 (or off) still turns it off for one match. When main\'s data has it on, the row has nothing left to flip' },
   { id: 'powerPace', file: 'data/fight/ladder.json', path: ['chargePerSec'], from: 0.5, to: 2, needs: [], optional: true,
     what: 'the power-up pace for the page (from the idle-match README of Encounter, until QA has read the tier pace): data/fight/ladder.json chargePerSec 0.5 to 2, so a fighter charges four times as fast. It moves the golden and every replay data hash: for the page only' },
   { id: 'waterWarm', file: 'data/biomes/water.json', path: ['flowWarm', 'cols'], from: 0, to: 48, needs: [], optional: true, presentIf: { file: 'sim/world/water.gd', text: 'warmCols' },
@@ -640,7 +642,7 @@ export const PLANET_FUNC = [
   '\tvar probe: Dictionary = {"tick": host.ticks, "planetGen": WorldClimate.genNow(), "fine": st.fineCols.size(), "planet": not st.planetRing.is_empty(), "dataGen": int(WorldClimate.data().get("gen", 1)),',
   '\t\t"biome": DirLaunch.biomeOn(), "water": WorldFill.on(), "surface": WorldFill.surfaceOn(), "floor": WorldFill.floorOn(), "interrupts": DirWater.on(st), "turn": (WorldEpoch.enabled({}) and bool(DirCalm.cfg().get("enabled", false))), "turns": (st.epoch.n if st.epoch != null else -1),',
   '\t\t"errors": WorldFill.dataErrors(), "hp": hp}',
-  '\tJavaScriptBridge.eval("window.__preview = %s;" % JSON.stringify(probe), true)',
+  '\tJavaScriptBridge.eval("window.__preview = Object.assign(window.__preview || {}, %s);" % JSON.stringify(probe), true)',
   '',
 ].join('\n');
 
@@ -919,8 +921,9 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     '\tvar pw_off: bool = args.has("power") and (str(args["power"]) == "0" or str(args["power"]) == "off")',
     '\tif OS.has_feature("web"):',
     '\t\tpw_off = pw_off or bool(JavaScriptBridge.eval("/[?&]power=(0|off)(&|$)/.test(location.search)", true))',
-    '\td["power"] = not pw_off',
-    '\tif not pw_off:',
+    '\tif pw_off:   # the model is on through the data row `power` (data/fight/power.json enabled, A-ENERGY-04): the page no longer forces it on, it only lets ?power=0 turn it off for this match',
+    '\t\td["power"] = false',
+    '\tif not pw_off and SimPower.enabled():   # the flat-out base and the travel are the model\'s: only with it on, by the data or by a main that has the row already',
     '\t\tvar fo: float = 0.0',
     '\t\tvar tv: float = 0.0',
     '\t\tif OS.has_feature("web"):',
@@ -1012,9 +1015,9 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
 }
 
 const EDITS = [
-  { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
-  { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
-  { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n' },
+  { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n', skipIf: 'func _planet_setup(' },
+  { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n', skipIf: 'func _planet_setup(' },
+  { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n', skipIf: 'func _planet_setup(' },
   { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "travel", "circle", "nohud", ' },
   { name: 'the menu choices before the HUD loads them', from: '\tui_hud.menu_changed.connect(_on_menu_changed)\n', to: '\t_preview_go()\n\tui_hud.menu_changed.connect(_on_menu_changed)\n' },
   { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tif args.has("splitshare"):\n\t\t_pv_split_share()\n\tif args.has("audiolog"):\n\t\t_pv_aud_tick()   # the engine\'s own mixer, read only\n\tif args.has("replay"):\n\t\t_preview_replay()   # a saved black box match played again\n\tif args.has("script"):\n\t\t_preview_script()   # the scripted pad: its events for the coming tick are set before it runs\n\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
@@ -1029,6 +1032,7 @@ export function patchMain(text, extra = [], setup = {}, opts = {}) {
   const nl = (s) => (crlf ? s.replace(/\n/g, '\r\n') : s);
   let out = text;
   for (const e of EDITS) {
+    if (e.skipIf && out.includes(nl(e.skipIf))) continue;   // main has this edit as its own code already
     const from = nl(e.from);
     const n = out.split(from).length - 1;
     if (n !== 1) throw new Error(`render/core/main.gd: ${e.name}: expected the line once, found it ${n} times (tools/preview/switches.mjs EDITS is out of date)`);
