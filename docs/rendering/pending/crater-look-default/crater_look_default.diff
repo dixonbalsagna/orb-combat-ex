@@ -1,0 +1,23 @@
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -258,7 +258,8 @@
+ 	RenderTileGround.share = float(args.get("tileshare", 100.0)) / 100.0
+ 	RenderTileGround.gen = int(args.get("tilegen", 3))
+ 	RenderTileGround.fore_tone = not args.has("nofore")
+-	RenderTileGround.crater_look = args.has("craterlook")
++	RenderTileGround.crater_look = not args.has("nocraterlook")   # Art's crater and scar look on the tile ground: on (Orb's decision 3, 2026-11-13;
++	# A-RENDER-04: the black fill gone); --nocraterlook, ?nocraterlook=1 on a local page, the old full-width scar to compare
+ 	host.stepped_start = not manual and not args.has("syncstart") and not args.has("flashcap")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
+ 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
+ 	if args.has("human"):
+@@ -1642,8 +1643,8 @@
+ ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
+ ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
+ ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
+-const LOCAL_ONLY_ARGS: Array = ["craterlook", "others", "tiles", "notiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+-const URL_ARGS: Array = ["craterlook", "others", "tiles", "notiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const LOCAL_ONLY_ARGS: Array = ["craterlook", "nocraterlook", "others", "tiles", "notiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const URL_ARGS: Array = ["craterlook", "nocraterlook", "others", "tiles", "notiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

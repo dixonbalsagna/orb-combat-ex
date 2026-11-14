@@ -1,0 +1,131 @@
+# A-RENDER-01 acceptance 1: the render gate set with the globe ground as the default, on main def3445a (EP: sprint A1 plan (fixed order, waves, the added planet/terrain/destru)
+globe_default.diff 92c20bf1, 23 lines (render/core/main.gd: RenderTileGround.on unless notiles)
+import 0 errors 0
+golden.json byte-identical to main's
+tile_check exit 0: tile check passed
+lake_water_check exit 1: ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+cover_water_check exit 1: ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+sweep_check exit 1: ERROR: 60 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+ground_check exit 1: ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+render gates exit 0: 10 of 20
+## the render gates' summary
+open exit 1
+depth exit 1
+shape exit 1
+patch exit 1
+pane exit 0
+stage exit 0
+lane exit 0
+ground exit 1
+after exit 1
+sky exit 1
+flashreg exit 0
+hudwords exit 0
+seam exit 1
+detintro exit 1
+det exit 1
+flight exit 0
+city exit 0
+cue exit 0
+flash exit 0
+splitsweep exit 0
+gatesdone
+## every failing gate: its FAIL lines and last lines
+### open
+FAIL  the pair suddenly in the middle street behind the tower: its lobby opens, one storey of 2 floors (303 units) from the ground; the sight line to 30 units over their heads passes at 281, under its
+FAIL  Camera's cut flag: one tick after the pair is behind the tower 0% of its lobby is through; on a cut the next frame all of it is
+FAIL  the pair lifted 383 units, over the lobby's ceiling: the tower takes its share of the patch, at most 8496 pixels a tick (the lobby is 0% open meanwhile); back on the ground it gives the share up
+FAIL  the tower damaged to stages [1, 2, 3] while its lobby is open, with RenderLook.OPEN_DAMAGED on: the lobby stays open at each and the tower takes no share of the patch; whole again (the tool's ow
+FAIL  behind the low building a thing on its face in front of the fight, inside the patch, is hidden (1.00 left), and one at the fight's depth is not (1)
+FAIL  Camera's near-clip rule: a low building 1366 units from the lens stands as its stub, and 1366 units from it is under its footing; a tower as near is neither
+ok    on every tick of all of it, no tall building sinks, and no building without a lobby opens one
+open check FAILED: 6
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### depth
+FAIL  in the middle street (depth -1013) behind a tower both fighters count as hidden, so the pane opens it; in the crossing of the nearest avenue, seen down it, neither does
+     at depth -1013 a fighter of 75 units is 46 pixels tall at 720p (the camera does not follow depth yet)
+depth check FAILED: 1
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### shape
+FAIL  the lane table is the sim's (515 floats) and fits the ground shader: 15 strips (16 at most), 53 districts (16), 32 avenues (24)
+FAIL  the ground shader has the table's 15 strips, its 32 avenues and the two block lanes ((-187.5, -825.0, -1200.0, -1837.5))
+FAIL  the ground shader has the table's 15 strips, its 32 avenues and the two block lanes ((-187.5, -825.0, -1200.0, -1837.5))
+shape check FAILED (2)
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### patch
+FAIL  the fight small again: the house does not stand again inside the hold (0.75 s), then rises over 0.8 s at the fastest and stands whole
+FAIL  the fight small again: the house does not stand again inside the hold (0.75 s), then rises over 0.8 s at the fastest and stands whole
+patch check FAILED (1)
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### ground
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array')
+FAIL  seed 4 tick 480: a rebuild from state differs from the kept-up-to-date field (lists false, residual false, craters true)
+FAIL  seed 4 tick 600: a rebuild from state differs from the kept-up-to-date field (lists false, residual false, craters true)
+FAIL  seed 4 tick 720: a rebuild from state differs from the kept-up-to-date field (lists false, residual false, craters true)
+FAIL  seed 4 tick 840: a rebuild from state differs from the kept-up-to-date field (lists false, residual false, craters true)
+FAIL  seed 4 tick 960: a rebuild from state differs from the kept-up-to-date field (lists false, residual false, craters true)
+FAIL  seed 4 tick 1080: a rebuild from state differs from the kept-up-to-date field (lists false, residual false, craters true)
+FAIL  seed 4 tick 1200: a rebuild from state differs from the kept-up-to-date field (lists false, residual false, craters true)
+FAIL  seed 4 tick 2760: a rebuild from state differs from the kept-up-to-date field (lists false, residual false, craters true)
+ground check FAILED (117)
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### after
+FAIL  on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [5, 5]): 5 differ, first at tick 312, fighter 0: 0 drawn, the tally reads 1
+ok    a planet-crossing beam (32,058 units): its bright tail uncovers at most 1000 pixels a tick at any zoom (the cap is 1000; it was 34087 in one tick at 0.85 pixels a unit), only ever moves away, an
+after check FAILED (1)
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### sky
+FAIL  at a match's start the sky is the sunset key to the bit: the four colours and the stars' strength it always had (data read: true)
+(the pictures need a window: not drawn under --headless)
+sky check FAILED (1)
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### seam
+FAIL  terrain spans inf..-inf, want 0..W
+FAIL  together d=48000 frame 60 fighter 1: 1.63 px from the reference mapping
+FAIL  together d=48000 frame 60 fighter 1: moved 1.63 px off the reference motion
+FAIL  together d=48000 frame 61 fighter 1: 1.63 px from the reference mapping
+FAIL  together d=48000 frame 62 fighter 1: 1.51 px from the reference mapping
+FAIL  together d=48000 frame 63 fighter 1: 1.40 px from the reference mapping
+FAIL  together d=48000 frame 64 fighter 1: 1.29 px from the reference mapping
+FAIL  together d=48000 frame 65 fighter 1: 1.29 px from the reference mapping
+FAIL  orbit (separation through HALF) frame 283 fighter 0: 0.71 px from the reference mapping
+seam sweep FAILED (46)
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### detintro
+seed 2, jitter again intro { "play": true, "take": 3, "avoid": ["long_look", "latecomer", "long_look"] }: 15 checkpoints to tick 900, DIFFERS: the host sent another setup than it said ({ "play": true,
+determinism FAILED
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+### det
+  jitter again DIFFERS: first at tick 60 (36150ef45d2bb287 vs 514372b2d164d86d)
+determinism FAILED
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+
+## The classing run: each failure again on the same tree with --notiles (the old ground behind the test word)
+open with --notiles: exit 0; open check passed
+depth with --notiles: exit 0; depth check passed
+shape with --notiles: exit 0; shape check passed
+patch with --notiles: exit 0; patch check passed
+ground with --notiles: exit 0; ground check passed
+after with --notiles: exit 0; after check passed
+sky with --notiles: exit 0; sky check passed
+seam with --notiles: exit 0; seam sweep passed
+detintro with --notiles: exit 0; determinism passed
+det with --notiles: exit 0; determinism passed
+lake_water_check with --notiles: exit 0; lake water check passed
+cover_water_check with --notiles: exit 0; cover water check passed
+sweep_check with --notiles: exit 0; sweep check passed
+ground_check with --notiles: exit 0; ground check passed
+
+## Classing (Rendering, 2026-11-14): every failure passes again with --notiles, so each only ever saw the old ground
+All 14 are Rendering's own checks (render/tools/). What each assumed, and what it needs on the globe ground:
+| check | what it assumed | on the globe ground |
+|---|---|---|
+| open, depth, patch | the strip world's city layout (a tower in the middle street, a house at a set place) | re-stage on the globe's city, or pin --notiles for the strip-only rules and add globe cases |
+| shape | the strip world's lane table fits the ground shader | REAL, already in the 9 November build: planet 7's city has 53 districts and 32 avenues against the shader's 16 and 24, so street paint covers only 16 districts. Fix: the nearest districts and avenues to the camera, chosen again as it moves (as the bowls are) |
+| ground, ground_check | a fresh GroundField equals the kept one (lists, residual) | the fresh field has no tile field, so it never marks a crater the store's (GroundField.held). Give it the tile field. The "Out of bounds get index 0" script error is in the same path |
+| after | after-images drawn = VFX's tally | POSSIBLY REAL: on 5 ticks VFX's tally reads 1 and none is drawn round fighter 0 on the globe ground. Rendering to look |
+| sky | the sunset key to the bit at a match's start | the globe's sky (its horizon and world light) is another key: take the globe's key, or pin --notiles |
+| seam | the strip's terrain span and its pixel mapping (1.6 px off at 48,000 apart) | a globe version of the seam sweep: P1's "no pop at the seam" on the true globe |
+| det, detintro | the reference sim's setup is the hub's | the globe ground adds planet 7 and planetGen 3 to the setup (RenderTileGround.setup_of), so the reference must start from SimHost.setup_used. The four frame-rate runs agree with each other bit for bit, so frame timing doesn't reach the sim |
+| lake_water_check, cover_water_check | gen 2 worlds on the strip ground | they stage gen 2 worlds, which the globe ground turns into gen 3 planets: pin --notiles for the gen 2 rules, and the tile water is covered by tile_check |
+| sweep_check | the strip's building sweep against its x-span reference | the tile ground sweeps by view (planet bins), so its reference must be the tile one, or pin --notiles |

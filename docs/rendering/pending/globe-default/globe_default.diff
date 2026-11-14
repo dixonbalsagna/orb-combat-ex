@@ -1,0 +1,180 @@
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -91,6 +91,7 @@
+ var host: SimHost
+ var started: bool = false
+ var manual: bool = false          # tools call frame() or render_view() themselves
++var strip_ground: bool = false    # a tool's: the old strip ground, as --notiles (set before the main scene enters the tree)
+ var _attach_pending: bool = false   # the split view waits for the boot's match, started in pieces (_match_built attaches it)
+ var _match_ever: bool = false     # a match has been built in this session (a load that is cancelled before the first one starts a plain one under the menu)
+ var _planet_next: Dictionary = {} # the planet part of the next menu-started match's setup (planet_part), merged by _match_setup
+@@ -240,7 +241,8 @@
+ 		add_child(boot)
+ 		boot.begin([pane], RenderLook.BOOT_WORDS)
+ 	SimHost.draw_others = args.has("others")   # 2v2: the other fight drawn; off; --others, ?others=1 on a local page
+-	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
++	RenderTileGround.on = not args.has("notiles") and not strip_ground   # the globe ground: on (Orb's decision 3, 2026-11-13; A-RENDER-01);
++	# --notiles, ?notiles=1 on a local page, or a tool's strip_ground: the old strip ground for a test. The camera's block below follows it.
+ 	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
+ 	split_rig.peak_launch = RenderTileGround.on
+ 	split_rig.launch_director = RenderTileGround.on
+@@ -1640,8 +1642,8 @@
+ ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
+ ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
+ ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
+-const LOCAL_ONLY_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+-const URL_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const LOCAL_ONLY_ARGS: Array = ["craterlook", "others", "tiles", "notiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const URL_ARGS: Array = ["craterlook", "others", "tiles", "notiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+--- a/render/tools/after_check.gd
++++ b/render/tools/after_check.gd
+@@ -32,6 +32,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/cover_water_check.gd
++++ b/render/tools/cover_water_check.gd
+@@ -28,6 +28,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/depth_check.gd
++++ b/render/tools/depth_check.gd
+@@ -31,6 +31,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/determinism.gd
++++ b/render/tools/determinism.gd
+@@ -62,7 +62,7 @@
+ 		if intro:
+ 			ok = await _intro_runs(seed) and ok
+ 			continue
+-		var pure: Array = _pure(seed, FIGHTS if fights else {})
++		var pure: Array = _pure(seed, _as_host(FIGHTS if fights else {}))
+ 		var n: int = pure.size() - 1
+ 		var last: int = pure[n][0]
+ 		var runs: Dictionary = {
+@@ -89,6 +89,7 @@
+ 		main.manual = false   # the game's own setup, with the host's intro memory
+ 		var su: Dictionary = main.host.hub.setup()
+ 		su.merge(main._match_setup(seed), true)
++		su = _as_host(su)
+ 		main.manual = true
+ 		var pure: Array = _pure(seed, su)
+ 		var n: int = pure.size() - 1
+@@ -101,6 +102,11 @@
+ 		ok = ok and diff == ""
+ 		print("seed %d, %-12s intro %s: %d checkpoints to tick %d, %s" % [seed, w[0], str(su.get("intro")), pure.size(), pure[n][0], "same as the sim alone" if diff == "" else "DIFFERS: " + diff])
+ 	return ok
++
++
++## A setup as the host sends it: with the globe ground on, the planet's keys too (RenderTileGround.setup_of, main.start_match).
++func _as_host(su: Dictionary) -> Dictionary:
++	return RenderTileGround.setup_of(su) if RenderTileGround.on else su
+ 
+ 
+ ## The sim alone, as the parity tools run it: [[tick, hash], ...] every EVERY ticks, then the last tick. setup: the
+--- a/render/tools/ground_check.gd
++++ b/render/tools/ground_check.gd
+@@ -44,6 +44,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+@@ -116,6 +117,7 @@
+ 			fails.append("%s: column %d, the bowl formula at z = 0 is %.4f off deform" % [label, i, d])
+ 			break
+ 	var fresh := GroundField.new()
++	fresh.tile_field = gfld.tile_field   # as the kept one: on the tile ground a crater the store holds is held in both
+ 	fresh.rebuild(S)
+ 	if fresh.lists != gfld.lists or fresh.g != gfld.g or fresh.cdata != gfld.cdata:
+ 		fails.append("%s: a rebuild from state differs from the kept-up-to-date field (lists %s, residual %s, craters %s)" % [label, fresh.lists == gfld.lists, fresh.g == gfld.g, fresh.cdata == gfld.cdata])
+--- a/render/tools/lake_water_check.gd
++++ b/render/tools/lake_water_check.gd
+@@ -27,6 +27,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/open_check.gd
++++ b/render/tools/open_check.gd
+@@ -50,6 +50,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/patch_check.gd
++++ b/render/tools/patch_check.gd
+@@ -25,6 +25,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/seam_sweep.gd
++++ b/render/tools/seam_sweep.gd
+@@ -58,6 +58,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/shape_check.gd
++++ b/render/tools/shape_check.gd
+@@ -36,6 +36,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/sky_check.gd
++++ b/render/tools/sky_check.gd
+@@ -57,6 +57,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 
+--- a/render/tools/sweep_check.gd
++++ b/render/tools/sweep_check.gd
+@@ -37,6 +37,7 @@
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 

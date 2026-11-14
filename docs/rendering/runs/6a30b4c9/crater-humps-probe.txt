@@ -1,0 +1,33 @@
+# The humps in a crater (A1 clipping, F-RENDER-03): a sim probe of Orb's 16:46 play of 9 November (orb-first-play-20261109-1646.json, 19,388 ticks, seed 14617899),
+# replayed headless on the build's own tree (homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/tree, copied to scratch). The probe: tg/humps_probe.gd (scratch).
+# For each of the store's 16 craters, the ground (the field, its records, then the store's delta, as SimField._ground) along four lines through the centre,
+# from -1.6 r to +1.6 r every 8 units; a bump is a local top inside 0.95 r standing more than 10 units over the lower of the two hollows beside it.
+# The store's delta alone (craters, scorch, trenches) has no bump over 13 units in any bowl: the records' sum makes no humps. The bumps below are the ground under the bowl.
+# Up is positive. 'the ground without craters' is the field with its records at the bump; 'the bowl's centre' is the same at the crater's centre.
+ticks 19388, store records 321, craters 16, R 24446
+crater t 0.0 r 196 depth 43 rim 14, older craters reaching into it: none
+   centre 1260; at -186: 23 over the floor beside it (the ground without craters there 1253, the bowl's centre 1303)
+crater t 0.0 r 196 depth 43 rim 14, older craters reaching into it: none
+   centre 1217; at -178: 22 over the floor beside it (the ground without craters there 1222, the bowl's centre 1260)
+   centre 1217; at -178: 46 over the floor beside it (the ground without craters there 1251, the bowl's centre 1261)
+   centre 1217; at -186: 35 over the floor beside it (the ground without craters there 1237, the bowl's centre 1260)
+   centre 1217; at -178: 16 over the floor beside it (the ground without craters there 1212, the bowl's centre 1260)
+crater t 147.0 r 258 depth 57 rim 20, older craters reaching into it: none
+   centre 1785; at -205: 16 over the floor beside it (the ground without craters there 1770, the bowl's centre 1841)
+crater t 155.0 r 325 depth 71 rim 28, older craters reaching into it: none
+   centre 2259; at 200: 21 over the floor beside it (the ground without craters there 2304, the bowl's centre 2330)
+crater t 185.0 r 276 depth 46 rim 16, older craters reaching into it: none
+   centre 1070; at -241: 21 over the floor beside it (the ground without craters there 1078, the bowl's centre 1116)
+   centre 1072; at 255: 17 over the floor beside it (the ground without craters there 944, the bowl's centre 1117)
+crater t 194.8 r 259 depth 56 rim 20, older craters reaching into it: none
+   centre 1653; at 241: 20 over the floor beside it (the ground without craters there 1684, the bowl's centre 1709)
+crater t 237.2 r 1181 depth 258 rim 103, older craters reaching into it: none
+   centre 1402; at 206: 68 over the floor beside it (the ground without craters there 1970, the bowl's centre 1847)
+   centre 1403; at 390: 14 over the floor beside it (the ground without craters there 1839, the bowl's centre 1848)
+crater t 268.5 r 1992 depth 438 rim 175, older craters reaching into it: [t 268.5 r 1992 depth 438 rim 175 off 0] [t 237.2 r 1181 depth 258 rim 103 off 1144]
+   centre 1519; at 461: 66 over the floor beside it (the ground without craters there 1850, the bowl's centre 1856); at 1045: 11 over the floor beside it (the ground without craters there 1616, the bowl's centre 1856); at 1637: 18 over the floor beside it (the ground without craters there 1497, the bowl's centre 1856)
+   centre 1519; at -1515: 119 over the floor beside it (the ground without craters there 1821, the bowl's centre 1856); at -971: 63 over the floor beside it (the ground without craters there 1906, the bowl's centre 1856)
+   centre 1519; at -619: 23 over the floor beside it (the ground without craters there 1809, the bowl's centre 1856); at 765: 16 over the floor beside it (the ground without craters there 1781, the bowl's centre 1856)
+   centre 1519; at 509: 109 over the floor beside it (the ground without craters there 1889, the bowl's centre 1856); at 1461: 129 over the floor beside it (the ground without craters there 1614, the bowl's centre 1856)
+# The craters in time order match the play's crater marks in order (36, 114, 1000, 2061, 3022, 4453, 5239, 6847, 10323, 10840, 11216, 12907, 13548, 14424, 16522, 18559):
+# the crater at t 268.5 (radius 1992, depth 438) is the one made at tick 18559, and t 237.2 (radius 1181) at tick 16522.

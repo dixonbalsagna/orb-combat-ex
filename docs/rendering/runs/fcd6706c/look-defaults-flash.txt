@@ -1,0 +1,19 @@
+# The look defaults' flash readings (A-RENDER-01, A-RENDER-04), for the EP: Tools' pixel clips (run-pixels, the standard address /index.html?flashcap=1, no page word), main fcd6706c as built (e0), with the globe ground on by default (e1), and with the crater look on by default too (e14). One capture at a time.
+## e0
+clash-normal              1500      4.5    0       4.5      3.5     1/9     0  FAIL: the primary reading counts 4.5 (over 3); with the area threshold 15% lower it counts 4.5 (over 3); with a longer me
+clash-reduced             1500      4.5    0         5      3.5     2/8     0  FAIL: the primary reading counts 4.5 (over 3); with the area threshold 15% lower it counts 5 (over 3); with a longer memo
+collapse-normal           1500        5    0         5      5.5    2/10     0  FAIL: the primary reading counts 5 (over 3); with the area threshold 15% lower it counts 5 (over 3); with a longer memory
+collapse-reduced          1500        4    0         5      4.5     2/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 5 (over 3); with a longer memory
+pixel run: 4 of 4 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/L
+## e1
+clash-normal              1500      5.5    0       5.5        5    1/11     0  FAIL: the primary reading counts 5.5 (over 3); with the area threshold 15% lower it counts 5.5 (over 3); with a longer me
+clash-reduced             1500      6.5    0       7.5      6.5    0/11     0  FAIL: the primary reading counts 6.5 (over 3); with the area threshold 15% lower it counts 7.5 (over 3); with a longer me
+collapse-normal           1500      2.5    0         3      2.5     1/5     0  PASS  n/a
+collapse-reduced          1500        3    0         3        3     0/6     0  OVER GATE: the primary reading counts 3 (over our gate of 2.5)  n/a <-- NOT PASS
+pixel run: 3 of 4 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/L
+## e14
+clash-normal              1500      5.5    0       5.5        5    1/11     0  FAIL: the primary reading counts 5.5 (over 3); with the area threshold 15% lower it counts 5.5 (over 3); with a longer me
+clash-reduced             1500      6.5    0       7.5      6.5    0/11     0  FAIL: the primary reading counts 6.5 (over 3); with the area threshold 15% lower it counts 7.5 (over 3); with a longer me
+collapse-normal           1500        4    0         4        4     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a longer memory
+collapse-reduced          1500      3.5    0       3.5        4     0/6     0  FAIL: the primary reading counts 3.5 (over 3); with the area threshold 15% lower it counts 3.5 (over 3); with a longer me
+pixel run: 4 of 4 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/L
