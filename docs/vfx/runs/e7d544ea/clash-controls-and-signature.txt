@@ -1,0 +1,27 @@
+Clash controls, the signature VFX-off control, and the hash_check grant (VFX, 2026-11-14; EP only)
+
+STACK: main e7d544ea + Rendering's globe-default, crater-look-default, foot-slice (+ its hash_check grant) + VFX's meteor-default, scratch tree from git archive, web export, no page words. Scratch controls in the capture hook (not in any patch): blastoff = speed streaks, flame and sparks, material chunks and dust, embers, shrapnel, rubble off; vfxoff = the whole VFX hub off. Crater floor control = Rendering's crater_floor_off.scratch.patch (a second export). tools/flash/run-pixels.mjs --jobs 1, one clip at a time, below-normal, none starved. Primary general count, all four readings of each clip (960x540 and 1024x768, scale 1 and 2); limit 3, our gate 2.5.
+
+READINGS
+  clash normal, as played (anchor)                               960x540 s1 4.5@1075 | 960x540 s2 4.5@1075 | 1024x768 s1 5.5@1075 | 1024x768 s2 5.5@1075  (578 s)
+  clash normal, crater floor warm tone off (Rendering's scratch shader patch) 960x540 s1 4.5@1075 | 960x540 s2 4.5@1075 | 1024x768 s1 5.5@1075 | 1024x768 s2 5.5@1075  (640 s)
+  clash normal, VFX blast pieces off                             960x540 s1 3.5@1075 | 960x540 s2 4.5@1075 | 1024x768 s1 5.5@1075 | 1024x768 s2 5.5@1075  (585 s)
+  clash reduced, crater floor warm tone off                      960x540 s1 6.5@1075 | 960x540 s2 5.5@1075 | 1024x768 s1 5.5@1075 | 1024x768 s2 5.5@1075  (587 s)
+  clash reduced, VFX blast pieces off                            960x540 s1 4@152 | 960x540 s2 4@152 | 1024x768 s1 6@151 | 1024x768 s2 6@151  (574 s)
+  signature normal, as played                                    960x540 s1 3@76 | 960x540 s2 2.5@76 | 1024x768 s1 3@68 | 1024x768 s2 3@68  (534 s)
+  signature normal, whole VFX hub off                            960x540 s1 2.5@77 | 960x540 s2 2.5@77 | 1024x768 s1 4.5@70 | 1024x768 s2 4.5@70  (523 s)
+  signature reduced, as played                                   960x540 s1 4@78 | 960x540 s2 4@78 | 1024x768 s1 4.5@81 | 1024x768 s2 4.5@71  (519 s)
+  signature reduced, whole VFX hub off                           960x540 s1 4@78 | 960x540 s2 4@78 | 1024x768 s1 4.5@71 | 1024x768 s2 4.5@71  (529 s)
+
+GATES ON THE STACK: effects_check 1,168 ok, 0 failing; hash_check seeds 12345, 4 and 7 to tick 3,600, six ways, passes on the real globe ground with Rendering's foot-slice and its one-line grant (no strip pin).
+
+CLASH
+- Counted-flash events in the 1050 to 1130 window (the blast and the crater opening): 12 in the anchor, 12 with the crater floor's warm tone off, 12 with my blast pieces off. The worst second (tick 1075) is the same in all three, at the same reading in normal (4.5 at 960, 5.5 at 1024). My blast pieces off lowers only one of the four normal readings (960x540 scale 1: 4.5 to 3.5) and not the worst.
+- In reduced (no as-played reduced reading on this stack; the earlier stack read 6.5): crater floor off 6.5 / 5.5 / 5.5 at tick 1075; blast pieces off: the worst second moves to tick 152 (6 at 1024 scale 1, 4 at 960), so my pieces do add to the 1075 second in reduced, by about half a point, and the early second (tick 152) is the next worst.
+- The orange floor is still in the picture with BOTH controls (frames at tick 1081 from the floor-off and blast-off clips, read in place): the glow is not the warm floor tone the scratch patch removes and it is not my pieces. By code, the likeliest owner is the ground shader's heat glow: render/shaders/terrain.gdshaderinc lines 363 to 367 (`v_heat`, `heat_lo`, `heat_hi`, `heat_gain`, "a new crater's glow comes with its opening too"), fed by ImpactFx (render/core/ground_field.gd, "heat is the render-side glow (ImpactFx)"), with a calm gain under reduced flashing (RenderLook.HEAT_CALM). That is Rendering's, and it is a reading of the code and the pictures, not yet a control.
+- So: the clash look does not fail the clip (earlier), the crater floor's warm tone does not (this run), my blast pieces add little (normal 0 at the worst reading, about half a point in reduced). The fast bright glow of a new crater's heat is the remaining suspect.
+
+SIGNATURE (as played here against Tools' f1f91f45 nightly readings of 3.5 / 3.5: different stack and size, so not comparable)
+- Normal: as played 3 (960 s1, tick 76; 1024: 3); VFX hub off 2.5 at 960 and 4.5 at 1024 (tick 70). Reduced: as played 4 at 960 and 4.5 at 1024; VFX hub off the same, 4 and 4.5, at the same ticks (78 and 71).
+- So switching the whole VFX hub off does not lower the signature reading in a consistent way (down half a point at 960 in normal, UP a point and a half at 1024 in normal, no change in reduced). VFX is not the cause of the signature's counted flashes; this agrees with the frame attribution of f1f91f45 (scenery sweeping past a moving camera).
+- Unexplained: why the normal 1024 reading is higher with the hub off. Possibly the unregulated Rendering flashes meet no VFX state; I have not chased it.
