@@ -221,5 +221,32 @@
       "severity": "fail"
     }
   ],
-  "_mustContain": "Texts a public page file must carry (CD-02, CD-08): a missing file or a missing text is a hit. Legal wrote the words (docs/legal/public-contact-wording.md)."
+  "_mustContain": "Texts a public page file must carry (CD-02, CD-08): a missing file or a missing text is a hit. Legal wrote the words (docs/legal/public-contact-wording.md).",
+  "testerFiles": {
+    "severity": "fail",
+    "why": "Legal RL-267, gate G22: no tester's raw file or name in any tracked file. Testers' raw files live only in .private/testers/ (git-ignored).",
+    "pathRegexes": [
+      {
+        "id": "private-folder",
+        "re": "^.private/",
+        "why": "a file under .private/ is in the tracked list: the folder must be git-ignored (.gitignore has .private/)"
+      },
+      {
+        "id": "saved-match-name",
+        "re": "(^|/)(solo|lan)-[0-9a-f]{7,8}-[^/]*.json$",
+        "why": "the name of a saved match file (a tester's raw play file)"
+      },
+      {
+        "id": "tester-folder-in-runs",
+        "re": "^docs/[^/]+/runs/.*(^|/)(testers?|playtesters?|feedback-reports?)(/|$)",
+        "why": "a tester folder under a tracked runs/ folder"
+      }
+    ],
+    "savedKinds": [
+      "orb-lan-match",
+      "orb-solo-match"
+    ],
+    "namesFile": ".private/testers/names.txt",
+    "_namesFile": "A git-ignored list on Orb's own PC, one tester name or alias a line (blank lines and lines starting with # are skipped). When it is present the screen fails on any file that carries a name from it (whole word, any case) and never prints the name. It is absent on a CI runner: the screen then says so in a note and the names are not checked there (the structural rules above still run)."
+  }
 }

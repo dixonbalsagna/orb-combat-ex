@@ -123,13 +123,46 @@ export function screen(root, rules) {
       }
     }
   }
+  // Legal RL-267, G22: no tester's raw file or name in the repository. Structural (a path or a saved match's own kind) everywhere; names only where the git-ignored list is present (Orb's PC).
+  const notes = [];
+  const tf = rules.testerFiles;
+  if (tf) {
+    const pathRes = (tf.pathRegexes || []).map((p) => ({ ...p, rx: new RegExp(p.re) }));
+    const kinds = new Set(tf.savedKinds || []);
+    for (const f of files) {
+      for (const p of pathRes) if (p.rx.test(f)) add(`tester-file:${p.id}`, tf.severity, f, 0, f, p.why);
+      if (f.endsWith('.json') && !SELF.has(f)) {
+        const text = readText(root, f, rules);
+        if (text !== null && /"kind"/.test(text)) {
+          let d = null; try { d = JSON.parse(text); } catch { /* not a save */ }
+          if (d && typeof d === 'object' && kinds.has(d.kind)) add('tester-file:saved-match', tf.severity, f, 0, `"kind": "${d.kind}"`, "a saved match is a tester's raw play file: it lives in .private/testers/, never in a tracked file");
+        }
+      }
+    }
+    let namesText = null; try { namesText = readFileSync(join(root, ...tf.namesFile.split('/')), 'utf8'); } catch { /* absent */ }
+    const testerNames = namesText === null ? [] : namesText.split(/\r?\n/).map((x) => x.trim()).filter((x) => x && !x.startsWith('#'));
+    if (namesText === null) notes.push(`tester names are not checked here: ${tf.namesFile} is not present (it is git-ignored and lives on Orb's PC); the path and saved-match rules ran`);
+    else if (testerNames.length) {
+      const esc = testerNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const nameRe = new RegExp(`(?<![A-Za-z0-9_])(?:${esc.join('|')})(?![A-Za-z0-9_])`, 'i');
+      let ncount = 0;
+      for (const f of files) {
+        if (f.startsWith('.private/') || SELF.has(f)) continue;
+        const text = readText(root, f, rules);
+        if (text === null) continue;
+        const lines = text.split(/\r?\n/);
+        for (let i = 0; i < lines.length; i++) if (lines[i].length <= 20000 && nameRe.test(lines[i])) { add('tester-name', tf.severity, f, i + 1, '<a name from the tester list>', tf.why); ncount++; break; }
+      }
+      notes.push(`tester names checked against ${testerNames.length} name(s) from ${tf.namesFile}: ${ncount} file(s) carry one`);
+    } else notes.push(`${tf.namesFile} is present and holds no names`);
+  }
   // the public pages must carry Legal's words (a text that is not there is a hit)
   for (const m of rules.mustContain || []) {
     let body = null; try { body = readFileSync(join(root, ...m.file.split('/')), 'utf8'); } catch { /* missing */ }
     if (body === null) add('must-contain', m.severity || 'fail', m.file, 0, `the file is missing: ${m.text}`, m.why);
     else if (!body.includes(m.text)) add('must-contain', m.severity || 'fail', m.file, 0, `does not carry: ${m.text}`, m.why);
   }
-  return { hits, files: files.length, scanned };
+  return { hits, files: files.length, scanned, notes };
 }
 
 export function loadRules(file = join(HERE, 'content-screen.json')) { return JSON.parse(readFileSync(file, 'utf8')); }
@@ -144,6 +177,7 @@ function main() {
   if (a.includes('--json')) { console.log(JSON.stringify(r, null, 1)); }
   else {
     for (const h of [...fails, ...warns]) console.log(`${h.severity === 'fail' ? 'FAIL' : 'warn'}  ${h.rule}  ${h.file}:${h.line}  ${h.excerpt}${h.why ? `  (${h.why})` : ''}`);
+    for (const n of r.notes || []) console.log(`note  ${n}`);
     console.log(`content screen: ${r.scanned} text files of ${r.files} scanned, ${fails.length} failing hit(s), ${warns.length} warning(s)`);
   }
   process.exit(fails.length ? 1 : 0);

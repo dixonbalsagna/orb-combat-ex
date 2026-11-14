@@ -106,6 +106,37 @@ try {
   put('art/pic.png', win('realperson'));
   r = screen(tmp, rules);
   check('a binary file and a skipped extension are not read', r.hits.length === 0, JSON.stringify(r.hits));
+
+  // Legal RL-267, G22: a tester's raw file or name in a tracked file
+  rmSync(join(tmp, 'blob.bin')); rmSync(join(tmp, 'art', 'pic.png'));
+  r = screen(tmp, rules);
+  check('G22: a clean tree notes that names are not checked when the list is absent, and has no hit', r.hits.length === 0 && (r.notes || []).some((n) => /not checked here/.test(n)), JSON.stringify(r.notes));
+  put('docs/net/runs/abc12345/solo-1a2b3c4d-main-20261114-101500-report.json', '{ "x": 1 }\n');
+  put('docs/tools/runs/abc12345/lan-1a2b3c4d-old-20261114-101500-over.json', '{ "x": 1 }\n');
+  put('docs/qa/runs/abc12345/testers/notes.txt', 'a line\n');
+  put('.private/testers/readme.md', 'x\n');
+  put('data/some-save.json', '{ "kind": "orb-solo-match", "replay": {} }\n');
+  put('data/not-a-save.json', '{ "kind": "fighter", "x": 1 }\n');
+  r = screen(tmp, rules);
+  const tfh = r.hits.filter((h) => h.rule.startsWith('tester-file:'));
+  check('G22: a saved-match file name (solo and LAN) is found', ['docs/net/runs/abc12345/solo-1a2b3c4d-main-20261114-101500-report.json', 'docs/tools/runs/abc12345/lan-1a2b3c4d-old-20261114-101500-over.json'].every((f) => tfh.some((h) => h.file === f && h.rule === 'tester-file:saved-match-name')));
+  check('G22: a tester folder under runs/ is found', tfh.some((h) => h.file === 'docs/qa/runs/abc12345/testers/notes.txt' && h.rule === 'tester-file:tester-folder-in-runs'));
+  check('G22: a file under .private/ in the list is found (the folder must be ignored)', tfh.some((h) => h.file === '.private/testers/readme.md' && h.rule === 'tester-file:private-folder'));
+  check("G22: a JSON file whose own kind is a saved match is found, and another kind is not", tfh.some((h) => h.file === 'data/some-save.json' && h.rule === 'tester-file:saved-match') && !tfh.some((h) => h.file === 'data/not-a-save.json'));
+  check('G22: every one is a fail', tfh.length >= 5 && tfh.every((h) => h.severity === 'fail'));
+  for (const f of ['docs/net/runs/abc12345/solo-1a2b3c4d-main-20261114-101500-report.json', 'docs/tools/runs/abc12345/lan-1a2b3c4d-old-20261114-101500-over.json', 'docs/qa/runs/abc12345/testers/notes.txt', '.private/testers/readme.md', 'data/some-save.json', 'data/not-a-save.json']) rmSync(join(tmp, ...f.split('/')));
+  // names, from the local list
+  const TN = 'Zed' + 'brook';   // a made-up tester name, built from two pieces so this file does not hold it whole
+  put('.private/testers/names.txt', `# testers\n${TN}\n\n`);
+  put('docs/notes.md', `thanks to ${TN.toLowerCase()} for the report\n`);
+  put('docs/other.md', `the word ${TN}ish is another word\n`);
+  r = screen(tmp, rules);
+  const nh = r.hits.filter((h) => h.rule === 'tester-name');
+  check('G22: a name on the local list is found in a tracked file, in any case, as a whole word', nh.length === 1 && nh[0].file === 'docs/notes.md', JSON.stringify(nh));
+  check('G22: the screen never prints the name', JSON.stringify(r).toLowerCase().indexOf(TN.toLowerCase()) < 0);
+  check('G22: the list file itself is not read as a tracked file', !nh.some((h) => h.file.startsWith('.private/')));
+  check('G22: with the list present the note says how many names were checked', (r.notes || []).some((n) => /checked against 1 name/.test(n)));
+  rmSync(join(tmp, '.private', 'testers', 'names.txt')); rmSync(join(tmp, 'docs', 'notes.md')); rmSync(join(tmp, 'docs', 'other.md')); rmSync(join(tmp, '.private'), { recursive: true });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
