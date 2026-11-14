@@ -177,7 +177,7 @@
 +	if shipped == "arena":
 +		ok(WorldDefault.apply({}, 5).is_empty() and WorldDefault.part(5).is_empty(), "the mode is arena (until GW1a): a setup with no planet key plays the hand-made arena, and nothing is added to it")
 +	else:
-+		ok(int(WorldDefault.apply({}, 5).get("planet", -1)) == 7, "the mode is planet (GW1a): a setup with no planet key plays the fixed planet 7")
++		ok(int(WorldDefault.apply({}, 5, true).get("planet", -1)) == 7, "the mode is planet (GW1a): a setup with no planet key plays the fixed planet 7 (the sim's hook asks for the fixed one)")
 +	print("the planet default")
 +	WorldDefault.setForTest("planet", false)
 +	var s: Dictionary = {"intro": false}

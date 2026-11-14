@@ -202,7 +202,7 @@
 +}
 --- /dev/null
 +++ b/sim/world/tools/size_check.gd
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,105 @@
 +extends SceneTree
 +# The planet sizes (World, A1; sim/world/size.gd, data/biomes/sizes.json; docs/world/planet-sizes.md). From the repo root:
 +#   godot --headless --path . --script res://sim/world/tools/size_check.gd -- [--negative-control]
@@ -272,6 +272,21 @@
 +	var Sx := _match(_setup("enormous"), 30)
 +	ok(Sx.planetNC == 4800, "a size the data does not have plays medium")
 +	SimCore.dispose(Sx)
++	print("the host's loader (strict) makes a planet at its size")
++	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
++	SimPlanetLoad.strict = true
++	var su: Dictionary = _setup("big", 12, 2)
++	WorldPlanet.forget()
++	ok(not SimPlanetLoad.mayStart(su) and SimConst.PLANET_NC == 4800, "a big planet that is not made is not ready, and asking leaves the host's static (4,800) as it was")
++	var job = SimPlanetLoad.beginFor(su)
++	ok(job != null and SimConst.PLANET_NC == 4800, "beginning its load leaves the static as it was")
++	job.finishNow()
++	ok(job.done and SimConst.PLANET_NC == 4800 and SimPlanetLoad.mayStart(su), "the load, run to its end at the planet's own size, makes it ready (and the static is still 4,800)")
++	var Sl := SimCore.createSim()
++	SimCore.newMatch(Sl, 5, {"p1": false, "p2": false}, su)
++	ok(SimPlanetLoad.refused == 0 and Sl.planetNC == 9600 and Sl.frame != null, "a strict match on it starts (planetNC %d, a frame, none refused)" % Sl.planetNC)
++	SimCore.dispose(Sl)
++	SimPlanetLoad.strict = false
 +	print("a big planet's store")
 +	var Sh := _match(_setup("huge"), 5)
 +	if negative:

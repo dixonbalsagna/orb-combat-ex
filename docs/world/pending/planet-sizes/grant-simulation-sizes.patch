@@ -83,3 +83,53 @@
  	var c = _keyOf.get(k)
  	if c != null:
  		return c
+--- a/sim/core/planet_load.gd
++++ b/sim/core/planet_load.gd
+@@ -48,7 +48,13 @@
+ 	if not setup.has("planet"):
+ 		return true
+ 	var g: int = genOf(setup)
+-	return g < 2 or ready(int(setup.planet), g)
++	if g < 2:
++		return true
++	var nc0: int = SimConst.PLANET_NC
++	SimConst.setPlanet(WorldPlanetSize.colsOf(setup))   # the planet is made, and asked for, at the size the setup names (World, data/biomes/sizes.json); the host's own static goes back
++	var ok: bool = ready(int(setup.planet), g)
++	SimConst.setPlanet(nc0)
++	return ok
+ 
+ 
+ ## A load of planet `seed` by generation `gen` (0: the generation planets are made by now, a tool's or the data's).
+@@ -83,10 +89,18 @@
+ 	var _rj = null                 # World's RingJob over it
+ 	var _sj = null                 # World's SliceJob over a touch-down's ring
+ 	var _ringDone: bool = true
++	var _nc: int = 4800            # the planet's size in columns (the setup's size, else the static's): bound for every piece, the host's static put back after
+ 
+ 	func _init(sd: int, g: int, setup: Dictionary) -> void:
+ 		seed = sd
+ 		gen = g
++		var nc0: int = SimConst.PLANET_NC
++		_nc = WorldPlanetSize.colsOf(setup) if setup.has("planet") else nc0
++		SimConst.setPlanet(_nc)
++		_begin(sd, g, setup)
++		SimConst.setPlanet(nc0)
++
++	func _begin(sd: int, g: int, setup: Dictionary) -> void:
+ 		var was: int = WorldClimate.curGen
+ 		WorldClimate.useGen(g)
+ 		pj = WorldPlanet.makeJob(sd)
+@@ -117,6 +131,13 @@
+ 	## one piece each). True when the planet is ready for a match (and, from beginFor, its ring read). A budget of the
+ 	## whole load or more (finishNow's) goes through every step in the one call.
+ 	func step(units: int) -> bool:
++		var nc0: int = SimConst.PLANET_NC
++		SimConst.setPlanet(_nc)
++		var r: bool = _step(units)
++		SimConst.setPlanet(nc0)
++		return r
++
++	func _step(units: int) -> bool:
+ 		if done:
+ 			return true
+ 		frames += 1

@@ -6,15 +6,15 @@ data
   ok    medium is 4,800; no size, or no planet to size, is medium
 every offered size plays
   ok    tiny: the match is bound to 1280 columns round, an arena of the same, a radius of 6519
-  ok    tiny: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 1.6 s, shared machine: void as a measurement)
+  ok    tiny: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 1.9 s, shared machine: void as a measurement)
   ok    small: the match is bound to 2560 columns round, an arena of the same, a radius of 13038
-  ok    small: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.5 s, shared machine: void as a measurement)
+  ok    small: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.6 s, shared machine: void as a measurement)
   ok    medium: the match is bound to 4800 columns round, an arena of the same, a radius of 24446
   ok    medium: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.6 s, shared machine: void as a measurement)
   ok    big: the match is bound to 9600 columns round, an arena of the same, a radius of 48892
-  ok    big: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.7 s, shared machine: void as a measurement)
+  ok    big: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.8 s, shared machine: void as a measurement)
   ok    huge: the match is bound to 19200 columns round, an arena of the same, a radius of 97785
-  ok    huge: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.7 s, shared machine: void as a measurement)
+  ok    huge: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.9 s, shared machine: void as a measurement)
 the same setup twice
   ok    tiny: the same setup plays the same match (hash at tick 600)
   ok    big: the same setup plays the same match (hash at tick 600)
@@ -30,6 +30,11 @@ ERROR: SimCore.newMatch: setup.planetSize enormous is not a size in sizes.json (
        [5] _match (res://sim/world/tools/size_check.gd:26)
        [6] _init (res://sim/world/tools/size_check.gd:67)
   ok    a size the data does not have plays medium
+the host's loader (strict) makes a planet at its size
+  ok    a big planet that is not made is not ready, and asking leaves the host's static (4,800) as it was
+  ok    beginning its load leaves the static as it was
+  ok    the load, run to its end at the planet's own size, makes it ready (and the static is still 4,800)
+  ok    a strict match on it starts (planetNC 9600, a frame, none refused)
 a big planet's store
   ok    a crater dug here and one half way round the huge planet are two records
   ok    each place's box lists its own record only (no aliasing across the planet)
