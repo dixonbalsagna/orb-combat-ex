@@ -1785,3 +1785,4 @@ In short: the Grudge is out. Take It Standing as packeted is replaced by Orb's a
 2. Does the hurt fighter's form meter fill faster: "yes".
 3. Is "body" its own number or the core region: "workshop this, core region should be the most important but perhaps separate."
 Also: "I think base attacks should help fill stamina, so attacking with normal face-button attacks should be a respite between special or signature attacks. keep workshopping this."
+- Do specials and signatures cost stamina as well as energy (round two, docs/ep/proposals/alpha-feature-workshop-2.html; to the stand-in, relayed verbatim): "Yes, both". This confirms the stand-in's reading in that page.
