@@ -1,0 +1,191 @@
+
+1. strength: from the blow cue and the amount (kind_is_strength off), then from the damage kind (on)
+  ok    a medium blow cue makes impact.medium even when the damage is small
+  ok    a heavy blow cue makes impact.heavy
+  ok    the retired text flurry counts as light, whatever the damage
+  ok    no blow cue, small damage: light
+  ok    no blow cue, damage 40: medium
+  ok    no blow cue, damage 90: heavy
+  ok    a guarded hit is impact.guard
+  ok    a guard sounds higher for a light blow than for a heavy one (1.11 against 0.78)
+  ok    a beam hit still uses the old path
+  ok    one blow cue is used for one hit, the next falls back
+  ok    with the strength on the damage event, the kind is the strength (a medium kind, a light blow cue)
+  ok    a heavy kind is a heavy whatever the amount
+  ok    a guarded heavy blow is a lower guard
+  ok    the energy blow's own damage (kind blast) is left to energy_land: no impact on top
+  ok    a blast with no energy_land (a shot from afar) keeps the old stand-in
+2. flurry mode (mean over 60 flurries of 8 lights, 6 ticks apart)
+     first three -2.99 dB, next four -5.03 dB, pitch 1.001 to 1.030, seventh -4.97 dB, close -0.11 dB
+  ok    from the fourth blow a light is about 2 dB quieter
+  ok    the run climbs in pitch, a little (x1.030)
+  ok    the blow that closes the flurry is the loudest of the run
+  ok    from the fifth blow in a second the knock is the lite one; the closing blow is the full light again (["impact.light", "impact.light", "impact.light", "impact.light", "impact.light.lite", "impact.light.lite", "impact.light.lite", "impact.light"])
+  ok    two fighters trading lights each keep their own count (no assertion on the jitter: 1.3 dB spread)
+  ok    the same seed gives the same flurry, another seed another one
+2b. a mash: the hit sound plays on every blow, whether or not the sim froze on it
+  ok    eight blows 12 ticks apart make eight hit sounds in each case ([8, 8, 8])
+  ok    and they are the same sounds, pitch and level whatever the stop (nothing in audio reads it)
+3. the new impact sounds
+     impact.light   0.15 s, peak -9.0 dBFS, rms -24.3 dBFS
+     impact.light.lite 0.08 s, peak -11.0 dBFS, rms -26.3 dBFS
+     impact.medium  0.35 s, peak -6.0 dBFS, rms -21.4 dBFS
+     impact.heavy   0.80 s, peak -3.0 dBFS, rms -18.6 dBFS
+     impact.guard   0.17 s, peak -8.0 dBFS, rms -21.3 dBFS
+     impact.whiff   0.13 s, peak -12.0 dBFS, rms -29.4 dBFS
+  ok    light, medium and heavy are told apart by length
+  ok    the medium is about 0.3 s
+  ok    and by level
+  ok    the lite knock is shorter and quieter than the light
+  ok    impact.medium: no clipping and clean ends
+  ok    impact.guard: no clipping and clean ends
+  ok    impact.whiff: no clipping and clean ends
+5. the launcher (B now)
+  ok    launcher_open with a 14-tick stagger makes one ping
+  ok    critical priority, one at a time, in the launcher's own group
+  ok    it ducks the impacts and the music
+  ok    on its own bus, so it does not duck itself
+  ok    it sounds at the staggered fighter
+  ok    a stagger of 8 ticks (a shove) is no launcher
+  ok    the ping is identical every time (one gain, one pitch)
+  ok    a used launcher (his B thrown) stops the ping (40 ms fade)
+  ok    a lapsed window lets it ring out
+  ok    the close says used or lapsed by text only (k means nothing here)
+     ui.launcher 0.27 s, peak -5.0 dBFS, rms -23.7 dBFS
+  ok    about a quarter of a second
+6. the wind-up, misses and the double hit
+  ok    a 12-tick wind-up is the medium's gather at its own length
+  ok    a 28-tick wind-up is the heavy's, in the fighter's own group
+  ok    a 14-tick wind-up (the launcher's) is stretched to peak as it lands
+  ok    a 3-tick contact (a light) has no gather
+  ok    a Y whose gap needs 2 ticks to close has no gather yet
+  ok    and a frozen tick (a hit-stop) does not count toward it
+  ok    the gather starts with the wind-up itself, at its own 12 ticks
+  ok    a wind-up stopped by a blow before its gap closes never gathers
+  ok    a launcher's B (dur 14, thrown in an opening) gathers at once, stretched
+  ok    a wind-up stopped by a blow or lost (k 2) is faded out
+  ok    a wind-up stopped by a blow or lost (k 3) is faded out
+  ok    thrown or a miss (k 1) lets it finish
+  ok    thrown or a miss (k 4) lets it finish
+  ok    a miss (gave_ground) is the air
+  ok    a miss (reach) is the air
+  ok    a miss (dodge) is the air
+  ok    a reach that falls short is higher than giving ground
+  ok    the double hit announces itself with a charge (8 ticks ahead)
+  ok    the two blows landing together make one impact.double (1 impact cues)
+  ok    a later heavy hit is an ordinary heavy again
+     windup.medium  0.202 s, peak -12.0 dBFS
+  ok    windup.medium: no clipping, clean end
+     windup.heavy   0.482 s, peak -10.0 dBFS
+  ok    windup.heavy: no clipping, clean end
+     double.charge  0.131 s, peak -9.0 dBFS
+  ok    double.charge: no clipping, clean end
+     impact.double  0.807 s, peak -2.0 dBFS
+  ok    impact.double: no clipping, clean end
+  ok    the gathers are 12, 28 and 8 ticks long (0.202, 0.482, 0.131 s)
+7. energy in reach: the point-blank bolt and the blast
+  ok    a bolt has no gather (it is 2 ticks)
+  ok    a blast gathers for its 12 ticks
+  ok    the blast lands: the gather is cut and the whump sounds
+  ok    a blast is loudest on a hit, then armour, then a guard (-0.2, -2.9, -6.0 dB)
+  ok    a missed blast is the whump, quieter
+  ok    a missed bolt is the air
+  ok    from the sixth bolt in a second the zap is dropped (energy.bolt.lite)
+  ok    and it is 3 dB down (-5.92 against -2.91 dB)
+     energy.bolt        0.066 s, peak -7.0 dBFS
+  ok    energy.bolt: no clipping, clean end
+     energy.bolt.lite   0.044 s, peak -9.0 dBFS
+  ok    energy.bolt.lite: no clipping, clean end
+     energy.gather      0.202 s, peak -10.0 dBFS
+  ok    energy.gather: no clipping, clean end
+     energy.blast       0.756 s, peak -3.0 dBFS
+  ok    energy.blast: no clipping, clean end
+  ok    the gather is 12 ticks long
+8. the heavy's charge: hum, full tick, armour (Encounter's C2 shapes)
+  ok    a B's wind-up (dur 28) gathers at once
+  ok    no hum while it is only winding
+  ok    the `charge` windup starts the hum, in the charger's own group
+  ok    charge_full makes one tick on the Alert bus, critical priority
+  ok    fixed: no variant, no pitch change
+  ok    the Y's full charge (source y) is not in this chain
+  ok    the release (a blow cue text release) cuts the hum, 4 ticks before the landing
+  ok    the landing (end k 1) has nothing left to stop
+  ok    a charge stopped by a blow cuts the gather and the hum
+  ok    a medium's 12-tick wind-up has no hum
+  ok    a light on a charging B: the hit, and the dull absorbed tick under it
+  ok    a medium in the first 20 live ticks ends it: no armour tick
+  ok    a medium after 20 live ticks is absorbed (a lower tick)
+  ok    a heavy is not absorbed
+  ok    once the charge is over, a light is an ordinary light
+  ok    no armour tick on a fighter who is not winding up
+     charge.tick.heavy  0.127 s, peak -6.0 dBFS
+  ok    charge.tick.heavy: no clipping, clean end
+     charge.hum         0.646 s, peak -14.0 dBFS
+  ok    charge.hum: no clipping, clean end
+     impact.absorbed    0.054 s, peak -14.0 dBFS
+  ok    impact.absorbed: no clipping, clean end
+  ok    the full tick is short (0.13 s)
+  ok    the hum lasts as long as the longest hold (38 ticks, 0.65 s)
+9. the perfect follow-up, reworked: tick, one low tok a semitone higher a count, the hit leaning up, a quiet droop, one sound for both sides
+  ok    a plain light's pose lets go (k 1): a dry tick
+  ok    a window that opens on the hit has no sound of its own: the hit is the cue
+  ok    perfect 1: one tok at the tap, 0 semitone(s) up (x1.000)
+  ok    the follow-up's hit is the impact alone: no note, no chord
+  ok    perfect 2: one tok at the tap, 1 semitone(s) up (x1.059)
+  ok    the follow-up's hit is the impact alone: no note, no chord
+  ok    perfect 3: one tok at the tap, 2 semitone(s) up (x1.122)
+  ok    the follow-up's hit is the impact alone: no note, no chord
+  ok    the close arrives with the opening's ping
+     light hit, mean over 40 seeds: plain 1.0046 / -3.07 dB, after perfect 1 1.0341, after perfect 3 1.0956 / -1.07 dB
+  ok    after the first perfect the hit is half a semitone up (x1.029)
+  ok    after the third, one and a half semitones (x1.091)
+  ok    and the close is 2 dB louder (2.00)
+  ok    a link steps two counts: the tok is already the second
+  ok    a count of 4 is the top rung
+  ok    a perfect on a blocked hit is still a guard sound
+  ok    a tap on the hit's own tick: no tok yet
+  ok    ...nor a tick later
+  ok    ...it sounds 2 live ticks after the hit, when the transient has passed
+  ok    a tap 8 ticks after the hit sounds at once
+  ok    a missed window: one quiet droop from the last tok
+  ok    and it is at least 12 dB under a light hit (-17.0 dB)
+  ok    a chain that lapsed after 90 ticks is silent
+  ok    a break with nothing in the chain is silent
+  ok    a follow-up stopped in its wind-up does not lean its hit (x0.993)
+  ok    the AI's perfect and a human's make the same cues (one chain sound for both sides)
+     perfect.tok 8.0 dB under a light hit
+  ok    the tok sits at least 6 dB under a light hit
+  ok    perfect.tok: no clipping, clean end, under 0.2 s (0.074 s)
+  ok    perfect.break: no clipping, clean end, under 0.2 s (0.097 s)
+  ok    perfect.tick: no clipping, clean end, under 0.2 s (0.015 s)
+10. the held X settles; the mashed Y grinds; the charged medium; the launcher's rest
+     held X, mean pitch by blow over 24 seeds: [1.0, 1.007, 1.001, 0.974, 0.948, 0.888, 0.844, 0.844, 0.839, 0.844]
+     held X, sound by blow: ["impact.light.lite", "impact.light.lite", "impact.light.lite", "impact.light.lite", "impact.light.lite", "impact.light", "impact.light", "impact.light", "impact.light", "impact.light"]
+  ok    the burst starts as the lite rattle and relaxes into the full light as the gap grows
+  ok    the pitch falls as it slows and then holds at its floor pace (one move settling)
+  ok    by about three semitones (1.186)
+  ok    a burst cut short by another press is a mash: it climbs, it does not settle
+  ok    from the second medium in 48 ticks each has the grind's churn under it
+  ok    it gets heavier, not louder (pitch 1.004 to 0.944)
+  ok    after a pause a medium is a plain medium again
+  ok    the Y's charge is its own, higher hum
+  ok    full: a brighter tick with no ring, fixed
+  ok    and the B's tick is still the lower one with the ring
+  ok    the release cuts the Y's hum like the B's
+     charge.tick.light 0.106 s, charge.hum.y 0.530 s
+  ok    the Y's tick does not clip
+  ok    an opening while the launcher rests: a dull knock, no ping, no duck
+4. the voices: class caps
+  ok    eight light hits in one tick leave at most 4 light voices (4)
+  ok    a heavy hit still gets a voice while the light class is full
+  ok    the ping gets a voice
+  ok    and ducks Sfx by 3 dB and Music by 4 dB (-3.0, -4.0)
+  ok    the Sfx bus really is down
+  ok    a second ping replaces the first (one launcher voice)
+  ok    after 0.4 s the bus is back at its level
+  ok    a stop request finds the ping's voice
+  ok    and the voice is faded out and stopped
+  ok    eight bolts in one tick leave at most 2 bolt voices (2)
+  ok    a chain of three: every tok and the ping gets a voice (4 of 4)
+
+brawl check passed

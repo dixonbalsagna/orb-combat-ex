@@ -1,0 +1,18 @@
+
+seed 4      ticks 5400  sim hash f9c3925167a561ca  unchanged by audio
+            cue log a881f2a335ca3c99  reproducible   729 cues (486.0 a minute), busiest tick 4
+            light knocks ringing together (busy ticks): mean 1.46, most 8, ticks with three or more 1.6%
+            (stop) 4, block.perfect 5, energy.blast 2, energy.bolt 52, energy.gather 1, impact.absorbed 14, impact.crater 6, impact.guard 107, impact.heavy 19, impact.light 253, impact.light.lite 135, impact.medium 9, impact.whiff 1, rush.whoosh 21, ui.launcher 7, voice.anti_hero.effort.heavy 4, voice.anti_hero.pain.head 11, voice.anti_hero.pain.limb 28, voice.protagonist.effort.heavy 1, voice.protagonist.pain.head 14, voice.protagonist.pain.limb 23, windup.heavy 4, windup.medium 8
+seed 12345  ticks 5400  sim hash 575eaa4e6ee6c0bb  unchanged by audio
+            cue log 4a9247cec7da822f  reproducible   628 cues (418.7 a minute), busiest tick 6
+            light knocks ringing together (busy ticks): mean 1.38, most 4, ticks with three or more 1.0%
+            (stop) 5, block.perfect 1, charge.hum 1, charge.tick.heavy 1, energy.blast 2, energy.bolt 37, grip.refuse 3, impact.absorbed 12, impact.crater 7, impact.guard 98, impact.heavy 27, impact.light 200, impact.light.lite 103, impact.medium 6, rush.whoosh 30, ui.launcher 3, voice.anti_hero.effort.heavy 6, voice.anti_hero.pain.head 7, voice.anti_hero.pain.limb 24, voice.protagonist.effort.heavy 6, voice.protagonist.pain.head 12, voice.protagonist.pain.limb 23, windup.heavy 7, windup.medium 7
+seed 777    ticks 5400  sim hash 11f93f7acd317a53  unchanged by audio
+            cue log 76f0909c01b2df2d  reproducible   733 cues (488.7 a minute), busiest tick 5
+            light knocks ringing together (busy ticks): mean 1.35, most 4, ticks with three or more 0.7%
+            (stop) 5, block.perfect 5, charge.hum 2, charge.tick.heavy 2, energy.blast 2, energy.bolt 30, energy.gather 1, grip.refuse 6, impact.absorbed 21, impact.crater 4, impact.guard 100, impact.heavy 23, impact.light 223, impact.light.lite 180, impact.medium 9, rush.whoosh 21, ui.launcher 2, voice.anti_hero.effort.heavy 5, voice.anti_hero.pain.head 8, voice.anti_hero.pain.limb 25, voice.protagonist.effort.heavy 8, voice.protagonist.pain.head 10, voice.protagonist.pain.limb 25, windup.heavy 11, windup.medium 5
+roster ids PROTAGONIST and RIVAL: the flash cues and the grunt cues are the same whatever the display label: yes
+
+flash cues: 32 checked (every fighter x every active flash), all present and within their flash time
+
+audio host check passed

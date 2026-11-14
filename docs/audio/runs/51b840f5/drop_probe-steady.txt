@@ -1,0 +1,51 @@
+
+drop probe: seeds [301, 302, 303, 304, 305, 306], 43200 ticks (720 s), 16 voices, setup { "power": true, "dash": true }
+TOTAL asked 5142 played 5096 dropped for distance 46, dropped for no slot 0 (0.9% dropped)
+class                       asked played    far noslot  evicted
+(none) impact                 146    127     19      0        0
+rush                          563    548     15      0        0
+(none) voice                  580    575      5      0        0
+moment.clash                   22     19      3      0        0
+block.perfect                  34     31      3      0        0
+grip.refuse                     7      6      1      0        0
+grip.thud                      30     30      0      0        0
+miss                            7      7      0      0        0
+charge                          2      2      0      0        0
+chargetick                      2      2      0      0        0
+form.ready                      4      4      0      0        0
+tug.lock                        8      8      0      0        0
+tug.bed                         8      8      0      0        0
+tug.crack                      68     68      0      0        0
+tug.surge                      53     53      0      0        0
+tug.pulse                      35     35      0      0        0
+tug.groove                     61     61      0      0        0
+tug.end                         7      7      0      0        0
+double                          1      1      0      0        0
+grip.creak                     26     26      0      0        0
+launcher                       23     23      0      0        0
+absorbed                       31     31      0      0        0
+grip                           17     17      0      0        0
+moment.parry                   62     62      0      0        0
+windup                         92     92      0      0        0
+moment.decisive                81     81      0      0        0
+moment.launch                  19     19      0      0        0
+moment.fire                    36     36      0      0        0
+moment.charge                  18     18      0      0        0
+energy.bolt                   230    230      0      0        0
+hit.light                    2082   2082      0      0        0
+hit.guard                     583    583      0      0        0
+hit.medium                    131    131      0      0        0
+hit.heavy                      73     73      0      0        0
+-- evictions of a voice still sounding (victim <- taker):
+-- no-slot drops by sound:
+-- distance drops by sound:
+     15  rush.whoosh
+     13  impact.light
+      3  impact.crater
+      3  impact.heavy
+      3  impact.guard
+      3  block.perfect
+      2  voice.anti_hero.pain.head
+      1  voice.protagonist.effort.heavy
+      1  voice.anti_hero.pain.limb
+      1  voice.anti_hero.effort.heavy

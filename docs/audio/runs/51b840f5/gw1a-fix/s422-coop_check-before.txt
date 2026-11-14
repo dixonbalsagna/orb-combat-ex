@@ -1,0 +1,47 @@
+
+1. switched off (as shipped): nothing
+  ok    the switch is off in the data
+  ok    none of the five cues makes a sound (0)
+  ok    the other fights' list is read for nothing
+2. the brink's call, in the fight in S
+  ok    a sting at the listener on the Alert bus, lower than the ready form's, named for the caller (["form.ready", "voice.protagonist.pain.head"])
+  ok    the fighter's own cry, at him ([1, "voice.protagonist.pain.head", false, true, 4000.0])
+  ok    a second call of the same fighter within 4 s is not heard again
+  ok    and 241 ticks later it is
+  ok    another fighter's call has its own clock
+  ok    a call from a body that does not exist makes nothing
+3. the brink's call, from another fight
+  ok    a two-fight match, fight 0 in S
+  ok    the sting sounds at the listener, named for the partner (["form.ready", "voice.anti_hero.pain.head"])
+  ok    his cry comes far away: muffled, quiet, from his own body in the other fight (gain -9.2)
+  ok    nothing else in another fight is heard (its distant mix is a proposal)
+  ok    an empty list is nothing
+  ok    a match of one fight reads no other list
+4. the pad's refusal knock
+  ok    a refused press: the dull knock, at the presser (["grip.refuse"], -3.2 dB)
+  ok    nine more in nine ticks: one knock only, a mash is never a buzz (0)
+  ok    13 ticks on it sounds again
+  ok    each fighter has his own
+  ok    a press replaced by a newer one is told more quietly (-10.2 against -3.2)
+  ok    a director-side drop (press_refused) is the same knock
+5. the charge stages rising
+  ok    each stage's tick is higher than the last, from the root to the octave ([0.99592659315094, 1.13152325511092, 1.22272562414169, 1.51156338896497, 1.72600513773668, 2.00879882814363])
+  ok    only the top stage adds the low thud ([0, 0, 0, 0, 0, 1])
+  ok    a step down (stage 6 to 5) is a lower, duller tick and no thud
+  ok    a stage the energy will not pay for: its tick and the knock
+  ok    the same stage told capped again: only the knock
+  ok    a new charge long after starts again at the root
+  ok    stage 0 is silent
+6. a good push in a beam clash
+  ok    a plain surge: a sharp tok at the pusher (the struggle's whump is AudioTug's)
+  ok    a sharp surge: nothing added here (AudioTug already adds the tok, a step higher)
+  ok    with the struggle's sound on: the whump and the tok together on a plain push
+7. seeded matches, the set on: every cue valid; 1v1 and 2v2
+  ok    1v1: every cue names a bank sound with finite, in-range numbers 
+  ok    and a second run makes the same coop cues ([15696728, 11570440, 15696728, 11570440])
+  ok    2v2: the sim made brink calls in both the fight in S and the other (2, 2)
+  FAIL  2v2: every cue valid number out of range for drone.bed.hi: gain -20.3 pitch 1.15
+  ok    2v2: one sting for each call of each fighter (spaced 4 s), from either fight (4, 4)
+     (1v1: 0 brink calls seen, 0 heard, 2 refusal knocks; 2v2: 4 calls)
+
+coop check FAILED (1)

@@ -1,0 +1,42 @@
+diff --git a/audio/data/carry_cues.json b/audio/data/carry_cues.json
+index 3ece63b3..6fc1dfbd 100644
+--- a/audio/data/carry_cues.json
++++ b/audio/data/carry_cues.json
+@@ -1,7 +1,7 @@
+ {
+   "schema": 1,
+-  "note": "Sound that carries what the HUD no longer draws (Orb's minimalist rule, 2026-10-18; docs/design/minimal-hud.md, docs/research/readable-speed.md; docs/audio/carry.md). PARKED behind `enabled`: false. The beam struggle's groove and cracks (with the base struggle in tug_cues.json), the grip's clasp, creak, thud and refusal, the ready form's sting and the coil's hum, the air brake's skid, the rush, and the perfect block. Same lower, chunkier family as the hits. Needs a schema from Tools (a warning until then).",
+-  "enabled": false,
++  "note": "Sound that carries what the HUD no longer draws (Orb's minimalist rule, 2026-10-18; docs/design/minimal-hud.md, docs/research/readable-speed.md; docs/audio/carry.md). ON since A-AUDIO-01 (2026-11-14), as in the build Orb played on 9 November; `enabled` false switches it off. The beam struggle's groove and cracks (with the base struggle in tug_cues.json), the grip's clasp, creak, thud and refusal, the ready form's sting and the coil's hum, the air brake's skid, the rush, and the perfect block. Same lower, chunkier family as the hits. Needs a schema from Tools (a warning until then).",
++  "enabled": true,
+   "drones": {
+     "coil": {
+       "rate": 32000,
+diff --git a/audio/data/moment_cues.json b/audio/data/moment_cues.json
+index 1d2a15bd..9144e491 100644
+--- a/audio/data/moment_cues.json
++++ b/audio/data/moment_cues.json
+@@ -1,7 +1,7 @@
+ {
+   "schema": 1,
+-  "note": "The moments a player would notice that had no sound (docs/audio/first-play-sound.md; the EP's brief of 2026-11-01): a beam charging and firing, a KO, the biggest blows, a launch, the meteor's landing, a parry and two bolts meeting. EXISTING SOUNDS ONLY, each at its own pitch and level (the lower, chunkier family, Orb 2026-10-16). PARKED behind `enabled`: false: off, nothing here runs and audio is byte-for-byte what it was. The silence while the meteor flies is left alone on purpose. Needs a schema from Tools (a warning until then).",
+-  "enabled": false,
++  "note": "The moments a player would notice that had no sound (docs/audio/first-play-sound.md; the EP's brief of 2026-11-01): a beam charging and firing, a KO, the biggest blows, a launch, the meteor's landing, a parry and two bolts meeting. EXISTING SOUNDS ONLY, each at its own pitch and level (the lower, chunkier family, Orb 2026-10-16). ON since A-AUDIO-01 (2026-11-14), as in the build Orb played on 9 November; `enabled` false switches it off, and then audio is byte-for-byte what it was. The silence while the meteor flies is left alone on purpose. Needs a schema from Tools (a warning until then).",
++  "enabled": true,
+   "charge": {"sound": "energy.gather", "gain_db": -4.0, "pitch": 0.9, "priority": 60, "cls": "moment.charge", "cap": 2, "caption": "[charging]", "stop_ms": 120},
+   "fire": {"layers": [{"sound": "energy.blast", "gain_db": -2.0, "pitch": 0.8}, {"sound": "impact.heavy", "gain_db": -6.0, "pitch": 0.7}], "priority": 70, "cls": "moment.fire", "cap": 2, "caption": "[beam]"},
+   "ko": {"layers": [{"sound": "impact.heavy", "gain_db": 0.0, "pitch": 0.55}, {"sound": "impact.crater", "gain_db": -3.0, "pitch": 0.8}], "priority": 98, "cls": "moment.ko", "cap": 1, "caption": "[knock-out]"},
+diff --git a/audio/data/tug_cues.json b/audio/data/tug_cues.json
+index ec0854ca..28a88b99 100644
+--- a/audio/data/tug_cues.json
++++ b/audio/data/tug_cues.json
+@@ -1,7 +1,7 @@
+ {
+   "schema": 1,
+-  "note": "The beam struggle's sound (docs/audio/launch-and-tug.md; audio/audio_tug.gd). PARKED behind `enabled`: false until Encounter's beam-struggle window is on main. The bed is two looped drones (drone.bed.lo, drone.bed.hi) whose gain, pitch and place follow the meeting point; the pulse, surge, stray, lock and end are one-shots in the lower family (Orb, 2026-10-16). Needs a schema from Tools (a warning until then).",
+-  "enabled": false,
++  "note": "The beam struggle's sound (docs/audio/launch-and-tug.md; audio/audio_tug.gd). ON since A-AUDIO-01 (2026-11-14), as in the build Orb played on 9 November; `enabled` false switches it off. It makes cues only while the beam struggle runs (Encounter's window). The bed is two looped drones (drone.bed.lo, drone.bed.hi) whose gain, pitch and place follow the meeting point; the pulse, surge, stray, lock and end are one-shots in the lower family (Orb, 2026-10-16). Needs a schema from Tools (a warning until then).",
++  "enabled": true,
+   "drones": {
+     "bed.lo": {
+       "rate": 32000,

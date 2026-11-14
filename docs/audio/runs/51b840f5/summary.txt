@@ -1,0 +1,14 @@
+tug_check exit 1 (first run, before the check was updated; the rerun passed) 7 s
+moments_check exit 0 13 s
+carry_check exit 0 10 s
+coop_check exit 0 18 s
+brawl_check exit 0 7 s
+tone_check exit 0 1 s
+status_check exit 0 3 s
+web_policy_check exit 0 3 s
+beat_check exit 0 1 s
+babble_check exit 0 9 s
+world_check exit 0 91 s
+host_check exit 0 58 s
+done
+warm_check exit see file

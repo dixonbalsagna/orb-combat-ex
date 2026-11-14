@@ -1,0 +1,15 @@
+
+1. the data as shipped
+  ok    the beam struggle set is on (audio/data/tug_cues.json)
+  ok    the moments set is on (audio/data/moment_cues.json)
+  ok    the carry set is on (audio/data/carry_cues.json)
+  --    world off, coop off (both stay as they were in the build Orb played)
+2. seeded matches [301, 302, 303, 304], up to 3600 ticks, setup { "power": true, "dash": true }
+  ok    every cue names a bank sound with finite, in-range numbers (1907 cues) 
+  ok    a beam charging or firing: 14 events, 21 cues
+  --    a knock-out: not in these matches (0 events)
+  ok    a launch: 6 events, 6 cues
+  ok    a beam struggle starting: 1 events, 12 cues
+  --    a transformation: not in these matches (0 events)
+
+sets check passed

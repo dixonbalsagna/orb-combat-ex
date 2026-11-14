@@ -1,0 +1,62 @@
+
+1. dormant: with `enabled` false nothing is made
+  ok    the switch is ON in the data (main's default since A-AUDIO-01: Orb's build had it on)
+  ok    none of the ten makes a cue (0), and the switch reads off when it is set off
+2. the beam struggle: the groove, the cracks
+  ok    the pulse is the kick
+  ok    nothing at 5 ticks while the point is in the middle
+  ok    the off-beat knock lands 10 ticks after the kick
+  ok    near an end the taps come at 5 and 15 ticks and the knock at 10 ([45, 55])
+  ok    the beams crack as the point nears an end ([0.9, 1.0, 1.1, 0.9, 1.0, 1.1])
+  ok    each threshold cracks once on the way up, and again after the point has gone back ([0.9, 1.0, 1.1, 0.9])
+  ok    a surge cracks, at -5 dB
+  ok    a sharp one cracks louder and higher, at the presser (x 4100)
+  ok    the end still sounds as before
+  ok    and nothing of the groove after it
+3. the grip
+  ok    a clinch starts with a clasp, at the one caught
+  ok    only its start
+  ok    the creak climbs a semitone a point of grip and stops at 5 ([1.0, 1.122, 1.335, 1.335])
+  ok    a pummel thuds
+  ok    a sharp one adds the tok
+  ok    a void pummel and a stray are silent
+  ok    a press in the lockout gets the short dull refusal, at the presser
+  ok    a press made in a stun and cleared (press_ack stunned) gets the same refusal, at the presser
+  ok    the accepted presses (held, lapsed) stay silent: their blows sound
+  ok    a press the brawl refused (press_ack refused) gets the same refusal
+  ok    a busy or thrown refusal is silent
+4. the ready sting, the coil's hum, the skid, the rush, the perfect block
+  ok    a form comes ready: the sting, unducked
+  ok    a held form starts the coil's hum, looped, in the fighter's own group
+  ok    a bigger coil lifts it: louder (+9.8 dB) and higher (x1.203)
+  ok    the release stops it
+  ok    and only once
+  ok    the brake starts a skid: louder and higher for a faster send (2.0 dB, x1.15)
+  ok    a slow send skids quieter
+  ok    the end of the brake cuts it
+  ok    the ring's turn is one low shift at the pair (x 2600), not at the far pivot
+  ok    a small turn is a little higher and quieter than a full one (x1.013, -3.5 dB against x0.900, -2.0 dB)
+  ok    parked, it makes nothing
+  ok    a rush is a whoosh at the rusher (x 2500), at its own length
+  ok    a shorter, faster one is higher
+  ok    a perfect block has its own sound, at the blocker
+  ok    the same events give the same sounds twice
+5. the sounds
+  ok    tug.tock: no clipping, clean end, 0.07 s
+  ok    tug.tick: no clipping, clean end, 0.04 s
+  ok    tug.crack: no clipping, clean end, 0.23 s
+  ok    grip.clasp: no clipping, clean end, 0.15 s
+  ok    grip.creak: no clipping, clean end, 0.27 s
+  ok    grip.thud: no clipping, clean end, 0.13 s
+  ok    grip.refuse: no clipping, clean end, 0.05 s
+  ok    form.ready: no clipping, clean end, 0.41 s
+  ok    brake.skid: no clipping, clean end, 0.57 s
+  ok    rush.whoosh: no clipping, clean end, 0.39 s
+  ok    block.perfect: no clipping, clean end, 0.15 s
+  ok    the coil's drone loops without a seam
+6. the coil's hum through AudioVoices
+  ok    the hum plays, looped
+  ok    it rises with the coil (x1.231)
+  ok    and the release fades it out
+
+carry check passed

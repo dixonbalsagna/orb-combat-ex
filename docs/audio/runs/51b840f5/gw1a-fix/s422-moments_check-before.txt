@@ -1,0 +1,30 @@
+
+1. switched off (in memory; main ships it ON since A-AUDIO-01): nothing
+  ok    the switch is ON in the data (Orb's build had it on)
+  ok    none of the eight events makes a cue
+  ok    the crater alone makes the ordinary crater sound (1)
+2. switched on: each moment
+  ok    a beam's charge: a gather at the shooter, in its own group (["energy.gather"])
+  ok    the charge's end cuts it
+  ok    the beam leaving: the blast and a heavy under it, low, at the shooter (["energy.blast", "impact.heavy"])
+  ok    a KO: a heavy hit at about half speed and a crater under it, at the loser (["impact.heavy", "impact.crater"])
+  ok    a decisive knockback: a heavy thump under the blow
+  ok    a decisive launch and beam clash add nothing (the launch's whoosh and the struggle's lock are theirs)
+  ok    a launch: the whoosh at the sent body, not the launcher
+  ok    a parry: the absorbed hit
+  ok    two bolts meeting: a guard thud at the meeting point
+3. the meteor's landing
+  ok    the send is silent and so is the flight (the silence before the landing is kept)
+  ok    a small crater in flight is not the landing
+  ok    the landing: the ordinary crater, and the meteor's crater and heavy layered on it (["impact.crater", "impact.crater", "impact.heavy"])
+  ok    the meteor's crater is as low and as loud as the cue limits allow (pitch 0.5, +3 dB)
+  ok    once: the next big crater is an ordinary one
+  ok    past the window it is not the meteor's
+4. seeded matches, the set on: every cue is valid and each moment sounds as often as it happens
+  FAIL  every cue names a bank sound with finite, in-range numbers number out of range for drone.bed.hi: gain -20.4 pitch 1.14
+  ok    one blast for each beam fired (7, 7)
+  ok    one KO hit for each KO (0, 0)
+  ok    one whoosh for each launch (6, 6)
+     (0 meteor sends in these matches)
+
+moments check FAILED (1)

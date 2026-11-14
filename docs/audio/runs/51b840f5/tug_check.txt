@@ -1,0 +1,70 @@
+
+1. dormant: with `enabled` false the five cues make nothing
+  ok    the switch is ON in the data (main's default since A-AUDIO-01: Orb's build had it on)
+  ok    no cue from any of them (0)
+  ok    and the switch reads off when it is set off
+2. a struggle: the lock, the bed, the pulse, the surge, the stray
+  ok    the start is the clash thud, and the music ducks
+  ok    with the heavy impact under it
+  ok    two looped drones start
+  ok    each in its own group, one class of two
+  ok    at the meeting point, between the fighters (4050.0)
+  ok    even: the low drone at -20 dB, the high one at -28 dB and 0.3% sharp (the slow beat)
+  ok    a moved point is an update of the two drones over 120 ms
+  ok    to the new place (4080.0)
+  ok    pitch up 1.189 and louder (-15.2 dB) at 60% of the way to an end
+  ok    the high drone louder still and detuned further (beat 1.50%)
+  ok    no change, no update
+  ok    a step under half a percent of the line is not worth an update
+  ok    a big move 2 ticks after the last update waits (updates are at least 3 ticks apart)
+  ok    then it is sent: back at the middle, -20 dB and the original pitch
+  ok    the pulse at an even point: a fixed thud, the music held down
+  ok    at an end its pitch is four semitones up (x1.260)
+  ok    a surge: the rising whump, nothing else
+  ok    a sharp surge is 1.5 dB louder and adds the perfect follow-up's tok
+  ok    at the fighter who pressed
+  ok    ten strays in ten ticks make one knock (1)
+  ok    and the next after 20 ticks is heard
+  ok    each fighter has his own
+  ok    the same cues give the same sounds twice
+  ok    with no Clash.mid, the cue's amount is the point (0.7: -16.8 dB)
+  ok    a pulse before any start makes nothing
+3. the three ends, and the safety stop
+  ok    overwhelmed: both drones stop, fading over 350 ms
+  ok    overwhelmed: tug.fall
+  ok    the loser stands at the end the point reached, and the beam lands on him
+  ok    overwhelmed: after the end nothing more sounds
+  ok    detonate: both drones stop, fading over 60 ms
+  ok    detonate: impact.double
+  ok    the boom is where the beams meet (the point, 0.52 of the way)
+  ok    detonate: after the end nothing more sounds
+  ok    time: both drones stop, fading over 300 ms
+  ok    time: impact.medium
+  ok    on time, at the side the point is on
+  ok    time: after the end nothing more sounds
+  ok    a struggle with no end cue is stopped after 900 ticks
+  ok    and once
+4. the drones loop without a seam
+  ok    drone.bed.lo is in the bank, at 32 kHz, and not warmed with the one-shots
+     drone.bed.lo 64000 samples, peak -12.0 dBFS, seam 0.00646 against a largest step of 0.00646
+  ok    drone.bed.lo: the last sample runs into the first as a normal step does
+  ok    drone.bed.lo: normalised to -12 dBFS
+  ok    drone.bed.hi is in the bank, at 32 kHz, and not warmed with the one-shots
+     drone.bed.hi 64000 samples, peak -12.0 dBFS, seam 0.01032 against a largest step of 0.01032
+  ok    drone.bed.hi: the last sample runs into the first as a normal step does
+  ok    drone.bed.hi: normalised to -12 dBFS
+  ok    the high drone is the one with the harmonics
+  ok    tug.pulse: no clipping, clean end (0.10 s)
+  ok    tug.surge: no clipping, clean end (0.15 s)
+  ok    tug.lock: no clipping, clean end (0.44 s)
+  ok    tug.fall: no clipping, clean end (0.65 s)
+5. the looped voice in AudioVoices
+  ok    both drones play, looped over their whole length (2, 2)
+  ok    and the bank's own stream is still a one-shot
+  ok    an update finds both voices
+  ok    after the ramp the low drone is at its new pitch (1.260 against 1.260)
+  ok    an update for a group that is not playing finds nothing
+  ok    a pulse and its duck leave the bed playing
+  ok    the end fades both drones out and stops them
+
+tug check passed

@@ -1,0 +1,33 @@
+
+  ok    off the web there is no page player (the voices play as before)
+1. a one-shot goes to the page
+  ok    a light hit is taken
+  ok    the page is asked to play it, and was given its samples once
+  ok    its Godot player is not used
+  ok    the voice counts as sounding (active 1, played 1)
+  ok    its level is the cue's, the distance's and the trim (0.355)
+  ok    on the Sfx bus, no low-pass
+  ok    a cue far to the right is quieter and panned right (0.10, pan 1.00)
+  ok    a muffled cue goes to the muffled bus with its low-pass from mix.json (900 Hz)
+  ok    a muffled voice goes to the muffled voice bus
+2. what the page does not play stays on Godot's players
+  ok    a looped cue is a Godot player's
+  ok    while the page's context is not running the cue is held: nothing is queued for a click, no Godot player starts on the frozen engine context, and it is counted as held, not dropped
+  ok    a held cue is not a drop
+3. the voices' rules hold for page voices
+  ok    a third voice of a class capped at two replaces the oldest page voice (its sound is stopped in the page first)
+  ok    a weaker cue of a full class is dropped
+  ok    a cue with a group takes its group's slot (one mouth)
+  ok    stopping the group stops the page voice
+  ok    a group with no voice finds none
+  ok    a page voice ends when its sound's own length has passed (2 to 0)
+4. the page's buses follow the mixer
+  ok    every bus and the Master were sent at the start
+  ok    a player's effects trim reaches the page (0.500)
+  ok    and the Master's mute (0.00010)
+  ok    a duck reaches the page (0.50)
+  ok    the mono option is known to the static setter
+5. the status line
+  ok    the status line reads with a page player in place
+
+web policy check passed

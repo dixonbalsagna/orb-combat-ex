@@ -1,0 +1,6 @@
+
+warm(): 258 clips in 2470 ms (the one-shots alone, as before: 123 clips in 1496 ms; the flashes of the roster's voices and every voice's babble add 974 ms)
+checked 978 cues of two matches, every flash, and 213 babble events
+  ok    nothing a match plays renders on its first use
+
+warm check passed
