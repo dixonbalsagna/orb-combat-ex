@@ -1,0 +1,13 @@
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index 745cf1f..34fcec2 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -3175,6 +3175,8 @@ static func _aiPart(S: SimState, ex, f, o, bl: Dictionary) -> bool:
+ ## True when a `sig` press of f's is B, the heavy (brawl-second-pass.md sections 2 and 5): no stance is held. With a
+ ## stance held it is that stance's signature, as before.
+ static func isB(f, kind: String) -> bool:
++	if kind == "sig" and on() and f.ai == null and not DirStick.firing and SimInputData.b_no_beam() and not (SimInputData.b_no_beam_keep_rt() and (f.input.stanceMask & 4) != 0 and f.state != "charging"):
++		return true   # (bNoBeamKeepRt, the interim: B within tapHold.holdStart ticks of RT's press, before RT's hold is the channel (the fighter is not yet charging), is still the signature until RT + right stick lands; a B during the channel is the heavy) Orb's rule (2026-11-01; switches.bNoBeam): a player's B never starts a beam, with RT held, with LT held when the flight strike does not take it, or in an energy mode; the stick's own beam (DirStick.firing) is not a press of B
+ 	return kind == "sig" and on() and (f.input.stanceMask & 15) == 0 and f.act.mode != 1   # with the energy family held, B is the beam
+ 
+ 

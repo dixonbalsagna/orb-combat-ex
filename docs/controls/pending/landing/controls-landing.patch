@@ -1,0 +1,2691 @@
+diff --git a/data/input/layouts.json b/data/input/layouts.json
+index d82012d..777f2d4 100644
+--- a/data/input/layouts.json
++++ b/data/input/layouts.json
+@@ -132,12 +132,6 @@
+           ],
+           "action": "strike_mirror",
+           "axis": ["up", "left", "down", "right"]
+-        },
+-        {
+-          "controls": [
+-            "pad:l3"
+-          ],
+-          "action": "brace_key"
+         }
+       ]
+     },
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 420bc9b..8e5da11 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -38,7 +38,17 @@
+   "switches": {
+     "airBrakeGuard": false,
+     "grappleReads": false,
+-    "rightStick": false
++    "rightStick": false,
++    "beamAim": false,
++    "quickRead": false,
++    "hapticLadder": false,
++    "hapticIncoming": false,
++    "hapticIncomingBeam": false,
++    "hapticRefused": false,
++    "specialsOff": false,
++    "signatureRtOnly": false,
++    "driverOnRb": false,
++    "webRumble": false
+   },
+   "strike": {
+     "_note": "Pitch 4a (Orb, 2026-10-30): directional-charge strikes on the right stick, their own class. Read only while switches.rightStick is on (docs/controls/right-hand-attacks.md). Every value is a first value; the ladder and the lockouts are Game Design's and the capture tool's to move.",
+@@ -47,6 +57,13 @@
+     "on": 0.6,
+     "off": 0.35,
+     "settle": 2,
++    "settleQuick": 1,
++    "refuseTicks": 30,
++    "bufferTicks": 0,
++    "preAt": 0.25,
++    "aimTrail": 4,
++    "aimLatchTicks": 3,
++    "aimLatchPeak": 0.85,
+     "dwell": 12,
+     "levels": [12, 30, 50],
+     "beamLevels": [12, 30, 54],
+@@ -55,7 +72,7 @@
+     "swapLockout": 6,
+     "swapReverseLockout": 8,
+     "queueDepth": 3,
+-    "queueTicks": 36,
++    "queueTicks": 20,
+     "style": "hold",
+     "mirror": "auto",
+     "freeR3": true,
+diff --git a/render/core/main.gd b/render/core/main.gd
+index fd979a5..cb9dd1d 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -903,6 +903,8 @@ func _on_drained(events: Array, lines: Array) -> void:
+ 	if barks != null:
+ 		ui_hud.consume_all(barks.step(host.S, events))
+ 	_haptics_from_events(events)
++	for r in host.hub.take_haptics():   # Controls: the strike charge's ladder rungs (timing.json switches.hapticLadder; empty while it is off)
++		_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
+ 	UiSimBridge.feed(ui_hud, lines)
+ 
+ 
+@@ -946,6 +948,7 @@ func _on_form_prompt(slot: int, _device: String) -> void:
+ ## the first now, the rest on host timers. Host time only; nothing here reads or writes the sim.
+ var _haptic_last_ms: Array = [-100000, -100000]
+ var _haptic_last_kind: Array = [{}, {}]   # per slot, the host time each kind last played: a kind's own gap (a mashed button never buzzes the pad)
++var _beam_window_id: Array = [0, 0]       # per receiver, bumped by every beam_window cue: a timer from an older window drops its pulse
+ var _haptic_firer: int = -1               # the slot that fired the beam struggle's first beam (the beam_struggle cue's actor)
+ 
+ 
+@@ -978,17 +981,49 @@ func _haptics_from_events(events: Array) -> void:
+ 		if name == "beam_struggle":
+ 			_haptic_firer = int(e.actor)
+ 			continue
++		if name == "beam_window":
++			_beam_window_rumble(e)
++			continue
++		if name == "stick_start":
++			host.hub.note_stick_started(int(e.actor))   # Controls: the request was answered, so no refusal cue (timing.json switches.hapticRefused)
+ 		for r in SimHaptics.requests(name, int(e.actor), int(e.target), String(e.text), float(e.amount), _haptic_firer):
+ 			_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
+ 
+ 
++## Row 40's crescendo (timing.json switches.hapticIncomingBeam; Controls' SimHaptics.beam_window): the receiver's pad gets rising `incoming_beam` pulses through the answer
++## window, on host timers; a later beam_window cue for that receiver (its "start" or "end") makes the pulses still waiting drop. View only.
++func _beam_window_rumble(e) -> void:
++	var w: Dictionary = SimHaptics.beam_window(int(e.actor), int(e.target), String(e.text), float(e.n))
++	if w.is_empty():
++		return
++	var slot: int = int(w["slot"])
++	_beam_window_id[slot] += 1
++	if not bool(w["open"]):
++		return
++	var id: int = int(_beam_window_id[slot])
++	for p in w["pulses"]:
++		var scale: float = float(p["scale"])
++		get_tree().create_timer(float(p["at"]) / 1000.0).timeout.connect(func() -> void:
++			if int(_beam_window_id[slot]) == id:
++				_on_haptic(slot, "incoming_beam", scale))
++
++
+ func _play_haptic_step(plan: Dictionary, s: Dictionary) -> void:
+ 	if str(plan["via"]) == "handheld":
+ 		Input.vibrate_handheld(int(s["ms"]))
++	elif OS.has_feature("web") and bool(SimInputData.t(["switches", "webRumble"], false)):   # Controls: the page asks the pad itself (timing.json switches.webRumble, off)
++		_web_rumble(int(plan["id"]), float(s["weak"]), float(s["strong"]), float(s["seconds"]))
+ 	else:
+ 		Input.start_joy_vibration(int(plan["id"]), float(s["weak"]), float(s["strong"]), float(s["seconds"]))
+ 
+ 
++## The browser build has no pad rumble in Godot's own runtime (the 4.7.2 web template exports only navigator.vibrate, for phones), so Input.start_joy_vibration does nothing on a page.
++## The pad's own vibrationActuator is asked through the page instead: Chromium browsers (Chrome, Edge, Opera GX) offer "dual-rumble" on Xbox-type and DualSense pads; Firefox and Safari do
++## not, and nothing happens there. The pad's index in navigator.getGamepads() is Godot's joypad id. Never the only cue; the Vibration option still switches it off.
++func _web_rumble(id: int, weak: float, strong: float, seconds: float) -> void:
++	JavaScriptBridge.eval("(function(i,w,s,d){try{var g=navigator.getGamepads&&navigator.getGamepads()[i];var a=g&&g.vibrationActuator;if(a&&a.playEffect){a.playEffect('dual-rumble',{startDelay:0,duration:Math.round(d*1000),weakMagnitude:w,strongMagnitude:s});}}catch(e){}})(%d,%f,%f,%f)" % [id, weak, strong, seconds], true)
++
++
+ ## The pause menu handed player two back to the AI: the hub frees their device (it can join again), and the slot
+ ## changes hands now, with the sim still frozen, so the menu shows it.
+ func _on_player_two_leave() -> void:
+diff --git a/sim/input/haptics.gd b/sim/input/haptics.gd
+index 26f4d20..caa64fb 100644
+--- a/sim/input/haptics.gd
++++ b/sim/input/haptics.gd
+@@ -23,6 +23,53 @@ extends RefCounted
+ ## from the beam struggle's first cue).
+ 
+ const DEFAULTS: Dictionary = {
++	# The strike stick's charge ladder (pitch 1): a tick, a knock, a thud as each rung is reached. Each has a low motor in it, so none is the brake's tick.
++	"ladder_1": {
++		"pad": [{"at": 0, "weak": 0.35, "strong": 0.15, "ms": 20}],
++		"handheld": [{"at": 0, "ms": 12}],
++		"gapMs": 120,
++	},
++	"ladder_2": {
++		"pad": [{"at": 0, "weak": 0.3, "strong": 0.45, "ms": 25}],
++		"handheld": [{"at": 0, "ms": 22}],
++		"gapMs": 120,
++	},
++	"ladder_3": {
++		"pad": [{"at": 0, "weak": 0.25, "strong": 0.8, "ms": 45}, {"at": 70, "weak": 0.2, "strong": 0.3, "ms": 25}],
++		"handheld": [{"at": 0, "ms": 40}, {"at": 70, "ms": 15}],
++		"gapMs": 160,
++	},
++	# The throw of a charged strike or beam (docs/controls/beam-aim-feel.md section 5): one low push, then a short roll-off, on the low motor with only a trace of the high one.
++	# Soft and chunky: nothing brighter than a thud, so the lift of the thumb is answered by weight, not a buzz. The thrower only; scaled by the charge reached.
++	"release_thump": {
++		"pad": [{"at": 0, "weak": 0.1, "strong": 0.65, "ms": 40}, {"at": 55, "weak": 0.0, "strong": 0.25, "ms": 30}],
++		"handheld": [{"at": 0, "ms": 30}, {"at": 55, "ms": 14}],
++		"gapMs": 160,
++	},
++	# A rival's stick strike has started (pitch 3), on the defender's pad: two light taps for a blow from above or toward, one low knock for below or away.
++	"incoming_high": {
++		"pad": [{"at": 0, "weak": 0.55, "strong": 0.12, "ms": 20}, {"at": 45, "weak": 0.3, "strong": 0.1, "ms": 20}],
++		"handheld": [{"at": 0, "ms": 14}, {"at": 45, "ms": 10}],
++		"gapMs": 200,
++	},
++	# A beam is on its way and the receiver may still answer (row 40, Encounter's `beam_window`): one firm pulse, played again and again at a rising scale through the
++	# window (a crescendo to arrival, see beam_window). Both motors, no longer than a heavy's snap.
++	"incoming_beam": {
++		"pad": [{"at": 0, "weak": 0.4, "strong": 0.5, "ms": 40}],
++		"handheld": [{"at": 0, "ms": 26}],
++		"gapMs": 100,
++	},
++	# A stick press the game did not answer (the audit's gap 2): two short dull knocks on the low motor, the sound of a press that went nowhere. The presser only.
++	"stick_refused": {
++		"pad": [{"at": 0, "weak": 0.05, "strong": 0.35, "ms": 30}, {"at": 70, "weak": 0.0, "strong": 0.3, "ms": 30}],
++		"handheld": [{"at": 0, "ms": 20}, {"at": 70, "ms": 12}],
++		"gapMs": 200,
++	},
++	"incoming_low": {
++		"pad": [{"at": 0, "weak": 0.1, "strong": 0.55, "ms": 30}],
++		"handheld": [{"at": 0, "ms": 18}],
++		"gapMs": 200,
++	},
+ 	# A thump with a ring after it: the pluck and the head snap, then the ring (Audio's shape, 150 ms in all). The launcher only.
+ 	"launch_open": {
+ 		"pad": [{"at": 0, "weak": 0.3, "strong": 0.7, "ms": 80}, {"at": 90, "weak": 0.2, "strong": 0.0, "ms": 60}],
+@@ -82,6 +129,57 @@ const MAX_STEPS: int = 4
+ const MAX_AT_MS: int = 1000
+ 
+ 
++## The beam-answer window (row 40). Encounter's cue `beam_window` (UI's contract): text "start" or "end", actor = the shooter, target = the receiver, `n` = the ticks from
++## the hand to the front's arrival, `k` = the beam's level, and an optional `dodge_from`; the host passes `text` and `n` (as `ticks`). "start" opens it, "end" closes it. Returns {} when the switch is off or the cue is
++## not a window; else {slot: the receiver, open: bool, pulses: [{at: ms after the cue, scale: 0 to 1}]}: a crescendo of `incoming_beam` pulses, one per 200 ms of the window
++## (1 to 5), spaced evenly inside it and rising from 0.3 to 1.0, the last well before arrival. Pure; the host plays them on its timers and drops the rest when the window closes.
++static func beam_window(actor: int, target: int, text: String, ticks: float) -> Dictionary:
++	if not SimInputData.haptic_beam_on():
++		return {}
++	var slot: int = target if (target >= 0 and target <= 1 and target != actor) else (1 - actor if (actor >= 0 and actor <= 1) else -1)
++	if slot < 0:
++		return {}
++	if text != "start" or ticks < 1.0:
++		return {"slot": slot, "open": false, "pulses": []}
++	var length_ms: int = int(ticks * 1000.0 / 60.0)
++	var n: int = clampi(int(float(length_ms) / 200.0), 1, 5)
++	var pulses: Array = []
++	for k in range(1, n + 1):
++		pulses.append({"at": int(float(length_ms * k) / float(n + 1)), "scale": 0.3 + 0.7 * float(k) / float(n)})
++	return {"slot": slot, "open": true, "pulses": pulses}
++
++
++## The ladder's pulses (pitch 1): the rungs a held strike's charge has newly reached, from `from_level` to `to_level` (0 to 3). The hub keeps the levels
++## it saw and calls this when one rises; nothing here reads the sim.
++static func ladder_requests(slot: int, from_level: int, to_level: int) -> Array:
++	var out: Array = []
++	for rung in range(maxi(from_level, 0) + 1, mini(to_level, 3) + 1):
++		out.append({"slot": slot, "kind": "ladder_%d" % rung, "scale": 1.0})
++	return out
++
++
++## The pulse for a charge that has reached stage `n` of `of` (UI's `charge_stage` cue, docs/ui/charge-stages.md; docs/controls/beam-aim-feel.md section 5): the first stage is the
++## tick (ladder_1), the last the thud with its ring (ladder_3), those between the knock (ladder_2) rising from 0.7 to 1.0 of its strength, so a six-stage charge climbs without any
++## pulse louder than the top. [] for stage 0 or a stage outside 1..of. A two-stage charge is the tick, then the thud. Needs switches.hapticLadder.
++static func stage_requests(slot: int, n: int, of: int) -> Array:
++	if not SimInputData.haptic_ladder_on() or slot < 0 or slot > 1 or of < 1 or n < 1 or n > of:
++		return []
++	if n == of:
++		return [{"slot": slot, "kind": "ladder_3", "scale": 1.0}]
++	if n == 1:
++		return [{"slot": slot, "kind": "ladder_1", "scale": 1.0}]
++	var rise: float = float(n - 2) / float(maxi(1, of - 3))
++	return [{"slot": slot, "kind": "ladder_2", "scale": 0.7 + 0.3 * clampf(rise, 0.0, 1.0)}]
++
++
++## The thump that answers a throw: the thrower's pad, scaled by the charge reached (level 1 to `of`; 0.4 at the first rung up to 1.0 at the last). A flick (level 0) throws no thump,
++## so a mashed quick strike never buzzes. Needs switches.hapticLadder.
++static func release_requests(slot: int, level: int, of: int = 3) -> Array:
++	if not SimInputData.haptic_ladder_on() or slot < 0 or slot > 1 or level < 1 or of < 1:
++		return []
++	return [{"slot": slot, "kind": "release_thump", "scale": 0.4 + 0.6 * clampf(float(level) / float(of), 0.0, 1.0)}]
++
++
+ ## The kinds this knows.
+ static func kinds() -> Array:
+ 	return DEFAULTS.keys()
+@@ -209,6 +307,21 @@ static func push_share(point: float, pusher_is_firer: bool) -> float:
+ ## host keeps; -1 if unknown (the surge's actor is then taken as the firer). A beam_stray and every other cue rumble nothing.
+ static func requests(name: String, actor: int, target: int, text: String, amount: float, firer: int = -1) -> Array:
+ 	match name:
++		"stick_refused":
++			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
++			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
++				return []
++			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0}]
++		"stick_start":
++			# Encounter's cue when a stick strike's request begins: actor = the striker, text = its direction as the defender faces it. The defender feels it (switches.hapticIncoming).
++			if not SimInputData.haptic_incoming_on() or actor < 0 or actor > 1:
++				return []
++			match text:
++				"toward", "up":
++					return [{"slot": 1 - actor, "kind": "incoming_high", "scale": 1.0}]
++				"away", "down":
++					return [{"slot": 1 - actor, "kind": "incoming_low", "scale": 1.0}]
++			return []
+ 		"launcher_open":
+ 			return [{"slot": actor, "kind": "launch_open", "scale": 1.0}] if actor >= 0 else []
+ 		"transform_ready":
+diff --git a/sim/input/hub.gd b/sim/input/hub.gd
+index e105be1..9249714 100644
+--- a/sim/input/hub.gd
++++ b/sim/input/hub.gd
+@@ -46,6 +46,7 @@ var latch_charge_pref: Array = [false, false]
+ var sent_pref: Array = [false, false]
+ var charges_off_pref: Array = [false, false]
+ var _was: Array = [false, false]
++var _pad_used: Dictionary = {}    # device id -> true once that pad has pressed a button, pulled a trigger or pushed a stick past 0.5: the start menu's guess at player one's pad is only a guess until then
+ ## Each player's hold styles (accessibility, layout only; docs/controls/hold-toggles.md): action ("guard", "dodge", "power", "transform") ->
+ ## "hold" (the default) or "toggle". Energy has its own, `mode_styles`.
+ const HOLD_ACTIONS: Array = ["guard", "dodge", "power", "transform"]
+@@ -56,6 +57,9 @@ var hand_pref: Array = ["standard", "standard"]   # hand_layout: "standard" or "
+ var brace_style_pref: Array = ["", ""]            # the brace's assist: "" the data default (flick), "flick" or "press" (the button alone)
+ var strike_style_pref: Array = ["", ""]
+ var mirror_pref: Array = ["auto", "auto"]
++var _ladder_prev: Array = [0, 0]             # the strike charge's rung each slot's pad last felt (take_haptics)
++var _haptic_pending: Array = []
++var _stick_wait: Array = [-1, -1]           # per slot: live ticks since a stick request began with no strike started, -1 when none is waiting             # the rumble the hub asked for since the host last took it
+ var struggle_pref: Array = [false, false]   # the host's word each tick that the slot's fighter is in a struggle (set_struggle)
+ var _pad_no_right_stick: Dictionary = {}   # device id -> true: the host says this pad has no right stick
+ 
+@@ -260,6 +264,15 @@ func _pad_slot(dev: int) -> int:
+ 	for s in range(2):
+ 		if slot_pad[s] == dev and claimed[s]:
+ 			return s
++	# One person's first press takes player one. The start menu puts player one on "the first connected pad", which on a PC with a phantom or a second device (a virtual pad, a headset
++	# dongle) is not the pad in the person's hands; if that pad has never been used, a different pad's first press is the person, not a second player, and takes the slot.
++	if slot_device[0] == "pad" and claimed[0] and slot_pad[0] != dev and not _pad_used.get(slot_pad[0], false) and not (slot_device[1] == "pad" and slot_pad[1] == dev):
++		if pads.has(slot_pad[0]):
++			pads[slot_pad[0]].release_all()
++			pads.erase(slot_pad[0])
++		slot_pad[0] = dev
++		_claim(0, "pad")
++		return 0
+ 	var s2: int = _assign("pad")
+ 	if s2 < 0:
+ 		return -1
+@@ -294,6 +307,7 @@ func pad_stick_right(dev: int, x: float, y: float) -> void:
+ 		if slot_pad[s] == dev and claimed[s]:
+ 			_pad(dev, s).axis("pad:rs", x, y)
+ 			if absf(x) > 0.5 or absf(y) > 0.5:
++				_pad_used[dev] = true
+ 				_claim(s, "pad")
+ 			return
+ 
+@@ -305,6 +319,7 @@ func pad_button(dev: int, name: String, down: bool) -> void:
+ 		if s < 0:
+ 			return
+ 		_pad(dev, s).press("pad:" + name)
++		_pad_used[dev] = true
+ 		_claim(s, "pad")
+ 	elif pads.has(dev):
+ 		pads[dev].release("pad:" + name)
+@@ -317,6 +332,7 @@ func pad_trigger(dev: int, name: String, v: float) -> void:
+ 		if s < 0:
+ 			return
+ 		_pad(dev, s).analog("pad:" + name, v)
++		_pad_used[dev] = true
+ 		_claim(s, "pad")
+ 	elif pads.has(dev):
+ 		pads[dev].analog("pad:" + name, v)
+@@ -328,6 +344,7 @@ func pad_stick(dev: int, x: float, y: float) -> void:
+ 		if slot_pad[s] == dev and claimed[s]:
+ 			_pad(dev, s).axis("pad:ls", x, y)
+ 			if absf(x) > 0.5 or absf(y) > 0.5:
++				_pad_used[dev] = true
+ 				_claim(s, "pad")
+ 			return
+ 
+@@ -399,11 +416,21 @@ func intent(slot: int) -> SimIntent:
+ 			kl.set_brace_flick(brace_style_of(slot) == "flick")
+ 			_apply_hold_styles(kl, slot)
+ 			i = kl.build()
+-	return SimIntent.canon(i)
++	var out: SimIntent = SimIntent.canon(i)
++	_note_ladder(slot, out)
++	_note_refusal(slot, out)
++	return out
+ 
+ 
+ ## SimCore.step took the intents: every device's edges are spent.
+ func consumed() -> void:
++	var refuse: int = SimInputData.ti(["strike", "refuseTicks"], 30)
++	for s in range(2):
++		if int(_stick_wait[s]) >= 0:
++			_stick_wait[s] += 1
++			if int(_stick_wait[s]) > refuse:
++				_stick_wait[s] = -1
++				_haptic_pending.append({"slot": s, "kind": "stick_refused", "scale": 1.0})
+ 	for l in layouts.values():
+ 		l.consumed()
+ 	for l in pads.values():
+@@ -419,6 +446,7 @@ func reset_claims() -> void:
+ 	slot_device = ["kb", "kb"]
+ 	slot_pad = [-1, -1]
+ 	pads.clear()
++	_pad_used.clear()
+ 	_joins.clear()
+ 	_leaves.clear()
+ 	notes.clear()
+@@ -788,6 +816,57 @@ func rumble_target(slot: int) -> Dictionary:
+ 
+ 
+ ## The preset id a slot plays with now: "kb-solo", "kb-shared-p1" or "kb-shared-p2", its pad preset, or the touch preset.
++## The strike stick's pre-read for a slot's pose (the quick read, timing.json switches.quickRead; render-only): {"dir", "depth"} or {}. See SimLayout.strike_pre.
++func strike_pre(slot: int) -> Dictionary:
++	match slot_device[slot]:
++		"pad":
++			var d: int = slot_pad[slot]
++			return pads[d].strike_pre() if pads.has(d) else {}
++		"touch":
++			return {}
++		_:
++			return _kb_layout(slot).strike_pre()
++
++
++## The rumble the hub itself asks for (switches.hapticLadder): the host calls this once a tick after the intents and plays each {slot, kind, scale} as it plays
++## a cue's. Empty with the switch off. A pulse is never the only cue.
++## The host's word that the director started a slot's stick strike (Encounter's `stick_start` cue): the request was answered, so no refusal. Call it from the cue loop.
++func note_stick_started(slot: int) -> void:
++	if slot >= 0 and slot <= 1:
++		_stick_wait[slot] = -1
++
++
++func take_haptics() -> Array:
++	var out: Array = _haptic_pending
++	_haptic_pending = []
++	return out
++
++
++## The ladder's rumble (pitch 1): one pulse as each rung of a held strike's charge is reached, once. Called with each slot's intent as it is built.
++func _note_refusal(slot: int, i: SimIntent) -> void:
++	if not SimInputData.haptic_refused_on():
++		_stick_wait[slot] = -1
++		return
++	if i.rsCancel:
++		_stick_wait[slot] = -1
++	elif i.rsStart:
++		_stick_wait[slot] = 0
++
++
++func _note_ladder(slot: int, i: SimIntent) -> void:
++	if not SimInputData.haptic_ladder_on():
++		_ladder_prev[slot] = 0
++		return
++	if i.rsRelease:
++		for r in SimHaptics.release_requests(slot, i.rsLevel):
++			_haptic_pending.append(r)
++	var lv: int = i.rsLevel if i.rsHeld else 0
++	if lv > int(_ladder_prev[slot]):
++		for r in SimHaptics.ladder_requests(slot, int(_ladder_prev[slot]), lv):
++			_haptic_pending.append(r)
++	_ladder_prev[slot] = lv
++
++
+ func layout_of(slot: int) -> String:
+ 	match slot_device[slot]:
+ 		"pad":
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index aefd07a..753691d 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -169,6 +169,56 @@ static func right_stick_on() -> bool:
+ 	return bool(t(["switches", "rightStick"], false))
+ 
+ 
++## The strike charge's rumble, one pulse as each rung of the ladder is reached (docs/controls/rule-of-cool-pitches.md pitch 1; switches.hapticLadder, off). Needs the right-hand switch.
++static func haptic_ladder_on() -> bool:
++	return right_stick_on() and bool(t(["switches", "hapticLadder"], false))
++
++
++## The signature is RT + B only (docs/design/energy-overhaul.md E121; the EP's decision of 2026-11-01): B with LB, RB or LT held is the heavy of that stance (B with RB is Y's blast until the Driver
++## has its own job), so a guard or a dodge can never fire a beam by accident. B alone stays the big blow. switches.signatureRtOnly, off.
++static func signature_rt_only() -> bool:
++	return bool(t(["switches", "signatureRtOnly"], false))
++
++
++## The Driver is on RB + B (docs/director/pending/driver; data/director/interrupts.json blast.driver.enabled): with switches.signatureRtOnly, RB + B is then left as the B press for the Driver
++## to read, instead of being sent as Y's blast. Set together with the Driver's own switch. switches.driverOnRb, off.
++static func driver_on_rb() -> bool:
++	return bool(t(["switches", "driverOnRb"], false))
++
++
++## The power specials are off (docs/design/pad-first-press.md: RT + X, Y, A are not built; a press is the plain blow and the charge drops). switches.specialsOff, off.
++static func specials_off() -> bool:
++	return bool(t(["switches", "specialsOff"], false))
++
++
++## A stick press that never started a strike is told to its pad (the audit's gap 2; switches.hapticRefused, off). Needs the right-hand switch.
++static func haptic_refused_on() -> bool:
++	return right_stick_on() and bool(t(["switches", "hapticRefused"], false))
++
++
++## The beam-answer window's rumble on the receiver's pad (docs/design/rule-of-cool-map.md row 40; switches.hapticIncomingBeam, off). Independent of the right-hand
++## switch: a signature beam warns too.
++static func haptic_beam_on() -> bool:
++	return bool(t(["switches", "hapticIncomingBeam"], false))
++
++
++## The incoming strike's rumble on the defender's pad (pitch 3; switches.hapticIncoming, off). Needs the right-hand switch.
++static func haptic_incoming_on() -> bool:
++	return right_stick_on() and bool(t(["switches", "hapticIncoming"], false))
++
++
++## The quick read (docs/controls/responsiveness.md): the strike and brace settle one tick sooner, the vanish resolves on the second press, and the layout
++## publishes the stick's pre-read for the pose. Needs the right-hand switch; off, every number is the one it always was.
++static func quick_on() -> bool:
++	return right_stick_on() and bool(t(["switches", "quickRead"], false))
++
++
++## The beam's aim (docs/controls/beam-aim-feel.md): the strike stick's aim trails the thumb by a small dead band, and the throw carries the aim the stick held at the rim,
++## not the zero of a stick that has already sprung home. Needs the right-hand switch (switches.beamAim, off); off, every record is the one it always was.
++static func beam_aim_on() -> bool:
++	return right_stick_on() and bool(t(["switches", "beamAim"], false))
++
++
+ ## A preset with its parked strike bindings (`strikeBindings`, the same shape as `bindings`) joined to its bindings while the right-hand switch is on, so the
+ ## layout, the remap screen and the checks see one list. With the switch off, or no strike bindings, the preset comes back as it is.
+ static func _with_strike(p: Dictionary) -> Dictionary:
+diff --git a/sim/input/layout.gd b/sim/input/layout.gd
+index 2d69b53..2074020 100644
+--- a/sim/input/layout.gd
++++ b/sim/input/layout.gd
+@@ -119,6 +119,7 @@ var _brace_peak: Vector2 = Vector2.ZERO
+ var _brace_pending: bool = false    # a brace read (from the flick or the button) waits for a step to take it
+ var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
+ var in_struggle: bool = false       # the host says this slot's fighter is in a struggle (a beam clash, a finisher): the stick does nothing and the faces are free
++var _b_hold_prev: bool = false      # B was held in the energy layer on the last build (E131: the stick is inert while it is)
+ var _inert_masks: Array = []        # the stance masks on which the strike stick does nothing (pure 4a: the power layer, and the lay), from data
+ var _brace_dir: int = 0             # a brace read waiting for a step to take it
+ var _vanish_pending: bool = false   # the vanish resolved and waits for a step to take it
+@@ -485,10 +486,17 @@ func _real_press(c: String) -> bool:
+ 		var power_layer: bool = _is_down("power") or _armed.has(SimStance.CHARGING)   # the layer IS the charging stance, held or armed
+ 		var took_layer: bool = false
+ 		if power_layer:
++			var dropped: bool = false
+ 			for b in _single[c]:
+ 				if b["layer"] == "power":
++					var act: String = str(b["action"])
++					if SimInputData.specials_off() and (act == "special1" or act == "special2" or act == "special3" or act == "special_auto"):
++						dropped = true   # the specials are off: this press is the plain blow of its base binding, and it drops the charge (docs/design/pad-first-press.md)
++						continue
+ 					took_layer = true
+-					_layer_press(str(b["action"]), c)
++					_layer_press(act, c)
++			if dropped and not took_layer:
++				_held.erase("power")
+ 		if took_layer:
+ 			_as[c] = "layer"
+ 		else:
+@@ -919,6 +927,14 @@ func build() -> SimIntent:
+ 	for_mask &= ~_chord_stance_bits()   # a pending transform chord changes no stance
+ 	var mask: int = SimStance.resolve(for_mask, SimStance.newest_of(for_mask, since), SimStance.hybrids())
+ 	i.stanceMask = mask
++	if SimInputData.signature_rt_only() and (mask & SimStance.CHARGING) == 0 and (mask != 0 or i.mode == 1) and not (SimInputData.driver_on_rb() and ((mask & SimStance.ENERGY) != 0 or i.mode == 1)):
++		# The signature is RT + B only: with any other stance held, B is the heavy of that stance (its edge and its level), so a guard or a dodge never fires a beam by accident.
++		if i.sig:
++			i.sig = false
++			i.heavy = true
++		if i.sigHeld:
++			i.sigHeld = false
++			i.heavyHeld = true
+ 	# Exclusive: a stance button that is not the reported stance reports nothing of its own (its edges to RT's burst, and the dodge
+ 	# edge, always report).
+ 	i.guard = i.guard and (mask & SimStance.DEFENSIVE) != 0
+@@ -945,6 +961,14 @@ func build() -> SimIntent:
+ 	return i
+ 
+ 
++## The quick read's pre-read of the strike stick, for the pose and nothing else (never in the intent, never in the hash): {"dir": 1 up, 2 down, 3 left,
++## 4 right, "depth": 0 to 1 toward the request} while the stick leans before its request starts; {} otherwise, or with the quick read off. Render-only.
++func strike_pre() -> Dictionary:
++	if _strike == null or not SimInputData.quick_on() or _strike.pre_dir == SimStrikeRead.NONE:
++		return {}
++	return {"dir": _strike.pre_dir, "depth": _strike.pre_depth}
++
++
+ ## Make the readers the preset asks for. The right-hand attacks need the switch AND a strike control in the preset (a Simple preset has none, so Simple
+ ## keeps its own grammar). Called by set_preset.
+ func _build_right_hand() -> void:
+@@ -1005,6 +1029,7 @@ func set_struggle(on: bool) -> void:
+ 
+ func _right_hand_reset() -> void:
+ 	_rs = Vector2.ZERO
++	_b_hold_prev = false
+ 	in_struggle = false
+ 	_brace_pending = false
+ 	_brace_t0 = -1000
+@@ -1093,7 +1118,13 @@ func _right_hand(i: SimIntent, mask: int) -> void:
+ 	_law.filter(i, tick, busy)
+ 	var was_down: bool = _strike.down
+ 	var sv: Array = _strike_vector()
+-	_strike.step(sv[0].x, sv[0].y, mask, tick, live, _law.floor_tick(), sv[1], in_struggle or _inert_masks.has(mask))
++	# E131: while B is held in the energy layer (the Driver's bank) the stick is inert, so no grip can bank a Driver and draw a beam together; the release
++	# counts as a face event (R from it). The stick strikes first and B is stripped by the law above (one charge at a time).
++	var b_hold: bool = (mask & SimStance.ENERGY) != 0 and i.sigHeld
++	if _b_hold_prev and not b_hold:
++		_law.note_hold_release(tick)
++	_b_hold_prev = b_hold
++	_strike.step(sv[0].x, sv[0].y, mask, tick, live, _law.floor_tick(), sv[1], in_struggle or _inert_masks.has(mask) or b_hold)
+ 	if was_down and not _strike.down:
+ 		_law.note_stick_end(tick)   # the thumb left the stick: the faces are free L later (a throw, a cancel or a toggled charge's rest alike)
+ 	if _strike.is_active():
+diff --git a/sim/input/left_hand.gd b/sim/input/left_hand.gd
+index c85a07b..fd4afe5 100644
+--- a/sim/input/left_hand.gd
++++ b/sim/input/left_hand.gd
+@@ -20,6 +20,7 @@ const NONE: int = 0
+ var flick_on: bool = true         # the flick read of the brace (the assist brace_style "press" turns it off; the brace BUTTON is the layout's)
+ var brace: bool = false          # edge: set a read
+ var brace_dir: int = 0           # screen direction, SimStrikeRead.UP.. RIGHT
++var early: bool = false           # the quick read: the vanish resolves on the second press + vanishSettle, not when the window closes
+ var vanish: bool = false         # edge: the vanish resolved
+ var vanish_vec: Vector2 = Vector2.ZERO
+ 
+@@ -60,7 +61,8 @@ func _init() -> void:
+ 	rest_level = SimInputData.tf(["leftHand", "restLevel"], 0.2)
+ 	window = SimInputData.ti(["leftHand", "vanishWindow"], SimInputData.ti(["tapHold", "chordWindow"], 6))
+ 	v_settle = SimInputData.ti(["leftHand", "vanishSettle"], 2)
+-	settle = SimInputData.ti(["strike", "settle"], 2)
++	settle = SimInputData.ti(["strike", "settleQuick"], 1) if SimInputData.quick_on() else SimInputData.ti(["strike", "settle"], 2)
++	early = SimInputData.quick_on()
+ 	on_at = SimInputData.tf(["strike", "on"], 0.60)
+ 	off_at = SimInputData.tf(["strike", "off"], 0.35)
+ 
+@@ -165,7 +167,10 @@ func _vanish(x: float, y: float, m: float, guard_down: bool, dodge_down: bool, g
+ 	if not (guard_down and dodge_down):
+ 		_gather = false   # one of them was let go before it resolved: a dodge and a guard, no vanish
+ 		return
+-	if tick >= maxi(_g_first + window, _g_second + v_settle):
++	# The quick read: no wait for the window to close, and no settle when the stick is already out at the second press (its direction is known: only a flick that
++	# comes after the read is lost, which is the neutral default and safe).
++	var known: bool = early and _g_peak_m >= on_at
++	if tick >= (_g_second + (0 if known else v_settle) if early else maxi(_g_first + window, _g_second + v_settle)):
+ 		vanish = true
+ 		vanish_vec = _g_peak
+ 		_gather = false
+diff --git a/sim/input/strike_law.gd b/sim/input/strike_law.gd
+index 759e3ee..f955479 100644
+--- a/sim/input/strike_law.gd
++++ b/sim/input/strike_law.gd
+@@ -35,6 +35,12 @@ func floor_tick() -> int:
+ 	return 0 if last_face < 0 else last_face + reverse_lockout
+ 
+ 
++## B was held in the energy layer (the Driver's bank, docs/design/energy-overhaul.md E129 to E131) and has just been let go at `tick`: it counts as the last face
++## event, so a strike request waits R from the release, as a thumb moving from B to the stick would.
++func note_hold_release(tick: int) -> void:
++	last_face = maxi(last_face, tick)
++
++
+ ## A struggle: the faces are free now, and nothing waiting from before goes out as a surge.
+ func free_faces() -> void:
+ 	queue.clear()
+diff --git a/sim/input/strike_read.gd b/sim/input/strike_read.gd
+index c14eafa..846fa99 100644
+--- a/sim/input/strike_read.gd
++++ b/sim/input/strike_read.gd
+@@ -42,6 +42,7 @@ var _start_tick: int = 0
+ var _start_live: int = 0
+ var _peak: Vector2 = Vector2.ZERO
+ var _peak_r: float = -1.0
++var _prev_r: float = 0.0               # last build's deflection: the pre-read follows a rising stick only
+ var _edge_tick: int = -1
+ var _rest_seen: bool = false           # toggle style: the stick rested after the start, so the next push throws
+ 
+@@ -55,6 +56,16 @@ var dwell: int
+ var ladder: Array
+ var beam_ladder: Array
+ var toggle: bool = false               # strike_style "toggle": a push starts the charge, the NEXT push throws it
++var pre_at: float                      # the quick read: the pre-read begins at this rescaled deflection (before `on`)
++var pre_dir: int = NONE                # the quick read, for the pose only (never in the intent): the quadrant the stick is leaning to, before the request; NONE at rest
++var pre_depth: float = 0.0             # ... and how far toward `on` it has got, 0 to 1
++var aim_trail: float                   # the beam's aim (switches.beamAim): the radians the shown aim trails the stick before it moves
++var aim_latch: int                     # ... the rim ticks the throw's aim is the mean of
++var aim_peak: float                    # ... the fraction of the hold's peak deflection that counts as the rim
++var _aim_angle: float = 0.0
++var _aim_seen: bool = false
++var _hold_peak: float = 0.0
++var _rim: Array = []                   # the last rim vectors of the hold
+ 
+ 
+ func _init() -> void:
+@@ -62,7 +73,11 @@ func _init() -> void:
+ 	quant = float(SimInputData.ti(["strike", "quant"], 16))
+ 	on_at = SimInputData.tf(["strike", "on"], 0.60)
+ 	off_at = SimInputData.tf(["strike", "off"], 0.35)
+-	settle = SimInputData.ti(["strike", "settle"], 2)
++	settle = SimInputData.ti(["strike", "settleQuick"], 1) if SimInputData.quick_on() else SimInputData.ti(["strike", "settle"], 2)
++	pre_at = SimInputData.tf(["strike", "preAt"], 0.25)
++	aim_trail = SimInputData.tf(["strike", "aimTrail"], 4.0) / 180.0 * SimMathx.PI
++	aim_latch = maxi(1, SimInputData.ti(["strike", "aimLatchTicks"], 3))
++	aim_peak = SimInputData.tf(["strike", "aimLatchPeak"], 0.85)
+ 	dwell = SimInputData.ti(["strike", "dwell"], 12)
+ 	ladder = _ints(SimInputData.t(["strike", "levels"], [12, 30, 50]), [12, 30, 50])
+ 	beam_ladder = _ints(SimInputData.t(["strike", "beamLevels"], [12, 30, 54]), [12, 30, 54])
+@@ -142,6 +157,15 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
+ 		down = false
+ 	var crossing: bool = down and not was_down
+ 	aim = sector(x, y) if (r > 0.0 and (x != 0.0 or y != 0.0)) else 0
++	if SimInputData.beam_aim_on():
++		_aim_step(x, y, r, crossing)
++	if (phase == IDLE or phase == CROSSED) and r >= pre_at and r >= _prev_r and not inert:   # leaning in, not falling back
++		pre_dir = quadrant(x, y)
++		pre_depth = minf(1.0, r / on_at)
++	else:
++		pre_dir = NONE
++		pre_depth = 0.0
++	_prev_r = r
+ 	match phase:
+ 		IDLE:
+ 			if crossing and inert:
+@@ -152,6 +176,8 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
+ 				layer = mask
+ 				_peak = Vector2(x, y)
+ 				_peak_r = r
++				if settle <= 0:
++					_try_start(x, y, tick, live, floor_tick)   # the quick read at settle 0: the direction is taken on the crossing tick itself (docs/controls/responsiveness.md)
+ 		CROSSED:
+ 			if r > _peak_r:
+ 				_peak = Vector2(x, y)
+@@ -174,6 +200,58 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
+ 		_peak_r = -1.0
+ 
+ 
++## The beam's aim (docs/controls/beam-aim-feel.md). While the stick is down the shown aim follows it through a trailing dead band (it moves only once the stick is
++## more than `aim_trail` from it, then stays that far behind), so a thumb that is holding still does not walk the sector; the rim vectors of the hold are kept for the throw.
++func _aim_step(x: float, y: float, r: float, crossing: bool) -> void:
++	if crossing:
++		_rim.clear()
++		_hold_peak = 0.0
++		_aim_seen = false
++	if not down:
++		aim = 0
++		return
++	if r > _hold_peak:
++		_hold_peak = r
++	if r >= aim_peak * _hold_peak and (x != 0.0 or y != 0.0):
++		_rim.append(Vector2(x, y))
++		if _rim.size() > aim_latch:
++			_rim.pop_front()
++	if x == 0.0 and y == 0.0:
++		return
++	var a: float = WorldPlanet.atan2f(y, x)
++	if not _aim_seen:
++		_aim_angle = a
++		_aim_seen = true
++	else:
++		var e: float = a - _aim_angle
++		if e > SimMathx.PI:
++			e -= SimMathx.TAU
++		elif e < -SimMathx.PI:
++			e += SimMathx.TAU
++		if e > aim_trail:
++			_aim_angle = a - aim_trail
++		elif e < -aim_trail:
++			_aim_angle = a + aim_trail
++	var t: float = _aim_angle
++	while t < 0.0:
++		t += SimMathx.TAU
++	while t >= SimMathx.TAU:
++		t -= SimMathx.TAU
++	aim = int(floor(t / SimMathx.TAU * 32.0 + 0.5)) % 32
++
++
++## The throw's aim: the sector of the mean of the last rim vectors (the thumb's last steady direction), or the peak of a flick that never had a rim.
++func _latched_aim() -> int:
++	var v: Vector2 = Vector2.ZERO
++	for p in _rim:
++		v += p
++	if v == Vector2.ZERO:
++		v = _peak
++	if v == Vector2.ZERO:
++		return aim
++	return sector(v.x, v.y)
++
++
+ func _try_start(x: float, y: float, tick: int, live: int, floor_tick: int) -> void:
+ 	if tick < _cross_tick + settle or tick < floor_tick:
+ 		return
+@@ -195,6 +273,8 @@ func _try_start(x: float, y: float, tick: int, live: int, floor_tick: int) -> vo
+ func _throw(tick: int, live: int) -> void:
+ 	level = level_at(live - _start_live, is_beam_layer(layer))
+ 	release = true
++	if SimInputData.beam_aim_on():
++		aim = _latched_aim()   # the stick has sprung home by the tick it is read: the throw carries the aim it held (docs/controls/beam-aim-feel.md)
+ 	_mark(tick)
+ 	phase = SPENT
+ 	_rest_seen = false
+@@ -260,6 +340,12 @@ func reset() -> void:
+ 	dir = NONE
+ 	level = 0
+ 	aim = 0
++	pre_dir = NONE
++	pre_depth = 0.0
++	_prev_r = 0.0
+ 	_peak_r = -1.0
+ 	_rest_seen = false
++	_rim.clear()
++	_hold_peak = 0.0
++	_aim_seen = false
+ 	clear_edges()
+diff --git a/sim/input/test/beam_aim_test.gd b/sim/input/test/beam_aim_test.gd
+new file mode 100644
+index 0000000..24c8c40
+--- /dev/null
++++ b/sim/input/test/beam_aim_test.gd
+@@ -0,0 +1,245 @@
++extends SceneTree
++## Headless checks for the beam's aim (docs/controls/beam-aim-feel.md; timing.json switches.beamAim, off): the throw carries the aim the stick held at the rim, not the zero of a
++## stick that has sprung home; the shown aim trails a still thumb's wobble by a small dead band and follows a real re-aim; a flick shorter than the settle takes its peak;
++## nothing changes while the switch is off. The thumbs are the measured ones from Orb's first play (rim spread about 3 degrees, spring-back inside a tick). From the repo root:
++##   godot --headless --path . --script res://sim/input/test/beam_aim_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++var _seed: int = 12345
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.clear_overrides()
++	_sw(true, false)
++	_off()
++	_sw(true, true)
++	_throw_carries_aim()
++	_still_thumb()
++	_re_aim()
++	_flick()
++	_bounce()
++	_toggle_and_inert()
++	_sw(true, false)
++	_off_is_the_old_stream()
++	print("beam_aim_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(right: bool, beam: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = right
++	sw["beamAim"] = beam
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _rnd() -> float:
++	_seed = (_seed * 1103515245 + 12345) & 0x7fffffff
++	return float(_seed) / float(0x7fffffff)
++
++
++## A roughly normal wobble with the given spread (the sum of four uniforms).
++func _noise(sd: float) -> float:
++	return ((_rnd() + _rnd() + _rnd() + _rnd()) - 2.0) * sd * 1.732
++
++
++## The stick vector at an angle in degrees (counter-clockwise from right, y up) and a magnitude.
++func _v(deg: float, m: float = 1.0) -> Vector2:
++	var a: float = deg / 180.0 * PI
++	return Vector2(cos(a), sin(a)) * m
++
++
++## A hold: 2 ticks of rest, a one-tick arc in (80% of the way, 8 degrees short), `ticks` on the rim with a `sd`-degree wobble, then home in one tick.
++func _hold(deg: float, ticks: int, sd: float = 3.0, home_ticks: int = 6) -> Array:
++	var out: Array = [Vector2.ZERO, Vector2.ZERO, _v(deg - 8.0, 0.8)]
++	for t in range(ticks):
++		out.append(_v(deg + _noise(sd), 1.0 + _noise(0.01)))
++	for t in range(home_ticks):
++		out.append(Vector2.ZERO)
++	return out
++
++
++## Plays frames through one reader the way the layout does (one step a tick, edges cleared after each). Returns what the sim's intent would have carried.
++func _play(frames: Array) -> Dictionary:
++	var r: SimStrikeRead = SimStrikeRead.new()
++	var aims: Array = []
++	var res: Dictionary = {"aims": aims, "start": -1, "release": -1, "rel_aim": -1, "start_aim": -1, "held_aim": []}
++	for t in range(frames.size()):
++		var v: Vector2 = frames[t]
++		r.step(v.x, v.y, 0, t, t)
++		aims.append(r.aim)
++		if r.start and res["start"] < 0:
++			res["start"] = t
++			res["start_aim"] = r.aim
++		if r.release and res["release"] < 0:
++			res["release"] = t
++			res["rel_aim"] = r.aim
++		r.clear_edges()
++	return res
++
++
++## The angular distance between two 32-way sectors, in sectors.
++func _sdist(a: int, b: int) -> int:
++	var d: int = absi(a - b) % 32
++	return mini(d, 32 - d)
++
++
++func _off() -> void:
++	# the old behaviour, kept while the switch is off: the throw reads the stick at rest
++	var res: Dictionary = _play(_hold(180.0, 30))
++	ok(res["release"] >= 0, "off: the hold is thrown")
++	ok(res["rel_aim"] == 0, "off: the throw's aim is the stick at rest (0, which reads as right) for a hold toward the left: %d" % res["rel_aim"])
++
++
++func _throw_carries_aim() -> void:
++	var cases: Array = [[180.0, 16], [0.0, 0], [90.0, 8], [270.0, 24], [45.0, 4], [135.0, 12], [225.0, 20], [315.0, 28]]
++	for c in cases:
++		var res: Dictionary = _play(_hold(c[0], 30))
++		ok(res["release"] >= 0, "on: a hold at %d degrees is thrown" % int(c[0]))
++		ok(_sdist(res["rel_aim"], c[1]) <= 1, "on: the throw carries the held direction %d degrees (sector %d, got %d)" % [int(c[0]), c[1], res["rel_aim"]])
++	# the same thumbs in a spread of lengths and wobbles, 60 holds: the error of the throw's aim
++	var worst: int = 0
++	var over1: int = 0
++	var n: int = 0
++	for k in range(60):
++		var deg: float = float((k * 37) % 360)
++		var res: Dictionary = _play(_hold(deg, 8 + (k % 40), 3.0 + float(k % 4)))
++		var want: int = int(floor(deg / 11.25 + 0.5)) % 32
++		var e: int = _sdist(res["rel_aim"], want)
++		worst = maxi(worst, e)
++		if e > 1:
++			over1 += 1
++		n += 1
++	ok(over1 <= 6, "on: of %d spread holds (wobble 3 to 6 degrees) at most 6 are thrown more than one sector off the held direction (%d, worst %d)" % [n, over1, worst])
++	ok(worst <= 2, "on: and none is more than two sectors off (worst %d)" % worst)
++
++
++func _still_thumb() -> void:
++	# a thumb that means to hold still, 3 degrees of wobble: the shown aim changes far less than the raw sector would
++	var shown: int = 0
++	var raw: int = 0
++	for k in range(30):
++		var deg: float = float((k * 53) % 360) + 5.0
++		var frames: Array = _hold(deg, 40, 3.0)
++		var r: SimStrikeRead = SimStrikeRead.new()
++		var last_s: int = -1
++		var last_raw: int = -1
++		for t in range(frames.size()):
++			var v: Vector2 = frames[t]
++			r.step(v.x, v.y, 0, t, t)
++			if r.down and t >= 4 and t < 4 + 40:
++				if last_s >= 0 and r.aim != last_s:
++					shown += 1
++				last_s = r.aim
++				var rs: int = SimStrikeRead.sector(v.x, v.y)
++				if last_raw >= 0 and rs != last_raw:
++					raw += 1
++				last_raw = rs
++			r.clear_edges()
++	print("still thumb: shown aim changes ", shown, ", raw sector changes ", raw)
++	ok(shown * 10 <= raw * 7, "still thumb: the shown aim changes at most 70%% as often as the raw sector (%d against %d over 30 holds)" % [shown, raw])
++
++
++func _re_aim() -> void:
++	# a charge held at the right, then swept up by 80 degrees over four ticks and held there: the shown aim follows within a tick or two, the throw is the new place
++	var frames: Array = [Vector2.ZERO, Vector2.ZERO, _v(-8.0, 0.8)]
++	for t in range(20):
++		frames.append(_v(0.0 + _noise(2.0)))
++	for t in range(4):
++		frames.append(_v(20.0 * float(t + 1)))
++	for t in range(20):
++		frames.append(_v(80.0 + _noise(2.0)))
++	for t in range(6):
++		frames.append(Vector2.ZERO)
++	var r: SimStrikeRead = SimStrikeRead.new()
++	var follow: int = -1
++	var rel_aim: int = -1
++	for t in range(frames.size()):
++		var v: Vector2 = frames[t]
++		r.step(v.x, v.y, 0, t, t)
++		if t >= 3 + 20 + 4 and follow < 0 and r.down and _sdist(r.aim, 7) <= 1:
++			follow = t
++		if r.release:
++			rel_aim = r.aim
++		r.clear_edges()
++	ok(follow >= 0 and follow <= 3 + 20 + 4 + 1, "re-aim: the shown aim is at the new place (sector 7) by the tick after the sweep ends (tick %d)" % follow)
++	ok(_sdist(rel_aim, 7) <= 1, "re-aim: the throw is the new place, sector 7 (got %d)" % rel_aim)
++
++
++func _flick() -> void:
++	# a flick that is back at rest before the settle: it starts and throws together, with the peak of its arc
++	var frames: Array = [Vector2.ZERO, Vector2.ZERO, _v(110.0, 0.9), _v(100.0, 1.0), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
++	var res: Dictionary = _play(frames)
++	ok(res["release"] >= 0, "flick: a flick shorter than the settle is thrown")
++	ok(_sdist(res["rel_aim"], 9) <= 1, "flick: and carries its direction, sector 9 (got %d)" % res["rel_aim"])
++
++
++func _bounce() -> void:
++	# the thumb lifts and the stick bounces past the centre (0.4 the other way): no aim is read after the throw
++	var frames: Array = _hold(0.0, 20)
++	frames.append(_v(180.0, 0.4))
++	frames.append(_v(180.0, 0.3))
++	frames.append(Vector2.ZERO)
++	frames.append(Vector2.ZERO)
++	var res: Dictionary = _play(frames)
++	ok(_sdist(res["rel_aim"], 0) <= 1, "bounce: the throw carries the held direction, right (got %d)" % res["rel_aim"])
++	var after: bool = true
++	for t in range(res["release"] + 1, frames.size()):
++		if res["aims"][t] != 0:
++			after = false
++	ok(after, "bounce: after the throw the aim is 0 (at rest), the bounce is not read")
++
++
++func _toggle_and_inert() -> void:
++	# a stick pushed on an inert layer (pure 4a: RT held) does nothing: no start, no release, the aim stays 0
++	var r: SimStrikeRead = SimStrikeRead.new()
++	var any: bool = false
++	var frames: Array = _hold(0.0, 20)
++	for t in range(frames.size()):
++		var v: Vector2 = frames[t]
++		r.step(v.x, v.y, 0, t, t, 0, false, true)
++		if r.start or r.release:
++			any = true
++		r.clear_edges()
++	ok(not any, "inert: nothing starts or releases on an inert layer, with the aim switch on")
++	# a cancelled charge (the left hand): no throw, and the reader is ready for the next hold at a new direction
++	var r2: SimStrikeRead = SimStrikeRead.new()
++	var f2: Array = _hold(0.0, 20)
++	var thrown: bool = false
++	for t in range(f2.size()):
++		var v2: Vector2 = f2[t]
++		r2.step(v2.x, v2.y, 0, t, t)
++		if t == 14:
++			r2.cancel_now(t)
++		if r2.release:
++			thrown = true
++		r2.clear_edges()
++	ok(not thrown, "cancel: a cancelled charge is not thrown")
++	var res: Dictionary = _play(_hold(180.0, 20))
++	ok(_sdist(res["rel_aim"], 16) <= 1, "next hold: a new direction after the old one is its own (got %d)" % res["rel_aim"])
++
++
++func _off_is_the_old_stream() -> void:
++	# with the switch off the reader's aim is exactly the sector of the stick every step, the way it was
++	var same: bool = true
++	var frames: Array = _hold(70.0, 25)
++	var r: SimStrikeRead = SimStrikeRead.new()
++	for t in range(frames.size()):
++		var v: Vector2 = frames[t]
++		r.step(v.x, v.y, 0, t, t)
++		var want: int = SimStrikeRead.sector(v.x, v.y) if (r.deflection(v.x, v.y) > 0.0 and (v.x != 0.0 or v.y != 0.0)) else 0
++		if r.aim != want:
++			same = false
++		r.clear_edges()
++	ok(same, "off: with the switch off the aim is the live sector of the stick on every step")
+diff --git a/sim/input/test/beam_aim_test.gd.uid b/sim/input/test/beam_aim_test.gd.uid
+new file mode 100644
+index 0000000..4a8ebbc
+--- /dev/null
++++ b/sim/input/test/beam_aim_test.gd.uid
+@@ -0,0 +1 @@
++uid://bre0k0vnukr03
+diff --git a/sim/input/test/haptics_test.gd b/sim/input/test/haptics_test.gd
+index a564693..cff3e4d 100644
+--- a/sim/input/test/haptics_test.gd
++++ b/sim/input/test/haptics_test.gd
+@@ -45,11 +45,11 @@ func _with(block, f: Callable) -> void:
+ 
+ func _data() -> void:
+ 	var ks: Array = SimHaptics.kinds()
+-	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose"]
++	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump"]
+ 	var has_all: bool = ks.size() == want.size()
+ 	for w in want:
+ 		has_all = has_all and ks.has(w)
+-	ok(has_all, "data: the eight kinds (the six asked for, the struggle's push and being pushed, and the loser's end)")
++	ok(has_all, "data: the sixteen kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam)")
+ 	ok(not ks.has("struggle_pulse") and not ks.has("struggle_surge"), "data: the beat-aligned struggle kinds are retired (Orb: not on the beat)")
+ 	ok(SimHaptics.min_gap_ms() == 80, "data: requests for one slot are at least 80 ms apart")
+ 	# The data file and the code defaults agree.
+diff --git a/sim/input/test/pad_first_press_test.gd b/sim/input/test/pad_first_press_test.gd
+new file mode 100644
+index 0000000..df1fc7e
+--- /dev/null
++++ b/sim/input/test/pad_first_press_test.gd
+@@ -0,0 +1,137 @@
++extends SceneTree
++## One person's first press takes player one (the EP's rule, 2026-11-01, after Orb's first play): the start menu puts player one on "the first connected pad", which on a PC with a phantom
++## or a second device is not the pad in the person's hands, so that person's first press used to join as player TWO. Scripted pads at device ids 0, 1, 2 through the real hub:
++##   godot --headless --path . --script res://sim/input/test/pad_first_press_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.clear_overrides()
++	_phantom()
++	_proven_pad()
++	_stick_counts()
++	_second_person()
++	_start_press()
++	_keyboard_and_two_player()
++	_reset()
++	print("pad_first_press_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++## What _on_menu_started does for "Player 1 is Controller": slot 0 human, on the first connected pad, claimed.
++func _menu_hub(pad0: int, pad1: int = -1) -> SimInputHub:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, pad1 >= 0)
++	hub.slot_device[0] = "pad"
++	hub.slot_pad[0] = pad0
++	hub.claimed[0] = true
++	if pad1 >= 0:
++		hub.slot_device[1] = "pad"
++		hub.slot_pad[1] = pad1
++		hub.claimed[1] = true
++	return hub
++
++
++func _phantom() -> void:
++	for real in [1, 2]:
++		var hub: SimInputHub = _menu_hub(0)
++		hub.pad_button(real, "west", true)
++		ok(int(hub.slot_pad[0]) == real and bool(hub.claimed[0]), "phantom: the menu put player one on pad 0; pad %d's first press takes slot 0 (slot 0 is pad %d)" % [real, hub.slot_pad[0]])
++		ok(not hub.claimed[1] and hub.take_joins().is_empty(), "phantom: pad %d did not join as player two" % real)
++		var i: SimIntent = hub.intent(0)
++		ok(i.light, "phantom: the press that took the slot is player one's light blow")
++		hub.consumed()
++		hub.pad_button(real, "west", false)
++		hub.pad_stick(real, 1.0, 0.0)
++		var m: SimIntent = hub.intent(0)
++		ok(m.mx > 0.5, "phantom: and the stick of pad %d now moves player one" % real)
++
++
++func _proven_pad() -> void:
++	# pad 0 was the right one and has pressed: pad 1 is a second person, who joins as player two
++	var hub: SimInputHub = _menu_hub(0)
++	hub.pad_button(0, "west", true)
++	hub.pad_button(1, "west", true)
++	ok(int(hub.slot_pad[0]) == 0 and int(hub.slot_pad[1]) == 1 and bool(hub.claimed[1]), "proven: pad 0 has pressed, so pad 1 is a second person and joins as player two")
++	ok(hub.take_joins() == [1], "proven: the join is slot 1")
++	# a trigger counts as used
++	var h2: SimInputHub = _menu_hub(0)
++	h2.pad_trigger(0, "rt", 1.0)
++	h2.pad_button(1, "west", true)
++	ok(int(h2.slot_pad[0]) == 0 and bool(h2.claimed[1]), "proven: a trigger pull counts as used")
++
++
++func _stick_counts() -> void:
++	var hub: SimInputHub = _menu_hub(0)
++	hub.pad_stick(0, 1.0, 0.0)
++	hub.pad_button(1, "west", true)
++	ok(int(hub.slot_pad[0]) == 0 and bool(hub.claimed[1]), "stick: a stick pushed past half on pad 0 counts as used, so pad 1 joins as player two")
++	var h2: SimInputHub = _menu_hub(0)
++	h2.pad_stick(0, 0.2, 0.0)
++	h2.pad_button(1, "west", true)
++	ok(int(h2.slot_pad[0]) == 1 and not h2.claimed[1], "stick: a stick nudge under half does not count: pad 1's press takes player one")
++	var h3: SimInputHub = _menu_hub(0)
++	h3.pad_stick_right(0, 0.0, 1.0)
++	h3.pad_button(2, "west", true)
++	ok(int(h3.slot_pad[0]) == 0 and bool(h3.claimed[1]), "stick: the right stick pushed past half counts too")
++
++
++func _second_person() -> void:
++	# the phantom, the real person, then a real second person on pad 2
++	var hub: SimInputHub = _menu_hub(0)
++	hub.pad_button(1, "west", true)
++	hub.pad_button(2, "west", true)
++	ok(int(hub.slot_pad[0]) == 1 and int(hub.slot_pad[1]) == 2 and bool(hub.claimed[1]), "second person: pad 1 took player one, then pad 2 joined as player two")
++	ok(hub.take_joins() == [1], "second person: one join, slot 1")
++	# the phantom pressing later is a third device with both slots taken: it takes no slot
++	hub.pad_button(0, "west", true)
++	ok(int(hub.slot_pad[0]) == 1 and int(hub.slot_pad[1]) == 2, "second person: a third pad takes neither slot back")
++
++
++func _start_press() -> void:
++	var hub: SimInputHub = _menu_hub(0)
++	ok(hub.start_joins(1), "start: Start on pad 1 would join (the host then hands the press to the hub)")
++	hub.pad_button(1, "start", true)
++	ok(int(hub.slot_pad[0]) == 1 and not hub.claimed[1], "start: and the hub gives it to player one, not player two")
++
++
++func _keyboard_and_two_player() -> void:
++	# player one on the keyboard: a pad's first press is a second person
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.key("KeyF", true)
++	hub.key("KeyF", false)
++	hub.pad_button(1, "west", true)
++	ok(hub.slot_device[0] == "kb" and bool(hub.claimed[1]) and int(hub.slot_pad[1]) == 1, "keyboard: player one on the keyboard, a pad press is player two (unchanged)")
++	# two players on two pads, both from the menu: each pad's own press finds its own slot
++	var h2: SimInputHub = _menu_hub(0, 1)
++	h2.pad_button(1, "west", true)
++	h2.pad_button(0, "west", true)
++	ok(int(h2.slot_pad[0]) == 0 and int(h2.slot_pad[1]) == 1, "two on pads: each pad keeps the slot the menu gave it, in any order of pressing")
++	# two players on pads, a third pad that has not pressed: it takes player one from pad 0 only if pad 0 never pressed
++	var h3: SimInputHub = _menu_hub(0, 1)
++	h3.pad_button(2, "west", true)
++	ok(int(h3.slot_pad[0]) == 2 and int(h3.slot_pad[1]) == 1, "two on pads: pad 0 never pressed, so a third pad's press takes player one")
++
++
++func _reset() -> void:
++	var hub: SimInputHub = _menu_hub(0)
++	hub.pad_button(0, "west", true)
++	hub.reset_claims()
++	hub.set_humans(true, false)
++	hub.slot_device[0] = "pad"
++	hub.slot_pad[0] = 0
++	hub.claimed[0] = true
++	hub.pad_button(1, "west", true)
++	ok(int(hub.slot_pad[0]) == 1, "reset: after reset_claims a pad that had pressed no longer counts as used")
+diff --git a/sim/input/test/pad_first_press_test.gd.uid b/sim/input/test/pad_first_press_test.gd.uid
+new file mode 100644
+index 0000000..c0ba1dc
+--- /dev/null
++++ b/sim/input/test/pad_first_press_test.gd.uid
+@@ -0,0 +1 @@
++uid://0ocun6dpti2c
+diff --git a/sim/input/test/quick_read_test.gd b/sim/input/test/quick_read_test.gd
+new file mode 100644
+index 0000000..dd8e6b8
+--- /dev/null
++++ b/sim/input/test/quick_read_test.gd
+@@ -0,0 +1,330 @@
++extends SceneTree
++## Headless checks for the quick read (docs/controls/responsiveness.md; timing.json switches.quickRead, off): the strike and brace settle one tick sooner, the
++## vanish resolves on the second press, the stick publishes a pre-read for the pose, and none of it loosens the no-claw law, changes the swapped layout's
++## stream, or changes anything while the switch is off. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/quick_read_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.clear_overrides()
++	_sw(true, false)
++	var base: Dictionary = _timings()
++	_sw(true, true)
++	var quick: Dictionary = _timings()
++	_off(base)
++	_sooner(base, quick)
++	_pre()
++	_law()
++	_swap()
++	_sw(false, false)
++	_off_switch()
++	print("quick_read_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(right: bool, quick: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = right
++	sw["quickRead"] = quick
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _pad(preset: String = "arena") -> SimLayout:
++	return SimLayout.new(SimInputData.preset(preset))
++
++
++func _first(its: Array, what: String) -> int:
++	for t in range(its.size()):
++		var i: SimIntent = its[t]
++		match what:
++			"rsStart": if i.rsStart: return t
++			"rsRelease": if i.rsRelease: return t
++			"brace": if i.brace: return t
++			"escape": if i.escape: return t
++			"light": if i.light: return t
++	return -1
++
++
++## A flick on the strike stick from rest at tick 10: full push in `ramp` ticks, held 4, back in 3. Returns the intents.
++func _flick(l: SimLayout, ramp: int, ticks: int = 40, ang: float = 0.0) -> Array:
++	var out: Array = []
++	for t in range(ticks):
++		var k: int = t - 10
++		var m: float = 0.0
++		if k >= 0 and k < ramp:
++			m = float(k + 1) / float(ramp)
++		elif k >= ramp and k < ramp + 4:
++			m = 1.0
++		elif k >= ramp + 4 and k < ramp + 7:
++			m = 1.0 - float(k - ramp - 3) / 3.0
++		l.axis("pad:rs", cos(deg_to_rad(ang)) * m, sin(deg_to_rad(ang)) * m)
++		out.append(l.build())
++		l.consumed()
++	return out
++
++
++## The numbers this file compares, under the current switches: strike start by ramp, brace flick, vanish by gap.
++func _timings() -> Dictionary:
++	var d: Dictionary = {}
++	for ramp in [1, 2, 3, 4]:
++		var its: Array = _flick(_pad(), ramp)
++		d["start%d" % ramp] = _first(its, "rsStart") - 10
++		d["dir%d" % ramp] = (its[_first(its, "rsStart")] as SimIntent).rsDir
++	var l: SimLayout = _pad()
++	l.press("pad:lb")
++	var got: int = -1
++	for t in range(40):
++		var k: int = t - 15
++		l.axis("pad:ls", 0.0, 1.0 if k >= 0 and k < 8 else 0.0)
++		var i: SimIntent = l.build()
++		if i.brace and got < 0:
++			got = k
++		l.consumed()
++	d["brace"] = got
++	for g in [0, 3, 6]:
++		var lv: SimLayout = _pad()
++		var e: int = -1
++		for t in range(30):
++			if t == 5:
++				lv.press("pad:lb")
++			if t == 5 + g:
++				lv.analog("pad:lt", 1.0)
++			var iv: SimIntent = lv.build()
++			if iv.escape and e < 0:
++				e = t - 5
++			lv.consumed()
++		d["vanish%d" % g] = e
++	return d
++
++
++func _off(base: Dictionary) -> void:
++	ok(base["start3"] == 4 and base["start1"] == 2, "off: a ramp-3 flick starts 4 ticks after the thumb moved, a ramp-1 flick 2 (the settle of 2): %s %s" % [base["start3"], base["start1"]])
++	ok(base["vanish0"] == 6 and base["vanish3"] == 6 and base["vanish6"] == 8, "off: the vanish resolves at the later of the window and the second press + 2 (6, 6, 8): %s %s %s" % [base["vanish0"], base["vanish3"], base["vanish6"]])
++
++
++func _sooner(base: Dictionary, quick: Dictionary) -> void:
++	for ramp in [1, 2, 3, 4]:
++		ok(quick["start%d" % ramp] == base["start%d" % ramp] - 1, "quick: a ramp-%d flick starts one tick sooner (%s -> %s)" % [ramp, base["start%d" % ramp], quick["start%d" % ramp]])
++		ok(quick["dir%d" % ramp] == base["dir%d" % ramp] and quick["dir%d" % ramp] == SimStrikeRead.RIGHT, "quick: the locked direction is the same (right) at ramp %d" % ramp)
++	ok(quick["brace"] == base["brace"] - 1, "quick: the flick brace is one tick sooner (%s -> %s)" % [base["brace"], quick["brace"]])
++	ok(quick["vanish0"] == 2 and quick["vanish3"] == 5 and quick["vanish6"] == 8, "quick: the vanish resolves on the second press + 2 (2, 5, 8; was 6, 6, 8): %s %s %s" % [quick["vanish0"], quick["vanish3"], quick["vanish6"]])
++	# A vanish with the stick already leaning keeps the direction.
++	var l: SimLayout = _pad()
++	var vy: float = -9.0
++	for t in range(30):
++		if t >= 3:
++			l.axis("pad:ls", 0.0, 1.0)
++		if t == 5:
++			l.press("pad:lb")
++			l.analog("pad:lt", 1.0)
++		var i: SimIntent = l.build()
++		if i.escape and vy < -5.0:
++			vy = i.my
++		l.consumed()
++	ok(vy > 0.5, "quick: a vanish with the stick leaning up before the presses is sent up (my %.2f)" % vy)
++	# A guard and a dodge more than the window apart are no vanish, quick or not.
++	var l2: SimLayout = _pad()
++	var any_escape: bool = false
++	for t in range(40):
++		if t == 5:
++			l2.press("pad:lb")
++		if t == 14:
++			l2.analog("pad:lt", 1.0)
++		if l2.build().escape:
++			any_escape = true
++		l2.consumed()
++	ok(not any_escape, "quick: LT 9 ticks after LB is the plain dodge out of guard, no vanish")
++	# One of the two let go before the second press + 2: no vanish.
++	var l3: SimLayout = _pad()
++	var esc3: bool = false
++	for t in range(30):
++		if t == 5:
++			l3.press("pad:lb")
++			l3.analog("pad:lt", 1.0)
++		if t == 6:
++			l3.release("pad:lb")
++		if l3.build().escape:
++			esc3 = true
++		l3.consumed()
++	ok(not esc3, "quick: LB let go the next tick: no vanish")
++
++
++func _pre() -> void:
++	var l: SimLayout = _pad()
++	var pre_first: int = -1
++	var start: int = -1
++	var dir_ok: bool = true
++	var after_start: bool = false
++	for t in range(40):
++		var k: int = t - 10
++		var m: float = 0.0
++		if k >= 0 and k < 3:
++			m = float(k + 1) / 3.0
++		elif k >= 3 and k < 7:
++			m = 1.0
++		elif k >= 7 and k < 10:
++			m = 1.0 - float(k - 6) / 3.0
++		l.axis("pad:rs", m, 0.0)
++		var i: SimIntent = l.build()
++		var pre: Dictionary = l.strike_pre()
++		if not pre.is_empty():
++			if pre_first < 0:
++				pre_first = k
++			if int(pre["dir"]) != SimStrikeRead.RIGHT:
++				dir_ok = false
++		if i.rsStart and start < 0:
++			start = k
++		if start >= 0 and k > start and not pre.is_empty():
++			after_start = true
++		l.consumed()
++	ok(pre_first >= 0 and start >= 0 and pre_first < start, "pre: the pre-read appears before the request starts (pre at +%d, start at +%d)" % [pre_first, start])
++	ok(start - pre_first >= 2, "pre: it leads the start by at least 2 ticks on a ramp-3 flick (%d)" % (start - pre_first))
++	ok(dir_ok, "pre: the leaning direction is right")
++	ok(not after_start, "pre: gone once the request has started (the sim has it)")
++	ok(l.strike_pre().is_empty(), "pre: empty at rest")
++	# The pre-read is not in the intent: the streams with and without asking for it are the same.
++	var a: Array = _flick(_pad(), 3)
++	var lb: SimLayout = _pad()
++	var b: Array = []
++	for t in range(40):
++		var k: int = t - 10
++		var m: float = 0.0
++		if k >= 0 and k < 3:
++			m = float(k + 1) / 3.0
++		elif k >= 3 and k < 7:
++			m = 1.0
++		elif k >= 7 and k < 10:
++			m = 1.0 - float(k - 6) / 3.0
++		lb.axis("pad:rs", m, 0.0)
++		b.append(lb.build())
++		lb.strike_pre()
++		lb.consumed()
++	var same: bool = true
++	for t in range(40):
++		if SimIntent.pack(a[t]) != SimIntent.pack(b[t]) or SimIntent.pack2(a[t]) != SimIntent.pack2(b[t]):
++			same = false
++	ok(same, "pre: asking for it changes no intent")
++	# The inert layer (RT held) has none.
++	var li: SimLayout = _pad()
++	li.analog("pad:rt", 1.0)
++	var inert_pre: bool = false
++	for t in range(20):
++		li.axis("pad:rs", 1.0 if t > 5 else 0.0, 0.0)
++		li.build()
++		if not li.strike_pre().is_empty():
++			inert_pre = true
++		li.consumed()
++	ok(not inert_pre, "pre: none on an inert layer (RT held)")
++	# The hub says the same for a slot, and is empty with the switch off.
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	hub.pad_stick_right(7, 1.0, 0.0)
++	hub.intent(0)
++	ok(int(hub.strike_pre(0).get("dir", 0)) == SimStrikeRead.RIGHT, "pre: the hub gives a slot its pre-read")
++
++
++## The no-claw law holds with the quick read on: numbers read from data, nothing hard-coded to the settle of 2.
++func _law() -> void:
++	var lock: int = SimInputData.ti(["strike", "lockout"], 6)
++	var rev: int = SimInputData.ti(["strike", "reverseLockout"], 8)
++	# A face press 4 ticks before the stick crosses: the strike waits until R after it.
++	var l: SimLayout = _pad()
++	var its: Array = []
++	for t in range(60):
++		if t == 20:
++			l.press("pad:west")
++		if t == 22:
++			l.release("pad:west")
++		l.axis("pad:rs", 1.0 if t >= 24 else 0.0, 0.0)
++		its.append(l.build())
++		l.consumed()
++	var st: int = _first(its, "rsStart")
++	ok(st >= 20 + rev, "law: a strike never starts inside R = %d of a face press (face at 20, start at %d)" % [rev, st])
++	ok(_first(its, "light") == 20, "law: the face press made before the strike is the press (tick 20)")
++	# A face press the tick after the strike starts is held back (the faces are inert while it is out).
++	var l2: SimLayout = _pad()
++	var its2: Array = []
++	for t in range(60):
++		if t == 17:
++			l2.press("pad:west")
++		l2.axis("pad:rs", 1.0 if t >= 10 else 0.0, 0.0)
++		its2.append(l2.build())
++		l2.consumed()
++	var st2: int = _first(its2, "rsStart")
++	var pressed_at: int = st2 + 1
++	var l3: SimLayout = _pad()
++	var its3: Array = []
++	for t in range(60):
++		if t == pressed_at:
++			l3.press("pad:west")
++		l3.axis("pad:rs", 1.0 if t >= 10 else 0.0, 0.0)
++		its3.append(l3.build())
++		l3.consumed()
++	var lt3: int = _first(its3, "light")
++	ok(lt3 < 0 or lt3 >= 10 + 40, "law: a face press one tick after the start does not reach the sim while the stick is out (light at %d)" % lt3)
++	# The thumb leaving the stick frees the faces L later.
++	var l4: SimLayout = _pad()
++	var its4: Array = []
++	for t in range(60):
++		if t == 12:
++			l4.press("pad:west")
++		l4.axis("pad:rs", 1.0 if (t >= 5 and t < 11) else 0.0, 0.0)
++		its4.append(l4.build())
++		l4.consumed()
++	var lt4: int = _first(its4, "light")
++	ok(lt4 >= 11 + lock - 1, "law: a face press right after the thumb leaves the stick waits L = %d (light at %d)" % [lock, lt4])
++
++
++## The swapped layout makes the same stream under the quick read (row S's idea, one script).
++func _swap() -> void:
++	var a: SimLayout = _pad("arena")
++	var b: SimLayout = _pad("arena-swapped")
++	var same: bool = true
++	for t in range(120):
++		var m: float = 1.0 if (t % 30) in [10, 11, 12, 13] else 0.0
++		var dirx: float = 1.0 if int(t / 30) % 2 == 0 else -1.0
++		a.axis("pad:rs", m * dirx, 0.0)
++		b.axis("pad:ls", m * dirx, 0.0)
++		if t % 40 == 20:
++			a.press("pad:west")
++			b.press("pad:dpad_left")
++		if t % 40 == 22:
++			a.release("pad:west")
++			b.release("pad:dpad_left")
++		var ia: SimIntent = a.build()
++		var ib: SimIntent = b.build()
++		a.consumed()
++		b.consumed()
++		if SimIntent.pack(ia) != SimIntent.pack(ib) or SimIntent.pack2(ia) != SimIntent.pack2(ib):
++			same = false
++	ok(same, "swap: arena and arena-swapped make one stream under the quick read")
++
++
++## Off: the switch missing or false is the layout as it was.
++func _off_switch() -> void:
++	var l: SimLayout = _pad()
++	ok(l.strike_pre().is_empty(), "off: no pre-read")
++	var its: Array = _flick(_pad(), 3)
++	var any: bool = false
++	for i in its:
++		if (i as SimIntent).rsStart or (i as SimIntent).rsHeld:
++			any = true
++	ok(not any, "off: no strike at all with switches.rightStick false")
+diff --git a/sim/input/test/quick_read_test.gd.uid b/sim/input/test/quick_read_test.gd.uid
+new file mode 100644
+index 0000000..e16ce9e
+--- /dev/null
++++ b/sim/input/test/quick_read_test.gd.uid
+@@ -0,0 +1 @@
++uid://c54o3c07e0o5p
+diff --git a/sim/input/test/stage_haptics_test.gd b/sim/input/test/stage_haptics_test.gd
+new file mode 100644
+index 0000000..66eb0bf
+--- /dev/null
++++ b/sim/input/test/stage_haptics_test.gd
+@@ -0,0 +1,190 @@
++extends SceneTree
++## Headless checks for the charge stages' rumble and the throw's thump (docs/controls/beam-aim-feel.md section 5; timing.json switches.hapticLadder, off): a stage of N
++## is the tick, the knock rising, then the thud; the throw of a charged strike answers with one low thump scaled by the charge, a flick with none; everything is soft and
++## low (no pulse louder than the top one, the thump on the low motor); and none of it plays while the switch is off. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/stage_haptics_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.clear_overrides()
++	_sw(true, true)
++	_stages()
++	_thump()
++	_soft()
++	_hub()
++	_sw(true, false)
++	_off()
++	print("stage_haptics_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(right: bool, ladder: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = right
++	sw["hapticLadder"] = ladder
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _kinds(of: int) -> Array:
++	var out: Array = []
++	for n in range(1, of + 1):
++		var r: Array = SimHaptics.stage_requests(0, n, of)
++		out.append(r[0]["kind"] if r.size() == 1 else "none")
++	return out
++
++
++func _close(a: Array, b: Array) -> bool:
++	if a.size() != b.size():
++		return false
++	for k in range(a.size()):
++		if absf(float(a[k]) - float(b[k])) > 0.011:
++			return false
++	return true
++
++
++func _scales(of: int) -> Array:
++	var out: Array = []
++	for n in range(1, of + 1):
++		var r: Array = SimHaptics.stage_requests(0, n, of)
++		out.append(snappedf(float(r[0]["scale"]), 0.01) if r.size() == 1 else -1.0)
++	return out
++
++
++func _stages() -> void:
++	ok(_kinds(2) == ["ladder_1", "ladder_3"], "stages: a two-stage charge is the tick, then the thud: %s" % str(_kinds(2)))
++	ok(_kinds(3) == ["ladder_1", "ladder_2", "ladder_3"], "stages: three is the old ladder: %s" % str(_kinds(3)))
++	ok(_kinds(6) == ["ladder_1", "ladder_2", "ladder_2", "ladder_2", "ladder_2", "ladder_3"], "stages: six is the tick, four knocks, the thud: %s" % str(_kinds(6)))
++	ok(_close(_scales(6), [1.0, 0.7, 0.8, 0.9, 1.0, 1.0]), "stages: the knocks climb from 0.7 to 1.0 of their strength, the tick and the thud are as written: %s" % str(_scales(6)))
++	ok(_close(_scales(4), [1.0, 0.7, 1.0, 1.0]), "stages: four has a soft knock and a full one: %s" % str(_scales(4)))
++	ok(SimHaptics.stage_requests(0, 0, 3).is_empty(), "stages: stage 0 (a charge starting) is silent")
++	ok(SimHaptics.stage_requests(0, 4, 3).is_empty(), "stages: a stage past the last is silent")
++	ok(SimHaptics.stage_requests(2, 1, 3).is_empty() and SimHaptics.stage_requests(-1, 1, 3).is_empty(), "stages: only slots 0 and 1 feel a stage")
++	ok(int(SimHaptics.stage_requests(1, 2, 3)[0]["slot"]) == 1, "stages: the pulse is for the charger's slot")
++
++
++func _thump() -> void:
++	ok(SimHaptics.release_requests(0, 0).is_empty(), "thump: a flick (level 0) throws no thump")
++	var sc: Array = []
++	for lv in [1, 2, 3]:
++		var r: Array = SimHaptics.release_requests(1, lv)
++		ok(r.size() == 1 and r[0]["kind"] == "release_thump" and int(r[0]["slot"]) == 1, "thump: level %d is one release_thump for the thrower" % lv)
++		sc.append(snappedf(float(r[0]["scale"]), 0.01))
++	ok(_close(sc, [0.6, 0.8, 1.0]), "thump: scaled by the charge reached, 0.6 / 0.8 / 1.0: %s" % str(sc))
++	ok(SimHaptics.release_requests(0, 2, 6)[0]["scale"] < SimHaptics.release_requests(0, 5, 6)[0]["scale"], "thump: with six stages a later stage thumps harder")
++	ok(SimHaptics.release_requests(3, 2).is_empty(), "thump: only slots 0 and 1")
++
++
++func _soft() -> void:
++	var th: Array = SimHaptics.steps("release_thump", "pad", 1.0)
++	ok(th.size() == 2, "soft: the thump is a push and a roll-off")
++	var chunky: bool = true
++	var quiet: bool = true
++	for s in th:
++		if float(s["strong"]) < float(s["weak"]) * 3.0 and float(s["weak"]) > 0.0:
++			chunky = false
++		if float(s["strong"]) > 0.7 or float(s["weak"]) > 0.15:
++			quiet = false
++	ok(chunky, "soft: the thump is the low motor (at least three times the high one)")
++	ok(quiet, "soft: and no louder than 0.7 low, 0.15 high")
++	var top: float = 0.0
++	for k in ["ladder_1", "ladder_2", "ladder_3"]:
++		for s in SimHaptics.steps(k, "pad", 1.0):
++			top = maxf(top, float(s["strong"]))
++	ok(float(SimHaptics.steps("release_thump", "pad", 1.0)[0]["strong"]) <= top, "soft: the thump is no heavier than the thud (%.2f against %.2f)" % [SimHaptics.steps("release_thump", "pad", 1.0)[0]["strong"], top])
++	var knock_max: float = 0.0
++	for n in range(2, 6):
++		var r: Array = SimHaptics.stage_requests(0, n, 6)
++		for s in SimHaptics.steps(r[0]["kind"], "pad", float(r[0]["scale"])):
++			knock_max = maxf(knock_max, float(s["strong"]))
++	ok(knock_max < top, "soft: no knock of a six-stage charge is as heavy as the thud (%.2f against %.2f)" % [knock_max, top])
++	var plan: Dictionary = SimHaptics.plan("release_thump", {"kind": "pad", "id": 3}, true, -10000, 1000, 0.6)
++	ok(plan.get("via", "") == "pad" and plan["steps"].size() == 2, "soft: a pad plays it")
++	ok(SimHaptics.plan("release_thump", {"kind": "pad", "id": 3}, true, 950, 1000, 1.0).is_empty(), "soft: inside the slot-wide gap it is dropped")
++
++
++func _hub_pad() -> SimInputHub:
++	var hub: SimInputHub = SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	return hub
++
++
++func _hub() -> void:
++	# a held strike to level 3 and a throw: the three rungs, then the thump on the throw tick
++	var hub: SimInputHub = _hub_pad()
++	var got: Array = []
++	for t in range(140):
++		hub.pad_stick_right(7, 1.0 if (t >= 10 and t < 90) else 0.0, 0.0)
++		hub.intent(0)
++		for r in hub.take_haptics():
++			got.append([t, String(r["kind"]), snappedf(float(r["scale"]), 0.01)])
++		hub.consumed()
++	var kinds: Array = []
++	for g in got:
++		kinds.append(g[1])
++	ok(kinds == ["ladder_1", "ladder_2", "ladder_3", "release_thump"], "hub: a charge to the top answers each rung, then the throw: %s" % str(kinds))
++	if got.size() == 4:
++		ok(got[3][0] == 90 and absf(float(got[3][2]) - 1.0) < 0.011, "hub: the thump is on the tick the stick falls (90) at full scale: %s" % str(got[3]))
++	# a charge thrown at level 1
++	var h1: SimInputHub = _hub_pad()
++	var k1: Array = []
++	var s1: Array = []
++	for t in range(100):
++		h1.pad_stick_right(7, 1.0 if (t >= 10 and t < 30) else 0.0, 0.0)
++		h1.intent(0)
++		for r in h1.take_haptics():
++			k1.append(String(r["kind"]))
++			s1.append(snappedf(float(r["scale"]), 0.01))
++		h1.consumed()
++	ok(k1 == ["ladder_1", "release_thump"] and absf(float(s1[1]) - 0.6) < 0.011, "hub: a charge let go at the first rung is the tick and a 0.6 thump: %s %s" % [str(k1), str(s1)])
++	# a quick flick: no rung, no thump
++	var h2: SimInputHub = _hub_pad()
++	var q: int = 0
++	for t in range(60):
++		h2.pad_stick_right(7, 1.0 if (t >= 10 and t < 14) else 0.0, 0.0)
++		h2.intent(0)
++		q += h2.take_haptics().size()
++		h2.consumed()
++	ok(q == 0, "hub: a quick flick throws no thump")
++	# a cancelled charge (the guard): no throw, no thump
++	var h3: SimInputHub = _hub_pad()
++	var after: int = 0
++	for t in range(100):
++		h3.pad_stick_right(7, 1.0 if t >= 10 else 0.0, 0.0)
++		if t == 25:
++			h3.pad_button(7, "lb", true)
++		h3.intent(0)
++		for r in h3.take_haptics():
++			if t >= 26:
++				after += 1
++		h3.consumed()
++	ok(after == 0, "hub: a guard press ends the charge and nothing is felt after it")
++
++
++func _off() -> void:
++	ok(SimHaptics.stage_requests(0, 2, 3).is_empty() and SimHaptics.release_requests(0, 3).is_empty(), "off: with the switch off neither request exists")
++	var hub: SimInputHub = _hub_pad()
++	var n: int = 0
++	for t in range(140):
++		hub.pad_stick_right(7, 1.0 if (t >= 10 and t < 90) else 0.0, 0.0)
++		hub.intent(0)
++		n += hub.take_haptics().size()
++		hub.consumed()
++	ok(n == 0, "off: a whole charge and throw play nothing")
+diff --git a/sim/input/test/stage_haptics_test.gd.uid b/sim/input/test/stage_haptics_test.gd.uid
+new file mode 100644
+index 0000000..702b7f1
+--- /dev/null
++++ b/sim/input/test/stage_haptics_test.gd.uid
+@@ -0,0 +1 @@
++uid://bwwahfvtkmb3y
+diff --git a/sim/input/test/stick_feel_test.gd b/sim/input/test/stick_feel_test.gd
+new file mode 100644
+index 0000000..95357b6
+--- /dev/null
++++ b/sim/input/test/stick_feel_test.gd
+@@ -0,0 +1,676 @@
++extends SceneTree
++## Headless checks for the stick's feel (docs/controls/rule-of-cool-pitches.md pitches 1 and 3, docs/design/rule-of-cool-map.md section 5's landing rule):
++##   - the reader against the landing rule: the blow lands at the later of the wind-up's end and the stick's return. The reader's side of it: a flick held a
++##     short time returns before a 7-tick wind-up ends; a stick still out holds the request (rsHeld) with level 0 until the dwell, then it is a charge on the
++##     ladder; a release keeps the level it had; a flick held to 11 is still a quick strike
++##   - the ladder's rumble (switches.hapticLadder): one pulse per rung, on the tick the level rises, none at rest, none after a cancel, again for a second charge
++##   - the incoming cue (switches.hapticIncoming): the defender's pad, high for toward and up, low for away and down; the striker's none
++##   - all of it off with its switch off, and nothing in the intent changes
++##   godot --headless --path . --script res://sim/input/test/stick_feel_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.clear_overrides()
++	_sw(true, true, true, true)
++	_landing()
++	_ladder()
++	_incoming()
++	_beams()
++	_b_hold()
++	_beam_window()
++	_zero()
++	_refused()
++	_specials_off()
++	_sig_rt_only()
++	_sw(true, true, false, false)
++	_off()
++	_sw(false, false, false, false)
++	print("stick_feel_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(right: bool, quick: bool, ladder: bool, incoming: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = right
++	sw["quickRead"] = quick
++	sw["hapticLadder"] = ladder
++	sw["hapticIncoming"] = incoming
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++## A flick right from rest at tick 10: full push in `ramp` ticks, held `hold` ticks, back in 3. Returns the intents.
++func _flick(l: SimLayout, ramp: int, hold: int, ticks: int = 100) -> Array:
++	var out: Array = []
++	for t in range(ticks):
++		var k: int = t - 10
++		var m: float = 0.0
++		if k >= 0 and k < ramp:
++			m = float(k + 1) / float(ramp)
++		elif k >= ramp and k < ramp + hold:
++			m = 1.0
++		elif k >= ramp + hold and k < ramp + hold + 3:
++			m = 1.0 - float(k - ramp - hold + 1) / 3.0
++		l.axis("pad:rs", m, 0.0)
++		out.append(l.build())
++		l.consumed()
++	return out
++
++
++func _first(its: Array, what: String, from: int = 0) -> int:
++	for t in range(from, its.size()):
++		var i: SimIntent = its[t]
++		if (what == "rsStart" and i.rsStart) or (what == "rsRelease" and i.rsRelease):
++			return t
++	return -1
++
++
++## The reader against the landing rule.
++func _landing() -> void:
++	var dwell: int = SimInputData.ti(["strike", "dwell"], 12)
++	for h in [0, 2, 4, 6, 8, 10, 11, 14, 20]:
++		var its: Array = _flick(SimLayout.new(SimInputData.preset("arena")), 2, h)
++		var s: int = _first(its, "rsStart")
++		var r: int = _first(its, "rsRelease", s)
++		var out: int = r - s   # ticks the stick was out, from the request to its return
++		# between the start and the return the request is in the sim's hands
++		var held_all: bool = true
++		for t in range(s, r):
++			held_all = held_all and (its[t] as SimIntent).rsHeld
++		ok(s >= 0 and r >= s and held_all, "landing: a flick held %d: rsHeld from the start to the return (start %d, return %d)" % [h, s, r])
++		var lv: int = (its[r] as SimIntent).rsLevel
++		ok((lv == 0) == (out < dwell), "landing: held %d: out for %d ticks, level %d at the return (a quick strike below the dwell of %d, a charge at or past it)" % [h, out, lv, dwell])
++		if out >= 8:
++			# the wind-up (7) is over and the stick is still out: the director waits on the return, and the reader says the request is still held, at level 0 until the dwell
++			var at7: SimIntent = its[s + 7]
++			ok(at7.rsHeld and not at7.rsRelease and at7.rsLevel == (0 if 7 < dwell else 1), "landing: held %d: at the wind-up's end (start + 7) the stick is still out, level %d, no release yet" % [h, at7.rsLevel])
++		if out <= 6:
++			ok(r < s + 7, "landing: held %d: the return comes before the wind-up ends, so the blow lands at the wind-up's end (return at +%d)" % [h, out])
++	# the ladder through the reader, from the start: 12, 30, 50
++	var long: Array = _flick(SimLayout.new(SimInputData.preset("arena")), 2, 90)
++	var s2: int = _first(long, "rsStart")
++	var lv_at: Callable = func(k: int) -> int: return (long[s2 + k] as SimIntent).rsLevel
++	ok(lv_at.call(11) == 0 and lv_at.call(12) == 1 and lv_at.call(29) == 1 and lv_at.call(30) == 2 and lv_at.call(49) == 2 and lv_at.call(50) == 3, "landing: the charge ladder is unchanged by the quick read, 12 / 30 / 50 live ticks from the start")
++
++
++## A held stick through the real hub: pulses as the rungs are reached.
++func _hub_pad() -> SimInputHub:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	return hub
++
++
++func _ladder() -> void:
++	var hub: SimInputHub = _hub_pad()
++	var start: int = -1
++	var pulses: Array = []   # [tick, kind]
++	for t in range(120):
++		var m: float = 1.0 if (t >= 10 and t < 80) else 0.0
++		hub.pad_stick_right(7, m, 0.0)
++		var i: SimIntent = hub.intent(0)
++		if i.rsStart and start < 0:
++			start = t
++		for r in hub.take_haptics():
++			pulses.append([t, String(r["kind"]), int(r["slot"])])
++		hub.consumed()
++	var want: Array = ["ladder_1", "ladder_2", "ladder_3", "release_thump"]   # the throw at 80 answers with the thump (docs/controls/beam-aim-feel.md)
++	var got: Array = []
++	for p in pulses:
++		got.append(p[1])
++	ok(got == want, "ladder: one pulse per rung, in order (got %s)" % str(got))
++	if pulses.size() == 4:
++		ok(int(pulses[3][0]) == 80, "ladder: the thump comes on the throw tick (the stick falls at 80), not before (got %d)" % pulses[3][0])
++		ok(int(pulses[0][0]) == start + 12 and int(pulses[1][0]) == start + 30 and int(pulses[2][0]) == start + 50, "ladder: on the ticks the level rises, 12 / 30 / 50 from the start (start %d, pulses at %d, %d, %d)" % [start, pulses[0][0], pulses[1][0], pulses[2][0]])
++		ok(int(pulses[0][2]) == 0, "ladder: for the charger's slot")
++	# a second charge pulses again
++	var hub2: SimInputHub = _hub_pad()
++	var n: int = 0
++	for t in range(260):
++		var m2: float = 1.0 if ((t >= 10 and t < 70) or (t >= 130 and t < 200)) else 0.0
++		hub2.pad_stick_right(7, m2, 0.0)
++		hub2.intent(0)
++		n += hub2.take_haptics().size()
++		hub2.consumed()
++	ok(n >= 5, "ladder: a second charge pulses again (%d pulses over two charges of 60 and 70 ticks)" % n)
++	# a flick, a stick at rest and a cancelled charge: no pulses
++	var hub3: SimInputHub = _hub_pad()
++	var quiet: int = 0
++	for t in range(60):
++		hub3.pad_stick_right(7, 1.0 if (t >= 10 and t < 14) else 0.0, 0.0)
++		hub3.intent(0)
++		quiet += hub3.take_haptics().size()
++		hub3.consumed()
++	ok(quiet == 0, "ladder: a quick flick reaches no rung, no pulse")
++	var hub4: SimInputHub = _hub_pad()
++	var after_cancel: int = 0
++	for t in range(100):
++		hub4.pad_stick_right(7, 1.0 if t >= 10 else 0.0, 0.0)
++		if t == 25:
++			hub4.pad_button(7, "lb", true)   # the guard: it ends a started charge
++		hub4.intent(0)
++		for r in hub4.take_haptics():
++			if t >= 26:
++				after_cancel += 1
++		hub4.consumed()
++	ok(after_cancel == 0, "ladder: a guard press ends the charge, and no rung is felt after it")
++
++
++func _incoming() -> void:
++	var cases: Array = [["toward", "incoming_high"], ["up", "incoming_high"], ["away", "incoming_low"], ["down", "incoming_low"]]
++	for c in cases:
++		var r0: Array = SimHaptics.requests("stick_start", 0, -1, c[0], 0.0)
++		var r1: Array = SimHaptics.requests("stick_start", 1, 0, c[0], 0.0)
++		ok(r0.size() == 1 and int(r0[0]["slot"]) == 1 and r0[0]["kind"] == c[1], "incoming: slot 0 strikes %s: slot 1 feels %s" % [c[0], c[1]])
++		ok(r1.size() == 1 and int(r1[0]["slot"]) == 0 and r1[0]["kind"] == c[1], "incoming: slot 1 strikes %s: slot 0 feels %s" % [c[0], c[1]])
++	ok(SimHaptics.requests("stick_start", 0, -1, "", 0.0).is_empty(), "incoming: no direction, no cue")
++	ok(SimHaptics.requests("stick_start", -1, -1, "toward", 0.0).is_empty(), "incoming: no striker, no cue")
++	for k in ["incoming_high", "incoming_low", "ladder_1", "ladder_2", "ladder_3"]:
++		var pad: Dictionary = SimHaptics.plan(k, {"kind": "pad", "id": 3}, true, -10000, 1000)
++		var ph: Dictionary = SimHaptics.plan(k, {"kind": "touch", "id": -1}, true, -10000, 1000)
++		ok(not pad.is_empty() and not ph.is_empty(), "kinds: %s plays on a pad and a phone" % k)
++	ok(SimHaptics.plan("incoming_high", {"kind": "kb", "id": -1}, true, -10000, 1000).is_empty(), "kinds: nothing on a keyboard")
++
++
++## Row 40: the beam-answer window's crescendo on the receiver's pad (switches.hapticIncomingBeam).
++func _beam_window() -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["hapticIncomingBeam"] = false
++	SimInputData.timing["switches"] = sw
++	ok(SimHaptics.beam_window(0, 1, "start", 30.0).is_empty(), "beam window: nothing with its switch off")
++	sw["hapticIncomingBeam"] = true
++	SimInputData.timing["switches"] = sw
++	var w: Dictionary = SimHaptics.beam_window(0, 1, "start", 30.0)
++	ok(not w.is_empty() and int(w["slot"]) == 1 and bool(w["open"]), "beam window: shooter 0, receiver 1: the receiver's pad")
++	var w1: Dictionary = SimHaptics.beam_window(1, -1, "start", 30.0)
++	ok(int(w1["slot"]) == 0, "beam window: no target given: the other slot is the receiver")
++	var cases: Array = [6.0, 12.0, 20.0, 30.0, 60.0, 90.0]
++	var gap: int = SimHaptics.kind_gap_ms("incoming_beam")
++	for ticks in cases:
++		var p: Array = SimHaptics.beam_window(0, 1, "start", ticks)["pulses"]
++		var len_ms: int = int(ticks * 1000.0 / 60.0)
++		var rising: bool = true
++		var spaced: bool = true
++		var inside: bool = p.size() >= 1 and p.size() <= 5
++		for k in range(p.size()):
++			inside = inside and int(p[k]["at"]) > 0 and int(p[k]["at"]) < len_ms
++			if k > 0:
++				rising = rising and float(p[k]["scale"]) > float(p[k - 1]["scale"])
++				spaced = spaced and int(p[k]["at"]) - int(p[k - 1]["at"]) >= gap
++		ok(inside and (rising or p.size() == 1) and spaced, "beam window: %d ticks: %d pulses inside the window, rising, at least %d ms apart" % [int(ticks), p.size(), gap])
++		ok(p.size() == 0 or float(p[p.size() - 1]["scale"]) == 1.0, "beam window: %d ticks: the last pulse is the loudest (a crescendo to arrival)" % int(ticks))
++	ok(not bool(SimHaptics.beam_window(0, 1, "end", 30.0)["open"]) and not bool(SimHaptics.beam_window(0, 1, "beam", 30.0)["open"]), "beam window: the end cue closes it, and an unknown text opens nothing")
++	ok(not bool(SimHaptics.beam_window(0, 1, "start", 0.0)["open"]), "beam window: a zero-length window is closed")
++	ok(SimHaptics.requests("beam_window", 0, 1, "start", 30.0).is_empty(), "beam window: the cue itself rumbles nothing: the pulses come from beam_window on the host's timers")
++	for dev in [{"kind": "pad", "id": 3}, {"kind": "touch", "id": -1}]:
++		ok(not SimHaptics.plan("incoming_beam", dev, true, -10000, 1000, 0.3).is_empty(), "beam window: incoming_beam plays on a %s even at its softest" % dev["kind"])
++	sw["hapticIncomingBeam"] = false
++	SimInputData.timing["switches"] = sw
++
++
++func _off() -> void:
++	ok(SimHaptics.requests("stick_start", 0, -1, "toward", 0.0).is_empty(), "off: the incoming cue asks for nothing with its switch off")
++	var hub: SimInputHub = _hub_pad()
++	var n: int = 0
++	for t in range(100):
++		hub.pad_stick_right(7, 1.0 if t >= 10 else 0.0, 0.0)
++		hub.intent(0)
++		n += hub.take_haptics().size()
++		hub.consumed()
++	ok(n == 0, "off: a held charge asks for no ladder pulses with its switch off")
++	# the intents are the same with the ladder on and off
++	_sw(true, true, true, false)
++	var a: SimInputHub = _hub_pad()
++	var pa: Array = []
++	for t in range(80):
++		a.pad_stick_right(7, 1.0 if (t >= 10 and t < 60) else 0.0, 0.0)
++		pa.append(SimIntent.pack2(a.intent(0)))
++		a.take_haptics()
++		a.consumed()
++	_sw(true, true, false, false)
++	var b: SimInputHub = _hub_pad()
++	var pb: Array = []
++	for t in range(80):
++		b.pad_stick_right(7, 1.0 if (t >= 10 and t < 60) else 0.0, 0.0)
++		pb.append(SimIntent.pack2(b.intent(0)))
++		b.take_haptics()
++		b.consumed()
++	ok(pa == pb, "off: asking for the ladder changes no intent (pack2 equal over 80 ticks)")
++
++
++## E120: beams are the stick in the energy layer (RB + stick, and its mirrors), on the beam ladder 12 / 30 / 54, in every form and the left-handed swap.
++func _beam_form(l: SimLayout, rb: String, press: Callable, release: Callable, name: String) -> void:
++	l.press(rb)
++	var its: Array = []
++	for t in range(110):
++		if t == 10:
++			press.call()
++		its.append(l.build())
++		l.consumed()
++	var st: int = _first(its, "rsStart")
++	ok(st >= 0 and (its[st] as SimIntent).rsMask == SimStance.ENERGY, "beam: %s: RB + the stick is a request on the energy layer (mask %d)" % [name, (its[st] as SimIntent).rsMask if st >= 0 else -1])
++	if st >= 0:
++		var lv: Callable = func(k: int) -> int: return (its[st + k] as SimIntent).rsLevel
++		ok(lv.call(11) == 0 and lv.call(12) == 1 and lv.call(29) == 1 and lv.call(30) == 2 and lv.call(53) == 2 and lv.call(54) == 3, "beam: %s: the beam ladder is 12 / 30 / 54 live ticks from the start" % name)
++		ok((its[st + 90] as SimIntent).rsHeld and (its[st + 90] as SimIntent).rsLevel == 3, "beam: %s: a level 3 beam is held and never thrown by a timer (E129's Loaded is reachable on the stick)" % name)
++
++
++func _beams() -> void:
++	var a: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	_beam_form(a, "pad:rb", func(): a.axis("pad:rs", 1.0, 0.0), func(): pass, "pad stick")
++	var b: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	b.set_mirror_dpad(true)
++	_beam_form(b, "pad:rb", func(): b.press("pad:dpad_right"), func(): pass, "D-pad mirror")
++	var c: SimLayout = SimLayout.new(SimInputData.preset("kb-solo"))
++	_beam_form(c, "kb:KeyQ", func(): c.press("kb:ArrowRight"), func(): pass, "keyboard arrows")
++	var d: SimLayout = SimLayout.new(SimInputData.preset("arena-swapped"))
++	_beam_form(d, SimSwap.control("pad:rb"), func(): d.axis(SimSwap.control("pad:rs"), 1.0, 0.0), func(): pass, "left-handed pad")
++
++
++## E131: while B is held in the energy layer the stick is inert; B released then the stick waits R; the stick first strips B.
++func _b_hold() -> void:
++	var rev: int = SimInputData.ti(["strike", "reverseLockout"], 8)
++	var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var its: Array = []
++	for t in range(100):
++		if t == 5:
++			l.press("pad:rb")
++		if t == 10:
++			l.press("pad:east")   # B: the Driver's hold
++		l.axis("pad:rs", 1.0 if ((t >= 20 and t < 31) or t >= 41) else 0.0, 0.0)
++		if t == 40:
++			l.release("pad:east")
++		its.append(l.build())
++		l.consumed()
++	var st: int = _first(its, "rsStart")
++	var inert_ok: bool = true
++	for t in range(0, 41):
++		inert_ok = inert_ok and not (its[t] as SimIntent).rsStart and not (its[t] as SimIntent).rsHeld
++	ok(inert_ok, "B held: the stick (pushed twice while B is held in energy) starts nothing")
++	ok(st >= 40 + rev and (its[st] as SimIntent).rsMask == SimStance.ENERGY, "B released then the stick: the beam request waits R = %d from the release (release 40, start %d)" % [rev, st])
++	# the same stick with no B: it starts as soon as the reader allows
++	var l0: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var its0: Array = []
++	for t in range(100):
++		if t == 5:
++			l0.press("pad:rb")
++		l0.axis("pad:rs", 1.0 if t >= 41 else 0.0, 0.0)
++		its0.append(l0.build())
++		l0.consumed()
++	var st0: int = _first(its0, "rsStart")
++	ok(st0 >= 41 and st0 < 40 + rev, "B held: without B the same push starts at once (%d), which is the hole the release lockout closes" % st0)
++	# the stick first: B is stripped while the beam is out (one charge at a time)
++	var l2: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var its2: Array = []
++	for t in range(80):
++		if t == 5:
++			l2.press("pad:rb")
++		l2.axis("pad:rs", 1.0 if t >= 10 else 0.0, 0.0)
++		if t == 30:
++			l2.press("pad:east")
++		its2.append(l2.build())
++		l2.consumed()
++	var leak: bool = false
++	for t in range(30, 80):
++		leak = leak or (its2[t] as SimIntent).sig or (its2[t] as SimIntent).sigHeld
++	ok(not leak and (its2[79] as SimIntent).rsHeld, "stick first: B pressed while the beam is out is held back (no sig, no sigHeld), and the beam stays held")
++	# the keyboard's signature key is the same B
++	var k: SimLayout = SimLayout.new(SimInputData.preset("kb-solo"))
++	var itk: Array = []
++	for t in range(60):
++		if t == 3:
++			k.press("kb:KeyQ")
++		if t == 6:
++			k.press("kb:KeyL")
++		if t == 15:
++			k.press("kb:ArrowRight")
++		itk.append(k.build())
++		k.consumed()
++	ok(_first(itk, "rsStart") < 0, "B held: the keyboard's L is B too: the arrows start nothing while L is held in energy")
++
++
++## Settle 0 (strike.settleQuick = 0, the option Orb can try): the strike's direction is taken on the crossing tick; nothing else about it moves.
++func _set_settle(v: int) -> void:
++	var st: Dictionary = SimInputData.timing.get("strike", {})
++	st["settleQuick"] = v
++	SimInputData.timing["strike"] = st
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _start_after_motion(l: SimLayout, ramp: int, press_x: int = -1) -> int:
++	var its: Array = []
++	for t in range(60):
++		var k: int = t - 10
++		var m: float = 0.0
++		if k >= 0 and k < ramp:
++			m = float(k + 1) / float(ramp)
++		elif k >= ramp and k < ramp + 4:
++			m = 1.0
++		elif k >= ramp + 4 and k < ramp + 7:
++			m = 1.0 - float(k - ramp - 3) / 3.0
++		if t == press_x:
++			l.press("pad:west")
++		if t == press_x + 2:
++			l.release("pad:west")
++		l.axis("pad:rs", m, 0.0)
++		its.append(l.build())
++		l.consumed()
++	return _first(its, "rsStart") - 10
++
++
++func _zero() -> void:
++	var one: Dictionary = {}
++	var zero: Dictionary = {}
++	_set_settle(1)
++	for r in [1, 2, 3, 4]:
++		one[r] = _start_after_motion(SimLayout.new(SimInputData.preset("arena")), r)
++	_set_settle(0)
++	for r in [1, 2, 3, 4]:
++		zero[r] = _start_after_motion(SimLayout.new(SimInputData.preset("arena")), r)
++		ok(zero[r] == one[r] - 1, "settle 0: a ramp-%d flick starts on the crossing tick, one sooner than settle 1 (%d, was %d)" % [r, zero[r], one[r]])
++	# the crossing tick: ramp 1 crosses at motion +0, ramp 2 at +1
++	ok(zero[1] == 0 and zero[2] == 1, "settle 0: the start is the crossing tick itself")
++	# the direction is right at the crossing
++	var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var dirs_ok: bool = true
++	for ang in [0.0, 90.0, 180.0, 270.0, 20.0, -20.0, 160.0, 200.0]:
++		var lv: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++		var got: int = 0
++		for t in range(30):
++			var m: float = 1.0 if (t >= 5 and t < 15) else 0.0
++			lv.axis("pad:rs", cos(deg_to_rad(ang)) * m, sin(deg_to_rad(ang)) * m)
++			var it: SimIntent = lv.build()
++			if it.rsStart and got == 0:
++				got = it.rsDir
++			lv.consumed()
++		var want: int = SimStrikeRead.quadrant(cos(deg_to_rad(ang)), sin(deg_to_rad(ang)))
++		dirs_ok = dirs_ok and got == want
++	ok(dirs_ok, "settle 0: a full push at eight angles reads the quadrant it is in")
++	# the law: a face press before the stick waits R; one on the crossing tick wins
++	var rev: int = SimInputData.ti(["strike", "reverseLockout"], 8)
++	var s_law: int = _start_after_motion(SimLayout.new(SimInputData.preset("arena")), 2, 9)
++	ok(s_law + 10 >= 9 + rev, "settle 0: a face press 2 ticks before the crossing still holds the strike R = %d (start at %d, press at 9)" % [rev, s_law + 10])
++	var l2: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var its2: Array = []
++	for t in range(60):
++		if t == 10:
++			l2.press("pad:west")   # on the crossing tick of a ramp-1 flick
++		l2.axis("pad:rs", 1.0 if (t >= 10 and t < 20) else 0.0, 0.0)
++		its2.append(l2.build())
++		l2.consumed()
++	var lt: int = -1
++	for t in range(its2.size()):
++		if (its2[t] as SimIntent).light and lt < 0:
++			lt = t
++	ok(lt == 10 and _first(its2, "rsStart") >= 10 + rev, "settle 0: the face press on the crossing tick wins (light at %d) and the strike starts R later (start %d)" % [lt, _first(its2, "rsStart")])
++	# the mirrors act on the same tick as the stick
++	var m1: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	m1.set_mirror_dpad(true)
++	var ds: int = -1
++	var k1: SimLayout = SimLayout.new(SimInputData.preset("kb-solo"))
++	var ks: int = -1
++	for t in range(30):
++		if t == 10:
++			m1.press("pad:dpad_right")
++			k1.press("kb:ArrowRight")
++		var a: SimIntent = m1.build()
++		var b: SimIntent = k1.build()
++		if a.rsStart and ds < 0:
++			ds = t
++		if b.rsStart and ks < 0:
++			ks = t
++		m1.consumed()
++		k1.consumed()
++	ok(ds == 10 and ks == 10, "settle 0: the D-pad and the keyboard arrows act on the press tick, like the stick (%d, %d)" % [ds, ks])
++	# the swapped layout makes the same stream
++	var sa: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var sb: SimLayout = SimLayout.new(SimInputData.preset("arena-swapped"))
++	var same: bool = true
++	for t in range(100):
++		var mm: float = 1.0 if (t % 25) in [10, 11, 12] else 0.0
++		sa.axis("pad:rs", mm, 0.0)
++		sb.axis("pad:ls", mm, 0.0)
++		if t % 40 == 20:
++			sa.press("pad:west")
++			sb.press("pad:dpad_left")
++		if t % 40 == 22:
++			sa.release("pad:west")
++			sb.release("pad:dpad_left")
++		var ia: SimIntent = sa.build()
++		var ib: SimIntent = sb.build()
++		sa.consumed()
++		sb.consumed()
++		if SimIntent.pack(ia) != SimIntent.pack(ib) or SimIntent.pack2(ia) != SimIntent.pack2(ib):
++			same = false
++	ok(same, "settle 0: arena and arena-swapped make one stream")
++	# the flick brace at settle 0 goes out on its crossing tick
++	var lb: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	lb.press("pad:lb")
++	var bt: int = -1
++	for t in range(40):
++		lb.axis("pad:ls", 0.0, 1.0 if (t >= 20 and t < 26) else 0.0)
++		if lb.build().brace and bt < 0:
++			bt = t
++		lb.consumed()
++	ok(bt == 20, "settle 0: the flick brace goes out on its crossing tick (%d)" % bt)
++	# the vanish: a direction already out at the second press resolves at once; with none it still waits the settle
++	var vt: int = _vanish_tick(true)
++	var vn: int = _vanish_tick(false)
++	ok(vt == 10 and vn == 12, "quick vanish: stick already out at the second press: that tick (%d); no stick: the settle, 2 later (%d)" % [vt, vn])
++	_set_settle(1)
++
++
++func _vanish_tick(stick_out: bool) -> int:
++	var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var got: int = -1
++	for t in range(40):
++		if stick_out and t >= 4:
++			l.axis("pad:ls", 1.0, 0.0)
++		if t == 9:
++			l.press("pad:lb")
++		if t == 10:
++			l.analog("pad:lt", 1.0)
++		if l.build().escape and got < 0:
++			got = t
++		l.consumed()
++	return got
++
++
++## The audit's gap 2: a stick press the game did not answer tells its pad (switches.hapticRefused), unless the director said it started.
++func _refusal_hub(on: bool) -> SimInputHub:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["hapticRefused"] = on
++	SimInputData.timing["switches"] = sw
++	return _hub_pad()
++
++
++func _refused() -> void:
++	var refuse: int = SimInputData.ti(["strike", "refuseTicks"], 30)
++	# no answer: a flick, then the live ticks pass with no stick_start
++	var hub: SimInputHub = _refusal_hub(true)
++	var got: Array = []
++	for t in range(80):
++		hub.pad_stick_right(7, 1.0 if (t >= 10 and t < 14) else 0.0, 0.0)
++		hub.intent(0)
++		for r in hub.take_haptics():
++			got.append([t, String(r["kind"]), int(r["slot"])])
++		hub.consumed()
++		for r in hub.take_haptics():
++			got.append([t, String(r["kind"]), int(r["slot"])])
++	ok(got.size() == 1 and got[0][1] == "stick_refused" and got[0][2] == 0, "refused: a stick request with no strike started is told to its pad once (%s)" % str(got))
++	if got.size() == 1:
++		ok(int(got[0][0]) >= 10 + refuse and int(got[0][0]) <= 10 + refuse + 6, "refused: it comes refuseTicks = %d live ticks after the request (request about tick 12, told at %d)" % [refuse, got[0][0]])
++	# answered: the host tells the hub the director started it
++	var hub2: SimInputHub = _refusal_hub(true)
++	var n2: int = 0
++	for t in range(80):
++		hub2.pad_stick_right(7, 1.0 if (t >= 10 and t < 14) else 0.0, 0.0)
++		var i2: SimIntent = hub2.intent(0)
++		if i2.rsStart:
++			hub2.note_stick_started(0)   # Encounter's stick_start cue, on the same tick
++		n2 += hub2.take_haptics().size()
++		hub2.consumed()
++		n2 += hub2.take_haptics().size()
++	ok(n2 == 0, "refused: a strike the director started is never told as refused")
++	# a cancelled request (the guard or dodge) is not a refusal
++	var hub3: SimInputHub = _refusal_hub(true)
++	var n3: int = 0
++	for t in range(100):
++		hub3.pad_stick_right(7, 1.0 if t >= 10 else 0.0, 0.0)
++		if t == 14:
++			hub3.pad_button(7, "lb", true)
++		hub3.intent(0)
++		n3 += hub3.take_haptics().size()
++		hub3.consumed()
++		n3 += hub3.take_haptics().size()
++	ok(n3 <= 1, "refused: a request cancelled by the guard tells nothing more than once (%d)" % n3)
++	# off
++	var hub4: SimInputHub = _refusal_hub(false)
++	var n4: int = 0
++	for t in range(80):
++		hub4.pad_stick_right(7, 1.0 if (t >= 10 and t < 14) else 0.0, 0.0)
++		hub4.intent(0)
++		hub4.consumed()
++		n4 += hub4.take_haptics().size()
++	ok(n4 == 0, "refused: nothing with its switch off")
++	# Encounter's own cue, as soon as it knows
++	_refusal_hub(true)
++	var rq: Array = SimHaptics.requests("stick_refused", 1, -1, "", 0.0)
++	ok(rq.size() == 1 and int(rq[0]["slot"]) == 1 and rq[0]["kind"] == "stick_refused", "refused: Encounter's stick_refused cue goes to the presser only")
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["hapticRefused"] = false
++	SimInputData.timing["switches"] = sw
++	ok(SimHaptics.requests("stick_refused", 1, -1, "", 0.0).is_empty(), "refused: the cue does nothing with the switch off")
++	for dev in [{"kind": "pad", "id": 3}, {"kind": "touch", "id": -1}]:
++		ok(not SimHaptics.plan("stick_refused", dev, true, -10000, 1000).is_empty(), "refused: the kind plays on a %s" % dev["kind"])
++
++
++## The power specials are off (docs/design/pad-first-press.md): RT held, then X, Y or A is the plain blow, and the charge drops.
++func _specials_off() -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	for off in [false, true]:
++		sw["specialsOff"] = off
++		SimInputData.timing["switches"] = sw
++		SimInputData.clear_overrides()
++		SimInputData.invalidate()
++		for f in [["west", "light", 1], ["north", "heavy", 2], ["south", "context", 3]]:
++			var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++			l.analog("pad:rt", 1.0)
++			var plain: bool = false
++			var special: int = 0
++			var power_after: bool = true
++			for t in range(40):
++				if t == 20:
++					l.press("pad:" + f[0])
++				if t == 23:
++					l.release("pad:" + f[0])
++				var i: SimIntent = l.build()
++				if t >= 20 and bool(i.get(f[1])):
++					plain = true
++				if i.special != 0:
++					special = i.special
++				if t == 30:
++					power_after = i.power
++				l.consumed()
++			if off:
++				ok(plain and special == 0 and not power_after, "specials off: RT then %s is the plain %s, no special, and the charge drops (plain %s, special %d, power after %s)" % [f[0], f[1], str(plain), special, str(power_after)])
++			else:
++				ok(special == f[2] and not plain, "specials on (as shipped): RT then %s is special %d" % [f[0], f[2]])
++		# B in the power layer stays the signature
++		var lb: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++		lb.analog("pad:rt", 1.0)
++		var sig: bool = false
++		for t in range(30):
++			if t == 20:
++				lb.press("pad:east")
++			if lb.build().sig:
++				sig = true
++			lb.consumed()
++		ok(sig, "specials %s: RT then B is still the signature" % ("off" if off else "on"))
++	sw["specialsOff"] = false
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++## The signature is RT + B only (the EP's decision, E121): with the switch on, B with LB, RB or LT held is the heavy of that stance and never the signature; RT + B and B alone are as they were.
++func _sig_rt_only() -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	for on in [false, true]:
++		sw["signatureRtOnly"] = on
++		SimInputData.timing["switches"] = sw
++		SimInputData.clear_overrides()
++		SimInputData.invalidate()
++		for lay in [["none", ""], ["LB", "lb"], ["RB", "rb"], ["LT", "lt"], ["RT", "rt"]]:
++			var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++			if lay[1] == "lt" or lay[1] == "rt":
++				l.analog("pad:" + lay[1], 1.0)
++			elif lay[1] != "":
++				l.press("pad:" + lay[1])
++			var sig: bool = false
++			var heavy: bool = false
++			var sig_held: bool = false
++			var heavy_held: bool = false
++			for t in range(40):
++				if t == 20:
++					l.press("pad:east")
++				if t == 30:
++					l.release("pad:east")
++				var i: SimIntent = l.build()
++				if t >= 20 and t < 30:
++					sig_held = sig_held or i.sigHeld
++					heavy_held = heavy_held or i.heavyHeld
++				if t >= 20:
++					sig = sig or i.sig
++					heavy = heavy or i.heavy
++				l.consumed()
++			var is_sig: bool = (not on) or lay[0] == "none" or lay[0] == "RT"
++			ok(sig == is_sig and heavy == (not is_sig), "signature RT only %s: B with %s is %s (sig %s, heavy %s)" % ["on" if on else "off", lay[0], "the signature" if is_sig else "the heavy", str(sig), str(heavy)])
++			ok(sig_held == is_sig and heavy_held == (not is_sig), "signature RT only %s: B held with %s carries its level as %s" % ["on" if on else "off", lay[0], "sigHeld" if is_sig else "heavyHeld"])
++	# With the Driver on RB (switches.driverOnRb): RB + B stays the B press for the Driver to read; LB + B and LT + B are still the stance's heavy.
++	sw["signatureRtOnly"] = true
++	sw["driverOnRb"] = true
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++	for lay in [["LB", "lb", false], ["RB", "rb", true], ["LT", "lt", false]]:
++		var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++		if lay[1] == "lt":
++			l.analog("pad:lt", 1.0)
++		else:
++			l.press("pad:" + lay[1])
++		var sig: bool = false
++		var heavy: bool = false
++		for t in range(40):
++			if t == 20:
++				l.press("pad:east")
++			if t == 30:
++				l.release("pad:east")
++			var i: SimIntent = l.build()
++			if t >= 20:
++				sig = sig or i.sig
++				heavy = heavy or i.heavy
++			l.consumed()
++		ok(sig == lay[2] and heavy == (not lay[2]), "driver on RB: B with %s is %s (sig %s, heavy %s)" % [lay[0], "left for the Driver" if lay[2] else "the heavy", str(sig), str(heavy)])
++	sw["signatureRtOnly"] = false
++	sw["driverOnRb"] = false
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
+diff --git a/sim/input/test/stick_feel_test.gd.uid b/sim/input/test/stick_feel_test.gd.uid
+new file mode 100644
+index 0000000..52a9206
+--- /dev/null
++++ b/sim/input/test/stick_feel_test.gd.uid
+@@ -0,0 +1 @@
++uid://c1qo2cyhh124x
+diff --git a/sim/input/test/strike_gate_test.gd b/sim/input/test/strike_gate_test.gd
+index 1db60f0..fbd5f81 100644
+--- a/sim/input/test/strike_gate_test.gd
++++ b/sim/input/test/strike_gate_test.gd
+@@ -257,8 +257,19 @@ func _row_k() -> void:
+ 	# A press made early in a long charge expires; one made late goes out.
+ 	var evs2: Array = [[10, "rs", "", 1.0, 0.0], [90, "rs", "", 0.0, 0.0], [20, "b", "west", true], [22, "b", "west", false], [80, "b", "north", true], [82, "b", "north", false]]
+ 	var its2: Array = _run(_pad(), evs2, 140)
+-	ok(_face_tick(its2, "X") < 0, "K: a press made at tick 20 of an 80-tick charge has expired by the throw (36 ticks)")
++	ok(_face_tick(its2, "X") < 0, "K: a press made at tick 20 of an 80-tick charge has expired by the throw")
+ 	ok(_face_tick(its2, "Y") >= _first(its2, "rsRelease") + L, "K: a press made late in the charge goes out after the throw + L")
++	# The queue's life (strike.queueTicks, 20): a press goes out if it is at most that old when the stick is quiet, and expires one tick later. A press made during a quick flick is never lost.
++	var qt: int = int(SimInputData.t(["strike", "queueTicks"], 36))
++	var base: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [60, "rs", "", 0.0, 0.0]], 140)
++	var go: int = _first(base, "rsRelease") + L
++	var edge_ok: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [60, "rs", "", 0.0, 0.0], [go - qt, "b", "west", true], [go - qt + 2, "b", "west", false]], 140)
++	var edge_late: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [60, "rs", "", 0.0, 0.0], [go - qt - 1, "b", "west", true], [go - qt + 1, "b", "west", false]], 140)
++	ok(_face_tick(edge_ok, "X") >= go, "K: a press exactly queueTicks (%d) old when the stick is quiet goes out (at %d)" % [qt, _face_tick(edge_ok, "X")])
++	ok(_face_tick(edge_late, "X") < 0, "K: one tick older has expired")
++	# a press at the start of a quick flick (stick out 11 ticks, under the dwell) is at most dwell + settle + L old: never lost
++	var quick: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [21, "rs", "", 0.0, 0.0], [11, "b", "west", true], [13, "b", "west", false]], 100)
++	ok(_face_tick(quick, "X") >= 0, "K: a press made at the start of a quick flick (stick out 11 ticks) is not lost (goes out at %d)" % _face_tick(quick, "X"))
+ 
+ 
+ # ---- L --------------------------------------------------------------------------------------------------------
+diff --git a/sim/input/test/strike_hub_test.gd b/sim/input/test/strike_hub_test.gd
+index a61607f..3139255 100644
+--- a/sim/input/test/strike_hub_test.gd
++++ b/sim/input/test/strike_hub_test.gd
+@@ -200,24 +200,17 @@ func _presets() -> void:
+ 	var ks: Dictionary = SimInputData.preset("kb-solo-swapped")
+ 	ok(not ks.is_empty() and str(ks["hand"]) == "swapped" and ks["device"] == "kb", "presets: kb-solo-swapped is shipped, for the keyboard")
+ 	ok(SimInputData.default_preset("pad") == "arena" and SimInputData.default_preset("kb") == "kb-solo", "presets: the defaults are still Arena and the solo keyboard")
+-	# Remap: the optional rows (the pad leaves the strike button and Escape unbound; the brace button is L3 by default, so a player who picks "button only" is not stranded), and binding one.
++	# Remap: the optional rows (the pad leaves the strike button, the brace button and Escape unbound: brace is off for the first press, docs/design/pad-first-press.md), and binding one.
+ 	var rows: Array = SimInputRemap.listing(a)
+ 	var opt: Dictionary = {}
+ 	for r in rows:
+ 		if (r["controls"] as Array).is_empty():
+ 			opt[str(r["action"])] = r
+-	ok(opt.has("strike_key") and opt.has("escape") and not opt.has("brace_key"), "remap: the pad lists the strike button and Escape as rows with no control, and the brace button as L3: %s" % str(opt.keys()))
+-	var brace_l3: bool = false
+-	for r in rows:
+-		if str(r["action"]) == "brace_key" and r["controls"] == ["pad:l3"]:
+-			brace_l3 = true
+-	ok(brace_l3, "remap: Arena's brace button is L3 by default (the assist 'button only' needs a control)")
++	ok(opt.has("strike_key") and opt.has("brace_key") and opt.has("escape"), "remap: the pad lists the strike button, the brace button and Escape as rows with no control: %s" % str(opt.keys()))
+ 	var res: Dictionary = SimInputRemap.rebind(a, "strike_key", null, 0, ["pad:back"])
+ 	ok(not bool(res["ok"]) and str(res["conflict"].get("action", "")) == "hints", "remap: a taken control (Back, the hints) is a conflict")
+ 	res = SimInputRemap.rebind(a, "strike_key", null, 0, ["pad:l3"])
+-	ok(not bool(res["ok"]) and str(res["conflict"].get("action", "")) == "brace_key", "remap: L3 is the brace button's, a conflict named")
+-	res = SimInputRemap.rebind(SimInputRemap.rebind(a, "brace_key", null, 0, ["pad:r3"])["preset"], "strike_key", null, 0, ["pad:l3"])
+-	ok(bool(res["ok"]), "remap: the strike button binds to L3 once the brace button moves to R3: %s" % str(res.get("error", "")))
++	ok(bool(res["ok"]), "remap: the strike button binds to L3: %s" % str(res.get("error", "")))
+ 	var res2: Dictionary = SimInputRemap.rebind(a, "escape", null, 0, ["pad:r3"])
+ 	ok(bool(res2["ok"]), "remap: Escape (the single-control vanish) binds to any control, R3 included, by the player's choice")
+ 	var res3: Dictionary = SimInputRemap.rebind(a, "brace_key", null, 0, ["pad:west"])
+diff --git a/sim/input/tools/orb_aim_probe.gd b/sim/input/tools/orb_aim_probe.gd
+new file mode 100644
+index 0000000..efd3a6a
+--- /dev/null
++++ b/sim/input/tools/orb_aim_probe.gd
+@@ -0,0 +1,93 @@
++extends SceneTree
++## Plays the raw right-stick samples of a black-box first-play file through the real strike reader, once with switches.beamAim off and once on, and prints counts only:
++## how far the aim on the release step is from the direction the thumb held (the rim mean), and how often the shown aim changes while the stick is held.
++## The file is Orb's and stays private (homework/Files/...): nothing of the samples is printed or written.
++##   godot --headless --path . --script res://sim/input/tools/orb_aim_probe.gd -- file=<path to the json>
++## (a path without spaces; the harness' own runner passes it as a user argument)
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	var path: String = ""
++	for a in OS.get_cmdline_user_args() + OS.get_cmdline_args():
++		if str(a).begins_with("file="):
++			path = str(a).substr(5)
++	if path == "" or not FileAccess.file_exists(path):
++		print("orb_aim_probe: no file (pass file=<path>)")
++		quit(1)
++		return
++	var d: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
++	var samples: Array = d["rawRightStick"]["samples"]
++	# one sample a tick (the last), like the sim's read; the ticks between two samples more than one apart are at rest
++	var steps: Array = []
++	var last_t: int = -1
++	for s in samples:
++		var t: int = int(s[0])
++		if last_t >= 0 and t - last_t > 1:
++			for k in range(last_t + 1, t):
++				steps.append([k, 0.0, 0.0])
++		if t == last_t:
++			steps[steps.size() - 1] = [t, float(s[2]), -float(s[3])]
++		else:
++			steps.append([t, float(s[2]), -float(s[3])])
++		last_t = t
++	for mode in [false, true]:
++		var sw: Dictionary = SimInputData.timing.get("switches", {})
++		sw["rightStick"] = true
++		sw["beamAim"] = mode
++		SimInputData.timing["switches"] = sw
++		SimInputData.clear_overrides()
++		SimInputData.invalidate()
++		_run(steps, mode)
++	quit(0)
++
++
++func _run(steps: Array, mode: bool) -> void:
++	var r: SimStrikeRead = SimStrikeRead.new()
++	var holds: int = 0
++	var rel_err: Array = []
++	var changes: int = 0
++	var zero_rel: int = 0
++	var cur: Array = []        # the vectors of the current hold at the rim (85% of its peak)
++	var peak_r: float = 0.0
++	var hold_vecs: Array = []
++	var last_aim: int = -1
++	var in_hold: bool = false
++	for st in steps:
++		var tick: int = int(st[0])
++		var x: float = st[1]
++		var y: float = st[2]
++		r.step(x, y, 0, tick, tick)
++		if r.down:
++			if not in_hold:
++				in_hold = true
++				hold_vecs = []
++				peak_r = 0.0
++				last_aim = -1
++			var rr: float = r.deflection(x, y)
++			peak_r = maxf(peak_r, rr)
++			hold_vecs.append([rr, Vector2(x, y), r.aim])
++			if last_aim >= 0 and r.aim != last_aim and r.phase == SimStrikeRead.ACTIVE:
++				changes += 1
++			last_aim = r.aim
++		if r.release:
++			holds += 1
++			var v: Vector2 = Vector2.ZERO
++			for h in hold_vecs:
++				if h[0] >= 0.85 * peak_r:
++					v += h[1]
++			if v != Vector2.ZERO:
++				var want: float = rad_to_deg(atan2(v.y, v.x))
++				var got: float = float(r.aim) * 11.25
++				var e: float = absf(fposmod(got - want + 180.0, 360.0) - 180.0)
++				rel_err.append(e)
++			if r.aim == 0:
++				zero_rel += 1
++		if not r.down:
++			in_hold = false
++		r.clear_edges()
++	rel_err.sort()
++	var n: int = rel_err.size()
++	var p50: float = rel_err[n / 2] if n > 0 else -1.0
++	var p90: float = rel_err[mini(n - 1, int(n * 0.9))] if n > 0 else -1.0
++	var worst: float = rel_err[n - 1] if n > 0 else -1.0
++	print("beamAim %s: %d releases, %d carry aim 0; |release aim - rim mean| deg p50 %.1f p90 %.1f max %.1f; aim changes while a charge is held: %d" % ["ON " if mode else "OFF", holds, zero_rel, p50, p90, worst, changes])
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index 8d2b6a3..a8436bf 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -964,6 +964,46 @@
+           "type": "boolean",
+           "description": "SimPressRead.a_read drops the shove and the clinch-by-mash; the grapple's catch_read and brace_read replace them (off)."
+         },
++        "hapticLadder": {
++          "type": "boolean",
++          "description": "The strike stick's charge ladder rumbles: one pulse as each rung is reached (docs/controls/rule-of-cool-pitches.md pitch 1; sim/input/haptics.gd ladder_1 to ladder_3). Needs rightStick. Off."
++        },
++        "hapticIncoming": {
++          "type": "boolean",
++          "description": "A rival's stick strike rumbles on the defender's pad as it starts: high for toward and up, low for away and down (pitch 3; incoming_high, incoming_low). Needs rightStick. Off."
++        },
++        "hapticRefused": {
++          "type": "boolean",
++          "description": "A stick press the director never started a strike for tells its pad: the stick_refused knocks, refuseTicks live ticks after the request or as soon as Encounter's stick_refused cue says so (the audit's gap 2). Needs rightStick. Off."
++        },
++        "webRumble": {
++          "type": "boolean",
++          "description": "On a web page the pad's rumble is asked of the browser directly (the pad's vibrationActuator, dual-rumble), because the Godot web runtime has no pad rumble of its own. Chromium browsers support it; Firefox and Safari do nothing. Render side only: never the sim. Off."
++        },
++        "driverOnRb": {
++          "type": "boolean",
++          "description": "With signatureRtOnly: RB + B is left as the B press for the Driver (data/director/interrupts.json blast.driver.enabled) instead of being sent as Y's blast. Set together with the Driver's switch. Off."
++        },
++        "signatureRtOnly": {
++          "type": "boolean",
++          "description": "The signature is RT + B only (docs/design/energy-overhaul.md E121): B with LB, RB or LT held is the heavy of that stance (B with RB is Y's blast until the Driver exists), so a guard or a dodge never fires a beam by accident. B alone stays the big blow. Off."
++        },
++        "specialsOff": {
++          "type": "boolean",
++          "description": "The power specials are off (docs/design/pad-first-press.md): with RT held, X, Y and A are the plain blows of their base buttons and the charge drops. Off."
++        },
++        "beamAim": {
++          "type": "boolean",
++          "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
++        },
++        "hapticIncomingBeam": {
++          "type": "boolean",
++          "description": "The beam-answer window rumbles on the receiver's pad: a crescendo of incoming_beam pulses from Encounter's beam_window cue to the front's arrival (docs/design/rule-of-cool-map.md row 40). Independent of rightStick. Off."
++        },
++        "quickRead": {
++          "type": "boolean",
++          "description": "The quick read (docs/controls/responsiveness.md; needs rightStick): the strike and the brace settle strike.settleQuick ticks after the crossing, the vanish resolves on the second press + leftHand.vanishSettle, and the layout publishes the stick's pre-read for the pose (render only). Off."
++        },
+         "rightStick": {
+           "type": "boolean",
+           "description": "The right-hand attacks (docs/controls/right-hand-attacks.md): the strike stick, the left hand's brace and vanish, hybrids 3 and 10 (stances.json withRightStick), R3 freed (off)."
+@@ -1007,6 +1047,47 @@
+           "minimum": 0,
+           "description": "Ticks from the crossing to the request's start; the direction is taken then (2)."
+         },
++        "bufferTicks": {
++          "type": "integer",
++          "minimum": 0,
++          "maximum": 60,
++          "description": "The stick's input buffer (docs/controls/responsiveness.md section 8): a request that finds the fighter unable to act (the host's set_can_act) waits this many ticks for him, the newest flick only, and is dropped and told if he cannot in time. 0 is off (the default); 9 is the smallest useful version."
++        },
++        "refuseTicks": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 120,
++          "description": "Live ticks a stick request may wait for the director to start its strike before the pad is told it was refused (30)."
++        },
++        "aimTrail": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 20,
++          "description": "While switches.beamAim is on, the degrees the shown aim trails the stick before it moves (4): the thumb's wobble inside the band does not walk the sector."
++        },
++        "aimLatchTicks": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 12,
++          "description": "While switches.beamAim is on, the throw's aim is the mean of this many of the last rim ticks (3)."
++        },
++        "aimLatchPeak": {
++          "type": "number",
++          "minimum": 0.5,
++          "maximum": 1,
++          "description": "While switches.beamAim is on, a tick counts as the rim when its deflection is at least this fraction of the hold's peak (0.85)."
++        },
++        "settleQuick": {
++          "type": "integer",
++          "minimum": 0,
++          "description": "The settle while switches.quickRead is on (1). 0 and 1 start on the same tick: the request starts at the build after the crossing at the soonest."
++        },
++        "preAt": {
++          "type": "number",
++          "minimum": 0,
++          "exclusiveMaximum": 1,
++          "description": "The quick read's pre-read of the strike stick begins at this rescaled deflection (0.25), while the stick leans in, before strike.on. For the pose only: never in the intent."
++        },
+         "dwell": {
+           "type": "integer",
+           "minimum": 1,

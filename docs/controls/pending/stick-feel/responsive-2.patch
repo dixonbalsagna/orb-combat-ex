@@ -1,0 +1,193 @@
+diff --git a/sim/input/left_hand.gd b/sim/input/left_hand.gd
+index f2cd039..fd4afe5 100644
+--- a/sim/input/left_hand.gd
++++ b/sim/input/left_hand.gd
+@@ -167,7 +167,10 @@ func _vanish(x: float, y: float, m: float, guard_down: bool, dodge_down: bool, g
+ 	if not (guard_down and dodge_down):
+ 		_gather = false   # one of them was let go before it resolved: a dodge and a guard, no vanish
+ 		return
+-	if tick >= (_g_second + v_settle if early else maxi(_g_first + window, _g_second + v_settle)):   # the quick read: no wait for the window to close
++	# The quick read: no wait for the window to close, and no settle when the stick is already out at the second press (its direction is known: only a flick that
++	# comes after the read is lost, which is the neutral default and safe).
++	var known: bool = early and _g_peak_m >= on_at
++	if tick >= (_g_second + (0 if known else v_settle) if early else maxi(_g_first + window, _g_second + v_settle)):
+ 		vanish = true
+ 		vanish_vec = _g_peak
+ 		_gather = false
+diff --git a/sim/input/strike_read.gd b/sim/input/strike_read.gd
+index 980ab8a..a4ad62a 100644
+--- a/sim/input/strike_read.gd
++++ b/sim/input/strike_read.gd
+@@ -164,6 +164,8 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
+ 				layer = mask
+ 				_peak = Vector2(x, y)
+ 				_peak_r = r
++				if settle <= 0:
++					_try_start(x, y, tick, live, floor_tick)   # the quick read at settle 0: the direction is taken on the crossing tick itself (docs/controls/responsiveness.md)
+ 		CROSSED:
+ 			if r > _peak_r:
+ 				_peak = Vector2(x, y)
+diff --git a/sim/input/test/stick_feel_test.gd b/sim/input/test/stick_feel_test.gd
+index f41fe4e..e8f17f4 100644
+--- a/sim/input/test/stick_feel_test.gd
++++ b/sim/input/test/stick_feel_test.gd
+@@ -30,6 +30,7 @@ func _init() -> void:
+ 	_beams()
+ 	_b_hold()
+ 	_beam_window()
++	_zero()
+ 	_sw(true, true, false, false)
+ 	_off()
+ 	_sw(false, false, false, false)
+@@ -338,3 +339,151 @@ func _b_hold() -> void:
+ 		itk.append(k.build())
+ 		k.consumed()
+ 	ok(_first(itk, "rsStart") < 0, "B held: the keyboard's L is B too: the arrows start nothing while L is held in energy")
++
++
++## Settle 0 (strike.settleQuick = 0, the option Orb can try): the strike's direction is taken on the crossing tick; nothing else about it moves.
++func _set_settle(v: int) -> void:
++	var st: Dictionary = SimInputData.timing.get("strike", {})
++	st["settleQuick"] = v
++	SimInputData.timing["strike"] = st
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _start_after_motion(l: SimLayout, ramp: int, press_x: int = -1) -> int:
++	var its: Array = []
++	for t in range(60):
++		var k: int = t - 10
++		var m: float = 0.0
++		if k >= 0 and k < ramp:
++			m = float(k + 1) / float(ramp)
++		elif k >= ramp and k < ramp + 4:
++			m = 1.0
++		elif k >= ramp + 4 and k < ramp + 7:
++			m = 1.0 - float(k - ramp - 3) / 3.0
++		if t == press_x:
++			l.press("pad:west")
++		if t == press_x + 2:
++			l.release("pad:west")
++		l.axis("pad:rs", m, 0.0)
++		its.append(l.build())
++		l.consumed()
++	return _first(its, "rsStart") - 10
++
++
++func _zero() -> void:
++	var one: Dictionary = {}
++	var zero: Dictionary = {}
++	_set_settle(1)
++	for r in [1, 2, 3, 4]:
++		one[r] = _start_after_motion(SimLayout.new(SimInputData.preset("arena")), r)
++	_set_settle(0)
++	for r in [1, 2, 3, 4]:
++		zero[r] = _start_after_motion(SimLayout.new(SimInputData.preset("arena")), r)
++		ok(zero[r] == one[r] - 1, "settle 0: a ramp-%d flick starts on the crossing tick, one sooner than settle 1 (%d, was %d)" % [r, zero[r], one[r]])
++	# the crossing tick: ramp 1 crosses at motion +0, ramp 2 at +1
++	ok(zero[1] == 0 and zero[2] == 1, "settle 0: the start is the crossing tick itself")
++	# the direction is right at the crossing
++	var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var dirs_ok: bool = true
++	for ang in [0.0, 90.0, 180.0, 270.0, 20.0, -20.0, 160.0, 200.0]:
++		var lv: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++		var got: int = 0
++		for t in range(30):
++			var m: float = 1.0 if (t >= 5 and t < 15) else 0.0
++			lv.axis("pad:rs", cos(deg_to_rad(ang)) * m, sin(deg_to_rad(ang)) * m)
++			var it: SimIntent = lv.build()
++			if it.rsStart and got == 0:
++				got = it.rsDir
++			lv.consumed()
++		var want: int = SimStrikeRead.quadrant(cos(deg_to_rad(ang)), sin(deg_to_rad(ang)))
++		dirs_ok = dirs_ok and got == want
++	ok(dirs_ok, "settle 0: a full push at eight angles reads the quadrant it is in")
++	# the law: a face press before the stick waits R; one on the crossing tick wins
++	var rev: int = SimInputData.ti(["strike", "reverseLockout"], 8)
++	var s_law: int = _start_after_motion(SimLayout.new(SimInputData.preset("arena")), 2, 9)
++	ok(s_law + 10 >= 9 + rev, "settle 0: a face press 2 ticks before the crossing still holds the strike R = %d (start at %d, press at 9)" % [rev, s_law + 10])
++	var l2: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var its2: Array = []
++	for t in range(60):
++		if t == 10:
++			l2.press("pad:west")   # on the crossing tick of a ramp-1 flick
++		l2.axis("pad:rs", 1.0 if (t >= 10 and t < 20) else 0.0, 0.0)
++		its2.append(l2.build())
++		l2.consumed()
++	var lt: int = -1
++	for t in range(its2.size()):
++		if (its2[t] as SimIntent).light and lt < 0:
++			lt = t
++	ok(lt == 10 and _first(its2, "rsStart") >= 10 + rev, "settle 0: the face press on the crossing tick wins (light at %d) and the strike starts R later (start %d)" % [lt, _first(its2, "rsStart")])
++	# the mirrors act on the same tick as the stick
++	var m1: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	m1.set_mirror_dpad(true)
++	var ds: int = -1
++	var k1: SimLayout = SimLayout.new(SimInputData.preset("kb-solo"))
++	var ks: int = -1
++	for t in range(30):
++		if t == 10:
++			m1.press("pad:dpad_right")
++			k1.press("kb:ArrowRight")
++		var a: SimIntent = m1.build()
++		var b: SimIntent = k1.build()
++		if a.rsStart and ds < 0:
++			ds = t
++		if b.rsStart and ks < 0:
++			ks = t
++		m1.consumed()
++		k1.consumed()
++	ok(ds == 10 and ks == 10, "settle 0: the D-pad and the keyboard arrows act on the press tick, like the stick (%d, %d)" % [ds, ks])
++	# the swapped layout makes the same stream
++	var sa: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var sb: SimLayout = SimLayout.new(SimInputData.preset("arena-swapped"))
++	var same: bool = true
++	for t in range(100):
++		var mm: float = 1.0 if (t % 25) in [10, 11, 12] else 0.0
++		sa.axis("pad:rs", mm, 0.0)
++		sb.axis("pad:ls", mm, 0.0)
++		if t % 40 == 20:
++			sa.press("pad:west")
++			sb.press("pad:dpad_left")
++		if t % 40 == 22:
++			sa.release("pad:west")
++			sb.release("pad:dpad_left")
++		var ia: SimIntent = sa.build()
++		var ib: SimIntent = sb.build()
++		sa.consumed()
++		sb.consumed()
++		if SimIntent.pack(ia) != SimIntent.pack(ib) or SimIntent.pack2(ia) != SimIntent.pack2(ib):
++			same = false
++	ok(same, "settle 0: arena and arena-swapped make one stream")
++	# the flick brace at settle 0 goes out on its crossing tick
++	var lb: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	lb.press("pad:lb")
++	var bt: int = -1
++	for t in range(40):
++		lb.axis("pad:ls", 0.0, 1.0 if (t >= 20 and t < 26) else 0.0)
++		if lb.build().brace and bt < 0:
++			bt = t
++		lb.consumed()
++	ok(bt == 20, "settle 0: the flick brace goes out on its crossing tick (%d)" % bt)
++	# the vanish: a direction already out at the second press resolves at once; with none it still waits the settle
++	var vt: int = _vanish_tick(true)
++	var vn: int = _vanish_tick(false)
++	ok(vt == 10 and vn == 12, "quick vanish: stick already out at the second press: that tick (%d); no stick: the settle, 2 later (%d)" % [vt, vn])
++	_set_settle(1)
++
++
++func _vanish_tick(stick_out: bool) -> int:
++	var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var got: int = -1
++	for t in range(40):
++		if stick_out and t >= 4:
++			l.axis("pad:ls", 1.0, 0.0)
++		if t == 9:
++			l.press("pad:lb")
++		if t == 10:
++			l.analog("pad:lt", 1.0)
++		if l.build().escape and got < 0:
++			got = t
++		l.consumed()
++	return got

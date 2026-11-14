@@ -1,0 +1,85 @@
+diff --git a/sim/input/haptics.gd b/sim/input/haptics.gd
+index b857357..5101548 100644
+--- a/sim/input/haptics.gd
++++ b/sim/input/haptics.gd
+@@ -232,7 +232,12 @@ const REFUSALS: Dictionary = {
+ 	"dodged": {"word": "Dodged", "owner": "encounter", "what": "the request was dodged out of (text dodged)"},
+ 	"cancelled": {"word": "Cancelled", "owner": "encounter", "what": "the guard or the dodge ended the charge (text cancel)"},
+ 	"not_yours": {"word": "Not yours", "owner": "encounter", "what": "the first move belongs to his rival (text refused)"},
+-	"busy": {"word": "Busy", "owner": "encounter", "what": "the fighter could not act: a state number as the text"},
++	"busy": {"word": "Busy", "owner": "encounter", "what": "the fighter could not act: a state number as the text (the old shape; the director now says which of the four below)"},
++	"launched": {"word": "In the air", "owner": "encounter", "what": "he could not act because he was launched (refusal-reasons: DirExchange.cantWhy)"},
++	"down": {"word": "Down", "owner": "encounter", "what": "he could not act because he was down (refusal-reasons)"},
++	"stunned": {"word": "Stunned", "owner": "encounter", "what": "he could not act because he was stunned (refusal-reasons)"},
++	"locked": {"word": "Locked", "owner": "encounter", "what": "he could not act because an exchange held him (refusal-reasons)"},
++	"queue_full": {"word": "Queue full", "owner": "encounter", "what": "three blows already waiting and the cooldown holds them: one knock a burst (refusal-reasons)"},
+ 	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
+ 	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},
+ 	"block_lockout": {"word": "Block cooling", "owner": "encounter", "what": "the perfect block's anti-mash lockout held the press"},
+@@ -472,6 +477,8 @@ static func requests(name: String, actor: int, target: int, text: String, amount
+ 			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
+ 			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
+ 				return []
++			if source == "hit" and SimInputData.haptic_impact_on():
++				return []   # a blow that stopped the charge is felt as the blow itself (hit_taken, switches.hapticImpact): a second knock on the same tick is the same news twice. The screen word "Hit" stays UI's
+ 			if source == "soon":
+ 				return []   # a held release waiting on its target's gate is not a refusal: the screen word is enough (the EP, 2026-11-07)
+ 			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(source if source != "" else text)}]   # the reason is the cue's source (text is the direction); an old caller with the reason in text still reads
+diff --git a/sim/input/test/refusal_cue_test.gd b/sim/input/test/refusal_cue_test.gd
+index 7ab97e4..bcdebed 100644
+--- a/sim/input/test/refusal_cue_test.gd
++++ b/sim/input/test/refusal_cue_test.gd
+@@ -22,10 +22,12 @@ func _init() -> void:
+ 	sw["rightStick"] = true
+ 	sw["hapticRefused"] = true
+ 	sw["hapticStages"] = false
++	sw["hapticImpact"] = false
+ 	SimInputData.timing["switches"] = sw
+ 	SimInputData.clear_overrides()
+ 	SimInputData.invalidate()
+ 	_source()
++	_reasons()
+ 	_table()
+ 	_hub()
+ 	print("refusal_cue_test: %d checks, %d failed" % [checks, fails])
+@@ -46,6 +48,18 @@ func _source() -> void:
+ 		ok(_reason("press_refused", "", code) == code, "source: a press_refused cue with source %s reads %s" % [code, code])
+ 	ok(_reason("stick_refused", "right", "soon") == "(none)", "source: a stick_refused cue with source soon (a release waiting on the gate) knocks nothing: the screen word is enough")
+ 	ok(SimHaptics.refusal_code("soon") == "soon", "source: soon is still a code, for the word")
++	# A blow that stopped the charge (source hit): knocked with the impact rumble off, silent with it on (hit_taken is the same news); a beam charge taken (source taken) knocks either way.
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["hapticImpact"] = true
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++	ok(_reason("stick_refused", "right", "hit") == "(none)", "source: a blow that stopped the charge knocks nothing with the impact rumble on (hit_taken is the same news)")
++	ok(_reason("stick_refused", "beam", "taken") == "hit", "source: a beam charge taken still knocks, with the impact rumble on")
++	sw["hapticImpact"] = false
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
+ 	ok(_reason("stick_refused", "right", "") == "other", "source: a stick_refused cue with a direction and no source reads other, not the direction")
+ 	# An older caller that puts the reason in the text still reads.
+ 	ok(_reason("stick_refused", "ki", "") == "no_energy" and _reason("press_refused", "stun_limit", "") == "stun_limit", "source: the reason in text with no source still reads (the old shape)")
+@@ -56,6 +70,21 @@ func _source() -> void:
+ 	ok(r.size() == 1 and r[0]["kind"] == "stick_refused" and int(r[0]["slot"]) == 1 and absf(float(r[0]["scale"]) - 1.0) < 0.001, "source: one stick_refused knock to slot 1")
+ 
+ 
++## The reasons the director's refusal-reasons park sends (docs/director/pending/refusal-reasons): what holds him is named, never a number, and every code is knocked once to the presser and says itself.
++func _reasons() -> void:
++	for code in ["launched", "down", "stunned", "locked"]:
++		ok(_reason("stick_refused", "right", code) == code, "reasons: a stick_refused cue with source %s reads %s, not busy or other" % [code, code])
++		ok(_reason("press_refused", "", code) == code, "reasons: a press_refused cue with source %s reads %s" % [code, code])
++	ok(_reason("press_refused", "", "queue_full") == "queue_full", "reasons: a full queue reads queue_full")
++	ok(_reason("stick_refused", "right", "not_yours") == "not_yours", "reasons: not_yours (the rival's first move) reads itself")
++	for code in ["launched", "down", "stunned", "locked", "queue_full"]:
++		ok(SimHaptics.REFUSALS.has(code) and SimHaptics.refusal_word(code) != SimHaptics.refusal_word("other"), "reasons: %s has a word of its own" % code)
++	# Only a refusal knocks: a landed blow, a hit-stop, a stage, a launch or a landing never maps to the refusal knock.
++	for kind in ["damage", "launch", "land", "rush", "stick_hit", "stick_start", "stick_stage", "press_ack"]:
++		for r in SimHaptics.requests(kind, 0, 1, "", 0.0, -1, ""):
++			ok(String(r.get("kind", "")) != "stick_refused", "reasons: the cue %s never knocks as a refusal" % kind)
++
++
+ func _table() -> void:
+ 	for code in ["too_close", "cooling", "soon"]:
+ 		ok(SimHaptics.REFUSALS.has(code) and String(SimHaptics.REFUSALS[code]["word"]) != "", "table: %s has its word" % code)

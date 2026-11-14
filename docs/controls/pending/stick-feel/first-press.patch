@@ -1,0 +1,289 @@
+diff --git a/sim/input/haptics.gd b/sim/input/haptics.gd
+index c60dae8..792d789 100644
+--- a/sim/input/haptics.gd
++++ b/sim/input/haptics.gd
+@@ -52,6 +52,12 @@ const DEFAULTS: Dictionary = {
+ 		"handheld": [{"at": 0, "ms": 26}],
+ 		"gapMs": 100,
+ 	},
++	# A stick press the game did not answer (the audit's gap 2): two short dull knocks on the low motor, the sound of a press that went nowhere. The presser only.
++	"stick_refused": {
++		"pad": [{"at": 0, "weak": 0.05, "strong": 0.35, "ms": 30}, {"at": 70, "weak": 0.0, "strong": 0.3, "ms": 30}],
++		"handheld": [{"at": 0, "ms": 20}, {"at": 70, "ms": 12}],
++		"gapMs": 200,
++	},
+ 	"incoming_low": {
+ 		"pad": [{"at": 0, "weak": 0.1, "strong": 0.55, "ms": 30}],
+ 		"handheld": [{"at": 0, "ms": 18}],
+@@ -272,6 +278,11 @@ static func push_share(point: float, pusher_is_firer: bool) -> float:
+ ## host keeps; -1 if unknown (the surge's actor is then taken as the firer). A beam_stray and every other cue rumble nothing.
+ static func requests(name: String, actor: int, target: int, text: String, amount: float, firer: int = -1) -> Array:
+ 	match name:
++		"stick_refused":
++			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
++			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
++				return []
++			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0}]
+ 		"stick_start":
+ 			# Encounter's cue when a stick strike's request begins: actor = the striker, text = its direction as the defender faces it. The defender feels it (switches.hapticIncoming).
+ 			if not SimInputData.haptic_incoming_on() or actor < 0 or actor > 1:
+diff --git a/sim/input/hub.gd b/sim/input/hub.gd
+index b1ecafa..13d1f5e 100644
+--- a/sim/input/hub.gd
++++ b/sim/input/hub.gd
+@@ -57,7 +57,8 @@ var brace_style_pref: Array = ["", ""]            # the brace's assist: "" the d
+ var strike_style_pref: Array = ["", ""]
+ var mirror_pref: Array = ["auto", "auto"]
+ var _ladder_prev: Array = [0, 0]             # the strike charge's rung each slot's pad last felt (take_haptics)
+-var _haptic_pending: Array = []             # the rumble the hub asked for since the host last took it
++var _haptic_pending: Array = []
++var _stick_wait: Array = [-1, -1]           # per slot: live ticks since a stick request began with no strike started, -1 when none is waiting             # the rumble the hub asked for since the host last took it
+ var struggle_pref: Array = [false, false]   # the host's word each tick that the slot's fighter is in a struggle (set_struggle)
+ var _pad_no_right_stick: Dictionary = {}   # device id -> true: the host says this pad has no right stick
+ 
+@@ -403,11 +404,19 @@ func intent(slot: int) -> SimIntent:
+ 			i = kl.build()
+ 	var out: SimIntent = SimIntent.canon(i)
+ 	_note_ladder(slot, out)
++	_note_refusal(slot, out)
+ 	return out
+ 
+ 
+ ## SimCore.step took the intents: every device's edges are spent.
+ func consumed() -> void:
++	var refuse: int = SimInputData.ti(["strike", "refuseTicks"], 30)
++	for s in range(2):
++		if int(_stick_wait[s]) >= 0:
++			_stick_wait[s] += 1
++			if int(_stick_wait[s]) > refuse:
++				_stick_wait[s] = -1
++				_haptic_pending.append({"slot": s, "kind": "stick_refused", "scale": 1.0})
+ 	for l in layouts.values():
+ 		l.consumed()
+ 	for l in pads.values():
+@@ -806,6 +815,12 @@ func strike_pre(slot: int) -> Dictionary:
+ 
+ ## The rumble the hub itself asks for (switches.hapticLadder): the host calls this once a tick after the intents and plays each {slot, kind, scale} as it plays
+ ## a cue's. Empty with the switch off. A pulse is never the only cue.
++## The host's word that the director started a slot's stick strike (Encounter's `stick_start` cue): the request was answered, so no refusal. Call it from the cue loop.
++func note_stick_started(slot: int) -> void:
++	if slot >= 0 and slot <= 1:
++		_stick_wait[slot] = -1
++
++
+ func take_haptics() -> Array:
+ 	var out: Array = _haptic_pending
+ 	_haptic_pending = []
+@@ -813,6 +828,16 @@ func take_haptics() -> Array:
+ 
+ 
+ ## The ladder's rumble (pitch 1): one pulse as each rung of a held strike's charge is reached, once. Called with each slot's intent as it is built.
++func _note_refusal(slot: int, i: SimIntent) -> void:
++	if not SimInputData.haptic_refused_on():
++		_stick_wait[slot] = -1
++		return
++	if i.rsCancel:
++		_stick_wait[slot] = -1
++	elif i.rsStart:
++		_stick_wait[slot] = 0
++
++
+ func _note_ladder(slot: int, i: SimIntent) -> void:
+ 	if not SimInputData.haptic_ladder_on():
+ 		_ladder_prev[slot] = 0
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index 160c534..4532414 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -174,6 +174,16 @@ static func haptic_ladder_on() -> bool:
+ 	return right_stick_on() and bool(t(["switches", "hapticLadder"], false))
+ 
+ 
++## The power specials are off (docs/design/pad-first-press.md: RT + X, Y, A are not built; a press is the plain blow and the charge drops). switches.specialsOff, off.
++static func specials_off() -> bool:
++	return bool(t(["switches", "specialsOff"], false))
++
++
++## A stick press that never started a strike is told to its pad (the audit's gap 2; switches.hapticRefused, off). Needs the right-hand switch.
++static func haptic_refused_on() -> bool:
++	return right_stick_on() and bool(t(["switches", "hapticRefused"], false))
++
++
+ ## The beam-answer window's rumble on the receiver's pad (docs/design/rule-of-cool-map.md row 40; switches.hapticIncomingBeam, off). Independent of the right-hand
+ ## switch: a signature beam warns too.
+ static func haptic_beam_on() -> bool:
+diff --git a/sim/input/layout.gd b/sim/input/layout.gd
+index 2667cf8..f2866d8 100644
+--- a/sim/input/layout.gd
++++ b/sim/input/layout.gd
+@@ -486,10 +486,17 @@ func _real_press(c: String) -> bool:
+ 		var power_layer: bool = _is_down("power") or _armed.has(SimStance.CHARGING)   # the layer IS the charging stance, held or armed
+ 		var took_layer: bool = false
+ 		if power_layer:
++			var dropped: bool = false
+ 			for b in _single[c]:
+ 				if b["layer"] == "power":
++					var act: String = str(b["action"])
++					if SimInputData.specials_off() and (act == "special1" or act == "special2" or act == "special3" or act == "special_auto"):
++						dropped = true   # the specials are off: this press is the plain blow of its base binding, and it drops the charge (docs/design/pad-first-press.md)
++						continue
+ 					took_layer = true
+-					_layer_press(str(b["action"]), c)
++					_layer_press(act, c)
++			if dropped and not took_layer:
++				_held.erase("power")
+ 		if took_layer:
+ 			_as[c] = "layer"
+ 		else:
+diff --git a/sim/input/test/haptics_test.gd b/sim/input/test/haptics_test.gd
+index 4f0069a..a1d5650 100644
+--- a/sim/input/test/haptics_test.gd
++++ b/sim/input/test/haptics_test.gd
+@@ -45,11 +45,11 @@ func _with(block, f: Callable) -> void:
+ 
+ func _data() -> void:
+ 	var ks: Array = SimHaptics.kinds()
+-	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam"]
++	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused"]
+ 	var has_all: bool = ks.size() == want.size()
+ 	for w in want:
+ 		has_all = has_all and ks.has(w)
+-	ok(has_all, "data: the fourteen kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam)")
++	ok(has_all, "data: the fifteen kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam)")
+ 	ok(not ks.has("struggle_pulse") and not ks.has("struggle_surge"), "data: the beat-aligned struggle kinds are retired (Orb: not on the beat)")
+ 	ok(SimHaptics.min_gap_ms() == 80, "data: requests for one slot are at least 80 ms apart")
+ 	# The data file and the code defaults agree.
+diff --git a/sim/input/test/stick_feel_test.gd b/sim/input/test/stick_feel_test.gd
+index e8f17f4..666d0a8 100644
+--- a/sim/input/test/stick_feel_test.gd
++++ b/sim/input/test/stick_feel_test.gd
+@@ -31,6 +31,8 @@ func _init() -> void:
+ 	_b_hold()
+ 	_beam_window()
+ 	_zero()
++	_refused()
++	_specials_off()
+ 	_sw(true, true, false, false)
+ 	_off()
+ 	_sw(false, false, false, false)
+@@ -487,3 +489,120 @@ func _vanish_tick(stick_out: bool) -> int:
+ 			got = t
+ 		l.consumed()
+ 	return got
++
++
++## The audit's gap 2: a stick press the game did not answer tells its pad (switches.hapticRefused), unless the director said it started.
++func _refusal_hub(on: bool) -> SimInputHub:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["hapticRefused"] = on
++	SimInputData.timing["switches"] = sw
++	return _hub_pad()
++
++
++func _refused() -> void:
++	var refuse: int = SimInputData.ti(["strike", "refuseTicks"], 30)
++	# no answer: a flick, then the live ticks pass with no stick_start
++	var hub: SimInputHub = _refusal_hub(true)
++	var got: Array = []
++	for t in range(80):
++		hub.pad_stick_right(7, 1.0 if (t >= 10 and t < 14) else 0.0, 0.0)
++		hub.intent(0)
++		for r in hub.take_haptics():
++			got.append([t, String(r["kind"]), int(r["slot"])])
++		hub.consumed()
++		for r in hub.take_haptics():
++			got.append([t, String(r["kind"]), int(r["slot"])])
++	ok(got.size() == 1 and got[0][1] == "stick_refused" and got[0][2] == 0, "refused: a stick request with no strike started is told to its pad once (%s)" % str(got))
++	if got.size() == 1:
++		ok(int(got[0][0]) >= 10 + refuse and int(got[0][0]) <= 10 + refuse + 6, "refused: it comes refuseTicks = %d live ticks after the request (request about tick 12, told at %d)" % [refuse, got[0][0]])
++	# answered: the host tells the hub the director started it
++	var hub2: SimInputHub = _refusal_hub(true)
++	var n2: int = 0
++	for t in range(80):
++		hub2.pad_stick_right(7, 1.0 if (t >= 10 and t < 14) else 0.0, 0.0)
++		var i2: SimIntent = hub2.intent(0)
++		if i2.rsStart:
++			hub2.note_stick_started(0)   # Encounter's stick_start cue, on the same tick
++		n2 += hub2.take_haptics().size()
++		hub2.consumed()
++		n2 += hub2.take_haptics().size()
++	ok(n2 == 0, "refused: a strike the director started is never told as refused")
++	# a cancelled request (the guard or dodge) is not a refusal
++	var hub3: SimInputHub = _refusal_hub(true)
++	var n3: int = 0
++	for t in range(100):
++		hub3.pad_stick_right(7, 1.0 if t >= 10 else 0.0, 0.0)
++		if t == 14:
++			hub3.pad_button(7, "lb", true)
++		hub3.intent(0)
++		n3 += hub3.take_haptics().size()
++		hub3.consumed()
++		n3 += hub3.take_haptics().size()
++	ok(n3 <= 1, "refused: a request cancelled by the guard tells nothing more than once (%d)" % n3)
++	# off
++	var hub4: SimInputHub = _refusal_hub(false)
++	var n4: int = 0
++	for t in range(80):
++		hub4.pad_stick_right(7, 1.0 if (t >= 10 and t < 14) else 0.0, 0.0)
++		hub4.intent(0)
++		hub4.consumed()
++		n4 += hub4.take_haptics().size()
++	ok(n4 == 0, "refused: nothing with its switch off")
++	# Encounter's own cue, as soon as it knows
++	_refusal_hub(true)
++	var rq: Array = SimHaptics.requests("stick_refused", 1, -1, "", 0.0)
++	ok(rq.size() == 1 and int(rq[0]["slot"]) == 1 and rq[0]["kind"] == "stick_refused", "refused: Encounter's stick_refused cue goes to the presser only")
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["hapticRefused"] = false
++	SimInputData.timing["switches"] = sw
++	ok(SimHaptics.requests("stick_refused", 1, -1, "", 0.0).is_empty(), "refused: the cue does nothing with the switch off")
++	for dev in [{"kind": "pad", "id": 3}, {"kind": "touch", "id": -1}]:
++		ok(not SimHaptics.plan("stick_refused", dev, true, -10000, 1000).is_empty(), "refused: the kind plays on a %s" % dev["kind"])
++
++
++## The power specials are off (docs/design/pad-first-press.md): RT held, then X, Y or A is the plain blow, and the charge drops.
++func _specials_off() -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	for off in [false, true]:
++		sw["specialsOff"] = off
++		SimInputData.timing["switches"] = sw
++		SimInputData.clear_overrides()
++		SimInputData.invalidate()
++		for f in [["west", "light", 1], ["north", "heavy", 2], ["south", "context", 3]]:
++			var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++			l.analog("pad:rt", 1.0)
++			var plain: bool = false
++			var special: int = 0
++			var power_after: bool = true
++			for t in range(40):
++				if t == 20:
++					l.press("pad:" + f[0])
++				if t == 23:
++					l.release("pad:" + f[0])
++				var i: SimIntent = l.build()
++				if t >= 20 and bool(i.get(f[1])):
++					plain = true
++				if i.special != 0:
++					special = i.special
++				if t == 30:
++					power_after = i.power
++				l.consumed()
++			if off:
++				ok(plain and special == 0 and not power_after, "specials off: RT then %s is the plain %s, no special, and the charge drops (plain %s, special %d, power after %s)" % [f[0], f[1], str(plain), special, str(power_after)])
++			else:
++				ok(special == f[2] and not plain, "specials on (as shipped): RT then %s is special %d" % [f[0], f[2]])
++		# B in the power layer stays the signature
++		var lb: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++		lb.analog("pad:rt", 1.0)
++		var sig: bool = false
++		for t in range(30):
++			if t == 20:
++				lb.press("pad:east")
++			if lb.build().sig:
++				sig = true
++			lb.consumed()
++		ok(sig, "specials %s: RT then B is still the signature" % ("off" if off else "on"))
++	sw["specialsOff"] = false
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()

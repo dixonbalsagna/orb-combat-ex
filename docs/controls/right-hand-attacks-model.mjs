@@ -129,5 +129,49 @@ console.log("\n6. MIXED CHAIN: strike, B, strike, X (4c)");
   check(on[0] <= on[1], "mixed chain: law ON claw no better than FAST");
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+console.log("\n7. B HELD IN ENERGY (docs/design/energy-overhaul.md E129 to E131): a Driver banking on B while the stick draws a beam");
+{
+  const BEAM = 14;                                          // a beam's commitment on the stick (the quick strike's, as an arithmetic stand-in)
+  for (const held of [30, 54, 84]) {                        // the Driver's levels (E125)
+    const naive = Math.floor(held / BEAM);                  // beams a claw draws while B is held, with the stick live
+    const law = 0;                                          // E131: while B is held in energy the stick is inert (the reader ignores a push until it rests)
+    console.log("   B held " + held + " ticks: naive claw +" + naive + " beams, law ON +" + law);
+    check(law === 0, "B held " + held + ": the stick is inert, so no grip banks a Driver and draws a beam together");
+  }
+  // B released, then the stick: the law's R runs from the release, so the claw starts the stick when the FAST thumb does.
+  const release = 0;
+  const clawOff = release + SETTLE;                         // naive: the thumb is already on the stick
+  const clawOn = release + Math.max(R, SETTLE);             // the release counts as a face event: the request waits R
+  const fast = release + Math.max(GRIPS.FAST.fs + SETTLE, R);
+  console.log("   B released at 0, then the stick: naive claw starts at " + clawOff + ", law ON claw at " + clawOn + ", FAST at " + fast);
+  check(clawOn === fast, "B released then the stick: law ON claw starts when FAST does");
+  check(clawOff < fast, "B released then the stick: naive claw is earlier than FAST (the hole the release lockout closes)");
+  // The stick first, then B: the faces are inert while a strike or beam is out (K3), so B waits for the stick's end + L.
+  const stickEnd = 0;
+  const bClaw = stickEnd + L;
+  const bFast = stickEnd + Math.max(GRIPS.FAST.sf, L);
+  console.log("   Stick released at 0, then B: law ON claw acts at " + bClaw + ", FAST at " + bFast);
+  check(bClaw === bFast, "stick then B: law ON claw acts when FAST does");
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+console.log("\n8. 2v2 FOCUS PRESS (docs/design/two-v-two.md; docs/controls/two-v-two-input.md): a D-pad press takes the left thumb off the move stick");
+{
+  const TRAVEL = GRIPS.FAST.fs;      // ticks the standard thumb spends off the move stick to reach the D-pad and come back (the model's own transfer)
+  const EASE = 12;                   // focus eases over about 12 ticks and gives no blow (Game Design)
+  console.log("   least gap | presses in 600 ticks | steering ticks a claw keeps over the FAST thumb (" + TRAVEL + " a press)");
+  for (const gap of [12, 30, 60]) {
+    const presses = Math.floor(HORIZON / gap);
+    const gain = presses * TRAVEL;   // a claw keeps steering through every press; a standard thumb loses TRAVEL ticks of it
+    console.log("   " + String(gap).padEnd(9) + " | " + String(presses).padEnd(20) + " | " + gain + " (" + (100 * gain / HORIZON).toFixed(0) + "% of the horizon)");
+  }
+  // The law: a focus press holds the move stick for TRAVEL ticks for everyone (an action, not a device), so a claw loses the same ticks as the FAST thumb.
+  const lawGain = 0;
+  console.log("   with the law (the move stick held " + TRAVEL + " ticks after a focus press, for every grip): claw gain " + lawGain + " steering ticks");
+  check(lawGain === 0, "focus: with the move stick held after the press the claw gains no steering");
+  check(EASE >= TRAVEL, "focus: the ease (" + EASE + ") outlasts the thumb's travel (" + TRAVEL + "), so a claw cannot use the gap to land anything");
+}
+
 console.log("\n" + (fails === 0 ? "model: every claw check holds with the law ON" : "model: " + fails + " check(s) FAILED"));
 process.exit(fails === 0 ? 0 : 1);

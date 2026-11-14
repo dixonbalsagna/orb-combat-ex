@@ -1,0 +1,24 @@
+diff --git a/render/core/main.gd b/render/core/main.gd
+index cca27c9..2faa0e1 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -953,10 +953,19 @@ func _haptics_from_events(events: Array) -> void:
+ func _play_haptic_step(plan: Dictionary, s: Dictionary) -> void:
+ 	if str(plan["via"]) == "handheld":
+ 		Input.vibrate_handheld(int(s["ms"]))
++	elif OS.has_feature("web") and bool(SimInputData.t(["switches", "webRumble"], false)):   # Controls: the page asks the pad itself (timing.json switches.webRumble, off)
++		_web_rumble(int(plan["id"]), float(s["weak"]), float(s["strong"]), float(s["seconds"]))
+ 	else:
+ 		Input.start_joy_vibration(int(plan["id"]), float(s["weak"]), float(s["strong"]), float(s["seconds"]))
+ 
+ 
++## The browser build has no pad rumble in Godot's own runtime (the 4.7.2 web template exports only navigator.vibrate, for phones), so Input.start_joy_vibration does nothing on a page.
++## The pad's own vibrationActuator is asked through the page instead: Chromium browsers (Chrome, Edge, Opera GX) offer "dual-rumble" on Xbox-type and DualSense pads; Firefox and Safari do
++## not, and nothing happens there. The pad's index in navigator.getGamepads() is Godot's joypad id. Never the only cue; the Vibration option still switches it off.
++func _web_rumble(id: int, weak: float, strong: float, seconds: float) -> void:
++	JavaScriptBridge.eval("(function(i,w,s,d){try{var g=navigator.getGamepads&&navigator.getGamepads()[i];var a=g&&g.vibrationActuator;if(a&&a.playEffect){a.playEffect('dual-rumble',{startDelay:0,duration:Math.round(d*1000),weakMagnitude:w,strongMagnitude:s});}}catch(e){}})(%d,%f,%f,%f)" % [id, weak, strong, seconds], true)
++
++
+ ## The pause menu handed player two back to the AI: the hub frees their device (it can join again), and the slot
+ ## changes hands now, with the sim still frozen, so the menu shows it.
+ func _on_player_two_leave() -> void:

@@ -1,0 +1,478 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 5c7d085..654e8b9 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -49,6 +49,7 @@
+     "signatureRtOnly": true,
+     "driverOnRb": false,
+     "flightStrikeB": false,
++    "chordPick": false,
+     "stallKeep": true,
+     "hapticImpact": true,
+     "hapticStages": false,
+diff --git a/sim/input/haptics.gd b/sim/input/haptics.gd
+index 5101548..f631fd7 100644
+--- a/sim/input/haptics.gd
++++ b/sim/input/haptics.gd
+@@ -46,6 +46,13 @@ const DEFAULTS: Dictionary = {
+ 		"handheld": [{"at": 0, "ms": 30}, {"at": 55, "ms": 14}],
+ 		"gapMs": 160,
+ 	},
++	# The stick's full send (docs/controls/full-send-haptic.md; Encounter's stick_full_send cue): the top-stage payoff, a held stick strike sent at a full B's share. The heaviest thing the pad does:
++	# a slam on the low motor with a bite of the high one, a roll-off, then a settle, all inside the 160 ms every kind keeps. The sender only (the one sent has launch_felt). Scaled by the family (the slam 1.0).
++	"full_send": {
++		"pad": [{"at": 0, "weak": 0.3, "strong": 1.0, "ms": 60}, {"at": 65, "weak": 0.0, "strong": 0.55, "ms": 45}, {"at": 115, "weak": 0.0, "strong": 0.25, "ms": 40}],
++		"handheld": [{"at": 0, "ms": 60}, {"at": 65, "ms": 28}],
++		"gapMs": 400,
++	},
+ 	# Orb's 2026-10-05 picks, the five that were missing (docs/controls/impact-haptics.md; switches.hapticImpact). Soft and low, none brighter than a thud; every one has its own gap so a brawl
+ 	# never buzzes. A landed blow, felt by the one who landed it, scaled by the blow's strength.
+ 	"blow_land": {
+@@ -237,6 +244,9 @@ const REFUSALS: Dictionary = {
+ 	"down": {"word": "Down", "owner": "encounter", "what": "he could not act because he was down (refusal-reasons)"},
+ 	"stunned": {"word": "Stunned", "owner": "encounter", "what": "he could not act because he was stunned (refusal-reasons)"},
+ 	"locked": {"word": "Locked", "owner": "encounter", "what": "he could not act because an exchange held him (refusal-reasons)"},
++	"recovering": {"word": "Recovering", "owner": "encounter", "what": "a flick made early in his flight was too old to be his first blow out (flickKeep.recoverTicks; refusal-reasons)"},
++	"set_piece": {"word": "In a move", "owner": "encounter", "what": "a finisher, the KO, a set piece in a brawl or a beam struggle: the flick would be stale (refusal-reasons)"},
++	"chord": {"word": "One at a time", "owner": "controls", "what": "two attack buttons on one tick: the bigger went, the smaller was let go of (switches.chordPick)"},
+ 	"queue_full": {"word": "Queue full", "owner": "encounter", "what": "three blows already waiting and the cooldown holds them: one knock a burst (refusal-reasons)"},
+ 	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
+ 	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},
+@@ -284,6 +294,8 @@ const BUILDING_H_REF: float = 300.0
+ static func event_requests(e) -> Array:
+ 	if String(e.type) == "cue" and String(e.kind) == "stick_stage":
+ 		return stage_event_requests(e)
++	if String(e.type) == "cue" and String(e.kind) == "stick_full_send":
++		return full_send_requests(e)
+ 	if not SimInputData.haptic_impact_on():
+ 		return []
+ 	match String(e.type):
+@@ -318,6 +330,20 @@ static func event_requests(e) -> Array:
+ 	return []
+ 
+ 
++## The stick's full send on the sender's pad (docs/controls/full-send-haptic.md; switches.hapticLadder, with the right stick): Encounter's cue `stick_full_send` (actor the sender, source the family) is one `full_send`,
++## the slam at full strength, the grounded bury a little under, a send up or across lighter. Presentation only, read from the cue and nothing else.
++const FULL_SEND_SCALE: Dictionary = {"slamDown": 1.0, "bury": 0.9, "skyward": 0.8, "across": 0.8, "acrossBehind": 0.8}
++
++
++static func full_send_requests(e) -> Array:
++	if not SimInputData.haptic_ladder_on():
++		return []
++	var slot: int = int(e.actor)
++	if slot < 0 or slot > 1:
++		return []
++	return [{"slot": slot, "kind": "full_send", "scale": float(FULL_SEND_SCALE.get(String(e.source), 0.8))}]
++
++
+ ## The charge's stages on the pad (docs/controls/stage-pulses.md; switches.hapticStages, off): Encounter's cue `stick_stage` (actor the charger, `k` the stage, `n` the count, source "capped" when
+ ## what he can pay stopped the climb) is one pulse by `stage_requests`: the first stage the tick, the last the thud, those between the knock climbing, so a base fighter's two stages are the tick
+ ## and the thud and a six-stage charge climbs. A step down (k under the last) says nothing; "capped" is the knock of a press that went nowhere (stick_refused, 0.6). A first stage is always a
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index 12ea8a2..394f4f6 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -197,6 +197,12 @@ static func flight_strike_b() -> bool:
+ 	return bool(t(["switches", "flightStrikeB"], false))
+ 
+ 
++## Two attack presses on one tick are one blow, the biggest (docs/controls/chord-pick.md; switches.chordPick, off): B with X or Y, or Y with X, goes as the bigger press and the smaller is told "chord".
++## Independent of the right-hand switch (a keyboard chords too).
++static func chord_pick_on() -> bool:
++	return bool(t(["switches", "chordPick"], false))
++
++
+ ## The power specials are off (docs/design/pad-first-press.md: RT + X, Y, A are not built; a press is the plain blow and the charge drops). switches.specialsOff, off.
+ static func specials_off() -> bool:
+ 	return bool(t(["switches", "specialsOff"], false))
+@@ -252,7 +258,7 @@ static func haptic_impact_on() -> bool:
+ ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
+ static func pin_switches_off() -> void:
+ 	var sw: Dictionary = timing.get("switches", {})
+-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
++	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+ 		sw[k] = false
+ 	timing["switches"] = sw
+ 	clear_overrides()
+diff --git a/sim/input/layout.gd b/sim/input/layout.gd
+index 1f5ddf4..260863b 100644
+--- a/sim/input/layout.gd
++++ b/sim/input/layout.gd
+@@ -119,6 +119,8 @@ var _brace_peak: Vector2 = Vector2.ZERO
+ var _brace_pending: bool = false    # a brace read (from the flick or the button) waits for a step to take it
+ var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
+ var dodge_held: bool = false        # switches.dodgeHeld: the intent's dodgeHeld says the dodge control is physically down
++var chord_pick: bool = false        # switches.chordPick: two attack edges on one tick are one blow, the biggest, and the smaller is told (docs/controls/chord-pick.md)
++var _chord_dropped: Array = []      # [{k, why, t}]: the attack presses a chord let go of, joined to the strike law's list by take_dropped
+ var stall_keep: bool = false        # switches.stallKeep: keep the strike stick's furthest point between two builds (see _note_peak)
+ var _peak_rs: Vector2 = Vector2.ZERO    # the strike vector at its furthest, as the events reported it, since the last build
+ var _peak_pressed: bool = false         # a strike key was down at some moment since the last build
+@@ -188,6 +190,7 @@ func _init(p_preset: Dictionary = {}) -> void:
+ 	quant = float(SimInputData.ti(["stick", "quant"], 16))
+ 	stall_keep = SimInputData.stall_keep_on()
+ 	dodge_held = SimInputData.dodge_held_on()
++	chord_pick = SimInputData.chord_pick_on()
+ 	trig_on = SimInputData.tf(["stick", "triggerOn"], 0.35)
+ 	trig_off = SimInputData.tf(["stick", "triggerOff"], 0.25)
+ 	if not p_preset.is_empty():
+@@ -1000,6 +1003,8 @@ func build() -> SimIntent:
+ 		i.mode = 1 if ((mode_on or _armed.has(SimStance.ENERGY)) and (mask & SimStance.ENERGY) != 0) else 0   # an armed one-shot energy stance makes the next blow energy
+ 	if rs_on:
+ 		_right_hand(i, mask)
++	if chord_pick:
++		_pick_chord(i)
+ 	if not _armed.is_empty() and (i.light or i.heavy or i.sig or i.context or i.special != 0):
+ 		_armed.clear()
+ 	_last_mask = mask
+@@ -1156,13 +1161,35 @@ func _strike_vector() -> Array:
+ 
+ ## The face presses the strike law let go of since the last call, [{k, why, t}], and the list starts again (docs/controls/refusals.md). [] when the right-hand switch is off.
+ func take_dropped() -> Array:
+-	if _law == null:
+-		return []
+-	var d: Array = _law.dropped
+-	_law.dropped = []
++	var d: Array = []
++	if _law != null:
++		d = _law.dropped
++		_law.dropped = []
++	if not _chord_dropped.is_empty():
++		d = d + _chord_dropped
++		_chord_dropped = []
+ 	return d
+ 
+ 
++## Two attack edges on one tick (B with X or Y; X with Y) used to reach the director together, and SimControl takes one attack a tick: the light, then the heavy, then the signature, so a B pressed with an X was
++## dropped with no word (14 of Orb's presses). With switches.chordPick the biggest press goes (signature over heavy over light) and each smaller one is let go of and told: the code "chord" in take_dropped, so the hub
++## knocks the pad once and UI can say "One at a time". The held fields are not touched. Resolved here, before the intent is recorded, so a replay carries the pick.
++func _pick_chord(i: SimIntent) -> void:
++	var n: int = (1 if i.light else 0) + (1 if i.heavy else 0) + (1 if i.sig else 0)
++	if n < 2:
++		return
++	if i.sig:
++		if i.heavy:
++			i.heavy = false
++			_chord_dropped.append({"k": "heavy", "why": "chord", "t": tick})
++		if i.light:
++			i.light = false
++			_chord_dropped.append({"k": "light", "why": "chord", "t": tick})
++	elif i.heavy and i.light:
++		i.light = false
++		_chord_dropped.append({"k": "light", "why": "chord", "t": tick})
++
++
+ ## The right hand and the left hand's upgrades for one build (switches.rightStick). The order matters, and is the law: the left hand's guard or dodge
+ ## cancels a charge first; the faces are filtered by what the strike was BEFORE this build's step (so a face press on the crossing tick wins, K1); then
+ ## the strike steps with the law's floor (R after a face press) and the layer is this build's stance mask (K6).
+diff --git a/sim/input/test/chord_pick_test.gd b/sim/input/test/chord_pick_test.gd
+new file mode 100644
+index 0000000..824c223
+--- /dev/null
++++ b/sim/input/test/chord_pick_test.gd
+@@ -0,0 +1,177 @@
++extends SceneTree
++## Headless checks for the chord pick (docs/controls/chord-pick.md; timing.json switches.chordPick, off): two attack edges on one tick (B with X or Y, or Y with X) used to reach SimControl together, which takes one
++## attack a tick (the light, then the heavy, then the signature), so a B pressed with an X was dropped with no word (14 of Orb's presses). With the switch the biggest press goes (signature over heavy over light)
++## and each smaller one is let go of and told: the refusal code "chord" through the layout's take_dropped, and through the hub as one knock and one UI row. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/chord_pick_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()
++	_sw(true)
++	_pad()
++	_other_ticks()
++	_keyboard()
++	_hub()
++	_sw(false)
++	_off()
++	SimInputData.pin_switches_off()
++	print("chord_pick_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(on: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["chordPick"] = on
++	sw["rightStick"] = true
++	sw["hapticRefused"] = on
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++## The control of an action's plain binding in a preset.
++func _ctl(preset: Dictionary, action: String) -> String:
++	for b in preset["bindings"]:
++		if str(b["action"]) == action and b.get("layer", null) == null and b.get("gesture", null) == null and (b["controls"] as Array).size() == 1:
++			return str(b["controls"][0])
++	return ""
++
++
++## Press the controls on one tick (after a rest), run 6 ticks; what the intent said on the press tick and after, and what the layout let go of.
++func _run(layout: SimLayout, presses: Array) -> Dictionary:
++	for t in range(6):
++		layout.build()
++		layout.consumed()
++	for c in presses:
++		layout.press(c)
++	var seen := {"light": false, "heavy": false, "sig": false}
++	var drops: Array = []
++	for t in range(8):
++		var i: SimIntent = layout.build()
++		seen["light"] = seen["light"] or i.light
++		seen["heavy"] = seen["heavy"] or i.heavy
++		seen["sig"] = seen["sig"] or i.sig
++		drops.append_array(layout.take_dropped())
++		layout.consumed()
++	for c in presses:
++		layout.release(c)
++	for t in range(40):
++		layout.build()
++		layout.consumed()
++	layout.take_dropped()
++	seen["drops"] = drops
++	return seen
++
++
++func _codes(r: Dictionary) -> Array:
++	var out: Array = []
++	for d in r["drops"]:
++		if str(d["why"]) == "chord":
++			out.append(str(d["k"]))
++	out.sort()
++	return out
++
++
++func _pad() -> void:
++	var p: Dictionary = SimInputData.preset("arena")
++	var x: String = _ctl(p, "light")
++	var y: String = _ctl(p, "heavy")
++	var b: String = _ctl(p, "signature")
++	ok(x != "" and y != "" and b != "" and x != y and y != b, "pad: Arena has the three attack controls (%s %s %s)" % [x, y, b])
++	var r: Dictionary = _run(SimLayout.new(p), [b, x])
++	ok(r["sig"] and not r["light"] and not r["heavy"] and _codes(r) == ["light"], "pad: B with X on one tick is the signature, X let go of and told chord: %s" % str(r))
++	r = _run(SimLayout.new(p), [b, y])
++	ok(r["sig"] and not r["heavy"] and not r["light"] and _codes(r) == ["heavy"], "pad: B with Y is the signature, Y told chord")
++	r = _run(SimLayout.new(p), [y, x])
++	ok(r["heavy"] and not r["light"] and not r["sig"] and _codes(r) == ["light"], "pad: Y with X is the heavy, X told chord")
++	r = _run(SimLayout.new(p), [b, y, x])
++	ok(r["sig"] and not r["heavy"] and not r["light"] and _codes(r) == ["heavy", "light"], "pad: all three is the signature, the other two told chord")
++	r = _run(SimLayout.new(p), [x])
++	ok(r["light"] and not r["heavy"] and not r["sig"] and r["drops"].is_empty(), "pad: X alone is the light and nothing is told")
++	r = _run(SimLayout.new(p), [b])
++	ok(r["sig"] and not r["light"] and r["drops"].is_empty(), "pad: B alone is the signature and nothing is told")
++	# The pad swapped: the face buttons trade places with the D-pad, the rule is the same on whatever carries the actions.
++	var sp: Dictionary = SimInputData.preset("arena-swapped")
++	var sx: String = _ctl(sp, "light")
++	var sb: String = _ctl(sp, "signature")
++	r = _run(SimLayout.new(sp), [sb, sx])
++	ok(r["sig"] and not r["light"] and _codes(r) == ["light"], "pad swapped: the same pick (%s with %s)" % [sb, sx])
++
++
++## Edges one tick apart are two presses, as ever.
++func _other_ticks() -> void:
++	var p: Dictionary = SimInputData.preset("arena")
++	var l := SimLayout.new(p)
++	for t in range(6):
++		l.build()
++		l.consumed()
++	l.press(_ctl(p, "light"))
++	var a: SimIntent = l.build()
++	l.consumed()
++	l.press(_ctl(p, "signature"))
++	var b: SimIntent = l.build()
++	ok(a.light and not a.sig and b.sig and not b.light and l.take_dropped().is_empty(), "ticks: X then B on the next tick are two presses, nothing is let go of")
++
++
++func _keyboard() -> void:
++	var p: Dictionary = SimInputData.preset("kb-solo")
++	var x: String = _ctl(p, "light")
++	var b: String = _ctl(p, "signature")
++	if x == "" or b == "":
++		ok(false, "keyboard: the solo layout has a light and a signature key")
++		return
++	var r: Dictionary = _run(SimLayout.new(p), [b, x])
++	ok(r["sig"] and not r["light"] and _codes(r) == ["light"], "keyboard: the same pick on the keys: %s" % str(r))
++
++
++## Through the hub: one knock for the tick and one row for UI with the code chord.
++func _hub() -> void:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	for t in range(6):
++		hub.intent(0)
++		hub.consumed()
++	hub.pad_button(7, "west", true)
++	hub.pad_button(7, "east", true)
++	var knocks: int = 0
++	var reasons: Array = []
++	var refusals: Array = []
++	var sig: bool = false
++	var light: bool = false
++	for t in range(6):
++		var i: SimIntent = hub.intent(0)
++		sig = sig or i.sig
++		light = light or i.light
++		for h in hub.take_haptics():
++			if str(h.get("kind", "")) == "stick_refused":
++				knocks += 1
++				reasons.append(str(h.get("reason", "")))
++		refusals.append_array(hub.take_refusals())
++		hub.consumed()
++	ok(sig and not light, "hub: the intent is the signature alone")
++	ok(knocks == 1 and reasons == ["chord"], "hub: one knock, reason chord: %s" % str(reasons))
++	ok(refusals.size() == 1 and str(refusals[0]["code"]) == "chord", "hub: one row for UI, code chord: %s" % str(refusals))
++	ok(SimHaptics.REFUSALS.has("chord") and SimHaptics.refusal_word("chord") == "One at a time", "hub: the code has its word")
++
++
++## Off: both edges reach the director as ever, nothing is told.
++func _off() -> void:
++	var p: Dictionary = SimInputData.preset("arena")
++	var r: Dictionary = _run(SimLayout.new(p), [_ctl(p, "signature"), _ctl(p, "light")])
++	ok(r["sig"] and r["light"] and r["drops"].is_empty(), "off: B with X is both edges, as it was, and nothing is told")
+diff --git a/sim/input/test/chord_pick_test.gd.uid b/sim/input/test/chord_pick_test.gd.uid
+new file mode 100644
+index 0000000..d15043a
+--- /dev/null
++++ b/sim/input/test/chord_pick_test.gd.uid
+@@ -0,0 +1 @@
++uid://vkvizaltaf0q
+diff --git a/sim/input/test/full_send_haptic_test.gd b/sim/input/test/full_send_haptic_test.gd
+new file mode 100644
+index 0000000..11eeab8
+--- /dev/null
++++ b/sim/input/test/full_send_haptic_test.gd
+@@ -0,0 +1,81 @@
++extends SceneTree
++## Headless checks for the stick's full-send haptic (docs/controls/full-send-haptic.md; Encounter's cue stick_full_send, docs/director/pending/stick-slam/): the sender's pad gets one `full_send` (the
++## heaviest thing the pad does), scaled by the family (slam 1.0, bury 0.9, the rest 0.8), behind switches.hapticLadder with the right stick. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/full_send_haptic_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()
++	_sw(true)
++	_cue()
++	_shape()
++	_sw(false)
++	_off()
++	SimInputData.pin_switches_off()
++	print("full_send_haptic_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(on: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = true
++	sw["hapticLadder"] = on
++	sw["hapticImpact"] = false
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _e(actor: int, source: String) -> SimState.FxEvent:
++	var e := SimState.FxEvent.new()
++	e.type = "cue"
++	e.kind = "stick_full_send"
++	e.actor = actor
++	e.text = "down"
++	e.source = source
++	return e
++
++
++func _cue() -> void:
++	var want: Dictionary = {"slamDown": 1.0, "bury": 0.9, "skyward": 0.8, "across": 0.8, "acrossBehind": 0.8}
++	for fam in want.keys():
++		var r: Array = SimHaptics.event_requests(_e(0, fam))
++		ok(r.size() == 1 and r[0]["kind"] == "full_send" and int(r[0]["slot"]) == 0 and absf(float(r[0]["scale"]) - float(want[fam])) < 0.001, "cue: %s is one full_send to the sender at %.1f: %s" % [fam, want[fam], str(r)])
++	var r1: Array = SimHaptics.event_requests(_e(1, "slamDown"))
++	ok(r1.size() == 1 and int(r1[0]["slot"]) == 1, "cue: the sender is the slot, either one")
++	ok(SimHaptics.event_requests(_e(2, "slamDown")).is_empty() and SimHaptics.event_requests(_e(-1, "slamDown")).is_empty(), "cue: only slots 0 and 1 are knocked")
++	ok(float(SimHaptics.event_requests(_e(0, "something"))[0]["scale"]) == 0.8, "cue: an unknown family is 0.8")
++
++
++func _shape() -> void:
++	ok(SimHaptics.kinds().has("full_send"), "shape: full_send is a kind")
++	var pad: Array = SimHaptics.steps("full_send", "pad", 1.0)
++	ok(pad.size() == 3 and float(pad[0]["strong"]) >= 0.99, "shape: three steps, the first at full strength on the low motor (%s)" % str(pad))
++	var best: float = 0.0
++	for k in ["release_thump", "launch_felt", "landing_thud", "hit_taken", "ladder_3", "blow_land"]:
++		var sum_k: float = 0.0
++		for st in SimHaptics.steps(k, "pad", 1.0):
++			sum_k += float(st["strong"]) * float(st["ms"])
++		best = maxf(best, sum_k)
++	var mine: float = 0.0
++	for st in pad:
++		mine += float(st["strong"]) * float(st["ms"])
++	ok(mine > best, "shape: it carries the most low-motor weight of any kind (%.1f against %.1f)" % [mine, best])
++	ok(SimHaptics.steps("full_send", "handheld", 1.0).size() == 2, "shape: the phone gets two pulses")
++	ok(SimHaptics.kind_gap_ms("full_send") >= 400, "shape: a full send is rate-limited (400 ms), so two in a row never buzz")
++
++
++func _off() -> void:
++	ok(SimHaptics.event_requests(_e(0, "slamDown")).is_empty(), "off: with the ladder rumble off the cue asks for nothing")
+diff --git a/sim/input/test/full_send_haptic_test.gd.uid b/sim/input/test/full_send_haptic_test.gd.uid
+new file mode 100644
+index 0000000..be6c6e4
+--- /dev/null
++++ b/sim/input/test/full_send_haptic_test.gd.uid
+@@ -0,0 +1 @@
++uid://18j99ahydn6c
+diff --git a/sim/input/test/haptics_test.gd b/sim/input/test/haptics_test.gd
+index 4643fb8..e8ea625 100644
+--- a/sim/input/test/haptics_test.gd
++++ b/sim/input/test/haptics_test.gd
+@@ -45,7 +45,7 @@ func _with(block, f: Callable) -> void:
+ 
+ func _data() -> void:
+ 	var ks: Array = SimHaptics.kinds()
+-	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]
++	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "full_send", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]
+ 	var has_all: bool = ks.size() == want.size()
+ 	for w in want:
+ 		has_all = has_all and ks.has(w)
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index fdb49a3..ed016b3 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -996,6 +996,10 @@
+           "type": "boolean",
+           "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
+         },
++        "chordPick": {
++          "type": "boolean",
++          "description": "Two attack presses on one tick (B with X or Y, or Y with X) are one blow, the biggest (signature over heavy over light), and the smaller is let go of and told with the refusal code chord (docs/controls/chord-pick.md). Before, the director took the light, then the heavy, then the signature, so a B pressed with an X was dropped with no word. Off."
++        },
+         "flightStrikeB": {
+           "type": "boolean",
+           "description": "With signatureRtOnly: LT + B is left as the B press for the flight strike to read (data/director/interrupts.json zip.flightStrikes.enabled; its biggest blow) instead of being sent as Y's heavy. LB + B and RB + B are unchanged. Set together with the flight strikes' switch and dodgeHeld. Off."

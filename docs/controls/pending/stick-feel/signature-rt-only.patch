@@ -1,0 +1,124 @@
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index 4532414..6e70dea 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -174,6 +174,18 @@ static func haptic_ladder_on() -> bool:
+ 	return right_stick_on() and bool(t(["switches", "hapticLadder"], false))
+ 
+ 
++## The signature is RT + B only (docs/design/energy-overhaul.md E121; the EP's decision of 2026-11-01): B with LB, RB or LT held is the heavy of that stance (B with RB is Y's blast until the Driver
++## has its own job), so a guard or a dodge can never fire a beam by accident. B alone stays the big blow. switches.signatureRtOnly, off.
++static func signature_rt_only() -> bool:
++	return bool(t(["switches", "signatureRtOnly"], false))
++
++
++## The Driver is on RB + B (docs/director/pending/driver; data/director/interrupts.json blast.driver.enabled): with switches.signatureRtOnly, RB + B is then left as the B press for the Driver
++## to read, instead of being sent as Y's blast. Set together with the Driver's own switch. switches.driverOnRb, off.
++static func driver_on_rb() -> bool:
++	return bool(t(["switches", "driverOnRb"], false))
++
++
+ ## The power specials are off (docs/design/pad-first-press.md: RT + X, Y, A are not built; a press is the plain blow and the charge drops). switches.specialsOff, off.
+ static func specials_off() -> bool:
+ 	return bool(t(["switches", "specialsOff"], false))
+diff --git a/sim/input/layout.gd b/sim/input/layout.gd
+index f2866d8..2074020 100644
+--- a/sim/input/layout.gd
++++ b/sim/input/layout.gd
+@@ -927,6 +927,14 @@ func build() -> SimIntent:
+ 	for_mask &= ~_chord_stance_bits()   # a pending transform chord changes no stance
+ 	var mask: int = SimStance.resolve(for_mask, SimStance.newest_of(for_mask, since), SimStance.hybrids())
+ 	i.stanceMask = mask
++	if SimInputData.signature_rt_only() and (mask & SimStance.CHARGING) == 0 and (mask != 0 or i.mode == 1) and not (SimInputData.driver_on_rb() and ((mask & SimStance.ENERGY) != 0 or i.mode == 1)):
++		# The signature is RT + B only: with any other stance held, B is the heavy of that stance (its edge and its level), so a guard or a dodge never fires a beam by accident.
++		if i.sig:
++			i.sig = false
++			i.heavy = true
++		if i.sigHeld:
++			i.sigHeld = false
++			i.heavyHeld = true
+ 	# Exclusive: a stance button that is not the reported stance reports nothing of its own (its edges to RT's burst, and the dodge
+ 	# edge, always report).
+ 	i.guard = i.guard and (mask & SimStance.DEFENSIVE) != 0
+diff --git a/sim/input/test/stick_feel_test.gd b/sim/input/test/stick_feel_test.gd
+index 666d0a8..e9f7056 100644
+--- a/sim/input/test/stick_feel_test.gd
++++ b/sim/input/test/stick_feel_test.gd
+@@ -33,6 +33,7 @@ func _init() -> void:
+ 	_zero()
+ 	_refused()
+ 	_specials_off()
++	_sig_rt_only()
+ 	_sw(true, true, false, false)
+ 	_off()
+ 	_sw(false, false, false, false)
+@@ -606,3 +607,69 @@ func _specials_off() -> void:
+ 	SimInputData.timing["switches"] = sw
+ 	SimInputData.clear_overrides()
+ 	SimInputData.invalidate()
++
++
++## The signature is RT + B only (the EP's decision, E121): with the switch on, B with LB, RB or LT held is the heavy of that stance and never the signature; RT + B and B alone are as they were.
++func _sig_rt_only() -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	for on in [false, true]:
++		sw["signatureRtOnly"] = on
++		SimInputData.timing["switches"] = sw
++		SimInputData.clear_overrides()
++		SimInputData.invalidate()
++		for lay in [["none", ""], ["LB", "lb"], ["RB", "rb"], ["LT", "lt"], ["RT", "rt"]]:
++			var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++			if lay[1] == "lt" or lay[1] == "rt":
++				l.analog("pad:" + lay[1], 1.0)
++			elif lay[1] != "":
++				l.press("pad:" + lay[1])
++			var sig: bool = false
++			var heavy: bool = false
++			var sig_held: bool = false
++			var heavy_held: bool = false
++			for t in range(40):
++				if t == 20:
++					l.press("pad:east")
++				if t == 30:
++					l.release("pad:east")
++				var i: SimIntent = l.build()
++				if t >= 20 and t < 30:
++					sig_held = sig_held or i.sigHeld
++					heavy_held = heavy_held or i.heavyHeld
++				if t >= 20:
++					sig = sig or i.sig
++					heavy = heavy or i.heavy
++				l.consumed()
++			var is_sig: bool = (not on) or lay[0] == "none" or lay[0] == "RT"
++			ok(sig == is_sig and heavy == (not is_sig), "signature RT only %s: B with %s is %s (sig %s, heavy %s)" % ["on" if on else "off", lay[0], "the signature" if is_sig else "the heavy", str(sig), str(heavy)])
++			ok(sig_held == is_sig and heavy_held == (not is_sig), "signature RT only %s: B held with %s carries its level as %s" % ["on" if on else "off", lay[0], "sigHeld" if is_sig else "heavyHeld"])
++	# With the Driver on RB (switches.driverOnRb): RB + B stays the B press for the Driver to read; LB + B and LT + B are still the stance's heavy.
++	sw["signatureRtOnly"] = true
++	sw["driverOnRb"] = true
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++	for lay in [["LB", "lb", false], ["RB", "rb", true], ["LT", "lt", false]]:
++		var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++		if lay[1] == "lt":
++			l.analog("pad:lt", 1.0)
++		else:
++			l.press("pad:" + lay[1])
++		var sig: bool = false
++		var heavy: bool = false
++		for t in range(40):
++			if t == 20:
++				l.press("pad:east")
++			if t == 30:
++				l.release("pad:east")
++			var i: SimIntent = l.build()
++			if t >= 20:
++				sig = sig or i.sig
++				heavy = heavy or i.heavy
++			l.consumed()
++		ok(sig == lay[2] and heavy == (not lay[2]), "driver on RB: B with %s is %s (sig %s, heavy %s)" % [lay[0], "left for the Driver" if lay[2] else "the heavy", str(sig), str(heavy)])
++	sw["signatureRtOnly"] = false
++	sw["driverOnRb"] = false
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()

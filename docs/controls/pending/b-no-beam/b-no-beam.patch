@@ -1,0 +1,391 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 0eff4a9..57ec69a 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -51,6 +51,8 @@
+     "flightStrikeB": false,
+     "chordPick": false,
+     "flickKept": false,
++    "bNoBeam": false,
++    "bNoBeamKeepRt": false,
+     "stallKeep": true,
+     "hapticImpact": true,
+     "hapticStages": false,
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index da63c90..f38a5cb 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -197,6 +197,17 @@ static func flight_strike_b() -> bool:
+ 	return bool(t(["switches", "flightStrikeB"], false))
+ 
+ 
++## A player's B never starts a beam (docs/controls/b-no-beam.md; Orb, 2026-11-01: beams come only from the right stick): DirBrawl.isB reads every player's B press as the heavy, not only B with no layer held.
++## The stick's own beam (DirStick.firing) is not a press of B and is unaffected. Needs nothing else. switches.bNoBeam, off.
++static func b_no_beam() -> bool:
++	return bool(t(["switches", "bNoBeam"], false))
++
++
++## The interim of bNoBeam (the EP, 2026-11-08; Game Design's condition): RT + B is still the signature as a chord only, B within tapHold.holdStart ticks of RT's press, until RT + right stick is built, so the signature is never unreachable. A B during an RT channel is the heavy. Needs bNoBeam. switches.bNoBeamKeepRt, off.
++static func b_no_beam_keep_rt() -> bool:
++	return bool(t(["switches", "bNoBeamKeepRt"], false))
++
++
+ ## The director keeps a flick it cannot start yet (data/director/stick.json flickKeep, up to pendFollow.maxTicks = 90 ticks, with no cue while it waits), so the hub's wait for an answer is strike.refuseTicksKept (120)
+ ## and not refuseTicks (30), or the pad knocks "Didn't start" at 31 ticks and the held flick then fires anyway (docs/controls/flick-kept.md). Set together with flickKeep. switches.flickKept, off.
+ static func flick_kept_on() -> bool:
+@@ -264,7 +275,7 @@ static func haptic_impact_on() -> bool:
+ ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
+ static func pin_switches_off() -> void:
+ 	var sw: Dictionary = timing.get("switches", {})
+-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "flickKept", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
++	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "flickKept", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+ 		sw[k] = false
+ 	timing["switches"] = sw
+ 	clear_overrides()
+diff --git a/sim/input/test/b_no_beam_layouts_test.gd b/sim/input/test/b_no_beam_layouts_test.gd
+new file mode 100644
+index 0000000..21a20f6
+--- /dev/null
++++ b/sim/input/test/b_no_beam_layouts_test.gd
+@@ -0,0 +1,143 @@
++extends SceneTree
++## Headless checks for "no press of B fires a beam or a signature, alone or with any shoulder, in any stance or layout" (docs/design/overnight-2026-11-08.md (b); docs/controls/b-no-beam.md): every pad, keyboard and touch
++## preset, every stance on its own and in the pairs a thumb can hold (LB guard, RB energy, RT power, LT dodge), B tapped and held, at three distances, the flight strikes on (the Sunday build's rows), a standing rival,
++## the real layout built tick by tick into the sim. With switches.bNoBeam on no combination starts a beam. Off (the control), some combination does, so the scan can tell. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/b_no_beam_layouts_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++var zip_fs0: bool = false
++var runs: int = 0
++
++const PRESETS: Array = ["arena", "arena-swapped", "simple-pad", "kb-solo", "kb-solo-swapped", "kb-shared-p1", "kb-shared-p2", "touch-full"]
++const STANCES: Array = [[], ["guard"], ["mode"], ["power"], ["dodge"], ["guard", "mode"], ["dodge", "guard"], ["power", "dodge"], ["mode", "dodge"], ["power", "mode"], ["power", "guard"]]
++const DISTS: Array = [80.0, 212.0, 800.0]
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()
++	zip_fs0 = bool(DirZip.fsCfg().get("enabled", false))
++	DirZip.fsCfg()["enabled"] = true   # the Sunday build's flight strikes row: one key in interrupts.json, two in timing.json
++	_sw(true)
++	var leaks_on: Array = _scan()
++	ok(leaks_on.is_empty(), "on: no B press starts a beam in any preset, stance, hold or distance (%d leaks: %s)" % [leaks_on.size(), str(leaks_on.slice(0, 6))])
++	print("scanned %d runs with the switch on" % runs)
++	_sw(true, true)
++	runs = 0
++	var leaks_keep: Array = _scan()
++	var all_rt: bool = true
++	var rt_alone: bool = false
++	for l in leaks_keep:
++		all_rt = all_rt and (" power " in (" " + String(l) + " ") or String(l).contains("power"))
++		rt_alone = rt_alone or String(l).begins_with("arena power ")
++	ok(not leaks_keep.is_empty() and all_rt and rt_alone, "interim (bNoBeamKeepRt): the only beams from B are the ones with RT in the combination, and RT + B on the pad is still one (%d leaks, e.g. %s)" % [leaks_keep.size(), str(leaks_keep.slice(0, 4))])
++	print("scanned %d runs with the interim: %d beams from B, all with RT held" % [runs, leaks_keep.size()])
++	runs = 0
++	var leaks_chan: Array = _scan(30)   # the same scan with B 30 ticks after the stances (an RT channel is on): Game Design's condition
++	ok(leaks_chan.is_empty(), "interim: B pressed 30 ticks after the stance (an RT channel) fires no signature in any preset or stance combination (%d leaks: %s)" % [leaks_chan.size(), str(leaks_chan.slice(0, 4))])
++	print("scanned %d runs with the interim and B 30 ticks after the stance: %d beams from B" % [runs, leaks_chan.size()])
++	_sw(false)
++	runs = 0
++	var leaks_off: Array = _scan()
++	ok(leaks_off.size() >= 1, "off (the control): the same scan finds beams from B (%d found, e.g. %s), so it can tell" % [leaks_off.size(), str(leaks_off.slice(0, 3))])
++	print("scanned %d runs with the switch off: %d beams from B (%s)" % [runs, leaks_off.size(), str(leaks_off.slice(0, 12))])
++	DirZip.fsCfg()["enabled"] = zip_fs0
++	SimInputData.pin_switches_off()
++	print("b_no_beam_layouts_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(on: bool, keep_rt: bool = false) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = true
++	sw["signatureRtOnly"] = true
++	sw["flightStrikeB"] = true
++	sw["dodgeHeld"] = true
++	sw["bNoBeam"] = on
++	sw["bNoBeamKeepRt"] = keep_rt
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++## The control of an action's plain binding in a preset ("" if it has none).
++func _ctl(preset: Dictionary, action: String) -> String:
++	for b in preset["bindings"]:
++		if str(b["action"]) == action and b.get("layer", null) == null and b.get("gesture", null) == null and (b["controls"] as Array).size() == 1:
++			return str(b["controls"][0])
++	return ""
++
++
++func _scan(lead: int = 10) -> Array:
++	var leaks: Array = []
++	for pid in PRESETS:
++		var preset: Dictionary = SimInputData.preset(pid)
++		if preset.is_empty():
++			ok(false, "scan: the preset %s exists" % pid)
++			continue
++		var b: String = _ctl(preset, "signature")
++		if b == "":
++			continue
++		for st in STANCES:
++			var ctls: Array = []
++			var have: bool = true
++			for a in st:
++				var c: String = _ctl(preset, a)
++				if c == "":
++					have = false
++				ctls.append(c)
++			if not have:
++				continue
++			for hold_b in [false, true]:
++				for dist in DISTS:
++					if _beam(preset, ctls, b, hold_b, dist, lead):
++						leaks.append("%s %s %s %d" % [pid, "+".join(st) if not st.is_empty() else "none", "held" if hold_b else "tap", int(dist)])
++	return leaks
++
++
++func _beam(preset: Dictionary, ctls: Array, b: String, hold_b: bool, dist: float, lead: int = 10) -> bool:
++	runs += 1
++	var layout := SimLayout.new(preset)
++	var su := {"v2": [true, true], "assists": [[], []], "intro": false}
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
++	var a = S.fighters[0]
++	var r = S.fighters[1]
++	r.x = SimWrap.wrap(a.x + dist)
++	r.y = a.y
++	var quiet := SimIntent.new()
++	var beam: bool = false
++	for t in range(30):
++		SimCore.step(S, [layout.build(), quiet])
++		layout.consumed()
++		S.out.fx.clear()
++	for c in ctls:
++		layout.press(c)
++	for t in range(lead):
++		SimCore.step(S, [layout.build(), quiet])
++		layout.consumed()
++		S.out.fx.clear()
++	layout.press(b)
++	for t in range(120):
++		if t == (24 if hold_b else 3):
++			layout.release(b)
++		SimCore.step(S, [layout.build(), quiet])
++		layout.consumed()
++		for e in S.out.fx:
++			var nm: String = String(e.kind) if String(e.type) == "cue" else String(e.type)
++			if int(e.actor) == 0 and (nm == "beam_fire" or nm == "beam_charge" or nm == "beam_outcome"):
++				beam = true
++		S.out.fx.clear()
++		if beam:
++			break
++	SimCore.dispose(S)
++	return beam
+diff --git a/sim/input/test/b_no_beam_layouts_test.gd.uid b/sim/input/test/b_no_beam_layouts_test.gd.uid
+new file mode 100644
+index 0000000..2edc96d
+--- /dev/null
++++ b/sim/input/test/b_no_beam_layouts_test.gd.uid
+@@ -0,0 +1 @@
++uid://c1ggoif0qwfn
+diff --git a/sim/input/test/b_no_beam_test.gd b/sim/input/test/b_no_beam_test.gd
+new file mode 100644
+index 0000000..c5268db
+--- /dev/null
++++ b/sim/input/test/b_no_beam_test.gd
+@@ -0,0 +1,159 @@
++extends SceneTree
++## Headless checks for "B never fires a beam" (docs/controls/b-no-beam.md; timing.json switches.bNoBeam, off; Orb's rule of 2026-11-01: beams come only from the right stick). The real hub into the sim, a standing rival:
++## with the switch on, B with no layer held, with LB, RB, LT (past the flight strike's take-back window, the flight strikes on) or RT, tapped or held, starts no beam; the right stick's own beam (RB + stick, released) still does.
++## Off (the control), RT + B and LT + B (flight strikes on, past the window) are the signature beam, as they were. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/b_no_beam_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++var zip_fs0: bool = false
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()
++	zip_fs0 = bool(DirZip.fsCfg().get("enabled", false))
++	DirZip.fsCfg()["enabled"] = true   # the Sunday build's flight strikes row: one key in interrupts.json, two in timing.json
++	_sw(true)
++	_on()
++	_stick()
++	_sw(true, true)
++	_interim()
++	_sw(false)
++	_off()
++	DirZip.fsCfg()["enabled"] = zip_fs0
++	SimInputData.pin_switches_off()
++	print("b_no_beam_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(on: bool, keep_rt: bool = false) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = true
++	sw["signatureRtOnly"] = true
++	sw["flightStrikeB"] = true
++	sw["dodgeHeld"] = true
++	sw["bNoBeam"] = on
++	sw["bNoBeamKeepRt"] = keep_rt
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++## What slot 0 did after a B press: the names of its events in 120 ticks. `pre` is a list of [kind, name] held 10 ticks before B (a button or a trigger); `stick` is a right-stick hold (RB + the stick) instead of B.
++func _run(pre: Array, hold_b: bool, dist: float = 212.0, stick: bool = false, lead: int = 10) -> Dictionary:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	var su: Dictionary = hub.setup()
++	su["intro"] = false
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	b.x = SimWrap.wrap(a.x + dist)
++	b.y = a.y
++	var quiet := SimIntent.new()
++	for t in range(30):
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		S.out.fx.clear()
++	for e in pre:
++		if e[0] == "b":
++			hub.pad_button(7, e[1], true)
++		else:
++			hub.pad_trigger(7, e[1], 1.0)
++	for t in range(lead):
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		S.out.fx.clear()
++	var names: Dictionary = {}
++	if stick:
++		hub.pad_stick_right(7, 1.0, 0.0)
++	else:
++		hub.pad_button(7, "east", true)
++	for t in range(120):
++		if stick:
++			if t == 40:
++				hub.pad_stick_right(7, 0.0, 0.0)
++		elif t == (24 if hold_b else 3):
++			hub.pad_button(7, "east", false)
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		for e in S.out.fx:
++			var nm: String = String(e.kind) if String(e.type) == "cue" else String(e.type)
++			if int(e.actor) == 0:
++				names[nm] = true
++		S.out.fx.clear()
++	SimCore.dispose(S)
++	return names
++
++
++func _beam(n: Dictionary) -> bool:
++	return n.has("beam_fire") or n.has("beam_charge") or n.has("beam_outcome")
++
++
++func _on() -> void:
++	var layers: Array = [["B alone", []], ["LB + B", [["b", "lb"]]], ["RB + B", [["b", "rb"]]], ["LT + B (past the take-back window)", [["t", "lt"]]], ["RT + B", [["t", "rt"]]], ["LT + LB + B", [["t", "lt"], ["b", "lb"]]]]
++	for lay in layers:
++		for hold_b in [false, true]:
++			for dist in [80.0, 212.0, 800.0]:
++				var n: Dictionary = _run(lay[1], hold_b, dist)
++				ok(not _beam(n), "on: %s (%s, %d units) starts no beam: %s" % [lay[0], "held" if hold_b else "tap", int(dist), str(n.keys())])
++	var alone: Dictionary = _run([], false, 212.0)
++	ok(alone.has("blow") or alone.has("windup") or alone.has("rush"), "on: B alone is still a blow (the heavy), not nothing: %s" % str(alone.keys()))
++	var rt: Dictionary = _run([["t", "rt"]], false, 212.0)
++	ok(rt.has("blow") or rt.has("windup") or rt.has("rush") or rt.has("lunge_heavy"), "on: RT + B is the big blow, not nothing: %s" % str(rt.keys()))
++
++
++## The interim (bNoBeamKeepRt, the EP's decision of 2026-11-08): until RT + right stick is built, B with RT held is still the signature, so it can always be fired. Everything else stays out: B alone, LB, RB, LT past the window, LT + LB.
++func _interim() -> void:
++	var layers: Array = [["B alone", []], ["LB + B", [["b", "lb"]]], ["RB + B", [["b", "rb"]]], ["LT + B (past the take-back window)", [["t", "lt"]]], ["LT + LB + B", [["t", "lt"], ["b", "lb"]]]]
++	for lay in layers:
++		for hold_b in [false, true]:
++			for dist in [80.0, 212.0, 800.0]:
++				var n: Dictionary = _run(lay[1], hold_b, dist)
++				ok(not _beam(n), "interim: %s (%s, %d units) starts no beam: %s" % [lay[0], "held" if hold_b else "tap", int(dist), str(n.keys())])
++	for hold_b in [false, true]:
++		for dist in [80.0, 212.0, 800.0]:
++			var r: Dictionary = _run([["t", "rt"]], hold_b, dist)
++			ok(_beam(r), "interim: RT + B (%s, %d units) is still the signature beam: %s" % ["held" if hold_b else "tap", int(dist), str(r.keys())])
++	var s: Dictionary = _run([["b", "rb"]], false, 400.0, true)
++	ok(_beam(s), "interim: the right stick's own beam still fires: %s" % str(s.keys()))
++	# Game Design's condition: RT + B is the signature only as a chord, B within tapHold.holdStart (12) ticks of RT's press; a B during an RT channel is not.
++	var hs: int = SimInputData.ti(["tapHold", "holdStart"], 12)
++	for lead in [1, 3, hs - 3]:
++		for hold_b in [false, true]:
++			var c: Dictionary = _run([["t", "rt"]], hold_b, 212.0, false, lead)
++			ok(_beam(c), "interim: RT, then B %d ticks later (inside the %d-tick chord window, %s) is the signature: %s" % [lead, hs, "held" if hold_b else "tap", str(c.keys())])
++	for lead in [hs + 3, 20, 40]:
++		for hold_b in [false, true]:
++			for dist in [80.0, 212.0, 800.0]:
++				var ch: Dictionary = _run([["t", "rt"]], hold_b, dist, false, lead)
++				ok(not _beam(ch), "interim: B %d ticks into an RT channel (past the %d-tick window, %s, %d units) fires no signature: %s" % [lead, hs, "held" if hold_b else "tap", int(dist), str(ch.keys())])
++
++
++func _stick() -> void:
++	var s: Dictionary = _run([["b", "rb"]], false, 400.0, true)
++	ok(_beam(s), "on: the right stick's own beam (RB held, the stick pushed and released) still fires: %s" % str(s.keys()))
++
++
++## Off, the control: the leaks are there. RT + B and LT + B past the window (flight strikes on) are the signature beam.
++func _off() -> void:
++	var rt: Dictionary = _run([["t", "rt"]], false, 212.0)
++	ok(_beam(rt), "off (the control): RT + B is the signature beam: %s" % str(rt.keys()))
++	var lt: Dictionary = _run([["t", "lt"]], false, 212.0)
++	ok(_beam(lt), "off (the control): LT + B past the take-back window, flight strikes on, is the signature beam: %s" % str(lt.keys()))
++	var alone: Dictionary = _run([], false, 212.0)
++	ok(not _beam(alone), "off: B alone is not a beam (it never was): %s" % str(alone.keys()))
+diff --git a/sim/input/test/b_no_beam_test.gd.uid b/sim/input/test/b_no_beam_test.gd.uid
+new file mode 100644
+index 0000000..230751e
+--- /dev/null
++++ b/sim/input/test/b_no_beam_test.gd.uid
+@@ -0,0 +1 @@
++uid://fibp6wk0bbkm
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index 75a8e84..06cb279 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -996,6 +996,14 @@
+           "type": "boolean",
+           "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
+         },
++        "bNoBeam": {
++          "type": "boolean",
++          "description": "A player's B never starts a beam, whatever he holds (docs/controls/b-no-beam.md; Orb's rule of 2026-11-01: beams come only from the right stick). The director reads a player's B press as the heavy (DirBrawl.isB) with RT held, with LT held past the flight strike's take-back window, with an energy mode on, and with no layer held; the right stick's own beam is unaffected. Off: B with RT held, or with LT held when the flight strike does not take it, is the signature beam."
++        },
++        "bNoBeamKeepRt": {
++          "type": "boolean",
++          "description": "The interim of bNoBeam (docs/controls/b-no-beam.md; the EP's decision of 2026-11-08): with bNoBeam on, B pressed within tapHold.holdStart (12) ticks of RT's press (the chord, before RT's hold becomes the channel) is still the signature (the beam), so the signature stays reachable until RT + right stick is built; a B during an RT channel is the heavy; B alone, with LB, RB or LT, and with an energy mode are never a beam. Turn it off when RT + stick lands, and RT + B is the big blow. Needs bNoBeam. Off."
++        },
+         "flickKept": {
+           "type": "boolean",
+           "description": "Set together with the director's flickKeep (data/director/stick.json): the director holds a flick it cannot start yet, quietly, up to 90 ticks, so the hub waits strike.refuseTicksKept instead of strike.refuseTicks before it calls a stick request unanswered (docs/controls/flick-kept.md). Off: refuseTicks, as before."

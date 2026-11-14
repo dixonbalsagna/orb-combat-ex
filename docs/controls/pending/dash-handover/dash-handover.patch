@@ -1,0 +1,368 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 2c9eea2..a27ac17 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -50,6 +50,7 @@
+     "driverOnRb": false,
+     "flightStrikeB": false,
+     "chordPick": false,
++    "dashHandover": false,
+     "flickKept": false,
+     "inertKnock": false,
+     "bNoBeam": false,
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index f8160b1..fd90cea 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -220,6 +220,12 @@ static func flick_kept_on() -> bool:
+ 	return bool(t(["switches", "flickKept"], false))
+ 
+ 
++## LT's dash is on from the press tick and only while LT is held (docs/controls/dash-handover.md; Game Design's ruling of 2026-11-08 (c): LT's high speed is fast from the first tick, and a tapped LT stays the slip):
++## no free 12-tick lunge after a release, so a tap is a tap and a hold is the high speed from tick 1. The sprint bit and the dodge edge are as they were. switches.dashHandover, off.
++static func dash_handover_on() -> bool:
++	return bool(t(["switches", "dashHandover"], false))
++
++
+ ## Two attack presses on one tick are one blow, the biggest (docs/controls/chord-pick.md; switches.chordPick, off): B with X or Y, or Y with X, goes as the bigger press and the smaller is told "chord".
+ ## Independent of the right-hand switch (a keyboard chords too).
+ static func chord_pick_on() -> bool:
+@@ -281,7 +287,7 @@ static func haptic_impact_on() -> bool:
+ ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
+ static func pin_switches_off() -> void:
+ 	var sw: Dictionary = timing.get("switches", {})
+-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "flickKept", "inertKnock", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
++	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "dashHandover", "flickKept", "inertKnock", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+ 		sw[k] = false
+ 	timing["switches"] = sw
+ 	clear_overrides()
+diff --git a/sim/input/layout.gd b/sim/input/layout.gd
+index e640896..7eb56c1 100644
+--- a/sim/input/layout.gd
++++ b/sim/input/layout.gd
+@@ -121,6 +121,7 @@ var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
+ var dodge_held: bool = false        # switches.dodgeHeld: the intent's dodgeHeld says the dodge control is physically down
+ var inert_knock: bool = false       # switches.inertKnock: a right-stick push on an inert layer (RT held, LB + RB) is told, once (docs/controls/inert-knock.md)
+ var _prev_strike_phase: int = 0     # the strike reader's phase last build (for the inert push's edge)
++var dash_handover: bool = false     # switches.dashHandover: the dash is on from LT's press tick and only while it is held, no free lunge after a release (docs/controls/dash-handover.md)
+ var chord_pick: bool = false        # switches.chordPick: two attack edges on one tick are one blow, the biggest, and the smaller is told (docs/controls/chord-pick.md)
+ var _chord_dropped: Array = []      # [{k, why, t}]: the attack presses a chord let go of, joined to the strike law's list by take_dropped
+ var stall_keep: bool = false        # switches.stallKeep: keep the strike stick's furthest point between two builds (see _note_peak)
+@@ -193,6 +194,7 @@ func _init(p_preset: Dictionary = {}) -> void:
+ 	stall_keep = SimInputData.stall_keep_on()
+ 	dodge_held = SimInputData.dodge_held_on()
+ 	chord_pick = SimInputData.chord_pick_on()
++	dash_handover = SimInputData.dash_handover_on()
+ 	inert_knock = SimInputData.inert_knock_on()
+ 	trig_on = SimInputData.tf(["stick", "triggerOn"], 0.35)
+ 	trig_off = SimInputData.tf(["stick", "triggerOff"], 0.25)
+@@ -1017,7 +1019,11 @@ func build() -> SimIntent:
+ 		_edge_t0 = tick - 1
+ 	i.waited = clampi(tick - 1 - _edge_t0, 0, 15) if _edge_t0 >= 0 else 0
+ 	# Today's fields, until I3: a lunge or a sprint is the dash, the channel is the charge.
+-	i.dash = sprinting or tick <= _lunge_until
++	if dash_handover:
++		# Game Design's ruling (2026-11-08, c): LT's high speed is on from the press tick, only while LT is held (the dodge edge is the first tick), and ends when it is let go of: a tap is the slip, not a 12-tick lunge.
++		i.dash = sprinting or ((_is_down("dodge") or i.dodge) and not chord_dodge and (mask & SimStance.MANOEUVRE) != 0)
++	else:
++		i.dash = sprinting or tick <= _lunge_until
+ 	i.charge = channel
+ 	i.stance = -1.0
+ 	return i
+diff --git a/sim/input/test/dash_handover_test.gd b/sim/input/test/dash_handover_test.gd
+new file mode 100644
+index 0000000..f9291f8
+--- /dev/null
++++ b/sim/input/test/dash_handover_test.gd
+@@ -0,0 +1,182 @@
++extends SceneTree
++## Headless checks for LT's dash handover (docs/controls/dash-handover.md; timing.json switches.dashHandover, off; Game Design's ruling of 2026-11-08 (c)): LT's high speed is on from the press tick and only while LT is held,
++## a tapped LT stays the slip. Before, a press gave a free 12-tick lunge (dodge.lungeTicks) whatever the release, so a tap was a 12-tick dash, which would be a leap once the dash is fast at any range. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/dash_handover_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()
++	_sw(true)
++	_on()
++	_sim(true)
++	_sw(false)
++	_off()
++	_sim(false)
++	SimInputData.pin_switches_off()
++	print("dash_handover_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(on: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["dashHandover"] = on
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _ctl(preset: Dictionary, action: String) -> String:
++	for b in preset["bindings"]:
++		if str(b["action"]) == action and b.get("layer", null) == null and b.get("gesture", null) == null and (b["controls"] as Array).size() == 1:
++			return str(b["controls"][0])
++	return ""
++
++
++## Press `ctls` (a list of controls, together) after a rest, hold `hold` ticks, release, run to 40 ticks; returns {dash: [per tick bool], sprint: [...]}; a control with a leading "@" is pressed `late` ticks after the first.
++func _run(layout: SimLayout, ctls: Array, hold: int, late: Array = [], late_at: int = 0) -> Dictionary:
++	for t in range(8):
++		layout.build()
++		layout.consumed()
++	for c in ctls:
++		layout.press(c)
++	var dash: Array = []
++	var sprint: Array = []
++	for t in range(40):
++		if t == hold:
++			for c in ctls:
++				layout.release(c)
++		if late.size() > 0 and t == late_at:
++			for c in late:
++				layout.press(c)
++		var i: SimIntent = layout.build()
++		dash.append(i.dash)
++		sprint.append(i.sprint)
++		layout.consumed()
++	for c in ctls + late:
++		layout.release(c)
++	for t in range(30):
++		layout.build()
++		layout.consumed()
++	return {"dash": dash, "sprint": sprint}
++
++
++func _count(a: Array) -> int:
++	var n: int = 0
++	for v in a:
++		if v:
++			n += 1
++	return n
++
++
++func _on() -> void:
++	var arena: Dictionary = SimInputData.preset("arena")
++	var lt: String = _ctl(arena, "dodge")
++	var lb: String = _ctl(arena, "guard")
++	var rt: String = _ctl(arena, "power")
++	ok(lt != "" and lb != "" and rt != "", "on: Arena has LT, LB and RT (%s %s %s)" % [lt, lb, rt])
++	var tap: Dictionary = _run(SimLayout.new(arena), [lt], 2)
++	ok(tap["dash"][0] and _count(tap["dash"]) <= 3 and not tap["dash"][5] and not tap["dash"][12], "on: a tap (LT let go after 2 ticks) is a dash on the press tick and only while it is down: %s" % str(tap["dash"].slice(0, 14)))
++	var tap6: Dictionary = _run(SimLayout.new(arena), [lt], 6)
++	ok(tap6["dash"][0] and _count(tap6["dash"]) <= 7 and not tap6["dash"][9], "on: a tap let go after 6 ticks is 6 or 7 dash ticks, none after: %s" % str(tap6["dash"].slice(0, 12)))
++	var held: Dictionary = _run(SimLayout.new(arena), [lt], 30)
++	var all_held: bool = true
++	for k in range(30):
++		all_held = all_held and held["dash"][k]
++	ok(held["dash"][0] and all_held and not held["dash"][32], "on: held, the dash is on from the first tick to the release (30 ticks) and ends when it is let go: dash ticks %d" % _count(held["dash"]))
++	var hs: int = SimInputData.ti(["tapHold", "holdStart"], 12)
++	ok(not held["sprint"][hs - 3] and held["sprint"][hs + 2], "on: the sprint bit still starts at tapHold.holdStart (%d): %s" % [hs, str(held["sprint"].slice(hs - 3, hs + 3))])
++	var back: Dictionary = _run(SimLayout.new(arena), [lt], 30, [lb], 5)
++	ok(back["dash"][2] and not back["dash"][10], "on: LB pressed after LT (the vanish) ends the dash (a stance that is not LT's): %s" % str(back["dash"].slice(0, 12)))
++	var chord: Dictionary = _run(SimLayout.new(arena), [lt, rt], 20)
++	ok(_count(chord["dash"]) == 0, "on: LT and RT together within the chord window are the transform chord: no dash (%d)" % _count(chord["dash"]))
++	var kb: Dictionary = SimInputData.preset("kb-solo")
++	var kdash: String = _ctl(kb, "dodge")
++	var ktap: Dictionary = _run(SimLayout.new(kb), [kdash], 2)
++	ok(kdash != "" and ktap["dash"][0] and _count(ktap["dash"]) <= 3, "on: the keyboard's dodge key is the same (a tap is %d dash ticks)" % _count(ktap["dash"]))
++	var over := SimLayout.new(arena)
++	over.sprint_override = true
++	for t in range(10):
++		over.build()
++		over.consumed()
++	var oi: SimIntent = over.build()
++	ok(oi.dash and oi.sprint, "on: a host-held sprint (the touch outer ring) is the dash")
++	var edge := SimLayout.new(arena)
++	for t in range(8):
++		edge.build()
++		edge.consumed()
++	edge.press(lt)
++	edge.release(lt)
++	var e1: SimIntent = edge.build()
++	ok(e1.dodge and e1.dash, "on: a press and release inside one tick still moves him on that tick (the dodge edge): dodge %s dash %s" % [str(e1.dodge), str(e1.dash)])
++	edge.consumed()
++	var e2: SimIntent = edge.build()
++	ok(not e2.dash, "on: ... and not on the next")
++
++
++func _off() -> void:
++	var arena: Dictionary = SimInputData.preset("arena")
++	var lt: String = _ctl(arena, "dodge")
++	var tap: Dictionary = _run(SimLayout.new(arena), [lt], 2)
++	ok(_count(tap["dash"]) >= SimInputData.ti(["dodge", "lungeTicks"], 12), "off (the control): a tap is a free lunge of lungeTicks dash ticks, whatever the release: %d" % _count(tap["dash"]))
++
++
++## Through the sim (a standing rival 3,000 off, the energy model on, the stick held toward him): a tap carries him less than the same tap did, and a hold is the same either way.
++func _sim(on: bool) -> void:
++	var tap: float = _carry(4)
++	var held: float = _carry(0)
++	var none: float = _carry(-1)
++	if on:
++		ok(tap - none < 2.0, "on: a tap let go at tick 4 carries him less than 2 body heights beyond the stick alone (%.2f)" % (tap - none))
++		ok(held - none > 8.0, "on: held, the dash carries him far (%.2f bh beyond the stick alone)" % (held - none))
++	else:
++		ok(tap - none > 3.5, "off (the control): the same tap carries him more than 3.5 body heights beyond the stick alone (%.2f)" % (tap - none))
++
++
++func _carry(release_at: int) -> float:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	var su: Dictionary = hub.setup()
++	su["intro"] = false
++	su["power"] = true
++	su["travel"] = 1.5
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	b.x = SimWrap.wrap(a.x + 3000.0)
++	b.y = a.y
++	var quiet := SimIntent.new()
++	for t in range(70):
++		a.vx = 0.0
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		S.out.fx.clear()
++	var x0: float = a.x
++	hub.pad_stick(7, 1.0, 0.0)
++	if release_at >= 0:
++		hub.pad_trigger(7, "lt", 1.0)
++	for t in range(1, 61):
++		if release_at > 0 and t == release_at + 1:
++			hub.pad_trigger(7, "lt", 0.0)
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		S.out.fx.clear()
++	var d: float = absf(SimWrap.sdx(x0, a.x)) / 75.0
++	SimCore.dispose(S)
++	return d
+diff --git a/sim/input/test/dash_handover_test.gd.uid b/sim/input/test/dash_handover_test.gd.uid
+new file mode 100644
+index 0000000..b61b96e
+--- /dev/null
++++ b/sim/input/test/dash_handover_test.gd.uid
+@@ -0,0 +1 @@
++uid://8jrvboh54pom
+diff --git a/sim/input/tools/lt_tap_probe.gd b/sim/input/tools/lt_tap_probe.gd
+new file mode 100644
+index 0000000..92cbd87
+--- /dev/null
++++ b/sim/input/tools/lt_tap_probe.gd
+@@ -0,0 +1,81 @@
++extends SceneTree
++## Controls' LT tap and hold probe (docs/controls/dash-handover.md): what the pad's LT does tick by tick, and how far a tapped LT carries a fighter. The real hub into the sim (the energy model on), a standing rival
++## 3,000 units off, the left stick toward him. Rows: LT released at tick r after its press (r = 0 means held); the number of ticks the intent said dash and sprint, the distance in body heights (75 units) travelled in the
++## 60 ticks after the press, the peak speed (units a second) and the speed on tick 1, 6 and 12 after the press.
++##   godot --headless --path . --script res://sim/input/tools/lt_tap_probe.gd [-- --sep=3000] [--handover]
++
++const BH: float = 75.0
++const RELEASE: Array = [-1, 2, 4, 6, 7, 8, 12, 20, 0]   # -1: no LT at all (the stick alone), the control
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.clear_overrides()
++	var sep: float = 3000.0
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--sep="):
++			sep = float(a.substr(6))
++		elif a == "--handover":
++			var sw: Dictionary = SimInputData.timing["switches"]
++			sw["dashHandover"] = true
++			SimInputData.invalidate()
++	print("handover switch: %s ; separation %d" % [str(SimInputData.timing.get("switches", {}).get("dashHandover", "n/a")), int(sep)])
++	print("(the stick is held toward him the whole 60 ticks, so even a tap travels on at the plain flight speed: read the distance against the control row)")
++	print("released at | dash ticks | sprint ticks | travelled (bh) in 60 ticks | peak speed | speed at tick 1, 6, 12")
++	for r in RELEASE:
++		var o: Dictionary = _run(sep, r)
++		print("%11s | %10d | %12d | %26.2f | %10d | %d, %d, %d" % ["no LT" if r < 0 else ("held" if r == 0 else str(r)), o["dash"], o["sprint"], o["bh"], int(o["peak"]), int(o["v1"]), int(o["v6"]), int(o["v12"])])
++	quit(0)
++
++
++func _run(sep: float, release_at: int) -> Dictionary:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	var su: Dictionary = hub.setup()
++	su["intro"] = false
++	su["power"] = true
++	su["travel"] = 1.5
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	b.x = SimWrap.wrap(a.x + sep)
++	b.y = a.y
++	var quiet := SimIntent.new()
++	for t in range(30):
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		S.out.fx.clear()
++	for t in range(40):   # settle: nothing moves him
++		a.vx = 0.0
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		S.out.fx.clear()
++	var x0: float = a.x
++	var peak: float = 0.0
++	var dash: int = 0
++	var sprint: int = 0
++	var v: Dictionary = {}
++	hub.pad_stick(7, 1.0, 0.0)
++	if release_at >= 0:
++		hub.pad_trigger(7, "lt", 1.0)
++	for t in range(1, 61):
++		if release_at > 0 and t == release_at + 1:
++			hub.pad_trigger(7, "lt", 0.0)
++		var i: SimIntent = hub.intent(0)
++		if i.dash:
++			dash += 1
++		if i.sprint:
++			sprint += 1
++		SimCore.step(S, [i, quiet])
++		hub.consumed()
++		S.out.fx.clear()
++		peak = maxf(peak, absf(float(a.vx)))
++		v[t] = absf(float(a.vx))
++	var o := {"dash": dash, "sprint": sprint, "bh": absf(SimWrap.sdx(x0, a.x)) / BH, "peak": peak, "v1": v[1], "v6": v[6], "v12": v[12]}
++	SimCore.dispose(S)
++	return o
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index c89c837..547fff3 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -1012,6 +1012,10 @@
+           "type": "boolean",
+           "description": "Set together with the director's flickKeep (data/director/stick.json): the director holds a flick it cannot start yet, quietly, up to 90 ticks, so the hub waits strike.refuseTicksKept instead of strike.refuseTicks before it calls a stick request unanswered (docs/controls/flick-kept.md). Off: refuseTicks, as before."
+         },
++        "dashHandover": {
++          "type": "boolean",
++          "description": "LT's dash is on from the press tick and only while LT is held (docs/controls/dash-handover.md; Game Design's ruling of 2026-11-08, section c): the intent's dash is true on the press tick and stays true while the control is down (the stance still LT's), and ends the tick it is let go of. Before, a press gave a free 12-tick lunge (dodge.lungeTicks) whatever the release, so a tap was a 12-tick dash, which would be a leap once the dash is fast at any range. The sprint bit still starts at tapHold.holdStart. A tap is the slip (the dodge edge, unchanged). Off."
++        },
+         "chordPick": {
+           "type": "boolean",
+           "description": "Two attack presses on one tick (B with X or Y, or Y with X) are one blow, the biggest (signature over heavy over light), and the smaller is let go of and told with the refusal code chord (docs/controls/chord-pick.md). Before, the director took the light, then the heavy, then the signature, so a B pressed with an X was dropped with no word. Off."

@@ -1,0 +1,38 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 420bc9b8..b7c1963e 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -55,7 +55,7 @@
+     "swapLockout": 6,
+     "swapReverseLockout": 8,
+     "queueDepth": 3,
+-    "queueTicks": 36,
++    "queueTicks": 20,
+     "style": "hold",
+     "mirror": "auto",
+     "freeR3": true,
+diff --git a/sim/input/test/strike_gate_test.gd b/sim/input/test/strike_gate_test.gd
+index 1db60f0d..fbd5f81f 100644
+--- a/sim/input/test/strike_gate_test.gd
++++ b/sim/input/test/strike_gate_test.gd
+@@ -257,8 +257,19 @@ func _row_k() -> void:
+ 	# A press made early in a long charge expires; one made late goes out.
+ 	var evs2: Array = [[10, "rs", "", 1.0, 0.0], [90, "rs", "", 0.0, 0.0], [20, "b", "west", true], [22, "b", "west", false], [80, "b", "north", true], [82, "b", "north", false]]
+ 	var its2: Array = _run(_pad(), evs2, 140)
+-	ok(_face_tick(its2, "X") < 0, "K: a press made at tick 20 of an 80-tick charge has expired by the throw (36 ticks)")
++	ok(_face_tick(its2, "X") < 0, "K: a press made at tick 20 of an 80-tick charge has expired by the throw")
+ 	ok(_face_tick(its2, "Y") >= _first(its2, "rsRelease") + L, "K: a press made late in the charge goes out after the throw + L")
++	# The queue's life (strike.queueTicks, 20): a press goes out if it is at most that old when the stick is quiet, and expires one tick later. A press made during a quick flick is never lost.
++	var qt: int = int(SimInputData.t(["strike", "queueTicks"], 36))
++	var base: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [60, "rs", "", 0.0, 0.0]], 140)
++	var go: int = _first(base, "rsRelease") + L
++	var edge_ok: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [60, "rs", "", 0.0, 0.0], [go - qt, "b", "west", true], [go - qt + 2, "b", "west", false]], 140)
++	var edge_late: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [60, "rs", "", 0.0, 0.0], [go - qt - 1, "b", "west", true], [go - qt + 1, "b", "west", false]], 140)
++	ok(_face_tick(edge_ok, "X") >= go, "K: a press exactly queueTicks (%d) old when the stick is quiet goes out (at %d)" % [qt, _face_tick(edge_ok, "X")])
++	ok(_face_tick(edge_late, "X") < 0, "K: one tick older has expired")
++	# a press at the start of a quick flick (stick out 11 ticks, under the dwell) is at most dwell + settle + L old: never lost
++	var quick: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [21, "rs", "", 0.0, 0.0], [11, "b", "west", true], [13, "b", "west", false]], 100)
++	ok(_face_tick(quick, "X") >= 0, "K: a press made at the start of a quick flick (stick out 11 ticks) is not lost (goes out at %d)" % _face_tick(quick, "X"))
+ 
+ 
+ # ---- L --------------------------------------------------------------------------------------------------------

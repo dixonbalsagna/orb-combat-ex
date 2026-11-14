@@ -1,0 +1,171 @@
+diff --git a/sim/input/test/stray_beams_input_test.gd b/sim/input/test/stray_beams_input_test.gd
+new file mode 100644
+index 0000000..88478c5
+--- /dev/null
++++ b/sim/input/test/stray_beams_input_test.gd
+@@ -0,0 +1,158 @@
++extends SceneTree
++## Headless checks, through the real hub, for the two stray beams of Orb's 9 November play (Encounter's park docs/director/pending/stray-beams/; A-COMBAT-05 and A-COMBAT-11; Controls' acceptance item 6):
++##  1. RT + B at the last tick of its window and one tick after (switches bNoBeam and bNoBeamKeepRt on, tapHold.holdStart 12): from a pad the layout makes RT a charge on its 12th tick (the intent's `charge` bit, tick 11 from the press),
++##     so B pressed 0 to 11 ticks after RT's press is the signature (11 is the last tick of the window) and B 12 ticks after (one tick after) is the heavy, B never beams; and after a brawl has begun with RT still held
++##     (Orb's tick 6617: RT, a blow, B 26 ticks later) B is the heavy. (Encounter's own check feeds intents with no charge bit and counts the window to 12 ticks; a pad cannot reach that last tick.)
++##  2. A stick beam let go of that cannot start (its target is held, so the release waits) is dropped by a face press made after the release (ownMove.dropOnPress): no beam comes, the cue is stick_refused beam replaced;
++##     with nothing pressed it still fires once the target is free.
++## It needs Encounter's `stray-beams.diff` applied (its brawl.gd window and dropOnPress); on a tree without it the rows marked (fix) fail, which is the control. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/stray_beams_input_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = true
++	sw["signatureRtOnly"] = true
++	sw["bNoBeam"] = true
++	sw["bNoBeamKeepRt"] = true
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++	_window()
++	_released()
++	SimInputData.pin_switches_off()
++	print("stray_beams_input_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _fresh(hub: SimInputHub, dist: float) -> SimState:
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	var su: Dictionary = hub.setup()
++	su["intro"] = false
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
++	S.fighters[1].x = SimWrap.wrap(S.fighters[0].x + dist)
++	S.fighters[1].y = S.fighters[0].y
++	var quiet := SimIntent.new()
++	for t in range(30):
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		S.out.fx.clear()
++	return S
++
++
++## One tick: the pad's intent into the sim, the names of slot 0's cues (and the brawl) into `seen`.
++func _tick(S: SimState, hub: SimInputHub, seen: Dictionary) -> void:
++	SimCore.step(S, [hub.intent(0), SimIntent.new()])
++	hub.consumed()
++	for e in S.out.fx:
++		if String(e.type) == "cue":
++			var nm: String = String(e.kind)
++			if nm == "stick_refused" and int(e.actor) == 0:
++				seen["refused:" + String(e.source)] = true
++			elif int(e.actor) == 0:
++				seen[nm] = true
++	S.out.fx.clear()
++	S.out.feed.clear()
++
++
++func _beam(seen: Dictionary) -> bool:
++	return seen.has("beam_fire") or seen.has("beam_charge") or seen.has("beam_stage")
++
++
++## RT pressed at once, B `lead` ticks later (a tap of 3), 120 ticks in all. `blow_first`: an X tap on the tick after RT begins a brawl first, as in Orb's 6617.
++func _rt_b(lead: int, blow_first: bool) -> Dictionary:
++	var hub := SimInputHub.new()
++	var S := _fresh(hub, 212.0)
++	var seen: Dictionary = {}
++	hub.pad_trigger(7, "rt", 1.0)
++	for t in range(0, 120):
++		if blow_first and t == 1:
++			hub.pad_button(7, "west", true)
++		if blow_first and t == 4:
++			hub.pad_button(7, "west", false)
++		if t == lead:
++			hub.pad_button(7, "east", true)
++		if t == lead + 3:
++			hub.pad_button(7, "east", false)
++		_tick(S, hub, seen)
++	SimCore.dispose(S)
++	return seen
++
++
++func _window() -> void:
++	var hs: int = SimInputData.ti(["tapHold", "holdStart"], 12)
++	ok(hs == 12, "window: tapHold.holdStart is 12")
++	# lead 0 is B on RT's own tick: the pad's chord. The press is read the tick after the one it was made on, so `lead` counts ticks from RT's press.
++	for lead in [0, 1, hs - 1]:
++		var s: Dictionary = _rt_b(lead, false)
++		ok(_beam(s), "window: RT, then B %d ticks later (inside the window; %d is its last tick from a pad) is still the signature: %s" % [lead, hs - 1, str(s.keys())])
++	for lead in [hs, hs + 1]:
++		var after: Dictionary = _rt_b(lead, false)
++		ok(not _beam(after), "window: RT, then B %d ticks later (%s) is the heavy, no beam: %s" % [lead, "one tick after the window" if lead == hs else "two after", str(after.keys())])
++	# Orb's 6617: RT, a blow begins a brawl, B 26 ticks after RT while RT is still held
++	var brawl: Dictionary = _rt_b(26, true)
++	ok(brawl.has("brawl_start") or brawl.has("blow"), "window: the setup begins a brawl before B (a blow or brawl_start is seen): %s" % str(brawl.keys()))
++	ok(not _beam(brawl), "window (fix): in a brawl, RT held, B 26 ticks after RT is the heavy: no signature (Orb's 6617): %s" % str(brawl.keys()))
++
++
++## A stage 1 stick hold, let go while the target is held: it waits. `press` (north: Y, east: B, "": nothing) is pressed 8 ticks after the release.
++func _release_wait(press: String, drop_on_press: bool) -> Dictionary:
++	var om: Dictionary = DirBeamMove.cfg()
++	var was = om.get("dropOnPress", false)
++	om["dropOnPress"] = drop_on_press
++	DirStick.setForce(1)
++	DirBeamPlay.setFrontForce(1)
++	DirBeamMove.setForce(1)
++	var hub := SimInputHub.new()
++	var S := _fresh(hub, 1200.0)
++	var seen: Dictionary = {}
++	hub.pad_button(7, "rb", true)
++	hub.pad_stick_right(7, 1.0, 0.0)
++	for t in range(31):
++		_tick(S, hub, seen)
++	S.fighters[1].stunTicks = 40   # his target held: the release waits on the gate
++	hub.pad_stick_right(7, 0.0, 0.0)
++	_tick(S, hub, seen)
++	var waiting: bool = DirBeamMove.pending(S.fighters[0])
++	var after: Dictionary = {}
++	for t in range(110):
++		if t == 7 and press != "":
++			hub.pad_button(7, press, true)
++		if t == 10 and press != "":
++			hub.pad_button(7, press, false)
++		_tick(S, hub, after)
++	DirBeamMove.setForce(-1)
++	DirBeamPlay.setFrontForce(-1)
++	DirStick.setForce(-1)
++	om["dropOnPress"] = was
++	SimCore.dispose(S)
++	after["_waiting"] = waiting
++	return after
++
++
++func _released() -> void:
++	var drop: Dictionary = _release_wait("north", true)
++	ok(drop["_waiting"], "released: the stage 1 release waits for its target (the lit hand holds)")
++	ok(drop.has("refused:replaced") and not _beam(drop), "released (fix): a Y press made 8 ticks after the release drops the waiting beam (stick_refused beam replaced), no beam comes: %s" % str(drop.keys()))
++	var none: Dictionary = _release_wait("", true)
++	ok(none["_waiting"] and _beam(none) and not none.has("refused:replaced"), "released: with nothing pressed it still fires once the target is free: %s" % str(none.keys()))
++	var off: Dictionary = _release_wait("north", false)
++	ok(off["_waiting"] and not off.has("refused:replaced"), "released (control, dropOnPress off): the Y press drops nothing, as before: %s" % str(off.keys()))
+diff --git a/sim/input/test/stray_beams_input_test.gd.uid b/sim/input/test/stray_beams_input_test.gd.uid
+new file mode 100644
+index 0000000..316b2ad
+--- /dev/null
++++ b/sim/input/test/stray_beams_input_test.gd.uid
+@@ -0,0 +1 @@
++uid://wot1ivjj5223

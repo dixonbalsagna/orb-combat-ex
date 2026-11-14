@@ -1,0 +1,19 @@
+Negative control: haptics.gd and hub.gd put back to HEAD (592a807b), charge_lost_test run on the patched tree otherwise.
+
+FAIL  on: a heavy's wind-up stopped by a blow (k 2) is charge_broken on the charger's pad: []
+FAIL  on: lost to a stagger or the brawl's end (k 3) is charge_lapsed, on slot 1's pad: []
+FAIL  on: charge_broken is a code with its word
+FAIL  on: charge_lapsed is a code with its word
+FAIL  on: hold_short is a code with its word
+FAIL  on: and the three words differ
+FAIL  on: a stick_refused 'hit' (a blow took the charge) is charge_broken, even with hapticImpact on: []
+FAIL  on: a stick_refused 'taken' (a blow took the charge) is charge_broken, even with hapticImpact on: [{ "slot": 0, "kind": "stick_refused", "scale": 1.0, "reason": "hi
+FAIL  plan: charge_broken plays inside the slot gap of the thud that came with it (and replaces it): {  }
+FAIL  plan: so does charge_lapsed
+FAIL  plan: and 400 ms later it plays
+FAIL  hold: an 8-tick hold let go of before stage 1 taps once, one row, code hold_short: { "kinds": [], "rows": [], "start": true }
+FAIL  hold: and a 10-tick hold the same: { "kinds": [], "rows": [], "start": true }
+FAIL  hold: held 5 ticks is a flick and says nothing; held 6 (the data's least) is told: { "kinds": [], "rows": [], "start": true } / { "kinds": [], "rows": [], "start": 
+FAIL  hold: with RB held (a quick beam let go early) the same: { "kinds": [], "rows": [], "start": true }
+FAIL  hold: one tap per hold, and a fresh hub has no rows
+charge_lost_test: 37 checks, 16 failed

@@ -1,0 +1,565 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index fe8bfad..988f27c 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -50,6 +50,7 @@
+     "driverOnRb": false,
+     "stallKeep": false,
+     "hapticImpact": false,
++    "dodgeHeld": false,
+     "webRumble": false
+   },
+   "strike": {
+diff --git a/docs/net/rollback.md b/docs/net/rollback.md
+index 2690ba6..a61559e 100644
+--- a/docs/net/rollback.md
++++ b/docs/net/rollback.md
+@@ -371,11 +371,11 @@ In both, every confirmed tick from the decision to 60 ticks after the swap is co
+ 
+ ## 14. The intent's second word
+ 
+-The right-hand attacks add a second packed word (`SimIntent.pack2`, 26 bits, behind `switches.rightStick`), because the first word has no room. It travels beside the first, tick for tick.
++The right-hand attacks add a second packed word (`SimIntent.pack2`, 27 bits, behind `switches.rightStick`), because the first word has no room. It travels beside the first, tick for tick.
+ 
+ - **In the session.** `advance(p, w)` and `addInput(k, t, p, w)` take it, `words` holds it only where it isn't 0, and a tick's `usedW` keeps what it ran with. A late word that differs rolls back even when the first word agrees.
+-- **A prediction** (`predictWord`) keeps a strike being held: `rsHeld`, `rsDir`, `rsLevel`, `rsMask`, `rsAim`. It drops the edges (`rsStart`, `rsRelease`, `rsCancel`, `rsLag`, `brace`, `braceDir`). Once `rsHeld` is off, the word was a throw's or a cancel's last tick, and the next is 0, because the layout writes nothing with no strike active. A held strike's level and aim steps are mispredictions, as a press is.
+-- **On the wire.** A packet with any word that isn't 0 is kind byte 3: one u32 per input, right after the inputs, so 4 bytes an unacknowledged input in that packet only. A packet with none is kind 1, the bytes it always was. A word past 26 bits is refused.
++- **A prediction** (`predictWord`) keeps a strike being held: `rsHeld`, `rsDir`, `rsLevel`, `rsMask`, `rsAim`, and `dodgeHeld` (bit 26, LT down; behind `switches.dodgeHeld`), which it keeps with or without a strike. It drops the edges (`rsStart`, `rsRelease`, `rsCancel`, `rsLag`, `brace`, `braceDir`). Once `rsHeld` is off, the word was a throw's or a cancel's last tick, and the next is 0, because the layout writes nothing with no strike active. A held strike's level and aim steps are mispredictions, as a press is.
++- **On the wire.** A packet with any word that isn't 0 is kind byte 3: one u32 per input, right after the inputs, so 4 bytes an unacknowledged input in that packet only. A packet with none is kind 1, the bytes it always was. A word past 27 bits is refused.
+ - **Spectators** get the words in the relay's packet.
+ - **The digest** reads `pack2` of each fighter's intent with the switch on. The sim doesn't read the word yet, so nothing else would show a lost one. With the switch off, a digest is what it always was.
+ - **A desync report's replay** uses `SimReplay`'s fifth number, and `replayState` reads it.
+diff --git a/net/bot.gd b/net/bot.gd
+index ae4f334..63bd0d5 100644
+--- a/net/bot.gd
++++ b/net/bot.gd
+@@ -53,6 +53,15 @@ static func setRightStick(on: bool) -> void:
+ 	SimInputData.invalidate()
+ 
+ 
++## --dodge-held (docs/controls/dodge-held.md): the bots also hold LT in runs (the word's bit 26), so a check carries it on the wire, in every hash and through every rollback. Needs the right stick on.
++static func setDodgeHeld(on: bool) -> void:
++	SimInputData.ensure()
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["dodgeHeld"] = on
++	SimInputData.timing["switches"] = sw
++	SimInputData.invalidate()
++
++
+ ## The packed intent for the next tick.
+ func next() -> int:
+ 	tick += 1
+@@ -191,4 +200,6 @@ func _word() -> int:
+ 	if r2.next() < 0.004:
+ 		i.brace = true
+ 		i.braceDir = 1 + int(floor(r2.next() * 4.0))
++	if SimInputData.dodge_held_on():
++		i.dodgeHeld = (tick / 17) % 3 == 1   # LT held for 17 ticks in every 51, from the bot's own tick: no stream of its own, so the other words are as they were
+ 	return SimIntent.pack2(i)
+diff --git a/net/session.gd b/net/session.gd
+index e54e4b8..db5e791 100644
+--- a/net/session.gd
++++ b/net/session.gd
+@@ -32,6 +32,8 @@ const EDGE_MASK: int = (3 << 18) | (7 << 20) | (1 << 24) | (1 << 25) | (1 << 28)
+ ## The second word's held fields (SimIntent.pack2's layout): rsHeld, rsDir, rsLevel, rsMask, rsAim. A prediction keeps them while rsHeld is on; once it is off the
+ ## word was a throw's or a cancel's last tick, and the next is 0 (the layout writes nothing of it with no strike active).
+ const WORD_HELD: int = 1 | (7 << 4) | (3 << 7) | (15 << 9) | (31 << 13)
++## LT held (dodgeHeld, bit 26): a held state like the first word's held fields, so a prediction keeps it with or without a strike (a player who holds LT keeps holding it).
++const WORD_DODGE_HELD: int = 1 << 26
+ const NEVER: int = 0x3FFFFFFF   # a slot's contig once the AI plays it: it needs no more inputs (contig is 32-bit)
+ 
+ var S: SimState
+@@ -238,7 +240,8 @@ func wordFor(k: int, t: int) -> int:
+ 
+ ## What a prediction makes of a slot's last confirmed second word.
+ static func predictWord(w: int) -> int:
+-	return w & WORD_HELD if (w & 1) != 0 else 0
++	var keep: int = w & WORD_DODGE_HELD
++	return (w & WORD_HELD) | keep if (w & 1) != 0 else keep
+ 
+ 
+ ## The intent a packed pair stands for: what every run of a tick, a spectator and a straight run step the sim with.
+diff --git a/net/tools/rollback_check.gd b/net/tools/rollback_check.gd
+index 56af345..5280e4e 100644
+--- a/net/tools/rollback_check.gd
++++ b/net/tools/rollback_check.gd
+@@ -165,6 +165,9 @@ func _init() -> void:
+ 			sparse = maxi(1, int(a.substr(9)))
+ 		elif a == "--right-stick":
+ 			NetBot.setRightStick(true)
++		elif a == "--dodge-held":
++			NetBot.setRightStick(true)
++			NetBot.setDodgeHeld(true)
+ 		elif a == "--negative-control":
+ 			sabotage = "on"
+ 		elif a == "--ai" or a == "--ai=sim":
+diff --git a/net/tools/word_check.gd b/net/tools/word_check.gd
+index 7054282..30794c3 100644
+--- a/net/tools/word_check.gd
++++ b/net/tools/word_check.gd
+@@ -100,7 +100,7 @@ func wire() -> void:
+ 	var dp = NetTransport.decode(plain)
+ 	ok(dp != null and not dp.has("words"), "a packet without a word comes back without one")
+ 	var withW: Dictionary = pk.duplicate()
+-	var w0: int = (1 << 26) - 1
++	var w0: int = (1 << SimIntent.BITS2) - 1
+ 	withW["words"] = PackedInt32Array([0, w0])
+ 	var b: PackedByteArray = NetTransport.encode(withW)
+ 	ok(b[0] == 3 and b.size() == plain.size() + 8, "a packet with a word: kind 3, 4 bytes an input (%d, %d)" % [b[0], b.size()])
+@@ -111,15 +111,15 @@ func wire() -> void:
+ 	var da = NetTransport.decode(NetTransport.encode(withAi))
+ 	ok(da != null and da.words == withW.words and da.ai == [[1, 44]], "words and a takeover in one packet")
+ 	var high: PackedByteArray = b.duplicate()
+-	high[1 + 1 + 4 + 4 + 4 + 1 + 16 + 4 + 3] = 0x04   # the second word's top byte: bit 26
+-	ok(NetTransport.decode(high) == null, "a word past 26 bits on the wire is refused")
++	high[1 + 1 + 4 + 4 + 4 + 1 + 16 + 4 + 3] = 0x08   # the second word's top byte: bit 27
++	ok(NetTransport.decode(high) == null, "a word past 27 bits on the wire is refused")
+ 	ok(NetTransport.decode(b.slice(0, b.size() - 30)) == null, "a truncated kind 3 packet is refused")
+ 	var kind1: PackedByteArray = b.duplicate()
+ 	kind1[0] = 1
+ 	ok(NetTransport.decode(kind1) == null, "kind 1 with kind 3's body is refused")
+ 	var over: Dictionary = pk.duplicate()
+-	over["words"] = PackedInt32Array([0, 1 << 26])
+-	ok(NetTransport.encode(over)[0] == 2, "a word past 26 bits isn't a game packet")
++	over["words"] = PackedInt32Array([0, 1 << SimIntent.BITS2])
++	ok(NetTransport.encode(over)[0] == 2, "a word past 27 bits isn't a game packet")
+ 	var short: Dictionary = pk.duplicate()
+ 	short["words"] = PackedInt32Array([1])
+ 	ok(NetTransport.encode(short)[0] == 2, "words and inputs of different lengths aren't a game packet")
+@@ -146,6 +146,21 @@ func prediction() -> void:
+ 	i.rsHeld = false
+ 	ok(NetSession.predictWord(SimIntent.pack2(i)) == 0, "after a throw's last tick, the next is 0")
+ 	ok(NetSession.predictWord(0) == 0, "no word predicts no word")
++	var d := SimIntent.new()
++	d.dodgeHeld = true
++	ok(NetSession.predictWord(SimIntent.pack2(d)) == SimIntent.pack2(d) and SimIntent.pack2(d) == (1 << 26), "LT held with no strike is bit 26 and a prediction keeps it")
++	d.rsHeld = true
++	d.rsDir = 4
++	d.rsStart = true
++	d.rsLag = 3
++	var dp: int = NetSession.predictWord(SimIntent.pack2(d))
++	var dq := SimIntent.new()
++	SimIntent.unpack2(dp, dq)
++	ok(dq.dodgeHeld and dq.rsHeld and dq.rsDir == 4 and not dq.rsStart and dq.rsLag == 0, "with a strike held a prediction keeps LT held and the strike's held fields and drops its edges")
++	d.rsHeld = false
++	d.rsStart = false
++	d.rsLag = 0
++	ok(NetSession.predictWord(SimIntent.pack2(d)) == (1 << 26), "after the strike's last tick LT held is still predicted, the rest is 0")
+ 	var S := SimCore.createSim()
+ 	SimCore.newMatch(S, SEED, {"p1": false, "p2": false}, {})
+ 	var sess := NetSession.new(S, 0, DELAY)
+diff --git a/sim/core/replay.gd b/sim/core/replay.gd
+index a4d3e25..b0079cb 100644
+--- a/sim/core/replay.gd
++++ b/sim/core/replay.gd
+@@ -12,7 +12,7 @@ extends RefCounted
+ ##                integer for the whole record, written as two numbers (split: its low 32 bits, and the bits above
+ ##                them), because a JSON number is exact only below 2^53 and the record may grow past that. Both are null
+ ##                for no intent. With switches.rightStick on, an entry whose second word is not 0 carries it as a fifth number
+-##                (SimIntent.pack2, 26 bits), and the header's data says the switch was on. Off, no entry has one.
++##                (SimIntent.pack2, 27 bits), and the header's data says the switch was on. Off, no entry has one.
+ ##   toggles      [tick, slot]: toggleAI before that tick
+ ##   checkpoints  [tick, gameplay hash] every CHECK_EVERY ticks; final: the gameplay hash at the end
+ ## Intents, not raw keys, are recorded, so a replay does not depend on the key mapping or the layout. The recorder steps
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index 64aa801..797d554 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -213,6 +213,12 @@ static func quick_on() -> bool:
+ 	return right_stick_on() and bool(t(["switches", "quickRead"], false))
+ 
+ 
++## LT held, in the second word (docs/controls/dodge-held.md; switches.dodgeHeld, off): the intent says whether the dodge control is physically down this tick, so the flight strike's take-back can ask
++## "LT still held at the face press". Needs the right-hand switch (the second word is its); off, every record is the one it always was.
++static func dodge_held_on() -> bool:
++	return right_stick_on() and bool(t(["switches", "dodgeHeld"], false))
++
++
+ ## No input lost in a stall (docs/controls/stall-keep.md; switches.stallKeep, off): when the page hitches, several steps read the one pad snapshot the events left, so a flick that rose and fell between two
+ ## steps was never seen. With it on the layout keeps the strike stick's furthest point (and a strike key's press) since its last build and reads it once.
+ ## Needs the right-hand switch; off, every record is the one it always was.
+diff --git a/sim/input/intent.gd b/sim/input/intent.gd
+index f880612..212c850 100644
+--- a/sim/input/intent.gd
++++ b/sim/input/intent.gd
+@@ -16,7 +16,7 @@ const VERSION: int = 4
+ ## pack(): bit widths, least significant first.
+ const BITS: int = 53
+ ## pack2(): the second word's width.
+-const BITS2: int = 26
++const BITS2: int = 27
+ 
+ var mx: float = 0.0          # the stick, -1 to 1; canonical values are k / 127 (canon())
+ var my: float = 0.0
+@@ -50,7 +50,7 @@ var stanceMask: int = 0
+ var contextHeld: bool = false   # held: a Context button is down (A's hold: the martial channel, the zip tackle). Bit 51
+ var sigHeld: bool = false       # held: a Signature button is down, on any layer (B's held reading). Bit 52
+ ## The second word (switches.rightStick, off): the right stick's strike and the left hand's brace (docs/controls/right-hand-attacks.md section 1,
+-## sim/input/strike_read.gd). All neutral while the switch is off, and pack() does not carry them: pack2() does, in 26 bits of its own, so a
++## sim/input/strike_read.gd). All neutral while the switch is off, and pack() does not carry them: pack2() does, in 27 bits of its own, so a
+ ## replay recorded with the switch off is the same integer it always was. Directions are SCREEN directions (1 up, 2 down, 3 left, 4 right); the
+ ## director turns them into toward and away with the fighter's facing at the throw.
+ var rsHeld: bool = false     # held: a strike is in the sim's hands (from its start until it is thrown or cancelled)
+@@ -64,6 +64,7 @@ var rsAim: int = 0           # the stick's sector now, 0 to 31 (the beam's sweep
+ var rsLag: int = 0           # 0 to 15: ticks the oldest strike edge waited, because the sim was frozen
+ var brace: bool = false      # edge: LB and a left flick set a read (the old v2 read, on the left thumb)
+ var braceDir: int = 0        # which read: 1 up (his heavy), 2 down (his flurry), 3 and 4 the two sides (his grab / his shot, by facing)
++var dodgeHeld: bool = false  # held: the dodge control (LT) is physically down this tick (switches.dodgeHeld, off); the flight strike's take-back needs LT still held at the face press (Game Design, playable-build.md section 1)
+ # Today's fields, until I3:
+ var dash: bool = false
+ var charge: bool = false
+@@ -115,6 +116,7 @@ static func clear2(i: SimIntent) -> void:
+ 	i.rsLag = 0
+ 	i.brace = false
+ 	i.braceDir = 0
++	i.dodgeHeld = false
+ 
+ 
+ ## Overwrite every field of dst from src, as humanInput overwrote f.in for a human fighter.
+@@ -157,6 +159,7 @@ static func applyIntent(dst: SimIntent, src: SimIntent) -> void:
+ 	dst.rsLag = src.rsLag
+ 	dst.brace = src.brace
+ 	dst.braceDir = src.braceDir
++	dst.dodgeHeld = src.dodgeHeld
+ 
+ 
+ ## The whole record as one integer (53 bits; the sim keeps it as one integer and only the replay's JSON splits it): mx and my as 8 bits each (k + 127 for k / 127), mode + 1 in
+@@ -239,8 +242,8 @@ static func unpack(p: int) -> SimIntent:
+ 	return i
+ 
+ 
+-## The second word as one integer (26 bits): rsHeld, rsStart, rsRelease, rsCancel in bits 0 to 3, rsDir in 4 to 6, rsLevel in 7 and 8, rsMask in
+-## 9 to 12, rsAim in 13 to 17, rsLag in 18 to 21, brace in 22, braceDir in 23 to 25. 0 for a record with none of it, which is every record while
++## The second word as one integer (27 bits): rsHeld, rsStart, rsRelease, rsCancel in bits 0 to 3, rsDir in 4 to 6, rsLevel in 7 and 8, rsMask in
++## 9 to 12, rsAim in 13 to 17, rsLag in 18 to 21, brace in 22, braceDir in 23 to 25, dodgeHeld in 26. 0 for a record with none of it, which is every record while
+ ## switches.rightStick is off.
+ static func pack2(i: SimIntent) -> int:
+ 	var p: int = 0
+@@ -260,6 +263,8 @@ static func pack2(i: SimIntent) -> int:
+ 	if i.brace:
+ 		p |= 1 << 22
+ 	p |= clampi(i.braceDir, 0, 4) << 23
++	if i.dodgeHeld:
++		p |= 1 << 26
+ 	return p
+ 
+ 
+@@ -282,6 +287,7 @@ static func unpack2(p: int, i: SimIntent) -> bool:
+ 	i.rsLag = (p >> 18) & 15
+ 	i.brace = ((p >> 22) & 1) != 0
+ 	i.braceDir = bd
++	i.dodgeHeld = ((p >> 26) & 1) != 0
+ 	return true
+ 
+ 
+diff --git a/sim/input/layout.gd b/sim/input/layout.gd
+index 4329214..66a52f3 100644
+--- a/sim/input/layout.gd
++++ b/sim/input/layout.gd
+@@ -118,6 +118,7 @@ var _brace_was: bool = false
+ var _brace_peak: Vector2 = Vector2.ZERO
+ var _brace_pending: bool = false    # a brace read (from the flick or the button) waits for a step to take it
+ var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
++var dodge_held: bool = false        # switches.dodgeHeld: the intent's dodgeHeld says the dodge control is physically down
+ var stall_keep: bool = false        # switches.stallKeep: keep the strike stick's furthest point between two builds (see _note_peak)
+ var _peak_rs: Vector2 = Vector2.ZERO    # the strike vector at its furthest, as the events reported it, since the last build
+ var _peak_pressed: bool = false         # a strike key was down at some moment since the last build
+@@ -184,6 +185,7 @@ func _init(p_preset: Dictionary = {}) -> void:
+ 	full_at = SimInputData.tf(["stick", "fullAt"], 0.9)
+ 	quant = float(SimInputData.ti(["stick", "quant"], 16))
+ 	stall_keep = SimInputData.stall_keep_on()
++	dodge_held = SimInputData.dodge_held_on()
+ 	trig_on = SimInputData.tf(["stick", "triggerOn"], 0.35)
+ 	trig_off = SimInputData.tf(["stick", "triggerOff"], 0.25)
+ 	if not p_preset.is_empty():
+@@ -1156,7 +1158,17 @@ func take_dropped() -> Array:
+ ## The right hand and the left hand's upgrades for one build (switches.rightStick). The order matters, and is the law: the left hand's guard or dodge
+ ## cancels a charge first; the faces are filtered by what the strike was BEFORE this build's step (so a face press on the crossing tick wins, K1); then
+ ## the strike steps with the law's floor (R after a face press) and the layer is this build's stance mask (K6).
++## Whether a control that is the dodge (LT, or a key) is physically down: the finger's own state, so a toggled dodge that is on with the finger up reads false, and a tap that came and went between two builds reads false.
++func _dodge_phys_down() -> bool:
++	for c in _held.get("dodge", []):
++		if _phys.get(c, false):
++			return true
++	return false
++
++
+ func _right_hand(i: SimIntent, mask: int) -> void:
++	if dodge_held:
++		i.dodgeHeld = _dodge_phys_down()
+ 	var digital: bool = (_stick_control == "")
+ 	var lv: Vector2 = Vector2(i.mx, i.my) if digital else _stick
+ 	if in_struggle:
+diff --git a/sim/input/test/dodge_held_test.gd b/sim/input/test/dodge_held_test.gd
+new file mode 100644
+index 0000000..c5bdfa5
+--- /dev/null
++++ b/sim/input/test/dodge_held_test.gd
+@@ -0,0 +1,245 @@
++extends SceneTree
++## Headless checks for the intent bit dodgeHeld (docs/controls/dodge-held.md; timing.json switches.dodgeHeld, off): the second word's bit 26 says the dodge control (LT) is physically down this tick, and Game Design's
++## ruling for the flight strike's take-back reads it: a face press within 4 ticks after LT, LT still held at the face press, never button-first, measured on the face edge the sim sees (after the strike law)
++## (docs/design/playable-build.md section 1). The word's pack, unpack, canon and width; the layout's reading (hold, tap, a tap that came and went between builds, a key, a toggled dodge, the swapped layout);
++## off writes nothing; and the claw check of the ruled rule. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/dodge_held_test.gd
++## Exit 0 if every check passes.
++
++const W: int = 4
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	_sw(true, true)
++	_word()
++	_reading()
++	_take_back()
++	_claw()
++	_sw(true, false)
++	_off()
++	print("dodge_held_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(right: bool, held: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	for k in ["quickRead", "beamAim", "hapticLadder", "hapticIncoming", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "stallKeep", "hapticImpact"]:
++		sw[k] = false
++	sw["rightStick"] = right
++	sw["dodgeHeld"] = held
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _pad(swapped: bool = false) -> SimLayout:
++	return SimLayout.new(SimInputData.preset(SimSwap.swapped_id("arena") if swapped else "arena"))
++
++
++func _word() -> void:
++	ok(SimIntent.BITS2 == 27, "word: the second word is 27 bits")
++	var i := SimIntent.new()
++	i.dodgeHeld = true
++	var p: int = SimIntent.pack2(i)
++	ok(p == (1 << 26), "word: LT held alone is bit 26 (%d)" % p)
++	var j := SimIntent.new()
++	ok(SimIntent.unpack2(p, j) and j.dodgeHeld and not j.rsHeld and not j.brace, "word: it unpacks to LT held and nothing else")
++	ok(SimIntent.pack2(j) == p, "word: and re-packs to the same integer")
++	ok(not SimIntent.unpack2(1 << SimIntent.BITS2, SimIntent.new()), "word: a bit above the word is refused")
++	# the old fields are where they were
++	var k := SimIntent.new()
++	k.rsHeld = true
++	k.rsDir = 4
++	k.rsLevel = 3
++	k.rsMask = 15
++	k.rsAim = 31
++	k.rsLag = 15
++	k.brace = true
++	k.braceDir = 4
++	var old: int = SimIntent.pack2(k)
++	k.dodgeHeld = true
++	ok(SimIntent.pack2(k) == old | (1 << 26), "word: the strike and brace fields are where they were; LT held adds only bit 26")
++	var c: SimIntent = SimIntent.canon(k)
++	ok(c.dodgeHeld and c.rsDir == 4 and c.rsAim == 31, "word: canon carries it")
++	var d := SimIntent.new()
++	SimIntent.applyIntent(d, k)
++	ok(d.dodgeHeld, "word: applyIntent copies it")
++	SimIntent.clear2(d)
++	ok(not d.dodgeHeld and SimIntent.pack2(d) == 0, "word: clear2 clears it")
++	# an old record (no bit 26) reads as LT not held
++	var o := SimIntent.new()
++	o.dodgeHeld = true
++	ok(SimIntent.unpack2(old, o) and not o.dodgeHeld, "word: a word recorded before the bit existed reads as LT not held")
++
++
++## Builds a layout through `evs` ([tick, kind, name, a]): returns per tick [dodge edge, dodgeHeld].
++func _stream(l: SimLayout, evs: Array, n: int, swapped: bool = false) -> Array:
++	var out: Array = []
++	for t in range(n):
++		for e in evs:
++			if int(e[0]) == t:
++				var c: String = "pad:" + str(e[2])
++				if swapped:
++					c = SimSwap.control(c)
++				match str(e[1]):
++					"t":
++						l.analog(c, float(e[3]))
++					"b":
++						if bool(e[3]):
++							l.press(c)
++						else:
++							l.release(c)
++					"k":
++						if bool(e[3]):
++							l.press("kb:" + str(e[2]))
++						else:
++							l.release("kb:" + str(e[2]))
++		var i: SimIntent = l.build()
++		out.append([i.dodge, i.dodgeHeld, SimIntent.pack2(SimIntent.canon(i))])
++		l.consumed()
++	return out
++
++
++func _reading() -> void:
++	var s: Array = _stream(_pad(), [[10, "t", "lt", 1.0], [20, "t", "lt", 0.0]], 30)
++	ok(not s[9][1] and s[10][0] and s[10][1], "reading: on LT's press tick the dodge edge and dodgeHeld are both on")
++	var held: bool = true
++	for t in range(10, 20):
++		held = held and s[t][1]
++	ok(held and not s[11][0], "reading: dodgeHeld stays on every tick LT is down, the edge only on the first")
++	ok(not s[20][1] and not s[25][1], "reading: and is off on the tick after the release")
++	ok(s[10][2] & (1 << 26) != 0 and s[9][2] == 0 and s[20][2] == 0, "reading: the packed word carries it, and is 0 when LT is up (a clean record)")
++	# a tap that came and went between two builds: the edge is there, LT is not held
++	var l: SimLayout = _pad()
++	for t in range(3):
++		l.build()
++		l.consumed()
++	l.analog("pad:lt", 1.0)
++	l.analog("pad:lt", 0.0)
++	var i: SimIntent = l.build()
++	ok(i.dodge and not i.dodgeHeld, "reading: a tap that came and went before the build is a dodge edge with LT not held")
++	# a key
++	var k: Array = _stream(SimLayout.new(SimInputData.preset("kb-solo")), [[10, "k", "Space", true], [20, "k", "Space", false]], 30)
++	ok(k[10][1] and k[15][1] and not k[20][1], "reading: the keyboard's dodge key reads the same")
++	# a toggled dodge: the finger's own state, so the toggle being on with the finger up is not held
++	var tl: SimLayout = _pad()
++	tl.set_hold_style("dodge", "toggle")
++	var t2: Array = _stream(tl, [[10, "t", "lt", 1.0], [14, "t", "lt", 0.0]], 24)
++	ok(t2[10][1] and t2[12][1] and not t2[15][1], "reading: a toggled dodge is read by the finger: down while pressed, not once let go though the toggle is on")
++	# the swapped layout: the dodge control is on the other hand's trigger
++	var sw: Array = _stream(_pad(true), [[10, "t", "lt", 1.0], [20, "t", "lt", 0.0]], 30, true)
++	ok(sw[10][1] and sw[15][1] and not sw[20][1], "reading: the swapped layout reads its own dodge control")
++	# the rest of the intent is what it was: the same stream with the bit and without it, but for the bit
++	_sw(true, false)
++	var off: Array = _stream(_pad(), [[10, "t", "lt", 1.0], [20, "t", "lt", 0.0]], 30)
++	_sw(true, true)
++	var same: bool = true
++	for t in range(30):
++		if off[t][0] != s[t][0] or (off[t][2] | (1 << 26)) != (s[t][2] | (1 << 26)):
++			same = false
++	ok(same, "reading: with the switch on the intent differs from the switch-off stream by the bit alone")
++
++
++## The take-back as Game Design ruled it: the face edge (after the strike law) 0 to 4 ticks after the LT edge, with LT still held at the face press, never button-first.
++func _take_back_run(evs: Array, n: int = 80, swapped: bool = false) -> Dictionary:
++	var l: SimLayout = _pad(swapped)
++	var res: Dictionary = {"lt": -1, "face": -1, "held": false}
++	for t in range(n):
++		for e in evs:
++			if int(e[0]) == t:
++				var c: String = "pad:" + ("rs" if str(e[1]) == "rs" else str(e[2]))
++				if swapped:
++					c = SimSwap.control(c)
++				match str(e[1]):
++					"t":
++						l.analog(c, float(e[3]))
++					"b":
++						if bool(e[3]):
++							l.press(c)
++						else:
++							l.release(c)
++					"rs":
++						l.axis(c, float(e[3]), float(e[4]))
++		var i: SimIntent = l.build()
++		if i.dodge and res["lt"] < 0:
++			res["lt"] = t
++		if (i.light or i.heavy or i.sig) and res["face"] < 0:
++			res["face"] = t
++			res["held"] = i.dodgeHeld
++		l.consumed()
++	return res
++
++
++func _converted(r: Dictionary) -> bool:
++	return r["lt"] >= 0 and r["face"] >= 0 and r["face"] - r["lt"] >= 0 and r["face"] - r["lt"] <= W and bool(r["held"])
++
++
++func _take_back() -> void:
++	for g in range(0, 10):
++		var r: Dictionary = _take_back_run([[10, "t", "lt", 1.0], [10 + g, "b", "west", true], [11 + g, "b", "west", false]])
++		ok(_converted(r) == (g <= W), "ruled: LT held, the face press %d ticks after is %s" % [g, "a take-back" if g <= W else "too late (past 4)"])
++	# LT let go before the face press: not held at the press, so not a take-back, even inside the 4 ticks
++	var rel: Dictionary = _take_back_run([[10, "t", "lt", 1.0], [12, "t", "lt", 0.0], [13, "b", "west", true], [14, "b", "west", false]])
++	ok(rel["lt"] == 10 and rel["face"] == 13 and not rel["held"] and not _converted(rel), "ruled: LT let go on tick 12 and the face press on 13 (3 after the LT edge) is not a take-back: LT was not held")
++	var still: Dictionary = _take_back_run([[10, "t", "lt", 1.0], [11, "b", "west", true], [12, "b", "west", false], [14, "t", "lt", 0.0]])
++	ok(_converted(still), "ruled: LT let go after the face press does not matter (it was held at the press)")
++	# the face first: never a take-back, whatever the gap
++	for g in [1, 2, 3, 4, 8]:
++		var fr: Dictionary = _take_back_run([[10, "b", "west", true], [11, "b", "west", false], [10 + g, "t", "lt", 1.0]])
++		ok(not _converted(fr) and fr["face"] == 10, "ruled: the face press %d ticks before LT is never a take-back" % g)
++	# the same tick: LT held and the face press together
++	var same: Dictionary = _take_back_run([[10, "t", "lt", 1.0], [10, "b", "west", true], [11, "b", "west", false]])
++	ok(_converted(same) and same["face"] == 10 and same["held"], "ruled: LT and a face press on the same tick are a take-back, LT held on that tick")
++	# X, Y, B
++	for pair in [["west", "light"], ["north", "heavy"], ["east", "sig"]]:
++		var kr: Dictionary = _take_back_run([[10, "t", "lt", 1.0], [12, "b", pair[0], true], [13, "b", pair[0], false]])
++		ok(_converted(kr), "ruled: LT then %s (%s) within 4 is a take-back" % [pair[0], pair[1]])
++	# a face press held behind a strike stick waits, and is gone by the time LT's 4 ticks are
++	var busy: Dictionary = _take_back_run([[4, "rs", "", 1.0, 0.0], [10, "t", "lt", 1.0], [11, "b", "west", true], [12, "b", "west", false], [40, "rs", "", 0.0, 0.0]], 100)
++	ok(not _converted(busy), "ruled: a face press behind a held strike stick is not a take-back (it waits, then goes or is dropped)")
++	# the swapped layout
++	var a: Dictionary = _take_back_run([[10, "t", "lt", 1.0], [12, "b", "west", true], [13, "b", "west", false]], 80, false)
++	var b: Dictionary = _take_back_run([[10, "t", "lt", 1.0], [12, "b", "west", true], [13, "b", "west", false]], 80, true)
++	ok(_converted(a) and _converted(b) and a["face"] == b["face"], "ruled: the swapped layout takes it back on the same ticks")
++
++
++func _claw() -> void:
++	# The claw gate's three models for the face press after LT (0, 6, 13 ticks) and the take-back under the ruled rule: LT is the left index finger and the face button the right thumb, so there is no thumb
++	# transfer to save; what the strike law holds is the same for all three. A flick that ends on tick 12, LT on 14, the face press at 14 + g.
++	var out: Dictionary = {}
++	for m in [["CLAW", 0], ["FAST", 6], ["SLOW", 13]]:
++		var r: Dictionary = _take_back_run([[8, "rs", "", 1.0, 0.0], [12, "rs", "", 0.0, 0.0], [14, "t", "lt", 1.0], [14 + int(m[1]), "b", "west", true], [15 + int(m[1]), "b", "west", false]], 100)
++		out[m[0]] = [r["face"], _converted(r)]
++	ok(out["CLAW"][0] >= 12 + SimInputData.ti(["strike", "lockout"], 6), "claw: even a claw's face press after a flick waits the lockout L (tick %d)" % out["CLAW"][0])
++	ok(out["CLAW"][0] <= out["FAST"][0] and out["FAST"][0] <= out["SLOW"][0], "claw: the faster the thumb the earlier the press, never before the law's floor (%s)" % str(out))
++	var free: Dictionary = {}
++	for m in [["CLAW", 0], ["FAST", 2], ["SLOW", 6]]:
++		free[m[0]] = _converted(_take_back_run([[10, "t", "lt", 1.0], [10 + int(m[1]), "b", "west", true], [11 + int(m[1]), "b", "west", false]]))
++	ok(free["CLAW"] and free["FAST"] and not free["SLOW"], "claw: with the stick at rest a 0 or 2 tick bimanual gap is a take-back, a 6 tick one is not (%s): the window, not the grip, decides" % str(free))
++
++
++func _off() -> void:
++	var s: Array = _stream(_pad(), [[10, "t", "lt", 1.0], [20, "t", "lt", 0.0]], 30)
++	var any: bool = false
++	for t in range(30):
++		if s[t][1] or s[t][2] != 0:
++			any = true
++	ok(not any, "off: with the switch off dodgeHeld is never set and the second word is 0 (a record is what it always was)")
++	_sw(false, true)
++	var r: Array = _stream(_pad(), [[10, "t", "lt", 1.0], [20, "t", "lt", 0.0]], 30)
++	var any2: bool = false
++	for t in range(30):
++		if r[t][1] or r[t][2] != 0:
++			any2 = true
++	ok(not any2, "off: and with rightStick off nothing is written even with the switch on")
++	_sw(true, false)
+diff --git a/sim/input/test/dodge_held_test.gd.uid b/sim/input/test/dodge_held_test.gd.uid
+new file mode 100644
+index 0000000..7b57583
+--- /dev/null
++++ b/sim/input/test/dodge_held_test.gd.uid
+@@ -0,0 +1 @@
++uid://b7nubbfbh2bv7
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index 4d6d1fa..c5b2289 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -996,6 +996,10 @@
+           "type": "boolean",
+           "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
+         },
++        "dodgeHeld": {
++          "type": "boolean",
++          "description": "LT held, in the intent's second word, bit 26 (docs/controls/dodge-held.md; needs rightStick): the intent says whether the dodge control is physically down this tick, so the flight strike's take-back (a face press within 4 ticks of LT, LT still held) can be read. Off."
++        },
+         "hapticImpact": {
+           "type": "boolean",
+           "description": "Orb's 2026-10-05 rumble picks that were missing (docs/controls/impact-haptics.md): a landed blow felt by the one who landed it (blow_land) and by the one it hit (hit_taken), a close (close_surge), a launch felt by the one sent (launch_felt), a landing (landing_thud) and a building breaking (building_break, both pads). Independent of rightStick. Off."

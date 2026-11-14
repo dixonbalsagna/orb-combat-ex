@@ -1,0 +1,168 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 654e8b9..0eff4a9 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -50,6 +50,7 @@
+     "driverOnRb": false,
+     "flightStrikeB": false,
+     "chordPick": false,
++    "flickKept": false,
+     "stallKeep": true,
+     "hapticImpact": true,
+     "hapticStages": false,
+@@ -65,6 +66,7 @@
+     "settle": 2,
+     "settleQuick": 1,
+     "refuseTicks": 30,
++    "refuseTicksKept": 120,
+     "bufferTicks": 0,
+     "preAt": 0.25,
+     "aimTrail": 4,
+diff --git a/sim/input/hub.gd b/sim/input/hub.gd
+index bb806b0..5285afe 100644
+--- a/sim/input/hub.gd
++++ b/sim/input/hub.gd
+@@ -447,7 +447,7 @@ func take_refusals() -> Array:
+ 
+ 
+ func consumed() -> void:
+-	var refuse: int = SimInputData.ti(["strike", "refuseTicks"], 30)
++	var refuse: int = SimInputData.ti(["strike", "refuseTicksKept"], 120) if SimInputData.flick_kept_on() else SimInputData.ti(["strike", "refuseTicks"], 30)   # flickKept: the director holds a flick up to 90 ticks and says nothing while it does
+ 	for s in range(2):
+ 		if int(_stick_wait[s]) >= 0:
+ 			_stick_wait[s] += 1
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index 394f4f6..da63c90 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -197,6 +197,12 @@ static func flight_strike_b() -> bool:
+ 	return bool(t(["switches", "flightStrikeB"], false))
+ 
+ 
++## The director keeps a flick it cannot start yet (data/director/stick.json flickKeep, up to pendFollow.maxTicks = 90 ticks, with no cue while it waits), so the hub's wait for an answer is strike.refuseTicksKept (120)
++## and not refuseTicks (30), or the pad knocks "Didn't start" at 31 ticks and the held flick then fires anyway (docs/controls/flick-kept.md). Set together with flickKeep. switches.flickKept, off.
++static func flick_kept_on() -> bool:
++	return bool(t(["switches", "flickKept"], false))
++
++
+ ## Two attack presses on one tick are one blow, the biggest (docs/controls/chord-pick.md; switches.chordPick, off): B with X or Y, or Y with X, goes as the bigger press and the smaller is told "chord".
+ ## Independent of the right-hand switch (a keyboard chords too).
+ static func chord_pick_on() -> bool:
+@@ -258,7 +264,7 @@ static func haptic_impact_on() -> bool:
+ ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
+ static func pin_switches_off() -> void:
+ 	var sw: Dictionary = timing.get("switches", {})
+-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
++	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "flickKept", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+ 		sw[k] = false
+ 	timing["switches"] = sw
+ 	clear_overrides()
+diff --git a/sim/input/test/refusal_cue_test.gd b/sim/input/test/refusal_cue_test.gd
+index bcdebed..81bd86b 100644
+--- a/sim/input/test/refusal_cue_test.gd
++++ b/sim/input/test/refusal_cue_test.gd
+@@ -120,12 +120,76 @@ func _hub_run(answer: String) -> Array:
+ 	return [refusals, knocks]
+ 
+ 
++## switches.flickKept: the hub waits refuseTicksKept (120), above the director's 90-tick keep. Before the first knock it says nothing, so a held flick that fires at tick 60 is told nothing; one nothing ever
++## answers is still told, at 96. The director's own refusals (stick_refused, press_refused) end the wait at once, so their knocks do not move. Off, the wait is refuseTicks (30) as ever.
++func _kept() -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["flickKept"] = true
++	SimInputData.timing["switches"] = sw
++	SimInputData.invalidate()
++	var k: int = SimInputData.ti(["strike", "refuseTicksKept"], 120)
++	ok(k >= 91 and SimInputData.flick_kept_on(), "kept: refuseTicksKept is above the director's 90-tick keep (%d) and the switch reads on" % k)
++	var held: Array = _kept_run(60, "start")
++	ok((held[0] as Array).is_empty() and int(held[1]) == 0, "kept: a flick the director held for 60 ticks and then started is told nothing (no 'Didn't start'): %s" % str(held))
++	var late: Array = _kept_run(112, "start")
++	ok((late[0] as Array).is_empty() and int(late[1]) == 0, "kept: held 112 ticks, the longest answer the probe saw (113),  it is still told nothing: %s" % str(late))
++	var cue: Array = _kept_run(60, "stick_refused")
++	ok((cue[0] as Array).is_empty() and int(cue[1]) == 0, "kept: a refusal the director says at 60 is the director's knock alone, the hub adds none: %s" % str(cue))
++	var none: Array = _kept_run(-1, "")
++	ok((none[0] as Array).size() == 1 and str(none[0][0]["code"]) == "no_answer" and int(none[1]) == 1, "kept: a flick nothing ever answers is still told 'no answer', once: %s" % str(none))
++	ok(int(none[2]) >= 10 + k and int(none[2]) <= 10 + k + 6, "kept: ... at refuseTicksKept live ticks after the request (request about tick 12, told at %d)" % int(none[2]))
++	sw["flickKept"] = false
++	SimInputData.timing["switches"] = sw
++	SimInputData.invalidate()
++	var off: Array = _kept_run(-1, "")
++	var r: int = SimInputData.ti(["strike", "refuseTicks"], 30)
++	ok((off[0] as Array).size() == 1 and int(off[2]) >= 10 + r and int(off[2]) <= 10 + r + 6, "kept off (the control): the unanswered flick is told at refuseTicks = %d, told at %d: %s" % [r, int(off[2]), str(off)])
++	var held_off: Array = _kept_run(60, "start")
++	ok((held_off[0] as Array).size() == 1 and str(held_off[0][0]["code"]) == "no_answer", "kept off (the control): the same held flick is told 'Didn't start' at %d, then it fires anyway: %s" % [r, str(held_off)])
++
++
++## One flick on a pad through the hub (request at tick 10), answered by `answer` at `at` ticks after the request (-1: never); run 200 ticks. Returns [refusals, knocks, the tick of the first knock].
++func _kept_run(at: int, answer: String) -> Array:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	var refusals: Array = []
++	var knocks: int = 0
++	var first: int = -1
++	var req: int = -1
++	for t in range(200):
++		if t == 10:
++			hub.pad_stick_right(7, 1.0, 0.0)
++		if t == 14:
++			hub.pad_stick_right(7, 0.0, 0.0)
++		var i: SimIntent = hub.intent(0)
++		if i.rsStart and req < 0:
++			req = t
++		if req >= 0 and at >= 0 and t == req + at:
++			if answer == "start":
++				hub.note_stick_started(0)
++			else:
++				hub.note_press_answered(0)
++		for h in hub.take_haptics():
++			if str(h.get("kind", "")) == "stick_refused":
++				knocks += 1
++				if first < 0:
++					first = t
++		refusals.append_array(hub.take_refusals())
++		hub.consumed()
++	return [refusals, knocks, first]
++
++
+ func _hub() -> void:
+ 	var none: Array = _hub_run("")
+ 	ok((none[0] as Array).size() == 1 and str(none[0][0]["code"]) == "no_answer" and int(none[1]) == 1, "hub: an unanswered flick is one 'no answer' and one knock after refuseTicks (the control): %s" % str(none))
+ 	for a in ["start", "stick_refused", "press_refused"]:
+ 		var r: Array = _hub_run(a)
+ 		ok((r[0] as Array).is_empty() and int(r[1]) == 0, "hub: answered by %s, the hub's wait ends: no 'no answer', no second knock: %s" % [a, str(r)])
++	_kept()
+ 	# An answer for the other slot, or none, changes nothing for this one.
+ 	var hub := SimInputHub.new()
+ 	hub.note_press_answered(-1)
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index ed016b3..75a8e84 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -996,6 +996,10 @@
+           "type": "boolean",
+           "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
+         },
++        "flickKept": {
++          "type": "boolean",
++          "description": "Set together with the director's flickKeep (data/director/stick.json): the director holds a flick it cannot start yet, quietly, up to 90 ticks, so the hub waits strike.refuseTicksKept instead of strike.refuseTicks before it calls a stick request unanswered (docs/controls/flick-kept.md). Off: refuseTicks, as before."
++        },
+         "chordPick": {
+           "type": "boolean",
+           "description": "Two attack presses on one tick (B with X or Y, or Y with X) are one blow, the biggest (signature over heavy over light), and the smaller is let go of and told with the refusal code chord (docs/controls/chord-pick.md). Before, the director took the light, then the heavy, then the signature, so a B pressed with an X was dropped with no word. Off."
+@@ -1083,6 +1087,12 @@
+           "maximum": 120,
+           "description": "Live ticks a stick request may wait for the director to start its strike before the pad is told it was refused (30)."
+         },
++        "refuseTicksKept": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 240,
++          "description": "With switches.flickKept: the live ticks a stick request may wait before the pad is told it was unanswered (120: above the director's 90-tick keep, pendFollow.maxTicks, and the longest answer the probe saw, 113). Without the switch, refuseTicks."
++        },
+         "aimTrail": {
+           "type": "number",
+           "minimum": 0,

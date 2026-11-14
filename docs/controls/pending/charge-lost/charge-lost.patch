@@ -1,0 +1,451 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index a27ac17..5ade179 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -53,6 +53,7 @@
+     "dashHandover": false,
+     "flickKept": false,
+     "inertKnock": false,
++    "chargeLostCue": false,
+     "bNoBeam": false,
+     "bNoBeamKeepRt": false,
+     "stallKeep": true,
+@@ -88,7 +89,8 @@
+     "style": "hold",
+     "mirror": "auto",
+     "freeR3": true,
+-    "inertMasks": [3, 4]
++    "inertMasks": [3, 4],
++    "shortHoldTicks": 6
+   },
+   "leftHand": {
+     "_note": "The left hand's reads while switches.rightStick is on: LB and a left flick is a brace, LB and LT within vanishWindow ticks (either order) and a direction is the vanish (sends escape).",
+diff --git a/sim/input/haptics.gd b/sim/input/haptics.gd
+index f274bb9..e411b2f 100644
+--- a/sim/input/haptics.gd
++++ b/sim/input/haptics.gd
+@@ -161,6 +161,27 @@ const DEFAULTS: Dictionary = {
+ 		"handheld": [{"at": 0, "ms": 40}],
+ 		"gapMs": 300,
+ 	},
++	# A charge lost (docs/controls/charge-lost.md; switches.chargeLostCue). Low and chunky, no brighter than a thud (Orb), and none a flash of anything: the charger's pad only.
++	# The foe's blow took it: the thud of being hit, cut short, then two dying echoes (a held breath let out). `overrides`: it plays even inside the slot-wide gap of the hit_taken that came with it, and replaces it.
++	"charge_broken": {
++		"pad": [{"at": 0, "weak": 0.15, "strong": 0.9, "ms": 45}, {"at": 75, "weak": 0.0, "strong": 0.5, "ms": 30}, {"at": 125, "weak": 0.0, "strong": 0.25, "ms": 30}],
++		"handheld": [{"at": 0, "ms": 40}, {"at": 75, "ms": 20}, {"at": 125, "ms": 12}],
++		"gapMs": 300,
++		"overrides": true,
++	},
++	# Lost with nobody's blow on it, to a stagger or the brawl's end: no punch, a slow sag on the low motor.
++	"charge_lapsed": {
++		"pad": [{"at": 0, "weak": 0.0, "strong": 0.4, "ms": 60}, {"at": 80, "weak": 0.0, "strong": 0.2, "ms": 60}],
++		"handheld": [{"at": 0, "ms": 30}, {"at": 80, "ms": 25}],
++		"gapMs": 300,
++		"overrides": true,
++	},
++	# A right-stick hold let go of before its first stage: one faint low tap, the least thing the pad says.
++	"hold_short": {
++		"pad": [{"at": 0, "weak": 0.0, "strong": 0.2, "ms": 25}],
++		"handheld": [{"at": 0, "ms": 14}],
++		"gapMs": 400,
++	},
+ }
+ const MIN_GAP_MS: int = 80
+ const PAD_MIN_MS: int = 20
+@@ -249,6 +270,9 @@ const REFUSALS: Dictionary = {
+ 	"chord": {"word": "One at a time", "owner": "controls", "what": "two attack buttons on one tick: the bigger went, the smaller was let go of (switches.chordPick)"},
+ 	"charging": {"word": "Charging", "owner": "controls", "what": "a right-stick push while RT is held: the charge owns the stick, the strike stick is inert (strike.inertMasks; switches.inertKnock)"},
+ 	"warding": {"word": "Warding", "owner": "controls", "what": "a right-stick push while LB and RB are both held: the strike stick is inert (strike.inertMasks; switches.inertKnock)"},
++	"charge_broken": {"word": "Charge broken", "owner": "controls", "what": "a heavy's charge, a stick strike's or a beam hold's was taken by the foe's blow (switches.chargeLostCue)"},
++	"charge_lapsed": {"word": "Charge lost", "owner": "controls", "what": "a heavy's charge was lost to a stagger or the brawl's end, with no blow of the foe's on it (switches.chargeLostCue)"},
++	"hold_short": {"word": "Hold longer", "owner": "controls", "what": "a right-stick hold was let go of before its first stage, after strike.shortHoldTicks (switches.chargeLostCue)"},
+ 	"queue_full": {"word": "Queue full", "owner": "encounter", "what": "three blows already waiting and the cooldown holds them: one knock a burst (refusal-reasons)"},
+ 	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
+ 	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},
+@@ -298,6 +322,8 @@ static func event_requests(e) -> Array:
+ 		return stage_event_requests(e)
+ 	if String(e.type) == "cue" and String(e.kind) == "stick_full_send":
+ 		return full_send_requests(e)
++	if String(e.type) == "cue" and String(e.kind) == "windup":
++		return charge_lost_requests(e)
+ 	if not SimInputData.haptic_impact_on():
+ 		return []
+ 	match String(e.type):
+@@ -332,6 +358,22 @@ static func event_requests(e) -> Array:
+ 	return []
+ 
+ 
++## A heavy's wind-up or charge that did not get thrown (the director's `windup` cue, text "end", source "b" for the big blow; k 2 stopped by a blow, 3 lost to a stagger or the brawl's end; 1 thrown and 4 a miss are the
++## player's own and say nothing here): the charger's pad gets charge_broken (the foe's blow took it) or charge_lapsed (nobody's). Needs switches.chargeLostCue; reads the cue and nothing else.
++static func charge_lost_requests(e) -> Array:
++	if not SimInputData.charge_lost_cue_on() or String(e.text) != "end" or String(e.source) != "b":
++		return []
++	var slot: int = int(e.actor)
++	if slot < 0 or slot > 1:
++		return []
++	match int(e.k):
++		2:
++			return [{"slot": slot, "kind": "charge_broken", "scale": 1.0, "reason": "charge_broken"}]
++		3:
++			return [{"slot": slot, "kind": "charge_lapsed", "scale": 1.0, "reason": "charge_lapsed"}]
++	return []
++
++
+ ## The stick's full send on the sender's pad (docs/controls/full-send-haptic.md; switches.hapticLadder, with the right stick): Encounter's cue `stick_full_send` (actor the sender, source the family) is one `full_send`,
+ ## the slam at full strength, the grounded bury a little under, a send up or across lighter. Presentation only, read from the cue and nothing else.
+ const FULL_SEND_SCALE: Dictionary = {"slamDown": 1.0, "bury": 0.9, "skyward": 0.8, "across": 0.8, "acrossBehind": 0.8}
+@@ -379,6 +421,12 @@ static func kinds() -> Array:
+ 	return DEFAULTS.keys()
+ 
+ 
++## True for a kind that plays even inside the slot-wide gap (it replaces what was just playing): a lost charge arrives on the tick of the blow that took it, and the blow's own thud (hit_taken, 80 ms gap) must not
++## shut it out. Its own gapMs still holds, so it can never buzz twice in a row.
++static func overrides_slot_gap(kind: String) -> bool:
++	return DEFAULTS.has(kind) and bool(DEFAULTS[kind].get("overrides", false))
++
++
+ ## The minimum gap between two requests for one slot, in milliseconds.
+ static func min_gap_ms() -> int:
+ 	return SimInputData.ti(["haptics", "minGapMs"], MIN_GAP_MS)
+@@ -457,7 +505,7 @@ static func allow(last_ms: int, now_ms: int, gap_ms: int = -1) -> bool:
+ ## A keyboard, a slot nobody holds, an unknown kind, the option off, nothing left in the steps, a request too soon after the last or too
+ ## soon after the last of its own kind: {}.
+ static func plan(kind: String, target: Dictionary, enabled: bool, last_ms: int, now_ms: int, scale: float = 1.0, last_kind_ms: int = -1000000) -> Dictionary:
+-	if not enabled or not DEFAULTS.has(kind) or not allow(last_ms, now_ms) or not allow(last_kind_ms, now_ms, kind_gap_ms(kind)):
++	if not enabled or not DEFAULTS.has(kind) or not allow(last_ms, now_ms, 0 if overrides_slot_gap(kind) else -1) or not allow(last_kind_ms, now_ms, kind_gap_ms(kind)):
+ 		return {}
+ 	match str(target.get("kind", "none")):
+ 		"pad":
+@@ -503,6 +551,8 @@ static func requests(name: String, actor: int, target: int, text: String, amount
+ 	match name:
+ 		"stick_refused":
+ 			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
++			if SimInputData.charge_lost_cue_on() and (source == "hit" or source == "taken") and actor >= 0 and actor <= 1:
++				return [{"slot": actor, "kind": "charge_broken", "scale": 1.0, "reason": "charge_broken"}]   # a stick charge or a beam hold the blow of the foe took: the lost charge, which plays over the blow thud
+ 			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
+ 				return []
+ 			if source == "hit" and SimInputData.haptic_impact_on():
+diff --git a/sim/input/hub.gd b/sim/input/hub.gd
+index 5285afe..b6fc7fb 100644
+--- a/sim/input/hub.gd
++++ b/sim/input/hub.gd
+@@ -57,6 +57,7 @@ var hand_pref: Array = ["standard", "standard"]   # hand_layout: "standard" or "
+ var brace_style_pref: Array = ["", ""]            # the brace's assist: "" the data default (flick), "flick" or "press" (the button alone)
+ var strike_style_pref: Array = ["", ""]
+ var mirror_pref: Array = ["auto", "auto"]
++var _hold_age: Array = [0, 0]               # the ticks each slot's right-stick hold has lasted (chargeLostCue: a hold let go of before stage 1 is told)
+ var _ladder_prev: Array = [0, 0]             # the strike charge's rung each slot's pad last felt (take_haptics)
+ var _haptic_pending: Array = []
+ var _refusals: Array = []                  # every press the game let go of with no sign, for UI: [{slot, code, tick, button}] (take_refusals)
+@@ -423,6 +424,7 @@ func intent(slot: int) -> SimIntent:
+ 			drops = kl.take_dropped()
+ 	var out: SimIntent = SimIntent.canon(i)
+ 	_note_ladder(slot, out)
++	_note_short_hold(slot, out)
+ 	_note_refusal(slot, out)
+ 	_note_drops(slot, drops)
+ 	return out
+@@ -886,6 +888,23 @@ func _note_refusal(slot: int, i: SimIntent) -> void:
+ 		_stick_wait[slot] = 0
+ 
+ 
++## A right-stick hold let go of before its first stage (switches.chargeLostCue): a hold of at least strike.shortHoldTicks that ends at level 0 is a quick strike the player may have meant as a charge, and the pad taps once
++## (hold_short) with a row for UI. A shorter push is a flick and says nothing; a struggle's push is never a hold. Reads only the intent the hub built.
++func _note_short_hold(slot: int, i: SimIntent) -> void:
++	if not SimInputData.charge_lost_cue_on() or bool(struggle_push_pref[slot]):
++		_hold_age[slot] = 0
++		return
++	if i.rsHeld:
++		_hold_age[slot] += 1
++	if i.rsRelease:
++		if i.rsLevel == 0 and int(_hold_age[slot]) >= SimInputData.short_hold_ticks():
++			_haptic_pending.append({"slot": slot, "kind": "hold_short", "scale": 1.0, "reason": "hold_short"})
++			_refusals.append({"slot": slot, "code": "hold_short", "tick": 0, "button": "stick"})
++		_hold_age[slot] = 0
++	elif not i.rsHeld:
++		_hold_age[slot] = 0
++
++
+ func _note_ladder(slot: int, i: SimIntent) -> void:
+ 	if not SimInputData.haptic_ladder_on():
+ 		_ladder_prev[slot] = 0
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index fd90cea..0f443b8 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -214,6 +214,17 @@ static func inert_knock_on() -> bool:
+ 	return bool(t(["switches", "inertKnock"], false))
+ 
+ 
++## A lost charge is felt (docs/controls/charge-lost.md; switches.chargeLostCue, off): the heavy's charge, a stick strike's or a beam hold's taken by a blow, a charge lost to a stagger or the brawl's end, and a stick hold
++## let go of before its first stage each get a pad pulse of their own and a refusal code for UI. Independent of the other haptic switches (the hold's tap needs the right stick, which has no hold without it).
++static func charge_lost_cue_on() -> bool:
++	return bool(t(["switches", "chargeLostCue"], false))
++
++
++## The least ticks a right-stick hold lasts for its early release to be told (strike.shortHoldTicks).
++static func short_hold_ticks() -> int:
++	return clampi(ti(["strike", "shortHoldTicks"], 6), 2, 12)
++
++
+ ## The director keeps a flick it cannot start yet (data/director/stick.json flickKeep, up to pendFollow.maxTicks = 90 ticks, with no cue while it waits), so the hub's wait for an answer is strike.refuseTicksKept (120)
+ ## and not refuseTicks (30), or the pad knocks "Didn't start" at 31 ticks and the held flick then fires anyway (docs/controls/flick-kept.md). Set together with flickKeep. switches.flickKept, off.
+ static func flick_kept_on() -> bool:
+@@ -287,7 +298,7 @@ static func haptic_impact_on() -> bool:
+ ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
+ static func pin_switches_off() -> void:
+ 	var sw: Dictionary = timing.get("switches", {})
+-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "dashHandover", "flickKept", "inertKnock", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
++	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "dashHandover", "flickKept", "inertKnock", "chargeLostCue", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+ 		sw[k] = false
+ 	timing["switches"] = sw
+ 	clear_overrides()
+diff --git a/sim/input/test/haptics_test.gd b/sim/input/test/haptics_test.gd
+index e8ea625..28c38f1 100644
+--- a/sim/input/test/haptics_test.gd
++++ b/sim/input/test/haptics_test.gd
+@@ -45,11 +45,11 @@ func _with(block, f: Callable) -> void:
+ 
+ func _data() -> void:
+ 	var ks: Array = SimHaptics.kinds()
+-	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "full_send", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]
++	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "full_send", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break", "charge_broken", "charge_lapsed", "hold_short"]
+ 	var has_all: bool = ks.size() == want.size()
+ 	for w in want:
+ 		has_all = has_all and ks.has(w)
+-	ok(has_all, "data: the twenty-two kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam)")
++	ok(has_all, "data: the twenty-six kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam, and the three lost-charge kinds, switches.chargeLostCue)")
+ 	ok(not ks.has("struggle_pulse") and not ks.has("struggle_surge"), "data: the beat-aligned struggle kinds are retired (Orb: not on the beat)")
+ 	ok(SimHaptics.min_gap_ms() == 80, "data: requests for one slot are at least 80 ms apart")
+ 	# The data file and the code defaults agree.
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index 547fff3..c4349e7 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -1008,6 +1008,10 @@
+           "type": "boolean",
+           "description": "A right-stick push on a layer where the strike stick is inert (RT held: strike.inertMasks, the charge owns the stick; LB + RB) is told, once per push: the refusal code charging (or warding), one pad knock and one row for UI (docs/controls/inert-knock.md). Before, it did nothing and said nothing. Needs rightStick and hapticRefused. Off."
+         },
++        "chargeLostCue": {
++          "type": "boolean",
++          "description": "A lost charge is felt (docs/controls/charge-lost.md): the heavy's charge (or a stick strike's or a beam hold's) taken by the foe's blow is one pad buzz (charge_broken), lost to a stagger or the brawl's end another (charge_lapsed), and a right-stick hold let go of before stage 1 after strike.shortHoldTicks a faint tap (hold_short), each with a refusal code for UI's word. The charger's pad only; nothing on screen. Off: the blow's own thud (hit_taken) and nothing else, as before."
++        },
+         "flickKept": {
+           "type": "boolean",
+           "description": "Set together with the director's flickKeep (data/director/stick.json): the director holds a flick it cannot start yet, quietly, up to 90 ticks, so the hub waits strike.refuseTicksKept instead of strike.refuseTicks before it calls a stick request unanswered (docs/controls/flick-kept.md). Off: refuseTicks, as before."
+@@ -1212,6 +1216,12 @@
+           "type": "boolean",
+           "description": "R3 (and L3) bind no Escape while the switch is on (true)."
+         },
++        "shortHoldTicks": {
++          "type": "integer",
++          "minimum": 2,
++          "maximum": 12,
++          "description": "With switches.chargeLostCue: a right-stick hold of at least this many ticks that is let go of before the charge's first stage (a quick strike or quick beam, level 0) taps the pad once, hold_short (6; stage 1 comes at levels[0], 12). A shorter push is a flick and says nothing."
++        },
+         "inertMasks": {
+           "type": "array",
+           "uniqueItems": true,
+diff --git a/sim/input/test/charge_lost_test.gd b/sim/input/test/charge_lost_test.gd
+new file mode 100644
+index 0000000..fc52dd0
+--- /dev/null
++++ b/sim/input/test/charge_lost_test.gd
+@@ -0,0 +1,190 @@
++extends SceneTree
++## Headless checks for a lost charge being felt (docs/controls/charge-lost.md; timing.json switches.chargeLostCue, off): the heavy's charge (the director's windup cue, text end, source b) taken by the foe's blow (k 2) or lost to a
++## stagger or the brawl's end (k 3), a stick strike's or a beam hold's charge taken by a blow (stick_refused, source hit or taken), and a right-stick hold let go of before stage 1 (the hub). One pad buzz of its own for each, a refusal
++## code for UI's word, the charger's pad only. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/charge_lost_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()
++	_sw(true)
++	_cues()
++	_stick_cues()
++	_plan()
++	_hold()
++	_sw(false)
++	_off()
++	SimInputData.pin_switches_off()
++	print("charge_lost_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(on: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["rightStick"] = true
++	sw["hapticRefused"] = true
++	sw["hapticImpact"] = true
++	sw["chargeLostCue"] = on
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _wu(actor: int, text: String, source: String, k: int) -> SimState.FxEvent:
++	var e := SimState.FxEvent.new()
++	e.type = "cue"
++	e.kind = "windup"
++	e.actor = float(actor)
++	e.text = text
++	e.source = source
++	e.k = float(k)
++	return e
++
++
++func _kinds(a: Array) -> Array:
++	var out: Array = []
++	for r in a:
++		out.append(String(r["kind"]))
++	return out
++
++
++func _cues() -> void:
++	var broken: Array = SimHaptics.event_requests(_wu(0, "end", "b", 2))
++	ok(broken.size() == 1 and broken[0]["kind"] == "charge_broken" and int(broken[0]["slot"]) == 0 and broken[0]["reason"] == "charge_broken", "on: a heavy's wind-up stopped by a blow (k 2) is charge_broken on the charger's pad: %s" % str(broken))
++	var lapsed: Array = SimHaptics.event_requests(_wu(1, "end", "b", 3))
++	ok(lapsed.size() == 1 and lapsed[0]["kind"] == "charge_lapsed" and int(lapsed[0]["slot"]) == 1 and lapsed[0]["reason"] == "charge_lapsed", "on: lost to a stagger or the brawl's end (k 3) is charge_lapsed, on slot 1's pad: %s" % str(lapsed))
++	ok(SimHaptics.event_requests(_wu(0, "end", "b", 1)).is_empty(), "on: a thrown heavy (k 1) says nothing here: it was the player's")
++	ok(SimHaptics.event_requests(_wu(0, "end", "b", 4)).is_empty(), "on: a heavy that missed (k 4) says nothing here: the blow was thrown")
++	ok(SimHaptics.event_requests(_wu(0, "end", "y", 2)).is_empty() and SimHaptics.event_requests(_wu(0, "end", "y", 3)).is_empty(), "on: a medium's wind-up (Y) has no charge, so losing it is only the blow's thud")
++	ok(SimHaptics.event_requests(_wu(0, "start", "b", 2)).is_empty() and SimHaptics.event_requests(_wu(0, "charge", "b", 2)).is_empty(), "on: a wind-up's start and its charge begin say nothing")
++	ok(SimHaptics.event_requests(_wu(-1, "end", "b", 2)).is_empty() and SimHaptics.event_requests(_wu(2, "end", "b", 2)).is_empty(), "on: only slots 0 and 1")
++	ok(SimHaptics.requests("windup", 0, 1, "end", 0.0, -1, "b").is_empty(), "on: the cue-name path says nothing for windup (the event path owns it, once)")
++	# the three have a word of their own, and the words differ
++	var words: Dictionary = {}
++	for code in ["charge_broken", "charge_lapsed", "hold_short"]:
++		ok(SimHaptics.REFUSALS.has(code) and String(SimHaptics.REFUSALS[code]["word"]) != "" and SimHaptics.refusal_code(code) == code, "on: %s is a code with its word" % code)
++		words[SimHaptics.refusal_word(code)] = true
++	ok(words.size() == 3, "on: and the three words differ")
++
++
++func _stick_cues() -> void:
++	# a stick strike's charge stopped by a blow ("hit") or a beam hold lost to one ("taken"): the lost charge, not the old knock and not silence
++	for src in ["hit", "taken"]:
++		var r: Array = SimHaptics.requests("stick_refused", 0, -1, "up", 0.0, -1, src)
++		ok(r.size() == 1 and r[0]["kind"] == "charge_broken" and int(r[0]["slot"]) == 0, "on: a stick_refused '%s' (a blow took the charge) is charge_broken, even with hapticImpact on: %s" % [src, str(r)])
++	var ki: Array = SimHaptics.requests("stick_refused", 1, -1, "up", 0.0, -1, "ki")
++	ok(ki.size() == 1 and ki[0]["kind"] == "stick_refused" and ki[0]["reason"] == "no_energy", "on: the other refusals are untouched (ki is still the knock)")
++	var cancel: Array = SimHaptics.requests("stick_refused", 0, -1, "up", 0.0, -1, "cancel")
++	ok(cancel.size() == 1 and cancel[0]["kind"] == "stick_refused" and cancel[0]["reason"] == "cancelled", "on: and the player's own guard or dodge ending a charge is not called a lost charge")
++	ok(SimHaptics.requests("stick_refused", 1, -1, "up", 0.0, -1, "soon").is_empty(), "on: the wait for a free target stays silent")
++
++
++func _plan() -> void:
++	var pad: Dictionary = {"kind": "pad", "id": 3}
++	var hit: Dictionary = SimHaptics.plan("hit_taken", pad, true, -100000, 1000)
++	ok(not hit.is_empty(), "plan: the blow's own thud plays")
++	# the lost charge arrives on the same tick as the thud (1 ms later on the host's clock): it plays over it
++	var over: Dictionary = SimHaptics.plan("charge_broken", pad, true, 1000, 1001)
++	ok(not over.is_empty() and over["via"] == "pad" and over["steps"].size() == 3 and int(over["steps"][0]["at"]) == 0, "plan: charge_broken plays inside the slot gap of the thud that came with it (and replaces it): %s" % str(over))
++	var lap: Dictionary = SimHaptics.plan("charge_lapsed", pad, true, 1000, 1001)
++	ok(not lap.is_empty(), "plan: so does charge_lapsed")
++	ok(SimHaptics.plan("stick_refused", pad, true, 1000, 1001).is_empty(), "plan: a kind that does not override still waits out the slot gap (the control)")
++	ok(SimHaptics.plan("hold_short", pad, true, 1000, 1001).is_empty(), "plan: hold_short waits too: the faintest tap never covers another pulse")
++	# but never twice in a row: the kind's own gap
++	ok(SimHaptics.plan("charge_broken", pad, true, 1001, 1100, 1.0, 1001).is_empty(), "plan: a second charge_broken 100 ms after the first is dropped (gapMs 300)")
++	ok(not SimHaptics.plan("charge_broken", pad, true, 1001, 1400, 1.0, 1001).is_empty(), "plan: and 400 ms later it plays")
++	ok(SimHaptics.plan("charge_broken", {"kind": "none"}, true, -100000, 1000).is_empty() and SimHaptics.plan("charge_broken", pad, false, -100000, 1000).is_empty(), "plan: a keyboard and the haptics option off are silent")
++	ok(SimHaptics.plan("charge_broken", {"kind": "touch"}, true, -100000, 1000)["via"] == "handheld", "plan: a phone buzzes it by lengths")
++	# the three are told apart on the pad and none is the high motor alone
++	var sigs: Dictionary = {}
++	for k in ["charge_broken", "charge_lapsed", "hold_short", "hit_taken", "stick_refused", "release_thump"]:
++		var sig: String = ""
++		var low_only: bool = true
++		for s in SimHaptics.steps(k, "pad"):
++			sig += "%d/%.2f/%.2f/%d;" % [int(s["at"]), float(s["weak"]), float(s["strong"]), int(s["ms"])]
++			low_only = low_only and float(s["strong"]) > 0.0
++		sigs[sig] = true
++		ok(low_only or k == "stick_refused", "kinds: %s has a low motor in every step (chunky, never tinny)" % k)
++	ok(sigs.size() == 6, "kinds: none of them buzzes the pad like the thud, the knock or the throw")
++
++
++## One pad through the hub: hold RB (the beam layer) or nothing, push the right stick for `push` ticks, rest. Returns {kinds: [haptic kinds], rows: [codes]}.
++func _run(push: int, held_rb: bool = false) -> Dictionary:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	var out := {"kinds": [], "rows": [], "start": false}
++	for k in range(8):
++		_tick(hub, out)
++	if held_rb:
++		hub.pad_button(7, "rb", true)
++	for k in range(14):
++		_tick(hub, out)
++	hub.pad_stick_right(7, 1.0, 0.0)
++	for k in range(push):
++		_tick(hub, out)
++	hub.pad_stick_right(7, 0.0, 0.0)
++	for k in range(24):
++		_tick(hub, out)
++	return out
++
++
++func _tick(hub: SimInputHub, out: Dictionary) -> void:
++	var i: SimIntent = hub.intent(0)
++	if i.rsStart:
++		out["start"] = true
++	for h in hub.take_haptics():
++		var kd: String = str(h.get("kind", ""))
++		if kd == "hold_short" or kd == "stick_refused" and str(h.get("reason", "")) != "no_answer":
++			(out["kinds"] as Array).append(kd)
++	for r in hub.take_refusals():
++		if str(r["code"]) != "no_answer":
++			(out["rows"] as Array).append(str(r["code"]))
++	hub.consumed()
++
++
++func _hold() -> void:
++	var shortest: int = SimInputData.short_hold_ticks()
++	ok(shortest == 6, "hold: the data's least hold is 6 ticks")
++	var flick: Dictionary = _run(3)
++	ok(flick["start"] and flick["kinds"].is_empty() and flick["rows"].is_empty(), "hold: a 3-tick push is a flick: a strike request and no word: %s" % str(flick))
++	var just_under: Dictionary = _run(shortest + 1)   # a push is the stick out for the settle (2 ticks) and then the hold
++	var edge: Dictionary = _run(shortest + 2)
++	var n8: Dictionary = _run(8)
++	ok(n8["kinds"] == ["hold_short"] and n8["rows"] == ["hold_short"], "hold: an 8-tick hold let go of before stage 1 taps once, one row, code hold_short: %s" % str(n8))
++	var n10: Dictionary = _run(10)
++	ok(n10["kinds"] == ["hold_short"], "hold: and a 10-tick hold the same: %s" % str(n10))
++	ok(just_under["kinds"].is_empty() and edge["kinds"] == ["hold_short"], "hold: held 5 ticks is a flick and says nothing; held 6 (the data's least) is told: %s / %s" % [str(just_under), str(edge)])
++	var full: Dictionary = _run(20)
++	ok(full["kinds"].is_empty() and full["rows"].is_empty(), "hold: a 20-tick push reached stage 1 (it does from 14): the ladder's own pulse, no short-hold tap: %s" % str(full))
++	var rb: Dictionary = _run(8, true)
++	ok(rb["kinds"] == ["hold_short"], "hold: with RB held (a quick beam let go early) the same: %s" % str(rb))
++	var twice: Dictionary = _run(8)
++	var hub := SimInputHub.new()
++	ok(twice["rows"].size() == 1 and hub.take_refusals().is_empty(), "hold: one tap per hold, and a fresh hub has no rows")
++
++
++## Off, the control: nothing new, and the old paths are as they were.
++func _off() -> void:
++	ok(SimHaptics.event_requests(_wu(0, "end", "b", 2)).is_empty() and SimHaptics.event_requests(_wu(0, "end", "b", 3)).is_empty(), "off (the control): a lost heavy charge says nothing new")
++	var hit: Array = SimHaptics.requests("stick_refused", 0, -1, "up", 0.0, -1, "hit")
++	ok(hit.is_empty(), "off (the control): a stick charge stopped by a blow is the blow's thud alone, as before (hapticImpact on)")
++	var taken: Array = SimHaptics.requests("stick_refused", 0, -1, "up", 0.0, -1, "taken")
++	ok(taken.size() == 1 and taken[0]["kind"] == "stick_refused" and taken[0]["reason"] == "hit", "off (the control): a beam hold taken is the old knock with the reason hit")
++	var n8: Dictionary = _run(8)
++	ok(n8["kinds"].is_empty() and n8["rows"].is_empty() and n8["start"], "off (the control): an 8-tick hold let go of early starts a strike and says nothing")
+diff --git a/sim/input/test/charge_lost_test.gd.uid b/sim/input/test/charge_lost_test.gd.uid
+new file mode 100644
+index 0000000..53d03bb
+--- /dev/null
++++ b/sim/input/test/charge_lost_test.gd.uid
+@@ -0,0 +1 @@
++uid://o6hvuux2ix8w

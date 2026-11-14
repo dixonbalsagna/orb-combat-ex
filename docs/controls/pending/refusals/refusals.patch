@@ -1,0 +1,396 @@
+diff --git a/sim/input/haptics.gd b/sim/input/haptics.gd
+index 66a90b7..018d1d2 100644
+--- a/sim/input/haptics.gd
++++ b/sim/input/haptics.gd
+@@ -217,6 +217,47 @@ static func release_requests(slot: int, level: int, of: int = 3) -> Array:
+ 	return [{"slot": slot, "kind": "release_thump", "scale": 0.4 + 0.6 * clampf(float(level) / float(of), 0.0, 1.0)}]
+ 
+ 
++## Every press answered (docs/controls/refusals.md): the reason codes of the presses the game lets go of, which UI can show ("a word at the edge, the first few times") and which ride on the `reason` key of a
++## stick_refused request. `word` is a suggested English word for the edge (UI owns the final string), `owner` says whose drop it is, `what` what happened. The pad's knock is the same for all: a press that went nowhere.
++const REFUSALS: Dictionary = {
++	"face_late": {"word": "Too late", "owner": "controls", "what": "a face press waited behind the stick for longer than strike.queueTicks and went"},
++	"face_overflow": {"word": "Too many", "owner": "controls", "what": "a fourth face press behind the stick: the oldest went (strike.queueDepth)"},
++	"no_answer": {"word": "No answer", "owner": "controls", "what": "a stick request the director never started inside strike.refuseTicks"},
++	"no_energy": {"word": "No energy", "owner": "encounter", "what": "the press would cost more energy than he has (the director's stick_refused text ki)"},
++	"hit": {"word": "Hit", "owner": "encounter", "what": "the charge was lost to a hit (text taken)"},
++	"too_late": {"word": "Too late", "owner": "encounter", "what": "the request waited too long for the fighter to act (text late)"},
++	"replaced": {"word": "Replaced", "owner": "encounter", "what": "a newer press took the buffered one's place (text replaced)"},
++	"no_reach": {"word": "Out of reach", "owner": "encounter", "what": "it cannot reach him in the air (text chase)"},
++	"answered": {"word": "Answered", "owner": "encounter", "what": "a planned exchange took the request: his rival's answer (text answered)"},
++	"dodged": {"word": "Dodged", "owner": "encounter", "what": "the request was dodged out of (text dodged)"},
++	"cancelled": {"word": "Cancelled", "owner": "encounter", "what": "the guard or the dodge ended the charge (text cancel)"},
++	"not_yours": {"word": "Not yours", "owner": "encounter", "what": "the first move belongs to his rival (text refused)"},
++	"busy": {"word": "Busy", "owner": "encounter", "what": "the fighter could not act: a state number as the text"},
++	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
++	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},
++	"block_lockout": {"word": "Block cooling", "owner": "encounter", "what": "the perfect block's anti-mash lockout held the press"},
++	"other": {"word": "Not now", "owner": "controls", "what": "a refusal whose text this table does not know"},
++}
++## The director's stick_refused cue texts, as codes.
++const REFUSAL_TEXT: Dictionary = {"ki": "no_energy", "taken": "hit", "late": "too_late", "replaced": "replaced", "chase": "no_reach", "answered": "answered", "dodged": "dodged", "cancel": "cancelled", "refused": "not_yours"}
++
++
++## The reason code for a refusal cue's text: a known code passes through, the director's words map (REFUSAL_TEXT), a number (a state mask) is "busy", anything else "other".
++static func refusal_code(text: String) -> String:
++	if REFUSALS.has(text):
++		return text
++	if REFUSAL_TEXT.has(text):
++		return String(REFUSAL_TEXT[text])
++	if text != "" and text.is_valid_int():
++		return "busy"
++	return "other"
++
++
++## The suggested edge word for a code (UI owns the final string); "Not now" for an unknown code.
++static func refusal_word(code: String) -> String:
++	return String(REFUSALS.get(code, REFUSALS["other"])["word"])
++
++
+ ## What the five impact kinds are scaled by.
+ const BLOW_STRENGTH: Dictionary = {"light": 0.3, "medium": 0.6, "heavy": 1.0, "bolt": 0.3, "blast": 0.7, "guard": 0.2}
+ const LAND_SPEED_REF: float = 1400.0
+@@ -398,7 +439,12 @@ static func requests(name: String, actor: int, target: int, text: String, amount
+ 			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
+ 			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
+ 				return []
+-			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0}]
++			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(text)}]
++		"press_refused":
++			# The director's (or the block's) cue for a press that is not a stick request and was let go of: actor = the presser, text = a reason code (stun_limit, queue_expired, block_lockout).
++			if not SimInputData.refusal_cues_on() or actor < 0 or actor > 1:
++				return []
++			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(text)}]
+ 		"stick_start":
+ 			# Encounter's cue when a stick strike's request begins: actor = the striker, text = its direction as the defender faces it. The defender feels it (switches.hapticIncoming).
+ 			if not SimInputData.haptic_incoming_on() or actor < 0 or actor > 1:
+diff --git a/sim/input/hub.gd b/sim/input/hub.gd
+index 9249714..f0a6434 100644
+--- a/sim/input/hub.gd
++++ b/sim/input/hub.gd
+@@ -59,6 +59,7 @@ var strike_style_pref: Array = ["", ""]
+ var mirror_pref: Array = ["auto", "auto"]
+ var _ladder_prev: Array = [0, 0]             # the strike charge's rung each slot's pad last felt (take_haptics)
+ var _haptic_pending: Array = []
++var _refusals: Array = []                  # every press the game let go of with no sign, for UI: [{slot, code, tick, button}] (take_refusals)
+ var _stick_wait: Array = [-1, -1]           # per slot: live ticks since a stick request began with no strike started, -1 when none is waiting             # the rumble the hub asked for since the host last took it
+ var struggle_pref: Array = [false, false]   # the host's word each tick that the slot's fighter is in a struggle (set_struggle)
+ var _pad_no_right_stick: Dictionary = {}   # device id -> true: the host says this pad has no right stick
+@@ -376,6 +377,7 @@ func touch_up(id: int) -> void:
+ 
+ ## The intent v2 for a human slot this tick, canonical, from whichever device holds the slot. Call once per slot per tick.
+ func intent(slot: int) -> SimIntent:
++	var drops: Array = []
+ 	var i: SimIntent
+ 	var style: String = mode_style_of(slot)
+ 	match slot_device[slot]:
+@@ -395,6 +397,7 @@ func intent(slot: int) -> SimIntent:
+ 				if float(trigger_pref[slot]) > 0.0:
+ 					pads[d].set_trigger_threshold(float(trigger_pref[slot]))
+ 				i = pads[d].build()
++				drops = pads[d].take_dropped()
+ 			else:
+ 				i = SimIntent.new()
+ 		"touch":
+@@ -416,13 +419,32 @@ func intent(slot: int) -> SimIntent:
+ 			kl.set_brace_flick(brace_style_of(slot) == "flick")
+ 			_apply_hold_styles(kl, slot)
+ 			i = kl.build()
++			drops = kl.take_dropped()
+ 	var out: SimIntent = SimIntent.canon(i)
+ 	_note_ladder(slot, out)
+ 	_note_refusal(slot, out)
++	_note_drops(slot, drops)
+ 	return out
+ 
+ 
+ ## SimCore.step took the intents: every device's edges are spent.
++## Every press answered (docs/controls/refusals.md): the face presses the strike law let go of (one that waited behind the stick past its life, or the oldest of a full queue) knock the pad of their slot,
++## once for the tick whatever number went, and are kept for UI with their reason code: take_refusals(). Needs switches.hapticRefused.
++func _note_drops(slot: int, drops: Array) -> void:
++	if drops.is_empty() or not SimInputData.refusal_cues_on():
++		return
++	for d in drops:
++		_refusals.append({"slot": slot, "code": str(d["why"]), "tick": int(d["t"]), "button": str(d["k"])})
++	_haptic_pending.append({"slot": slot, "kind": "stick_refused", "scale": 1.0, "reason": str(drops[0]["why"])})
++
++
++## The presses the hub saw the game let go of since the last call, for UI to say why ("a word at the edge, the first few times"): [{slot, code, tick, button}]. Codes: see SimHaptics.REFUSALS.
++func take_refusals() -> Array:
++	var out: Array = _refusals
++	_refusals = []
++	return out
++
++
+ func consumed() -> void:
+ 	var refuse: int = SimInputData.ti(["strike", "refuseTicks"], 30)
+ 	for s in range(2):
+@@ -430,7 +452,8 @@ func consumed() -> void:
+ 			_stick_wait[s] += 1
+ 			if int(_stick_wait[s]) > refuse:
+ 				_stick_wait[s] = -1
+-				_haptic_pending.append({"slot": s, "kind": "stick_refused", "scale": 1.0})
++				_haptic_pending.append({"slot": s, "kind": "stick_refused", "scale": 1.0, "reason": "no_answer"})
++				_refusals.append({"slot": s, "code": "no_answer", "tick": 0, "button": "stick"})
+ 	for l in layouts.values():
+ 		l.consumed()
+ 	for l in pads.values():
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index f2f4374..64aa801 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -220,6 +220,12 @@ static func stall_keep_on() -> bool:
+ 	return right_stick_on() and bool(t(["switches", "stallKeep"], false))
+ 
+ 
++## Every press answered (docs/controls/refusals.md): a press the game let go of with no sign knocks the pad of the one who made it and is listed for UI with a reason code. The same switch as the stick's
++## refused knock (switches.hapticRefused, off); this is the form that needs no right-hand switch (a perfect block's lockout, a stun limit and the director's queue are not the stick's).
++static func refusal_cues_on() -> bool:
++	return bool(t(["switches", "hapticRefused"], false))
++
++
+ ## The hits, closes, launches, landings and building breaks on the pad (Orb's 2026-10-05 rumble picks; docs/controls/impact-haptics.md; switches.hapticImpact, off). Independent of the right-hand switch.
+ static func haptic_impact_on() -> bool:
+ 	return bool(t(["switches", "hapticImpact"], false))
+diff --git a/sim/input/layout.gd b/sim/input/layout.gd
+index 23874c3..69d13cd 100644
+--- a/sim/input/layout.gd
++++ b/sim/input/layout.gd
+@@ -1141,6 +1141,15 @@ func _strike_vector() -> Array:
+ 	return [v, pressed]
+ 
+ 
++## The face presses the strike law let go of since the last call, [{k, why, t}], and the list starts again (docs/controls/refusals.md). [] when the right-hand switch is off.
++func take_dropped() -> Array:
++	if _law == null:
++		return []
++	var d: Array = _law.dropped
++	_law.dropped = []
++	return d
++
++
+ ## The right hand and the left hand's upgrades for one build (switches.rightStick). The order matters, and is the law: the left hand's guard or dodge
+ ## cancels a charge first; the faces are filtered by what the strike was BEFORE this build's step (so a face press on the crossing tick wins, K1); then
+ ## the strike steps with the law's floor (R after a face press) and the layer is this build's stance mask (K6).
+diff --git a/sim/input/strike_law.gd b/sim/input/strike_law.gd
+index f955479..7e75066 100644
+--- a/sim/input/strike_law.gd
++++ b/sim/input/strike_law.gd
+@@ -21,6 +21,7 @@ var expiry: int = 36
+ var last_face: int = -1000000   # the tick a face press last went through
+ var stick_until: int = -1000000 # the first tick the faces are free after a stick command
+ var queue: Array = []           # [{k, v, t}]: a pressed face button waiting for the stick to be quiet
++var dropped: Array = []         # [{k, why, t}]: the face presses the law let go of with no sign (docs/controls/refusals.md): "face_late" (older than `expiry`), "face_overflow" (the oldest of a full queue)
+ 
+ 
+ func _init(swapped: bool = false) -> void:
+@@ -72,6 +73,8 @@ func filter(i: SimIntent, tick: int, busy: bool) -> void:
+ 	for q in queue:
+ 		if tick - int(q["t"]) <= expiry:
+ 			keep.append(q)
++		else:
++			dropped.append({"k": q["k"], "why": "face_late", "t": tick})
+ 	queue = keep
+ 	if inert:
+ 		_strip(i, true)
+@@ -94,7 +97,8 @@ func filter(i: SimIntent, tick: int, busy: bool) -> void:
+ func _enqueue(e: Dictionary) -> void:
+ 	queue.append(e)
+ 	while queue.size() > depth:
+-		queue.pop_front()   # newest wins
++		var gone: Dictionary = queue.pop_front()   # newest wins
++		dropped.append({"k": gone["k"], "why": "face_overflow", "t": int(e["t"])})
+ 
+ 
+ ## The held levels of the face buttons are off while a strike is in the sim's hands.
+@@ -136,5 +140,6 @@ func _put(i: SimIntent, e: Dictionary) -> void:
+ ## Everything let go (a pause, a new match).
+ func reset() -> void:
+ 	queue.clear()
++	dropped.clear()
+ 	last_face = -1000000
+ 	stick_until = -1000000
+diff --git a/sim/input/test/refusals_test.gd b/sim/input/test/refusals_test.gd
+new file mode 100644
+index 0000000..7c4e551
+--- /dev/null
++++ b/sim/input/test/refusals_test.gd
+@@ -0,0 +1,171 @@
++extends SceneTree
++## Headless checks for every press answered (docs/controls/refusals.md; timing.json switches.hapticRefused, off): the strike law's two silent drops (a face press that waited behind the stick past its life, the
++## oldest of a full queue) are listed with a reason code and knock the pad of their slot; the director's stick_refused texts and the new press_refused cue carry the codes UI shows; the code table is complete.
++## From the repo root:
++##   godot --headless --path . --script res://sim/input/test/refusals_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	_sw(true, true)
++	_law()
++	_hub()
++	_cues()
++	_table()
++	_sw(true, false)
++	_off()
++	print("refusals_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(right: bool, refused: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	for k in ["quickRead", "beamAim", "hapticLadder", "hapticIncoming", "specialsOff", "signatureRtOnly", "driverOnRb", "stallKeep", "hapticImpact"]:
++		sw[k] = false
++	sw["rightStick"] = right
++	sw["hapticRefused"] = refused
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _pad() -> SimLayout:
++	return SimLayout.new(SimInputData.preset("arena"))
++
++
++## Builds `n` ticks; before tick t the events of `evs` ([tick, kind, name, a, b]) are applied. Returns every drop the layout reported, as [tick, why, k].
++func _run(l: SimLayout, evs: Array, n: int) -> Array:
++	var out: Array = []
++	for t in range(n):
++		for e in evs:
++			if int(e[0]) == t:
++				match str(e[1]):
++					"b":
++						if bool(e[3]):
++							l.press("pad:" + str(e[2]))
++						else:
++							l.release("pad:" + str(e[2]))
++					"rs":
++						l.axis("pad:rs", float(e[3]), float(e[4]))
++		l.build()
++		for d in l.take_dropped():
++			out.append([t, str(d["why"]), str(d["k"])])
++		l.consumed()
++	return out
++
++
++func _law() -> void:
++	var expiry: int = SimInputData.ti(["strike", "queueTicks"], 36)
++	# a stick held out, a face press made behind it that waits past its life
++	var d1: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [20, "b", "west", true], [21, "b", "west", false]], 20 + expiry + 20)
++	ok(d1.size() == 1 and d1[0][1] == "face_late" and d1[0][2] == "light", "law: a light press that waited behind the held stick past the queue's life is dropped as face_late (%s)" % str(d1))
++	ok(d1.size() == 1 and d1[0][0] > 20 + expiry - 1 and d1[0][0] <= 20 + expiry + 3, "law: and told just after its life ends (tick %s, pressed at 20, life %d)" % [str(d1[0][0] if d1.size() > 0 else -1), expiry])
++	# a full queue: the fourth press pushes the oldest out
++	var d2: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [20, "b", "west", true], [21, "b", "west", false], [22, "b", "north", true], [23, "b", "north", false], [24, "b", "east", true], [25, "b", "east", false], [26, "b", "south", true], [27, "b", "south", false]], 30)
++	ok(d2.size() == 1 and d2[0][1] == "face_overflow" and d2[0][2] == "light", "law: a fourth press behind the stick pushes the oldest out as face_overflow (%s)" % str(d2))
++	# the stick lets go in time: the press goes, nothing is dropped
++	var d3: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [14, "b", "west", true], [15, "b", "west", false], [18, "rs", "", 0.0, 0.0]], 70)
++	ok(d3.is_empty(), "law: a press that waits and then goes is not a refusal (%s)" % str(d3))
++	# no stick, no queue, no drop
++	var d4: Array = _run(_pad(), [[10, "b", "west", true], [11, "b", "west", false], [30, "b", "north", true], [31, "b", "north", false]], 80)
++	ok(d4.is_empty(), "law: face presses with the stick at rest are never dropped")
++	# with the right-hand switch off the list is empty (there is no law)
++	_sw(false, true)
++	var d5: Array = _run(_pad(), [[10, "rs", "", 1.0, 0.0], [20, "b", "west", true], [21, "b", "west", false]], 80)
++	ok(d5.is_empty(), "law: with rightStick off there is no law and no drop")
++	_sw(true, true)
++
++
++func _hub_run(evs: Array, n: int) -> Dictionary:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	var knocks: Array = []
++	var refusals: Array = []
++	for t in range(n):
++		for e in evs:
++			if int(e[0]) == t:
++				if str(e[1]) == "rs":
++					hub.pad_stick_right(7, float(e[3]), float(e[4]))
++				else:
++					hub.pad_button(7, str(e[2]), bool(e[3]))
++		hub.intent(0)
++		for r in hub.take_haptics():
++			knocks.append(r)
++		refusals.append_array(hub.take_refusals())
++		hub.consumed()
++	return {"knocks": knocks, "refusals": refusals}
++
++
++func _hub() -> void:
++	var expiry: int = SimInputData.ti(["strike", "queueTicks"], 36)
++	var r: Dictionary = _hub_run([[10, "rs", "", 1.0, 0.0], [20, "b", "west", true], [21, "b", "west", false]], 20 + expiry + 20)
++	var late: Array = []
++	for k in r["knocks"]:
++		if k.get("reason", "") == "face_late":
++			late.append(k)
++	ok(late.size() == 1 and late[0]["kind"] == "stick_refused" and int(late[0]["slot"]) == 0, "hub: the dropped face press knocks its slot's pad, one stick_refused with the reason face_late")
++	var codes: Array = []
++	for x in r["refusals"]:
++		if x["code"] == "face_late":
++			codes.append(x)
++	ok(codes.size() == 1 and int(codes[0]["slot"]) == 0 and codes[0]["button"] == "light", "hub: and it is listed for UI: take_refusals() gives slot, code, tick and button")
++	ok(SimHaptics.refusal_word(codes[0]["code"]) == "Too late", "hub: and the code has its word")
++	ok(SimHaptics.plan("stick_refused", {"kind": "pad", "id": 3}, true, -10000, 1000).get("via", "") == "pad", "hub: a pad plays the knock")
++	ok(_hub_run([[10, "rs", "", 1.0, 0.0], [20, "b", "west", true], [21, "b", "west", false]], 20 + expiry + 20)["refusals"].size() == r["refusals"].size(), "hub: the same run gives the same list (deterministic)")
++	# taken once: nothing is left to take
++	var hub := SimInputHub.new()
++	ok(hub.take_refusals().is_empty(), "hub: nothing to take on a fresh hub")
++
++
++func _cues() -> void:
++	var cases: Array = [["ki", "no_energy"], ["taken", "hit"], ["late", "too_late"], ["replaced", "replaced"], ["chase", "no_reach"], ["answered", "answered"], ["dodged", "dodged"], ["cancel", "cancelled"], ["refused", "not_yours"], ["5", "busy"], ["stun_limit", "stun_limit"], ["", "other"], ["no such word", "other"]]
++	for c in cases:
++		ok(SimHaptics.refusal_code(c[0]) == c[1], "cues: the text '%s' is the code %s" % [c[0], c[1]])
++		var r: Array = SimHaptics.requests("stick_refused", 1, -1, c[0], 0.0)
++		ok(r.size() == 1 and r[0]["kind"] == "stick_refused" and int(r[0]["slot"]) == 1 and r[0]["reason"] == c[1], "cues: a stick_refused cue with '%s' knocks slot 1 with the reason %s" % [c[0], c[1]])
++	for code in ["stun_limit", "queue_expired", "block_lockout"]:
++		var p: Array = SimHaptics.requests("press_refused", 0, -1, code, 0.0)
++		ok(p.size() == 1 and p[0]["kind"] == "stick_refused" and p[0]["reason"] == code and int(p[0]["slot"]) == 0, "cues: a press_refused cue with %s knocks slot 0 with that reason" % code)
++	ok(SimHaptics.requests("press_refused", -1, -1, "stun_limit", 0.0).is_empty() and SimHaptics.requests("press_refused", 2, -1, "stun_limit", 0.0).is_empty(), "cues: only slots 0 and 1 are knocked")
++	# press_refused needs only the refused switch, not the right hand
++	_sw(false, true)
++	ok(SimHaptics.requests("press_refused", 0, -1, "block_lockout", 0.0).size() == 1, "cues: press_refused works with the right-hand switch off (a block's lockout is not the stick's)")
++	ok(SimHaptics.requests("stick_refused", 0, -1, "ki", 0.0).is_empty(), "cues: the stick's own cue still needs the right hand")
++	_sw(true, true)
++
++
++func _table() -> void:
++	for code in SimHaptics.REFUSALS.keys():
++		var row: Dictionary = SimHaptics.REFUSALS[code]
++		ok(String(row["word"]) != "" and (row["owner"] == "controls" or row["owner"] == "encounter") and String(row["what"]) != "", "table: %s has a word, an owner and what happened" % code)
++	for t in SimHaptics.REFUSAL_TEXT.keys():
++		ok(SimHaptics.REFUSALS.has(SimHaptics.REFUSAL_TEXT[t]), "table: the director's text '%s' maps to a code in the table" % t)
++	for code in ["face_late", "face_overflow", "stun_limit", "queue_expired", "block_lockout"]:
++		ok(SimHaptics.REFUSALS.has(code), "table: the four silent drops of the brief are all there (%s)" % code)
++	ok(SimHaptics.refusal_word("nonsense") == "Not now", "table: an unknown code reads Not now")
++
++
++func _off() -> void:
++	var expiry: int = SimInputData.ti(["strike", "queueTicks"], 36)
++	var r: Dictionary = _hub_run([[10, "rs", "", 1.0, 0.0], [20, "b", "west", true], [21, "b", "west", false]], 20 + expiry + 20)
++	var n: int = 0
++	for k in r["knocks"]:
++		if k.get("reason", "") == "face_late":
++			n += 1
++	ok(n == 0 and r["refusals"].is_empty(), "off: with hapticRefused off nothing is knocked or listed (the law's drop stays silent, as it was)")
++	ok(SimHaptics.requests("press_refused", 0, -1, "stun_limit", 0.0).is_empty(), "off: and the press_refused cue maps to nothing")
+diff --git a/sim/input/test/refusals_test.gd.uid b/sim/input/test/refusals_test.gd.uid
+new file mode 100644
+index 0000000..bf7a8b0
+--- /dev/null
++++ b/sim/input/test/refusals_test.gd.uid
+@@ -0,0 +1 @@
++uid://behwdh4y4fx34

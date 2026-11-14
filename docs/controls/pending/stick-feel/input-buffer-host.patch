@@ -1,0 +1,12 @@
+diff --git a/render/core/sim_host.gd b/render/core/sim_host.gd
+index d1e8fd7..a64ef00 100644
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -416,6 +416,7 @@ func tick(vw: float, vh: float) -> void:
+ 		if S.fighters[k].ai == null:
+ 			if SimInputData.right_stick_on():
+ 				hub.set_struggle(k, SimDir.inStruggle(S, S.fighters[k]))   # a beam clash or a finisher's contest: the stick does nothing there (Controls' K3)
++				hub.set_can_act(k, not (str(S.fighters[k].state) in ["launched", "down", "intro", "waiting", "dropped"]))   # Controls: the input buffer (strike.bufferTicks) waits while he is sent, down or in an intro
+ 			inputs[k] = hub.intent(k)
+ 	var pausing: bool = S.pause.left > 0   # Q10: this tick is one of a pausing set piece's frozen ticks
+ 	var pre: bool = intro_running()        # the intro phase: this tick is a pre-clock tick

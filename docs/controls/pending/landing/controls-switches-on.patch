@@ -1,0 +1,223 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 988f27c..d12495c 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -38,20 +38,20 @@
+   "switches": {
+     "airBrakeGuard": false,
+     "grappleReads": false,
+-    "rightStick": false,
+-    "beamAim": false,
+-    "quickRead": false,
+-    "hapticLadder": false,
+-    "hapticIncoming": false,
+-    "hapticIncomingBeam": false,
+-    "hapticRefused": false,
+-    "specialsOff": false,
+-    "signatureRtOnly": false,
++    "rightStick": true,
++    "beamAim": true,
++    "quickRead": true,
++    "hapticLadder": true,
++    "hapticIncoming": true,
++    "hapticIncomingBeam": true,
++    "hapticRefused": true,
++    "specialsOff": true,
++    "signatureRtOnly": true,
+     "driverOnRb": false,
+-    "stallKeep": false,
+-    "hapticImpact": false,
++    "stallKeep": true,
++    "hapticImpact": true,
+     "dodgeHeld": false,
+-    "webRumble": false
++    "webRumble": true
+   },
+   "strike": {
+     "_note": "Pitch 4a (Orb, 2026-10-30): directional-charge strikes on the right stick, their own class. Read only while switches.rightStick is on (docs/controls/right-hand-attacks.md). Every value is a first value; the ladder and the lockouts are Game Design's and the capture tool's to move.",
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index 797d554..923c4f1 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -237,6 +237,17 @@ static func haptic_impact_on() -> bool:
+ 	return bool(t(["switches", "hapticImpact"], false))
+ 
+ 
++## For the checks: every Controls switch off, as the data first shipped them, so a check of the old behaviour runs against it whatever the page's values are (the shipped data has them on).
++## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
++static func pin_switches_off() -> void:
++	var sw: Dictionary = timing.get("switches", {})
++	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
++		sw[k] = false
++	timing["switches"] = sw
++	clear_overrides()
++	invalidate()
++
++
+ ## The beam's aim (docs/controls/beam-aim-feel.md): the strike stick's aim trails the thumb by a small dead band, and the throw carries the aim the stick held at the rim,
+ ## not the zero of a stick that has already sprung home. Needs the right-hand switch (switches.beamAim, off); off, every record is the one it always was.
+ static func beam_aim_on() -> bool:
+diff --git a/sim/input/test/agency_input_test.gd b/sim/input/test/agency_input_test.gd
+index 8a5c33b..f4eb510 100644
+--- a/sim/input/test/agency_input_test.gd
++++ b/sim/input/test/agency_input_test.gd
+@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_pack()
+ 	_escape_controls()
+diff --git a/sim/input/test/hub_test.gd b/sim/input/test/hub_test.gd
+index 5637919..81423ec 100644
+--- a/sim/input/test/hub_test.gd
++++ b/sim/input/test/hub_test.gd
+@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	_devices()
+ 	_preset_and_hold()
+ 	_disconnect()
+diff --git a/sim/input/test/join_test.gd b/sim/input/test/join_test.gd
+index 21eda79..e3891d2 100644
+--- a/sim/input/test/join_test.gd
++++ b/sim/input/test/join_test.gd
+@@ -20,6 +20,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_pad_pad()
+ 	_pad_keyboard()
+diff --git a/sim/input/test/layout_test.gd b/sim/input/test/layout_test.gd
+index a47cd14..3bb8797 100644
+--- a/sim/input/test/layout_test.gd
++++ b/sim/input/test/layout_test.gd
+@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_data()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	ok(SimInputData.loaded and not SimInputData.presets.is_empty(), "data: the presets loaded from data/input")
+ 	_data()
+ 	_keyboard()
+@@ -51,6 +52,7 @@ func _data() -> void:
+ 			ok(b.has(k) and is_equal_approx(float(a[k]), float(b[k])), "data: DEFAULT_TIMING.%s.%s equals timing.json" % [sect, k])
+ 	ok(SimInputData.default_preset("pad") == "arena" and SimInputData.default_preset("kb") == "kb-solo" and SimInputData.default_preset("touch") == "touch-simple", "data: the default preset per device")
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	ok(SimAct.queueMax == 3 and SimAct.dodgeWindow == 12 and is_equal_approx(SimAct.awayDead, 0.3), "data: SimAct's statics set from the data")
+ 
+ 
+diff --git a/sim/input/test/left_hand_test.gd b/sim/input/test/left_hand_test.gd
+index 4e14f94..ec544b2 100644
+--- a/sim/input/test/left_hand_test.gd
++++ b/sim/input/test/left_hand_test.gd
+@@ -19,6 +19,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_brace_pad()
+ 	_brace_keys()
+diff --git a/sim/input/test/mode_test.gd b/sim/input/test/mode_test.gd
+index 220840b..8c4bcf4 100644
+--- a/sim/input/test/mode_test.gd
++++ b/sim/input/test/mode_test.gd
+@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_hold_every_layout()
+ 	_same_tick()
+diff --git a/sim/input/test/remap_test.gd b/sim/input/test/remap_test.gd
+index e49e989..aa95929 100644
+--- a/sim/input/test/remap_test.gd
++++ b/sim/input/test/remap_test.gd
+@@ -19,6 +19,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_data()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_listing_and_required()
+ 	_rebind()
+diff --git a/sim/input/test/stage_haptics_test.gd b/sim/input/test/stage_haptics_test.gd
+index 66eb0bf..5fcf973 100644
+--- a/sim/input/test/stage_haptics_test.gd
++++ b/sim/input/test/stage_haptics_test.gd
+@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_sw(true, true)
+ 	_stages()
+diff --git a/sim/input/test/stance_test.gd b/sim/input/test/stance_test.gd
+index a14d5c8..7b66576 100644
+--- a/sim/input/test/stance_test.gd
++++ b/sim/input/test/stance_test.gd
+@@ -20,6 +20,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_resolve()
+ 	_singles()
+diff --git a/sim/input/test/stick_feel_test.gd b/sim/input/test/stick_feel_test.gd
+index 95357b6..bc1fb26 100644
+--- a/sim/input/test/stick_feel_test.gd
++++ b/sim/input/test/stick_feel_test.gd
+@@ -22,6 +22,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_sw(true, true, true, true)
+ 	_landing()
+diff --git a/sim/input/test/strike_gate_test.gd b/sim/input/test/strike_gate_test.gd
+index fbd5f81..8bf2bec 100644
+--- a/sim/input/test/strike_gate_test.gd
++++ b/sim/input/test/strike_gate_test.gd
+@@ -37,6 +37,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_switch(true)
+ 	for sw in [false, true]:
+diff --git a/sim/input/test/strike_read_test.gd b/sim/input/test/strike_read_test.gd
+index 15c835b..ed06578 100644
+--- a/sim/input/test/strike_read_test.gd
++++ b/sim/input/test/strike_read_test.gd
+@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_and_apply()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	SimInputData.clear_overrides()
+ 	_helpers()
+ 	_quick()
+diff --git a/sim/input/test/touch_full_test.gd b/sim/input/test/touch_full_test.gd
+index e72d975..cf37bcd 100644
+--- a/sim/input/test/touch_full_test.gd
++++ b/sim/input/test/touch_full_test.gd
+@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
+ 
+ func _init() -> void:
+ 	SimInputData.load_data()
++	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
+ 	_layout()
+ 	_buttons()
+ 	_armed_display()

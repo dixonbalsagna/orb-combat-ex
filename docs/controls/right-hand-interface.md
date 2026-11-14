@@ -55,6 +55,7 @@ Combat's content is the move table: one move per `(layer, direction)` for the qu
   `set_pad_has_right_stick(dev, bool)` (the host's word that a pad has no second stick, such as a handheld's half pad: the D-pad mirror then comes on under "auto");
   `set_struggle(slot, bool)`.
 - **The pad brace button** (2026-10-31): Arena ships `brace_key` on L3 (R3 swapped), so `brace_style` "press" (Button only) never leaves a pad player without a control; UI's help for that choice can say "L3 on Arena; change it in Remap". Simple has no brace button.
+- **The strike stick's rumble** (2026-11-01, parked in `pending/stick-feel/`, switches `hapticLadder` and `hapticIncoming`): the host calls `host.hub.take_haptics()` once a tick (the ladder's rungs as each slot's intent is built) and plays each {slot, kind, scale}; the incoming cue is Encounter's `stick_start`, which the host's cue loop already hands to `SimHaptics.requests`.
 - **UI rows** (`ui/data/settings.json`, via UI): hand layout, D-pad mirror, strike style, brace style; names for the presets `kb-solo-swapped`, `arena-swapped`, `simple-pad-swapped`; action labels for `strike`, `strike_key`, `brace_key`; the legend and the how-to-play. Remap rows for the strike stick, strike button, brace button and Escape are already in `sim/input/remap.gd` (`AXIS_ACTIONS`, `OPTIONAL`).
 
 ## 5. What a player needs before they feel a stick strike on a pad, in order

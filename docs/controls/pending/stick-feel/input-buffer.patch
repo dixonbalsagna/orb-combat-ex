@@ -1,0 +1,311 @@
+diff --git a/sim/input/hub.gd b/sim/input/hub.gd
+index 13d1f5e..14b4837 100644
+--- a/sim/input/hub.gd
++++ b/sim/input/hub.gd
+@@ -405,6 +405,7 @@ func intent(slot: int) -> SimIntent:
+ 	var out: SimIntent = SimIntent.canon(i)
+ 	_note_ladder(slot, out)
+ 	_note_refusal(slot, out)
++	_note_buffer_expired(slot)
+ 	return out
+ 
+ 
+@@ -813,21 +814,43 @@ func strike_pre(slot: int) -> Dictionary:
+ 			return _kb_layout(slot).strike_pre()
+ 
+ 
+-## The rumble the hub itself asks for (switches.hapticLadder): the host calls this once a tick after the intents and plays each {slot, kind, scale} as it plays
+-## a cue's. Empty with the switch off. A pulse is never the only cue.
++## The host's word each tick that a slot's fighter can start a strike now (true when it never says): the input buffer (strike.bufferTicks) waits for it. See SimLayout.set_can_act.
++func set_can_act(slot: int, on: bool) -> void:
++	if slot < 0 or slot > 1:
++		return
++	if slot_device[slot] == "pad":
++		var d: int = slot_pad[slot]
++		if pads.has(d):
++			pads[d].set_can_act(on)
++	elif slot_device[slot] != "touch":
++		_kb_layout(slot).set_can_act(on)
++
++
+ ## The host's word that the director started a slot's stick strike (Encounter's `stick_start` cue): the request was answered, so no refusal. Call it from the cue loop.
+ func note_stick_started(slot: int) -> void:
+ 	if slot >= 0 and slot <= 1:
+ 		_stick_wait[slot] = -1
+ 
+ 
++## The rumble the hub itself asks for (switches.hapticLadder): the host calls this once a tick after the intents and plays each {slot, kind, scale} as it plays
++## a cue's. Empty with the switch off. A pulse is never the only cue.
+ func take_haptics() -> Array:
+ 	var out: Array = _haptic_pending
+ 	_haptic_pending = []
+ 	return out
+ 
+ 
+-## The ladder's rumble (pitch 1): one pulse as each rung of a held strike's charge is reached, once. Called with each slot's intent as it is built.
++## A buffered request ran out of time (the layout's refused_edge): the pad is told, once.
++func _note_buffer_expired(slot: int) -> void:
++	var lay = null
++	if slot_device[slot] == "pad":
++		lay = pads.get(slot_pad[slot])
++	elif slot_device[slot] != "touch":
++		lay = _kb_layout(slot)
++	if lay != null and bool(lay.refused_edge) and SimInputData.haptic_refused_on():
++		_haptic_pending.append({"slot": slot, "kind": "stick_refused", "scale": 1.0})
++
++
+ func _note_refusal(slot: int, i: SimIntent) -> void:
+ 	if not SimInputData.haptic_refused_on():
+ 		_stick_wait[slot] = -1
+@@ -838,6 +861,7 @@ func _note_refusal(slot: int, i: SimIntent) -> void:
+ 		_stick_wait[slot] = 0
+ 
+ 
++## The ladder's rumble (pitch 1): one pulse as each rung of a held strike's charge is reached, once. Called with each slot's intent as it is built.
+ func _note_ladder(slot: int, i: SimIntent) -> void:
+ 	if not SimInputData.haptic_ladder_on():
+ 		_ladder_prev[slot] = 0
+diff --git a/sim/input/layout.gd b/sim/input/layout.gd
+index f2866d8..3f6bd94 100644
+--- a/sim/input/layout.gd
++++ b/sim/input/layout.gd
+@@ -119,6 +119,8 @@ var _brace_peak: Vector2 = Vector2.ZERO
+ var _brace_pending: bool = false    # a brace read (from the flick or the button) waits for a step to take it
+ var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
+ var in_struggle: bool = false       # the host says this slot's fighter is in a struggle (a beam clash, a finisher): the stick does nothing and the faces are free
++var can_act_flag: bool = true         # the host's word each tick that the fighter can start a strike now (set_can_act); the input buffer waits on it
++var refused_edge: bool = false      # a buffered stick request ran out of time this build: the hub tells the pad (the refusal knock)
+ var _b_hold_prev: bool = false      # B was held in the energy layer on the last build (E131: the stick is inert while it is)
+ var _inert_masks: Array = []        # the stance masks on which the strike stick does nothing (pure 4a: the power layer, and the lay), from data
+ var _brace_dir: int = 0             # a brace read waiting for a step to take it
+@@ -953,6 +955,11 @@ func build() -> SimIntent:
+ 	return i
+ 
+ 
++## The host's word each tick that the fighter can start a strike (not in an exchange, not down, not sent): only the input buffer (strike.bufferTicks) reads it.
++func set_can_act(on: bool) -> void:
++	can_act_flag = on
++
++
+ ## The quick read's pre-read of the strike stick, for the pose and nothing else (never in the intent, never in the hash): {"dir": 1 up, 2 down, 3 left,
+ ## 4 right, "depth": 0 to 1 toward the request} while the stick leans before its request starts; {} otherwise, or with the quick read off. Render-only.
+ func strike_pre() -> Dictionary:
+@@ -1021,6 +1028,7 @@ func set_struggle(on: bool) -> void:
+ 
+ func _right_hand_reset() -> void:
+ 	_rs = Vector2.ZERO
++	refused_edge = false
+ 	_b_hold_prev = false
+ 	in_struggle = false
+ 	_brace_pending = false
+@@ -1109,6 +1117,7 @@ func _right_hand(i: SimIntent, mask: int) -> void:
+ 	var busy: bool = _strike.phase == SimStrikeRead.ACTIVE or (_strike.phase == SimStrikeRead.SPENT and _strike.down)
+ 	_law.filter(i, tick, busy)
+ 	var was_down: bool = _strike.down
++	_strike.can_act = can_act_flag
+ 	var sv: Array = _strike_vector()
+ 	# E131: while B is held in the energy layer (the Driver's bank) the stick is inert, so no grip can bank a Driver and draw a beam together; the release
+ 	# counts as a face event (R from it). The stick strikes first and B is stripped by the law above (one charge at a time).
+@@ -1119,6 +1128,7 @@ func _right_hand(i: SimIntent, mask: int) -> void:
+ 	_strike.step(sv[0].x, sv[0].y, mask, tick, live, _law.floor_tick(), sv[1], in_struggle or _inert_masks.has(mask) or b_hold)
+ 	if was_down and not _strike.down:
+ 		_law.note_stick_end(tick)   # the thumb left the stick: the faces are free L later (a throw, a cancel or a toggled charge's rest alike)
++	refused_edge = _strike.refused
+ 	if _strike.is_active():
+ 		_law.strip_levels(i)   # nothing about a charge is changed by a face button, from the tick it starts
+ 	if _strike.is_active() or _strike.has_edges():
+diff --git a/sim/input/strike_read.gd b/sim/input/strike_read.gd
+index a4ad62a..937efec 100644
+--- a/sim/input/strike_read.gd
++++ b/sim/input/strike_read.gd
+@@ -56,6 +56,9 @@ var dwell: int
+ var ladder: Array
+ var beam_ladder: Array
+ var toggle: bool = false               # strike_style "toggle": a push starts the charge, the NEXT push throws it
++var buffer: int = 0                    # the input buffer (strike.bufferTicks, 0 = off): a request that finds the fighter unable to act waits this many ticks for him to be able
++var can_act: bool = true               # the host's word, each tick (SimLayout.set_can_act): the fighter can start a strike now
++var refused: bool = false              # edge: a buffered request ran out of time and was dropped (the refusal knock)
+ var pre_at: float                      # the quick read: the pre-read begins at this rescaled deflection (before `on`)
+ var pre_dir: int = NONE                # the quick read, for the pose only (never in the intent): the quadrant the stick is leaning to, before the request; NONE at rest
+ var pre_depth: float = 0.0             # ... and how far toward `on` it has got, 0 to 1
+@@ -68,6 +71,7 @@ func _init() -> void:
+ 	off_at = SimInputData.tf(["strike", "off"], 0.35)
+ 	settle = SimInputData.ti(["strike", "settleQuick"], 1) if SimInputData.quick_on() else SimInputData.ti(["strike", "settle"], 2)
+ 	pre_at = SimInputData.tf(["strike", "preAt"], 0.25)
++	buffer = maxi(0, SimInputData.ti(["strike", "bufferTicks"], 0))
+ 	dwell = SimInputData.ti(["strike", "dwell"], 12)
+ 	ladder = _ints(SimInputData.t(["strike", "levels"], [12, 30, 50]), [12, 30, 50])
+ 	beam_ladder = _ints(SimInputData.t(["strike", "beamLevels"], [12, 30, 54]), [12, 30, 54])
+@@ -167,7 +171,13 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
+ 				if settle <= 0:
+ 					_try_start(x, y, tick, live, floor_tick)   # the quick read at settle 0: the direction is taken on the crossing tick itself (docs/controls/responsiveness.md)
+ 		CROSSED:
+-			if r > _peak_r:
++			if buffer > 0 and crossing and not inert:
++				# the newest flick wins: a second flick while the first waits for him to be able to act replaces it, and the window starts again
++				_cross_tick = tick
++				layer = mask
++				_peak = Vector2(x, y)
++				_peak_r = r
++			elif r > _peak_r:
+ 				_peak = Vector2(x, y)
+ 				_peak_r = r
+ 			_try_start(x, y, tick, live, floor_tick)
+@@ -191,6 +201,13 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
+ func _try_start(x: float, y: float, tick: int, live: int, floor_tick: int) -> void:
+ 	if tick < _cross_tick + settle or tick < floor_tick:
+ 		return
++	if buffer > 0 and not can_act:
++		# He cannot act: the request waits for him, for the buffer's ticks from the moment it could have started, and is dropped (and told) if he cannot by then.
++		if tick - maxi(_cross_tick + settle, floor_tick) >= buffer:
++			phase = SPENT if down else IDLE
++			refused = true
++			_mark(tick)
++		return
+ 	var v: Vector2 = Vector2(x, y) if down else _peak
+ 	dir = quadrant(v.x, v.y)
+ 	if dir == NONE:
+@@ -261,6 +278,7 @@ func has_edges() -> bool:
+ 
+ ## A step took the intent: the edges are spent.
+ func clear_edges() -> void:
++	refused = false
+ 	start = false
+ 	release = false
+ 	cancel = false
+diff --git a/sim/input/test/stick_feel_test.gd b/sim/input/test/stick_feel_test.gd
+index 666d0a8..5a2306f 100644
+--- a/sim/input/test/stick_feel_test.gd
++++ b/sim/input/test/stick_feel_test.gd
+@@ -33,6 +33,7 @@ func _init() -> void:
+ 	_zero()
+ 	_refused()
+ 	_specials_off()
++	_buffer()
+ 	_sw(true, true, false, false)
+ 	_off()
+ 	_sw(false, false, false, false)
+@@ -606,3 +607,123 @@ func _specials_off() -> void:
+ 	SimInputData.timing["switches"] = sw
+ 	SimInputData.clear_overrides()
+ 	SimInputData.invalidate()
++
++
++## The input buffer (strike.bufferTicks): a stick request that finds the fighter unable to act waits for him, newest flick only, and is dropped (and told) if he cannot in time.
++func _set_buffer(n: int) -> void:
++	var st: Dictionary = SimInputData.timing.get("strike", {})
++	st["bufferTicks"] = n
++	SimInputData.timing["strike"] = st
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++## A flick (right, or the direction given) at tick `at`, held `hold` ticks; can_act is false until tick `free_at` (-1: always true). Returns [start tick, release tick, dir, refused tick, intents].
++func _buf_run(free_at: int, at: int = 10, hold: int = 3, ang: float = 0.0, second: Array = [], faces: Array = []) -> Array:
++	var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var its: Array = []
++	var refused: int = -1
++	for t in range(80):
++		l.set_can_act(free_at < 0 or t >= free_at)
++		var m: float = 1.0 if (t >= at and t < at + hold) else 0.0
++		var x: float = cos(deg_to_rad(ang)) * m
++		var y: float = sin(deg_to_rad(ang)) * m
++		for sec in second:
++			if t >= int(sec[0]) and t < int(sec[0]) + int(sec[1]):
++				x = cos(deg_to_rad(float(sec[2])))
++				y = sin(deg_to_rad(float(sec[2])))
++		l.axis("pad:rs", x, y)
++		for f in faces:
++			if t == int(f):
++				l.press("pad:west")
++			if t == int(f) + 2:
++				l.release("pad:west")
++		its.append(l.build())
++		if l.refused_edge and refused < 0:
++			refused = t
++		l.consumed()
++	return [_first(its, "rsStart"), _first(its, "rsRelease"), (its[maxi(_first(its, "rsStart"), 0)] as SimIntent).rsDir, refused, its]
++
++
++func _buffer() -> void:
++	var settle: int = SimInputData.ti(["strike", "settleQuick"], 1)
++	# off: the request starts as it always did, whatever the fighter can do
++	_set_buffer(0)
++	var off: Array = _buf_run(40)
++	ok(off[0] == 10 + settle and off[3] < 0, "buffer off: a flick starts at once even if he cannot act (start %d)" % off[0])
++	# on, he can act: no change
++	_set_buffer(9)
++	var free: Array = _buf_run(-1)
++	ok(free[0] == off[0], "buffer on, he can act: the same start (%d)" % free[0])
++	# on, he cannot act at first and can 5 ticks later: the request starts the first tick he can, with the flick's own direction, throwing at once if the stick is back
++	var late: Array = _buf_run(18)
++	ok(late[0] == 18 and late[1] == 18 and late[2] == SimStrikeRead.RIGHT and late[3] < 0, "buffer on: a flick made at 10 while he cannot act starts the tick he can (18), as a quick strike, toward (start %d, release %d, dir %d)" % [late[0], late[1], late[2]])
++	# on, the stick is still out when he can act: it starts then and is held
++	var held: Array = _buf_run(16, 10, 30)
++	ok(held[0] == 16 and held[1] > 16, "buffer on: a stick still out when he can act starts then and stays held (start %d, release %d)" % [held[0], held[1]])
++	# the window: waiting is allowed for the buffer's ticks from the earliest start, then the request is dropped and told once
++	var expired: Array = _buf_run(60)
++	ok(expired[0] < 0 and expired[3] == 10 + settle + 9, "buffer on: he cannot act for good: the request is dropped %d ticks after it could have started, and told once (refused at %d)" % [9, expired[3]])
++	var edge: Array = _buf_run(10 + settle + 8)
++	ok(edge[0] == 10 + settle + 8 and edge[3] < 0, "buffer on: he can act on the last tick of the window: it starts (%d)" % edge[0])
++	# the next flick after an expiry works
++	var l: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var got: int = -1
++	for t in range(100):
++		l.set_can_act(t >= 60)
++		l.axis("pad:rs", 1.0 if ((t >= 10 and t < 13) or (t >= 70 and t < 73)) else 0.0, 0.0)
++		if l.build().rsStart and got < 0:
++			got = t
++		l.consumed()
++	ok(got >= 70, "buffer on: after an expiry the stick must rest, and a later flick starts normally (%d)" % got)
++	# newest flick only: a second flick to the left replaces the first while he cannot act
++	var two: Array = _buf_run(22, 10, 3, 0.0, [[16, 3, 180.0]])
++	ok(two[0] == 22 and two[2] == SimStrikeRead.LEFT, "buffer on: two flicks while he cannot act: the newest (left) is the one that starts (start %d, dir %d)" % [two[0], two[2]])
++	var n_starts: int = 0
++	for it in two[4]:
++		if (it as SimIntent).rsStart:
++			n_starts += 1
++	ok(n_starts == 1, "buffer on: only one strike starts")
++	# the law is unchanged: a face press while the request waits goes through and holds the strike R from it
++	var rev: int = SimInputData.ti(["strike", "reverseLockout"], 8)
++	var withface: Array = _buf_run(14, 10, 3, 0.0, [], [12])
++	var lt: int = -1
++	for t in range(withface[4].size()):
++		if (withface[4][t] as SimIntent).light and lt < 0:
++			lt = t
++	ok(lt == 12 and withface[0] >= 12 + rev, "buffer on: a face press at 12 while the request waits still goes out (light %d) and the strike waits R = %d from it (start %d)" % [lt, rev, withface[0]])
++	# the hub tells the pad when a buffered request expires (switches.hapticRefused)
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["hapticRefused"] = true
++	SimInputData.timing["switches"] = sw
++	var hub: SimInputHub = _hub_pad()
++	var knocks: int = 0
++	for t in range(80):
++		hub.set_can_act(0, false)
++		hub.pad_stick_right(7, 1.0 if (t >= 10 and t < 13) else 0.0, 0.0)
++		hub.intent(0)
++		knocks += hub.take_haptics().size()
++		hub.consumed()
++		knocks += hub.take_haptics().size()
++	ok(knocks == 1, "buffer on: an expired request knocks the pad once (%d)" % knocks)
++	sw["hapticRefused"] = false
++	SimInputData.timing["switches"] = sw
++	# the swapped layout makes the same stream under the buffer
++	var sa: SimLayout = SimLayout.new(SimInputData.preset("arena"))
++	var sb: SimLayout = SimLayout.new(SimInputData.preset("arena-swapped"))
++	var same: bool = true
++	for t in range(120):
++		var can: bool = (t % 40) >= 15
++		sa.set_can_act(can)
++		sb.set_can_act(can)
++		var mm: float = 1.0 if (t % 40) in [10, 11, 12] else 0.0
++		sa.axis("pad:rs", mm, 0.0)
++		sb.axis("pad:ls", mm, 0.0)
++		var ia: SimIntent = sa.build()
++		var ib: SimIntent = sb.build()
++		sa.consumed()
++		sb.consumed()
++		if SimIntent.pack(ia) != SimIntent.pack(ib) or SimIntent.pack2(ia) != SimIntent.pack2(ib):
++			same = false
++	ok(same, "buffer on: arena and arena-swapped make one stream")
++	_set_buffer(0)

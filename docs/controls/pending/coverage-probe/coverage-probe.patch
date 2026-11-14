@@ -1,0 +1,463 @@
+diff --git a/sim/input/tools/coverage_probe.gd b/sim/input/tools/coverage_probe.gd
+new file mode 100644
+index 0000000..3f5e20b
+--- /dev/null
++++ b/sim/input/tools/coverage_probe.gd
+@@ -0,0 +1,338 @@
++extends SceneTree
++## The moveset coverage probe (A-CONTROLS-06, X-03; docs/controls/coverage-probe.md). A scripted pad presses every cell of the move table in a live match, through the REAL hub into SimCore, for each fighter,
++## and says for each cell: the OUTCOME (what the sim did), REFUSED (the build said no, with its reason), NOTHING (a silent press: nothing happened and nothing was said) or SAME AS an earlier cell (the same outcome).
++##   godot --headless --path <tree> --script res://sim/input/tools/coverage_probe.gd [-- --fighters=PROTAGONIST,RIVAL --seeds=5,11,23 --dist=250 --cells=res://sim/input/tools/coverage_cells.json --only=<id substring>]
++## It reads the build's data as loaded from res://: a tree's loose files, or a desktop build's pack (`--main-pack build.pck --script ...`), never main's. Nothing is set in memory (no pins, no switches): the pad is exactly the data's.
++## The first lines print the data it read (the fighters' data hash, timing.json's hash and its switches) so a reading says which build it is of.
++## The cell list is data (coverage_cells.json: one object per cell, with the pad events that press it and a by_design sentence when the cell is empty on purpose). Nothing here names a cell.
++##
++## How a cell is read. A fresh match per cell and seed (the fighter under test is slot 0 on the pad, a standing opponent 250 units away: at 80 the match opens in a clinch, and the first press only ends it), 30 ticks to settle, the cell's held layer pressed, then 90 ticks of the cell's script.
++## The layer alone (a baseline run, no press) is subtracted, so holding LB is not "an outcome" of every LB cell. What is read: the exchange's template, the attacker's pieces (the feed's PIECES line), the events of the pad's
++## fighter and the damage dealt, the fighter's act and state changes, a rush, and the press refusals the build told (stick_refused and press_refused cues, and the hub's own refusal rows, with their reason). A cell's outcome is the union over the seeds,
++## because a pool picks its piece by the seed; two cells are the same when their outcomes are, piece for piece.
++## Two kinds of repeat are told: SAME AS (the whole outcome is an earlier cell's) and SAME MOVE AS (the same template, pieces and hit kinds, with a side effect the layer adds, such as the stance check LB brings).
++## Output: one `CELL` line per cell and fighter, then `COUNT` lines. Read-only; exits 0.
++
++const SETTLE: int = 30
++const FIRST_TICK: int = -40
++const WINDOW: int = 90
++const NOISE: Array = ["press_ack"]
++
++var cells: Array = []
++var _tracing: bool = false
++var seeds: Array = [5, 11, 23]
++var dist: float = 250.0
++var only: String = ""
++var trace: String = ""   # --trace=<cell id>: print every event and feed line of that cell (first seed), for reading why a cell reads as it does
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	var cells_path: String = "res://sim/input/tools/coverage_cells.json"
++	var fighters: Array = []
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--fighters="):
++			fighters = a.substr(11).split(",")
++		elif a.begins_with("--seeds="):
++			seeds = []
++			for s in a.substr(8).split(","):
++				seeds.append(int(s))
++		elif a.begins_with("--dist="):
++			dist = float(a.substr(7))
++		elif a.begins_with("--cells="):
++			cells_path = a.substr(8)
++		elif a.begins_with("--only="):
++			only = a.substr(7)
++		elif a.begins_with("--trace="):
++			trace = a.substr(8)
++	var j = JSON.parse_string(FileAccess.get_file_as_string(cells_path))
++	if not (j is Dictionary) or not j.has("cells"):
++		print("COVERAGE ERROR: no cells in ", cells_path)
++		quit(1)
++		return
++	cells = j["cells"]
++	if fighters.is_empty():
++		var ord: Array = FighterData.order()
++		for k in range(mini(2, ord.size())):
++			fighters.append(String(ord[k]))   # the roster's first two, as a match's default pairing is
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	var on: Array = []
++	for k in sw:
++		if bool(sw[k]):
++			on.append(String(k))
++	on.sort()
++	print("COVERAGE data: fighters hash %s ; timing.json sha256 %s ; %d cells ; seeds %s ; dist %d" % [FighterData.dataHash(), FileAccess.get_sha256("res://data/input/timing.json").substr(0, 16), cells.size(), str(seeds), int(dist)])
++	print("COVERAGE switches on: %s" % ", ".join(on))
++	print("COVERAGE fighters: %s" % ", ".join(fighters))
++	for f in fighters:
++		_fighter(String(f), fighters)
++	quit(0)
++
++
++func _other(f: String, all: Array) -> String:
++	for o in all:
++		if String(o) != f:
++			return String(o)
++	for o in FighterData.order():
++		if String(o) != f:
++			return String(o)
++	return f
++
++
++func _fighter(fid: String, all: Array) -> void:
++	var other: String = _other(fid, all)
++	# the baselines: each layer held with no press
++	var base: Dictionary = {}
++	for layer in ["none", "LB", "RB", "RT", "LT", "pair"]:
++		var pre: Array = []
++		for c in cells:
++			if String(c["layer"]) == layer:
++				pre = c["pre"]
++				break
++		var agg: Dictionary = _empty_agg()
++		if layer != "pair":
++			for s in seeds:
++				_merge(agg, _run(fid, other, int(s), pre, []))
++		base[layer] = agg
++	var sigs: Dictionary = {}   # signature -> the first cell id with it
++	var moves: Dictionary = {}   # move signature (template, pieces, hit kinds) -> [the first cell id, its outcome]
++	var counts: Dictionary = {"cells": 0, "outcome": 0, "same": 0, "same_move": 0, "refused": 0, "nothing": 0}
++	for c in cells:
++		var id: String = String(c["id"])
++		if only != "" and id.find(only) < 0:
++			continue
++		var agg: Dictionary = _empty_agg()
++		for s in seeds:
++			_tracing = (trace == id and s == seeds[0])
++			_merge(agg, _run(fid, other, int(s), c["pre"], c["script"]))
++			_tracing = false
++		var b: Dictionary = base[String(c["layer"])]
++		var out: Dictionary = _minus(agg, b)
++		counts["cells"] += 1
++		var note: String = String(c.get("by_design", ""))
++		var line: String
++		var has_outcome: bool = out["changed"] or not out["tpl"].is_empty() or not out["pieces"].is_empty() or float(out["dmg"]) > 0.0 or not out["ev"].is_empty() or not out["act"].is_empty()
++		if has_outcome:
++			var sig: String = _sig(out)
++			var msig: String = _msig(out)
++			if sigs.has(sig):
++				counts["same"] += 1
++				line = "SAME AS %s" % str(sigs[sig])
++			elif msig != "" and moves.has(msig):
++				counts["same_move"] += 1
++				var first: Array = moves[msig]
++				var extra: Array = []
++				for e in _sorted(out["ev"]):
++					if not first[1]["ev"].has(e):
++						extra.append(e)
++				line = "SAME MOVE AS %s (the same template, pieces and hit kinds; also %s)" % [str(first[0]), ",".join(extra) if not extra.is_empty() else "no new event"]
++				sigs[sig] = id
++			else:
++				sigs[sig] = id
++				if msig != "":
++					moves[msig] = [id, out]
++				counts["outcome"] += 1
++				line = "OUTCOME %s" % _describe(out)
++		elif not out["refused"].is_empty():
++			counts["refused"] += 1
++			line = "REFUSED %s" % ",".join(_sorted(out["refused"]))
++		else:
++			counts["nothing"] += 1
++			line = "NOTHING"
++		if note != "" and not has_outcome:
++			line += "  (by design: %s)" % note
++		print("CELL %s | %-32s | %s" % [fid, id, line])
++	var no_outcome: int = int(counts["refused"]) + int(counts["nothing"])
++	print("COUNT %s: %d cells; %d own outcomes, %d same as an earlier cell, %d the same move with another side effect, %d refused (said), %d nothing (silent); no outcome %d, repeats %d (strict) or %d (same move)" % [fid, counts["cells"], counts["outcome"], counts["same"], counts["same_move"], counts["refused"], counts["nothing"], no_outcome, counts["same"], int(counts["same"]) + int(counts["same_move"])])
++
++
++# ---- one run -----------------------------------------------------------------------------------------------------------------------------------
++
++func _empty_agg() -> Dictionary:
++	return {"tpl": {}, "pieces": {}, "ev": {}, "act": {}, "refused": {}, "dmg": 0.0, "changed": false, "states": {}, "dmgk": {}}
++
++
++func _merge(a: Dictionary, r: Dictionary) -> void:
++	for k in ["tpl", "pieces", "ev", "act", "refused", "states", "dmgk"]:
++		for x in r[k]:
++			a[k][x] = true
++	a["dmg"] = maxf(float(a["dmg"]), float(r["dmg"]))
++	a["changed"] = bool(a["changed"]) or bool(r["changed"])
++
++
++## What the cell's run added to its layer's baseline.
++func _minus(a: Dictionary, b: Dictionary) -> Dictionary:
++	var o: Dictionary = _empty_agg()
++	for k in ["tpl", "pieces", "ev", "act", "refused", "states", "dmgk"]:
++		for x in a[k]:
++			if not b[k].has(x):
++				o[k][x] = true
++	o["dmg"] = float(a["dmg"])
++	var st_new: bool = false
++	for s in o["states"]:
++		if String(s) != "free":
++			st_new = true
++	o["changed"] = st_new
++	return o
++
++
++func _sorted(d: Dictionary) -> Array:
++	var k: Array = d.keys()
++	k.sort()
++	return k
++
++
++func _sig(o: Dictionary) -> String:
++	return "tpl=%s|pieces=%s|ev=%s|act=%s|dmgk=%s|st=%s" % [str(_sorted(o["tpl"])), str(_sorted(o["pieces"])), str(_sorted(o["ev"])), str(_sorted(o["act"])), str(_sorted(o["dmgk"])), str(_sorted(o["states"]))]
++
++
++## A move's identity: the exchange template, the attacker's pieces and the kinds of hit, without the events a layer adds around it (a stance check, a launcher window). "" for a cell that has no pieces and no template (a beam, a shot, a stance): those are compared by their whole outcome only.
++func _msig(o: Dictionary) -> String:
++	if o["pieces"].is_empty() and o["tpl"].is_empty():
++		return ""
++	return "tpl=%s|pieces=%s|dmgk=%s" % [str(_sorted(o["tpl"])), str(_sorted(o["pieces"])), str(_sorted(o["dmgk"]))]
++
++
++func _describe(o: Dictionary) -> String:
++	var parts: Array = []
++	if not o["tpl"].is_empty():
++		parts.append("tpl=" + "/".join(_sorted(o["tpl"])))
++	if not o["pieces"].is_empty():
++		parts.append("pieces=" + "/".join(_sorted(o["pieces"])))
++	if float(o["dmg"]) > 0.0:
++		parts.append("hit=%.0f(%s)" % [float(o["dmg"]), ",".join(_sorted(o["dmgk"]))])
++	if not o["ev"].is_empty():
++		parts.append("ev=" + ",".join(_sorted(o["ev"])))
++	if not o["act"].is_empty():
++		parts.append("act=" + ",".join(_sorted(o["act"])))
++	var st: Array = []
++	for s in _sorted(o["states"]):
++		if String(s) != "free":
++			st.append(String(s))
++	if not st.is_empty():
++		parts.append("st=" + ",".join(st))
++	if parts.is_empty():
++		parts.append("(a change)")
++	return " ".join(parts)
++
++
++func _apply(hub: SimInputHub, e: Array) -> void:
++	match str(e[1]):
++		"b":
++			hub.pad_button(7, str(e[2]), bool(e[3]))
++		"t":
++			hub.pad_trigger(7, str(e[2]), float(e[3]))
++		"ls":
++			hub.pad_stick(7, float(e[3]), float(e[4]))
++		"rs":
++			hub.pad_stick_right(7, float(e[3]), float(e[4]))
++
++
++func _run(fid: String, other: String, seed_: int, pre: Array, script: Array) -> Dictionary:
++	var hub := SimInputHub.new()
++	hub.set_humans(true, false)
++	hub.pad_button(7, "south", true)
++	hub.pad_button(7, "south", false)
++	hub.take_joins()
++	hub.set_humans(true, false)
++	var su: Dictionary = hub.setup()
++	su["intro"] = false
++	su["slots"] = [fid, other]
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed_, {"p1": false, "p2": false}, su)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	b.x = SimWrap.wrap(a.x + dist)
++	b.y = a.y
++	var quiet := SimIntent.new()
++	for t in range(SETTLE):
++		SimCore.step(S, [hub.intent(0), quiet])
++		hub.consumed()
++		S.out.fx.clear()
++		S.out.feed.clear()
++	var all: Array = pre + script
++	var r: Dictionary = _empty_agg()
++	var hp0: float = float(b.hp)
++	var act0: Dictionary = _act_snapshot(a)
++	for t in range(FIRST_TICK, WINDOW):
++		for e in all:
++			if int(e[0]) == t:
++				_apply(hub, e)
++		var i: SimIntent = hub.intent(0)
++		SimCore.step(S, [i, quiet])
++		hub.consumed()
++		for rf in hub.take_refusals():   # what the hub itself says (a press the layout let go of, a push on an inert layer): said, though it is no sim cue
++			if t >= 0:
++				r["refused"][String(rf["code"])] = true
++		if t >= 0:
++			if S.dirS.ex != null:
++				r["tpl"][str(S.dirS.ex.tpl)] = true
++				for bt in S.dirS.ex.beats:
++					if bt.args != null and bt.args.has("piece") and (bt.op == "chainStrike" or String(bt.args.get("a", "A")) == "A"):
++						r["pieces"][String(bt.args["piece"])] = true
++			r["states"][str(a.state)] = true
++			if a.rush != null:
++				r["changed"] = true
++			var snap: Dictionary = _act_snapshot(a)
++			for k in snap:
++				if snap[k] != act0.get(k):
++					r["act"][k] = true
++		if _tracing:
++			for l in S.out.feed:
++				print("TRACE t=%d feed %s: %s" % [t, str(l.tag), str(l.sub)])
++			for e in S.out.fx:
++				print("TRACE t=%d %s kind=%s text=%s source=%s actor=%d k=%.0f" % [t, str(e.type), str(e.kind), str(e.text), str(e.source), int(e.actor), float(e.k)])
++		for l in S.out.feed:
++			if str(l.tag) == "PIECES":
++				for part in str(l.sub).split("  (")[0].split(", "):
++					var pp: String = part.strip_edges()
++					if pp.begins_with(str(a.name) + " "):
++						r["pieces"][pp.substr(str(a.name).length() + 1)] = true
++		for e in S.out.fx:
++			var nm: String = String(e.kind) if String(e.type) == "cue" else String(e.type)
++			if t < 0 or NOISE.has(nm):
++				continue
++			if nm == "stick_refused" or nm == "press_refused":
++				if int(e.actor) == 0:
++					r["refused"][String(e.source) if String(e.source) != "" else String(e.text)] = true
++				continue
++			if nm == "damage":
++				if int(e.attacker) == 0:
++					r["dmgk"][String(e.kind)] = true
++				continue
++			if int(e.actor) == 0:
++				r["ev"][_ident(nm, e)] = true
++		S.out.fx.clear()
++		S.out.feed.clear()
++	r["dmg"] = hp0 - float(b.hp)
++	SimCore.dispose(S)
++	return r
++
++
++## An event's name with its variant: cue text and source that name a kind of blow or beam ("blow[light/lunge]"), not a count or a tick. Other events are their name.
++func _ident(nm: String, e) -> String:
++	if String(e.type) != "cue":
++		return nm
++	var t: String = String(e.text)
++	var src: String = String(e.source)
++	if t.is_valid_int() or t == "start" or t == "end":
++		t = ""
++	if src.is_valid_int():
++		src = ""
++	if t == "" and src == "":
++		return nm
++	var both: String = t if src == "" else (src if t == "" else t + "/" + src)
++	return "%s[%s]" % [nm, both]
++
++
++## The fighter's act record as a dictionary of its plain values (what his presses changed).
++func _act_snapshot(f) -> Dictionary:
++	var out: Dictionary = {}
++	for pr in f.act.get_property_list():
++		var n: String = str(pr["name"])
++		if int(pr["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE == 0:
++			continue
++		var v = f.act.get(n)
++		if v is int or v is bool or v is float:
++			out[n] = v
++	return out
+diff --git a/sim/input/tools/coverage_probe.gd.uid b/sim/input/tools/coverage_probe.gd.uid
+new file mode 100644
+index 0000000..557142a
+--- /dev/null
++++ b/sim/input/tools/coverage_probe.gd.uid
+@@ -0,0 +1 @@
++uid://dgbups2dnt0y6
+diff --git a/sim/input/tools/coverage_cells.json b/sim/input/tools/coverage_cells.json
+new file mode 100644
+index 0000000..f075524
+--- /dev/null
++++ b/sim/input/tools/coverage_cells.json
+@@ -0,0 +1,106 @@
++{
++ "_note": "The move table's cells for the coverage probe (sim/input/tools/coverage_probe.gd; A-CONTROLS-06; docs/controls/coverage-probe.md). One object per cell: id (layer/button/press, layer/stick/flick|hold/direction, pair/name), layer (none, LB, RB, RT, LT, or pair), kind, pre (pad events before the press: the held layer), script (the press), by_design (a sentence when the cell is empty on purpose, from Combat's design page; empty means the cell is expected to do something). Event forms: [tick, 'b', control, down], [tick, 't', control, value], [tick, 'ls' or 'rs', '', x, y]; negative ticks are before the press. Add a cell by adding an object; nothing in the probe's code names a cell.",
++ "cells": [
++  {"id":"none/X/tap","layer":"none","kind":"face","pre":[],"script":[[0,"b","west",true],[3,"b","west",false]],"by_design":""},
++  {"id":"none/X/mash","layer":"none","kind":"face","pre":[],"script":[[0,"b","west",true],[3,"b","west",false],[6,"b","west",true],[9,"b","west",false],[12,"b","west",true],[15,"b","west",false],[18,"b","west",true],[21,"b","west",false],[24,"b","west",true],[27,"b","west",false],[30,"b","west",true],[33,"b","west",false],[36,"b","west",true],[39,"b","west",false],[42,"b","west",true],[45,"b","west",false]],"by_design":""},
++  {"id":"none/X/hold","layer":"none","kind":"face","pre":[],"script":[[0,"b","west",true],[40,"b","west",false]],"by_design":""},
++  {"id":"none/Y/tap","layer":"none","kind":"face","pre":[],"script":[[0,"b","north",true],[3,"b","north",false]],"by_design":""},
++  {"id":"none/Y/mash","layer":"none","kind":"face","pre":[],"script":[[0,"b","north",true],[3,"b","north",false],[6,"b","north",true],[9,"b","north",false],[12,"b","north",true],[15,"b","north",false],[18,"b","north",true],[21,"b","north",false],[24,"b","north",true],[27,"b","north",false],[30,"b","north",true],[33,"b","north",false],[36,"b","north",true],[39,"b","north",false],[42,"b","north",true],[45,"b","north",false]],"by_design":""},
++  {"id":"none/Y/hold","layer":"none","kind":"face","pre":[],"script":[[0,"b","north",true],[40,"b","north",false]],"by_design":""},
++  {"id":"none/B/tap","layer":"none","kind":"face","pre":[],"script":[[0,"b","east",true],[3,"b","east",false]],"by_design":""},
++  {"id":"none/B/mash","layer":"none","kind":"face","pre":[],"script":[[0,"b","east",true],[3,"b","east",false],[6,"b","east",true],[9,"b","east",false],[12,"b","east",true],[15,"b","east",false],[18,"b","east",true],[21,"b","east",false],[24,"b","east",true],[27,"b","east",false],[30,"b","east",true],[33,"b","east",false],[36,"b","east",true],[39,"b","east",false],[42,"b","east",true],[45,"b","east",false]],"by_design":""},
++  {"id":"none/B/hold","layer":"none","kind":"face","pre":[],"script":[[0,"b","east",true],[40,"b","east",false]],"by_design":""},
++  {"id":"none/A/tap","layer":"none","kind":"face","pre":[],"script":[[0,"b","south",true],[3,"b","south",false]],"by_design":""},
++  {"id":"none/A/mash","layer":"none","kind":"face","pre":[],"script":[[0,"b","south",true],[3,"b","south",false],[6,"b","south",true],[9,"b","south",false],[12,"b","south",true],[15,"b","south",false],[18,"b","south",true],[21,"b","south",false],[24,"b","south",true],[27,"b","south",false],[30,"b","south",true],[33,"b","south",false],[36,"b","south",true],[39,"b","south",false],[42,"b","south",true],[45,"b","south",false]],"by_design":""},
++  {"id":"none/A/hold","layer":"none","kind":"face","pre":[],"script":[[0,"b","south",true],[40,"b","south",false]],"by_design":""},
++  {"id":"LB/X/tap","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","west",true],[3,"b","west",false]],"by_design":""},
++  {"id":"LB/X/mash","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","west",true],[3,"b","west",false],[6,"b","west",true],[9,"b","west",false],[12,"b","west",true],[15,"b","west",false],[18,"b","west",true],[21,"b","west",false],[24,"b","west",true],[27,"b","west",false],[30,"b","west",true],[33,"b","west",false],[36,"b","west",true],[39,"b","west",false],[42,"b","west",true],[45,"b","west",false]],"by_design":""},
++  {"id":"LB/X/hold","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","west",true],[40,"b","west",false]],"by_design":""},
++  {"id":"LB/Y/tap","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","north",true],[3,"b","north",false]],"by_design":""},
++  {"id":"LB/Y/mash","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","north",true],[3,"b","north",false],[6,"b","north",true],[9,"b","north",false],[12,"b","north",true],[15,"b","north",false],[18,"b","north",true],[21,"b","north",false],[24,"b","north",true],[27,"b","north",false],[30,"b","north",true],[33,"b","north",false],[36,"b","north",true],[39,"b","north",false],[42,"b","north",true],[45,"b","north",false]],"by_design":""},
++  {"id":"LB/Y/hold","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","north",true],[40,"b","north",false]],"by_design":""},
++  {"id":"LB/B/tap","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","east",true],[3,"b","east",false]],"by_design":""},
++  {"id":"LB/B/mash","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","east",true],[3,"b","east",false],[6,"b","east",true],[9,"b","east",false],[12,"b","east",true],[15,"b","east",false],[18,"b","east",true],[21,"b","east",false],[24,"b","east",true],[27,"b","east",false],[30,"b","east",true],[33,"b","east",false],[36,"b","east",true],[39,"b","east",false],[42,"b","east",true],[45,"b","east",false]],"by_design":""},
++  {"id":"LB/B/hold","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","east",true],[40,"b","east",false]],"by_design":""},
++  {"id":"LB/A/tap","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","south",true],[3,"b","south",false]],"by_design":""},
++  {"id":"LB/A/mash","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","south",true],[3,"b","south",false],[6,"b","south",true],[9,"b","south",false],[12,"b","south",true],[15,"b","south",false],[18,"b","south",true],[21,"b","south",false],[24,"b","south",true],[27,"b","south",false],[30,"b","south",true],[33,"b","south",false],[36,"b","south",true],[39,"b","south",false],[42,"b","south",true],[45,"b","south",false]],"by_design":""},
++  {"id":"LB/A/hold","layer":"LB","kind":"face","pre":[[-10,"b","lb",true]],"script":[[0,"b","south",true],[40,"b","south",false]],"by_design":""},
++  {"id":"RB/X/tap","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","west",true],[3,"b","west",false]],"by_design":""},
++  {"id":"RB/X/mash","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","west",true],[3,"b","west",false],[6,"b","west",true],[9,"b","west",false],[12,"b","west",true],[15,"b","west",false],[18,"b","west",true],[21,"b","west",false],[24,"b","west",true],[27,"b","west",false],[30,"b","west",true],[33,"b","west",false],[36,"b","west",true],[39,"b","west",false],[42,"b","west",true],[45,"b","west",false]],"by_design":""},
++  {"id":"RB/X/hold","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","west",true],[40,"b","west",false]],"by_design":""},
++  {"id":"RB/Y/tap","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","north",true],[3,"b","north",false]],"by_design":""},
++  {"id":"RB/Y/mash","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","north",true],[3,"b","north",false],[6,"b","north",true],[9,"b","north",false],[12,"b","north",true],[15,"b","north",false],[18,"b","north",true],[21,"b","north",false],[24,"b","north",true],[27,"b","north",false],[30,"b","north",true],[33,"b","north",false],[36,"b","north",true],[39,"b","north",false],[42,"b","north",true],[45,"b","north",false]],"by_design":""},
++  {"id":"RB/Y/hold","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","north",true],[40,"b","north",false]],"by_design":""},
++  {"id":"RB/B/tap","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","east",true],[3,"b","east",false]],"by_design":""},
++  {"id":"RB/B/mash","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","east",true],[3,"b","east",false],[6,"b","east",true],[9,"b","east",false],[12,"b","east",true],[15,"b","east",false],[18,"b","east",true],[21,"b","east",false],[24,"b","east",true],[27,"b","east",false],[30,"b","east",true],[33,"b","east",false],[36,"b","east",true],[39,"b","east",false],[42,"b","east",true],[45,"b","east",false]],"by_design":""},
++  {"id":"RB/B/hold","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","east",true],[40,"b","east",false]],"by_design":""},
++  {"id":"RB/A/tap","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","south",true],[3,"b","south",false]],"by_design":""},
++  {"id":"RB/A/mash","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","south",true],[3,"b","south",false],[6,"b","south",true],[9,"b","south",false],[12,"b","south",true],[15,"b","south",false],[18,"b","south",true],[21,"b","south",false],[24,"b","south",true],[27,"b","south",false],[30,"b","south",true],[33,"b","south",false],[36,"b","south",true],[39,"b","south",false],[42,"b","south",true],[45,"b","south",false]],"by_design":""},
++  {"id":"RB/A/hold","layer":"RB","kind":"face","pre":[[-10,"b","rb",true]],"script":[[0,"b","south",true],[40,"b","south",false]],"by_design":""},
++  {"id":"RT/X/tap","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","west",true],[3,"b","west",false]],"by_design":""},
++  {"id":"RT/X/mash","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","west",true],[3,"b","west",false],[6,"b","west",true],[9,"b","west",false],[12,"b","west",true],[15,"b","west",false],[18,"b","west",true],[21,"b","west",false],[24,"b","west",true],[27,"b","west",false],[30,"b","west",true],[33,"b","west",false],[36,"b","west",true],[39,"b","west",false],[42,"b","west",true],[45,"b","west",false]],"by_design":""},
++  {"id":"RT/X/hold","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","west",true],[40,"b","west",false]],"by_design":""},
++  {"id":"RT/Y/tap","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","north",true],[3,"b","north",false]],"by_design":""},
++  {"id":"RT/Y/mash","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","north",true],[3,"b","north",false],[6,"b","north",true],[9,"b","north",false],[12,"b","north",true],[15,"b","north",false],[18,"b","north",true],[21,"b","north",false],[24,"b","north",true],[27,"b","north",false],[30,"b","north",true],[33,"b","north",false],[36,"b","north",true],[39,"b","north",false],[42,"b","north",true],[45,"b","north",false]],"by_design":""},
++  {"id":"RT/Y/hold","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","north",true],[40,"b","north",false]],"by_design":""},
++  {"id":"RT/B/tap","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","east",true],[3,"b","east",false]],"by_design":""},
++  {"id":"RT/B/mash","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","east",true],[3,"b","east",false],[6,"b","east",true],[9,"b","east",false],[12,"b","east",true],[15,"b","east",false],[18,"b","east",true],[21,"b","east",false],[24,"b","east",true],[27,"b","east",false],[30,"b","east",true],[33,"b","east",false],[36,"b","east",true],[39,"b","east",false],[42,"b","east",true],[45,"b","east",false]],"by_design":""},
++  {"id":"RT/B/hold","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","east",true],[40,"b","east",false]],"by_design":""},
++  {"id":"RT/A/tap","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","south",true],[3,"b","south",false]],"by_design":""},
++  {"id":"RT/A/mash","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","south",true],[3,"b","south",false],[6,"b","south",true],[9,"b","south",false],[12,"b","south",true],[15,"b","south",false],[18,"b","south",true],[21,"b","south",false],[24,"b","south",true],[27,"b","south",false],[30,"b","south",true],[33,"b","south",false],[36,"b","south",true],[39,"b","south",false],[42,"b","south",true],[45,"b","south",false]],"by_design":""},
++  {"id":"RT/A/hold","layer":"RT","kind":"face","pre":[[-10,"t","rt",1]],"script":[[0,"b","south",true],[40,"b","south",false]],"by_design":""},
++  {"id":"LT/X/tap","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","west",true],[3,"b","west",false]],"by_design":""},
++  {"id":"LT/X/mash","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","west",true],[3,"b","west",false],[6,"b","west",true],[9,"b","west",false],[12,"b","west",true],[15,"b","west",false],[18,"b","west",true],[21,"b","west",false],[24,"b","west",true],[27,"b","west",false],[30,"b","west",true],[33,"b","west",false],[36,"b","west",true],[39,"b","west",false],[42,"b","west",true],[45,"b","west",false]],"by_design":""},
++  {"id":"LT/X/hold","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","west",true],[40,"b","west",false]],"by_design":""},
++  {"id":"LT/Y/tap","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","north",true],[3,"b","north",false]],"by_design":""},
++  {"id":"LT/Y/mash","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","north",true],[3,"b","north",false],[6,"b","north",true],[9,"b","north",false],[12,"b","north",true],[15,"b","north",false],[18,"b","north",true],[21,"b","north",false],[24,"b","north",true],[27,"b","north",false],[30,"b","north",true],[33,"b","north",false],[36,"b","north",true],[39,"b","north",false],[42,"b","north",true],[45,"b","north",false]],"by_design":""},
++  {"id":"LT/Y/hold","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","north",true],[40,"b","north",false]],"by_design":""},
++  {"id":"LT/B/tap","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","east",true],[3,"b","east",false]],"by_design":""},
++  {"id":"LT/B/mash","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","east",true],[3,"b","east",false],[6,"b","east",true],[9,"b","east",false],[12,"b","east",true],[15,"b","east",false],[18,"b","east",true],[21,"b","east",false],[24,"b","east",true],[27,"b","east",false],[30,"b","east",true],[33,"b","east",false],[36,"b","east",true],[39,"b","east",false],[42,"b","east",true],[45,"b","east",false]],"by_design":""},
++  {"id":"LT/B/hold","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","east",true],[40,"b","east",false]],"by_design":""},
++  {"id":"LT/A/tap","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","south",true],[3,"b","south",false]],"by_design":""},
++  {"id":"LT/A/mash","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","south",true],[3,"b","south",false],[6,"b","south",true],[9,"b","south",false],[12,"b","south",true],[15,"b","south",false],[18,"b","south",true],[21,"b","south",false],[24,"b","south",true],[27,"b","south",false],[30,"b","south",true],[33,"b","south",false],[36,"b","south",true],[39,"b","south",false],[42,"b","south",true],[45,"b","south",false]],"by_design":""},
++  {"id":"LT/A/hold","layer":"LT","kind":"face","pre":[[-10,"t","lt",1]],"script":[[0,"b","south",true],[40,"b","south",false]],"by_design":""},
++  {"id":"none/stick/flick/up","layer":"none","kind":"stick","pre":[],"script":[[0,"rs","",0,1],[3,"rs","",0,0]],"by_design":""},
++  {"id":"none/stick/flick/down","layer":"none","kind":"stick","pre":[],"script":[[0,"rs","",0,-1],[3,"rs","",0,0]],"by_design":""},
++  {"id":"none/stick/flick/toward","layer":"none","kind":"stick","pre":[],"script":[[0,"rs","",1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"none/stick/flick/away","layer":"none","kind":"stick","pre":[],"script":[[0,"rs","",-1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"none/stick/flick/downAir","layer":"none","kind":"stick","pre":[],"script":[[-30,"ls","",0,1],[-6,"ls","",0,0],[0,"rs","",0,-1],[3,"rs","",0,0]],"by_design":"","in_air":true},
++  {"id":"none/stick/hold/up","layer":"none","kind":"stick","pre":[],"script":[[0,"rs","",0,1],[40,"rs","",0,0]],"by_design":""},
++  {"id":"none/stick/hold/down","layer":"none","kind":"stick","pre":[],"script":[[0,"rs","",0,-1],[40,"rs","",0,0]],"by_design":""},
++  {"id":"none/stick/hold/toward","layer":"none","kind":"stick","pre":[],"script":[[0,"rs","",1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"none/stick/hold/away","layer":"none","kind":"stick","pre":[],"script":[[0,"rs","",-1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"LB/stick/flick/up","layer":"LB","kind":"stick","pre":[[-10,"b","lb",true]],"script":[[0,"rs","",0,1],[3,"rs","",0,0]],"by_design":""},
++  {"id":"LB/stick/flick/down","layer":"LB","kind":"stick","pre":[[-10,"b","lb",true]],"script":[[0,"rs","",0,-1],[3,"rs","",0,0]],"by_design":""},
++  {"id":"LB/stick/flick/toward","layer":"LB","kind":"stick","pre":[[-10,"b","lb",true]],"script":[[0,"rs","",1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"LB/stick/flick/away","layer":"LB","kind":"stick","pre":[[-10,"b","lb",true]],"script":[[0,"rs","",-1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"LB/stick/hold/up","layer":"LB","kind":"stick","pre":[[-10,"b","lb",true]],"script":[[0,"rs","",0,1],[40,"rs","",0,0]],"by_design":""},
++  {"id":"LB/stick/hold/down","layer":"LB","kind":"stick","pre":[[-10,"b","lb",true]],"script":[[0,"rs","",0,-1],[40,"rs","",0,0]],"by_design":""},
++  {"id":"LB/stick/hold/toward","layer":"LB","kind":"stick","pre":[[-10,"b","lb",true]],"script":[[0,"rs","",1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"LB/stick/hold/away","layer":"LB","kind":"stick","pre":[[-10,"b","lb",true]],"script":[[0,"rs","",-1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"LT/stick/flick/up","layer":"LT","kind":"stick","pre":[[-10,"t","lt",1]],"script":[[0,"rs","",0,1],[3,"rs","",0,0]],"by_design":""},
++  {"id":"LT/stick/flick/down","layer":"LT","kind":"stick","pre":[[-10,"t","lt",1]],"script":[[0,"rs","",0,-1],[3,"rs","",0,0]],"by_design":""},
++  {"id":"LT/stick/flick/toward","layer":"LT","kind":"stick","pre":[[-10,"t","lt",1]],"script":[[0,"rs","",1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"LT/stick/flick/away","layer":"LT","kind":"stick","pre":[[-10,"t","lt",1]],"script":[[0,"rs","",-1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"LT/stick/hold/up","layer":"LT","kind":"stick","pre":[[-10,"t","lt",1]],"script":[[0,"rs","",0,1],[40,"rs","",0,0]],"by_design":""},
++  {"id":"LT/stick/hold/down","layer":"LT","kind":"stick","pre":[[-10,"t","lt",1]],"script":[[0,"rs","",0,-1],[40,"rs","",0,0]],"by_design":""},
++  {"id":"LT/stick/hold/toward","layer":"LT","kind":"stick","pre":[[-10,"t","lt",1]],"script":[[0,"rs","",1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"LT/stick/hold/away","layer":"LT","kind":"stick","pre":[[-10,"t","lt",1]],"script":[[0,"rs","",-1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"RB/stick/flick/up","layer":"RB","kind":"stick","pre":[[-10,"b","rb",true]],"script":[[0,"rs","",0,1],[3,"rs","",0,0]],"by_design":""},
++  {"id":"RB/stick/flick/down","layer":"RB","kind":"stick","pre":[[-10,"b","rb",true]],"script":[[0,"rs","",0,-1],[3,"rs","",0,0]],"by_design":""},
++  {"id":"RB/stick/flick/toward","layer":"RB","kind":"stick","pre":[[-10,"b","rb",true]],"script":[[0,"rs","",1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"RB/stick/flick/away","layer":"RB","kind":"stick","pre":[[-10,"b","rb",true]],"script":[[0,"rs","",-1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"RB/stick/hold/up","layer":"RB","kind":"stick","pre":[[-10,"b","rb",true]],"script":[[0,"rs","",0,1],[40,"rs","",0,0]],"by_design":""},
++  {"id":"RB/stick/hold/down","layer":"RB","kind":"stick","pre":[[-10,"b","rb",true]],"script":[[0,"rs","",0,-1],[40,"rs","",0,0]],"by_design":""},
++  {"id":"RB/stick/hold/toward","layer":"RB","kind":"stick","pre":[[-10,"b","rb",true]],"script":[[0,"rs","",1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"RB/stick/hold/away","layer":"RB","kind":"stick","pre":[[-10,"b","rb",true]],"script":[[0,"rs","",-1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"RT/stick/flick/toward","layer":"RT","kind":"stick","pre":[[-10,"t","rt",1]],"script":[[0,"rs","",1,0],[3,"rs","",0,0]],"by_design":""},
++  {"id":"RT/stick/hold/toward","layer":"RT","kind":"stick","pre":[[-10,"t","rt",1]],"script":[[0,"rs","",1,0],[40,"rs","",0,0]],"by_design":""},
++  {"id":"pair/X+Y (lift)","layer":"pair","kind":"pair","pre":[],"script":[[0,"b","west",true],[0,"b","north",true],[3,"b","west",false],[3,"b","north",false]],"by_design":""},
++  {"id":"pair/LT+RT (transform chord)","layer":"pair","kind":"pair","pre":[],"script":[[0,"t","lt",1],[0,"t","rt",1],[8,"t","lt",0],[8,"t","rt",0]],"by_design":""},
++  {"id":"pair/LB+LT (vanish)","layer":"pair","kind":"pair","pre":[[-2,"ls","",1,0]],"script":[[0,"b","lb",true],[0,"t","lt",1],[8,"b","lb",false],[8,"t","lt",0]],"by_design":""},
++  {"id":"pair/LB+RB (the lay) held","layer":"pair","kind":"pair","pre":[],"script":[[0,"b","lb",true],[0,"b","rb",true],[40,"b","lb",false],[40,"b","rb",false]],"by_design":""},
++  {"id":"pair/LT+RB (the kite) held","layer":"pair","kind":"pair","pre":[],"script":[[0,"t","lt",1],[0,"b","rb",true],[40,"t","lt",0],[40,"b","rb",false]],"by_design":""},
++  {"id":"pair/B+X on one tick (chord)","layer":"pair","kind":"pair","pre":[],"script":[[0,"b","east",true],[0,"b","west",true],[3,"b","east",false],[3,"b","west",false]],"by_design":""}
++ ]
++}

@@ -1,0 +1,56 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 420bc9b..9bb435b 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -38,7 +38,8 @@
+   "switches": {
+     "airBrakeGuard": false,
+     "grappleReads": false,
+-    "rightStick": false
++    "rightStick": false,
++    "quickRead": false
+   },
+   "strike": {
+     "_note": "Pitch 4a (Orb, 2026-10-30): directional-charge strikes on the right stick, their own class. Read only while switches.rightStick is on (docs/controls/right-hand-attacks.md). Every value is a first value; the ladder and the lockouts are Game Design's and the capture tool's to move.",
+@@ -47,6 +48,8 @@
+     "on": 0.6,
+     "off": 0.35,
+     "settle": 2,
++    "settleQuick": 1,
++    "preAt": 0.25,
+     "dwell": 12,
+     "levels": [12, 30, 50],
+     "beamLevels": [12, 30, 54],
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index 8d2b6a3..3219476 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -964,6 +964,10 @@
+           "type": "boolean",
+           "description": "SimPressRead.a_read drops the shove and the clinch-by-mash; the grapple's catch_read and brace_read replace them (off)."
+         },
++        "quickRead": {
++          "type": "boolean",
++          "description": "The quick read (docs/controls/responsiveness.md; needs rightStick): the strike and the brace settle strike.settleQuick ticks after the crossing, the vanish resolves on the second press + leftHand.vanishSettle, and the layout publishes the stick's pre-read for the pose (render only). Off."
++        },
+         "rightStick": {
+           "type": "boolean",
+           "description": "The right-hand attacks (docs/controls/right-hand-attacks.md): the strike stick, the left hand's brace and vanish, hybrids 3 and 10 (stances.json withRightStick), R3 freed (off)."
+@@ -1007,6 +1011,17 @@
+           "minimum": 0,
+           "description": "Ticks from the crossing to the request's start; the direction is taken then (2)."
+         },
++        "settleQuick": {
++          "type": "integer",
++          "minimum": 0,
++          "description": "The settle while switches.quickRead is on (1). 0 and 1 start on the same tick: the request starts at the build after the crossing at the soonest."
++        },
++        "preAt": {
++          "type": "number",
++          "minimum": 0,
++          "exclusiveMaximum": 1,
++          "description": "The quick read's pre-read of the strike stick begins at this rescaled deflection (0.25), while the stick leans in, before strike.on. For the pose only: never in the intent."
++        },
+         "dwell": {
+           "type": "integer",
+           "minimum": 1,

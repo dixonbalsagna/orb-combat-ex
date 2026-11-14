@@ -1,0 +1,34 @@
+{
+  "_note": "The input script for the hit-stop A/B clip (docs/controls/clips/hitstop-ab.md). Ticks count from the first controllable tick of the scene (tick 0), in the sim's own ticks, whatever the hit-stop holds (the page's step() runs one tick at a time, so a held tick is a tick of the clip too). Ops: b = a pad button (name = west X, north Y, east B, south A, lb, rb), t = a trigger (lt, rt) at 0 to 1, rs = the right stick (x, y; y up, one tick of 1.0 is a flick), ls = the left stick. The pad is on slot 0; slot 1 plays nothing.",
+  "scene": { "seed": 5, "pairing": "the default pair", "distanceUnits": 80, "slots": "P1 pad (this script), P2 idle", "intro": false, "ticks": 760 },
+  "segments": [
+    { "name": "X taps (light)", "from": 0 },
+    { "name": "Y tap (heavy)", "from": 60 },
+    { "name": "Y mash", "from": 110 },
+    { "name": "stick quick strikes", "from": 220 },
+    { "name": "stick charge, level 1", "from": 290 },
+    { "name": "stick charge, level 3", "from": 380 },
+    { "name": "RB: shot and blast", "from": 500 },
+    { "name": "B held (launch)", "from": 580 },
+    { "name": "B tap", "from": 680 }
+  ],
+  "events": [
+    [0, "b", "west", true], [3, "b", "west", false],
+    [30, "b", "west", true], [33, "b", "west", false],
+    [60, "b", "north", true], [63, "b", "north", false],
+    [110, "b", "north", true], [112, "b", "north", false],
+    [118, "b", "north", true], [120, "b", "north", false],
+    [126, "b", "north", true], [128, "b", "north", false],
+    [134, "b", "north", true], [136, "b", "north", false],
+    [142, "b", "north", true], [144, "b", "north", false],
+    [150, "b", "north", true], [152, "b", "north", false],
+    [220, "rs", 1.0, 0.0], [223, "rs", 0.0, 0.0],
+    [250, "rs", 1.0, 0.0], [253, "rs", 0.0, 0.0],
+    [290, "rs", 1.0, 0.0], [330, "rs", 0.0, 0.0],
+    [380, "rs", 1.0, 0.0], [450, "rs", 0.0, 0.0],
+    [500, "b", "rb", true], [510, "b", "west", true], [513, "b", "west", false],
+    [540, "b", "north", true], [543, "b", "north", false], [550, "b", "rb", false],
+    [580, "b", "east", true], [620, "b", "east", false],
+    [680, "b", "east", true], [683, "b", "east", false]
+  ]
+}

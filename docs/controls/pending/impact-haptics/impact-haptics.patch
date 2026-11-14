@@ -1,0 +1,355 @@
+diff --git a/data/input/timing.json b/data/input/timing.json
+index 03222a2..fe8bfad 100644
+--- a/data/input/timing.json
++++ b/data/input/timing.json
+@@ -49,6 +49,7 @@
+     "signatureRtOnly": false,
+     "driverOnRb": false,
+     "stallKeep": false,
++    "hapticImpact": false,
+     "webRumble": false
+   },
+   "strike": {
+diff --git a/render/core/main.gd b/render/core/main.gd
+index cb9dd1d..ca2228a 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -988,6 +988,8 @@ func _haptics_from_events(events: Array) -> void:
+ 			host.hub.note_stick_started(int(e.actor))   # Controls: the request was answered, so no refusal cue (timing.json switches.hapticRefused)
+ 		for r in SimHaptics.requests(name, int(e.actor), int(e.target), String(e.text), float(e.amount), _haptic_firer):
+ 			_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
++		for r in SimHaptics.event_requests(e):   # Controls: the blows, closes, launches, landings and building breaks (timing.json switches.hapticImpact; empty while it is off)
++			_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
+ 
+ 
+ ## Row 40's crescendo (timing.json switches.hapticIncomingBeam; Controls' SimHaptics.beam_window): the receiver's pad gets rising `incoming_beam` pulses through the answer
+diff --git a/sim/input/haptics.gd b/sim/input/haptics.gd
+index caa64fb..66a90b7 100644
+--- a/sim/input/haptics.gd
++++ b/sim/input/haptics.gd
+@@ -46,6 +46,43 @@ const DEFAULTS: Dictionary = {
+ 		"handheld": [{"at": 0, "ms": 30}, {"at": 55, "ms": 14}],
+ 		"gapMs": 160,
+ 	},
++	# Orb's 2026-10-05 picks, the five that were missing (docs/controls/impact-haptics.md; switches.hapticImpact). Soft and low, none brighter than a thud; every one has its own gap so a brawl
++	# never buzzes. A landed blow, felt by the one who landed it, scaled by the blow's strength.
++	"blow_land": {
++		"pad": [{"at": 0, "weak": 0.15, "strong": 0.6, "ms": 30}],
++		"handheld": [{"at": 0, "ms": 23}],
++		"gapMs": 90,
++	},
++	# A blow taken: the same weight, lower and a little longer, felt by the one it hit.
++	"hit_taken": {
++		"pad": [{"at": 0, "weak": 0.1, "strong": 0.7, "ms": 40}],
++		"handheld": [{"at": 0, "ms": 29}],
++		"gapMs": 90,
++	},
++	# A close: an attack carries the fighter across the gap. One short surge on both motors.
++	"close_surge": {
++		"pad": [{"at": 0, "weak": 0.3, "strong": 0.25, "ms": 40}],
++		"handheld": [{"at": 0, "ms": 24}],
++		"gapMs": 200,
++	},
++	# Sent flying: the launched fighter's own pad. A heavy push, then a roll-off.
++	"launch_felt": {
++		"pad": [{"at": 0, "weak": 0.2, "strong": 0.8, "ms": 80}, {"at": 100, "weak": 0.0, "strong": 0.4, "ms": 60}],
++		"handheld": [{"at": 0, "ms": 42}, {"at": 100, "ms": 18}],
++		"gapMs": 300,
++	},
++	# Touchdown after a launch: a thud with a short tail, scaled by the speed it came down at.
++	"landing_thud": {
++		"pad": [{"at": 0, "weak": 0.1, "strong": 0.65, "ms": 50}, {"at": 70, "weak": 0.0, "strong": 0.25, "ms": 30}],
++		"handheld": [{"at": 0, "ms": 34}, {"at": 70, "ms": 16}],
++		"gapMs": 200,
++	},
++	# A building breaks (it falls): both pads, two low pushes, scaled by its height. Over inside 160 ms like every kind.
++	"building_break": {
++		"pad": [{"at": 0, "weak": 0.2, "strong": 0.6, "ms": 70}, {"at": 90, "weak": 0.0, "strong": 0.4, "ms": 70}],
++		"handheld": [{"at": 0, "ms": 45}, {"at": 90, "ms": 40}],
++		"gapMs": 600,
++	},
+ 	# A rival's stick strike has started (pitch 3), on the defender's pad: two light taps for a blow from above or toward, one low knock for below or away.
+ 	"incoming_high": {
+ 		"pad": [{"at": 0, "weak": 0.55, "strong": 0.12, "ms": 20}, {"at": 45, "weak": 0.3, "strong": 0.1, "ms": 20}],
+@@ -180,6 +217,56 @@ static func release_requests(slot: int, level: int, of: int = 3) -> Array:
+ 	return [{"slot": slot, "kind": "release_thump", "scale": 0.4 + 0.6 * clampf(float(level) / float(of), 0.0, 1.0)}]
+ 
+ 
++## What the five impact kinds are scaled by.
++const BLOW_STRENGTH: Dictionary = {"light": 0.3, "medium": 0.6, "heavy": 1.0, "bolt": 0.3, "blast": 0.7, "guard": 0.2}
++const LAND_SPEED_REF: float = 1400.0
++const LAUNCH_SPEED_REF: float = 1500.0
++const BUILDING_H_REF: float = 300.0
++
++
++## The rumble for one sim event, read from the event itself (an SimState.FxEvent; docs/controls/impact-haptics.md). Orb's 2026-10-05 picks that were missing:
++##   damage (light, medium, heavy, bolt, blast, guard)  the attacker feels blow_land and the one hit feels hit_taken, scaled by the strength (a guarded blow is dull: 0.2); beams, impacts and
++##                                                     hazards (kind beam, impact, anything else) rumble nothing here: the struggle has its own kinds and a landing its own event
++##   rush        actor = the fighter closing the gap     -> close_surge
++##   launch      actor = the one sent, target = the launcher (the launcher's own cue is UI's launcher_open)  -> launch_felt on the sent one, scaled by speed
++##   land        actor = the one touching down, spd      -> landing_thud, scaled by the speed
++##   building_fall  (no fighter)                         -> building_break on both pads, scaled by the height
++## [] for any other event, and for all of them with switches.hapticImpact off. Pure: nothing is read or written but the event.
++static func event_requests(e) -> Array:
++	if not SimInputData.haptic_impact_on():
++		return []
++	match String(e.type):
++		"damage":
++			var strength: float = float(BLOW_STRENGTH.get(String(e.kind), -1.0))
++			if strength < 0.0:
++				return []
++			var out: Array = []
++			var a: int = int(e.attacker)
++			var v: int = int(e.victim)
++			if a >= 0 and a <= 1 and a != v:
++				out.append({"slot": a, "kind": "blow_land", "scale": strength})
++			if v >= 0 and v <= 1 and a != v:
++				out.append({"slot": v, "kind": "hit_taken", "scale": strength})
++			return out
++		"rush":
++			var r: int = int(e.actor)
++			return [{"slot": r, "kind": "close_surge", "scale": 1.0}] if r >= 0 and r <= 1 else []
++		"launch":
++			var s: int = int(e.actor)
++			if s < 0 or s > 1:
++				return []
++			return [{"slot": s, "kind": "launch_felt", "scale": clampf(float(e.amount) / LAUNCH_SPEED_REF, 0.3, 1.0)}]
++		"land":
++			var l: int = int(e.actor)
++			if l < 0 or l > 1:
++				return []
++			return [{"slot": l, "kind": "landing_thud", "scale": clampf(float(e.spd) / LAND_SPEED_REF, 0.25, 1.0)}]
++		"building_fall":
++			var sc: float = clampf(float(e.depth) / BUILDING_H_REF, 0.3, 1.0)
++			return [{"slot": 0, "kind": "building_break", "scale": sc}, {"slot": 1, "kind": "building_break", "scale": sc}]
++	return []
++
++
+ ## The kinds this knows.
+ static func kinds() -> Array:
+ 	return DEFAULTS.keys()
+diff --git a/sim/input/input_data.gd b/sim/input/input_data.gd
+index 03a55dc..f2f4374 100644
+--- a/sim/input/input_data.gd
++++ b/sim/input/input_data.gd
+@@ -220,6 +220,11 @@ static func stall_keep_on() -> bool:
+ 	return right_stick_on() and bool(t(["switches", "stallKeep"], false))
+ 
+ 
++## The hits, closes, launches, landings and building breaks on the pad (Orb's 2026-10-05 rumble picks; docs/controls/impact-haptics.md; switches.hapticImpact, off). Independent of the right-hand switch.
++static func haptic_impact_on() -> bool:
++	return bool(t(["switches", "hapticImpact"], false))
++
++
+ ## The beam's aim (docs/controls/beam-aim-feel.md): the strike stick's aim trails the thumb by a small dead band, and the throw carries the aim the stick held at the rim,
+ ## not the zero of a stick that has already sprung home. Needs the right-hand switch (switches.beamAim, off); off, every record is the one it always was.
+ static func beam_aim_on() -> bool:
+diff --git a/sim/input/test/haptics_test.gd b/sim/input/test/haptics_test.gd
+index cff3e4d..4643fb8 100644
+--- a/sim/input/test/haptics_test.gd
++++ b/sim/input/test/haptics_test.gd
+@@ -45,11 +45,11 @@ func _with(block, f: Callable) -> void:
+ 
+ func _data() -> void:
+ 	var ks: Array = SimHaptics.kinds()
+-	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump"]
++	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]
+ 	var has_all: bool = ks.size() == want.size()
+ 	for w in want:
+ 		has_all = has_all and ks.has(w)
+-	ok(has_all, "data: the sixteen kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam)")
++	ok(has_all, "data: the twenty-two kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam)")
+ 	ok(not ks.has("struggle_pulse") and not ks.has("struggle_surge"), "data: the beat-aligned struggle kinds are retired (Orb: not on the beat)")
+ 	ok(SimHaptics.min_gap_ms() == 80, "data: requests for one slot are at least 80 ms apart")
+ 	# The data file and the code defaults agree.
+diff --git a/sim/input/test/impact_haptics_test.gd b/sim/input/test/impact_haptics_test.gd
+new file mode 100644
+index 0000000..082af20
+--- /dev/null
++++ b/sim/input/test/impact_haptics_test.gd
+@@ -0,0 +1,163 @@
++extends SceneTree
++## Headless checks for the impact rumble (docs/controls/impact-haptics.md; timing.json switches.hapticImpact, off): Orb's 2026-10-05 picks that were missing, a landed blow, a close, a launch felt by the one
++## launched, a landing and a building breaking. Pure mapping over fabricated events, the kinds' shapes (soft, low, no hum), and a run of real AI matches whose events go through the same mapping, so a
++## field name that does not match the sim's own events shows. From the repo root:
++##   godot --headless --path . --script res://sim/input/test/impact_haptics_test.gd
++## Exit 0 if every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _init() -> void:
++	SimInputData.load_and_apply()
++	_sw(true)
++	_blows()
++	_moves()
++	_shapes()
++	_matches()
++	_sw(false)
++	_off()
++	print("impact_haptics_test: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
++
++
++func _sw(on: bool) -> void:
++	var sw: Dictionary = SimInputData.timing.get("switches", {})
++	sw["hapticImpact"] = on
++	SimInputData.timing["switches"] = sw
++	SimInputData.clear_overrides()
++	SimInputData.invalidate()
++
++
++func _ev(type: String) -> SimState.FxEvent:
++	var e := SimState.FxEvent.new()
++	e.type = type
++	return e
++
++
++func _dmg(att: int, vic: int, kind: String) -> SimState.FxEvent:
++	var e: SimState.FxEvent = _ev("damage")
++	e.attacker = float(att)
++	e.victim = float(vic)
++	e.kind = kind
++	e.amount = 30.0
++	return e
++
++
++func _blows() -> void:
++	var r: Array = SimHaptics.event_requests(_dmg(0, 1, "heavy"))
++	ok(r.size() == 2 and int(r[0]["slot"]) == 0 and r[0]["kind"] == "blow_land" and int(r[1]["slot"]) == 1 and r[1]["kind"] == "hit_taken", "blows: a heavy from slot 0 to slot 1: slot 0 feels blow_land, slot 1 hit_taken")
++	ok(absf(float(r[0]["scale"]) - 1.0) < 0.001, "blows: a heavy is scale 1.0")
++	var sc: Array = []
++	for k in ["light", "medium", "heavy"]:
++		sc.append(float(SimHaptics.event_requests(_dmg(0, 1, k))[0]["scale"]))
++	ok(sc[0] < sc[1] and sc[1] < sc[2], "blows: light, medium, heavy climb (%s)" % str(sc))
++	var g: Array = SimHaptics.event_requests(_dmg(1, 0, "guard"))
++	ok(g.size() == 2 and float(g[0]["scale"]) <= 0.2 + 0.001 and int(g[0]["slot"]) == 1, "blows: a guarded blow is dull (0.2) and the attacker is slot 1")
++	ok(SimHaptics.event_requests(_dmg(-1, 1, "light")).size() == 1 and SimHaptics.event_requests(_dmg(-1, 1, "light"))[0]["kind"] == "hit_taken", "blows: a hit with no attacker (the world) is felt by the one hit only")
++	ok(SimHaptics.event_requests(_dmg(0, -1, "light")).size() == 1 and SimHaptics.event_requests(_dmg(0, -1, "light"))[0]["kind"] == "blow_land", "blows: a blow that hit nobody on a pad is felt by the attacker only")
++	ok(SimHaptics.event_requests(_dmg(0, 0, "light")).is_empty(), "blows: a fighter hurting himself rumbles nothing")
++	for k in ["beam", "impact", "burn", ""]:
++		ok(SimHaptics.event_requests(_dmg(0, 1, k)).is_empty(), "blows: kind '%s' rumbles nothing here (beams have the struggle's kinds, a landing its own event)" % k)
++	ok(SimHaptics.event_requests(_dmg(2, 3, "heavy")).is_empty(), "blows: slots past the two pads rumble nothing (a third and fourth fighter)")
++
++
++func _moves() -> void:
++	var rush: SimState.FxEvent = _ev("rush")
++	rush.actor = 1.0
++	var r: Array = SimHaptics.event_requests(rush)
++	ok(r.size() == 1 and int(r[0]["slot"]) == 1 and r[0]["kind"] == "close_surge", "close: a rush's actor feels close_surge")
++	var la: SimState.FxEvent = _ev("launch")
++	la.actor = 1.0
++	la.target = 0.0
++	la.amount = 1500.0
++	var l: Array = SimHaptics.event_requests(la)
++	ok(l.size() == 1 and int(l[0]["slot"]) == 1 and l[0]["kind"] == "launch_felt", "launch: the one sent (actor) feels launch_felt; the launcher is not asked here (UI's launcher_open)")
++	var slow: SimState.FxEvent = _ev("launch")
++	slow.actor = 0.0
++	slow.amount = 300.0
++	ok(float(SimHaptics.event_requests(slow)[0]["scale"]) < float(l[0]["scale"]), "launch: a slower send is gentler")
++	var ld: SimState.FxEvent = _ev("land")
++	ld.actor = 0.0
++	ld.spd = 1400.0
++	var lr: Array = SimHaptics.event_requests(ld)
++	ok(lr.size() == 1 and int(lr[0]["slot"]) == 0 and lr[0]["kind"] == "landing_thud" and absf(float(lr[0]["scale"]) - 1.0) < 0.001, "landing: the one touching down feels landing_thud at the top scale for a hard one")
++	ld.spd = 100.0
++	ok(float(SimHaptics.event_requests(ld)[0]["scale"]) >= 0.25 - 0.001, "landing: a soft landing is not silent: the least scale is 0.25")
++	var bf: SimState.FxEvent = _ev("building_fall")
++	bf.depth = 300.0
++	var b: Array = SimHaptics.event_requests(bf)
++	ok(b.size() == 2 and b[0]["kind"] == "building_break" and b[1]["kind"] == "building_break" and int(b[0]["slot"]) == 0 and int(b[1]["slot"]) == 1, "building: a fall rumbles both pads")
++	bf.depth = 60.0
++	ok(float(SimHaptics.event_requests(bf)[0]["scale"]) < 1.0, "building: a low one is gentler")
++	ok(SimHaptics.event_requests(_ev("spark")).is_empty() and SimHaptics.event_requests(_ev("crater")).is_empty(), "other events rumble nothing here")
++
++
++func _shapes() -> void:
++	var top: float = 0.0
++	for k in ["ladder_1", "ladder_2", "ladder_3"]:
++		for s in SimHaptics.steps(k, "pad", 1.0):
++			top = maxf(top, float(s["strong"]))
++	for k in ["blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]:
++		var st: Array = SimHaptics.steps(k, "pad", 1.0)
++		ok(not st.is_empty() and st.size() <= 4, "shape: %s has steps (at most four)" % k)
++		var bright: bool = false
++		for s in st:
++			if float(s["weak"]) > 0.35:
++				bright = true
++		ok(not bright, "shape: %s has nothing bright on the high motor (0.35 at most)" % k)
++		ok(SimHaptics.steps(k, "handheld", 1.0).size() >= 1, "shape: %s has a phone pulse" % k)
++		ok(SimHaptics.kind_gap_ms(k) >= 90, "shape: %s has its own gap, 90 ms or more" % k)
++	for k in ["blow_land", "hit_taken", "landing_thud", "building_break", "launch_felt"]:
++		var low: bool = true
++		for s in SimHaptics.steps(k, "pad", 1.0):
++			if float(s["strong"]) < float(s["weak"]):
++				low = false
++		ok(low, "shape: %s is the low motor first (strong at least weak in every step)" % k)
++	ok(float(SimHaptics.steps("launch_felt", "pad", 1.0)[0]["strong"]) >= float(SimHaptics.steps("hit_taken", "pad", 1.0)[0]["strong"]), "shape: being launched is the heaviest push of the blows")
++	ok(float(SimHaptics.steps("blow_land", "pad", 0.3)[0]["strong"]) < float(SimHaptics.steps("blow_land", "pad", 1.0)[0]["strong"]), "shape: a light blow is softer than a heavy one")
++	var p: Dictionary = SimHaptics.plan("landing_thud", {"kind": "pad", "id": 3}, true, -10000, 1000, 0.5)
++	ok(p.get("via", "") == "pad" and p["steps"].size() == 2, "shape: a pad plays landing_thud in two steps")
++
++
++## Real AI matches: the events the sim itself emits go through the same mapping.
++func _matches() -> void:
++	var tally: Dictionary = {}
++	var bad: int = 0
++	var ticks: int = 0
++	for seed_v in [3, 11]:
++		var S: SimState = SimCore.createSim()
++		SimCore.newMatch(S, seed_v, {}, {"intro": false})
++		var t: int = 0
++		while t < 5400 and S.game.ko == null:
++			SimCore.step(S)
++			t += 1
++			for e in S.out.fx:
++				for r in SimHaptics.event_requests(e):
++					tally[r["kind"]] = int(tally.get(r["kind"], 0)) + 1
++					if int(r["slot"]) < 0 or int(r["slot"]) > 1 or float(r["scale"]) < 0.0 or float(r["scale"]) > 1.0 or not SimHaptics.kinds().has(r["kind"]):
++						bad += 1
++			S.out.fx.clear()
++		ticks += t
++	print("impact_haptics_test: real matches, %d ticks: %s" % [ticks, str(tally)])
++	ok(bad == 0, "matches: every request from real events has a slot 0 or 1, a scale from 0 to 1 and a known kind")
++	for k in ["blow_land", "hit_taken"]:
++		ok(int(tally.get(k, 0)) > 0, "matches: real blows reach %s (%d)" % [k, int(tally.get(k, 0))])
++	var any_move: int = int(tally.get("close_surge", 0)) + int(tally.get("launch_felt", 0)) + int(tally.get("landing_thud", 0)) + int(tally.get("building_break", 0))
++	ok(any_move > 0, "matches: real closes, launches, landings or building breaks reach the mapping (%d)" % any_move)
++
++
++func _off() -> void:
++	ok(SimHaptics.event_requests(_dmg(0, 1, "heavy")).is_empty(), "off: with the switch off nothing is asked, whatever the event")
++	var la: SimState.FxEvent = _ev("launch")
++	la.actor = 1.0
++	la.amount = 1500.0
++	ok(SimHaptics.event_requests(la).is_empty(), "off: and no launch, landing or break either")
+diff --git a/sim/input/test/impact_haptics_test.gd.uid b/sim/input/test/impact_haptics_test.gd.uid
+new file mode 100644
+index 0000000..16672fa
+--- /dev/null
++++ b/sim/input/test/impact_haptics_test.gd.uid
+@@ -0,0 +1 @@
++uid://wcjdhuu0q5t5
+diff --git a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+index 914a0d1..4d6d1fa 100644
+--- a/tools/schemas/input-timing.schema.json
++++ b/tools/schemas/input-timing.schema.json
+@@ -996,6 +996,10 @@
+           "type": "boolean",
+           "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
+         },
++        "hapticImpact": {
++          "type": "boolean",
++          "description": "Orb's 2026-10-05 rumble picks that were missing (docs/controls/impact-haptics.md): a landed blow felt by the one who landed it (blow_land) and by the one it hit (hit_taken), a close (close_surge), a launch felt by the one sent (launch_felt), a landing (landing_thud) and a building breaking (building_break, both pads). Independent of rightStick. Off."
++        },
+         "stallKeep": {
+           "type": "boolean",
+           "description": "No input lost in a stall (docs/controls/stall-keep.md; needs rightStick): the layout keeps the strike stick's furthest point (and a strike key's press) since its last build and reads it once, so a flick that came and went between two steps (the page hitched and several steps read one snapshot) is still a flick. Off."
