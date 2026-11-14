@@ -1,0 +1,4 @@
+gate: <scratch>/g/hz/check_t3.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/hz/load_split_t3.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/hz/parity_t1.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/hz/parity_t3.txt: no SCRIPT ERROR lines

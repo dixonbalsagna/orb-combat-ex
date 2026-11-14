@@ -1,0 +1,7 @@
+Horde trial T1 to T3, scratch 5263c1a6 + the trial's build (sw/hz t1..t3) + the 6a30b4c9 switch list's ON rows (81 flipped by data) for the check
+T1 golden (switch off, main's data): gate: <scratch>/g/hz/parity_t1.txt: no SCRIPT ERROR lines / Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+golden check passed
+T3 golden (switch off, main's data): Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+golden check passed
+T3 horde_check: HORDE: 33 check(s), 0 failed
+load_split exit 0; ratchet: two-fighter ratchet ok: 365 against a baseline of 365

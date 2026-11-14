@@ -1,0 +1,34 @@
+ok    the data loads with no error []
+ok    the data's switch is off
+ok    switch off: no horde state, two fighters
+ok    the file is in a replay's data hash only with the horde on
+ok    switch on: the run and five slots (5)
+ok    seat 0, a pad: in the fight
+ok    seat 1, nobody on it: away
+ok    every place, and the empty seat, parked 30000 up
+ok    marks and lanes laid
+ok    not ended at the start
+ok    the empty seat stays parked, unstepped, through 900 ticks
+ok    two runs give one hash (15 readings)
+ok    another seed, another hash
+ok    an away body takes no hit
+ok    200 refills or more (621)
+ok    reading 3: a body made fresh equals a new match's body (position, keys, horde state aside)
+ok    reading 4: never more than 3 places in (3), the list always 5
+ok    reading 20: no hit on an away body (0), no power gained by one (0)
+ok    reading 20: a pack body's power stays at nothing (0 ticks above)
+ok    eight waves, then the run ends cleared (waves 8, over 1 at tick 11072)
+ok    621 bodies sent and felled alone (621, 621)
+ok    the match has ended
+ok    reading 2: two scripted runs, one hash through 621 refills (36 readings)
+ok    two seats: 934 bodies (each wave's count x 1.5, rounded) (934, over 1)
+ok    nothing falls: the backstop ends the run at 12:00 (over 3 at tick 43199)
+ok    the build Orb plays: the model, the dash, the kick, the right stick on
+ok    a scripted pad clears wave 1 with X (cleared at tick 4078)
+ok    reading 14: no hit on one's own side (seat on seat 0, pack on pack 0)
+ok    reading 19: no exchange (0 ticks), no seat locked (0 ticks)
+ok    a pad with all three weights clears wave 1 (tick 2867)
+ok    reading 19, every button and two pads: no exchange (0), no seat locked (0), no late refusal (0)
+ok    the beam and the grab are refused, said (horde_sig 692, horde_grab 1)
+ok    reading 14 with two pads: no hit on one's own side (seat on seat 0, pack on pack 0; a fighter's own blast on himself 17, as one-on-one)
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

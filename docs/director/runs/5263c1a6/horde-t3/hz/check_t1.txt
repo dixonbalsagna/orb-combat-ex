@@ -1,0 +1,15 @@
+ok    the data loads with no error []
+ok    the data's switch is off
+ok    switch off: no horde state, two fighters
+ok    the file is in a replay's data hash only with the horde on
+ok    switch on: the run and five slots (5)
+ok    seat 0, a pad: in the fight
+ok    seat 1, nobody on it: away
+ok    every place, and the empty seat, parked 30000 up
+ok    marks and lanes laid
+ok    not ended at the start
+ok    away bodies stay parked, unstepped, through 900 ticks
+ok    two runs give one hash (15 readings)
+ok    another seed, another hash
+ok    an away body takes no hit
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
