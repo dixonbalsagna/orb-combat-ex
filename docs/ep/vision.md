@@ -1779,3 +1779,9 @@ On each idea:
 - The Band Follows: "lets workshop this, sounds like a great idea"
 
 In short: the Grudge is out. Take It Standing as packeted is replaced by Orb's absorb idea (hold LB, time RB), for every fighter. No time manipulation in the game's universe, "just extremely high speed".
+
+**The Alpha feature workshop, Orb's answers (2026-11-13 evening, to the EP, verbatim; docs/ep/proposals/alpha-feature-workshop.html):**
+1. Does reaching a new form ease injuries: "yes".
+2. Does the hurt fighter's form meter fill faster: "yes".
+3. Is "body" its own number or the core region: "workshop this, core region should be the most important but perhaps separate."
+Also: "I think base attacks should help fill stamina, so attacking with normal face-button attacks should be a respite between special or signature attacks. keep workshopping this."
