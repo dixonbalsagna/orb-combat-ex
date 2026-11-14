@@ -1,0 +1,41 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 3f8c17d..f4a311a 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -380,6 +380,8 @@ const PEAK_BACK_MIN: float = 0.2
+ const CLOSE_R: float = 0.17              # a locked brawl's size: a fighter's height as a share of the screen's, against the fight's 0.12 and the cap's 0.14
+ const REVEAL_R: float = 0.05             # readable: a reveal keeps him at least this size (36 px at 720p)
+ const REVEAL_R_HIGH: float = 0.03        # ... and this with both at tier 3 or up, where the width is the point
++const LEAD_AHEAD_X: float = 0.16         # lead_ahead: how far ahead the pane leads him at speed, of the width, against PANE_LEAD_X's 0.08
++const LEAD_AHEAD_V: float = 6000.0       # ... reached at this speed
+ const SHARE_EVEN: float = 0.6            # split_share: the line eases to the middle for a beam struggle, and back, over this
+ const R_READ: float = 0.1                # readable: the size a slow body comes back to, at least (72 px at 720p), against the fight's 0.11 and the pane's 0.085
+ const READ_SPEED: float = 1500.0         # under this a body isn't really flying
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index ccdefcf..2ae4d51 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -344,6 +344,7 @@ var _ft_dir: Vector2 = Vector2.ZERO
+ var _ft_t: float = -1.0
+ var _ft_slot: int = -1
+ var _ft_v: Array = [Vector2.ZERO, Vector2.ZERO]
++var lead_ahead: bool = false               # flying fast, more of the pane ahead of him, launched or not (docs/camera/split-unequal.md). Off: the pane's small lead, and none for a launch
+ var split_share: float = 0.0               # against a CPU, the player's pane takes this share of the split, 0.5 to 1 (Orb's first play: about 0.7; docs/camera/split-unequal.md). 0: off, none of it runs
+ var _sh_slot: int = -1                     # the player the share is for, -1 none
+ var _sh_w: float = 1.0                     # 1, or easing to 0 in a beam struggle: the beams meet at the middle
+@@ -4554,9 +4555,13 @@ func _update_pane_lead(S: SimState) -> void:
+ 	for i in range(2):
+ 		var tgt: float = 0.0
+ 		var f = S.fighters[i]
+-		if merged_lead and not reduced_motion and sep >= 0.999 and e < 0.001 and solo_kind == "" and chase_slot != i and f.state != "launched" and _lg_slot < 0:
++		if merged_lead and not reduced_motion and sep >= 0.999 and e < 0.001 and solo_kind == "" and ((chase_slot != i and f.state != "launched") or (lead_ahead and (split_share <= 0.0 or i == _sh_slot))) and _lg_slot < 0:
+ 			var w: float = smoothstep(CamParams.PANE_LEAD_V0, CamParams.PANE_LEAD_V1, absf(f.vx))
+-			var dx: float = -clampf(f.vx * CamParams.PANE_LEAD_T * maxf(float(_zo[i]), 0.001), -CamParams.PANE_LEAD_X * vw, CamParams.PANE_LEAD_X * vw) * w
++			var lead_x: float = CamParams.PANE_LEAD_X
++			if lead_ahead and (split_share <= 0.0 or i == _sh_slot):
++				lead_x = lerpf(lead_x, CamParams.LEAD_AHEAD_X, smoothstep(CamParams.PANE_LEAD_V1, CamParams.LEAD_AHEAD_V, absf(f.vx)))
++			lead_x *= _pane_k(i)
++			var dx: float = -clampf(f.vx * CamParams.PANE_LEAD_T * maxf(float(_zo[i]), 0.001), -lead_x * vw, lead_x * vw) * w
+ 			# kept off the divider: his distance from it along n stays at least PANE_LEAD_KEEP of the rest anchor's
+ 			var s: float = -1.0 if i == 0 else 1.0
+ 			var rest_d: float = (_anchor_rest(i) - Vector2(vw * 0.5, vh * 0.5)).dot(n) * s

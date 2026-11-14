@@ -1,0 +1,75 @@
+# NEGATIVE CONTROL: cut_register_check on main d41ce393 (no gate)
+every reason (12): not granted with a row on an empty register ["angle", "relocate", "side_swap", "rush_pin", "solo_cut_in", "hold_to_victim", "insert", "transform", "intro", "travel_safety", "far_catch_up", "motion_setting"]; granted on a full one ["angle", "relocate", "side_swap", "rush_pin", "solo_cut_in", "hold_to_victim", "insert", "transform", "intro", "travel_safety", "far_catch_up", "motion_setting"]
+FAIL  reasons the gate doesn't grant with a register row: ["angle", "relocate", "side_swap", "rush_pin", "solo_cut_in", "hold_to_victim", "insert", "transform", "intro", "travel_safety", "far_catch_up", "motion_setting"]
+FAIL  reasons granted on a full register: ["angle", "relocate", "side_swap", "rush_pin", "solo_cut_in", "hold_to_victim", "insert", "transform", "intro", "travel_safety", "far_catch_up", "motion_setting"]
+seed 4, normal: cuts { "side_swap": 2 }; asked -1, refused -1, unasked -1; without a register row 2 ["side_swap at 2494", "side_swap at 2946"]; biggest step change off a cut 0.049 at 2486
+FAIL  seed 4, normal: 2 cuts without the register's row: ["side_swap at 2494", "side_swap at 2946"]
+FAIL  seed 4, normal: -1 cuts skipped the gate
+seed 4, normal, the register full: cuts { "side_swap": 2 }; asked -1, refused -1; biggest step change 0.049 at 2486
+FAIL  seed 4, normal: with the register full, cuts were made: { "side_swap": 2 }
+seed 7, normal: cuts { "insert": 2, "side_swap": 2 }; asked -1, refused -1, unasked -1; without a register row 4 ["insert at 1654", "insert at 1681", "side_swap at 1710", "side_swap at 2605"]; biggest step change off a cut 0.228 at 1574
+FAIL  seed 7, normal: 4 cuts without the register's row: ["insert at 1654", "insert at 1681", "side_swap at 1710", "side_swap at 2605"]
+FAIL  seed 7, normal: -1 cuts skipped the gate
+seed 7, normal, the register full: cuts { "insert": 2, "side_swap": 2 }; asked -1, refused -1; biggest step change 0.228 at 1574
+FAIL  seed 7, normal: with the register full, cuts were made: { "insert": 2, "side_swap": 2 }
+seed 12, normal: cuts { "side_swap": 2 }; asked -1, refused -1, unasked -1; without a register row 2 ["side_swap at 536", "side_swap at 1918"]; biggest step change off a cut 0.096 at 1627
+FAIL  seed 12, normal: 2 cuts without the register's row: ["side_swap at 536", "side_swap at 1918"]
+FAIL  seed 12, normal: -1 cuts skipped the gate
+seed 12, normal, the register full: cuts { "side_swap": 2 }; asked -1, refused -1; biggest step change 0.096 at 1627
+FAIL  seed 12, normal: with the register full, cuts were made: { "side_swap": 2 }
+seed 39, normal: cuts {  }; asked -1, refused -1, unasked -1; without a register row 0 []; biggest step change off a cut 0.031 at 1334
+FAIL  seed 39, normal: -1 cuts skipped the gate
+seed 39, normal, the register full: cuts {  }; asked -1, refused -1; biggest step change 0.031 at 1334
+seed 77, normal: cuts { "side_swap": 1 }; asked -1, refused -1, unasked -1; without a register row 1 ["side_swap at 1896"]; biggest step change off a cut 0.244 at 1398
+FAIL  seed 77, normal: 1 cuts without the register's row: ["side_swap at 1896"]
+FAIL  seed 77, normal: -1 cuts skipped the gate
+seed 77, normal, the register full: cuts { "side_swap": 1 }; asked -1, refused -1; biggest step change 0.244 at 1398
+FAIL  seed 77, normal: with the register full, cuts were made: { "side_swap": 1 }
+seed 106, normal: cuts { "side_swap": 1 }; asked -1, refused -1, unasked -1; without a register row 1 ["side_swap at 916"]; biggest step change off a cut 0.257 at 413
+FAIL  seed 106, normal: 1 cuts without the register's row: ["side_swap at 916"]
+FAIL  seed 106, normal: -1 cuts skipped the gate
+seed 106, normal, the register full: cuts { "side_swap": 1 }; asked -1, refused -1; biggest step change 0.257 at 413
+FAIL  seed 106, normal: with the register full, cuts were made: { "side_swap": 1 }
+seed 4, reduced: cuts { "side_swap": 2 }; asked -1, refused -1, unasked -1; without a register row 2 ["side_swap at 2494", "side_swap at 2946"]; biggest step change off a cut 0.049 at 2486
+FAIL  seed 4, reduced: 2 cuts without the register's row: ["side_swap at 2494", "side_swap at 2946"]
+FAIL  seed 4, reduced: -1 cuts skipped the gate
+seed 4, reduced, the register full: cuts { "side_swap": 2 }; asked -1, refused -1; biggest step change 0.049 at 2486
+FAIL  seed 4, reduced: with the register full, cuts were made: { "side_swap": 2 }
+seed 7, reduced: cuts { "insert": 2, "side_swap": 2 }; asked -1, refused -1, unasked -1; without a register row 4 ["insert at 1654", "insert at 1681", "side_swap at 1710", "side_swap at 2605"]; biggest step change off a cut 0.228 at 1574
+FAIL  seed 7, reduced: 4 cuts without the register's row: ["insert at 1654", "insert at 1681", "side_swap at 1710", "side_swap at 2605"]
+FAIL  seed 7, reduced: -1 cuts skipped the gate
+seed 7, reduced, the register full: cuts { "insert": 2, "side_swap": 2 }; asked -1, refused -1; biggest step change 0.228 at 1574
+FAIL  seed 7, reduced: with the register full, cuts were made: { "insert": 2, "side_swap": 2 }
+seed 12, reduced: cuts { "side_swap": 2 }; asked -1, refused -1, unasked -1; without a register row 2 ["side_swap at 536", "side_swap at 1918"]; biggest step change off a cut 0.096 at 1627
+FAIL  seed 12, reduced: 2 cuts without the register's row: ["side_swap at 536", "side_swap at 1918"]
+FAIL  seed 12, reduced: -1 cuts skipped the gate
+seed 12, reduced, the register full: cuts { "side_swap": 2 }; asked -1, refused -1; biggest step change 0.096 at 1627
+FAIL  seed 12, reduced: with the register full, cuts were made: { "side_swap": 2 }
+seed 39, reduced: cuts {  }; asked -1, refused -1, unasked -1; without a register row 0 []; biggest step change off a cut 0.031 at 1334
+FAIL  seed 39, reduced: -1 cuts skipped the gate
+seed 39, reduced, the register full: cuts {  }; asked -1, refused -1; biggest step change 0.031 at 1334
+seed 77, reduced: cuts { "side_swap": 1 }; asked -1, refused -1, unasked -1; without a register row 1 ["side_swap at 1896"]; biggest step change off a cut 0.244 at 1398
+FAIL  seed 77, reduced: 1 cuts without the register's row: ["side_swap at 1896"]
+FAIL  seed 77, reduced: -1 cuts skipped the gate
+seed 77, reduced, the register full: cuts { "side_swap": 1 }; asked -1, refused -1; biggest step change 0.244 at 1398
+FAIL  seed 77, reduced: with the register full, cuts were made: { "side_swap": 1 }
+seed 106, reduced: cuts { "side_swap": 1 }; asked -1, refused -1, unasked -1; without a register row 1 ["side_swap at 916"]; biggest step change off a cut 0.257 at 413
+FAIL  seed 106, reduced: 1 cuts without the register's row: ["side_swap at 916"]
+FAIL  seed 106, reduced: -1 cuts skipped the gate
+seed 106, reduced, the register full: cuts { "side_swap": 1 }; asked -1, refused -1; biggest step change 0.257 at 413
+FAIL  seed 106, reduced: with the register full, cuts were made: { "side_swap": 1 }
+seed 7, motion: cuts { "side_swap": 2 }; asked -1, refused -1, unasked -1; without a register row 2 ["side_swap at 1710", "side_swap at 2605"]; biggest step change off a cut 5.587 at 1350
+FAIL  seed 7, motion: 2 cuts without the register's row: ["side_swap at 1710", "side_swap at 2605"]
+FAIL  seed 7, motion: -1 cuts skipped the gate
+FAIL  seed 7, motion: the picture jumped 5.587 of the width at 1350 with no cut named (a cut that asked nothing)
+seed 7, motion, the register full: cuts { "side_swap": 2 }; asked -1, refused -1; biggest step change 5.587 at 1350
+FAIL  seed 7, motion: with the register full, cuts were made: { "side_swap": 2 }
+seed 12, motion: cuts { "side_swap": 2 }; asked -1, refused -1, unasked -1; without a register row 2 ["side_swap at 536", "side_swap at 1918"]; biggest step change off a cut 1.432 at 575
+FAIL  seed 12, motion: 2 cuts without the register's row: ["side_swap at 536", "side_swap at 1918"]
+FAIL  seed 12, motion: -1 cuts skipped the gate
+FAIL  seed 12, motion: the picture jumped 1.432 of the width at 575 with no cut named (a cut that asked nothing)
+seed 12, motion, the register full: cuts { "side_swap": 2 }; asked -1, refused -1; biggest step change 1.432 at 575
+FAIL  seed 12, motion: with the register full, cuts were made: { "side_swap": 2 }
+cuts with room: 24; refusals with the register full: -14
+FAIL  the runs made no cut (24) or refused none (-14): the check proves nothing
+cut_register_check: 73 checks, 43 failed

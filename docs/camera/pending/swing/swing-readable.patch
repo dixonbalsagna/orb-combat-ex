@@ -1,0 +1,264 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 259e9b1..a73f7a2 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -378,6 +378,11 @@ const PEAK_BACK_KO: float = 0.5
+ const PEAK_BACK_MIN: float = 0.2
+ # The high-velocity moves (docs/camera/launch-director.md), first values
+ const CLOSE_R: float = 0.17              # a locked brawl's size: a fighter's height as a share of the screen's, against the fight's 0.12 and the cap's 0.14
++const R_READ: float = 0.1                # readable: the size a slow body comes back to, at least (72 px at 720p), against the fight's 0.11 and the pane's 0.085
++const READ_SPEED: float = 1500.0         # under this a body isn't really flying
++const READ_AFTER: float = 0.3            # for this long, so an arc's top doesn't count
++const READ_MZ: float = 0.012             # the zoom coming in as the panes merge, log units a tick (MZ_RATE's 0.0035 took over two seconds to reach a readable size)
++const READ_MARGIN: float = 0.5           # the one view's margin round a slow pair, of its usual
+ const CLOSE_GAP: float = 300.0           # near enough to count
+ const CLOSE_IN: float = 0.7              # in over this, eased
+ const CLOSE_OUT: float = 0.35            # and out
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 65ad24c..ed85de9 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -343,6 +343,9 @@ var _ft_dir: Vector2 = Vector2.ZERO
+ var _ft_t: float = -1.0
+ var _ft_slot: int = -1
+ var _ft_v: Array = [Vector2.ZERO, Vector2.ZERO]
++var readable: bool = false                 # wide while a body's really flying, readable within about a second of it stopping (Orb: fighters seem too small; docs/camera/launch-director.md). Off: none of it runs
++var _rd_t: Array = [0.0, 0.0]              # how long each body has been slow
++var _rd_p: Array = [Vector2.ZERO, Vector2.ZERO]
+ var close_brawl: bool = false              # a locked brawl frames closer (Orb: close combat framing at base power). Off: none of it runs
+ var _cb_w: float = 0.0
+ var launch_director: bool = false        # the high-velocity moves (docs/camera/launch-director.md). Off: none of them runs
+@@ -400,6 +403,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_pk_flat = false
+ 	_pk_wait = 0.0
+ 	_cb_w = 0.0
++	_rd_t = [0.0, 0.0]
+ 	_ft_t = -1.0
+ 	_ft_v = [Vector2.ZERO, Vector2.ZERO]
+ 	ft_offset = Vector2.ZERO
+@@ -620,6 +624,13 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 	_update_intro(S)
+ 	if follow_through:
+ 		_ft_tick(S)
++	if readable:
++		for i0 in range(2):
++			# (by where he's got to as well: a rush moves a body without its velocity)
++			var f0 = S.fighters[i0]
++			var moved: float = Vector2(SimWrap.sdx(float(_rd_p[i0].x), f0.x), f0.y - float(_rd_p[i0].y)).length() / DT
++			_rd_p[i0] = Vector2(f0.x, f0.y)
++			_rd_t[i0] = float(_rd_t[i0]) + DT if maxf(_body_speed(f0), moved) < CamParams.READ_SPEED else 0.0
+ 	if flight_reveal:
+ 		_reveal_tick(S)
+ 	if swing_view:
+@@ -822,7 +833,7 @@ func _update_trigger(S: SimState) -> void:
+ 		if merge_lookahead and _sep_rate > 0.0:
+ 			var ad_p: float = minf(SimConst.HALF, ad + _sep_rate * CamParams.MERGE_LOOKAHEAD)
+ 			r_merge_now = minf(r_now, CamParams.BODY_H * zoom_u(vw, vh, ad_p, _pair_dy(A, B), maxf(A.tier, B.tier)) / vh)
+-		_above_t = _above_t + DT if (r_merge_now > rm and chase_slot < 0) else 0.0   # not while one is being chased
++		_above_t = _above_t + DT if (r_merge_now > rm and (chase_slot < 0 or (readable and float(_rd_t[chase_slot]) >= CamParams.READ_AFTER))) else 0.0   # not while one is being chased
+ 		if _above_t >= CamParams.MERGE_DWELL and _layout_age >= CamParams.MIN_SPLIT_AGE:
+ 			if nocut_hold and _no_cut(S):
+ 				nocut_holds += 1
+@@ -1198,6 +1209,29 @@ func _gov_armed() -> float:
+ 
+ ## The speed the body has (units a second): a launched fighter has it from the launch event, ten ticks before he moves (the hit-stop), so the
+ ## zoom is out by the time he goes; the governor's measured speed (the focus's) comes only as he moves.
++## Whether the readable rule holds for this body now: slow for long enough, and no shot of a flight, nor a wide shot of its own (the arena turn, a pause), on.
++func _rd_on(i: int) -> bool:
++	return readable and float(_rd_t[i]) >= CamParams.READ_AFTER and _pk_phase == "" and reveal_w <= 0.0 and _turn_t < 0.0 and _wide_t < 0.0 and not intro_active and not fold_active
++
++
++## The one view's zoom for a slow pair: a tighter margin, at most the readable size.
++func _read_z(ahead: float, dy: float) -> float:
++	var tight: float = minf(vw / (ahead + CamParams.FIT_MARGIN_X * CamParams.READ_MARGIN / _m()), vh * 0.8 / (dy + CamParams.REF_MARGIN_Y * CamParams.READ_MARGIN))
++	return minf(tight, CamParams.R_READ * _m() * vh / CamParams.BODY_H)
++
++
++## For the check: the size this pane should have reached under the rule, or 0 if the rule doesn't hold for it. A body's own shot (a form, a KO) keeps its size.
++func read_size(S: SimState, i: int) -> float:
++	if not _rd_on(i) or solo_kind != "" or _slam_slot >= 0:
++		return 0.0
++	if sep > 0.5:
++		return CamParams.R_READ * _m() * (1.0 - CamParams.REF_TIER * (float(S.fighters[i].tier) - 1.0))
++	if not _rd_on(1 - i):
++		return 0.0
++	var d: float = absf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x))
++	return _read_z(d, _pair_dy(S.fighters[0], S.fighters[1])) * CamParams.BODY_H / vh
++
++
+ func _body_speed(f) -> float:
+ 	var sp: float = Vector2(float(f.vx), float(f.vy)).length()
+ 	return sp if sp < 60000.0 else 0.0
+@@ -2766,6 +2800,8 @@ func _merged_target(S: SimState) -> Vector3:
+ 			var r_to: float = CamParams.CLOSE_R * m_close() * tier_k
+ 			if r_to > r_here:
+ 				z *= exp(log(r_to / r_here) * smoothstep(0.0, 1.0, _cb_w))
++	if _rd_on(0) and _rd_on(1):
++		z = maxf(z, _read_z(ahead, dy_pair))
+ 	if _scape_t >= 0.0 and _scape_w > 0.0:
+ 		# the landscape shot leans toward the new ground or the landmark, both fighters kept inside 0.42 of the width
+ 		var sh_l: float = CamParams.SCAPE_LEAN * vw / maxf(z, 0.001) * smoothstep(0.0, 1.0, _scape_w) * signf(SimWrap.sdx(mx, _scape_x))
+@@ -3048,6 +3084,9 @@ func _own_zoom_target(S: SimState, i: int) -> float:
+ 				var wp: float = 1.0 if reduced_motion else clampf(solo_t / CamParams.WRECK_T, 0.0, 1.0)
+ 				r = lerpf(CamParams.R_WRECK_0, CamParams.R_WRECK, smoothstep(0.0, 1.0, wp)) * m
+ 				alt_f = 1.0
++	if _rd_on(i) and not (solo_kind != "" and solo_slot == i):
++		r = maxf(r, CamParams.R_READ * m)
++		alt_f = 1.0
+ 	var z: float = r * vh / CamParams.BODY_H * tier_f * alt_f
+ 	z *= _push_mult(i) * _hit_mult(i) * _arr_mult(i) * _turn_mult()
+ 	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
+@@ -3909,7 +3948,7 @@ func _outputs(S: SimState) -> void:
+ 			var cap: float = (CamParams.SLAM_ZOOM_RATE if slam_now else CamParams.ZOOM_RATE_TRANS) * DT
+ 			var cap_up: float = cap
+ 			if merge_zoom_limit and not reduced_motion and _merging_now():
+-				cap_up = minf(cap, CamParams.MZ_RATE)
++				cap_up = minf(cap, CamParams.READ_MZ if readable else CamParams.MZ_RATE)
+ 			if _sw_ticks >= CamParams.SWING_SHOT_TICKS and S.fighters[i].state == "launched":
+ 				cap_up = 0.0   # no zoom in during a swing on a body in the air (camera.md section 2; Legal e12)
+ 			var cap_dn: float = 0.0 if (_sw_tall and _sw_ticks > 0 and solo_kind == "") else cap   # tall land near: no pull out either
+@@ -5235,7 +5274,8 @@ func _swing_tick(S: SimState) -> void:
+ 	var d_rad: float = 0.0 if _sw_prev.is_empty() else CamPlaces.turn_between(_sw_prev, _pl)
+ 	_sw_prev = _pl
+ 	var sw: Dictionary = CamPlaces.swing_of(S)
+-	var running: bool = absf(d_rad) > CamParams.SWING_STILL * DT or not sw.is_empty()
++	var stalled: bool = readable and not sw.is_empty() and S.get("swing") != null and absf(float(S.swing.rate)) < 0.01
++	var running: bool = absf(d_rad) > CamParams.SWING_STILL * DT or (not sw.is_empty() and not stalled)
+ 	# A rollback's correction or a re-seat shows as a turn no swing makes: it stays out of the picture and eases away, no faster than a swing.
+ 	if absf(d_rad) > CamParams.SWING_MAX_TICK:
+ 		swing_shown -= d_rad
+diff --git a/render/camera/tests/flight_shots_check.gd b/render/camera/tests/flight_shots_check.gd
+index 748ee37..febadbe 100644
+--- a/render/camera/tests/flight_shots_check.gd
++++ b/render/camera/tests/flight_shots_check.gd
+@@ -99,6 +99,8 @@ func _close() -> void:
+ 	var S: SimState = _match(0.0, true, 12345)
+ 	var setup := func(rig0) -> void:
+ 		rig0.set("close_brawl", true)
++		rig0.set("launch_director", true)
++		rig0.set("flat_mode", "wide")
+ 	var rig = _rig(S, setup)
+ 	var sum: Array = [0.0, 0]
+ 	var meter := func(St: SimState, r0, _t: int) -> void:
+@@ -117,11 +119,11 @@ func _initialize() -> void:
+ 	for a in OS.get_cmdline_user_args():
+ 		if a == "--measure":
+ 			measure = true
++	if "close_brawl" in SplitRig.new():
++		_close()
+ 	for row in [[1.0, 10800.0], [2.0, 10800.0], [3.0, 26700.0], [4.0, 26700.0]]:
+ 		_flat("wide, tier %d, %d" % [int(row[0]), int(row[1])], "wide", float(row[0]), float(row[1]), 40)
+ 		_flat("hold, tier %d, %d" % [int(row[0]), int(row[1])], "hold", float(row[0]), float(row[1]), 90)
+-	if "close_brawl" in SplitRig.new():
+-		_close()
+ 	var probe := SplitRig.new()
+ 	if "flight_reveal" in probe:
+ 		_reveal()
+diff --git a/render/camera/tests/launch_shots_check.gd b/render/camera/tests/launch_shots_check.gd
+index 508dd9c..aff1311 100644
+--- a/render/camera/tests/launch_shots_check.gd
++++ b/render/camera/tests/launch_shots_check.gd
+@@ -16,7 +16,7 @@ var director: bool = true
+ var allmoves: bool = false
+ ## A jolt is the picture's step changing in a tick, of the width. A blow's release may start hard (its first ticks: the blow hides the start, as a cut on action does);
+ ## nothing else may. Lost is the subject off the frame in a run of ticks: a launch's climb may leave the top for the first 0.8 s, on Research's reading.
+-const LIMITS: Dictionary = {"jolt": 0.06, "release": 0.30, "release_zoom": 0.03, "zjolt": 0.012, "lost": 50}
++const LIMITS: Dictionary = {"jolt": 0.06, "release": 0.30, "release_zoom": 0.03, "zjolt": 0.012, "lost": 50, "small": 90}
+ const RELEASE_TICKS: int = 10
+ 
+ 
+@@ -45,7 +45,7 @@ func _rig(S: SimState, setup: Callable = Callable()) -> SplitRig:
+ 	if allmoves:
+ 		rig.set("flat_mode", "wide")
+ 		rig.set("flight_reveal", true)
+-		rig.set("follow_through", true)
++		rig.set("follow_through", true); rig.set("close_brawl", true); rig.set("readable", true)
+ 	if setup.is_valid():
+ 		setup.call(rig)
+ 	rig.reset(S, VW, VH)
+@@ -69,7 +69,8 @@ func _steps(a: SplitFrame, b: SplitFrame, i: int) -> Vector3:
+ 
+ ## Runs a staged or a real stretch and reads every tick. `subject`: a Callable(S, rig) giving who must be in the frame now (a slot), or -1.
+ func _watch(S: SimState, rig: SplitRig, ticks: int, subject: Callable, stage: Callable = Callable()) -> Dictionary:
+-	var r: Dictionary = {"release": 0.0, "jolt": 0.0, "jolt_at": "", "zjolt": 0.0, "zjolt_at": "", "lost": 0, "lost_run": 0, "lost_at": "", "cuts": {}, "unnamed": 0, "ticks": 0, "whips0": rig.whips}
++	var small_run: int = 0
++	var r: Dictionary = {"small": 0, "small_at": "", "release": 0.0, "jolt": 0.0, "jolt_at": "", "zjolt": 0.0, "zjolt_at": "", "lost": 0, "lost_run": 0, "lost_at": "", "cuts": {}, "unnamed": 0, "ticks": 0, "whips0": rig.whips}
+ 	var prev: SplitFrame = rig.current()
+ 	var st: Array = [Vector3.ZERO, Vector3.ZERO]
+ 	var fresh: Array = [true, true]
+@@ -122,11 +123,24 @@ func _watch(S: SimState, rig: SplitRig, ticks: int, subject: Callable, stage: Ca
+ 				var zj: float = absf(s.z - o.z)
+ 				if since <= RELEASE_TICKS:
+ 					_ok(zj <= float(LIMITS.release_zoom), "a release's zoom jolt of %.4f at tick %d" % [zj, S.tick])
++				elif rig._slam_slot >= 0:
++					pass   # the slam's own door, as for the jolt above
+ 				elif zj > float(r.zjolt):
+ 					r.zjolt = zj
+ 					r.zjolt_at = "tick %d pane %d: %s, %s, %s, zoom step %.4f" % [S.tick, i, f.mode, rig.solo_kind + " " + rig.solo_phase, S.fighters[i].state, s.z]
+ 			st[i] = s
+ 			fresh[i] = false
++		if "readable" in rig and rig.readable:
++			# small and slow: the rule asks for a size and the picture is well under it
++			var sm: bool = false
++			for i0 in range(2):
++				var want_r: float = rig.read_size(S, i0)
++				if f.shows(i0) and want_r > 0.0 and f.cam_z[i0] * CamParams.BODY_H / VH < want_r * 0.9:
++					sm = true
++			small_run = small_run + 1 if sm else 0
++			if small_run > int(r.small):
++				r.small = small_run
++				r.small_at = "tick %d: %s, %s, %s/%s" % [S.tick, f.mode, rig.solo_kind, S.fighters[0].state, S.fighters[1].state]
+ 		var who: int = subject.call(S, rig) if subject.is_valid() else -1
+ 		var off: bool = false
+ 		if who >= 0:
+@@ -280,12 +294,30 @@ func _chase() -> void:
+ 	_say("flat-out chase", _watch(S, rig, 420, Callable(self, "_flier"), hold))
+ 
+ 
++## A swing waiting at no speed (a form's pause) isn't a running swing, so its shot doesn't hold the size.
++func _stall() -> void:
++	var S: SimState = _match(0.0, true, 12345)
++	var rig: SplitRig = _rig(S)
++	rig.set("readable", true)
++	S.swing.active = true
++	S.swing.cause = "form"
++	S.swing.left = 40.0
++	S.swing.rate = 0.0
++	for t in range(40):
++		rig.step(S, VW, VH, [])
++	_ok(int(rig._sw_ticks) == 0, "a stalled swing ran the swing's shot for %d ticks" % rig._sw_ticks)
++	S.swing.active = false
++
++
+ func _fights(n: int, ticks: int) -> void:
+ 	for seed in range(1, n + 1):
+ 		var S: SimState = _match(0.0, true, seed, [7, 3, 11, 25][seed % 4])
+ 		var rig: SplitRig = _rig(S)
+ 		var r: Dictionary = _watch(S, rig, ticks, Callable(self, "_who"))
+ 		_say("AI fight %d" % seed, r, 0.16)
++		if "readable" in rig and rig.readable:
++			print("    small and slow: at most %d ticks %s" % [r.small, r.small_at])
++			_ok(int(r.small) <= int(LIMITS.small), "AI fight %d: a small, slow fighter for %d ticks (%s)" % [seed, r.small, r.small_at])
+ 
+ 
+ ## In a fight the subject is who a solo shot is on; otherwise nobody may be lost from a pane that's his.
+@@ -319,6 +351,7 @@ func _initialize() -> void:
+ 	_meteor_arc()
+ 	_tower()
+ 	_chase()
++	_stall()
+ 	_fights(nf, tf)
+ 	if measure:
+ 		print("launch_shots_check: measured")
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 727b996..d61182a 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -243,6 +243,7 @@ func _ready() -> void:
+ 	split_rig.peak_launch = RenderTileGround.on
+ 	split_rig.launch_director = RenderTileGround.on
+ 	split_rig.close_brawl = RenderTileGround.on
++	split_rig.readable = RenderTileGround.on
+ 	split_rig.follow_through = RenderTileGround.on
+ 	split_rig.flight_reveal = RenderTileGround.on
+ 	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)

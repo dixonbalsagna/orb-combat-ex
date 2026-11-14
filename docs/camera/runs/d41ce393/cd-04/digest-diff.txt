@@ -1,0 +1,32 @@
+# clip_digest, 1v1, main d41ce393 against the fix: frames that differ, by clip and mode (of 48,600), and their tick range
+     71 ai:1 normal
+    456 ai:1 reduced
+     16 ai:106 normal
+    713 ai:106 reduced
+    124 ai:38 normal
+    819 ai:38 reduced
+     38 ai:4 normal
+    229 ai:4 reduced
+    980 ai:5 normal
+   1229 ai:5 reduced
+    425 collapse reduced
+    195 mashcity reduced
+     24 rushcity normal
+    501 rushcity reduced
+    435 signaturecity reduced
+
+ai:1/normal 2426-2498
+ai:1/reduced 189-2855
+ai:106/normal 2395-3456
+ai:106/reduced 266-3557
+ai:38/normal 200-1206
+ai:38/reduced 88-2434
+ai:4/normal 2746-2798
+ai:4/reduced 1750-2798
+ai:5/normal 722-2265
+ai:5/reduced 722-2418
+collapse/reduced 73-1432
+mashcity/reduced 73-288
+rushcity/normal 554-1500
+rushcity/reduced 116-1500
+signaturecity/reduced 91-1500

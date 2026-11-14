@@ -1,0 +1,106 @@
+diff --git a/data/camera/swing.json b/data/camera/swing.json
+index f9cf83d..d63c2b3 100644
+--- a/data/camera/swing.json
++++ b/data/camera/swing.json
+@@ -1,8 +1,20 @@
+ {
+   "_note": "Camera's numbers for the swing that a reading can move (docs/camera/swing-view.md). A flash read or a tester can lower peakRate with no code change (Accessibility, docs/accessibility/swing-motion.md, ruling 3). The view's only: the sim never reads this.",
+   "schema": "camera.swing/1",
+-  "splitShare": 0.0,
+-  "_splitShare": "against a CPU, the player's pane takes this share of the split, 0.5 to 1; 0 is even. Orb's first play asked for about 0.7 (docs/camera/split-unequal.md). Off here: a page word turns it on",
++  "splitShare": 0.7,
++  "_splitShare": "against a CPU, the player's pane takes this share of the split, 0.5 to 1; 0 is even. Orb's first play asked for about 0.7 (docs/camera/split-unequal.md); both of Orb's 9 November builds played 0.7, and it is main's since A-CAMERA-01",
++  "pieces": {
++    "swingView": true,
++    "peakLaunch": true,
++    "launchDirector": true,
++    "closeBrawl": true,
++    "readable": true,
++    "followThrough": true,
++    "flightReveal": true
++  },
++  "_pieces": "the camera Orb played on 9 November (A-CAMERA-01), each on at a plain start: the swing with the turning world (docs/camera/swing-view.md), the peak launch shot, the launch director (docs/camera/launch-director.md), the close brawl, the readable size, the follow-through and the flight reveal. Until A-CAMERA-01 they rode on the tile-ground start word. swingView and peakLaunch also need the globe ground drawn (render/core/main.gd): the peak shot's widest view needs the globe, so on the flat ground they stay off whatever this says",
++  "flatMode": "wide",
++  "_flatMode": "a flat send's shot (docs/camera/launch-director.md): wide (Orb's builds), hold, or empty for none; a start word flat=wide or flat=hold still chooses it for a comparison",
+   "peakRate": 3.0,
+   "_peakRate": "the peak launch's zoom, e-folds a second at most. 3 is Research's: 93% of the descent in frame, against 34% at 1. A slower number loses the falling fighter out of the frame"
+ }
+diff --git a/render/camera/cam_places.gd b/render/camera/cam_places.gd
+index 6fe27ae..f8a8329 100644
+--- a/render/camera/cam_places.gd
++++ b/render/camera/cam_places.gd
+@@ -27,6 +27,16 @@ static func data() -> Dictionary:
+ 		_d = j
+ 	return _d
+ 
++## One of the camera pieces Orb played (data/camera/swing.json "pieces", A-CAMERA-01): off when the data doesn't name it.
++static func piece(key: String) -> bool:
++	var p = data().get("pieces", {})
++	return p is Dictionary and bool(p.get(key, false))
++
++
++## A flat send's shot from the data: "wide", "hold" or "" (none).
++static func flat_mode() -> String:
++	return String(data().get("flatMode", ""))
++
+ const _TALL_RINGS: Array = [0.5, 1.0]
+ const _TALL_SPOKES: int = 8
+ 
+diff --git a/render/core/main.gd b/render/core/main.gd
+index fbe2402..7520c27 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -241,15 +241,18 @@ func _ready() -> void:
+ 		boot.begin([pane], RenderLook.BOOT_WORDS)
+ 	SimHost.draw_others = args.has("others")   # 2v2: the other fight drawn; off; --others, ?others=1 on a local page
+ 	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
+-	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
+-	split_rig.peak_launch = RenderTileGround.on
+-	split_rig.launch_director = RenderTileGround.on
+-	split_rig.close_brawl = RenderTileGround.on
+-	split_rig.readable = RenderTileGround.on
+-	split_rig.split_share = float(CamPlaces.data().get("splitShare", 0.0)) if RenderTileGround.on else 0.0
+-	split_rig.follow_through = RenderTileGround.on
+-	split_rig.flight_reveal = RenderTileGround.on
+-	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)
++	# The camera Orb played on 9 November, from Camera's data (data/camera/swing.json "pieces", A-CAMERA-01), at a plain start. The swing and the
++	# peak launch also need the globe ground drawn: the peak shot's widest view needs the globe (docs/camera/swing-view.md), so on the flat ground
++	# they stay off.
++	split_rig.swing_view = CamPlaces.piece("swingView") and RenderTileGround.on
++	split_rig.peak_launch = CamPlaces.piece("peakLaunch") and RenderTileGround.on
++	split_rig.launch_director = CamPlaces.piece("launchDirector")
++	split_rig.close_brawl = CamPlaces.piece("closeBrawl")
++	split_rig.readable = CamPlaces.piece("readable")
++	split_rig.split_share = float(CamPlaces.data().get("splitShare", 0.0))
++	split_rig.follow_through = CamPlaces.piece("followThrough")
++	split_rig.flight_reveal = CamPlaces.piece("flightReveal")
++	split_rig.flat_mode = String(args.get("flat", CamPlaces.flat_mode()))   # flat=wide or flat=hold still chooses it, for a comparison (launch-director.md)
+ 	RenderTileGround.rate = float(args.get("tilerate", 0.0))
+ 	RenderTileGround.quick = args.has("tilequick")
+ 	RenderTileGround.near_mode = int(args.get("nearmode", RenderLook.TILE_NEAR_DEFAULT))
+diff --git a/tools/schemas/camera-swing.schema.json b/tools/schemas/camera-swing.schema.json
+index 576c007..3866c02 100644
+--- a/tools/schemas/camera-swing.schema.json
++++ b/tools/schemas/camera-swing.schema.json
+@@ -10,6 +10,21 @@
+   "properties": {
+     "schema": { "const": "camera.swing/1" },
+     "splitShare": { "type": "number", "minimum": 0, "maximum": 1 },
++    "pieces": {
++      "type": "object",
++      "patternProperties": { "^_": {} },
++      "additionalProperties": false,
++      "properties": {
++        "swingView": { "type": "boolean" },
++        "peakLaunch": { "type": "boolean" },
++        "launchDirector": { "type": "boolean" },
++        "closeBrawl": { "type": "boolean" },
++        "readable": { "type": "boolean" },
++        "followThrough": { "type": "boolean" },
++        "flightReveal": { "type": "boolean" }
++      }
++    },
++    "flatMode": { "enum": ["", "wide", "hold"] },
+     "peakRate": { "type": "number", "exclusiveMinimum": 0, "maximum": 3 }
+   }
+ }

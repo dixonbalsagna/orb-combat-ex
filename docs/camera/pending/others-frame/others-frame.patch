@@ -1,0 +1,368 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index f78db7ff..b15a7612 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -532,6 +532,11 @@ const MANY_PULL: float = 0.15         # the group's bounding centre pulls the fo
+ const MANY_ASSIGN_BH: float = 4.0     # a body belongs to the second principal's pane unless he is this many body heights nearer the one (the partner always goes with the one)
+ const MANY_PANE_PULL: float = 0.15    # a pane's focus is pulled toward the centre of its assigned bodies by at most this much of the pane's width
+ const MANY_PARTNER_BH: float = 1.0    # the partner is the nearest of the others to the one; another takes over only when this much nearer
++const OTHERS_ZKEEP: float = 0.55      # 2v2 drawn (frame_others): the other pair joins while the zoom stays above this share of the pair's own ...
++const OTHERS_R_MIN: float = 0.06      # ... and no body under this share of the height (READ_FAST: 43 px at 720p)
++const OTHERS_EDGE: float = 0.44       # 2v2 drawn (frame_others): an other body too far to join is leaned to, to stand this far from the centre (of the width) ...
++const OTHERS_KEEP: float = 0.42       # ... while the pair stays inside this ...
++const OTHERS_EDGE_RATE: float = 0.005 # ... and the lean moves at most this much of the width a tick
+ const LH_SKY_ALT: float = 1500.0      # the rule does not engage for a body this high above the ground (units): the picture under a high flight is sky, which a chase does not change
+ const LH_SLOW: float = 0.8             # ... and ends when his speed has been under this share of the threshold ...
+ const LH_SLOW_TICKS: int = 6           # ... for this many ticks (or he has landed): one cut if he is far, else the ordinary follow takes him
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 9cfb54d2..d2ceb5cb 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -578,6 +578,9 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_mode_changes.clear()
+ 	_mode_reasons.clear()
+ 	_solo_decisions.clear()
++	_ow = {}
++	others_w = 0.0
++	_oe_s = 0.0
+ 	time = 0.0
+ 	_prev_state = [A.state, B.state]
+ 	r_now = _metric(S)
+@@ -2853,6 +2856,14 @@ func _merged_target(S: SimState) -> Vector3:
+ 		y_mid = float(ms["y_mid"])
+ 		my = clampf(y_mid + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
+ 		many_z = CamParams.MANY_PIX_FLOOR / CamParams.BODY_H
++	if frame_others and S.stage != null and S.stage.fights.size() > 1 and S.stage.cur != SimStage.WHOLE and _lg_slot < 0 and not _lg_rel:
++		# 2v2 with the other fight drawn (SimHost.draw_others): its standing bodies near this pair join the one view, eased in and out
++		var os: Dictionary = _others_set(S, mx, ahead, dy_pair, y_mid)
++		mx = float(os["mx"])
++		ahead = float(os["ahead"])
++		dy_pair = float(os["dy"])
++		y_mid = float(os["y_mid"])
++		my = clampf(y_mid + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
+ 	var z: float = zoom_u(vw, vh, ahead, dy_pair, maxf(A.tier, B.tier), _m(), true)
+ 	var mult: float = maxf(_push_mult(0), _push_mult(1)) * _intro_mult()
+ 	if _st_w > 0.0:
+@@ -2967,6 +2978,109 @@ func _merged_target(S: SimState) -> Vector3:
+ 	return Vector3(SimWrap.wrap(mx), my, z)
+ 
+ 
++## 2v2 with the other fight drawn (docs/camera/pending/others-frame): the other fights' standing bodies join the one view by
++## the one-versus-many rule (docs/camera/one-v-many.md section 3). Each counts by a weight that moves MANY_RATE a tick (a join or a
++## leave takes 40 ticks and steps nothing): 1 while the zoom that fits him with the pair (and the nearer others) stays above
++## OTHERS_ZKEEP of the pair's own and OTHERS_R_MIN of the height a body, 0 past MANY_JOIN of that limit. So a pair nearby makes a wider shot of
++## all four, and one farther off is let go, eased, leaving the frame to this pair. The focus leans toward the set's centre by at most
++## MANY_PULL of the width. A body that's out, higher than MANY_UP_BH over the pair or deeper than MANY_DEPTH counts for nothing.
++## Weights are keyed by fight and place; a key that's gone (the fight held changed) is forgotten.
++func _others_set(S: SimState, mx: float, ahead: float, dy: float, y_mid: float) -> Dictionary:
++	var pair: Array = S.fighters.slice(0, 2)
++	var A = pair[0]
++	var B = pair[1]
++	var r1: float = SimWrap.sdx(A.x, B.x)
++	var lo: float = minf(0.0, r1)
++	var hi: float = maxf(0.0, r1)
++	var y_lo: float = minf(float(A.y), float(B.y))
++	var y_hi: float = maxf(float(A.y), float(B.y))
++	var tier: float = maxf(float(A.tier), float(B.tier))
++	var m: float = _m()
++	var rel_mid: float = SimWrap.sdx(A.x, mx)
++	var z0: float = zoom_u(vw, vh, maxf(ahead, hi - lo), maxf(dy, y_hi - y_lo), tier, m, false)
++	var z_lim: float = minf(maxf(CamParams.OTHERS_R_MIN * vh / CamParams.BODY_H, z0 * CamParams.OTHERS_ZKEEP), z0)   # wider than one-v-many's 0.75: another team's fight is worth a smaller pair
++	var fz: float = (float(A.z) + float(B.z)) * 0.5
++	var cand: Array = []
++	for i in range(S.stage.fights.size()):
++		if i == S.stage.cur:
++			continue
++		var fs: Array = S.stage.fights[i].fighters
++		for j in range(fs.size()):
++			cand.append([i * 8 + j, fs[j]])
++	cand.sort_custom(func(a, b): return absf(SimWrap.sdx(A.x, a[1].x) - rel_mid) < absf(SimWrap.sdx(A.x, b[1].x) - rel_mid))
++	var seen: Dictionary = {}
++	var members: Array = []
++	for c in cand:
++		var key: int = int(c[0])
++		var g = c[1]
++		seen[key] = true
++		var gy: float = float(g.y)
++		var rk: float = SimWrap.sdx(A.x, g.x)
++		var tgt: float = 0.0
++		if bool(g.get("out")) or gy - y_hi > CamParams.MANY_UP_BH * CamParams.BODY_H or absf(float(g.z) - fz) > CamParams.MANY_DEPTH:
++			tgt = 0.0
++		else:
++			var zc: float = zoom_u(vw, vh, maxf(ahead, maxf(hi, rk) - minf(lo, rk)), maxf(dy, maxf(y_hi, gy) - minf(y_lo, gy)), maxf(tier, float(g.tier)), m, false)
++			tgt = smoothstep(CamParams.MANY_JOIN * z_lim, CamParams.MANY_LEAVE * z_lim, zc)
++		var w: float = move_toward(float(_ow.get(key, 0.0)), tgt, CamParams.MANY_RATE)
++		_ow[key] = w
++		if w > 0.0:
++			lo = lerpf(lo, minf(lo, rk), w)
++			hi = lerpf(hi, maxf(hi, rk), w)
++			y_lo = lerpf(y_lo, minf(y_lo, gy), w)
++			y_hi = lerpf(y_hi, maxf(y_hi, gy), w)
++			members.append([rk, w])
++	for k in _ow.keys():
++		if not seen.has(k):
++			_ow.erase(k)
++	others_w = 0.0
++	for mw in members:
++		others_w = maxf(others_w, float(mw[1]))
++	var fx: float = mx
++	var out_d: Dictionary = {"mx": mx, "ahead": ahead, "dy": dy, "y_mid": y_mid}
++	if not members.is_empty():
++		var centre: float = (lo + hi) * 0.5
++		var pull_max: float = CamParams.MANY_PULL * vw / maxf(_mz, 0.1)
++		fx = SimWrap.wrap(mx + clampf(centre - rel_mid, -pull_max, pull_max))
++		var rel_f: float = SimWrap.sdx(A.x, fx)
++		var half: float = maxf(absf(rel_f), absf(r1 - rel_f))
++		for mw in members:
++			half = maxf(half, float(mw[1]) * absf(float(mw[0]) - rel_f))
++		out_d = {"mx": fx, "ahead": minf(SimConst.HALF, maxf(ahead, 2.0 * half)), "dy": maxf(dy, y_hi - y_lo), "y_mid": (y_lo + y_hi) * 0.5}
++	# Too far to join, near enough to show: the nearest standing other body not in the set leans the focus toward him until he
++	# stands at OTHERS_EDGE of the width from the centre, while the pair stays inside OTHERS_KEEP. The lean is an offset that moves at
++	# most OTHERS_EDGE_RATE of the width a tick (and the camera eases on top), fading out where the room left can't bring him in.
++	var zp: float = maxf(_mz, 0.001)
++	var keep_u: float = CamParams.OTHERS_KEEP * vw / zp
++	var dA: float = SimWrap.sdx(fx, A.x)
++	var dB: float = SimWrap.sdx(fx, B.x)
++	var lo_s: float = maxf(dA, dB) - keep_u
++	var hi_s: float = minf(dA, dB) + keep_u
++	var s_t: float = 0.0
++	var best: float = 1.0e18
++	for c in cand:
++		var g = c[1]
++		if float(_ow.get(int(c[0]), 0.0)) >= 0.5 or bool(g.get("out")) or float(g.y) - y_hi > CamParams.MANY_UP_BH * CamParams.BODY_H or absf(float(g.z) - fz) > CamParams.MANY_DEPTH:
++			continue
++		var rel: float = SimWrap.sdx(fx, g.x)
++		if absf(rel) >= best:
++			continue
++		best = absf(rel)
++		var need: float = absf(rel) - CamParams.OTHERS_EDGE * vw / zp
++		s_t = 0.0
++		if need > 0.0 and lo_s <= hi_s:
++			var sh: float = signf(rel) * need
++			var sh_c: float = clampf(sh, lo_s, hi_s)
++			if absf(sh_c) > 1.0:
++				s_t = sh_c * (1.0 - smoothstep(1.0, 1.3, absf(sh) / absf(sh_c)))
++	_oe_s = move_toward(_oe_s, s_t, CamParams.OTHERS_EDGE_RATE * vw / zp)
++	if lo_s <= hi_s:
++		_oe_s = clampf(_oe_s, minf(lo_s, 0.0), maxf(hi_s, 0.0))
++	if _oe_s != 0.0:
++		out_d["mx"] = SimWrap.wrap(float(out_d["mx"]) + _oe_s)
++	return out_d
++
++
+ ## The framing set of a match of more than two bodies (docs/camera/one-v-many.md section 3): the principals are the one
+ ## (slot 0), the second principal (slot 1) and the one's partner now (the nearest of the others: a tag hands the fight to a
+ ## guard, and he stands to striking distance). The others, nearest first, count by a weight: 1 while the zoom that fits them
+@@ -3445,6 +3559,10 @@ var flash_bundle: bool = false                          # OFF since 2026-10-19 (
+ var flash_bundle_reduced_only: bool = true              # ... on only while the reduced-flashing setting is on (the default of the game: EP's decision of 2026-10-16); the ordinary mode is what it was
+ var _fb_prev: int = -1                                  # the bundle's last state (-1 not yet seen)
+ var many_framing: bool = false                         # one versus many (docs/camera/one-v-many.md): the shared view frames the principals and the bodies that fit; off by default
++var frame_others: bool = false                         # 2v2 with the other fight drawn (main.gd sets it from SimHost.draw_others): its bodies near this pair join the one view
++var _ow: Dictionary = {}                                # each other body's weight in the one view, by fight * 8 + place
++var others_w: float = 0.0                              # the largest of them this tick (a read for checks)
++var _oe_s: float = 0.0                                 # the lean toward the nearest other body not in the set, world units (signed)
+ var _many_w: Array = [1.0, 1.0, 0.0, 0.0, 0.0]          # each body's weight in the framing set, moved toward its target by MANY_RATE a tick (no step when one joins or leaves)
+ var _many_dbg: Array = []
+ var _many_pw: Array = [[0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0]]   # pane i's weight for body k in his framing set (moves at MANY_RATE a tick)
+diff --git a/render/camera/tests/others_frame_check.gd b/render/camera/tests/others_frame_check.gd
+new file mode 100644
+index 00000000..c4ccc74a
+--- /dev/null
++++ b/render/camera/tests/others_frame_check.gd
+@@ -0,0 +1,184 @@
++extends SceneTree
++## 2v2 with the other fight drawn: its bodies near the pair join the one view (SplitRig.frame_others, docs/camera/pending/others-frame).
++##   godot --headless --path . --script res://render/camera/tests/others_frame_check.gd
++## - the other pair comes in from far off, stays near, and goes again: all four in the picture while near, none of the
++##   others framed while far, and the moves eased (no cut, the picture's jolt and zoom jolt within launch_shots_check's limits)
++## - while the other pair is far, the frames are the same as with the switch off
++## - an other body that's out counts for nothing
++## - the fight held changes (a LAN PC whose player is out shows his partner's): the weights start again
++const JOLT_LIMIT: float = 0.06
++const ZJOLT_LIMIT: float = 0.012
++const VW: float = 1280.0
++const VH: float = 720.0
++var fails: int = 0
++var checks: int = 0
++
++
++func _ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  " + what)
++
++
++func _new(on: bool) -> Array:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 77, {"p1": false, "p2": false, "p3": false, "p4": false}, {"intro": false, "fights": 2, "cross": true, "planet": 7, "touch": 3, "planetGen": 3})
++	S.dt = SplitRig.DT
++	var rig := SplitRig.new()
++	for k in ["swing_view", "peak_launch", "launch_director", "close_brawl", "readable", "follow_through", "flight_reveal"]:
++		rig.set(k, true)   # as main.gd sets the rig with tiles
++	rig.flat_mode = "wide"
++	rig.split_share = 0.7
++	rig.set("frame_others", on)   # (rig.set: the negative control runs on a rig without it)
++	SimStage.enter(S, 0)
++	var o: Array = S.stage.fights[1].fighters
++	o[0].x = SimWrap.wrap(S.fighters[0].x + 9000.0)
++	o[1].x = SimWrap.wrap(S.fighters[0].x + 9300.0)
++	rig.reset(S, VW, VH)
++	return [S, rig]
++
++
++func _place(S: SimState, d: float) -> void:
++	var o: Array = S.stage.fights[1].fighters
++	var base: float = (float(S.fighters[0].x) + float(S.fighters[1].x)) * 0.5 if absf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)) < 2000.0 else float(S.fighters[0].x)
++	o[0].x = SimWrap.wrap(base + d)
++	o[1].x = SimWrap.wrap(base + d + 160.0)
++	for f in o:
++		f.vx = 0.0
++		f.vy = 0.0
++		f.y = (float(S.fighters[0].y) + float(S.fighters[1].y)) * 0.5   # at the pair's height (a body 8 heights over them counts for nothing)
++
++
++func _tick(S: SimState, rig: SplitRig) -> void:
++	SimStage.enter(S, 0)
++	SimCore.step(S)
++	SimStage.enter(S, 0)
++	rig.step(S, VW, VH, S.out.fx)
++	for i in range(S.stage.fights.size()):
++		var o = S.out if i == S.stage.cur else S.stage.fights[i].out
++		o.fx.clear()
++		o.feed.clear()
++
++
++func _in(f: SplitFrame, x: float, y: float) -> bool:
++	var p: Vector2 = f.screen_pos(0, x, y + CamParams.CHEST)
++	return p.x >= 0.0 and p.x <= VW and p.y >= 0.0 and p.y <= VH
++
++
++func _hash(f: SplitFrame) -> int:
++	return hash([snappedf(f.cam_x[0], 0.01), snappedf(f.cam_y[0], 0.01), snappedf(f.cam_z[0], 0.00001), snappedf(f.cam_x[1], 0.01), snappedf(f.cam_y[1], 0.01), snappedf(f.cam_z[1], 0.00001), snappedf(f.sep, 0.0001), f.mode, f.cut])
++
++
++func _comes_and_goes() -> void:
++	var sr: Array = _new(true)
++	var S: SimState = sr[0]
++	var rig: SplitRig = sr[1]
++	var prev: SplitFrame = rig.current().duplicate()
++	var last := Vector2.ZERO
++	var jolt: float = 0.0
++	var jolt_at: int = -1
++	var zj: float = 0.0
++	var cuts: int = 0
++	var near_all: int = 0
++	var near_one: int = 0
++	var near_n: int = 0
++	var far_w: float = 0.0
++	var pair_off: int = 0
++	var w_max: float = 0.0
++	for t in range(900):
++		# far (6,000) for 120 ticks, in to 1,000 over 300 (past the pair's own frame: main never shows them), near for 180, out again over 300
++		var d: float = 6000.0
++		if t >= 120 and t < 420:
++			d = lerpf(6000.0, 1000.0, smoothstep(0.0, 1.0, float(t - 120) / 300.0))
++		elif t >= 420 and t < 600:
++			d = 1000.0
++		elif t >= 600:
++			d = lerpf(1000.0, 6000.0, smoothstep(0.0, 1.0, float(t - 600) / 300.0))
++		_place(S, d)
++		_tick(S, rig)
++		var f: SplitFrame = rig.current()
++		w_max = maxf(w_max, float(rig.get("others_w") if rig.get("others_w") != null else 0.0))
++		if f.cut:
++			cuts += 1
++		if t > 10 and not f.cut and f.sep < 0.5 and prev.sep < 0.5:
++			var z: float = f.cam_z[0]
++			var s := Vector2(SimWrap.sdx(prev.cam_x[0], f.cam_x[0]) * z / VW, (f.cam_y[0] - prev.cam_y[0]) * z / VW)
++			if (s - last).length() > jolt:
++				jolt = (s - last).length()
++				jolt_at = t
++			zj = maxf(zj, absf(log(f.cam_z[0] / prev.cam_z[0])) * 0.5)
++			last = s
++		if f.sep < 0.5 and not (_in(f, S.fighters[0].x, S.fighters[0].y) and _in(f, S.fighters[1].x, S.fighters[1].y)):
++			pair_off += 1
++		if t >= 470 and t < 600:
++			near_n += 1
++			var o: Array = S.stage.fights[1].fighters
++			if f.sep < 0.5 and _in(f, o[0].x, o[0].y) and _in(f, o[1].x, o[1].y) and _in(f, S.fighters[0].x, S.fighters[0].y) and _in(f, S.fighters[1].x, S.fighters[1].y):
++				near_all += 1
++			if f.sep < 0.5 and _in(f, o[0].x, o[0].y) and _in(f, S.fighters[0].x, S.fighters[0].y) and _in(f, S.fighters[1].x, S.fighters[1].y):
++				near_one += 1
++		if t < 120 or t >= 880:
++			far_w = maxf(far_w, float(rig.get("others_w") if rig.get("others_w") != null else 0.0))
++		prev = f.duplicate()
++	print("comes and goes: all four in the picture %d of %d near ticks, the nearer other with the pair %d; weight far %.3f, most %.3f; jolt %.4f at %d, zoom jolt %.4f; cuts %d; pair off the one view %d ticks" % [near_all, near_n, near_one, far_w, w_max, jolt, jolt_at, zj, cuts, pair_off])
++	_ok(near_all == near_n, "all four in the picture only %d of %d near ticks" % [near_all, near_n])
++	_ok(far_w == 0.0, "an other body far off still weighs %.3f" % far_w)
++	_ok(w_max >= 0.999, "the other pair never fully joined (%.3f)" % w_max)
++	_ok(cuts == 0, "%d cuts" % cuts)
++	_ok(jolt <= JOLT_LIMIT, "a jolt of %.4f at tick %d" % [jolt, jolt_at])
++	_ok(zj <= ZJOLT_LIMIT, "a zoom jolt of %.4f" % zj)
++	_ok(pair_off == 0, "the pair was off the one view for %d ticks" % pair_off)
++	SimCore.dispose(S)
++
++
++func _far_same() -> void:
++	var a: Array = _new(true)
++	var b: Array = _new(false)
++	var diff: int = 0
++	for t in range(300):
++		_place(a[0], 6000.0)
++		_place(b[0], 6000.0)
++		_tick(a[0], a[1])
++		_tick(b[0], b[1])
++		if _hash(a[1].current()) != _hash(b[1].current()):
++			diff += 1
++	print("far: %d of 300 frames differ from the switch off" % diff)
++	_ok(diff == 0, "with the other pair far, %d frames differ from the switch off" % diff)
++	SimCore.dispose(a[0])
++	SimCore.dispose(b[0])
++
++
++func _out_and_change() -> void:
++	var sr: Array = _new(true)
++	var S: SimState = sr[0]
++	var rig: SplitRig = sr[1]
++	var o: Array = S.stage.fights[1].fighters
++	for t in range(120):
++		_place(S, 350.0)
++		o[0].out = true
++		o[1].out = true
++		_tick(S, rig)
++	print("out: weight %.3f" % float(rig.get("others_w") if rig.get("others_w") != null else 0.0))
++	_ok(float(rig.get("others_w") if rig.get("others_w") != null else 0.0) == 0.0, "bodies that are out weigh %.3f" % float(rig.get("others_w") if rig.get("others_w") != null else 0.0))
++	o[0].out = false
++	o[1].out = false
++	for t in range(60):
++		_place(S, 350.0)
++		_tick(S, rig)
++	var keys0: Array = rig.get("_ow").keys() if rig.get("_ow") != null else []
++	SimStage.enter(S, 1)
++	rig.step(S, VW, VH, [])
++	var keys1: Array = rig.get("_ow").keys() if rig.get("_ow") != null else []
++	print("change: keys %s then %s" % [str(keys0), str(keys1)])
++	_ok(keys0.has(8) and not keys1.has(8) and keys1.has(0), "the weights didn't start again on the fight change: %s then %s" % [str(keys0), str(keys1)])
++	SimStage.enter(S, 0)
++	SimCore.dispose(S)
++
++
++func _initialize() -> void:
++	_comes_and_goes()
++	_far_same()
++	_out_and_change()
++	print("others_frame_check: %d checks, %d failed" % [checks, fails] if fails > 0 else "others_frame_check: %d checks passed" % checks)
++	quit(1 if fails > 0 else 0)
+diff --git a/render/core/main.gd b/render/core/main.gd
+index fbe24024..e2a85fe1 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -240,6 +240,7 @@ func _ready() -> void:
+ 		add_child(boot)
+ 		boot.begin([pane], RenderLook.BOOT_WORDS)
+ 	SimHost.draw_others = args.has("others")   # 2v2: the other fight drawn; off; --others, ?others=1 on a local page
++	split_rig.frame_others = SimHost.draw_others   # ... and the camera frames its bodies when they're near (docs/camera/pending/others-frame)
+ 	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
+ 	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
+ 	split_rig.peak_launch = RenderTileGround.on

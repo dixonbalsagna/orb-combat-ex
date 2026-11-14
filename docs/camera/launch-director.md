@@ -62,7 +62,19 @@ Each is its own patch and switch, all on with `tiles`.
 
 **A bug found by the real-fight gate, in the reveal.** It opened on a fighter whose pane wasn't on the screen, so the other pane took a jolt of 0.161 and lost its subject for 26 ticks. It now doesn't start or carry on while the other pane has the screen. The same fight now reads 0.028, and 3 ticks lost.
 
-**Not done:** no one has looked at a close-brawl clip. The first was filmed where no locked brawl happens, and the next was stopped at the pause. Seed 12345 from tick 1500 has a real one.
+**The close-brawl clip:** `img/close-brawl/close-brawl.gif`, stills `town.jpg` and `sea.jpg`. A real AI fight (seed 12345) with the presses at the frame's edge, before on the left, on Rendering's building band: a town from tick 150, open sea from tick 3000. No wall in either stretch. The other stretches I filmed of this seed (from ticks 1500 and 3000) were at sea, so it shows only that one town, not a dense street.
+
+## After the first reels: readable, and the meteor's shot (2026-11-01)
+
+**Readable** (`SplitRig.readable`, on with `tiles`). The agreed line: wide while a body's really flying, readable within about a second of it stopping. A body under 1,500 units a second (by where it's got to, since a rush moves a body without its velocity) for 0.3 s comes back to at least 0.10: in a pane, dropping the altitude's zoom-out; in one view, on half the usual margin, as far as the pair fits. A slow launched body isn't chased, so the split may close. A swing waiting at no speed isn't a running swing. The arena turn, a pause's pull-out, a peak shot and a reveal keep their own width. `launch_shots_check` fails on small and slow for over 90 ticks; the worst in 4 AI fights is 66. Clip: `img/close-brawl/readable.gif`.
+
+**The meteor's peak shot** (`swing-peak-retry`). It didn't fire through the played route. That send lands in a hit-stop; the shot asked to look again when the stop ended, and the next lines wiped the request. My staged tests had no hit-stop. Now it fires: 50,000 units wide at the top with the planet's curve in frame, 8,000 at the landing. Clip, staged by the sim's own `DirArc.send`: `img/launch-director/meteor-peak.gif`. **Still to judge:** the trail thins to about a pixel at that width, which is VFX's pixel floor to look at, and the hold and return at the landing take about 1.8 s against the 1 s line, kept so the blast reads whole.
+
+**In frame** (`swing-in-frame`, `swing-rush-follow`, under `readable`). A player always sees himself. A reveal needs land in its shot and keeps him at least 0.05 (0.03 with both at tier 3+). A long rush's pane follows him, instead of `split-screen.md`'s cut ahead to where he'll arrive, which left him out of his own pane for about a second. `launch_shots_check` fails on any body out of his own open pane for over 15 ticks.
+
+**The chase after a send** (`swing-chase-air`, under `readable`). Encounter's chase-tap rushes at up to 30,000 units a second at a body still flying. The slam door was made for arriving at someone who stays there: it closed the view, then the blow sent him on, and it reopened about 3 ticks later. Now there's no door: the split stays open and his pane follows, and the rival comes into the player's large pane before the catch (`img/split-unequal/chase-catch-coming.jpg`, staged send). `chase_rush_check.gd` limits, on Encounter's eased rush (`chase-ease.diff`) at today's speeds: the picture's step 0.30 of the width a tick, its jolt 0.10. Read: 0.27 and 0.07. With the energy model on (`power-core`): at base power or on the meteor's own curve, step 0.06, jolt 0.03, read 0.049 and 0.022; an ordinary send at top power, step 0.25, jolt 0.12, read 0.20 and 0.11; in AI fights, jolt 0.10 and release 0.05, read 0.082 and 0.017.
+
+**A fast body's size** (`swing-size-floor`). The 0.04 dip in a chase was the scroll governor: a flash-era limit that gives up zoom so the scenery crosses slower, with a floor of `R_FLOOR`, 0.032. So the catch landed at the smallest moment. Under `readable` its floor is 0.06, at no cost in step or jolt.
 
 ## Checks
 

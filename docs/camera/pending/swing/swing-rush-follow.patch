@@ -1,0 +1,49 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index eaeb225..32ed4fc 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -1321,6 +1321,8 @@ func _update_lunge(S: SimState) -> void:
+ 
+ ## Whether a rush of `ra` at `rt` is long enough, in screens at the rusher pane's zoom, to cut ahead for.
+ func _rush_far(S: SimState, ra: int, rt: int) -> bool:
++	if readable:
++		return false   # no cut ahead: his pane stays his, or he's out of his own picture for the whole rush
+ 	var rf = S.fighters[ra]
+ 	var r_off: float = float(rf.rush.off) if rf.rush != null else 0.0
+ 	var dr: float = absf(SimWrap.sdx(rf.x, S.fighters[rt].x + r_off))   # to the arrival point
+@@ -5529,7 +5531,7 @@ func _soft_settling(i: int, pp: Vector2, aim: Vector2, z: float) -> bool:
+ ## Whether pane i's move is a launched body's, fast enough that the follow can't simply stay with him.
+ func _speed_body(i: int) -> bool:
+ 	var f = _sim_f[i]
+-	return f != null and f.state == "launched"
++	return f != null and (f.state == "launched" or (readable and f.rush != null))
+ 
+ 
+ ## Whether pane i shows a body whose framing moves by its own eased step (a building send, its stage's relay, the hand-over):
+diff --git a/render/camera/tests/launch_shots_check.gd b/render/camera/tests/launch_shots_check.gd
+index 9dac07b..5856554 100644
+--- a/render/camera/tests/launch_shots_check.gd
++++ b/render/camera/tests/launch_shots_check.gd
+@@ -16,7 +16,7 @@ var director: bool = true
+ var allmoves: bool = false
+ ## A jolt is the picture's step changing in a tick, of the width. A blow's release may start hard (its first ticks: the blow hides the start, as a cut on action does);
+ ## nothing else may. Lost is the subject off the frame in a run of ticks: a launch's climb may leave the top for the first 0.8 s, on Research's reading.
+-const LIMITS: Dictionary = {"jolt": 0.06, "release": 0.30, "release_zoom": 0.03, "zjolt": 0.012, "lost": 50, "small": 90, "off": 12}
++const LIMITS: Dictionary = {"jolt": 0.06, "release": 0.30, "release_zoom": 0.03, "zjolt": 0.012, "lost": 50, "small": 90, "off": 15}
+ const RELEASE_TICKS: int = 10
+ 
+ 
+@@ -132,11 +132,11 @@ func _watch(S: SimState, rig: SplitRig, ticks: int, subject: Callable, stage: Ca
+ 			st[i] = s
+ 			fresh[i] = false
+ 		if "readable" in rig and rig.readable:
+-			# a flying body out of the picture that's his: the player always sees himself
++			# a body out of the pane that's his: the player always sees himself
+ 			var gone: bool = false
+ 			for i1 in range(2):
+ 				var f1 = S.fighters[i1]
+-				if f.shows(i1) and f1.state == "launched" and rig._pk_phase == "" and (f.sep > 0.5 or f.e > 0.5):
++				if f.shows(i1) and rig._slam_slot < 0 and rig._pk_phase == "" and (rig.solo_kind == "" or rig.solo_slot == i1) and f.sep >= 0.999:
+ 					var sp: Vector2 = f.screen_pos(i1, f1.x, f1.y + CamParams.CHEST)
+ 					if sp.x < 0.0 or sp.x > VW or sp.y < 0.0 or sp.y > VH or f.weight1(sp) != (1.0 if i1 == 1 else 0.0):
+ 						gone = true

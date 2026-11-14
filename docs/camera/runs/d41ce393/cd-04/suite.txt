@@ -1,0 +1,18 @@
+# CD-04 camera gates: main d41ce393 + docs/camera/pending/cd04/cd04.patch (sha1 cb4d7363), headless, Godot 4.7.2, 2026-11-08T04:27Z
+# (no VFX register patch: the rig's fallback ask). One line per check.
+cut_register_check   cut_register_check: 73 checks passed 
+clip_digest          
+split_sweep          split sweep passed 
+chase_rush_check     FAIL energy model, base, seed 1, 8 after the send, 1 taps, share 0.0: the view flapped: ["split", "closing", "merged", "opening", "split"] chase_rush_check: 130 checks, 3 failed 
+launch_shots_check   launch_shots_check: 635 checks passed 
+flight_shots_check   FAIL close brawl: a jolt of 0.237 of the width (tick 2048 pane 0: solo, launch follow, launched, step 0.031, ) flight_shots_check: 1 of 521 checks FAILED 
+cross_ko_check       cross_ko_check: 21 checks passed 
+peak_shot_check      peak_shot_check: 24 checks passed 
+peak_retry_check     peak_retry_check: 1 check passed 
+split_vision_check   split_vision_check: 11 checks passed 
+split_share_check    split_share_check: 26 checks passed 
+swing_shot_check     swing_shot_check: 164 checks passed 
+swing_places_check   swing_places_check: 33 checks passed 
+swing_real_check     swing_real_check: 48 checks passed 
+swing_read_check     swing_read_check: 14420 checks passed 
+intro_shots          

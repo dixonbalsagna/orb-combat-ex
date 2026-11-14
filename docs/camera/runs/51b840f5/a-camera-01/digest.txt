@@ -1,0 +1,26 @@
+# The camera, frame by frame (clip_digest: the real main scene, 9 clips x normal and reduced, 48,600 frames), headless
+# A: main 51b840f5 as Orb's 9 November builds set it: --tiles, and data/camera/swing.json as the 9 November tree's (splitShare 0.7; its first 8 lines compared equal to homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/tree/data/camera/swing.json)
+# B: main + the park, with --tiles (the globe ground; the look, A-RENDER-01, makes it a plain start later)
+# C: main + the park at a plain start (no words): no globe ground, so the swing and the peak launch stay off and the ground is the strip
+A = B: byte-identical
+C against A: every frame differs (the ground and the globe framing differ, not only the camera), by clip:
+   3600 ai:1 normal
+   3600 ai:1 reduced
+   3600 ai:106 normal
+   3600 ai:106 reduced
+   3600 ai:38 normal
+   3600 ai:38 reduced
+   3600 ai:4 normal
+   3600 ai:4 reduced
+   3600 ai:5 normal
+   3600 ai:5 reduced
+   1500 collapse normal
+   1500 collapse reduced
+   1800 mashcity normal
+   1800 mashcity reduced
+   1500 rushcity normal
+   1500 rushcity reduced
+   1500 signaturecity normal
+   1500 signaturecity reduced
+
+# Seen in A and B, not the camera's: Rendering's PlanetView._tile_foot_slice (render/core/planet_view.gd:1541) logs 'Out of bounds get index' with the tile ground on (A 291 lines, B 271; C none)

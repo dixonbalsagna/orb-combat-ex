@@ -85,6 +85,10 @@ That's paper: I haven't tested it.
 - **The hard line:** see above.
 - **Nothing here has been played with a pad.** The pictures are stills from a staged flight; the numbers are computer fights.
 
+## After the first play
+
+You found 50/50 uncomfortable at high speed and suggested about 70/30 against a CPU. **So "who sees what" changes for one player against the computer:** the split is 70/30 in your favour once that's marked. Two players on one screen stay even, and each PC on a network has its own 70/30. The ideas and pictures: `split-unequal.md`.
+
 ## Marks wanted from Orb
 
 1. **The merge:** hard edge, as on the right above? Yes, or tell me what's wrong with it.

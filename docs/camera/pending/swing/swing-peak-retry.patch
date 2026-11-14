@@ -1,0 +1,73 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index ed85de9..3d5dbd9 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -250,6 +250,7 @@ var _sw_cause: String = ""
+ var peak_launch: bool = false              # the upward launch's shot, earned by tier (camera.md "The meteor launch"; game-design.md section 12). Off: none of it runs
+ var peak_width: float = 0.0                # the shot's width at 16:9 this tick, for the debug feed; 0 when none
+ var peak_shots: int = 0
++var _pk_retry: bool = false
+ var _pk_phase: String = ""                 # "", "rise", "hang", "fall", "hold", "back"
+ var _pk_slot: int = -1                     # the body sent up
+ var _pk_top: float = 0.0                   # the most this shot may show, 16:9 width
+@@ -4956,7 +4957,10 @@ func _peak_tick(S: SimState) -> void:
+ 		for i in range(2):
+ 			var f = S.fighters[i]
+ 			if f.state == "launched" and _pk_prev_state[i] != "launched":
++				_pk_retry = false
+ 				_peak_begin(S, i)
++				if _pk_retry:
++					return   # still in the hit-stop: he leaves when it ends, so this launch is still new next tick
+ 				break
+ 		for i in range(2):
+ 			_pk_prev_state[i] = S.fighters[i].state
+@@ -5042,7 +5046,7 @@ func _peak_begin(S: SimState, i: int) -> void:
+ 	var vx: float = float(f.vx) / maxf(float(f.launchT), 0.001)
+ 	var flat: bool = launch_director and flat_mode != "" and float(f.vy) < CamParams.PEAK_STEEP * absf(vx) and sqrt(vx * vx + float(f.vy) * float(f.vy)) >= CamParams.FLAT_SPEED
+ 	if S.dirS.stop > 0.0 or intro_active or fold_active or (float(f.vy) <= 0.0 and not flat):
+-		_pk_prev_state[i] = ""   # still in the hit-stop: he leaves when it ends
++		_pk_retry = true   # still in the hit-stop: he leaves when it ends
+ 		return
+ 	if float(f.vy) < CamParams.PEAK_STEEP * absf(vx) and not flat:
+ 		return
+diff --git a/render/camera/tests/peak_retry_check.gd b/render/camera/tests/peak_retry_check.gd
+new file mode 100644
+index 0000000..30f2c61
+--- /dev/null
++++ b/render/camera/tests/peak_retry_check.gd
+@@ -0,0 +1,35 @@
++extends SceneTree
++## A launch sent in a hit-stop still gets its peak shot (docs/camera/launch-director.md): the shot waits out the stop, then fires, once.
++##   godot --headless --path . --script res://render/camera/tests/peak_retry_check.gd
++
++func _initialize() -> void:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, 12345, {"p1": false, "p2": false}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
++	S.dt = SplitRig.DT
++	for f in S.fighters:
++		f.tier = 4.0
++	var rig := SplitRig.new()
++	rig.swing_view = true
++	rig.peak_launch = true
++	rig.launch_director = true
++	rig.reset(S, 1280.0, 720.0)
++	for t in range(5):
++		rig.step(S, 1280.0, 720.0, [])
++	var o = S.fighters[1]
++	o.state = "launched"
++	o.launchT = 1.0
++	o.vx = 6000.0
++	o.vy = 11000.0
++	S.dirS.stop = 0.1
++	var during: int = 0
++	for t in range(6):
++		rig.step(S, 1280.0, 720.0, [])
++		during = rig.peak_shots
++	S.dirS.stop = 0.0
++	for t in range(3):
++		rig.step(S, 1280.0, 720.0, [])
++	var ok: bool = during == 0 and rig.peak_shots == 1
++	if not ok:
++		print("FAIL shots in the stop %d, after it %d" % [during, rig.peak_shots])
++	print("peak_retry_check: %s" % ("1 check passed" if ok else "1 of 1 checks FAILED"))
++	quit(0 if ok else 1)

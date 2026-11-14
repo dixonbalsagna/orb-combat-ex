@@ -1,0 +1,34 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index f4a311a..f614366 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -383,6 +383,7 @@ const REVEAL_R_HIGH: float = 0.03        # ... and this with both at tier 3 or u
+ const LEAD_AHEAD_X: float = 0.16         # lead_ahead: how far ahead the pane leads him at speed, of the width, against PANE_LEAD_X's 0.08
+ const LEAD_AHEAD_V: float = 6000.0       # ... reached at this speed
+ const SHARE_EVEN: float = 0.6            # split_share: the line eases to the middle for a beam struggle, and back, over this
++const READ_FAST: float = 0.06            # readable: the least the scroll governor leaves a fast body in his pane (43 px at 720p), against R_FLOOR's 0.032 and LAUNCH_FLOOR's 0.05
+ const R_READ: float = 0.1                # readable: the size a slow body comes back to, at least (72 px at 720p), against the fight's 0.11 and the pane's 0.085
+ const READ_SPEED: float = 1500.0         # under this a body isn't really flying
+ const READ_AFTER: float = 0.3            # for this long, so an arc's top doesn't count
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 4ff8b4b..dedd278 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -3102,7 +3102,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
+ 	var z: float = r * vh / CamParams.BODY_H * tier_f * alt_f
+ 	z *= _push_mult(i) * _hit_mult(i) * _arr_mult(i) * _turn_mult()
+ 	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
+-		var zfl: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
++		var zfl: float = (CamParams.READ_FAST if readable else CamParams.R_FLOOR) * vh / CamParams.BODY_H
+ 		if many_framing and S.fighters.size() > 2:
+ 			zfl = maxf(zfl, CamParams.MANY_PIX_FLOOR / CamParams.BODY_H)   # a pane's pixel floor in a many-body match (a share of a phone's height is 12 px)
+ 		var gv: float = _scroll_gov(maxf(maxf(float(_vsm[i]), _gov_armed()), _body_speed(f)), z * pz)
+@@ -3113,7 +3113,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
+ 		# 0.06 of the width a tick, and a cliff face against sunlit sand swept 23,000 pixels twice in 14 ticks at ai seed
+ 		# 4 (Tools: 3 flashes, the pair 6 and 5% over the area threshold). The same governor as any pursuit (the scenery no
+ 		# faster than SCROLL_MAX of the width a tick), with a floor of his size: LAUNCH_FLOOR of the height.
+-		var zl: float = CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H
++		var zl: float = (CamParams.READ_FAST if readable else CamParams.LAUNCH_FLOOR) * vh / CamParams.BODY_H
+ 		var gvl: float = _scroll_gov(maxf(float(_vsm[i]), _body_speed(f)), z * pz)
+ 		_gov_bind[i] = gvl < 0.999
+ 		z = maxf(z * gvl, minf(z, zl))

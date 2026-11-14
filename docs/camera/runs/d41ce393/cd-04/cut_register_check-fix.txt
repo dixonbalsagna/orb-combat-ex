@@ -1,0 +1,32 @@
+# cut_register_check on the fix (main d41ce393 + cd04.patch), the rig's fallback ask
+every reason (12): not granted with a row on an empty register []; granted on a full one []
+seed 4, normal: cuts { "side_swap": 2 }; asked 2, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.049 at 2486
+seed 4, normal, the register full: cuts {  }; asked 142, refused 142; biggest step change 0.062 at 2498
+seed 7, normal: cuts { "insert": 2, "side_swap": 2 }; asked 10, refused 6, unasked 0; without a register row 0 []; biggest step change off a cut 0.228 at 1574
+seed 7, normal, the register full: cuts {  }; asked 344, refused 344; biggest step change 0.228 at 1574
+seed 12, normal: cuts { "side_swap": 2 }; asked 2, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.096 at 1627
+seed 12, normal, the register full: cuts {  }; asked 188, refused 188; biggest step change 0.096 at 1627
+seed 39, normal: cuts {  }; asked 0, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.031 at 1334
+seed 39, normal, the register full: cuts {  }; asked 0, refused 0; biggest step change 0.031 at 1334
+seed 77, normal: cuts { "side_swap": 1 }; asked 1, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.244 at 1398
+seed 77, normal, the register full: cuts {  }; asked 74, refused 74; biggest step change 0.244 at 1398
+seed 106, normal: cuts { "side_swap": 1 }; asked 1, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.257 at 413
+seed 106, normal, the register full: cuts {  }; asked 93, refused 93; biggest step change 0.257 at 413
+seed 4, reduced: cuts { "side_swap": 2 }; asked 2, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.051 at 2488
+seed 4, reduced, the register full: cuts {  }; asked 142, refused 142; biggest step change 0.062 at 2498
+seed 7, reduced: cuts { "insert": 2, "side_swap": 2 }; asked 106, refused 102, unasked 0; without a register row 0 []; biggest step change off a cut 0.350 at 1779
+seed 7, reduced, the register full: cuts {  }; asked 344, refused 344; biggest step change 0.181 at 1656
+seed 12, reduced: cuts { "side_swap": 2 }; asked 2, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.096 at 1627
+seed 12, reduced, the register full: cuts {  }; asked 188, refused 188; biggest step change 0.096 at 1627
+seed 39, reduced: cuts {  }; asked 0, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.031 at 1334
+seed 39, reduced, the register full: cuts {  }; asked 0, refused 0; biggest step change 0.031 at 1334
+seed 77, reduced: cuts { "side_swap": 1 }; asked 1, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.244 at 1398
+seed 77, reduced, the register full: cuts {  }; asked 74, refused 74; biggest step change 0.244 at 1398
+seed 106, reduced: cuts { "side_swap": 1 }; asked 1, refused 0, unasked 0; without a register row 0 []; biggest step change off a cut 0.257 at 413
+seed 106, reduced, the register full: cuts {  }; asked 93, refused 93; biggest step change 0.257 at 413
+seed 7, motion: cuts { "motion_setting": 4, "side_swap": 2 }; asked 14, refused 8, unasked 0; without a register row 0 []; biggest step change off a cut 0.230 at 1534
+seed 7, motion, the register full: cuts {  }; asked 2086, refused 2086; biggest step change 0.048 at 1654
+seed 12, motion: cuts { "side_swap": 2, "motion_setting": 3 }; asked 89, refused 84, unasked 0; without a register row 0 []; biggest step change off a cut 0.064 at 1613
+seed 12, motion, the register full: cuts {  }; asked 3481, refused 3481; biggest step change 0.052 at 518
+cuts with room: 31; refusals with the register full: 7249
+cut_register_check: 73 checks passed

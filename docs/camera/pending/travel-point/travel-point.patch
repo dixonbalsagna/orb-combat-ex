@@ -1,0 +1,81 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index a1a79ea..8c05107 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -97,6 +97,7 @@ var _tf_s: int = 0
+ var intro_active: bool = false           # between intro_start and clock_start (docs/architecture/intro-phase.md)
+ var rush_cuts: int = 0                   # long rushes the rusher's pane was cut ahead for (counted for the tests)
+ var _rush_pin: Array = [false, false]
++var _pin_point: Array = [false, false]   # the pin is on a point rush's end (the travel budget's cut put it there), not a fighter
+ var _rush_wait: Array = [0, 0]            # ticks before a long rush's cut ahead is made (a rush that ends in them is not cut for)
+ var lunge_holds: int = 0                 # lunges held for (counted for the tests); docs/camera/lunge-framing.md
+ var _lg_slot: int = -1                   # the attacker of a lunge being held for, else -1
+@@ -464,6 +465,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_sig_done = [true, true]
+ 	_derived_beams_t = -1.0e9
+ 	_rush_pin = [false, false]
++	_pin_point = [false, false]
+ 	_rush_wait = [0, 0]
+ 	_od_valid = false
+ 	_od_shown = [false, false]
+@@ -3733,8 +3735,9 @@ func _update_cameras(S: SimState) -> void:
+ 			freeze = true   # a rush's pane waits RUSH_COMMIT_TICKS before its cut ahead: still, not following him (the whip of a pane chasing 18,000 units a second was 63 more rush jolts in the sweep)
+ 		if _rush_pin[i]:
+ 			var rp = f.rush
+-			if rp == null or rp.tgt == null or solo_kind != "" or sep < 0.999:
++			if rp == null or (rp.tgt == null and not bool(_pin_point[i])) or solo_kind != "" or sep < 0.999:
+ 				_rush_pin[i] = false
++				_pin_point[i] = false
+ 				# The rush ended before he got there (a parry, a knock-back): a pane aimed far from him cuts back to him once,
+ 				# instead of the lag bound whipping across.
+ 				var ux: float = SimWrap.sdx(_fx[i], f.x) * zc
+@@ -3744,8 +3747,12 @@ func _update_cameras(S: SimState) -> void:
+ 					rush_cuts += 1
+ 			else:
+ 				_rush_pin_t[i] = time
+-				_fx[i] = SimWrap.wrap(rp.tgt.x + rp.off)
+-				_fy[i] = rp.tgt.y + CamParams.CHEST
++				if bool(_pin_point[i]) and rp.tgt == null:
++					_fx[i] = SimWrap.wrap(rp.px)
++					_fy[i] = rp.py + CamParams.CHEST
++				else:
++					_fx[i] = SimWrap.wrap(rp.tgt.x + rp.off)
++					_fy[i] = rp.tgt.y + CamParams.CHEST
+ 				freeze = true
+ 		if not freeze:
+ 			# The lag bound (camera-v2.md section 2). e is the fighter's offset from where the camera is aiming, in screen
+@@ -4083,6 +4090,17 @@ func _subject_leaving(S: SimState, i: int, cam: Vector3) -> bool:
+ 	return false
+ 
+ 
++## Where pane i's own fighter's point rush ends (a rush with no fighter target, still running), or NAN when there is none.
++## Only in a split, where the pane is his alone.
++func _point_rush_end(S: SimState, i: int) -> Vector2:
++	if sep < 0.999 or solo_kind != "":
++		return Vector2(NAN, NAN)
++	var rp = S.fighters[i].rush
++	if rp == null or rp.tgt != null or float(rp.end) <= S.T:
++		return Vector2(NAN, NAN)
++	return Vector2(SimWrap.wrap(rp.px), rp.py)
++
++
+ func _pane_shown(i: int) -> bool:
+ 	if i == 0:
+ 		return not (sep > 0.001 and e >= 0.999 and sliver <= 0.0 and e_slot == 1)
+@@ -4160,6 +4178,16 @@ func _travel_budget(S: SimState) -> void:
+ 					_tb_cut_t[i] = time
+ 					travel_cuts += 1
+ 					_od[i] = tgt_full
++					var pr: Vector2 = _point_rush_end(S, i)
++					if pr.x == pr.x:
++						# He's on a point rush (a beam's rise): the cut goes where it ends and the pin holds the pane there, or he
++						# leaves again at once and TRAVEL_COOL holds the next cut for a second.
++						var ox: float = SimWrap.sdx(float(_fx[i]), pr.x)
++						var oy: float = pr.y + CamParams.CHEST - float(_fy[i])
++						_od[i] = Vector3(SimWrap.wrap(tgt_full.x + ox), tgt_full.y + oy, tgt_full.z)
++						_outs[i] = Vector3(_od[i].x, _od[i].y, tgt_full.z / pm)
++						_rush_pin[i] = true
++						_pin_point[i] = true
+ 				else:
+ 					_od[i] = lim
+ 					_outs[i] = Vector3(lim.x, lim.y, lim.z / pm)

@@ -1,0 +1,98 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index dedd278..0f9458e 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -1238,8 +1238,27 @@ func read_size(S: SimState, i: int) -> float:
+ 		return CamParams.R_READ * _m() * (1.0 - CamParams.REF_TIER * (float(S.fighters[i].tier) - 1.0))
+ 	if not _rd_on(1 - i):
+ 		return 0.0
+-	var d: float = absf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x))
+-	return _read_z(d, _pair_dy(S.fighters[0], S.fighters[1])) * CamParams.BODY_H / vh
++	var me = S.fighters[i]
++	var o = S.fighters[1 - i]
++	var d: float = absf(SimWrap.sdx(me.x, o.x))
++	return _read_z(d, _pair_dy(me, o)) * CamParams.BODY_H / vh
++
++
++## The middle of the fight on the line: the roster's fighters about the first, wrapped.
++func _pair_mid(S: SimState) -> float:
++	var x0: float = float(S.fighters.front().x)
++	var off: float = 0.0
++	for f in S.fighters:
++		off += SimWrap.sdx(x0, f.x)
++	return SimWrap.wrap(x0 + off / float(S.fighters.size()))
++
++
++## The faster of the pair's two bodies: the roster's first two.
++func _pair_speed(S: SimState) -> float:
++	var v: float = 0.0
++	for f in S.fighters.slice(0, 2):
++		v = maxf(v, _body_speed(f))
++	return v
+ 
+ 
+ func _body_speed(f) -> float:
+@@ -3943,7 +3962,7 @@ func _update_cameras(S: SimState) -> void:
+ 
+ 
+ func _outputs(S: SimState) -> void:
+-	_sim_f = [S.fighters[0], S.fighters[1]]
++	_sim_f = S.fighters.slice(0, 2)
+ 	var w: float = 1.0 - _smootherstep(sep)
+ 	for i in range(2):
+ 		_anchors[i] = _anchor(S, i) + Vector2(float(_plead[i]), 0.0)
+@@ -4770,8 +4789,7 @@ func _angle_tick(S: SimState) -> void:
+ 		return
+ 	if want == "" or not angles or _pk_phase != "" or reduced_motion or not plain or time - _ang_last_t < CamParams.ANGLE_GAP or _shot_pitch != 0.0 or _sw_ticks > 0:
+ 		return
+-	var A = S.fighters[0]
+-	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
++	var mid: float = _pair_mid(S)
+ 	var fam: String = String(CamParams.ANGLE_BIOME.get(_biome_at(S, mid), ""))
+ 	if fam == "":
+ 		fam = "high" if _ang_last_family == "low" else "low"
+@@ -4899,8 +4917,7 @@ func _pitch_in_move() -> bool:
+ ## standing landmark coming into the frame, is shown within SCAPE_WINDOW at a calm moment in the plain one view: the view eases out
+ ## (SCAPE_WIDE, never a fighter under SCAPE_MIN_R), a slight low angle and a lean toward the new ground, held, and eased back. No cut.
+ func _scape_tick(S: SimState) -> void:
+-	var A = S.fighters[0]
+-	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
++	var mid: float = _pair_mid(S)
+ 	var bio: String = _biome_at(S, mid)
+ 	var half_w: float = 0.5 * vw / maxf(_mz, 0.001)
+ 	var jumped: bool = absf(SimWrap.sdx(_scape_mid, mid)) > half_w
+@@ -4941,7 +4958,7 @@ func _scape_tick(S: SimState) -> void:
+ 	if jumped:
+ 		_scape_due = -1.0
+ 	var plain: bool = landscape and not reduced_motion and sep <= 0.001 and not split_wanted and solo_kind == "" and _ov_kind == "" and _pn.is_empty() and not intro_active and not fold_active and _lg_slot < 0 and S.game.clash == null and _turn_t < 0.0
+-	var calm: bool = (pace == "relax" or pace == "fade") and _ant_w < 0.05 and not _gov_bind_m and maxf(_body_speed(A), _body_speed(S.fighters[1])) < CamParams.SCAPE_SPEED_MAX
++	var calm: bool = (pace == "relax" or pace == "fade") and _ant_w < 0.05 and not _gov_bind_m and _pair_speed(S) < CamParams.SCAPE_SPEED_MAX
+ 	if _scape_t >= 0.0:
+ 		if _scape_own and _shot_pitch != _scape_pa:
+ 			_scape_own = false   # another shot took the angle: it is its to set; the view still eases back
+@@ -5441,8 +5458,7 @@ func _swing_past_limit(S: SimState, off: float) -> bool:
+ 
+ ## Tall land near the camera on the side the turn is bringing forward (a fixed test, from the frame): Encounter's plan reads the same.
+ func _swing_tall_near(S: SimState, dist: float) -> bool:
+-	var A = S.fighters[0]
+-	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
++	var mid: float = _pair_mid(S)
+ 	for b in S.buildings:
+ 		if not b.alive or b.h < CamParams.SWING_TALL:
+ 			continue
+diff --git a/sim/director/swing_read.gd b/sim/director/swing_read.gd
+index 7317c12..0dbaeec 100644
+--- a/sim/director/swing_read.gd
++++ b/sim/director/swing_read.gd
+@@ -26,8 +26,9 @@ static func read(S: SimState, quietS: float = -1.0, swingS: float = 1.0, turn: i
+ 	var R: Dictionary = data().read
+ 	var W: Dictionary = R.terms
+ 	var terms: Array = []
+-	var A = S.fighters[0]
+-	var B = S.fighters[1]
++	var pair: Array = S.fighters.slice(0, 2)   # the swing's read is of the pair: the roster's first two
++	var A = pair.front()
++	var B = pair.back()
+ 	var hitstop: bool = S.dirS.stop > 0.0
+ 	var gap: float = absf(SimWrap.sdx(A.x, B.x))
+ 	var air: Array = [_air(S, A, R), _air(S, B, R)]

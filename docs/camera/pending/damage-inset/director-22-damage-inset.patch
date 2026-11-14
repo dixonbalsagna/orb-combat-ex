@@ -1,0 +1,1299 @@
+diff --git a/data/camera/damage_inset.json b/data/camera/damage_inset.json
+new file mode 100644
+index 0000000..5c2b470
+--- /dev/null
++++ b/data/camera/damage_inset.json
+@@ -0,0 +1,19 @@
++{
++  "schema": "camera.damage_inset/1",
++  "_about": "The live inset of a dodged beam's damage (docs/camera/damage-inset.md, docs/camera/damage-inset-build.md). enabled is the switch (off). It opens when a beam the defender avoided carries on and damages a structure that is not already in the dodger's picture, scored from the damage events it caused. Numbers are first values. Score: points per stage stepped, per share of a building's floors cleared, for a fall, a multiplier for a landmark, and a bonus for a tower (per body height over towerBh, at most towerMax). open and big are the score thresholds. windowS: the damage counts if it comes within this many seconds of the dodge, before or after (a beam carves on its way). reach: how far from the beam's line a building counts as hit (the blast's radius and a margin; it only decides which damage is this beam's, not a design lever). seenShare: a structure whose centre is in the dodger's pane and drawn at this share of the pane's height needs no inset (GD's rulings 2026-10-30b). avoided: the beam outcomes that count: the beam was avoided and carries on. fallMinBh: it also opens on the fall, of any cause, of a building that stood at least this many body heights before the fight, out of the picture, in the pane of the fighter nearer it; 0 turns this off (GD's rulings 2026-10-30d). ration: at most one in gapS, perMinute a minute; waitForStripS: how long it waits for a fighter strip to end before it is dropped. blocked: shots and moments it never opens over, and which close it. thumb: the size as shares of the screen, margin its distance from the pane's edge. frame: where the inset's camera stands (centerY a share of the building's height), margin and landmarkMargin the room around it, minPx its smallest drawn height, pushIn an eased push over pushS. time: minS and maxS its life, maxFallS with a fall and its rubble, tailS after the last event, wipeIn and wipeOut (the strip's own speeds). lookTicks: a fighter who will be under it this many ticks ahead starts its close. flash: stillWhenReduced (a frozen frame under Reduce flashing or reduced motion), stillAtS how long after the first event the still is taken.",
++  "enabled": false,
++  "score": { "perStage": 0.5, "perFloorShare": 1.0, "perFall": 2.0, "landmarkMul": 1.5, "towerBh": 10, "perBhOver": 0.1, "towerMax": 0.5 },
++  "thresholds": { "open": 1.0, "big": 2.0 },
++  "windowS": 2.0,
++  "reach": 400,
++  "seenShare": 0.5,
++  "avoided": ["DODGE", "ESCAPE", "DEFLECT"],
++  "fallMinBh": 20,
++  "ration": { "gapS": 15, "perMinute": 3, "waitForStripS": 1.0 },
++  "blocked": ["intro", "transform", "finisher", "ko", "launch", "lunge"],
++  "thumb": { "w": 0.22, "h": 0.16, "margin": 0.02 },
++  "frame": { "centerY": 0.55, "margin": 0.20, "landmarkMargin": 0.35, "minPx": 60, "pushIn": 0.04, "pushS": 1.0 },
++  "time": { "minS": 1.4, "maxS": 4.0, "maxFallS": 6.0, "tailS": 0.6, "wipeIn": 0.08, "wipeOut": 0.12 },
++  "lookTicks": 8,
++  "flash": { "stillWhenReduced": true, "stillAtS": 0.5 }
++}
+diff --git a/render/camera/camera_data.gd b/render/camera/camera_data.gd
+new file mode 100644
+index 0000000..5ffeb56
+--- /dev/null
++++ b/render/camera/camera_data.gd
+@@ -0,0 +1,19 @@
++class_name CameraData
++extends RefCounted
++## Camera's data files: read once, and a file or a key that is missing falls back to the constants in CamParams, so the rig never
++## depends on the file being there. It reads no sim state.
++
++const DAMAGE_INSET_PATH: String = "res://data/camera/damage_inset.json"
++static var _damage_inset: Dictionary = {}
++
++
++## The damage inset's numbers (docs/camera/damage-inset.md), each top-level key from the file or else the defaults.
++static func damage_inset() -> Dictionary:
++	if _damage_inset.is_empty():
++		_damage_inset = CamParams.DAMAGE_INSET.duplicate(true)
++		if FileAccess.file_exists(DAMAGE_INSET_PATH):
++			var parsed = JSON.parse_string(FileAccess.get_file_as_string(DAMAGE_INSET_PATH))
++			if parsed is Dictionary:
++				for k in parsed:
++					_damage_inset[k] = parsed[k]
++	return _damage_inset
+diff --git a/render/camera/camera_data.gd.uid b/render/camera/camera_data.gd.uid
+new file mode 100644
+index 0000000..b3f4f0d
+--- /dev/null
++++ b/render/camera/camera_data.gd.uid
+@@ -0,0 +1 @@
++uid://dafbctgf32jiy
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index ac4c5cf..61cf81f 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -451,6 +451,17 @@ const INTRO_BELL_LEN: float = 0.05
+ const INTRO_EASE_OUT: float = 0.6       # the staredown push eases out over this after the clock
+ 
+ # --- the panel cut-in (pitches.md 8a option B, rule-of-cool.md row 11) ---
++const DAMAGE_INSET: Dictionary = {   # the damage inset's fallback (data/camera/damage_inset.json has the numbers; docs/camera/damage-inset.md)
++	"enabled": false,
++	"score": {"perStage": 0.5, "perFloorShare": 1.0, "perFall": 2.0, "landmarkMul": 1.5, "towerBh": 10, "perBhOver": 0.1, "towerMax": 0.5},
++	"thresholds": {"open": 1.0, "big": 2.0}, "windowS": 2.0, "reach": 400, "seenShare": 0.5, "avoided": ["DODGE", "ESCAPE", "DEFLECT"], "fallMinBh": 20,
++	"ration": {"gapS": 15, "perMinute": 3, "waitForStripS": 1.0},
++	"blocked": ["intro", "transform", "finisher", "ko", "launch", "lunge"],
++	"thumb": {"w": 0.22, "h": 0.16, "margin": 0.02},
++	"frame": {"centerY": 0.55, "margin": 0.20, "landmarkMargin": 0.35, "minPx": 60, "pushIn": 0.04, "pushS": 1.0},
++	"time": {"minS": 1.4, "maxS": 4.0, "maxFallS": 6.0, "tailS": 0.6, "wipeIn": 0.08, "wipeOut": 0.12},
++	"lookTicks": 8, "flash": {"stillWhenReduced": true, "stillAtS": 0.5},
++}
+ const PANEL_W: float = 0.56            # the strip's visible width, of the screen width
+ const PANEL_H: float = 0.20            # its height, of the screen height
+ const PANEL_SLANT: float = 0.22        # the slanted ends: this much of its height
+diff --git a/render/camera/panel_mask.gdshader b/render/camera/panel_mask.gdshader
+index 76ba8d7..5d3ee29 100644
+--- a/render/camera/panel_mask.gdshader
++++ b/render/camera/panel_mask.gdshader
+@@ -7,6 +7,8 @@ uniform float open : hint_range(0.0, 1.0) = 1.0;
+ uniform float wipe_dir = 1.0;     // +1 opens from the left, -1 from the right
+ uniform vec4 edge_col : source_color = vec4(0.95, 0.55, 0.2, 1.0);
+ uniform float border = 4.0;
++uniform vec2 uv_scale = vec2(1.0);   // the part of the inset's texture it shows (a thumbnail: the middle of the strip's viewport)
++uniform vec2 uv_off = vec2(0.0);
+ 
+ void fragment() {
+ 	vec2 p = UV * box;
+@@ -19,7 +21,7 @@ void fragment() {
+ 	float u = wipe_dir > 0.0 ? x / w : 1.0 - x / w;
+ 	float reveal = smoothstep(0.0, 0.05, open * 1.08 - u);
+ 	float d = min(min(x, w - x), dy);
+-	vec3 col = texture(TEXTURE, UV).rgb;
++	vec3 col = texture(TEXTURE, uv_off + UV * uv_scale).rgb;
+ 	col *= mix(1.0, 0.72, smoothstep(border + 26.0, border, d));
+ 	col = mix(col, edge_col.rgb, step(d, border));
+ 	COLOR = vec4(col, inside * reveal);
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 2dedb9c..5650642 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -218,6 +218,16 @@ var angles: bool = true                    # angles by context on a decisive pea
+ var angle_shots: int = 0
+ var angle_now: String = ""                 # "low" or "high" while an angle holds, for the debug feed
+ var _ang_want: String = ""                 # this tick's decisive kind, if any
++var damage_inset: bool = bool(CameraData.damage_inset()["enabled"])   # a dodged beam's damage in a corner (docs/camera/damage-inset.md); off
++var damage_insets: int = 0                 # opened (counted for the tests)
++var _dmg: Dictionary = {}                  # the running inset, or {}
++var _dmg_dodges: Array = []                # the last dodged beams and the line each was fired along
++var _dmg_sites: Dictionary = {}            # the structures they damaged, by building index, with what was done to each
++var _dmg_held: Array = []                  # damage with no dodge yet
++var _dmg_beam_n: int = 0                   # avoided beams so far: each one's id
++var _dmg_opened: Array = []                # when the last ones opened (the ration)
++var _dmg_wait_t: float = -1.0              # when a qualifying site began to wait for a strip
++var _dmg_fp: Array = [null, null]          # each fighter's feet on the screen last frame (his step, for the look ahead)
+ var rally_framing: bool = true             # the sell and the rally (CamParams.SELL_*, RALLY_*; GD rulings 23d)
+ var lean_step: bool = true                 # step skips work whose result is not used (the same frames either way; false is the old path, for a timing)
+ var sells: int = 0
+@@ -441,6 +451,12 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_scape_own = false
+ 	_scape_last_t = -1.0e9
+ 	_scape_seen = {}
++	_dmg = {}
++	_dmg_dodges = []
++	_dmg_sites = {}
++	_dmg_opened = []
++	_dmg_wait_t = -1.0
++	_dmg_fp = [null, null]
+ 	_scape_busy_t = -1.0e9
+ 	_ang_last_family = ""
+ 	angle_now = ""
+@@ -509,6 +525,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 		elif String(_ef(ev, "type", "")) == "arena_turn" and turn_cut and not intro_active:
+ 			cut = true   # the ring's turn: every camera snaps to the wide on its tick (_read_events starts the wide)
+ 	_read_events(S, events)
++	if damage_inset:
++		_dmg_read(S, events)
+ 	_rush_commit(S)
+ 	_update_lunge(S)
+ 	_update_brawl_focus(S)
+@@ -518,6 +536,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 	r_now = _metric(S)
+ 	_update_solo(S)
+ 	_update_panel(S)
++	if damage_inset:
++		_dmg_update(S)
+ 	_update_intro(S)
+ 	_angle_tick(S)
+ 	_scape_tick(S)
+@@ -1847,6 +1867,366 @@ func _panel_frame(S: SimState) -> Dictionary:
+ 	}
+ 
+ 
++## The damage inset (docs/camera/damage-inset.md; `damage_inset`, off): a dodged beam's damage to a structure out of the dodger's
++## picture, shown live in the corner on the building's side (a collapse: the strip's band). A steady camera on a place, so it adds
++## no camera move to the main view. With no event naming a beam, the cause is the stand-in: the other fighter's beam, dodged inside
++## the window, whose line passes the building (and a stage's own `owner`). A second way in (GD's rulings 2026-10-30d): a skyscraper's fall
++## of any cause, out of the picture. Legal's conditions: it reads the structure's events only, never a casualty or a head count, so a
++## collapse with no deaths opens the same inset as one with deaths, and it awards nothing.
++func _dmg_read(S: SimState, events: Array) -> void:
++	var d: Dictionary = CameraData.damage_inset()
++	for ev in events:
++		var t: String = String(_ef(ev, "type", ""))
++		if t == "beam_outcome":
++			var k: String = String(_ef(ev, "kind", ""))
++			var a: int = int(_ef(ev, "actor", -1))
++			var g: int = int(_ef(ev, "target", -1))
++			var avoided: Array = d["avoided"]
++			if avoided.has(k) and a >= 0 and a < 2 and g >= 0 and g < 2 and a != g:
++				var A = S.fighters[a]
++				var D = S.fighters[g]
++				var dir0: Vector2 = Vector2(SimWrap.sdx(A.x, D.x), D.y - A.y - 2.0).normalized()
++				_dmg_beam_n += 1
++				var rec0: Dictionary = {"id": _dmg_beam_n, "owner": a, "dodger": g, "fork": k == "DEFLECT", "t": time, "ox": A.x, "oy": A.y + 38.0, "ux": dir0.x, "uy": dir0.y, "len": 4200.0 * SimConst.WS}
++				for bm in S.beams:
++					if bm.A == A:
++						rec0 = {"id": _dmg_beam_n, "owner": a, "dodger": g, "fork": k == "DEFLECT", "t": time, "ox": bm.ox, "oy": bm.oy, "ux": bm.ux, "uy": bm.uy, "len": bm.len}   # the line it was on
++				_dmg_dodges.append(rec0)
++				if _dmg_dodges.size() > 4:
++					_dmg_dodges.pop_front()
++				var held: Array = _dmg_held
++				_dmg_held = []
++				for rec in held:
++					if time - float(rec["at"]) <= float(d["windowS"]):
++						_dmg_match(S, rec, d)
++		elif t == "building_stage" or t == "floors_fall" or t == "building_fall":
++			_dmg_damage(S, ev, t, d)
++
++
++func _dmg_building(S: SimState, idx: int):
++	if idx >= 0 and idx < S.buildings.size() and S.buildings[idx].idx == idx:
++		return S.buildings[idx]
++	for b in S.buildings:
++		if b.idx == idx:
++			return b
++	return null
++
++
++## Whether the avoided beam reached the building: each live beam of its line (a perfect block's swat is the defender's own and leaves on a
++## new line, so a fork may be either fighter's), else the line it was on; within the blast's reach of it.
++func _dmg_on_line(S: SimState, dg: Dictionary, b, reach: float) -> bool:
++	var found: bool = false
++	var ow = S.fighters[int(dg["owner"])]
++	var dd = S.fighters[int(dg["dodger"])]
++	for bm in S.beams:
++		if bm.A == ow or (bool(dg["fork"]) and bm.A == dd):
++			found = true
++			if _dmg_line_hits(S, bm.ox, bm.oy, Vector2(bm.ux, bm.uy), bm.len, b, reach):
++				return true
++	if found or bool(dg["fork"]):
++		return false
++	return _dmg_line_hits(S, float(dg["ox"]), float(dg["oy"]), Vector2(float(dg["ux"]), float(dg["uy"])), float(dg["len"]), b, reach)
++
++
++func _dmg_line_hits(S: SimState, ox: float, oy: float, dir: Vector2, ln: float, b, reach: float) -> bool:
++	var base: float = WorldStructures.baseY(S, b)
++	var x1: float = dir.x * maxf(ln, 0.0)   # its whole length: the beam goes on biting past where it meets the ground
++	var along: float = SimWrap.sdx(ox, b.x)
++	var hw: float = 0.5 * b.w + reach
++	if along < minf(0.0, x1) - hw or along > maxf(0.0, x1) + hw:
++		return false
++	var at: float = clampf(along, minf(0.0, x1), maxf(0.0, x1))
++	var y: float = oy + dir.y * (at / dir.x) if absf(dir.x) > 0.001 else base
++	return y <= base + b.h + reach
++
++
++## A damage event, matched to a dodge in the window; with none yet it waits, since a beam carves on its way and the outcome is called
++## when it reaches the dodger.
++func _dmg_damage(S: SimState, ev, t: String, d: Dictionary) -> void:
++	var idx: int = int(_ef(ev, "b", -1))
++	if _dmg_building(S, idx) == null:
++		return
++	if t == "building_stage" and float(_ef(ev, "to", 0.0)) <= float(_ef(ev, "from", 0.0)):
++		return
++	var rec: Dictionary = {"t": t, "b": idx, "from": float(_ef(ev, "from", 0.0)), "to": float(_ef(ev, "to", 0.0)), "owner": int(_ef(ev, "owner", -1)) if t == "building_stage" else -1, "at": time}
++	if not _dmg_match(S, rec, d) and not (t == "building_fall" and _dmg_fall(S, rec, d)):
++		_dmg_held.append(rec)
++		if _dmg_held.size() > 24:
++			_dmg_held.pop_front()
++
++
++func _dmg_match(S: SimState, rec: Dictionary, d: Dictionary) -> bool:
++	var idx: int = int(rec["b"])
++	var b = _dmg_building(S, idx)
++	var t: String = String(rec["t"])
++	if not _dmg.is_empty() and int(_dmg["b"]) == idx:
++		_dmg["last_t"] = time
++		if t == "building_fall":
++			_dmg["fell"] = true
++		return true
++	var match_dg: Dictionary = {}
++	for i in range(_dmg_dodges.size() - 1, -1, -1):
++		var dg: Dictionary = _dmg_dodges[i]
++		if absf(float(rec["at"]) - float(dg["t"])) > float(d["windowS"]):
++			continue
++		var by: int = int(rec["owner"])
++		if by >= 0 and by != int(dg["owner"]) and not (bool(dg["fork"]) and by == int(dg["dodger"])):
++			continue
++		if _dmg_on_line(S, dg, b, float(d["reach"])):
++			match_dg = dg
++			break
++	if match_dg.is_empty():
++		return false
++	if not _dmg_sites.has(idx):
++		_dmg_sites[idx] = {"b": idx, "by": "beam", "beam": int(match_dg["id"]), "dodger": int(match_dg["dodger"]), "stages": 0.0, "share": 0.0, "fell": false, "last_t": time}
++	var site: Dictionary = _dmg_sites[idx]
++	site["last_t"] = time
++	match t:
++		"building_stage":
++			site["stages"] = float(site["stages"]) + float(rec["to"]) - float(rec["from"])
++		"floors_fall":
++			site["share"] = float(site["share"]) + (float(rec["to"]) - float(rec["from"]) + 1.0) / maxf(float(b.floors), 1.0)
++		"building_fall":
++			site["fell"] = true
++	return true
++
++
++## A fall no avoided beam explains: a building of `fallMinBh` body heights or more (its height is its generation's, what it stood before
++## the fight; 0 turns this off) goes in the pane of the fighter nearer it. A blast's other towers meet the ration's gap.
++func _dmg_fall(S: SimState, rec: Dictionary, d: Dictionary) -> bool:
++	var idx: int = int(rec["b"])
++	var b = _dmg_building(S, idx)
++	var least: float = float(d["fallMinBh"])
++	if least <= 0.0 or b.h < least * CamParams.BODY_H:
++		return false
++	if _dmg_sites.has(idx):
++		_dmg_sites[idx]["fell"] = true
++		_dmg_sites[idx]["last_t"] = time
++		return true
++	var near: int = 0 if absf(SimWrap.sdx(S.fighters[0].x, b.x)) <= absf(SimWrap.sdx(S.fighters[1].x, b.x)) else 1
++	_dmg_sites[idx] = {"b": idx, "by": "fall", "beam": -1, "dodger": near, "stages": 0.0, "share": 0.0, "fell": true, "last_t": time}
++	return true
++
++
++func _dmg_score(site: Dictionary, b, d: Dictionary) -> float:
++	var sc: Dictionary = d["score"]
++	var pts: float = float(site["stages"]) * float(sc["perStage"]) + float(site["share"]) * float(sc["perFloorShare"])
++	if bool(site["fell"]):
++		pts += float(sc["perFall"])
++	pts += minf(maxf(0.0, b.h / CamParams.BODY_H - float(sc["towerBh"])) * float(sc["perBhOver"]), float(sc["towerMax"]))
++	return pts * (float(sc["landmarkMul"]) if b.landmark > 0 else 1.0)
++
++
++## A moment it does not open over (data's `blocked`), and which closes a running one.
++func _dmg_blocked(d: Dictionary) -> bool:
++	if intro_active or fold_active or _ov_kind != "":
++		return true
++	var list: Array = d["blocked"]
++	return list.has(solo_kind) or (_lg_slot >= 0 and list.has("lunge"))
++
++
++func _dmg_pane(f: SplitFrame, dodger: int) -> int:
++	return dodger if f.shows(dodger) else 0
++
++
++## The player can already see the damage well: the building's centre is in the dodger's pane and it is drawn at seenShare of the pane's
++## height or more (GD's rulings 2026-10-30b). A tower small in a wide shot, or off the top of a close shot, is not in the picture.
++func _dmg_in_picture(S: SimState, b, pi: int, d: Dictionary) -> bool:
++	var base: float = WorldStructures.baseY(S, b)
++	var c: Vector2 = _cur.screen_pos(pi, b.x, base + 0.5 * b.h, b.z)
++	if c.x < 0.0 or c.x > vw or c.y < 0.0 or c.y > vh or _cur.weight1(c) != float(pi):
++		return false
++	var drawn: float = absf(_cur.screen_pos(pi, b.x, base + b.h, b.z).y - _cur.screen_pos(pi, b.x, base, b.z).y)
++	return drawn >= float(d["seenShare"]) * vh
++
++
++## The rect lies wholly in pane pi (a split's divider never crosses it).
++func _dmg_in_pane(f: SplitFrame, r: Rect2, pi: int) -> bool:
++	if not f.shows(pi):
++		return false
++	for p in [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]:
++		if f.weight1(p) != float(pi):
++			return false
++	return true
++
++
++## A fighter's box in pane pi, as the strip's band tests it, moved `ahead` ticks on by his step on the screen.
++func _dmg_box(f: SplitFrame, S: SimState, k: int, pi: int, ahead: float) -> Rect2:
++	var fk = S.fighters[k]
++	var feet: Vector2 = f.screen_pos(pi, fk.x, fk.y, float(fk.z))
++	var head: Vector2 = f.screen_pos(pi, fk.x, fk.y + CamParams.BODY_H, float(fk.z))
++	var fh: float = absf(feet.y - head.y)
++	var box: Rect2 = Rect2(feet.x - fh * 0.4, minf(head.y, feet.y), fh * 0.8, fh)
++	if ahead > 0.0 and _dmg_fp[k] != null:
++		var step: Vector2 = feet - Vector2(_dmg_fp[k])
++		if step.length() < 0.5 * vw:
++			box.position += step * ahead
++	return box
++
++
++func _dmg_rect_free(f: SplitFrame, S: SimState, r: Rect2, pi: int, ahead: float) -> bool:
++	var g: Rect2 = r.grow(8.0)
++	for k in range(2):
++		if g.intersects(_dmg_box(f, S, k, pi, 0.0)) or (ahead > 0.0 and g.intersects(_dmg_box(f, S, k, pi, ahead))):
++			return false
++	return true
++
++
++## The thumbnail's rect: the top corner on the building's side, else the other one, where it lies in the pane with no fighter under it.
++## In a split only the pane's outer corner: the divider wanders over the inner one, and it would be gone a few ticks after it opened.
++func _dmg_thumb_rect(S: SimState, b, pi: int, d: Dictionary) -> Rect2:
++	var th: Dictionary = d["thumb"]
++	var w: float = float(th["w"]) * vw
++	var h: float = float(th["h"]) * vh
++	var m: float = float(th["margin"]) * vw
++	var y0: float = maxf(vh * CamParams.PANEL_TOP_Y, panel_floor)
++	var right: bool = SimWrap.sdx(_cur.cam_x[pi], b.x) >= 0.0
++	var sides: Array = [right, not right]
++	if sep > 0.001:
++		sides = [SimWrap.sdx(S.fighters[pi].x, S.fighters[1 - pi].x) < 0.0]
++	for side in sides:
++		var r: Rect2 = Rect2(vw - m - w if side else m, y0, w, h)
++		if _dmg_in_pane(_cur, r, pi) and _dmg_rect_free(_cur, S, r, pi, float(d["lookTicks"])):
++			return r
++	return Rect2()
++
++
++func _dmg_still(d: Dictionary) -> bool:
++	return reduced_motion or panel_mode == "still" or (flash_reduced and bool(d["flash"]["stillWhenReduced"]))
++
++
++func _dmg_update(S: SimState) -> void:
++	var d: Dictionary = CameraData.damage_inset()
++	if not _dmg.is_empty():
++		_dmg["t"] = float(_dmg["t"]) + DT
++		var tm: Dictionary = d["time"]
++		if float(_dmg["close"]) >= 0.0:
++			_dmg["close"] = float(_dmg["close"]) + DT
++			if float(_dmg["close"]) >= float(tm["wipeOut"]):
++				_dmg = {}
++			return
++		var end: float = maxf(float(tm["minS"]), float(_dmg["last_t"]) - float(_dmg["t0"]) + float(tm["tailS"]))
++		var cap: float = float(tm["maxFallS"]) if bool(_dmg["fell"]) else float(tm["maxS"])
++		if float(_dmg["t"]) >= minf(end, cap) or _dmg_blocked(d) or panel_mode == "off":
++			_dmg_close()
++		return
++	for key in _dmg_sites.keys():
++		if time - float(_dmg_sites[key]["last_t"]) > float(d["windowS"]):
++			_dmg_sites.erase(key)
++	var best: Dictionary = {}
++	var best_sc: float = 0.0
++	for key in _dmg_sites:
++		var sc0: float = _dmg_score(_dmg_sites[key], _dmg_building(S, int(key)), d)
++		if sc0 >= float(d["thresholds"]["open"]) and sc0 > best_sc:
++			best = _dmg_sites[key]
++			best_sc = sc0
++	if best.is_empty():
++		_dmg_wait_t = -1.0
++		return
++	if panel_mode == "off" or _dmg_blocked(d) or _cur == null:
++		return
++	var ra: Dictionary = d["ration"]
++	if not _dmg_opened.is_empty() and time - float(_dmg_opened[-1]) < float(ra["gapS"]):
++		return
++	var in_min: int = 0
++	for ot in _dmg_opened:
++		if time - float(ot) < 60.0:
++			in_min += 1
++	if in_min >= int(ra["perMinute"]):
++		return
++	if not _pn.is_empty():
++		if _dmg_wait_t < 0.0:
++			_dmg_wait_t = time
++		elif time - _dmg_wait_t > float(ra["waitForStripS"]):
++			_dmg_sites.erase(best["b"])
++			_dmg_wait_t = -1.0
++		return
++	_dmg_wait_t = -1.0
++	var b = _dmg_building(S, int(best["b"]))
++	var dodger: int = int(best["dodger"])
++	var pi: int = _dmg_pane(_cur, dodger)
++	if _dmg_in_picture(S, b, pi, d):
++		return
++	var big: bool = best_sc >= float(d["thresholds"]["big"]) and sep <= 0.001   # (in a split a collapse is the thumbnail too: the strip's slant is not cut at the divider)
++	var r: Rect2 = Rect2()
++	var slant: float = 0.0
++	if big:
++		var band: int = _panel_band(S)
++		if band >= 0:
++			r = _panel_rect(band)
++			slant = (1.0 if dodger == 0 else -1.0) * r.size.y * CamParams.PANEL_SLANT
++	if r.size == Vector2.ZERO:
++		r = _dmg_thumb_rect(S, b, pi, d)
++	if r.size == Vector2.ZERO:
++		return
++	_dmg = {"b": int(best["b"]), "dodger": dodger, "rect": r, "slant": slant, "t": (-float(d["flash"]["stillAtS"]) if _dmg_still(d) else 0.0), "t0": time, "last_t": float(best["last_t"]), "fell": bool(best["fell"]), "close": -1.0, "by": String(best["by"]), "beam": int(best["beam"]), "score": best_sc}
++	_dmg_sites.erase(best["b"])
++	_dmg_opened.append(time)
++	if _dmg_opened.size() > 8:
++		_dmg_opened.pop_front()
++	damage_insets += 1
++
++
++func _dmg_close() -> void:
++	if reduced_motion or panel_mode == "still":
++		_dmg = {}
++	elif float(_dmg["close"]) < 0.0:
++		_dmg["close"] = 0.0
++
++
++## The frame's record, in the panel's shape (kind "site"): it takes the one inset slot. Nothing about the main view changes. It goes
++## at once if a fighter has got under it or the divider has reached it (never drawn over a fighter); it starts to close if he is about to.
++func _dmg_frame(S: SimState, f: SplitFrame) -> void:
++	if _dmg.is_empty():
++		_dmg_fp = [null, null]
++		return
++	var d: Dictionary = CameraData.damage_inset()
++	var r: Rect2 = _dmg["rect"]
++	var dodger: int = int(_dmg["dodger"])
++	var pi: int = _dmg_pane(f, dodger)
++	var t: float = float(_dmg["t"])
++	if t < 0.0:
++		return   # a still waits for its moment
++	if not _dmg_in_pane(f, r, pi) or not _dmg_rect_free(f, S, r, pi, 0.0):
++		_dmg = {}
++		return
++	if float(_dmg["close"]) < 0.0 and not _dmg_rect_free(f, S, r, pi, float(d["lookTicks"])):
++		_dmg_close()
++		if _dmg.is_empty():
++			return
++	for k in range(2):
++		_dmg_fp[k] = f.screen_pos(pi, S.fighters[k].x, S.fighters[k].y, float(S.fighters[k].z))
++	var tm: Dictionary = d["time"]
++	var still: bool = _dmg_still(d)
++	var open: float = 1.0
++	if not (reduced_motion or panel_mode == "still"):
++		open = smoothstep(0.0, float(tm["wipeIn"]), t)
++		if float(_dmg["close"]) >= 0.0:
++			open *= 1.0 - smoothstep(0.0, float(tm["wipeOut"]), float(_dmg["close"]))
++	var b = _dmg_building(S, int(_dmg["b"]))
++	var fr: Dictionary = d["frame"]
++	var ph: float = vh * CamParams.PANEL_H
++	var mg: float = 1.0 + 2.0 * float(fr["landmarkMargin"] if b.landmark > 0 else fr["margin"])
++	var rw: float = r.size.x - absf(float(_dmg["slant"]))
++	var z: float = minf(rw / maxf(b.w * mg, 1.0), r.size.y / maxf(b.h * mg, 1.0))
++	z = maxf(z, float(fr["minPx"]) / maxf(b.h, 1.0))
++	if not still:
++		z *= 1.0 + float(fr["pushIn"]) * _smootherstep(clampf(t / float(fr["pushS"]), 0.0, 1.0))   # the one move it has, eased at both ends
++	var wz: float = -float(b.z)
++	if absf(wz) > 1.0:
++		var den: float = 1.0 / z - wz / (CamParams.K_FACTOR * ph)
++		if den > 1e-6:
++			z = 1.0 / den
++	var focus: float = WorldStructures.baseY(S, b) + float(fr["centerY"]) * b.h
++	var pw: float = vw * CamParams.PANEL_W + ph * CamParams.PANEL_SLANT
++	f.panel = {
++		"kind": "site", "slot": dodger, "open": open, "still": still, "band": -1, "rect": r, "slant": float(_dmg["slant"]),
++		"size": Vector2i(int(ceil(pw)), int(ceil(ph))), "cam_x": SimWrap.wrap(b.x),
++		"cam_y": clampf(focus - (ph * CamParams.PLANE_Y - ph * 0.5) / z, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP),
++		"cam_z": z,
++	}
++
++
+ ## Which side of the winner holds more wreckage: the craters (area times depth, a signature's double), the buildings
+ ## lost (their face area, scaled by how much is gone) and the knockback trenches, inside the part of the screen that side
+ ## will have, nearer counting more. Sets wreck_dir (+1 right, -1 left, 0 when little is in view) and wreck_score.
+@@ -4299,6 +4679,8 @@ func _make_frame(S: SimState) -> SplitFrame:
+ 		f.line_alpha = 0.0
+ 		f.active = [true, false]
+ 		f.swing = -1.0
++	if damage_inset:
++		_dmg_frame(S, f)
+ 	f.cut = false
+ 	return f
+ 
+diff --git a/render/camera/split_view.gd b/render/camera/split_view.gd
+index b9bc019..06695ec 100644
+--- a/render/camera/split_view.gd
++++ b/render/camera/split_view.gd
+@@ -40,6 +40,7 @@ var _host_seed: int = -1
+ var _attached: bool = false
+ var flash_reduced: bool = false      # the reduced-flashing setting: the host's flash register's `reduced`, read each tick
+ var _panel_asked: bool = false
++var _panel_site: bool = false        # the slot holds the damage inset (kind "site")
+ var _panel_blocked: bool = false      # the flash register refused the strip now running: it is not drawn
+ var _dip_prev: float = 0.0            # the last frame's fade (a safety cut's brightness dip)
+ var _dip_ok: bool = true              # whether the dip now running was granted by the flash register
+@@ -282,6 +283,12 @@ func set_panel_mode(v: String) -> void:
+ 		main.split_rig.panel_mode = v if v in ["full", "still", "off"] else "full"
+ 
+ 
++## The damage inset (docs/camera/damage-inset.md), off by default: data/camera/damage_inset.json's `enabled`.
++func set_damage_inset(on: bool) -> void:
++	if main != null:
++		main.split_rig.damage_inset = on
++
++
+ ## A cut under Reduce flashing or reduced motion cross-dissolves (default on); false keeps the old dip. Build-time switch.
+ func set_cut_dissolve(on: bool) -> void:
+ 	cut_dissolve = on
+@@ -324,7 +331,7 @@ func inset_view(_a: float) -> Dictionary:
+ 	if bool(p["still"]) and _panel_frames >= 2:
+ 		return {}
+ 	return {"cam_x": p["cam_x"], "cam_y": p["cam_y"], "cam_z": p["cam_z"], "pitch": 0.0,
+-		"cutaway": {"request": true, "radius_px": 0.9 * float(p["size"].y), "only": -1}}
++		"cutaway": {"request": String(p["kind"]) != "site", "radius_px": 0.9 * float(p["size"].y), "only": -1}, "people": String(p["kind"]) != "site"}
+ 
+ 
+ ## The strip's viewport size for this screen: the frame's panel size (SplitRig._panel_frame) from the same numbers.
+@@ -352,6 +359,11 @@ func _ensure_panel_viewport(sz: Vector2i) -> bool:
+ ## The strip: placed from the frame's panel, shown while its wipe is open, and the inset only renders while it is up.
+ func _present_panel(fr: SplitFrame) -> void:
+ 	var p: Dictionary = fr.panel
++	var site: bool = String(p.get("kind", "")) == "site"
++	if site != _panel_site:   # the damage inset and a strip share the slot: each starts afresh (its register ask, a still's two frames)
++		_panel_site = site
++		_panel_asked = false
++		_panel_frames = 0
+ 	# A strip that opens and shuts is a change over a tenth of the screen and then another: it asks the shared flash register
+ 	# as it begins (source "cut_in_panel", a big-event source) and is not drawn when refused (the beam's white and the
+ 	# explosion before it have asked first). Tools' recount found the strip opening and closing between a beam's flashes.
+@@ -362,6 +374,8 @@ func _present_panel(fr: SplitFrame) -> void:
+ 		_panel_asked = true
+ 		var pr: Rect2 = p["rect"]
+ 		_panel_blocked = not ask_register("cut_in_panel", clampf(pr.size.x * pr.size.y / maxf(size.x * size.y, 1.0), 0.0, 1.0))
++	elif site and _panel_blocked:
++		_panel_blocked = not ask_register("cut_in_panel", clampf(Rect2(p["rect"]).get_area() / maxf(size.x * size.y, 1.0), 0.0, 1.0))   # the inset comes after a beam's flashes: it may be let in late
+ 	if p.is_empty() or _panel_blocked or _panel_vp == null or float(p["open"]) <= 0.001:
+ 		_panel_rect.visible = false
+ 		if _panel_vp != null:
+@@ -375,7 +389,13 @@ func _present_panel(fr: SplitFrame) -> void:
+ 	_panel_rect.visible = true
+ 	_panel_mat.set_shader_parameter("box", r.size)
+ 	_panel_mat.set_shader_parameter("slant", float(p["slant"]))
+-	_panel_mat.set_shader_parameter("open", float(p["open"]))
++	var open_now: float = float(p["open"])
++	if site and not main.split_rig.reduced_motion:
++		open_now = minf(open_now, smoothstep(0.0, 5.0, float(_panel_frames + 1)))   # a wipe from when it is let in (the strip's 0.08 s)
++	_panel_mat.set_shader_parameter("open", open_now)
++	var uv_s: Vector2 = (r.size / Vector2(p["size"])).min(Vector2.ONE) if site else Vector2.ONE
++	_panel_mat.set_shader_parameter("uv_scale", uv_s)
++	_panel_mat.set_shader_parameter("uv_off", (Vector2.ONE - uv_s) * 0.5)
+ 	_panel_mat.set_shader_parameter("wipe_dir", 1.0 if int(p["slot"]) == 0 else -1.0)
+ 	_panel_mat.set_shader_parameter("edge_col", panel_colors[int(p["slot"])])
+ 	_panel_frames += 1
+diff --git a/render/camera/tests/inset_rate.gd b/render/camera/tests/inset_rate.gd
+new file mode 100644
+index 0000000..d94ed88
+--- /dev/null
++++ b/render/camera/tests/inset_rate.gd
+@@ -0,0 +1,264 @@
++extends SceneTree
++## The damage inset's rate (GD's rulings 2026-10-30b row 5): whole AI matches through the rig, the inset on, slot 0 a scripted defender
++## who avoids every third beam aimed at him (a tap of the dodge through the tell, his queued answer dropped). The AI's own dodges can't
++## measure this: it avoids about one beam in 12 matches. It also checks that `reach` credits a beam's damage: each building stage the sim
++## credits to a fighter with a live beam, within the window of a beam avoided, read at several reaches. It writes the scripted tap into
++## its own sim and nothing else; the rig only reads. BEAM lines (GD's rulings 2026-10-30c row 3): each of slot 0's avoided beams, its tier,
++## whether a standing building was within reach of its line, the best building's score and height, the sum of its scores. OPENS lines:
++## when slot 0's openings come, and building_fall events: all, off every pane, in a pane under seenShare, the sum of their n.
++## TRIG lines (GD's rulings 2026-10-30d): each opening under a fallMinBh of --fall's list, its tick, trigger, side, kind, whether an
++## exchange is on, and how many ticks it lived; a rig only reads, so all of them watch one sim.
++##   godot --headless --path . --script res://render/camera/tests/inset_rate.gd -- --gen=2 --from=1 --to=30 [--every=3] [--max=36000] [--fall=15,20,25,30]
++## --gen=1 or 2 plays QA's planets (qa/godot/qa_planet.gd's list and touches); --gen=0 the hand-made world.
++
++const PLANETS: Array = [3, 7, 11, 13, 17, 19, 23, 25, 37, 31]
++const TOUCHES: Array = [0, 1, 2, 3]
++const REACHES: Array = [400.0, 600.0, 800.0, 1200.0, 2400.0, 1.0e9]
++const TALL: Array = [15.0, 20.0, 25.0, 30.0]
++
++var fall_list: Array = []
++
++
++func _initialize() -> void:
++	var gen: int = 2
++	var from: int = 1
++	var to: int = 30
++	var every: int = 3
++	var max_ticks: int = 36000
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--gen="):
++			gen = int(a.substr(6))
++		elif a.begins_with("--from="):
++			from = int(a.substr(7))
++		elif a.begins_with("--to="):
++			to = int(a.substr(5))
++		elif a.begins_with("--every="):
++			every = int(a.substr(8))
++		elif a.begins_with("--max="):
++			max_ticks = int(a.substr(6))
++		elif a.begins_with("--fall="):
++			fall_list = Array(a.substr(7).split_floats(","))
++	for seed in range(from, to + 1):
++		_match(gen, seed, every, max_ticks)
++	quit(0)
++
++
++func _match(gen: int, seed: int, every: int, max_ticks: int) -> void:
++	var S: SimState = SimCore.createSim()
++	var su: Dictionary = {}
++	if gen > 0:
++		var i: int = seed - 1
++		su = {"planet": int(PLANETS[i % PLANETS.size()]), "touch": int(TOUCHES[(i / PLANETS.size()) % TOUCHES.size()]), "arena": {"cols": 2400}, "planetGen": gen, "intro": false}
++	SimCore.newMatch(S, seed, {"p1": true, "p2": true}, su)
++	if gen > 0 and S.planetCols.is_empty():
++		print("MATCH gen %d seed %d FELL BACK to the hand-made world: not counted" % [gen, seed])
++		SimCore.dispose(S)
++		return
++	var rig := SplitRig.new()
++	rig.damage_inset = true
++	rig.test_human_slot = 0
++	rig.reset(S, 1280.0, 720.0)
++	var watch: Array = []
++	for v in fall_list:
++		var wr := SplitRig.new()
++		wr.damage_inset = true
++		wr.test_human_slot = 0
++		wr.reset(S, 1280.0, 720.0)
++		watch.append({"bh": float(v), "rig": wr, "was": false, "opens": []})
++	var tall: Array = [0, 0, 0, 0]   # falls out of the picture of buildings of at least TALL's heights
++	var beams: Dictionary = {}   # slot 0's avoided beams, by id
++	var open_a: Array = []       # slot 0's openings: [tick, the beam's tier]
++	var falls: Array = [0, 0, 0, 0]   # building_fall events: all, off every pane, in a pane under seenShare, folded into a summary
++	S.dt = SplitRig.DT
++	var P = S.fighters[0]
++	var t: int = 0
++	var aimed: int = 0
++	var cur_ex: int = 0
++	var avoid: bool = false
++	var outcomes: Dictionary = {}
++	var opens: Array = [0, 0]
++	var was_open: bool = false
++	var qualified: Dictionary = {}
++	var open_at: Array = []
++	var why: Dictionary = {"picture": 0, "blocked": 0, "strip": 0, "ration": 0, "norect": 0}
++	var reach_ok: Array = []
++	for _r in REACHES:
++		reach_ok.append(0)
++	var reach_n: int = 0
++	var held: Array = []
++	var d: Dictionary = CameraData.damage_inset()
++	var funnel: Dictionary = {"avoided": 0, "scored": 0, "opened": 0, "last": ""}   # slot 0's avoided beams: how many damaged a building to the score, how many opened
++	var f_t: float = -100.0
++	var f_scored: bool = false
++	var f_opened: bool = false
++	while t < max_ticks and not (S.game.ko != null and S.game.koT > 3.0):
++		var ex = S.dirS.ex
++		if ex != null and ex.kind == "sig" and ex.D == P and ex.branch == "":
++			var id: int = ex.get_instance_id()
++			if id != cur_ex:
++				cur_ex = id
++				aimed += 1
++				avoid = (aimed + seed) % every == 0
++			if avoid:
++				P.act.dodgeTick = S.tick
++				P.act.queue.clear()
++		SimCore.step(S)
++		var ev: Array = S.out.fx.duplicate()
++		S.out.fx.clear()
++		S.out.feed.clear()
++		var data_bh: float = float(d["fallMinBh"])
++		for wa in watch:
++			d["fallMinBh"] = float(wa["bh"])
++			var wr2: SplitRig = wa["rig"]
++			wr2.step(S, 1280.0, 720.0, ev)
++			var up: bool = not wr2._dmg.is_empty()
++			if up and not bool(wa["was"]):
++				(wa["opens"] as Array).append([t, String(wr2._dmg["by"]), int(wr2._dmg["dodger"]), absf(float(wr2._dmg["slant"])) > 0.0, S.dirS.ex != null, -1])
++			elif bool(wa["was"]) and not up:
++				var last: Array = (wa["opens"] as Array)[-1]
++				last[5] = t - int(last[0])
++			wa["was"] = up
++		d["fallMinBh"] = data_bh
++		rig.step(S, 1280.0, 720.0, ev)
++		for dg in rig._dmg_dodges:
++			if int(dg["dodger"]) == 0 and not beams.has(int(dg["id"])):
++				beams[int(dg["id"])] = {"tier": int(S.fighters[int(dg["owner"])].tier), "tick": t, "fork": bool(dg["fork"]), "dg": dg, "reach": false, "sites": {}}
++		for id in beams:
++			var bq: Dictionary = beams[id]
++			if not bool(bq["reach"]) and rig.time - float(bq["dg"]["t"]) <= float(d["windowS"]):
++				for bb in S.buildings:
++					if bb.alive and rig._dmg_on_line(S, bq["dg"], bb, float(d["reach"])):
++						bq["reach"] = true
++						break
++		for key in rig._dmg_sites:
++			var ls: Dictionary = rig._dmg_sites[key]
++			if int(ls["dodger"]) == 0 and beams.has(int(ls["beam"])):
++				_note(beams[int(ls["beam"])], int(key), rig._dmg_score(ls, rig._dmg_building(S, int(key)), d), rig._dmg_building(S, int(key)))
++		for e in ev:
++			if e.type == "building_fall":
++				falls[0] = int(falls[0]) + 1
++				falls[3] = int(falls[3]) + int(e.n)
++				var fb = rig._dmg_building(S, int(e.b))
++				if fb != null:
++					var seen: int = _seen(rig, S, fb, d)
++					if seen < 2:
++						for it in range(TALL.size()):
++							if fb.h >= float(TALL[it]) * CamParams.BODY_H:
++								tall[it] = int(tall[it]) + 1
++					if seen == 0:
++						falls[1] = int(falls[1]) + 1
++					elif seen == 1:
++						falls[2] = int(falls[2]) + 1
++		t += 1
++		var dodges_new: bool = false
++		for e in ev:
++			if e.type == "beam_outcome" and int(e.target) == 0:
++				outcomes[String(e.kind)] = int(outcomes.get(String(e.kind), 0)) + 1
++			if e.type == "beam_outcome":
++				dodges_new = true
++			if e.type == "beam_outcome" and int(e.target) == 0 and (d["avoided"] as Array).has(String(e.kind)):
++				funnel["avoided"] = int(funnel["avoided"]) + 1
++				f_t = rig.time
++				f_scored = false
++				f_opened = false
++			if e.type == "building_stage" and int(e.owner) >= 0 and float(e.to) > float(e.from):
++				var live: bool = false
++				for bm in S.beams:
++					if bm.A == S.fighters[int(e.owner)]:
++						live = true
++				if live:
++					held.append({"b": int(e.b), "owner": int(e.owner), "t": rig.time, "done": false})
++		# the reach check: a stage by a live beam's owner, within the window of an avoided beam of that fighter (or a fork)
++		for rec in held:
++			if bool(rec["done"]):
++				continue
++			for dg in rig._dmg_dodges:
++				if absf(float(rec["t"]) - float(dg["t"])) > float(d["windowS"]):
++					continue
++				if int(rec["owner"]) != int(dg["owner"]) and not (bool(dg["fork"]) and int(rec["owner"]) == int(dg["dodger"])):
++					continue
++				rec["done"] = true
++				var b = rig._dmg_building(S, int(rec["b"]))
++				reach_n += 1
++				for k in range(REACHES.size()):
++					if rig._dmg_on_line(S, dg, b, float(REACHES[k])):
++						reach_ok[k] = int(reach_ok[k]) + 1
++				break
++		if held.size() > 200:
++			held = held.slice(100)
++		# what holds a site that has the score
++		for key in rig._dmg_sites:
++			var site: Dictionary = rig._dmg_sites[key]
++			var sb = rig._dmg_building(S, int(key))
++			if rig._dmg_score(site, sb, d) >= float(d["thresholds"]["open"]):
++				qualified[key] = true
++				if not rig._dmg.is_empty() or (not rig._dmg_opened.is_empty() and rig.time - float(rig._dmg_opened[-1]) < float(d["ration"]["gapS"])):
++					why["ration"] = int(why["ration"]) + 1   # one is up, or the gap: a beam's other buildings
++				elif rig._dmg_in_picture(S, sb, rig._dmg_pane(rig.current(), int(site["dodger"])), d):
++					why["picture"] = int(why["picture"]) + 1
++				elif rig._dmg_blocked(d):
++					why["blocked"] = int(why["blocked"]) + 1
++				elif not rig._pn.is_empty():
++					why["strip"] = int(why["strip"]) + 1
++				else:
++					why["norect"] = int(why["norect"]) + 1   # no corner free, in the pane
++		if rig.time - f_t <= 3.0:
++			for key in rig._dmg_sites:
++				var fs: Dictionary = rig._dmg_sites[key]
++				if int(fs["dodger"]) == 0 and not f_scored and rig._dmg_score(fs, rig._dmg_building(S, int(key)), d) >= float(d["thresholds"]["open"]):
++					f_scored = true
++					funnel["scored"] = int(funnel["scored"]) + 1
++			if not rig._dmg.is_empty() and int(rig._dmg["dodger"]) == 0 and String(rig._dmg["by"]) == "beam" and not f_opened:
++				f_opened = true
++				funnel["opened"] = int(funnel["opened"]) + 1
++				if not f_scored:
++					f_scored = true
++					funnel["scored"] = int(funnel["scored"]) + 1
++		var is_open: bool = not rig._dmg.is_empty()
++		if is_open and not was_open:
++			opens[int(rig._dmg["dodger"])] = int(opens[int(rig._dmg["dodger"])]) + 1
++			open_at.append(t)
++			if int(rig._dmg["dodger"]) == 0:
++				var q: Dictionary = beams.get(int(rig._dmg["beam"]), {})
++				open_a.append([t, int(q.get("tier", 0))])
++				if not q.is_empty():
++					_note(q, int(rig._dmg["b"]), float(rig._dmg["score"]), rig._dmg_building(S, int(rig._dmg["b"])))
++		was_open = is_open
++	for id in beams:
++		var br: Dictionary = beams[id]
++		var best: float = 0.0
++		var best_bh: float = 0.0
++		var total: float = 0.0
++		for k in br["sites"]:
++			total += float(br["sites"][k]["score"])
++			if float(br["sites"][k]["score"]) > best:
++				best = float(br["sites"][k]["score"])
++				best_bh = float(br["sites"][k]["bh"])
++		print("BEAM gen %d seed %d tick %d tier %d fork %s reach %s damaged %d best %.2f bh %.1f sum %.2f" % [gen, seed, int(br["tick"]), int(br["tier"]), str(br["fork"]), str(br["reach"]), (br["sites"] as Dictionary).size(), best, best_bh, total])
++	print("OPENS gen %d seed %d ticks %d a %s falls %s tall %s" % [gen, seed, t, JSON.stringify(open_a), JSON.stringify(falls), JSON.stringify(tall)])
++	for wa in watch:
++		print("TRIG gen %d seed %d ticks %d bh %.0f opens %s" % [gen, seed, t, float(wa["bh"]), JSON.stringify(wa["opens"])])
++	print("MATCH gen %d seed %d ticks %d aimed %d outcomes %s opens0 %d opens1 %d qualified %d held %s at %s reach_n %d reach %s buildings %d funnel %s" % [gen, seed, t, aimed, JSON.stringify(outcomes), int(opens[0]), int(opens[1]), qualified.size(), JSON.stringify(why), str(open_at), reach_n, str(reach_ok), S.buildings.size(), JSON.stringify(funnel)])
++	SimCore.dispose(S)
++
++
++## The most this beam's damage to a building has scored.
++func _note(rec: Dictionary, key: int, score: float, b) -> void:
++	var was: Dictionary = (rec["sites"] as Dictionary).get(key, {"score": 0.0})
++	if score >= float(was["score"]):
++		rec["sites"][key] = {"score": score, "bh": b.h / CamParams.BODY_H}
++
++
++## Whether a fall was on screen: 0 off every pane, 1 in a pane but drawn under seenShare, 2 in the picture.
++func _seen(rig: SplitRig, S: SimState, b, d: Dictionary) -> int:
++	var f: SplitFrame = rig.current()
++	var out: int = 0
++	var base: float = WorldStructures.baseY(S, b)
++	for pi in range(2):
++		if not f.shows(pi):
++			continue
++		var c: Vector2 = f.screen_pos(pi, b.x, base + 0.5 * b.h, b.z)
++		if c.x < 0.0 or c.x > rig.vw or c.y < 0.0 or c.y > rig.vh or f.weight1(c) != float(pi):
++			continue
++		out = maxi(out, 2 if rig._dmg_in_picture(S, b, pi, d) else 1)
++	return out
+diff --git a/render/camera/tests/inset_rate.gd.uid b/render/camera/tests/inset_rate.gd.uid
+new file mode 100644
+index 0000000..a59dde7
+--- /dev/null
++++ b/render/camera/tests/inset_rate.gd.uid
+@@ -0,0 +1 @@
++uid://da3gii8n8263w
+diff --git a/render/camera/tests/split_sweep.gd b/render/camera/tests/split_sweep.gd
+index 2e2fa06..1d2284f 100644
+--- a/render/camera/tests/split_sweep.gd
++++ b/render/camera/tests/split_sweep.gd
+@@ -206,6 +206,29 @@ func _run() -> void:
+ 	await _scenario("takeover divider eased", func(): return _takeover_eased(), {})
+ 	await _scenario("slam door whip", func(): return _slam_whip(), {})
+ 	await _scenario("sell push", func(): return _sell_row(), {})
++	await _scenario("damage below the threshold", func(): return _dmg_row("below"), {})
++	await _scenario("damage thumb", func(): return _dmg_row("thumb"), {})
++	await _scenario("damage strip", func(): return _dmg_row("strip"), {})
++	await _scenario("damage in the picture", func(): return _dmg_row("picture"), {})
++	await _scenario("damage not a dodge", func(): return _dmg_row("notdodge"), {})
++	await _scenario("damage ration", func(): return _dmg_row("ration"), {})
++	await _scenario("damage priority", func(): return _dmg_row("priority"), {})
++	await _scenario("damage blocked", func(): return _dmg_row("blocked"), {})
++	await _scenario("damage still", func(): return _dmg_row("still"), {})
++	await _scenario("damage split", func(): return _dmg_row("split"), {})
++	await _scenario("damage never over a fighter", func(): return _dmg_row("under"), {})
++	await _scenario("damage before the dodge", func(): return _dmg_row("early"), {})
++	await _scenario("damage a tower falls", func(): return _dmg_row("fall"), {})
++	await _scenario("damage a short building falls", func(): return _dmg_row("fallshort"), {})
++	await _scenario("damage a fall in the picture", func(): return _dmg_row("fallseen"), {})
++	await _scenario("damage two falls in a blast", func(): return _dmg_row("fallgap"), {})
++	await _scenario("damage a fall in a split", func(): return _dmg_row("fallsplit"), {})
++	await _scenario("damage fallMinBh 0", func(): return _dmg_row("falloff"), {})
++	await _scenario("damage the same with or without deaths", func(): return _dmg_row("nocasualty"), {})
++	await _scenario("damage small in the picture", func(): return _dmg_row("small"), {})
++	await _scenario("damage a swat", func(): return _dmg_row("fork"), {})
++	await _scenario("damage another fighter on a dodge", func(): return _dmg_row("notfork"), {})
++	await _scenario("damage off", func(): return _dmg_row("off"), {})
+ 	await _scenario("rally follow", func(): return _rally_row(false), {})
+ 	await _scenario("rally turn", func(): return _rally_row(true), {})
+ 	await _scenario("rally grab holds the size", func(): return _rally_grab(), {})
+@@ -4160,6 +4183,388 @@ func _rally_row(turn: bool) -> Dictionary:
+ 	return {}
+ 
+ 
++# ------------------------------------------------------------------------------------------------ the damage inset
++
++## A building with the pair on a line through it, A firing past B, and the rig settled: the building 3,200 units beyond B (out of the
++## picture), or 120 (`near`, in it). `tall`: the tallest; else a short one, with no tower bonus in its score.
++func _dmg_setup(split: bool = false, near: bool = false, tall: bool = true):
++	var b = null
++	var lim: float = float(CameraData.damage_inset()["score"]["towerBh"]) * CamParams.BODY_H
++	for c in _S.buildings:
++		if not tall and c.h > lim:
++			continue
++		if b == null or (tall and c.h > b.h) or (not tall and c.h < b.h):
++			b = c
++	var y: float = WorldStructures.baseY(_S, b) + 0.5 * b.h - 38.0
++	var gap: float = 9000.0 if split else 400.0
++	var bx: float = b.x - (120.0 if near else 3200.0)
++	_pose(bx - gap, y, bx, y)
++	_rig.damage_inset = true
++	_seed_rig()
++	for _i in range(150):
++		_tick_rig()
++	return b
++
++
++func _dmg_ev(type: String, b, fields: Dictionary) -> SimState.FxEvent:
++	var fl: Dictionary = {"b": float(b.idx), "x": b.x, "w": b.w, "z": b.z, "h": b.h}
++	fl.merge(fields, true)
++	return _shot_events(type, fl)
++
++
++func _dmg_dodge(kind: String = "DODGE") -> SimState.FxEvent:
++	return _shot_events("beam_outcome", {"actor": 0.0, "target": 1.0, "kind": kind})
++
++
++func _dmg_stages(b, n: int) -> SimState.FxEvent:
++	return _dmg_ev("building_stage", b, {"from": 0.0, "to": float(n), "owner": 0.0})
++
++
++func _dmg_site_up() -> bool:
++	return String(_rig.current().panel.get("kind", "")) == "site"
++
++
++## A fighter's box under the rect in this frame.
++func _dmg_under(fr: SplitFrame, r: Rect2, pi: int) -> bool:
++	for k in range(2):
++		var fk = _S.fighters[k]
++		var feet: Vector2 = fr.screen_pos(pi, fk.x, fk.y, float(fk.z))
++		var head: Vector2 = fr.screen_pos(pi, fk.x, fk.y + CamParams.BODY_H, float(fk.z))
++		var fh: float = absf(feet.y - head.y)
++		if Rect2(feet.x - fh * 0.4, minf(head.y, feet.y), fh * 0.8, fh).intersects(r):
++			return true
++	return false
++
++
++## Runs until the inset has come and gone (or `limit` ticks): how long it was up and its rect, every frame checked for a fighter under it.
++func _dmg_watch(limit: int = 480) -> Dictionary:
++	var ticks: int = 0
++	var rect: Rect2 = Rect2()
++	var seen: bool = false
++	var under: int = 0
++	for _k in range(limit):
++		_tick_rig()
++		var fr: SplitFrame = _rig.current()
++		if String(fr.panel.get("kind", "")) == "site":
++			seen = true
++			ticks += 1
++			rect = fr.panel["rect"]
++			if _dmg_under(fr, rect, int(fr.panel["slot"]) if fr.shows(int(fr.panel["slot"])) else 0):
++				under += 1
++		elif seen:
++			break
++	return {"seen": seen, "ticks": ticks, "rect": rect, "under": under}
++
++
++## Past the ration, for a row's second inset.
++func _dmg_skip_ration() -> void:
++	_S.T += 70.0
++	_rig.time += 70.0
++	_tick_rig()
++
++
++func _dmg_row(which: String) -> Dictionary:
++	var d: Dictionary = CameraData.damage_inset()
++	match which:
++		"below":
++			var b = _dmg_setup(false, false, false)
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 1)])
++			_check(not bool(_dmg_watch(120)["seen"]), "%s: opened on one stage" % _label)
++		"thumb":
++			var b = _dmg_setup(false, false, false)
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			var w: Dictionary = _dmg_watch()
++			_check(bool(w["seen"]), "%s: did not open" % _label)
++			var r: Rect2 = w["rect"]
++			var th: Dictionary = d["thumb"]
++			_check(absf(r.size.x - float(th["w"]) * vw) < 1.0 and absf(r.size.y - float(th["h"]) * vh) < 1.0, "%s: the size is %s" % [_label, str(r.size)])
++			_check(r.position.x > 0.5 * vw, "%s: not in the corner on the building's side (x %.0f)" % [_label, r.position.x])
++			_check(r.position.y >= maxf(vh * CamParams.PANEL_TOP_Y, _rig.panel_floor) - 0.5, "%s: above the HUD's floor" % _label)
++			var secs: float = float(w["ticks"]) * SplitRig.DT
++			_check(secs >= float(d["time"]["minS"]) - 0.02 and secs <= float(d["time"]["maxS"]) + float(d["time"]["wipeOut"]) + 0.02, "%s: lived %.2f s" % [_label, secs])
++			_check(int(w["under"]) == 0, "%s: a fighter under it on %d ticks" % [_label, int(w["under"])])
++			stats["detail " + _label] = "%.2f s, rect %s" % [secs, str(r)]
++		"early":
++			var b = _dmg_setup(false, false, false)
++			_tick_rig([_dmg_stages(b, 2)])
++			for _k in range(10):
++				_tick_rig()
++			_tick_rig([_dmg_dodge()])
++			_check(bool(_dmg_watch(120)["seen"]), "%s: the damage before the dodge did not count" % _label)
++		"small":
++			# a short building in the middle of the picture, drawn under seenShare of the height: the damage is not seen well, so it opens
++			var b = _dmg_setup(false, false, false)
++			var y: float = WorldStructures.baseY(_S, b) + 0.5 * b.h - 38.0
++			_pose(b.x - 200.0, y, b.x + 200.0, y)
++			_seed_rig()
++			for _i in range(150):
++				_tick_rig()
++			var shot: Vector2 = _rig.current().screen_pos(0, b.x, WorldStructures.baseY(_S, b) + 0.5 * b.h, b.z)
++			_check(shot.x > 0.0 and shot.x < vw, "%s: the row's building is off the screen" % _label)
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			_check(bool(_dmg_watch(120)["seen"]), "%s: did not open" % _label)
++		"fork":
++			# a perfect block's swat: the beam is the defender's and leaves on a new line, and what it does is credited to him
++			var b = _dmg_setup(false, false, false)
++			var D = _S.fighters[1]
++			var bm := SimState.Beam.new()
++			bm.A = D
++			bm.ox = D.x
++			bm.oy = D.y + 36.0
++			bm.ux = 1.0
++			bm.uy = 0.0
++			bm.len = 6000.0
++			_S.beams.append(bm)
++			_tick_rig([_dmg_dodge("DEFLECT")])
++			_tick_rig([_dmg_ev("building_stage", b, {"from": 0.0, "to": 2.0, "owner": 1.0})])
++			_check(bool(_dmg_watch(120)["seen"]), "%s: the swat's damage did not open it" % _label)
++			_S.beams.clear()
++		"notfork":
++			# on a plain dodge the beam is the attacker's: damage credited to the dodger is another matter
++			var b = _dmg_setup(false, false, false)
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_ev("building_stage", b, {"from": 0.0, "to": 2.0, "owner": 1.0})])
++			_check(not bool(_dmg_watch(120)["seen"]), "%s: opened on the dodger's own damage" % _label)
++		"strip":
++			var b = _dmg_setup()
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_ev("building_fall", b, {"mode": "implode", "n": 1.0})])
++			var w: Dictionary = _dmg_watch(480)
++			_check(bool(w["seen"]), "%s: did not open" % _label)
++			var r: Rect2 = w["rect"]
++			_check(absf(r.size.y - CamParams.PANEL_H * vh) < 1.0, "%s: not the strip's band (%s)" % [_label, str(r.size)])
++			_check(float(w["ticks"]) * SplitRig.DT <= float(d["time"]["maxFallS"]) + float(d["time"]["wipeOut"]) + 0.02, "%s: lived %.2f s" % [_label, float(w["ticks"]) * SplitRig.DT])
++			_check(int(w["under"]) == 0, "%s: a fighter under it on %d ticks" % [_label, int(w["under"])])
++		"fall":
++			# no beam avoided: a tower's fall out of the picture opens the strip's band in a merged view
++			var b = _dmg_setup()
++			_tick_rig([_dmg_ev("building_fall", b, {"mode": "implode", "n": 1.0})])
++			var w: Dictionary = _dmg_watch(480)
++			_check(bool(w["seen"]), "%s: did not open" % _label)
++			_check(absf((w["rect"] as Rect2).size.y - CamParams.PANEL_H * vh) < 1.0, "%s: not the strip's band (%s)" % [_label, str(w["rect"])])
++			_check(int(w["under"]) == 0, "%s: a fighter under it on %d ticks" % [_label, int(w["under"])])
++		"fallshort":
++			var b = _dmg_setup(false, false, false)
++			_check(b.h < float(d["fallMinBh"]) * CamParams.BODY_H, "%s: the row's building is tall" % _label)
++			_tick_rig([_dmg_ev("building_fall", b, {"mode": "implode", "n": 1.0})])
++			_check(not bool(_dmg_watch(120)["seen"]), "%s: opened on a short building's fall" % _label)
++		"fallseen":
++			# drawn at seenShare or more, in the middle of the picture
++			var b = _dmg_setup()
++			var ys: float = WorldStructures.baseY(_S, b) + 0.5 * b.h - 38.0
++			_pose(b.x - 150.0, ys, b.x + 150.0, ys)
++			_seed_rig()
++			for _i in range(150):
++				_tick_rig()
++			var fr0: SplitFrame = _rig.current()
++			var drawn: float = absf(fr0.screen_pos(0, b.x, WorldStructures.baseY(_S, b) + b.h, b.z).y - fr0.screen_pos(0, b.x, WorldStructures.baseY(_S, b), b.z).y)
++			_check(drawn >= float(d["seenShare"]) * vh, "%s: the row's tower is drawn %.0f px" % [_label, drawn])
++			_tick_rig([_dmg_ev("building_fall", b, {"mode": "implode", "n": 1.0})])
++			_check(not bool(_dmg_watch(120)["seen"]), "%s: opened with the fall in the picture" % _label)
++		"fallgap":
++			# a blast: every tower falls together, and one picture comes of it
++			var b = _dmg_setup()
++			var was: int = _rig.damage_insets
++			var evs: Array = []
++			for c in _S.buildings:
++				if c.h >= float(d["fallMinBh"]) * CamParams.BODY_H:
++					evs.append(_dmg_ev("building_fall", c, {"mode": "implode", "n": 1.0}))
++			_check(evs.size() >= 2, "%s: only %d towers" % [_label, evs.size()])
++			for e in evs:
++				_tick_rig([e])
++			_dmg_watch(480)
++			_check(_rig.damage_insets - was == 1, "%s: %d opened on one blast" % [_label, _rig.damage_insets - was])
++			_check(b != null, "%s" % _label)
++		"fallsplit":
++			# the thumbnail, in the pane of the fighter nearer the building
++			var b = _dmg_setup(true)
++			_check(_rig.sep >= 0.999, "%s: not split (sep %.3f)" % [_label, _rig.sep])
++			_tick_rig([_dmg_ev("building_fall", b, {"mode": "implode", "n": 1.0})])
++			_tick_rig()
++			_tick_rig()
++			_check(_dmg_site_up(), "%s: did not open" % _label)
++			var pn: Dictionary = _rig.current().panel
++			_check(int(pn["slot"]) == 1, "%s: in the far fighter's pane" % _label)
++			_check(absf((pn["rect"] as Rect2).size.y - float(d["thumb"]["h"]) * vh) < 1.0, "%s: not the thumbnail" % _label)
++			_check((pn["rect"] as Rect2).position.x > 0.5 * vw, "%s: not the pane's outer corner" % _label)
++			_dmg_watch(480)
++		"nocasualty":
++			# Legal: people moving or dying neither open it nor change it
++			var seen_panel: Array = []
++			var cas0: float = _S.world.casualties
++			for deaths in [false, true]:
++				var b = _dmg_setup()
++				if deaths:
++					_S.world.casualties = cas0 + 500.0
++					_tick_rig([_shot_events("evacuate", {"b": float(b.idx), "x": b.x, "n": 500.0, "cx": b.x, "reason": "budget", "owner": 0.0})])
++					_check(not bool(_dmg_watch(60)["seen"]), "%s: opened on people alone" % _label)
++				_tick_rig([_dmg_ev("building_fall", b, {"mode": "implode", "n": 1.0})])
++				_tick_rig()
++				_tick_rig()
++				_check(_dmg_site_up(), "%s: did not open (deaths %s)" % [_label, str(deaths)])
++				var pn0: Dictionary = _rig.current().panel
++				seen_panel.append([pn0["rect"], pn0["slot"], pn0["still"], pn0["cam_x"], pn0["cam_z"]])
++				_dmg_watch(480)
++				_dmg_skip_ration()
++			_check(seen_panel[0] == seen_panel[1], "%s: %s against %s" % [_label, str(seen_panel[0]), str(seen_panel[1])])
++			_S.world.casualties = cas0
++		"falloff":
++			var keep: float = float(d["fallMinBh"])
++			d["fallMinBh"] = 0.0
++			var b = _dmg_setup()
++			_tick_rig([_dmg_ev("building_fall", b, {"mode": "implode", "n": 1.0})])
++			_check(not bool(_dmg_watch(120)["seen"]), "%s: opened with the trigger off" % _label)
++			d["fallMinBh"] = keep
++		"picture":
++			var b = _dmg_setup(false, true)
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			_check(not bool(_dmg_watch(120)["seen"]), "%s: opened with the building in the picture" % _label)
++		"notdodge":
++			var b = _dmg_setup()
++			_tick_rig([_dmg_dodge("GUARD")])
++			_tick_rig([_dmg_stages(b, 2)])
++			_check(not bool(_dmg_watch(120)["seen"]), "%s: opened after a guard" % _label)
++		"ration":
++			var b = _dmg_setup()
++			var opened: Array = []
++			var was: int = _rig.damage_insets
++			for s in range(4):
++				_tick_rig([_dmg_dodge()])
++				_tick_rig([_dmg_stages(b, 2)])
++				for _k in range(int(5.0 * 60.0) if s < 2 else int(16.0 * 60.0)):
++					_tick_rig()
++				opened.append(_rig.damage_insets - was)
++			_check(int(opened[1]) == 1, "%s: %d opened in 10 s" % [_label, int(opened[1])])
++			_check(int(opened[3]) <= int(d["ration"]["perMinute"]), "%s: %d opened in a minute" % [_label, int(opened[3])])
++			stats["detail " + _label] = "opened by site: %s" % str(opened)
++		"priority":
++			var b = _dmg_setup()
++			_rig._pn = {"kind": "signature", "slot": 0, "t": 0.0, "dur": 3.0, "band": 0, "prio": 3}
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			var up: bool = false
++			for _k in range(int((float(d["ration"]["waitForStripS"]) + 0.3) * 60.0)):
++				_tick_rig()
++				up = up or _dmg_site_up()
++			_check(not up, "%s: opened over a running strip" % _label)
++			_rig._pn = {}
++			_check(not bool(_dmg_watch(60)["seen"]), "%s: not dropped after the wait" % _label)
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			_tick_rig()
++			_tick_rig()
++			_check(_dmg_site_up(), "%s: did not open" % _label)
++			_rig._pn = {"kind": "signature", "slot": 0, "t": 0.0, "dur": 0.5, "band": 0, "prio": 3}
++			_tick_rig()
++			_check(_dmg_site_up(), "%s: a strip replaced a running inset" % _label)
++			_rig._pn = {}
++		"blocked":
++			var b = _dmg_setup()
++			_tick_rig([_shot_events("transform", {"actor": 0.0, "tier": 2.0, "source": "x", "dur": 1.5})])
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			var up: bool = false
++			for _k in range(40):
++				_tick_rig()
++				up = up or (_dmg_site_up() and _rig.solo_kind != "")
++			_check(not up, "%s: opened during a transformation" % _label)
++		"still":
++			var b = _dmg_setup()
++			_rig.flash_reduced = true
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			var delay: int = 0
++			while not _dmg_site_up() and delay < 90:
++				_tick_rig()
++				delay += 1
++			_check(_dmg_site_up(), "%s: did not open" % _label)
++			_check(absf(float(delay) * SplitRig.DT - float(d["flash"]["stillAtS"])) < 0.06, "%s: the still came after %d ticks" % [_label, delay])
++			_check(bool(_rig.current().panel["still"]), "%s: not a still" % _label)
++			var z0: float = float(_rig.current().panel["cam_z"])
++			for _k in range(30):
++				_tick_rig()
++			if _dmg_site_up():
++				_check(float(_rig.current().panel["cam_z"]) == z0, "%s: the still's camera moved" % _label)
++			_rig.flash_reduced = false
++			_dmg_watch()
++			_dmg_skip_ration()
++			_rig.reduced_motion = true
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			var dl: int = 0
++			while not _dmg_site_up() and dl < 90:
++				_tick_rig()
++				dl += 1
++			_check(_dmg_site_up() and float(_rig.current().panel["open"]) == 1.0, "%s: reduced motion does not open at once" % _label)
++			_rig.reduced_motion = false
++		"split":
++			var runs: Array = []
++			for on in [false, true]:
++				var b = _dmg_setup(true)
++				_rig.damage_inset = on
++				var sig: Array = []
++				var inside: bool = true
++				var seen: bool = false
++				_check(_rig.sep >= 0.999, "%s: not split (sep %.3f)" % [_label, _rig.sep])
++				_tick_rig([_dmg_dodge()])
++				_tick_rig([_dmg_stages(b, 2)])
++				for _k in range(180):
++					_tick_rig()
++					var fr: SplitFrame = _rig.current()
++					sig.append([fr.c, fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], fr.cam_x[1], fr.cam_y[1], fr.cam_z[1], fr.sep, fr.e])
++					if String(fr.panel.get("kind", "")) == "site":
++						seen = true
++						var r: Rect2 = fr.panel["rect"]
++						for p in [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]:
++							inside = inside and fr.weight1(p) == 1.0
++				if on:
++					_check(seen, "%s: did not open" % _label)
++					_check(inside, "%s: the rect left the dodger's pane" % _label)
++				runs.append(sig)
++			_check(runs[0] == runs[1], "%s: the divider or a pane's camera differs with the inset" % _label)
++		"under":
++			# a fighter flies up into the corner: it is never drawn over him, and it closes
++			var b = _dmg_setup(false, false, false)
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			_tick_rig()
++			_tick_rig()
++			_check(_dmg_site_up(), "%s: did not open" % _label)
++			var r: Rect2 = _rig.current().panel["rect"]
++			var B = _S.fighters[1]
++			var under: int = 0
++			var closed: bool = false
++			for _k in range(70):
++				var fr: SplitFrame = _rig.current()
++				var tx: float = fr.cam_x[0] + (r.get_center().x - vw * 0.5) / fr.cam_z[0]
++				var ty: float = fr.cam_y[0] + (vh * CamParams.PLANE_Y - r.get_center().y) / fr.cam_z[0]
++				B.x = SimWrap.wrap(B.x + SimWrap.sdx(B.x, tx) * 0.15)
++				B.y += (ty - B.y) * 0.15
++				_tick_rig()
++				var now: SplitFrame = _rig.current()
++				if String(now.panel.get("kind", "")) != "site":
++					closed = true
++					break
++				if _dmg_under(now, r, int(now.panel["slot"]) if now.shows(int(now.panel["slot"])) else 0):
++					under += 1
++			_check(under == 0, "%s: drawn over the fighter on %d ticks" % [_label, under])
++			_check(closed, "%s: it did not close" % _label)
++		"off":
++			# (the frames to the bit are clip_digest's: a clean main against this tree with the switch off)
++			var b = _dmg_setup()
++			_rig.damage_inset = false
++			var was: int = _rig.damage_insets
++			_tick_rig([_dmg_dodge()])
++			_tick_rig([_dmg_stages(b, 2)])
++			_check(not bool(_dmg_watch(120)["seen"]) and _rig.damage_insets == was, "%s: opened with the switch off" % _label)
++	_rig.damage_inset = false
++	return {}
++
++
+ ## A grab in flight (GD 23d item 6, Combat's own links): B is sent, a grab link comes, and A closes from 600 units to the body while
+ ## B is held. Legal (e12): nothing zoomed over a fighter held in the air, so the shot's size target holds within 1% over the hold.
+ func _rally_grab() -> Dictionary:

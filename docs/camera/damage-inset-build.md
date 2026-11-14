@@ -1,6 +1,6 @@
 # The damage inset: the build plan (Camera, 2026-10-17)
 
-Owner: Camera and Cinematography. The plan for building `damage-inset.md` (the design, Orb's picture-in-picture of a dodged beam's damage), ready to start. The data and its schema are in `docs/camera/pending/build-ready/` (`damage_inset.json`, `damage_inset.schema.json`); both pass the repository's validator in a scratch copy (with the two map entries below) and the schema rejects a bad value (a negative threshold) as it should.
+Owner: Camera and Cinematography. The plan for building `damage-inset.md` (the design, Orb's picture-in-picture of a dodged beam's damage), ready to start. **Built on this plan and parked, 2026-10-30: docs/camera/pending/damage-inset/ (the patch, the schema, and how the build differs from this plan).** The data and schema are there too, and supersede the copies this page was written with.
 
 ## 1. What is built on, and what is not there yet
 

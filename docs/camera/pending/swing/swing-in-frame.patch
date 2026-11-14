@@ -1,0 +1,134 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index a73f7a2..e9eee2d 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -378,6 +378,8 @@ const PEAK_BACK_KO: float = 0.5
+ const PEAK_BACK_MIN: float = 0.2
+ # The high-velocity moves (docs/camera/launch-director.md), first values
+ const CLOSE_R: float = 0.17              # a locked brawl's size: a fighter's height as a share of the screen's, against the fight's 0.12 and the cap's 0.14
++const REVEAL_R: float = 0.05             # readable: a reveal keeps him at least this size (36 px at 720p)
++const REVEAL_R_HIGH: float = 0.03        # ... and this with both at tier 3 or up, where the width is the point
+ const R_READ: float = 0.1                # readable: the size a slow body comes back to, at least (72 px at 720p), against the fight's 0.11 and the pane's 0.085
+ const READ_SPEED: float = 1500.0         # under this a body isn't really flying
+ const READ_AFTER: float = 0.3            # for this long, so an arc's top doesn't count
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 3d5dbd9..eaeb225 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -5114,7 +5114,7 @@ func _reveal_tick(S: SimState) -> void:
+ 		_rv_ang = CamParams.REVEAL_PITCH * smoothstep(0.0, 1.0, reveal_w) if _rv_ang != 0.0 else 0.0
+ 		var free: bool = time - _rv_last >= CamParams.REVEAL_GAP and not reduced_motion and not intro_active and not fold_active and _pk_phase == "" and solo_kind != "transform" and solo_kind != "ko" and solo_kind != "finisher" and S.game.clash == null and S.game.ko == null and _sw_ticks < CamParams.SWING_SHOT_TICKS
+ 		for i in range(2):
+-			if free and float(_rv_fly[i]) >= CamParams.REVEAL_AFTER and not (e_slot == 1 - i and e > 0.001):   # (not while the other's pane has the screen: he isn't in the picture)
++			if free and float(_rv_fly[i]) >= CamParams.REVEAL_AFTER and not (e_slot == 1 - i and e > 0.001) and (not readable or _reveal_has_land(S, i)):   # (not while the other's pane has the screen: he isn't in the picture)
+ 				_rv_slot = i
+ 				_rv_t = 0.0
+ 				_rv_last = time
+@@ -5130,6 +5130,16 @@ func _reveal_tick(S: SimState) -> void:
+ 	_rv_ang = CamParams.REVEAL_PITCH * smoothstep(0.0, 1.0, reveal_w)
+ 
+ 
++## Whether the view opening out would show any land: over open sea it would be an empty frame, so he stays at follow size with his speed lines.
++func _reveal_has_land(S: SimState, i: int) -> bool:
++	var f = S.fighters[i]
++	var dir: float = signf(float(f.vx))
++	for ahead in [0.0, 1500.0, 3000.0]:
++		if _biome_at(S, SimWrap.wrap(float(f.x) + dir * float(ahead))) != "ocean":
++			return true
++	return false
++
++
+ ## Opens the view on the flier: the width eases out to REVEAL_W, or to the size floor below tier 3, and he goes low in the frame. Over a shared view it opens both.
+ func _reveal_outputs(S: SimState) -> void:
+ 	if _rv_slot < 0:
+@@ -5138,6 +5148,10 @@ func _reveal_outputs(S: SimState) -> void:
+ 	var L = S.fighters[1 - _rv_slot]
+ 	var ring_k: float = SimConst.W / CamParams.PEAK_RING
+ 	var top: float = (CamParams.REVEAL_W if minf(float(f.tier), float(L.tier)) >= CamParams.REVEAL_TIER else CamParams.REVEAL_W_LOW) * ring_k
++	if readable:
++		# a width that keeps him a size you can see: 16:9 width is 1.778 * BODY_H / r
++		var r_least: float = CamParams.REVEAL_R_HIGH if minf(float(f.tier), float(L.tier)) >= CamParams.REVEAL_TIER else CamParams.REVEAL_R
++		top = minf(top, 1.778 * CamParams.BODY_H / r_least)
+ 	var w: float = smoothstep(0.0, 1.0, reveal_w)
+ 	for i in range(2):
+ 		if i != _rv_slot and sep > 0.5:
+diff --git a/render/camera/tests/launch_shots_check.gd b/render/camera/tests/launch_shots_check.gd
+index aff1311..9dac07b 100644
+--- a/render/camera/tests/launch_shots_check.gd
++++ b/render/camera/tests/launch_shots_check.gd
+@@ -16,7 +16,7 @@ var director: bool = true
+ var allmoves: bool = false
+ ## A jolt is the picture's step changing in a tick, of the width. A blow's release may start hard (its first ticks: the blow hides the start, as a cut on action does);
+ ## nothing else may. Lost is the subject off the frame in a run of ticks: a launch's climb may leave the top for the first 0.8 s, on Research's reading.
+-const LIMITS: Dictionary = {"jolt": 0.06, "release": 0.30, "release_zoom": 0.03, "zjolt": 0.012, "lost": 50, "small": 90}
++const LIMITS: Dictionary = {"jolt": 0.06, "release": 0.30, "release_zoom": 0.03, "zjolt": 0.012, "lost": 50, "small": 90, "off": 12}
+ const RELEASE_TICKS: int = 10
+ 
+ 
+@@ -70,7 +70,8 @@ func _steps(a: SplitFrame, b: SplitFrame, i: int) -> Vector3:
+ ## Runs a staged or a real stretch and reads every tick. `subject`: a Callable(S, rig) giving who must be in the frame now (a slot), or -1.
+ func _watch(S: SimState, rig: SplitRig, ticks: int, subject: Callable, stage: Callable = Callable()) -> Dictionary:
+ 	var small_run: int = 0
+-	var r: Dictionary = {"small": 0, "small_at": "", "release": 0.0, "jolt": 0.0, "jolt_at": "", "zjolt": 0.0, "zjolt_at": "", "lost": 0, "lost_run": 0, "lost_at": "", "cuts": {}, "unnamed": 0, "ticks": 0, "whips0": rig.whips}
++	var off_run: int = 0
++	var r: Dictionary = {"off": 0, "off_at": "", "small": 0, "small_at": "", "release": 0.0, "jolt": 0.0, "jolt_at": "", "zjolt": 0.0, "zjolt_at": "", "lost": 0, "lost_run": 0, "lost_at": "", "cuts": {}, "unnamed": 0, "ticks": 0, "whips0": rig.whips}
+ 	var prev: SplitFrame = rig.current()
+ 	var st: Array = [Vector3.ZERO, Vector3.ZERO]
+ 	var fresh: Array = [true, true]
+@@ -131,6 +132,18 @@ func _watch(S: SimState, rig: SplitRig, ticks: int, subject: Callable, stage: Ca
+ 			st[i] = s
+ 			fresh[i] = false
+ 		if "readable" in rig and rig.readable:
++			# a flying body out of the picture that's his: the player always sees himself
++			var gone: bool = false
++			for i1 in range(2):
++				var f1 = S.fighters[i1]
++				if f.shows(i1) and f1.state == "launched" and rig._pk_phase == "" and (f.sep > 0.5 or f.e > 0.5):
++					var sp: Vector2 = f.screen_pos(i1, f1.x, f1.y + CamParams.CHEST)
++					if sp.x < 0.0 or sp.x > VW or sp.y < 0.0 or sp.y > VH or f.weight1(sp) != (1.0 if i1 == 1 else 0.0):
++						gone = true
++			off_run = off_run + 1 if gone else 0
++			if off_run > int(r.off):
++				r.off = off_run
++				r.off_at = "tick %d: %s, %s" % [S.tick, f.mode, rig.solo_kind]
+ 			# small and slow: the rule asks for a size and the picture is well under it
+ 			var sm: bool = false
+ 			for i0 in range(2):
+@@ -181,6 +194,18 @@ func _say(name: String, r: Dictionary, jolt_limit: float = -1.0) -> void:
+ 	_ok(int(r.lost_run) <= int(LIMITS.lost), "%s: the subject lost for %d ticks (%s)" % [name, r.lost_run, r.lost_at])
+ 
+ 
++## A send like the reel's: 9,000 units a second, nearly flat, at low power: he stays in the picture.
++func _in_frame() -> void:
++	var setup := func(rig0) -> void:
++		rig0.set("readable", true)
++		rig0.set("flat_mode", "wide")
++		rig0.set("flight_reveal", true)
++	for row in [[1.0, 9000.0, 5.0], [2.0, 6000.0, 10.0], [1.0, 9900.0, 0.0]]:
++		var r: Dictionary = _staged("in frame, tier %d, %d" % [int(row[0]), int(row[1])], float(row[0]), float(row[1]), float(row[2]), 420, setup, 0.16)
++		print("    out of his picture: at most %d ticks %s" % [r.off, r.off_at])
++		_ok(int(r.off) <= int(LIMITS.off), "in frame: out of his picture for %d ticks (%s)" % [r.off, r.off_at])
++
++
+ func _flier(_S, _rig0) -> int:
+ 	return 1
+ 
+@@ -316,7 +341,8 @@ func _fights(n: int, ticks: int) -> void:
+ 		var r: Dictionary = _watch(S, rig, ticks, Callable(self, "_who"))
+ 		_say("AI fight %d" % seed, r, 0.16)
+ 		if "readable" in rig and rig.readable:
+-			print("    small and slow: at most %d ticks %s" % [r.small, r.small_at])
++			print("    small and slow: at most %d ticks %s; a flying body out of his picture: at most %d ticks %s" % [r.small, r.small_at, r.off, r.off_at])
++			_ok(int(r.off) <= int(LIMITS.off), "AI fight %d: a flying body out of his picture for %d ticks (%s)" % [seed, r.off, r.off_at])
+ 			_ok(int(r.small) <= int(LIMITS.small), "AI fight %d: a small, slow fighter for %d ticks (%s)" % [seed, r.small, r.small_at])
+ 
+ 
+@@ -352,6 +378,8 @@ func _initialize() -> void:
+ 	_tower()
+ 	_chase()
+ 	_stall()
++	if "readable" in SplitRig.new():
++		_in_frame()
+ 	_fights(nf, tf)
+ 	if measure:
+ 		print("launch_shots_check: measured")

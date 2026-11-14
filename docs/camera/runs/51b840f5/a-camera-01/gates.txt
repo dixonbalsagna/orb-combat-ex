@@ -1,0 +1,18 @@
+# A-CAMERA-01 gate: main 51b840f5 + docs/camera/pending/a-camera-01/a-camera-01.patch, every headless check under render/camera/tests, one job at a time, headless Godot 4.7.2; seconds each
+chase_rush_check       19s  chase_rush_check: 130 checks passed 
+cross_ko_check         11s  cross_ko_check: 21 checks passed 
+flight_shots_check     22s  flight_shots_check: 803 checks passed 
+launch_shots_check     41s  launch_shots_check: 1029 checks passed 
+peak_retry_check        9s  peak_retry_check: 1 check passed 
+peak_shot_check        10s  peak_shot_check: 24 checks passed 
+split_share_check      31s  split_share_check: 26 checks passed 
+split_vision_check     16s  split_vision_check: 11 checks passed 
+swing_fight_check       7s  swing_fight_check: DirSwing is off in this build, skipped 
+swing_places_check     11s  swing_places_check: 33 checks passed 
+swing_real_check       14s  swing_real_check: 48 checks passed 
+swing_shot_check        8s  swing_shot_check: 164 checks passed 
+swing_read_check       29s  swing_read_check: 14420 checks passed 
+split_sweep           633s  split sweep passed 
+clip_digest           226s  (a digest, no verdict: see digest.txt)
+
+# not run: intro_shots, panel_shot, depth_strip, split_test_main/pane (need a window; Godot runs are headless only), and the probes (clip_probe, collapse_probe, intro_probe, launch_probe, many_probe: no verdict)

@@ -1,0 +1,239 @@
+diff --git a/render/core/main.gd b/render/core/main.gd
+index cca27c9..9303f4c 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -58,6 +58,7 @@ var split_frame: SplitFrame = null  # this frame's, while a compositor is attach
+ ## once per displayed frame after drawing the panes, and its pane_jitter(i) (if it has one) for a pane's shake.
+ ## Attaching one resets the rig to the current state; without one the rig costs nothing (about 0.05 ms a tick).
+ var split_view: SplitView = null   # Camera's compositor in the game (null in the tools)
++var film_cam: Callable               # the capture hook's film camera (a film scene's `bdshot` word): rewrites the rig's frame each draw; invalid in play
+ var flashcap: FlashCapture = null     # Tools' capture hook (--flashcap, on the web ?flashcap=1): the game is stepped from the page; null in normal play
+ static var render_scale: float = 1.0      # the 3D render scale (_render_scale): lower on a phone
+ var _build_queue: Array = []             # the boot's pane build still to run (_step_build): _match_built's steps
+@@ -803,6 +804,8 @@ func render_view(a: float) -> void:
+ 		if "pitch_deg" in split_rig:
+ 			split_rig.pitch_deg = cam_pitch
+ 		split_frame = split_rig.frame(a)
++		if film_cam.is_valid():
++			film_cam.call(split_frame, host.S, a)
+ 		var zmax: float = 0.0
+ 		var zfocus: float = 0.0   # the closer pane's focus depth, for the flash register's sizes
+ 		# Camera's frame may carry the pitch and each pane's cut-away request; until it does, the debug pitch, and in a
+@@ -816,6 +819,8 @@ func render_view(a: float) -> void:
+ 		for i in range(panes.size()):
+ 			if i == 0 or split_frame.shows(i):
+ 				var j: Vector2 = compositor.pane_jitter(i) if compositor.has_method("pane_jitter") else (host.jitter if i == 0 else Vector2.ZERO)
++				if film_cam.is_valid():
++					j = Vector2.ZERO   # a film shot has no shake
+ 				panes[i].occlusion = occlusion
+ 				panes[i].cutaway = PaneWorld.request(cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {}), cl[i] if cl is Array and i < cl.size() else null)
+ 				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
+diff --git a/render/core/sim_host.gd b/render/core/sim_host.gd
+index d1e8fd7..5405418 100644
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -37,6 +37,7 @@ var hub := SimInputHub.new()    # every device's input and the intent v2 per hum
+ var touch: SimTouch = hub.touch  # the hub's touch layer, for the host's hit tests and UI's button state
+ var feed: Array = []            # recent SimState.FeedLine, oldest first
+ var jitter := Vector2.ZERO      # screen shake offset in pixels for the current tick
++var film_in: Array = [null, null]   # the capture hook's film scenes only (render/tools/flash_capture.gd): each slot's intent for the next tick, or null; null in play
+ var tick_usec: int = 0          # cost of the last SimCore.step
+ var fx_usec: int = 0            # cost of the last fx consume and camera step
+ var _prev := PackedFloat64Array()
+@@ -417,6 +418,9 @@ func tick(vw: float, vh: float) -> void:
+ 			if SimInputData.right_stick_on():
+ 				hub.set_struggle(k, SimDir.inStruggle(S, S.fighters[k]))   # a beam clash or a finisher's contest: the stick does nothing there (Controls' K3)
+ 			inputs[k] = hub.intent(k)
++	for k in range(2):
++		if film_in[k] != null:
++			inputs[k] = film_in[k]
+ 	var pausing: bool = S.pause.left > 0   # Q10: this tick is one of a pausing set piece's frozen ticks
+ 	var pre: bool = intro_running()        # the intro phase: this tick is a pre-clock tick
+ 	if pre and _skip_intro > 0:
+diff --git a/render/tools/flash_capture.gd b/render/tools/flash_capture.gd
+index 4912690..8ad3069 100644
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -34,6 +34,9 @@ const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signatureci
+ const SEED: int = 12345
+ const FORM_TICKS: Array = [300, 1500]
+ ## Which slots are the AI's (true) in each scenario.
++## Film scenes (clips for people, not Tools' worst cases): not in SCENARIOS, so the flash check's lists stay as sources.json has
++## them (tools/flash/selftest.js). Which slots are the AI's (true) in each.
++const FILM_SCENES: Dictionary = {"beamduel": [false, false]}
+ const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "plumedesert": [false, false], "plumeice": [false, false], "plumevolc": [false, false], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
+ 
+ var main: Node
+@@ -91,18 +94,21 @@ func poll() -> void:
+ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int = 0, slots: Array = []) -> void:
+ 	VARIANT = variant
+ 	var err: String = ""
+-	if not SCENARIOS.has(sc):
++	if not SCENARIOS.has(sc) and not FILM_SCENES.has(sc):
+ 		err = "no scenario '%s' (%s): playing ai" % [sc, ", ".join(PackedStringArray(SCENARIOS))]
+ 		sc = "ai"
+ 	scenario = sc
+ 	VfxBiome.override_biome = ""      # the plume clips force a biome for their own run only (_plume)
+-	var ai: Array = AI_SLOTS[sc]
++	var ai: Array = AI_SLOTS[sc] if AI_SLOTS.has(sc) else FILM_SCENES[sc]
+ 	var host: SimHost = main.host
+ 	# a pairing other than the roster's first two: the page's `slots` (two fighter ids, tools/flash/capture-web.mjs --slots), as flash_worst.gd's --slots does
+ 	var ai_set: Dictionary = {"p1": ai[0], "p2": ai[1]}
+ 	for i in range(2, slots.size()):
+ 		ai_set["p%d" % (i + 1)] = sc == "ring"   # the ring's bodies past the pair fight; any other scene's stand
+-	main.start_match(seed if seed != 0 else SEED, ai_set, {} if slots.size() < 2 else {"slots": slots})   # its own setup: no intro, not filed
++	if sc == "beamduel":
++		main.start_match(seed if seed != 0 else SEED, ai_set, main._match_setup(seed if seed != 0 else SEED))   # the page's own world words (planet, tiles)
++	else:
++		main.start_match(seed if seed != 0 else SEED, ai_set, {} if slots.size() < 2 else {"slots": slots})   # its own setup: no intro, not filed
+ 	_pend = {"sc": sc, "reduced": reduced, "skip": skip, "err": err, "ai": ai}
+ 	_load_since = Time.get_ticks_msec()
+ 	if not _loading():   # a gen 1 world is made whole by start_match: set up at once, as it always was
+@@ -256,6 +262,8 @@ func _walk(S: SimState, near: float) -> void:
+ ## The inputs and the staging for tick t of a scenario.
+ func drive(sc: String, t: int, S: SimState) -> void:
+ 	match sc:
++		"beamduel":     # Camera's film scene: both charge, a signature, the answer, the beam struggle (_duel)
++			_duel(t, S)
+ 		"mash":         # both human, walking into reach and mashing light, with a heavy now and then
+ 			_mash(t, S)
+ 		"mashcity":     # the same, in the re-laid city, set down beside its tallest tower
+@@ -469,3 +477,138 @@ func _stage_collapse(S: SimState, t: int) -> void:
+ 	var b0 = front[mini(front.size() - 1, k * 3)]
+ 	S.fighters[0].tier = 3.0
+ 	WorldStructures.explode(S, b0.x, WorldTerrain.groundY(S, b0.x) + 40.0, 800.0, S.fighters[0])
++
++
++# ------------------------------------------------------------------ film scene: the beam duel (Camera; docs/camera/pending/clip-scenes)
++# Both charge, P1 fires the signature, P2's answer is put in his queue as the beam leaves (a write into the sim, like the
++# other scenes' ki and set-downs), and the real beam struggle runs. Words: bdshot=1|2|3 the film camera's framing (absent
++# or 0: the game's own camera), bdgap the pair's distance (1000), bdalt their height over the ground (0), bdx P1's x
++# (the seed's start), bdcity=1 set down beside the tallest tower first. The HUD is hidden for the scene.
++
++const BD_CHARGE_TO: int = 70   # both charge from the start; P1 fires on this tick
++var _bd_tb: int = -1           # the tick P1's beam left
++var _bd_shot: int = 1
++var _bd_t0: float = -1.0
++var _bd_mid: Vector2 = Vector2.ZERO
++
++
++func _kvf(key: String, d: float) -> float:
++	var v: String = _page_kv(key)
++	return float(v) if v != "" else d
++
++
++func _duel(t: int, S: SimState) -> void:
++	var host: SimHost = main.host
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	if t == 0:
++		_bd_shot = int(_kvf("bdshot", 0.0))
++		if _page_kv("bdcity") == "1":
++			_to_the_city(S)
++		if _page_kv("bdx") != "":
++			A.x = SimWrap.wrap(_kvf("bdx", 0.0))
++		D.x = SimWrap.wrap(A.x + _kvf("bdgap", 1000.0))
++		for f in [A, D]:
++			f.y = WorldTerrain.groundY(S, f.x) + _kvf("bdalt", 0.0)
++			f.vx = 0.0
++			f.vy = 0.0
++			f.ki = 100.0
++		main.get_node("HUD").visible = false
++		if _bd_shot > 0:
++			main.film_cam = _film
++		_bd_tb = -1
++		_bd_t0 = -1.0
++	if _bd_tb < 0 and S.beams.size() > 0:
++		_bd_tb = t
++	if _bd_tb >= 0 and t == _bd_tb + 4:
++		SimAct.push(D, SimAct.SIG, 0, 0, S.tick)   # P2 fires back as the beam leaves: the fronts meet, the struggle starts
++	var ins: Array = []
++	for k in range(2):
++		var i := SimIntent.new()
++		i.charge = t < BD_CHARGE_TO
++		if k == 0 and (t == BD_CHARGE_TO or t == BD_CHARGE_TO + 1):
++			i.sig = t == BD_CHARGE_TO
++			i.sigHeld = true
++			i.stanceMask = 4
++		ins.append(i)
++	host.film_in = ins
++
++
++static func _ss(x: float) -> float:
++	var u: float = clampf(x, 0.0, 1.0)
++	return u * u * u * (u * (u * 6.0 - 15.0) + 10.0)
++
++
++## The frame's camera put where the shot wants it: the world point (wx, wy) at (u, v) of the screen, zoom z, pitch p.
++func _place(fr: SplitFrame, wx: float, wy: float, wz: float, u: float, v: float, z: float, p: float) -> void:
++	var cx: float = wx
++	var cy: float = wy - 0.2 * fr.vh / z
++	for k in range(8):
++		var q: Vector2 = SplitFrame.project(cx, cy, z, p, fr.vw, fr.vh, wx, wy, wz)
++		cx = SimWrap.wrap(cx + (q.x - u * fr.vw) / z)
++		cy -= (q.y - v * fr.vh) / z
++	fr.cam_x[0] = cx
++	fr.cam_y[0] = cy
++	fr.cam_z[0] = z
++	fr.pitch = p
++
++
++func _film(fr: SplitFrame, S: SimState, a: float) -> void:
++	var tt: float = float(main.host.ticks) + a
++	if _bd_t0 < 0.0:
++		_bd_t0 = tt
++	var t: float = tt - _bd_t0
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var dx: float = SimWrap.sdx(A.x, D.x)
++	var span: float = maxf(absf(dx), 300.0)
++	var mid := Vector2(SimWrap.wrap(A.x + dx * 0.5), (float(A.y) + float(D.y)) * 0.5 + CamParams.CHEST)
++	# the subjects' point, eased: the fighters hardly move, and the camera never takes a step from them
++	if _bd_mid == Vector2.ZERO or t < 1.0:
++		_bd_mid = mid
++	else:
++		_bd_mid = Vector2(SimWrap.wrap(_bd_mid.x + SimWrap.sdx(_bd_mid.x, mid.x) * 0.06), lerpf(_bd_mid.y, mid.y, 0.06))
++	var fz: float = (float(A.z) + float(D.z)) * 0.5
++	var u: float = _ss((t - 62.0) / 70.0)   # held on the charge, the move as he fires, settled as the beams lock; the struggle is held still
++	var fit: float = fr.vw / span
++	var dir: float = signf(dx) if dx != 0.0 else 1.0
++	match _bd_shot:
++		1:   # low and side-on, the ground along the bottom, a slow push in and drift
++			var z: float = fit * lerpf(0.70, 0.79, u)
++			var wx: float = SimWrap.wrap(_bd_mid.x + dir * span * lerpf(0.03, -0.03, u))
++			_place(fr, wx, _bd_mid.y, fz, 0.5, lerpf(0.62, 0.60, u), z, lerpf(0.0, 3.0, u))
++		2:   # high and wide, looking down on the town under them, craning down a little and easing in
++			var z: float = fit * lerpf(0.58, 0.68, u)
++			_place(fr, _bd_mid.x, _bd_mid.y, fz, 0.5, lerpf(0.30, 0.35, u), z, lerpf(17.0, 11.0, u))
++		_:   # tight on P1 charging, across to P2 charging, then pulling back to both as the beams meet
++			var tight: float = 2.3
++			var wide: float = fit * 0.70
++			var ax := Vector2(float(A.x), float(A.y) + CamParams.CHEST)
++			var dpt := Vector2(float(D.x), float(D.y) + CamParams.CHEST)
++			var c: float = _ss((t - 36.0) / 30.0)    # across, P1 to P2
++			var w: float = _ss((t - 100.0) / 50.0)   # back, to both
++			var hx: float = SimWrap.wrap(ax.x + SimWrap.sdx(ax.x, dpt.x) * c)
++			var hy: float = lerpf(ax.y, dpt.y, c)
++			var lift: float = sin(PI * c) * 0.35   # the move across opens a little in its middle, so it reads as a move and not a whip
++			var zt: float = tight * (1.0 - lift)
++			var z: float = exp(lerpf(log(zt), log(wide), w))
++			var wx: float = SimWrap.wrap(hx + SimWrap.sdx(hx, _bd_mid.x) * w)
++			var wy: float = lerpf(hy, _bd_mid.y, w)
++			var su: float = lerpf(0.5 - 0.12 * dir, 0.5 + 0.12 * dir, c)
++			_place(fr, wx, wy, fz, lerpf(su, 0.5, w), lerpf(0.52, 0.58, w), z, lerpf(-1.0, 4.0, w))
++	fr.focus_z[0] = fz
++	fr.mode = "merged"
++	fr.sep = 0.0
++	fr.e = 0.0
++	fr.e_slot = -1
++	fr.share = 0.0
++	fr.sliver = 0.0
++	fr.active = [true, false]
++	fr.panel = {}
++	fr.fade = 0.0
++	fr.flash = 0.0
++	fr.line_alpha = 0.0
++	fr.gap = 0.0
++	fr.shake = PackedFloat64Array([0.0, 0.0])
++	fr.many_off = []
++	fr.cut = t < 1.0

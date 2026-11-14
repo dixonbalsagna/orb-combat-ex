@@ -1,0 +1,42 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index ae0eeb7..e72ded3 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -316,6 +316,7 @@ var blow_push: bool = true               # a small push-in on each landed blow b
+ var blows: int = 0                         # blow pushes started (for the sweep)
+ var _bp_amp: float = 0.0
+ var _bp_t: float = -1.0
++var _bm_drawn: float = 1.0                # the blow push the last frame drew (the limiter leaves room for its change)
+ var _bp_hold: float = 0.0
+ var _live_punch_at: float = -1.0         # the live version: when the 6-tick punch-in starts (rig time)
+ var _punch_t: float = -1.0
+@@ -563,6 +564,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	story_d = -1
+ 	_mlead = 0.0
+ 	_bp_t = -1.0
++	_bm_drawn = 1.0
+ 	_stg_on = [false, false]
+ 	_stg_rel = [0, 0]
+ 	_lens_ok = [false, false]
+@@ -4091,6 +4093,12 @@ func _outputs(S: SimState) -> void:
+ 		shared = _blend_cam(shared, _owns[solo_slot], smoothstep(0.0, 1.0, solo_w))
+ 		fz_sh = lerpf(_fzm, float(_fz[solo_slot]), smoothstep(0.0, 1.0, solo_w))
+ 	var slam_now: bool = _slam_slot >= 0 and e > 0.0
++	# The blow push is applied after this limiter (in _make_frame, so it stays crisp), so its own change this frame comes out of the
++	# drawn zoom's allowance: the zoom on the screen keeps to the comfort limit. A push rising on the tick a split opened, with the
++	# pane's zoom on its cap, read 2.85 e-folds a second against 2.40 (split_sweep, real match 10 at 49 degrees, t=248.42).
++	var bm_now: float = _blow_mult()
++	var d_push: float = log(bm_now) - log(maxf(_bm_drawn, 1.0e-6))
++	_bm_drawn = bm_now
+ 	for i in range(2):
+ 		var o: Vector3 = _blend_cam(_owns[i], shared, w)
+ 		var fzo_i: float = lerpf(float(_fz[i]), fz_sh, w)   # the depth the displayed camera is defined at
+@@ -4114,6 +4122,8 @@ func _outputs(S: SimState) -> void:
+ 			if _sw_ticks >= CamParams.SWING_SHOT_TICKS and S.fighters[i].state == "launched":
+ 				cap_up = 0.0   # no zoom in during a swing on a body in the air (camera.md section 2; Legal e12)
+ 			var cap_dn: float = 0.0 if (_sw_tall and _sw_ticks > 0 and solo_kind == "") else cap   # tall land near: no pull out either
++			cap_up = maxf(0.0, cap_up - maxf(0.0, d_push))   # (the push's share of this frame's change, see above)
++			cap_dn = maxf(0.0, cap_dn - maxf(0.0, -d_push))
+ 			var z_held: float = exp(log(_oz[i]) + clampf(log(o.z) - log(_oz[i]), -cap_dn, cap_up))
+ 			# The approach cap's other half: the lens (the focus depth plus the camera's distance to it) is the same whatever moves
+ 			# it, so a zoom that comes in while the focus goes deeper is held when the lens would close on the face ahead faster

@@ -1,0 +1,19 @@
+# push-cap gates: the EP's batch tree (main 66b66796 + tonight's parks, from s413-setup.sh) + docs/camera/pending/push-cap/push-cap.patch (bc92711f); headless Godot 4.7.2, one job at a time
+chase_rush_check     chase_rush_check: 130 checks passed 
+flight_shots_check   flight_shots_check: 803 checks passed 
+split_share_check    split_share_check: 26 checks passed 
+split_vision_check   split_vision_check: 11 checks passed 
+swing_shot_check     swing_shot_check: 164 checks passed 
+swing_places_check   swing_places_check: 33 checks passed 
+swing_real_check     swing_real_check: 48 checks passed 
+cross_ko_check       cross_ko_check: 21 checks passed 
+launch_shots_check   launch_shots_check: 1029 checks passed 
+split_sweep          split sweep passed 
+swing_read_check     swing_read_check: 14420 checks passed 
+
+# before the fix, the same tree: split_sweep's failing row alone (a scratch --row switch running only real match 10 pitch 49 full, rig sees two humans)
+FAIL real match 10 pitch 49 full (rig sees two humans): pane 1 zoom rate 2.85 e-folds a second (limit 2.40) at t=248.42 mode opening sep 0.063 e 0.00 solo_w 0.00
+row pz: 1 failures
+
+# with the fix, that row alone
+row pz: 0 failures

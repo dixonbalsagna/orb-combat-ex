@@ -1,0 +1,330 @@
+diff --git a/data/camera/swing.json b/data/camera/swing.json
+index edcf9b0..f9cf83d 100644
+--- a/data/camera/swing.json
++++ b/data/camera/swing.json
+@@ -1,6 +1,8 @@
+ {
+   "_note": "Camera's numbers for the swing that a reading can move (docs/camera/swing-view.md). A flash read or a tester can lower peakRate with no code change (Accessibility, docs/accessibility/swing-motion.md, ruling 3). The view's only: the sim never reads this.",
+   "schema": "camera.swing/1",
++  "splitShare": 0.0,
++  "_splitShare": "against a CPU, the player's pane takes this share of the split, 0.5 to 1; 0 is even. Orb's first play asked for about 0.7 (docs/camera/split-unequal.md). Off here: a page word turns it on",
+   "peakRate": 3.0,
+   "_peakRate": "the peak launch's zoom, e-folds a second at most. 3 is Research's: 93% of the descent in frame, against 34% at 1. A slower number loses the falling fighter out of the frame"
+ }
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index e9eee2d..3f8c17d 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -380,6 +380,7 @@ const PEAK_BACK_MIN: float = 0.2
+ const CLOSE_R: float = 0.17              # a locked brawl's size: a fighter's height as a share of the screen's, against the fight's 0.12 and the cap's 0.14
+ const REVEAL_R: float = 0.05             # readable: a reveal keeps him at least this size (36 px at 720p)
+ const REVEAL_R_HIGH: float = 0.03        # ... and this with both at tier 3 or up, where the width is the point
++const SHARE_EVEN: float = 0.6            # split_share: the line eases to the middle for a beam struggle, and back, over this
+ const R_READ: float = 0.1                # readable: the size a slow body comes back to, at least (72 px at 720p), against the fight's 0.11 and the pane's 0.085
+ const READ_SPEED: float = 1500.0         # under this a body isn't really flying
+ const READ_AFTER: float = 0.3            # for this long, so an arc's top doesn't count
+diff --git a/render/camera/split_frame.gd b/render/camera/split_frame.gd
+index c58e5b0..24e884e 100644
+--- a/render/camera/split_frame.gd
++++ b/render/camera/split_frame.gd
+@@ -12,6 +12,8 @@ var mode: String = "merged"          # merged, opening, split, closing, slam, sw
+ var sep: float = 0.0                 # 0 one view, 1 two panes (linear; the panes' blend uses smootherstep(sep))
+ var e: float = 0.0                   # how far one pane has taken the screen (a launch, a cinematic, a slam)
+ var e_slot: int = -1
++var share: float = 0.0                # the large pane's share of an unequal split; 0 when the split is even (no CPU, the switch off, a beam struggle)
++var share_slot: int = -1              # whose pane is the large one, -1 none
+ var sliver: float = 0.0              # share of the screen the other pane keeps at e = 1
+ var theta: float = 0.0               # angle of n, radians
+ var n: Vector2 = Vector2.RIGHT
+@@ -56,6 +58,8 @@ func duplicate() -> SplitFrame:
+ 	f.sep = sep
+ 	f.e = e
+ 	f.e_slot = e_slot
++	f.share = share
++	f.share_slot = share_slot
+ 	f.sliver = sliver
+ 	f.theta = theta
+ 	f.n = n
+@@ -198,6 +202,8 @@ func viewed_arc(i: int) -> float:
+ func split_record(pointer_always: bool = false) -> Dictionary:
+ 	var d: Dictionary = {}
+ 	d["sep"] = sep
++	d["share"] = share
++	d["share_slot"] = share_slot
+ 	d["c"] = c
+ 	d["n"] = n
+ 	d["gap"] = gap
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 32ed4fc..ccdefcf 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -344,6 +344,9 @@ var _ft_dir: Vector2 = Vector2.ZERO
+ var _ft_t: float = -1.0
+ var _ft_slot: int = -1
+ var _ft_v: Array = [Vector2.ZERO, Vector2.ZERO]
++var split_share: float = 0.0               # against a CPU, the player's pane takes this share of the split, 0.5 to 1 (Orb's first play: about 0.7; docs/camera/split-unequal.md). 0: off, none of it runs
++var _sh_slot: int = -1                     # the player the share is for, -1 none
++var _sh_w: float = 1.0                     # 1, or easing to 0 in a beam struggle: the beams meet at the middle
+ var readable: bool = false                 # wide while a body's really flying, readable within about a second of it stopping (Orb: fighters seem too small; docs/camera/launch-director.md). Off: none of it runs
+ var _rd_t: Array = [0.0, 0.0]              # how long each body has been slow
+ var _rd_p: Array = [Vector2.ZERO, Vector2.ZERO]
+@@ -618,6 +621,9 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 	_flash = maxf(0.0, _flash - DT)
+ 	_update_orientation(S)
+ 	r_now = _metric(S)
++	if split_share > 0.0:
++		_sh_slot = _human_slot(S)
++		_sh_w = move_toward(_sh_w, 0.0 if S.game.clash != null else 1.0, DT / CamParams.SHARE_EVEN)
+ 	if peak_launch:
+ 		_peak_tick(S)
+ 	_update_solo(S)
+@@ -3132,7 +3138,22 @@ func _own_zoom_target(S: SimState, i: int) -> float:
+ func _anchor_rest(i: int) -> Vector2:
+ 	var n: Vector2 = Vector2(cos(theta), sin(theta))
+ 	var s: float = -1.0 if i == 0 else 1.0
+-	return Vector2(vw * 0.5, vh * 0.5 + CamParams.ANCHOR_DROP * vh) + s * Vector2(n.x * CamParams.ANCHOR_LX * vw, n.y * CamParams.ANCHOR_LY * vh)
++	return Vector2(vw * 0.5, vh * 0.5 + CamParams.ANCHOR_DROP * vh) + s * Vector2(n.x * CamParams.ANCHOR_LX * vw, n.y * CamParams.ANCHOR_LY * vh) + n * _share_delta(n) * 0.5
++
++
++## This pane's width against an even split's: more than 1 for the large pane, less for the small one, 1 with no share.
++func _pane_k(i: int) -> float:
++	if split_share <= 0.0 or _sh_slot < 0:
++		return 1.0
++	var mine: float = split_share if i == _sh_slot else 1.0 - split_share
++	return lerpf(1.0, mine / 0.5, _smootherstep(sep) * smoothstep(0.0, 1.0, _sh_w))
++
++
++## How far the share moves the divider from the middle along n: it comes in as the panes open and goes as they close, so it has no clock of its own.
++func _share_delta(n: Vector2) -> float:
++	if split_share <= 0.0 or _sh_slot < 0:
++		return 0.0
++	return _half_extent_along_n(n) * (2.0 * split_share - 1.0) * (1.0 if _sh_slot == 0 else -1.0) * _smootherstep(sep) * smoothstep(0.0, 1.0, _sh_w)
+ 
+ 
+ func _half_extent_along_n(n: Vector2) -> float:
+@@ -3706,7 +3727,7 @@ func _update_cameras(S: SimState) -> void:
+ 			var ry: float = (fy_ref - _fy[i]) * zc
+ 			var e_w: float = sqrt(rx * rx + ry * ry) / vw
+ 			var lag_soft: float = CamParams.LAG_SOFT
+-			var lag_hard: float = CamParams.LAG_HARD
++			var lag_hard: float = CamParams.LAG_HARD * _pane_k(i)
+ 			var cut_w: float = CamParams.LAG_CUT
+ 			if staged:
+ 				lag_soft = CamParams.STAGE_LAG_HARD
+@@ -4412,6 +4433,9 @@ func _make_frame(S: SimState) -> SplitFrame:
+ 	f.sep = sep
+ 	f.e = e
+ 	f.e_slot = e_slot
++	var share_on: bool = split_share > 0.0 and _sh_slot >= 0 and _sh_w >= 0.5
++	f.share = split_share if share_on else 0.0
++	f.share_slot = _sh_slot if share_on else -1
+ 	f.sliver = sliver if e_slot >= 0 else 0.0
+ 	f.many_off = _many_marks.duplicate(true)
+ 	f.theta = theta
+@@ -4423,6 +4447,10 @@ func _make_frame(S: SimState) -> SplitFrame:
+ 		# lands with them instead of crossing the screen at one speed while they ease. The slam's door keeps its own shape (e = p^3).
+ 		var ev: float = e if _slam_slot >= 0 else smoothstep(0.0, 1.0, e)
+ 		delta = ev * hn * (1.0 - 2.0 * sliver) * (1.0 if e_slot == 0 else -1.0)
++		if split_share > 0.0:
++			delta += _share_delta(f.n) * (1.0 - ev)   # a shot's or the slam's divider takes over from the share
++	elif split_share > 0.0:
++		delta = _share_delta(f.n)
+ 	f.c = Vector2(vw * 0.5, vh * 0.5) + f.n * delta
+ 	var ss: float = _smootherstep(sep)
+ 	f.gap = maxf(CamParams.GAP_MIN_PX, CamParams.GAP_FRAC * vw)
+@@ -5496,7 +5524,7 @@ func _mass_stage(was_cut: bool) -> void:
+ func _soft_catch(i: int, pp: Vector2, aim: Vector2, z: float, oz: float) -> void:
+ 	_soft_on[i] = true
+ 	var w: float = vw / z
+-	var room: float = CamParams.SPEED_EXCURSION * (0.5 if sep > 0.5 else 1.0) * w
++	var room: float = CamParams.SPEED_EXCURSION * (0.5 * _pane_k(i) if sep > 0.5 else 1.0) * w
+ 	var dev0: Vector2 = Vector2(SimWrap.sdx(pp.x, aim.x), aim.y - pp.y)
+ 	var v: Vector2 = Vector2(_mv[i])
+ 	_mavs[i] = Vector2(_mavs[i]).lerp(Vector2(_mav[i]), CamParams.SPEED_SMOOTH)   # (a lag bound's one-tick pull isn't his speed)
+diff --git a/render/camera/split_view.gd b/render/camera/split_view.gd
+index fdde56c..185e14e 100644
+--- a/render/camera/split_view.gd
++++ b/render/camera/split_view.gd
+@@ -275,6 +275,11 @@ func set_feathered_sweeps(v: int) -> void:
+ 
+ ## The player's settings (docs/camera/split-screen.md sections 2 and 13). Solo against the AI: split like two players
+ ## (default) or follow the human fighter alone when far. Reduced motion: quicker swing, no tier push, no launch follow.
++func set_split_share(share: float) -> void:
++	if main != null:
++		main.split_rig.split_share = share
++
++
+ func set_solo_split(on: bool) -> void:
+ 	if main != null:
+ 		main.split_rig.solo_split = on
+diff --git a/render/camera/tests/split_share_check.gd b/render/camera/tests/split_share_check.gd
+new file mode 100644
+index 0000000..d87f0fc
+--- /dev/null
++++ b/render/camera/tests/split_share_check.gd
+@@ -0,0 +1,141 @@
++extends SceneTree
++## The unequal split (docs/camera/split-unequal.md): against a CPU the player's pane takes the larger share, each fighter stays in his own pane, the line eases with the panes, and two humans or the switch off stay even.
++##   godot --headless --path . --script res://render/camera/tests/split_share_check.gd
++
++var fails: int = 0
++var checks: int = 0
++
++
++func _ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL ", what)
++
++
++## A staged flight apart and back: returns what the divider and the fighters did.
++func _run(share: float, human: int, side: float) -> Dictionary:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, 12345, {"p1": false, "p2": false}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
++	S.dt = SplitRig.DT
++	var rig := SplitRig.new()
++	rig.split_share = share
++	rig.test_human_slot = human
++	rig.reset(S, 1280.0, 720.0)
++	var x0: float = S.fighters[0].x
++	var out: Dictionary = {"biggest": 0.0, "wide": 0.0, "in0": 0, "in1": 0, "split": 0, "merged_end": false, "largest_share": 0.0}
++	var last_c: float = NAN
++	for t in range(900):
++		var d: float = 300.0
++		if t > 200 and t <= 500:
++			d = 300.0 + (t - 200) * 20.0
++		elif t > 500:
++			d = maxf(300.0, 6300.0 - (t - 500) * 20.0)
++		var i: int = 0
++		for f in S.fighters:
++			f.ai = null
++			f.state = "free"
++			f.vx = 0.0
++			f.vy = 0.0
++			f.x = SimWrap.wrap(x0 + side * (-0.5 if i == 0 else 0.5) * d)
++			f.y = WorldTerrain.groundY(S, f.x) + 500.0
++			i += 1
++		SimCore.step(S)
++		S.out.fx.clear()
++		S.out.feed.clear()
++		rig.step(S, 1280.0, 720.0, [])
++		var fr: SplitFrame = rig.current()
++		if not is_nan(last_c):
++			out.biggest = maxf(float(out.biggest), absf(fr.c.x - last_c) / 1280.0)
++		last_c = fr.c.x
++		if fr.sep >= 0.999 and fr.e <= 0.001:
++			out.split = int(out.split) + 1
++			var a: Vector2 = fr.screen_pos(0, S.fighters[0].x, S.fighters[0].y + CamParams.CHEST)
++			var b: Vector2 = fr.screen_pos(1, S.fighters[1].x, S.fighters[1].y + CamParams.CHEST)
++			if fr.weight1(a) == 0.0 and a.x > 0.0 and a.x < 1280.0:
++				out.in0 = int(out.in0) + 1
++			if fr.weight1(b) == 1.0 and b.x > 0.0 and b.x < 1280.0:
++				out.in1 = int(out.in1) + 1
++			# pane 1's share of the middle row, at the line
++			var share1: float = 1.0 - fr.c.x / 1280.0 if fr.n.x >= 0.0 else fr.c.x / 1280.0
++			out.largest_share = share1
++		out.merged_end = fr.sep <= 0.001
++	return out
++
++
++## Real AI fights at 70/30, the player in slot 0: he never leaves his own pane. The CPU's narrow pane is reported, not failed: he can leave it for a moment.
++func _real() -> void:
++	var worst: Array = [0, 0]
++	for seed in [1, 2, 3]:
++		var S: SimState = SimCore.createSim()
++		SimCore.newMatch(S, seed, {"p1": true, "p2": true}, {"planet": [7, 3, 11, 25][seed % 4], "touch": 1, "planetGen": 3, "intro": false})
++		S.dt = SplitRig.DT
++		var rig := SplitRig.new()
++		rig.swing_view = true
++		rig.peak_launch = true
++		rig.launch_director = true
++		rig.readable = true
++		rig.split_share = 0.7
++		rig.test_human_slot = 0
++		rig.reset(S, 1280.0, 720.0)
++		var run: Array = [0, 0]
++		for t in range(3600):
++			SimCore.step(S)
++			var ev: Array = S.out.fx.duplicate()
++			S.out.fx.clear()
++			S.out.feed.clear()
++			rig.step(S, 1280.0, 720.0, ev)
++			var fr: SplitFrame = rig.current()
++			for i in range(2):
++				var gone: bool = false
++				if fr.sep >= 0.999 and fr.e <= 0.001 and rig._slam_slot < 0 and rig._pk_phase == "":
++					var f = S.fighters[i]
++					var sp: Vector2 = fr.screen_pos(i, f.x, f.y + CamParams.CHEST)
++					gone = sp.x < 0.0 or sp.x > 1280.0 or sp.y < 0.0 or sp.y > 720.0 or fr.weight1(sp) != (1.0 if i == 1 else 0.0)
++				run[i] = int(run[i]) + 1 if gone else 0
++				worst[i] = maxi(int(worst[i]), int(run[i]))
++	print("real fights at 70/30: the player out of his pane at most %d ticks, the CPU out of his at most %d" % [worst[0], worst[1]])
++	_ok(int(worst[0]) <= 15, "the player out of his pane for %d ticks" % worst[0])
++
++
++## A beam struggle: the line eases back to the middle, and out again after.
++func _even() -> void:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, 12345, {"p1": false, "p2": false}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
++	var rig := SplitRig.new()
++	rig.split_share = 0.7
++	rig.test_human_slot = 1
++	rig.reset(S, 1280.0, 720.0)
++	rig.sep = 1.0
++	rig.split_wanted = true
++	var n := Vector2(1.0, 0.0)
++	rig.r_now = 0.01
++	rig._sh_slot = 1
++	var far: float = absf(rig._share_delta(n))
++	_ok(far > 200.0, "the share moves the line: %.0f" % far)
++	rig._sh_w = 0.0
++	_ok(rig._share_delta(n) == 0.0, "in a struggle the line is in the middle")
++	var rec: Dictionary = SplitFrame.new().split_record()
++	_ok(rec.has("share") and rec.has("share_slot") and float(rec["share"]) == 0.0 and int(rec["share_slot"]) == -1, "the record carries the share")
++	rig._sh_w = 0.5
++	_ok(absf(rig._share_delta(n)) < far and absf(rig._share_delta(n)) > 0.0, "and it eases between")
++
++
++func _initialize() -> void:
++	var off: Dictionary = _run(0.0, 1, 1.0)
++	var even: Dictionary = _run(0.7, -1, 1.0)
++	_ok(absf(float(even.largest_share) - 0.5) < 0.03, "two humans stay even: pane 1 has %.2f" % even.largest_share)
++	for row in [[1, 1.0], [0, 1.0], [1, -1.0], [0, -1.0]]:
++		var r: Dictionary = _run(0.7, int(row[0]), float(row[1]))
++		var mine: float = float(r.largest_share) if int(row[0]) == 1 else 1.0 - float(r.largest_share)
++		print("player %d, side %+.0f: his pane %.2f of the width, line's biggest step %.4f, in his pane %d and %d of %d, merged at the end %s" % [row[0], row[1], mine, r.biggest, r.in0, r.in1, r.split, r.merged_end])
++		_ok(int(r.split) > 200, "a real split: %d ticks" % r.split)
++		_ok(mine > 0.62 and mine < 0.78, "his pane %.2f" % mine)
++		_ok(int(r.in0) >= int(r.split) - 2 and int(r.in1) >= int(r.split) - 2, "each in his own pane: %d, %d of %d" % [r.in0, r.in1, r.split])
++		_ok(float(r.biggest) < 0.03, "the line stepped %.4f of the width in a tick" % r.biggest)
++		_ok(bool(r.merged_end), "merged at the end")
++	print("line's biggest step, off: %.4f" % off.biggest)
++	_even()
++	_real()
++	print("split_share_check: %d checks, %d failed" % [checks, fails] if fails > 0 else "split_share_check: %d checks passed" % checks)
++	quit(1 if fails > 0 else 0)
+diff --git a/render/core/main.gd b/render/core/main.gd
+index d61182a..8adf6d6 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -244,6 +244,7 @@ func _ready() -> void:
+ 	split_rig.launch_director = RenderTileGround.on
+ 	split_rig.close_brawl = RenderTileGround.on
+ 	split_rig.readable = RenderTileGround.on
++	split_rig.split_share = float(CamPlaces.data().get("splitShare", 0.0)) if RenderTileGround.on else 0.0
+ 	split_rig.follow_through = RenderTileGround.on
+ 	split_rig.flight_reveal = RenderTileGround.on
+ 	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)
+diff --git a/tools/schemas/camera-swing.schema.json b/tools/schemas/camera-swing.schema.json
+index 54c9236..af1cd70 100644
+--- a/tools/schemas/camera-swing.schema.json
++++ b/tools/schemas/camera-swing.schema.json
+@@ -9,6 +9,7 @@
+   "required": ["schema", "peakRate"],
+   "properties": {
+     "schema": { "const": "camera.swing/1" },
++    "splitShare": { "type": "number", "minimum": 0, "maximum": 1 },
+     "peakRate": { "type": "number", "exclusiveMinimum": 0, "maximum": 3 }
+   }
+ }

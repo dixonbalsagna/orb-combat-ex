@@ -1,0 +1,31 @@
+# The trace at the failure (before the fix), real match 10 at 49 degrees: ZP = the 6-tick punch and the blow push; ZT = the rig's last mode reasons, pane zoom targets (zo), drawn zooms (oz), layout age
+  ZP 248.333 punch 1.0000 blow 1.0000 bp_t -1.000 bp_amp 0.012
+  ZP 248.350 punch 1.0000 blow 1.0000 bp_t -1.000 bp_amp 0.012
+  ZP 248.367 punch 1.0000 blow 1.0000 bp_t -1.000 bp_amp 0.012
+  ZP 248.383 punch 1.0000 blow 1.0000 bp_t -1.000 bp_amp 0.012
+  ZP 248.400 punch 1.0000 blow 1.0075 bp_t 0.017 bp_amp 0.021
+  ZP 248.417 punch 1.0000 blow 1.0130 bp_t 0.033 bp_amp 0.021
+  ZP 248.433 punch 1.0000 blow 1.0167 bp_t 0.050 bp_amp 0.021
+  ZP 248.450 punch 1.0000 blow 1.0190 bp_t 0.067 bp_amp 0.021
+  ZP 248.467 punch 1.0000 blow 1.0202 bp_t 0.083 bp_amp 0.021
+  ZP 248.483 punch 1.0000 blow 1.0207 bp_t 0.100 bp_amp 0.021
+  ZP 248.500 punch 1.0000 blow 1.0208 bp_t 0.117 bp_amp 0.021
+  ZT 248.250 why ["merge slam", "split out of frame"] zo 2.135/1.489 oz 1.555/1.096 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.07
+  ZT 248.267 why ["merge slam", "split out of frame"] zo 2.115/1.486 oz 1.513/1.141 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.08
+  ZT 248.283 why ["merge slam", "split out of frame"] zo 2.094/1.481 oz 1.542/1.168 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.10
+  ZT 248.300 why ["merge slam", "split out of frame"] zo 2.069/1.475 oz 1.520/1.167 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep 1 slamdone false age 0.12
+  ZT 248.317 why ["merge slam", "split out of frame"] zo 2.027/1.461 oz 1.498/1.167 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep 1 slamdone false age 0.13
+  ZT 248.333 why ["merge slam", "split out of frame"] zo 1.928/1.419 oz 1.474/1.180 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep 1 slamdone false age 0.15
+  ZT 248.350 why ["merge slam", "split out of frame"] zo 1.834/1.355 oz 1.450/1.198 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep 1 slamdone false age 0.17
+  ZT 248.367 why ["merge slam", "split out of frame"] zo 1.744/1.301 oz 1.428/1.215 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep 1 slamdone false age 0.18
+  ZT 248.383 why ["split out of frame", "merge slam"] zo 1.738/1.297 oz 1.413/1.264 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [1.2, 1.2] gov [false, false] slamstep -1 slamdone false age 0.00
+  ZT 248.400 why ["merge slam", "split out of frame"] zo 1.730/1.293 oz 1.397/1.316 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.00
+  ZT 248.417 why ["merge slam", "split out of frame"] zo 1.723/1.289 oz 1.392/1.362 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.02
+  ZT 248.433 why ["merge slam", "split out of frame"] zo 1.716/1.285 oz 1.410/1.388 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.03
+  ZT 248.450 why ["merge slam", "split out of frame"] zo 1.709/1.282 oz 1.440/1.385 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.05
+  ZT 248.467 why ["merge slam", "split out of frame"] zo 1.703/1.278 oz 1.470/1.374 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.07
+  ZT 248.483 why ["merge slam", "split out of frame"] zo 1.697/1.275 oz 1.499/1.360 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.08
+  ZT 248.500 why ["merge slam", "split out of frame"] zo 1.691/1.271 oz 1.524/1.343 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.10
+  ZT 248.517 why ["merge slam", "split out of frame"] zo 1.683/1.267 oz 1.547/1.327 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.12
+  ZT 248.533 why ["merge slam", "split out of frame"] zo 1.675/1.262 oz 1.569/1.308 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.13
+  ZT 248.550 why ["merge slam", "split out of frame"] zo 1.667/1.258 oz 1.589/1.288 ozs [0.0, 0.0] ozv [0.0, 0.0] zr [2.4, 2.4] gov [false, false] slamstep -1 slamdone false age 0.15

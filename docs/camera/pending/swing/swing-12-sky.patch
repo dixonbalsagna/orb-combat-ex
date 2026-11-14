@@ -1,0 +1,331 @@
+diff --git a/render/camera/cam_places.gd b/render/camera/cam_places.gd
+index 6fe27ae..2a9f2a1 100644
+--- a/render/camera/cam_places.gd
++++ b/render/camera/cam_places.gd
+@@ -12,6 +12,7 @@ static var frame_source: Callable = Callable()
+ static var swing_source: Callable = Callable()
+ static var biome_source: Callable = Callable()
+ static var land_source: Callable = Callable()
++static var ground_source: Callable = Callable()
+ 
+ const _DATA: String = "res://data/camera/swing.json"
+ static var _d = null
+@@ -140,6 +141,17 @@ static func swing_of(S: SimState) -> Dictionary:
+ 
+ 
+ ## Tall land round x within r (Game Design's fixed test, height only): the bake's heights on two rings of points, on the view's own line.
++## The planet's ground under strip x, depth z (positive toward the camera). Without the field: the strip's own ground.
++static func ground_at(S: SimState, x: float, z: float) -> float:
++	if ground_source.is_valid():
++		return ground_source.call(S, x, z)
++	var F = _field()
++	if F == null or S.get("frame") == null:
++		return WorldTerrain.groundY(S, x)
++	F.placeAt(S, x, z)
++	return F.heightOf(S.frame.seed, S.frame.gen, 0, F.ox, F.oy, F.oz)
++
++
+ static func land_tall(S: SimState, x: float, r: float, tall: float) -> bool:
+ 	if land_source.is_valid():
+ 		return land_source.call(S, x, r)
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 259e9b1..0b2d670 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -378,6 +378,11 @@ const PEAK_BACK_KO: float = 0.5
+ const PEAK_BACK_MIN: float = 0.2
+ # The high-velocity moves (docs/camera/launch-director.md), first values
+ const CLOSE_R: float = 0.17              # a locked brawl's size: a fighter's height as a share of the screen's, against the fight's 0.12 and the cap's 0.14
++const SKY_TILT: float = 4.0              # brawl_sky: the low angle it may take, degrees, limited by the ground rule
++const SKY_STRIP: float = 1.2             # the strip of sky that counts, degrees at the frame's top (about 4% of its height)
++const SKY_COLS: Array = [-0.7, 0.0, 0.7]   # the frame's columns it reads, of the half width
++const SKY_NEED: int = 2                  # how many must show sky: a corner isn't a strip
++const SKY_DEPTHS: Array = [800.0, 1500.0, 2500.0, 4500.0]   # how far behind the plane it reads the ground
+ const CLOSE_GAP: float = 300.0           # near enough to count
+ const CLOSE_IN: float = 0.7              # in over this, eased
+ const CLOSE_OUT: float = 0.35            # and out
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 65ad24c..8160654 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -345,6 +345,13 @@ var _ft_slot: int = -1
+ var _ft_v: Array = [Vector2.ZERO, Vector2.ZERO]
+ var close_brawl: bool = false              # a locked brawl frames closer (Orb: close combat framing at base power). Off: none of it runs
+ var _cb_w: float = 0.0
++var brawl_sky: bool = false                # with close_brawl: no sky in frame as a brawl locks, so tilt, or give up size, once, until the lock breaks (docs/camera/launch-director.md). Off: none of it runs
++var sky_choice: String = ""                # this brawl's decision: "", "sky" (none needed), "tilt", "wide", "wide tilt", "none" (no normal shot would show sky)
++var sky_cost_us: int = 0                   # what the last decision cost
++var _cbs_set: bool = false
++var _cbs_tilt: float = 0.0
++var _cbs_wide: bool = false
++var _cbs_ang: float = 0.0
+ var launch_director: bool = false        # the high-velocity moves (docs/camera/launch-director.md). Off: none of them runs
+ var _ozs: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # ... and the zoom it drew
+ var _sim_f: Array = [null, null]
+@@ -400,6 +407,11 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_pk_flat = false
+ 	_pk_wait = 0.0
+ 	_cb_w = 0.0
++	_cbs_set = false
++	_cbs_tilt = 0.0
++	_cbs_wide = false
++	_cbs_ang = 0.0
++	sky_choice = ""
+ 	_ft_t = -1.0
+ 	_ft_v = [Vector2.ZERO, Vector2.ZERO]
+ 	ft_offset = Vector2.ZERO
+@@ -633,7 +645,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 		_push = [0.0, 0.0]   # the beam struggle opens with the tier push's shape: in, hold, out
+ 	_clash_prev = clash_now
+ 	# (a shot's own low angle and the swing's: the lower, which meets its ease at 0; a high angle takes the swing's on top)
+-	_pitch_now = pitch_deg + (_shot_pitch + swing_angle if _shot_pitch > 0.0 else minf(_shot_pitch, minf(swing_angle, _rv_ang)))
++	_pitch_now = pitch_deg + (_shot_pitch + swing_angle if _shot_pitch > 0.0 else minf(_shot_pitch, minf(swing_angle, minf(_rv_ang, _cbs_ang))))
+ 	var d_pitch: float = absf(_pitch_now - _last_pitch)
+ 	if d_pitch > 0.01:
+ 		_last_pitch = _pitch_now
+@@ -2764,8 +2776,18 @@ func _merged_target(S: SimState) -> Vector3:
+ 			var r_here: float = z * CamParams.BODY_H / vh
+ 			var tier_k: float = 1.0 - CamParams.REF_TIER * (maxf(float(A.tier), float(B.tier)) - 1.0)
+ 			var r_to: float = CamParams.CLOSE_R * m_close() * tier_k
+-			if r_to > r_here:
++			if brawl_sky:
++				if locked and not _cbs_set:
++					_brawl_sky_decide(S, mx, r_to, r_here)
++				_cbs_ang = _cbs_tilt * smoothstep(0.0, 1.0, _cb_w)
++			if r_to > r_here and not _cbs_wide:
+ 				z *= exp(log(r_to / r_here) * smoothstep(0.0, 1.0, _cb_w))
++		elif brawl_sky:
++			# eased all the way out, so a blow's short break in a brawl keeps the brawl's choice
++			_cbs_set = false
++			_cbs_tilt = 0.0
++			_cbs_wide = false
++			_cbs_ang = 0.0
+ 	if _scape_t >= 0.0 and _scape_w > 0.0:
+ 		# the landscape shot leans toward the new ground or the landmark, both fighters kept inside 0.42 of the width
+ 		var sh_l: float = CamParams.SCAPE_LEAN * vw / maxf(z, 0.001) * smoothstep(0.0, 1.0, _scape_w) * signf(SimWrap.sdx(mx, _scape_x))
+@@ -5146,6 +5168,70 @@ func _ft_outputs() -> void:
+ 		_outs[i] = Vector3(SimWrap.wrap(o.x + ft_offset.x * w), o.y + ft_offset.y * w, o.z)
+ 
+ 
++## Once, as a brawl locks. Sky at the close size is the usual case. Then the low angle, as far as the ground rule lets it, at the close size; then today's size, with and without
++## the angle. If no normal shot would show sky, stay close: giving up size would buy nothing.
++func _brawl_sky_decide(S: SimState, mx: float, r_close: float, r_fit: float) -> void:
++	var t0: int = Time.get_ticks_usec()
++	_cbs_set = true
++	_cbs_tilt = 0.0
++	_cbs_wide = false
++	var fy: float = 0.5 * (float(S.fighters[0].y) + float(S.fighters[1].y)) + CamParams.CHEST
++	var r_c: float = maxf(r_close, r_fit)
++	var low_c: float = 0.0 if reduced_motion else _ground_low(-CamParams.SKY_TILT, r_c * vh / CamParams.BODY_H)
++	var low_f: float = 0.0 if reduced_motion else _ground_low(-CamParams.SKY_TILT, r_fit * vh / CamParams.BODY_H)
++	var g_c: PackedFloat64Array = _sky_ground(S, mx, r_c)
++	sky_choice = "none"
++	if _sky_shows(g_c, fy, r_c, 0.0):
++		sky_choice = "sky"
++	elif low_c < -0.5 and _sky_shows(g_c, fy, r_c, low_c):
++		sky_choice = "tilt"
++		_cbs_tilt = low_c
++	elif r_fit < r_c:
++		var g_f: PackedFloat64Array = _sky_ground(S, mx, r_fit)
++		if _sky_shows(g_f, fy, r_fit, 0.0):
++			sky_choice = "wide"
++			_cbs_wide = true
++		elif low_f < -0.5 and _sky_shows(g_f, fy, r_fit, low_f):
++			sky_choice = "wide tilt"
++			_cbs_wide = true
++			_cbs_tilt = low_f
++	sky_cost_us = Time.get_ticks_usec() - t0
++
++
++## The ground under the frame's columns, for a shot at size r: one read a column and depth, so a tilt's test at the same size costs nothing more.
++func _sky_ground(S: SimState, mx: float, r: float) -> PackedFloat64Array:
++	var z: float = r * vh / CamParams.BODY_H
++	var dist: float = CamParams.K_FACTOR * vh / z
++	var rad: float = CamPlaces.radius()
++	var out := PackedFloat64Array()
++	for fr in CamParams.SKY_COLS:
++		for dd in CamParams.SKY_DEPTHS:
++			var d: float = float(dd)   # behind the plane
++			var lat: float = float(fr) * 0.5 * vw / z * (dist + d) / dist
++			var sag: float = (lat * lat + d * d) / (2.0 * rad) if rad > 0.0 else 0.0
++			out.append(CamPlaces.ground_at(S, SimWrap.wrap(mx + lat), -d) - sag)
++	return out
++
++
++## Whether a shot at size r and angle deg (negative: low) shows a strip of sky: enough of the frame's columns where no ground behind the plane reaches its top.
++func _sky_shows(ground: PackedFloat64Array, fy: float, r: float, deg: float) -> bool:
++	var dist: float = CamParams.K_FACTOR * vh / (r * vh / CamParams.BODY_H)
++	var up: float = deg_to_rad(-deg)
++	var eye: float = fy - dist * tan(up - atan((CamParams.PLANE_Y - 0.5) / CamParams.K_FACTOR))
++	var top: float = tan(up + deg_to_rad(15.0 - CamParams.SKY_STRIP))
++	var nd: int = CamParams.SKY_DEPTHS.size()
++	var clear: int = 0
++	for c in range(CamParams.SKY_COLS.size()):
++		var seen: bool = true
++		for k in range(nd):
++			if ground[c * nd + k] - eye > top * (dist + float(CamParams.SKY_DEPTHS[k])):
++				seen = false
++				break
++		if seen:
++			clear += 1
++	return clear >= CamParams.SKY_NEED
++
++
+ func m_close() -> float:
+ 	return _m()
+ 
+diff --git a/render/camera/tests/brawl_sky_check.gd b/render/camera/tests/brawl_sky_check.gd
+new file mode 100644
+index 0000000..bcb295a
+--- /dev/null
++++ b/render/camera/tests/brawl_sky_check.gd
+@@ -0,0 +1,149 @@
++extends SceneTree
++## The latch on a skyless flank (docs/camera/launch-director.md): the decision's ladder on made-up ground, that it holds through a brawl, and what it does in real AI fights.
++##   godot --headless --path . --script res://render/camera/tests/brawl_sky_check.gd -- [--fights=4] [--list]
++
++var fails: int = 0
++var checks: int = 0
++var ridge: float = 0.0
++var list: bool = false
++
++
++func _ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL ", what)
++
++
++func _rig(S: SimState) -> SplitRig:
++	var rig := SplitRig.new()
++	rig.swing_view = true
++	rig.peak_launch = true
++	rig.launch_director = true
++	rig.close_brawl = true
++	rig.brawl_sky = true
++	rig.reset(S, 1280.0, 720.0)
++	return rig
++
++
++func _match(seed: int, planet: int = 7) -> SimState:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, seed, {"p1": true, "p2": true}, {"planet": planet, "touch": 1, "planetGen": 3, "intro": false})
++	S.dt = SplitRig.DT
++	return S
++
++
++func _step(S: SimState, rig: SplitRig) -> SplitFrame:
++	SimCore.step(S)
++	var ev: Array = S.out.fx.duplicate()
++	S.out.fx.clear()
++	S.out.feed.clear()
++	rig.step(S, 1280.0, 720.0, ev)
++	return rig.current()
++
++
++## Ground that's `ridge` above the fighters' feet from 1,500 behind the plane on, flat in front of that.
++func _ground(S: SimState, _x: float, z: float) -> float:
++	return float(S.fighters[0].y) + (ridge if z <= -1500.0 else 0.0)
++
++
++func _ladder() -> void:
++	CamPlaces.ground_source = Callable(self, "_ground")
++	var S: SimState = _match(12345)
++	for f in S.fighters:
++		f.y = WorldTerrain.groundY(S, f.x) + 700.0
++	var rig: SplitRig = _rig(S)
++	var seen: Dictionary = {}
++	for h in [0.0, 300.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0, 1100.0, 1250.0, 1600.0, 2400.0, 60000.0]:
++		ridge = h
++		rig._cbs_set = false
++		rig._brawl_sky_decide(S, float(S.fighters[0].x), 0.17, 0.12)
++		if not seen.has(rig.sky_choice):
++			seen[rig.sky_choice] = h
++		print("ridge %.0f: %s, tilt %.1f" % [h, rig.sky_choice, rig._cbs_tilt])
++	_ok(seen.has("sky") and float(seen["sky"]) == 0.0, "low ground shows sky: %s" % str(seen))
++	_ok(rig.sky_choice == "none", "a huge ridge shows none: %s" % rig.sky_choice)
++	_ok(not rig._cbs_wide and rig._cbs_tilt == 0.0, "with no sky to win, the close shot stays")
++	_ok(seen.has("tilt"), "a tilt is tried first: %s" % str(seen))
++	var first_size: float = minf(float(seen.get("wide", 1.0e9)), float(seen.get("wide tilt", 1.0e9)))
++	_ok(float(seen.get("tilt", 1.0e9)) < first_size, "size only after the tilt: %s" % str(seen))
++	CamPlaces.ground_source = Callable()
++
++
++## Real fights: every lock's choice, that it never changes inside a brawl, that the angle moves eased, and the decision's cost.
++func _fights(n: int) -> void:
++	var worst_us: int = 0
++	var tally: Dictionary = {}
++	var costs: Array = []
++	for seed in range(1, n + 1):
++		var sd: int = 12345 if seed == 1 else seed
++		var S: SimState = _match(sd, 7 if seed <= 2 else [3, 11][seed % 2])
++		var rig: SplitRig = _rig(S)
++		var prev_set: bool = false
++		var big_p: float = 0.0
++		var last_p: float = 0.0
++		var changes: int = 0
++		var last_choice: String = ""
++		for t in range(3600):
++			_step(S, rig)
++			if rig._cbs_set and not prev_set:
++				tally[rig.sky_choice] = int(tally.get(rig.sky_choice, 0)) + 1
++				costs.append(rig.sky_cost_us)
++				worst_us = maxi(worst_us, rig.sky_cost_us)
++				last_choice = rig.sky_choice
++				if list:
++					print("seed %d tick %d: %s tilt %.1f, %d us, x %.0f" % [sd, S.tick, rig.sky_choice, rig._cbs_tilt, rig.sky_cost_us, S.fighters[0].x])
++			elif rig._cbs_set and rig.sky_choice != last_choice:
++				changes += 1
++			prev_set = rig._cbs_set
++			big_p = maxf(big_p, absf(rig._cbs_ang - last_p))
++			last_p = rig._cbs_ang
++		_ok(changes == 0, "seed %d: the choice changed %d times inside a brawl" % [sd, changes])
++		_ok(big_p <= CamParams.PITCH_CUT_DEG, "seed %d: the angle stepped %.2f in a tick" % [sd, big_p])
++	costs.sort()
++	var med: int = int(costs[costs.size() / 2]) if costs.size() > 0 else 0
++	print("real fights: %s, a decision costs %d us (median), %d at worst" % [str(tally), med, worst_us])
++	_ok(costs.size() > 10, "only %d decisions" % costs.size())
++	_ok(med < 3000, "a decision's median cost %d us (a busy machine reads high: it is 12 to 24 ground reads)" % med)
++
++
++## Where on the planet a brawl would need it, at two heights over the ground.
++func _scan() -> void:
++	var S: SimState = _match(12345)
++	var rig: SplitRig = _rig(S)
++	for over in [100.0, 500.0]:
++		var tally: Dictionary = {}
++		var first: Dictionary = {}
++		var worst: int = 0
++		var x: float = 0.0
++		while x < SimConst.W:
++			var g: float = WorldTerrain.groundY(S, x)
++			S.fighters[0].x = x
++			S.fighters[1].x = x
++			S.fighters[0].y = g + over
++			S.fighters[1].y = g + over
++			rig._cbs_set = false
++			rig._brawl_sky_decide(S, x, 0.17, 0.12)
++			tally[rig.sky_choice] = int(tally.get(rig.sky_choice, 0)) + 1
++			worst = maxi(worst, rig.sky_cost_us)
++			if rig.sky_choice != "sky" and int(first.get(rig.sky_choice, []).size()) < 4:
++				var a0: Array = first.get(rig.sky_choice, [])
++				a0.append(int(x))
++				first[rig.sky_choice] = a0
++			x += 400.0
++		print("scan at %.0f over the ground: %s; where: %s; worst %d us" % [over, str(tally), str(first), worst])
++
++
++func _initialize() -> void:
++	var nf: int = 4
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--fights="):
++			nf = int(a.substr(9))
++		elif a == "--list":
++			list = true
++	_ladder()
++	_fights(nf)
++	if list:
++		_scan()
++	print("brawl_sky_check: %d checks, %d failed" % [checks, fails] if fails > 0 else "brawl_sky_check: %d checks passed" % checks)
++	quit(1 if fails > 0 else 0)

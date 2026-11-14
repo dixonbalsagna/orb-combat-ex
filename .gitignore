@@ -44,3 +44,13 @@ docs/ui/runs/397a7adf/**/*.png
 
 # Tools run stills (large, many show fighters); the few tracked earlier stay tracked
 docs/tools/img/
+
+# Camera stills (many show fighters; in-progress character art never goes on a public page)
+docs/camera/img/close-brawl/
+docs/camera/img/cross-ko/
+docs/camera/img/damage-inset/
+docs/camera/img/launch-director/
+docs/camera/img/split-unequal/
+docs/camera/img/swing/
+docs/camera/img/vkeep/
+docs/camera/img/vkeep-energy/

@@ -1,6 +1,6 @@
 # A live inset of the damage: a dodged beam that hits a skyscraper behind you (Camera, 2026-10-16)
 
-Owner: Camera and Cinematography. **Paper.** Nothing here is built. Asked by the EP from Orb's homework 5 (docs/ep/vision.md, "Orb answers homework 5"): "dodging a beam that hits a skyscraper behind you should give a live picture-in-picture view of the damage, depending on how significant it is". When it opens (a significance threshold), where it sits, how long it stays, how it shares the split screen, the flash and cost limits. Every number is a first value and is marked when it wants a measurement.
+Owner: Camera and Cinematography. **Built behind a switch, off, and parked (2026-10-30): docs/camera/pending/damage-inset/README.md, which says where the build differs from this paper.** Asked by the EP from Orb's homework 5 (docs/ep/vision.md, "Orb answers homework 5"): "dodging a beam that hits a skyscraper behind you should give a live picture-in-picture view of the damage, depending on how significant it is". When it opens (a significance threshold), where it sits, how long it stays, how it shares the split screen, the flash and cost limits. Every number is a first value and is marked when it wants a measurement.
 
 ## 0. The short version
 
