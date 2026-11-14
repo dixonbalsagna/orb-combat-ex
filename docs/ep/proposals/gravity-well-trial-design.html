@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Gravity Well: Trial Design</title>
+<style>
+  :root {
+    --bg:#f6f5f1; --panel:#ffffff; --ink:#1c1d22; --dim:#5d6070; --line:#dddbd3;
+    --a:#2f6f9f; --b:#c0503f; --gold:#b07a12; --ok:#2e7d4f; --warn:#a4462f; --ground:#8a6a48;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg:#121419; --panel:#1b1e26; --ink:#e8eaf0; --dim:#9aa1b2; --line:#2d3240;
+    --a:#6fb2e0; --b:#ee8a78; --gold:#e8be5a; --ok:#7fd3a0; --warn:#f09a84; --ground:#9a7a58;
+  } }
+  :root[data-theme="dark"] {
+    --bg:#121419; --panel:#1b1e26; --ink:#e8eaf0; --dim:#9aa1b2; --line:#2d3240;
+    --a:#6fb2e0; --b:#ee8a78; --gold:#e8be5a; --ok:#7fd3a0; --warn:#f09a84; --ground:#9a7a58;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,Segoe UI,sans-serif; }
+  main { max-width:980px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:28px; margin:0 0 6px; line-height:1.2; }
+  h2 { font-size:21px; margin:44px 0 8px; padding-top:12px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:22px 0 6px; }
+  p { margin:8px 0; }
+  .dim { color:var(--dim); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:12px 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+  .find { border-left:3px solid var(--warn); }
+  .new { border-left:3px solid var(--gold); }
+  .rule { border-left:3px solid var(--ok); }
+  blockquote { margin:10px 0; padding:10px 14px; border-left:3px solid var(--a); background:var(--panel); border-radius:0 8px 8px 0; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+  th, td { border-bottom:1px solid var(--line); padding:7px 6px; text-align:left; vertical-align:top; }
+  th { font-weight:600; color:var(--dim); font-size:13px; }
+  .scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .scroll table { min-width:640px; }
+  .num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+  code { font:13px ui-monospace,Consolas,monospace; background:var(--bg); padding:1px 4px; border-radius:4px; overflow-wrap:anywhere; }
+  pre { font:12.5px/1.45 ui-monospace,Consolas,monospace; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; overflow-x:auto; }
+  pre code { background:none; padding:0; overflow-wrap:normal; }
+  ol li, ul li { margin:4px 0; }
+  nav a { color:var(--a); text-decoration:none; margin-right:12px; font-size:14px; display:inline-block; }
+  .yes { color:var(--ok); font-weight:600; }
+  .no { color:var(--warn); font-weight:600; }
+  .v-fixed { color:var(--ok); font-weight:600; }
+  .v-kept { color:var(--gold); font-weight:600; }
+  canvas { width:100%; height:200px; display:block; background:var(--panel); border:1px solid var(--line); border-radius:8px; touch-action:manipulation; }
+  .row { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; margin:10px 0; font-size:14px; }
+  .row label { display:flex; gap:6px; align-items:center; }
+  input[type=range] { width:130px; accent-color:var(--a); }
+  select, button { font:inherit; font-size:14px; background:var(--panel); color:var(--ink); border:1px solid var(--a); border-radius:6px; padding:6px 10px; }
+  button { cursor:pointer; }
+  .out { font-size:14px; background:var(--bg); border-radius:6px; padding:8px 10px; margin-top:6px; min-height:3.2em; }
+  .cap { font-size:13px; color:var(--dim); margin-top:6px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>The gravity well: the design for the first trial</h1>
+<p class="dim">From Orb's stand-in, 2026-11-14, for the EP, then Simulation and Encounter, who build the trial (the path's "spike S2": a throwaway build on a scratch copy). Design only: nothing here is built or decided. Every number is a first value, kept in one data file. Code references are to main at def3445a; the fight code there is the same as in the 9 November build Orb played, and only the switches differ. The timing tables come from a small model of the code's formulas, not from a Godot run. An independent review found faults in the first draft; what it changed is in <a href="#checks">section 15</a>.</p>
+
+<nav>
+  <a href="#plain">1. In plain words</a><a href="#new">2. What changed</a><a href="#agency">3. The agency rule</a><a href="#size">4. Size</a><a href="#zones">5. Zones</a><a href="#draw">6. The draw</a><a href="#snap">7. The snap</a><a href="#close">8. The close fight</a><a href="#toys">9. Try it</a><a href="#data">10. Data</a><a href="#code">11. Pseudocode</a><a href="#spike">12. The trial</a><a href="#question">13. The question for Orb</a><a href="#risks">14. Risks</a><a href="#checks">15. Checks</a>
+</nav>
+
+<h2 id="plain">1. In plain words</h2>
+<blockquote>"KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED" <span class="dim">(Orb, 2026-11-13, on "up close, does your stick move only you?"; <code>docs/ep/vision.md:1800</code>)</span></blockquote>
+<div class="card rule">
+  <ul>
+    <li><strong>Every fighter has a gravity well around them.</strong> It grows when they transform, and while they power up.</li>
+    <li><strong>Inside your rival's well, X, Y, B or a flick of the right stick snaps you in to them</strong> and the blow follows. It is the lunge you already have: the same short crouch first, so it can be seen coming. What is new is how far it reaches (a bigger well reaches further) and that a stronger fighter's snap flies faster.</li>
+    <li><strong>Outside it, the same press is the long-range kit</strong> you already have: the taunt, the charge that flies in, bolts and beams.</li>
+    <li><strong>Let go of everything inside a well and you drift together, gently.</strong> Touch the stick and the drift is gone on that same instant. After you have been knocked away it stays off until you make a move of your own.</li>
+    <li><strong>Up close there are two versions to try side by side.</strong> Today your stick moves the whole fight, both of you. In the new version your stick moves only you, and nobody's stick ever moves the other player. Your rival stays with you by attacking, because every blow steps its thrower in.</li>
+    <li><strong>One test for all of it:</strong> nothing moves your fighter except your own hands, a blow that lands on you, and (once it arrives) a rival's attack starting the close fight.</li>
+  </ul>
+</div>
+<p>The trial builds both versions of the close fight behind one switch, so the question in <a href="#question">section 13</a> can be put to Orb with something to watch and, I hope, to play.</p>
+
+<h2 id="new">2. What changed since the 8 November packet</h2>
+<p>The packet (<code>docs/ep/proposals/gravity-well.html</code>) and Game Design's reading (<code>docs/design/gravity-well-reading.md</code>) stand as the long plan. This page narrows them to the cut the path recommends for Alpha, "size, zones and the snap" (decision 12, which Orb has not confirmed yet: it is due to be confirmed from this trial's page). Each row below is a place where this page departs from the packet or from Game Design's reading. They are my proposals, for Game Design to rule on.</p>
+<div class="scroll"><table>
+<tr><th>Topic</th><th>The packet and Game Design said</th><th>This page says</th><th>Why</th></tr>
+<tr><td>Size</td><td>Heft, tier and charge</td><td>Tier and charge only</td><td>No heft, weight or mass exists on a fighter today (the physics packet is paper). Tier steps give almost the same table: 12.5, 15, 17.5, 20 body heights</td></tr>
+<tr><td>Zones</td><td>Six, stored per fighter</td><td>Today's three bands, with the well setting the outer two edges per fighter</td><td>At tier 1 with no charge the well's edge is exactly today's middle band edge (12.5). That keeps the trial small</td></tr>
+<tr><td>The snap's speed</td><td>"Flat out for his level"; by Game Design's flight page (<code>docs/design/flight-3500.md</code>) that is 3,500 at base once flight 3,500 lands, with the lunge left at 4,000</td><td>The faster of today's lunge (4,000) and flat out for the level</td><td>At 3,500 a tier 1 snap would fly slower than the lunge it replaces. With this rule a tier 1 snap inside 12.5 body heights is exactly today's lunge, and tiers 2 to 4 fly at 4,640, 6,090 and 8,070</td></tr>
+<tr><td>The snap's crouch</td><td>Unchanged (6 ticks light, 10 heavy)</td><td>Unchanged</td><td>Orb, 10-04: lunges should be "easier to spot when they're being used against you". Game Design, 11-07: the crouch "is the tell Orb asked to read. That stays." My first draft shortened it; the review caught that</td></tr>
+<tr><td>The defender and the snap</td><td>Drawn to meet it, within a quarter of flight speed</td><td>Not moved at all while it flies</td><td>The approach already leaves the defender alone. Moving them to meet it adds code and takes their body</td></tr>
+<tr><td>The draw</td><td>Up to a quarter of flight speed, halved on a fighter holding away; never past that cap against a held stick</td><td>Only while the stick is at rest and the hands are off everything, and never after a knock-back until the fighter's own next move</td><td><strong>This is my reading, stricter than anything Orb has ruled.</strong> Orb's 10-31 words allow a gentle nudge that is not confusing; the 11-08 complaint was "we weren't in control of our fighter". The trial carries both settings (section 6) so the difference can be felt</td></tr>
+<tr><td>Walking out alone, up close</td><td>Game Design: alone, at a walk, for no energy; "leaving costs exposure, not a cap"</td><td>The same shape, with a number: a fighter holding away breaks clear on the third blow that reaches them</td><td>Without a rule like this, lights re-seat the attacker every time and nobody ever gets out. The record of Orb's 10-02 playtest (the EP's words, <code>vision.md:492</code>): a way for the escaper to exit any situation at some risk</td></tr>
+<tr><td>Leaning on the rival</td><td>Not covered</td><td>A body is solid: walking into the rival stops you and does not move them</td><td>So that "nobody's stick moves the other player" is true without an exception</td></tr>
+<tr><td>Edge pulse and sound; the measuring tools of the packet's increment 0</td><td>Inside increments 3 and 0, which the audit counts in the Alpha cut</td><td>Left out of the trial, counted in the size (section 12)</td><td>The trial is about feel and size; the pulse is Controls' and Audio's</td></tr>
+<tr><td>Intent reader, far kit, the other collisions; the edge band's "hold to charge"</td><td>Increments 5 to 7</td><td>Not in the trial or the recommended cut</td><td>Path decision 12 and row A-COMBAT-15</td></tr>
+</table></div>
+
+<h2 id="agency">3. The agency rule: what may move your fighter</h2>
+<p>This is the test every part of the design is held to. It is built from Orb's words and recorded answers:</p>
+<ul>
+  <li>"the worst is how pressing a single attack key at any distance essentially locks both fighters from performing actions as the attacker flies in and performs the attack." (10-02)</li>
+  <li>"players should always feel like they are able to control their character, with few exceptions like during knockbacks" (10-05)</li>
+  <li>Recorded answer, 10-05: "After a knock-back the re-close is always the player's own move (no automatic pull)."</li>
+  <li>"no situation where they feel confused as to why their character just started turning on their own" (10-31)</li>
+  <li>"when I fire a beam, the character slowly drifts in a direction, then fires. I don't like this." (11-01)</li>
+  <li>"sometimes engaging in close-up fights it felt like we weren't in control of our fighter" (11-08)</li>
+</ul>
+<div class="scroll"><table>
+<tr><th>What moves you</th><th>Allowed</th><th>The bound</th></tr>
+<tr><td>Your left stick</td><td class="yes">Always</td><td>Except while you are knocked back or launched (the air brake is your control there), frozen in a hit's pause, held in a grab, or inside a set piece you chose. Staggered: half in a brawl and none outside it, as today</td></tr>
+<tr><td>Your own press</td><td class="yes">Yes</td><td>Your step-in up close, your snap inside a well. You chose it by pressing</td></tr>
+<tr><td>A blow that lands on you</td><td class="yes">Yes</td><td>The reel, the shove, the knock-back, the launch. This is the fight</td></tr>
+<tr><td>A rival's snap arriving</td><td class="yes">At arrival only</td><td>You are free and unmoved while it flies. When it arrives the close fight begins, as today: in today's version both bodies are held and stopped and the pair drifts on; in the new version you keep your own stick and half your own speed. If you tapped dodge, the planned dodge exchange still takes both of you (section 14)</td></tr>
+<tr><td>The well's draw</td><td class="yes">Only in silence</td><td>Only with your stick at rest and your hands off everything, never while staggered, never after a knock-back until your own next input. At most a quarter of your flying speed. It stops short of striking distance</td></tr>
+<tr><td>The brawl's magnet</td><td class="yes">Only in silence</td><td>New version: only while both sticks are at rest. Half a body height a second, as today</td></tr>
+<tr><td>Walking into the other fighter</td><td class="no">Moves nobody</td><td>New version: a body is solid. You stop; they are not pushed</td></tr>
+<tr><td>The other player's stick</td><td class="no">Never, in the new version</td><td>Today it does: one stick moves the pair</td></tr>
+<tr><td>The game's choreography</td><td class="no">Not in the well or the close fight</td><td>My reading. Orb, 10-16: "player agency should always be respected but when rule-of-cool demands it, the fight choreographer should determine the direction the fight takes" (<code>vision.md:1420</code>). So it may stage a launch or a set piece you started. Nothing in this page gives it a new way to move a body</td></tr>
+</table></div>
+<p><strong>What "magnetic" means under this rule.</strong> Orb asked on 10-04 for brawls that hold together so fighters "trade continuous strings of blows without interruption". The fight holds together because <em>attacking closes distance</em>: each blow steps its thrower in, and inside a well a blow from further off snaps them in. The magnet lives in the presses, not in a force on the bodies.</p>
+
+<h2 id="size">4. Size</h2>
+<pre><code>radius = 12.5 body heights × (1 + 0.2 × (tier − 1)) × (1 + 0.25 × charge)      held between 4.5 and 20</code></pre>
+<div class="scroll"><table>
+<tr><th>Fighter</th><th>Well radius</th><th>While powering up or gathering a beam</th><th>The snap's speed</th></tr>
+<tr><td>Tier 1</td><td class="num">12.5 (938 units)</td><td class="num">15.6</td><td class="num">4,000 a second (today's lunge)</td></tr>
+<tr><td>Tier 2</td><td class="num">15</td><td class="num">18.8</td><td class="num">about 4,640</td></tr>
+<tr><td>Tier 3</td><td class="num">17.5</td><td class="num">20 (the cap)</td><td class="num">about 6,090</td></tr>
+<tr><td>Tier 4</td><td class="num">20 (1,500 units)</td><td class="num">20</td><td class="num">about 8,070</td></tr>
+</table></div>
+<ul>
+  <li><strong>12.5 at tier 1</strong> is today's middle band edge (<code>bands.midBh</code>), where the lunge already reaches. <strong>20</strong> is the cap Game Design accepted.</li>
+  <li><strong>Tier</strong> is <code>f.tier</code>, 1 to 4, hashed already. When forms or the physics packet's weight land, they replace the tier term; the data keeps one line for it.</li>
+  <li><strong>Charge</strong> is new: a count that rises over 30 ticks while the fighter powers up (RT held, state "charging") or holds a beam (<code>f.beamCharge</code>), and falls over 15 ticks after. There is no standing charge value on a fighter today, so the well keeps its own.</li>
+  <li><strong>A swollen well is a dare, and the page should say so.</strong> Your own reach is set by your rival's well, not yours. So growing your well while you power up lets your rival snap in from further (15.6 plus the edge band, against 12.5 today) while you stand charging, and a blow that arrives on a charging fighter is the built charge-interrupt exchange. That fits the workshop table Orb read ("power up at your peril" inside a well), but it is a cost, and <code>chargeGrow</code> can be set to 0 if the trial says it punishes too hard.</li>
+  <li><strong>The edge moves only on things you can see:</strong> a transformation, or a power-up starting and stopping. It does not creep with the power meter.</li>
+  <li>Speeds assume flight 3,500 as the default (Orb's decision 5, <code>docs/design/flight-3500.md</code>): flat out is 3,500 × 2.305 to the power of the level. The snap takes that speed from the level directly (<code>S.powerFlat</code>), not from <code>flightSpeed</code>, so stance, distance and the dash's switches cannot change it.</li>
+</ul>
+
+<h2 id="zones">5. Zones, and what a press does</h2>
+<p>Each fighter asks one thing: <strong>am I inside the rival's well?</strong> Wells differ in size, so the two fighters can have different answers at the same moment.</p>
+<div class="scroll"><table>
+<tr><th>Where you are</th><th>At tier 1 against tier 1</th><th>X, Y, B or a right-stick flick</th><th>Left stick</th><th>Changed from today?</th></tr>
+<tr><td><strong>The brawl</strong></td><td>Within 3 body heights (it lets go past 4.5)</td><td>A blow at once: your step-in, then the blow</td><td><a href="#close">Section 8</a></td><td>Only by section 8</td></tr>
+<tr><td><strong>Inside the rival's well</strong></td><td>3 to 12.5</td><td><strong>The snap:</strong> the crouch, then you fly in and the blow follows</td><td>Yours. In silence, the draw</td><td>At tier 1, no. Further and faster as tiers rise</td></tr>
+<tr><td><strong>On its edge</strong></td><td>12.5 to 15.5</td><td>The snap, from the edge</td><td>Yours</td><td>Today this is a taunt</td></tr>
+<tr><td><strong>Outside</strong></td><td>Beyond 15.5</td><td>The far kit as built: tap taunts, hold charges in, bolts, beams</td><td>Yours</td><td>No</td></tr>
+</table></div>
+<ul>
+  <li><strong>A transformed fighter's bigger well reaches an untransformed one first.</strong> The smaller fighter is inside it from further away, so the smaller fighter's blows snap in from further away. The bigger one, still outside the small well, has the far kit across that range.</li>
+  <li><strong>That asymmetry is my reading, not Orb's decision.</strong> It was the packet's question 3; Game Design supports it; Orb has not answered it. Orb's 13 November answer in full: "I need this as a underlying mechanic to sell the idea of the fighters stepping in and engaging each other. within the gravity well they are using their close range attacks, outside the well each fighters' abilities are altered. lets workshop this and find a way to complement our systems and keep combat engaging and fair-feeling." It can also be read as "when either of you is inside the other's well, you both fight close". The trial carries that second reading as a switch (<code>zones.either</code>), and counts how often the bigger fighter's press became a taunt they did not want (section 12, row 9).</li>
+  <li><strong>The edge band</strong> (3 body heights past the well) exists so there is no cliff: a tap just outside still snaps in.</li>
+  <li><strong>A tap on a taunting rival is still the meeting</strong> (both rush to the middle), as built. The well does not change that.</li>
+  <li><strong>How it is stored.</strong> The close band stays <code>DirBands</code>' own (slot 26 of the director's integers, with its hysteresis). The well answers "middle or far" for a press, per fighter, from a zone written once a tick. Four places read the band on a press's path and must take the well's answer (section 11). The computer's choices (<code>ai.gd:282-299</code>), flight strikes, the chase tap and the grab keep today's edges on purpose.</li>
+</ul>
+
+<h2 id="draw">6. The draw</h2>
+<ul>
+  <li><strong>When:</strong> you are inside the rival's well, outside the brawl, in free flight, and silent. Silent means the stick as you hold it is at rest (read before the game's own gates, so a stagger cannot fake it), and no guard, dash, attack button, right-stick hold, beam charge or approach is in hand. No draw while either fighter is staggered, launched, down, or after a knockout.</li>
+  <li><strong>Never after a knock-back.</strong> When something other than your own hands has moved you (a knock-back's slide or drift, a launch, a stagger), the draw stays off for you until you are free again and make an input of your own, and it stays off for your rival too until you do. So the re-close after a knock-back is always a player's own move, for both of them, as Orb's 10-05 answer has it.</li>
+  <li><strong>How strong:</strong> at most a quarter of your plain flying speed, about 107 units a second at tier 1 (flat-out flight is 3,500). Nothing at the well's edge, full by half its radius. It fades in over 12 ticks of silence.</li>
+  <li><strong>How it ends:</strong> it is applied as its own small movement, not through your fighter's speed, so there is no leftover drift: on the tick your stick moves, the draw moves you by nothing.</li>
+  <li><strong>Where it stops:</strong> it eases out over the last body height before 2.5, the mark where today's approach also stops. It never pushes you into the rival.</li>
+  <li><strong>What you see:</strong> two fighters who both let go drift from 12 body heights to striking distance in about 7 seconds, and from 8 in about 2. The pulling-together Orb pictured is mostly the snap; this is the quiet part.</li>
+  <li><strong>Three settings for the trial:</strong> off; in silence only (this page); and Game Design's capped draw (a quarter of flight speed, halved on a fighter holding away). I think Orb would want the silent one, but that is a judgement, and it should be felt before it is treated as the rule.</li>
+</ul>
+
+<h2 id="snap">7. The snap</h2>
+<p>The snap is today's approach with its reach and speed set by the well. Today a press in the middle band crouches for 6 ticks (10 for a heavy), then flies the attacker in at 4,000 units a second to 2.5 body heights from the rival, where the close fight takes over (<code>DirBands.begin</code>, <code>sim/director/bands.gd:194-236</code>; <code>bands.lunge</code>). The defender is free and unmoved until it arrives.</p>
+<div class="scroll"><table>
+<tr><th></th><th>Today's lunge</th><th>The snap</th></tr>
+<tr><td>Reach</td><td>To 12.5 body heights, fixed</td><td>To the rival's well plus the edge band: 15.5 at tier 1, up to 23</td></tr>
+<tr><td>Crouch before moving</td><td>6 ticks light, 10 heavy</td><td>The same</td></tr>
+<tr><td>Speed</td><td>4,000 a second</td><td>The faster of 4,000 and your flat-out speed: 4,000 at tier 1, about 8,070 at tier 4. Never more than 3 body heights a tick (the creative rulebook's row m02)</td></tr>
+<tr><td>The defender, while it flies</td><td>Free, not moved</td><td>Free, not moved</td></tr>
+<tr><td>At arrival</td><td>The close fight begins and holds both</td><td>The same; see section 3's row and section 8</td></tr>
+<tr><td>If the defender flies off</td><td>The rush always arrives: each tick it covers what is left divided by the ticks left</td><td>The same by default. A fleeing defender is settled as today, by the pursuit exchange (pillar 3: escape is a gamble, not a range check)</td></tr>
+</table></div>
+<div class="scroll"><table>
+<tr><th>Press X from</th><th>Today</th><th>The snap, tier 1</th><th>Tier 2</th><th>Tier 3</th><th>Tier 4</th></tr>
+<tr><td>6 body heights</td><td class="num">16 ticks</td><td class="num">16</td><td class="num">16</td><td class="num">15</td><td class="num">15</td></tr>
+<tr><td>9</td><td class="num">20</td><td class="num">20</td><td class="num">19</td><td class="num">17</td><td class="num">16</td></tr>
+<tr><td>12.5</td><td class="num">24</td><td class="num">24</td><td class="num">22</td><td class="num">20</td><td class="num">18</td></tr>
+<tr><td>15</td><td>a taunt</td><td class="num">27</td><td class="num">25</td><td class="num">22</td><td class="num">19</td></tr>
+<tr><td>20</td><td>a taunt</td><td class="num">32</td><td class="num">29</td><td class="num">25</td><td class="num">22</td></tr>
+<tr><td>23</td><td>a taunt</td><td class="num">36</td><td class="num">32</td><td class="num">28</td><td class="num">24</td></tr>
+</table></div>
+<p class="cap">Ticks from the press to the blow landing (60 ticks a second): the crouch, the flight, up to 4 ticks of step-in, 2 ticks for a light to land. The rows past the attacker's own reach apply only when the rival's well is that big. B keeps its 28-tick wind-up counted from the press, so it lands about 32 ticks after the press from anywhere inside 15 body heights, as today.</p>
+<h3>An option for the trial: a snap you can outrun</h3>
+<p>Today's rush cannot be outrun: it speeds up to arrive on time, and the gamble is the pursuit exchange that follows. An alternative worth one arm of the trial, <strong>off by default</strong>: the snap flies at its own speed and no faster, and if it falls 6 ticks behind schedule it ends as "outrun", with the attacker handed back their own flight and nobody held. In the model, at equal tiers a defender who starts dashing away before the snap arrives nearly always gets away (flat-out flight is 3,500 against the snap's 4,000), a tier 4 attacker catches a tier 1 defender who reacts a tenth of a second late from 9 body heights, and a tier 1 attacker almost never catches a fleeing tier 4. That turns the escape into a race, which pillar 3 warns against, so it is here as a comparison, not as my recommendation.</p>
+
+<h2 id="close">8. The close fight: two modes behind one switch</h2>
+<div class="grid">
+  <div class="card find"><h3>Today: your stick moves the fight</h3>
+    <ul>
+      <li>This came from Orb's own October calls: each stick nudges the centre of the fight (10-05), and both sticks pushed apart walk out (10-06).</li>
+      <li>Both fighters are held and neither body reads its own stick. One shared speed is the sum of both sticks, at 0.4 of flying speed each (172 units a second), and both bodies get it (<code>brawl.gd</code> <code>_move</code> 2865-2998, <code>carryOn</code> 3014).</li>
+      <li>You can drag the fight where you want it, toward a building or away from a crowd, and it never drifts apart while anyone is attacking.</li>
+      <li>Push away from a rival and you carry them with you. Against the computer your stick always wins at least half its push.</li>
+      <li>Ways out: both sticks held apart for 13 ticks; the escape (LT and away, 15 energy); a flight strike away (the exit Orb used most on 8 November: 11 of 26 brawl endings); a knock-back or launch; or nobody pressing an attack for a second, after which the fight lets go and both are stopped.</li>
+      <li>Stepping back while the rival winds up a heavy already moves only you ("giving ground", 5 body heights a second, to a limit of 2.4 past striking distance).</li>
+    </ul>
+  </div>
+  <div class="card rule"><h3>Proposed: your stick moves you</h3>
+    <ul>
+      <li>Each fighter's stick moves their own body, at the same 0.4 of flying speed as today, so the test changes one thing only. Up and down work the same way.</li>
+      <li>Nobody's stick moves the other player. A body is solid: walk into your rival and you stop.</li>
+      <li>The magnet works only while both sticks are at rest.</li>
+      <li>Your rival stays on you by attacking: each blow steps its thrower in, exactly as today.</li>
+      <li><strong>Walking away from a rival who is not attacking:</strong> free. The gap opens as you walk, and the fight lets go at 4.5 body heights or after a second without an attack, and you keep your speed.</li>
+      <li><strong>Walking away from one who is attacking:</strong> it costs you the hits. Hold away and you break clear on the third blow that reaches you, landed or guarded (a first value). A heavy that staggers you, or a grab, stops the walk. The escape (LT and away, 15 energy) is still the fast, safe way out.</li>
+      <li>Giving ground stays; past its limit you keep walking at your own pace instead of being held.</li>
+      <li>You steer the fight by hitting (the right stick's strikes already carry a rival 1, 2 or 4 body heights) or by backing off and being followed.</li>
+    </ul>
+  </div>
+</div>
+<div class="scroll"><table>
+<tr><th>Four seconds in the model</th><th>Today</th><th>Proposed</th></tr>
+<tr><td>You hold away, the rival does nothing</td><td>You drag the rival 165 units. After a second the fight lets go and stops you both, still at striking distance</td><td>You walk. The rival is not moved. After a second the fight lets go; you are 3 body heights away and still walking</td></tr>
+<tr><td>You hold away, the rival throws lights</td><td>17 blows land. You never get out, and you drag them 680 units</td><td>3 blows land, then you break clear (0.7 s). The rival moved only by their own blows</td></tr>
+<tr><td>You hold away while the rival winds up heavies</td><td>They miss (giving ground). You sit at its limit for as long as they keep winding up</td><td>The first misses and you walk out (1.3 s)</td></tr>
+<tr><td>You do nothing, the rival holds away or toward</td><td>You are carried 165 units before the fight lets go</td><td>You are not moved</td></tr>
+<tr><td>You walk into an idle rival</td><td>The pair slides 165 units</td><td>You stop against them. They are not moved</td></tr>
+<tr><td>You both hold away</td><td>The fight lets go after 13 ticks; nobody moved in that time</td><td>The gap opens as you both walk: clear in 0.9 s</td></tr>
+</table></div>
+<h3>What the new mode gives up, said plainly</h3>
+<ul>
+  <li><strong>Dragging the fight with one stick.</strong> On 10-05 Orb asked that "each player should be able to nudge the center of attraction". In the new mode the stick alone no longer moves the rival, in any direction. You steer by hitting or by being followed.</li>
+  <li><strong>A fight that cannot drift apart.</strong> Two players who both stop attacking separate sooner. One press snaps them back together.</li>
+  <li><strong>Holding someone with lights alone.</strong> Three lights no longer keep a rival who wants to leave. That is a real change to pressure, and the number is Game Design's.</li>
+</ul>
+<h3>What must change in the code for the new mode</h3>
+<ol>
+  <li><code>_move</code> (2865-2998): one speed per fighter in place of the shared one. The sum of the sticks, the half-push floor (2925-2940) and the both-sticks cancel go. Keep, per fighter: the <code>live</code> gate (2870: no stick during a zip's ticks in reach or a double hit), the stagger branch (2881-2889), and the building and slope tests on that body's own position.</li>
+  <li>The rush freeze (2946-2948) becomes per body: a fighter with a rush does not move by their stick; the other keeps theirs.</li>
+  <li><code>carryOn</code> (3014-3023; also called after every blow from <code>exchange.gd:480</code>): writes each fighter's own speed.</li>
+  <li>The arrival drift (<code>begin</code> 288-312): each fighter keeps half of <em>their own</em> speed, fading over 20 ticks, in place of the summed pair drift. Nobody is stopped dead by the other's arrival.</li>
+  <li>The magnet (3903-3928): rests unless both sticks are at rest. It already rests while someone may give ground (3911).</li>
+  <li><strong>The counted gap.</strong> A wound-up blow is judged against a gap counted from the start of its wind-up (<code>GAPV</code>), which only giving ground updates today (2576, 2637; read at 1313-1315). Every own-body movement must be counted the same way, or heavies land from too far.</li>
+  <li>Giving ground (<code>_giveStep</code> 2542-2639): inside its leash, as built. Past it, the fighter keeps their own walking speed, where today the step is projected back and the body stands still (2612-2613).</li>
+  <li>The walk-out counter (3029-3071, 3862-3870) is skipped. <code>over</code> zeroes both fighters' speed for every reason but "walk" (464-468); in the new mode "apart", "idle" (3929-3930) and "broke" join that exemption, each fighter keeping their own speed.</li>
+  <li><strong>The break-away:</strong> a count on the leaver of blows that reached them while they held away, reset by their own attack or by letting go. It is counted in <code>contact</code>, on the guarded branch (1421) and the landed path (1408, 1511). "Held away" is the brawl's own angle test (<code>_away</code>, 3066-3071) read from the stick as held (<code>heldMx</code>, <code>heldMy</code>: a heavy's stagger zeroes the gated stick) for a player, and <code>AI_PART</code> for the computer, whose movement stick is kept out of its intent (3042-3043). At <code>leaveAfterBlows</code> the brawl ends with a new reason, "broke". "Left" is already the paid escape's reason (<code>interrupt.gd:459</code>) and the two must be counted apart.</li>
+  <li>A body is solid: in a brawl in the new mode, the push-apart below 45 units (<code>melee.gd:129-134</code>, sideways only, half each today) moves back only the body whose own stick is pushing in; with both pushing, both stop. If neither is pushing in (an overlap left by a blow's placement), it stays half each as today. No one is pushed into a building by a stick.</li>
+  <li>While a grab holds either fighter (<code>DirGrapple.holds</code>; the grab is on in Orb's build), own movement is off, as the walk-out is today (3864).</li>
+  <li>The own speeds live in the well's state, which the brawl's reset (2840-2841) does not touch: zero them in <code>begin</code> and <code>over</code>.</li>
+  <li>The computer's stick in a brawl was written to steer the pair (<code>_aiNudge</code> 3143-3156). "Away while guarding" would now walk it out of its own fight. For the trial it holds still where it used to push away. Encounter retunes after.</li>
+  <li>Depth (fighters in depth) is off in the trial; <code>_moveZ</code> and <code>carryOn</code>'s depth branch stay pair-wide until it is needed.</li>
+</ol>
+<p><strong>What does not change:</strong> every blow's timing and worth, the step-in, the reels, the hit's pause, the escape, the burst, the right stick's carries, and the camera's close shot (it has its own gap guard, and the bodies stay within 4.5 body heights while the brawl lasts).</p>
+
+<h2 id="toys">9. Try it</h2>
+<div class="card">
+  <h3>Wells and the snap</h3>
+  <canvas id="wellToy" aria-label="Two fighters on a line with the rival's gravity well and your own drawn as bands along the ground"></canvas>
+  <div class="row">
+    <label>Your power level <input type="range" id="wA" min="1" max="4" step="1" value="1"> <span id="wAv" class="num">1</span></label>
+    <label>Rival's power level <input type="range" id="wB" min="1" max="4" step="1" value="1"> <span id="wBv" class="num">1</span></label>
+    <label>Distance <input type="range" id="wG" min="2" max="26" step="0.5" value="10"> <span id="wGv" class="num">10 body heights</span></label>
+    <label><input type="checkbox" id="wC"> Rival is powering up</label>
+  </div>
+  <div class="out" id="wellOut"></div>
+  <p class="cap">The bands are a diagram. The game draws nothing over or between the fighters.</p>
+</div>
+<div class="card">
+  <h3>Who moves when you push the stick</h3>
+  <canvas id="brawlToy" aria-label="Two fighters close together; the animation shows who moves over four seconds"></canvas>
+  <div class="row">
+    <label>Version <select id="bMode"><option value="pair">Today: the stick moves the fight</option><option value="own" selected>Proposed: the stick moves you</option></select></label>
+    <label>Your stick <select id="bYou"><option value="away" selected>Held away</option><option value="toward">Held toward</option><option value="rest">At rest</option></select></label>
+    <label>The rival <select id="bRiv"><option value="idle" selected>Does nothing</option><option value="lights">Throws lights</option><option value="heavy">Winds up heavies</option><option value="away">Holds away too</option><option value="toward">Walks into you</option></select></label>
+    <button id="bPlay" type="button">Play four seconds</button>
+  </div>
+  <div class="out" id="brawlOut">Pick a version and press Play.</div>
+  <p class="cap">You are the blue fighter on the left. A model on one line with this page's first values, not the game.</p>
+</div>
+
+<h2 id="data">10. The numbers, as data</h2>
+<p><code>data/fight/well.json</code> (new), with <code>tools/schemas/fight-well.schema.json</code> and its row in <code>tools/schemas/map.json</code>. The file follows <code>data/fight/kick.json</code>: a <code>schema</code> line, <code>enabled</code> false, a comment key beside each value.</p>
+<pre><code>{
+  "schema": "fight.well/1",
+  "enabled": false,
+  "size":  { "baseBh": 12.5, "tierStep": 0.2, "chargeGrow": 0.25, "chargeRiseTicks": 30, "chargeFallTicks": 15,
+             "minBh": 4.5, "maxBh": 20 },
+  "zones": { "edgeBh": 3, "hysteresisBh": 0.5, "either": false },
+  "draw":  { "mode": "rest", "cap": 0.25, "fullAt": 0.5, "quietTicks": 12, "stopBh": 2.5, "stopEaseBh": 1 },
+  "snap":  { "enabled": true, "floorSpeed": 4000, "maxStepBh": 3, "outrun": false, "graceTicks": 6 },
+  "close": { "mode": "pair", "ownMul": 0.4, "rampTicks": 8, "leaveAfterBlows": 3, "magnetAtRestOnly": true }
+}</code></pre>
+<ul>
+  <li><strong>Switches for a match:</strong> a setup key <code>"well"</code> (true or false) overrides <code>enabled</code>, and <code>"wellClose"</code> (<code>"pair"</code> or <code>"own"</code>) overrides <code>close.mode</code>, exactly as <code>"kick"</code> does (<code>sim/core/sim.gd:262-267</code>).</li>
+  <li><strong><code>close.mode</code> works without the well.</strong> It is the answer to Orb's question and can be judged on its own.</li>
+  <li><code>draw.mode</code> is <code>"off"</code>, <code>"rest"</code> or <code>"capped"</code> (Game Design's). <code>zones.either</code> is the second reading of Orb's answer. <code>snap.floorSpeed</code> is today's lunge speed. The crouch and tick limits stay in <code>bands.lunge</code>.</li>
+  <li><strong>The trial runs with the build's setup, not main's defaults.</strong> Setup keys it must pass: <code>"power": true</code>, <code>"dash": true</code>, <code>"slip": true</code> (the three <code>net/lan.gd:30</code> forces), <code>"kick": true</code> and <code>"flatOut": 3500</code>; and the build's data switches for the arrival ease and the dash handover. On main's data today the energy model and the kick are off and flat out is still 5,000 (<code>power.json:108</code>), so every speed here would read differently: at 5,000 a tier 4 snap is 11,525, not 8,070.</li>
+</ul>
+
+<h2 id="code">11. Pseudocode and where it hooks</h2>
+<p class="dim">GDScript-shaped. Float64 throughout, <code>SimWrap.sdx(a, b)</code> is b minus a, <code>SimDetMath</code> and <code>SimMathx</code> for math, no random draws anywhere in the well. The pattern to copy is the kick (<code>sim/core/kick.gd</code>): state that exists and is hashed only while the switch is on.</p>
+<div class="card find">
+  <strong>Two traps the review found, for the builders.</strong>
+  <ul>
+    <li><strong>The core may not name the director.</strong> <code>hash.gd</code> will name <code>SimWell</code>, so <code>well.gd</code> is in the core's load, and any <code>DirBands</code> or <code>DirInterrupt</code> name inside it fails the load-split gate (<code>sim/core/tools/load_split.gd</code>, run by CI; rule at <code>sim/core/dir.gd:7-9</code>). So <code>SimWell</code> keeps its own 75.0, measures distance itself, and reaches the director only through <code>SimDir</code>. The press's band read lives in <code>DirBands</code>.</li>
+    <li><strong>The two-fighter count has no slack (365 of 365) and it counts comments.</strong> Do not spell the roster's rival helper or a first-slot index anywhere in a shipped well file, not even in a comment.</li>
+  </ul>
+</div>
+<pre><code># ---- sim/core/state.gd: beside KickState (1037-1045) and the fighter's kik field (1112)
+class WellState:
+	var zone: int = -1       # against the rival's well: 0 inside, 1 edge band, 2 outside; -1 = not written yet
+	var r: int = 0           # the fighter's own radius, whole units
+	var chg: int = 0         # charge count, 0 .. chargeRiseTicks
+	var quiet: int = 0       # ticks of silence, 0 .. quietTicks
+	var own: int = 1         # 1 = the last movement was the fighter's own; 0 = something else moved them and they have not acted since
+	var dx: int = 0          # this tick's draw, 1/16 unit a second
+	var dy: int = 0
+	var ovx: int = 0         # close.mode "own": the fighter's own speed in a brawl, 1/16 unit a second
+	var ovy: int = 0
+	var lv: int = 0          # close.mode "own": blows that reached the fighter while holding away
+	var late: int = 0        # snap.outrun: ticks this snap has fallen behind
+# on SimState: var wellOn: bool = false; var wellOwn: bool = false      on Fighter: var wel = null
+
+# ---- sim/core/well.gd (new): class_name SimWell. Loader, enabled(), dataHash(), errors(), setup() as SimKick's (kick.gd:16-100).
+# No Dir* name in this file (the load split). No random draw.
+const FILE: String = "res://data/fight/well.json"
+const HASHED: Array = ["zone", "r", "chg", "quiet", "own", "dx", "dy", "ovx", "ovy", "lv", "late"]
+const BH: float = 75.0
+const IN := 0
+const EDGE := 1
+const OUT := 2
+
+static func setup(S: SimState, setup_: Dictionary = {}) -> void:
+	_ensure()
+	S.wellOwn = str(setup_.get("wellClose", _d.close.mode)) == "own"
+	for f in S.fighters:
+		f.wel = SimState.WellState.new() if (S.wellOn or S.wellOwn) else null
+
+static func radius(f) -> float:                                   # pure
+	var c: Dictionary = _d.size
+	var r: float = float(c.baseBh) * BH
+	r *= 1.0 + float(c.tierStep) * (f.tier - 1.0)
+	r *= 1.0 + float(c.chargeGrow) * float(f.wel.chg) / float(c.chargeRiseTicks)
+	return SimMathx.jclamp(r, float(c.minBh) * BH, float(c.maxBh) * BH)
+
+static func cfg() -> Dictionary:
+	_ensure()
+	return _d
+
+static func zoneNow(S: SimState, A, D) -> int:                    # pure: for a press before the first write
+	return _zone(_dist(A, D), radius(D), -1)
+
+static func _dist(a, b) -> float:                                 # as DirBands.dist (bands.gd:49-52), without naming it
+	if a.z != b.z and (a.zT != 0.0 or b.zT != 0.0):
+		return SimDetMath.hypot(SimDetMath.hypot(SimWrap.sdx(a.x, b.x), b.y - a.y), b.z - a.z)
+	return SimDetMath.hypot(SimWrap.sdx(a.x, b.x), b.y - a.y)
+
+static func _zone(d: float, rj: float, was: int) -> int:
+	var h: float = float(_d.zones.hysteresisBh) * BH * 0.5 if was >= 0 else 0.0
+	if d &lt;= rj + (h if was == IN else -h):
+		return IN
+	return EDGE if d &lt;= rj + float(_d.zones.edgeBh) * BH + (h if (was == IN or was == EDGE) else -h) else OUT
+
+## The one writer. Called once a live tick from SimCore._fightTick, after the control loop and before the stepFighter
+## loop (sim.gd, between 429 and 430), behind `if S.wellOn:`. It reads every body as the tick began and then writes
+## them all, so the random slot order changes nothing. In 2v2 each fight is swapped into S, so it runs per fight.
+## A face press is read inside the control loop, so it reads the zone written the tick before, as it reads last
+## tick's band today. The zone is one movement step older than the band beside it (the band is written after the move).
+static func tick(S: SimState) -> void:
+	var n: int = S.fighters.size()
+	var rs := PackedFloat64Array(); rs.resize(n)
+	for k in n:
+		var f = S.fighters[k]
+		var up: bool = f.state == "charging" or f.beamCharge != null
+		f.wel.chg = mini(int(_d.size.chargeRiseTicks), f.wel.chg + 1) if up \
+			else maxi(0, f.wel.chg - ceili(float(_d.size.chargeRiseTicks) / float(_d.size.chargeFallTicks)))
+		rs[k] = radius(f)
+	var zs := PackedInt32Array(); zs.resize(n)
+	var ds := PackedFloat64Array(); ds.resize(n * 2)
+	for k in n:
+		var f = S.fighters[k]
+		var j: int = _other(S, k)                                  # the other body of this fight, found by a loop over the fight's bodies
+		if j &lt; 0:
+			zs[k] = OUT; continue
+		var o = S.fighters[j]
+		var d: float = _dist(f, o)
+		zs[k] = _zone(d, rs[j], f.wel.zone)
+		if bool(_d.zones.either) and zs[k] != IN and _zone(d, rs[k], S.fighters[j].wel.zone) == IN:
+			zs[k] = IN                                             # the second reading: either of you inside the other's well
+		_draw(S, f, o, d, rs[j], ds, k)
+	for k in n:
+		var w = S.fighters[k].wel
+		w.zone = zs[k]
+		w.r = roundi(rs[k])
+		w.dx = roundi(ds[k * 2] * 16.0)
+		w.dy = roundi(ds[k * 2 + 1] * 16.0)
+
+## The draw, only in silence. Writes the wanted movement toward the rival into ds.
+static func _draw(S: SimState, f, o, d: float, r: float, ds: PackedFloat64Array, k: int) -> void:
+	var i: SimIntent = f.input
+	var moved: bool = f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0 \
+		or (f.rush != null and f.rush.tgt == null)                 # a send's slide or drift is a rush with no target and no
+	if moved:                                                      #   state change (launch.gd:1237-1265); an approach's rush has one
+		f.wel.own = 0                                               # something else has the fighter: no draw until they act
+	var rest: bool = f.heldMx == 0.0 and f.heldMy == 0.0          # the stick as held, before any gate (state.gd:1170):
+	                                                               #   a stun zeroes i.mx and i.my (wounds.gd:279-281), not these
+	var hands: bool = i.guard or i.dash or i.light or i.heavy or i.sig or i.lightHeld or i.heavyHeld or i.sigHeld \
+		or i.rsHeld or i.rsStart or f.beamCharge != null
+	if not moved and f.state == "free" and f.rush == null and (not rest or hands):
+		f.wel.own = 1                                               # their own input, once free of it: the latch is theirs again
+	var silent: bool = rest and not hands and f.state == "free" and f.rush == null and f.stunTicks == 0 \
+		and S.game.ko == null and not SimDir.approaching(S, f) and f.wel.own == 1 \
+		and o.wel.own == 1                                         # and the rival's too: nobody drifts after a fighter they sent
+	# The director also calls SimWell.sent(f) (sets own = 0) where it knocks a fighter back without a rush:
+	# DirRecoil.knocked (recoil.gd:74) and the old DirLaunch.knockBack (launch.gd:1381).
+	f.wel.quiet = mini(int(_d.draw.quietTicks), f.wel.quiet + 1) if silent else 0
+	if str(_d.draw.mode) == "off" or d > r:
+		return
+	var stop: float = float(_d.draw.stopBh) * BH
+	if d &lt;= stop:
+		return
+	var share: float = float(f.wel.quiet) / float(_d.draw.quietTicks)   # "rest": nothing unless silent
+	if str(_d.draw.mode) == "capped":                              # Game Design's: always on, halved on a fighter holding away
+		share = 0.5 if SimDir.heldAway(S, f) else 1.0
+		if moved or f.state != "free" or f.rush != null:
+			share = 0.0
+	if share &lt;= 0.0:
+		return
+	var depth: float = SimMathx.jclamp((1.0 - d / r) / (1.0 - float(_d.draw.fullAt)), 0.0, 1.0)
+	var ease: float = SimMathx.jclamp((d - stop) / (float(_d.draw.stopEaseBh) * BH), 0.0, 1.0)
+	var sp: float = float(_d.draw.cap) * SimFighter.flightSpeed(S, f, false) * depth * ease * share
+	ds[k * 2] = SimWrap.sdx(f.x, o.x) / d * sp
+	ds[k * 2 + 1] = (o.y - f.y) / d * sp
+
+# ---- sim/core/fighter.gd, the free branch: the draw is its own movement, added where the position is integrated
+## (748-749), not to f.vx. So it leaves no speed behind: on the tick the stick moves, dx and dy are already 0.
+var wx: float = float(f.wel.dx) / 16.0 if (S.wellOn and f.wel != null) else 0.0
+var wy: float = float(f.wel.dy) / 16.0 if (S.wellOn and f.wel != null) else 0.0
+f.x = SimWrap.wrap(f.x + (f.vx + wx) * dt)
+f.y += (f.vy + wy) * dt                                            # the floor and ceiling clamps (750-757) follow as today
+
+# ---- sim/director/bands.gd: the press's band, in the director (it may name SimWell)
+static func pressBand(S: SimState, A, D) -> int:                  # pure
+	var b: int = band(A, D)
+	if not S.wellOn or A.wel == null or b == CLOSE:
+		return b
+	var z: int = A.wel.zone
+	if z &lt; 0:                                                      # before the first write: straight from the distance
+		z = SimWell.zoneNow(S, A, D)
+	return MID if z &lt;= SimWell.EDGE else FAR
+# The four places on a press's path that read the band and must read pressBand instead:
+#   exchange.gd:310      var bd = DirBands.pressBand(S, A, D)      (the gate at 308-325)
+#   bands.gd:287         farPressNow's `band(A, D) != FAR`
+#   bands.gd:197         begin's own `var b: int = band(A, D)`: it picks the numbers (200-201), the crouch (207),
+#                        the lunge cue for Camera, VFX and Animation (230) and the feed text (234-235)
+#   stick.gd:520         _lungeLight (on in Orb's build): a flick inside a well is the light snap, as Game Design ruled
+# Left on today's edges on purpose: ai.gd:282-299, DirZip, the chase tap, the grab.
+
+# ---- sim/director/bands.gd, begin (194-236): the snap is the middle band's approach with the well's speed
+var snap: bool = S.wellOn and bool(SimWell.cfg().snap.enabled) and not charge and not cr and b == MID   # b is pressBand now
+if snap:
+	var sp: float = maxf(float(w.floorSpeed), SimPower.flatFor(S, A))
+	n = maxi(int(m.minTicks), int(ceil(maxf(0.0, d - eng) / sp * 60.0)))   # line 205's own form (so tier 1 rounds exactly as today),
+	n = maxi(n, int(ceil(maxf(0.0, d - eng) / (float(w.maxStepBh) * BH))))  #   without its 20-tick ceiling; then the 3 bh a tick cap
+	# line 207's crouch is kept as it is: 6 and 10, "light" if DirStick.pending(A); the return from a send (208-213) still applies
+	SimEvents.feed(S, A.name + " SNAP", str(roundi(d / BH)) + " bh into a well of " + str(roundi(float(D.wel.r) / BH)) + " in " + str(wind + n) + " ticks")
+	SimFx.cue(S, A, "snap", ...)
+# SimPower.flatFor(S, f) (new, pure): S.powerFlat * pow(flatGrowth, level(f)) * f.spd: flat out for the fighter's level, read
+# from the level so stance, range, the sea and the dash's switches cannot change it (flightSpeed(S, f, true) is 1,032
+# a second inside 20 bh with the energy model off: fighter.gd:626-633).
+# Also feed "&lt;name&gt; FAR KIT, outside the well" when a press reads OUT, so QA's Alpha checklist can read the well from the feed.
+
+# ---- the outrun option (snap.outrun, off by default). begin marks a snap with a spare bit of APPR_REQ (bit 10; bits 0-9
+# are used, bands.gd:22-25) and zeroes wel.late. In DirBands.tick, for a marked approach only, before `left -= 1` (456-469):
+var togo: float = maxf(0.0, dist to the engage mark)
+var need: int = int(ceil(togo / per))
+if need > left:                                                    # behind schedule: move BOTH clocks, or _engage fires on time
+	f.wel.late += need - left                                      #   (467-469) and locks both from range
+	left = need
+	DirInterrupt.si(f, DirInterrupt.APPR_LEFT, left)
+	f.rush.end = S.T + float(left) * SimConst.DT
+if f.wel.late > int(w.graceTicks):
+	drop(S, f, "outrun")                                           # clears APPR_LEFT, APPR_WIND and the rush (506-512)
+	set f.vx, f.vy to the fighter's plain flight along the line (the crouch zeroed them: 462-463); cue "snap_outrun"; feed "SNAP outrun"
+	continue                                                       # or the lines below re-arm the approach drop just cleared
+# per = the snap's units a tick, recomputed from the level each tick, so nothing new is stored but wel.late and the bit.
+
+# ---- sim/director/brawl.gd, close.mode "own" (S.wellOwn): the fourteen items of section 8. The core of item 1:
+var tgt: float = SimWell.cfg().close.ownMul * _flySpeed(S, f)     # 0.4 of flight; guard and stagger factors as today
+var acc: float = tgt / float(SimWell.cfg().close.rampTicks)
+f.wel.ovx += roundi(clampf(ux * tgt - f.wel.ovx / 16.0, -acc, acc) * 16.0)   # (ux, uy): the fighter's own ramped stick, as today
+f.wel.ovy += roundi(clampf(uy * tgt - f.wel.ovy / 16.0, -acc, acc) * 16.0)
+
+# ---- the registrations a switch-gated system needs
+# sim/core/sim.gd _mSetupsA (262-267):  S.wellOn = setup.get("well", SimWell.enabled()) == true; SimWell.setup(S, setup)
+# sim/core/hash.gd (199-211):           if S.wellOn or S.wellOwn: _obj(out, f.wel, SimWell.HASHED)
+# net/desync.gd (96-107):               the same fields, and a fault injector in net/tools/desync_check.gd:101
+# sim/core/replay.gd dataHash (191-196): h.text(SimWell.dataHash()) only for a match with either switch on,
+#   so two PCs with different well.json cannot pass the LAN handshake (net/handshake.gd:109-114).
+# sim/core/dir.gd:                       SimDir.approaching(S, f) and SimDir.heldAway(S, f), forwards into the director.</code></pre>
+<p><strong>Why the hash stays the same with the switch off.</strong> <code>f.wel</code> is null, nothing is hashed, no director integer is added, <code>pressBand</code> returns the band unchanged, <code>begin</code> takes today's numbers, the brawl takes today's branch, the fighter's step adds zero, and the file is not in the replay key. The golden gate (<code>sim/core/tools/parity.gd</code>) proves it, and a <code>well_check.gd</code> on the kick's pattern (<code>kick_check.gd:318-345</code>) proves the rest: off equals no word of it, the state is in the hash and in the desync digest, the data is in the replay key when on, and a rollback across snaps replays the same. The trial also runs <code>load_split.gd</code>, the determinism lint and the two-fighter count.</p>
+
+<h2 id="spike">12. The trial: order, measures, and what Orb gets</h2>
+<p>A throwaway build on a scratch copy; nothing lands. The path gives it about 2M tokens. The order puts the question for Orb first, because that is the part with a decision waiting on it.</p>
+<div class="scroll"><table>
+<tr><th>#</th><th>Step</th><th>Who</th><th>Rough share</th></tr>
+<tr><td>1</td><td><code>close.mode</code> "own" in the brawl (section 8's fourteen items), with its setup key</td><td>Encounter</td><td>40%</td></tr>
+<tr><td>2</td><td><code>SimWell</code>: data, the loader, radius, the zone writer, <code>pressBand</code> at the four readers</td><td>Simulation, Encounter</td><td>20%</td></tr>
+<tr><td>3</td><td>The snap in <code>DirBands.begin</code>; the feed lines</td><td>Encounter</td><td>10%</td></tr>
+<tr><td>4</td><td>The draw (silent setting first)</td><td>Simulation</td><td>5%</td></tr>
+<tr><td>5</td><td>Scripted pads (stick at rest, held away, held toward, each measured from the rival's side, as the gauntlet's circle arm already does: <code>tools/feel/gauntlet.gd:250-265</code>), the readings below, the clips</td><td>Both, with Tools for the build and the capture</td><td>25%</td></tr>
+<tr><td>If time allows</td><td>The outrun option; <code>zones.either</code>; Game Design's capped draw</td><td></td><td></td></tr>
+</table></div>
+<h3>What the trial measures</h3>
+<div class="scroll"><table>
+<tr><th>#</th><th>Reading</th><th>Pass line (first values)</th></tr>
+<tr><td>1</td><td>Distance a free fighter was moved by the draw on a tick when their stick was held, or a right-stick hold or beam charge was in hand, or they were staggered, or after a knock-back before the knocked fighter's own next input (read for both the knocked fighter and the one who sent them)</td><td>0, in each case</td></tr>
+<tr><td>2</td><td>In a brawl, distance a fighter was moved by anything but their own stick, their own press, a landed blow or a grab</td><td>New mode: 0 while a stick is held; the magnet only with both at rest. Today's mode: reported as it is</td></tr>
+<tr><td>3</td><td>In a brawl, outside a hit's pause: ticks from a stick push, from rest, to your own body moving that way; and ticks with the stick held away while the body stands still</td><td>New mode: at most 2; and 0 (today the giving-ground limit and the shared speed both hold a body still)</td></tr>
+<tr><td>4</td><td>Press to contact from 4.5, 6, 9, 12.5, 15 and 20 body heights, light and heavy, tiers 1 and 4</td><td>Never later than today's from the same gap; tier 1 inside 12.5 identical to today</td></tr>
+<tr><td>5</td><td>Ticks from a rival's press to the defender being held, by gap and tier; arrivals that became a planned exchange and not a brawl</td><td>Reported. This is the reading for Orb's 10-02 complaint</td></tr>
+<tr><td>6</td><td>The defender's speed on the tick after a snap arrives, against the tick before</td><td>New mode: at least half. Today: 0, reported</td></tr>
+<tr><td>7</td><td>Walking out alone: the gap 60 ticks after the stick goes away against an idle rival; blows taken and ticks to break clear against one throwing lights; against one mixing a heavy every third blow</td><td>New mode: about 3 body heights (today: striking distance); 3 blows and under a second; reported</td></tr>
+<tr><td>8</td><td>Brawls per match by how they ended (apart, idle, broke, left, flight, launch), median brawl length, share of the match spent in a brawl, blows taken per exit</td><td>Reported for both modes, 40 matches each. The brawl should stay at least half the match (<code>playable-build.md</code>)</td></tr>
+<tr><td>9</td><td>Presses that became a taunt for the bigger fighter while the smaller one was inside their well; power-ups ended by a snap pressed from beyond 12.5 body heights</td><td>Reported, for Game Design. A first line: at most one unwanted taunt a match</td></tr>
+<tr><td>10</td><td>Hash with both switches off against the golden record; two runs with them on; the same with the two slots swapped</td><td>Identical; identical; zones mirror</td></tr>
+<tr><td>11</td><td>The share of approaches the computer answered, today's lunge against the snap; its win rate on easy against the "Orb's scheme" pad in both modes</td><td>Reported. The computer answers an approach only if it lasts 16 ticks or more (<code>bands.gd:574</code>, <code>reactTicks</code> 14), so faster snaps from higher tiers get no answer from it</td></tr>
+</table></div>
+<p>There is no stick-to-motion reading in the tools today (<code>tools/feel/feel.gd</code> counts held time, hits and refusals, and counts every brawl tick as held in both modes). Rows 1 to 3 and 5 to 6 need a small reader of <code>f.heldMx</code>, <code>f.input</code> and positions beside the gauntlet's counters.</p>
+<h3>What Orb gets</h3>
+<ul>
+  <li><strong>Four short pairs of clips, today then proposed, with the pad's inputs drawn at the bottom:</strong> walking away from a rival who does nothing; walking away from one who is throwing lights; standing still while the rival pushes the stick; pressing X from across the well at the first power level and at the third.</li>
+  <li><strong>Two links to play, if Tools can build them from the scratch copy</strong> the way the private preview builds are made: the same build, one with today's close fight and one with the new. Whether your fighter feels like yours cannot be judged from a clip. I think Orb would want to hold the pad for this one.</li>
+</ul>
+<h3>My guess at the size, and what it depends on</h3>
+<ul>
+  <li><strong>The well (size, zones, the snap): large, not extra-large,</strong> if the four band readers are the whole list. The snap is the approach that already exists, and at tier 1 the zones are today's bands.</li>
+  <li><strong>Add to that, inside the recommended cut but outside the trial:</strong> the edge pulse and sound, and the measuring tools above. With them the cut is at the top of large.</li>
+  <li><strong>The new close-fight mode: not sized until step 1 has run.</strong> It touches a 4,300-line file whose pair-wide values live on one fighter's slots, and the review found five rules the first draft missed (the rush freeze, the idle end, the giving-ground limit, the solid body, the arrival's treatment of the defender). Its tuning tail is the longest part: the computer's brawl settings (<code>giveGround</code>, <code>follow</code>, <code>walkOut</code>, <code>nudgeShare</code> in <code>ai.json</code>) were all tuned for the shared movement.</li>
+</ul>
+<h3>A note for the EP on the stop rule</h3>
+<p>The path asked Orb for a standing yes: if the pull is not playable by the middle of the third milestone, the snap moves to the next landing window. Orb did not give it. If the trial confirms that the snap is the small part, I would suggest re-pointing the rule at the close-fight mode instead: if the new mode is not ready or not picked by then, the well ships with today's close fight and the new mode follows. That is Orb's to agree and yours to ask; I am only pointing at it.</p>
+
+<h2 id="question">13. The question for Orb</h2>
+<p class="dim">A draft for the EP to put to Orb under the clips. One question.</p>
+<div class="card new">
+  <p><strong>Up close, when you push your stick, who should move?</strong></p>
+  <p><strong>A. The fight moves (today, from your October calls).</strong> Each stick nudges the whole fight, so you can drag it where you want and it never drifts apart. You carry your rival with you and they carry you. To leave on your own you escape for 15 energy, zip away, or wait for a second without attacks.</p>
+  <p><strong>B. You move (what I think you would want).</strong> Your stick moves only your fighter, at the same pace as today. Nobody's stick ever moves the other player. Your rival stays on you by attacking, and you stay on them the same way. You can always walk away from someone who is not hitting you. Walk away from someone who is, and you take three blows before you break clear, unless a heavy or a grab stops you. The paid escape is still the fast way out.</p>
+  <p class="dim">Watch each pair of clips. If the two links to play are ready, fight the computer for a minute on each: push away, push into them, circle.</p>
+</div>
+<ul>
+  <li><strong>Why B, in my view:</strong> it is the only version where "we weren't in control of our fighter" cannot come from the other player's hands, and brawls still hold together because attacking closes distance.</li>
+  <li><strong>What B costs:</strong> you can no longer drag the fight across the map with the stick alone, and three lights no longer hold someone who wants to go.</li>
+  <li><strong>If the answer is "neither yet":</strong> the knobs are B's walking pace, how many blows it takes to break clear, and whether the magnet should hold while one stick is busy.</li>
+</ul>
+
+<h2 id="risks">14. Risks, unknowns, and what I could not verify</h2>
+<ul>
+  <li><strong>The arrival still holds both fighters.</strong> A snap arriving starts the close fight; in today's version that stops the defender and holds both, now from up to 23 body heights away for a strong attacker, about a third of a second after one press. That is the shape of Orb's 10-02 complaint. The new close-fight mode softens it (the defender keeps their stick and half their speed). Row 5 measures it. The dodge is worse: a snap that arrives on a rival who tapped dodge starts the planned "dodge" exchange, which locks both; a snap on a charging fighter starts the charge-interrupt. Game Design's call 5 turns those into brawl answers; it is outside the recommended cut, and it is the largest remaining source of "locked".</li>
+  <li><strong>The moving edge is still invisible.</strong> The same tap at the same distance snaps in or taunts depending on the rival's tier and whether they are powering up. The edge band softens it. A pulse on the pad and a low sound at the crossing are in the recommended cut and not in the trial. Showing it in the world is open: Game Design's reading said dust along the ground toward a big well, "never on fighters". Orb's 13 November answer on the marks ("PLACEHOLDERS FOR DIEGETIC AURAS, GLOWS, FLARES ETC. THAT SHOWCASE GAME MECHANICS WHERE NECESSARY. UI/UX ELEMENTS MUST BE NON-INTRUSIVE") may reopen whether the rival's own aura could show a swollen well. That is Orb's and Art's call, behind the look gate; the ground dust stays the first thing to try.</li>
+  <li><strong>One snap at a time.</strong> While one approach is on, every other request waits (<code>exchange.gd:259-261</code>). The first press in a tick starts its snap; the rival's press waits and becomes their first blow when it arrives, as with today's lunge. The clash of two snaps, from the clash table Orb read, is later work.</li>
+  <li><strong>The computer.</strong> Its closing rules use fixed distances (130, 700; <code>ai.gd:209-215</code>), its attack choice reads the old band (282-299), and it answers only approaches of 16 ticks or more. It will play the well without knowing it is there. Fine for a trial, not for Alpha.</li>
+  <li><strong>2v2.</strong> A 2v2 is two fights swapped into the state in turn, so the well as written works per pair and knows nothing of the other pair.</li>
+  <li><strong>The LAN copy.</strong> The LAN setup forces only power, travel, dash and slip. A well switch would follow each PC's data file unless it is added there; the handshake would then refuse two PCs whose well data differ.</li>
+  <li><strong>Flight strikes</strong> still reach a fixed 12.5 body heights. Game Design ruled their range should follow the defender's well. Left out of the trial.</li>
+  <li><strong>The zone is a tick behind,</strong> and one movement step older than the band it sits beside. Near an edge at closing speeds the two can disagree for a tick. The trial should report any press where they did.</li>
+  <li><strong>Not verified by me:</strong> the exact contact tick of a brawl blow after an approach (the tables use the scheduled lead from <code>_throw</code>, read but not run); whether the clip tool can show two settings of an arbitrary switch side by side (its flag today is for the hit's pause only); whether Orb's LAN copy carried the same setup words as the page.</li>
+  <li><strong>A record to correct:</strong> "27 brawls, 0 walk-outs" in my 8 November packet and in Game Design's reading sits beside one <code>brawl_end:left</code> and one <code>brawl_end:idle</code> in the same file (<code>docs/qa/runs/1931a0f8/slot0-cue-summary-orb-play-20261108-1726.txt</code>). "Left" is the paid dodge out (<code>interrupt.gd:459</code>), so "no free walk-outs" is right. The same file has 5 more brawls that began as counters, so 32, not 27.</li>
+</ul>
+
+<h2 id="checks">15. Checks</h2>
+<p>Three independent reviewers read the first draft against the code, against Orb's words and the rulings, and as hostile playtesters. Every blocker and major finding was then handed to a separate checker whose job was to refute it from the files. 31 findings went to checkers: 24 held as stated, 7 were corrected in part and used as corrected. Eleven minor findings were not sent to a checker; I checked those I used myself. A second, narrower check then read the rewritten rules (the last rows).</p>
+<div class="scroll"><table>
+<tr><th>Finding</th><th>Verdict</th><th>What changed</th></tr>
+<tr><td>The draw read the game's gated stick, so a staggered fighter holding away was pulled in; also after a knockout and during a snap's own crouch</td><td class="v-fixed">fixed</td><td>Silence reads the stick as held (<code>heldMx</code>, <code>heldMy</code>), and needs no stagger, no knockout and no approach in hand</td></tr>
+<tr><td>The draw pulled a fighter back in after a knock-back, against Orb's recorded "no automatic pull"</td><td class="v-fixed">fixed</td><td>A latch: after anything but your own hands moves you, no draw until your own next input</td></tr>
+<tr><td>The draw pulled a fighter holding the right stick for a strike or a beam, the drift Orb disliked on 11-01</td><td class="v-fixed">fixed</td><td>A right-stick hold and a beam charge break the silence. (The checker showed RT's power-up already could not leak.)</td></tr>
+<tr><td>The draw went through the fighter's speed, so it lingered for a tick or more after the stick moved</td><td class="v-fixed">fixed</td><td>It is its own movement at the position step: gone on the tick the stick moves</td></tr>
+<tr><td>"Only at rest" was presented as following Orb; it is stricter than anything Orb ruled</td><td class="v-fixed">fixed</td><td>Stated as my reading; the trial carries three settings, Game Design's among them</td></tr>
+<tr><td>All speeds used flat-out 5,000; Orb's decision is 3,500, where a tier 1 snap is slower than today's lunge</td><td class="v-fixed">fixed</td><td>Tables redone at 3,500. The snap is the faster of the lunge and flat out; departure from Game Design's flight page stated in section 2</td></tr>
+<tr><td>The snap's speed came from a function that returns 1,032 a second on main's default data</td><td class="v-fixed">fixed</td><td>Speed read from the level directly; the trial's setup is listed in section 10</td></tr>
+<tr><td>The crouch was cut from 6 and 10 ticks to 2 and 6 without naming that Orb asked for a readable lunge and Game Design ruled the crouch stays</td><td class="v-fixed">fixed</td><td>The crouch is unchanged</td></tr>
+<tr><td>A core file named director classes, which fails the load-split gate</td><td class="v-fixed">fixed</td><td><code>SimWell</code> names no director class; the band read moved into <code>DirBands</code></td></tr>
+<tr><td>Two band readers on the press's path were missed: <code>begin</code>'s own read and the right stick's light lunge</td><td class="v-fixed">fixed</td><td>Four readers listed. (The checker noted the computer's reads were already listed as a risk.)</td></tr>
+<tr><td>The outrun rule as written would still engage on time and lock both, and did not cap the step</td><td class="v-fixed">fixed</td><td>Rewritten to move both clocks and to end through <code>drop</code>; and made an option, off by default, since today's always-arriving rush is what pillar 3 asks for</td></tr>
+<tr><td>"The defender is never moved or locked" was true only until arrival, where the close fight holds both and stops the defender</td><td class="v-fixed">fixed</td><td>Said plainly; a row in the agency table; two new readings; in the new mode each fighter keeps half their own speed</td></tr>
+<tr><td>"Nobody's stick ever moves the other player" was false: the lean pushed a rival about three quarters as far as today's drag</td><td class="v-fixed">fixed</td><td>A body is solid in the new mode: you stop, they are not moved</td></tr>
+<tr><td>Option B told Orb walking out costs hits; the design gave no exit at all against a rival throwing lights. Game Design's ruling is "exposure, not a cap"</td><td class="v-fixed">fixed</td><td>The break-away: clear on the third blow that reaches a fighter holding away. Stated as a departure with its number for Game Design</td></tr>
+<tr><td>Option A was not described fairly: it left out that it came from Orb's own calls, its upsides, and its other exits; and the test changed speed as well as who moves</td><td class="v-fixed">fixed</td><td>A rewritten; both modes run at 0.4 of flying speed</td></tr>
+<tr><td>The model had no idle rule: today a brawl lets go a second after the last attack, so three table rows were wrong and a pass line could pass with the new mode doing nothing</td><td class="v-fixed">fixed</td><td>Idle rule added to the model; table and readings redone; in the new mode the fighters keep their speed on that ending</td></tr>
+<tr><td>Giving ground's limit would hold a walker still past 2.4 body heights for a whole wind-up. (The checker corrected which reading it broke.)</td><td class="v-fixed">fixed</td><td>Past the limit the fighter keeps their own pace; a reading counts ticks held away but still</td></tr>
+<tr><td>The change list for the new mode missed the grab, the live gate, the rush freeze, the bare reuse of the charge rush, stale speeds between brawls, and depth</td><td class="v-fixed">fixed</td><td>The list is fourteen items; the charge-rush reuse is dropped</td></tr>
+<tr><td>The asymmetric wells were presented as Orb's answer; Orb asked for more workshop</td><td class="v-fixed">fixed</td><td>Stated as my reading, Orb's answer quoted in full, the other reading carried as a switch</td></tr>
+<tr><td>A swollen well only helps the rival; "the same on both sides" held only at equal tiers</td><td class="v-fixed">fixed</td><td>Said plainly as a dare with its off switch; the sentence removed; a reading added</td></tr>
+<tr><td>Three pass lines could not be passed by any build (momentum, the ramp, intended misses)</td><td class="v-fixed">fixed</td><td>Readings 1 to 3 reworded; readings added for brawl endings, brawl length and brawl share</td></tr>
+<tr><td>The computer answers only approaches of 16 ticks or more. (The checker corrected two overstatements.)</td><td class="v-kept">kept as a risk</td><td>Stated in the readings and risks; with the crouch kept, tier 1 snaps are answered as today's lunges are</td></tr>
+<tr><td>Section 2 misplaced the edge pulse and the measuring tools outside the recommended cut; "Alpha's cut" read as settled</td><td class="v-fixed">fixed</td><td>Row corrected; the cut named as the path's recommendation, not yet confirmed by Orb; the size given with and without</td></tr>
+<tr><td>Minor, used: the zone's first-tick value; the counter-rush and the stick's crouch key in <code>begin</code>; the count that reads comments; one snap at a time; no feed line for a snap; team words and raw units in the parts Orb reads; the stop rule sitting in Orb's section; the aura quote recased</td><td class="v-fixed">fixed</td><td>Each as the reviewer proposed</td></tr>
+<tr><td>Second check: the knock-back latch missed the commonest knock-backs (a slide or a drift is a rush, not a state), a held stick re-armed it mid-slide, and the sender drifted after the fighter they had sent</td><td class="v-fixed">fixed</td><td>A send's rush trips the latch; it re-arms only once the fighter is free; the draw needs both fighters' latches</td></tr>
+<tr><td>Second check: the break-away reused the paid escape's ending and would have stopped both fighters; "held away" at the moment a blow lands was not defined</td><td class="v-fixed">fixed</td><td>A new ending, "broke", with speed kept; "held away" defined for a player and for the computer, with where to count it</td></tr>
+<tr><td>Second check, minor: the solid body with neither stick pushing; three gaps in the outrun option; the kick and flight 3,500 as setup keys; a stagger outside a brawl; one paraphrase shown as Orb's words and one ruling of Orb's on choreography left out; a rounding form</td><td class="v-fixed">fixed</td><td>Each as proposed</td></tr>
+<tr><td>Second check, confirmed correct: the stick-as-held fields for players and the computer, the draw's place in the movement step, the four band readers, the speed function's parts, three cells of the tick table by hand, the hash with both switches off, and all seven quotes word for word</td><td class="v-kept">held</td><td>No change</td></tr>
+</table></div>
+<p class="dim">Cost of this page: about 5.3M tokens. Four readers mapped the code and the records (1.0M, on Opus); the review was 3 reviewers and 31 checkers (3.5M, the checkers on Opus) and one second check (0.2M, on Opus); the rest was this session. The review cost more than I planned: a checker for every finding is thorough, and for the next two pages only blockers and contested findings go to checkers.</p>
+
+
+</main>
+<script>
+// The gravity well, the first trial: a model of the design's first values. Pure functions; no page access.
+// Units are the game's: 75 units = one body height, 60 ticks a second.
+var W = {
+  BH: 75, TPS: 60,
+  // data/fight/well.json (proposed first values)
+  baseBh: 12.5, tierStep: 0.2, chargeGrow: 0.25, minBh: 4.5, maxBh: 20, edgeBh: 3,
+  drawCap: 0.25, drawFullAt: 0.5, drawQuietTicks: 12, drawStopBh: 2.5, drawEaseBh: 1,
+  snapMaxStepBh: 3, snapGraceTicks: 6,
+  ownMul: 0.4, ownRampTicks: 8, leaveAfterBlows: 3,
+  // what the game has today (interrupts.json, power.json after flight 3,500 lands, kick.json; read 2026-11-14)
+  closeBh: 3, engageBh: 2.5, breakBh: 4.5, midBh: 12.5,
+  lungeSpeed: 4000, lungeWind: { light: 6, heavy: 10 }, lungeMin: 3, lungeMax: 20,
+  flight: 430, flatOut: 3500, growth: 2.305, kickInstant: 0.8, kickClimb: 8,
+  reach: 68, offset: 58, minSep: 45, closeTicksPerBh: 2, closeMaxTicks: 4, stepRoom: 39.75,
+  lightContact: 2, lightGap: 14, lightReachBh: 0.6, heavyWind: 28, heavyReachBh: 1, edgeReachBh: 0.033,
+  whiffOpen: 20, giveSpeed: 375, leashBh: 2.4, idleTicks: 60,
+  nudgeMul: 0.4, pairRampTicks: 8, pull: 0.3125, partTicks: 12, staggerTicks: 12, staggerMul: 0.5,
+  thresholds: [0, 35, 65, 100]
+};
+function level(tier) { return 0.8 * (tier - 1) / 3 + 0.2 * W.thresholds[tier - 1] / 100; }
+function plain(tier) { return W.flight * (1 + 0.1 * (tier - 1)); }
+function flat(tier) { return W.flatOut * Math.pow(W.growth, level(tier)); }
+function snapSpeed(tier) { return Math.min(Math.max(W.lungeSpeed, flat(tier)), W.snapMaxStepBh * W.BH * W.TPS); }
+function radiusBh(tier, charge) {
+  var r = W.baseBh * (1 + W.tierStep * (tier - 1)) * (1 + W.chargeGrow * (charge || 0));
+  return Math.max(W.minBh, Math.min(W.maxBh, r));
+}
+// Where am I, measured against the RIVAL's well? 0 the brawl, 1 inside the well, 2 its edge band, 3 outside.
+var ZONE = ['in the brawl', 'inside the well', 'on its edge', 'outside it'];
+function zoneOf(gapBh, hisR) {
+  if (gapBh <= W.closeBh) return 0;
+  if (gapBh <= hisR) return 1;
+  if (gapBh <= hisR + W.edgeBh) return 2;
+  return 3;
+}
+function pressDoes(zone) {
+  if (zone === 0) return 'a blow, at once';
+  if (zone === 1) return 'the snap: fly in and strike';
+  if (zone === 2) return 'the snap, from the edge';
+  return 'a taunt, or a charge in if held';
+}
+function closeTicks(dist) {
+  var gap = (dist - W.reach) / W.BH;
+  return gap <= 0 ? 0 : Math.min(W.closeMaxTicks, Math.ceil(W.closeTicksPerBh * gap));
+}
+function finish(wind, n, weight) {
+  var c = closeTicks(W.engageBh * W.BH);
+  var blow = weight === 'light' ? W.lightContact : Math.max(2, W.heavyWind - (wind + n));
+  return { ok: true, wind: wind, travel: n, close: c, blow: blow, total: wind + n + c + blow };
+}
+// Press to contact, in ticks, for a blow thrown from dist units. weight: 'light' or 'heavy' (B).
+function today(dist, weight) {
+  var bh = dist / W.BH;
+  if (bh <= W.closeBh) { var c = closeTicks(dist), b = weight === 'light' ? W.lightContact : W.heavyWind; return { ok: true, wind: 0, travel: 0, close: c, blow: b, total: c + b }; }
+  if (bh > W.midBh) return { ok: false };
+  var n = Math.max(W.lungeMin, Math.min(W.lungeMax, Math.ceil((dist - W.engageBh * W.BH) / (W.lungeSpeed / W.TPS))));
+  return finish(W.lungeWind[weight], n, weight);
+}
+function snap(dist, weight, tier) {
+  var bh = dist / W.BH;
+  if (bh <= W.closeBh) return today(dist, weight);
+  var n = Math.max(W.lungeMin, Math.ceil((dist - W.engageBh * W.BH) / (snapSpeed(tier) / W.TPS)));
+  return finish(W.lungeWind[weight], n, weight);
+}
+// Does a snap catch a defender who dashes straight away 'react' ticks after the press? Both on one line.
+// The snap's rule: each tick it needs ceil(left / per) more ticks; it may fall behind by snapGraceTicks in all, then it is outrun.
+function chase(dist, weight, aTier, dTier, react) {
+  var per = snapSpeed(aTier) / W.TPS, wind = W.lungeWind[weight];
+  var left = Math.max(W.lungeMin, Math.ceil((dist - W.engageBh * W.BH) / per));
+  var ax = 0, dx = dist, engage = W.engageBh * W.BH, grace = 0;
+  for (var t = 1; t <= 400; t++) {
+    if (t > react) {
+      var k = t - react, share = Math.min(1, W.kickInstant + (1 - W.kickInstant) * (k - 1) / W.kickClimb);
+      dx += flat(dTier) * share / W.TPS;
+    }
+    if (t > wind) {
+      var togo = Math.max(0, dx - engage - ax), need = Math.ceil(togo / per);
+      if (need > left) { grace += need - left; left = need; }
+      if (grace > W.snapGraceTicks) return { caught: false, tick: t, gap: dx - ax };
+      ax += left > 0 ? togo / left : 0; left--;
+      if (left <= 0) return { caught: true, tick: t };
+    }
+  }
+  return { caught: false, tick: 400, gap: dx - ax };
+}
+// The draw on a fighter whose stick has been at rest for quietTicks, in units a second, at gapBh inside a well of hisR.
+function draw(gapBh, hisR, tier, quietTicks) {
+  if (gapBh > hisR || gapBh <= W.drawStopBh) return 0;
+  var depth = Math.max(0, Math.min(1, (1 - gapBh / hisR) / (1 - W.drawFullAt)));
+  var ease = Math.max(0, Math.min(1, (gapBh - W.drawStopBh) / W.drawEaseBh));
+  var quiet = Math.min(1, (quietTicks === undefined ? W.drawQuietTicks : quietTicks) / W.drawQuietTicks);
+  return W.drawCap * plain(tier) * depth * ease * quiet;
+}
+function driftTime(fromBh, hisR, tier) {   // seconds for two resting fighters to drift from fromBh to within half a body height of the stop
+  var g = fromBh * W.BH, t = 0;
+  while (g > (W.drawStopBh + 0.5) * W.BH && t < 60 * 120) { g -= 2 * draw(g / W.BH, hisR, tier) / W.TPS; t++; }
+  return t / W.TPS;
+}
+
+// ---- The close fight: who moves when you push the stick. One line; you on the left, the rival on the right.
+// mode: 'pair' (today: the stick moves the fight) or 'own' (proposed: the stick moves you).
+// you: 'rest' | 'away' | 'toward'.  rival: 'idle' | 'lights' | 'heavy' | 'away' | 'toward'.
+function brawl(mode, you, rival, ticks) {
+  var s = { t: 0, a: 0, d: W.offset, av: 0, dv: 0, cen: 0, hits: 0, whiffs: 0, out: -1, why: '', dMovedByYourStick: 0, aMovedByHisStick: 0, stun: 0, part: 0, frames: [], next: 10, blow: null, open: 0, lastPress: 0, leaving: 0, still: 0 };
+  var top = W.nudgeMul * W.flight, own = W.ownMul * W.flight;
+  var ys = you === 'away' ? -1 : you === 'toward' ? 1 : 0;       // your stick: + is toward the rival (to the right)
+  var rs = rival === 'away' ? 1 : rival === 'toward' ? -1 : 0;   // the rival's stick: + is away from you
+  for (var t = 1; t <= (ticks || 240); t++) {
+    s.t = t;
+    var a0 = s.a;
+    var yst = ys * (s.stun > 0 ? W.staggerMul : 1);
+    if (s.stun > 0) s.stun--;
+    var gap = s.d - s.a;
+    // giving ground (built, ruled 10-06): while the rival winds up a heavy and you hold away, you step back alone, in either mode.
+    // Its leash stops you at 2.4 body heights past striking distance; in the proposed mode you keep walking past it at your own pace.
+    var giving = !!(s.blow && s.blow.kind === 'heavy' && ys < 0 && s.stun === 0);
+    var leash = W.offset + W.leashBh * W.BH;
+    if (giving && (gap < leash || mode === 'pair')) {
+      s.cen = 0; s.av = 0;
+      s.a -= Math.min(W.giveSpeed / W.TPS, Math.max(0, leash - gap));
+    } else if (mode === 'pair') {
+      // one speed for both: the sum of the sticks; against the computer a player's held stick wins
+      var tgt = yst * top + rs * top;
+      if (rival !== 'away' && rival !== 'toward' && yst !== 0) tgt = yst * top;
+      s.cen += Math.max(-top / W.pairRampTicks, Math.min(top / W.pairRampTicks, tgt - s.cen));
+      s.a += s.cen / W.TPS; s.d += s.cen / W.TPS;
+      if (ys !== 0 && rs === 0) s.dMovedByYourStick += Math.abs(s.cen / W.TPS);
+      if (rs !== 0 && ys === 0) s.aMovedByHisStick += Math.abs(s.cen / W.TPS);
+      if (ys < 0 && rs > 0) { s.part++; if (s.part > W.partTicks) { s.out = t; s.why = 'you both walked out'; } } else s.part = 0;
+    } else {
+      s.av += Math.max(-own / W.ownRampTicks, Math.min(own / W.ownRampTicks, yst * own - s.av));
+      s.dv += Math.max(-own / W.ownRampTicks, Math.min(own / W.ownRampTicks, rs * own - s.dv));
+      // a body is solid: walking into the other fighter stops you and does not move them
+      var na = s.a + s.av / W.TPS, nd = s.d + s.dv / W.TPS;
+      if (nd - na < W.minSep) { if (s.av > 0) { na = Math.min(na, s.d - W.minSep); s.av = 0; } if (s.dv < 0) { nd = Math.max(nd, na + W.minSep); s.dv = 0; } }
+      s.a = na; s.d = nd;
+    }
+    // the magnet: today always; proposed only while both sticks rest
+    gap = s.d - s.a;
+    if (gap > W.offset && (mode === 'pair' || (ys === 0 && rs === 0)) && !s.blow && !giving) {
+      var p = Math.min((gap - W.offset) / 2, W.pull); s.a += p; s.d -= p;
+    }
+    if (ys < 0 && Math.abs(s.a - a0) < 0.01 && s.stun === 0) s.still++;
+    // the rival's blows
+    if (s.open > 0) s.open--;
+    if ((rival === 'lights' || rival === 'heavy') && !s.blow && t >= s.next && s.open === 0) {
+      gap = s.d - s.a; s.lastPress = t;
+      if (rival === 'lights') s.blow = { kind: 'light', at: t + closeTicks(gap) + W.lightContact };
+      else s.blow = { kind: 'heavy', at: t + W.heavyWind };
+    }
+    if (s.blow) {
+      var b = s.blow; gap = s.d - s.a;
+      if (b.kind === 'light' && t < b.at - W.lightContact + 1) s.d -= Math.min(W.stepRoom, Math.max(0, gap - W.offset));
+      if (t >= b.at) {
+        gap = s.d - s.a;
+        var far = b.kind === 'light' ? gap - W.offset - Math.min(W.stepRoom, Math.max(0, gap - W.offset)) : gap - W.offset;
+        var reachU = ((b.kind === 'light' ? W.lightReachBh : W.heavyReachBh) - W.edgeReachBh) * W.BH;
+        if (far <= reachU) {
+          s.hits++; s.stun = b.kind === 'heavy' ? W.staggerTicks : 0; s.d = s.a + W.offset;
+          if (mode === 'own' && ys < 0) { s.leaving++; if (s.leaving >= W.leaveAfterBlows) { s.out = t; s.why = 'you broke away on blow ' + s.leaving; } }
+        } else { s.whiffs++; if (b.kind === 'heavy') s.open = W.whiffOpen; }
+        s.next = t + (b.kind === 'light' ? W.lightGap - W.lightContact : 6); s.blow = null;
+      }
+    }
+    s.frames.push([s.a, s.d]);
+    if (s.out < 0 && s.d - s.a > W.breakBh * W.BH) { s.out = t; s.why = 'the gap opened past 4.5 body heights'; }
+    if (s.out < 0 && !s.blow && t - s.lastPress > W.idleTicks) { s.out = t; s.why = mode === 'pair' ? 'nobody attacked for a second, so the fight let go and both were stopped' : 'nobody attacked for a second, so the fight let go and you kept walking'; }
+    if (s.out >= 0) break;
+  }
+  s.gap = s.d - s.a;
+  return s;
+}
+
+(function () {
+  function el(id) { return document.getElementById(id); }
+  function css(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function fit(cv) {
+    var r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    cv.width = Math.max(300, Math.round(r.width * d)); cv.height = Math.round(200 * d);
+    var c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); return { c: c, w: r.width, h: 200 };
+  }
+  function body(c, x, y, col) { c.fillStyle = col; c.beginPath(); c.arc(x, y - 22, 7, 0, 6.3); c.fill(); c.fillRect(x - 5, y - 15, 10, 15); }
+  function secs(ticks) { return (ticks / 60).toFixed(2) + ' s'; }
+  // ---- toy 1
+  var cv1 = el('wellToy'), out1 = el('wellOut');
+  function drawWell() {
+    if (!cv1 || !cv1.getContext) return;
+    var ta = +el('wA').value, tb = +el('wB').value, g = +el('wG').value, ch = el('wC').checked ? 1 : 0;
+    el('wAv').textContent = ta; el('wBv').textContent = tb; el('wGv').textContent = g + ' body heights';
+    var ra = radiusBh(ta, 0), rb = radiusBh(tb, ch);
+    var k = fit(cv1), c = k.c, sc = (k.w - 40) / 56, mid = k.w / 2, gy = 150;
+    c.clearRect(0, 0, k.w, k.h);
+    var ax = mid - g * sc / 2, bx = mid + g * sc / 2;
+    function band(x, r, col, yy) { c.globalAlpha = 0.28; c.fillStyle = col; c.fillRect(x - r * sc, yy, 2 * r * sc, 10); c.globalAlpha = 0.14; c.fillRect(x - (r + W.edgeBh) * sc, yy, 2 * (r + W.edgeBh) * sc, 10); c.globalAlpha = 1; }
+    band(bx, rb, css('--b'), gy + 4); band(ax, ra, css('--a'), gy + 18);
+    c.strokeStyle = css('--ground'); c.lineWidth = 2; c.beginPath(); c.moveTo(0, gy); c.lineTo(k.w, gy); c.stroke();
+    body(c, ax, gy, css('--a')); body(c, bx, gy, css('--b'));
+    c.fillStyle = css('--dim'); c.font = '12px system-ui'; c.fillText('the rival’s well: ' + rb.toFixed(1), 8, gy + 13); c.fillText('your well: ' + ra.toFixed(1), 8, gy + 27);
+    var za = zoneOf(g, rb), zb = zoneOf(g, ra);
+    var t0 = today(g * W.BH, 'light'), s1 = snap(g * W.BH, 'light', ta);
+    var mine = 'You are <strong>' + ZONE[za] + '</strong>' + (za === 0 ? '' : ' (the rival’s)') + '. Your X: ' + pressDoes(za);
+    if (za === 1 || za === 2) mine += ', landing <strong>' + secs(s1.total) + '</strong> after the press (today: ' + (t0.ok ? secs(t0.total) : 'a taunt') + ')';
+    var his = 'The rival is <strong>' + ZONE[zb] + '</strong>' + (zb === 0 ? '' : ' (yours)') + '. Their X: ' + pressDoes(zb) + '.';
+    var note = (za === 1 || za === 2) ? '<br>They are free and unmoved until you arrive. Then the close fight begins.' : '';
+    out1.innerHTML = mine + '.<br>' + his + note;
+  }
+  ['wA', 'wB', 'wG', 'wC'].forEach(function (id) { var e = el(id); if (e) e.addEventListener('input', drawWell); });
+  // ---- toy 2
+  var cv2 = el('brawlToy'), out2 = el('brawlOut'), anim = null, last = null;
+  var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function drawBrawl(fr, t, s) {
+    if (!cv2 || !cv2.getContext) return;
+    var k = fit(cv2), c = k.c, gy = 150, sc = k.w / 1500, x0 = k.w / 2;
+    c.clearRect(0, 0, k.w, k.h);
+    c.strokeStyle = css('--ground'); c.lineWidth = 2; c.beginPath(); c.moveTo(0, gy); c.lineTo(k.w, gy); c.stroke();
+    c.strokeStyle = css('--line'); c.setLineDash([4, 4]); c.beginPath(); c.moveTo(x0, 20); c.lineTo(x0, gy); c.moveTo(x0 + W.offset * sc, 20); c.lineTo(x0 + W.offset * sc, gy); c.stroke(); c.setLineDash([]);
+    body(c, x0 + fr[0] * sc, gy, css('--a')); body(c, x0 + fr[1] * sc, gy, css('--b'));
+    c.fillStyle = css('--dim'); c.font = '12px system-ui'; c.fillText('dashed lines: where you both started', 8, 16);
+    if (s) c.fillText((t / 60).toFixed(1) + ' s', k.w - 44, 16);
+  }
+  function bhs(u) { return (u / W.BH).toFixed(1) + ' body heights'; }
+  function summary(s, mode, you, riv) {
+    var a = [];
+    a.push(s.out >= 0 ? 'After ' + (s.out / 60).toFixed(1) + ' s: ' + s.why + '.' : 'After four seconds you are still in the fight.');
+    if (s.hits) a.push(s.hits + ' of the rival’s blows reached you.');
+    if (s.whiffs) a.push(s.whiffs + ' of their blows missed.');
+    if (s.dMovedByYourStick > 1) a.push('Your stick alone moved the rival ' + bhs(s.dMovedByYourStick) + '.');
+    else if (you !== 'rest') a.push('Your stick did not move the rival.');
+    if (s.aMovedByHisStick > 1) a.push('The rival’s stick alone moved you ' + bhs(s.aMovedByHisStick) + '.');
+    else if (riv === 'away' || riv === 'toward') a.push('The rival’s stick did not move you.');
+    a.push('You ended ' + bhs(s.gap) + ' apart.');
+    return a.join(' ');
+  }
+  function play() {
+    var mode = el('bMode').value, you = el('bYou').value, riv = el('bRiv').value;
+    var s = brawl(mode, you, riv, 240); last = s;
+    if (anim) cancelAnimationFrame(anim);
+    out2.textContent = summary(s, mode, you, riv);
+    if (still) { drawBrawl(s.frames[s.frames.length - 1], s.frames.length, s); return; }
+    var i = 0;
+    (function step() {
+      drawBrawl(s.frames[Math.min(i, s.frames.length - 1)], Math.min(i, s.frames.length), s);
+      i += 2;
+      if (i < s.frames.length + 20) anim = requestAnimationFrame(step); else anim = null;
+    })();
+  }
+  if (el('bPlay')) el('bPlay').addEventListener('click', play);
+  function redraw() { drawWell(); if (last && !anim) drawBrawl(last.frames[last.frames.length - 1], last.frames.length, last); else if (!last) drawBrawl([0, W.offset], 0, null); }
+  window.addEventListener('resize', redraw);
+  if (window.matchMedia) { try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw); } catch (e) {} }
+  redraw();
+})();
+</script>
+</body>
+</html>
