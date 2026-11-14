@@ -1,0 +1,968 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 2db56d0..64d56a2 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -128,6 +128,14 @@ jobs:
+         run: node tools/desktop-package-selftest.mjs
+       - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
+         run: node tools/flash/nightly-selftest.mjs
++      - name: Four-readings self-test (a clip captured at two sizes and read at two scales, the worst counts, the AI-seed clips staged; Legal RL-209)
++        run: node tools/flash/readings-selftest.mjs
++      - name: Pixel run self-test (the real run-pixels.mjs against stand-in capture and analysis, four readings, the folders, the staged seed clips, --sizes, --capture-only)
++        run: node tools/flash/run-pixels-selftest.mjs
++      - name: Signature gate self-test (a words-only child inherits its pin's grandfathering only if no reading is worse; Legal RL-209)
++        run: node tools/flash/signature-gate-selftest.mjs
++      - name: Pin child self-test (the words-only child of the pin, the strings, the proof that nothing else changed, the patch, the commit id; Legal RL-209)
++        run: node tools/pin-child-selftest.mjs
+       - name: Gate wrapper self-test (a Godot gate whose log has SCRIPT ERROR lines fails, whatever its exit code)
+         run: node tools/gate-selftest.mjs
+       # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
+diff --git a/docs/tools/load-and-captures.md b/docs/tools/load-and-captures.md
+new file mode 100644
+index 0000000..ddbe63a
+--- /dev/null
++++ b/docs/tools/load-and-captures.md
+@@ -0,0 +1,49 @@
++# Does machine load change a flash reading? (Tools, 2026-10-30)
++
++The EP's question, from Orb: stop voiding flash readings because the machine was busy. All the load comes from our own sessions, and there is no quiet to wait for. `capture-web.mjs` steps exactly one tick a frame, so load should make a capture slower and not different. The void rule rests on one incident (2026-10-12, a one-frame artefact of 87,000 pixels that turned a 2 into a 2.5). Animation read HEAD's collapse clip at 3.5 under load while others read 2 and 2.5.
++
++## What was measured
++
++Same export, same clip (`collapse`, seed 12345, normal, 1500 ticks, 1024x768), captured twice in a row while the nightly and everyone else's gates kept the machine at 87 to 100% (never below 74%; no quiet window existed to compare with), and the two compared frame by frame (`compare-frames.mjs`'s decoder, tolerance 0 and 8).
++
++| build | captures | frames byte-identical | frames that differ | the worst frame | the readings |
++| --- | --- | --- | --- | --- | --- |
++| pin 257a766c as it is | 2 at 87 to 100% load (8.7 and 7.2 frames a second) | 210 of 1500 | 1290 | 0.126% of the pixels (993 of 786,432), in a band across the ground, from tick 2 on | identical, 2 / 3.5 / 1 both times |
++| the same with `TIME` in `render/shaders/crowd.gdshader` replaced by 0.0 (scratch copy) | 2 at 76 to 88% load (7.3 and 8.7 frames a second) | **1496 of 1500** | 4 | 1 to 4 pixels, one grey level (GPU rounding) | not read: the frames are the same |
++
++**So load does not change the frames; one wall-clock read in the render does.** `crowd.gdshader` uses the engine's `TIME` three times (the civilians' run cycle, the startle tremble, the idle hop), so the crowd's pose depends on when the page started, not on the sim tick. That shows as a band of scattered pixels at ground level in every capture, load or no load (two captures at the same load differ as much as two at different loads). With the clock pinned, two captures at different loads are the same picture. The flash readings did not move with it (2 / 3.5 / 1 both times), because the crowd is small and never near a counted change.
++
++The 87,000-pixel artefact of 2026-10-12 was a one-frame event, not a load level. A test of the frames finds it; a test of CPU percent does not.
++
++## Why the same collapse clip reads 3.5 for one session and 2 for another
++
++Not load: frame size (Rendering found it first; the table below confirms it, and it is the same on the pin and on main). Collapse-normal, seed 12345, 1500 ticks:
++
++| size and scale | pin 257a766c | main b7a2cd86 |
++| --- | --- | --- |
++| 960x540 full-size | 3.5 / 3.5 / 1 | 3.5 / 3.5 / 1 |
++| 960x540 half (scale 2) | 2.5 / 3.5 / 2 | 3.5 / 3.5 / 1 |
++| 1024x768 full-size | 2 / 3.5 / 1 | 2 / 2.5 / 1 |
++| 1024x768 half (scale 2) | 2.5 / 3.5 / 2 | 2 / 2.5 / 2 |
++
++(primary / area-15% / two-second memory). The first blast (ticks 66 to 72) puts changed pixels in one analyser window at **0.91 of the area threshold at 1024x768 and 1.23 of it at 960x540**: at 4:3 it misses by a tenth and at 16:9 it counts, once, at tick 69. It is **not** the shape of the analyser's window: the same 960x540 frames read 3.5 under four windows (a third by a third, 4:3 of the same height, 4:3 of the same width, a square). It is where the blast lands relative to the threshold, so a clip with a blast near the threshold is size-sensitive. Box-averaging to the half scale also moves the count (the pin's collapse-normal at 960x540 reads 3.5 full-size and 2.5 at the half scale). Legal's RL-209 answers it by counting the worst of four readings (two sizes, two scales) for the fixed clips (docs/tools/pin-child.md).
++
++## The proposed rule (replacing "void if the machine was busy")
++
++1. **A tick-locked clip counts at any load.** Drop the frames-a-second void (`MIN_FRAMES_A_SECOND`, tools/flash/release-pass.mjs) and the quiet-machine wait; the capture's own time limit stays (a capture that does not finish is not a reading). The load before and after stay recorded (information, not a condition).
++2. **The capture proves itself, by its frames.** After a clip is read, re-capture the frames behind its peak readings (the worst second and every dip: the ranges `run-pixels --keep-ranges` already keeps, with `--skip` fast-forwarding to them; a window of about 250 ticks is a minute or two) and compare them with the first capture's frames by `compare-frames.mjs`. A reading stands when the re-captured window **reads the same** and its frames are **byte-identical or within the noise bound** (the bound is measured on the build: 0.158% of the pixels while the crowd clock leaks, 0.0000% when it does not). A frame beyond the bound is an artefact to find, and the reading does not stand until it is explained or the window re-captured again. That detects the one case the old rule came from (a one-frame spike that does not reproduce) at any load.
++3. **Fix the leak so the bound is zero.** Pass the crowd shader a uniform driven by the sim tick (the crowd's code that sets the shader's parameters feeds it; the three `TIME` reads go) so a capture is byte-reproducible; until then the bound above is used. Rendering's file; one line each in three places; no look change by design (a frozen crowd phase is replaced by a tick-driven one).
++4. **Release-pass rows record the proof, not the load**: `proof: { window: [from, to], frames, identical, withinNoise, bound }` replaces the load fields as the gate; the guard (CPU cap, time limit, tag) stays as information.
++
++**Not done, and why:** the window re-capture itself and a capture under deliberate starvation (16 busy loops on the capture's cores) were queued behind the EP's priority reads and stopped by the pause; the proposal's re-capture step is therefore designed on a hook that supports `--skip` ("the same sim as a clip that drew them", flash_capture.gd) but not yet shown byte-identical on a window. The lowest load obtained was 74%.
++
++## Which measurements need quiet
++
++- **Wall-clock figures**: frame times and their percentiles (`docs/perf/tools/frame-bench.mjs`, `latency-bench.mjs`), boot and load times, the audio warm-up, hitch probes. Contention changes them directly. Two partial remedies exist: `frame-bench` already records **CPU milliseconds per frame** (renderer and gpu-process, `cpu_ms_per_frame`), a figure that load inflates much less than the wall clock (SMT, cache and turbo still move it; by how much is not measured here), and a **calibration spin** (a fixed loop timed before and after a run) would give a load factor to divide by. Neither is proved; the proposal is to report CPU time per frame as the load-tolerant figure and keep wall-clock percentiles as quiet-only, and to measure once, on the next quiet window, how far each moves between a quiet and a loaded run of the same scene.
++- **Not wall-clock, so no quiet needed**: every flash reading (tick-locked), frame comparisons, the headless sim runs (determinism), counts of events and draw calls.
++
++## What Legal must accept (the rule touches RL-131 and the release-pass condition)
++
++- RL-131 (addendum 7): a clip captured on a starved machine is void, and the rate under 1 frame a second voids it. The proposal replaces both with the frame proof; the second capture of a clip whose worst second is above 2.0 and the re-capture of a sensitive clip (a different run, never a later window of the same run) stay as they are. The proof window is a re-capture of the **same** run, so it does not replace the sensitive clip's second run.
++- The release-pass record's capture-condition fields become information, and the proof fields become required.
++- Tools' nightly already runs under load (the whole night here ran at 74 to 100%): its readings stand under the rule, with the proof run on a reading that is at or over a tripwire.
+diff --git a/docs/tools/pin-child.md b/docs/tools/pin-child.md
+new file mode 100644
+index 0000000..a3fe9e3
+--- /dev/null
++++ b/docs/tools/pin-child.md
+@@ -0,0 +1,41 @@
++# The words-only child of the pin, and the four readings (Legal RL-209)
++
++Tools, 2026-10-30. What keeps the demo up while flash work is paused (Orb, 2026-10-30: flash work stays paused, the child of the pin is the plan, no signature fix on main).
++
++## Why a child
++
++Main's signature clip reads, REDUCED at 16:9, 3.5 / 3.5 / 3 (960x540, full size), worse than the live pin 257a766c's 3 / 3 / 3, and Legal's RL-209 (b) does not let the pin move to it. The live pin's in-game words are the old ones (RL-192, RL-193), and the excuse for them ends on 2026-11-08. The least change that satisfies both is the pin's own code plus only the cleared words: **the child**. It inherits the pin's grandfathering (RL-195, RL-202; RL-200 ends) to 2026-11-15 only if the signature and collapse clips, both modes, both sizes, read no worse and look the same.
++
++## What the child is
++
++`tools/pin-child.json` lists 17 strings in 4 files (`ui/data/terms.json`: the notice, the two card bodies and the lock line; `settings.json`: the help of "Flashing effects notice"; `options.json`: "Color-blind mode" and three helps; `howto.json`: eight licence words). Each entry names a string in the pin's file and the same string, as the cleared words, in main's `b7a2cd86`. A feature, a new key or a moved item in main is not a word and is never copied (the diff of `ui/data` between the pin and main also holds toggle styles, text size and volume, which are not in the child).
++
++```
++node tools/pin-child.mjs --check                 the 17 strings, and a proof that nothing else in ui/data differs from the pin
++node tools/pin-child.mjs --commit-id             the child commit's id, computed in a throwaway object directory (the repo is not written)
++node tools/pin-child.mjs --patch <file>          a patch against the pin
++node tools/pin-child.mjs --tree <dir> --recipe   the changed files written to <dir>, and the git plumbing that makes the commit for real
++```
++
++The text of each file is edited, not re-serialised (the old string as JSON must occur once; it becomes the new one), then the child's parsed JSON is compared with the pin's parsed JSON with only the listed strings changed. The author, committer, dates and message are fixed in the config, so **the commit id is known before the commit exists** (`302d0be9...` today; the self-test and a scratch clone both reproduce it): the pin move can name it, and the EP's recipe makes that same commit without touching the work tree, the index or any branch. The commit needs a branch (the site pin names its id and CI's export reads it with `git archive`).
++
++`node tools/pin-child-selftest.mjs` (16 checks) covers the replacements, the proof, the ambiguity refusals, the patch (it applies to the pin) and the id (same twice, same as the recipe's commit, no object written).
++
++## The proof that the child is the pin
++
++Legal's condition is that the signature and collapse clips, both modes, both sizes, are byte-identical or within noise to the pin's by the frame comparison, then the nightly on the child. The words are in menus and cards the clips never show, so the frames should be the pin's. `tools/flash/compare-frames.mjs` compares the child's frames with the pin's at every tick; the noise bound is the pin against itself (collapse is not byte-reproducible even build against itself: `render/shaders/crowd.gdshader` reads the engine's clock, see load-and-captures.md).
++
++## The four readings (tools)
++
++`tools/flash/readings.mjs`: a clip is captured at 960x540 (the primary) and at 1024x768, and each capture is read at full size and at the analyser's default scale for its width (2 for both: a box average down to 640 or under). **The worst of the four counts**, number by number, for the gate and for the interim's 3.5 trigger. `run-pixels.mjs` does it by default (`--sizes 960x540,1024x768` to choose); its `summary.json` rows keep `result` in the analyser's own shape (so the nightly, the release pass and the signature gate read them as before) with the worst numbers, and add `readings` (each of the four) and `worst` (which one). The second size's folder is `<id>@1024x768`. A clip costs twice the capture time (about 25 minutes, so a 16-clip nightly about 6 hours: pass `--sizes 960x540` to halve it where Legal's rule allows).
++
++`tools/flash/signature-gate.mjs --record-child <child summary> --pin-summary <pin summary> --commit <child> --of <pin>` records the child as grandfathered when **no reading** (each of the four, each of primary, red, area-15% and the two-second memory, of the signature and collapse clips, both modes) is worse than the pin's, and re-points the RL-202 engine-flip entry at the child. It refuses, writing nothing, when one is worse or missing.
++
++## State at the pause (2026-10-30, evening) and what resumes
++
++Done, in scratch and in the parks:
++- The child's data strings (`pin-child.json`, 17 strings in 4 files), its commit id (`302d0be9...`, reproduced by the recipe in a scratch clone), its Web export (scratch, custom template, lock and hook as the nightly's measurement export).
++- The four readings of the pin and of main, reduced and normal, signature, collapse and (reduced) clash. The pin's worst of four (primary / area-15% / memory): signature reduced 3 / 3 / 3, normal 2.5 / 2.5 / 3; collapse reduced 2.5 / 2.5 / 2.5, normal 3.5 / 3.5 / 2; clash reduced 2 / 2 / 2. Main's: signature reduced 3.5 / 3.5 / 3 (blocked), normal 3.5 / 4.5 / 3.5; collapse reduced 2.5 / 3 / 2, normal 3.5 / 3.5 / 2.
++- The nightly on the pin (custom template, 16 clips at 1024x768 full-size, none over 3.5; exit 3 is the signature clip's grandfathered 3 / 3 / 3), and the reduced seeds re-read at 960x540 full-size: 1049 3.5 / 4.5 / 3.5, 1050 3.5 / 3.5 / 3.5, 1051 1.5 / 2.5 / 1.5, 1053 1.5 / 2.5 / 2, 1054 2.5 / 2.5 / 2.5. RL-212's tripwires (primary over 3.5, area-15% over 4.5) have not tripped; 1049 and 1050 are at the line.
++
++Not done (resumes at start-up, in this order): ai-1055-reduced at 960x540 (its capture was stopped by the pause); the second capture of ai-1049-reduced at 960x540 with its frames kept, and what is on screen at ticks 853 to 880 (the headless register shows no flash ask between 780 and 892, so the seven changes are not register flashes; the owner is Rendering or VFX once the frames are seen); main's clash (reduced, then both normals) and the pin's clash-normal; the child's proof run (`run-pixels` with both sizes on the child's export, frames kept, then `compare-frames` against the pin's kept frames at both sizes, noise from the pin against itself) and `signature-gate --record-child`; the nightly on the child; the load experiment's window re-capture and starved capture; the route check's first real run; the pin-move commit's files (site.json, signature-gate record, excuse and grandfather files).
+diff --git a/tools/flash/readings-selftest.mjs b/tools/flash/readings-selftest.mjs
+new file mode 100644
+index 0000000..41bff25
+--- /dev/null
++++ b/tools/flash/readings-selftest.mjs
+@@ -0,0 +1,74 @@
++// Self-test of tools/flash/readings.mjs: the four readings of a clip and the worst of them (Legal RL-209). Node built-ins only.
++import { SIZES, STAGED_TRIGGER, parseSize, defaultScale, scalesFor, numbers, verdictOn, worstOf, readClip } from './readings.mjs';
++
++let failed = 0;
++const check = (name, ok, detail) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : '\n     ' + detail}`); if (!ok) failed++; };
++const res = (primary, red, lower, stricter, tick = 100) => ({
++  general: { flashes: primary, atTick: tick, atFrame: tick - 1 }, red: { flashes: red },
++  combined: { verdict: 'PASS', lower, higher: lower, stricter, primary: Math.max(primary, red) }, cross: { general: { flashes: stricter }, red: { flashes: 0 } },
++  params: { maxFlashes: 3, gate: 2.5 }, pass: true, dips: { list: [] },
++});
++const rd = (size, scale, r) => ({ size, scale, result: r });
++
++check('the two sizes are 16:9 first, then the standard\'s reference', SIZES.join() === '960x540,1024x768');
++check('a size is parsed, and a malformed one refused', parseSize('960x540').w === 960 && parseSize('960x540').h === 540 && (() => { try { parseSize('960*540'); return false; } catch { return true; } })());
++check('the analyser\'s default scale is the smallest that brings the width to 640 or under', defaultScale(960) === 2 && defaultScale(1024) === 2 && defaultScale(640) === 1 && defaultScale(1920) === 3);
++check('a size is analysed at full size and at its default, once when they are the same', scalesFor(960).join() === '1,2' && scalesFor(1024).join() === '1,2' && scalesFor(640).join() === '1');
++check('the numbers of a result: primary, red, area-15%, the longer memory', JSON.stringify(numbers(res(3, 1, 2.5, 2))) === JSON.stringify({ primary: 3, red: 1, area15: 2.5, twoSec: 2 }));
++
++const a = res(3, 0, 3, 3, 426), b = res(2.5, 0, 3.5, 2, 69);
++const inputs = [rd('960x540', 1, a), rd('960x540', 2, b)];
++const before = JSON.stringify(inputs);
++const w = worstOf(inputs);
++check('the worst of two takes the largest of each number, not the worst reading\'s numbers', w.general.flashes === 3 && w.combined.lower === 3.5 && w.combined.stricter === 3 && w.combined.primary === 3);
++check('the verdict is the combined rule\'s on those numbers (3.5 on the area reading is FAIL) with the reason', w.combined.verdict === 'FAIL' && w.pass === false && /area threshold 15% lower it counts 3\.5/.test(w.combined.reasons.join(' ')), JSON.stringify(w.combined));
++check('the inputs are not changed', JSON.stringify(inputs) === before);
++check('every reading is listed with its size, scale and numbers, and the worst one is named', w.worstOf === 2 && w.readings.length === 2 && w.readings[1].size === '960x540' && w.readings[1].scale === 2 && w.readings[1].area15 === 3.5 && w.worst.scale === 2, JSON.stringify(w.worst));
++check('the primary reading\'s tick is the worst primary reading\'s', w.general.atTick === 426);
++check('four readings that all pass are PASS; a primary of 3 is OVER GATE, not PASS', worstOf([rd('960x540', 1, res(2, 0, 2.5, 1)), rd('960x540', 2, res(2.5, 0, 2.5, 2)), rd('1024x768', 1, res(1.5, 0, 2, 1)), rd('1024x768', 2, res(2, 0, 2, 1))]).combined.verdict === 'PASS'
++  && worstOf([rd('960x540', 1, res(3, 0, 3, 3))]).combined.verdict === 'OVER GATE');
++check('a red count over 3 is FAIL', worstOf([rd('960x540', 1, res(1, 3.5, 1, 1))]).combined.verdict === 'FAIL');
++check('a clip with no longer-memory reading keeps it null, not 0', worstOf([rd('960x540', 1, res(1, 0, 1, null))]).combined.stricter === null);
++check('the pin\'s collapse-normal at 960x540 (3.5 / 3.5 / 1 and 2.5 / 3.5 / 2) with the 1024x768 ones (2 / 3.5 / 1) reads 3.5 / 3.5 / 2', (() => { const x = worstOf([rd('960x540', 1, res(3.5, 0, 3.5, 1)), rd('960x540', 2, res(2.5, 0, 3.5, 2)), rd('1024x768', 1, res(2, 0, 3.5, 1)), rd('1024x768', 2, res(2, 0, 3.5, 1))]); return x.general.flashes === 3.5 && x.combined.lower === 3.5 && x.combined.stricter === 2 && x.worst.size === '960x540' && x.worst.scale === 1; })());
++check('nothing to read is refused', (() => { try { worstOf([]); return false; } catch { return true; } })());
++
++// the loop, with a stand-in for the capture and the analysis
++{
++  const calls = [];
++  const table = { '960x540:1': res(3, 0, 3, 3), '960x540:2': res(3, 0, 3, 3), '1024x768:1': res(3.5, 0, 3.5, 3), '1024x768:2': res(2, 0, 3, 2) };
++  const r = await readClip({
++    job: { id: 'signature-reduced' },
++    capture: async (job, size) => { calls.push(`capture ${size.text}`); return { dir: `d-${size.text}`, clip: { framesPerSecond: 9 } }; },
++    analyse: async (dir, scale, size) => { calls.push(`analyse ${size.text} ${scale}`); return table[`${size.text}:${scale}`]; },
++  });
++  check('a clip is captured at each size, in order, and each capture analysed at its scales', calls.join('|') === 'capture 960x540|analyse 960x540 1|analyse 960x540 2|capture 1024x768|analyse 1024x768 1|analyse 1024x768 2', calls.join('|'));
++  check('the result is the worst of the four, with the captures listed', r.readings.length === 4 && r.result.general.flashes === 3.5 && r.result.worst.size === '1024x768' && r.captures.length === 2 && r.captures[0].dir === 'd-960x540');
++  let msg = '';
++  try { await readClip({ job: { id: 'x' }, sizes: ['960x540'], capture: async () => { throw new Error('no page'); }, analyse: async () => null }); } catch (e) { msg = e.message; }
++  check('a capture that fails names the clip and the size', /x at 960x540: no page/.test(msg), msg);
++  const one = await readClip({ job: { id: 'y' }, sizes: ['640x360'], capture: async () => ({ dir: 'd', clip: {} }), analyse: async () => res(1, 0, 1, 1) });
++  check('a width of 640 is analysed once', one.readings.length === 1);
++}
++
++// the staged reading of an AI-seed clip (Legal, 2026-10-30)
++{
++  const make = (table) => { const calls = []; return { calls, args: { job: { id: 'ai-1-reduced' }, staged: true, capture: async (job, size) => { calls.push('capture ' + size.text); return { dir: 'd-' + size.text, clip: {} }; }, analyse: async (dir, scale, size) => { calls.push('analyse ' + size.text + ' ' + scale); return table[size.text + ':' + scale] || res(1, 0, 1, 1); } } }; };
++  check('the trigger is a primary of 2.5', STAGED_TRIGGER === 2.5);
++  let m = make({ '960x540:1': res(2, 0, 3.5, 3) });
++  let r = await readClip(m.args);
++  check('a seed clip whose 16:9 full-size primary is under 2.5 is read once: one capture, one analysis, whatever its other numbers', r.readings.length === 1 && r.captures.length === 1 && m.calls.join('|') === 'capture 960x540|analyse 960x540 1' && r.staged === true && r.result.worstOf === 1, m.calls.join('|'));
++  m = make({ '960x540:1': res(2.5, 0, 2, 1), '960x540:2': res(2, 0, 2, 1), '1024x768:1': res(3.5, 0, 3.5, 3), '1024x768:2': res(2, 0, 2, 1) });
++  r = await readClip(m.args);
++  check('at 2.5 the other readings are added, in order: the other scale, then the other size at both', m.calls.join('|') === 'capture 960x540|analyse 960x540 1|analyse 960x540 2|capture 1024x768|analyse 1024x768 1|analyse 1024x768 2' && r.readings.length === 4, m.calls.join('|'));
++  check('and the worst of the four counts', r.result.general.flashes === 3.5 && r.result.worst.size === '1024x768' && r.staged === true);
++  m = make({ '960x540:1': res(1, 2.5, 1, 1) });
++  r = await readClip(m.args);
++  check('a red count of 2.5 triggers it too', r.readings.length === 4);
++  m = make({ '960x540:1': res(3, 0, 3, 3) });
++  m.args.staged = false;
++  r = await readClip(m.args);
++  check('a fixed clip (staged off) is always read four times', r.readings.length === 4 && r.staged === false);
++}
++
++console.log(failed ? `readings self-test FAILED (${failed})` : 'readings self-test passed');
++process.exit(failed ? 1 : 0);
+diff --git a/tools/flash/readings.mjs b/tools/flash/readings.mjs
+new file mode 100644
+index 0000000..310c163
+--- /dev/null
++++ b/tools/flash/readings.mjs
+@@ -0,0 +1,90 @@
++// The four readings of a clip (Legal RL-209 (a), 2026-10-30): the same clip is captured at two frame sizes, 960x540 (16:9, the primary size) and 1024x768 (the standard's reference), and each
++// capture is analysed at two scales, the full-size one and the analyser's default for that width (a box average down to 640 or under). The WORST of the four counts, for the gate and for the interim's
++// trigger alike: a clip reads what its worst reading reads. A reading is { size: '960x540', scale: 1, result } with `result` the analyser's (tools/flash/wcag.js analyse).
++//
++//   worstOf(readings)  -> one result in the analyser's own shape (so every consumer reads it as before: general.flashes, red.flashes, combined.*, cross.general.flashes, dips, worstSecond ...)
++//                         whose numbers are the largest of the readings', whose verdict is the combined rule's on those numbers, and which also carries `readings` (each reading's numbers) and `worst`.
++//   readClip(...)      -> the loop that captures a clip at every size and analyses every capture at every scale (the capture and the analysis are passed in, so a self-test can stand in for them).
++export const SIZES = ['960x540', '1024x768'];   // the primary size first
++export const STAGED_TRIGGER = 2.5;   // an AI-seed clip's primary (or red) reading, at the first size and full size, from which the other readings are added (Legal, 2026-10-30)
++const num = (v) => typeof v === 'number' && Number.isFinite(v);
++const max = (...v) => { const n = v.filter(num); return n.length ? Math.max(...n) : null; };
++
++export function parseSize(text) {
++  const m = /^(\d+)x(\d+)$/.exec(String(text));
++  if (!m) throw new Error(`a size looks like 960x540, not ${text}`);
++  return { w: Number(m[1]), h: Number(m[2]), text: `${Number(m[1])}x${Number(m[2])}` };
++}
++/** The analyser's default scale for a width: the smallest box average that brings the width to 640 or under (tools/flash/analyse-frames.js). */
++export const defaultScale = (w) => Math.max(1, Math.ceil(w / 640));
++/** The scales a size is analysed at: full size, and the default for its width (the same one when the width is 640 or under). */
++export const scalesFor = (w) => [...new Set([1, defaultScale(w)])];
++
++/** The three numbers and the red count of a result. */
++export function numbers(r) {
++  return { primary: r.general.flashes, red: r.red ? r.red.flashes : 0, area15: r.combined.lower, twoSec: num(r.combined.stricter) ? r.combined.stricter : null };
++}
++const score = (n) => [max(n.primary, n.red, n.area15, n.twoSec), n.primary];
++
++/** The combined rule's verdict on four numbers (tools/flash/wcag.js: FAIL over 3 on the primary, area-15% or two-second reading; OVER GATE over 2.5 on the primary). */
++export function verdictOn(n, p = {}) {
++  const maxFlashes = num(p.maxFlashes) ? p.maxFlashes : 3, gate = num(p.gate) ? p.gate : 2.5;
++  const reasons = [];
++  if (n.primary > maxFlashes || n.red > maxFlashes) reasons.push(`the primary reading counts ${max(n.primary, n.red)} (over ${maxFlashes})`);
++  if (n.area15 > maxFlashes) reasons.push(`with the area threshold 15% lower it counts ${n.area15} (over ${maxFlashes})`);
++  if (n.twoSec !== null && n.twoSec > maxFlashes) reasons.push(`with a longer memory it counts ${n.twoSec} (over ${maxFlashes})`);
++  const verdict = reasons.length ? 'FAIL' : n.primary > gate ? 'OVER GATE' : 'PASS';
++  if (verdict === 'OVER GATE') reasons.push(`the primary reading counts ${n.primary} (over our gate of ${gate})`);
++  return { verdict, reasons };
++}
++
++export function worstOf(readings) {
++  if (!readings.length) throw new Error('worstOf needs at least one reading');
++  const rows = readings.map((x) => ({ size: x.size, scale: x.scale, ...numbers(x.result), atTick: x.result.general.atTick, verdict: x.result.combined.verdict }));
++  let bi = 0;
++  rows.forEach((r, i) => { const a = score(r), b = score(rows[bi]); if (a[0] > b[0] || (a[0] === b[0] && a[1] > b[1])) bi = i; });
++  const base = readings[bi].result;
++  const r = JSON.parse(JSON.stringify(base));
++  const W = { primary: max(...rows.map((x) => x.primary)), red: max(...rows.map((x) => x.red)), area15: max(...rows.map((x) => x.area15)), twoSec: max(...rows.map((x) => x.twoSec)) };
++  // the largest of each, set where every consumer reads it
++  const atMax = (k) => readings[rows.findIndex((x) => x[k] === W[k])].result;
++  r.general.flashes = W.primary; r.general.atTick = atMax('primary').general.atTick; r.general.atFrame = atMax('primary').general.atFrame;
++  if (r.red) r.red.flashes = W.red;
++  r.combined.primary = max(W.primary, W.red); r.combined.lower = W.area15;
++  r.combined.higher = max(...readings.map((x) => x.result.combined.higher));
++  r.combined.stricter = W.twoSec;
++  if (r.cross && r.cross.general) { r.cross.general.flashes = max(...readings.map((x) => (x.result.cross && x.result.cross.general ? x.result.cross.general.flashes : null))); if (r.cross.red) r.cross.red.flashes = max(...readings.map((x) => (x.result.cross && x.result.cross.red ? x.result.cross.red.flashes : null))); }
++  const v = verdictOn({ primary: r.combined.primary, red: W.red || 0, area15: W.area15, twoSec: W.twoSec }, r.params || {});
++  r.combined.verdict = v.verdict; r.combined.reasons = v.reasons;
++  r.pass = v.verdict === 'PASS';
++  r.worst = { size: rows[bi].size, scale: rows[bi].scale };
++  r.worstOf = rows.length;
++  r.readings = rows;
++  return r;
++}
++
++/**
++ * Captures `job` at every size and analyses each capture at each of that size's scales. `capture(job, size)` -> { dir, clip } (the capture's folder and its clip.json); `analyse(dir, scale)` ->
++ * the analyser's result. Returns { readings, captures: [{ size, dir, clip }], result }, `result` being worstOf(readings). A capture that fails throws with its size named.
++ * `staged` (the AI-seed clips): read the first size at full size only; when that reading's primary or red count is under STAGED_TRIGGER that is the clip's reading, otherwise the rest of the four are added.
++ */
++export async function readClip({ job, sizes = SIZES, capture, analyse, staged = false }) {
++  const readings = [], captures = [];
++  let first = true;
++  for (const text of sizes) {
++    const size = parseSize(text);
++    let cap;
++    try { cap = await capture(job, size); } catch (e) { throw new Error(`${job.id} at ${size.text}: ${e.message}`); }
++    captures.push({ size: size.text, dir: cap.dir, clip: cap.clip });
++    const scales = scalesFor(size.w);
++    if (staged && first) {
++      const one = { size: size.text, scale: scales[0], result: await analyse(cap.dir, scales[0], size) };
++      readings.push(one);
++      const n = numbers(one.result);
++      if (!(n.primary >= STAGED_TRIGGER || n.red >= STAGED_TRIGGER)) return { readings, captures, result: worstOf(readings), staged: true };
++      for (const scale of scales.slice(1)) readings.push({ size: size.text, scale, result: await analyse(cap.dir, scale, size) });
++    } else for (const scale of scales) readings.push({ size: size.text, scale, result: await analyse(cap.dir, scale, size) });
++    first = false;
++  }
++  return { readings, captures, result: worstOf(readings), staged };
++}
+diff --git a/tools/flash/run-pixels-selftest.mjs b/tools/flash/run-pixels-selftest.mjs
+new file mode 100644
+index 0000000..d36fded
+--- /dev/null
++++ b/tools/flash/run-pixels-selftest.mjs
+@@ -0,0 +1,84 @@
++// Self-test of tools/flash/run-pixels.mjs's four readings (Legal RL-209): the real run-pixels.mjs, in a scratch copy of tools/flash whose capture-web.mjs and analyse-frames.js are stand-ins, so no
++// browser and no frames are needed. Node built-ins only.
++import { spawnSync } from 'node:child_process';
++import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const here = dirname(fileURLToPath(import.meta.url));
++let failed = 0;
++const check = (name, ok, detail) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : '\n     ' + detail}`); if (!ok) failed++; };
++
++const root = mkdtempSync(join(tmpdir(), 'run-pixels-'));
++const d = join(root, 'tools', 'flash');   // clips.mjs reads data/fighters/roster.json two folders up
++try {
++  mkdirSync(d, { recursive: true }); mkdirSync(join(root, 'data', 'fighters'), { recursive: true });
++  copyFileSync(join(here, '..', '..', 'data', 'fighters', 'roster.json'), join(root, 'data', 'fighters', 'roster.json'));
++  for (const f of readdirSync(here)) if (/\.(mjs|js|json)$/.test(f) && !/selftest/.test(f)) copyFileSync(join(here, f), join(d, f));
++  // a capture that writes a clip.json and one frame; it fails when STUB_FAIL names its size
++  writeFileSync(join(d, 'capture-web.mjs'), [
++    "import { mkdirSync, writeFileSync } from 'node:fs'; import { join } from 'node:path';",
++    "const a = process.argv.slice(2); const o = (n) => a[a.indexOf(n) + 1];",
++    "const w = Number(o('--width')), h = Number(o('--height')), out = o('--out');",
++    "if (process.env.STUB_FAIL === w + 'x' + h) { console.error('[capture-web] FAILED: the stand-in refuses ' + w + 'x' + h); process.exit(1); }",
++    "mkdirSync(out, { recursive: true }); writeFileSync(join(out, 'frame-000001.png'), 'x');",
++    "writeFileSync(join(out, 'clip.json'), JSON.stringify({ width: w, height: h, reduced: a.includes('--reduced'), ticks: Number(o('--ticks')), framesPerSecond: w === 960 ? 9 : 7, loadBefore: 50, loadAfter: 60, mode: { reduce_flashing: a.includes('--reduced') }, probe: {}, guard: { tag: 'stub' } }));",
++  ].join('\n'));
++  // an analysis whose numbers depend on the size and scale: 960x540 full 3 / 3.5 / 2, 960x540 half 2.5 / 3 / 2.5, 1024x768 full 2 / 2.5 / 1, 1024x768 half 3.5 / 3 / 1
++  writeFileSync(join(d, 'analyse-frames.js'), [
++    "const fs = require('fs'), path = require('path');",
++    "const a = process.argv.slice(2); const o = (n) => a[a.indexOf(n) + 1];",
++    "const clip = JSON.parse(fs.readFileSync(path.join(a[0], 'clip.json'), 'utf8'));",
++    "const t = (process.env.STUB_LOW === '1' ? { '960:1': [2, 3.5, 2], '960:2': [2, 3, 2], '1024:1': [2, 2.5, 1], '1024:2': [3.5, 3, 1] } : { '960:1': [3, 3.5, 2], '960:2': [2.5, 3, 2.5], '1024:1': [2, 2.5, 1], '1024:2': [3.5, 3, 1] })[clip.width + ':' + o('--scale')];",
++    "const [p, l, s] = t;",
++    "const r = { frames: 1, width: clip.width, height: clip.height, general: { flashes: p, atFrame: 9, atTick: 10, worstSecond: [], marginal: 0 }, red: { flashes: 0, atTick: 0, worstSecond: [], marginal: 0 }, dips: { list: [] },",
++    "  combined: { verdict: 'X', lower: l, higher: l, stricter: s, primary: p }, cross: { general: { flashes: s }, red: { flashes: 0 } }, params: { maxFlashes: 3, gate: 2.5 }, pass: true };",
++    "fs.writeFileSync(o('--json'), JSON.stringify([{ clip: a[0], result: r }]));",
++  ].join('\n'));
++
++  const run = (extra, env = {}, clip = 'signature-reduced') => spawnSync(process.execPath, [join(d, 'run-pixels.mjs'), '--dir', d, '--out', join(d, 'out'), '--clip', clip, '--jobs', '1', ...extra], { encoding: 'utf8', env: { ...process.env, ...env, MSYS_NO_PATHCONV: '1' } });
++  const summary = () => JSON.parse(readFileSync(join(d, 'out', 'summary.json'), 'utf8'))[0];
++
++  let r = run(['--keep']);
++  const s = summary();
++  check('a clip is captured at both sizes and read at both scales of each: four readings', s.readings && s.readings.length === 4 && s.sizes.join() === '960x540,1024x768', JSON.stringify(s.readings));
++  check('the result is the worst of the four, number by number (3.5 / 3.5 / 2.5), and says which reading is the worst', s.result.general.flashes === 3.5 && s.result.combined.lower === 3.5 && s.result.combined.stricter === 2.5 && s.result.worstOf === 4 && s.result.worst.size === '1024x768', JSON.stringify(s.result.worst));
++  check('its verdict is the combined rule\'s on those numbers: FAIL, so the run exits 1', s.result.combined.verdict === 'FAIL' && r.status === 1 && /worst of 4 readings/.test(r.stdout), r.stdout);
++  check('the first size keeps the clip\'s folder and the others are <id>@<size>', existsSync(join(d, 'out', 'signature-reduced', 'clip.json')) && existsSync(join(d, 'out', 'signature-reduced@1024x768', 'clip.json')));
++  check('analysis.json (what margins.mjs reads) is in the primary folder', existsSync(join(d, 'out', 'signature-reduced', 'analysis.json')));
++  check('the capture condition is the slowest capture\'s, and each capture is listed', s.guard.framesPerSecond === 7 && s.captures.length === 2 && s.captures[0].size === '960x540' && s.captures[0].framesPerSecond === 9, JSON.stringify(s.guard));
++  check('--keep keeps the frames of every size', existsSync(join(d, 'out', 'signature-reduced', 'frame-000001.png')) && existsSync(join(d, 'out', 'signature-reduced@1024x768', 'frame-000001.png')));
++
++  rmSync(join(d, 'out'), { recursive: true, force: true });
++  r = run(['--sizes', '960x540']);
++  const one = summary();
++  check('--sizes 960x540 is two readings (full size and the width\'s default), the old single-size run being one of them', one.readings.length === 2 && one.result.general.flashes === 3 && one.result.combined.lower === 3.5, JSON.stringify(one.readings));
++
++  rmSync(join(d, 'out'), { recursive: true, force: true });
++  r = run(['--clip', 'signature-reduced'], { STUB_FAIL: '1024x768' });
++  check('a capture that fails at the second size is reported with the clip and the size, and the run exits 1', r.status === 1 && /signature-reduced at 1024x768/.test(r.stdout + r.stderr) && /CAPTURE FAILED/.test(r.stdout), r.stdout + r.stderr);
++
++  rmSync(join(d, 'out'), { recursive: true, force: true });
++  r = run(['--capture-only']);
++  check('--capture-only captures every size and reads nothing', r.status === 0 && existsSync(join(d, 'out', 'signature-reduced', 'clip.json')) && existsSync(join(d, 'out', 'signature-reduced@1024x768', 'clip.json')) && !existsSync(join(d, 'out', 'signature-reduced', 'analysis.json')), r.stdout + r.stderr);
++
++  // the AI-seed clips are staged (Legal, 2026-10-30): 16:9 full size first, the rest of the four only from a primary of 2.5
++  rmSync(join(d, 'out'), { recursive: true, force: true });
++  r = run(['--keep'], { STUB_LOW: '1' }, 'ai-4-reduced');
++  const low = summary();
++  check('an AI-seed clip whose 16:9 full-size primary is under 2.5 is read once: one reading, one capture, no second folder', low.readings.length === 1 && low.result.worstOf === 1 && low.captures.length === 1 && !existsSync(join(d, 'out', 'ai-4-reduced@1024x768')), JSON.stringify(low.readings));
++  rmSync(join(d, 'out'), { recursive: true, force: true });
++  r = run(['--keep'], {}, 'ai-4-reduced');
++  const hi = summary();
++  check('one at 2.5 or more gets the other readings added: four readings, two captures, the worst counts', hi.readings.length === 4 && hi.captures.length === 2 && hi.result.general.flashes === 3.5, JSON.stringify(hi.readings));
++  rmSync(join(d, 'out'), { recursive: true, force: true });
++  r = run(['--keep', '--all-readings'], { STUB_LOW: '1' }, 'ai-4-reduced');
++  check('--all-readings reads an AI-seed clip four times too', summary().readings.length === 4);
++
++  r = run(['--sizes', '960by540']);
++  check('a malformed size is refused before anything runs', r.status !== 0 && /a size looks like/.test(r.stdout + r.stderr), r.stdout + r.stderr);
++} finally { rmSync(root, { recursive: true, force: true }); }
++
++console.log(failed ? `run-pixels self-test FAILED (${failed})` : 'run-pixels self-test passed');
++process.exit(failed ? 1 : 0);
+diff --git a/tools/flash/run-pixels.mjs b/tools/flash/run-pixels.mjs
+index e087763..5a6b7e6 100644
+--- a/tools/flash/run-pixels.mjs
++++ b/tools/flash/run-pixels.mjs
+@@ -1,12 +1,13 @@
+-// Half 2 for real: captures every worst case from a local web export of the game, in normal and reduced mode, at the standard's reference size (1024 x 768), analyses each
+-// clip at full size, and cross-checks each clip against the headless run of the same scenario (the drift check between tools/flash/flash_worst.gd and Rendering's copy of
++// Half 2 for real: captures every worst case from a local web export of the game, in normal and reduced mode, at two frame sizes (Legal RL-209: 960 x 540, the 16:9 primary, and 1024 x 768, the
++// standard's reference), reads each capture at two scales (full size and the analyser's default for its width: four readings a clip, the WORST counts, tools/flash/readings.mjs), and cross-checks each clip against the headless run of the same scenario (the drift check between tools/flash/flash_worst.gd and Rendering's copy of
+ // the staging, render/tools/flash_capture.gd). Manual, not CI: it needs a web export and takes tens of minutes.
+ //
+ //   godot --headless --path . --export-release "Web" <site>/index.html            (a HEAD export; the Web preset, templates already installed)
+ //   godot --headless --path . --script res://tools/flash/flash_worst.gd -- --out=<flash>            (the headless runs for the cross-check)
+-//   node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <flash>] [--jobs 3] [--only mash,clash] [--clip collapse-normal] [--keep | --keep-ranges]
++//   node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <flash>] [--jobs 3] [--only mash,clash] [--clip collapse-normal] [--keep | --keep-ranges] [--sizes 960x540,1024x768] [--all-readings]
++//   --all-readings: read the AI-seed clips four times too (they are read at the first size and full size, and the rest only from a primary of 2.5, Legal 2026-10-30)
+ //
+-// Writes <out>/<id>/ (frames and clip.json), <out>/summary.json and a table. Frames of clips that show no failure are deleted unless --keep. Exit 0 when every clip shows
++// Writes <out>/<id>/ (the first size's frames and clip.json; the other sizes' are <out>/<id>@<size>/), <out>/summary.json (result = the worst of the four readings, readings = each of them) and a table. Frames of clips that show no failure are deleted unless --keep. Exit 0 when every clip shows
+ // no failure under the reading (docs/tools/flash-check.md) and every cross-check agrees, 1 otherwise. On Git Bash set MSYS_NO_PATHCONV=1 or quote --path.
+ import { spawn, spawnSync } from 'node:child_process';
+ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+@@ -14,6 +15,7 @@ import { join, dirname } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import { createRequire } from 'node:module';
+ import { requiredClips } from './clips.mjs';
++import { SIZES, parseSize, readClip } from './readings.mjs';
+ 
+ const here = dirname(fileURLToPath(import.meta.url));
+ const V = createRequire(import.meta.url)('./verdict.js');
+@@ -28,9 +30,9 @@ const VARIANT = Number(opt('--variant', 0));   // a different run of every fixed
+ const SKIP = Number(opt('--skip', 0));   // ticks run without a picture before every clip (a window of a match: the clip is --ticks long from tick skip + 1); needs the hook's skip
+ const CLIP_TIMEOUT_S = Number(opt('--clip-timeout', 3600));
+ const ONLY = opt('--only') ? opt('--only').split(',') : null;
+-const W = 1024, H = 768;
++const SIZE_LIST = (opt('--sizes') || SIZES.join(',')).split(',').map((s) => parseSize(s.trim()).text);   // the first is the primary: its folder keeps the clip's id (RL-209)
+ const TICKS_OVERRIDE = opt('--ticks') ? Number(opt('--ticks')) : 0;   // a shorter clip, for a speed measurement (the verdict then covers only those ticks)
+-if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--hold] [--merge-zoom] [--ticks N] [--skip N] [--variant N] [--seeds a,b,c] [--legacy-hook] [--cpu-cap 40] [--clip-timeout 3600]'); process.exit(2); }
++if (!DIR || !OUT) { console.error('usage: node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1" --out <clips> [--flash <headless runs>] [--jobs 3] [--only a,b] [--clip id,id] [--keep | --keep-ranges] [--software] [--budget] [--hold] [--merge-zoom] [--ticks N] [--skip N] [--variant N] [--seeds a,b,c] [--legacy-hook] [--cpu-cap 40] [--clip-timeout 3600] [--sizes 960x540,1024x768] [--all-readings]'); process.exit(2); }
+ const src = JSON.parse(readFileSync(join(here, 'sources.json'), 'utf8'));
+ const CLIP = opt('--clip') ? opt('--clip').split(',') : null;
+ // the required set (sources.json, tools/flash/clips.mjs): the five fixed cases, and for `ai` every pairing at every seed, each in both modes
+@@ -64,15 +66,40 @@ function seriesFromRows(rows, ticks, skip = 0) {
+   return s;
+ }
+ 
++/** The frames to keep of one capture: the worst second (30 ticks before to 90 after its start) and every dip (15 before to 30 after), over the results read from it. */
++function rangesOf(results) {
++  const ranges = [];
++  for (const result of results) {
++    for (const k of ['general', 'red']) if (result[k].flashes >= 1 && result[k].atTick > 0) ranges.push([result[k].atTick - 30, result[k].atTick + 90]);
++    for (const d of result.dips.list) ranges.push([d.tick - 15, d.tick + 30]);
++  }
++  return ranges;
++}
++
+ async function one(job) {
+-  const dir = join(OUT, job.id);
+   const t0 = Date.now();
+-  const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', job.scenario, '--seed', String(job.seed), ...(job.slots ? ['--slots', job.slots.join(',')] : []), ...(job.reduced ? ['--reduced'] : []), ...(argv.includes('--legacy-hook') ? ['--legacy-hook'] : []), '--ticks', String(TICKS_OVERRIDE || job.ticks), ...(argv.includes('--software') ? ['--software'] : []), ...(argv.includes('--budget') ? ['--budget'] : []), ...(argv.includes('--hold') ? ['--hold'] : []), ...(argv.includes('--merge-zoom') ? ['--merge-zoom'] : []), ...(SKIP > 0 ? ['--skip', String(SKIP)] : []), ...(VARIANT !== 0 ? ['--variant', String(VARIANT)] : []), '--width', String(W), '--height', String(H), '--out', dir, '--timeout', String(CLIP_TIMEOUT_S), '--cpu-cap', String(CPU_CAP)], (CLIP_TIMEOUT_S + 900) * 1000);
+-  if (cap.code !== 0) return { ...job, error: cap.out.trim().split('\n').pop() };
+-  if (argv.includes('--capture-only')) return { ...job, captured: true };
+-  const an = await run([join(here, 'analyse-frames.js'), dir, '--scale', '1', '--json', join(dir, 'analysis.json')]);
+-  const result = JSON.parse(readFileSync(join(dir, 'analysis.json'), 'utf8'))[0].result;
+-  const clip = JSON.parse(readFileSync(join(dir, 'clip.json'), 'utf8'));
++  const dirFor = (size) => (size.text === SIZE_LIST[0] ? join(OUT, job.id) : join(OUT, `${job.id}@${size.text}`));
++  const capture = async (j, size) => {
++    const dir = dirFor(size);
++    const cap = await run([join(here, 'capture-web.mjs'), '--dir', DIR, '--path', PATH, '--scenario', j.scenario, '--seed', String(j.seed), ...(j.slots ? ['--slots', j.slots.join(',')] : []), ...(j.reduced ? ['--reduced'] : []), ...(argv.includes('--legacy-hook') ? ['--legacy-hook'] : []), '--ticks', String(TICKS_OVERRIDE || j.ticks), ...(argv.includes('--software') ? ['--software'] : []), ...(argv.includes('--budget') ? ['--budget'] : []), ...(argv.includes('--hold') ? ['--hold'] : []), ...(argv.includes('--merge-zoom') ? ['--merge-zoom'] : []), ...(SKIP > 0 ? ['--skip', String(SKIP)] : []), ...(VARIANT !== 0 ? ['--variant', String(VARIANT)] : []), '--width', String(size.w), '--height', String(size.h), '--out', dir, '--timeout', String(CLIP_TIMEOUT_S), '--cpu-cap', String(CPU_CAP)], (CLIP_TIMEOUT_S + 900) * 1000);
++    if (cap.code !== 0) throw new Error(cap.out.trim().split('\n').pop());
++    return { dir, clip: JSON.parse(readFileSync(join(dir, 'clip.json'), 'utf8')) };
++  };
++  if (argv.includes('--capture-only')) {
++    try { for (const s of SIZE_LIST) await capture(job, parseSize(s)); } catch (e) { return { ...job, error: e.message }; }
++    return { ...job, captured: true };
++  }
++  const analyse = async (dir, scale) => {
++    const json = join(dir, `analysis-s${scale}.json`);
++    await run([join(here, 'analyse-frames.js'), dir, '--scale', String(scale), '--json', json]);
++    return JSON.parse(readFileSync(json, 'utf8'))[0].result;
++  };
++  let read;   // the AI-seed clips are read at 16:9 full size first and the rest of the four only from a primary of 2.5 (Legal, 2026-10-30)
++  try { read = await readClip({ job, sizes: SIZE_LIST, capture, analyse, staged: job.scenario === 'ai' && !argv.includes('--all-readings') }); } catch (e) { return { ...job, error: e.message }; }
++  const result = read.result;
++  const clip = read.captures[0].clip;   // the primary size's: the headless cross-check and the mode read-back are taken from it
++  const dir = read.captures[0].dir;
++  writeFileSync(join(dir, 'analysis.json'), JSON.stringify([{ clip: dir, meta: clip, scale: 'worst of ' + read.readings.length, result }], null, 2) + '\n');   // what margins.mjs reads: the worst reading's own numbers and worst second
+   let cross = null;
+   if (FLASH) {
+     const f = join(FLASH, `flash-${job.scenario}-${job.reduced ? 'reduced' : 'normal'}${job.label}${job.multi ? '-' + job.seed : ''}.json`);
+@@ -90,19 +117,21 @@ async function one(job) {
+   }
+   const bad = !result.pass;
+   let kept = bad || argv.includes('--keep');
+-  if (argv.includes('--keep-ranges')) {
+-    // keep only the frames a person needs: the worst second (30 ticks before to 90 after its start) and every dip (15 before to 30 after), delete the rest
+-    const ranges = [];
+-    for (const k of ['general', 'red']) if (result[k].flashes >= 1 && result[k].atTick > 0) ranges.push([result[k].atTick - 30, result[k].atTick + 90]);
+-    for (const d of result.dips.list) ranges.push([d.tick - 15, d.tick + 30]);
+-    for (const f of readdirSync(dir)) {
+-      const m = /^frame-(\d+)\.png$/.exec(f);
+-      if (m && !ranges.some(([lo, hi]) => Number(m[1]) >= lo && Number(m[1]) <= hi)) rmSync(join(dir, f));
+-    }
+-    writeFileSync(join(dir, 'kept-ranges.json'), JSON.stringify({ ranges }, null, 2) + String.fromCharCode(10));
+-    kept = true;
+-  } else if (!bad && !argv.includes('--keep')) for (const f of readdirSync(dir)) if (/\.png$/i.test(f)) rmSync(join(dir, f));
+-  return { ...job, seconds: Math.round((Date.now() - t0) / 1000), result, cross, kept, mode: clip.mode || null, probe: clip.probe || null, guard: { ...(clip.guard || {}), loadBefore: clip.loadBefore, loadAfter: clip.loadAfter, framesPerSecond: clip.framesPerSecond } };
++  for (const cap of read.captures) {
++    if (argv.includes('--keep-ranges')) {
++      // keep only the frames a person needs, delete the rest
++      const ranges = rangesOf(read.readings.filter((x) => x.size === cap.size).map((x) => x.result));
++      for (const f of readdirSync(cap.dir)) {
++        const m = /^frame-(\d+)\.png$/.exec(f);
++        if (m && !ranges.some(([lo, hi]) => Number(m[1]) >= lo && Number(m[1]) <= hi)) rmSync(join(cap.dir, f));
++      }
++      writeFileSync(join(cap.dir, 'kept-ranges.json'), JSON.stringify({ ranges }, null, 2) + String.fromCharCode(10));
++      kept = true;
++    } else if (!bad && !argv.includes('--keep')) for (const f of readdirSync(cap.dir)) if (/\.png$/i.test(f)) rmSync(join(cap.dir, f));
++  }
++  const fps = Math.min(...read.captures.map((c) => c.clip.framesPerSecond).filter((x) => typeof x === 'number'));   // the slowest capture: a starved one voids the clip (RL-131)
++  return { ...job, seconds: Math.round((Date.now() - t0) / 1000), result, readings: read.result.readings, sizes: SIZE_LIST, cross, kept, mode: clip.mode || null, probe: clip.probe || null,
++    guard: { ...(clip.guard || {}), loadBefore: clip.loadBefore, loadAfter: clip.loadAfter, framesPerSecond: Number.isFinite(fps) ? fps : clip.framesPerSecond }, captures: read.captures.map((c) => ({ size: c.size, framesPerSecond: c.clip.framesPerSecond, loadBefore: c.clip.loadBefore, loadAfter: c.clip.loadAfter })) };
+ }
+ 
+ const results = [];
+@@ -113,7 +142,7 @@ await Promise.all(Array.from({ length: JOBS }, async () => {
+     const r = await one(job);
+     results.push(r);
+     if (r.captured) { console.log(`${job.id}: captured`); continue; }
+-    console.log(r.error ? `${job.id}: CAPTURE FAILED: ${r.error}` : `${job.id}: ${r.result.combined.verdict}, primary ${r.result.general.flashes} general ${r.result.red.flashes} red, area-15% ${r.result.combined.lower}, 2 s memory ${r.result.combined.stricter === null ? 'n/a' : r.result.combined.stricter}, ${r.result.dips.list.length} dips, ${r.seconds}s${r.cross && !r.cross.missing ? `, register count ${r.cross.agrees ? 'agrees' : 'DIFFERS'} with the headless run (${(100 * r.cross.share).toFixed(1)}% of ticks)` : ''}`);
++    console.log(r.error ? `${job.id}: CAPTURE FAILED: ${r.error}` : `${job.id}: ${r.result.combined.verdict}, primary ${r.result.general.flashes} general ${r.result.red.flashes} red, area-15% ${r.result.combined.lower}, 2 s memory ${r.result.combined.stricter === null ? 'n/a' : r.result.combined.stricter}, ${r.result.dips.list.length} dips, ${r.seconds}s${r.result.worstOf > 1 ? `, worst of ${r.result.worstOf} readings (${r.result.worst.size} at scale ${r.result.worst.scale})` : ''}${r.cross && !r.cross.missing ? `, register count ${r.cross.agrees ? 'agrees' : 'DIFFERS'} with the headless run (${(100 * r.cross.share).toFixed(1)}% of ticks)` : ''}`);
+   }
+ }));
+ if (argv.includes('--capture-only')) { console.log(`captured ${results.length} clips into ${OUT}; analyse them with analyse-frames.js`); process.exit(results.some((r) => r.error) ? 1 : 0); }
+diff --git a/tools/flash/signature-gate-selftest.mjs b/tools/flash/signature-gate-selftest.mjs
+new file mode 100644
+index 0000000..796169c
+--- /dev/null
++++ b/tools/flash/signature-gate-selftest.mjs
+@@ -0,0 +1,51 @@
++// Self-test of the words-only child's record in tools/flash/signature-gate.mjs (Legal RL-209 (b)): a child inherits its pin's grandfathering only if no reading is worse. Node built-ins only.
++import { spawnSync } from 'node:child_process';
++import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { CHILD_CLIPS, childProblems, readingsOf, worstNumbers, gateProblems } from './signature-gate.mjs';
++
++const here = dirname(fileURLToPath(import.meta.url));
++let failed = 0;
++const check = (name, ok, detail) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : '\n     ' + detail}`); if (!ok) failed++; };
++
++const PIN = 'a'.repeat(40), CHILD = 'b'.repeat(40);
++const reading = (size, scale, primary, red, area15, twoSec) => ({ size, scale, primary, red, area15, twoSec });
++// a row's four readings: [960x540 full, 960x540 half, 1024x768 full, 1024x768 half]
++const row = (id, nums) => ({ id, readings: ['960x540:1', '960x540:2', '1024x768:1', '1024x768:2'].map((k, i) => reading(k.split(':')[0], Number(k.split(':')[1]), ...nums[i])) });
++const base = { 'signature-reduced': [[3, 0, 3, 3], [3, 0, 3, 3], [2.5, 0, 3, 2], [2.5, 0, 3, 2]], 'signature-normal': [[1.5, 0, 2.5, 1.5], [2.5, 0, 2.5, 1.5], [2.5, 0, 2.5, 3], [2, 0, 2.5, 1]], 'collapse-reduced': [[2.5, 0, 2.5, 0.5], [2.5, 0, 2.5, 2.5], [2, 0, 2.5, 2], [2, 0, 2.5, 1]], 'collapse-normal': [[3.5, 0, 3.5, 1], [2.5, 0, 3.5, 2], [2, 0, 3.5, 1], [2, 0, 3.5, 1]] };
++const rows = (tweak = {}) => CHILD_CLIPS.map((id) => row(id, tweak[id] || base[id]));
++
++check('a child that reads exactly as its pin has no problem', childProblems(rows(), rows()).length === 0);
++check('a child that reads lower on some numbers has none either', childProblems(rows({ 'collapse-normal': [[3, 0, 3, 1], [2.5, 0, 3.5, 1], [2, 0, 3, 1], [1.5, 0, 3.5, 1]] }), rows()).length === 0);
++const worse = childProblems(rows({ 'signature-reduced': [[3, 0, 3, 3], [3, 0, 3, 3], [2.5, 0, 3, 2], [2.5, 0, 3.5, 2]] }), rows());
++check('one number worse in one reading is a problem that names the clip, the size, the scale and the number', worse.length === 1 && /signature-reduced at 1024x768 scale 2: area15 reads 3\.5 on the child, worse than the pin's 3/.test(worse[0]), worse.join('\n'));
++check('a worse red count counts too', childProblems(rows({ 'collapse-reduced': [[2.5, 1, 2.5, 0.5], ...base['collapse-reduced'].slice(1)] }), rows()).some((m) => /red reads 1/.test(m)));
++check('a clip missing from the child is a problem (a missing clip is not a pass)', childProblems(rows().filter((r) => r.id !== 'collapse-normal'), rows()).some((m) => /collapse-normal: the child's summary has no readings/.test(m)));
++check('a clip missing from the pin is a problem', childProblems(rows(), rows().filter((r) => r.id !== 'signature-normal')).some((m) => /signature-normal: the pin's summary has no readings/.test(m)));
++check('a reading the child lacks at a size and scale is a problem', (() => { const c = rows(); c[0].readings = c[0].readings.slice(1); return childProblems(c, rows()).some((m) => /no reading at 960x540 scale 1/.test(m)); })());
++check('a row with an error or no readings has none', readingsOf({ id: 'x', error: 'boom', readings: [{}] }) === null && readingsOf({ id: 'x' }) === null && readingsOf(null) === null);
++check('the worst-of-four numbers of a row: the largest of each', JSON.stringify(worstNumbers(row('signature-reduced', base['signature-reduced']))) === JSON.stringify({ primary: 3, area15: 3, twoSec: 3 }));
++
++// the command, end to end
++const d = mkdtempSync(join(tmpdir(), 'sig-gate-'));
++try {
++  const w = (name, v) => { const f = join(d, name); writeFileSync(f, JSON.stringify(v)); return f; };
++  const gate = w('gate.json', { _why: 'w', commit: PIN, date: '2026-10-27', grandfathered: true, limits: { primary: 2.5, area15: 3, twoSec: 2 }, engineFlip: { ruling: 'RL-202', commit: PIN, template: { tag: 't', sha512: 's' }, until: '2026-11-15' } });
++  const run = (child, extra = []) => spawnSync(process.execPath, [join(here, 'signature-gate.mjs'), '--record-child', child, '--pin-summary', w('pin.json', rows()), '--commit', CHILD, '--of', PIN, '--file', gate, '--date', '2026-10-31', ...extra], { encoding: 'utf8' });
++  let r = run(w('child-bad.json', rows({ 'signature-reduced': [[3.5, 0, 3, 3], ...base['signature-reduced'].slice(1)] })));
++  check('a worse child exits 1, says it does not inherit the grandfathering, and writes nothing', r.status === 1 && /does not inherit the grandfathering/.test(r.stderr) && JSON.parse(readFileSync(gate, 'utf8')).commit === PIN, r.stderr);
++  r = run(w('child.json', rows()));
++  const rec = JSON.parse(readFileSync(gate, 'utf8'));
++  check('a child that reads no worse is recorded: its commit, grandfathered, the pin it is of, the ruling', r.status === 0 && rec.commit === CHILD && rec.grandfathered === true && rec.child.of === PIN && rec.child.ruling === 'RL-209', r.stderr + r.stdout);
++  check('the record keeps the PIN\'s worst-of-four numbers as reduced and normal', JSON.stringify(rec.reduced) === JSON.stringify({ primary: 3, area15: 3, twoSec: 3 }) && JSON.stringify(rec.normal) === JSON.stringify({ primary: 2.5, area15: 2.5, twoSec: 3 }), JSON.stringify([rec.reduced, rec.normal]));
++  check('it holds the pin\'s and the child\'s readings of every clip, four each', CHILD_CLIPS.every((id) => rec.pinReadings[id].length === 4 && rec.childReadings[id].length === 4));
++  check('the engine-flip entry (RL-202) is re-pointed at the child, the template and the end date kept', rec.engineFlip.commit === CHILD && rec.engineFlip.template.tag === 't' && rec.engineFlip.until === '2026-11-15' && rec.engineFlip.ruling === 'RL-202');
++  check('the gate passes the child as the pin and refuses the old pin (the record is for the child)', gateProblems(rec, CHILD).length === 0 && gateProblems(rec, PIN).some((m) => /on record is for bbbbbbbb/.test(m)));
++  r = spawnSync(process.execPath, [join(here, 'signature-gate.mjs'), '--record-child', join(d, 'child.json')], { encoding: 'utf8' });
++  check('missing arguments are refused with the usage', r.status === 2 && /usage/.test(r.stderr));
++} finally { rmSync(d, { recursive: true, force: true }); }
++
++console.log(failed ? `signature-gate self-test FAILED (${failed})` : 'signature-gate self-test passed');
++process.exit(failed ? 1 : 0);
+diff --git a/tools/flash/signature-gate.mjs b/tools/flash/signature-gate.mjs
+index 1bda164..f567edc 100644
+--- a/tools/flash/signature-gate.mjs
++++ b/tools/flash/signature-gate.mjs
+@@ -7,6 +7,11 @@
+ //   node tools/flash/signature-gate.mjs --check [--file <signature-gate.json>] [--pin <full sha>]
+ //        exit 1 unless the record is for the pin (tools/site.json "pin" by default) and reduced is within the limits (or the record is the standing pin's grandfathered one).
+ //   tools/check-site-interim.mjs runs the same check on the owner-approved site, so a pin moved without a reading fails the deploy.
++//   node tools/flash/signature-gate.mjs --record-child <child summary.json> --pin-summary <pin summary.json> --commit <child sha> --of <pin sha> [--file <f>] [--date YYYY-MM-DD]
++//        Legal RL-209 (b): a WORDS-ONLY CHILD of the grandfathered pin (tools/pin-child.mjs) inherits the pin's grandfathering when its signature and collapse clips, both modes, read no worse than the pin's on
++//        EVERY reading (each size and scale of the four, each of primary, red, area-15% and the two-second memory). It REFUSES (exit 1, nothing written) when one is worse or missing. Both summaries are run-pixels
++//        summary.json files (their rows carry `readings`, tools/flash/readings.mjs). Writes this file for the child: grandfathered, the pin's worst-of-four numbers as `reduced` and `normal`, the pin's and the
++//        child's readings, and the engine-flip entry (RL-202) re-pointed at the child.
+ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+ import { join, resolve } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+@@ -39,6 +44,44 @@ export function worseThan(reduced, max = REDUCED_MAX) {
+   return Object.keys(max).filter((k) => reduced[k] > max[k]).map((k) => `${k} ${reduced[k]} (over ${max[k]})`);
+ }
+ 
++/** The clips a words-only child must read no worse than its pin on (RL-209 (b)): the signature and the collapse clips, both modes. */
++export const CHILD_CLIPS = ['signature-normal', 'signature-reduced', 'collapse-normal', 'collapse-reduced'];
++const NUMBER_KEYS = ['primary', 'red', 'area15', 'twoSec'];
++
++/** The readings of a summary row, [{ size, scale, primary, red, area15, twoSec }], or null when the row has none (RL-209: four readings a clip). Pure. */
++export function readingsOf(row) {
++  return row && !row.error && Array.isArray(row.readings) && row.readings.length ? row.readings : null;
++}
++
++/** Why a child does not inherit its pin's grandfathering: every reading of every clip must exist and be no worse than the pin's. An array; empty when it does. Pure. */
++export function childProblems(childRows, pinRows) {
++  const out = [];
++  const by = (rows) => new Map((rows || []).map((r) => [r.id, r]));
++  const c = by(childRows), p = by(pinRows);
++  for (const id of CHILD_CLIPS) {
++    const pr = readingsOf(p.get(id)), cr = readingsOf(c.get(id));
++    if (!pr) { out.push(`${id}: the pin's summary has no readings for it`); continue; }
++    if (!cr) { out.push(`${id}: the child's summary has no readings for it (a missing clip is not a pass)`); continue; }
++    for (const a of pr) {
++      const b = cr.find((x) => x.size === a.size && x.scale === a.scale);
++      if (!b) { out.push(`${id}: the child has no reading at ${a.size} scale ${a.scale}`); continue; }
++      for (const k of NUMBER_KEYS) {
++        const pv = typeof a[k] === 'number' ? a[k] : 0, cv = typeof b[k] === 'number' ? b[k] : 0;
++        if (cv > pv) out.push(`${id} at ${a.size} scale ${a.scale}: ${k} reads ${cv} on the child, worse than the pin's ${pv}`);
++      }
++    }
++  }
++  return out;
++}
++
++/** The worst-of-four numbers of a row, the way a record keeps them: { primary, area15, twoSec } (the same as readingOf of its merged result). Pure. */
++export function worstNumbers(row) {
++  const rs = readingsOf(row);
++  if (!rs) return null;
++  const max = (k) => Math.max(...rs.map((x) => (typeof x[k] === 'number' ? x[k] : 0)));
++  return { primary: max('primary'), area15: max('area15'), twoSec: max('twoSec') };
++}
++
+ /** The text of a reading, for a report line. */
+ export function readingText(x) { return x ? `${x.primary} / ${x.area15} / ${x.twoSec}` : 'not read'; }
+ 
+@@ -68,6 +111,30 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
+     console.log(`signature gate ok: ${String(pin).slice(0, 8)}; reduced ${readingText(record.reduced)} (limit 2.5 / 3 / 2)${record.grandfathered ? ' (grandfathered: the pin Legal ruled on before the condition)' : ''}`);
+     process.exit(0);
+   }
++  if (args.includes('--record-child')) {
++    const childFile = opt('--record-child'), pinFile = opt('--pin-summary'), child = opt('--commit'), of = opt('--of');
++    if (!childFile || !pinFile || !/^[0-9a-f]{40}$/.test(String(child)) || !/^[0-9a-f]{40}$/.test(String(of))) { console.error('usage: node tools/flash/signature-gate.mjs --record-child <child summary.json> --pin-summary <pin summary.json> --commit <child sha> --of <pin sha> [--file <f>] [--date YYYY-MM-DD]'); process.exit(2); }
++    let childRows, pinRows;
++    try { childRows = JSON.parse(readFileSync(resolve(childFile), 'utf8')); pinRows = JSON.parse(readFileSync(resolve(pinFile), 'utf8')); } catch (e) { console.error(`signature gate: a summary could not be read: ${e.message}`); process.exit(2); }
++    const bad = childProblems(childRows, pinRows);
++    if (bad.length) { for (const m of bad) console.error(`signature gate: ${m}`); console.error(`signature gate: the child ${child.slice(0, 8)} reads worse than its pin ${of.slice(0, 8)} or has a reading missing; nothing recorded (it does not inherit the grandfathering)`); process.exit(1); }
++    const prevC = existsSync(file) ? (() => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return null; } })() : null;
++    const table = (rows) => Object.fromEntries(CHILD_CLIPS.map((id) => [id, readingsOf(rows.find((r) => r.id === id)).map(({ size, scale, primary, red, area15, twoSec }) => ({ size, scale, primary, red, area15, twoSec }))]));
++    const date = opt('--date', new Date().toISOString().slice(0, 10));
++    const pinSig = (id) => worstNumbers(pinRows.find((r) => r.id === id));
++    const recordC = {
++      _why: prevC && prevC._why ? prevC._why : 'The signature clip read on the pin (Legal RL-195 condition (a)); written by tools/flash/signature-gate.mjs --record, checked by tools/check-site-interim.mjs.',
++      commit: child, date, grandfathered: true,
++      child: { of, ruling: 'RL-209', words: 'tools/pin-child.json', clips: CHILD_CLIPS },
++      _grandfathered: `The words-only child ${child.slice(0, 8)} of the live pin ${of.slice(0, 8)} (Legal RL-209 (b)): the pin's own code plus only the cleared ui/data words. It inherits the pin's grandfathering because every reading (both sizes, both scales) of the signature and collapse clips, both modes, is no worse than the pin's. \`reduced\` and \`normal\` are the PIN's worst of four, kept as measured; the next pin has to pass the limits and replaces this record.`,
++      limits: REDUCED_MAX, reduced: pinSig('signature-reduced'), normal: pinSig('signature-normal'),
++      pinReadings: table(pinRows), childReadings: table(childRows),
++    };
++    if (prevC && prevC.engineFlip) recordC.engineFlip = { ...prevC.engineFlip, commit: child };
++    writeFileSync(file, JSON.stringify(recordC, null, 2) + '\n');
++    console.log(`signature gate: recorded the child ${child.slice(0, 8)} of ${of.slice(0, 8)}: no reading of the signature or collapse clips, either mode, is worse than the pin's (reduced signature ${readingText(recordC.reduced)}, normal ${readingText(recordC.normal)}, the pin's worst of four)`);
++    process.exit(0);
++  }
+   const summary = opt('--record');
+   const commit = opt('--commit');
+   if (!summary || !/^[0-9a-f]{40}$/.test(String(commit))) { console.error('usage: node tools/flash/signature-gate.mjs --record <summary.json> --commit <full sha> [--file <signature-gate.json>] [--date YYYY-MM-DD]  |  --check [--file <f>] [--pin <sha>]'); process.exit(2); }
+diff --git a/tools/pin-child-selftest.mjs b/tools/pin-child-selftest.mjs
+new file mode 100644
+index 0000000..904bb16
+--- /dev/null
++++ b/tools/pin-child-selftest.mjs
+@@ -0,0 +1,82 @@
++// Self-test of tools/pin-child.mjs (Legal RL-209 (b)): the words-only child of a pin, on a throwaway git repo. Node built-ins and git only.
++import { execFileSync, spawnSync } from 'node:child_process';
++import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { buildChild, proveWordsOnly, patchOf, childCommitId, recipe, getAt, pathOf } from './pin-child.mjs';
++
++const here = dirname(fileURLToPath(import.meta.url));
++let failed = 0;
++const check = (name, ok, detail) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : '\n     ' + detail}`); if (!ok) failed++; };
++
++const root = mkdtempSync(join(tmpdir(), 'pin-child-test-'));
++const git = (...a) => execFileSync('git', ['-c', 'core.autocrlf=false', '-c', 'user.name=t', '-c', 'user.email=t@t.invalid', '-c', 'commit.gpgsign=false', ...a], { cwd: root, encoding: 'utf8' }).trim();
++try {
++  git('init', '-q');
++  const put = (f, text) => { const p = join(root, ...f.split('/')); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, text); };
++  // the pin: a notice with the old words, a settings file with an item to locate, an options file with a British word in a label and in an id
++  const pinTerms = '{\n  "prompt": { "menu_notice": "We are fixing them.", "other": "same" }\n}\n';
++  const pinSettings = '{\n  "sections": [ { "items": [ "a", { "action": "photo_notice", "help": "an analyser" } ] } ]\n}\n';
++  const pinOptions = '{\n  "options": { "colour_vision": { "label": "Colour-blind mode" } }\n}\n';
++  put('ui/data/terms.json', pinTerms); put('ui/data/settings.json', pinSettings); put('ui/data/options.json', pinOptions); put('ui/data/untouched.json', '{ "k": "a licence" }\n');
++  git('add', '-A'); git('commit', '-q', '-m', 'pin');
++  const PIN = git('rev-parse', 'HEAD');
++  // main: the cleared words, a moved settings item, a new key and a feature string that is NOT a word
++  put('ui/data/terms.json', '{\n  "prompt": { "menu_notice": "Please do not play.", "other": "same", "load_x": "Raising" }\n}\n');
++  put('ui/data/settings.json', '{\n  "sections": [ { "items": [ "z", "a", { "action": "photo_notice", "help": "an analyzer" } ] } ]\n}\n');
++  put('ui/data/options.json', '{\n  "options": { "colour_vision": { "label": "Color-blind mode" } }\n}\n');
++  put('ui/data/untouched.json', '{ "k": "a license" }\n');
++  git('add', '-A'); git('commit', '-q', '-m', 'main');
++  const FROM = git('rev-parse', 'HEAD');
++  const readPin = (f) => git('show', `${PIN}:${f}`) + '\n';
++  const readFrom = (f) => git('show', `${FROM}:${f}`) + '\n';
++  const config = { pin: PIN, from: FROM, commit: { name: 'Meridian Tools', email: 'tools@meridian.invalid', date: '2026-10-30T20:00:00Z', message: 'child' }, words: [
++    { file: 'ui/data/terms.json', pointer: '/prompt/menu_notice', row: 'RL-192' },
++    { file: 'ui/data/settings.json', locate: { key: 'action', equals: 'photo_notice' }, field: 'help', row: 'RL-192' },
++    { file: 'ui/data/options.json', pointer: '/options/colour_vision/label', row: 'RL-193' },
++  ] };
++
++  const built = buildChild(readPin, readFrom, config);
++  check('the listed strings are replaced in the pin\'s own text, the formatting untouched', built.texts['ui/data/terms.json'] === '{\n  "prompt": { "menu_notice": "Please do not play.", "other": "same" }\n}\n' && built.changes.length === 3);
++  check('an item is found by a key and its value even when it moved (the settings help), and only that string changes', built.texts['ui/data/settings.json'] === '{\n  "sections": [ { "items": [ "a", { "action": "photo_notice", "help": "an analyzer" } ] } ]\n}\n');
++  check('a new key or a moved item in the source is not copied (load_x, the extra settings item)', !/load_x/.test(built.texts['ui/data/terms.json']) && !/"z"/.test(built.texts['ui/data/settings.json']));
++  check('a file that is not listed is never in the child', !('ui/data/untouched.json' in built.texts));
++  check('the proof holds: the child equals the pin with only the listed strings changed', proveWordsOnly(readPin, config, built.texts, readFrom).length === 0);
++  const tampered = { ...built.texts, 'ui/data/terms.json': built.texts['ui/data/terms.json'].replace('"same"', '"other"') };
++  check('the proof catches any other difference', proveWordsOnly(readPin, config, tampered, readFrom).some((m) => /more than the listed strings/.test(m)));
++  const tried = (cfg) => { try { buildChild(readPin, readFrom, cfg); return ''; } catch (e) { return e.message; } };
++  check('a string that is the same in both is refused (nothing to change)', /the same in both/.test(tried({ ...config, words: [{ file: 'ui/data/terms.json', pointer: '/prompt/other', row: 'x' }] })));
++  check('a pointer that is not a string in the pin is refused', /not a string in the pin/.test(tried({ ...config, words: [{ file: 'ui/data/terms.json', pointer: '/prompt', row: 'x' }] })));
++  check('a pointer missing in the source is refused', /not a string in/.test(tried({ ...config, words: [{ file: 'ui/data/terms.json', pointer: '/prompt/menu_notice_gone', row: 'x' }] })));
++  check('a string that occurs twice in the pin\'s text is refused (a replacement must be unambiguous)', (() => {
++    const two = { ...config, pin: PIN };
++    const rp = (f) => (f === 'ui/data/terms.json' ? '{ "prompt": { "menu_notice": "We are fixing them.", "dup": "We are fixing them." } }\n' : readPin(f));
++    const rf = (f) => (f === 'ui/data/terms.json' ? '{ "prompt": { "menu_notice": "Please.", "dup": "We are fixing them." } }\n' : readFrom(f));
++    try { buildChild(rp, rf, { ...two, words: [{ file: 'ui/data/terms.json', pointer: '/prompt/menu_notice', row: 'x' }] }); return false; } catch (e) { return /2 times/.test(e.message); }
++  })());
++  check('locate needs exactly one match', (() => { try { pathOf({ a: [{ k: 'v' }, { k: 'v' }] }, { file: 'f', locate: { key: 'k', equals: 'v' }, field: 'h' }); return false; } catch (e) { return /2 items/.test(e.message); } })());
++  check('getAt reads a pointer path and returns undefined past the end', getAt({ a: [{ b: 1 }] }, ['a', 0, 'b']) === 1 && getAt({ a: 1 }, ['a', 'b']) === undefined);
++
++  // the patch applies to the pin and gives the child's files
++  const patch = patchOf(readPin, built.texts);
++  const pf = join(root, 'child.patch');
++  writeFileSync(pf, patch);
++  git('checkout', '-q', PIN);
++  const ap = spawnSync('git', ['-c', 'core.autocrlf=false', 'apply', '--check', pf], { cwd: root, encoding: 'utf8' });
++  check('the patch applies to the pin\'s tree and has no CRs or a/a/ paths', ap.status === 0 && !/\r/.test(patch) && /^diff --git a\/ui\/data\/terms\.json b\/ui\/data\/terms\.json$/m.test(patch), ap.stderr);
++  git('checkout', '-q', FROM);
++
++  // the commit id: deterministic, nothing written to the repo, the same as the recipe's commit made for real
++  const objectsBefore = git('count-objects', '-v');
++  const id1 = childCommitId(root, config, built.texts), id2 = childCommitId(root, config, built.texts);
++  check('the child commit id is computed without writing to the repo, and is the same twice', /^[0-9a-f]{40}$/.test(id1) && id1 === id2 && git('count-objects', '-v') === objectsBefore, `${id1} ${id2}`);
++  const files = join(root, 'files');
++  for (const [f, text] of Object.entries(built.texts)) { const p = join(files, ...f.split('/')); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, text); }
++  const made = spawnSync('bash', ['-c', recipe(config, files.replace(/\\/g, '/'))], { cwd: root, encoding: 'utf8' });
++  check('the recipe makes that same commit for real (same id), parent the pin, three files changed', made.status === 0 && made.stdout.trim().split('\n').pop() === id1 && git('rev-parse', `${id1}^`) === PIN && git('diff', '--name-only', PIN, id1).split('\n').length === 3, made.stdout + made.stderr);
++  check('the child commit\'s own files are the child\'s text, byte for byte', git('show', `${id1}:ui/data/terms.json`) + '\n' === built.texts['ui/data/terms.json'] && git('show', `${id1}:ui/data/untouched.json`) + '\n' === readPin('ui/data/untouched.json'));
++} finally { rmSync(root, { recursive: true, force: true }); }
++
++console.log(failed ? `pin-child self-test FAILED (${failed})` : 'pin-child self-test passed');
++process.exit(failed ? 1 : 0);
+diff --git a/tools/pin-child.json b/tools/pin-child.json
+new file mode 100644
+index 0000000..80bbdfc
+--- /dev/null
++++ b/tools/pin-child.json
+@@ -0,0 +1,30 @@
++{
++  "_about": "The words-only child of the live pin (Legal RL-209 (b), 2026-10-30): the pin's own commit plus ONLY the cleared words of the game's ui/data strings (RL-192, RL-193, the lock line) and nothing else. Each entry names a string in the pin's file and the same string, as the cleared words, in the commit `from`. tools/pin-child.mjs rewrites exactly those strings in the pin's text (each must occur once), proves nothing else in ui/data changed, and prints the patch or writes the tree. A file or pointer not listed here is never touched: a feature, a new key or a moved item in `from` is not a word.",
++  "pin": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
++  "from": "b7a2cd869f9bcd1f8e1bede07ba33c26465cdcd1",
++  "commit": {
++    "name": "Meridian Tools",
++    "email": "tools@meridian.invalid",
++    "date": "2026-10-30T20:00:00Z",
++    "message": "Words-only child of the pin 257a766c: the cleared ui/data words of RL-192 and RL-193 and the lock line, nothing else (Legal RL-209)"
++  },
++  "words": [
++    { "file": "ui/data/terms.json", "pointer": "/prompt/photo_body_a", "row": "RL-192" },
++    { "file": "ui/data/terms.json", "pointer": "/prompt/photo_body_b", "row": "RL-192" },
++    { "file": "ui/data/terms.json", "pointer": "/prompt/menu_notice", "row": "RL-192" },
++    { "file": "ui/data/terms.json", "pointer": "/prompt/menu_rf_locked", "row": "RL-192 (the lock line)" },
++    { "file": "ui/data/settings.json", "locate": { "key": "action", "equals": "photo_notice" }, "field": "help", "row": "RL-192" },
++    { "file": "ui/data/options.json", "pointer": "/options/colour_vision/label", "row": "RL-192" },
++    { "file": "ui/data/options.json", "pointer": "/options/colour_vision/help", "row": "RL-193" },
++    { "file": "ui/data/options.json", "pointer": "/options/glyph_style/help", "row": "RL-193" },
++    { "file": "ui/data/options.json", "pointer": "/options/you_marker/help", "row": "RL-193" },
++    { "file": "ui/data/howto.json", "pointer": "/pages/3/items/8/text", "row": "RL-193" },
++    { "file": "ui/data/howto.json", "pointer": "/pages/5/title", "row": "RL-193" },
++    { "file": "ui/data/howto.json", "pointer": "/pages/5/items/0/text", "row": "RL-193" },
++    { "file": "ui/data/howto.json", "pointer": "/pages/5/items/1/text", "row": "RL-193" },
++    { "file": "ui/data/howto.json", "pointer": "/pages/5/items/2/text", "row": "RL-193" },
++    { "file": "ui/data/howto.json", "pointer": "/pages/5/items/3/text", "row": "RL-193" },
++    { "file": "ui/data/howto.json", "pointer": "/pages/6/title", "row": "RL-193" },
++    { "file": "ui/data/howto.json", "pointer": "/pages/6/items/0/text", "row": "RL-193" }
++  ]
++}
+diff --git a/tools/pin-child.mjs b/tools/pin-child.mjs
+new file mode 100644
+index 0000000..c69e3fa
+--- /dev/null
++++ b/tools/pin-child.mjs
+@@ -0,0 +1,168 @@
++// The words-only child of the live pin (Legal RL-209 (b)): the pin's commit plus ONLY the cleared words of the game's ui/data strings, listed in tools/pin-child.json, and nothing else.
++//
++//   node tools/pin-child.mjs --check                       lists the strings the child changes and proves nothing else in ui/data differs from the pin
++//   node tools/pin-child.mjs --patch <file>                the same, plus a patch against the pin's commit (git apply, a/ and b/ prefixes)
++//   node tools/pin-child.mjs --tree <dir>                  writes the changed files into <dir> (a checkout or export of the pin): ui/data/<file> only
++//   node tools/pin-child.mjs --commit-id                   the child commit's id, computed in a throwaway object directory (the repo is not written): author, dates and message are fixed in the config
++//   node tools/pin-child.mjs --recipe --tree <dir>         prints the git plumbing that makes that same commit for real, without touching the work tree, the index or a branch (the EP runs it; <dir> = --tree's files)
++//   [--root <repo>] [--config <tools/pin-child.json>]
++// How: each entry names a string in the pin's file (a JSON pointer, or the item with a key of a value and its field) and the same string, as the cleared words, in the commit `from`. The pin's TEXT is
++// edited (the old string as JSON, which must occur once in the file, becomes the new one), so the formatting is untouched. Then the child's parsed JSON is compared with the pin's parsed JSON with
++// only the listed strings changed: any other difference fails. Exit 0 when it holds, 1 when it does not, 2 on bad input.
++import { execFileSync } from 'node:child_process';
++import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { isDeepStrictEqual } from 'node:util';
++
++const here = dirname(fileURLToPath(import.meta.url));
++export const CONFIG = join(here, 'pin-child.json');
++
++const parts = (pointer) => pointer.split('/').slice(1).map((p) => p.replace(/~1/g, '/').replace(/~0/g, '~'));
++/** The value at a JSON pointer, or undefined. */
++export function getAt(obj, path) {
++  let v = obj;
++  for (const k of path) { if (v === null || typeof v !== 'object' || !(k in v)) return undefined; v = v[k]; }
++  return v;
++}
++/** The path (an array of keys) of an entry: its pointer, or the first object anywhere with `locate.key === locate.equals`, then `field`. */
++export function pathOf(obj, entry) {
++  if (entry.pointer) return parts(entry.pointer);
++  const found = [];
++  const walk = (v, p) => {
++    if (v && typeof v === 'object') {
++      if (!Array.isArray(v) && v[entry.locate.key] === entry.locate.equals) found.push(p);
++      for (const k of Object.keys(v)) walk(v[k], [...p, Array.isArray(v) ? Number(k) : k]);
++    }
++  };
++  walk(obj, []);
++  if (found.length !== 1) throw new Error(`${entry.file}: ${found.length} items with ${entry.locate.key} ${entry.locate.equals} (exactly one expected)`);
++  return [...found[0], entry.field];
++}
++const setAt = (obj, path, value) => { const parent = getAt(obj, path.slice(0, -1)); parent[path[path.length - 1]] = value; };
++
++/**
++ * The child's files. `readPin(file)` and `readFrom(file)` return a file's text at the pin and at the source commit. Returns { texts: { file: text }, changes: [{ file, where, old, new, row }] }.
++ * Throws when a string is missing, equal, or not found exactly once in the pin's text.
++ */
++export function buildChild(readPin, readFrom, config) {
++  const byFile = new Map();
++  for (const e of config.words) { if (!byFile.has(e.file)) byFile.set(e.file, []); byFile.get(e.file).push(e); }
++  const texts = {};
++  const changes = [];
++  for (const [file, entries] of byFile) {
++    let text = readPin(file);
++    const pinObj = JSON.parse(text), fromObj = JSON.parse(readFrom(file));
++    for (const e of entries) {
++      const pp = pathOf(pinObj, e), fp = pathOf(fromObj, e);
++      const oldV = getAt(pinObj, pp), newV = getAt(fromObj, fp);
++      const where = `${file} ${pp.join('/')}`;
++      if (typeof oldV !== 'string') throw new Error(`${where}: not a string in the pin`);
++      if (typeof newV !== 'string') throw new Error(`${where}: not a string in ${config.from.slice(0, 8)} (${fp.join('/')})`);
++      if (oldV === newV) throw new Error(`${where}: the same in both (nothing to change; remove the entry)`);
++      const a = JSON.stringify(oldV), n = text.split(a).length - 1;
++      if (n !== 1) throw new Error(`${where}: the pin's text holds that string ${n} times (exactly one expected)`);
++      text = text.replace(a, () => JSON.stringify(newV));
++      changes.push({ file, where, old: oldV, new: newV, row: e.row });
++    }
++    texts[file] = text;
++  }
++  return { texts, changes };
++}
++
++/** Proves the child's parsed files equal the pin's parsed files with only the listed strings changed. Returns the problems (empty when it holds). */
++export function proveWordsOnly(readPin, config, texts, readFrom) {
++  const problems = [];
++  const byFile = new Map();
++  for (const e of config.words) { if (!byFile.has(e.file)) byFile.set(e.file, []); byFile.get(e.file).push(e); }
++  for (const [file, entries] of byFile) {
++    const expect = JSON.parse(readPin(file));
++    const fromObj = JSON.parse(readFrom(file));
++    for (const e of entries) setAt(expect, pathOf(expect, e), getAt(fromObj, pathOf(fromObj, e)));
++    let child;
++    try { child = JSON.parse(texts[file]); } catch (err) { problems.push(`${file}: the child's text is not JSON (${err.message})`); continue; }
++    if (!isDeepStrictEqual(child, expect)) problems.push(`${file}: the child differs from the pin by more than the listed strings`);
++  }
++  return problems;
++}
++
++const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
++
++/** A unified diff of the pin's files against the child's, as `git apply` takes it (a/ and b/ prefixes). */
++export function patchOf(readPin, texts) {
++  const d = mkdtempSync(join(tmpdir(), 'pin-child-'));
++  try {
++    for (const [file, text] of Object.entries(texts)) {
++      for (const side of ['a', 'b']) { const f = join(d, side, ...file.split('/')); mkdirSync(dirname(f), { recursive: true }); writeFileSync(f, side === 'a' ? readPin(file) : text); }
++    }
++    let out = '';
++    try { out = execFileSync('git', ['-c', 'core.autocrlf=false', 'diff', '--no-index', '--no-color', 'a', 'b'], { cwd: d, encoding: 'utf8', maxBuffer: 1 << 26 }); } catch (e) { out = e.stdout || ''; }   // exit 1 means "there are differences"
++    return out.replace(/^diff --git a\/a\/(\S+) b\/b\/(\S+)$/gm, 'diff --git a/$1 b/$2').replace(/^--- a\/a\//gm, '--- a/').replace(/^\+\+\+ b\/b\//gm, '+++ b/');
++  } finally { rmSync(d, { recursive: true, force: true }); }
++}
++
++const identity = (c) => ({ GIT_AUTHOR_NAME: c.name, GIT_AUTHOR_EMAIL: c.email, GIT_AUTHOR_DATE: c.date, GIT_COMMITTER_NAME: c.name, GIT_COMMITTER_EMAIL: c.email, GIT_COMMITTER_DATE: c.date });
++
++/**
++ * The id of the child commit, made WITHOUT writing to the repo: every object goes to a throwaway object directory that reads the repo's through an alternate. The author, committer, dates and
++ * message are fixed by the config, so the same commit made for real by the recipe has the same id (a pin can name it before the commit exists). `texts` are the changed files' text.
++ */
++export function childCommitId(root, config, texts) {
++  const tmp = mkdtempSync(join(tmpdir(), 'pin-child-objects-'));
++  try {
++    const objects = resolve(root, git(root, ['rev-parse', '--git-path', 'objects']).trim());
++    const env = { ...process.env, ...identity(config.commit), GIT_OBJECT_DIRECTORY: tmp, GIT_ALTERNATE_OBJECT_DIRECTORIES: objects, GIT_INDEX_FILE: join(tmp, 'index') };
++    const run = (args, input) => execFileSync('git', ['-c', 'commit.gpgsign=false', '-c', 'core.autocrlf=false', ...args], { cwd: root, env, encoding: 'utf8', input, maxBuffer: 1 << 26 }).trim();
++    run(['read-tree', config.pin]);
++    for (const [file, text] of Object.entries(texts)) {
++      const mode = run(['ls-tree', config.pin, '--', file]).split(/\s+/)[0];
++      const blob = run(['hash-object', '-w', '--no-filters', '--stdin'], text);
++      run(['update-index', '--cacheinfo', `${mode},${blob},${file}`]);
++    }
++    const tree = run(['write-tree']);
++    return run(['commit-tree', tree, '-p', config.pin, '-m', config.commit.message]);
++  } finally { rmSync(tmp, { recursive: true, force: true }); }
++}
++
++/** The git plumbing that makes the child commit from the pin for real, without touching the work tree, the index or a branch: it prints the same id as childCommitId. `dir` holds the changed files at their paths. */
++export function recipe(config, dir) {
++  const files = [...new Set(config.words.map((w) => w.file))];
++  const c = config.commit;
++  return [
++    `# the child commit: the pin's tree with ${files.length} ui/data files replaced; run in the repo root with Git Bash. Nothing here touches the work tree, the index or a branch.`,
++    `export GIT_AUTHOR_NAME="${c.name}" GIT_AUTHOR_EMAIL="${c.email}" GIT_AUTHOR_DATE="${c.date}" GIT_COMMITTER_NAME="${c.name}" GIT_COMMITTER_EMAIL="${c.email}" GIT_COMMITTER_DATE="${c.date}"`,
++    `export GIT_INDEX_FILE="$(mktemp -u)"`,
++    `git read-tree ${config.pin}`,
++    ...files.map((f) => `git update-index --cacheinfo 100644,$(git -c core.autocrlf=false hash-object -w --no-filters "${dir}/${f}"),${f}`),
++    `TREE=$(git write-tree)`,
++    `COMMIT=$(git -c commit.gpgsign=false commit-tree "$TREE" -p ${config.pin} -m "${c.message}")`,
++    `rm -f "$GIT_INDEX_FILE"; unset GIT_INDEX_FILE; echo "$COMMIT"`,
++    `# then keep it reachable: git branch pin-child "$COMMIT"  (the site pin names this id; CI's export reads it with git archive)`,
++  ].join('\n');
++}
++
++function main(argv) {
++  const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
++  const root = resolve(opt('--root', join(here, '..')));
++  const config = JSON.parse(readFileSync(resolve(opt('--config', CONFIG)), 'utf8'));
++  const readPin = (f) => git(root, ['show', `${config.pin}:${f}`]);
++  const readFrom = (f) => git(root, ['show', `${config.from}:${f}`]);
++  let built;
++  try { built = buildChild(readPin, readFrom, config); } catch (e) { console.error(`pin-child: ${e.message}`); return 1; }
++  const problems = proveWordsOnly(readPin, config, built.texts, readFrom);
++  for (const c of built.changes) console.log(`${c.row}: ${c.where}\n   - ${c.old.slice(0, 120)}\n   + ${c.new.slice(0, 120)}`);
++  if (problems.length) { for (const p of problems) console.error(`pin-child: ${p}`); return 1; }
++  console.log(`pin-child: ${built.changes.length} strings in ${Object.keys(built.texts).length} files; nothing else in them differs from the pin ${config.pin.slice(0, 8)}`);
++  if (opt('--patch')) { writeFileSync(resolve(opt('--patch')), patchOf(readPin, built.texts)); console.log(`pin-child: patch written to ${opt('--patch')}`); }
++  if (opt('--tree')) {
++    const tree = resolve(opt('--tree'));
++    for (const [file, text] of Object.entries(built.texts)) { const f = join(tree, ...file.split('/')); if (!existsSync(dirname(f))) mkdirSync(dirname(f), { recursive: true }); writeFileSync(f, text); }
++    console.log(`pin-child: ${Object.keys(built.texts).length} files written under ${tree}`);
++  }
++  if (argv.includes('--commit-id')) console.log(`pin-child: the child commit's id is ${childCommitId(root, config, built.texts)} (computed in a throwaway object directory; nothing written to the repo)`);
++  if (argv.includes('--recipe')) console.log(recipe(config, opt('--tree', '<dir of the written files>')));
++  return 0;
++}
++
++if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exit(main(process.argv.slice(2)));

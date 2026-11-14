@@ -1,0 +1,3 @@
+# anim-hold-w-schema (Tools, 2026-10-31): two cases for Animation's `hold_w`
+
+Animation's `stick-class-schema.patch` (12:02) now carries the `hold_w` property in `tools/schemas/anim-wave-keysets.schema.json` itself, so Tools' schema grant is no longer needed and was dropped. What stays is the fixture coverage a data-shape change gets: `git -c core.autocrlf=false apply docs/tools/pending/anim-hold-w-schema/anim-hold-w-schema.patch` (one file, `tools/fixtures/cases.json`) adds two cases to `validate --self-test`: a key set with `hold_w` 0.25 (valid) and one with `hold_w` 2 (`maximum`, at `/keysets/w1.test/hold_w`). **Apply it after `stick-class-schema.patch`** (the cases need the property). Without `stick-class` neither the property nor these cases exist.

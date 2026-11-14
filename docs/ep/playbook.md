@@ -19,7 +19,7 @@ For the session titled "Meridian - Executive Producer". Directors do not need th
 - **Watch CI (CD-01, CD-20).** After every push, read `gh run list --workflow ci.yml` and `--workflow web-parity.yml`. A red or missing run is the first item at every standup, before anything else. CI was silently broken for 38 pushes, from 2026-11-06 to 2026-11-07.
 - **Keep evidence (CD-22).** Save every gate or check result behind a landing as small text under `docs/<area>/runs/<sha>/` (the EP's under `docs/ep/runs/<sha>/`), not only in scratch. A figure in a safety record points to its saved output; otherwise it's labelled "unverified".
 - **Delegated safety decisions (CD-24).** When Orb hands a decision over, record the owner and the written conditions in `docs/ep/vision.md`. The owner reconfirms in writing every two weeks. A rule not to raise a topic with Orb never covers a safeguard that has lapsed; when one has, ask Orb the one question. The public test build is the EP's under five conditions (vision.md, 2026-11-07).
-- **Verify builds from their data.** Check a build's switch list against its packed data (`pck-proof`, the stand-in's `check_build.py`), never against the list alone.
+- **Verify builds from their data.** Check a build's switch list against its packed data (`node tools/preview/build-check.mjs --build <desktop build folder>` for desktop builds, `pck-verify` for page builds), never against the list alone.
 
 ## Session housekeeping
 

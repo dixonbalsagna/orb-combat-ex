@@ -1,0 +1,110 @@
+diff --git a/docs/tools/preview.md b/docs/tools/preview.md
+index 2cb2ef4..6aa52ac 100644
+--- a/docs/tools/preview.md
++++ b/docs/tools/preview.md
+@@ -117,6 +117,8 @@ The private page (`node tools/preview/stack-preview.mjs --port 8766 --watch --op
+ | `sticks=2` | the same for player 2: both pads hold power to charge ki, then fire the signature on the same ticks (the clash reel) |
+ | `hitstop=1` / `hitstop=off` | hit-stop by weight on or off for the match (`data/fight/hitstop.json` stays off as shipped) |
+ | `peak=1` | start at full power: both fighters at tier 4 (`startTier`; tier 4 takes about six minutes of AI fighting to reach) |
++| `power=0` / `power=off` | the one energy model off for the match (`"power": false`); the page puts it on otherwise |
++| `flatout=N` / `travel=N` | flat-out flight's base (3,500 to 7,000) and how far a launch carries along the line (1.25 to 2.0, default 2.0); the two sliders bottom right set the same |
+ | `blackbox=1` | the black box (below), on in the printed address |
+ 
+ **Switches** (each flips a data flag in the scratch tree, read back from the running game by the smoke check): gen2, biome, water, surface, interrupts, floor, calmTurn, turn, rightStick, quickRead, hapticLadder, specialsOff, signatureRtOnly, hapticRefused, hapticIncoming, gen3, meteor, tiles, swing, everywhere, arc, ending, follow, lightStops (the stick's light no longer ends a quick flick), grapple (A catches and taunts), driver (RB + B is the Driver), driverOnRb (with signatureRtOnly, RB + B stays a B press for the Driver to read), beamFront, kick, mixed, struggle. A switch whose file the tree does not have waits and is named in the report.
+@@ -160,7 +162,7 @@ The private page (`node tools/preview/stack-preview.mjs --port 8766 --watch --op
+ 
+ **v6 additions (Tools, 2026-11-01).** `reel.mjs --hold 541,3301 [--hold-for 60] [--hold-every 6]` pauses on a tick (the sim is not stepped; the page keeps drawing) and takes a still every few seconds for a minute, with the mean change from still to still in `reel.json` `holds` (stills in `<out>/holds/`): ground that stays reads as a change near 0. `blackbox-clip.mjs --hold-at N` does the same on a tick of a recorded match. The page word `?splitshare=N` sets Camera's split share each frame (0.5 against the default 0.7). Parks added to the manifest: Camera's swing-share and lead-ahead (+ a fixup turning `lead_ahead` on), Encounter's beam-still, ground-settle, swing-warm, Simulation's field-place (+ Encounter's standing grant), Controls' first-pad, Audio's status line, Rendering's p to t (tile pool, coarse first, fill slice, tile level word, tundra strata) and Art's `data/art/biomes.json` overlay; the switches `splitShare` and `settle`.
+ 
+-**The energy model on the page (Simulation's power-core, off by default).** `?power=1` puts `"power": true` in a match's setup (data/fight/power.json stays off); `?flatout=N` (3,500 to 7,000, the data's own range) or the slider shown with `?power=1` (bottom right, remembered in the browser, read at the start of the next match) sets `"flatOut"`, the base of flat-out flight. The parks `simulation-ceil-table` and `simulation-power-core` are in the manifest after field-place; CI has `Power check` and its negative control.
++**The energy model on the page (Simulation's power-core, on for the page).** Every match puts `"power": true` in its setup unless the address says `?power=0` or `?power=off` (then `"power": false`; the web drops a word valued 0, so the page reads its own address for it). While it's on, two sliders show bottom right (remembered in the browser as `orb_flatout` and `orb_travel`, read at the start of the next match): `"flatOut"`, the base of flat-out flight (3,500 to 7,000, or `?flatout=N`), and `"travel"`, how far a launch carries along the line (1.25 to 2.0 in steps of 0.05, default 2.0; `?travel=N` starts the slider there; Game Design's slam-and-pace.md section 2). The parks `simulation-ceil-table` and `simulation-power-core` are in the manifest after field-place; CI has `Power check` and its negative control.
+ 
+ ## Rows held off, rows of several keys, and the final switch list (2026-11-07)
+ 
+diff --git a/tools/preview/blackbox.mjs b/tools/preview/blackbox.mjs
+index 9070949..a0fd374 100644
+--- a/tools/preview/blackbox.mjs
++++ b/tools/preview/blackbox.mjs
+@@ -458,9 +458,12 @@ export const AUDIO_HEAD = String.raw`
+     }
+   } catch (e) { /* none */ }
+   window.__audeng = function (o) { A.eng = o; A.engCalls = (A.engCalls || 0) + 1; };
+-  if (/[?&]power(=(?!0|off)[^&]*|&|$)/.test(location.search)) {   // Orb's slider for the base of flat-out flight (Simulation's flatOut, 3,500 to 7,000): read at the start of the next match
++  if (!/[?&]power=(0|off)(&|$)/.test(location.search)) {   // Orb's sliders for the one energy model (on for the page; ?power=0 or ?power=off hides them): the base of flat-out flight (Simulation's flatOut, 3,500 to 7,000) and how far a launch carries (Simulation's travel, 1.25 to 2.0; ?travel=N starts it there), each read at the start of the next match
+     var K = 'orb_flatout', v0 = 5000; try { var sv = parseFloat(localStorage.getItem(K)); if (sv >= 3500 && sv <= 7000) v0 = sv; } catch (e) { /* none */ }
+     window.__flatout = v0;
++    var KT = 'orb_travel', tv0 = 2; try { var st = parseFloat(localStorage.getItem(KT)); if (st >= 1.25 && st <= 2) tv0 = st; } catch (e) { /* none */ }
++    var mt = /[?&]travel=([0-9.]+)(&|$)/.exec(location.search); if (mt && parseFloat(mt[1]) >= 1.25 && parseFloat(mt[1]) <= 2) tv0 = parseFloat(mt[1]);
++    window.__travel = tv0;
+     document.addEventListener('DOMContentLoaded', function () {
+       var box = document.createElement('div');
+       box.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483646;font:12px/1.3 sans-serif;color:#fff;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px';
+@@ -468,8 +471,12 @@ export const AUDIO_HEAD = String.raw`
+       sl.type = 'range'; sl.min = '3500'; sl.max = '7000'; sl.step = '100'; sl.value = String(v0); sl.style.cssText = 'vertical-align:middle;width:160px';
+       function show() { lab.textContent = 'flat-out flight base speed ' + sl.value + ' (applies at the next match) '; }
+       sl.addEventListener('input', function () { window.__flatout = parseFloat(sl.value); try { localStorage.setItem(K, sl.value); } catch (e) { /* none */ } show(); });
+-      ['keydown', 'keyup'].forEach(function (ev) { sl.addEventListener(ev, function (e) { e.stopPropagation(); }); });
+-      show(); box.appendChild(lab); box.appendChild(sl); document.body.appendChild(box);
++      var labT = document.createElement('span'), slT = document.createElement('input');
++      slT.type = 'range'; slT.min = '1.25'; slT.max = '2'; slT.step = '0.05'; slT.value = String(tv0); slT.style.cssText = 'vertical-align:middle;width:160px';
++      function showT() { labT.textContent = 'how far a launch carries x' + parseFloat(slT.value).toFixed(2) + ' (applies at the next match) '; }
++      slT.addEventListener('input', function () { window.__travel = parseFloat(slT.value); try { localStorage.setItem(KT, slT.value); } catch (e) { /* none */ } showT(); });
++      [sl, slT].forEach(function (s) { ['keydown', 'keyup'].forEach(function (ev) { s.addEventListener(ev, function (e) { e.stopPropagation(); }); }); });
++      show(); showT(); box.appendChild(lab); box.appendChild(sl); box.appendChild(document.createElement('br')); box.appendChild(labT); box.appendChild(slT); document.body.appendChild(box);
+     });
+   }
+   window.__audstatus = function (s) { A.status = String(s); A.statusCalls = (A.statusCalls || 0) + 1; };
+diff --git a/tools/preview/preview-selftest.mjs b/tools/preview/preview-selftest.mjs
+index 87b5fc1..0cbe9e8 100644
+--- a/tools/preview/preview-selftest.mjs
++++ b/tools/preview/preview-selftest.mjs
+@@ -292,7 +292,7 @@ try {
+     const t1 = plan(repo, sha, { overlay: ['render/core', 'sim/world'], pending: pend.rows });
+     check('with both in the tree tiles is on and the word is carried on the address', t1.active.includes('tiles') && t1.urlWords.join() === 'tiles=1' && t1.setup.planetGen === 3, JSON.stringify(t1));
+     check('--off tiles leaves no word', plan(repo, sha, { overlay: ['render/core', 'sim/world'], off: ['tiles'], pending: pend.rows }).urlWords.length === 0);
+-    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", "nointro", '); })());
++    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "travel", "circle", "nohud", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "travel", "circle", "nohud", "nointro", '); })());
+     const tb = await buildPreview({ ...opts, overlay: ['render/core', 'sim/world'], rebuild: true, pending: pend });
+     check('a build with both overlaid reports the word and flips no file for it', tb.active.includes('tiles') && tb.urlWords.join() === 'tiles=1' && !tb.flips.some((x) => x.id === 'tiles'), JSON.stringify([tb.active, tb.urlWords]));
+ 
+diff --git a/tools/preview/switches.mjs b/tools/preview/switches.mjs
+index 8b0a2fc..7801e9e 100644
+--- a/tools/preview/switches.mjs
++++ b/tools/preview/switches.mjs
+@@ -873,16 +873,25 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
+     '\t\td["startTier"] = 4',
+   ];
+   const powerLines = [
+-    '\t# ?power=1: one energy model on for this match (Simulation\'s setup key "power": true; data/fight/power.json stays off); ?flatout=N or the page\'s slider (window.__flatout) tries another base for flat-out flight, 3,500 to 7,000',
+-    '\tif args.has("power") and str(args["power"]) != "0" and str(args["power"]) != "off":',
+-    '\t\td["power"] = true',
++    '\t# one energy model, on for the page whatever the data says (Simulation\'s setup key "power"; Game Design\'s slam-and-pace.md section 2, step 1): ?power=0 or ?power=off puts "power": false for this match (the web\'s parse_args drops a word valued 0, so the page reads its own address for it). While it is on, ?flatout=N or the page\'s slider (window.__flatout) tries another base for flat-out flight, 3,500 to 7,000, and ?travel=N or its slider (window.__travel) how far a launch carries along the line (Simulation\'s "travel"), 1.25 to 2.0',
++    '\tvar pw_off: bool = args.has("power") and (str(args["power"]) == "0" or str(args["power"]) == "off")',
++    '\tif OS.has_feature("web"):',
++    '\t\tpw_off = pw_off or bool(JavaScriptBridge.eval("/[?&]power=(0|off)(&|$)/.test(location.search)", true))',
++    '\td["power"] = not pw_off',
++    '\tif not pw_off:',
+     '\t\tvar fo: float = 0.0',
++    '\t\tvar tv: float = 0.0',
+     '\t\tif OS.has_feature("web"):',
+     '\t\t\tfo = float(JavaScriptBridge.eval("window.__flatout || 0", true))',
++    '\t\t\ttv = float(JavaScriptBridge.eval("window.__travel || 0", true))',
+     '\t\tif fo <= 0.0 and args.has("flatout"):',
+     '\t\t\tfo = float(str(args["flatout"]))',
+     '\t\tif fo > 0.0:',
+     '\t\t\td["flatOut"] = clampf(fo, 3500.0, 7000.0)',
++    '\t\tif tv <= 0.0 and args.has("travel"):',
++    '\t\t\ttv = float(str(args["travel"]))',
++    '\t\tif tv > 0.0:',
++    '\t\t\td["travel"] = clampf(tv, 1.25, 2.0)',
+   ];
+   const circleLines = [
+     '## Scratch (tools/preview): ?circle=1 turns the stance circle (LT + Y in reach; Encounter, docs/director/pending/stance-circle) on for the match: data stances.circle.enabled, off as shipped. Local pages only.',
+@@ -954,7 +963,7 @@ const EDITS = [
+   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
+   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
+   { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n' },
+-  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", ' },
++  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "travel", "circle", "nohud", ' },
+   { name: 'the menu choices before the HUD loads them', from: '\tui_hud.menu_changed.connect(_on_menu_changed)\n', to: '\t_preview_go()\n\tui_hud.menu_changed.connect(_on_menu_changed)\n' },
+   { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tif args.has("splitshare"):\n\t\t_pv_split_share()\n\tif args.has("audiolog"):\n\t\t_pv_aud_tick()   # the engine\'s own mixer, read only\n\tif args.has("replay"):\n\t\t_preview_replay()   # a saved black box match played again\n\tif args.has("script"):\n\t\t_preview_script()   # the scripted pad: its events for the coming tick are set before it runs\n\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
+ ];

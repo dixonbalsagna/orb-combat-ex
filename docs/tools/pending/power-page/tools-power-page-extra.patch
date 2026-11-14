@@ -1,0 +1,109 @@
+diff --git a/tools/preview/blackbox.mjs b/tools/preview/blackbox.mjs
+index a0fd374..ce389de 100644
+--- a/tools/preview/blackbox.mjs
++++ b/tools/preview/blackbox.mjs
+@@ -460,6 +460,7 @@ export const AUDIO_HEAD = String.raw`
+   window.__audeng = function (o) { A.eng = o; A.engCalls = (A.engCalls || 0) + 1; };
+   if (!/[?&]power=(0|off)(&|$)/.test(location.search)) {   // Orb's sliders for the one energy model (on for the page; ?power=0 or ?power=off hides them): the base of flat-out flight (Simulation's flatOut, 3,500 to 7,000) and how far a launch carries (Simulation's travel, 1.25 to 2.0; ?travel=N starts it there), each read at the start of the next match
+     var K = 'orb_flatout', v0 = 5000; try { var sv = parseFloat(localStorage.getItem(K)); if (sv >= 3500 && sv <= 7000) v0 = sv; } catch (e) { /* none */ }
++    var mf = /[?&]flatout=([0-9.]+)(&|$)/.exec(location.search); if (mf && parseFloat(mf[1]) >= 3500 && parseFloat(mf[1]) <= 7000) v0 = parseFloat(mf[1]);   // ?flatout=N starts the slider at N (3,500 to 7,000), as ?travel= does
+     window.__flatout = v0;
+     var KT = 'orb_travel', tv0 = 2; try { var st = parseFloat(localStorage.getItem(KT)); if (st >= 1.25 && st <= 2) tv0 = st; } catch (e) { /* none */ }
+     var mt = /[?&]travel=([0-9.]+)(&|$)/.exec(location.search); if (mt && parseFloat(mt[1]) >= 1.25 && parseFloat(mt[1]) <= 2) tv0 = parseFloat(mt[1]);
+diff --git a/docs/tools/preview.md b/docs/tools/preview.md
+index 6aa52ac..8a57b77 100644
+--- a/docs/tools/preview.md
++++ b/docs/tools/preview.md
+@@ -175,3 +175,5 @@ The private page (`node tools/preview/stack-preview.mjs --port 8766 --watch --op
+ A row's `more` keys may name a `file` of their own. `flightStrikes` is one row of three keys: `data/director/interrupts.json` zip.flightStrikes.enabled, and `data/input/timing.json` switches.flightStrikeB and switches.dodgeHeld. It needs rightStick and signatureRtOnly, and is held off by default (reason "held for the next batch's page (EP)"); `--on flightStrikes` turns it on. It is ON only if every key is in the tree, otherwise WAITING. The dodgeHeld row shares its key; flipping it twice reads the same. `aimCuts` is `data/director/launch.json` aimCuts.enabled, held the same way. `parts(sw)` in switches.mjs splits a row by file; every caller (plan, build, check, flipAll) loops over it. Table: 76 rows, 7 held (the four city rows, flightStrikes, aimCuts, stickLungeLight: data/director/stick.json lungeLight.enabled, needs rightStick).
+ 
+ **Clip size (2026-11-07, for Rendering's look at Orb's ground):** `blackbox-clip.mjs --width W --height H` sets the page's size (default 960 by 540); `--width 2000 --height 1125` matches Orb's window, and a picture is taken at `--scale` of it (0.5 gives 1000 by 563). clip.json records `page: { width, height, scale }`. The black box does not record Orb's camera: the saved file holds the intents, seed, setup, marks, frame timings, the pad's raw sticks and buttons and the audio record, and no camera field; the replay page computes the camera from the sim's state and the page's size, so the same size is the same framing.
++
++**The page's settings, checked in a real page (2026-11-07, G4):** `node tools/preview/power-page-check.mjs --dir <the build's web folder>` opens the built page through the guarded launcher with the black box on (one browser at a time, below-normal, with a time limit), clicks through the How to play card and the flashing notice as the smoke check does, lets the match start, and reads the black box's own record of the match's setup together with the two sliders, for six addresses: no word, `?power=1`, `?power=0`, `?power=off`, `?travel=1.5&flatout=6000` and an out-of-range pair. Expected: power true with `travel` 2 and `flatOut` 5000 and two sliders; power false with neither key and no slider; the two words reach the setup; a slider moved sets `window.__travel` / `window.__flatout` and is remembered (`orb_travel`, `orb_flatout`) with the labels "how far a launch carries x1.55" and "flat-out flight base speed 6200". `?flatout=N` (3,500 to 7,000) now starts the slider at N like `?travel=`: before, the page head set the slider's value first and the game took it first, so the word never reached the setup on the web (found by this check). An out-of-range word is ignored by the head.
+diff --git a/tools/preview/power-page-check.mjs b/tools/preview/power-page-check.mjs
+new file mode 100644
+index 0000000..6c7bc5e
+--- /dev/null
++++ b/tools/preview/power-page-check.mjs
+@@ -0,0 +1,81 @@
++// The page's energy-model settings, checked in a real built page (Tools, 2026-11-07; Simulation's grant-tools-page.patch, G4): for each address the page is opened through the guarded launcher with the
++// black box on, the match starts, and the black box's own record of the match's setup is read (window.__bb_replay: the setup EXACTLY as the match started), together with the two sliders.
++//   node tools/preview/power-page-check.mjs --dir <the build's web folder> [--out <file>] [--limit 600]
++// Expectations (Simulation's README): no word: setup.power true, travel 2, flatOut 5000, both sliders on the page; ?power=0 or ?power=off: setup.power false, no travel or flatOut key, no slider;
++// ?travel=1.5 and ?flatout=6000: the setup carries them; out-of-range words are clamped by the page (travel 1.25 to 2, flatOut 3500 to 7000); a slider moved sets window.__travel / __flatout and is remembered.
++// Exit 1 on any miss. Node built-ins only. One browser at a time, below-normal, with a time limit.
++import { writeFileSync } from 'node:fs';
++import { resolve } from 'node:path';
++import { Cdp, launchBrowser, serve, browserExe } from '../machine/browser.mjs';
++
++const a = process.argv.slice(2);
++const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
++const DIR = opt('--dir');
++if (!DIR) { console.error('usage: node tools/preview/power-page-check.mjs --dir <web folder> [--out <file>]'); process.exit(2); }
++const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
++const exe = browserExe('chrome');
++if (!exe) { console.error('no chrome found'); process.exit(2); }
++const BASE = 'planet=7&go=1&blackbox=1&preview=1';
++const CASES = [
++  { name: 'no power word', words: '', power: true, travel: 2, flatOut: 5000, sliders: true },
++  { name: '?power=1 (the same as no word)', words: 'power=1', power: true, travel: 2, flatOut: 5000, sliders: true },
++  { name: '?power=0', words: 'power=0', power: false, travel: undefined, flatOut: undefined, sliders: false },
++  { name: '?power=off', words: 'power=off', power: false, travel: undefined, flatOut: undefined, sliders: false },
++  { name: '?travel=1.5&flatout=6000', words: 'travel=1.5&flatout=6000', power: true, travel: 1.5, flatOut: 6000, sliders: true },
++  { name: '?travel=9&flatout=100 (out of range)', words: 'travel=9&flatout=100', power: true, travel: 2, flatOut: 5000, sliders: true, note: 'an out-of-range word is ignored by the page head, so the slider stays at its own value' },
++];
++const lines = [];
++const out = (s) => { lines.push(s); console.log(s); };
++let bad = 0;
++const server = await serve(resolve(DIR));
++let browser = null;
++try {
++  for (const c of CASES.filter((x) => !opt('--only') || x.name.includes(opt('--only')))) {
++    browser = await launchBrowser({ exe, flags: ['--window-size=1280,720'], session: process.env.MERIDIAN_SESSION || 'tools-pipeline', purpose: 'power page check', timeoutS: Number(opt('--limit', 600)), cpuPercent: 25, log: () => {} });
++    const page = await Cdp.open(browser.target.webSocketDebuggerUrl);
++    await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
++    await page.send('Runtime.enable');
++    const url = `http://127.0.0.1:${server.address().port}/index.html?${BASE}${c.words ? '&' + c.words : ''}`;
++    await page.send('Page.navigate', { url });
++    const deadline = Date.now() + 240 * 1000;
++    let rec = null;
++    // a fresh profile meets the How to play card and the flashing notice with the start menu: the match is held behind them (as tools/preview/smoke.mjs does): click through until the tick runs
++    const click = async (x, y) => { await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y }); await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }); await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }); };
++    const tick = async () => (await page.eval('(window.__preview && window.__preview.tick) || 0', true).catch(() => 0)) || 0;
++    for (let tries = 0; tries < 30 && Date.now() < deadline; tries++) {
++      const t0 = await tick(); await sleep(2500);
++      if ((await tick()) > t0 + 30) break;
++      await click(1099, 195); await sleep(1200); await click(640, 503); await sleep(1200);
++    }
++    while (Date.now() < deadline && !rec) {
++      await sleep(1500);
++      // the first records can be an empty setup (a demo before the start): wait for the match's own, which carries the planet
++      rec = await page.eval('(function () { try { var s = window.__bb_replay ? JSON.parse(window.__bb_replay).setup : null; return s && s.planet !== undefined ? s : null; } catch (e) { return null; } })()', true).catch(() => null);
++    }
++    const dom = await page.eval('(function () { var r = [].slice.call(document.querySelectorAll("input[type=range]")).map(function (s) { return { min: s.min, max: s.max, value: s.value }; }); return { sliders: r, power: window.__travel, flat: window.__flatout, text: document.body.innerText.slice(-400) }; })()', true).catch(() => null);
++    const got = rec || {};
++    const check = (what, ok) => { if (!ok) bad++; return `${ok ? 'ok  ' : 'FAIL'} ${what}`; };
++    out(`--- ${c.name}  (${url.replace(/^http:\/\/127\.0\.0\.1:\d+/, '')})`);
++    out(`    black box setup: ${JSON.stringify({ power: got.power, travel: got.travel, flatOut: got.flatOut, planet: got.planet })}; sliders on page: ${dom ? dom.sliders.length : '?'}; window.__travel ${dom && dom.power}, __flatout ${dom && dom.flat}`);
++    out('    ' + check(`setup.power is ${c.power}`, got.power === c.power));
++    if (c.travel !== undefined) out('    ' + check(`setup.travel is ${c.travel}`, Number(got.travel) === c.travel)); else if (!c.power) out('    ' + check('no travel key in the setup with power off', got.travel === undefined));
++    if (c.flatOut !== undefined) out('    ' + check(`setup.flatOut is ${c.flatOut}`, Number(got.flatOut) === c.flatOut)); else if (!c.power) out('    ' + check('no flatOut key in the setup with power off', got.flatOut === undefined)); else out(`    info setup.flatOut is ${JSON.stringify(got.flatOut)} (${c.note || ''})`);
++    out('    ' + check(c.sliders ? 'both sliders are on the page (flat-out base, how far a launch carries)' : 'no slider on the page with power off', c.sliders ? dom && dom.sliders.length === 2 : dom && dom.sliders.length === 0));
++    if (c.name === 'no power word') {   // the sliders: move each, the page's variable follows and is remembered
++      const moved = await page.eval('(function () { var r = [].slice.call(document.querySelectorAll("input[type=range]")); if (r.length !== 2) return null; r[0].value = "6200"; r[0].dispatchEvent(new Event("input")); r[1].value = "1.55"; r[1].dispatchEvent(new Event("input")); return { flat: window.__flatout, travel: window.__travel, ls: [localStorage.getItem("orb_flatout"), localStorage.getItem("orb_travel")], text: document.body.innerText.slice(-300) }; })()', true).catch(() => null);
++      out(`    sliders moved: ${JSON.stringify(moved && { flat: moved.flat, travel: moved.travel, remembered: moved.ls })}`);
++      out('    ' + check('the flat-out slider sets window.__flatout and is remembered as orb_flatout', moved && moved.flat === 6200 && moved.ls[0] === '6200'));
++      out('    ' + check('the travel slider sets window.__travel and is remembered as orb_travel', moved && moved.travel === 1.55 && moved.ls[1] === '1.55'));
++      out('    ' + check('the labels read "how far a launch carries x1.55" and "flat-out flight base speed 6200"', moved && /how far a launch carries x1\.55/.test(moved.text) && /flat-out flight base speed 6200/.test(moved.text)));
++    }
++    try { page.close(); } catch { /* closed */ }
++    await browser.close();
++    browser = null;
++  }
++} finally {
++  if (browser) { try { await browser.close(); } catch { /* stopped */ } }
++  server.close();
++}
++out(`power page check: ${bad ? `FAILED, ${bad} miss(es)` : 'ok'}`);
++if (opt('--out')) writeFileSync(resolve(opt('--out')), lines.join('\n') + '\n');
++process.exitCode = bad ? 1 : 0;

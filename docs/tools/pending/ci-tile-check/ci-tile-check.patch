@@ -1,0 +1,13 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 5b2b13e..ecdef61 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -200,6 +200,8 @@ jobs:
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/frame_check.gd -- --negative-control'
+       - name: Rollback check, a field world (two peers over the loopback match the straight run, LAN and p120)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=field --seeds=1 --ticks=300 --profiles=lan,p120'
++      - name: Tile check (the tile ground's heights equal the sim's along the line, and every stored tile holds its nodes)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/tile_check.gd'
+       - name: Render determinism (gameplay hashes match with the scene running)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/determinism.gd'
+       - name: Render seam sweep

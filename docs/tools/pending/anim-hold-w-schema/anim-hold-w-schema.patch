@@ -1,0 +1,78 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index f1c9e0e..40b1388 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -18947,6 +18947,73 @@
+       ],
+       "expect": null
+     },
++    {
++      "id": "anim-wave-keysets-hold-w-valid",
++      "schema": "anim-wave-keysets.schema.json",
++      "mutate": [
++        {
++          "file": "data/anim/waves/wave1.keysets.json",
++          "set": {
++            "/keysets/w1.test": {
++              "limb": "hand_r",
++              "target": "head",
++              "weight": "heavy",
++              "hold_w": 0.25,
++              "keys": [
++                {
++                  "role": "load",
++                  "pose": "w1.jab.chamber"
++                },
++                {
++                  "role": "contact",
++                  "pose": "w1.jab.contact"
++                },
++                {
++                  "role": "follow",
++                  "pose": "w1.jab.follow"
++                }
++              ]
++            }
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "anim-wave-keysets-hold-w-over-one",
++      "schema": "anim-wave-keysets.schema.json",
++      "mutate": [
++        {
++          "file": "data/anim/waves/wave1.keysets.json",
++          "set": {
++            "/keysets/w1.test": {
++              "limb": "hand_r",
++              "target": "head",
++              "weight": "heavy",
++              "hold_w": 2,
++              "keys": [
++                {
++                  "role": "load",
++                  "pose": "w1.jab.chamber"
++                },
++                {
++                  "role": "contact",
++                  "pose": "w1.jab.contact"
++                },
++                {
++                  "role": "follow",
++                  "pose": "w1.jab.follow"
++                }
++              ]
++            }
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/keysets/w1.test/hold_w"
++      }
++    },
+     {
+       "id": "anim-wave-keysets-variant-name-ok",
+       "schema": "anim-wave-keysets.schema.json",

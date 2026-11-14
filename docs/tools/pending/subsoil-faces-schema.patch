@@ -1,0 +1,201 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 76f8e53..c9f3c94 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -299602,6 +299602,174 @@
+         "pointer": "/sky_tint"
+       }
+     },
++    {
++      "id": "art-biomes-subsoil-faces-valid",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/desert/palette/subsoil_faces": [
++              "#f6c46c",
++              "#febb71",
++              "#feb582"
++            ]
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "art-biomes-subsoil-faces-beach-valid",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/beach/palette/subsoil_faces": [
++              "#e6d3a8",
++              "#f5ca9a",
++              "#fec199"
++            ]
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "art-biomes-subsoil-faces-absent-ok",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "del": [
++            "/biomes/desert/palette/subsoil_faces"
++          ]
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "art-biomes-subsoil-faces-on-another-biome-ok",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/plains/palette/subsoil_faces": [
++              "#3a2c20",
++              "#4a3a2c",
++              "#241a12"
++            ]
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "art-biomes-subsoil-faces-needs-three",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/desert/palette/subsoil_faces": [
++              "#f6c46c",
++              "#febb71"
++            ]
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minItems",
++        "pointer": "/biomes/desert/palette/subsoil_faces"
++      }
++    },
++    {
++      "id": "art-biomes-subsoil-faces-four",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/desert/palette/subsoil_faces": [
++              "#f6c46c",
++              "#febb71",
++              "#feb582",
++              "#fea000"
++            ]
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maxItems",
++        "pointer": "/biomes/desert/palette/subsoil_faces"
++      }
++    },
++    {
++      "id": "art-biomes-subsoil-faces-colour-shape",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/desert/palette/subsoil_faces/1": "orange"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "pattern",
++        "pointer": "/biomes/desert/palette/subsoil_faces/1"
++      }
++    },
++    {
++      "id": "art-biomes-subsoil-faces-colour-upper-case",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/desert/palette/subsoil_faces/0": "#F6C46C"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "pattern",
++        "pointer": "/biomes/desert/palette/subsoil_faces/0"
++      }
++    },
++    {
++      "id": "art-biomes-subsoil-faces-colour-type",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/desert/palette/subsoil_faces/2": 12
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/biomes/desert/palette/subsoil_faces/2"
++      }
++    },
++    {
++      "id": "art-biomes-subsoil-faces-not-an-array",
++      "schema": "art-biomes.schema.json",
++      "mutate": [
++        {
++          "file": "data/art/biomes.json",
++          "set": {
++            "/biomes/desert/palette/subsoil_faces": "#f6c46c"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/biomes/desert/palette/subsoil_faces"
++      }
++    },
+     {
+       "id": "audio-world-cues-valid",
+       "schema": "audio-world-cues.schema.json",
+diff --git a/tools/schemas/art-biomes.schema.json b/tools/schemas/art-biomes.schema.json
+index ac7a8b5..9ca7881 100644
+--- a/tools/schemas/art-biomes.schema.json
++++ b/tools/schemas/art-biomes.schema.json
+@@ -191,6 +191,17 @@
+                 "pattern": "^#[0-9a-f]{6}$",
+                 "description": "A colour, #rrggbb in lower case."
+               },
++              "subsoil_faces": {
++                "type": "array",
++                "minItems": 3,
++                "maxItems": 3,
++                "items": {
++                  "type": "string",
++                  "pattern": "^#[0-9a-f]{6}$",
++                  "description": "A colour, #rrggbb in lower case."
++                },
++                "description": "A crater's inside as authored faces, [lit, mid, shade]. When present the render uses these instead of deriving lit and shade from the subsoil colour, so the faces can stay inside the contrast budget of the ground around them. Only the desert and the beach carry it."
++              },
+               "rock": {
+                 "type": "array",
+                 "minItems": 3,

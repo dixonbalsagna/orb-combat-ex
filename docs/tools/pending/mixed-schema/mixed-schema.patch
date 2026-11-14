@@ -1,0 +1,272 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 0e1d63c..5b8c12f 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -312097,6 +312097,133 @@
+       ],
+       "expect": null
+     },
++    {
++      "id": "combat-mixed-live-valid",
++      "schema": "combat-mixed.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/mixed.json",
++          "set": {
++            "/schema": "combat.mixed/1"
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "combat-mixed-bad-schema",
++      "schema": "combat-mixed.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/mixed.json",
++          "set": {
++            "/schema": "combat.mixed/2"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "const",
++        "pointer": "/schema"
++      }
++    },
++    {
++      "id": "combat-mixed-extra-key",
++      "schema": "combat-mixed.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/mixed.json",
++          "set": {
++            "/stray": 1
++          }
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/stray"
++      }
++    },
++    {
++      "id": "combat-mixed-enabled-not-boolean",
++      "schema": "combat-mixed.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/mixed.json",
++          "set": {
++            "/enabled": "yes"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/enabled"
++      }
++    },
++    {
++      "id": "combat-mixed-window-not-integer",
++      "schema": "combat-mixed.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/mixed.json",
++          "set": {
++            "/windowTicks": 150.5
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/windowTicks"
++      }
++    },
++    {
++      "id": "combat-mixed-tap-share-over-one",
++      "schema": "combat-mixed.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/mixed.json",
++          "set": {
++            "/tapMaxShare": 1.5
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/tapMaxShare"
++      }
++    },
++    {
++      "id": "combat-mixed-lead-ticks-one-number",
++      "schema": "combat-mixed.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/mixed.json",
++          "set": {
++            "/leadTicks": [
++              24
++            ]
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minItems",
++        "pointer": "/leadTicks"
++      }
++    },
++    {
++      "id": "combat-mixed-burst-zero",
++      "schema": "combat-mixed.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/mixed.json",
++          "set": {
++            "/burstBh": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/burstBh"
++      }
++    },
+     {
+       "id": "anim-lead-in-bad-schema",
+       "schema": "anim-lead-in.schema.json",
+diff --git a/tools/schemas/combat-mixed.schema.json b/tools/schemas/combat-mixed.schema.json
+new file mode 100644
+index 0000000..670352c
+--- /dev/null
++++ b/tools/schemas/combat-mixed.schema.json
+@@ -0,0 +1,113 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/combat-mixed",
++  "title": "combat.mixed/1",
++  "description": "data/combat/mixed.json: the mixed string (Combat, 2026-11-01; docs/design/energy-overhaul.md section 21, rule-of-cool-map.md row 34; sim/director/mixed.gd). A send or a knock opens a string, and each far blow keeps it open; in an open string a tapped far heavy is a lob aimed where he is going. enabled false leaves nothing running and no slot sized. Version field: schema. Policy: closed except keys starting with an underscore.",
++  "type": "object",
++  "required": [
++    "schema",
++    "enabled",
++    "windowTicks",
++    "tapMaxShare",
++    "burstBh",
++    "edgeShare",
++    "knockBh",
++    "leanBh",
++    "wayReachBh",
++    "wayEveryTicks",
++    "wayForceMul",
++    "leadTicks",
++    "arcMul",
++    "freeBh"
++  ],
++  "patternProperties": {
++    "^_": {}
++  },
++  "properties": {
++    "schema": {
++      "const": "combat.mixed/1"
++    },
++    "enabled": {
++      "type": "boolean",
++      "description": "false leaves nothing running and no slot sized."
++    },
++    "windowTicks": {
++      "type": "integer",
++      "minimum": 1,
++      "maximum": 1200,
++      "description": "How long a far string stays open after its last blow (ticks)."
++    },
++    "tapMaxShare": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "A heavy let go with at most this share of its charge is a tap, so a lob."
++    },
++    "burstBh": {
++      "type": "number",
++      "minimum": 0.1,
++      "maximum": 20,
++      "description": "E123's tapped burst radius, in body heights."
++    },
++    "edgeShare": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "The share of worth outside half the burst radius (E30)."
++    },
++    "knockBh": {
++      "type": "number",
++      "minimum": 0.1,
++      "maximum": 20,
++      "description": "E30's clean hit: how far it knocks, in body heights."
++    },
++    "leanBh": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 20,
++      "description": "E33's lean, in body heights."
++    },
++    "wayReachBh": {
++      "type": "number",
++      "minimum": 0.1,
++      "maximum": 100,
++      "description": "How far past him a building can be and still finish him, in body heights."
++    },
++    "wayEveryTicks": {
++      "type": "integer",
++      "minimum": 1,
++      "maximum": 100000,
++      "description": "rule-of-cool.md's rule 2: a big set piece every this many ticks."
++    },
++    "wayForceMul": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 10,
++      "description": "The way's force, as a multiple of a heavy's force."
++    },
++    "arcMul": {
++      "type": "number",
++      "minimum": 1,
++      "maximum": 10,
++      "description": "E144: how much a low roof may raise the lob's arc (a multiple of the flat arc)."
++    },
++    "freeBh": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 20,
++      "description": "E144: nothing stops the lob this near the thrower, in body heights."
++    },
++    "leadTicks": {
++      "type": "array",
++      "minItems": 2,
++      "maxItems": 2,
++      "items": {
++        "type": "integer",
++        "minimum": 1,
++        "maximum": 600
++      },
++      "description": "The lob's shortest and longest flight in ticks, timed to land as he does ([shortest, longest]; the order is checked by the director)."
++    }
++  },
++  "additionalProperties": false
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index ba5d74d..25cd79b 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -7,6 +7,10 @@
+     "audio/music"
+   ],
+   "rules": [
++    {
++      "match": "data/combat/mixed.json",
++      "schema": "combat-mixed.schema.json"
++    },
+     {
+       "match": "data/combat/templates.json",
+       "schema": "combat-templates.schema.json"

@@ -1,0 +1,50 @@
+diff --git a/tools/schemas/audio-carry-cues.schema.json b/tools/schemas/audio-carry-cues.schema.json
+index 9df563d..37fb15b 100644
+--- a/tools/schemas/audio-carry-cues.schema.json
++++ b/tools/schemas/audio-carry-cues.schema.json
+@@ -443,7 +443,7 @@
+                 "type": "string"
+               },
+               "minItems": 1,
+-              "maxItems": 1
++              "maxItems": 3
+             },
+             "priority": {
+               "type": "integer",
+diff --git a/tools/schemas/director-swing.schema.json b/tools/schemas/director-swing.schema.json
+index 06dd0ee..e978d85 100644
+--- a/tools/schemas/director-swing.schema.json
++++ b/tools/schemas/director-swing.schema.json
+@@ -276,6 +276,32 @@
+         "reach": {
+           "type": "number",
+           "minimum": 0
++        },
++        "shareCap": {
++          "type": "object",
++          "patternProperties": {
++            "^_": {}
++          },
++          "additionalProperties": false,
++          "properties": {
++            "enabled": {
++              "type": "boolean"
++            },
++            "max": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1
++            },
++            "after": {
++              "type": "integer",
++              "minimum": 0
++            }
++          },
++          "required": [
++            "enabled",
++            "max",
++            "after"
++          ]
+         }
+       },
+       "required": [

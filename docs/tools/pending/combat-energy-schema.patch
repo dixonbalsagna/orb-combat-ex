@@ -1,0 +1,1522 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 16e7c48..fa8f335 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -301125,6 +301125,964 @@
+         "pointer": "/lanes/cyborg/kinds/grab/main"
+       }
+     },
++    {
++      "id": "combat-energy-valid",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/schema": "combat.energy/1"
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "combat-energy-underscore-key-ok",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/_why": "a note"
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "combat-energy-open-cell-key-ok",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/light/lookNote": "a free look",
++            "/grab/reads": "a net"
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "combat-energy-key-required-schema",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/schema"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-fighter",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/fighter"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-side",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/side"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-meter",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/meter"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-lane",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/lane"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-names",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/names"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-light",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/light"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-medium",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/medium"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-heavy",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/heavy"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-beam",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/beam"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-grab",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/grab"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-trap",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/trap"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-key-required-atoms",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/atoms"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": ""
++      }
++    },
++    {
++      "id": "combat-energy-unknown-key",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/extra": 1
++          }
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/extra"
++      }
++    },
++    {
++      "id": "combat-energy-schema-version",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/schema": "combat.energy/2"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "const",
++        "pointer": "/schema"
++      }
++    },
++    {
++      "id": "combat-energy-fighter-lower-case",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/fighter": "protagonist"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "pattern",
++        "pointer": "/fighter"
++      }
++    },
++    {
++      "id": "combat-energy-side",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/side": "neutral"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/side"
++      }
++    },
++    {
++      "id": "combat-energy-meter",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/meter": "rage"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/meter"
++      }
++    },
++    {
++      "id": "combat-energy-lane-shape",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/lane": "Cyan Lane"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "pattern",
++        "pointer": "/lane"
++      }
++    },
++    {
++      "id": "combat-energy-names-missing",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/names/trap"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/names"
++      }
++    },
++    {
++      "id": "combat-energy-names-empty",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/names/beam": ""
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minLength",
++        "pointer": "/names/beam"
++      }
++    },
++    {
++      "id": "combat-energy-refuse-bolt-speed-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/light/speedMul": 1.5
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/light/speedMul"
++      }
++    },
++    {
++      "id": "combat-energy-refuse-drain-payoff",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/payoff": "drain"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/grab/payoff"
++      }
++    },
++    {
++      "id": "combat-energy-refuse-trait-that-pushes",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/beam/trait/pushMul": 2
++          }
++        }
++      ],
++      "expect": {
++        "rule": "const",
++        "pointer": "/beam/trait/pushMul"
++      }
++    },
++    {
++      "id": "combat-energy-refuse-45-tick-catch",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/catchTicks": 45
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/grab/catchTicks"
++      }
++    },
++    {
++      "id": "combat-energy-bolt-speed-under-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/light/speedMul": 0.7
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/light/speedMul"
++      }
++    },
++    {
++      "id": "combat-energy-bolt-damage-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/light/dmgMul": 1.3
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/light/dmgMul"
++      }
++    },
++    {
++      "id": "combat-energy-bolt-damage-under-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/light/dmgMul": 0.7
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/light/dmgMul"
++      }
++    },
++    {
++      "id": "combat-energy-bolt-spread-past",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/light/spreadDeg": 45
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/light/spreadDeg"
++      }
++    },
++    {
++      "id": "combat-energy-lob-arc-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/medium/arcTicks": 50
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/medium/arcTicks"
++      }
++    },
++    {
++      "id": "combat-energy-lob-arc-under-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/medium/arcTicks": 20
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/medium/arcTicks"
++      }
++    },
++    {
++      "id": "combat-energy-lob-level-1-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/medium/l1Ticks": 40
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/medium/l1Ticks"
++      }
++    },
++    {
++      "id": "combat-energy-lob-level-2-under-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/medium/l2Ticks": 30
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/medium/l2Ticks"
++      }
++    },
++    {
++      "id": "combat-energy-lob-damage-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/medium/dmgMul": 1.4
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/medium/dmgMul"
++      }
++    },
++    {
++      "id": "combat-energy-lob-level-2-template",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/medium/l2/template": "orb"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/medium/l2/template"
++      }
++    },
++    {
++      "id": "combat-energy-lob-level-2-missing",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/medium/l2"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/medium"
++      }
++    },
++    {
++      "id": "combat-energy-heavy-damage-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/heavy/dmgMul": 1.3
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/heavy/dmgMul"
++      }
++    },
++    {
++      "id": "combat-energy-beam-sweep-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/beam/sweepDegPerSec": 50
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/beam/sweepDegPerSec"
++      }
++    },
++    {
++      "id": "combat-energy-beam-sweep-under-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/beam/sweepDegPerSec": 10
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/beam/sweepDegPerSec"
++      }
++    },
++    {
++      "id": "combat-energy-beam-length-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/beam/lenMul": 1.5
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/beam/lenMul"
++      }
++    },
++    {
++      "id": "combat-energy-beam-width-past",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/beam/widthMul": 3
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/beam/widthMul"
++      }
++    },
++    {
++      "id": "combat-energy-beam-trait-missing",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/beam/trait"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/beam"
++      }
++    },
++    {
++      "id": "combat-energy-beam-trait-push-missing",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/beam/trait/pushMul"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/beam/trait"
++      }
++    },
++    {
++      "id": "combat-energy-beam-trait-push-below-one",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/beam/trait/pushMul": 0.5
++          }
++        }
++      ],
++      "expect": {
++        "rule": "const",
++        "pointer": "/beam/trait/pushMul"
++      }
++    },
++    {
++      "id": "combat-energy-grab-look",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/look": "sphere"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/grab/look"
++      }
++    },
++    {
++      "id": "combat-energy-grab-payoff-confine",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/payoff": "confine"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/grab/payoff"
++      }
++    },
++    {
++      "id": "combat-energy-grab-throw-past-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/throwTicks": 40
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/grab/throwTicks"
++      }
++    },
++    {
++      "id": "combat-energy-grab-throw-under-band",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/throwTicks": 10
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/grab/throwTicks"
++      }
++    },
++    {
++      "id": "combat-energy-grab-catch-zero",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/catchTicks": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/grab/catchTicks"
++      }
++    },
++    {
++      "id": "combat-energy-grab-catch-missing",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "del": [
++            "/grab/catchTicks"
++          ]
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/grab"
++      }
++    },
++    {
++      "id": "combat-energy-trap-template",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/trap/template": "orb"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/trap/template"
++      }
++    },
++    {
++      "id": "combat-energy-name-not-the-fighter",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/fighter": "RIVAL"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "xref:combat-energy-name",
++        "pointer": "/fighter"
++      }
++    },
++    {
++      "id": "combat-energy-lane-unknown",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/lane": "violet_lane"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "xref:combat-energy-lane",
++        "pointer": "/lane"
++      }
++    },
++    {
++      "id": "combat-energy-light-colour-not-the-lanes",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/light/colour": "#123456"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "xref:combat-energy-lane",
++        "pointer": "/light/colour"
++      }
++    },
++    {
++      "id": "combat-energy-atom-not-in-atoms",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/light/atoms/0": "en.protagonist.light.nowhere"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "xref:combat-energy-atoms",
++        "pointer": "/light/atoms/0"
++      }
++    },
++    {
++      "id": "combat-energy-kit-too-like-another",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/look": "ring",
++            "/grab/payoff": "bind",
++            "/medium/l2/template": "split",
++            "/trap/template": "own",
++            "/beam/trait/kind": "press"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "xref:combat-energy-distinct",
++        "pointer": "/fighter"
++      }
++    },
++    {
++      "id": "combat-energy-kit-two-things-apart",
++      "schema": "combat-energy.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/energy/protagonist.json",
++          "set": {
++            "/grab/look": "ring",
++            "/grab/payoff": "bind",
++            "/medium/l2/template": "split"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "xref:combat-energy-distinct",
++        "pointer": "/fighter"
++      }
++    },
+     {
+       "id": "fight-ricochet-angle-zero",
+       "schema": "fight-ricochet.schema.json",
+diff --git a/tools/lib/xref-combat-energy.js b/tools/lib/xref-combat-energy.js
+new file mode 100644
+index 0000000..ea9c9ef
+--- /dev/null
++++ b/tools/lib/xref-combat-energy.js
+@@ -0,0 +1,51 @@
++'use strict';
++// Cross-reference rules for Combat's energy kits, data/combat/energy/<fighter>.json (combat.energy/1; docs/combat/pending/energy/README.md; called from xref-fight.js):
++//   combat-energy-name      the file's name is its fighter in lower case (an "energy." prefix is allowed: energy.rival.json)
++//   combat-energy-lane      `lane` is a key of data/art/energy-lanes.json lanes, and light.colour is that lane's light_colour
++//   combat-energy-atoms     every atom a cell lists (light, medium, heavy, beam, grab, trap) is a key of the kit's `atoms`
++//   combat-energy-distinct  two kits differ in at least three of five things: the grab's look, the grab's payoff, the lob's level-2 template, the trap's template and the beam trait's kind
++//                           (Game Design's kit sheet, section 14)
++// "Every fighter is a roster id" waits for the roster to hold all four.
++
++const DIR = /^data\/combat\/energy\/[^/]+\.json$/;
++const CELLS = ['light', 'medium', 'heavy', 'beam', 'grab', 'trap'];
++const NEEDED = 3;
++
++function xrefCombatEnergy({ get, err, esc, isObj, docsFor }) {
++  const files = docsFor(DIR);
++  if (!files.length) return;
++  const lanesDoc = get('data/art/energy-lanes.json');
++  const lanes = isObj(lanesDoc) && isObj(lanesDoc.lanes) ? lanesDoc.lanes : null;
++  const kits = [];
++  for (const file of files) {
++    const k = get(file);
++    if (!isObj(k)) continue;
++    kits.push({ file, k });
++    const base = file.slice(file.lastIndexOf('/') + 1).replace(/\.json$/, '').replace(/^energy\./, '');
++    if (typeof k.fighter === 'string' && base !== k.fighter.toLowerCase()) err(file, '/fighter', 'combat-energy-name', `the file is "${base}" but the fighter is "${k.fighter}": a kit's file is its fighter in lower case`);
++    if (lanes && typeof k.lane === 'string') {
++      const lane = lanes[k.lane];
++      if (!isObj(lane)) err(file, '/lane', 'combat-energy-lane', `lane "${k.lane}" is not a lane of data/art/energy-lanes.json (${Object.keys(lanes).join(', ')})`);
++      else if (isObj(k.light) && typeof k.light.colour === 'string' && typeof lane.light_colour === 'string' && k.light.colour.toLowerCase() !== lane.light_colour.toLowerCase()) err(file, '/light/colour', 'combat-energy-lane', `light.colour ${k.light.colour} is not the lane's light_colour ${lane.light_colour}`);
++    }
++    if (isObj(k.atoms)) {
++      const have = new Set(Object.keys(k.atoms));
++      for (const cell of CELLS) {
++        const c = k[cell];
++        if (isObj(c) && Array.isArray(c.atoms)) c.atoms.forEach((a, i) => { if (typeof a === 'string' && !have.has(a)) err(file, `/${cell}/atoms/${i}`, 'combat-energy-atoms', `the atom "${a}" is not a key of this kit's atoms`); });
++      }
++    }
++  }
++  const sig = ({ k }) => [isObj(k.grab) ? k.grab.look : null, isObj(k.grab) ? k.grab.payoff : null, isObj(k.medium) && isObj(k.medium.l2) ? k.medium.l2.template : null, isObj(k.trap) ? k.trap.template : null, isObj(k.beam) && isObj(k.beam.trait) ? k.beam.trait.kind : null];
++  const names = ['grab look', 'grab payoff', "lob's level-2 template", 'trap template', 'beam trait'];
++  for (let i = 0; i < kits.length; i++) for (let j = i + 1; j < kits.length; j++) {
++    const a = sig(kits[i]), b = sig(kits[j]);
++    const differ = a.filter((v, n) => v !== null && b[n] !== null && v !== b[n]).length;
++    if (differ < NEEDED) {
++      const same = names.filter((_, n) => a[n] !== null && a[n] === b[n]).join(', ');
++      for (const [me, other] of [[kits[i], kits[j]], [kits[j], kits[i]]]) err(me.file, '/fighter', 'combat-energy-distinct', `this kit differs from ${other.file.slice(other.file.lastIndexOf('/') + 1)} in only ${differ} of 5 things (at least ${NEEDED} are needed); the same: ${same}`);
++    }
++  }
++}
++
++module.exports = { xrefCombatEnergy };
+diff --git a/tools/lib/xref-fight.js b/tools/lib/xref-fight.js
+index 39b0e64..4a63e77 100644
+--- a/tools/lib/xref-fight.js
++++ b/tools/lib/xref-fight.js
+@@ -18,6 +18,7 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
+   require('./xref-lanes').xrefLanes({ get, err, esc, isObj });
+   require('./xref-brawl-keys').xrefBrawlKeys({ get, err, esc, isObj });
+   require('./xref-brunt').xrefBrunt({ get, err, esc, isObj });
++  require('./xref-combat-energy').xrefCombatEnergy({ get, err, esc, isObj, docsFor });
+   require('./xref-world-cues').xrefWorldCues({ get, err, esc, isObj });
+   require('./xref-biome-look').xrefBiomeLook({ get, err, esc, isObj });
+   require('./xref-grounds').xrefGrounds({ get, err, esc, isObj, root });
+diff --git a/tools/schemas/combat-energy.schema.json b/tools/schemas/combat-energy.schema.json
+new file mode 100644
+index 0000000..ef620ff
+--- /dev/null
++++ b/tools/schemas/combat-energy.schema.json
+@@ -0,0 +1,463 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/combat-energy",
++  "title": "combat.energy/1",
++  "description": "By Combat (docs/combat/energy-movesets.md section 4): data/combat/energy/<fighter>.json, one fighter's energy kit inside Game Design's frame (docs/design/energy-overhaul.md E1-E117, the kit sheet section 14). It holds only what E81 leaves to a fighter; every other number is the frame's. Bands enforced here: bolt speed and damage multipliers (E81, 20% and 15%), the lob's arc (36 +- 6 ticks) and charge levels (28 and 48 +- 10%), the beam's levels (30, 54, 84 +- 10%), the beam's damage and length (15% and 25%), its drawn width (x0.4 to x1.6) and hit width (x0.7 to x1.3, section 20), the struggle trait's push (always 1, E96), the beam's sweep (within 20% of the reference's 32 degrees a second), the grab's arrival (24 to 30 ticks) and catch (40), and the templates. Policy: the top level is closed except keys starting with an underscore; each cell is open past its checked keys, since each fighter names his own look. Cross-references (tools/lib/xref-combat-energy.js: combat-energy-name, -lane, -atoms, -distinct): lane is a key of data/art/energy-lanes.json lanes, and light.colour is that lane's light_colour; every atom a cell lists is a key of atoms; the file's name is its fighter in lower case; every fighter is a roster id once he is in the roster; each kit differs from every other in at least three of grab look, grab payoff, the lob's level-2 template, the trap template and the beam's trait (section 14)",
++  "type": "object",
++  "patternProperties": {
++    "^_": {}
++  },
++  "additionalProperties": false,
++  "required": [
++    "schema",
++    "fighter",
++    "side",
++    "meter",
++    "lane",
++    "names",
++    "light",
++    "medium",
++    "heavy",
++    "beam",
++    "grab",
++    "trap",
++    "atoms"
++  ],
++  "properties": {
++    "schema": {
++      "const": "combat.energy/1"
++    },
++    "fighter": {
++      "type": "string",
++      "pattern": "^[A-Z][A-Z_]*$"
++    },
++    "side": {
++      "enum": [
++        "hero",
++        "villain"
++      ]
++    },
++    "meter": {
++      "enum": [
++        "anguish",
++        "menace",
++        "hunger"
++      ]
++    },
++    "lane": {
++      "type": "string",
++      "pattern": "^[a-z][a-z_]*$"
++    },
++    "frame": {
++      "type": "string",
++      "minLength": 1
++    },
++    "hand": {
++      "type": "string",
++      "minLength": 1
++    },
++    "colour": {
++      "type": [
++        "object",
++        "string"
++      ]
++    },
++    "collateral": {
++      "type": [
++        "object",
++        "string"
++      ]
++    },
++    "forms": {
++      "type": [
++        "object",
++        "string"
++      ]
++    },
++    "identity": {
++      "type": "string",
++      "minLength": 1
++    },
++    "names": {
++      "type": "object",
++      "required": [
++        "light",
++        "medium",
++        "heavy",
++        "beam",
++        "grab",
++        "trap"
++      ],
++      "additionalProperties": true,
++      "properties": {
++        "light": {
++          "type": "string",
++          "minLength": 1
++        },
++        "medium": {
++          "type": "string",
++          "minLength": 1
++        },
++        "heavy": {
++          "type": "string",
++          "minLength": 1
++        },
++        "beam": {
++          "type": "string",
++          "minLength": 1
++        },
++        "grab": {
++          "type": "string",
++          "minLength": 1
++        },
++        "trap": {
++          "type": "string",
++          "minLength": 1
++        }
++      }
++    },
++    "light": {
++      "type": "object",
++      "properties": {
++        "speedMul": {
++          "type": "number",
++          "minimum": 0.8,
++          "maximum": 1.2
++        },
++        "dmgMul": {
++          "type": "number",
++          "minimum": 0.85,
++          "maximum": 1.15
++        },
++        "spreadDeg": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 30
++        },
++        "shape": {
++          "type": "string",
++          "minLength": 1
++        }
++      },
++      "additionalProperties": true,
++      "required": [
++        "speedMul",
++        "dmgMul"
++      ]
++    },
++    "medium": {
++      "type": "object",
++      "properties": {
++        "arcTicks": {
++          "type": "number",
++          "minimum": 30,
++          "maximum": 42
++        },
++        "l1Ticks": {
++          "type": "number",
++          "minimum": 25.2,
++          "maximum": 30.8
++        },
++        "l2Ticks": {
++          "type": "number",
++          "minimum": 43.2,
++          "maximum": 52.8
++        },
++        "dmgMul": {
++          "type": "number",
++          "minimum": 0.85,
++          "maximum": 1.15
++        },
++        "l2": {
++          "type": "object",
++          "properties": {
++            "template": {
++              "enum": [
++                "bounce",
++                "split",
++                "cling",
++                "roll",
++                "own"
++              ]
++            }
++          },
++          "additionalProperties": true,
++          "required": [
++            "template"
++          ]
++        }
++      },
++      "additionalProperties": true,
++      "required": [
++        "arcTicks",
++        "l2"
++      ]
++    },
++    "heavy": {
++      "type": "object",
++      "properties": {
++        "dmgMul": {
++          "type": "number",
++          "minimum": 0.85,
++          "maximum": 1.15
++        }
++      },
++      "additionalProperties": true
++    },
++    "beam": {
++      "type": "object",
++      "properties": {
++        "levelTicks": {
++          "type": "array",
++          "prefixItems": [
++            {
++              "type": "number",
++              "minimum": 27,
++              "maximum": 33
++            },
++            {
++              "type": "number",
++              "minimum": 48.6,
++              "maximum": 59.4
++            },
++            {
++              "type": "number",
++              "minimum": 75.6,
++              "maximum": 92.4
++            }
++          ],
++          "minItems": 3,
++          "maxItems": 3
++        },
++        "widthMul": {
++          "type": "number",
++          "minimum": 0.4,
++          "maximum": 1.6
++        },
++        "hitWidthMul": {
++          "type": "number",
++          "minimum": 0.7,
++          "maximum": 1.3
++        },
++        "lenMul": {
++          "type": "number",
++          "minimum": 0.75,
++          "maximum": 1.25
++        },
++        "dmgMul": {
++          "oneOf": [
++            {
++              "type": "number",
++              "minimum": 0.85,
++              "maximum": 1.15
++            },
++            {
++              "type": "array",
++              "items": {
++                "type": "number",
++                "minimum": 0.85,
++                "maximum": 1.15
++              },
++              "minItems": 3,
++              "maxItems": 3
++            }
++          ]
++        },
++        "sweepDegPerSec": {
++          "type": "number",
++          "minimum": 25.6,
++          "maximum": 38.4
++        },
++        "trait": {
++          "type": "object",
++          "properties": {
++            "pushMul": {
++              "const": 1
++            }
++          },
++          "additionalProperties": true,
++          "required": [
++            "pushMul"
++          ]
++        }
++      },
++      "additionalProperties": true,
++      "required": [
++        "levelTicks",
++        "trait",
++        "widthMul",
++        "hitWidthMul"
++      ]
++    },
++    "grab": {
++      "type": "object",
++      "properties": {
++        "look": {
++          "enum": [
++            "net",
++            "ring",
++            "lash",
++            "cage",
++            "own"
++          ]
++        },
++        "payoff": {
++          "enum": [
++            "yank",
++            "bind",
++            "slam",
++            "throw"
++          ]
++        },
++        "throwTicks": {
++          "type": "number",
++          "minimum": 24,
++          "maximum": 30
++        },
++        "catchTicks": {
++          "type": "number",
++          "minimum": 1,
++          "maximum": 40
++        }
++      },
++      "additionalProperties": true,
++      "required": [
++        "look",
++        "payoff",
++        "catchTicks"
++      ]
++    },
++    "trap": {
++      "type": "object",
++      "properties": {
++        "template": {
++          "enum": [
++            "line",
++            "pillar",
++            "field",
++            "own"
++          ]
++        }
++      },
++      "additionalProperties": true,
++      "required": [
++        "template"
++      ]
++    },
++    "snare": {
++      "type": "object"
++    },
++    "mines": {
++      "type": "object"
++    },
++    "atoms": {
++      "type": "object",
++      "patternProperties": {
++        "^_": {},
++        "^en\\.[a-z]+\\.": {
++          "type": "object",
++          "required": [
++            "windup",
++            "active",
++            "recover"
++          ],
++          "additionalProperties": true,
++          "properties": {
++            "windup": {
++              "oneOf": [
++                {
++                  "type": "integer",
++                  "minimum": 0,
++                  "maximum": 600
++                },
++                {
++                  "type": "array",
++                  "items": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 600
++                  },
++                  "minItems": 3,
++                  "maxItems": 3
++                },
++                {
++                  "type": "string",
++                  "minLength": 1
++                }
++              ]
++            },
++            "active": {
++              "oneOf": [
++                {
++                  "type": "integer",
++                  "minimum": 0,
++                  "maximum": 600
++                },
++                {
++                  "type": "array",
++                  "items": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 600
++                  },
++                  "minItems": 3,
++                  "maxItems": 3
++                },
++                {
++                  "type": "string",
++                  "minLength": 1
++                }
++              ]
++            },
++            "recover": {
++              "oneOf": [
++                {
++                  "type": "integer",
++                  "minimum": 0,
++                  "maximum": 600
++                },
++                {
++                  "type": "array",
++                  "items": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 600
++                  },
++                  "minItems": 3,
++                  "maxItems": 3
++                },
++                {
++                  "type": "string",
++                  "minLength": 1
++                }
++              ]
++            },
++            "tell": {
++              "type": "string",
++              "minLength": 1
++            },
++            "pose": {
++              "type": "string",
++              "minLength": 1
++            }
++          }
++        }
++      },
++      "additionalProperties": false
++    },
++    "legalAsks": {
++      "type": "array",
++      "items": {
++        "type": "string",
++        "minLength": 1
++      }
++    },
++    "openQuestions": {
++      "type": "array",
++      "items": {
++        "type": "string",
++        "minLength": 1
++      }
++    }
++  }
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index e53ec08..9026bf7 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -27,6 +27,10 @@
+       "match": "data/combat/depth.json",
+       "schema": "combat-depth.schema.json"
+     },
++    {
++      "match": "data/combat/energy/*.json",
++      "schema": "combat-energy.schema.json"
++    },
+     {
+       "match": "data/art/flashes.json",
+       "schema": "art-flashes.schema.json"

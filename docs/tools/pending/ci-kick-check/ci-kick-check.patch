@@ -1,0 +1,13 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 5b2b13e..5733125 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -184,6 +184,8 @@ jobs:
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/two_states_check.gd'
+       - name: Two states in one process, negative control (three deliberate breaks must be caught)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/two_states_check.gd -- --negative-control'
++      - name: Kick check (the kick and the coin turn, each row of the table, two runs with one hash, a rollback across kicks and plants, off equals no word of it)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/kick_check.gd'
+       - name: Replays across processes (each level's replay plays in a fresh process, whatever the recording process ran first)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/replay_xproc_check.gd'
+       - name: Replays across processes, negative control (four deliberate breaks must be caught)

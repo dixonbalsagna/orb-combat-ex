@@ -1,0 +1,345 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 0e1d63c..f985332 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -262707,6 +262707,147 @@
+         "pointer": "/fallback/heavyOnStandIns"
+       }
+     },
++    {
++      "id": "combat-phrases-live-valid",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/schema": "combat.phrases/1"
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "combat-phrases-bad-schema",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/schema": "combat.phrases/2"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "const",
++        "pointer": "/schema"
++      }
++    },
++    {
++      "id": "combat-phrases-extra-key",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/stray": 1
++          }
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/stray"
++      }
++    },
++    {
++      "id": "combat-phrases-enabled-not-boolean",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/enabled": "yes"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/enabled"
++      }
++    },
++    {
++      "id": "combat-phrases-gap-zero",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/gapTicks": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/gapTicks"
++      }
++    },
++    {
++      "id": "combat-phrases-generator-version-zero",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/generator/version": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/generator/version"
++      }
++    },
++    {
++      "id": "combat-phrases-unknown-class",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/classes/0": "sky"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/classes/0"
++      }
++    },
++    {
++      "id": "combat-phrases-too-few-phrases",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/fighters/protagonist/phrases": []
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minItems",
++        "pointer": "/fighters/protagonist/phrases"
++      }
++    },
++    {
++      "id": "combat-phrases-part-not-a-button",
++      "schema": "combat-phrases.schema.json",
++      "mutate": [
++        {
++          "file": "data/combat/phrases.json",
++          "set": {
++            "/fighters/rival/phrases/0/parts/0/b": "B"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/fighters/rival/phrases/0/parts/0/b"
++      }
++    },
+     {
+       "id": "combat-recipes-launcher-optional",
+       "schema": "combat-recipes.schema.json",
+diff --git a/tools/schemas/combat-phrases.schema.json b/tools/schemas/combat-phrases.schema.json
+new file mode 100644
+index 0000000..4703391
+--- /dev/null
++++ b/tools/schemas/combat-phrases.schema.json
+@@ -0,0 +1,172 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/combat-phrases",
++  "title": "combat.phrases/1",
++  "description": "docs/combat/pending/phrases/README.md: data/combat/phrases.json, each fighter's phrases, written by gen_phrases.mjs from a fixed seed (rule-of-cool-map.md row 1). Read only with `enabled` true. Policy: closed except keys starting with an underscore.",
++  "type": "object",
++  "required": [
++    "schema",
++    "enabled",
++    "generator",
++    "gapTicks",
++    "classes",
++    "fighters"
++  ],
++  "patternProperties": {
++    "^_": {}
++  },
++  "additionalProperties": false,
++  "properties": {
++    "schema": {
++      "const": "combat.phrases/1"
++    },
++    "enabled": {
++      "type": "boolean"
++    },
++    "generator": {
++      "type": "object",
++      "required": [
++        "seed",
++        "version"
++      ],
++      "additionalProperties": false,
++      "properties": {
++        "seed": {
++          "type": "integer"
++        },
++        "version": {
++          "type": "integer",
++          "minimum": 1
++        }
++      }
++    },
++    "gapTicks": {
++      "type": "integer",
++      "minimum": 1
++    },
++    "classes": {
++      "type": "array",
++      "items": {
++        "enum": [
++          "open",
++          "street",
++          "water",
++          "slick",
++          "face",
++          "trees",
++          "lowAir",
++          "highAir"
++        ]
++      },
++      "minItems": 8,
++      "maxItems": 8
++    },
++    "fighters": {
++      "type": "object",
++      "propertyNames": {
++        "pattern": "^[a-z]+$"
++      },
++      "additionalProperties": {
++        "type": "object",
++        "required": [
++          "seed",
++          "phrases"
++        ],
++        "additionalProperties": false,
++        "properties": {
++          "seed": {
++            "type": "integer"
++          },
++          "phrases": {
++            "type": "array",
++            "minItems": 8,
++            "maxItems": 12,
++            "items": {
++              "type": "object",
++              "required": [
++                "id",
++                "parts",
++                "enders"
++              ],
++              "additionalProperties": false,
++              "properties": {
++                "id": {
++                  "type": "string",
++                  "pattern": "^[a-z][0-9]{2}$"
++                },
++                "parts": {
++                  "type": "array",
++                  "minItems": 2,
++                  "maxItems": 4,
++                  "items": {
++                    "type": "object",
++                    "required": [
++                      "b",
++                      "g"
++                    ],
++                    "additionalProperties": false,
++                    "properties": {
++                      "b": {
++                        "enum": [
++                          "X",
++                          "Y",
++                          "stick"
++                        ]
++                      },
++                      "g": {
++                        "enum": [
++                          "tap",
++                          "mash",
++                          "hold",
++                          "flick"
++                        ]
++                      },
++                      "dir": {
++                        "enum": [
++                          "up",
++                          "down",
++                          "toward",
++                          "away"
++                        ]
++                      },
++                      "piece": {
++                        "type": "string",
++                        "pattern": "^strike\\."
++                      },
++                      "pieces": {
++                        "type": "array",
++                        "items": {
++                          "type": "string",
++                          "pattern": "^strike\\."
++                        },
++                        "minItems": 1,
++                        "maxItems": 3
++                      }
++                    }
++                  }
++                },
++                "enders": {
++                  "type": "object",
++                  "required": [
++                    "open",
++                    "street",
++                    "water",
++                    "slick",
++                    "face",
++                    "trees",
++                    "lowAir",
++                    "highAir"
++                  ],
++                  "additionalProperties": {
++                    "type": "string",
++                    "pattern": "^strike\\."
++                  }
++                }
++              }
++            }
++          }
++        }
++      }
++    }
++  }
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index ba5d74d..ea85dca 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -11,6 +11,10 @@
+       "match": "data/combat/templates.json",
+       "schema": "combat-templates.schema.json"
+     },
++    {
++      "match": "data/combat/phrases.json",
++      "schema": "combat-phrases.schema.json"
++    },
+     {
+       "match": "data/combat/finishers.json",
+       "schema": "combat-finishers.schema.json"
