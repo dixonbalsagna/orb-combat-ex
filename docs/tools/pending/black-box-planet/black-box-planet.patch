@@ -1,0 +1,15 @@
+diff --git a/tools/preview/blackbox.mjs b/tools/preview/blackbox.mjs
+index 65e5ad9..917cc83 100644
+--- a/tools/preview/blackbox.mjs
++++ b/tools/preview/blackbox.mjs
+@@ -109,7 +109,10 @@ export const HOST_FUNCS = [
+   'func _bb_pb_step() -> bool:',
+   '\tif _bb_pb_t == 0:   # the recorded match exactly as SimReplay.play starts it, with no hub setup merged in',
+   '\t\tseed = int(_bb_pb.get("seed", 0)) & 0xFFFFFFFF',
++  '\t\tvar bb_strict: bool = SimPlanetLoad.strict   # the recorded match is made as it was recorded, a planet not loaded yet is made cold (the page\'s own start loads it first; a playback has no loading screen)',
++  '\t\tSimPlanetLoad.strict = false',
+   '\t\tSimCore.newMatch(S, seed, _bb_pb.get("ai", {}), _bb_pb.get("setup", {}))',
++  '\t\tSimPlanetLoad.strict = bb_strict',
+   '\t\t_started(_bb_pb.get("setup", {}), false)',
+   '\t\tfor k in range(S.fighters.size()):',
+   '\t\t\tvar want_ai0: bool = bool(_bb_pb.get("ai", {}).get("p%d" % (k + 1), true))',

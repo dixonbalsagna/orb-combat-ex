@@ -1,0 +1,15 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 2c31b16..30c5261 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -328,6 +328,10 @@ jobs:
+         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd'
+       - name: Cross end check, negative control (a fallen body left standing must be seen)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd -- --negative-control'
++      - name: Match recorder check (a solo and a couch match leave a report and a save in user://reports that replay to the same final hash; a changed intent must not verify; a match of two fights is not recorded; A-UI-02)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/match_recorder_check.gd'
++      - name: Match end check (a match ends each of the three ways on the data's own switches, by a finishing move, by wear on an idle player and by the last event after the cap; A-MODES-07)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/director/tools/match_end_check.gd'
+       # Controls' input tests (docs/controls/check-scripts-answers.md): all of sim/input/test except b_no_beam_layouts_test (245 s: the landing gate and a nightly), 44 scripts, 3 at a time; each through tools/gate.mjs so a
+       # SCRIPT ERROR under exit 0 fails it. xargs exits non-zero when any one fails. tools/check-scripts.json's ciGlobs makes the table count them.
+       - name: Controls input tests (44 of 45, 3 at a time; the 245 s layout scan stays in the landing gate)
