@@ -1,6 +1,6 @@
 # Sprint A1: main is the game Orb plays (EP-run)
 
-Started by the EP on Orb's word, 2026-11-13 23:30 PST: "I want you to take care of the plan and starting the sprint." Orb accepted every recommendation in the path's decisions table (vision.md, 2026-11-13 night) and added one thing: "I do want the planet, terrain, destruction, clipping all worked on heading towards the A1. Five different planet sizes should be achieved along with this."
+Started by the EP on Orb's word, 2026-11-13 23:30 PST: "I want you to take care of the plan and starting the sprint." Orb answered the twelve decisions on the audit's page, then accepted the path's recommendations for decisions 2 to 6, 11 and 14 ("Go with recommendation on all", vision.md, 2026-11-13 night); the other rows are asked when their milestone needs them and added one thing: "I do want the planet, terrain, destruction, clipping all worked on heading towards the A1. Five different planet sizes should be achieved along with this."
 
 The source of truth is `docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md`, section A1, and each director's brief in `05-directives/A1/<slug>.md`, **read to its end**: the "Amendments after the adversarial review" section overrides the text above it.
 
@@ -19,7 +19,7 @@ The source of truth is `docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md`, sec
 2. **A-PROCESS-03 (EP):** the working tree (14,805 paths) is committed or deliberately ignored, one owner's group at a time, screened before each push.
 3. **A-CODE-03 (Tools):** the code that lives only as patches in the build tool moves onto main: the planet entry, the report and replay hook (A-UI-02), and the energy model's switch (A-ENERGY-04).
 4. **A-NET-05 (Simulation):** the build id in a replay, landed before the golden window.
-5. **GW1a:**
+5. **GW1a** (A-WORLD-01, the round planet as the default, is NOT in it: it is the first step of GW1b, after A-CODE-01 closes, EP decision 2026-11-14):
    - the golden record is made first on the kept 9 November build's own data, as the target;
    - the switch groups land as main's data one owner at a time, in this order: pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus. Each comes with its own gate run and side-by-side;
    - A-CODE-01 closes when main reproduces the target record bit for bit.
@@ -47,7 +47,7 @@ Built as parks beside GW1. They land **after GW1a is proven**, as their own wind
   - then the path's terrain rows.
 - **Destruction (World, with VFX):** craters and trenches drawn where you stand (decision 3), and buildings breaking at every tier without the "ping pong" rebound Orb saw.
 - **Clipping (Rendering, with Animation):** fighters' feet meet the drawn ground (Orb: "the terrain doesn't quite match up with the character's hitboxes"), plus no fighter sinking into a crater or a building.
-- The terrain-mesh and tessellation overhaul stays after Alpha (decision 3).
+- The terrain-mesh and tessellation overhaul (Orb's "cheap tesselation engine" idea) stays after Alpha (decision 3); the terrain, destruction and clipping fixes above are in A1. The planet scope lands in its own window after GW1b (GW1c), with this exit line: five sizes selectable, each generates and plays, small, medium and big drawn and measured (tiny and huge per Orb's open answer); feet within 8 units of the drawn ground; the step 2 re-cut landed.
 
 ## Waves (one PC)
 
@@ -95,7 +95,7 @@ The stand-in becomes the team's **design and review specialist** for A1 (Orb, 20
 
 ## The Fable reset plan
 
-**Updated 2026-11-14 (Orb):** a Fable reset clears the main weekly pool too, so a reset is a fresh week for both meters. The rule now: press one when all-models reaches about 85% or Fable about 90%, with A1 work queued; the stand-in carries a fuller specialist queue (the GW1a review, the S3 horde design, the energy build spec, the signature spec, the second adversarial round on the path). The 40% share above is replaced by this rule.
+**Updated 2026-11-14:** Orb reported that a Fable reset clears the main weekly pool too, and asked for more specialist work for the stand-in; the 85%/90% press points below are the EP's rule, not Orb's words, so a reset is a fresh week for both meters. The rule now: press one when all-models reaches about 85% or Fable about 90%, with A1 work queued; the stand-in carries a fuller specialist queue (the GW1a review, the S3 horde design, the energy build spec, the signature spec, the second adversarial round on the path). The 40% share above is replaced by this rule.
 
 The original plan, kept for the record:
 
