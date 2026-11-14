@@ -1,0 +1,12 @@
+diff --git a/render/vfx/tools/hash_check.gd b/render/vfx/tools/hash_check.gd
+index 636d80d..250587c 100644
+--- a/render/vfx/tools/hash_check.gd
++++ b/render/vfx/tools/hash_check.gd
+@@ -44,6 +44,7 @@ func _initialize() -> void:
+ 	root.add_child(vpn)
+ 	main = load("res://render/main.tscn").instantiate()
+ 	main.manual = true
++	main.strip_ground = true      # the old strip ground, as Rendering's checks pin it (A-RENDER-01's classing run): this check holds the sim's hash against the VFX scene; the globe ground's own scene error is Rendering's (planet_view.gd _tile_foot_slice)
+ 	vpn.add_child(main)
+ 	_run.call_deferred()
+ 

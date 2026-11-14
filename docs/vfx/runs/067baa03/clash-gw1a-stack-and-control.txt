@@ -1,0 +1,28 @@
+The clash clip on the GW1a look stack, with a control (VFX, 2026-11-14; EP only)
+
+STACK: main 067baa03 (the stack was built on it; HEAD has moved since) + Rendering's globe-default and crater-look-default (docs/rendering/pending, applied in order) + VFX's meteor-default (docs/vfx/pending/meteor-default), in a scratch tree from git archive, web export, no page words (the globe ground and the meteor are the defaults). Not Camera's parks (cd04, a-camera-01).
+CAPTURE: tools/flash/run-pixels.mjs --jobs 1 --clip clash-normal / clash-reduced, one at a time, through Tools' launcher (below-normal, CPU-capped); each 640 to 690 s; none starved or void.
+CONTROL: the clash look off (VfxClashLook enabled false by a scratch page word in the capture hook, not in any patch): BeamView draws the old flare. The control is not "no clash picture", it is the old flare in place of the new air disc.
+
+READINGS (primary general count, limit 3, our gate 2.5; worst of four readings)
+  as played, normal    5.5   (area-15% 5.5, 2 s memory 5)    669 s
+  as played, reduced   6.5   (area-15% 7.5, 2 s memory 6.5)  639 s
+  control,   normal    5.5   (area-15% 5.5, 2 s memory 5)    675 s
+  control,   reduced   5.5   (area-15% 7.5, 2 s memory 6.5)  691 s
+Tools' earlier readings on the same ground (docs/rendering/runs/fcd6706c/look-defaults-flash.txt): 5.5 / 6.5. This capture reproduces them.
+
+WHAT THE CONTROL SAYS
+- The clash look is not what fails the clip. Switching it for the old flare leaves the normal reading at 5.5 and takes the reduced one from 6.5 to 5.5, still far over.
+- The control does change the picture where the clash look is drawn: at ticks 60 to 140 between 2.5% and 5.3% of the pixels differ by more than 20 grey levels; from tick 1075 on fewer than 0.03% do.
+- Counted flash events (the analyser's general list, 960x540 reading): played 42, control 39. The worst 60-tick window is the same in both: (10, 1075) raw events from tick 1075. Early cluster (ticks 40 to 200, where the clash look is drawn): played 8, control 6: the clash look adds about two events there. Late cluster (ticks 1050 to 1130): played 10, control 10.
+- Played event ticks: [67, 100, 108, 140, 147, 156, 169, 174, 222, 226, 245, 250, 259, 294, 417, 435, 499, 588, 623, 721, 842, 870, 891, 923, 954, 1075, 1081, 1086, 1097, 1101, 1107, 1109, 1110, 1111, 1113, 1187, 1344, 1362, 1395, 1406, 1468, 1474]
+- Control event ticks: [108, 145, 149, 154, 169, 173, 221, 249, 272, 294, 450, 502, 587, 622, 721, 841, 870, 894, 903, 925, 954, 1075, 1081, 1086, 1097, 1101, 1107, 1109, 1110, 1111, 1113, 1187, 1352, 1360, 1385, 1419, 1461, 1475, 1481]
+
+WHAT IS IN THE WORST SECOND (ticks 1075 to 1113, identical in both clips)
+The beam clash ends and a blast lands on the left fighter. Between tick 1074 and tick 1077 (three ticks) the ground under him opens as a crater: a bright orange-gold floor with a jagged rim covering about a third of the left pane, with a screen-wide set of blue speed streaks, chips and sparks arriving on the same ticks (pictures: docs/vfx/img/flash-gw1a/). The floor's brightness decays over about 35 ticks (the bottom-left quarter's mean luminance goes from 130 to 92 across ticks 1103 to 1110). The same picture appears with the clash look off.
+ATTRIBUTION (a reading of the pictures, not yet a control): the orange crater floor is the largest, fastest change in the second and it is the tile ground's crater (Rendering's crater look on the globe ground); the speed streaks, chips and sparks are VFX's but are small in area. Tools' stacks agree: the clash goes from 4.5 / 4.5 on main as built to 5.5 / 6.5 when the globe ground is on, and the crater look on top changes the collapse and not the clash. So the evidence points at the globe ground's crater floor, which is Rendering's, not at the clash look.
+
+NEXT CONTROLS (each is one capture of about 11 minutes, normal then reduced; I run them only when the EP gives a window)
+1. The crater floor's brightness off (Rendering's tone, a scratch switch): does the worst second fall? If yes, the fix is in the crater floor's tone and its rise (Rendering's), and VFX's part is to keep its streaks and chips from landing on the same tick.
+2. VFX's blast pieces off (speed streaks, chips, sparks, the flame burst) with the floor left: the VFX share of the second.
+3. Only then a fix, with the look gate.

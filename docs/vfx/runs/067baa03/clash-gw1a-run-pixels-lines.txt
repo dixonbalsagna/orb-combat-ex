@@ -1,0 +1,4 @@
+clash-normal: FAIL, primary 5.5 general 0 red, area-15% 5.5, 2 s memory 5, 0 dips, 669s, worst of 4 readings (1024x768 at scale 1)
+clash-reduced: FAIL, primary 6.5 general 0 red, area-15% 7.5, 2 s memory 6.5, 0 dips, 639s, worst of 4 readings (1024x768 at scale 2)
+clash-normal: FAIL, primary 5.5 general 0 red, area-15% 5.5, 2 s memory 5, 0 dips, 675s, worst of 4 readings (1024x768 at scale 1)
+clash-reduced: FAIL, primary 5.5 general 0 red, area-15% 7.5, 2 s memory 6.5, 0 dips, 691s, worst of 4 readings (1024x768 at scale 2)

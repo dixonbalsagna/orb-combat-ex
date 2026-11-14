@@ -1,0 +1,6 @@
+run: GW1a stack in a scratch tree: main 067baa03 + Rendering globe-default + crater-look-default + VFX meteor-default, then World's planet grant re-cut (docs/vfx/pending/planet-sizes-meteor); Godot 4.7.2 headless; below-normal
+effects_check with the planet patch: 1168 ok, 0 FAIL; effects check passed; ec rc=0 secs=58
+hash_check on the stack WITH the planet patch, no pin: FAILED (script error planet_view.gd:1541, hash differs from tick 60): hc rc=1 secs=237
+hash_check on the stack WITHOUT the planet patch, no pin: FAILED the same way: hc rc=1 secs=236  -> the cause is the globe ground in the headless scene, not the planet patch
+hash_check with the strip pin, three seeds (12345,4,7), tick 3600, no planet patch: PASSED: hc rc=0 secs=259
+hash_check with the strip pin AND the planet patch, seed 12345: PASSED: hc rc=0 secs=99
