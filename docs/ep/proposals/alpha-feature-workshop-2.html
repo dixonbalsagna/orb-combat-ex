@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workshop, round two: the loop</title>
+<style>
+:root{--bg:#f7f5f0;--ink:#1d1c1a;--mute:#5d5a54;--card:#ffffff;--line:#d9d4c8;--accent:#9a3412;--code:#f0ede6;--b1:#2f7d5b;--b2:#b7791f;--b3:#3b6ea5;--b4:#8c2f2f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#17171a;--ink:#ecebe7;--mute:#a7a39a;--card:#202024;--line:#3a3a40;--accent:#f0a57a;--code:#2a2a30;--b1:#6fcf9b;--b2:#e6b566;--b3:#8fb8e8;--b4:#e08a8a}}
+:root[data-theme="dark"]{--bg:#17171a;--ink:#ecebe7;--mute:#a7a39a;--card:#202024;--line:#3a3a40;--accent:#f0a57a;--code:#2a2a30;--b1:#6fcf9b;--b2:#e6b566;--b3:#8fb8e8;--b4:#e08a8a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 Georgia,"Times New Roman",serif}
+main{max-width:860px;margin:0 auto;padding:28px 16px 80px}
+h1{font-size:2rem;line-height:1.15;margin:.2em 0 .1em}h2{font-size:1.4rem;margin:2.2em 0 .5em;padding-top:.6em;border-top:2px solid var(--line)}
+h3{font-size:1.15rem;margin:1.3em 0 .3em}h4{font:600 .82rem/1.3 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:1.1em 0 .3em}
+p{margin:.5em 0}.sub{color:var(--mute);font-style:italic}ul,ol{margin:.3em 0 .6em;padding-left:1.25em}li{margin:.3em 0}
+.box{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 18px;margin:14px 0}.q{border-left:5px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:.95rem}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{font:600 .8rem system-ui,sans-serif;color:var(--mute)}
+.quote{color:var(--mute);font-style:italic}a{color:var(--accent)}
+pre{background:var(--code);padding:10px;border-radius:5px;overflow-x:auto;font:12.5px/1.45 Consolas,Menlo,monospace}
+details{margin-top:.8em;border-top:1px dashed var(--line);padding-top:.5em}summary{cursor:pointer;font:600 .85rem system-ui,sans-serif;color:var(--mute)}
+#toy{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}@media (max-width:680px){#toy{grid-template-columns:1fr}}
+.bar{height:16px;background:var(--code);border-radius:4px;overflow:hidden;margin:2px 0 8px}.bar i{display:block;height:100%}
+.lab{font:600 .8rem system-ui,sans-serif;color:var(--mute);display:flex;justify-content:space-between}
+button{font:600 .85rem system-ui,sans-serif;padding:7px 10px;margin:3px 4px 3px 0;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}button:disabled{opacity:.45;cursor:default}
+#log{font:.88rem/1.4 system-ui,sans-serif;color:var(--mute);min-height:7.5em}#log div:first-child{color:var(--ink)}
+</style></head><body><main>
+
+<h1>Workshop, round two: the loop</h1>
+<p class="sub">From Orb's stand-in, 13 November 2026. It follows <a href="alpha-feature-workshop.html">the first workshop page</a>. The stand-in is an estimate of Orb and holds none of Orb's approvals. Everything here is a proposal: nothing is briefed or built.</p>
+
+<h2>The short version</h2>
+<p>You answered the three questions and added one idea. All four are now in the loop:</p>
+<ul>
+<li><b>A new form eases injuries:</b> yes. <b>The hurt fighter's form meter fills faster:</b> yes. Both were already in the first toy and stay.</li>
+<li><b>Plain attacks refill stamina.</b> Fists are the respite between the big moves, as you said. Well-timed blows refill it fastest; mashing barely does.</li>
+<li><b>The core is the most important part, and separate from the body.</b> The core is now the body's gate: while it holds, little gets through; once it's broken, everything does.</li>
+</ul>
+<p>The toy below is updated with both.</p>
+
+<h2>1. Fists are the respite</h2>
+<p class="quote">"I think base attacks should help fill stamina, so attacking with normal face-button attacks should be a respite between special or signature attacks."</p>
+<p>I read this as a rhythm: the big moves spend stamina, and plain blows that land earn it back. So a fight breathes: fireworks, then fists, then fireworks.</p>
+<table>
+<tr><th>What</th><th>Stamina</th></tr>
+<tr><td>A plain light, medium or heavy that lands</td><td>gives back 3, 5 or 8</td></tr>
+<tr><td>The same blow, well timed</td><td>one and a half times that</td></tr>
+<tr><td>The same blow, mashed</td><td>about a third of that</td></tr>
+<tr><td>A blow that is blocked</td><td>half</td></tr>
+<tr><td>A blow that misses</td><td>nothing</td></tr>
+<tr><td>A special move</td><td>costs 15, with its energy</td></tr>
+<tr><td>A signature</td><td>costs 30, with its energy</td></tr>
+<tr><td>Dashing, flying flat out, guarding under blows</td><td>cost stamina, as before</td></tr>
+<tr><td>Standing off and resting</td><td>comes back at about 12 a second (it was 22: fists are now the fast way)</td></tr>
+</table>
+
+<h3>What the numbers do</h3>
+<table>
+<tr><th>After a signature and a special, stamina is at 55. To get it back:</th><th></th></tr>
+<tr><td>Well-timed strings of three blows</td><td>3 strings</td></tr>
+<tr><td>Ordinary strings</td><td>4 strings</td></tr>
+<tr><td>Mashed strings</td><td>11 strings</td></tr>
+<tr><td>Backing off and resting</td><td>about 3 seconds out of the fight</td></tr>
+</table>
+<p>Over about four and a half seconds: brawling with good timing returns 83 stamina, resting returns 65, and mashing returns 19.</p>
+<p><b>Why I like where this lands:</b></p>
+<ul>
+<li><b>It rewards staying in the fight.</b> The fastest way to recover is to keep landing clean blows, not to fly away.</li>
+<li><b>It gives timing a real edge over mashing,</b> which you asked for in October, and which the game needs: today a button-masher does as well as a careful player against the easier computer.</li>
+<li><b>It chains into your other rules.</b> Clean fists refill stamina, high stamina speeds energy, energy pays for the next big move. Fists fuel the fireworks.</li>
+</ul>
+<p><b>The risk to watch:</b> the fighter landing blows gets stronger while the one being hit gets worse injuries at low stamina. That could run away with a fight. The ways back are still there: stamina returns when you break away, a new form refills it, and the hurt fighter reaches a form sooner. QA should measure how often the fighter who falls behind first still wins before this is switched on. The first lever, if it runs away, is what a blocked blow gives back.</p>
+<p class="sub">One reading of mine to check: I took "respite between special or signature attacks" to mean specials and signatures cost stamina as well as energy. If you meant only that fists give it back, the costs come out and the rest stands.</p>
+
+<h2>2. The core guards the body</h2>
+<p class="quote">"core region should be the most important but perhaps separate."</p>
+<p>So there are four parts that get injured, head, arms, legs and core, and one deeper number, the body, which is what a fighter finally runs out of. The core is the gate between them.</p>
+<ul>
+<li><b>A hit on the head, arms or legs</b> reaches the body only if that part is already injured, and how much depends on the core. With a sound core, about half as much gets through as before. With a broken core, twice as much.</li>
+<li><b>A hit on the core itself</b> always reaches the body a little, and more as the core fails: 5% through a sound core, rising to 80% through a broken one.</li>
+<li><b>So the core is the part worth guarding and worth attacking.</b> Break it and every other blow counts double.</li>
+</ul>
+<table>
+<tr><th>Five heavy blows to the arms, rested</th><th>Body lost</th></tr>
+<tr><td>Core sound</td><td>1.7</td></tr>
+<tr><td>Core bruised</td><td>2.9</td></tr>
+<tr><td>Core battered</td><td>4.3</td></tr>
+<tr><td>Core broken</td><td>5.8</td></tr>
+</table>
+<table>
+<tr><th>Heavy blows until the body gives out</th><th></th></tr>
+<tr><td>All to the arms</td><td>34</td></tr>
+<tr><td>Six to the core, then the arms</td><td>22</td></tr>
+<tr><td>All to the core</td><td>17</td></tr>
+<tr><td>All to the core, on a winded fighter</td><td>11</td></tr>
+</table>
+<p><b>How you read it with no bars:</b> the core shows on the torso and in how a fighter holds themselves: an arm wrapped across the ribs, a hunch, a flinch when they turn. The body shows in how slowly they get up and how their voice sounds.</p>
+<p><b>What it gives each fighter later:</b> the gate numbers are rows in a fighter's data. A tough fighter has a core that holds longer; a fast one has a core that fails sooner but a body that lasts.</p>
+
+<h2>Try it</h2>
+<p class="sub">The game shows no bars. These are here only so you can watch the numbers move.</p>
+<div class="box"><div id="toy">
+<div>
+<div class="lab"><span>Body</span><span id="vb"></span></div><div class="bar"><i id="bb" style="background:var(--b4)"></i></div>
+<div class="lab"><span>Stamina</span><span id="vs"></span></div><div class="bar"><i id="bs" style="background:var(--b1)"></i></div>
+<div class="lab"><span>Energy</span><span id="ve"></span></div><div class="bar"><i id="be" style="background:var(--b3)"></i></div>
+<div class="lab"><span>Form meter</span><span id="vm"></span></div><div class="bar"><i id="bm" style="background:var(--b2)"></i></div>
+<div class="lab"><span>Core</span><span id="vc"></span></div><div class="bar"><i id="bc" style="background:var(--accent)"></i></div>
+<div class="lab"><span>Head</span><span id="vh"></span></div><div class="bar"><i id="bh" style="background:var(--mute)"></i></div>
+<div class="lab"><span>Arms</span><span id="va"></span></div><div class="bar"><i id="ba" style="background:var(--mute)"></i></div>
+<div class="lab"><span>Legs</span><span id="vl"></span></div><div class="bar"><i id="bl" style="background:var(--mute)"></i></div>
+</div>
+<div>
+<h4>Fists (they give stamina back)</h4>
+<button onclick="act('timed')">Three blows, well timed</button><button onclick="act('plain')">Three blows, ordinary</button><button onclick="act('mash')">Three blows, mashed</button>
+<h4>Big moves (they spend it)</h4>
+<button onclick="act('special')">Special</button><button onclick="act('sig')">Signature</button><button onclick="act('fly')">Fly flat out 3 s</button>
+<h4>Recover</h4>
+<button onclick="act('rest')">Rest 1 s</button><button onclick="act('charge')">Charge 2 s</button><button id="tf" onclick="act('form')">Transform</button>
+<h4>You take</h4>
+<button onclick="act('core')">A heavy to the core</button><button onclick="act('arms')">A heavy to the arms</button><button onclick="act('legs')">A heavy to the legs</button><button onclick="act('guard')">A heavy, guarded</button>
+<h4>What happened</h4><div id="log"></div>
+<button onclick="reset()">Start again</button>
+</div></div></div>
+<p><b>Things to try:</b></p>
+<ul>
+<li>Charge to full energy, throw a signature and a special, then get your stamina back three ways: well-timed blows, mashing, and resting.</li>
+<li>Take five heavies to the arms. Start again, take six to the core first, then the same five to the arms.</li>
+<li>Get beaten down, then charge and transform, and watch what a new form gives back and what it doesn't.</li>
+</ul>
+
+<details><summary>For the team: what changed from round one, as pseudocode</summary>
+<pre>
+# data/fight/vitals.json (all starting values; per-fighter overrides allowed)
+#   refill {light 3, medium 5, heavy 8}, timedMul 1.5, mashMul 0.35, blockedMul 0.5
+#   specialCost 15, signatureCost 30, staminaRegen 12
+#   spill [0, 0.12, 0.28, 0.5]   coreSpill [0.05, 0.25, 0.5, 0.8]   coreGate [0.6, 1.0, 1.5, 2.0]
+
+static func on_plain_blow_landed(S, A, weight: String, read: int, blocked: bool) -> void:
+    # a plain face-button blow, no stance held; "read" is the press grade Controls already gives
+    var g = C.refill[weight]
+    g *= C.timedMul if read >= READ_GOOD else (C.mashMul if read == READ_MASH else 1.0)
+    if blocked: g *= C.blockedMul
+    A.stamina = minf(A.staminaMax, A.stamina + g)          # a miss never calls this
+
+static func body_share(D, region: int) -> float:
+    var st = SimWounds.stage(D, region)
+    if region == SimWounds.CORE: return C.coreSpill[st]
+    return minf(0.9, C.spill[st] * C.coreGate[SimWounds.stage(D, SimWounds.CORE)])
+</pre>
+<p>Open for Game Design: whether the knockout rule moves from "core broken" to "body empty", which this implies; what a grab, a stick strike and an energy blow give back, since they are not plain face-button blows; and whether a blocked blow should give anything at all.</p>
+</details>
+
+<h2>What happens next</h2>
+<ul>
+<li><b>Nothing is briefed.</b> Your answers are in the record, where the weekend's audit reads them.</li>
+<li><b>This page is not saved into the project yet.</b> The EP holds changes while the audit reads, and will add it afterwards.</li>
+<li><b>Cost:</b> small. No agents.</li>
+</ul>
+
+<script>
+// Round two of the loop model: base attacks refill stamina; the core guards the body.
+var K = {
+  staminaRegen: 12,      // a second when quiet, at "normal" body (was 22: fists are now the fast way back)
+  bodyRegenLow: 0.6, bodyRegenSpan: 0.6,
+  energyLow: 0.75, energySpan: 0.5, energyTrickle: 5, energyCharge: 30,
+  severityMax: 0.6,
+  spill: [0, 0.12, 0.28, 0.5],        // head, arms, legs: share of a hit that reaches the body, by that part's stage
+  coreSpill: [0.05, 0.25, 0.5, 0.8],  // a hit on the core itself
+  coreGate: [0.6, 1.0, 1.5, 2.0],     // every other part's share is multiplied by the core's state
+  stages: [25, 50, 80],
+  flatOut: 6, step: 8, guardCost: 0.8, guardTakes: 0.38,
+  refill: { light: 3, medium: 5, heavy: 8 }, timedMul: 1.5, mashMul: 0.35, blockedMul: 0.5,
+  specialCost: 15, signatureCost: 30, specialEnergy: 20, signatureEnergy: 45,
+  formDeal: 0.6, formTake: 0.4, formHurtBoost: 0.8, formCharge: 8,
+  formStamina: 15, formMend: 20, formEnergy: 50, fallThrough: 2
+};
+var DMG = { light: 4, medium: 7, heavy: 12 };
+function fresh() {
+  return { body: 100, stamina: 100, staminaMax: 100, energy: 40, inj: { head: 0, arms: 0, legs: 0, core: 0 }, form: 0, meter: 0, log: [] };
+}
+function stageOf(v) { return v >= K.stages[2] ? 3 : v >= K.stages[1] ? 2 : v >= K.stages[0] ? 1 : 0; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function regenRate(s) {
+  var r = K.staminaRegen * (K.bodyRegenLow + K.bodyRegenSpan * s.body / 100);
+  if (stageOf(s.inj.legs) >= 2) r *= 0.85;
+  return r;
+}
+function energyMul(s) { return K.energyLow + K.energySpan * s.stamina / s.staminaMax; }
+function severity(s) { return 1 + K.severityMax * (1 - s.stamina / s.staminaMax); }
+function say(s, t) { s.log.unshift(t); if (s.log.length > 6) s.log.pop(); }
+function spend(s, amount) {
+  var take = Math.min(s.stamina, amount);
+  s.stamina -= take;
+  var lack = amount - take;
+  if (lack > 0) { s.energy -= Math.min(s.energy, lack * K.fallThrough); return true; }
+  return false;
+}
+function rest(s, sec) {
+  s.stamina = clamp(s.stamina + regenRate(s) * sec, 0, s.staminaMax);
+  s.energy = clamp(s.energy + K.energyTrickle * energyMul(s) * sec, 0, 100);
+  say(s, 'Rested ' + sec + ' s: stamina comes back at ' + regenRate(s).toFixed(0) + ' a second.');
+}
+function fly(s, sec) {
+  var burned = spend(s, K.flatOut * sec);
+  say(s, 'Flew flat out ' + sec + ' s.' + (burned ? ' Out of stamina: the rest came out of energy.' : ''));
+}
+// A plain face-button blow that lands. how: 'timed', 'plain', 'mash'; blocked halves it.
+function land(s, weight, how, blocked) {
+  var gain = K.refill[weight] * (how === 'timed' ? K.timedMul : how === 'mash' ? K.mashMul : 1) * (blocked ? K.blockedMul : 1);
+  s.stamina = clamp(s.stamina + gain, 0, s.staminaMax);
+  s.meter = clamp(s.meter + DMG[weight] * (blocked ? 0.38 : 1) * K.formDeal, 0, 100);
+  s.energy = clamp(s.energy + 0.3 * DMG[weight] * energyMul(s), 0, 100);
+  return gain;
+}
+function string(s, how) {            // three blows: light, light, medium
+  var g = land(s, 'light', how, false) + land(s, 'light', how, false) + land(s, 'medium', how, false);
+  say(s, 'Landed three plain blows (' + (how === 'timed' ? 'well timed' : how === 'mash' ? 'mashed' : 'ordinary') + '): ' + g.toFixed(1) + ' stamina back.');
+}
+function special(s, big) {
+  var cost = big ? K.signatureCost : K.specialCost, en = big ? K.signatureEnergy : K.specialEnergy;
+  if (s.energy < en) { say(s, 'Not enough energy for that (' + en + ' needed).'); return false; }
+  s.energy -= en;
+  var burned = spend(s, cost);
+  say(s, (big ? 'Signature' : 'Special') + ': ' + cost + ' stamina and ' + en + ' energy.' + (burned ? ' Stamina ran out: energy paid the difference.' : ''));
+  return true;
+}
+function charge(s, sec) {
+  var m = energyMul(s);
+  s.energy = clamp(s.energy + K.energyCharge * m * sec, 0, 100);
+  s.meter = clamp(s.meter + K.formCharge * m * sec, 0, 100);
+  s.stamina = clamp(s.stamina + regenRate(s) * sec, 0, s.staminaMax);
+  say(s, 'Charged ' + sec + ' s at ' + m.toFixed(2) + ' times the normal rate (stamina sets it).');
+}
+function hit(s, part, dmg, guarded) {
+  var sev = severity(s), wear = dmg * sev;
+  if (guarded) { wear *= K.guardTakes; spend(s, dmg * K.guardCost); }
+  var st = stageOf(s.inj[part]);
+  var share = part === 'core' ? K.coreSpill[st] : Math.min(0.9, K.spill[st] * K.coreGate[stageOf(s.inj.core)]);
+  var toBody = wear * share;
+  s.inj[part] = clamp(s.inj[part] + wear - toBody, 0, 100);
+  s.body = clamp(s.body - toBody, 0, 100);
+  s.meter = clamp(s.meter + dmg * K.formTake * (1 + K.formHurtBoost * (1 - s.body / 100)), 0, 100);
+  say(s, (guarded ? 'Guarded a ' : 'Took a ') + dmg + ' to the ' + part + ': injury times ' + sev.toFixed(2) + (toBody > 0.05 ? ', and ' + toBody.toFixed(1) + ' reached the body.' : ', none reached the body.'));
+}
+function canTransform(s) { return s.meter >= 100 && s.energy >= K.formEnergy && s.form < 3; }
+function transform(s) {
+  if (!canTransform(s)) { say(s, 'Not ready: the form needs a full meter and ' + K.formEnergy + ' energy.'); return false; }
+  s.form += 1; s.meter = 0; s.energy -= K.formEnergy;
+  s.staminaMax += K.formStamina; s.stamina = s.staminaMax;
+  for (var p in s.inj) s.inj[p] = clamp(s.inj[p] - K.formMend, 0, 100);
+  say(s, 'New form: stamina refilled with a higher ceiling, every injury eased by ' + K.formMend + '. The body did not heal.');
+  return true;
+}
+
+var S = fresh();
+function pct(v, max) { return Math.max(0, Math.min(100, 100 * v / max)) + '%'; }
+var STAGE = ['sound', 'bruised', 'battered', 'broken'];
+function draw() {
+  function set(id, v, max, txt) { document.getElementById('b' + id).style.width = pct(v, max); document.getElementById('v' + id).textContent = txt; }
+  set('b', S.body, 100, S.body.toFixed(0));
+  set('s', S.stamina, S.staminaMax, S.stamina.toFixed(0) + ' of ' + S.staminaMax + (S.stamina <= 0 ? ' (winded)' : ''));
+  set('e', S.energy, 100, S.energy.toFixed(0));
+  set('m', S.meter, 100, S.meter.toFixed(0) + (S.form ? ' (form ' + S.form + ')' : ''));
+  set('c', S.inj.core, 100, S.inj.core.toFixed(0) + ' ' + STAGE[stageOf(S.inj.core)]);
+  set('h', S.inj.head, 100, S.inj.head.toFixed(0) + ' ' + STAGE[stageOf(S.inj.head)]);
+  set('a', S.inj.arms, 100, S.inj.arms.toFixed(0) + ' ' + STAGE[stageOf(S.inj.arms)]);
+  set('l', S.inj.legs, 100, S.inj.legs.toFixed(0) + ' ' + STAGE[stageOf(S.inj.legs)]);
+  document.getElementById('tf').disabled = !canTransform(S);
+  var L = document.getElementById('log'); L.innerHTML = '';
+  S.log.forEach(function (t) { var d = document.createElement('div'); d.textContent = t; L.appendChild(d); });
+}
+function act(k) {
+  if (k === 'timed' || k === 'plain' || k === 'mash') string(S, k);
+  else if (k === 'special') special(S, false); else if (k === 'sig') special(S, true);
+  else if (k === 'fly') fly(S, 3); else if (k === 'rest') rest(S, 1); else if (k === 'charge') charge(S, 2);
+  else if (k === 'form') transform(S); else if (k === 'core') hit(S, 'core', 12, false); else if (k === 'arms') hit(S, 'arms', 12, false);
+  else if (k === 'legs') hit(S, 'legs', 12, false); else if (k === 'guard') hit(S, 'arms', 12, true);
+  if (S.body <= 0) say(S, 'The body has given out: this fighter is on the brink.');
+  draw();
+}
+function reset() { S = fresh(); draw(); }
+draw();
+</script>
+</main></body></html>
