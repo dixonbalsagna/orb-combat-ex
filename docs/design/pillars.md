@@ -1,5 +1,7 @@
 # Design pillars
 
+**2026-11-07: nobody dies (Orb, CD-05; Legal RL-257).** Wherever this page reads deaths or a per-person feed, `bystanders.md` replaces it: the meters, Witness and power read structures, wrecks, evacuation events and the fight, never people. The words it retires stay in this page only as history.
+
 Owner: Game Design. Status: P0, draft for EP review. Date: 2026-09-29.
 
 The seven pillars decide what Meridian (working title) is. Every feature, tuning change and cut is judged against them. For each pillar this page gives what it means in play, how we test it, what breaks it (anti-examples), and where the prototype stands today.

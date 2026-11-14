@@ -1,5 +1,7 @@
 # Spec: Wounds (damage model, Variant A)
 
+**2026-11-13: energy, stamina, health and the body now have one page, `energy-stamina-body.md`.** Where this page disagrees with it, that page wins.
+
 Owner: Game Design. Status: spec for P2 and P3, the input for Combat and Encounter Systems. **Scope: 1v1.** 2v2 rules are deferred (Orb). Date: 2026-09-29.
 
 **Sources.**
@@ -37,7 +39,7 @@ Numbers are **starting values**, which QA tunes against `balance-targets.md` (§
 | | When | What happens | First value |
 | ---: | :--- | :--- | :--- |
 | 1 | **A real fight** | Wear reaches the brink, a decisive win while he's open sets up the finisher, and the last-ditch struggle plays. As ruled | Brink to KO 45 to 90 s, unchanged |
-| 2 | **He isn't fighting back** | After no press or stick from him for a while, the wear he takes rises, and any input ends it at once. Once he's on the brink, the attacker goes straight for the set-up. It's for a pad that's been put down, not for a beginner, who's pressing something | After 10 s, wear ×3. Finisher within about 15 s of the brink |
+| 2 | **He isn't fighting back** | After no press or stick from him for a while, the wear he takes rises, and any input ends it at once. Once he's on the brink, the attacker goes straight for the set-up. It's for a pad that's been put down, not for a beginner, who's pressing something | **Re-ruled on Orb's first play (`power-scale.md`):** after 60 s, wear ×2. The push for the finisher starts after 90 s |
 | 3 | **The time cap** | **Both fighters go on the brink,** Rallies are off, and every decisive win's a finisher, as `balance-targets.md` already says. **Today's stand-in doesn't do this:** it only changes a win against someone already on the brink, so a fight with nobody on the brink at 11:00 doesn't end. That's the real gap | 11:00 |
 | 4 | **Still nothing after the cap** | The planet gives way: the fighter with less wear gets his finisher anyway, with no contest. It's a real ending with a winner | 12:00 |
 | 5 | **Nobody's touched anything at all** | Wear's level, so there's no winner to give. It's a no-contest, straight to rematch | No input from anyone for 60 s, after the cap |

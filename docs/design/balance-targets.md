@@ -1,5 +1,7 @@
 # Balance targets
 
+**2026-11-13: energy, stamina, health and the body now have one page, `energy-stamina-body.md`.** Where this page disagrees with it, that page wins.
+
 Owner: Game Design. Status: P0, draft for EP review. Date: 2026-09-29.
 
 The measurable bands the game must meet. Each is written so QA's harness (`qa/`, `prototype/tools/`) can check it with a pass or fail. QA owns the measurement and the release bar. Game Design owns the bands. The owner named in the last column of each table owns the fix.

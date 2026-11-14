@@ -1,5 +1,7 @@
 # Power scale: one energy model
 
+**2026-11-13: energy, stamina, health and the body now have one page, `energy-stamina-body.md`.** Where this page disagrees with it, that page wins.
+
 Owner: Game Design. 2026-11-01, on Orb's first play: "a physics based approach to power scaling when it comes to launches, kinetic energy, beam attacks." **Paper only. Every number is a first value, worked out by hand against the code and data, and not run.** Simulation's, World's and Combat's numbers haven't arrived yet. Physics here means consistent, not realistic: the same power always buys the same result.
 
 ## What's wrong today

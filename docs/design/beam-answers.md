@@ -2,6 +2,8 @@
 
 Owner: Game Design. 2026-11-01, with Combat's notes (`docs/combat/beam-answers-moves.md`) and Controls' fit check (`docs/controls/beam-answers-input.md`) folded in. For Orb's order: "there should be a brief window where the second player can dodge, powerful block, or fire a beam of their own. In addition, walking into the beam, swatting the beam away, anything else cool we can do." **Paper only. Nothing here is played, and every number is a first value.**
 
+**Orb has marked this page. `beam-answers-2.md` replaces it wherever they differ:** the swat moves to a held right stick, the walk becomes a struggle, and the hose is shelved.
+
 **In short.** Every beam now comes from the right stick, and so does firing back. Everything else is your left hand: tap LT to dodge, or press LB as the beam arrives, and the left stick decides what that press does. Still, you block. Up, down or back, you swat it there. Toward, you walk into it. It's one press and one timing to learn. Only firing back leads to a beam struggle, and only a won struggle can send the other fighter flying, which is why people will keep choosing it.
 
 ## Where the buttons go

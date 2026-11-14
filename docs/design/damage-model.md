@@ -1,5 +1,7 @@
 # Damage model: fights without health bars
 
+**2026-11-13: energy, stamina, health and the body now have one page, `energy-stamina-body.md`.** Where this page disagrees with it, that page wins.
+
 Owner: Game Design. Status: proposal for Orb to react to. Date: 2026-09-29.
 
 Orb's questionnaire 3 (`docs/ep/vision.md`) asks for:

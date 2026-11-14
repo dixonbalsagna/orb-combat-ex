@@ -111,6 +111,29 @@ Combat's bots (`docs/combat/pending/stick-directions/README.md`): land at all 66
 
 **If it's too strong:** `max` 3 to 2, then steal only at 2 or more. **What would kill it:** Orb's hands, if being stolen from feels random, or stick-only becoming the best way to play.
 
+## A flick counts in your run (2026-11-02)
+
+**Encounter found why stick-only loses:** a flick with no stun builds no run, so a stick player loses every trade break (48 in 613 s, run 0 against 2 or 3). **I'd ruled it to build none, to keep Y the blow that does both. That was wrong.** Unplayed.
+
+- **A landed flick counts in your run as a light does,** one point, not a medium's three. Y stays the stronger builder.
+- **The steal goes on top,** when he's got a run to take.
+- **If stick-only still loses every trade break,** a flick counts as a medium, three points.
+
+**The value, on Encounter's read: 1.5 points.** Trade breaks against the easy computer, AI against player: 48 and 0 at 1 point, **13 and 32 at 1.5,** and 0 and 45 at 2 or 3. So 1 is a cliff one way and 2 the other. 1.5 lets a stick player beat easy most of the time without sweeping it, which is right for the easy computer. **The masher and newcomer rows aren't read yet.** If either drifts, 1.25 next.
+
+## Ignition: the meteor from a level 3 flick
+
+Encounter found that after a clean level 3 upward flick, a B pressed in the flick's recovery (16 ticks) waits it out, then goes as a plain heavy, too late for the stun, so no meteor. **The fix is the rule already made for B: a hold builds during your own blow** (`press-decides.md` 5). The recovery is part of your blow.
+
+- **B pressed and held during the recovery counts its hold from the press,** and inside the banked stun its flash comes at 24 ticks (`bankFull`, as ruled).
+- **So a B pressed on the tick after the hit lands at about 29 ticks,** inside the 40 to 48 of a level 3 upward stun. The bank's existing grace of 30 ticks covers anyone a little slower.
+- **Tapped, it's a tapped B: a stagger,** by the one rule for B. The meteor needs the full flash, so the player has to hold.
+- **If it still misses,** a clean level 3's recovery comes down from 16 to 8 ticks, for that strike only.
+
+## A stick hold swept into a planned exchange
+
+If the computer's answer turns your stick press into a planned exchange and you're still holding the stick, **the hold becomes the charge on your first free tick, counting from then.** You weren't acting during the exchange, so no time is banked. It's one press, one attack: the hold you kept still does something.
+
 ## The Driver seeks
 
 Encounter's park seeks, where E124 and E126 say straight. **Fine for the first press.** It's the player's alone, and the AI doesn't use it, so nobody's being hit by something they can't step off. **Conditions:**

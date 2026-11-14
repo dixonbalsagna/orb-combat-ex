@@ -1,5 +1,7 @@
 # What the player must know, with nothing on the fighters
 
+**2026-11-13: energy, stamina, health and the body now have one page, `energy-stamina-body.md`.** Where this page disagrees with it, that page wins.
+
 Owner: Game Design. Date: 2026-10-18. **Paper only.** Orb's ruling is in `docs/ep/taste.md`: "A minimalist UI. Nothing on, over or between the fighters, ever". Orb circled the beam struggle's tug bar as "absolutely awful". This page rules, for each mechanic, the least the player must know at that moment, and where it comes from instead. It is aligned with Research's paper on readable high-speed combat with little HUD when that lands. Routed by owner in §4.
 
 ## 1. The three places information may come from

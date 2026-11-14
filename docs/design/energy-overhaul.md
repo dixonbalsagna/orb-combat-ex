@@ -1,5 +1,7 @@
 # Energy overhaul: the system spec
 
+**2026-11-13: energy, stamina, health and the body now have one page, `energy-stamina-body.md`.** Where this page disagrees with it, that page wins.
+
 Owner: Game Design. **Orb answered the clips on 2026-11-01, and §21 replaces anything below where they differ: beams are the right stick's, Y is explosive, B is kinetic and its hold is the Driver.** **Status: the full spec, 2026-10-23** (the frame, §1 to §12, then Part 2, §13 to §19, with the builders' constraints ruled in §19 and Combat's kits in §20). Every rule is numbered (E1, E2 and on) so Controls, Combat, Research, Narrative and Legal can build on it and cite it. It is paper only. Nothing is built, every number is a first value for data, and all of it sits behind one switch (`energy.v2`) until Orb has played it. Part 2 holds Orb's step-by-step clips, the fighter kit sheet, QA's bands, the data shape and what retires.
 
 **Orb's ask** (`docs/ep/vision.md`, "Energy attacks overhaul", 2026-10-23), and where each part is answered:

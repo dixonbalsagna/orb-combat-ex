@@ -1,5 +1,9 @@
 # Fight economy
 
+**2026-11-13: energy, stamina, health and the body now have one page, `energy-stamina-body.md`.** Where this page disagrees with it, that page wins.
+
+**2026-11-07: nobody dies (Orb, CD-05; Legal RL-257).** Wherever this page reads deaths or a per-person feed, `bystanders.md` replaces it: the meters, Witness and power read structures, wrecks, evacuation events and the fight, never people. The words it retires stay in this page only as history.
+
 Owner: Game Design. Status: P0, draft for EP review. Date: 2026-09-29.
 
 The resources a fight runs on: HP, ki, power and tiers, the fighters' ego meters (the prototype's menace and anguish), hiding, recovery and ambush, and how collateral scales with tier. For each resource this page gives the prototype's constants, the decisions they create for a player, the levers that tune them and the QA metrics that show a lever working. It closes with how a match should escalate across the 5-to-7-minute length Orb set.

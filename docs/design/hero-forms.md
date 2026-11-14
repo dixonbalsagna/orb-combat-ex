@@ -1,5 +1,7 @@
 # The Protagonist's branching forms, and anguish reworked
 
+**2026-11-07: nobody dies (Orb, CD-05; Legal RL-257).** Wherever this page reads deaths or a per-person feed, `bystanders.md` replaces it: the meters, Witness and power read structures, wrecks, evacuation events and the fight, never people. The words it retires stay in this page only as history.
+
 Owner: Game Design. Date: 2026-10-16. **Paper only.** Nothing here is built or run by me, and **every number is a first value.** Narrative writes the why and the voice alongside this page, and names the branches and the forms. The names here are working names.
 
 **Orb** (homework 5, `docs/ep/vision.md`): building up anguish "by intentionally killing civilians is a perverse incentive for the protagonist", and a fight against another good guy "might be lame and boring if neither can power up because they're avoiding civilian deaths". Orb's idea: branching forms, "one branch achieved by witnessing civilian deaths at the hands of his opponent, perhaps one achieved by allowing his opponent to power up first and testing himself against a higher form".

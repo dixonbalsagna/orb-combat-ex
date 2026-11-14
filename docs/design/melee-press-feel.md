@@ -1,5 +1,7 @@
 # Melee press feel: every press is a blow
 
+**2026-11-13: energy, stamina, health and the body now have one page, `energy-stamina-body.md`.** Where this page disagrees with it, that page wins.
+
 > **Revised by `brawl-second-pass.md`** (2026-10-06, after Orb played the live brawl; questionnaire 19). Where the two disagree, that page is the newer rule. It changes: the magnetism of §2 (the stick now moves the brawl); the tapped Y, which becomes a quick heavy in a flurry on every button (§3, §5); the held X and held Y as charges, with the charged Y armoured against a flurry; "three blows stop a wind-up" and "a heavy after two landed blows is the ender", both withdrawn (§5, §7); the martial arts row of §10 for A and B; signatures on a tap of B (§11), which now need a hold and play live; and the level trade's seeded draw (§9d), replaced by a double throw-back. That page's §9 lists what stands.
 
 Owner: Game Design. Orb approved the second melee prototype (`docs/ep/prototypes/melee-trade-v2.html`) and gave the direction this page turns into rules (`docs/ep/vision.md`, "the melee feel"):

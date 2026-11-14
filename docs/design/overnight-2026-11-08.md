@@ -73,3 +73,18 @@ Owner: Game Design. On the EP's overnight brief, from Orb's Sunday plays and Orb
   "dash": { "anyRange": true, "firstTickMin": 1000, "fullByTicks": 12, "arriveEaseBh": 1.5,
     "closeSec": { "1000": 0.4, "3000": 0.8, "6000": 1.4 }, "slipMaxBh": 1.5 }
   ```
+
+## Slip-arrive: keep the hold (2026-11-09, Encounter's park)
+
+**Keep it** (`slipHoldTicks` as built: a short LT tap near the rival holds at the mark until 13 ticks after the press), **with one condition: it only holds a player who does nothing.**
+- **What ends the beat on that tick:**
+  - any attack press (a face button or a stick strike);
+  - LT held into the dash;
+  - another slip;
+  - the left stick pushed away from the mark.
+- **Why keep it:** a tap near him lands cleanly on the mark, and that's what lets the next press reach. The carry alone is 0.1 to 1.2 bh off at close range, which can leave him out of reach for the counter the slip set up.
+- **Why the condition:** with any input ending it, the beat is precision, never control taken. That's `gravity-well-reading.md`'s rule 4: the director moves your body only in a move you chose, and a slip is one.
+
+**The slip's line at 12 ticks (2026-11-09): no objection.** A slip is an LT let go before tick 12, which matches the pad's `tapHold.holdStart` 12: one line between a tap and a hold across the pad.
+- **My bound of 1.5 bh (by tick 6) is met at neither line.** So it's re-read on numbers: QA reports how far a slip let go before tick 12 travels, both near the rival (where the mark sets it) and in the open, and I set the bound from that.
+- **The purpose stays:** a slip is a step, never a leap.
