@@ -1,0 +1,2 @@
+ok    the match file replays exactly on this tree (, first bad tick -1, 8926 ticks, 1 toggles, 3 marks)
+HORDE CLIPS: 0 check(s) failed

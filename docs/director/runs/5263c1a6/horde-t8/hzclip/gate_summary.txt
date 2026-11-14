@@ -1,0 +1,4 @@
+gate: <scratch>/g/hzclip/check_horde-clip-1-down.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/hzclip/check_horde-clip-1.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/hzclip/rec_full.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/hzclip/rec_short.txt: no SCRIPT ERROR lines
