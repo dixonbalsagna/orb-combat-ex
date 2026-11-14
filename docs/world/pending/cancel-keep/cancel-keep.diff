@@ -1,0 +1,263 @@
+diff --git a/docs/world/calm-turn-world.md b/docs/world/calm-turn-world.md
+index 6e6b89b..2fc6a39 100644
+--- a/docs/world/calm-turn-world.md
++++ b/docs/world/calm-turn-world.md
+@@ -72,6 +72,8 @@ While a turn waits, the warm ticks prepare most of the swap (`WorldEpoch._prep`:
+ 
+ **Kept after the swap (2026-10-30).** The swap does not drop the ring job and the preparation it used: it retires them (`WorldEpoch._retire`), keyed by the world it turned away from, for `KEEP_TICKS` (21, NetSession's `maxAhead` 20 and one) sim ticks; `tick()` sweeps what has aged out, and `SimCore.dispose` releases a disposed sim's (`WorldEpoch.release`, which also drops every world the sim made entries for; `NetSnapshot.restore` disposes with `keepWorld`, since the restored state plays on). A rollback that restores a state of that world and runs the swap again finds them: the swap tick is the swap and not a ring read plus a preparation (`rerun_cost.gd`: about 60 ms before (90 to 107 on a loaded machine) and about 2 ms after, on a Half ring, with the same state hash). The kept preparation is safe to use twice because the swap binds its structures `fresh` (the prepared buildings and trees stay pristine) and the kept buildings' districts are generation records the restore puts back (packed-structures.md).
+ 
++**Kept after a cancel or a new pick (2026-10-30; Netcode's find).** `cancel` and `choose` used to drop the world's ring jobs and preparation at once, so a rollback to before a cancel (the restored state counts the ring as read) read the whole ring on the rollback frame: up to 274 ms on gen 2 Whole, 130 on Half. They are now kept as the swap's are: the live jobs and preparation belong to one pick (its tick and pivot column, `_livePk`); the next call with another pick shelves them under their own pick (`_sync`, `_shelf`), a rollback into the first pick takes them back, and everything ages out `KEEP_TICKS` after it was last used (`_sweep`). It also closes a latent fault: the jobs were keyed by world and bearing only, so a rollback into pick A after pick B (same bearing, another pivot) would have used B's ring for A; the pick is now part of what they belong to. `WorldEpoch.catchupCols` (a process counter, not state) counts columns a job had to read at once to catch up; it stays 0 across a rollback (`epoch_check`, three rollback cases with the old behaviour as the negative control). No state, hash or data changes.
++
+ ## What is not here
+ 
+ - **Steering** (the side from the brawl's drag and the last launch, the pick by combat alchemy's score) is Encounter's; World gives the candidates and applies the pick. The check stands in for Encounter with a scripted ask.
+diff --git a/sim/world/epoch.gd b/sim/world/epoch.gd
+index c6d9923..c5c46df 100644
+--- a/sim/world/epoch.gd
++++ b/sim/world/epoch.gd
+@@ -25,6 +25,10 @@ static var _retired: Array = []   # [[worldId, owner (the sim's instance id), th
+ static var coldCount: int = 0     # process diagnostics, not state (a rolled-back re-run of a swap must leave the state as a straight run does): swaps that read their ring on the swap tick
+ static var unprepCount: int = 0   # ... and swaps that made their preparation on the swap tick
+ const KEEP_TICKS: int = 21        # the rollback window of 20 + 1: a rollback can run a swap again at most this many ticks after it
++static var catchupCols: int = 0   # process diagnostics: columns a ring job had to read at once to catch up with the state's count (a state carried into a process, or restored after its job was dropped): a hitch; 0 in play and across a rollback
++static var _livePk: Dictionary = {}   # worldId -> the pick ("tick/pivot column") the live ring jobs (_jobs) and preparation (_plans) belong to
++static var _touched: Dictionary = {}  # worldId -> the S.tick the live ones were last used on
++static var _shelf: Dictionary = {}    # "worldId/tick/pc" -> {wid, owner, last, jobs, plan}: a pick's jobs and preparation after another pick took the live place or the turn was cancelled (see _sync)
+ 
+ 
+ static func data() -> Dictionary:
+@@ -179,7 +183,6 @@ static func choose(S: SimState, i: int, k: int = 0, fallbackDeg: float = -1.0) -
+ 	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "camp": bool(E.ask.get("camp", false)), "tick": S.tick, "due": E.ask.due, "k": k if k > 0 else int(d.warmCols), "fb": absf(float(warm[1].deg)) if warm.size() > 1 else 0.0}   # tick: the pick's; due: the moment it is for. k and fb are hashed
+ 	E.warm = warm
+ 	E.ask = null
+-	_dropJobs(S)
+ 
+ 
+ ## Encounter's cancel (DirCalm): a pending pick whose pair has moved off its pivot is dropped, so the director can ask again.
+@@ -190,24 +193,68 @@ static func cancel(S: SimState) -> void:
+ 	E.next = null
+ 	E.ask = null
+ 	E.warm = []
+-	_dropJobs(S)
+ 
+ 
+ static func _jkey(S: SimState, deg: float) -> String:
+ 	return "%d/%s" % [S.worldId, str(deg)]
+ 
+ 
+-static func _dropJobs(S: SimState) -> void:
+-	_dropWorld(S.worldId)
++## What a pick is, for the jobs and the preparation: the tick it was chosen on and its pivot column (with the world, a ring spec is a function of these and the bearing).
++static func _pick(E: Dictionary) -> String:
++	return "%d/%d" % [int(E.next.tick), int(E.next.pc)]
++
++
++## The live ring jobs (_jobs) and preparation (_plans) of a world belong to one pick. A cancel or a new pick does not drop them: the next call here, with another pick, puts them on the shelf under their own pick, and
++## a rollback to a state inside that pick takes them back, so the ring it counts as read is not read again on the rollback frame (Netcode: up to 274 ms on gen 2 Whole). They age out KEEP_TICKS after they were last
++## used (_sweep), the rollback window. A pick's jobs are only ever used for the pick that made them, whatever else the world has been asked since.
++static func _sync(S: SimState, E: Dictionary) -> void:
++	var wid: int = S.worldId
++	var pk: String = _pick(E)
++	var last: int = int(_touched.get(wid, S.tick))
++	_touched[wid] = S.tick
++	var cur = _livePk.get(wid)
++	if cur == pk:
++		return
++	if cur != null:
++		_shelve(wid, String(cur), last)
++	_livePk[wid] = pk
++	var key: String = "%d/%s" % [wid, pk]
++	var sh = _shelf.get(key)
++	if sh != null:
++		_shelf.erase(key)
++		for k in sh.jobs:
++			_jobs[k] = sh.jobs[k]
++		if sh.plan != null:
++			_plans[wid] = sh.plan
++		_owners[wid] = sh.owner
++
++
++static func _shelve(wid: int, pk: String, last: int) -> void:
++	var jobs: Dictionary = {}
++	var pre: String = "%d/" % wid
++	for k in _jobs.keys():
++		if String(k).begins_with(pre):
++			jobs[k] = _jobs[k]
++			_jobs.erase(k)
++	var plan = _plans.get(wid)
++	_plans.erase(wid)
++	if jobs.is_empty() and plan == null:
++		return
++	_shelf["%d/%s" % [wid, pk]] = {"wid": wid, "owner": int(_owners.get(wid, 0)), "last": last, "jobs": jobs, "plan": plan}
+ 
+ 
+ static func _dropWorld(wid: int) -> void:
+ 	_owners.erase(wid)
+ 	_plans.erase(wid)
++	_livePk.erase(wid)
++	_touched.erase(wid)
+ 	var pre: String = "%d/" % wid
+ 	for k in _jobs.keys():
+ 		if String(k).begins_with(pre):
+ 			_jobs.erase(k)
++	for k in _shelf.keys():
++		if int(_shelf[k].wid) == wid:
++			_shelf.erase(k)
+ 
+ 
+ ## The swap leaves its world's ring jobs and preparation in place for KEEP_TICKS, keyed by the world it turned away from (the new world has its own id): a rollback that restores a state of that world and
+@@ -224,6 +271,12 @@ static func _retire(S: SimState) -> void:
+ ## Drops what has aged out, for this sim's retired worlds: called each tick, free when nothing is retired.
+ static func _sweep(S: SimState) -> void:
+ 	var me: int = S.get_instance_id()
++	for k in _shelf.keys():
++		if int(_shelf[k].owner) == me and S.tick - int(_shelf[k].last) >= KEEP_TICKS:
++			_shelf.erase(k)
++	var wid: int = S.worldId
++	if _livePk.has(wid) and S.epoch != null and S.epoch.next == null and int(_owners.get(wid, me)) == me and S.tick - int(_touched.get(wid, S.tick)) >= KEEP_TICKS:
++		_dropWorld(wid)   # a cancelled pick's live ring jobs and preparation, unused for the rollback window
+ 	var keep: Array = []
+ 	for r in _retired:
+ 		if int(r[1]) == me and S.tick >= int(r[2]):
+@@ -246,6 +299,9 @@ static func release(S: SimState) -> void:
+ 	for wid in _owners.keys():
+ 		if int(_owners[wid]) == me:
+ 			_dropWorld(int(wid))
++	for k in _shelf.keys():
++		if int(_shelf[k].owner) == me:
++			_dropWorld(int(_shelf[k].wid))
+ 	_dropWorld(S.worldId)
+ 
+ 
+@@ -254,6 +310,7 @@ static func release(S: SimState) -> void:
+ ## carried into a process that has not got a job makes it again and reads up to `cols` at once (the same columns, a hitch). True when every ring is read.
+ static func _warm(S: SimState) -> bool:
+ 	var E = S.epoch
++	_sync(S, E)
+ 	var n: int = _share(E)
+ 	var all: bool = true
+ 	for w in E.warm:
+@@ -292,6 +349,7 @@ static func _jobFor(S: SimState, E: Dictionary, w: Dictionary):
+ 		job.lazy = true   # the columns on the warm ticks; the blend and the places in the preparation's first two ticks
+ 		if int(w.cols) > 0:
+ 			job.readTo(int(w.cols))   # the catch-up of a carried state
++			catchupCols += int(w.cols)
+ 		_jobs[key] = job
+ 		_owners[S.worldId] = S.get_instance_id()
+ 	return job
+@@ -304,6 +362,7 @@ static func readAhead(S: SimState, units: int, colUnits: int = 3) -> int:
+ 	var E = S.epoch
+ 	if E == null or E.next == null:
+ 		return 0
++	_sync(S, E)
+ 	var left: int = maxi(0, units / maxi(1, colUnits))
+ 	var did: int = 0
+ 	var best: Array = []
+@@ -328,6 +387,7 @@ static func warmPlan(S: SimState) -> Array:
+ 	var out: Array = []
+ 	if E == null or E.next == null:
+ 		return out
++	_sync(S, E)
+ 	for w in E.warm:
+ 		var job = _jobs.get(_jkey(S, float(w.deg)))
+ 		out.append([int(job.i) if job != null else 0, SimConst.NC, int(w.cols)])
+@@ -615,7 +675,7 @@ static func _reach(S: SimState, pc: int) -> float:
+ ## asks again at its next send. The moveMax rule wins over "never under 2 degrees".
+ static func tick(S: SimState, hold: bool = true) -> void:
+ 	var E = S.epoch
+-	if not _retired.is_empty():
++	if not _retired.is_empty() or not _shelf.is_empty() or not _livePk.is_empty():
+ 		_sweep(S)
+ 	if E == null or E.next == null:
+ 		return
+@@ -666,6 +726,7 @@ static func _w(px: float, i: int, Z0: float, Z1: float) -> float:
+ static func swap(S: SimState) -> void:
+ 	var E: Dictionary = S.epoch
+ 	var nx: Dictionary = E.next
++	_sync(S, E)
+ 	var seed: int = int(E.seed)
+ 	var P := WorldPlanet.make(seed)
+ 	var spec: Dictionary = nx.spec
+diff --git a/sim/world/tools/epoch_check.gd b/sim/world/tools/epoch_check.gd
+index 09c1c8a..e3d242d 100644
+--- a/sim/world/tools/epoch_check.gd
++++ b/sim/world/tools/epoch_check.gd
+@@ -545,6 +545,78 @@ func _init() -> void:
+ 		else:
+ 			SimCore.dispose(Sk)
+ 			ok(kept and not WorldEpoch._plans.has(oldWid) and _jobsOf(oldWid) == 0 and _retiredOf(Sk) == 0 and not WorldEpoch._owners.has(oldWid), "a sim disposed inside the term leaves no job, preparation, retirement or owner behind")
++	# --- a cancel, or a new pick, leaves the pick's ring jobs and preparation for KEEP_TICKS ticks: a rollback to before it finds them (Netcode: no ring read again on the rollback frame), is the same state, and never gets another pick's ring
++	var pool := NetSnapshot.Pool.new()
++	for variant in range(3):   # 0: cancelled, 1: cancelled and picked again at another pivot, 2: a restore before the pick, picked again
++		var Sr := ready(2400)
++		WorldEpoch.ask(Sr, "rb", mid(Sr), 1, 0)
++		var snap0: NetSnapshot = null
++		if variant == 2:
++			snap0 = NetSnapshot.take(Sr, pool)
++		WorldEpoch.choose(Sr, 2, 64, 2.5)
++		for t in range(20):
++			SimCore.step(Sr)
++		var snap: NetSnapshot = NetSnapshot.take(Sr, pool)
++		var specA: Array = Sr.epoch.warm[0].spec.c
++		var colsA: int = int(Sr.epoch.warm[0].cols)
++		if variant == 0 or variant == 1:
++			WorldEpoch.cancel(Sr)
++			if variant == 1:
++				for f in Sr.fighters:
++					f.x += 2400.0
++				Sr.epoch.lastT = Sr.T - float(WorldEpoch.data().gapSeconds)
++				WorldEpoch.ask(Sr, "rb2", mid(Sr), 1, 0)
++				WorldEpoch.choose(Sr, 2, 64, 2.5)
++			for t in range(5):
++				SimCore.step(Sr)
++			NetSnapshot.restore(Sr, snap, pool)
++		else:
++			NetSnapshot.restore(Sr, snap0, pool)
++			WorldEpoch.ask(Sr, "rb", mid(Sr), 1, 0)
++			WorldEpoch.choose(Sr, 2, 64, 2.5)
++		var c0: int = WorldEpoch.catchupCols
++		for t in range(5 if variant != 2 else 25):
++			SimCore.step(Sr)
++		var jb = WorldEpoch._jobs.get(WorldEpoch._jkey(Sr, float(Sr.epoch.warm[0].deg)))
++		var Sctl := ready(2400)
++		WorldEpoch.ask(Sctl, "rb", mid(Sctl), 1, 0)
++		WorldEpoch.choose(Sctl, 2, 64, 2.5)
++		for t in range(25):
++			SimCore.step(Sctl)
++		var sameH: bool = str(SimHash.stateHash(Sr).gameplay) == str(SimHash.stateHash(Sctl).gameplay)
++		ok(WorldEpoch.catchupCols - c0 == 0 and sameH and jb != null and vclose(jb.ring.c, Sr.epoch.warm[0].spec.c) and vclose(jb.ring.c, specA), "%s: no column read at once on the rollback frame (%d), the same state as a straight run, the job is the restored pick's ring (%d columns counted at the snapshot)" % [["a rollback to before a cancel", "a rollback to before a cancel and a pick at another pivot", "a rollback to before the pick, picked again"][variant], WorldEpoch.catchupCols - c0, colsA])
++		SimCore.dispose(Sr)
++		SimCore.dispose(Sctl)
++	var Sn := ready(2400)
++	WorldEpoch.ask(Sn, "age", mid(Sn), 1, 0)
++	WorldEpoch.choose(Sn, 2, 64, 2.5)
++	for t in range(5):
++		SimCore.step(Sn)
++	var wn: int = Sn.worldId
++	WorldEpoch.cancel(Sn)
++	for t in range(WorldEpoch.KEEP_TICKS - 2):
++		SimCore.step(Sn)
++	var heldN: bool = WorldEpoch._plans.has(wn) and _jobsOf(wn) > 0
++	for t in range(4):
++		SimCore.step(Sn)
++	ok(heldN and not WorldEpoch._plans.has(wn) and _jobsOf(wn) == 0 and not WorldEpoch._livePk.has(wn), "a cancelled pick's jobs and preparation are held %d ticks after the cancel, not longer" % WorldEpoch.KEEP_TICKS)
++	SimCore.dispose(Sn)
++	var Sdis := ready(2400)
++	WorldEpoch.ask(Sdis, "disp", mid(Sdis), 1, 0)
++	WorldEpoch.choose(Sdis, 2, 64, 2.5)
++	for t in range(5):
++		SimCore.step(Sdis)
++	var wd: int = Sdis.worldId
++	WorldEpoch.cancel(Sdis)
++	for f in Sdis.fighters:
++		f.x += 2400.0
++	Sdis.epoch.lastT = Sdis.T - float(WorldEpoch.data().gapSeconds)
++	WorldEpoch.ask(Sdis, "disp2", mid(Sdis), 1, 0)
++	WorldEpoch.choose(Sdis, 2, 64, 2.5)
++	SimCore.step(Sdis)
++	SimCore.dispose(Sdis)
++	ok(not WorldEpoch._plans.has(wd) and _jobsOf(wd) == 0 and not WorldEpoch._owners.has(wd) and WorldEpoch._shelf.is_empty(), "a sim disposed with a shelved pick leaves no job, preparation, owner or shelf entry")
++	pool.clear()
+ 	print("EPOCH: %d check(s) failed" % fails)
+ 	quit()
+ 

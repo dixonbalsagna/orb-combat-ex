@@ -1,0 +1,12 @@
+## hand-made arena (16 matches)
+tier 1 window share p50 0.000 p75 0.000 p90 0.012 max 0.014 | total p50 0.000 p90 0.012 max 0.014
+tier 2 window share p50 0.000 p75 0.004 p90 0.010 max 0.075 | total p50 0.000 p90 0.014 max 0.083
+tier 3 window share p50 0.019 p75 0.021 p90 0.060 max 0.216 | total p50 0.019 p90 0.098 max 0.272
+tier 4 window share p50 0.089 p75 0.249 p90 0.409 max 0.550 | total p50 0.122 p90 0.452 max 0.668
+mean mass lost 105.6 structures 36.7 villain mass 35.2
+## planet 7 (6 matches)
+tier 1 window share p50 0.001 p75 0.004 p90 0.017 max 0.017 | total p50 0.001 p90 0.017 max 0.017
+tier 2 window share p50 0.013 p75 0.016 p90 0.023 max 0.023 | total p50 0.013 p90 0.038 max 0.038
+tier 3 window share p50 0.047 p75 0.056 p90 0.075 max 0.075 | total p50 0.060 p90 0.094 max 0.094
+tier 4 window share p50 0.246 p75 0.274 p90 0.275 max 0.275 | total p50 0.316 p90 0.349 max 0.349
+mean mass lost 386.7 structures 98.3 villain mass 210.5

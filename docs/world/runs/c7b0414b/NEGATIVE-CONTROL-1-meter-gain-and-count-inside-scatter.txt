@@ -1,0 +1,27 @@
+  FAIL: seed 1 cause 0: nothing counted (0.500)
+  FAIL: seed 1 cause 0: no meter rose ["fighter 0 menace 10.0000 -> 11.0000", "fighter 0 power 10.0000 -> 11.0000"]
+  FAIL: seed 1 cause 1: nothing counted (0.500)
+  FAIL: seed 1 cause 1: no meter rose ["fighter 1 menace 10.0000 -> 11.0000", "fighter 1 power 10.0000 -> 11.0000"]
+  FAIL: seed 2 cause 0: nothing counted (0.500)
+  FAIL: seed 2 cause 0: no meter rose ["fighter 0 menace 10.0000 -> 11.0000", "fighter 0 power 10.0000 -> 11.0000"]
+  FAIL: seed 2 cause 1: nothing counted (0.500)
+  FAIL: seed 2 cause 1: no meter rose ["fighter 1 menace 10.0000 -> 11.0000", "fighter 1 power 10.0000 -> 11.0000"]
+  FAIL: seed 3 cause 0: nothing counted (0.500)
+  FAIL: seed 3 cause 0: no meter rose ["fighter 0 menace 10.0000 -> 11.0000", "fighter 0 power 10.0000 -> 11.0000"]
+  FAIL: seed 3 cause 1: nothing counted (0.500)
+  FAIL: seed 3 cause 1: no meter rose ["fighter 1 menace 10.0000 -> 11.0000", "fighter 1 power 10.0000 -> 11.0000"]
+  FAIL: class 0: it fell, killed no one and left no one inside
+  FAIL: class 0: his menace 12.8000 (want 11.8000) and power 11.0700 (want 10.0700) rose by its mass 1 and its size
+  FAIL: class 0: the same meters with every person taken out [[10.0, 10.0, 10.0, 0.0], [12.8, 11.07, 10.0, 0.0]] [[10.0, 10.0, 10.0, 0.0], [11.8, 10.07, 10.0, 0.0]]
+  FAIL: class 1: it fell, killed no one and left no one inside
+  FAIL: class 1: his menace 17.0000 (want 16.0000) and power 11.3500 (want 10.3500) rose by its mass 5 and its size
+  FAIL: class 1: the same meters with every person taken out [[10.0, 10.0, 10.0, 0.0], [17.0, 11.35, 10.0, 0.0]] [[10.0, 10.0, 10.0, 0.0], [16.0, 10.35, 10.0, 0.0]]
+  FAIL: class 2: it fell, killed no one and left no one inside
+  FAIL: class 2: his menace 26.0000 (want 25.0000) and power 12.0500 (want 11.0500) rose by its mass 15 and its size
+  FAIL: class 2: the same meters with every person taken out [[10.0, 10.0, 10.0, 0.0], [26.0, 12.05, 10.0, 0.0]] [[10.0, 10.0, 10.0, 0.0], [25.0, 11.05, 10.0, 0.0]]
+  FAIL: the whole world brought down by the villain: the count is 0, the mass lost is all of it (518)
+  FAIL: the same meters with every person taken out
+  FAIL: seed 7: AI against AI for 2400 ticks, with every person taken out: the same fighters, meters, structures and craters at every look
+  FAIL: seed 7: the count never moved
+  FAIL: collateral.gd: no kill, no feed, nothing writes the count, and a meter is written only by fell, emptied, dug and _trauma (["scatter"])
+BYSTANDERS: 26 check(s) failed

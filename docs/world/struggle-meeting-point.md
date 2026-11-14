@@ -1,5 +1,7 @@
 # The beam struggle's meeting point: what it does today, and a crater beneath it (World, 2026-11-02)
 
+> **Built 2026-11-07 on Game Design's numbers: `docs/world/struggle-meet.md`** (this page's table and first numbers are superseded by `docs/design/power-scale.md`).
+
 The EP's order, from Orb's note on Camera's tight-then-pull-back clip: "the center where the beams collide would have the biggest shockwave, possibly causing a crater underneath", and in the clip a building by the fighter on the left collapsed instead. **This is a plan and a measurement. Nothing is built or changed.** Game Design rules the numbers; the sketch below puts them in the energy model's terms so they can be set in data.
 
 ## What a struggle does to the ground and buildings today (read from `sim/director/beam.gd`)
@@ -21,9 +23,9 @@ The EP's order, from Orb's note on Camera's tight-then-pull-back clip: "the cent
 
 - **During the 89 struggles: 0 buildings hurt, 0 craters dug.**
 - **The point's height above the ground:** median 189 (time) to 513 (detonate); a tenth of them over 1,000. With the fronts on, the fighters stand 634 to 852 apart (median 675); with them off, 58 to 372.
-- **I did not reproduce the building by the shooter.** In the 8 struggles that had a beam in the air before they began (the beam fired, then answered), no building was hurt before the clash either. So I can't say from the sim which hit it. The candidates in the code: (1) a winner's beam after an overwhelm or let-go, which carves from his own hand outward, so a building beside the winner takes its first damage; (2) the beam before the answer: `DirBeamPlay.fire` (193) puts the real beam in `S.beams`, which carves along its path as its front travels (`beamStep`), until `_answerNow` removes it; both are on the shooter's side of the point. **Send me the clip's match seed or the tick of the collapse and I'll find which.**
+- **The building by the shooter: found (Camera's beamduel, seed 12345, 200 up, 750 east; the EP's relay).** It is not the struggle but the beam before it is answered. I staged the same on planet 7 (10 buildings on the front street, the shooter 200 up beside each on both sides, the rival answering one tick after the fire) and **every building within about 500 units of the shooter, on either side, even behind him, loses 14 to 37 hp on the first tick after the beam leaves**. The call is `_sampleBeamRead` (beam.gd 545): `damageArea` around each sample, a disc of (26 + 8 P) x 8 = 272 units, and the first samples are at his hand. With the fronts on the beam crawls (42 ticks for 750 units, 18 units a tick) and `beamStep` samples at the front's position **every tick** (s0, then every 288), so the ground by his hand is sampled about 15 times where the old 0.22 s beam sampled it once or twice. Unanswered for 70 ticks at that range: 15 buildings hurt, 2 down, 1,497 hp; the same with the samples on a fixed 288-unit grid (one per spot): 14 hurt, 0 down, 1,277 hp (a change of 3 lines in `beamStep`, only while the beam plays; at 2,400 and 9,000 it changes nothing). A small building (100 to 700 hp) next to him goes down; the struggle, which starts 4 ticks later, does nothing at all.
 
-So the picture Orb saw is the whole design today: the middle is dug in one ending in three; everything else lands at a fighter.
+So the picture Orb saw is two things: **the shooters' neighbourhood takes the beam's first ticks, and the middle is dug in one ending in three.**
 
 ## The crater at the meeting point, on the energy model
 
@@ -51,7 +53,7 @@ So the meeting crater is about 1.7 times the radius of today's detonate and 1.4 
 | | |
 | :--- | :--- |
 | **Mine** | `data/biomes/craters.json` `struggleMeet` (`enabled` false, `heightReach`, `fEnd` per ending, `perPulse`, `minE`), its schema, `WorldCraters.struggleMeet(S, mid, how, tiers)` in `sim/world/craters.gd`, `struggle_meet_check.gd` (`STRUGGLEMEET`), a doc. About 60 lines. |
-| **Encounter's: a grant** | `sim/director/beam.gd` `_resolveStruggle`: one call at its top for any ending (about 3 lines), and a call in `clashTick` per pulse for the groove (3 lines). |
+| **Encounter's: a grant** | `sim/director/beam.gd` `_resolveStruggle`: one call at its top for any ending (about 3 lines), and a call in `clashTick` per pulse for the groove (3 lines). **And the sample-grid fix in `beamStep` (3 lines, hash-moving only while the beam plays), which stands on its own: it is what stops the shooter's building falling.** |
 | **Hash** | moves every hash that holds a struggle (the ground and buildings change); off by default behind the data switch. |
 | **Cost** | one special dig at the end, like `explode`'s today; `WorldCrater.relax` is now cheap (water-cost); no new per-tick cost. |
 | **Look** | the shockwave ring and dust are VFX's and Rendering's; the crater and fall are the ground's. A change to what the player sees ships with the look-gate side-by-side. |

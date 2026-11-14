@@ -1,0 +1,338 @@
+diff --git a/data/biomes/craters.json b/data/biomes/craters.json
+index 5d06801..6d458b9 100644
+--- a/data/biomes/craters.json
++++ b/data/biomes/craters.json
+@@ -8,6 +8,16 @@
+     "eMult": 9.0,
+     "rMax": 6100.0
+   },
++  "collapse": {
++    "enabled": false,
++    "minR": 900.0,
++    "reach": 0.8,
++    "dent": 0.0,
++    "kinds": ["impact", "powerup"],
++    "capShare": 1.0,
++    "keep": 0.2,
++    "_note": "A big bowl brings down what stands in it (docs/world/crater-collapse.md; Legal RL-232). Off by default. A dig of a kind in kinds whose bowl radius is at least minR levels every building whose centre is within reach x its radius (the same blast as the meteor's: twice its hp, folded into one fall event); past the share of the ring a fighter's level allows (the fighter's beamLevelCapShare, else capShare) the rest are left at keep of their hp; between reach and 1 radius a building takes dent x its hp x its distance's falling share (0 = none). The fall comes from the energy spent: nothing here reads a block's size, a building's occupants or a place's people, and a barred landmark (noTarget: the chapel) is not levelled. The meteor's own blast stays Encounter's."
++  },
+   "classes": {
+     "paving": { "radius": 1.0, "depth": 1.0, "rim": 1.0, "steep": 1.0, "cracks": "slabs_tilted", "ejecta": "slab_chunks" },
+     "rock": { "radius": 0.9, "depth": 0.8, "rim": 0.6, "steep": 1.4, "cracks": "star", "ejecta": "blocks" },
+diff --git a/sim/world/crater.gd b/sim/world/crater.gd
+index 5d1a4ba..dd19f78 100644
+--- a/sim/world/crater.gd
++++ b/sim/world/crater.gd
+@@ -175,10 +175,27 @@ static func _col(x: float) -> int:
+ static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
+ 	SimField.far()
+ 	var r = _digRead(S, x, energy, cause, kind, dirx, vert, special, z, shape, meteor)
++	if r != null and not meteor:
++		_collapse(S, r, cause, kind, z)
+ 	SimField.near()
+ 	return r
+ 
+ 
++## A big bowl brings down what stands in it (craters.json collapse, off by default; docs/world/crater-collapse.md; Legal RL-232). It follows from the size of the bowl, which is the energy spent: nothing here picks a place or reads
++## a block's size, its occupants or the people near it, and a barred landmark (noTarget) is not levelled (WorldStructures.levelIn). The cap is the existing one (the fighter's beamLevelCapShare of the first ring). The meteor's own
++## blast is Encounter's (DirArc), so a meteor dig skips this.
++static func _collapse(S: SimState, rec, cause, kind: String, z: float) -> void:
++	var c: Dictionary = WorldCraters.collapse()
++	if not bool(c.enabled) or rec.r < float(c.minR) or not (c.kinds as Array).has(kind):
++		return
++	var zz: float = z if not is_nan(z) else (float(cause.z) if (cause != null and "z" in cause) else 0.0)
++	var share: float = float(c.capShare)
++	if cause != null and "ld" in cause and cause.ld != null and cause.ld.beamLevelCapShare.size() > 3:
++		share = float(cause.ld.beamLevelCapShare[3])
++	var cap: int = maxi(1, int(SimMathx.jround(share * float(WorldStructures.ringCount(S)))))
++	WorldStructures.levelIn(S, float(rec.x), zz, float(c.reach) * float(rec.r), cause, cap, float(c.keep), float(rec.r), float(c.dent))
++
++
+ static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
+ 	if kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
+ 		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
+diff --git a/sim/world/craters.gd b/sim/world/craters.gd
+index 83ea991..c07b4b9 100644
+--- a/sim/world/craters.gd
++++ b/sim/world/craters.gd
+@@ -114,6 +114,12 @@ static func _load() -> void:
+ 		var mt = j.meteor
+ 		if not (mt is Dictionary) or float(mt.get("eMult", 0.0)) < 1.0 or float(mt.get("rMax", 0.0)) < 600.0:
+ 			_errors.append("craters.json: meteor needs eMult (at least 1) and rMax (at least 600)")
++	if j.has("collapse"):
++		var cl = j.collapse
++		if not (cl is Dictionary) or not cl.has("enabled") or float(cl.get("minR", 0.0)) < 100.0 or float(cl.get("reach", 0.0)) <= 0.0 or float(cl.get("reach", 0.0)) > 1.0 \
++				or float(cl.get("dent", -1.0)) < 0.0 or float(cl.get("dent", 0.0)) > 1.0 or float(cl.get("capShare", 0.0)) <= 0.0 or float(cl.get("capShare", 0.0)) > 1.0 \
++				or float(cl.get("keep", -1.0)) < 0.0 or float(cl.get("keep", 0.0)) > 1.0 or not (cl.get("kinds", null) is Array):
++			_errors.append("craters.json: collapse needs enabled, minR (at least 100), reach (above 0, at most 1), dent and keep (0 to 1), capShare (above 0, at most 1) and kinds (a list)")
+ 	if not _errors.is_empty():
+ 		for k in range(_shapes.size()):
+ 			_shapes[k] = NONE
+@@ -277,3 +283,11 @@ static func stepRefill(S: SimState, w: Array) -> bool:
+ 		w[I + 6] = f1
+ 		WorldTerrain.lowRefresh(S, c0, n + 2)
+ 	return clock >= dur
++
++
++## A big bowl brings down what stands in it (craters.json collapse, read apart from the module's switch; docs/world/crater-collapse.md): {enabled, minR, reach, dent, kinds, capShare, keep}. Missing: off.
++static func collapse() -> Dictionary:
++	var c: Variant = data().get("collapse", {})
++	if not (c is Dictionary) or not bool(c.get("enabled", false)):
++		return {"enabled": false}
++	return c
+diff --git a/sim/world/structures.gd b/sim/world/structures.gd
+index 884cd24..869e3d6 100644
+--- a/sim/world/structures.gd
++++ b/sim/world/structures.gd
+@@ -462,6 +462,31 @@ static func dz(b) -> float:
+ 	return maxf(0.0, absf(b.z) - b.d * 0.5)
+ 
+ 
++## A blast that levels what stands within r of (x, z) (Encounter's meteor blast, moved here so a crater's collapse can use it too; docs/world/crater-collapse.md): every building whose centre is within r takes twice its hp
++## ("implode": a fall each, the rest folded into one event past IMPLODE_EVENT_CAP), up to `cap` buildings; past the cap the rest are left standing at `keep` of their hp. A landmark barred as a target (WorldSettle.noTarget,
++## RL-214: the chapel) is not levelled. From r out to `outer` a building takes `dent` x its hp, falling to nothing at `outer` (0 dent or no outer: none). Nothing here reads a building's people or a place's size.
++static func levelIn(S: SimState, x: float, z: float, r: float, cause, cap: int, keep: float, outer: float = 0.0, dent: float = 0.0) -> void:
++	var levelled: int = 0
++	S.world.fallTick = -1.0
++	SimField.far()
++	for bi in near(S, x, maxf(r, outer)):
++		var b = S.buildings[bi]
++		if not b.alive or WorldSettle.noTarget(b.landmark):
++			continue
++		var d: float = SimDetMath.hypot(SimWrap.sdx(x, b.x), float(b.z) - z)
++		if d <= r:
++			var lost0: float = S.world.structuresLost
++			damageBuilding(S, b, float(b.maxhp) * 2.0, cause, "implode", x, 0.0, false, keep if levelled >= cap else 0.0)
++			if S.world.structuresLost > lost0:
++				levelled += 1
++		elif dent > 0.0 and d < outer:
++			damageBuilding(S, b, float(b.maxhp) * dent * (1.0 - (d - r) / (outer - r)), cause, "burst", x)
++	SimField.near()
++	if S.world.fallFold > 0.0:
++		SimFx.buildingFall(S, -1, x, 0.0, 0.0, 0.0, "implode", 0.0, x, 0.0, S.world.fallFold)
++		S.world.fallFold = 0.0
++
++
+ ## local: the damage is a brunt's local floor damage (its people are handled by the floors), so only the collapse below applies.
+ static func damageBuilding(S: SimState, b, d: float, cause, mode: String = "burst", cx: float = 0.0, evt: float = 0.0, local: bool = false, keep: float = 0.0) -> void:
+ 	# keep (the beam tier gate, balance-targets.md §15): the blow leaves the building standing at keep x maxhp at least.
+diff --git a/sim/world/tools/collapse_check.gd b/sim/world/tools/collapse_check.gd
+new file mode 100644
+index 0000000..c3c1179
+--- /dev/null
++++ b/sim/world/tools/collapse_check.gd
+@@ -0,0 +1,179 @@
++extends SceneTree
++# A big bowl brings down what stands in it (World, sim/world/crater.gd _collapse, structures.gd levelIn, data/biomes/craters.json collapse; docs/world/crater-collapse.md; Legal RL-232): off, a dig of any size leaves every
++# building as it was; on, a bowl of at least minR levels the buildings whose centres are within reach x its radius (up to the cap, the rest left at keep of their hp), a barred landmark stands, a small bowl and a meteor's dig level
++# nothing, the falls are a few events (one folded), and the same setup gives the same state twice.
++#   godot --headless --path . --script res://sim/world/tools/collapse_check.gd -- [--planet=7] [--touch=1]
++var fails: int = 0
++
++
++func ok(cond: bool, what: String) -> void:
++	if cond:
++		print("  ok   ", what)
++	else:
++		fails += 1
++		print("  FAIL ", what)
++
++
++func _match(planet: int, touch: int) -> SimState:
++	WorldClimate.useGen(3)
++	WorldPlanet.forget()
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"intro": false, "planet": planet, "touch": touch, "planetGen": 3})
++	for i in range(30):
++		SimCore.step(S)
++	return S
++
++
++func _alive(S: SimState) -> int:
++	var n: int = 0
++	for b in S.buildings:
++		if b.alive:
++			n += 1
++	return n
++
++
++## The centre of the densest cluster of standing buildings within radius r (the first one found at the most): a (x, z) to dig at.
++func _cluster(S: SimState, r: float) -> Array:
++	var best: int = -1
++	var bn: int = -1
++	for i in range(mini(S.buildings.size(), S.bFirst if S.bFirst > 0 else S.buildings.size())):
++		var a = S.buildings[i]
++		if not a.alive:
++			continue
++		var n: int = 0
++		for j in WorldStructures.near(S, a.x, r):
++			var b = S.buildings[j]
++			if b.alive and SimDetMath.hypot(SimWrap.sdx(a.x, b.x), float(b.z) - float(a.z)) <= r:
++				n += 1
++		if n > bn:
++			bn = n
++			best = i
++	return [float(S.buildings[best].x), float(S.buildings[best].z), bn]
++
++
++func _within(S: SimState, x: float, z: float, r: float) -> Array:
++	var out: Array = []
++	for j in WorldStructures.near(S, x, r):
++		var b = S.buildings[j]
++		if b.alive and SimDetMath.hypot(SimWrap.sdx(x, b.x), float(b.z) - z) <= r:
++			out.append(int(j))
++	return out
++
++
++func _falls(S: SimState) -> int:
++	var n: int = 0
++	for e in S.out.fx:
++		if String(e.type) == "building_fall":
++			n += 1
++	return n
++
++
++func _init() -> void:
++	var planet: int = 7
++	var touch: int = 1
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--planet="):
++			planet = int(a.substr(9))
++		elif a.begins_with("--touch="):
++			touch = int(a.substr(8))
++	var d: Dictionary = WorldCraters.data()
++	var keep: Dictionary = d.get("collapse", {}).duplicate(true)
++	var c: Dictionary = WorldCraters.collapse()
++	ok(not bool(keep.get("enabled", true)) and not bool(c.enabled), "off in the data as shipped (collapse.enabled false)")
++	ok(float(keep.minR) >= 100.0 and float(keep.reach) > 0.0 and float(keep.reach) <= 1.0 and (keep.kinds as Array).has("impact") and (keep.kinds as Array).has("powerup"), "the first values: minR %.0f, reach %.2f, kinds %s" % [float(keep.minR), float(keep.reach), str(keep.kinds)])
++	var E_big: float = pow(1.15 * float(keep.minR) / WorldCrater.R_BASE, 2.0) / WorldCrater.SPECIAL_E_MULT   # a bowl a little over minR (the digs below are special: nine times the energy, three times the radius)
++	var S0 := _match(planet, touch)
++	var spot: Array = _cluster(S0, 0.8 * 1.15 * float(keep.minR))
++	var x: float = spot[0]
++	var z: float = spot[1]
++	ok(int(spot[2]) >= 4, "the planet's first ring has a cluster of %d buildings within reach of a %.0f bowl" % [int(spot[2]), 1.15 * float(keep.minR)])
++	# off: the bowl digs and nothing falls
++	var S := _match(planet, touch)
++	var n_alive: int = _alive(S)
++	var rec = WorldCrater.dig(S, x, E_big, S.fighters[0], "impact", 0.0, 1.0, true, z)
++	ok(rec != null and rec.r >= float(keep.minR), "a bowl of %.0f is dug" % (rec.r if rec != null else -1.0))
++	ok(_alive(S) == n_alive and _falls(S) == 0, "off: every building stands (%d of %d), no fall event" % [_alive(S), n_alive])
++	var h_off: String = str(SimHash.stateHash(S).gameplay)
++	# on
++	d["collapse"] = keep.duplicate(true)
++	d["collapse"]["enabled"] = true
++	var S2 := _match(planet, touch)
++	var rec2 = WorldCrater.dig(S2, x, 1.0, S2.fighters[0], "impact", 0.0, 1.0, true, z)   # a small bowl first (E 1, radius 160 or 480 when special): nothing below minR falls
++	ok(rec2 != null and rec2.r < float(keep.minR) and _alive(S2) == n_alive, "a bowl under minR (%.0f) levels nothing" % (rec2.r if rec2 != null else -1.0))
++	var S3 := _match(planet, touch)
++	var chapel: int = -1   # a barred landmark standing in the bowl is left standing
++	var lm: Array = WorldSettle.data().get("landmarks", [])
++	var barred: int = 0
++	for k in range(lm.size()):
++		if WorldSettle.noTarget(k + 1):
++			barred = k + 1
++			break
++	var in_reach0: Array = []
++	var rr: float = 1.15 * float(keep.minR)
++	for j in _within(S3, x, z, float(keep.reach) * rr):
++		in_reach0.append(j)
++	if barred > 0 and in_reach0.size() > 2:
++		chapel = in_reach0[1]
++		S3.buildings[chapel].landmark = barred
++	var in_outer0: Array = _within(S3, x, z, rr)
++	var far0: Array = []
++	for j in range(S3.buildings.size()):
++		if S3.buildings[j].alive and not in_outer0.has(j):
++			far0.append(j)
++	var lost0: float = S3.world.structuresLost
++	var rec3 = WorldCrater.dig(S3, x, E_big, S3.fighters[0], "impact", 0.0, 1.0, true, z)
++	var reach_real: float = float(keep.reach) * rec3.r
++	var in_reach: Array = []   # judged on the real bowl's radius
++	for j in in_reach0:
++		if SimDetMath.hypot(SimWrap.sdx(x, S3.buildings[j].x), float(S3.buildings[j].z) - z) <= reach_real:
++			in_reach.append(j)
++	var share: float = float(keep.capShare)
++	var f0 = S3.fighters[0]
++	if "ld" in f0 and f0.ld != null and f0.ld.beamLevelCapShare.size() > 3:
++		share = float(f0.ld.beamLevelCapShare[3])
++	var cap: int = maxi(1, int(SimMathx.jround(share * float(WorldStructures.ringCount(S3)))))
++	var dead: int = 0
++	var spared_ok: bool = true
++	var standing_ok: bool = true
++	for j in in_reach:
++		var b = S3.buildings[j]
++		if not b.alive:
++			dead += 1
++		elif j != chapel and b.hp < float(keep.keep) * b.maxhp - 1.0e-6:
++			standing_ok = false   # past the cap a building is left at keep of its hp at least
++	if chapel >= 0:
++		spared_ok = S3.buildings[chapel].alive
++	ok(in_reach.size() >= 3 and dead >= 1, "on: a bowl of %.0f brings down %d of the %d buildings within %.0f of it" % [rec3.r, dead, in_reach.size(), reach_real])
++	ok(dead <= cap, "no more than the cap fall (%d, cap %d)" % [dead, cap])
++	ok(standing_ok, "a building the cap leaves standing keeps at least %.0f%% of its hp" % (100.0 * float(keep.keep)))
++	ok(chapel < 0 or spared_ok, "a barred landmark (noTarget %d) in the bowl stands (%s)" % [barred, "none on this planet" if chapel < 0 else "checked"])
++	var untouched: bool = true
++	for j in far0:
++		if not S3.buildings[j].alive:
++			untouched = false
++	ok(untouched, "no building beyond the bowl (%d of them) is touched" % far0.size())
++	ok(S3.world.structuresLost >= lost0 + float(dead), "the fall is the existing structuresLost (%.0f to %.0f), no new count" % [lost0, S3.world.structuresLost])
++	ok(_falls(S3) <= WorldStructures.IMPLODE_EVENT_CAP + 1, "the falls are at most %d events (%d), the rest one folded event" % [WorldStructures.IMPLODE_EVENT_CAP + 1, _falls(S3)])
++	# the meteor's dig skips it (the meteor's blast is Encounter's)
++	var S4 := _match(planet, touch)
++	var a4: int = _alive(S4)
++	WorldCrater.dig(S4, x, WorldCrater.impactEnergy(8570.0, 4.0), S4.fighters[0], "impact", 0.0, 1.0, false, z, PackedFloat64Array(), true)
++	ok(_alive(S4) == a4, "a meteor's dig levels nothing itself (%d of %d stand)" % [_alive(S4), a4])
++	# a beam's trench is not a collapse (kinds)
++	var S5 := _match(planet, touch)
++	var a5: int = _alive(S5)
++	WorldCrater.dig(S5, x, E_big, S5.fighters[0], "beam", 0.0, 1.0, false, z)
++	ok(_alive(S5) == a5, "a kind not in the data's kinds (beam) levels nothing")
++	# the same setup lays the same state twice
++	var S6 := _match(planet, touch)
++	var S7 := _match(planet, touch)
++	WorldCrater.dig(S6, x, E_big, S6.fighters[0], "impact", 0.0, 1.0, true, z)
++	WorldCrater.dig(S7, x, E_big, S7.fighters[0], "impact", 0.0, 1.0, true, z)
++	ok(str(SimHash.stateHash(S6).gameplay) == str(SimHash.stateHash(S7).gameplay), "the same dig gives the same state twice")
++	# the switch off again is the old state
++	d["collapse"] = keep
++	var S8 := _match(planet, touch)
++	WorldCrater.dig(S8, x, E_big, S8.fighters[0], "impact", 0.0, 1.0, true, z)
++	ok(str(SimHash.stateHash(S8).gameplay) == h_off, "switched off again, the dig leaves the state it left before")
++	print("COLLAPSE: %d check(s) failed" % fails)
++	quit(0 if fails == 0 else 1)
+diff --git a/tools/schemas/biomes-craters.schema.json b/tools/schemas/biomes-craters.schema.json
+index e21872c..349c082 100644
+--- a/tools/schemas/biomes-craters.schema.json
++++ b/tools/schemas/biomes-craters.schema.json
+@@ -45,6 +45,22 @@
+         "rMax": { "type": "number", "minimum": 600, "maximum": 8320 }
+       }
+     },
++    "collapse": {
++      "type": "object",
++      "description": "A big bowl brings down what stands in it (docs/world/crater-collapse.md; Legal RL-232). Off by default. A dig of a kind in kinds whose bowl radius is at least minR levels the buildings within reach x its radius, past the fighter's level cap share the rest are left at keep of their hp, and between reach and 1 radius a building takes dent of its hp falling with distance. Read whether or not the module is on.",
++      "required": ["enabled", "minR", "reach", "dent", "kinds", "capShare", "keep"],
++      "additionalProperties": false,
++      "patternProperties": { "^_": true },
++      "properties": {
++        "enabled": { "type": "boolean" },
++        "minR": { "type": "number", "minimum": 100, "maximum": 8320 },
++        "reach": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
++        "dent": { "type": "number", "minimum": 0, "maximum": 1 },
++        "kinds": { "type": "array", "uniqueItems": true, "items": { "enum": ["impact", "beam", "powerup", "explode"] } },
++        "capShare": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
++        "keep": { "type": "number", "minimum": 0, "maximum": 1 }
++      }
++    },
+     "classes": {
+       "type": "object",
+       "description": "One row per look class (WorldGround.LOOKS); a class without a row digs today's bowl.",
+diff --git a/tools/world-checks.json b/tools/world-checks.json
+index f00386a..86bdb26 100644
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -4,2 +4,3 @@
+     "burial_check", "floor_check", "lane_check", "props_wet_check",
++    "collapse_check",
+     "after_check", "arena_check", "b_check", "blastcheck", "blockcheck", "brunt_check", "calm_read_check", "campaign_check", "climate_check", "collateral_check",

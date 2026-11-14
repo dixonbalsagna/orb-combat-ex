@@ -1,0 +1,15 @@
+# cancel-keep: a cancel or a new pick keeps the turn's ring jobs for the rollback window (World, 2026-10-30)
+
+Netcode's find (docs/world/ring-any-angle/netcode.md): `WorldEpoch.cancel` and `choose` dropped the world's ring jobs and preparation at once, so a rollback to before a cancel (the restored state counts the ring as read) read the whole ring on the rollback frame: up to 274 ms on gen 2 Whole, 130 ms on Half. Checked in the code and in a test: it was real.
+
+**Files:** `cancel-keep.diff` (sha1 24ef6783f67e, 3 files): `sim/world/epoch.gd`, `sim/world/tools/epoch_check.gd`, `docs/world/calm-turn-world.md`. No grant, no state, hash or data change. Base HEAD 715c561c; applies on it and on it with `tree-strip` applied first (`git apply --check`, fresh export).
+
+**The fix.** The live ring jobs and preparation belong to one pick (its tick and pivot column, `_livePk`). `cancel` and `choose` no longer drop them. The next call with another pick shelves them under their own pick (`_sync`, `_shelf`), a rollback into the first pick takes them back, and everything ages out `KEEP_TICKS` (21) after it was last used (`_sweep`). `SimCore.dispose` releases the shelf too. `WorldEpoch.catchupCols` is a process counter of columns a job had to read at once.
+
+**A latent fault it closes.** Jobs were keyed by world and bearing only. A rollback into pick A after pick B (same bearing, another pivot) took B's ring for A. The negative control shows it: on the old code that case fails the "job is the restored pick's ring" test.
+
+**Proved (scratch, `epoch_check`):** three rollback cases (before a cancel; before a cancel then a pick at another pivot; before the pick, picked again), each with no column read at once, the same state hash as a straight run, and the job the restored pick's ring; the age test (held 21 ticks, not longer); a sim disposed with a shelved pick leaves nothing. On the old behaviour (counter only) 3 of the new checks fail (2,560 columns read on the rollback frame in the first case). With the fix: `EPOCH: 0 check(s) failed`.
+
+**NOT run (stopped by the EP's pause at tick 20:43):** the full gate. The World checks had passed through `repeat_check` (all rc=0, no failures) and the rest had not run. Still to run before landing: the remaining World checks, `world-checks --verify`, validate and self-test, lint, golden/parity, determinism plain and `--intro`, `gen2_soak` against base (a pick-free soak should be byte-identical), `two_states_check` plain and `--setups=turn`, `rollback_check --setup=calm --turn-at=300` on lan, p120 and far, `rerun_cost` (the swap re-run must still be about 2 ms), `run-all.js`, the render gates. The scratch chain is `chain90.sh` (scratchpad); trees `pk/p90` (fix), `pk/p90b` (base), `pk/p90c` (counter only).
+
+**Not in this park:** Netcode's other suggestions (key the jobs by ring content; a streamed ground; a bearing that takes effect 20 ticks after the decision). The pick key makes arbitrary angles safe; content keying would also share reads across picks and is a separate change.

@@ -1,0 +1,85 @@
+--- a/sim/core/constants.gd
++++ b/sim/core/constants.gd
+@@ -18,7 +18,8 @@
+ const BOOST_NEAR: float = 1500.0   # free-flight boost starts when the opponent is farther than this ...
+ const BOOST_FAR: float = 12000.0   # ... and is full at this separation
+ const COL: float = 32.0        # terrain column width (0.43 fighter heights)
+-const PLANET_NC: int = 4800    # the planet's circumference in columns: fixed (the planet is 4,800 columns round whatever the arena is)
++const PLANET_NC_MEDIUM: int = 4800   # medium, today's planet: 4,800 columns round
++static var PLANET_NC: int = 4800     # the planet's circumference in columns: a match's setting (WorldPlanetSize; setPlanet at the top of newMatch), medium unless its setup names a size. The arena is never longer
+ ## The arena's length (docs/world/shifting-arena-design.md): the planet's great circle by default, or a smaller ring of a planet's plane through the pair. Set once at the top
+ ## of newMatch from setup.arena (its columns), so a match always sets it and none is stale; absent means the planet's own 4,800.
+ static var W: float = 9600.0 * PS   # the arena's length: x wraps into [0, W)
+@@ -26,6 +27,12 @@
+ static var HALF: float = 9600.0 * PS / 2.0    # the largest shortest-arc separation
+ 
+ 
++## The planet's size for this match (World, docs/world/planet-sizes.md): its columns round. COL does not change, so a bigger planet is more ground and a smaller one less. Medium is byte for byte today's.
++static func setPlanet(cols: int) -> void:
++	PLANET_NC = cols
++	SimField.R = float(cols) * COL / SimMathx.TAU
++
++
+ static func setArena(cols: int) -> void:
+ 	NC = cols
+ 	W = float(cols) * COL
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -11,6 +11,7 @@
+ var dt: float = 0.0
+ var rng: SimRng = SimRng.new(7)
+ var game := Game.new()
++var planetNC: int = 4800             # World: this match's planet size in columns round (SimConst.setPlanet), kept like arenaCols and set again by step. Not hashed: the setup's planetSize is in the match's key, and the planet's own numbers are in the state
+ var arenaCols: int = 4800            # World: this match's arena length in columns (SimConst.setArena; newMatch sets it, step sets the static again when another match has changed it). Not hashed
+ var planetCols := PackedByteArray()  # World: this match's planet world's biome by column (WorldBiomes.planetCols), kept for the same reason; empty for the hand-made world. Not hashed
+ var planetGen: int = 0               # World: the generation this match's planet is made by (WorldClimate.curGen: 0 is the data's, 1 or 2 a setup's), kept like planetCols and set again by step. Not hashed
+--- a/sim/core/sim.gd
++++ b/sim/core/sim.gd
+@@ -108,6 +108,7 @@
+ 			return true
+ 		pieces += 1
+ 		if phase > 0:   # the match's statics, as the head set them (another sim may have stepped since)
++			SimConst.setPlanet(S.planetNC)
+ 			SimConst.setArena(S.arenaCols)
+ 			WorldBiomes.planetCols = planetCols
+ 			WorldBiomes.fineCols = fineCols
+@@ -158,7 +159,9 @@
+ 		DirAI.level = DirAI.levelOf(setup)
+ 	S.game.seed = float(J.seed & 0xFFFFFFFF)
+ 	S.rng = SimRng.new(J.seed & 0xFFFFFFFF)
+-	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
++	S.planetNC = WorldPlanetSize.colsOf(setup)   # the planet's size in columns (World, data/biomes/sizes.json): medium's 4,800 unless the setup names a size
++	SimConst.setPlanet(S.planetNC)
++	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's own round (the size's cap past big)
+ 	SimConst.setArena(S.arenaCols)
+ 	WorldBiomes.planetCols = PackedByteArray()
+ 	WorldBiomes.fineCols = PackedByteArray()
+@@ -318,7 +321,7 @@
+ static func _arenaCols(setup: Dictionary) -> int:
+ 	var arena = setup.get("arena", null)
+ 	if arena == null:
+-		return SimConst.PLANET_NC
++		return mini(SimConst.PLANET_NC, WorldPlanetSize.arenaCap(SimConst.PLANET_NC))
+ 	var n = arena.get("cols", null) if arena is Dictionary else null
+ 	var ok: bool = setup.has("planet") and (n is int or n is float) and float(n) == floorf(float(n)) and float(n) >= 600.0 and float(n) <= float(SimConst.PLANET_NC) and int(n) % 8 == 0
+ 	if not ok:
+@@ -339,6 +342,8 @@
+ 
+ 
+ static func _step(S: SimState, inputs) -> bool:
++	if SimConst.PLANET_NC != S.planetNC:
++		SimConst.setPlanet(S.planetNC)
+ 	if SimConst.NC != S.arenaCols or WorldBiomes.worldId != S.worldId:   # the arena's length and a planet's biomes are statics: a match takes its own again, whatever another match has built since (two sims alive in one process)
+ 		SimConst.setArena(S.arenaCols)
+ 		WorldBiomes.planetCols = S.planetCols
+--- a/sim/core/field.gd
++++ b/sim/core/field.gd
+@@ -97,7 +97,7 @@
+ 
+ ## The hash a gen 3 setup adds to the replay's data and so to the match key: the bake's, and keySample seeded canonical nodes', each read fresh from the planet's function and as this machine holds it, so a build that computes the field differently, or a cache that stale, is refused at the handshake. Finishes the bake if it isn't yet (a replay's header, a tool's); a host's load has done it.
+ static func keyHash(seed: int, gen: int = 3) -> String:
+-	var k: int = seed * 4 + gen
++	var k: int = (seed * 4 + gen) ^ ((SimConst.PLANET_NC - SimConst.PLANET_NC_MEDIUM) << 40)   # the planet's size is in the key (medium's is as it was)
+ 	var c = _keyOf.get(k)
+ 	if c != null:
+ 		return c

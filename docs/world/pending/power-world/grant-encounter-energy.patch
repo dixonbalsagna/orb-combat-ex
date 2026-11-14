@@ -1,6 +1,8 @@
+diff --git a/sim/director/arc.gd b/sim/director/arc.gd
+index f2ec855..1b67173 100644
 --- a/sim/director/arc.gd
 +++ b/sim/director/arc.gd
-@@ -107,7 +107,7 @@
+@@ -107,7 +107,7 @@ static func _impact(S: SimState, f, c: Dictionary, g: float) -> void:
  	var by = f.launchBy
  	var tier: float = float(by.tier) if by != null else 4.0
  	var n: int = S.craters.size()
@@ -9,9 +11,11 @@
  	f.hopped = true
  	if S.craters.size() > n:
  		_blast(S, f.x, f.z, float(S.craters[S.craters.size() - 1].r), by, c)
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index 0392f3e..6c2ac48 100644
 --- a/sim/director/brawl.gd
 +++ b/sim/director/brawl.gd
-@@ -1934,7 +1934,7 @@
+@@ -1975,7 +1975,7 @@ static func _popTick(S: SimState) -> void:
  			if spk:
  				_ls(f, LA_POP_SPK, 0)
  				var by = SimRoster.opp(S, f)

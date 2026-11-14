@@ -1,0 +1,98 @@
+# Verdict lines of the World checks (85 listed in tools/world-checks.json) and the director and core subset, on the final tree (main + cd05 + bystanders + grants), never more than three Godot jobs at once
+cross_check: CROSS: 0 check(s) failed
+two_states_check: PASS  0 failure(s)
+arc_check: ARC: 0 check(s) failed
+building_read: (no verdict line: exit 0, no script error)
+floorlift_check: FLOORLIFT: 0 check(s) failed
+launch_cuts_check: LAUNCH CUTS: 0 check(s) failed
+loader_check: (no verdict line: exit 0, no script error)
+sigvariants_check: sigvariants check passed
+swing_check: SWING: 0 check(s) failed
+after_check: AFTER: 0 check(s) failed
+arena_check: ARENA: 0 check(s) failed
+b_check: B: 0 check(s) failed
+beam_grid_check: BEAMGRID: 0 check(s) failed
+blastcheck: BLAST: 0 check(s) failed
+blockcheck: BLOCK: 0 check(s) failed
+brunt_check: BRUNT: 0 check(s) failed
+burial_check: BURIAL: 0 check(s) failed
+bystanders_check: BYSTANDERS: 0 check(s) failed
+calm_read_check: CALMREAD: 0 check(s) failed
+campaign_check: CAMPAIGN: 0 check(s) failed
+climate_check: CLIMATE: 0 check(s) failed
+collateral_check: COLLATERAL: 0 check(s) failed
+control_check: CONTROL: 0 check(s) failed
+craters_check: CRATERS CHECK: 0 failed
+deepencheck: DEEPEN: 0 check(s) failed
+demostart_check: DEMOSTART: 0 check(s) failed
+density_check: DENSITY: 0 check(s) failed
+depthreads_check: DEPTHREADS: 0 check(s) failed
+directcheck: DIRECT: 0 check(s) failed
+epoch_check: EPOCH: 0 check(s) failed
+everywhere_check: EVERYWHERE: 0 check(s) failed
+far_check: FAR: 0 check(s) failed
+far_people_check: FARPEOPLE: 0 check(s) failed
+farmap_check: FARMAP: 0 check(s) failed
+farsites_check: FARSITES: 0 check(s) failed
+field_cache_check: FIELDCACHE: 0 check(s) failed
+field_check: FIELD: 0 check(s) failed
+field_crack_check: FIELDCRACK: 0 check(s) failed
+field_crater_check: FIELDCRATER: 0 check(s) failed
+field_load_check: FIELDLOAD: 0 check(s) failed
+field_lot_check: FIELDLOT: 0 check(s) failed
+field_plan_check: FIELDPLAN: 0 check(s) failed
+field_records_check: FIELDRECORDS: 0 check(s) failed
+field_scorch_check: FIELDSCORCH: 0 check(s) failed
+field_trench_check: FIELDTRENCH: 0 check(s) failed
+field_water_check: FIELDWATER: 0 check(s) failed
+fill_check: FILL: 0 check(s) failed
+fire_check: FIRE: 0 check(s) failed
+floor_check: FLOOR: 0 check(s) failed
+floor_walk_probe: FLOORWALK: 0 check(s) failed
+gen2_state_check: STATE: 0 check(s) failed
+ground_check: GROUND: 0 check(s) failed (after the re-pin; it was 2 before it)
+ground_props_check: GROUNDPROPS: 0 check(s) failed
+host_check: HOST: 0 check(s) failed
+interior_check: INTERIOR: 0 check(s) failed
+isect_check: ISECT: 0 check(s) failed
+lakes_check: LAKES: 0 check(s) failed
+land_check: LAND: 0 check(s) failed
+landmark_spare_check: LANDMARKSPARE: 0 check(s) failed
+lane_check: LANES: 0 check(s) failed
+lot_reach_check: LOTREACH: 0 check(s) failed
+meteor_crater_check: METEORCRATER: 0 check(s) failed
+minecheck: MINE: 0 check(s) failed
+node_warm_check: NODEWARM: 0 check(s) failed
+noise_check: NOISE: 0 check(s) failed
+places_cache_check: PLACESCACHE: 0 check(s) failed
+planet_cache_check: PLANETCACHE: 0 check(s) failed
+planet_check: PLANET: 0 check(s) failed
+planet_world_check: PLANETWORLD: 0 check(s) failed
+power_world_check: POWERWORLD: 0 check(s) failed
+props_check: PROPS: 0 check(s) failed
+props_wet_check: PROPSWET: 0 check(s) failed
+relax_check: RELAX: 0 check(s) failed
+repeat_check: REPEAT: 0 check(s) failed
+ringpick_check: RINGPICK: 0 check(s) failed
+rivers_check: RIVERS: 0 check(s) failed
+sea_rules_check: SEARULES: 0 check(s) failed
+sites_check: SITES: 0 check(s) failed
+skate_check: SKATE: 0 check(s) failed
+stagecheck: STAGE: 0 check(s) failed
+step_check: STEP: 0 check(s) failed
+store_check: STORE: 0 check(s) failed
+street_axis_check: STREETAXIS: 0 check(s) failed
+struggle_dir_check: STRUGGLEDIR: 0 check(s) failed
+struggle_meet_check: STRUGGLEMEET: 0 check(s) failed
+surface_check: SURFACE: 0 check(s) failed
+surface_follow_check: SURFFOLLOW: 0 check(s) failed
+switchon_check: SWITCHON: 0 check(s) failed
+through_check: THROUGH: 0 check(s) failed
+wall_check: WALL: 0 check(s) failed
+wall_hold_check: WALLHOLD: 0 check(s) failed
+water_read_check: WATERREAD: 0 check(s) failed
+water_warm_check: WATERWARM: 0 check(s) failed
+wrecks_check: WRECKS: 0 check(s) failed
+
+ground_check: re-pinned from the stack (ground-check-pins-from-the-stack.txt), then GROUND: 0 check(s) failed
+cross_check: CROSS: 0 check(s) failed after the outside-shooter rows

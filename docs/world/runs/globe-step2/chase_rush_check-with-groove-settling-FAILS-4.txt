@@ -1,0 +1,26 @@
+
+seed 1, 0 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.244, jolt 0.153 (tick 96 split), size down to 0.063; cuts {  }; player off his picture 0 ticks, rival 20; split > swing > split > swing > split
+FAIL seed 1, 0 after the send, 1 taps, share 0.7: a jolt of 0.153 (tick 96 split)
+seed 1, 8 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.237, jolt 0.138 (tick 96 split), size down to 0.062; cuts {  }; player off his picture 0 ticks, rival 6; split
+FAIL seed 1, 8 after the send, 1 taps, share 0.7: a jolt of 0.138 (tick 96 split)
+seed 1, 20 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.248, jolt 0.137 (tick 96 split), size down to 0.060; cuts {  }; player off his picture 0 ticks, rival 35; split
+FAIL seed 1, 20 after the send, 1 taps, share 0.7: a jolt of 0.137 (tick 96 split)
+seed 1, 8 after the send, 1 taps, share 0.0: SMASH ACROSS at 5376, 1 catches; step 0.228, jolt 0.095 (tick 96 split), size down to 0.062; cuts {  }; player off his picture 0 ticks, rival 14; split
+seed 2, 0 after the send, 4 taps, share 0.7: SMASH ACROSS at 5376, 3 catches; step 0.244, jolt 0.153 (tick 96 split), size down to 0.063; cuts {  }; player off his picture 0 ticks, rival 28; split > swing > split > swing > split
+FAIL seed 2, 0 after the send, 4 taps, share 0.7: a jolt of 0.153 (tick 96 split)
+energy model, base, seed 1, 0 after the send, 1 taps, share 0.7: UPPERCUT at 2002, 1 catches; step 0.032, jolt 0.006 (tick 79 closing), size down to 0.080; cuts {  }; player off his picture 0 ticks, rival 0; split > closing > merged
+energy model, base, seed 1, 8 after the send, 1 taps, share 0.7: UPPERCUT at 2002, 1 catches; step 0.034, jolt 0.006 (tick 128 merged), size down to 0.079; cuts {  }; player off his picture 0 ticks, rival 0; split > closing > merged
+energy model, base, seed 1, 20 after the send, 1 taps, share 0.7: UPPERCUT at 2002, 1 catches; step 0.041, jolt 0.006 (tick 151 merged), size down to 0.074; cuts {  }; player off his picture 0 ticks, rival 0; split > closing > merged > opening > split
+energy model, base, seed 1, 8 after the send, 1 taps, share 0.0: UPPERCUT at 2002, 1 catches; step 0.036, jolt 0.007 (tick 67 split), size down to 0.079; cuts {  }; player off his picture 0 ticks, rival 0; split > closing > merged
+energy model, base, seed 2, 0 after the send, 4 taps, share 0.7: UPPERCUT at 2002, 4 catches; step 0.032, jolt 0.006 (tick 111 merged), size down to 0.092; cuts {  }; player off his picture 0 ticks, rival 0; split > closing > merged
+energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: HIGH ARC at 9777, 0 catches; step 0.049, jolt 0.022 (tick 63 closing), size down to 0.005; cuts {  }; player off his picture 0 ticks, rival 43; split > closing > merged
+energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: HIGH ARC at 9777, 0 catches; step 0.048, jolt 0.018 (tick 64 closing), size down to 0.005; cuts {  }; player off his picture 0 ticks, rival 43; split > closing > merged
+energy model, top power, seed 1, 20 after the send, 1 taps, share 0.7: HIGH ARC at 9777, 0 catches; step 0.029, jolt 0.012 (tick 71 closing), size down to 0.004; cuts {  }; player off his picture 0 ticks, rival 43; split > closing > merged
+energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: HIGH ARC at 9777, 0 catches; step 0.047, jolt 0.021 (tick 72 closing), size down to 0.005; cuts {  }; player off his picture 5 ticks, rival 43; split > closing > merged
+energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: HIGH ARC at 9777, 0 catches; step 0.049, jolt 0.022 (tick 63 closing), size down to 0.004; cuts { "side_swap": 1 }; player off his picture 0 ticks, rival 43; split > closing > merged > opening > split > swing
+energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: BUILDING SMASH at 7001, 1 catches; step 0.201, jolt 0.106 (tick 78 split), size down to 0.068; cuts {  }; player off his picture 0 ticks, rival 42; split
+energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: BUILDING SMASH at 7001, 1 catches; step 0.197, jolt 0.111 (tick 80 split), size down to 0.068; cuts {  }; player off his picture 0 ticks, rival 36; split
+energy model, top power, seed 1, 20 after the send, 1 taps, share 0.7: BUILDING SMASH at 7001, 1 catches; step 0.122, jolt 0.045 (tick 81 split), size down to 0.067; cuts {  }; player off his picture 0 ticks, rival 10; split
+energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: BUILDING SMASH at 7001, 1 catches; step 0.199, jolt 0.081 (tick 79 split), size down to 0.068; cuts {  }; player off his picture 2 ticks, rival 17; split
+energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: BUILDING SMASH at 7001, 2 catches; step 0.201, jolt 0.106 (tick 78 split), size down to 0.068; cuts {  }; player off his picture 0 ticks, rival 81; split
+chase_rush_check: 130 checks, 4 failed

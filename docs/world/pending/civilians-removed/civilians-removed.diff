@@ -1,0 +1,124 @@
+diff --git a/sim/world/collateral.gd b/sim/world/collateral.gd
+index 6abbf45..00afd44 100644
+--- a/sim/world/collateral.gd
++++ b/sim/world/collateral.gd
+@@ -213,2 +213,13 @@ static func placesReached(S: SimState) -> Dictionary:
+ 
++## QA's civilians-removed run (Legal RL-244 condition 4, RL-215 to RL-217; docs/world/civilians-removed.md): a setup with `"civilians": false` has no people anywhere, in the first ring or in a far place: every building's people, its
++## flight record and the lure histogram are zero, so nothing that reads people (a casualty, an evacuation, a lure, the meters they feed) has anything to read. `pop0` stays what it was, so the meters' scale is the same as in the match
++## with people and the two runs differ only by the people (`present`, the budget's basis, stays too). Off by default (no key, or true).
++static func removeCivilians(S: SimState) -> void:
++	for b in S.buildings:
++		b.pop = 0.0
++		b.popAlive = 0.0
++		b.fled = 0.0
++	S.popHist.fill(0.0)
++
++
+ ## Start of a match, after the buildings exist: the window, the state and the lure histogram.
+diff --git a/sim/world/planet_world.gd b/sim/world/planet_world.gd
+index 98a6119..ad7625b 100644
+--- a/sim/world/planet_world.gd
++++ b/sim/world/planet_world.gd
+@@ -328,2 +328,4 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
+ 	WorldCollateral.init(S)
++	if setup.get("civilians", true) == false:   # QA's civilians-removed run (RL-244): the same match with no people (docs/world/civilians-removed.md)
++		WorldCollateral.removeCivilians(S)
+ 	var spec: Dictionary = specOf(sl.circ)
+diff --git a/sim/world/tools/civilians_removed_check.gd b/sim/world/tools/civilians_removed_check.gd
+new file mode 100644
+index 0000000..12d603f
+--- /dev/null
++++ b/sim/world/tools/civilians_removed_check.gd
+@@ -0,0 +1,83 @@
++extends SceneTree
++# QA's civilians-removed run (World, sim/world/collateral.gd removeCivilians, sim/world/planet_world.gd; Legal RL-244 condition 4; docs/world/civilians-removed.md): a setup with "civilians": false has no people; with the key
++# absent or true nothing changes; the buildings, the terrain and pop0 are the same either way, so the two runs differ only by the people.
++#   godot --headless --path . --script res://sim/world/tools/civilians_removed_check.gd -- [--planet=7] [--touch=1]
++var fails: int = 0
++
++
++func ok(cond: bool, what: String) -> void:
++	if cond:
++		print("  ok   ", what)
++	else:
++		fails += 1
++		print("  FAIL ", what)
++
++
++func _match(planet: int, touch: int, setup_extra: Dictionary) -> SimState:
++	WorldClimate.useGen(3)
++	WorldPlan.everywhereOverride = 1
++	WorldPlanet.forget()
++	var su := {"intro": false, "planet": planet, "touch": touch, "planetGen": 3}
++	su.merge(setup_extra)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, su)
++	for i in range(30):
++		SimCore.step(S)
++	return S
++
++
++func _people(S: SimState) -> float:
++	var n: float = 0.0
++	for b in S.buildings:
++		n += float(b.pop) + float(b.popAlive)
++	return n
++
++
++func _init() -> void:
++	var planet: int = 7
++	var touch: int = 1
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--planet="):
++			planet = int(a.substr(9))
++		elif a.begins_with("--touch="):
++			touch = int(a.substr(8))
++	var plans: Dictionary = WorldField.data().get("plans", {})
++	var keep_fp = plans.get("farPeople", false)
++	plans["farPeople"] = true
++	var A := _match(planet, touch, {})
++	var B := _match(planet, touch, {"civilians": true})
++	var C := _match(planet, touch, {"civilians": false})
++	ok(_people(A) > 100.0 and _people(A) == _people(B), "with the key absent or true there are people (%.0f) and nothing changes" % _people(A))
++	ok(str(SimHash.stateHash(A).gameplay) == str(SimHash.stateHash(B).gameplay), "a setup with civilians true is the same match as one without the key")
++	ok(_people(C) == 0.0, "with civilians false no building holds a person (pop and popAlive, first ring and far places: %.0f)" % _people(C))
++	var hist: float = 0.0
++	for v in C.popHist:
++		hist += v
++	ok(hist == 0.0, "and the lure histogram is empty")
++	ok(C.world.pop0 == A.world.pop0 and C.world.present == A.world.present, "pop0 and the budget's basis are what they were (%.0f), so the meters keep their scale" % C.world.pop0)
++	var same: bool = C.buildings.size() == A.buildings.size()
++	for i in range(mini(C.buildings.size(), A.buildings.size())):
++		var a = A.buildings[i]
++		var c = C.buildings[i]
++		if a.x != c.x or a.w != c.w or a.h != c.h or a.maxhp != c.maxhp or a.z != c.z:
++			same = false
++	ok(same, "the buildings are the same (%d, places, sizes, hit points)" % C.buildings.size())
++	var gdiff: bool = false
++	for i in range(0, SimConst.NC, 97):
++		if WorldTerrain.baseAt(A, i) != WorldTerrain.baseAt(C, i):
++			gdiff = true
++	ok(not gdiff, "and so is the ground")
++	# a blast over the first ring kills nobody
++	var bx: float = 0.0   # the most peopled building of the first ring
++	var best: float = -1.0
++	for i in range(A.bFirst):
++		if A.buildings[i].popAlive > best:
++			best = A.buildings[i].popAlive
++			bx = A.buildings[i].x
++	WorldStructures.damageArea(C, bx, 100.0, 3000.0, 1.0e6, C.fighters[0], false, 0.0, -1, 0.0, 1.0)
++	WorldStructures.damageArea(A, bx, 100.0, 3000.0, 1.0e6, A.fighters[0], false, 0.0, -1, 0.0, 1.0)
++	ok(C.world.casualties == 0.0 and C.world.evacuated == 0.0, "a blast over the town takes no one in the run without people (%.0f lost, %.0f fled)" % [C.world.casualties, C.world.evacuated])
++	ok(A.world.casualties > 0.0 or A.world.evacuated > 0.0, "control: the same blast takes people in the run with them (%.0f lost, %.0f fled)" % [A.world.casualties, A.world.evacuated])
++	plans["farPeople"] = keep_fp
++	print("CIVILIANSREMOVED: %d check(s) failed" % fails)
++	quit(0 if fails == 0 else 1)
+diff --git a/tools/world-checks.json b/tools/world-checks.json
+index f00386a..f0e53cb 100644
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -6,2 +6,3 @@
+     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
++    "civilians_removed_check",
+     "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",

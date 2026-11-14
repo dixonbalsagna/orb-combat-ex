@@ -1,0 +1,6 @@
+Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+ok    act rule and time cap
+      9 matches, 174798 ticks: every per-tick digest and full-state checkpoint identical
+      3 slices, 3 tick-0 states, a planet match of 3600 ticks: identical
+time  266.5 s
+golden check passed

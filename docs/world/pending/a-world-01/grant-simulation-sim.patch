@@ -1,0 +1,10 @@
+--- a/sim/core/sim.gd
++++ b/sim/core/sim.gd
+@@ -72,6 +72,7 @@
+ ## between two pieces does not change it. A setup refused (SimPlanetLoad.strict, a gen 2 planet not made) is a job done at
+ ## once that touched nothing.
+ static func beginMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> MatchJob:
++	setup = WorldDefault.apply(setup, seed, true)   # a setup that names no planet plays the world the data says (data/biomes/world.json: the hand-made arena until GW1a, then the one fixed planet: tests and headless matches never draw); an explicit planet or world: "arena" wins. The host's quick match draws its planet itself (WorldDefault.part) and names it
+ 	var j := MatchJob.new()
+ 	j.S = S
+ 	j.seed = seed

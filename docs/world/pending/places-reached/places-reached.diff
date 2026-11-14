@@ -1,0 +1,205 @@
+diff --git a/data/biomes/field.json b/data/biomes/field.json
+index 7d00b44..dd061f5 100644
+--- a/data/biomes/field.json
++++ b/data/biomes/field.json
+@@ -20,3 +20,4 @@
+     "farReach": 9000,
+-    "farShare": 1.0
++    "farShare": 1.0,
++    "placesReached": {"firstRing": "all", "far": "posed"}
+   },
+diff --git a/sim/world/collateral.gd b/sim/world/collateral.gd
+index 07a6c18..6abbf45 100644
+--- a/sim/world/collateral.gd
++++ b/sim/world/collateral.gd
+@@ -157,2 +157,58 @@ static func wakeFar(S: SimState) -> void:
+ 
++## The data's rule for which places are REACHED (field.json plans.placesReached: firstRing "all", far "posed"), fixed before a read and never chosen after (Legal RL-244 condition 1; docs/world/places-reached.md).
++static func placesReachedRule() -> Dictionary:
++	var r: Variant = WorldField.data().get("plans", {}).get("placesReached", {})
++	return r if r is Dictionary else {}
++
++
++## The places the fight has reached and their people, for QA's civilian band (12 to 30% of the people in the places reached; the whole planet's total beside it, information only: RL-244, RL-228). A pure read: nothing is written and
++## nothing is hashed. The rule (placesReachedRule): the first ring's places count from tick 0; a far place counts once it is posed (wakeFar: a fighter has come within plans.farReach of its first building, tested every 30 ticks),
++## and then all of its people count. Returns {"rule", "places": [{place, far, reached, pop, alive, lost}], "pop", "lost" (the people in the places reached and the people lost there), "whole", "wholeLost" (the whole planet)}.
++## A first-ring place's own loss is not kept per place (the toll is one number, S.world.casualties), so its "lost" is -1 and the first ring's loss is that number; a far place's loss is its people less those alive (no one in a far place
++## flees: the far branch of kill() only removes them). Far places hold people only with plans.farPeople on.
++static func placesReached(S: SimState) -> Dictionary:
++	var rule: Dictionary = placesReachedRule()
++	var out := {"rule": rule, "places": [], "pop": 0.0, "lost": 0.0, "whole": 0.0, "wholeLost": 0.0}
++	var n: int = S.buildings.size()
++	var info: Array = [-1, [], S.buildings.size(), 0.0]
++	if not S.fieldRecs.is_empty():
++		info = _farInfo(S)
++		if int(info[0]) >= 0:
++			n = int(info[0])
++	var first: Dictionary = {}   # the first ring's places in order of first building
++	for bi in range(n):
++		var b = S.buildings[bi]
++		var pid: int = int(b.place)
++		if not first.has(pid):
++			first[pid] = {"place": pid, "far": false, "reached": String(rule.get("firstRing", "all")) == "all", "pop": 0.0, "alive": 0.0, "lost": -1.0}
++		first[pid].pop += float(b.pop)
++		first[pid].alive += float(b.popAlive)
++	for pid in first:
++		out.places.append(first[pid])
++	var ring_pop: float = S.world.pop0
++	var ring_lost: float = S.world.casualties
++	out.whole += ring_pop
++	out.wholeLost += ring_lost
++	if String(rule.get("firstRing", "all")) == "all":
++		out.pop += ring_pop
++		out.lost += ring_lost
++	var far_rule: bool = String(rule.get("far", "posed")) == "posed"
++	var pl: Array = info[1]
++	for k in range(pl.size()):
++		var p: Dictionary = pl[k]
++		var alive: float = 0.0
++		for bi in range(int(p.first), int(p.first) + int(p.count)):
++			alive += float(S.buildings[bi].popAlive)
++		var pop: float = float(p.pop)
++		var reached: bool = far_rule and k < 62 and ((S.world.farMask >> k) & 1) == 1
++		var lost: float = maxf(0.0, pop - alive) if (k < 62 and ((S.world.farMask >> k) & 1) == 1) else 0.0   # a place not posed is asleep (its people are not yet there), not lost
++		out.places.append({"place": int(p.place), "far": true, "reached": reached, "pop": pop, "alive": alive, "lost": lost})
++		out.whole += pop
++		out.wholeLost += lost
++		if reached:
++			out.pop += pop
++			out.lost += lost
++	return out
++
++
+ ## Start of a match, after the buildings exist: the window, the state and the lure histogram.
+diff --git a/sim/world/tools/places_reached_check.gd b/sim/world/tools/places_reached_check.gd
+new file mode 100644
+index 0000000..dbb3725
+--- /dev/null
++++ b/sim/world/tools/places_reached_check.gd
+@@ -0,0 +1,110 @@
++extends SceneTree
++# The places the fight has reached, for QA's civilian band (World, sim/world/collateral.gd placesReached, data/biomes/field.json plans.placesReached; Legal RL-244; docs/world/places-reached.md): the rule is data;
++# the first ring's places count from tick 0 and a far place once it is posed, then all its people; the whole planet's total is reported beside it; reading it writes and hashes nothing.
++#   godot --headless --path . --script res://sim/world/tools/places_reached_check.gd -- [--planet=7] [--touch=1]
++var fails: int = 0
++
++
++func ok(cond: bool, what: String) -> void:
++	if cond:
++		print("  ok   ", what)
++	else:
++		fails += 1
++		print("  FAIL ", what)
++
++
++func _init() -> void:
++	var planet: int = 7
++	var touch: int = 1
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--planet="):
++			planet = int(a.substr(9))
++		elif a.begins_with("--touch="):
++			touch = int(a.substr(8))
++	var plans: Dictionary = WorldField.data().get("plans", {})
++	var rule: Dictionary = WorldCollateral.placesReachedRule()
++	ok(String(rule.get("firstRing", "")) == "all" and String(rule.get("far", "")) == "posed", "the rule is in the data: the first ring from tick 0, a far place once posed (%s)" % str(rule))
++	var keep_fp = plans.get("farPeople", false)
++	plans["farPeople"] = true   # far places hold people for this check
++	WorldClimate.useGen(3)
++	WorldPlan.everywhereOverride = 1
++	WorldPlanet.forget()
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"intro": false, "planet": planet, "touch": touch, "planetGen": 3})
++	for i in range(30):
++		SimCore.step(S)
++	# undo the wake the first ticks did (a fighter was already near a far place), so the start is the first ring alone
++	var info0: Array = WorldCollateral._farInfo(S)
++	for pk in info0[1]:
++		for bi in range(int(pk.first), int(pk.first) + int(pk.count)):
++			S.buildings[bi].popAlive = 0.0
++	S.world.farMask = 0
++	var h0: String = str(SimHash.stateHash(S).gameplay)
++	var r0: Dictionary = WorldCollateral.placesReached(S)
++	var first_n: int = 0
++	var first_pop: float = 0.0
++	var far_n: int = 0
++	var far_pop: float = 0.0
++	for p in r0.places:
++		if p.far:
++			far_n += 1
++			far_pop += p.pop
++		else:
++			first_n += 1
++			first_pop += p.pop
++	ok(first_n >= 1 and far_n >= 10, "the planet has %d first-ring places and %d far places" % [first_n, far_n])
++	ok(absf(first_pop - S.world.pop0) < 1.0e-6, "the first ring's places hold pop0 between them (%.0f of %.0f)" % [first_pop, S.world.pop0])
++	ok(far_pop > 0.0, "far places hold people with farPeople on (%.0f)" % far_pop)
++	ok(absf(r0.pop - S.world.pop0) < 1.0e-6 and r0.lost == S.world.casualties, "at the start only the first ring is reached: %.0f people, %.0f lost" % [r0.pop, r0.lost])
++	ok(absf(r0.whole - (S.world.pop0 + far_pop)) < 1.0e-6, "the whole planet's total is the first ring's and every far place's (%.0f)" % r0.whole)
++	# pose two far places and lose some of their people
++	var posed: Array = []
++	for k in range(r0.places.size()):
++		pass
++	var pl0: Array = WorldCollateral._farInfo(S)[1]
++	for kk in [0, 2]:   # pose two far places as wakeFar does: the bit, and their people there
++		for bi in range(int(pl0[kk].first), int(pl0[kk].first) + int(pl0[kk].count)):
++			S.buildings[bi].popAlive = S.buildings[bi].pop
++	S.world.farMask |= 1
++	S.world.farMask |= 4
++	var r1: Dictionary = WorldCollateral.placesReached(S)
++	var reached_far: Array = []
++	for p in r1.places:
++		if p.far and p.reached:
++			reached_far.append(p)
++	ok(reached_far.size() == 2, "two posed far places are reached (%d)" % reached_far.size())
++	var info: Array = WorldCollateral._farInfo(S)
++	var pl: Array = info[1]
++	var want_pop: float = S.world.pop0 + float(pl[0].pop) + float(pl[2].pop)
++	ok(absf(r1.pop - want_pop) < 1.0e-6, "the people in the places reached are the first ring's and the two places' (%.0f of %.0f)" % [r1.pop, want_pop])
++	# lose a third of the people of the second posed place, and a first-ring casualty
++	var lost_expect: float = 0.0
++	for bi in range(int(pl[2].first), int(pl[2].first) + int(pl[2].count)):
++		var b = S.buildings[bi]
++		var cut: float = b.popAlive / 3.0
++		b.popAlive -= cut
++		lost_expect += cut
++	S.world.casualties += 10.0
++	var r2: Dictionary = WorldCollateral.placesReached(S)
++	ok(absf(r2.lost - (S.world.casualties + lost_expect)) < 1.0e-6, "the loss in the places reached is the toll and what the far place lost (%.1f of %.1f)" % [r2.lost, S.world.casualties + lost_expect])
++	ok(r2.wholeLost >= r2.lost - 1.0e-9 and r2.whole > r2.pop, "the whole planet is reported beside it (%.0f people, %.1f lost; reached: %.0f, %.1f)" % [r2.whole, r2.wholeLost, r2.pop, r2.lost])
++	# a far place that is not posed does not count, whatever it lost
++	var unposed_lost: float = 0.0
++	for bi in range(int(pl[1].first), int(pl[1].first) + int(pl[1].count)):
++		S.buildings[bi].popAlive *= 0.5
++		unposed_lost += S.buildings[bi].pop * 0.5
++	var r3: Dictionary = WorldCollateral.placesReached(S)
++	ok(absf(r3.lost - r2.lost) < 1.0e-6 and absf(r3.pop - r2.pop) < 1.0e-6 and r3.whole == r2.whole, "a far place not posed is not in the places reached (its people are asleep, not lost), only in the whole planet's total")
++	# reading it writes nothing: put the state as it was and hash it again
++	S.world.farMask = 0
++	S.world.casualties -= 10.0
++	var S2 := SimCore.createSim()
++	SimCore.newMatch(S2, 1, {}, {"intro": false, "planet": planet, "touch": touch, "planetGen": 3})
++	for i in range(30):
++		SimCore.step(S2)
++	var h1: String = str(SimHash.stateHash(S2).gameplay)
++	WorldCollateral.placesReached(S2)
++	ok(h1 == str(SimHash.stateHash(S2).gameplay), "reading the places reached changes no state and no hash")
++	plans["farPeople"] = keep_fp
++	print("PLACESREACHED: %d check(s) failed" % fails)
++	quit(0 if fails == 0 else 1)
+diff --git a/tools/schemas/biomes-field.schema.json b/tools/schemas/biomes-field.schema.json
+index 7e02d31..738ae59 100644
+--- a/tools/schemas/biomes-field.schema.json
++++ b/tools/schemas/biomes-field.schema.json
+@@ -31,2 +31,3 @@
+         "farReach": { "type": "number", "minimum": 500, "maximum": 40000, "description": "A far place is posed (its people wake, and join the anguish's norm) when a fighter is within this many units of its first building." },
++        "placesReached": { "type": "object", "additionalProperties": false, "required": ["firstRing", "far"], "description": "Which places count as REACHED for QA's civilian band (Legal RL-244: a stated test, fixed in data before the read and never chosen after it): the first ring's places from tick 0 (all), a far place once it is posed (a fighter has come within farReach of its first building) and then all its people. WorldCollateral.placesReached reads it.", "properties": { "firstRing": { "enum": ["all"] }, "far": { "enum": ["posed"] } } },
+         "everywhere": { "type": "boolean", "description": "On, every place the first ring does not hold is laid too, as the whole of its plan, planet-fixed, with no people (docs/world/places-everywhere.md). Off, only the first ring's places stand." },
+diff --git a/tools/world-checks.json b/tools/world-checks.json
+index f00386a..075ef1f 100644
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -7,2 +7,3 @@
+     "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
++    "places_reached_check",
+     "land_check", "minecheck", "noise_check", "planet_check", "planet_world_check", "props_check", "repeat_check", "ringpick_check", "rivers_check", "sea_rules_check",

@@ -1,0 +1,77 @@
+
+slots and hash
+  ok    a gen 3 match has a frame (the planet store is the ground)
+  ok    a base blow digs a crater record
+  ok    its slots: supersedes nothing, dry, no repeats, material 0
+  ok    the same blow makes the same store hash
+  ok    a record's water level is folded into the hash
+  ok    a record's repeat count is folded into the hash
+  ok    the record it supersedes is folded into the hash
+  ok    a record is 16 numbers
+no shafts: 20 hits on one spot
+  ok    repeats 0: 20 hits leave the centre 78.3 deep, within 0.26 of the largest radius 356.0 (92.6); 1 dug a record, 19 were refused
+  ok    repeats 0: ... and it is a real crater (78.3 deep)
+  ok    repeats 0: a spot too dented to take another crater takes none (19 refused, no record, nothing superseded)
+  ok    repeats 2: 20 hits leave the centre 122.4 deep, within 0.26 of the largest radius 556.3 (144.6); 3 dug a record, 17 were refused
+  ok    repeats 2: ... and it is a real crater (122.4 deep)
+repeats
+  ok    the first base blow's radius is 356 ([356.0, 445.0, 556.25])
+  ok    the second and third grow it 1.25 times each ([356.0, 445.0, 556.25]), a max never a sum
+  ok    10 base hits on one spot: the largest crater is 556.3, under 560
+  ok    the two grown craters are superseded (2), the store is append-only (3 records)
+  ok    a superseded record adds nothing to the ground (skip it and nothing changes)
+  ok    the grown record counts its repeats (2)
+  ok    an ordinary blow on a 960-radius special crater supersedes nothing (it could dig only 600)
+  ok    repeats 0: nothing is superseded (the old behaviour, a crater a blow)
+  ok    repeats 0: no crater grows (largest 356.0)
+the furrow
+  ok    furrow off: a glancing blow makes its crater and nothing else (1 record)
+  ok    furrow on: a glancing blow makes its crater and a trench (2 records)
+  ok    ... which starts at the crater's centre (0.000 off)
+  ok    ... and is a third of the bowl's depth at most (19.7 of 56.4)
+  ok    furrow on, a straight-down blow: no trench (1 record)
+settling
+  ok    a steep wall is found (2.05 over 1.25)
+  ok    the bowl widens (235.8 from 200) and shallows (31.6 from 44)
+  ok    its volume is kept (R^2 d: 1760000.0 to 1760000.0)
+  ok    at the radius cap the bowl does not widen, and it only gets shallower (44.0)
+  ok    a bowl on level ground is left as it is
+  ok    a trench 100 deep and 32 wide is settled to 51.0 deep and 62.8 wide (wall 1.25, cross-section kept)
+  ok    a shallow trench is left as it is
+  ok    a trench record is stored settled (51.0 deep, 62.8 half width)
+  ok    with settle off a groove is stored as asked
+  ok    settle can be switched off in craters.json globe
+floor, ceiling and the kinds
+  ok    a bowl 5,000 deep reads the floor (-2,080)
+  ok    a heap is a cone, held to a slope of 1 in 1 (179.1 high on 300 radius)
+  ok    a merged mark reads as a crater (-40.0)
+  ok    a scar is a groove cut to its depth (-29.8 of 30)
+  ok    ... with a lip on the bank (11.95)
+  ok    a groove crossed again is no deeper than its target
+a groove through a rim
+  ok    across a trench through the rim of a 600-radius crater (rim 52.8), the ground never steps more than 9.0 in 8 units
+  ok    (the rim is high enough to have made the cliff: 52.8)
+water where it could come from (B1)
+  ok    a low coast is found on planet 7 (x 9300, ground 50.4)
+  ok    with the switch off a coastal crater holds no water
+  ok    with it on, a crater beside the sea holds water at the sea's level (0.0)
+  ok    ... and the pool is 81.6 deep at its centre (ground -81.6 under a level of 0)
+  ok    the world's water read (recordWater) sees it
+  ok    ... and the strip's native water at the crater's column holds it (79.9; the sea or a lake is not there)
+  ok    ... and with the switch off the same hole at the coast reads as the sea, as it did (79.9)
+  ok    an inland point is found (x 32250)
+  FAIL  an inland crater with no source holds no water
+  FAIL  ... and the flood reads nothing there
+  FAIL  ... and the strip's native water there is none: no sea in an inland hole however deep (132.0 deep, floor -46.8)
+  ok    (with the switch off the same hole reads as the sea, 46.8 deep: the sourceless water this removes)
+  ok    a hole under minDug looks for no source
+  ok    a trench cut on from the coast carries the sea's level along its length ([0.0, 0.0, 0.0])
+  ok    ... and the trench holds water where its floor is under the level (floor -80.6)
+  ok    a bowl dug in a flooded crater is handled
+  ok    ... and takes the level of the water it overlaps (0.0)
+  ok    the coastal records hold water (1)
+two peers
+  ok    after the rollback and the replay the stores are the same (5 records, hash -8071559848693062112)
+  ok    the ground reads the same in all 4800 columns on both peers (0 differ)
+  ok    ... and a third state that never rolled back (0 differ)
+GLOBE: 3 check(s) failed

@@ -1,0 +1,43 @@
+
+seed 1 planet 7: 16 records (3 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 2 planet 12: 22 records (2 craters, 20 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 3 planet 3: 15 records (1 craters, 1 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 4 planet 13: 41 records (3 craters, 11 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.312 of its radius
+seed 5 planet 17: 20 records (2 craters, 2 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.284 of its radius
+seed 6 planet 7: 55 records (2 craters, 36 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.280 of its radius
+seed 7 planet 12: 48 records (8 craters, 40 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.298 of its radius
+seed 8 planet 3: 19 records (4 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 9 planet 13: 51 records (4 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.290 of its radius
+seed 10 planet 17: 39 records (5 craters, 13 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 11 planet 7: 50 records (2 craters, 31 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.271 of its radius
+seed 12 planet 12: 18 records (3 craters, 1 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 13 planet 3: 45 records (4 craters, 24 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.302 of its radius
+seed 14 planet 13: 61 records (4 craters, 29 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.317 of its radius
+seed 15 planet 17: 55 records (4 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.281 of its radius
+seed 16 planet 7: 57 records (3 craters, 35 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 17 planet 12: 26 records (4 craters, 4 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.303 of its radius
+seed 18 planet 3: 48 records (4 craters, 12 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.287 of its radius
+seed 19 planet 13: 7 records (5 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 20 planet 17: 20 records (3 craters, 1 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.286 of its radius
+seed 21 planet 7: 28 records (3 craters, 12 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 22 planet 12: 42 records (2 craters, 21 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 23 planet 3: 23 records (2 craters, 21 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 24 planet 13: 21 records (4 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.301 of its radius
+seed 25 planet 17: 10 records (6 craters, 4 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.254 of its radius
+seed 26 planet 7: 48 records (3 craters, 11 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.290 of its radius
+seed 27 planet 12: 76 records (7 craters, 39 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.302 of its radius
+seed 28 planet 3: 36 records (4 craters, 1 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 29 planet 13: 32 records (1 craters, 17 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 30 planet 17: 53 records (3 craters, 19 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.294 of its radius
+seed 31 planet 7: 39 records (2 craters, 20 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.301 of its radius
+seed 32 planet 12: 21 records (4 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 33 planet 3: 21 records (5 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.295 of its radius
+seed 34 planet 13: 39 records (2 craters, 20 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.276 of its radius
+seed 35 planet 17: 42 records (4 craters, 7 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.295 of its radius
+seed 36 planet 7: 155 records (12 craters, 73 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.324 of its radius
+seed 37 planet 12: 98 records (7 craters, 47 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 38 planet 3: 11 records (3 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.282 of its radius
+seed 39 planet 13: 47 records (6 craters, 8 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.299 of its radius
+seed 40 planet 17: 30 records (4 craters, 0 trenches), 0 superseded, 0 steps over 1 bh (0 from the craters alone), the deepest crater relief when dug (ring against centre) 0.321 of its radius
+steps over 1 bh a match: total 0, worst 0, goal at most 6; deepest centre 0.324 of its radius (goal 0.26)
+GLOBEAUDIT: 0 match(es) over 6 steps, 0 with no marks

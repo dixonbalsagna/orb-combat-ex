@@ -1,135 +1,32 @@
---- a/sim/world/crater.gd
-+++ b/sim/world/crater.gd
-@@ -83,9 +83,10 @@
- 
- 
- ## sp is the unboosted speed: the launch's horizontal traversal factor is divided out before the energy is taken.
--static func impactEnergy(sp: float, tier: float) -> float:
-+## The energy of a body hitting the ground at speed sp: v squared, times (1 + IMPACT_TIER_E per tier above 1). With S given and its power model on (S.powerOn: docs/design/power-scale.md) the tier term is gone, since the level is already in the speed: one path, nothing counted twice.
-+static func impactEnergy(sp: float, tier: float, S: SimState = null) -> float:
- 	var v: float = sp / IMPACT_SPEED_REF
--	return v * v * (1.0 + IMPACT_TIER_E * (tier - 1.0))
-+	return v * v * (1.0 if (S != null and S.powerOn) else 1.0 + IMPACT_TIER_E * (tier - 1.0))
- 
- 
- static func powerupEnergy(tier: float) -> float:
-@@ -298,7 +299,7 @@
- 	var E: float = energy * (SPECIAL_E_MULT if special else (WorldCraters.meteorEMult() if meteor else 1.0))
- 	var NC: int = SimConst.NC
- 	var COL: float = SimConst.COL
--	var rcap: float = WorldCraters.meteorRMax() if meteor else (R_MAX if (special or kind == "powerup") else ORD_R_MAX)   # the meteor's own ladder (craters.json meteor): its size is data, so it can come down if the dig hitches
-+	var rcap: float = WorldCraters.meteorRMax() if meteor else (R_MAX if (special or kind == "powerup" or (S.powerOn and kind == "impact")) else ORD_R_MAX)   # the power model has no ordinary cap (power-scale.md: the level is already in the energy); the meteor's own ladder (craters.json meteor): its size is data, so it can come down if the dig hitches
- 	var R: float = minf(rcap, R_BASE * sqrt(E))
- 	var R0: float = R        # today's radius: the depth, its cap and the rim are today's bowl's times the material's factors
- 	var sD: float = 1.0      # the material's depth, rim and wall (craters.json); 1, 1, 1 is today's bowl exactly
---- a/sim/world/contact.gd
-+++ b/sim/world/contact.gd
-@@ -32,6 +32,7 @@
- static var K_SKIM_KEEP: float = 0.85
- static var K_SINK: float = 200.0
- static var K_MAXC: int = 8
-+static var K_MAXC_POWER: int = 3   # contact.json power.maxContacts: the ground contacts a send may make under the power model (a skim keeps K_MAXC)
- static var K_MAXT: int = 240
- static var K_TUMT: int = 72
- static var K_TAILT: int = 18
-@@ -211,6 +212,7 @@
- 	K_SKIM_KEEP = float(w.skimKeep)
- 	K_SINK = float(w.sinkBelow)
- 	K_MAXC = int(D.journey.maxContacts)
-+	K_MAXC_POWER = int(D.get("power", {}).get("maxContacts", 3))
- 	K_MAXT = _ticks(float(D.journey.maxSeconds))
- 	K_TUMT = _ticks(float(D.tumble.maxSeconds))
- 	K_TAILT = _ticks(float(D.tumble.cappedTail))
-@@ -639,7 +641,31 @@
- 		b.vy = SimMathx.jmin(b.vy, 0.0)
- 
- 
--static func _bounceCap(b: Body) -> int:
-+## The contacts after which a send tumbles to a stop on the ground: the journey's, or under the power model (S.powerOn) at most contact.json power.maxContacts, so a body does not rattle off bumps in the ground (Orb, first play): a hard landing digs,
-+## a shallow one skids and furrows, and what is left of the energy is spent in the slide. Water's skims keep the journey's.
-+static func _maxC(S: SimState) -> int:
-+	return mini(K_MAXC, K_MAXC_POWER) if S.powerOn else K_MAXC
-+
-+
-+static var _pwBounces: int = -1
-+
-+
-+## The most terrain bounces a send may take under the power model (data/fight/power.json contact.maxTerrainBounces, 1: Game Design, docs/design/power-scale.md; Orb: "I would have rather seen my fighter leave a crater or a trench").
-+## Read once; only a match with S.powerOn uses it.
-+static func _powerBounces() -> int:
-+	if _pwBounces < 0:
-+		_pwBounces = 1
-+		var f := FileAccess.open("res://data/fight/power.json", FileAccess.READ)
-+		if f != null:
-+			var j = JSON.parse_string(f.get_as_text())
-+			if j is Dictionary and j.get("contact") is Dictionary and (j.contact.get("maxTerrainBounces") is float or j.contact.get("maxTerrainBounces") is int):
-+				_pwBounces = maxi(0, int(j.contact.maxTerrainBounces))
-+	return _pwBounces
-+
-+
-+static func _bounceCap(S: SimState, b: Body) -> int:
-+	if S.powerOn:   # the power model: one bounce a send at most, whatever the tier, then he digs in or skids
-+		return _powerBounces()
- 	return int(K_PERTIER[clampi(int(b.tier), 1, 4) - 1])
- 
- 
-@@ -681,7 +707,7 @@
- 	# a steep landing is a slam at the first contact, and the landing after a hard slam's hop; a later steep landing after a bounce or a
- 	# lip launch is a bounce or a skid by the usual rules (a journey makes one mark)
- 	var slam: bool = sea or (sin2 >= K_SLAM2 and (first or wasHopped)) or (b.swallow and first)   # biomes W6: the marsh swallows the slam whatever its angle
--	var forceTumble: bool = b.contacts >= K_MAXC or b.t >= K_MAXT
-+	var forceTumble: bool = b.contacts >= _maxC(S) or b.t >= K_MAXT
- 	if S.ricOn and not sea and not forceTumble and SimRicochet.steepGround(s):   # Simulation's ricochet (sim/core/ricochet.gd): fast and shallow on steep ground, a glance
- 		var gl: PackedFloat64Array = SimRicochet.rule(vn, vt, b.rics)
- 		if int(gl[0]) == SimRicochet.GLANCE:
-@@ -701,7 +727,7 @@
- 	if slam:
- 		var hop: bool = (not sea) and sp >= K_HOPSPEED and not b.hopped and not b.swallow
- 		if hop and first and b.embedOK:   # a blow that will embed him digs in and stays there: no hop
--			var Ee: float = WorldCrater.impactEnergy(sp, b.tier) * (WorldCrater.SPECIAL_E_MULT if b.special else 1.0)
-+			var Ee: float = WorldCrater.impactEnergy(sp, b.tier, S) * (WorldCrater.SPECIAL_E_MULT if b.special else 1.0)
- 			var dEst: float = WorldCrater.radiusOf(Ee, b.special) * WorldCrater.DEPTH_RATIO * (WorldCrater.GRAZE_MIN + (1.0 - WorldCrater.GRAZE_MIN) * vertL) / 75.0
- 			if dEst >= K_EMB_MIN or (b.special and dEst >= K_EMB_SPECIAL):
- 				hop = false
-@@ -722,7 +748,7 @@
- 	if absf(vt) < 1.0e-6:
- 		dir = 1.0 if b.vx >= 0.0 else -1.0
- 	if not tumbleOnly:
--		var cap: int = _bounceCap(b)
-+		var cap: int = _bounceCap(S, b)
- 		if sin2 >= K_SKID2 and int(b.bounces) < cap:
- 			# a bounce: the normal part is reflected with the bounce's keep, the tangent part keeps its share
- 			var e: float = float(K_VKEEP[mini(int(b.bounces), K_VKEEP.size() - 1)]) * _gv(S, 2, b.x)
-@@ -796,7 +822,7 @@
- 	var xa: float = SimWrap.wrap(b.x + dir * vN2 * tv * SimDetMath.pow(0.55, dt) * dt)
- 	var yb: float = b.y + (vyT - 1000.0 * dt) * dt
- 	# past the journey's caps (8 contacts or 4 s) he tumbles to a stop: no more leaving the ground
--	var capNow: bool = b.contacts >= K_MAXC or b.t >= K_MAXT
-+	var capNow: bool = b.contacts >= _maxC(S) or b.t >= K_MAXT
- 	if not capNow and vN2 > 0.0 and yb - WorldTerrain.groundY(S, xa, b.z) > K_CLEAR:
- 		var cause: String = "crest"   # natural ground: a hill's or ridge's crest
- 		if S.rubble[int(floor(SimWrap.wrap(b.x) / SimConst.COL)) % SimConst.NC] > 0.0:
-@@ -1165,7 +1191,7 @@
- 	var first: bool = bool(e.first)
- 	f.contactT = 0
- 	var sea: bool = WorldTerrain.seaAt(S, f.x)
--	var E: float = WorldCrater.impactEnergy(sp, tier)
-+	var E: float = WorldCrater.impactEnergy(sp, tier, S)
- 	if first:
- 		f.slideE = E
- 		f.slideX0 = f.x
-@@ -1385,7 +1411,7 @@
- static func bump(S: SimState, f, by, kind: String, spN: float) -> float:
- 	var dmg: float = spN * WorldSlide.STOP_DMG
- 	if kind != "heap":
--		WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(spN, by.tier) * WorldSlide.STOP_E, by, "impact", 0.0, 1.0, false, f.z)
-+		WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(spN, by.tier, S) * WorldSlide.STOP_E, by, "impact", 0.0, 1.0, false, f.z)
- 	SimDamage.hurt(S, f, dmg, by)
- 	SimFx.shake(S, minf(10.0, spN * 0.004), f.x, f.z)
- 	SimFx.debris(S, f.x, f.y + 8.0, 3, "#6d6a66", 400.0, f.z)
+diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
+index 81ed24b..c62ae4f 100644
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -64,5 +64,6 @@
+   "interiorBounceTangent": 0.8,
+   "interiorLinkSpeed": 900.0,
+   "repeatMarks": 0,
+-  "repeatCraterGrow": 1.25
++  "repeatCraterGrow": 1.25,
++  "powerLowTowerMaxH": 1200.0
+ }
+diff --git a/data/biomes/contact.json b/data/biomes/contact.json
+index b505a28..6c14f3b 100644
+--- a/data/biomes/contact.json
++++ b/data/biomes/contact.json
+@@ -97,5 +97,6 @@
+     "biomes": ["city", "village"],
+     "dugBelow": -3.0
+   },
+-  "rubbleMin": 8.0
++  "rubbleMin": 8.0,
++  "power": {"maxContacts": 3}
+ }
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index 0d1d1a1..75a433a 100644
 --- a/sim/world/brunt.gd
 +++ b/sim/world/brunt.gd
-@@ -47,6 +47,8 @@
+@@ -47,6 +47,8 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
  	"interiorBounceSpeed": 900.0, "interiorBounceTanMin": 0.8391, "interiorBounceTanMax": 2.7475, "interiorBounceKeep": 0.45, "interiorBounceTangent": 0.8, "interiorLinkSpeed": 900.0,
  	# repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts and the most repeats a crater grows; repeatCraterGrow the radius factor a repeat asks
  	"repeatMarks": 0, "repeatCraterGrow": 1.25,
@@ -138,7 +35,7 @@
  }
  const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
  	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
-@@ -346,6 +348,72 @@
+@@ -346,6 +348,72 @@ static func _flightToSweptRead(S: SimState, x0: float, y0: float, vx0: float, vy
  	return {"ok": false}
  
  
@@ -211,7 +108,7 @@
  # ===================================================================== the outcome of one hit (pure)
  
  ## What hitting building b at height y with normalised speed spN and launcher tier does, without changing anything.
-@@ -356,6 +424,8 @@
+@@ -356,6 +424,8 @@ static func _flightToSweptRead(S: SimState, x0: float, y0: float, vx0: float, vy
  ## towerPunches already went through this flight (punched) holds the body, unless its covered floors have already taken giveWay times their
  ## own strength in damage (a building that remembers its walls): the held hit is a crack or a dent, the body comes off the face.
  static func outcomeOf(S: SimState, b, y: float, spN: float, tier: float, punched: int = 0, special: bool = false) -> Dictionary:
@@ -220,7 +117,7 @@
  	var c: Dictionary = cfg()
  	var ti: int = tierIx(tier, special)
  	var dmg: float = spN * float(c.tierFactor[ti]) * float(c.bruntMul)
-@@ -431,7 +501,9 @@
+@@ -431,7 +501,9 @@ static func outcomeDmg(S: SimState, b, y: float, dmg: float) -> Dictionary:
  	return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "crack", "pass": false, "keep": 0.0, "deaths": dead}
  
  
@@ -231,7 +128,7 @@
  	var c: Dictionary = cfg()
  	return float(c.chainSpecial) if special else float(c.chainMax[tierIx(tier, false)])
  
-@@ -466,7 +538,7 @@
+@@ -466,7 +538,7 @@ static func next(S: SimState, b, y: float, vx: float, vy: float, trav: float) ->
  ## ends inside it. A pure lookahead: nothing is changed.
  static func chainPlan(S: SimState, tier: float, special: bool, b, fr: Dictionary, trav: float) -> Array:
  	var out: Array = []
@@ -240,7 +137,37 @@
  	var cur = b
  	var r: Dictionary = fr
  	var t0: float = fr.t
-@@ -768,7 +840,7 @@
+@@ -512,6 +584,29 @@ static func chainDeaths(chain: Array) -> float:
+ 
+ # ===================================================================== candidates and aim (the planner's interface)
+ 
++## A four-row table (brunt.json tierFactor, lodgeSeconds) read at a place along its rows: row 0 to 3, a straight line between two rows.
++static func _tableAt(tbl: Array, row: float) -> float:
++	var i: int = clampi(int(floor(row)), 0, tbl.size() - 1)
++	var j: int = mini(i + 1, tbl.size() - 1)
++	return float(tbl[i]) + (float(tbl[j]) - float(tbl[i])) * (row - float(i))
++
++
++## The damage a body does per unit of speed, tierFactor at the send's tier. Under the power model (S.powerOn) there is no tier: it is the table read along its rows by the sender's level (SimPower.level, 0 at base with no power to 1 at the top
++## with all of it), so a lodge's last hit, a slab's break and a thrown wreck grow with the level and not in steps (docs/world/power-world.md).
++static func tierFactorOf(S: SimState, by, tier: float, special: bool) -> float:
++	var c: Dictionary = cfg()
++	if S != null and S.powerOn and by != null:
++		return _tableAt(c.tierFactor, SimPower.level(by) * 3.0)
++	return float(c.tierFactor[tierIx(tier, special)])
++
++
++## The seconds a lodge or a wall holds a body: lodgeSeconds at the tier, or under the power model along its rows by the sender's level.
++static func lodgeSecondsOf(S: SimState, by, tier: float, special: bool) -> float:
++	if S != null and S.powerOn and by != null:
++		return _tableAt(cfg().lodgeSeconds, SimPower.level(by) * 3.0)
++	return lodgeSeconds(tier, special)
++
++
+ ## A cheap score used to choose which buildings are worth an aim search: tall, occupied, undamaged.
+ static func _cheap(b, popCap: float) -> float:
+ 	return b.h / (BH * WS) + minf(b.popAlive, popCap) + (2.0 if b.hp >= b.maxhp else 0.0)
+@@ -769,7 +864,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
  		f.splashed.append(MARK_HOUSE if isHouse(b) else MARK_TOWER)   # this flight went through it
  	var nx: Dictionary = {"b": -1}
  	var spLeft: float = SimDetMath.hypot(f.vx * keep / trav, f.vy * keep)
@@ -249,73 +176,197 @@
  		nx = next(S, b, y, f.vx * keep, f.vy * keep, trav)
  	# the lodge: the last building of a chain takes what is left; he ends inside it
  	var lodge: bool = passes and nx.b < 0 and not inside
---- a/data/biomes/brunt.json
-+++ b/data/biomes/brunt.json
-@@ -64,5 +64,6 @@
-   "interiorBounceTangent": 0.8,
-   "interiorLinkSpeed": 900.0,
-   "repeatMarks": 0,
--  "repeatCraterGrow": 1.25
-+  "repeatCraterGrow": 1.25,
-+  "powerLowTowerMaxH": 1200.0
- }
---- a/data/biomes/contact.json
-+++ b/data/biomes/contact.json
-@@ -31,6 +31,7 @@
-     "maxSeconds": 1.2,
-     "cappedTail": 0.3
-   },
-+  "power": {"maxContacts": 3},
-   "journey": {
-     "maxContacts": 8,
-     "maxSeconds": 4.0
---- a/tools/schemas/biomes-brunt.schema.json
-+++ b/tools/schemas/biomes-brunt.schema.json
-@@ -306,6 +306,12 @@
-       "minimum": 1,
-       "maximum": 3,
-       "description": "The radius factor an impact on already cratered ground asks of the old crater."
-+    },
-+    "powerLowTowerMaxH": {
-+      "type": "number",
-+      "minimum": 100,
-+      "maximum": 6000,
-+      "description": "The power model (data/fight/power.json absorb, docs/world/power-world.md): a tower under this height takes the low-tower mass of a body's energy, a taller one the tall-tower mass. About a third of planet 7's towers are under 1,200 (their heights run 675 to 4,875, median 1,620). Read only with the power switch on."
-     }
-   },
-   "additionalProperties": false,
---- a/tools/schemas/biomes-contact.schema.json
-+++ b/tools/schemas/biomes-contact.schema.json
-@@ -208,6 +208,15 @@
-         "^_": true
-       }
-     },
-+    "power": {
-+      "type": "object",
-+      "required": ["maxContacts"],
-+      "additionalProperties": false,
-+      "description": "The power model (data/fight/power.json, docs/world/power-world.md): with a match's power switch on, a send makes at most this many ground contacts before it tumbles to a stop (journey.maxContacts is the cap otherwise, and water's skims keep it). Optional; missing is 3.",
-+      "properties": {
-+        "maxContacts": { "type": "integer", "minimum": 1, "maximum": 8 }
-+      }
-+    },
-     "journey": {
-       "type": "object",
-       "required": [
---- a/tools/world-checks.json
-+++ b/tools/world-checks.json
-@@ -7,7 +7,7 @@
-     "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
-     "land_check", "minecheck", "noise_check", "planet_check", "planet_world_check", "props_check", "repeat_check", "ringpick_check", "rivers_check", "sea_rules_check",
-     "sites_check", "skate_check", "stagecheck", "step_check", "surface_check", "meteor_crater_check", "collapse_check", "through_check", "surface_follow_check", "switchon_check", "wall_check", "wrecks_check",
--    "water_warm_check",
-+    "water_warm_check", "power_world_check",
-     "floor_walk_probe"
-   ],
-   "leaveOut": {
+@@ -797,12 +892,12 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 		return
+ 	if lodge:
+ 		# what is left of the launch is one more hit on the building (the core wears most), and he is held in the breach
+-		var tfac: float = float(cm.tierFactor[tierIx(tierB, f.launchSpecial)])
++		var tfac: float = tierFactorOf(S, by, tierB, f.launchSpecial)
+ 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
+ 		if b.alive and rest > 0.0:
+ 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
+ 		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
+-		var holdS: float = lodgeSeconds(tierB, f.launchSpecial)
++		var holdS: float = lodgeSecondsOf(S, by, tierB, f.launchSpecial)
+ 		_hold(S, f, holdS)
+ 		var bodyW: float = WorldLanes.body()[0]
+ 		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
+@@ -814,7 +909,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 		return
+ 	if not passes:
+ 		if not kicked:
+-			_hold(S, f, lodgeSeconds(tierB, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
++			_hold(S, f, lodgeSecondsOf(S, by, tierB, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
+ 		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice); the stagger is set below
+ 		var slam: float = float(cm.wallSlamMul) - 1.0
+ 		if slam > 0.0:
+diff --git a/sim/world/contact.gd b/sim/world/contact.gd
+index 7921a2e..5c4f846 100644
+--- a/sim/world/contact.gd
++++ b/sim/world/contact.gd
+@@ -32,6 +32,7 @@ static var K_SKIM_LIFT: float = 0.65
+ static var K_SKIM_KEEP: float = 0.85
+ static var K_SINK: float = 200.0
+ static var K_MAXC: int = 8
++static var K_MAXC_POWER: int = 3   # contact.json power.maxContacts: the ground contacts a send may make under the power model (a skim keeps K_MAXC)
+ static var K_MAXT: int = 240
+ static var K_TUMT: int = 72
+ static var K_TAILT: int = 18
+@@ -211,6 +212,7 @@ static func _cache() -> void:
+ 	K_SKIM_KEEP = float(w.skimKeep)
+ 	K_SINK = float(w.sinkBelow)
+ 	K_MAXC = int(D.journey.maxContacts)
++	K_MAXC_POWER = int(D.get("power", {}).get("maxContacts", 3))
+ 	K_MAXT = _ticks(float(D.journey.maxSeconds))
+ 	K_TUMT = _ticks(float(D.tumble.maxSeconds))
+ 	K_TAILT = _ticks(float(D.tumble.cappedTail))
+@@ -643,7 +645,31 @@ static func groundPhase(S: SimState, b: Body, ev: Array) -> void:
+ 		b.vy = SimMathx.jmin(b.vy, 0.0)
+ 
+ 
+-static func _bounceCap(b: Body) -> int:
++## The contacts after which a send tumbles to a stop on the ground: the journey's, or under the power model (S.powerOn) at most contact.json power.maxContacts, so a body does not rattle off bumps in the ground (Orb, first play): a hard landing digs,
++## a shallow one skids and furrows, and what is left of the energy is spent in the slide. Water's skims keep the journey's.
++static func _maxC(S: SimState) -> int:
++	return mini(K_MAXC, K_MAXC_POWER) if S.powerOn else K_MAXC
++
++
++static var _pwBounces: int = -1
++
++
++## The most terrain bounces a send may take under the power model (data/fight/power.json contact.maxTerrainBounces, 1: Game Design, docs/design/power-scale.md; Orb: "I would have rather seen my fighter leave a crater or a trench").
++## Read once; only a match with S.powerOn uses it.
++static func _powerBounces() -> int:
++	if _pwBounces < 0:
++		_pwBounces = 1
++		var f := FileAccess.open("res://data/fight/power.json", FileAccess.READ)
++		if f != null:
++			var j = JSON.parse_string(f.get_as_text())
++			if j is Dictionary and j.get("contact") is Dictionary and (j.contact.get("maxTerrainBounces") is float or j.contact.get("maxTerrainBounces") is int):
++				_pwBounces = maxi(0, int(j.contact.maxTerrainBounces))
++	return _pwBounces
++
++
++static func _bounceCap(S: SimState, b: Body) -> int:
++	if S.powerOn:   # the power model: one bounce a send at most, whatever the tier, then he digs in or skids
++		return _powerBounces()
+ 	return int(K_PERTIER[clampi(int(b.tier), 1, 4) - 1])
+ 
+ 
+@@ -685,7 +711,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
+ 	# a steep landing is a slam at the first contact, and the landing after a hard slam's hop; a later steep landing after a bounce or a
+ 	# lip launch is a bounce or a skid by the usual rules (a journey makes one mark)
+ 	var slam: bool = sea or (sin2 >= K_SLAM2 and (first or wasHopped)) or (b.swallow and first)   # biomes W6: the marsh swallows the slam whatever its angle
+-	var forceTumble: bool = b.contacts >= K_MAXC or b.t >= K_MAXT
++	var forceTumble: bool = b.contacts >= _maxC(S) or b.t >= K_MAXT
+ 	if S.ricOn and not sea and not forceTumble and SimRicochet.steepGround(s):   # Simulation's ricochet (sim/core/ricochet.gd): fast and shallow on steep ground, a glance
+ 		var gl: PackedFloat64Array = SimRicochet.rule(vn, vt, b.rics)
+ 		if int(gl[0]) == SimRicochet.GLANCE:
+@@ -705,7 +731,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
+ 	if slam:
+ 		var hop: bool = (not sea) and sp >= K_HOPSPEED and not b.hopped and not b.swallow
+ 		if hop and first and b.embedOK:   # a blow that will embed him digs in and stays there: no hop
+-			var Ee: float = WorldCrater.impactEnergy(sp, b.tier) * (WorldCrater.SPECIAL_E_MULT if b.special else 1.0)
++			var Ee: float = WorldCrater.impactEnergy(sp, b.tier, S) * (WorldCrater.SPECIAL_E_MULT if b.special else 1.0)
+ 			var dEst: float = WorldCrater.radiusOf(Ee, b.special) * WorldCrater.DEPTH_RATIO * (WorldCrater.GRAZE_MIN + (1.0 - WorldCrater.GRAZE_MIN) * vertL) / 75.0
+ 			if dEst >= K_EMB_MIN or (b.special and dEst >= K_EMB_SPECIAL):
+ 				hop = false
+@@ -726,7 +752,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
+ 	if absf(vt) < 1.0e-6:
+ 		dir = 1.0 if b.vx >= 0.0 else -1.0
+ 	if not tumbleOnly:
+-		var cap: int = _bounceCap(b)
++		var cap: int = _bounceCap(S, b)
+ 		if sin2 >= K_SKID2 and int(b.bounces) < cap:
+ 			# a bounce: the normal part is reflected with the bounce's keep, the tangent part keeps its share
+ 			var e: float = float(K_VKEEP[mini(int(b.bounces), K_VKEEP.size() - 1)]) * _gv(S, 2, b.x)
+@@ -800,7 +826,7 @@ static func stepContact(S: SimState, b: Body, dt: float, ev: Array) -> void:
+ 	var xa: float = SimWrap.wrap(b.x + dir * vN2 * tv * SimDetMath.pow(0.55, dt) * dt)
+ 	var yb: float = b.y + (vyT - 1000.0 * dt) * dt
+ 	# past the journey's caps (8 contacts or 4 s) he tumbles to a stop: no more leaving the ground
+-	var capNow: bool = b.contacts >= K_MAXC or b.t >= K_MAXT
++	var capNow: bool = b.contacts >= _maxC(S) or b.t >= K_MAXT
+ 	if not capNow and vN2 > 0.0 and yb - WorldTerrain.groundY(S, xa, b.z) > K_CLEAR:
+ 		var cause: String = "crest"   # natural ground: a hill's or ridge's crest
+ 		if S.rubble[int(floor(SimWrap.wrap(b.x) / SimConst.COL)) % SimConst.NC] > 0.0:
+@@ -1169,7 +1195,7 @@ static func _contact(S: SimState, f, by, b: Body, e: Dictionary) -> void:
+ 	var first: bool = bool(e.first)
+ 	f.contactT = 0
+ 	var sea: bool = WorldTerrain.seaAt(S, f.x)
+-	var E: float = WorldCrater.impactEnergy(sp, tier)
++	var E: float = WorldCrater.impactEnergy(sp, tier, S)
+ 	if first:
+ 		f.slideE = E
+ 		f.slideX0 = f.x
+@@ -1389,7 +1415,7 @@ static func slideObstacle(S: SimState, x: float, z: float, dir: float, dist: flo
+ static func bump(S: SimState, f, by, kind: String, spN: float) -> float:
+ 	var dmg: float = spN * WorldSlide.STOP_DMG
+ 	if kind != "heap":
+-		WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(spN, by.tier) * WorldSlide.STOP_E, by, "impact", 0.0, 1.0, false, f.z)
++		WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(spN, by.tier, S) * WorldSlide.STOP_E, by, "impact", 0.0, 1.0, false, f.z)
+ 	SimDamage.hurt(S, f, dmg, by)
+ 	SimFx.shake(S, minf(10.0, spN * 0.004), f.x, f.z)
+ 	SimFx.debris(S, f.x, f.y + 8.0, 3, "#6d6a66", 400.0, f.z)
+diff --git a/sim/world/crater.gd b/sim/world/crater.gd
+index dd19f78..10f1eae 100644
+--- a/sim/world/crater.gd
++++ b/sim/world/crater.gd
+@@ -83,9 +83,10 @@ static func beamPower(A) -> float:
+ 
+ 
+ ## sp is the unboosted speed: the launch's horizontal traversal factor is divided out before the energy is taken.
+-static func impactEnergy(sp: float, tier: float) -> float:
++## The energy of a body hitting the ground at speed sp: v squared, times (1 + IMPACT_TIER_E per tier above 1). With S given and its power model on (S.powerOn: docs/design/power-scale.md) the tier term is gone, since the level is already in the speed: one path, nothing counted twice.
++static func impactEnergy(sp: float, tier: float, S: SimState = null) -> float:
+ 	var v: float = sp / IMPACT_SPEED_REF
+-	return v * v * (1.0 + IMPACT_TIER_E * (tier - 1.0))
++	return v * v * (1.0 if (S != null and S.powerOn) else 1.0 + IMPACT_TIER_E * (tier - 1.0))
+ 
+ 
+ static func powerupEnergy(tier: float) -> float:
+@@ -298,7 +299,7 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
+ 	var E: float = energy * (SPECIAL_E_MULT if special else (WorldCraters.meteorEMult() if meteor else 1.0))
+ 	var NC: int = SimConst.NC
+ 	var COL: float = SimConst.COL
+-	var rcap: float = WorldCraters.meteorRMax() if meteor else (R_MAX if (special or kind == "powerup") else ORD_R_MAX)   # the meteor's own ladder (craters.json meteor): its size is data, so it can come down if the dig hitches
++	var rcap: float = WorldCraters.meteorRMax() if meteor else (R_MAX if (special or kind == "powerup" or (S.powerOn and kind == "impact")) else ORD_R_MAX)   # the power model has no ordinary cap (power-scale.md: the level is already in the energy); the meteor's own ladder (craters.json meteor): its size is data, so it can come down if the dig hitches
+ 	var R: float = minf(rcap, R_BASE * sqrt(E))
+ 	var R0: float = R        # today's radius: the depth, its cap and the rim are today's bowl's times the material's factors
+ 	var sD: float = 1.0      # the material's depth, rim and wall (craters.json); 1, 1, 1 is today's bowl exactly
+diff --git a/sim/world/interior.gd b/sim/world/interior.gd
+index d4e5955..464a96f 100644
+--- a/sim/world/interior.gd
++++ b/sim/world/interior.gd
+@@ -313,7 +313,7 @@ static func _breakSlab(S: SimState, f, b, by, j: int, sp: float) -> void:
+ 	if j >= b.floors or not WorldBrunt.isStanding(b, j):
+ 		return
+ 	var c: Dictionary = WorldBrunt.cfg()
+-	var dmg: float = sp * float(c.tierFactor[WorldBrunt.tierIx(float(f.interior.tier), f.launchSpecial)]) * float(c.bruntMul)
++	var dmg: float = sp * WorldBrunt.tierFactorOf(S, by, float(f.interior.tier), f.launchSpecial) * float(c.bruntMul)
+ 	var oc: Dictionary = {"floors": true, "dmg": dmg, "ratio": maxf(dmg / WorldBrunt.floorStr(b, j), 1.0), "outcome": "punch", "k": j, "hit": [j], "pass": true, "keep": float(c.interiorFloorKeep), "deaths": 0.0}
+ 	WorldBrunt.applyFloors(S, b, oc, by, f.chainEvt, f.x, f, f.y)
+ 
+@@ -360,12 +360,12 @@ static func _end(S: SimState, f, b, by, end: String, viaFace: bool = false) -> v
+ 	var cm: Dictionary = WorldBrunt.cfg()
+ 	var held: bool = end == "lodge" or end == "capped"
+ 	if held:
+-		var tfac: float = float(cm.tierFactor[WorldBrunt.tierIx(float(s.tier), f.launchSpecial)])
++		var tfac: float = WorldBrunt.tierFactorOf(S, by, float(s.tier), f.launchSpecial)
+ 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
+ 		if b.alive and rest > 0.0:
+ 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", f.x, f.chainEvt, true)
+ 		SimDamage.hurt(S, f, spLeft * WorldBrunt.FIGHTER_DMG, by)
+-		var holdS: float = WorldBrunt.lodgeSeconds(float(s.tier), f.launchSpecial)
++		var holdS: float = WorldBrunt.lodgeSecondsOf(S, by, float(s.tier), f.launchSpecial)
+ 		WorldBrunt._hold(S, f, holdS)
+ 		f.vx = 0.0
+ 		f.vy = 0.0
+diff --git a/sim/world/tools/power_world_check.gd b/sim/world/tools/power_world_check.gd
+new file mode 100644
+index 0000000..c3c53ae
 --- /dev/null
 +++ b/sim/world/tools/power_world_check.gd
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,130 @@
 +extends SceneTree
 +# The power model, World's half (docs/world/power-world.md; docs/design/power-scale.md; sim/core/power.gd is Simulation's): with a match's power switch on, a crater is the energy of the send with no tier term and no
 +# ordinary cap, a building takes its mass of the body's energy (house 1, low tower 5, tall tower 15) and a send goes through while it has it, and a send bounces off the terrain at most once. With the switch off nothing changes.
@@ -403,6 +454,16 @@
 +		E *= o.keep * o.keep
 +	ok(n == 4, "a maximum send (E 60.5) goes through %d tall towers (Game Design: 4), speed falling as it goes" % n)
 +	ok(WorldBrunt.chainCap(1.0, false, off) == 1.0 and WorldBrunt.chainCap(4.0, false, off) == 4.0 and WorldBrunt.chainCap(1.0, false, on) >= 99.0, "chain cap: off the tier's links (1 and 4), on the energy is the budget")
++	# the tables that were read by tier are read by level under the power model: the last hit of a lodge, a slab, a thrown wreck, the hold
++	var tf: Array = WorldBrunt.cfg().tierFactor
++	var ls: Array = WorldBrunt.cfg().lodgeSeconds
++	var base := {"tier": 1.0, "power": 0.0}
++	var top := {"tier": 4.0, "power": 100.0}
++	var mid := {"tier": 3.0, "power": 50.0}
++	ok(WorldBrunt.tierFactorOf(off, top, 4.0, false) == float(tf[3]) and WorldBrunt.tierFactorOf(off, base, 1.0, false) == float(tf[0]), "off: the tier factor is the tier's row (%.2f, %.2f)" % [WorldBrunt.tierFactorOf(off, top, 4.0, false), WorldBrunt.tierFactorOf(off, base, 1.0, false)])
++	ok(is_equal_approx(WorldBrunt.tierFactorOf(on, base, 4.0, false), float(tf[0])) and is_equal_approx(WorldBrunt.tierFactorOf(on, top, 1.0, false), float(tf[3])), "on: the level decides, not the tier: base %.2f, top %.2f" % [WorldBrunt.tierFactorOf(on, base, 4.0, false), WorldBrunt.tierFactorOf(on, top, 1.0, false)])
++	var fm: float = WorldBrunt.tierFactorOf(on, mid, 1.0, false)
++	ok(fm > float(tf[0]) and fm < float(tf[3]) and is_equal_approx(WorldBrunt.lodgeSecondsOf(on, top, 1.0, false), float(ls[3])) and is_equal_approx(WorldBrunt.lodgeSecondsOf(off, top, 4.0, false), float(ls[3])), "on: a middle level reads between the rows (%.2f), and the hold follows the level (%.1f s at the top)" % [fm, WorldBrunt.lodgeSecondsOf(on, top, 1.0, false)])
 +	# the terrain: at most one bounce a send
 +	var b4 := WorldContact.launchBody(0.0, 0.0, 0.0, 0.0, 1.0, 4.0)
 +	var b1 := WorldContact.launchBody(0.0, 0.0, 0.0, 0.0, 1.0, 1.0)
@@ -436,3 +497,61 @@
 +		if String(c.kind) == kind:
 +			n += 1
 +	return n
+diff --git a/sim/world/wrecks.gd b/sim/world/wrecks.gd
+index 803b1ba..7d3ff67 100644
+--- a/sim/world/wrecks.gd
++++ b/sim/world/wrecks.gd
+@@ -213,7 +213,7 @@ static func burst(S: SimState, id: int, x: float, y: float, tier: float, cause)
+ 	var b = S.buildings[id]
+ 	b.marks = TAKEN
+ 	var sc: float = sqrt(wreckMass(b) / K_B_REF)
+-	var dmg: float = K_B_SPEED * float(WorldBrunt.cfg().tierFactor[WorldBrunt.tierIx(tier, false)]) * float(WorldBrunt.cfg().bruntMul) * clampf(sc, K_B_SMIN, K_B_SMAX)
++	var dmg: float = K_B_SPEED * WorldBrunt.tierFactorOf(S, cause, tier, false) * float(WorldBrunt.cfg().bruntMul) * clampf(sc, K_B_SMIN, K_B_SMAX)
+ 	var r: float = clampf(K_B_R * BH * sc, K_B_RMIN * BH, K_B_RMAX * BH)
+ 	SimFx.debris(S, x, y + BH * 0.3, 14, "#8a8f98", 520.0)
+ 	SimFx.dust(S, x, y, 5, "#a89f92")
+diff --git a/tools/schemas/biomes-brunt.schema.json b/tools/schemas/biomes-brunt.schema.json
+index be07724..87b5fd4 100644
+--- a/tools/schemas/biomes-brunt.schema.json
++++ b/tools/schemas/biomes-brunt.schema.json
+@@ -306,6 +306,12 @@
+       "minimum": 1,
+       "maximum": 3,
+       "description": "The radius factor an impact on already cratered ground asks of the old crater."
++    },
++    "powerLowTowerMaxH": {
++      "type": "number",
++      "minimum": 100,
++      "maximum": 6000,
++      "description": "The power model (data/fight/power.json absorb, docs/world/power-world.md): a tower under this height takes the low-tower mass of a body's energy, a taller one the tall-tower mass. About a third of planet 7's towers are under 1,200 (their heights run 675 to 4,875, median 1,620). Read only with the power switch on."
+     }
+   },
+   "additionalProperties": false,
+diff --git a/tools/schemas/biomes-contact.schema.json b/tools/schemas/biomes-contact.schema.json
+index 34833bd..4ac9d39 100644
+--- a/tools/schemas/biomes-contact.schema.json
++++ b/tools/schemas/biomes-contact.schema.json
+@@ -208,6 +208,15 @@
+         "^_": true
+       }
+     },
++    "power": {
++      "type": "object",
++      "required": ["maxContacts"],
++      "additionalProperties": false,
++      "description": "The power model (data/fight/power.json, docs/world/power-world.md): with a match's power switch on, a send makes at most this many ground contacts before it tumbles to a stop (journey.maxContacts is the cap otherwise, and water's skims keep it). Optional; missing is 3.",
++      "properties": {
++        "maxContacts": { "type": "integer", "minimum": 1, "maximum": 8 }
++      }
++    },
+     "journey": {
+       "type": "object",
+       "required": [
+diff --git a/tools/world-checks.json b/tools/world-checks.json
+index f00386a..64c55b2 100644
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -5,2 +5,3 @@
+     "after_check", "arena_check", "b_check", "blastcheck", "blockcheck", "brunt_check", "calm_read_check", "campaign_check", "climate_check", "collateral_check",
++    "power_world_check",
+     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",

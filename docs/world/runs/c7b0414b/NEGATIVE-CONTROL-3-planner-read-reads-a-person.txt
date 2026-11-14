@@ -1,0 +1,4 @@
+  FAIL: seed 7: AI against AI for 2400 ticks, with every person taken out: the same fighters, meters, structures and craters at every look
+  FAIL: seed 8: AI against AI for 2400 ticks, with every person taken out: the same fighters, meters, structures and craters at every look
+  FAIL: at least one of the matches brought a building down, so the identity is not vacuous
+BYSTANDERS: 3 check(s) failed

@@ -1,0 +1,21 @@
+--- a/sim/core/field.gd
++++ b/sim/core/field.gd
+@@ -436,7 +436,7 @@
+ 	if i < 0 or i >= _nc:
+ 		i = posmod(i, _nc)
+ 	var w: float
+-	if S.fieldRecs.is_empty():
++	if S.fieldRecs.is_empty() and not WorldFill.floodOn():   # (the holes the fight dug can hold water without any lake or river on the world: B1, water.json flood)
+ 		w = 0.0
+ 	elif _far > 0:
+ 		var c0: int = i - i % _st
+@@ -453,6 +453,9 @@
+ 			_t1[i] = _serial
+ 		w = _w1[i]
+ 	var g: float = h + low
++	if WorldFill.floodOn() and S.storeN > 0:   # B1: a hole the fight dug is not the sea however deep it is: the sea is the field's ground, and the hole's own water is the flood's (WorldFill.floodDepth, read in recordWater above)
++		pointAt(S, float(i) * SimConst.COL)
++		g -= WorldStore.heightDelta(S, ox, oy, oz)
+ 	var sea: float = WorldWater.SEA_LEVEL - g if g < WorldWater.SHORE_WET else 0.0
+ 	return maxf(sea, w - low if w > 0.0 else 0.0)
+ 

@@ -1,0 +1,10 @@
+T7380 S.T=103.9 | F0 x=42297 y=6027 z=0 ground=-176 seaTop=21 waterDepth=199.8 | F1 x=41622 y=3824 z=0 ground=-268 seaTop=0 waterDepth=319.6
+  columns within 300 of F0 with water: 296, deepest 773.2; waterWin entries 0
+  store 276 records by kind { 0: 5, 3: 43, 2: 228 }; strip craters 5; slides 6; maxTier 1; heavyX 67762 heavyT 88.9
+T7500 S.T=105.9 | F0 x=42297 y=6027 z=0 ground=-176 seaTop=21 waterDepth=199.8 | F1 x=41622 y=3824 z=0 ground=-268 seaTop=0 waterDepth=319.6
+  columns within 300 of F0 with water: 296, deepest 773.2; waterWin entries 0
+  store 276 records by kind { 0: 5, 3: 43, 2: 228 }; strip craters 5; slides 6; maxTier 1; heavyX 67762 heavyT 88.9
+T7620 S.T=107.7 | F0 x=42297 y=6027 z=0 ground=-176 seaTop=21 waterDepth=199.8 | F1 x=41622 y=3824 z=0 ground=-268 seaTop=0 waterDepth=319.6
+  columns within 300 of F0 with water: 296, deepest 773.2; waterWin entries 0
+  store 276 records by kind { 0: 5, 3: 43, 2: 228 }; strip craters 5; slides 6; maxTier 1; heavyX 67762 heavyT 88.9
+PROBED

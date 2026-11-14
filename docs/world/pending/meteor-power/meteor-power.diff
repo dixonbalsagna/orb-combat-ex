@@ -1,0 +1,36 @@
+diff --git a/data/biomes/craters.json b/data/biomes/craters.json
+index 6d458b9..62121a8 100644
+--- a/data/biomes/craters.json
++++ b/data/biomes/craters.json
+@@ -8,2 +8,3 @@
+     "eMult": 9.0,
++    "eMultPower": 15.75,
+     "rMax": 6100.0
+diff --git a/sim/world/crater.gd b/sim/world/crater.gd
+index 10f1eae..0748ee6 100644
+--- a/sim/world/crater.gd
++++ b/sim/world/crater.gd
+@@ -298,3 +298,3 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
+ 		return null
+-	var E: float = energy * (SPECIAL_E_MULT if special else (WorldCraters.meteorEMult() if meteor else 1.0))
++	var E: float = energy * (SPECIAL_E_MULT if special else (WorldCraters.meteorEMult(S.powerOn) if meteor else 1.0))
+ 	var NC: int = SimConst.NC
+diff --git a/sim/world/craters.gd b/sim/world/craters.gd
+index c07b4b9..77e9fd6 100644
+--- a/sim/world/craters.gd
++++ b/sim/world/craters.gd
+@@ -57,3 +57,5 @@ static func dataErrors() -> Array:
+ ## The meteor's crater (craters.json meteor, read apart from the module's switch): the energy multiplier (the specials' 9) and the largest radius, units. Missing or invalid: 9 and 6,100.
+-static func meteorEMult() -> float:
++static func meteorEMult(power: bool = false) -> float:
++	if power and data().get("meteor", {}).has("eMultPower"):   # the power model has no tier term in the landing's energy (tier 4 was x1.75), so the meteor keeps its size by a multiplier of its own
++		return float(data().get("meteor", {}).get("eMultPower"))
+ 	return float(data().get("meteor", {}).get("eMult", 9.0))
+diff --git a/tools/schemas/biomes-craters.schema.json b/tools/schemas/biomes-craters.schema.json
+index 349c082..9e513a4 100644
+--- a/tools/schemas/biomes-craters.schema.json
++++ b/tools/schemas/biomes-craters.schema.json
+@@ -44,2 +44,3 @@
+         "eMult": { "type": "number", "minimum": 1 },
++        "eMultPower": { "type": "number", "minimum": 1, "description": "The same multiplier under the power model (S.powerOn), where the landing's energy has no tier term: 9 x 1.75 (tier 4) = 15.75 keeps the meteor's bowl where it was. Optional: missing, eMult." },
+         "rMax": { "type": "number", "minimum": 600, "maximum": 8320 }

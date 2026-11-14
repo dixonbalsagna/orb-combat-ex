@@ -1,0 +1,41 @@
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -94,6 +94,8 @@
+ var _attach_pending: bool = false   # the split view waits for the boot's match, started in pieces (_match_built attaches it)
+ var _match_ever: bool = false     # a match has been built in this session (a load that is cancelled before the first one starts a plain one under the menu)
+ var _planet_next: Dictionary = {} # the planet part of the next menu-started match's setup (planet_part), merged by _match_setup
++var _menu_seed: int = -1          # the seed the next menu-started match plays, drawn when the menu first asks (A-WORLD-14): a quick match's planet is drawn from it (WorldDefault.part), so the planet made ahead while the player decides is the one the match plays
++var _played_one: bool = false     # this session has started a match: the first one plays the fixed planet (a newcomer's), the later ones the data's draw (UI persists it across sessions)
+ var fighter_views: Array = []
+ var _insets_vp := Vector2.ZERO       # the view's size when the safe-area insets were last read
+ var view_cam_x: float = 0.0       # the interpolated camera's wrapped world x this frame
+@@ -446,6 +448,10 @@
+ 		for k in ["planet", "planetGen", "touch", "arena"]:
+ 			if cfg.has(k):
+ 				out[k] = cfg[k]
++	elif WorldDefault.planetDefault():   # A-WORLD-01: a menu that names no planet plays the round planet, the data's (data/biomes/world.json): the fixed one for a first match, else a quick match's draw
++		if _menu_seed < 0:
++			_menu_seed = fresh_seed()
++		out = WorldDefault.part(_menu_seed, not _played_one)
+ 	return out
+ 
+ 
+@@ -1337,7 +1343,8 @@
+ func _on_menu_started(cfg: Dictionary) -> void:
+ 	var two: bool = int(cfg.get("players", 1)) == 2
+ 	var ai := {"p1": false, "p2": not two}
+-	var sd: int = fresh_seed()
++	var sd: int = _menu_seed if (_menu_seed >= 0 and WorldDefault.planetDefault() and not cfg.has("planet")) else fresh_seed()   # the seed the planet was drawn from, when the menu has drawn one
++	_menu_seed = sd
+ 	_planet_next = planet_part(cfg)
+ 	_ai_level = str(cfg.get("ai_level", ""))
+ 	if bool(cfg.get("intros", true)):
+@@ -1347,6 +1354,8 @@
+ 		su.merge(_ai_part())
+ 		start_match(sd, ai, su)
+ 	_planet_next = {}
++	_menu_seed = -1
++	_played_one = true
+ 	var pads: Array = Input.get_connected_joypads()
+ 	var next_pad := 0
+ 	for s in range(2 if two else 1):

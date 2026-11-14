@@ -1,0 +1,31 @@
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -594,7 +594,7 @@
+   },
+   "calmTurn": {
+     "_note": "The calm-moment turn, the director's part (sim/director/calm.gd; docs/director/calm-turn.md; Game Design's rulings-2026-10-19b.md section 1 with 1e, and rulings-2026-10-22.md 5a; the EP's of 2026-10-22: no ring read on the swap tick, the warm rate at most 32; World's WorldEpoch). The ask: at a pausing form step (full or short; live is not one) the pivot is the pair's midpoint as the pause starts and one ring is warmed, only a bearing that keeps the ground rule there being taken; at a launch's send the pivot is predicted (between the rest and the launcher, on the side it was sent), a bearing preferred that keeps the rule at the predicted spread plus predictMargin (with none, the smallest), and World's smallest bearing's ring is warmed with it as the fallback. The pick is by what a turn brings into view (score by kind: a rival's home, a landmark, a city, a town, his own home). The host warms the columns over the ticks to the moment, warmCols to warmColsMax a frame (the calm_turn cue carries the rate); when that is not enough by the moment, the pick waits, warming, for a later one, and a new send or pause keeps a waiting pick whose pair keeps its ground rule (else cancels it and asks again). The hold: the warm read done; the ground under each fighter moved at most World's moveMax (his distance from the pivot times the sine of the angle) at the chosen angle or the fallback's, where they stand; no exchange, approach, beam clash, taunt, flip, counter-rush, waiting attack or open finisher; and a moment: the first formTicks live ticks after a pausing form step's pause, or a fighter at rest from a send within landedTicks with both down or set (under setSpeed units a second); and World's calm. enabled false (or World's turn off): nothing runs.",
+-    "enabled": false,
++    "enabled": true,
+     "landedTicks": 45,
+     "setSpeed": 60,
+     "warmCols": 16,
+@@ -864,7 +864,7 @@
+     "_note": "The zip, slice Z1 (sim/director/zip.gd; docs/design/melee-press-feel.md section 2c). LT with X (strike) or Y (heavy) in band: ki paid at the press; tellTicks of tell; inTicks (the range by distance) on the way in; reachBefore ticks in reach before his blow and reachAfter after it; outTicks on the way out, plus 1 for each out.bhPerTick body heights of path past out.freeBh, out.maxTicks at most. heldTicks: the button kept down this long past the tell is the held reading (a zip strike is then in reach heldReachBefore ticks before its blow). floor: no way in or out is under max(minTicks, the distance in bh over bhPerTick, rounded up) (Legal RL-076). exit: awayBh more with the stick straight away, capBh at most from the rival; a blocked point slides slideDeg at a time, probes at most, to a point clear by clearBh. bowBh: the bow of a way out that passes the rival (over him; under him with the stick down and room beneath) or clears the ground. towardDeg, awayDeg, exitSteps: Game Design's stick rules. mul, reel (a zip strike) and stagger (a zip heavy) by reading. counter: a tech strike pressed from techBefore ticks before the arrival, or a heavy landing from heavyBefore ticks before it, until his blow lands, cancels the blow; a tech counter staggers him staggerTicks and is worth a skill strike times mul. knockdownTicks: the drop when a shot hits him on the way out. dodgeConvertTicks: a face press this soon after LT's press takes the dodge back."
+   },
+   "water": {
+-    "enabled": false,
++    "enabled": true,
+     "surfaceTicks": 30,
+     "riseTicks": 10,
+     "_note": "Game Design's rulings-2026-10-26 row 6 (on 23b item 7): a fighter whose drop (the zip's knock-down) takes him under the water surfaces within surfaceTicks live ticks of going under, whatever he presses, rising over the last riseTicks; he counts as landed when he surfaces (a rally's end). A launched body is World's surfacing rule (data/biomes/water.json surface). Waded water is not under. A fighter who dives by himself is never brought up (sim/director/water.gd, DirWater)."
+--- a/data/combat/launch_biome.json
++++ b/data/combat/launch_biome.json
+@@ -3,7 +3,7 @@
+   "_target": "its own file (Encounter, biomes W3): it was drafted as a block 'biome' of data/director/launch.json, and is moved here from docs/combat/pending/biomes/launch.biome.json with its schema tools/schemas/combat-launch-biome.schema.json (from the draft fragment director-launch-biome.fragment.json). DirData.dataHash() folds this file's text into the replay's data hash, as it does launch.json's",
+   "_about": "Combat's (2026-10-23; built by Encounter in biomes W3; docs/combat/biomes.md section 3). RULED by Game Design (docs/design/rulings-2026-10-23b.md item 1): the values accepted as a set, with the rules below. Launch-planner terms by biome and surface for sim/director/launch.gd chooseLaunch: eight scored candidates that use the ground (a cliff, ice to skid on, a marsh that swallows a slam, trees to smash through, a skim ashore, a slope, a vent, a big prop), terms on the landing's surface, and two biome tables that replace hard-coded numbers. Every score is in the planner's points and is a first value for Game Design. The planner's shared terms (noise, care at the landing, distance, new biome, water, repeats, launch anywhere's freshness) apply to every new candidate as to SMASH ACROSS; a new candidate is never offered when its feature is missing, so a biome without it plays exactly as today. A candidate's hero and villain are added by personality as interiorAim's score is (the care's sign, or the role at care 0). Lengths are in body heights (75 units). With enabled false nothing is offered or added. The block rides launch.json, which DirLaunch.dataText() already folds into the replay's data hash.",
+   "biome": {
+-    "enabled": false,
++    "enabled": true,
+     "rules": {
+       "stickWins": "the biome terms never outweigh town.stickWins, and a held stick's kind (up, down, across) is never changed",
+       "freshByKind": "launch anywhere's freshness reads each candidate by the kind of its sends list: CLIFFSIDE, ICE SKID, TREE LINE, SKIM ASHORE, DOWNHILL and PROP SMASH across, MARSH SWALLOW down, VENT LIFT up",

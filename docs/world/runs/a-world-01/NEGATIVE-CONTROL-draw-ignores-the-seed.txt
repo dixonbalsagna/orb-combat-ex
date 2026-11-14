@@ -1,0 +1,24 @@
+
+data
+  ok    world.json loads clean ([])
+  ok    shipped, a setup with no planet key plays the hand-made arena (mode arena) until GW1a
+  ok    ... and nothing is added to it
+the planet default
+  ok    a setup with no planet key gets the fixed planet (7, touch 3, generation 3)
+  ok    ... and the setup it was given is not changed
+  ok    an explicit planet key wins
+  ok    the key world: arena asks for the hand-made arena, and gets it
+the draw
+  ok    the same seed draws the same planet and touch, every time (300 seeds)
+  ok    every draw is a planet in the data's pool
+  FAIL  300 seeds use the whole pool (1 of 5 planets, 1 of 3 touches)
+  ok    a newcomer's first match plays the fixed planet whatever the seed
+  ok    a quick match's part names the planet, the touch and the generation
+matches
+  ok    with the mode on planet a match with no planet key plays a generated planet (planet 7, generation 3, a frame), not the arena
+  ok    the same seed plays the same planet twice: the match's hash is the same at tick 60
+  ok    world: arena plays the hand-made arena (no planet ring)
+  ok    shipped, the same setup plays the arena
+every planet in the pool generates and plays
+  ok    5 planets at 3 touches each: all generate and play 90 ticks
+WORLDDEFAULT: 1 check(s) failed (negative control)

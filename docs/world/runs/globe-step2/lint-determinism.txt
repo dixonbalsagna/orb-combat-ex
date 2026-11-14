@@ -1,0 +1,2 @@
+determinism lint self-test ok: 91 checks
+determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/world, sim/input

@@ -1,0 +1,6 @@
+self-test: 10093 of 10093 checks passed
+  parser 326 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 193; data cases 8355
+321 files checked, 0 errors, 2 warnings
+two-fighter ratchet ok: 365 against a baseline of 365
+content screen: 6529 text files of 7738 scanned, 0 failing hit(s), 0 warning(s)
+world-checks: ok, 86 checks run in CI, 31 scripts left out with a reason

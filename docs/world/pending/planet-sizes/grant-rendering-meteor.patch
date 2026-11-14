@@ -1,0 +1,39 @@
+--- a/render/vfx/meteor.gd
++++ b/render/vfx/meteor.gd
+@@ -14,7 +14,7 @@
+ 	"life_s": [4.0, 8.0, 12.0], "spacing": [800.0, 500.0, 300.0], "draw_pts": [32.0, 64.0, 96.0],
+ }
+ ## The line's radius in units: the planet is PLANET_NC columns round (Simulation's `SimField.R`).
+-const R_PLANET: float = float(SimConst.PLANET_NC) * SimConst.COL / TAU
++# the line's radius is SimField.R (set with the match's planet size: SimConst.setPlanet)
+ const DEFAULT_COOL: Dictionary = {"tier": [0.0, 0.0, 0.3, 0.7], "form_step": 0.1, "form_max": 0.3}
+ const DEFAULT_ROW: Dictionary = {"front": "wall", "width_k": 1.0, "linger_k": 1.0, "scale": 100.0, "braid": 0.0}
+ ## The flight lines (docs/vfx/flight-lines.md; Game Design docs/design/rule-of-cool-map.md section 1): the same ribbon laid by a fighter flying near flat out, with a strength of its own.
+@@ -136,14 +136,14 @@
+ ## frame's numbers; a check holds them to the round trip, and when the field frame lands the cross-check against `SimField` is the first thing to run.
+ ## The direction of strip x at depth z (toward the camera above 0): the line's point turned about the line by z / R.
+ static func place(fr, x: float, z: float) -> PackedFloat64Array:
+-	var a: float = SimWrap.sdx(float(fr.x0), x) / R_PLANET
++	var a: float = SimWrap.sdx(float(fr.x0), x) / SimField.R
+ 	var c: float = cos(a)
+ 	var s: float = sin(a)
+ 	var qx: float = float(fr.px) * c + float(fr.tx) * s
+ 	var qy: float = float(fr.py) * c + float(fr.ty) * s
+ 	var qz: float = float(fr.pz) * c + float(fr.tz) * s
+ 	if z != 0.0:
+-		var b: float = z / R_PLANET
++		var b: float = z / SimField.R
+ 		var cb: float = cos(b)
+ 		var sb: float = sin(b)
+ 		var nx: float = float(fr.ty) * float(fr.pz) - float(fr.tz) * float(fr.py)
+@@ -160,8 +160,8 @@
+ 	var nx: float = float(fr.ty) * float(fr.pz) - float(fr.tz) * float(fr.py)
+ 	var ny: float = float(fr.tz) * float(fr.px) - float(fr.tx) * float(fr.pz)
+ 	var nz: float = float(fr.tx) * float(fr.py) - float(fr.ty) * float(fr.px)
+-	var sz: float = R_PLANET * asin(clampf(qx * nx + qy * ny + qz * nz, -1.0, 1.0))
+-	var sx: float = SimWrap.wrap(float(fr.x0) + R_PLANET * atan2(qx * float(fr.tx) + qy * float(fr.ty) + qz * float(fr.tz), qx * float(fr.px) + qy * float(fr.py) + qz * float(fr.pz)))
++	var sz: float = SimField.R * asin(clampf(qx * nx + qy * ny + qz * nz, -1.0, 1.0))
++	var sx: float = SimWrap.wrap(float(fr.x0) + SimField.R * atan2(qx * float(fr.tx) + qy * float(fr.ty) + qz * float(fr.tz), qx * float(fr.px) + qy * float(fr.py) + qz * float(fr.pz)))
+ 	return Vector2(sx, sz)
+ 
+ 

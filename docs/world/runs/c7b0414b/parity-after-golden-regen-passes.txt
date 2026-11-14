@@ -1,0 +1,3 @@
+Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+ok    wired numbers change a match
+golden check passed

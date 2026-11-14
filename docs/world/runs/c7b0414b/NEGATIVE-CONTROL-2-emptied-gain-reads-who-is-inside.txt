@@ -1,0 +1,5 @@
+  FAIL: class 0: the same meters with every person taken out [[10.0, 10.0, 10.0, 0.0], [11.8, 10.07, 10.0, 0.0]] [[10.0, 10.0, 10.0, 0.0], [10.8, 10.07, 10.0, 0.0]]
+  FAIL: class 1: the same meters with every person taken out [[10.0, 10.0, 10.0, 0.0], [16.0, 10.35, 10.0, 0.0]] [[10.0, 10.0, 10.0, 0.0], [14.0, 10.35, 10.0, 0.0]]
+  FAIL: class 2: the same meters with every person taken out [[10.0, 10.0, 10.0, 0.0], [25.0, 11.05, 10.0, 0.0]] [[10.0, 10.0, 10.0, 0.0], [22.0, 11.05, 10.0, 0.0]]
+  FAIL: seed 7: AI against AI for 2400 ticks, with every person taken out: the same fighters, meters, structures and craters at every look
+BYSTANDERS: 4 check(s) failed

@@ -1,0 +1,15 @@
+# beam-grid: a beam that plays is sampled once at each point of a fixed grid (World, 2026-11-02)
+
+The fix for the building beside the shooter that fell before the struggle (Camera's beamduel). Grant: the EP, in Encounter's `sim/director/beam.gd` `beamStep` (3 lines). Cause, numbers and proof: `docs/world/beam-grid.md`.
+
+**Apply:** `beam-grid.diff` (3 files: `sim/director/beam.gd`, the new `sim/world/tools/beam_grid_check.gd` and its `.uid`); `git apply --check` passes on HEAD and with `docs/director/pending/clash-end/clash-end.diff` applied first. **`tools/world-checks.json` needs `"beam_grid_check"` in "run"** (it is in `docs/world/pending/world-checks-run/world-checks-run.diff`).
+
+**Hash-moving, by intent.** The shipped data plays beams, so every match with a signature beam moves: **regenerate `sim/core/test/golden.json` (`sim/core/tools/golden.gd`) in the same commit** (Simulation's file; 9 of 9 matches and 1 of 2 replays differ). Replay trees recorded before it will not reproduce past a beam.
+
+**Proved:** `BEAMGRID` 0 failed (near the shooter 21,482 hp lost before, 11,281 with it; fallen 22 to 2; the path still carved; beam not playing: one hash); `frame_check` 203 passed. Not run on this tree: Rendering's 15 and the full gate set (the golden needs regenerating first).
+
+**Stacking (2026-11-02, Encounter's note on cross-fights):** the grid's hunks sit after `var s: float = s0`, past cross-fights' `if b.stopAt >= 0.0: s1 = minf(s1, b.stopAt)` line, so the grid samples are inside the clipped s1 (`while s < s1` is unchanged). `git apply` of the beam.gd hunks, on HEAD's beam.gd, takes all five parks that touch the file (power-core, cross-fights, clash-end, beam-still, beam-grid) in three different orders, grid first, middle and last, with no conflict. Tools' manifest order: beam-grid is not in `tools/preview/stack.json` yet; any place in it applies.
+
+**Re-cut 2026-11-06 on HEAD 51ab2001:** applies as it was; **now carries its own line in `tools/world-checks.json`** (`beam_grid_check`, in the diff; it replaces the eleventh line of the retired `world-checks-run` park). Still moves the golden (Simulation regenerates `sim/core/test/golden.json` in the same commit).
+
+**Re-cut 2026-11-07 on HEAD d5582dbd (held, not to land yet):** applies as it was. `BEAMGRID` 0 failed on HEAD (near the shooter 22,020 hp lost before, 10,662 with it; fallen 23 to 1; the path still carved 47,671 to 33,369); `world-checks.mjs --verify` ok. It stacks with power-world, crater-collapse, civilians-removed and places-reached in one order, no conflict. **Held by the EP:** with it on, `split_sweep` fails ("real match 3 pitch 49 full: fighter 1 out of its pane for 1.20 s (mode split) at t=346.95"); without it it passes. The grid changes which buildings fall on a beam's first ticks, so a fight can take a different path; the camera miss is probably a new path Camera's code mishandles, not the grid's fault (Camera is looking). Not run by me: `split_sweep`, the golden regeneration (Simulation's).

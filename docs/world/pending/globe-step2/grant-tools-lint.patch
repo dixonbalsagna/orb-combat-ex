@@ -1,0 +1,58 @@
+--- a/tools/lint-determinism.mjs
++++ b/tools/lint-determinism.mjs
+@@ -7,6 +7,8 @@
+ // (exit 1) on a bare use of:
+ //   trig       sin cos tan asin acos atan atan2 sinh cosh tanh deg_to_rad rad_to_deg
+ //   constants  PI TAU
++//   power/log  pow exp log (the engine's powers and logs differ in the last bit between platforms: SimDetMath.pow / exp / log are ours; sqrt is exact and passes)
++//   float32    Vector3 (three float32s: planet points are three plain floats; Vector3i is integers and passes)
+ //   random     randf randi randf_range randi_range randfn rand_range randomize shuffle (a bare call or Array.shuffle / pick_random)  -- the sim has SimRng
+ //   clock      Time.<anything>, OS.get_ticks_msec, OS.get_ticks_usec, OS.get_unix_time, OS.get_system_time_*, OS.delay_*, Engine.get_frames_drawn, Engine.get_physics_frames
+ // "Bare" means not after a dot or a name: SimDetMath.sin(x), SimMathx.PI and rng.randf() are our own and pass. A function definition ("func sin(") is not a use.
+@@ -23,9 +25,12 @@
+ 
+ const TRIG = ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh', 'deg_to_rad', 'rad_to_deg'];
+ const RANDOM = ['randf', 'randi', 'randf_range', 'randi_range', 'randfn', 'rand_range', 'randomize'];
++const MATH = ['pow', 'exp', 'log'];
+ const NOT_AFTER = '(?<![.\\w$])';   // not a method of something, not part of a longer name
+ const RULES = [
+   { id: 'engine-trig', re: new RegExp(`${NOT_AFTER}(${TRIG.join('|')})\\s*\\(`), what: "the engine's trig", use: 'SimDetMath' },
++  { id: 'engine-math', re: new RegExp(`${NOT_AFTER}(${MATH.join('|')})\\s*\\(`), what: "the engine's pow, exp or log", use: 'SimDetMath.pow / exp / log' },
++  { id: 'engine-vector3', re: /(?<![.\w$])Vector3(?!\w)/, raw: true, what: "a Vector3 (three float32s)", use: 'three plain floats, or an Array' },
+   { id: 'engine-pi', re: new RegExp(`${NOT_AFTER}(PI|TAU)(?![\\w(])`), what: "the engine's PI/TAU", use: 'SimMathx.PI / SimMathx.TAU' },
+   { id: 'engine-random', re: new RegExp(`${NOT_AFTER}(${RANDOM.join('|')})\\s*\\(`), what: "the engine's random numbers", use: 'SimRng' },
+   { id: 'engine-random', re: /\.(shuffle|pick_random)\s*\(/, what: "the engine's random shuffle/pick (Array.shuffle, pick_random)", use: 'SimRng' },
+@@ -64,11 +69,11 @@
+   for (let n = 0; n < lines.length; n++) {
+     // a function definition ("static func sin(x: float) -> float:") is not a use: take its head off, and look at what follows it on the line
+     const code = parts[n].code.replace(DEF_HEAD, ' ');
+-    if (!code.trim()) continue;
++    if (!code.trim() && !parts[n].code.includes('Vector3')) continue;   // (a rule marked raw looks at the definition's head too: a Vector3 in a signature is a use)
+     const here = parts[n].comment, above = n > 0 && !parts[n - 1].code.trim() ? parts[n - 1].comment : '';
+     const waived = (WAIVER.test(here) || WAIVER.test(above));
+     for (const r of RULES) {
+-      const m = r.re.exec(code.replace(/^\s*func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], ]+)?\s*:/, ' '));
++      const m = r.re.exec(r.raw ? parts[n].code : code.replace(/^\s*func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], ]+)?\s*:/, ' '));
+       if (m && !waived) out.push({ line: n + 1, rule: r.id, what: r.what, use: r.use, text: lines[n].trim().slice(0, 140), found: m[0].trim() });
+     }
+     // a waiver without a reason is itself a finding
+--- a/tools/lint-determinism-selftest.mjs
++++ b/tools/lint-determinism-selftest.mjs
+@@ -15,6 +15,8 @@
+   ['var a = sin(x)', 'engine-trig'], ['var a = cos(x) * 2', 'engine-trig'], ['return tan(x)', 'engine-trig'], ['var a = asin(x)', 'engine-trig'], ['var a = acos(x)', 'engine-trig'],
+   ['var a = atan(x)', 'engine-trig'], ['var a = atan2(y, x)', 'engine-trig'], ['var r = deg_to_rad(d)', 'engine-trig'], ['var d = rad_to_deg(r)', 'engine-trig'], ['var a = sin (x)', 'engine-trig'],
+   ['var a = float(d) * PI / 180.0', 'engine-pi'], ['return r - TAU * floorf(r)', 'engine-pi'], ['x = -PI', 'engine-pi'], ['y = 2.0*PI', 'engine-pi'],
++  ['var a = pow(x, 2.0)', 'engine-math'], ['var a = pow (x, 1.0 / 3.0)', 'engine-math'], ['return exp(-t)', 'engine-math'], ['var a = log(x) * 2.0', 'engine-math'], ['var a = 1.0 + pow(x, y) * exp(z)', 'engine-math'],
++  ['var v = Vector3(1, 2, 3)', 'engine-vector3'], ['var v: Vector3 = p', 'engine-vector3'], ['var z = Vector3.ZERO', 'engine-vector3'], ['func f(a: Vector3) -> Vector3:', 'engine-vector3'],
+   ['var r = randf()', 'engine-random'], ['var r = randi() % 4', 'engine-random'], ['var r = randf_range(0, 1)', 'engine-random'], ['randomize()', 'engine-random'], ['list.shuffle()', 'engine-random'],
+   ['var x = list.pick_random()', 'engine-random'], ['var g = RandomNumberGenerator.new()', 'engine-random'],
+   ['var t = Time.get_ticks_msec()', 'engine-clock'], ['var t = OS.get_ticks_msec()', 'engine-clock'], ['var t = OS.get_unix_time()', 'engine-clock'], ['var n = Engine.get_frames_drawn()', 'engine-clock'],
+@@ -27,6 +29,8 @@
+   'var a = SimDetMath.sin(x)', 'var a = SimDetMath.cos(x) + SimDetMath.atan2(y, x)', 'var p = SimMathx.PI', 'var r = rng.randf()', 'var r = SimRng.keyed(seed, "k", 3)', 'var a = WorldPlanet.acosf(x)', 'var a = asinf(x)',
+   'var a = atanf(y / x)', 'var t = _PI * 2.0', 'var pi = 3', 'var spin = 1', 'var cost = 2', 'var tanned = 1', 'var randfoo = 1', 'var mess = "no sin( here, nor PI, nor randf()"', "var m = 'cos(x) and Time.get_ticks_msec()'",
+   '# sin(x) PI randf() Time.now', 'var a = 1   # was sin(x) once', 'static func sin(x: float) -> float:', 'func cos(x) -> float:', 'func tan(x):', 'static func atan2(y: float, x: float) -> float:',
++  'var a = SimDetMath.pow(x, 2.0)', 'var a = SimDetMath.exp(-t) + SimDetMath.log(x)', 'static func pow(x: float, y: float) -> float:', 'static func exp(x: float) -> float:', 'static func log(S: SimState, f) -> void:', 'DirAlchemy.log(S, A, 3)',
++  'var power = 1', 'var logn = 2', 'var expo = 3', 'var a = sqrt(x)', 'var a = x.pow(2)', 'var v = Vector3i(1, 2, 3)', 'var mess = "pow(x) Vector3 exp(1) log(2)"', '# pow(x) exp(y) log(z) Vector3', 'var my_Vector3 = 1',
+   'var timer = 0', 'var t = tick * DT', 'var a = d.length()', 'var ti = Mathx.PI', 'var x = self.sin_table[3]',
+ ]) check(`not found: ${src}`, found(src).length === 0, found(src).join(','));
+ 

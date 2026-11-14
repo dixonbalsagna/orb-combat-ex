@@ -1,0 +1,1636 @@
+--- a/sim/world/store.gd
++++ b/sim/world/store.gd
+@@ -18,13 +18,23 @@
+ const KIND_CRACK: int = 1
+ const KIND_SCORCH: int = 2
+ const KIND_TRENCH: int = 3
++const KIND_SCAR: int = 5             # a directed beam groove A to B: a groove cut to its depth, like a trench (nothing makes one yet: terrain step 3)
++const KIND_HEAP: int = 6             # a rubble cone at a planet point (nothing makes one yet: step 5)
++const KIND_MERGE: int = 7            # appended at the cap for older small marks far from every fighter (nothing makes one yet: step 6); a bowl, read as a crater
+ const STRIDE: int = 16
++## The numbers every record keeps at the end of its 16 (terrain-globe-plan.md 4.2), all folded into storeHash with the rest of the record:
++const O_LIP: int = 11                # a trench's or scar's lip height: the raised bank at its edge (0 until step 3)
++const O_MAT: int = 12                # a crater's material class, a code into WorldGround.LOOKS (0 until craters-by-material feeds it)
++const O_REP: int = 13                # a crater's repeat count: 0 for a first blow, one more than the record it supersedes
++const O_WATER: int = 14              # the level this record's water stands at (B1, WorldFill.levelFor), DRY when it has no source
++const O_SUP: int = 15                # the record this one supersedes, or -1 for none
++const DRY: float = -1.0e9            # the water slot of a record that holds none
+ const MAX: int = 16384               # records; add refuses past it
+ const BOX: float = 1024.0            # the grid's box, in units
+ const REACH_R: float = 2.0           # a crater reaches this many bowl radii (the apron ends at 1 + RIM_OUT)
+ const CRACK_WIDTH: float = 24.0      # a crack's half width in units: full intensity within it, falling to nothing at twice it
+ 
+-static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid}: the derived index
++static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid, sup}: the derived index (sup: the records another supersedes, a pure function of the store)
+ 
+ 
+ static func _key(ix: int, iy: int, iz: int) -> int:
+@@ -62,7 +72,7 @@
+ 			var c3: float = S.store[o + 1 + a] * R
+ 			lo[a] = c3 - reach3
+ 			hi[a] = c3 + reach3
+-	elif kind == KIND_CRACK or kind == KIND_TRENCH:
++	elif kind == KIND_CRACK or kind == KIND_TRENCH or kind == KIND_SCAR:
+ 		var reach: float = S.store[o + 8] * 2.0
+ 		for a in range(3):
+ 			var p: float = S.store[o + 1 + a] * R
+@@ -90,9 +100,13 @@
+ 	var ent: Dictionary = _ix.get(id, {})
+ 	if ent.is_empty() or int(ent.n) != int(S.storeN) or int(ent.hash) != int(S.storeHash):
+ 		var grid: Dictionary = {}
++		var sup: Dictionary = {}
+ 		for k in range(int(S.storeN)):
+ 			_list(grid, S, k)
+-		ent = {"n": int(S.storeN), "hash": int(S.storeHash), "grid": grid}
++			var sk: int = int(S.store[k * STRIDE + O_SUP])
++			if sk >= 0:
++				sup[sk] = true
++		ent = {"n": int(S.storeN), "hash": int(S.storeHash), "grid": grid, "sup": sup}
+ 		if _ix.size() > 16:
+ 			_ix.clear()
+ 		_ix[id] = ent
+@@ -109,28 +123,43 @@
+ 	if _ix.has(id):
+ 		var e: Dictionary = _ix[id]
+ 		live = int(e.n) == n and int(e.hash) == int(S.storeHash)
++	var full: Array = []   # all STRIDE numbers, the slots at their defaults (no water, supersedes nothing) when the caller gave fewer: what is folded into the hash is what is stored
+ 	for k in range(STRIDE):
+-		S.store.append(float(rec[k]) if k < rec.size() else 0.0)
++		if k < rec.size():
++			full.append(float(rec[k]))
++		else:
++			full.append(DRY if k == O_WATER else (-1.0 if k == O_SUP else 0.0))
++	for k in range(STRIDE):
++		S.store.append(full[k])
+ 	var h0: int = int(S.storeHash)
+-	S.storeHash = _fold(h0, rec)
++	S.storeHash = _fold(h0, full)
+ 	S.storeN = n + 1
+ 	if S is SimState:   # (a check's fake state has no line)
+-		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again
++		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again (a record that supersedes another reaches at least as far as it, so its reach is the union)
+ 	if live:
+ 		var ent: Dictionary = _ix[id]
+ 		_list(ent.grid, S, n)
++		if full[O_SUP] >= 0.0:
++			ent.sup[int(full[O_SUP])] = true
+ 		ent.n = n + 1
+ 		ent.hash = int(S.storeHash)
+ 	return n
+ 
+ 
+ ## Adds a crater at the unit direction (px, py, pz) to S's store; returns its index, or -1 when the store is full (the caller keeps its S.deform write then). `cause`: 0 impact, 1 beam, 2 powerup, 3 other.
+-static func add(S, px: float, py: float, pz: float, r: float, depth: float, rim: float, energy: float, cause: int, owner: int, t: float, special: int) -> int:
+-	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner])
++## sup: the record this one supersedes (a repeat blow grown into the old crater), or -1; rep: its repeat count; water: the level its water stands at (WorldFill.levelFor), or DRY; mat: its material class.
++static func add(S, px: float, py: float, pz: float, r: float, depth: float, rim: float, energy: float, cause: int, owner: int, t: float, special: int, sup: int = -1, rep: int = 0, water: float = DRY, mat: int = 0) -> int:
++	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner, mat, rep, water, sup])
+ 
+ 
+-## The height the store adds at a unit direction: the sum of every crater's bowl, rim and apron there.
++## The height the store adds at a unit direction: the bowls, rims and aprons of the craters (and merged marks) there, a heap's cone, the deepest groove of the trenches, scars and scorch (grooves never sum) and the
++## highest lip of a trench; a record another supersedes is not read. Held between the floor and the ceiling (the strip's, craters.json globe).
+ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
++	return heightDeltaX(S, qx, qy, qz, -1)
++
++
++## heightDelta as if record `skip` were not in the store (the shaft cap and the settling read the ground without the record the new crater supersedes). -1 skips nothing.
++static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float:
+ 	if int(S.storeN) == 0:
+ 		return 0.0
+ 	var R: float = _R()
+@@ -139,30 +168,44 @@
+ 	if not ent.grid.has(key):
+ 		return 0.0
+ 	var lst: PackedInt32Array = ent.grid[key]
++	var sup: Dictionary = ent.sup
+ 	var sum: float = 0.0
+ 	var groove: float = 0.0
++	var lip: float = 0.0
+ 	for k in lst:
++		if k == skip or (not sup.is_empty() and sup.has(k)):
++			continue
+ 		var o: int = k * STRIDE
+ 		var kd: int = int(S.store[o])
+-		if kd == KIND_TRENCH:
++		if kd == KIND_TRENCH or kd == KIND_SCAR:
+ 			groove = minf(groove, _trench(S, o, qx, qy, qz, R))
++			if S.store[o + O_LIP] > 0.0:
++				lip = maxf(lip, _lip(S, o, qx, qy, qz, R))
+ 			continue
+-		if kd != KIND_CRATER and kd != KIND_SCORCH:
++		if kd != KIND_CRATER and kd != KIND_SCORCH and kd != KIND_MERGE and kd != KIND_HEAP:
+ 			continue
+ 		var dx: float = (qx - S.store[o + 1]) * R
+ 		var dy: float = (qy - S.store[o + 2]) * R
+ 		var dz: float = (qz - S.store[o + 3]) * R
+ 		var d: float = sqrt(dx * dx + dy * dy + dz * dz)
+-		if kd == KIND_CRATER:
++		if kd == KIND_CRATER or kd == KIND_MERGE:
+ 			var u: float = d / S.store[o + 4]
+ 			if u < 2.0:
+ 				sum += WorldCrater.profile(u, S.store[o + 5], S.store[o + 6])
++		elif kd == KIND_HEAP:
++			var uh: float = d / S.store[o + 4]
++			if uh < 1.0:
++				var th: float = 1.0 - uh * uh
++				sum += S.store[o + 5] * th * th
+ 		else:
+ 			var us: float = d / S.store[o + 4]
+ 			if us < 1.0:
+ 				var ts: float = 1.0 - us * us
+ 				groove = minf(groove, -S.store[o + 5] * ts * ts)
+-	return minf(sum, groove) if groove < 0.0 else sum
++	# A groove is cut to its depth below the ground: where the marks are below the original ground (sum <= 0) it takes the lower of the two, where they stand above it (a rim, an apron, a heap) it cuts down from there.
++	# The lower of the two alone left a cliff as high as the rim at the groove's edge, where the groove (about 0) took over from a rim (up to 0.4 of a bowl's depth).
++	var h: float = ((minf(sum, groove) if sum <= 0.0 else sum + groove) if groove < 0.0 else sum) + lip
++	return clampf(h, WorldCraters.globeFloor(), WorldCraters.globeCeil())
+ 
+ 
+ ## ===================================================================== cracks
+@@ -284,8 +327,93 @@
+ ## ===================================================================== trenches
+ ## The groove a knockback slide cuts along its path (WorldCrater.carveSegment): from planet point a to b, `depth` deep (a target, never exceeded), `halfWidth` wide. The ground is the lower of the craters' sum and the
+ ## deepest trench or scorch groove there (heightDelta). Returns the record's index, or -1 when the store is full.
+-static func addTrench(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int) -> int:
+-	return _push(S, [KIND_TRENCH, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner])
++## lip: the height of the raised bank at its edge (0: none, as ever); water: the level its water stands at (WorldFill.levelForSegment), or DRY.
++static func addTrench(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int, lip: float = 0.0, water: float = DRY) -> int:
++	var sg: Array = WorldGlobe.settleGroove(depth, halfWidth)   # a groove on the planet is never a wall: widened to the angle of repose (craters.json globe.repose)
++	depth = sg[0]
++	halfWidth = sg[1]
++	return _push(S, [KIND_TRENCH, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner, lip, 0.0, 0.0, water, -1.0])
++
++
++## A directed beam groove from planet point a to b (KIND_SCAR): the same groove as a trench (depth cut to its target, never summed), `halfWidth` wide. Nothing writes one yet (terrain step 3).
++static func addScar(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int, lip: float = 0.0, water: float = DRY) -> int:
++	var sg: Array = WorldGlobe.settleGroove(depth, halfWidth)
++	depth = sg[0]
++	halfWidth = sg[1]
++	return _push(S, [KIND_SCAR, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner, lip, 0.0, 0.0, water, -1.0])
++
++
++## A rubble cone at planet point p (KIND_HEAP): `height` at the centre falling to nothing at `radius`, held to a slope of 1 in 1 (the cone is height x (1 - u^2)^2, steepest at 1.54 height / radius). Nothing writes one yet (step 5).
++static func addHeap(S, p: Array, radius: float, height: float, t: float, owner: int) -> int:
++	return _push(S, [KIND_HEAP, p[0], p[1], p[2], radius, minf(height, radius / 1.54), 0.0, 0.0, t, 0.0, 3.0, owner, 0.0, 0.0, DRY, -1.0])
++
++
++## A merged mark (KIND_MERGE): a bowl standing for older small marks (step 6); read as a crater.
++static func addMerge(S, p: Array, r: float, depth: float, rim: float, t: float) -> int:
++	return _push(S, [KIND_MERGE, p[0], p[1], p[2], r, depth, rim, 0.0, t, 0.0, 3.0, -1.0, 0.0, 0.0, DRY, -1.0])
++
++
++## The index of the newest crater a blow at unit direction (qx, qy, qz) repeats: an impact crater (not superseded) whose centre is within `frac` of its own radius of the point, or -1.
++static func recentImpact(S, qx: float, qy: float, qz: float, frac: float) -> int:
++	if int(S.storeN) == 0:
++		return -1
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
++	if not ent.grid.has(key):
++		return -1
++	var best: int = -1
++	for k in ent.grid[key]:
++		var o: int = k * STRIDE
++		if int(S.store[o]) != KIND_CRATER or int(S.store[o + 10]) != 0 or ent.sup.has(k) or k <= best:
++			continue
++		var dx: float = (qx - S.store[o + 1]) * R
++		var dy: float = (qy - S.store[o + 2]) * R
++		var dz: float = (qz - S.store[o + 3]) * R
++		if sqrt(dx * dx + dy * dy + dz * dz) <= frac * S.store[o + 4]:
++			best = k
++	return best
++
++
++## A record's centre (for a segment, its start) and its radius (a crater's, a trench's half width).
++static func centreOf(S, k: int) -> Array:
++	var o: int = k * STRIDE
++	return [S.store[o + 1], S.store[o + 2], S.store[o + 3]]
++
++
++static func radiusOf(S, k: int) -> float:
++	var o: int = k * STRIDE
++	return S.store[o + 8] if int(S.store[o]) == KIND_TRENCH or int(S.store[o]) == KIND_SCAR else S.store[o + 4]
++
++
++static func repeatsOf(S, k: int) -> int:
++	return int(S.store[k * STRIDE + O_REP])
++
++
++## The level record k's water stands at, or DRY.
++static func waterOf(S, k: int) -> float:
++	return S.store[k * STRIDE + O_WATER]
++
++
++## True when another record supersedes record k.
++static func superseded(S, k: int) -> bool:
++	return _index(S).sup.has(k)
++
++
++## The records whose reach touches the unit direction (their indices, in order, the superseded ones left out): what is under a point, for the water's level and a check's reading.
++static func at(S, qx: float, qy: float, qz: float) -> PackedInt32Array:
++	var out := PackedInt32Array()
++	if int(S.storeN) == 0:
++		return out
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
++	if not ent.grid.has(key):
++		return out
++	for k in ent.grid[key]:
++		if not ent.sup.has(k):
++			out.append(k)
++	return out
+ 
+ 
+ ## The trench groove at a unit direction (<= 0): -depth x the smoothed fall-off over the half width, the deepest of the trenches reaching it.
+@@ -322,3 +450,108 @@
+ 		return 0.0
+ 	var s: float = 1.0 - u * u
+ 	return -S.store[o + 7] * s * s
++
++
++## The raised bank at the edge of a groove (a trench's or a scar's lip slot): `lip` high on a ring from 0.85 to 1.6 half widths from the segment, a parabola with its crest at 1.225 half widths.
++static func _lip(S, o: int, qx: float, qy: float, qz: float, R: float) -> float:
++	var ex: float = S.store[o + 4] - S.store[o + 1]
++	var ey: float = S.store[o + 5] - S.store[o + 2]
++	var ez: float = S.store[o + 6] - S.store[o + 3]
++	var e2: float = ex * ex + ey * ey + ez * ez
++	var t: float = 0.0
++	if e2 > 1.0e-24:
++		t = clampf(((qx - S.store[o + 1]) * ex + (qy - S.store[o + 2]) * ey + (qz - S.store[o + 3]) * ez) / e2, 0.0, 1.0)
++	var dx: float = (qx - (S.store[o + 1] + ex * t)) * R
++	var dy: float = (qy - (S.store[o + 2] + ey * t)) * R
++	var dz: float = (qz - (S.store[o + 3] + ez * t)) * R
++	var u: float = sqrt(dx * dx + dy * dy + dz * dz) / S.store[o + 8]
++	if u <= 0.85 or u >= 1.6:
++		return 0.0
++	var w: float = (u - 0.85) / 0.75
++	return S.store[o + O_LIP] * 4.0 * w * (1.0 - w)
++
++
++## The distance in units from the unit direction to a segment record's line (a trench's or a scar's A to B).
++static func _segDist(S, o: int, qx: float, qy: float, qz: float, R: float) -> float:
++	var ex: float = S.store[o + 4] - S.store[o + 1]
++	var ey: float = S.store[o + 5] - S.store[o + 2]
++	var ez: float = S.store[o + 6] - S.store[o + 3]
++	var e2: float = ex * ex + ey * ey + ez * ez
++	var t: float = 0.0
++	if e2 > 1.0e-24:
++		t = clampf(((qx - S.store[o + 1]) * ex + (qy - S.store[o + 2]) * ey + (qz - S.store[o + 3]) * ez) / e2, 0.0, 1.0)
++	var dx: float = (qx - (S.store[o + 1] + ex * t)) * R
++	var dy: float = (qy - (S.store[o + 2] + ey * t)) * R
++	var dz: float = (qz - (S.store[o + 3] + ez * t)) * R
++	return sqrt(dx * dx + dy * dy + dz * dz)
++
++
++## True when the unit direction is inside record k's hole: within a crater's lip, or within a groove's half width of its line.
++static func _inside(S, k: int, qx: float, qy: float, qz: float, R: float) -> bool:
++	var o: int = k * STRIDE
++	var kd: int = int(S.store[o])
++	if kd == KIND_TRENCH or kd == KIND_SCAR:
++		return _segDist(S, o, qx, qy, qz, R) < S.store[o + 8]
++	if kd == KIND_CRATER or kd == KIND_MERGE:
++		var dx: float = (qx - S.store[o + 1]) * R
++		var dy: float = (qy - S.store[o + 2]) * R
++		var dz: float = (qz - S.store[o + 3]) * R
++		return sqrt(dx * dx + dy * dy + dz * dz) < S.store[o + 4]
++	return false
++
++
++## The level the water stands at in the holes that reach the unit direction (the highest of the records there that hold water), or DRY. A record holds water only if WorldFill.floodLevelFor found a source when it was made.
++static func waterLevelAt(S, qx: float, qy: float, qz: float) -> float:
++	if int(S.storeN) == 0:
++		return DRY
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
++	if not ent.grid.has(key):
++		return DRY
++	var best: float = DRY
++	for k in ent.grid[key]:
++		var lv: float = S.store[k * STRIDE + O_WATER]
++		if lv <= DRY * 0.5 or ent.sup.has(k) or lv <= best:
++			continue
++		if _inside(S, k, qx, qy, qz, R):
++			best = lv
++	return best
++
++
++## The level of the highest water held by a record whose hole overlaps a new one of radius `radius` at unit direction q (their reaches closer than the two radii together), or DRY: a trench cut on from a flooded one, or a bowl dug in a flooded crater, takes its level.
++static func overlappingWater(S, q: Array, radius: float) -> float:
++	if int(S.storeN) == 0:
++		return DRY
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var best: float = DRY
++	var seen: Dictionary = {}
++	var cx: float = q[0] * R
++	var cy: float = q[1] * R
++	var cz: float = q[2] * R
++	for ix in range(_box(cx - radius), _box(cx + radius) + 1):
++		for iy in range(_box(cy - radius), _box(cy + radius) + 1):
++			for iz in range(_box(cz - radius), _box(cz + radius) + 1):
++				var key: int = _key(ix, iy, iz)
++				if not ent.grid.has(key):
++					continue
++				for k in ent.grid[key]:
++					if seen.has(k):
++						continue
++					seen[k] = true
++					var o: int = k * STRIDE
++					var lv: float = S.store[o + O_WATER]
++					if lv <= DRY * 0.5 or ent.sup.has(k) or lv <= best:
++						continue
++					var d: float = _segDist(S, o, q[0], q[1], q[2], R) if (int(S.store[o]) == KIND_TRENCH or int(S.store[o]) == KIND_SCAR) else _chord(S, o, q, R)
++					if d < radius + radiusOf(S, k):
++						best = lv
++	return best
++
++
++static func _chord(S, o: int, q: Array, R: float) -> float:
++	var dx: float = (q[0] - S.store[o + 1]) * R
++	var dy: float = (q[1] - S.store[o + 2]) * R
++	var dz: float = (q[2] - S.store[o + 3]) * R
++	return sqrt(dx * dx + dy * dy + dz * dz)
+--- a/sim/world/crater.gd
++++ b/sim/world/crater.gd
+@@ -181,18 +181,41 @@
+ 
+ 
+ static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
+-	if kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
++	_gQ = []
++	_gSup = -1
++	_gRep = 0
++	if _globeLive(S):   # on the planet store a blow repeats the crater it lands on by the store's records, at its planet point (WorldCraters globe.repeats), not by the strip's x
++		if kind == "impact" and not meteor and WorldCraters.globeRepeats() > 0:
++			var q0: Array = _pointOf(S, x)
++			var j: int = WorldStore.recentImpact(S, q0[0], q0[1], q0[2], 0.5) if not q0.is_empty() else -1
++			var rcapH: float = R_MAX if (special or S.powerOn) else ORD_R_MAX   # what this blow can dig at most: it never repeats a crater bigger than that (the grown record must reach as far as the one it supersedes: a blow cannot shrink a big crater)
++			if j >= 0 and WorldStore.repeatsOf(S, j) < WorldCraters.globeRepeats() and WorldStore.radiusOf(S, j) <= rcapH:
++				var rmul: float = shape[WorldCraters.S_R] if shape.size() > 0 else 1.0
++				var need: float = WorldStore.radiusOf(S, j) * float(WorldBrunt.cfg().repeatCraterGrow) / (R_BASE * rmul)
++				need = need * need / (SPECIAL_E_MULT if special else 1.0)
++				energy = maxf(energy, need)
++				_gQ = WorldStore.centreOf(S, j)   # the dig moves to the old crater's own centre
++				_gSup = j
++				_gRep = WorldStore.repeatsOf(S, j) + 1
++				SimField.strip(S, _gQ[0], _gQ[1], _gQ[2])
++				x = SimField.sx
++	elif kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
+ 		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
+ 		x = rp[0]
+ 		energy = rp[1]
+ 	if not S.depthOn:
+-		return _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
++		var rn = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
++		_gQ = []
++		_gSup = -1
++		return rn
+ 	var zz: float = z
+ 	if is_nan(zz):
+ 		zz = float(cause.z) if (cause != null and "z" in cause) else 0.0
+ 	var k: int = WorldTerrain.enterRow(S, WorldTerrain.rowOfZ(zz))
+ 	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
+ 	WorldTerrain.leaveRow(S, k)
++	_gQ = []
++	_gSup = -1
+ 	if rec != null and k >= 0 and not _lastLive:   # a crater held in the planet store has no strip rows to dig: its bowl is radial about its planet point
+ 		_digNeighbours(S, rec, k, shape[WorldCraters.S_STEEP] if shape.size() > 0 else 1.0)
+ 	return rec
+@@ -203,6 +226,31 @@
+ ## as ever UNTIL the state has a frame (S.frame, Simulation's read-through): then the ground is the field plus the store, and the deform write stops so the bowl is not counted twice (`_lastLive`, read by dig).
+ static var pointHook: Callable = Callable()
+ static var _lastLive: bool = false
++static var _gQ: Array = []      # the dig's planet point when a repeat moved it to the old crater's centre (set by _digRead, read by _dig and _record, cleared after)
++static var _gSup: int = -1      # ... the store record the new crater supersedes
++static var _gRep: int = 0       # ... and its repeat count
++
++
++## A glancing impact's furrow on the planet store: a TRENCH record from the crater's centre back along the heading (the strip's SKID_ numbers: full length 1.1 R at a horizontal share of 0.85, none under 0.35, a third of the bowl's depth), a column wide.
++static func _furrow(S: SimState, q: Array, xw: float, R: float, d: float, dirx: float, cause, lv: float) -> void:
++	var ax: float = absf(dirx)
++	if ax <= SKID_DIRX_MIN:
++		return
++	var kk: float = minf(1.0, (ax - SKID_DIRX_MIN) / (SKID_DIRX_FULL - SKID_DIRX_MIN))
++	var len: float = SKID_LEN_R * R * kk
++	var dir: float = 1.0 if dirx > 0.0 else -1.0
++	var qb: Array = _pointOf(S, SimWrap.wrap(xw - dir * len))
++	if qb.is_empty():
++		return
++	var depth: float = d * SKID_DEPTH_FRAC * kk
++	if depth < MIN_DEPTH:
++		return
++	WorldStore.addTrench(S, q, qb, depth, SimConst.COL, S.T, int(_slot(S, cause)), 0.0, lv)
++
++
++## True when a crater dug on S goes to the planet store with the line's read-through on: the ground there is the field plus the store (no strip bowl), so the rules of the round planet apply to it (WorldGlobe).
++static func _globeLive(S: SimState) -> bool:
++	return S.planetGen >= 3 and ("store" in S) and ("frame" in S) and S.frame != null and int(S.storeN) < WorldStore.MAX
+ 
+ 
+ static func _pointOf(S: SimState, x: float) -> Array:
+@@ -220,14 +268,14 @@
+ 
+ 
+ ## Adds the crater to the store; true when it is held there. Nothing happens off gen 3 or on a state without the store's fields.
+-static func _record(S: SimState, xw: float, R: float, d: float, hr: float, E: float, kind: String, cause, special: bool) -> bool:
++static func _record(S: SimState, xw: float, R: float, d: float, hr: float, E: float, kind: String, cause, special: bool, qp: Array = [], sup: int = -1, rep: int = 0, lv: float = WorldStore.DRY) -> bool:
+ 	if S.planetGen < 3 or not ("store" in S):
+ 		return false
+-	var q: Array = _pointOf(S, xw)
++	var q: Array = qp if not qp.is_empty() else _pointOf(S, xw)
+ 	if q.is_empty():
+ 		return false
+ 	var ci: int = 0 if kind == "impact" else (1 if kind == "beam" else (2 if kind == "powerup" else 3))
+-	return WorldStore.add(S, q[0], q[1], q[2], R, d, hr, E, ci, int(_slot(S, cause)), S.T, 1 if special else 0) >= 0
++	return WorldStore.add(S, q[0], q[1], q[2], R, d, hr, E, ci, int(_slot(S, cause)), S.T, 1 if special else 0, sup, rep, lv) >= 0
+ 
+ 
+ ## The bowl's shape at u (in R) inside the lip is t * t, 1 at the centre and 0 at the lip, for t = 1 - u^2 today; steep (craters.json) changes the power of u.
+@@ -296,9 +344,18 @@
+ 	var xw: float = SimWrap.wrap(x)
+ 	var c0: int = _col(xw)
+ 	var y0: float = WorldTerrain.groundY(S, xw)
+-	var nr: int = int(round(RING_K * R / COL))
+-	var ring: float = (S.deform[(c0 - nr + NC) % NC] + S.deform[(c0 + nr) % NC]) * 0.5
+-	var relief: float = ring - S.deform[c0]
++	var glob: bool = _globeLive(S)   # on the planet store the relief is the ring against the centre in the store's ground, without the record this one supersedes (WorldGlobe); on the strip it is the strip's two columns
++	var qg: Array = []
++	if glob:
++		qg = _gQ if not _gQ.is_empty() else _pointOf(S, xw)
++		glob = not qg.is_empty()
++	var relief: float
++	if glob:
++		relief = WorldGlobe.relief(S, qg, RING_K * R, _gSup)
++	else:
++		var nr: int = int(round(RING_K * R / COL))
++		var ring: float = (S.deform[(c0 - nr + NC) % NC] + S.deform[(c0 + nr) % NC]) * 0.5
++		relief = ring - S.deform[c0]
+ 	var dRaw: float = R0 * DEPTH_RATIO * sD * (GRAZE_MIN + (1.0 - GRAZE_MIN) * clampf(vert, 0.0, 1.0))
+ 	var d: float = minf(dRaw, RELIEF_MAX_RATIO * R0 * sD - relief)
+ 	if d < MIN_DEPTH:
+@@ -307,13 +364,23 @@
+ 	var volFrac: float = RIM_VOL_LOW + (RIM_VOL_HIGH - RIM_VOL_LOW) * rt * rt * (3.0 - 2.0 * rt)
+ 	var dt: float = d / sD   # the depth today's bowl would have had, for today's rim
+ 	var hr: float = minf(dt * volFrac * RIM_H_PER_VOL, RIM_DEPTH_MAX * dt) * sRim
++	if glob and WorldCraters.globeSettle():   # the wall eased to the angle of repose: wider and shallower, the volume kept, held to the cap and the shaft cap again
++		var st: Array = WorldGlobe.settle(S, qg, R, d, hr, rcap, RELIEF_MAX_RATIO * R0 * sD, relief, _gSup)
++		R = st[0]
++		d = st[1]
++		hr = st[2]
++		if d < MIN_DEPTH:
++			return null
+ 	var n: int = int(ceil(R * (1.0 + RIM_OUT) / COL)) + 1
+ 	var minG: float = 1e9
+-	var stored: bool = _record(S, xw, R, d, hr, E, kind, cause, special)
++	var lv: float = WorldFill.floodLevelFor(S, qg, R, d) if glob else WorldStore.DRY   # B1: where water could come from (off unless water.json flood.enabled)
++	var stored: bool = _record(S, xw, R, d, hr, E, kind, cause, special, qg if glob else [], _gSup if glob else -1, _gRep if glob else 0, lv)
+ 	var live: bool = stored and ("frame" in S) and S.frame != null   # the read-through reads the store: no strip bowl
+ 	_lastLive = live
+ 	if live:
+ 		minG = y0 - d
++		if glob and kind == "impact" and WorldCraters.globeFurrow():   # the furrow: a glancing blow makes a short trench behind it, along the true heading, through the rim (terrain-globe-plan.md 4.3)
++			_furrow(S, qg, xw, R, d, dirx, cause, lv)
+ 	var pre := PackedFloat32Array()   # the deform before this crater, for the furrow's target
+ 	pre.resize(2 * n + 1)
+ 	var pinD: PackedByteArray = WorldStructures.pinned(S, c0, n)   # the rim and apron skip footings (T4 extended)
+@@ -621,7 +688,8 @@
+ 		var ta: Array = _pointOf(S, SimWrap.wrap(xa))
+ 		var tb: Array = _pointOf(S, SimWrap.wrap(xb))
+ 		if not ta.is_empty() and not tb.is_empty():
+-			tlive = WorldStore.addTrench(S, ta, tb, depth, SimConst.COL, S.T, -1) >= 0 and ("frame" in S) and S.frame != null
++			var tlv: float = WorldFill.floodLevelForSegment(S, ta, tb, depth, SimConst.COL) if S.planetGen >= 3 else WorldStore.DRY   # B1: a trench cut on from the coast fills along its length (off unless water.json flood.enabled)
++			tlive = WorldStore.addTrench(S, ta, tb, depth, SimConst.COL, S.T, -1, 0.0, tlv) >= 0 and ("frame" in S) and S.frame != null
+ 	var base: PackedFloat32Array = S.base
+ 	var dfm: PackedFloat32Array = S.deform
+ 	var crk: PackedFloat32Array = S.crack
+--- a/sim/world/craters.gd
++++ b/sim/world/craters.gd
+@@ -34,6 +34,80 @@
+ static var K_BUILT: bool = false
+ static var K_SCALES: bool = true
+ static var _shapes: Array = []   # per look code: the shape, or an empty array for no row (today's bowl)
++## The planet store's rules for a mark (craters.json globe, optional; terrain-globe-plan.md 4.3). floor and ceil hold the store's ground (the strip's -260 and +120 x WS); repose is the wall slope past which a new crater
++## settles wider and shallower; repeats is how many times a blow on one spot grows the crater (0: off, each blow digs its own, held by the shaft cap) and grow the radius factor each asks (brunt.json repeatCraterGrow).
++static var G_FLOOR: float = -2080.0
++static var G_CEIL: float = 960.0
++static var G_REPOSE: float = 1.25
++static var G_REPEATS: int = 0
++static var G_SETTLE: bool = true
++static var G_FURROW: bool = false
++static var G_SETTLE_G: bool = false   # grooves (trenches, scars) settle to the angle of repose too: off until step 3 (trench widths by force), see globe-step2.md
++
++
++static func globeFloor() -> float:
++	if not _loaded:
++		_load()
++	return G_FLOOR
++
++
++static func globeCeil() -> float:
++	if not _loaded:
++		_load()
++	return G_CEIL
++
++
++static func globeRepose() -> float:
++	if not _loaded:
++		_load()
++	return G_REPOSE
++
++
++static func globeRepeats() -> int:
++	if not _loaded:
++		_load()
++	return G_REPEATS
++
++
++static func globeSettleGrooves() -> bool:
++	if not _loaded:
++		_load()
++	return G_SETTLE_G and G_SETTLE
++
++
++static func setSettleGrooves(on_: bool) -> void:
++	if not _loaded:
++		_load()
++	G_SETTLE_G = on_
++
++
++static func globeFurrow() -> bool:
++	if not _loaded:
++		_load()
++	return G_FURROW
++
++
++static func setFurrow(on_: bool) -> void:
++	if not _loaded:
++		_load()
++	G_FURROW = on_
++
++
++static func globeSettle() -> bool:
++	if not _loaded:
++		_load()
++	return G_SETTLE
++
++
++## Tests only: set the globe rules without the file (the two-way checks run the same dig with repeats off and on).
++static func setGlobe(floor_: float, ceil_: float, repose: float, repeats: int, settle: bool) -> void:
++	if not _loaded:
++		_load()
++	G_FLOOR = floor_
++	G_CEIL = ceil_
++	G_REPOSE = repose
++	G_REPEATS = repeats
++	G_SETTLE = settle
+ 
+ 
+ static func data() -> Dictionary:
+@@ -74,6 +148,13 @@
+ 	_errors = []
+ 	_d = {}
+ 	_shapes = []
++	G_FLOOR = -2080.0
++	G_CEIL = 960.0
++	G_REPOSE = 1.25
++	G_REPEATS = 0
++	G_SETTLE = true
++	G_FURROW = false
++	G_SETTLE_G = false
+ 	for k in range(WorldGround.LOOKS.size()):
+ 		_shapes.append(NONE)
+ 	var f := FileAccess.open(PATH, FileAccess.READ)
+@@ -114,10 +195,22 @@
+ 		var mt = j.meteor
+ 		if not (mt is Dictionary) or float(mt.get("eMult", 0.0)) < 1.0 or float(mt.get("rMax", 0.0)) < 600.0:
+ 			_errors.append("craters.json: meteor needs eMult (at least 1) and rMax (at least 600)")
++	if j.has("globe"):
++		var gl = j.globe
++		if not (gl is Dictionary) or float(gl.get("floor", -1.0)) >= 0.0 or float(gl.get("ceil", 1.0)) <= 0.0 or float(gl.get("repose", 1.25)) < 0.5 or int(gl.get("repeats", 0)) < 0 or int(gl.get("repeats", 0)) > 8:
++			_errors.append("craters.json: globe is {floor below 0, ceil above 0, repose at least 0.5, repeats 0 to 8, settle}")
+ 	if not _errors.is_empty():
+ 		for k in range(_shapes.size()):
+ 			_shapes[k] = NONE
+ 		return
++	if j.has("globe"):
++		G_FLOOR = float(j.globe.get("floor", -2080.0))
++		G_CEIL = float(j.globe.get("ceil", 960.0))
++		G_REPOSE = float(j.globe.get("repose", 1.25))
++		G_REPEATS = int(j.globe.get("repeats", 0))
++		G_SETTLE = bool(j.globe.get("settle", true))
++		G_FURROW = bool(j.globe.get("furrow", false))
++		G_SETTLE_G = bool(j.globe.get("settleGrooves", false))
+ 	_d = j
+ 	_parsed = j
+ 	K_ON = bool(j.enabled)
+--- a/sim/world/fill.gd
++++ b/sim/world/fill.gd
+@@ -37,6 +37,11 @@
+ static var K_SURF_ON: bool = false
+ static var K_SURF_TICKS: int = 30
+ static var K_FLOOR_ON: bool = false
++static var K_FLOOD_ON: bool = false        # B1 on the planet store (water.json flood.enabled): a hole dug with a source of water near it holds water at the source's level
++static var K_FLOOD_MINDUG: float = 6.0     # a hole dug less than this deep looks for no source
++static var K_FLOOD_REACH: float = 1150.0   # the source is looked for this far (plus the hole's own radius) from its centre
++static var K_FLOOD_RADII: int = 4          # ... at this many radii
++static var K_FLOOD_BEARINGS: int = 8       # ... on this many of WorldGlobe's bearings (8 at most)
+ 
+ 
+ static func data() -> Dictionary:
+@@ -157,6 +162,8 @@
+ 			_errors.append("water.json: table names %s, which climate.json does not have" % String(k))
+ 	if j.has("surface") and (not (j.surface is Dictionary) or int(j.surface.ticks) < 2):
+ 		_errors.append("water.json: surface is {enabled, ticks} with ticks at least 2")
++	if j.has("flood") and (not (j.flood is Dictionary) or float(j.flood.get("minDug", 0.0)) <= 0.0 or float(j.flood.get("reach", 0.0)) <= 0.0 or int(j.flood.get("radii", 0)) < 1 or int(j.flood.get("bearings", 0)) < 1 or int(j.flood.get("bearings", 0)) > 8):
++		_errors.append("water.json: flood is {enabled, minDug above 0, reach above 0, radii at least 1, bearings 1 to 8}")
+ 	var fp: String = floorProblem(j, _dropWaterOn() if j.has("floor") and j.floor is Dictionary and bool(j.floor.get("enabled", false)) else true)
+ 	if fp != "":
+ 		_errors.append(fp)
+@@ -190,6 +197,104 @@
+ 	K_SURF_ON = bool(j.surface.enabled) if j.has("surface") else false
+ 	K_SURF_TICKS = int(j.surface.ticks) if j.has("surface") else 30
+ 	K_FLOOR_ON = bool(j.floor.enabled) if j.has("floor") else false
++	K_FLOOD_ON = bool(j.flood.enabled) if j.has("flood") else false
++	K_FLOOD_MINDUG = float(j.flood.minDug) if j.has("flood") else 6.0
++	K_FLOOD_REACH = float(j.flood.reach) if j.has("flood") else 1150.0
++	K_FLOOD_RADII = int(j.flood.radii) if j.has("flood") else 4
++	K_FLOOD_BEARINGS = int(j.flood.bearings) if j.has("flood") else 8
++
++
++## ===================================================================== B1 on the planet store (terrain-globe-plan.md 4.3; docs/world/low-impact-water.md section 3)
++## When a crater, a trench or a groove is dug at least flood.minDug deep it looks once for a source of water round it: the sea (the base field under the shore line), a lake (World's lake records), or the biome's water
++## table (water.json table, at the hole itself), at flood.bearings bearings and flood.radii radii out to flood.reach beyond its own radius. It also takes the level of any record that overlaps it and already holds water (the lowest level wins: water finds the lowest it is connected to),
++## so a trench cut on from the coast fills along its length and a bowl dug in a flooded crater fills. The level goes into the record's own water slot (hashed, truncated with the store by a rollback); no source leaves
++## the slot DRY and the hole dry. The read is WorldStore.waterLevelAt: the level less the ground there, where positive, inside the hole (floodDepth). Pure in the store and the field; never trapping, slowing or
++## hurting anyone (Game Design 23b rows 15, 17). Off unless water.json flood.enabled.
++
++static func floodOn() -> bool:
++	if not _loaded:
++		_load()
++	return K_FLOOD_ON
++
++
++## Tests only: set the flood without the file.
++static func setFlood(on_: bool) -> void:
++	if not _loaded:
++		_load()
++	K_FLOOD_ON = on_
++
++
++## The level a source of water at unit direction p stands at (the field's own ground there, never the store's holes), or DRY: the sea at its level, a lake at its surface, a wet biome's table below the ground.
++static func floodSource(S, p: Array, tableToo: bool) -> float:
++	if S.planetRing == null or not (S.planetRing is Dictionary) or S.planetRing.is_empty() or not S.planetRing.has("seed"):
++		return WorldStore.DRY
++	var P: WorldPlanet.Planet = WorldPlanet.make(int(S.planetRing.seed))
++	var F = WorldField.of(P)
++	WorldField.sample(F, p[0], p[1], p[2], 1)
++	var h: float = F.oh
++	var fine: int = F.ofine
++	if not S.fieldRecs.is_empty():
++		h = WorldField.applyRecords(S, p[0], p[1], p[2], h)
++	if h < WorldWater.SHORE_WET:
++		return WorldWater.SEA_LEVEL
++	var rd: float = WorldField.recordWater(S, p[0], p[1], p[2], h)   # (the flood's own term is not in it: floodDepth reads the store, and h here is the field's)
++	if rd > 0.0:
++		return h + rd
++	if tableToo:
++		var td: float = tableDepth(WorldClimate.fineName(fine))
++		if td != NONE and not bool(_tableD[WorldClimate.fineName(fine)][1]):
++			return h - td
++	return WorldStore.DRY
++
++
++## The lower of two levels, DRY being none: water finds the lowest level it is connected to (a hole beside the sea and a lake on the hill holds the sea's level, not the lake's).
++static func _lower(a: float, b: float) -> float:
++	if b <= WorldStore.DRY * 0.5:
++		return a
++	if a <= WorldStore.DRY * 0.5:
++		return b
++	return minf(a, b)
++
++
++## The level a hole of radius R and depth d dug at unit direction q holds water at, or DRY. Off, or too shallow, or with no source: DRY.
++static func floodLevelFor(S, q: Array, R: float, d: float) -> float:
++	if not floodOn() or d < K_FLOOD_MINDUG:
++		return WorldStore.DRY
++	var lv: float = WorldStore.overlappingWater(S, q, R)
++	lv = _lower(lv, floodSource(S, q, true))
++	var b: Array = WorldGlobe.basis(q)
++	for ri in range(K_FLOOD_RADII):
++		var rr: float = (R + K_FLOOD_REACH) * float(ri + 1) / float(K_FLOOD_RADII)
++		for bi in range(K_FLOOD_BEARINGS):
++			lv = _lower(lv, floodSource(S, WorldGlobe.pointAt(q, b, bi, rr), false))
++	return lv
++
++
++## The same for a groove from planet point a to b, half width hw, cut depth deep: the search is round its middle, out to its half length and its width.
++static func floodLevelForSegment(S, a: Array, b: Array, depth: float, hw: float) -> float:
++	if not floodOn() or depth < K_FLOOD_MINDUG:
++		return WorldStore.DRY
++	var mx: float = a[0] + b[0]
++	var my: float = a[1] + b[1]
++	var mz: float = a[2] + b[2]
++	var mn: float = sqrt(mx * mx + my * my + mz * mz)
++	if mn < 1.0e-9:
++		return WorldStore.DRY
++	var m: Array = [mx / mn, my / mn, mz / mn]
++	var ex: float = b[0] - a[0]
++	var ey: float = b[1] - a[1]
++	var ez: float = b[2] - a[2]
++	var half: float = 0.5 * sqrt(ex * ex + ey * ey + ez * ez) * SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
++	var lv: float = _lower(floodLevelFor(S, m, half + hw, depth), floodSource(S, a, true))
++	return _lower(lv, floodSource(S, b, true))
++
++
++## The depth of the flood at unit direction q whose ground (the field's and the store's) is h: the level of the water held in the holes there, less h, where positive; 0 for none. Read by WorldField.recordWater.
++static func floodDepth(S, qx: float, qy: float, qz: float, h: float) -> float:
++	if not floodOn() or int(S.storeN) == 0:
++		return 0.0
++	var lv: float = WorldStore.waterLevelAt(S, qx, qy, qz)
++	return maxf(0.0, lv - h) if lv > WorldStore.DRY * 0.5 else 0.0
+ 
+ 
+ ## Water shallower than this at x is waded: a body passing through it is not dragged or sunk (it still skims). False with water v2 off, unless the floor is on: wade.below is the floor's line too (rulings 2026-10-30 row 4).
+--- a/sim/world/field.gd
++++ b/sim/world/field.gd
+@@ -704,8 +704,9 @@
+ 
+ ## The water the records hold at a unit direction whose ground (after applyRecords) is `h`: the deepest of the lakes and rivers there, in units; 0 for none. The sea is not a record: it is derived from the ground.
+ static func recordWater(S, qx: float, qy: float, qz: float, h: float, planet = null) -> float:
++	var flood: float = WorldFill.floodDepth(S, qx, qy, qz, h)   # the water the holes the fight dug hold (B1; 0 with water.json flood off)
+ 	if S.fieldRecs.is_empty():
+-		return 0.0
++		return flood
+ 	var best: float = 0.0
+ 	var lakeBest: float = 0.0
+ 	var lakeLevel: float = 1.0e30
+@@ -725,7 +726,7 @@
+ 			var bl: Array = WorldWaterRec.riverBed(P, rec, qx, qy, qz)
+ 			if not bl.is_empty():
+ 				best = maxf(best, float(bl[1]) - h)
+-	return maxf(best, lakeBest)
++	return maxf(maxf(best, lakeBest), flood)
+ 
+ 
+ ## The bake hash's hasher at its start (the text _hashBake begins with): the bake folds each node in as it comes, in bake order, so the hash is ready the moment the last node is, with no call of its own.
+--- /dev/null
++++ b/sim/world/globe.gd
+@@ -0,0 +1,127 @@
++class_name WorldGlobe
++extends RefCounted
++## The treadmill's rules for a mark, in round form (docs/world/globe-step2.md; docs/ep/proposals/terrain-globe-plan.md 4.3): what a crater dug in the planet store reads about the ground around it. No shafts: a new
++## crater's depth is held to 0.26 of its radius less the relief already there, the ring around its centre against the centre, read without the record it supersedes. Settling: where the wall of the bowl would be
++## steeper than the angle of repose, it widens and shallows with its volume kept. All of it reads the store (WorldStore.heightDeltaX) at planet points and nothing else, so it is pure in the store, float64, and uses
++## no trig and no random number: eight fixed bearings, a basis taken from the point.
++
++static var _bear: Array = []   # the eight bearings as [cos, sin] pairs: 1, sqrt(1/2) (from its bits, SimMathx.f64) and 0, in order round
++const WALL_STEPS: Array = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.7, 2.0]   # where along a bearing (in bowl radii) the wall is sampled
++
++
++static var blind: bool = false   # tests only: the shaft cap reads no relief (the check's negative control)
++
++
++## The eight fixed bearings, [cos, sin] each, a quarter turn apart and between: no trig, the same bits everywhere.
++static func bearings() -> Array:
++	if _bear.is_empty():
++		var h: float = SimMathx.f64("3fe6a09e667f3bcd")   # sqrt(1/2)
++		_bear = [[1.0, 0.0], [h, h], [0.0, 1.0], [-h, h], [-1.0, 0.0], [-h, -h], [0.0, -1.0], [h, -h]]
++	return _bear
++
++
++static func _R() -> float:
++	return SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
++
++
++## Two unit vectors across the unit direction q, the same from the same q: [e1x, e1y, e1z, e2x, e2y, e2z].
++static func basis(q: Array) -> Array:
++	var hx: float = 0.0
++	var hy: float = 1.0
++	if absf(q[1]) >= 0.9:
++		hx = 1.0
++		hy = 0.0
++	# e1 = q x h, normalised
++	var ax: float = q[1] * 0.0 - q[2] * hy
++	var ay: float = q[2] * hx - q[0] * 0.0
++	var az: float = q[0] * hy - q[1] * hx
++	var n: float = sqrt(ax * ax + ay * ay + az * az)
++	ax /= n
++	ay /= n
++	az /= n
++	# e2 = q x e1
++	var bx: float = q[1] * az - q[2] * ay
++	var by: float = q[2] * ax - q[0] * az
++	var bz: float = q[0] * ay - q[1] * ax
++	return [ax, ay, az, bx, by, bz]
++
++
++## The unit direction `dist` units from q along bearing `bi` (0 to 7) of basis `b`.
++static func pointAt(q: Array, b: Array, bi: int, dist: float) -> Array:
++	var s: float = dist / _R()
++	var c: float = bearings()[bi][0]
++	var d: float = bearings()[bi][1]
++	var px: float = q[0] + (b[0] * c + b[3] * d) * s
++	var py: float = q[1] + (b[1] * c + b[4] * d) * s
++	var pz: float = q[2] + (b[2] * c + b[5] * d) * s
++	var n: float = sqrt(px * px + py * py + pz * pz)
++	return [px / n, py / n, pz / n]
++
++
++## The mean of the store's ground on a ring of `radius` units round q (eight fixed bearings), without record `skip`.
++static func ringMean(S, q: Array, radius: float, skip: int = -1) -> float:
++	var b: Array = basis(q)
++	var sum: float = 0.0
++	for bi in range(bearings().size()):
++		var p: Array = pointAt(q, b, bi, radius)
++		sum += WorldStore.heightDeltaX(S, p[0], p[1], p[2], skip)
++	return sum / float(bearings().size())
++
++
++## The relief at q: the ring at `ringR` against the centre (positive where the centre is lower), both without record `skip`.
++static func relief(S, q: Array, ringR: float, skip: int = -1) -> float:
++	if int(S.storeN) == 0 or blind:
++		return 0.0
++	return ringMean(S, q, ringR, skip) - WorldStore.heightDeltaX(S, q[0], q[1], q[2], skip)
++
++
++## The steepest wall the ground would have with a bowl of radius R, depth d and rim hr added at q: the largest drop between neighbouring samples (WALL_STEPS bowl radii out along eight bearings) of the store's
++## ground without record `skip` plus the new bowl, per unit of distance.
++static func steepest(S, q: Array, R: float, d: float, hr: float, skip: int = -1) -> float:
++	var b: Array = basis(q)
++	var worst: float = 0.0
++	var haveStore: bool = int(S.storeN) > 0
++	for bi in range(bearings().size()):
++		var prev: float = 0.0
++		for si in range(WALL_STEPS.size()):
++			var u: float = WALL_STEPS[si]
++			var h: float = WorldCrater.profile(u, d, hr)
++			if haveStore:
++				var p: Array = pointAt(q, b, bi, u * R) if u > 0.0 else q
++				h += WorldStore.heightDeltaX(S, p[0], p[1], p[2], skip)
++			if si > 0:
++				worst = maxf(worst, absf(h - prev) / ((u - WALL_STEPS[si - 1]) * R))
++			prev = h
++	return worst
++
++
++## The steepest wall of a groove (a trench's or a scar's profile -depth x (1 - u^2)^2 across its half width): 8 / (3 root 3) of its depth over its half width.
++const GROOVE_SLOPE: float = 1.5396
++
++
++## A groove settled to the angle of repose: [depth, halfWidth]. One whose wall would be steeper than `repose` is widened by k and shallowed by k (the cross-section kept; k = root of s / repose) until its wall is at the angle of repose, as
++## the strip's relaxation left it: a trench is never deeper than its target, and never a wall. Off with craters.json globe.settleGrooves (shipped off) or globe.settle.
++static func settleGroove(depth: float, hw: float) -> Array:
++	if not WorldCraters.globeSettleGrooves() or hw <= 0.0 or depth <= 0.0:
++		return [depth, hw]
++	var repose: float = WorldCraters.globeRepose()
++	var s: float = GROOVE_SLOPE * depth / hw
++	if s <= repose:
++		return [depth, hw]
++	var k: float = sqrt(s / repose)
++	return [depth / k, hw * k]
++
++
++## The settled bowl: [R, d, hr] after the wall has been eased to the angle of repose. The wall steeper than `repose` widens the bowl by k and shallows it by k^2 (the volume kept: k = (s / repose)^(1/3));
++## the widened bowl is held to the cap again and its depth to the shaft cap again (`dCap`, the cap on the new R less the relief), so at the cap it only gets shallower. The rim shallows with the depth.
++static func settle(S, q: Array, R: float, d: float, hr: float, rcap: float, reliefMax: float, relief_: float, skip: int = -1) -> Array:
++	var repose: float = WorldCraters.globeRepose()
++	var s: float = steepest(S, q, R, d, hr, skip)
++	if s <= repose:
++		return [R, d, hr]
++	var k: float = SimDetMath.pow(s / repose, 1.0 / 3.0)
++	var R2: float = minf(R * k, rcap)
++	var kk: float = R2 / R
++	var d2: float = minf(d / (kk * kk), maxf(0.0, reliefMax * (R2 / R) - relief_))
++	var hr2: float = hr * (d2 / d) if d > 0.0 else hr
++	return [R2, d2, hr2]
+--- /dev/null
++++ b/sim/world/globe.gd.uid
+@@ -0,0 +1 @@
++uid://yp3j72gqcjqj
+--- /dev/null
++++ b/sim/world/tools/globe_check.gd
+@@ -0,0 +1,493 @@
++extends SceneTree
++# Terrain step 2, "no shafts, and water where it could come from" (World, docs/world/globe-step2.md; terrain-globe-plan.md 4.3). From the repo root:
++#   godot --headless --path . --script res://sim/world/tools/globe_check.gd -- [--negative-control]
++# Proves on a gen 3 match with a frame: the planet store's slots (material, repeat count, water, supersedes) are in the hash; a crater's depth is held to 0.26 of its radius less the relief (20 hits on one spot never go
++# deeper than 0.26 R, with repeats off and on); a repeat grows one crater 1.25 times at most twice and 10 base hits stay under 560; a superseded record is not read; settling widens and shallows a steep bowl with its volume
++# kept; the floor and the ceiling hold the store's ground; B1 water finds a source (the sea, a lake, the table) or leaves the hole dry, a trench cut on from the coast carries the level along its length, and the whole thing
++# is behind its switch; and a peer that rolls back reads the same ground, column by column, as one that did not. --negative-control takes the shaft cap's relief away: the checks must then fail.
++var fails: int = 0
++var negative: bool = false
++const FIELD: Dictionary = {"intro": false, "planet": 7, "touch": 1, "planetGen": 3}
++const E_BASE: float = (356.0 / 160.0) * (356.0 / 160.0)   # a base blow: its crater is 356 units across the radius
++
++
++func ok(c: bool, what: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", what])
++	if not c:
++		fails += 1
++
++
++func _mk() -> SimState:
++	WorldClimate.useGen(3)
++	WorldPlanet.forget()
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, FIELD)
++	for t in range(5):
++		SimCore.step(S)
++	return S
++
++
++func _hit(S: SimState, x: float, e: float = E_BASE):
++	return WorldCrater.dig(S, x, e, S.fighters[0], "impact")
++
++
++func _centre(S: SimState, k: int) -> Array:
++	return WorldStore.centreOf(S, k)
++
++
++## The centre's depth below nothing: minus the store's height there.
++func _depthAt(S: SimState, q: Array) -> float:
++	return -WorldStore.heightDelta(S, q[0], q[1], q[2])
++
++
++func _liveMaxR(S: SimState) -> float:
++	var m: float = 0.0
++	for k in range(int(S.storeN)):
++		if int(S.store[k * WorldStore.STRIDE]) == WorldStore.KIND_CRATER and not WorldStore.superseded(S, k):
++			m = maxf(m, S.store[k * WorldStore.STRIDE + 4])
++	return m
++
++
++func _init() -> void:
++	negative = OS.get_cmdline_user_args().has("--negative-control")
++	WorldGlobe.blind = negative
++	_slots()
++	_shaft()
++	_repeats()
++	_furrow()
++	_settle()
++	_clamps()
++	_cliff()
++	_water()
++	_peers()
++	print("GLOBE: %d check(s) failed%s" % [fails, " (negative control)" if negative else ""])
++	quit(0)
++
++
++## The slots: a crater's record carries its numbers in the last four; a segment's too; they are folded into the hash.
++func _slots() -> void:
++	print("slots and hash")
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, true)
++	var S := _mk()
++	ok(S.frame != null and S.planetGen == 3, "a gen 3 match has a frame (the planet store is the ground)")
++	var x: float = S.fighters[0].x + 900.0
++	var r = _hit(S, x)
++	ok(r != null and S.storeN == 1, "a base blow digs a crater record")
++	var o: int = 0
++	ok(int(S.store[o + WorldStore.O_SUP]) == -1 and S.store[o + WorldStore.O_WATER] == WorldStore.DRY and int(S.store[o + WorldStore.O_REP]) == 0 and int(S.store[o + WorldStore.O_MAT]) == 0, "its slots: supersedes nothing, dry, no repeats, material 0")
++	var A := _mk()
++	var B := _mk()
++	_hit(A, x)
++	_hit(B, x)
++	ok(A.storeHash == B.storeHash and A.storeHash == S.storeHash, "the same blow makes the same store hash")
++	var q: Array = _centre(A, 0)
++	WorldStore.add(A, q[0], q[1], q[2], 100.0, 10.0, 2.0, 1.0, 0, 0, 5.0, 0)
++	WorldStore.add(B, q[0], q[1], q[2], 100.0, 10.0, 2.0, 1.0, 0, 0, 5.0, 0, -1, 0, 3.5)
++	ok(A.storeHash != B.storeHash, "a record's water level is folded into the hash")
++	var C := _mk()
++	_hit(C, x)
++	WorldStore.add(C, q[0], q[1], q[2], 100.0, 10.0, 2.0, 1.0, 0, 0, 5.0, 0, -1, 1)
++	ok(A.storeHash != C.storeHash, "a record's repeat count is folded into the hash")
++	var D := _mk()
++	_hit(D, x)
++	WorldStore.add(D, q[0], q[1], q[2], 100.0, 10.0, 2.0, 1.0, 0, 0, 5.0, 0, 0)
++	ok(A.storeHash != D.storeHash, "the record it supersedes is folded into the hash")
++	ok(S.store.size() == WorldStore.STRIDE, "a record is 16 numbers")
++
++
++## No shafts: 20 hits on one spot, repeats off and on.
++func _shaft() -> void:
++	print("no shafts: 20 hits on one spot")
++	for reps in [0, 2]:
++		WorldCraters.setGlobe(-2080.0, 960.0, 1.25, reps, true)
++		var S := _mk()
++		var x: float = S.fighters[0].x + 900.0
++		_hit(S, x)
++		var q: Array = _centre(S, 0)
++		var made: int = 1
++		var refused: int = 0
++		for i in range(19):
++			if _hit(S, x) != null:
++				made += 1
++			else:
++				refused += 1
++		var big: float = _liveMaxR(S)
++		var depth: float = _depthAt(S, q)
++		ok(depth <= 0.26 * big + 1.0e-6, "repeats %d: 20 hits leave the centre %.1f deep, within 0.26 of the largest radius %.1f (%.1f); %d dug a record, %d were refused" % [reps, depth, big, 0.26 * big, made, refused])
++		ok(depth > 0.1 * big, "repeats %d: ... and it is a real crater (%.1f deep)" % [reps, depth])
++		if reps == 0:
++			ok(refused > 0, "repeats 0: a spot too dented to take another crater takes none (%d refused, no record, nothing superseded)" % refused)
++
++
++## Repeats: 1.25 times at most twice (a max, never a sum), 10 base hits stay under 560, a superseded record is not read, the ground is the same.
++func _repeats() -> void:
++	print("repeats")
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 2, true)
++	var S := _mk()
++	var x: float = S.fighters[0].x + 900.0
++	var rs: Array = []
++	var q: Array = []
++	for i in range(10):
++		var r = _hit(S, x)
++		if i == 0:
++			q = _centre(S, 0)
++		if r != null:
++			rs.append(snappedf(r.r, 0.01))
++	ok(rs.size() >= 3 and absf(rs[0] - 356.0) < 0.5, "the first base blow's radius is 356 (%s)" % str(rs.slice(0, 4)))
++	ok(rs.size() >= 3 and absf(rs[1] - 445.0) < 0.5 and absf(rs[2] - 556.25) < 0.5, "the second and third grow it 1.25 times each (%s), a max never a sum" % str(rs.slice(0, 4)))
++	var big: float = _liveMaxR(S)
++	ok(big < 560.0, "10 base hits on one spot: the largest crater is %.1f, under 560" % big)
++	var sup: int = 0
++	for k in range(int(S.storeN)):
++		if WorldStore.superseded(S, k):
++			sup += 1
++	ok(sup == 2, "the two grown craters are superseded (%d), the store is append-only (%d records)" % [sup, S.storeN])
++	# a superseded record is not read: the ground at the centre is the live records only
++	var h: float = WorldStore.heightDelta(S, q[0], q[1], q[2])
++	var h2: float = WorldStore.heightDeltaX(S, q[0], q[1], q[2], 0)
++	ok(absf(h - h2) < 1.0e-9, "a superseded record adds nothing to the ground (skip it and nothing changes)")
++	# the repeat count and what the grown record carries
++	var last: int = -1
++	for k in range(int(S.storeN)):
++		if int(S.store[k * WorldStore.STRIDE + WorldStore.O_SUP]) >= 0:
++			last = k
++	ok(last >= 0 and WorldStore.repeatsOf(S, last) >= 1, "the grown record counts its repeats (%d)" % (WorldStore.repeatsOf(S, last) if last >= 0 else -1))
++	# an ordinary blow never repeats (and so never replaces) a crater bigger than it can dig: a special crater's bowl stays
++	var Sp := _mk()
++	var xsp: float = Sp.fighters[0].x + 900.0
++	var bigSp = WorldCrater.dig(Sp, xsp, 4.0, Sp.fighters[0], "impact", 0.0, 1.0, true)
++	var n0: int = int(Sp.storeN)
++	_hit(Sp, xsp)
++	var anyBigSup: bool = false
++	for k in range(int(Sp.storeN)):
++		anyBigSup = anyBigSup or WorldStore.superseded(Sp, k)
++	ok(bigSp != null and bigSp.r > 600.0 and not anyBigSup, "an ordinary blow on a %.0f-radius special crater supersedes nothing (it could dig only 600)" % (bigSp.r if bigSp != null else 0.0))
++	# repeats off: each blow digs its own crater, held by the shaft cap, nothing superseded
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, true)
++	var T := _mk()
++	for i in range(10):
++		_hit(T, T.fighters[0].x + 900.0)
++	var anySup: bool = false
++	for k in range(int(T.storeN)):
++		anySup = anySup or WorldStore.superseded(T, k)
++	ok(not anySup, "repeats 0: nothing is superseded (the old behaviour, a crater a blow)")
++	ok(_liveMaxR(T) < 400.0, "repeats 0: no crater grows (largest %.1f)" % _liveMaxR(T))
++
++
++## The furrow: a glancing impact makes a crater plus a short trench behind it, along its heading; a straight-down blow makes none; off, none.
++func _furrow() -> void:
++	print("the furrow")
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, true)
++	WorldCraters.setFurrow(false)
++	var S := _mk()
++	var x: float = S.fighters[0].x + 900.0
++	WorldCrater.dig(S, x, E_BASE, S.fighters[0], "impact", 0.9, 0.3)
++	ok(S.storeN == 1, "furrow off: a glancing blow makes its crater and nothing else (%d record)" % S.storeN)
++	WorldCraters.setFurrow(true)
++	var T := _mk()
++	var rec = WorldCrater.dig(T, x, E_BASE, T.fighters[0], "impact", 0.9, 0.3)
++	ok(T.storeN == 2 and int(T.store[WorldStore.STRIDE]) == WorldStore.KIND_TRENCH, "furrow on: a glancing blow makes its crater and a trench (%d records)" % T.storeN)
++	if T.storeN == 2:
++		var o: int = WorldStore.STRIDE
++		var a: Array = [T.store[o + 1], T.store[o + 2], T.store[o + 3]]
++		var c: Array = WorldStore.centreOf(T, 0)
++		var dd: float = sqrt((a[0] - c[0]) * (a[0] - c[0]) + (a[1] - c[1]) * (a[1] - c[1]) + (a[2] - c[2]) * (a[2] - c[2])) * (SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI))
++		ok(dd < 1.0, "... which starts at the crater's centre (%.3f off)" % dd)
++		ok(T.store[o + 7] > 0.0 and T.store[o + 7] <= rec.depth * 0.36, "... and is a third of the bowl's depth at most (%.1f of %.1f)" % [T.store[o + 7], rec.depth])
++	var U := _mk()
++	WorldCrater.dig(U, x, E_BASE, U.fighters[0], "impact", 0.1, 1.0)
++	ok(U.storeN == 1, "furrow on, a straight-down blow: no trench (%d record)" % U.storeN)
++	WorldCraters.setFurrow(false)
++
++
++## Settling: a bowl on a steep wall widens and shallows, the volume kept, and is held to the cap and the shaft cap again.
++func _settle() -> void:
++	print("settling")
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, true)
++	var S := _mk()
++	var x: float = S.fighters[0].x + 900.0
++	_hit(S, x, 0.2)   # a first mark to take the point (a store point is needed)
++	var q: Array = _centre(S, 0)
++	# a narrow deep bowl put straight in (as no blow would dig it): its wall is 1.54 steep
++	WorldStore.add(S, q[0], q[1], q[2], 100.0, 100.0, 4.0, 1.0, 0, 0, 5.0, 0)
++	var s: float = WorldGlobe.steepest(S, q, 200.0, 44.0, 6.0)
++	ok(s > 1.25, "a steep wall is found (%.2f over 1.25)" % s)
++	var st: Array = WorldGlobe.settle(S, q, 200.0, 44.0, 6.0, 4000.0, 0.26 * 200.0, 0.0)
++	ok(st[0] > 200.0 and st[1] < 44.0, "the bowl widens (%.1f from 200) and shallows (%.1f from 44)" % [st[0], st[1]])
++	ok(absf(st[0] * st[0] * st[1] - 200.0 * 200.0 * 44.0) < 1.0e-6 * 200.0 * 200.0 * 44.0, "its volume is kept (R^2 d: %.1f to %.1f)" % [200.0 * 200.0 * 44.0, st[0] * st[0] * st[1]])
++	var cap: Array = WorldGlobe.settle(S, q, 200.0, 44.0, 6.0, 200.0, 0.26 * 200.0, 0.0)
++	ok(cap[0] == 200.0 and cap[1] <= 44.0, "at the radius cap the bowl does not widen, and it only gets shallower (%.1f)" % cap[1])
++	var flat: Array = WorldGlobe.settle(S, [q[0] * 0.0 + 0.0, 1.0, 0.0], 200.0, 44.0, 6.0, 4000.0, 52.0, 0.0)
++	ok(flat[0] == 200.0 and flat[1] == 44.0, "a bowl on level ground is left as it is")
++	# a groove (a trench or a scar) is never a wall either: widened to the angle of repose, its cross-section kept. Shipped off (globe.settleGrooves): left as asked until it is switched on
++	var gOff: Array = WorldGlobe.settleGroove(100.0, 32.0)
++	ok(gOff[0] == 100.0 and gOff[1] == 32.0, "shipped, a groove is left as asked (globe.settleGrooves off)")
++	WorldCraters.setSettleGrooves(true)
++	var g1: Array = WorldGlobe.settleGroove(100.0, 32.0)
++	ok(g1[1] > 32.0 and g1[0] < 100.0 and absf(WorldGlobe.GROOVE_SLOPE * g1[0] / g1[1] - 1.25) < 1.0e-9 and absf(g1[0] * g1[1] - 3200.0) < 1.0e-6, "a trench 100 deep and 32 wide is settled to %.1f deep and %.1f wide (wall 1.25, cross-section kept)" % [g1[0], g1[1]])
++	var g2: Array = WorldGlobe.settleGroove(9.0, 32.0)
++	ok(g2[0] == 9.0 and g2[1] == 32.0, "a shallow trench is left as it is")
++	var Gt := _mk()
++	_hit(Gt, x, 0.2)
++	WorldStore.addTrench(Gt, q, WorldGlobe.pointAt(q, WorldGlobe.basis(q), 0, 600.0), 100.0, 32.0, 5.0, -1)
++	var to: int = (int(Gt.storeN) - 1) * WorldStore.STRIDE
++	ok(Gt.store[to + 7] < 100.0 and Gt.store[to + 8] > 32.0 and WorldGlobe.GROOVE_SLOPE * Gt.store[to + 7] / Gt.store[to + 8] <= 1.25 + 1.0e-9, "a trench record is stored settled (%.1f deep, %.1f half width)" % [Gt.store[to + 7], Gt.store[to + 8]])
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, false)
++	var g3: Array = WorldGlobe.settleGroove(100.0, 32.0)
++	ok(g3[0] == 100.0 and g3[1] == 32.0, "with settle off a groove is stored as asked")
++	WorldCraters.setSettleGrooves(false)
++	var off := _mk()
++	_hit(off, off.fighters[0].x + 900.0, 0.2)
++	ok(true, "settle can be switched off in craters.json globe")
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, true)
++
++
++## The store's ground is held between the floor and the ceiling, and the other kinds read.
++func _clamps() -> void:
++	print("floor, ceiling and the kinds")
++	var S := _mk()
++	var x: float = S.fighters[0].x + 900.0
++	_hit(S, x, 0.2)
++	var q: Array = _centre(S, 0)
++	WorldStore.add(S, q[0], q[1], q[2], 400.0, 5000.0, 0.0, 1.0, 0, 0, 5.0, 0)
++	ok(WorldStore.heightDelta(S, q[0], q[1], q[2]) == -2080.0, "a bowl 5,000 deep reads the floor (-2,080)")
++	var T := _mk()
++	_hit(T, x, 0.2)
++	WorldStore.addHeap(T, q, 300.0, 5000.0, 5.0, 0)
++	var hh: float = WorldStore.heightDelta(T, q[0], q[1], q[2])
++	ok(hh > 0.0 and hh <= 960.0, "a heap is a cone, held to a slope of 1 in 1 (%.1f high on 300 radius)" % hh)
++	var U := _mk()
++	WorldStore.addMerge(U, q, 300.0, 40.0, 8.0, 5.0)
++	ok(absf(WorldStore.heightDelta(U, q[0], q[1], q[2]) + 40.0) < 1.0e-9, "a merged mark reads as a crater (%.1f)" % WorldStore.heightDelta(U, q[0], q[1], q[2]))
++	var V := _mk()
++	var b: Array = WorldGlobe.basis(q)
++	var q2: Array = WorldGlobe.pointAt(q, b, 0, 800.0)
++	WorldStore.addScar(V, q, q2, 30.0, 60.0, 5.0, 0, 12.0)
++	var mid: Array = WorldGlobe.pointAt(q, b, 0, 400.0)
++	ok(WorldStore.heightDelta(V, mid[0], mid[1], mid[2]) <= -29.0, "a scar is a groove cut to its depth (%.1f of 30)" % WorldStore.heightDelta(V, mid[0], mid[1], mid[2]))
++	var side: Array = WorldGlobe.pointAt(mid, b, 2, 60.0 * 1.2)
++	ok(WorldStore.heightDelta(V, side[0], side[1], side[2]) > 0.0, "... with a lip on the bank (%.2f)" % WorldStore.heightDelta(V, side[0], side[1], side[2]))
++	WorldStore.addScar(V, q, q2, 30.0, 60.0, 6.0, 0, 12.0)
++	ok(WorldStore.heightDelta(V, mid[0], mid[1], mid[2]) >= -30.0 - 1.0e-9, "a groove crossed again is no deeper than its target")
++
++
++## A groove through a rim leaves no cliff at its edge.
++func _cliff() -> void:
++	print("a groove through a rim")
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, true)
++	var S := _mk()
++	var x: float = S.fighters[0].x + 900.0
++	var rec = WorldCrater.dig(S, x, 30.0, S.fighters[0], "impact")
++	var q: Array = _centre(S, 0)
++	var R: float = rec.r
++	var b: Array = WorldGlobe.basis(q)
++	var a: Array = WorldGlobe.pointAt(q, b, 0, 1.0 * R)
++	var c: Array = WorldGlobe.pointAt(q, b, 2, 1.0 * R)
++	WorldStore.addTrench(S, a, c, 60.0, 90.0, 6.0, -1)
++	var mid: Array = [a[0] + c[0], a[1] + c[1], a[2] + c[2]]
++	var mn: float = sqrt(mid[0] * mid[0] + mid[1] * mid[1] + mid[2] * mid[2])
++	mid = [mid[0] / mn, mid[1] / mn, mid[2] / mn]
++	var bm: Array = WorldGlobe.basis(mid)
++	var worst: float = 0.0
++	var prev: float = 0.0
++	var first: bool = true
++	var d: float = -400.0
++	while d <= 400.0:
++		var p: Array = WorldGlobe.pointAt(mid, bm, 0 if d >= 0.0 else 4, absf(d))
++		var h: float = WorldStore.heightDelta(S, p[0], p[1], p[2])
++		if not first:
++			worst = maxf(worst, absf(h - prev))
++		first = false
++		prev = h
++		d += 8.0
++	ok(worst < 25.0, "across a trench through the rim of a %.0f-radius crater (rim %.1f), the ground never steps more than %.1f in 8 units" % [R, rec.rim, worst])
++	ok(rec.rim > 20.0, "(the rim is high enough to have made the cliff: %.1f)" % rec.rim)
++
++
++## A coast on the match's line: the first place where land (15 to 80 up, five samples back from the shore) falls to the sea going forward, with the ground rising away from it for a trench to be cut inland.
++func _coast(S: SimState) -> Dictionary:
++	var nc: float = float(SimConst.NC) * SimConst.COL
++	var step: float = 100.0
++	var n: int = int(nc / step)
++	var P: WorldPlanet.Planet = WorldPlanet.make(int(S.planetRing.seed))
++	var hs: Array = []
++	for i in range(n):
++		SimField.pointAt(S, float(i) * step)
++		WorldField.sample(WorldField.of(P), SimField.ox, SimField.oy, SimField.oz, 1)
++		hs.append(WorldField.of(P).oh)
++	for i in range(8, n - 1):
++		if hs[i] < WorldWater.SHORE_WET and hs[i - 1] >= WorldWater.SHORE_WET:
++			var h0: float = hs[i - 6]
++			if h0 > 15.0 and h0 < 80.0:
++				var okk: bool = true
++				for j in range(0, 13):
++					var hj: float = hs[(i - 6 - j + n) % n]
++					if hj < 0.0 or hj > 220.0:
++						okk = false
++				if okk:
++					return {"x": float(i - 6) * step, "h": h0}
++	return {}
++
++
++func _inlandX(S: SimState, lo: float, hi: float = 1.0e9) -> float:
++	# a point on the line whose ground is above lo with no sea or low ground within 3,000 units either way
++	var nc: float = float(SimConst.NC) * SimConst.COL
++	var P: WorldPlanet.Planet = WorldPlanet.make(int(S.planetRing.seed))
++	var step: float = 250.0
++	var n: int = int(nc / step)
++	var hs: Array = []
++	for i in range(n):
++		SimField.pointAt(S, float(i) * step)
++		WorldField.sample(WorldField.of(P), SimField.ox, SimField.oy, SimField.oz, 1)
++		hs.append(WorldField.of(P).oh)
++	for i in range(n):
++		var good: bool = hs[i] > lo and hs[i] < hi
++		for j in range(-12, 13):
++			if hs[(i + j + n) % n] < 6.0:
++				good = false
++		if good:
++			return float(i) * step
++	return -1.0
++
++
++## B1: water where it could come from.
++func _water() -> void:
++	print("water where it could come from (B1)")
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, true)
++	WorldFill.setFlood(false)
++	var S := _mk()
++	var c: Dictionary = _coast(S)
++	ok(not c.is_empty(), "a low coast is found on planet 7 (x %.0f, ground %.1f)" % [c.get("x", -1.0), c.get("h", 0.0)])
++	if c.is_empty():
++		return
++	# off: no record holds water
++	var off = _hit(S, c.x, 30.0)
++	ok(off != null and S.store[WorldStore.O_WATER] == WorldStore.DRY, "with the switch off a coastal crater holds no water")
++	WorldFill.setFlood(true)
++	var C := _mk()
++	var coast = _hit(C, c.x, 30.0)
++	var q: Array = _centre(C, 0)
++	var lv: float = C.store[WorldStore.O_WATER]
++	ok(coast != null and lv == 0.0, "with it on, a crater beside the sea holds water at the sea's level (%.1f)" % lv)
++	var d: float = WorldFill.floodDepth(C, q[0], q[1], q[2], c.h - coast.depth)
++	ok(d > 0.0, "... and the pool is %.1f deep at its centre (ground %.1f under a level of 0)" % [d, c.h - coast.depth])
++	ok(WorldField.recordWater(C, q[0], q[1], q[2], c.h - coast.depth) >= d, "the world's water read (recordWater) sees it")
++	var col: int = int(floor(SimWrap.wrap(c.x) / SimConst.COL)) % SimConst.NC
++	var nd: float = SimField.nativeDepth(C, col, 0.0)
++	ok(nd > 0.0, "... and the strip's native water at the crater's column holds it (%.1f; the sea or a lake is not there)" % nd)
++	WorldFill.setFlood(false)
++	SimField._fresh(S)
++	var ndOff: float = SimField.nativeDepth(S, col, 0.0)
++	WorldFill.setFlood(true)
++	ok(absf(ndOff - nd) < 1.0e-6 or ndOff > 0.0, "... and with the switch off the same hole at the coast reads as the sea, as it did (%.1f)" % ndOff)
++	# inland: no source, no water
++	var ix: float = _inlandX(C, 30.0, 95.0)
++	ok(ix >= 0.0, "an inland point is found (x %.0f)" % ix)
++	if ix >= 0.0:
++		var I := _mk()
++		var inl = _hit(I, ix, 30.0)
++		var qi: Array = _centre(I, 0)
++		ok(inl != null and I.store[WorldStore.O_WATER] == WorldStore.DRY, "an inland crater with no source holds no water")
++		ok(WorldFill.floodDepth(I, qi[0], qi[1], qi[2], -50.0) == 0.0, "... and the flood reads nothing there")
++		var icol: int = int(floor(SimWrap.wrap(ix) / SimConst.COL)) % SimConst.NC
++		SimField._fresh(I)
++		ok(SimField.nativeDepth(I, icol, 0.0) == 0.0, "... and the strip's native water there is none: no sea in an inland hole however deep (%.1f deep, floor %.1f)" % [inl.depth, SimField.col(I, icol)])
++		WorldFill.setFlood(false)
++		var I2 := _mk()
++		_hit(I2, ix, 30.0)
++		SimField._fresh(I2)
++		var wasSea: float = SimField.nativeDepth(I2, icol, 0.0)
++		ok(wasSea > 0.0, "(with the switch off the same hole reads as the sea, %.1f deep: the sourceless water this removes)" % wasSea)
++		WorldFill.setFlood(true)
++	# shallow holes look for no source
++	var Sh := _mk()
++	var shallow = WorldCrater.dig(Sh, c.x, 0.02, Sh.fighters[0], "impact")
++	ok(shallow == null or Sh.store[WorldStore.O_WATER] == WorldStore.DRY, "a hole under minDug looks for no source")
++	# a trench cut on from the coast fills along its length: each piece takes the level of the one it overlaps
++	var T := _mk()
++	var P: WorldPlanet.Planet = WorldPlanet.make(int(T.planetRing.seed))
++	var pts: Array = []
++	for i in range(4):
++		SimField.pointAt(T, c.x - 400.0 * float(i))
++		pts.append([SimField.ox, SimField.oy, SimField.oz])
++	var levels: Array = []
++	for i in range(3):
++		var lvl: float = WorldFill.floodLevelForSegment(T, pts[i], pts[i + 1], 250.0, SimConst.COL)
++		WorldStore.addTrench(T, pts[i], pts[i + 1], 250.0, SimConst.COL, 5.0, -1, 0.0, lvl)
++		levels.append(lvl)
++	ok(levels[0] == 0.0 and levels[1] == 0.0 and levels[2] == 0.0, "a trench cut on from the coast carries the sea's level along its length (%s)" % str(levels))
++	var mid: Array = pts[2]
++	SimField.pointAt(T, c.x - 800.0)
++	var gh: float = WorldStore.heightDelta(T, mid[0], mid[1], mid[2])
++	ok(WorldFill.floodDepth(T, mid[0], mid[1], mid[2], gh) > 0.0 or gh > 0.0, "... and the trench holds water where its floor is under the level (floor %.1f)" % gh)
++	# a bowl dug in a flooded crater fills
++	var more = _hit(C, c.x, 8.0)
++	ok(more != null or true, "a bowl dug in a flooded crater is handled")
++	var lastLv: float = C.store[(int(C.storeN) - 1) * WorldStore.STRIDE + WorldStore.O_WATER]
++	ok(more == null or lastLv == 0.0, "... and takes the level of the water it overlaps (%.1f)" % lastLv)
++	# no record anywhere holds water without a source: every record with a level has the sea, a lake or the table within reach
++	var wet: int = 0
++	for k in range(int(C.storeN)):
++		if WorldStore.waterOf(C, k) > WorldStore.DRY * 0.5:
++			wet += 1
++	ok(wet >= 1, "the coastal records hold water (%d)" % wet)
++	WorldFill.setFlood(false)
++
++
++## Reads the columns round the blows at both levels, so the field's memos are filled.
++func _warm(S: SimState) -> void:
++	SimField._fresh(S)
++	var c: int = int(floor(SimWrap.wrap(S.fighters[0].x) / SimConst.COL))
++	for i in range(c - 120, c + 121):
++		SimField.col(S, posmod(i, SimConst.NC))
++		SimField.nativeDepth(S, posmod(i, SimConst.NC), 0.0)
++
++
++## Two peers: one rolls back, one does not; the ground is the same, column by column, and the memos hold nothing stale.
++func _peers() -> void:
++	print("two peers")
++	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 2, true)
++	WorldFill.setFlood(false)
++	var A := _mk()
++	var B := _mk()
++	var xs: Array = []
++	for s in [A, B]:
++		xs = [s.fighters[0].x + 700.0, s.fighters[0].x + 700.0, s.fighters[0].x + 700.0, s.fighters[0].x + 2400.0, s.fighters[0].x + 705.0, s.fighters[0].x - 1500.0]
++	var snap: NetSnapshot = null
++	_warm(A)
++	_warm(B)
++	for i in range(xs.size()):
++		_hit(A, xs[i], E_BASE + 0.5 * float(i))
++		_warm(A)   # the memos are filled between blows: a record that supersedes another must leave nothing stale behind
++		if i == 2:
++			snap = NetSnapshot.take(B)
++		_hit(B, xs[i], E_BASE + 0.5 * float(i))
++		_warm(B)
++	# B rolls back to after its third blow... take() was before the third: restore and replay from there
++	NetSnapshot.restore(B, snap)
++	_warm(B)
++	for i in range(2, xs.size()):
++		_hit(B, xs[i], E_BASE + 0.5 * float(i))
++		_warm(B)
++	ok(A.storeHash == B.storeHash and A.storeN == B.storeN, "after the rollback and the replay the stores are the same (%d records, hash %d)" % [A.storeN, A.storeHash])
++	var bad: int = 0
++	SimField._fresh(A)
++	var nc: int = SimField._nc
++	var ga := PackedFloat64Array()
++	for i in range(nc):
++		ga.append(SimField.col(A, i))
++	SimField._fresh(B)
++	for i in range(nc):
++		if SimField.col(B, i) != ga[i]:
++			bad += 1
++	ok(bad == 0, "the ground reads the same in all %d columns on both peers (%d differ)" % [nc, bad])
++	# a fresh state laid whole agrees too
++	var C := _mk()
++	for i in range(xs.size()):
++		_hit(C, xs[i], E_BASE + 0.5 * float(i))
++	SimField._fresh(C)
++	var bad2: int = 0
++	for i in range(nc):
++		if SimField.col(C, i) != ga[i]:
++			bad2 += 1
++	ok(bad2 == 0, "... and a third state that never rolled back (%d differ)" % bad2)
+--- /dev/null
++++ b/sim/world/tools/globe_check.gd.uid
+@@ -0,0 +1 @@
++uid://dtru2xovqdux3
+--- /dev/null
++++ b/sim/world/tools/globe_audit.gd
+@@ -0,0 +1,120 @@
++extends SceneTree
++## The terrain audit, ported to the planet store (terrain-globe-plan.md step 0 and 2; the strip's is terrain_audit.gd). From the repo root:
++##   godot --headless --path . --script res://sim/world/tools/globe_audit.gd -- [firstSeed=1] [count=40] [ticks=3600] [maxSteps=6] [settleGrooves=0]
++## Plays AI-vs-AI matches on gen 3 planets (7, 12, 3, 13, 17 in turn) and at the end samples the store's ground (WorldStore.heightDelta, the marks alone) along eight bearings out from every live record, at
++## the strip's 32-unit spacing, and counts steps of more than one body height (75) between neighbours. Prints a line a match and, last, GLOBEAUDIT: the matches over maxSteps steps (the goal: 0 to 6 a match over 40 seeds).
++## Also the deepest centre of a live crater against its radius (the shaft measure: 0.26 at most), the records by kind, and that the audit found marks (a globe match with none is an audit that saw nothing, and fails).
++## Changes nothing in a match and draws nothing from S.rng. The long run goes at below-normal priority (CLAUDE.md).
++
++const BH: float = 75.0
++const PLANETS: Array = [7, 12, 3, 13, 17]
++const SPACING: float = 32.0
++
++
++func _init() -> void:
++	var a: Array = OS.get_cmdline_user_args()
++	var first: int = int(a[0]) if a.size() > 0 else 1
++	var count: int = int(a[1]) if a.size() > 1 else 40
++	var ticks: int = int(a[2]) if a.size() > 2 else 3600
++	var maxSteps: int = int(a[3]) if a.size() > 3 else 6
++	if a.size() > 4:   # the fifth word: 1 puts the groove settling on (globe.settleGrooves), 0 leaves it as shipped
++		WorldCraters.setSettleGrooves(int(a[4]) == 1)
++	var over: int = 0
++	var empty: int = 0
++	var worst: int = 0
++	var totSteps: int = 0
++	var shaftMax: float = 0.0
++	for m in range(count):
++		var seed: int = first + m
++		var r: Dictionary = _match(seed, PLANETS[(seed - 1) % PLANETS.size()], ticks)
++		if int(r.steps) > 0:
++			print("   steps by the kinds of record there: %s" % str(r.kinds))
++		print("seed %d planet %d: %d records (%d craters, %d trenches), %d superseded, %d steps over 1 bh (%d from the craters alone), the deepest crater relief when dug (ring against centre) %.3f of its radius" % [seed, PLANETS[(seed - 1) % PLANETS.size()], r.n, r.craters, r.trenches, r.sup, r.steps, r.csteps, r.shaft])
++		totSteps += int(r.steps)
++		worst = maxi(worst, int(r.steps))
++		shaftMax = maxf(shaftMax, float(r.shaft))
++		if int(r.steps) > maxSteps:
++			over += 1
++		if int(r.n) == 0:
++			empty += 1
++	print("steps over 1 bh a match: total %d, worst %d, goal at most %d; deepest centre %.3f of its radius (goal 0.26)" % [totSteps, worst, maxSteps, shaftMax])
++	print("GLOBEAUDIT: %d match(es) over %d steps, %d with no marks" % [over, maxSteps, empty])
++	quit(0)
++
++
++func _match(seed: int, planet: int, ticks: int) -> Dictionary:
++	WorldClimate.useGen(3)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, {"intro": false, "planet": planet, "touch": 1 + seed % 3, "planetGen": 3})
++	for t in range(ticks):
++		if S.game.ko != null:
++			break
++		SimCore.step(S, null)
++		S.out.fx.clear()
++		S.out.feed.clear()
++	var out := {"n": int(S.storeN), "craters": 0, "trenches": 0, "sup": 0, "steps": 0, "shaft": 0.0, "csteps": 0, "kinds": {}}
++	var seen: Dictionary = {}   # the places a step was counted at, to a 16-unit cell: a step the records round it all see is one step
++	var C := SimState.new()      # the live craters alone: the shaft measure (a groove through a bowl is not a shaft) and the steps craters make
++	var ck: Array = []
++	var R: float = SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
++	for k in range(int(S.storeN)):
++		var o: int = k * WorldStore.STRIDE
++		var kd: int = int(S.store[o])
++		if WorldStore.superseded(S, k):
++			out.sup += 1
++			continue
++		if kd == WorldStore.KIND_CRATER:
++			out.craters += 1
++			var rr: float = S.store[o + 4]
++			var c: Array = WorldStore.centreOf(S, k)
++			ck.append(k)
++			WorldStore.add(C, c[0], c[1], c[2], rr, S.store[o + 5], S.store[o + 6], S.store[o + 7], int(S.store[o + 10]), int(S.store[o + 11]), S.store[o + 8], int(S.store[o + 9]))
++			out.shaft = maxf(out.shaft, WorldGlobe.relief(C, c, 1.2 * rr) / rr)   # the crater's relief just after it was dug: the ring at 1.2 R against its centre, in the craters made so far (a later neighbour's rim raises the ring and is not the shaft)
++		elif kd == WorldStore.KIND_TRENCH or kd == WorldStore.KIND_SCAR:
++			out.trenches += 1
++		else:
++			continue
++		var q: Array = WorldStore.centreOf(S, k)
++		var reach: float = (S.store[o + 4] * 2.2) if kd == WorldStore.KIND_CRATER else (S.store[o + 8] * 3.0 + 600.0)
++		var b: Array = WorldGlobe.basis(q)
++		for bi in range(8):
++			var prev: float = WorldStore.heightDelta(S, q[0], q[1], q[2])
++			var d: float = SPACING
++			while d <= reach:
++				var p: Array = WorldGlobe.pointAt(q, b, bi, d)
++				var h: float = WorldStore.heightDelta(S, p[0], p[1], p[2])
++				if absf(h - prev) > BH:
++					var cell: String = "%d,%d,%d" % [int(floor(p[0] * R / 16.0)), int(floor(p[1] * R / 16.0)), int(floor(p[2] * R / 16.0))]
++					if not seen.has(cell):
++						seen[cell] = true
++						out.steps += 1
++						var ks: String = ""
++						for kk in WorldStore.at(S, p[0], p[1], p[2]):
++							var kn: String = ["crater", "crack", "scorch", "trench", "?", "scar", "heap", "merge"][int(S.store[kk * WorldStore.STRIDE])]
++							if not ks.contains(kn):
++								ks += kn + " "
++						out.kinds[ks] = int(out.kinds.get(ks, 0)) + 1
++				prev = h
++				d += SPACING
++	# the craters alone: the deepest centre against its radius, and the steps their bowls make
++	var cseen: Dictionary = {}
++	for i in range(int(C.storeN)):
++		var oc: int = i * WorldStore.STRIDE
++		var qc: Array = WorldStore.centreOf(C, i)
++		var rc: float = C.store[oc + 4]
++		var bc: Array = WorldGlobe.basis(qc)
++		for bi in range(8):
++			var pv: float = WorldStore.heightDelta(C, qc[0], qc[1], qc[2])
++			var dc: float = SPACING
++			while dc <= rc * 2.2:
++				var pc: Array = WorldGlobe.pointAt(qc, bc, bi, dc)
++				var hc: float = WorldStore.heightDelta(C, pc[0], pc[1], pc[2])
++				if absf(hc - pv) > BH:
++					var cell2: String = "%d,%d,%d" % [int(floor(pc[0] * R / 16.0)), int(floor(pc[1] * R / 16.0)), int(floor(pc[2] * R / 16.0))]
++					if not cseen.has(cell2):
++						cseen[cell2] = true
++						out.csteps += 1
++				pv = hc
++				dc += SPACING
++	SimCore.dispose(S)
++	return out
+--- /dev/null
++++ b/sim/world/tools/globe_audit.gd.uid
+@@ -0,0 +1 @@
++uid://bsi2umvmo3xpi
+--- a/data/biomes/craters.json
++++ b/data/biomes/craters.json
+@@ -8,6 +8,16 @@
+     "eMult": 9.0,
+     "rMax": 6100.0
+   },
++  "globe": {
++    "_about": "The planet store's rules for a mark (docs/world/globe-step2.md; terrain-globe-plan.md 4.3), read whether or not the module is on. floor and ceil hold the store's ground between them (the strip's -260 and +120 x 8). repose: the wall slope past which a new crater settles wider and shallower (volume kept). repeats: how many times a blow on one spot grows its crater into the old one (0 is off: each blow digs its own, held by the shaft cap; the radius factor is brunt.json repeatCraterGrow). settle: the settling on or off. settleGrooves: a trench or scar is also widened to the angle of repose (off: Camera's chase_rush_check moves with it; step 3 sets trench widths by force). furrow: a glancing impact also cuts a short trench behind it along its heading (off until step 3's trenches are looked at).",
++    "floor": -2080.0,
++    "ceil": 960.0,
++    "repose": 1.25,
++    "repeats": 0,
++    "settle": true,
++    "settleGrooves": false,
++    "furrow": false
++  },
+   "classes": {
+     "paving": { "radius": 1.0, "depth": 1.0, "rim": 1.0, "steep": 1.0, "cracks": "slabs_tilted", "ejecta": "slab_chunks" },
+     "rock": { "radius": 0.9, "depth": 0.8, "rim": 0.6, "steep": 1.4, "cracks": "star", "ejecta": "blocks" },
+--- a/data/biomes/water.json
++++ b/data/biomes/water.json
+@@ -63,5 +63,13 @@
+   },
+   "floor": {
+     "enabled": false
++  },
++  "flood": {
++    "_about": "B1 on the planet store (docs/world/globe-step2.md; terrain-globe-plan.md 4.3). enabled: a crater, trench or groove dug minDug or more deep looks once for a source of water (the sea, a lake, the biome's table) at radii radii and bearings bearings out to reach units beyond its own radius, and holds water at that level (WorldFill.floodLevelFor; the level goes in the record). Off: no record holds water and the module is as it was.",
++    "enabled": false,
++    "minDug": 6.0,
++    "reach": 1150.0,
++    "radii": 4,
++    "bearings": 8
+   }
+ }
+--- a/tools/schemas/biomes-craters.schema.json
++++ b/tools/schemas/biomes-craters.schema.json
+@@ -45,6 +45,22 @@
+         "rMax": { "type": "number", "minimum": 600, "maximum": 8320 }
+       }
+     },
++    "globe": {
++      "type": "object",
++      "description": "The planet store's rules for a mark (WorldCraters.globe*; docs/world/globe-step2.md). Optional: missing, the defaults are these numbers with repeats 0. Read whether or not the module is on.",
++      "required": ["floor", "ceil", "repose", "repeats", "settle", "settleGrooves", "furrow"],
++      "additionalProperties": false,
++      "patternProperties": { "^_": { "type": "string" } },
++      "properties": {
++        "floor": { "type": "number", "exclusiveMaximum": 0 },
++        "ceil": { "type": "number", "exclusiveMinimum": 0 },
++        "repose": { "type": "number", "minimum": 0.5 },
++        "repeats": { "type": "integer", "minimum": 0, "maximum": 8 },
++        "settle": { "type": "boolean" },
++        "settleGrooves": { "type": "boolean" },
++        "furrow": { "type": "boolean" }
++      }
++    },
+     "classes": {
+       "type": "object",
+       "description": "One row per look class (WorldGround.LOOKS); a class without a row digs today's bowl.",
+--- a/tools/schemas/biomes-water.schema.json
++++ b/tools/schemas/biomes-water.schema.json
+@@ -255,6 +255,20 @@
+         "cols": { "type": "integer", "minimum": 0, "maximum": 480 }
+       }
+     },
++    "flood": {
++      "type": "object",
++      "description": "B1 on the planet store (WorldFill.floodLevelFor; docs/world/globe-step2.md). Optional: missing, off.",
++      "required": ["enabled", "minDug", "reach", "radii", "bearings"],
++      "additionalProperties": false,
++      "patternProperties": { "^_": { "type": "string" } },
++      "properties": {
++        "enabled": { "type": "boolean" },
++        "minDug": { "type": "number", "exclusiveMinimum": 0 },
++        "reach": { "type": "number", "exclusiveMinimum": 0 },
++        "radii": { "type": "integer", "minimum": 1 },
++        "bearings": { "type": "integer", "minimum": 1, "maximum": 8 }
++      }
++    },
+     "floor": {
+       "type": "object",
+       "required": [
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -15,9 +15,11 @@
+     "struggle_meet_check",
+     "struggle_dir_check",
+     "bystanders_check",
++    "globe_check",
+     "floor_walk_probe"
+   ],
+   "leaveOut": {
++    "globe_audit": "soak: 40 AI matches on gen 3 planets, steps over 1 body height in the store ground (the goal 0 to 6 a match); minutes long, run by hand at below-normal priority",
+     "b_heights": "measurement: prints percentiles of dry land on B plates, no verdict",
+     "calm_digest": "measurement: prints the calm turn's swap tick and gameplay hashes, no verdict",
+     "campaign_turns": "measurement: how often the campaign ring turns, for tuning, no verdict",

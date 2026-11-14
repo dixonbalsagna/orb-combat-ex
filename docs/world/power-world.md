@@ -20,9 +20,8 @@ Game Design's `docs/design/power-scale.md` (Orb: "a physics based approach to po
 
 ## What is not done, or not mine
 
-- **`kitFields`** (the Protagonist's Driver level 2 `craterMul` 0.6; the Rival's `ignoresFirstAbsorb`): not read. They need the Driver's blow to say which kit it is at the dig and the pass; Encounter's `driver.gd` has it.
-- **`interior.gd` and `wrecks.gd`** (the chain inside a tower, thrown wrecks) still read the tier tables. The interior chain is off in the data (`interiorChain` 0); a wreck's speed is its own. Both stay on the old numbers under power until Game Design says what they should be.
-- **The lodge's last hit** (what is left of a send when its chain ends) and the splash on neighbours still use `tierFactor`; they are small and read the tier. A follow-up if the balance wants them in energy.
+- **`kitFields`** (Grist's Driver level 2 `craterMul` 0.6; Loupe's `ignoresFirstAbsorb`): not read, and they cannot be from World alone: the dig and the pass need to know the send was a Driver level 2, and nothing in the match says so (a launch carries `launchPower` and `launchSpecial` only). It needs one new hashed field on the fighter for the send's kit (Simulation's `state.gd` and `hash.gd`) and one line in Encounter's `driver.gd` to set it; then World is two lines (the crater's energy times `craterMul` squared, since it is a radius factor; the first building's mass skipped). Say go and I do my two.
+- **`interior.gd`, `wrecks.gd` and the lodge** (the chain inside a tower, a thrown wreck, the last hit and hold of a lodge) now read the tier tables by the sender's level under power (`WorldBrunt.tierFactorOf`, `lodgeSecondsOf`: a straight line between the four rows by `SimPower.level`), so they grow with level and not in steps; off, the tier's row. `INTERIOR`, `WRECKS`, `BRUNT`, `BLAST`, `THROUGH` 0 failed.
 - **The beam's groove and structure row, the burn's look** (`power.json` `beam` and `burn`): Combat's, VFX's and Rendering's.
 - **Not run:** native against web, `anim_check`, QA's civilian band with the fall on at tier 4 (RL-232), the flash clips and the look gate, a play with it on.
 

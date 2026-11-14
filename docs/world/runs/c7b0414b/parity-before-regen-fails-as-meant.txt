@@ -1,0 +1,10 @@
+Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+FAIL  tick-0 state: seed 1: 6441f6fa9e23c7b5 (golden fcd9129e1bea63ee); first difference at value 94: b:1, golden n:0000000000000000
+FAIL  roster data: the roster data hash differs (data/fighters/ changed): 685a4d5984842afe vs golden 0e41e2e13f505bf0; regenerate the goldens if the edit is meant
+FAIL  wired numbers change a match: PROTAGONIST/meters.json ["meters", "anguish", "sources", 0, "within"]: no effect on probe aFell; PROTAGONIST/meters.json ["meters", "anguish", "sources", 2, "amount"]: no effect on probe aFell
+FAIL  the intro phase (golden): differs
+FAIL  composed intros (golden): differs
+FAIL  matches: default seed 1: first full-state difference by tick 0 (checkpoint 0): 6441f6fa9e23c7b5:8d548a45c9362954:2d8f73acd2d0aedd vs golden fcd9129e1bea63ee:8d548a45c9362954:2d8f73acd2d0aedd; swap seed 1: first full-state difference by tick 0 (checkpoint
+FAIL  human-input replays: replay seed 11: first full-state difference by tick 0 (checkpoint 0): fc7449acb74482c8:8d548a45c9362954:2d8f73acd2d0aedd vs golden ad6a82cc0260aa91:8d548a45c9362954:2d8f73acd2d0aedd
+FAIL  planet worlds (golden): tick-0 state of the planet match 7/3: 44ea0d8dd38d4339, golden 4eea0097c34ed953
+golden check FAILED

@@ -1,0 +1,494 @@
+--- /dev/null
++++ b/sim/world/size.gd
+@@ -0,0 +1,134 @@
++class_name WorldPlanetSize
++extends RefCounted
++## The planet's size (A1; docs/world/planet-sizes.md; data/biomes/sizes.json). A match's setup names a size (planetSize); the sim binds it with SimConst.setPlanet at the top of the match. Pure reads of the data.
++## Medium is today's planet: 4,800 columns, the arena the whole great circle, the bake every 512 units, byte for byte. A size changes the planet's length and the places on it; it never changes a column (32 units), a body or a speed.
++
++const PATH := "res://data/biomes/sizes.json"
++const SCHEMA := "biomes.sizes/1"
++
++static var _d: Dictionary = {}
++static var _loaded: bool = false
++static var _errors: Array = []
++static var _names: Array = []
++
++
++static func data() -> Dictionary:
++	if not _loaded:
++		_load()
++	return _d
++
++
++static func dataErrors() -> Array:
++	if not _loaded:
++		_load()
++	return _errors
++
++
++static func _load() -> void:
++	_loaded = true
++	_errors = []
++	_d = {}
++	_names = []
++	var f := FileAccess.open(PATH, FileAccess.READ)
++	if f == null:
++		return   # no file: every planet is medium
++	var j = JSON.parse_string(f.get_as_text())
++	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
++		_errors.append("sizes.json: not a %s object" % SCHEMA)
++		return
++	if not j.has("default") or not (j.get("sizes") is Dictionary) or not j.sizes.has(String(j.get("default", ""))):
++		_errors.append("sizes.json: default names a size in sizes")
++		return
++	for k in j.sizes:
++		var r = j.sizes[k]
++		if not (r is Dictionary) or not r.has("cols") or not r.has("arenaCols") or not r.has("bakeStride") or not r.has("offered"):
++			_errors.append("sizes.json: %s is {cols, arenaCols, bakeStride, offered}" % k)
++			continue
++		var cols: int = int(r.cols)
++		if cols < 1280 or cols % 64 != 0:
++			_errors.append("sizes.json: %s: cols is a multiple of 64 (a face edge, cols / 16 nodes of 128 units, is a multiple of 4 so the bake lines up)" % k)
++		if int(r.arenaCols) < 600 or int(r.arenaCols) > cols or int(r.arenaCols) % 8 != 0:
++			_errors.append("sizes.json: %s: arenaCols is 600 to cols, a multiple of 8" % k)
++		if int(r.bakeStride) < 1 or (cols / 16) % int(r.bakeStride) != 0:
++			_errors.append("sizes.json: %s: bakeStride divides the face edge's nodes (cols / 16)" % k)
++	if not _errors.is_empty():
++		return
++	if int(j.sizes[String(j.default)].cols) != SimConst.PLANET_NC_MEDIUM:
++		_errors.append("sizes.json: the default size is medium's 4,800 columns")
++		return
++	_d = j
++	for k in j.sizes:
++		_names.append(String(k))
++
++
++## The size names, in the data's order (only the offered ones when `offered` is true).
++static func names(offered: bool = false) -> Array:
++	if not _loaded:
++		_load()
++	var out: Array = []
++	for k in _names:
++		if not offered or bool(_d.sizes[k].offered):
++			out.append(k)
++	return out
++
++
++## The name of the size of a setup: its planetSize when the setup names a planet (the hand-made world is always medium) and the data has it, else the default.
++static func nameOf(setup: Dictionary) -> String:
++	if not _loaded:
++		_load()
++	if _d.is_empty() or not setup.has("planet"):
++		return "medium"
++	var n: String = String(setup.get("planetSize", _d.default))
++	if not _d.sizes.has(n):
++		if not FighterData.quiet:
++			push_error("SimCore.newMatch: setup.planetSize %s is not a size in sizes.json (%s); medium plays" % [n, str(_names)])
++		return String(_d.default)
++	return n
++
++
++static func colsOf(setup: Dictionary) -> int:
++	if not _loaded:
++		_load()
++	if _d.is_empty():
++		return SimConst.PLANET_NC_MEDIUM
++	return int(_d.sizes[nameOf(setup)].cols)
++
++
++## The longest ring a fight on this size is played on, in columns (the planet's own round up to big, the cap past it).
++static func arenaCap(cols: int) -> int:
++	if not _loaded:
++		_load()
++	for k in _names:
++		if int(_d.sizes[k].cols) == cols:
++			return int(_d.sizes[k].arenaCols)
++	return cols
++
++
++## The bake's spacing in 128-unit nodes for a planet of `cols` columns.
++static func bakeStrideFor(cols: int) -> int:
++	if not _loaded:
++		_load()
++	for k in _names:
++		if int(_d.sizes[k].cols) == cols:
++			return int(_d.sizes[k].bakeStride)
++	return 4
++
++
++## The planet.json numbers this size changes (the places: cities, towns and the ring's minimums), or {} for medium: merged over P.c when the planet is made.
++static func placesFor(cols: int) -> Dictionary:
++	if not _loaded:
++		_load()
++	for k in _names:
++		if int(_d.sizes[k].cols) == cols:
++			return _d.sizes[k].get("places", {})
++	return {}
++
++
++## The name of a size by its columns, or "" (a report, the HUD).
++static func nameOfCols(cols: int) -> String:
++	if not _loaded:
++		_load()
++	for k in _names:
++		if int(_d.sizes[k].cols) == cols:
++			return k
++	return ""
+--- /dev/null
++++ b/sim/world/size.gd.uid
+@@ -0,0 +1 @@
++uid://drwvqqsryscgd
+--- /dev/null
++++ b/data/biomes/sizes.json
+@@ -0,0 +1,13 @@
++{
++  "schema": "biomes.sizes/1",
++  "_about": "The planet sizes a match can pick (A1, Orb 2026-11-13: five sizes; docs/world/planet-sizes.md; read by sim/world/size.gd). A size is the planet's columns round (cols; a column is 32 units, so a size is a distance, and every speed and every body stays as it is), the longest great-circle ring a fight is played on (arenaCols: past it the swing and the arena shift carry the fight round the world), and the bake's spacing in 128-unit nodes (bakeStride, 4 is 512 units). medium is today's planet exactly. A setup picks one by name (planetSize); the hand-made world and a setup with no planet are always medium. offered: the five in the menu; the sixth is data that is off.",
++  "default": "medium",
++  "sizes": {
++    "tiny":     { "cols": 1280,  "arenaCols": 1280, "bakeStride": 4,  "offered": true, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
++    "small":    { "cols": 2560,  "arenaCols": 2560, "bakeStride": 4,  "offered": true, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
++    "medium":   { "cols": 4800,  "arenaCols": 4800, "bakeStride": 4,  "offered": true },
++    "big":      { "cols": 9600,  "arenaCols": 9600, "bakeStride": 4,  "offered": true, "places": { "cities": 24, "towns": 88 } },
++    "huge":     { "cols": 19200, "arenaCols": 19200, "bakeStride": 8,  "offered": true, "places": { "cities": 48, "towns": 176 } },
++    "colossal": { "cols": 38400, "arenaCols": 38400, "bakeStride": 16, "offered": false, "places": { "cities": 96, "towns": 352 } }
++  }
++}
+--- /dev/null
++++ b/tools/schemas/biomes-sizes.schema.json
+@@ -0,0 +1,42 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/biomes-sizes",
++  "title": "biomes.sizes/1",
++  "description": "data/biomes/sizes.json: the planet sizes a match can pick (WorldPlanetSize; docs/world/planet-sizes.md). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. The loader also checks the rules JSON Schema cannot: cols a multiple of 64, arenaCols 600 to cols and a multiple of 8, bakeStride dividing cols / 16, and the default being medium's 4,800.",
++  "type": "object",
++  "required": ["schema", "_about", "default", "sizes"],
++  "additionalProperties": false,
++  "properties": {
++    "schema": { "const": "biomes.sizes/1" },
++    "_about": { "type": "string" },
++    "default": { "type": "string", "description": "The size a setup that names none plays: medium." },
++    "sizes": {
++      "type": "object",
++      "minProperties": 1,
++      "additionalProperties": {
++        "type": "object",
++        "required": ["cols", "arenaCols", "bakeStride", "offered"],
++        "additionalProperties": false,
++        "properties": {
++          "cols": { "type": "integer", "minimum": 1280, "description": "The planet's columns round (a column is 32 units)." },
++          "arenaCols": { "type": "integer", "minimum": 600, "description": "The longest ring a fight is played on (on a field world: the planet's own round)." },
++          "bakeStride": { "type": "integer", "minimum": 1, "description": "The bake's spacing in 128-unit nodes." },
++          "offered": { "type": "boolean", "description": "In the menu's list of sizes." },
++          "places": {
++            "type": "object",
++            "description": "planet.json numbers this size changes: the place counts and the ring's minimums.",
++            "additionalProperties": false,
++            "properties": {
++              "cities": { "type": "integer", "minimum": 0 },
++              "towns": { "type": "integer", "minimum": 0 },
++              "minCities": { "type": "integer", "minimum": 0 },
++              "minTowns": { "type": "integer", "minimum": 0 },
++              "relaxCities": { "type": "integer", "minimum": 0 },
++              "relaxTowns": { "type": "integer", "minimum": 0 }
++            }
++          }
++        }
++      }
++    }
++  }
++}
+--- /dev/null
++++ b/sim/world/tools/size_check.gd
+@@ -0,0 +1,90 @@
++extends SceneTree
++# The planet sizes (World, A1; sim/world/size.gd, data/biomes/sizes.json; docs/world/planet-sizes.md). From the repo root:
++#   godot --headless --path . --script res://sim/world/tools/size_check.gd -- [--negative-control]
++# Proves, for each size the data offers (tiny, small, medium, big, huge) on planet 7: the match is bound to the size (the planet's columns, the arena, the radius), plays on a field world (a frame, fighters on finite
++# ground, the arena wrapping at the planet's round), and plays 600 ticks; the same setup twice has the same match hash; medium named is byte for byte medium unnamed; a size nobody offers is refused to medium; a
++# crater dug at one place on the biggest planet is not read at the place half way round (the store's grid does not alias across a big planet); and the data's own rules hold (a size's columns, its ring, its bake).
++# Prints each size's start time and tick cost: those are void as measurements on a shared machine (Performance reads them in a quiet window). --negative-control makes the grid's key offset the medium's 64 on a big
++# planet: the aliasing check must then fail.
++var fails: int = 0
++var negative: bool = false
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func _setup(nm: String, planet: int = 7, touch: int = 1) -> Dictionary:
++	return {"intro": false, "planet": planet, "touch": touch, "planetGen": 3, "planetSize": nm}
++
++
++func _match(setup: Dictionary, ticks: int) -> SimState:
++	WorldClimate.useGen(3)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, setup)
++	for t in range(ticks):
++		SimCore.step(S)
++	return S
++
++
++func _init() -> void:
++	negative = OS.get_cmdline_user_args().has("--negative-control")
++	print("data")
++	ok(WorldPlanetSize.dataErrors().is_empty(), "sizes.json loads clean (%s)" % str(WorldPlanetSize.dataErrors()))
++	var offered: Array = WorldPlanetSize.names(true)
++	ok(offered.size() == 5 and offered == ["tiny", "small", "medium", "big", "huge"], "five sizes are offered, smallest first (%s)" % str(offered))
++	ok(WorldPlanetSize.names().size() == 6 and not offered.has("colossal"), "the sixth, colossal, is data that is off")
++	ok(WorldPlanetSize.colsOf({"planet": 7, "planetSize": "medium"}) == 4800 and WorldPlanetSize.colsOf({"planet": 7}) == 4800 and WorldPlanetSize.colsOf({"planetSize": "huge"}) == 4800, "medium is 4,800; no size, or no planet to size, is medium")
++	print("every offered size plays")
++	var hashes: Dictionary = {}
++	for nm in offered:
++		var cols: int = WorldPlanetSize.colsOf({"planet": 7, "planetSize": nm})
++		var t0: int = Time.get_ticks_usec()
++		var S := _match(_setup(nm), 600)
++		var secs: float = float(Time.get_ticks_usec() - t0) / 1.0e6
++		var f0 = S.fighters[0]
++		var f1 = S.fighters[1]
++		var R: float = float(cols) * SimConst.COL / (2.0 * SimMathx.PI)
++		var bound: bool = S.planetNC == cols and SimConst.PLANET_NC == cols and S.arenaCols == cols and SimConst.NC == cols and absf(SimField.R - R) < 1.0e-6
++		var fine: bool = S.tick >= 600 and S.frame != null and is_finite(f0.x) and is_finite(f0.y) and is_finite(f1.x) and is_finite(f1.y) and f0.x >= 0.0 and f0.x < SimConst.W and f0.y > -400.0 and f0.y < 30000.0
++		ok(bound, "%s: the match is bound to %d columns round, an arena of the same, a radius of %.0f" % [nm, cols, R])
++		ok(fine, "%s: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks %.1f s, shared machine: void as a measurement)" % [nm, secs])
++		hashes[nm] = SimHash.stateHash(S).gameplay
++		SimCore.dispose(S)
++	print("the same setup twice")
++	for nm in ["tiny", "big"]:
++		var S2 := _match(_setup(nm), 600)
++		ok(SimHash.stateHash(S2).gameplay == hashes[nm], "%s: the same setup plays the same match (hash at tick 600)" % nm)
++		SimCore.dispose(S2)
++	print("medium")
++	var Sm := _match({"intro": false, "planet": 7, "touch": 1, "planetGen": 3}, 120)
++	var Sn := _match(_setup("medium"), 120)
++	ok(SimHash.stateHash(Sm).gameplay == SimHash.stateHash(Sn).gameplay, "medium named plays byte for byte the match medium unnamed plays (hash at tick 120)")
++	SimCore.dispose(Sm)
++	SimCore.dispose(Sn)
++	var Sx := _match(_setup("enormous"), 30)
++	ok(Sx.planetNC == 4800, "a size the data does not have plays medium")
++	SimCore.dispose(Sx)
++	print("a big planet's store")
++	var Sh := _match(_setup("huge"), 5)
++	if negative:
++		WorldStore._koff = 64
++		WorldStore._koffNC = SimConst.PLANET_NC
++	var f = Sh.fighters[0]
++	var xa: float = SimWrap.wrap(f.x + 900.0)
++	var xb: float = SimWrap.wrap(xa + SimConst.W * 0.5)   # half way round the planet's great circle
++	var ra = WorldCrater.dig(Sh, xa, 8.0, f, "impact")
++	var rb = WorldCrater.dig(Sh, xb, 8.0, f, "impact")
++	ok(ra != null and rb != null and Sh.storeN == 2, "a crater dug here and one half way round the huge planet are two records")
++	if Sh.storeN == 2:
++		var qa: Array = WorldStore.centreOf(Sh, 0)
++		var qb: Array = WorldStore.centreOf(Sh, 1)
++		ok(WorldStore.at(Sh, qa[0], qa[1], qa[2]).size() == 1 and WorldStore.at(Sh, qb[0], qb[1], qb[2]).size() == 1, "each place's box lists its own record only (no aliasing across the planet)")
++		ok(absf(WorldStore.heightDelta(Sh, qa[0], qa[1], qa[2]) + ra.depth) < 1.0e-6 and absf(WorldStore.heightDelta(Sh, qb[0], qb[1], qb[2]) + rb.depth) < 1.0e-6, "each centre reads its own bowl's depth")
++	# the keys of two boxes the huge planet has, (0, 33, 0) and (1, -95, 0): with the medium's offset of 64 they are the same key (a record in one would be read at the other)
++	ok(WorldStore._key(0, 33, 0) != WorldStore._key(1, -95, 0) and WorldStore._key(95, -95, 95) != WorldStore._key(-95, 95, -95), "two boxes of the huge planet that a 64 offset would give one key have two (offset %d)" % WorldStore._koff)
++	SimCore.dispose(Sh)
++	print("SIZES: %d check(s) failed%s" % [fails, " (negative control)" if negative else ""])
++	quit(0)
+--- /dev/null
++++ b/sim/world/tools/size_check.gd.uid
+@@ -0,0 +1 @@
++uid://iinku45dpx5k
+--- /dev/null
++++ b/sim/world/tools/size_probe.gd
+@@ -0,0 +1,31 @@
++extends SceneTree
++## Probe (scratch): a match on each named planet size, timed. godot --headless --path . --script res://sim/world/tools/size_probe.gd -- small big [planet=7] [touch=1] [ticks=300]
++func _init() -> void:
++	var names: Array = []
++	var planet: int = 7
++	var touch: int = 1
++	var ticks: int = 300
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("planet="):
++			planet = int(a.substr(7))
++		elif a.begins_with("touch="):
++			touch = int(a.substr(6))
++		elif a.begins_with("ticks="):
++			ticks = int(a.substr(6))
++		else:
++			names.append(a)
++	for nm in names:
++		WorldClimate.useGen(3)
++		var t0: int = Time.get_ticks_usec()
++		var S := SimCore.createSim()
++		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false, "planet": planet, "touch": touch, "planetGen": 3, "planetSize": nm})
++		var tm: float = float(Time.get_ticks_usec() - t0) / 1.0e6
++		var t1: int = Time.get_ticks_usec()
++		for t in range(ticks):
++			SimCore.step(S)
++		var t2: int = Time.get_ticks_usec()
++		var f0 = S.fighters[0]
++		var f1 = S.fighters[1]
++		print(WorldPlanetSize.dataErrors()); print("%s: planetNC %d arena %d NC %d R %.0f; start %.2f s, %d ticks %.2f s (%.2f ms/tick); fighters x %.0f %.0f y %.0f %.0f; buildings %d trees %d; frame %s" % [nm, S.planetNC, S.arenaCols, SimConst.NC, SimField.R, (t1 - t0) / 1.0e6, ticks, (t2 - t1) / 1.0e6, (t2 - t1) / 1000.0 / float(ticks), f0.x, f1.x, f0.y, f1.y, S.structures.size() if "structures" in S else -1, S.trees.size(), str(S.frame != null)])
++		SimCore.dispose(S)
++	quit(0)
+--- /dev/null
++++ b/sim/world/tools/size_probe.gd.uid
+@@ -0,0 +1 @@
++uid://c5jienjb54hfd
+--- a/sim/world/planet.gd
++++ b/sim/world/planet.gd
+@@ -324,10 +324,15 @@
+ 	var platesBJob = null                    # their make in steps (WorldPlateB.step): the state it has reached
+ 
+ 
++## The memo's key: the seed and the generation, and the planet's size when it is not medium (a planet is a pure function of its seed, the data and its size: docs/world/planet-sizes.md). Medium's key is today's.
++static func _key(seed: int, gn: int) -> int:
++	return (seed * 4 + gn) ^ ((SimConst.PLANET_NC - SimConst.PLANET_NC_MEDIUM) << 40)
++
++
+ ## Memoised by the seed: the planet is a pure function of it and of the data.
+ static func make(seed: int) -> Planet:
+ 	var gn: int = WorldClimate.genNow()
+-	var key: int = seed * 4 + gn
++	var key: int = _key(seed, gn)
+ 	if _planets.has(key):
+ 		return _planets[key]
+ 	var P: Planet = _newPlanet(seed, gn)
+@@ -354,6 +359,12 @@
+ 			P.c[k] = WorldClimate.data().planet[k]
+ 		if WorldLand.plateB():   # Research's B plates make taller ground: the mountain line moves up (climate.json b, window 13)
+ 			P.c["mountainAbove"] = float(WorldClimate.data().b.mountainAbove)
++	if SimConst.PLANET_NC != SimConst.PLANET_NC_MEDIUM:   # a size's own place counts and ring minimums (data/biomes/sizes.json places)
++		var pl: Dictionary = WorldPlanetSize.placesFor(SimConst.PLANET_NC)
++		if not pl.is_empty():
++			P.c = P.c.duplicate()
++			for k in pl:
++				P.c[k] = pl[k]
+ 	P.L = float(SimConst.PLANET_NC) * SimConst.COL
+ 	P.R = P.L / (2.0 * SimMathx.PI)
+ 	return P
+@@ -381,7 +392,7 @@
+ 	func _init(sd: int) -> void:
+ 		seed = sd
+ 		var gn: int = WorldClimate.genNow()
+-		key = sd * 4 + gn
++		key = WorldPlanet._key(sd, gn)
+ 		if WorldPlanet._planets.has(key):
+ 			P = WorldPlanet._planets[key]
+ 			done = true
+@@ -444,7 +455,7 @@
+ ## Whether make(seed) would find the planet made (by the generation planets are made by now): a host's load step asks
+ ## before a match's start (SimPlanetLoad).
+ static func isMade(seed: int) -> bool:
+-	return _planets.has(seed * 4 + WorldClimate.genNow())
++	return _planets.has(_key(seed, WorldClimate.genNow()))
+ 
+ 
+ static func makeJob(seed: int) -> PlanetJob:
+@@ -1219,7 +1230,7 @@
+ 
+ ## The slice memoised outside the sim state: keyed by the planet, the touch, the pick index and the data hash. The read is pure, so the cache cannot change a match.
+ static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedByteArray(), relaxed: bool = false, side: int = 1) -> Slice:
+-	var key: String = "%d/%d/%s/%d/%s/%d/%d" % [seed, touch, str(standing.hex_encode()), 1 if relaxed else 0, dataHash(), SimConst.NC, side]
++	var key: String = "%d/%d/%s/%d/%s/%d/%d" % [seed, touch, str(standing.hex_encode()), 1 if relaxed else 0, dataHash(), SimConst.NC + (SimConst.PLANET_NC - SimConst.PLANET_NC_MEDIUM) * 65536, side]
+ 	if _slices.has(key):
+ 		return _slices[key]
+ 	var P: Planet = make(seed)
+@@ -1260,7 +1271,7 @@
+ 		standing = st
+ 		relaxed = rel
+ 		side = sd2
+-		key = "%d/%d/%s/%d/%s/%d/%d" % [sd, tch, str(st.hex_encode()), 1 if rel else 0, WorldPlanet.dataHash(), SimConst.NC, sd2]
++		key = "%d/%d/%s/%d/%s/%d/%d" % [sd, tch, str(st.hex_encode()), 1 if rel else 0, WorldPlanet.dataHash(), SimConst.NC + (SimConst.PLANET_NC - SimConst.PLANET_NC_MEDIUM) * 65536, sd2]
+ 		if WorldPlanet._slices.has(key):
+ 			slice = WorldPlanet._slices[key]
+ 			done = true
+--- a/sim/world/field.gd
++++ b/sim/world/field.gd
+@@ -131,10 +131,12 @@
+ 
+ 
+ static func cells() -> int:
+-	return int(data().get("cells", 300))
++	return int(data().get("cells", 300)) * SimConst.PLANET_NC / SimConst.PLANET_NC_MEDIUM   # the nodes stay 128 units apart whatever the planet's size
+ 
+ 
+ static func bakeStride() -> int:
++	if SimConst.PLANET_NC != SimConst.PLANET_NC_MEDIUM:
++		return WorldPlanetSize.bakeStrideFor(SimConst.PLANET_NC)
+ 	return int(data().get("bakeStride", 4))
+ 
+ 
+--- a/sim/world/store.gd
++++ b/sim/world/store.gd
+@@ -37,8 +37,17 @@
+ static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid, sup}: the derived index (sup: the records another supersedes, a pure function of the store)
+ 
+ 
++## The grid's box key: the box's three indices offset so none is negative. The offset is 64 (medium's: the planet's radius is 24 boxes) and grows with a bigger planet's radius, so no two boxes share a key (a record listed twice in a merged list would count twice).
++static var _koff: int = 64
++static var _koffNC: int = 0
++
++
+ static func _key(ix: int, iy: int, iz: int) -> int:
+-	return ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)
++	if _koffNC != SimConst.PLANET_NC:
++		_koffNC = SimConst.PLANET_NC
++		_koff = maxi(64, int(ceil(float(SimConst.PLANET_NC) * SimConst.COL / (2.0 * SimMathx.PI) / BOX)) + 2)
++	var m: int = _koff * 2
++	return ((ix + _koff) * m + (iy + _koff)) * m + (iz + _koff)
+ 
+ 
+ static func _box(v: float) -> int:
+--- a/sim/world/waterrec.gd
++++ b/sim/world/waterrec.gd
+@@ -25,8 +25,17 @@
+ 	return SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
+ 
+ 
++## The grid's box key: the box's three indices offset so none is negative. The offset is 64 (medium's: the planet's radius is 24 boxes) and grows with a bigger planet's radius, so no two boxes share a key (a record listed twice in a merged list would count twice).
++static var _koff: int = 64
++static var _koffNC: int = 0
++
++
+ static func _key(ix: int, iy: int, iz: int) -> int:
+-	return ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)
++	if _koffNC != SimConst.PLANET_NC:
++		_koffNC = SimConst.PLANET_NC
++		_koff = maxi(64, int(ceil(float(SimConst.PLANET_NC) * SimConst.COL / (2.0 * SimMathx.PI) / BOX)) + 2)
++	var m: int = _koff * 2
++	return ((ix + _koff) * m + (iy + _koff)) * m + (iz + _koff)
+ 
+ 
+ static func _box2(v: float) -> int:
+--- a/sim/world/planet_cache.gd
++++ b/sim/world/planet_cache.gd
+@@ -18,7 +18,8 @@
+ 
+ 
+ static func keyOf(seed: int) -> String:
+-	return "%s|planet|seed %d|rev %d" % [WorldFieldCache.baseKey(), seed, CODE_REV]
++	var size: String = "" if SimConst.PLANET_NC == SimConst.PLANET_NC_MEDIUM else "|cols %d" % SimConst.PLANET_NC   # medium's key is as it was (its blobs stay good); another size has its own
++	return "%s|planet|seed %d|rev %d%s" % [WorldFieldCache.baseKey(), seed, CODE_REV, size]
+ 
+ 
+ ## The made planet's pieces as one payload.
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -466,2 +466,6 @@
+     {
++      "match": "data/biomes/sizes.json",
++      "schema": "biomes-sizes.schema.json"
++    },
++    {
+       "match": "data/biomes/blast.json",
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -12,2 +12,3 @@
+     "street_axis_check",
++    "size_check",
+     "water_warm_check", "water_read_check", "landmark_spare_check", "lot_reach_check", "relax_check", "node_warm_check",
+@@ -21,2 +22,3 @@
+     "b_heights": "measurement: prints percentiles of dry land on B plates, no verdict",
++    "size_probe": "probe: a match on each named planet size, timed (scratch tool, no verdict)",
+     "calm_digest": "measurement: prints the calm turn's swap tick and gameplay hashes, no verdict",

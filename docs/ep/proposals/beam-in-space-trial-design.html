@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Beam In Space: Trial Design</title>
+<style>
+  :root {
+    --bg:#f6f5f1; --panel:#ffffff; --ink:#1c1d22; --dim:#5d6070; --line:#dddbd3;
+    --a:#2f6f9f; --b:#c0503f; --gold:#b07a12; --ok:#2e7d4f; --warn:#a4462f; --ground:#8a6a48;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg:#121419; --panel:#1b1e26; --ink:#e8eaf0; --dim:#9aa1b2; --line:#2d3240;
+    --a:#6fb2e0; --b:#ee8a78; --gold:#e8be5a; --ok:#7fd3a0; --warn:#f09a84; --ground:#9a7a58;
+  } }
+  :root[data-theme="dark"] {
+    --bg:#121419; --panel:#1b1e26; --ink:#e8eaf0; --dim:#9aa1b2; --line:#2d3240;
+    --a:#6fb2e0; --b:#ee8a78; --gold:#e8be5a; --ok:#7fd3a0; --warn:#f09a84; --ground:#9a7a58;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,Segoe UI,sans-serif; }
+  main { max-width:980px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:28px; margin:0 0 6px; line-height:1.2; }
+  h2 { font-size:21px; margin:44px 0 8px; padding-top:12px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:22px 0 6px; }
+  p { margin:8px 0; }
+  .dim { color:var(--dim); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:12px 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+  .find { border-left:3px solid var(--warn); }
+  .new { border-left:3px solid var(--gold); }
+  .rule { border-left:3px solid var(--ok); }
+  blockquote { margin:10px 0; padding:10px 14px; border-left:3px solid var(--a); background:var(--panel); border-radius:0 8px 8px 0; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+  th, td { border-bottom:1px solid var(--line); padding:7px 6px; text-align:left; vertical-align:top; }
+  th { font-weight:600; color:var(--dim); font-size:13px; }
+  .scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .scroll table { min-width:640px; }
+  .num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+  code { font:13px ui-monospace,Consolas,monospace; background:var(--bg); padding:1px 4px; border-radius:4px; overflow-wrap:anywhere; }
+  pre { font:12.5px/1.45 ui-monospace,Consolas,monospace; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; overflow-x:auto; }
+  pre code { background:none; padding:0; overflow-wrap:normal; }
+  ol li, ul li { margin:4px 0; }
+  nav a { color:var(--a); text-decoration:none; margin-right:12px; font-size:14px; display:inline-block; }
+  .yes { color:var(--ok); font-weight:600; }
+  .no { color:var(--warn); font-weight:600; }
+  .v-fixed { color:var(--ok); font-weight:600; }
+  .v-kept { color:var(--gold); font-weight:600; }
+  canvas { width:100%; height:220px; display:block; background:var(--panel); border:1px solid var(--line); border-radius:8px; touch-action:manipulation; }
+  .row { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; margin:10px 0; font-size:14px; }
+  .row label { display:flex; gap:6px; align-items:center; }
+  input[type=range] { width:130px; accent-color:var(--a); }
+  select, button { font:inherit; font-size:14px; background:var(--panel); color:var(--ink); border:1px solid var(--a); border-radius:6px; padding:6px 10px; }
+  button { cursor:pointer; }
+  .out { font-size:14px; background:var(--bg); border-radius:6px; padding:8px 10px; margin-top:6px; min-height:3.2em; }
+  .cap { font-size:13px; color:var(--dim); margin-top:6px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>The beam in space: the design for the first trial</h1>
+<p class="dim">From Orb's stand-in, 2026-11-14, for the EP, then Encounter, who builds the trial (the path's "spike S1": a throwaway build on a scratch copy). It turns Game Design's option A (<code>docs/design/beam-physics.md</code>, picked by Orb on 9 November: "A sounds good") into something a builder can follow. Design only: nothing here is built or decided, and every number is a first value in data. Code references are to main at def3445a; the beam code there is byte-for-byte the code of the 9 November build Orb played, and only data switches differ. The tables come from a small model, not from a Godot run. An independent review found faults in the first draft; what it changed is in <a href="#checks">section 18</a>.</p>
+
+<nav>
+  <a href="#plain">1. In plain words</a><a href="#today">2. Today</a><a href="#rule">3. The rule</a><a href="#travel">4. Travel</a><a href="#aim">5. Aim</a><a href="#escape">6. Escape</a><a href="#contact">7. Contact</a><a href="#struggle">8. The struggle</a><a href="#ai">9. The computer</a><a href="#seen">10. Seen</a><a href="#toy">11. Try it</a><a href="#data">12. Data</a><a href="#code">13. Pseudocode</a><a href="#breaks">14. What breaks</a><a href="#spike">15. The trial</a><a href="#questions">16. For Orb</a><a href="#risks">17. Risks</a><a href="#checks">18. Checks</a>
+</nav>
+
+<h2 id="plain">1. In plain words</h2>
+<blockquote>"opponent fired a beam at me, I didn't even see it on my screen, seemed like it was way under me and it still counted and hurt me ... lets get a big overhaul to the beam physics" <span class="dim">(Orb, 2026-11-08, <code>docs/ep/vision.md:1675</code>)</span></blockquote>
+<blockquote>"beams should not be instant rays cast in a direction, they should appear to the player to have a velocity and project out from the fighter" <span class="dim">(Orb, 2026-11-01, <code>vision.md:1601</code>)</span></blockquote>
+<div class="card rule">
+  <ul>
+    <li><strong>A beam becomes a real thing in the world.</strong> It leaves your hand along the line your right stick pointed, and its front travels at a speed you can see.</li>
+    <li><strong>It hits only what it touches.</strong> If it passes under you, it digs the ground under you and you are fine.</li>
+    <li><strong>You get out of its way by moving.</strong> A beam never holds you in place and never moves you until it touches you. The timed dodge, the guard and the powerful block all still work, at the moment it reaches you. With the first numbers, getting out means already being on the move, or dashing: the beam is too fast to walk away from once it has left.</li>
+    <li><strong>A bigger charge is a wider, faster, longer beam,</strong> so it is harder to get out of. A small beam at long range mostly makes someone move.</li>
+    <li><strong>Firing plants you.</strong> You stand still while you pour the beam out, a third of a second for the smallest and a second and a half for a full one, so a miss is an opening for your rival.</li>
+    <li><strong>Two beams that meet head-on start the struggle where they met.</strong> Fire back late and it starts closer to you, though never so close that it is over before you can push.</li>
+    <li><strong>The computer plays by the same rule:</strong> it has to aim, it can miss, and it moves off your line when it sees you charging.</li>
+  </ul>
+</div>
+<p><strong>What the trial itself will show:</strong> the first five. The struggle from two beams meeting is in it only if time allows, and the computer gets its aim and a first sidestep on one level. The trial does not yet fix "I didn't even see it on my screen": that needs UI's edge-of-screen line switched on, which is behind the look gate (section 10).</p>
+
+<h2 id="today">2. What a beam is today, and why it felt arbitrary</h2>
+<ul>
+  <li><strong>A beam is an exchange with a named target, not a thing in space.</strong> Once it starts, both fighters are held (<code>sim/director/exchange.gd:363-364</code>). The hit is a beat scheduled for a fixed tick after the fire, and it runs wherever the defender is (<code>beamplay.gd:292</code>, <code>opReach</code> at 398).</li>
+  <li><strong>No code tests the beam's line against a fighter</strong> in a one-on-one fight. The drawn front is paced to arrive on that tick (<code>beamplay.gd:308-313</code>), from 36 to 60 ticks after the fire at any distance: "so it always arrives" (<code>beamplay.gd:55-58</code>).</li>
+  <li><strong>The defender cannot move between the fire and the hit.</strong> Their stick moves them only during the 6-tick tell, by about half a body height. What decides it is a press: a dodge tap in the last 18 ticks, a fresh guard press in the last 12, or firing back.</li>
+  <li><strong>That is Orb's Sunday:</strong> five of the computer's seven beams hit, four of them from 2,400 to 6,600 units with up to 2,850 units of height between the fighters, each about a second after the fire whatever the range (<code>docs/qa/runs/1931a0f8/README.md:20-30</code>).</li>
+  <li><strong>What is already there to build on:</strong> the beam object is a fixed line with a front (<code>SimState.Beam</code>: origin, direction, length, front share <code>p</code>; <code>sim/core/state.gd:757-779</code>), the renderer already draws that front, and a line-against-body test exists for 2v2, where a beam of one fight hits the first enemy of the other fight on its line and stops there (<code>sim/core/cross.gd:273-323</code>).</li>
+</ul>
+
+<h2 id="rule">3. The rule</h2>
+<div class="scroll"><table>
+<tr><th>Game Design's three questions</th><th>Today</th><th>In the trial</th></tr>
+<tr><td><strong>Seen:</strong> can you see it coming, from its source?</td><td>The charge glows; the front is drawn but its timing is a schedule. The shooter can be off your screen</td><td>The same glow, a front that moves at its real speed, and a cue for the fighter on its line (section 10)</td></tr>
+<tr><td><strong>Aimed:</strong> does it go where the shooter pointed?</td><td>Inside a 35 degree cone it is re-aimed onto the target and always reaches them; outside it misses everyone</td><td>It goes where the stick pointed. Inside a small cone it snaps onto where the target is at the fire, then it is a fixed line</td></tr>
+<tr><td><strong>Escapable:</strong> can you get out by moving?</td><td>No</td><td>Yes: be off the line by the beam's width when the front gets there</td></tr>
+</table></div>
+<p><strong>The agency side of it,</strong> since Orb's latest word on control is "PLAYER AGENCY MUST BE RESPECTED": a beam is something its shooter chose, so it may plant the shooter. It is not something the target chose, so it may not hold or move the target until it touches them. That one sentence is what takes the beam out of the exchange system.</p>
+
+<h2 id="travel">4. Travel: speed, width, length</h2>
+<div class="scroll"><table>
+<tr><th>Stage</th><th>Hold to reach it</th><th>Front speed</th><th>Half width</th><th>Hits a body within</th><th>Reach</th><th>Stays lit</th></tr>
+<tr><td>1</td><td class="num">0.2 s</td><td class="num">8,000 a second</td><td class="num">45 units</td><td class="num">85 (1.1 body heights)</td><td class="num">4,200 (56)</td><td class="num">0.33 s</td></tr>
+<tr><td>2</td><td class="num">0.47 s</td><td class="num">10,000</td><td class="num">70</td><td class="num">110</td><td class="num">5,400</td><td class="num">0.6 s</td></tr>
+<tr><td>3</td><td class="num">0.77 s</td><td class="num">12,000</td><td class="num">95</td><td class="num">135 (1.8)</td><td class="num">6,600 (88)</td><td class="num">0.9 s</td></tr>
+<tr><td>4</td><td class="num">1.1 s</td><td class="num">14,000</td><td class="num">120</td><td class="num">160</td><td class="num">7,800</td><td class="num">1.1 s</td></tr>
+<tr><td>5</td><td class="num">1.5 s</td><td class="num">16,000</td><td class="num">145</td><td class="num">185</td><td class="num">9,000</td><td class="num">1.3 s</td></tr>
+<tr><td>6</td><td class="num">2 s</td><td class="num">18,000</td><td class="num">170</td><td class="num">210 (2.8)</td><td class="num">10,200 (136)</td><td class="num">1.5 s</td></tr>
+</table></div>
+<ul>
+  <li>Speeds, widths and lengths are Game Design's first values from <code>beam-physics.md</code>. Hold times, prices and "stays lit" are the built stage ladder (<code>interrupts.json</code> <code>ownMove</code>: <code>stageTicks</code>, <code>price</code>, <code>lastsSec</code>). How many stages a fighter has (2 at base, up to 6) is built too.</li>
+  <li><strong>"Hits a body within"</strong> is the beam's half width plus a fighter's body (40 units, the size shots already use). It is measured from the body's chest to the line.</li>
+  <li><strong>The front moves a fixed distance each tick.</strong> Stage 1 covers 133 units a tick; stage 6 covers 300 (4 body heights). The hit test covers the whole stretch the front crossed that tick, so nothing is skipped.</li>
+  <li><strong>Only the front hits.</strong> A body is tested on the tick the front crosses it and never again. The column behind the front stays lit and keeps carving the ground, but it does not hurt a fighter who flies into it. So a rival who sidesteps can go straight at the shooter.</li>
+  <li><strong>Past its reach the beam spends itself, and that is a real change.</strong> Today a hit lands at any distance up to 33,600 units. With Game Design's lengths a base fighter's beam (two stages) ends at 72 body heights and a full one at 136. One of the computer's hits in Orb's Sunday match came from 6,568 units, which is beyond a base fighter's reach. Pillar 3 says "never out of range", and today's code cites it as the reason beams always arrive, so this is Game Design's to confirm. The trial reports how many of Orb's recorded beams would have been out of reach.</li>
+</ul>
+<div class="scroll"><table>
+<tr><th>Time from the fire to the front arriving</th><th>Stage 1</th><th>Stage 3</th><th>Stage 6</th><th>Today, any stage</th></tr>
+<tr><td>9 body heights (675 units)</td><td class="num">0.10 s</td><td class="num">0.07 s</td><td class="num">0.05 s</td><td class="num">0.68 s</td></tr>
+<tr><td>20 (1,500)</td><td class="num">0.20 s</td><td class="num">0.13 s</td><td class="num">0.08 s</td><td class="num">0.78 s</td></tr>
+<tr><td>40 (3,000)</td><td class="num">0.38 s</td><td class="num">0.25 s</td><td class="num">0.17 s</td><td class="num">0.98 s</td></tr>
+<tr><td>60 (4,500)</td><td>out of reach</td><td class="num">0.38 s</td><td class="num">0.25 s</td><td class="num">1.0 s</td></tr>
+<tr><td>80 (6,000)</td><td>out of reach</td><td class="num">0.50 s</td><td class="num">0.33 s</td><td class="num">1.0 s</td></tr>
+</table></div>
+<p><strong>These first values are fast.</strong> A beam that used to take a second now takes a fifth to a half of one. The warning has moved from the travel to the charge: the glow and the hold are the tell. Whether that reads well enough is the first thing the trial's clip should show, and the speeds are one line of data to slow down.</p>
+
+<h2 id="aim">5. Aim</h2>
+<ul>
+  <li><strong>The line is the right stick's direction at the release,</strong> as the beam controls already read it: 32 directions, 11.25 degrees apart, steadied over the last 3 ticks before the release (<code>sim/input/strike_read.gd</code>; <code>DirBeamAim.thrown</code>).</li>
+  <li><strong>A small assist:</strong> if that direction is within the assist angle of the line to the rival, the beam is aimed exactly at where the rival is on the tick it fires. Outside it, the beam goes where you pointed. No leading, and no steering after it leaves.</li>
+  <li><strong>The assist angle is a number to settle.</strong> The page Orb picked option A from said 15 degrees. The data has 35 (<code>front.aim.assistDeg</code>). With 32 stick directions, 15 is enough that pointing at someone always finds them; 35 forgives a stick pointed two directions off. The trial tries both, and it is Game Design's and Controls' number.</li>
+  <li><strong>Up and down are real.</strong> A beam aimed up goes up. One aimed down digs the ground where it lands, as today.</li>
+  <li><strong>It fires when you let go.</strong> Today a released beam waits up to 90 ticks for the target to have been free for 18, and then fires into whatever you are doing (row A-COMBAT-05, the late beam at tick 5220 of Orb's last match). A beam in space does not hold its target, so the wait goes: it fires 6 ticks after the release, or it is refused at once with the cue that says why (no energy, or you were hit).</li>
+  <li><strong>The rule behind that wait stays, in another form.</strong> Game Design ruled after Orb's 11-06 play that "a beam should never come ... at a target who can't act" (<code>docs/design/beams-third-play.md:47-51</code>). So a beam in space passes through a body that cannot act: one that is launched, down or stunned, or has been free for less than 18 ticks. That keeps the rule without the wait, and it stops a beam being repeated on a body it has just launched. Game Design should rule on it; the other choice is to refuse the fire while the target cannot act.</li>
+</ul>
+
+<h2 id="escape">6. Escape: who gets out</h2>
+<p>From the model, one beam aimed at where the target stood when it fired. "Miss" means the target was further from the line than the beam hits when the front got there.</p>
+<div class="scroll"><table>
+<tr><th>The target...</th><th>Range</th><th>Stage 1</th><th>Stage 3</th><th>Stage 6</th></tr>
+<tr><td rowspan="3">stands still</td><td>20 body heights</td><td>hit</td><td>hit</td><td>hit</td></tr>
+<tr><td>40</td><td>hit</td><td>hit</td><td>hit</td></tr>
+<tr><td>80</td><td>out of reach</td><td>hit</td><td>hit</td></tr>
+<tr><td rowspan="3">is already flying across the line at plain speed</td><td>20</td><td>too close to call (1 unit)</td><td>hit</td><td>hit</td></tr>
+<tr><td>40</td><td>miss</td><td>hit</td><td>hit</td></tr>
+<tr><td>80</td><td>out of reach</td><td>miss</td><td>hit</td></tr>
+<tr><td rowspan="3">stands, then dashes across a quarter second after the fire</td><td>20</td><td>hit</td><td>hit</td><td>hit</td></tr>
+<tr><td>40</td><td>miss</td><td>hit</td><td>hit</td></tr>
+<tr><td>80</td><td>out of reach</td><td>miss</td><td>miss</td></tr>
+<tr><td rowspan="3">is already dashing across the line</td><td>9</td><td>miss</td><td>miss</td><td>hit</td></tr>
+<tr><td>20</td><td>miss</td><td>miss</td><td>miss</td></tr>
+<tr><td>40</td><td>miss</td><td>miss</td><td>miss</td></tr>
+</table></div>
+<ul>
+  <li><strong>Standing still gets you hit,</strong> at any range the beam reaches.</li>
+  <li><strong>A small beam at range is for making someone move.</strong> Anyone already moving across it is safe from about 25 body heights out. Flying up or down is a little slower than flying sideways (0.85), so those margins are thinner.</li>
+  <li><strong>Inside about 20 body heights no sidestep that starts after the fire gets out,</strong> at any stage. The path's test for Alpha asks for a beam dodged by moving "at near, middle and far range" (X-16). With these numbers the near range passes only for a defender who is already moving. Either the values slow down or the EP agrees that wording.</li>
+  <li><strong>A full beam catches a fighter who is only drifting,</strong> at any range it reaches, and one who dashes a quarter second late out to 60 body heights.</li>
+  <li><strong>Reacting to the fire with a walk never works;</strong> the front is too fast. You react to the charge, or you dash.</li>
+  <li><strong>Up close the answers decide it:</strong> inside about 10 body heights nobody leaves the line of a beam they were standing on.</li>
+  <li>Game Design's bands to read the trial against: hit rate on a moving target beyond 3,000 units, 10 to 30%; inside 1,500, 40 to 70%; beams that hit someone they did not visibly touch, 0; beams whose source was not on the target's own screen and gave no cue at its edge, 0.</li>
+</ul>
+
+<h2 id="contact">7. Contact: what happens when it touches you</h2>
+<p>The answers Orb asked for on 11-01 ("a brief window where the second player can dodge, powerful block, or fire a beam of their own") all stay as inputs. They are read on the tick the beam touches the body, not on a scheduled tick. <strong>But the window shrinks up close:</strong> the dodge and the fresh guard count in the 12 ticks before contact, and inside about 20 body heights the whole time from release to contact is 9 to 18 ticks. So up close an answer has to be pressed on the charge, not on the release.</p>
+<div class="scroll"><table>
+<tr><th>You did</th><th>Read at contact as</th><th>What happens</th><th>In the trial?</th></tr>
+<tr><td>Moved off the line</td><td>No contact</td><td>Nothing. The beam carves on</td><td class="yes">Yes: the point of it</td></tr>
+<tr><td>Tapped LT just before</td><td>The dodge's 12 ticks cover the contact</td><td>The beam passes through you and carries on (as 2v2 beams already do: <code>cross.gd</code> <code>dodging</code>)</td><td class="yes">Yes</td></tr>
+<tr><td>Could not act (launched, down, stunned, or only just freed)</td><td>Not free for 18 ticks</td><td>The beam passes through you</td><td class="yes">Yes</td></tr>
+<tr><td>Pressed LB fresh, just before</td><td>A fresh guard press within 12 ticks before contact</td><td>The powerful block: the beam stops at you. Its looks (split, swat, walk in) by your stick, as built</td><td>The stop, yes. The three looks later</td></tr>
+<tr><td>Held LB</td><td>Guard held at contact</td><td>Guard damage, and you are pushed back along the beam's own line. The beam stops at you</td><td class="yes">Yes</td></tr>
+<tr><td>Nothing</td><td>Hit</td><td>Stage damage, and you are launched along the beam's own line. The beam stops at you</td><td class="yes">Yes</td></tr>
+<tr><td>Fired a beam of your own back down the line</td><td>The fronts meet</td><td>The struggle, where they met (section 8)</td><td>If time allows</td></tr>
+</table></div>
+<ul>
+  <li><strong>The launch follows the beam's line,</strong> not the old line between the two fighters at the fire.</li>
+  <li><strong>The point-blank shove is a switch, filmed both ways.</strong> Today, firing from inside 9 body heights throws the other fighter back to 9 with no damage (<code>beamplay.gd:163-200</code>). Game Design's reason was reaction time: the travel never takes less than 0.6 s, "what lets a person react", and the shove makes room for that (<code>power-scale.md:329</code>); option A's own page says "the point-blank throw-back stands". Against it: a shove is the game moving a body that nothing touched. Without it, nobody inside about 20 body heights can answer after the release. A third way is a longer tell when a rival is that close. This is Game Design's ruling to make before the clip, and the trial's data has all three (<code>shove</code>, <code>closeTell</code>).</li>
+  <li><strong>The dodge no longer lifts you 300 units</strong> (<code>beam.gd:184-192</code>). You stay where you are and the beam goes through.</li>
+  <li><strong>One touch per beam per body,</strong> on the tick the front crosses it.</li>
+</ul>
+<h3>The shooter</h3>
+<ul>
+  <li><strong>While charging:</strong> as built. Free, at a tenth of flying speed after 12 ticks, no dash, armoured against lights, no exchange and nobody held.</li>
+  <li><strong>From the release:</strong> planted. No movement and no other action for the 6-tick tell plus the stage's "stays lit" time: 0.43 s for a stage 1, 1.6 s for a stage 6. (The beam itself lives a little longer, while its front finishes its reach.) The shooter stays in the ordinary free state and keeps the hold's armour, so the rival's attacks start normally against them; a blow that armour does not take, or a launch or a stun, cuts the beam off where its front is.</li>
+  <li>That makes a miss an opening, and a bigger beam a bigger bet. With the gravity well's snap, a rival who sidesteps a stage 6 can be on the shooter before they can move again.</li>
+</ul>
+
+<h2 id="struggle">8. What the struggle becomes</h2>
+<p>Today no beam ever meets another beam. Every struggle starts from the defender pressing an answer inside a window (in the tell, late while the beam "travels", or RB toward to fire back), and "where the fronts meet" is a share of the travel time, at most 0.3 past the middle (<code>beamplay.gd:219-236</code>).</p>
+<div class="card rule">
+  <strong>In space: two beams struggle when each would have hit the other's shooter, and their fronts meet.</strong>
+  <ul>
+    <li>Each tick, for a beam of yours and a beam of your rival's: if your rival is on your beam's line, you are on theirs, and the two fronts between you have met, the two beams are replaced by the struggle.</li>
+    <li>It starts at the point where they met, as a share of the way between your hands. Fire at the same moment with equal beams and it starts in the middle. Fire back late and it starts nearer you (table below). The head start from power (tier, energy) is added as today.</li>
+    <li><strong>The start is capped,</strong> as a late answer's is today: never more than 0.3 past the middle, and never within two pushes of either end. Without the cap a late stage 1 against a stage 6 would start at nine tenths and be over on the first pulse. Orb, 10-16: "it felt like the winner of the beam struggle was determined as soon as the beams were fired".</li>
+    <li>From there it is the built struggle, unchanged: 15 pulses, timed pushes, nobody gains by mashing, let go on the pulse to slip out (<code>beam.gd:253-606</code>). Both fighters are held for it. Both chose to fire, so that is a set piece each of them picked.</li>
+    <li>Beams that cross at an angle do not struggle. Each carries on and hits what it touches.</li>
+  </ul>
+</div>
+<div class="scroll"><table>
+<tr><th>Apart by</th><th>Fired together</th><th>Rival fires 0.2 s late</th><th>0.4 s late</th></tr>
+<tr><td>20 body heights, both stage 1</td><td>Meets in the middle</td><td>Too late: the first beam lands</td><td>Too late</td></tr>
+<tr><td>40, both stage 1</td><td>The middle</td><td>Four fifths of the way to the late one (the cap)</td><td>Too late</td></tr>
+<tr><td>80, both stage 3 (a stage 1 does not reach)</td><td>The middle</td><td>About seven tenths</td><td>Four fifths (the cap)</td></tr>
+</table></div>
+<ul>
+  <li><strong>The instant fire-back stays as an input:</strong> today RB and a flick toward an incoming beam answers it at once for the first stage's price. In space that flick fires a stage 1 beam with no hold, only while you are on a live beam's line. Where it meets is then geometry.</li>
+  <li><strong>The answer "in the tell" and the "late answer" stop being separate rules.</strong> They are both just firing your own beam.</li>
+  <li><strong>Two beams struggle only if each reaches the other's shooter.</strong> A stage 1 cannot struggle with anything from beyond its own 56 body heights; the bigger beam simply arrives.</li>
+  <li><strong>The world:</strong> each beam carves as its front passes until they meet, then both stop. That is already Game Design's ruling ("the beams carve as normal until their fronts meet, then stop"; <code>power-scale.md</code>), and with real beams it finally has beams to stop. World's meeting-point crater code (<code>struggleMeet</code>, off) can then find them.</li>
+</ul>
+
+<h2 id="ai">9. What the computer's beam play becomes</h2>
+<p>Today the computer's beam always arrives, so it never needed to aim, to judge a shot, or to move out of the way. It needs all three now, and the audit already asks that it use only inputs a player has (A-AI-07).</p>
+<div class="scroll"><table>
+<tr><th></th><th>Today</th><th>In space</th></tr>
+<tr><td><strong>Aim</strong></td><td>It holds the right stick left or right only and writes no aim (<code>beam_move.gd:183-188</code>). With the aim switch on its throw reads as "straight right" every time. In Orb's 8 November match both of its wide beams came with Orb on its left and all five hits with Orb on its right. That fits; it was not confirmed by a run</td><td>It points its stick like a player: the direction nearest the line to its rival, and the same assist a player gets. Its error by level is a chance of pointing two directions off, which is outside the assist, so that beam goes wide. Leading a moving target is not in the trial: the assist snaps onto where the rival is, so a lead cannot be expressed through it. This is the first thing to build: without an aim the computer misses half its beams by accident</td></tr>
+<tr><td><strong>When to fire</strong></td><td>On a timer and an energy level; range and line are not read (<code>ai.gd:258-277</code>)</td><td>A shot is worth taking when the rival is inside the beam's reach and is standing, charging, recovering from a miss, or flying straight at or away from it. Not when they are flying across at range. One score, with a threshold by level</td></tr>
+<tr><td><strong>Getting out of the way</strong></td><td>Never. It draws one answer when the charge starts: block, dodge tap, wade, or fire back (<code>beamplay.gd:570-596</code>)</td><td>When a rival's charge reaches its first stage and it is inside that beam's reach, it waits its reaction time (the same 14 ticks it needs for an approach), then on a chance by level it flies across the line and keeps flying until the charge ends or the beam has passed. At higher levels it adds a dash when the beam leaves. It reacts to the charge, which can be seen, never to the release tick: the rule the perfect-guess work already set for charged blows. (Reacting only once the beam has left would almost never work: section 6)</td></tr>
+<tr><td><strong>The other answers</strong></td><td>Drawn in advance against a beam that always arrives</td><td>Drawn only if it is still on the line as the front closes: the dodge tap, the guard, the powerful block, each at its level's built rate</td></tr>
+<tr><td><strong>The struggle</strong></td><td>Its pushes are drawn at the start; never sharp</td><td>Unchanged</td></tr>
+</table></div>
+<p>The computer's pacing against a human ("about 3 signatures a match", <code>ai.json</code> <code>vsHuman</code>) was set for beams that always land. It will need a new reading once beams can miss.</p>
+
+<h2 id="seen">10. Seen</h2>
+<ul>
+  <li><strong>The charge</strong> is already drawn (the hand's glow grows with the hold). The stage steps are not drawn today; they go only to sound and, when switched on, rumble. Game Design's page asks for "stage pulses"; that needs VFX and the look gate, and it is not in the trial.</li>
+  <li><strong>The front</strong> is already drawn from the beam's own front position, so once the sim moves it at a real speed the picture follows with no renderer change. One thing does need VFX: a beam's fade is timed from the fire, and a long beam would start fading before it arrives. The trial sets the beam's life to its travel time plus its "stays lit" time and reports how the tail looks.</li>
+  <li><strong>On your screen.</strong> Game Design's page says a beam fired at you "brings its source into your frame, or shows Camera's steady edge cue". Two corrections from the records: the camera does not frame a shooter today, and the edge line is UI's, built and switched off (<code>docs/ui/beam-answer-alert.md</code>; feature <code>answer_alert</code>), with Legal's terms on it (RL-227: a steady thin line, never over the fighters). It listens for a cue that only the old scheduled beam sends.</li>
+  <li><strong>So the trial sends two cues.</strong> When a charge reaches its first stage, every enemy inside that beam's reach gets <code>beam_charge</code>: that gives the edge line, the sound and the rumble the whole hold to work with, which is where the warning now lives. At the fire, anyone on the line gets <code>beam_warn</code> (the cue 2v2 beams already send) with the ticks until the front arrives; with these speeds that is only 3 to 30 ticks.</li>
+  <li><strong>The trial does not by itself fix "I didn't even see it on my screen".</strong> A cue is an event, not a picture. For a shooter off your screen, what you would see is UI's edge line, and turning that on is UI's work behind the look gate. Until it is on, a beam from off screen gives less warning than today's, because it arrives sooner. The trial measures this (reading 6) so the gap is on the record.</li>
+  <li>Nothing is drawn on, over or between the fighters.</li>
+</ul>
+
+<h2 id="toy">11. Try it</h2>
+<div class="card">
+  <canvas id="beamToy" aria-label="A shooter on the left fires a beam along a line at a target; the target may move off the line"></canvas>
+  <div class="row">
+    <label>Charge <input type="range" id="tS" min="1" max="6" step="1" value="1"> <span id="tSv" class="num">stage 1</span></label>
+    <label>Distance <input type="range" id="tR" min="9" max="100" step="1" value="40"> <span id="tRv" class="num">40 body heights</span></label>
+    <label>The target <select id="tH"><option value="stand">Stands still</option><option value="drift" selected>Is already flying across</option><option value="react">Walks off a quarter second after the fire</option><option value="dash">Dashes off a quarter second after the fire</option><option value="sprint">Is already dashing across</option></select></label>
+    <button id="tGo" type="button">Fire</button>
+  </div>
+  <div class="out" id="beamOut">Pick a charge, a distance and what the target does, then fire.</div>
+  <p class="cap">Seen from the side, slowed to about a quarter of game speed. The band is the width that hits. A model with this page's first values, not the game.</p>
+</div>
+
+<h2 id="data">12. The numbers, as data</h2>
+<p>A new block beside the beam's other numbers, in <code>data/director/interrupts.json</code> under <code>beamPlays</code>, with its schema lines in the same change. Game Design's page put it in <code>data/fight/power.json</code>; that file joins a replay's key only when the energy model is on, and Encounter owns the beam, so I suggest it lives here. Either way it is off by default.</p>
+<pre><code>"space": {
+  "enabled": false,
+  "frontSpeed":   { "base": 8000, "perStage": 2000 },
+  "hitHalfWidth": { "base": 45,   "perStage": 25 },
+  "length":       { "base": 4200, "perStage": 1200 },
+  "bodyR": 40,
+  "assistDeg": 15,
+  "dodgeTicks": 12,
+  "perfectTicks": 12,
+  "needFreeTicks": 18,
+  "plant": true,
+  "shove": false,
+  "closeTell": { "withinBh": 20, "ticks": 6 },
+  "struggleOnMeet": false,
+  "snapBack": { "enabled": false, "stage": 1 },
+  "ai": { "aimSlip": { "easy": 0.3, "medium": 0.15, "hard": 0.05 },
+          "sidestep": { "easy": 0.25, "medium": 0.5, "hard": 0.8 }, "sidestepDash": { "easy": false, "medium": true, "hard": true } }
+}</code></pre>
+<ul>
+  <li>Each of the three ladders is "base at stage 1, plus so much a stage". The stage ladder itself (<code>ownMove.stageTicks</code>, <code>price</code>, <code>dmgMul</code>, <code>lastsSec</code>) is read as it is.</li>
+  <li>It needs the build's three beam switches on as well (<code>front</code>, <code>front.ownMove</code>, <code>front.aim</code>), all off in main's data today. Director switches have no setup key; a page build flips the data.</li>
+  <li><code>assistDeg</code> here is the one the beam in space reads. The older 35 (<code>front.aim.assistDeg</code>) stays for the old path.</li>
+  <li><code>closeTell.ticks</code> at 6 is today's tell; raising it lengthens the tell only when a rival is within <code>withinBh</code>.</li>
+  <li>Any edit to <code>interrupts.json</code> changes the data key of every saved match, so this lands in a golden window, as the path already plans (GW2).</li>
+</ul>
+
+<h2 id="code">13. Pseudocode and where it hooks</h2>
+<p class="dim">GDScript-shaped. Float64, <code>SimWrap.sdx(a, b)</code> is b minus a, <code>SimDetMath</code> and <code>SimMathx</code> for math, no new random draws in the beam itself (the computer's choices use keyed draws, as the struggle's do).</p>
+<div class="card find">
+  <strong>The one structural fact.</strong> The game runs one exchange at a time (<code>S.dirS.ex</code>), and while one exists every other request waits (<code>exchange.gd:257</code>). So a beam that leaves the target free cannot be an exchange at all: a free target who could not press anything until the beam ended would be worse than today. The beam in space is fired like a shot (<code>sim/core/shots.gd</code>): no exchange, nobody held. Only the struggle, which both fighters chose, goes back into an exchange.
+</div>
+<pre><code># ---- sim/core/state.gd, class Beam (757-779): three new fields. Hash them only when set, as cross, first and
+# stopAt already are (hash.gd:299-301), so a match with the switch off hashes as today. Snapshots copy them unasked.
+var sv: float = 0.0      # the front's speed, units a tick; 0 = not a beam in space (today's schedule)
+var hw: float = 0.0      # half the width that hits
+var stage: int = 0
+
+# ---- the switch: director switches have no setup key; a page build flips the data through tools/preview/switches.mjs
+static func spaceOn() -> bool:   # needs the build's three beam switches too (front, ownMove, aim: all off in main's data)
+	return DirBeamMove.on() and DirBeamAim.on() and bool(cfg().get("enabled", false))
+
+# ---- sim/director/stick.gd (798-806) and beam_move.gd: the release, the tell, the fire
+# Today the release calls released() and tryFire() on the same tick, and the 6-tick tell is the exchange's first beat.
+# In space the tell is a count on the stick's own state:
+#   released() sets M_PEND and M_PAT as today (beam_move.gd:247-248) and sets the plant: PLANT = now + releaseTell + lit ticks.
+#   holdMove (stick.gd:248-253) returns 0.0 while spaceOn() and (pending or planted): no movement from the release on.
+#     (Today it returns 1.0 while pending.)
+#   ST_ON stays 3 until the plant ends, so armoured() (232-238) keeps the hold's armour through the pour.
+#   _holdLost and holdHit (256-266) already fire when the shooter is launched, downed, stunned or hit through the armour:
+#     in space they also cut the beam (stopAt = its front) and end the plant.
+# tryFire (beam_move.gd:261-299), space branch, called each live tick while pending:
+if spaceOn():
+	if DirBrawl._now(S) - (_g(f, M_PAT) - 1) &lt; int(front().releaseTell):
+		return false                                               # the hand is lit for the tell; then it fires, never later
+	if S.game.ko != null or f.ki &lt; float(cfg().price[st - 1]) or DirBands.pending(f):
+		cue stick_refused "beam" with the reason; f.beamCharge = null; lost(f); return true   # refused at once, with a word
+	var ex = DirBrawl.exOf(S)
+	if ex != null and DirBrawl.isBrawl(ex) and ex.branch == "" and not ex.cancel and (ex.A == f or ex.D == f) and not DirBrawl._setPiece(ex):
+		DirBrawl.end(S, ex, "beam")                                # letting go inside a brawl ends the brawl, as today (281)
+	elif ex != null:
+		cue stick_refused "beam" "busy"; f.beamCharge = null; lost(f); return true
+	f.ki -= float(cfg().price[st - 1])
+	_s(f, M_FIRED, st)                                             # so lasts(f) and hitDamage(f, base) read the stage (311-326);
+	f.sigReadyT = ...; cue "beam_stage"                            #   cleared when the beam's life ends. Pacing and cue as today (289-297)
+	f.beamCharge = null                                            # the glow is drawn from it; today opBeamFire clears it (beam.gd:74)
+	DirBeamSpace.fire(S, f, st)                                    # (new file: sim/director/beam_space.gd)
+	return true
+# The 18-tick "target free" test and the 90-tick wait (266-288) are not reached. See "can't act" below for what replaces them.
+
+# ---- sim/director/beam_space.gd (new): class_name DirBeamSpace
+static func _len(st: int) -> float:
+	return float(cfg().length.base) + float(cfg().length.perStage) * (st - 1)      # 4,200 at stage 1, as the other two
+
+static func fire(S: SimState, A, st: int) -> void:
+	var c: Dictionary = cfg()                                      # interrupts.json beamPlays.space
+	var D = DirBrawl.rivalOf(S, A)
+	var ox: float = A.x
+	var oy: float = A.y + 38.0
+	var dir: PackedFloat64Array = _line(S, A, D, ox, oy)           # the thrown stick direction (B_THROW, cleared here), snapped onto
+	                                                               #   D's chest when within space.assistDeg. DirBeamAim.wide is not used
+	DirBeam.fireBeam(S, A, ox, oy, dir[0], dir[1], _len(st), "")   # beam.gd:658-671: returns nothing; it appends to S.beams
+	var b = S.beams.back()
+	b.sv = (float(c.frontSpeed.base) + float(c.frontSpeed.perStage) * (st - 1)) * SimConst.DT
+	b.hw = float(c.hitHalfWidth.base) + float(c.hitHalfWidth.perStage) * (st - 1)
+	b.stage = st
+	b.life = b.len / b.sv * SimConst.DT + DirBeamMove.lasts(A)     # to the end of its reach, then its lit time
+	SimFx.cue(S, A, "beam_fire", ...)
+
+# ---- sim/director/beam.gd, beamStep (713-739): the front moves at its own speed, and touches before it carves
+if b.sv > 0.0:
+	var s0: float = b.p * b.len
+	np = SimMathx.jmin(1.0, b.p + b.sv / b.len)                    # in place of the schedule (DirBeamPlay.front) and of t / 0.22
+	DirBeamSpace.touch(S, b, s0, np * b.len)                       # may set b.stopAt, which then bounds this same tick's carve (723-724)
+# The carve along the stretch (728-732) is unchanged. SimCross.beams (cross.gd:273-310) skips a beam with sv > 0:
+# one line test for every body, not two with two widths.
+
+# ---- only the front hits: each body is tested on the tick the front crosses it, and never again
+static func touch(S: SimState, b, s0: float, s1: float) -> void:
+	for f in _bodies(S, b.A):                                      # every enemy body: the fight's other body, and with cross on the
+		var s: float = SimCross._along(b, 1.0, f.x, f.y + CHEST, f.z, b.hw + BODY_R)   #   other fight's enemies; never a partner
+		if s &lt;= s0 or s > s1:                                      # cross.gd:315-323 gives the distance along the line, or -1 when
+			continue                                               #   further off than the width. Crossed this tick, or not
+		b.cross |= SimCross.bit(f)                                 # the slot's own bit (cross.gd:97-99), not an index in this fight
+		if not _free(S, f) or S.tick - f.act.dodgeTick &lt; int(cfg().dodgeTicks):
+			SimFx.beamOutcome(S, b.A, f, "DODGE" if _free(S, f) else "PASS"); continue   # the timed dodge, or a body that can't act
+		b.stopAt = s                                               # the beam stops on the first body it touches
+		_contact(S, b, f)
+		return
+
+## A body that can act: not launched, down, dropped or stunned, and free for needFreeTicks (18) live ticks. It is the
+## stamp DirBeamMove already keeps (M_FREE, beam_move.gd:76-87). A beam passes through a body that cannot act.
+static func _contact(S: SimState, b, f) -> void:
+	var A = b.A
+	if S.tick - _guardPressTick(f) &lt;= int(cfg().perfectTicks):     # the powerful block: a fresh LB press. No tick of it is kept
+		DirInterrupt.deflect(S, f)                                 #   today (only i.guardPress): one director integer, written only
+		SimFx.beamOutcome(S, A, f, "DEFLECT"); return              #   while the switch is on. Its three looks: section 14
+	var guard: bool = f.stance == 1.0
+	var dmg: float = DirBeamMove.hitDamage(A, (200.0 if guard else 230.0) * DirBeam.sigDamageMul())
+	if S.dirS.ex != null:
+		end it first ("beam")                                      # doLaunch writes onto S.dirS.ex.A while an exchange exists (launch.gd:983-985)
+	SimDamage.hit(S, null, A, f, dmg, {"kind": "beam", "ignoreStance": not guard, "stop": 0.14, "shake": 16, "big": true})
+	DirLaunch.doLaunch(S, A, f, {"name": "BEAM", "ux": b.ux, "uy": b.uy * 0.6 + 0.12},
+		SimPower.sendForce(S, A, 1300.0 if guard else 2600.0, "beam.guarded" if guard else "beam.signature"))
+	SimFx.beamOutcome(S, A, f, "GUARD" if guard else "HIT")
+# SimDamage.hit with a null exchange is how cross.gd's _land (246-256) already lands a beam on a fighter outside the
+# shooter's exchange. When a beam's life ends having touched nobody who was within its reach: SimFx.beamOutcome(S, A, f,
+# "MISS") with how far off the line they were as the front passed. QA's escape probe reads it.
+
+# ---- the two cues, for UI's edge line, sound, rumble and the computer
+# "beam_charge" with a target: when a hold reaches its first stage, once, to every enemy body inside that stage's reach.
+#   (Today that cue comes only from the exchange, beamplay.gd:73-77, which a beam in space does not have.)
+# "beam_warn": at the fire, to every enemy body on the line, with n = ticks until the front reaches it.
+
+# ---- section 8, the meeting (struggleOnMeet; needs beamStruggle.enabled). Checked once a tick after beamStep, by index,
+# backwards, as beamStep itself iterates (beam.gd:714): removing beams inside a for-in loop skips entries.
+static func _meet(S: SimState, a, b) -> bool:                      # a and b: live beams in space of opposing teams, neither stopped
+	var sa: float = SimCross._along(a, 1.0, b.A.x, b.A.y + CHEST, b.A.z, a.hw + BODY_R)   # is the other shooter on my line
+	var sb: float = SimCross._along(b, 1.0, a.A.x, a.A.y + CHEST, a.A.z, b.hw + BODY_R)   # and am I on theirs
+	if sa &lt; 0.0 or sb &lt; 0.0 or sa > a.len or sb > b.len or a.p * a.len + b.p * b.len &lt; sa:
+		return false
+	var share: float = SimMathx.jclamp(a.p * a.len / sa, 0.5 - meetMax, 0.5 + meetMax)   # front.meetMax 0.3, as a late answer today
+	remove both beams; DirExchange.startMeet(S, a.A, b.A, share)
+	return true
+# DirExchange.startMeet (new): what _start does for a clash (exchange.gd:355-370): makes the exchange, holds both, faces
+# them, counts it, tells the systems that listen for an exchange's start. Then it sets DirBeamPlay._meetShift = share - 0.5
+# around DirBeam.startClash, exactly as _answerNow does (beamplay.gd:233-236), because _startStruggle computes
+# c.mid = clamp(0.5 + head + meetShift) (beam.gd:267-268) and takes no start point. Then hold mid at least two surges
+# (0.2) from either end, so no struggle is over before a pulse is played.
+
+# ---- the computer (section 9): sim/director/beam_move.gd and ai.gd
+# _aiStick (beam_move.gd:183-188): write i.rsAim = the stick direction nearest the line to its rival, as a player would
+#   point; with the level's keyed chance aimSlip, two directions off (22.5 degrees, outside the assist: that beam goes wide).
+# ai.gd:258-277: start a hold only when _shotWorth(S, f, o) clears the level's threshold.
+# ai.gd, new: after "beam_charge" names it, wait reactTicks (14), then on the level's keyed draw hold the stick across the
+#   line from the shooter's hand to itself, the side it is already on, and keep it held until the hold ends or the front
+#   has passed; add the dash at "beam_warn" where the level has it.</code></pre>
+<p><strong>Why the hash stays the same with the switch off.</strong> No beam gets a speed, so <code>beamStep</code> takes today's branch, <code>step</code> skips every beam, the three new fields stay at their defaults and are not hashed, <code>tryFire</code> takes today's path, and no director integer is written. The data block's presence changes the data key, as any edit to that file does.</p>
+
+<h2 id="breaks">14. What breaks, and what goes away</h2>
+<div class="scroll"><table>
+<tr><th>Thing</th><th>What happens to it</th></tr>
+<tr><td>The scheduled hit (<code>beamReach</code>, <code>opReach</code>), the travel table (<code>frontTicks</code>, the 60-tick ceiling), the answer windows keyed to an arrival tick (<code>lateTick</code>, <code>_arrival</code>, <code>windowOpen</code>)</td><td>Not used by a beam in space. They stay for the signature until it is moved over</td></tr>
+<tr><td>The late-fire bug (A-COMBAT-05)</td><td>Gone for stick beams: there is no wait to be late from. The sprint's planned fix for it is still needed until this lands</td></tr>
+<tr><td>The shove, the 300-unit dodge lift, the escape roll (a dice roll on a sprinting defender)</td><td>Gone. A sprinting defender is off the line or is not</td></tr>
+<tr><td>The powerful block's three looks (split, swat, walk through) and the wade</td><td>Built, live, and Orb's own picks. They need re-homing onto the contact tick: the split and the swat spawn beams at the defender, which is small; the walk and the wade rush the defender to the shooter, which today is an exchange beat. Not in the trial, but they belong in the Alpha build (Game Design's page of 13 November expects them there). Only the new workshop version of walking into a beam is after Alpha by decision 14</td></tr>
+<tr><td>The struggle's three ways to start</td><td>Replaced by the meeting. Needs a new way into an exchange from two free fighters (<code>startMeet</code>)</td></tr>
+<tr><td>The computer's beam answers (<code>aiPlan</code>, <code>aiMayDodge</code>, <code>aiDir</code>) and its pacing</td><td>Rewritten as section 9. The largest single piece</td></tr>
+<tr><td>Checks: <code>beam_front_check</code> (travel and windows), <code>beam_move_check</code> (its <code>_gate</code> and <code>_late</code> rows assert the wait), <code>beam_ai_check</code></td><td>Each needs its rows rewritten. None of them runs in CI today, so nothing will go red by itself; that is a risk, not a comfort</td></tr>
+<tr><td>Cues other directors read: <code>beam_window</code> (UI's alert, the rumble), <code>beam_outcome</code> (camera's panel), <code>beam_shove</code>, <code>beam_late</code>, <code>beam_arrive</code></td><td><code>beam_window</code> is replaced by <code>beam_warn</code>; <code>beam_outcome</code> is kept and gains MISS; the others stop. UI, Camera, VFX, Audio and Controls each have a reader to move</td></tr>
+<tr><td>The signature (RT + B today)</td><td>Untouched by the trial. For Alpha it should become the same beam at its top stage with its own longer tell, or it will be the one beam that still finds you. Game Design's call, with the signature inputs Orb named</td></tr>
+<tr><td>Biome variants and the aftermath twist</td><td>The carve looks are picked from the ground under the defender today; with no named defender, pick from the ground under the beam's first strike. Small</td></tr>
+<tr><td>2v2</td><td>Gets simpler: one line test for every body, in the fight or across fights. A partner is still never hit</td></tr>
+</table></div>
+
+<h2 id="spike">15. The trial: order, measures, and what Orb gets</h2>
+<p>A throwaway build on a scratch copy; nothing lands. The path gives it about 2M tokens and asks for three things: one beam that leaves the fighter, travels at a speed and misses a defender who steps off its line; whether the whole job (row A-COMBAT-01) is still a large one; and what breaks in the struggle and the computer's beam play.</p>
+<div class="scroll"><table>
+<tr><th>#</th><th>Step</th><th>Rough share</th></tr>
+<tr><td>1</td><td>The beam's speed and the line test: the three fields, <code>beamStep</code>'s branch, <code>DirBeamSpace.fire</code>, <code>step</code> and <code>_touch</code> with hit, guard and the timed dodge; <code>tryFire</code> without the wait; the plant</td><td>40%</td></tr>
+<tr><td>2</td><td>The escape probe (below) and its three ranges; the MISS and <code>beam_warn</code> events</td><td>20%</td></tr>
+<tr><td>3</td><td>The computer's aim only (so its beams go where its rival is), and a first sidestep on one level</td><td>20%</td></tr>
+<tr><td>4</td><td>The clips</td><td>10%</td></tr>
+<tr><td>If time allows</td><td>The meeting and <code>startMeet</code>; the powerful block's stop; the instant fire-back</td><td>10%</td></tr>
+</table></div>
+<h3>What the trial measures</h3>
+<div class="scroll"><table>
+<tr><th>#</th><th>Reading</th><th>Pass line (first values)</th></tr>
+<tr><td>1</td><td><strong>The escape probe (the path's X-16).</strong> A scripted shooter whose stick tracks the defender to the nearest of the 32 directions until the release fires stages 1, 3 and 6 from three ranges inside each stage's reach (stage 1: 1,500, 3,000, 4,000; the others 1,500, 3,000, 6,000). Three scripted defenders: one stands; one has been flying across at full plain speed since at least 30 ticks before the release, run once sideways and once upward; one dashes across 15 ticks after the fire</td><td>Standing: hit every time. The other two: hit or miss as section 6's table says, cell by cell. A cell within 15 units of the beam's width is reported, not judged. Any other difference is a finding</td></tr>
+<tr><td>2</td><td>Beams that damaged a fighter who was further from the line than the width at contact</td><td>0</td></tr>
+<tr><td>3</td><td>Ticks a target was held or moved by a beam before it touched them</td><td>0</td></tr>
+<tr><td>4</td><td>Beams fired later than 6 ticks after their release; beams fired with no right-stick release</td><td>0 and 0 (the path's X-17 for stick beams)</td></tr>
+<tr><td>5</td><td><strong>Orb's Sunday beams, re-staged.</strong> A saved match cannot be replayed on the trial (other code, other data, and the fight diverges at the first changed beam). So take each of the computer's seven beams from QA's trace (both fighters' places and speeds at the fire, and the target's recorded movement for the next second) and stage each as its own scene: in reach or not, on the line or off it when the front arrives, the outcome beside the recorded one</td><td>Reported. This is the before and after for Orb's Sunday complaint</td></tr>
+<tr><td>6</td><td>The computer's beams on easy and hard against the three scripted defenders: fired, on the line at contact, hit. For every beam: ticks from release to contact (and the count under 14, a person's reaction); ticks from the first cue to contact; whether the shooter was on the target's screen at the charge and at the fire; beams that passed through a body that could not act</td><td>Reported, against Game Design's bands</td></tr>
+<tr><td>7</td><td>The computer's sidestep: share of a scripted shooter's beams it left the line of, by stage and range</td><td>Reported</td></tr>
+<tr><td>8</td><td>Hash with the switch off against the golden record; two runs with it on</td><td>Identical; identical</td></tr>
+<tr><td>9</td><td>Every check and cue reader in section 14 that fails or goes quiet with the switch on</td><td>The list, with a size against each. This is the answer to "what breaks"</td></tr>
+</table></div>
+<h3>What Orb gets</h3>
+<ul>
+  <li><strong>Three short clips with the pad's inputs drawn at the bottom:</strong> the same small beam fired at a fighter who stands, and at one who flies off its line (it passes and digs the ground); a small, a middle and a full beam fired from the same spot, to see the stages; the computer firing at Orb's scripted pad and the pad stepping out of the way.</li>
+  <li><strong>A link to play, if Tools can build it</strong> from the scratch copy: fire at the computer, and have it fire at you.</li>
+</ul>
+<h3>My guess at the size, and what it depends on</h3>
+<ul>
+  <li><strong>The beam itself (steps 1 and 2): medium.</strong> The line, the front, the body test, the carve and the hit on a fighter outside an exchange all exist in some form.</li>
+  <li><strong>The whole of A-COMBAT-01 for Alpha: large at least, and extra-large if every answer is kept.</strong> The weight is not in the beam. It is in the computer (aim, shot choice, sidestep, re-read rates), the struggle's new way in, the three block looks and the two walk-ins, the cue readers in five other directors' code, and three checks to rewrite.</li>
+  <li><strong>What the Alpha build needs beyond the trial,</strong> so nobody mistakes the trial's cut for it: the powerful block's three looks and the wade, which Orb plays today; the meeting; the computer's aim, shot choice and sidestep; the signature moved onto the new beam (or it is the one beam that still finds you, and the third milestone needs both signatures on Orb's inputs); the two cues and UI's edge line for a shooter off screen; five directors' cue readers; three checks rewritten and put where they run. After Alpha by decision 14 and Game Design's page: the catch, the timed swat, and the new version of walking into a beam.</li>
+</ul>
+
+<h2 id="questions">16. For Orb</h2>
+<p class="dim">Drafts for the EP to put under the clips, one at a time.</p>
+<div class="card new">
+  <p><strong>1. Beam stages.</strong> On 9 November you said "I'm not sure, workshop it". This clip is the workshop. A longer hold makes the beam wider, faster and longer, and harder to get out of. Your fighter gets two steps at base and up to six at full power. Keep that?</p>
+  <p><strong>Yes</strong> (I think you would want this). <strong>Or no:</strong> one beam size, and the charge only adds damage.</p>
+</div>
+<div class="card new">
+  <p><strong>2. How fast should a beam fly?</strong> With the first numbers a small beam crosses a screen and a half in about a third of a second. So the warning is the glow in the shooter's hand, not the flight: you move when you see the charge, not when you see the beam. <strong>Fast, as shown</strong>, or <strong>slower</strong>, so there is time to react to the beam itself?</p>
+</div>
+<p>For the notes that go with the clips, because each changes something Orb has played: a beam no longer waits for its target to be free (it passes through a fighter who cannot act); the dodge no longer lifts the dodger; a beam now has a reach and can fall short; and the point-blank throw-back is shown both on and off until Game Design rules.</p>
+
+<h2 id="risks">17. Risks, unknowns, and what I could not verify</h2>
+<ul>
+  <li><strong>The first speeds may be too fast to read.</strong> See question 2. The fix is data.</li>
+  <li><strong>The ground does not stop a beam.</strong> Today a beam aimed down keeps going underground for its whole length and grooves every column above it, the same depth however deep it is (<code>beam.gd:680-706</code>). "It hits only what it touches" is then not true of the ground, and a fighter standing behind a hill can be hit through it. Orb agreed on 11-01 that a beam goes through a tower. Whether it goes through a mountain is World's and Game Design's to settle, and the trial should film one beam fired into a slope.</li>
+  <li><strong>Depth.</strong> A beam carries no depth today (its depth fields are never set), so in a match with fighters in depth the line test reads depth zero. Depth is off in Orb's builds. It must be set before depth is turned on.</li>
+  <li><strong>The planted shooter is new pressure on the shooter.</strong> 1.6 seconds planted for a full beam may be too much once the gravity well's snap can reach them. It is one number to turn (a share of the lit time).</li>
+  <li><strong>A juggled fighter.</strong> As written, a beam passes through a launched body, by the "can't act" rule. That gives up beams as part of a juggle. Orb's own test question of 10-06 was "do energy attacks look cool as part of close-range combos?", so Game Design may want a beam to touch a launched body after all, once per launch. The trial should film both.</li>
+  <li><strong>The turntable.</strong> The planet's turning waits while any beam is alive (<code>swing.gd:32</code>). Beam lives are 0.9 to 2.1 seconds here against 0.9 to 2.5 today.</li>
+  <li><strong>The computer's "always aims right" reading</strong> is from the code and one match record, not from a run. The trial's first probe should confirm it before anything is built on it.</li>
+  <li><strong>A third beam bug the mapping found, not run:</strong> a stick release that fires no beam leaves its thrown aim set, and the next signature can use it and fire wide (<code>beam_aim.gd:79-80</code>; <code>stick.gd:799-808</code>). Worth a row in Encounter's list whether or not this design is built.</li>
+  <li><strong>Not verified by me:</strong> that <code>cross.gd</code>'s landing code can be called for a body in the shooter's own fight without change; how VFX's tail and fade behave on a long-lived beam; whether the clip tool can show two switch settings side by side.</li>
+</ul>
+
+<h2 id="checks">18. Checks</h2>
+<p>Two independent reviewers read the first draft: one against the code (on Opus), one against Orb's words, the rulings and as a hostile playtester. They returned 24 findings. The four blockers went to separate checkers whose job was to refute them: three held as stated and one was corrected in part and used as corrected. The other twenty were not sent to checkers; I checked each one I used against the files or the model myself. This is a leaner review than the gravity well page had, as promised.</p>
+<div class="scroll"><table>
+<tr><th>Finding</th><th>Verdict</th><th>What changed</th></tr>
+<tr><td>The pseudocode called three functions wrongly: the beam maker returns nothing, the stage helpers take a fighter and read a mark only the old path sets, and one helper did not exist</td><td class="v-fixed">fixed</td><td>The beam is taken from the list; the fired-stage mark is set at the fire; the pacing write and the stage cue are kept</td></tr>
+<tr><td>The hit used an invented landing function, a launch plan of the wrong shape and a force call missing two arguments</td><td class="v-fixed">fixed</td><td>The hit is the plain damage call the 2v2 beam already uses; the launch plan and the force call are written as the code has them</td></tr>
+<tr><td>The tell and the plant did not work as written: the beam fired on the release tick, the shooter could move during the tell, the plant was shorter than stated, and the planted shooter had lost the armour the page relied on</td><td class="v-fixed">fixed</td><td>The tell is a count on the stick's own state; no movement from the release; the plant runs from the release; the hold's armour is kept through it; the two existing "hold lost" hooks cut the beam</td></tr>
+<tr><td>Dropping the point-blank shove removes the reaction window the ruling protected, and the page said the answers "all stay". (The checker corrected two overstatements.)</td><td class="v-fixed">fixed</td><td>The ruling's reason is stated; the shove is a switch filmed both ways, with a third option; the page says the window shrinks up close; a reading counts short windows</td></tr>
+<tr><td>The wait before a fire is also Game Design's ruling that a beam never comes at a target who can't act; dropping it allowed repeated beams on a launched body</td><td class="v-fixed">fixed</td><td>A beam passes through a body that cannot act; named as a departure for Game Design</td></tr>
+<tr><td>"The column stays lit and hits" cancelled "a miss is an opening": a rival who sidestepped would be hit flying at the shooter</td><td class="v-fixed">fixed</td><td>Only the front hits</td></tr>
+<tr><td>A late beam could start a struggle at nine tenths, over before a pulse; Orb said in October that a struggle felt decided as the beams fired</td><td class="v-fixed">fixed</td><td>The start is capped as a late answer's is today, and held two pushes from either end</td></tr>
+<tr><td>The computer's aim error and lead were erased by the assist; its sidestep was keyed to the fire, when it is already too late</td><td class="v-fixed">fixed</td><td>Its error is a chance of pointing outside the assist; the lead is dropped from the trial; the sidestep is keyed to the charge</td></tr>
+<tr><td>For a shooter off screen the trial gave less warning than today, and Game Design's band and reading for exactly that were left out</td><td class="v-fixed">fixed</td><td>A cue at the charge; the band and the reading restored; the page says plainly that the trial does not yet fix "didn't see it"</td></tr>
+<tr><td>The escape probe was not the table's case and would report false findings; no reacting sidestep escapes at the near range</td><td class="v-fixed">fixed</td><td>The probe is defined in full, with a margin; the near-range problem is stated for the EP</td></tr>
+<tr><td>The "smaller cut" took the block's looks and the wade out of Alpha, though Orb plays them and Game Design expects them there</td><td class="v-fixed">fixed</td><td>No smaller cut is proposed; the page lists what the Alpha build needs beyond the trial</td></tr>
+<tr><td>Replaying Orb's saved matches on the trial cannot work</td><td class="v-fixed">fixed</td><td>The reading re-stages each recorded beam as its own scene</td></tr>
+<tr><td>The reach is a bigger change than the page said, and touches pillar 3</td><td class="v-fixed">fixed</td><td>Real figures, and named for Game Design</td></tr>
+<tr><td>Question 1 led with an older remark and left out Orb's "I'm not sure, workshop it"; question 2 was conditional; a team label was in Orb's card</td><td class="v-fixed">fixed</td><td>Both questions rewritten</td></tr>
+<tr><td>Minor, used: the gates the new fire skipped (a knockout, the shooter's own approach, a set-piece brawl); the charge glow never cleared; one bit scheme for 2v2; the touch before the carve; the meeting's loop and its way into a struggle; the data's switch and assist number; the length ladder's base; a table row beyond a stage 1's reach</td><td class="v-fixed">fixed</td><td>Each as proposed</td></tr>
+<tr><td>Confirmed correct by the reviewers: the one-exchange-at-a-time rule; the beam's fields and the "hashed only when set" pattern; the line test's shape; the stage ladder against the data; every cell of the travel, escape and meeting tables against the model; every quote of Orb's</td><td class="v-kept">held</td><td>No change</td></tr>
+</table></div>
+<p class="dim">Cost of this page: about 2.0M tokens. Three readers mapped the code and the records (0.9M, on Opus); the review was 2 reviewers and 4 checkers (0.7M, five of the six on Opus); the rest was this session.</p>
+
+
+</main>
+<script>
+// Beam option A, the first trial: a model of the design's first values. Pure functions; no page access.
+// Units are the game's: 75 units = one body height, 60 ticks a second.
+var B = {
+  BH: 75, TPS: 60,
+  // Game Design's first values (docs/design/beam-physics.md), as data
+  speed0: 8000, speedStep: 2000,      // the front, units a second: stage 1, and added per stage
+  half0: 45, halfStep: 25,            // half the width that hits a fighter
+  len0: 3000, lenStep: 1200,          // how far the beam reaches before it spends itself
+  lasts: [0.33, 0.6, 0.9, 1.1, 1.3, 1.5],   // seconds the column stays lit (interrupts.json ownMove.lastsSec, built)
+  stageTicks: [12, 28, 46, 66, 90, 120],    // hold time to reach each stage (built)
+  tell: 6,                            // ticks from the release to the fire (built: front.releaseTell)
+  assistDeg: 15,                      // the line snaps onto the target inside this (the page Orb picked from; the data says 35)
+  bodyR: 40,                          // a fighter's body, as shots use it (shots.json)
+  // movement (after flight 3,500 lands)
+  plain: 430, flatOut: 3500, kickInstant: 0.8, kickClimb: 8, lag: 0.112
+};
+function speed(stage) { return B.speed0 + B.speedStep * (stage - 1); }
+function half(stage) { return B.half0 + B.halfStep * (stage - 1); }
+function len(stage) { return B.len0 + B.lenStep * stage; }
+function hitR(stage) { return half(stage) + B.bodyR; }
+function travelTicks(stage, dist) { return Math.ceil(dist / (speed(stage) / B.TPS)); }
+// One beam fired straight along +x at a target standing at (range, 0) when it fires.
+// how: 'stand' | 'drift' (already flying across at plain speed) | 'sprint' (already flying across flat out)
+//    | 'react' (stands, then flies across at plain speed 'react' ticks after the fire)
+//    | 'dash'  (stands, then dashes across flat out 'react' ticks after the fire)
+// Returns what happened and when.
+function shot(stage, range, how, react) {
+  var v = speed(stage) / B.TPS, r = hitR(stage), L = len(stage), life = Math.round(B.lasts[stage - 1] * B.TPS);
+  var front = 0, y = 0, vy = 0, frames = [], reached = -1;
+  var total = Math.ceil(L / v) + life;
+  for (var t = 1; t <= total; t++) {
+    if (how === 'drift') vy = B.plain;
+    else if (how === 'sprint') vy = B.flatOut;
+    else if (how === 'react' && t > react) vy += (B.plain - vy) * B.lag;
+    else if (how === 'dash' && t > react) { var k = t - react; vy = B.flatOut * Math.min(1, B.kickInstant + (1 - B.kickInstant) * (k - 1) / B.kickClimb); }
+    y += vy / B.TPS;
+    front = Math.min(L, front + v);
+    frames.push([front, y]);
+    if (reached < 0 && front >= range) {      // only the front hits: tested on the tick it crosses the target, and never again
+      reached = t;
+      if (Math.abs(y) <= r) return { hit: true, tick: t, off: y, need: r, frames: frames, reached: reached, short: false };
+    }
+  }
+  return { hit: false, tick: reached, off: y, need: r, frames: frames, reached: reached, short: L < range, offAtFront: reached > 0 ? frames[reached - 1][1] : y };
+}
+// How far across the line a fighter gets in n ticks: already at plain speed; dashing from rest after a reaction.
+function acrossPlain(n) { return B.plain * n / B.TPS; }
+function acrossDash(n, react) { var d = 0; for (var t = react + 1; t <= n; t++) { var k = t - react; d += B.flatOut * Math.min(1, B.kickInstant + (1 - B.kickInstant) * (k - 1) / B.kickClimb) / B.TPS; } return d; }
+// Two beams fired at each other along one line from 'gap' apart: where do the fronts meet, as a share of the way from A to D?
+// lateTicks: how many ticks after A's fire D's beam leaves.
+function meet(stageA, stageD, gap, lateTicks) {
+  if (len(stageA) < gap || len(stageD) < gap) return { met: false, reach: false, tick: 0 };   // each must reach the other's shooter
+  var va = speed(stageA) / B.TPS, vd = speed(stageD) / B.TPS, fa = 0, fd = 0;
+  for (var t = 1; t <= 600; t++) {
+    fa += va; if (t > lateTicks) fd += vd;
+    if (fa >= gap) return { met: false, tick: t };            // A's front reached D before D's beam met it
+    if (fa + fd >= gap) return { met: true, tick: t, raw: fa / gap, share: Math.max(0.2, Math.min(0.8, fa / gap)) };
+  }
+  return { met: false, tick: 600 };
+}
+
+(function () {
+  function el(id) { return document.getElementById(id); }
+  function css(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  var cv = el('beamToy'), out = el('beamOut'), anim = null, last = null;
+  var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function fit() {
+    var r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    cv.width = Math.max(300, Math.round(r.width * d)); cv.height = Math.round(220 * d);
+    var c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); return { c: c, w: r.width, h: 220 };
+  }
+  function body(c, x, y, col) { c.fillStyle = col; c.beginPath(); c.arc(x, y - 22, 7, 0, 6.3); c.fill(); c.fillRect(x - 5, y - 15, 10, 15); }
+  function read() { return { s: +el('tS').value, r: +el('tR').value * B.BH, how: el('tH').value }; }
+  function labels() { el('tSv').textContent = 'stage ' + el('tS').value; el('tRv').textContent = el('tR').value + ' body heights'; }
+  function draw(q, res, i) {
+    if (!cv || !cv.getContext) return;
+    var k = fit(), c = k.c, span = Math.max(q.r * 1.15, 1200), sc = (k.w - 60) / span, x0 = 30, y0 = 170;
+    c.clearRect(0, 0, k.w, k.h);
+    var fr = res && i >= 0 ? res.frames[Math.min(i, res.frames.length - 1)] : [0, 0];
+    var rr = hitR(q.s) * sc;
+    if (res && i >= 0) {
+      c.globalAlpha = 0.25; c.fillStyle = css('--gold'); c.fillRect(x0, y0 - 14 - Math.max(2, rr), fr[0] * sc, Math.max(4, 2 * rr)); c.globalAlpha = 1;
+      c.fillStyle = css('--gold'); c.beginPath(); c.arc(x0 + fr[0] * sc, y0 - 14, Math.max(3, rr * 0.6), 0, 6.3); c.fill();
+    }
+    c.strokeStyle = css('--line'); c.setLineDash([4, 4]); c.beginPath(); c.moveTo(x0, y0 - 14); c.lineTo(k.w - 10, y0 - 14); c.stroke(); c.setLineDash([]);
+    body(c, x0, y0, css('--a'));
+    body(c, x0 + q.r * sc, y0 - Math.min(140, Math.abs(fr[1]) * sc * 1.0), css('--b'));
+    c.fillStyle = css('--dim'); c.font = '12px system-ui'; c.fillText('the shooter', x0 - 8, y0 + 16);
+    if (res && i >= 0) c.fillText((Math.min(i + 1, res.frames.length) / 60).toFixed(2) + ' s after the fire', k.w - 150, 16);
+  }
+  function say(q, res) {
+    var t = [];
+    if (res.short) { t.push('Out of reach: a stage ' + q.s + ' beam spends itself after ' + Math.round(len(q.s) / B.BH) + ' body heights.'); }
+    else {
+      t.push('The front arrives ' + (res.reached / 60).toFixed(2) + ' s after the fire (today: about ' + (Math.min(60, 36 + Math.round(q.r / 8000 * 60)) / 60).toFixed(1) + ' s, and it would hit regardless).');
+      if (res.hit) t.push('<strong>Hit.</strong> The target was ' + Math.round(Math.abs(res.off)) + ' units from the line; this beam hits within ' + res.need + '.');
+      else t.push('<strong>Miss.</strong> The target was ' + Math.round(Math.abs(res.offAtFront)) + ' units off the line when the front passed; this beam hits within ' + res.need + '. It carves on to the end of its reach.');
+    }
+    out.innerHTML = t.join(' ');
+  }
+  function fire() {
+    labels();
+    var q = read(), res = shot(q.s, q.r, q.how, 15); last = { q: q, res: res };
+    if (anim) cancelAnimationFrame(anim);
+    say(q, res);
+    var end = res.hit ? res.tick - 1 : Math.min(res.frames.length - 1, (res.reached > 0 ? res.reached : res.frames.length) + 12);
+    if (still) { draw(q, res, end); return; }
+    var i = 0, slow = 0;
+    (function step() {
+      draw(q, res, Math.min(i, end));
+      slow++; if (slow % 4 === 0) i++;
+      if (i <= end + 2) anim = requestAnimationFrame(step); else anim = null;
+    })();
+  }
+  ['tS', 'tR', 'tH'].forEach(function (id) { var e = el(id); if (e) e.addEventListener('input', function () { labels(); if (!anim) draw(read(), null, -1); }); });
+  if (el('tGo')) el('tGo').addEventListener('click', fire);
+  function redraw() { labels(); if (last && !anim) draw(last.q, last.res, last.res.hit ? last.res.tick - 1 : last.res.frames.length - 1); else if (!anim) draw(read(), null, -1); }
+  window.addEventListener('resize', redraw);
+  if (window.matchMedia) { try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw); } catch (e) {} }
+  redraw();
+})();
+</script>
+</body>
+</html>

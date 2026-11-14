@@ -1,0 +1,310 @@
+--- /dev/null
++++ b/sim/world/default.gd
+@@ -0,0 +1,135 @@
++class_name WorldDefault
++extends RefCounted
++## The world a match plays on when its setup names none (A-WORLD-01, A-WORLD-14; docs/world/world-default.md; data/biomes/world.json). One module, read by the sim (SimCore.beginMatch, for headless matches and tests) and by the
++## host (the menu's planet_part, which makes the planet ahead while the player decides), so the two always agree.
++##   mode "arena":  a setup with no planet key plays the old hand-made arena, as it always has (shipped until the golden window GW1a).
++##   mode "planet": a setup with no planet key plays the round planet: the one fixed planet (data `fixed`: the planet Orb's build plays), or, for a quick match, a planet drawn from the match's seed out of `random.pool`.
++## An explicit key always wins: a setup with a `planet` plays that planet; a setup with `world: "arena"` plays the hand-made arena (what the tests that need it say). The first match of a newcomer and the tests use the fixed planet
++## (`first: true`). The drawn planet is a pure function of the match's seed (SimRng.keyed, no stream), so the same seed plays the same planet on every machine; its seed is in the setup and so in the replay and the report.
++
++const PATH := "res://data/biomes/world.json"
++const SCHEMA := "biomes.world/1"
++
++static var _d: Dictionary = {}
++static var _loaded: bool = false
++static var _errors: Array = []
++static var K_MODE: String = "arena"
++static var K_FIXED: Dictionary = {"planet": 7, "touch": 3, "planetGen": 3}
++static var K_RANDOM: bool = false
++static var K_POOL: Array = [7, 12, 3, 13, 17]
++static var K_TOUCHES: Array = [1, 2, 3]
++
++
++static func data() -> Dictionary:
++	if not _loaded:
++		_load()
++	return _d
++
++
++static func dataErrors() -> Array:
++	if not _loaded:
++		_load()
++	return _errors
++
++
++static func _load() -> void:
++	_loaded = true
++	_errors = []
++	_d = {}
++	K_MODE = "arena"
++	K_FIXED = {"planet": 7, "touch": 3, "planetGen": 3}
++	K_RANDOM = false
++	K_POOL = [7, 12, 3, 13, 17]
++	K_TOUCHES = [1, 2, 3]
++	var f := FileAccess.open(PATH, FileAccess.READ)
++	if f == null:
++		return   # no file: the old arena, as it was
++	var j = JSON.parse_string(f.get_as_text())
++	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
++		_errors.append("world.json: not a %s object" % SCHEMA)
++		return
++	for k in ["mode", "fixed", "random"]:
++		if not j.has(k):
++			_errors.append("world.json: %s is missing" % k)
++	if not _errors.is_empty():
++		return
++	if not (String(j.mode) in ["arena", "planet"]):
++		_errors.append("world.json: mode is arena or planet")
++	var fx = j.fixed
++	if not (fx is Dictionary) or not fx.has("planet") or not fx.has("touch") or not fx.has("planetGen") or int(fx.planetGen) < 2 or int(fx.touch) < 0:
++		_errors.append("world.json: fixed is {planet, touch, planetGen (2 or 3)}")
++	var rd = j.random
++	if not (rd is Dictionary) or not rd.has("enabled") or not (rd.get("pool") is Array) or (rd.pool as Array).is_empty() or not (rd.get("touches") is Array) or (rd.touches as Array).is_empty():
++		_errors.append("world.json: random is {enabled, pool (planet seeds, not empty), touches (not empty)}")
++	if not _errors.is_empty():
++		return
++	_d = j
++	K_MODE = String(j.mode)
++	K_FIXED = {"planet": int(fx.planet), "touch": int(fx.touch), "planetGen": int(fx.planetGen)}
++	K_RANDOM = bool(rd.enabled)
++	K_POOL = []
++	for p in rd.pool:
++		K_POOL.append(int(p))
++	K_TOUCHES = []
++	for t in rd.touches:
++		K_TOUCHES.append(int(t))
++
++
++static func mode() -> String:
++	if not _loaded:
++		_load()
++	return K_MODE
++
++
++static func planetDefault() -> bool:
++	return mode() == "planet"
++
++
++## Tests only: the mode, the fixed planet and the random switch without the file.
++static func setForTest(mode_: String, random_: bool) -> void:
++	if not _loaded:
++		_load()
++	K_MODE = mode_
++	K_RANDOM = random_
++
++
++## The planet a quick match with this seed plays: [planet seed, touch], a pure function of the match's seed out of the data's pool. The same seed, the same planet, on every machine.
++static func draw(matchSeed: int) -> Array:
++	if not _loaded:
++		_load()
++	var a: int = int(SimRng.keyed(matchSeed, "world.planet", 0) * float(K_POOL.size()))
++	var b: int = int(SimRng.keyed(matchSeed, "world.touch", 0) * float(K_TOUCHES.size()))
++	return [K_POOL[clampi(a, 0, K_POOL.size() - 1)], K_TOUCHES[clampi(b, 0, K_TOUCHES.size() - 1)]]
++
++
++## The planet part of a setup that names none: the planet keys (planet, touch, planetGen) to merge into it, or {} when the data's mode is the arena. first: a newcomer's first match (the fixed planet, never the draw).
++static func part(matchSeed: int, first: bool = false) -> Dictionary:
++	if not _loaded:
++		_load()
++	if K_MODE != "planet":
++		return {}
++	var out: Dictionary = K_FIXED.duplicate()
++	if K_RANDOM and not first:
++		var d: Array = draw(matchSeed)
++		out["planet"] = int(d[0])
++		out["touch"] = int(d[1])
++	return out
++
++
++## A setup with the default world applied: the setup as given when it names a planet, or `world: "arena"`, or the mode is the arena; else a copy with the planet keys merged. Never changes the dictionary it is given.
++static func apply(setup: Dictionary, matchSeed: int, first: bool = false) -> Dictionary:
++	if setup.has("planet") or String(setup.get("world", "")) == "arena":
++		return setup
++	var p: Dictionary = part(matchSeed, first or bool(setup.get("first", false)))
++	if p.is_empty():
++		return setup
++	var out: Dictionary = setup.duplicate()
++	out.merge(p)
++	return out
++
++
++## What a report or the HUD reads of a match's world: the planet's seed (or 0 for the hand-made arena), its generation and the touch. From the state alone.
++static func describe(S) -> Dictionary:
++	if S.planetRing is Dictionary and not S.planetRing.is_empty() and S.planetRing.has("seed"):
++		return {"planet": int(S.planetRing.seed), "gen": int(S.planetGen), "cols": int(S.planetRing.get("cols", SimConst.PLANET_NC))}
++	return {"planet": 0, "gen": 1, "cols": 0}
+--- /dev/null
++++ b/sim/world/default.gd.uid
+@@ -0,0 +1 @@
++uid://uqy1a7m1b11v
+--- /dev/null
++++ b/sim/world/tools/world_default_check.gd
+@@ -0,0 +1,97 @@
++extends SceneTree
++# The world a match plays on when its setup names none (World, A-WORLD-01 and A-WORLD-14; sim/world/default.gd, data/biomes/world.json). From the repo root:
++#   godot --headless --path . --script res://sim/world/tools/world_default_check.gd -- [--negative-control]
++# Proves: shipped, a setup with no planet key plays the hand-made arena as it did; with the mode on planet it plays the round planet (a generated planet, not the arena); an explicit planet key and the key world: "arena"
++# win; the same seed gives the same planet twice and the same match hash; the quick-match draw is a pure function of the match's seed, stays in the data's pool and uses all of it; a first match and the tests use the fixed
++# planet; every planet in the pool, at every touch, generates and plays. --negative-control makes the draw ignore the seed: the spread check must then fail.
++var fails: int = 0
++var negative: bool = false
++const SU: Dictionary = {"intro": false}
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func _match(seed: int, setup: Dictionary, ticks: int = 60) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {"p1": false, "p2": false}, setup)
++	for t in range(ticks):
++		SimCore.step(S)
++	return S
++
++
++func _init() -> void:
++	negative = OS.get_cmdline_user_args().has("--negative-control")
++	print("data")
++	ok(WorldDefault.dataErrors().is_empty(), "world.json loads clean (%s)" % str(WorldDefault.dataErrors()))
++	var shipped: String = WorldDefault.mode()
++	ok(shipped == "arena" or shipped == "planet", "the data's mode is arena or planet (it is %s)" % shipped)
++	if shipped == "arena":
++		ok(WorldDefault.apply({}, 5).is_empty() and WorldDefault.part(5).is_empty(), "the mode is arena (until GW1a): a setup with no planet key plays the hand-made arena, and nothing is added to it")
++	else:
++		ok(int(WorldDefault.apply({}, 5).get("planet", -1)) == 7, "the mode is planet (GW1a): a setup with no planet key plays the fixed planet 7")
++	print("the planet default")
++	WorldDefault.setForTest("planet", false)
++	var s: Dictionary = {"intro": false}
++	var a: Dictionary = WorldDefault.apply(s, 5)
++	ok(int(a.planet) == 7 and int(a.touch) == 3 and int(a.planetGen) == 3 and a.intro == false, "a setup with no planet key gets the fixed planet (7, touch 3, generation 3)")
++	ok(not s.has("planet"), "... and the setup it was given is not changed")
++	ok(int(WorldDefault.apply({"planet": 3, "touch": 1}, 5).planet) == 3, "an explicit planet key wins")
++	ok(not WorldDefault.apply({"world": "arena"}, 5).has("planet"), "the key world: arena asks for the hand-made arena, and gets it")
++	print("the draw")
++	WorldDefault.setForTest("planet", true)
++	var same: bool = true
++	var seen: Dictionary = {}
++	var seenT: Dictionary = {}
++	var pool: Array = WorldDefault.K_POOL
++	var inPool: bool = true
++	var det: bool = true
++	for sd in range(1, 301):
++		var d1: Array = WorldDefault.draw(sd if not negative else 1)
++		var d2: Array = WorldDefault.draw(sd if not negative else 1)
++		det = det and d1 == d2
++		seen[d1[0]] = true
++		seenT[d1[1]] = true
++		inPool = inPool and pool.has(d1[0])
++	ok(det, "the same seed draws the same planet and touch, every time (300 seeds)")
++	ok(inPool, "every draw is a planet in the data's pool")
++	ok(seen.size() == pool.size() and seenT.size() == WorldDefault.K_TOUCHES.size(), "300 seeds use the whole pool (%d of %d planets, %d of %d touches)" % [seen.size(), pool.size(), seenT.size(), WorldDefault.K_TOUCHES.size()])
++	var p1: Dictionary = WorldDefault.part(11)
++	var pf: Dictionary = WorldDefault.part(11, true)
++	ok(int(pf.planet) == 7 and int(pf.touch) == 3, "a newcomer's first match plays the fixed planet whatever the seed")
++	ok(p1.has("planet") and p1.has("touch") and int(p1.planetGen) == 3, "a quick match's part names the planet, the touch and the generation")
++	print("matches")
++	WorldDefault.setForTest("planet", false)
++	var A := _match(77, SU)
++	var d: Dictionary = WorldDefault.describe(A)
++	ok(not A.planetRing.is_empty() and int(d.planet) == 7 and int(d.gen) == 3 and A.frame != null, "with the mode on planet a match with no planet key plays a generated planet (planet %d, generation %d, a frame), not the arena" % [d.planet, d.gen])
++	var B := _match(77, SU)
++	ok(SimHash.stateHash(A).gameplay == SimHash.stateHash(B).gameplay and WorldPlanet.dataHash(3) == WorldPlanet.dataHash(3), "the same seed plays the same planet twice: the match's hash is the same at tick 60")
++	var Ar := _match(77, {"intro": false, "world": "arena"})
++	ok(Ar.planetRing.is_empty() and int(WorldDefault.describe(Ar).planet) == 0, "world: arena plays the hand-made arena (no planet ring)")
++	WorldDefault.setForTest(shipped, false)
++	var Sh := _match(77, SU)
++	if shipped == "arena":
++		ok(Sh.planetRing.is_empty(), "with the data's mode (arena) the same setup plays the arena")
++	else:
++		ok(not Sh.planetRing.is_empty(), "with the data's mode (planet) the same setup plays a planet")
++	print("every planet in the pool generates and plays")
++	WorldDefault.setForTest("planet", true)
++	var bad: int = 0
++	for pl in pool:
++		for tc in WorldDefault.K_TOUCHES:
++			var M := _match(3, {"intro": false, "planet": pl, "touch": tc, "planetGen": 3}, 90)
++			var f0 = M.fighters[0]
++			var f1 = M.fighters[1]
++			var fine: bool = M.tick >= 90 and is_finite(f0.x) and is_finite(f0.y) and is_finite(f1.x) and is_finite(f1.y) and int(M.planetRing.seed) == pl and M.frame != null
++			if not fine:
++				bad += 1
++				print("     planet %d touch %d did not start well" % [pl, tc])
++			SimCore.dispose(M)
++	ok(bad == 0, "%d planets at %d touches each: all generate and play 90 ticks" % [pool.size(), WorldDefault.K_TOUCHES.size()])
++	WorldDefault.setForTest(shipped, false)
++	print("WORLDDEFAULT: %d check(s) failed%s" % [fails, " (negative control)" if negative else ""])
++	quit(0)
+--- /dev/null
++++ b/sim/world/tools/world_default_check.gd.uid
+@@ -0,0 +1 @@
++uid://ufhnxba1jypo
+--- /dev/null
++++ b/data/biomes/world.json
+@@ -0,0 +1,7 @@
++{
++  "schema": "biomes.world/1",
++  "_about": "The world a match plays on when its setup names none (A-WORLD-01, A-WORLD-14; docs/world/world-default.md; read by sim/world/default.gd, used by SimCore.beginMatch and the host's planet_part). mode: arena (a setup with no planet key plays the old hand-made arena: shipped until the golden window GW1a) or planet (it plays the round planet). fixed: the planet a newcomer's first match and the tests play (the planet Orb's build plays: planet 7, touch 3, generation 3). random: with enabled, a quick match plays a planet drawn from its own match seed out of pool (planet seeds that generate and play: world_default_check), landing at one of touches; its seed is in the setup, the replay and the report. An explicit planet key in a setup always wins; the key world: arena asks for the hand-made arena.",
++  "mode": "arena",
++  "fixed": { "planet": 7, "touch": 3, "planetGen": 3 },
++  "random": { "enabled": false, "pool": [7, 12, 3, 13, 17], "touches": [1, 2, 3] }
++}
+--- /dev/null
++++ b/tools/schemas/biomes-world.schema.json
+@@ -0,0 +1,36 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/biomes-world",
++  "title": "biomes.world/1",
++  "description": "data/biomes/world.json: the world a match plays on when its setup names none (WorldDefault; docs/world/world-default.md). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore.",
++  "type": "object",
++  "required": ["schema", "_about", "mode", "fixed", "random"],
++  "additionalProperties": false,
++  "properties": {
++    "schema": { "const": "biomes.world/1" },
++    "_about": { "type": "string" },
++    "mode": { "enum": ["arena", "planet"], "description": "arena: no planet key plays the hand-made arena (as before GW1a); planet: it plays the round planet." },
++    "fixed": {
++      "type": "object",
++      "required": ["planet", "touch", "planetGen"],
++      "additionalProperties": false,
++      "description": "The planet of a newcomer's first match and of the tests.",
++      "properties": {
++        "planet": { "type": "integer", "minimum": 0 },
++        "touch": { "type": "integer", "minimum": 0 },
++        "planetGen": { "type": "integer", "minimum": 2, "maximum": 3 }
++      }
++    },
++    "random": {
++      "type": "object",
++      "required": ["enabled", "pool", "touches"],
++      "additionalProperties": false,
++      "description": "A quick match's planet, drawn from its own match seed.",
++      "properties": {
++        "enabled": { "type": "boolean" },
++        "pool": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 0 } },
++        "touches": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 0 } }
++      }
++    }
++  }
++}
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -462,2 +462,6 @@
+     {
++      "match": "data/biomes/world.json",
++      "schema": "biomes-world.schema.json"
++    },
++    {
+       "match": "data/biomes/contact.json",
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -14,2 +14,3 @@
+     "wall_hold_check",
++    "world_default_check",
+     "struggle_meet_check",
