@@ -1,0 +1,130 @@
+diff --git a/data/camera/swing.json b/data/camera/swing.json
+index 681e20b..6e54c31 100644
+--- a/data/camera/swing.json
++++ b/data/camera/swing.json
+@@ -15,6 +15,14 @@
+     "launchWide": true
+   },
+   "_pieces": "the camera Orb played on 9 November (A-CAMERA-01), each on at a plain start: the swing with the turning world (docs/camera/swing-view.md), the peak launch shot, the launch director (docs/camera/launch-director.md), the close brawl, the readable size, the follow-through and the flight reveal. Until A-CAMERA-01 they rode on the tile-ground start word. swingView and peakLaunch also need the globe ground drawn (render/core/main.gd): the peak shot's widest view needs the globe, so on the flat ground they stay off whatever this says",
++  "reducedPace": {
++    "enabled": true,
++    "openSec": 0.9,
++    "catchUpMax": 0.03,
++    "safeBox": 0.3,
++    "zoomRate": 0.6
++  },
++  "_reducedPace": "under Reduce flashing only (normal play never reads it): an ordinary split opening takes openSec (0.45 s otherwise; an urgent one keeps its speed); a pane's catch-up moves at most catchUpMax of the width a tick while its fighter is within safeBox of the focus, giving way smoothly past it; the drawn zoom changes at most zoomRate e-folds a second (2.4 otherwise; the slam's door keeps its own). From the flash readings on the globe ground (docs/camera/runs/611c1c2b/flash/)",
+   "flatMode": "wide",
+   "_flatMode": "a flat send's shot (docs/camera/launch-director.md): wide (Orb's builds), hold, or empty for none; a start word flat=wide or flat=hold still chooses it for a comparison",
+   "peakRate": 3.0,
+diff --git a/render/camera/cam_places.gd b/render/camera/cam_places.gd
+index f8a8329..caa758d 100644
+--- a/render/camera/cam_places.gd
++++ b/render/camera/cam_places.gd
+@@ -33,6 +33,14 @@ static func piece(key: String) -> bool:
+ 	return p is Dictionary and bool(p.get(key, false))
+ 
+ 
++## Under Reduce flashing, the camera's slower pace (data/camera/swing.json "reducedPace"): `key`'s number, or -1 when the pace is off.
++static func reduced_pace(key: String) -> float:
++	var rp = data().get("reducedPace", {})
++	if not (rp is Dictionary) or not bool(rp.get("enabled", false)):
++		return -1.0
++	return float(rp.get(key, -1.0))
++
++
+ ## A flat send's shot from the data: "wide", "hold" or "" (none).
+ static func flat_mode() -> String:
+ 	return String(data().get("flatMode", ""))
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 6bd4b62..1003dd8 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -2790,6 +2790,8 @@ func _update_layout() -> void:
+ 		# A split that opens because a fighter has left the shared view, or because one was knocked away, opens fast: at
+ 		# the normal rate the fighter was off the screen for most of it (0.3 s at 10,000 units a second is 3,000 units).
+ 		var t_open: float = CamParams.T_OPEN_URGENT if (_view_lost or chase_slot >= 0) else CamParams.T_OPEN
++		if not (_view_lost or chase_slot >= 0) and _rpace("openSec") > 0.0:
++			t_open = maxf(t_open, _rpace("openSec"))   # Reduce flashing: an ordinary opening takes longer (an urgent one keeps its speed: nobody is lost)
+ 		var rate: float = 1.0 / (t_open if target > sep else CamParams.T_CLOSE)
+ 		if reduced_motion:
+ 			rate *= 1.5
+@@ -3528,6 +3530,7 @@ var _st_a: int = 0
+ var _st_d: int = 1
+ var _st_t0: float = 0.0
+ var _st_t1: float = 0.0                                 # the latest time the struggle ends by
++var pace_holds: int = 0                                # (counted for the tests: ticks the reduced pace held a catch-up)
+ var launch_hold_reduced: bool = false                   # under Reduce flashing only, the launch rule runs, eager (main.gd from data pieces.launchHoldReduced; the clash reading, 2026-11-14)
+ var launch_hold_eager: bool = false                     # under reduced flashing the rule engages sooner (section 15); off by default
+ var launch_holds: int = 0                              # (counted for the tests)
+@@ -3676,6 +3679,14 @@ func _pane_is_shown_alone(i: int) -> bool:
+ 	return solo_slot == i and solo_w >= 0.99
+ 
+ 
++## Under Reduce flashing, one of the slower pace's numbers (CamPlaces.reduced_pace), or -1 when Reduce flashing is off or the pace is.
++## Normal play never reads them: it stays as Orb plays it.
++func _rpace(key: String) -> float:
++	if not flash_reduced or reduced_motion:
++		return -1.0   # (the motion setting has its own rules: its cuts take the place of moves)
++	return CamPlaces.reduced_pace(key)
++
++
+ ## The launch rule is on: its switch, or Reduce flashing with launch_hold_reduced (a fast flight's scenery streaming past was the clash
+ ## reading's largest share on the globe ground: docs/camera/runs/611c1c2b/flash/).
+ func _lh_on() -> bool:
+@@ -4050,6 +4061,22 @@ func _update_cameras(S: SimState) -> void:
+ 					scroll_caps += 1
+ 					if int(_onset_run[i]) < CamParams.CAP_MAX:
+ 						_onset[i] = maxi(int(_onset[i]), 1)
++		# Reduce flashing: while he is safely inside the pane (within safeBox of the focus), the pane's catch-up moves at most catchUpMax of the
++		# width a tick; past the box the allowance grows with the distance, so the hold gives way smoothly and never loses him.
++		var cu_max: float = _rpace("catchUpMax")
++		if cu_max > 0.0 and not _cut_now and int(_wp_t[i]) < 0 and solo_kind != "intro" and not (_lh_on() and int(_lh[i]) != 0):
++			var zc_r: float = maxf(_zo[i], 0.001)
++			var off_x: float = SimWrap.sdx(_pfx[i], f.x) * zc_r / vw
++			var off_y: float = (f.y + CamParams.CHEST - float(_pfy[i])) * zc_r / vw
++			var past: float = maxf(0.0, sqrt(off_x * off_x + off_y * off_y) - maxf(_rpace("safeBox"), 0.0))
++			var allow_u: float = (cu_max + past) * vw / zc_r
++			var sx_r: float = SimWrap.sdx(_pfx[i], _fx[i])
++			var sy_r: float = _fy[i] - float(_pfy[i])
++			var len_r: float = sqrt(sx_r * sx_r + sy_r * sy_r)
++			if len_r > allow_u and len_r < 1500.0:
++				_fx[i] = SimWrap.wrap(_pfx[i] + sx_r * allow_u / len_r)
++				_fy[i] = float(_pfy[i]) + sy_r * allow_u / len_r
++				pace_holds += 1
+ 		# own zoom: first-order filter, then the rate cap
+ 		# the scroll governor reads how fast the pane's camera is actually moving (a pinned pane is not: it waits)
+ 		var dfx: float = absf(SimWrap.sdx(_pfx[i], _fx[i]))
+@@ -4172,7 +4199,8 @@ func _outputs(S: SimState) -> void:
+ 		# higher SLAM_ZOOM_RATE (it was exempt: 0.2 of a log unit in one tick, the largest jolt in the sweep's scan).
+ 		if _oz_valid:
+ 			var cap: float = (CamParams.SLAM_ZOOM_RATE if slam_now else CamParams.ZOOM_RATE_TRANS) * DT
+-			var cap_up: float = cap
++			var cap_in_rp: float = cap if (slam_now or _rpace("zoomRate") <= 0.0) else minf(cap, _rpace("zoomRate") * DT)   # Reduce flashing: the zoom comes IN slower (out keeps its rate: a slow pull-out lost an escaping fighter; the slam's door keeps its own)
++			var cap_up: float = cap_in_rp
+ 			if merge_zoom_limit and not reduced_motion and _merging_now():
+ 				cap_up = minf(cap, CamParams.READ_MZ if readable else CamParams.MZ_RATE)
+ 			if _sw_ticks >= CamParams.SWING_SHOT_TICKS and S.fighters[i].state == "launched":
+diff --git a/tools/schemas/camera-swing.schema.json b/tools/schemas/camera-swing.schema.json
+index db7787f..296dc3e 100644
+--- a/tools/schemas/camera-swing.schema.json
++++ b/tools/schemas/camera-swing.schema.json
+@@ -26,6 +26,18 @@
+         "launchWide": { "type": "boolean" }
+       }
+     },
++    "reducedPace": {
++      "type": "object",
++      "patternProperties": { "^_": {} },
++      "additionalProperties": false,
++      "properties": {
++        "enabled": { "type": "boolean" },
++        "openSec": { "type": "number", "minimum": 0.45, "maximum": 2 },
++        "catchUpMax": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.045 },
++        "safeBox": { "type": "number", "minimum": 0, "maximum": 0.45 },
++        "zoomRate": { "type": "number", "exclusiveMinimum": 0, "maximum": 2.4 }
++      }
++    },
+     "flatMode": { "enum": ["", "wide", "hold"] },
+     "peakRate": { "type": "number", "exclusiveMinimum": 0, "maximum": 3 }
+   }

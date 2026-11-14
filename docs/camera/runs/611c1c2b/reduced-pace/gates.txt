@@ -1,0 +1,24 @@
+# reduced-pace on the stack + cd04 + launch-hold-reduced + launch-wide (fxr): every camera check, headless
+chase_rush_check     chase_rush_check: 130 checks passed 
+flight_shots_check   flight_shots_check: 803 checks passed 
+launch_shots_check   launch_shots_check: 1029 checks passed 
+cross_ko_check       cross_ko_check: 21 checks passed 
+peak_retry_check     peak_retry_check: 1 check passed 
+peak_shot_check      peak_shot_check: 24 checks passed 
+split_share_check    split_share_check: 26 checks passed 
+split_vision_check   split_vision_check: 11 checks passed 
+swing_places_check   swing_places_check: 33 checks passed 
+swing_real_check     swing_real_check: 48 checks passed 
+swing_shot_check     swing_shot_check: 164 checks passed 
+swing_read_check     swing_read_check: 14420 checks passed 
+cut_register_check   cut_register_check: 73 checks passed 
+split_sweep          split sweep passed 
+
+# the first cut (zoomRate capping the zoom both ways) failed split_sweep's escape 5000 reduced (the chaser outside the picture 79 of 180 ticks); each number alone on the escape rows:
+open only: split sweep passed 
+catch only: split sweep passed 
+zoom only: FAIL  escape 5000 reduced: fighter 0 has been out of its pane for 1.20 s (mode opening) at t=3.70 pos (-23.7878, 504.8734) sep 0.000 e 0.00 solo /0.00 slam -1 u 2900 sigma 1/1 n (1.0, 0.0) FAIL  escap
+the cut parked: zoomRate caps the zoom coming IN only: escape rows pass (above)
+
+# normal mode alone, clip_digest on all 9 clips, with and without reduced-pace: identical
+identical (24,300 frames)

@@ -1,0 +1,7 @@
+# reduced mode, natively, the flagged seconds: ticks the pane moved more than 0.03 of the width (p0 = pane 0, p1 = pane 1), off a cut; zoom = largest zoom step a tick
+signature 70-145: launch parks: p0 7, p1 34, zoom 0.0179 || + reduced-pace: p0 7, p1 31, zoom 0.0179
+collapse  1440-1500: launch parks: p0 1, p1 0, zoom 0.0179 || + reduced-pace: p0 0, p1 0, zoom 0.0179
+clash     150-260: launch parks: p0 31, p1 7, zoom 0.0199 || + reduced-pace: p0 26, p1 9, zoom 0.0199
+clash     1080-1160: launch parks: p0 3, p1 0, zoom 0.0195 || + reduced-pace: p0 4, p1 0, zoom 0.0195
+signature's right pane: the fighter there flies freely at about 7,800 units a second; the pane follows at his speed (0.06 of the width a tick) with him 0.26 of the width from the focus, at the readable floor (43 px). The catch-up hold gives way past safeBox by design, or he'd be lost.
+collapse's last second: the one view pulling OUT 1.8% a tick to keep a parting pair in frame; a slower pull-out lost the escaping fighter in split_sweep.
