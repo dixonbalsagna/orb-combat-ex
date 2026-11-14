@@ -1,9 +1,9 @@
 // How many switch rows still differ between main and a kept build's packed data (Tools, 2026-11-14; register rows A-CODE-03 criterion 2 and A-CODE-01, "the EP reads it every two days").
 //
-//   node tools/preview/switch-diff.mjs [--build <kept folder, or part of its name>] [--rev HEAD] [--list] [--json out.json] [--fail-over N]
+//   node tools/preview/switch-diff.mjs [--build <kept folder, or part of its name>] [--rev HEAD | --tree <a folder of data files>] [--list] [--json out.json] [--fail-over N]
 //
 // The kept build (default: orb-first-play-6a30b4c9-6627cb9d, the 9 November build Orb played) holds, inside its index.pck, the data the game ran on. main is the commit named by --rev (default HEAD):
-// the committed files, never the working tree. For every data row of the switch table (tools/preview/switches.mjs) the value at the row's key (and at each of its `more` keys) is read from both and
+// the committed files, never the working tree. --tree names a FOLDER instead (read only: a scratch tree of a stack, to ask what the diff will be once it lands; a file the folder does not hold counts as absent). For every data row of the switch table (tools/preview/switches.mjs) the value at the row's key (and at each of its `more` keys) is read from both and
 // compared. A row DIFFERS when any of its keys holds another value in main than in the build, or exists in only one of them. A row that is not data (a page word, a setup key) is counted apart.
 // As each owner's group lands on main (GW1a), its rows leave this list; the closing count is 0. Node built-ins and git only; nothing is built or run.
 import { execFileSync } from 'node:child_process';
@@ -70,12 +70,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   try {
     const dir = resolveBuild(opt('--build'));
-    const rev = opt('--rev', 'HEAD');
+    const treeDir = opt('--tree', null);
+    const rev = treeDir ? 'tree ' + treeDir : opt('--rev', 'HEAD');
     const buf = readFileSync(join(dir, 'web', 'index.pck'));
     const files = packFiles(buf);
     const cacheB = new Map(), cacheM = new Map();
     const buildJson = (f) => { if (!cacheB.has(f)) cacheB.set(f, packJson(buf, files, f)); return cacheB.get(f); };
     const mainJson = (f) => {
+      if (treeDir) { if (!cacheM.has(f)) { let v = null; try { v = JSON.parse(readFileSync(join(resolve(treeDir), ...f.split('/')), 'utf8').replace(/^﻿/, '')); } catch { /* absent */ } cacheM.set(f, v); } return cacheM.get(f); }
       if (!cacheM.has(f)) { let v = null; try { v = JSON.parse(execFileSync('git', ['show', `${rev}:${f}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).replace(/^﻿/, '')); } catch { /* not in main */ } cacheM.set(f, v); }
       return cacheM.get(f);
     };

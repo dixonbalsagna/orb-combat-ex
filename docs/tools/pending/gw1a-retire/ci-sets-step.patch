@@ -1,0 +1,13 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 2c31b16..0723f67 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -405,6 +405,8 @@ jobs:
+         run: '"$GODOT" --headless --path . --import'
+       - name: Audio babble check
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/babble_check.gd'
++      - name: Audio sets check (the five things a player should hear are made into sounds on a seeded match, on the audio data as it ships)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/sets_check.gd'
+       - name: Audio beat check
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/beat_check.gd'
+       - name: Audio brawl check

@@ -1,0 +1,2287 @@
+diff --git a/tools/preview/preview-selftest.mjs b/tools/preview/preview-selftest.mjs
+index 3569ef3..356918d 100644
+--- a/tools/preview/preview-selftest.mjs
++++ b/tools/preview/preview-selftest.mjs
+@@ -10,7 +10,13 @@ import { join } from 'node:path';
+ import { buildPreview, buildKey, serveLocal, checkTree, plan, overlayPaths, overlayFiles, applyPatchText } from './preview.mjs';
+ import * as BB from './blackbox.mjs';
+ import { rawPadProblems } from './blackbox-rawpad-check.mjs';
+-import { SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc, present, parts } from './switches.mjs';
++import { SWITCHES, LANDED_IDS, LANDED_PROBES, isOn, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc, present, parts } from './switches.mjs';
++import { RETIRED_ROWS, historicRows, useHistoricTable } from './retired-rows.mjs';
++// GW1a (2026-11-14): the rows main's own data landed are no longer in the live table (SWITCHES, LANDED_IDS). The engine checks below (flip, the cascade, waiting, the scratch patch, the builds) run on the table as it was
++// BEFORE the retirement (retired-rows.mjs: the retired rows from retired-rows.json and the live rows in their old order), so they go on proving the engine itself; the section at the end of the run checks the live table.
++const LIVE_ROWS = SWITCHES.slice();
++const HIST_ROWS = historicRows(LIVE_ROWS);
++const restoreLive = useHistoricTable();
+ const HELD = SWITCHES.filter((x) => x.held).map((x) => x.id);   // rows held off by default (the city rows): on the list, off, with their reason
+ const ON = IDS.filter((i) => !HELD.includes(i));
+ import { expectations, probeProblems } from './smoke.mjs';
+@@ -448,6 +454,21 @@ try {
+     writeFileSync(join(t4, 'sim', 'core', 'replay.gd'), 'class_name SimReplay\nstatic func buildId() -> String:\n\treturn ""\n');
+     check('hasHeader reads the tree: yes; no; no replay.gd at all; and a tree with only buildId (the first cut, withdrawn) is no', BB.hasHeader(t1) === true && BB.hasHeader(t2) === false && BB.hasHeader(t3) === false && BB.hasHeader(t4) === false);
+   }
++  // ---- the live table after the GW1a retirement (A-CODE-03, the EP's GW1a item for Tools)
++  restoreLive();
++  {
++    const ids = new Set(IDS), landed = new Set(LANDED_IDS);
++    check('GW1a: every retired row is out of the live table, and none is both retired and kept', LANDED_IDS.every((id) => !ids.has(id)) && landed.size === LANDED_IDS.length && LANDED_IDS.length === RETIRED_ROWS.length && RETIRED_ROWS.every((r) => landed.has(r.id)));
++    check('GW1a: the kept rows are the ones the golden window did not land (the water group, the held city rows, the rows whose files are not in main yet, and the three page rows)', IDS.length === 19 && [...IDS].sort().join() === 'aimCuts,airBrake,blackbox,cityHold,floor,gen3,go,hitstopAny,kick,mixed,phrases,powerPace,slamTurn,slip,surface,wallPush,wallPushAi,water,waterWarm', IDS.join());
++    check('GW1a: the old table is the live rows and the retired ones together, 93 rows with no id twice', HIST_ROWS.length === 93 && new Set(HIST_ROWS.map((s) => s.id)).size === 93 && HIST_ROWS.every((s) => s !== undefined));
++    check('GW1a: a kept row never needs a retired one (the cascade would turn it off for a switch that is not there)', SWITCHES.every((s) => s.needs.every((n) => ids.has(n))));
++    check('GW1a: asking to turn a landed row on or off is said so, not called unknown and not silently ignored', (() => { const r = resolve(['tiles', 'gen2']), r2 = resolve([], SWITCHES, ['rightStick']); return r.landed.join() === 'tiles,gen2' && r.unknown.length === 0 && r.active.join() === resolve([]).active.join() && r2.landed.join() === 'rightStick' && resolve(['nonsense']).unknown.join() === 'nonsense' && resolve(['nonsense']).landed.length === 0; })());
++    check('GW1a: the look words (tiles=1, meteor=loud, craterlook=1) are no longer launch words, and the page rows that stay still are', (() => { const w = tableWith([]).filter((s) => s.url).map((s) => s.url); return !w.includes('tiles=1') && !w.includes('meteor=loud') && !w.includes('craterlook=1') && w.includes('go=1') && w.includes('blackbox=1'); })());
++    check('GW1a: the smoke check expects the landed rows ON in the running game: the data generation 2, the biome, the interrupts and the turn, the right stick, the meteor', (() => { const e = expectations([]); return e.planetGen === 2 && e.dataGen === 2 && e.biome === true && e.interrupts === true && e.turn === true && e.rightStick === true && e.meteor === true && e.swingOn === true && e.struggle === true && e.water === false && e.floor === false; })());
++    check('GW1a: the probes of the retired rows stay, each with the code it needs, one for each row that had one', LANDED_PROBES.length > 30 && LANDED_PROBES.every((p) => p.id && p.probe && p.probeIf && p.probeIf.file && p.probeIf.text) && ['rightStick', 'meteor', 'struggle', 'swing', 'arc', 'beamFront'].every((id) => LANDED_PROBES.some((p) => p.id === id)) && LANDED_PROBES.every((p) => landed.has(p.id)));
++    check('GW1a: isOn says on for a preview switch that is on and for a landed row, and off for a kept row that is not on', isOn(['water'], 'water') && isOn([], 'tiles') && isOn([], 'rightStick') && !isOn([], 'water') && !isOn(['water'], 'floor'));
++    check('GW1a: retired-rows.json says where each row went and why it is retired (an evidence line), and holds the old row whole', RETIRED_ROWS.every((r) => typeof r.evidence === 'string' && r.evidence.length > 10 && Number.isInteger(r.index)) && RETIRED_ROWS.find((r) => r.id === 'gen2').file === 'data/biomes/climate.json' && RETIRED_ROWS.find((r) => r.id === 'meteor').url === 'meteor=loud');
++  }
+ } finally {
+   rmSync(tmp, { recursive: true, force: true });
+ }
+diff --git a/tools/preview/preview.mjs b/tools/preview/preview.mjs
+index 72d231d..b7953c3 100644
+--- a/tools/preview/preview.mjs
++++ b/tools/preview/preview.mjs
+@@ -23,7 +23,7 @@ import { exportRevision } from '../flash/head-export.mjs';
+ import { scriptErrors } from '../gate.mjs';
+ import { patchHost, injectPage, hasHeader } from './blackbox.mjs';
+ import { shellSnippet, injectShell } from '../lib/audio-shell.mjs';
+-import { IDS, SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, EDITS_FINGERPRINT, flip, parts, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
++import { IDS, SWITCHES, LANDED_PROBES, isOn, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, EDITS_FINGERPRINT, flip, parts, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
+ 
+ const HERE = fileURLToPath(new URL('.', import.meta.url));
+ const REPO = resolve(HERE, '..', '..');
+@@ -149,15 +149,16 @@ export function plan(repo, sha, { off = [], on = [], overlay = [], pending = [],
+   const tierWord = (() => { const x = read('sim/core/sim.gd'); return x !== null && x.includes('startTier'); })();
+   const hitstopWord = (() => { const x = read('sim/core/hitstop.gd'); return x !== null && x.includes('static func enabled'); })();
+   const powerWord = (() => { const x = read('sim/core/power.gd'); return x !== null && x.includes('class_name SimPower'); })();
+-  const dashWord = (() => { const x = read('sim/core/power.gd'); return x !== null && x.includes('dashOn_') && active.includes('arrive'); })();   // Simulation's power-dash park: the setup key "dash" exists only in a tree that has it, and the page sends it only while the arrive row is on (the EP, 2026-11-08: the dash at 5,000 a second flies through the rival without Encounter's arrival)
++  const dashWord = (() => { const x = read('sim/core/power.gd'); return x !== null && x.includes('dashOn_') && isOn(active, 'arrive'); })();   // Simulation's power-dash park: the setup key "dash" exists only in a tree that has it, and the page sends it only while the arrive row is on (the EP, 2026-11-08: the dash at 5,000 a second flies through the rival without Encounter's arrival)
+   const circleWord = (() => { const x = read('sim/director/stance.gd'); return x !== null && x.includes('static func circleOn'); })();
+   const sticksOk = (() => { const x = read('sim/director/stick.gd'); return x !== null && x.includes('class_name DirStick'); })();
+   const swingsOff = (() => { const x = read('sim/director/swing.gd'); return x !== null && x.includes('static func setForce'); })();
+   const alts = table.filter((s) => active.includes(s.id) && s.url && s.alt).map((s) => (s.alt.add ? { id: s.id, add: s.alt.add, label: s.alt.label } : { id: s.id, word: s.url, to: s.alt.word, label: s.alt.label })).concat(swingsOff ? [{ id: 'swing', add: 'swings=off', label: 'DirSwing off (Encounter\'s page word)' }] : []).concat(kickWord && active.includes('kick') ? KICK_SAMPLES : []).concat(hitstopWord ? HITSTOP_SAMPLES : []).concat(tierWord ? PEAK_SAMPLES : []);
+   const more = table.filter((s) => active.includes(s.id) && Array.isArray(s.probeMore)).flatMap((s) => s.probeMore.filter((m) => { const x = read(m.probeIf.file); return x !== null && x.includes(m.probeIf.text); }).map((m) => m.line));
+   const occProbe = '"occ": (pane.occluded if pane != null and pane.occluded.size() >= 2 else []), "occAll": _pv_occ_all(), "aud": _pv_aud(), "ko": (host.S != null and host.S.game.ko != null), "fx": [host.S.fighters[0].x, host.S.fighters[1].x, host.S.fighters[0].y, host.S.fighters[1].y]', kiProbe = '"ki": [host.S.fighters[0].ki, host.S.fighters[1].ki]', uiProbe = '"teach": ([str(ui_hud.hub.models[0].teach), str(ui_hud.hub.models[1].teach)] if ui_hud != null and ui_hud.hub.models.size() >= 2 else []), "taught": [UiPrefs.get_bool("taught_beam"), UiPrefs.get_bool("taught_beam_nudge"), UiPrefs.get_bool("taught_fire_back")], "tnow": (ui_hud.hub.t_now if ui_hud != null else -1.0)';
+-  const probes = [occProbe, kiProbe, uiProbe].concat(sticksOk ? ['"stk": _pv_stick_n', '"stkk": _pv_stick_kinds', '"bo": _pv_beam_kinds', '"padtxt": _pv_padtxt', '"noise": [_pv_intended, _pv_real, _pv_phantom]', '"noised": _pv_nd', '"arcsends": _pv_arc_kinds', '"p1human": (host.S.fighters[0].ai == null)'] : []).concat(powerWord ? ['"powerOn": host.S.powerOn', '"flatOut": snappedf(host.S.powerFlat, 1.0)', '"crn": host.S.craters.size()', '"cr": ([snappedf(host.S.craters[-1].x, 1.0), snappedf(host.S.craters[-1].r, 1.0), snappedf(host.S.craters[-1].depth, 1.0), host.S.craters[-1].t] if host.S.craters.size() > 0 else [])'] : []).concat(circleWord ? ['"circleOn": DirStance.circleOn()'] : []).concat((() => { const x = read('sim/world/settlements.gd'); return x !== null && x.includes('static func noTarget') ? ['"lm": (host.S.buildings.filter(func(b): return b.alive and WorldSettle.noTarget(b.landmark)).map(func(b): return [snappedf(b.x, 1.0), snappedf(float(b.z), 1.0)]) if host.ticks % 150 == 1 else [])'] : []; })()).concat((() => { const x = read('data/director/interrupts.json'); return x !== null && x.includes('chargeClose') ? ['"press": [bool(DirInterrupt.data().get("brawl", {}).get("chargeClose", {}).get("enabled", false)), bool(DirInterrupt.data().get("brawl", {}).get("pressWait", {}).get("enabled", false)), bool(DirInterrupt.data().get("brawl", {}).get("oneRuleB", {}).get("enabled", false)), bool(DirInterrupt.data().get("beamPlays", {}).get("front", {}).get("aim", {}).get("enabled", false)), bool(DirInterrupt.data().get("stances", {}).get("circle", {}).get("enabled", false))]'] : []; })()).concat(more).concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe));
+-  return { table, held: r.held, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord, hitstopWord, powerWord, dashWord, circleWord };
++  const probes = [occProbe, kiProbe, uiProbe].concat(sticksOk ? ['"stk": _pv_stick_n', '"stkk": _pv_stick_kinds', '"bo": _pv_beam_kinds', '"padtxt": _pv_padtxt', '"noise": [_pv_intended, _pv_real, _pv_phantom]', '"noised": _pv_nd', '"arcsends": _pv_arc_kinds', '"p1human": (host.S.fighters[0].ai == null)'] : []).concat(powerWord ? ['"powerOn": host.S.powerOn', '"flatOut": snappedf(host.S.powerFlat, 1.0)', '"crn": host.S.craters.size()', '"cr": ([snappedf(host.S.craters[-1].x, 1.0), snappedf(host.S.craters[-1].r, 1.0), snappedf(host.S.craters[-1].depth, 1.0), host.S.craters[-1].t] if host.S.craters.size() > 0 else [])'] : []).concat(circleWord ? ['"circleOn": DirStance.circleOn()'] : []).concat((() => { const x = read('sim/world/settlements.gd'); return x !== null && x.includes('static func noTarget') ? ['"lm": (host.S.buildings.filter(func(b): return b.alive and WorldSettle.noTarget(b.landmark)).map(func(b): return [snappedf(b.x, 1.0), snappedf(float(b.z), 1.0)]) if host.ticks % 150 == 1 else [])'] : []; })()).concat((() => { const x = read('data/director/interrupts.json'); return x !== null && x.includes('chargeClose') ? ['"press": [bool(DirInterrupt.data().get("brawl", {}).get("chargeClose", {}).get("enabled", false)), bool(DirInterrupt.data().get("brawl", {}).get("pressWait", {}).get("enabled", false)), bool(DirInterrupt.data().get("brawl", {}).get("oneRuleB", {}).get("enabled", false)), bool(DirInterrupt.data().get("beamPlays", {}).get("front", {}).get("aim", {}).get("enabled", false)), bool(DirInterrupt.data().get("stances", {}).get("circle", {}).get("enabled", false))]'] : []; })()).concat(more).concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe))
++    .concat(LANDED_PROBES.filter((p) => !table.some((s) => s.id === p.id)).filter((p) => { const x = read(p.probeIf.file); return x !== null && x.includes(p.probeIf.text); }).map((p) => p.probe));   // the probes of the rows main's own data landed (GW1a): the page still reads what the running game says
++  return { table, held: r.held, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, landed: r.landed, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord, hitstopWord, powerWord, dashWord, circleWord };
+ }
+ 
+ /** Applies a git patch to a scratch tree (git apply, whitespace-tolerant: a CRLF checkout must not refuse it). Throws with git's first line when it does not fit. */
+@@ -181,6 +182,7 @@ export async function buildPreview(o) {
+   if (pend.problems.length) throw new Error(`tools/preview/switches-pending.json: ${pend.problems.join('; ')}`);
+   const pl = plan(repo, sha, { off: o.off || [], on: o.on || [], overlay, pending: pend.rows });
+   const r = { active: pl.active, cascaded: pl.cascaded, unknown: pl.unknown };
++  if (pl.landed && pl.landed.length) throw new Error(`${pl.landed.join(', ')} ${pl.landed.length > 1 ? 'are' : 'is'} main's own data since GW1a: there is no switch to turn on or off here`);
+   if (r.unknown.length) throw new Error(`unknown switch ${r.unknown.join(', ')}: the switches are ${pl.table.map((s) => s.id).join(', ')} (or all)`);
+   const subject = git(repo, ['log', '-1', '--format=%s', sha]).slice(0, 110);
+   const date = git(repo, ['log', '-1', '--format=%cs', sha]);
+@@ -217,7 +219,7 @@ export async function buildPreview(o) {
+   }
+   const mainFile = join(tree, 'render', 'core', 'main.gd');
+   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
+-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));
++  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: isOn(pl.active, 'struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));
+   if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'), { header: hasHeader(tree) })); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
+   const godot = o.godotNode ? null : godotExe(o.godot);
+   const g = { godot, godotNode: o.godotNode };
+diff --git a/tools/preview/retired-rows.json b/tools/preview/retired-rows.json
+new file mode 100644
+index 0000000..83dd0e1
+--- /dev/null
++++ b/tools/preview/retired-rows.json
+@@ -0,0 +1,1488 @@
++{
++ "keptNeedsBefore": {
++  "floor": [
++   "surface",
++   "interrupts"
++  ],
++  "slamTurn": [
++   "swing"
++  ],
++  "slip": [
++   "arrive"
++  ],
++  "phrases": [
++   "rightStick"
++  ],
++  "mixed": [
++   "rightStick"
++  ]
++ },
++ "_about": "The switch rows the golden window GW1a landed as main's own data (tools/preview/switches.mjs LANDED_IDS), as they were before: id, file, key, from, to. Kept as the record of what landed and as the selftest's fixtures for the flip engine. Written by the retirement, 2026-11-14.",
++ "rows": [
++  {
++   "id": "gen2",
++   "file": "data/biomes/climate.json",
++   "path": [
++    "gen"
++   ],
++   "from": 1,
++   "to": 2,
++   "needs": [],
++   "what": "planet generation 2 (climate, 15 fine biomes, lakes, sites) for every planet match instead of the stored planet",
++   "index": 0,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "biome",
++   "file": "data/combat/launch_biome.json",
++   "path": [
++    "biome",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "what": "the launch planner reads the ground (cliffs, ice, marsh, trees, vents) and its surface (biome.enabled)",
++   "index": 1,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "interrupts",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "water",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "what": "surfacing, the director half: a drop (the zip's knock-down) under water is brought up and counts as landed",
++   "index": 4,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "calmTurn",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "calmTurn",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "what": "the calm turn, the director's half (DirCalm.on): without it the director never asks and the turn never happens, whatever rings.json says. Found by QA, 2026-10-31: `turn` alone gave 0 turns in 200 matches",
++   "index": 6,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "turn",
++   "file": "data/biomes/rings.json",
++   "path": [
++    "turn",
++    "on"
++   ],
++   "from": 0,
++   "to": 1,
++   "needs": [
++    "calmTurn"
++   ],
++   "what": "the arena's calm turn (World's half, rings.json turn.on; it needs calmTurn, the director's half): at a calm moment after a launch has landed, the ring swaps for a new one turned a few degrees (at most 4 a match, 60 s apart)",
++   "index": 7,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "rightStick",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "rightStick"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "host": "right-hand-host",
++   "probe": "\"rightStick\": SimInputData.right_stick_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func right_stick_on"
++   },
++   "what": "the right-hand attacks (pitch 4a, Controls): the right stick throws directional-charge strikes, the left hand braces and slips; the pad's right stick is read. Waits until Controls' code is in the tree you build (or overlaid)",
++   "index": 8,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "quickRead",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "quickRead"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"quickRead\": SimInputData.quick_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func quick_on"
++   },
++   "what": "the quick read (Controls, responsiveness): the strike and the brace read one tick sooner, the vanish resolves on the second press, and the layout publishes the stick's pre-read for the pose. timing.json switches.quickRead. Waits until Controls' code and keys are in the tree (docs/controls/pending/quick-read)",
++   "index": 9,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "hapticLadder",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "hapticLadder"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"hapticLadder\": SimInputData.haptic_ladder_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func haptic_ladder_on"
++   },
++   "what": "the strike charge's ladder on the pad (Controls, pitch 1): a held stick strike pulses once as each rung is reached, 12 / 30 / 50 live ticks from the request; none for a quick flick. Needs the right hand. timing.json switches.hapticLadder. Waits for docs/controls/pending/stick-feel",
++   "index": 10,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "specialsOff",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "specialsOff"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"specialsOff\": SimInputData.specials_off()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func specials_off"
++   },
++   "what": "the first press (Game Design, docs/design/pad-first-press.md; Controls): the power specials are not built, so RT + X, Y, A are the plain blow and the charge drops. timing.json switches.specialsOff. Waits for docs/controls/pending/stick-feel (round 2)",
++   "index": 11,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "signatureRtOnly",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "signatureRtOnly"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"signatureRtOnly\": SimInputData.signature_rt_only()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func signature_rt_only"
++   },
++   "what": "the signature on RT + B only (Controls, round 4): B alone is the big blow, RT + B is the signature, and B with LB, RB or LT held is the heavy of that stance, so a guard or a dodge never fires a beam by accident. timing.json switches.signatureRtOnly. The pad sheet assumes it is on. Waits for docs/controls/pending/stick-feel (round 4)",
++   "index": 12,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "beamAim",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "beamAim"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"beamAim\": SimInputData.beam_aim_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func beam_aim_on"
++   },
++   "what": "the beam aim (Controls, docs/controls/pending/beam-aim, docs/controls/beam-aim-feel.md): the throw carries the aim the stick held at the rim, the shown aim trails the thumb by 4 degrees and at rest the aim is 0, so a beam goes where the thumb threw it. timing.json switches.beamAim. Needs the right hand. Waits for the park",
++   "index": 13,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "hapticRefused",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "hapticRefused"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"hapticRefused\": SimInputData.haptic_refused_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func haptic_refused_on"
++   },
++   "what": "a stick press the game did not answer tells its pad (two dull knocks, 30 live ticks after the request; the audit's gap 2). Needs the right hand. timing.json switches.hapticRefused. Waits for docs/controls/pending/stick-feel (round 2)",
++   "index": 14,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "hapticIncoming",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "hapticIncoming"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"hapticIncoming\": SimInputData.haptic_incoming_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func haptic_incoming_on"
++   },
++   "what": "the incoming cue on the defender's pad (Controls, pitch 3): one cue when a rival's stick strike starts, high for toward and up, low for away and down; the striker feels nothing. Needs the right hand. timing.json switches.hapticIncoming. Waits for docs/controls/pending/stick-feel",
++   "index": 15,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "webRumble",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "webRumble"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"webRumble\": bool(SimInputData.t([\"switches\", \"webRumble\"], false))",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "static func t("
++   },
++   "what": "the pad rumble on the page (Controls, docs/controls/pending/stick-feel/web-rumble.patch): the page asks the vibrationActuator of the pad itself (dual-rumble; Chrome, Edge and Opera GX with an Xbox-type or DualSense pad), because the web runtime of Godot has no pad rumble. timing.json switches.webRumble. Waits for haptic-switches.patch and web-rumble.patch",
++   "index": 16,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "settle",
++   "file": "data/biomes/contact.json",
++   "path": [
++    "settle",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"settle\": int(WorldContact.K_MAXC)",
++   "probeIf": {
++    "file": "sim/world/contact.gd",
++    "text": "static var K_MAXC"
++   },
++   "what": "a body on the ground digs or stops (Encounter, docs/director/pending/ground-settle): a launched body meets the ground at most 3 times, and 0, 0, 1, 1 bounces by tier, instead of tumbling off it up to 8. data/biomes/contact.json settle.enabled. The read-back is the contact limit (3 on, 8 off). Waits for the patch and its key",
++   "index": 17,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "splitShare",
++   "file": "data/camera/swing.json",
++   "path": [
++    "splitShare"
++   ],
++   "from": 0,
++   "to": 0.7,
++   "needs": [],
++   "optional": true,
++   "probe": "\"splitShare\": (split_rig.split_share if split_rig != null else -1.0), \"leadAhead\": (split_rig.lead_ahead if split_rig != null else false)",
++   "probeIf": {
++    "file": "data/camera/swing.json",
++    "text": "splitShare"
++   },
++   "what": "against a CPU the player pane takes 0.7 of the split (Camera swing-share, Orb first play asked for about 0.7), instead of 50/50; with tiles on. data/camera/swing.json splitShare. ?splitshare=0.5 on a local page sets it for a comparison. The probe also reads lead_ahead. Waits for swing-share.patch",
++   "index": 18,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "chaseTap",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "chase",
++    "tap",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"chaseTap\": DirChaseTap.on()",
++   "probeIf": {
++    "file": "sim/director/chase_tap.gd",
++    "text": "static func on"
++   },
++   "what": "the chase after a launch by a plain tap (Encounter, docs/director/pending/chase-tap; Orb: the follow-up floats): while the one you sent is in the air, press X, Y or B and you rush him; the blow lands as you catch him and sends him on. The price is free, 20, 30, 45 for X. data/director/interrupts.json chase.tap.enabled. Waits for the park",
++   "index": 19,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "chargeArmour",
++   "file": "data/director/stick.json",
++   "path": [
++    "armour",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"chargeArmour\": DirStick.armourOn()",
++   "probeIf": {
++    "file": "sim/director/stick.gd",
++    "text": "static func armourOn"
++   },
++   "what": "a charged attack has the armour of B (Encounter, docs/director/pending/charge-armour; Orb: charged attacks should be much harder to interrupt, especially by light attacks): data/director/stick.json armour.enabled. Needs the right hand. Waits for the park",
++   "index": 20,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "power",
++   "file": "data/fight/power.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "the one energy model (Simulation's sim/core/power.gd; Game Design's power-scale.md; register row A-ENERGY-04): data/fight/power.json enabled. Orb's 9 November build ran it ON through a code patch of the page (the setup key \"power\": true) while the data said off; now it is a data row like the others, so the build's data is what the game ran on and a pack verify can read it. The page word ?power=0 (or off) still turns it off for one match. When main's data has it on, the row has nothing left to flip",
++   "index": 21,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "chargeClose",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "brawl",
++    "chargeClose",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "Encounters press-decides charge-close (docs/director/pending/charge-close; Game Design press-decides section 2): a B held and let go at a rival walking away. data/director/interrupts.json brawl.chargeClose.enabled. Waits for the park",
++   "index": 24,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "pressWait",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "brawl",
++    "pressWait",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "Encounters press-decides press-wait (docs/director/pending/press-wait; Orbs second play: hard to charge an attack when every hit seems to interrupt). data/director/interrupts.json brawl.pressWait.enabled. Waits for the park",
++   "index": 25,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "oneRuleB",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "brawl",
++    "oneRuleB",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "Encounters press-decides one rule for B (docs/director/pending/b-one-rule; replaces press-send). data/director/interrupts.json brawl.oneRuleB.enabled. Waits for the park",
++   "index": 26,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "beamAim2",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "beamPlays",
++    "front",
++    "aim",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "beamFront"
++   ],
++   "optional": true,
++   "what": "Encounters beam aim cut (docs/director/pending/beam-aim): acts only with the beam fronts stationary, beside Controls beamAim. data/director/interrupts.json beamPlays.front.aim.enabled. Waits for the park",
++   "index": 27,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "nodeWarm",
++   "file": "data/biomes/field.json",
++   "path": [
++    "warm",
++    "radius"
++   ],
++   "from": 0,
++   "to": 10000,
++   "needs": [],
++   "optional": true,
++   "presentIf": {
++    "file": "sim/world/field.gd",
++    "text": "warmNear"
++   },
++   "what": "the ground's nodes round the start are read at the match start (World, docs/world/pending/node-warm): data/biomes/field.json warm.radius 0 to 10,000; about 0.34 s more at match load on a native build (the web load time is in the smoke), the same state hash. Waits for the park",
++   "index": 28,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "stickPend",
++   "file": "data/director/stick.json",
++   "path": [
++    "pendFollow",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "a stick press waits with its request, up to 90 ticks, and is told at once when it is answered or refused (Encounter, docs/director/pending/stick-pend; Game Design stick-lands). data/director/stick.json pendFollow.enabled. The park's other switch, flickRun, stays OFF until Game Design sets its points (no row). Waits for the park",
++   "index": 29,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "joltYield",
++   "file": "data/director/swing.json",
++   "path": [
++    "jolt",
++    "yieldToLaunch"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "a jolt swing yields to a launch swing on the same tick (Encounter, docs/director/pending/swing-pair; QA kept-build row 4). data/director/swing.json jolt.yieldToLaunch. Waits for the park",
++   "index": 30,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "brawlShareCap",
++   "file": "data/director/swing.json",
++   "path": [
++    "brawl",
++    "shareCap",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "brawl swings are not offered while they would be over 0.4 of the match's big swings, once there have been 3 (Encounter, docs/director/pending/swing-pair). data/director/swing.json brawl.shareCap.enabled. Waits for the park",
++   "index": 31,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "meteor",
++   "url": "meteor=loud",
++   "alt": {
++    "word": "meteor=quiet",
++    "label": "the quiet trail"
++   },
++   "presentIf": {
++    "file": "data/vfx/meteor.json"
++   },
++   "needs": [],
++   "optional": true,
++   "probe": "\"meteor\": host.vfx.meteor_enabled",
++   "probeIf": {
++    "file": "render/vfx/vfx_hub.gd",
++    "text": "meteor_enabled"
++   },
++   "what": "VFX's meteor trail: a fighter's own burn laid along his path and cooling in the world. A page word on a local page (?meteor=loud, the default here, or ?meteor=quiet: two sets of numbers for Orb to pick between); no word, the trail is off and byte-identical off. The printed address carries the loud word and the quiet one is printed beside it. Waits until the tree has VFX's data/vfx/meteor.json",
++   "index": 35,
++   "evidence": "the GW1a scratch tree has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
++  },
++  {
++   "id": "tiles",
++   "url": "tiles=1",
++   "cmd": "--tiles",
++   "alt": {
++    "add": "nofore=1",
++    "label": "the fore tone OFF, to compare (Rendering's page word; on by default)"
++   },
++   "presentIf": {
++    "file": "render/core/tile_ground.gd"
++   },
++   "needs": [
++    "gen3"
++   ],
++   "optional": true,
++   "what": "Rendering's tile ground (stage 4 of the ring-at-any-angle work): the fight on planet-keyed tiles on a true globe, through Simulation's frame. A page word for now (?tiles=1, local pages only): the printed address carries it. Needs gen3 and waits until the tree has render/core/tile_ground.gd",
++   "index": 36,
++   "evidence": "the GW1a scratch tree has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
++  },
++  {
++   "id": "swing",
++   "file": "data/director/swing.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "gen3"
++   ],
++   "optional": true,
++   "probe": "\"swings\": (st.swing.n if st.swing != null else -1), \"swing\": ({\"on\": st.swing.active, \"rate\": snappedf(st.swing.rate, 0.1), \"left\": snappedf(st.swing.left, 0.1), \"cause\": st.swing.cause, \"kind\": st.swing.kind} if st.swing != null else {}), \"fst\": [st.fighters[0].state, st.fighters[1].state], \"ln\": [st.fighters[0].launchN, st.fighters[1].launchN], \"pz\": [st.pause.left, snappedf(st.dirS.stop, 0.01)]",
++   "probeMore": [
++    {
++     "line": "\"mv\": SimSwing.movingNow(st)",
++     "probeIf": {
++      "file": "sim/core/swing.gd",
++      "text": "func movingNow"
++     }
++    },
++    {
++     "line": "\"swingOn\": DirSwing.on(st)",
++     "probeIf": {
++      "file": "sim/director/swing.gd",
++      "text": "static func on(S: SimState)"
++     }
++    },
++    {
++     "line": "\"stickOn\": DirStick.on()",
++     "probeIf": {
++      "file": "sim/director/stick.gd",
++      "text": "static func on() -> bool"
++     }
++    }
++   ],
++   "probeIf": {
++    "file": "sim/core/state.gd",
++    "text": "var swing = null"
++   },
++   "what": "DirSwing (Encounter): the choreographer's swing: a launch, a chase, a form's pause, an AI's flight and a brawl each offer the line a turn, which the core's SimSwing runs. data/director/swing.json `enabled`; it does nothing but on a field world, so it needs gen3 (setup planet, touch, planetGen 3). Waits until the tree has Encounter's code",
++   "index": 37,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "everywhere",
++   "file": "data/biomes/field.json",
++   "path": [
++    "plans",
++    "everywhere"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "gen3"
++   ],
++   "optional": true,
++   "probe": "\"everywhere\": WorldPlan.everywhere()",
++   "probeIf": {
++    "file": "sim/world/plan.gd",
++    "text": "static func everywhere"
++   },
++   "what": "buildings at every place (World, docs/world/places-everywhere.md): each place the first ring does not hold is laid as the whole of its plan, planet-fixed, with no people, so a swing or a launch onto any town finds real buildings. data/biomes/field.json plans.everywhere. Gen 3 only. Waits until the tree has World's park (docs/world/pending/places-everywhere)",
++   "index": 38,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "arc",
++   "file": "data/director/launch.json",
++   "path": [
++    "arc",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"arc\": DirArc.on()",
++   "probeIf": {
++    "file": "sim/director/arc.gd",
++    "text": "static func on"
++   },
++   "what": "the meteor launch, one curve, with ignition (Encounter, docs/director/pending/meteor and meteor-2; row 5 of rule-of-cool-map.md): a heavy charged to full at tier 4 with two forms each goes up one authored curve, the meteor on a stunned or weak foe. data/director/launch.json arc.enabled. Try it from a training start: ?tier=4. Waits until the tree has Encounter's park",
++   "index": 39,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "ending",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "ending",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"ending\": DirEnding.on()",
++   "probeIf": {
++    "file": "sim/director/ending.gd",
++    "text": "static func on"
++   },
++   "what": "the match ending (Encounter; Game Design's ladder, spec-wounds.md 1b-end): at the time limit the fighter with less wear gets his finisher with no contest, and level wear is a no-contest (a no_contest cue, no KO). data/director/interrupts.json ending.enabled. Waits until the tree has Encounter's park (docs/director/pending/match-ending)",
++   "index": 40,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "follow",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "bands",
++    "follow",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"follow\": DirFollow.on()",
++   "probeIf": {
++    "file": "sim/director/follow.gd",
++    "text": "static func on"
++   },
++   "what": "a far press follows him (Encounter, docs/director/pending/far-follow; row 42): for 150 ticks after a send or knock-back he threw, a far tap flies him after the target instead of taunting. data/director/interrupts.json bands.follow.enabled. Waits until the tree has Encounter's park",
++   "index": 41,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "lightStops",
++   "file": "data/director/stick.json",
++   "path": [
++    "lightStops"
++   ],
++   "from": true,
++   "to": false,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"lightStops\": DirStick.lightStops()",
++   "probeIf": {
++    "file": "sim/director/stick.gd",
++    "text": "static func lightStops"
++   },
++   "what": "a light on a quick flick still lands (Encounter, docs/director/pending/stick-directions): no stun, worth softWorth, so the direction shows; LB held through a flick holds the guard. data/director/stick.json lightStops, false here. True is today's rule. Waits for the stick-directions park",
++   "index": 42,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "grapple",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "grapple",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"grapple\": DirGrapple.on()",
++   "probeIf": {
++    "file": "sim/director/grapple.gd",
++    "text": "static func on"
++   },
++   "what": "A in a brawl catches (the clinch and the throws) and a far A taunts: data/director/interrupts.json grapple.enabled. Off as shipped",
++   "index": 43,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "driver",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "blast",
++    "driver",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "signatureRtOnly"
++   ],
++   "optional": true,
++   "probe": "\"driver\": DirDriver.on()",
++   "probeIf": {
++    "file": "sim/director/driver.gd",
++    "text": "static func on"
++   },
++   "what": "RB + B is the Driver (Encounter, docs/director/pending/driver): hold B with RB to gather, let go to fire; a player's only. data/director/interrupts.json blast.driver.enabled. Needs driverOnRb with signatureRtOnly. Waits for the driver park",
++   "index": 44,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "driverOnRb",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "driverOnRb"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "signatureRtOnly"
++   ],
++   "optional": true,
++   "probe": "\"driverOnRb\": SimInputData.driver_on_rb()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func driver_on_rb"
++   },
++   "what": "with signatureRtOnly, RB + B stays a B press for the Driver to read instead of being sent as Y's blast (Controls, signature-rt-only.patch). timing.json switches.driverOnRb. Waits for Controls' stick-feel round 4",
++   "index": 45,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "beamMove",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "beamPlays",
++    "front",
++    "ownMove",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick",
++    "beamFront"
++   ],
++   "optional": true,
++   "what": "the beam as its own move (Encounter, docs/director/pending/beam-move): beamPlays.front.ownMove.enabled. It needs the right stick, the beam front (beamFront: beamPlays.front.enabled) and the stationary front (front.stationary, on in the data). Waits for the park",
++   "index": 46,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "stallKeep",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "stallKeep"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"stallKeep\": SimInputData.stall_keep_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func stall_keep_on"
++   },
++   "what": "no input lost in a stall (Controls, docs/controls/pending/impact-haptics, refusals): when the page hitches and several game steps read one pad snapshot, every button press and the stick's furthest point since the last step are kept. timing.json switches.stallKeep. Waits for the park",
++   "index": 47,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "hapticImpact",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "hapticImpact"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"hapticImpact\": SimInputData.haptic_impact_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func haptic_impact_on"
++   },
++   "what": "the impact rumble (Controls, docs/controls/impact-haptics.md): landed blows, closes, launches and landings, building breaks on the pad (Orb's 2026-10-05 picks). timing.json switches.hapticImpact. Waits for the park",
++   "index": 48,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "dodgeHeld",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "dodgeHeld"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"dodgeHeld\": SimInputData.dodge_held_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func dodge_held_on"
++   },
++   "what": "LT held in the intent's second word (Controls, docs/controls/dodge-held.md): the flight strike's take-back reads whether LT is still down at the face press. timing.json switches.dodgeHeld. Waits for the park and for Encounter to read it",
++   "index": 49,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "hapticStages",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "hapticStages"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "beamMove",
++    "hapticLadder"
++   ],
++   "optional": true,
++   "probe": "\"hapticStages\": SimInputData.haptic_stages_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func haptic_stages_on"
++   },
++   "what": "the stages of a charge on the pad (Controls, docs/controls/pending/stage-pulses): a pulse for each stick_stage cue of Encounter. timing.json switches.hapticStages. Needs beamMove, and the hapticLadder row too (SimInputData.haptic_stages_on() is the ladder AND the flag). With beamMove off a hold is silent. Waits for the park",
++   "index": 50,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "refusedCue",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "press",
++    "refusedCue"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "every refused press says so with a cue (Encounter, the morning fixes, batch 3): the press refused word at the edge and the knock on the pad, so a press never vanishes in silence. interrupts.json press.refusedCue. Waits for the park",
++   "index": 51,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "strikeStages",
++   "file": "data/director/stick.json",
++   "path": [
++    "strikeStages",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "what": "strike charge stages by power (Encounter, docs/director/pending/strike-stages; beams-own-move-plan step 2): 2 to 6 stages, a held charge that never fires by itself. data/director/stick.json strikeStages.enabled. Waits for the park",
++   "index": 52,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "beamMoveAi",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "beamPlays",
++    "front",
++    "ownMove",
++    "ai"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "beamMove"
++   ],
++   "optional": true,
++   "what": "the computer fires its beam through the same own move (Encounter, docs/director/pending/beam-ai). beamPlays.front.ownMove.ai. Needs beamMove. Waits for the park",
++   "index": 53,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "pushMode",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "beamStruggle",
++    "pushMode",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "struggle"
++   ],
++   "optional": true,
++   "alsoIn": {
++    "file": "render/core/sim_host.gd",
++    "text": "pushModeOf",
++    "why": "the host line of Controls (docs/controls/pending/push-stick/host-push.patch): with pushMode on and no stick passed through, nothing pushes in a struggle"
++   },
++   "what": "what pushes in a beam struggle, chosen per player (Encounter, docs/director/pending/push-mode; Game Design: rhythm on the right stick by default, or on the face buttons). beamStruggle.pushMode.enabled; the choice rides in the match setup per slot. Waits for the park and Simulation's grant",
++   "index": 54,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "pushUi",
++   "file": "ui/data/options.json",
++   "path": [
++    "options",
++    "struggle_push",
++    "default"
++   ],
++   "from": "face",
++   "to": "stick",
++   "needs": [
++    "pushMode"
++   ],
++   "optional": true,
++   "what": "the beam struggle push option of player 1 defaults to the right stick only when pushMode is on (UI, ui/data/options.json options.struggle_push.default; the shipped default is face, so a struggle panel never teaches a push the sim does not read). The row is on with pushMode and off without it",
++   "index": 55,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "pushUi2",
++   "file": "ui/data/options.json",
++   "path": [
++    "options",
++    "struggle_push_p2",
++    "default"
++   ],
++   "from": "face",
++   "to": "stick",
++   "needs": [
++    "pushMode"
++   ],
++   "optional": true,
++   "what": "the same for player 2 (options.struggle_push_p2.default)",
++   "index": 56,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "flightStrikes",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "zip",
++    "flightStrikes",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick",
++    "signatureRtOnly"
++   ],
++   "optional": true,
++   "more": [
++    {
++     "file": "data/input/timing.json",
++     "path": [
++      "switches",
++      "flightStrikeB"
++     ],
++     "from": false,
++     "to": true
++    },
++    {
++     "file": "data/input/timing.json",
++     "path": [
++      "switches",
++      "dodgeHeld"
++     ],
++     "from": false,
++     "to": true
++    }
++   ],
++   "what": "the flight strikes (Encounter): three keys as one row, across two files: interrupts.json zip.flightStrikes.enabled, timing.json switches.flightStrikeB and switches.dodgeHeld (the same key as the dodgeHeld row; either row turns it on). Needs rightStick and signatureRtOnly. ON in the next build (the EP, 2026-11-07); it waits, naming the key, until the park that adds it lands",
++   "index": 61,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "stickLungeLight",
++   "file": "data/director/stick.json",
++   "path": [
++    "lungeLight",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "what": "the light lunge on the stick (Encounter): data/director/stick.json lungeLight.enabled. Needs rightStick. ON in the next build (the EP, 2026-11-07); it waits, naming the key, until the park that adds it lands",
++   "index": 63,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "flickKeep",
++   "file": "data/director/stick.json",
++   "path": [
++    "flickKeep",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "more": [
++    {
++     "path": [
++      "pendFollow",
++      "enabled"
++     ],
++     "from": false,
++     "to": true
++    },
++    {
++     "file": "data/input/timing.json",
++     "path": [
++      "switches",
++      "flickKept"
++     ],
++     "from": false,
++     "to": true,
++     "ifPresent": true
++    }
++   ],
++   "what": "a stick flick that cannot start now is kept (Encounter, docs/director/pending/refusal-reasons; Game Design ruling 1): held, the newest only, quietly, and his first blow out. data/director/stick.json flickKeep.enabled. ON in Sunday's build (the EP, 2026-11-07); it waits, naming the key, until the park lands. The new refusal knocks ride press.refusedCue, which stays held",
++   "index": 64,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "flickRun",
++   "file": "data/director/stick.json",
++   "path": [
++    "flickRun",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "what": "a landed quick flick counts in its striker's run, with the steal on top (Game Design, stick-lands.md; the refusal-reasons park sets its points to 1.5). data/director/stick.json flickRun.enabled. ON in Sunday's build (the EP, 2026-11-07)",
++   "index": 65,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "fullSend",
++   "file": "data/director/stick.json",
++   "path": [
++    "fullSend",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "more": [
++    {
++     "file": "ui/data/features.json",
++     "path": [
++      "features",
++      "slam_hint"
++     ],
++     "from": false,
++     "to": true
++    }
++   ],
++   "what": "the stick's full send and the slam (Encounter, docs/director/pending/stick-slam; Game Design slam-and-pace section 1): a hold to the top stage sends, down on a foe in the air is the slam. data/director/stick.json fullSend.enabled, and in the same row UI's \"Hold to slam\" hint, ui/data/features.json features.slam_hint (UI: turn it on in the same commit as fullSend). ON in Sunday's build (the EP, 2026-11-07); it waits until both parks (stick-slam and slam-hint) have landed",
++   "index": 66,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "chordPick",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "chordPick"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "hapticRefused"
++   ],
++   "optional": true,
++   "what": "a chord is the biggest press (Controls, docs/controls/pending/chord-full-send; docs/controls/chord-pick.md): when two buttons come together the hub picks the biggest and says what it dropped, and the full send has its own haptic. timing.json switches.chordPick. Needs hapticRefused (the hub needs it to knock and list the drop). ON in Sunday's build (the EP, 2026-11-07); it waits, naming the key, until the park lands",
++   "index": 67,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "bNoBeam",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "bNoBeam"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "B never fires a beam (Orb's rule of 2026-11-01: beams come only from the right stick; Controls, docs/controls/pending/b-no-beam, design docs/controls/b-no-beam.md): a player's B never starts a beam, alone, with RT held, or with LT held past the flight strike's window; the stick's own beam is unaffected. timing.json switches.bNoBeam. It reads nothing else. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands. Note: the park's first patch only adds the key, and the switch does nothing until its second patch (director-isb.patch, Encounter's DirBrawl.isB) lands too: the row going on is not proof the beam is closed, so read the build's own data and the leak check",
++   "index": 68,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "bNoBeamKeepRt",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "bNoBeamKeepRt"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "bNoBeam"
++   ],
++   "optional": true,
++   "what": "the interim of bNoBeam (the EP, 2026-11-08; Controls' park docs/controls/pending/b-no-beam): B with RT held is still the signature until RT + right stick is built, so the signature is never unreachable; every other press of B is closed. timing.json switches.bNoBeamKeepRt. Needs bNoBeam (with it off this does nothing). ON in the next build, together with bNoBeam; it waits, naming the key, until the park lands. It goes OFF when the RT + stick signature lands (then B with RT held is closed too)",
++   "index": 69,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "arrive",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "bands",
++    "arrive",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "alsoIn": {
++    "file": "sim/core/fighter.gd",
++    "text": "SimDir.arrive(",
++    "why": "Simulation's grant (docs/director/pending/arrive/grant-simulation-arrive.patch): without the hook line in free flight the switch does nothing"
++   },
++   "what": "the arrival (Encounter, docs/director/pending/arrive; Game Design's overnight ruling (c)): LT's high speed eases into striking distance over the last 1.5 body heights, never through the rival. data/director/interrupts.json bands.arrive.enabled. ON in the next build (the EP, 2026-11-08) and tied to the page's \"dash\": true: the page sends the dash only when this row is on (preview.mjs dashWord), because the flat-out dash at 5,000 a second would fly through the rival without it. It waits, naming what is missing, until BOTH the park (the key) and Simulation's grant (the hook line in fighter.gd) have landed",
++   "index": 70,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "dashHandover",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "dashHandover"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "arrive",
++    "slip"
++   ],
++   "optional": true,
++   "what": "LT dash handover (Controls, docs/controls/dash-handover.md; Game Design ruling of 2026-11-08 section c): the free 12-tick lunge after a press of LT is a handover instead: at least 1,000 a second on the tick after the press and full by tick 12, so a tapped LT is the slip and not a 13-tick dash. data/input/timing.json switches.dashHandover. Needs arrive (the arrival, so the fast dash never flies through the rival) and slip (the brake that makes a tap a slip). ON in the polish build (the EP and Controls, 2026-11-09, on Encounter slip-arrive); it waits, naming the key, until the park lands",
++   "index": 72,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "carryRound",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "carryRound",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "you only go round after him if you are still pressing toward him (Encounter, docs/director/pending/carry-round; Game Design's beams-third-play.md, the dodge exchange; gauntlet-plan.md section 8): the dodge set piece's follow rush (exchange.gd, the rush op) carries a player round only while the stick still presses toward; let go and he stays where he is, the set piece is over and he is free. data/director/interrupts.json carryRound.enabled (top level, deadZone 0.3). Off, nothing changes. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands",
++   "index": 73,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "paceMatch",
++   "file": "data/director/ai.json",
++   "path": [
++    "levels",
++    "easy",
++    "brawl",
++    "paceMatch",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "easy matches the player's pace (Encounter, docs/director/pending/pace-match; Game Design's gauntlet-plan.md section 6): on the easy level the gap between the computer's taps in a brawl string is never shorter than the player's own recent gap between attack presses (floor 12, ceiling 30 ticks, a 3 s window, 27 with no human). data/director/ai.json levels.easy.brawl.paceMatch.enabled. Off, nothing changes. ON in the next build (the EP, 2026-11-09, after Encounter's gauntlet, docs/director/runs/397a7adf/pace-match/gauntlet/: Orb's scheme 5 to 65 percent on easy, the masher held at 60, the only option that held both bands); it waits, naming the key, until the park lands",
++   "index": 74,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "inertKnock",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "inertKnock"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick",
++    "hapticRefused"
++   ],
++   "optional": true,
++   "what": "a right-stick push on a layer where the strike stick is inert (RT held, or LB + RB) is told once: the refusal \"charging\" (\"warding\"), one pad knock, one row for UI (Controls, docs/controls/pending/inert-knock; design docs/controls/inert-knock.md). timing.json switches.inertKnock. Needs rightStick and hapticRefused (the hub's refusal cues). ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands. UI needs words for charging and warding (\"Charging\", \"Warding\"): until it has them the pad knocks and the screen may say nothing",
++   "index": 75,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "sideFromBlowOnly",
++   "file": "data/director/launch.json",
++   "path": [
++    "sideFromBlowOnly"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "a launch goes the way of the blow (Game Design's overnight ruling (a), docs/design/overnight-2026-11-08.md; Encounter's park docs/director/pending/side-from-blow): the full heavy's curve keeps the punch's way with the stick at rest, and only the stick picks the far side; the launch planner offers no candidate on the far side. data/director/launch.json sideFromBlowOnly (top level). Off, nothing changes. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands",
++   "index": 76,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "chargeLostCue",
++   "file": "data/input/timing.json",
++   "path": [
++    "switches",
++    "chargeLostCue"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"chargeLostCue\": SimInputData.charge_lost_cue_on()",
++   "probeIf": {
++    "file": "sim/input/input_data.gd",
++    "text": "func charge_lost_cue_on"
++   },
++   "what": "a lost charge is felt (Controls, docs/controls/pending/charge-lost; design docs/controls/charge-lost.md): three pad pulses of their own for the charger only, no screen mark: charge_broken (a heavy, a stick strike or a beam hold taken by a blow of the foe), charge_lapsed (lost to a stagger or the end of the brawl) and hold_short (a right-stick hold let go of before stage 1). timing.json switches.chargeLostCue. No pairing (the hold_short pulse only happens with the right stick, which is on). ON in the polish build (the EP, 2026-11-09); it waits, naming the key, until the park lands",
++   "index": 77,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "menusRail",
++   "file": "ui/data/features.json",
++   "path": [
++    "features",
++    "menus_rail"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "the Rail menus (UI & UX, docs/ui/menus-rail.md; Orb picked mockup A on 2026-11-09): Start, Pause, New match? and Match over get one frame, a dark rail down the left with the choices and the detail on the right, the buttons of the last device along the foot, and Options gets tabs across the top. ui/data/features.json features.menus_rail. Off, every screen is as before; it also stays as before on a touch screen, under 1000 by 600, and when narrower than 1.3 to 1. Slides and eases only (ADR 0010). ON in the polish build (the EP, 2026-11-09) if the rule fix from UI and the EP look at the stills pass; it waits, naming the key, until the key is in the tree",
++   "index": 78,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "stances",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "stances",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"stances\": DirStance.on()",
++   "probeIf": {
++    "file": "sim/director/stance.gd",
++    "text": "static func on"
++   },
++   "what": "LB and LT on a blow (Encounter, docs/director/pending/stances; pad-first-press.md): the check, the push and the rest differ. data/director/interrupts.json stances.enabled. Needs the stick. Waits for the stances park",
++   "index": 81,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "craterlook",
++   "url": "craterlook=1",
++   "presentIf": {
++    "file": "render/core/tile_ground.gd",
++    "text": "crater_look"
++   },
++   "needs": [
++    "tiles"
++   ],
++   "optional": true,
++   "what": "Art's crater and scar looks (Rendering, 2026-11-01i; docs/art/crater-look.md): walls in two rings toned by their facing, a warm floor, a burn for the scar. A page word on a local page, on the tile ground only. Waits for the crater-scar-look park",
++   "index": 83,
++   "evidence": "the GW1a scratch tree has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
++  },
++  {
++   "id": "vsHuman",
++   "file": "data/director/ai.json",
++   "path": [
++    "vsHuman",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "the beams of the AI against a human (Encounter, docs/director/pending/clash-window): it fires its first by 25 to 45 s and paces the rest when the human could pay and answer. data/director/ai.json vsHuman.enabled. Waits for the clash-window park",
++   "index": 84,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "firstMeteor",
++   "file": "data/director/launch.json",
++   "path": [
++    "arc",
++    "firstMeteor"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "arc"
++   ],
++   "optional": true,
++   "what": "a stand-in rule for trying the meteor (Encounter, docs/director/pending/meteor-route): the first planet-scale launch of the match IS the meteor, whatever the rival is doing. Both at tier 4 (the full-power address), fly next to him, hold B until the flash, let go. data/director/launch.json arc.firstMeteor. Waits for the meteor-route park",
++   "index": 85,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "beamFront",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "beamPlays",
++    "front",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"beamFront\": DirBeamPlay.frontOn()",
++   "probeIf": {
++    "file": "sim/director/beamplay.gd",
++    "text": "static func frontOn"
++   },
++   "what": "beams that travel, and the window to answer (Encounter, docs/director/pending/beam-front; row 40 of rule-of-cool-map.md): the beam takes ticks from hand to him, the hit is decided at arrival, and he can fire back, dodge in the last 14 ticks or block. data/director/interrupts.json beamPlays.front.enabled. Waits until the tree has Encounter's park",
++   "index": 86,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "struggle",
++   "file": "data/director/interrupts.json",
++   "path": [
++    "beamStruggle",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"struggle\": DirBeam.struggleOn()",
++   "probeIf": {
++    "file": "sim/director/beam.gd",
++    "text": "static func struggleOn"
++   },
++   "alt": {
++    "add": "struggle=off",
++    "label": "the beam struggle OFF (Encounter's page word; on by default here)"
++   },
++   "what": "the beam struggle on the pulse: surges, strays and letting go (Encounter; Game Design's redesign after Orb's playtest of 2026-10-16: what you press during the clash moves the outcome). data/director/interrupts.json beamStruggle.enabled. On by default on the private page; ?struggle=off on a local page turns it off. Waits until the tree has Encounter's park (docs/director/pending/beam-struggle)",
++   "index": 89,
++   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "soundTug",
++   "file": "audio/data/tug_cues.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "struggle"
++   ],
++   "optional": true,
++   "probe": "\"soundTug\": host.audio_cues.tug.enabled()",
++   "probeIf": {
++    "file": "audio/audio_tug.gd",
++    "text": "func enabled"
++   },
++   "what": "the beam struggle sound (Audio, docs/audio/first-play-sound.md): the two-drone bed, the pulse, surge, stray, lock and end, in the lower family. audio/data/tug_cues.json enabled. Needs the beam struggle (its events). Read back: host.audio_cues.tug.enabled()",
++   "index": 90,
++   "evidence": "Audio's group sets it in audio/data (the park's files); the GW1a scratch tree has no audio folder to read"
++  },
++  {
++   "id": "soundMoments",
++   "file": "audio/data/moment_cues.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"soundMoments\": host.audio_cues.moments.enabled()",
++   "probeIf": {
++    "file": "audio/audio_moments.gd",
++    "text": "func enabled"
++   },
++   "what": "the moments a player would notice (Audio, docs/audio/pending/moments): a beam charging and firing, the KO, the biggest blows, a launch, the meteor landing, a parry, two bolts meeting; existing sounds only, low and chunky. audio/data/moment_cues.json enabled. Read back: host.audio_cues.moments.enabled()",
++   "index": 91,
++   "evidence": "Audio's group sets it in audio/data (the park's files); the GW1a scratch tree has no audio folder to read"
++  },
++  {
++   "id": "soundCarry",
++   "file": "audio/data/carry_cues.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "soundTug"
++   ],
++   "optional": true,
++   "probe": "\"soundCarry\": host.audio_cues.carry.enabled()",
++   "probeIf": {
++    "file": "audio/audio_carry.gd",
++    "text": "func enabled"
++   },
++   "what": "the carry sounds (Audio, docs/audio/first-play-sound.md): what the HUD no longer draws, said in sound. audio/data/carry_cues.json enabled. Needs the beam struggle sound. Read back: host.audio_cues.carry.enabled()",
++   "index": 92,
++   "evidence": "Audio's group sets it in audio/data (the park's files); the GW1a scratch tree has no audio folder to read"
++  }
++ ]
++}
+diff --git a/tools/preview/retired-rows.mjs b/tools/preview/retired-rows.mjs
+new file mode 100644
+index 0000000..efbbfb1
+--- /dev/null
++++ b/tools/preview/retired-rows.mjs
+@@ -0,0 +1,25 @@
++// The switch table as it was BEFORE the golden window GW1a retired the rows it landed (Tools, 2026-11-14). For the self-tests only: the engine checks (flip, the cascade, waiting, the scratch patch, the stack builds) were
++// written on that table and still prove the engine, so they run on it, rebuilt here from the live rows and tools/preview/retired-rows.json (the retired rows whole, with their old place; the kept rows' old `needs`).
++// useHistoricTable() changes SWITCHES and IDS (the table module's own arrays) IN PLACE and returns the function that puts the live ones back. Nothing in a build reads this file.
++import { readFileSync } from 'node:fs';
++import { SWITCHES, IDS } from './switches.mjs';
++
++const FILE = JSON.parse(readFileSync(new URL('./retired-rows.json', import.meta.url), 'utf8'));
++export const RETIRED_ROWS = FILE.rows;
++
++/** The old table: the retired rows at their old places, the live rows between them in their order, each kept row's old `needs` put back. Pure. */
++export function historicRows(live = SWITCHES) {
++  const out = new Array(live.length + RETIRED_ROWS.length);
++  for (const r of RETIRED_ROWS) { const { index, evidence, ...row } = r; out[index] = row; }
++  let k = 0;
++  for (const r of live) { while (out[k] !== undefined) k++; out[k] = FILE.keptNeedsBefore[r.id] ? { ...r, needs: FILE.keptNeedsBefore[r.id] } : r; }
++  return out;
++}
++
++export function useHistoricTable() {
++  const liveRows = SWITCHES.slice(), liveIds = IDS.slice();
++  const hist = historicRows(liveRows);
++  SWITCHES.splice(0, SWITCHES.length, ...hist);
++  IDS.splice(0, IDS.length, ...hist.map((s) => s.id));
++  return () => { SWITCHES.splice(0, SWITCHES.length, ...liveRows); IDS.splice(0, IDS.length, ...liveIds); };
++}
+diff --git a/tools/preview/smoke.mjs b/tools/preview/smoke.mjs
+index 78a4bbc..7ffdac7 100644
+--- a/tools/preview/smoke.mjs
++++ b/tools/preview/smoke.mjs
+@@ -12,13 +12,13 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+ import { dirname, resolve, join } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import { Cdp, launchBrowser, serve, browserExe } from '../machine/browser.mjs';
+-import { IDS, errorSwitch } from './switches.mjs';
++import { IDS, LANDED_IDS, errorSwitch } from './switches.mjs';
+ 
+ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+ 
+ /** What the probe must read, given the switches that are on. Pure. */
+ export function expectations(on, { planet = true } = {}) {
+-  const set = new Set(on);
++  const set = new Set([...on, ...LANDED_IDS.filter((id) => !IDS.includes(id))]);   // a row main's own data landed (GW1a) is on in the running game whether or not the preview flipped it
+   return {
+     planet,
+     planetGen: set.has('gen2') ? 2 : 1,
+diff --git a/tools/preview/stack-preview.mjs b/tools/preview/stack-preview.mjs
+index 6694cd6..8c2e8a8 100644
+--- a/tools/preview/stack-preview.mjs
++++ b/tools/preview/stack-preview.mjs
+@@ -19,6 +19,7 @@ import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, save
+ import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
+ import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
+ import { patchHost, patchAudio, patchHaptics, injectPage, hasHeader, BB_FINGERPRINT } from './blackbox.mjs';
++import { isOn } from './switches.mjs';
+ import { shellSnippet, injectShell } from '../lib/audio-shell.mjs';
+ import { setWebCustomTemplate } from '../flash/web-preset.mjs';
+ import { fetchTemplate } from '../site-template.mjs';
+@@ -102,6 +103,7 @@ export async function buildStackPreview(o) {
+   };
+   const pl = plan(repo, r.commit, { off: o.off || [], on: o.on || [], pending: pend.rows, read });
+   const out = { sha: r.commit, subject: r.subject, report: r, stackLines: describeReport(r), active: pl.active, waiting: pl.waiting, held: pl.held, cascaded: pl.cascaded, urlWords: pl.urlWords, alts: pl.alts, table: pl.table, unknown: pl.unknown, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, dir: null, web: null, meta: null, scriptErrors: [] };
++  if (pl.landed && pl.landed.length) throw new Error(`${pl.landed.join(', ')} ${pl.landed.length > 1 ? 'are' : 'is'} main's own data since GW1a: there is no switch to turn on or off here`);
+   if (pl.unknown.length) throw new Error(`unknown switch ${pl.unknown.join(', ')}`);
+   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
+   const tz = templateZip(o.template, repo);
+@@ -123,7 +125,7 @@ export async function buildStackPreview(o) {
+   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify(pageStamp(r.commit, commitDate(repo, r.commit), parksIn.length, key))}\n`);
+   const mainFile = join(tree, 'render', 'core', 'main.gd');
+   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
+-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));
++  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: isOn(pl.active, 'struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));
+   if (pl.active.includes('blackbox')) { const af = join(tree, 'audio', 'audio_voices.gd'); if (existsSync(af)) writeFileSync(af, patchAudio(readFileSync(af, 'utf8'))); writeFileSync(mainFile, patchHaptics(readFileSync(mainFile, 'utf8'))); }
+   if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'), { header: hasHeader(tree) })); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
+   if (pl.active.includes('blackbox')) {   // Encounter's fix (2026-11-02): during a playback of a saved match the hook's ai scene stages nothing into it (the forms at 300 and 1500, the tier at 900, the stage at 1200)
+diff --git a/tools/preview/stack-selftest.mjs b/tools/preview/stack-selftest.mjs
+index 817d35e..fb07871 100644
+--- a/tools/preview/stack-selftest.mjs
++++ b/tools/preview/stack-selftest.mjs
+@@ -7,6 +7,8 @@ import { tmpdir } from 'node:os';
+ import { dirname, join } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import { templateZip, pageStamp, commitDate } from './stack-preview.mjs';
++import { useHistoricTable } from './retired-rows.mjs';
++useHistoricTable();   // GW1a: these checks were written on the switch table as it was before the retirement of the rows main's own data landed (retired-rows.mjs); they go on proving the engine on it
+ import { findPython, snapshotTree, loadManifest, patchFiles, ownerOfPath, readOwners, tryApply, applyStack, missingNeeds, flipAll, runValidate, attributeErrors, errorBlocks, stackKey, changesBetween, checkScratch, runStack, describeReport } from './stack.mjs';
+ 
+ const here = dirname(fileURLToPath(import.meta.url));
+diff --git a/tools/preview/switch-diff.mjs b/tools/preview/switch-diff.mjs
+index 7f10064..6200556 100644
+--- a/tools/preview/switch-diff.mjs
++++ b/tools/preview/switch-diff.mjs
+@@ -1,9 +1,9 @@
+ // How many switch rows still differ between main and a kept build's packed data (Tools, 2026-11-14; register rows A-CODE-03 criterion 2 and A-CODE-01, "the EP reads it every two days").
+ //
+-//   node tools/preview/switch-diff.mjs [--build <kept folder, or part of its name>] [--rev HEAD] [--list] [--json out.json] [--fail-over N]
++//   node tools/preview/switch-diff.mjs [--build <kept folder, or part of its name>] [--rev HEAD | --tree <a folder of data files>] [--list] [--json out.json] [--fail-over N]
+ //
+ // The kept build (default: orb-first-play-6a30b4c9-6627cb9d, the 9 November build Orb played) holds, inside its index.pck, the data the game ran on. main is the commit named by --rev (default HEAD):
+-// the committed files, never the working tree. For every data row of the switch table (tools/preview/switches.mjs) the value at the row's key (and at each of its `more` keys) is read from both and
++// the committed files, never the working tree. --tree names a FOLDER instead (read only: a scratch tree of a stack, to ask what the diff will be once it lands; a file the folder does not hold counts as absent). For every data row of the switch table (tools/preview/switches.mjs) the value at the row's key (and at each of its `more` keys) is read from both and
+ // compared. A row DIFFERS when any of its keys holds another value in main than in the build, or exists in only one of them. A row that is not data (a page word, a setup key) is counted apart.
+ // As each owner's group lands on main (GW1a), its rows leave this list; the closing count is 0. Node built-ins and git only; nothing is built or run.
+ import { execFileSync } from 'node:child_process';
+@@ -70,12 +70,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
+   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
+   try {
+     const dir = resolveBuild(opt('--build'));
+-    const rev = opt('--rev', 'HEAD');
++    const treeDir = opt('--tree', null);
++    const rev = treeDir ? 'tree ' + treeDir : opt('--rev', 'HEAD');
+     const buf = readFileSync(join(dir, 'web', 'index.pck'));
+     const files = packFiles(buf);
+     const cacheB = new Map(), cacheM = new Map();
+     const buildJson = (f) => { if (!cacheB.has(f)) cacheB.set(f, packJson(buf, files, f)); return cacheB.get(f); };
+     const mainJson = (f) => {
++      if (treeDir) { if (!cacheM.has(f)) { let v = null; try { v = JSON.parse(readFileSync(join(resolve(treeDir), ...f.split('/')), 'utf8').replace(/^﻿/, '')); } catch { /* absent */ } cacheM.set(f, v); } return cacheM.get(f); }
+       if (!cacheM.has(f)) { let v = null; try { v = JSON.parse(execFileSync('git', ['show', `${rev}:${f}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).replace(/^﻿/, '')); } catch { /* not in main */ } cacheM.set(f, v); }
+       return cacheM.get(f);
+     };
+diff --git a/tools/preview/switches.mjs b/tools/preview/switches.mjs
+index 278c871..53a7a23 100644
+--- a/tools/preview/switches.mjs
++++ b/tools/preview/switches.mjs
+@@ -10,240 +10,357 @@
+ import { createHash } from 'node:crypto';
+ import { BB_FINGERPRINT } from './blackbox.mjs';
+ 
++
++// GW1a (2026-11-14, Tools): the rows whose data the golden window landed as main's own are RETIRED from this table. A retired row's value is what main's data holds now, so applying it would change nothing
++// (or, where main's value moved on, would put the old one back): the page build neither flips them nor lists them, and the launch words of the look group (tiles, craterlook, meteor) are no longer added.
++// LANDED_IDS names them. smoke.mjs reads them as on when it works out what the running game must report; resolve() says so when someone asks to turn one off. node tools/preview/switch-diff.mjs --tree <a tree>
++// is the proof: after the GW1a stack the rows still differing from the 9 November build are the ones kept here.
++export const LANDED_IDS = ["gen2","biome","interrupts","calmTurn","turn","rightStick","quickRead","hapticLadder","specialsOff","signatureRtOnly","beamAim","hapticRefused","hapticIncoming","webRumble","settle","splitShare","chaseTap","chargeArmour","power","chargeClose","pressWait","oneRuleB","beamAim2","nodeWarm","stickPend","joltYield","brawlShareCap","swing","everywhere","arc","ending","follow","lightStops","grapple","driver","driverOnRb","beamMove","stallKeep","hapticImpact","dodgeHeld","hapticStages","refusedCue","strikeStages","beamMoveAi","pushMode","pushUi","pushUi2","flightStrikes","stickLungeLight","flickKeep","flickRun","fullSend","chordPick","bNoBeam","bNoBeamKeepRt","arrive","dashHandover","carryRound","paceMatch","inertKnock","sideFromBlowOnly","chargeLostCue","menusRail","stances","vsHuman","firstMeteor","beamFront","struggle","soundTug","soundMoments","soundCarry","tiles","craterlook","meteor"];
++// The probes of the retired rows stay: the page still reads what the running game says each one is (window.__preview), so the smoke check goes on verifying that main's own data turned the thing on.
++export const LANDED_PROBES = [
++ {
++  "id": "rightStick",
++  "probe": "\"rightStick\": SimInputData.right_stick_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func right_stick_on"
++  }
++ },
++ {
++  "id": "quickRead",
++  "probe": "\"quickRead\": SimInputData.quick_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func quick_on"
++  }
++ },
++ {
++  "id": "hapticLadder",
++  "probe": "\"hapticLadder\": SimInputData.haptic_ladder_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func haptic_ladder_on"
++  }
++ },
++ {
++  "id": "specialsOff",
++  "probe": "\"specialsOff\": SimInputData.specials_off()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func specials_off"
++  }
++ },
++ {
++  "id": "signatureRtOnly",
++  "probe": "\"signatureRtOnly\": SimInputData.signature_rt_only()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func signature_rt_only"
++  }
++ },
++ {
++  "id": "beamAim",
++  "probe": "\"beamAim\": SimInputData.beam_aim_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func beam_aim_on"
++  }
++ },
++ {
++  "id": "hapticRefused",
++  "probe": "\"hapticRefused\": SimInputData.haptic_refused_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func haptic_refused_on"
++  }
++ },
++ {
++  "id": "hapticIncoming",
++  "probe": "\"hapticIncoming\": SimInputData.haptic_incoming_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func haptic_incoming_on"
++  }
++ },
++ {
++  "id": "webRumble",
++  "probe": "\"webRumble\": bool(SimInputData.t([\"switches\", \"webRumble\"], false))",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "static func t("
++  }
++ },
++ {
++  "id": "settle",
++  "probe": "\"settle\": int(WorldContact.K_MAXC)",
++  "probeIf": {
++   "file": "sim/world/contact.gd",
++   "text": "static var K_MAXC"
++  }
++ },
++ {
++  "id": "splitShare",
++  "probe": "\"splitShare\": (split_rig.split_share if split_rig != null else -1.0), \"leadAhead\": (split_rig.lead_ahead if split_rig != null else false)",
++  "probeIf": {
++   "file": "data/camera/swing.json",
++   "text": "splitShare"
++  }
++ },
++ {
++  "id": "chaseTap",
++  "probe": "\"chaseTap\": DirChaseTap.on()",
++  "probeIf": {
++   "file": "sim/director/chase_tap.gd",
++   "text": "static func on"
++  }
++ },
++ {
++  "id": "chargeArmour",
++  "probe": "\"chargeArmour\": DirStick.armourOn()",
++  "probeIf": {
++   "file": "sim/director/stick.gd",
++   "text": "static func armourOn"
++  }
++ },
++ {
++  "id": "meteor",
++  "probe": "\"meteor\": host.vfx.meteor_enabled",
++  "probeIf": {
++   "file": "render/vfx/vfx_hub.gd",
++   "text": "meteor_enabled"
++  }
++ },
++ {
++  "id": "swing",
++  "probe": "\"swings\": (st.swing.n if st.swing != null else -1), \"swing\": ({\"on\": st.swing.active, \"rate\": snappedf(st.swing.rate, 0.1), \"left\": snappedf(st.swing.left, 0.1), \"cause\": st.swing.cause, \"kind\": st.swing.kind} if st.swing != null else {}), \"fst\": [st.fighters[0].state, st.fighters[1].state], \"ln\": [st.fighters[0].launchN, st.fighters[1].launchN], \"pz\": [st.pause.left, snappedf(st.dirS.stop, 0.01)]",
++  "probeIf": {
++   "file": "sim/core/state.gd",
++   "text": "var swing = null"
++  }
++ },
++ {
++  "id": "swing",
++  "probe": "\"mv\": SimSwing.movingNow(st)",
++  "probeIf": {
++   "file": "sim/core/swing.gd",
++   "text": "func movingNow"
++  }
++ },
++ {
++  "id": "swing",
++  "probe": "\"swingOn\": DirSwing.on(st)",
++  "probeIf": {
++   "file": "sim/director/swing.gd",
++   "text": "static func on(S: SimState)"
++  }
++ },
++ {
++  "id": "swing",
++  "probe": "\"stickOn\": DirStick.on()",
++  "probeIf": {
++   "file": "sim/director/stick.gd",
++   "text": "static func on() -> bool"
++  }
++ },
++ {
++  "id": "everywhere",
++  "probe": "\"everywhere\": WorldPlan.everywhere()",
++  "probeIf": {
++   "file": "sim/world/plan.gd",
++   "text": "static func everywhere"
++  }
++ },
++ {
++  "id": "arc",
++  "probe": "\"arc\": DirArc.on()",
++  "probeIf": {
++   "file": "sim/director/arc.gd",
++   "text": "static func on"
++  }
++ },
++ {
++  "id": "ending",
++  "probe": "\"ending\": DirEnding.on()",
++  "probeIf": {
++   "file": "sim/director/ending.gd",
++   "text": "static func on"
++  }
++ },
++ {
++  "id": "follow",
++  "probe": "\"follow\": DirFollow.on()",
++  "probeIf": {
++   "file": "sim/director/follow.gd",
++   "text": "static func on"
++  }
++ },
++ {
++  "id": "lightStops",
++  "probe": "\"lightStops\": DirStick.lightStops()",
++  "probeIf": {
++   "file": "sim/director/stick.gd",
++   "text": "static func lightStops"
++  }
++ },
++ {
++  "id": "grapple",
++  "probe": "\"grapple\": DirGrapple.on()",
++  "probeIf": {
++   "file": "sim/director/grapple.gd",
++   "text": "static func on"
++  }
++ },
++ {
++  "id": "driver",
++  "probe": "\"driver\": DirDriver.on()",
++  "probeIf": {
++   "file": "sim/director/driver.gd",
++   "text": "static func on"
++  }
++ },
++ {
++  "id": "driverOnRb",
++  "probe": "\"driverOnRb\": SimInputData.driver_on_rb()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func driver_on_rb"
++  }
++ },
++ {
++  "id": "stallKeep",
++  "probe": "\"stallKeep\": SimInputData.stall_keep_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func stall_keep_on"
++  }
++ },
++ {
++  "id": "hapticImpact",
++  "probe": "\"hapticImpact\": SimInputData.haptic_impact_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func haptic_impact_on"
++  }
++ },
++ {
++  "id": "dodgeHeld",
++  "probe": "\"dodgeHeld\": SimInputData.dodge_held_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func dodge_held_on"
++  }
++ },
++ {
++  "id": "hapticStages",
++  "probe": "\"hapticStages\": SimInputData.haptic_stages_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func haptic_stages_on"
++  }
++ },
++ {
++  "id": "chargeLostCue",
++  "probe": "\"chargeLostCue\": SimInputData.charge_lost_cue_on()",
++  "probeIf": {
++   "file": "sim/input/input_data.gd",
++   "text": "func charge_lost_cue_on"
++  }
++ },
++ {
++  "id": "stances",
++  "probe": "\"stances\": DirStance.on()",
++  "probeIf": {
++   "file": "sim/director/stance.gd",
++   "text": "static func on"
++  }
++ },
++ {
++  "id": "beamFront",
++  "probe": "\"beamFront\": DirBeamPlay.frontOn()",
++  "probeIf": {
++   "file": "sim/director/beamplay.gd",
++   "text": "static func frontOn"
++  }
++ },
++ {
++  "id": "struggle",
++  "probe": "\"struggle\": DirBeam.struggleOn()",
++  "probeIf": {
++   "file": "sim/director/beam.gd",
++   "text": "static func struggleOn"
++  }
++ },
++ {
++  "id": "soundTug",
++  "probe": "\"soundTug\": host.audio_cues.tug.enabled()",
++  "probeIf": {
++   "file": "audio/audio_tug.gd",
++   "text": "func enabled"
++  }
++ },
++ {
++  "id": "soundMoments",
++  "probe": "\"soundMoments\": host.audio_cues.moments.enabled()",
++  "probeIf": {
++   "file": "audio/audio_moments.gd",
++   "text": "func enabled"
++  }
++ },
++ {
++  "id": "soundCarry",
++  "probe": "\"soundCarry\": host.audio_cues.carry.enabled()",
++  "probeIf": {
++   "file": "audio/audio_carry.gd",
++   "text": "func enabled"
++  }
++ }
++];
++/** Whether a switch is on in a build: the preview turned it on, or main's own data has it on since GW1a. */
++export const isOn = (active, id) => active.includes(id) || (LANDED_IDS.includes(id) && !IDS.includes(id));
++
+ export const SWITCHES = [
+-  { id: 'gen2', file: 'data/biomes/climate.json', path: ['gen'], from: 1, to: 2, needs: [],
+-    what: 'planet generation 2 (climate, 15 fine biomes, lakes, sites) for every planet match instead of the stored planet' },
+-  { id: 'biome', file: 'data/combat/launch_biome.json', path: ['biome', 'enabled'], from: false, to: true, needs: [],
+-    what: 'the launch planner reads the ground (cliffs, ice, marsh, trees, vents) and its surface (biome.enabled)' },
+   { id: 'water', file: 'data/biomes/water.json', path: ['enabled'], from: false, to: true, needs: [],
+     what: 'water v2: holes fill from the sea, lakes and the water table; wading; the crater wave; the douse' },
+   { id: 'surface', file: 'data/biomes/water.json', path: ['surface', 'enabled'], from: false, to: true, needs: [],
+     what: 'surfacing, the world half: a launched body that lands in water is brought up to the surface' },
+-  { id: 'interrupts', file: 'data/director/interrupts.json', path: ['water', 'enabled'], from: false, to: true, needs: [],
+-    what: 'surfacing, the director half: a drop (the zip\'s knock-down) under water is brought up and counts as landed' },
+-  { id: 'floor', file: 'data/biomes/water.json', path: ['floor', 'enabled'], from: false, to: true, needs: ['surface', 'interrupts'],
++  { id: 'floor', file: 'data/biomes/water.json', path: ['floor', 'enabled'], from: false, to: true, needs: ['surface'],
+     what: 'the lake floor: a free fighter\'s floor in the ring\'s own water is its surface less his feet (needs both halves of surfacing)' },
+-  { id: 'calmTurn', file: 'data/director/interrupts.json', path: ['calmTurn', 'enabled'], from: false, to: true, needs: [],
+-    what: 'the calm turn, the director\'s half (DirCalm.on): without it the director never asks and the turn never happens, whatever rings.json says. Found by QA, 2026-10-31: `turn` alone gave 0 turns in 200 matches' },
+-  { id: 'turn', file: 'data/biomes/rings.json', path: ['turn', 'on'], from: 0, to: 1, needs: ['calmTurn'],
+-    what: 'the arena\'s calm turn (World\'s half, rings.json turn.on; it needs calmTurn, the director\'s half): at a calm moment after a launch has landed, the ring swaps for a new one turned a few degrees (at most 4 a match, 60 s apart)' },
+-  { id: 'rightStick', file: 'data/input/timing.json', path: ['switches', 'rightStick'], from: false, to: true, needs: [], optional: true, host: 'right-hand-host',
+-    probe: '"rightStick": SimInputData.right_stick_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func right_stick_on' },
+-    what: 'the right-hand attacks (pitch 4a, Controls): the right stick throws directional-charge strikes, the left hand braces and slips; the pad\'s right stick is read. Waits until Controls\' code is in the tree you build (or overlaid)' },
+-  { id: 'quickRead', file: 'data/input/timing.json', path: ['switches', 'quickRead'], from: false, to: true, needs: [], optional: true,
+-    probe: '"quickRead": SimInputData.quick_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func quick_on' },
+-    what: 'the quick read (Controls, responsiveness): the strike and the brace read one tick sooner, the vanish resolves on the second press, and the layout publishes the stick\'s pre-read for the pose. timing.json switches.quickRead. Waits until Controls\' code and keys are in the tree (docs/controls/pending/quick-read)' },
+-  { id: 'hapticLadder', file: 'data/input/timing.json', path: ['switches', 'hapticLadder'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"hapticLadder": SimInputData.haptic_ladder_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_ladder_on' },
+-    what: 'the strike charge\'s ladder on the pad (Controls, pitch 1): a held stick strike pulses once as each rung is reached, 12 / 30 / 50 live ticks from the request; none for a quick flick. Needs the right hand. timing.json switches.hapticLadder. Waits for docs/controls/pending/stick-feel' },
+-  { id: 'specialsOff', file: 'data/input/timing.json', path: ['switches', 'specialsOff'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"specialsOff": SimInputData.specials_off()', probeIf: { file: 'sim/input/input_data.gd', text: 'func specials_off' },
+-    what: 'the first press (Game Design, docs/design/pad-first-press.md; Controls): the power specials are not built, so RT + X, Y, A are the plain blow and the charge drops. timing.json switches.specialsOff. Waits for docs/controls/pending/stick-feel (round 2)' },
+-  { id: 'signatureRtOnly', file: 'data/input/timing.json', path: ['switches', 'signatureRtOnly'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"signatureRtOnly": SimInputData.signature_rt_only()', probeIf: { file: 'sim/input/input_data.gd', text: 'func signature_rt_only' },
+-    what: 'the signature on RT + B only (Controls, round 4): B alone is the big blow, RT + B is the signature, and B with LB, RB or LT held is the heavy of that stance, so a guard or a dodge never fires a beam by accident. timing.json switches.signatureRtOnly. The pad sheet assumes it is on. Waits for docs/controls/pending/stick-feel (round 4)' },
+-  { id: 'beamAim', file: 'data/input/timing.json', path: ['switches', 'beamAim'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"beamAim": SimInputData.beam_aim_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func beam_aim_on' },
+-    what: 'the beam aim (Controls, docs/controls/pending/beam-aim, docs/controls/beam-aim-feel.md): the throw carries the aim the stick held at the rim, the shown aim trails the thumb by 4 degrees and at rest the aim is 0, so a beam goes where the thumb threw it. timing.json switches.beamAim. Needs the right hand. Waits for the park' },
+-  { id: 'hapticRefused', file: 'data/input/timing.json', path: ['switches', 'hapticRefused'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"hapticRefused": SimInputData.haptic_refused_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_refused_on' },
+-    what: 'a stick press the game did not answer tells its pad (two dull knocks, 30 live ticks after the request; the audit\'s gap 2). Needs the right hand. timing.json switches.hapticRefused. Waits for docs/controls/pending/stick-feel (round 2)' },
+-  { id: 'hapticIncoming', file: 'data/input/timing.json', path: ['switches', 'hapticIncoming'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"hapticIncoming": SimInputData.haptic_incoming_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_incoming_on' },
+-    what: 'the incoming cue on the defender\'s pad (Controls, pitch 3): one cue when a rival\'s stick strike starts, high for toward and up, low for away and down; the striker feels nothing. Needs the right hand. timing.json switches.hapticIncoming. Waits for docs/controls/pending/stick-feel' },
+-  { id: 'webRumble', file: 'data/input/timing.json', path: ['switches', 'webRumble'], from: false, to: true, needs: [], optional: true,
+-    probe: '"webRumble": bool(SimInputData.t(["switches", "webRumble"], false))', probeIf: { file: 'sim/input/input_data.gd', text: 'static func t(' },
+-    what: 'the pad rumble on the page (Controls, docs/controls/pending/stick-feel/web-rumble.patch): the page asks the vibrationActuator of the pad itself (dual-rumble; Chrome, Edge and Opera GX with an Xbox-type or DualSense pad), because the web runtime of Godot has no pad rumble. timing.json switches.webRumble. Waits for haptic-switches.patch and web-rumble.patch' },
+-  { id: 'settle', file: 'data/biomes/contact.json', path: ['settle', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"settle": int(WorldContact.K_MAXC)', probeIf: { file: 'sim/world/contact.gd', text: 'static var K_MAXC' },
+-    what: 'a body on the ground digs or stops (Encounter, docs/director/pending/ground-settle): a launched body meets the ground at most 3 times, and 0, 0, 1, 1 bounces by tier, instead of tumbling off it up to 8. data/biomes/contact.json settle.enabled. The read-back is the contact limit (3 on, 8 off). Waits for the patch and its key' },
+-  { id: 'splitShare', file: 'data/camera/swing.json', path: ['splitShare'], from: 0, to: 0.7, needs: [], optional: true,
+-    probe: '"splitShare": (split_rig.split_share if split_rig != null else -1.0), "leadAhead": (split_rig.lead_ahead if split_rig != null else false)', probeIf: { file: 'data/camera/swing.json', text: 'splitShare' },
+-    what: 'against a CPU the player pane takes 0.7 of the split (Camera swing-share, Orb first play asked for about 0.7), instead of 50/50; with tiles on. data/camera/swing.json splitShare. ?splitshare=0.5 on a local page sets it for a comparison. The probe also reads lead_ahead. Waits for swing-share.patch' },
+-  { id: 'chaseTap', file: 'data/director/interrupts.json', path: ['chase', 'tap', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"chaseTap": DirChaseTap.on()', probeIf: { file: 'sim/director/chase_tap.gd', text: 'static func on' },
+-    what: 'the chase after a launch by a plain tap (Encounter, docs/director/pending/chase-tap; Orb: the follow-up floats): while the one you sent is in the air, press X, Y or B and you rush him; the blow lands as you catch him and sends him on. The price is free, 20, 30, 45 for X. data/director/interrupts.json chase.tap.enabled. Waits for the park' },
+-  { id: 'chargeArmour', file: 'data/director/stick.json', path: ['armour', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"chargeArmour": DirStick.armourOn()', probeIf: { file: 'sim/director/stick.gd', text: 'static func armourOn' },
+-    what: 'a charged attack has the armour of B (Encounter, docs/director/pending/charge-armour; Orb: charged attacks should be much harder to interrupt, especially by light attacks): data/director/stick.json armour.enabled. Needs the right hand. Waits for the park' },
+-  { id: 'power', file: 'data/fight/power.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'the one energy model (Simulation\'s sim/core/power.gd; Game Design\'s power-scale.md; register row A-ENERGY-04): data/fight/power.json enabled. Orb\'s 9 November build ran it ON through a code patch of the page (the setup key "power": true) while the data said off; now it is a data row like the others, so the build\'s data is what the game ran on and a pack verify can read it. The page word ?power=0 (or off) still turns it off for one match. When main\'s data has it on, the row has nothing left to flip' },
+   { id: 'powerPace', file: 'data/fight/ladder.json', path: ['chargePerSec'], from: 0.5, to: 2, needs: [], optional: true,
+     what: 'the power-up pace for the page (from the idle-match README of Encounter, until QA has read the tier pace): data/fight/ladder.json chargePerSec 0.5 to 2, so a fighter charges four times as fast. It moves the golden and every replay data hash: for the page only' },
+   { id: 'waterWarm', file: 'data/biomes/water.json', path: ['flowWarm', 'cols'], from: 0, to: 48, needs: [], optional: true, presentIf: { file: 'sim/world/water.gd', text: 'warmCols' },
+     what: 'a new flow window reads its span in chunks of 48 columns (World, docs/world/pending/water-window-warm): the first flow step comes 16 ticks later and no tick reads more than 48 columns of a window. data/biomes/water.json flowWarm.cols 0 to 48. IT MOVES EVERY HASH from the first water window: for the page only, and never for a replay proof against an older build (pass --off waterWarm there). Waits for the park' },
+-  { id: 'chargeClose', file: 'data/director/interrupts.json', path: ['brawl', 'chargeClose', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'Encounters press-decides charge-close (docs/director/pending/charge-close; Game Design press-decides section 2): a B held and let go at a rival walking away. data/director/interrupts.json brawl.chargeClose.enabled. Waits for the park' },
+-  { id: 'pressWait', file: 'data/director/interrupts.json', path: ['brawl', 'pressWait', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'Encounters press-decides press-wait (docs/director/pending/press-wait; Orbs second play: hard to charge an attack when every hit seems to interrupt). data/director/interrupts.json brawl.pressWait.enabled. Waits for the park' },
+-  { id: 'oneRuleB', file: 'data/director/interrupts.json', path: ['brawl', 'oneRuleB', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'Encounters press-decides one rule for B (docs/director/pending/b-one-rule; replaces press-send). data/director/interrupts.json brawl.oneRuleB.enabled. Waits for the park' },
+-  { id: 'beamAim2', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'aim', 'enabled'], from: false, to: true, needs: ['beamFront'], optional: true,
+-    what: 'Encounters beam aim cut (docs/director/pending/beam-aim): acts only with the beam fronts stationary, beside Controls beamAim. data/director/interrupts.json beamPlays.front.aim.enabled. Waits for the park' },
+-  { id: 'nodeWarm', file: 'data/biomes/field.json', path: ['warm', 'radius'], from: 0, to: 10000, needs: [], optional: true, presentIf: { file: 'sim/world/field.gd', text: 'warmNear' },
+-    what: 'the ground\'s nodes round the start are read at the match start (World, docs/world/pending/node-warm): data/biomes/field.json warm.radius 0 to 10,000; about 0.34 s more at match load on a native build (the web load time is in the smoke), the same state hash. Waits for the park' },
+-  { id: 'stickPend', file: 'data/director/stick.json', path: ['pendFollow', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'a stick press waits with its request, up to 90 ticks, and is told at once when it is answered or refused (Encounter, docs/director/pending/stick-pend; Game Design stick-lands). data/director/stick.json pendFollow.enabled. The park\'s other switch, flickRun, stays OFF until Game Design sets its points (no row). Waits for the park' },
+-  { id: 'joltYield', file: 'data/director/swing.json', path: ['jolt', 'yieldToLaunch'], from: false, to: true, needs: [], optional: true,
+-    what: 'a jolt swing yields to a launch swing on the same tick (Encounter, docs/director/pending/swing-pair; QA kept-build row 4). data/director/swing.json jolt.yieldToLaunch. Waits for the park' },
+-  { id: 'brawlShareCap', file: 'data/director/swing.json', path: ['brawl', 'shareCap', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'brawl swings are not offered while they would be over 0.4 of the match\'s big swings, once there have been 3 (Encounter, docs/director/pending/swing-pair). data/director/swing.json brawl.shareCap.enabled. Waits for the park' },
+   { id: 'gen3', setup: { planetGen: 3 }, presentIf: { file: 'sim/world/field.gd' }, needs: [], optional: true,
+     what: 'planet generation 3 (World\'s field world): the match\'s setup says planetGen 3 on a whole ring (no arena key), not a data flag. Waits until the tree has World\'s code (sim/world/field.gd)' },
+   { id: 'blackbox', url: 'blackbox=1', presentIf: { file: 'sim/core/replay.gd' }, needs: [], optional: true,
+     what: 'the black box for Orb\'s first play (the EP, 2026-11-01): records the presses, the seed and the setup on this PC in the project\'s own replay format, and after the match offers three optional questions and a file to save (a download to the player\'s Downloads folder). Read-only, no network, nothing leaves the PC; the sim is stepped by the same call with the same inputs. Local pages only. tools/preview/blackbox.mjs' },
+   { id: 'go', url: 'go=1', presentIf: { file: 'ui/core/ui_prefs.gd' }, needs: [], optional: true,
+     what: 'the private page for a person with a pad (the EP, 2026-11-01): ?go=1 on a local page sets, before the start menu loads, Player 1 = Controller and Intros off if the player has not chosen otherwise, and counts the How to play card as seen. The notice card and its "I understand, start" stay, a deliberate click. Nothing already chosen is overwritten.' },
+-  { id: 'meteor', url: 'meteor=loud', alt: { word: 'meteor=quiet', label: 'the quiet trail' }, presentIf: { file: 'data/vfx/meteor.json' }, needs: [], optional: true,
+-    probe: '"meteor": host.vfx.meteor_enabled', probeIf: { file: 'render/vfx/vfx_hub.gd', text: 'meteor_enabled' },
+-    what: 'VFX\'s meteor trail: a fighter\'s own burn laid along his path and cooling in the world. A page word on a local page (?meteor=loud, the default here, or ?meteor=quiet: two sets of numbers for Orb to pick between); no word, the trail is off and byte-identical off. The printed address carries the loud word and the quiet one is printed beside it. Waits until the tree has VFX\'s data/vfx/meteor.json' },
+-  { id: 'tiles', url: 'tiles=1', cmd: '--tiles', alt: { add: 'nofore=1', label: 'the fore tone OFF, to compare (Rendering\'s page word; on by default)' }, presentIf: { file: 'render/core/tile_ground.gd' }, needs: ['gen3'], optional: true,
+-    what: 'Rendering\'s tile ground (stage 4 of the ring-at-any-angle work): the fight on planet-keyed tiles on a true globe, through Simulation\'s frame. A page word for now (?tiles=1, local pages only): the printed address carries it. Needs gen3 and waits until the tree has render/core/tile_ground.gd' },
+-  { id: 'swing', file: 'data/director/swing.json', path: ['enabled'], from: false, to: true, needs: ['gen3'], optional: true,
+-    probe: '"swings": (st.swing.n if st.swing != null else -1), "swing": ({"on": st.swing.active, "rate": snappedf(st.swing.rate, 0.1), "left": snappedf(st.swing.left, 0.1), "cause": st.swing.cause, "kind": st.swing.kind} if st.swing != null else {}), "fst": [st.fighters[0].state, st.fighters[1].state], "ln": [st.fighters[0].launchN, st.fighters[1].launchN], "pz": [st.pause.left, snappedf(st.dirS.stop, 0.01)]',
+-    probeMore: [{ line: '"mv": SimSwing.movingNow(st)', probeIf: { file: 'sim/core/swing.gd', text: 'func movingNow' } },
+-      { line: '"swingOn": DirSwing.on(st)', probeIf: { file: 'sim/director/swing.gd', text: 'static func on(S: SimState)' } },
+-      { line: '"stickOn": DirStick.on()', probeIf: { file: 'sim/director/stick.gd', text: 'static func on() -> bool' } }], probeIf: { file: 'sim/core/state.gd', text: 'var swing = null' },
+-    what: 'DirSwing (Encounter): the choreographer\'s swing: a launch, a chase, a form\'s pause, an AI\'s flight and a brawl each offer the line a turn, which the core\'s SimSwing runs. data/director/swing.json `enabled`; it does nothing but on a field world, so it needs gen3 (setup planet, touch, planetGen 3). Waits until the tree has Encounter\'s code' },
+-  { id: 'everywhere', file: 'data/biomes/field.json', path: ['plans', 'everywhere'], from: false, to: true, needs: ['gen3'], optional: true,
+-    probe: '"everywhere": WorldPlan.everywhere()', probeIf: { file: 'sim/world/plan.gd', text: 'static func everywhere' },
+-    what: 'buildings at every place (World, docs/world/places-everywhere.md): each place the first ring does not hold is laid as the whole of its plan, planet-fixed, with no people, so a swing or a launch onto any town finds real buildings. data/biomes/field.json plans.everywhere. Gen 3 only. Waits until the tree has World\'s park (docs/world/pending/places-everywhere)' },
+-  { id: 'arc', file: 'data/director/launch.json', path: ['arc', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"arc": DirArc.on()', probeIf: { file: 'sim/director/arc.gd', text: 'static func on' },
+-    what: 'the meteor launch, one curve, with ignition (Encounter, docs/director/pending/meteor and meteor-2; row 5 of rule-of-cool-map.md): a heavy charged to full at tier 4 with two forms each goes up one authored curve, the meteor on a stunned or weak foe. data/director/launch.json arc.enabled. Try it from a training start: ?tier=4. Waits until the tree has Encounter\'s park' },
+-  { id: 'ending', file: 'data/director/interrupts.json', path: ['ending', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"ending": DirEnding.on()', probeIf: { file: 'sim/director/ending.gd', text: 'static func on' },
+-    what: 'the match ending (Encounter; Game Design\'s ladder, spec-wounds.md 1b-end): at the time limit the fighter with less wear gets his finisher with no contest, and level wear is a no-contest (a no_contest cue, no KO). data/director/interrupts.json ending.enabled. Waits until the tree has Encounter\'s park (docs/director/pending/match-ending)' },
+-  { id: 'follow', file: 'data/director/interrupts.json', path: ['bands', 'follow', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"follow": DirFollow.on()', probeIf: { file: 'sim/director/follow.gd', text: 'static func on' },
+-    what: 'a far press follows him (Encounter, docs/director/pending/far-follow; row 42): for 150 ticks after a send or knock-back he threw, a far tap flies him after the target instead of taunting. data/director/interrupts.json bands.follow.enabled. Waits until the tree has Encounter\'s park' },
+-  { id: 'lightStops', file: 'data/director/stick.json', path: ['lightStops'], from: true, to: false, needs: ['rightStick'], optional: true,
+-    probe: '"lightStops": DirStick.lightStops()', probeIf: { file: 'sim/director/stick.gd', text: 'static func lightStops' },
+-    what: 'a light on a quick flick still lands (Encounter, docs/director/pending/stick-directions): no stun, worth softWorth, so the direction shows; LB held through a flick holds the guard. data/director/stick.json lightStops, false here. True is today\'s rule. Waits for the stick-directions park' },
+-  { id: 'grapple', file: 'data/director/interrupts.json', path: ['grapple', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"grapple": DirGrapple.on()', probeIf: { file: 'sim/director/grapple.gd', text: 'static func on' },
+-    what: 'A in a brawl catches (the clinch and the throws) and a far A taunts: data/director/interrupts.json grapple.enabled. Off as shipped' },
+-  { id: 'driver', file: 'data/director/interrupts.json', path: ['blast', 'driver', 'enabled'], from: false, to: true, needs: ['signatureRtOnly'], optional: true,
+-    probe: '"driver": DirDriver.on()', probeIf: { file: 'sim/director/driver.gd', text: 'static func on' },
+-    what: 'RB + B is the Driver (Encounter, docs/director/pending/driver): hold B with RB to gather, let go to fire; a player\'s only. data/director/interrupts.json blast.driver.enabled. Needs driverOnRb with signatureRtOnly. Waits for the driver park' },
+-  { id: 'driverOnRb', file: 'data/input/timing.json', path: ['switches', 'driverOnRb'], from: false, to: true, needs: ['signatureRtOnly'], optional: true,
+-    probe: '"driverOnRb": SimInputData.driver_on_rb()', probeIf: { file: 'sim/input/input_data.gd', text: 'func driver_on_rb' },
+-    what: 'with signatureRtOnly, RB + B stays a B press for the Driver to read instead of being sent as Y\'s blast (Controls, signature-rt-only.patch). timing.json switches.driverOnRb. Waits for Controls\' stick-feel round 4' },
+-  { id: 'beamMove', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'ownMove', 'enabled'], from: false, to: true, needs: ['rightStick', 'beamFront'], optional: true,
+-    what: 'the beam as its own move (Encounter, docs/director/pending/beam-move): beamPlays.front.ownMove.enabled. It needs the right stick, the beam front (beamFront: beamPlays.front.enabled) and the stationary front (front.stationary, on in the data). Waits for the park' },
+-  { id: 'stallKeep', file: 'data/input/timing.json', path: ['switches', 'stallKeep'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"stallKeep": SimInputData.stall_keep_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func stall_keep_on' },
+-    what: 'no input lost in a stall (Controls, docs/controls/pending/impact-haptics, refusals): when the page hitches and several game steps read one pad snapshot, every button press and the stick\'s furthest point since the last step are kept. timing.json switches.stallKeep. Waits for the park' },
+-  { id: 'hapticImpact', file: 'data/input/timing.json', path: ['switches', 'hapticImpact'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"hapticImpact": SimInputData.haptic_impact_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_impact_on' },
+-    what: 'the impact rumble (Controls, docs/controls/impact-haptics.md): landed blows, closes, launches and landings, building breaks on the pad (Orb\'s 2026-10-05 picks). timing.json switches.hapticImpact. Waits for the park' },
+-  { id: 'dodgeHeld', file: 'data/input/timing.json', path: ['switches', 'dodgeHeld'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"dodgeHeld": SimInputData.dodge_held_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func dodge_held_on' },
+-    what: 'LT held in the intent\'s second word (Controls, docs/controls/dodge-held.md): the flight strike\'s take-back reads whether LT is still down at the face press. timing.json switches.dodgeHeld. Waits for the park and for Encounter to read it' },
+-  { id: 'hapticStages', file: 'data/input/timing.json', path: ['switches', 'hapticStages'], from: false, to: true, needs: ['beamMove', 'hapticLadder'], optional: true,
+-    probe: '"hapticStages": SimInputData.haptic_stages_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_stages_on' },
+-    what: 'the stages of a charge on the pad (Controls, docs/controls/pending/stage-pulses): a pulse for each stick_stage cue of Encounter. timing.json switches.hapticStages. Needs beamMove, and the hapticLadder row too (SimInputData.haptic_stages_on() is the ladder AND the flag). With beamMove off a hold is silent. Waits for the park' },
+-  { id: 'refusedCue', file: 'data/director/interrupts.json', path: ['press', 'refusedCue'], from: false, to: true, needs: [], optional: true,
+-    what: 'every refused press says so with a cue (Encounter, the morning fixes, batch 3): the press refused word at the edge and the knock on the pad, so a press never vanishes in silence. interrupts.json press.refusedCue. Waits for the park' },
+-  { id: 'strikeStages', file: 'data/director/stick.json', path: ['strikeStages', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    what: 'strike charge stages by power (Encounter, docs/director/pending/strike-stages; beams-own-move-plan step 2): 2 to 6 stages, a held charge that never fires by itself. data/director/stick.json strikeStages.enabled. Waits for the park' },
+-  { id: 'beamMoveAi', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'ownMove', 'ai'], from: false, to: true, needs: ['beamMove'], optional: true,
+-    what: 'the computer fires its beam through the same own move (Encounter, docs/director/pending/beam-ai). beamPlays.front.ownMove.ai. Needs beamMove. Waits for the park' },
+-  { id: 'pushMode', file: 'data/director/interrupts.json', path: ['beamStruggle', 'pushMode', 'enabled'], from: false, to: true, needs: ['struggle'], optional: true,
+-    alsoIn: { file: 'render/core/sim_host.gd', text: 'pushModeOf', why: 'the host line of Controls (docs/controls/pending/push-stick/host-push.patch): with pushMode on and no stick passed through, nothing pushes in a struggle' },
+-    what: 'what pushes in a beam struggle, chosen per player (Encounter, docs/director/pending/push-mode; Game Design: rhythm on the right stick by default, or on the face buttons). beamStruggle.pushMode.enabled; the choice rides in the match setup per slot. Waits for the park and Simulation\'s grant' },
+-  { id: 'pushUi', file: 'ui/data/options.json', path: ['options', 'struggle_push', 'default'], from: 'face', to: 'stick', needs: ['pushMode'], optional: true,
+-    what: 'the beam struggle push option of player 1 defaults to the right stick only when pushMode is on (UI, ui/data/options.json options.struggle_push.default; the shipped default is face, so a struggle panel never teaches a push the sim does not read). The row is on with pushMode and off without it' },
+-  { id: 'pushUi2', file: 'ui/data/options.json', path: ['options', 'struggle_push_p2', 'default'], from: 'face', to: 'stick', needs: ['pushMode'], optional: true,
+-    what: 'the same for player 2 (options.struggle_push_p2.default)' },
+   { id: 'wallPush', file: 'data/director/launch.json', path: ['walk', 'enabled'], from: false, to: true, needs: [], optional: true, held: 'waiting on QA city read',
+     what: 'the wall push (Encounter, docs/director/pending/city-push): a landed blow carries the pair toward the nearest standing building, so a slam can happen. launch.json walk.enabled (walk.reachWalked stays off: it is on Orb bystander hold, RL-247). Held off until QA city read' },
+   { id: 'wallPushAi', file: 'data/director/launch.json', path: ['walk', 'ai', 'enabled'], from: false, to: true, needs: ['wallPush'], optional: true, held: 'waiting on QA city read',
+     what: 'the computer leans for the wall push by its personality (Encounter, city-push). launch.json walk.ai.enabled. Needs wallPush. Held off until QA city read' },
+-  { id: 'slamTurn', file: 'data/director/swing.json', path: ['slam', 'enabled'], from: false, to: true, needs: ['swing'], optional: true, held: 'waiting on QA city read',
++  { id: 'slamTurn', file: 'data/director/swing.json', path: ['slam', 'enabled'], from: false, to: true, needs: [], optional: true, held: 'waiting on QA city read',
+     what: 'a wall slam or a lodge turns the world: it can start a big swing, cause slam (Encounter, city-push). data/director/swing.json slam.enabled. Needs swing. Held off until QA city read' },
+   { id: 'cityHold', file: 'data/biomes/brunt.json', path: ['lodgeHold'], from: 'world', to: 'body', needs: [], optional: true, held: 'waiting on QA city read',
+     more: [{ path: ['wallRebound'], from: 0.25, to: 0 }, { path: ['wallStop'], from: 1, to: 0 }, { path: ['wallDepthHold'], from: 0, to: 1 }, { path: ['repeatMarks'], from: 0, to: 2 }],
+     what: 'the wall hold of World (docs/design/playable-build.md section 4): a body that meets a wall is held by it, no rebound, no stop, held at its depth, and repeat marks 2. data/biomes/brunt.json lodgeHold body, wallRebound 0, wallStop 0, wallDepthHold 1, repeatMarks 2, as one row. Held off until QA city read' },
+-  { id: 'flightStrikes', file: 'data/director/interrupts.json', path: ['zip', 'flightStrikes', 'enabled'], from: false, to: true, needs: ['rightStick', 'signatureRtOnly'], optional: true,
+-    more: [{ file: 'data/input/timing.json', path: ['switches', 'flightStrikeB'], from: false, to: true }, { file: 'data/input/timing.json', path: ['switches', 'dodgeHeld'], from: false, to: true }],
+-    what: 'the flight strikes (Encounter): three keys as one row, across two files: interrupts.json zip.flightStrikes.enabled, timing.json switches.flightStrikeB and switches.dodgeHeld (the same key as the dodgeHeld row; either row turns it on). Needs rightStick and signatureRtOnly. ON in the next build (the EP, 2026-11-07); it waits, naming the key, until the park that adds it lands' },
+   { id: 'aimCuts', file: 'data/director/launch.json', path: ['aimCuts', 'enabled'], from: false, to: true, needs: [], optional: true, held: 'held for the next batch\'s page (EP)',
+     what: 'the aim cuts (Encounter): data/director/launch.json aimCuts.enabled. Held off in the morning build; for the next batch\'s page' },
+-  { id: 'stickLungeLight', file: 'data/director/stick.json', path: ['lungeLight', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    what: 'the light lunge on the stick (Encounter): data/director/stick.json lungeLight.enabled. Needs rightStick. ON in the next build (the EP, 2026-11-07); it waits, naming the key, until the park that adds it lands' },
+-  { id: 'flickKeep', file: 'data/director/stick.json', path: ['flickKeep', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    more: [{ path: ['pendFollow', 'enabled'], from: false, to: true }, { file: 'data/input/timing.json', path: ['switches', 'flickKept'], from: false, to: true, ifPresent: true }],
+-    what: 'a stick flick that cannot start now is kept (Encounter, docs/director/pending/refusal-reasons; Game Design ruling 1): held, the newest only, quietly, and his first blow out. data/director/stick.json flickKeep.enabled. ON in Sunday\'s build (the EP, 2026-11-07); it waits, naming the key, until the park lands. The new refusal knocks ride press.refusedCue, which stays held' },
+-  { id: 'flickRun', file: 'data/director/stick.json', path: ['flickRun', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    what: 'a landed quick flick counts in its striker\'s run, with the steal on top (Game Design, stick-lands.md; the refusal-reasons park sets its points to 1.5). data/director/stick.json flickRun.enabled. ON in Sunday\'s build (the EP, 2026-11-07)' },
+-  { id: 'fullSend', file: 'data/director/stick.json', path: ['fullSend', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    more: [{ file: 'ui/data/features.json', path: ['features', 'slam_hint'], from: false, to: true }],
+-    what: 'the stick\'s full send and the slam (Encounter, docs/director/pending/stick-slam; Game Design slam-and-pace section 1): a hold to the top stage sends, down on a foe in the air is the slam. data/director/stick.json fullSend.enabled, and in the same row UI\'s "Hold to slam" hint, ui/data/features.json features.slam_hint (UI: turn it on in the same commit as fullSend). ON in Sunday\'s build (the EP, 2026-11-07); it waits until both parks (stick-slam and slam-hint) have landed' },
+-  { id: 'chordPick', file: 'data/input/timing.json', path: ['switches', 'chordPick'], from: false, to: true, needs: ['hapticRefused'], optional: true,
+-    what: 'a chord is the biggest press (Controls, docs/controls/pending/chord-full-send; docs/controls/chord-pick.md): when two buttons come together the hub picks the biggest and says what it dropped, and the full send has its own haptic. timing.json switches.chordPick. Needs hapticRefused (the hub needs it to knock and list the drop). ON in Sunday\'s build (the EP, 2026-11-07); it waits, naming the key, until the park lands' },
+-  { id: 'bNoBeam', file: 'data/input/timing.json', path: ['switches', 'bNoBeam'], from: false, to: true, needs: [], optional: true,
+-    what: 'B never fires a beam (Orb\'s rule of 2026-11-01: beams come only from the right stick; Controls, docs/controls/pending/b-no-beam, design docs/controls/b-no-beam.md): a player\'s B never starts a beam, alone, with RT held, or with LT held past the flight strike\'s window; the stick\'s own beam is unaffected. timing.json switches.bNoBeam. It reads nothing else. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands. Note: the park\'s first patch only adds the key, and the switch does nothing until its second patch (director-isb.patch, Encounter\'s DirBrawl.isB) lands too: the row going on is not proof the beam is closed, so read the build\'s own data and the leak check' },
+-  { id: 'bNoBeamKeepRt', file: 'data/input/timing.json', path: ['switches', 'bNoBeamKeepRt'], from: false, to: true, needs: ['bNoBeam'], optional: true,
+-    what: 'the interim of bNoBeam (the EP, 2026-11-08; Controls\' park docs/controls/pending/b-no-beam): B with RT held is still the signature until RT + right stick is built, so the signature is never unreachable; every other press of B is closed. timing.json switches.bNoBeamKeepRt. Needs bNoBeam (with it off this does nothing). ON in the next build, together with bNoBeam; it waits, naming the key, until the park lands. It goes OFF when the RT + stick signature lands (then B with RT held is closed too)' },
+-  { id: 'arrive', file: 'data/director/interrupts.json', path: ['bands', 'arrive', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    alsoIn: { file: 'sim/core/fighter.gd', text: 'SimDir.arrive(', why: 'Simulation\'s grant (docs/director/pending/arrive/grant-simulation-arrive.patch): without the hook line in free flight the switch does nothing' },
+-    what: 'the arrival (Encounter, docs/director/pending/arrive; Game Design\'s overnight ruling (c)): LT\'s high speed eases into striking distance over the last 1.5 body heights, never through the rival. data/director/interrupts.json bands.arrive.enabled. ON in the next build (the EP, 2026-11-08) and tied to the page\'s "dash": true: the page sends the dash only when this row is on (preview.mjs dashWord), because the flat-out dash at 5,000 a second would fly through the rival without it. It waits, naming what is missing, until BOTH the park (the key) and Simulation\'s grant (the hook line in fighter.gd) have landed' },
+-  { id: 'slip', file: 'data/fight/power.json', path: ['dash', 'slip', 'enabled'], from: false, to: true, needs: ['arrive'], optional: true,
++  { id: 'slip', file: 'data/fight/power.json', path: ['dash', 'slip', 'enabled'], from: false, to: true, needs: [], optional: true,
+     what: 'the slip\'s brake (Simulation, docs/architecture/pending/dash-slip; Game Design\'s overnight ruling (c), "a tapped LT is still the slip"): an LT let go before tick 6 of the dash eases to the slip\'s 1,125 a second over 4 ticks instead of carrying a full dash; held 6 ticks or longer, nothing changes. data/fight/power.json dash.slip.enabled. Only with the page\'s dash (the model on), so it needs arrive. It does its job with Controls\' dashHandover on: with the 12-tick lunge every tap is a 13-tick dash. It waits, naming the key, until the park lands' },
+-  { id: 'dashHandover', file: 'data/input/timing.json', path: ['switches', 'dashHandover'], from: false, to: true, needs: ['arrive', 'slip'], optional: true,
+-    what: 'LT dash handover (Controls, docs/controls/dash-handover.md; Game Design ruling of 2026-11-08 section c): the free 12-tick lunge after a press of LT is a handover instead: at least 1,000 a second on the tick after the press and full by tick 12, so a tapped LT is the slip and not a 13-tick dash. data/input/timing.json switches.dashHandover. Needs arrive (the arrival, so the fast dash never flies through the rival) and slip (the brake that makes a tap a slip). ON in the polish build (the EP and Controls, 2026-11-09, on Encounter slip-arrive); it waits, naming the key, until the park lands' },
+-  { id: 'carryRound', file: 'data/director/interrupts.json', path: ['carryRound', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'you only go round after him if you are still pressing toward him (Encounter, docs/director/pending/carry-round; Game Design\'s beams-third-play.md, the dodge exchange; gauntlet-plan.md section 8): the dodge set piece\'s follow rush (exchange.gd, the rush op) carries a player round only while the stick still presses toward; let go and he stays where he is, the set piece is over and he is free. data/director/interrupts.json carryRound.enabled (top level, deadZone 0.3). Off, nothing changes. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands' },
+-  { id: 'paceMatch', file: 'data/director/ai.json', path: ['levels', 'easy', 'brawl', 'paceMatch', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'easy matches the player\'s pace (Encounter, docs/director/pending/pace-match; Game Design\'s gauntlet-plan.md section 6): on the easy level the gap between the computer\'s taps in a brawl string is never shorter than the player\'s own recent gap between attack presses (floor 12, ceiling 30 ticks, a 3 s window, 27 with no human). data/director/ai.json levels.easy.brawl.paceMatch.enabled. Off, nothing changes. ON in the next build (the EP, 2026-11-09, after Encounter\'s gauntlet, docs/director/runs/397a7adf/pace-match/gauntlet/: Orb\'s scheme 5 to 65 percent on easy, the masher held at 60, the only option that held both bands); it waits, naming the key, until the park lands' },
+-  { id: 'inertKnock', file: 'data/input/timing.json', path: ['switches', 'inertKnock'], from: false, to: true, needs: ['rightStick', 'hapticRefused'], optional: true,
+-    what: 'a right-stick push on a layer where the strike stick is inert (RT held, or LB + RB) is told once: the refusal "charging" ("warding"), one pad knock, one row for UI (Controls, docs/controls/pending/inert-knock; design docs/controls/inert-knock.md). timing.json switches.inertKnock. Needs rightStick and hapticRefused (the hub\'s refusal cues). ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands. UI needs words for charging and warding ("Charging", "Warding"): until it has them the pad knocks and the screen may say nothing' },
+-  { id: 'sideFromBlowOnly', file: 'data/director/launch.json', path: ['sideFromBlowOnly'], from: false, to: true, needs: [], optional: true,
+-    what: 'a launch goes the way of the blow (Game Design\'s overnight ruling (a), docs/design/overnight-2026-11-08.md; Encounter\'s park docs/director/pending/side-from-blow): the full heavy\'s curve keeps the punch\'s way with the stick at rest, and only the stick picks the far side; the launch planner offers no candidate on the far side. data/director/launch.json sideFromBlowOnly (top level). Off, nothing changes. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands' },
+-  { id: 'chargeLostCue', file: 'data/input/timing.json', path: ['switches', 'chargeLostCue'], from: false, to: true, needs: [], optional: true,
+-    probe: '"chargeLostCue": SimInputData.charge_lost_cue_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func charge_lost_cue_on' },
+-    what: 'a lost charge is felt (Controls, docs/controls/pending/charge-lost; design docs/controls/charge-lost.md): three pad pulses of their own for the charger only, no screen mark: charge_broken (a heavy, a stick strike or a beam hold taken by a blow of the foe), charge_lapsed (lost to a stagger or the end of the brawl) and hold_short (a right-stick hold let go of before stage 1). timing.json switches.chargeLostCue. No pairing (the hold_short pulse only happens with the right stick, which is on). ON in the polish build (the EP, 2026-11-09); it waits, naming the key, until the park lands' },
+-  { id: 'menusRail', file: 'ui/data/features.json', path: ['features', 'menus_rail'], from: false, to: true, needs: [], optional: true,
+-    what: 'the Rail menus (UI & UX, docs/ui/menus-rail.md; Orb picked mockup A on 2026-11-09): Start, Pause, New match? and Match over get one frame, a dark rail down the left with the choices and the detail on the right, the buttons of the last device along the foot, and Options gets tabs across the top. ui/data/features.json features.menus_rail. Off, every screen is as before; it also stays as before on a touch screen, under 1000 by 600, and when narrower than 1.3 to 1. Slides and eases only (ADR 0010). ON in the polish build (the EP, 2026-11-09) if the rule fix from UI and the EP look at the stills pass; it waits, naming the key, until the key is in the tree' },
+   { id: 'hitstopAny', file: 'data/fight/hitstop.json', path: ['budgetAny', 'enabled'], from: false, to: true, needs: [], optional: true,
+     what: 'the freeze budget on whichever table is live (Simulation, docs/architecture/pending/hitstop-any; Game Design gauntlet-plan.md sections 7 and 8: at most 15 percent of a match frozen on average): the window of the last 10 live seconds counts every frozen tick even with hit-stop by weight off, and over 12 percent of it a hit stop is x0.7 (x0.5 over the 40 percent deep line), at least 1 tick; a decisive blow, a KO, a launch, a full launch and a heavy are never cut. data/fight/hitstop.json budgetAny.enabled (the setup word hitstopBudget is read over it). Off, the golden is byte-identical. ON in the polish build (the EP, 2026-11-09) if the re-read by Encounter holds; it waits, naming the key, until the park lands' },
+   { id: 'airBrake', file: 'data/fight/brake.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+     what: 'the air brake (Game Design, buildings.md 7.2; sim/core/brake.gd): hold LT to brake while knocked back in the air. data/fight/brake.json enabled; SimCore.newMatch copies it into the match, and the file joins a replay\'s data hash only when on. After Simulation\'s determinism and rollback checks' },
+-  { id: 'stances', file: 'data/director/interrupts.json', path: ['stances', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+-    probe: '"stances": DirStance.on()', probeIf: { file: 'sim/director/stance.gd', text: 'static func on' },
+-    what: 'LB and LT on a blow (Encounter, docs/director/pending/stances; pad-first-press.md): the check, the push and the rest differ. data/director/interrupts.json stances.enabled. Needs the stick. Waits for the stances park' },
+-  { id: 'phrases', file: 'data/combat/phrases.json', path: ['enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
++  { id: 'phrases', file: 'data/combat/phrases.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+     probe: '"phrases": DirPhrase.on()', probeIf: { file: 'sim/director/phrase.gd', text: 'static func on' },
+     what: 'each fighter\'s phrases (Combat\'s lists, Encounter\'s hook; rule-of-cool-map.md row 1): a press inside a phrase takes its next piece, a mash counts as part of it. data/combat/phrases.json enabled. Waits for the phrases and hook parks' },
+-  { id: 'craterlook', url: 'craterlook=1', presentIf: { file: 'render/core/tile_ground.gd', text: 'crater_look' }, needs: ['tiles'], optional: true,
+-    what: 'Art\'s crater and scar looks (Rendering, 2026-11-01i; docs/art/crater-look.md): walls in two rings toned by their facing, a warm floor, a burn for the scar. A page word on a local page, on the tile ground only. Waits for the crater-scar-look park' },
+-  { id: 'vsHuman', file: 'data/director/ai.json', path: ['vsHuman', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'the beams of the AI against a human (Encounter, docs/director/pending/clash-window): it fires its first by 25 to 45 s and paces the rest when the human could pay and answer. data/director/ai.json vsHuman.enabled. Waits for the clash-window park' },
+-  { id: 'firstMeteor', file: 'data/director/launch.json', path: ['arc', 'firstMeteor'], from: false, to: true, needs: ['arc'], optional: true,
+-    what: 'a stand-in rule for trying the meteor (Encounter, docs/director/pending/meteor-route): the first planet-scale launch of the match IS the meteor, whatever the rival is doing. Both at tier 4 (the full-power address), fly next to him, hold B until the flash, let go. data/director/launch.json arc.firstMeteor. Waits for the meteor-route park' },
+-  { id: 'beamFront', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"beamFront": DirBeamPlay.frontOn()', probeIf: { file: 'sim/director/beamplay.gd', text: 'static func frontOn' },
+-    what: 'beams that travel, and the window to answer (Encounter, docs/director/pending/beam-front; row 40 of rule-of-cool-map.md): the beam takes ticks from hand to him, the hit is decided at arrival, and he can fire back, dodge in the last 14 ticks or block. data/director/interrupts.json beamPlays.front.enabled. Waits until the tree has Encounter\'s park' },
+   { id: 'kick', file: 'data/fight/kick.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+     probe: '"kick": SimKick.enabled()', probeIf: { file: 'sim/core/kick.gd', text: 'static func enabled' },
+     what: 'the kick and the coin turn (Simulation, docs/architecture/kick.md; rule-of-cool-map.md row 23): flat out from under half of top speed leaves at `instant` of top speed on the first tick (default 0.8) and reaches top speed over `climbTicks` (default 8) (Orb: instant, or at least instant to about 80%); a stick flip above half of top speed brakes, plants and kicks the other way. The overspeed is its own switch and off. Page words to try values: ?instant=0.9&climbTicks=4 (the printed sample addresses). data/fight/kick.json enabled. A setup\'s "kick" overrides it for a match: the page word ?kick=1 puts true in the setup, ?kick=off puts false (to compare). Waits until the tree has Simulation\'s park (docs/architecture/pending/kick)' },
+-  { id: 'mixed', file: 'data/combat/mixed.json', path: ['enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
++  { id: 'mixed', file: 'data/combat/mixed.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+     probe: '"mixed": DirMixed.on()', probeIf: { file: 'sim/director/mixed.gd', text: 'static func on' },
+     what: 'the mixed string (Combat, Orb\'s clip C9; docs/design/energy-overhaul.md section 21): a send or a knock opens a string across any range, and in it a tapped far heavy is a lob aimed where he is going, timed to land as he does. data/combat/mixed.json enabled. Needs the right hand. A prototype nobody has played. Waits until the tree has Combat\'s park (docs/combat/pending/mixed-string)' },
+-  { id: 'struggle', file: 'data/director/interrupts.json', path: ['beamStruggle', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"struggle": DirBeam.struggleOn()', probeIf: { file: 'sim/director/beam.gd', text: 'static func struggleOn' },
+-    alt: { add: 'struggle=off', label: 'the beam struggle OFF (Encounter\'s page word; on by default here)' },
+-    what: 'the beam struggle on the pulse: surges, strays and letting go (Encounter; Game Design\'s redesign after Orb\'s playtest of 2026-10-16: what you press during the clash moves the outcome). data/director/interrupts.json beamStruggle.enabled. On by default on the private page; ?struggle=off on a local page turns it off. Waits until the tree has Encounter\'s park (docs/director/pending/beam-struggle)' },
+-  { id: 'soundTug', file: 'audio/data/tug_cues.json', path: ['enabled'], from: false, to: true, needs: ['struggle'], optional: true,
+-    probe: '"soundTug": host.audio_cues.tug.enabled()', probeIf: { file: 'audio/audio_tug.gd', text: 'func enabled' },
+-    what: 'the beam struggle sound (Audio, docs/audio/first-play-sound.md): the two-drone bed, the pulse, surge, stray, lock and end, in the lower family. audio/data/tug_cues.json enabled. Needs the beam struggle (its events). Read back: host.audio_cues.tug.enabled()' },
+-  { id: 'soundMoments', file: 'audio/data/moment_cues.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"soundMoments": host.audio_cues.moments.enabled()', probeIf: { file: 'audio/audio_moments.gd', text: 'func enabled' },
+-    what: 'the moments a player would notice (Audio, docs/audio/pending/moments): a beam charging and firing, the KO, the biggest blows, a launch, the meteor landing, a parry, two bolts meeting; existing sounds only, low and chunky. audio/data/moment_cues.json enabled. Read back: host.audio_cues.moments.enabled()' },
+-  { id: 'soundCarry', file: 'audio/data/carry_cues.json', path: ['enabled'], from: false, to: true, needs: ['soundTug'], optional: true,
+-    probe: '"soundCarry": host.audio_cues.carry.enabled()', probeIf: { file: 'audio/audio_carry.gd', text: 'func enabled' },
+-    what: 'the carry sounds (Audio, docs/audio/first-play-sound.md): what the HUD no longer draws, said in sound. audio/data/carry_cues.json enabled. Needs the beam struggle sound. Read back: host.audio_cues.carry.enabled()' },
+ ];
+ 
+ export const IDS = SWITCHES.map((s) => s.id);
+@@ -378,7 +495,8 @@ export function resolve(off = [], table = SWITCHES, on = []) {
+   const IDS = table.map((s) => s.id);
+   const want = new Set(off.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
+   const wantOn = new Set(on.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
+-  const unknown = [...want, ...wantOn].filter((id) => id !== 'all' && !IDS.includes(id));
++  const landed = [...new Set([...want, ...wantOn].filter((id) => LANDED_IDS.includes(id) && !IDS.includes(id)))];   // main's own data since GW1a: nothing to turn on or off here
++  const unknown = [...want, ...wantOn].filter((id) => id !== 'all' && !IDS.includes(id) && !landed.includes(id));
+   // a row with `held` (a reason) is off in a build unless asked for with --on: it is on the list, off, with its reason (the city rows wait on QA's read)
+   const held = table.filter((s) => s.held && !wantOn.has(s.id)).map((s) => ({ id: s.id, why: s.held }));
+   const heldIds = new Set(held.map((h) => h.id));
+@@ -392,7 +510,7 @@ export function resolve(off = [], table = SWITCHES, on = []) {
+       if (missing.length) { active.delete(sw.id); cascaded.push({ id: sw.id, because: missing }); again = true; }
+     }
+   }
+-  return { active: IDS.filter((id) => active.has(id)), cascaded, unknown, held };
++  return { active: IDS.filter((id) => active.has(id)), cascaded, unknown, held, landed };
+ }
+ 
+ /** Which switch a load error or console line is about, by the file or module it names. A hint for the report, not a proof. */
