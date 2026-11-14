@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX desync check   Godot 4.7.2-stable (official)   setup default   600 ticks   checkpoint every 60   delay 2
+seed 1  straight: 10 checkpoints, digest 315 us mean, SimHash.stateHash 20794 us
+  ok   clean   lan     checkpoints matched   9  rollbacks    0  
+  ok   rng         lan     desync at 240 (agreed to 180): first field S.rng.a (417283181 vs 417283180), 3 field(s) listed
+  ok   fighter_x   lan     healed: the state equals the straight run's again by checkpoint 240 (SimHash), nothing to detect
+  ok   building_hp lan     desync at 240 (agreed to 180): first field S.bHp[0] (3374.0 vs 3375.0), 1 field(s) listed
+  ok   terrain     lan     desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   mood        lan     desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   director    lan     desync at 240 (agreed to 180): first field S.dirS.cool (-0.01333233333333 (bits bf8b4dfb7d2b1577) vs -0.01333333333333 (bits bf8b4e81b4e81b26)), 1 field(s) listed
+FAIL  injection fighter_x healed every time: it tested nothing
+objects alive before 1719, after 1731
+FAIL  7 runs, 9 checkpoints matched, 1 failure(s)
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe --ticks=600 --profiles=lan: no SCRIPT ERROR lines

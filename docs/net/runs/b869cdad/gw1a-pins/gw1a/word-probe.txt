@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+right stick on: false
+first tick the digests differ: -1
+hash same: false
+  diff: { "path": "S.fighters[0].act.dirI[610]", "a": "60", "b": "0" }
+  diff: { "path": "S.fighters[0].input.rsHeld", "a": "false", "b": "true" }
+  diff: { "path": "S.fighters[0].input.rsDir", "a": "0", "b": "3" }
+  diff: { "path": "S.fighters[0].input.rsLevel", "a": "0", "b": "2" }
+  diff: { "path": "S.fighters[1].act.dirI[610]", "a": "60", "b": "0" }
+  diff: { "path": "S.fighters[1].input.rsHeld", "a": "false", "b": "true" }
+  diff: { "path": "S.fighters[1].input.rsDir", "a": "0", "b": "3" }
+  diff: { "path": "S.fighters[1].input.rsLevel", "a": "0", "b": "2" }
+A fighter0 input rsHeld false rsDir 0 rsLevel 0 | B true 3 2
