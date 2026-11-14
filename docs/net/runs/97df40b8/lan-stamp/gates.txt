@@ -1,0 +1,6 @@
+a01_lan_check gate exit 0, SCRIPT ERROR 0 :: LAN: 0 check(s) failed  [lan_check.gd --ticks=1200]
+a02_word_check gate exit 0, SCRIPT ERROR 0 :: word check passed: 623 checks, 0 failed  [word_check.gd ]
+a03_desync_check gate exit 0, SCRIPT ERROR 0 :: PASS  14 runs, 18 checkpoints matched, 0 failure(s)  [desync_check.gd --seeds=1 --ticks=600 --profiles=lan,p120]
+b01_lan_check gate exit 0, SCRIPT ERROR 0 :: LAN: 0 check(s) failed  [lan_check.gd --ticks=1200 --negative-control]
+b02_word_check gate exit 0, SCRIPT ERROR 0 :: word check passed: 9 checks, 0 failed  [word_check.gd --negative-control]
+b03_desync_check gate exit 0, SCRIPT ERROR 0 :: PASS  negative control: 5 break(s) caught, 0 missed  [desync_check.gd --seeds=1 --ticks=600 --profiles=lan,p120 --negative-control]

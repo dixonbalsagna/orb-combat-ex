@@ -1,0 +1,20 @@
+# The kit on the page tree at HEAD 681aa09a (Tools' stamp) with replay-build.patch applied and this park's net/; no --build.
+replay-build applied to the page tree: exit 0; buildId in replay.gd: 1; refusal in desync.gd: 1
+kit exit 0: kit in <user>\AppData\Local\Temp\claude\bb5aa63790efa20b\879b4c35-3465-4ddb-bf73-1a63538915f3\scratchpad\kit21, build 681aa09a-a156d7d7, host 10.0.0.135, rule for 10.0.0.0/24
+host-lan: exit 0, script errors 0; 2026-11-14T00:42:09; Connected, input wait 2 ticks; tick 1, delay 2, rollbacks 0, deepest 0, checks matched 0, ping 0.9 
+join-lan: exit 0, script errors 0; 2026-11-14T00:42:43; Connected, input wait 2 ticks; tick 600, delay 2, rollbacks 0, deepest 0, checks matched 9, ping 16
+saved: lan-681aa09a-old-20261114-004243-test.json
+host-lan again with --frames=1500 (the first run's 900 frames ended at tick 592, before the save at 600): exit 0, script errors 0
+
+# The stamp
+page tree:  {"commit":"681aa09","date":"2026-11-14","stack":1,"id":"681aa09a-a156d7d7"}
+exe:        {"commit":"681aa09","date":"2026-11-14","stack":1,"lan":true,"built":"2026-11-14T08:40:43.839Z","id":"681aa09a-a156d7d7"}
+tree/:      {"commit":"681aa09","date":"2026-11-14","stack":1,"lan":true,"built":"2026-11-14T08:40:43.839Z","id":"681aa09a-a156d7d7"}
+exe and tree/ byte for byte the same; tree/ has 1,260 files, all read-only; its sim, data, net and project.godot equal the exported tree
+lan-681aa09a-main-20261114-004345-test.json | build {"built": "2026-11-14T08:40:43.839Z", "commit": "681aa09", "date": "2026-11-14", "id": "681aa09a-a156d7d7", "lan": true, "stack": 1.0} | replay.build 681aa09a-a156d7d7 | ticks 600 | checkpoints 10
+lan-681aa09a-old-20261114-004243-test.json | build {"built": "2026-11-14T08:40:43.839Z", "commit": "681aa09", "date": "2026-11-14", "id": "681aa09a-a156d7d7", "lan": true, "stack": 1.0} | replay.build 681aa09a-a156d7d7 | ticks 600 | checkpoints 10
+
+# blackbox-verify (tools/preview/blackbox-verify.mjs)
+main's file on the folder's tree/:  BLACKBOX OK ticks=600 final=092c6ec1aa260c6f
+old's file on the folder's tree/:   BLACKBOX OK ticks=600 final=bf1d653f88326812 (a separate --lan-loop run, so another match)
+main's file on a copy of tree/ whose stamp id is 681aa09a-00000000: BLACKBOX FAILED: reason=build firstBadTick=-1

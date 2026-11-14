@@ -1,0 +1,254 @@
+diff --git a/docs/net/lan-v1.md b/docs/net/lan-v1.md
+index dedab8f..9cfa952 100644
+--- a/docs/net/lan-v1.md
++++ b/docs/net/lan-v1.md
+@@ -71,12 +71,14 @@ Each PC saves the match as `lan-<commit8>-<main|old>-<yyyymmdd-hhmmss>-<reason>.
+ | `net` | delay, rollbacks, deepest, checks matched, round trip, packets dropped by the checks, the tick a gone PC's seat went to the computer |
+ | `replay` | SimReplay (`meridian-replay`, v4): every player's confirmed inputs to `finalTo`, the toggles (a dropped seat on its sim slot), SimHash's gameplay hash at each final checkpoint (every 60 ticks; `NetSession.hashChecks`), and the final hash when the confirmed tick is the present (on a LAN, most of the time) |
+ 
+-It plays back through the project's own replay path: `node tools/preview/blackbox-verify.mjs <file> --tree <the LAN folder>	ree` (the folder's tree is the page's). `lan_check` proves both PCs' files play back (1v1, 2v2 together, a dropped seat), with negative controls for a changed input and a toggle on the wrong body.
++It plays back through the project's own replay path: `node tools/preview/blackbox-verify.mjs <file> --tree <the LAN folder>\tree` (the folder's own tree; see the build's stamp below). `lan_check` proves both PCs' files play back (1v1, 2v2 together, a dropped seat), with negative controls for a changed input and a toggle on the wrong body.
++
++**The build's stamp (A-NET-05, 2026-11-14).** Each LAN folder's game names its build once, in `res://build_info.json`, the file `SimReplay.buildId()` reads. The kit writes it in the shape of Tools' page stamp: `{commit (7), date (the commit's), stack, lan: true, built (the kit's own UTC time), id}`. The id is the page's own (`<commit8>-<cache key 8>`): the kit changes only render and UI files, so the sim, data and net a replay runs on are the page's, and a LAN save plays on the page (Tools' LAN report clips) and on its kept tree too (the stand-in's B1 review, finding 1). `built` tells one LAN folder from another. Both PCs, running the same folder, share the stamp. A saved file's `build` is that stamp and its replay's `build` is the id; the file name keeps the commit's first 8 from the id. The kit writes the same stamp into the folder's `tree/` (the game's sim, data, net, project and class cache as exported, read-only), so a saved match plays back there. Anywhere else (another build, a dev tree) it is refused as another build's before its first tick, with both ids, the same reason a solo replay gets; UI writes the sentence. `--build` is needed only for a tree with no page stamp. `lan_check` loads a foreign LAN save from disk and checks the refusal, with a control that leaves the build check out.
+ 
+ ## Making the folder
+ 
+ ```
+-node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135 --build=<name>
++node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135
+ ```
+ 
+ Build it on the main PC: the kit stops if the address isn't that PC's own. `10.0.0.135` comes from Performance's look on 2026-10-31.
+diff --git a/net/lan.gd b/net/lan.gd
+index d2fc4ad..5df15f1 100644
+--- a/net/lan.gd
++++ b/net/lan.gd
+@@ -520,7 +520,7 @@ func save(reason: String) -> String:
+ 	var dir: String = saveDir if saveDir != "" else OS.get_executable_path().get_base_dir().path_join(SAVE_DIR)
+ 	DirAccess.make_dir_recursive_absolute(dir)
+ 	var stamp: String = Time.get_datetime_string_from_system().replace("-", "").replace(":", "").replace("T", "-")
+-	var commit: String = String(doc.build.get("commit", "dev")).left(8).validate_filename()   # the build's commit, so files from different builds never mix (the EP)
++	var commit: String = commit8(doc.build)   # the build's commit, so files from different builds never mix (the EP)
+ 	var name: String = "lan-%s-%s-%s-%s" % [commit if commit != "" else "dev", doc.pc, stamp, reason]
+ 	var fname: String = name + ".json"
+ 	var n: int = 2
+@@ -538,7 +538,21 @@ func save(reason: String) -> String:
+ 	return fname
+ 
+ 
++## The commit's first 8 characters for a saved file's name, from the build's stamp: its id begins with them (Tools' page id is
++## "<commit8>-<key8>", and the LAN kit keeps it; the stamp's own "commit" has 7). A stamp with no id gives its commit.
++static func commit8(b: Dictionary) -> String:
++	var id: String = String(b.get("id", ""))
++	var c: String = id.get_slice("-", 0) if id != "" else String(b.get("commit", "dev"))
++	return c.left(8).validate_filename()
++
++
++## The exe's stamp, res://build_info.json, the one SimReplay.buildId() reads (A-NET-05): the saved file's "build" is it, and its
++## replay's "build" is its id, so a LAN save names its build once. stampFor (tests) stands in for the file.
++static var stampFor: Dictionary = {}
++
+ static func _buildInfo() -> Dictionary:
++	if not stampFor.is_empty():
++		return stampFor.duplicate(true)
+ 	if not FileAccess.file_exists("res://build_info.json"):
+ 		return {}
+ 	var j = JSON.parse_string(FileAccess.get_file_as_string("res://build_info.json"))
+diff --git a/net/tools/lan_check.gd b/net/tools/lan_check.gd
+index 041420c..3579b6b 100644
+--- a/net/tools/lan_check.gd
++++ b/net/tools/lan_check.gd
+@@ -24,6 +24,10 @@ extends SceneTree
+ ##   - a saved match (NetLan.save, with the scripted hit-stops off so the inputs are the whole match): both PCs' files play back through SimReplay.play,
+ ##     every checkpoint and the final hash matching, the two PCs' replays the same, in 1v1 (lan, p120), 2v2 together (p120) and together with the second PC
+ ##     gone (its seat's toggle on the sim's slot, p3's);
++##   - A-NET-05, a stamped build (the kit's stamp standing in for build_info.json): both PCs' saved files name the build once (the file's "build" is the stamp,
++##     the replay's "build" its id), the file name keeps the commit's first 8, and both play back on that build; a LAN save loaded from disk with another
++##     build's id is refused as "build" before its first tick, with both ids, as a solo replay is, and so is a save with no stamp; the desync report's
++##     re-run refuses it too;
+ ##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on, the dash and its slip's brake, and the page's travel of 1.5,
+ ##     and a short match on each stays in step;
+ ##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
+@@ -36,7 +40,8 @@ extends SceneTree
+ ## doesn't put the view back after its rollback must be caught showing fight 0 while the player stands; with CD-10's checks off, the huge wait must be taken, the bad
+ ## slot must reach the session (which refuses it, with no script error) and the flood must fill it; and with the hand-over off, a gone PC must freeze the match; and a LAN setup without its "power" word
+ ## must be caught starting with the model off; a saved match with one input changed, and one whose dropped seat's toggle names the session's index
+-## instead of the sim's slot, must each fail to play back.
++## instead of the sim's slot, must each fail to play back; and with SimReplay's build check left out (blindBuild), the foreign LAN save must play to its
++## last tick, so the refusal is the build id's alone.
+ ## Each must be caught.
+ ## Verdict line: LAN: N check(s) failed
+ 
+@@ -430,6 +435,9 @@ func _init() -> void:
+ 		ok(not bool(wrongSeat.ok), "a dropped seat's toggle on the session's index must fail to play back")
+ 		_close(r)
+ 		ticks = keepN
++		var blind: Dictionary = _stampRows(saveTo, true)
++		print("control, A-NET-05 with the build check left out: the foreign LAN save played %s (reason \"%s\", to tick %d of %d)" % [str(blind.foreignOk), blind.foreignWhy, blind.foreignTo, blind.ticks])
++		ok(bool(blind.foreignOk) and int(blind.foreignTo) == int(blind.ticks), "with the build check left out, the foreign LAN save must play to its last tick")
+ 		r = _run("lan", true, true, 0, true, false)
+ 		print("control, two fights, S not moved to the player's fight: %d frames held the wrong one" % r.wrongFight)
+ 		ok(r.wrongFight > 0, "with S not moved, a PC must be caught holding the wrong fight")
+@@ -636,6 +644,14 @@ func _init() -> void:
+ 		print("  saved match, %s: %d checkpoints, finals %d, play %s, same %s, toggles %s" % [what, sp.n, sp.finals, str(sp.reasons), str(sp.same), str(sp.toggles)])
+ 		_close(sr)
+ 	ticks = keepT
++	var st: Dictionary = _stampRows(saveTo, false)
++	ok(bool(st.named), "A-NET-05: both PCs' files name the build once: the file's build is the stamp, the replay's build its id (%s)" % str(st.ids))
++	ok(bool(st.names), "A-NET-05: the file names keep the commit's first 8 from the stamp's id (%s)" % str(st.files))
++	ok(bool(st.ownOk), "A-NET-05: both PCs' stamped files play back on that build (%s)" % str(st.ownWhy))
++	ok(st.foreignWhy == "build" and int(st.foreignAt) == -1 and st.foreignBuild == st.otherId and st.foreignHome == st.id and st.foreignRefusal == "build", "A-NET-05: a LAN save of another build, loaded from disk, is refused as \"build\" before its first tick, with both ids (%s, at %d; build %s, home %s; refusal %s)" % [st.foreignWhy, st.foreignAt, st.foreignBuild, st.foreignHome, st.foreignRefusal])
++	ok(st.bareWhy == "build", "A-NET-05: a LAN save with no stamp is refused by a stamped build (%s)" % st.bareWhy)
++	ok(bool(st.reportRefuses), "A-NET-05: the desync report's re-run (NetDesync.replayState) refuses the foreign save")
++	print("  A-NET-05, stamp %s: files %s; own play %s; foreign %s at %d (build %s, home %s); no stamp %s" % [st.id, str(st.files), str(st.ownWhy), st.foreignWhy, st.foreignAt, st.foreignBuild, st.foreignHome, st.bareWhy])
+ 	var pre: String = NetLan.prefixOf("10.0.0.135")
+ 	ok(pre == "10.0.0.", "the /24 of an address (%s)" % pre)
+ 	ok(NetEnetTransport.allowed("10.0.0.7", pre) and not NetEnetTransport.allowed("10.238.114.20", pre) and not NetEnetTransport.allowed("10.0.01.7", pre) and not NetEnetTransport.allowed("203.0.113.5", pre), "the filter lets in only the /24")
+@@ -671,6 +687,73 @@ func _setupPower(su: Dictionary) -> Array:
+ 	return [on, trav, hs[0] == hs[1]]
+ 
+ 
++## A-NET-05 on a stamped build: a 1v1 on lan to 600 ticks, both PCs save with the kit's stamp standing in for build_info.json (NetLan.stampFor, and
++## SimReplay's id set to it), each file is read back from disk; one is written back with another build's id ("foreign") and loaded again, and one
++## with no stamp. blind (the control): SimReplay.blindBuild, the build check left out. Leaves the stamp, the id and the switch as they were.
++func _stampRows(dir: String, blind: bool) -> Dictionary:
++	var stamp := {"commit": "6a30b4c", "date": "2026-11-09T14:31:07-08:00", "stack": 1, "lan": true, "built": "2026-11-14T20:15:00.000Z", "id": "6a30b4c9-6627cb9d"}
++	var other: String = "6eec6a75-62e1fea3"
++	var keepT: int = ticks
++	ticks = 600
++	NetLan.stampFor = stamp
++	SimReplay._bid = String(stamp.id)
++	SimReplay.blindBuild = blind
++	var out := {"id": stamp.id, "otherId": other, "ticks": 0, "named": true, "names": true, "ownOk": true, "ownWhy": [], "ids": [], "files": [],
++		"foreignWhy": "", "foreignAt": -2, "foreignBuild": "", "foreignHome": "", "foreignRefusal": "", "foreignOk": false, "foreignTo": -1, "bareWhy": "", "reportRefuses": false}
++	var r := _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"pure": true, "saveDir": dir})
++	var docs: Array = []
++	for k in range(2):
++		var fn: String = r.lans[k].save("test")
++		out.files.append(fn)
++		var d = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(fn))) if fn != "" else null
++		if not (d is Dictionary) or not (d.get("replay") is Dictionary):
++			out.named = false
++			out.ownOk = false
++			continue
++		docs.append(d)
++		out.ids.append([String((d.build as Dictionary).get("id", "")), String(d.replay.get("build", ""))])
++		var b: Dictionary = d.build
++		out.named = out.named and String(b.get("id", "")) == String(stamp.id) and String(b.get("commit", "")) == String(stamp.commit) and b.get("lan") == true and String(d.replay.get("build", "")) == String(stamp.id)
++		out.names = out.names and fn.begins_with("lan-6a30b4c9-%s-" % ("main" if k == 0 else "old"))
++		var res: Dictionary = SimReplay.play(d.replay)
++		out.ownWhy.append(String(res.reason))
++		out.ownOk = out.ownOk and bool(res.ok)
++		out.ticks = int(d.replay.ticks)
++	if not docs.is_empty():
++		var f: Dictionary = docs[0].duplicate(true)
++		f.replay.build = other
++		var ffn: String = "lan-6eec6a75-main-foreign-test.json"
++		var fh := FileAccess.open(dir.path_join(ffn), FileAccess.WRITE)
++		fh.store_string(JSON.stringify(f))
++		fh.close()
++		var back = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(ffn)))
++		DirAccess.remove_absolute(dir.path_join(ffn))
++		var fr: Dictionary = SimReplay.play(back.replay)
++		out.foreignWhy = String(fr.reason)
++		out.foreignAt = int(fr.firstBadTick)
++		out.foreignBuild = String(fr.get("build", ""))
++		out.foreignHome = String(fr.get("home", ""))
++		out.foreignOk = bool(fr.ok)
++		out.foreignTo = int(back.replay.ticks) if bool(fr.ok) else int(fr.firstBadTick)
++		out.foreignRefusal = SimReplay.refusal(back.replay)
++		var rs := NetDesync.replayState(back.replay, 60)
++		out.reportRefuses = rs == null
++		if rs != null:
++			SimCore.dispose(rs)
++		var bare: Dictionary = docs[0].duplicate(true)
++		bare.replay.erase("build")
++		out.bareWhy = String(SimReplay.play(bare.replay).reason)
++	for fn in out.files:
++		if String(fn) != "":
++			DirAccess.remove_absolute(dir.path_join(String(fn)))
++	_close(r)
++	SimReplay.blindBuild = false
++	SimReplay._bid = null
++	NetLan.stampFor = {}
++	ticks = keepT
++	return out
++
++
+ ## Both PCs save; each file is read back and played through SimReplay.play. mutate (tests): (doc) -> void, applied to each doc before it
+ ## plays. Returns {ok: every file played back to its checkpoints and final, same: the two replays' inputs and toggles alike, n: checkpoints,
+ ## finals: how many carried a final hash, reasons: SimReplay.play's reasons, toggles: the first file's toggles, files: the names}.
+diff --git a/net/tools/lan_kit.mjs b/net/tools/lan_kit.mjs
+index f6ec127..11d9bb6 100644
+--- a/net/tools/lan_kit.mjs
++++ b/net/tools/lan_kit.mjs
+@@ -1,15 +1,16 @@
+ // Makes the private LAN test's folder (docs/net/lan-v1.md): a plain 1v1 between two PCs. It edits a SCRATCH COPY of the project, exports it and writes the shortcuts. It starts no game and opens no port.
+ // The public desktop builds stay as they are: they exclude net/ (Legal RL-204), and nothing here goes on main. So the two lines the game needs are patched in here, and this stops if they no longer fit.
+-//   node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135 --build=NAME [--no-export]
++//   node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135 [--build=NAME] [--no-export]
++// --build: only for a tree with no page stamp (build_info.json with an id); a kept build's tree has one, and the kit's stamp builds on it (A-NET-05).
+ // --tree: a copy of main, or of the tree Tools' stack exported for the kept build (its sim_host steps through the black box's _bb_step).
+-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
++import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+ import { join, resolve } from 'node:path';
+ import { networkInterfaces } from 'node:os';
+ import { spawnSync } from 'node:child_process';
+ 
+ const a = Object.fromEntries(process.argv.slice(2).map((s) => { const [k, ...v] = s.replace(/^--/, '').split('='); return [k, v.join('=')]; }));
+ const stop = (m) => { console.error(m); process.exit(2); };
+-for (const k of ['tree', 'out', 'godot', 'host-ip', 'build']) if (!a[k]) stop(`--${k} is required`);
++for (const k of ['tree', 'out', 'godot', 'host-ip']) if (!a[k]) stop(`--${k} is required`);
+ if (!/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(a['host-ip'])) stop('--host-ip: a home-network address');
+ if (!/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a['host-ip'])) stop('--host-ip: private addresses only');
+ // Legal RL-230: the home network only. The address must be this PC's own, on a real adapter, as Performance's old-PC server refuses (build the folder on the PC that hosts).
+@@ -18,13 +19,22 @@ if (!/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a['host-ip'])) stop('--
+   if (!owner) stop(`--host-ip: ${a['host-ip']} isn't an address of this PC`);
+   if (/zerotier|vpn|tailscale|wireguard|hamachi|tap|tun|virtual|vethernet|loopback/i.test(owner[0])) stop(`--host-ip: ${owner[0]} is a member or virtual network, which RL-230 rules out`);
+ }
+-if (!/^[A-Za-z0-9._-]+$/.test(a.build)) stop('--build: letters, digits, dot, dash and underscore only');
++if (a.build !== undefined && !/^[A-Za-z0-9._-]+$/.test(a.build)) stop('--build: letters, digits, dot, dash and underscore only');
+ const tree = resolve(a.tree);
+ const out = resolve(a.out);
+ if (existsSync(join(tree, '.git'))) stop(`${tree} has a .git: give a scratch copy, never the repository`);
+ if (!existsSync(join(tree, 'project.godot'))) stop(`${tree} is not a project`);
+ if (existsSync(out) && readdirSync(out).length > 0) stop(`${out} is not empty`);
+ const subnet = a['host-ip'].split('.').slice(0, 3).join('.') + '.0/24';
++// The build's stamp (A-NET-05): SimReplay.buildId() reads res://build_info.json, so this names every replay the LAN game saves. It is Tools' page stamp
++// ({commit, date, stack, id}) with lan and the kit's own time (built, UTC). Its id is the page's own: the kit changes only render and UI files, so the sim,
++// data and net a replay runs on are the page's, and a LAN save plays on the page (Tools' LAN report clips), on its kept tree and on this folder's tree/,
++// and is refused as another build's anywhere else (the stand-in's B1 review, finding 1). built tells one LAN folder from another.
++const page = existsSync(join(tree, 'build_info.json')) ? JSON.parse(readFileSync(join(tree, 'build_info.json'), 'utf8')) : {};
++if (!page.id && !a.build) stop('--build is required: the tree has no page stamp (build_info.json with an id)');
++const built = new Date().toISOString();
++const stamp = { commit: String(page.commit || a.build).slice(0, 7), date: page.date ?? '', stack: page.stack ?? 0, lan: true, built, id: String(page.id || a.build) };
++if (!/^[A-Za-z0-9._-]+$/.test(stamp.id)) stop(`the stamp's id must be letters, digits, dot, dash and underscore only (${stamp.id})`);
+ const exeName = 'orb-combat-lan.exe';
+ 
+ function patch(rel, edits) {
+@@ -114,7 +124,7 @@ run(process.execPath, [join(tree, 'tools', 'desktop-package.mjs'), 'lock', '--ro
+   if (f.capture_hook === true) stop('the capture hook is on (RL-230)');
+ }
+ mkdirSync(out, { recursive: true });
+-writeFileSync(join(tree, 'build_info.json'), JSON.stringify({ commit: a.build, lan: true }));
++writeFileSync(join(tree, 'build_info.json'), JSON.stringify(stamp));
+ if (a['no-export'] === undefined) {
+   run(resolve(a.godot), ['--headless', '--path', tree, '--import']);
+   run(resolve(a.godot), ['--headless', '--path', tree, '--export-release', 'Windows Desktop', join(out, exeName)]);
+@@ -199,4 +209,15 @@ if (!words.includes("Fighters in the other fight can hit you, and your partner's
+ if (!/opens a network link between the two PCs/.test(words)) stop('lan_words.txt: it must say a link opens');
+ if (/collects|sends nothing|no accounts/i.test(words)) stop('lan_words.txt: RL-204\'s privacy line stays out of the kit');
+ writeFileSync(join(out, 'READ ME FIRST.txt'), words.replace(/\r?\n/g, '\r\n'));
+-console.log(`kit in ${out}, build ${a.build}, host ${a['host-ip']}, rule for ${subnet}`);
++// The folder's replay tree: the game's sim, data, net, project and class cache as exported, with the stamp, read-only.
++{
++  const rt = join(out, 'tree');
++  mkdirSync(rt, { recursive: true });
++  for (const x of ['sim', 'data', 'net', '.godot']) if (existsSync(join(tree, x))) cpSync(join(tree, x), join(rt, x), { recursive: true });
++  for (const x of ['project.godot', 'build_info.json']) copyFileSync(join(tree, x), join(rt, x));
++  writeFileSync(join(rt, 'README.txt'), crlf([`The replay tree of this LAN folder, build ${stamp.id}: the game's sim, data, net and project as it was exported, with its stamp (build_info.json).`,
++    'A saved match from saved\\ plays back exactly here, and only here:', '  node tools/preview/blackbox-verify.mjs <lan-....json> --tree "<this folder>"', 'Read-only: never edit, swap or rebuild it.']));
++  const lock = (p) => { for (const n of readdirSync(p)) { const q = join(p, n); if (statSync(q).isDirectory()) lock(q); else chmodSync(q, 0o444); } };
++  lock(rt);
++}
++console.log(`kit in ${out}, build ${stamp.id}, host ${a['host-ip']}, rule for ${subnet}`);
