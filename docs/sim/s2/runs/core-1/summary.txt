@@ -1,0 +1,13 @@
+import 0; parse errors 0
+validate 0; 322 files checked, 0 errors, 2 warnings
+lint 0; determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/world, sim/input 
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+load_split: exit 0 in 4 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name
+well: exit 1 in 52 s; script errors 0; WELL: 1 check(s) failed
+3:well: the snap's speed by tier (power 0, flat out 3500): [4000, 4373, 5464, 6827]
+4:well: AI against AI, 600 ticks, ticks the first slot stood in the rival's well: 600
+5:well: two who let go at 10 bh are 2.50 bh apart after 31 s; the fastest draw was 69.4 a second (cap 107.5)
+6:FAIL  Game Design's capped draw: on with the stick held, halved on a fighter holding away (619 against 1176)
+golden: exit 0 in 147 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 143.5 s
+  the golden with the well off REPRODUCES GW1a's target byte for byte
+s2a done

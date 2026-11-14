@@ -1,0 +1,7 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+well: the snap's speed by tier (power 0, flat out 3500): [4000, 4373, 5464, 6827]
+well: AI against AI, 600 ticks, ticks the first slot stood in the rival's well: 600
+well: two who let go at 10 bh are 2.50 bh apart after 31 s; the fastest draw was 69.4 a second (cap 107.5)
+FAIL  Game Design's capped draw: on with the stick held, halved on a fighter holding away (619 against 1176)
+WELL: 1 check(s) failed

@@ -1,0 +1,25 @@
+#!/bin/sh
+# s2a_go.sh <scratchpad>: spike S2's core (the gravity well) on s2: HEAD + close-rows + energy-on + gates + GW1a's target data.
+# import; validate, lint, the two-fighter ratchet, the load split; well_check; the golden with the well off against GW1a's
+# target (byte for byte). ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; T="$NS/s2"; O="$NS/s2o"
+R="/c/Users/<user>/Documents/Claude Proj/Breakers-Like"
+rm -rf "${NS:?}/s2o"; mkdir -p "$O" "$NS/s2app"; export APPDATA="$(cygpath -w "$NS/s2app")"
+cd "$T" || exit 1
+case "$(pwd -P)" in */scratchpad/s2) ;; *) echo refusing; exit 1 ;; esac
+run() { name="$1"; t="$2"; shift 2; s=$(date +%s); timeout "$t" "$G" --headless --path . --script "$@" > "$O/$name.txt" 2>&1; code=$?; echo "$name: exit $code in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR\|Parse Error' "$O/$name.txt"); $(grep -v 'WARNING\|at: \|^$\|ERROR: \|wait_to_finish' "$O/$name.txt" | tail -1 | cut -c1-150)"; grep -n "^FAIL\|^  FAIL\|^well:" "$O/$name.txt" | head -40 | cut -c1-260; }
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"; grep -n "Parse Error\|SCRIPT ERROR" "$O/import.txt" | head -8 | cut -c1-240
+node tools/validate.js > "$O/validate.txt" 2>&1; echo "validate $?; $(tail -1 "$O/validate.txt" | cut -c1-80)"
+node tools/lint-determinism.mjs > "$O/lint.txt" 2>&1; echo "lint $?; $(tail -2 "$O/lint.txt" | tr '\n' ' ' | cut -c1-200)"
+node tools/ratchet-two-fighter.mjs > "$O/ratchet.txt" 2>&1; echo "ratchet $?; $(tail -1 "$O/ratchet.txt")"
+run load_split 600 res://sim/core/tools/load_split.gd
+run well 1200 res://sim/core/tools/well_check.gd
+cp sim/core/test/golden.json "$O/golden_main.json"
+run golden 900 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$R/docs/sim/runs/6a30b4c9/gw1a-target/golden-target.json" && echo "  the golden with the well off REPRODUCES GW1a's target byte for byte" || echo "  the golden with the well off DIFFERS from GW1a's target"
+cp sim/core/test/golden.json "$O/golden_s2.json"
+cp "$O/golden_main.json" sim/core/test/golden.json
+echo s2a done
