@@ -1,0 +1,22 @@
+Attribution of Tools' full local readings (hardware, 960x540, f1f91f45, the nightly's page words) from their kept frames (VFX, 2026-11-14; EP only). Read in place, nothing copied. Frame n is tick n. Method: the analyser's own event list (analysis.json: tick, sign, size), then for each large event the share of the frame whose luminance changed by more than 0.10 (26 of 255) between tick-3 and tick, and where on the screen, from the frames; the clip's `inWindow` column is what the flash register thought it had granted.
+
+SIGNATURE, normal (primary 3.5, memory 2.5)
+ events in the worst second: ticks 76(-) 82(+, 4.0x threshold) 110(-) 114(+, 3.6x) 123(+) 125(-) 127(+) 129(-); next large: 138(+, 3.9x), 189(+, 3.8x)
+ changed share of the frame at the big events: tick 82: 26.1% (left pane 31%, right 21%); tick 114: 17.1% (right pane 32%, left 2%); tick 138: 6.8%.
+ What the changed area is: at 82 the whole scene pans (every building edge in both panes); at 114 and 138 one large lit building face (salmon, against the night sky) slides across the right pane, then the ground plane; the beam itself is a thin line.
+ register: its in-window count was up to 6 from tick 50: the register was granting VFX and Rendering flashes in that second, but the big events are not the register's grants.
+SIGNATURE, reduced (primary 3.5, memory 2.5)
+ events: 78 81 82 86(+, 4.0x) 112 115(+, 3.7x) 125 138(+, 3.9x) 177 189(+, 3.8x) ...
+ changed share: tick 86: 27.9%; tick 115: 13.6%; tick 138: 6.2%; tick 189: 9.6%: the same events at the same size as normal.
+ register: its in-window count never passed 1 (ticks 1420 to 1479 only): under Reduce flashing nothing of VFX or Rendering is granted a full flash in the worst second, and the reading is the same 3.5.
+COLLAPSE, reduced (primary 3, over our gate), end of the clip
+ events: 1465(-) 1471(+) 1479(-) 1491(+) 1495(-) 1499(+), 1.5x to 2.5x threshold each
+ changed share: tick 1471: 8.7%; 1491: 13.2%; 1495: 16.7%. The frame is a close view of a mountainside of tile ground: the white areas of the change map are the terrain's bands and slabs shifting as the camera moves; there is no effect in frame but the two fighters.
+ register: in-window nonzero only from tick 138 to 881 (max 2): nothing was asking it in the last second.
+
+ATTRIBUTION (a reading of frames and the register log; not a control)
+- The signature's counted flashes are SCENERY SWEEPING PAST A MOVING CAMERA, on the tile ground: whole facades and the ground plane changing luminance against the night sky as the panes pan. The register cannot see this (flash_registry.gd's header names it: scenery past a moving camera, a panel wiping open). VFX's pieces (the beam, chips, sparks, speed streaks) appear in the change maps as thin lines and small blocks, a few percent of the frame. Under Reduce flashing VFX asks nothing and the reading is the same, which is the cleanest evidence: the cause is not an effect that the reduced mode switches off.
+- That the reduced reading equals the normal one fits the camera's reduced scroll limit not being restored on this commit (SCROLL_MAX_REDUCED is 0.045, the ordinary limit, until Camera's cd04 lands): the reduced mode is not calmer at the camera.
+- The collapse's end is the same thing on close terrain: tile-ground bands shifting under a moving camera, with no effect in frame.
+- So the fixes are Camera's (the scroll governor in reduced, the cuts through ask_cut) and Rendering's (the ground's tones and the facade luminance against the sky), not VFX's. Nothing here is a reason to change a VFX effect.
+- NOT shown by this: whether VFX's pieces add anything at all to those seconds; that needs the control (my effects off, same clip), which I run only in a capture window.
