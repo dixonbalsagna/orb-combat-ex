@@ -23,10 +23,10 @@ index fbe2402..36502a7 100644
 +	return host.record_file("report", tags, note)
 diff --git a/render/core/match_recorder.gd b/render/core/match_recorder.gd
 new file mode 100644
-index 0000000..d3bd5b4
+index 0000000..361a577
 --- /dev/null
 +++ b/render/core/match_recorder.gd
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,155 @@
 +class_name MatchRecorder
 +extends RefCounted
 +## The match as a replay, on a plain desktop build (register rows A-UI-02 and A-CODE-03, Tools, 2026-11-14). It was the black box of the private page (tools/preview/blackbox.mjs): a few lines of the
@@ -99,6 +99,8 @@ index 0000000..d3bd5b4
 +		return
 +	if replay.is_empty():
 +		_begin(S)
++		if not armed:   # a match of two fights is not recorded (_begin said so): nothing was started, so there is no header to read below
++			return
 +	replay.toggles.append([int(replay.ticks), idx])
 +
 +
@@ -108,6 +110,8 @@ index 0000000..d3bd5b4
 +		return
 +	if replay.is_empty():
 +		_begin(S)
++		if not armed:   # a match of two fights is not recorded (_begin said so): nothing was started, so there is no header to read below
++			return
 +	if S.game.ko != null or int(replay.ticks) >= MAX_TICKS:   # the state now is the state after the last recorded tick: that is the match's final one
 +		replay.final = SimHash.stateHash(S).gameplay
 +		done = true
@@ -240,10 +244,10 @@ index ae4749b..6da5f64 100644
 +	return j if j is Dictionary else {}
 diff --git a/render/tools/match_recorder_check.gd b/render/tools/match_recorder_check.gd
 new file mode 100644
-index 0000000..374e978
+index 0000000..606f071
 --- /dev/null
 +++ b/render/tools/match_recorder_check.gd
-@@ -0,0 +1,150 @@
+@@ -0,0 +1,162 @@
 +extends SceneTree
 +## The match as a replay on a desktop build (A-UI-02, Tools, 2026-11-14; render/core/match_recorder.gd). Headless, through the real SimHost: a solo match and a couch match are played with scripted intents, the report
 +## and the save are asked for, and the file each leaves in user://reports/ is read back and replayed with SimReplay.play: it must be there, hold the match's kind, mode, build, mark and replay, and reproduce to the
@@ -372,6 +376,18 @@ index 0000000..374e978
 +	_made.append(name4)
 +	var doc4: Dictionary = _read(name4)
 +	_ok((doc4.get("replay", {}).get("toggles", []) as Array).size() == 1 and bool(SimReplay.play(doc4.get("replay", {})).ok), "an AI toggle during the match is recorded and the replay still verifies")
++
++	# a match of two fights (SimState.stage set): the recorder records nothing and never raises (found on the GW1a stack, 2026-11-14: anim_check printed "Invalid access to property 'ticks'" at before_step, because _begin
++	# disarmed it and left no header, and the line after it read one)
++	var srec := MatchRecorder.new()
++	var sstate := SimState.new()
++	sstate.stage = {}
++	srec.arm(7, {}, {})
++	srec.before_step(sstate, [])
++	srec.toggle(sstate, 0)
++	srec.before_step(sstate, [])
++	_ok(not srec.armed and srec.replay.is_empty(), "a match of two fights is not recorded: the recorder disarms itself, keeps no header and a toggle or a tick after that raises nothing")
++	_ok(srec.save(sstate, "report", "", "", {}, "user://reports_check_stage") == "", "and a save of it answers the empty name")
 +
 +	# the folder keeps the newest files only
 +	var rec := MatchRecorder.new()

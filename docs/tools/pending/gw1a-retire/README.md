@@ -49,3 +49,7 @@ On a scratch git of HEAD (clean `git archive`, then this patch): `preview-selfte
 ## The audio sets check step (`ci-sets-step.patch`)
 
 `audio/tools/sets_check.gd` passes on a clean HEAD copy with Audio's three data files laid over it (`gate.mjs` exit 0, "sets check passed", no SCRIPT ERROR) and **fails on HEAD alone** (gate exit 1): the step is red until the three sets are on in `audio/data`, so it lands with Audio's park (which carries `sets_check.gd` per the EP; if the file is not committed with it, the step names a file git does not have, which `tools/check-workflow-paths.mjs` refuses). The scripts table counts it as CI from then on.
+
+## Confirmed on the final stack (`s422 final`, HEAD 30ca5423 plus every GW1a park, read only)
+
+The same 82 data rows read at their `to` value in the final tree itself (no copy of Simulation's park needed any more): the id list equals the one the patch was cut from, so the patch, **sha1 `8bf4586ce97a19996a5fcb26cbd80639988b2890`, is unchanged**. The three look words are still on by default in the final tree's code (checked by line). `switch-diff --tree` on the final tree: the **old table 1 of 87** (`power`, the row where main is ahead of the build), the **new table 0 of 5**. The patch still applies to HEAD 59ef5597 (`tools/preview` has not changed since its base).
