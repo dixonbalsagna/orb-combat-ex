@@ -172,7 +172,7 @@
     "A-NET-05": {
       "status": "reported",
       "ref": "00925b89 (sim re-cut, B1); Netcode stack proof b0135850",
-      "note": "Waits on Tools' piece (EP status 4, Sat 14 Nov 04:50)."
+      "note": "B1 is in the EP's gate (scratch; all passing so far; re-check review docs/ep/reviews/B1-recheck.md, no blockers) (EP status 5, Sat 14 Nov 05:50)."
     },
     "A-CONTROLS-02": {
       "status": "reported",
@@ -328,6 +328,11 @@
       "status": "reported",
       "ref": "f83c78e9 (the GW1a preview reproduces the target byte for byte on today's code)",
       "note": "Not closed: main itself must reproduce the target, which waits on GW1a landing (EP status 4, Sat 14 Nov 04:50). Blockers: World's checks park, Sim's gates park, Rendering's foot-slice split."
+    },
+    "A-WORLD-06": {
+      "status": "reported",
+      "ref": "ee2cf459 (World: crater tiers)",
+      "note": "An A3 row reported early (EP status 5, Sat 14 Nov 05:50)."
     }
   },
   "added": [
@@ -367,9 +372,9 @@
       "owner": "rendering-techart",
       "what": "Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building.",
       "status": "reported",
-      "ref": "ff02e386 (Rendering: clipping, feet) and its GW1a re-cuts",
+      "ref": "ff02e386 (clipping); e7d544ea (foot slice, GW1a); the clipping re-cut, feet 1.0%",
       "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
-      "note": "Part reported (EP status 4, Sat 14 Nov 04:50); the foot-slice split blocks GW1a."
+      "note": "Reported (EP status 5, Sat 14 Nov 05:50)."
     },
     {
       "id": "ADD-A1-05",
@@ -411,6 +416,12 @@
       "count": 69,
       "of": 87,
       "note": "EP status 4 (Sat 04:50 PST): unchanged. GW1a blockers: World's checks park, Sim's gates park, Rendering's foot-slice split"
+    },
+    {
+      "date": "2026-11-14",
+      "count": 69,
+      "of": 87,
+      "note": "EP status 5 (Sat 05:50 PST): unchanged. GW1a blockers: Sim's gates park and VFX's hash_check grant approval"
     }
   ],
   "switchRowsEveryDays": 2,
@@ -525,9 +536,9 @@
     }
   },
   "notes": [
-    "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde): design 50c41812, rulings 49db1eff, trials T1 to T3 reported 73fa513e; Encounter's S3 row stays briefed until the trial clip.",
-    "Main is b0135850 (17 commits pushed; CI on 148f4e16 green); it includes the net CI split 3c2ff9ac and the local-build proof d3d5bd66. Nothing of the played game has landed.",
-    "Also: Tools' owner-private notice dd4dca9a is part of A-TOOLS-01 and closes nothing; Netcode lan-hash 8007de44 (B1); UI a1-world-menu 611c1c2b and a1-window-row 49fa623e.",
-    "Meters at EP status 4: all-models 68%, Fable 87% (the Fable reset waits on Orb)."
+    "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde): design 50c41812, rulings 49db1eff and e5241f26, 8a233e6c, trials T1 to T6 reported (73fa513e, 1c19d81d); Encounter's S3 row stays briefed until the trial clip.",
+    "Main is 46048213 (14 commits pushed; CI on b0135850 green, the first run of the split); all parks or tools, nothing of the played game.",
+    "Also: GW1c fix and the wall-hold split (World); Tools' schema cases 1e37ad83, CI rebalance 4df76d53, nightly windows 8ad6286a; the owner-private notice dd4dca9a is part of A-TOOLS-01 and closes nothing.",
+    "Meters at EP status 5: all-models 70%, Fable 87% (the Fable reset waits on Orb)."
   ]
 }
