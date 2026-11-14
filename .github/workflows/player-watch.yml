@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  actions: read   # the last successful run of flash-nightly.yml (CD-09: the scheduled flash reading must be at most two days old)
 
 jobs:
   watch:
@@ -27,6 +28,8 @@ jobs:
       - name: The reading's self-test (each way the live site can disagree with the repository)
         run: node tools/player-watch-selftest.mjs
       - name: Read the live site and compare it with the repository
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -o pipefail
           node tools/player-watch.mjs | tee "${RUNNER_TEMP}/player-watch.txt"

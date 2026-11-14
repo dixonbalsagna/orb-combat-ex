@@ -25,9 +25,10 @@ export function classify(body) {
 
 /**
  * The reading, pure: every input is passed in. site: parsed tools/site.json; gate: signature-gate.json; nightly: nightly-seeds.json; live: { status, body, pck, error } of the live /play/ (pck: the status of /play/index.pck);
- * today: YYYY-MM-DD; cfg: { nightlyMaxDays, warnDays }. Returns { lines: [{ level, text }], fail, state, expect }.
+ * today: YYYY-MM-DD; cfg: { nightlyMaxDays, warnDays }; ciNightly (optional): the scheduled flash reading of main, { last: 'YYYY-MM-DD' of its last successful run or null, error? } (CD-09, 2026-11-14), absent when the
+ * repository's runs could not be asked (a local run). Returns { lines: [{ level, text }], fail, state, expect }.
  */
-export function reading({ site, gate, nightly, live, today, cfg = {} }) {
+export function reading({ site, gate, nightly, live, today, cfg = {}, ciNightly }) {
   const maxNight = cfg.nightlyMaxDays ?? 2, warnDays = cfg.warnDays ?? 3;
   const lines = [];
   const add = (level, text) => lines.push({ level, text });
@@ -83,7 +84,31 @@ export function reading({ site, gate, nightly, live, today, cfg = {} }) {
     else if (expect === 'live') add('FAIL', `the last nightly is ${last}, ${age} day(s) old (the limit is ${maxNight}) and a game is live: the take-down trigger is not being read`);
     else add('WARN', `the last nightly is ${last}, ${age} day(s) old; not needed while the site is offline, needed again before it returns`);
   }
+  // 5. the scheduled flash reading of main (.github/workflows/flash-nightly.yml, CD-09): the alarm is the same whether a game is live or not, because every outside tester's gate list needs a current reading
+  if (ciNightly) {
+    if (ciNightly.error) add('WARN', `the runs of the scheduled flash reading (flash-nightly.yml) could not be read: ${ciNightly.error}`);
+    else if (!ciNightly.last) add('FAIL', 'the scheduled flash reading (flash-nightly.yml) has no successful run: no flash reading of main is being read on a schedule');
+    else {
+      const age = daysBetween(ciNightly.last, today);
+      if (age <= maxNight) add('OK', `the last scheduled flash reading of main succeeded on ${ciNightly.last} (${age} day(s) old)`);
+      else add('FAIL', `the last successful scheduled flash reading of main is ${ciNightly.last}, ${age} day(s) old (the limit is ${maxNight}): the flash reading is not being kept current`);
+    }
+  }
   return { lines, fail: lines.some((l) => l.level === 'FAIL'), state, expect };
+}
+
+/** The date of the last successful run of the scheduled flash reading, from GitHub's run list of the workflow (or { error }). Needs GITHUB_REPOSITORY; the token is optional (a public repository's list is open). */
+export async function ciNightlyFrom(env = process.env, fetcher = fetch) {
+  const repo = env.GITHUB_REPOSITORY;
+  if (!repo) return undefined;   // not on GitHub: nothing to ask
+  try {
+    const r = await fetcher(`https://api.github.com/repos/${repo}/actions/workflows/flash-nightly.yml/runs?status=success&branch=main&per_page=1`, { headers: { accept: 'application/vnd.github+json', 'user-agent': 'orb-combat-ex-player-watch', ...(env.GITHUB_TOKEN ? { authorization: `Bearer ${env.GITHUB_TOKEN}` } : {}) } });
+    if (r.status === 404) return { last: null };   // the workflow file is not on main yet: no run
+    if (!r.ok) return { error: `HTTP ${r.status}` };
+    const j = await r.json();
+    const run = j && Array.isArray(j.workflow_runs) ? j.workflow_runs[0] : null;
+    return { last: run && run.created_at ? String(run.created_at).slice(0, 10) : null };
+  } catch (e) { return { error: String(e && e.message || e) }; }
 }
 
 async function get(url, method = 'GET', tries = 3) {
@@ -110,7 +135,8 @@ async function main() {
   const play = await get(`${base}play/`);
   const pck = await get(`${base}play/index.pck`, 'HEAD', 2);
   const live = { status: play.status, body: play.body, error: play.error, pck: pck.error ? undefined : pck.status };
-  const r = reading({ site: json('site.json', {}), gate: json('flash/signature-gate.json', {}), nightly: json('flash/nightly-seeds.json', {}), live, today, cfg });
+  const ciNightly = await ciNightlyFrom();
+  const r = reading({ site: json('site.json', {}), gate: json('flash/signature-gate.json', {}), nightly: json('flash/nightly-seeds.json', {}), live, today, cfg, ciNightly });
   if (a.includes('--json')) console.log(JSON.stringify({ today, base, ...r }, null, 1));
   else {
     for (const l of r.lines) console.log(`${l.level.padEnd(4)}  ${l.text}`);

@@ -1,0 +1,98 @@
+# The scheduled flash reading of main (corrective item CD-09, register row A-LEGAL-08; Tools, 2026-11-14).
+# Every night a Web export of main is made on a runner and a fixed set of clips (the beam clash, the building collapse and the signature, each in normal and in reduced-flashing mode) is
+# captured in headless Chrome with software rendering and read with the release pass's analyser (tools/flash/run-pixels.mjs, wcag.js). tools/flash/nightly-ci.mjs turns the readings
+# into the night's verdict: a clip over the take-down line of 3 on ANY reading (the primary, the area-15% one, the two-second memory, or the red count read directly) turns that job red, and
+# so does a clip that could not be read (a missing clip is never a pass). GitHub emails the repository owner about a failed scheduled run; player-watch.yml also raises an alarm when the last
+# successful run of this workflow is more than two days old (tools/player-watch.mjs).
+#
+# The clips are read on the ground players see (`tiles=1`, planet 7, the loud meteor): the words are in FLASH_WORDS below.
+# One job a clip, so no job is near the six-hour limit: with software rendering (about 0.3 frames a second on a runner, docs/tools/flash-check.md) a 1,500-tick clip takes about an hour and a half.
+# Each job makes its own export (about five minutes), because nothing here may use an artifact action that is not pinned to a commit already in this repository.
+# NOT YET RUN ON A RUNNER (the pixel half has only run on this PC): start it once by hand, `gh workflow run flash-nightly.yml -f ticks=300`, to see the rate and the first lines; with ticks 0 it reads the full clips.
+# Nothing here gates a deploy and nothing is published.
+name: Flash nightly
+
+on:
+  schedule:
+    - cron: '23 4 * * *'   # every night, 04:23 UTC
+  workflow_dispatch:
+    inputs:
+      ticks:
+        description: 'ticks to read per clip: 0 is the full clip (1,500); a short number is a speed trial (the verdict then covers only those ticks)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash   # GitHub's `bash` is `bash --noprofile --norc -eo pipefail {0}`: a failing command before a pipe fails the step
+
+env:
+  FLASH_WORDS: 'flashcap=1&planet=7&meteor=loud&tiles=1'
+
+jobs:
+  read:
+    name: Read ${{ matrix.clip }} on main
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        clip: [clash-normal, clash-reduced, collapse-normal, collapse-reduced, signature-normal, signature-reduced]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - name: The verdict's self-test (each way a night can be clean, a finding, over the line or unread)
+        run: node tools/flash/nightly-ci-selftest.mjs
+      - uses: ./.github/actions/setup-godot
+        with:
+          web-templates: 'true'
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Write build_info.json
+        run: node tools/write-build-info.mjs --commit "${GITHUB_SHA}"
+      - name: Export Web (Compatibility, single-threaded)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/web"
+          "$GODOT" --headless --path . --export-release "Web" "${RUNNER_TEMP}/web/index.html"
+      - name: Capture the clip (software rendering) and read it
+        env:
+          CLIP: ${{ matrix.clip }}
+          TICKS: ${{ inputs.ticks || '0' }}
+        run: |
+          {
+            echo "### ${CLIP} on ${GITHUB_SHA::8}"
+            echo
+            echo "runner: $(nproc) vCPUs, $(free -g | awk '/Mem:/{print $2}') GB; $(google-chrome --version)"
+          } >> "$GITHUB_STEP_SUMMARY"
+          extra=()
+          if [ "${TICKS}" != "0" ]; then extra+=(--ticks "${TICKS}"); fi
+          node tools/flash/run-pixels.mjs --dir "${RUNNER_TEMP}/web" --path "/index.html?${FLASH_WORDS}" --out "${RUNNER_TEMP}/clips" --clip "${CLIP}" --sizes 960x540 --jobs 1 --cpu-cap 100 --clip-timeout 15000 --software "${extra[@]}" | tee "${RUNNER_TEMP}/run-pixels.txt" || true
+      - name: The night's verdict (red when the clip crosses the line of 3 on any reading or could not be read)
+        env:
+          CLIP: ${{ matrix.clip }}
+        run: |
+          set +e
+          node tools/flash/nightly-ci.mjs "${RUNNER_TEMP}/clips" --expect "${CLIP}" --md "${RUNNER_TEMP}/verdict.md" | tee "${RUNNER_TEMP}/verdict.txt"
+          code=${PIPESTATUS[0]}
+          { echo; cat "${RUNNER_TEMP}/verdict.md" 2>/dev/null || echo 'no verdict was written'; } >> "$GITHUB_STEP_SUMMARY"
+          # 0 clean, 3 a finding (a warning on the run, not red); 1 over the line and 2 not read are red
+          if [ "$code" = "1" ] || [ "$code" = "2" ]; then exit "$code"; fi
+          exit 0
+      - name: Keep the reading (summary and verdict, 30 days)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: flash-reading-${{ matrix.clip }}
+          path: |
+            ${{ runner.temp }}/clips/summary.json
+            ${{ runner.temp }}/verdict.txt
+            ${{ runner.temp }}/run-pixels.txt
+          retention-days: 30
+          if-no-files-found: warn

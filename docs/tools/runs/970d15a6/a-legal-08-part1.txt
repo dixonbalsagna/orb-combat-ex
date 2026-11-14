@@ -1,0 +1,35 @@
+A-LEGAL-08 part 1 (CD-09 items 1, 2, 4 and the scheduled reading's judge), Tools, 2026-11-14, on HEAD 970d15a6 plus the working tree
+
+1. The tie in tools/flash/wcag.js (Pool.push): the old code gave every tie between the two change directions to up.
+   Two equal halves strobing in counter-phase, 3 seconds, general count by the OLD code / the NEW code / either half alone:
+   OLD  half 3 both general 10 pass false
+   OLD  half 3 left general 10 pass false
+   OLD  half 3 cp general 0.5 pass true
+   OLD  half 5 both general 6 pass false
+   OLD  half 5 left general 6 pass false
+   OLD  half 5 cp general 0.5 pass true
+   NEW  half 3 both general 10 pass false
+   NEW  half 3 left general 10 pass false
+   NEW  half 3 cp general 10 pass false
+   NEW  half 5 both general 6 pass false
+   NEW  half 5 left general 6 pass false
+   NEW  half 5 cp general 6 pass false
+
+2. The self-test (tools/flash/selftest.js) with the new counter-phase cases, run against the OLD wcag.js (git show HEAD:tools/flash/wcag.js):
+     FAIL two equal halves strobing in counter-phase every 3 frames read as either half alone (10 a second): counter-phase 0.5, alone 10
+     FAIL two equal halves strobing in counter-phase every 5 frames read as either half alone (6 a second): counter-phase 0.5, alone 6
+     FAIL two equal halves strobing in counter-phase every 10 frames read as either half alone (3 a second): counter-phase 0.5, alone 3
+     FAIL counter-phase at 10 a second fails the gate (it passed with a reading of 0.5)
+   flash self-test FAILED: 4 of 80 checks
+   the same file against the NEW wcag.js:
+   flash self-test ok: 100 checks
+
+3. Real clips are unchanged by the fix (the six MMS GIFs of 2026-11-10 through analyse-gif.mjs, general / red / area-15% / two-second memory, old = new on every one):
+   1-launch-chain-a.gif: 2 0 2 1.5 0
+   1-launch-chain-b.gif: 2.5 0 2.5 1.5 0
+   2-skyscraper-a.gif: 1.5 0 1.5 2 0
+   2-skyscraper-b.gif: 2 0 1.5 2 0
+   3-beam-clash-a.gif: 1.5 0 1.5 1.5 0
+   3-beam-clash-b.gif: 1.5 0 1.5 1.5 0
+
+4. Self-tests run on the working tree, all ok: flash selftest 100, release-pass 113, nightly seeds 84, nightly-ci 24, readings, run-pixels, signature-gate, compare-frames 19, clip-id 26, pixel (6 scenes), player-watch 30, head-export 11.

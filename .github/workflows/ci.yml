@@ -133,6 +133,8 @@ jobs:
         run: node tools/desktop-package-selftest.mjs
       - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
         run: node tools/flash/nightly-selftest.mjs
+      - name: Scheduled flash reading verdict self-test (the take-down line of 3 on every reading, red read directly, a missing clip is never a pass)
+        run: node tools/flash/nightly-ci-selftest.mjs
       - name: Four-readings self-test (a clip captured at two sizes and read at two scales, the worst counts, the AI-seed clips staged; Legal RL-209)
         run: node tools/flash/readings-selftest.mjs
       - name: Pixel run self-test (the real run-pixels.mjs against stand-in capture and analysis, four readings, the folders, the staged seed clips, --sizes, --capture-only)
