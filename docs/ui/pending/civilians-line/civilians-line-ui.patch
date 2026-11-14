@@ -1,0 +1,16 @@
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-11-08 23:51:24.878060900 -0800
++++ b/ui/tools/hud_check.gd	2026-11-08 23:51:24.968371700 -0800
+@@ -8912,6 +8912,12 @@
+ 	hub.consume({"type": "world", "structures": 7, "craters": 21, "civilians": 80, "pop0": 425})
+ 	var line: String = UiCenter.chip_line(hub)
+ 	_ok(not rx.search(line) and not line.to_lower().contains("civilian") and not line.contains("80") and not line.contains("425"), "retired words: the chip's line says buildings and craters only (%s)" % line)
++	# The overlay HUD the game also draws (render/core/hud.gd, Rendering's) had its own CIVILIANS LOST line, reading the sim's casualties: it must not come back.
++	var overlay_text: String = FileAccess.get_file_as_string("res://render/core/hud.gd")
++	var overlay_hits := PackedStringArray()
++	for m2 in rx.search_all(overlay_text):
++		overlay_hits.append(m2.get_string())
++	_ok(overlay_text != "" and overlay_hits.is_empty(), "retired words: the overlay HUD (render/core/hud.gd) draws no CIVILIANS LOST and reads no casualties (%s)" % str(overlay_hits.slice(0, 3)))
+ 
+ 
+ ## Narrative's plain words (docs/narrative/plain-words.md, merged 2026-10-16) fit where they are drawn, the Cyborg's WEAK SPOT card included; a run needs a length (run_to above 0).

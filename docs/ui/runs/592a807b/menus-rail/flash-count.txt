@@ -1,0 +1,2 @@
+flash count passed: in no window of 60 ticks does the weighted register grant more than 2.5 of weight (1 under reduced flashing), more than 3 flashes of weight 0.5 or more (1 reduced) or more than 6 flashes (3 reduced) in 82 runs. This is the register's count of the sources that ask it; it is not a 
+(82 run files, normal and reduced; UI-only change, the register is untouched; half 1 only, run on a scratch HEAD copy with the Rail files)

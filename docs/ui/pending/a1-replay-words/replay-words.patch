@@ -1,0 +1,2344 @@
+--- a/ui/data/terms.json	2026-11-14 00:04:39.217522700 -0800
++++ b/ui/data/terms.json	2026-11-14 00:04:39.307418500 -0800
+@@ -89,7 +89,7 @@
+   },
+   "prompt": { "load_plates": "Raising the continents", "load_climate": "Setting the winds and weather", "load_rivers": "Cutting the rivers", "load_places": "Founding the towns", "load_ring": "Laying out the ground", "load_back": "Back to the menu", "special": "SPECIAL", "transform": "TRANSFORM", "attack": "ATTACK", "attack_hint": "TAP  HOLD  SWIPE UP", "guard": "GUARD", "guard_hint": "HOLD", "power": "POWER", "power_hint": "HOLD", "move": "MOVE", "move_hint": "FLICK TO DODGE",
+     "full_light": "LIGHT", "full_heavy": "HEAVY", "full_signature": "SIGNATURE", "full_context": "ACTION", "full_mode": "ENERGY", "full_transform": "TRANSFORM", "full_dodge": "DODGE",
+-    "rail_kicker": "Orb Combat EX", "modes_title": "Choose a mode", "setup_title": "Set up the match", "mode_coming": "Coming", "mode_not_ready": "This mode is not in the game yet.", "menu_quit": "Quit", "pause_quit": "Quit", "pause_quit_ask": "Close the game?", "pause_quit_yes": "Close the game", "pause_quit_no": "Stay", "menu_f1": "Player 1 fighter", "menu_f2": "Player 2 fighter", "menu_fc": "Computer's fighter", "no_mirror": "Two of the same fighter can't be told apart yet, so each player needs a different one.", "rail_hint_back_modes": "Back", "rail_hint_change_fighter": "Change", "version_line": "Version {v}", "rail_hint_back": "Back", "rail_hint_choose_change": "Choose and change", "rail_now_default": "Now: {now}. Default: {default}.", "rail_start_title": "Start a match", "rail_read_first": "Read this first", "rail_you": "You", "rail_against": "Against", "rail_the_computer": "The computer", "rail_paused": "Paused", "rail_over": "Match over", "rail_this_match": "This match", "rail_hint_choose": "Choose", "rail_hint_select": "Select", "rail_hint_resume": "Resume", "rail_hint_keep": "Keep playing", "rail_hint_again": "Play again", "rail_hint_menu": "Main menu", "rail_hint_change": "Change", "rail_hint_tabs": "Tabs", "rail_hint_details": "Details", "rail_hint_not_now": "Not now", "rail_hint_reset": "Reset this page", "rail_hint_start": "Start", "rail_p2_leave": "Hand player two back", "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy: the big blow", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second, and they are not fixed yet.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing: on. Turning it off restores full effects, which flash more.", "menu_rf_locked": "Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing: off. Full effects are on, and they flash more.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_ai": "Computer", "menu_ai_easy": "Easy", "menu_ai_medium": "Medium", "menu_ai_hard": "Hard", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "cap_struggle": "Beam struggle: press on the beat", "cap_open": "Open: press B", "demo_hint": "Press any key to play", "hint_full": "Full! Let go to knock your rival back.", "hint_miss": "Open! Hit the lit button.", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
++    "rail_kicker": "Orb Combat EX", "replay_wrong_build": "This replay was saved by a different version of the game (build {build}, {date}), so it can't be played in this one.", "modes_title": "Choose a mode", "setup_title": "Set up the match", "mode_coming": "Coming", "mode_not_ready": "This mode is not in the game yet.", "menu_quit": "Quit", "pause_quit": "Quit", "pause_quit_ask": "Close the game?", "pause_quit_yes": "Close the game", "pause_quit_no": "Stay", "menu_f1": "Player 1 fighter", "menu_f2": "Player 2 fighter", "menu_fc": "Computer's fighter", "no_mirror": "Two of the same fighter can't be told apart yet, so each player needs a different one.", "rail_hint_back_modes": "Back", "rail_hint_change_fighter": "Change", "version_line": "Version {v}", "rail_hint_back": "Back", "rail_hint_choose_change": "Choose and change", "rail_now_default": "Now: {now}. Default: {default}.", "rail_start_title": "Start a match", "rail_read_first": "Read this first", "rail_you": "You", "rail_against": "Against", "rail_the_computer": "The computer", "rail_paused": "Paused", "rail_over": "Match over", "rail_this_match": "This match", "rail_hint_choose": "Choose", "rail_hint_select": "Select", "rail_hint_resume": "Resume", "rail_hint_keep": "Keep playing", "rail_hint_again": "Play again", "rail_hint_menu": "Main menu", "rail_hint_change": "Change", "rail_hint_tabs": "Tabs", "rail_hint_details": "Details", "rail_hint_not_now": "Not now", "rail_hint_reset": "Reset this page", "rail_hint_start": "Start", "rail_p2_leave": "Hand player two back", "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy: the big blow", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second, and they are not fixed yet.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing: on. Turning it off restores full effects, which flash more.", "menu_rf_locked": "Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing: off. Full effects are on, and they flash more.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_ai": "Computer", "menu_ai_easy": "Easy", "menu_ai_medium": "Medium", "menu_ai_hard": "Hard", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "cap_struggle": "Beam struggle: press on the beat", "cap_open": "Open: press B", "demo_hint": "Press any key to play", "hint_full": "Full! Let go to knock your rival back.", "hint_miss": "Open! Hit the lit button.", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
+     "pause_new_ask": "Start a new match?", "pause_new_yes": "New match", "pause_new_no": "Keep playing", "pause_resume_key": "P", "pause_howto_key": "F1", "pause_new_key": "N",
+     "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "Keep hitting, then press the lit button to launch your rival.", "over_wins": "{name} wins", "over_wins_team": "{a} and {b} win", "teach_beam": "Hold right stick: beam. Let go to fire.", "teach_beam_keys": "Hold the arrows: beam. Let go to fire.", "cross_out": "You're out. Your partner fights on", "refuse_no_energy": "No energy", "refuse_too_late": "Too late", "refuse_no_reach": "Tap to chase", "refuse_face_late": "Too late", "refuse_no_answer": "Didn't start", "refuse_stun_limit": "Already stunned", "refuse_queue_expired": "Too slow", "refuse_block_lockout": "Block cooling", "refuse_close": "Too close", "refuse_ki": "No energy", "refuse_hit": "Hit", "refuse_taken": "Hit", "refuse_soon": "Too soon", "refuse_cooling": "Cooling", "refuse_late": "Too late", "refuse_chase": "Tap to chase", "refuse_stunned": "Stunned", "refuse_chase_no_ki": "No energy", "refuse_chase_late": "Too late", "refuse_off_beat": "Off the beat", "refuse_locked": "Locked in", "refuse_launched": "In flight", "refuse_down": "Knocked down", "refuse_queue_full": "Too many presses", "refuse_not_yours": "Their move", "refuse_recovering": "Recovering", "refuse_set_piece": "In a move", "refuse_chord": "One at a time", "refuse_busy": "Busy", "refuse_not_ready": "Not ready", "refuse_charging": "Charging", "refuse_warding": "Warding", "pause_save": "Save this match", "save_done_web": "Saved to your Downloads folder", "save_none": "This build can't save a match file yet", "report_saved": "Report saved: {file}", "report_saved_web": "Report saved to your Downloads folder", "report_failed": "Could not save the report", "report_none": "This build can't save a report yet", "report_where": "Saved reports go in the 'saved' folder beside the game.", "fb_save": "SAVE REPORT", "teach_report_pad": "Press View + RB to report a problem", "teach_report_keys": "Press F9 to report a problem", "outside_start": "Going for the other fight's foe", "outside_whiff": "Missed the other fight's foe", "outside_landed": "Hit the other fight's foe", "outside_taken": "Hit from the other fight", "outside_broken": "Your finisher was broken", "alert_outside": "BEAM FROM THE OTHER FIGHT", "struggle_buttons": "Press on the beat", "struggle_stick": "Flick toward them on the beat", "teach_slam": "Hold to slam", "teach_chase": "Tap an attack to chase. It lands as you catch them.", "teach_flick": "Hold for a beam", "teach_fire_back": "RB + right stick: fire back", "legend_beam": "Beam (hold to charge)", "legend_beam_toggle": "Beam (toggle to charge)", "legend_blast": "Blast (flick)", "howto_plan_noforms": "You are the fighter. Fly, dodge, guard, hit light or heavy, hold power, call your signature.", "over_no_contest": "No contest: nobody played", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "alert_incoming": "BEAM INCOMING", "alert_charging": "BEAM CHARGING", "alert_fire_back": "FIRE BACK", "alert_dodge": "DODGE", "remap_swapped": "{layout}, swapped", "remap_strike_key": "Strike key", "remap_strike_key_help": "A strike in the direction you are holding. For a keyboard, or a controller with one stick.", "remap_brace_key": "Brace", "remap_brace_key_help": "Brace against the blow you expect, in the direction you hold. No stick flick needed.", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
+   "planet": "EVERHOLD",
+--- a/localization/pseudo/ui/data/terms.json	2026-11-14 00:04:39.232530100 -0800
++++ b/localization/pseudo/ui/data/terms.json	2026-11-14 00:04:39.416667800 -0800
+@@ -185,6 +185,7 @@
+     "full_transform": "[ŢŔÅÅÑŠFÖÖŔM]",
+     "full_dodge": "[ĎÖĎĜÉ]",
+     "rail_kicker": "[ÖÖŕb Çöömbááţ ÉX]",
++    "replay_wrong_build": "[Ţĥííš ŕéépĺááýý ŵááš šáávééď býý áá ďííffééŕééñţ vééŕšííööñ ööf ţĥéé ĝááméé (büüííĺď {build}, {date}), šöö ííţ çááñ'ţ béé pĺááýýééď ííñ ţĥííš ööñéé. ~~~~~~]",
+     "modes_title": "[Çĥöööšéé á mööďé]",
+     "setup_title": "[Šééţ üüp ţĥéé mááţçĥ]",
+     "mode_coming": "[Çömíñĝ]",
+@@ -221,7 +222,7 @@
+     "rail_hint_change": "[Çĥáñĝé]",
+     "rail_hint_tabs": "[Ţábš]",
+     "rail_hint_details": "[Ďééţáíĺš]",
+-    "rail_hint_not_now": "Not now",
++    "rail_hint_not_now": "[Ñööţ ñöŵ]",
+     "rail_hint_reset": "[Ŕééšééţ ţĥííš pááĝé]",
+     "rail_hint_start": "[Šţáŕţ]",
+     "rail_p2_leave": "[Ĥááñď pĺááýýééŕ ţŵöö bááçķ]",
+@@ -243,19 +244,19 @@
+     "three_howto_signature": "[Ĥééáávýý: ţĥéé bííĝ bĺööŵ]",
+     "three_remap_heavy": "[Méďíüm]",
+     "three_remap_signature": "[Ĥéávý]",
+-    "photo_title": "This game contains flashing effects.",
+-    "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second, and they are not fixed yet.",
++    "photo_title": "[Ţĥííš ĝááméé çööñţááííñš fĺáášĥííñĝ ééffééçţš. ~]",
++    "photo_body_a": "[ÖÖüüŕ ööŵñ ááüüţöömááţééď çĥééçķ ĥááš fööüüñď šööméé šçééñééš, šüüçĥ ááš áá çáámééŕáá fĺýý-páášţ ööf çööĺĺáápšííñĝ büüííĺďííñĝš ááñď šööméé bééáám íímpááçţš, ţĥááţ fĺáášĥ mööŕéé ööfţééñ ţĥááñ ţĥéé ŕééçöömmééñďééď ĺíímííţ ööf ţĥŕéééé ţíímééš áá šééçööñď, ááñď ţĥééýý ááŕéé ñööţ fííxééď ýýééţ. ~~~~~~~~~~~~~~~]",
+     "photo_settings_line": "[Ţĥéé \"Ŕééďüüçééď mööţííööñ\" šééţţííñĝ (pááüüšéé mééñüü, Šééţţííñĝš) çĥááñĝééš áá fééŵ ééffééçţš büüţ ďööééš ñööţ fííx ţĥééšéé šçééñééš. ~~~~~~~~]",
+     "photo_settings_line_rf": "[Ţĥéé \"Ŕééďüüçééď mööţííööñ\" šééţţííñĝ (pááüüšéé mééñüü, Šééţţííñĝš) çĥááñĝééš áá fééŵ ééffééçţš büüţ ďööééš ñööţ fííx ţĥééšéé šçééñééš. ~~~~~~~~]",
+-    "photo_body_b": "No independent photosensitivity analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.",
+-    "photo_start": "I understand, start",
++    "photo_body_b": "[Ñöö ííñďéépééñďééñţ pĥööţööšééñšííţíívííţýý ááñááĺýýžééŕ ĥááš bééééñ ŕüüñ. ÎÎf ýýööüü ööŕ šöömééööñéé ííñ ýýööüüŕ fáámííĺýý ĥááš pĥööţööšééñšííţíívéé éépííĺéépšýý, pĺééáášéé ďöö ñööţ pĺááýý ţĥííš vééŕšííööñ.]",
++    "photo_start": "[ÎÎ üüñďééŕšţááñď, šţááŕţ ]",
+     "photo_settings": "[ÖÖpééñ Šééţţíñĝš]",
+     "photo_more": "[Šçŕööĺĺ fööŕ mööŕéé]",
+-    "menu_notice": "This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.",
++    "menu_notice": "[Ţĥííš ĝááméé çööñţááííñš fĺáášĥííñĝ ééffééçţš. ÖÖüüŕ ööŵñ ááüüţöömááţééď çĥééçķ fööüüñď šööméé šçééñééš ţĥááţ ĝöö öövééŕ ţĥéé ŕééçöömmééñďééď ĺíímííţ ööf ţĥŕéééé fĺáášĥééš áá šééçööñď, ááñď ţĥééýý ááŕéé ñööţ fííxééď ýýééţ. Ñöö ííñďéépééñďééñţ ááñááĺýýžééŕ ĥááš bééééñ ŕüüñ. ÎÎf ýýööüü ööŕ šöömééööñéé ííñ ýýööüüŕ fáámííĺýý ĥááš pĥööţööšééñšííţíívéé éépííĺéépšýý, pĺééáášéé ďöö ñööţ pĺááýý ţĥííš vééŕšííööñ. ~~~~~~~~~~~~]",
+     "menu_rf_on": "[Ŕééďüüçéé fĺáášĥííñĝ: ööñ. Ţüüŕñííñĝ ííţ ööff ŕééšţööŕééš füüĺĺ ééffééçţš, ŵĥííçĥ fĺáášĥ mööŕéé. ~~~~~~~]",
+-    "menu_rf_locked": "Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.",
++    "menu_rf_locked": "[Ŕééďüüçéé fĺáášĥííñĝ ííš ööñ ááñď çááññööţ béé ţüüŕñééď ööff ííñ ţĥííš vééŕšííööñ. ÎÎţ ĺööŵééŕš šööméé ééffééçţš büüţ ďööééš ñööţ ŕéémöövéé ţĥéé fĺááĝĝééď šçééñééš. ~~~~~~~~~]",
+     "menu_rf_off": "[Ŕééďüüçéé fĺáášĥííñĝ: ööff. Füüĺĺ ééffééçţš ááŕéé ööñ, ááñď ţĥééýý fĺáášĥ mööŕéé. ~~~~]",
+-    "menu_not_now": "Not now",
++    "menu_not_now": "[Ñööţ ñöŵ]",
+     "menu_holding_url": "../",
+     "menu_players": "[Pĺááýéŕš]",
+     "menu_one": "[1 pĺááýéŕ]",
+@@ -279,7 +280,7 @@
+     "menu_shake": "[Šçŕééééñ šĥááķé]",
+     "menu_captions": "[Çáápţíöñš]",
+     "menu_guide": "[Möövé ĝüüíďé]",
+-    "menu_start": "I understand, start",
++    "menu_start": "[ÎÎ üüñďééŕšţááñď, šţááŕţ ]",
+     "menu_back": "[Bááçķ ţöö ţĥéé mááţçĥ ]",
+     "menu_both_kb": "[Bööţĥ ööñ ţĥéé ķééýýbööááŕď: ýýööüü šĥááŕéé ííţ, ááñď ţĥéé ĝüüííďéé šĥööŵš ééááçĥ pĺááýýééŕ'š ķééýýš. ~]",
+     "menu_no_pad": "[Ñöö çööñţŕööĺĺééŕ fööüüñď ýýééţ. Pŕééšš áá büüţţööñ ööñ ííţ. ~]",
+--- a/docs/ui/strings.md	2026-11-14 00:04:39.224027900 -0800
++++ b/docs/ui/strings.md	2026-11-14 00:04:39.560616300 -0800
+@@ -1,6 +1,6 @@
+ # Every player-facing string in ui/data, by where it shows
+ 
+-Generated by `python ui/tools/strings_inventory.py` (UI & UX, 2026-10-12) from `ui/data/*.json`. **1131 strings in batches of ten**, one surface at a time, so Orb can mark a batch and Narrative can work from it. Ids, colours, notes and one-word identifiers are left out. The JSON stays the source: a rewrite goes into the data file named in the key column, and `hud_check` compares some of these word for word (the gate, the About page), so a change to those is made with its test. **Nothing new ships unmarked.**
++Generated by `python ui/tools/strings_inventory.py` (UI & UX, 2026-10-12) from `ui/data/*.json`. **1132 strings in batches of ten**, one surface at a time, so Orb can mark a batch and Narrative can work from it. Ids, colours, notes and one-word identifiers are left out. The JSON stays the source: a rewrite goes into the data file named in the key column, and `hud_check` compares some of these word for word (the gate, the About page), so a change to those is made with its test. **Nothing new ships unmarked.**
+ 
+ Mark column: **keep**, **rewrite** (Narrative drafts), or **cut**. A flag in the key column (**N**) is a line Narrative's `docs/narrative/writing-quality.md` names.
+ 
+@@ -386,7 +386,7 @@
+ | 236 | LOST SIGHT | `terms:banner_rename.LOCK LOST — TARGET HIDDEN` | |
+ | 237 | LOST SIGHT | `terms:banner_rename.LOCK LOST` | |
+ 
+-## Batch 30: Button prompts and touch captions (1 to 10 of 174 on this surface)
++## Batch 30: Button prompts and touch captions (1 to 10 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+@@ -401,7 +401,7 @@
+ | 246 | ATTACK | `terms:prompt.attack` | |
+ | 247 | TAP  HOLD  SWIPE UP | `terms:prompt.attack_hint` | |
+ 
+-## Batch 31: Button prompts and touch captions (11 to 20 of 174 on this surface)
++## Batch 31: Button prompts and touch captions (11 to 20 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+@@ -416,7 +416,7 @@
+ | 256 | SIGNATURE | `terms:prompt.full_signature` | |
+ | 257 | ACTION | `terms:prompt.full_context` | |
+ 
+-## Batch 32: Button prompts and touch captions (21 to 30 of 174 on this surface)
++## Batch 32: Button prompts and touch captions (21 to 30 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+@@ -424,1354 +424,1355 @@
+ | 259 | TRANSFORM | `terms:prompt.full_transform` | |
+ | 260 | DODGE | `terms:prompt.full_dodge` | |
+ | 261 | Orb Combat EX | `terms:prompt.rail_kicker` | |
+-| 262 | Choose a mode | `terms:prompt.modes_title` | |
+-| 263 | Set up the match | `terms:prompt.setup_title` | |
+-| 264 | Coming | `terms:prompt.mode_coming` | |
+-| 265 | This mode is not in the game yet. | `terms:prompt.mode_not_ready` | |
+-| 266 | Two of the same fighter can't be told apart yet, so each player needs a different one. | `terms:prompt.no_mirror` | |
+-| 267 | Back | `terms:prompt.rail_hint_back_modes` | |
++| 262 | This replay was saved by a different version of the game (build {build}, {date}), so it can't be played in this one. | `terms:prompt.replay_wrong_build` | |
++| 263 | Choose a mode | `terms:prompt.modes_title` | |
++| 264 | Set up the match | `terms:prompt.setup_title` | |
++| 265 | Coming | `terms:prompt.mode_coming` | |
++| 266 | This mode is not in the game yet. | `terms:prompt.mode_not_ready` | |
++| 267 | Two of the same fighter can't be told apart yet, so each player needs a different one. | `terms:prompt.no_mirror` | |
+ 
+-## Batch 33: Button prompts and touch captions (31 to 40 of 174 on this surface)
++## Batch 33: Button prompts and touch captions (31 to 40 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 268 | Change | `terms:prompt.rail_hint_change_fighter` | |
+-| 269 | Version {v} | `terms:prompt.version_line` | |
+-| 270 | Back | `terms:prompt.rail_hint_back` | |
+-| 271 | Choose and change | `terms:prompt.rail_hint_choose_change` | |
+-| 272 | Now: {now}. Default: {default}. | `terms:prompt.rail_now_default` | |
+-| 273 | Start a match | `terms:prompt.rail_start_title` | |
+-| 274 | Read this first | `terms:prompt.rail_read_first` | |
+-| 275 | You | `terms:prompt.rail_you` | |
+-| 276 | Against | `terms:prompt.rail_against` | |
+-| 277 | The computer | `terms:prompt.rail_the_computer` | |
++| 268 | Back | `terms:prompt.rail_hint_back_modes` | |
++| 269 | Change | `terms:prompt.rail_hint_change_fighter` | |
++| 270 | Version {v} | `terms:prompt.version_line` | |
++| 271 | Back | `terms:prompt.rail_hint_back` | |
++| 272 | Choose and change | `terms:prompt.rail_hint_choose_change` | |
++| 273 | Now: {now}. Default: {default}. | `terms:prompt.rail_now_default` | |
++| 274 | Start a match | `terms:prompt.rail_start_title` | |
++| 275 | Read this first | `terms:prompt.rail_read_first` | |
++| 276 | You | `terms:prompt.rail_you` | |
++| 277 | Against | `terms:prompt.rail_against` | |
+ 
+-## Batch 34: Button prompts and touch captions (41 to 50 of 174 on this surface)
++## Batch 34: Button prompts and touch captions (41 to 50 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 278 | Paused | `terms:prompt.rail_paused` | |
+-| 279 | Match over | `terms:prompt.rail_over` | |
+-| 280 | This match | `terms:prompt.rail_this_match` | |
+-| 281 | Choose | `terms:prompt.rail_hint_choose` | |
+-| 282 | Select | `terms:prompt.rail_hint_select` | |
+-| 283 | Resume | `terms:prompt.rail_hint_resume` | |
+-| 284 | Keep playing | `terms:prompt.rail_hint_keep` | |
+-| 285 | Play again | `terms:prompt.rail_hint_again` | |
+-| 286 | Main menu | `terms:prompt.rail_hint_menu` | |
+-| 287 | Change | `terms:prompt.rail_hint_change` | |
++| 278 | The computer | `terms:prompt.rail_the_computer` | |
++| 279 | Paused | `terms:prompt.rail_paused` | |
++| 280 | Match over | `terms:prompt.rail_over` | |
++| 281 | This match | `terms:prompt.rail_this_match` | |
++| 282 | Choose | `terms:prompt.rail_hint_choose` | |
++| 283 | Select | `terms:prompt.rail_hint_select` | |
++| 284 | Resume | `terms:prompt.rail_hint_resume` | |
++| 285 | Keep playing | `terms:prompt.rail_hint_keep` | |
++| 286 | Play again | `terms:prompt.rail_hint_again` | |
++| 287 | Main menu | `terms:prompt.rail_hint_menu` | |
+ 
+-## Batch 35: Button prompts and touch captions (51 to 60 of 174 on this surface)
++## Batch 35: Button prompts and touch captions (51 to 60 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 288 | Tabs | `terms:prompt.rail_hint_tabs` | |
+-| 289 | Details | `terms:prompt.rail_hint_details` | |
+-| 290 | Not now | `terms:prompt.rail_hint_not_now` | |
+-| 291 | Reset this page | `terms:prompt.rail_hint_reset` | |
+-| 292 | Start | `terms:prompt.rail_hint_start` | |
+-| 293 | Hand player two back | `terms:prompt.rail_p2_leave` | |
+-| 294 | not yet | `terms:prompt.not_yet` | |
+-| 295 | Light | `terms:prompt.three_light` | |
+-| 296 | Medium | `terms:prompt.three_medium` | |
+-| 297 | Heavy | `terms:prompt.three_heavy` | |
++| 288 | Change | `terms:prompt.rail_hint_change` | |
++| 289 | Tabs | `terms:prompt.rail_hint_tabs` | |
++| 290 | Details | `terms:prompt.rail_hint_details` | |
++| 291 | Not now | `terms:prompt.rail_hint_not_now` | |
++| 292 | Reset this page | `terms:prompt.rail_hint_reset` | |
++| 293 | Start | `terms:prompt.rail_hint_start` | |
++| 294 | Hand player two back | `terms:prompt.rail_p2_leave` | |
++| 295 | not yet | `terms:prompt.not_yet` | |
++| 296 | Light | `terms:prompt.three_light` | |
++| 297 | Medium | `terms:prompt.three_medium` | |
+ 
+-## Batch 36: Button prompts and touch captions (61 to 70 of 174 on this surface)
++## Batch 36: Button prompts and touch captions (61 to 70 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 298 | Action | `terms:prompt.three_context` | |
+-| 299 | Signature (hold) | `terms:prompt.three_sig_chord` | |
+-| 300 | Attack (hold: stronger) | `terms:prompt.three_attack` | |
+-| 301 | MEDIUM | `terms:prompt.three_full_heavy` | |
+-| 302 | HEAVY | `terms:prompt.three_full_signature` | |
+-| 303 | Medium | `terms:prompt.three_howto_heavy` | |
+-| 304 | Heavy: the big blow | `terms:prompt.three_howto_signature` | |
+-| 305 | Medium | `terms:prompt.three_remap_heavy` | |
+-| 306 | Heavy | `terms:prompt.three_remap_signature` | |
+-| 307 | Beam struggle: press on the beat | `terms:prompt.cap_struggle` | |
++| 298 | Heavy | `terms:prompt.three_heavy` | |
++| 299 | Action | `terms:prompt.three_context` | |
++| 300 | Signature (hold) | `terms:prompt.three_sig_chord` | |
++| 301 | Attack (hold: stronger) | `terms:prompt.three_attack` | |
++| 302 | MEDIUM | `terms:prompt.three_full_heavy` | |
++| 303 | HEAVY | `terms:prompt.three_full_signature` | |
++| 304 | Medium | `terms:prompt.three_howto_heavy` | |
++| 305 | Heavy: the big blow | `terms:prompt.three_howto_signature` | |
++| 306 | Medium | `terms:prompt.three_remap_heavy` | |
++| 307 | Heavy | `terms:prompt.three_remap_signature` | |
+ 
+-## Batch 37: Button prompts and touch captions (71 to 80 of 174 on this surface)
++## Batch 37: Button prompts and touch captions (71 to 80 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 308 | Open: press B | `terms:prompt.cap_open` | |
+-| 309 | Press any key to play | `terms:prompt.demo_hint` | |
+-| 310 | Full! Let go to knock your rival back. | `terms:prompt.hint_full` | |
+-| 311 | Open! Hit the lit button. | `terms:prompt.hint_miss` | |
+-| 312 | P2: press any button to join | `terms:prompt.join` | |
+-| 313 | P2: press a button | `terms:prompt.join_short` | |
+-| 314 | P2: press T to join | `terms:prompt.join_key` | |
+-| 315 | P2: T to join | `terms:prompt.join_key_short` | |
+-| 316 | Hold | `terms:prompt.form_hold` | |
+-| 317 | Tap | `terms:prompt.form_tap` | |
++| 308 | Beam struggle: press on the beat | `terms:prompt.cap_struggle` | |
++| 309 | Open: press B | `terms:prompt.cap_open` | |
++| 310 | Press any key to play | `terms:prompt.demo_hint` | |
++| 311 | Full! Let go to knock your rival back. | `terms:prompt.hint_full` | |
++| 312 | Open! Hit the lit button. | `terms:prompt.hint_miss` | |
++| 313 | P2: press any button to join | `terms:prompt.join` | |
++| 314 | P2: press a button | `terms:prompt.join_short` | |
++| 315 | P2: press T to join | `terms:prompt.join_key` | |
++| 316 | P2: T to join | `terms:prompt.join_key_short` | |
++| 317 | Hold | `terms:prompt.form_hold` | |
+ 
+-## Batch 38: Button prompts and touch captions (81 to 90 of 174 on this surface)
++## Batch 38: Button prompts and touch captions (81 to 90 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 318 | hit harder until the match ends | `terms:prompt.form_boost` | |
+-| 319 | hit harder from now on | `terms:prompt.form_boost_short` | |
+-| 320 | Press any key to skip | `terms:prompt.intro_skip_kbd` | |
+-| 321 | Press any button to skip | `terms:prompt.intro_skip_pad` | |
+-| 322 | Tap to skip | `terms:prompt.intro_skip_touch` | |
+-| 323 | Keep hitting, then press the lit button to launch your rival. | `terms:prompt.launch_hint` | |
+-| 324 | {name} wins | `terms:prompt.over_wins` | |
+-| 325 | {a} and {b} win | `terms:prompt.over_wins_team` | |
+-| 326 | Hold right stick: beam. Let go to fire. | `terms:prompt.teach_beam` | |
+-| 327 | Hold the arrows: beam. Let go to fire. | `terms:prompt.teach_beam_keys` | |
++| 318 | Tap | `terms:prompt.form_tap` | |
++| 319 | hit harder until the match ends | `terms:prompt.form_boost` | |
++| 320 | hit harder from now on | `terms:prompt.form_boost_short` | |
++| 321 | Press any key to skip | `terms:prompt.intro_skip_kbd` | |
++| 322 | Press any button to skip | `terms:prompt.intro_skip_pad` | |
++| 323 | Tap to skip | `terms:prompt.intro_skip_touch` | |
++| 324 | Keep hitting, then press the lit button to launch your rival. | `terms:prompt.launch_hint` | |
++| 325 | {name} wins | `terms:prompt.over_wins` | |
++| 326 | {a} and {b} win | `terms:prompt.over_wins_team` | |
++| 327 | Hold right stick: beam. Let go to fire. | `terms:prompt.teach_beam` | |
+ 
+-## Batch 39: Button prompts and touch captions (91 to 100 of 174 on this surface)
++## Batch 39: Button prompts and touch captions (91 to 100 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 328 | You're out. Your partner fights on | `terms:prompt.cross_out` | |
+-| 329 | No energy | `terms:prompt.refuse_no_energy` | |
+-| 330 | Too late | `terms:prompt.refuse_too_late` | |
+-| 331 | Tap to chase | `terms:prompt.refuse_no_reach` | |
+-| 332 | Too late | `terms:prompt.refuse_face_late` | |
+-| 333 | Didn't start | `terms:prompt.refuse_no_answer` | |
+-| 334 | Already stunned | `terms:prompt.refuse_stun_limit` | |
+-| 335 | Too slow | `terms:prompt.refuse_queue_expired` | |
+-| 336 | Block cooling | `terms:prompt.refuse_block_lockout` | |
+-| 337 | Too close | `terms:prompt.refuse_close` | |
++| 328 | Hold the arrows: beam. Let go to fire. | `terms:prompt.teach_beam_keys` | |
++| 329 | You're out. Your partner fights on | `terms:prompt.cross_out` | |
++| 330 | No energy | `terms:prompt.refuse_no_energy` | |
++| 331 | Too late | `terms:prompt.refuse_too_late` | |
++| 332 | Tap to chase | `terms:prompt.refuse_no_reach` | |
++| 333 | Too late | `terms:prompt.refuse_face_late` | |
++| 334 | Didn't start | `terms:prompt.refuse_no_answer` | |
++| 335 | Already stunned | `terms:prompt.refuse_stun_limit` | |
++| 336 | Too slow | `terms:prompt.refuse_queue_expired` | |
++| 337 | Block cooling | `terms:prompt.refuse_block_lockout` | |
+ 
+-## Batch 40: Button prompts and touch captions (101 to 110 of 174 on this surface)
++## Batch 40: Button prompts and touch captions (101 to 110 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 338 | No energy | `terms:prompt.refuse_ki` | |
+-| 339 | Hit | `terms:prompt.refuse_hit` | |
+-| 340 | Hit | `terms:prompt.refuse_taken` | |
+-| 341 | Too soon | `terms:prompt.refuse_soon` | |
+-| 342 | Cooling | `terms:prompt.refuse_cooling` | |
+-| 343 | Too late | `terms:prompt.refuse_late` | |
+-| 344 | Tap to chase | `terms:prompt.refuse_chase` | |
+-| 345 | Stunned | `terms:prompt.refuse_stunned` | |
+-| 346 | No energy | `terms:prompt.refuse_chase_no_ki` | |
+-| 347 | Too late | `terms:prompt.refuse_chase_late` | |
++| 338 | Too close | `terms:prompt.refuse_close` | |
++| 339 | No energy | `terms:prompt.refuse_ki` | |
++| 340 | Hit | `terms:prompt.refuse_hit` | |
++| 341 | Hit | `terms:prompt.refuse_taken` | |
++| 342 | Too soon | `terms:prompt.refuse_soon` | |
++| 343 | Cooling | `terms:prompt.refuse_cooling` | |
++| 344 | Too late | `terms:prompt.refuse_late` | |
++| 345 | Tap to chase | `terms:prompt.refuse_chase` | |
++| 346 | Stunned | `terms:prompt.refuse_stunned` | |
++| 347 | No energy | `terms:prompt.refuse_chase_no_ki` | |
+ 
+-## Batch 41: Button prompts and touch captions (111 to 120 of 174 on this surface)
++## Batch 41: Button prompts and touch captions (111 to 120 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 348 | Off the beat | `terms:prompt.refuse_off_beat` | |
+-| 349 | Locked in | `terms:prompt.refuse_locked` | |
+-| 350 | In flight | `terms:prompt.refuse_launched` | |
+-| 351 | Knocked down | `terms:prompt.refuse_down` | |
+-| 352 | Too many presses | `terms:prompt.refuse_queue_full` | |
+-| 353 | Their move | `terms:prompt.refuse_not_yours` | |
+-| 354 | Recovering | `terms:prompt.refuse_recovering` | |
+-| 355 | In a move | `terms:prompt.refuse_set_piece` | |
+-| 356 | One at a time | `terms:prompt.refuse_chord` | |
+-| 357 | Busy | `terms:prompt.refuse_busy` | |
++| 348 | Too late | `terms:prompt.refuse_chase_late` | |
++| 349 | Off the beat | `terms:prompt.refuse_off_beat` | |
++| 350 | Locked in | `terms:prompt.refuse_locked` | |
++| 351 | In flight | `terms:prompt.refuse_launched` | |
++| 352 | Knocked down | `terms:prompt.refuse_down` | |
++| 353 | Too many presses | `terms:prompt.refuse_queue_full` | |
++| 354 | Their move | `terms:prompt.refuse_not_yours` | |
++| 355 | Recovering | `terms:prompt.refuse_recovering` | |
++| 356 | In a move | `terms:prompt.refuse_set_piece` | |
++| 357 | One at a time | `terms:prompt.refuse_chord` | |
+ 
+-## Batch 42: Button prompts and touch captions (121 to 130 of 174 on this surface)
++## Batch 42: Button prompts and touch captions (121 to 130 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 358 | Not ready | `terms:prompt.refuse_not_ready` | |
+-| 359 | Charging | `terms:prompt.refuse_charging` | |
+-| 360 | Warding | `terms:prompt.refuse_warding` | |
+-| 361 | Saved to your Downloads folder | `terms:prompt.save_done_web` | |
+-| 362 | This build can't save a match file yet | `terms:prompt.save_none` | |
+-| 363 | Report saved: {file} | `terms:prompt.report_saved` | |
+-| 364 | Report saved to your Downloads folder | `terms:prompt.report_saved_web` | |
+-| 365 | Could not save the report | `terms:prompt.report_failed` | |
+-| 366 | This build can't save a report yet | `terms:prompt.report_none` | |
+-| 367 | Saved reports go in the 'saved' folder beside the game. | `terms:prompt.report_where` | |
++| 358 | Busy | `terms:prompt.refuse_busy` | |
++| 359 | Not ready | `terms:prompt.refuse_not_ready` | |
++| 360 | Charging | `terms:prompt.refuse_charging` | |
++| 361 | Warding | `terms:prompt.refuse_warding` | |
++| 362 | Saved to your Downloads folder | `terms:prompt.save_done_web` | |
++| 363 | This build can't save a match file yet | `terms:prompt.save_none` | |
++| 364 | Report saved: {file} | `terms:prompt.report_saved` | |
++| 365 | Report saved to your Downloads folder | `terms:prompt.report_saved_web` | |
++| 366 | Could not save the report | `terms:prompt.report_failed` | |
++| 367 | This build can't save a report yet | `terms:prompt.report_none` | |
+ 
+-## Batch 43: Button prompts and touch captions (131 to 140 of 174 on this surface)
++## Batch 43: Button prompts and touch captions (131 to 140 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 368 | SAVE REPORT | `terms:prompt.fb_save` | |
+-| 369 | Press View + RB to report a problem | `terms:prompt.teach_report_pad` | |
+-| 370 | Press F9 to report a problem | `terms:prompt.teach_report_keys` | |
+-| 371 | Going for the other fight's foe | `terms:prompt.outside_start` | |
+-| 372 | Missed the other fight's foe | `terms:prompt.outside_whiff` | |
+-| 373 | Hit the other fight's foe | `terms:prompt.outside_landed` | |
+-| 374 | Hit from the other fight | `terms:prompt.outside_taken` | |
+-| 375 | Your finisher was broken | `terms:prompt.outside_broken` | |
+-| 376 | BEAM FROM THE OTHER FIGHT | `terms:prompt.alert_outside` | |
+-| 377 | Press on the beat | `terms:prompt.struggle_buttons` | |
++| 368 | Saved reports go in the 'saved' folder beside the game. | `terms:prompt.report_where` | |
++| 369 | SAVE REPORT | `terms:prompt.fb_save` | |
++| 370 | Press View + RB to report a problem | `terms:prompt.teach_report_pad` | |
++| 371 | Press F9 to report a problem | `terms:prompt.teach_report_keys` | |
++| 372 | Going for the other fight's foe | `terms:prompt.outside_start` | |
++| 373 | Missed the other fight's foe | `terms:prompt.outside_whiff` | |
++| 374 | Hit the other fight's foe | `terms:prompt.outside_landed` | |
++| 375 | Hit from the other fight | `terms:prompt.outside_taken` | |
++| 376 | Your finisher was broken | `terms:prompt.outside_broken` | |
++| 377 | BEAM FROM THE OTHER FIGHT | `terms:prompt.alert_outside` | |
+ 
+-## Batch 44: Button prompts and touch captions (141 to 150 of 174 on this surface)
++## Batch 44: Button prompts and touch captions (141 to 150 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 378 | Flick toward them on the beat | `terms:prompt.struggle_stick` | |
+-| 379 | Hold to slam | `terms:prompt.teach_slam` | |
+-| 380 | Tap an attack to chase. It lands as you catch them. | `terms:prompt.teach_chase` | |
+-| 381 | Hold for a beam | `terms:prompt.teach_flick` | |
+-| 382 | RB + right stick: fire back | `terms:prompt.teach_fire_back` | |
+-| 383 | Beam (hold to charge) | `terms:prompt.legend_beam` | |
+-| 384 | Beam (toggle to charge) | `terms:prompt.legend_beam_toggle` | |
+-| 385 | Blast (flick) | `terms:prompt.legend_blast` | |
+-| 386 | You are the fighter. Fly, dodge, guard, hit light or heavy, hold power, call your signature. | `terms:prompt.howto_plan_noforms` | |
+-| 387 | No contest: nobody played | `terms:prompt.over_no_contest` | |
++| 378 | Press on the beat | `terms:prompt.struggle_buttons` | |
++| 379 | Flick toward them on the beat | `terms:prompt.struggle_stick` | |
++| 380 | Hold to slam | `terms:prompt.teach_slam` | |
++| 381 | Tap an attack to chase. It lands as you catch them. | `terms:prompt.teach_chase` | |
++| 382 | Hold for a beam | `terms:prompt.teach_flick` | |
++| 383 | RB + right stick: fire back | `terms:prompt.teach_fire_back` | |
++| 384 | Beam (hold to charge) | `terms:prompt.legend_beam` | |
++| 385 | Beam (toggle to charge) | `terms:prompt.legend_beam_toggle` | |
++| 386 | Blast (flick) | `terms:prompt.legend_blast` | |
++| 387 | You are the fighter. Fly, dodge, guard, hit light or heavy, hold power, call your signature. | `terms:prompt.howto_plan_noforms` | |
+ 
+-## Batch 45: Button prompts and touch captions (151 to 160 of 174 on this surface)
++## Batch 45: Button prompts and touch captions (151 to 160 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 388 | Buildings lost: {n} | `terms:prompt.over_structures` | |
+-| 389 | Craters: {n} | `terms:prompt.over_craters` | |
+-| 390 | OFF SCREEN | `terms:prompt.inc_lost` | |
+-| 391 | RUSH | `terms:prompt.inc_rush` | |
+-| 392 | CLOSING | `terms:prompt.inc_closing` | |
+-| 393 | Energy (hold) | `terms:prompt.mode_hold` | |
+-| 394 | Energy (toggle) | `terms:prompt.mode_toggle` | |
+-| 395 | Player | `terms:prompt.remap_player` | |
+-| 396 | Player 1 | `terms:prompt.remap_p1` | |
+-| 397 | Player 2 | `terms:prompt.remap_p2` | |
++| 388 | No contest: nobody played | `terms:prompt.over_no_contest` | |
++| 389 | Buildings lost: {n} | `terms:prompt.over_structures` | |
++| 390 | Craters: {n} | `terms:prompt.over_craters` | |
++| 391 | OFF SCREEN | `terms:prompt.inc_lost` | |
++| 392 | RUSH | `terms:prompt.inc_rush` | |
++| 393 | CLOSING | `terms:prompt.inc_closing` | |
++| 394 | Energy (hold) | `terms:prompt.mode_hold` | |
++| 395 | Energy (toggle) | `terms:prompt.mode_toggle` | |
++| 396 | Player | `terms:prompt.remap_player` | |
++| 397 | Player 1 | `terms:prompt.remap_p1` | |
+ 
+-## Batch 46: Button prompts and touch captions (161 to 170 of 174 on this surface)
++## Batch 46: Button prompts and touch captions (161 to 170 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 398 | BEAM INCOMING | `terms:prompt.alert_incoming` | |
+-| 399 | BEAM CHARGING | `terms:prompt.alert_charging` | |
+-| 400 | FIRE BACK | `terms:prompt.alert_fire_back` | |
+-| 401 | DODGE | `terms:prompt.alert_dodge` | |
+-| 402 | {layout}, swapped | `terms:prompt.remap_swapped` | |
+-| 403 | Strike key | `terms:prompt.remap_strike_key` | |
+-| 404 | A strike in the direction you are holding. For a keyboard, or a controller with one stick. | `terms:prompt.remap_strike_key_help` | |
+-| 405 | Brace | `terms:prompt.remap_brace_key` | |
+-| 406 | Brace against the blow you expect, in the direction you hold. No stick flick needed. | `terms:prompt.remap_brace_key_help` | |
+-| 407 | P2: any button | `terms:prompt.join_tiny` | |
++| 398 | Player 2 | `terms:prompt.remap_p2` | |
++| 399 | BEAM INCOMING | `terms:prompt.alert_incoming` | |
++| 400 | BEAM CHARGING | `terms:prompt.alert_charging` | |
++| 401 | FIRE BACK | `terms:prompt.alert_fire_back` | |
++| 402 | DODGE | `terms:prompt.alert_dodge` | |
++| 403 | {layout}, swapped | `terms:prompt.remap_swapped` | |
++| 404 | Strike key | `terms:prompt.remap_strike_key` | |
++| 405 | A strike in the direction you are holding. For a keyboard, or a controller with one stick. | `terms:prompt.remap_strike_key_help` | |
++| 406 | Brace | `terms:prompt.remap_brace_key` | |
++| 407 | Brace against the blow you expect, in the direction you hold. No stick flick needed. | `terms:prompt.remap_brace_key_help` | |
+ 
+-## Batch 47: Button prompts and touch captions (171 to 174 of 174 on this surface)
++## Batch 47: Button prompts and touch captions (171 to 175 of 175 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 408 | P2: press T | `terms:prompt.join_key_tiny` | |
+-| 409 | P2 left | `terms:prompt.left_short` | |
+-| 410 | P2 joined | `terms:prompt.joined` | |
+-| 411 | P2 handed back to the computer | `terms:prompt.left` | |
++| 408 | P2: any button | `terms:prompt.join_tiny` | |
++| 409 | P2: press T | `terms:prompt.join_key_tiny` | |
++| 410 | P2 left | `terms:prompt.left_short` | |
++| 411 | P2 joined | `terms:prompt.joined` | |
++| 412 | P2 handed back to the computer | `terms:prompt.left` | |
+ 
+ ## Batch 48: Stances: charging (the stance page, the legend and the remap screen) (1 to 10 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 412 | CHARGING | `stances:stances.charging.name` | |
+-| 413 | Charging | `stances:stances.charging.title` | |
+-| 414 | Gather power for your specials and your ultimate. | `stances:stances.charging._blurb` | |
+-| 415 | Charging stance (hold to charge) | `stances:stances.charging._howto` | |
+-| 416 | Charging stance (toggle to charge) | `stances:stances.charging._howto_toggle` | |
+-| 417 | Charging stance (hold) | `stances:stances.charging._remap` | |
+-| 418 | Hold to charge. Held with a face button it throws a special. | `stances:stances.charging._remap_help` | |
+-| 419 | Charging (hold) | `stances:stances.charging._legend` | |
+-| 420 | Charging (toggle) | `stances:stances.charging._legend_toggle` | |
+-| 421 | Charging stance (toggle) | `stances:stances.charging._remap_toggle` | |
++| 413 | CHARGING | `stances:stances.charging.name` | |
++| 414 | Charging | `stances:stances.charging.title` | |
++| 415 | Gather power for your specials and your ultimate. | `stances:stances.charging._blurb` | |
++| 416 | Charging stance (hold to charge) | `stances:stances.charging._howto` | |
++| 417 | Charging stance (toggle to charge) | `stances:stances.charging._howto_toggle` | |
++| 418 | Charging stance (hold) | `stances:stances.charging._remap` | |
++| 419 | Hold to charge. Held with a face button it throws a special. | `stances:stances.charging._remap_help` | |
++| 420 | Charging (hold) | `stances:stances.charging._legend` | |
++| 421 | Charging (toggle) | `stances:stances.charging._legend_toggle` | |
++| 422 | Charging stance (toggle) | `stances:stances.charging._remap_toggle` | |
+ 
+ ## Batch 49: Stances: charging (the stance page, the legend and the remap screen) (11 to 16 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 422 | Press to start charging, press again to stop. Pressed with a face button it throws a special. | `stances:stances.charging._remap_help_toggle` | |
+-| 423 | Hold the power button | `stances:stances.charging.enter` | |
+-| 424 | Quick special | `stances:stances.charging.cells.x` | |
+-| 425 | Strong special | `stances:stances.charging.cells.y` | |
+-| 426 | Utility special | `stances:stances.charging.cells.a` | |
+-| 427 | Ultimate (hold) | `stances:stances.charging.cells.b` | |
++| 423 | Press to start charging, press again to stop. Pressed with a face button it throws a special. | `stances:stances.charging._remap_help_toggle` | |
++| 424 | Hold the power button | `stances:stances.charging.enter` | |
++| 425 | Quick special | `stances:stances.charging.cells.x` | |
++| 426 | Strong special | `stances:stances.charging.cells.y` | |
++| 427 | Utility special | `stances:stances.charging.cells.a` | |
++| 428 | Ultimate (hold) | `stances:stances.charging.cells.b` | |
+ 
+ ## Batch 50: Stances: defensive (the stance page, the legend and the remap screen) (1 to 10 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 428 | DEFENSIVE | `stances:stances.defensive.name` | |
+-| 429 | Defensive | `stances:stances.defensive.title` | |
+-| 430 | Guard, answer the rival's blows and push the rival back. | `stances:stances.defensive._blurb` | |
+-| 431 | Defensive stance (hold) | `stances:stances.defensive._howto` | |
+-| 432 | Defensive stance (toggle) | `stances:stances.defensive._howto_toggle` | |
+-| 433 | Defensive stance (hold) | `stances:stances.defensive._remap` | |
+-| 434 | Hold for the defensive stance: guard, and the face buttons check, push, reverse and counter. | `stances:stances.defensive._remap_help` | |
+-| 435 | Defensive (hold) | `stances:stances.defensive._legend` | |
+-| 436 | Defensive (toggle) | `stances:stances.defensive._legend_toggle` | |
+-| 437 | Defensive stance (toggle) | `stances:stances.defensive._remap_toggle` | |
++| 429 | DEFENSIVE | `stances:stances.defensive.name` | |
++| 430 | Defensive | `stances:stances.defensive.title` | |
++| 431 | Guard, answer the rival's blows and push the rival back. | `stances:stances.defensive._blurb` | |
++| 432 | Defensive stance (hold) | `stances:stances.defensive._howto` | |
++| 433 | Defensive stance (toggle) | `stances:stances.defensive._howto_toggle` | |
++| 434 | Defensive stance (hold) | `stances:stances.defensive._remap` | |
++| 435 | Hold for the defensive stance: guard, and the face buttons check, push, reverse and counter. | `stances:stances.defensive._remap_help` | |
++| 436 | Defensive (hold) | `stances:stances.defensive._legend` | |
++| 437 | Defensive (toggle) | `stances:stances.defensive._legend_toggle` | |
++| 438 | Defensive stance (toggle) | `stances:stances.defensive._remap_toggle` | |
+ 
+ ## Batch 51: Stances: defensive (the stance page, the legend and the remap screen) (11 to 16 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 438 | Press once for the defensive stance: guard, and the face buttons check, push, reverse and counter. Press again to stop. | `stances:stances.defensive._remap_help_toggle` | |
+-| 439 | Hold the guard button | `stances:stances.defensive.enter` | |
+-| 440 | Check | `stances:stances.defensive.cells.x` | |
+-| 441 | Push | `stances:stances.defensive.cells.y` | |
+-| 442 | Reversal | `stances:stances.defensive.cells.a` | |
+-| 443 | Counter | `stances:stances.defensive.cells.b` | |
++| 439 | Press once for the defensive stance: guard, and the face buttons check, push, reverse and counter. Press again to stop. | `stances:stances.defensive._remap_help_toggle` | |
++| 440 | Hold the guard button | `stances:stances.defensive.enter` | |
++| 441 | Check | `stances:stances.defensive.cells.x` | |
++| 442 | Push | `stances:stances.defensive.cells.y` | |
++| 443 | Reversal | `stances:stances.defensive.cells.a` | |
++| 444 | Counter | `stances:stances.defensive.cells.b` | |
+ 
+ ## Batch 52: Stances: energy (the stance page, the legend and the remap screen) (1 to 10 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 444 | ENERGY | `stances:stances.energy.name` | |
+-| 445 | Energy arts | `stances:stances.energy.title` | |
+-| 446 | Blasts instead of blows: bolts, charged shots, mines and your beam. | `stances:stances.energy._blurb` | |
+-| 447 | Energy stance (hold; Settings can make it a toggle) | `stances:stances.energy._howto` | |
+-| 448 | Energy stance (toggle; Settings can make it hold) | `stances:stances.energy._howto_toggle` | |
+-| 449 | Energy stance (hold) | `stances:stances.energy._remap` | |
+-| 450 | Hold for energy attacks: blasts instead of blows. Let go for martial arts. Settings can make it a toggle. | `stances:stances.energy._remap_help` | |
+-| 451 | Energy (hold) | `stances:stances.energy._legend` | |
+-| 452 | Energy (toggle) | `stances:stances.energy._legend_toggle` | |
+-| 453 | Energy stance (toggle) | `stances:stances.energy._remap_toggle` | |
++| 445 | ENERGY | `stances:stances.energy.name` | |
++| 446 | Energy arts | `stances:stances.energy.title` | |
++| 447 | Blasts instead of blows: bolts, charged shots, mines and your beam. | `stances:stances.energy._blurb` | |
++| 448 | Energy stance (hold; Settings can make it a toggle) | `stances:stances.energy._howto` | |
++| 449 | Energy stance (toggle; Settings can make it hold) | `stances:stances.energy._howto_toggle` | |
++| 450 | Energy stance (hold) | `stances:stances.energy._remap` | |
++| 451 | Hold for energy attacks: blasts instead of blows. Let go for martial arts. Settings can make it a toggle. | `stances:stances.energy._remap_help` | |
++| 452 | Energy (hold) | `stances:stances.energy._legend` | |
++| 453 | Energy (toggle) | `stances:stances.energy._legend_toggle` | |
++| 454 | Energy stance (toggle) | `stances:stances.energy._remap_toggle` | |
+ 
+ ## Batch 53: Stances: energy (the stance page, the legend and the remap screen) (11 to 16 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 454 | Press for energy attacks: blasts instead of blows. Press again for martial arts. | `stances:stances.energy._remap_help_toggle` | |
+-| 455 | Hold the energy button | `stances:stances.energy.enter` | |
+-| 456 | Bolts | `stances:stances.energy.cells.x` | |
+-| 457 | Charged shot | `stances:stances.energy.cells.y` | |
+-| 458 | Mine | `stances:stances.energy.cells.a` | |
+-| 459 | Driver | `stances:stances.energy.cells.b` | |
++| 455 | Press for energy attacks: blasts instead of blows. Press again for martial arts. | `stances:stances.energy._remap_help_toggle` | |
++| 456 | Hold the energy button | `stances:stances.energy.enter` | |
++| 457 | Bolts | `stances:stances.energy.cells.x` | |
++| 458 | Charged shot | `stances:stances.energy.cells.y` | |
++| 459 | Mine | `stances:stances.energy.cells.a` | |
++| 460 | Driver | `stances:stances.energy.cells.b` | |
+ 
+ ## Batch 54: Stances: manoeuvre (the stance page, the legend and the remap screen) (1 to 10 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 460 | MANOEUVRE | `stances:stances.manoeuvre.name` | |
+-| 461 | Manoeuvre | `stances:stances.manoeuvre.title` | |
+-| 462 | Dodge, boost and zip in and out. | `stances:stances.manoeuvre._blurb` | |
+-| 463 | Manoeuvre stance (hold), dodge (tap) | `stances:stances.manoeuvre._howto` | |
+-| 464 | Manoeuvre stance (toggle), dodge (tap) | `stances:stances.manoeuvre._howto_toggle` | |
+-| 465 | Dodge (tap), manoeuvre stance (hold) | `stances:stances.manoeuvre._remap` | |
+-| 466 | Tap to dodge. Hold for the manoeuvre stance: boost, and the face buttons zip in and out. | `stances:stances.manoeuvre._remap_help` | |
+-| 467 | Manoeuvre (hold) | `stances:stances.manoeuvre._legend` | |
+-| 468 | Manoeuvre (toggle) | `stances:stances.manoeuvre._legend_toggle` | |
+-| 469 | Dodge (tap), manoeuvre stance (toggle) | `stances:stances.manoeuvre._remap_toggle` | |
++| 461 | MANOEUVRE | `stances:stances.manoeuvre.name` | |
++| 462 | Manoeuvre | `stances:stances.manoeuvre.title` | |
++| 463 | Dodge, boost and zip in and out. | `stances:stances.manoeuvre._blurb` | |
++| 464 | Manoeuvre stance (hold), dodge (tap) | `stances:stances.manoeuvre._howto` | |
++| 465 | Manoeuvre stance (toggle), dodge (tap) | `stances:stances.manoeuvre._howto_toggle` | |
++| 466 | Dodge (tap), manoeuvre stance (hold) | `stances:stances.manoeuvre._remap` | |
++| 467 | Tap to dodge. Hold for the manoeuvre stance: boost, and the face buttons zip in and out. | `stances:stances.manoeuvre._remap_help` | |
++| 468 | Manoeuvre (hold) | `stances:stances.manoeuvre._legend` | |
++| 469 | Manoeuvre (toggle) | `stances:stances.manoeuvre._legend_toggle` | |
++| 470 | Dodge (tap), manoeuvre stance (toggle) | `stances:stances.manoeuvre._remap_toggle` | |
+ 
+ ## Batch 55: Stances: manoeuvre (the stance page, the legend and the remap screen) (11 to 16 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 470 | Tap to dodge. Press once for the manoeuvre stance: boost, and the face buttons zip in and out. Press again to stop. | `stances:stances.manoeuvre._remap_help_toggle` | |
+-| 471 | Hold the dodge button | `stances:stances.manoeuvre.enter` | |
+-| 472 | Zip strike | `stances:stances.manoeuvre.cells.x` | |
+-| 473 | Zip heavy | `stances:stances.manoeuvre.cells.y` | |
+-| 474 | Zip tackle | `stances:stances.manoeuvre.cells.a` | |
+-| 475 | Terrain art | `stances:stances.manoeuvre.cells.b` | |
++| 471 | Tap to dodge. Press once for the manoeuvre stance: boost, and the face buttons zip in and out. Press again to stop. | `stances:stances.manoeuvre._remap_help_toggle` | |
++| 472 | Hold the dodge button | `stances:stances.manoeuvre.enter` | |
++| 473 | Zip strike | `stances:stances.manoeuvre.cells.x` | |
++| 474 | Zip heavy | `stances:stances.manoeuvre.cells.y` | |
++| 475 | Zip tackle | `stances:stances.manoeuvre.cells.a` | |
++| 476 | Terrain art | `stances:stances.manoeuvre.cells.b` | |
+ 
+ ## Batch 56: Stances: martial (the stance page, the legend and the remap screen) (1 to 8 of 8 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 476 | MARTIAL | `stances:stances.martial.name` | |
+-| 477 | Martial arts | `stances:stances.martial.title` | |
+-| 478 | Your own style: strikes, throws and your signature. | `stances:stances.martial._blurb` | |
+-| 479 | Hold nothing | `stances:stances.martial.enter` | |
+-| 480 | Light strikes | `stances:stances.martial.cells.x` | |
+-| 481 | Heavy strikes | `stances:stances.martial.cells.y` | |
+-| 482 | Grab and throw | `stances:stances.martial.cells.a` | |
+-| 483 | Signature | `stances:stances.martial.cells.b` | |
++| 477 | MARTIAL | `stances:stances.martial.name` | |
++| 478 | Martial arts | `stances:stances.martial.title` | |
++| 479 | Your own style: strikes, throws and your signature. | `stances:stances.martial._blurb` | |
++| 480 | Hold nothing | `stances:stances.martial.enter` | |
++| 481 | Light strikes | `stances:stances.martial.cells.x` | |
++| 482 | Heavy strikes | `stances:stances.martial.cells.y` | |
++| 483 | Grab and throw | `stances:stances.martial.cells.a` | |
++| 484 | Signature | `stances:stances.martial.cells.b` | |
+ 
+ ## Batch 57: Stances: the armed badge and the page's shared words (1 to 7 of 7 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 484 | NEXT BLOW | `stances:_armed_word` | |
+-| 485 | NEXT | `stances:_armed_short` | |
+-| 486 | An armed stance (Full touch: a tap on guard, power or dodge arms that stance for the next blow, lapsing after 90 ticks; Controls, docs/controls/stance-key-help.md) is not held and is not latched: the badge says NEXT BLOW with a ring that runs down, and the touch button says NEXT with the same ring. Energy's latch is steady, not draining. | `stances:_armed_note` | |
+-| 487 | the defensive stance | `stances:_counters.launch.word` | |
+-| 488 | the manoeuvre stance | `stances:_counters.melee.word` | |
+-| 489 | the signature | `stances:_counters.beam.word` | |
+-| 490 | What answers each finisher kind (Game Design, docs/design/melee-press-feel.md sections 10 and 11): a launch the defensive stance, a melee the manoeuvre stance, a beam the Signature press (B) from the martial, energy or charging stance. The finisher telegraph chip reads this for its icon and words. The sim still reads the old answers (reads.json finisher_counter) until Encounter builds the rule; the words say the stance, never a timing, so they hold for both. | `stances:_counters_note` | |
++| 485 | NEXT BLOW | `stances:_armed_word` | |
++| 486 | NEXT | `stances:_armed_short` | |
++| 487 | An armed stance (Full touch: a tap on guard, power or dodge arms that stance for the next blow, lapsing after 90 ticks; Controls, docs/controls/stance-key-help.md) is not held and is not latched: the badge says NEXT BLOW with a ring that runs down, and the touch button says NEXT with the same ring. Energy's latch is steady, not draining. | `stances:_armed_note` | |
++| 488 | the defensive stance | `stances:_counters.launch.word` | |
++| 489 | the manoeuvre stance | `stances:_counters.melee.word` | |
++| 490 | the signature | `stances:_counters.beam.word` | |
++| 491 | What answers each finisher kind (Game Design, docs/design/melee-press-feel.md sections 10 and 11): a launch the defensive stance, a melee the manoeuvre stance, a beam the Signature press (B) from the martial, energy or charging stance. The finisher telegraph chip reads this for its icon and words. The sim still reads the old answers (reads.json finisher_counter) until Encounter builds the rule; the words say the stance, never a timing, so they hold for both. | `stances:_counters_note` | |
+ 
+ ## Batch 58: The control legend (arena layout) (1 to 10 of 19 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 491 | Fly | `hints:schemes.arena.rows.0.label` | |
+-| 492 | Light | `hints:schemes.arena.rows.1.label` | |
+-| 493 | Heavy | `hints:schemes.arena.rows.2.label` | |
+-| 494 | Action | `hints:schemes.arena.rows.3.label` | |
+-| 495 | Big blow | `hints:schemes.arena.rows.4.label` | |
+-| 496 | Guard (hold) | `hints:schemes.arena.rows.5.label` | |
+-| 497 | Guard (toggle) | `hints:schemes.arena.rows.5.label_toggle` | |
+-| 498 | Strike (hold to charge) | `hints:schemes.arena.rows.6.label` | |
+-| 499 | Strike (toggle to charge) | `hints:schemes.arena.rows.6.label_toggle` | |
+-| 500 | Strike (D-pad) | `hints:schemes.arena.rows.7.label` | |
++| 492 | Fly | `hints:schemes.arena.rows.0.label` | |
++| 493 | Light | `hints:schemes.arena.rows.1.label` | |
++| 494 | Heavy | `hints:schemes.arena.rows.2.label` | |
++| 495 | Action | `hints:schemes.arena.rows.3.label` | |
++| 496 | Big blow | `hints:schemes.arena.rows.4.label` | |
++| 497 | Guard (hold) | `hints:schemes.arena.rows.5.label` | |
++| 498 | Guard (toggle) | `hints:schemes.arena.rows.5.label_toggle` | |
++| 499 | Strike (hold to charge) | `hints:schemes.arena.rows.6.label` | |
++| 500 | Strike (toggle to charge) | `hints:schemes.arena.rows.6.label_toggle` | |
++| 501 | Strike (D-pad) | `hints:schemes.arena.rows.7.label` | |
+ 
+ ## Batch 59: The control legend (arena layout) (11 to 19 of 19 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 501 | Strike (D-pad, toggle) | `hints:schemes.arena.rows.7.label_toggle` | |
+-| 502 | Energy (hold) | `hints:schemes.arena.rows.8.label` | |
+-| 503 | Power (hold) | `hints:schemes.arena.rows.9.label` | |
+-| 504 | Power (toggle) | `hints:schemes.arena.rows.9.label_toggle` | |
+-| 505 | Dodge, sprint | `hints:schemes.arena.rows.10.label` | |
+-| 506 | Dodge, sprint (toggle) | `hints:schemes.arena.rows.10.label_toggle` | |
+-| 507 | Specials | `hints:schemes.arena.rows.11.label` | |
+-| 508 | Escape | `hints:schemes.arena.rows.12.label` | |
+-| 509 | Transform | `hints:schemes.arena.rows.13.label` | |
++| 502 | Strike (D-pad, toggle) | `hints:schemes.arena.rows.7.label_toggle` | |
++| 503 | Energy (hold) | `hints:schemes.arena.rows.8.label` | |
++| 504 | Power (hold) | `hints:schemes.arena.rows.9.label` | |
++| 505 | Power (toggle) | `hints:schemes.arena.rows.9.label_toggle` | |
++| 506 | Dodge, sprint | `hints:schemes.arena.rows.10.label` | |
++| 507 | Dodge, sprint (toggle) | `hints:schemes.arena.rows.10.label_toggle` | |
++| 508 | Specials | `hints:schemes.arena.rows.11.label` | |
++| 509 | Escape | `hints:schemes.arena.rows.12.label` | |
++| 510 | Transform | `hints:schemes.arena.rows.13.label` | |
+ 
+ ## Batch 60: The control legend (kb-shared-p1 layout) (1 to 10 of 17 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 510 | Fly | `hints:schemes.kb-shared-p1.rows.0.label` | |
+-| 511 | Light | `hints:schemes.kb-shared-p1.rows.1.label` | |
+-| 512 | Heavy | `hints:schemes.kb-shared-p1.rows.2.label` | |
+-| 513 | Action | `hints:schemes.kb-shared-p1.rows.3.label` | |
+-| 514 | Big blow | `hints:schemes.kb-shared-p1.rows.4.label` | |
+-| 515 | Guard (hold) | `hints:schemes.kb-shared-p1.rows.5.label` | |
+-| 516 | Guard (toggle) | `hints:schemes.kb-shared-p1.rows.5.label_toggle` | |
+-| 517 | Strike (with a direction) | `hints:schemes.kb-shared-p1.rows.6.label` | |
+-| 518 | Brace | `hints:schemes.kb-shared-p1.rows.7.label` | |
+-| 519 | Energy (hold) | `hints:schemes.kb-shared-p1.rows.8.label` | |
++| 511 | Fly | `hints:schemes.kb-shared-p1.rows.0.label` | |
++| 512 | Light | `hints:schemes.kb-shared-p1.rows.1.label` | |
++| 513 | Heavy | `hints:schemes.kb-shared-p1.rows.2.label` | |
++| 514 | Action | `hints:schemes.kb-shared-p1.rows.3.label` | |
++| 515 | Big blow | `hints:schemes.kb-shared-p1.rows.4.label` | |
++| 516 | Guard (hold) | `hints:schemes.kb-shared-p1.rows.5.label` | |
++| 517 | Guard (toggle) | `hints:schemes.kb-shared-p1.rows.5.label_toggle` | |
++| 518 | Strike (with a direction) | `hints:schemes.kb-shared-p1.rows.6.label` | |
++| 519 | Brace | `hints:schemes.kb-shared-p1.rows.7.label` | |
++| 520 | Energy (hold) | `hints:schemes.kb-shared-p1.rows.8.label` | |
+ 
+ ## Batch 61: The control legend (kb-shared-p1 layout) (11 to 17 of 17 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 520 | Power (hold) | `hints:schemes.kb-shared-p1.rows.9.label` | |
+-| 521 | Power (toggle) | `hints:schemes.kb-shared-p1.rows.9.label_toggle` | |
+-| 522 | Dodge, sprint | `hints:schemes.kb-shared-p1.rows.10.label` | |
+-| 523 | Dodge, sprint (toggle) | `hints:schemes.kb-shared-p1.rows.10.label_toggle` | |
+-| 524 | Specials | `hints:schemes.kb-shared-p1.rows.11.label` | |
+-| 525 | Escape | `hints:schemes.kb-shared-p1.rows.12.label` | |
+-| 526 | Transform | `hints:schemes.kb-shared-p1.rows.13.label` | |
++| 521 | Power (hold) | `hints:schemes.kb-shared-p1.rows.9.label` | |
++| 522 | Power (toggle) | `hints:schemes.kb-shared-p1.rows.9.label_toggle` | |
++| 523 | Dodge, sprint | `hints:schemes.kb-shared-p1.rows.10.label` | |
++| 524 | Dodge, sprint (toggle) | `hints:schemes.kb-shared-p1.rows.10.label_toggle` | |
++| 525 | Specials | `hints:schemes.kb-shared-p1.rows.11.label` | |
++| 526 | Escape | `hints:schemes.kb-shared-p1.rows.12.label` | |
++| 527 | Transform | `hints:schemes.kb-shared-p1.rows.13.label` | |
+ 
+ ## Batch 62: The control legend (kb-shared-p2 layout) (1 to 10 of 17 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 527 | Fly | `hints:schemes.kb-shared-p2.rows.0.label` | |
+-| 528 | Light | `hints:schemes.kb-shared-p2.rows.1.label` | |
+-| 529 | Heavy | `hints:schemes.kb-shared-p2.rows.2.label` | |
+-| 530 | Action | `hints:schemes.kb-shared-p2.rows.3.label` | |
+-| 531 | Big blow | `hints:schemes.kb-shared-p2.rows.4.label` | |
+-| 532 | Guard (hold) | `hints:schemes.kb-shared-p2.rows.5.label` | |
+-| 533 | Guard (toggle) | `hints:schemes.kb-shared-p2.rows.5.label_toggle` | |
+-| 534 | Strike (with a direction) | `hints:schemes.kb-shared-p2.rows.6.label` | |
+-| 535 | Brace | `hints:schemes.kb-shared-p2.rows.7.label` | |
+-| 536 | Energy (hold) | `hints:schemes.kb-shared-p2.rows.8.label` | |
++| 528 | Fly | `hints:schemes.kb-shared-p2.rows.0.label` | |
++| 529 | Light | `hints:schemes.kb-shared-p2.rows.1.label` | |
++| 530 | Heavy | `hints:schemes.kb-shared-p2.rows.2.label` | |
++| 531 | Action | `hints:schemes.kb-shared-p2.rows.3.label` | |
++| 532 | Big blow | `hints:schemes.kb-shared-p2.rows.4.label` | |
++| 533 | Guard (hold) | `hints:schemes.kb-shared-p2.rows.5.label` | |
++| 534 | Guard (toggle) | `hints:schemes.kb-shared-p2.rows.5.label_toggle` | |
++| 535 | Strike (with a direction) | `hints:schemes.kb-shared-p2.rows.6.label` | |
++| 536 | Brace | `hints:schemes.kb-shared-p2.rows.7.label` | |
++| 537 | Energy (hold) | `hints:schemes.kb-shared-p2.rows.8.label` | |
+ 
+ ## Batch 63: The control legend (kb-shared-p2 layout) (11 to 17 of 17 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 537 | Power (hold) | `hints:schemes.kb-shared-p2.rows.9.label` | |
+-| 538 | Power (toggle) | `hints:schemes.kb-shared-p2.rows.9.label_toggle` | |
+-| 539 | Dodge, sprint | `hints:schemes.kb-shared-p2.rows.10.label` | |
+-| 540 | Dodge, sprint (toggle) | `hints:schemes.kb-shared-p2.rows.10.label_toggle` | |
+-| 541 | Specials | `hints:schemes.kb-shared-p2.rows.11.label` | |
+-| 542 | Escape | `hints:schemes.kb-shared-p2.rows.12.label` | |
+-| 543 | Transform | `hints:schemes.kb-shared-p2.rows.13.label` | |
++| 538 | Power (hold) | `hints:schemes.kb-shared-p2.rows.9.label` | |
++| 539 | Power (toggle) | `hints:schemes.kb-shared-p2.rows.9.label_toggle` | |
++| 540 | Dodge, sprint | `hints:schemes.kb-shared-p2.rows.10.label` | |
++| 541 | Dodge, sprint (toggle) | `hints:schemes.kb-shared-p2.rows.10.label_toggle` | |
++| 542 | Specials | `hints:schemes.kb-shared-p2.rows.11.label` | |
++| 543 | Escape | `hints:schemes.kb-shared-p2.rows.12.label` | |
++| 544 | Transform | `hints:schemes.kb-shared-p2.rows.13.label` | |
+ 
+ ## Batch 64: The control legend (kb-solo layout) (1 to 10 of 18 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 544 | Fly | `hints:schemes.kb-solo.rows.0.label` | |
+-| 545 | Light | `hints:schemes.kb-solo.rows.1.label` | |
+-| 546 | Heavy | `hints:schemes.kb-solo.rows.2.label` | |
+-| 547 | Action | `hints:schemes.kb-solo.rows.3.label` | |
+-| 548 | Big blow | `hints:schemes.kb-solo.rows.4.label` | |
+-| 549 | Guard (hold) | `hints:schemes.kb-solo.rows.5.label` | |
+-| 550 | Guard (toggle) | `hints:schemes.kb-solo.rows.5.label_toggle` | |
+-| 551 | Strike (hold to charge) | `hints:schemes.kb-solo.rows.6.label` | |
+-| 552 | Strike (toggle to charge) | `hints:schemes.kb-solo.rows.6.label_toggle` | |
+-| 553 | Brace | `hints:schemes.kb-solo.rows.7.label` | |
++| 545 | Fly | `hints:schemes.kb-solo.rows.0.label` | |
++| 546 | Light | `hints:schemes.kb-solo.rows.1.label` | |
++| 547 | Heavy | `hints:schemes.kb-solo.rows.2.label` | |
++| 548 | Action | `hints:schemes.kb-solo.rows.3.label` | |
++| 549 | Big blow | `hints:schemes.kb-solo.rows.4.label` | |
++| 550 | Guard (hold) | `hints:schemes.kb-solo.rows.5.label` | |
++| 551 | Guard (toggle) | `hints:schemes.kb-solo.rows.5.label_toggle` | |
++| 552 | Strike (hold to charge) | `hints:schemes.kb-solo.rows.6.label` | |
++| 553 | Strike (toggle to charge) | `hints:schemes.kb-solo.rows.6.label_toggle` | |
++| 554 | Brace | `hints:schemes.kb-solo.rows.7.label` | |
+ 
+ ## Batch 65: The control legend (kb-solo layout) (11 to 18 of 18 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 554 | Energy (hold) | `hints:schemes.kb-solo.rows.8.label` | |
+-| 555 | Power (hold) | `hints:schemes.kb-solo.rows.9.label` | |
+-| 556 | Power (toggle) | `hints:schemes.kb-solo.rows.9.label_toggle` | |
+-| 557 | Dodge, sprint | `hints:schemes.kb-solo.rows.10.label` | |
+-| 558 | Dodge, sprint (toggle) | `hints:schemes.kb-solo.rows.10.label_toggle` | |
+-| 559 | Specials | `hints:schemes.kb-solo.rows.11.label` | |
+-| 560 | Escape | `hints:schemes.kb-solo.rows.12.label` | |
+-| 561 | Transform | `hints:schemes.kb-solo.rows.13.label` | |
++| 555 | Energy (hold) | `hints:schemes.kb-solo.rows.8.label` | |
++| 556 | Power (hold) | `hints:schemes.kb-solo.rows.9.label` | |
++| 557 | Power (toggle) | `hints:schemes.kb-solo.rows.9.label_toggle` | |
++| 558 | Dodge, sprint | `hints:schemes.kb-solo.rows.10.label` | |
++| 559 | Dodge, sprint (toggle) | `hints:schemes.kb-solo.rows.10.label_toggle` | |
++| 560 | Specials | `hints:schemes.kb-solo.rows.11.label` | |
++| 561 | Escape | `hints:schemes.kb-solo.rows.12.label` | |
++| 562 | Transform | `hints:schemes.kb-solo.rows.13.label` | |
+ 
+ ## Batch 66: The control legend (simple-pad layout) (1 to 10 of 12 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 562 | Fly | `hints:schemes.simple-pad.rows.0.label` | |
+-| 563 | Light (hold: heavy) | `hints:schemes.simple-pad.rows.1.label` | |
+-| 564 | Signature | `hints:schemes.simple-pad.rows.2.label` | |
+-| 565 | Guard (hold) | `hints:schemes.simple-pad.rows.3.label` | |
+-| 566 | Guard (toggle) | `hints:schemes.simple-pad.rows.3.label_toggle` | |
+-| 567 | Dodge, sprint | `hints:schemes.simple-pad.rows.4.label` | |
+-| 568 | Dodge, sprint (toggle) | `hints:schemes.simple-pad.rows.4.label_toggle` | |
+-| 569 | Power (hold) | `hints:schemes.simple-pad.rows.5.label` | |
+-| 570 | Power (toggle) | `hints:schemes.simple-pad.rows.5.label_toggle` | |
+-| 571 | Action | `hints:schemes.simple-pad.rows.6.label` | |
++| 563 | Fly | `hints:schemes.simple-pad.rows.0.label` | |
++| 564 | Light (hold: heavy) | `hints:schemes.simple-pad.rows.1.label` | |
++| 565 | Signature | `hints:schemes.simple-pad.rows.2.label` | |
++| 566 | Guard (hold) | `hints:schemes.simple-pad.rows.3.label` | |
++| 567 | Guard (toggle) | `hints:schemes.simple-pad.rows.3.label_toggle` | |
++| 568 | Dodge, sprint | `hints:schemes.simple-pad.rows.4.label` | |
++| 569 | Dodge, sprint (toggle) | `hints:schemes.simple-pad.rows.4.label_toggle` | |
++| 570 | Power (hold) | `hints:schemes.simple-pad.rows.5.label` | |
++| 571 | Power (toggle) | `hints:schemes.simple-pad.rows.5.label_toggle` | |
++| 572 | Action | `hints:schemes.simple-pad.rows.6.label` | |
+ 
+ ## Batch 67: The control legend (simple-pad layout) (11 to 12 of 12 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 572 | Escape | `hints:schemes.simple-pad.rows.7.label` | |
+-| 573 | Transform | `hints:schemes.simple-pad.rows.8.label` | |
++| 573 | Escape | `hints:schemes.simple-pad.rows.7.label` | |
++| 574 | Transform | `hints:schemes.simple-pad.rows.8.label` | |
+ 
+ ## Batch 68: The control legend (today layout) (1 to 10 of 15 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 574 | Fly | `hints:schemes.today.rows.0.label` | |
+-| 575 | Light | `hints:schemes.today.rows.1.label` | |
+-| 576 | Heavy | `hints:schemes.today.rows.2.label` | |
+-| 577 | Action | `hints:schemes.today.rows.3.label` | |
+-| 578 | Big blow | `hints:schemes.today.rows.4.label` | |
+-| 579 | Guard (hold) | `hints:schemes.today.rows.5.label` | |
+-| 580 | Guard (toggle) | `hints:schemes.today.rows.5.label_toggle` | |
+-| 581 | Energy (hold) | `hints:schemes.today.rows.6.label` | |
+-| 582 | Power (hold) | `hints:schemes.today.rows.7.label` | |
+-| 583 | Power (toggle) | `hints:schemes.today.rows.7.label_toggle` | |
++| 575 | Fly | `hints:schemes.today.rows.0.label` | |
++| 576 | Light | `hints:schemes.today.rows.1.label` | |
++| 577 | Heavy | `hints:schemes.today.rows.2.label` | |
++| 578 | Action | `hints:schemes.today.rows.3.label` | |
++| 579 | Big blow | `hints:schemes.today.rows.4.label` | |
++| 580 | Guard (hold) | `hints:schemes.today.rows.5.label` | |
++| 581 | Guard (toggle) | `hints:schemes.today.rows.5.label_toggle` | |
++| 582 | Energy (hold) | `hints:schemes.today.rows.6.label` | |
++| 583 | Power (hold) | `hints:schemes.today.rows.7.label` | |
++| 584 | Power (toggle) | `hints:schemes.today.rows.7.label_toggle` | |
+ 
+ ## Batch 69: The control legend (today layout) (11 to 15 of 15 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 584 | Dodge, sprint | `hints:schemes.today.rows.8.label` | |
+-| 585 | Dodge, sprint (toggle) | `hints:schemes.today.rows.8.label_toggle` | |
+-| 586 | Specials | `hints:schemes.today.rows.9.label` | |
+-| 587 | Escape | `hints:schemes.today.rows.10.label` | |
+-| 588 | Transform | `hints:schemes.today.rows.11.label` | |
++| 585 | Dodge, sprint | `hints:schemes.today.rows.8.label` | |
++| 586 | Dodge, sprint (toggle) | `hints:schemes.today.rows.8.label_toggle` | |
++| 587 | Specials | `hints:schemes.today.rows.9.label` | |
++| 588 | Escape | `hints:schemes.today.rows.10.label` | |
++| 589 | Transform | `hints:schemes.today.rows.11.label` | |
+ 
+ ## Batch 70: The control legend (1 to 3 of 3 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 589 | YOU | `hints:you.single` | |
+-| 590 | P1 | `hints:you.pair.0` | |
+-| 591 | P2 | `hints:you.pair.1` | |
++| 590 | YOU | `hints:you.single` | |
++| 591 | P1 | `hints:you.pair.0` | |
++| 592 | P2 | `hints:you.pair.1` | |
+ 
+ ## Batch 71: Reads: telegraphs, hints and the finisher struggle (1 to 10 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 592 | Fly. The world wraps: keep going and you come back round. | `reads:hints.b1.hint` | |
+-| 593 | Head for your rival, or keep going and watch the world wrap. | `reads:hints.b1.alt0` | |
+-| 594 | Try flying the other way. It's the same planet. | `reads:hints.b1.nudge` | |
+-| 595 | See? No edges. | `reads:hints.b1.done` | |
+-| 596 | Attack, hold Guard, or tap Dodge. The blows follow. | `reads:hints.b2.hint` | |
+-| 597 | Hold Guard, then attack. Feel how the exchange changes. | `reads:hints.b2.alt0` | |
+-| 598 | Try Dodge, then Attack. Your blows follow what you do. | `reads:hints.b2.alt1` | |
+-| 599 | Hold Guard or tap Dodge. Watch the blows change. | `reads:hints.b2.nudge` | |
+-| 600 | What you do decides the blows. | `reads:hints.b2.done` | |
+-| 601 | They're guarding. Hit heavy. | `reads:hints.b3.hint` | |
++| 593 | Fly. The world wraps: keep going and you come back round. | `reads:hints.b1.hint` | |
++| 594 | Head for your rival, or keep going and watch the world wrap. | `reads:hints.b1.alt0` | |
++| 595 | Try flying the other way. It's the same planet. | `reads:hints.b1.nudge` | |
++| 596 | See? No edges. | `reads:hints.b1.done` | |
++| 597 | Attack, hold Guard, or tap Dodge. The blows follow. | `reads:hints.b2.hint` | |
++| 598 | Hold Guard, then attack. Feel how the exchange changes. | `reads:hints.b2.alt0` | |
++| 599 | Try Dodge, then Attack. Your blows follow what you do. | `reads:hints.b2.alt1` | |
++| 600 | Hold Guard or tap Dodge. Watch the blows change. | `reads:hints.b2.nudge` | |
++| 601 | What you do decides the blows. | `reads:hints.b2.done` | |
++| 602 | They're guarding. Hit heavy. | `reads:hints.b3.hint` | |
+ 
+ ## Batch 72: Reads: telegraphs, hints and the finisher struggle (11 to 20 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 602 | A guarding rival breaks under heavy blows. | `reads:hints.b3.alt0` | |
+-| 603 | Guard up? Go heavy. | `reads:hints.b3.alt1` | |
+-| 604 | Use your heavy attack while they guard. | `reads:hints.b3.nudge` | |
+-| 605 | Guard broken. That's the read. | `reads:hints.b3.done` | |
+-| 606 | Watch the body: that's how you read damage. | `reads:hints.b4.hint` | |
+-| 607 | No health bar. Look at their arms, legs and head. | `reads:hints.b4.alt0` | |
+-| 608 | Where is the rival hurt? Look. | `reads:hints.b4.alt1` | |
+-| 609 | Look at the rival. Where are they worn? | `reads:hints.b4.nudge` | |
+-| 610 | Now you can read a wound. | `reads:hints.b4.done` | |
+-| 611 | Big swing coming. Slip it. | `reads:hints.b5.hint` | |
++| 603 | A guarding rival breaks under heavy blows. | `reads:hints.b3.alt0` | |
++| 604 | Guard up? Go heavy. | `reads:hints.b3.alt1` | |
++| 605 | Use your heavy attack while they guard. | `reads:hints.b3.nudge` | |
++| 606 | Guard broken. That's the read. | `reads:hints.b3.done` | |
++| 607 | Watch the body: that's how you read damage. | `reads:hints.b4.hint` | |
++| 608 | No health bar. Look at their arms, legs and head. | `reads:hints.b4.alt0` | |
++| 609 | Where is the rival hurt? Look. | `reads:hints.b4.alt1` | |
++| 610 | Look at the rival. Where are they worn? | `reads:hints.b4.nudge` | |
++| 611 | Now you can read a wound. | `reads:hints.b4.done` | |
++| 612 | Big swing coming. Slip it. | `reads:hints.b5.hint` | |
+ 
+ ## Batch 73: Reads: telegraphs, hints and the finisher struggle (21 to 30 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 612 | A heavy is winding up. Tap Dodge, or hold Guard and wait. | `reads:hints.b5.alt0` | |
+-| 613 | See the wind-up? Tap Dodge or hold Guard. | `reads:hints.b5.alt1` | |
+-| 614 | When they wind up big, tap Dodge or hold Guard. | `reads:hints.b5.nudge` | |
+-| 615 | You read it and answered it. That's the game. | `reads:hints.b5.done` **N** | |
+-| 616 | Charge, then call your signature. | `reads:hints.b6.hint` | |
+-| 617 | Charge until you have enough, then call your signature. | `reads:hints.b6.alt0` | |
+-| 618 | Your signature needs a full 45 Charge. | `reads:hints.b6.nudge` | |
+-| 619 | Signature away. Watch it land. | `reads:hints.b6.done` | |
+-| 620 | You're ready. Transform when you choose. | `reads:hints.b7.hint` | |
+-| 621 | The change is ready. Take it whenever you like. | `reads:hints.b7.alt0` | |
++| 613 | A heavy is winding up. Tap Dodge, or hold Guard and wait. | `reads:hints.b5.alt0` | |
++| 614 | See the wind-up? Tap Dodge or hold Guard. | `reads:hints.b5.alt1` | |
++| 615 | When they wind up big, tap Dodge or hold Guard. | `reads:hints.b5.nudge` | |
++| 616 | You read it and answered it. That's the game. | `reads:hints.b5.done` **N** | |
++| 617 | Charge, then call your signature. | `reads:hints.b6.hint` | |
++| 618 | Charge until you have enough, then call your signature. | `reads:hints.b6.alt0` | |
++| 619 | Your signature needs a full 45 Charge. | `reads:hints.b6.nudge` | |
++| 620 | Signature away. Watch it land. | `reads:hints.b6.done` | |
++| 621 | You're ready. Transform when you choose. | `reads:hints.b7.hint` | |
++| 622 | The change is ready. Take it whenever you like. | `reads:hints.b7.alt0` | |
+ 
+ ## Batch 74: Reads: telegraphs, hints and the finisher struggle (31 to 40 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 622 | Transform when the prompt shows. You hit harder from here. | `reads:hints.b7.alt1` | |
+-| 623 | Your transformation is ready. Nobody will stop you. | `reads:hints.b7.nudge` **N** | |
+-| 624 | Nobody interrupts a transformation. Take your time. | `reads:hints.b7.done` | |
+-| 625 | They're going for the finish. Brace, slip or meet it. | `reads:hints.b8.hint` | |
+-| 626 | A finisher is coming. Guard, dodge or attack to answer it. | `reads:hints.b8.alt0` | |
+-| 627 | Their finish has a kind. Match it. | `reads:hints.b8.alt1` | |
+-| 628 | Answer their finisher: Guard, Dodge or Attack. | `reads:hints.b8.nudge` | |
+-| 629 | You held. The fight is still yours. | `reads:hints.b8.done` | |
+-| 630 | From here, the fight is yours. | `reads:hints.b9.hint` | |
+-| 631 | You have the reads. Go and win. | `reads:hints.b9.alt0` | |
++| 623 | Transform when the prompt shows. You hit harder from here. | `reads:hints.b7.alt1` | |
++| 624 | Your transformation is ready. Nobody will stop you. | `reads:hints.b7.nudge` **N** | |
++| 625 | Nobody interrupts a transformation. Take your time. | `reads:hints.b7.done` | |
++| 626 | They're going for the finish. Brace, slip or meet it. | `reads:hints.b8.hint` | |
++| 627 | A finisher is coming. Guard, dodge or attack to answer it. | `reads:hints.b8.alt0` | |
++| 628 | Their finish has a kind. Match it. | `reads:hints.b8.alt1` | |
++| 629 | Answer their finisher: Guard, Dodge or Attack. | `reads:hints.b8.nudge` | |
++| 630 | You held. The fight is still yours. | `reads:hints.b8.done` | |
++| 631 | From here, the fight is yours. | `reads:hints.b9.hint` | |
++| 632 | You have the reads. Go and win. | `reads:hints.b9.alt0` | |
+ 
+ ## Batch 75: Reads: telegraphs, hints and the finisher struggle (41 to 42 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 632 | That's everything. It's your fight now. | `reads:hints.b9.alt1` | |
+-| 633 | Good. Now go and play. | `reads:hints.b9.done` | |
++| 633 | That's everything. It's your fight now. | `reads:hints.b9.alt1` | |
++| 634 | Good. Now go and play. | `reads:hints.b9.done` | |
+ 
+ ## Batch 76: Sound captions on barks (1 to 5 of 5 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 634 | hard grunt | `terms:caption.effort.heavy` | |
+-| 635 | short laugh | `terms:caption.laugh.short` | |
+-| 636 | long laugh | `terms:caption.laugh.long` | |
+-| 637 | cruel laugh | `terms:caption.laugh.cruel` | |
+-| 638 | heavy sigh | `terms:caption.sigh.heavy` | |
++| 635 | hard grunt | `terms:caption.effort.heavy` | |
++| 636 | short laugh | `terms:caption.laugh.short` | |
++| 637 | long laugh | `terms:caption.laugh.long` | |
++| 638 | cruel laugh | `terms:caption.laugh.cruel` | |
++| 639 | heavy sigh | `terms:caption.sigh.heavy` | |
+ 
+ ## Batch 77: Settings: the section and row names (1 to 10 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 639 | Controls | `settings:sections.0.title` | |
+-| 640 | Remap controls | `settings:sections.0.items.36.label` | |
+-| 641 | Open | `settings:sections.0.items.36.value` | |
+-| 642 | Change which button or key does what, for the layout you are using. | `settings:sections.0.items.36.help` | |
+-| 643 | Remap player 2's controls | `settings:sections.0.items.37.label` | |
+-| 644 | Open | `settings:sections.0.items.37.value` | |
+-| 645 | Change which button or key does what for player two, when two people play. | `settings:sections.0.items.37.help` | |
+-| 646 | Beam alerts | `settings:sections.1.title` | |
+-| 647 | Camera | `settings:sections.2.title` | |
+-| 648 | Display | `settings:sections.3.title` | |
++| 640 | Controls | `settings:sections.0.title` | |
++| 641 | Remap controls | `settings:sections.0.items.36.label` | |
++| 642 | Open | `settings:sections.0.items.36.value` | |
++| 643 | Change which button or key does what, for the layout you are using. | `settings:sections.0.items.36.help` | |
++| 644 | Remap player 2's controls | `settings:sections.0.items.37.label` | |
++| 645 | Open | `settings:sections.0.items.37.value` | |
++| 646 | Change which button or key does what for player two, when two people play. | `settings:sections.0.items.37.help` | |
++| 647 | Beam alerts | `settings:sections.1.title` | |
++| 648 | Camera | `settings:sections.2.title` | |
++| 649 | Display | `settings:sections.3.title` | |
+ 
+ ## Batch 78: Settings: the section and row names (11 to 16 of 16 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 649 | Sound | `settings:sections.4.title` | |
+-| 650 | Accessibility | `settings:sections.5.title` | |
+-| 651 | Flashing effects notice | `settings:sections.5.items.4.label` | |
+-| 652 | Read | `settings:sections.5.items.4.value` | |
+-| 653 | The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that no independent photosensitivity analyzer has been run. | `settings:sections.5.items.4.help` | |
+-| 654 | Cosmetics | `settings:sections.6.title` | |
++| 650 | Sound | `settings:sections.4.title` | |
++| 651 | Accessibility | `settings:sections.5.title` | |
++| 652 | Flashing effects notice | `settings:sections.5.items.4.label` | |
++| 653 | Read | `settings:sections.5.items.4.value` | |
++| 654 | The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that no independent photosensitivity analyzer has been run. | `settings:sections.5.items.4.help` | |
++| 655 | Cosmetics | `settings:sections.6.title` | |
+ 
+ ## Batch 79: The Remap controls screen (1 to 10 of 60 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 655 | REMAP CONTROLS | `settings:remap.title` | |
+-| 656 | Layout | `settings:remap.layout` | |
+-| 657 | Pick the layout to change. Each layout keeps its own keys or buttons. | `settings:remap.layout_help` | |
+-| 658 | Reset this layout | `settings:remap.reset` | |
+-| 659 | Reset | `settings:remap.reset_button` | |
+-| 660 | Put every key or button of this layout back the way it came. | `settings:remap.reset_help` | |
+-| 661 | Up and Down: choose.  Enter: change.  Left and Right: other layout.  Esc: back. | `settings:remap.hint_keys` | |
+-| 662 | D-pad: choose.  A: change.  Left and right: other layout.  B: back. | `settings:remap.hint_pad` | |
+-| 663 | Press the key for {action}.  Esc cancels. | `settings:remap.capture_key` | |
+-| 664 | Press the button for {action}.  Start cancels. | `settings:remap.capture_pad` | |
++| 656 | REMAP CONTROLS | `settings:remap.title` | |
++| 657 | Layout | `settings:remap.layout` | |
++| 658 | Pick the layout to change. Each layout keeps its own keys or buttons. | `settings:remap.layout_help` | |
++| 659 | Reset this layout | `settings:remap.reset` | |
++| 660 | Reset | `settings:remap.reset_button` | |
++| 661 | Put every key or button of this layout back the way it came. | `settings:remap.reset_help` | |
++| 662 | Up and Down: choose.  Enter: change.  Left and Right: other layout.  Esc: back. | `settings:remap.hint_keys` | |
++| 663 | D-pad: choose.  A: change.  Left and right: other layout.  B: back. | `settings:remap.hint_pad` | |
++| 664 | Press the key for {action}.  Esc cancels. | `settings:remap.capture_key` | |
++| 665 | Press the button for {action}.  Start cancels. | `settings:remap.capture_pad` | |
+ 
+ ## Batch 80: The Remap controls screen (11 to 20 of 60 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 665 | Press... | `settings:remap.capture_word` | |
+-| 666 | {control} is already {other}. Swap them? | `settings:remap.conflict` | |
+-| 667 | {control} is kept for the game. Pick another. | `settings:remap.reserved` | |
+-| 668 | {control} belongs to the other player's keys. Pick another. | `settings:remap.pair` | |
+-| 669 | {control} is already {other}. Pick another. | `settings:remap.taken` | |
+-| 670 | Pick four different keys. | `settings:remap.twice` | |
+-| 671 | That was not a key. Press a key. | `settings:remap.wrong_device_kb` | |
+-| 672 | That was not a controller button. Press a button. | `settings:remap.wrong_device_pad` | |
+-| 673 | {action} is now {control}. | `settings:remap.done` | |
+-| 674 | {action} already uses {control}. | `settings:remap.same` | |
++| 666 | Press... | `settings:remap.capture_word` | |
++| 667 | {control} is already {other}. Swap them? | `settings:remap.conflict` | |
++| 668 | {control} is kept for the game. Pick another. | `settings:remap.reserved` | |
++| 669 | {control} belongs to the other player's keys. Pick another. | `settings:remap.pair` | |
++| 670 | {control} is already {other}. Pick another. | `settings:remap.taken` | |
++| 671 | Pick four different keys. | `settings:remap.twice` | |
++| 672 | That was not a key. Press a key. | `settings:remap.wrong_device_kb` | |
++| 673 | That was not a controller button. Press a button. | `settings:remap.wrong_device_pad` | |
++| 674 | {action} is now {control}. | `settings:remap.done` | |
++| 675 | {action} already uses {control}. | `settings:remap.same` | |
+ 
+ ## Batch 81: The Remap controls screen (21 to 30 of 60 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 675 | Cancelled. | `settings:remap.cancelled` | |
+-| 676 | {layout} is back to its defaults. | `settings:remap.reset_done` | |
+-| 677 | SWAP | `settings:remap.swap` | |
+-| 678 | CANCEL | `settings:remap.cancel` | |
+-| 679 | Arena (controller) | `settings:remap.layouts.arena` | |
+-| 680 | Simple (controller) | `settings:remap.layouts.simple-pad` | |
+-| 681 | Keyboard | `settings:remap.layouts.kb-solo` | |
+-| 682 | Keyboard, player 1 | `settings:remap.layouts.kb-shared-p1` | |
+-| 683 | Keyboard, player 2 | `settings:remap.layouts.kb-shared-p2` | |
+-| 684 | Keyboard, swapped | `settings:remap.layouts.kb-solo-swapped` | |
++| 676 | Cancelled. | `settings:remap.cancelled` | |
++| 677 | {layout} is back to its defaults. | `settings:remap.reset_done` | |
++| 678 | SWAP | `settings:remap.swap` | |
++| 679 | CANCEL | `settings:remap.cancel` | |
++| 680 | Arena (controller) | `settings:remap.layouts.arena` | |
++| 681 | Simple (controller) | `settings:remap.layouts.simple-pad` | |
++| 682 | Keyboard | `settings:remap.layouts.kb-solo` | |
++| 683 | Keyboard, player 1 | `settings:remap.layouts.kb-shared-p1` | |
++| 684 | Keyboard, player 2 | `settings:remap.layouts.kb-shared-p2` | |
++| 685 | Keyboard, swapped | `settings:remap.layouts.kb-solo-swapped` | |
+ 
+ ## Batch 82: The Remap controls screen (31 to 40 of 60 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 685 | The four keys that fly you. Press them in order: up, left, down, right. | `settings:remap.helps.move` | |
+-| 686 | A quick blow. Also the first special while Power is held. | `settings:remap.helps.light` | |
+-| 687 | A slow, hard blow. Also the second special while Power is held. | `settings:remap.helps.heavy` | |
+-| 688 | Your signature move, when you have the Charge for it. | `settings:remap.helps.signature` | |
+-| 689 | Hold to guard. | `settings:remap.helps.guard` | |
+-| 690 | Tap to dodge, hold to sprint. | `settings:remap.helps.dodge` | |
+-| 691 | Hold to charge. Held with a face button it calls a special. | `settings:remap.helps.power` | |
+-| 692 | Hold for energy attacks: blasts instead of blows. Let go for physical. Settings can make it a toggle. | `settings:remap.helps.mode` | |
+-| 693 | The move that fits the moment, such as a grab. The third special while Power is held. | `settings:remap.helps.context` | |
+-| 694 | A way out of a fight. | `settings:remap.helps.escape` | |
++| 686 | The four keys that fly you. Press them in order: up, left, down, right. | `settings:remap.helps.move` | |
++| 687 | A quick blow. Also the first special while Power is held. | `settings:remap.helps.light` | |
++| 688 | A slow, hard blow. Also the second special while Power is held. | `settings:remap.helps.heavy` | |
++| 689 | Your signature move, when you have the Charge for it. | `settings:remap.helps.signature` | |
++| 690 | Hold to guard. | `settings:remap.helps.guard` | |
++| 691 | Tap to dodge, hold to sprint. | `settings:remap.helps.dodge` | |
++| 692 | Hold to charge. Held with a face button it calls a special. | `settings:remap.helps.power` | |
++| 693 | Hold for energy attacks: blasts instead of blows. Let go for physical. Settings can make it a toggle. | `settings:remap.helps.mode` | |
++| 694 | The move that fits the moment, such as a grab. The third special while Power is held. | `settings:remap.helps.context` | |
++| 695 | A way out of a fight. | `settings:remap.helps.escape` | |
+ 
+ ## Batch 83: The Remap controls screen (41 to 50 of 60 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 695 | Takes a form that is ready: hold it for half a second. | `settings:remap.helps.transform` | |
+-| 696 | Press to guard, press again to stop. | `settings:remap.helps_toggle.guard` | |
+-| 697 | Tap to dodge. Press once for the manoeuvre stance and its sprint, press again to stop. | `settings:remap.helps_toggle.dodge` | |
+-| 698 | Press to start charging, press again to stop. Pressed with a face button it calls a special. | `settings:remap.helps_toggle.power` | |
+-| 699 | Press for energy attacks: blasts instead of blows. Press again for physical. | `settings:remap.helps_toggle.mode` | |
+-| 700 | Takes a form that is ready: press the controls together once and let go, and it comes half a second later. | `settings:remap.helps_toggle.transform` | |
+-| 701 | the west button | `settings:remap.controls.west` | |
+-| 702 | the north button | `settings:remap.controls.north` | |
+-| 703 | the east button | `settings:remap.controls.east` | |
+-| 704 | the south button | `settings:remap.controls.south` | |
++| 696 | Takes a form that is ready: hold it for half a second. | `settings:remap.helps.transform` | |
++| 697 | Press to guard, press again to stop. | `settings:remap.helps_toggle.guard` | |
++| 698 | Tap to dodge. Press once for the manoeuvre stance and its sprint, press again to stop. | `settings:remap.helps_toggle.dodge` | |
++| 699 | Press to start charging, press again to stop. Pressed with a face button it calls a special. | `settings:remap.helps_toggle.power` | |
++| 700 | Press for energy attacks: blasts instead of blows. Press again for physical. | `settings:remap.helps_toggle.mode` | |
++| 701 | Takes a form that is ready: press the controls together once and let go, and it comes half a second later. | `settings:remap.helps_toggle.transform` | |
++| 702 | the west button | `settings:remap.controls.west` | |
++| 703 | the north button | `settings:remap.controls.north` | |
++| 704 | the east button | `settings:remap.controls.east` | |
++| 705 | the south button | `settings:remap.controls.south` | |
+ 
+ ## Batch 84: The Remap controls screen (51 to 60 of 60 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 705 | LB | `settings:remap.controls.lb` | |
+-| 706 | RB | `settings:remap.controls.rb` | |
+-| 707 | LT | `settings:remap.controls.lt` | |
+-| 708 | RT | `settings:remap.controls.rt` | |
+-| 709 | L3 | `settings:remap.controls.l3` | |
+-| 710 | R3 | `settings:remap.controls.r3` | |
+-| 711 | D-pad up | `settings:remap.controls.dpad_up` | |
+-| 712 | D-pad down | `settings:remap.controls.dpad_down` | |
+-| 713 | D-pad left | `settings:remap.controls.dpad_left` | |
+-| 714 | D-pad right | `settings:remap.controls.dpad_right` | |
++| 706 | LB | `settings:remap.controls.lb` | |
++| 707 | RB | `settings:remap.controls.rb` | |
++| 708 | LT | `settings:remap.controls.lt` | |
++| 709 | RT | `settings:remap.controls.rt` | |
++| 710 | L3 | `settings:remap.controls.l3` | |
++| 711 | R3 | `settings:remap.controls.r3` | |
++| 712 | D-pad up | `settings:remap.controls.dpad_up` | |
++| 713 | D-pad down | `settings:remap.controls.dpad_down` | |
++| 714 | D-pad left | `settings:remap.controls.dpad_left` | |
++| 715 | D-pad right | `settings:remap.controls.dpad_right` | |
+ 
+ ## Batch 85: The pause menu (1 to 10 of 18 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 715 | Quit | `terms:prompt.pause_quit` | |
+-| 716 | Close the game? | `terms:prompt.pause_quit_ask` | |
+-| 717 | Close the game | `terms:prompt.pause_quit_yes` | |
+-| 718 | Stay | `terms:prompt.pause_quit_no` | |
+-| 719 | PAUSED | `terms:prompt.pause_title` | |
+-| 720 | Resume | `terms:prompt.pause_resume` | |
+-| 721 | How to play | `terms:prompt.pause_howto` | |
+-| 722 | Settings | `terms:prompt.pause_settings` | |
+-| 723 | Send feedback | `terms:prompt.pause_feedback` | |
+-| 724 | About | `terms:prompt.pause_about` | |
++| 716 | Quit | `terms:prompt.pause_quit` | |
++| 717 | Close the game? | `terms:prompt.pause_quit_ask` | |
++| 718 | Close the game | `terms:prompt.pause_quit_yes` | |
++| 719 | Stay | `terms:prompt.pause_quit_no` | |
++| 720 | PAUSED | `terms:prompt.pause_title` | |
++| 721 | Resume | `terms:prompt.pause_resume` | |
++| 722 | How to play | `terms:prompt.pause_howto` | |
++| 723 | Settings | `terms:prompt.pause_settings` | |
++| 724 | Send feedback | `terms:prompt.pause_feedback` | |
++| 725 | About | `terms:prompt.pause_about` | |
+ 
+ ## Batch 86: The pause menu (11 to 18 of 18 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 725 | New match | `terms:prompt.pause_new` | |
+-| 726 | Start a new match? | `terms:prompt.pause_new_ask` | |
+-| 727 | New match | `terms:prompt.pause_new_yes` | |
+-| 728 | Keep playing | `terms:prompt.pause_new_no` | |
+-| 729 | F1 | `terms:prompt.pause_howto_key` | |
+-| 730 | Save this match | `terms:prompt.pause_save` | |
+-| 731 | Player two: hand back to the computer | `terms:prompt.pause_p2_leave` | |
+-| 732 | Player two: press any button to join | `terms:prompt.pause_p2_join` | |
++| 726 | New match | `terms:prompt.pause_new` | |
++| 727 | Start a new match? | `terms:prompt.pause_new_ask` | |
++| 728 | New match | `terms:prompt.pause_new_yes` | |
++| 729 | Keep playing | `terms:prompt.pause_new_no` | |
++| 730 | F1 | `terms:prompt.pause_howto_key` | |
++| 731 | Save this match | `terms:prompt.pause_save` | |
++| 732 | Player two: hand back to the computer | `terms:prompt.pause_p2_leave` | |
++| 733 | Player two: press any button to join | `terms:prompt.pause_p2_join` | |
+ 
+ ## Batch 87: Settings: rows and their help (1 to 10 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 733 | Info flashes | `options:options.info_flashes.label` | |
+-| 734 | Small flashes over a fighter's head that show what the fighter senses: danger, spotted you, searching. Turning this off hides only these. | `options:options.info_flashes.help` | |
+-| 735 | Body figure | `options:options.silhouette.label` | |
+-| 736 | A small body figure beside each nameplate that shows wear, always on. On in training and by the accessibility default. | `options:options.silhouette.help` | |
+-| 737 | Always show damage rings | `options:options.crown_always.label` | |
+-| 738 | The rings that show each fighter's damage stay up all the time instead of fading. Flashes over the head still show; the rings dim under one. | `options:options.crown_always.help` | |
+-| 739 | Planet map | `options:options.planet_map.label` | |
+-| 740 | A small globe at the bottom edge with the fight's trail round the planet. Off hides it. | `options:options.planet_map.help` | |
+-| 741 | World turning | `options:options.world_turning.label` | |
+-| 742 | When the fight turns to face somewhere new, the world can swing round behind the fighters. Cut jumps to the new view on the blow instead. Auto follows Reduced motion. | `options:options.world_turning.help` | |
++| 734 | Info flashes | `options:options.info_flashes.label` | |
++| 735 | Small flashes over a fighter's head that show what the fighter senses: danger, spotted you, searching. Turning this off hides only these. | `options:options.info_flashes.help` | |
++| 736 | Body figure | `options:options.silhouette.label` | |
++| 737 | A small body figure beside each nameplate that shows wear, always on. On in training and by the accessibility default. | `options:options.silhouette.help` | |
++| 738 | Always show damage rings | `options:options.crown_always.label` | |
++| 739 | The rings that show each fighter's damage stay up all the time instead of fading. Flashes over the head still show; the rings dim under one. | `options:options.crown_always.help` | |
++| 740 | Planet map | `options:options.planet_map.label` | |
++| 741 | A small globe at the bottom edge with the fight's trail round the planet. Off hides it. | `options:options.planet_map.help` | |
++| 742 | World turning | `options:options.world_turning.label` | |
++| 743 | When the fight turns to face somewhere new, the world can swing round behind the fighters. Cut jumps to the new view on the blow instead. Auto follows Reduced motion. | `options:options.world_turning.help` | |
+ 
+ ## Batch 88: Settings: rows and their help (11 to 20 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 743 | Beam alert set | `options:options.alert_preset.label` | |
+-| 744 | Start from a set, then change anything. Calm shows one quiet caption and the gentlest sound and buzz, Standard is the usual, Full tells you everything. Changing a row below makes it Custom. | `options:options.alert_preset.help` | |
+-| 745 | Beam alert set, player 2 | `options:options.alert_preset_p2.label` | |
+-| 746 | The same for player two when two people play. Player one's is the one above. A change takes effect at the start of the next match. | `options:options.alert_preset_p2.help` | |
+-| 747 | Screen edge line | `options:options.alert_edge.label` | |
+-| 748 | A thin line at the screen's edge on the side a beam comes from. Off screen only shows it just when the shooter is out of sight. | `options:options.alert_edge.help` | |
+-| 749 | Screen edge line, player 2 | `options:options.alert_edge_p2.label` | |
+-| 750 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_edge_p2.help` | |
+-| 751 | Edge line thickness | `options:options.alert_edge_width.label` | |
+-| 752 | How thick the line at the screen's edge is. | `options:options.alert_edge_width.help` | |
++| 744 | Beam alert set | `options:options.alert_preset.label` | |
++| 745 | Start from a set, then change anything. Calm shows one quiet caption and the gentlest sound and buzz, Standard is the usual, Full tells you everything. Changing a row below makes it Custom. | `options:options.alert_preset.help` | |
++| 746 | Beam alert set, player 2 | `options:options.alert_preset_p2.label` | |
++| 747 | The same for player two when two people play. Player one's is the one above. A change takes effect at the start of the next match. | `options:options.alert_preset_p2.help` | |
++| 748 | Screen edge line | `options:options.alert_edge.label` | |
++| 749 | A thin line at the screen's edge on the side a beam comes from. Off screen only shows it just when the shooter is out of sight. | `options:options.alert_edge.help` | |
++| 750 | Screen edge line, player 2 | `options:options.alert_edge_p2.label` | |
++| 751 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_edge_p2.help` | |
++| 752 | Edge line thickness | `options:options.alert_edge_width.label` | |
++| 753 | How thick the line at the screen's edge is. | `options:options.alert_edge_width.help` | |
+ 
+ ## Batch 89: Settings: rows and their help (21 to 30 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 753 | Edge line thickness, player 2 | `options:options.alert_edge_width_p2.label` | |
+-| 754 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_edge_width_p2.help` | |
+-| 755 | Beam caption | `options:options.alert_caption.label` | |
+-| 756 | Words and buttons at the screen's edge: BEAM INCOMING, then FIRE BACK or DODGE, with a bar that runs down to the moment it arrives. | `options:options.alert_caption.help` | |
+-| 757 | Beam caption, player 2 | `options:options.alert_caption_p2.label` | |
+-| 758 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_caption_p2.help` | |
+-| 759 | Caption size | `options:options.alert_caption_size.label` | |
+-| 760 | How big the caption is. | `options:options.alert_caption_size.help` | |
+-| 761 | Caption size, player 2 | `options:options.alert_caption_size_p2.label` | |
+-| 762 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_caption_size_p2.help` | |
++| 754 | Edge line thickness, player 2 | `options:options.alert_edge_width_p2.label` | |
++| 755 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_edge_width_p2.help` | |
++| 756 | Beam caption | `options:options.alert_caption.label` | |
++| 757 | Words and buttons at the screen's edge: BEAM INCOMING, then FIRE BACK or DODGE, with a bar that runs down to the moment it arrives. | `options:options.alert_caption.help` | |
++| 758 | Beam caption, player 2 | `options:options.alert_caption_p2.label` | |
++| 759 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_caption_p2.help` | |
++| 760 | Caption size | `options:options.alert_caption_size.label` | |
++| 761 | How big the caption is. | `options:options.alert_caption_size.help` | |
++| 762 | Caption size, player 2 | `options:options.alert_caption_size_p2.label` | |
++| 763 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_caption_size_p2.help` | |
+ 
+ ## Batch 90: Settings: rows and their help (31 to 40 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 763 | Caption place | `options:options.alert_caption_pos.label` | |
+-| 764 | Where the caption sits: on the side the beam comes from, or at the bottom centre under the fight, where it is always in the same place. | `options:options.alert_caption_pos.help` | |
+-| 765 | Caption place, player 2 | `options:options.alert_caption_pos_p2.label` | |
+-| 766 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_caption_pos_p2.help` | |
+-| 767 | Early warning | `options:options.alert_early.label` | |
+-| 768 | Also shows BEAM CHARGING while the rival gathers a beam, before it is fired. It shows what the lit hand already shows. | `options:options.alert_early.help` | |
+-| 769 | Early warning, player 2 | `options:options.alert_early_p2.label` | |
+-| 770 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_early_p2.help` | |
+-| 771 | Which beams warn | `options:options.alert_which.label` | |
+-| 772 | All beams, charged beams only, or the signature only. | `options:options.alert_which.help` | |
++| 764 | Caption place | `options:options.alert_caption_pos.label` | |
++| 765 | Where the caption sits: on the side the beam comes from, or at the bottom centre under the fight, where it is always in the same place. | `options:options.alert_caption_pos.help` | |
++| 766 | Caption place, player 2 | `options:options.alert_caption_pos_p2.label` | |
++| 767 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_caption_pos_p2.help` | |
++| 768 | Early warning | `options:options.alert_early.label` | |
++| 769 | Also shows BEAM CHARGING while the rival gathers a beam, before it is fired. It shows what the lit hand already shows. | `options:options.alert_early.help` | |
++| 770 | Early warning, player 2 | `options:options.alert_early_p2.label` | |
++| 771 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_early_p2.help` | |
++| 772 | Which beams warn | `options:options.alert_which.label` | |
++| 773 | All beams, charged beams only, or the signature only. | `options:options.alert_which.help` | |
+ 
+ ## Batch 91: Settings: rows and their help (41 to 50 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 773 | Which beams warn, player 2 | `options:options.alert_which_p2.label` | |
+-| 774 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_which_p2.help` | |
+-| 775 | Glint at the shooter's hand | `options:options.alert_glint.label` | |
+-| 776 | A bright spark at the hand as the beam is gathered. | `options:options.alert_glint.help` | |
+-| 777 | Glint at the shooter's hand, player 2 | `options:options.alert_glint_p2.label` | |
+-| 778 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_glint_p2.help` | |
+-| 779 | Air and light along the beam | `options:options.alert_air.label` | |
+-| 780 | The air ripples ahead of the beam, its colour sweeps along the ground and dust lifts under it. | `options:options.alert_air.help` | |
+-| 781 | Air and light along the beam, player 2 | `options:options.alert_air_p2.label` | |
+-| 782 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_air_p2.help` | |
++| 774 | Which beams warn, player 2 | `options:options.alert_which_p2.label` | |
++| 775 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_which_p2.help` | |
++| 776 | Glint at the shooter's hand | `options:options.alert_glint.label` | |
++| 777 | A bright spark at the hand as the beam is gathered. | `options:options.alert_glint.help` | |
++| 778 | Glint at the shooter's hand, player 2 | `options:options.alert_glint_p2.label` | |
++| 779 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_glint_p2.help` | |
++| 780 | Air and light along the beam | `options:options.alert_air.label` | |
++| 781 | The air ripples ahead of the beam, its colour sweeps along the ground and dust lifts under it. | `options:options.alert_air.help` | |
++| 782 | Air and light along the beam, player 2 | `options:options.alert_air_p2.label` | |
++| 783 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_air_p2.help` | |
+ 
+ ## Batch 92: Settings: rows and their help (51 to 60 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 783 | Incoming beam sound | `options:options.alert_sound.label` | |
+-| 784 | A low rising note that climbs until the beam arrives. | `options:options.alert_sound.help` | |
+-| 785 | Incoming beam sound, player 2 | `options:options.alert_sound_p2.label` | |
+-| 786 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_sound_p2.help` | |
+-| 787 | Incoming beam volume | `options:options.alert_sound_volume.label` | |
+-| 788 | How loud the note is. | `options:options.alert_sound_volume.help` | |
+-| 789 | Incoming beam volume, player 2 | `options:options.alert_sound_volume_p2.label` | |
+-| 790 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_sound_volume_p2.help` | |
+-| 791 | Incoming beam rumble | `options:options.alert_rumble.label` | |
+-| 792 | A buzz on your controller that grows until the beam arrives. | `options:options.alert_rumble.help` | |
++| 784 | Incoming beam sound | `options:options.alert_sound.label` | |
++| 785 | A low rising note that climbs until the beam arrives. | `options:options.alert_sound.help` | |
++| 786 | Incoming beam sound, player 2 | `options:options.alert_sound_p2.label` | |
++| 787 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_sound_p2.help` | |
++| 788 | Incoming beam volume | `options:options.alert_sound_volume.label` | |
++| 789 | How loud the note is. | `options:options.alert_sound_volume.help` | |
++| 790 | Incoming beam volume, player 2 | `options:options.alert_sound_volume_p2.label` | |
++| 791 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_sound_volume_p2.help` | |
++| 792 | Incoming beam rumble | `options:options.alert_rumble.label` | |
++| 793 | A buzz on your controller that grows until the beam arrives. | `options:options.alert_rumble.help` | |
+ 
+ ## Batch 93: Settings: rows and their help (61 to 70 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 793 | Incoming beam rumble, player 2 | `options:options.alert_rumble_p2.label` | |
+-| 794 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_rumble_p2.help` | |
+-| 795 | Incoming beam rumble strength | `options:options.alert_rumble_strength.label` | |
+-| 796 | How hard the buzz is. | `options:options.alert_rumble_strength.help` | |
+-| 797 | Incoming beam rumble strength, player 2 | `options:options.alert_rumble_strength_p2.label` | |
+-| 798 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_rumble_strength_p2.help` | |
+-| 799 | Brink ring | `options:options.brink_cue.label` | |
+-| 800 | A thin faint ring around a fighter on the brink. | `options:options.brink_cue.help` | |
+-| 801 | Cue captions | `options:options.edge_captions.label` | |
+-| 802 | A short line at the bottom edge names a cue as it happens, such as a beam struggle or an opening. Nothing is drawn on the fighters. | `options:options.edge_captions.help` | |
++| 794 | Incoming beam rumble, player 2 | `options:options.alert_rumble_p2.label` | |
++| 795 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_rumble_p2.help` | |
++| 796 | Incoming beam rumble strength | `options:options.alert_rumble_strength.label` | |
++| 797 | How hard the buzz is. | `options:options.alert_rumble_strength.help` | |
++| 798 | Incoming beam rumble strength, player 2 | `options:options.alert_rumble_strength_p2.label` | |
++| 799 | The same for player two when two people play. Player one's is the one above. | `options:options.alert_rumble_strength_p2.help` | |
++| 800 | Brink ring | `options:options.brink_cue.label` | |
++| 801 | A thin faint ring around a fighter on the brink. | `options:options.brink_cue.help` | |
++| 802 | Cue captions | `options:options.edge_captions.label` | |
++| 803 | A short line at the bottom edge names a cue as it happens, such as a beam struggle or an opening. Nothing is drawn on the fighters. | `options:options.edge_captions.help` | |
+ 
+ ## Batch 94: Settings: rows and their help (71 to 80 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 803 | Captions | `options:options.captions.label` | |
+-| 804 | Bracketed sound tags such as [wince] on spoken lines. | `options:options.captions.help` | |
+-| 805 | Latched charge | `options:options.latch_charge.label` | |
+-| 806 | A tap on Medium or Heavy starts its wind-up and the next press lets it go, for when holding a button is hard. Off: hold to charge. | `options:options.latch_charge.help` | |
+-| 807 | Latched charge, player 2 | `options:options.latch_charge_p2.label` | |
+-| 808 | The same for player two when two people play. Player one's is the one above. | `options:options.latch_charge_p2.help` | |
+-| 809 | Charges off | `options:options.charges_off.label` | |
+-| 810 | Every press is a tap: Medium and Heavy throw as soon as their wind-up ends, and holding does not charge. Off: hold to charge. | `options:options.charges_off.help` | |
+-| 811 | Charges off, player 2 | `options:options.charges_off_p2.label` | |
+-| 812 | The same for player two when two people play. Player one's is the one above. | `options:options.charges_off_p2.help` | |
++| 804 | Captions | `options:options.captions.label` | |
++| 805 | Bracketed sound tags such as [wince] on spoken lines. | `options:options.captions.help` | |
++| 806 | Latched charge | `options:options.latch_charge.label` | |
++| 807 | A tap on Medium or Heavy starts its wind-up and the next press lets it go, for when holding a button is hard. Off: hold to charge. | `options:options.latch_charge.help` | |
++| 808 | Latched charge, player 2 | `options:options.latch_charge_p2.label` | |
++| 809 | The same for player two when two people play. Player one's is the one above. | `options:options.latch_charge_p2.help` | |
++| 810 | Charges off | `options:options.charges_off.label` | |
++| 811 | Every press is a tap: Medium and Heavy throw as soon as their wind-up ends, and holding does not charge. Off: hold to charge. | `options:options.charges_off.help` | |
++| 812 | Charges off, player 2 | `options:options.charges_off_p2.label` | |
++| 813 | The same for player two when two people play. Player one's is the one above. | `options:options.charges_off_p2.help` | |
+ 
+ ## Batch 95: Settings: rows and their help (81 to 90 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 813 | Reduce flashing | `options:options.reduce_flashing.label` | |
+-| 814 | Fewer and gentler flashes. Turning it off restores full effects, which flash more. Reduced motion is a separate setting. | `options:options.reduce_flashing.help` | |
+-| 815 | Reduced motion | `options:options.reduced_motion.label` | |
+-| 816 | Removes flicker, shimmer and shrinking rings. The split screen changes sides in one step instead of sweeping across, and screen shake is cut to a quarter. Everything keeps its shape. | `options:options.reduced_motion.help` | |
+-| 817 | Split screen against the computer | `options:options.split_solo.label` | |
+-| 818 | Use the split screen when you play alone against the computer. Off keeps one camera on your fighter and shows the rival by an edge pointer and the ring map when it is far. | `options:options.split_solo.help` | |
+-| 819 | Show prompts | `options:options.show_prompts.label` | |
+-| 820 | Button prompts on the parry ring, the finisher rings and under your nameplate. Always on in training and in the first three matches. | `options:options.show_prompts.help` | |
+-| 821 | Glyph style | `options:options.glyph_style.label` | |
+-| 822 | The look of the button glyphs. Neutral is our own position diamond with letters. A device family's own letters wait for a license check. | `options:options.glyph_style.help` | |
++| 814 | Reduce flashing | `options:options.reduce_flashing.label` | |
++| 815 | Fewer and gentler flashes. Turning it off restores full effects, which flash more. Reduced motion is a separate setting. | `options:options.reduce_flashing.help` | |
++| 816 | Reduced motion | `options:options.reduced_motion.label` | |
++| 817 | Removes flicker, shimmer and shrinking rings. The split screen changes sides in one step instead of sweeping across, and screen shake is cut to a quarter. Everything keeps its shape. | `options:options.reduced_motion.help` | |
++| 818 | Split screen against the computer | `options:options.split_solo.label` | |
++| 819 | Use the split screen when you play alone against the computer. Off keeps one camera on your fighter and shows the rival by an edge pointer and the ring map when it is far. | `options:options.split_solo.help` | |
++| 820 | Show prompts | `options:options.show_prompts.label` | |
++| 821 | Button prompts on the parry ring, the finisher rings and under your nameplate. Always on in training and in the first three matches. | `options:options.show_prompts.help` | |
++| 822 | Glyph style | `options:options.glyph_style.label` | |
++| 823 | The look of the button glyphs. Neutral is our own position diamond with letters. A device family's own letters wait for a license check. | `options:options.glyph_style.help` | |
+ 
+ ## Batch 96: Settings: rows and their help (91 to 100 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 823 | Hit pause | `options:options.hitstop_scale.label` | |
+-| 824 | How long the game pauses for a moment on a heavy hit, from half to full. | `options:options.hitstop_scale.help` | |
+-| 825 | Alternate hot-seat keyboard layout | `options:options.hotseat_alt_layout.label` | |
+-| 826 | A second keyboard layout for two players on one keyboard. Off keeps the default layout. | `options:options.hotseat_alt_layout.help` | |
+-| 827 | Effects quality | `options:options.vfx_quality.label` | |
+-| 828 | How much debris, dust and cracking the effects draw. Auto picks by how fast the game is running; the others fix it. Fewer effects never hide a warning. | `options:options.vfx_quality.help` | |
+-| 829 | Vibration | `options:options.haptics.label` | |
+-| 830 | A short buzz on your pad or phone when you can transform. It is never the only signal: the screen says the same. | `options:options.haptics.help` | |
+-| 831 | Keep tutorial hints up | `options:options.keep_hints.label` | |
+-| 832 | In the guided first match, a hint stays on screen after you have done what it asks, until the next hint replaces it. | `options:options.keep_hints.help` | |
++| 824 | Hit pause | `options:options.hitstop_scale.label` | |
++| 825 | How long the game pauses for a moment on a heavy hit, from half to full. | `options:options.hitstop_scale.help` | |
++| 826 | Alternate hot-seat keyboard layout | `options:options.hotseat_alt_layout.label` | |
++| 827 | A second keyboard layout for two players on one keyboard. Off keeps the default layout. | `options:options.hotseat_alt_layout.help` | |
++| 828 | Effects quality | `options:options.vfx_quality.label` | |
++| 829 | How much debris, dust and cracking the effects draw. Auto picks by how fast the game is running; the others fix it. Fewer effects never hide a warning. | `options:options.vfx_quality.help` | |
++| 830 | Vibration | `options:options.haptics.label` | |
++| 831 | A short buzz on your pad or phone when you can transform. It is never the only signal: the screen says the same. | `options:options.haptics.help` | |
++| 832 | Keep tutorial hints up | `options:options.keep_hints.label` | |
++| 833 | In the guided first match, a hint stays on screen after you have done what it asks, until the next hint replaces it. | `options:options.keep_hints.help` | |
+ 
+ ## Batch 97: Settings: rows and their help (101 to 110 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 833 | Control hints | `options:options.control_hints.label` | |
+-| 834 | A small legend of your controls in your corner. Auto shows it at the start of every match and in your first matches, always keeps it up, off hides it. | `options:options.control_hints.help` | |
+-| 835 | Camera zoom | `options:options.camera_zoom.label` | |
+-| 836 | How close the camera frames the fight, from 0 (far) to 10 (close). Fighters keep a minimum size on screen either way. | `options:options.camera_zoom.help` | |
+-| 837 | Camera shake | `options:options.camera_shake.label` | |
+-| 838 | How hard the camera shakes on hits and blasts, from 0 (none) to 10 (most). Reduced motion caps it at a quarter. | `options:options.camera_shake.help` | |
+-| 839 | Launch camera | `options:options.camera_launch_follow.label` | |
+-| 840 | Where the camera goes when a fighter is launched. Auto: it follows you if you are launched, keeps the computer in view if you launch it, and splits when two people play. Chase always follows the launched fighter. Split always shows both. Hold: when you launch someone the camera stays on you, then cuts to the impact. | `options:options.camera_launch_follow.help` | |
+-| 841 | Panel cut-ins | `options:options.camera_panels.label` | |
+-| 842 | A slanted strip of the action in close-up for the big hits and finishing moments. Full: it opens and shuts with a wipe. Still: it shows a frozen frame and does not move. Off: none. | `options:options.camera_panels.help` | |
++| 834 | Control hints | `options:options.control_hints.label` | |
++| 835 | A small legend of your controls in your corner. Auto shows it at the start of every match and in your first matches, always keeps it up, off hides it. | `options:options.control_hints.help` | |
++| 836 | Camera zoom | `options:options.camera_zoom.label` | |
++| 837 | How close the camera frames the fight, from 0 (far) to 10 (close). Fighters keep a minimum size on screen either way. | `options:options.camera_zoom.help` | |
++| 838 | Camera shake | `options:options.camera_shake.label` | |
++| 839 | How hard the camera shakes on hits and blasts, from 0 (none) to 10 (most). Reduced motion caps it at a quarter. | `options:options.camera_shake.help` | |
++| 840 | Launch camera | `options:options.camera_launch_follow.label` | |
++| 841 | Where the camera goes when a fighter is launched. Auto: it follows you if you are launched, keeps the computer in view if you launch it, and splits when two people play. Chase always follows the launched fighter. Split always shows both. Hold: when you launch someone the camera stays on you, then cuts to the impact. | `options:options.camera_launch_follow.help` | |
++| 842 | Panel cut-ins | `options:options.camera_panels.label` | |
++| 843 | A slanted strip of the action in close-up for the big hits and finishing moments. Full: it opens and shuts with a wipe. Still: it shows a frozen frame and does not move. Off: none. | `options:options.camera_panels.help` | |
+ 
+ ## Batch 98: Settings: rows and their help (111 to 120 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 843 | Controller layout | `options:options.pad_preset.label` | |
+-| 844 | Arena: triggers dodge and charge power, bumpers guard and switch mode. Simple: fewer buttons, the game picks heavy, mode and specials for you. | `options:options.pad_preset.help` | |
+-| 845 | Controller layout, player 2 | `options:options.pad_preset_p2.label` | |
+-| 846 | The layout player two's controller uses when two people play. Player one's is the Controller layout above. | `options:options.pad_preset_p2.help` | |
+-| 847 | Hand layout | `options:options.hand_layout.label` | |
+-| 848 | Which hand flies and defends and which hand strikes. Standard is the usual arrangement. Swapped mirrors the whole controller (or the solo keyboard): the stick that flew now strikes, the shoulders trade places, and the face buttons and the D-pad trade places. | `options:options.hand_layout.help` | |
+-| 849 | Hand layout, player 2 | `options:options.hand_layout_p2.label` | |
+-| 850 | The same for player two when two people play. Player one's is the one above. | `options:options.hand_layout_p2.help` | |
+-| 851 | Strike on the D-pad | `options:options.dpad_mirror.label` | |
+-| 852 | Strike with the D-pad instead of the strike stick. Auto turns it on only for a controller that has no second stick. While the D-pad strikes, that thumb is off the move stick. | `options:options.dpad_mirror.help` | |
++| 844 | Controller layout | `options:options.pad_preset.label` | |
++| 845 | Arena: triggers dodge and charge power, bumpers guard and switch mode. Simple: fewer buttons, the game picks heavy, mode and specials for you. | `options:options.pad_preset.help` | |
++| 846 | Controller layout, player 2 | `options:options.pad_preset_p2.label` | |
++| 847 | The layout player two's controller uses when two people play. Player one's is the Controller layout above. | `options:options.pad_preset_p2.help` | |
++| 848 | Hand layout | `options:options.hand_layout.label` | |
++| 849 | Which hand flies and defends and which hand strikes. Standard is the usual arrangement. Swapped mirrors the whole controller (or the solo keyboard): the stick that flew now strikes, the shoulders trade places, and the face buttons and the D-pad trade places. | `options:options.hand_layout.help` | |
++| 850 | Hand layout, player 2 | `options:options.hand_layout_p2.label` | |
++| 851 | The same for player two when two people play. Player one's is the one above. | `options:options.hand_layout_p2.help` | |
++| 852 | Strike on the D-pad | `options:options.dpad_mirror.label` | |
++| 853 | Strike with the D-pad instead of the strike stick. Auto turns it on only for a controller that has no second stick. While the D-pad strikes, that thumb is off the move stick. | `options:options.dpad_mirror.help` | |
+ 
+ ## Batch 99: Settings: rows and their help (121 to 130 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 853 | Strike on the D-pad, player 2 | `options:options.dpad_mirror_p2.label` | |
+-| 854 | The same for player two when two people play. Player one's is the one above. | `options:options.dpad_mirror_p2.help` | |
+-| 855 | Strike style | `options:options.strike_style.label` | |
+-| 856 | Hold: push the strike stick out to charge a strike and let it go to throw. Toggle: push to start the charge and push again to throw. | `options:options.strike_style.help` | |
+-| 857 | Beam struggle push | `options:options.struggle_push.label` | |
+-| 858 | How you push in a beam struggle, on the beat. Right stick: flick it toward them (the easiest). Face buttons: press X, Y or B (harder). A change takes effect at the start of the next match. Player one's; player two's is the next row. | `options:options.struggle_push.help` | |
+-| 859 | Beam struggle push, player 2 | `options:options.struggle_push_p2.label` | |
+-| 860 | The same for player two when two people play. Player one's is the one above. | `options:options.struggle_push_p2.help` | |
+-| 861 | Strike style, player 2 | `options:options.strike_style_p2.label` | |
+-| 862 | The same for player two when two people play. Player one's is the one above. | `options:options.strike_style_p2.help` | |
++| 854 | Strike on the D-pad, player 2 | `options:options.dpad_mirror_p2.label` | |
++| 855 | The same for player two when two people play. Player one's is the one above. | `options:options.dpad_mirror_p2.help` | |
++| 856 | Strike style | `options:options.strike_style.label` | |
++| 857 | Hold: push the strike stick out to charge a strike and let it go to throw. Toggle: push to start the charge and push again to throw. | `options:options.strike_style.help` | |
++| 858 | Beam struggle push | `options:options.struggle_push.label` | |
++| 859 | How you push in a beam struggle, on the beat. Right stick: flick it toward them (the easiest). Face buttons: press X, Y or B (harder). A change takes effect at the start of the next match. Player one's; player two's is the next row. | `options:options.struggle_push.help` | |
++| 860 | Beam struggle push, player 2 | `options:options.struggle_push_p2.label` | |
++| 861 | The same for player two when two people play. Player one's is the one above. | `options:options.struggle_push_p2.help` | |
++| 862 | Strike style, player 2 | `options:options.strike_style_p2.label` | |
++| 863 | The same for player two when two people play. Player one's is the one above. | `options:options.strike_style_p2.help` | |
+ 
+ ## Batch 100: Settings: rows and their help (131 to 140 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 863 | Brace style | `options:options.brace_style.label` | |
+-| 864 | Flick: guard and flick the stick, or press the brace button. Button only: only the brace button braces, so no flick speed is needed. The button is L3 on Arena (R3 if swapped); change it in Remap controls. | `options:options.brace_style.help` | |
+-| 865 | Brace style, player 2 | `options:options.brace_style_p2.label` | |
+-| 866 | The same for player two when two people play. Player one's is the one above. | `options:options.brace_style_p2.help` | |
+-| 867 | Controller has a second stick | `options:options.pad_right_stick.label` | |
+-| 868 | Off tells the game your controller has only one stick, so the D-pad strikes. A handheld or a one-stick controller needs this off. | `options:options.pad_right_stick.help` | |
+-| 869 | Controller has a second stick, player 2 | `options:options.pad_right_stick_p2.label` | |
+-| 870 | The same for player two's controller when two people play. Player one's is the one above. | `options:options.pad_right_stick_p2.help` | |
+-| 871 | Energy: hold or toggle | `options:options.energy_style.label` | |
+-| 872 | Hold: energy attacks while you hold the energy control, physical when you let go. Toggle: press once to switch, press again to switch back. Toggle is for players who cannot hold a button while pressing another. | `options:options.energy_style.help` | |
++| 864 | Brace style | `options:options.brace_style.label` | |
++| 865 | Flick: guard and flick the stick, or press the brace button. Button only: only the brace button braces, so no flick speed is needed. The button is L3 on Arena (R3 if swapped); change it in Remap controls. | `options:options.brace_style.help` | |
++| 866 | Brace style, player 2 | `options:options.brace_style_p2.label` | |
++| 867 | The same for player two when two people play. Player one's is the one above. | `options:options.brace_style_p2.help` | |
++| 868 | Controller has a second stick | `options:options.pad_right_stick.label` | |
++| 869 | Off tells the game your controller has only one stick, so the D-pad strikes. A handheld or a one-stick controller needs this off. | `options:options.pad_right_stick.help` | |
++| 870 | Controller has a second stick, player 2 | `options:options.pad_right_stick_p2.label` | |
++| 871 | The same for player two's controller when two people play. Player one's is the one above. | `options:options.pad_right_stick_p2.help` | |
++| 872 | Energy: hold or toggle | `options:options.energy_style.label` | |
++| 873 | Hold: energy attacks while you hold the energy control, physical when you let go. Toggle: press once to switch, press again to switch back. Toggle is for players who cannot hold a button while pressing another. | `options:options.energy_style.help` | |
+ 
+ ## Batch 101: Settings: rows and their help (141 to 150 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 873 | Energy: hold or toggle, player 2 | `options:options.energy_style_p2.label` | |
+-| 874 | The same for player two when two people play. Player one's is the one above. | `options:options.energy_style_p2.help` | |
+-| 875 | Guard: hold or toggle | `options:options.guard_style.label` | |
+-| 876 | Hold: guard while you hold the guard control. Toggle: press once to start guarding, press again to stop. Toggle is for players who cannot hold a button down. | `options:options.guard_style.help` | |
+-| 877 | Guard: hold or toggle, player 2 | `options:options.guard_style_p2.label` | |
+-| 878 | The same for player two when two people play. Player one's is the one above. | `options:options.guard_style_p2.help` | |
+-| 879 | Manoeuvre stance: hold or toggle | `options:options.manoeuvre_style.label` | |
+-| 880 | Hold: the manoeuvre stance, with its sprint, while you hold the dodge control. Toggle: press once to start, press again to stop. Toggle is for players who cannot hold a button down. | `options:options.manoeuvre_style.help` | |
+-| 881 | Manoeuvre stance: hold or toggle, player 2 | `options:options.manoeuvre_style_p2.label` | |
+-| 882 | The same for player two when two people play. Player one's is the one above. | `options:options.manoeuvre_style_p2.help` | |
++| 874 | Energy: hold or toggle, player 2 | `options:options.energy_style_p2.label` | |
++| 875 | The same for player two when two people play. Player one's is the one above. | `options:options.energy_style_p2.help` | |
++| 876 | Guard: hold or toggle | `options:options.guard_style.label` | |
++| 877 | Hold: guard while you hold the guard control. Toggle: press once to start guarding, press again to stop. Toggle is for players who cannot hold a button down. | `options:options.guard_style.help` | |
++| 878 | Guard: hold or toggle, player 2 | `options:options.guard_style_p2.label` | |
++| 879 | The same for player two when two people play. Player one's is the one above. | `options:options.guard_style_p2.help` | |
++| 880 | Manoeuvre stance: hold or toggle | `options:options.manoeuvre_style.label` | |
++| 881 | Hold: the manoeuvre stance, with its sprint, while you hold the dodge control. Toggle: press once to start, press again to stop. Toggle is for players who cannot hold a button down. | `options:options.manoeuvre_style.help` | |
++| 882 | Manoeuvre stance: hold or toggle, player 2 | `options:options.manoeuvre_style_p2.label` | |
++| 883 | The same for player two when two people play. Player one's is the one above. | `options:options.manoeuvre_style_p2.help` | |
+ 
+ ## Batch 102: Settings: rows and their help (151 to 160 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 883 | Charging stance: hold or toggle | `options:options.charge_style.label` | |
+-| 884 | Hold: charge while you hold the power control. Toggle: press once to start charging, press again to stop. Toggle is for players who cannot hold a button down. | `options:options.charge_style.help` | |
+-| 885 | Charging stance: hold or toggle, player 2 | `options:options.charge_style_p2.label` | |
+-| 886 | The same for player two when two people play. Player one's is the one above. | `options:options.charge_style_p2.help` | |
+-| 887 | Transform: hold or toggle | `options:options.transform_style.label` | |
+-| 888 | Hold: hold the transform controls for half a second. Toggle: press them once, together, and let go; the transform comes half a second later, and pressing either again before then cancels it. Toggle is for players who cannot hold buttons down. | `options:options.transform_style.help` | |
+-| 889 | Transform: hold or toggle, player 2 | `options:options.transform_style_p2.label` | |
+-| 890 | The same for player two when two people play. Player one's is the one above. | `options:options.transform_style_p2.help` | |
+-| 891 | Player two join prompt | `options:options.join_prompt.label` | |
+-| 892 | While one person plays the computer, a small note on the computer's side says player two can press any button to join. It fades after a while and stays in the pause menu. | `options:options.join_prompt.help` | |
++| 884 | Charging stance: hold or toggle | `options:options.charge_style.label` | |
++| 885 | Hold: charge while you hold the power control. Toggle: press once to start charging, press again to stop. Toggle is for players who cannot hold a button down. | `options:options.charge_style.help` | |
++| 886 | Charging stance: hold or toggle, player 2 | `options:options.charge_style_p2.label` | |
++| 887 | The same for player two when two people play. Player one's is the one above. | `options:options.charge_style_p2.help` | |
++| 888 | Transform: hold or toggle | `options:options.transform_style.label` | |
++| 889 | Hold: hold the transform controls for half a second. Toggle: press them once, together, and let go; the transform comes half a second later, and pressing either again before then cancels it. Toggle is for players who cannot hold buttons down. | `options:options.transform_style.help` | |
++| 890 | Transform: hold or toggle, player 2 | `options:options.transform_style_p2.label` | |
++| 891 | The same for player two when two people play. Player one's is the one above. | `options:options.transform_style_p2.help` | |
++| 892 | Player two join prompt | `options:options.join_prompt.label` | |
++| 893 | While one person plays the computer, a small note on the computer's side says player two can press any button to join. It fades after a while and stays in the pause menu. | `options:options.join_prompt.help` | |
+ 
+ ## Batch 103: Settings: rows and their help (161 to 170 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 893 | Show recipe | `options:options.show_recipe.label` | |
+-| 894 | A small readout of the mix of blows you have been throwing (light, heavy, energy), once the game reads your presses. Nothing is drawn yet. | `options:options.show_recipe.help` | |
+-| 895 | Beat ring | `options:options.beat_ring.label` | |
+-| 896 | A ring on the fighter about to be struck, closing on the moment the blow lands: on the rival for your blows, on you for the rival's. For timing your presses, a parry or a counter. Off by default. | `options:options.beat_ring.help` | |
+-| 897 | Touch layout | `options:options.touch_preset.label` | |
+-| 898 | Simple: attack, guard and power buttons, and the game picks the rest. Full: a button for every action, best on a tablet. | `options:options.touch_preset.help` | |
+-| 899 | Left-handed touch layout | `options:options.left_handed.label` | |
+-| 900 | On a touch screen, the buttons on the left and the move stick on the right. | `options:options.left_handed.help` | |
+-| 901 | Unlock all cosmetics | `options:options.unlock_all.label` | |
+-| 902 | Every cosmetic can be equipped. Nothing is marked as earned: your real collection keeps counting and comes back when this is off. | `options:options.unlock_all.help` | |
++| 894 | Show recipe | `options:options.show_recipe.label` | |
++| 895 | A small readout of the mix of blows you have been throwing (light, heavy, energy), once the game reads your presses. Nothing is drawn yet. | `options:options.show_recipe.help` | |
++| 896 | Beat ring | `options:options.beat_ring.label` | |
++| 897 | A ring on the fighter about to be struck, closing on the moment the blow lands: on the rival for your blows, on you for the rival's. For timing your presses, a parry or a counter. Off by default. | `options:options.beat_ring.help` | |
++| 898 | Touch layout | `options:options.touch_preset.label` | |
++| 899 | Simple: attack, guard and power buttons, and the game picks the rest. Full: a button for every action, best on a tablet. | `options:options.touch_preset.help` | |
++| 900 | Left-handed touch layout | `options:options.left_handed.label` | |
++| 901 | On a touch screen, the buttons on the left and the move stick on the right. | `options:options.left_handed.help` | |
++| 902 | Unlock all cosmetics | `options:options.unlock_all.label` | |
++| 903 | Every cosmetic can be equipped. Nothing is marked as earned: your real collection keeps counting and comes back when this is off. | `options:options.unlock_all.help` | |
+ 
+ ## Batch 104: Settings: rows and their help (171 to 180 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 903 | Damage ring thickness | `options:options.thickness.label` | |
+-| 904 | How thick the damage rings are: thin, normal or thick. | `options:options.thickness.help` | |
+-| 905 | Color-blind mode | `options:options.colour_vision.label` | |
+-| 906 | Swaps the colors that carry meaning (wear stages, stances, moods, and the two fighters' colors) for ones that stay apart with protanopia, deuteranopia or tritanopia. Off keeps the game's own colors. Everything also has a word, an icon or a shape. | `options:options.colour_vision.help` | |
+-| 907 | Text size | `options:options.text_size.label` | |
+-| 908 | How big the words are in the menus and on the screen. Large is a quarter bigger than Normal and Larger is half bigger. Where room is tight a line stays a little smaller, so it is never cut off. | `options:options.text_size.help` | |
+-| 909 | Mark my fighter | `options:options.you_marker.label` | |
+-| 910 | A small marker over your fighter in your color. Always keeps it up through the fight, Intro shows it with the control hints at the start only, Off hides it. | `options:options.you_marker.help` | |
+-| 911 | Fighter panels | `options:options.hud_sides.label` | |
+-| 912 | Fixed: player one's panel stays on the left, player two's on the right. Follow: the panels move over to the side their fighter is on, after the fighters have held their sides for a moment. They never move in the middle of an exchange, and with two players they stay in their own corners. | `options:options.hud_sides.help` | |
++| 904 | Damage ring thickness | `options:options.thickness.label` | |
++| 905 | How thick the damage rings are: thin, normal or thick. | `options:options.thickness.help` | |
++| 906 | Color-blind mode | `options:options.colour_vision.label` | |
++| 907 | Swaps the colors that carry meaning (wear stages, stances, moods, and the two fighters' colors) for ones that stay apart with protanopia, deuteranopia or tritanopia. Off keeps the game's own colors. Everything also has a word, an icon or a shape. | `options:options.colour_vision.help` | |
++| 908 | Text size | `options:options.text_size.label` | |
++| 909 | How big the words are in the menus and on the screen. Large is a quarter bigger than Normal and Larger is half bigger. Where room is tight a line stays a little smaller, so it is never cut off. | `options:options.text_size.help` | |
++| 910 | Mark my fighter | `options:options.you_marker.label` | |
++| 911 | A small marker over your fighter in your color. Always keeps it up through the fight, Intro shows it with the control hints at the start only, Off hides it. | `options:options.you_marker.help` | |
++| 912 | Fighter panels | `options:options.hud_sides.label` | |
++| 913 | Fixed: player one's panel stays on the left, player two's on the right. Follow: the panels move over to the side their fighter is on, after the fighters have held their sides for a moment. They never move in the middle of an exchange, and with two players they stay in their own corners. | `options:options.hud_sides.help` | |
+ 
+ ## Batch 105: Settings: rows and their help (181 to 190 of 190 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 913 | Place names | `options:options.region_label.label` | |
+-| 914 | The place under the camera on the planet strip. | `options:options.region_label.help` | |
+-| 915 | Master volume | `options:options.volume_master.label` | |
+-| 916 | How loud the whole game is, from 0% (silent) to 100%. | `options:options.volume_master.help` | |
+-| 917 | Effects volume | `options:options.volume_effects.label` | |
+-| 918 | Blows, blasts, the world and the crowds, from 0% (silent) to 100%. Turn it down to hear the voices better. | `options:options.volume_effects.help` | |
+-| 919 | Voice volume | `options:options.volume_voice.label` | |
+-| 920 | The fighters' voices and grunts, from 0% (silent) to 100%. | `options:options.volume_voice.help` | |
+-| 921 | Mono sound | `options:options.mono_audio.label` | |
+-| 922 | Plays the same sound in both ears, for one earbud, one working ear or a single speaker. Sounds no longer tell you which side they come from. | `options:options.mono_audio.help` | |
++| 914 | Place names | `options:options.region_label.label` | |
++| 915 | The place under the camera on the planet strip. | `options:options.region_label.help` | |
++| 916 | Master volume | `options:options.volume_master.label` | |
++| 917 | How loud the whole game is, from 0% (silent) to 100%. | `options:options.volume_master.help` | |
++| 918 | Effects volume | `options:options.volume_effects.label` | |
++| 919 | Blows, blasts, the world and the crowds, from 0% (silent) to 100%. Turn it down to hear the voices better. | `options:options.volume_effects.help` | |
++| 920 | Voice volume | `options:options.volume_voice.label` | |
++| 921 | The fighters' voices and grunts, from 0% (silent) to 100%. | `options:options.volume_voice.help` | |
++| 922 | Mono sound | `options:options.mono_audio.label` | |
++| 923 | Plays the same sound in both ears, for one earbud, one working ear or a single speaker. Sounds no longer tell you which side they come from. | `options:options.mono_audio.help` | |
+ 
+ ## Batch 106: Settings and Remap: the screens' own words (1 to 10 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 923 | SETTINGS | `settings:title` | |
+-| 924 | CLOSE | `settings:close` | |
+-| 925 | Up and Down: choose.  Left and Right: change.  Enter: switch.  Esc: close. | `settings:hint_keys` | |
+-| 926 | D-pad: choose and change.  A: switch.  B: close. | `settings:hint_pad` | |
+-| 927 | On | `settings:on` | |
+-| 928 | Off | `settings:off` | |
+-| 929 | Soon | `settings:soon` | |
+-| 930 | Arena | `settings:labels.pad_preset.arena` | |
+-| 931 | Simple | `settings:labels.pad_preset.simple-pad` | |
+-| 932 | Right stick | `settings:labels.struggle_push.stick` | |
++| 924 | SETTINGS | `settings:title` | |
++| 925 | CLOSE | `settings:close` | |
++| 926 | Up and Down: choose.  Left and Right: change.  Enter: switch.  Esc: close. | `settings:hint_keys` | |
++| 927 | D-pad: choose and change.  A: switch.  B: close. | `settings:hint_pad` | |
++| 928 | On | `settings:on` | |
++| 929 | Off | `settings:off` | |
++| 930 | Soon | `settings:soon` | |
++| 931 | Arena | `settings:labels.pad_preset.arena` | |
++| 932 | Simple | `settings:labels.pad_preset.simple-pad` | |
++| 933 | Right stick | `settings:labels.struggle_push.stick` | |
+ 
+ ## Batch 107: Settings and Remap: the screens' own words (11 to 20 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 933 | Face buttons | `settings:labels.struggle_push.face` | |
+-| 934 | Right stick | `settings:labels.struggle_push_p2.stick` | |
+-| 935 | Face buttons | `settings:labels.struggle_push_p2.face` | |
+-| 936 | Hold | `settings:labels.energy_style.hold` | |
+-| 937 | Toggle | `settings:labels.energy_style.toggle` | |
+-| 938 | Hold | `settings:labels.energy_style_p2.hold` | |
+-| 939 | Toggle | `settings:labels.energy_style_p2.toggle` | |
+-| 940 | Hold | `settings:labels.guard_style.hold` | |
+-| 941 | Toggle | `settings:labels.guard_style.toggle` | |
+-| 942 | Hold | `settings:labels.guard_style_p2.hold` | |
++| 934 | Face buttons | `settings:labels.struggle_push.face` | |
++| 935 | Right stick | `settings:labels.struggle_push_p2.stick` | |
++| 936 | Face buttons | `settings:labels.struggle_push_p2.face` | |
++| 937 | Hold | `settings:labels.energy_style.hold` | |
++| 938 | Toggle | `settings:labels.energy_style.toggle` | |
++| 939 | Hold | `settings:labels.energy_style_p2.hold` | |
++| 940 | Toggle | `settings:labels.energy_style_p2.toggle` | |
++| 941 | Hold | `settings:labels.guard_style.hold` | |
++| 942 | Toggle | `settings:labels.guard_style.toggle` | |
++| 943 | Hold | `settings:labels.guard_style_p2.hold` | |
+ 
+ ## Batch 108: Settings and Remap: the screens' own words (21 to 30 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 943 | Toggle | `settings:labels.guard_style_p2.toggle` | |
+-| 944 | Hold | `settings:labels.manoeuvre_style.hold` | |
+-| 945 | Toggle | `settings:labels.manoeuvre_style.toggle` | |
+-| 946 | Hold | `settings:labels.manoeuvre_style_p2.hold` | |
+-| 947 | Toggle | `settings:labels.manoeuvre_style_p2.toggle` | |
+-| 948 | Hold | `settings:labels.charge_style.hold` | |
+-| 949 | Toggle | `settings:labels.charge_style.toggle` | |
+-| 950 | Hold | `settings:labels.charge_style_p2.hold` | |
+-| 951 | Toggle | `settings:labels.charge_style_p2.toggle` | |
+-| 952 | Hold | `settings:labels.transform_style.hold` | |
++| 944 | Toggle | `settings:labels.guard_style_p2.toggle` | |
++| 945 | Hold | `settings:labels.manoeuvre_style.hold` | |
++| 946 | Toggle | `settings:labels.manoeuvre_style.toggle` | |
++| 947 | Hold | `settings:labels.manoeuvre_style_p2.hold` | |
++| 948 | Toggle | `settings:labels.manoeuvre_style_p2.toggle` | |
++| 949 | Hold | `settings:labels.charge_style.hold` | |
++| 950 | Toggle | `settings:labels.charge_style.toggle` | |
++| 951 | Hold | `settings:labels.charge_style_p2.hold` | |
++| 952 | Toggle | `settings:labels.charge_style_p2.toggle` | |
++| 953 | Hold | `settings:labels.transform_style.hold` | |
+ 
+ ## Batch 109: Settings and Remap: the screens' own words (31 to 40 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 953 | Toggle | `settings:labels.transform_style.toggle` | |
+-| 954 | Hold | `settings:labels.transform_style_p2.hold` | |
+-| 955 | Toggle | `settings:labels.transform_style_p2.toggle` | |
+-| 956 | Calm | `settings:labels.alert_preset.calm` | |
+-| 957 | Standard | `settings:labels.alert_preset.standard` | |
+-| 958 | Full | `settings:labels.alert_preset.full` | |
+-| 959 | Custom | `settings:labels.alert_preset.custom` | |
+-| 960 | Calm | `settings:labels.alert_preset_p2.calm` | |
+-| 961 | Standard | `settings:labels.alert_preset_p2.standard` | |
+-| 962 | Full | `settings:labels.alert_preset_p2.full` | |
++| 954 | Toggle | `settings:labels.transform_style.toggle` | |
++| 955 | Hold | `settings:labels.transform_style_p2.hold` | |
++| 956 | Toggle | `settings:labels.transform_style_p2.toggle` | |
++| 957 | Calm | `settings:labels.alert_preset.calm` | |
++| 958 | Standard | `settings:labels.alert_preset.standard` | |
++| 959 | Full | `settings:labels.alert_preset.full` | |
++| 960 | Custom | `settings:labels.alert_preset.custom` | |
++| 961 | Calm | `settings:labels.alert_preset_p2.calm` | |
++| 962 | Standard | `settings:labels.alert_preset_p2.standard` | |
++| 963 | Full | `settings:labels.alert_preset_p2.full` | |
+ 
+ ## Batch 110: Settings and Remap: the screens' own words (41 to 50 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 963 | Custom | `settings:labels.alert_preset_p2.custom` | |
+-| 964 | Off | `settings:labels.alert_edge.off` | |
+-| 965 | Off screen only | `settings:labels.alert_edge.offscreen` | |
+-| 966 | Always | `settings:labels.alert_edge.always` | |
+-| 967 | Off | `settings:labels.alert_edge_p2.off` | |
+-| 968 | Off screen only | `settings:labels.alert_edge_p2.offscreen` | |
+-| 969 | Always | `settings:labels.alert_edge_p2.always` | |
+-| 970 | Thin | `settings:labels.alert_edge_width.thin` | |
+-| 971 | Medium | `settings:labels.alert_edge_width.medium` | |
+-| 972 | Thick | `settings:labels.alert_edge_width.thick` | |
++| 964 | Custom | `settings:labels.alert_preset_p2.custom` | |
++| 965 | Off | `settings:labels.alert_edge.off` | |
++| 966 | Off screen only | `settings:labels.alert_edge.offscreen` | |
++| 967 | Always | `settings:labels.alert_edge.always` | |
++| 968 | Off | `settings:labels.alert_edge_p2.off` | |
++| 969 | Off screen only | `settings:labels.alert_edge_p2.offscreen` | |
++| 970 | Always | `settings:labels.alert_edge_p2.always` | |
++| 971 | Thin | `settings:labels.alert_edge_width.thin` | |
++| 972 | Medium | `settings:labels.alert_edge_width.medium` | |
++| 973 | Thick | `settings:labels.alert_edge_width.thick` | |
+ 
+ ## Batch 111: Settings and Remap: the screens' own words (51 to 60 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 973 | Thin | `settings:labels.alert_edge_width_p2.thin` | |
+-| 974 | Medium | `settings:labels.alert_edge_width_p2.medium` | |
+-| 975 | Thick | `settings:labels.alert_edge_width_p2.thick` | |
+-| 976 | Small | `settings:labels.alert_caption_size.small` | |
+-| 977 | Medium | `settings:labels.alert_caption_size.medium` | |
+-| 978 | Large | `settings:labels.alert_caption_size.large` | |
+-| 979 | Small | `settings:labels.alert_caption_size_p2.small` | |
+-| 980 | Medium | `settings:labels.alert_caption_size_p2.medium` | |
+-| 981 | Large | `settings:labels.alert_caption_size_p2.large` | |
+-| 982 | Shooter's side | `settings:labels.alert_caption_pos.side` | |
++| 974 | Thin | `settings:labels.alert_edge_width_p2.thin` | |
++| 975 | Medium | `settings:labels.alert_edge_width_p2.medium` | |
++| 976 | Thick | `settings:labels.alert_edge_width_p2.thick` | |
++| 977 | Small | `settings:labels.alert_caption_size.small` | |
++| 978 | Medium | `settings:labels.alert_caption_size.medium` | |
++| 979 | Large | `settings:labels.alert_caption_size.large` | |
++| 980 | Small | `settings:labels.alert_caption_size_p2.small` | |
++| 981 | Medium | `settings:labels.alert_caption_size_p2.medium` | |
++| 982 | Large | `settings:labels.alert_caption_size_p2.large` | |
++| 983 | Shooter's side | `settings:labels.alert_caption_pos.side` | |
+ 
+ ## Batch 112: Settings and Remap: the screens' own words (61 to 70 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 983 | Bottom centre | `settings:labels.alert_caption_pos.bottom` | |
+-| 984 | Shooter's side | `settings:labels.alert_caption_pos_p2.side` | |
+-| 985 | Bottom centre | `settings:labels.alert_caption_pos_p2.bottom` | |
+-| 986 | All beams | `settings:labels.alert_which.all` | |
+-| 987 | Charged beams | `settings:labels.alert_which.charged` | |
+-| 988 | Signature only | `settings:labels.alert_which.signature` | |
+-| 989 | All beams | `settings:labels.alert_which_p2.all` | |
+-| 990 | Charged beams | `settings:labels.alert_which_p2.charged` | |
+-| 991 | Signature only | `settings:labels.alert_which_p2.signature` | |
+-| 992 | Off | `settings:labels.alert_glint.off` | |
++| 984 | Bottom centre | `settings:labels.alert_caption_pos.bottom` | |
++| 985 | Shooter's side | `settings:labels.alert_caption_pos_p2.side` | |
++| 986 | Bottom centre | `settings:labels.alert_caption_pos_p2.bottom` | |
++| 987 | All beams | `settings:labels.alert_which.all` | |
++| 988 | Charged beams | `settings:labels.alert_which.charged` | |
++| 989 | Signature only | `settings:labels.alert_which.signature` | |
++| 990 | All beams | `settings:labels.alert_which_p2.all` | |
++| 991 | Charged beams | `settings:labels.alert_which_p2.charged` | |
++| 992 | Signature only | `settings:labels.alert_which_p2.signature` | |
++| 993 | Off | `settings:labels.alert_glint.off` | |
+ 
+ ## Batch 113: Settings and Remap: the screens' own words (71 to 80 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 993 | Normal | `settings:labels.alert_glint.normal` | |
+-| 994 | Bright | `settings:labels.alert_glint.bright` | |
+-| 995 | Off | `settings:labels.alert_glint_p2.off` | |
+-| 996 | Normal | `settings:labels.alert_glint_p2.normal` | |
+-| 997 | Bright | `settings:labels.alert_glint_p2.bright` | |
+-| 998 | Off | `settings:labels.alert_air.off` | |
+-| 999 | Subtle | `settings:labels.alert_air.subtle` | |
+-| 1000 | Strong | `settings:labels.alert_air.strong` | |
+-| 1001 | Off | `settings:labels.alert_air_p2.off` | |
+-| 1002 | Subtle | `settings:labels.alert_air_p2.subtle` | |
++| 994 | Normal | `settings:labels.alert_glint.normal` | |
++| 995 | Bright | `settings:labels.alert_glint.bright` | |
++| 996 | Off | `settings:labels.alert_glint_p2.off` | |
++| 997 | Normal | `settings:labels.alert_glint_p2.normal` | |
++| 998 | Bright | `settings:labels.alert_glint_p2.bright` | |
++| 999 | Off | `settings:labels.alert_air.off` | |
++| 1000 | Subtle | `settings:labels.alert_air.subtle` | |
++| 1001 | Strong | `settings:labels.alert_air.strong` | |
++| 1002 | Off | `settings:labels.alert_air_p2.off` | |
++| 1003 | Subtle | `settings:labels.alert_air_p2.subtle` | |
+ 
+ ## Batch 114: Settings and Remap: the screens' own words (81 to 90 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1003 | Strong | `settings:labels.alert_air_p2.strong` | |
+-| 1004 | Low | `settings:labels.alert_sound_volume.low` | |
+-| 1005 | Normal | `settings:labels.alert_sound_volume.normal` | |
+-| 1006 | Loud | `settings:labels.alert_sound_volume.loud` | |
+-| 1007 | Low | `settings:labels.alert_sound_volume_p2.low` | |
+-| 1008 | Normal | `settings:labels.alert_sound_volume_p2.normal` | |
+-| 1009 | Loud | `settings:labels.alert_sound_volume_p2.loud` | |
+-| 1010 | Low | `settings:labels.alert_rumble_strength.low` | |
+-| 1011 | Medium | `settings:labels.alert_rumble_strength.medium` | |
+-| 1012 | High | `settings:labels.alert_rumble_strength.high` | |
++| 1004 | Strong | `settings:labels.alert_air_p2.strong` | |
++| 1005 | Low | `settings:labels.alert_sound_volume.low` | |
++| 1006 | Normal | `settings:labels.alert_sound_volume.normal` | |
++| 1007 | Loud | `settings:labels.alert_sound_volume.loud` | |
++| 1008 | Low | `settings:labels.alert_sound_volume_p2.low` | |
++| 1009 | Normal | `settings:labels.alert_sound_volume_p2.normal` | |
++| 1010 | Loud | `settings:labels.alert_sound_volume_p2.loud` | |
++| 1011 | Low | `settings:labels.alert_rumble_strength.low` | |
++| 1012 | Medium | `settings:labels.alert_rumble_strength.medium` | |
++| 1013 | High | `settings:labels.alert_rumble_strength.high` | |
+ 
+ ## Batch 115: Settings and Remap: the screens' own words (91 to 100 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1013 | Low | `settings:labels.alert_rumble_strength_p2.low` | |
+-| 1014 | Medium | `settings:labels.alert_rumble_strength_p2.medium` | |
+-| 1015 | High | `settings:labels.alert_rumble_strength_p2.high` | |
+-| 1016 | Arena | `settings:labels.pad_preset_p2.arena` | |
+-| 1017 | Simple | `settings:labels.pad_preset_p2.simple-pad` | |
+-| 1018 | Standard | `settings:labels.hand_layout.standard` | |
+-| 1019 | Swapped | `settings:labels.hand_layout.swapped` | |
+-| 1020 | Standard | `settings:labels.hand_layout_p2.standard` | |
+-| 1021 | Swapped | `settings:labels.hand_layout_p2.swapped` | |
+-| 1022 | Auto | `settings:labels.dpad_mirror.auto` | |
++| 1014 | Low | `settings:labels.alert_rumble_strength_p2.low` | |
++| 1015 | Medium | `settings:labels.alert_rumble_strength_p2.medium` | |
++| 1016 | High | `settings:labels.alert_rumble_strength_p2.high` | |
++| 1017 | Arena | `settings:labels.pad_preset_p2.arena` | |
++| 1018 | Simple | `settings:labels.pad_preset_p2.simple-pad` | |
++| 1019 | Standard | `settings:labels.hand_layout.standard` | |
++| 1020 | Swapped | `settings:labels.hand_layout.swapped` | |
++| 1021 | Standard | `settings:labels.hand_layout_p2.standard` | |
++| 1022 | Swapped | `settings:labels.hand_layout_p2.swapped` | |
++| 1023 | Auto | `settings:labels.dpad_mirror.auto` | |
+ 
+ ## Batch 116: Settings and Remap: the screens' own words (101 to 110 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1023 | On | `settings:labels.dpad_mirror.on` | |
+-| 1024 | Off | `settings:labels.dpad_mirror.off` | |
+-| 1025 | Auto | `settings:labels.dpad_mirror_p2.auto` | |
+-| 1026 | On | `settings:labels.dpad_mirror_p2.on` | |
+-| 1027 | Off | `settings:labels.dpad_mirror_p2.off` | |
+-| 1028 | Hold | `settings:labels.strike_style.hold` | |
+-| 1029 | Toggle | `settings:labels.strike_style.toggle` | |
+-| 1030 | Hold | `settings:labels.strike_style_p2.hold` | |
+-| 1031 | Toggle | `settings:labels.strike_style_p2.toggle` | |
+-| 1032 | Flick | `settings:labels.brace_style.flick` | |
++| 1024 | On | `settings:labels.dpad_mirror.on` | |
++| 1025 | Off | `settings:labels.dpad_mirror.off` | |
++| 1026 | Auto | `settings:labels.dpad_mirror_p2.auto` | |
++| 1027 | On | `settings:labels.dpad_mirror_p2.on` | |
++| 1028 | Off | `settings:labels.dpad_mirror_p2.off` | |
++| 1029 | Hold | `settings:labels.strike_style.hold` | |
++| 1030 | Toggle | `settings:labels.strike_style.toggle` | |
++| 1031 | Hold | `settings:labels.strike_style_p2.hold` | |
++| 1032 | Toggle | `settings:labels.strike_style_p2.toggle` | |
++| 1033 | Flick | `settings:labels.brace_style.flick` | |
+ 
+ ## Batch 117: Settings and Remap: the screens' own words (111 to 120 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1033 | Button only | `settings:labels.brace_style.press` | |
+-| 1034 | Flick | `settings:labels.brace_style_p2.flick` | |
+-| 1035 | Button only | `settings:labels.brace_style_p2.press` | |
+-| 1036 | Simple | `settings:labels.touch_preset.touch-simple` | |
+-| 1037 | Full | `settings:labels.touch_preset.touch-full` | |
+-| 1038 | Auto | `settings:labels.vfx_quality.auto` | |
+-| 1039 | High | `settings:labels.vfx_quality.high` | |
+-| 1040 | Medium | `settings:labels.vfx_quality.medium` | |
+-| 1041 | Low | `settings:labels.vfx_quality.low` | |
+-| 1042 | Auto | `settings:labels.control_hints.auto` | |
++| 1034 | Button only | `settings:labels.brace_style.press` | |
++| 1035 | Flick | `settings:labels.brace_style_p2.flick` | |
++| 1036 | Button only | `settings:labels.brace_style_p2.press` | |
++| 1037 | Simple | `settings:labels.touch_preset.touch-simple` | |
++| 1038 | Full | `settings:labels.touch_preset.touch-full` | |
++| 1039 | Auto | `settings:labels.vfx_quality.auto` | |
++| 1040 | High | `settings:labels.vfx_quality.high` | |
++| 1041 | Medium | `settings:labels.vfx_quality.medium` | |
++| 1042 | Low | `settings:labels.vfx_quality.low` | |
++| 1043 | Auto | `settings:labels.control_hints.auto` | |
+ 
+ ## Batch 118: Settings and Remap: the screens' own words (121 to 130 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1043 | Always | `settings:labels.control_hints.always` | |
+-| 1044 | Off | `settings:labels.control_hints.off` | |
+-| 1045 | Off | `settings:labels.colour_vision.off` | |
+-| 1046 | Protanopia | `settings:labels.colour_vision.protan` | |
+-| 1047 | Deuteranopia | `settings:labels.colour_vision.deutan` | |
+-| 1048 | Tritanopia | `settings:labels.colour_vision.tritan` | |
+-| 1049 | Normal | `settings:labels.text_size.1.0` | |
+-| 1050 | Large | `settings:labels.text_size.1.25` | |
+-| 1051 | Larger | `settings:labels.text_size.1.5` | |
+-| 1052 | Always | `settings:labels.you_marker.always` | |
++| 1044 | Always | `settings:labels.control_hints.always` | |
++| 1045 | Off | `settings:labels.control_hints.off` | |
++| 1046 | Off | `settings:labels.colour_vision.off` | |
++| 1047 | Protanopia | `settings:labels.colour_vision.protan` | |
++| 1048 | Deuteranopia | `settings:labels.colour_vision.deutan` | |
++| 1049 | Tritanopia | `settings:labels.colour_vision.tritan` | |
++| 1050 | Normal | `settings:labels.text_size.1.0` | |
++| 1051 | Large | `settings:labels.text_size.1.25` | |
++| 1052 | Larger | `settings:labels.text_size.1.5` | |
++| 1053 | Always | `settings:labels.you_marker.always` | |
+ 
+ ## Batch 119: Settings and Remap: the screens' own words (131 to 140 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1053 | Intro | `settings:labels.you_marker.intro` | |
+-| 1054 | Off | `settings:labels.you_marker.off` | |
+-| 1055 | Fixed | `settings:labels.hud_sides.fixed` | |
+-| 1056 | Follow | `settings:labels.hud_sides.follow` | |
+-| 1057 | Auto | `settings:labels.world_turning.auto` | |
+-| 1058 | Full | `settings:labels.world_turning.full` | |
+-| 1059 | Cut | `settings:labels.world_turning.cut` | |
+-| 1060 | Auto | `settings:labels.camera_launch_follow.auto` | |
+-| 1061 | Chase | `settings:labels.camera_launch_follow.chase` | |
+-| 1062 | Split | `settings:labels.camera_launch_follow.split` | |
++| 1054 | Intro | `settings:labels.you_marker.intro` | |
++| 1055 | Off | `settings:labels.you_marker.off` | |
++| 1056 | Fixed | `settings:labels.hud_sides.fixed` | |
++| 1057 | Follow | `settings:labels.hud_sides.follow` | |
++| 1058 | Auto | `settings:labels.world_turning.auto` | |
++| 1059 | Full | `settings:labels.world_turning.full` | |
++| 1060 | Cut | `settings:labels.world_turning.cut` | |
++| 1061 | Auto | `settings:labels.camera_launch_follow.auto` | |
++| 1062 | Chase | `settings:labels.camera_launch_follow.chase` | |
++| 1063 | Split | `settings:labels.camera_launch_follow.split` | |
+ 
+ ## Batch 120: Settings and Remap: the screens' own words (141 to 147 of 147 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1063 | Hold | `settings:labels.camera_launch_follow.hold` | |
+-| 1064 | Full | `settings:labels.camera_panels.full` | |
+-| 1065 | Still | `settings:labels.camera_panels.still` | |
+-| 1066 | Off | `settings:labels.camera_panels.off` | |
+-| 1067 | Thin | `settings:labels.thickness.0.75` | |
+-| 1068 | Normal | `settings:labels.thickness.1.0` | |
+-| 1069 | Thick | `settings:labels.thickness.1.5` | |
++| 1064 | Hold | `settings:labels.camera_launch_follow.hold` | |
++| 1065 | Full | `settings:labels.camera_panels.full` | |
++| 1066 | Still | `settings:labels.camera_panels.still` | |
++| 1067 | Off | `settings:labels.camera_panels.off` | |
++| 1068 | Thin | `settings:labels.thickness.0.75` | |
++| 1069 | Normal | `settings:labels.thickness.1.0` | |
++| 1070 | Thick | `settings:labels.thickness.1.5` | |
+ 
+ ## Batch 121: Send feedback (1 to 10 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1070 | SEND FEEDBACK | `feedback:title` | |
+-| 1071 | Tell Orb what you found. Please leave out anything personal. | `feedback:hint` | |
+-| 1072 | What happened? What did you expect? | `feedback:placeholder` | |
+-| 1073 | Bug | `feedback:tags.0.label` | |
+-| 1074 | Felt unfair | `feedback:tags.1.label` | |
+-| 1075 | Confusing | `feedback:tags.2.label` | |
+-| 1076 | Loved it | `feedback:tags.3.label` | |
+-| 1077 | COPY REPORT | `feedback:buttons.copy` | |
+-| 1078 | COPY AGAIN | `feedback:buttons.copy_again` | |
+-| 1079 | BACK | `feedback:buttons.back` | |
++| 1071 | SEND FEEDBACK | `feedback:title` | |
++| 1072 | Tell Orb what you found. Please leave out anything personal. | `feedback:hint` | |
++| 1073 | What happened? What did you expect? | `feedback:placeholder` | |
++| 1074 | Bug | `feedback:tags.0.label` | |
++| 1075 | Felt unfair | `feedback:tags.1.label` | |
++| 1076 | Confusing | `feedback:tags.2.label` | |
++| 1077 | Loved it | `feedback:tags.3.label` | |
++| 1078 | COPY REPORT | `feedback:buttons.copy` | |
++| 1079 | COPY AGAIN | `feedback:buttons.copy_again` | |
++| 1080 | BACK | `feedback:buttons.back` | |
+ 
+ ## Batch 122: Send feedback (11 to 20 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1080 | CLOSE | `feedback:buttons.close` | |
+-| 1081 | SEND FEEDBACK | `feedback:buttons.match_end` | |
+-| 1082 | Copied. Paste it to Orb. | `feedback:copied` | |
+-| 1083 | If nothing was copied, select the text below and copy it. | `feedback:copied_fallback` | |
+-| 1084 | ORB COMBAT EX - PLAYTEST FEEDBACK | `feedback:report.title` | |
+-| 1085 | Build | `feedback:report.build` | |
+-| 1086 | Seed | `feedback:report.seed` | |
+-| 1087 | Setup | `feedback:report.setup` | |
+-| 1088 | Match time | `feedback:report.time` | |
+-| 1089 | Screen | `feedback:report.screen` | |
++| 1081 | CLOSE | `feedback:buttons.close` | |
++| 1082 | SEND FEEDBACK | `feedback:buttons.match_end` | |
++| 1083 | Copied. Paste it to Orb. | `feedback:copied` | |
++| 1084 | If nothing was copied, select the text below and copy it. | `feedback:copied_fallback` | |
++| 1085 | ORB COMBAT EX - PLAYTEST FEEDBACK | `feedback:report.title` | |
++| 1086 | Build | `feedback:report.build` | |
++| 1087 | Seed | `feedback:report.seed` | |
++| 1088 | Setup | `feedback:report.setup` | |
++| 1089 | Match time | `feedback:report.time` | |
++| 1090 | Screen | `feedback:report.screen` | |
+ 
+ ## Batch 123: Send feedback (21 to 30 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1090 | Platform | `feedback:report.platform` | |
+-| 1091 | Engine | `feedback:report.engine` | |
+-| 1092 | Settings | `feedback:report.settings` | |
+-| 1093 | Tags | `feedback:report.tags` | |
+-| 1094 | Notes | `feedback:report.notes` | |
+-| 1095 | in progress | `feedback:report.in_progress` | |
+-| 1096 | Playtest report copied to the clipboard. Paste it here: | `send:_targets.mailto.short_body` | |
+-| 1097 | OPEN EMAIL | `send:_targets.mailto.open` | |
+-| 1098 | OPEN EMAIL opens your email app with the text below, addressed to the team. Only the team sees it. Nothing is sent until you press send there. Please leave out anything personal. | `send:_targets.mailto.review` | |
+-| 1099 | Your email app opened. The report is also copied: paste it if the message is empty. | `send:_targets.mailto.opened` | |
++| 1091 | Platform | `feedback:report.platform` | |
++| 1092 | Engine | `feedback:report.engine` | |
++| 1093 | Settings | `feedback:report.settings` | |
++| 1094 | Tags | `feedback:report.tags` | |
++| 1095 | Notes | `feedback:report.notes` | |
++| 1096 | in progress | `feedback:report.in_progress` | |
++| 1097 | Playtest report copied to the clipboard. Paste it here: | `send:_targets.mailto.short_body` | |
++| 1098 | OPEN EMAIL | `send:_targets.mailto.open` | |
++| 1099 | OPEN EMAIL opens your email app with the text below, addressed to the team. Only the team sees it. Nothing is sent until you press send there. Please leave out anything personal. | `send:_targets.mailto.review` | |
++| 1100 | Your email app opened. The report is also copied: paste it if the message is empty. | `send:_targets.mailto.opened` | |
+ 
+ ## Batch 124: Send feedback (31 to 40 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1100 | Playtest report copied to the clipboard. Paste it here: | `send:_targets.form.short_body` | |
+-| 1101 | OPEN FORM | `send:_targets.form.open` | |
+-| 1102 | OPEN FORM opens a private feedback form with the text below. Only the team sees it. Nothing is sent until you submit the form. Please leave out anything personal. | `send:_targets.form.review` | |
+-| 1103 | The form opened in a new tab. The report is also copied: paste it if the form is empty. | `send:_targets.form.opened` | |
+-| 1104 | Playtest | `send:issue.title_prefix` | |
+-| 1105 | Playtest report copied to the clipboard. Paste it here: | `send:issue.short_body` | |
+-| 1106 | SEND | `send:buttons.send` | |
+-| 1107 | OPEN ISSUE | `send:buttons.open` | |
+-| 1108 | Review before sending | `send:review_title` | |
+-| 1109 | OPEN ISSUE opens a public GitHub issue with the text below. Nothing is sent until you submit it there. Please leave out anything personal. | `send:review` | |
++| 1101 | Playtest report copied to the clipboard. Paste it here: | `send:_targets.form.short_body` | |
++| 1102 | OPEN FORM | `send:_targets.form.open` | |
++| 1103 | OPEN FORM opens a private feedback form with the text below. Only the team sees it. Nothing is sent until you submit the form. Please leave out anything personal. | `send:_targets.form.review` | |
++| 1104 | The form opened in a new tab. The report is also copied: paste it if the form is empty. | `send:_targets.form.opened` | |
++| 1105 | Playtest | `send:issue.title_prefix` | |
++| 1106 | Playtest report copied to the clipboard. Paste it here: | `send:issue.short_body` | |
++| 1107 | SEND | `send:buttons.send` | |
++| 1108 | OPEN ISSUE | `send:buttons.open` | |
++| 1109 | Review before sending | `send:review_title` | |
++| 1110 | OPEN ISSUE opens a public GitHub issue with the text below. Nothing is sent until you submit it there. Please leave out anything personal. | `send:review` | |
+ 
+ ## Batch 125: Send feedback (41 to 42 of 42 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1110 | GitHub opened in a new tab. The report is also copied: paste it if the page is empty. | `send:opened` | |
+-| 1111 | This report is too long for a link, so it is copied. Paste it into the page that opens. | `send:too_long` | |
++| 1111 | GitHub opened in a new tab. The report is also copied: paste it if the page is empty. | `send:opened` | |
++| 1112 | This report is too long for a link, so it is copied. Paste it into the page that opens. | `send:too_long` | |
+ 
+ ## Batch 126: The planet strip: place names (1 to 10 of 12 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1112 | EVERHOLD | `terms:planet` | |
+-| 1113 | LONGWATER | `terms:places.0.name` | |
+-| 1114 | NETMEND | `terms:places.1.name` | |
+-| 1115 | FURROWLEA | `terms:places.2.name` | |
+-| 1116 | BELLGATE | `terms:places.3.name` | |
+-| 1117 | KILNSTEAD | `terms:places.4.name` | |
+-| 1118 | DEEPHOLT | `terms:places.5.name` | |
+-| 1119 | SUNWASTE | `terms:places.6.name` | |
+-| 1120 | ANVILFELL | `terms:places.7.name` | |
+-| 1121 | FARWATCH | `terms:places.8.name` | |
++| 1113 | EVERHOLD | `terms:planet` | |
++| 1114 | LONGWATER | `terms:places.0.name` | |
++| 1115 | NETMEND | `terms:places.1.name` | |
++| 1116 | FURROWLEA | `terms:places.2.name` | |
++| 1117 | BELLGATE | `terms:places.3.name` | |
++| 1118 | KILNSTEAD | `terms:places.4.name` | |
++| 1119 | DEEPHOLT | `terms:places.5.name` | |
++| 1120 | SUNWASTE | `terms:places.6.name` | |
++| 1121 | ANVILFELL | `terms:places.7.name` | |
++| 1122 | FARWATCH | `terms:places.8.name` | |
+ 
+ ## Batch 127: The planet strip: place names (11 to 12 of 12 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1122 | WINDLEA | `terms:places.9.name` | |
+-| 1123 | LONGWATER | `terms:places.10.name` | |
++| 1123 | WINDLEA | `terms:places.9.name` | |
++| 1124 | LONGWATER | `terms:places.10.name` | |
+ 
+ ## Batch 128: Fighter names and titles (1 to 8 of 8 on this surface)
+ 
+ | # | Text | Key | Mark |
+ | ---: | :-- | :-- | :-- |
+-| 1124 | Grist | `fighter_names:names.protagonist.name` | |
+-| 1125 | Martial Artist | `fighter_names:names.protagonist.title` | |
+-| 1126 | Keeper's Lance | `fighter_names:names.protagonist.sigName` | |
+-| 1127 | Loupe | `fighter_names:names.rival.name` | |
+-| 1128 | Challenger | `fighter_names:names.rival.title` | |
+-| 1129 | The Barrage | `fighter_names:names.rival.sigName` | |
+-| 1130 | Empress Orza | `fighter_names:names.empress.name` | |
+-| 1131 | Bolus | `fighter_names:names.cyborg.name` | |
++| 1125 | Grist | `fighter_names:names.protagonist.name` | |
++| 1126 | Martial Artist | `fighter_names:names.protagonist.title` | |
++| 1127 | Keeper's Lance | `fighter_names:names.protagonist.sigName` | |
++| 1128 | Loupe | `fighter_names:names.rival.name` | |
++| 1129 | Challenger | `fighter_names:names.rival.title` | |
++| 1130 | The Barrage | `fighter_names:names.rival.sigName` | |
++| 1131 | Empress Orza | `fighter_names:names.empress.name` | |
++| 1132 | Bolus | `fighter_names:names.cyborg.name` | |
+ 

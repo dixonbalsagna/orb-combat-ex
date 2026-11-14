@@ -1,0 +1,14 @@
+SESSION (a pad on the start menu, presses and the lit row):
+  opened -> page modes, lit row solo
+  D-pad up from the top -> page modes, lit row quit
+  D-pad down from the last -> page modes, lit row solo
+  D-pad down to couch_2v2 -> page modes, lit row couch_2v2
+  A on it (coming) -> page modes, lit row couch_2v2
+  A on the first mode -> page setup, lit row p1
+  D-pad right on Player 1 fighter -> page setup, lit row f1
+  B -> page modes, lit row solo
+  A on the second mode -> page setup, lit row p1
+  A on Start -> page setup, lit row start
+  A on Quit -> page quit, lit row quit_no
+  B on the question -> page modes, lit row quit
+  A on Close the game -> page quit, lit row quit_yes

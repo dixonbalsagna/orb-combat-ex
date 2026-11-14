@@ -1,0 +1,1 @@
+flash count (half 1, normal and reduced, 82 runs): passed on a scratch tree of HEAD plus a1-pause-clock, and again on the tree with all the A1 menu parks. UI-only changes: the register is untouched. Pixel half not run.

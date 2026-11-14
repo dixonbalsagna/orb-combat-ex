@@ -1,0 +1,261 @@
+--- a/ui/tools/sweep.mjs	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/tools/sweep.mjs	1969-12-31 16:00:00.000000000 -0800
+@@ -0,0 +1,56 @@
++// The screen sweep (A-UI-09; docs/ui/screen-sweep.md): a still of every menu and HUD state at one screen size (1280 by 800, the Steam Deck's, by default), and for each the smallest text on it.
++//   node ui/tools/sweep.mjs --dir <the demo's web export> --out <folder> [--godot <godot exe> --tree <project folder>] [--size 1280x800] [--floor 9] [--aim 12] [--skip-stills] [--only id,id]
++// Two halves, one table:
++//   the text half: ui/tools/screen_sweep.gd, run headless (at most one Godot process), draws each state with every line's size and rectangle kept and prints `SWEEP {json}` a state;
++//   the picture half: one still a state through tools/machine/capture.mjs (Tools' launcher, one capture at a time, a time limit, below-normal priority), the page's query being the state's `query`.
++// It writes <out>/sweep.json and <out>/sweep.md (a row a state: the still, the smallest text's size and line, the lines that went off the screen, a verdict). A state fails when its smallest text is under
++// the floor (9 px) and is listed as "aim" when under 12 px; a clipped or small text is listed, not fixed (A1). Nothing here touches the game or the sim.
++import { spawnSync } from 'node:child_process';
++import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
++import { join, resolve } from 'node:path';
++
++const argv = process.argv.slice(2);
++const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
++const has = (n) => argv.includes(n);
++const DIR = opt('--dir'), OUT = opt('--out');
++const TREE = opt('--tree', '.');
++const GODOT = opt('--godot', process.env.GODOT || 'godot');
++const SIZE = opt('--size', '1280x800');
++const FLOOR = Number(opt('--floor', 9)), AIM = Number(opt('--aim', 12));
++const ONLY = opt('--only', '') ? opt('--only').split(',') : null;
++if (!OUT || (!DIR && !has('--skip-stills'))) { console.error('usage: node ui/tools/sweep.mjs --dir <the demo web export> --out <folder> [--godot <exe> --tree <project>] [--size 1280x800] [--skip-stills] [--only id,id]'); process.exit(2); }
++const [W, H] = SIZE.split('x').map(Number);
++mkdirSync(OUT, { recursive: true });
++
++// The text half.
++console.log(`sweep: the text pass at ${SIZE} (one headless Godot)`);
++const g = spawnSync(GODOT, ['--headless', '--path', TREE, '--script', 'res://ui/tools/screen_sweep.gd', '--', `--size=${SIZE}`], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
++const states = [];
++for (const line of (g.stdout || '').split(/\r?\n/)) {
++  if (line.startsWith('SWEEP ')) states.push(JSON.parse(line.slice(6)));
++}
++if (!(g.stdout || '').includes('SWEEP_DONE') || states.length === 0) { console.error('sweep: the text pass did not finish\n' + (g.stdout || '').slice(-1500) + (g.stderr || '').slice(-1500)); process.exit(1); }
++
++// The picture half.
++const capture = resolve(import.meta.dirname || '.', '..', '..', 'tools', 'machine', 'capture.mjs');
++for (const s of states) {
++  if (ONLY && !ONLY.includes(s.id)) { s.still = ''; continue; }
++  s.still = '';
++  if (has('--skip-stills')) continue;
++  const png = join(OUT, `${s.id}-${SIZE}.png`);
++  const r = spawnSync(process.execPath, [capture, 'still', '--dir', DIR, '--path', `/index.html?${s.query}`, '--out', png, '--width', String(W), '--height', String(H), '--wait-ms', '7000', '--session', 'ui-ux', '--purpose', 'look', '--time-limit', '120', '--quiet'], { encoding: 'utf8' });
++  if (r.status === 0 && existsSync(png)) s.still = `${s.id}-${SIZE}.png`;
++  else console.error(`sweep: no still for ${s.id}: ${(r.stderr || r.stdout || '').slice(0, 200)}`);
++  console.log(`  ${s.id}: ${s.still || 'NO STILL'}  smallest text ${s.min_px} px`);
++}
++
++// The table.
++const verdict = (s) => (s.lines === 0 ? 'no text' : s.min_px < FLOOR ? 'FAIL: under the floor' : s.min_px < AIM ? 'aim: under 12 px' : 'ok');
++const rows = states.map((s) => ({ ...s, verdict: verdict(s) }));
++writeFileSync(join(OUT, 'sweep.json'), JSON.stringify({ size: SIZE, floor: FLOOR, aim: AIM, states: rows }, null, 2));
++const md = [`# Screen sweep at ${SIZE}`, '', `Floor ${FLOOR} px (fails), aim ${AIM} px. A clipped or small text is listed here and not fixed (A1). Stills through tools/machine/capture.mjs.`, '',
++  '| State | Still | Lines | Smallest text | Its line | Off screen | Verdict |', '| :--- | :--- | ---: | ---: | :--- | ---: | :--- |',
++  ...rows.map((s) => `| ${s.id} | ${s.still || '(none)'} | ${s.lines} | ${s.min_px} px | ${String(s.min_text).replace(/\|/g, '/')} | ${s.outside}${s.outside_first ? ' (' + String(s.outside_first).replace(/\|/g, '/') + ')' : ''} | ${s.verdict} |`), ''].join('\n');
++writeFileSync(join(OUT, 'sweep.md'), md);
++const fails = rows.filter((s) => s.verdict.startsWith('FAIL')).length, aims = rows.filter((s) => s.verdict.startsWith('aim')).length, clipped = rows.filter((s) => s.outside > 0).length;
++console.log(`sweep: ${rows.length} states, ${fails} under the floor, ${aims} under the aim, ${clipped} with text off the screen; ${join(OUT, 'sweep.md')}`);
+--- a/ui/tools/screen_sweep.gd	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/tools/screen_sweep.gd	1969-12-31 16:00:00.000000000 -0800
+@@ -0,0 +1,178 @@
++extends SceneTree
++## The text half of the screen sweep (A-UI-09; docs/ui/screen-sweep.md): every menu and HUD state at one screen size (1280 by 800, the Steam Deck's, unless --size=WxH), drawn headless with every line's size and rectangle
++## kept (UiText.boxing), and for each state the smallest text on it (its size, the line, where it is drawn from), how many lines went off the screen, and how many lines there were. It prints one line a state,
++## `SWEEP {json}`, and one `SWEEP_DONE`; ui/tools/sweep.mjs reads them and takes the stills (through tools/machine/capture.mjs, the launcher). Nothing here writes into the tree or the sim.
++##   godot --headless --path <tree> --script res://ui/tools/screen_sweep.gd -- [--size=1280x800]
++## The floor is 9 px (a state with a line under it fails) and the aim 12 px (proposed in the A1 brief; the thresholds are the runner's).
++
++var size_px: Vector2i = Vector2i(1280, 800)
++
++
++class Probe extends Control:
++	var fn: Callable
++
++	func _draw() -> void:
++		fn.call(self)
++
++
++func _initialize() -> void:
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--size="):
++			var wh: PackedStringArray = a.substr(7).split("x")
++			if wh.size() == 2:
++				size_px = Vector2i(int(wh[0]), int(wh[1]))
++	_run.call_deferred()
++
++
++## Report one state from the lines drawn while `UiText.boxing` was on.
++func _report(id: String, seen: Array, query: String) -> void:
++	var view := Rect2(Vector2.ZERO, Vector2(size_px))
++	var min_fs: int = 9999
++	var min_text: String = ""
++	var min_at: String = ""
++	var outside: int = 0
++	var first_out: String = ""
++	for b in seen:
++		var fs: int = int(b["fs"])
++		if fs < min_fs:
++			min_fs = fs
++			min_text = str(b["text"]).left(40)
++			min_at = str(b["at"])
++		if not view.grow(1.0).encloses(b["rect"]):
++			outside += 1
++			if first_out == "":
++				first_out = "'%s' %s" % [str(b["text"]).left(30), str(b["rect"])]
++	print("SWEEP " + JSON.stringify({"id": id, "query": query, "lines": seen.size(), "min_px": (min_fs if min_fs != 9999 else 0), "min_text": min_text, "min_at": min_at, "outside": outside, "outside_first": first_out, "size": "%dx%d" % [size_px.x, size_px.y]}))
++
++
++## Draw `fn(canvas)` (a widget's own draw) once and report it.
++func _drawn(id: String, query: String, fn: Callable) -> void:
++	var pr := Probe.new()
++	pr.size = Vector2(size_px)
++	pr.fn = fn
++	root.add_child(pr)
++	UiText.boxes = []
++	UiText.boxing = true
++	pr.queue_redraw()
++	await process_frame
++	UiText.boxing = false
++	var seen: Array = UiText.boxes.duplicate()
++	UiText.boxes = []
++	pr.queue_free()
++	_report(id, seen, query)
++
++
++func _run() -> void:
++	root.size = size_px
++	UiData.set_feature("menus_rail", true)
++	UiData.set_feature("menu_modes", true)
++	var vp := Vector2(size_px)
++	var lay := UiLayout.new()
++	lay.dp = 1.0
++	lay.compute(vp, false)
++	var fo: Array = UiSettings.focusable(UiSettings.rows())
++	# The start menu's pages.
++	var pick: Array = UiModes.fighters()
++	var cfg1 := {"players": 1, "p1": "kb", "p2": "kb", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true, "p1_fighter": str(pick[0]), "p2_fighter": str(pick[1])}
++	var cfg2: Dictionary = cfg1.duplicate()
++	cfg2["players"] = 2
++	var base := {"focus": 0, "not_now": false, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "safe": Rect2(), "version": "Version 0000000"}
++	for spec in [["menu-modes", "modes", cfg1, false, "rail&modes&quitrow&menu"], ["menu-modes-midmatch", "modes", cfg1, true, "rail&modes&quitrow&menu&mmid"], ["menu-setup-solo", "setup", cfg1, false, "rail&modes&quitrow&menu&mpick=solo"],
++			["menu-setup-two", "setup", cfg2, false, "rail&modes&quitrow&menu&mpick=versus"], ["menu-quit", "quit", cfg1, false, "rail&modes&quitrow&menu&mquit"]]:
++		var st: Dictionary = base.duplicate()
++		st["cfg"] = spec[2]
++		st["page"] = spec[1]
++		st["mid_match"] = spec[3]
++		var mp: Dictionary = UiMenu.plan(vp, lay.s, 1.0, false, st)
++		await _drawn(str(spec[0]), str(spec[4]), func(ci): UiMenu.draw(ci, mp))
++	var st_old: Dictionary = base.duplicate()
++	st_old["cfg"] = cfg1
++	UiData.set_feature("menu_modes", false)
++	var mold: Dictionary = UiMenu.plan(vp, lay.s, 1.0, false, st_old)
++	await _drawn("menu-single-card", "menu", func(ci): UiMenu.draw(ci, mold))
++	UiData.set_feature("menu_modes", true)
++	# The pause menu, the new-match question, Quit's question, the match-over card.
++	var pbase := {"focus": 0, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "win": ""}
++	for spec in [["pause", {}, "rail&modes&quitrow&at=20&pause"], ["pause-lan", {"facts": ["Buildings lost: 3", "Craters: 2"], "where": "Saved reports go in the 'saved' folder beside the game.", "join": true}, "rail&modes&quitrow&at=20&pause&lan"],
++			["pause-new-match-question", {"confirm": true}, "rail&at=20&pause&pconfirm"], ["pause-quit-question", {"quit_ask": true}, "rail&modes&quitrow&at=20&pause&pquit"],
++			["match-over", {"over": true, "win": "Grist wins", "facts": ["Grist wins", "Buildings lost: 3", "Craters: 2"]}, "rail&modes&quitrow&ko&over&lan"],
++			["match-over-saved", {"over": true, "win": "Grist wins", "facts": ["Grist wins", "Buildings lost: 3", "Craters: 2"], "status": "Match saved: saved/orb-combat-match-1234567890.json", "where": "Saved reports go in the 'saved' folder beside the game."}, "rail&modes&quitrow&ko&over&lan&saved"]]:
++		var ps: Dictionary = pbase.duplicate()
++		ps.merge(spec[1], true)
++		var pp: Dictionary = UiPause.plan(vp, lay.s, 1.0, false, ps)
++		await _drawn(str(spec[0]), str(spec[2]), func(ci): UiPause.draw(ci, pp))
++	# Settings: the Rail's tabs, and the old card.
++	var sst := {"focus": int(fo[0]), "scroll": 0.0, "device": "kbd", "help_scroll": 0, "style": "neutral", "since": 1.0, "reduced": false}
++	var sp: Dictionary = UiSettings.plan(vp, lay.s, 1.0, false, sst, {})
++	await _drawn("settings", "rail&settings=1", func(ci): UiSettings.draw(ci, sp, {}))
++	UiData.set_feature("menus_rail", false)
++	var sp_old: Dictionary = UiSettings.plan(vp, lay.s, 1.0, false, sst, {})
++	await _drawn("settings-old-card", "settings=1", func(ci): UiSettings.draw(ci, sp_old, {}))
++	UiData.set_feature("menus_rail", true)
++	# The match HUD, a mock scenario each.
++	for scn in UiMockFeed.SCENARIOS:
++		await _hud_state("hud-" + str(scn).replace("_", "-"), str(scn), "scenario=" + str(scn))
++	# The screens that open over the HUD: how to play, the feedback panel, the control remap and the first-run notice.
++	await _hud_overlay("howto", "howto=0", func(h): h.show_howto(false, 0))
++	await _hud_overlay("howto-about", "howto=1", func(h): h.show_howto(false, UiHowto.page_index("about")))
++	await _hud_overlay("feedback", "feedback=1", func(h): h.show_feedback("pause"))
++	await _hud_overlay("remap", "remap=1", func(h):
++		UiData.set_feature("remap", true)
++		h.show_remap(""))
++	await _hud_overlay("first-run-notice", "notice=1", func(h): h.show_photo_notice(false))
++	print("SWEEP_DONE")
++	quit(0)
++
++
++## A screen that opens over the HUD (`open` is called with the HUD), drawn for a second with the lines of its last frame kept.
++func _hud_overlay(id: String, query: String, open: Callable) -> void:
++	var host := Control.new()
++	host.set_anchors_preset(Control.PRESET_FULL_RECT)
++	root.add_child(host)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	host.add_child(hud)
++	var f: Array = UiMockFeed.fighters("hero_vs_proud")
++	hud.setup(f[0], f[1])
++	hud.set_option("force_redraw", true)
++	open.call(hud)
++	for i in range(60):
++		hud.advance(1.0 / 60.0)
++	UiText.boxes = []
++	UiText.boxing = true
++	await process_frame
++	UiText.boxing = false
++	var seen: Array = UiText.boxes.duplicate()
++	UiText.boxes = []
++	host.queue_free()
++	await process_frame
++	_report(id, seen, query)
++
++
++## The match HUD in a mock scenario for three seconds, every layer drawn every frame, the lines of the last frame kept.
++func _hud_state(id: String, scn: String, query: String) -> void:
++	var host := Control.new()
++	host.set_anchors_preset(Control.PRESET_FULL_RECT)
++	root.add_child(host)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	host.add_child(hud)
++	var f: Array = UiMockFeed.fighters(scn)
++	hud.setup(f[0], f[1])
++	hud.set_option("show_prompts", true)
++	hud.set_option("force_redraw", true)
++	hud.anchor_fn = func(slot): return {"pos": Vector2(float(size_px.x) * (0.35 + 0.3 * float(slot)), float(size_px.y) * 0.55), "h": 120.0, "visible": true}
++	var feed := UiMockFeed.new(scn, 3)
++	var seen_all: Array = []
++	for i in range(180):
++		for e in feed.step(1.0 / 60.0):
++			hud.consume(e)
++		hud.advance(1.0 / 60.0)
++		if i % 30 == 29:
++			UiText.boxes = []
++			UiText.boxing = true
++			await process_frame
++			UiText.boxing = false
++			seen_all.append_array(UiText.boxes.duplicate())
++			UiText.boxes = []
++	host.queue_free()
++	await process_frame
++	_report(id, seen_all, query)
+--- a/docs/ui/screen-sweep.md	1969-12-31 16:00:00.000000000 -0800
++++ b/docs/ui/screen-sweep.md	1969-12-31 16:00:00.000000000 -0800
+@@ -0,0 +1,18 @@
++# The screen sweep (A-UI-09; UI & UX, 2026-11-13; sprint A1; park `a1-screen-sweep`, not landed)
++
++A tool that takes a still of every menu and HUD state at one screen size (1280 by 800, the Steam Deck's, by default) and lists the smallest text on each. It closes A-UI-09's tool and its first set of stills; clipped or small text is expected to be listed, not fixed, in A1.
++
++```
++node ui/tools/sweep.mjs --dir <the demo's web export> --out <folder> [--godot <godot exe> --tree <project folder>] [--size 1280x800] [--floor 9] [--aim 12] [--skip-stills] [--only id,id]
++```
++
++- **The text half** is `ui/tools/screen_sweep.gd`, run headless (one Godot process, at most): every state is drawn with every line's size and rectangle kept (`UiText.boxing`) and printed as `SWEEP {json}`. The states: the start menu's list of modes (and as opened from a match), the setup for one player and for two, Quit's question, the single start card; the pause menu, the LAN pause, the new-match question, Quit's question, the match-over card (and with a saved file); Settings on the Rail and the old card; the match HUD in each of the five mock scenarios; How to play (and its About page), the feedback panel, the control remap, and the first-run notice.
++- **The picture half** is one still a state through `tools/machine/capture.mjs` (Tools' launcher: one capture at a time, a time limit, below-normal priority), the page being the demo's web export with the state's query (`?rail&modes&menu&mpick=solo`, `?scenario=hero_vs_proud`, ...). The queries are in `screen_sweep.gd`, beside the states, so a new state is one line there.
++- **The table** is `<out>/sweep.md` and `sweep.json`: a row a state with its still, the number of lines, the smallest text's size and the line it is, how many lines went off the screen, and a verdict: **FAIL** under the floor (9 px), **aim** under 12 px, else ok.
++- Needs the demo's web export (the project's main scene set to `res://ui/demo/hud_demo.tscn`, `--export-release "Web"`) for the stills; `--skip-stills` runs the text half alone.
++
++## What it covers and what it does not
++
++It measures **the UI's own text** (everything drawn through `UiText`, so it is the HUD, the cards and the menus), at the draw-time size. Text drawn by other code (the world's labels, a window title, the demo's debug line) is not in it. The smallest UI text is the UI's text floor (14 px) on every state at 1280 by 800 in the first set: no state is under the 9 px floor or the 12 px aim, and none has a line off the screen. Where the first real-game stills come from is Tools' build (the sweep points at any web export of the demo or of the game that takes the same query).
++
++First set: `docs/ui/runs/<sha>/screen-sweep/` (`sweep.md`, `sweep.json`, one still per state).

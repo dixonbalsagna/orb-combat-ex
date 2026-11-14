@@ -1,0 +1,4 @@
+FAIL  damage facts: the open card draws MATCH OVER and the two counts, nothing about people
+FAIL  report this: the pause screen says where saved reports go on a LAN build and says nothing about it otherwise (false true)
+FAIL  save this match: the match-over card lists it; the record has the schema, build, seed, setup, settings, winner and note; a LAN host's hook saves it and the card says where; with no host and no w
+hud_check: 8288 checks, 3 failed

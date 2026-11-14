@@ -1,0 +1,217 @@
+--- a/ui/hud/ui_hud.gd	2026-11-13 23:34:50.320743900 -0800
++++ b/ui/hud/ui_hud.gd	2026-11-13 23:34:50.391873800 -0800
+@@ -227,6 +227,7 @@
+ var _l_turn: UiLayer
+ var _menu_kind := false               # the notice slot is showing the start menu (UiMenu), not the gate's text
+ var _menu_focus := 0
++var _ut := 0.0                       # the menus' own clock (the Rail's slides): it runs while the game is held, unlike _t (A-UI-01: the game advances the HUD by 0 while the sim is paused)
+ var _set_t0 := -99.0                  # the HUD clock when Settings opened (the Rail slides in from it)
+ var _menu_t0 := -99.0                 # the HUD clock when the start menu opened (the Rail slides in from it)
+ var _menu_seen := 0                   # the focus the Rail last saw, to notice a move
+@@ -494,7 +495,20 @@
+ 	return a
+ 
+ 
++## The menus' clock moves with the game's when the game runs, and by real time when it does not (the pause menu, the start menu: the host advances the HUD by 0), so a menu always slides in.
++func _process(delta: float) -> void:
++	if _dt <= 0.0:
++		_ut += delta
++
++
++## The menus' clock by hand (a test that plays the game's paused frames: set_process(false), advance(0.0), advance_ui(dt)).
++func advance_ui(dt: float) -> void:
++	_ut += dt
++
++
+ func advance(dt: float) -> void:
++	if dt > 0.0:
++		_ut += dt
+ 	_anchor_memo = [null, null]
+ 	_anchor_memo_on = true
+ 	_advance(dt)
+@@ -1639,7 +1653,7 @@
+ 	_menu_kind = true
+ 	_menu_mid = mid_match
+ 	_menu_focus = 0
+-	_menu_t0 = _t
++	_menu_t0 = _ut
+ 	_menu_seen = 0
+ 	_menu_prev = -1
+ 	_menu_bar_t0 = -99.0
+@@ -1677,8 +1691,8 @@
+ 	if _menu_focus != _menu_seen:   # the Rail's lit bar slides from the row it left (UI state only)
+ 		_menu_prev = _menu_seen
+ 		_menu_seen = _menu_focus
+-		_menu_bar_t0 = _t
+-	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed(), "device": _set_device, "style": str(opts["glyph_style"]), "since": _t - _menu_t0, "prev": _menu_prev, "bar_since": _t - _menu_bar_t0, "reduced": bool(opts["reduced_motion"])})
++		_menu_bar_t0 = _ut
++	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed(), "device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _menu_t0, "prev": _menu_prev, "bar_since": _ut - _menu_bar_t0, "reduced": bool(opts["reduced_motion"])})
+ 
+ 
+ func _menu_rows() -> Array:
+@@ -2113,7 +2127,7 @@
+ 	_pm_confirm = false
+ 	_pm_focus = 0
+ 	_pm_down = ""
+-	_pm_t0 = _t
++	_pm_t0 = _ut
+ 	_pm_seen = 0
+ 	_pm_prev = -1
+ 	_pm_bar_t0 = -99.0
+@@ -2144,9 +2158,9 @@
+ 	if _pm_focus != _pm_seen:   # the Rail's lit bar slides from the row it left (UI state only)
+ 		_pm_prev = _pm_seen
+ 		_pm_seen = _pm_focus
+-		_pm_bar_t0 = _t
++		_pm_bar_t0 = _ut
+ 	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "where": UiData.t("prompt.report_where") if lan_report_fn.is_valid() else "",
+-		"device": _set_device, "style": str(opts["glyph_style"]), "since": _t - _pm_t0, "prev": _pm_prev, "bar_since": _t - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else ""})
++		"device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _pm_t0, "prev": _pm_prev, "bar_since": _ut - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else ""})
+ 
+ 
+ func _paint_pmenu(ci: CanvasItem) -> void:
+@@ -2386,7 +2400,7 @@
+ 		return
+ 	UiSettings.two_humans = _humans() >= 2
+ 	_set_open = true
+-	_set_t0 = _t
++	_set_t0 = _ut
+ 	_set_scroll = 0.0
+ 	_set_drag = {}
+ 	_set_axis = {}
+@@ -2439,7 +2453,7 @@
+ 
+ ## What the Settings plan is asked for: the focus, the scroll and the help's scroll, the last device, and (for the Rail) the glyph style, the time since it opened and Reduce motion.
+ func _settings_st() -> Dictionary:
+-	return {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll, "style": str(opts["glyph_style"]), "since": _t - _set_t0, "reduced": bool(opts["reduced_motion"])}
++	return {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll, "style": str(opts["glyph_style"]), "since": _ut - _set_t0, "reduced": bool(opts["reduced_motion"])}
+ 
+ 
+ func settings_plan() -> Dictionary:
+--- a/ui/tools/hud_check.gd	2026-11-13 23:34:50.366811000 -0800
++++ b/ui/tools/hud_check.gd	2026-11-13 23:34:50.415474400 -0800
+@@ -87,6 +87,7 @@
+ 	await _retired_words_rules()
+ 	await _report_this_rules()
+ 	await _menus_rail_rules()
++	await _pause_clock_rules()
+ 	await _plain_words_rules()
+ 	await _launch_marks_rules()
+ 	await _tug_rules()
+@@ -11031,3 +11032,73 @@
+ 	hud.hide_photo_notice(false)
+ 	hud.queue_free()
+ 	UiData.set_feature("menus_rail", null)
++
++
++## A-UI-01: the Rail's pause menu opens the way the game opens it. The game holds the sim while the pause menu is open and advances the HUD by 0 (render/core/main.gd: ui_hud.advance(0.0 if host.paused else delta)),
++## so a slide timed on the HUD's own clock never started and the menu stayed off the screen. The menus have their own clock now: it runs by the game's step when the game runs and by real time when it does not.
++func _pause_clock_rules() -> void:
++	UiPrefs.path = "user://ui_prefs_test_pause_clock.json"
++	if FileAccess.file_exists(UiPrefs.path):
++		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
++	UiData.set_feature("menus_rail", true)
++	var hud := UiHud.new()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	hud.hub.model(0).ai = false
++	hud.hub.model(1).ai = true
++	hud.set_option("reduced_motion", false)
++	for i in range(10):
++		hud.advance(1.0 / 60.0)
++	hud.set_process(false)   # by hand, so the count is exact: the frames of a held game are advance(0.0) and the menus' clock
++	hud.show_pause_menu()
++	var at_open: float = float(hud.pause_menu_plan()["slide"])
++	for i in range(30):
++		hud.advance(0.0)
++		hud.advance_ui(1.0 / 60.0)
++	var held: Dictionary = hud.pause_menu_plan()
++	_ok(bool(held.has("rail")) and at_open < 0.2 and float(held["slide"]) == 1.0 and (held["card"] as Rect2).size.x > 0.0, "pause clock: pausing with the clock stopped (advance 0.0 each frame) the rail slides in and settles (%.2f at open, %.2f half a second on)" % [at_open, float(held["slide"])])
++	hud.pause_menu_action("down")
++	for i in range(4):
++		hud.advance(0.0)
++		hud.advance_ui(1.0 / 60.0)
++	var mid: Dictionary = hud.pause_menu_plan()
++	var ys: Array = mid["row_ys"]
++	_ok(float(mid["bar_y"]) > float(ys[0]) and float(mid["bar_y"]) < float(ys[1]), "pause clock: with the clock stopped the lit bar still slides to the next row")
++	hud._pm_close("test")
++	# The old behaviour, for the record: with no menu clock the slide never leaves 0 (the fault the case above catches).
++	var stuck := UiHud.new()
++	stuck.size = Vector2(1280, 720)
++	root.add_child(stuck)
++	await process_frame
++	stuck.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	stuck.set_process(false)
++	stuck.advance(1.0 / 60.0)
++	stuck.show_pause_menu()
++	for i in range(30):
++		stuck.advance(0.0)
++	_ok(float(stuck.pause_menu_plan()["slide"]) == 0.0, "pause clock: without the menus' clock a held game's slide stays at 0 (what Orb saw)")
++	stuck.queue_free()
++	# Real time: the HUD's own process step moves the menus' clock while the game advances it by 0.
++	var live := UiHud.new()
++	live.size = Vector2(1280, 720)
++	root.add_child(live)
++	await process_frame
++	live.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	live.advance(1.0 / 60.0)
++	live.show_pause_menu()
++	var t0: int = Time.get_ticks_msec()
++	while Time.get_ticks_msec() - t0 < 400:
++		live.advance(0.0)
++		await process_frame
++	_ok(float(live.pause_menu_plan()["slide"]) == 1.0, "pause clock: in real time (the HUD's process step) a held game's rail is in place after 0.4 s")
++	live.hide_settings()
++	live.queue_free()
++	# Reduce motion: in place at once.
++	hud.set_option("reduced_motion", true)
++	hud.show_pause_menu()
++	_ok(float(hud.pause_menu_plan()["slide"]) == 1.0, "pause clock: with Reduce motion on the menu is in place at once")
++	hud._pm_close("test")
++	hud.queue_free()
++	UiData.set_feature("menus_rail", null)
+--- a/ui/tools/pause_clock_probe.gd	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/tools/pause_clock_probe.gd	1969-12-31 16:00:00.000000000 -0800
+@@ -0,0 +1,40 @@
++extends SceneTree
++## A-UI-01 probe: the real scene (render/main.tscn), the Rail on, pause opened the way the game does (the sim held, the HUD advanced by 0), and the rail's slide read frame by frame.
++##   godot --headless --path <tree> --script res://ui/tools/pause_clock_probe.gd -- [--reduced]
++const DT: float = 1.0 / 60.0
++var main: Node
++
++
++func _initialize() -> void:
++	var vpn := SubViewport.new()
++	vpn.size = Vector2i(1280, 720)
++	vpn.render_target_update_mode = SubViewport.UPDATE_ALWAYS
++	root.add_child(vpn)
++	main = load("res://render/main.tscn").instantiate()
++	main.manual = true
++	vpn.add_child(main)
++	_run.call_deferred()
++
++
++func _run() -> void:
++	await process_frame
++	UiData.set_feature("menus_rail", true)
++	var reduced: bool = OS.get_cmdline_user_args().has("--reduced")
++	main.start_match(12345, {"p1": false, "p2": true}, null)
++	for i in range(240):
++		main.frame(DT)
++	var hud: UiHud = main.ui_hud
++	hud.set_option("reduced_motion", reduced)
++	hud.show_pause_menu()
++	print("paused=%s rail=%s" % [str(main.host.paused), str(hud.pause_menu_plan().has("rail"))])
++	var first: float = -1.0
++	for i in range(60):
++		main.frame(DT)
++		await process_frame
++		var s: float = float(hud.pause_menu_plan().get("slide", -1.0))
++		if i in [0, 5, 10, 20, 40, 59]:
++			print("frame %d: slide %.3f paused=%s" % [i, s, str(main.host.paused)])
++		if first < 0.0 and s >= 1.0:
++			first = float(i)
++	print("PROBE reduced=%s slid_in_at_frame=%s" % [str(reduced), str(first)])
++	quit(0)

@@ -1,0 +1,2 @@
+rail check: 617 checks, 281 failed
+4 faults injected in a scratch copy (notice word dropped, hints on both devices, Rail on touch, lit bar stuck on row 0): all four caught

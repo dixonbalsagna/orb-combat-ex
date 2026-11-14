@@ -1,0 +1,105 @@
+--- a/tools/schemas/map.json	2026-11-13 23:50:28.611711700 -0800
++++ b/tools/schemas/map.json	2026-11-13 23:50:28.714141900 -0800
+@@ -168,6 +168,10 @@
+       "schema": "ui-features.schema.json"
+     },
+     {
++      "match": "ui/data/modes.json",
++      "schema": "ui-modes.schema.json"
++    },
++    {
+       "match": "ui/data/faces.json",
+       "schema": "ui-faces.schema.json"
+     },
+--- a/tools/schemas/ui-modes.schema.json	1969-12-31 16:00:00.000000000 -0800
++++ b/tools/schemas/ui-modes.schema.json	1969-12-31 16:00:00.000000000 -0800
+@@ -0,0 +1,89 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/ui-modes",
++  "title": "ui modes (schema 1)",
++  "description": "ui/data/modes.json: the start menu's list of modes (docs/ui/menus-a1.md). Version field: schema. Policy: closed; keys starting with '_' are comments. A mode row has an id, a label, a state (ready or coming) and whether the testers' package shows it; a ready row says how many people play.",
++  "type": "object",
++  "required": [
++    "schema",
++    "modes"
++  ],
++  "properties": {
++    "schema": {
++      "const": 1
++    },
++    "note": {
++      "type": "string"
++    },
++    "mirror_pick": {
++      "type": "boolean"
++    },
++    "modes": {
++      "type": "array",
++      "minItems": 1,
++      "items": {
++        "$ref": "#/$defs/mode"
++      }
++    }
++  },
++  "additionalProperties": false,
++  "$defs": {
++    "mode": {
++      "type": "object",
++      "required": [
++        "id",
++        "label",
++        "state",
++        "testers"
++      ],
++      "properties": {
++        "id": {
++          "type": "string",
++          "pattern": "^[a-z][a-z0-9_]*$"
++        },
++        "label": {
++          "type": "string",
++          "minLength": 1,
++          "maxLength": 40
++        },
++        "detail": {
++          "type": "string",
++          "maxLength": 160
++        },
++        "state": {
++          "enum": [
++            "ready",
++            "coming"
++          ]
++        },
++        "players": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 2
++        },
++        "testers": {
++          "type": "boolean"
++        }
++      },
++      "if": {
++        "properties": {
++          "state": {
++            "const": "ready"
++          }
++        },
++        "required": [
++          "state"
++        ]
++      },
++      "then": {
++        "required": [
++          "players"
++        ]
++      },
++      "patternProperties": {
++        "^_": true
++      },
++      "additionalProperties": false
++    }
++  }
++}

@@ -1,0 +1,9 @@
+# a1-rail-default: the Rail and the A1 menus are main's default (A-MODES-15, A-UI-04; UI & UX, 2026-11-13; park, not landed)
+
+`rail-default.patch` (`patch -p1` / `git apply`; dry-run clean on HEAD def3445a plus `a1-pause-clock` and `a1-start-flow`; **apply last of the menu parks**): `ui/data/features.json` (`menus_rail` true, `menu_modes` true), `ui/tools/hud_check.gd`, `docs/ui/menus-rail.md`.
+
+- **What flips:** the Rail frame on all screens, and the A1 start menu (the list of modes, the setup, Quit). `testers_package` stays false (Tools' package build sets it). The build tool's `menusRail` row can go once this lands (Tools): the packed `features.json` says true.
+- **The checks:** the Rail's rules now run at 1280 by 800 too (twelve sizes); "the switch ships off" is now "ships on". The older rules that read the old cards (the single start card, the pause lists without Quit, the old Settings card, the minimal HUD's plain pause screen) are **pinned to the old layout in `_live_on()`** with that reason, as the file does for every newer switch: those cards are still the layout of a small or touch screen, and the Rail's and the A1 menus' own rules cover what a desktop player sees. (The three rules the rail-on patch rewrote stay rewritten.) Full hud_check with both switches on by default: **8505 checks, 0 failed** (`docs/ui/runs/def3445a/rail-default/gate-rail-and-modes-on.txt`).
+- **Every Rail screen has a still:** `docs/ui/runs/def3445a/screen-sweep/` (park `a1-screen-sweep`): 24 states at 1280 by 800.
+- **Look gate:** side-by-sides today against the A1 menus at 1280 by 800 for the start, setup, pause and match-over screens are on this PC (paths in the report); the start pair is in `docs/ui/runs/def3445a/rail-default/`.
+- Reading the first desktop build's packed `features.json` (acceptance 3) is Tools' to do after the build.

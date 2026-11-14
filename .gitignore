@@ -38,3 +38,6 @@ docs/tools/shortcuts/Make my report folder.cmd
 
 # Real-thumb captures of the right stick (tools/capture): raw files hold anonymous codes and stick samples; only the summary tables are committed
 tools/capture/raw/
+
+# UI run stills from the demo that show grey-box fighters (in-progress character art never goes on a public page); text records stay tracked
+docs/ui/runs/397a7adf/**/*.png

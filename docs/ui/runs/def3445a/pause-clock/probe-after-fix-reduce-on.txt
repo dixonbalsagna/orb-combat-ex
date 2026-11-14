@@ -1,0 +1,8 @@
+paused=true rail=true
+frame 0: slide 1.000 paused=true
+frame 5: slide 1.000 paused=true
+frame 10: slide 1.000 paused=true
+frame 20: slide 1.000 paused=true
+frame 40: slide 1.000 paused=true
+frame 59: slide 1.000 paused=true
+PROBE reduced=true slid_in_at_frame=0.0

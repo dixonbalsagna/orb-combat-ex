@@ -1,0 +1,51 @@
+--- a/ui/tools/hud_check.gd	2026-11-09 09:34:17.856068200 -0800
++++ b/ui/tools/hud_check.gd	2026-11-09 09:34:17.876160800 -0800
+@@ -8889,7 +8889,7 @@
+ 	UiText.tracing = false
+ 	var card_words := " ".join(PackedStringArray(UiText.trace))
+ 	UiText.trace = []
+-	_ok(card_words.contains("Buildings lost: 12") and card_words.contains("MATCH OVER") and not card_words.to_lower().contains("civilian"), "damage facts: the open card draws MATCH OVER and the two counts, nothing about people")
++	_ok(card_words.contains("Buildings lost: 12") and card_words.to_upper().contains("MATCH OVER") and not card_words.to_lower().contains("civilian"), "damage facts: the open card draws MATCH OVER and the two counts, nothing about people")
+ 	UiData.set_feature("damage_facts", null)
+ 	hud.queue_free()
+ 	await process_frame
+@@ -8914,6 +8914,16 @@
+ 	hud._input(e)
+ 
+ 
++## The words the pause card says under its buttons: the old card's foot lines, or on the Rail the chip and the detail card's lines (the facts, a save's status, where saved reports go).
++func _foot_text(hud: UiHud) -> String:
++	var p: Dictionary = hud.pause_menu_plan()
++	var parts: Array = []
++	parts.append_array(PackedStringArray(p["join_lines"]))
++	if p.has("rail"):
++		parts.append_array(PackedStringArray(p["facts_lines"]))
++	return " ".join(PackedStringArray(parts))
++
++
+ func _report_this_rules() -> void:
+ 	UiPrefs.path = "user://ui_prefs_test_report.json"
+ 	if FileAccess.file_exists(UiPrefs.path):
+@@ -9000,11 +9010,11 @@
+ 	_ok(save_btn and panel_ok and back_ok and no_btn, "report this: the feedback panel has SAVE REPORT only on a LAN build, and it hands the host the ticked tags (their ids) and the note and then says where it saved (%s %s %s %s)" % [save_btn, panel_ok, back_ok, no_btn])
+ 	# The pause screen says where saved reports go (a LAN build only).
+ 	hud.show_pause_menu()
+-	var where_on: bool = " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"])).contains("'saved' folder")
++	var where_on: bool = _foot_text(hud).contains("'saved' folder")
+ 	hud._pm_close("test")
+ 	hud.lan_report_fn = Callable()
+ 	hud.show_pause_menu()
+-	var where_off: bool = not " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"])).contains("'saved' folder")
++	var where_off: bool = not _foot_text(hud).contains("'saved' folder")
+ 	hud._pm_close("test")
+ 	hud.lan_report_fn = good
+ 	# Save this match, on the card that opens after a match.
+@@ -9016,7 +9026,7 @@
+ 	var rec_ok: bool = str(rec["schema"]) == "orb-combat-match-record/1" and rec.has("seed") and rec.has("build") and rec.has("settings") and rec.has("note") and str(rec["winner"]) == "ONE"
+ 	hud._fb_text.text = "The beam froze."   # the note the player typed
+ 	hud.pause_menu_choose("save")
+-	var status := func() -> String: return " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"]))
++	var status := func() -> String: return _foot_text(hud)
+ 	var lan_save: bool = str(status.call()).contains("Report saved: saved/report-0001.json") and calls.back() == ["", "The beam froze."]
+ 	hud.lan_report_fn = Callable()
+ 	hud.pause_menu_choose("save")

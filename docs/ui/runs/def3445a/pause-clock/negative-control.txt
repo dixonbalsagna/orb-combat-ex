@@ -1,0 +1,4 @@
+FAIL  pause clock: pausing with the clock stopped (advance 0.0 each frame) the rail slides in and settles (0.00 at open, 0.00 half a second on)
+FAIL  pause clock: with the clock stopped the lit bar still slides to the next row
+FAIL  pause clock: in real time (the HUD's process step) a held game's rail is in place after 0.4 s
+rail check: 554 checks, 3 failed

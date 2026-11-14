@@ -1,0 +1,11 @@
+diff -ruN a/render/core/main.gd b/render/core/main.gd
+--- a/render/core/main.gd	2026-11-07 13:36:45.786151900 -0800
++++ b/render/core/main.gd	2026-11-07 13:36:45.833170900 -0800
+@@ -183,6 +183,7 @@
+ 	ui_hud.feedback_opened.connect(func(_context): _hold_for_overlay())
+ 	ui_hud.feedback_closed.connect(_release_overlay)
+ 	ui_hud.feedback_fn = _feedback_context
++	ui_hud.web_blocked_fn = func() -> bool: return audio != null and audio.web_blocked()   # Audio's read-only getter (docs/audio/pad-start.md): the start menu says its sound line while the browser holds the sound (docs/ui/sound-line.md)
+ 	ui_hud.settings_opened.connect(_hold_for_overlay)
+ 	ui_hud.settings_closed.connect(_release_overlay)
+ 	# The panel cut-in's border takes each fighter's lane colour from UI (it fires at the HUD's first advance).

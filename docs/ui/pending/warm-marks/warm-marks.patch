@@ -1,0 +1,80 @@
+diff -ruN a/ui/core/ui_warm.gd b/ui/core/ui_warm.gd
+--- a/ui/core/ui_warm.gd	2026-10-23 15:25:07.018199100 -0700
++++ b/ui/core/ui_warm.gd	2026-10-23 15:25:07.192289200 -0700
+@@ -10,11 +10,14 @@
+ 
+ const DESIGN_SIZES: Array = [14.0, 15.0, 16.0, 18.0, 19.0, 20.0, 22.0, 23.0, 24.0, 28.0, 30.0, 34.0, 36.0, 38.0]
+ const GLYPHS := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;!?'\"-+()/%[]&x*"
++const MARKS: Array = ["ack_refused", "ack_energy", "ack_empty", "ack_held", "ack_lapsed", "charge", "charge_armoured", "lit4", "lit3", "dots"]   # what _draw draws after the text, in order
+ const FRAMES := 3
+ const OPACITY := 0.012
+ 
+ var pairs: Array = []        # [font size, outline px], what is drawn (for the checks)
++var marks: Array = []        # the legend's overlay marks drawn (for the checks)
+ var _frames: int = 0
++var _scale: float = 1.0
+ 
+ 
+ ## The sizes and outlines for a layout scale and viewport: pure, so the checks read the same list the draw uses.
+@@ -28,6 +31,10 @@
+ 			if not seen.has(key):
+ 				seen[key] = true
+ 				out.append([fs, ol])
++	var gfs: int = UiGlyphs._fs(maxf(24.0 * scale, 20.0))   # the legend's key and button letters (UiGlyphs.draw_spec), whatever the scale
++	if not seen.has("%d/0" % gfs):
++		seen["%d/0" % gfs] = true
++		out.append([gfs, 0])
+ 	var bfs: int = UiText.px(clampf(vp.x * 0.03, 30.0, 46.0) / maxf(scale, 0.01), scale, 22.0)   # the banner's size, as UiCenter.draw_banner fits it
+ 	var bol: int = int(ceil(maxf(2.0, float(bfs) * 0.09)))
+ 	for pr in [[bfs, bol], [bfs, 0]]:
+@@ -40,6 +47,8 @@
+ 
+ func start(scale: float, vp: Vector2) -> void:
+ 	pairs = plan(scale, vp)
++	marks = MARKS.duplicate()
++	_scale = scale
+ 	position = Vector2.ZERO
+ 	size = vp
+ 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+@@ -72,3 +81,17 @@
+ 		y += float(fs) * 1.25
+ 		if w < 0.0:
+ 			break
++	# The legend's overlay marks, each drawn once: the press-acknowledgement marks (a cross, a dash, a dot, a ring, on their dark disc), the wind-up ring (and B's armoured one), the launch
++	# window's ring with its ticks, and the flurry's ring of dots: the first time any of them is recorded is in a fight, on the press that causes it.
++	var gh: float = maxf(24.0 * _scale, 20.0)
++	var mx: float = size.x * 0.5
++	var my: float = size.y * 0.5
++	for kind in ["refused", "energy", "empty", "held", "lapsed"]:
++		UiHints.draw_ack(self, kind, Vector2(mx, my), gh * 0.5, 1.0)
++		mx += gh * 1.6
++	UiHints.draw_charge(self, Vector2(mx, my), gh * 0.62, 0.5, false, 1.0)
++	UiHints.draw_charge(self, Vector2(mx + gh * 1.6, my), gh * 0.62, 0.5, true, 1.0)
++	UiHints.draw_lit(self, Vector2(mx + gh * 3.2, my), gh * 0.52, 1.0, 4)
++	UiHints.draw_lit(self, Vector2(mx + gh * 4.8, my), gh * 0.52, 1.0, 3)
++	UiHints.draw_dots(self, Vector2(mx + gh * 6.4, my), gh * 0.5, 4, 1.0)
++
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-23 15:25:07.154179300 -0700
++++ b/ui/tools/hud_check.gd	2026-10-23 15:25:07.306225800 -0700
+@@ -6234,6 +6234,20 @@
+ 			missing.append(UiWarm.GLYPHS[i])
+ 	_ok(missing.is_empty(), "text warm: the font has every glyph the warm-up draws (%s missing)" % str(missing))
+ 	_ok(UiData.feature("text_warm"), "text warm: the switch is on as shipped")
++	var gl_bad := PackedStringArray()
++	for sc2 in [0.4, 0.667, 1.0, 2.5]:
++		var gk: String = "%d/0" % UiGlyphs._fs(maxf(24.0 * sc2, 20.0))
++		var found := false
++		for pr2 in UiWarm.plan(sc2, Vector2(1280, 720)):
++			found = found or ("%d/%d" % [pr2[0], pr2[1]]) == gk
++		if not found:
++			gl_bad.append("s %.2f %s" % [sc2, gk])
++	_ok(gl_bad.is_empty(), "text warm: the plan holds the legend's key-letter size at every scale (%s)" % str(gl_bad))
++	var uw := UiWarm.new()
++	uw.size = Vector2(640, 360)
++	uw.start(1.0, Vector2(640, 360))
++	_ok(uw.marks.size() == 10 and uw.marks.has("ack_refused") and uw.marks.has("lit3") and uw.marks.has("dots"), "text warm: the legend's overlay marks are all drawn once (%s)" % str(uw.marks))
++	uw.free()
+ 
+ 
+ ## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.

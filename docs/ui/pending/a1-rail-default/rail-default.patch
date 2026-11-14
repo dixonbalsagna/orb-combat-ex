@@ -1,0 +1,94 @@
+--- a/ui/data/features.json	2026-11-13 23:31:02.517271300 -0800
++++ b/ui/data/features.json	2026-11-13 23:54:13.994647000 -0800
+@@ -46,8 +46,8 @@
+     "alert_vfx": false,
+     "alert_audio": false,
+     "alert_rumble": false,
+-    "menus_rail": false,
+-    "menu_modes": false,
++    "menus_rail": true,
++    "menu_modes": true,
+     "testers_package": false
+   }
+ }
+--- a/ui/tools/hud_check.gd	2026-11-13 23:40:32.545504800 -0800
++++ b/ui/tools/hud_check.gd	2026-11-13 23:57:50.908258800 -0800
+@@ -771,6 +771,8 @@
+ 	UiData.set_feature("beam_teach", false)     # and without the beam teaching lines (the older rules look at the old words)
+ 	UiData.set_feature("struggle_teach", false)  # and without the clash rows and the refusal words (the older rules look at the legend as it was)
+ 	UiData.set_feature("refusal_words", false)
++	UiData.set_feature("menus_rail", false)   # the older rules look at the cards the Rail replaces on a desktop screen (they are still the layout of a small or touch screen); the Rail's own rules turn it on themselves
++	UiData.set_feature("menu_modes", false)   # the older rules look at the single start card and at the pause lists without Quit (the A1 rules turn it on themselves)
+ 	UiData.set_feature("report_this", false)   # the first-matches line about reporting and the match-over card's Save this match are newer than the older rules, which look at the teaching row and the card as they were
+ 	UiData.set_feature("save_match", false)
+ 	for k in ["forms_live", "specials_live", "brace_live", "vanish_live"]:
+@@ -10796,9 +10798,10 @@
+ 
+ 
+ func _menus_rail_rules() -> void:
+-	# The switch ships off; with it off every plan is today's.
++	# The switch ships on (A1: the Rail is main's default); with it off every plan is today's.
+ 	UiData.set_feature("menus_rail", null)
+-	_ok(not UiData.feature("menus_rail"), "menus rail: the switch ships off")
++	_ok(UiData.feature("menus_rail"), "menus rail: the switch ships on")
++	UiData.set_feature("menus_rail", false)
+ 	for k in ["rail_kicker", "rail_paused", "rail_over", "rail_this_match", "rail_hint_choose", "rail_hint_select", "rail_hint_resume", "rail_hint_keep", "rail_hint_again", "rail_hint_not_now", "rail_hint_tabs", "rail_hint_back",
+ 			"rail_hint_choose_change", "rail_p2_leave", "rail_start_title", "rail_read_first", "rail_you", "rail_against", "rail_the_computer", "rail_now_default"]:
+ 		_ok(UiData.t("prompt." + k) != "prompt." + k, "menus rail: the word %s exists" % k)
+@@ -10823,7 +10826,7 @@
+ 		last = e
+ 	_ok(monotone and UiRail.ease_out(0.0) == 0.0 and UiRail.ease_out(1.0) == 1.0, "menus rail: the ease only goes forward")
+ 	# Geometry at every size: wide enough sizes get the Rail and fit; short or narrow ones and touch keep today's card.
+-	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1366, 768), 1.0], [Vector2(1600, 1000), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(2560, 1080), 1.0], [Vector2(1000, 600), 1.0], [Vector2(1024, 576), 1.0],
++	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1280, 800), 1.0], [Vector2(1366, 768), 1.0], [Vector2(1600, 1000), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(2560, 1080), 1.0], [Vector2(1000, 600), 1.0], [Vector2(1024, 576), 1.0],
+ 		[Vector2(844, 390), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(390, 844), 1.0]]
+ 	for cse in cases:
+ 		var sz: Vector2 = cse[0]
+@@ -11032,7 +11035,7 @@
+ 	_ok(true, "menus rail (hud): the start menu answers up and down")
+ 	hud.hide_photo_notice(false)
+ 	hud.queue_free()
+-	UiData.set_feature("menus_rail", null)
++	UiData.set_feature("menus_rail", false)   # back to the older rules' pin
+ 
+ 
+ ## A-UI-01: the Rail's pause menu opens the way the game opens it. The game holds the sim while the pause menu is open and advances the HUD by 0 (render/core/main.gd: ui_hud.advance(0.0 if host.paused else delta)),
+@@ -11102,7 +11105,7 @@
+ 	_ok(float(hud.pause_menu_plan()["slide"]) == 1.0, "pause clock: with Reduce motion on the menu is in place at once")
+ 	hud._pm_close("test")
+ 	hud.queue_free()
+-	UiData.set_feature("menus_rail", null)
++	UiData.set_feature("menus_rail", false)   # back to the older rules' pin
+ 
+ 
+ # --- The A1 start menu: modes, setup, fighters, Quit (docs/ui/menus-a1.md) ------------------------------------------------------
+@@ -11363,8 +11366,8 @@
+ 	UiData.set_feature("menu_modes", true)
+ 	_ok(esc_menu and esc_match and esc_off, "a1 menus (hud): Escape no longer closes the game with no question: the start menu and a match ask first (%s %s), and with the switch off it closes as before (%s)" % [esc_menu, esc_match, esc_off])
+ 	hud.queue_free()
+-	UiData.set_feature("menu_modes", null)
+-	UiData.set_feature("menus_rail", null)
++	UiData.set_feature("menu_modes", false)   # back to the pin of the older rules
++	UiData.set_feature("menus_rail", false)   # back to the older rules' pin
+ 	print("SESSION (a pad on the start menu, presses and the lit row):")
+ 	for line in session:
+ 		print("  ", line)
+--- a/docs/ui/menus-rail.md	2026-11-13 23:29:20.498452800 -0800
++++ b/docs/ui/menus-rail.md	2026-11-13 23:54:30.193191100 -0800
+@@ -1,6 +1,6 @@
+ # The Rail menus (UI & UX, 2026-11-09; Orb picked mockup A on 2026-11-09: "rail looks great, keep going")
+ 
+-**Status: built behind a switch, off.** `menus_rail` in `ui/data/features.json` (false). With it off every screen is exactly as before. The mockup is `docs/ui/mockups/menus-modern/a-rail.html`; the design pass and the choices behind it are in `docs/ui/menus-modern.md`. This page is what the code does.
++**Status: main's default (sprint A1, A-MODES-15 and A-UI-04).** `menus_rail` in `ui/data/features.json` is true; set false, every screen is exactly as it was before the Rail. Built behind a switch on 2026-11-09 and on in Orb's builds through the build tool's row; the row goes now that main ships it on. The Rail's checks run at 1280 by 800 (the Steam Deck's) as well, and every Rail screen has a still in `docs/ui/runs/<sha>/screen-sweep/`. The mockup is `docs/ui/mockups/menus-modern/a-rail.html`; the design pass and the choices behind it are in `docs/ui/menus-modern.md`. This page is what the code does.
+ 
+ ## 1. What changed
+ 
+@@ -41,7 +41,7 @@
+ 
+ ## 7. Tests
+ 
+-`_menus_rail_rules` in hud_check: the switch ships off and the old plans are untouched with it off; every new word exists; the ease and the slide are monotone, 180 and 140 ms, cut under Reduce motion; at eleven sizes, touch on and off, kbd and pad, the pause plan in five states (pause, new match, two people with the join line, match over with a saved file, a LAN pause), the start menu in three (one player, two, mid-match) and Settings all fit, every control is a real target inside its panel, the detail and chip clear the rail, the hints show one device only, Legal's notice is the plan's text word for word, and the narrow or short sizes keep today's layout; the lit bar sits on the focused row, slides and cuts; the plan keys change with the animation step; in the HUD the rail slides in and holds, the D-pad moves the lit row and the hints switch to the pad, Reduce motion cuts, LB, RB, Q, E and a click move between tabs, and with the switch off Q and E do nothing and RB pages as before.
++`_menus_rail_rules` in hud_check: the switch ships off and the old plans are untouched with it off; every new word exists; the ease and the slide are monotone, 180 and 140 ms, cut under Reduce motion; at twelve sizes (1280 by 800 among them), touch on and off, kbd and pad, the pause plan in five states (pause, new match, two people with the join line, match over with a saved file, a LAN pause), the start menu in three (one player, two, mid-match) and Settings all fit, every control is a real target inside its panel, the detail and chip clear the rail, the hints show one device only, Legal's notice is the plan's text word for word, and the narrow or short sizes keep today's layout; the lit bar sits on the focused row, slides and cuts; the plan keys change with the animation step; in the HUD the rail slides in and holds, the D-pad moves the lit row and the hints switch to the pad, Reduce motion cuts, LB, RB, Q, E and a click move between tabs, and with the switch off Q and E do nothing and RB pages as before.
+ 
+ ## 8. Left for later
+ 

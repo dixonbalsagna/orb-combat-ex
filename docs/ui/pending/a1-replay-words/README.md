@@ -1,0 +1,5 @@
+# a1-replay-words: the words for a replay from another build (A-NET-05; UI & UX, 2026-11-14; park, not landed)
+
+One term, for Orb to read before it is used: `prompt.replay_wrong_build` = "This replay was saved by a different version of the game (build {build}, {date}), so it can't be played in this one." Simulation's draft kept word for word, with the two holes named: `{build}` (the build's short commit, "6a30b4c") and `{date}` (the build's date as the caller writes it, "9 November"). Use it as `UiData.fmt("prompt.replay_wrong_build", {"build": ..., "date": ...})`.
+
+`replay-words.patch` (`patch -p1` / `git apply`; dry-run clean on HEAD def3445a plus `a1-pause-clock` and `a1-start-flow`, which both change the same files): `ui/data/terms.json`, the regenerated pseudo-locale (`localization/pseudo/ui/data/terms.json`) and `docs/ui/strings.md`. No code uses the term yet: where it is shown (the replay screen, or the line the host prints) and the reason code beside it are Simulation's and the host's.
