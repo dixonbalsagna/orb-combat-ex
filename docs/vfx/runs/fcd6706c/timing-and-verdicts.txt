@@ -1,0 +1,9 @@
+run: clean main fcd6706c in a scratch tree from git archive; Godot 4.7.2 headless; below-normal priority; one Godot process at a time; the machine was shared with other sessions
+effects_check: 1167 ok, 0 FAIL; verdict line 'effects check passed'; 66 seconds
+hash_check (seeds=12345, ticks=3600, six ways): verdict line 'hash check passed'; 108 seconds for the one seed (three seeds: about 5.5 minutes)
+(verdict lines from the logs, saved here as text: this file is the record)
+worst tick: {"asked":8,"drawn":5,"echoes":0,"entries":[{"age":4,"alpha":0.1,"dx":157.9,"dy":0.0,"source":"after-image (Rendering)"},{"age":3,"alpha":0.2,"dx":126.3,"dy":0.0,"source":"after-image (Rend
+
+hash check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
