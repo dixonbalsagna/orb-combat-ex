@@ -1,7 +1,9 @@
 Control: the same probe on a tree with the kept build's data but main's OLD data/input/timing.json (the eleven pad switches off). It reads differently, so the probe sees the pad.
 
-COUNT PROTAGONIST: 101 cells; 51 own outcomes, 35 same as an earlier cell, 10 the same move with another side effect, 0 refused (said), 5 nothing (silent); no outcome 5, repeats 35 (strict) or 45 (same move)
-COUNT RIVAL: 101 cells; 50 own outcomes, 35 same as an earlier cell, 11 the same move with another side effect, 0 refused (said), 5 nothing (silent); no outcome 5, repeats 35 (strict) or 46 (same move)
+COUNT PROTAGONIST: 116 cells; 60 own outcomes, 41 same as an earlier cell, 10 the same move with another side effect, 0 refused (said), 5 nothing (silent); no outcome 5, repeats 41 (strict) or 51 (same move)
+EXPLAINED PROTAGONIST: by design: no outcome 0, repeats 22; proposed (not yet by design): no outcome 0, repeats 20; unexplained: no outcome 5, repeats 9
+COUNT RIVAL: 116 cells; 59 own outcomes, 41 same as an earlier cell, 11 the same move with another side effect, 0 refused (said), 5 nothing (silent); no outcome 5, repeats 41 (strict) or 52 (same move)
+EXPLAINED RIVAL: by design: no outcome 0, repeats 22; proposed (not yet by design): no outcome 0, repeats 20; unexplained: no outcome 5, repeats 10
 
 cells that read differently for PROTAGONIST (kept build -> old timing.json):
   RB/B/tap : OUTCOME  ->  SAME AS RB/Y/tap
@@ -14,4 +16,5 @@ cells that read differently for PROTAGONIST (kept build -> old timing.json):
   RT/stick/hold/toward : REFUSED charging  ->  NOTHING
   pair/X+Y (lift) : SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also no new ev  ->  SAME MOVE AS none/X/tap (the same template, pieces and hit kinds; also no new ev
   pair/B+X on one tick (chord) : SAME MOVE AS none/B/tap (the same template, pieces and hit kinds; also no new ev  ->  SAME AS pair/X+Y (lift)
-10 of 101 cells differ
+  brawlLT/B/tap : OUTCOME pieces=strike.su_blade_fall/strike.su_knee_legs/strike.su_palm_heave  ->  SAME AS brawlLT/Y/tap
+11 of 116 cells differ

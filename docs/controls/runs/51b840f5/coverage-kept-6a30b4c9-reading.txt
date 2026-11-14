@@ -1,7 +1,7 @@
-Moveset coverage probe, first reading (A-CONTROLS-06, X-03): the kept 9 November build's own tree (homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/tree; copied, the source read-only), the probe copied into the copy.
-godot --headless --path <copy> --script res://sim/input/tools/coverage_probe.gd -- --fighters=PROTAGONIST,RIVAL  (Godot 4.7.2, one job, below normal, about 100 s). Two readings are byte-identical.
+Moveset coverage probe, reading (A-CONTROLS-06, X-03) with Combat's 116 cells (docs/combat/pending/move-table/coverage_cells.json, S4): the kept 9 November build's own tree (homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/tree; copied, the source read-only), the probe copied into the copy.
+godot --headless --path <copy> --script res://sim/input/tools/coverage_probe.gd -- --fighters=PROTAGONIST,RIVAL  (Godot 4.7.2, one job, below normal, about 2 minutes). Two readings are byte-identical. Fixed since the first reading: the fighters stand on the floor, the joining A press no longer opens a taunt, a clinch the opening makes is waited out (dist 100 reads), the air layer's pre is applied (FIRST_TICK -80) and the foe is brought to the fighter's height in an air cell.
 
-COVERAGE data: fighters hash 138dbb1cefd2b682 ; timing.json sha256 598415119bca708f ; 101 cells ; seeds [5, 11, 23] ; dist 250
+COVERAGE data: fighters hash 138dbb1cefd2b682 ; timing.json sha256 598415119bca708f ; 116 cells ; seeds [5, 11, 23] ; dist 250
 COVERAGE switches on: bNoBeam, bNoBeamKeepRt, beamAim, chargeLostCue, chordPick, dashHandover, dodgeHeld, driverOnRb, flickKept, flightStrikeB, hapticImpact, hapticIncoming, hapticIncomingBeam, hapticLadder, hapticRefused, hapticStages, inertKnock, quickRead, rightStick, signatureRtOnly, specialsOff, stallKeep, webRumble
 COVERAGE fighters: PROTAGONIST, RIVAL
 CELL PROTAGONIST | none/X/tap                       | OUTCOME tpl=brawl pieces=strike.edge_crescent hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush st=locked
@@ -12,19 +12,19 @@ CELL PROTAGONIST | none/Y/mash                      | OUTCOME tpl=brawl pieces=s
 CELL PROTAGONIST | none/Y/hold                      | OUTCOME tpl=brawl pieces=strike.palm_push/strike.rising_palm/strike.spinning_back_kick hit=21(medium) ev=attack,blow[medium/lunge],blow[release],brawl_end[idle],brawl_start,exchange_end,lunge_heavy[lunge],rush,windup[y] st=locked
 CELL PROTAGONIST | none/B/tap                       | OUTCOME tpl=brawl pieces=strike.su_blade_fall/strike.su_edge_step/strike.su_turn hit=51(heavy) ev=attack,blow[heavy/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_heavy[lunge],rush,windup[b] st=locked
 CELL PROTAGONIST | none/B/mash                      | OUTCOME tpl=brawl pieces=strike.su_blade_jaw/strike.su_drive/strike.su_edge_step/strike.su_hammer_arm/strike.su_knee_legs hit=103(heavy) ev=attack,blow[heavy/lunge],blow[heavy],brawl_start,lunge_heavy[lunge],rush,windup[b] st=locked
-CELL PROTAGONIST | none/B/hold                      | OUTCOME tpl=brawl pieces=strike.su_blade_fall/strike.su_edge_step/strike.su_edge_unwind/strike.su_elbow_jaw/strike.su_turn hit=81(heavy,impact) ev=attack,blow[heavy/lunge],blow[release],brawl_end[knockback],brawl_start,exchange_end,launch_plan,lunge_heavy[lunge],rush,windup[b],windup[charge/b] st=locked
-CELL PROTAGONIST | none/A/tap                       | OUTCOME ev=taunt_credit_quarter,taunt_end_finished,taunt_start
-CELL PROTAGONIST | none/A/mash                      | SAME AS none/A/tap
-CELL PROTAGONIST | none/A/hold                      | SAME AS none/A/tap
-CELL PROTAGONIST | LB/X/tap                         | SAME MOVE AS none/X/tap (the same template, pieces and hit kinds; also stance_check)
-CELL PROTAGONIST | LB/X/mash                        | SAME MOVE AS none/X/mash (the same template, pieces and hit kinds; also stance_check)
-CELL PROTAGONIST | LB/X/hold                        | SAME MOVE AS none/X/hold (the same template, pieces and hit kinds; also stance_check)
-CELL PROTAGONIST | LB/Y/tap                         | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also stance_push)
+CELL PROTAGONIST | none/B/hold                      | OUTCOME tpl=brawl pieces=strike.su_blade_fall/strike.su_edge_step/strike.su_edge_unwind/strike.su_elbow_jaw/strike.su_turn hit=82(heavy,impact) ev=attack,blow[heavy/lunge],blow[release],brawl_end[knockback],brawl_start,exchange_end,launch_plan,lunge_heavy[lunge],rush,windup[b],windup[charge/b] st=locked
+CELL PROTAGONIST | none/A/tap                       | OUTCOME ev=taunt_credit_half,taunt_end_finished,taunt_start
+CELL PROTAGONIST | none/A/mash                      | SAME AS none/A/tap  (by design: Out of reach, A held or mashed is the same taunt as A tapped (Game Design, stick-lands.md: tap and hold are the same taunt).)
+CELL PROTAGONIST | none/A/hold                      | SAME AS none/A/tap  (by design: Out of reach, A held or mashed is the same taunt as A tapped (Game Design, stick-lands.md: tap and hold are the same taunt).)
+CELL PROTAGONIST | LB/X/tap                         | SAME MOVE AS none/X/tap (the same template, pieces and hit kinds; also stance_check)  (by design: LB + X is the check: the same blow with the guard kept up (pad-first-press.md, LB and LT + X and Y). Its own looks are the parked stance split, at Beta.)
+CELL PROTAGONIST | LB/X/mash                        | SAME MOVE AS none/X/mash (the same template, pieces and hit kinds; also stance_check)  (by design: LB + X is the check: the same blow with the guard kept up (pad-first-press.md, LB and LT + X and Y). Its own looks are the parked stance split, at Beta.)
+CELL PROTAGONIST | LB/X/hold                        | SAME MOVE AS none/X/hold (the same template, pieces and hit kinds; also stance_check)  (by design: LB + X is the check: the same blow with the guard kept up (pad-first-press.md, LB and LT + X and Y). Its own looks are the parked stance split, at Beta.)
+CELL PROTAGONIST | LB/Y/tap                         | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also stance_push)  (by design: LB + Y is the push: the same blow and the rival shoved back (pad-first-press.md). Its own looks are the parked stance split, at Beta.)
 CELL PROTAGONIST | LB/Y/mash                        | OUTCOME tpl=brawl pieces=strike.palm_push/strike.rising_knee/strike.rising_palm/strike.uppercut hit=43(medium) ev=attack,blow[medium/lunge],blow[medium],brawl_start,lunge_heavy[lunge],miss[reach/y],rush,stance_push,windup[y] st=locked
-CELL PROTAGONIST | LB/Y/hold                        | SAME MOVE AS none/Y/hold (the same template, pieces and hit kinds; also stance_push)
-CELL PROTAGONIST | LB/B/tap                         | SAME AS LB/Y/tap
-CELL PROTAGONIST | LB/B/mash                        | SAME AS LB/Y/mash
-CELL PROTAGONIST | LB/B/hold                        | SAME AS LB/Y/hold
+CELL PROTAGONIST | LB/Y/hold                        | SAME MOVE AS none/Y/hold (the same template, pieces and hit kinds; also stance_push)  (by design: LB + Y is the push: the same blow and the rival shoved back (pad-first-press.md). Its own looks are the parked stance split, at Beta.)
+CELL PROTAGONIST | LB/B/tap                         | SAME AS LB/Y/tap  (proposed, not by design yet: LB + B is sent as Y: the push, until the defensive counter (an art, 25 ki; moveset-generator.md section 3) at Beta.)
+CELL PROTAGONIST | LB/B/mash                        | SAME AS LB/Y/mash  (proposed, not by design yet: LB + B is sent as Y: the push, until the defensive counter (an art, 25 ki; moveset-generator.md section 3) at Beta.)
+CELL PROTAGONIST | LB/B/hold                        | SAME AS LB/Y/hold  (proposed, not by design yet: LB + B is sent as Y: the push, until the defensive counter (an art, 25 ki; moveset-generator.md section 3) at Beta.)
 CELL PROTAGONIST | LB/A/tap                         | NOTHING
 CELL PROTAGONIST | LB/A/mash                        | NOTHING
 CELL PROTAGONIST | LB/A/hold                        | NOTHING
@@ -32,45 +32,45 @@ CELL PROTAGONIST | RB/X/tap                         | OUTCOME hit=14(blast) ev=b
 CELL PROTAGONIST | RB/X/mash                        | OUTCOME hit=115(blast,impact) ev=barrage_ender,blast_windup,shot_fire,shot_hit
 CELL PROTAGONIST | RB/X/hold                        | SAME AS RB/X/tap
 CELL PROTAGONIST | RB/Y/tap                         | OUTCOME hit=25(blast) ev=blast_charge,shot_fire,shot_hit
-CELL PROTAGONIST | RB/Y/mash                        | OUTCOME hit=117(blast,impact) ev=barrage_ender,blast_charge,shot_fire,shot_hit
+CELL PROTAGONIST | RB/Y/mash                        | OUTCOME hit=118(blast,impact) ev=barrage_ender,blast_charge,shot_fire,shot_hit
 CELL PROTAGONIST | RB/Y/hold                        | OUTCOME hit=62(blast,impact) ev=blast_charge,blast_full,shot_fire,shot_hit
 CELL PROTAGONIST | RB/B/tap                         | OUTCOME hit=62(blast,impact) ev=driver_charge,driver_fire,shot_fire,shot_hit
 CELL PROTAGONIST | RB/B/mash                        | SAME AS RB/B/tap
-CELL PROTAGONIST | RB/B/hold                        | OUTCOME hit=77(blast,impact) ev=charge_stage,driver_charge,driver_fire,shot_fire,shot_hit
+CELL PROTAGONIST | RB/B/hold                        | OUTCOME hit=76(blast,impact) ev=charge_stage,driver_charge,driver_fire,shot_fire,shot_hit
 CELL PROTAGONIST | RB/A/tap                         | OUTCOME ev=mine_lay,shot_fire
 CELL PROTAGONIST | RB/A/mash                        | OUTCOME ev=mine_lay,mine_refused,shot_fire
 CELL PROTAGONIST | RB/A/hold                        | SAME AS RB/A/tap
-CELL PROTAGONIST | RT/X/tap                         | SAME AS none/X/tap
-CELL PROTAGONIST | RT/X/mash                        | SAME AS none/X/mash
-CELL PROTAGONIST | RT/X/hold                        | SAME AS none/X/hold
-CELL PROTAGONIST | RT/Y/tap                         | SAME AS none/Y/tap
-CELL PROTAGONIST | RT/Y/mash                        | SAME AS none/Y/mash
-CELL PROTAGONIST | RT/Y/hold                        | SAME AS none/Y/hold
-CELL PROTAGONIST | RT/B/tap                         | OUTCOME tpl=signature ev=attack,beam_charge,beam_fire,beam_window st=locked
-CELL PROTAGONIST | RT/B/mash                        | SAME AS RT/B/tap
-CELL PROTAGONIST | RT/B/hold                        | SAME AS RT/B/tap
-CELL PROTAGONIST | RT/A/tap                         | SAME AS none/A/tap
-CELL PROTAGONIST | RT/A/mash                        | SAME AS none/A/tap
-CELL PROTAGONIST | RT/A/hold                        | SAME AS none/A/tap
-CELL PROTAGONIST | LT/X/tap                         | SAME AS none/X/tap
-CELL PROTAGONIST | LT/X/mash                        | SAME AS none/X/mash
-CELL PROTAGONIST | LT/X/hold                        | SAME AS none/X/hold
-CELL PROTAGONIST | LT/Y/tap                         | SAME AS none/Y/tap
-CELL PROTAGONIST | LT/Y/mash                        | SAME AS none/Y/mash
-CELL PROTAGONIST | LT/Y/hold                        | SAME AS none/Y/hold
-CELL PROTAGONIST | LT/B/tap                         | SAME AS none/B/tap
-CELL PROTAGONIST | LT/B/mash                        | SAME AS none/B/mash
-CELL PROTAGONIST | LT/B/hold                        | SAME AS none/B/hold
-CELL PROTAGONIST | LT/A/tap                         | SAME AS none/A/tap
-CELL PROTAGONIST | LT/A/mash                        | SAME AS none/A/tap
-CELL PROTAGONIST | LT/A/hold                        | SAME AS none/A/tap
+CELL PROTAGONIST | RT/X/tap                         | SAME AS none/X/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | RT/X/mash                        | SAME AS none/X/mash  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | RT/X/hold                        | SAME AS none/X/hold  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | RT/Y/tap                         | SAME AS none/Y/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | RT/Y/mash                        | SAME AS none/Y/mash  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | RT/Y/hold                        | SAME AS none/Y/hold  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | RT/B/tap                         | OUTCOME tpl=signature hit=131(beam) ev=attack,beam_charge,beam_fire,beam_outcome,beam_window,chase_ready st=locked
+CELL PROTAGONIST | RT/B/mash                        | SAME AS RT/B/tap  (by design: The signature fires once, however it's pressed (beam-answers.md).)
+CELL PROTAGONIST | RT/B/hold                        | SAME AS RT/B/tap  (by design: The signature fires once, however it's pressed (beam-answers.md).)
+CELL PROTAGONIST | RT/A/tap                         | SAME AS none/A/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | RT/A/mash                        | SAME AS none/A/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | RT/A/hold                        | SAME AS none/A/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL PROTAGONIST | LT/X/tap                         | SAME AS none/X/tap  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL PROTAGONIST | LT/X/mash                        | SAME AS none/X/mash  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL PROTAGONIST | LT/X/hold                        | SAME AS none/X/hold  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL PROTAGONIST | LT/Y/tap                         | SAME AS none/Y/tap  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL PROTAGONIST | LT/Y/mash                        | SAME AS none/Y/mash  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL PROTAGONIST | LT/Y/hold                        | SAME AS none/Y/hold  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL PROTAGONIST | LT/B/tap                         | SAME AS none/B/tap  (proposed, not by design yet: LT + B plays the plain heavy until the tackle, dive grab and snatch (moveset-generator.md section 3) at Beta.)
+CELL PROTAGONIST | LT/B/mash                        | SAME AS none/B/mash  (proposed, not by design yet: LT + B plays the plain heavy until the tackle, dive grab and snatch (moveset-generator.md section 3) at Beta.)
+CELL PROTAGONIST | LT/B/hold                        | SAME AS none/B/hold  (proposed, not by design yet: LT + B plays the plain heavy until the tackle, dive grab and snatch (moveset-generator.md section 3) at Beta.)
+CELL PROTAGONIST | LT/A/tap                         | SAME AS none/A/tap  (proposed, not by design yet: LT + A plays A until the terrain art (25 ki; moveset-generator.md section 3) at Beta.)
+CELL PROTAGONIST | LT/A/mash                        | SAME AS none/A/tap  (proposed, not by design yet: LT + A plays A until the terrain art (25 ki; moveset-generator.md section 3) at Beta.)
+CELL PROTAGONIST | LT/A/hold                        | SAME AS none/A/tap  (proposed, not by design yet: LT + A plays A until the terrain art (25 ki; moveset-generator.md section 3) at Beta.)
 CELL PROTAGONIST | none/stick/flick/up              | OUTCOME tpl=brawl pieces=strike.flick_rise hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
-CELL PROTAGONIST | none/stick/flick/down            | OUTCOME tpl=brawl pieces=strike.spike_heel hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+CELL PROTAGONIST | none/stick/flick/down            | OUTCOME tpl=brawl pieces=strike.scythe_sweep hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
 CELL PROTAGONIST | none/stick/flick/toward          | OUTCOME tpl=brawl pieces=strike.heel_thrust hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
 CELL PROTAGONIST | none/stick/flick/away            | OUTCOME tpl=brawl pieces=strike.wheel_blade hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
-CELL PROTAGONIST | none/stick/flick/downAir         | SAME AS none/stick/flick/down
+CELL PROTAGONIST | none/stick/flick/downAir         | OUTCOME tpl=brawl pieces=strike.spike_heel hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,slam_hint[down],stick_hit[down],stick_start[down] st=locked
 CELL PROTAGONIST | none/stick/hold/up               | OUTCOME tpl=brawl pieces=strike.flick_rise/strike.lifting_heave hit=37(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[up/skyward],stick_release[up],stick_stage,stick_start[up] st=locked
-CELL PROTAGONIST | none/stick/hold/down             | OUTCOME tpl=brawl pieces=strike.plunge_blade/strike.spike_heel hit=76(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],stick_release[down],stick_stage,stick_start[down] st=locked
+CELL PROTAGONIST | none/stick/hold/down             | OUTCOME tpl=brawl pieces=strike.plunge_blade/strike.scythe_sweep hit=76(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],stick_release[down],stick_stage,stick_start[down] st=locked
 CELL PROTAGONIST | none/stick/hold/toward           | OUTCOME tpl=brawl pieces=strike.drive_palm/strike.heel_thrust hit=55(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[toward/across],stick_release[toward],stick_stage,stick_start[toward] st=locked
 CELL PROTAGONIST | none/stick/hold/away             | OUTCOME tpl=brawl pieces=strike.turning_edge/strike.wheel_blade hit=55(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[away/acrossBehind],stick_release[away],stick_stage,stick_start[away] st=locked
 CELL PROTAGONIST | LB/stick/flick/up                | OUTCOME tpl=brawl pieces=strike.palm_rise/strike.rising_elbow hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
@@ -93,19 +93,35 @@ CELL PROTAGONIST | RB/stick/flick/up                | OUTCOME hit=22(blast) ev=b
 CELL PROTAGONIST | RB/stick/flick/down              | OUTCOME hit=22(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[down]
 CELL PROTAGONIST | RB/stick/flick/toward            | OUTCOME hit=22(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[toward]
 CELL PROTAGONIST | RB/stick/flick/away              | OUTCOME hit=22(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[away]
-CELL PROTAGONIST | RB/stick/hold/up                 | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[up])
-CELL PROTAGONIST | RB/stick/hold/down               | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[down])
-CELL PROTAGONIST | RB/stick/hold/toward             | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,stick_stage,stick_start[toward])
-CELL PROTAGONIST | RB/stick/hold/away               | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[away])
+CELL PROTAGONIST | RB/stick/hold/up                 | OUTCOME tpl=signature ev=attack,beam_aim,beam_charge,beam_fire,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[up] st=locked  (by design: RB + right stick held is the beam, on the signature's template; the stick's direction aims it (Orb, 2026-11-01: beams only from the right stick).)
+CELL PROTAGONIST | RB/stick/hold/down               | SAME MOVE AS RB/stick/hold/up (the same template, pieces and hit kinds; also stick_start[down])  (by design: RB + right stick held is the beam, on the signature's template; the stick's direction aims it (Orb, 2026-11-01: beams only from the right stick).)
+CELL PROTAGONIST | RB/stick/hold/toward             | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,stick_stage,stick_start[toward])  (by design: RB + right stick held is the beam, on the signature's template; the stick's direction aims it (Orb, 2026-11-01: beams only from the right stick).)
+CELL PROTAGONIST | RB/stick/hold/away               | SAME MOVE AS RB/stick/hold/up (the same template, pieces and hit kinds; also stick_start[away])  (by design: RB + right stick held is the beam, on the signature's template; the stick's direction aims it (Orb, 2026-11-01: beams only from the right stick).)
 CELL PROTAGONIST | RT/stick/flick/toward            | REFUSED charging
 CELL PROTAGONIST | RT/stick/hold/toward             | REFUSED charging
-CELL PROTAGONIST | pair/X+Y (lift)                  | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also no new event)
+CELL PROTAGONIST | pair/X+Y (lift)                  | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also no new event)  (proposed, not by design yet: X and Y together play Y, the heavier, as the B + X chord does (chordPick). No lift is designed.)
 CELL PROTAGONIST | pair/LT+RT (transform chord)     | OUTCOME act=dodgeTick
 CELL PROTAGONIST | pair/LB+LT (vanish)              | OUTCOME ev=kick act=dodgeTick
 CELL PROTAGONIST | pair/LB+RB (the lay) held        | OUTCOME act=guardSince,mode
 CELL PROTAGONIST | pair/LT+RB (the kite) held       | OUTCOME act=dodgeTick,mode
-CELL PROTAGONIST | pair/B+X on one tick (chord)     | SAME MOVE AS none/B/tap (the same template, pieces and hit kinds; also no new event)
-COUNT PROTAGONIST: 101 cells; 53 own outcomes, 32 same as an earlier cell, 11 the same move with another side effect, 2 refused (said), 3 nothing (silent); no outcome 5, repeats 32 (strict) or 43 (same move)
+CELL PROTAGONIST | pair/B+X on one tick (chord)     | SAME MOVE AS none/B/tap (the same template, pieces and hit kinds; also no new event)  (by design: On one tick the heavier press wins (chordPick, Controls).)
+CELL PROTAGONIST | brawl/A/tap                      | OUTCOME hit=9() ev=grapple_catch[tell],grapple_clinch,grapple_end[time],grapple_pulse
+CELL PROTAGONIST | brawl/A/mash                     | OUTCOME hit=9() ev=grapple_catch[tell],grapple_clinch,grapple_end[time],grapple_pulse,grapple_pummel[void],grapple_stray
+CELL PROTAGONIST | brawl/A/hold                     | SAME AS brawl/A/tap
+CELL PROTAGONIST | brawl/X/tap                      | OUTCOME pieces=strike.snap_round hit=17(light) ev=blow[light]
+CELL PROTAGONIST | brawlLT/X/tap                    | SAME AS brawl/X/tap
+CELL PROTAGONIST | brawlLT/Y/tap                    | OUTCOME pieces=strike.palm_push hit=30(medium) ev=blow[medium],windup[y]
+CELL PROTAGONIST | brawlLT/B/tap                    | OUTCOME pieces=strike.su_blade_fall/strike.su_knee_legs/strike.su_palm_heave hit=60(heavy) ev=blow[heavy],windup[b]  (proposed, not by design yet: LT + B plays the plain heavy until the tackle at Beta.)
+CELL PROTAGONIST | brawlLB/A/tap                    | OUTCOME hit=9()
+CELL PROTAGONIST | brawlLB/B/tap                    | SAME MOVE AS brawlLT/Y/tap (the same template, pieces and hit kinds; also stance_push)  (proposed, not by design yet: LB + B is the push, as LB + Y, until the counter at Beta.)
+CELL PROTAGONIST | air/stick/flick/down             | SAME AS none/stick/flick/downAir
+CELL PROTAGONIST | air/A/tap                        | SAME AS none/A/tap  (proposed, not by design yet: A in the air is the taunt until the dive grab (moveset-generator.md section 3) at Beta.)
+CELL PROTAGONIST | air/X/tap                        | SAME AS none/X/tap
+CELL PROTAGONIST | none/RT/hold (charge up)         | OUTCOME st=charging
+CELL PROTAGONIST | none/LT/tap (dodge)              | OUTCOME act=dodgeTick
+CELL PROTAGONIST | pair/LB+RB+A (snare)             | SAME AS pair/LB+RB (the lay) held  (proposed, not by design yet: LB + RB + A is the guard until the kits' snare at Beta.)
+COUNT PROTAGONIST: 116 cells; 63 own outcomes, 37 same as an earlier cell, 11 the same move with another side effect, 2 refused (said), 3 nothing (silent); no outcome 5, repeats 37 (strict) or 48 (same move)
+EXPLAINED PROTAGONIST: by design: no outcome 0, repeats 22; proposed (not yet by design): no outcome 0, repeats 19; unexplained: no outcome 5, repeats 7
 CELL RIVAL | none/X/tap                       | OUTCOME tpl=brawl pieces=strike.cross hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush st=locked
 CELL RIVAL | none/X/mash                      | OUTCOME tpl=brawl pieces=strike.cross/strike.cross_fist/strike.forearm_drop/strike.gut_rise/strike.hook/strike.jab/strike.knee_hook hit=42(light) ev=attack,blow[light/lunge],blow[light],brawl_start,launcher_close[lapsed],launcher_open[flurry],lunge_light[lunge],rush st=locked
 CELL RIVAL | none/X/hold                      | OUTCOME tpl=brawl pieces=strike.cross/strike.cross_fist/strike.jab/strike.jab_fist/strike.short_uppercut/strike.spear_fist hit=25(light) ev=attack,blow[light/lunge],blow[light],brawl_end[idle],brawl_start,burst[x],exchange_end,lunge_light[lunge],rush st=locked
@@ -114,65 +130,65 @@ CELL RIVAL | none/Y/mash                      | OUTCOME tpl=brawl pieces=strike.
 CELL RIVAL | none/Y/hold                      | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also blow[release])
 CELL RIVAL | none/B/tap                       | OUTCOME tpl=brawl pieces=strike.su_fist_unwind/strike.su_heel/strike.su_ram hit=55(heavy) ev=attack,blow[heavy/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_heavy[lunge],rush,windup[b] st=locked
 CELL RIVAL | none/B/mash                      | OUTCOME tpl=brawl pieces=strike.su_hammer/strike.su_heel/strike.su_knee/strike.su_ram hit=110(heavy) ev=attack,blow[heavy/lunge],blow[heavy],brawl_start,lunge_heavy[lunge],rush,windup[b] st=locked
-CELL RIVAL | none/B/hold                      | OUTCOME tpl=brawl pieces=strike.su_fist_unwind/strike.su_heel/strike.su_hook/strike.su_plate/strike.su_ram hit=87(heavy,impact) ev=attack,blow[heavy/lunge],blow[release],brawl_end[knockback],brawl_start,exchange_end,launch_plan,lunge_heavy[lunge],rush,windup[b],windup[charge/b] st=locked
-CELL RIVAL | none/A/tap                       | OUTCOME ev=taunt_credit_quarter,taunt_end_finished,taunt_start
-CELL RIVAL | none/A/mash                      | SAME AS none/A/tap
-CELL RIVAL | none/A/hold                      | SAME AS none/A/tap
-CELL RIVAL | LB/X/tap                         | SAME MOVE AS none/X/tap (the same template, pieces and hit kinds; also stance_check)
-CELL RIVAL | LB/X/mash                        | SAME MOVE AS none/X/mash (the same template, pieces and hit kinds; also stance_check)
-CELL RIVAL | LB/X/hold                        | SAME MOVE AS none/X/hold (the same template, pieces and hit kinds; also stance_check)
-CELL RIVAL | LB/Y/tap                         | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also stance_push)
+CELL RIVAL | none/B/hold                      | OUTCOME tpl=brawl pieces=strike.su_fist_unwind/strike.su_heel/strike.su_hook/strike.su_plate/strike.su_ram hit=88(heavy,impact) ev=attack,blow[heavy/lunge],blow[release],brawl_end[knockback],brawl_start,exchange_end,launch_plan,lunge_heavy[lunge],rush,windup[b],windup[charge/b] st=locked
+CELL RIVAL | none/A/tap                       | OUTCOME ev=taunt_credit_half,taunt_end_finished,taunt_start
+CELL RIVAL | none/A/mash                      | SAME AS none/A/tap  (by design: Out of reach, A held or mashed is the same taunt as A tapped (Game Design, stick-lands.md: tap and hold are the same taunt).)
+CELL RIVAL | none/A/hold                      | SAME AS none/A/tap  (by design: Out of reach, A held or mashed is the same taunt as A tapped (Game Design, stick-lands.md: tap and hold are the same taunt).)
+CELL RIVAL | LB/X/tap                         | SAME MOVE AS none/X/tap (the same template, pieces and hit kinds; also stance_check)  (by design: LB + X is the check: the same blow with the guard kept up (pad-first-press.md, LB and LT + X and Y). Its own looks are the parked stance split, at Beta.)
+CELL RIVAL | LB/X/mash                        | SAME MOVE AS none/X/mash (the same template, pieces and hit kinds; also stance_check)  (by design: LB + X is the check: the same blow with the guard kept up (pad-first-press.md, LB and LT + X and Y). Its own looks are the parked stance split, at Beta.)
+CELL RIVAL | LB/X/hold                        | SAME MOVE AS none/X/hold (the same template, pieces and hit kinds; also stance_check)  (by design: LB + X is the check: the same blow with the guard kept up (pad-first-press.md, LB and LT + X and Y). Its own looks are the parked stance split, at Beta.)
+CELL RIVAL | LB/Y/tap                         | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also stance_push)  (by design: LB + Y is the push: the same blow and the rival shoved back (pad-first-press.md). Its own looks are the parked stance split, at Beta.)
 CELL RIVAL | LB/Y/mash                        | OUTCOME tpl=brawl pieces=strike.driving_knee/strike.fist_rise/strike.headbutt/strike.rising_knee/strike.uppercut hit=46(medium) ev=attack,blow[medium/lunge],blow[medium],brawl_start,lunge_heavy[lunge],miss[reach/y],rush,stance_push,windup[y] st=locked
-CELL RIVAL | LB/Y/hold                        | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also blow[release],stance_push)
-CELL RIVAL | LB/B/tap                         | SAME AS LB/Y/tap
-CELL RIVAL | LB/B/mash                        | SAME AS LB/Y/mash
-CELL RIVAL | LB/B/hold                        | SAME AS LB/Y/hold
+CELL RIVAL | LB/Y/hold                        | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also blow[release],stance_push)  (by design: LB + Y is the push: the same blow and the rival shoved back (pad-first-press.md). Its own looks are the parked stance split, at Beta.)
+CELL RIVAL | LB/B/tap                         | SAME AS LB/Y/tap  (proposed, not by design yet: LB + B is sent as Y: the push, until the defensive counter (an art, 25 ki; moveset-generator.md section 3) at Beta.)
+CELL RIVAL | LB/B/mash                        | SAME AS LB/Y/mash  (proposed, not by design yet: LB + B is sent as Y: the push, until the defensive counter (an art, 25 ki; moveset-generator.md section 3) at Beta.)
+CELL RIVAL | LB/B/hold                        | SAME AS LB/Y/hold  (proposed, not by design yet: LB + B is sent as Y: the push, until the defensive counter (an art, 25 ki; moveset-generator.md section 3) at Beta.)
 CELL RIVAL | LB/A/tap                         | NOTHING
 CELL RIVAL | LB/A/mash                        | NOTHING
 CELL RIVAL | LB/A/hold                        | NOTHING
 CELL RIVAL | RB/X/tap                         | OUTCOME hit=15(blast) ev=blast_windup,shot_fire,shot_hit
-CELL RIVAL | RB/X/mash                        | OUTCOME hit=123(blast,impact) ev=barrage_ender,blast_windup,shot_fire,shot_hit
+CELL RIVAL | RB/X/mash                        | OUTCOME hit=124(blast,impact) ev=barrage_ender,blast_windup,shot_fire,shot_hit
 CELL RIVAL | RB/X/hold                        | SAME AS RB/X/tap
 CELL RIVAL | RB/Y/tap                         | OUTCOME hit=27(blast) ev=blast_charge,shot_fire,shot_hit
-CELL RIVAL | RB/Y/mash                        | OUTCOME hit=125(blast,impact) ev=barrage_ender,blast_charge,shot_fire,shot_hit
+CELL RIVAL | RB/Y/mash                        | OUTCOME hit=126(blast,impact) ev=barrage_ender,blast_charge,shot_fire,shot_hit
 CELL RIVAL | RB/Y/hold                        | OUTCOME hit=66(blast,impact) ev=blast_charge,blast_full,shot_fire,shot_hit
 CELL RIVAL | RB/B/tap                         | OUTCOME hit=66(blast,impact) ev=driver_charge,driver_fire,shot_fire,shot_hit
 CELL RIVAL | RB/B/mash                        | SAME AS RB/B/tap
-CELL RIVAL | RB/B/hold                        | OUTCOME hit=82(blast,impact) ev=charge_stage,driver_charge,driver_fire,shot_fire,shot_hit
+CELL RIVAL | RB/B/hold                        | OUTCOME hit=81(blast,impact) ev=charge_stage,driver_charge,driver_fire,shot_fire,shot_hit
 CELL RIVAL | RB/A/tap                         | OUTCOME ev=mine_lay,shot_fire
 CELL RIVAL | RB/A/mash                        | OUTCOME ev=mine_lay,mine_refused,shot_fire
 CELL RIVAL | RB/A/hold                        | SAME AS RB/A/tap
-CELL RIVAL | RT/X/tap                         | SAME AS none/X/tap
-CELL RIVAL | RT/X/mash                        | SAME AS none/X/mash
-CELL RIVAL | RT/X/hold                        | SAME AS none/X/hold
-CELL RIVAL | RT/Y/tap                         | SAME AS none/Y/tap
-CELL RIVAL | RT/Y/mash                        | SAME AS none/Y/mash
-CELL RIVAL | RT/Y/hold                        | SAME AS none/Y/hold
-CELL RIVAL | RT/B/tap                         | OUTCOME tpl=signature ev=attack,beam_charge,beam_fire,beam_window st=locked
-CELL RIVAL | RT/B/mash                        | SAME AS RT/B/tap
-CELL RIVAL | RT/B/hold                        | SAME AS RT/B/tap
-CELL RIVAL | RT/A/tap                         | SAME AS none/A/tap
-CELL RIVAL | RT/A/mash                        | SAME AS none/A/tap
-CELL RIVAL | RT/A/hold                        | SAME AS none/A/tap
-CELL RIVAL | LT/X/tap                         | SAME AS none/X/tap
-CELL RIVAL | LT/X/mash                        | SAME AS none/X/mash
-CELL RIVAL | LT/X/hold                        | SAME AS none/X/hold
-CELL RIVAL | LT/Y/tap                         | SAME AS none/Y/tap
-CELL RIVAL | LT/Y/mash                        | SAME AS none/Y/mash
-CELL RIVAL | LT/Y/hold                        | SAME AS none/Y/hold
-CELL RIVAL | LT/B/tap                         | SAME AS none/B/tap
-CELL RIVAL | LT/B/mash                        | SAME AS none/B/mash
-CELL RIVAL | LT/B/hold                        | SAME AS none/B/hold
-CELL RIVAL | LT/A/tap                         | SAME AS none/A/tap
-CELL RIVAL | LT/A/mash                        | SAME AS none/A/tap
-CELL RIVAL | LT/A/hold                        | SAME AS none/A/tap
+CELL RIVAL | RT/X/tap                         | SAME AS none/X/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | RT/X/mash                        | SAME AS none/X/mash  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | RT/X/hold                        | SAME AS none/X/hold  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | RT/Y/tap                         | SAME AS none/Y/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | RT/Y/mash                        | SAME AS none/Y/mash  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | RT/Y/hold                        | SAME AS none/Y/hold  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | RT/B/tap                         | OUTCOME tpl=signature hit=141(beam) ev=attack,beam_charge,beam_fire,beam_outcome,beam_window,chase_ready st=locked
+CELL RIVAL | RT/B/mash                        | SAME AS RT/B/tap  (by design: The signature fires once, however it's pressed (beam-answers.md).)
+CELL RIVAL | RT/B/hold                        | SAME AS RT/B/tap  (by design: The signature fires once, however it's pressed (beam-answers.md).)
+CELL RIVAL | RT/A/tap                         | SAME AS none/A/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | RT/A/mash                        | SAME AS none/A/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | RT/A/hold                        | SAME AS none/A/tap  (by design: RT with X, Y or A plays the plain blow until each fighter's three specials exist; the charge drops, so it's never a dead press (pad-first-press.md, Leave off: RT + X, Y, A).)
+CELL RIVAL | LT/X/tap                         | SAME AS none/X/tap  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL RIVAL | LT/X/mash                        | SAME AS none/X/mash  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL RIVAL | LT/X/hold                        | SAME AS none/X/hold  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL RIVAL | LT/Y/tap                         | SAME AS none/Y/tap  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL RIVAL | LT/Y/mash                        | SAME AS none/Y/mash  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL RIVAL | LT/Y/hold                        | SAME AS none/Y/hold  (proposed, not by design yet: Out of reach, LT + X and Y are the lunge, as X and Y alone; the piloted lunge and heavy charge (moveset-generator.md section 3) are Beta. In reach they are the step strike and the circle.)
+CELL RIVAL | LT/B/tap                         | SAME AS none/B/tap  (proposed, not by design yet: LT + B plays the plain heavy until the tackle, dive grab and snatch (moveset-generator.md section 3) at Beta.)
+CELL RIVAL | LT/B/mash                        | SAME AS none/B/mash  (proposed, not by design yet: LT + B plays the plain heavy until the tackle, dive grab and snatch (moveset-generator.md section 3) at Beta.)
+CELL RIVAL | LT/B/hold                        | SAME AS none/B/hold  (proposed, not by design yet: LT + B plays the plain heavy until the tackle, dive grab and snatch (moveset-generator.md section 3) at Beta.)
+CELL RIVAL | LT/A/tap                         | SAME AS none/A/tap  (proposed, not by design yet: LT + A plays A until the terrain art (25 ki; moveset-generator.md section 3) at Beta.)
+CELL RIVAL | LT/A/mash                        | SAME AS none/A/tap  (proposed, not by design yet: LT + A plays A until the terrain art (25 ki; moveset-generator.md section 3) at Beta.)
+CELL RIVAL | LT/A/hold                        | SAME AS none/A/tap  (proposed, not by design yet: LT + A plays A until the terrain art (25 ki; moveset-generator.md section 3) at Beta.)
 CELL RIVAL | none/stick/flick/up              | OUTCOME tpl=brawl pieces=strike.lift_fist hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
-CELL RIVAL | none/stick/flick/down            | OUTCOME tpl=brawl pieces=strike.spike_knee hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+CELL RIVAL | none/stick/flick/down            | OUTCOME tpl=brawl pieces=strike.skid_kick hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
 CELL RIVAL | none/stick/flick/toward          | OUTCOME tpl=brawl pieces=strike.short_ram hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
 CELL RIVAL | none/stick/flick/away            | OUTCOME tpl=brawl pieces=strike.swing_plate hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
-CELL RIVAL | none/stick/flick/downAir         | SAME AS none/stick/flick/down
+CELL RIVAL | none/stick/flick/downAir         | OUTCOME tpl=brawl pieces=strike.spike_knee hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,slam_hint[down],stick_hit[down],stick_start[down] st=locked
 CELL RIVAL | none/stick/hold/up               | OUTCOME tpl=brawl pieces=strike.knee_launch/strike.lift_fist hit=40(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[up/skyward],stick_release[up],stick_stage,stick_start[up] st=locked
-CELL RIVAL | none/stick/hold/down             | OUTCOME tpl=brawl pieces=strike.hammer_drop/strike.spike_knee hit=79(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],stick_release[down],stick_stage,stick_start[down] st=locked
+CELL RIVAL | none/stick/hold/down             | OUTCOME tpl=brawl pieces=strike.hammer_drop/strike.skid_kick hit=78(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],stick_release[down],stick_stage,stick_start[down] st=locked
 CELL RIVAL | none/stick/hold/toward           | OUTCOME tpl=brawl pieces=strike.plate_ram/strike.short_ram hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[toward/across],stick_release[toward],stick_stage,stick_start[toward] st=locked
 CELL RIVAL | none/stick/hold/away             | OUTCOME tpl=brawl pieces=strike.swing_elbow/strike.swing_plate hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[away/acrossBehind],stick_release[away],stick_stage,stick_start[away] st=locked
 CELL RIVAL | LB/stick/flick/up                | OUTCOME tpl=brawl pieces=strike.rising_elbow/strike.short_uppercut hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
@@ -180,7 +196,7 @@ CELL RIVAL | LB/stick/flick/down              | OUTCOME tpl=brawl pieces=strike.
 CELL RIVAL | LB/stick/flick/toward            | OUTCOME tpl=brawl pieces=strike.shoulder_check/strike.spear_hand hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
 CELL RIVAL | LB/stick/flick/away              | OUTCOME tpl=brawl pieces=strike.cross/strike.front_kick hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
 CELL RIVAL | LB/stick/hold/up                 | OUTCOME tpl=brawl pieces=strike.knee_launch/strike.rising_elbow/strike.short_uppercut hit=40(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[up/skyward],stick_release[up],stick_stage,stick_start[up] st=locked
-CELL RIVAL | LB/stick/hold/down               | OUTCOME tpl=brawl pieces=strike.hammer_drop/strike.low_thrust/strike.short_knee hit=79(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],stick_release[down],stick_stage,stick_start[down] st=locked
+CELL RIVAL | LB/stick/hold/down               | OUTCOME tpl=brawl pieces=strike.hammer_drop/strike.low_thrust/strike.short_knee hit=78(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],stick_release[down],stick_stage,stick_start[down] st=locked
 CELL RIVAL | LB/stick/hold/toward             | OUTCOME tpl=brawl pieces=strike.plate_ram/strike.shoulder_check/strike.spear_hand hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[toward/across],stick_release[toward],stick_stage,stick_start[toward] st=locked
 CELL RIVAL | LB/stick/hold/away               | OUTCOME tpl=brawl pieces=strike.cross/strike.front_kick/strike.swing_elbow hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[away/acrossBehind],stick_release[away],stick_stage,stick_start[away] st=locked
 CELL RIVAL | LT/stick/flick/up                | OUTCOME tpl=brawl pieces=strike.knee_lift/strike.uppercut hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
@@ -188,23 +204,39 @@ CELL RIVAL | LT/stick/flick/down              | OUTCOME tpl=brawl pieces=strike.
 CELL RIVAL | LT/stick/flick/toward            | OUTCOME tpl=brawl pieces=strike.driving_knee/strike.spear_hand hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
 CELL RIVAL | LT/stick/flick/away              | OUTCOME tpl=brawl pieces=strike.fist_sweep/strike.hook hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
 CELL RIVAL | LT/stick/hold/up                 | OUTCOME tpl=brawl pieces=strike.knee_launch/strike.knee_lift/strike.uppercut hit=40(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[up/skyward],stick_release[up],stick_stage,stick_start[up] st=locked
-CELL RIVAL | LT/stick/hold/down               | OUTCOME tpl=brawl pieces=strike.elbow_drop/strike.hammer/strike.hammer_drop hit=79(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],stick_release[down],stick_stage,stick_start[down] st=locked
+CELL RIVAL | LT/stick/hold/down               | OUTCOME tpl=brawl pieces=strike.elbow_drop/strike.hammer/strike.hammer_drop hit=78(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],stick_release[down],stick_stage,stick_start[down] st=locked
 CELL RIVAL | LT/stick/hold/toward             | OUTCOME tpl=brawl pieces=strike.driving_knee/strike.plate_ram/strike.spear_hand hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[toward/across],stick_release[toward],stick_stage,stick_start[toward] st=locked
 CELL RIVAL | LT/stick/hold/away               | OUTCOME tpl=brawl pieces=strike.fist_sweep/strike.hook/strike.swing_elbow hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[away/acrossBehind],stick_release[away],stick_stage,stick_start[away] st=locked
 CELL RIVAL | RB/stick/flick/up                | OUTCOME hit=23(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[up]
 CELL RIVAL | RB/stick/flick/down              | OUTCOME hit=23(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[down]
 CELL RIVAL | RB/stick/flick/toward            | OUTCOME hit=23(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[toward]
 CELL RIVAL | RB/stick/flick/away              | OUTCOME hit=23(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[away]
-CELL RIVAL | RB/stick/hold/up                 | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[up])
-CELL RIVAL | RB/stick/hold/down               | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[down])
-CELL RIVAL | RB/stick/hold/toward             | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,stick_stage,stick_start[toward])
-CELL RIVAL | RB/stick/hold/away               | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[away])
+CELL RIVAL | RB/stick/hold/up                 | OUTCOME tpl=signature ev=attack,beam_aim,beam_charge,beam_fire,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[up] st=locked  (by design: RB + right stick held is the beam, on the signature's template; the stick's direction aims it (Orb, 2026-11-01: beams only from the right stick).)
+CELL RIVAL | RB/stick/hold/down               | SAME MOVE AS RB/stick/hold/up (the same template, pieces and hit kinds; also stick_start[down])  (by design: RB + right stick held is the beam, on the signature's template; the stick's direction aims it (Orb, 2026-11-01: beams only from the right stick).)
+CELL RIVAL | RB/stick/hold/toward             | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,stick_stage,stick_start[toward])  (by design: RB + right stick held is the beam, on the signature's template; the stick's direction aims it (Orb, 2026-11-01: beams only from the right stick).)
+CELL RIVAL | RB/stick/hold/away               | SAME MOVE AS RB/stick/hold/up (the same template, pieces and hit kinds; also stick_start[away])  (by design: RB + right stick held is the beam, on the signature's template; the stick's direction aims it (Orb, 2026-11-01: beams only from the right stick).)
 CELL RIVAL | RT/stick/flick/toward            | REFUSED charging
 CELL RIVAL | RT/stick/hold/toward             | REFUSED charging
-CELL RIVAL | pair/X+Y (lift)                  | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also no new event)
+CELL RIVAL | pair/X+Y (lift)                  | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also no new event)  (proposed, not by design yet: X and Y together play Y, the heavier, as the B + X chord does (chordPick). No lift is designed.)
 CELL RIVAL | pair/LT+RT (transform chord)     | OUTCOME act=dodgeTick
 CELL RIVAL | pair/LB+LT (vanish)              | OUTCOME ev=kick act=dodgeTick
 CELL RIVAL | pair/LB+RB (the lay) held        | OUTCOME act=guardSince,mode
 CELL RIVAL | pair/LT+RB (the kite) held       | OUTCOME act=dodgeTick,mode
-CELL RIVAL | pair/B+X on one tick (chord)     | SAME MOVE AS none/B/tap (the same template, pieces and hit kinds; also no new event)
-COUNT RIVAL: 101 cells; 52 own outcomes, 32 same as an earlier cell, 12 the same move with another side effect, 2 refused (said), 3 nothing (silent); no outcome 5, repeats 32 (strict) or 44 (same move)
+CELL RIVAL | pair/B+X on one tick (chord)     | SAME MOVE AS none/B/tap (the same template, pieces and hit kinds; also no new event)  (by design: On one tick the heavier press wins (chordPick, Controls).)
+CELL RIVAL | brawl/A/tap                      | OUTCOME hit=9() ev=grapple_catch[tell],grapple_clinch,grapple_end[time],grapple_pulse
+CELL RIVAL | brawl/A/mash                     | OUTCOME hit=9() ev=grapple_catch[tell],grapple_clinch,grapple_end[time],grapple_pulse,grapple_pummel[void],grapple_stray
+CELL RIVAL | brawl/A/hold                     | SAME AS brawl/A/tap
+CELL RIVAL | brawl/X/tap                      | OUTCOME pieces=strike.forearm_drop hit=18(light) ev=blow[light]
+CELL RIVAL | brawlLT/X/tap                    | SAME AS brawl/X/tap
+CELL RIVAL | brawlLT/Y/tap                    | OUTCOME pieces=strike.uppercut hit=32(medium) ev=blow[medium],phrase_done[r08/open],windup[y]
+CELL RIVAL | brawlLT/B/tap                    | OUTCOME pieces=strike.su_edge_legs/strike.su_fist_unwind/strike.su_hook hit=64(heavy) ev=blow[heavy],windup[b]  (proposed, not by design yet: LT + B plays the plain heavy until the tackle at Beta.)
+CELL RIVAL | brawlLB/A/tap                    | OUTCOME hit=9()
+CELL RIVAL | brawlLB/B/tap                    | SAME MOVE AS brawlLT/Y/tap (the same template, pieces and hit kinds; also stance_push)  (proposed, not by design yet: LB + B is the push, as LB + Y, until the counter at Beta.)
+CELL RIVAL | air/stick/flick/down             | SAME AS none/stick/flick/downAir
+CELL RIVAL | air/A/tap                        | SAME AS none/A/tap  (proposed, not by design yet: A in the air is the taunt until the dive grab (moveset-generator.md section 3) at Beta.)
+CELL RIVAL | air/X/tap                        | SAME AS none/X/tap
+CELL RIVAL | none/RT/hold (charge up)         | OUTCOME st=charging
+CELL RIVAL | none/LT/tap (dodge)              | OUTCOME act=dodgeTick
+CELL RIVAL | pair/LB+RB+A (snare)             | SAME AS pair/LB+RB (the lay) held  (proposed, not by design yet: LB + RB + A is the guard until the kits' snare at Beta.)
+COUNT RIVAL: 116 cells; 62 own outcomes, 37 same as an earlier cell, 12 the same move with another side effect, 2 refused (said), 3 nothing (silent); no outcome 5, repeats 37 (strict) or 49 (same move)
+EXPLAINED RIVAL: by design: no outcome 0, repeats 22; proposed (not yet by design): no outcome 0, repeats 19; unexplained: no outcome 5, repeats 8
