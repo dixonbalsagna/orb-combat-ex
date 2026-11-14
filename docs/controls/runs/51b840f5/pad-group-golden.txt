@@ -1,0 +1,15 @@
+Pad group, golden (sim/core/tools/golden.gd, one Godot job, below normal), Godot 4.7.2.
+
+(a) HEAD + pad group only, against main's own golden (sim/core/test/golden.json at HEAD):
+  main golden sha256 fc6d0c01a72ac132d0e8fb8412643b7d2edc6ce5b79c1098445eeb18f839ba1b
+  pad-only  golden   fc6d0c01a72ac132d0e8fb8412643b7d2edc6ce5b79c1098445eeb18f839ba1b
+  -> byte-identical: the eleven switches do not move the golden's nine matches or two replays (measured; not traced).
+
+(b) HEAD + pad group + the kept 9 November build's whole data/ folder + power.json enabled and dash.enabled true (GW1a's recipe), against Simulation's target (docs/sim/runs/6a30b4c9/gw1a-target/golden-target.json):
+  target             a2b9ed1c6f487c29dcfab5b43e4b1745a52209c7069bc64003934c857d2e971d
+  composed           a2b9ed1c6f487c29dcfab5b43e4b1745a52209c7069bc64003934c857d2e971d
+  -> byte-identical (184,833 ticks, 9 matches, 2 replays). Main's sim/input, which differs from the kept build's only in remap.gd, does not move it.
+
+wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (174798 ticks), 2 replays in 170.3 s
+wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 202.7 s
+SCRIPT ERROR lines: pad-only 0, composed 0

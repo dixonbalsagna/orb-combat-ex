@@ -1,0 +1,21 @@
+Control: the same tree with ONLY data/input/timing.json flipped (no test or pin-list change): 4 of 45 fail, which is why the patch carries the pins.
+
+push_stick_test :: FAIL  F: outside a struggle an unanswered flick is the one 'no answer' it always was ([]) | FAIL  G: the pad pulses a tick, a knock and a thud on a long beam hold (got []) | push_stick_test: 33 checks, 2 failed
+refusal_cue_test :: FAIL  source: a beam charge taken still knocks, with the impact rumble on | FAIL  hub: an unanswered flick is one 'no answer' and one knock after refuseTicks (the control): [[], 0] | refusal_cue_test: 52 checks, 5 failed
+stage_haptics_test :: FAIL  hub: a charge to the top answers each rung, then the throw: ["release_thump"] | FAIL  hub: a charge let go at the first rung is the tick and a 0.6 thump: ["release_thump"] [0.6] | stage_haptics_test: 29 checks, 2 failed
+stick_feel_test :: FAIL  ladder: one pulse per rung, in order (got ["release_thump"]) | FAIL  ladder: a second charge pulses again (2 pulses over two charges of 60 and 70 ticks) | stick_feel_test: 139 checks, 2 failed
+-- push_stick
+FAIL  F: outside a struggle an unanswered flick is the one 'no answer' it always was ([])
+FAIL  G: the pad pulses a tick, a knock and a thud on a long beam hold (got [])
+-- refusal_cue
+FAIL  source: a stick_refused cue of direction right with source 'taken' reads hit (got charge_broken)
+FAIL  source: a stick_refused cue of direction right with source 'hit' reads hit (got charge_broken)
+FAIL  source: a blow that stopped the charge knocks nothing with the impact rumble on (hit_taken is the same news)
+FAIL  source: a beam charge taken still knocks, with the impact rumble on
+FAIL  hub: an unanswered flick is one 'no answer' and one knock after refuseTicks (the control): [[], 0]
+-- stage_haptics
+FAIL  hub: a charge to the top answers each rung, then the throw: ["release_thump"]
+FAIL  hub: a charge let go at the first rung is the tick and a 0.6 thump: ["release_thump"] [0.6]
+-- stick_feel
+FAIL  ladder: one pulse per rung, in order (got ["release_thump"])
+FAIL  ladder: a second charge pulses again (2 pulses over two charges of 60 and 70 ticks)

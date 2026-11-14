@@ -1,0 +1,19 @@
+Pad group, the data and the code against the kept 9 November build (homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/tree)
+
+data/input/timing.json after the patch: sha256 598415119bca708fee5591d95a326fcc684eb8b5f56c0996aa1ff66db493633c
+kept build's packed timing.json:         sha256 598415119bca708fee5591d95a326fcc684eb8b5f56c0996aa1ff66db493633c  (byte-identical)
+
+main's timing.json (HEAD) against the kept build's, every key that differs (flattened):
+  switches.bNoBeam  main false  kept true
+  switches.bNoBeamKeepRt  main false  kept true
+  switches.chargeLostCue  main false  kept true
+  switches.chordPick  main false  kept true
+  switches.dashHandover  main false  kept true
+  switches.dodgeHeld  main false  kept true
+  switches.driverOnRb  main false  kept true
+  switches.flickKept  main false  kept true
+  switches.flightStrikeB  main false  kept true
+  switches.hapticStages  main false  kept true
+  switches.inertKnock  main false  kept true
+
+sim/input, HEAD (git archive, the committed state) against the kept build (diff -rq): no difference at all, every file byte-identical. (The working tree's remap.gd, test/hold_toggle_test.gd and test/mash_probe.gd show as different in a raw diff only because the working copies have CRLF line endings; ignoring CR they are the same. tools/stall_probe.gd is an untracked probe, not in the patch.)
