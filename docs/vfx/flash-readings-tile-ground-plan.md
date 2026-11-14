@@ -7,6 +7,14 @@ For the outside-tester chain. Results go to the EP only. Nothing here is for Orb
 - The standard flash clips never ran with the tile ground, and no pixel reading exists for the played commit 6a30b4c9.
 - Camera leads the reading. Tools' repaired chain (A-LEGAL-08) takes it. My part is the effects: say which effect causes a failing reading, and fix that effect.
 
+## The readings handed over 2026-11-14 (Tools' pixel clips, EP; `docs/rendering/runs/fcd6706c/look-defaults-flash.txt`)
+Normal / reduced, primary reading, limit 3 (our gate 2.5):
+- **Main as built** (the old ground): clash 4.5 / 4.5, collapse 5 / 4. All four are over the limit already, before any of the default changes.
+- **With the globe ground:** clash 5.5 / 6.5 (collapse 2.5 / 3).
+- **With the globe ground and the crater look:** collapse 4 / 3.5 (clash 5.5 / 6.5).
+
+**The stack that counts is GW1a's: the 9 November build, which has the globe ground, the crater look and the meteor trail on.** Every reading and every fix works against that stack (the meteor default is `docs/vfx/pending/meteor-default/`). Outside-tester builds stay blocked by gate G21 until these pass, and never by degrading the look: no dissolves, fades or blur. So the plan below changes in two ways: the controls include the **meteor trail off** as well as the clash, collapse and blast switches, and the clash is over on all three stacks including the old ground, so the first control to run is the clash **effect-off on main as built**: if it still reads 4.5, the clash's number is mostly the scene, and the globe ground only makes it worse.
+
 ## The method: measure, then attribute
 A reading on its own says a clip fails. It does not say what to change. I learned this on 2026-11-07 with the 2v2 clips: seven of eight failed, and a control (the same scene with the effect switched off) read the same, so the cause was the scene and not the effect. So for each clip I want read:
 

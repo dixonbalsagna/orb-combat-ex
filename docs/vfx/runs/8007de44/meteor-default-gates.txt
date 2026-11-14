@@ -1,0 +1,5 @@
+run: main 8007de44 + docs/vfx/pending/meteor-default, scratch tree from git archive; Godot 4.7.2 headless; below-normal priority
+effects_check: 1168 ok, 0 FAIL; effects check passed; ec rc=0 secs=58
+hash_check (seeds 12345,4,7; 3600 ticks; six ways; meteor ON by default): hash check passed; hc rc=0 secs=279
+validate: 321 files checked, 0 errors, 2 warnings
+(first effects_check run: 4 checks failed because they assumed the meteor off by default or the base profile; they were updated in the patch, and the second run passed)

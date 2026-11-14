@@ -1,0 +1,82 @@
+diff --git a/render/vfx/meteor.gd b/render/vfx/meteor.gd
+index a40deb4..6e537da 100644
+--- a/render/vfx/meteor.gd
++++ b/render/vfx/meteor.gd
+@@ -50,6 +50,8 @@ static func page_word() -> String:
+ 				_word = "quiet" if kv[1] == "1" else kv[1]
+ 	if _word != "":
+ 		set_profile(_word)
++	elif VfxLook.METEOR_DEFAULT:
++		set_profile(VfxLook.METEOR_PROFILE)      # the default is on: it runs with the profile Orb plays, with no word
+ 	return _word
+ 
+ 
+diff --git a/render/vfx/tools/effects_check.gd b/render/vfx/tools/effects_check.gd
+index c352bb1..b50fccb 100644
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -6395,7 +6395,8 @@ func _meteor() -> void:
+ 	SimCore.newMatch(S, 6)
+ 	var fp = S.fighters[0]
+ 	var fr = S.fighters[1]
+-	# Data: the compiled defaults are the file's frame (a file edit that forgets the default is caught here).
++	# Data: the compiled defaults are the file's frame (a file edit that forgets the default is caught here). The base values are the `quiet` profile: the default runs `loud` over them.
++	VfxMeteor.set_profile("quiet")
+ 	var drift: String = ""
+ 	for k in VfxMeteor.DEFAULT_FRAME:
+ 		var dv = VfxMeteor.DEFAULT_FRAME[k]
+@@ -6637,7 +6638,12 @@ func _meteor() -> void:
+ 	# The hub: off by default, nothing runs; on, it lays the path from the same ticks.
+ 	var h := VfxHub.new()
+ 	h.reset(S, 5)
+-	_check(h.meteor_enabled == false and VfxLook.METEOR_DEFAULT == false, "the meteor switch is off by default")
++	_check(h.meteor_enabled == true and VfxLook.METEOR_DEFAULT == true and VfxLook.METEOR_PROFILE == "loud", "the meteor trail is on by default (GW1a), with the loud profile")
++	VfxMeteor._word = "?"      # read the word again: the lines above set other profiles
++	VfxMeteor.page_word()
++	_check(VfxMeteor.fp("wide_k") == 1.0 and VfxMeteor.fp("pan_k") < 0.2, "with no word, the default runs the loud profile (a wide ribbon at full strength, dimmed by the camera's sweep): wide_k %.1f pan_k %.1f" % [VfxMeteor.fp("wide_k"), VfxMeteor.fp("pan_k")])
++	h.meteor_burn_enabled = false      # the test that follows is the switch off
++	h.meteor_enabled = false
+ 	fp.x = 1000.0
+ 	fp.y = gy + 3000.0
+ 	for i in range(60):
+@@ -7126,11 +7132,12 @@ func _flight_lines() -> void:
+ 	# The switch: off by default; on, the hub lays a flight line from the same ticks, without the burn.
+ 	var h := VfxHub.new()
+ 	h.reset(S, 5)
+-	_check(h.flight_enabled == false and VfxLook.FLIGHT_DEFAULT == false and h.meteor_enabled == false, "the flight lines are off by default, and the ribbon is not running")
++	_check(h.flight_enabled == false and VfxLook.FLIGHT_DEFAULT == false and h.meteor_burn_enabled == VfxLook.METEOR_DEFAULT, "the flight lines are off by default (the ribbon runs for the meteor's burn, which follows its own default)")
+ 	var hf := VfxHub.new()
+ 	hf.reset(S, 5)
+ 	hf.flight_enabled = true
+ 	hf.meteor_enabled = true
++	hf.meteor_burn_enabled = false      # the lines without the burn
+ 	var f0 = S.fighters[0]
+ 	f0.tier = 4.0
+ 	f0.state = "idle"
+diff --git a/render/vfx/vfx_hub.gd b/render/vfx/vfx_hub.gd
+index 94e2f66..7c5b542 100644
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -107,7 +107,7 @@ var calm_lock: bool = true       # Reduce flashing is locked on while the other
+ var flash_ch: int = 0            # the register's channel for this hub: 0 the screen's own fight, 1 and up an other fight (stage_feed.gd)
+ var shares_register: bool = false   # this hub is a feeder of the main hub's register (adopt_register): it never resets, clocks or sizes it
+ var is_other: bool = false      # an other fight's hub (stage_feed.gd): it reads Animation's view of that fight (RenderAnim.fight_view), and leaves the shared colour-blind table to the main hub
+-var meteor_burn_enabled: bool = VfxLook.METEOR_DEFAULT or VfxMeteor.page_word() != ""   # the meteor burn: off by default (a local preview page can turn it on with the word ?meteor=1, =quiet or =loud): with it off nothing here runs and nothing draws
++var meteor_burn_enabled: bool = VfxMeteor.page_word() != "" or VfxLook.METEOR_DEFAULT   # the meteor burn: off by default (a local preview page can turn it on with the word ?meteor=1, =quiet or =loud): with it off nothing here runs and nothing draws
+ var flight_enabled: bool = VfxLook.FLIGHT_DEFAULT or VfxMeteor.flight_word() != ""   # the flight lines (docs/vfx/flight-lines.md): off by default; a local preview page turns them on with ?flight=1, =quiet or =loud. They use the meteor trail's ribbon
+ var meteor_enabled: bool = meteor_burn_enabled or flight_enabled      # the ribbon runs and draws while either is on
+ var perf_level: bool = VfxLook.PERF_DEFAULT       # the Performance level (perf.gd): a smaller pool, a burst's overflow batched over a few ticks, spawns on the far side skipped, fewer timed jobs a tick; off by default and then not read at all
+diff --git a/render/vfx/vfx_look.gd b/render/vfx/vfx_look.gd
+index 94503da..231ab66 100644
+--- a/render/vfx/vfx_look.gd
++++ b/render/vfx/vfx_look.gd
+@@ -174,7 +174,8 @@ const HEADS_DEFAULT: bool = false            # the blasts' heads in the beam's l
+ const FLIGHT_DEFAULT: bool = false         # the flight lines (meteor.gd flight terms; docs/vfx/flight-lines.md): off until Orb has seen them
+ const CLASH_WAVE_DEFAULT: bool = false       # the beam clash's shockwave at the meeting point (clash_wave.gd; docs/vfx/clash-shockwave.md): off until Orb has seen it
+ const OTHER_FIGHTS_DEFAULT: bool = false    # the other fights' effects in a 2v2 match (stage_feed.gd; docs/vfx/other-fights.md): off until Orb has seen them
+-const METEOR_DEFAULT: bool = false          # the meteor trail (meteor.gd, meteor_view.gd; docs/vfx/meteor-trail.md): off until Orb has seen it
++const METEOR_DEFAULT: bool = true           # the meteor trail (meteor.gd, meteor_view.gd; docs/vfx/meteor-trail.md): ON, as Orb plays it (GW1a, A-RENDER-01: no launch word needed); ?meteor=quiet picks the base values on a local page
++const METEOR_PROFILE: String = "loud"       # the profile the default runs with (data/vfx/meteor.json `profiles`): Orb's build plays ?meteor=loud
+ const PERF_DEFAULT: bool = false             # the Performance level's pool caps (perf.gd, data/vfx/perf.json; docs/vfx/perf-level.md): off until the quality ladder asks for it
+ const MARKS_BY_QUALITY: Array = [0, 6, 10]        # live marks per fighter
+ const OUTER_BY_QUALITY: Array = [false, true, true]
