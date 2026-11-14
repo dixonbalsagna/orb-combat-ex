@@ -1,0 +1,44 @@
+== chase_rush with the re-base (STEP_TOP 0.30), the stack + all camera parks: chase_rush_check: 130 checks passed
+    row energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: step 0.064 jolt 0.035 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: step 0.062 jolt 0.032 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: step 0.062 jolt 0.032 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: step 0.064 jolt 0.035 off 0 flaps 0 (a GW1a ceiling)
+
+== keep-human, the signature scene (own_pane_check --measure, before and after)
+  signature normal, fighter 0: out of his pane at most 0 ticks (limit 26, a known loss) 
+  signature normal, fighter 1: out of his pane at most 48 ticks (limit 48, a known loss) ticks 860 to 907, solo, sep 0.00, free
+  signature reduced, fighter 0: out of his pane at most 8 ticks (limit 26, a known loss) ticks 1 to 8, merged, sep 0.00, locked
+  signature reduced, fighter 1: out of his pane at most 46 ticks (limit 48, a known loss) ticks 860 to 905, merged, sep 0.00, free
+(before: signature normal fighter 0 out 26 ticks, 125 to 150)
+
+== keep-human, clip_digest default view, scape-only against scape + keep-human
+== keep-human, default view: scape-only against scape + keep-human
+ai:1                       reduced  same over 3600 ticks
+ai:106                     reduced  same over 3600 ticks
+ai:38                      reduced  same over 3600 ticks
+ai:4                       reduced  same over 3600 ticks
+ai:5                       reduced  same over 3600 ticks
+collapse                   reduced  same over 1500 ticks
+mashcity                   reduced  same over 1800 ticks
+rushcity                   reduced  DIFFERS on 132 of 1500 ticks, first 480, last 1231
+signaturecity              reduced  same over 1500 ticks
+
+== every camera gate on the stack with scape-side + keep-human (before the re-base)
+chase_rush_check     chase_rush_check: 130 checks passed 
+flight_shots_check   flight_shots_check: 539 checks passed 
+launch_shots_check   launch_shots_check: 843 checks passed 
+cross_ko_check       cross_ko_check: 21 checks passed 
+peak_retry_check     peak_retry_check: 1 check passed 
+peak_shot_check      peak_shot_check: 24 checks passed 
+split_share_check    split_share_check: 26 checks passed 
+split_vision_check   split_vision_check: 11 checks passed 
+swing_places_check   swing_places_check: 33 checks passed 
+swing_real_check     swing_real_check: 48 checks passed 
+swing_shot_check     swing_shot_check: 164 checks passed 
+swing_read_check     swing_read_check: 14420 checks passed 
+split_sweep          split sweep passed 
+own_pane_check       own_pane_check: 12 checks passed 
+done
+
+== A-CAMERA-01 on the GW1a stack: the data form against the 9 November code path (main.gd's 6a30b4c9 block, the globe ground on), clip_digest both modes, 9 clips
+byte-identical (48600 lines)
