@@ -1,0 +1,54 @@
+== AI fight 2 around tick 3219 before (cam0 x jumps 82039 -> 82678 -> 83166, then eases back; both fighters free, depth 0)
+T 3214 mode merged sep 0.00 cam0 82026,2909 z 0.5381 A 82647,3050,0 free B 82133,2694,0 free scape landmark solo / mlead 31.3 fx 82647,2995 anch 988,405 pl [0.7
+T 3215 mode merged sep 0.00 cam0 82030,2911 z 0.5347 A 82643,3048,0 free B 82140,2700,0 free scape landmark solo / mlead 29.9 fx 82643,3004 anch 988,405 pl [0.7
+T 3216 mode merged sep 0.00 cam0 82033,2913 z 0.5321 A 82640,3047,0 free B 82146,2705,0 free scape landmark solo / mlead 28.5 fx 82640,3011 anch 988,405 pl [0.7
+T 3217 mode merged sep 0.00 cam0 82037,2915 z 0.5299 A 82635,3045,0 free B 82153,2711,0 free scape landmark solo / mlead 27.2 fx 82635,3018 anch 988,405 pl [0.7
+T 3218 mode merged sep 0.00 cam0 82039,2917 z 0.5282 A 82630,3045,0 free B 82160,2717,0 free scape landmark solo / mlead 25.9 fx 82630,3025 anch 988,405 pl [0.7
+T 3219 mode merged sep 0.00 cam0 82678,2920 z 0.5268 A 82625,3043,0 free B 82167,2723,0 free scape landmark solo / mlead 24.7 fx 82625,3030 anch 988,406 pl [0.7
+T 3220 mode merged sep 0.00 cam0 83166,2921 z 0.5234 A 82620,3041,0 free B 82174,2728,0 free scape landmark solo / mlead 23.5 fx 82620,3034 anch 989,406 pl [0.7
+T 3221 mode merged sep 0.00 cam0 83166,2922 z 0.5179 A 82615,3039,0 free B 82180,2734,0 free scape landmark solo / mlead 22.5 fx 82615,3037 anch 989,407 pl [0.7
+T 3222 mode merged sep 0.00 cam0 83150,2924 z 0.5104 A 82609,3037,0 free B 82187,2740,0 free scape landmark solo / mlead 21.4 fx 82609,3039 anch 989,407 pl [0.7
+T 3223 mode merged sep 0.00 cam0 83108,2925 z 0.5013 A 82603,3037,0 free B 82194,2746,0 free scape landmark solo / mlead 20.4 fx 82603,3043 anch 989,408 pl [0.7
+T 3224 mode merged sep 0.00 cam0 83044,2927 z 0.4924 A 82597,3035,0 free B 82201,2751,0 free scape landmark solo / mlead 19.5 fx 82597,3045 anch 989,408 pl [0.7
+T 3225 mode merged sep 0.00 cam0 82965,2930 z 0.4837 A 82591,3033,0 free B 82208,2757,0 free scape landmark solo / mlead 18.6 fx 82591,3046 anch 990,409 pl [0.7
+T 3226 mode merged sep 0.00 cam0 82869,2932 z 0.4751 A 82585,3031,0 free B 82214,2763,0 free scape landmark solo / mlead 17.7 fx 82585,3047 anch 990,409 pl [0.7
+== after (largest jolt)
+done jolt 0.056 at tick 3182 pane 0: merged,  , free, step 0.085, landmark
+== launch_shots --measure after: 
+AI fight 1             release 0.000 jolt 0.043 zoom 0.0067 lost 0 (run 0) whips 0 cuts { "side_swap": 2 }
+AI fight 2             release 0.037 jolt 0.056 zoom 0.0099 lost 0 (run 0) whips 0 cuts { "side_swap": 6 }
+AI fight 3             release 0.005 jolt 0.110 zoom 0.0069 lost 0 (run 0) whips 0 cuts { "side_swap": 4 }
+== fight 3's jolt (kept as a ceiling): tick 2532, the opening's first tick as a lock moves the rival 300 down
+T 2529 mode merged sep 0.00 cam0 76164,1854 z 1.1520 A 76193,1814,0 locked B 76135,1814,0 locked scape  solo / mlead 0.0 fx 76193,1852 anch 998,451 pl [0.856121
+T 2530 mode merged sep 0.00 cam0 76164,1854 z 1.1520 A 76193,1814,0 locked B 76135,1814,0 locked scape  solo / mlead 0.0 fx 76193,1852 anch 998,451 pl [0.856121
+T 2531 mode opening sep 0.08 cam0 76162,1733 z 1.1474 A 76193,1814,0 locked B 76135,1515,0 locked scape  solo / mlead 0.0 fx 76193,1852 anch 998,448 pl [0.85612
+T 2532 mode opening sep 0.17 cam0 76147,1734 z 1.1383 A 76193,1814,0 locked B 76135,1515,0 locked scape  solo / mlead 0.0 fx 76193,1852 anch 998,445 pl [0.85612
+T 2533 mode opening sep 0.25 cam0 76113,1735 z 1.1247 A 76193,1814,0 locked B 76135,1515,0 locked scape  solo / mlead 0.0 fx 76193,1852 anch 998,442 pl [0.85612
+T 2534 mode opening sep 0.33 cam0 76060,1738 z 1.1068 A 76193,1814,0 locked B 76135,1515,0 locked scape  solo / mlead 0.0 fx 76193,1852 anch 998,440 pl [0.85612
+== clip_digest, the default view, before vs after the fix
+ai:1                       reduced  same over 3600 ticks
+ai:106                     reduced  DIFFERS on 139 of 3600 ticks, first 151, last 1071
+ai:38                      reduced  same over 3600 ticks
+ai:4                       reduced  same over 3600 ticks
+ai:5                       reduced  same over 3600 ticks
+collapse                   reduced  same over 1500 ticks
+mashcity                   reduced  same over 1800 ticks
+rushcity                   reduced  same over 1500 ticks
+signaturecity              reduced  same over 1500 ticks
+== every camera gate on the stack with the fix (cut_register isn't on this stack; split_sweep's 4 are gw1a-pins-2's, the same before the fix)
+chase_rush_check     chase_rush_check: 130 checks passed 
+flight_shots_check   flight_shots_check: 539 checks passed 
+launch_shots_check   launch_shots_check: 843 checks passed 
+cross_ko_check       cross_ko_check: 21 checks passed 
+peak_retry_check     peak_retry_check: 1 check passed 
+peak_shot_check      peak_shot_check: 24 checks passed 
+split_share_check    split_share_check: 26 checks passed 
+split_vision_check   split_vision_check: 11 checks passed 
+swing_places_check   swing_places_check: 33 checks passed 
+swing_real_check     swing_real_check: 48 checks passed 
+swing_shot_check     swing_shot_check: 164 checks passed 
+swing_read_check     swing_read_check: 14420 checks passed 
+cut_register_check   
+split_sweep          FAIL  real match 3 full (rig sees two humans): fighter 0 has been out of its pane for 1.20 s (mode split) at t=356.88 pos (1872.048, 457.6191) sep 1.000 e 0.00 solo /0.00 slam -1 u -5994 sigma -1/-1 n (-0.999855, 0.017021) FAIL  crossing start: the layout was not one view in the first 100 ticks spli
+own_pane_check       own_pane_check: 12 checks passed 
+done

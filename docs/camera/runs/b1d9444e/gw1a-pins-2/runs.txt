@@ -1,0 +1,31 @@
+== before (s422 + own-pane + gw1a-pins + chase-measure + the scape fix)
+FAIL  real match 3 pitch 49 full: fighter 1 has been out of its pane for 1.20 s (mode split) at t=311.98 pos (-1421.758, 383.8765) sep 1.000 e 0.00 solo /0.00 slam -1 u -6307 sigma -1/-1 n (-0.999999, 0.001722)
+FAIL  real match 3 full (rig sees slot 0 as the human): fighter 0 has been out of its pane for 1.20 s (mode split) at t=356.88 pos (1872.048, 457.6191) sep 1.000 e 0.00 solo /0.00 slam -1 u -5994 sigma -1/-1 n (-0.999855, 0.017021
+FAIL  real match 3 full (rig sees two humans): fighter 0 has been out of its pane for 1.20 s (mode split) at t=356.88 pos (1872.048, 457.6191) sep 1.000 e 0.00 solo /0.00 slam -1 u -5994 sigma -1/-1 n (-0.999855, 0.017021)
+FAIL  crossing start: the layout was not one view in the first 100 ticks
+split sweep FAILED (4)
+== the same with the rig before the scape fix
+FAIL  real match 3 pitch 49 full: fighter 1 has been out of its pane for 1.20 s (mode split) at t=311.98 pos (-1421.758, 383.8765) sep 1.000 e 0.00 solo /0.00 slam -1 u -6307 sigma -1/-1 n (-0.999999, 0.001722)
+FAIL  real match 3 full (rig sees slot 0 as the human): fighter 0 has been out of its pane for 1.20 s (mode split) at t=356.88 pos (1872.048, 457.6191) sep 1.000 e 0.00 solo /0.00 slam -1 u -5994 sigma -1/-1 n (-0.999855, 0.017021
+FAIL  real match 3 full (rig sees two humans): fighter 0 has been out of its pane for 1.20 s (mode split) at t=356.88 pos (1872.048, 457.6191) sep 1.000 e 0.00 solo /0.00 slam -1 u -5994 sigma -1/-1 n (-0.999855, 0.017021)
+FAIL  crossing start: the layout was not one view in the first 100 ticks
+split sweep FAILED (4)
+== --budget=off (the shipped default; not the sweep's calibrated mode: other rows fail on its limits)
+FAIL  fold: fighter 1 moved 0.021 of the width against its anchor while it barely moved
+FAIL  many bodies tag: the camera travelled 0.0541 of the width in a tick (bound 0.045)
+FAIL  many bodies tag: the camera travelled 0.0541 of the width in a tick (bound 0.045)
+FAIL  real match 3 pitch 49 full: pane 1 zoom rate 1.24 e-folds a second (limit 1.20) at t=350.65 mode split sep 1.000 e 0.00 solo_w 0.00
+FAIL  real match 3 full (rig sees two humans): pane 0 zoom rate 1.55 e-folds a second (limit 1.20) at t=266.13 mode split sep 1.000 e 0.00 solo_w 0.00
+FAIL  real match 10 pitch 49 full (rig sees two humans): fighter 0 moved 0.031 of the width against its anchor while it barely moved
+FAIL  crossing start: the layout was not one view in the first 100 ticks
+split sweep FAILED (7)
+== crossing start bisected (--only=crossing; groups back to main's: all, biomes, director+combat, fight+input; then single fight files)
+ssb_1: FAIL  crossing start: the layout was not one view in the first 100 ticks split sweep FAILED (1) 
+ssb_2: FAIL  crossing start: the layout was not one view in the first 100 ticks split sweep FAILED (1) 
+ssb_3: split sweep passed 
+ssb_4: FAIL  crossing start: the layout was not one view in the first 100 ticks split sweep FAILED (1) 
+ssb_5: FAIL  crossing start: the layout was not one view in the first 100 ticks split sweep FAILED (1) 
+ssb_6: FAIL  crossing start: the layout was not one view in the first 100 ticks split sweep FAILED (1) 
+(the last six runs, in order: brake, hitstop, kick, ladder, power, timing: only kick back to main's passes)
+== after the pins: split sweep passed
+== after the pins, main's data: split sweep passed
