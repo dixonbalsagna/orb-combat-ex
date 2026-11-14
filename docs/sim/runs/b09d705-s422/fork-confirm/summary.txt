@@ -1,0 +1,17 @@
+import 0; parse errors 0
+fork_check from a cold cache: exit 0 in 71 s
+planet 7: the same, { "surface": "639a7d89cd3ba9ba", "state": "a750fd6756eb991c" }
+planet 12: the same, { "surface": "4fa552795d128c15", "state": "d31aae8b73ce0ba3" }
+planet 3: the same, { "surface": "74bcd691e8012510", "state": "2fb82ea396763d04" }
+FORK: 0 check(s) failed
+planet 12, real, cold cache: RESULT state d31aae8b73ce0ba3
+planet 12, real, warm cache: RESULT state d31aae8b73ce0ba3
+planet 12, predict, warm cache: RESULT state d31aae8b73ce0ba3
+planet 12, predict, cold cache: RESULT state d31aae8b73ce0ba3
+fork_check negative control: exit 0 in 70 s
+-- planet 7: state differs (a750fd6756eb991c, 60e6cec8180ad546)
+-- planet 12: state differs (d31aae8b73ce0ba3, 7217d6ea8f94f5cf)
+-- planet 3: state differs (2fb82ea396763d04, f0cdf7b229657fd4)
+FORK: 0 check(s) failed
+World's cache_warm_check: exit 0 in 15 s; CACHEWARM: 0 check(s) failed
+f2 done

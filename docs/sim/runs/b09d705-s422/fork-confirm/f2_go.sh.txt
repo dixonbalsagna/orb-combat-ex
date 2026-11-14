@@ -1,0 +1,25 @@
+#!/bin/sh
+# f2_go.sh <scratchpad>: fork_check on the rebuilt GW1a stack (the EP's s422 at b09d705, with World's cache-determinism fix),
+# cold and warm. f2app is this run's own user data, so its field cache starts empty. Each emptying is one literal guarded
+# path, never in a loop. ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; T="$NS/f2"; O="$NS/f2o"
+C="$NS/f2app/Godot/app_userdata/Orb Combat EX/field-cache"
+rm -rf "${NS:?}/f2o"; mkdir -p "$O" "$NS/f2app"; export APPDATA="$(cygpath -w "$NS/f2app")"
+cd "$T" || exit 1
+case "$(pwd -P)" in */scratchpad/f2) ;; *) echo refusing; exit 1 ;; esac
+child() { timeout 900 "$G" --headless --path . --script res://sim/core/tools/fork_check.gd -- --child=12 --mode=$1 > "$O/child_$2.txt" 2>&1; echo "planet 12, $1, $3: $(grep '^RESULT state' "$O/child_$2.txt")"; }
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+rm -rf "${C:?}"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://sim/core/tools/fork_check.gd > "$O/fork.txt" 2>&1; echo "fork_check from a cold cache: exit $? in $(( $(date +%s) - s )) s"; grep "^planet\|^FAIL\|FORK" "$O/fork.txt"
+rm -rf "${C:?}"
+child real real_cold "cold cache"
+child real real_warm "warm cache"
+child predict predict_warm "warm cache"
+rm -rf "${C:?}"
+child predict predict_cold "cold cache"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://sim/core/tools/fork_check.gd -- --negative-control > "$O/fork_neg.txt" 2>&1; echo "fork_check negative control: exit $? in $(( $(date +%s) - s )) s"; grep "^-- planet\|^FAIL\|FORK" "$O/fork_neg.txt"
+s=$(date +%s); timeout 1800 "$G" --headless --path . --script res://sim/world/tools/cache_warm_check.gd > "$O/cache_warm.txt" 2>&1; echo "World's cache_warm_check: exit $? in $(( $(date +%s) - s )) s; $(grep -v 'WARNING\|at: \|^$' "$O/cache_warm.txt" | tail -1 | cut -c1-200)"
+echo f2 done
