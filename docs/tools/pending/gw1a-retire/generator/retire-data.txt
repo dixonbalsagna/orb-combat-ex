@@ -1,6 +1,9 @@
 gen2
 biome
+water
+surface
 interrupts
+floor
 calmTurn
 turn
 rightStick
@@ -17,6 +20,8 @@ splitShare
 chaseTap
 chargeArmour
 power
+powerPace
+waterWarm
 chargeClose
 pressWait
 oneRuleB
@@ -54,6 +59,7 @@ chordPick
 bNoBeam
 bNoBeamKeepRt
 arrive
+slip
 dashHandover
 carryRound
 paceMatch
@@ -61,8 +67,16 @@ inertKnock
 sideFromBlowOnly
 chargeLostCue
 menusRail
+hitstopAny
+airBrake
 stances
+phrases
 vsHuman
 firstMeteor
 beamFront
+kick
+mixed
 struggle
+soundTug
+soundMoments
+soundCarry

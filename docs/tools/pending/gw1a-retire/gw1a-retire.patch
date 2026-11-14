@@ -1,5 +1,5 @@
 diff --git a/tools/preview/preview-selftest.mjs b/tools/preview/preview-selftest.mjs
-index 3569ef3..377aa95 100644
+index 3569ef3..56ea53e 100644
 --- a/tools/preview/preview-selftest.mjs
 +++ b/tools/preview/preview-selftest.mjs
 @@ -10,7 +10,13 @@ import { join } from 'node:path';
@@ -26,14 +26,14 @@ index 3569ef3..377aa95 100644
 +  {
 +    const ids = new Set(IDS), landed = new Set(LANDED_IDS);
 +    check('GW1a: every retired row is out of the live table, and none is both retired and kept', LANDED_IDS.every((id) => !ids.has(id)) && landed.size === LANDED_IDS.length && LANDED_IDS.length === RETIRED_ROWS.length && RETIRED_ROWS.every((r) => landed.has(r.id)));
-+    check('GW1a: the kept rows are the ones the golden window did not land (the water group, the held city rows, the rows whose files are not in main yet, and the three page rows; the Combat rows phrases and mixed retire with the Combat park)', IDS.length === 17 && [...IDS].sort().join() === 'aimCuts,airBrake,blackbox,cityHold,floor,gen3,go,hitstopAny,kick,powerPace,slamTurn,slip,surface,wallPush,wallPushAi,water,waterWarm', IDS.join());
++    check('GW1a: the kept rows are the ones the golden window did not land (the five held rows: the city rows and the aim cuts; and the three page rows: gen3, blackbox, go)', IDS.length === 8 && [...IDS].sort().join() === 'aimCuts,blackbox,cityHold,gen3,go,slamTurn,wallPush,wallPushAi', IDS.join());
 +    check('GW1a: the old table is the live rows and the retired ones together, 93 rows with no id twice', HIST_ROWS.length === 93 && new Set(HIST_ROWS.map((s) => s.id)).size === 93 && HIST_ROWS.every((s) => s !== undefined));
 +    check('GW1a: a kept row never needs a retired one (the cascade would turn it off for a switch that is not there)', SWITCHES.every((s) => s.needs.every((n) => ids.has(n))));
 +    check('GW1a: asking to turn a landed row on or off is said so, not called unknown and not silently ignored', (() => { const r = resolve(['tiles', 'gen2']), r2 = resolve([], SWITCHES, ['rightStick']); return r.landed.join() === 'tiles,gen2' && r.unknown.length === 0 && r.active.join() === resolve([]).active.join() && r2.landed.join() === 'rightStick' && resolve(['nonsense']).unknown.join() === 'nonsense' && resolve(['nonsense']).landed.length === 0; })());
 +    check('GW1a: the look words (tiles=1, meteor=loud, craterlook=1) are no longer launch words, and the page rows that stay still are', (() => { const w = tableWith([]).filter((s) => s.url).map((s) => s.url); return !w.includes('tiles=1') && !w.includes('meteor=loud') && !w.includes('craterlook=1') && w.includes('go=1') && w.includes('blackbox=1'); })());
-+    check('GW1a: the smoke check expects the landed rows ON in the running game: the data generation 2, the biome, the interrupts and the turn, the right stick, the meteor', (() => { const e = expectations([]); return e.planetGen === 2 && e.dataGen === 2 && e.biome === true && e.interrupts === true && e.turn === true && e.rightStick === true && e.meteor === true && e.swingOn === true && e.struggle === true && e.water === false && e.floor === false; })());
++    check('GW1a: the smoke check expects the landed rows ON in the running game: the data generation 2, the biome, the interrupts and the turn, the right stick, the meteor', (() => { const e = expectations([]); return e.planetGen === 2 && e.dataGen === 2 && e.biome === true && e.interrupts === true && e.turn === true && e.rightStick === true && e.meteor === true && e.swingOn === true && e.struggle === true && e.water === true && e.surface === true && e.floor === true && e.mixed === true && e.kick === true; })());
 +    check('GW1a: the probes of the retired rows stay, each with the code it needs, one for each row that had one', LANDED_PROBES.length > 30 && LANDED_PROBES.every((p) => p.id && p.probe && p.probeIf && p.probeIf.file && p.probeIf.text) && ['rightStick', 'meteor', 'struggle', 'swing', 'arc', 'beamFront'].every((id) => LANDED_PROBES.some((p) => p.id === id)) && LANDED_PROBES.every((p) => landed.has(p.id)));
-+    check('GW1a: isOn says on for a preview switch that is on and for a landed row, and off for a kept row that is not on', isOn(['water'], 'water') && isOn([], 'tiles') && isOn([], 'rightStick') && !isOn([], 'water') && !isOn(['water'], 'floor'));
++    check('GW1a: isOn says on for a preview switch that is on and for a landed row, and off for a kept row that is not on', isOn(['cityHold'], 'cityHold') && isOn([], 'tiles') && isOn([], 'rightStick') && isOn([], 'water') && !isOn([], 'cityHold') && !isOn(['cityHold'], 'gen3'));
 +    check('GW1a: retired-rows.json says where each row went and why it is retired (an evidence line), and holds the old row whole', RETIRED_ROWS.every((r) => typeof r.evidence === 'string' && r.evidence.length > 10 && Number.isInteger(r.index)) && RETIRED_ROWS.find((r) => r.id === 'gen2').file === 'data/biomes/climate.json' && RETIRED_ROWS.find((r) => r.id === 'meteor').url === 'meteor=loud');
 +  }
  } finally {
@@ -91,21 +91,14 @@ index 72d231d..b7953c3 100644
    const g = { godot, godotNode: o.godotNode };
 diff --git a/tools/preview/retired-rows.json b/tools/preview/retired-rows.json
 new file mode 100644
-index 0000000..5d5e42e
+index 0000000..3b34b67
 --- /dev/null
 +++ b/tools/preview/retired-rows.json
-@@ -0,0 +1,1524 @@
+@@ -0,0 +1,1660 @@
 +{
 + "keptNeedsBefore": {
-+  "floor": [
-+   "surface",
-+   "interrupts"
-+  ],
 +  "slamTurn": [
 +   "swing"
-+  ],
-+  "slip": [
-+   "arrive"
 +  ]
 + },
 + "_about": "The switch rows the golden window GW1a landed as main's own data (tools/preview/switches.mjs LANDED_IDS), as they were before: id, file, key, from, to. Kept as the record of what landed and as the selftest's fixtures for the flip engine. Written by the retirement, 2026-11-14.",
@@ -121,7 +114,7 @@ index 0000000..5d5e42e
 +   "needs": [],
 +   "what": "planet generation 2 (climate, 15 fine biomes, lakes, sites) for every planet match instead of the stored planet",
 +   "index": 0,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "biome",
@@ -135,7 +128,34 @@ index 0000000..5d5e42e
 +   "needs": [],
 +   "what": "the launch planner reads the ground (cliffs, ice, marsh, trees, vents) and its surface (biome.enabled)",
 +   "index": 1,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "water",
++   "file": "data/biomes/water.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "what": "water v2: holes fill from the sea, lakes and the water table; wading; the crater wave; the douse",
++   "index": 2,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "surface",
++   "file": "data/biomes/water.json",
++   "path": [
++    "surface",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "what": "surfacing, the world half: a launched body that lands in water is brought up to the surface",
++   "index": 3,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "interrupts",
@@ -149,7 +169,24 @@ index 0000000..5d5e42e
 +   "needs": [],
 +   "what": "surfacing, the director half: a drop (the zip's knock-down) under water is brought up and counts as landed",
 +   "index": 4,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "floor",
++   "file": "data/biomes/water.json",
++   "path": [
++    "floor",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "surface",
++    "interrupts"
++   ],
++   "what": "the lake floor: a free fighter's floor in the ring's own water is its surface less his feet (needs both halves of surfacing)",
++   "index": 5,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "calmTurn",
@@ -163,7 +200,7 @@ index 0000000..5d5e42e
 +   "needs": [],
 +   "what": "the calm turn, the director's half (DirCalm.on): without it the director never asks and the turn never happens, whatever rings.json says. Found by QA, 2026-10-31: `turn` alone gave 0 turns in 200 matches",
 +   "index": 6,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "turn",
@@ -179,7 +216,7 @@ index 0000000..5d5e42e
 +   ],
 +   "what": "the arena's calm turn (World's half, rings.json turn.on; it needs calmTurn, the director's half): at a calm moment after a launch has landed, the ring swaps for a new one turned a few degrees (at most 4 a match, 60 s apart)",
 +   "index": 7,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "rightStick",
@@ -200,7 +237,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the right-hand attacks (pitch 4a, Controls): the right stick throws directional-charge strikes, the left hand braces and slips; the pad's right stick is read. Waits until Controls' code is in the tree you build (or overlaid)",
 +   "index": 8,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "quickRead",
@@ -220,7 +257,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the quick read (Controls, responsiveness): the strike and the brace read one tick sooner, the vanish resolves on the second press, and the layout publishes the stick's pre-read for the pose. timing.json switches.quickRead. Waits until Controls' code and keys are in the tree (docs/controls/pending/quick-read)",
 +   "index": 9,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "hapticLadder",
@@ -242,7 +279,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the strike charge's ladder on the pad (Controls, pitch 1): a held stick strike pulses once as each rung is reached, 12 / 30 / 50 live ticks from the request; none for a quick flick. Needs the right hand. timing.json switches.hapticLadder. Waits for docs/controls/pending/stick-feel",
 +   "index": 10,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "specialsOff",
@@ -264,7 +301,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the first press (Game Design, docs/design/pad-first-press.md; Controls): the power specials are not built, so RT + X, Y, A are the plain blow and the charge drops. timing.json switches.specialsOff. Waits for docs/controls/pending/stick-feel (round 2)",
 +   "index": 11,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "signatureRtOnly",
@@ -286,7 +323,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the signature on RT + B only (Controls, round 4): B alone is the big blow, RT + B is the signature, and B with LB, RB or LT held is the heavy of that stance, so a guard or a dodge never fires a beam by accident. timing.json switches.signatureRtOnly. The pad sheet assumes it is on. Waits for docs/controls/pending/stick-feel (round 4)",
 +   "index": 12,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "beamAim",
@@ -308,7 +345,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the beam aim (Controls, docs/controls/pending/beam-aim, docs/controls/beam-aim-feel.md): the throw carries the aim the stick held at the rim, the shown aim trails the thumb by 4 degrees and at rest the aim is 0, so a beam goes where the thumb threw it. timing.json switches.beamAim. Needs the right hand. Waits for the park",
 +   "index": 13,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "hapticRefused",
@@ -330,7 +367,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "a stick press the game did not answer tells its pad (two dull knocks, 30 live ticks after the request; the audit's gap 2). Needs the right hand. timing.json switches.hapticRefused. Waits for docs/controls/pending/stick-feel (round 2)",
 +   "index": 14,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "hapticIncoming",
@@ -352,7 +389,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the incoming cue on the defender's pad (Controls, pitch 3): one cue when a rival's stick strike starts, high for toward and up, low for away and down; the striker feels nothing. Needs the right hand. timing.json switches.hapticIncoming. Waits for docs/controls/pending/stick-feel",
 +   "index": 15,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "webRumble",
@@ -372,7 +409,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the pad rumble on the page (Controls, docs/controls/pending/stick-feel/web-rumble.patch): the page asks the vibrationActuator of the pad itself (dual-rumble; Chrome, Edge and Opera GX with an Xbox-type or DualSense pad), because the web runtime of Godot has no pad rumble. timing.json switches.webRumble. Waits for haptic-switches.patch and web-rumble.patch",
 +   "index": 16,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "settle",
@@ -392,7 +429,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "a body on the ground digs or stops (Encounter, docs/director/pending/ground-settle): a launched body meets the ground at most 3 times, and 0, 0, 1, 1 bounces by tier, instead of tumbling off it up to 8. data/biomes/contact.json settle.enabled. The read-back is the contact limit (3 on, 8 off). Waits for the patch and its key",
 +   "index": 17,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "splitShare",
@@ -411,7 +448,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "against a CPU the player pane takes 0.7 of the split (Camera swing-share, Orb first play asked for about 0.7), instead of 50/50; with tiles on. data/camera/swing.json splitShare. ?splitshare=0.5 on a local page sets it for a comparison. The probe also reads lead_ahead. Waits for swing-share.patch",
 +   "index": 18,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "chaseTap",
@@ -432,7 +469,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the chase after a launch by a plain tap (Encounter, docs/director/pending/chase-tap; Orb: the follow-up floats): while the one you sent is in the air, press X, Y or B and you rush him; the blow lands as you catch him and sends him on. The price is free, 20, 30, 45 for X. data/director/interrupts.json chase.tap.enabled. Waits for the park",
 +   "index": 19,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "chargeArmour",
@@ -454,7 +491,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "a charged attack has the armour of B (Encounter, docs/director/pending/charge-armour; Orb: charged attacks should be much harder to interrupt, especially by light attacks): data/director/stick.json armour.enabled. Needs the right hand. Waits for the park",
 +   "index": 20,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "power",
@@ -468,7 +505,40 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the one energy model (Simulation's sim/core/power.gd; Game Design's power-scale.md; register row A-ENERGY-04): data/fight/power.json enabled. Orb's 9 November build ran it ON through a code patch of the page (the setup key \"power\": true) while the data said off; now it is a data row like the others, so the build's data is what the game ran on and a pack verify can read it. The page word ?power=0 (or off) still turns it off for one match. When main's data has it on, the row has nothing left to flip",
 +   "index": 21,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "powerPace",
++   "file": "data/fight/ladder.json",
++   "path": [
++    "chargePerSec"
++   ],
++   "from": 0.5,
++   "to": 2,
++   "needs": [],
++   "optional": true,
++   "what": "the power-up pace for the page (from the idle-match README of Encounter, until QA has read the tier pace): data/fight/ladder.json chargePerSec 0.5 to 2, so a fighter charges four times as fast. It moves the golden and every replay data hash: for the page only",
++   "index": 22,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "waterWarm",
++   "file": "data/biomes/water.json",
++   "path": [
++    "flowWarm",
++    "cols"
++   ],
++   "from": 0,
++   "to": 48,
++   "needs": [],
++   "optional": true,
++   "presentIf": {
++    "file": "sim/world/water.gd",
++    "text": "warmCols"
++   },
++   "what": "a new flow window reads its span in chunks of 48 columns (World, docs/world/pending/water-window-warm): the first flow step comes 16 ticks later and no tick reads more than 48 columns of a window. data/biomes/water.json flowWarm.cols 0 to 48. IT MOVES EVERY HASH from the first water window: for the page only, and never for a replay proof against an older build (pass --off waterWarm there). Waits for the park",
++   "index": 23,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "chargeClose",
@@ -484,7 +554,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "Encounters press-decides charge-close (docs/director/pending/charge-close; Game Design press-decides section 2): a B held and let go at a rival walking away. data/director/interrupts.json brawl.chargeClose.enabled. Waits for the park",
 +   "index": 24,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "pressWait",
@@ -500,7 +570,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "Encounters press-decides press-wait (docs/director/pending/press-wait; Orbs second play: hard to charge an attack when every hit seems to interrupt). data/director/interrupts.json brawl.pressWait.enabled. Waits for the park",
 +   "index": 25,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "oneRuleB",
@@ -516,7 +586,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "Encounters press-decides one rule for B (docs/director/pending/b-one-rule; replaces press-send). data/director/interrupts.json brawl.oneRuleB.enabled. Waits for the park",
 +   "index": 26,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "beamAim2",
@@ -535,7 +605,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "Encounters beam aim cut (docs/director/pending/beam-aim): acts only with the beam fronts stationary, beside Controls beamAim. data/director/interrupts.json beamPlays.front.aim.enabled. Waits for the park",
 +   "index": 27,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "nodeWarm",
@@ -554,7 +624,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the ground's nodes round the start are read at the match start (World, docs/world/pending/node-warm): data/biomes/field.json warm.radius 0 to 10,000; about 0.34 s more at match load on a native build (the web load time is in the smoke), the same state hash. Waits for the park",
 +   "index": 28,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "stickPend",
@@ -569,7 +639,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "a stick press waits with its request, up to 90 ticks, and is told at once when it is answered or refused (Encounter, docs/director/pending/stick-pend; Game Design stick-lands). data/director/stick.json pendFollow.enabled. The park's other switch, flickRun, stays OFF until Game Design sets its points (no row). Waits for the park",
 +   "index": 29,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "joltYield",
@@ -584,7 +654,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "a jolt swing yields to a launch swing on the same tick (Encounter, docs/director/pending/swing-pair; QA kept-build row 4). data/director/swing.json jolt.yieldToLaunch. Waits for the park",
 +   "index": 30,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "brawlShareCap",
@@ -600,7 +670,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "brawl swings are not offered while they would be over 0.4 of the match's big swings, once there have been 3 (Encounter, docs/director/pending/swing-pair). data/director/swing.json brawl.shareCap.enabled. Waits for the park",
 +   "index": 31,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "meteor",
@@ -621,7 +691,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "VFX's meteor trail: a fighter's own burn laid along his path and cooling in the world. A page word on a local page (?meteor=loud, the default here, or ?meteor=quiet: two sets of numbers for Orb to pick between); no word, the trail is off and byte-identical off. The printed address carries the loud word and the quiet one is printed beside it. Waits until the tree has VFX's data/vfx/meteor.json",
 +   "index": 35,
-+   "evidence": "the GW1a scratch tree has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
++   "evidence": "the full GW1a stack has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
 +  },
 +  {
 +   "id": "tiles",
@@ -640,7 +710,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "Rendering's tile ground (stage 4 of the ring-at-any-angle work): the fight on planet-keyed tiles on a true globe, through Simulation's frame. A page word for now (?tiles=1, local pages only): the printed address carries it. Needs gen3 and waits until the tree has render/core/tile_ground.gd",
 +   "index": 36,
-+   "evidence": "the GW1a scratch tree has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
++   "evidence": "the full GW1a stack has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
 +  },
 +  {
 +   "id": "swing",
@@ -684,7 +754,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "DirSwing (Encounter): the choreographer's swing: a launch, a chase, a form's pause, an AI's flight and a brawl each offer the line a turn, which the core's SimSwing runs. data/director/swing.json `enabled`; it does nothing but on a field world, so it needs gen3 (setup planet, touch, planetGen 3). Waits until the tree has Encounter's code",
 +   "index": 37,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "everywhere",
@@ -706,7 +776,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "buildings at every place (World, docs/world/places-everywhere.md): each place the first ring does not hold is laid as the whole of its plan, planet-fixed, with no people, so a swing or a launch onto any town finds real buildings. data/biomes/field.json plans.everywhere. Gen 3 only. Waits until the tree has World's park (docs/world/pending/places-everywhere)",
 +   "index": 38,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "arc",
@@ -726,7 +796,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the meteor launch, one curve, with ignition (Encounter, docs/director/pending/meteor and meteor-2; row 5 of rule-of-cool-map.md): a heavy charged to full at tier 4 with two forms each goes up one authored curve, the meteor on a stunned or weak foe. data/director/launch.json arc.enabled. Try it from a training start: ?tier=4. Waits until the tree has Encounter's park",
 +   "index": 39,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "ending",
@@ -746,7 +816,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the match ending (Encounter; Game Design's ladder, spec-wounds.md 1b-end): at the time limit the fighter with less wear gets his finisher with no contest, and level wear is a no-contest (a no_contest cue, no KO). data/director/interrupts.json ending.enabled. Waits until the tree has Encounter's park (docs/director/pending/match-ending)",
 +   "index": 40,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "follow",
@@ -767,7 +837,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "a far press follows him (Encounter, docs/director/pending/far-follow; row 42): for 150 ticks after a send or knock-back he threw, a far tap flies him after the target instead of taunting. data/director/interrupts.json bands.follow.enabled. Waits until the tree has Encounter's park",
 +   "index": 41,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "lightStops",
@@ -788,7 +858,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "a light on a quick flick still lands (Encounter, docs/director/pending/stick-directions): no stun, worth softWorth, so the direction shows; LB held through a flick holds the guard. data/director/stick.json lightStops, false here. True is today's rule. Waits for the stick-directions park",
 +   "index": 42,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "grapple",
@@ -808,7 +878,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "A in a brawl catches (the clinch and the throws) and a far A taunts: data/director/interrupts.json grapple.enabled. Off as shipped",
 +   "index": 43,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "driver",
@@ -831,7 +901,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "RB + B is the Driver (Encounter, docs/director/pending/driver): hold B with RB to gather, let go to fire; a player's only. data/director/interrupts.json blast.driver.enabled. Needs driverOnRb with signatureRtOnly. Waits for the driver park",
 +   "index": 44,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "driverOnRb",
@@ -853,7 +923,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "with signatureRtOnly, RB + B stays a B press for the Driver to read instead of being sent as Y's blast (Controls, signature-rt-only.patch). timing.json switches.driverOnRb. Waits for Controls' stick-feel round 4",
 +   "index": 45,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "beamMove",
@@ -873,7 +943,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the beam as its own move (Encounter, docs/director/pending/beam-move): beamPlays.front.ownMove.enabled. It needs the right stick, the beam front (beamFront: beamPlays.front.enabled) and the stationary front (front.stationary, on in the data). Waits for the park",
 +   "index": 46,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "stallKeep",
@@ -895,7 +965,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "no input lost in a stall (Controls, docs/controls/pending/impact-haptics, refusals): when the page hitches and several game steps read one pad snapshot, every button press and the stick's furthest point since the last step are kept. timing.json switches.stallKeep. Waits for the park",
 +   "index": 47,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "hapticImpact",
@@ -917,7 +987,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the impact rumble (Controls, docs/controls/impact-haptics.md): landed blows, closes, launches and landings, building breaks on the pad (Orb's 2026-10-05 picks). timing.json switches.hapticImpact. Waits for the park",
 +   "index": 48,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "dodgeHeld",
@@ -939,7 +1009,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "LT held in the intent's second word (Controls, docs/controls/dodge-held.md): the flight strike's take-back reads whether LT is still down at the face press. timing.json switches.dodgeHeld. Waits for the park and for Encounter to read it",
 +   "index": 49,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "hapticStages",
@@ -962,7 +1032,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the stages of a charge on the pad (Controls, docs/controls/pending/stage-pulses): a pulse for each stick_stage cue of Encounter. timing.json switches.hapticStages. Needs beamMove, and the hapticLadder row too (SimInputData.haptic_stages_on() is the ladder AND the flag). With beamMove off a hold is silent. Waits for the park",
 +   "index": 50,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "refusedCue",
@@ -977,7 +1047,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "every refused press says so with a cue (Encounter, the morning fixes, batch 3): the press refused word at the edge and the knock on the pad, so a press never vanishes in silence. interrupts.json press.refusedCue. Waits for the park",
 +   "index": 51,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "strikeStages",
@@ -994,7 +1064,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "strike charge stages by power (Encounter, docs/director/pending/strike-stages; beams-own-move-plan step 2): 2 to 6 stages, a held charge that never fires by itself. data/director/stick.json strikeStages.enabled. Waits for the park",
 +   "index": 52,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "beamMoveAi",
@@ -1013,7 +1083,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the computer fires its beam through the same own move (Encounter, docs/director/pending/beam-ai). beamPlays.front.ownMove.ai. Needs beamMove. Waits for the park",
 +   "index": 53,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "pushMode",
@@ -1036,7 +1106,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "what pushes in a beam struggle, chosen per player (Encounter, docs/director/pending/push-mode; Game Design: rhythm on the right stick by default, or on the face buttons). beamStruggle.pushMode.enabled; the choice rides in the match setup per slot. Waits for the park and Simulation's grant",
 +   "index": 54,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "pushUi",
@@ -1054,7 +1124,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the beam struggle push option of player 1 defaults to the right stick only when pushMode is on (UI, ui/data/options.json options.struggle_push.default; the shipped default is face, so a struggle panel never teaches a push the sim does not read). The row is on with pushMode and off without it",
 +   "index": 55,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "pushUi2",
@@ -1072,7 +1142,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the same for player 2 (options.struggle_push_p2.default)",
 +   "index": 56,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "flightStrikes",
@@ -1111,7 +1181,7 @@ index 0000000..5d5e42e
 +   ],
 +   "what": "the flight strikes (Encounter): three keys as one row, across two files: interrupts.json zip.flightStrikes.enabled, timing.json switches.flightStrikeB and switches.dodgeHeld (the same key as the dodgeHeld row; either row turns it on). Needs rightStick and signatureRtOnly. ON in the next build (the EP, 2026-11-07); it waits, naming the key, until the park that adds it lands",
 +   "index": 61,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "stickLungeLight",
@@ -1128,7 +1198,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the light lunge on the stick (Encounter): data/director/stick.json lungeLight.enabled. Needs rightStick. ON in the next build (the EP, 2026-11-07); it waits, naming the key, until the park that adds it lands",
 +   "index": 63,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "flickKeep",
@@ -1165,7 +1235,7 @@ index 0000000..5d5e42e
 +   ],
 +   "what": "a stick flick that cannot start now is kept (Encounter, docs/director/pending/refusal-reasons; Game Design ruling 1): held, the newest only, quietly, and his first blow out. data/director/stick.json flickKeep.enabled. ON in Sunday's build (the EP, 2026-11-07); it waits, naming the key, until the park lands. The new refusal knocks ride press.refusedCue, which stays held",
 +   "index": 64,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "flickRun",
@@ -1182,7 +1252,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "a landed quick flick counts in its striker's run, with the steal on top (Game Design, stick-lands.md; the refusal-reasons park sets its points to 1.5). data/director/stick.json flickRun.enabled. ON in Sunday's build (the EP, 2026-11-07)",
 +   "index": 65,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "fullSend",
@@ -1210,7 +1280,7 @@ index 0000000..5d5e42e
 +   ],
 +   "what": "the stick's full send and the slam (Encounter, docs/director/pending/stick-slam; Game Design slam-and-pace section 1): a hold to the top stage sends, down on a foe in the air is the slam. data/director/stick.json fullSend.enabled, and in the same row UI's \"Hold to slam\" hint, ui/data/features.json features.slam_hint (UI: turn it on in the same commit as fullSend). ON in Sunday's build (the EP, 2026-11-07); it waits until both parks (stick-slam and slam-hint) have landed",
 +   "index": 66,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "chordPick",
@@ -1227,7 +1297,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "a chord is the biggest press (Controls, docs/controls/pending/chord-full-send; docs/controls/chord-pick.md): when two buttons come together the hub picks the biggest and says what it dropped, and the full send has its own haptic. timing.json switches.chordPick. Needs hapticRefused (the hub needs it to knock and list the drop). ON in Sunday's build (the EP, 2026-11-07); it waits, naming the key, until the park lands",
 +   "index": 67,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "bNoBeam",
@@ -1242,7 +1312,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "B never fires a beam (Orb's rule of 2026-11-01: beams come only from the right stick; Controls, docs/controls/pending/b-no-beam, design docs/controls/b-no-beam.md): a player's B never starts a beam, alone, with RT held, or with LT held past the flight strike's window; the stick's own beam is unaffected. timing.json switches.bNoBeam. It reads nothing else. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands. Note: the park's first patch only adds the key, and the switch does nothing until its second patch (director-isb.patch, Encounter's DirBrawl.isB) lands too: the row going on is not proof the beam is closed, so read the build's own data and the leak check",
 +   "index": 68,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "bNoBeamKeepRt",
@@ -1259,7 +1329,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the interim of bNoBeam (the EP, 2026-11-08; Controls' park docs/controls/pending/b-no-beam): B with RT held is still the signature until RT + right stick is built, so the signature is never unreachable; every other press of B is closed. timing.json switches.bNoBeamKeepRt. Needs bNoBeam (with it off this does nothing). ON in the next build, together with bNoBeam; it waits, naming the key, until the park lands. It goes OFF when the RT + stick signature lands (then B with RT held is closed too)",
 +   "index": 69,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "arrive",
@@ -1280,7 +1350,25 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the arrival (Encounter, docs/director/pending/arrive; Game Design's overnight ruling (c)): LT's high speed eases into striking distance over the last 1.5 body heights, never through the rival. data/director/interrupts.json bands.arrive.enabled. ON in the next build (the EP, 2026-11-08) and tied to the page's \"dash\": true: the page sends the dash only when this row is on (preview.mjs dashWord), because the flat-out dash at 5,000 a second would fly through the rival without it. It waits, naming what is missing, until BOTH the park (the key) and Simulation's grant (the hook line in fighter.gd) have landed",
 +   "index": 70,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "slip",
++   "file": "data/fight/power.json",
++   "path": [
++    "dash",
++    "slip",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "arrive"
++   ],
++   "optional": true,
++   "what": "the slip's brake (Simulation, docs/architecture/pending/dash-slip; Game Design's overnight ruling (c), \"a tapped LT is still the slip\"): an LT let go before tick 6 of the dash eases to the slip's 1,125 a second over 4 ticks instead of carrying a full dash; held 6 ticks or longer, nothing changes. data/fight/power.json dash.slip.enabled. Only with the page's dash (the model on), so it needs arrive. It does its job with Controls' dashHandover on: with the 12-tick lunge every tap is a 13-tick dash. It waits, naming the key, until the park lands",
++   "index": 71,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "dashHandover",
@@ -1298,7 +1386,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "LT dash handover (Controls, docs/controls/dash-handover.md; Game Design ruling of 2026-11-08 section c): the free 12-tick lunge after a press of LT is a handover instead: at least 1,000 a second on the tick after the press and full by tick 12, so a tapped LT is the slip and not a 13-tick dash. data/input/timing.json switches.dashHandover. Needs arrive (the arrival, so the fast dash never flies through the rival) and slip (the brake that makes a tap a slip). ON in the polish build (the EP and Controls, 2026-11-09, on Encounter slip-arrive); it waits, naming the key, until the park lands",
 +   "index": 72,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "carryRound",
@@ -1313,7 +1401,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "you only go round after him if you are still pressing toward him (Encounter, docs/director/pending/carry-round; Game Design's beams-third-play.md, the dodge exchange; gauntlet-plan.md section 8): the dodge set piece's follow rush (exchange.gd, the rush op) carries a player round only while the stick still presses toward; let go and he stays where he is, the set piece is over and he is free. data/director/interrupts.json carryRound.enabled (top level, deadZone 0.3). Off, nothing changes. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands",
 +   "index": 73,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "paceMatch",
@@ -1331,7 +1419,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "easy matches the player's pace (Encounter, docs/director/pending/pace-match; Game Design's gauntlet-plan.md section 6): on the easy level the gap between the computer's taps in a brawl string is never shorter than the player's own recent gap between attack presses (floor 12, ceiling 30 ticks, a 3 s window, 27 with no human). data/director/ai.json levels.easy.brawl.paceMatch.enabled. Off, nothing changes. ON in the next build (the EP, 2026-11-09, after Encounter's gauntlet, docs/director/runs/397a7adf/pace-match/gauntlet/: Orb's scheme 5 to 65 percent on easy, the masher held at 60, the only option that held both bands); it waits, naming the key, until the park lands",
 +   "index": 74,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "inertKnock",
@@ -1349,7 +1437,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "a right-stick push on a layer where the strike stick is inert (RT held, or LB + RB) is told once: the refusal \"charging\" (\"warding\"), one pad knock, one row for UI (Controls, docs/controls/pending/inert-knock; design docs/controls/inert-knock.md). timing.json switches.inertKnock. Needs rightStick and hapticRefused (the hub's refusal cues). ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands. UI needs words for charging and warding (\"Charging\", \"Warding\"): until it has them the pad knocks and the screen may say nothing",
 +   "index": 75,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "sideFromBlowOnly",
@@ -1363,7 +1451,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "a launch goes the way of the blow (Game Design's overnight ruling (a), docs/design/overnight-2026-11-08.md; Encounter's park docs/director/pending/side-from-blow): the full heavy's curve keeps the punch's way with the stick at rest, and only the stick picks the far side; the launch planner offers no candidate on the far side. data/director/launch.json sideFromBlowOnly (top level). Off, nothing changes. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands",
 +   "index": 76,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "chargeLostCue",
@@ -1383,7 +1471,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "a lost charge is felt (Controls, docs/controls/pending/charge-lost; design docs/controls/charge-lost.md): three pad pulses of their own for the charger only, no screen mark: charge_broken (a heavy, a stick strike or a beam hold taken by a blow of the foe), charge_lapsed (lost to a stagger or the end of the brawl) and hold_short (a right-stick hold let go of before stage 1). timing.json switches.chargeLostCue. No pairing (the hold_short pulse only happens with the right stick, which is on). ON in the polish build (the EP, 2026-11-09); it waits, naming the key, until the park lands",
 +   "index": 77,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "menusRail",
@@ -1398,7 +1486,36 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the Rail menus (UI & UX, docs/ui/menus-rail.md; Orb picked mockup A on 2026-11-09): Start, Pause, New match? and Match over get one frame, a dark rail down the left with the choices and the detail on the right, the buttons of the last device along the foot, and Options gets tabs across the top. ui/data/features.json features.menus_rail. Off, every screen is as before; it also stays as before on a touch screen, under 1000 by 600, and when narrower than 1.3 to 1. Slides and eases only (ADR 0010). ON in the polish build (the EP, 2026-11-09) if the rule fix from UI and the EP look at the stills pass; it waits, naming the key, until the key is in the tree",
 +   "index": 78,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "hitstopAny",
++   "file": "data/fight/hitstop.json",
++   "path": [
++    "budgetAny",
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "the freeze budget on whichever table is live (Simulation, docs/architecture/pending/hitstop-any; Game Design gauntlet-plan.md sections 7 and 8: at most 15 percent of a match frozen on average): the window of the last 10 live seconds counts every frozen tick even with hit-stop by weight off, and over 12 percent of it a hit stop is x0.7 (x0.5 over the 40 percent deep line), at least 1 tick; a decisive blow, a KO, a launch, a full launch and a heavy are never cut. data/fight/hitstop.json budgetAny.enabled (the setup word hitstopBudget is read over it). Off, the golden is byte-identical. ON in the polish build (the EP, 2026-11-09) if the re-read by Encounter holds; it waits, naming the key, until the park lands",
++   "index": 79,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "airBrake",
++   "file": "data/fight/brake.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "what": "the air brake (Game Design, buildings.md 7.2; sim/core/brake.gd): hold LT to brake while knocked back in the air. data/fight/brake.json enabled; SimCore.newMatch copies it into the match, and the file joins a replay's data hash only when on. After Simulation's determinism and rollback checks",
++   "index": 80,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "stances",
@@ -1420,7 +1537,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "LB and LT on a blow (Encounter, docs/director/pending/stances; pad-first-press.md): the check, the push and the rest differ. data/director/interrupts.json stances.enabled. Needs the stick. Waits for the stances park",
 +   "index": 81,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "phrases",
@@ -1441,7 +1558,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "each fighter's phrases (Combat's lists, Encounter's hook; rule-of-cool-map.md row 1): a press inside a phrase takes its next piece, a mash counts as part of it. data/combat/phrases.json enabled. Waits for the phrases and hook parks",
 +   "index": 82,
-+   "evidence": "Combat park (docs/combat/pending/gw1a-rows) sets enabled true in data/combat/phrases.json; the GW1a scratch tree does not hold the file"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "craterlook",
@@ -1456,7 +1573,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "Art's crater and scar looks (Rendering, 2026-11-01i; docs/art/crater-look.md): walls in two rings toned by their facing, a warm floor, a burn for the scar. A page word on a local page, on the tile ground only. Waits for the crater-scar-look park",
 +   "index": 83,
-+   "evidence": "the GW1a scratch tree has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
++   "evidence": "the full GW1a stack has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)"
 +  },
 +  {
 +   "id": "vsHuman",
@@ -1471,7 +1588,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "the beams of the AI against a human (Encounter, docs/director/pending/clash-window): it fires its first by 25 to 45 s and paces the rest when the human could pay and answer. data/director/ai.json vsHuman.enabled. Waits for the clash-window park",
 +   "index": 84,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "firstMeteor",
@@ -1488,7 +1605,7 @@ index 0000000..5d5e42e
 +   "optional": true,
 +   "what": "a stand-in rule for trying the meteor (Encounter, docs/director/pending/meteor-route): the first planet-scale launch of the match IS the meteor, whatever the rival is doing. Both at tier 4 (the full-power address), fly next to him, hold B until the flash, let go. data/director/launch.json arc.firstMeteor. Waits for the meteor-route park",
 +   "index": 85,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "beamFront",
@@ -1509,7 +1626,26 @@ index 0000000..5d5e42e
 +   },
 +   "what": "beams that travel, and the window to answer (Encounter, docs/director/pending/beam-front; row 40 of rule-of-cool-map.md): the beam takes ticks from hand to him, the hit is decided at arrival, and he can fire back, dodge in the last 14 ticks or block. data/director/interrupts.json beamPlays.front.enabled. Waits until the tree has Encounter's park",
 +   "index": 86,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
++  },
++  {
++   "id": "kick",
++   "file": "data/fight/kick.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [],
++   "optional": true,
++   "probe": "\"kick\": SimKick.enabled()",
++   "probeIf": {
++    "file": "sim/core/kick.gd",
++    "text": "static func enabled"
++   },
++   "what": "the kick and the coin turn (Simulation, docs/architecture/kick.md; rule-of-cool-map.md row 23): flat out from under half of top speed leaves at `instant` of top speed on the first tick (default 0.8) and reaches top speed over `climbTicks` (default 8) (Orb: instant, or at least instant to about 80%); a stick flip above half of top speed brakes, plants and kicks the other way. The overspeed is its own switch and off. Page words to try values: ?instant=0.9&climbTicks=4 (the printed sample addresses). data/fight/kick.json enabled. A setup's \"kick\" overrides it for a match: the page word ?kick=1 puts true in the setup, ?kick=off puts false (to compare). Waits until the tree has Simulation's park (docs/architecture/pending/kick)",
++   "index": 87,
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "mixed",
@@ -1530,7 +1666,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the mixed string (Combat, Orb's clip C9; docs/design/energy-overhaul.md section 21): a send or a knock opens a string across any range, and in it a tapped far heavy is a lob aimed where he is going, timed to land as he does. data/combat/mixed.json enabled. Needs the right hand. A prototype nobody has played. Waits until the tree has Combat's park (docs/combat/pending/mixed-string)",
 +   "index": 88,
-+   "evidence": "Combat park (docs/combat/pending/gw1a-rows) sets enabled true in data/combat/mixed.json; the GW1a scratch tree does not hold the file"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "struggle",
@@ -1554,7 +1690,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the beam struggle on the pulse: surges, strays and letting go (Encounter; Game Design's redesign after Orb's playtest of 2026-10-16: what you press during the clash moves the outcome). data/director/interrupts.json beamStruggle.enabled. On by default on the private page; ?struggle=off on a local page turns it off. Waits until the tree has Encounter's park (docs/director/pending/beam-struggle)",
 +   "index": 89,
-+   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "soundTug",
@@ -1575,7 +1711,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the beam struggle sound (Audio, docs/audio/first-play-sound.md): the two-drone bed, the pulse, surge, stray, lock and end, in the lower family. audio/data/tug_cues.json enabled. Needs the beam struggle (its events). Read back: host.audio_cues.tug.enabled()",
 +   "index": 90,
-+   "evidence": "Audio's group sets it in audio/data (the park's files); the GW1a scratch tree has no audio folder to read"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "soundMoments",
@@ -1594,7 +1730,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the moments a player would notice (Audio, docs/audio/pending/moments): a beam charging and firing, the KO, the biggest blows, a launch, the meteor landing, a parry, two bolts meeting; existing sounds only, low and chunky. audio/data/moment_cues.json enabled. Read back: host.audio_cues.moments.enabled()",
 +   "index": 91,
-+   "evidence": "Audio's group sets it in audio/data (the park's files); the GW1a scratch tree has no audio folder to read"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  },
 +  {
 +   "id": "soundCarry",
@@ -1615,7 +1751,7 @@ index 0000000..5d5e42e
 +   },
 +   "what": "the carry sounds (Audio, docs/audio/first-play-sound.md): what the HUD no longer draws, said in sound. audio/data/carry_cues.json enabled. Needs the beam struggle sound. Read back: host.audio_cues.carry.enabled()",
 +   "index": 92,
-+   "evidence": "Audio's group sets it in audio/data (the park's files); the GW1a scratch tree has no audio folder to read"
++   "evidence": "the full GW1a stack (the EP's s422 tree, plus Simulation's data-fight-gw1a for the five data/fight rows) holds the row's value (to) at its key"
 +  }
 + ]
 +}
@@ -1713,10 +1849,10 @@ index 817d35e..fb07871 100644
  
  const here = dirname(fileURLToPath(import.meta.url));
 diff --git a/tools/preview/switches.mjs b/tools/preview/switches.mjs
-index 278c871..a70d347 100644
+index 278c871..6e14774 100644
 --- a/tools/preview/switches.mjs
 +++ b/tools/preview/switches.mjs
-@@ -10,240 +10,359 @@
+@@ -10,240 +10,348 @@
  import { createHash } from 'node:crypto';
  import { BB_FINGERPRINT } from './blackbox.mjs';
  
@@ -1725,7 +1861,7 @@ index 278c871..a70d347 100644
 +// (or, where main's value moved on, would put the old one back): the page build neither flips them nor lists them, and the launch words of the look group (tiles, craterlook, meteor) are no longer added.
 +// LANDED_IDS names them. smoke.mjs reads them as on when it works out what the running game must report; resolve() says so when someone asks to turn one off. node tools/preview/switch-diff.mjs --tree <a tree>
 +// is the proof: after the GW1a stack the rows still differing from the 9 November build are the ones kept here.
-+export const LANDED_IDS = ["gen2","biome","interrupts","calmTurn","turn","rightStick","quickRead","hapticLadder","specialsOff","signatureRtOnly","beamAim","hapticRefused","hapticIncoming","webRumble","settle","splitShare","chaseTap","chargeArmour","power","chargeClose","pressWait","oneRuleB","beamAim2","nodeWarm","stickPend","joltYield","brawlShareCap","swing","everywhere","arc","ending","follow","lightStops","grapple","driver","driverOnRb","beamMove","stallKeep","hapticImpact","dodgeHeld","hapticStages","refusedCue","strikeStages","beamMoveAi","pushMode","pushUi","pushUi2","flightStrikes","stickLungeLight","flickKeep","flickRun","fullSend","chordPick","bNoBeam","bNoBeamKeepRt","arrive","dashHandover","carryRound","paceMatch","inertKnock","sideFromBlowOnly","chargeLostCue","menusRail","stances","vsHuman","firstMeteor","beamFront","struggle","soundTug","soundMoments","soundCarry","tiles","craterlook","meteor","phrases","mixed"];
++export const LANDED_IDS = ["gen2","biome","water","surface","interrupts","floor","calmTurn","turn","rightStick","quickRead","hapticLadder","specialsOff","signatureRtOnly","beamAim","hapticRefused","hapticIncoming","webRumble","settle","splitShare","chaseTap","chargeArmour","power","powerPace","waterWarm","chargeClose","pressWait","oneRuleB","beamAim2","nodeWarm","stickPend","joltYield","brawlShareCap","swing","everywhere","arc","ending","follow","lightStops","grapple","driver","driverOnRb","beamMove","stallKeep","hapticImpact","dodgeHeld","hapticStages","refusedCue","strikeStages","beamMoveAi","pushMode","pushUi","pushUi2","flightStrikes","stickLungeLight","flickKeep","flickRun","fullSend","chordPick","bNoBeam","bNoBeamKeepRt","arrive","slip","dashHandover","carryRound","paceMatch","inertKnock","sideFromBlowOnly","chargeLostCue","menusRail","hitstopAny","airBrake","stances","phrases","vsHuman","firstMeteor","beamFront","kick","mixed","struggle","soundTug","soundMoments","soundCarry","tiles","craterlook","meteor"];
 +// The probes of the retired rows stay: the page still reads what the running game says each one is (window.__preview), so the smoke check goes on verifying that main's own data turned the thing on.
 +export const LANDED_PROBES = [
 + {
@@ -2001,6 +2137,14 @@ index 278c871..a70d347 100644
 +  }
 + },
 + {
++  "id": "kick",
++  "probe": "\"kick\": SimKick.enabled()",
++  "probeIf": {
++   "file": "sim/core/kick.gd",
++   "text": "static func enabled"
++  }
++ },
++ {
 +  "id": "struggle",
 +  "probe": "\"struggle\": DirBeam.struggleOn()",
 +  "probeIf": {
@@ -2041,15 +2185,14 @@ index 278c871..a70d347 100644
 -    what: 'planet generation 2 (climate, 15 fine biomes, lakes, sites) for every planet match instead of the stored planet' },
 -  { id: 'biome', file: 'data/combat/launch_biome.json', path: ['biome', 'enabled'], from: false, to: true, needs: [],
 -    what: 'the launch planner reads the ground (cliffs, ice, marsh, trees, vents) and its surface (biome.enabled)' },
-   { id: 'water', file: 'data/biomes/water.json', path: ['enabled'], from: false, to: true, needs: [],
-     what: 'water v2: holes fill from the sea, lakes and the water table; wading; the crater wave; the douse' },
-   { id: 'surface', file: 'data/biomes/water.json', path: ['surface', 'enabled'], from: false, to: true, needs: [],
-     what: 'surfacing, the world half: a launched body that lands in water is brought up to the surface' },
+-  { id: 'water', file: 'data/biomes/water.json', path: ['enabled'], from: false, to: true, needs: [],
+-    what: 'water v2: holes fill from the sea, lakes and the water table; wading; the crater wave; the douse' },
+-  { id: 'surface', file: 'data/biomes/water.json', path: ['surface', 'enabled'], from: false, to: true, needs: [],
+-    what: 'surfacing, the world half: a launched body that lands in water is brought up to the surface' },
 -  { id: 'interrupts', file: 'data/director/interrupts.json', path: ['water', 'enabled'], from: false, to: true, needs: [],
 -    what: 'surfacing, the director half: a drop (the zip\'s knock-down) under water is brought up and counts as landed' },
 -  { id: 'floor', file: 'data/biomes/water.json', path: ['floor', 'enabled'], from: false, to: true, needs: ['surface', 'interrupts'],
-+  { id: 'floor', file: 'data/biomes/water.json', path: ['floor', 'enabled'], from: false, to: true, needs: ['surface'],
-     what: 'the lake floor: a free fighter\'s floor in the ring\'s own water is its surface less his feet (needs both halves of surfacing)' },
+-    what: 'the lake floor: a free fighter\'s floor in the ring\'s own water is its surface less his feet (needs both halves of surfacing)' },
 -  { id: 'calmTurn', file: 'data/director/interrupts.json', path: ['calmTurn', 'enabled'], from: false, to: true, needs: [],
 -    what: 'the calm turn, the director\'s half (DirCalm.on): without it the director never asks and the turn never happens, whatever rings.json says. Found by QA, 2026-10-31: `turn` alone gave 0 turns in 200 matches' },
 -  { id: 'turn', file: 'data/biomes/rings.json', path: ['turn', 'on'], from: 0, to: 1, needs: ['calmTurn'],
@@ -2095,10 +2238,10 @@ index 278c871..a70d347 100644
 -    what: 'a charged attack has the armour of B (Encounter, docs/director/pending/charge-armour; Orb: charged attacks should be much harder to interrupt, especially by light attacks): data/director/stick.json armour.enabled. Needs the right hand. Waits for the park' },
 -  { id: 'power', file: 'data/fight/power.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
 -    what: 'the one energy model (Simulation\'s sim/core/power.gd; Game Design\'s power-scale.md; register row A-ENERGY-04): data/fight/power.json enabled. Orb\'s 9 November build ran it ON through a code patch of the page (the setup key "power": true) while the data said off; now it is a data row like the others, so the build\'s data is what the game ran on and a pack verify can read it. The page word ?power=0 (or off) still turns it off for one match. When main\'s data has it on, the row has nothing left to flip' },
-   { id: 'powerPace', file: 'data/fight/ladder.json', path: ['chargePerSec'], from: 0.5, to: 2, needs: [], optional: true,
-     what: 'the power-up pace for the page (from the idle-match README of Encounter, until QA has read the tier pace): data/fight/ladder.json chargePerSec 0.5 to 2, so a fighter charges four times as fast. It moves the golden and every replay data hash: for the page only' },
-   { id: 'waterWarm', file: 'data/biomes/water.json', path: ['flowWarm', 'cols'], from: 0, to: 48, needs: [], optional: true, presentIf: { file: 'sim/world/water.gd', text: 'warmCols' },
-     what: 'a new flow window reads its span in chunks of 48 columns (World, docs/world/pending/water-window-warm): the first flow step comes 16 ticks later and no tick reads more than 48 columns of a window. data/biomes/water.json flowWarm.cols 0 to 48. IT MOVES EVERY HASH from the first water window: for the page only, and never for a replay proof against an older build (pass --off waterWarm there). Waits for the park' },
+-  { id: 'powerPace', file: 'data/fight/ladder.json', path: ['chargePerSec'], from: 0.5, to: 2, needs: [], optional: true,
+-    what: 'the power-up pace for the page (from the idle-match README of Encounter, until QA has read the tier pace): data/fight/ladder.json chargePerSec 0.5 to 2, so a fighter charges four times as fast. It moves the golden and every replay data hash: for the page only' },
+-  { id: 'waterWarm', file: 'data/biomes/water.json', path: ['flowWarm', 'cols'], from: 0, to: 48, needs: [], optional: true, presentIf: { file: 'sim/world/water.gd', text: 'warmCols' },
+-    what: 'a new flow window reads its span in chunks of 48 columns (World, docs/world/pending/water-window-warm): the first flow step comes 16 ticks later and no tick reads more than 48 columns of a window. data/biomes/water.json flowWarm.cols 0 to 48. IT MOVES EVERY HASH from the first water window: for the page only, and never for a replay proof against an older build (pass --off waterWarm there). Waits for the park' },
 -  { id: 'chargeClose', file: 'data/director/interrupts.json', path: ['brawl', 'chargeClose', 'enabled'], from: false, to: true, needs: [], optional: true,
 -    what: 'Encounters press-decides charge-close (docs/director/pending/charge-close; Game Design press-decides section 2): a B held and let go at a rival walking away. data/director/interrupts.json brawl.chargeClose.enabled. Waits for the park' },
 -  { id: 'pressWait', file: 'data/director/interrupts.json', path: ['brawl', 'pressWait', 'enabled'], from: false, to: true, needs: [], optional: true,
@@ -2218,8 +2361,7 @@ index 278c871..a70d347 100644
 -    alsoIn: { file: 'sim/core/fighter.gd', text: 'SimDir.arrive(', why: 'Simulation\'s grant (docs/director/pending/arrive/grant-simulation-arrive.patch): without the hook line in free flight the switch does nothing' },
 -    what: 'the arrival (Encounter, docs/director/pending/arrive; Game Design\'s overnight ruling (c)): LT\'s high speed eases into striking distance over the last 1.5 body heights, never through the rival. data/director/interrupts.json bands.arrive.enabled. ON in the next build (the EP, 2026-11-08) and tied to the page\'s "dash": true: the page sends the dash only when this row is on (preview.mjs dashWord), because the flat-out dash at 5,000 a second would fly through the rival without it. It waits, naming what is missing, until BOTH the park (the key) and Simulation\'s grant (the hook line in fighter.gd) have landed' },
 -  { id: 'slip', file: 'data/fight/power.json', path: ['dash', 'slip', 'enabled'], from: false, to: true, needs: ['arrive'], optional: true,
-+  { id: 'slip', file: 'data/fight/power.json', path: ['dash', 'slip', 'enabled'], from: false, to: true, needs: [], optional: true,
-     what: 'the slip\'s brake (Simulation, docs/architecture/pending/dash-slip; Game Design\'s overnight ruling (c), "a tapped LT is still the slip"): an LT let go before tick 6 of the dash eases to the slip\'s 1,125 a second over 4 ticks instead of carrying a full dash; held 6 ticks or longer, nothing changes. data/fight/power.json dash.slip.enabled. Only with the page\'s dash (the model on), so it needs arrive. It does its job with Controls\' dashHandover on: with the 12-tick lunge every tap is a 13-tick dash. It waits, naming the key, until the park lands' },
+-    what: 'the slip\'s brake (Simulation, docs/architecture/pending/dash-slip; Game Design\'s overnight ruling (c), "a tapped LT is still the slip"): an LT let go before tick 6 of the dash eases to the slip\'s 1,125 a second over 4 ticks instead of carrying a full dash; held 6 ticks or longer, nothing changes. data/fight/power.json dash.slip.enabled. Only with the page\'s dash (the model on), so it needs arrive. It does its job with Controls\' dashHandover on: with the 12-tick lunge every tap is a 13-tick dash. It waits, naming the key, until the park lands' },
 -  { id: 'dashHandover', file: 'data/input/timing.json', path: ['switches', 'dashHandover'], from: false, to: true, needs: ['arrive', 'slip'], optional: true,
 -    what: 'LT dash handover (Controls, docs/controls/dash-handover.md; Game Design ruling of 2026-11-08 section c): the free 12-tick lunge after a press of LT is a handover instead: at least 1,000 a second on the tick after the press and full by tick 12, so a tapped LT is the slip and not a 13-tick dash. data/input/timing.json switches.dashHandover. Needs arrive (the arrival, so the fast dash never flies through the rival) and slip (the brake that makes a tap a slip). ON in the polish build (the EP and Controls, 2026-11-09, on Encounter slip-arrive); it waits, naming the key, until the park lands' },
 -  { id: 'carryRound', file: 'data/director/interrupts.json', path: ['carryRound', 'enabled'], from: false, to: true, needs: [], optional: true,
@@ -2235,10 +2377,10 @@ index 278c871..a70d347 100644
 -    what: 'a lost charge is felt (Controls, docs/controls/pending/charge-lost; design docs/controls/charge-lost.md): three pad pulses of their own for the charger only, no screen mark: charge_broken (a heavy, a stick strike or a beam hold taken by a blow of the foe), charge_lapsed (lost to a stagger or the end of the brawl) and hold_short (a right-stick hold let go of before stage 1). timing.json switches.chargeLostCue. No pairing (the hold_short pulse only happens with the right stick, which is on). ON in the polish build (the EP, 2026-11-09); it waits, naming the key, until the park lands' },
 -  { id: 'menusRail', file: 'ui/data/features.json', path: ['features', 'menus_rail'], from: false, to: true, needs: [], optional: true,
 -    what: 'the Rail menus (UI & UX, docs/ui/menus-rail.md; Orb picked mockup A on 2026-11-09): Start, Pause, New match? and Match over get one frame, a dark rail down the left with the choices and the detail on the right, the buttons of the last device along the foot, and Options gets tabs across the top. ui/data/features.json features.menus_rail. Off, every screen is as before; it also stays as before on a touch screen, under 1000 by 600, and when narrower than 1.3 to 1. Slides and eases only (ADR 0010). ON in the polish build (the EP, 2026-11-09) if the rule fix from UI and the EP look at the stills pass; it waits, naming the key, until the key is in the tree' },
-   { id: 'hitstopAny', file: 'data/fight/hitstop.json', path: ['budgetAny', 'enabled'], from: false, to: true, needs: [], optional: true,
-     what: 'the freeze budget on whichever table is live (Simulation, docs/architecture/pending/hitstop-any; Game Design gauntlet-plan.md sections 7 and 8: at most 15 percent of a match frozen on average): the window of the last 10 live seconds counts every frozen tick even with hit-stop by weight off, and over 12 percent of it a hit stop is x0.7 (x0.5 over the 40 percent deep line), at least 1 tick; a decisive blow, a KO, a launch, a full launch and a heavy are never cut. data/fight/hitstop.json budgetAny.enabled (the setup word hitstopBudget is read over it). Off, the golden is byte-identical. ON in the polish build (the EP, 2026-11-09) if the re-read by Encounter holds; it waits, naming the key, until the park lands' },
-   { id: 'airBrake', file: 'data/fight/brake.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
-     what: 'the air brake (Game Design, buildings.md 7.2; sim/core/brake.gd): hold LT to brake while knocked back in the air. data/fight/brake.json enabled; SimCore.newMatch copies it into the match, and the file joins a replay\'s data hash only when on. After Simulation\'s determinism and rollback checks' },
+-  { id: 'hitstopAny', file: 'data/fight/hitstop.json', path: ['budgetAny', 'enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'the freeze budget on whichever table is live (Simulation, docs/architecture/pending/hitstop-any; Game Design gauntlet-plan.md sections 7 and 8: at most 15 percent of a match frozen on average): the window of the last 10 live seconds counts every frozen tick even with hit-stop by weight off, and over 12 percent of it a hit stop is x0.7 (x0.5 over the 40 percent deep line), at least 1 tick; a decisive blow, a KO, a launch, a full launch and a heavy are never cut. data/fight/hitstop.json budgetAny.enabled (the setup word hitstopBudget is read over it). Off, the golden is byte-identical. ON in the polish build (the EP, 2026-11-09) if the re-read by Encounter holds; it waits, naming the key, until the park lands' },
+-  { id: 'airBrake', file: 'data/fight/brake.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+-    what: 'the air brake (Game Design, buildings.md 7.2; sim/core/brake.gd): hold LT to brake while knocked back in the air. data/fight/brake.json enabled; SimCore.newMatch copies it into the match, and the file joins a replay\'s data hash only when on. After Simulation\'s determinism and rollback checks' },
 -  { id: 'stances', file: 'data/director/interrupts.json', path: ['stances', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
 -    probe: '"stances": DirStance.on()', probeIf: { file: 'sim/director/stance.gd', text: 'static func on' },
 -    what: 'LB and LT on a blow (Encounter, docs/director/pending/stances; pad-first-press.md): the check, the push and the rest differ. data/director/interrupts.json stances.enabled. Needs the stick. Waits for the stances park' },
@@ -2254,9 +2396,9 @@ index 278c871..a70d347 100644
 -  { id: 'beamFront', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'enabled'], from: false, to: true, needs: [], optional: true,
 -    probe: '"beamFront": DirBeamPlay.frontOn()', probeIf: { file: 'sim/director/beamplay.gd', text: 'static func frontOn' },
 -    what: 'beams that travel, and the window to answer (Encounter, docs/director/pending/beam-front; row 40 of rule-of-cool-map.md): the beam takes ticks from hand to him, the hit is decided at arrival, and he can fire back, dodge in the last 14 ticks or block. data/director/interrupts.json beamPlays.front.enabled. Waits until the tree has Encounter\'s park' },
-   { id: 'kick', file: 'data/fight/kick.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
-     probe: '"kick": SimKick.enabled()', probeIf: { file: 'sim/core/kick.gd', text: 'static func enabled' },
-     what: 'the kick and the coin turn (Simulation, docs/architecture/kick.md; rule-of-cool-map.md row 23): flat out from under half of top speed leaves at `instant` of top speed on the first tick (default 0.8) and reaches top speed over `climbTicks` (default 8) (Orb: instant, or at least instant to about 80%); a stick flip above half of top speed brakes, plants and kicks the other way. The overspeed is its own switch and off. Page words to try values: ?instant=0.9&climbTicks=4 (the printed sample addresses). data/fight/kick.json enabled. A setup\'s "kick" overrides it for a match: the page word ?kick=1 puts true in the setup, ?kick=off puts false (to compare). Waits until the tree has Simulation\'s park (docs/architecture/pending/kick)' },
+-  { id: 'kick', file: 'data/fight/kick.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+-    probe: '"kick": SimKick.enabled()', probeIf: { file: 'sim/core/kick.gd', text: 'static func enabled' },
+-    what: 'the kick and the coin turn (Simulation, docs/architecture/kick.md; rule-of-cool-map.md row 23): flat out from under half of top speed leaves at `instant` of top speed on the first tick (default 0.8) and reaches top speed over `climbTicks` (default 8) (Orb: instant, or at least instant to about 80%); a stick flip above half of top speed brakes, plants and kicks the other way. The overspeed is its own switch and off. Page words to try values: ?instant=0.9&climbTicks=4 (the printed sample addresses). data/fight/kick.json enabled. A setup\'s "kick" overrides it for a match: the page word ?kick=1 puts true in the setup, ?kick=off puts false (to compare). Waits until the tree has Simulation\'s park (docs/architecture/pending/kick)' },
 -  { id: 'mixed', file: 'data/combat/mixed.json', path: ['enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
 -    probe: '"mixed": DirMixed.on()', probeIf: { file: 'sim/director/mixed.gd', text: 'static func on' },
 -    what: 'the mixed string (Combat, Orb\'s clip C9; docs/design/energy-overhaul.md section 21): a send or a knock opens a string across any range, and in it a tapped far heavy is a lob aimed where he is going, timed to land as he does. data/combat/mixed.json enabled. Needs the right hand. A prototype nobody has played. Waits until the tree has Combat\'s park (docs/combat/pending/mixed-string)' },
@@ -2276,7 +2418,7 @@ index 278c871..a70d347 100644
  ];
  
  export const IDS = SWITCHES.map((s) => s.id);
-@@ -378,7 +497,8 @@ export function resolve(off = [], table = SWITCHES, on = []) {
+@@ -378,7 +486,8 @@ export function resolve(off = [], table = SWITCHES, on = []) {
    const IDS = table.map((s) => s.id);
    const want = new Set(off.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
    const wantOn = new Set(on.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
@@ -2286,7 +2428,7 @@ index 278c871..a70d347 100644
    // a row with `held` (a reason) is off in a build unless asked for with --on: it is on the list, off, with its reason (the city rows wait on QA's read)
    const held = table.filter((s) => s.held && !wantOn.has(s.id)).map((s) => ({ id: s.id, why: s.held }));
    const heldIds = new Set(held.map((h) => h.id));
-@@ -392,7 +512,7 @@ export function resolve(off = [], table = SWITCHES, on = []) {
+@@ -392,7 +501,7 @@ export function resolve(off = [], table = SWITCHES, on = []) {
        if (missing.length) { active.delete(sw.id); cascaded.push({ id: sw.id, because: missing }); again = true; }
      }
    }

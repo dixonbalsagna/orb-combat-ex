@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 const [file, listFile] = process.argv.slice(2);
 const dataIds = readFileSync(listFile, 'utf8').split(/\r?\n/).filter(Boolean);
-const extra = ['soundTug', 'soundMoments', 'soundCarry', 'tiles', 'craterlook', 'meteor', 'phrases', 'mixed'];
+const extra = ['tiles', 'craterlook', 'meteor'];   // the look words: no data key to read, judged from the code of the tree (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)
 const retired = [...dataIds, ...extra];
 const set = new Set(retired);
 const orig = (await import(pathToFileURL(file).href + '?orig=1')).SWITCHES;   // the table as it is, before the text is edited
@@ -65,7 +65,7 @@ console.log(`retired ${retired.length} rows (${dataIds.length} data rows by the 
 console.log('needs dropped: ' + (droppedNeeds.join(' | ') || 'none'));
 // the record of what landed: the retired rows as they were (without their long text), with the evidence for each
 import { dirname, join } from 'node:path';
-const ev = (id) => (dataIds.includes(id) ? 'the GW1a scratch tree holds the row\'s value (to) in main\'s data' : ['phrases', 'mixed'].includes(id) ? ('Combat park (docs/combat/pending/gw1a-rows) sets enabled true in data/combat/' + id + '.json; the GW1a scratch tree does not hold the file') : ['tiles', 'craterlook', 'meteor'].includes(id) ? 'the GW1a scratch tree has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)' : 'Audio\'s group sets it in audio/data (the park\'s files); the GW1a scratch tree has no audio folder to read');
+const ev = (id) => (dataIds.includes(id) ? 'the full GW1a stack (the EP\'s s422 tree, plus Simulation\'s data-fight-gw1a for the five data/fight rows) holds the row\'s value (to) at its key' : ['phrases', 'mixed'].includes(id) ? ('Combat park (docs/combat/pending/gw1a-rows) sets enabled true in data/combat/' + id + '.json; the GW1a scratch tree does not hold the file') : ['tiles', 'craterlook', 'meteor'].includes(id) ? 'the full GW1a stack has it on by default in code (RenderTileGround.on, crater_look, VfxLook.METEOR_DEFAULT)' : 'Audio\'s group sets it in audio/data (the park\'s files); the GW1a scratch tree has no audio folder to read');
 const rec = orig.map((r, index) => ({ r, index })).filter((x) => set.has(x.r.id)).map(({ r, index }) => ({ ...r, index, evidence: ev(r.id) }));
 writeFileSync(join(dirname(file), 'retired-rows.json'), JSON.stringify({ keptNeedsBefore: needsBefore, _about: 'The switch rows the golden window GW1a landed as main\'s own data (tools/preview/switches.mjs LANDED_IDS), as they were before: id, file, key, from, to. Kept as the record of what landed and as the selftest\'s fixtures for the flip engine. Written by the retirement, 2026-11-14.', rows: rec }, null, 1) + NL);
 console.log('wrote retired-rows.json with', rec.length, 'rows');
