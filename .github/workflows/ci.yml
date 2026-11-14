@@ -90,6 +90,8 @@ jobs:
       - name: Two-fighter ratchet (shipped code names no more places than the baseline)
         run: node tools/ratchet-two-fighter.mjs
       # The fighter-specific code ratchet (A-ENERGY-06; X-15): the energy, stamina, body and forms systems may not name a fighter by his id more often than the baseline (0 on 2026-11-14)
+      - name: Mode smoke runner self-test (a result is read as pass or fail; the game's data folder is moved off the real one; A-MODES-08)
+        run: node tools/smoke/mode-smoke-selftest.mjs
       - name: Fighter-specific code ratchet self-test
         run: node tools/ratchet-fighter-specific-selftest.mjs
       - name: Fighter-specific code ratchet (no system is written for one named fighter)
@@ -109,6 +111,11 @@ jobs:
         run: node tools/check-scripts-table-selftest.mjs
       - name: Check scripts table (no new script left unclassified; the ratchet only goes down)
         run: node tools/check-scripts-table.mjs --check
+      # The version number and the changelog (docs/tools/changelog.md; A-TOOLS-07): the counter in tools/version.json and the changelog's top entry agree
+      - name: Version tool self-test
+        run: node tools/version-selftest.mjs
+      - name: Version and changelog agree
+        run: node tools/version.mjs --check
       # The copy of the kept builds and play files to a second place (docs/tools/backup.md; A-TOOLS-09): node and temporary folders only
       - name: Backup tool self-test (the copy, a second run, verify, the restore and its refusal)
         run: node tools/backup-kept-selftest.mjs
@@ -331,6 +338,16 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/cover_water_check.gd'
       - name: Lake water (a ring with lakes draws water across the interior, in hard depth steps; none without lakes)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/lake_water_check.gd'
+      # One mode a run through the real main scene, by row name: start menu, players, start, a match, a result card, a rematch, the pause menu and the way back (A-MODES-08). A step that fails fails the job; a run with no result file does too.
+      - name: Mode smoke (solo and two people, to a result, a rematch and back to the menu)
+        run: 'node tools/smoke/mode-smoke.mjs --godot "$GODOT" --out "${RUNNER_TEMP}/mode-smoke"'
+      - name: Keep the mode smoke results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mode-smoke
+          path: ${{ runner.temp }}/mode-smoke
+          if-no-files-found: warn
 
   # The network checks (docs/net/rollback.md sections 7 to 11), in a job of their own: together they take about 7 minutes (the two-process ENet proof about 1 minute each way), so they run beside the other jobs instead of lengthening godot-parity.
   # enet_check starts two more Godot processes (a host and a joiner) on 127.0.0.1, UDP ports 47100 and 47102, with no outside service. It is run here and never on Orb's PC (a socket there could raise a Windows Firewall prompt).

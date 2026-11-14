@@ -21,7 +21,7 @@ import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exportRevision } from '../flash/head-export.mjs';
 import { scriptErrors } from '../gate.mjs';
-import { patchHost, injectPage } from './blackbox.mjs';
+import { patchHost, injectPage, hasBuildId } from './blackbox.mjs';
 import { shellSnippet, injectShell } from '../lib/audio-shell.mjs';
 import { IDS, SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, EDITS_FINGERPRINT, flip, parts, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
 
@@ -218,7 +218,7 @@ export async function buildPreview(o) {
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
   writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));
-  if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'))); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
+  if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'), { buildId: hasBuildId(tree) })); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
   const godot = o.godotNode ? null : godotExe(o.godot);
   const g = { godot, godotNode: o.godotNode };
   log('importing the project (Godot, below-normal priority)');

@@ -6,7 +6,7 @@ Register rows A-CODE-03 (Orb's solo build carries code that is not on main), A-U
 
 | Patch | What | Files |
 | :--- | :--- | :--- |
-| `planet-entry-and-probe.patch` | `_planet_setup()`: the menu's planet part, else the option `planet=N` (touch 3) of the page address or command line. `planet`, `touch` and `preview` join `URL_ARGS`. `_publish_probe()`: with `preview=1` on the web, `window.__preview` (the tick, the planet's generation, what the world's switches read, the hit points), twice a second, read only. | `render/core/main.gd` |
+| `planet-entry-and-probe.patch` | `_planet_setup()`: the menu's planet part, else the option `planet=N` (touch 3) of the page address or command line. `planet`, `touch` and `preview` join `URL_ARGS` AND `LOCAL_ONLY_ARGS` (RL-196: a word that changes how a match starts, or a debug probe, is dropped on a public page; re-cut 2026-11-14 at the EP's word, sha1 cd8237cb). `_publish_probe()`: with `preview=1` on the web, `window.__preview` (the tick, the planet's generation, what the world's switches read, the hit points), twice a second, read only. | `render/core/main.gd` |
 | `report-hook.patch` | `MatchRecorder`: the black box's host half as ordinary code. It READS the tick's intents, the seed, the setup and the AI toggles into SimReplay's own format, through three insert-only hooks in `SimHost` (arm after the setup is kept, `before_step` before `SimCore.step`, `toggle` before `toggleAI`). `SimHost.record_file(reason, tag, note)` writes `user://reports/solo-<commit8>-main-<time>-<reason>.json` ({kind "orb-solo-match", pc, slot, mode solo or couch, build, reason, savedAt, tick, marks, replay}, the shape of a LAN save). `main.gd` sets `ui_hud.lan_report_fn` to it on a desktop build, so the one-press report, "Save this match" and the panel's Save report row work with no UI change; a LAN build's host and the web page's download come first as before. The newest 20 files are kept. | `render/core/match_recorder.gd` (+ .uid), `render/core/sim_host.gd`, `render/core/main.gd`, `render/tools/match_recorder_check.gd` (+ .uid) |
 
 ## Proof
@@ -34,6 +34,10 @@ A page build's source tree against HEAD 59c6b195: **30 files differ**: 26 data a
           node tools/gate.mjs --verdict "match_recorder_check:" -- "$GODOT" --headless --path . --script res://render/tools/match_recorder_check.gd
 ```
 (Use the job's own way of running a Godot check; the line the script prints is `match_recorder_check: 16 checks, 0 failed`.)
+
+## Scope of the recorder
+
+`MatchRecorder` records the two bodies of the sim state (`S.fighters`, the first two slots of SimReplay's format): that is a solo match and a couch match. A 2v2 match (`S.stage` with four bodies) is NOT recorded whole: its replay would lack the other two slots' intents, so the recorder is not offered for it and a 2v2 save waits for the stage-aware version (the EP's note, 2026-11-14; Netcode's LAN save, which records every confirmed input, covers LAN 2v2).
 
 ## Needs
 

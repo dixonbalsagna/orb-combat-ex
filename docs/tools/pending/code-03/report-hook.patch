@@ -23,10 +23,10 @@ index fbe2402..36502a7 100644
 +	return host.record_file("report", tags, note)
 diff --git a/b/render/core/match_recorder.gd b/render/core/match_recorder.gd
 new file mode 100644
-index 0000000..becba18
+index 0000000..0ef3478
 --- /dev/null
 +++ b/render/core/match_recorder.gd
-@@ -0,0 +1,137 @@
+@@ -0,0 +1,140 @@
 +class_name MatchRecorder
 +extends RefCounted
 +## The match as a replay, on a plain desktop build (register rows A-UI-02 and A-CODE-03, Tools, 2026-11-14). It was the black box of the private page (tools/preview/blackbox.mjs): a few lines of the
@@ -67,6 +67,9 @@ index 0000000..becba18
 +
 +## The record's header, from the state the match was started in (read before any toggle of this match, as SimReplay.recorder does).
 +func _begin(S: SimState) -> void:
++	if S.stage != null:   # a match of two fights (four bodies): this recorder keeps the first two only, so it records nothing and a save answers "" (the EP's note, 2026-11-14; a LAN save records every confirmed input)
++		armed = false
++		return
 +	var ai: Dictionary = {}
 +	for k in range(S.fighters.size()):
 +		ai["p%d" % (k + 1)] = S.fighters[k].ai != null

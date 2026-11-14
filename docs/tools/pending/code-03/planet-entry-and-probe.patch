@@ -1,5 +1,5 @@
 diff --git a/render/core/main.gd b/render/core/main.gd
-index fbe2402..37083d1 100644
+index fbe2402..f440f16 100644
 --- a/render/core/main.gd
 +++ b/render/core/main.gd
 @@ -422,9 +422,9 @@ func _mb_attach() -> bool:
@@ -65,11 +65,13 @@ index fbe2402..37083d1 100644
  		su.merge(_ai_part())
  		start_match(sd, ai, su)
  	_planet_next = {}
-@@ -1641,7 +1669,7 @@ const HOLD_STYLE_OPTIONS := {"guard_style": "guard", "manoeuvre_style": "dodge",
+@@ -1640,8 +1668,8 @@ const HOLD_STYLE_OPTIONS := {"guard_style": "guard", "manoeuvre_style": "dodge",
+ ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
  ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
  ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
- const LOCAL_ONLY_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+-const LOCAL_ONLY_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
 -const URL_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const LOCAL_ONLY_ARGS: Array = ["planet", "touch", "preview", "craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
 +const URL_ARGS: Array = ["planet", "touch", "preview", "craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
  
  

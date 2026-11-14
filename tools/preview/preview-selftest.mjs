@@ -430,6 +430,20 @@ try {
     const noProbe = await smoke({ dir: (() => { const d = join(tmp, 'blank'); mkdirSync(d, { recursive: true }); writeFileSync(join(d, 'index.html'), '<html><body><canvas></canvas></body></html>'); return d; })(), on: IDS, timeoutS: 8, session: 'tools-preview-selftest', exe });
     check('it fails a page that never publishes its state', noProbe.ok === false && /did not boot/.test(noProbe.problems[0].text), JSON.stringify(noProbe.problems));
   }
+  // A-NET-05 (B1 fix 1): the build-id part of the black box is added only for a tree whose replay.gd has SimReplay.buildId
+  {
+    const HOST2 = ['extends RefCounted', 'func new_match(p_seed: int) -> void:', '\tsetup_used = su.duplicate(true)', '\t_started(su, remember)', 'func tick() -> void:', '\tif SimCore.step(S, inputs):', '\t\thub.consumed()', 'func toggle_ai(idx: int) -> void:', '\tSimCore.toggleAI(S, idx)', ''].join('\n');
+    const plain = BB.patchHost(HOST2), stamped = BB.patchHost(HOST2, { buildId: true });
+    check('a tree with no SimReplay.buildId gets a black box that never names it (an older commit still compiles)', !plain.includes('SimReplay.buildId') && !plain.includes('__replay_home'));
+    check('a tree with it gets the recorded "build" and the check against the build (or the home a tool names)', stamped.includes('_bb["build"] = SimReplay.buildId()') && stamped.includes('window.__replay_home') && stamped.includes('String(rp.get("build", "")) != want_build'));
+    check('the build-id version differs from the plain one only by those additions (the hooks are the same)', stamped.includes('\t_bb_arm(seed, ai, su)') && stamped.includes('\tif _bb_step(inputs):') && stamped.length > plain.length);
+    check('withBuildId names a moved anchor instead of passing', (() => { try { BB.withBuildId('func nothing():\n'); return false; } catch (e) { return /moved/.test(e.message); } })());
+    const t1 = join(tmp, 'tree-has'), t2 = join(tmp, 'tree-not'), t3 = join(tmp, 'tree-none');
+    mkdirSync(join(t1, 'sim', 'core'), { recursive: true }); mkdirSync(join(t2, 'sim', 'core'), { recursive: true }); mkdirSync(t3, { recursive: true });
+    writeFileSync(join(t1, 'sim', 'core', 'replay.gd'), 'class_name SimReplay\nstatic func buildId() -> String:\n\treturn ""\n');
+    writeFileSync(join(t2, 'sim', 'core', 'replay.gd'), 'class_name SimReplay\nstatic func play() -> void:\n\tpass\n');
+    check('hasBuildId reads the tree: yes, no, and no replay.gd at all', BB.hasBuildId(t1) === true && BB.hasBuildId(t2) === false && BB.hasBuildId(t3) === false);
+  }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

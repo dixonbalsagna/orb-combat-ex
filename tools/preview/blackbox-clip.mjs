@@ -19,6 +19,7 @@ const rp = doc.replay || doc;
 const fr = doc.frames || null;   // the slow frames of the real play (the page's own frame gaps): [tick, ms, seconds in]
 const marks = fr && Array.isArray(fr.slow) ? fr.slow : [];
 const HOLD_AT = Number(opt('--hold-at', 0)), HOLD_FOR = Number(opt('--hold-for', 60)), HOLD_EVERY = Math.max(1, Number(opt('--hold-every', 6)));   // pause on a tick of the match: not stepping, a still every HOLD_EVERY s for HOLD_FOR s (docs/tools/preview.md)
+const HOME = String(opt('--home', '') || '');   // A-NET-05: the stamp of the build that made the save when it is not this page's (a LAN save carries the kit's stamp): window.__replay_home, so the page checks the file against it (the data hash still has to match)
 const FROM = Math.max(0, Number(opt('--from', 0))), TO = Number(opt('--to', 0));   // a window: pictures only from FROM, and the match is played no further than TO (0: to its end)
 const TICKS = Math.min(Number(rp.ticks) || 0, MAXT, TO > 0 ? TO : Infinity);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -37,7 +38,7 @@ try {
   page = await Cdp.open(browser.target.webSocketDebuggerUrl);
   await page.send('Page.enable');
   await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
-  await page.send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__replay = ${JSON.stringify(JSON.stringify(rp))};\n${OVERLAY_JS}` });
+  await page.send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__replay = ${JSON.stringify(JSON.stringify(rp))};\n${HOME ? `window.__replay_home = ${JSON.stringify(HOME)};\n` : ''}${OVERLAY_JS}` });
   await page.send('Page.navigate', { url });
   const deadline = Date.now() + 900 * 1000;
   let ready = false;

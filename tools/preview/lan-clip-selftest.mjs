@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { rowOf, rowsFromInputs, pictureTicks, stripFor } from './lan-strip.mjs';
-import { planWindow, html, reportMarks, commitOf, groupMarks, scrubPath } from './lan-clip.mjs';
+import { planWindow, html, reportMarks, commitOf, groupMarks, scrubPath, homeOf } from './lan-clip.mjs';
 import { findFiles, keptBuildFor, readmeText, cmdText, newestPerPc, clipJobs, SAVED } from './lan-report.mjs';
 
 const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
@@ -152,5 +152,6 @@ try {
 // a plain desktop build's own save (solo-, kind orb-solo-match) is a report file too (A-UI-02)
 ok(SAVED.test('solo-6a30b4c-main-20261114-101500-report.json') && SAVED.test('solo-6a30b4c9-main-20261114-101500-save.json') && SAVED.test('solo-unknown-main-20261114-101500-report-2.json') && !SAVED.test('solo-6a30b4c-old-2026111-101500-report.json'), 'the saved-file pattern takes a desktop build\'s solo- file (7 or 8 character commit, report or save, the -<n> suffix) and refuses a malformed one');
 
+eq([homeOf({ replay: { build: '6a30b4c9-1f2e3d4c' } }), homeOf({ build: 'x' }), homeOf({ replay: { build: { commit: 'a' } } }), homeOf({ replay: {} }), homeOf(null)], ['6a30b4c9-1f2e3d4c', 'x', '', '', ''], 'homeOf: the replay own build string, else nothing (A-NET-05: a LAN save is filmed against its own stamp)');
 console.log(bad ? `lan-clip selftest: ${bad} of ${n} FAILED` : `lan-clip selftest ok: ${n} checks`);
 process.exitCode = bad ? 1 : 0;

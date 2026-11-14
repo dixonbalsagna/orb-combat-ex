@@ -18,7 +18,7 @@ import { patchHook } from './film-hook.mjs';
 import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, saveSmoke, serveLocal } from './preview.mjs';
 import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
 import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
-import { patchHost, patchAudio, patchHaptics, injectPage, BB_FINGERPRINT } from './blackbox.mjs';
+import { patchHost, patchAudio, patchHaptics, injectPage, hasBuildId, BB_FINGERPRINT } from './blackbox.mjs';
 import { shellSnippet, injectShell } from '../lib/audio-shell.mjs';
 import { setWebCustomTemplate } from '../flash/web-preset.mjs';
 import { fetchTemplate } from '../site-template.mjs';
@@ -125,7 +125,7 @@ export async function buildStackPreview(o) {
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
   writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));
   if (pl.active.includes('blackbox')) { const af = join(tree, 'audio', 'audio_voices.gd'); if (existsSync(af)) writeFileSync(af, patchAudio(readFileSync(af, 'utf8'))); writeFileSync(mainFile, patchHaptics(readFileSync(mainFile, 'utf8'))); }
-  if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'))); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
+  if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'), { buildId: hasBuildId(tree) })); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
   if (pl.active.includes('blackbox')) {   // Encounter's fix (2026-11-02): during a playback of a saved match the hook's ai scene stages nothing into it (the forms at 300 and 1500, the tier at 900, the stage at 1200)
     const hf = join(tree, 'render', 'tools', 'flash_capture.gd');
     if (existsSync(hf)) {

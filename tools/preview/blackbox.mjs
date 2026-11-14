@@ -9,6 +9,8 @@
 //
 // The saved file plays back through the existing replay path: `node tools/preview/blackbox-verify.mjs <file> --tree <stack tree>` re-runs it headless (SimReplay.play) and says whether it reproduces to the last tick.
 import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const HOOKS = [
   { name: 'the match start (the seed, the AI flags and the setup it was started with)', from: '\tsetup_used = su.duplicate(true)\n', to: '\tsetup_used = su.duplicate(true)\n\t_bb_arm(seed, ai, su)\n' },
@@ -184,8 +186,25 @@ export const HOST_FUNCS = [
   '',
 ].join('\n');
 
-/** sim_host.gd with the black box's hooks and functions. Throws, naming the hook, when the file has moved (the preview must then be updated). Keeps the file's line endings. */
-export function patchHost(text) {
+// A-NET-05 (a replay names the build that made it; Simulation's SimReplay.buildId()): added to the black box's functions ONLY for a tree whose replay.gd has buildId, so a page build of an older commit still
+// compiles (patchHost's `buildId` option; callers read the tree's replay.gd). The recorded replay then carries "build", and bb_play_start refuses another build's file, with one exception: a tool that films a
+// save made by ANOTHER stamp of the same code (a LAN save carries the kit's own stamp) names that stamp in window.__replay_home, and the file is then checked against it (the data hash still has to match).
+const REC_ANCHOR = '\t\t"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}\n';
+const PLAY_ANCHOR = '\tif rp.get("format", "") != SimReplay.FORMAT or int(rp.get("v", 0)) != SimReplay.V or int(rp.get("intent", 0)) != SimIntent.VERSION:\n';
+export const HAS_BUILD_ID = /static func buildId\(/;
+/** Whether a tree's sim/core/replay.gd has SimReplay.buildId (A-NET-05 has landed in it). */
+export function hasBuildId(tree) { const f = join(tree, 'sim', 'core', 'replay.gd'); return existsSync(f) && HAS_BUILD_ID.test(readFileSync(f, 'utf8')); }
+export function withBuildId(funcs) {
+  if (funcs.split(REC_ANCHOR).length !== 2 || funcs.split(PLAY_ANCHOR).length !== 2) throw new Error('tools/preview/blackbox.mjs: the black box functions moved (withBuildId is out of date)');
+  const rec = REC_ANCHOR + '\tif SimReplay.buildId() != "":\n\t\t_bb["build"] = SimReplay.buildId()   # A-NET-05: the build that made it (build_info.json)\n';
+  const play = '\tvar bb_home: String = String(JavaScriptBridge.eval("window.__replay_home || \'\'", true)) if OS.has_feature("web") else ""   # a tool filming a save of another stamp names it\n' +
+    '\tvar want_build: String = bb_home if bb_home != "" else SimReplay.buildId()\n' +
+    '\tif rp.get("format", "") != SimReplay.FORMAT or int(rp.get("v", 0)) != SimReplay.V or int(rp.get("intent", 0)) != SimIntent.VERSION or String(rp.get("build", "")) != want_build:\n';
+  return funcs.replace(REC_ANCHOR, () => rec).replace(PLAY_ANCHOR, () => play);
+}
+
+/** sim_host.gd with the black box's hooks and functions. Throws, naming the hook, when the file has moved (the preview must then be updated). Keeps the file's line endings. opts.buildId: the tree's replay.gd has SimReplay.buildId (A-NET-05). */
+export function patchHost(text, opts = {}) {
   const crlf = text.includes('\r\n');
   const nl = (s) => (crlf ? s.replace(/\n/g, '\r\n') : s);
   let out = text;
@@ -195,7 +214,7 @@ export function patchHost(text) {
     if (n !== 1) throw new Error(`render/core/sim_host.gd: ${h.name}: expected the line once, found it ${n} times (tools/preview/blackbox.mjs HOOKS is out of date)`);
     out = out.replace(from, () => nl(h.to));
   }
-  return out.replace(/\s*$/, '') + nl(HOST_FUNCS);
+  return out.replace(/\s*$/, '') + nl(opts.buildId ? withBuildId(HOST_FUNCS) : HOST_FUNCS);
 }
 
 
@@ -514,4 +533,4 @@ export const AUDIO_HEAD = String.raw`
 })();
 `;
 
-export const BB_FINGERPRINT = createHash('sha1').update(JSON.stringify([HOOKS, HOST_FUNCS, PAGE_SCRIPT, AUDIO_HEAD, patchAudio.toString(), patchHaptics.toString()])).digest('hex').slice(0, 6);
+export const BB_FINGERPRINT = createHash('sha1').update(JSON.stringify([HOOKS, HOST_FUNCS, PAGE_SCRIPT, AUDIO_HEAD, patchAudio.toString(), patchHaptics.toString(), withBuildId.toString()])).digest('hex').slice(0, 6);

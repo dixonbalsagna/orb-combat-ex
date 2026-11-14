@@ -35,6 +35,8 @@ export function reportMarks(doc) {
   return (Array.isArray(doc.reportTicks) ? doc.reportTicks : []).map(Number).filter((n) => n > 0).sort((a, b) => a - b).map((tick) => ({ tick, tag: '', note: '' }));
 }
 /** The commit a file was recorded on: Netcode's build.commit, a black box's build.commit, else a top-level `commit`. */
+/** The stamp the save's replay names as its build (SimReplay's "build"), or '' when it names none. Pure. */
+export function homeOf(doc) { const rp = (doc && doc.replay) || doc || {}; return typeof rp.build === 'string' ? rp.build : ''; }
 export function commitOf(doc) { return (doc.build && doc.build.commit) || doc.commit || null; }
 /** Which PC: Netcode's `pc` ("main" or "old"), else `side`. */
 export function pcOf(doc) { return doc.pc || doc.side || null; }
@@ -111,6 +113,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!existsSync(join(resolve(DIR), 'index.html'))) finish(3, `no index.html in ${DIR}`);
   const args = [join(HERE, 'blackbox-clip.mjs'), '--file', resolve(FILE), '--dir', resolve(DIR), '--out', out, '--width', String(WIDTH), '--height', String(HEIGHT), '--scale', '1', '--every', String(EVERY), '--from', String(w.from), '--to', String(w.to)];
   const q = opt('--query', null); if (q) args.push('--query', q);
+  const home = homeOf(doc); if (home) args.push('--home', home);   // the save's own stamp (A-NET-05): a LAN save is made by the kit's stamp, not the page's
   const limitS = Math.max(60, Number(opt('--limit', 1200)));
   const env = { ...process.env, MERIDIAN_SESSION: process.env.MERIDIAN_SESSION || 'tools-pipeline' };
   const child = spawn(process.execPath, args, { env, stdio: 'inherit', windowsHide: true });
