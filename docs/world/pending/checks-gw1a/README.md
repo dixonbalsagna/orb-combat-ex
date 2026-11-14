@@ -47,3 +47,5 @@ Not in the split: `step_check`'s timing line fails under load whatever the data 
 
 - A pin changes memory, not files: a check run in the same process after another that pinned sees pinned data (each check is its own Godot process in CI, so it does not).
 - `WorldPin.shipped()` reaches into five modules' data (World's, the director's, the planner's, Simulation's power). If one of them changes how it loads, the pin must follow; `pins-gw1a` carries the check that would show it (each pinned check fails against a moved value).
+
+**Status at quiet time (2026-11-14):** the re-class is complete and parked (both diffs apply strictly on HEAD; all 33 pass on the s422 tree, 23 with the model on, 8 in both passes, ground_check old-path). Nothing half-done. Next: the quiet-window run of depthreads_check with its pin (not run), and the two owed World parks it names (memory-under-model, wrecks-power) only if briefed.
