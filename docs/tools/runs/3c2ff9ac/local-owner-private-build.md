@@ -1,0 +1,9 @@
+# The local owner-private build, proof on commit 3c2ff9ac (Tools, 2026-11-14)
+
+`node tools/desktop-local-build.mjs --commit 3c2ff9ac --out <scratch folder>`, run on Orb's PC (Windows 11, Godot 4.7.2 headless, below-normal priority), **without** `--with-working-tools`, at the EP's request. The output went to a scratch folder, not `homework/`. Nothing was handed to anyone: main is not Orb's 9 November game until GW1a lands, so no main build goes in front of Orb yet.
+
+Every step ok, about 3 minutes: the commit unpacked into a scratch copy (the working tree not read); lock on; version `0.1.0` into the export preset; routes check clean; build_info.json `{"commit":"3c2ff9a","date":"2026-11-14","version":"0.1.0"}` (the version is in it now: the commit carries the `write-build-info.mjs` change); import; export "Windows Desktop" (121,058,008 bytes); the project's bench and the exported program's bench both print `gameplay hash at tick 2400: 7b8c8aff21d1a5cb`, the same hash as CI run 43589936940 on 148f4e16 and the earlier local try on 5963d224; pack; zip 44,397,302 bytes; unzipped somewhere new; verify ok (files, magic bytes, embedded pck, notices, lock, ORB-PRIVATE line).
+
+SHA-256 of the zip: `1513e5c951f3d521ea3d9af46e8509fa2ff13c6ec97a2f3d0dcc83393f53262e`. The package folder holds `orb-combat-ex.exe`, `README.txt`, `NOTICES.txt`, `build_info.json`. README.txt reads: Orb Combat EX (working title), Development build for Windows x86_64, Commit 3c2ff9a, the line "ORB-PRIVATE: a private build for Orb and Orb 2 only. Please do not pass it on to anyone else.", then Orb's owner-approved flashing notice.
+
+No "TEST ONLY" line in the output or the build record: this is a build of the commit alone. Not done: the program was not started with a window (no session opens one), so the menu coming up on screen is unseen; Linux and Orb 2's PC were not tried.
