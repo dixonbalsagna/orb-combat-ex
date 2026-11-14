@@ -33,3 +33,6 @@ jobs:
       # The shell inside every run: step parses too (bash -n): the YAML lint skips block scalars, and run 43582095368 of the desktop builds failed on a runner on a quoting error in one (2026-11-14).
       - name: The shell scripts in every run step parse (self-test, then the files)
         run: node tools/check-workflow-shell-selftest.mjs && node tools/check-workflow-shell.mjs
+      # Every file a workflow names is in git (2026-11-14: ci.yml was committed naming tools/version.mjs and version-selftest.mjs, which were only on the author's PC, and the data job went red on the runner).
+      - name: Every file the workflows name is in git (self-test, then the files)
+        run: node tools/check-workflow-paths-selftest.mjs && node tools/check-workflow-paths.mjs

@@ -16,6 +16,9 @@ check('the recorded-yes step without its gate is found', problems(once("      - 
 check('a default of outside-testers is found', problems(real.replace('default: owner-private', 'default: outside-testers')).some((m) => /default to owner-private/.test(m)));
 check('a missing audience input is found', problems(real.replace(/^      audience:/m, '      audiencex:')).some((m) => /no `audience` input/.test(m)));
 check('a publishing step is found', problems(real.replace('  windows-bench:\n', "  publish:\n    runs-on: ubuntu-24.04\n    steps:\n      - uses: softprops/action-gh-release@v2\n  windows-bench:\n")).some((m) => /publishing step/.test(m)));
+check('the real workflow passes the owner notice only on an owner-private line', real.includes('then notice=(--notice site-interim-owner.json)') && problems(real).length === 0);
+check('a --notice outside an owner-private test is found', problems(real.replace('if [ "${AUDIENCE}" = "owner-private" ]; then notice=(--notice site-interim-owner.json); fi', 'notice=(--notice site-interim-owner.json)')).some((m) => /does not test for owner-private/.test(m)));
+check('a --notice naming another file is found', problems(real.replace('then notice=(--notice site-interim-owner.json)', 'then notice=(--notice site-interim.json)')).some((m) => /not the owner notice file/.test(m)));
 check('a job-level gate covers its steps', problems(real).length === 0 && jobsOf(real).find((j) => j.job === 'windows-still').header.some((l) => /outside-testers/.test(l)));
 console.log(`desktop audience selftest: ${n} checks, ${bad} failed`);
 process.exit(bad ? 1 : 0);

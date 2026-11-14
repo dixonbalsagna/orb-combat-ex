@@ -305,7 +305,7 @@ export function verifyDir(platform, dir, o = {}) {
     if (info && o.commit && !String(o.commit).toLowerCase().startsWith(String(info.commit))) out.push(`build_info.json names commit ${info.commit}, the build is of ${o.commit}`);
   }
   let notice = null;
-  try { notice = activeNotice(); } catch (e) { out.push(e.message); }
+  try { notice = activeNotice(HERE, o.notice || null); } catch (e) { out.push(e.message); }
   if (has('README.txt') && notice) {
     const r = readFileSync(join(dir, 'README.txt'), 'utf8');
     if (!r.includes(notice.gate.ai)) out.push('README.txt does not carry the AI line word for word');
@@ -403,7 +403,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       try { info = JSON.parse(readFileSync(infoFile, 'utf8')); } catch (e) { throw new Error(`${infoFile} could not be read (node tools/write-build-info.mjs first): ${e.message}`); }
       const lic = JSON.parse(readFileSync(join(HERE, 'site-licences.json'), 'utf8'));
       mkdirSync(out, { recursive: true });
-      writeFileSync(join(out, 'README.txt'), readmeText(platform, activeNotice(), info));
+      writeFileSync(join(out, 'README.txt'), readmeText(platform, activeNotice(HERE, opt('--notice') || null), info));
       writeFileSync(join(out, 'NOTICES.txt'), noticesText(lic));
       writeFileSync(join(out, 'build_info.json'), JSON.stringify(info) + '\n');
       console.log(`desktop package: README.txt, NOTICES.txt and build_info.json (${info.commit}, ${info.date}) written to ${out} for ${platform}`);
@@ -434,7 +434,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.log(lockReduceFlashing(root) ? `lock_reduce_flashing set true in ${root}/ui/data/features.json` : 'lock_reduce_flashing was already true');
     } else if (cmd === 'verify') {
       if (!PLATFORMS.includes(platform) || !opt('--dir')) usage();
-      const problems = verifyDir(platform, resolve(opt('--dir')), { commit: opt('--commit'), locked: args.includes('--locked') ? true : args.includes('--unlocked') ? false : undefined });
+      const problems = verifyDir(platform, resolve(opt('--dir')), { commit: opt('--commit'), notice: opt('--notice') || null, locked: args.includes('--locked') ? true : args.includes('--unlocked') ? false : undefined });
       if (problems.length) { for (const p of problems) console.error(`desktop package FAILED (${platform}): ${p}`); process.exit(1); }
       console.log(`desktop package ok (${platform}): the files, the executable's magic bytes, the embedded pck, build_info.json, README.txt and NOTICES.txt hold.${platform === 'linux' ? '' : ` This was read, not run: a ${platform === 'windows' ? 'Windows' : 'macOS'} build cannot be started on this machine.`}`);
     } else usage();

@@ -48,6 +48,14 @@ export function problems(text) {
       const name = /name:\s*(.*)/.exec(s.text)?.[1] || (/uses:\s*(\S+)/.exec(s.text)?.[1] ?? 'a step');
       const stepGated = s.text.split('\n').some((l) => /^\s*(?:- )?if:/.test(l) && GATE.test(l));
       if (/uses:\s*actions\/upload-artifact@/.test(s.text) && !(stepGated || jobGated)) out.push(`${j.job} (line ${s.line}): an upload-artifact step is not gated by \`inputs.audience == 'outside-testers'\` (an owner-private run would keep a file)`);
+      // an outside-testers package carries the site's active notice, never the owner's: `--notice` may be passed only inside an owner-private branch, and only with the owner notice file
+      const code = s.text.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+      for (const l of code.split(String.fromCharCode(10))) {
+        const m = /--notice\s+(\S+)/.exec(l);
+        if (!m) continue;
+        if (m[1].replace(/[^A-Za-z0-9_.-]/g, '') !== 'site-interim-owner.json') out.push(`${j.job} (line ${s.line}): --notice names ${m[1]}, not the owner notice file (tools/site-interim-owner.json)`);
+        if (!/"\$\{AUDIENCE\}"\s*=\s*"owner-private"/.test(l)) out.push(`${j.job} (line ${s.line}): --notice is passed on a line that does not test for owner-private (an outside-testers package must carry the site's active notice)`);
+      }
       if (/Refuse without Orb's recorded yes/.test(s.text) && !(stepGated || jobGated)) out.push(`${j.job} (line ${s.line}): the recorded-yes step is not gated to outside-testers (an owner-private run has no approval file)`);
       if (/uses:\s*(softprops\/action-gh-release|actions\/deploy-pages|actions\/upload-pages-artifact|manleydev\/butler|josephbmanley\/butler)/.test(s.text) || /\bbutler push\b|gh release (create|upload)/.test(s.text)) out.push(`${j.job} (line ${s.line}): ${name}: a publishing step (release, Pages or itch.io) has no place in this workflow (RL-262)`);
     }
