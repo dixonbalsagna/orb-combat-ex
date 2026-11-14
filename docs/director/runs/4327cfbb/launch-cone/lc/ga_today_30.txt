@@ -1,0 +1,4 @@
+      cone off (0 degrees): 30 matches, 214 launches, 37 aimed at a building, 26 more than 20 degrees off the line (worst 139.9); by 10-degree bins [5, 6, 7, 4, 3, 2, 1, 3, 4, 2]
+INFO  today's planner (no cone): 26 of 37 aimed launches more than 20 degrees off the line
+LAUNCH CONE: 0 check(s) failed
+rc=0

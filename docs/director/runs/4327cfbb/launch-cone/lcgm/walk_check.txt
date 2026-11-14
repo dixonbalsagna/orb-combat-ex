@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+      a short charge's knock-back: 0 of 10
+      of 10 buildings, 700 away: leaning 7, switch off 7, no lean 7
+      sends seen: {"BUILDING SMASH":22,"DRIVE DOWN":6,"SMASH ACROSS":2,"UPPERCUT":2}
+ok    3 blows leaning, then B: at least 70% reach it (7 of 10)
+ok    no lean: it's today's rate (7 against 7)
+ok    worth doesn't move (25.73 against 25.73)
+ok    off: no wall
+ok    off: no slot
+WALK: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

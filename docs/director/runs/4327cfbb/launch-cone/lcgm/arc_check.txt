@@ -1,0 +1,63 @@
+ok    off: step does nothing
+ok    off: no slot
+ok    off: a full charge isn't earned
+ok    off: nobody's flying
+ok    row 0: the send tells the view where he lands
+ok    row 0: sideways speed never under half its mean (0.79)
+ok    row 0: never doubles back (0)
+ok    row 0: speed never jumps (2.2% a tick)
+ok    row 0: lands near what it said (0 off)
+ok    row 0: the ground sees the data's speed
+ok    row 1: the send tells the view where he lands
+ok    row 1: sideways speed never under half its mean (0.79)
+ok    row 1: never doubles back (0)
+ok    row 1: speed never jumps (2.9% a tick)
+ok    row 1: lands near what it said (0 off)
+ok    row 1: the ground sees the data's speed
+ok    row 0: the send tells the view where he lands
+ok    row 0: sideways speed never under half its mean (0.79)
+ok    row 0: never doubles back (0)
+ok    row 0: speed never jumps (2.2% a tick)
+ok    row 0: lands near what it said (0 off)
+ok    row 0: the ground sees the data's speed
+ok    short of full: not earned
+ok    full, foe not weak: the high row
+ok    full, foe stunned: the meteor
+ok    under tier 4: not earned
+ok    inside the gap between set pieces: not earned
+ok    no stun banked: the flash is the data's (44)
+ok    a banked stun: the flash comes at 24
+ok    the stun over: back to the data's
+ok    under tier 4: nothing's banked
+ok    two runs, one hash
+ok    through the sim's own step, he comes off the curve (free)
+ok    B held to the flash at tier 4 goes up the curve
+ok    one send (1)
+ok    and flies it (296)
+ok    startTier: both at tier 4 (4, 4)
+ok    from a training start, on a stunned foe: the meteor (["METEOR"])
+ok    and he's flying
+ok    no swing during the shot
+ok    a level 3 upward stick strike banks the charge
+ok    and B, inside the stun, is the meteor (["METEOR"])
+ok    stunned: the meteor
+ok    one crater, on land (1)
+ok    the meteor's own bowl (6046)
+ok    the blast takes what's in it
+ok    the second, on the first value: the high arc
+ok    a landing's score doesn't read popAlive
+ok    a landing's score doesn't read popNear
+ok    a landing's score doesn't read casualt
+ok    a landing's score doesn't read crowd
+ok    a landing's score doesn't read menace
+ok    a landing's score doesn't read anguish
+ok    the landing's energy is at the cap (158.7 of 158.8)
+ok    a landing doesn't end the match
+ok    a held brake leaves the curve only from the end of the hang (0.67)
+ok    on its heading
+ok    sideFromBlowOnly on: with no side from the stick (none, up, down) the curve goes the punch's way, whatever the landing score says
+ok    sideFromBlowOnly on: the stick toward keeps the punch's way, away sends him back past
+ok    sideFromBlowOnly on: the planner offers no candidate behind (0)
+ok    negative control, sideFromBlowOnly off: with no side from the stick the landing score turns the curve (the old rule)
+ARC: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

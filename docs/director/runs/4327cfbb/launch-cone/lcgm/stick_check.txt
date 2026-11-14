@@ -1,0 +1,73 @@
+ok    a flick lands one quick strike (1)
+ok    it lands 7 live ticks from the request (8)
+ok    its stun is 20 (20)
+ok    it does damage
+ok    it never sends him (locked)
+ok    a stick still out holds the blow back
+ok    the release lands it (1)
+ok    level 3's stun is 40 (40)
+ok    level 3 stays in reach (locked)
+ok    level 3 opens the send
+ok    a guard blocks it, with no stun (0)
+ok    a light ends its wind-up (0)
+ok    and the charge is lost
+ok    one stun a string: the second still hits and stuns nothing (20, 0, 2)
+ok    the third of one direction inside 3 s hits and doesn't stun ([24, 24, 0])
+ok    a cancel throws nothing (0)
+ok    from out of reach it closes, and lands as the stick's (1)
+ok    released before its blow, level 2 lands at level 2's stun (1, 32)
+ok    no charge cue before dwell (0)
+ok    it lands as a quick (1, 20)
+ok    a guard list shares out: {"strike.palm_rise":15,"strike.rising_elbow":18,"strike.uppercut":15}
+ok    a guard piece never repeats his last (0)
+ok    a travel list shares out: {"strike.palm_lift":15,"strike.rising_palm":18,"strike.uppercut":15}
+ok    a travel piece never repeats his last (0)
+ok    a charge's draw takes the quick's place in his last two (strike.lifting_heave)
+ok    no stick piece is thrown at a downed foe: {}
+ok    no stick strike lands on one (0)
+ok    out past the wind-up, the blow waits
+ok    back before the dwell: it lands just after (1)
+ok    as a quick strike (20)
+ok    direction 1, level 3: the brawl holds through the stun (40 of 40)
+ok    direction 1, level 3: in reach (299)
+ok    direction 2, level 3: the brawl holds through the stun (40 of 40)
+ok    direction 2, level 3: in reach (94)
+ok    the ignition route lands inside the 40-tick stun (31)
+ok    and it sends him up the curve
+ok    he's launched (launched)
+ok    same worth ([21.4395999999979, 21.4395999999979, 21.4395999999979, 21.4395999999979])
+ok    up floats him
+ok    down holds him on the floor
+ok    toward drives him back
+ok    away turns him past
+ok    direction 1: the brawl holds
+ok    direction 2: the brawl holds
+ok    direction 4: the brawl holds
+ok    direction 3: the brawl holds
+ok    sent and staying sent: one refusal (1)
+ok    as the wait runs out (9)
+ok    and nothing waits
+ok    free inside the wait: the press goes, and lands
+ok    a quick strike: a medium's hit-stop
+ok    level 2: a heavy's
+ok    level 3, which opens the send: a launch's
+ok    true: the light stops it
+ok    false: the light takes the stun (1, stun 0)
+ok    false: he took the light
+ok    false: and the one it landed on reels
+ok    a Y still ends it (0)
+ok    LB + flick lands through a light, at the guard's stun (1, stun 14)
+ok    direction 1, level 3: the brawl holds (30 of 30)
+ok    direction 2, level 3: the brawl holds (30 of 30)
+ok    direction 3, level 3: the brawl holds (30 of 30)
+ok    direction 4, level 3: the brawl holds (30 of 30)
+ok    a light pressed 16 ticks in: the charge goes on
+ok    ... at 30% of its damage (2.8 of 26.0)
+ok    a medium pressed 2 ticks in: the charge is lost
+ok    a medium pressed 30 ticks in: the charge goes on
+ok    a heavy pressed 14 ticks in: the charge is lost
+ok    a light on a beam's hold: it goes on, at 30%
+ok    a dodge makes it miss
+ok    ... and he's open for 0.33 s (17)
+STICK: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

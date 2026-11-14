@@ -1,0 +1,11 @@
+ok    a stage 1 hold of 14 ticks fires releaseTell after its release: 8 ticks
+ok    holding he's slowed (0.10); let go and waiting on the gate, full speed again (1.00)
+ok    a quick RB flick in a brawl says why: close (1)
+ok    out of one it's the heavy blast (request 1), and nothing's refused
+ok    a working fire-back is answered: a struggle, stick_start, no refusal
+ok    it costs the smallest stage's 12 (12.0)
+ok    one it can't pay says ki, once, and isn't answered
+ok    a second stick stun in one string is held back, and the flick lands: no refusal (stun_limit 0, hits 2)
+ok    a request that runs out is said: queue_expired
+ok    off (press.refusedCue false): no press_refused
+MORNING FIXES: 0 check(s) failed

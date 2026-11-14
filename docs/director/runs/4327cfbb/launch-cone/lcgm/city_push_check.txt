@@ -1,0 +1,9 @@
+ok    a building on a field world beyond the pair (0)
+ok    with its share at all strings, the computer holds its stick toward its rival, a building beyond him its target
+ok    with its share at none it never leans, and off it never does
+ok    a slam starts a big swing, cause slam
+ok    and when it's done the line runs nearer down the street behind the building
+ok    a lodge in the tick's events starts it
+ok    off, a slam turns nothing
+CITY PUSH: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

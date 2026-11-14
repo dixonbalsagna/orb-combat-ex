@@ -1,0 +1,6 @@
+ga_today_30: gate: <scratch>/g/lc/ga_today_30.txt: no SCRIPT ERROR lines
+ exit 0
+ga_cone_30: gate: <scratch>/g/lc/ga_cone_30.txt: no SCRIPT ERROR lines
+ exit 0
+gx_planner_only_30: gate: <scratch>/g/lc/gx_planner_only_30.txt: no SCRIPT ERROR lines
+ exit 0

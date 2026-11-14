@@ -1,0 +1,6 @@
+10:33:52 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+10:39:37 parity exit 1: golden check FAILED
+10:42:02 golden with the rider exit 0
+10:44:28 golden with wallCone 0 (the rider off) exit 0
+10:44:29 golden off against rider: 1 rows differ of 11
+10:44:29 tree put back: launch.json same as before; golden.json changed: 0

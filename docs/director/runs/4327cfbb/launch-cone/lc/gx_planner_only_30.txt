@@ -1,0 +1,4 @@
+      cone on (20 degrees): 30 matches, 222 launches, 25 aimed at a building, 10 more than 20 degrees off the line (worst 147.6); by 10-degree bins [9, 6, 2, 2, 1, 1, 1, 0, 0, 3]
+FAIL  Game Design's QA row: launches aimed more than 20 degrees off the blow's line, 0 (25 aimed)
+LAUNCH CONE: 1 check(s) failed
+rc=1

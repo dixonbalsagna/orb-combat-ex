@@ -1,0 +1,45 @@
+walk_check on the 9 November data, a probe build: the rider plus print lines only (LCP: the planner's candidates at B, along/off from the
+launched body, in the cone or not; LCH: the walk's pick and the building hit). Switches held in memory by environment, scratch only.
+
+== 1. the rider's planner cone off (today's planner), swing and plans.everywhere on: the reach is other buildings, far off the line
+LCH pick b0 hit b317 (true) lean 1
+LCH pick b28 hit b30 (true) lean 1
+LCH pick b65 hit b-1 (false) lean 1
+LCH pick b94 hit b96 (true) lean 1
+LCH pick b125 hit b126 (true) lean 1
+LCH pick b156 hit b-1 (false) lean 1
+LCH pick b183 hit b181 (true) lean 1
+LCH pick b219 hit b214 (true) lean 1
+LCH pick b256 hit b-1 (false) lean 1
+LCH pick b293 hit b-1 (false) lean 1
+      of 10 buildings, 700 away: leaning 6, switch off 6, no lean 4
+LCP   b317 along=380.7 off=539.8 dist=660.5 in=false bz=-741.4 bd=403.3
+LCP   b30 along=1725.0 off=881.9 dist=1937.3 in=false bz=-1182.8 bd=601.8
+LCP   b96 along=1141.7 off=998.1 dist=1516.5 in=false bz=-1297.1 bd=598.0
+LCP   b126 along=536.8 off=1086.4 dist=1211.8 in=false bz=-1390.2 bd=607.5
+
+== 2. cone on, everywhere on, the swing held off: the walk's own building, walked to, is 187.5 off the line at 160 to 385 along
+LCW b0 bz=-386.1 bd=397.1 Dz=0.0 Az=0.0
+LCW b94 bz=-491.2 bd=607.5 Dz=0.0 Az=0.0
+LCW b125 bz=-491.2 bd=607.5 Dz=0.0 Az=0.0
+LCP   b0 along=171.6 off=187.5 dist=254.2 in=false bz=-386.1 bd=397.1
+LCP   b65 along=385.1 off=187.5 dist=428.3 in=false bz=-376.9 bd=378.9
+LCP   b94 along=160.1 off=187.5 dist=246.6 in=false bz=-491.2 bd=607.5
+LCP   b125 along=337.4 off=187.5 dist=386.0 in=false bz=-491.2 bd=607.5
+      of 10 buildings, 700 away: leaning 1, switch off 1, no lean 4
+
+== 3. cone on, everywhere and swing on: the swing's turn under the three blows (turn = what it still has to turn at B)
+LCP turn=0.89 coneDeg=19.11 swingActive=true planNull=true
+LCP turn=0.91 coneDeg=19.09 swingActive=true planNull=true
+LCP turn=35.22 coneDeg=-15.22 swingActive=true planNull=true
+LCP turn=0.52 coneDeg=19.48 swingActive=true planNull=true
+LCP turn=0.00 coneDeg=20.00 swingActive=true planNull=true
+LCP turn=0.00 coneDeg=20.00 swingActive=false planNull=true
+LCP turn=0.00 coneDeg=20.00 swingActive=false planNull=true
+LCP turn=30.44 coneDeg=-10.44 swingActive=true planNull=true
+LCP turn=41.55 coneDeg=-21.55 swingActive=true planNull=true
+LCP turn=47.90 coneDeg=-27.90 swingActive=true planNull=true
+
+== 4. cone on, everywhere off, swing on / off
+lcp_walk6:      of 10 buildings, 700 away: leaning 6, switch off 7, no lean 6
+lcp_walk7:      of 10 buildings, 700 away: leaning 7, switch off 7, no lean 7

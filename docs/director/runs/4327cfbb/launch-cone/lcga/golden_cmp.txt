@@ -1,0 +1,20 @@
+match 0  ticks 18000 (same)  light same  checkpoints equal 151 of 151 (first part equal 151)
+match 1  ticks 18000 (same)  light same  checkpoints equal 151 of 151 (first part equal 151)
+match 2  ticks 18000 (same)  light same  checkpoints equal 151 of 151 (first part equal 151)
+match 3  ticks 18000 (same)  light same  checkpoints equal 151 of 151 (first part equal 151)
+match 4  ticks 18000 (same)  light same  checkpoints equal 151 of 151 (first part equal 151)
+match 5  ticks 18000 (same)  light same  checkpoints equal 151 of 151 (first part equal 151)
+match 6  ticks 18000 (same)  light DIFFERENT  checkpoints equal 129 of 151 (first part equal 129)
+match 7  ticks 18000 (same)  light same  checkpoints equal 151 of 151 (first part equal 151)
+match 8  ticks 40833 (same)  light same  checkpoints equal 341 of 341 (first part equal 341)
+replay 0  ticks 3000 (same)  light same  checkpoints equal 26 of 26 (first part equal 26)
+replay 1  ticks 2400 (same)  light same  checkpoints equal 21 of 21 (first part equal 21)
+tick0      same
+wounds     same
+rally      same
+cripple    same
+mood       same
+keyed      same
+rosterHash same
+fightHash  same
+RESULT: 1 DIFFER

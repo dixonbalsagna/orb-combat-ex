@@ -1,0 +1,193 @@
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index 37092bc..6a430af 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -219,7 +219,14 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
+ 	if not walked.is_empty() and not cands.has(int(walked[0])) and (DirWalk.reachWalked() or all.has(int(walked[0]))):
+ 		cands.append(int(walked[0]))   # (and the cap never drops it: with the cuts off it's in World's list, and aimed)
+ 	var shared: Dictionary = _sharedAims(S, A, D, cands, force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly) if cuts else {}
++	# The one cone (knockBack.wall.wallCone): Game Design's second ruling, every aimed send. The plan may run on a turned line (the swing's
++	# pick, or the line a running swing ends on): that turn counts against the cone, so the target stays inside it from the blow's own line.
++	var coneOn: bool = float(data().knockBack.get("wall", {}).get("wallCone", 0.0)) > 0.0
++	var coneDeg: float = float(data().knockBack.get("wall", {}).get("wallCone", 0.0)) - DirSwing.planTurn(S)
++	var coneSlope: float = _lineSlope(A, D)
+ 	for bi in cands:
++		if coneOn and not _inConeDeg(coneDeg, _wallAt(D, S.buildings[bi], f, coneSlope)):
++			continue   # outside the blow's cone, in the ground plane: no smash into it and no send inside it (the background ricochet of Orb's ping-pong)
+ 		var plan = shared[bi] if shared.has(bi) else WorldBrunt.aim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly)   # fresh: the launcher's send into a building, x its freshness
+ 		if plan != null and fwdOnly and float(plan.ux) * f < 0.0:
+ 			plan = null
+@@ -1294,6 +1301,14 @@ static func _inCone(w: Dictionary, at: PackedFloat64Array) -> bool:
+ 	return at[1] <= SimDetMath.sin(a) / SimDetMath.cos(a) * at[0] + 1e-9
+ 
+ 
++## Inside a cone of deg degrees (none at all when deg is 0 or less): the planner's test, with the turn its line carries taken off.
++static func _inConeDeg(deg: float, at: PackedFloat64Array) -> bool:
++	if deg <= 0.0:
++		return false
++	var a: float = deg * SimMathx.PI / 180.0
++	return at[1] <= SimDetMath.sin(a) / SimDetMath.cos(a) * at[0] + 1e-9
++
++
+ ## A knock-back that aims at a wall (game-design.md section 15): a standing building on the side he goes, inside the knock's own
+ ## distance in plan. A plain send on buildings.md 6.1's ladder. It reads standing buildings only, and care as a flat weight, never
+ ## who is inside. A player's stick held another way wins. Null when there's none, and always with it off.
+diff --git a/sim/director/swing.gd b/sim/director/swing.gd
+index a0c030b..79f3f45 100644
+--- a/sim/director/swing.gd
++++ b/sim/director/swing.gd
+@@ -692,12 +692,26 @@ static func _restSec() -> float:
+ 	return float(cfg().restTicks) / DirData.TICKS_PER_SEC
+ 
+ 
++## The turn, in degrees, that a launch's plan runs on: the swing's own pick for it, or what a running swing still has to turn. DirLaunch
++## takes it off the cone, so a target stays inside it measured from the blow's own line.
++static func planTurn(S: SimState) -> float:
++	if _plan != null:
++		return absf(float(_plan.top.turn))
++	var sw = S.swing
++	if not on(S) or sw == null or not sw.active:
++		return 0.0
++	return absf(SimSwing.at(sw, sw.ticks) - SimSwing.at(sw, sw.tau)) + absf(float(sw.nextDeg))
++
++
+ ## A launch's pick, or null, with its feed line.
+ static func _launchPick(S: SimState, A, D, force: float):
+ 	var c: Dictionary = cfg()
+ 	var t: float = force * float(c.fit.secPerForce)
+ 	var reach: float = force * float(c.fit.reachPerForce) * SimPower.distScale()
+ 	var cap: float = minf(float(c.maxDeg), SimSwing.mostFor(t - _restSec(), "launch"))
++	var cone: float = float(DirLaunch.data().knockBack.get("wall", {}).get("wallCone", 0.0))
++	if cone > 0.0:
++		cap = minf(cap, cone)   # (Game Design, buildings.md section 10: a launch's target stays inside the cone around the blow's line, a turn of the world included)
+ 	if cap < float(c.bigMin):
+ 		_explain(S, "launch", [], false, "", 0)
+ 		return null
+diff --git a/sim/director/tools/launch_cone_check.gd b/sim/director/tools/launch_cone_check.gd
+new file mode 100644
+index 0000000..371190c
+--- /dev/null
++++ b/sim/director/tools/launch_cone_check.gd
+@@ -0,0 +1,81 @@
++extends SceneTree
++## The launch planner's cone (Game Design, docs/design/buildings.md section 10, second ruling): godot --headless --path . --script res://sim/director/tools/launch_cone_check.gd -- [--matches=6] [--ticks=18000] [--cone=on|off]
++## Computer against computer on planet 7 (the field world), the data as it is: every launch aimed at a building (its aimB once launched) is
++## measured against the blow's line in the ground plane (the launch's direction along x, at the launched body's depth). Game Design's QA
++## row: launches aimed more than 20 degrees off the line, 0. --cone=off sets the cone to 0 in memory (today's planner): the negative control.
++
++var args: Dictionary = {}
++var fails: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	if not c:
++		fails += 1
++	print(("ok    " if c else "FAIL  ") + what)
++
++
++func _init() -> void:
++	for a in OS.get_cmdline_user_args():
++		var kv: PackedStringArray = a.trim_prefix("--").split("=")
++		args[kv[0]] = kv[1] if kv.size() > 1 else "1"
++	var matches: int = int(args.get("matches", "6"))
++	var ticks: int = int(args.get("ticks", "18000"))
++	var coneOn: bool = String(args.get("cone", "on")) != "off"
++	var wd: Dictionary = DirLaunch.data().knockBack.wall
++	if not coneOn:
++		wd["wallCone"] = 0.0
++	var cone: float = float(wd.get("wallCone", 0.0))
++	var launches: int = 0
++	var aimed: int = 0
++	var wide: int = 0
++	var worst: float = 0.0
++	var byName: Dictionary = {}
++	var hist: Array = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]   # by 10-degree bins
++	for m in range(matches):
++		var S := SimCore.createSim()
++		SimCore.newMatch(S, 31 + m, {"p1": true, "p2": true}, {"planet": 7, "touch": 2, "planetGen": 3, "intro": false})
++		var pre: Array = []
++		for f in S.fighters:
++			pre.append([f.x, f.z])
++		for t in range(ticks):
++			for k in range(S.fighters.size()):
++				pre[k] = [S.fighters[k].x, S.fighters[k].z]
++			SimCore.step(S)
++			for e in S.out.fx:
++				if e.type != "launch":
++					continue
++				launches += 1
++				var k: int = int(e.actor)
++				if k < 0 or k >= S.fighters.size():
++					continue
++				var f = S.fighters[k]
++				if int(f.aimB) < 0:
++					continue
++				aimed += 1
++				var b = S.buildings[int(f.aimB)]
++				var s: float = SimMathx.jsign(float(e.ux)) if float(e.ux) != 0.0 else SimMathx.jsign(f.vx)
++				var x0: float = float(pre[k][0])
++				var z0: float = float(pre[k][1])
++				var along: float = SimWrap.sdx(x0, b.x) * s - b.w * 0.5
++				var off: float = maxf(0.0, absf(float(b.z) - z0) - float(b.d) * 0.5)
++				var deg: float = atan2(off, maxf(along, 0.001)) * 180.0 / PI if along > 0.0 else 90.0 + atan2(-along, maxf(off, 0.001)) * 180.0 / PI
++				worst = maxf(worst, deg)
++				hist[mini(9, int(deg / 10.0))] += 1
++				if deg > 20.01:
++					wide += 1
++				var nm: String = String(e.text) if String(e.text) != "" else "?"
++				byName[nm] = int(byName.get(nm, 0)) + 1
++			S.out.fx.clear()
++			S.out.feed.clear()
++			if SimCore.ended(S):
++				break
++		SimCore.dispose(S)
++	print("      cone %s (%.0f degrees): %d matches, %d launches, %d aimed at a building, %d more than 20 degrees off the line (worst %.1f); by 10-degree bins %s" % ["on" if coneOn else "off", cone, matches, launches, aimed, wide, worst, str(hist)])
++	if coneOn:
++		ok(wide == 0, "Game Design's QA row: launches aimed more than 20 degrees off the blow's line, 0 (%d aimed)" % aimed)
++		if aimed == 0:
++			print("NOTE  no launch was aimed at a building in this run: the row had nothing to measure (more matches, or the 9 November data)")
++	else:
++		print("INFO  today's planner (no cone): %d of %d aimed launches more than 20 degrees off the line" % [wide, aimed])
++	print("LAUNCH CONE: %d check(s) failed" % fails)
++	quit(1 if fails > 0 else 0)
+diff --git a/sim/director/tools/walk_check.gd b/sim/director/tools/walk_check.gd
+index a690118..630cdf1 100644
+--- a/sim/director/tools/walk_check.gd
++++ b/sim/director/tools/walk_check.gd
+@@ -12,8 +12,14 @@ var names: Dictionary = {}
+ 
+ 
+ func _init() -> void:
++	# A lane world with the ring held still (Game Design, buildings.md section 10: the walk reaches a wall inside the blow's cone; a
++	# street's front row, 187.5 off the line, is the street turn's, terrain-plan step 7). The swing has its own checks.
++	WorldPlan.everywhereOverride = 0
++	DirSwing.setForce(0)
+ 	_rows()
+ 	DirWalk.setForce(-1)
++	DirSwing.setForce(-1)
++	WorldPlan.everywhereOverride = -1
+ 	print("WALK: %d check(s) failed" % failed)
+ 	quit(1 if failed > 0 else 0)
+ 
+@@ -98,12 +104,20 @@ func _run(i: int, gap: float, lean: float, blows: int, hold: int = 46) -> Array:
+ 	return [reached, lost]
+ 
+ 
++## Inside the launch's cone from this check's staging, 700 along (Game Design, buildings.md section 10): a deeper building is not offered.
++func _inCone(b) -> bool:
++	var cone: float = float(DirLaunch.data().knockBack.get("wall", {}).get("wallCone", 0.0))
++	if cone <= 0.0:
++		return true
++	return maxf(0.0, absf(float(b.z)) - float(b.d) * 0.5) <= tan(cone * PI / 180.0) * 700.0
++
++
+ func _rows() -> void:
+ 	var S := _fresh()
+ 	var ids: Array = []
+ 	for i in range(S.buildings.size()):
+ 		var b = S.buildings[i]
+-		if b.alive and not WorldSettle.noTarget(b.landmark) and absf(WorldBrunt.faceZ(b)) <= 800.0 and WorldStructures.inBand(S, float(b.z), float(b.d)):   # (one of the index, as a knock aims: World's everywhere_check rows)
++		if b.alive and not WorldSettle.noTarget(b.landmark) and absf(WorldBrunt.faceZ(b)) <= 800.0 and WorldStructures.inBand(S, float(b.z), float(b.d)) and _inCone(b):   # (one of the index, as a knock aims: World's everywhere_check rows; and inside the cone from 700 along)
+ 			ids.append(i)
+ 	SimCore.dispose(S)
+ 	var pick: Array = []
