@@ -1,0 +1,105 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 84ea414..d25b570 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -106426,6 +106426,86 @@
+         "pointer": "/setup/weight/sneeze"
+       }
+     },
++    {
++      "id": "director-launch-wallcone-over-90",
++      "schema": "director-launch.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/knockBack/wall/wallCone": 120
++          },
++          "file": "data/director/launch.json"
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/knockBack/wall/wallCone"
++      }
++    },
++    {
++      "id": "director-launch-wallcone-negative",
++      "schema": "director-launch.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/knockBack/wall/wallCone": -5
++          },
++          "file": "data/director/launch.json"
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/knockBack/wall/wallCone"
++      }
++    },
++    {
++      "id": "director-launch-wallcone-not-a-number",
++      "schema": "director-launch.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/knockBack/wall/wallCone": "wide"
++          },
++          "file": "data/director/launch.json"
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/knockBack/wall/wallCone"
++      }
++    },
++    {
++      "id": "director-launch-wallby-unknown",
++      "schema": "director-launch.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/knockBack/wall/wallBy": "nearest"
++          },
++          "file": "data/director/launch.json"
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/knockBack/wall/wallBy"
++      }
++    },
++    {
++      "id": "director-launch-wall-unknown-key",
++      "schema": "director-launch.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/knockBack/wall/wallAngle": 20
++          },
++          "file": "data/director/launch.json"
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/knockBack/wall/wallAngle"
++      }
++    },
+     {
+       "id": "ladder-rates-valid",
+       "schema": "fighter-ladder.schema.json",
+diff --git a/tools/fixtures/virtual/data/director/launch.json b/tools/fixtures/virtual/data/director/launch.json
+index 67c30ca..6ea30e9 100644
+--- a/tools/fixtures/virtual/data/director/launch.json
++++ b/tools/fixtures/virtual/data/director/launch.json
+@@ -56,7 +56,8 @@
+     "slideUnderBh": 4,
+     "slideTicks": 18,
+     "wear": 0.5,
+-    "impactPerSpeed": 0.018
++    "impactPerSpeed": 0.018,
++    "wall": {"enabled":false,"base":1,"care":0.5,"reach":1500,"distMul":3,"perUnit":1.4,"speed":[1100,1300,1500,1800],"uy":[0.05,0.12,0.25,0.4,0.6,0.8],"clear":20,"wallCone":20,"wallBy":"trueDistance"}
+   },
+   "earned": {
+     "enabled": true,
