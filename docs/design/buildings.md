@@ -303,3 +303,5 @@ Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These
 - **with the model off:** the table's 3.0 at tier 4, within 5%.
 
 **X-14 reads the model's path.** "3 times at the top tier" means the escalation a player sees across a match, from a fresh start to a fully powered top tier.
+
+**Shots, with the model on (2026-11-15, World's `crater-tiers.md`):** a shot has no speed for the model to read, so **it follows the model through the fighter's level, as a beam's groove does:** its crater energy is its kind's own base (today's value, taken as level 0) × 12.25^level. That's 3.5 times the radius from a fresh base fighter to a full top tier, the same escalation as bodies and beams. **The tier table (1, 2.1, 4.3, 9) is for the model off only.**
