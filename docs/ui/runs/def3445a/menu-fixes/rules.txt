@@ -1,0 +1,2 @@
+FAIL  a1 menus 1280x720 kbd modes mid: fits, every control is a target on screen, none overlap, Legal's notice word for word where it shows
+rail check: 741 checks, 1 failed

@@ -1,7 +1,7 @@
 diff --git a/render/core/main.gd b/render/core/main.gd
---- a/render/core/main.gd	2026-11-13 23:38:36.316330900 -0800
-+++ b/render/core/main.gd	2026-11-13 23:38:36.395332500 -0800
-@@ -197,6 +197,7 @@
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -199,6 +199,7 @@ func _ready() -> void:
  	ui_hud.menu_changed.connect(_on_menu_changed)
  	ui_hud.loading_back_requested.connect(_on_loading_back)
  	ui_hud.menu_started.connect(_on_menu_started)   # the start menu's Start, and the match-over card's Play again (docs/ui/start-menu.md)
@@ -9,22 +9,22 @@ diff --git a/render/core/main.gd b/render/core/main.gd
  	ui_hud.option_changed.connect(_on_option_changed)
  	# The hub's defaults go into the HUD first (its legend and prompts show the layouts in use) ...
  	ui_hud.set_option("pad_preset", host.hub.pad_preset)
-@@ -422,10 +423,13 @@
+@@ -424,10 +425,13 @@ func _mb_attach() -> bool:
  ## accepted and does nothing.)
  func _match_setup(seed: int = 0) -> Dictionary:
  	if manual or args.has("nointro") or args.has("bench") or args.has("flashcap"):
--		return _planet_next.duplicate()
-+		var plain: Dictionary = _planet_next.duplicate()
+-		return _planet_setup()
++		var plain := _planet_setup()
 +		plain.merge(_slots_part())
 +		return plain
  	var su: Dictionary = {"intro": host.intro_record(seed)}
- 	su.merge(_planet_next)
+ 	su.merge(_planet_setup())
  	su.merge(_ai_part())
 +	su.merge(_slots_part())
  	return su
  
  
-@@ -438,6 +442,15 @@
+@@ -440,6 +444,15 @@ func _ai_part() -> Dictionary:
  	return {"aiLevel": _ai_level} if _ai_level != "" else {}
  
  
@@ -37,10 +37,10 @@ diff --git a/render/core/main.gd b/render/core/main.gd
 +	return {"slots": _slots.duplicate()} if _slots.size() == 2 else {}
 +
 +
- ## The planet a menu's choices name, as the match's setup keys (planet, planetGen, touch, arena); {} while they name none (the menu has no such choice yet: the campaign's and the planet picker's
- ## choices will carry `planet`). The one place that reads it, for the early start (_on_menu_changed) and for Start (_on_menu_started), so the two always agree.
- func planet_part(cfg: Dictionary) -> Dictionary:
-@@ -1340,11 +1353,13 @@
+ ## The state probe (A-CODE-03, 2026-11-14; it was a scratch patch of the private page): `?preview=1` on the web publishes window.__preview twice a second for the smoke check and the page tools: the tick, the planet's
+ ## generation, what the world's switches read as in the running game, and the fighters' hit points. Read only: it writes nothing to the sim and changes nothing the player sees. Off without the option.
+ func _publish_probe() -> void:
+@@ -1370,11 +1383,13 @@ func _on_menu_started(cfg: Dictionary) -> void:
  	var sd: int = fresh_seed()
  	_planet_next = planet_part(cfg)
  	_ai_level = str(cfg.get("ai_level", ""))
@@ -48,13 +48,14 @@ diff --git a/render/core/main.gd b/render/core/main.gd
  	if bool(cfg.get("intros", true)):
  		start_match(sd, ai)
  	else:
- 		var su: Dictionary = _planet_next.duplicate()
+-		var su: Dictionary = _planet_setup()
++		var su := _planet_setup()
  		su.merge(_ai_part())
 +		su.merge(_slots_part())
  		start_match(sd, ai, su)
  	_planet_next = {}
  	var pads: Array = Input.get_connected_joypads()
-@@ -1594,7 +1609,7 @@
+@@ -1624,7 +1639,7 @@ func _unhandled_input(e: InputEvent) -> void:
  				_flash_key(e)
  				return
  			if code == "Escape" and not OS.has_feature("web"):

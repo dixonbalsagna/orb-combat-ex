@@ -1,0 +1,1 @@
+Rect2 size is negative ERROR lines: probe before 2510, after 0; full gate before 116 (all ui_turn.gd:44), after 0

@@ -1,5 +1,14 @@
 --- a/ui/data/features.json	2026-11-13 23:31:02.517271300 -0800
-+++ b/ui/data/features.json	2026-11-13 23:54:13.994647000 -0800
++++ b/ui/data/features.json	2026-11-14 01:04:19.906474400 -0800
+@@ -32,7 +32,7 @@
+     "legend_beam": true,
+     "split_fit": true,
+     "chip_clear": true,
+-    "slam_hint": false,
++    "slam_hint": true,
+     "report_this": true,
+     "save_match": true,
+     "legend_quiet": true,
 @@ -46,8 +46,8 @@
      "alert_vfx": false,
      "alert_audio": false,
@@ -11,18 +20,95 @@
      "testers_package": false
    }
  }
---- a/ui/tools/hud_check.gd	2026-11-13 23:40:32.545504800 -0800
-+++ b/ui/tools/hud_check.gd	2026-11-13 23:57:50.908258800 -0800
-@@ -771,6 +771,8 @@
+--- a/ui/data/options.json	2026-11-13 23:29:15.719525100 -0800
++++ b/ui/data/options.json	2026-11-14 01:04:19.906474400 -0800
+@@ -64,8 +64,8 @@
+     "dpad_mirror": { "default": "auto", "group": "controls", "label": "Strike on the D-pad", "help": "Strike with the D-pad instead of the strike stick. Auto turns it on only for a controller that has no second stick. While the D-pad strikes, that thumb is off the move stick.", "accessibility": true, "choices": ["auto", "on", "off"] },
+     "dpad_mirror_p2": { "default": "auto", "group": "controls", "label": "Strike on the D-pad, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true, "choices": ["auto", "on", "off"] },
+     "strike_style": { "default": "hold", "group": "controls", "label": "Strike style", "help": "Hold: push the strike stick out to charge a strike and let it go to throw. Toggle: push to start the charge and push again to throw.", "accessibility": true, "choices": ["hold", "toggle"] },
+-    "struggle_push": {"default": "face", "group": "controls", "label": "Beam struggle push", "help": "How you push in a beam struggle, on the beat. Right stick: flick it toward them (the easiest). Face buttons: press X, Y or B (harder). A change takes effect at the start of the next match. Player one's; player two's is the next row.", "accessibility": true, "choices": ["stick", "face"]},
+-    "struggle_push_p2": {"default": "face", "group": "controls", "label": "Beam struggle push, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true, "choices": ["stick", "face"]},
++    "struggle_push": {"default": "stick", "group": "controls", "label": "Beam struggle push", "help": "How you push in a beam struggle, on the beat. Right stick: flick it toward them (the easiest). Face buttons: press X, Y or B (harder). A change takes effect at the start of the next match. Player one's; player two's is the next row.", "accessibility": true, "choices": ["stick", "face"]},
++    "struggle_push_p2": {"default": "stick", "group": "controls", "label": "Beam struggle push, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true, "choices": ["stick", "face"]},
+     "strike_style_p2": { "default": "hold", "group": "controls", "label": "Strike style, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true, "choices": ["hold", "toggle"] },
+     "brace_style": { "default": "flick", "group": "controls", "label": "Brace style", "help": "Flick: guard and flick the stick, or press the brace button. Button only: only the brace button braces, so no flick speed is needed. The button is L3 on Arena (R3 if swapped); change it in Remap controls.", "accessibility": true, "choices": ["flick", "press"] },
+     "brace_style_p2": { "default": "flick", "group": "controls", "label": "Brace style, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true, "choices": ["flick", "press"] },
+--- a/ui/tools/hud_check.gd	2026-11-14 00:55:47.469229700 -0800
++++ b/ui/tools/hud_check.gd	2026-11-14 01:05:09.440195900 -0800
+@@ -34,8 +34,8 @@
+ 	for k in CONTROLS_SWITCHES:
+ 		if sw.has(k) or on:
+ 			sw[k] = on
+-	sw["driverOnRb"] = false   # Controls leaves this one off in the shipped data
+-	sw["dodgeHeld"] = false    # and this one
++	sw["driverOnRb"] = false   # pinned off for the older rules, which were written for the pad without it (the shipped data has it on once the pad group has landed; the rules that read the shipped state turn it on themselves)
++	sw["dodgeHeld"] = false    # and this one the same way
+ 	SimInputData.timing["switches"] = sw
+ 	SimInputData.clear_overrides()
+ 	SimInputData.invalidate()
+@@ -772,6 +772,9 @@
  	UiData.set_feature("beam_teach", false)     # and without the beam teaching lines (the older rules look at the old words)
  	UiData.set_feature("struggle_teach", false)  # and without the clash rows and the refusal words (the older rules look at the legend as it was)
  	UiData.set_feature("refusal_words", false)
 +	UiData.set_feature("menus_rail", false)   # the older rules look at the cards the Rail replaces on a desktop screen (they are still the layout of a small or touch screen); the Rail's own rules turn it on themselves
 +	UiData.set_feature("menu_modes", false)   # the older rules look at the single start card and at the pause lists without Quit (the A1 rules turn it on themselves)
++	UiData.set_feature("slam_hint", false)    # the older rules look at the legend and the teaching row without the "Hold to slam" hint (shipped on since A1)
  	UiData.set_feature("report_this", false)   # the first-matches line about reporting and the match-over card's Save this match are newer than the older rules, which look at the teaching row and the card as they were
  	UiData.set_feature("save_match", false)
  	for k in ["forms_live", "specials_live", "brace_live", "vanish_live"]:
-@@ -10796,9 +10798,10 @@
+@@ -1571,15 +1574,15 @@
+ 	UiData.set_feature("right_hand", true)   # the right-hand attacks on: the stick push exists
+ 	hud.advance(1.0 / 60.0)   # the first frame gives each model its person's choice and starts the match clock
+ 	await process_frame
+-	var def_ok: bool = hud.hub.model(0).push_mode == "face" and hud.hub.model(1).push_mode == "face"   # the fallback: while the stick push is inert in a struggle, everyone is taught the face buttons
+-	hud.set_option("struggle_push_p2", "stick")
++	var def_ok: bool = str(o1["default"]) == "stick" and str(o2["default"]) == "stick" and hud.hub.model(0).push_mode == "stick" and hud.hub.model(1).push_mode == "stick"   # the shipped default is the right stick's push (pushUi and pushUi2, on since A1 with the push mode in the sim)
++	hud.set_option("struggle_push_p2", "face")
+ 	hud.advance(1.0 / 60.0)
+ 	await process_frame
+-	var held_mid: bool = hud.hub.model(1).push_mode == "face"   # the match clock is running: a change in Options is next match's
++	var held_mid: bool = hud.hub.model(1).push_mode == "stick"   # the match clock is running: a change in Options is next match's
+ 	hud.hub.reset()
+ 	hud.advance(1.0 / 60.0)
+ 	await process_frame
+-	var synced: bool = hud.hub.model(0).push_mode == "face" and hud.hub.model(1).push_mode == "stick" and held_mid
++	var synced: bool = hud.hub.model(0).push_mode == "stick" and hud.hub.model(1).push_mode == "face" and held_mid
+ 	hud.hub.reset()   # (a new match: the push modes are read again)
+ 	UiData.set_feature("right_hand", false)   # with them off there is no stick push: everyone is taught the face buttons, and the row is not listed
+ 	hud.advance(1.0 / 60.0)
+@@ -1616,7 +1619,7 @@
+ 	_ok(quiet_before and up_in_struggle, "struggle teach: the legend that had gone quiet stays up for the whole of one of the first struggles (quiet before %s, up in the struggle %s)" % [str(quiet_before), str(up_in_struggle)])
+ 	hud.queue_free()
+ 	await process_frame
+-	_ok(str(o1["default"]) == "face" and str(o2["default"]) == "face" and (o1["choices"] as Array) == ["stick", "face"] and in_controls and words_ok and def_ok and synced, "struggle teach: Beam struggle push is a Controls row for each player (Right stick by default, or Face buttons), and the HUD gives each fighter their person's choice")
++	_ok(str(o1["default"]) == "stick" and str(o2["default"]) == "stick" and (o1["choices"] as Array) == ["stick", "face"] and in_controls and words_ok and def_ok and synced, "struggle teach: Beam struggle push is a Controls row for each player (Right stick by default, or Face buttons), and the HUD gives each fighter their person's choice")
+ 	_live_on()
+ 
+ 
+@@ -2040,7 +2043,9 @@
+ 	if FileAccess.file_exists(UiPrefs.path):
+ 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+ 	UiData.set_feature("beam_teach", null)
+-	UiData.set_feature("slam_hint", null)   # the shipped state (off until Encounter's slam is on)
++	UiData.set_feature("slam_hint", null)   # the shipped state (on since A1: the hint ships with the stick's slam)
++	var shipped_on: bool = UiData.feature("slam_hint")
++	UiData.set_feature("slam_hint", false)
+ 	var hub := _refusal_rules_hub()
+ 	var m: UiFighterModel = hub.model(0)
+ 	_slam_cue(hub, 0)
+@@ -2062,9 +2067,9 @@
+ 	UiPrefs.set_value("taught_slam_n", 0)
+ 	_slam_cue(hub, 0)
+ 	var needs_teach: bool = m.teach == ""   # it rides the teaching lines: with them off it is quiet
+-	_ok(shipped_off and said, "slam hint: off as shipped (no word, no count); on, Encounter's slam_hint cue says 'Hold to slam' with the stick's glyph for 1.5 s")
++	_ok(shipped_on and shipped_off and said, "slam hint: ships on (A1); with the switch off no word and no count; on, Encounter's slam_hint cue says 'Hold to slam' with the stick's glyph for 1.5 s")
+ 	_ok(computer_quiet and third_ok and limit_ok and needs_teach, "slam hint: not for the computer, only the first three times, and not with the teaching lines off")
+-	UiData.set_feature("slam_hint", null)
++	UiData.set_feature("slam_hint", false)   # back to the older rules' pin
+ 	UiData.set_feature("beam_teach", null)
+ 	if FileAccess.file_exists(UiPrefs.path):
+ 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+@@ -10797,9 +10802,10 @@
  
  
  func _menus_rail_rules() -> void:
@@ -35,7 +121,7 @@
  	for k in ["rail_kicker", "rail_paused", "rail_over", "rail_this_match", "rail_hint_choose", "rail_hint_select", "rail_hint_resume", "rail_hint_keep", "rail_hint_again", "rail_hint_not_now", "rail_hint_tabs", "rail_hint_back",
  			"rail_hint_choose_change", "rail_p2_leave", "rail_start_title", "rail_read_first", "rail_you", "rail_against", "rail_the_computer", "rail_now_default"]:
  		_ok(UiData.t("prompt." + k) != "prompt." + k, "menus rail: the word %s exists" % k)
-@@ -10823,7 +10826,7 @@
+@@ -10824,7 +10830,7 @@
  		last = e
  	_ok(monotone and UiRail.ease_out(0.0) == 0.0 and UiRail.ease_out(1.0) == 1.0, "menus rail: the ease only goes forward")
  	# Geometry at every size: wide enough sizes get the Rail and fit; short or narrow ones and touch keep today's card.
@@ -44,7 +130,7 @@
  		[Vector2(844, 390), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(390, 844), 1.0]]
  	for cse in cases:
  		var sz: Vector2 = cse[0]
-@@ -11032,7 +11035,7 @@
+@@ -11033,7 +11039,7 @@
  	_ok(true, "menus rail (hud): the start menu answers up and down")
  	hud.hide_photo_notice(false)
  	hud.queue_free()
@@ -53,7 +139,7 @@
  
  
  ## A-UI-01: the Rail's pause menu opens the way the game opens it. The game holds the sim while the pause menu is open and advances the HUD by 0 (render/core/main.gd: ui_hud.advance(0.0 if host.paused else delta)),
-@@ -11102,7 +11105,7 @@
+@@ -11103,7 +11109,7 @@
  	_ok(float(hud.pause_menu_plan()["slide"]) == 1.0, "pause clock: with Reduce motion on the menu is in place at once")
  	hud._pm_close("test")
  	hud.queue_free()
@@ -62,7 +148,7 @@
  
  
  # --- The A1 start menu: modes, setup, fighters, Quit (docs/ui/menus-a1.md) ------------------------------------------------------
-@@ -11363,8 +11366,8 @@
+@@ -11364,8 +11370,8 @@
  	UiData.set_feature("menu_modes", true)
  	_ok(esc_menu and esc_match and esc_off, "a1 menus (hud): Escape no longer closes the game with no question: the start menu and a match ask first (%s %s), and with the switch off it closes as before (%s)" % [esc_menu, esc_match, esc_off])
  	hud.queue_free()
@@ -74,7 +160,7 @@
  	for line in session:
  		print("  ", line)
 --- a/docs/ui/menus-rail.md	2026-11-13 23:29:20.498452800 -0800
-+++ b/docs/ui/menus-rail.md	2026-11-13 23:54:30.193191100 -0800
++++ b/docs/ui/menus-rail.md	2026-11-14 01:11:57.168289100 -0800
 @@ -1,6 +1,6 @@
  # The Rail menus (UI & UX, 2026-11-09; Orb picked mockup A on 2026-11-09: "rail looks great, keep going")
  
@@ -83,7 +169,7 @@
  
  ## 1. What changed
  
-@@ -41,7 +41,7 @@
+@@ -41,10 +41,14 @@
  
  ## 7. Tests
  
@@ -92,3 +178,10 @@
  
  ## 8. Left for later
  
+ - **Comfort switches** stay on the Start screen (Orb has not answered the question in docs/ui/menus-modern.md section 8).
+ - **Reset this page (Y)** from the mockup is not built (nothing in the HUD resets a page yet); the hint strip does not show it.
+ - **Phone layouts** are parked (ADR 0011).
++
++## 9. Switches that go with it (GW1a's left-panel menus group; sprint A1)
++
++Shipped on with the Rail: `slam_hint` ("Hold to slam", the teaching line for the stick's slam) in `ui/data/features.json`, and the two beam-struggle push defaults `struggle_push` and `struggle_push_p2` set to **stick** (Controls' pushUi and pushUi2, `ui/data/options.json`). The push defaults teach the right stick's push, which only means something while the sim's push mode is on (`beamStruggle.pushMode.enabled`, Encounter's); they land with or after it, and the older rules that were written for the face default or for the hint off are rewritten or pinned in `hud_check` with the reason.
