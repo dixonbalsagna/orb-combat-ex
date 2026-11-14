@@ -2,12 +2,14 @@
 
 Encounter, 2026-11-14, sprint A1. **Built on main 1c19d81d + Simulation's energy-on (both patches) + energy-on-pins**, as the EP asked. It stacks with Simulation's meters-zero (`apply --check` clean). All seven files are Encounter's, so there are no grants.
 
+**Re-cut (2026-11-15):** energy-on-pins now holds `arc_check`'s meteor bowl and `beam_ai_check`'s beam hold as GW1a ceilings, under the model and the dash, instead of pinning them off (the GW1a review's major 2). So these riders' two check hunks now take the ceilings off and put both rows back in full: the bowl more than 5,000, the rival locked 0 ticks. The other five files are unchanged.
+
 ## The three riders
 
 | # | What | Where | Why |
 | ---: | :--- | :--- | :--- |
-| 1 | **The meteor's own bowl keeps its tier** in both models. `arc_check`'s pin comes off | `sim/director/arc.gd` `_impact`; `tools/arc_check.gd` | With the model on, `WorldCrater.impactEnergy` drops the tier, because a model speed already carries it. The meteor's landing speed is authored data, not a model speed, so its bowl lost its tier (4,571 against World's 6,046) |
-| 2 | **The computer starts no beam hold while it can't act** (`DirBeamMove.aiStart`): not unless it is free or charging and not stunned. Its old press goes instead. `beam_ai_check`'s dash pin comes off | `sim/director/beam_move.gd`; `tools/beam_ai_check.gd` | With the dash on it closes fast and starts its hold inside the brawl (brawl.gd:4120), locked. A locked hold never climbs a stage, so its beam was lost |
+| 1 | **The meteor's own bowl keeps its tier** in both models. `arc_check`'s GW1a ceiling comes off | `sim/director/arc.gd` `_impact`; `tools/arc_check.gd` | With the model on, `WorldCrater.impactEnergy` drops the tier, because a model speed already carries it. The meteor's landing speed is authored data, not a model speed, so its bowl lost its tier (4,571 against World's 6,046) |
+| 2 | **The computer starts no beam hold while it can't act** (`DirBeamMove.aiStart`): not unless it is free or charging and not stunned. Its old press goes instead. `beam_ai_check`'s GW1a ceiling comes off | `sim/director/beam_move.gd`; `tools/beam_ai_check.gd` | With the dash on it closes fast and starts its hold inside the brawl (brawl.gd:4120), locked. A locked hold never climbs a stage, so its beam was lost |
 | 3 | **Decision 6 (the meters steer nothing in A1)**: `swing.json` `direction.anguish` 0; the swing's tension reads the mood alone (`swing.gd` `_tension`) | `data/director/swing.json`; `sim/director/swing.gd`; `tools/swing_legal_check.gd` | Simulation's list in `docs/architecture/pending/meters-zero/README.md` |
 
 **On rider 3, two choices of mine:**
@@ -23,13 +25,17 @@ Encounter, 2026-11-14, sprint A1. **Built on main 1c19d81d + Simulation's energy
 
 ## Apply
 
-On main 1c19d81d + energy-on + energy-on-pins: `git -c core.autocrlf=false -c core.eol=lf apply gw1b-riders.diff`.
+On main + energy-on + energy-on-pins (the re-cut): `git -c core.autocrlf=false -c core.eol=lf apply gw1b-riders.diff`. Checked on main 4327cfbb + energy-on + the re-cut pins, with main's data and with the 9 November data.
 
 | Patch | Owner | sha1 |
 | :--- | :--- | :--- |
-| `gw1b-riders.diff`: `sim/director/arc.gd`, `beam_move.gd`, `swing.gd`, `data/director/swing.json`, `sim/director/tools/arc_check.gd`, `beam_ai_check.gd`, `swing_legal_check.gd` | Encounter | beda3233d41c07d90aa2ead044345f7f59977867 |
+| `gw1b-riders.diff`: `sim/director/arc.gd`, `beam_move.gd`, `swing.gd`, `data/director/swing.json`, `sim/director/tools/arc_check.gd`, `beam_ai_check.gd`, `swing_legal_check.gd` | Encounter | 76d967bee6c40922c8978507c400daa8363bdedb (the re-cut; the first cut was beda3233) |
 
-## Proof
+## Proof of the re-cut
+
+Records are in `docs/director/runs/4327cfbb/energy-on-pins-v2/` (`r9_*` the 9 November data, `rm_*` main's). With the re-cut pins and these riders: `arc_check` 0 failed on both (the bowl 6,046) and `beam_ai_check` 0 failed on both (0 locked). Without the riders, the ceilings hold at 4,571 and 29. Only the two check hunks changed, so the first cut's proof below stands for the rest.
+
+## Proof of the first cut
 
 Records are in `docs/director/runs/1c19d81d/gw1b-riders/`, and every output went through `tools/gate.mjs`.
 - **Every director check passes:** 41 of 41, with `loader_check` and `launch_cost_check` left out for their length. That includes `arc_check` and `beam_ai_check` with their pins off.

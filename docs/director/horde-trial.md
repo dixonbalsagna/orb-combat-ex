@@ -18,7 +18,7 @@ The sources are kept as reference for A4 in `horde-trial/src/` (not a park; noth
 | T5 | Going down and getting up (400 back at the wave's end); the second seat joining, leaving and coming back | Reading 15 | **Pass:** in the list and reading its pad the tick after the join; a leave keeps the body; coming back never raises it or lifts a downed seat; a replay with three toggles reproduces |
 | T6 | The probe: medium ×10 alone and ×10 with two; 3-a-second, mash, slow, idle, guard-tapper and dodge-tapper ×3; the medium pad on the page's 240 arm and on row D, ×5 each | Readings 8 to 11 | Below |
 | T7 | Frame cost at two and five bodies | | **Waits for the EP's quiet window** |
-| T8 | The clip | | **Waits for Tools' launcher** |
+| T8 | The clip | Match files that replay exactly | **Match files done** (`horde-trial/clips/`); Tools cuts them. Not in the clip: B through a building (below) and the design's beat 5 (one pad alone never clears a two-player wave) |
 
 `horde_check` passes 44 of 44. With the switch off: load split passes, and the two-fighter count is 365 of 365.
 
@@ -99,6 +99,7 @@ The scripted pads chase the nearest body in height too, so one can climb toward 
 
 ## Not done
 
-- T7 (the EP's quiet window) and T8 (Tools' film variant of the capture hook, and Camera's many-body frame).
+- T7 (the EP's quiet window). T8's capture is Tools' (the film variant of the capture hook, and Camera's many-body frame).
+- **A Horde B never strikes a building.** It launches the body by the knock-out fallback's plain launch (`DirHorde._fell`), with no aimed building, and a building is struck only by an aimed flight (`WorldBrunt.checkHit` reads `f.aimB`). Routing the Horde's B through the launch planner is A4 work, after the launch-cone rider lands, so it honours the cone.
 - `net/desync.gd`'s horde lines (the design's 6.1) are not written. The trial's hash lines are in `hash.gd` only.
 - The A3 body share, the beam in space, the shot as a pack blow (`blow.shot`), energy for a fall, and the result screen are left out, as the design leaves them for later or for other owners.

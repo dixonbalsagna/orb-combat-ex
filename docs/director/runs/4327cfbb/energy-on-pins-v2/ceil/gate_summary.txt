@@ -1,0 +1,12 @@
+gate: <scratch>/g/ceil/c9_arc_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/c9_beam_ai_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/cm_arc_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/cm_beam_ai_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/gp9_arc_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/gp9_beam_ai_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/gpm_arc_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/gpm_beam_ai_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/r9_arc_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/r9_beam_ai_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/rm_arc_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/ceil/rm_beam_ai_check.txt: no SCRIPT ERROR lines

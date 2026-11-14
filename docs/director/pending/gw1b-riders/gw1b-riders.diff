@@ -51,31 +51,59 @@ index a0c030b..d3fc9f0 100644
  
  ## Where to (RL-215's second column). Fit, the place, personality in standing buildings, the hero's anguish, variety, lean,
 diff --git a/sim/director/tools/arc_check.gd b/sim/director/tools/arc_check.gd
-index 9837c70..c2502b5 100644
+index bf5745d..22a5062 100644
 --- a/sim/director/tools/arc_check.gd
 +++ b/sim/director/tools/arc_check.gd
-@@ -477,7 +477,7 @@ func _brake() -> void:
+@@ -36,10 +36,6 @@ func _expect(ok: bool, what: String) -> void:
+ 		failed += 1
  
- ## The meteor's landing: World's bowl, a blast over it, and one a match.
- func _meteorBowl() -> void:
--	var S := _fresh(11, true)   # (the model off: with it on, World's impactEnergy drops the tier for the meteor's authored speed, a bowl of 4,571 against World's 6,046; the fix waits until after GW1a, docs/director/pending/power-on/)
-+	var S := _fresh()
- 	var A = S.fighters[0]
- 	var D = S.fighters[1]
- 	var cfg: Dictionary = DirArc.cfg()
+ 
+-## The meteor's bowl under the energy model today (the 9 November data and main's with energy-on): a GW1a ceiling, see _s0.
+-const METEOR_BOWL_TODAY: float = 4570.0
+-
+-
+ func _fresh(seed: int = 11) -> SimState:
+ 	var S := SimCore.createSim()
+ 	SimCore.newMatch(S, seed, {"p1": false, "p2": false}, {"planet": 7, "touch": 2, "planetGen": 3, "intro": false})
+@@ -509,11 +505,7 @@ func _s0(S: SimState) -> void:
+ 		return
+ 	var c = S.craters[S.craters.size() - 1]
+ 	print("      the bowl: radius %.0f, depth %.0f" % [float(c.r), float(c.depth)])
+-	# A GW1a ceiling (the GW1a review, major 2): with the energy model on, World's impactEnergy drops the tier for the meteor's authored
+-	# landing speed, so the bowl is 4,571 against World's 6,046 (the row is more than 5,000). A real fault on Orb's path, held at today's
+-	# number: it may only grow. The fix is owed for GW1b (Encounter's gw1b-riders: the meteor's bowl dug with the tiered formula), and
+-	# puts the row back.
+-	_expect(float(c.r) >= METEOR_BOWL_TODAY, "the meteor's own bowl (%.0f; a GW1a ceiling at today's %.0f, World's 6,046; owed: gw1b-riders)" % [float(c.r), METEOR_BOWL_TODAY])
++	_expect(float(c.r) > 5000.0, "the meteor's own bowl (%.0f)" % float(c.r))
+ 	var standing: int = 0
+ 	var fell: int = 0
+ 	for b in S.buildings:
 diff --git a/sim/director/tools/beam_ai_check.gd b/sim/director/tools/beam_ai_check.gd
-index b4429d6..e8cf629 100644
+index 509ad46..e8cf629 100644
 --- a/sim/director/tools/beam_ai_check.gd
 +++ b/sim/director/tools/beam_ai_check.gd
-@@ -34,7 +34,7 @@ func _expect(ok: bool, what: String) -> void:
+@@ -8,8 +8,6 @@ extends SceneTree
  
- func _match(seed: int) -> SimState:
- 	var S := SimCore.createSim()
--	SimCore.newMatch(S, seed, {"p1": true, "p2": false}, {"intro": false, "dash": false})   # (the dash off: with it on the computer closes fast and starts its hold while locked in an exchange, where it never climbs a stage; a finding for after GW1a)
-+	SimCore.newMatch(S, seed, {"p1": true, "p2": false}, {"intro": false})
- 	for f in S.fighters:
- 		f.hp = 100000.0
- 	S.fighters[1].ai = null
+ var failed: int = 0
+ const CAP: int = 9000
+-## Ticks the rival is locked while the computer charges, with the dash on, today on the 9 November data: a GW1a ceiling, see _on.
+-const LOCKED_IN_CHARGE_TODAY: int = 29
+ 
+ 
+ func _init() -> void:
+@@ -83,11 +81,7 @@ func _on() -> void:
+ 	var price: float = float(DirBeamMove.cfg().price[maxi(0, stageAt - 1)]) if stageAt > 0 else -1.0
+ 	print("      on: charged at %d, its exchange at %d (stage %d, paid %.1f against %.1f), fired %s, wait %.1f" % [chargeAt, startAt, stageAt, paid, price, str(fired), A.sigReadyT])
+ 	_expect(chargeAt > 0 and startAt > chargeAt, "the computer's beam starts as a hold, and its exchange comes at the release (%d ticks later)" % (startAt - chargeAt))
+-	# A GW1a ceiling (the GW1a review, major 2): with the dash on, the computer closes fast and starts its hold while its rival is locked
+-	# in an exchange (DirBeamMove.aiStart doesn't ask that it is free). A real fault on Orb's path, held at today's number on the 9 November
+-	# data: it may only come down. The fix is owed for GW1b (Encounter's gw1b-riders: no hold unless free or charging), and puts the row
+-	# back to 0.
+-	_expect(exInCharge == 0 and lockedInCharge <= LOCKED_IN_CHARGE_TODAY, "nobody is locked while it charges (%d ticks in an exchange, %d its rival locked; a GW1a ceiling at today's %d; owed: gw1b-riders)" % [exInCharge, lockedInCharge, LOCKED_IN_CHARGE_TODAY])
++	_expect(exInCharge == 0 and lockedInCharge == 0, "nobody is locked while it charges (%d ticks in an exchange, %d its rival locked)" % [exInCharge, lockedInCharge])
+ 	_expect(stageAt >= 1 and absf(paid - price) < 0.2 and fired, "it lets go at a stage, pays that stage (%.1f), and fires" % paid)
+ 	_expect(A.sigReadyT > S.T, "its pacing keeps its signature wait (ready at %.1f)" % A.sigReadyT)
+ 	SimCore.dispose(S)
 diff --git a/sim/director/tools/swing_legal_check.gd b/sim/director/tools/swing_legal_check.gd
 index a95c823..db88219 100644
 --- a/sim/director/tools/swing_legal_check.gd
