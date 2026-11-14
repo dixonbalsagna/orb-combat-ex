@@ -9,7 +9,8 @@
     "godot-sim": { "limitMin": 45, "budgetMin": 30, "measuredMin": "15.4 on 2026-11-14 with the 44 input tests in (run 43582259423)", "runs": "43554356718, 43569719695, 43582259423" },
     "godot-roll-render": { "limitMin": 45, "budgetMin": 30, "measuredMin": "25.9 on 2026-11-14 with the mode smoke in (run 43582259423); earlier 20 to 25", "runs": "43554356718, 43569719695, 43582259423" },
     "godot-audio-vfx": { "limitMin": 30, "budgetMin": 20, "measuredMin": "9.4 on 2026-11-14, first run on a runner (run 43582259423); the scratch run on a busy PC took about 11 min of checks", "runs": "43582259423" },
-        "net": { "limitMin": 60, "budgetMin": 40, "measuredMin": "AT OR OVER the budget of 40 on 2026-11-14: 40.0 (run 43582259423), 49 (run 43585293428), 51 (an earlier run, 43573301102); earlier 29 to 31. The limit is 60. It is the slowest job and it is growing: split it before it times out", "runs": "43553420852, 43554356718, 43569719695, 43582259423, 43585293428" },
+    "net": { "limitMin": 45, "budgetMin": 30, "measuredMin": "not measured since the split (2026-11-14). The one job it came from took 40.0, 49 and 51 minutes (limit 60); the first half has 23 of the 42 net steps, none of the ENet ones", "runs": "43553420852, 43554356718, 43569719695, 43582259423, 43585293428" },
+    "net-2": { "limitMin": 45, "budgetMin": 30, "measuredMin": "not measured yet: the second half, 19 of the 42 net steps, with the three two-process ENet proofs", "runs": "" },
     "world": { "limitMin": 45, "budgetMin": 30, "measuredMin": "19.0 on 2026-11-14 (run 43582259423); earlier 21 to 24", "runs": "43553420852, 43554356718, 43569719695, 43582259423" },
     "site": { "limitMin": 20, "budgetMin": 13, "measuredMin": "1", "runs": "43553420852, 43554356718, 43569719695" },
     "deploy": { "limitMin": 10, "budgetMin": 6, "measuredMin": "0", "runs": "43553420852, 43554356718, 43569719695" }
