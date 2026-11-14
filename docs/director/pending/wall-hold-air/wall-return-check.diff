@@ -1,0 +1,142 @@
+diff --git a/sim/director/tools/wall_return_check.gd b/sim/director/tools/wall_return_check.gd
+new file mode 100644
+index 0000000..8ea4f87
+--- /dev/null
++++ b/sim/director/tools/wall_return_check.gd
+@@ -0,0 +1,136 @@
++extends SceneTree
++## The ping-pong's path off a wall, with World's held cityHold row (docs/director/pending/wall-hold-air/; Orb, 2026-11-14: "a fighter
++## bounces off something in the background and then ricochets in an unrealistic and immersion-breaking trajectory"). Launches at a 9 to 15
++## floor tower on the front street (seeds 1 to 8, tiers 1 to 3, World's wall_hold_check staging), sent from 100 and from 900 above the ground.
++##   godot --headless --path . --script res://sim/director/tools/wall_return_check.gd
++## - today (the data's defaults): every wall slam throws him back off the face and his depth comes home while he's still in the air
++## - cityHold with the grant (no pull home through the air while the depth hold is on): nobody thrown back, nothing frozen, his depth
++##   comes home after he lands (at most a tenth of it in the air), and he's back on the line inside 240 ticks
++## - the negative control (cityHold as built, the grant's switch left off): from 900 up the fall outlasts the hold and his depth comes
++##   home in the air
++## Ends on the verdict line.
++
++var failed: int = 0
++var H: float = 100.0
++
++
++func _tower(S: SimState):
++	for b in S.buildings:
++		if b.floors >= 9 and b.floors <= 15 and int(b.row) == 1:
++			return b
++	return null
++
++
++func _mode(mode: String) -> void:
++	var c: Dictionary = WorldBrunt.cfg()
++	var on: bool = mode != "today"
++	c.lodgeHold = "body" if on else "world"
++	c.wallRebound = 0.0 if on else 0.25
++	c.wallStop = 0.0 if on else 1.0
++	c.wallDepthHold = 1 if on else 0
++	c.repeatMarks = 2 if on else 0
++	WorldBrunt.testHoldAirOff = mode != "air"
++
++
++func _slam(seed: int, tier: float) -> Dictionary:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, {"intro": false})
++	S.out.fx.clear()
++	var A = S.fighters[1]
++	var D = S.fighters[0]
++	var tw = _tower(S)
++	if tw == null:
++		SimCore.dispose(S)
++		return {}
++	A.tier = tier
++	D.hp = 1.0e9
++	A.hp = 1.0e9
++	D.x = SimWrap.wrap(tw.x - 3000.0)
++	D.y = WorldTerrain.groundY(S, D.x) + H
++	var plan = WorldBrunt.aim(S, A, D, tw, 2000.0, 1.0 + A.ld.launch * (tier - 1.0), false)
++	if plan == null:
++		SimCore.dispose(S)
++		return {}
++	DirLaunch.doLaunch(S, A, D, plan, 2000.0)
++	var wall: bool = false
++	var hit: bool = false
++	var g: int = 0
++	var vxIn: float = 0.0
++	while g < 900 and not hit:
++		vxIn = D.vx
++		SimCore.step(S, null)
++		g += 1
++		for e in S.out.fx:
++			if e.type == "building_hit":
++				hit = true
++				wall = wall or String(e.outcome) == "wall"
++		S.out.fx.clear()
++	if not wall:
++		SimCore.dispose(S)
++		return {}
++	var out := {"freeze": float(S.dirS.stop), "reversed": vxIn * D.vx < 0.0 and absf(D.vx) > 50.0, "zHit": absf(D.z), "zLand": -1.0, "home": -1}
++	var tHit: int = S.tick
++	for t in range(240):
++		var air: bool = D.state == "launched"
++		SimCore.step(S, null)
++		S.out.fx.clear()
++		if air and D.state != "launched" and out.zLand < 0.0:
++			out.zLand = absf(D.z)
++		if out.home < 0 and absf(D.z) < 20.0:
++			out.home = S.tick - tHit
++	if out.zLand < 0.0:
++		out.zLand = absf(D.z)
++	SimCore.dispose(S)
++	return out
++
++
++## [slams, thrown back, freeze sum, the mean share of depth home in the air, slams home inside 240]
++func _read(mode: String) -> Array:
++	_mode(mode)
++	var n: int = 0
++	var rev: int = 0
++	var frz: float = 0.0
++	var air: float = 0.0
++	var home: int = 0
++	for sd in range(1, 9):
++		for tier in [1.0, 2.0, 3.0]:
++			var r: Dictionary = _slam(sd, tier)
++			if r.is_empty():
++				continue
++			n += 1
++			rev += 1 if r.reversed else 0
++			frz += float(r.freeze)
++			if float(r.zHit) > 1.0:
++				air += clampf(1.0 - float(r.zLand) / float(r.zHit), 0.0, 1.0)
++			home += 1 if int(r.home) >= 0 else 0
++	return [n, rev, frz, air / maxf(1.0, float(n)), home]
++
++
++func _expect(ok: bool, what: String) -> void:
++	print(("ok    " if ok else "FAIL  ") + what)
++	if not ok:
++		failed += 1
++
++
++func _init() -> void:
++	var rows: Dictionary = {}
++	for h in [100.0, 900.0]:
++		H = h
++		for mode in ["today", "cityHold", "air"]:
++			var r: Array = _read(mode)
++			rows["%s@%d" % [mode, int(h)]] = r
++			print("      from %d up, %s: %d wall slams, thrown back %d, freeze %.2f s, depth home in the air %.0f%%, home inside 240 ticks %d" % [int(h), mode, r[0], r[1], float(r[2]) / maxf(1.0, float(r[0])), 100.0 * float(r[3]), r[4]])
++	_mode("today")
++	WorldBrunt.testHoldAirOff = false
++	var t1: Array = rows["today@100"]
++	var t9: Array = rows["today@900"]
++	var a1: Array = rows["air@100"]
++	var a9: Array = rows["air@900"]
++	var c9: Array = rows["cityHold@900"]
++	_expect(t1[0] >= 12 and t9[0] >= 6, "wall slams staged: %d from 100 up, %d from 900 up" % [t1[0], t9[0]])
++	_expect(t1[1] == t1[0] and float(t9[3]) >= 0.9, "today: every slam throws him back off the face, and his depth comes home while he's still in the air")
++	_expect(a1[1] == 0 and a9[1] == 0 and float(a1[2]) == 0.0 and float(a9[2]) == 0.0, "cityHold with the grant: nobody thrown back, nothing freezes the fight")
++	_expect(float(a1[3]) <= 0.1 and float(a9[3]) <= 0.1 and a1[4] == a1[0] and a9[4] == a9[0], "cityHold with the grant: his depth comes home after he lands (%.0f%% and %.0f%% in the air), inside 240 ticks" % [100.0 * float(a1[3]), 100.0 * float(a9[3])])
++	_expect(float(c9[3]) >= 0.5, "negative control, cityHold as built: from 900 up the fall outlasts the hold and his depth comes home in the air (%.0f%%)" % (100.0 * float(c9[3])))
++	print("WALL RETURN: %d check(s) failed" % failed)
++	quit(1 if failed > 0 else 0)

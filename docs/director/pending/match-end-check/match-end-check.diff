@@ -1,0 +1,115 @@
+diff --git a/sim/director/tools/match_end_check.gd b/sim/director/tools/match_end_check.gd
+new file mode 100644
+index 0000000..fc20669
+--- /dev/null
++++ b/sim/director/tools/match_end_check.gd
+@@ -0,0 +1,109 @@
++extends SceneTree
++## A match ends each of the three ways, on the data's own switches (A-MODES-07, acceptance 2; docs/director/pending/match-end-check/). Nothing
++## is forced: the ending is read from interrupts.json (on with the 9 November rows, GW1a), and each match is played to its end, on planet 7
++## as the build plays it.
++##   godot --headless --path . --script res://sim/director/tools/match_end_check.gd
++## - a finishing move: two computers fight until one falls. The KO comes from a finisher (a finisher_start before it), before the cap, and
++##   never from the HP bar
++## - wear on an idle player: a player who touches nothing against a computer is opened on the brink, and falls to its finisher
++## - the last event after the time cap: two players who keep moving but never fight, one with more wear, play on past the cap to lastAt:
++##   the one with less wear gets his finisher, with no contest, and the other falls
++## Ends on the verdict line.
++
++var failed: int = 0
++const SETUP: Dictionary = {"planet": 7, "touch": 2, "planetGen": 3, "intro": false}
++
++
++func _init() -> void:
++	_expect(DirEnding.on(), "the ending is on in the data (interrupts.json ending.enabled: the 9 November rows)")
++	if DirEnding.on():
++		var a: Dictionary = {}
++		for sd in [21, 22, 23]:
++			a = _play(sd, {"p1": true, "p2": true}, "ai")
++			if a.by == "fight":
++				break
++		print("      two computers: seed %d ends at %.1f min by %s, %s fell, a finisher before it %s, the cap %s" % [a.seed, a.min, a.by, a.fell, str(a.fin), str(a.cap)])
++		_expect(a.by == "fight" and a.fin and not a.cap, "a finishing move: two computers fight until one falls to a finisher, before the cap")
++		var b: Dictionary = _play(21, {"p1": false, "p2": true}, "idle")
++		print("      an idle player against a computer: ends at %.1f min by %s, %s fell, opened on the brink before it %s, a finisher before it %s" % [b.min, b.by, b.fell, str(b.opened), str(b.fin)])
++		_expect(b.ko and b.fell == "player" and b.opened and b.fin, "wear on an idle player: he's opened on the brink and falls to the computer's finisher")
++		var c: Dictionary = _last()
++		print("      two players who never fight: the cap %s at %.1f min, ends at %.1f min by %s, %s fell, a finisher before it %s" % [str(c.cap), c.capMin, c.min, c.by, c.fell, str(c.fin)])
++		_expect(c.cap and c.ko and c.fell == "the one with more wear" and c.fin, "the last event after the time cap: the one with less wear gets his finisher and the other falls")
++	print("MATCH END: %d check(s) failed" % failed)
++	quit(1 if failed > 0 else 0)
++
++
++func _expect(ok: bool, what: String) -> void:
++	print(("ok    " if ok else "FAIL  ") + what)
++	if not ok:
++		failed += 1
++
++
++func _fins(S: SimState) -> bool:
++	for e in S.out.fx:
++		if String(e.type) == "finisher_start":
++			return true
++	return false
++
++
++func _play(sd: int, ai: Dictionary, mode: String) -> Dictionary:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, sd, ai, SETUP)
++	var out := {"seed": sd, "min": 0.0, "by": "none", "fell": "", "fin": false, "cap": false, "ko": false, "opened": false}
++	var t: int = 0
++	while t < 60000:
++		SimCore.step(S, [SimIntent.new(), SimIntent.new()])
++		t += 1
++		if _fins(S):
++			out.fin = true
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if mode == "idle" and S.fighters[0].brinkOpen:
++			out.opened = true
++		if S.game.ko != null:
++			out.ko = true
++			out.cap = S.game.timeCap
++			out.by = "cap" if S.game.timeCap else "fight"
++			out.fell = "player" if (mode == "idle" and S.game.ko == S.fighters[0]) else ("slot %d" % S.fighters.find(S.game.ko))
++			break
++		if DirEnding.noContest(S):
++			out.by = "no contest"
++			break
++	out.min = float(t) / 3600.0
++	SimCore.dispose(S)
++	return out
++
++
++func _last() -> Dictionary:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 21, {"p1": false, "p2": false}, SETUP)
++	var P = S.fighters[0]
++	P.wear[SimWounds.HEAD] = int(P.wd.stageAt[1])   # the first has the more wear
++	var out := {"min": 0.0, "by": "none", "fell": "", "fin": false, "cap": false, "capMin": 0.0, "ko": false}
++	var t: int = 0
++	var mv := SimIntent.new()
++	while t < 60000:
++		# both keep a hand on the pad (moving a little, away and back), and never press a fight
++		mv = SimIntent.new()
++		mv.mx = 1.0 if (t / 120) % 2 == 0 else -1.0
++		SimCore.step(S, [mv, mv])
++		t += 1
++		if _fins(S):
++			out.fin = true
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if S.game.timeCap and not out.cap:
++			out.cap = true
++			out.capMin = float(t) / 3600.0
++		if S.game.ko != null:
++			out.ko = true
++			out.by = "last event" if S.game.timeCap else "fight"
++			out.fell = "the one with more wear" if S.game.ko == P else "the other"
++			break
++		if DirEnding.noContest(S):
++			out.by = "no contest"
++			break
++	out.min = float(t) / 3600.0
++	SimCore.dispose(S)
++	return out

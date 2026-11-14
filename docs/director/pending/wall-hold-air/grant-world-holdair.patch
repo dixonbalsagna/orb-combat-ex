@@ -1,0 +1,22 @@
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index 69b75dc..a5efb04 100644
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -868,12 +868,17 @@ static func zAt(x0: float, z0: float, z1: float, d: float, x: float) -> float:
+ 	return z0 + (z1 - z0) * p * p * (3.0 - 2.0 * p)
+ 
+ 
++static var testHoldAirOff: bool = false   # tests only: the pull home through the air as before, with the depth hold on
++
++
+ static func stepZ(S: SimState, f, dt: float) -> void:
+ 	if f.aimB >= 0:
+ 		f.z = zAt(f.aimX0, f.aimZ0, f.aimZ1, f.aimD, f.x)
+ 	elif f.wallZ > 0:
+ 		pass   # held at a wall's face (wallDepthHold): his depth stays for the hold (wounds.gd counts it down with the stun)
+ 	elif f.z != 0.0:
++		if int(cfg().wallDepthHold) > 0 and not testHoldAirOff:
++			return   # the wall's depth hold on: no pull home through the air; DirPlane eases him home once he has landed (never a snap)
+ 		f.z *= SimDetMath.pow(0.001, dt)
+ 		if absf(f.z) < 0.5:
+ 			f.z = 0.0
