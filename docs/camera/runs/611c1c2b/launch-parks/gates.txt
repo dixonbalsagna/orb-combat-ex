@@ -26,3 +26,9 @@ detail rally follow                with / without the rally framing: cuts 3 / 3,
 detail rally grab holds the size   size target over the hold 0.6024 to 0.6024
 detail rally turn                  with / without the rally framing: cuts 1 / 3, body off 34 / 66, chaser off 15 / 15, held true, the body's largest change of screen speed 1.224 / 1.126 of the width a tick
 split sweep FAILED (4)
+
+# after the re-word to 'beats or ties' (launch-wide 49402d51): split_sweep --only=rally with both pieces forced on
+detail rally follow                with / without the rally framing: cuts 3 / 3, body off 34 / 34, chaser off 15 / 15, held true, the body's largest change of screen speed 1.224 / 1.126 of the width a tick
+detail rally grab holds the size   size target over the hold 0.6024 to 0.6024
+detail rally turn                  with / without the rally framing: cuts 1 / 3, body off 34 / 66, chaser off 15 / 15, held true, the body's largest change of screen speed 1.224 / 1.126 of the width a tick
+split sweep passed
