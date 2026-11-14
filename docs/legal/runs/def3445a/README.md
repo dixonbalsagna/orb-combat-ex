@@ -11,4 +11,4 @@ Each ruling is one row in `docs/legal/review-log.md`, dated 2026-11-13. Nothing 
 | RL-265 | The permission page, the line that replaces "licence not chosen yet", and the contributor note (A-LEGAL-10) | `docs/legal/permission-page.md`, `docs/legal/contributor-note.md` |
 | RL-266 | The gates before an outside tester plays (A-LEGAL-03) | `docs/legal/outside-tester-gates.md` |
 
-Later candidates add their own folder here (`runs/<sha>/README.md`) listing the record for each gate G1 to G20.
+Later candidates add their own folder here (`runs/<sha>/README.md`) listing the record for each gate G1 to G22.
