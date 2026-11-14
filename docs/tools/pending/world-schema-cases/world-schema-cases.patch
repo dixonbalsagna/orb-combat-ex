@@ -1,0 +1,203 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 84ea414..eb3325a 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -313987,6 +313987,198 @@
+         "rule": "maximum",
+         "pointer": "/splitShare"
+       }
++    },
++    {
++      "id": "biomes-sizes-unknown-key",
++      "schema": "biomes-sizes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/extra": 1
++          },
++          "file": "data/biomes/sizes.json"
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/extra"
++      }
++    },
++    {
++      "id": "biomes-sizes-medium-cols-too-small",
++      "schema": "biomes-sizes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/sizes/medium/cols": 100
++          },
++          "file": "data/biomes/sizes.json"
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/sizes/medium/cols"
++      }
++    },
++    {
++      "id": "biomes-sizes-missing-offered",
++      "schema": "biomes-sizes.schema.json",
++      "mutate": [
++        {
++          "del": [
++            "/sizes/medium/offered"
++          ],
++          "file": "data/biomes/sizes.json"
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/sizes/medium"
++      }
++    },
++    {
++      "id": "biomes-sizes-places-unknown-key",
++      "schema": "biomes-sizes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/sizes/tiny/places/hamlets": 3
++          },
++          "file": "data/biomes/sizes.json"
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/sizes/tiny/places/hamlets"
++      }
++    },
++    {
++      "id": "biomes-sizes-offered-not-boolean",
++      "schema": "biomes-sizes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/sizes/big/offered": "yes"
++          },
++          "file": "data/biomes/sizes.json"
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/sizes/big/offered"
++      }
++    },
++    {
++      "id": "biomes-sizes-bakestride-zero",
++      "schema": "biomes-sizes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/sizes/big/bakeStride": 0
++          },
++          "file": "data/biomes/sizes.json"
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/sizes/big/bakeStride"
++      }
++    },
++    {
++      "id": "biomes-world-unknown-key",
++      "schema": "biomes-world.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/extra": 1
++          },
++          "file": "data/biomes/world.json"
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/extra"
++      }
++    },
++    {
++      "id": "biomes-world-mode-unknown",
++      "schema": "biomes-world.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/mode": "sphere"
++          },
++          "file": "data/biomes/world.json"
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/mode"
++      }
++    },
++    {
++      "id": "biomes-world-plangen-too-high",
++      "schema": "biomes-world.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/fixed/planetGen": 4
++          },
++          "file": "data/biomes/world.json"
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/fixed/planetGen"
++      }
++    },
++    {
++      "id": "biomes-world-fixed-missing-touch",
++      "schema": "biomes-world.schema.json",
++      "mutate": [
++        {
++          "del": [
++            "/fixed/touch"
++          ],
++          "file": "data/biomes/world.json"
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/fixed"
++      }
++    },
++    {
++      "id": "biomes-world-random-pool-empty",
++      "schema": "biomes-world.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/random/pool": []
++          },
++          "file": "data/biomes/world.json"
++        }
++      ],
++      "expect": {
++        "rule": "minItems",
++        "pointer": "/random/pool"
++      }
++    },
++    {
++      "id": "biomes-world-random-enabled-not-boolean",
++      "schema": "biomes-world.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/random/enabled": "true"
++          },
++          "file": "data/biomes/world.json"
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/random/enabled"
++      }
+     }
+   ],
+   "text": [

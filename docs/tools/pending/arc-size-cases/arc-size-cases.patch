@@ -1,0 +1,107 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 84ea414..42d437c 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -295193,6 +295193,89 @@
+         "pointer": "/launchTravel"
+       }
+     },
++    {
++      "id": "fight-power-arcbysize-peak-zero",
++      "schema": "fight-power.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/arcBySize/peakOfRadius": 0
++          },
++          "file": "data/fight/power.json"
++        }
++      ],
++      "expect": {
++        "rule": "exclusiveMinimum",
++        "pointer": "/arcBySize/peakOfRadius"
++      }
++    },
++    {
++      "id": "fight-power-arcbysize-side-over-half",
++      "schema": "fight-power.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/arcBySize/sideOfLap": 0.6
++          },
++          "file": "data/fight/power.json"
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/arcBySize/sideOfLap"
++      }
++    },
++    {
++      "id": "fight-power-arcbysize-size-not-string",
++      "schema": "fight-power.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/arcBySize/sizes": [
++              "tiny",
++              3
++            ]
++          },
++          "file": "data/fight/power.json"
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/arcBySize/sizes/1"
++      }
++    },
++    {
++      "id": "fight-power-arcbysize-missing-peak",
++      "schema": "fight-power.schema.json",
++      "mutate": [
++        {
++          "del": [
++            "/arcBySize/peakOfRadius"
++          ],
++          "file": "data/fight/power.json"
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/arcBySize"
++      }
++    },
++    {
++      "id": "fight-power-arcbysize-unknown-key",
++      "schema": "fight-power.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/arcBySize/extra": 1
++          },
++          "file": "data/fight/power.json"
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/arcBySize/extra"
++      }
++    },
+     {
+       "id": "fight-kick-valid",
+       "schema": "fight-kick.schema.json",
+diff --git a/tools/fixtures/virtual/data/fight/power.json b/tools/fixtures/virtual/data/fight/power.json
+index e081fb9..e960f7f 100644
+--- a/tools/fixtures/virtual/data/fight/power.json
++++ b/tools/fixtures/virtual/data/fight/power.json
+@@ -113,5 +113,7 @@
+   "dash": {"enabled": false, "anyRange": true, "firstTickMin": 1000.0, "fullByTicks": 12, "arriveEaseBh": 1.5, "closeSec": {"1000": 0.4, "3000": 0.8, "6000": 1.4}, "slipMaxBh": 1.5},
+   "_dash": "LT held (Game Design's overnight-2026-11-08.md (c)). With the energy model on and this on, or a setup's \"dash\": the held dash's top speed is the level's flat out at any range, with no ramp by the gap, and it rises fast: at least firstTickMin a second on its first tick, full by fullByTicks. arriveEaseBh is Encounter's, slipMaxBh Controls', closeSec QA's targets",
+   "meteorSpeed": 7000.0,
+-  "_meteorSpeed": "the meteor and the high arc are authored curves. They count as this for their crater, buildings and energy, and their trail burns in full for the whole curve (power-scale.md)"
++  "_meteorSpeed": "the meteor and the high arc are authored curves. They count as this for their crater, buildings and energy, and their trail burns in full for the whole curve (power-scale.md)",
++  "arcBySize": {"peakOfRadius": 1.0, "sideOfLap": 0.25, "sizes": ["tiny", "small"]},
++  "_arcBySize": "the authored curves on a small planet (Game Design, planet-sizes.md section 2): a virtual copy of data/fight/power.json for the self-test"
+ }
