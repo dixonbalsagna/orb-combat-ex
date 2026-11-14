@@ -1,15 +1,16 @@
 // Makes the private LAN test's folder (docs/net/lan-v1.md): a plain 1v1 between two PCs. It edits a SCRATCH COPY of the project, exports it and writes the shortcuts. It starts no game and opens no port.
 // The public desktop builds stay as they are: they exclude net/ (Legal RL-204), and nothing here goes on main. So the two lines the game needs are patched in here, and this stops if they no longer fit.
-//   node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135 --build=NAME [--no-export]
+//   node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135 [--build=NAME] [--no-export]
+// --build: only for a tree with no page stamp (build_info.json with an id); a kept build's tree has one, and the kit's stamp builds on it (A-NET-05).
 // --tree: a copy of main, or of the tree Tools' stack exported for the kept build (its sim_host steps through the black box's _bb_step).
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { networkInterfaces } from 'node:os';
 import { spawnSync } from 'node:child_process';
 
 const a = Object.fromEntries(process.argv.slice(2).map((s) => { const [k, ...v] = s.replace(/^--/, '').split('='); return [k, v.join('=')]; }));
 const stop = (m) => { console.error(m); process.exit(2); };
-for (const k of ['tree', 'out', 'godot', 'host-ip', 'build']) if (!a[k]) stop(`--${k} is required`);
+for (const k of ['tree', 'out', 'godot', 'host-ip']) if (!a[k]) stop(`--${k} is required`);
 if (!/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(a['host-ip'])) stop('--host-ip: a home-network address');
 if (!/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a['host-ip'])) stop('--host-ip: private addresses only');
 // Legal RL-230: the home network only. The address must be this PC's own, on a real adapter, as Performance's old-PC server refuses (build the folder on the PC that hosts).
@@ -18,13 +19,22 @@ if (!/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a['host-ip'])) stop('--
   if (!owner) stop(`--host-ip: ${a['host-ip']} isn't an address of this PC`);
   if (/zerotier|vpn|tailscale|wireguard|hamachi|tap|tun|virtual|vethernet|loopback/i.test(owner[0])) stop(`--host-ip: ${owner[0]} is a member or virtual network, which RL-230 rules out`);
 }
-if (!/^[A-Za-z0-9._-]+$/.test(a.build)) stop('--build: letters, digits, dot, dash and underscore only');
+if (a.build !== undefined && !/^[A-Za-z0-9._-]+$/.test(a.build)) stop('--build: letters, digits, dot, dash and underscore only');
 const tree = resolve(a.tree);
 const out = resolve(a.out);
 if (existsSync(join(tree, '.git'))) stop(`${tree} has a .git: give a scratch copy, never the repository`);
 if (!existsSync(join(tree, 'project.godot'))) stop(`${tree} is not a project`);
 if (existsSync(out) && readdirSync(out).length > 0) stop(`${out} is not empty`);
 const subnet = a['host-ip'].split('.').slice(0, 3).join('.') + '.0/24';
+// The build's stamp (A-NET-05): SimReplay.buildId() reads res://build_info.json, so this names every replay the LAN game saves. It is Tools' page stamp
+// ({commit, date, stack, id}) with lan and the kit's own time (built, UTC). Its id is the page's own: the kit changes only render and UI files, so the sim,
+// data and net a replay runs on are the page's, and a LAN save plays on the page (Tools' LAN report clips), on its kept tree and on this folder's tree/,
+// and is refused as another build's anywhere else (the stand-in's B1 review, finding 1). built tells one LAN folder from another.
+const page = existsSync(join(tree, 'build_info.json')) ? JSON.parse(readFileSync(join(tree, 'build_info.json'), 'utf8')) : {};
+if (!page.id && !a.build) stop('--build is required: the tree has no page stamp (build_info.json with an id)');
+const built = new Date().toISOString();
+const stamp = { commit: String(page.commit || a.build).slice(0, 7), date: page.date ?? '', stack: page.stack ?? 0, lan: true, built, id: String(page.id || a.build) };
+if (!/^[A-Za-z0-9._-]+$/.test(stamp.id)) stop(`the stamp's id must be letters, digits, dot, dash and underscore only (${stamp.id})`);
 const exeName = 'orb-combat-lan.exe';
 
 function patch(rel, edits) {
@@ -114,7 +124,7 @@ run(process.execPath, [join(tree, 'tools', 'desktop-package.mjs'), 'lock', '--ro
   if (f.capture_hook === true) stop('the capture hook is on (RL-230)');
 }
 mkdirSync(out, { recursive: true });
-writeFileSync(join(tree, 'build_info.json'), JSON.stringify({ commit: a.build, lan: true }));
+writeFileSync(join(tree, 'build_info.json'), JSON.stringify(stamp));
 if (a['no-export'] === undefined) {
   run(resolve(a.godot), ['--headless', '--path', tree, '--import']);
   run(resolve(a.godot), ['--headless', '--path', tree, '--export-release', 'Windows Desktop', join(out, exeName)]);
@@ -199,4 +209,15 @@ if (!words.includes("Fighters in the other fight can hit you, and your partner's
 if (!/opens a network link between the two PCs/.test(words)) stop('lan_words.txt: it must say a link opens');
 if (/collects|sends nothing|no accounts/i.test(words)) stop('lan_words.txt: RL-204\'s privacy line stays out of the kit');
 writeFileSync(join(out, 'READ ME FIRST.txt'), words.replace(/\r?\n/g, '\r\n'));
-console.log(`kit in ${out}, build ${a.build}, host ${a['host-ip']}, rule for ${subnet}`);
+// The folder's replay tree: the game's sim, data, net, project and class cache as exported, with the stamp, read-only.
+{
+  const rt = join(out, 'tree');
+  mkdirSync(rt, { recursive: true });
+  for (const x of ['sim', 'data', 'net', '.godot']) if (existsSync(join(tree, x))) cpSync(join(tree, x), join(rt, x), { recursive: true });
+  for (const x of ['project.godot', 'build_info.json']) copyFileSync(join(tree, x), join(rt, x));
+  writeFileSync(join(rt, 'README.txt'), crlf([`The replay tree of this LAN folder, build ${stamp.id}: the game's sim, data, net and project as it was exported, with its stamp (build_info.json).`,
+    'A saved match from saved\\ plays back exactly here, and only here:', '  node tools/preview/blackbox-verify.mjs <lan-....json> --tree "<this folder>"', 'Read-only: never edit, swap or rebuild it.']));
+  const lock = (p) => { for (const n of readdirSync(p)) { const q = join(p, n); if (statSync(q).isDirectory()) lock(q); else chmodSync(q, 0o444); } };
+  lock(rt);
+}
+console.log(`kit in ${out}, build ${stamp.id}, host ${a['host-ip']}, rule for ${subnet}`);

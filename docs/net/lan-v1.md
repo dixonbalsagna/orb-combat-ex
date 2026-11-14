@@ -71,12 +71,14 @@ Each PC saves the match as `lan-<commit8>-<main|old>-<yyyymmdd-hhmmss>-<reason>.
 | `net` | delay, rollbacks, deepest, checks matched, round trip, packets dropped by the checks, the tick a gone PC's seat went to the computer |
 | `replay` | SimReplay (`meridian-replay`, v4): every player's confirmed inputs to `finalTo`, the toggles (a dropped seat on its sim slot), SimHash's gameplay hash at each final checkpoint (every 60 ticks; `NetSession.hashChecks`), and the final hash when the confirmed tick is the present (on a LAN, most of the time) |
 
-It plays back through the project's own replay path: `node tools/preview/blackbox-verify.mjs <file> --tree <the LAN folder>	ree` (the folder's tree is the page's). `lan_check` proves both PCs' files play back (1v1, 2v2 together, a dropped seat), with negative controls for a changed input and a toggle on the wrong body.
+It plays back through the project's own replay path: `node tools/preview/blackbox-verify.mjs <file> --tree <the LAN folder>\tree` (the folder's own tree; see the build's stamp below). `lan_check` proves both PCs' files play back (1v1, 2v2 together, a dropped seat), with negative controls for a changed input and a toggle on the wrong body.
+
+**The build's stamp (A-NET-05, 2026-11-14).** Each LAN folder's game names its build once, in `res://build_info.json`, the file `SimReplay.buildId()` reads. The kit writes it in the shape of Tools' page stamp: `{commit (7), date (the commit's), stack, lan: true, built (the kit's own UTC time), id}`. The id is the page's own (`<commit8>-<cache key 8>`): the kit changes only render and UI files, so the sim, data and net a replay runs on are the page's, and a LAN save plays on the page (Tools' LAN report clips) and on its kept tree too (the stand-in's B1 review, finding 1). `built` tells one LAN folder from another. Both PCs, running the same folder, share the stamp. A saved file's `build` is that stamp and its replay's `build` is the id; the file name keeps the commit's first 8 from the id. The kit writes the same stamp into the folder's `tree/` (the game's sim, data, net, project and class cache as exported, read-only), so a saved match plays back there. Anywhere else (another build, a dev tree) it is refused as another build's before its first tick, with both ids, the same reason a solo replay gets; UI writes the sentence. `--build` is needed only for a tree with no page stamp. `lan_check` loads a foreign LAN save from disk and checks the refusal, with a control that leaves the build check out.
 
 ## Making the folder
 
 ```
-node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135 --build=<name>
+node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135
 ```
 
 Build it on the main PC: the kit stops if the address isn't that PC's own. `10.0.0.135` comes from Performance's look on 2026-10-31.

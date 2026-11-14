@@ -520,7 +520,7 @@ func save(reason: String) -> String:
 	var dir: String = saveDir if saveDir != "" else OS.get_executable_path().get_base_dir().path_join(SAVE_DIR)
 	DirAccess.make_dir_recursive_absolute(dir)
 	var stamp: String = Time.get_datetime_string_from_system().replace("-", "").replace(":", "").replace("T", "-")
-	var commit: String = String(doc.build.get("commit", "dev")).left(8).validate_filename()   # the build's commit, so files from different builds never mix (the EP)
+	var commit: String = commit8(doc.build)   # the build's commit, so files from different builds never mix (the EP)
 	var name: String = "lan-%s-%s-%s-%s" % [commit if commit != "" else "dev", doc.pc, stamp, reason]
 	var fname: String = name + ".json"
 	var n: int = 2
@@ -538,7 +538,21 @@ func save(reason: String) -> String:
 	return fname
 
 
+## The commit's first 8 characters for a saved file's name, from the build's stamp: its id begins with them (Tools' page id is
+## "<commit8>-<key8>", and the LAN kit keeps it; the stamp's own "commit" has 7). A stamp with no id gives its commit.
+static func commit8(b: Dictionary) -> String:
+	var id: String = String(b.get("id", ""))
+	var c: String = id.get_slice("-", 0) if id != "" else String(b.get("commit", "dev"))
+	return c.left(8).validate_filename()
+
+
+## The exe's stamp, res://build_info.json, the one SimReplay.buildId() reads (A-NET-05): the saved file's "build" is it, and its
+## replay's "build" is its id, so a LAN save names its build once. stampFor (tests) stands in for the file.
+static var stampFor: Dictionary = {}
+
 static func _buildInfo() -> Dictionary:
+	if not stampFor.is_empty():
+		return stampFor.duplicate(true)
 	if not FileAccess.file_exists("res://build_info.json"):
 		return {}
 	var j = JSON.parse_string(FileAccess.get_file_as_string("res://build_info.json"))

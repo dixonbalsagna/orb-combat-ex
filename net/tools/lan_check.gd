@@ -24,6 +24,10 @@ extends SceneTree
 ##   - a saved match (NetLan.save, with the scripted hit-stops off so the inputs are the whole match): both PCs' files play back through SimReplay.play,
 ##     every checkpoint and the final hash matching, the two PCs' replays the same, in 1v1 (lan, p120), 2v2 together (p120) and together with the second PC
 ##     gone (its seat's toggle on the sim's slot, p3's);
+##   - A-NET-05, a stamped build (the kit's stamp standing in for build_info.json): both PCs' saved files name the build once (the file's "build" is the stamp,
+##     the replay's "build" its id), the file name keeps the commit's first 8, and both play back on that build; a LAN save loaded from disk with another
+##     build's id is refused as "build" before its first tick, with both ids, as a solo replay is, and so is a save with no stamp; the desync report's
+##     re-run refuses it too;
 ##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on, the dash and its slip's brake, and the page's travel of 1.5,
 ##     and a short match on each stays in step;
 ##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
@@ -36,7 +40,8 @@ extends SceneTree
 ## doesn't put the view back after its rollback must be caught showing fight 0 while the player stands; with CD-10's checks off, the huge wait must be taken, the bad
 ## slot must reach the session (which refuses it, with no script error) and the flood must fill it; and with the hand-over off, a gone PC must freeze the match; and a LAN setup without its "power" word
 ## must be caught starting with the model off; a saved match with one input changed, and one whose dropped seat's toggle names the session's index
-## instead of the sim's slot, must each fail to play back.
+## instead of the sim's slot, must each fail to play back; and with SimReplay's build check left out (blindBuild), the foreign LAN save must play to its
+## last tick, so the refusal is the build id's alone.
 ## Each must be caught.
 ## Verdict line: LAN: N check(s) failed
 
@@ -430,6 +435,9 @@ func _init() -> void:
 		ok(not bool(wrongSeat.ok), "a dropped seat's toggle on the session's index must fail to play back")
 		_close(r)
 		ticks = keepN
+		var blind: Dictionary = _stampRows(saveTo, true)
+		print("control, A-NET-05 with the build check left out: the foreign LAN save played %s (reason \"%s\", to tick %d of %d)" % [str(blind.foreignOk), blind.foreignWhy, blind.foreignTo, blind.ticks])
+		ok(bool(blind.foreignOk) and int(blind.foreignTo) == int(blind.ticks), "with the build check left out, the foreign LAN save must play to its last tick")
 		r = _run("lan", true, true, 0, true, false)
 		print("control, two fights, S not moved to the player's fight: %d frames held the wrong one" % r.wrongFight)
 		ok(r.wrongFight > 0, "with S not moved, a PC must be caught holding the wrong fight")
@@ -636,6 +644,14 @@ func _init() -> void:
 		print("  saved match, %s: %d checkpoints, finals %d, play %s, same %s, toggles %s" % [what, sp.n, sp.finals, str(sp.reasons), str(sp.same), str(sp.toggles)])
 		_close(sr)
 	ticks = keepT
+	var st: Dictionary = _stampRows(saveTo, false)
+	ok(bool(st.named), "A-NET-05: both PCs' files name the build once: the file's build is the stamp, the replay's build its id (%s)" % str(st.ids))
+	ok(bool(st.names), "A-NET-05: the file names keep the commit's first 8 from the stamp's id (%s)" % str(st.files))
+	ok(bool(st.ownOk), "A-NET-05: both PCs' stamped files play back on that build (%s)" % str(st.ownWhy))
+	ok(st.foreignWhy == "build" and int(st.foreignAt) == -1 and st.foreignBuild == st.otherId and st.foreignHome == st.id and st.foreignRefusal == "build", "A-NET-05: a LAN save of another build, loaded from disk, is refused as \"build\" before its first tick, with both ids (%s, at %d; build %s, home %s; refusal %s)" % [st.foreignWhy, st.foreignAt, st.foreignBuild, st.foreignHome, st.foreignRefusal])
+	ok(st.bareWhy == "build", "A-NET-05: a LAN save with no stamp is refused by a stamped build (%s)" % st.bareWhy)
+	ok(bool(st.reportRefuses), "A-NET-05: the desync report's re-run (NetDesync.replayState) refuses the foreign save")
+	print("  A-NET-05, stamp %s: files %s; own play %s; foreign %s at %d (build %s, home %s); no stamp %s" % [st.id, str(st.files), str(st.ownWhy), st.foreignWhy, st.foreignAt, st.foreignBuild, st.foreignHome, st.bareWhy])
 	var pre: String = NetLan.prefixOf("10.0.0.135")
 	ok(pre == "10.0.0.", "the /24 of an address (%s)" % pre)
 	ok(NetEnetTransport.allowed("10.0.0.7", pre) and not NetEnetTransport.allowed("10.238.114.20", pre) and not NetEnetTransport.allowed("10.0.01.7", pre) and not NetEnetTransport.allowed("203.0.113.5", pre), "the filter lets in only the /24")
@@ -669,6 +685,73 @@ func _setupPower(su: Dictionary) -> Array:
 		hs.append(SimHash.stateHash(S).gameplay)
 		SimCore.dispose(S)
 	return [on, trav, hs[0] == hs[1]]
+
+
+## A-NET-05 on a stamped build: a 1v1 on lan to 600 ticks, both PCs save with the kit's stamp standing in for build_info.json (NetLan.stampFor, and
+## SimReplay's id set to it), each file is read back from disk; one is written back with another build's id ("foreign") and loaded again, and one
+## with no stamp. blind (the control): SimReplay.blindBuild, the build check left out. Leaves the stamp, the id and the switch as they were.
+func _stampRows(dir: String, blind: bool) -> Dictionary:
+	var stamp := {"commit": "6a30b4c", "date": "2026-11-09T14:31:07-08:00", "stack": 1, "lan": true, "built": "2026-11-14T20:15:00.000Z", "id": "6a30b4c9-6627cb9d"}
+	var other: String = "6eec6a75-62e1fea3"
+	var keepT: int = ticks
+	ticks = 600
+	NetLan.stampFor = stamp
+	SimReplay._bid = String(stamp.id)
+	SimReplay.blindBuild = blind
+	var out := {"id": stamp.id, "otherId": other, "ticks": 0, "named": true, "names": true, "ownOk": true, "ownWhy": [], "ids": [], "files": [],
+		"foreignWhy": "", "foreignAt": -2, "foreignBuild": "", "foreignHome": "", "foreignRefusal": "", "foreignOk": false, "foreignTo": -1, "bareWhy": "", "reportRefuses": false}
+	var r := _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"pure": true, "saveDir": dir})
+	var docs: Array = []
+	for k in range(2):
+		var fn: String = r.lans[k].save("test")
+		out.files.append(fn)
+		var d = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(fn))) if fn != "" else null
+		if not (d is Dictionary) or not (d.get("replay") is Dictionary):
+			out.named = false
+			out.ownOk = false
+			continue
+		docs.append(d)
+		out.ids.append([String((d.build as Dictionary).get("id", "")), String(d.replay.get("build", ""))])
+		var b: Dictionary = d.build
+		out.named = out.named and String(b.get("id", "")) == String(stamp.id) and String(b.get("commit", "")) == String(stamp.commit) and b.get("lan") == true and String(d.replay.get("build", "")) == String(stamp.id)
+		out.names = out.names and fn.begins_with("lan-6a30b4c9-%s-" % ("main" if k == 0 else "old"))
+		var res: Dictionary = SimReplay.play(d.replay)
+		out.ownWhy.append(String(res.reason))
+		out.ownOk = out.ownOk and bool(res.ok)
+		out.ticks = int(d.replay.ticks)
+	if not docs.is_empty():
+		var f: Dictionary = docs[0].duplicate(true)
+		f.replay.build = other
+		var ffn: String = "lan-6eec6a75-main-foreign-test.json"
+		var fh := FileAccess.open(dir.path_join(ffn), FileAccess.WRITE)
+		fh.store_string(JSON.stringify(f))
+		fh.close()
+		var back = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(ffn)))
+		DirAccess.remove_absolute(dir.path_join(ffn))
+		var fr: Dictionary = SimReplay.play(back.replay)
+		out.foreignWhy = String(fr.reason)
+		out.foreignAt = int(fr.firstBadTick)
+		out.foreignBuild = String(fr.get("build", ""))
+		out.foreignHome = String(fr.get("home", ""))
+		out.foreignOk = bool(fr.ok)
+		out.foreignTo = int(back.replay.ticks) if bool(fr.ok) else int(fr.firstBadTick)
+		out.foreignRefusal = SimReplay.refusal(back.replay)
+		var rs := NetDesync.replayState(back.replay, 60)
+		out.reportRefuses = rs == null
+		if rs != null:
+			SimCore.dispose(rs)
+		var bare: Dictionary = docs[0].duplicate(true)
+		bare.replay.erase("build")
+		out.bareWhy = String(SimReplay.play(bare.replay).reason)
+	for fn in out.files:
+		if String(fn) != "":
+			DirAccess.remove_absolute(dir.path_join(String(fn)))
+	_close(r)
+	SimReplay.blindBuild = false
+	SimReplay._bid = null
+	NetLan.stampFor = {}
+	ticks = keepT
+	return out
 
 
 ## Both PCs save; each file is read back and played through SimReplay.play. mutate (tests): (doc) -> void, applied to each doc before it
