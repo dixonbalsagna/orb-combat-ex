@@ -1,0 +1,3 @@
+FAIL  coverage: biomes-sizes.schema.json: at least three invalid cases
+FAIL  coverage: biomes-world.schema.json: at least three invalid cases
+self-test: 10105 of 10107 checks passed, 2 FAILED

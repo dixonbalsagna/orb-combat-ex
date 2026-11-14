@@ -1,0 +1,12 @@
+gate: <scratch>/g/gc/arc_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/arc_size_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/core_load_split.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/core_two_states_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/flight_strike_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/floorlift_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/follow_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/parity.txt: 1 SCRIPT ERROR line(s) in the output (allowed 0); the first:
+  SCRIPT ERROR: Invalid access to property or key 'farMask' on a base object of type 'Nil'.
+gate: <scratch>/g/gc/parity_noflip.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/size_noflip.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/gc/w_size_check.txt: no SCRIPT ERROR lines

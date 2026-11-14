@@ -1,0 +1,17 @@
+04:43:08 parity exit 1 gate:SCRIPT-ERROR: golden check FAILED
+04:43:44 validate: 323 files checked, 0 errors, 2 warnings; selftest: self-test: 10105 of 10107 checks passed, 2 FAILED
+04:43:44 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+04:44:09 arc_size_check exit 0: ARC SIZES: 17 check(s), 0 failed
+04:44:27 arc_check exit 0: ARC: 0 check(s) failed
+04:45:09 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+04:45:40 floorlift_check exit 0: FLOORLIFT: 0 check(s) failed
+04:45:57 follow_check exit 0: FOLLOW: 0 check(s) failed
+04:47:19 world size_check exit 0: SIZES: 2 check(s) failed
+04:52:10 core two_states_check exit 0: PASS  0 failure(s)
+04:52:15 core load_split exit 0: 
+04:52:15 gc gates done
+--- re-run without a-world-01's GW1a data flips (data-switches-gw1a.diff, data-switches-gw1a-others.patch), the park kept:
+parity: Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+golden check passed, SCRIPT ERROR lines 0
+world size_check: SIZES: 0 check(s) failed
+validate: 323 files checked, 0 errors, 2 warnings; selftest: self-test: 10105 of 10107 checks passed, 2 FAILED (World's biomes-sizes and biomes-world schemas: no invalid cases)

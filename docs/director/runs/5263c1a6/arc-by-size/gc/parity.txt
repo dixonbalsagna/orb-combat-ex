@@ -1,0 +1,80 @@
+Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+ok    long float literals
+ok    constants
+ok    cosmetic stream seeds
+ok    rng
+ok    wrap
+ok    sin/cos
+ok    pow/exp/log/hypot
+FAIL  tick-0 state: seed 1: c935b0f622b29b81 (golden 6441f6fa9e23c7b5); first difference at value 65: n:40f2a3e000000000, golden n:40f5e00000000000
+ok    wounds (forced hits)
+ok    rally (forced)
+FAIL  crippling (forced): differs
+ok    mood and style (forced)
+ok    fight data
+ok    roster data
+ok    roster loader rejects bad data
+ok    the game's wounds and ladder files, and a fighter's differences
+ok    the training dummy in the roster
+ok    a match's slots name two fighters the data has
+ok    one versus many: a match of three to five bodies
+ok    one versus many: what the core counts of a guard
+ok    wired numbers change a match
+ok    keyed draws
+FAIL  arm setups: default-flip: setup and applyArm differ by tick 0
+ok    intent pack
+ok    exp past its scaling's reach
+ok    a stun ends the held states
+ok    action state
+ok    pausing set pieces
+ok    act rule and time cap
+ok    the break
+ok    the form impulse
+ok    blocked blows and the arms
+ok    blocked shots and the arms
+ok    the second breath waits for quiet
+ok    a bowed rush
+ok    a drop
+ok    the mood by a blow's form
+ok    the free-flight speed and the locked damping, as reads
+ok    the stick as held, through a stun
+ok    a medium blow, rule by rule
+ok    a blow that names its region
+ok    no tier past the ladder's last
+FAIL  the view's particles carry their depth: the ground at depth reads 1089.4169314119 over a plane lowered to 960.480420286934
+ok    depth in the core
+FAIL  a fighter's depth outside a flight, and the contact rule: the camera's start for the default match reads 76700.0, or depth is on
+FAIL  the intro phase: intro false did not give the flat start
+FAIL  composed intros: double_drop, slot 1 first, gap 30: the state at the clock is not the one the setup's skip gives
+ok    the intro's default facts and the take
+ok    the last stand
+ok    a hidden fighter is found when he charges or is launched
+ok    shots
+FAIL  shots: buildings, wild deflects, the spray, mines: no building in reach of the plane with clear air beside it
+ok    agency lines
+ok    a clash's meeting point
+ok    SimMathx.PI and TAU
+ok    the blow cue's run stays out of the hash
+ok    the run's rare boons
+ok    the catastrophe's blast cloud and ash
+ok    the launch's curve
+ok    hit-stop by weight
+ok    the ricochet's glance
+FAIL  the replay header covers a planet's data: rings.json's turn edited: turn on [true, true], off [false, false], no planet, gen 1, gen 2 [false, true, true]; only the turn's setups should move
+ok    the intent's second word in the hash and the replay
+ok    a struggle, as the host reads it
+FAIL  a match starts on the floor of a lake or the sea: the floor off: a flat start is at 523.407 and 556.608, not 60
+FAIL  the run's ground: a coastal home's first ring: turned false, ok true, home held true, 2 reads in 279 frames (want turned, ok, held, a read a frame)
+ok    the run's state and carry
+FAIL  the campaign's arc and episode: the cross-back of 0bac000000017334: from 2 to 4, asked -1, column 4 led by { "id": 0, "kind": "city", "place": 10, "arc": -754, "entry": 551, "dir": -1, "preferred": 0 } (want 2 to 4, column 2's untaken
+FAIL  the planet's load: the planet's load: refused cold false, gen 1 never true, progress climbs true, phases ["plates", "climate", "places", "ring", "done"] (want plates, climate, places, ring, done), the match starts false and is the col
+ok    the calm turn on gen 2
+FAIL  the match's start in pieces: the match's start in pieces: { "intro": false }: 8 pieces, same true, progress climbs true; { "intro": "skip" }: 8 pieces, same true, progress climbs true; { "planet": 7, "touch": 3, "intro": false }: 8 pi
+ok    the aftermaths
+FAIL  the curve's shared functions, the brake's control back, the camera feed: the send { "ux": 0.6, "uy": 0.8 }: predict() touches down on tick 203, the flight on 204 (arrival told: true)
+ok    the air brake
+ok    forms: five steps and the slingshot
+FAIL  forms: Witness and Trial: a building of mass 1.0 the rival brought down near him gave Witness 0.0, not 16.0
+ok    menace at the cap decays after its delay, whatever the dead (CD-05)
+ok    Animation's view fields: a launch's tier, a hit's stop and tier
+FAIL  the intro phase (golden): differs

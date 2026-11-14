@@ -1,0 +1,191 @@
+diff --git a/sim/director/arc.gd b/sim/director/arc.gd
+index e6c3df5..432d2f4 100644
+--- a/sim/director/arc.gd
++++ b/sim/director/arc.gd
+@@ -134,9 +134,32 @@ static func _blast(S: SimState, x: float, z: float, r: float, by, c: Dictionary)
+ 		S.world.fallFold = 0.0
+ 
+ 
+-## How a ring smaller than the whole scales the curve, so the angle round holds.
++## How a ring smaller than its own planet scales the curve, so the angle round holds. A planet's size is a distance (docs/design/planet-sizes.md
++## section 2): on the whole of any planet the curve is absolute, as on medium. wholeRing is medium's lap, so medium is today's bit for bit.
+ static func _scale() -> float:
+-	return SimConst.W / float(cfg().wholeRing)
++	return SimConst.W / (float(SimConst.PLANET_NC) * SimConst.COL) * (float(SimConst.PLANET_NC_MEDIUM) * SimConst.COL / float(cfg().wholeRing))
++
++
++## power.json arcBySize when this planet's size is one it names (tiny and small), else an empty Dictionary.
++static func _bySize() -> Dictionary:
++	var c: Dictionary = SimPower.arcBySize()
++	if c.is_empty() or not (c.get("sizes", []) as Array).has(WorldPlanetSize.nameOfCols(SimConst.PLANET_NC)):
++		return {}
++	return c
++
++
++## A curve's sideways distance on this planet: its row's, by the scale; on a size arcBySize names, at most sideOfLap of the lap.
++static func _dist(r: Dictionary) -> float:
++	var d: float = float(r.d) * _scale()
++	var c: Dictionary = _bySize()
++	return minf(d, float(c.sideOfLap) * float(SimConst.PLANET_NC) * SimConst.COL) if not c.is_empty() else d
++
++
++## Its rise over the line between the grounds: its row's, by the scale; on a size arcBySize names, at most peakOfRadius of the radius.
++static func _rise(r: Dictionary) -> float:
++	var h: float = float(r.h) * _scale()
++	var c: Dictionary = _bySize()
++	return minf(h, float(c.peakOfRadius) * SimField.R) if not c.is_empty() else h
+ 
+ 
+ ## Along the ground, 0 to 1, at t of the flight (0 to 1): slowest at the apex, quickest at both ends.
+@@ -213,7 +236,7 @@ static func sideFor(S: SimState, f, o, row: int, aim: int) -> float:
+ ## What a landing that way is worth: standing buildings near it, and water or open ground, read from the bake. Never who's there (RL-213).
+ static func landingScore(S: SimState, o, row: int, side: float) -> float:
+ 	var c: Dictionary = cfg().landing
+-	var land: float = SimWrap.wrap(o.x + side * float(_row(row).d) * _scale())
++	var land: float = SimWrap.wrap(o.x + side * _dist(_row(row)))
+ 	SimField.far()
+ 	var s: float = 0.0
+ 	if WorldWater.surfaceAt(S, land) > WorldTerrain.groundY(S, land):
+@@ -234,14 +257,15 @@ static func landingScore(S: SimState, o, row: int, side: float) -> float:
+ static func landing(o) -> Dictionary:
+ 	var r: Dictionary = _row(_g(o, A_ROW) - 1)
+ 	var side: float = float(_g(o, A_SIDE) - 2)
+-	return {"x": SimWrap.wrap(float(_g(o, A_X0)) / 16.0 + side * float(r.d) * _scale()), "y": float(_g(o, A_GL)) / 16.0, "side": side, "ticks": _ticks(r) - _g(o, A_AGE)}
++	return {"x": SimWrap.wrap(float(_g(o, A_X0)) / 16.0 + side * _dist(r)), "y": float(_g(o, A_GL)) / 16.0, "side": side, "ticks": _ticks(r) - _g(o, A_AGE)}
+ 
+ 
+ ## Puts him on the curve, and tells the view where he'll land.
+ static func send(S: SimState, f, o, row: int, side: float) -> void:
+ 	var r: Dictionary = _row(row)
+-	var ks: float = _scale()
+-	var land: float = SimWrap.wrap(o.x + side * float(r.d) * ks)
++	var dd: float = _dist(r)
++	var hh: float = _rise(r)
++	var land: float = SimWrap.wrap(o.x + side * dd)
+ 	SimField.far()
+ 	var gl: float = maxf(WorldTerrain.groundY(S, land), WorldWater.surfaceAt(S, land))
+ 	SimField.near()
+@@ -249,8 +273,8 @@ static func send(S: SimState, f, o, row: int, side: float) -> void:
+ 	o.launchT = 1.0
+ 	var total: int = _ticks(r)
+ 	var u1: float = along(1.0 / float(total), float(r.apex), float(cfg().apexU))
+-	o.vx = side * float(r.d) * ks * u1 / SimConst.DT
+-	o.vy = (rise(u1, float(r.h) * ks, float(cfg().skew)) + (gl - float(o.y)) * u1) / SimConst.DT
++	o.vx = side * dd * u1 / SimConst.DT
++	o.vy = (rise(u1, hh, float(cfg().skew)) + (gl - float(o.y)) * u1) / SimConst.DT
+ 	if S.brakeOn and o.brk != null:
+ 		o.brk.n = o.launchN   # the core's brake holds off until the curve lets it: from the end of the hang
+ 		o.brk.t = 0
+@@ -274,7 +298,7 @@ static func send(S: SimState, f, o, row: int, side: float) -> void:
+ 	var e = S.out.fx[S.out.fx.size() - 1]
+ 	e.x = land      # where he'll land, for the view's tiles
+ 	e.y = gl
+-	e.amount = float(r.h) * ks
++	e.amount = hh
+ 	e.n = S.tick + _ticks(r)
+ 
+ 
+@@ -293,7 +317,8 @@ static func step(S: SimState, f, dt: float) -> bool:
+ 	var c: Dictionary = cfg()
+ 	var row: int = _g(f, A_ROW) - 1
+ 	var r: Dictionary = _row(row)
+-	var ks: float = _scale()
++	var dd: float = _dist(r)
++	var hh: float = _rise(r)
+ 	var total: int = _ticks(r)
+ 	var age: int = mini(_g(f, A_AGE) + 1, total)
+ 	_s(f, A_AGE, age)
+@@ -304,8 +329,8 @@ static func step(S: SimState, f, dt: float) -> bool:
+ 	var apexTime: float = float(r.apex)
+ 	var t: float = float(age) / float(total)
+ 	var u: float = along(t, apexTime, float(c.apexU))
+-	var nx: float = SimWrap.wrap(x0 + side * float(r.d) * ks * u)
+-	var ny: float = g0 + (gl - g0) * u + rise(u, float(r.h) * ks, float(c.skew))
++	var nx: float = SimWrap.wrap(x0 + side * dd * u)
++	var ny: float = g0 + (gl - g0) * u + rise(u, hh, float(c.skew))
+ 	f.vx = SimWrap.sdx(f.x, nx) / dt
+ 	f.vy = (ny - f.y) / dt
+ 	f.x = nx
+diff --git a/sim/director/tools/arc_size_check.gd b/sim/director/tools/arc_size_check.gd
+new file mode 100644
+index 0000000..36da2ee
+--- /dev/null
++++ b/sim/director/tools/arc_size_check.gd
+@@ -0,0 +1,70 @@
++extends SceneTree
++## arcBySize (Game Design, docs/design/planet-sizes.md section 2): godot --headless --path . --script res://sim/director/tools/arc_size_check.gd
++## The meteor and the high arc flown on each of the five sizes (planet 7, touch 1): on tiny and small the rise is at most 1.0 x the radius and the
++## sideways distance at most a quarter of the lap; on medium, big and huge the curve is absolute (medium's numbers, today's at medium); a ring
++## smaller than its planet still scales it. Negative control: arcBySize taken out, tiny flies the absolute curve past both caps.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  " + what)
++	else:
++		print("ok    " + what)
++
++
++## One curve flown to its end: the peak over the start's ground, the sideways distance, the ticks.
++func _fly(size: String, row: int, arena: int = 0) -> Dictionary:
++	var S := SimCore.createSim()
++	var su: Dictionary = {"intro": false, "planet": 7, "touch": 1, "planetGen": 3, "planetSize": size}
++	if arena > 0:
++		su["arena"] = {"cols": arena}
++	SimCore.newMatch(S, 11, {"p1": false, "p2": false}, su)
++	var f = S.fighters[0]
++	var o = S.fighters[1]
++	var x0: float = o.x
++	var g0: float = maxf(WorldTerrain.groundY(S, o.x), WorldWater.surfaceAt(S, o.x))
++	DirArc.send(S, f, o, row, 1.0)
++	var top: float = o.y
++	var n: int = 0
++	var far: float = 0.0
++	while DirArc._g(o, DirArc.A_ROW) != 0 and n < 2000:
++		SimCore.step(S)
++		S.out.fx.clear()
++		S.out.feed.clear()
++		top = maxf(top, o.y)
++		far = maxf(far, absf(SimWrap.sdx(x0, o.x)))
++		n += 1
++	return {"peak": top - g0, "side": far, "R": SimField.R, "lap": float(SimConst.PLANET_NC) * SimConst.COL, "dist": DirArc._dist(DirArc._row(row)), "rise": DirArc._rise(DirArc._row(row)), "ticks": n}
++
++
++func _init() -> void:
++	DirArc.setForce(1)
++	var hM: Array = [16400.0, 9900.0]
++	var dM: Array = [25436.0, 15355.0]
++	var c: Dictionary = SimPower.arcBySize()
++	ok(not c.is_empty() and c.sizes.has("tiny") and c.sizes.has("small"), "power.json arcBySize names tiny and small (%s)" % str(c))
++	for size in ["tiny", "small", "medium", "big", "huge"]:
++		for row in [0, 1]:
++			var r: Dictionary = _fly(size, row)
++			var name: String = ["meteor", "high arc"][row]
++			print("  %s %s: peak %.0f (rise %.0f, radius %.0f), sideways %.0f (dist %.0f, lap %.0f, %.3f of it), %d ticks" % [size, name, r.peak, r.rise, r.R, r.side, r.dist, r.lap, r.side / r.lap, r.ticks])
++			if size == "tiny" or size == "small":
++				ok(r.rise <= r.R + 1e-6 and r.dist <= 0.25 * r.lap + 1e-6, "%s %s: the rise at most the radius, the sideways distance at most a quarter of the lap" % [size, name])
++				ok(r.side <= 0.25 * r.lap + 60.0, "%s %s: flown, it lands within a quarter of the lap (%.3f)" % [size, name, r.side / r.lap])
++			else:
++				ok(absf(r.dist - dM[row]) < 1e-6 and absf(r.rise - hM[row]) < 1e-6, "%s %s: absolute, medium's curve (%.0f across, %.0f up)" % [size, name, r.dist, r.rise])
++	var rr: Dictionary = _fly("medium", 0, 2400)
++	ok(absf(rr.dist - dM[0] * 0.5) < 1e-6, "a ring of half its planet still scales the curve by half, so the angle round holds (%.0f)" % rr.dist)
++	# negative control: without arcBySize tiny flies the absolute curve, past both caps
++	var keep = SimPower._d.get("arcBySize")
++	SimPower._d.erase("arcBySize")
++	var nr: Dictionary = _fly("tiny", 0)
++	SimPower._d["arcBySize"] = keep
++	ok(nr.rise > nr.R and nr.dist > 0.25 * nr.lap, "negative control: arcBySize out, tiny's meteor rises %.0f over a radius of %.0f and goes %.3f of the lap" % [nr.rise, nr.R, nr.dist / nr.lap])
++	print("ARC SIZES: %d check(s), %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
+diff --git a/sim/director/tools/arc_size_check.gd.uid b/sim/director/tools/arc_size_check.gd.uid
+new file mode 100644
+index 0000000..a33217a
+--- /dev/null
++++ b/sim/director/tools/arc_size_check.gd.uid
+@@ -0,0 +1 @@
++uid://c5v1oibqwagvb

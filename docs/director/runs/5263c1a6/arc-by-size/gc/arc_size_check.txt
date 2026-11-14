@@ -1,0 +1,18 @@
+ok    power.json arcBySize names tiny and small ({ "peakOfRadius": 1.0, "sideOfLap": 0.25, "sizes": ["tiny", "small"] })
+ok    tiny meteor: the rise at most the radius, the sideways distance at most a quarter of the lap
+ok    tiny meteor: flown, it lands within a quarter of the lap (0.251)
+ok    tiny high arc: the rise at most the radius, the sideways distance at most a quarter of the lap
+ok    tiny high arc: flown, it lands within a quarter of the lap (0.251)
+ok    small meteor: the rise at most the radius, the sideways distance at most a quarter of the lap
+ok    small meteor: flown, it lands within a quarter of the lap (0.250)
+ok    small high arc: the rise at most the radius, the sideways distance at most a quarter of the lap
+ok    small high arc: flown, it lands within a quarter of the lap (0.188)
+ok    medium meteor: absolute, medium's curve (25436 across, 16400 up)
+ok    medium high arc: absolute, medium's curve (15355 across, 9900 up)
+ok    big meteor: absolute, medium's curve (25436 across, 16400 up)
+ok    big high arc: absolute, medium's curve (15355 across, 9900 up)
+ok    huge meteor: absolute, medium's curve (25436 across, 16400 up)
+ok    huge high arc: absolute, medium's curve (15355 across, 9900 up)
+ok    a ring of half its planet still scales the curve by half, so the angle round holds (12718)
+ok    negative control: arcBySize out, tiny's meteor rises 16400 over a radius of 6519 and goes 0.621 of the lap
+WARNING: 19 ObjectDB instances were leaked at exit (run with `--verbose` for details).

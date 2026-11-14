@@ -1,0 +1,55 @@
+{
+  "schema": "fight.horde/1",
+  "enabled": false,
+  "_enabled": "the one switch. SimCore.newMatch copies it into S.hordeOn unless the match's setup has its own \"horde\". Off: no horde state exists or is hashed, no event is sent, and this file is not in a replay's data hash",
+  "seats": 2,
+  "places": 3,
+  "pack": {
+    "fodder":    {"fighter": "REFERENCE", "worth": 1, "speedMul": 0.8,
+                  "blow": {"reachBh": 1.5, "windup": 14, "damage": 2, "flinchTicks": 6}, "guarded": {"reboundTicks": 4}},
+    "bruiser":   {"fighter": "REFERENCE", "worth": 4, "speedMul": 0.7,
+                  "blow": {"reachBh": 1.5, "windup": 18, "damage": 4, "flinchTicks": 10}, "guarded": {"reboundTicks": 4}},
+    "speedster": {"fighter": "REFERENCE", "worth": 4, "speedMul": 1.0,
+                  "blow": {"reachBh": 4.0, "windup": 12, "damage": 2, "flinchTicks": 8}, "guarded": {"reboundTicks": 4}}
+  },
+  "_pack": "Game Design's trial arm (docs/design/horde-trial.md ruling 2): blows 2, 4 and 2 with the 113 gap; the page's arm is 4, 8 and 4 with the 240 gap",
+  "play": {
+    "perPlayer": {"easy": 2, "medium": 3, "hard": 3},
+    "gapTicks": {"easy": 170, "medium": 113, "hard": 68},
+    "_gapTicks": "Game Design's ruling 1: row G, 113 at medium, is the trial's default arm; the page's 240 (easy 360, hard 144) is the comparison arm",
+    "spacingTicks": 8,
+    "settleTicks": 30,
+    "openTicks": 24,
+    "reelTicks": 10,
+    "behindWindupMin": 20,
+    "seenBh": 8.0,
+    "leashBh": 30.0,
+    "crowdBh": [2.0, 4.0],
+    "dodgeAgainTicks": 30,
+    "perfectReelTicks": 20
+  },
+  "blow": {
+    "worth": {"light": 1, "medium": 2.5, "heavy": 6},
+    "hopBh": 1.5, "hopTicks": 3, "whiffTicks": 20,
+    "sendBh": {"medium": 1, "heavy": 3},
+    "shot": {"light": 1, "heavy": 2.5}
+  },
+  "hold": {"light": 3, "medium": 5, "heavy": 7, "wholeFight": false},
+  "respawn": {"ticks": 2, "spawnBh": 40, "speedMul": 3.2, "staggerTicks": 20, "parkBh": 400},
+  "waves": [
+    {"fodder": 56, "bruiser": 0,  "speedster": 0},
+    {"fodder": 56, "bruiser": 6,  "speedster": 0},
+    {"fodder": 56, "bruiser": 8,  "speedster": 3},
+    {"fodder": 56, "bruiser": 11, "speedster": 6},
+    {"fodder": 58, "bruiser": 14, "speedster": 8},
+    {"fodder": 58, "bruiser": 17, "speedster": 11},
+    {"fodder": 62, "bruiser": 20, "speedster": 14},
+    {"fodder": 62, "bruiser": 22, "speedster": 17}
+  ],
+  "rest": {"ticks": 600, "backBody": 0},
+  "down": {"onLastBlow": true, "backAtWaveEnd": true, "backBody": 400, "bodyShare": 1.0},
+  "two": {"countMul": 1.5, "respawnMul": 1.0},
+  "energyOnFall": {"enabled": false, "fodder": 2, "grunt": 4},
+  "result": {"felled": true},
+  "cap": {"seconds": 720}
+}

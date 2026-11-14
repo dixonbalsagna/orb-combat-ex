@@ -1,0 +1,23 @@
+diff --git a/tools/schemas/fight-power.schema.json b/tools/schemas/fight-power.schema.json
+index b35cbfe..a3b8e5d 100644
+--- a/tools/schemas/fight-power.schema.json
++++ b/tools/schemas/fight-power.schema.json
+@@ -231,6 +231,18 @@
+         "^_": true
+       }
+     },
++    "arcBySize": {
++      "type": "object",
++      "description": "the authored curves' caps on small planets (Game Design, planet-sizes.md section 2; DirArc)",
++      "required": ["peakOfRadius", "sideOfLap", "sizes"],
++      "properties": {
++        "peakOfRadius": {"type": "number", "exclusiveMinimum": 0},
++        "sideOfLap": {"type": "number", "exclusiveMinimum": 0, "maximum": 0.5},
++        "sizes": {"type": "array", "items": {"type": "string"}}
++      },
++      "additionalProperties": false,
++      "patternProperties": {"^_": true}
++    },
+     "launchTravel": {
+       "type": "number",
+       "minimum": 1
