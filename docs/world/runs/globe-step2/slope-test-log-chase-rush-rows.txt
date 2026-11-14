@@ -1,0 +1,24 @@
+# The slope test on the chase_rush_check rows (World, 2026-11-14; the EP's question: can a slide be thrown into the air by the end of its own trench?)
+# The slide's two slope tests are in sim/world/slide.gd step: ground rising more than WALL stops it with an impact; ground falling away more than CLIFF (1.0) releases the fighter into the air. A scratch print on HEAD def3445a plus the globe-step2 park logs every slide step whose |rise| is over 0.35 (the line SLIDEDBG).
+# Result over all five rows of the first block (power off) of Camera's chase_rush_check:
+#   groove settling OFF (as re-cut): SLIDEDBG lines 0; chase_rush_check: 130 checks passed
+#   groove settling ON  (the first cut): SLIDEDBG lines 0; chase_rush_check: 130 checks, 4 failed
+# So no slide step in these rows meets a slope over 0.35, wall or cliff, with the trench settled or not: the slide is not thrown into the air by the end of its own trench here, and the four rows are not moved by the slope test. They move because the ground the fight plays on differs after the landing trench is cut (121 to 152 deep and 64 wide, or 56 to 63 deep and 69 to 77 wide), and the camera and the director read that ground. The step-3 job (trench widths by force) re-reads these rows through the camera, not through the slide.
+
+seed 1, 0 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.268, jolt 0.068 (tick 92 split), size down to 0.064; cuts {  }; player off his picture 0 ticks, rival 12;
+seed 1, 8 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.264, jolt 0.053 (tick 101 split), size down to 0.064; cuts {  }; player off his picture 0 ticks, rival 28
+seed 1, 20 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.184, jolt 0.066 (tick 142 split), size down to 0.061; cuts {  }; player off his picture 0 ticks, rival 2
+seed 1, 8 after the send, 1 taps, share 0.0: SMASH ACROSS at 5376, 1 catches; step 0.262, jolt 0.062 (tick 101 split), size down to 0.064; cuts {  }; player off his picture 2 ticks, rival 25
+seed 2, 0 after the send, 4 taps, share 0.7: SMASH ACROSS at 5376, 4 catches; step 0.268, jolt 0.068 (tick 92 split), size down to 0.065; cuts {  }; player off his picture 0 ticks, rival 12;
+chase_rush_check: 130 checks passed
+--- settling on:
+seed 1, 0 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.244, jolt 0.153 (tick 96 split), size down to 0.063; cuts {  }; player off his picture 0 ticks, rival 20;
+FAIL seed 1, 0 after the send, 1 taps, share 0.7: a jolt of 0.153 (tick 96 split)
+seed 1, 8 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.237, jolt 0.138 (tick 96 split), size down to 0.062; cuts {  }; player off his picture 0 ticks, rival 6; 
+FAIL seed 1, 8 after the send, 1 taps, share 0.7: a jolt of 0.138 (tick 96 split)
+seed 1, 20 after the send, 1 taps, share 0.7: SMASH ACROSS at 5376, 1 catches; step 0.248, jolt 0.137 (tick 96 split), size down to 0.060; cuts {  }; player off his picture 0 ticks, rival 35
+FAIL seed 1, 20 after the send, 1 taps, share 0.7: a jolt of 0.137 (tick 96 split)
+seed 1, 8 after the send, 1 taps, share 0.0: SMASH ACROSS at 5376, 1 catches; step 0.228, jolt 0.095 (tick 96 split), size down to 0.062; cuts {  }; player off his picture 0 ticks, rival 14;
+seed 2, 0 after the send, 4 taps, share 0.7: SMASH ACROSS at 5376, 3 catches; step 0.244, jolt 0.153 (tick 96 split), size down to 0.063; cuts {  }; player off his picture 0 ticks, rival 28;
+FAIL seed 2, 0 after the send, 4 taps, share 0.7: a jolt of 0.153 (tick 96 split)
+chase_rush_check: 130 checks, 4 failed
