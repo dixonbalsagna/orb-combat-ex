@@ -1,0 +1,21 @@
+07:21:02 location_check exit 0: LOCATION: 0 check(s) failed
+07:21:07 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+07:21:13 outside_check exit 0: OUTSIDE: 0 check(s) failed
+07:21:18 pace_check exit 0: PACE: 0 check(s) failed
+07:21:25 phrase_check exit 0: PHRASE: 0 check(s) failed
+07:21:30 plane_check exit 0: PLANE: 0 check(s) failed
+07:21:35 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+07:21:42 press_decides_check exit 0: PRESS: 0 check(s) failed
+07:21:47 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+07:21:53 reads_check exit 0: reads_check: 16 of 16 passed
+07:21:58 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+07:22:03 relief_check exit 0: RELIEF: 0 check(s) failed
+07:22:57 sigvariants_check exit 0: sigvariants check passed
+07:23:07 stance_check exit 0: STANCE: 0 check(s) failed
+07:23:20 stick_check exit 0: STICK: 0 check(s) failed
+07:23:25 stick_lunge_check exit 0: STICK LUNGE: 0 check(s) failed
+07:23:31 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+07:23:37 sure_reach_check exit 0: sure_reach_check: passed
+07:24:24 swing_check exit 0: SWING: 0 check(s) failed
+07:25:58 swing_legal_check exit 0: SWING LEGAL: 0 check(s) failed
+07:26:39 walk_check exit 1: WALK: 1 check(s) failed
