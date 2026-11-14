@@ -1,0 +1,7 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    at z = 0 farColumn is the slice's own column: the same height (to float32) and biome at 50 columns of the Planet slice
+  ok    on a Close ring too (1,200 columns): z = 0 is the slice's column, and the reads beside it are numbers
+  ok    the same read twice is the same
+  ok    a column's far ground out to 12,000 units each side changes with distance (2 kinds of ground)
+FAR: 0 check(s) failed

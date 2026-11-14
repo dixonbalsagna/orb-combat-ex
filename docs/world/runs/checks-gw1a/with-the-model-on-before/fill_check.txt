@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    water.json is clean ([])
+  ok    the switch (data/biomes/water.json enabled) is off in the data
+  ok    off: a trench dug by the sea on higher ground stays dry and opens no window (the no-inland-flooding rule)
+  ok    on: the same trench opens a fill window and one water_fill cue (cause sea, front 2880 units/s, rate 270/s, 33 columns)
+  ok    on: the trench is wet (13 columns) with its surface at the sea's level (0.00) and the window closed after 16 steps
+  ok    the fill is a front from the source: at step 10 the near end is wet and the far end is not yet
+  ok    the fill does no damage and makes no casualty (Game Design row 17)
+  ok    a hole in a desert far from water stays dry
+  ok    a hole in a wetland far from water seeps full to its table (surface 24.0, the ground's 30 less 6), cue cause table with no front
+  ok    a jungle hole shallower than its water table (45) stays dry
+  ok    a send along a dug scar: dry it skims 0 times, flooded 6 (the sea's rules: at most 6, 85% kept each)
+  ok    a slow body through a shallow fill is waded, not dragged to a stop: 131 units (88 with nothing counted as shallow, where the sea's drag stops it)
+  ok    a slam into a flooded crater throws one ring wave (water_wave) and pushes a fighter at the surface 75 units outward, over 6 steps
+  ok    a slam into a dry crater throws no wave
+  ok    a fill reaching a scorched line emits one water_douse (the sim keeps no fire; the steam is the renderer's)
+  (a water step: four fill windows 1239 us, today's worst, eight flow windows, 1704 us; no window open 0.39 us a tick)
+  ok    the cost: four open fills cost 1239 us a step against today's worst of 1704, and a tick with nothing open costs 0.39 us
+FILL: 0 check(s) failed

@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   a gen 3 ring with lakes was found (planet 7 touch 1)
+  ok   4 lake records for the ring's 4 lakes
+  ok   on the line the records hold the ring's water: 59 columns, 0 missed, depth differs by 0.000 at most (0 columns skipped where the ring's ground and the field plus platforms differ by over a unit)
+  info 3 of the points 14 columns beyond a lake's ends on the line are wet in the records and dry on the line: the basin is flooded in two dimensions and the ring's plan stopped at a crest (the 2D water is the truth in a swing)
+  info lake at column 1267 (level 540, 22 columns on the line): water at 19 of 33 points across the line
+  info lake at column 1542 (level 2206, 65 columns on the line): water at 33 of 33 points across the line
+  info lake at column 1606 (level 2345, 35 columns on the line): water at 26 of 33 points across the line
+  info lake at column 2361 (level 760, 51 columns on the line): water at 24 of 33 points across the line
+  ok   4 lakes sampled across the line, 4 of them wider than the line itself
+  ok   a water read is a pure function of the point
+  info planet 7 touch 2: 102 river segment records near the ring
+  ok   the strongest river (flow 196): 12 of 21 points along its axis are in a channel, bed under level
+  ok   its level changes by 12.8 units at most between points a twentieth of a segment apart
+FIELDWATER: 0 check(s) failed
+WARNING: 12 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

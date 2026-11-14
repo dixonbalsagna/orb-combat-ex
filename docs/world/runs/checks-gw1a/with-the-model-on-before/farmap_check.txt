@@ -1,0 +1,10 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    _fm (SimRng.imul written out) is the hash it was: 60,000 random inputs, bit for bit
+  ok    farField is farColumn bit for bit (heights and biomes) on 3 planets x 3 ring sizes x 8 depths including z = 0; the coarse read inside its limit is the exact read, and it leaves no octave dropped behind (0)
+  ok    the coarse read past its limit is a rougher height (at most 1715 units off) with 10.7% of its biomes moved
+  ok    the map's far field against the exact read over 7 rings (7/2400, 3/4800, 3/2400, 3/1200, 25/4800, 25/2400, 25/1200): worst mean |dh| 25.3 units, worst share of heights over 100 units off 0.9%, worst share of biomes different 2.2%
+  ok    the octahedral decode and encode are inverses (2,000 points over both hemispheres)
+  ok    the same planet and size give the same map
+  ok    the lookup is continuous over the whole sphere, fold and edge included: the largest step over 3,000 pairs 0.0016 radians apart is 49 units
+FARMAP: 0 check(s) failed

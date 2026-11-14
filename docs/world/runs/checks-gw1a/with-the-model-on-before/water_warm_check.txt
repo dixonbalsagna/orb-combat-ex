@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   off in the data as shipped (flowWarm.cols 0)
+  ok   planet 7 touch 1: off, the dig's window (span 351) starts at age 0
+  ok   on (48 a step): the window starts at minus 8 steps to read 351 columns (-8)
+  ok   the first flow step comes 16 ticks later (the 1 window(s) need 8 steps of 2); the off run never warms (0)
+  ok   the same setup gives the same state twice
+  ok   after 1,200 ticks the water is the same (63740 against 63815)
+  info worst tick over 1,200 after the dig: off 9.5 ms, on 9.5 ms (a shared PC, indicative)
+  info the three worst ticks of the first 120 after the dig: off: 2.6 ms at tick 41, 2.3 at 53, 2.3 at 0; on: 3.1 ms at tick 73, 2.8 at 72, 2.7 at 71
+  ok   a coast with a window was found to test on
+WATERWARM: 0 check(s) failed
+WARNING: 13 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

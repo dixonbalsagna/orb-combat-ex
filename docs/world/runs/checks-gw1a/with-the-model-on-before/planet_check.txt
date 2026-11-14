@@ -1,0 +1,48 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    planet.json loads clean ([])
+  ok    atan2f, asinf and acosf agree with the engine's to 0.0000000000093 over 12,000 values (a column is 1.3e-3 rad)
+  ok    atan2f on the axes
+  ok    planet.gd uses no engine vector types and no engine trig, pow or exp ([])
+  ok    the planet of seed 7 is the same twice (42 places)
+  ok    a point reads the same bits whether the cell caches are cold or warm, in either order (200 points)
+  ok    planet 7 has the places of picture A2 (42 of 42; the module has 42)
+  ok    both ice biomes occur (sheet 942, sea ice 612 of 5,000 points)
+  ok    no ice outside the caps (latitude y beyond 0.72): 0
+  ok    floes are thicker toward the pole (17.4 units near it, 0.0 toward the edge)
+  ok    bergs stand 45 to 215 units (11 seen)
+  ok    the shelf is flat at 36 units, within its noise, and no ice sheet dips below it (296 points seen)
+  ok    no land inside the north pack's edge (0 of 500)
+  ok    the picker finds a slice meeting the minimum for 93% of 150 touch-downs (3.4 candidates tried)
+  ok    the same touch-down picks the same circle and the same point twice
+  ok    where the strict minimum finds nothing the relaxed one sometimes does (3 of 7 of 80 touch-downs; the rest are moved to another touch-down)
+  ok    an accepted slice holds the minimum (3 cities, 3 towns, 5 biomes, 60% land)
+  ok    a slice is 4800 columns of height and biome
+  ok    the middle column is the touch-down
+  ok    the places the slice holds are the ones the picker counted (3 cities)
+  ok    a held place's column is the nearest to its centre (within a column)
+  ok    the slice hash is the same from a cold planet (d0f86ade)
+  ok    the memoised slice is the one the read gives
+  ok    every height is finite and under 20,000 units
+  ok    one point reached along two circles agrees to 0.00000000715221 units over 100 crossings
+  ok    a place's frame round-trips whole units to within one unit (60 points)
+  ok    a crater laid on the line is read back at its column and on the line (col 1684 for 1684, lateral 1)
+  ok    the bowl lowers its columns (40.0 units) and no others
+  ok    a negative depth raises the ground (a cooled-magma mound: +30.0 units)
+  ok    a crater outside every place is kept as a point of the sphere
+  ok    a building keeps its highest stage
+  ok    people lost and gone never pass a thousand together
+  ok    the wear list is whole numbers and round-trips through JSON byte for byte
+  ok    past the cap the oldest craters merge (400 kept)
+  ok    a place with no wear is fresh
+  ok    2 of 40 buildings down (5%) is damaged
+  ok    26 of 40 down (under 40% standing) is fallen
+  ok    70% of the people lost is fallen
+  ok    the mask marks the fallen place and no other
+  ok    a full slice's people sum to 1800 ([526, 526, 526, 74, 74, 74])
+  ok    a slice through a ruin has fewer people (1431)
+  ok    with a city fallen, no slice counts it as standing
+  ok    three offers, the same twice (touch-downs 20480, 20481, 20483)
+  ok    the offers hold different cities
+  ok    the vectors file matches: 64 points on each of two planets (height bits, biome), 8 picks, the places' hash
+PLANET: 0 check(s) failed

@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+== deepen, slideObstacle, bump ==
+  ok    deepen by 1.2 makes the crater 1.2 times as deep (86.2 to 103.5 units)
+  ok    the ground at the centre is lower by about a fifth of the depth (-85.6 to -102.7)
+  ok    it draws nothing from the rng
+  ok    no crater there: nothing, 0 returned
+  ok    a factor of 1 or less does nothing
+  FAIL  a bowl at the radius cap is deepened (704 to 154; a second dig made 154)
+  ok    no NaN in the ground
+  ok    an obstacle is found on a mountain slope within 3.5 bh
+  ok    open desert is clear
+  ok    a bump at 870 speed costs 5.2 hp
+DEEPEN: 1 check(s) failed

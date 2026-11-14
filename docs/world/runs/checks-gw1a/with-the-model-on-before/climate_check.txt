@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    climate.json is clean and the default generation is 1 ([])
+  ok    generation 1 reads the stored planet bit for bit: 12 slices (4 planets x 3 sizes) hash to what they did before gen 2, and carry no fine biomes
+  ok    a gen 2 slice is the same twice (a new planet object, a new grid), differs between seeds and from gen 1's, and carries a fine biome a column
+  ok    every column's stored biome is its fine biome's alias, and 4 Whole rings show 13 of the 15 fine biomes
+  ok    temperature falls with latitude (equator 1.06, 44 degrees 0.28) and with height (0.66 at 2,500 units)
+  ok    a range casts a rain shadow: over 193 climbs of the westerlies the carried moisture 4 cells downwind (0.00) is below the windward side's (0.15)
+  ok    the coast is wetter than the interior: moisture within 2 cells of the sea 0.76 (3372 cells), 14 or more cells inland 0.10 (29056 cells)
+  ok    surfAt on random points costs 77.0 us in gen 2 against 33.1 in gen 1 (2.33 times; the climate grid is made once a planet)
+  ok    a gen 2 planet has places of its own (window 3's landforms moved them: 54 against 42), and a planet knows its generation
+CLIMATE: 0 check(s) failed
+WARNING: 19 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

@@ -1,0 +1,35 @@
+# The GW1a pins and the energy model: which rows stay off-path, which are real faults (World, 2026-11-14; GW1a review blocker 1)
+
+`WorldPin.shipped()` turned the energy model and the dash off in 33 checks, so every row ran on the path main shipped before GW1a, not Orb's. The review asked that each check that fails with the model on be classed. Method: a copy of the EP's s422 tree (the GW1a stack), each check run with the model on (`WorldPin.shipped(true)`), every failing row read, classed and re-read. Records: `docs/world/runs/checks-gw1a/` (`failing-rows-under-the-model.txt`, `with-the-model-on-before/`, `with-the-model-on-after/`). Park: `docs/world/pending/checks-gw1a/` (`pins-gw1a.diff`, re-cut).
+
+## The rule now
+
+`WorldPin.shipped(power)`: `power` false (the default) is the old pin; `power` true keeps the model and the dash as the data has them. A check that has rows on either path runs its body **twice** (`_run(false)`, then `_run(true)`, one process, one verdict), prints `--- the energy model and the dash OFF/ON`, and each failing row is one of:
+- **OFF-PATH**: the row tests arithmetic the model replaces; it runs with the model off only, and with it on a line says why.
+- **REAL FAULT**: it runs with the model on as a **ceiling at today's value** (it may only come down), named `KNOWN FAULT (owed: ...)`.
+
+## Of the 33: 23 run with the model on, 8 run both ways, 1 stays on the old path
+
+**23 now run with the model on** (`shipped(true)`; the rest of the pin stands): floor, arena, climate, epoch, far, farmap, farsites, field_water, field_lot, fill, gen2_state, lakes, land, planet, ringpick, sea_rules, sites, surface, street_axis, water_warm and struggle_meet pass as they are; **bystanders_check** and **struggle_dir_check**, which Simulation had listed, pass on the GW1a stack too. `bystanders_check` plays Orb's path with the model on: 81 people ran in the scatter runs, **none died** (the Legal row holds on Orb's path). On the GW1b stack (zeroed feeds) it needs `pending/bystanders-gw1b`.
+
+**8 run twice** (model off, then on): repeat, wrecks, meteor_crater, interior, wall_hold, brunt, deepen, craters. **1 stays on the old path**: ground_check (it pins hashes recorded on the old play).
+
+| Check | Failing row with the model on | Class | Why / owed fix |
+| :--- | :--- | :--- | :--- |
+| `repeat_check` | the same send does 1.00x, 1.00x, 1.00x the first one's damage (the ladder's 1.74 and 2.70) | **REAL FAULT** | A mark still raises the tier (`tierAt` reads 4), but with the model on the tier term is gone and the energy decides the damage, so **a building's memory does nothing**. Ceiling: the shortfall at the third repeat stays at 1.72 or under (today 1.70). Owed: **memory-under-model** (new World park: under the model a mark scales the body's energy by the ladder's step, so repeats still wear a building down; `wall-hold-on`'s `repeatMarks` 2 is inert on Orb's path until it lands) |
+| `wall_hold_check` | the building remembers: repeats break it (0 fall off, 0 of 24 with `repeatMarks` 2) | **REAL FAULT** | The same fault seen from the wall: three sends at one tower fell 24 of 24 off the model, 0 on it. Ceiling: memory never makes it worse. Owed: **memory-under-model** |
+| `wall_hold_check` | today the fight freezes at the hit and he is thrown off the face (0 of 16) | OFF-PATH (the throw); the freeze stays asserted | With the model on the old throw is 91 units on average, not 1,154 (none over 150), but the fight still freezes 0.50 s at the hit until `wall-hold-on`'s data. The model row asserts the freeze (at least 0.45 s) and a ceiling of 150 on the push |
+| `wrecks_check` | the scrap does more to structures as the tier rises (134.6 hp at every tier) | **REAL FAULT** | With the model on the scrap burst does the same at every tier. Ceiling: it never does less as the tier rises. Owed: **wrecks-power** (new World park: `WorldWrecks.burst` takes the body's energy from `SimPower`, not the tier table) |
+| `meteor_crater_check` | an ordinary dig of that energy is held to 8 bh (2,015) | OFF-PATH | The model lifts the ordinary cap on purpose (power-world.md). Model row: an ordinary dig of that energy digs above 8 bh and within `R_MAX`. The meteor bowl's own fault is Encounter's `gw1b-riders` (the EP's pick); World's `meteor-power` is held |
+| `deepencheck` | a bowl at the radius cap is deepened (704 to 154) | OFF-PATH | The row's premise is the ordinary cap (the old second dig made nothing). With the model on a second blow digs a wider bowl (3,200 then 3,840) and `deepen` raises it by a fifth (128.5 to 154.2): that is the model row |
+| `brunt_check` | 6 rows: the punch by tier (tiers 3 and 4), a house gone through at every tier, `giveWay`, the hold by tier, the link cap by tier | OFF-PATH | A building takes its mass of the body's energy and a send goes through while it has it: `power_world_check` (masses 1, 5 and 15, a base send through a house) is the model's row. The tier ladder these rows count is not Orb's path |
+| `interior_check` | 3 rows: the ceiling reached from tiers 3 and 4, a fast steep tier-1 send bounces off the held floor | OFF-PATH | The reach of a send is its energy (its speed), not its tier, and a send bounces off the ground at most once (`power.json` `contact.maxTerrainBounces` 1) |
+| `craters_check` | on: a gen 2 match digs a shaped crater on snow in 2,400 ticks | OFF-PATH; fails with the model off too on this tree | Craters by material is off in the data (`craters.json enabled` false): a path the game does not take. The row counts shaped craters of one AI match, which depends on its course: on the GW1a stack it no longer slams on snow in that time with the model off or on (7 craters in 9,600 ticks with it on, none shaped), so it is skipped in both passes with the reason; the direct slams on each class run in both passes and pass. **It was already failing pinned on s422**: the pin only hid it, and this check is World's |
+| `ground_check` | 2 rows: gen 1 planet matches and the hand-made world hash as before window 2 | OFF-PATH by construction | They pin hashes recorded on the old play, so they stay on the old path, with the reason in the pin's line |
+
+## Owed fixes named
+
+- **memory-under-model** (World): marks scale the body's energy under the model (the `repeat_check` and `wall_hold_check` ceilings).
+- **wrecks-power** (World): the scrap's burst from the body's energy (the `wrecks_check` ceiling).
+- The meteor bowl: Encounter's `gw1b-riders` (the EP's pick); World's `meteor-power` is held unless Game Design says otherwise.
+- `crater-tiers` and `bystanders-gw1b` are parked and cover what they cover; nothing above depends on them.

@@ -1,0 +1,29 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+--- the energy model and the dash OFF (main before GW1a)
+  ok   brunt.json loads clean ([])
+  ok   the data's defaults are today's behaviour (lodgeHold world, wallRebound 0.25, wallStop 1.0, wallDepthHold 0.0, repeatMarks 0.0)
+  ok   16 wall slams staged on towers (seeds 1 to 8, tiers 1 to 3)
+      today: the whole fight frozen 0.50 s at the hit; pushed 1154 units off the face (more than 150 off in 16 of 16); depth home in 52 ticks
+      set on: the whole fight frozen 0.00 s; pushed 18 units off the face (more than 150 off in 0 of 16); depth home in 41 ticks
+  ok   today the fight freezes at the hit and he is thrown off the face (16 of 16)
+  ok   set on: nothing freezes the whole fight (only he is held)
+  ok   set on: he stays at the face for the hold (18 units off on average)
+  ok   set on: his depth stays for the hold and then eases home (41 ticks)
+  ok   the same slam twice gives one hash
+      three sends at one tower, 24 towers: 0 fall with the building's memory off, 24 with repeatMarks 2
+  ok   the building remembers: repeats break it (0 fall off, 24 of 24 with repeatMarks 2)
+--- the energy model and the dash ON (Orb's real path)
+  ok   brunt.json loads clean ([])
+  ok   the data's defaults are today's behaviour (lodgeHold world, wallRebound 0.25, wallStop 1.0, wallDepthHold 0, repeatMarks 0)
+  ok   16 wall slams staged on towers (seeds 1 to 8, tiers 1 to 3)
+      today: the whole fight frozen 0.50 s at the hit; pushed 91 units off the face (more than 150 off in 0 of 16); depth home in 48 ticks
+      set on: the whole fight frozen 0.00 s; pushed 18 units off the face (more than 150 off in 0 of 16); depth home in 41 ticks
+  ok   with the energy model on, until the wall-hold data: the fight still freezes at the hit (0.50 s) and he is pushed 91 units off the face (the throw is no longer the 1,154 of the old path; ceiling 150 on the average, it may only come down)
+  ok   set on: nothing freezes the whole fight (only he is held)
+  ok   set on: he stays at the face for the hold (18 units off on average)
+  ok   set on: his depth stays for the hold and then eases home (41 ticks)
+  ok   the same slam twice gives one hash
+      three sends at one tower, 24 towers: 0 fall with the building's memory off, 0 with repeatMarks 2
+  ok   KNOWN FAULT (owed: memory-under-model): with the energy model on the building does not remember (0 fall off, 0 of 24 with repeatMarks 2); ceiling: memory never makes it worse
+WALLHOLD: 0 check(s) failed

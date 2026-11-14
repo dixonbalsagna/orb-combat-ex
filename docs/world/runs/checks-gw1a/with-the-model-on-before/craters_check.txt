@@ -1,0 +1,41 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    craters.json is clean ([])
+  ok    ground.json is clean ([])
+  ok    the switches in the data: enabled off, touchBuilt off, embedThresholdScales on
+  ok    ground.json provisionalProps is off in the data
+  ok    every one of Combat's 14 classes has a row (water, which has none, digs today's bowl)
+  ok    the rows are Combat's numbers (biomes.md section 4.3: sand 1.3 wide, mud x1.8, snow 20% in 20 s, ice breaks through, shingle fills near the sea)
+  ok    off: a slam in a wetland reads no shape (today's bowl)
+  ok    on, touchBuilt off: the hand-made world plays as with the switch off (900 ticks; the vector is the same plus after.gd's two zeros, no shaped crater)
+  ok    on, touchBuilt off: a gen 1 planet plays as with the switch off (900 ticks; the vector is the same plus after.gd's two zeros, no shaped crater)
+  FAIL  on: a gen 2 match (planet 3, 2400 ticks) digs 0 shaped crater(s) on its new ground (it slams on snow), and so is a different match
+  ok    off again: the gen 2 match is the one it was, with no shaped crater
+  ok    mud: a slam in wetland digs 0.80 x the radius, 1.20 x the depth and 0.20 x the rim of today's bowl (the row: 0.8, 1.2, 0.2)
+  ok    snow: a slam in taiga digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 0.9, 1.4, 0.5)
+  ok    frost: a slam in tundra digs 1.00 x the radius, 0.80 x the depth and 1.60 x the rim of today's bowl (the row: 1.0, 0.8, 1.6)
+  ok    litter: a slam in jungle digs 1.00 x the radius, 1.00 x the depth and 1.00 x the rim of today's bowl (the row: 1.0, 1.0, 1.0)
+  ok    crust: a slam in volcanic digs 0.90 x the radius, 0.90 x the depth and 0.80 x the rim of today's bowl (the row: 0.9, 0.9, 0.8)
+  ok    turf: a slam in savanna digs 1.00 x the radius, 1.00 x the depth and 1.10 x the rim of today's bowl (the row: 1.0, 1.0, 1.1)
+  ok    steep: 1 is today's profile; a steep wall (ice 1.5) is deeper at 0.8 R than today's, a slack one (sand 0.6) shallower (-2.38, -1.30, -0.55), the centre at full depth
+  ok    a beam's strip digs its own row: burnt grass reads ash, the savanna beside it turf
+  ok    touchBuilt off: plains (soil) dig today's bowl
+  ok    touchBuilt on: plains dig the soil row
+  ok    crater_shape: the crater event's surface is the material (mud) and eventFor gives the bowl as dug with its row (embedMul 1.8, mud_splash)
+  ok    the material is not one of the crater event's hashed fields (no hash.gd line)
+  ok    fill water: the mud bowl (59.7 deep) holds water to the wetland's table (6.0 below the ground), and reads flooded
+  ok    fill waterNearSea: a shingle bowl 13 columns from the sea fills to the sea (30.1 deep), one 420 columns away stays dry
+  ok    refill: the mud bowl's centre fills back from 57.3 to 22.9 deep (40%) over 240 ticks by an aftermath job (40.1 at 120), and the job ends
+  ok    refill: the water in a closing mud bowl keeps its level (24.00, then 24.00)
+  ok    the same slam twice, 100 ticks on, is the same state (the job is hashed with after.gd's)
+  ok    breakThrough: a slam on a floe 12 above the sea breaks it: a 10-column slot cut below the sea and filled (40 deep at the centre), and contact does not embed him
+  ok    breakThrough: on a floe 100 above the sea the bowl (29.9 deep) stays in the ice
+  ok    the cut is the FLOE SPLIT aftermath's (after.gd split calls breakThrough): 2 columns, 40 below the sea, filled
+  ok    embed: the threshold is the row's depth (mud 1.2, ice 0.6, today's bowl 1) and he sits embedMul deep (mud 1.8)
+  ok    embedThresholdScales off: the threshold is today's
+  ok    props off: no berg and no lone tree ({ "ice_spire": 35, "tall_grass": 511, "termite_mound": 26, "driftwood": 72, "shell": 153 })
+  ok    props on: 14 bergs on the sea ice and 22 lone trees on savanna and beach, each of its own biome and size
+  ok    props on: the other rows lay exactly what they laid with it off (797)
+CRATERS CHECK: 1 failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

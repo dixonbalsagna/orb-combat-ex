@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    water.json is clean ([])
+  ok    the surfacing rule ships off, at 30 ticks
+  ok    the hand-made world has deep sea, and ground contact is on
+  ok    with the rule on, five launches into the sea (slow, steep, fast and glancing) each surface set on the surface within 30 ticks of going under (ticks under: 29 29 29 29 29), never down
+  ok    the count of ticks under never passes 30 (29)
+  ok    with the rule off, 3 of 3 of those launches end at another tick or depth, or down (the old sink rule)
+  ok    a dive is the same twice
+  ok    a dry state hashes the same with the rule on or off (wetT is hashed only while not 0)
+  ok    a fighter who is under (wetT 5) is not the same state as a dry one
+SURFACE: 0 check(s) failed

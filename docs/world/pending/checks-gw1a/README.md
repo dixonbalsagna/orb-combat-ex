@@ -31,13 +31,17 @@ Not in the split: `step_check`'s timing line fails under load whatever the data 
 | The same 32, pinned, on the same data | **all 32 pass** (`with-the-pins-on-GW1a-rows-and-energy-on.txt`) |
 | The same 32, pinned, on today's main data | **all 32 pass**: a pin is a no-op where the data is the old data, so the patch can land before the data (`with-the-pins-on-todays-main-data.txt`) |
 | The 11 mode-only checks with `WorldPin.arena()`, on the GW1a rows and the planet default | all 11 pass |
-| Not covered | `wrecks_check` (pinned for GW1a, not run; it also asks `newMatch` for the default world, so it may want `WorldPin.arena()` too: the quiet-window run says), `depthreads_check` (pinned for the mode by static reading, not run), and the energy model's own re-read rows: the pins keep the off path; a row that should read under the model (the tier ladder at the model's numbers) is a separate job for Encounter and Game Design |
+| Not covered | `depthreads_check` (pinned for the mode by static reading, not run; waits for the quiet window), the energy model's own re-read rows beyond the ones named in `docs/world/pins-and-the-model.md`. `wrecks_check` now runs, with the model on, on the s422 tree: its one failing row is a ceiling (owed: wrecks-power) |
+
+## Re-cut 2026-11-14 (GW1a review blocker 1): the model is no longer pinned off where it matters
+
+`WorldPin.shipped(power)` (default false) keeps the old pin; `shipped(true)` leaves the energy model and the dash as the data has them. **23 checks now run with the model on** (21 of the original list, plus `bystanders_check` and `struggle_dir_check`, which pass with it on; `bystanders_check` plays Orb's path with no civilian dying). **Eight checks run twice** in one process, model off then on (`repeat`, `wrecks`, `meteor_crater`, `interior`, `wall_hold`, `brunt`, `deepen`, `craters`): each failing row is OFF-PATH (model off only, with the reason) or a REAL FAULT run with the model on as a ceiling at today's value (`KNOWN FAULT (owed: ...)`). `ground_check` stays on the old path (it pins recorded hashes). The class of every row, the owed fixes and the records: `docs/world/pins-and-the-model.md`, `docs/world/runs/checks-gw1a/`. Gates: all 33 pass on the s422 tree (the GW1a stack). `pins-gw1b.diff` is re-cut on the new `pin.gd`. Both diffs apply strictly on HEAD (`git -c core.autocrlf=false apply`), in order.
 
 ## NEEDS FROM EP
 
 - Land `pins-gw1a.diff` with or before GW1a; `pins-gw1b.diff` with A-WORLD-01 (the first step of GW1b).
 - A quiet window for `wrecks_check` and `depthreads_check` on the new data.
-- Whether any of the pinned checks should instead be re-read under the new default (the pin hides nothing: each pinned row still tests the path it was written for, and nothing else tests the new path yet). The new default's own checks are `world_default_check` and `size_check`.
+- The pins no longer hide the model: see the re-cut section and `docs/world/pins-and-the-model.md` for every row that fails with it on (off-path with its reason, or a ceiling with the owed fix). Whether any pinned check should be re-read under the new default world (GW1b) is a separate question; the new default's own checks are `world_default_check` and `size_check`.
 
 ## RISKS
 

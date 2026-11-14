@@ -1,0 +1,52 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    the turn's data stands at Game Design's caps (4 turns, 60 s apart, 40 degrees of drift) and is off
+  ok    no candidate bearing is over 10 degrees ([2.5, 5.0, 7.5, 10.0])
+  ok    a turn keeps the pivot's column on the same point (a Whole, a Half and a Close ring) and turns the way the ring runs there by its bearing (worst error 0.0000 degrees); a Whole ring drifts its bearing
+  ok    with the turn off (the data's switch, no setup.arena.turn) there is no epoch
+  ok    setup.arena.turn gives the match an epoch on its ring
+  ok    under 60 s of fight time into the match there is no turn to ask
+  ok    at 100 s the ask gives the candidates on the +x side (4, bearings [2.5, 5.0, 7.5, 10.0])
+    places brought into view by the candidates: 0
+  ok    a decided turn has two rings to warm (the chosen bearing and the smallest candidate) and none is warm yet
+  ok    no ring is read on the tick: a decided turn on calm ground with no warm ring does not swap
+  ok    warmAngles says which bearings are read (5 and 2.5)
+  ok    a body in flight stops the turn (World's calm check)
+  ok    no hold, no turn
+  ok    a turn that is decided but not yet swapped is in the state hash, and its bearing with it
+  ok    how many of a decided turn's rings are read is in the hash (when a swap may happen)
+  ok    after the swap the state hash holds the new ring's slice hash: two different turns from one state hash differently
+  ok    calm and held: the turn happens (epoch 1 at 100 s)
+  ok    an arena_turn event says so (turn 1, at the pivot)
+  ok    the epoch is in the state hash
+  ok    the buildings near the pair are the same buildings with the same hurt and fallen state
+  ok    the ground and the crater under the pair are as they were
+  ok    the crater record is carried
+  ok    outside the zone the ground is the new ring's, and unmarked
+  ok    the arrays keep their length and the ledger is not touched (casualties 0, pop0 1800)
+  ok    every building has a unique place and plan, stands inside the world and on dry ground (64 buildings, 71 before)
+  ok    straight after a turn there is no new ask (60 s apart)
+  ok    60 s later there is
+  ok    and none past the fourth turn
+  ok    a ring already 36 degrees from its first axis is offered only the turn that keeps it within 40 (1 of 4 candidates, drift 38.5)
+  ok    over 8 planets, 3 pivots and both sides (192 candidate lists), every place a turn lists (27 in all) is held by the new ring, not the old, within view
+  ok    swap on a warm ring only: the 10 degrees, else the warm 2.5 if it holds the ground within moveMax (450), else it waits for the next moment, and when even 2 would move it more it refuses and the director can ask again (0 off: smax 415 ten (10.0 degrees, ground moved 73) | 3600 off: smax 4019 twofive (2.5 degrees, ground moved 175) | 11000 off: smax 11411 wait | 12000 off: smax 12403 wait | 14000 off: smax 14419 refuse | 40000 off: smax 40403 refuse)
+  ok    choose records its tick and the moment's due
+  ok    cancel drops a pending pick, and the director can ask again
+  ok    a ring read 64 columns at a time (24 steps) is readSlice's slice, hash and held places
+  ok    a Half match turned at 100 s plays 600 ticks on to the same hash however the rings were warmed (100 or 640 columns a call, or read cold: the cold read is counted, [0, 0, 1]) (1/f0418e015521)
+  ok    a Close match turned to the -x side at the largest bearing plays on and plays the same twice (1/20/9a6637bf73e2d5d1)
+  ok    a Whole match turns too and plays on (133 buildings before, 119 after)
+  ok    fallbackDeg 0 (a form pick) warms one ring, at the k the pick brings
+  ok    a landing pick (fallback 2.5) warms two, and k and the fallback are in the hash
+  ok    a fallback not under the chosen bearing is left out, and k 0 is the data's
+  ok    SimCore.step alone warms: 10 sim ticks at k 16 read 160 columns of each ring
+  ok    a match played by SimCore.step alone (no host) turns on the same tick and to the same hash when replayed, when its slices are lost mid-warm, and when it is hashed every tick (seed 1 swaps on tick 105 (waited 37) | seed 2 swaps on tick 64 (waited 37))
+  ok    a swap on the preparation the warm ticks made (3.2 ms) is the swap that makes it itself (13.6 ms): the same state hash after 120 ticks (1/8d89c06cbcbb); unprep counts [0,1]
+  ok    WorldWater.init over the hand-made world and 15 planet rings (11 of them with sea): the same water as the original laps, bit for bit
+  ok    a ring read in one tick counts as warm exactly prepTicks (6) ticks later, not before
+  ok    a landing pick (k 16, two rings) swaps on tick 155 = the ticks to read (150) + prepTicks - 1, a pause's pick (k 32, one ring) on 80, both with the preparation done (unprep 0, 0); with the preparation lost two ticks in the swap comes on the same tick (155)
+  ok    after the swap the world it left keeps its ring job(s) and preparation (2 job(s), the retirement noted)
+  ok    ... and drops them 21 ticks after the swap, not before
+  ok    a sim disposed inside the term leaves no job, preparation, retirement or owner behind
+EPOCH: 0 check(s) failed

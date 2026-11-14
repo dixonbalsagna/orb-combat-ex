@@ -1,0 +1,22 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    the defaults are today's (4,800 columns, 153,600 units)
+  ok    setArena(1600): 51,200 round, the wrap and the shortest arc follow
+  ok    planet 7, touch 3 has a slice to read
+  ok    a ring of 2,400, 1,600, 1,200 and 600 columns: unit points, a column of arc between neighbours (within 0.2%), closed (a gap under 0.01 unit), the touch-down at the middle column, zero lateral on itself
+  ok    and tangent to the great circle at the touch-down (the next column lies along its travel direction)
+  ok    the Planet slice (planet 7, touch 3) is today's: hash d0f86ade, 4,800 columns
+  ok    a 2400-column slice: 2400 heights, 3 places held, every held column inside, the middle column is the Planet slice's middle column
+  ok    a 1600-column slice: 1600 heights, 3 places held, every held column inside, the middle column is the Planet slice's middle column
+  ok    a 1200-column slice: 1200 heights, 1 places held, every held column inside, the middle column is the Planet slice's middle column
+  ok    a 600-column slice: 600 heights, 1 places held, every held column inside, the middle column is the Planet slice's middle column
+  ok    a place's lateral offset from the ring is its distance to the ring (5 of 5 places within 6,000 units)
+  ok    an arena of 4,800 columns plays the same as none (hash d3bdee9d)
+  ok    a 2400-column match: 71 buildings, 1800 people, every building and fighter inside the world, 3600 ticks played, the same hash twice (db946912)
+  ok    a 1600-column match: 31 buildings, 1801 people, every building and fighter inside the world, 3600 ticks played, the same hash twice (3f578b97)
+  ok    a 1200-column match: 20 buildings, 1800 people, every building and fighter inside the world, 3600 ticks played, the same hash twice (6e235209)
+  ok    a 600-column match: 17 buildings, 1800 people, every building and fighter inside the world, 3600 ticks played, the same hash twice (7c18c9d5)
+  ok    a default match after a small one is today's world (4,800 columns, 118 buildings)
+  ok    a bad arena (under 600, over 4,800, odd, even but not a multiple of 8, a string, a fraction, no columns, not a dictionary, or no planet) is the planet's own 4,800
+  ok    a 2,400-column match and a default one stepped alternately 100 ticks at a time play as each plays alone (a1508c5e, 70267be7)
+ARENA: 0 check(s) failed

@@ -1,0 +1,47 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   the block is whole: []
+  ok   off in the data as shipped (struggleMeet.enabled false)
+  ok   the start has a cluster to stage in (4 buildings within 450)
+  ok   off: meet() and ring() do nothing and the state hash is as it was
+  ok   on with the switch
+  ok   the sizes are the table's, by stage (6 rows, time / detonation / overwhelm after 1 s / with a signature, to a unit or 1.2%)
+  ok   a base overwhelm after 1 s is a scorch only (dug 0.25 under minE 0.47)
+  ok   the height cuts the energy by 1 - height / (2 x the radius): half at half the reach, an air burst past it, the glass radius unchanged
+  ok   the biggest (two full signatures at maximum, detonating) is no bigger than a signature's own hit at the top
+  ok   small: a bowl is dug (kind bowl)
+  ok   small: radius 251 units, the model's 251
+  ok   small: what stands in the bowl falls (2 down)
+  ok   small: nothing falls past the lip and nothing is touched outside the glass radius (0 wrong, 261 untouched beyond)
+  ok   small: every standing tower within the glass radius has its windows out (0 of 0)
+  ok   small: a barred landmark in the bowl stands with its hit points (RL-242, RL-243)
+  ok   mid: a bowl is dug (kind bowl)
+  ok   mid: radius 816 units, the model's 816
+  ok   mid: what stands in the bowl falls (5 down)
+  ok   mid: nothing falls past the lip and nothing is touched outside the glass radius (0 wrong, 258 untouched beyond)
+  ok   mid: every standing tower within the glass radius has its windows out (0 of 0)
+  ok   mid: a barred landmark in the bowl stands with its hit points (RL-242, RL-243)
+  ok   max: a bowl is dug (kind bowl)
+  ok   max: radius 3734 units, the model's 3734
+  ok   max: what stands in the bowl falls (26 down)
+  ok   max: nothing falls past the lip and nothing is touched outside the glass radius (0 wrong, 232 untouched beyond)
+  ok   max: every standing tower within the glass radius has its windows out (3 of 3)
+  ok   max: a barred landmark in the bowl stands with its hit points (RL-242, RL-243)
+  ok   the three sizes are in order ([251.459738328027, 816.360393858991, 3733.98660951])
+  ok   an event with no stage or count is the top stage of one (radius 3734)
+  ok   an air burst: no bowl, nothing falls (air, 0 craters added, 0 down)
+  ok   an air burst at the top: the towers' glass goes out to the radius (5 towers, radius 3734)
+  ok   glass counts no one: the people in buildings are as they were
+  ok   a short overwhelm at base: a scorch, no crater record (scorch)
+  ok   the first ring is 1 body height across (75 units)
+  ok   the first ring wears what is inside it (1 worn), nothing outside (0), and finishes no standing building (0 fell)
+  ok   the last ring is 3 body heights (225 units)
+  ok   each ring is a cue struggle_ring for VFX (2)
+  ok   the wider ring wears what is inside it and nothing outside (4 worn, 0 outside)
+  ok   the wider ring wears at least as much (152 then 513 hp in all)
+  ok   the struggle digs nothing while it runs (perPulse 0)
+  ok   at most one ring every 2 s (the gap, in ticks)
+  ok   the same setup gives the same state twice
+STRUGGLEMEET: 0 check(s) failed
+WARNING: 40 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

@@ -1,0 +1,8 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  seed 1 time bowl r 131 rGlass 253 dug 0.7 rings 3 craters on the ending tick [[130.6,"beam",true]] (off: [])
+  seed 3 overwhelmed bowl r 191 rGlass 219 dug 1.4 rings 2 craters on the ending tick [[190.8,"beam",true],[678.8,"beam",true],[958.9,"beam",true]] (off: [[678.8,"beam",true]])
+  seed 6 detonate bowl r 360 rGlass 377 dug 5.1 rings 3 craters on the ending tick [[360.2,"beam",true]] (off: [[678.8,"beam",true]])
+  seed 7 overwhelmed air r 0 rGlass 165 dug 0.0 rings 2 craters on the ending tick [[678.8,"beam",true]] (off: [[678.8,"beam",true]])
+STRUGGLEDIR seeds 8: ended off 4, on 4; shapes {"air":1,"bowl":3}; endings {"detonate":1,"overwhelmed":2,"time":1}; rings 10; bowls 3; overwhelms 2, beam from the point in 2; beams stopped at a struggle start 0; extra craters on an ending tick 2
+STRUGGLEDIR: 0 check(s) failed

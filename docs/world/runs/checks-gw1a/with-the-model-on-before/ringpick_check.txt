@@ -1,0 +1,47 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    rings.json loads clean ([])
+  ok    the sizes are Game Design's: 1,200, 2,400 and 4,800 columns
+  ok    Narrative's four claims load (["RIVAL", "EMPRESS", "CYBORG", "PROTAGONIST"])
+  ok    a ring round a point (1,200, 2,400 and 4,800 columns): the touch-down is its first point, every point is unit and on the ring
+  ok    a ring through a point has it as the touch-down, zero lateral on it
+  ok    an arena as a setup carries a ring exactly (the axis and touch-down as bit patterns, through JSON and back)
+  ok    the ring read of the picker's own great circle holds the same cities (3) and towns (3) as evalCircle, and its shares sum to 1
+  ok    48 candidates a Half, the pinned place first, the same from the same stream and different from another
+    RIVAL/close: 12 picks, 12 met the size's minimum, 7 met it and the claim's must-cross
+    RIVAL/half: 12 picks, 12 met the size's minimum, 10 met it and the claim's must-cross
+    RIVAL/whole: 12 picks, 12 met the size's minimum, 9 met it and the claim's must-cross
+    EMPRESS/close: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+    EMPRESS/half: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+    EMPRESS/whole: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+    CYBORG/close: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+    CYBORG/half: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+    CYBORG/whole: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+    PROTAGONIST/close: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+    PROTAGONIST/half: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+    PROTAGONIST/whole: 12 picks, 12 met the size's minimum, 12 met it and the claim's must-cross
+  ok    144 of 144 picks (12 planets, 4 claims, 3 sizes) found a ring that meets its size's minimum
+  ok    134 of 144 also meet the claim's must-cross
+    mean candidates read a pick: 42.7; mean 188 ms a pick on this PC (a shared machine: informational)
+  ok    on planet 7 at Half, the four claims choose 3 different rings
+  ok    the claims show in the rings (mean over 12 planets, Half): plains Empress 0.38 against Rival 0.28; mountains Rival 0.17 against Empress 0.01; open water Protagonist 0.35 against Empress 0.29
+  ok    a pick stepped three candidates at a time (16 steps) is the pick in one call
+  ok    the same claim, size and stream pick the same ring, to the bit
+  ok    the first ring is a Close ring round the player's home, which it holds as its centre
+  ok    the boss's ring is the great circle through his home and the most populous other place (both within half a unit of it)
+  ok    a match on the Rival's Close ring (1200/10/c0d5f8f0890759a8) builds from it, plays 1,200 ticks and plays the same twice
+  ok    over 5 planets x 4 claims x 3 sizes (60 picks), the second pick with the first in opts.used is a ring the first is not 60 times (60 of them still meet the size's minimum); the rest had nothing else and say so (repeat)
+  ok    an empty used list is no used list: the pick is the one it was
+  ok    a used ring is passed over (the pick moves on from candidate 0 to 37), and a setup.arena that has been through JSON, exact bits, is the same entry as the spec
+  ok    a used entry that names a place and a kind passes over every candidate round or through that place
+  ok    the same circle with another touch-down is the same ring
+  ok    a Whole ring's axis the other way round is the same circle, and a ring of another length is not the same ring
+  ok    with every candidate already fought the pick still returns a ring, flagged as a repeat, its score taken down by 0.50
+  ok    a stepped pick with a used list is the one made at once
+  ok    a coastal home (planet 3, city 8: the ring round it is 26% land): the first ring turns to a ring through the home that meets Close's minimum with 58% land, the home on it
+  ok    a first ring that already meets the minimum is the ring it was, to the bit (planet 7, home 0)
+  ok    when no bearing meets the minimum (every place fallen) the story's ring stands as it is
+  ok    over 8 planets' cities, every first ring that missed the minimum (9 of them) was turned to one that meets it (9)
+  ok    a stepped first ring (7 steps of 2, up to 13 reads) is the one made at once, and the same twice
+  ok    the turned first ring plays: a match on its arena, 120 ticks
+RINGPICK: 0 check(s) failed

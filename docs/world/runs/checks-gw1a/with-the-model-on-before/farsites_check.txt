@@ -1,0 +1,10 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    farPlaces lists every place of 3 planets x 3 rings (426), by id, and farColumn's (column, z) is where each stands: the worst miss is 58.8 units, from rounding the column to a whole one (a column is 32 units on the ring and fans out with the lateral offset); the lateral limit holds
+  ok    the settlement layer (128 square): the texel under every place's centre is marked as its kind or better (31 towns, 11 cities), and every marked texel is inside a place's radius or holds a centre; 3669 texels marked of 16384
+  ok    the map's field also returns the settlement under each sample ("s", same layout as "h"), and places() is farPlaces
+  ok    a planet match with the turn off keeps its ring in S.planetRing, the one a turning match keeps in its epoch (the axis, the touch-down point, the columns, the seed)
+  ok    S.planetRing is not hashed
+  ok    a Whole ring's too (a great circle, 4,800 columns); the hand-made world has none
+  ok    after a turn S.planetRing is the new ring (the epoch's)
+FARSITES: 0 check(s) failed

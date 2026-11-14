@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    a gen 1 and a gen 2 match on the same explicit ring are told apart by the memo: gen 1 0afbcf59 both times, gen 2 58fa0673 both times
+  ok    a gen 1 match built after a gen 2 one has no fine columns, no trees, and the data's generation in its own state
+  ok    two sims alive (gen 1 built first, gen 2 after), stepped in turns for 120 ticks, are each the match they are alone
+  ok    the same with the gen 2 built first and the other order of stepping
+  ok    each match keeps its own generation and fine columns in its state (gen 2 and 0)
+  ok    a gen 2 ring with lakes is found; the match keeps them in S.planetRing
+  ok    a lake bed dug 80 deep keeps the lake's surface level (256 deep at the dig, was 176) and a berm does not raise it
+  ok    a berm over the bed leaves the water at the level or dry
+  ok    a body landing on the bed of a deep lake (127 deep) slams, as in the sea (first contact: slam)
+  ok    in a gen 2 match a lake column deep enough to hide in is sea to WorldTerrain.seaAt, a shallower one is not
+  ok    a gen 1 match has no sea but the reservoir's
+  ok    a fighter low in a deep lake is not out of sight because of the water (line of sight reads the ground only)
+  ok    the gen 2 turn landed (epoch 1)
+  ok    a lake in the kept core of a turn (1 of 5 here) stands as it was: the same columns, level and water; the new ring's lakes are only on ground the new ring takes (4 lakes now)
+  ok    every carried or planted lake is wet over all of its columns after the swap
+  (a gen 2 turn's preparation: 6 warm ticks, the dearest 230.4 ms)
+  ok    gen 1: makeJob in 12 steps of 4,000 units makes the planet make makes (53 places), memoised only when whole, and make then returns it
+  ok    gen 2: makeJob in 17 steps of 4,000 units makes the planet make makes (54 places), memoised only when whole, and make then returns it
+STATE: 0 check(s) failed
+WARNING: 13 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

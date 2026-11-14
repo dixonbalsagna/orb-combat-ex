@@ -1,0 +1,22 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    land.json is clean and the data's generation is still 1 ([])
+  ok    a planet is made by its generation (memoised apart)
+  ok    14 plates: unit centres, drifts along the ground at 0.40 to 0.96, the closest pair 0.15 apart (1 - dot)
+  ok    the plates are a pure function of the seed (a fresh planet object makes the same, another seed other plates)
+  ok    gen 2 height and biome are a pure function of the point (a fresh planet object reads the same)
+  ok    land share 60% in gen 1, 67% in gen 2 (window 1's smaller polar caps alone add about 12); 25% of points change between land and sea
+  ok    where plates close, on their edge, the ground stands 1106 units above gen 1's on average (240 points)
+  ok    where plates part on land the ground stands -844 units below gen 1's (a rift valley; 288 points)
+  (adjacent-column slopes, 99th / 99.9th / steepest: gen 1 0.90 / 1.33 / 1.72, gen 2 1.04 / 2.40 / 3.53)
+  ok    across a plate edge the ground does not jump: 11 adjacent columns straddle an edge, the largest step is 32 units
+  ok    slopes between adjacent columns: 99.9% under 2.40, the steepest 3.53 (units of height per unit along)
+  ok    the shoreline term is full at sea level and zero past two and a half bands
+  ok    plateaus: 12% of adjacent high-ground columns (3105 pairs) are level to 0.03 in gen 2, 5% in gen 1
+  ok    the polar zone's edge wobbles by -0.041 to 0.054 in the sine of the latitude (amp 0.07): no ruled line, and it stays between 0.80 and 0.89
+  ok    54 places stand on ground between placeHMin and placeHMax in gen 2 (they moved with the land)
+  (surfAt: 34.3 us a point in gen 1, 78.2 in gen 2: 2.28x; the gen 2 planet's one-off grid 0 ms)
+  ok    a gen 2 point costs under 3.5x a gen 1 point (2.28x; the whole of gen 2, climate included, once the grid is made)
+LAND: 0 check(s) failed
+WARNING: 13 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

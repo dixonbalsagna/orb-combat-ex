@@ -1,0 +1,27 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+--- the energy model and the dash OFF (main before GW1a)
+== deepen, slideObstacle, bump ==
+  ok    deepen by 1.2 makes the crater 1.2 times as deep (86.2 to 103.5 units)
+  ok    the ground at the centre is lower by about a fifth of the depth (-85.6 to -102.7)
+  ok    it draws nothing from the rng
+  ok    no crater there: nothing, 0 returned
+  ok    a factor of 1 or less does nothing
+  ok    a bowl at the radius cap is deepened (132 to 158; a second dig made nothing)
+  ok    no NaN in the ground
+  ok    an obstacle is found on a mountain slope within 3.5 bh
+  ok    open desert is clear
+  ok    a bump at 870 speed costs 5.2 hp
+--- the energy model and the dash ON (Orb's real path)
+== deepen, slideObstacle, bump ==
+  ok    deepen by 1.2 makes the crater 1.2 times as deep (86.2 to 103.5 units)
+  ok    the ground at the centre is lower by about a fifth of the depth (-85.6 to -102.7)
+  ok    it draws nothing from the rng
+  ok    no crater there: nothing, 0 returned
+  ok    a factor of 1 or less does nothing
+  ok    with the energy model on there is no ordinary cap: a second blow at the same place digs a wider bowl (3200, then 3840) and deepen raises that bowl by a fifth (128.5 to 154.2)
+  ok    no NaN in the ground
+  ok    an obstacle is found on a mountain slope within 3.5 bh
+  ok    open desert is clear
+  ok    a bump at 870 speed costs 5.2 hp
+DEEPEN: 0 check(s) failed

@@ -1,0 +1,28 @@
+Failing rows with the energy model and the dash ON (Orb's real path), before the re-read (WorldPin.shipped(true) on the s422 tree, the GW1a stack): see with-the-model-on-before/. After: with-the-model-on-after/ (each re-read check runs twice, model off then on).
+== repeat_check
+FAIL  the same send does 1.00x, 1.00x, then 1.00x the first one's damage (the ladder's 1.74 and 2.70, capped)
+== meteor_crater_check
+FAIL an ordinary dig of that energy is held to 8 bh (2015)
+== interior_check
+FAIL  tier 3 down: from tier 3 the ceiling is reached (or he left first: capped)
+FAIL  tier 4 down: from tier 3 the ceiling is reached (or he left first: capped)
+FAIL  a fast steep send at tier 1 bounces off the held floor (face! floor15 END:lodge)
+== wall_hold_check
+FAIL today the fight freezes at the hit and he is thrown off the face (0 of 16)
+FAIL the building remembers: repeats break it (0 fall off, 0 of 24 with repeatMarks 2)
+== brunt_check
+FAIL  at tier 3 a tower the body has the strength to punch lets him through, and one it cannot holds him (60 of 90)
+FAIL  at tier 4 the same (42 of 90)
+FAIL  a house is gone through at every tier and speed, at houseKeep, and the hit kills it (0 of 12)
+FAIL  a tier-1 tower of 10 floors and 1125 hit points gives way after 12 walls at speed 1400 (the data's giveWay 2.0; a median tower of 13 floors: about 3)
+FAIL  the last hit holds the body for the tier's seconds (99 of 173)
+FAIL  no chain uses more links than its tier's cap, a house half (160 of 173)
+== deepencheck
+FAIL  a bowl at the radius cap is deepened (704 to 154; a second dig made 154)
+== wrecks_check
+FAIL  the scrap does more to structures as the tier rises (hp taken: [134.649106587749, 134.649106587749, 134.649106587749, 134.649106587749])
+== craters_check
+FAIL  on: a gen 2 match (planet 3, 2400 ticks) digs 0 shaped crater(s) on its new ground (it slams on snow), and so is a different match
+== ground_check
+FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+FAIL  the hand-made world and a gen 1 turn hash as before (turn: n=1 838649c53fbb1ded)

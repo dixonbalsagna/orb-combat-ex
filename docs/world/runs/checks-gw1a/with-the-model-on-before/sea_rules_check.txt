@@ -1,0 +1,8 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    on a world without a lake seaTop is exactly 0 over the sea and NO_SEA elsewhere (so every line reads as it did)
+  ok    over the sea a fighter below 0 flies at 0.55 of his speed, above it at full (as before)
+  ok    a deep lake at altitude: seaTop is its surface (800), and dry land beside it has none
+  ok    a fighter below a lake's surface flies at 0.55 of his speed as in the sea, and above it at full
+  ok    a launch that falls into a deep lake is predicted to end in water, as one into the sea is
+SEARULES: 0 check(s) failed
