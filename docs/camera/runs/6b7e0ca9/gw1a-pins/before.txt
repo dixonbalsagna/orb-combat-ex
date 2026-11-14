@@ -1,0 +1,29 @@
+# Before: the GW1a stack s422 + own-pane (copy), the four checks
+== split_vision_check: split_vision_check: 11 checks, 1 failed
+FAIL the split's distance moved with power: 1332 and 2100
+== chase_rush_check: chase_rush_check: 130 checks, 19 failed
+FAIL seed 1, 20 after the send, 1 taps, share 0.7: the view flapped: ["merged", "opening", "split"]
+FAIL energy model, base, seed 1, 20 after the send, 1 taps, share 0.7: the view flapped: ["merged", "opening", "split"]
+FAIL energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: the picture stepped 0.064 of the width
+FAIL energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: a jolt of 0.035 (tick 62 merged)
+FAIL energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: the picture stepped 0.062 of the width
+FAIL energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: a jolt of 0.032 (tick 66 merged)
+FAIL energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: the picture stepped 0.062 of the width
+FAIL energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: a jolt of 0.032 (tick 66 merged)
+FAIL energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: the picture stepped 0.064 of the width
+FAIL energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: a jolt of 0.035 (tick 62 merged)
+FAIL energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: the picture stepped 0.288 of the width
+FAIL energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: the view flapped: ["merged", "opening", "split"]
+FAIL energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: the view flapped: ["merged", "opening", "split"]
+FAIL energy model, top power, seed 1, 20 after the send, 1 taps, share 0.7: the picture stepped 0.262 of the width
+FAIL energy model, top power, seed 1, 20 after the send, 1 taps, share 0.7: the view flapped: ["merged", "opening", "split", "closing", "merged"]
+FAIL energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: the view flapped: ["merged", "opening", "split"]
+FAIL energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: the picture stepped 0.288 of the width
+FAIL energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: the player off his picture for 96 ticks
+FAIL energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: the view flapped: ["merged", "opening", "split"]
+== flight_shots_check: flight_shots_check: 1 of 539 checks FAILED
+FAIL reveal 6.0 s: a release's jolt of 0.307
+== launch_shots_check: launch_shots_check: 3 of 843 checks FAILED
+FAIL AI fight 2: a jolt of 0.262 of the width (tick 3219 pane 0: merged,  , free, step 0.263, landmark)
+FAIL AI fight 2, energy model: a jolt of 0.262
+FAIL AI fight 3, energy model: a jolt of 0.110

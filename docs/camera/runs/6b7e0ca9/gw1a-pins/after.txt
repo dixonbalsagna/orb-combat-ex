@@ -1,0 +1,45 @@
+# After the park, on the stack
+== split_vision_check: 11 checks passed
+== flight_shots_check: 539 checks passed
+== launch_shots_check: 843 checks passed
+== chase_rush_check: 130 checks passed
+row seed 1, 20 after the send, 1 taps, share 0.7: step 0.035 jolt 0.007 off 2 flaps 1 (a GW1a ceiling)
+row energy model, base, seed 1, 20 after the send, 1 taps, share 0.7: step 0.035 jolt 0.007 off 2 flaps 1 (a GW1a ceiling)
+row energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: step 0.064 jolt 0.035 off 0 flaps 0 (a GW1a ceiling)
+row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: step 0.062 jolt 0.032 off 0 flaps 0 (a GW1a ceiling)
+row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: step 0.062 jolt 0.032 off 0 flaps 0 (a GW1a ceiling)
+row energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: step 0.064 jolt 0.035 off 0 flaps 0 (a GW1a ceiling)
+row energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7 (arc off): step 0.288 jolt 0.098 off 6 flaps 1 (a GW1a ceiling)
+row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7 (arc off): step 0.182 jolt 0.052 off 0 flaps 1 (a GW1a ceiling)
+row energy model, top power, seed 1, 20 after the send, 1 taps, share 0.7 (arc off): step 0.262 jolt 0.078 off 0 flaps 1 (a GW1a ceiling)
+row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0 (arc off): step 0.234 jolt 0.097 off 0 flaps 1 (a GW1a ceiling)
+row energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7 (arc off): step 0.288 jolt 0.098 off 96 flaps 1 (a GW1a ceiling)
+== own_pane_check: 12 checks passed
+  clash normal, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  clash normal, fighter 1: out of his pane at most 0 ticks (limit 52, a known loss) 
+  clash reduced, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  clash reduced, fighter 1: out of his pane at most 0 ticks (limit 52, a known loss) 
+  signature normal, fighter 0: out of his pane at most 26 ticks (limit 26, a known loss) ticks 125 to 150, merged, sep 0.00, free
+  signature normal, fighter 1: out of his pane at most 48 ticks (limit 48, a known loss) ticks 860 to 907, solo, sep 0.00, free
+  signature reduced, fighter 0: out of his pane at most 26 ticks (limit 26, a known loss) ticks 125 to 150, merged, sep 0.00, free
+  signature reduced, fighter 1: out of his pane at most 46 ticks (limit 48, a known loss) ticks 860 to 905, merged, sep 0.00, free
+  launchai normal, fighter 0: out of his pane at most 10 ticks (limit 15) ticks 1 to 10, merged, sep 0.00, free
+  launchai normal, fighter 1: out of his pane at most 0 ticks (limit 35, a known loss) 
+  launchai reduced, fighter 0: out of his pane at most 1 ticks (limit 15) ticks 1 to 1, merged, sep 0.00, free
+  launchai reduced, fighter 1: out of his pane at most 0 ticks (limit 35, a known loss) 
+   at: cleanup (core/object/object.cpp:2536)
+   at: clear (core/io/resource.cpp:822)
+
+# After the park, with main's data on the same tree
+split_vision_check: 11 checks passed
+flight_shots_check: 803 checks passed
+chase_rush_check: 130 checks passed
+launch_shots_check: 1029 checks passed
+own_pane_check: 12 checks passed
+
+# The signature scene with the 9 November data still fires its beams (clip_digest --events)
+t 94 beam_outcome actor 0.0
+t 94 launch actor 1.0
+t 796 launch actor 0.0
+t 1183 beam_outcome actor 0.0
+t 1183 launch actor 1.0

@@ -1,0 +1,23 @@
+# Data bisection (groups put back to main's for one run): all / biomes / camera / director+combat / fight+input; then single files
+== chase_rush_check
+[data/biomes/climate.json,data/biomes/contact.jso...] chase_rush_check: 130 checks passed | 
+[data/biomes/climate.json,data/biomes/contact.jso...] chase_rush_check: 130 checks, 10 failed | FAIL seed 1, 0 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening",  FAIL seed 1, 8 after the send, 1 taps, share 0.7: the
+[data/camera/swing.json...] chase_rush_check: 130 checks, 19 failed | FAIL seed 1, 20 after the send, 1 taps, share 0.7: the view flapped: ["merged", "opening", "split"] FAIL energy model, base, seed 1, 20 after the send, 1 taps, share 0.7: the view flapped: [
+[data/combat/launch_biome.json,data/combat/mixed....] chase_rush_check: 130 checks, 3 failed | FAIL seed 1, 20 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", FAIL seed 2, 0 after the send, 4 taps, share 0.7: the 
+[data/fight/brake.json,data/fight/hitstop.json,da...] chase_rush_check: 130 checks, 24 failed | FAIL seed 1, 8 after the send, 1 taps, share 0.7: a jolt of 0.170 (tick 85 opening) FAIL seed 1, 8 after the send, 1 taps, share 0.7: the view flapped: ["merged", "
+== flight_shots_check
+[data/biomes/climate.json,data/biomes/contact.jso...] flight_shots_check: 803 checks passed | 
+[data/biomes/climate.json,data/biomes/contact.jso...] flight_shots_check: 666 checks passed | 
+[data/combat/launch_biome.json,data/combat/mixed....] flight_shots_check: 1 of 741 checks FAILED | FAIL reveal 6.0 s: a release's jolt of 0.309 
+[data/fight/brake.json,data/fight/hitstop.json,da...] flight_shots_check: 1 of 548 checks FAILED | FAIL reveal 6.0 s: a release's jolt of 0.307 
+== split_vision_check (by file)
+[data/biomes/climate.json] FAIL the split's distance moved with power: 1332 and 2100 split_vision_check: 11 checks, 1 failed 
+[data/biomes/contact.json] FAIL the split's distance moved with power: 1332 and 2100 split_vision_check: 11 checks, 1 failed 
+[data/biomes/field.json] FAIL only 0 merges to judge split_vision_check: 11 checks, 1 failed 
+[data/biomes/rings.json] FAIL the split's distance moved with power: 1332 and 2100 split_vision_check: 11 checks, 1 failed 
+[data/biomes/water.json] FAIL the split's distance moved with power: 1332 and 2100 split_vision_check: 11 checks, 1 failed 
+== launch_shots_check --measure --fights=3 (the big ticks)
+AI fight 1             release 0.000 jolt 0.043 zoom 0.0067 lost 0 (run 0) whips 0 cuts { "side_swap": 2 }
+    big tick 3219 pane 0: j 0.262 prev step 0.002 now 0.263 mode merged solo   e 0.00 sep 0.00 slam -1 lag 0 rush false state free/free
+AI fight 2             release 0.037 jolt 0.262 zoom 0.0099 lost 0 (run 0) whips 0 cuts { "side_swap": 6 }
+AI fight 3             release 0.005 jolt 0.110 zoom 0.0069 lost 0 (run 0) whips 0 cuts { "side_swap": 4 }
