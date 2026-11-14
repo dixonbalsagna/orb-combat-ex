@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+D after-branch 9e80655cacb470e7
+D after-swing 85ff7827d878261c (55 ticks)
+D landing 0: x 29.1357 y 2089.3369 hp 1571.5119 state free craters 1 hash 08bf16729d61013f
+E landing 0: buildings 3705 (3705 up) 3408ffb2bc7cedcf; ground a772a5a3ebe32171; people -1; trees 179
+D landing 1: x 19344.0415 y -25.8999 hp 1571.5119 state free craters 1 hash 386bff6ce18765f8
+E landing 1: buildings 3705 (3705 up) 3408ffb2bc7cedcf; ground d693d562dc4ddf65; people -1; trees 179
+D landing 2: x 38473.4246 y 1415.2472 hp 1571.5119 state free craters 1 hash d4ebe646413690ca
+E landing 2: buildings 3705 (3705 up) 3408ffb2bc7cedcf; ground 95ca8a76d8f9f48b; people -1; trees 179
+D landing 3: x 57628.5202 y 0.0000 hp 1571.5119 state free craters 2 hash df7227c0735fa8ae
+E landing 3: buildings 3705 (3705 up) 3408ffb2bc7cedcf; ground 6cce22bca7c03ea7; people -1; trees 179
+D landing 4: x 76896.8134 y 48.0715 hp 1571.5119 state free craters 2 hash ff06075f872c1450
+E landing 4: buildings 3705 (3705 up) 3408ffb2bc7cedcf; ground 74b3c8076bb12f1c; people -1; trees 179
+D landing 5: x 96028.5202 y 0.0000 hp 1571.5119 state free craters 3 hash 3b6558202e12c9cd
+E landing 5: buildings 3705 (3705 up) 3408ffb2bc7cedcf; ground ad9d67f27ce2ce33; people -1; trees 179
+D landing 6: x 115232.9845 y 1422.0569 hp 1571.5119 state free craters 3 hash 99f24a1b8767dbc8
+E landing 6: buildings 3705 (3705 up) 3408ffb2bc7cedcf; ground ab9b558e346cdb19; people -1; trees 179
+D landing 7: x 134452.7096 y 484.1747 hp 1571.5119 state free craters 3 hash bb2485b2e2913a3d
+E landing 7: buildings 3705 (3705 up) 3408ffb2bc7cedcf; ground 315669062f4e9d36; people -1; trees 179
+RESULT state d31aae8b73ce0ba3
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

@@ -1,0 +1,8 @@
+v1_settle_main: the SAME (RESULT state d31aae8b73ce0ba3) in 18 s
+v2_field_main: the SAME (RESULT state fe216304f7192227) in 17 s
+v3_water_main: the SAME (RESULT state 6af7b399c3247b24) in 17 s
+v4_rings_main: the SAME (RESULT state d31aae8b73ce0ba3) in 17 s
+v5_climate_main: differs (RESULT state b1a3c0c479445440 / RESULT state d31aae8b73ce0ba3) in 20 s
+v6_fight_rows_main: the SAME (RESULT state 2415141ad7faf033) in 18 s
+ M sim/core/tools/frame_check.gd
+fb done
