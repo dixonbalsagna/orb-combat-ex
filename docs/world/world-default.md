@@ -23,7 +23,7 @@ Taken by diffing `data/` of main against the 9 November build Orb played (`homew
 | `contact.json` `settle.enabled` | false | true | yes |
 | `field.json` `plans.everywhere` | false | true | yes (`warm.radius` 10000.0 against 10000 is the same number) |
 | `rings.json` `turn.on` | 0 | 1 | yes |
-| `world.json` `mode`, `random.enabled` (new) | arena, false | (the page word `?planet=7`) | yes |
+| `world.json` `mode`, `random.enabled` (new) | arena, false | (the page word `?planet=7`) | no: `data-switches-gw1b.diff` (GW1b) |
 
 Two of these need switches in files that are not mine, or they do nothing or refuse to load: `rings.json turn.on` needs `data/director/interrupts.json` `calmTurn.enabled` (without it the turn never happens: QA found it, 2026-10-31); `water.json floor.enabled` needs `interrupts.json` `water.enabled` and `surface.enabled` (`WorldFill.floorProblem`: a floor without both halves of the surfacing rule is a load error that turns the whole water module off). `data/combat/launch_biome.json` `biome.enabled` (the planner reads the ground) is the planet's too. The kept build also flips the pad, the computer opponent, the camera's `splitShare` and a score of director and combat switches: those are the other directors' rows of the same table, not World's, and I did not touch them.
 
