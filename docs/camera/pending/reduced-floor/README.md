@@ -1,6 +1,8 @@
 # Parked: under Reduce flashing, a fast pane may go below the readable size (reduced-floor)
 
-Camera, 2026-11-14, the EP's go on option (i): the safety mode, where readability may give a little. Normal play never reads it.
+Camera, 2026-11-14, the EP's go on option (i): under Reduce flashing, readability may give a little.
+
+**Which view this changes.** Reduce flashing is on by default (`ui/data/options.json`; the site and desktop exports lock it on), so the reduced view is the camera players see, and the full-effects view (Reduce flashing off) is the opt-in one. This park changes the default camera: a fast pane there may go below the readable size. The full-effects view never reads it. **Held** from landing until it passes the EP's look gate with a side-by-side of the default view (the EP, 2026-11-14).
 
 **Apply after** reduced-pace (it uses `_rpace`), on the GW1a look stack: `git -c core.autocrlf=false apply reduced-floor.patch` (sha1 838fe0d7). It lands after GW1a.
 

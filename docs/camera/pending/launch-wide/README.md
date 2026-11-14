@@ -1,6 +1,10 @@
-# Parked: in normal play, a fast launch pulls wide to the readable size (launch-wide)
+# Parked: a fast launch pulls wide to the readable size (launch-wide)
 
-Camera, 2026-11-14, the EP's decision (c) on the clash reading: normal mode, lead wide on a fast send, eased. Option (b), following at 10 to 15 px, isn't built; it reverses director step 4a and would go to Orb only as a camera taste question.
+Camera, 2026-11-14, the EP's decision (c) on the clash reading: lead wide on a fast send, eased.
+
+**Which view this changes.** Reduce flashing is on by default (`ui/data/options.json`; the site and desktop exports lock it on), so the reduced view is the camera players see, and the full-effects view (Reduce flashing off) is the opt-in one. This piece is on in both views, so it changes the default camera too: there it takes the fast flights the launch rule's hold doesn't (with launch-hold-reduced), or all of them (without it). **Held** from landing until it passes the EP's look gate with a side-by-side of the default view (the EP, 2026-11-14).
+
+Option (b), following at 10 to 15 px, isn't built; it reverses director step 4a and would go to Orb only as a camera taste question.
 
 **Apply after** launch-hold-reduced (it uses `_lh_on()`), on the GW1a look stack: `git -c core.autocrlf=false apply launch-wide.patch` (sha1 49402d51). It lands after GW1a.
 
@@ -14,7 +18,7 @@ Camera, 2026-11-14, the EP's decision (c) on the clash reading: normal mode, lea
 
 ## What it does
 
-A launched fighter is chased at fight size (director step 4a). With this, when his flight would stream the scenery past faster than the governor's limit, his pane eases out (the governor's own ease, `GOV_TAU`). It goes no smaller than the readable size, so he stays readable. It's on in normal play; under Reduce flashing the launch rule's hold takes the fast flights first.
+A launched fighter is chased at fight size (director step 4a). With this, when his flight would stream the scenery past faster than the governor's limit, his pane eases out (the governor's own ease, `GOV_TAU`). It goes no smaller than the readable size, so he stays readable. It's on in both views; under Reduce flashing (the default) the launch rule's hold, when launch-hold-reduced is in, takes the fast flights first.
 
 ## Proof
 
@@ -22,4 +26,4 @@ A launched fighter is chased at fight size (director step 4a). With this, when h
 | :--- | :--- |
 | Clash, normal, the two flight stretches (native; `docs/camera/runs/611c1c2b/launch-parks/clash-steps.txt`) | ticks over 0.045: **93 to 80** and **57 to 39**. A partial fix, as expected: at about 20,000 units a second the readable floor binds |
 | Every camera check, with this piece and launch-hold-reduced forced on (`gates.txt`) | all pass except split_sweep's two rally rows, which **tie**. A rally row checks that the rally framing beats the same run without it. This piece improves the run without it from 28 to 15 ticks of the chaser off the screen, the same 15 as with the rally framing. Not a regression. **The park re-words them to "beats or ties"** (the EP); with both pieces forced on, `split_sweep --only=rally` passes |
-| **The pixel reading** | **Owed:** in the EP's next quiet window, clash normal on the stack with both parks. If it can't get normal mode under the limit, (b) goes to Orb as a taste question with a side-by-side ("on a fast launch, follow close or pull wide"), never framed around flashing |
+| **The pixel reading** | **Owed:** in the EP's next quiet window, clash with full effects on the stack with both parks. If it can't get the full-effects view under the limit, (b) goes to Orb as a taste question with a side-by-side ("on a fast launch, follow close or pull wide"), never framed around flashing |

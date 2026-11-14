@@ -1,6 +1,8 @@
 # Parked: the camera's slower pace under Reduce flashing (reduced-pace)
 
-Camera, 2026-11-14, the EP's go: Reduce flashing is the tester-safety mode. Normal play stays exactly as Orb plays it: the normal-mode digest is identical on all 9 clips.
+Camera, 2026-11-14, the EP's go.
+
+**Which view this changes.** Reduce flashing is on by default (`ui/data/options.json`; the site and desktop exports lock it on), so the reduced view is the camera players see, and the full-effects view (Reduce flashing off) is the opt-in one. This park changes the default camera. The full-effects view is unchanged: its digest is identical on all 9 clips. **Held** from landing until it passes the EP's look gate with a side-by-side of the default view (the EP, 2026-11-14).
 
 **Apply after** cd04, launch-hold-reduced and launch-wide, on the GW1a look stack: `git -c core.autocrlf=false apply reduced-pace.patch` (sha1 21591c0b). It lands after GW1a.
 
@@ -22,7 +24,7 @@ Camera, 2026-11-14, the EP's go: Reduce flashing is the tester-safety mode. Norm
 | Run | Result |
 | :--- | :--- |
 | Every camera check on the full stack with this park | **all pass**, including split_sweep (escape rows) and cut_register_check 73 |
-| Normal mode alone, clip_digest on all 9 clips, with and without | **identical** (24,300 frames) |
+| The full-effects view alone, clip_digest on all 9 clips, with and without | **identical** (24,300 frames) |
 | The flagged seconds, reduced, natively (`native.txt`) | **little change.** Signature's right pane is a fighter flying freely at about 7,800 units a second, followed at his speed at the readable floor, so the hold rightly gives way. Collapse's last second is a pull-out keeping a parting pair in frame, which this park mustn't slow. Clash's first flight stretch: 31 to 26 ticks over 0.03 |
 
 ## What's left in those seconds
