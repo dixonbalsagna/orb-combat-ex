@@ -1,0 +1,40 @@
+extends SceneTree
+## Scratch (Simulation, A1: support for World's five planet sizes). On a tree with World's globe-step2, a-world-01 and
+## planet-sizes: does a replay of a match on a big or a tiny planet play back, when the host's static size was last bound
+## to medium (as a fresh process, or a host that played a medium match before)? And does the replay's data hash (the
+## header's, and the LAN handshake's) depend on which size the static held when it was taken?
+
+func _rec(size: String) -> Dictionary:
+	var su := {"planet": 7, "touch": 1, "planetGen": 3, "intro": false}
+	if size != "":
+		su["planetSize"] = size
+	var S := SimCore.createSim()
+	var rec := SimReplay.recorder(S, 7, {"p1": true, "p2": true}, su)
+	for t in range(300):
+		rec.step([null, null])
+	var rp: Dictionary = rec.finish()
+	print("%s: recorded on %d columns, final %s" % [size if size != "" else "medium (unnamed)", S.planetNC, str(rp.final).substr(0, 16)])
+	SimCore.dispose(S)
+	return rp
+
+
+func _medium() -> void:
+	var M := SimCore.createSim()
+	SimCore.newMatch(M, 3, {"p1": true, "p2": true}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
+	SimCore.dispose(M)
+
+
+func _init() -> void:
+	var bad: int = 0
+	for size in ["big", "tiny"]:
+		var rp: Dictionary = _rec(size)
+		var hRec: String = String(rp.data)
+		_medium()
+		var hMed: String = SimReplay.dataHash(rp.setup)
+		print("  the header's data hash %s; taken again with the static at medium (%d) %s: %s" % [hRec.substr(0, 12), SimConst.PLANET_NC, hMed.substr(0, 12), "same" if hRec == hMed else "DIFFERENT"])
+		var r: Dictionary = SimReplay.play(rp)
+		print("  played with the static at medium: ok=%s reason=%s firstBadTick=%d" % [str(r.ok), r.reason, int(r.firstBadTick)])
+		if hRec != hMed or not r.ok:
+			bad += 1
+	print("SIZE REPLAY PROBE: %d of 2 sizes fail" % bad)
+	quit(0)

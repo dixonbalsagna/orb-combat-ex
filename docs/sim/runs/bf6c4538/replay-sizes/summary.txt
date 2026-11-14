@@ -1,0 +1,31 @@
+The replay size fix (kick/replay_sizes_edit.py) on a scratch export of bf6c4538 with World's globe-step2, a-world-01 and planet-sizes applied in order and committed as the base. Before the fix, on the same stack (pr_go.sh step 3):
+== 3. size replay probe on World's stack
+sz import 0; parse errors 0
+size_replay: exit 0 in 72 s; script errors 0; SIZE REPLAY PROBE: 2 of 2 sizes fail
+big: recorded on 9600 columns, final 487d0f2b4f836c3f
+  the header's data hash d9ec5a4127f0; taken again with the static at medium (4800) afadb57cb5dc: DIFFERENT
+  played with the static at medium: ok=false reason=data firstBadTick=-1
+tiny: recorded on 1280 columns, final 0413d702f316b2ba
+  the header's data hash 532bec20b25d; taken again with the static at medium (4800) afadb57cb5dc: DIFFERENT
+  played with the static at medium: ok=false reason=data firstBadTick=-1
+SIZE REPLAY PROBE: 2 of 2 sizes fail
+probes done
+
+After the fix:
+#### sz
+replay-sizes sha1 400168aefded76ecff477c7fb021ae880432034f sha256 5e02e088b442 2 files
+import 0; parse errors 0
+parity through gate.mjs: exit 0 in 349 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+85:ok    a replay of a sized planet plays in a host bound to another size
+sizes: exit 0 in 38 s; script errors 0; SIZES: 0 check(s) failed
+xproc: exit 0 in 49 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 484fdc4f949d567f, Easy 69c555c28b7333ae, Medium 4b9a8ddefd2b69e3 (600
+size_replay: exit 0 in 63 s; script errors 0; SIZE REPLAY PROBE: 0 of 2 sizes fail
+big: recorded on 9600 columns, final 487d0f2b4f836c3f
+  the header's data hash 04d4d6e5ff32; taken again with the static at medium (4800) 04d4d6e5ff32: same
+  played with the static at medium: ok=true reason= firstBadTick=-1
+tiny: recorded on 1280 columns, final 0413d702f316b2ba
+  the header's data hash 13f61784479e; taken again with the static at medium (4800) 13f61784479e: same
+  played with the static at medium: ok=true reason= firstBadTick=-1
+SIZE REPLAY PROBE: 0 of 2 sizes fail
+sz done
+#### mz
