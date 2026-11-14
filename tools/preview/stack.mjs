@@ -2,8 +2,10 @@
 // 2026-10-31 (Orb's playable). It applies each park in order, says the FIRST CONFLICT by file and owner, turns every switch on, runs validate, imports the project and plays a smoke match headless, and prints
 // what each park needs that is not there. Never touches the repository (it reads files from it and writes only under a scratch folder; it refuses to run in the repository root).
 //
-//   node tools/preview/stack.mjs [--rev main] [--only id,id] [--skip id,id] [--include-unready] [--no-godot] [--no-smoke] [--ticks 900] [--out <scratch base>] [--state <file>] [--force] [--keep-tree] [--list]
+//   node tools/preview/stack.mjs [--rev main] [--only id,id] [--skip id,id] [--include-unready] [--no-godot] [--no-smoke] [--ticks 900] [--out <scratch base>] [--state <file>] [--force] [--keep-tree] [--as-shipped | --off id,id] [--on id,id] [--list]
 //   --list          the parks of tools/preview/stack.json, in order, with their owners and whether they are ready
+//   --as-shipped    every switch of the table OFF: the data is main's as committed (the parks are still applied); what the golden record and the gates that read the switches as shipped are valid for (A-CODE-02, 2026-11-14). Same as --off all
+//   --off id,id     the switches left off; --on id,id: the held rows put on
 //   --no-godot      stop after the apply, the switches and validate (fast: a few seconds; for the hourly look)
 //   --force         run again although nothing the stack is made of has changed since the last run
 //   exit 0: every park applied, validate clean, the import and the smoke match clean; 1 otherwise (the report says what); 2 bad usage.
@@ -570,7 +572,7 @@ export function describeReport(r) {
 
 async function main() {
   const a = process.argv.slice(2);
-  const known = new Set(['--rev', '--only', '--skip', '--include-unready', '--no-godot', '--no-smoke', '--ticks', '--out', '--state', '--force', '--keep-tree', '--list', '--repo', '--manifest', '--godot', '--help']);
+  const known = new Set(['--rev', '--only', '--skip', '--include-unready', '--no-godot', '--no-smoke', '--ticks', '--out', '--state', '--force', '--keep-tree', '--list', '--repo', '--manifest', '--godot', '--help', '--as-shipped', '--off', '--on']);
   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/stack.mjs --help`); process.exit(2); }
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const has = (n) => a.includes(n);
@@ -584,7 +586,7 @@ async function main() {
   }
   let res;
   try {
-    res = await runStack({ repo, manifest: opt('--manifest'), rev: opt('--rev', 'main'), only: opt('--only', '').split(',').filter(Boolean), skip: opt('--skip', '').split(',').filter(Boolean), includeUnready: has('--include-unready'), noGodot: has('--no-godot'), noSmoke: has('--no-smoke'), ticks: Number(opt('--ticks', 900)), out: opt('--out'), state: opt('--state'), force: has('--force'), keepTree: has('--keep-tree'), godot: opt('--godot'), log: (m) => console.error(`[stack] ${m}`) });
+    res = await runStack({ repo, manifest: opt('--manifest'), rev: opt('--rev', 'main'), only: opt('--only', '').split(',').filter(Boolean), skip: opt('--skip', '').split(',').filter(Boolean), includeUnready: has('--include-unready'), noGodot: has('--no-godot'), noSmoke: has('--no-smoke'), ticks: Number(opt('--ticks', 900)), out: opt('--out'), state: opt('--state'), force: has('--force'), keepTree: has('--keep-tree'), godot: opt('--godot'), off: has('--as-shipped') ? ['all'] : opt('--off', '').split(',').filter(Boolean), on: opt('--on', '').split(',').filter(Boolean), log: (m) => console.error(`[stack] ${m}`) });
   } catch (e) { console.error(`stack: ${e.message}`); process.exit(2); }
   for (const l of describeReport(res.report)) console.log(l);
   console.log(res.changes.length ? `\nCHANGED since the last run:\n${res.changes.map((c) => `  - ${c}`).join('\n')}` : '\nNo change since the last run.');

@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, chmodSync 
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { activeNotice, readmeText, noticesText, lockReduceFlashing, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
+import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -25,6 +25,7 @@ try {
     check(`${p}: README.txt carries the AI line, every flashing paragraph, the under line and the commit`, r.includes(notice.gate.ai) && notice.gate.blocks.every((b) => !b.p || r.includes(b.p)) && (!notice.gate.under || r.includes(notice.gate.under)) && r.includes('Commit abc1234, 2026-10-28'));
     check(`${p}: README.txt says how to run it and points to NOTICES.txt`, /HOW TO RUN/.test(r) && /NOTICES\.txt/.test(r));
   }
+  check('private: an owner-private README carries the ORB-PRIVATE line under the commit, and an ordinary one does not (Legal RL-262)', (() => { const a = readmeText('windows', notice, info, { private: true }), b = readmeText('windows', notice, info); const L = a.split(String.fromCharCode(10)); return L[3] === PRIVATE_LINE && /ORB-PRIVATE/.test(a) && !/ORB-PRIVATE/.test(b) && L[2].startsWith('Commit '); })());
   check('windows: README.txt names the SmartScreen warning and how to get past it', /SmartScreen/.test(readmeText('windows', notice, info)) && /Run anyway/.test(readmeText('windows', notice, info)));
   check('macos: README.txt gives the unsigned-app steps (Open Anyway, the Control-click way, xattr) and says it is not notarized', (() => { const r = readmeText('macos', notice, info); return /Open Anyway/.test(r) && /Control-click/.test(r) && /xattr -dr com\.apple\.quarantine/.test(r) && /not notarized/.test(r) && /ad-hoc/.test(r); })());
   check('linux: README.txt gives the tar line and the chmod fallback', (() => { const r = readmeText('linux', notice, info); return /tar -xzf/.test(r) && /chmod \+x/.test(r); })());

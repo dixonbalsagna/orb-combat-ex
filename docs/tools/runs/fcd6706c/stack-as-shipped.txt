@@ -1,0 +1,6 @@
+A-CODE-02 (a gate runner setting for switches as shipped, 2026-11-14): node tools/preview/stack.mjs --rev fcd6706c --as-shipped --no-godot --force --keep-tree
+the stack's tree compared with its commit (node tools/preview/build-compare.mjs --tree <the tree> --rev fcd6706c):
+DIFFERS                data/art/biomes.json
+tree <user>\AppData\Local\Temp\claude\bb5aa63790efa20b\f4930939-92a3-468f-86d1-efe5cc11ac6a\scratchpad\stk\out\fcd6706c-6f018b7c1f78\tree against fcd6706c: 8610 files identical, 1 differ, 0 missing, 0 extra: NOT the commit
+
+the one file that differs is Art's overlay park (the working-tree edit of data/art/biomes.json, laid over the commit); with --skip art-biomes-working-tree the tree is the commit

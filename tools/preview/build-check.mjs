@@ -95,6 +95,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     };
     const r = checkRows(SWITCHES, (f) => packJson(pck, files, f), commitJsonOf);
     console.log(report(r, { list: a.includes('--list'), commit: rev, build: file.split(/[\\/]/).pop() }));
+    console.log(`the build's own stamp: ${stamp ? JSON.stringify(stamp) : 'none'}${stamp && stamp.version ? ` (version ${stamp.version}: the number its menu must show)` : ''}`);
     if (opt('--json')) writeFileSync(resolve(opt('--json')), JSON.stringify({ build: file.split(/[\\/]/).pop(), commit: rev, stamp, data: r.data, on: r.on, problems: r.problems, rows: r.rows }, null, 1));
     process.exitCode = r.problems.length ? 1 : 0;
   } catch (e) { console.error(`build-check: ${e.message}`); process.exitCode = 2; }

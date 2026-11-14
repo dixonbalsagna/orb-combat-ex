@@ -168,7 +168,7 @@ jobs:
           mkdir -p "${pkg}" "${dist}"
           # the words the README carries: an owner-private build carries the OWNER-APPROVED notice (tools/site-interim-owner.json, Orb's own, final); an outside-testers package carries the site's active notice
           # (tools/site.json interim.notice), which must be final, and is refused while it is a draft (Legal RL-204). No other value is ever passed (tools/check-desktop-audience.mjs).
-          notice=(); if [ "${AUDIENCE}" = "owner-private" ]; then notice=(--notice site-interim-owner.json); fi
+          notice=(); if [ "${AUDIENCE}" = "owner-private" ]; then notice=(--notice site-interim-owner.json --private); fi
           declare -A dir=( [windows]=orb-combat-ex-windows-x86_64 [linux]=orb-combat-ex-linux-x86_64 [macos]=orb-combat-ex-macos-universal )
           for p in windows linux macos; do
             mkdir -p "${pkg}/${dir[$p]}"
@@ -195,7 +195,7 @@ jobs:
           tar -xzf "${dist}/orb-combat-ex-linux-x86_64.tar.gz" -C "${chk}/linux"
           unzip -q "${dist}/orb-combat-ex-macos-universal.zip" -d "${chk}/macos"
           flag="--locked"
-          notice=(); if [ "${AUDIENCE}" = "owner-private" ]; then notice=(--notice site-interim-owner.json); fi
+          notice=(); if [ "${AUDIENCE}" = "owner-private" ]; then notice=(--notice site-interim-owner.json --private); fi
           sha="${{ steps.commit.outputs.sha }}"
           node tools/desktop-package.mjs verify --platform windows --dir "${chk}/windows/orb-combat-ex-windows-x86_64" --commit "${sha}" "${flag}" "${notice[@]}"
           node tools/desktop-package.mjs verify --platform linux --dir "${chk}/linux/orb-combat-ex-linux-x86_64" --commit "${sha}" "${flag}" "${notice[@]}"

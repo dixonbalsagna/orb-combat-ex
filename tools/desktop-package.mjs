@@ -20,6 +20,7 @@ import { scanRoutes } from './site-routes.mjs';
 
 const HERE = import.meta.dirname;
 const REPO = resolve(HERE, '..');
+export const PRIVATE_LINE = "ORB-PRIVATE: a private build for Orb and Orb 2 only. Please do not pass it on to anyone else.";   // Legal RL-262 section 1, point 4: the README line of an owner-private package
 export const PLATFORMS = ['windows', 'linux', 'macos'];
 export const NAMES = { windows: 'orb-combat-ex.exe', linux: 'orb-combat-ex.x86_64', macos: 'Orb Combat EX.app' };
 export const LOCK_ON = /"lock_reduce_flashing"\s*:\s*true/;
@@ -73,13 +74,14 @@ const RUN = {
 const PLATFORM_LABEL = { windows: 'Windows x86_64', linux: 'Linux x86_64', macos: 'macOS (universal: Apple silicon and Intel)' };
 
 /** README.txt for a platform. `info` is build_info.json ({commit, date}). Pure. */
-export function readmeText(platform, notice, info) {
+export function readmeText(platform, notice, info, opts = {}) {
   if (!PLATFORMS.includes(platform)) throw new Error(`platform "${platform}" is not one of ${PLATFORMS.join(', ')}`);
   const g = notice.gate;
   const lines = [
     `${notice.title || 'Orb Combat EX (working title)'}`,
     `Development build for ${PLATFORM_LABEL[platform]}`,
     `Commit ${info.commit}, ${info.date}`,
+    ...(opts.private ? [PRIVATE_LINE] : []),
     '',
     g.heading.toUpperCase(),
     ...g.blocks.map((b) => b.p).filter(Boolean),
@@ -311,6 +313,8 @@ export function verifyDir(platform, dir, o = {}) {
     if (!r.includes(notice.gate.ai)) out.push('README.txt does not carry the AI line word for word');
     if (!notice.gate.blocks.every((b) => !b.p || r.includes(b.p))) out.push('README.txt does not carry the flashing notice word for word');
     if (info && !r.includes(`Commit ${info.commit}`)) out.push('README.txt does not name the commit of build_info.json');
+    if (o.private && !r.includes(PRIVATE_LINE)) out.push('README.txt does not carry the ORB-PRIVATE line (an owner-private package says so: Legal RL-262)');
+    if (!o.private && r.includes('ORB-PRIVATE')) out.push('README.txt carries the ORB-PRIVATE line but the package is not checked as owner-private (an outside package must never say it)');
     // Legal's RL-204 words, word for word, and the one sentence that must be gone
     const NL = String.fromCharCode(10);
     if (!r.includes(`PRIVACY${NL}${PRIVACY}${NL}`) || r.indexOf(`PRIVACY${NL}`) < r.indexOf('HOW THIS GAME WAS MADE')) out.push("README.txt does not carry Legal's PRIVACY section word for word after HOW THIS GAME WAS MADE (RL-204)");
@@ -403,7 +407,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       try { info = JSON.parse(readFileSync(infoFile, 'utf8')); } catch (e) { throw new Error(`${infoFile} could not be read (node tools/write-build-info.mjs first): ${e.message}`); }
       const lic = JSON.parse(readFileSync(join(HERE, 'site-licences.json'), 'utf8'));
       mkdirSync(out, { recursive: true });
-      writeFileSync(join(out, 'README.txt'), readmeText(platform, activeNotice(HERE, opt('--notice') || null), info));
+      writeFileSync(join(out, 'README.txt'), readmeText(platform, activeNotice(HERE, opt('--notice') || null), info, { private: args.includes('--private') }));
       writeFileSync(join(out, 'NOTICES.txt'), noticesText(lic));
       writeFileSync(join(out, 'build_info.json'), JSON.stringify(info) + '\n');
       console.log(`desktop package: README.txt, NOTICES.txt and build_info.json (${info.commit}, ${info.date}) written to ${out} for ${platform}`);
@@ -434,7 +438,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.log(lockReduceFlashing(root) ? `lock_reduce_flashing set true in ${root}/ui/data/features.json` : 'lock_reduce_flashing was already true');
     } else if (cmd === 'verify') {
       if (!PLATFORMS.includes(platform) || !opt('--dir')) usage();
-      const problems = verifyDir(platform, resolve(opt('--dir')), { commit: opt('--commit'), notice: opt('--notice') || null, locked: args.includes('--locked') ? true : args.includes('--unlocked') ? false : undefined });
+      const problems = verifyDir(platform, resolve(opt('--dir')), { commit: opt('--commit'), notice: opt('--notice') || null, private: args.includes('--private'), locked: args.includes('--locked') ? true : args.includes('--unlocked') ? false : undefined });
       if (problems.length) { for (const p of problems) console.error(`desktop package FAILED (${platform}): ${p}`); process.exit(1); }
       console.log(`desktop package ok (${platform}): the files, the executable's magic bytes, the embedded pck, build_info.json, README.txt and NOTICES.txt hold.${platform === 'linux' ? '' : ` This was read, not run: a ${platform === 'windows' ? 'Windows' : 'macOS'} build cannot be started on this machine.`}`);
     } else usage();
