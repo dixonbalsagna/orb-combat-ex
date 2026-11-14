@@ -1,0 +1,6 @@
+ok    out of reach, it lands in reach (1 hit at 58.0, reach 68.0)
+ok    it waited 1 tick(s)
+ok    a rival held out of reach: it meets nothing (0 hits, waited 6)
+ok    in reach, it doesn't wait (waited 0, 1 hit)
+ok    negative control, no wait: it lands from too far (79.8), so this check can see the fault
+sure_reach_check: passed

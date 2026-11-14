@@ -1,0 +1,7 @@
+ok    at the start, the buckets read the line
+ok    the turn rested (75)
+ok    after a turn, the buckets read the new line (0 stale)
+ok    and they've changed
+ok    another planet in the same process reads its own (0 stale)
+LOCATION: 0 check(s) failed
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).

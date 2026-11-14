@@ -1,0 +1,33 @@
+PASS  built: the rows marked asBuilt are the retired table's seven biomes (city, desert, forest, mountains, ocean, plains, village)
+PASS  built: city is BOULEVARD RAZE, groove [0.8, 1.0] (crater.gd had [0.8, 1.0], equal to the bit), dust #9b8f7e, sparks false, fire false, structMul 1.0, trees area
+PASS  built: desert is GLASS TRENCH, groove [0.8, 1.3] (crater.gd had [0.8, 1.3], equal to the bit), dust #e6c47a, sparks true, fire false, structMul 1.0, trees area
+PASS  built: forest is FIRESTORM, groove [1.0, 1.1] (crater.gd had [1.0, 1.1], equal to the bit), dust #9b8f7e, sparks false, fire true, structMul 1.0, trees area
+PASS  built: mountains is RIDGE BORE, groove [1.6, 0.8] (crater.gd had [1.6, 0.8], equal to the bit), dust #9b8f7e, sparks false, fire false, structMul 1.0, trees area
+PASS  built: ocean is HORIZON CLEAVE, groove [1.0, 1.0] (crater.gd had [1.0, 1.0], equal to the bit), dust #9b8f7e, sparks false, fire false, structMul 1.0, trees area
+PASS  built: plains is FIELD SCAR, groove [1.0, 1.0] (crater.gd had [1.0, 1.0], equal to the bit), dust #9b8f7e, sparks false, fire false, structMul 1.0, trees area
+PASS  built: village is BOULEVARD RAZE, groove [0.8, 1.0] (crater.gd had [0.8, 1.0], equal to the bit), dust #9b8f7e, sparks false, fire false, structMul 1.0, trees area
+PASS  gen 1: all 4800 columns pick the same row off and on, biomeAt's, named as the retired table (city 750, desert 500, forest 500, mountains 550, ocean 1250, plains 425, village 825); 0 differ
+PASS  gen 2 off: 24000 columns on 10 planets pick biomeAt's row, named as the retired table (city 2064, desert 1146, forest 3087, mountains 6627, ocean 3033, plains 6298, village 1745); 0 differ
+PASS  gen 2 on: every column picks fineNameAt's row; 0 differ
+PASS  gen 2 on: 17 of 17 rows picked (beach 506, city 2064, desert 640, forest 1441, highland 2556, ice_sheet 2099, jungle 919, mountains 1935, ocean 3033, plains 1637, savanna 2002, sea_ice 10, taiga 727, tundra 2345, village 1745, volcani
+PASS  beam: ocean (seed 7 touch 0, x 16) fires HORIZON CLEAVE: 81 scorch samples at width 656.00 (the retired factor's, to the bit), 81 dust #9b8f7e, 0 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: city (seed 7 touch 0, x 30192) fires BOULEVARD RAZE: 81 scorch samples at width 656.00 (the retired factor's, to the bit), 81 dust #9b8f7e, 0 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: village (seed 7 touch 2, x 41296) fires BOULEVARD RAZE: 81 scorch samples at width 656.00 (the retired factor's, to the bit), 81 dust #9b8f7e, 0 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: plains (seed 7 touch 1, x 41232) fires FIELD SCAR: 81 scorch samples at width 656.00 (the retired factor's, to the bit), 81 dust #9b8f7e, 0 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: forest (seed 7 touch 0, x 976) fires FIRESTORM: 81 scorch samples at width 721.60 (the retired factor's, to the bit), 81 dust #9b8f7e, 0 sparks, 81 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: desert (seed 7 touch 1, x 18064) fires GLASS TRENCH: 81 scorch samples at width 852.80 (the retired factor's, to the bit), 81 dust #e6c47a, 81 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: mountains (seed 7 touch 1, x 4272) fires RIDGE BORE: 81 scorch samples at width 524.80 (the retired factor's, to the bit), 81 dust #9b8f7e, 0 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: ice_sheet (seed 7 touch 0, x 11312) fires ICEFIELD THAW: 52 scorch samples at width 656.00, 52 dust #e8f1f6, 0 sparks, 0 fires, bite 0.25; trees none (World's treeMode: sigafter_probe)
+PASS  beam: sea_ice (seed 25 touch 0, x 71024) fires FLOE SPLIT: 81 scorch samples at width 656.00, 81 dust #e8f1f6, 0 sparks, 0 fires, bite 0.25; trees none (World's treeMode: sigafter_probe)
+PASS  beam: jungle (seed 7 touch 0, x 64272) fires VINE SHEAR: 81 scorch samples at width 590.40, 81 dust #6b5a3a, 0 sparks, 0 fires, bite 0.25; trees fell (World's treeMode: sigafter_probe)
+PASS  beam: savanna (seed 7 touch 1, x 20560) fires GRASSLAND BLAZE: 81 scorch samples at width 787.20, 81 dust #c9a95c, 0 sparks, 81 fires, bite 0.25; trees burn (World's treeMode: sigafter_probe)
+PASS  beam: tundra (seed 7 touch 0, x 19888) fires FROST HEAVE: 81 scorch samples at width 656.00, 81 dust #d7dcd8, 0 sparks, 0 fires, bite 0.25; trees none (World's treeMode: sigafter_probe)
+PASS  beam: taiga (seed 7 touch 0, x 1872) fires PINE BREAK: 81 scorch samples at width 656.00, 81 dust #e8f1f6, 0 sparks, 0 fires, bite 0.25; trees snap (World's treeMode: sigafter_probe)
+PASS  beam: wetland (seed 7 touch 0, x 1392) fires MIRE BOIL: 81 scorch samples at width 590.40, 81 dust #5a5a3c, 0 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: beach (seed 7 touch 0, x 528) fires SHORE SCOUR: 81 scorch samples at width 721.60, 81 dust #b9ad94, 0 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: highland (seed 7 touch 0, x 21264) fires SCREE RUN: 81 scorch samples at width 590.40, 81 dust #8f8a7a, 0 sparks, 0 fires, bite 0.25; trees area (World's treeMode: sigafter_probe)
+PASS  beam: volcanic (seed 7 touch 1, x 3632) fires CRUST SEAR: 81 scorch samples at width 524.80, 81 dust #4a4440, 0 sparks, 0 fires, bite 0.25; trees burn (World's treeMode: sigafter_probe)
+PASS  play off: 6 gen 2 matches, signatures planned over desert GLASS TRENCH 2, forest FIRESTORM 3, mountains RIDGE BORE 1, ocean HORIZON CLEAVE 3, plains FIELD SCAR 3; scorched by FIELD SCAR 36, FIRESTORM 62, GLASS TRENCH 34, HORIZON CLEAV
+PASS  play on: 6 gen 2 matches, signatures planned over desert GLASS TRENCH 2, forest FIRESTORM 2, highland SCREE RUN 1, ocean HORIZON CLEAVE 3, plains FIELD SCAR 1, savanna GRASSLAND BLAZE 4; scorched by FIELD SCAR 17, FIRESTORM 35, GLASS 
+sigvariants check passed
+WARNING: 22 ObjectDB instances were leaked at exit (run with `--verbose` for details).

@@ -1,0 +1,18 @@
+ok    a blow from outside lands on an enemy across who's open
+ok    he hovers in reach and it lands on the opening that comes
+ok    no opening: a whiff, and nothing lands
+ok    one blow from outside an opening
+ok    his own rival nearer: no blow from outside
+ok    a blow from outside lands on a man in a trade of his own
+ok    ... and ends his string, his run with it
+ok    a beam meets an enemy across first: he's warned, and it stops on him
+ok    ... and its own target is spared it, the exchange over
+ok    a blast press with his focus across fires into the other fight, and it lands there
+ok    a blow from outside holds his stun from resetting, for teamRestunTicks only
+ok    after a while apart a send scores the way of the other fight; not before, not at two on one
+ok    the brink's call goes once (1)
+ok    a computer partner comes when his partner's on the brink, and strikes from outside
+ok    a computer winner goes to the other fight and strikes from outside
+ok    a human's press: his winner goes to the other fight and strikes from outside
+ok    off: nothing crosses
+OUTSIDE: 0 check(s) failed

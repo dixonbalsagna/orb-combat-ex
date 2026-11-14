@@ -1,0 +1,8 @@
+ok    on: a player pressing every 20 ticks meets easy at 20
+ok    on: at thumb pace (every 40) the ceiling, 30
+ok    on: a masher (every 8) meets the floor, 12
+ok    on: only guards, or one press in the window: the ceiling (never passive)
+ok    on: presses older than the window don't count
+ok    on: against another computer, noHuman (27)
+ok    off: as drawn (12), and nothing written on the player
+PACE: 0 check(s) failed

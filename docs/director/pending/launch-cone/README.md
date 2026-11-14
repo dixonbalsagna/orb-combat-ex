@@ -11,7 +11,8 @@ Encounter, 2026-11-15, sprint A1. Game Design's second ruling in `docs/design/bu
 | | Launches | Aimed at a building | More than 20° off the line | Worst | By 10° bins (0 to 90+) |
 | :--- | ---: | ---: | ---: | ---: | :--- |
 | **Today** | 214 | 37 | **26 (70%)** | 139.9° | 5, 6, 7, 4, 3, 2, 1, 3, 4, 2 |
-| **With this rider** | 207 | 18 | **0** | 18.7° | 8, 10, 0 … |
+| **With this rider** (the re-cut) | 209 | 20 | **0** | 18.7° | 10, 10, 0 … |
+| The first cut (a running swing's remaining turn refused) | 207 | 18 | 0 | 18.7° | 8, 10, 0 … |
 
 **Where they came from.** The planner's BUILDING SMASH offers buildings "in any row". A cone in the planner alone wasn't enough, because some wide aims came through **the choreographer's swing**:
 - At a launch, the swing picks a building and turns the fight's ring so the building lies ahead, by up to `maxDeg` (180°).
@@ -19,15 +20,15 @@ Encounter, 2026-11-15, sprint A1. Game Design's second ruling in `docs/design/bu
 - Measured from the blow's own line, it's more than 100° off: the world swings round and the fighter is sent at a building that was behind him.
 - That's the background ricochet of Orb's ping-pong, and it reaches the planner through the swing. With the cone in the planner alone, 10 of 25 aimed launches were still wide, the worst 147.6°.
 
-**Half the building smashes go.** With the rider, 18 launches are aimed at a building where today there are 37. The ones that remain are the ones in front.
+**About half the building smashes go.** With the rider, 20 launches are aimed at a building where today there are 37. The ones that remain are the ones in front.
 
 ## What it does
 
 | Where | Change |
 | :--- | :--- |
-| `DirLaunch` (the planner's building loop) | A building outside the cone isn't offered: neither the smash into it nor the send inside it. The test reads the turn the plan's line carries (`DirSwing.planTurn`: the swing's own pick for this launch, or what a running swing still has to turn) and takes it off the cone, so the target stays inside 20° **measured from the blow's own line**. While a running swing still has more than 20° to turn, no building is offered. New helper `_inConeDeg` |
-| `DirSwing._launchPick` | A launch's swing turn is capped at the cone (it was `maxDeg`, 180). With `bigMin` 16 the swing still makes a launch's big turn, 16° to 20° |
-| `DirSwing.planTurn` (new) | The turn the plan runs on, in degrees |
+| `DirLaunch` (the planner's building loop) | A building outside the cone isn't offered: neither the smash into it nor the send inside it. **The cone is measured from the blow's actual line at contact, wherever a running swing has got to** (GD's ruling, §10). The plan may read a turned line (the swing's pick for this launch, or the line a running swing ends on), so each building is placed in the frame as it is now, read from its pose and never written (new helper `_coneAt`, and `_inConeDeg`). The turn a running swing still has to make refuses nothing. No building in the cone: the launch flies its own line |
+| `DirSwing._launchPick` | A launch's swing turn is capped at the cone (it was `maxDeg`, 180). With `bigMin` 16 the swing still makes a launch's big turn, 16° to 20°. Measured from the actual line, that turn counts against the 20° |
+| `DirSwing.actualFrame` (new) | The frame as it is at contact, before any plan's turn |
 | **MOUNTAINSIDE** | Unchanged: it aims at a slope on the line, forward only (the contact rule) |
 | **The visit's places** | Unchanged: they have their own 4° turn cone, and the visit is off in data |
 | `sim/director/tools/launch_cone_check.gd` (new) | Game Design's QA row: computer-against-computer matches (`--matches`, the default is 6), every aimed launch measured. `--cone=off` (the cone 0 in memory, today's planner) is the measurement and the negative control. With no aimed launch in the run it says so |
@@ -38,7 +39,7 @@ Encounter, 2026-11-15, sprint A1. Game Design's second ruling in `docs/design/bu
 On the 9 November data, with the rider, walk_check reached 0 of 10. A probe build (prints only, in `runs/…/walk-probe.txt`) showed why:
 - **Today's passes there were never the walk.** Each "reach" was the planner's smash into another building, 27° to 64° off the line (pick b0, hit b317 at 55°). The walk's own building was never hit, and "switch off" reached as often as "leaning" did. Those are the sends the ruling removes.
 - **With `plans.everywhere`, a street's front row stands 187.5 off the line.** It's inside the cone from 700 along (tan 20° × 700 is 255), but the walk brings the pair to 160 to 385 along, where it's 26° to 50° off. The ruling gives that reach to **the street turn** (terrain-plan step 7: Camera turns the shot so a street's front row lies along the line), not to an aimed send.
-- **The swing turns the ring under the three blows** on that data. In 4 of the 10 runs it still had 30° to 48° to turn at B, so no building was offered at all.
+- **The swing turns the ring under the three blows** on that data (in 4 of the 10 runs it still had 30° to 48° to turn at B), so the walk's building moves against the line.
 
 So walk_check now tests the walk on a lane world with the ring still, which is what it was written for. There it reaches 7 of 10, on both data sets. The walk itself is off in the 9 November build (`wallPush`).
 
@@ -48,7 +49,7 @@ On the stack with wall-cone: `git -c core.autocrlf=false -c core.eol=lf apply la
 
 | Patch | Owner | sha1 | sha256 starts |
 | :--- | :--- | :--- | :--- |
-| `launch-cone.diff`: `sim/director/launch.gd`, `swing.gd`, `tools/walk_check.gd`, the new `tools/launch_cone_check.gd` | Encounter | 031c647cf70338d67f33dc7f91e2c58f4293e01e | d23f75c7240a |
+| `launch-cone.diff` (the re-cut; the first cut was 031c647c): `sim/director/launch.gd`, `swing.gd`, `tools/walk_check.gd`, the new `tools/launch_cone_check.gd` | Encounter | 0dfc6cc92b92070abd5784f20588d79cb7446127 | bb464bfcd5cc |
 
 ## Proof
 
@@ -65,5 +66,13 @@ Run on main 4327cfbb + energy-on + gates-shipped + energy-on-pins + gw1a-pins + 
 ## NEEDS FROM EP
 
 - **The golden moves:** it changes which launches are offered whenever buildings are near, so it rides GW1b with its re-record.
-- **Game Design, one word:** I read "the blow's line" as the line before any turn of the world. So the swing's launch turn now counts against the 20°, and a launch's big swing is held to 16° to 20°. Nothing here stops the swing's other causes (the chase, the brawl, the story) from turning the world.
-- **Game Design, the walk:** on a plan-streets world, "walk him to the wall" can't reach a front-row building inside the cone. I read that as the street turn's job (your section 10). walk_check now tests the walk on a lane world.
+- **Game Design confirmed both readings** (§10): the blow's line is the line before the launch's own turn, so a launch's big swing is held to 16° to 20°; and a front-row building on a plan-streets world is the street turn's, not the walk's. Nothing here stops the swing's other causes (the chase, the brawl, the story) from turning the world.
+
+## Re-cut (2026-11-15): Game Design's ruling on a running swing
+
+The first cut took a running swing's remaining turn off the cone, so while a swing still had more than 20° to turn, no building was offered at all (4 of walk_check's 10 runs on the 9 November data). Game Design ruled that the cone is measured from the blow's actual line at contact, wherever the swing has got to, and that the turn still to come refuses nothing. The re-cut measures each building in the frame as it is at contact (`_coneAt`, `DirSwing.actualFrame`) and drops `DirSwing.planTurn`.
+
+**Proof of the re-cut** (records in `docs/director/runs/4327cfbb/launch-cone-v2/`, every output gated, no script error):
+- GD's QA row, 30 matches on the 9 November data: 0 of 20 aimed launches more than 20° off (worst 18.7°).
+- Every director check passes on both data sets: 42 of 42. `walk_check` reaches 7 of 10 on both.
+- **Stopped for quiet time (2026-11-15):** the golden on and off, parity, validate, lint and ratchet weren't re-run for the re-cut; the first cut's are above. Next step: `gates_lcone.sh <tree> <out> gold` on ga and gm, then report.

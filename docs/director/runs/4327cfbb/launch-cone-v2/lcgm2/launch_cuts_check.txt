@@ -1,0 +1,4 @@
+ok    the cap keeps 3, the best by the cheap score, at least one a side, in World's order (40 of 40)
+ok    one flight an arc gives every building the plan aim gives it (987 of 987)
+LAUNCH CUTS: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
