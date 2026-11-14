@@ -1,0 +1,42 @@
+S2 row-11 close-fight gauntlet, n=30 (Tools, 2026-11-14)
+
+Question: on easy, against Orb's pad scheme (the scripted pad on the real hub), how often does the computer beat the pad with the well's own-body close mode, against today's close fight.
+Tree: the S2 scratch tree (Simulation's s2t: HEAD plus the S2 director half and well.json), copied by the gauntlet, never touched.
+Command (below-normal, 3 jobs, one cell per job):
+  node tools/feel/gauntlet.mjs --tree <s2t> --arms orbs --levels easy --n 30 --jobs 3 --json <out.json>
+    --scheme "today=data/fight/power.json:flight.flatOut=3500;data/fight/power.json:launchTravel=1.5"
+    --scheme "well-own=data/fight/well.json:enabled=true;data/fight/well.json:close.mode=own;data/fight/power.json:flight.flatOut=3500;data/fight/power.json:launchTravel=1.5"
+  "shipped" (no overrides) is always run first by the tool; it is the reference row below.
+30 matches a cell, seeds from 1, the same seeds in every scheme. Wall time about 13 minutes. No SCRIPT ERROR, no failed cell.
+
+RAW COUNTS (each cell: 30 matches done)
+scheme     pad wins  computer wins  draws  timeouts  capped  median match (s)
+shipped      24          6            0       0        0       538.9
+today        21          9            0       0        0       623.8
+well-own     16         14            0       0        0       614.2
+
+"Computer wins" is the pad's losses (a match ends in a KO; there were no draws, no timeouts, no matches capped). So the computer's win rate is exactly 100 minus the pad's here.
+
+THE TABLE (win % is the pad's; 95% Wilson band)
+scheme     pad win %      computer win %   refusals/100 presses   s without control/min   beams/match
+shipped    80% +/-14      20%              22.4                   53.4                    0
+today      70% +/-16      30%              24.6                   54.4                    0
+well-own   53% +/-17      47%              14.8                   54.2                    0
+
+Presses, refusals, hits (for the refusal column):
+scheme     presses  refused  hits landed by pad  hits taken by pad  computer beams
+shipped    26443    5918     19474               19877              277
+today      28422    7006     21346               20384              246
+well-own   27215    4020     20579               22083              261
+
+READING
+- well-own against today: the pad wins 5 matches fewer (16 of 30 against 21 of 30), the computer's rate goes from 30% to 47%. A two-sided Fisher exact test on 16/30 against 21/30 gives p about 0.29, and the two 95% bands overlap (53% +/-17 and 70% +/-16): the gap is a lean, not a result, at n=30.
+- Against shipped, well-own is 8 matches down (24 to 16); this gap is larger (24/30 against 16/30: p about 0.05 by the same test) but it mixes the close mode with the 3500/1.5 values: today alone is already 3 matches down from shipped (24 against 21, p about 0.55).
+- Refusals per 100 presses: today 24.6, well-own 14.8. That is a much larger move than the win rate and it holds at the larger n (at n=10 it was 20.6 and 9.8). The pad is refused fewer times with the own-body mode.
+- Time without control stays at about 54 s/min in all three. Hits landed and taken are within about 10% of each other in all three; well-own is the one where the pad takes more than it lands (22083 taken against 20579 landed).
+- Beams per match are 0 in all cells (the pad arm fired none); the computer fired some (foeBeams above).
+
+NOT PROVEN
+- One arm (the scripted orbs pad) and one level (easy). Nothing here speaks for medium, hard or other pad schemes.
+- The median match column is the run's own reading (medianSec) and I have not checked its unit against the match clock; it is not a feel reading, and I would not lean on it.
+- 30 matches a cell is the size the EP asked for. The 95% bands are about +/-16 points, so a gap of 17 points (what was measured) is on the edge of what this size can tell apart. A larger n on the same two cells would settle it.
