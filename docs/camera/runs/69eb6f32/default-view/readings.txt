@@ -1,0 +1,9 @@
+ap  clash-reduced      worst 6.5 | 960x540 s1: 6.5 @1075 | 960x540 s2: 5.5 @1075 | 1024x768 s1: 5.5 @1075 | 1024x768 s2: 5.5 @1075 | verdict FAIL | fps 11.24 | load 31/52
+ap  signature-reduced  worst 4.5 | 960x540 s1: 3 @78 | 960x540 s2: 3 @78 | 1024x768 s1: 4.5 @81 | 1024x768 s2: 4.5 @71 | verdict FAIL | fps 10.96 | load 30/43
+ap  collapse-reduced   worst 3.5 | 960x540 s1: 3 @1112 | 960x540 s2: 3 @1112 | 1024x768 s1: 3.5 @1090 | 1024x768 s2: 3.5 @1090 | verdict FAIL | fps 12.26 | load 35/46
+ac  clash-reduced      worst 5.5 | 960x540 s1: 4.5 @1075 | 960x540 s2: 4 @151 | 1024x768 s1: 5.5 @1075 | 1024x768 s2: 5.5 @1075 | verdict FAIL | fps 11.23 | load 37/47
+ah  clash-reduced      worst 2.5 | 960x540 s1: 2.5 @108 | 960x540 s2: 2.5 @108 | 1024x768 s1: 2 @151 | 1024x768 s2: 2 @151 | verdict FAIL | fps 11.27 | load 25/27
+st  clash-reduced      worst 2.5 | 960x540 s1: 2.5 @1075 | 960x540 s2: 2.5 @1075 | 1024x768 s1: 2.5 @108 | 1024x768 s2: 2.5 @108 | verdict FAIL | fps 11.02 | load 50/51
+st  signature-reduced  worst 2 | 960x540 s1: 2 @78 | 960x540 s2: 2 @78 | 1024x768 s1: 1 @71 | 1024x768 s2: 1 @71 | verdict PASS | fps 11.04 | load 35/27
+st  collapse-reduced   worst 4 | 960x540 s1: 4 @1112 | 960x540 s2: 4 @1112 | 1024x768 s1: 3.5 @1120 | 1024x768 s2: 3.5 @1120 | verdict FAIL | fps 12.22 | load 42/32
+sw  clash-reduced      worst 4 | 960x540 s1: 4 @153 | 960x540 s2: 4 @149 | 1024x768 s1: 4 @152 | 1024x768 s2: 4 @152 | verdict FAIL | fps 11.33 | load 32/40

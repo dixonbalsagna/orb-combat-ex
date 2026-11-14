@@ -1,0 +1,25 @@
+== ap
+  clash fighter 0: out of his pane 99 ticks; long runs: 178-241 (64, launched), 1102-1116 (15, launched); height in pane p10 72 min 65 px
+  clash fighter 1: out of his pane 163 ticks; long runs: 1-163 (163); height in pane p10 71 min 61 px
+  signature fighter 0: out of his pane 74 ticks; long runs: 362-402 (41), 424-456 (33); height in pane p10 44 min 43 px
+  signature fighter 1: out of his pane 931 ticks; long runs: 1-80 (80, launched), 103-128 (26, launched), 322-337 (16), 403-418 (16), 453-1241 (789, launched); height in pane p10 43 min 43 px
+== ac
+  clash fighter 0: out of his pane 10 ticks; long runs: none; height in pane p10 72 min 62 px
+  clash fighter 1: out of his pane 163 ticks; long runs: 1-163 (163); height in pane p10 71 min 61 px
+  signature fighter 0: out of his pane 74 ticks; long runs: 362-402 (41), 424-456 (33); height in pane p10 44 min 43 px
+  signature fighter 1: out of his pane 930 ticks; long runs: 1-80 (80, launched), 109-133 (25, launched), 322-337 (16), 403-418 (16), 453-1241 (789, launched); height in pane p10 43 min 43 px
+== ah
+  clash fighter 0: out of his pane 186 ticks; long runs: 157-254 (98, launched), 256-268 (13, launched), 1087-1152 (66, launched); height in pane p10 72 min 70 px
+  clash fighter 1: out of his pane 159 ticks; long runs: 1-159 (159); height in pane p10 71 min 61 px
+  signature fighter 0: out of his pane 74 ticks; long runs: 362-402 (41), 424-456 (33); height in pane p10 44 min 43 px
+  signature fighter 1: out of his pane 930 ticks; long runs: 1-80 (80, launched), 109-133 (25, launched), 322-337 (16), 403-418 (16), 453-1241 (789, launched); height in pane p10 43 min 43 px
+== st
+  clash fighter 0: out of his pane 176 ticks; long runs: 157-254 (98, launched), 257-268 (12, launched), 1088-1152 (65, launched); height in pane p10 72 min 52 px
+  clash fighter 1: out of his pane 159 ticks; long runs: 1-159 (159); height in pane p10 71 min 61 px
+  signature fighter 0: out of his pane 72 ticks; long runs: 363-402 (40), 423-454 (32); height in pane p10 29 min 26 px
+  signature fighter 1: out of his pane 951 ticks; long runs: 1-80 (80, launched), 88-114 (27, launched), 322-337 (16), 403-418 (16), 453-1241 (789, launched), 1247-1257 (11, launched), 1270-1281 (12, launched); height in pane p10 26 min 25 px
+== sw
+  clash fighter 0: out of his pane 44 ticks; long runs: 157-191 (35, launched); height in pane p10 34 min 23 px
+  clash fighter 1: out of his pane 163 ticks; long runs: 1-163 (163); height in pane p10 71 min 61 px
+  signature fighter 0: out of his pane 72 ticks; long runs: 363-402 (40), 423-454 (32); height in pane p10 29 min 26 px
+  signature fighter 1: out of his pane 951 ticks; long runs: 1-80 (80, launched), 88-114 (27, launched), 322-337 (16), 403-418 (16), 453-1241 (789, launched), 1247-1257 (11, launched), 1270-1281 (12, launched); height in pane p10 26 min 25 px
