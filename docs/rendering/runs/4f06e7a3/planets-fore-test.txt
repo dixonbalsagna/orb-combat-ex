@@ -1,0 +1,12 @@
+# Planet 12's spikes and planet 17's river (the EP's order, after the planet stills, planets-globe-stills.txt): the cause.
+# Same build and scene as the stills (main e56d372c + Camera + A-CODE-03 + look-recut; the hook's beamduel, seed 12345, ticks 1 to 601 every 150), three ways:
+#   as shipped (planets-p<N>-t*.png); the foreground TONE off (page word nofore=1: planets-p<N>-pf-t*.png); the foreground CLAMP off (a scratch build, lrf:
+#   tile_fore returns the ground as it is; never a park: planets-p<N>-pc-t*.png). Side by side at tick 451: planets-fore-test-t451.png. Stills uncommitted.
+# Planet 12: the dark green teeth in the near foreground stay with the tone off and are gone with the clamp off. They are the foreground rule's per-vertex
+#   clamp (tile_fore, render/shaders/tile_read.gdshaderinc): in front of the fighter plane each vertex is held at or under the sight line to the line's own
+#   ground; where that line cuts across a tile's triangles, a triangle with one corner held and the others not folds into a steep tooth, dark from either side.
+#   It shows where the ground rises toward the camera (the beach's dunes).
+# Planet 17: the strip of green between two bands of water takes the ground's own colour with the tone off (it IS the tone: one shade in front of the plane),
+#   and both bands become one sheet of water with the clamp off: the near water's surface is clamped to the same sight line (water.gdshaderinc: surf =
+#   tile_fore(surf, p)) apart from the ground under it.
+# Neither is a fault of those planets: planet 7's near ground sits low, under the line, so the clamp rarely bites there.

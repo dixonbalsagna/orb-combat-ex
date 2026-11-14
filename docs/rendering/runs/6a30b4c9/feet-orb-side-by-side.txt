@@ -1,0 +1,16 @@
+# The feet parks on Orb's own replay, the look gate (the EP's order): Orb's 16:46 play of 9 November (orb-first-play-20261109-1646.json, private), ticks
+# 4140 to 5540 every 10 (the beams of 4146, 4423 and 5220 cut grooves where the fight is), through Tools' blackbox-clip, one capture at a time.
+# Left (blue, 6a30b4c9): the build as Orb played it: git archive 6a30b4c9 + the kept build's sim, data and net (homework/Files/builds/orb-first-play-
+#   6a30b4c9-6627cb9d/tree) + Tools' patchMain (the replay entry), the file's page words (planet=7&meteor=loud&tiles=1 ...).
+# Right (orange, 1e50522a): the same + feet-ground (feet_lift.py) + marks-baked (marks_baked.py: the store grant, the foot slice, the grooves in the tiles,
+#   a body's own column lifted at his place). Both edit scripts applied clean to 6a30b4c9's code.
+# Orb's file carries no checkpoints, so the clip compared none: the replay path, not proof bit for bit. The sim is the same in both: VFX's hash_check on the
+#   landing stack with these parks passes with the final hashes of the run without them (runs/f61eb8c2/feet-hash.txt against foot-slice-hash.txt).
+# Pictures (uncommitted, they show fighters): docs/rendering/img/lookgate/feet-orb-t00002.png ... -t00130.png (frame N = tick 4140 + 10 (N - 1)) and
+#   feet-orb.gif (141 frames, half size).
+# What they show:
+#   tick 4430 (frame 30): as played, both fighters stand sunk into the dark ground in front of them; with the parks, they stand on it, feet in view.
+#   tick 5230 (frame 110): with the parks the fighter stands on the beam's groove, about 40 pixels higher on the slope, the groove drawn under him (not drawn as
+#     played). The tall building behind differs for frames 108 to 111 only (ticks 5210 to 5240, around the beam's impact): with the parks it shows dark
+#     gaps between floors. The sim is the same, so it is the drawing: likely the groove under the tower, now drawn, taking the tower's footing down with it
+#     ("a footing that moved sets its building again"). Frames 105 and 115 are identical.

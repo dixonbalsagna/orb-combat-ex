@@ -1,0 +1,13 @@
+# The calm tones' flash readings (the EP's GO, 2026-11-14): Tools' pixel clips, /index.html?flashcap=1, no page word; before = main e56d372c + Camera + A-CODE-03 + look-recut (lr1_site), after = + calm_tones.diff 315fb831 (ct_site). One capture at a time.
+## lr1 (before)
+collapse-normal           1500        4    0         4        4     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a longer memory
+collapse-reduced          1500        4    0         4        4     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a longer memory
+signature-normal          1500      2.5    0       2.5      2.5     1/5     0  PASS  n/a
+signature-reduced         1500      3.5    0         4        3     1/6     0  FAIL: the primary reading counts 3.5 (over 3); with the area threshold 15% lower it counts 4 (over 3)  n/a <-- NOT PASS
+pixel run: 3 of 4 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/L
+## ct (after: the calm tones)
+collapse-normal           1500        4    0         4        4     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a longer memory
+collapse-reduced          1500        3    0         4      3.5     0/6     0  FAIL: with the area threshold 15% lower it counts 4 (over 3); with a longer memory it counts 3.5 (over 3)  n/a <-- NOT PA
+signature-normal          1500      2.5    0       2.5      2.5     1/5     0  PASS  n/a
+signature-reduced         1500        3    0       3.5        3     0/6     0  FAIL: with the area threshold 15% lower it counts 3.5 (over 3)  n/a <-- NOT PASS
+pixel run: 3 of 4 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/L

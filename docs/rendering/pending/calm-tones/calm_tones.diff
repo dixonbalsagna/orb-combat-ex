@@ -1,0 +1,86 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -598,6 +598,11 @@
+ const TILE_BOWL_OPEN: float = 0.25
+ ## Art's crater (docs/art/crater-look.md). CRATER_RINGS: depth of the lip, the outer wall's end, the inner wall's end; below .w of slope it's floor.
+ ## CRATER_STEPS: the inner ring's step on the outer's tone, the floor's on the subsoil's shade, a floor stripe's half-step, a stripe's width in nodes.
++## The flash register's reduced mode (PaneWorld.flash_calm: reduced motion or Reduce flashing), for scenery sweeping past a moving camera (VFX's and
++## Camera's attribution of the signature and collapse readings, 2026-11-14). CALM_BANDS: the strata lines' darkness (0.62 shipped), the facet tones'
++## spread kept (0 to 1), the rock's and the depth's hard steps kept (0: continuous). CALM_FACE: a facade's share toward the sky behind it.
++const CALM_BANDS := Vector3(0.85, 0.5, 0.0)
++const CALM_FACE: float = 0.3
+ const CRATER_RINGS := Vector4(6.0, 40.0, 120.0, 0.12)
+ const CRATER_STEPS := Vector4(0.74, 0.68, 0.08, 1.6)
+ ## Art's scar (docs/art/crater-look.md). SCAR_LOOK: the width's share of the sim's groove, the outline's variation, its rate along the line, the singe fringe past the core as a share of the width. SCAR_FRINGE: the ground under the singe, by multiply. SCAR_SLICE: columns read a frame for the taper table. SCAR_MIN: the scorch that counts as scar.
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -2141,9 +2141,12 @@
+ 	_terrain_mat.set_shader_parameter("heat_gain", RenderLook.HEAT_CALM if on else 1.0)
+ 	_terrain_mat.set_shader_parameter("char_gain", RenderLook.CHAR_CALM if on else 1.0)
+ 	_terrain_mat.set_shader_parameter("calm_ease", 1.0 if on else 0.0)   # a new crater's colours spread in (RenderLook.CRATER_CALM_S)
++	_terrain_mat.set_shader_parameter("band_calm", 1.0 if on else 0.0)   # the mountainside's hard steps soften (the tile ground copies it)
++	_terrain_mat.set_shader_parameter("calm_bands", RenderLook.CALM_BANDS)
+ 	if _bld_mat != null:
+ 		for m in [_bld_mat, _front_mat]:
+ 			m.set_shader_parameter("spread_area", RenderLook.SPREAD_AREA_TICK * (RenderLook.SPREAD_CALM if on else 1.0))   # a stage spreads at half the pace
++			m.set_shader_parameter("face_calm", RenderLook.CALM_FACE if on else 0.0)   # a facade nearer the sky behind it
+ 
+ 
+ ## The depth of this pane's focus plane (Camera's dolly; 0: the fighter plane): the rows' haze is measured from it.
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -121,6 +121,7 @@
+ uniform float pan_mix = 0.7;         // RenderLook.PAN_HAZE_MIX: how far it melts at full haze
+ uniform vec3 wl_mul = vec3(1.0);     // the world's light (SkyDrive.world_at's buildings layer); lit panes are never dimmed
+ uniform vec3 wl_add = vec3(0.0);
++uniform float face_calm = 0.0;   // the flash register's reduced mode (PaneWorld.flash_calm): a facade's share toward the sky behind it (RenderLook.CALM_FACE); 0 in the normal mode
+ uniform float wl_lit = 1.0;          // the share of windows lit against the sunset's (SkyDrive.win_at / RenderLook.WINDOW_LIT_SHARE)
+ uniform float pan_whip = 0.0;        // 0 to 1: this pane's camera whips along the ground (PaneWorld.pan_whip), in every match
+ uniform float pan_whip_mix = 1.0;    // RenderLook.PAN_WHIP_MIX: how far a wall melts at a full whip
+@@ -915,6 +916,9 @@
+ 		}
+ 	}
+ 	col = mix(col * wl_mul + wl_add, col, lit_w);   // the world's light, but not on a lit pane
++	if (face_calm > 0.001) {
++		col = mix(col, sky_color(min(elevation(v_view), horizon + 0.3 * sky_tan)), face_calm);   // calm: a large lit face against the night sky, nearer the sky
++	}
+ 	if (v_look.z > 0.001) {
+ 		// The rows' haze: the air's colour toward the horizon in this direction, more of it the farther back the row.
+ 		col = mix(col, sky_color(min(elevation(v_view), horizon + 0.3 * sky_tan)), v_look.z);
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -48,6 +48,8 @@
+ uniform float rock_high = 0.3;
+ uniform vec2 depth_step = vec2(1.1, 0.94);
+ uniform float strata_h = 60.0;
++uniform float band_calm = 0.0;   // the flash register's reduced mode (PaneWorld.flash_calm): the mountainside's hard steps soften (RenderLook.CALM_BANDS); 0 in the normal mode
++uniform vec3 calm_bands = vec3(0.85, 0.5, 0.0);
+ uniform vec2 scar_band = vec2(1.5, 0.3);   // the scar's edge rim in pixels, and the burn where its band starts
+ uniform vec3 tone_k = vec3(1.06, 1.0, 0.86);
+ // Biome rendering window 3: the far land's ridges (RenderLook.FAR_LADDER_*; RenderBiomeLook rows ladder_row to + 2).
+@@ -199,16 +201,22 @@
+ 	float g0 = rock_slope.x * (above > 0.0 ? mix(1.0, rock_high, clamp((v_h - above) / above, 0.0, 1.0)) : 1.0);
+ 	float rr = clamp((length(v_grad) - g0) / max(rock_slope.y - g0, 0.01), 0.0, 1.0);
+ 	float rs = rr <= 0.0 ? 0.0 : (rr >= 1.0 ? 1.0 : (floor(rr * 5.0) + 0.5) / 5.0);
++	rs = mix(rs, rr, band_calm * (1.0 - calm_bands.z));   // calm: the rock meets the green in a slope, not five steps
+ 	vec3 c = mix(mix(biome_tone(v_ba, tone), biome_tone(v_bb, tone), zf), mix(biome_tone(v_ba, 3 + tone), biome_tone(v_bb, 3 + tone), zf), rs);
+ 	float tk = tone == 0 ? tone_k.x : (tone == 2 ? tone_k.z : tone_k.y);
++	if (band_calm > 0.0 && tone != 1) {   // calm: the lit and the shaded facets come toward the middle tone
++		vec3 c1 = mix(mix(biome_tone(v_ba, 1), biome_tone(v_bb, 1), zf), mix(biome_tone(v_ba, 4), biome_tone(v_bb, 4), zf), rs);
++		c = mix(c, c1, band_calm * (1.0 - calm_bands.y));
++		tk = mix(tk, tone_k.y, band_calm * (1.0 - calm_bands.y));
++	}
+ 	if (rs > 0.5 && rk.r > 0.5) {
+ 		// strata lines on the rock: thin dark lines every strata_h of height (antialiased edges only)
+ 		float sb = v_h / strata_h;
+ 		float fw = fwidth(sb);
+ 		float ln = (1.0 - smoothstep(0.0, fw * 1.2, abs(fract(sb + 0.5) - 0.5))) * (1.0 - smoothstep(0.12, 0.3, fw));   // none where the lines would crowd closer than a few pixels
+-		c = mix(c, c * 0.62, ln);
+-	}
+-	c *= mix(depth_step.x, depth_step.y, floor(clamp(v_back, 0.0, 0.999) * 3.0) * 0.5);   // the band's value by depth, in three hard steps
++		c = mix(c, c * mix(0.62, calm_bands.x, band_calm), ln);
++	}
++	c *= mix(depth_step.x, depth_step.y, mix(floor(clamp(v_back, 0.0, 0.999) * 3.0) * 0.5, clamp(v_back, 0.0, 1.0), band_calm * (1.0 - calm_bands.z)));   // the band's value by depth, in three hard steps
+ 	// The far land (window 3, Art's value ladder): past ladder_from of the far blend, its biome's three ridges by depth
+ 	// behind the fighter plane in hard steps, nearest the darkest, lit, mid and shade by the same light; hazed below by
+ 	// the ridge's own step. Without the ladder, its own colour shaded as before.

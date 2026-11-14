@@ -1,0 +1,8 @@
+# The rows' interpolation (rows_interp.py) on main 83a5b963 + feet-ground + marks-baked; the diagnostic feet probe, seeds 1 and 7, 1800 ticks, --tiles
+# before (runs/83a5b963/marks-baked-2.txt, the gate): seed 1: 21 over 8 (worst 19.0); seed 7: 21 over 8 (worst 8.8)
+import 0 errors 0
+exit 0
+seed 1, 1800 frames: standing samples 1104; drawn vs stood over 8: 385 (worst 138.4); feet under the drawn ground over 8: 0 (worst 4.2; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 4.5)
+seed 7, 1800 frames: standing samples 359; drawn vs stood over 8: 5 (worst 34.5); feet under the drawn ground over 8: 0 (worst 0.3; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 0.9)
+ALL, of the rest: frame off 0; crater drawn otherwise 0; undrawn store mark 0
+ALL 2 seeds: standing samples 1463; drawn vs stood over 8: 390 (worst 138.4); feet under the drawn ground over 8: 0 (worst 4.2; first 600 frames 0; bowl opening 0, lift not read 0, rest 0); feet over it by 8: 0 (worst 4.5)

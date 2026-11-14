@@ -1,0 +1,9 @@
+# VFX's hash_check (seeds 12345, 4, 7, 1, 3600 ticks) on main f61eb8c2 + Camera + A-CODE-03 + look-recut + foot-slice + VFX's grant + feet-ground + the store grant + marks-baked (the globe ground on by default): do the feet parks change the sim?
+import 0 errors 0
+exit 0
+seed 12345: 60 checkpoints to tick 3600, final 33bf8a71f82ceec2
+seed 4: 60 checkpoints to tick 3600, final dfca086a4ea551d0
+seed 7: 60 checkpoints to tick 3600, final badeac0a0f75d3a0
+seed 1: 60 checkpoints to tick 3600, final 0a3cde0bae94df8d
+effects ran: max trail strength 1.00, 3390 marks spawned, 233948 ribbon segments drawn in 86406 ticks
+hash check passed
