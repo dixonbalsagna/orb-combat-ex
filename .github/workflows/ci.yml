@@ -89,6 +89,11 @@ jobs:
         run: node tools/ratchet-two-fighter-selftest.mjs
       - name: Two-fighter ratchet (shipped code names no more places than the baseline)
         run: node tools/ratchet-two-fighter.mjs
+      # The fighter-specific code ratchet (A-ENERGY-06; X-15): the energy, stamina, body and forms systems may not name a fighter by his id more often than the baseline (0 on 2026-11-14)
+      - name: Fighter-specific code ratchet self-test
+        run: node tools/ratchet-fighter-specific-selftest.mjs
+      - name: Fighter-specific code ratchet (no system is written for one named fighter)
+        run: node tools/ratchet-fighter-specific.mjs
       # The workflow files themselves must parse (an unquoted ": " in a step name broke this file once and nothing said so before the push): node only, the subset of YAML these files use.
       - name: Workflow files parse (self-test)
         run: node tools/check-workflows-selftest.mjs
@@ -99,6 +104,14 @@ jobs:
         run: node tools/ci-budgets-check.mjs --self-test
       - name: CI job budgets (every job of ci.yml has a written budget within two thirds of its limit)
         run: node tools/ci-budgets-check.mjs
+      # The table of the check and test scripts (docs/tools/check-scripts.md; A-CODE-04): which run in CI, which in the gate, which on purpose not (with the reason); a new script in none of them raises the unreviewed count and fails
+      - name: Check scripts table (self-test)
+        run: node tools/check-scripts-table-selftest.mjs
+      - name: Check scripts table (no new script left unclassified; the ratchet only goes down)
+        run: node tools/check-scripts-table.mjs --check
+      # The copy of the kept builds and play files to a second place (docs/tools/backup.md; A-TOOLS-09): node and temporary folders only
+      - name: Backup tool self-test (the copy, a second run, verify, the restore and its refusal)
+        run: node tools/backup-kept-selftest.mjs
       # The build check from packed data for a desktop build (A-TOOLS-10): the embedded pack, each switch row against the commit
       - name: Build check self-test (a desktop build's packed data against its commit)
         run: node tools/preview/build-check-selftest.mjs

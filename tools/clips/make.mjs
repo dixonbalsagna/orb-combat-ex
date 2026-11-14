@@ -364,7 +364,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     else if (names.length) res = await make({ ...common, names, dry: argv.includes('--dry') });
     else { console.error('usage: node tools/clips/make.mjs <name|all> [--build <kept folder>] [--format gif|png|webm]  |  --from-match <saved match.json>  |  --list'); process.exit(2); }
     const failed = res.filter((x) => x.error);
-    log(`${res.length - failed.length} clip(s) made${failed.length ? `, ${failed.length} failed` : ''}`);
-    process.exit(failed.length ? 1 : 0);
+    // A-TOOLS-15 (2026-11-14): a GIF whose flash check says anything but PASS (OVER GATE, FAIL, or CHECK: the check could not run) is NOT a clip to hand over, and no longer a quiet line of index.txt: the run fails and names it
+    const notPass = res.filter((x) => !x.error && x.flash && x.flash !== 'PASS');
+    for (const x of notPass) console.error(`[clips] NOT PASS: ${x.name} reads "${x.flash}" on the flash check: do not hand it over (cut another window, crop or seed)`);
+    log(`${res.length - failed.length} clip(s) made${failed.length ? `, ${failed.length} failed` : ''}${notPass.length ? `, ${notPass.length} not PASS on the flash check` : ''}`);
+    process.exit(failed.length || notPass.length ? 1 : 0);
   } catch (e) { console.error(`[clips] FAILED: ${e.message}`); process.exit(1); }
 }

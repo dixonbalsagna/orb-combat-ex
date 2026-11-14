@@ -1,0 +1,34 @@
+A-TOOLS-09 rehearsal, 2026-11-14, tools/backup-kept.mjs, on the real homework/Files (the kept build of commit 1931a0f8 and every saved match and result of the top folder), copy and restore into scratch folders
+
+1. node tools/backup-kept.mjs --to <copy> --only 1931a0f8
+400 of 2499
+800 of 2499
+1200 of 2499
+1600 of 2499
+2000 of 2499
+2400 of 2499
+backup: 2499 files copied (184.8 MB), 0 already in the copy, 0 differ, of 2499
+
+2. node tools/backup-kept.mjs --to <copy> --include play  (the saved matches and results)
+backup: 8 files copied (3.4 MB), 0 already in the copy, 0 differ, of 8
+
+3. the same again (nothing new: nothing copied)
+400 of 2499
+800 of 2499
+1200 of 2499
+1600 of 2499
+2000 of 2499
+2400 of 2499
+backup: 0 files copied (0.0 MB), 2499 already in the copy, 0 differ, of 2499
+
+4. verify the copy
+backup verify: 2507 files read, 0 problem(s): THE COPY IS WHOLE
+
+5. restore into a NEW folder (the rehearsed restore)
+restore: 2507 copied, 0 already there and the same, 0 refused, of 2507
+
+6. verify the restored folder against the manifest
+backup verify: 2507 files read, 0 problem(s): THE COPY IS WHOLE
+
+7. restore again over it (nothing to do)
+restore: 0 copied, 2507 already there and the same, 0 refused, of 2507

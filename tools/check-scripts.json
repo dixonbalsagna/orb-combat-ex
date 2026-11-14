@@ -1,0 +1,5 @@
+{
+  "_about": "The reasons and the ratchet of tools/check-scripts-table.mjs (A-CODE-04, 2026-11-14). `reasons`: a check or test script that is NOT run in CI or in the landing gate on purpose, with why (a soak, a measurement for one owner's park, a tool that needs a window): { 'path': 'reason' }. A script with no reason, not in CI and not in the gate is UNREVIEWED; `unreviewedMax` is the number of those allowed, and it only goes down as owners wire their scripts into a workflow or give a reason (the EP routes the question to each owner). A script that is run has no reason.",
+  "unreviewedMax": 82,
+  "reasons": {}
+}

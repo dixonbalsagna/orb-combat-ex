@@ -40,6 +40,9 @@ jobs:
     name: Desktop builds (Windows, Linux, macOS), export, pack and check
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+      linux_hash: ${{ steps.hashes.outputs.linux_hash }}
     env:
       FRAMES: ${{ inputs.frames }}
       ORBS_YES: ${{ inputs.orbs_yes }}
@@ -111,12 +114,14 @@ jobs:
         working-directory: ${{ runner.temp }}/export/linux
         run: 'node "${GITHUB_WORKSPACE}/tools/gate.mjs" -- ./orb-combat-ex.x86_64 --headless --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-linux.txt"'
       - name: The two gameplay hashes match
+        id: hashes
         run: |
           a=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-project.txt" || true)
           b=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-linux.txt" || true)
           echo "project:  ${a:-none}"
           echo "exported: ${b:-none}"
           if [ -z "$a" ] || [ "$a" != "$b" ]; then echo "the exported Linux build does not play the same match"; exit 1; fi
+          echo "linux_hash=${b}" >> "$GITHUB_OUTPUT"
       # One folder per platform: the game, README.txt, NOTICES.txt, build_info.json. Windows and macOS as .zip, Linux as .tar.gz (the tar keeps the executable bit; an artifact zip does not).
       - name: Pack the three folders
         run: |
@@ -177,3 +182,95 @@ jobs:
             ${{ runner.temp }}/dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 1
+
+  # A Windows runner starts the Windows build (A-TOOLS-13, the A1 brief's amendment; Tools, 2026-11-14): the packed zip of the job above is unpacked and its exe plays the same bench match headless; its gameplay
+  # hash must be the Linux build's. Behind the same lock as the job it needs (it never runs without it). Nothing here uploads anything.
+  windows-bench:
+    name: Windows build plays the bench match and prints the Linux build's hash
+    needs: desktop
+    runs-on: windows-2025
+    timeout-minutes: 25
+    env:
+      FRAMES: ${{ inputs.frames }}
+      LINUX_HASH: ${{ needs.desktop.outputs.linux_hash }}
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: orb-combat-ex-windows-x86_64-${{ needs.desktop.outputs.sha }}
+          path: ${{ runner.temp }}/dl
+      - name: Unpack the zip
+        run: |
+          mkdir -p "${RUNNER_TEMP}/win"
+          7z x -y "${RUNNER_TEMP}/dl/orb-combat-ex-windows-x86_64.zip" -o"${RUNNER_TEMP}/win" > /dev/null
+          ls -l "${RUNNER_TEMP}/win/orb-combat-ex-windows-x86_64"
+      - name: The exported Windows build's bench (it starts and plays)
+        working-directory: ${{ runner.temp }}/win/orb-combat-ex-windows-x86_64
+        run: |
+          ./orb-combat-ex.exe --headless --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-windows.txt"
+      - name: The Windows and Linux gameplay hashes match
+        run: |
+          w=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-windows.txt" || true)
+          echo "windows: ${w:-none}"
+          echo "linux:   ${LINUX_HASH:-none}"
+          if [ -z "$w" ] || [ "$w" != "${LINUX_HASH}" ]; then echo "the Windows build does not play the same match as the Linux build"; exit 1; fi
+          { echo '### Windows bench'; echo; echo "- the Windows build printed: $w"; echo "- the Linux build printed:   ${LINUX_HASH}"; echo '- they match'; } >> "$GITHUB_STEP_SUMMARY"
+
+  # The Windows build's first picture (A-TOOLS-13; required by the amendment): the exe is started with a window, on the runner's own desktop, through ANGLE (OpenGL ES over Direct3D, software WARP when there is no
+  # GPU, which a hosted runner has not), and ONE still of the screen is kept for a day. Never run on a runner before: if the window does not open or the still is one flat colour, the job fails and its summary says what
+  # the game printed. The binary is not uploaded.
+  windows-still:
+    name: Windows build opens a window and one still is taken
+    needs: desktop
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: orb-combat-ex-windows-x86_64-${{ needs.desktop.outputs.sha }}
+          path: ${{ runner.temp }}/dl
+      - name: Unpack the zip
+        run: |
+          mkdir -p "${RUNNER_TEMP}/win"
+          7z x -y "${RUNNER_TEMP}/dl/orb-combat-ex-windows-x86_64.zip" -o"${RUNNER_TEMP}/win" > /dev/null
+      - name: Start the game and take one still of the screen
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP 'win\orb-combat-ex-windows-x86_64'
+          $still = Join-Path $env:RUNNER_TEMP 'still'
+          New-Item -ItemType Directory -Force $still | Out-Null
+          $log = Join-Path $still 'game.txt'
+          $p = Start-Process -FilePath (Join-Path $dir 'orb-combat-ex.exe') -ArgumentList '--rendering-driver','opengl3_angle','--resolution','1280x720' -PassThru -RedirectStandardOutput $log -RedirectStandardError (Join-Path $still 'game-err.txt')
+          Start-Sleep -Seconds 30
+          $alive = -not $p.HasExited
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $png = Join-Path $still 'windows-still.png'
+          $bmp.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)
+          # the number of distinct colours in a sample of the picture: one flat colour is a failed start
+          $seen = New-Object 'System.Collections.Generic.HashSet[int]'
+          for ($y = 0; $y -lt $bmp.Height; $y += 9) { for ($x = 0; $x -lt $bmp.Width; $x += 9) { [void]$seen.Add($bmp.GetPixel($x, $y).ToArgb()) } }
+          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+          $fence = '```'
+          $lines = @('### Windows build opened a window', '', "- the game was still running after 30 s: $alive", "- the still: $($b.Width)x$($b.Height), $($seen.Count) distinct colours in a sample", '', 'the first lines the game printed:', '', $fence)
+          $lines += (Get-Content $log -TotalCount 25 -ErrorAction SilentlyContinue)
+          $lines += (Get-Content (Join-Path $still 'game-err.txt') -TotalCount 25 -ErrorAction SilentlyContinue)
+          $lines += $fence
+          $lines | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          $lines | Out-File -Encoding utf8 (Join-Path $still 'summary.md')
+          if (-not $alive) { throw 'the game did not stay up for 30 seconds' }
+          if ($seen.Count -lt 8) { throw "the still is nearly one colour ($($seen.Count) in the sample)" }
+      - name: Keep the still and the game's first lines (one day; the binary is not kept)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-still
+          path: |
+            ${{ runner.temp }}/still/windows-still.png
+            ${{ runner.temp }}/still/summary.md
+            ${{ runner.temp }}/still/game.txt
+            ${{ runner.temp }}/still/game-err.txt
+          retention-days: 1
+          if-no-files-found: warn

@@ -72,8 +72,9 @@ jobs:
             echo "runner: $(nproc) vCPUs, $(free -g | awk '/Mem:/{print $2}') GB; $(google-chrome --version)"
           } >> "$GITHUB_STEP_SUMMARY"
           extra=()
-          if [ "${TICKS}" != "0" ]; then extra+=(--ticks "${TICKS}"); fi
-          node tools/flash/run-pixels.mjs --dir "${RUNNER_TEMP}/web" --path "/index.html?${FLASH_WORDS}" --out "${RUNNER_TEMP}/clips" --clip "${CLIP}" --sizes 960x540 --jobs 1 --cpu-cap 100 --clip-timeout 15000 --software "${extra[@]}" | tee "${RUNNER_TEMP}/run-pixels.txt" || true
+          limit=15000   # seconds a full clip may take (about 4 hours)
+          if [ "${TICKS}" != "0" ]; then extra+=(--ticks "${TICKS}"); limit=1800; fi   # a speed trial that has not read its few ticks in half an hour is a finding, not a wait
+          node tools/flash/run-pixels.mjs --dir "${RUNNER_TEMP}/web" --path "/index.html?${FLASH_WORDS}" --out "${RUNNER_TEMP}/clips" --clip "${CLIP}" --sizes 960x540 --jobs 1 --cpu-cap 100 --clip-timeout "${limit}" --software "${extra[@]}" | tee "${RUNNER_TEMP}/run-pixels.txt" || true
       - name: The night's verdict (red when the clip crosses the line of 3 on any reading or could not be read)
         env:
           CLIP: ${{ matrix.clip }}

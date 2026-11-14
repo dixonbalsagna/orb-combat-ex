@@ -1,0 +1,2 @@
+outside the four systems (not ratcheted): 15 places in 6 files (render/core/look.gd 2, render/vfx/glare.gd 2, render/vfx/shots_view.gd 1, sim/core/campaign.gd 1, sim/core/run.gd 1, ui/mock/ui_mock_feed.gd 8)
+fighter-specific code: 0 places (energy 0, stamina 0, body 0, forms 0); the baseline is 0

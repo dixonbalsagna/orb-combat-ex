@@ -1,0 +1,34 @@
+{
+  "schema": "ratchet.fighter-specific/1",
+  "_about": "The places the code of the energy, stamina, body and forms systems names a fighter by his id (tools/ratchet-fighter-specific.mjs; A-ENERGY-06; X-15). May only go down; lower it with --write after a fix. The systems and their files are the first reading's (Tools, 2026-11-14): an owner who says a file belongs, or is missing, has it added and the baseline taken again. Stamina does not exist in the sim yet: its list is empty.",
+  "systems": {
+    "energy": [
+      "sim/core/power.gd",
+      "sim/core/shots.gd",
+      "sim/director/beam.gd",
+      "sim/director/beam_move.gd",
+      "sim/director/beamplay.gd",
+      "sim/director/blast.gd"
+    ],
+    "stamina": [],
+    "body": [
+      "sim/core/fighter.gd",
+      "sim/core/fighter_data.gd",
+      "sim/core/damage.gd",
+      "sim/core/hiding.gd",
+      "sim/core/mood.gd"
+    ],
+    "forms": [
+      "sim/core/forms.gd",
+      "sim/core/boons.gd"
+    ]
+  },
+  "total": 0,
+  "bySystem": {
+    "energy": 0,
+    "stamina": 0,
+    "body": 0,
+    "forms": 0
+  },
+  "files": {}
+}
