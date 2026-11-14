@@ -1800,3 +1800,15 @@ Also: "I think base attacks should help fill stamina, so attacking with normal f
 10. Up close, does your stick move only you, and a standing yes for the stop rule: "KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED"
 11. Frame rate targets: "KEEP IMPROVING PERFORMANCE ON ALL LEVELS"
 12. The small marks drawn on a fighter during a dash or press: "LETS TREAT THESE SHAPES AS PLACEHOLDERS FOR DIEGETIC AURAS, GLOWS, FLARES ETC. THAT SHOWCASE GAME MECHANICS WHERE NECESSARY. UI/UX ELEMENTS MUST BE NON-INTRUSIVE, RULE-OF-COOL, PROTECT PLAYER AGENCY AND ENJOYMENT, RESPECT THE SPECTACLE"
+
+**Starting A1, Orb (2026-11-13 night, to the EP, verbatim):** "Go with recommendation on all. One thing - - I do want the planet, terrain, destruction, clipping all worked on heading towards the A1. Five different planet sizes should be achieved along with this. Please check through the homework folders and ensure all my answers have been properly recorded, then clean and reorganize the homework folder and get it ready for me to deal with the issues as they arise heading towards A1 and beyond. ... I want you to take care of the plan and starting the sprint. Help me think of a way to effectively make use of and assign valuable specialist tasks to my stand-in, as they are on Fable High with Ultracode. Ensure optimal use of the Fable capabilities, and help me strategically use my Fable resets so they don't go to waste. If I don't use them, I lose them."
+"Go with recommendation on all" accepts the path's recommendations for decisions 2 to 6, 11 and 14 (docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md, the decisions table):
+- a random planet each quick match, with a fixed one for a newcomer's first match and for tests;
+- the globe ground, the crater look without the black fill, and the meteor trail as defaults, with Alpha getting drawn craters and trenches (the terrain-mesh overhaul itself after Alpha);
+- the 9 November build as the look reference;
+- flight 3500 as the default;
+- the old meters: keep the comeback rule for every fighter, zero the rest, remove the code after Alpha;
+- the whole stamina, energy and body loop in Alpha as shared rules, with the hidden health number as the body and the core as its own most important part;
+- the workshop-items split.
+It also accepts the EP's A1 budget of up to about 40% of this week.
+**Added scope for A1:** the planet, terrain, destruction and clipping are worked on toward A1, with five planet sizes.
