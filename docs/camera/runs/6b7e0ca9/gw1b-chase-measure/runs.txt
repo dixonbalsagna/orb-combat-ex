@@ -1,0 +1,26 @@
+== the stack, the check reading with depth (flaps still the old count)
+    row seed 1, 20 after the send, 1 taps, share 0.7: step 0.035 jolt 0.007 off 2 flaps 1 (a GW1a ceiling)
+    row energy model, base, seed 1, 20 after the send, 1 taps, share 0.7: step 0.035 jolt 0.007 off 2 flaps 1 (a GW1a ceiling)
+    row energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: step 0.064 jolt 0.035 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: step 0.062 jolt 0.032 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: step 0.062 jolt 0.032 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: step 0.064 jolt 0.035 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7 (arc off): step 0.288 jolt 0.098 off 6 flaps 1 (a GW1a ceiling)
+    row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7 (arc off): step 0.182 jolt 0.052 off 0 flaps 1 (a GW1a ceiling)
+    row energy model, top power, seed 1, 20 after the send, 1 taps, share 0.7 (arc off): step 0.262 jolt 0.078 off 0 flaps 1 (a GW1a ceiling)
+    row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0 (arc off): step 0.234 jolt 0.097 off 0 flaps 1 (a GW1a ceiling)
+    row energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7 (arc off): step 0.288 jolt 0.098 off 6 flaps 1 (a GW1a ceiling)
+
+== the stack, depth + the flap count, the new table: chase_rush_check: 130 checks passed
+    row energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7: step 0.064 jolt 0.035 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.7: step 0.062 jolt 0.032 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 8 after the send, 1 taps, share 0.0: step 0.062 jolt 0.032 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7: step 0.064 jolt 0.035 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 0 after the send, 1 taps, share 0.7 (arc off): step 0.288 jolt 0.098 off 6 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 1, 20 after the send, 1 taps, share 0.7 (arc off): step 0.262 jolt 0.078 off 0 flaps 0 (a GW1a ceiling)
+    row energy model, top power, seed 2, 0 after the send, 4 taps, share 0.7 (arc off): step 0.288 jolt 0.098 off 6 flaps 0 (a GW1a ceiling)
+
+== negative control: the biome data back to main's (real flaps, a split before the opening), the new count (from the run's console; its log was overwritten by the next run's of the same truncated name)
+[biomes back to main] chase_rush_check: 130 checks, 6 failed | FAIL seed 1, 0 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", ... FAIL seed 1, 8 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", ...
+
+== main's data, the same tree: chase_rush_check: 130 checks passed

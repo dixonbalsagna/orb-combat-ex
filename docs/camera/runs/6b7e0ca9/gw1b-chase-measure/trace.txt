@@ -1,0 +1,41 @@
+# The 96-tick 'loss' traced (seed 2, top power, arc off; scratch chase_trace.gd): the player's depth and where he's drawn
+  Z 70 A.z 0 fz0 0 D.z 0 scr_noz 838,457 scr_z 838,457 sees false
+  Z 80 A.z 0 fz0 0 D.z 0 scr_noz 22,484 scr_z 22,484 sees true
+  Z 90 A.z 0 fz0 0 D.z -628 scr_noz 276,466 scr_z 276,466 sees true
+  Z 100 A.z -1101 fz0 0 D.z -2030 scr_noz 490,467 scr_z 546,428 sees true
+  Z 110 A.z -2322 fz0 0 D.z -2764 scr_noz 109,587 scr_z 425,452 sees true
+  Z 120 A.z -2322 fz0 0 D.z -2764 scr_noz -188,638 scr_z 339,461 sees true
+  Z 130 A.z -2322 fz0 0 D.z -2764 scr_noz -126,645 scr_z 392,452 sees true
+  Z 140 A.z -2495 fz0 0 D.z -2772 scr_noz 45,660 scr_z 468,447 sees true
+  Z 150 A.z -2613 fz0 0 D.z -2785 scr_noz -173,689 scr_z 421,449 sees true
+  Z 160 A.z -2701 fz0 0 D.z -2800 scr_noz -248,702 scr_z 411,448 sees true
+  Z 170 A.z -2802 fz0 0 D.z -2814 scr_noz -276,720 scr_z 414,449 sees true
+  Z 180 A.z -2800 fz0 0 D.z 0 scr_noz -677,699 scr_z 322,442 sees true
+  Z 190 A.z -2715 fz0 0 D.z 0 scr_noz -392,698 scr_z 383,444 sees true
+  Z 200 A.z -2563 fz0 0 D.z 0 scr_noz -274,648 scr_z 403,447 sees true
+  Z 210 A.z -2358 fz0 0 D.z 0 scr_noz -202,507 scr_z 409,444 sees true
+  Z 220 A.z -2112 fz0 0 D.z 0 scr_noz -131,427 scr_z 411,440 sees true
+  Z 230 A.z -1836 fz0 0 D.z 0 scr_noz -56,497 scr_z 413,444 sees true
+  Z 240 A.z -1542 fz0 0 D.z 0 scr_noz 17,548 scr_z 412,445 sees true
+  Z 250 A.z -1243 fz0 0 D.z 0 scr_noz 97,558 scr_z 413,444 sees true
+
+# The 0.288 step: the urgent split opening while the chaser rushes (sep, step, his screen x)
+  66 merged sep 0.00 e 0.00 slot -1 r 0.129 step 0.011 j 0.003 A free 0,800 D launched 9997,0 a@527,516 in true chase 1 
+  67 merged sep 0.00 e 0.00 slot -1 r 0.128 step 0.017 j 0.006 A free -0,803 D launched 9767,0 a@548,516 in true chase 1
+  68 opening sep 0.08 e 0.00 slot -1 r 0.126 step 0.023 j 0.006 A free 0,813 D launched 9567,0 a@608,509 in true chase 1
+  69 opening sep 0.17 e 0.00 slot -1 r 0.124 step 0.029 j 0.006 A free -0,834 D launched 9350,0 a@708,489 in false chase
+  70 opening sep 0.25 e 0.00 slot -1 r 0.122 step 0.049 j 0.021 A free 0,871 D launched 9133,0 a@838,457 in false chase 
+  71 opening sep 0.33 e 0.00 slot -1 r 0.120 step 0.133 j 0.084 A free 0,929 D launched 8906,0 a@946,421 in false chase 
+  72 opening sep 0.42 e 0.00 slot -1 r 0.117 step 0.150 j 0.017 A free 0,974 D launched 8690,0 a@973,403 in false chase 
+  73 opening sep 0.50 e 0.00 slot -1 r 0.115 step 0.232 j 0.082 A free 0,1044 D launched 8495,0 a@1055,374 in false chas
+  74 opening sep 0.58 e 0.00 slot -1 r 0.113 step 0.288 j 0.057 A free 0,1073 D launched 8279,0 a@837,394 in false chase
+  75 opening sep 0.67 e 0.00 slot -1 r 0.111 step 0.277 j 0.011 A free 0,1112 D launched 8079,0 a@631,401 in true chase 
+  76 opening sep 0.75 e 0.00 slot -1 r 0.109 step 0.247 j 0.031 A free 0,1148 D launched 7895,0 a@462,409 in true chase 
+  77 opening sep 0.83 e 0.00 slot -1 r 0.107 step 0.217 j 0.030 A free 0,1174 D launched 7712,0 a@327,423 in true chase 
+  78 opening sep 0.92 e 0.00 slot -1 r 0.105 step 0.204 j 0.014 A free -0,1195 D launched 5930,824 a@207,441 in true cha
+  79 split sep 1.00 e 0.00 slot -1 r 0.104 step 0.128 j 0.076 A free -0,1195 D launched 5930,824 a@51,472 in true chase 
+  80 split sep 1.00 e 0.00 slot -1 r 0.103 step 0.030 j 0.098 A free -0,1195 D launched 5930,824 a@22,484 in true chase 
+  81 split sep 1.00 e 0.00 slot -1 r 0.101 step 0.004 j 0.029 A free -0,1195 D launched 5930,824 a@32,489 in true chase 
+  82 split sep 1.00 e 0.00 slot -1 r 0.099 step 0.005 j 0.006 A free -0,1195 D launched 5871,807 a@127,491 in true chase
+  83 split sep 1.00 e 0.00 slot -1 r 0.098 step 0.011 j 0.006 A free -0,1218 D launched 5813,790 a@187,474 in true chase
+  84 split sep 1.00 e 0.00 slot -1 r 0.096 step 0.017 j 0.006 A free -0,1225 D launched 5755,774 a@219,472 in true chase
