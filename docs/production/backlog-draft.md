@@ -319,8 +319,8 @@ From the corrective plan: none. Every item without a closing entry, or with an o
 
 
 
-From the EP's owed list, QA's bug list and the parked folders: passed by the EP on 2026-11-14 and not yet merged into this table (owed list: docs/ep/sprints/A1-sprint.md; QA's bug list: qa/known-bugs.md and docs/qa/runs/6a30b4c9; parked folders: docs/*/pending). Format for each line: source, item, owner, horizon, note.
+**From the EP's owed list:** the EP's list is in memory and summarised in docs/ep/sprints/A1-sprint.md; items on it with a register id are already rows in table A. Anything without one is added here by the EP.
 
-| Source | Item | Owner | Horizon | Notes |
-| --- | --- | --- | --- | --- |
-| (sources passed, not yet merged) |  |  |  |  |
+**From QA's bug list** (qa/known-bugs.md; the register's row A-QA-03 says it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09, so it is not the whole bug list). Entries: KB-001 to KB-006 (the pinned prototype, open as coded, no release blocked) and GB-001 to GB-009. Not closed: GB-003 camera jolt on a knock-away (with Camera), GB-004 a design call, GB-005 mountain tumbles (with World), GB-007 rocks round a fast fighter (not reproduced), GB-009 the blaster's balance. Fixed but not re-verified in play: GB-002, GB-006. None has a register row; they are listed apart until QA's rows A-QA-03 and A-QA-07 re-read the list against the played build.
+
+**From the parked folders** (docs/*/pending, file counts read 2026-11-14): accessibility 0, animation 9, architecture 17, art 4, audio 82, camera 53, combat 147, controls 57, director 161, narrative 20, net 2, perf 0, rendering 127, tools 139, ui 41, vfx 51, world 33 (943 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.

@@ -36,7 +36,7 @@ _Live page. Last built from status.json for **2026-11-14**. It is rebuilt every 
 
 The three risks the path names (full list, owners, early signs and guards in risk-register.md):
 
-1. **Main cannot simply be made into the game Orb plays.** 72 switch rows, patches that exist only in a preview tool and checks that have never run on the configuration Orb plays. If this takes three weeks instead of one and a half, everything moves by the difference. Watch: the count above, every two days.
+1. **Main cannot simply be made into the game Orb plays.** 69 of 87 data rows differ, patches that exist only in a preview tool and checks that have never run on the configuration Orb plays. If this takes three weeks instead of one and a half, everything moves by the difference. Watch: the count above, every two days.
 2. **The Steam Deck says no to something** (a graphics driver, a frame rate under 30, text too small, controls not arriving as a pad). Watch: spike S5 in A1, the first real session in A2.
 3. **The fight rework is a class bigger than estimated** (the beam, the signature inputs, the stamina loop and the gravity well all change the same code). Watch: spikes S1 and S2 in A1 and the stop rule at A3's midpoint.
 
@@ -76,7 +76,7 @@ Also watched: the wait for people (two friends, twice), the weekly token limit, 
 - **gate:** the Executive Producer's check before anything lands on main: the saved test results plus, for anything you can see, a side-by-side picture against the 9 November build.
 - **golden window:** a landing that changes the simulation's fingerprint; the saved reference matches are re-recorded and replays from earlier builds stop verifying. There are four (GW1 to GW4).
 - **fingerprint:** a short number the simulation produces from a match; if a change moves it, the game plays differently.
-- **switch row:** one on/off setting in the build's switch list; 72 of 92 differ between main and the build Orb played on 9 November.
+- **switch row:** one on/off setting in the build's switch list; 69 of 87 data rows differ between main and the build Orb played on 9 November (read by tools/preview/switch-diff.mjs; the audit's older count was 72 of 92 switch rows).
 - **spike:** a small throwaway trial on a scratch copy that answers "how big is this really?" before anyone commits weeks to it; nothing from a spike lands.
 - **row:** one line of the audit's gap register (270 lines); a row is closed when its work is on main with a saved record.
 - **X-nn:** an exit criterion, such as X-29; "must pass" means the milestone cannot close without it, "first reading" means a failing number is the expected result this time.
@@ -93,7 +93,7 @@ The builds, play files, reports and clips Orb keeps are about 2.9 GB in one git-
 
 **Goal.** A fresh copy of the repository, with one command, makes the Windows and Linux desktop builds of the game Orb played on 9 November; that build opens on a list of modes with a fighter pick and can be quit with the pad; and the biggest unknowns in the fight have each been tried small.
 
-**Why here.** 72 of the 92 switch rows differ between main and the build Orb plays, and 14,805 paths were uncommitted. Until this closes, every test describes a different game from the one being judged, so nothing later starts landing.
+**Why here.** 69 of 87 data rows differ between main and the build Orb plays (the audit counted 72 of 92 switch rows), and 14,805 paths were uncommitted. Until this closes, every test describes a different game from the one being judged, so nothing later starts landing.
 
 **What Orb can play.** The first desktop build of their own game: a Windows program that opens on the left-panel menus, on the round planet, with the pad as Orb plays it and flight at 3500. The start menu lists the modes that exist today, lets each player pick a fighter, and has a Quit row.
 
