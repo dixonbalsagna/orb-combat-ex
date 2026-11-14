@@ -2,7 +2,7 @@
 // limit, below-normal priority, a CPU cap, a tidy profile folder, gone with this process), serves a built folder or opens a URL, and takes pictures. Nobody needs a Chrome launcher of their own.
 //
 //   node tools/machine/capture.mjs still  --dir <built site> [--path /index.html?x=1] | --url <page>  --out shot.png  [--wait-ms 3000 | --wait-js "window.__ready"]  [--init-js "window.__cap = 1"]
-//                                         [--after-js "expression run before the picture"] [--width 1024 --height 768] [--format png|jpeg --quality 88]
+//                                         [--after-js "expression run before the picture"] [--width 1024 --height 768 | --preset ui (1280 by 800)] [--format png|jpeg --quality 88]
 //   node tools/machine/capture.mjs frames --dir <built site> | --url <page>  --out <folder>  --count 600  [--first 1]  --step-js "window.__adv = {n}"  --tick-js "window.__tick"
 //                                         [--init-js ...] [--wait-js ...] [--info-js "expression saved beside each frame in index.txt"] [--format jpeg --quality 88] [--every 1]
 //   node tools/machine/capture.mjs eval   --dir <built site> | --url <page>  --js "expression"  [--wait-js ...]     prints the value (for a probe; no picture)
@@ -25,11 +25,14 @@ const has = (n) => argv.includes(n);
 const usage = (m) => { if (m) console.error(m); console.error('usage: node tools/machine/capture.mjs (still | frames | eval) (--dir <built site> [--path /index.html] | --url <page>) ... (see the header of tools/machine/capture.mjs)'); process.exit(2); };
 if (!['still', 'frames', 'eval'].includes(cmd)) usage();
 const known = new Set(['--dir', '--path', '--url', '--out', '--wait-ms', '--wait-js', '--init-js', '--after-js', '--width', '--height', '--format', '--quality', '--count', '--first', '--step-js', '--tick-js',
-  '--info-js', '--every', '--js', '--session', '--purpose', '--time-limit', '--cpu-cap', '--software', '--browser-path', '--isolation', '--quiet']);
+  '--info-js', '--every', '--js', '--session', '--purpose', '--time-limit', '--cpu-cap', '--software', '--browser-path', '--isolation', '--quiet', '--preset']);
 for (const a of argv.slice(1)) if (a.startsWith('--') && !known.has(a)) usage(`unknown option ${a}`);
 const DIR = opt('--dir'), URL_ = opt('--url');
 if ((!DIR && !URL_) || (DIR && URL_)) usage('give --dir or --url');
-const WIDTH = Number(opt('--width', 1024)), HEIGHT = Number(opt('--height', 768));
+// --preset ui: the size the UI's stills are taken at (A-UI-09: 1280 by 800, the Steam Deck's own); an explicit --width or --height still wins
+const PRESET = opt('--preset', null);
+if (PRESET !== null && PRESET !== 'ui') usage(`unknown --preset ${PRESET} (only: ui)`);
+const WIDTH = Number(opt('--width', PRESET === 'ui' ? 1280 : 1024)), HEIGHT = Number(opt('--height', PRESET === 'ui' ? 800 : 768));
 const FORMAT = opt('--format', 'png');
 const quiet = has('--quiet');
 const log = (m) => { if (!quiet) console.log(`[capture] ${m}`); };
