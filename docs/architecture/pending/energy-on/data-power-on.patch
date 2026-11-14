@@ -1,0 +1,23 @@
+diff --git a/data/fight/power.json b/data/fight/power.json
+index 06c1344..737b8d4 100644
+--- a/data/fight/power.json
++++ b/data/fight/power.json
+@@ -1,7 +1,7 @@
+ {
+-  "_note": "One energy model (docs/design/power-scale.md, Game Design; sim/core/power.gd). Off until Orb's build. Simulation and the director read level, energy, speedUnit, share, flight and launchTravel; World and VFX read the rest as they're built.",
++  "_note": "One energy model (docs/design/power-scale.md, Game Design; sim/core/power.gd). On in main's data since sprint A1 (A-ENERGY-04: the 9 November build played it on from the page's setup); a setup's \"power\": false turns it off for a match. Simulation and the director read level, energy, speedUnit, share, flight and launchTravel; World and VFX read the rest as they're built.",
+   "schema": "fight.power/1",
+-  "enabled": false,
++  "enabled": true,
+   "level": {"tierShare": 0.8, "powerShare": 0.2},
+   "energy": {"base": 4.94, "topOverBase": 12.25},
+   "speedUnit": 900.0,
+@@ -110,7 +110,7 @@
+   "launchTravel": 2.0,
+   "travel": {"min": 1.25, "max": 2.0},
+   "_travel": "a setup's \"travel\" (the page's ?travel= slider, for Orb's hands) tries another launchTravel, held to min and max. Game Design's lever is 1.5, then 1.25 (slam-and-pace.md section 2)",
+-  "dash": {"enabled": false, "anyRange": true, "firstTickMin": 1000.0, "fullByTicks": 12, "arriveEaseBh": 1.5, "closeSec": {"1000": 0.4, "3000": 0.8, "6000": 1.4}, "slipMaxBh": 1.5, "slip": {"enabled": false, "underTicks": 12, "speed": 1125.0, "easeTicks": 4}},
++  "dash": {"enabled": true, "anyRange": true, "firstTickMin": 1000.0, "fullByTicks": 12, "arriveEaseBh": 1.5, "closeSec": {"1000": 0.4, "3000": 0.8, "6000": 1.4}, "slipMaxBh": 1.5, "slip": {"enabled": false, "underTicks": 12, "speed": 1125.0, "easeTicks": 4}},
+   "_dash": "LT held (Game Design's overnight-2026-11-08.md (c)). With the energy model on and this on, or a setup's \"dash\": the held dash's top speed is the level's flat out at any range, with no ramp by the gap, and it rises fast: at least firstTickMin a second on its first tick, full by fullByTicks. arriveEaseBh is Encounter's, slipMaxBh Controls', closeSec QA's targets",
+   "_slip": "the slip's brake (Simulation, the EP's brief of 2026-11-09; Game Design's (c): a tapped LT is still the slip). With the dash on and this on, or a setup's \"slip\": a dash let go before underTicks ticks eases from its speed on the release to speed over easeTicks ticks, by a smoothstep; held underTicks or longer, nothing changes. speed is the slip bound's 1.5 bh in 6 ticks (75 x 1.5 / 0.1 s). It works with Controls' dashHandover on: with the 12-tick lunge every tap is a 13-tick dash",
+   "meteorSpeed": 7000.0,

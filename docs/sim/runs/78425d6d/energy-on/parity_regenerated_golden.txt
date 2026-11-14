@@ -1,0 +1,98 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+ok    long float literals
+ok    constants
+ok    cosmetic stream seeds
+ok    rng
+ok    wrap
+ok    sin/cos
+ok    pow/exp/log/hypot
+ok    tick-0 state
+ok    wounds (forced hits)
+ok    rally (forced)
+ok    crippling (forced)
+ok    mood and style (forced)
+ok    fight data
+ok    roster data
+ok    roster loader rejects bad data
+ok    the game's wounds and ladder files, and a fighter's differences
+ok    the training dummy in the roster
+ok    a match's slots name two fighters the data has
+ok    one versus many: a match of three to five bodies
+ok    one versus many: what the core counts of a guard
+ok    wired numbers change a match
+ok    keyed draws
+ok    arm setups
+ok    intent pack
+ok    exp past its scaling's reach
+ok    a stun ends the held states
+ok    action state
+ok    pausing set pieces
+ok    act rule and time cap
+ok    the break
+ok    the form impulse
+ok    blocked blows and the arms
+ok    blocked shots and the arms
+ok    the second breath waits for quiet
+ok    a bowed rush
+ok    a drop
+ok    the mood by a blow's form
+ok    the free-flight speed and the locked damping, as reads
+ok    the stick as held, through a stun
+ok    a medium blow, rule by rule
+ok    a blow that names its region
+ok    no tier past the ladder's last
+ok    the view's particles carry their depth
+ok    depth in the core
+ok    a fighter's depth outside a flight, and the contact rule
+ok    the intro phase
+ok    composed intros
+ok    the intro's default facts and the take
+ok    the last stand
+ok    a hidden fighter is found when he charges or is launched
+ok    shots
+ok    shots: buildings, wild deflects, the spray, mines
+ok    agency lines
+ok    a clash's meeting point
+ok    SimMathx.PI and TAU
+ok    the blow cue's run stays out of the hash
+ok    the run's rare boons
+ok    the catastrophe's blast cloud and ash
+ok    the launch's curve
+ok    hit-stop by weight
+ok    the ricochet's glance
+ok    the replay header covers a planet's data
+ok    the intent's second word in the hash and the replay
+ok    a struggle, as the host reads it
+ok    a match starts on the floor of a lake or the sea
+ok    the run's ground
+ok    the run's state and carry
+ok    the campaign's arc and episode
+ok    the planet's load
+ok    the calm turn on gen 2
+ok    the match's start in pieces
+ok    the aftermaths
+ok    the curve's shared functions, the brake's control back, the camera feed
+ok    the air brake
+ok    forms: five steps and the slingshot
+ok    forms: Witness and Trial
+ok    menace at the cap decays after its delay, whatever the dead (CD-05)
+ok    Animation's view fields: a launch's tier, a hit's stop and tier
+ok    the intro phase (golden)
+ok    composed intros (golden)
+ok    replay module
+      9 matches, 169765 ticks: every per-tick digest and full-state checkpoint identical
+ok    matches
+ok    human-input replays
+      3 slices, 3 tick-0 states, a planet match of 3600 ticks: identical
+ok    planet worlds (golden)
+      (matches and replays: 147.5 s)
+time  sim tick:  mean 435.7 us, p50 450, p99 1204, p99.9 2091, max 32973 us over 179990 ticks of 10 matches
+time  cosmetic consumer and camera (render side): mean 56.0 us, p50 43, p99 232, p99.9 614, max 8249 us over 179990 ticks of 10 matches
+time  376.0 s
+
+golden check passed
+WARNING: 25 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines

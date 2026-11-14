@@ -1,0 +1,162 @@
+A-ENERGY-04: first gate on a scratch export of 9431211a (kick/energy_on_edit.py before its fixes), with the other owners' checks; then the HEAD baseline and the floor probe (pr_go.sh); then the re-gate on 78425d6d with the fixes. One Godot job at a time, below normal.
+
+==== first gate (9431211a)
+data-power-on sha1 778cbae46942252232c620a5458bc3fdbbfa2330 sha256 ab9aca1681ea 1 files
+energy-on sha1 d9ef6c5e0b7ab9593da3e47593e0f7f73c9899d1 sha256 f89907f3b83e 4 files
+import 0; parse errors 0
+validate self-test 0;   parser 326 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 193; data cases 8355
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+golden: exit 0 in 160 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (169765 ticks), 2 replays in 154.1 s
+  golden.json MOVED (expected: the model on in the data)
+parity (against HEAD's golden) through gate.mjs: exit 1 in 427 s; golden check FAILED gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+11:FAIL  tick-0 state: seed 1: 50d4fb8f0e6c7728 (golden 6441f6fa9e23c7b5); first difference at value 34: n:40b3880000000000, golden n:0000000000000000
+68:FAIL  a match starts on the floor of a lake or the sea: the floor on, intro false, tick 2: he is 2.259 under his floor
+82:FAIL  the intro phase (golden): differs
+83:FAIL  composed intros (golden): differs
+85:FAIL  matches: default seed 1: first full-state difference by tick 0 (checkpoint 0): 50d4fb8f0e6c7728:8d548a45c9362954:2d8f73acd2d0aedd vs golden 6441f6fa9e23c7b5:8d548a45c9362954:2d8f73acd2d0aedd; swap seed 1: first 
+86:FAIL  human-input replays: replay seed 11: first full-state difference by tick 0 (checkpoint 0): 7c8181716f3b43fe:8d548a45c9362954:2d8f73acd2d0aedd vs golden fc7449acb74482c8:8d548a45c9362954:2d8f73acd2d0aedd
+87:FAIL  planet worlds (golden): tick-0 state of the planet match 7/3: 1026f7f2237ade86, golden 44ea0d8dd38d4339
+parity (against the regenerated golden) through gate.mjs: exit 1 in 430 s; golden check FAILED gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+68:FAIL  a match starts on the floor of a lake or the sea: the floor on, intro false, tick 2: he is 2.259 under his floor
+power_check (main's own data, the model on) through gate.mjs: exit 1 in 214 s; gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/power_check.gd: verdict: POWER: 7 check(s) failed
+25:FAIL  tier 1: the close dash doesn't change (4957.8, 1023.1)
+27:FAIL  tier 2: the close dash doesn't change (6567.3, 1125.4)
+29:FAIL  tier 3: the close dash doesn't change (8626.9, 1227.7)
+31:FAIL  tier 4: the close dash doesn't change (11425.7, 1330.0)
+36:FAIL  off by its setup, the same hash as with no word
+37:FAIL  the dash is in the hash
+43:FAIL  without the dash the word does nothing
+power_check negative control: exit 0 in 73 s; POWER negative control: 0 check(s) failed
+two_states: exit 0 in 111 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 188 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+rb_ai: exit 0 in 30 s; script errors 0; PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash comparisons (every 
+desync: exit 0 in 43 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+xproc: exit 0 in 60 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 05d7bfbf3946af8a, Easy 2777bbd2424855a4, Medium 08b1206e190
+det: exit 0 in 197 s; script errors 0; determinism passed
+kick: exit 1 in 65 s; script errors 0; KICK: 2 check(s) failed
+4:FAIL  without it the traversal's fall is there (peak 5000, at 1,500 5000)
+5:FAIL  keepTop arrives faster than the old fall (5000, 5000)
+load_split: exit 0 in 7 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name
+== the other owners' checks the old flip broke (2026-11-07 list), on today's HEAD with the model on
+w_brunt_check: exit 0 in 22 s; script errors 0; BRUNT: 6 check(s) failed
+7:  FAIL  at tier 3 a tower the body has the strength to punch lets him through, and one it cannot holds him (60 of 90)
+8:  FAIL  at tier 4 the same (42 of 90)
+9:  FAIL  a house is gone through at every tier and speed, at houseKeep, and the hit kills it (0 of 12)
+10:  FAIL  a tier-1 tower of 10 floors and 1125 hit points gives way after 12 walls at speed 1400 (the data's giveWay 2.0; a median tower of 13 floors: about 3)
+13:  FAIL  the last hit holds the body for the tier's seconds (99 of 173)
+14:  FAIL  no chain uses more links than its tier's cap, a house half (160 of 173)
+w_deepencheck: exit 1 in 10 s; script errors 0; DEEPEN: 1 check(s) failed
+9:  FAIL  a bowl at the radius cap is deepened (704 to 154; a second dig made 154)
+w_ground_check: exit 0 in 16 s; script errors 0; GROUND: 2 check(s) failed
+5:  FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+6:  FAIL  the hand-made world and a gen 1 turn hash as before (turn: n=1 b70dc45f346c8d89)
+w_interior_check: exit 0 in 20 s; script errors 0; INTERIOR: 3 check(s) failed
+30:  FAIL  tier 3 down: from tier 3 the ceiling is reached (or he left first: capped)
+38:  FAIL  tier 4 down: from tier 3 the ceiling is reached (or he left first: capped)
+72:  FAIL  a fast steep send at tier 1 bounces off the held floor (face! floor15 END:lodge)
+w_repeat_check: exit 0 in 8 s; script errors 0; REPEAT: 1 check(s) failed
+9:  FAIL  the same send does 1.00x, 1.00x, then 1.00x the first one's damage (the ladder's 1.74 and 2.70, capped)
+w_meteor_crater_check: exit 1 in 22 s; script errors 0; METEORCRATER: 1 check(s) failed
+5:  FAIL an ordinary dig of that energy is held to 8 bh (2015)
+w_wrecks_check: exit 0 in 8 s; script errors 0; WRECKS: 1 check(s) failed
+21:  FAIL  the scrap does more to structures as the tier rises (hp taken: [134.649106587749, 134.649106587749, 134.649106587749, 134.649106587749])
+w_wall_hold_check: exit 1 in 39 s; script errors 0; WALLHOLD: 3 check(s) failed
+8:  FAIL today the fight freezes at the hit and he is thrown off the face (0 of 17)
+9:  FAIL set on: nothing freezes the whole fight (only he is held)
+14:  FAIL the building remembers: repeats break it (0 fall off, 0 of 24 with repeatMarks 2)
+d_arc_check: exit 1 in 18 s; script errors 0; ARC: 1 check(s) failed
+53:FAIL  the meteor's own bowl (4571)
+d_follow_check: exit 1 in 20 s; script errors 0; FOLLOW: 3 check(s) failed
+6:FAIL  off, 60 after the send: the taunt
+15:FAIL  60 after the send: the tap flies after him
+16:FAIL  60 after the send: and the blow lands (-1)
+d_loader_check: exit 1 in 20 s; script errors 0; loader check FAILED
+d_floorlift_check: exit 1 in 49 s; script errors 0; FLOORLIFT: 1 check(s) failed
+9:FAIL  table: the control sees the pop: a drop about 45.4 deep lifts 0.00 in one tick, about 64.1 deep 0.00 (first measured at 15.81 and 53.17)
+d_press_decides_check: exit 0 in 11 s; script errors 0; PRESS: 0 check(s) failed
+d_launch_cost_check: exit 0 in 481 s; script errors 0; LAUNCH COST: 0 check(s) failed
+d_chase_tap_check: exit 0 in 8 s; script errors 0; CHASE: 0 check(s) failed
+c_chase_rush: exit 0 in 21 s; script errors 0; chase_rush_check: 130 checks passed
+n_spectator_neg: exit 1 in 150 s; script errors 0; FAIL  negative control: 23 break(s) caught, 9 missed
+36:FAIL  negative control: 23 break(s) caught, 9 missed
+== Rendering's checks
+after_check: exit 1 in 22 s; FAIL lines 1; script errors 0; after check FAILED (1)
+5:FAIL  the match has a rush in it: the five are reached (0), so the limit is tried
+cue_check: exit 0 in 70 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 20 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 68 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 63 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 80 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 78 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 11 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 16 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 26 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 29 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 18 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 17 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 21 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 18 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+gate done
+
+==== probes: the floor probe on the flip tree, the baseline on clean HEAD
+== 1. floor probe on the flip tree
+floor_probe: exit 0 in 7 s; script errors 0; no model: 0 fighter-ticks under the floor
+model+dash, intro false, tick 2, fighter 0: 2.259 under floorAt (floorFor 543.941, y 541.682); x 38002.0 from 37977.0 (moved 25.0), v (1500, 476), dash true, rush false
+model+dash, intro skip, tick 2, fighter 0: 2.259 under floorAt (floorFor 543.941, y 541.682); x 38002.0 from 37977.0 (moved 25.0), v (1500, 476), dash true, rush false
+model+dash: 2 fighter-ticks under the floor
+model, no dash: 0 fighter-ticks under the floor
+no model: 0 fighter-ticks under the floor
+== 2. baseline on HEAD (no flip)
+hb import 0
+hb_after: exit 0 in 18 s; script errors 0; after check passed
+hb_spectator_neg: exit 1 in 145 s; script errors 0; FAIL  negative control: 23 break(s) caught, 9 missed
+36:FAIL  negative control: 23 break(s) caught, 9 missed
+hb_floorlift: exit 0 in 37 s; script errors 0; FLOORLIFT: 0 check(s) failed
+hb_kick: exit 0 in 46 s; script errors 0; KICK: 0 check(s) failed
+== 3. size replay probe on World's stack
+
+==== re-gate with the fixes (78425d6d)
+#### en2
+data-power-on sha1 778cbae46942252232c620a5458bc3fdbbfa2330 sha256 ab9aca1681ea 1 files
+energy-on sha1 75fcede6574c0918684feb6bd983011232636e92 sha256 ef516a67cbca 6 files
+import 0; parse errors 0
+validate self-test 0;   parser 326 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 193; data cases 8355
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+golden: exit 0 in 149 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (169765 ticks), 2 replays in 142.4 s
+  golden.json MOVED (expected: the model on in the data)
+parity (against the regenerated golden) through gate.mjs: exit 0 in 383 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+power_check (main's own data, the model on) through gate.mjs: exit 0 in 158 s; POWER: 0 check(s) failed
+power_check negative control: exit 0 in 51 s; POWER negative control: 0 check(s) failed
+two_states: exit 0 in 75 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 137 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+rb_ai: exit 0 in 26 s; script errors 0; PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash comparisons (every 
+desync: exit 0 in 33 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+xproc: exit 0 in 54 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 05d7bfbf3946af8a, Easy 2777bbd2424855a4, Medium 08b1206e190
+det: exit 0 in 202 s; script errors 0; determinism passed
+kick: exit 0 in 54 s; script errors 0; KICK: 0 check(s) failed
+load_split: exit 0 in 7 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name
+== Rendering's checks
+after_check: exit 1 in 19 s; FAIL lines 1; script errors 0; after check FAILED (1)
+5:FAIL  the match has a rush in it: the five are reached (0), so the limit is tried
+cue_check: exit 0 in 62 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 16 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 58 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 57 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 71 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 71 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 9 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 14 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 23 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 25 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 17 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 15 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 19 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 14 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+gate done
+#### sz

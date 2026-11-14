@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+model+dash, intro false, tick 2, fighter 0: 2.259 under floorAt (floorFor 543.941, y 541.682); x 38002.0 from 37977.0 (moved 25.0), v (1500, 476), dash true, rush false
+model+dash, intro skip, tick 2, fighter 0: 2.259 under floorAt (floorFor 543.941, y 541.682); x 38002.0 from 37977.0 (moved 25.0), v (1500, 476), dash true, rush false
+model+dash: 2 fighter-ticks under the floor
+model, no dash: 0 fighter-ticks under the floor
+no model: 0 fighter-ticks under the floor
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

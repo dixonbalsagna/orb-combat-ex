@@ -1,0 +1,225 @@
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index cfed058..d8268fc 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -102,7 +102,7 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 	_obj(out, S.mood, ["t", "sec", "v", "band", "cand", "candT", "act", "beats", "onceMask", "cause", "aggression", "crowd", "casGiven", "lastCombo", "breaks"])
+ 	_obj(out, S.pause, ["left", "kind", "version", "actor", "bank", "acc", "sinceEnd", "seen", "total", "count"])   # Q10
+ 	out.append(S.depthOn)   # fight lanes (L0)
+-	if S.powerOn:   # one energy model: only when on, so a match without it hashes as before
++	if S.powerOn:   # one energy model (on in the data since sprint A1): only when on, so a match with it off hashes as before
+ 		out.append(S.powerFlat)
+ 		out.append(S.powerTravel)
+ 		if S.dashOn:   # the dash at any range: only when on, so a match without it hashes as before
+diff --git a/sim/core/power.gd b/sim/core/power.gd
+index 52a1b79..e056633 100644
+--- a/sim/core/power.gd
++++ b/sim/core/power.gd
+@@ -1,7 +1,7 @@
+ class_name SimPower
+ extends RefCounted
+ ## One energy model (docs/design/power-scale.md, Game Design), Simulation's part: how fast a send leaves, how far along the line it carries, and flat-out flight, from a fighter's level.
+-## The switch is data/fight/power.json "enabled" (off), which SimCore.newMatch copies into S.powerOn unless the setup has its own "power". With it off, nothing here changes a number.
++## The switch is data/fight/power.json "enabled" (on in main's data since sprint A1, A-ENERGY-04), which SimCore.newMatch copies into S.powerOn unless the setup has its own "power". With it off, nothing here changes a number.
+ ## A setup's "flatOut" tries another base for flat-out flight, inside the data's range (Orb's slider, a page word), and its "travel" another factor along the line (launchTravel), inside the data's
+ ## travel range (the page's ?travel= slider, x1.25 to x2). No draw from S.rng anywhere here, and a level is read from what's hashed.
+ 
+diff --git a/sim/core/tools/kick_check.gd b/sim/core/tools/kick_check.gd
+index fa5caf6..def4a60 100644
+--- a/sim/core/tools/kick_check.gd
++++ b/sim/core/tools/kick_check.gd
+@@ -69,7 +69,7 @@ func _keep() -> void:
+ 	var run := func(keep: bool, sep: float, dir: float) -> Array:
+ 		SimKick.keepTop = keep
+ 		var S := SimCore.createSim()
+-		SimCore.newMatch(S, 77, {"p1": false, "p2": false}, {"kick": true, "intro": false})
++		SimCore.newMatch(S, 77, {"p1": false, "p2": false}, {"kick": true, "intro": false, "dash": false})   # keepTop against the traversal's old fall: that ramp exists only with the dash at any range off (power.json's dash, on in the data since A1)
+ 		var f = S.fighters[0]
+ 		var o = S.fighters[1]
+ 		f.x = 40000.0
+diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
+index b94bfe4..c499b53 100644
+--- a/sim/core/tools/parity.gd
++++ b/sim/core/tools/parity.gd
+@@ -3229,7 +3229,7 @@ func _flightReads() -> String:
+ 	var seen := {}
+ 	for c in [[1.0, 0.0, false, false, 600.0], [3.0, 1.0, false, false, 600.0], [2.0, 2.0, true, false, 600.0], [1.0, 3.0, false, true, 600.0], [4.0, 0.0, false, true, 6000.0]]:
+ 		var S := SimCore.createSim()
+-		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
++		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false, "power": false})   # with the energy model on, flat out reads his power, which the step fills first (power_check's flight rows)
+ 		var f = S.fighters[0]
+ 		var o = S.fighters[1]
+ 		f.y = WorldTerrain.groundY(S, f.x) + 900.0
+@@ -3255,7 +3255,7 @@ func _flightReads() -> String:
+ 	if seen.size() < 5:
+ 		return "flightSpeed gave the same speed for different tiers, stances and dashes"
+ 	var L := SimCore.createSim()
+-	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"intro": false})
++	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"intro": false, "power": false})
+ 	var g = L.fighters[0]
+ 	g.y = WorldTerrain.groundY(L, g.x) + 900.0
+ 	g.state = "locked"
+@@ -4390,7 +4390,7 @@ func _destructionProbe(S: SimState, kind: String) -> Array:
+ ## the values it produced as text. A result starting with "!" means the probe could not set its scenario up.
+ func _wiredProbe(kind: String) -> String:
+ 	var S := SimCore.createSim()
+-	SimCore.newMatch(S, 3)
++	SimCore.newMatch(S, 3, {}, {"power": false})   # the numbers as wired with the energy model off (with it on, the ladder's launch step is 1 by design)
+ 	var kai = S.fighters[0]
+ 	var vorr = S.fighters[1]
+ 	var out: Array = []
+@@ -4749,6 +4749,8 @@ func _animFields() -> String:
+ ## patience; a release with a coil adds the surge, the armour and the lasting gain by its share and spends the coil; the
+ ## gains, and today's for a fighter without steps; a release of live steps never pauses; the hold and the release are
+ ## told, for a fighter without steps too; a forms match replays, with the forms data in its data hash.
++## Forms' rows play with the energy model off: with it on, a step's launch gain and a Witness form's are 1 by design
++## (power-core.md: no multiplier takes a send past its share).
+ func _forms() -> String:
+ 	if not SimForms.errors().is_empty():
+ 		return "the forms data: " + "; ".join(SimForms.errors())
+@@ -4765,7 +4767,7 @@ func _forms() -> String:
+ 	var dt: float = SimConst.DT
+ 	# the five steps, taken one at a time
+ 	var M := SimCore.createSim()
+-	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"forms": true})
++	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
+ 	var p = M.fighters[0]
+ 	var r = M.fighters[1]
+ 	if not M.formsOn or p.fd == null or r.fd != null or p.form == null or r.form == null:
+@@ -4810,7 +4812,7 @@ func _forms() -> String:
+ 	SimCore.dispose(M)
+ 	# banked: four steps ready at 65 while he waits, a fifth at 100; one release takes all five
+ 	var B := SimCore.createSim()
+-	SimCore.newMatch(B, 5, {"p1": false, "p2": false}, {"forms": true})
++	SimCore.newMatch(B, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
+ 	p = B.fighters[0]
+ 	r = B.fighters[1]
+ 	B.out.fx.clear()
+@@ -4882,7 +4884,7 @@ func _forms() -> String:
+ 	SimCore.dispose(B)
+ 	# the coil starts at the first break after the step came ready: inside an exchange it coils nothing
+ 	var X := SimCore.createSim()
+-	SimCore.newMatch(X, 5, {"p1": false, "p2": false}, {"forms": true})
++	SimCore.newMatch(X, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
+ 	p = X.fighters[0]
+ 	X.dirS.ex = SimState.Exchange.new()
+ 	p.power = 20.0
+@@ -4897,7 +4899,7 @@ func _forms() -> String:
+ 	SimCore.dispose(X)
+ 	# a release of live steps never pauses the fight
+ 	var L := SimCore.createSim()
+-	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"forms": true})
++	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
+ 	p = L.fighters[0]
+ 	p.power = 20.0
+ 	SimForms.readyTick(L, p, dt)
+@@ -4913,7 +4915,7 @@ func _forms() -> String:
+ 	SimCore.dispose(L)
+ 	# a fighter without steps: his hold and his one-step take are told
+ 	var N := SimCore.createSim()
+-	SimCore.newMatch(N, 5, {"p1": false, "p2": false}, {"forms": true})
++	SimCore.newMatch(N, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
+ 	r = N.fighters[1]
+ 	r.power = 40.0
+ 	r.act.formReady = true
+@@ -4974,7 +4976,7 @@ func _menaceCap() -> String:
+ func _formBranches() -> String:
+ 	var dt: float = SimConst.DT
+ 	var M := SimCore.createSim()
+-	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"forms": true})
++	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
+ 	var p = M.fighters[0]
+ 	var r = M.fighters[1]
+ 	if p.fd == null or p.fd.branchAt != [2, 4]:
+@@ -5103,7 +5105,7 @@ func _formBranches() -> String:
+ 	SimCore.dispose(M)
+ 	# ties: the first to Trial, then to the branch he is on; one pick for a release that passes II and IV
+ 	var T := SimCore.createSim()
+-	SimCore.newMatch(T, 6, {"p1": false, "p2": false}, {"forms": true})
++	SimCore.newMatch(T, 6, {"p1": false, "p2": false}, {"forms": true, "power": false})
+ 	p = T.fighters[0]
+ 	p.power = 35.0
+ 	SimForms.readyTick(T, p, dt)
+@@ -5123,7 +5125,7 @@ func _formBranches() -> String:
+ 		return "a tie on Trial went to %s" % p.form.branch
+ 	SimCore.dispose(T)
+ 	var U := SimCore.createSim()
+-	SimCore.newMatch(U, 7, {"p1": false, "p2": false}, {"forms": true})
++	SimCore.newMatch(U, 7, {"p1": false, "p2": false}, {"forms": true, "power": false})
+ 	p = U.fighters[0]
+ 	p.power = 65.0
+ 	SimForms.readyTick(U, p, dt)
+@@ -5766,7 +5768,7 @@ func _piTau() -> String:
+ ## The read is this match's: a state reused after a match with depth on and a crater where he starts begins as a new one does.
+ ## Landing above the bed digs nothing, and the cue stays at the sheet with a radius of 0; on the bed the crater stays; with the floor off it digs as ever (Game Design's rulings 2026-10-30 row 13).
+ func _floorStart() -> String:
+-	var lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2}   # its touch-down is in a lake
++	var lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2, "dash": false}   # its touch-down is in a lake. The dash off: at its speed a free fighter low along a rising lake floor outruns floorFor's rise limit (riseMax a tick) and sits up to about 2.3 units inside it for a tick or two, a finding for World (A-ENERGY-04's park)
+ 	var fresh := func(mode) -> SimState:
+ 		var N := SimCore.createSim()
+ 		SimCore.newMatch(N, 1, {}, lake.merged({"intro": mode}))
+diff --git a/sim/core/tools/power_check.gd b/sim/core/tools/power_check.gd
+index 1855409..4ac3362 100644
+--- a/sim/core/tools/power_check.gd
++++ b/sim/core/tools/power_check.gd
+@@ -61,6 +61,7 @@ func _flight() -> void:
+ 		var got: Array = []
+ 		for su in [FIELD, off]:
+ 			var s2: Dictionary = su.duplicate()
++			s2["dash"] = false   # the model's own flight table: the close dash is the old one without the dash at any range (power.json's dash, on in the data since A1)
+ 			if tier > 1:
+ 				s2["startTier"] = tier
+ 			var S := _new(s2)
+@@ -236,9 +237,9 @@ func _dash() -> void:
+ 	# off moves nothing, and on is in the hash
+ 	var A := _new(off)
+ 	var B := _new(FIELD)
+-	ok(str(SimHash.stateHash(A).gameplay) == str(SimHash.stateHash(B).gameplay), "off by its setup, the same hash as with no word")
+ 	var C := _new(on)
+-	ok(str(SimHash.stateHash(C).gameplay) != str(SimHash.stateHash(B).gameplay), "the dash is in the hash")
++	ok(str(SimHash.stateHash(B).gameplay) == str(SimHash.stateHash(C if SimPower.dashOn_ else A).gameplay), "a match with no word takes the data's dash switch (%s)" % str(SimPower.dashOn_))
++	ok(str(SimHash.stateHash(C).gameplay) != str(SimHash.stateHash(A).gameplay), "the dash is in the hash")
+ 	SimCore.dispose(A)
+ 	SimCore.dispose(B)
+ 	SimCore.dispose(C)
+@@ -308,7 +309,7 @@ func _slip() -> void:
+ 		ok(mono and r[k + ez - 2][1] > sp and r[k + ez - 1][1] <= sp + 1.0e-6, "a tap of %d: his speed falls to the slip's %.0f on the %dth tick after it, not before" % [k, sp, ez])
+ 		ok(r0[k + ez - 1][1] > 2.0 * sp, "off: a tap of %d is still at %.0f %d ticks after it" % [k, r0[k + ez - 1][1], ez])
+ 		ok(r[39][0] < r0[39][0], "a tap of %d carries him less with it on: %.2f bh against %.2f" % [k, r[39][0] / SimDepth.BH, r0[39][0] / SimDepth.BH])
+-	ok(_slipRun(off, 3000.0, _held(2), 40) == _slipRun(none, 3000.0, _held(2), 40), "off by its setup, a tap moves him as with no word")
++	ok(_slipRun(on if SimPower.slipOn_ else off, 3000.0, _held(2), 40) == _slipRun(none, 3000.0, _held(2), 40), "a match with no word takes the data's slip switch (%s)" % str(SimPower.slipOn_))
+ 	# held underTicks or longer: exactly as with it off
+ 	for k in [SimPower.slipUnder, SimPower.slipUnder + 2, 60]:   # (underTicks is data: 6, then 12 with Encounter's slip-arrive grant)
+ 		ok(_slipRun(on, 3000.0, _held(k), 60) == _slipRun(off, 3000.0, _held(k), 60), "held %d ticks: every tick the same as off" % k)
+@@ -329,14 +330,14 @@ func _slip() -> void:
+ 	# its scope, and the hash
+ 	var A := _new(off)
+ 	var B := _new(none)
+-	ok(str(SimHash.stateHash(A).gameplay) == str(SimHash.stateHash(B).gameplay), "slip off by its setup: the same hash as with no word")
+ 	var C := _new(on)
+-	ok(C.slipOn and str(SimHash.stateHash(C).gameplay) != str(SimHash.stateHash(B).gameplay), "the slip's brake is in the hash")
++	ok(str(SimHash.stateHash(B).gameplay) == str(SimHash.stateHash(C if SimPower.slipOn_ else A).gameplay), "the slip: a match with no word hashes as the data's switch says (%s)" % str(SimPower.slipOn_))
++	ok(C.slipOn and str(SimHash.stateHash(C).gameplay) != str(SimHash.stateHash(A).gameplay), "the slip's brake is in the hash")
+ 	SimCore.dispose(A)
+ 	SimCore.dispose(B)
+ 	SimCore.dispose(C)
+-	var D := _new({"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": true, "slip": true})
+-	ok(not D.slipOn, "without the dash the word does nothing")
++	var D := _new({"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": true, "dash": false, "slip": true})
++	ok(not D.slipOn, "with the dash off the word does nothing")
+ 	SimCore.dispose(D)
+ 	var E := _new({"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": false, "dash": true, "slip": true})
+ 	ok(not E.slipOn, "with the model off the word does nothing")
+diff --git a/sim/core/tools/two_states_check.gd b/sim/core/tools/two_states_check.gd
+index 1bd1831..cb74f11 100644
+--- a/sim/core/tools/two_states_check.gd
++++ b/sim/core/tools/two_states_check.gd
+@@ -35,7 +35,7 @@ const SETUPS: Dictionary = {   # rollback_check.gd's
+ 	"calm": {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}},
+ 	"turn": {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}},   # calm, with a turn decided at tick TURN_AT
+ 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world, with a swing asked every SWING_EVERY ticks
+-	"power": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true},   # one energy model (sim/core/power.gd)
++	"power": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": false},   # one energy model (sim/core/power.gd) off: it is on in the data since sprint A1, so every other setup has it
+ 	"travel": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.25},   # ... with the page's slider at x1.25 along the line
+ 	"stops": {"intro": false, "hitstopBudget": true},   # the freeze budget on whichever table is live (hitstop.json's budgetAny)
+ 	"dash": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "dash": true},   # ... with LT held fast at any range (power.json's dash)

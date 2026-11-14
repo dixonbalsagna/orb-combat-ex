@@ -1,0 +1,30 @@
+extends SceneTree
+## Scratch (Simulation, A-ENERGY-04): parity's spawn-floor row fails with the model and the dash on in the data ("the floor
+## on, intro false, tick 2: he is 2.259 under his floor"). The same lake and switches as the row; which setup does it, and
+## what was he doing: every free fighter under WorldWater.floorAt after a tick, with the clamp's own floorFor beside it.
+
+func _init() -> void:
+	WorldFill.setSurface(true)
+	WorldFill.setFloor(true)
+	DirInterrupt.data()["water"]["enabled"] = true
+	var lake := {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2}
+	for row in [["model+dash", {"power": true, "dash": true}], ["model, no dash", {"power": true, "dash": false}], ["no model", {"power": false}]]:
+		var n: int = 0
+		for mode in [false, "skip"]:
+			var S := SimCore.createSim()
+			SimCore.newMatch(S, 1, {}, lake.merged({"intro": mode}).merged(row[1]))
+			for t in range(12):
+				var x0: Array = [S.fighters[0].x, S.fighters[1].x]
+				SimCore.step(S)
+				S.out.fx.clear()
+				S.out.feed.clear()
+				for k in range(2):
+					var f = S.fighters[k]
+					var fa: float = WorldWater.floorAt(S, f.x, f.z)
+					if f.state == "free" and f.y < fa - 1.0e-3:
+						n += 1
+						var ff: float = SimFighter.floorFor(S, f, f.x, f.z, f.y)
+						print("%s, intro %s, tick %d, fighter %d: %.3f under floorAt (floorFor %.3f, y %.3f); x %.1f from %.1f (moved %.1f), v (%.0f, %.0f), dash %s, rush %s" % [row[0], str(mode), t, k, fa - f.y, ff, f.y, f.x, x0[k], SimWrap.sdx(x0[k], f.x), f.vx, f.vy, str(f.input.dash if f.input != null else null), str(f.rush != null)])
+			SimCore.dispose(S)
+		print("%s: %d fighter-ticks under the floor" % [row[0], n])
+	quit(0)
