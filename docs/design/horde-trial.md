@@ -71,3 +71,14 @@ If the arms feel alike, the busier one wins: it's a horde.
 **After the re-probe (2026-11-15):**
 - **Two-player run length (9:04 to 9:13 against 6:00 to 8:00): keep the band, and lower the count, not the toughness.** The two-player count multiplier goes from × 1.5 to **× 1.2**. `toughMul` 1.5 and `gapMul` 0.8 stay, so each player's pressure (reading 10, which now passes) holds while the run shortens to about 7:20. A run with a friend shouldn't drag past one alone. **Lever:** × 1.1 if it's still over 8:00. The campaign's × 1.5 (`campaign.md`) is the campaign's own rule.
 - **Reading 11 alone, seed 3 at 3.8 s:** **a pass.** The band reads on the median across seeds, with at least 9 of 10 inside, so one seed 0.2 s fast is noise.
+
+**One player left up (2026-11-15, Encounter's clips: in 10 recordings the remaining pad never cleared a two-player wave):**
+- **While only one player is up, the pack plays one-player values, at once.**
+  - The **lane gap** goes back to the one-player 113, for the live bodies too, from that tick.
+  - **New spawns** come at one-player toughness.
+  - **The wave's remaining count** drops to what a one-player wave would have left (× 1/1.2).
+  - **The live bodies keep the toughness they have.** Changing a body's health mid-fight would read as a glitch, and there are at most three of them.
+- **Two-player values come back at the next wave,** when the partner is up again (they're out until the wave is cleared, as ruled).
+- **Why:** the design's beat 5, "the other finishes the wave, the first gets up at the rest", is the co-op story. A wave sized for two that one player can't clear ends the run on a partner's mistake instead.
+- **On Orb's question 4:** the answer stays "not yet more than three". This rule is about the count for whoever is still standing.
+- **Encounter builds it after GW1a. QA's row:** a medium pad left alone at mid-wave clears it in at least 8 of 10 runs.
