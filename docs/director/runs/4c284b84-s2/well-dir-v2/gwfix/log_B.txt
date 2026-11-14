@@ -1,0 +1,7 @@
+08:41:23 well_dir_check exit 0: 
+08:42:20 well_check (Simulation's) exit 0: WELL: 0 check(s) failed
+08:44:52 golden.gd exit 0
+08:44:52 the golden with both switches off REPRODUCES GW1a's target byte for byte
+08:48:02 core two_states_check exit 0: PASS  0 failure(s)
+08:48:06 core load_split exit 0: 
+08:48:08 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365

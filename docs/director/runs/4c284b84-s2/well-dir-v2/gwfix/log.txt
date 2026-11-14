@@ -1,0 +1,64 @@
+Spike S2, the director's half re-cut for Simulation's review (five findings): Simulation's base + s2-core + s2-dir.patch (v2)
+08:41:23 a_press_check exit 0: A PRESS: 0 check(s) failed
+08:41:38 arc_check exit 1: ARC: 1 check(s) failed
+08:42:14 arrive_check exit 0: ARRIVE: 0 check(s) failed
+08:48:20 bark_reads_check exit 0: bark_reads_check: passed
+08:48:27 beam_ai_check exit 1: BEAM AI: 1 check(s) failed
+08:48:35 beam_front_check exit 1: FRONT: 4 check(s) failed
+08:48:40 beam_move_check exit 0: BEAM MOVE: 0 check(s) failed
+08:48:45 carry_round_check exit 0: CARRY ROUND: 0 check(s) failed
+08:48:51 chase_tap_check exit 0: CHASE: 0 check(s) failed
+08:49:04 city_push_check exit 0: CITY PUSH: 0 check(s) failed
+08:49:16 driver_check exit 0: DRIVER: 0 check(s) failed
+08:49:27 ending_check exit 0: ENDING: 0 check(s) failed
+08:49:32 ending_team_check exit 0: ENDING TEAM: 0 check(s) failed
+08:49:37 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+08:49:45 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+08:50:20 floorlift_check exit 1: FLOORLIFT: 1 check(s) failed
+08:50:37 follow_check exit 0: FOLLOW: 0 check(s) failed
+08:50:43 full_send_check exit 0: FULL SEND: 0 check(s) failed
+08:50:53 knock_wall_check exit 1: KNOCK WALL: 1 check(s) failed
+08:51:05 launch_cuts_check exit 0: LAUNCH CUTS: 0 check(s) failed
+08:51:13 location_check exit 0: LOCATION: 0 check(s) failed
+08:51:19 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+08:51:24 outside_check exit 0: OUTSIDE: 0 check(s) failed
+08:51:29 pace_check exit 0: PACE: 0 check(s) failed
+08:51:36 phrase_check exit 0: PHRASE: 0 check(s) failed
+08:51:41 plane_check exit 0: PLANE: 0 check(s) failed
+08:51:46 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+08:51:52 press_decides_check exit 0: PRESS: 0 check(s) failed
+08:51:56 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+08:52:02 reads_check exit 0: reads_check: 16 of 16 passed
+08:52:06 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+08:52:11 relief_check exit 0: RELIEF: 0 check(s) failed
+08:53:02 sigvariants_check exit 0: sigvariants check passed
+08:53:11 stance_check exit 0: STANCE: 0 check(s) failed
+08:53:23 stick_check exit 0: STICK: 0 check(s) failed
+08:53:28 stick_lunge_check exit 0: STICK LUNGE: 0 check(s) failed
+08:53:34 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+08:53:39 sure_reach_check exit 0: sure_reach_check: passed
+08:54:25 swing_check exit 0: SWING: 0 check(s) failed
+08:55:48 swing_legal_check exit 0: SWING LEGAL: 0 check(s) failed
+08:56:28 walk_check exit 1: WALK: 1 check(s) failed
+08:56:37 well_dir_check exit 0: 
+08:56:37 lane A done
+08:41:23 well_dir_check exit 0: 
+08:42:20 well_check (Simulation's) exit 0: WELL: 0 check(s) failed
+08:44:52 golden.gd exit 0
+08:44:52 the golden with both switches off REPRODUCES GW1a's target byte for byte
+08:48:02 core two_states_check exit 0: PASS  0 failure(s)
+08:48:06 core load_split exit 0: 
+08:48:08 validate: 322 files checked, 0 errors, 2 warnings; lint: determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/world, sim/input
+08:48:08 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+08:48:08 lane B done
+--- the review's rows on the half without the five fixes (gw_build only): 1, 2 and 5 fail; on the re-cut half all pass
+FAIL  1: holding away against heavies (36 ticks staggered), the brawl never ends as "broke" on the tick a heavy lands on him, nor while he is staggered (it ended as "broke")
+FAIL  2: in the brawl, a stick inside the dead zone (0.2) toward an idle rival moves neither body (14.7, 1.7)
+FAIL  5: the brawl a lunge begins: the idle defender is not moved by the arrival (2.64 units over 20 ticks)
+WELL DIR: 28 check(s), 3 failed
+arc_check: failure lines with the half c78c5c97, the base without it c78c5c97: the same
+beam_ai_check: failure lines with the half 36e23fc3, the base without it 36e23fc3: the same
+beam_front_check: failure lines with the half f98b2393, the base without it f98b2393: the same
+floorlift_check: failure lines with the half 6fd8eb8f, the base without it 6fd8eb8f: the same
+knock_wall_check: failure lines with the half c70cd551, the base without it c70cd551: the same
+walk_check: failure lines with the half 6f9062d4, the base without it 6f9062d4: the same

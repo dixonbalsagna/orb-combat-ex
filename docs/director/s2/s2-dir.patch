@@ -69,7 +69,7 @@ index 60df4d8..7c3a858 100644
  	if taunting(D):
  		meet(S, A, D, weight, entry, S.tick)
 diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
-index 9f89762..861fc44 100644
+index 9f89762..e461847 100644
 --- a/sim/director/brawl.gd
 +++ b/sim/director/brawl.gd
 @@ -274,6 +274,12 @@ static func starts(S: SimState, ex, kind: String, opn: int, fu: bool, dState: St
@@ -146,7 +146,7 @@ index 9f89762..861fc44 100644
  	if DirInterrupt.gi(f, DirInterrupt.LANDED) == landed0:
  		# Blocked: it chips, and no run changes. A heavy on a guard staggers the blocker in place (the set guard and
  		# the fresh one are C2b's). A shot on a guard wore him by the blocked shot's rule, and no more.
-@@ -3009,12 +3046,179 @@ static func _alone(ex, f) -> bool:
+@@ -3009,12 +3046,193 @@ static func _alone(ex, f) -> bool:
  	return st[0] * SimWrap.sdx(o.x, f.x) + st[1] * (f.y - o.y) >= 0.0
  
  
@@ -168,6 +168,8 @@ index 9f89762..861fc44 100644
 +		ux = f.heldMx * float(cfg().nudge.stagger)
 +		uy = f.heldMy * float(cfg().nudge.stagger)
 +	var ul: float = SimDetMath.hypot(ux, uy)
++	if ul <= SimAct.awayDead:
++		return PackedFloat64Array([0.0, 0.0])   # one threshold: a stick inside the dead zone neither walks him nor pushes (pushesIn, _atRest)
 +	if ul > 1.0:
 +		ux /= ul
 +		uy /= ul
@@ -186,7 +188,11 @@ index 9f89762..861fc44 100644
 +	var lx: float = SimWrap.sdx(f.x, o.x)
 +	var ly: float = o.y - f.y
 +	var ll: float = SimDetMath.hypot(lx, ly)
-+	return ll > 0.0 and (st[0] * lx + st[1] * ly) / ll > SimAct.awayDead
++	if ll <= 0.0:
++		return false
++	if st[0] * lx + st[1] * ly > 0.0:
++		return true   # his stick, past the dead zone, has a part toward him
++	return float(_g(f, PMOVE_X)) * lx + float(_g(f, PMOVE_Y)) * ly > 0.0   # or his own last step closed on him: the arrival's carry that brought him in
 +
 +
 +## Own bodies: f holds his stick away from o, read as held (a heavy's stagger zeroes the gated stick, not this). The computer: only when
@@ -199,8 +205,8 @@ index 9f89762..861fc44 100644
 +	return SimAim.angle_off_away_deg(f.heldMx, f.heldMy, 1 if SimWrap.sdx(o.x, f.x) >= 0.0 else -1) <= int(cfg().partDeg)
 +
 +
-+## Own bodies (Game Design's S2 ruling 3): a blow reached o, landed or guarded. Held away, it counts; on the leaveAfterBlows-th he breaks
-+## clear and the brawl ends as "broke". A stun, a stagger or a grab stops the walk: the count pauses, unchanged. True when it ended.
++## Own bodies (Game Design's S2 ruling 3): a blow reached o, landed or guarded. Held away, it counts (a stun or a grab he was already in
++## does not). The break is the tick's (_brokeTick): never on the tick of a blow that staggers, holds or sends him. Always false.
 +static func _broke(S: SimState, ex, o) -> bool:
 +	if o.wel == null:
 +		return false
@@ -208,7 +214,15 @@ index 9f89762..861fc44 100644
 +	if o.stunTicks > 0 or DirGrapple.holds(o) or not _heldAway(ex, o, f):
 +		return false
 +	o.wel.lv += 1
-+	if o.wel.lv < int(SimWell.cfg().close.leaveAfterBlows):
++	return false   # (counted at contact; the break itself is read in the tick, after the blow's stagger or send has been applied)
++
++
++## Own bodies: the walk-out's break, once a brawl tick. On the leaveAfterBlows-th blow that reached him holding away he breaks clear, as
++## "broke", only while he is free of a stun or a stagger, not held in a grab, still in the brawl (not sent) and still holding away.
++static func _brokeTick(S: SimState, ex, f, o) -> bool:
++	if f.wel == null or f.wel.lv < int(SimWell.cfg().close.leaveAfterBlows):
++		return false
++	if f.stunTicks > 0 or DirGrapple.holds(f) or f.state != "locked" or not _heldAway(ex, f, o):
 +		return false
 +	end(S, ex, "broke")
 +	return true
@@ -237,7 +251,7 @@ index 9f89762..861fc44 100644
 +		var st: PackedFloat64Array = _ownStick(ex, f) if live else PackedFloat64Array([0.0, 0.0])
 +		var ux: float = st[0]
 +		var uy: float = st[1]
-+		if gv == f and _alone(ex, f) and d0 < leash:
++		if gv == f and _alone(ex, f) and d0 < leash - 0.01:
 +			ux = 0.0   # inside the give leash his stick moves him by _giveStep
 +			uy = 0.0
 +		var tgt: float = float(wc.ownMul) * _flySpeed(S, f)
@@ -326,7 +340,7 @@ index 9f89762..861fc44 100644
  	for f in [ex.A, ex.D]:
  		f.vx = float(_g(ex.A, MOVE_X)) / 16.0 / keep
  		f.vy = float(_g(ex.A, MOVE_Y)) / 16.0 / keep
-@@ -3789,6 +3993,7 @@ static func tick(S: SimState, ex) -> void:
+@@ -3789,6 +4007,7 @@ static func tick(S: SimState, ex) -> void:
  		return
  	var c: Dictionary = cfg()
  	var now: int = _now(S)
@@ -334,16 +348,19 @@ index 9f89762..861fc44 100644
  	DirGrapple.tick(S, ex)   # the catch, the clinch and their exits (DirGrapple)
  	if S.dirS.ex != ex or ex.branch != "":
  		return
-@@ -3811,6 +4016,8 @@ static func tick(S: SimState, ex) -> void:
+@@ -3811,6 +4030,11 @@ static func tick(S: SimState, ex) -> void:
  			return
  		if not SimAct.peek(f).is_empty():
  			SimAct.clear(f)
 +		if ownOn and f.stunTicks <= 0 and not _heldAway(ex, f, o):
 +			f.wel.lv = 0   # the break-away's count: letting go of away resets it (a stun or a stagger pauses it)
++		if ownOn and _brokeTick(S, ex, f, o):
++			_inTick = false
++			return   # he held away through the blows: he breaks clear
  		if _g(f, SAFE_UNTIL) < 0 and f.stunTicks <= 0:
  			_s(f, SAFE_UNTIL, S.tick + int(c.flurry.closeGuardTicks))   # he has recovered from a close: he cannot be closed on again for this long
  		if not _windOn(o):
-@@ -3861,14 +4068,17 @@ static func tick(S: SimState, ex) -> void:
+@@ -3861,14 +4085,17 @@ static func tick(S: SimState, ex) -> void:
  		return
  	# The walk-out: both hold away for partTicks full ticks running, and the brawl lets go, free. It ends partTicks
  	# after the tick the later stick was first read, never sooner.
@@ -363,7 +380,7 @@ index 9f89762..861fc44 100644
  	# A press from a gap closes it over ticks, as part of the blow (_throw).
  	var stepping: bool = false
  	for f in [ex.A, ex.D]:
-@@ -3908,7 +4118,8 @@ static func tick(S: SimState, ex) -> void:
+@@ -3908,7 +4135,8 @@ static func tick(S: SimState, ex) -> void:
  		return
  	var ct: Dictionary = DirData.contact()
  	var pull: float = float(c.pullBhPerSec) * DirInterrupt.BH * SimConst.DT * 0.5
@@ -447,10 +464,10 @@ index 8f11c54..f4fdc87 100644
  ## A press he couldn't act on: it goes on his first tick free inside bufferTicks; past that it's refused, said once.
 diff --git a/sim/director/tools/well_dir_check.gd b/sim/director/tools/well_dir_check.gd
 new file mode 100644
-index 0000000..4539950
+index 0000000..09de4cd
 --- /dev/null
 +++ b/sim/director/tools/well_dir_check.gd
-@@ -0,0 +1,264 @@
+@@ -0,0 +1,330 @@
 +extends SceneTree
 +## Spike S2, the gravity well, the director's half (scratch; never to land): godot --headless --path . --script res://sim/director/tools/well_dir_check.gd
 +## The press's band (DirBands.pressBand) at the zones; the snap against today's lunge; the knock-backs' latch; the close fight's own-body
@@ -690,6 +707,71 @@ index 0000000..4539950
 +	ok(absf(SimWrap.sdx(bm, Sn.fighters[0].x)) < 0.5 and absf(SimWrap.sdx(Sn.fighters[0].x, Sn.fighters[1].x)) >= _bh(3.5) - 0.5, "own: with one stick held, no magnet: neither is drawn along the line")
 +
 +
++## Simulation's review (five findings): the rows for the three that show in play.
++func _t_review() -> void:
++	print("-- the review's findings")
++	# 1: a heavy that staggers him as he holds away never ends the brawl as "broke" while he is staggered
++	var heavies := func(S_, t):
++		var r1 := _in()
++		r1.sig = t >= 20 and t % 40 == 0   # B: the brawl's heavy (with the 9 November pad B is always the heavy), which staggers a fighter it lands on
++		return [_in(-1.0 if t >= 20 else 0.0), r1]
++	var S := _mk(_bh(2.0), {"wellClose": "own"})
++	_step(S, _in(0.0, true))
++	var a = S.fighters[0]
++	var staggered: int = 0
++	var brokeStunned: bool = false
++	var brokeOnHeavy: bool = false
++	var endWhy: String = ""
++	for t in range(400):
++		var pair: Array = heavies.call(S, t)
++		SimCore.step(S, [pair[0], pair[1]])
++		if a.stunTicks > 0:
++			staggered += 1
++		var heavyOnHim: bool = false
++		for e in S.out.fx:
++			if e.type == "damage" and int(e.victim) == 0 and (String(e.kind) == "heavy" or String(e.weight) == "heavy"):
++				heavyOnHim = true
++		for e in S.out.fx:
++			if e.type == "cue" and String(e.kind) == "brawl_end" and endWhy == "":
++				endWhy = String(e.text)
++				brokeStunned = endWhy == "broke" and a.stunTicks > 0
++				brokeOnHeavy = endWhy == "broke" and heavyOnHim
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if endWhy != "":
++			break
++	ok(staggered > 0 and not brokeStunned and not brokeOnHeavy, "1: holding away against heavies (%d ticks staggered), the brawl never ends as \"broke\" on the tick a heavy lands on him, nor while he is staggered (it ended as \"%s\")" % [staggered, endWhy])
++	# 2: a shallow stick, inside the dead zone, toward an idle rival: nobody moves
++	var S2 := _mk(_bh(2.0), {"wellClose": "own"})
++	_step(S2, _in(0.0, true))
++	for t in range(15):
++		_step(S2)
++	var ax0: float = S2.fighters[0].x
++	var dx0: float = S2.fighters[1].x
++	for t in range(30):
++		_step(S2, _in(0.2), null)   # (inside the brawl: it lets go after a second without an attack, and free flight is today's)
++	var still: bool = S2.dirS.ex != null and DirBrawl.isBrawl(S2.dirS.ex) and S2.dirS.ex.branch == ""
++	ok(still and absf(SimWrap.sdx(ax0, S2.fighters[0].x)) < 0.5 and absf(SimWrap.sdx(dx0, S2.fighters[1].x)) < 0.5, "2: in the brawl, a stick inside the dead zone (0.2) toward an idle rival moves neither body (%.1f, %.1f)" % [absf(SimWrap.sdx(ax0, S2.fighters[0].x)), absf(SimWrap.sdx(dx0, S2.fighters[1].x))])
++	# 5: a lunge arrives and the brawl begins: the defender is not shoved by the arrival's carry
++	var S5 := _mk(_bh(6.0), {"wellClose": "own"})
++	var gi := _in()
++	gi.guard = true   # (his hands on the guard: the core's draw is not the arrival)
++	SimCore.step(S5, [_in(0.0, true), gi])
++	S5.out.fx.clear()
++	var d5 = S5.fighters[1]
++	var began: int = -1
++	var dAt: float = 0.0
++	var moved: float = 0.0
++	for t in range(60):
++		_step(S5, null, gi if began < 0 else _in())   # (his hands on the guard while the lunge flies; idle once the brawl begins)
++		if began < 0 and S5.dirS.ex != null and DirBrawl.isBrawl(S5.dirS.ex):
++			began = t
++			dAt = d5.x
++		elif began >= 0 and t <= began + 20:
++			moved = maxf(moved, absf(SimWrap.sdx(dAt, d5.x)))
++	ok(began >= 0 and moved < 0.5, "5: the brawl a lunge begins: the idle defender is not moved by the arrival (%.2f units over 20 ticks)" % moved)
++
++
 +func _t_hash() -> void:
 +	print("-- the hash")
 +	var hs: Array = []
@@ -712,6 +794,32 @@ index 0000000..4539950
 +	_t_snap()
 +	_t_latch()
 +	_t_own()
++	_t_review()
 +	_t_hash()
 +	print("WELL DIR: %d check(s), %d failed" % [checks, fails])
 +	quit(1 if fails > 0 else 0)
+diff --git a/sim/director/walk.gd b/sim/director/walk.gd
+index 709ce9a..48c33b0 100644
+--- a/sim/director/walk.gd
++++ b/sim/director/walk.gd
+@@ -84,14 +84,14 @@ static func landed(S: SimState, ex, f, o) -> void:
+ 	if step <= 0.0:
+ 		_s(f, W_N, _g(f, W_N) + 1)   # he's there: the lean still counts
+ 		return
+-	var A = ex.A
+ 	var n: int = int(DirBrawl.cfg().carryTicks)
+ 	var v: float = step / ((float(n) + 1.0) * 0.5 * SimConst.DT)
+-	var left: int = DirBrawl._g(A, DirBrawl.CARRY_N)
+-	var keep: float = float(DirBrawl._g(A, DirBrawl.CARRY_X)) / 16.0 * (float(left) / maxf(1.0, float(n)))
+-	DirBrawl._s(A, DirBrawl.CARRY_X, int(round((keep + side * v) * 16.0)))
+-	DirBrawl._s(A, DirBrawl.CARRY_Y, 0)
+-	DirBrawl._s(A, DirBrawl.CARRY_N, n)
++	for A in ([ex.A, ex.D] if DirBrawl.ownOn else [ex.A]):   # (own bodies, spike S2: each carries his own drift, so both are carried, whoever is in slot A)
++		var left: int = DirBrawl._g(A, DirBrawl.CARRY_N)
++		var keep: float = float(DirBrawl._g(A, DirBrawl.CARRY_X)) / 16.0 * (float(left) / maxf(1.0, float(n)))
++		DirBrawl._s(A, DirBrawl.CARRY_X, int(round((keep + side * v) * 16.0)))
++		DirBrawl._s(A, DirBrawl.CARRY_Y, 0)
++		DirBrawl._s(A, DirBrawl.CARRY_N, n)
+ 	_s(f, W_N, _g(f, W_N) + 1)
+ 
+ 

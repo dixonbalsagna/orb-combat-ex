@@ -1,0 +1,28 @@
+ok    the well off: the band as it was (8 bh middle, 14 far)
+ok    tier 1: 8 bh is inside the well: the middle
+ok    tier 1: 14 bh is on its edge (12.5 to 15.5): the middle, where today it is the far
+ok    tier 1: 17 bh is outside: the far kit
+ok    a tier 4 well reaches a tier 1 fighter from 19 bh; the tier 4 fighter, outside the small well, has the far kit
+ok    the close band stays the band's own
+ok    tier 1 from 6 bh: the snap is today's lunge, 9 ticks to the engage (today 9)
+ok    tier 1 from 9 bh: the snap is today's lunge, 13 ticks to the engage (today 13)
+ok    tier 1 from 12 bh: the snap is today's lunge, 16 ticks to the engage (today 16)
+ok    tier 1 from 15 bh, the well's edge: a snap (today a taunt), 20 ticks (the lunge's 4,000 with no 20-tick ceiling: 20)
+ok    tier 1 from 17 bh, outside: no snap, the far kit (a tap taunts), and the feed says so
+ok    tier 4 from 12 bh flies faster (11 ticks against 16; flat out 8068), never more than 3 bh a tick (at least 4 of flight)
+ok    the defender is free and unmoved by the snap while it flies (12 ticks)
+ok    DirRecoil.knocked and DirLaunch.knockBack set the latch: no draw until his own next input
+ok    own: holding away from an idle rival, the rival is not moved (0.0 units)
+ok    control, today's pair: the rival is dragged (42.5 units)
+ok    own: the gap opens as he walks (47 units); the brawl lets go as "idle" at tick 60 (a second without an attack, or 4.5 bh) and he walks on (-235 a second)
+ok    own: walking into an idle rival, he stops against him (gap 45) and the rival is not moved (0.0)
+ok    control, today's pair: the pair slides (42.5)
+ok    own: a stick pushed from rest moves his own body within 2 tick(s); the other is not moved (0.00)
+ok    own: holding away from a rival throwing lights, he breaks clear as "broke" 46 ticks after he turned away
+ok    control, today's pair: no "broke" (it ended as "")
+ok    own: both sticks at rest, the magnet draws them in (263 to 256)
+ok    own: with one stick held, no magnet: neither is drawn along the line
+ok    1: holding away against heavies (54 ticks staggered), the brawl never ends as "broke" on the tick a heavy lands on him, nor while he is staggered (it ended as "broke")
+ok    2: in the brawl, a stick inside the dead zone (0.2) toward an idle rival moves neither body (0.0, 0.0)
+ok    5: the brawl a lunge begins: the idle defender is not moved by the arrival (0.00 units over 20 ticks)
+ok    both switches on: two runs, one hash (10 readings)

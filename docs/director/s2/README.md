@@ -4,6 +4,39 @@ Encounter, 2026-11-15, sprint A1 (A-COMBAT-03; Simulation leads). This is the li
 - The design is `docs/ep/proposals/gravity-well-trial-design.html` (sections 5, 7, 8 and 11). The rulings are Game Design's five for S2, at the end of `docs/design/gravity-well-reading.md`.
 - **A throwaway build: nothing here lands.** Simulation joins the halves and writes the page.
 
+## Re-cut, v2 (2026-11-15): Simulation's review, five findings
+
+`s2-dir.patch` is the whole half again, on the same base plus s2-core.
+
+| # | Finding (Simulation's) | Fix |
+| ---: | :--- | :--- |
+| 1 | `_broke` ran at contact, before the blow's stagger or send: a heavy that should stagger, a guard break, a launcher or a blast ender could end the brawl as "broke" | Contact only **counts** the blow. The break is read in the tick (`_brokeTick`), only while he isn't stunned or staggered, not held in a grab, still locked in the brawl (not sent) and still holding away |
+| 2 | Own movement read the raw stick, but `pushesIn` and `_atRest` used the 0.3 dead zone: a shallow stick walked you into the rival and shoved him | **One threshold:** `_ownStick` applies `SimAct.awayDead` where the stick is read, so a stick inside it neither walks nor pushes |
+| 3 | The leash test was strict | Own walking takes over from leash − 0.01 |
+| 4 | In own mode the wall push's carry went to `ex.A`'s slot | `walk.gd`: in own mode both bodies carry it, each on his own slot. The pair mode is unchanged |
+| 5 | The arrival carry drove the attacker into the defender; `contactTick` shoved the defender about 3 units | A body is solid by what moves it: `pushesIn` also reads his own last step (`PMOVE`, the stick and the carry). The arrival carry stops the attacker against the defender, and nobody else is moved |
+
+**`well_dir_check`: 28 of 28,** with three new rows for the findings that show in play. **On the half without the fixes, all three fail:**
+- Row 1: it ended as "broke" on the tick a heavy landed on him.
+- Row 2: a 0.2 stick walked him 14.7 and shoved the rival 1.7.
+- Row 5: the arrival moved the idle defender 2.64, Simulation's "about 3".
+
+With the fixes:
+- Row 1: 54 ticks staggered, and no break on a heavy's tick or while staggered.
+- Row 2: 0.0 and 0.0.
+- Row 5: 0.00.
+
+Findings 3 and 4 are code-level, with no play row of their own.
+
+**Gates (v2):** records are in `docs/director/runs/4c284b84-s2/well-dir-v2/`.
+- The golden with both switches off reproduces GW1a's target byte for byte.
+- Simulation's `well_check`, `two_states` and `load_split` pass. Validate: 0 errors. The lint is clean. The two-fighter count is 365.
+- Director checks: 36 of 42. The same six as v1 fail, with the same lines on the base without this half.
+
+| Patch (v2) | sha1 | sha256 starts |
+| :--- | :--- | :--- |
+| `s2-dir.patch` | 53570393dddba6eae72d1aa2be5f8f2539e01923 | 5632bcf191dc |
+
 ## What it does (`s2-dir.patch`)
 
 1. **`DirBands.pressBand(S, A, D)`.** The close band stays the band's own. Outside it, with the well on, the press reads the middle band if A is inside D's well or on its edge (SimWell's zone; straight from the distance before the first write), else the far band. With the well off, it returns the band as it was.
@@ -57,7 +90,7 @@ On Simulation's base plus `s2-core.patch`: `git -c core.autocrlf=false apply s2-
 
 | Patch | Files | sha1 | sha256 starts |
 | :--- | :--- | :--- | :--- |
-| `s2-dir.patch` | `sim/director/{bands,brawl,exchange,launch,melee,recoil,stick}.gd`, `sim/director/tools/well_dir_check.gd` | f0a4f769fb02faf672334412a55806f3e029f897 | 9146ae5a00ac |
+| `s2-dir.patch` (v2: see the re-cut section at the top; v1 was f0a4f769) | `sim/director/{bands,brawl,exchange,launch,melee,recoil,stick,walk}.gd`, `sim/director/tools/well_dir_check.gd` | 53570393dddba6eae72d1aa2be5f8f2539e01923 | 5632bcf191dc |
 
 ## For Simulation, joining the halves
 
