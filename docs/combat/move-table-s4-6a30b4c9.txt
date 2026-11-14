@@ -1,0 +1,242 @@
+Spike S4 records (Combat, 2026-11-14): the move table read by Controls' coverage probe on the kept 9 November build (commit 6a30b4c9; homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/tree, copied, the source read only).
+fighters hash 138dbb1cefd2b682; timing.json sha256 598415119bca708f; seeds 5, 11, 23; dist 250. My run as Controls ran it reproduces docs/controls/runs/51b840f5/coverage-kept-6a30b4c9-reading.txt line for line.
+Second reading, the fighter's energy full: no cell changed. Third, dist 100: invalid, as the match opens in a clinch and 40 cells read silent.
+Fifteen cells added (in reach, in the air, pairs): read with my copy of the probe and four new layers. Their lines follow the 101.
+Each line: fighter | cell | Combat's status | the probe's reading.
+
+PROTAGONIST | none/X/tap                     | own        | OUTCOME tpl=brawl pieces=strike.edge_crescent hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush st=locked
+PROTAGONIST | none/X/mash                    | own        | OUTCOME tpl=brawl pieces=strike.edge_crescent/strike.jab/strike.knee_hook/strike.short_knee/strike.snap_round hit=39(light) ev=attack,blow[light/lunge],blow[light],brawl_start,launcher_close[lapsed],launcher_open[flurry],lunge_lig
+PROTAGONIST | none/X/hold                    | own        | OUTCOME tpl=brawl pieces=strike.backfist/strike.edge_crescent/strike.palm_heave/strike.palm_heel/strike.palm_rise/strike.palm_turn hit=23(light) ev=attack,blow[light/lunge],blow[light],brawl_end[idle],brawl_start,burst[x],exchange
+PROTAGONIST | none/Y/tap                     | own        | OUTCOME tpl=brawl pieces=strike.palm_push/strike.rising_palm hit=21(medium) ev=attack,blow[medium/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_heavy[lunge],rush,windup[y] st=locked
+PROTAGONIST | none/Y/mash                    | own        | OUTCOME tpl=brawl pieces=strike.axe_kick/strike.body_hook/strike.palm_push/strike.rising_knee/strike.rising_palm/strike.uppercut hit=75(medium) ev=attack,blow[medium/lunge],blow[medium],brawl_start,launcher_close[lapsed],launcher_
+PROTAGONIST | none/Y/hold                    | gap_alpha  | OUTCOME tpl=brawl pieces=strike.palm_push/strike.rising_palm/strike.spinning_back_kick hit=21(medium) ev=attack,blow[medium/lunge],blow[release],brawl_end[idle],brawl_start,exchange_end,lunge_heavy[lunge],rush,windup[y] st=locked
+PROTAGONIST | none/B/tap                     | own        | OUTCOME tpl=brawl pieces=strike.su_blade_fall/strike.su_edge_step/strike.su_turn hit=51(heavy) ev=attack,blow[heavy/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_heavy[lunge],rush,windup[b] st=locked
+PROTAGONIST | none/B/mash                    | own        | OUTCOME tpl=brawl pieces=strike.su_blade_jaw/strike.su_drive/strike.su_edge_step/strike.su_hammer_arm/strike.su_knee_legs hit=103(heavy) ev=attack,blow[heavy/lunge],blow[heavy],brawl_start,lunge_heavy[lunge],rush,windup[b] st=lock
+PROTAGONIST | none/B/hold                    | own        | OUTCOME tpl=brawl pieces=strike.su_blade_fall/strike.su_edge_step/strike.su_edge_unwind/strike.su_elbow_jaw/strike.su_turn hit=81(heavy,impact) ev=attack,blow[heavy/lunge],blow[release],brawl_end[knockback],brawl_start,exchange_en
+PROTAGONIST | none/A/tap                     | own        | OUTCOME ev=taunt_credit_quarter,taunt_end_finished,taunt_start
+PROTAGONIST | none/A/mash                    | by_design  | SAME AS none/A/tap
+PROTAGONIST | none/A/hold                    | by_design  | SAME AS none/A/tap
+PROTAGONIST | LB/X/tap                       | by_design  | SAME MOVE AS none/X/tap (the same template, pieces and hit kinds; also stance_check)
+PROTAGONIST | LB/X/mash                      | by_design  | SAME MOVE AS none/X/mash (the same template, pieces and hit kinds; also stance_check)
+PROTAGONIST | LB/X/hold                      | by_design  | SAME MOVE AS none/X/hold (the same template, pieces and hit kinds; also stance_check)
+PROTAGONIST | LB/Y/tap                       | by_design  | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also stance_push)
+PROTAGONIST | LB/Y/mash                      | own        | OUTCOME tpl=brawl pieces=strike.palm_push/strike.rising_knee/strike.rising_palm/strike.uppercut hit=43(medium) ev=attack,blow[medium/lunge],blow[medium],brawl_start,lunge_heavy[lunge],miss[reach/y],rush,stance_push,windup[y] st=lo
+PROTAGONIST | LB/Y/hold                      | by_design  | SAME MOVE AS none/Y/hold (the same template, pieces and hit kinds; also stance_push)
+PROTAGONIST | LB/B/tap                       | proposed   | SAME AS LB/Y/tap
+PROTAGONIST | LB/B/mash                      | proposed   | SAME AS LB/Y/mash
+PROTAGONIST | LB/B/hold                      | proposed   | SAME AS LB/Y/hold
+PROTAGONIST | LB/A/tap                       | gap_alpha  | NOTHING
+PROTAGONIST | LB/A/mash                      | gap_alpha  | NOTHING
+PROTAGONIST | LB/A/hold                      | gap_alpha  | NOTHING
+PROTAGONIST | RB/X/tap                       | own        | OUTCOME hit=14(blast) ev=blast_windup,shot_fire,shot_hit
+PROTAGONIST | RB/X/mash                      | own        | OUTCOME hit=115(blast,impact) ev=barrage_ender,blast_windup,shot_fire,shot_hit
+PROTAGONIST | RB/X/hold                      | gap_alpha  | SAME AS RB/X/tap
+PROTAGONIST | RB/Y/tap                       | own        | OUTCOME hit=25(blast) ev=blast_charge,shot_fire,shot_hit
+PROTAGONIST | RB/Y/mash                      | own        | OUTCOME hit=117(blast,impact) ev=barrage_ender,blast_charge,shot_fire,shot_hit
+PROTAGONIST | RB/Y/hold                      | own        | OUTCOME hit=62(blast,impact) ev=blast_charge,blast_full,shot_fire,shot_hit
+PROTAGONIST | RB/B/tap                       | own        | OUTCOME hit=62(blast,impact) ev=driver_charge,driver_fire,shot_fire,shot_hit
+PROTAGONIST | RB/B/mash                      | gap_alpha  | SAME AS RB/B/tap
+PROTAGONIST | RB/B/hold                      | own        | OUTCOME hit=77(blast,impact) ev=charge_stage,driver_charge,driver_fire,shot_fire,shot_hit
+PROTAGONIST | RB/A/tap                       | own        | OUTCOME ev=mine_lay,shot_fire
+PROTAGONIST | RB/A/mash                      | own        | OUTCOME ev=mine_lay,mine_refused,shot_fire
+PROTAGONIST | RB/A/hold                      | gap_alpha  | SAME AS RB/A/tap
+PROTAGONIST | RT/X/tap                       | by_design  | SAME AS none/X/tap
+PROTAGONIST | RT/X/mash                      | by_design  | SAME AS none/X/mash
+PROTAGONIST | RT/X/hold                      | by_design  | SAME AS none/X/hold
+PROTAGONIST | RT/Y/tap                       | by_design  | SAME AS none/Y/tap
+PROTAGONIST | RT/Y/mash                      | by_design  | SAME AS none/Y/mash
+PROTAGONIST | RT/Y/hold                      | by_design  | SAME AS none/Y/hold
+PROTAGONIST | RT/B/tap                       | own        | OUTCOME tpl=signature ev=attack,beam_charge,beam_fire,beam_window st=locked
+PROTAGONIST | RT/B/mash                      | by_design  | SAME AS RT/B/tap
+PROTAGONIST | RT/B/hold                      | by_design  | SAME AS RT/B/tap
+PROTAGONIST | RT/A/tap                       | by_design  | SAME AS none/A/tap
+PROTAGONIST | RT/A/mash                      | by_design  | SAME AS none/A/tap
+PROTAGONIST | RT/A/hold                      | by_design  | SAME AS none/A/tap
+PROTAGONIST | LT/X/tap                       | proposed   | SAME AS none/X/tap
+PROTAGONIST | LT/X/mash                      | proposed   | SAME AS none/X/mash
+PROTAGONIST | LT/X/hold                      | proposed   | SAME AS none/X/hold
+PROTAGONIST | LT/Y/tap                       | proposed   | SAME AS none/Y/tap
+PROTAGONIST | LT/Y/mash                      | proposed   | SAME AS none/Y/mash
+PROTAGONIST | LT/Y/hold                      | proposed   | SAME AS none/Y/hold
+PROTAGONIST | LT/B/tap                       | proposed   | SAME AS none/B/tap
+PROTAGONIST | LT/B/mash                      | proposed   | SAME AS none/B/mash
+PROTAGONIST | LT/B/hold                      | proposed   | SAME AS none/B/hold
+PROTAGONIST | LT/A/tap                       | proposed   | SAME AS none/A/tap
+PROTAGONIST | LT/A/mash                      | proposed   | SAME AS none/A/tap
+PROTAGONIST | LT/A/hold                      | proposed   | SAME AS none/A/tap
+PROTAGONIST | none/stick/flick/up            | own        | OUTCOME tpl=brawl pieces=strike.flick_rise hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
+PROTAGONIST | none/stick/flick/down          | own        | OUTCOME tpl=brawl pieces=strike.spike_heel hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+PROTAGONIST | none/stick/flick/toward        | own        | OUTCOME tpl=brawl pieces=strike.heel_thrust hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
+PROTAGONIST | none/stick/flick/away          | own        | OUTCOME tpl=brawl pieces=strike.wheel_blade hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
+PROTAGONIST | none/stick/flick/downAir       | gap_probe  | SAME AS none/stick/flick/down
+PROTAGONIST | none/stick/hold/up             | own        | OUTCOME tpl=brawl pieces=strike.flick_rise/strike.lifting_heave hit=37(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[up/skyward],stick
+PROTAGONIST | none/stick/hold/down           | own        | OUTCOME tpl=brawl pieces=strike.plunge_blade/strike.spike_heel hit=76(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],
+PROTAGONIST | none/stick/hold/toward         | own        | OUTCOME tpl=brawl pieces=strike.drive_palm/strike.heel_thrust hit=55(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[toward/acros
+PROTAGONIST | none/stick/hold/away           | own        | OUTCOME tpl=brawl pieces=strike.turning_edge/strike.wheel_blade hit=55(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[away/acros
+PROTAGONIST | LB/stick/flick/up              | own        | OUTCOME tpl=brawl pieces=strike.palm_rise/strike.rising_elbow hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
+PROTAGONIST | LB/stick/flick/down            | own        | OUTCOME tpl=brawl pieces=strike.knee_hook/strike.short_knee hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+PROTAGONIST | LB/stick/flick/toward          | own        | OUTCOME tpl=brawl pieces=strike.palm_heel/strike.shoulder_check hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
+PROTAGONIST | LB/stick/flick/away            | own        | OUTCOME tpl=brawl pieces=strike.hook/strike.short_elbow hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
+PROTAGONIST | LB/stick/hold/up               | own        | OUTCOME tpl=brawl pieces=strike.lifting_heave/strike.palm_rise/strike.rising_elbow hit=37(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_sen
+PROTAGONIST | LB/stick/hold/down             | own        | OUTCOME tpl=brawl pieces=strike.knee_hook/strike.plunge_blade/strike.short_knee hit=76(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full
+PROTAGONIST | LB/stick/hold/toward           | own        | OUTCOME tpl=brawl pieces=strike.drive_palm/strike.palm_heel/strike.shoulder_check hit=55(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_fu
+PROTAGONIST | LB/stick/hold/away             | own        | OUTCOME tpl=brawl pieces=strike.hook/strike.short_elbow/strike.turning_edge hit=55(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_sen
+PROTAGONIST | LT/stick/flick/up              | own        | OUTCOME tpl=brawl pieces=strike.palm_lift/strike.rising_palm hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
+PROTAGONIST | LT/stick/flick/down            | own        | OUTCOME tpl=brawl pieces=strike.fist_chop/strike.overhand hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+PROTAGONIST | LT/stick/flick/toward          | own        | OUTCOME tpl=brawl pieces=strike.body_hook/strike.palm_push hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
+PROTAGONIST | LT/stick/flick/away            | own        | OUTCOME tpl=brawl pieces=strike.back_chop/strike.crescent_kick hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
+PROTAGONIST | LT/stick/hold/up               | own        | OUTCOME tpl=brawl pieces=strike.lifting_heave/strike.palm_lift/strike.rising_palm hit=37(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send
+PROTAGONIST | LT/stick/hold/down             | own        | OUTCOME tpl=brawl pieces=strike.fist_chop/strike.overhand/strike.plunge_blade hit=76(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_s
+PROTAGONIST | LT/stick/hold/toward           | own        | OUTCOME tpl=brawl pieces=strike.body_hook/strike.drive_palm/strike.palm_push hit=55(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_se
+PROTAGONIST | LT/stick/hold/away             | own        | OUTCOME tpl=brawl pieces=strike.back_chop/strike.crescent_kick/strike.turning_edge hit=55(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_f
+PROTAGONIST | RB/stick/flick/up              | own        | OUTCOME hit=22(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[up]
+PROTAGONIST | RB/stick/flick/down            | own        | OUTCOME hit=22(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[down]
+PROTAGONIST | RB/stick/flick/toward          | own        | OUTCOME hit=22(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[toward]
+PROTAGONIST | RB/stick/flick/away            | own        | OUTCOME hit=22(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[away]
+PROTAGONIST | RB/stick/hold/up               | by_design  | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[up])
+PROTAGONIST | RB/stick/hold/down             | by_design  | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[down])
+PROTAGONIST | RB/stick/hold/toward           | by_design  | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,stick_stage,stick_start[toward])
+PROTAGONIST | RB/stick/hold/away             | by_design  | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[away])
+PROTAGONIST | RT/stick/flick/toward          | gap_alpha  | REFUSED charging
+PROTAGONIST | RT/stick/hold/toward           | gap_alpha  | REFUSED charging
+PROTAGONIST | pair/X+Y (lift)                | proposed   | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also no new event)
+PROTAGONIST | pair/LT+RT (transform chord)   | own        | OUTCOME act=dodgeTick
+PROTAGONIST | pair/LB+LT (vanish)            | own        | OUTCOME ev=kick act=dodgeTick
+PROTAGONIST | pair/LB+RB (the lay) held      | own        | OUTCOME act=guardSince,mode
+PROTAGONIST | pair/LT+RB (the kite) held     | own        | OUTCOME act=dodgeTick,mode
+PROTAGONIST | pair/B+X on one tick (chord)   | by_design  | SAME MOVE AS none/B/tap (the same template, pieces and hit kinds; also no new event)
+COUNT PROTAGONIST: 101 cells; 53 own outcomes, 32 same as an earlier cell, 11 the same move with another side effect, 2 refused (said), 3 nothing (silent); no outcome 5, repeats 32 (strict) or 43 (same move)
+RIVAL       | none/X/tap                     | own        | OUTCOME tpl=brawl pieces=strike.cross hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush st=locked
+RIVAL       | none/X/mash                    | own        | OUTCOME tpl=brawl pieces=strike.cross/strike.cross_fist/strike.forearm_drop/strike.gut_rise/strike.hook/strike.jab/strike.knee_hook hit=42(light) ev=attack,blow[light/lunge],blow[light],brawl_start,launcher_close[lapsed],launcher_
+RIVAL       | none/X/hold                    | own        | OUTCOME tpl=brawl pieces=strike.cross/strike.cross_fist/strike.jab/strike.jab_fist/strike.short_uppercut/strike.spear_fist hit=25(light) ev=attack,blow[light/lunge],blow[light],brawl_end[idle],brawl_start,burst[x],exchange_end,lun
+RIVAL       | none/Y/tap                     | own        | OUTCOME tpl=brawl pieces=strike.rising_knee hit=23(medium) ev=attack,blow[medium/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_heavy[lunge],rush,windup[y] st=locked
+RIVAL       | none/Y/mash                    | own        | OUTCOME tpl=brawl pieces=strike.dropping_elbow/strike.fist_rise/strike.hammer/strike.headbutt/strike.rising_knee hit=81(medium) ev=attack,blow[medium/lunge],blow[medium],brawl_start,launcher_close[lapsed],launcher_open[flurry],lun
+RIVAL       | none/Y/hold                    | gap_alpha  | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also blow[release])
+RIVAL       | none/B/tap                     | own        | OUTCOME tpl=brawl pieces=strike.su_fist_unwind/strike.su_heel/strike.su_ram hit=55(heavy) ev=attack,blow[heavy/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_heavy[lunge],rush,windup[b] st=locked
+RIVAL       | none/B/mash                    | own        | OUTCOME tpl=brawl pieces=strike.su_hammer/strike.su_heel/strike.su_knee/strike.su_ram hit=110(heavy) ev=attack,blow[heavy/lunge],blow[heavy],brawl_start,lunge_heavy[lunge],rush,windup[b] st=locked
+RIVAL       | none/B/hold                    | own        | OUTCOME tpl=brawl pieces=strike.su_fist_unwind/strike.su_heel/strike.su_hook/strike.su_plate/strike.su_ram hit=87(heavy,impact) ev=attack,blow[heavy/lunge],blow[release],brawl_end[knockback],brawl_start,exchange_end,launch_plan,lu
+RIVAL       | none/A/tap                     | own        | OUTCOME ev=taunt_credit_quarter,taunt_end_finished,taunt_start
+RIVAL       | none/A/mash                    | by_design  | SAME AS none/A/tap
+RIVAL       | none/A/hold                    | by_design  | SAME AS none/A/tap
+RIVAL       | LB/X/tap                       | by_design  | SAME MOVE AS none/X/tap (the same template, pieces and hit kinds; also stance_check)
+RIVAL       | LB/X/mash                      | by_design  | SAME MOVE AS none/X/mash (the same template, pieces and hit kinds; also stance_check)
+RIVAL       | LB/X/hold                      | by_design  | SAME MOVE AS none/X/hold (the same template, pieces and hit kinds; also stance_check)
+RIVAL       | LB/Y/tap                       | by_design  | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also stance_push)
+RIVAL       | LB/Y/mash                      | own        | OUTCOME tpl=brawl pieces=strike.driving_knee/strike.fist_rise/strike.headbutt/strike.rising_knee/strike.uppercut hit=46(medium) ev=attack,blow[medium/lunge],blow[medium],brawl_start,lunge_heavy[lunge],miss[reach/y],rush,stance_pus
+RIVAL       | LB/Y/hold                      | by_design  | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also blow[release],stance_push)
+RIVAL       | LB/B/tap                       | proposed   | SAME AS LB/Y/tap
+RIVAL       | LB/B/mash                      | proposed   | SAME AS LB/Y/mash
+RIVAL       | LB/B/hold                      | proposed   | SAME AS LB/Y/hold
+RIVAL       | LB/A/tap                       | gap_alpha  | NOTHING
+RIVAL       | LB/A/mash                      | gap_alpha  | NOTHING
+RIVAL       | LB/A/hold                      | gap_alpha  | NOTHING
+RIVAL       | RB/X/tap                       | own        | OUTCOME hit=15(blast) ev=blast_windup,shot_fire,shot_hit
+RIVAL       | RB/X/mash                      | own        | OUTCOME hit=123(blast,impact) ev=barrage_ender,blast_windup,shot_fire,shot_hit
+RIVAL       | RB/X/hold                      | gap_alpha  | SAME AS RB/X/tap
+RIVAL       | RB/Y/tap                       | own        | OUTCOME hit=27(blast) ev=blast_charge,shot_fire,shot_hit
+RIVAL       | RB/Y/mash                      | own        | OUTCOME hit=125(blast,impact) ev=barrage_ender,blast_charge,shot_fire,shot_hit
+RIVAL       | RB/Y/hold                      | own        | OUTCOME hit=66(blast,impact) ev=blast_charge,blast_full,shot_fire,shot_hit
+RIVAL       | RB/B/tap                       | own        | OUTCOME hit=66(blast,impact) ev=driver_charge,driver_fire,shot_fire,shot_hit
+RIVAL       | RB/B/mash                      | gap_alpha  | SAME AS RB/B/tap
+RIVAL       | RB/B/hold                      | own        | OUTCOME hit=82(blast,impact) ev=charge_stage,driver_charge,driver_fire,shot_fire,shot_hit
+RIVAL       | RB/A/tap                       | own        | OUTCOME ev=mine_lay,shot_fire
+RIVAL       | RB/A/mash                      | own        | OUTCOME ev=mine_lay,mine_refused,shot_fire
+RIVAL       | RB/A/hold                      | gap_alpha  | SAME AS RB/A/tap
+RIVAL       | RT/X/tap                       | by_design  | SAME AS none/X/tap
+RIVAL       | RT/X/mash                      | by_design  | SAME AS none/X/mash
+RIVAL       | RT/X/hold                      | by_design  | SAME AS none/X/hold
+RIVAL       | RT/Y/tap                       | by_design  | SAME AS none/Y/tap
+RIVAL       | RT/Y/mash                      | by_design  | SAME AS none/Y/mash
+RIVAL       | RT/Y/hold                      | by_design  | SAME AS none/Y/hold
+RIVAL       | RT/B/tap                       | own        | OUTCOME tpl=signature ev=attack,beam_charge,beam_fire,beam_window st=locked
+RIVAL       | RT/B/mash                      | by_design  | SAME AS RT/B/tap
+RIVAL       | RT/B/hold                      | by_design  | SAME AS RT/B/tap
+RIVAL       | RT/A/tap                       | by_design  | SAME AS none/A/tap
+RIVAL       | RT/A/mash                      | by_design  | SAME AS none/A/tap
+RIVAL       | RT/A/hold                      | by_design  | SAME AS none/A/tap
+RIVAL       | LT/X/tap                       | proposed   | SAME AS none/X/tap
+RIVAL       | LT/X/mash                      | proposed   | SAME AS none/X/mash
+RIVAL       | LT/X/hold                      | proposed   | SAME AS none/X/hold
+RIVAL       | LT/Y/tap                       | proposed   | SAME AS none/Y/tap
+RIVAL       | LT/Y/mash                      | proposed   | SAME AS none/Y/mash
+RIVAL       | LT/Y/hold                      | proposed   | SAME AS none/Y/hold
+RIVAL       | LT/B/tap                       | proposed   | SAME AS none/B/tap
+RIVAL       | LT/B/mash                      | proposed   | SAME AS none/B/mash
+RIVAL       | LT/B/hold                      | proposed   | SAME AS none/B/hold
+RIVAL       | LT/A/tap                       | proposed   | SAME AS none/A/tap
+RIVAL       | LT/A/mash                      | proposed   | SAME AS none/A/tap
+RIVAL       | LT/A/hold                      | proposed   | SAME AS none/A/tap
+RIVAL       | none/stick/flick/up            | own        | OUTCOME tpl=brawl pieces=strike.lift_fist hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
+RIVAL       | none/stick/flick/down          | own        | OUTCOME tpl=brawl pieces=strike.spike_knee hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+RIVAL       | none/stick/flick/toward        | own        | OUTCOME tpl=brawl pieces=strike.short_ram hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
+RIVAL       | none/stick/flick/away          | own        | OUTCOME tpl=brawl pieces=strike.swing_plate hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
+RIVAL       | none/stick/flick/downAir       | gap_probe  | SAME AS none/stick/flick/down
+RIVAL       | none/stick/hold/up             | own        | OUTCOME tpl=brawl pieces=strike.knee_launch/strike.lift_fist hit=40(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[up/skyward],stick_re
+RIVAL       | none/stick/hold/down           | own        | OUTCOME tpl=brawl pieces=strike.hammer_drop/strike.spike_knee hit=79(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[down/bury],s
+RIVAL       | none/stick/hold/toward         | own        | OUTCOME tpl=brawl pieces=strike.plate_ram/strike.short_ram hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[toward/across],
+RIVAL       | none/stick/hold/away           | own        | OUTCOME tpl=brawl pieces=strike.swing_elbow/strike.swing_plate hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[away/across
+RIVAL       | LB/stick/flick/up              | own        | OUTCOME tpl=brawl pieces=strike.rising_elbow/strike.short_uppercut hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
+RIVAL       | LB/stick/flick/down            | own        | OUTCOME tpl=brawl pieces=strike.low_thrust/strike.short_knee hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+RIVAL       | LB/stick/flick/toward          | own        | OUTCOME tpl=brawl pieces=strike.shoulder_check/strike.spear_hand hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
+RIVAL       | LB/stick/flick/away            | own        | OUTCOME tpl=brawl pieces=strike.cross/strike.front_kick hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
+RIVAL       | LB/stick/hold/up               | own        | OUTCOME tpl=brawl pieces=strike.knee_launch/strike.rising_elbow/strike.short_uppercut hit=40(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_
+RIVAL       | LB/stick/hold/down             | own        | OUTCOME tpl=brawl pieces=strike.hammer_drop/strike.low_thrust/strike.short_knee hit=79(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full
+RIVAL       | LB/stick/hold/toward           | own        | OUTCOME tpl=brawl pieces=strike.plate_ram/strike.shoulder_check/strike.spear_hand hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_fu
+RIVAL       | LB/stick/hold/away             | own        | OUTCOME tpl=brawl pieces=strike.cross/strike.front_kick/strike.swing_elbow hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send
+RIVAL       | LT/stick/flick/up              | own        | OUTCOME tpl=brawl pieces=strike.knee_lift/strike.uppercut hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[up],stick_start[up] st=locked
+RIVAL       | LT/stick/flick/down            | own        | OUTCOME tpl=brawl pieces=strike.elbow_drop/strike.hammer hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+RIVAL       | LT/stick/flick/toward          | own        | OUTCOME tpl=brawl pieces=strike.driving_knee/strike.spear_hand hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[toward],stick_start[toward] st=locked
+RIVAL       | LT/stick/flick/away            | own        | OUTCOME tpl=brawl pieces=strike.fist_sweep/strike.hook hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[away],stick_start[away] st=locked
+RIVAL       | LT/stick/hold/up               | own        | OUTCOME tpl=brawl pieces=strike.knee_launch/strike.knee_lift/strike.uppercut hit=40(light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[up/s
+RIVAL       | LT/stick/hold/down             | own        | OUTCOME tpl=brawl pieces=strike.elbow_drop/strike.hammer/strike.hammer_drop hit=79(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_sen
+RIVAL       | LT/stick/hold/toward           | own        | OUTCOME tpl=brawl pieces=strike.driving_knee/strike.plate_ram/strike.spear_hand hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full
+RIVAL       | LT/stick/hold/away             | own        | OUTCOME tpl=brawl pieces=strike.fist_sweep/strike.hook/strike.swing_elbow hit=58(impact,light) ev=attack,blow[light/lunge],brawl_end[launch],brawl_start,chase_ready,exchange_end,launch_plan,lunge_light[lunge],rush,stick_full_send[
+RIVAL       | RB/stick/flick/up              | own        | OUTCOME hit=23(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[up]
+RIVAL       | RB/stick/flick/down            | own        | OUTCOME hit=23(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[down]
+RIVAL       | RB/stick/flick/toward          | own        | OUTCOME hit=23(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[toward]
+RIVAL       | RB/stick/flick/away            | own        | OUTCOME hit=23(blast) ev=beam_aim,blast_charge,shot_fire,shot_hit,stick_release[beam],stick_start[away]
+RIVAL       | RB/stick/hold/up               | by_design  | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[up])
+RIVAL       | RB/stick/hold/down             | by_design  | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[down])
+RIVAL       | RB/stick/hold/toward           | by_design  | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,stick_stage,stick_start[toward])
+RIVAL       | RB/stick/hold/away             | by_design  | SAME MOVE AS RT/B/tap (the same template, pieces and hit kinds; also beam_aim,beam_stage,beam_wide,exchange_end,stick_stage,stick_start[away])
+RIVAL       | RT/stick/flick/toward          | gap_alpha  | REFUSED charging
+RIVAL       | RT/stick/hold/toward           | gap_alpha  | REFUSED charging
+RIVAL       | pair/X+Y (lift)                | proposed   | SAME MOVE AS none/Y/tap (the same template, pieces and hit kinds; also no new event)
+RIVAL       | pair/LT+RT (transform chord)   | own        | OUTCOME act=dodgeTick
+RIVAL       | pair/LB+LT (vanish)            | own        | OUTCOME ev=kick act=dodgeTick
+RIVAL       | pair/LB+RB (the lay) held      | own        | OUTCOME act=guardSince,mode
+RIVAL       | pair/LT+RB (the kite) held     | own        | OUTCOME act=dodgeTick,mode
+RIVAL       | pair/B+X on one tick (chord)   | by_design  | SAME MOVE AS none/B/tap (the same template, pieces and hit kinds; also no new event)
+COUNT RIVAL: 101 cells; 52 own outcomes, 32 same as an earlier cell, 12 the same move with another side effect, 2 refused (said), 3 nothing (silent); no outcome 5, repeats 32 (strict) or 44 (same move)
+PROTAGONIST | brawl/A/tap                    | own        | OUTCOME hit=9() ev=grapple_catch[tell],grapple_clinch,grapple_end[time],grapple_pulse
+PROTAGONIST | brawl/A/mash                   | own        | OUTCOME hit=9() ev=grapple_catch[tell],grapple_clinch,grapple_end[time],grapple_pulse,grapple_pummel[void],grapple_stray
+PROTAGONIST | brawl/A/hold                   | gap_alpha  | SAME AS brawl/A/tap
+PROTAGONIST | brawl/X/tap                    | own        | OUTCOME pieces=strike.snap_round hit=17(light) ev=blow[light]
+PROTAGONIST | brawlLT/X/tap                  | gap_alpha  | SAME AS brawl/X/tap
+PROTAGONIST | brawlLT/Y/tap                  | gap_alpha  | OUTCOME pieces=strike.palm_push hit=30(medium) ev=blow[medium],windup[y]
+PROTAGONIST | brawlLT/B/tap                  | proposed   | OUTCOME pieces=strike.su_blade_fall/strike.su_knee_legs/strike.su_palm_heave hit=60(heavy) ev=blow[heavy],windup[b]
+PROTAGONIST | brawlLB/A/tap                  | gap_alpha  | OUTCOME hit=9()
+PROTAGONIST | brawlLB/B/tap                  | proposed   | SAME MOVE AS brawlLT/Y/tap (the same template, pieces and hit kinds; also stance_push)
+PROTAGONIST | air/stick/flick/down           | own        | OUTCOME tpl=brawl pieces=strike.spike_heel hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+PROTAGONIST | air/A/tap                      | proposed   | OUTCOME ev=taunt_credit_quarter,taunt_end_finished,taunt_start
+PROTAGONIST | air/X/tap                      | own        | OUTCOME tpl=brawl pieces=strike.edge_crescent hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush st=locked
+PROTAGONIST | none/RT/hold (charge up)       | own        | OUTCOME st=charging
+PROTAGONIST | none/LT/tap (dodge)            | own        | OUTCOME act=dodgeTick
+PROTAGONIST | pair/LB+RB+A (snare)           | proposed   | OUTCOME act=guardSince,mode
+COUNT PROTAGONIST: 15 cells; 12 own outcomes, 2 same as an earlier cell, 1 the same move with another side effect, 0 refused (said), 0 nothing (silent); no outcome 0, repeats 2 (strict) or 3 (same move)
+RIVAL       | brawl/A/tap                    | own        | OUTCOME hit=9() ev=grapple_catch[tell],grapple_clinch,grapple_end[time],grapple_pulse
+RIVAL       | brawl/A/mash                   | own        | OUTCOME hit=9() ev=grapple_catch[tell],grapple_clinch,grapple_end[time],grapple_pulse,grapple_pummel[void],grapple_stray
+RIVAL       | brawl/A/hold                   | gap_alpha  | SAME AS brawl/A/tap
+RIVAL       | brawl/X/tap                    | own        | OUTCOME pieces=strike.forearm_drop hit=18(light) ev=blow[light]
+RIVAL       | brawlLT/X/tap                  | gap_alpha  | SAME AS brawl/X/tap
+RIVAL       | brawlLT/Y/tap                  | gap_alpha  | OUTCOME pieces=strike.uppercut hit=32(medium) ev=blow[medium],phrase_done[r08/open],windup[y]
+RIVAL       | brawlLT/B/tap                  | proposed   | OUTCOME pieces=strike.su_edge_legs/strike.su_fist_unwind/strike.su_hook hit=64(heavy) ev=blow[heavy],windup[b]
+RIVAL       | brawlLB/A/tap                  | gap_alpha  | OUTCOME hit=9()
+RIVAL       | brawlLB/B/tap                  | proposed   | SAME MOVE AS brawlLT/Y/tap (the same template, pieces and hit kinds; also stance_push)
+RIVAL       | air/stick/flick/down           | own        | OUTCOME tpl=brawl pieces=strike.spike_knee hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush,stick_hit[down],stick_start[down] st=locked
+RIVAL       | air/A/tap                      | proposed   | OUTCOME ev=taunt_credit_quarter,taunt_end_finished,taunt_start
+RIVAL       | air/X/tap                      | own        | OUTCOME tpl=brawl pieces=strike.cross hit=9(light) ev=attack,blow[light/lunge],brawl_end[idle],brawl_start,exchange_end,lunge_light[lunge],rush st=locked
+RIVAL       | none/RT/hold (charge up)       | own        | OUTCOME st=charging
+RIVAL       | none/LT/tap (dodge)            | own        | OUTCOME act=dodgeTick
+RIVAL       | pair/LB+RB+A (snare)           | proposed   | OUTCOME act=guardSince,mode
+COUNT RIVAL: 15 cells; 12 own outcomes, 2 same as an earlier cell, 1 the same move with another side effect, 0 refused (said), 0 nothing (silent); no outcome 0, repeats 2 (strict) or 3 (same move)
