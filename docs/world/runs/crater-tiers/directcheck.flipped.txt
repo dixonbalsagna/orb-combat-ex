@@ -1,0 +1,32 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+== shots meet buildings ==
+  house maxhp 127 floors 2 h 340 | tower maxhp 1294 floors 12 h 1725
+  bolt     to level the house by tier:  t1 34 (first shows at 11)  t2 17 (first shows at 6)  t3 9 (first shows at 3)  t4 6 (first shows at 2)
+  shard    to level the house by tier:  t1 34 (first shows at 11)  t2 17 (first shows at 6)  t3 9 (first shows at 3)  t4 6 (first shows at 2)
+  arc      to level the house by tier:  t1 10 (first shows at 4)  t2 5 (first shows at 2)  t3 3 (first shows at 1)  t4 2 (first shows at 1)
+  lob      to level the house by tier:  t1 5 (first shows at 2)  t2 3 (first shows at 1)  t3 2 (first shows at 1)  t4 1 (first shows at 1)
+  charged  to level the house by tier:  t1 3 (first shows at 1)  t2 2 (first shows at 1)  t3 1 (first shows at 1)  t4 1 (first shows at 1)
+  bolt     at 15% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 12/12  (t1 stands after 60)  t4 standing 12/12  (t4 stands after 60)
+  bolt     at 50% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 12/12  (t1 stands after 60)  t4 standing 12/12  (t4 stands after 60)
+  bolt     at 90% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 12/12  (t1 stands after 60)  t4 standing 12/12  (t4 stands after 60)
+  charged  at 15% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 12/12  (t1 stands after 60)  t4 standing 12/12  (t4 levelled at 10)
+  charged  at 50% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 12/12  (t1 stands after 60)  t4 standing 10/12  (t4 levelled at 10)
+  charged  at 90% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 10/12  (t1 stands after 60)  (t4 stands after 60)
+  lob      at 15% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 12/12  (t1 stands after 60)  t4 standing 12/12  (t4 levelled at 17)
+  lob      at 50% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 12/12  (t1 stands after 60)  t4 standing 12/12  (t4 stands after 60)
+  lob      at 90% of a 12-floor tower, shots to level / floors standing after 10 shots:  t1 standing 12/12  (t1 stands after 60)  (t4 stands after 60)
+  ok    a charged shot flying over a house's roof does nothing to it
+  ok    and one at its wall does (hp 77 of 127, wear pool -1)
+  shot_end events: building building
+  tower (1294 hp), tier-1 bolts before the first shows: 108 (wear pool then -1)
+  burst   0 above the ground, crater by kind (tier 1):  bolt R55 d12 |  charged R143 d31 |  mine R143 d31 |
+  burst 150 above the ground, crater by kind (tier 1):  bolt R39 d9 |  charged R101 d22 |  mine R117 d26 |
+  burst 300 above the ground, crater by kind (tier 1):  bolt none |  charged none |  mine R83 d18 |
+  burst 450 above the ground, crater by kind (tier 1):  bolt none |  charged none |  mine none |
+  ground mine tier 1: R143 depth 31 (257 us)
+  ground mine tier 4: R429 depth 94 (472 us)
+  a field of 12 ground mines 110 units apart: 12 craters recorded, deepest ground -36 below base, 2268 us in all
+  a tier-1 ground mine at a tower's foot: tower 1264 of 1294 hp
+  and at a house: stands (92 of 127 hp)
+DIRECT: 0 check(s) failed

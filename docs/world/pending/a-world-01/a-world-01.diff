@@ -5,7 +5,7 @@
 +extends RefCounted
 +## The world a match plays on when its setup names none (A-WORLD-01, A-WORLD-14; docs/world/world-default.md; data/biomes/world.json). One module, read by the sim (SimCore.beginMatch, for headless matches and tests) and by the
 +## host (the menu's planet_part, which makes the planet ahead while the player decides), so the two always agree.
-+##   mode "arena":  a setup with no planet key plays the old hand-made arena, as it always has (shipped until the golden window GW1a).
++##   mode "arena":  a setup with no planet key plays the old hand-made arena, as it always has (shipped until the golden window GW1b).
 +##   mode "planet": a setup with no planet key plays the round planet: the one fixed planet (data `fixed`: the planet Orb's build plays), or, for a quick match, a planet drawn from the match's seed out of `random.pool`.
 +## An explicit key always wins: a setup with a `planet` plays that planet; a setup with `world: "arena"` plays the hand-made arena (what the tests that need it say). The first match of a newcomer and the tests use the fixed planet
 +## (`first: true`). The drawn planet is a pure function of the match's seed (SimRng.keyed, no stream), so the same seed plays the same planet on every machine; its seed is in the setup and so in the replay and the report.
@@ -175,9 +175,9 @@
 +	var shipped: String = WorldDefault.mode()
 +	ok(shipped == "arena" or shipped == "planet", "the data's mode is arena or planet (it is %s)" % shipped)
 +	if shipped == "arena":
-+		ok(WorldDefault.apply({}, 5).is_empty() and WorldDefault.part(5).is_empty(), "the mode is arena (until GW1a): a setup with no planet key plays the hand-made arena, and nothing is added to it")
++		ok(WorldDefault.apply({}, 5).is_empty() and WorldDefault.part(5).is_empty(), "the mode is arena (until GW1b): a setup with no planet key plays the hand-made arena, and nothing is added to it")
 +	else:
-+		ok(int(WorldDefault.apply({}, 5, true).get("planet", -1)) == 7, "the mode is planet (GW1a): a setup with no planet key plays the fixed planet 7 (the sim's hook asks for the fixed one)")
++		ok(int(WorldDefault.apply({}, 5, true).get("planet", -1)) == 7, "the mode is planet (GW1b): a setup with no planet key plays the fixed planet 7 (the sim's hook asks for the fixed one)")
 +	print("the planet default")
 +	WorldDefault.setForTest("planet", false)
 +	var s: Dictionary = {"intro": false}
@@ -249,7 +249,7 @@
 @@ -0,0 +1,7 @@
 +{
 +  "schema": "biomes.world/1",
-+  "_about": "The world a match plays on when its setup names none (A-WORLD-01, A-WORLD-14; docs/world/world-default.md; read by sim/world/default.gd, used by SimCore.beginMatch and the host's planet_part). mode: arena (a setup with no planet key plays the old hand-made arena: shipped until the golden window GW1a) or planet (it plays the round planet). fixed: the planet a newcomer's first match and the tests play (the planet Orb's build plays: planet 7, touch 3, generation 3). random: with enabled, a quick match plays a planet drawn from its own match seed out of pool (planet seeds that generate and play: world_default_check), landing at one of touches; its seed is in the setup, the replay and the report. An explicit planet key in a setup always wins; the key world: arena asks for the hand-made arena.",
++  "_about": "The world a match plays on when its setup names none (A-WORLD-01, A-WORLD-14; docs/world/world-default.md; read by sim/world/default.gd, used by SimCore.beginMatch and the host's planet_part). mode: arena (a setup with no planet key plays the old hand-made arena: shipped until the golden window GW1b) or planet (it plays the round planet). fixed: the planet a newcomer's first match and the tests play (the planet Orb's build plays: planet 7, touch 3, generation 3). random: with enabled, a quick match plays a planet drawn from its own match seed out of pool (planet seeds that generate and play: world_default_check), landing at one of touches; its seed is in the setup, the replay and the report. An explicit planet key in a setup always wins; the key world: arena asks for the hand-made arena.",
 +  "mode": "arena",
 +  "fixed": { "planet": 7, "touch": 3, "planetGen": 3 },
 +  "random": { "enabled": false, "pool": [7, 12, 3, 13, 17], "touches": [1, 2, 3] }
@@ -268,7 +268,7 @@
 +  "properties": {
 +    "schema": { "const": "biomes.world/1" },
 +    "_about": { "type": "string" },
-+    "mode": { "enum": ["arena", "planet"], "description": "arena: no planet key plays the hand-made arena (as before GW1a); planet: it plays the round planet." },
++    "mode": { "enum": ["arena", "planet"], "description": "arena: no planet key plays the hand-made arena (as before GW1b); planet: it plays the round planet." },
 +    "fixed": {
 +      "type": "object",
 +      "required": ["planet", "touch", "planetGen"],

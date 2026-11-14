@@ -10,7 +10,7 @@ Design, numbers and what is not built: `docs/world/planet-sizes.md`. Runs: `docs
 
 ## The five
 
-**Tiny 1,280, small 2,560, medium 4,800, big 9,600, huge 19,200 columns round** (a column is 32 units: 41 thousand to 614 thousand units; radius 6.5 to 98 thousand; a lap flat out at base 8 s to 123 s). Colossal (38,400) stays a row of data with `offered: false`, unproven. I propose these because the plan's colossal needs three pieces that are not built (windowed places, a ring that is not a great circle, a coarser bake), and the field world cannot hold a ring shorter than the planet (the frame maps the line to a closed great circle): so the arena is the planet's whole round at every size, and huge's per-column state is 4 times medium's (672 KB). Selectable from data: the menu offers `WorldPlanetSize.names(true)`; a setup names one as `planetSize`; a different five is an edit of `sizes.json`.
+**Tiny 1,280, small 2,560, medium 4,800, big 9,600, huge 19,200 columns round** (a column is 32 units: 41 thousand to 614 thousand units; radius 6.5 to 98 thousand; a lap flat out at Orb's 3,500 a second 12 s to 176 s). Colossal (38,400) stays a row of data with `offered: false`, unproven. I propose these because the plan's colossal needs three pieces that are not built (windowed places, a ring that is not a great circle, a coarser bake), and the field world cannot hold a ring shorter than the planet (the frame maps the line to a closed great circle): so the arena is the planet's whole round at every size, and huge's per-column state is 4 times medium's (672 KB). Selectable from data: the menu offers `WorldPlanetSize.names(true)`; a setup names one as `planetSize`; a different five is an edit of `sizes.json`.
 
 ## Against the brief
 

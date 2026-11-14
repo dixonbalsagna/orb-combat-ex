@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    brunt.json loads clean ([])
+  ok    the switch is at today's 0 or the cityHold row's 2 (repeatMarks 0), the crater factor 1.25
+  ok    the crater repeat is its own key, at 0 or 2 (repeatCraters 0): the building's memory does not turn it on
+  ok    switch off: a hit leaves no mark and the tier is the launch's
+  ok    an unmarked building meets the launch's tier (2)
+  ok    each hit marks the building (4 marks after four)
+  ok    and the tier is one higher per mark, at most two (tier 2 meets 4)
+  ok    the same send does 1.74x, 2.70x, then 2.70x the first one's damage (the ladder's 1.74 and 2.70, capped)
+  ok    the planner meets the marked building at the same tier (plan 3942.0, outcome 3942.0)
+  ok    a mark changes the state hash and none leaves it as it was
+  FAIL  repeatMarks 2 alone does not repeat a crater: a second impact beside it is today's (the same size or too dented to dig)
+  ok    repeat 1 digs at the old crater's centre (not 30 beside it)
+  ok    repeat 2 digs at the old crater's centre (not 30 beside it)
+  ok    off: see the next line; on, the first two repeats widen it by 1.25 ([160.0, 200.0, 250.0])
+  ok    and the ground at its centre is lower than after the first impact (-62.5 against -35.2)
+  ok    the third repeat grows it no more ([160.0, 200.0, 250.0])
+  ok    off: a second impact beside it is today's (the same size or too dented to dig)
+REPEAT: 1 check(s) failed

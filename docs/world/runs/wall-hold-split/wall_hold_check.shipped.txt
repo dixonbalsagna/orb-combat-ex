@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   brunt.json loads clean ([])
+  ok   the data is one of the two rows (today's, or Encounter's cityHold: the wall that holds him) and not a mixture (lodgeHold world, wallRebound 0.25, wallStop 1.0, wallDepthHold 0.0, repeatMarks 0.0)
+  ok   16 wall slams staged on towers (seeds 1 to 8, tiers 1 to 3)
+      today: the whole fight frozen 0.50 s at the hit; pushed 1154 units off the face (more than 150 off in 16 of 16); depth home in 53 ticks
+      set on: the whole fight frozen 0.00 s; pushed 18 units off the face (more than 150 off in 0 of 16); depth home in 41 ticks
+  ok   today the fight freezes at the hit and he is thrown off the face (16 of 16)
+  ok   set on: nothing freezes the whole fight (only he is held)
+  ok   set on: he stays at the face for the hold (18 units off on average)
+  ok   set on: his depth stays for the hold and then eases home (41 ticks)
+  ok   the same slam twice gives one hash
+      three sends at one tower, 24 towers: 0 fall with the building's memory off, 24 with repeatMarks 2
+  ok   the building remembers: repeats break it (0 fall off, 24 of 24 with repeatMarks 2)
+WALLHOLD: 0 check(s) failed

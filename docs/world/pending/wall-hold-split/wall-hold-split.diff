@@ -1,0 +1,129 @@
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -48,8 +48,9 @@
+ 	# a held slab bounces at interiorBounceSpeed or more between the two tangents (40 and 70 degrees), keeping interiorBounceKeep of the normal speed and interiorBounceTangent
+ 	# of the along-slab speed; he leaves a tower by the far face into the next link with interiorLinkSpeed or more (buildings.md section 7.3, ruled 2026-10-18)
+ 	"interiorBounceSpeed": 900.0, "interiorBounceTanMin": 0.8391, "interiorBounceTanMax": 2.7475, "interiorBounceKeep": 0.45, "interiorBounceTangent": 0.8, "interiorLinkSpeed": 900.0,
+-	# repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts and the most repeats a crater grows; repeatCraterGrow the radius factor a repeat asks
+-	"repeatMarks": 0, "repeatCraterGrow": 1.25,
++	# repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts; repeatCraters 0 off, else the most repeats a crater grows on the strip world (the planet's is craters.json globe.repeats);
++	# repeatCraterGrow the radius factor a repeat asks (the two are separate keys: the building's memory goes on with the walls, the old crater repeat with the strip world's gen 1 and 2)
++	"repeatMarks": 0, "repeatCraters": 0, "repeatCraterGrow": 1.25,
+ 	# the power model (data/fight/power.json, docs/world/power-world.md): the tower height under which a tower takes its low-tower mass, over it the tall-tower mass
+ 	"powerLowTowerMaxH": 1200.0,
+ }
+--- a/sim/world/crater.gd
++++ b/sim/world/crater.gd
+@@ -134,7 +134,7 @@
+ 
+ ## Repeats escalate (Orb, homework 30; buildings.md section 6.1): an impact on ground already cratered by an impact deepens and widens that crater instead of digging a
+ ## new one beside it. The dig moves to the old crater's centre and its energy rises so the bowl is repeatCraterGrow times the last one's radius (the depth cap, a share of the
+-## radius less the relief already there, then lets it go deeper). After repeatMarks repeats it grows no more. Returns [x, energy]. Behind brunt.json repeatMarks.
++## radius less the relief already there, then lets it go deeper). After repeatCraters repeats it grows no more. Returns [x, energy]. Behind brunt.json repeatCraters (the building's memory, repeatMarks, is its own key).
+ static func _repeat(S: SimState, x: float, energy: float, special: bool, rmul: float = 1.0) -> Array:
+ 	var last = null
+ 	for i in range(S.craters.size() - 1, -1, -1):
+@@ -149,7 +149,7 @@
+ 		if c.cause == "impact" and absf(SimWrap.sdx(c.x, last.x)) < 1.0:
+ 			m += 1
+ 	var cf: Dictionary = WorldBrunt.cfg()
+-	var grow: float = float(cf.repeatCraterGrow) if m <= int(cf.repeatMarks) else 1.0
++	var grow: float = float(cf.repeatCraterGrow) if m <= int(cf.repeatCraters) else 1.0
+ 	var need: float = last.r * grow / (R_BASE * rmul)   # rmul: the material's radius factor (craters.json), which _dig applies again
+ 	need = need * need / (SPECIAL_E_MULT if special else 1.0)
+ 	return [last.x, maxf(energy, need)]
+@@ -199,7 +199,7 @@
+ 				_gRep = WorldStore.repeatsOf(S, j) + 1
+ 				SimField.strip(S, _gQ[0], _gQ[1], _gQ[2])
+ 				x = SimField.sx
+-	elif kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
++	elif kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatCraters) > 0:
+ 		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
+ 		x = rp[0]
+ 		energy = rp[1]
+--- a/tools/schemas/biomes-brunt.schema.json
++++ b/tools/schemas/biomes-brunt.schema.json
+@@ -317,7 +317,13 @@
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 4,
+-      "description": "Repeats escalate (Orb, homework 30): 0 off, else the most marks a building counts, each one tier higher for the next send, and the most repeats a crater grows (Game Design: 2)."
++      "description": "Repeats escalate (Orb, homework 30): 0 off, else the most marks a building counts, each one tier higher for the next send (Game Design: 2)."
++    },
++    "repeatCraters": {
++      "type": "integer",
++      "minimum": 0,
++      "maximum": 4,
++      "description": "The old crater repeat on the strip world (gen 1 and 2 worlds): 0 off, else a blow within half a radius of a recent impact crater widens it by repeatCraterGrow, at most this many times. Separate from repeatMarks (the building's memory). The planet's own repeat is craters.json globe.repeats."
+     },
+     "repeatCraterGrow": {
+       "type": "number",
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.brunt/1",
+-  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him. A held slab bounces at interiorBounceSpeed or more between interiorBounceTanMin and interiorBounceTanMax (40 and 70 degrees), keeping interiorBounceKeep of the normal speed and interiorBounceTangent of the along-slab speed; he leaves a tower by the far face into the next link with interiorLinkSpeed or more (buildings.md section 7.3). Repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts (each one tier higher for the next send) and the most repeats a crater grows; repeatCraterGrow the radius factor a repeat asks.",
++  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him. A held slab bounces at interiorBounceSpeed or more between interiorBounceTanMin and interiorBounceTanMax (40 and 70 degrees), keeping interiorBounceKeep of the normal speed and interiorBounceTangent of the along-slab speed; he leaves a tower by the far face into the next link with interiorLinkSpeed or more (buildings.md section 7.3). Repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts (each one tier higher for the next send); repeatCraters 0 off, else the most repeats a crater grows on the strip world (the planet's is craters.json globe.repeats); repeatCraterGrow the radius factor a repeat asks.",
+   "bruntMul": 1.8,
+   "tierFactor": [
+     0.12,
+@@ -67,6 +67,7 @@
+   "interiorBounceTangent": 0.8,
+   "interiorLinkSpeed": 900.0,
+   "repeatMarks": 0,
++  "repeatCraters": 0,
+   "repeatCraterGrow": 1.25,
+   "powerLowTowerMaxH": 1200.0
+ }
+--- a/sim/world/tools/repeat_check.gd
++++ b/sim/world/tools/repeat_check.gd
+@@ -61,7 +61,9 @@
+ 	var c: Dictionary = WorldBrunt.cfg()
+ 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
+ 	ok((int(c.repeatMarks) == 0 or int(c.repeatMarks) == 2) and float(c.repeatCraterGrow) == 1.25, "the switch is at today's 0 or the cityHold row's 2 (repeatMarks %d), the crater factor 1.25" % int(c.repeatMarks))
++	ok(int(c.repeatCraters) == 0 or int(c.repeatCraters) == 2, "the crater repeat is its own key, at 0 or 2 (repeatCraters %d): the building's memory does not turn it on" % int(c.repeatCraters))
+ 	c.repeatMarks = 0   # the off branch below sets it off itself, as the on branch sets it on
++	c.repeatCraters = 0
+ 	# --- off: no mark is kept, the tier is the launch's
+ 	var S0 := fresh(1)
+ 	var h0 = house(S0)
+@@ -110,6 +112,13 @@
+ 	Sh.buildings[3].marks = 0
+ 	var hC: String = str(SimHash.stateHash(Sh).gameplay)
+ 	ok(hA != hB and hA == hC, "a mark changes the state hash and none leaves it as it was")
++	# --- ground: the building's memory alone does not repeat a crater (its own key, repeatCraters)
++	var Gk := fresh(1)
++	var Ak = Gk.fighters[1]
++	var k0 = WorldCrater.dig(Gk, 4800.0, 1.0, Ak, "impact", 0.0, 1.0)
++	var k1 = WorldCrater.dig(Gk, 4830.0, 1.0, Ak, "impact", 0.0, 1.0)
++	ok(k0 != null and (k1 == null or k1.r <= k0.r * 1.001), "repeatMarks 2 alone does not repeat a crater: a second impact beside it is today's (the same size or too dented to dig)")
++	c.repeatCraters = 2
+ 	# --- ground: an impact on cratered ground deepens and widens that crater
+ 	var G := fresh(1)
+ 	var X: float = 4800.0
+@@ -130,6 +139,7 @@
+ 	ok(radii.size() < 4 or radii[3] <= radii[2] * 1.001, "the third repeat grows it no more (%s)" % str(radii))
+ 	# the same off
+ 	c.repeatMarks = 0
++	c.repeatCraters = 0
+ 	var Go := fresh(1)
+ 	var q0 = WorldCrater.dig(Go, X, 1.0, Go.fighters[1], "impact", 0.0, 1.0)
+ 	var q1 = WorldCrater.dig(Go, X + 30.0, 1.0, Go.fighters[1], "impact", 0.0, 1.0)
+--- a/sim/world/tools/switchon_check.gd
++++ b/sim/world/tools/switchon_check.gd
+@@ -51,6 +51,7 @@
+ 	var c: Dictionary = WorldBrunt.cfg()
+ 	c.interiorChain = 1
+ 	c.repeatMarks = 2
++	c.repeatCraters = 2
+ 	var tot := {"ic": 0, "ie": 0, "bad": 0, "bounces": 0, "links": 0, "marks": 0}
+ 	var same: int = 0
+ 	for s in range(1, seeds + 1):
+@@ -65,5 +66,6 @@
+ 	ok(tot.ie <= tot.ic, "no end without a contact before it")
+ 	c.interiorChain = 0
+ 	c.repeatMarks = 0
++	c.repeatCraters = 0
+ 	print("SWITCHON: %d check(s) failed" % fails)
+ 	quit()

@@ -9,7 +9,7 @@ Plan: `docs/world/planet-overhaul.md` section 4 (six sizes, tiny to colossal). P
 | Columns round | 1,280 | 2,560 | **4,800** | 9,600 | 19,200 | 38,400 |
 | Units round | 40,960 | 81,920 | **153,600** | 307,200 | 614,400 | 1,228,800 |
 | Radius | 6,519 | 13,038 | **24,446** | 48,892 | 97,785 | 195,570 |
-| Lap flat out at base (5,000 a second) | 8 s | 16 s | **31 s** | 61 s | 123 s | 246 s |
+| Lap flat out at Orb's 3,500 a second | 12 s | 23 s | **44 s** | 88 s | 176 s | 351 s |
 | Cities / towns laid | 2 / 4 | 4 / 12 | **12 / 44** | 24 / 88 | 48 / 176 | 96 / 352 |
 
 **Tiny, small, medium, big, huge. Colossal stays a row of data that is off** (`offered: false`): it is unproven (the grid key in `SimField._boxKey` aliases past a radius of 131,000 units, and the sim has never held a quarter-million places), and the plan's own order put it last. Tiny and small are 1,280 and 2,560, not 1,200 and 2,400 as the plan said: a face edge is `cols / 16` nodes of 128 units, and the 512-unit bake needs that to be a multiple of 4, so a size is a multiple of 64 columns. The names still mean what they say (each about double the one before).

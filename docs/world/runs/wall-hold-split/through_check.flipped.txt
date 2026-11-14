@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   a tall building to go through (32)
+  ok   his velocity and place are untouched
+  ok   no wear and no hit stop
+  ok   he is still in flight
+  ok   the building is marked
+  ok   the flight counts the hit
+  ok   the building took damage (6581 to 6299 of 6581)
+  ok   the damage is capped at the share of its hit points (at most 3948)
+  ok   the building's hit event went out (7 fx events)
+  ok   a second building changes nothing of him either
+THROUGH: 0 check(s) failed

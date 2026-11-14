@@ -35,3 +35,13 @@ Game Design ruled the sizes (`docs/design/planet-sizes.md`): the spawn pair with
 - The flatten also fills a valley inside the bowl up to the centre's height (a level floor both ways): a crater dug beside a lake's shore can lift its floor above the water. The check does not cover water; B1's flood reads the same ground.
 - The spawn rule moves the touch point on tiny, small, big and huge (a different place on the same planet number): any recorded play on a size other than medium is not comparable. Orb's build is medium.
 - Not timed (shared machine): the flatten's cost is by count, a field read per read near a flatten crater.
+
+## Fix, 2026-11-14 (Encounter found it on the GW1c stack; EP order): the building cap on the plan path
+
+**Fault.** With a-world-01's GW1a data flips on, `size_check` failed on tiny and small: the tallest building was still 4,875 against caps of 1,956 and 3,911. The cap sits in `WorldSettle.generate`, and the places on the flipped data are laid by plan (`WorldPlan.geometry`, which calls `generate` and keeps the result). The plan's memo key and the **kept places' disk key** (`WorldPlan.placesKey`) did not carry the planet's size, so a tiny or small planet read the medium planet's places (the same seed, the same data) back, towers and all. Medium's matches before it in the same process or the same cache folder were enough.
+
+**Fix** (`gw1c-world-fix.diff`, stacks after `gw1c-world.diff`; `plan.gd` and `size_check.gd`): both keys carry `|cols N` when the size is not medium (medium's keys are as they were, so its cache stays good). `size_check` gains rows on the plan path: a medium match first, then tiny and small with plans on: the tallest within 0.3 of the radius, the same setup playing the same match twice, and the two keys differing by size.
+
+**Proof.** `SIZES` 0 failed on the shipped data and with the GW1a flips applied (before the fix, with the flips: 1 FAIL, `big` did not replay to the same hash); negative control (the keys as they were): 3 FAIL, the tallest 4,875 on tiny and small and the key row. Runs: `docs/world/runs/gw1c-world/size-check-fix-*.txt` and `size-check-flipped-before-fix.txt`.
+
+**Note.** The same fault would show in any size-keyed value kept by seed alone; the others (planet memo, slice memo, store and water grid keys, the field disk cache) carry the size already (checked).

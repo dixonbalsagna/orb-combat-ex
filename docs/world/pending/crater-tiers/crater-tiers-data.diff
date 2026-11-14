@@ -1,0 +1,26 @@
+--- a/data/biomes/craters.json
++++ b/data/biomes/craters.json
+@@ -10,7 +10,7 @@
+   },
+   "tier": {
+     "_about": "An impact's energy by the shooter's tier when the energy model is off (A-WORLD-06; docs/world/crater-tiers.md; Game Design, docs/design/buildings.md section 6.2): the multipliers of tiers 1 to 4, linear between. 1, 2.1, 4.3 and 9 make the crater's radius 1, 1.45, 2.07 and 3 times (X-14: three times at the top tier). With the model on the model decides and this is not read. on false is today's 25 percent a tier (1.32 times at tier 4). Shots (blast.json tierEnergy) take the same numbers.",
+-    "on": false,
++    "on": true,
+     "energy": [1.0, 2.1, 4.3, 9.0]
+   },
+   "globe": {
+--- a/data/biomes/blast.json
++++ b/data/biomes/blast.json
+@@ -75,9 +75,9 @@
+   },
+   "tierEnergy": [
+     1.0,
+-    1.3,
+-    1.7,
+-    2.2
++    2.1,
++    4.3,
++    9.0
+   ],
+   "tierDamage": [
+     0.25,

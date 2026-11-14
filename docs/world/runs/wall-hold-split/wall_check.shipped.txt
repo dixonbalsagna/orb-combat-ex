@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    brunt.json loads clean ([])
+  ok    the homework switches stand at today's or at the cityHold row (lodgeHold world, towerPunches[0] 0)
+  ok    a tier-1 body at a tower is a wall: building_hit outcome wall, keep 0 (["wall"])
+  ok    and the floor_hit says how it broke (["dent"])
+  ok    a held body has no lodge event
+  ok    he is staggered at least 24 ticks after the rebound (43 left when he is down)
+  ok    a longer stun already on him is not lowered (500)
+  ok    the wall slam is twice the hit: 47.9 against 27.3 with wallSlamMul 1
+  ok    a lodge event carries x, y, z and the hold seconds, after a building_hit with keep 0 (44 lodges, 44 well formed)
+  ok    lodgeHold body: the body is stunned for the hold
+WALL: 0 check(s) failed

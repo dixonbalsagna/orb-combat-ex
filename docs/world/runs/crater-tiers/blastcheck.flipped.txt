@@ -1,0 +1,16 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+== blast: what a shot does where it ends ==
+  ok    the data loads ([])
+  ok    bolt tier 1 draws nothing from the rng
+  bolt on open ground (vertical hit) by tier:  t1 R 55 depth 12  t2 R 80 depth 18  t3 R 115 depth 25  t4 R 166 depth 37
+  ok    lob tier 1 draws nothing from the rng
+  lob on open ground (vertical hit) by tier:  t1 R 113 depth 25  t2 R 164 depth 36  t3 R 235 depth 52  t4 R 339 depth 75
+  ok    charged tier 1 draws nothing from the rng
+  charged on open ground (vertical hit) by tier:  t1 R 143 depth 31  t2 R 207 depth 46  t3 R 297 depth 65  t4 R 429 depth 94
+  ok    a glancing charged shot digs a shallower bowl than a vertical one (20 against 31 units)
+  at the foot of a 20-floor front-row tower, buildings levelled by kind and tier: bolt t1: levelled 0, the tower at 100% hp; bolt t4: levelled 0, the tower at 100% hp; lob t1: levelled 0, the tower at 100% hp; lob t4: levelled 0, the tower at 98% hp; charged t1: levelled 0, the tower at 99% hp; charged t4: levelled 0, the tower at 97% hp;
+  ok    a shot into water leaves a splash and no crater
+  cost: a bolt's end 181 us, 
+  a charged shot's end 267 us
+BLAST: 0 check(s) failed

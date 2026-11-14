@@ -7,6 +7,8 @@ Orb, three plays (6 and 9 November and before): "the fighter that collided with 
 | `wall-hold-pins.diff` | the four checks that pin the old values re-pinned (`wall_hold_check`, `brunt_check`, `repeat_check`, `wall_check`) to **pass in both states** (today's values, or Encounter's `cityHold` row): all four pass on today's data and on the flipped data, so this lands any time |
 | `wall-hold-data.diff` | `data/biomes/brunt.json`: `lodgeHold` "body", `wallRebound` 0, `wallStop` 0, `wallDepthHold` 1, `repeatMarks` 2 (the `cityHold` row, the same five numbers Encounter's `tools/preview/switches.mjs` row sets for Orb's private build) |
 
+**Update 2026-11-14 (EP order, the key split):** the crater repeat is now its own key, so `repeatMarks` 2 is the building's memory only. Use `docs/world/pending/wall-hold-split/` (`wall-hold-split.diff`, then its `wall-hold-data.diff`, which replaces the data diff above); the RISKS bullet on the old crater repeat below no longer applies.
+
 Encounter's `docs/director/pending/wall-hold-air` (one line in `WorldBrunt.stepZ`, approved by World) is the last piece for a slam high up a tower, and acts only with `wallDepthHold` on: it applies to HEAD and rides with this row.
 
 ## What it does (measured by `WALLHOLD`, 16 slams: seeds 1 to 8, tiers 1 to 3, a send at a 9 to 15 floor tower on the front street)

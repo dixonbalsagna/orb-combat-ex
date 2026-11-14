@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   two records, 16 numbers each
+  ok   at a centre: its own bowl plus the other's apron
+  ok   far away the store adds nothing
+  ok   points 250 units round a crater read one height whichever way the line runs (0.0000 spread)
+  ok   the ground is the sum, whatever the order
+  ok   the running hash follows the order of adds
+  ok   a crater added is read at once (the index follows an add)
+  ok   a state restored to an older store reads the older store
+  ok   the snapshot reads its own records
+  ok   inside a platform the ground is lifted to the floor
+  ok   ground above the floor is left
+  ok   the sea is not filled in
+  ok   outside the platform and its blend the ground is the field's
+  ok   across the blend the lift falls off smoothly (-3.46 of -70.00 to 37.50)
+  ok   the store holds 16384 and refuses the rest (5 refused)
+STORE: 0 check(s) failed

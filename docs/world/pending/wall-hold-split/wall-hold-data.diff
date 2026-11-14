@@ -1,0 +1,26 @@
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -44,10 +44,10 @@
+   "heavyKeep": 0.7,
+   "wallSlamMul": 2.0,
+   "wallStaggerTicks": 24,
+-  "wallRebound": 0.25,
+-  "wallStop": 1.0,
+-  "wallDepthHold": 0,
+-  "lodgeHold": "world",
++  "wallRebound": 0.0,
++  "wallStop": 0.0,
++  "wallDepthHold": 1,
++  "lodgeHold": "body",
+   "interiorChain": 0,
+   "interiorTanMin": 0.26795,
+   "interiorTanMax": 1.73205,
+@@ -66,7 +66,7 @@
+   "interiorBounceKeep": 0.45,
+   "interiorBounceTangent": 0.8,
+   "interiorLinkSpeed": 900.0,
+-  "repeatMarks": 0,
++  "repeatMarks": 2,
+   "repeatCraters": 0,
+   "repeatCraterGrow": 1.25,
+   "powerLowTowerMaxH": 1200.0

@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    6 of 6 seeds play the same twice (hash and events)
+  ok    every interior_contact is well formed (0 contacts, 0 ends, 0 bounces, 1 links, 2 marks on buildings)
+  ok    no end without a contact before it
+SWITCHON: 0 check(s) failed
