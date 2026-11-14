@@ -1,0 +1,68 @@
+diff --git a/sim/core/replay.gd b/sim/core/replay.gd
+index 4aa7962..182eddd 100644
+--- a/sim/core/replay.gd
++++ b/sim/core/replay.gd
+@@ -120,7 +120,8 @@ func finish() -> Dictionary:
+ ## setup and of the AI flags (the state the match was started in), the ticks so far, empty lists, and the build that made
+ ## it when this build has a stamp (A-NET-05). Nothing about the match's play is in it yet.
+ static func header(seed: int, setup: Dictionary, ai: Dictionary, ticks: int = 0) -> Dictionary:
+-	var rp := {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(setup), "seed": seed, "setup": setup.duplicate(true),
++	var su: Dictionary = WorldDefault.apply(setup, seed, true)   # the world the match plays (A-WORLD-01, as SimCore.beginMatch applies it): a replay names its planet
++	var rp := {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(su), "seed": seed, "setup": su.duplicate(true),
+ 		"ai": ai.duplicate(), "ticks": ticks, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
+ 	if buildId() != "":
+ 		rp["build"] = buildId()   # a tree with no stamp writes nothing, so its replays are as they were
+@@ -237,6 +238,7 @@ static func play(rp: Dictionary, home = null) -> Dictionary:
+ ## setup is the match's: the fighters its slots name are folded in, one hash each, and nobody else; its planet's data,
+ ## when it names a planet.
+ static func dataHash(setup: Dictionary = {}) -> String:
++	setup = WorldDefault.apply(setup, 0, true)   # a setup that names no planet is hashed as the world it plays (the fixed planet: it never draws), so the header and the LAN handshake fold its data; in arena mode, as given
+ 	var h := SimHash.Hasher.new()
+ 	h.text(DirData.dataHash())
+ 	h.text(SimMood.dataHash())
+diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
+index 16a7ceb..a0fd572 100644
+--- a/sim/core/tools/parity.gd
++++ b/sim/core/tools/parity.gd
+@@ -111,6 +111,7 @@ func _init() -> void:
+ 	check("the intro phase (golden)", "" if SimGolden.introHash() == g.get("intro", "") else "differs")
+ 	check("composed intros (golden)", "" if SimGolden.introComposedHash() == g.get("introComposed", "") else "differs")
+ 	check("replay module", _replayModule())
++	check("a replay of the default world names its planet", _replayWorld())
+ 	var tm: int = Time.get_ticks_usec()
+ 	check("matches", _matches(g))
+ 	check("human-input replays", _replays(g))
+@@ -3581,6 +3582,33 @@ func _replayBuild(rp: Dictionary, ai: Dictionary) -> String:
+ 	return ""
+ 
+ 
++## A-WORLD-01 (World's default world, data/biomes/world.json): with the mode on planet, a match whose setup names no planet
++## plays the fixed planet; its replay's header names that planet, its data hash is the planet's (not the arena's), and the
++## replay plays back after the mode is put back to the arena. As shipped (the arena) the header and hash are as given.
++func _replayWorld() -> String:
++	var su := {"intro": false}
++	WorldDefault.apply(su, 1, true)   # its data loaded before the mode is set below
++	var m0 = WorldDefault.K_MODE
++	if m0 == "arena" and (SimReplay.header(1, su, {}).setup != su or SimReplay.dataHash(su) != SimReplay.dataHash({"intro": false, "world": "arena"})):
++		return "the arena mode: a header or hash moved"
++	var h0: String = SimReplay.dataHash({"intro": false, "world": "arena"})
++	WorldDefault.K_MODE = "planet"
++	var hp: String = SimReplay.dataHash(su)
++	var S := SimCore.createSim()
++	var rec := SimReplay.recorder(S, 1, {"p1": true, "p2": true}, su)
++	for t in range(30):
++		rec.step([null, null])
++	var rp: Dictionary = rec.finish()
++	SimCore.dispose(S)
++	WorldDefault.K_MODE = m0
++	if not rp.setup.has("planet") or String(rp.data) != hp or hp == h0:
++		return "the planet mode: the header's setup %s, its hash %s, the planet's %s, the arena's %s (want the planet named, its hash)" % [str(rp.setup), str(rp.data).substr(0, 12), hp.substr(0, 12), h0.substr(0, 12)]
++	var r: Dictionary = SimReplay.play(rp)
++	if not r.ok:
++		return "the default world's replay, played with the mode back on %s: %s at tick %d" % [str(m0), r.reason, int(r.firstBadTick)]
++	return ""
++
++
+ ## SimReplay (S4): record a scripted two-human run, play it back and play its JSON round trip; a changed input and a
+ ## replay from other combat data must both fail.
+ func _replayModule() -> String:

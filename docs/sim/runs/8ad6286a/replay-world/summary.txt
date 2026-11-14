@@ -1,0 +1,32 @@
+The a-world-01 companion (kick/replay_world_edit.py) on a scratch export of 8ad6286a with B1's two patches and World's globe-step2 and a-world-01 applied in order and committed as the base. One Godot job at a time, below normal.
+#### wd
+replay-world sha1 9e80651d10e2857f30c6329c1d0f879e85a57877 sha256 905f585b30e0 2 files
+import 0; parse errors 0
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+golden: exit 0 in 146 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (174798 ticks), 2 replays in 141.5 s
+  golden.json byte-identical
+parity through gate.mjs: exit 0 in 327 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+85:ok    a replay of the default world names its planet
+world_default: exit 0 in 35 s; script errors 0; WORLDDEFAULT: 0 check(s) failed
+xproc: exit 0 in 45 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 484fdc4f949d567f, Easy 69c555c28b7333ae, Medium 4b9a8ddefd2b69e3 (600
+lan: exit 0 in 126 s; script errors 0; LAN: 0 check(s) failed
+== Rendering's checks
+after_check: exit 0 in 15 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 57 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 16 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 53 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 48 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 57 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 59 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 8 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 14 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 23 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 22 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 14 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 13 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 15 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 13 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+wd done
+q3 done
