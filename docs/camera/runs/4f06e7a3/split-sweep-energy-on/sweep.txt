@@ -1,0 +1,35 @@
+# split_sweep with Simulation's energy-on park (docs/architecture/pending/energy-on), main 4f06e7a3, headless, one job at a time
+## before the pins (Rendering's reading, docs/rendering/runs/611c1c2b/split-sweep-energy-on.txt): 7 rows
+## the same rows with the travel budget off (the game's setting): the out-of-pane loss goes; the crossing rows still fail
+FAIL  crossing start staredown 72: a fighter only 0.060 of the screen height
+FAIL  crossing start staredown 72: the camera was outside the avenue on 2 of 9 closing ticks
+FAIL  crossing start: a fighter only 0.060 of the screen height
+FAIL  crossing start: the camera was outside the avenue on 2 of 9 closing ticks
+FAIL real match 10 pitch 49 full (rig sees two humans): pane 0 zoom rate 1.76 e-folds a second (limit 1.20) at t=253.30 mode split sep 1.000 e 0.00 solo_w 0.00
+row pz: 1 failures
+split sweep FAILED (4)
+## the real-match row with the model off and the budget off: fails on other things (the sweep certifies the budget-on camera)
+FAIL real match 10 pitch 49 full (rig sees two humans): fighter 0 moved 0.032 of the width against its anchor while it barely moved
+FAIL real match 10 pitch 49 full (rig sees two humans): pane 1 zoom rate 1.41 e-folds a second (limit 1.20) at t=347.00 mode split sep 1.000 e 0.00 solo_w 0.00
+row pz: 2 failures
+## the travel budget during the loss (pane 0): three travel cuts at 284.017, 284.133, 284.250, then the one-second cooldown; lost from 284.25 to the next cut at 285.267
+  TB 284.000 lost [0.01666666666667, 0.0] cut_t [280.050000000074, 278.633333333409] time 284.00 leaving true budget true why ["merge trigger"]
+  TB 284.100 lost [0.11666666666667, 0.01666666666667] cut_t [284.016666666737, 284.05000000007] time 284.10 leaving true budget true why ["split out of frame"]
+  TB 284.200 lost [0.21666666666667, 0.0] cut_t [284.133333333404, 284.05000000007] time 284.20 leaving true budget true why ["split out of frame"]
+  TB 284.300 lost [0.31666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 284.30 leaving true budget true why ["split out of frame"]
+  TB 284.400 lost [0.41666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 284.40 leaving true budget true why ["split out of frame"]
+  TB 284.500 lost [0.51666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 284.50 leaving true budget true why ["split out of frame"]
+  TB 284.600 lost [0.61666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 284.60 leaving true budget true why ["split out of frame"]
+  TB 284.700 lost [0.71666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 284.70 leaving true budget true why ["split out of frame"]
+  TB 284.800 lost [0.81666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 284.80 leaving true budget true why ["split out of frame"]
+  TB 284.900 lost [0.91666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 284.90 leaving true budget true why ["split out of frame"]
+  TB 285.000 lost [1.01666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 285.00 leaving true budget true why ["split out of frame"]
+  TB 285.100 lost [1.11666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 285.10 leaving true budget true why ["split out of frame"]
+  TB 285.200 lost [1.21666666666667, 0.0] cut_t [284.25000000007, 284.05000000007] time 285.20 leaving true budget true why ["split out of frame"]
+  TB 285.300 lost [0.0, 0.0] cut_t [285.266666666736, 284.05000000007] time 285.30 leaving false budget true why ["split out of frame"]
+  TB 285.400 lost [0.0, 0.0] cut_t [285.266666666736, 284.05000000007] time 285.40 leaving false budget true why ["split out of frame"]
+## with the pins (split-sweep-energy-pins.patch)
+== main + energy-on + pins
+split sweep passed
+== main + pins
+split sweep passed
