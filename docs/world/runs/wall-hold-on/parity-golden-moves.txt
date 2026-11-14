@@ -1,0 +1,4 @@
+Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+FAIL  matches: swap seed 1: first full-state difference by tick 15480 (checkpoint 129): da10724561912513:396afca6f8935973:f1593ce0398a799b vs golden 4ab61aaf4e046de1:d79a0d26ed0da85c:ef22b65918719c71; mirror-villain seed 1: first full-state difference by tick 8280 (checkpoint 69): 08de4c1a142dd217:bc74700266a5527d:1dbbf46a834d2920 vs golden 45529d891f79a897:f2951599b58e19b6:1dbbf46a834d2920; mirror-hero seed 1: first full-state difference by tick 11280 (checkpoint 94): 606802e44115f462:e3cce07849e0af98:a25e39d5d6368ea6 vs golden 92b85cb705aaa910:1e02cd07c5c9524b:a25e39d5d6368ea6; swap-flip seed 2: first full-state difference by tick 4920 (checkpoint 41): 56345a6fa634bbd6:5870525b08c0f086:b02
+ok    planet worlds (golden)
+golden check FAILED

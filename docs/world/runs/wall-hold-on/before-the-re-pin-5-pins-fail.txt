@@ -1,0 +1,16 @@
+  FAIL the data's defaults are today's behaviour (lodgeHold body, wallRebound 0.0, wallStop 0.0, wallDepthHold 1.0, repeatMarks 2.0)
+WALLHOLD: 1 check(s) failed
+  FAIL  the last hit holds the body for the tier's seconds (0 of 229)
+BRUNT: 1 check(s) failed
+INTERIOR: 0 check(s) failed
+LANDMARKSPARE: 0 check(s) failed
+  FAIL  the switch is off in the data (repeatMarks 2), the crater factor 1.25
+  FAIL  switch off: a hit leaves no mark and the tier is the launch's
+REPEAT: 2 check(s) failed
+THROUGH: 0 check(s) failed
+  FAIL  the homework switches stand at today's behaviour (lodgeHold body, towerPunches[0] 0)
+WALL: 1 check(s) failed
+COLLATERAL: 0 check(s) failed
+BYSTANDERS: 0 check(s) failed
+BLOCK: 0 check(s) failed
+STAGE: 0 check(s) failed

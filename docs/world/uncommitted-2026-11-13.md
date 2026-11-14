@@ -24,3 +24,7 @@
 | `docs/world/pending/power-world/grant-encounter-energy.patch` (the modified file) | landed; its edit can go with the folder when the park is re-checked |
 
 If you commit the keep list, the three `pending/` folders that are stale can be deleted in the same commit (World will not delete them first: they are untracked, so the EP's commit is the record).
+
+## Added 2026-11-14 (A1 parks: all docs, parks and run records)
+
+Keep: `docs/world/pending/a-world-01/`, `pending/planet-sizes/`, `pending/wall-hold-on/` (unlanded parks, in the order globe-step2, a-world-01, planet-sizes; wall-hold-on stands alone), `docs/world/world-default.md`, `planet-sizes.md`, `destruction-a1.md`, `docs/world/runs/a-world-01/`, `runs/planet-sizes/`, `runs/wall-hold-on/`, and the re-cut `pending/globe-step2/` and `runs/globe-step2/` already listed. This file itself: keep.

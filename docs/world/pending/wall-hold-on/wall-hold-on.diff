@@ -1,0 +1,71 @@
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -44,10 +44,10 @@
+   "heavyKeep": 0.7,
+   "wallSlamMul": 2.0,
+   "wallStaggerTicks": 24,
+-  "wallRebound": 0.25,
+-  "wallStop": 1.0,
+-  "wallDepthHold": 0,
+-  "lodgeHold": "world",
++  "wallRebound": 0.0,
++  "wallStop": 0.0,
++  "wallDepthHold": 1,
++  "lodgeHold": "body",
+   "interiorChain": 0,
+   "interiorTanMin": 0.26795,
+   "interiorTanMax": 1.73205,
+@@ -66,7 +66,7 @@
+   "interiorBounceKeep": 0.45,
+   "interiorBounceTangent": 0.8,
+   "interiorLinkSpeed": 900.0,
+-  "repeatMarks": 0,
++  "repeatMarks": 2,
+   "repeatCraterGrow": 1.25,
+   "powerLowTowerMaxH": 1200.0
+ }
+--- a/sim/world/tools/wall_hold_check.gd
++++ b/sim/world/tools/wall_hold_check.gd
+@@ -126,7 +126,7 @@
+ func _init() -> void:
+ 	var c: Dictionary = WorldBrunt.cfg()
+ 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
+-	ok(c.lodgeHold == "world" and absf(float(c.wallRebound) - 0.25) < 1.0e-9 and float(c.wallStop) == 1.0 and int(c.wallDepthHold) == 0 and int(c.repeatMarks) == 0, "the data's defaults are today's behaviour (lodgeHold %s, wallRebound %s, wallStop %s, wallDepthHold %s, repeatMarks %s)" % [c.lodgeHold, str(c.wallRebound), str(c.wallStop), str(c.wallDepthHold), str(c.repeatMarks)])
++	ok(c.lodgeHold == "body" and float(c.wallRebound) == 0.0 and float(c.wallStop) == 0.0 and int(c.wallDepthHold) == 1 and int(c.repeatMarks) == 2, "the data's defaults are the wall that holds him (lodgeHold %s, wallRebound %s, wallStop %s, wallDepthHold %s, repeatMarks %s)" % [c.lodgeHold, str(c.wallRebound), str(c.wallStop), str(c.wallDepthHold), str(c.repeatMarks)])
+ 	var offN: int = 0
+ 	var onN: int = 0
+ 	var offFreeze: float = 0.0
+--- a/sim/world/tools/brunt_check.gd
++++ b/sim/world/tools/brunt_check.gd
+@@ -176,7 +176,7 @@
+ 					t1_tower_punch += 1
+ 	ok(flights > 40, "%d flights touched a building" % flights)
+ 	ok(ended_ok == flights, "every flight ends held at a wall or lodged in its last building (%d of %d; %d held, %d lodged)" % [ended_ok, flights, held_n, lodges])
+-	ok(lodge_hold_ok == flights, "the last hit holds the body for the tier's seconds (%d of %d)" % [lodge_hold_ok, flights])
++	ok(lodge_hold_ok == flights or str(WorldBrunt.cfg().lodgeHold) == "body", "the last hit holds the world for the tier's seconds (%d of %d; with lodgeHold body only he is held and the fight's freeze is the plain hit-stop, which wall_hold_check measures)" % [lodge_hold_ok, flights])
+ 	ok(cap_ok == flights, "no chain uses more links than its tier's cap, a house half (%d of %d)" % [cap_ok, flights])
+ 	ok(t1_tower_punch == 0, "a tier-1 flight never punches an unmarked tower (%d did)" % t1_tower_punch)
+ 	print("BRUNT: %d check(s) failed" % fails)
+--- a/sim/world/tools/repeat_check.gd
++++ b/sim/world/tools/repeat_check.gd
+@@ -60,7 +60,8 @@
+ func _init() -> void:
+ 	var c: Dictionary = WorldBrunt.cfg()
+ 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
+-	ok(int(c.repeatMarks) == 0 and float(c.repeatCraterGrow) == 1.25, "the switch is off in the data (repeatMarks %d), the crater factor 1.25" % int(c.repeatMarks))
++	ok(int(c.repeatMarks) == 2 and float(c.repeatCraterGrow) == 1.25, "the switch is on in the data (repeatMarks %d), the crater factor 1.25" % int(c.repeatMarks))
++	c.repeatMarks = 0   # the off branch below sets it off itself, as the on branch sets it on
+ 	# --- off: no mark is kept, the tier is the launch's
+ 	var S0 := fresh(1)
+ 	var h0 = house(S0)
+--- a/sim/world/tools/wall_check.gd
++++ b/sim/world/tools/wall_check.gd
+@@ -50,7 +50,7 @@
+ func _init() -> void:
+ 	var c: Dictionary = WorldBrunt.cfg()
+ 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
+-	ok(c.lodgeHold == "world" and int(c.towerPunches[0]) == 0, "the homework switches stand at today's behaviour (lodgeHold %s, towerPunches[0] %d)" % [c.lodgeHold, int(c.towerPunches[0])])
++	ok(c.lodgeHold == "body" and int(c.towerPunches[0]) == 0, "the homework switches stand where Orb's wall hold put them (lodgeHold %s, towerPunches[0] %d)" % [c.lodgeHold, int(c.towerPunches[0])])
+ 	var S := fresh(1)
+ 	var tw = tower(S)
+ 	var D = S.fighters[0]
