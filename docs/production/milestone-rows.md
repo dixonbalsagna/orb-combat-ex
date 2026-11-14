@@ -14,7 +14,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-CAMERA-01 | S | major |  |  | reported | 8fee3caa (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share, follow-through, flight reveal) switches on only when the game… |
+| A-CAMERA-01 | S | major |  |  | reported | 8fee3caa; launch parks 63d62abd and b3bfa8e7 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share, follow-through, flight reveal) switches on only when the game… |
 
 **combat-choreography** (1)
 
@@ -117,16 +117,16 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-PERF-08 | S | major |  |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | The game sets no window: there is no display section in the project file and no fullscreen, resolution, vertical-sync or frame-cap setting in code or in the options. |
-| A-RENDER-01 | M | major |  |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | The look Orb plays (globe ground, crater look, meteor trail, the swing camera that rides with it) is switched on only by launch words; on main the default is the older… |
-| A-RENDER-04 | M | major |  |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | The black, flat-brown crater has a still and a proven cause (a beam's scorch filled per vertex on coarse tiles), but the fix is on only by a launch word, is parked for… |
+| A-RENDER-01 | M | major |  |  | reported | be128ccd (Rendering: globe default; VFX meteor-default e56d372c) — Reported (EP status 3, Sat 14 Nov 03:50). | The look Orb plays (globe ground, crater look, meteor trail, the swing camera that rides with it) is switched on only by launch words; on main the default is the older… |
+| A-RENDER-04 | M | major |  |  | reported | be128ccd (Rendering: crater look) — Reported (EP status 3, Sat 14 Nov 03:50). | The black, flat-brown crater has a still and a proven cause (a beam's scorch filled per vertex on coarse tiles), but the fix is on only by a launch word, is parked for… |
 
 **simulation-engine** (4)
 
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-CODE-02 | M | major |  | A-CODE-01 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no golden record and was verified by a pack read and a smoke… |
-| A-ENERGY-04 | S | major | GW1 |  | reported | 201bd3d2 (Sim, committed locally) — parked and gated, waiting for its window (EP status 2, 2026-11-14); World x8, Encounter x4 and Rendering's after_check are pinning. | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only through a code patch the page tool writes, so main does not… |
-| A-ENERGY-05 | M | major | GW1 |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) — Game Design's comeback numbers landed in 970d15a6; the data change (other effects set to zero) lands in GW1. | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in every match: they change damage, energy regain, beam contests… |
+| A-ENERGY-04 | S | major | GW1 |  | reported | 201bd3d2 (Sim, committed locally) — On main as a park in 148f4e16; Encounter's energy-on pins 720b9fa8 reported; World's pins park and Rendering's after_check pin still block GW1a (EP status 3, Sat 14 Nov 03:50). | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only through a code patch the page tool writes, so main does not… |
+| A-ENERGY-05 | M | major | GW1 |  | reported | 69406d59 (meters set to zero, committed locally) — Reported, lands in GW1b (EP status 3, Sat 14 Nov 03:50); Game Design's comeback numbers landed in 970d15a6. | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in every match: they change damage, energy regain, beam contests… |
 | A-NET-05 | S | major |  |  | reported | parked, held for B1 fixes (EP status 1, 2026-11-14) | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with the same data and different code is run and fails at… |
 
 **tools-pipeline** (13)
@@ -138,14 +138,14 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 | A-ENERGY-06 | S | major |  |  | landed | f391fec4 — A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer. | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two fighters" and says nothing about fighter-specific code. |
 | A-LEGAL-02 | M | blocker |  |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | No desktop package for an outside tester can be made today: the build workflow needs a recorded approval file that does not exist, the package text step reads a notice… |
 | A-MODES-08 | M | major |  | A-MODES-01 A-TOOLS-01 | reported | e702e058 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) | No mode smoke suite exists: the one smoke check drives the browser build by clicking fixed screen points and failed once when the menu layout changed, and the desktop… |
-| A-TOOLS-01 | L | blocker |  | A-CODE-01 A-CODE-03 A-LEGAL-02 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | No one command or CI run makes the Windows and Linux desktop builds of the game as Orb plays it, the solo game included: the only desktop workflow has never run, would… |
+| A-TOOLS-01 | L | blocker |  | A-CODE-01 A-CODE-03 A-LEGAL-02 | reported | CI run 43589936940 (owner-private, green, 53 steps, Linux hash matches); local one-command build db4f85a2, proof d3d5bd66 (local) — CI part met (EP status 3, Sat 14 Nov 03:50). Not closed: the first desktop build is still to be compared by stills on the same replay, Windows then Linux (A1 build step 6). | No one command or CI run makes the Windows and Linux desktop builds of the game as Orb plays it, the solo game included: the only desktop workflow has never run, would… |
 | A-TOOLS-07 | S | major |  |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | A build carries a commit and a date but no version number, the Windows program's version fields are empty, no changelog file exists, and whether the game shows its build… |
 | A-TOOLS-08 | S | major |  |  | landed | 047d4037 — Also f391fec4 (EP status 1). | The Godot check job's time swings from about 35 to 62 minutes on unchanged game code against a 75-minute limit, and the network job has reached 86% of its 60 minutes, so… |
 | A-TOOLS-09 | S | major |  |  | landed | f391fec4 — Landed f391fec4 (plan). Orb's answer on where the second copy lives is still open; last copy made: none yet. | The owner's builds, play files, reports and clips sit in one git-ignored folder of about 2.9 GB on one disk, with no backup plan written anywhere. |
 | A-TOOLS-10 | S | minor |  |  | landed | 047d4037 — Also f391fec4 (EP status 1). | The playbook's build-verification rule cites a script that is not in the repository and a tool name that matches no file; the tracked check that exists reads browser… |
 | A-TOOLS-13 | S | minor |  |  | landed | 047d4037 — Also f391fec4 (EP status 1). | No CI job ever starts a Windows build: every job runs on Linux, and the desktop workflow reads the Windows program's bytes without running it. |
 | A-TOOLS-15 | S | minor |  |  | landed | f391fec4 — A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer. | Corrective item CD-21 (stop silent passes: 'grandfathered', 'report only' and 'CHECK' lines that print as exceptions in the site builder and the clip kit) has no commit… |
-| A-UI-02 | M | blocker |  |  | reported | e702e058 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) | On main, and so in any plain desktop build, the one-press report and 'Save this match' save nothing: the hook that writes the match file is added only by the LAN kit and… |
+| A-UI-02 | M | blocker |  |  | reported | 5963d224 (report-hook re-cut, committed locally; e702e058 before) — The re-cut no longer blocks GW1a (EP status 3, Sat 14 Nov 03:50). | On main, and so in any plain desktop build, the one-press report and 'Save this match' save nothing: the hook that writes the match file is added only by the LAN kit and… |
 
 **ui-ux** (8)
 
@@ -164,7 +164,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-WORLD-01 | M | blocker | GW1 |  | reported | 3b6e89b5 (World, committed locally) — parked and gated, waiting for its window (EP status 2, 2026-11-14); lands first in GW1b. | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the menu never sets that key, and Orb's globe build… |
+| A-WORLD-01 | M | blocker | GW1 |  | reported | 3b6e89b5 (World, committed locally) — On main as a park in 148f4e16; lands first in GW1b (EP status 3, Sat 14 Nov 03:50). | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the menu never sets that key, and Orb's globe build… |
 
 **Added since the path, outside the register** (5 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They land as window GW1c, after GW1b.
 
@@ -172,7 +172,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 | --- | --- | --- | --- | --- | --- |
 | ADD-A1-01 | world-environment | Five selectable planet sizes (World, with Simulation and Performance): from World's six, five are picked; each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window. | reported | 3b6e89b5 (World, five sizes) and 7321f49b (Sim, replay sizes); GD ruling a046f3d9; Netcode pricing cf909e93 | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-02 | world-environment | Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
-| ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
+| ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | reported | 5263c1a6 (World destruction plan); Game Design buildings paper f3a8d64d | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-04 | rendering-techart | Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-05 | encounter-systems | Launch rebound bug (Encounter Systems, with World): a fighter that bounces off something in the background must not ricochet on an unrealistic path. Done test: no launch rebound leaves a structure or terrain at an angle or speed the contact cannot explain, read over seeded launches, plus Orb's eye at A1. | not started | EP, 2026-11-14 (Orb's clarification in vision.md) | Orb, 2026-11-14 (ideas-log ID-24) |
 
@@ -356,7 +356,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 | A-WORLD-04 | S | major | GW2 |  | not started |  | Any ground dug below the shore line reads as sea at once, wherever it is, because the sea is derived from ground height with no source test; the fix (the flood switch)… |
 | A-WORLD-06 | S | major |  | A-WORLD-03 | not started |  | X-14's three times the crater width at the top tier is not met for the same blow and no check asserts any ratio: an impact gains 25% energy a tier (1.32 times the width… |
 | A-WORLD-07 | L | major | GW2 | A-WORLD-03 | not started |  | A skid trench on the planet is cut at one fixed half width of 32 units (about one body height across) at every power, so the mark a slide leaves does not grow with tier. |
-| A-WORLD-10 | L | major | GW2 |  | not started |  | A body that hits a building or an outcrop still bounces back like a ping-pong ball, which Orb reported on three dates; the settings that would hold it are one switch row… |
+| A-WORLD-10 | L | major | GW2 |  | reported | 5263c1a6 (World: wall-hold, committed locally) — An A3 row reported early (EP status 3, Sat 14 Nov 03:50); the destruction plan came with it. | A body that hits a building or an outcrop still bounces back like a ping-pong ball, which Orb reported on three dates; the settings that would hold it are one switch row… |
 
 ## A4. Horde, teams, your own planet, the whole fighter — 19 rows
 

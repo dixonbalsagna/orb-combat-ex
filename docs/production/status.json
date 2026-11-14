@@ -87,9 +87,9 @@
       "note": "The six workshop items placed (Game Design). The EP confirms the row closes."
     },
     "A-ENERGY-05": {
-      "status": "briefed",
-      "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)",
-      "note": "Game Design's comeback numbers landed in 970d15a6; the data change (other effects set to zero) lands in GW1."
+      "status": "reported",
+      "ref": "69406d59 (meters set to zero, committed locally)",
+      "note": "Reported, lands in GW1b (EP status 3, Sat 14 Nov 03:50); Game Design's comeback numbers landed in 970d15a6."
     },
     "A-CONTROLS-04": {
       "status": "reported",
@@ -190,7 +190,7 @@
     },
     "A-CAMERA-01": {
       "status": "reported",
-      "ref": "8fee3caa (parked, gated)",
+      "ref": "8fee3caa; launch parks 63d62abd and b3bfa8e7 (parked, gated)",
       "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
     },
     "A-AUDIO-01": {
@@ -245,8 +245,8 @@
     },
     "A-UI-02": {
       "status": "reported",
-      "ref": "e702e058 (parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "ref": "5963d224 (report-hook re-cut, committed locally; e702e058 before)",
+      "note": "The re-cut no longer blocks GW1a (EP status 3, Sat 14 Nov 03:50)."
     },
     "A-MODES-08": {
       "status": "reported",
@@ -296,12 +296,32 @@
     "A-ENERGY-04": {
       "status": "reported",
       "ref": "201bd3d2 (Sim, committed locally)",
-      "note": "parked and gated, waiting for its window (EP status 2, 2026-11-14); World x8, Encounter x4 and Rendering's after_check are pinning."
+      "note": "On main as a park in 148f4e16; Encounter's energy-on pins 720b9fa8 reported; World's pins park and Rendering's after_check pin still block GW1a (EP status 3, Sat 14 Nov 03:50)."
     },
     "A-WORLD-01": {
       "status": "reported",
       "ref": "3b6e89b5 (World, committed locally)",
-      "note": "parked and gated, waiting for its window (EP status 2, 2026-11-14); lands first in GW1b."
+      "note": "On main as a park in 148f4e16; lands first in GW1b (EP status 3, Sat 14 Nov 03:50)."
+    },
+    "A-TOOLS-01": {
+      "status": "reported",
+      "ref": "CI run 43589936940 (owner-private, green, 53 steps, Linux hash matches); local one-command build db4f85a2, proof d3d5bd66 (local)",
+      "note": "CI part met (EP status 3, Sat 14 Nov 03:50). Not closed: the first desktop build is still to be compared by stills on the same replay, Windows then Linux (A1 build step 6)."
+    },
+    "A-WORLD-10": {
+      "status": "reported",
+      "ref": "5263c1a6 (World: wall-hold, committed locally)",
+      "note": "An A3 row reported early (EP status 3, Sat 14 Nov 03:50); the destruction plan came with it."
+    },
+    "A-RENDER-01": {
+      "status": "reported",
+      "ref": "be128ccd (Rendering: globe default; VFX meteor-default e56d372c)",
+      "note": "Reported (EP status 3, Sat 14 Nov 03:50)."
+    },
+    "A-RENDER-04": {
+      "status": "reported",
+      "ref": "be128ccd (Rendering: crater look)",
+      "note": "Reported (EP status 3, Sat 14 Nov 03:50)."
     }
   },
   "added": [
@@ -330,10 +350,10 @@
       "milestone": "A1",
       "owner": "world-environment",
       "what": "Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw.",
-      "status": "not started",
-      "ref": "planned in docs/ep/sprints/A1-sprint.md",
+      "status": "reported",
+      "ref": "5263c1a6 (World destruction plan); Game Design buildings paper f3a8d64d",
       "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
-      "note": "Lands as window GW1c, after GW1b."
+      "note": "Plan reported; the build is not started."
     },
     {
       "id": "ADD-A1-04",
@@ -373,6 +393,12 @@
       "count": 69,
       "of": 87,
       "note": "EP status 2 (Sat 02:50 PST): unchanged; GW1a moves it. Blocking GW1a: Rendering's look parks, the energy-on pins, Tools' report-hook re-cut, Sim's B1 header builder"
+    },
+    {
+      "date": "2026-11-14",
+      "count": 69,
+      "of": 87,
+      "note": "EP status 3 (Sat 03:50 PST): unchanged. GW1a blockers: World's pins park and Rendering's after_check pin; B1 waits on Sim's header builder"
     }
   ],
   "switchRowsEveryDays": 2,
@@ -487,8 +513,9 @@
     }
   },
   "notes": [
-    "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde design) is parked: stand-in 50c41812 plus Game Design rulings 49db1eff.",
-    "Main is 83a5b963; CI is running and 8 local commits are held until it finishes (EP status 2). Also parked: Tools' owner-private desktop notice fix (dd4dca9a).",
-    "Meters at EP status 2 (Sat 02:50 PST): all-models 64%, Fable 87% (the Fable reset waits on Orb). Earlier reading: 53% and 72%. Stand-in specialist work this week about 15M tokens at status 1."
+    "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde design) is input to Encounter's spike S3 row, which stays briefed until the trial clip: stand-in 50c41812, Game Design rulings 49db1eff.",
+    "Main is 148f4e16 (21 commits pushed at 03:40; CI on 83a5b963 was green, 148f4e16 is running; 7 local commits held). The parks listed at status 2 are on main as parks or tools, switched off.",
+    "Also: Tools' owner-private desktop notice fix dd4dca9a is part of A-TOOLS-01 and closes nothing; Netcode lan-hash 8007de44 (B1); UI a1-world-menu 611c1c2b and a1-window-row 49fa623e; the net CI split 3c2ff9ac.",
+    "Meters at EP status 3: all-models 66%, Fable 87% (the Fable reset waits on Orb)."
   ]
 }
