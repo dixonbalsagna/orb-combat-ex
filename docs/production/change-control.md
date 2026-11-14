@@ -1,6 +1,6 @@
 # Change control: how a new idea waits
 
-**Status: proposed, waiting for Orb's yes.** The rule below is copied from the path to Alpha ("Change control", docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md) and put in plain words. The Executive Producer records Orb's yes here once it is given; the freeze half is decision 23 in the path's table. Written 2026-11-13 by Production Operations. Row: A-PROCESS-01 (exit line X-33).
+**Status: logging and pricing in force from 2026-11-13; the post-freeze half waits on Orb's decision 23** (asked at A6). The rule below is copied from the path to Alpha ("Change control", docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md) and put in plain words; the Executive Producer added the pointer to it as rule 9 of the playbook. Written 2026-11-13 by Production Operations. Row: A-PROCESS-01 (exit line X-33).
 
 **The point.** Orb has a new idea most weeks, and every one of them is good enough to want. Each idea, though, costs tokens, weeks and sometimes a golden window (a landing that changes how the game plays, so that saved replays stop working). This page gives every idea a written place to wait, with a price tag, until Orb says yes. No idea quietly becomes build work, however small it looks.
 
@@ -67,8 +67,8 @@ The Executive Producer:
 - Records Orb's answer in the log's last column; an answer of yes changes the milestone's row list only through step 5.
 - Sends Production Operations each new line and each answer, so the tracker's counts stay true.
 
-## Proposed pointer for the playbook (the Executive Producer's file)
+## The playbook pointer (rule 9 of docs/ep/playbook.md, added by the Executive Producer)
 
-Production Operations does not edit the playbook. The line proposed for docs/ep/playbook.md, under "Rules of engagement":
+Production Operations does not edit the playbook. The line as proposed, now in the playbook under "Rules of engagement":
 
 > 9. **Change control.** Every new idea goes into docs/production/ideas-log.md the day it is said; price it within one working day (now, a named milestone, or after Alpha; size class; moves the fingerprint or not); build nothing from the log until Orb has said yes. Rules are in docs/production/change-control.md.

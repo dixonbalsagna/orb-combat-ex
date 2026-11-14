@@ -207,9 +207,10 @@ for (const line of cdText.split(/\r?\n/)) {
   if (m) cds.push({ id: 'CD-' + m[1], title: m[2].trim(), wave: c[1], owner: c[2], closing: c[5] });
 }
 const cdRows = id => reg.filter(r => cdIds(r).includes(id)).map(r => r.id);
-const closingKind = c => !c ? 'no closing entry' : /^open/i.test(c) ? 'open' : /owed|waits|after quiet/i.test(c) ? 'entry, with something still owed' : 'closed (has a commit or record)';
+const closedByEP = new Set(Object.keys(status.cdClosed || {}));
+const closingKind = (c, id) => closedByEP.has(id) ? 'closed (has a commit or record)' : !c ? 'no closing entry' : /^open/i.test(c) ? 'open' : /owed|waits|after quiet/i.test(c) ? 'entry, with something still owed' : 'closed (has a commit or record)';
 const backlogRows = [...reg].sort((a, b) => WORDER[whereLabel(a)] - WORDER[whereLabel(b)] || a.id.localeCompare(b.id));
-const apart = cds.filter(c => closingKind(c.closing) !== 'closed (has a commit or record)' && cdRows(c.id).length === 0);
+const apart = cds.filter(c => closingKind(c.closing, c.id) !== 'closed (has a commit or record)' && cdRows(c.id).length === 0);
 const backlogPage = [
   `# Backlog (draft): one table keyed by register id`,
   `_Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Production Operations drafts). Built for ${status.asOf} by tools/build-tracker.mjs from the audit's register (${reg.length} rows), the tracker's status and the corrective plan of 2026-11-07. Rows marked † are held to the EP's tables (see milestones.md). Status words as in the tracker; "not placed" is a row outside the milestones (the nice-to-have pool, or after Alpha)._`,
@@ -217,9 +218,9 @@ const backlogPage = [
   `## A. The register, by milestone\n\n` + table(['Id', 'Where', 'Owner', 'Size', 'Severity', 'Status', 'Corrective item', 'What it is'],
     backlogRows.map(r => [r.id + (heldRows(r.id) ? ' †' : ''), whereLabel(r), r.owner, r.cost, r.severity, statusOf(r), cdIds(r).join(' '), (heldRows(r.id) || HELD.test(r.gap)) ? '(see the full table)' : short(r.gap, 110)])),
   `## B. The corrective plan of 2026-11-07, row by row (27 items)\n\nThe plan's own closing column, read as written; "register row" is the row the audit made from that item (the register's source field). Items titled with a held word show a neutral title.\n\n` + table(['CD', 'What it is', 'Plan\'s closing column', 'Register row(s)'],
-    cds.map(c => [c.id, HELD.test(c.title) ? '(see the corrective plan)' : short(c.title, 90), closingKind(c.closing), cdRows(c.id).join(' ') || 'none'])),
+    cds.map(c => [c.id, HELD.test(c.title) ? '(see the corrective plan)' : short(c.title, 90), closingKind(c.closing, c.id), cdRows(c.id).join(' ') || 'none'])),
   `## C. Items with no register row (listed apart)\n\n` + (apart.length
-    ? `From the corrective plan: ${apart.map(c => c.id).join(', ')} (no closing entry or still owed, and no register row). Each needs an owner and a horizon from the EP, or a closing commit.\n\n` + table(['Source', 'Item', 'Owner', 'Horizon', 'Notes'], apart.map(c => ['corrective plan ' + c.id, HELD.test(c.title) ? '(see the corrective plan)' : short(c.title, 90), c.owner, '', closingKind(c.closing)]))
+    ? `From the corrective plan: ${apart.map(c => c.id).join(', ')} (no closing entry or still owed, and no register row). Each needs an owner and a horizon from the EP, or a closing commit.\n\n` + table(['Source', 'Item', 'Owner', 'Horizon', 'Notes'], apart.map(c => ['corrective plan ' + c.id, HELD.test(c.title) ? '(see the corrective plan)' : short(c.title, 90), c.owner, '', closingKind(c.closing, c.id)]))
     : `From the corrective plan: none. Every item without a closing entry, or with an open one, has a register row.\n\n`) +
     `\n\nFrom the EP's owed list, QA's bug list and the parked folders: waiting for the EP to pass them. Format for each line: source, item, owner, horizon, note.\n\n` + table(['Source', 'Item', 'Owner', 'Horizon', 'Notes'], [['(waiting for the EP)', '', '', '', '']]),
 ].join('\n\n') + '\n';
@@ -227,7 +228,7 @@ const backlogPage = [
 // ---- checks on the outputs ----
 check('the backlog lists every register row exactly once', backlogRows.length === reg.length && new Set(backlogRows.map(r => r.id)).size === reg.length && reg.every(r => (backlogPage.match(new RegExp(`^\\| ${r.id}[ |]`, 'gm')) || []).length === 1), '');
 check('the corrective plan has 27 rows, parsed', cds.length === 27, `parsed ${cds.length}`);
-check('every corrective item without a closing entry or still open has a register row', cds.every(c => closingKind(c.closing) === 'closed (has a commit or record)' || cdRows(c.id).length > 0 || apart.includes(c)), '');
+check('every corrective item without a closing entry or still open has a register row', cds.every(c => closingKind(c.closing, c.id) === 'closed (has a commit or record)' || cdRows(c.id).length > 0 || apart.includes(c)), '');
 check('no held word appears in the backlog', !HELD.test(backlogPage), (backlogPage.match(HELD) || [''])[0]);
 const idsIn = (text, list) => list.map(x => (text.match(new RegExp(`^\\| ${x.id}[ |]`, 'gm')) || []).length);
 check('every A1 row appears exactly once in the full table', idsIn(fullPage, rows.A1).every(n => n === 1), rows.A1.filter((x, i) => idsIn(fullPage, rows.A1)[i] !== 1).map(x => x.id).join(' '));

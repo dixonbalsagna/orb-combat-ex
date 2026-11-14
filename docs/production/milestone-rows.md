@@ -79,8 +79,8 @@ _Built from status.json for 2026-11-13 by tools/build-tracker.mjs, with every ro
 
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-LEGAL-10 | S | minor |  |  | reported | Orb's answer, vision.md 2026-11-13 night; Legal's ruling in ae01d434 — The permission page itself is still to be made; the EP confirms what closes the row. | The owner's one-line licence choice is not on record, so the build says the licence is not chosen yet and no plain permission page exists. |
-| A-WORLD-14 | S | minor |  |  | reported | Orb's answer, vision.md 2026-11-13 night (accepted the recommendation) — The default itself lands with A-WORLD-01 in GW1. | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes planet 7, and main's menu matches play the hand-made arena,… |
+| A-LEGAL-10 | S | minor |  |  | landed | ae01d434 — Legal's permission page and contributor note (ae01d434) plus Orb's licence "GO" in vision.md; closed on the EP's word, 2026-11-13. | The owner's one-line licence choice is not on record, so the build says the licence is not chosen yet and no plain permission page exists. |
+| A-WORLD-14 | S | minor |  |  | landed | 8d157e9a — Orb accepted decision 2 ("Go with recommendation on all", vision.md, 8d157e9a); closed on the EP's word. The default itself lands with A-WORLD-01 in GW1. | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes planet 7, and main's menu matches play the hand-made arena,… |
 
 **performance-platform** (3)
 
@@ -256,7 +256,7 @@ _Built from status.json for 2026-11-13 by tools/build-tracker.mjs, with every ro
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-LEGAL-06 | M | major |  |  | not started |  | Legal asked that report files be checked for account names and file paths before a tester sends them, and no such check exists; the LAN folder's report script points at… |
-| A-LEGAL-08 † | M | major |  |  | briefed | day-one safety chain (docs/ep/sprints/A1-sprint.md) — Part 1 landed in 191e5e30 (Tools). | The repairs to the flash measuring chain ordered on 2026-11-07 (CD-09) have no commit: the analyser file is unchanged, no flash reading runs on a schedule, the last… |
+| A-LEGAL-08 † | M | major |  |  | briefed | day-one safety chain (docs/ep/sprints/A1-sprint.md) — Part 1 landed in 191e5e30 and its nightly in 59c6b195 (Tools). Stays open until the first scheduled reading is recorded. | The repairs to the flash measuring chain ordered on 2026-11-07 (CD-09) have no commit: the analyser file is unchanged, no flash reading runs on a schedule, the last… |
 | A-MARKET-01 | S | major |  |  | not started |  | There is no fixed shot list: the recipe file covers three of the six named shots and has no recipe for a transformation, a lap of the globe or a LAN 2v2 moment. |
 | A-MARKET-02 | S | major |  | A-MARKET-01 | not started |  | No job renders the shots at a milestone and no archive exists: clips land in a git-ignored folder with no milestone name, no line on what changed and no backup. |
 | A-MARKET-03 | M | major |  | A-TOOLS-01 | not started |  | The capture hook exists only in a browser build, so the Alpha candidate's own Windows and Linux programs cannot be filmed, and a LAN 2v2 shot depends on a replay route… |

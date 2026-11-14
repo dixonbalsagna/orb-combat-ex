@@ -35,7 +35,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-ENERGY-06 | A1 | tools-pipeline | S | major | briefed |  | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two… |
 | A-LEGAL-02 | A1 | tools-pipeline | M | blocker | briefed |  | No desktop package for an outside tester can be made today: the build workflow needs a recorded approval file… |
 | A-LEGAL-09 | A1 | legal-ip | S | major | landed | CD-06 | Whether a restricted, key-only itch.io page may go up before the title search is not confirmed anywhere:… |
-| A-LEGAL-10 | A1 | orb | S | minor | reported |  | The owner's one-line licence choice is not on record, so the build says the licence is not chosen yet and no… |
+| A-LEGAL-10 | A1 | orb | S | minor | landed |  | The owner's one-line licence choice is not on record, so the build says the licence is not chosen yet and no… |
 | A-MODES-01 | A1 | ui-ux | M | blocker | briefed |  | The start menu has no list of modes: its rows are one or two players, each player's device, the computer's… |
 | A-MODES-06 | A1 | ui-ux | M | blocker | briefed |  | There is no fighter select: a match's fighters default to the first two ids of the roster file, so player one… |
 | A-MODES-07 | A1 | encounter-systems | S | major | briefed |  | On main the rules that end a match as the last played build did (knockout only by a finishing move, wear for… |
@@ -84,7 +84,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-UI-06 | A1 | ui-ux | S | major | briefed |  | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from… |
 | A-UI-09 | A1 | ui-ux | S | major | briefed |  | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every… |
 | A-WORLD-01 | A1 | world-environment | M | blocker | briefed |  | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made… |
-| A-WORLD-14 | A1 | orb | S | minor | reported |  | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes… |
+| A-WORLD-14 | A1 | orb | S | minor | landed |  | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes… |
 | A-ACCESS-01 | A2 | accessibility-localization | S | major | not started |  | There is no accessibility pass or record newer than 2026-10-31 and no runs folder for the area, so the… |
 | A-ACCESS-02 | A2 | ui-ux | S | minor | not started | CD-14 | The Hit pause slider is still shown on the Accessibility page and still has no reader outside the user… |
 | A-ACCESS-04 | A2 | ep | S | minor | not started | CD-14 | Corrective item CD-14 has an empty progress cell and no commit or record names it since 2026-11-07, although… |
@@ -289,7 +289,7 @@ The plan's own closing column, read as written; "register row" is the row the au
 | CD-02 | Take-down with no game job; manual unpublish written down; a contact route | entry, with something still owed | A-PROCESS-19 |
 | CD-03 | The public test build decision goes back to Orb | entry, with something still owed | A-PROCESS-12 |
 | CD-04 | (see the corrective plan) | open | A-CAMERA-02 A-LEGAL-01 |
-| CD-05 | The villain feeding on civilian deaths | entry, with something still owed | none |
+| CD-05 | The villain feeding on civilian deaths | closed (has a commit or record) | none |
 | CD-06 | A trademark search before any store page | closed (has a commit or record) | A-LEGAL-09 |
 | CD-07 | Personal details in the public repo | closed (has a commit or record) | none |
 | CD-08 | Make the public text true (README, CLAUDE.md, /about/, the pin's notice) | closed (has a commit or record) | none |
@@ -315,11 +315,9 @@ The plan's own closing column, read as written; "register row" is the row the au
 
 ## C. Items with no register row (listed apart)
 
-From the corrective plan: CD-05 (no closing entry or still owed, and no register row). Each needs an owner and a horizon from the EP, or a closing commit.
+From the corrective plan: none. Every item without a closing entry, or with an open one, has a register row.
 
-| Source | Item | Owner | Horizon | Notes |
-| --- | --- | --- | --- | --- |
-| corrective plan CD-05 | The villain feeding on civilian deaths | Game Design, World, Simulation, after Orb's ruling |  | entry, with something still owed |
+
 
 From the EP's owed list, QA's bug list and the parked folders: waiting for the EP to pass them. Format for each line: source, item, owner, horizon, note.
 

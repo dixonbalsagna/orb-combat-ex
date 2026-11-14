@@ -115,7 +115,7 @@ export const MILESTONES = [
       ['X-04', 'must pass', 'A scripted match reaches each form for each fighter; one still per form; a blow in flight when a transformation starts is handled the written way.'],
       ['X-03', 'must pass (the Alpha\'s bar)', 'The pad-driven coverage probe finds no cell without an outcome, and no duplicate inside the rows the bar names.'],
       ['X-13, X-14', 'must pass', 'All the pillars in one scripted match; the crater and trench ratios.'],
-      ['X-11', 'must pass (the dials)', 'The same seed and choices give the same planet on both LAN PCs. The Windows-against-Linux comparison is first required at A5.'],
+      ['X-11', 'must pass (the dials)', 'The same seed and choices give the same planet on both LAN PCs. The Windows-against-Linux comparison is first required at A5. **Proposed change (EP, 2026-11-13): the path\'s "one size" is superseded by the five planet sizes Orb added; the done test becomes "five sizes selectable, each generates and plays, frame cost read in a quiet window".**'],
       ['X-15 (third fighter)', 'must pass (resized)', 'The count of places in the code that name exactly two fighters is recorded, cannot rise, and is zero in the energy, stamina, body and forms systems.'],
     ],
   },

@@ -4,7 +4,8 @@ PASS  change-control: has the rule for after the freeze
 PASS  change-control: has the standing exception
 PASS  change-control: has the spike rule
 PASS  change-control: has "now" needs all three conditions
-PASS  change-control: has the playbook pointer is proposed, not made
+PASS  change-control: has the playbook pointer (rule 9)
+PASS  change-control: has a status line saying the post-freeze half waits on decision 23
 PASS  change-control: points to the ideas log and the special-moves note
 PASS  ideas-log: section A has exactly the path's seven first entries
 PASS  ideas-log: the seven entries are the absorb, debris, power-up contest, slipstream, flick, wind-up throw and co-op synergy, in the path's order
@@ -35,4 +36,4 @@ PASS  ideas-log.md: no held word
 PASS  risk-register.md: no held word
 PASS  token-record.md: no held word
 PASS  done-tests.md: no held word
-37 of 37 checks pass
+38 of 38 checks pass

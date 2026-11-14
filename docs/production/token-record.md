@@ -10,12 +10,12 @@
 
 | Week from (Fri 19:00) | All-models meter: start, end | Fable meter: start, end | Tokens briefed | Rows landed | Points per 1M tokens (computed) | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| 2026-11-13 | start: the weekly reset (0%, EP to confirm); **so far 26%** after the audit | start: the reset (0%, EP to confirm); **so far 49%** after the audit | about 18.5M so far (the audit); sprint A1's briefs on top, EP to add | 3 by the tracker on 2026-11-13 (A-ENERGY-02, A-COMBAT-15, A-LEGAL-09); EP to confirm they fall in this week | 26 points / 18.5M = about 1.4 for the audit alone (a blend of the rates below) | Week still open. A1 may use up to about 40% of this week; it pauses for Orb when the all-models meter reads about 66%. Wave 2 starts Sat 14 Nov. |
+| 2026-11-13 | 2% at the audit's start (the week began Fri 13 Nov 19:00); **26% at its end (21:52)**; week still open | 3% at the audit's start; **49% at its end (21:52)**; week still open | about 18.5M for the audit; about 67M briefed for A1 in all, planet scope included (EP, 2026-11-13) | 5 by the tracker on 2026-11-13 (A-ENERGY-02, A-COMBAT-15, A-LEGAL-09, A-LEGAL-10, A-WORLD-14; the last two are decisions); EP to confirm they fall in this week | for the audit alone: (26 minus 2) points / 18.5M = about 1.3 all-models points per 1M (a blend of the rates below); the Fable meter moved 46 points | Week still open. A1 may use up to about 40% of this week; it pauses for Orb when the all-models meter reads about 66%. Wave 2 starts Sat 14 Nov. |
 
 ## The rate basis the EP gave (to convert tokens to meter points)
 
 - About **1.6 all-models points per 1M tokens on the largest (Fable) model**; about **1 point per 1M on the smaller models** most directors run on. (The audit measured the first: 11 points for 7.0M tokens.)
-- The audit's own blend, from the row above: 26 points for about 18.5M tokens, about 1.4 a million.
+- The audit's own blend, from the row above: 24 points (2% to 26%) for about 18.5M tokens, about 1.3 a million.
 - These are rough. If a week's computed figure differs by a lot from this basis, note why (a heavy Fable week reads high; a week of cheaper models reads low) and use the computed figure from then on.
 
 ## What the path assumes, and the arithmetic it implies

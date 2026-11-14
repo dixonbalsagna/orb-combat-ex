@@ -16,7 +16,7 @@ const tableRows = (text, startsWith) => text.split(/\r?\n/).filter(l => l.starts
 const cc = read('change-control.md');
 const steps = [...cc.matchAll(/^([1-6])\. \*\*/gm)].map(m => m[1]);
 check('change-control: the six steps of the push are numbered 1 to 6', steps.slice(0, 6).join('') === '123456', steps.join(''));
-for (const [label, re] of [['the rule for after A4', /## After A4/], ['the rule for after the freeze', /## After the freeze/], ['the standing exception', /## The standing exception/], ['the spike rule', /Each spike's page counts as a change request/], ['"now" needs all three conditions', /only if all three of these hold/], ['the playbook pointer is proposed, not made', /Proposed pointer for the playbook/]])
+for (const [label, re] of [['the rule for after A4', /## After A4/], ['the rule for after the freeze', /## After the freeze/], ['the standing exception', /## The standing exception/], ['the spike rule', /Each spike's page counts as a change request/], ['"now" needs all three conditions', /only if all three of these hold/], ['the playbook pointer (rule 9)', /The playbook pointer \(rule 9/], ['a status line saying the post-freeze half waits on decision 23', /post-freeze half waits on Orb's decision 23/]])
   check(`change-control: has ${label}`, re.test(cc));
 check('change-control: points to the ideas log and the special-moves note', /ideas-log\.md/.test(cc) && /docs\/ep\/ideas\/special-moves\.md/.test(cc));
 

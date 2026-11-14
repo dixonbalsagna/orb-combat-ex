@@ -6,7 +6,7 @@ _Live page. Last built from status.json for **2026-11-13**. It is rebuilt every 
 
 ## Where the project is
 
-**Milestone A1, "Main is the game Orb plays".** 77 rows: 29 not started, 36 briefed, 9 reported, 3 landed.
+**Milestone A1, "Main is the game Orb plays".** 77 rows: 29 not started, 36 briefed, 7 reported, 5 landed.
 
 **Budget.** A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so A1 pauses for Orb when the all-models meter reads about 66%. The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.
 
@@ -14,7 +14,7 @@ _Live page. Last built from status.json for **2026-11-13**. It is rebuilt every 
 
 | Milestone | What it proves | Rows | Not started | Briefed | Reported | Landed | Tokens (path) | Weeks (path) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A1 (now) | Main is the game Orb plays | 77 | 29 | 36 | 9 | 3 | 55M | 2 to 4 |
+| A1 (now) | Main is the game Orb plays | 77 | 29 | 36 | 7 | 5 | 55M | 2 to 4 |
 | A2 | Safe to hand out; two real Steam Decks have run it | 41 | 39 | 2 | 0 | 0 | 34M | 2 to 4 |
 | A3 | The fight's new rules, and LAN inside the game | 27 | 27 | 0 | 0 | 0 | 53M | 3 to 5 |
 | A4 | Horde, teams, your own planet, the whole fighter | 19 | 19 | 0 | 0 | 0 | 57M | 2 to 3 |
@@ -92,7 +92,7 @@ The builds, play files, reports and clips Orb keeps are about 2.9 GB in one git-
 
 **What Orb can play.** The first desktop build of their own game: a Windows program that opens on the left-panel menus, on the round planet, with the pad as Orb plays it and flight at 3500. The start menu lists the modes that exist today, lets each player pick a fighter, and has a Quit row.
 
-**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 29 not started, 36 briefed, 9 reported, 3 landed.
+**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 29 not started, 36 briefed, 7 reported, 5 landed.
 
 **Golden window.** GW1 "Main is the game" (12 rows: A-AI-05, A-AI-10, A-CODE-01, A-COMBAT-05, A-COMBAT-11, A-COMBAT-14, A-CONTROLS-02, A-CONTROLS-04, A-ENERGY-04, A-ENERGY-05, A-MODES-07, A-WORLD-01). GW1a: the golden record is made first on the kept 9 November build's own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer's perfect-block fix, flight 3500), then one re-record. A-NET-05 (the build id in a replay) lands before the window.
 
@@ -128,7 +128,7 @@ _None open that this milestone needs._
 | ep | 16 | 12 | 1 | 3 | 0 |
 | game-design | 3 | 0 | 0 | 1 | 2 |
 | legal-ip | 1 | 0 | 0 | 0 | 1 |
-| orb | 2 | 0 | 0 | 2 | 0 |
+| orb | 2 | 0 | 0 | 0 | 2 |
 | performance-platform | 3 | 3 | 0 | 0 | 0 |
 | production-ops | 3 | 0 | 0 | 3 | 0 |
 | qa-balance | 9 | 9 | 0 | 0 | 0 |
@@ -213,8 +213,8 @@ _None open that this milestone needs._
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-LEGAL-10 | The owner's one-line licence choice is not on record, so the build says the licence is not chosen yet and no plain… | S |  | reported | Orb's answer, vision.md 2026-11-13 night; Legal's ruling in ae01d434 — The permission page itself is still to be made; the EP confirms what closes the row. |
-| A-WORLD-14 | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes planet 7, and… | S |  | reported | Orb's answer, vision.md 2026-11-13 night (accepted the recommendation) — The default itself lands with A-WORLD-01 in GW1. |
+| A-LEGAL-10 | The owner's one-line licence choice is not on record, so the build says the licence is not chosen yet and no plain… | S |  | landed | ae01d434 — Legal's permission page and contributor note (ae01d434) plus Orb's licence "GO" in vision.md; closed on the EP's word, 2026-11-13. |
+| A-WORLD-14 | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes planet 7, and… | S |  | landed | 8d157e9a — Orb accepted decision 2 ("Go with recommendation on all", vision.md, 8d157e9a); closed on the EP's word. The default itself lands with A-WORLD-01 in GW1. |
 
 **performance-platform** (3)
 
@@ -432,7 +432,7 @@ _6 more rows of this milestone are listed only on the full table (milestone-rows
 | X-04 | must pass | A scripted match reaches each form for each fighter; one still per form; a blow in flight when a transformation starts is handled the written way. |
 | X-03 | must pass (the Alpha's bar) | The pad-driven coverage probe finds no cell without an outcome, and no duplicate inside the rows the bar names. |
 | X-13, X-14 | must pass | All the pillars in one scripted match; the crater and trench ratios. |
-| X-11 | must pass (the dials) | The same seed and choices give the same planet on both LAN PCs. The Windows-against-Linux comparison is first required at A5. |
+| X-11 | must pass (the dials) | The same seed and choices give the same planet on both LAN PCs. The Windows-against-Linux comparison is first required at A5. **Proposed change (EP, 2026-11-13): the path's "one size" is superseded by the five planet sizes Orb added; the done test becomes "five sizes selectable, each generates and plays, frame cost read in a quiet window".** |
 | X-15 (third fighter) | must pass (resized) | The count of places in the code that name exactly two fighters is recorded, cannot rise, and is zero in the energy, stamina, body and forms systems. |
 
 **Decisions still open that this milestone needs**

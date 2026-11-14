@@ -9,6 +9,8 @@ node docs/production/tools/build-tracker.mjs     -> build-tracker-output.txt  (3
 node docs/production/tools/check-pages.mjs       -> check-pages-output.txt    (37 of 37 checks pass)
 ```
 
+**Re-run after the EP's answers (still 2026-11-13, still base 970d15a6; the output files here are from this run):** build-tracker.mjs 30 of 30, check-pages.mjs 38 of 38 (one check added: the status line on the freeze half). Changes that run: A-LEGAL-10 (ae01d434) and A-WORLD-14 (8d157e9a) landed on the EP's word; CD-05 closed by 6eec6a75; A1 is now 29 not started, 36 briefed, 7 reported, 5 landed. Re-run under the commit that holds the EP's commit of these pages once its id is known.
+
 ## Criterion 3 (milestones.md): the count and the trace
 
 - Rows by milestone, read from the audit's 04-milestone-rows.json: **A1 77, A2 41, A3 27, A4 19, A5 16, A6 0, 180 in all**. Each placed row exists in the register and is placed exactly once.

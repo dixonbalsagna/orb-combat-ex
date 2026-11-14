@@ -30,8 +30,8 @@
     "A-ENERGY-05": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)", "note": "Game Design's comeback numbers landed in 970d15a6; the data change (other effects set to zero) lands in GW1." },
     "A-CONTROLS-04": { "status": "reported", "ref": "970d15a6", "note": "Game Design's paper on flight 3500 landed; the data default changes in GW1b." },
     "A-LEGAL-09": { "status": "landed", "ref": "ae01d434", "note": "Legal's ruling on the itch.io page under the working title, on conditions (in RL-261 to RL-266)." },
-    "A-LEGAL-10": { "status": "reported", "ref": "Orb's answer, vision.md 2026-11-13 night; Legal's ruling in ae01d434", "note": "The permission page itself is still to be made; the EP confirms what closes the row." },
-    "A-WORLD-14": { "status": "reported", "ref": "Orb's answer, vision.md 2026-11-13 night (accepted the recommendation)", "note": "The default itself lands with A-WORLD-01 in GW1." },
+    "A-LEGAL-10": { "status": "landed", "ref": "ae01d434", "note": "Legal's permission page and contributor note (ae01d434) plus Orb's licence \"GO\" in vision.md; closed on the EP's word, 2026-11-13." },
+    "A-WORLD-14": { "status": "landed", "ref": "8d157e9a", "note": "Orb accepted decision 2 (\"Go with recommendation on all\", vision.md, 8d157e9a); closed on the EP's word. The default itself lands with A-WORLD-01 in GW1." },
     "A-PROCESS-01": { "status": "reported", "ref": "Production Ops report to the EP, 2026-11-13: change-control.md and ideas-log.md parked in docs/production/", "note": "Needs Orb's yes to the rule and the playbook pointer (the EP's)." },
     "A-PROCESS-04": { "status": "reported", "ref": "Production Ops report to the EP, 2026-11-13: risk-register.md rewritten in docs/production/" },
     "A-PROCESS-05": { "status": "reported", "ref": "Production Ops report to the EP, 2026-11-13: milestones.md and milestone-rows.md parked in docs/production/" },
@@ -40,7 +40,7 @@
     "A-PROCESS-08": { "status": "reported", "ref": "EP row; Production Ops draft in docs/production/token-record.md" },
     "A-PROCESS-16": { "status": "reported", "ref": "EP row; Production Ops draft in docs/production/done-tests.md" },
     "A-TOOLS-09": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)", "note": "Production Ops wrote the tracker paragraph (milestones.md, \"Orb's kept builds\"); Orb's answer on where the second copy lives is still open." },
-    "A-LEGAL-08": { "status": "briefed", "ref": "day-one safety chain (docs/ep/sprints/A1-sprint.md)", "note": "Part 1 landed in 191e5e30 (Tools)." },
+    "A-LEGAL-08": { "status": "briefed", "ref": "day-one safety chain (docs/ep/sprints/A1-sprint.md)", "note": "Part 1 landed in 191e5e30 and its nightly in 59c6b195 (Tools). Stays open until the first scheduled reading is recorded." },
     "A-LEGAL-03": { "status": "briefed", "ref": "day-one safety chain (docs/ep/sprints/A1-sprint.md)", "note": "Started early, in A1, as the path says." },
     "A-LEGAL-01": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov", "note": "Briefed early for A2 (Camera, Rendering, VFX)." },
     "A-CAMERA-02": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov", "note": "Briefed early for A2." }
@@ -55,6 +55,9 @@
     { "date": "2026-11-13", "count": 72, "of": 92, "note": "audit baseline 8901d351, as the path reports it" }
   ],
   "switchRowsEveryDays": 2,
+  "cdClosed": {
+    "CD-05": "6eec6a75: bystanders scatter and the meters read destruction; the audit counts it closed in practice (EP, 2026-11-13). No register row needed."
+  },
   "budget": {
     "line": "A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so A1 pauses for Orb when the all-models meter reads about 66%. The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.",
     "stopLinePercent": 66
