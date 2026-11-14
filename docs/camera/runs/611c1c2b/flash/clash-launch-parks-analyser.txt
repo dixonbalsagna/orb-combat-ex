@@ -1,0 +1,4 @@
+# Clash, analyser output, the stack + launch-hold-reduced + launch-wide, both modes
+clip                       frames      size  general  red  area-15%  2 s mem  margin  dips  verdict
+normal                       1499   512x384      3.5    0       3.5        3     0/7     0  FAIL: the primary reading counts 3.5 (over 3); with the area threshold 15% lower it counts 3.5 (over 3)
+reduced (reduced)            1499   512x384        2    0         3      2.5     0/4     0  PASS

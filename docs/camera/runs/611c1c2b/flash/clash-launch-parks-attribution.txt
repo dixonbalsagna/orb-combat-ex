@@ -1,0 +1,6 @@
+# Clash on the stack + launch-hold-reduced (b9bff998) + launch-wide (49402d51), web build, every tick, 1024x768, analysed at 512x384;
+# each counted change against the camera's per-tick log (native, same sim): 'camera scroll' = the shown pane moved more than 0.045 of the width a tick in the 6 ticks before, off a cut
+normal: analyser 3.5 flashes (worst second from 1074); 43 changes, 8 in the camera's scroll; camera-scroll changes alone 2.5 (from 1089); without them 2.5 (from 1415)
+   the worst second's changes: 1074, 1079, 1085, 1089*, 1091*, 1102*, 1110*, 1115*
+reduced: analyser 2.0 flashes (worst second from 150); 44 changes, 5 in the camera's scroll; camera-scroll changes alone 1.5 (from 230); without them 2.5 (from 911)
+   the worst second's changes: 150, 158, 169*, 172*, 195
