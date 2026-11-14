@@ -5,37 +5,37 @@
     "collapse-normal": {
       "skip": 0,
       "ticks": 120,
-      "capMin": 75,
-      "from": "from tick 1, 120 ticks (the first 60 are the analyser's warm-up, so 60 are read): run 43580079641 read 60 ticks as \"no analysis file\" because the analyser needs more than 61 frames. The worst moment of collapse is not measured. About 21 s a tick on a runner: 42 minutes"
+      "capMin": 110,
+      "from": "from tick 1, 120 ticks (the first 60 are the analyser's warm-up, so 60 are read): run 43580079641 read 60 ticks as \"no analysis file\" because the analyser needs more than 61 frames. The worst moment of collapse is not measured. About 21 s a tick on a runner: 42 minutes Run 43585295274: collapse-reduced read in 2412 s (40 min) but collapse-normal timed out at 84 of 120 ticks at the 75-minute cap, so both now have 110."
     },
     "collapse-reduced": {
       "skip": 0,
       "ticks": 120,
-      "capMin": 75,
+      "capMin": 110,
       "from": "as collapse-normal"
     },
     "clash-normal": {
       "skip": 950,
       "ticks": 170,
-      "capMin": 90,
-      "from": "ticks 951 to 1120 (170): the full local reading of clash-normal (960x540, hardware, 2026-11-14, HEAD 97df40b8 export) has its worst second at ticks 1075 to 1113 and a two-second memory of 4; this window read the same ticks (one a tick off), the same primary 4.5 and a memory of 4.5. A window from tick 1011 (125 ticks) read the same worst second but a memory of 0.5, because the memory reading ignores its first 120 frames: so the window starts at 951. Cost on a runner: about 35 minutes of skipped ticks plus about 23 of captured ones."
+      "capMin": 150,
+      "from": "ticks 951 to 1120 (170): the full local reading of clash-normal (960x540, hardware, 2026-11-14, HEAD 97df40b8 export) has its worst second at ticks 1075 to 1113 and a two-second memory of 4; this window read the same ticks (one a tick off), the same primary 4.5 and a memory of 4.5. A window from tick 1011 (125 ticks) read the same worst second but a memory of 0.5, because the memory reading ignores its first 120 frames: so the window starts at 951. Cost on a runner: about 35 minutes of skipped ticks plus about 23 of captured ones. Run 43585295274 (software rendering on a runner, cap 90 min) read this window in 5173 s (86 min): primary 4.5, two-second memory 4.5, the same as the hardware full reading; the cap is now 150 because three other clash windows of the same run timed out at 90."
     },
     "clash-reduced": {
       "skip": 950,
       "ticks": 170,
-      "capMin": 90,
+      "capMin": 150,
       "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
     },
     "clash-night-normal": {
       "skip": 950,
       "ticks": 170,
-      "capMin": 90,
+      "capMin": 150,
       "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
     },
     "clash-night-reduced": {
       "skip": 950,
       "ticks": 170,
-      "capMin": 90,
+      "capMin": 150,
       "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
     }
   },

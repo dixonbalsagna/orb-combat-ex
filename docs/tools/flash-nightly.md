@@ -49,3 +49,26 @@ The window picks the same worst second and the same primary reading as the full 
 ## Not done
 
 The scheduled run (a night with no dispatch) has not happened yet; its first reading is the next to record. `tools/ci-budgets-check.mjs --runs 3` waits for three runs of the other jobs on 047d4037 or later. The full local readings of signature, collapse and the other clash modes are long runs (under the long-run rules, one at a time, below-normal) and are the way their windows get measured.
+
+## The windows on a runner: run 43585295274 (by hand, 14 November 2026, 10:26 to 11:58 UTC; for the EP, not for Orb)
+
+The first run with the re-cut windows (`tools/flash/nightly-windows.json`: skip 950 and 170 ticks for the four clash clips with a 90-minute cap, 120 ticks from tick 1 for collapse with 75 minutes, 120 ticks from tick 1 and 45 minutes for signature), software rendering, 960x540, on `main` at 148f4e16.
+
+| Clip window | Result | Time |
+| :--- | :--- | :--- |
+| clash-normal (170 from 951) | **read: primary 4.5, area-15% 4.5, two-second memory 4.5: over the take-down line of 3** | 5,173 s |
+| clash-night-normal (same window) | **read: primary 3.5, memory 3.5: over the line of 3** | 5,411 s |
+| clash-reduced, clash-night-reduced | not read: timed out after 96 and 131 captured ticks of 170 | cap 90 min |
+| collapse-reduced (120 from tick 1) | read: PASS, primary 0.5, area-15% 1.5 | 2,412 s |
+| collapse-normal | not read: timed out after 84 of 120 ticks | cap 75 min |
+| signature-normal (120 from tick 1) | read: PASS, primary 2 | 1,251 s |
+| signature-reduced | read: **over our gate of 2.5, primary 3**, within the line (a finding, not red) | 2,404 s |
+
+What it shows:
+
+- **The software window on a runner reads the same as the hardware full reading.** clash-normal: primary 4.5 and two-second memory 4 (hardware, full clip, scratch export of HEAD 97df40b8) against primary 4.5 and memory 4.5 (software, the window, main 148f4e16). The window picked the same finding, on a different renderer and a different build, which is what the windows were for. It is a take-down-line crossing on the clip itself, not a fault of the tool: the full local reading said it first.
+- **The night sky reads lower than the day sky for the same clash** (3.5 against 4.5), and still crosses the line.
+- **The reduced-mode clash windows did not finish.** clash-normal read in 86 minutes inside a 90-minute cap, and the two reduced clash windows had read only 96 and 131 ticks when the cap ended, so the runner's rate varies a lot from job to job (about 2 s a skipped tick and 8 s a captured tick are averages, not promises). Caps are now 150 minutes for the clash windows (the job limit is 300) and 110 for collapse, whose normal-mode window ran 84 ticks in 75 minutes where the reduced mode ran 120 in 40.
+- The collapse windows have still not been measured for where the clip is at its worst: they read from tick 1.
+
+**What this makes of the nightly:** the scheduled run will be red on the clash clips every night until the clip itself is fixed, because it truly reads over the line. That is the tripwire doing its job, not a lapse in the tool. The EP decides what goes to whom: this page and the numbers are for the EP only.
