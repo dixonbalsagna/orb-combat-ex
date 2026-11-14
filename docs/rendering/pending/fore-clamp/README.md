@@ -45,7 +45,14 @@ Planet 12 improves and nothing regresses; planet 7 is as it was within the captu
 
 **Planet 12's second sawtooth (tick 451) isn't this rule's:** it's the profile's groove. By tick 451 the beam has cut a groove along the line, which the profile includes and the tiles on this base don't draw, so ground in front is held down to an undrawn floor. With `feet-ground` + `marks-baked` (the grooves in the tiles) it's gone (`fore-clamp-p12-with-marks.png`: shipped, v4, v4 + the feet parks). So it lands clean once marks-baked follows.
 
+## Gates
+
+On the v4 tree (main e56d372c + Camera + A-CODE-03 + `look-recut/` + this), `docs/rendering/runs/e56d372c/fore-clamp-gates.txt`:
+- no import errors;
+- `golden.json` byte-identical to main's;
+- the tile, lake water, cover water, sweep and ground checks pass;
+- the render gates pass 20 of 20.
+
 ## Owed
 
-- The render gates and ground checks on the v4 tree.
 - The flash on the standard set (planet 7 is the standard set's world) when this goes to the EP's gate.

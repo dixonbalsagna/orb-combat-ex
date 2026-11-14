@@ -1,6 +1,6 @@
-# Two of my checks on the GW1a stack (flash_reg_check, flight_check): check parks for GW1a
+# Four of my checks and VFX's ghost tally on the GW1a stack: check parks for GW1a
 
-Rendering, 2026-11-14, at the EP's word, ahead of the queue. Simulation attributed both on the GW1a stack (main + every GW1a park, the EP's scratch tree s422). I ran them on a copy.
+Rendering, 2026-11-14, at the EP's word, ahead of the queue. The checks are flash_reg_check, flight_check, sweep_check and props_check. Simulation attributed the first two and props_check on the GW1a stack (main + every GW1a park, the EP's scratch tree s422), and VFX found the ghost tally. I ran them on a copy.
 
 ## 1. flash_reg_check, two camera rows: re-read (`flashreg_settle.diff`, sha1 83860a10, 47 lines, `render/tools/flash_reg_check.gd`)
 
@@ -30,6 +30,43 @@ On the GW1a stack, control A fails before any park of mine too (checked with the
 - Under GW1a's fight data, the city at tier 3 on seed 4 changes no building in 1,800 ticks.
 - **The re-read:** it tries a further seed at a time, up to six, until one has something to miss. A seed with nothing prints a "note", and only the last can fail.
 - **Result:** on the GW1a stack seeds 4 and 5 have nothing, and seed 6 finds 186 differences; on main + `look-recut/`, seed 4 finds them as before. `sweep_check` passes on both.
+
+## 4. props_check, three rows: a pin (`props_strip.diff`, sha1 716dca7a, 10 lines, `render/tools/props_check.gd`)
+
+It isn't GW1a's fight data. It's the globe ground being on by default, from `look-recut/`, which GW1a lands.
+- **The cause:** with the globe ground on, `RenderTileGround.setup_of` gives every match that names no planet planet 7 at gen 3, so there is no hand-made world any more.
+  - props_check stages gen 2 spots and a hand-made world (`_start(4, ...)` with no planet), so all three rows read the wrong world.
+  - **The "off" row:** the "hand-made" world is a planet, so it lays props.
+  - **The "broken" row:** of the gen 2 PROP SMASH spots, 1 launch played and it broke no prop.
+  - **The control row:** with nothing broken, it has nothing to compare.
+- **Why it was missed:** `look-recut/` pinned the old strip ground in the 11 checks whose rules are the strip world's. props_check isn't in my gate set, so it wasn't one of them.
+- **The pin:** `main.strip_ground = true` before main enters the tree. It's the same line and the same reason as those 11.
+- **Order:** it uses look-recut's `strip_ground`, so it lands with or after `look-recut/`. On main alone the property doesn't exist yet. It applies on HEAD 41768933.
+- **Result:**
+  - On the GW1a stack, 9 of 9 rows pass (3 of 9 fail without the pin).
+  - Planet 7's ring has 126 props on the strip ground (312 on the globe).
+  - 6 PROP SMASH launches played, 2 broke a prop, and each was gone from the view on its frame. The control misses both.
+  - On main + `look-recut/` (without GW1a's data), the "off" row fails without the pin and all 9 pass with it (6 launches, 6 broken).
+- **Owed:** props_check has no globe-ground version yet: gen 3 planets with spots for PROP SMASH and a planet with props switched off. It is now a pinned strip check, like the 11. I'll write one if the EP wants it.
+
+## 5. VFX's hash_check ghost tally: VFX's limb echoes, not my after-images (`grant-vfx-ghost-limb.patch`, sha1 b96a9be0, 16 lines, `render/vfx/ghost_tally.gd`, VFX's path)
+
+VFX's hash_check fails on 25 ticks over a limb limit (f01: at most 2 limb-ghosts of one limb). The worst whole-figure tick, five of my after-images on one fighter, isn't over anything.
+- **Not mine:** the tally counts my after-images as whole-figure ghosts (m12, at most 5 round one fighter). They peak at 5, Rendering's alone are over it on 0 ticks, and the budget as drawn is over it on 0 ticks.
+  - Limb ghosts come from VFX alone: a tech blow's echoes (the press) and a tech zip leg's echoes, both counted on the limb `slot * 2`.
+- **What each failing tick holds** (`ghost_probe.gd`, scratch: hash_check's real match at 60 Hz, seeds 4, 12345 and 7):
+  - Every one is one fighter's tech blow echoes (1 or 2) plus that fighter's zip leg echoes (1 or 2), on the same limb: 3 or 4. That's 10 ticks at high quality, in four short runs of 2 to 3 ticks (seed 4 ticks 2460 to 2463, seed 7 ticks 414 to 417 and 619 to 622).
+  - The press's counter grants a blow's echoes up to 2 a limb without the zip's. The zip's echoes were held only to the five-ghost budget, never to the limb's two.
+  - At low quality with reduced motion: 0 ticks.
+- **Which park:** it isn't the energy model. With power and the dash off it's still 9 ticks. It's GW1a's fight data putting a tech blow and a tech zip leg on the same ticks. VFX's code is identical on main and on the stack, and main's data never lines them up, which is why VFX's own look stack passed.
+- **The fix (VFX's call, a grant):** the tally holds a zip leg's echoes to what's left of that limb's two and the screen's four, after the blow's echoes. That's the order the tally already uses for the budget ("echoes first, they are the blow itself"). shots_view already draws at most `zecho_n` of a leg's echoes, so the cap reaches the picture.
+  - **On screen:** on those ticks (about 3 in a minute of AI play), a zip leg shows 0 or 1 of its 2 wire echoes while the blow's 2 show.
+  - It's visible at high quality, which the default look uses: Reduce flashing doesn't turn on reduced motion.
+  - The look gate and the choice are VFX's. They may prefer to grant in the press's counter or key the zip's echoes elsewhere.
+- **Result** (the GW1a stack copy with VFX's `gw1a-pins/` and this grant):
+  - VFX's effects_check: 1,169 ok, 0 failing, as VFX's own record.
+  - The probe: 0 ticks over at every seed.
+  - hash_check passes. All 24 runs are the same as the sim alone. Of one limb 2 (2 at most); ticks over a limb limit 0; the budget is held as before.
 
 ## Proof
 
