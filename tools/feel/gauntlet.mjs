@@ -105,7 +105,7 @@ export async function gauntlet({ tree, schemes, arms = ARMS, levels = LEVELS, n 
       const job = queue[next++];
       const r = await runGd(trees[job.s], [String(n), String(seed), `--arm=${job.a}`, `--level=${job.l}`, `--capsec=${capsec}`, `--wall=${wall}`], { godot, limitMs, script: join(HERE, 'gauntlet.gd') });
       const l = r.text.split(/\r?\n/).find((x) => x.startsWith('GAUNTLET '));
-      if (!l) { failed.push({ ...job, why: r.text.split(/\r?\n/).filter(Boolean).slice(-4).join(' | ').slice(0, 300) }); continue; }
+      if (!l) { failed.push({ ...job, why: (r.killedOn ? `stopped at the first script error (${r.bytes} bytes printed): ${r.killedOn}; a scratch tree with a new class needs a re-import first` : r.text.split(/\r?\n/).filter(Boolean).slice(-4).join(' | ')).slice(0, 400) }); continue; }
       const res = JSON.parse(l.slice(9));
       raw[`${job.s}|${job.a}|${job.l}`] = res;
       cells[`${job.s}|${job.a}|${job.l}`] = readCell(res);

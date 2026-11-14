@@ -94,6 +94,8 @@ jobs:
         run: node qa/godot/selftest.js
       - name: Desktop build audience rule (owner-private keeps nothing, every upload and download is gated to outside-testers; Legal RL-262)
         run: node tools/check-desktop-audience-selftest.mjs && node tools/check-desktop-audience.mjs
+      - name: Gauntlet self-test, node part (the parsers, the reading, and the bounded output of a run, 300 MB of one script error kept in 82 KB with the first error named; the Godot parts skip here)
+        run: node tools/feel/gauntlet-selftest.mjs --no-e2e
       - name: Mode smoke runner self-test (a result is read as pass or fail; the game's data folder is moved off the real one; A-MODES-08)
         run: node tools/smoke/mode-smoke-selftest.mjs
       - name: Fighter-specific code ratchet self-test

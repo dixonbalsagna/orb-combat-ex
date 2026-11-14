@@ -47,26 +47,64 @@ export function workCopy(tree, tag = '') {
   return dst;
 }
 
-/** Runs godot on a scratch tree with args after `--`; resolves { code, text, line } where line is the JSON of the FEEL line (or null). */
-export function runGd(tree, scriptArgs, { godot, limitMs = 15 * 60 * 1000, script = FEEL_GD, tag = 'feel' } = {}) {
+/** What a child process printed, kept in bounds (2026-11-14; the heap out-of-memory of 9 November came from buffering about 22 MB of one repeated SCRIPT ERROR line for 16 minutes): the first headBytes and the
+ *  last tailBytes, every line that starts with one of `keep` (the result lines, FEEL and GAUNTLET, at most keepBytes), counts of bytes and lines, and the FIRST script error line. Pure. */
+export class OutputKeeper {
+  constructor({ headBytes = 16 * 1024, tailBytes = 64 * 1024, keepBytes = 64 * 1024, keep = ['FEEL ', 'GAUNTLET '] } = {}) {
+    Object.assign(this, { headBytes, tailBytes, keepBytes, keep, bytes: 0, lines: 0, head: '', tail: '', kept: [], keptBytes: 0, firstError: null, repeats: new Map(), rest: '' });
+  }
+  /** Adds a chunk (a string or Buffer). Returns the first script error line when this chunk is the one that carried it, else null. */
+  push(chunk) {
+    const s = typeof chunk === 'string' ? chunk : chunk.toString('utf8');
+    this.bytes += Buffer.byteLength(s);
+    if (this.head.length < this.headBytes) this.head += s.slice(0, this.headBytes - this.head.length);
+    this.tail = (this.tail + s).slice(-this.tailBytes);
+    let found = null;
+    const parts = (this.rest + s).split(/\r?\n/);
+    this.rest = parts.pop().slice(0, 4096);   // an unfinished line waits for its end (and a line with no end is cut)
+    for (const l of parts) {
+      this.lines++;
+      if (this.keep.some((k) => l.startsWith(k)) && this.keptBytes < this.keepBytes) { this.kept.push(l); this.keptBytes += l.length + 1; }
+      if (/^\s*(SCRIPT ERROR:|Parse Error:|ERROR: Failed to load script)/.test(l)) {
+        if (this.firstError === null) { this.firstError = l.trim().slice(0, 400); found = this.firstError; }
+        if (this.repeats.size < 200 || this.repeats.has(l)) this.repeats.set(l, (this.repeats.get(l) || 0) + 1);
+      }
+    }
+    return found;
+  }
+  /** The text handed to callers: what a short run printed whole, or the head, a line saying how much was left out, the kept lines and the tail. */
+  text() {
+    const NL = String.fromCharCode(10);
+    if (this.bytes <= this.headBytes) return this.head;
+    if (this.bytes <= this.tailBytes) return this.tail;
+    const top = [...this.repeats].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([l, n]) => `  ${n} x ${l.trim().slice(0, 200)}`).join(NL);
+    return [this.head, `[... ${this.bytes} bytes and ${this.lines} lines in all; the middle is left out; the result lines and the tail follow ...]`, this.kept.join(NL), top ? 'most repeated script errors:' + NL + top : '', this.tail].filter((x) => x !== '').join(NL);
+  }
+  /** The first kept line that starts with `word`, or null. */
+  line(word) { return this.kept.find((l) => l.startsWith(word)) ?? null; }
+}
+
+/** Runs godot on a scratch tree with args after `--`; resolves { code, text, line, bytes, lines, killedOn } where line is the JSON of the FEEL line (or null). The output is kept in bounds (OutputKeeper), and with
+ *  failFast (the default) the child is stopped, by its own PID, at the FIRST script error and the result names it in killedOn: a scratch tree that does not compile fails at once, not after minutes of the same error. */
+export function runGd(tree, scriptArgs, { godot, limitMs = 15 * 60 * 1000, script = FEEL_GD, tag = 'feel', failFast = true } = {}) {
   const exe = godotExe(godot);
   return new Promise((ok) => {
-    const chunks = [];
+    const keeper = new OutputKeeper();
     const child = spawn(exe, ['--headless', '--path', resolve(tree), '--script', script, '--', ...scriptArgs], { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
     try { setPriority(child.pid, osConstants.priority.PRIORITY_BELOW_NORMAL); } catch { /* gone */ }
-    child.stdout.on('data', (d) => chunks.push(d));
-    child.stderr.on('data', (d) => chunks.push(d));
-    const timer = setTimeout(() => {
-      try { if (process.platform === 'win32') spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true }); else child.kill('SIGKILL'); } catch { /* gone */ }
-    }, limitMs);
-    child.on('error', () => { clearTimeout(timer); ok({ code: -1, text: 'spawn failed', line: null }); });
+    const stop = () => { try { if (process.platform === 'win32') spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true }); else child.kill('SIGKILL'); } catch { /* gone */ } };
+    let killedOn = null;
+    const onData = (d) => { const e = keeper.push(d); if (e && failFast && killedOn === null) { killedOn = e; stop(); } };
+    child.stdout.on('data', onData);
+    child.stderr.on('data', onData);
+    const timer = setTimeout(stop, limitMs);
+    child.on('error', () => { clearTimeout(timer); ok({ code: -1, text: 'spawn failed', line: null, bytes: 0, lines: 0, killedOn: null }); });
     child.on('close', (code) => {
       clearTimeout(timer);
-      const text = Buffer.concat(chunks).toString('utf8');
-      const l = text.split(/\r?\n/).find((x) => x.startsWith('FEEL '));
+      const l = keeper.line('FEEL ');
       let line = null;
       try { line = l ? JSON.parse(l.slice(5)) : null; } catch { /* bad line */ }
-      ok({ code, text, line });
+      ok({ code, text: keeper.text(), line, bytes: keeper.bytes, lines: keeper.lines, killedOn });
     });
   });
 }

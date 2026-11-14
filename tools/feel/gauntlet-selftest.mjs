@@ -6,7 +6,7 @@
 import { existsSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { ROOT } from './lib.mjs';
+import { ROOT, OutputKeeper, runGd, godotExe } from './lib.mjs';
 import { parseScheme, schemesFromFile, wilson, readCell, table, gauntlet, ARMS } from './gauntlet.mjs';
 
 let fails = 0;
@@ -29,6 +29,38 @@ ok(c.winPct === 40 && c.refusalsPer100 === 15 && c.noControlPerMin === 12 && c.b
 const t = table({ 'shipped|stick|easy': c, 'rh|stick|easy': { ...c, winPct: 50, refusalsPer100: 5 } }, ['shipped', 'rh'], ['stick'], ['easy']);
 ok(/stick-only\s+easy/.test(t) && /\(-10\)/.test(t) && /\(\+10\)/.test(t), 'the table puts a scheme next to the shipped one with the change');
 ok(ARMS.join() === 'stick,masher,timing,beam,circle', 'the five arms are named');
+
+// 2026-11-14: the output of a run is kept in bounds, and a run that prints script errors stops at the first (the heap out-of-memory of 9 November: about 22 MB of one repeated error for 16 minutes)
+{
+  const k = new OutputKeeper();
+  const line = 'SCRIPT ERROR: Parse Error: Could not find type "Brawl" in the current scope.' + String.fromCharCode(10);
+  const big = Buffer.from(line.repeat(20000));
+  let first = null, firstAt = -1;
+  for (let i = 0; i < 200; i++) { const e = k.push(big); if (e && first === null) { first = e; firstAt = i; } }   // about 300 MB offered in 1.5 MB chunks
+  k.push('FEEL {"ok":1}' + String.fromCharCode(10));
+  ok(k.bytes > 290e6 && k.head.length <= 16 * 1024 && k.tail.length <= 64 * 1024 && k.text().length < 200 * 1024, `300 MB of one error is kept in bounds (text ${k.text().length} bytes of ${k.bytes})`);
+  ok(first !== null && firstAt === 0 && /Could not find type "Brawl"/.test(first), 'the first script error is named, in the first chunk that carried it');
+  ok(k.line('FEEL ') === 'FEEL {"ok":1}' && /FEEL \{"ok":1\}/.test(k.text()), 'the result line survives a flood (kept apart from the tail)');
+  ok(/most repeated script errors:/.test(k.text()) && /300000 x SCRIPT ERROR|\d+ x SCRIPT ERROR/.test(k.text()), 'the text says how often the most repeated error came');
+  const small = new OutputKeeper(); small.push('hello' + String.fromCharCode(10) + 'GAUNTLET {}' + String.fromCharCode(10));
+  ok(small.text().includes('GAUNTLET {}') && small.firstError === null, 'a short quiet run is returned whole, with no error named');
+  const split = new OutputKeeper(); split.push('SCRIPT ERR'); const e2 = split.push('OR: x' + String.fromCharCode(10));
+  ok(e2 === 'SCRIPT ERROR: x', 'an error line split across two chunks is still found');
+  // the real thing: godot on a scratch project whose script floods script errors; runGd must stop it at the first
+  let godot = null; try { godot = godotExe(); } catch { /* none here */ }
+  if (godot && !process.argv.includes('--no-e2e')) {
+    const dd = mkdtempSync(join(tmpdir(), 'meridian-gt-flood-'));
+    try {
+      writeFileSync(join(dd, 'project.godot'), 'config_version=5' + String.fromCharCode(10) + '[application]' + String.fromCharCode(10) + 'config/name="flood"' + String.fromCharCode(10));
+      writeFileSync(join(dd, 'flood.gd'), 'extends SceneTree' + String.fromCharCode(10) + 'func _initialize() -> void:' + String.fromCharCode(10) + '\tfor i in range(200000):' + String.fromCharCode(10) + '\t\tcall("no_such_function_here")' + String.fromCharCode(10) + '\tprint("FEEL {}")' + String.fromCharCode(10) + '\tquit()' + String.fromCharCode(10));
+      const t0 = Date.now();
+      const r = await runGd(dd, [], { godot, limitMs: 60000, script: join(dd, 'flood.gd') });
+      ok(r.killedOn !== null && r.bytes < 5e6 && Date.now() - t0 < 30000, `runGd stopped a run at its first script error, by its own PID (${r.bytes} bytes printed, ${Date.now() - t0} ms): ${String(r.killedOn).slice(0, 80)}`);
+      const r2 = await runGd(dd, [], { godot, limitMs: 8000, script: join(dd, 'flood.gd'), failFast: false });
+      ok(r2.killedOn === null && r2.text.length < 200 * 1024 && /SCRIPT ERROR/.test(r2.text), `with failFast off the same run (Godot hangs after a script error until the time limit) is stopped by the limit and its output kept (text ${r2.text.length} bytes)`);
+    } finally { rmSync(dd, { recursive: true, force: true }); }
+  } else console.log('skip the flood run (no Godot here, or --no-e2e)');
+}
 
 const kept = join(ROOT, 'homework', 'Files', 'builds', 'orb-first-play-10d8b8cf-68ee07cc', 'tree');
 if (process.argv.includes('--no-e2e')) console.log('skip the Godot checks (--no-e2e)');
