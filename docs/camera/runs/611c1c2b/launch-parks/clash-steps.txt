@@ -1,0 +1,5 @@
+# The camera's step through clash's two launch-flight stretches (native, clip_digest, the same sim as the pixel clips): ticks the shown pane moved more than 0.045 of the width, off a cut
+the stack, normal: 150-260: 93 over 0.045 (max 0.353), cuts []; 1080-1160: 57 over 0.045 (max 0.219), cuts []
+the stack, reduced: 150-260: 93 over 0.045 (max 0.353), cuts []; 1080-1160: 57 over 0.045 (max 0.219), cuts []
+the stack + launch-hold-reduced + launch-wide, normal: 150-260: 80 over 0.045 (max 0.421), cuts []; 1080-1160: 39 over 0.045 (max 0.152), cuts []
+the stack + launch-hold-reduced + launch-wide, reduced: 150-260: 20 over 0.045 (max 0.205), cuts [(255, 'far_catch_up')]; 1080-1160: 1 over 0.045 (max 0.207), cuts [(1153, 'far_catch_up')]

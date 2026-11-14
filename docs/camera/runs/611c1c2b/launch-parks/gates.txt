@@ -1,0 +1,28 @@
+# The two launch parks on the GW1a look stack (main 611c1c2b + a-camera-01 + globe-default + crater-look-default + cd04), every camera check with BOTH pieces forced on in the rig (a scratch copy: launch_hold_reduced and launch_wide default true), headless
+chase_rush_check     chase_rush_check: 130 checks passed 
+flight_shots_check   flight_shots_check: 803 checks passed 
+launch_shots_check   launch_shots_check: 1029 checks passed 
+cross_ko_check       cross_ko_check: 21 checks passed 
+peak_retry_check     peak_retry_check: 1 check passed 
+peak_shot_check      peak_shot_check: 24 checks passed 
+split_share_check    split_share_check: 26 checks passed 
+split_vision_check   split_vision_check: 11 checks passed 
+swing_places_check   swing_places_check: 33 checks passed 
+swing_real_check     swing_real_check: 48 checks passed 
+swing_shot_check     swing_shot_check: 164 checks passed 
+swing_read_check     swing_read_check: 14420 checks passed 
+cut_register_check   cut_register_check: 73 checks passed 
+split_sweep          FAIL  rally turn: the chaser, near, off the screen 15 ticks (15 without) FAIL  rally turn: the chaser, near, off the screen 15 ticks (15 without) split sweep FAILED (4) 
+
+# split_sweep's two rally rows, the stack alone against the forced-on copy (--only=rally): with the rally framing the chaser is off 15 ticks in both; the row compares against the same run without the rally framing, which the launch-wide piece improves from 28 to 15, so the row ties (15 / 15) and its 'with beats without' fails
+## rally_fx1
+detail rally follow                with / without the rally framing: cuts 3 / 3, body off 34 / 48, chaser off 15 / 28, held true, the body's largest change of screen speed 1.214 / 1.480 of the width a tick
+detail rally grab holds the size   size target over the hold 0.6024 to 0.6024
+detail rally turn                  with / without the rally framing: cuts 1 / 4, body off 57 / 65, chaser off 15 / 28, held true, the body's largest change of screen speed 1.214 / 1.480 of the width a tick
+## rally_fxg
+FAIL  rally follow: the chaser, near, off the screen 15 ticks (15 without)
+FAIL  rally turn: the chaser, near, off the screen 15 ticks (15 without)
+detail rally follow                with / without the rally framing: cuts 3 / 3, body off 34 / 34, chaser off 15 / 15, held true, the body's largest change of screen speed 1.224 / 1.126 of the width a tick
+detail rally grab holds the size   size target over the hold 0.6024 to 0.6024
+detail rally turn                  with / without the rally framing: cuts 1 / 3, body off 34 / 66, chaser off 15 / 15, held true, the body's largest change of screen speed 1.224 / 1.126 of the width a tick
+split sweep FAILED (4)

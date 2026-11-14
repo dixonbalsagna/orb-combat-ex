@@ -1,0 +1,100 @@
+diff --git a/data/camera/swing.json b/data/camera/swing.json
+index d63c2b3..798cd87 100644
+--- a/data/camera/swing.json
++++ b/data/camera/swing.json
+@@ -10,7 +10,8 @@
+     "closeBrawl": true,
+     "readable": true,
+     "followThrough": true,
+-    "flightReveal": true
++    "flightReveal": true,
++    "launchHoldReduced": true
+   },
+   "_pieces": "the camera Orb played on 9 November (A-CAMERA-01), each on at a plain start: the swing with the turning world (docs/camera/swing-view.md), the peak launch shot, the launch director (docs/camera/launch-director.md), the close brawl, the readable size, the follow-through and the flight reveal. Until A-CAMERA-01 they rode on the tile-ground start word. swingView and peakLaunch also need the globe ground drawn (render/core/main.gd): the peak shot's widest view needs the globe, so on the flat ground they stay off whatever this says",
+   "flatMode": "wide",
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index ee01e97..c721b68 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -3527,6 +3527,7 @@ var _st_a: int = 0
+ var _st_d: int = 1
+ var _st_t0: float = 0.0
+ var _st_t1: float = 0.0                                 # the latest time the struggle ends by
++var launch_hold_reduced: bool = false                   # under Reduce flashing only, the launch rule runs, eager (main.gd from data pieces.launchHoldReduced; the clash reading, 2026-11-14)
+ var launch_hold_eager: bool = false                     # under reduced flashing the rule engages sooner (section 15); off by default
+ var launch_holds: int = 0                              # (counted for the tests)
+ var launch_pans: int = 0
+@@ -3674,10 +3675,16 @@ func _pane_is_shown_alone(i: int) -> bool:
+ 	return solo_slot == i and solo_w >= 0.99
+ 
+ 
++## The launch rule is on: its switch, or Reduce flashing with launch_hold_reduced (a fast flight's scenery streaming past was the clash
++## reading's largest share on the globe ground: docs/camera/runs/611c1c2b/flash/).
++func _lh_on() -> bool:
++	return launch_hold or (launch_hold_reduced and flash_reduced)
++
++
+ ## A launch shot's pane is still catching up with him (his offset from its focus over LH_CATCH_W, a second at most past the hold):
+ ## the shot does not end and the panes do not merge over it.
+ func _lh_catching(S: SimState, i: int) -> bool:
+-	if not launch_hold or reduced_motion or _land_t > CamParams.LAND_HOLD + CamParams.LH_CATCH_MAX:
++	if not _lh_on() or reduced_motion or _land_t > CamParams.LAND_HOLD + CamParams.LH_CATCH_MAX:
+ 		return false
+ 	var f = S.fighters[i]
+ 	var ex: float = SimWrap.sdx(_fx[i], f.x) * _zo[i]
+@@ -3783,7 +3790,7 @@ func _update_cameras(S: SimState) -> void:
+ 		var zc: float = maxf(_zo[i], 0.001)
+ 		# A launch too fast to follow (launch_hold): the pane holds, then pans (see the variable's note).
+ 		var lh_ph: int = 0
+-		if launch_hold and not reduced_motion:
++		if _lh_on() and not reduced_motion:
+ 			lh_ph = int(_lh[i])
+ 			var spd_l: float = sqrt(vxm * vxm + vym * vym)
+ 			var z_fl: float = CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H
+@@ -3811,8 +3818,9 @@ func _update_cameras(S: SimState) -> void:
+ 				if fast:
+ 					var step_w: float = spd_l * zc / 60.0 / vw   # his step this tick at the pane's own zoom, in widths
+ 					_lh_dist[i] = float(_lh_dist[i]) + step_w
+-					var eng_w: float = CamParams.LH_ENGAGE_W_REDUCED if (flash_reduced and launch_hold_eager) else CamParams.LH_ENGAGE_W
+-					var big_w: float = CamParams.LH_BIG_REDUCED if (flash_reduced and launch_hold_eager) else CamParams.LH_BIG
++					var eager: bool = flash_reduced and (launch_hold_eager or launch_hold_reduced)
++					var eng_w: float = CamParams.LH_ENGAGE_W_REDUCED if eager else CamParams.LH_ENGAGE_W
++					var big_w: float = CamParams.LH_BIG_REDUCED if eager else CamParams.LH_BIG
+ 					if float(_lh_dist[i]) >= eng_w or step_w >= big_w or time - float(_lh_rel_t[i]) < 1.0:
+ 						lh_ph = 1
+ 						_lh_slow[i] = 0
+@@ -4087,7 +4095,7 @@ func _update_cameras(S: SimState) -> void:
+ 	# A launch the rule does not follow holds the shared frame too: the displayed camera is the blend of the shared and the
+ 	# launched pane's while the pane takes the screen, and the shared one would otherwise zoom out and travel for the pair
+ 	# (4% a tick, 200 units a tick) under it.
+-	var m_held: bool = launch_hold and not reduced_motion and (int(_lh[0]) != 0 or int(_lh[1]) != 0)
++	var m_held: bool = _lh_on() and not reduced_motion and (int(_lh[0]) != 0 or int(_lh[1]) != 0)
+ 	if m_held:
+ 		pass
+ 	elif sep >= 0.999 and _slam_slot < 0 and solo_kind == "":
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 999b0cd..3fe8abb 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -254,6 +254,7 @@ func _ready() -> void:
+ 	split_rig.split_share = float(CamPlaces.data().get("splitShare", 0.0))
+ 	split_rig.follow_through = CamPlaces.piece("followThrough")
+ 	split_rig.flight_reveal = CamPlaces.piece("flightReveal")
++	split_rig.launch_hold_reduced = CamPlaces.piece("launchHoldReduced")   # under Reduce flashing only: a fast flight holds, then one registered cut
+ 	split_rig.flat_mode = String(args.get("flat", CamPlaces.flat_mode()))   # flat=wide or flat=hold still chooses it, for a comparison (launch-director.md)
+ 	RenderTileGround.rate = float(args.get("tilerate", 0.0))
+ 	RenderTileGround.quick = args.has("tilequick")
+diff --git a/tools/schemas/camera-swing.schema.json b/tools/schemas/camera-swing.schema.json
+index 3866c02..ec0d814 100644
+--- a/tools/schemas/camera-swing.schema.json
++++ b/tools/schemas/camera-swing.schema.json
+@@ -21,7 +21,8 @@
+         "closeBrawl": { "type": "boolean" },
+         "readable": { "type": "boolean" },
+         "followThrough": { "type": "boolean" },
+-        "flightReveal": { "type": "boolean" }
++        "flightReveal": { "type": "boolean" },
++        "launchHoldReduced": { "type": "boolean" }
+       }
+     },
+     "flatMode": { "enum": ["", "wide", "hold"] },
