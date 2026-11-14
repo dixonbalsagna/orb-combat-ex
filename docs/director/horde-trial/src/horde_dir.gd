@@ -172,7 +172,7 @@ static func _refill(S: SimState, k: int) -> void:
 	SimHorde.clearBody(f.hd)
 	f.hd.kind = kind
 	f.hd.phase = 1
-	f.hd.worth = float(c.worth)
+	f.hd.worth = float(c.worth) * (float(_c().pack.twoPlayers.toughMul) if pads(S) >= 2 else 1.0)   # with two players the pack is tougher (Game Design, 2026-11-15)
 	f.face = -side
 	R.mark[k] = p
 	R.sent += 1
@@ -250,7 +250,7 @@ static func _away(S: SimState, k: int, how: String) -> void:
 ## A winding body's blow is over (it came due, or was spoiled): its lane is free again after the gap.
 static func _spoil(S: SimState, f) -> void:
 	if f.hd.ln >= 0:
-		S.horde.lane[S.horde.mark[S.fighters.find(f)] * SimHorde.places + f.hd.ln] = S.tick + gapTicks()
+		S.horde.lane[S.horde.mark[S.fighters.find(f)] * SimHorde.places + f.hd.ln] = S.tick + gapTicks(S)
 		f.hd.ln = -1
 	f.hd.at = 0
 	if f.hd.phase == 3:
@@ -466,8 +466,9 @@ static func perPlayer() -> int:
 	return int(_c().play.perPlayer[level()])
 
 
-static func gapTicks() -> int:
-	return int(_c().play.gapTicks[level()])
+static func gapTicks(S: SimState) -> int:
+	var g: int = int(_c().play.gapTicks[level()])
+	return int(round(float(g) * float(_c().pack.twoPlayers.gapMul))) if pads(S) >= 2 else g   # with two players the gap is shorter: 90 at medium (Game Design, 2026-11-15)
 
 
 static func blockTicks() -> int:

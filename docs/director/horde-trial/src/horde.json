@@ -10,8 +10,10 @@
     "bruiser":   {"fighter": "REFERENCE", "worth": 4, "speedMul": 0.7,
                   "blow": {"reachBh": 1.5, "windup": 18, "damage": 4, "flinchTicks": 10}, "guarded": {"reboundTicks": 4}},
     "speedster": {"fighter": "REFERENCE", "worth": 4, "speedMul": 1.0,
-                  "blow": {"reachBh": 4.0, "windup": 12, "damage": 2, "flinchTicks": 8}, "guarded": {"reboundTicks": 4}}
+                  "blow": {"reachBh": 4.0, "windup": 12, "damage": 2, "flinchTicks": 8}, "guarded": {"reboundTicks": 4}},
+    "twoPlayers": {"toughMul": 1.5, "gapMul": 0.8}
   },
+  "_twoPlayers": "Game Design's ruling of 2026-11-15 (horde-trial.md section 4): with both seats played, each pack body's toughness x toughMul and the lane gap x gapMul (90 at medium); three at a time and the two-player count stay",
   "_pack": "Game Design's trial arm (docs/design/horde-trial.md ruling 2): blows 2, 4 and 2 with the 113 gap; the page's arm is 4, 8 and 4 with the 240 gap",
   "play": {
     "perPlayer": {"easy": 2, "medium": 3, "hard": 3},

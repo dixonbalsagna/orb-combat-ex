@@ -407,11 +407,13 @@ func _runs(all: Dictionary, two: bool) -> void:
 					_say(ts.min() >= 6.0 and ts.max() <= 8.0, "reading 8 (two): each run 6:00 to 8:00")
 					_say(lost.min() >= 0.10 and lost.max() <= 0.35, "reading 10: each medium pad of two loses 10 to 35%")
 					_say(nr <= 0.35, "reading 10: a seat has no pack body within the lunge's reach for at most 35% of a wave")
+					var f12two: Array = rs.map(func(r): return float(r.fodder12) / 60.0)
+					_say(f12two.min() >= 3.0 and f12two.max() <= 6.0, "reading 11 (two, Game Design 2026-11-15): twelve fodder in 3 to 6 s between two (%.1f to %.1f)" % [f12two.min(), f12two.max()])
 				else:
 					_say(ts.min() >= 7.0 and ts.max() <= 9.0, "reading 8 (alone): each run 7:00 to 9:00")
 					_say(lost.min() >= 0.20 and lost.max() <= 0.45 and downs == 0, "reading 9: the medium pad loses 20 to 45% and never goes down")
 					var f12: Array = rs.map(func(r): return float(r.fodder12) / 60.0)
-					_say(f12.min() >= 10.0 and f12.max() <= 20.0, "reading 11: twelve fodder in 10 to 20 s (%.1f to %.1f; the model said 5.4, expected to fail fast)" % [f12.min(), f12.max()])
+					_say(f12.min() >= 4.0 and f12.max() <= 8.0, "reading 11 (Game Design 2026-11-15): twelve fodder in 4 to 8 s, alone (%.1f to %.1f)" % [f12.min(), f12.max()])
 			"three":
 				_say(lost.min() >= 0.30 and lost.max() <= 0.60, "reading 9: at 3 presses a second it loses 30 to 60%")
 			"mash":

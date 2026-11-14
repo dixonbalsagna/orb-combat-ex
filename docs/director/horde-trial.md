@@ -40,6 +40,24 @@ The sources are kept as reference for A4 in `horde-trial/src/` (not a park; noth
 - The page's 240 arm (blows 4/8/4): 7:13 to 7:29, 29 to 34% lost, **36 wind-ups a minute against G's 70**. GD's rule is that the busier arm wins when they feel alike; on these numbers they are alike and G is twice as busy.
 - Row D (blows 24/48/24, the whole body back in each breather): 7:17 to 7:29, 29 to 49% lost. One seed is past 45%.
 
+## After Game Design's rulings (2026-11-15, `docs/design/horde-trial.md` section 4)
+
+- **Arm G** is ruled.
+- **Reading 11's band is now 4 to 8 s for twelve alone.** The 10 seeds above read 3.8 to 5.6 s, so nine pass and seed 3 is 0.2 s fast. The data is unchanged, so this was re-read, not re-run.
+- **Two players:** `pack.twoPlayers.toughMul` 1.5 (each body's toughness at its refill) and `gapMul` 0.8 (the lane gap 113 becomes 90 at medium), both only with two pads. Two medium pads were re-probed over 10 seeds; records are in `runs/1c19d81d/horde-two/`, and `horde_check` is 44 of 44.
+
+| Reading | Line | Before | With the keys |
+| :--- | :--- | :--- | :--- |
+| 10 | Each loses 10 to 35% | 8 to 14% | **21 to 25%** |
+| 10 | Nobody in reach at most 35% of a wave | up to 38% | **up to 26%** |
+| 11 (two) | Twelve fodder in 3 to 6 s between two | about 3 s | **4.3 to 5.5 s** |
+| 21 (two, information) | | 57 to 64% in wave 1, rising to 85 to 88% | **74 to 82% in wave 1, rising to 91 to 95%** |
+| 8 (two) | Each run 6:00 to 8:00 | 6:17 to 6:31 | **9:04 to 9:13: fails** |
+| 5, 6, 7 | | pass | pass |
+
+- **The new trade-off is run length.** A tougher pack with ×1.5 bodies makes the two-player run about 1:30 longer than playing alone (7:37), and outside reading 8's band.
+- If Game Design wants the band kept, the count multiplier is the lever: by proportion, ×1.2 instead of ×1.5 gives a run of about 7:40. That's an estimate, not a run.
+
 ## Findings
 
 1. **The dash's arrival ease held the pack outside its own reach.** `bands.arrive`, which is on in Orb's build, eases any dashing body to `engageBh` (2.5 bh) from its rival and never closer. The pack dashes, and its reach is 1.5 bh, so every pack blow missed. In the trial a pack body is exempt; seats keep the ease toward their mark. The A4 build needs this line.
