@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX desync check   Godot 4.7.2-stable (official)   setup default   600 ticks   checkpoint every 60   delay 2
+seed 1  straight: 10 checkpoints, digest 378 us mean, SimHash.stateHash 25283 us
+  ok   clean   lan     checkpoints matched   9  rollbacks    0  
+  ok   clean   p120    checkpoints matched   9  rollbacks  328  
+  ok   rng         lan     desync at 240 (agreed to 180): first field S.rng.a (289400787 vs 289400786), 1 field(s) listed
+  ok   rng         p120    desync at 240 (agreed to 180): first field S.rng.a (289400787 vs 289400786), 1 field(s) listed
+  ok   fighter_x   lan     desync at 240 (agreed to 180): first field S.fighters[1].x (89067.3017581505 (bits 40f5beb4d4005ab9) vs 89067.3017581505 (bits 40f5beb4d4005ab8)), 1 field(s) listed
+  ok   fighter_x   p120    desync at 240 (agreed to 180): first field S.fighters[1].x (89067.3017581505 (bits 40f5beb4d4005ab9) vs 89067.3017581505 (bits 40f5beb4d4005ab8)), 1 field(s) listed
+  ok   building_hp lan     desync at 240 (agreed to 180): first field S.bHp[0] (3374.0 vs 3375.0), 1 field(s) listed
+  ok   building_hp p120    desync at 240 (agreed to 180): first field S.bHp[0] (3374.0 vs 3375.0), 1 field(s) listed
+  ok   terrain     lan     desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   terrain     p120    desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   mood        lan     desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   mood        p120    desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   director    lan     desync at 240 (agreed to 180): first field S.dirS.cool (-0.009999 (bits bf847a5b0ff10e57) vs -0.01 (bits bf847ae147ae1406)), 1 field(s) listed
+  ok   director    p120    desync at 240 (agreed to 180): first field S.dirS.cool (-0.009999 (bits bf847a5b0ff10e57) vs -0.01 (bits bf847ae147ae1406)), 1 field(s) listed
+objects alive before 1719, after 1731
+PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe --ticks=600 --profiles=lan,p120: no SCRIPT ERROR lines

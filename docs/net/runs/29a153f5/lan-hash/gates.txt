@@ -1,0 +1,5 @@
+a01_lan_check gate exit 0, SCRIPT ERROR 0 :: LAN: 0 check(s) failed  [lan_check.gd --ticks=1200]
+a02_rollback_check gate exit 0, SCRIPT ERROR 0 :: PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash comparisons (every 60 ticks),  [rollback_check.gd --ai --seeds=1 --ticks=600 --profiles=lan,p120,far]
+b01_lan_check gate exit 0, SCRIPT ERROR 0 :: LAN: 0 check(s) failed  [lan_check.gd --ticks=1200 --negative-control]
+b02_desync_check gate exit 0, SCRIPT ERROR 0 :: PASS  14 runs, 18 checkpoints matched, 0 failure(s)  [desync_check.gd --seeds=1 --ticks=600 --profiles=lan,p120]
+b03_transport_check gate exit 0, SCRIPT ERROR 0 :: PASS  0 failure(s)  [transport_check.gd ]

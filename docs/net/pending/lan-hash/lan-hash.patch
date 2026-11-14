@@ -1,0 +1,242 @@
+diff --git a/docs/net/lan-v1.md b/docs/net/lan-v1.md
+index 9cfa952..766508c 100644
+--- a/docs/net/lan-v1.md
++++ b/docs/net/lan-v1.md
+@@ -73,6 +73,8 @@ Each PC saves the match as `lan-<commit8>-<main|old>-<yyyymmdd-hhmmss>-<reason>.
+ 
+ It plays back through the project's own replay path: `node tools/preview/blackbox-verify.mjs <file> --tree <the LAN folder>\tree` (the folder's own tree; see the build's stamp below). `lan_check` proves both PCs' files play back (1v1, 2v2 together, a dropped seat), with negative controls for a changed input and a toggle on the wrong body.
+ 
++**The checkpoint hashes leave the frame (2026-11-14).** A saved match's replay checkpoints are SimHash's gameplay hash every 60 ticks. SimHash walks every column of the planet (about 25 ms at medium, four times the columns at huge), and the session used to run it in the frame, on every run of a checkpoint tick, so a LAN match could hitch once a second and again in a rollback that re-ran one. Now the session hashes each checkpoint once, when it becomes final, from the copy the checkpoint already holds, on a worker thread (`NetSession._hashLater`); a saved file waits for any job still running (`hashesDone`). The values and their order are the same: `lan_check` plays the same match both ways and finds both PCs' replays byte for byte the same, with none of the hashes on the game's thread, and a control that hashes the present state instead is caught.
++
+ **The build's stamp (A-NET-05, 2026-11-14).** Each LAN folder's game names its build once, in `res://build_info.json`, the file `SimReplay.buildId()` reads. The kit writes it in the shape of Tools' page stamp: `{commit (7), date (the commit's), stack, lan: true, built (the kit's own UTC time), id}`. The id is the page's own (`<commit8>-<cache key 8>`): the kit changes only render and UI files, so the sim, data and net a replay runs on are the page's, and a LAN save plays on the page (Tools' LAN report clips) and on its kept tree too (the stand-in's B1 review, finding 1). `built` tells one LAN folder from another. Both PCs, running the same folder, share the stamp. A saved file's `build` is that stamp and its replay's `build` is the id; the file name keeps the commit's first 8 from the id. The kit writes the same stamp into the folder's `tree/` (the game's sim, data, net, project and class cache as exported, read-only), so a saved match plays back there. Anywhere else (another build, a dev tree) it is refused as another build's before its first tick, with both ids, the same reason a solo replay gets; UI writes the sentence. `--build` is needed only for a tree with no page stamp. `lan_check` loads a foreign LAN save from disk and checks the refusal, with a control that leaves the build check out.
+ 
+ ## Making the folder
+diff --git a/net/lan.gd b/net/lan.gd
+index 5df15f1..e30d9b2 100644
+--- a/net/lan.gd
++++ b/net/lan.gd
+@@ -497,6 +497,7 @@ func save(reason: String) -> String:
+ 	var upto: int = sess.finalTo
+ 	var rp: Dictionary = NetDesync.replayOf(sess, {"seed": SEED, "setup": gameHost.setup_used, "ai": aiFor(args)}, upto)
+ 	var cps: Array = []
++	sess.hashesDone()   # the checkpoint hashes run on a worker thread (NetSession._hashLater)
+ 	for c in sess.hashFinal:
+ 		if int(c[0]) <= upto:
+ 			cps.append([int(c[0]), String(c[1])])
+diff --git a/net/session.gd b/net/session.gd
+index 975cc55..106555d 100644
+--- a/net/session.gd
++++ b/net/session.gd
+@@ -69,7 +69,15 @@ var takeoverRefused: int = 0  # takeovers of a slot this session doesn't have, r
+ # desync detection (NetDesync): a digest of the confirmed state every checkEvery ticks, exchanged with the other peers
+ var checkEvery: int = 60      # ticks between checkpoints; 0 turns detection off
+ var hashChecks: bool = false  # also keep SimHash's gameplay hash at each checkpoint as it becomes final (hashFinal): a saved match's replay checkpoints (NetLan)
+-var hashFinal: Array = []     # [tick, gameplay hash] of the state after that many ticks, at each final checkpoint, in order
++var hashFinal: Array = []     # [tick, gameplay hash] of the state after that many ticks, at each final checkpoint, in order (hashesDone() before reading)
++## SimHash walks every column of the planet (about 25 ms at medium, more at a bigger size), so it is never run in the game's frame: once a
++## checkpoint is final, its last run's copy (the snapshot the checkpoint already holds; SimHash reads a snapshot's own arrays) is hashed on
++## a worker thread, and that copy goes back to the pool only after its job. The hashes are the same values as before, in the same order.
++var hashJobs: Array = []      # [task id, snapshot] of each checkpoint hash still running
++var hashesMain: int = 0       # SimHash runs on the game's thread (0 with the fix), and their time in microseconds
++var hashUsMain: int = 0
++static var hashOld: bool = false    # tests only: hash on every run of a checkpoint tick, in the frame, as before the fix (the byte-for-byte row)
++static var hashLive: bool = false   # tests only (the control): hash the present state when a checkpoint becomes final, not its copy
+ var logRollbacks: bool = false   # keep [frame, depth] of every rollback (rollbackLog), at most ROLLBACK_LOG of them (NetLan's saved match)
+ var rollbackLog: Array = []
+ const ROLLBACK_LOG: int = 20000
+@@ -509,8 +517,11 @@ func _checkpoint(t: int) -> void:
+ 	if chkPend.has(t):
+ 		pool.put(chkPend[t][1])
+ 	chkPend[t] = [NetDesync.digest(S), NetSnapshot.take(S, pool)]
+-	if hashChecks:
+-		chkPend[t].append(SimHash.stateHash(S).gameplay)   # on every run of tick t: the last one's is the one that becomes final
++	if hashChecks and hashOld:
++		var u0: int = Time.get_ticks_usec()
++		chkPend[t].append(SimHash.stateHash(S).gameplay)   # the old path: on every run of tick t, in the frame; the last one's becomes final
++		hashUsMain += Time.get_ticks_usec() - u0
++		hashesMain += 1
+ 
+ 
+ ## Checkpoint b has become final: its last run's digest is this peer's, to send and to compare.
+@@ -527,14 +538,21 @@ func _confirmCheck(b: int) -> void:
+ 			pool.put(chkPend[t][1])
+ 			chkPend.erase(t)
+ 	chkMine[b] = e[0]
+-	if hashChecks and e.size() > 2:
+-		hashFinal.append([b, e[2]])
++	if hashChecks:
++		_reapHashes()
++		if e.size() > 2:
++			hashFinal.append([b, e[2]])
++		elif hashLive:
++			hashFinal.append([b, SimHash.stateHash(S).gameplay])   # the control: the present state, ticks after b
++			hashesMain += 1
++		else:
++			_hashLater(b, e[1])
+ 	if onCheck.is_valid():
+ 		onCheck.call(b, e[0])
+ 	if desync.is_empty():
+ 		chkSnaps[b] = e[1]
+ 	else:
+-		pool.put(e[1])   # after a desync only its two snapshots are kept
++		_put(e[1])   # after a desync only its two snapshots are kept
+ 	chkOut.append([b, e[0]])
+ 	if chkOut.size() > 4:
+ 		chkOut.pop_front()
+@@ -558,6 +576,7 @@ func _compareChecks() -> void:
+ 		if not chkRemote.has(t):
+ 			continue
+ 		if chkRemote[t] != chkMine[t]:
++			hashesDone()   # the report reads the checkpoint copies: no job is still walking one
+ 			desync = {"tick": t, "local": chkMine[t], "remote": chkRemote[t], "lastAgreed": agreedTo, "frame": frame,
+ 				"replay": NetDesync.replayOf(self, matchInfo, t), "snap": chkSnaps[t], "agreedSnap": chkSnaps.get(agreedTo)}
+ 			if onDesync.is_valid():
+@@ -571,10 +590,48 @@ func _compareChecks() -> void:
+ 		chkRemote.erase(t)
+ 		for b in chkSnaps.keys():   # keep only the newest agreed snapshot and the ones after it
+ 			if b < t:
+-				pool.put(chkSnaps[b])
++				_put(chkSnaps[b])
+ 				chkSnaps.erase(b)
+ 
+ 
++## Checkpoint b's gameplay hash, of its final run's copy, on a worker thread. Its slot in hashFinal holds the tick now and the hash once the
++## job is done.
++func _hashLater(b: int, snap: NetSnapshot) -> void:
++	var slot: Array = [b, ""]
++	hashFinal.append(slot)
++	var root: SimState = snap.root
++	var id: int = WorkerThreadPool.add_task(func() -> void: slot[1] = SimHash.stateHash(root).gameplay)
++	hashJobs.append([id, snap])
++
++
++## The jobs that have finished are let go of (a task is waited on once, which frees it).
++func _reapHashes() -> void:
++	var left: Array = []
++	for j in hashJobs:
++		if WorkerThreadPool.is_task_completed(int(j[0])):
++			WorkerThreadPool.wait_for_task_completion(int(j[0]))
++		else:
++			left.append(j)
++	hashJobs = left
++
++
++## Wait for every checkpoint hash still running: before hashFinal is read (a saved file), a desync report, and close.
++func hashesDone() -> void:
++	for j in hashJobs:
++		WorkerThreadPool.wait_for_task_completion(int(j[0]))
++	hashJobs.clear()
++
++
++## A checkpoint copy back to the pool, after its hash job if it has one (the pool hands its objects to the next save).
++func _put(snap: NetSnapshot) -> void:
++	for i in range(hashJobs.size()):
++		if hashJobs[i][1] == snap:
++			WorkerThreadPool.wait_for_task_completion(int(hashJobs[i][0]))
++			hashJobs.remove_at(i)
++			break
++	pool.put(snap)
++
++
+ ## Every slot's confirmed inputs from tick `since` up to the confirmed frontier (at most `cap` ticks), for a spectator:
+ ## [first tick, [PackedInt64Array per slot], [second words per slot: one each, or empty when all are 0]].
+ func confirmedSince(since: int, cap: int = 64) -> Array:
+@@ -609,6 +666,7 @@ func confirmedLog(upto: int) -> Array:
+ 
+ ## Free the saves and the pool (their objects can point at each other).
+ func close() -> void:
++	hashesDone()
+ 	for b in snaps:
+ 		pool.put(snaps[b])
+ 	snaps.clear()
+diff --git a/net/tools/lan_check.gd b/net/tools/lan_check.gd
+index 3579b6b..687c4fa 100644
+--- a/net/tools/lan_check.gd
++++ b/net/tools/lan_check.gd
+@@ -28,6 +28,9 @@ extends SceneTree
+ ##     the replay's "build" its id), the file name keeps the commit's first 8, and both play back on that build; a LAN save loaded from disk with another
+ ##     build's id is refused as "build" before its first tick, with both ids, as a solo replay is, and so is a save with no stamp; the desync report's
+ ##     re-run refuses it too;
++##   - the saved match's checkpoint hashes (SimHash, which walks every column) never run in the game's frame: with the fix, none on the game's
++##     thread, and both PCs' saved replays byte for byte the old path's (a hash on every run of a checkpoint tick, in the frame), in 1v1 and 2v2
++##     together on p120 (rollbacks re-run checkpoint ticks);
+ ##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on, the dash and its slip's brake, and the page's travel of 1.5,
+ ##     and a short match on each stays in step;
+ ##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
+@@ -42,6 +45,7 @@ extends SceneTree
+ ## must be caught starting with the model off; a saved match with one input changed, and one whose dropped seat's toggle names the session's index
+ ## instead of the sim's slot, must each fail to play back; and with SimReplay's build check left out (blindBuild), the foreign LAN save must play to its
+ ## last tick, so the refusal is the build id's alone.
++## With the checkpoint hash taken from the present state instead of the checkpoint's copy, the saved replays must differ from the old path's.
+ ## Each must be caught.
+ ## Verdict line: LAN: N check(s) failed
+ 
+@@ -438,6 +442,9 @@ func _init() -> void:
+ 		var blind: Dictionary = _stampRows(saveTo, true)
+ 		print("control, A-NET-05 with the build check left out: the foreign LAN save played %s (reason \"%s\", to tick %d of %d)" % [str(blind.foreignOk), blind.foreignWhy, blind.foreignTo, blind.ticks])
+ 		ok(bool(blind.foreignOk) and int(blind.foreignTo) == int(blind.ticks), "with the build check left out, the foreign LAN save must play to its last tick")
++		var lh: Dictionary = _hashRows(saveTo, false, true)
++		print("control, the checkpoint hash of the present state: the saved replays the old path's %s" % str(lh.same))
++		ok(not bool(lh.same), "a checkpoint hash of the present state must change the saved replays")
+ 		r = _run("lan", true, true, 0, true, false)
+ 		print("control, two fights, S not moved to the player's fight: %d frames held the wrong one" % r.wrongFight)
+ 		ok(r.wrongFight > 0, "with S not moved, a PC must be caught holding the wrong fight")
+@@ -652,6 +659,12 @@ func _init() -> void:
+ 	ok(st.bareWhy == "build", "A-NET-05: a LAN save with no stamp is refused by a stamped build (%s)" % st.bareWhy)
+ 	ok(bool(st.reportRefuses), "A-NET-05: the desync report's re-run (NetDesync.replayState) refuses the foreign save")
+ 	print("  A-NET-05, stamp %s: files %s; own play %s; foreign %s at %d (build %s, home %s); no stamp %s" % [st.id, str(st.files), str(st.ownWhy), st.foreignWhy, st.foreignAt, st.foreignBuild, st.foreignHome, st.bareWhy])
++	for together in [false, true]:
++		var hr: Dictionary = _hashRows(saveTo, together, false)
++		var what: String = "2v2 together" if together else "1v1"
++		ok(bool(hr.same) and int(hr.n) > 5, "the saved match's hashes, %s p120: both PCs' replays byte for byte the old path's (%d checkpoints)" % [what, hr.n])
++		ok(int(hr.mainNew) == 0 and int(hr.mainOld) >= int(hr.n), "the saved match's hashes, %s p120: none on the game's thread with the fix (%d; the old path ran %d for %d checkpoints, %.1f ms each)" % [what, hr.mainNew, hr.mainOld, hr.n, hr.msOld])
++		print("  checkpoint hashes, %s p120: old path %d in the frame for %d checkpoints (%.1f ms each on this machine), the fix 0 in the frame (%d); replays the same %s" % [what, hr.mainOld, hr.n, hr.msOld, hr.mainNew, str(hr.same)])
+ 	var pre: String = NetLan.prefixOf("10.0.0.135")
+ 	ok(pre == "10.0.0.", "the /24 of an address (%s)" % pre)
+ 	ok(NetEnetTransport.allowed("10.0.0.7", pre) and not NetEnetTransport.allowed("10.238.114.20", pre) and not NetEnetTransport.allowed("10.0.01.7", pre) and not NetEnetTransport.allowed("203.0.113.5", pre), "the filter lets in only the /24")
+@@ -754,6 +767,45 @@ func _stampRows(dir: String, blind: bool) -> Dictionary:
+ 	return out
+ 
+ 
++## The saved match's checkpoint hashes, the old path against the fix: the same p120 match (1v1, or 2v2 together) played twice to 1200 ticks, first
++## with NetSession.hashOld (every run, in the frame), then as shipped (once, on a worker thread), or with hashLive (the control); both PCs save each
++## time, and their replays are compared as text. Returns {same, n: checkpoints, mainOld, mainNew: hashes on the game's thread, msOld}.
++func _hashRows(dir: String, together: bool, live: bool) -> Dictionary:
++	var keepT: int = ticks
++	ticks = 1200
++	var texts: Array = []
++	var out := {"same": true, "n": 0, "mainOld": 0, "mainNew": 0, "msOld": 0.0}
++	for run in range(2):
++		NetSession.hashOld = run == 0
++		NetSession.hashLive = run == 1 and live
++		var r := _run("p120", true, true, 0, together, true, true, -1, true, [], true, together, -1, 0, {"pure": true, "saveDir": dir, "goneAt": -1, "dropAfter": 1000.0})
++		var mine: Array = []
++		var main: int = 0
++		var us: int = 0
++		for k in range(2):
++			var fn: String = r.lans[k].save("test")
++			var d = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(fn))) if fn != "" else null
++			DirAccess.remove_absolute(dir.path_join(fn))
++			mine.append(JSON.stringify(d.replay) if d is Dictionary else "")
++			if d is Dictionary:
++				out.n = maxi(int(out.n), (d.replay.checkpoints as Array).size())
++			main += r.lans[k].net.session.hashesMain
++			us += r.lans[k].net.session.hashUsMain
++		_close(r)
++		texts.append(mine)
++		if run == 0:
++			out.mainOld = main
++			out.msOld = us / 1000.0 / maxf(1.0, float(main))
++		else:
++			out.mainNew = main
++	NetSession.hashOld = false
++	NetSession.hashLive = false
++	ticks = keepT
++	for k in range(2):
++		out.same = out.same and texts[0][k] != "" and texts[0][k] == texts[1][k]
++	return out
++
++
+ ## Both PCs save; each file is read back and played through SimReplay.play. mutate (tests): (doc) -> void, applied to each doc before it
+ ## plays. Returns {ok: every file played back to its checkpoints and final, same: the two replays' inputs and toggles alike, n: checkpoints,
+ ## finals: how many carried a final hash, reasons: SimReplay.play's reasons, toggles: the first file's toggles, files: the names}.
