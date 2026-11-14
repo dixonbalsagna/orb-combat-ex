@@ -1,0 +1,24 @@
+# signature, reduced, the right pane (the fighter there is LAUNCHED by the signature and chased): tick, its pane's zoom (zo1), and its step a tick, with reduced-pace alone and with reduced-floor
+## reduced-pace alone
+84 zo1 0.713	step 0.0244
+90 zo1 0.655	step 0.0861
+96 zo1 0.623	step 0.1381
+102 zo1 0.604	step 0.0749
+108 zo1 0.593	step 0.0550
+114 zo1 0.586	step 0.0396
+120 zo1 0.582	step 0.0295
+126 zo1 0.580	step 0.0250
+132 zo1 0.578	step 0.0287
+138 zo1 0.577	step 0.0286
+## + reduced-floor
+84 zo1 0.661	step 0.0221
+90 zo1 0.520	step 0.0055
+96 zo1 0.452	step 0.1160
+102 zo1 0.401	step 0.0496
+108 zo1 0.362	step 0.0353
+114 zo1 0.343	step 0.0353
+120 zo1 0.330	step 0.0332
+126 zo1 0.321	step 0.0305
+132 zo1 0.315	step 0.0270
+138 zo1 0.326	step 0.0098
+## collapse and clash, reduced: unchanged by reduced-floor (their fast panes are not at the readable floor: the launch rule holds clash's, and collapse's last second is a fit pull-out)
