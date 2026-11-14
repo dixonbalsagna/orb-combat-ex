@@ -1,15 +1,15 @@
 # The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-14)
 
-262 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **116 run in CI**, 64 more run in the landing gate only, 0 are deliberately not run (reason given), **82 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
+262 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **130 run in CI**, 64 more run in the landing gate only, 1 are deliberately not run (reason given), **67 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
 
 | Folder | Scripts | CI | Gate only | Not run | Unreviewed |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| audio/tools | 14 | 0 | 1 | 0 | 13 |
+| audio/tools | 14 | 12 | 1 | 1 | 0 |
 | net/tools | 10 | 10 | 0 | 0 | 0 |
 | render/anim/tools | 3 | 0 | 1 | 0 | 2 |
 | render/camera/tests | 13 | 1 | 0 | 0 | 12 |
 | render/tools | 24 | 4 | 15 | 0 | 5 |
-| render/vfx/tools | 2 | 0 | 0 | 0 | 2 |
+| render/vfx/tools | 2 | 2 | 0 | 0 | 0 |
 | sim/core/tools | 16 | 12 | 0 | 0 | 4 |
 | sim/director/tools | 43 | 5 | 1 | 0 | 37 |
 | sim/input/test | 45 | 0 | 45 | 0 | 0 |
@@ -21,20 +21,20 @@
 
 | Script | Status | Reason |
 | :--- | :--- | :--- |
-| audio/tools/babble_check.gd | UNREVIEWED |  |
-| audio/tools/beat_check.gd | UNREVIEWED |  |
-| audio/tools/brawl_check.gd | UNREVIEWED |  |
-| audio/tools/carry_check.gd | UNREVIEWED |  |
-| audio/tools/coop_check.gd | UNREVIEWED |  |
+| audio/tools/babble_check.gd | CI |  |
+| audio/tools/beat_check.gd | CI |  |
+| audio/tools/brawl_check.gd | CI |  |
+| audio/tools/carry_check.gd | CI |  |
+| audio/tools/coop_check.gd | CI |  |
 | audio/tools/host_check.gd | GATE |  |
-| audio/tools/moments_check.gd | UNREVIEWED |  |
-| audio/tools/status_check.gd | UNREVIEWED |  |
-| audio/tools/tone_check.gd | UNREVIEWED |  |
-| audio/tools/tug_check.gd | UNREVIEWED |  |
-| audio/tools/warm_async_check.gd | UNREVIEWED |  |
-| audio/tools/warm_check.gd | UNREVIEWED |  |
-| audio/tools/web_policy_check.gd | UNREVIEWED |  |
-| audio/tools/world_check.gd | UNREVIEWED |  |
+| audio/tools/moments_check.gd | CI |  |
+| audio/tools/status_check.gd | CI |  |
+| audio/tools/tone_check.gd | CI |  |
+| audio/tools/tug_check.gd | CI |  |
+| audio/tools/warm_async_check.gd | NOT RUN | Audio's answer (2026-11-14): its timing rows fail under load, so a shared runner would give false failures; run by hand on a quiet machine when the warm-up changes. |
+| audio/tools/warm_check.gd | CI |  |
+| audio/tools/web_policy_check.gd | CI |  |
+| audio/tools/world_check.gd | CI |  |
 | net/tools/delay_check.gd | CI + gate |  |
 | net/tools/desync_check.gd | CI + gate |  |
 | net/tools/enet_check.gd | CI + gate |  |
@@ -85,8 +85,8 @@
 | render/tools/stage_check.gd | GATE |  |
 | render/tools/sweep_check.gd | CI + gate |  |
 | render/tools/tile_check.gd | UNREVIEWED |  |
-| render/vfx/tools/effects_check.gd | UNREVIEWED |  |
-| render/vfx/tools/hash_check.gd | UNREVIEWED |  |
+| render/vfx/tools/effects_check.gd | CI |  |
+| render/vfx/tools/hash_check.gd | CI |  |
 | sim/core/tools/ceil_check.gd | UNREVIEWED |  |
 | sim/core/tools/coop_check.gd | UNREVIEWED |  |
 | sim/core/tools/cross_check.gd | CI |  |

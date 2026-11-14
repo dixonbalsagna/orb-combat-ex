@@ -1,0 +1,21 @@
+// Self-test of the nightly windows (pure parts + the data file). Tools, 2026-11-14.  node tools/flash/nightly-windows-selftest.mjs
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { windowOf, optionsOf, problems } from './nightly-windows.mjs';
+let bad = 0, n = 0;
+const check = (name, ok) => { n++; if (!ok) { bad++; console.log('FAIL ' + name); } };
+const data = { defaultTicks: 120, clips: { a: { skip: 700, ticks: 120, from: 'x' }, b: { skip: 0, ticks: 60, from: 'y' } } };
+check('a clip with an entry gets its window', JSON.stringify(windowOf(data, 'a')) === JSON.stringify({ skip: 700, ticks: 120, from: 'x' }));
+check('a clip with none starts at tick 1 for the default', (() => { const w = windowOf(data, 'zzz'); return w.skip === 0 && w.ticks === 120; })());
+check('an override changes the length and keeps the start', (() => { const w = windowOf(data, 'a', 30); return w.skip === 700 && w.ticks === 30; })());
+check('the options carry --skip only when the start is later than tick 1', optionsOf(windowOf(data, 'a')) === '--skip 700 --ticks 120' && optionsOf(windowOf(data, 'b')) === '--ticks 60');
+check('good data has no problem', problems(data).length === 0);
+check('a window past the end of the clip is a problem', problems({ ...data, clips: { c: { skip: 1450, ticks: 120, from: 'x' } } }).length === 1);
+check('a missing "from" is a problem', problems({ ...data, clips: { c: { skip: 1, ticks: 2 } } }).length === 1);
+check('a negative or fractional start is a problem', problems({ ...data, clips: { c: { skip: -1, ticks: 2, from: 'x' }, d: { skip: 1.5, ticks: 2, from: 'x' } } }).length === 2);
+check('no default is a problem', problems({ clips: {} }).length === 1);
+const real = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'nightly-windows.json'), 'utf8'));
+check('the real data file is clean', problems(real).length === 0);
+console.log(`nightly-windows-selftest: ${n} checks, ${bad} failed`);
+process.exit(bad ? 1 : 0);

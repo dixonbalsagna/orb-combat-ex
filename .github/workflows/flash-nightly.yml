@@ -6,9 +6,10 @@
 # successful run of this workflow is more than two days old (tools/player-watch.mjs).
 #
 # The clips are read on the ground players see (`tiles=1`, planet 7, the loud meteor): the words are in FLASH_WORDS below.
-# One job a clip, so no job is near the six-hour limit: with software rendering (about 0.3 frames a second on a runner, docs/tools/flash-check.md) a 1,500-tick clip takes about an hour and a half.
+# One job a clip. A runner reads a WINDOW, not a whole clip (the EP's decision of 2026-11-14, after the speed trial of run 43575965534: 8 to 11 s a tick in the clash and signature clips, about 21 s in collapse, so a 1,500-tick
+# clip would take 3 to 9 hours): each clip is read for tools/flash/nightly-windows.json's ticks from its tick skip + 1 (run-pixels.mjs --skip), the nightly tripwire. The full reading stays a local run on Orb's PC (docs/tools/flash-nightly.md).
 # Each job makes its own export (about five minutes), because nothing here may use an artifact action that is not pinned to a commit already in this repository.
-# NOT YET RUN ON A RUNNER (the pixel half has only run on this PC): start it once by hand, `gh workflow run flash-nightly.yml -f ticks=300`, to see the rate and the first lines; with ticks 0 it reads the full clips.
+# By hand: `gh workflow run flash-nightly.yml` reads the windows; `-f ticks=60` reads that many ticks from the window's start (a speed trial); `-f ticks=full` reads the whole clip (hours: not for a runner).
 # Nothing here gates a deploy and nothing is published.
 name: Flash nightly
 
@@ -18,9 +19,9 @@ on:
   workflow_dispatch:
     inputs:
       ticks:
-        description: 'ticks to read per clip: 0 is the full clip (1,500); a short number is a speed trial (the verdict then covers only those ticks)'
+        description: 'empty: each clip as its window (tools/flash/nightly-windows.json); a number: that many ticks from the window start (a speed trial); full: the whole clip of 1,500 ticks (hours on a runner)'
         required: false
-        default: '0'
+        default: ''
 
 permissions:
   contents: read
@@ -64,7 +65,7 @@ jobs:
       - name: Capture the clip (software rendering) and read it
         env:
           CLIP: ${{ matrix.clip }}
-          TICKS: ${{ inputs.ticks || '0' }}
+          TICKS: ${{ inputs.ticks }}
         run: |
           {
             echo "### ${CLIP} on ${GITHUB_SHA::8}"
@@ -72,8 +73,14 @@ jobs:
             echo "runner: $(nproc) vCPUs, $(free -g | awk '/Mem:/{print $2}') GB; $(google-chrome --version)"
           } >> "$GITHUB_STEP_SUMMARY"
           extra=()
-          limit=15000   # seconds a full clip may take (about 4 hours)
-          if [ "${TICKS}" != "0" ]; then extra+=(--ticks "${TICKS}"); limit=1800; fi   # a speed trial that has not read its few ticks in half an hour is a finding, not a wait
+          limit=2700   # a window (170 ticks is about 23 minutes at the clash rate, plus the skipped ticks) that has not been read in 45 minutes is a finding, not a wait
+          if [ "${TICKS}" = "full" ]; then limit=15000   # seconds a full clip may take (about 4 hours)
+          else
+            args=("${CLIP}")
+            if [ -n "${TICKS}" ]; then args+=(--ticks "${TICKS}"); fi
+            opts=$(node tools/flash/nightly-windows.mjs "${args[@]}")
+            read -r -a extra <<< "${opts}"
+          fi
           node tools/flash/run-pixels.mjs --dir "${RUNNER_TEMP}/web" --path "/index.html?${FLASH_WORDS}" --out "${RUNNER_TEMP}/clips" --clip "${CLIP}" --sizes 960x540 --jobs 1 --cpu-cap 100 --clip-timeout "${limit}" --software "${extra[@]}" | tee "${RUNNER_TEMP}/run-pixels.txt" || true
       - name: The night's verdict (red when the clip crosses the line of 3 on any reading or could not be read)
         env:

@@ -163,6 +163,8 @@ jobs:
         run: node tools/flash/nightly-selftest.mjs
       - name: Scheduled flash reading verdict self-test (the take-down line of 3 on every reading, red read directly, a missing clip is never a pass)
         run: node tools/flash/nightly-ci-selftest.mjs
+      - name: Nightly flash windows (the data file is whole and no window runs past a clip; the options the workflow reads)
+        run: node tools/flash/nightly-windows-selftest.mjs && node tools/flash/nightly-windows.mjs --check
       - name: Four-readings self-test (a clip captured at two sizes and read at two scales, the worst counts, the AI-seed clips staged; Legal RL-209)
         run: node tools/flash/readings-selftest.mjs
       - name: Pixel run self-test (the real run-pixels.mjs against stand-in capture and analysis, four readings, the folders, the staged seed clips, --sizes, --capture-only)
@@ -348,6 +350,49 @@ jobs:
           name: mode-smoke
           path: ${{ runner.temp }}/mode-smoke
           if-no-files-found: warn
+
+  # The audio and VFX checks (A-CODE-04: the owners' answers, 2026-11-14): each is a headless script that ends with a non-zero exit when a check fails; tools/gate.mjs adds the SCRIPT ERROR count.
+  # Audio's sets check (audio/tools/sets_check.gd) is added when Audio's group lands (GW1a); the EP's call, 2026-11-14.
+  # Not here on purpose: the audio host check (in the landing gate), the audio async warm check (its timing rows fail under load: tools/check-scripts.json), and the two browser checks of the pad start and the web voices (by hand).
+  godot-audio-vfx:
+    name: Godot headless checks (audio sets, VFX effects and the VFX hash)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30   # budget 20 min; not measured on a runner yet. The scratch run (Windows, a busy PC) took 395 s for the VFX hash check, 68 s for the effects check, 95 s for the world audio check and under 20 s for each of the others: about 14 min with the import; tools/ci-budgets.json says so until three runs exist
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Audio babble check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/babble_check.gd'
+      - name: Audio beat check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/beat_check.gd'
+      - name: Audio brawl check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/brawl_check.gd'
+      - name: Audio carry check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/carry_check.gd'
+      - name: Audio coop check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/coop_check.gd'
+      - name: Audio moments check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/moments_check.gd'
+      - name: Audio status check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/status_check.gd'
+      - name: Audio tone check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/tone_check.gd'
+      - name: Audio tug check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/tug_check.gd'
+      - name: Audio warm check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/warm_check.gd'
+      - name: Audio web_policy check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/web_policy_check.gd'
+      - name: Audio world check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/world_check.gd'
+      - name: VFX effects check (the effects that have no picture test)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/vfx/tools/effects_check.gd'
+      - name: VFX hash check (the scene running with its effects does not change the sim's gameplay hash)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/vfx/tools/hash_check.gd'
 
   # The network checks (docs/net/rollback.md sections 7 to 11), in a job of their own: together they take about 7 minutes (the two-process ENet proof about 1 minute each way), so they run beside the other jobs instead of lengthening godot-parity.
   # enet_check starts two more Godot processes (a host and a joiner) on 127.0.0.1, UDP ports 47100 and 47102, with no outside service. It is run here and never on Orb's PC (a socket there could raise a Windows Firewall prompt).
@@ -561,7 +606,7 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: [qa, sim, data, flash, godot-parity, godot-sim, godot-roll-render, net, world, site]
+    needs: [qa, sim, data, flash, godot-parity, godot-sim, godot-roll-render, godot-audio-vfx, net, world, site]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10

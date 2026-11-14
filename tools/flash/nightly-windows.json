@@ -1,0 +1,36 @@
+{
+  "_why": "The window each clip is read at in the runner's nightly (the EP's decision of 2026-11-14: a runner cannot read a whole clip, so each clip is read as a window at its worst moment, collapse at 60 ticks; the full reading stays a local run on Orb's PC). skip is run-pixels.mjs's --skip (ticks run without a picture first; the window starts at tick skip + 1). A clip with no entry is read from tick 1 for defaultTicks, the speed trial's way. 'from' says how the moment was found: an entry that has not been measured says so. tools/flash/nightly-windows.mjs --check reads this file.",
+  "defaultTicks": 120,
+  "clips": {
+    "collapse-normal": {
+      "skip": 0,
+      "ticks": 60,
+      "from": "not measured: collapse costs about 21 s a tick on a runner (run 43575965534), so 60 ticks from tick 1 until a full local reading names its worst second"
+    },
+    "collapse-reduced": {
+      "skip": 0,
+      "ticks": 60,
+      "from": "not measured: as collapse-normal"
+    },
+    "clash-normal": {
+      "skip": 950,
+      "ticks": 170,
+      "from": "ticks 951 to 1120 (170): the full local reading of clash-normal (960x540, hardware, 2026-11-14, HEAD 97df40b8 export) has its worst second at ticks 1075 to 1113; the window read the same nine ticks (one off by a tick) and the same primary 4.5; 124 ticks of lead-in give the two-second memory its history"
+    },
+    "clash-reduced": {
+      "skip": 950,
+      "ticks": 170,
+      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
+    },
+    "clash-night-normal": {
+      "skip": 950,
+      "ticks": 170,
+      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
+    },
+    "clash-night-reduced": {
+      "skip": 950,
+      "ticks": 170,
+      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
+    }
+  }
+}
