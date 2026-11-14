@@ -1,9 +1,9 @@
 Control: the same probe on a tree with the kept build's data but main's OLD data/input/timing.json (the eleven pad switches off). It reads differently, so the probe sees the pad.
 
 COUNT PROTAGONIST: 116 cells; 60 own outcomes, 41 same as an earlier cell, 10 the same move with another side effect, 0 refused (said), 5 nothing (silent); no outcome 5, repeats 41 (strict) or 51 (same move)
-EXPLAINED PROTAGONIST: by design: no outcome 0, repeats 22; proposed (not yet by design): no outcome 0, repeats 20; unexplained: no outcome 5, repeats 9
+EXPLAINED PROTAGONIST: by design: no outcome 0, repeats 42; proposed (not yet by design): no outcome 0, repeats 0; unexplained: no outcome 5, repeats 9
 COUNT RIVAL: 116 cells; 59 own outcomes, 41 same as an earlier cell, 11 the same move with another side effect, 0 refused (said), 5 nothing (silent); no outcome 5, repeats 41 (strict) or 52 (same move)
-EXPLAINED RIVAL: by design: no outcome 0, repeats 22; proposed (not yet by design): no outcome 0, repeats 20; unexplained: no outcome 5, repeats 10
+EXPLAINED RIVAL: by design: no outcome 0, repeats 42; proposed (not yet by design): no outcome 0, repeats 0; unexplained: no outcome 5, repeats 10
 
 cells that read differently for PROTAGONIST (kept build -> old timing.json):
   RB/B/tap : OUTCOME  ->  SAME AS RB/Y/tap
