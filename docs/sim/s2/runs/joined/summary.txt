@@ -1,0 +1,48 @@
+import 0; parse errors 0
+validate 0; 322 files checked, 0 errors, 2 warnings
+lint 0; determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/world, sim/input 
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+load_split: exit 0 in 5 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name
+well: exit 0 in 55 s; script errors 0; WELL: 0 check(s) failed
+3:well: ... and with a full power meter: [4136, 5168, 6457, 8068] (his spd 1.000)
+4:well: the snap's speed by tier (power 0, flat out 3500): [4000, 4373, 5464, 6827]
+5:well: AI against AI, 600 ticks, ticks the first slot stood in the rival's well: 600
+6:well: two who let go at 10 bh are 2.50 bh apart after 31 s; the fastest draw was 69.4 a second (cap 107.5)
+7:well: rest: a light pressed at 8 bh, approach in hand 11 ticks, the defender drawn on 0, moved 0.0
+8:well: capped: a light pressed at 8 bh, approach in hand 10 ticks, the defender drawn on 10, moved 16.8
+well_dir: exit 0 in 7 s; script errors 0; WELL DIR: 28 check(s), 0 failed
+golden: exit 0 in 149 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 144.7 s
+  the golden with both switches off REPRODUCES GW1a's target byte for byte
+read_quick: exit 0 in 28 s; script errors 0; WELL READ done
+4:row4 light t1 (today/well+pair/well+own): 4.5 bh 14:lunge/14:snap/14:snap; 6.0 bh 15:lunge/15:snap/15:snap; 9.0 bh 19:lunge/19:snap/19:snap; 12.5 bh 23:lunge/23:snap/23:snap; 15.0 bh -:taunt/26:snap/26:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+5:row4 light t4 empty (today/well+pair/well+own): 4.5 bh 14:lunge/14:snap/14:snap; 6.0 bh 15:lunge/14:snap/14:snap; 9.0 bh 19:lunge/16:snap/16:snap; 12.5 bh 23:lunge/18:snap/18:snap; 15.0 bh -:taunt/20:snap/20:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+6:row4 light t4 full (today/well+pair/well+own): 4.5 bh 14:lunge/14:snap/14:snap; 6.0 bh 15:lunge/14:snap/14:snap; 9.0 bh 19:lunge/15:snap/15:snap; 12.5 bh 23:lunge/17:snap/17:snap; 15.0 bh -:taunt/18:snap/18:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+7:row4 heavy t1 (today/well+pair/well+own): 4.5 bh 18:lunge/18:snap/18:snap; 6.0 bh 19:lunge/19:snap/19:snap; 9.0 bh 23:lunge/23:snap/23:snap; 12.5 bh 27:lunge/27:snap/27:snap; 15.0 bh -:taunt/30:snap/30:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+8:row4 heavy t4 empty (today/well+pair/well+own): 4.5 bh 18:lunge/18:snap/18:snap; 6.0 bh 19:lunge/18:snap/18:snap; 9.0 bh 23:lunge/20:snap/20:snap; 12.5 bh 27:lunge/22:snap/22:snap; 15.0 bh -:taunt/24:snap/24:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+9:row4 heavy t4 full (today/well+pair/well+own): 4.5 bh 18:lunge/18:snap/18:snap; 6.0 bh 19:lunge/18:snap/18:snap; 9.0 bh 23:lunge/19:snap/19:snap; 12.5 bh 27:lunge/21:snap/21:snap; 15.0 bh -:taunt/22:snap/22:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+11:row4b light t1 against tier 4 (today/well): 15.0 bh -:taunt/26:snap; 20.0 bh -:taunt/31:snap; 23.0 bh -:taunt/35:snap; 25.0 bh -:taunt/-:taunt
+12:row4b light t4 empty against tier 4 (today/well): 15.0 bh -:taunt/20:snap; 20.0 bh -:taunt/23:snap; 23.0 bh -:taunt/25:snap; 25.0 bh -:taunt/-:taunt
+13:row4b light t4 full against tier 4 (today/well): 15.0 bh -:taunt/18:snap; 20.0 bh -:taunt/21:snap; 23.0 bh -:taunt/23:snap; 25.0 bh -:taunt/-:taunt
+15:row5 light t1 defender idle (today / well+own): 6.0 bh 9 brawl / 9 brawl; 12.5 bh 17 brawl / 17 brawl; 15.0 bh not held / 20 brawl; 20.0 bh not held / not held
+16:row5 light t1 defender guard (today / well+own): 6.0 bh 9 brawl / 9 brawl; 12.5 bh 17 brawl / 17 brawl; 15.0 bh not held / 20 brawl; 20.0 bh not held / not held
+17:row5 light t1 defender dodge (today / well+own): 6.0 bh 9 DODGE — CLEAN / 9 DODGE — CLEAN; 12.5 bh 17 brawl / 17 brawl; 15.0 bh not held / 20 brawl; 20.0 bh not held / not held
+18:row5 light t4 full defender idle (today / well+own): 6.0 bh 9 brawl / 8 brawl; 12.5 bh 17 brawl / 11 brawl; 15.0 bh not held / 12 brawl; 20.0 bh not held / not held
+19:row5 light t4 full defender guard (today / well+own): 6.0 bh 9 brawl / 8 brawl; 12.5 bh 17 brawl / 11 brawl; 15.0 bh not held / 12 brawl; 20.0 bh not held / not held
+20:row5 light t4 full defender dodge (today / well+own): 6.0 bh 9 DODGE — CLEAN / 8 DODGE & READ; 12.5 bh 17 brawl / 11 DODGE & READ; 15.0 bh not held / 12 DODGE & READ; 20.0 bh not held / not held
+22:row6 t1: 9.0 bh well+pair: 273 then 273; 9.0 bh well+own: 273 then 161; 15.0 bh well+pair: 315 then 289; 15.0 bh well+own: 315 then 180
+23:row6 t4 full: 9.0 bh well+pair: 228 then 322; 9.0 bh well+own: 228 then 141; 15.0 bh well+pair: 264 then 328; 15.0 bh well+own: 264 then 157
+25:row11 t1: 6.0 bh today: 10 ticks, 0 of 8; 6.0 bh well: 10 ticks, 0 of 8; 9.0 bh today: 14 ticks, 0 of 8; 9.0 bh well: 14 ticks, 0 of 8; 12.5 bh today: 18 ticks, 3 of 8; 12.5 bh well: 18 ticks, 3 of 8; 15.0 bh today: 0 ticks, 3 of 8; 15.0 bh well: 21 ticks, 3 of 8; 20.0 bh today: 0 ticks, 3 of 8; 20.0 bh well: 0 ticks, 3 of 8
+26:row11 t4 full: 6.0 bh today: 10 ticks, 0 of 8; 6.0 bh well: 9 ticks, 0 of 8; 9.0 bh today: 14 ticks, 0 of 8; 9.0 bh well: 10 ticks, 0 of 8; 12.5 bh today: 18 ticks, 3 of 8; 12.5 bh well: 12 ticks, 0 of 8; 15.0 bh today: 0 ticks, 3 of 8; 15.0 bh well: 13 ticks, 0 of 8; 20.0 bh today: 0 ticks, 3 of 8; 20.0 bh well: 0 ticks, 3 of 8
+read_brawl: exit 0 in 6 s; script errors 0; WELL READ done
+4:row7 you hold away, the rival does nothing | well+pair: idle at 51, blows 0 {  }, you moved 134, rival moved 134, gap at 1 s 1.14, stick away and standing 1 of 51 live ticks, first move 2 | well+own: idle at 51, blows 0 {  }, you moved 136, rival moved 0, gap at 1 s 3.13, stick away and standing 1 of 51 live ticks, first move 2
+5:row7 you hold away, the rival throws lights | well+pair: no end at -1, blows 16 { "light": 16 }, you moved 531, rival moved 531, gap at 1 s 0.77, stick away and standing 1 of 208 live ticks, first move 2 | well+own: broke at 36, blows 3 { "light": 3 }, you moved 76, rival moved 73, gap at 1 s 0.81, stick away and standing 1 of 30 live ticks, first move 2
+6:row7 you hold away, the rival winds up heavies | well+pair: no end at -1, blows 6 { "medium": 6 }, you moved 639, rival moved 639, gap at 1 s 0.77, stick away and standing 1 of 228 live ticks, first move 2 | well+own: broke at 88, blows 3 { "medium": 3 }, you moved 225, rival moved 222, gap at 1 s 1.27, stick away and standing 1 of 82 live ticks, first move 2
+7:row7 you hold away, the rival mixes a heavy every third blow | well+pair: no end at -1, blows 16 { "light": 11, "medium": 5 }, you moved 531, rival moved 531, gap at 1 s 0.77, stick away and standing 1 of 208 live ticks, first move 2 | well+own: broke at 36, blows 3 { "light": 2, "medium": 1 }, you moved 76, rival moved 73, gap at 1 s 0.81, stick away and standing 1 of 30 live ticks, first move 2
+8:row7 you do nothing, the rival holds away | well+pair: idle at 51, blows 0 {  }, you moved 128, rival moved 128, gap at 1 s 1.12, stick away and standing 0 of 0 live ticks, first move -1 | well+own: idle at 51, blows 0 {  }, you moved 0, rival moved 129, gap at 1 s 3.02, stick away and standing 0 of 0 live ticks, first move -1
+9:row7 you do nothing, the rival holds toward | well+pair: idle at 51, blows 0 {  }, you moved 128, rival moved 128, gap at 1 s 0.43, stick away and standing 0 of 0 live ticks, first move -1 | well+own: idle at 51, blows 0 {  }, you moved 0, rival moved 16, gap at 1 s 0.02, stick away and standing 0 of 0 live ticks, first move -1
+10:row7 you walk into an idle rival | well+pair: idle at 51, blows 0 {  }, you moved 134, rival moved 134, gap at 1 s 0.41, stick away and standing 0 of 0 live ticks, first move 2 | well+own: idle at 51, blows 0 {  }, you moved 16, rival moved 0, gap at 1 s 0.01, stick away and standing 0 of 0 live ticks, first move 2
+11:row7 you both hold away | well+pair: walk at 13, blows 0 {  }, you moved 1, rival moved 1, gap at 1 s 8.06, stick away and standing 1 of 13 live ticks, first move 2 | well+own: idle at 51, blows 0 {  }, you moved 136, rival moved 129, gap at 1 s 5.43, stick away and standing 1 of 51 live ticks, first move 2
+read_draw: exit 0 in 9 s; script errors 0; WELL READ done
+4:row1 scripted, draw rest: {  } over 4800 ticks (rest: 0 is the pass line; capped: the stick, hands, latch and approach rows are that arm's own rule, only stun counts against it)
+5:row1 scripted, draw capped: { "stick": 319, "hands": 806, "approach": 42 } over 4800 ticks (rest: 0 is the pass line; capped: the stick, hands, latch and approach rows are that arm's own rule, only stun counts against it)
+s2c done

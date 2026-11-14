@@ -1,0 +1,27 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+== row 4: press to contact (ticks from the press to the blow landing on an idle rival), today against the well
+row4 light t1 (today/well+pair/well+own): 4.5 bh 14:lunge/14:snap/14:snap; 6.0 bh 15:lunge/15:snap/15:snap; 9.0 bh 19:lunge/19:snap/19:snap; 12.5 bh 23:lunge/23:snap/23:snap; 15.0 bh -:taunt/26:snap/26:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+row4 light t4 empty (today/well+pair/well+own): 4.5 bh 14:lunge/14:snap/14:snap; 6.0 bh 15:lunge/14:snap/14:snap; 9.0 bh 19:lunge/16:snap/16:snap; 12.5 bh 23:lunge/18:snap/18:snap; 15.0 bh -:taunt/20:snap/20:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+row4 light t4 full (today/well+pair/well+own): 4.5 bh 14:lunge/14:snap/14:snap; 6.0 bh 15:lunge/14:snap/14:snap; 9.0 bh 19:lunge/15:snap/15:snap; 12.5 bh 23:lunge/17:snap/17:snap; 15.0 bh -:taunt/18:snap/18:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+row4 heavy t1 (today/well+pair/well+own): 4.5 bh 18:lunge/18:snap/18:snap; 6.0 bh 19:lunge/19:snap/19:snap; 9.0 bh 23:lunge/23:snap/23:snap; 12.5 bh 27:lunge/27:snap/27:snap; 15.0 bh -:taunt/30:snap/30:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+row4 heavy t4 empty (today/well+pair/well+own): 4.5 bh 18:lunge/18:snap/18:snap; 6.0 bh 19:lunge/18:snap/18:snap; 9.0 bh 23:lunge/20:snap/20:snap; 12.5 bh 27:lunge/22:snap/22:snap; 15.0 bh -:taunt/24:snap/24:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+row4 heavy t4 full (today/well+pair/well+own): 4.5 bh 18:lunge/18:snap/18:snap; 6.0 bh 19:lunge/18:snap/18:snap; 9.0 bh 23:lunge/19:snap/19:snap; 12.5 bh 27:lunge/21:snap/21:snap; 15.0 bh -:taunt/22:snap/22:snap; 20.0 bh -:taunt/-:taunt/-:taunt
+== row 4b: against a tier 4 rival (his well 20 bh, its edge 23): a light from 15, 20, 23 and 25 bh
+row4b light t1 against tier 4 (today/well): 15.0 bh -:taunt/26:snap; 20.0 bh -:taunt/31:snap; 23.0 bh -:taunt/35:snap; 25.0 bh -:taunt/-:taunt
+row4b light t4 empty against tier 4 (today/well): 15.0 bh -:taunt/20:snap; 20.0 bh -:taunt/23:snap; 23.0 bh -:taunt/25:snap; 25.0 bh -:taunt/-:taunt
+row4b light t4 full against tier 4 (today/well): 15.0 bh -:taunt/18:snap; 20.0 bh -:taunt/21:snap; 23.0 bh -:taunt/23:snap; 25.0 bh -:taunt/-:taunt
+== row 5: press to the defender held, and what held him (idle, guarding, a dodge tapped 4 ticks in)
+row5 light t1 defender idle (today / well+own): 6.0 bh 9 brawl / 9 brawl; 12.5 bh 17 brawl / 17 brawl; 15.0 bh not held / 20 brawl; 20.0 bh not held / not held
+row5 light t1 defender guard (today / well+own): 6.0 bh 9 brawl / 9 brawl; 12.5 bh 17 brawl / 17 brawl; 15.0 bh not held / 20 brawl; 20.0 bh not held / not held
+row5 light t1 defender dodge (today / well+own): 6.0 bh 9 DODGE — CLEAN / 9 DODGE — CLEAN; 12.5 bh 17 brawl / 17 brawl; 15.0 bh not held / 20 brawl; 20.0 bh not held / not held
+row5 light t4 full defender idle (today / well+own): 6.0 bh 9 brawl / 8 brawl; 12.5 bh 17 brawl / 11 brawl; 15.0 bh not held / 12 brawl; 20.0 bh not held / not held
+row5 light t4 full defender guard (today / well+own): 6.0 bh 9 brawl / 8 brawl; 12.5 bh 17 brawl / 11 brawl; 15.0 bh not held / 12 brawl; 20.0 bh not held / not held
+row5 light t4 full defender dodge (today / well+own): 6.0 bh 9 DODGE — CLEAN / 8 DODGE & READ; 12.5 bh 17 brawl / 11 DODGE & READ; 15.0 bh not held / 12 DODGE & READ; 20.0 bh not held / not held
+== row 6: the defender's speed the tick before he is held and the tick after (he holds up while it flies)
+row6 t1: 9.0 bh well+pair: 273 then 273; 9.0 bh well+own: 273 then 161; 15.0 bh well+pair: 315 then 289; 15.0 bh well+own: 315 then 180
+row6 t4 full: 9.0 bh well+pair: 228 then 322; 9.0 bh well+own: 228 then 141; 15.0 bh well+pair: 264 then 328; 15.0 bh well+own: 264 then 157
+== row 11: the computer's answer to an approach (it answers only one of reactTicks + 2 or more): approach ticks, and how often it chose an answer over 8 seeds
+row11 t1: 6.0 bh today: 10 ticks, 0 of 8; 6.0 bh well: 10 ticks, 0 of 8; 9.0 bh today: 14 ticks, 0 of 8; 9.0 bh well: 14 ticks, 0 of 8; 12.5 bh today: 18 ticks, 3 of 8; 12.5 bh well: 18 ticks, 3 of 8; 15.0 bh today: 0 ticks, 3 of 8; 15.0 bh well: 21 ticks, 3 of 8; 20.0 bh today: 0 ticks, 3 of 8; 20.0 bh well: 0 ticks, 3 of 8
+row11 t4 full: 6.0 bh today: 10 ticks, 0 of 8; 6.0 bh well: 9 ticks, 0 of 8; 9.0 bh today: 14 ticks, 0 of 8; 9.0 bh well: 10 ticks, 0 of 8; 12.5 bh today: 18 ticks, 3 of 8; 12.5 bh well: 12 ticks, 0 of 8; 15.0 bh today: 0 ticks, 3 of 8; 15.0 bh well: 13 ticks, 0 of 8; 20.0 bh today: 0 ticks, 3 of 8; 20.0 bh well: 0 ticks, 3 of 8
+WELL READ done

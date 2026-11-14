@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+well: ... and with a full power meter: [4136, 5168, 6457, 8068] (his spd 1.000)
+well: the snap's speed by tier (power 0, flat out 3500): [4000, 4373, 5464, 6827]
+well: AI against AI, 600 ticks, ticks the first slot stood in the rival's well: 600
+well: two who let go at 10 bh are 2.50 bh apart after 31 s; the fastest draw was 69.4 a second (cap 107.5)
+well: rest: a light pressed at 8 bh, approach in hand 11 ticks, the defender drawn on 0, moved 0.0
+well: capped: a light pressed at 8 bh, approach in hand 10 ticks, the defender drawn on 10, moved 16.8
+WELL: 0 check(s) failed

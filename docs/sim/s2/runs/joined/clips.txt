@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+clip 1-walk-away-idle-today: 393 ticks, mark at 392 (the 300 before it); opened at 142, turned at 152; idle at 51 after the turn
+clip 2-walk-away-lights-today: 393 ticks, mark at 392 (the 300 before it); opened at 142, turned at 152; no end in four seconds
+clip 3-still-rival-pushes-today: 393 ticks, mark at 392 (the 300 before it); opened at 142, turned at 152; idle at 51 after the turn
+clip 4a-press-x-tier1-today: 160 ticks, mark at 159 (the 150 before it); tier 1, pressed at 14.0 bh, tick 69; the press became: taunt_start
+clip 4b-press-x-tier3-today: 2291 ticks, mark at 2290 (the 150 before it); tier 3, pressed at 14.0 bh, tick 2200; the press became: taunt_start
+clip 1-walk-away-idle-proposed: 368 ticks, mark at 367 (the 300 before it); opened at 117, turned at 127; idle at 51 after the turn
+clip 2-walk-away-lights-proposed: 368 ticks, mark at 367 (the 300 before it); opened at 117, turned at 127; broke at 36 after the turn
+clip 3-still-rival-pushes-proposed: 368 ticks, mark at 367 (the 300 before it); opened at 117, turned at 127; idle at 51 after the turn
+clip 4a-press-x-tier1-proposed: 161 ticks, mark at 160 (the 150 before it); tier 1, pressed at 14.0 bh, tick 70; the press became: lunge_light
+clip 4b-press-x-tier3-proposed: 2401 ticks, mark at 2400 (the 150 before it); tier 3, pressed at 14.0 bh, tick 2310; the press became: lunge_light
+WELL CLIPS done

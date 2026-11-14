@@ -1,0 +1,1546 @@
+diff --git a/data/fight/well.json b/data/fight/well.json
+new file mode 100644
+index 0000000..1ea35f6
+--- /dev/null
++++ b/data/fight/well.json
+@@ -0,0 +1,59 @@
++{
++  "schema": "fight.well/1",
++  "enabled": false,
++  "_enabled": "the gravity well (spike S2, docs/ep/proposals/gravity-well-trial-design.html; Game Design's rulings at the end of docs/design/gravity-well-reading.md): a setup's \"well\" overrides it for a match. Off, nothing runs and nothing is hashed",
++  "size": {
++    "baseBh": 12.5,
++    "_baseBh": "a tier 1 well's radius in body heights (75 units): today's middle band's edge (bands.midBh)",
++    "tierStep": 0.2,
++    "_tierStep": "each tier past the first adds this share: 12.5, 15, 17.5, 20",
++    "chargeGrow": 0.25,
++    "_chargeGrow": "a fighter powering up or gathering a beam swells by this share at full charge. Game Design's ruling 5: 0.25 for the trial, 0 the lever",
++    "chargeRiseTicks": 30,
++    "chargeFallTicks": 15,
++    "minBh": 4.5,
++    "maxBh": 20,
++    "_maxBh": "the cap (today's BOOST_NEAR, 1,500 units); 4.5 is the brawl's breakBh"
++  },
++  "zones": {
++    "edgeBh": 3,
++    "_edgeBh": "the band past a well where a tap still snaps in: no cliff",
++    "hysteresisBh": 0.5,
++    "either": false,
++    "_either": "the second reading of Orb's 13 November answer: either of you inside the other's well and you both fight close"
++  },
++  "draw": {
++    "mode": "rest",
++    "_mode": "\"off\"; \"rest\" (Game Design's ruling 2, the default: only in silence, never after a knock-back until the fighter's own next input); \"capped\" (the comparison arm: always, halved on a fighter holding away)",
++    "cap": 0.25,
++    "_cap": "the most it moves a fighter, as a share of his plain flying speed",
++    "fullAt": 0.5,
++    "_fullAt": "nothing at the well's edge, full by this share of its radius",
++    "quietTicks": 12,
++    "_quietTicks": "\"rest\": it fades in over this many ticks of silence",
++    "stopBh": 2.5,
++    "stopEaseBh": 1,
++    "_stopBh": "it eases out over the last stopEaseBh before stopBh (where an approach ends) and never pushes into the rival",
++    "awayDead": 0.3,
++    "awayShare": 0.5,
++    "_awayDead": "\"capped\": a stick held beyond awayDead whose part away from the rival is at least awayShare of it is holding away (60 degrees)"
++  },
++  "snap": {
++    "enabled": true,
++    "floorSpeed": 4000,
++    "_floorSpeed": "Game Design's ruling 1: the snap flies at the faster of today's lunge (4,000) and flat out for the level",
++    "maxStepBh": 3,
++    "_maxStepBh": "never more than 3 body heights a tick (the creative rulebook's m02)",
++    "outrun": false,
++    "graceTicks": 6
++  },
++  "close": {
++    "mode": "pair",
++    "_mode": "\"pair\" (today: the sticks move the fight) or \"own\" (each stick moves its own fighter; a body is solid). A setup's \"wellClose\" overrides it, with or without the well",
++    "ownMul": 0.4,
++    "rampTicks": 8,
++    "leaveAfterBlows": 3,
++    "_leaveAfterBlows": "Game Design's ruling 3: a fighter holding away breaks clear on the third blow that reaches him, landed or guarded; a stun pauses the count, letting go of away resets it",
++    "magnetAtRestOnly": true
++  }
++}
+diff --git a/sim/core/dir.gd b/sim/core/dir.gd
+index 31d433a..55afec1 100644
+--- a/sim/core/dir.gd
++++ b/sim/core/dir.gd
+@@ -122,6 +122,11 @@ static func propBroke(S: SimState, f) -> void:
+ 	_d("launch.gd").propBroke(S, f)
+ 
+ 
++## DirBands.pending: f's approach is on, from his press to its arrival (the well's draw waits for it).
++static func approaching(f) -> bool:
++	return _d("bands.gd").pending(f)
++
++
+ ## DirBands.who: the fighter a band holds, or -1.
+ static func bandsWho(S: SimState) -> int:
+ 	return _d("bands.gd").who(S)
+diff --git a/sim/core/fighter.gd b/sim/core/fighter.gd
+index 6f3da18..db99428 100644
+--- a/sim/core/fighter.gd
++++ b/sim/core/fighter.gd
+@@ -745,8 +745,10 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
+ 			if S.slipOn:
+ 				SimPower.slip(f, i.dash)   # the slip's brake: a dash let go before tick 6 eases to the slip's speed (power.json dash.slip, off)
+ 			SimDir.arrive(S, f, dt)   # Encounter's arrival: the dash eases into striking distance, never through it (bands.arrive, off)
+-			f.x = SimWrap.wrap(f.x + f.vx * dt)
+-			f.y += f.vy * dt
++			var wx: float = float(f.wel.dx) / 16.0 if (S.wellOn and f.wel != null) else 0.0   # the well's draw (sim/core/well.gd): its own movement, not his speed, so it leaves nothing behind on the tick his stick moves
++			var wy: float = float(f.wel.dy) / 16.0 if (S.wellOn and f.wel != null) else 0.0
++			f.x = SimWrap.wrap(f.x + (f.vx + wx) * dt)
++			f.y += (f.vy + wy) * dt
+ 			var g: float = floorFor(S, f, f.x, f.z, y0)   # at his depth (the plane's when depth is off); with the floor on, the floor of the water he is over
+ 			if f.y < g:
+ 				f.y = g
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index d8268fc..d30d36c 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -201,6 +201,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 		if S.kickOn:   # the kick: only when on, so a match without it hashes as before
+ 			_obj(out, f.kik, SimKick.HASHED)
+ 			out.append(S.kickInstant); out.append(float(S.kickClimb))
++		if S.wellOn or S.wellOwn:   # the gravity well: only when on, so a match without it hashes as before
++			_obj(out, f.wel, SimWell.HASHED)
+ 		if S.formsOn:   # forms: only when on, so a match without them hashes as before
+ 			_obj(out, f.form, SimForms.HASHED)
+ 		if S.flightOn:   # the launch's curve: only when on
+diff --git a/sim/core/power.gd b/sim/core/power.gd
+index e056633..d986f4f 100644
+--- a/sim/core/power.gd
++++ b/sim/core/power.gd
+@@ -243,6 +243,11 @@ static func fm(S: SimState, m: float) -> float:
+ 	return 1.0 if S.powerOn else m
+ 
+ 
++## Flat out for f's level and build, whatever his stance, range, the sea or the dash's switches (the gravity well's snap, spike S2). Pure.
++static func flatFor(S: SimState, f) -> float:
++	return S.powerFlat * SimDetMath.pow(flatGrowth, level(f)) * f.spd
++
++
+ ## Flat out, far from the rival: the base by level, for his build and with what his stance and wounds do to his speed. Close to the rival the dash is what it always was.
+ static func flatSpeed(S: SimState, f, close: float, ramp: float) -> float:
+ 	var plain: float = 430.0 * f.spd * SimForms.speedMul(S, f) * 2.4
+diff --git a/sim/core/replay.gd b/sim/core/replay.gd
+index edac70c..7eb2fee 100644
+--- a/sim/core/replay.gd
++++ b/sim/core/replay.gd
+@@ -194,6 +194,10 @@ static func dataHash(setup: Dictionary = {}) -> String:
+ 		h.text(SimPower.dataHash())
+ 	if setup.get("kick", SimKick.enabled()) == true:   # the kick and the coin turn: data/fight/kick.json, only for a match with them on
+ 		h.text(SimKick.dataHash())
++	if SimWell.inMatch(setup):   # the gravity well: data/fight/well.json, only for a match with the well or the own-body close fight on
++		h.text(SimWell.dataHash())
++		if setup.get("power", SimPower.enabled()) != true:
++			h.text(SimPower.dataHash())   # the snap's speed reads power.json's flat out and level even with the energy model off
+ 	if setup.get("flight", SimFlight.enabled()) == true:   # the launch's curve: data/fight/flight.json, only for a match with it on
+ 		h.text(SimFlight.dataHash())
+ 	if setup.get("ricochet", SimRicochet.enabled()) == true:   # the ricochet's glance: data/fight/ricochet.json, only for a match with it on
+diff --git a/sim/core/sim.gd b/sim/core/sim.gd
+index 94463c4..6675637 100644
+--- a/sim/core/sim.gd
++++ b/sim/core/sim.gd
+@@ -265,6 +265,8 @@ static func _mSetupsA(J: MatchJob) -> void:
+ 	SimPower.setup(S, setup)   # one energy model: the data's switch (data/fight/power.json), or the setup's "power"; "flatOut" tries another base, "travel" another factor along the line
+ 	S.kickOn = setup.get("kick", SimKick.enabled()) == true   # the kick and the coin turn: the data's switch (data/fight/kick.json), or the setup's
+ 	SimKick.setup(S, setup)
++	S.wellOn = setup.get("well", SimWell.enabled()) == true   # the gravity well (spike S2): the data's switch (data/fight/well.json), or the setup's; "wellClose" the close fight's mode
++	SimWell.setup(S, setup)
+ 	J.phase = 4
+ 
+ 
+@@ -427,6 +429,8 @@ static func _fightTick(S: SimState, inputs, dtReal: float, dt: float) -> bool:
+ 		ord.append(k)
+ 	for k in ord:
+ 		SimControl.control(S, S.fighters[k], inputs[k] if inputs != null and k < inputs.size() else null)
++	if S.wellOn:
++		SimWell.tick(S)   # the wells: each fighter's zone against the rival's well, and the draw, from the bodies as the tick began
+ 	for f in S.fighters:
+ 		SimFighter.stepFighter(S, f, dt)
+ 	DirExchange.dirUpdate(S, dt)
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 0a84184..df512ad 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -89,6 +89,8 @@ var powerTravel: float = 2.0          # ... a send's factor along the line for t
+ var dashOn: bool = false              # ... LT held is fast at any range: power.json's dash, or the setup's "dash" (only with the model on)
+ var slipOn: bool = false              # ... the slip's brake: power.json's dash.slip, or the setup's "slip" (only with the dash on)
+ var kickOn: bool = false              # the kick and the coin turn (sim/core/kick.gd): data/fight/kick.json's switch, or the setup's "kick"
++var wellOn: bool = false              # the gravity well (sim/core/well.gd, spike S2): data/fight/well.json's switch, or the setup's "well"
++var wellOwn: bool = false             # the close fight's own-body mode: well.json close.mode "own", or the setup's "wellClose"
+ var kickInstant: float = 0.8          # ... its share of top speed on the first tick: the data's, or the setup's "instant"
+ var kickClimb: int = 8                # ... and its ticks to top speed: the data's, or the setup's "climbTicks"
+ var brakeOn: bool = false             # the air brake (sim/core/brake.gd): data/fight/brake.json's switch, or the setup's "brake"; off
+@@ -1045,6 +1047,21 @@ class KickState:
+ 	var no: bool = false       # this kick is that third: no overspeed
+ 
+ 
++## A fighter's gravity well while S.wellOn or S.wellOwn (sim/core/well.gd, spike S2). Whole numbers, so the hash reads them exactly.
++class WellState:
++	var zone: int = -1         # against the rival's well: 0 inside, 1 the edge band, 2 outside; -1 not written yet
++	var r: int = 0             # his own well's radius, whole units
++	var chg: int = 0           # the charge count, 0 to chargeRiseTicks
++	var quiet: int = 0         # ticks of silence, 0 to quietTicks
++	var own: int = 1           # 1: his last movement was his own; 0: something else moved him and he hasn't acted since
++	var dx: int = 0            # this tick's draw, 1/16 unit a second
++	var dy: int = 0
++	var ovx: int = 0           # close.mode "own": his own speed in a brawl, 1/16 unit a second (the director's)
++	var ovy: int = 0
++	var lv: int = 0            # close.mode "own": blows that reached him while he held away (the director's)
++	var late: int = 0          # snap.outrun: ticks this snap has fallen behind (the director's)
++
++
+ ## A fighter's air brake while S.brakeOn (sim/core/brake.gd).
+ class BrakeState:
+ 	var n: int = 0             # the launch number of his last send (Fighter.launchN): a new one is a new send
+@@ -1110,6 +1127,7 @@ class Fighter:
+ 	var act := ActState.new()        # I2a: what the fighter's presses mean now (sim/core/act.gd)
+ 	var style = null                 # M1: StyleState (sim/core/mood.gd)
+ 	var kik = null                   # the kick: KickState while S.kickOn (sim/core/kick.gd), null otherwise
++	var wel = null                   # the gravity well: WellState while S.wellOn or S.wellOwn (sim/core/well.gd), null otherwise
+ 	var brk = null                   # the air brake: BrakeState while S.brakeOn (sim/core/brake.gd), null otherwise
+ 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
+ 	var flt = null                   # the launch's curve: FlightState while S.flightOn (sim/core/flight.gd), null otherwise
+diff --git a/sim/core/tools/well_check.gd b/sim/core/tools/well_check.gd
+new file mode 100644
+index 0000000..c27a7ee
+--- /dev/null
++++ b/sim/core/tools/well_check.gd
+@@ -0,0 +1,317 @@
++extends SceneTree
++## The gravity well's core (spike S2, sim/core/well.gd): godot --headless --path . --script res://sim/core/tools/well_check.gd
++## The data and its sizes, the snap's speed by tier, the switch (off is the same as no word of it; on, the state is hashed and
++## the data is in the replay's key), the zones and their hysteresis, the draw in silence (its cap, its stop, the stick and the
++## hands ending it on the tick, the knock-back latch), Game Design's capped arm, and two runs and a rollback with it on.
++
++var fails: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	if not c:
++		fails += 1
++		print("FAIL  " + what)
++
++
++## Two human fighters, sep apart at one height, still, the well on, the trial's setup.
++func _mk(sep: float, more: Dictionary = {}) -> SimState:
++	var S := SimCore.createSim()
++	var su: Dictionary = {"well": true, "intro": false, "flatOut": 3500.0}
++	su.merge(more, true)
++	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, su)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	a.x = 3000.0
++	b.x = SimWrap.wrap(3000.0 + sep)
++	a.y = 2500.0
++	b.y = 2500.0
++	for f in [a, b]:
++		f.vx = 0.0
++		f.vy = 0.0
++	return S
++
++
++func _gap(S: SimState) -> float:
++	return absf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x))
++
++
++## One tick with these sticks (null: hands off).
++func _step(S: SimState, mx0: float = 0.0, mx1: float = 0.0, guard0: bool = false) -> void:
++	var i0 := SimIntent.new()
++	i0.mx = mx0
++	i0.guard = guard0
++	var i1 := SimIntent.new()
++	i1.mx = mx1
++	SimCore.step(S, [i0, i1])
++	S.out.fx.clear()
++	S.out.feed.clear()
++
++
++func _data() -> void:
++	ok(SimWell.errors().is_empty(), "well.json loads: " + str(SimWell.errors()))
++	ok(not SimWell.enabled() and SimWell.closeMode() == "pair", "the switch is off and the close fight is today's in data")
++	var S := _mk(900.0)
++	var a = S.fighters[0]
++	var want: Array = [937.5, 1125.0, 1312.5, 1500.0]
++	for t in range(4):
++		a.tier = float(t + 1)
++		ok(absf(SimWell.radius(a) - want[t]) < 1.0e-6, "tier %d's well: %.1f against %.1f" % [t + 1, SimWell.radius(a), want[t]])
++	a.tier = 1.0
++	a.wel.chg = 30
++	ok(absf(SimWell.radius(a) - 1171.875) < 1.0e-6, "a full charge at tier 1: 15.6 bh (%.1f)" % SimWell.radius(a))
++	a.tier = 3.0
++	ok(SimWell.radius(a) == 1500.0, "a full charge at tier 3 is held at the cap (%.1f)" % SimWell.radius(a))
++	a.tier = 1.0
++	a.wel.chg = 0
++	# The snap's speed (Game Design's ruling 1): the faster of 4,000 and flat out for the level; tier 1 is today's lunge.
++	var row: Array = []
++	for t in range(4):
++		a.tier = float(t + 1)
++		a.power = 0.0
++		var fl: float = SimPower.flatFor(S, a)
++		ok(absf(fl - S.powerFlat * SimDetMath.pow(SimPower.flatGrowth, SimPower.level(a)) * a.spd) < 1.0e-9, "flatFor reads the level")
++		row.append(roundi(maxf(4000.0, fl)))
++	var full: Array = []   # with a full power meter (the level's other 0.2): the design's table
++	for t in range(4):
++		a.tier = float(t + 1)
++		a.power = 100.0
++		full.append(roundi(maxf(4000.0, SimPower.flatFor(S, a))))
++	a.power = 0.0
++	print("well: ... and with a full power meter: %s (his spd %.3f)" % [str(full), a.spd])
++	a.tier = 1.0
++	ok(S.powerFlat == 3500.0 and row[0] == 4000 and row[1] > row[0] and row[3] > row[2] and row[2] > row[1], "the snap by tier at flat out 3,500: %s" % str(row))
++	print("well: the snap's speed by tier (power 0, flat out %.0f): %s" % [S.powerFlat, str(row)])
++	SimCore.dispose(S)
++
++
++func _run(setup_, ticks: int, rollAt: int = -1) -> Dictionary:
++	var S := SimCore.createSim()
++	var su: Dictionary = {"intro": false}
++	su.merge(setup_, true)
++	SimCore.newMatch(S, 12345, {"p1": true, "p2": true}, su)
++	var snap: NetSnapshot = null
++	var at: Array = []
++	var snapsIn: int = 0
++	for t in range(ticks):
++		if t == rollAt:
++			snap = NetSnapshot.take(S)
++		SimCore.step(S)
++		if rollAt >= 0 and t >= rollAt:
++			at.append(SimHash.stateHash(S).gameplay)
++		if S.wellOn and S.fighters[0].wel.zone == SimWell.IN:
++			snapsIn += 1
++		S.out.fx.clear()
++		S.out.feed.clear()
++	var bad: int = 0
++	if rollAt >= 0:
++		NetSnapshot.restore(S, snap)
++		for t in range(rollAt, ticks):
++			SimCore.step(S)
++			if SimHash.stateHash(S).gameplay != at[t - rollAt]:
++				bad += 1
++			S.out.fx.clear()
++			S.out.feed.clear()
++	var h: String = SimHash.stateHash(S).gameplay
++	var on: bool = S.wellOn
++	var w = S.fighters[0].wel
++	SimCore.dispose(S)
++	return {"h": h, "bad": bad, "on": on, "wel": w, "in": snapsIn}
++
++
++func _switch() -> void:
++	var off: Dictionary = _run({"well": false}, 600)
++	var dflt: Dictionary = _run({}, 600)
++	ok(off.h == dflt.h and off.wel == null, "off: the same as a match with no word of it, and no well state")
++	var on: Dictionary = _run({"well": true}, 600)
++	ok(on.on and on.wel != null, "on: each fighter has a well")
++	print("well: AI against AI, 600 ticks, ticks the first slot stood in the rival's well: %d" % on["in"])
++	# the state is in the hash
++	var S := _mk(900.0)
++	_step(S)
++	var h0: String = SimHash.stateHash(S).gameplay
++	S.fighters[1].wel.quiet += 1
++	ok(SimHash.stateHash(S).gameplay != h0, "the well's state is in the gameplay hash")
++	SimCore.dispose(S)
++	ok(SimReplay.dataHash({"well": true}) != SimReplay.dataHash({"well": false}), "the replay's key folds well.json with the well on")
++	ok(SimReplay.dataHash({"wellClose": "own"}) != SimReplay.dataHash({}), "... and with the own-body close fight on")
++	ok(SimReplay.dataHash({"well": false}) == SimReplay.dataHash({}), "... and not with both off")
++	var O := _mk(900.0, {"well": false, "wellClose": "own"})
++	ok(not O.wellOn and O.wellOwn and O.fighters[0].wel != null, "the own-body mode alone: the state exists, the wells don't run")
++	SimCore.dispose(O)
++
++
++func _zones() -> void:
++	for row in [[900.0, SimWell.IN], [1050.0, SimWell.EDGE], [1250.0, SimWell.OUT]]:
++		var S := _mk(row[0])
++		SimWell.cfg().draw.mode = "off"
++		_step(S)
++		ok(S.fighters[0].wel.zone == row[1] and S.fighters[1].wel.zone == row[1], "at %.0f units, tier 1 against tier 1: zone %d (want %d)" % [row[0], S.fighters[0].wel.zone, row[1]])
++		SimWell.cfg().draw.mode = "rest"
++		SimCore.dispose(S)
++	# a bigger well reaches the smaller fighter first; the bigger one stands outside the small one's
++	var B := _mk(1100.0)
++	SimWell.cfg().draw.mode = "off"
++	B.fighters[1].tier = 4.0
++	_step(B)
++	ok(B.fighters[0].wel.zone == SimWell.IN and B.fighters[1].wel.zone == SimWell.EDGE, "tier 1 at 14.7 bh from tier 4: the small one inside the big well (%d), the big one on the small well's edge (%d)" % [B.fighters[0].wel.zone, B.fighters[1].wel.zone])
++	SimWell.cfg().zones.either = true
++	_step(B)
++	ok(B.fighters[1].wel.zone == SimWell.IN, "zones.either: either inside the other's well and both fight close")
++	SimWell.cfg().zones.either = false
++	SimWell.cfg().draw.mode = "rest"
++	SimCore.dispose(B)
++	# hysteresis: inside at 12.5 bh + 0.2 stays inside; from outside it isn't inside until 0.25 bh in
++	var H := _mk(937.5 + 15.0)
++	SimWell.cfg().draw.mode = "off"
++	H.fighters[0].wel.zone = SimWell.IN
++	H.fighters[1].wel.zone = SimWell.EDGE
++	_step(H)
++	ok(H.fighters[0].wel.zone == SimWell.IN and H.fighters[1].wel.zone == SimWell.EDGE, "hysteresis: 0.2 bh past the edge, inside stays inside and the edge band stays the edge band")
++	SimWell.cfg().draw.mode = "rest"
++	SimCore.dispose(H)
++	# mirror: the slots swapped, the zones swap
++	var M1 := _mk(1200.0)
++	SimWell.cfg().draw.mode = "off"
++	M1.fighters[0].tier = 4.0
++	_step(M1)
++	var z1: Array = [M1.fighters[0].wel.zone, M1.fighters[1].wel.zone]
++	SimCore.dispose(M1)
++	var M2 := _mk(1200.0)
++	M2.fighters[1].tier = 4.0
++	_step(M2)
++	ok(z1 == [M2.fighters[1].wel.zone, M2.fighters[0].wel.zone], "the zones mirror with the slots swapped: %s" % str(z1))
++	SimWell.cfg().draw.mode = "rest"
++	SimCore.dispose(M2)
++
++
++func _drawRest() -> void:
++	var S := _mk(10.0 * 75.0)
++	var g0: float = _gap(S)
++	var cap: float = 0.25 * SimFighter.flightSpeed(S, S.fighters[0], false)
++	var most: float = 0.0
++	for t in range(11):
++		_step(S)
++	ok(S.fighters[0].wel.quiet >= 1 and S.fighters[0].wel.quiet <= 12, "silence counts up, to quietTicks (%d after 11 ticks)" % S.fighters[0].wel.quiet)
++	for t in range(60):
++		var x0: float = S.fighters[0].x
++		_step(S)
++		most = maxf(most, absf(SimWrap.sdx(x0, S.fighters[0].x)) * 60.0)
++	ok(_gap(S) < g0, "two who let go inside a well drift together: %.0f to %.0f" % [g0, _gap(S)])
++	ok(most <= cap + 1.0e-6, "the draw is at most a quarter of plain flight: %.1f against %.1f" % [most, cap])
++	for t in range(1800):
++		_step(S)
++	ok(_gap(S) >= 2.5 * 75.0 - 1.0e-6, "the draw stops short of 2.5 bh: the gap is %.1f" % _gap(S))
++	print("well: two who let go at 10 bh are %.2f bh apart after 31 s; the fastest draw was %.1f a second (cap %.1f)" % [_gap(S) / 75.0, most, cap])
++	SimCore.dispose(S)
++	# the stick ends it on the tick: a held stick, and the draw moves him by nothing
++	var T := _mk(10.0 * 75.0)
++	for t in range(30):
++		_step(T)
++	_step(T, 0.2)
++	ok(T.fighters[0].wel.dx == 0 and T.fighters[0].wel.quiet == 0, "a held stick: no draw on that tick (dx %d, quiet %d)" % [T.fighters[0].wel.dx, T.fighters[0].wel.quiet])
++	ok(T.fighters[1].wel.dx != 0, "... while the rival, silent, is still drawn")
++	_step(T, 0.0, 0.0, true)
++	ok(T.fighters[0].wel.dx == 0, "hands on the guard: no draw")
++	SimCore.dispose(T)
++	# the latch: after something else moves him, no draw for either until his own input
++	var L := _mk(10.0 * 75.0)
++	for t in range(30):
++		_step(L)
++	SimWell.sent(L.fighters[1])
++	for t in range(30):
++		_step(L)
++	ok(L.fighters[0].wel.dx == 0 and L.fighters[1].wel.dx == 0, "after a knock-back: no draw on him or on the one who sent him")
++	_step(L, 0.0, 0.5)
++	for t in range(20):
++		_step(L)
++	ok(L.fighters[1].wel.own == 1 and L.fighters[0].wel.dx != 0 and L.fighters[1].wel.dx != 0, "... until his own input, then both are drawn again")
++	SimCore.dispose(L)
++	# outside the well, nothing
++	var F := _mk(14.0 * 75.0)
++	for t in range(30):
++		_step(F)
++	ok(F.fighters[0].wel.dx == 0 and F.fighters[1].wel.dx == 0, "outside the well (14 bh at tier 1): no draw")
++	SimCore.dispose(F)
++
++
++## The defender while the rival's snap flies (the design's section 2: not moved at all; Encounter's question at the join): in silence,
++## no draw on either fighter from the press until it arrives; Game Design's capped arm draws him to meet it unless he guards.
++func _drawSnap() -> void:
++	for mode in ["rest", "capped"]:
++		SimWell.cfg().draw.mode = mode
++		var S := _mk(8.0 * 75.0, {"v2": [true, true], "travel": 1.5})   # (presses go through intent v2, as Encounter's check)
++		for t in range(30):
++			_step(S)
++		S.dirS.cool = 0.0
++		var d0 = S.fighters[0]
++		var a1 = S.fighters[1]
++		var x0: float = d0.x
++		var i1 := SimIntent.new()
++		i1.light = true
++		SimCore.step(S, [SimIntent.new(), i1])
++		var flying: int = 0
++		var drawn: int = 0
++		for t in range(60):
++			if not DirBands.pending(a1):
++				break
++			flying += 1
++			if d0.wel.dx != 0 or d0.wel.dy != 0:
++				drawn += 1
++			_step(S)
++		var moved: float = absf(SimWrap.sdx(x0, d0.x))
++		if mode == "rest":
++			ok(flying > 0 and drawn == 0 and moved < 1.0e-9, "in silence, the defender while the rival's snap flies: no draw (%d of %d ticks drawn), not moved (%.3f)" % [drawn, flying, moved])
++		else:
++			ok(flying > 0 and drawn > 0, "Game Design's capped arm: the defender is drawn to meet the snap (%d of %d ticks)" % [drawn, flying])
++		print("well: %s: a light pressed at 8 bh, approach in hand %d ticks, the defender drawn on %d, moved %.1f" % [mode, flying, drawn, moved])
++		SimCore.dispose(S)
++	SimWell.cfg().draw.mode = "rest"
++
++
++## Slot order changes nothing (the S2 review): a rival stunned this tick stops the silent fighter's draw from either slot.
++func _drawSlots() -> void:
++	for stunned in [1, 0]:
++		var S := _mk(8.0 * 75.0)
++		for t in range(30):
++			_step(S)
++		S.fighters[stunned].stunTicks = 10
++		_step(S)
++		var w = S.fighters[1 - stunned].wel
++		ok(w.dx == 0 and w.quiet == 0, "a rival stunned this tick (slot %d): the silent fighter is not drawn (dx %d, quiet %d), whichever slot he is in" % [stunned, w.dx, w.quiet])
++		SimCore.dispose(S)
++
++
++func _drawCapped() -> void:
++	SimWell.cfg().draw.mode = "capped"
++	var S := _mk(8.0 * 75.0)
++	_step(S, -1.0, -1.0)   # the first slot holds away from the rival (on its right); the second holds toward
++	var toward: float = absf(float(S.fighters[1].wel.dx)) / SimFighter.flightSpeed(S, S.fighters[1], false)   # each against his own plain flight: the two fighters' speeds differ
++	var away: float = absf(float(S.fighters[0].wel.dx)) / SimFighter.flightSpeed(S, S.fighters[0], false)
++	ok(away > 0.0 and toward > 0.0 and absf(away * 2.0 - toward) <= 0.01 * toward, "Game Design's capped draw: on with the stick held, halved on a fighter holding away (%.3f against %.3f of his flight)" % [away / 16.0, toward / 16.0])
++	SimWell.cfg().draw.mode = "rest"
++	SimCore.dispose(S)
++
++
++func _whole() -> void:
++	var a1: Dictionary = _run({"well": true, "flatOut": 3500.0}, 1200)
++	var a2: Dictionary = _run({"well": true, "flatOut": 3500.0}, 1200)
++	ok(a1.h == a2.h, "two runs with the well on are the same")
++	var r: Dictionary = _run({"well": true, "flatOut": 3500.0}, 900, 400)
++	ok(r.bad == 0, "a rollback across the wells replays the same (%d ticks differ)" % r.bad)
++	SimWell.cfg().draw.mode = "capped"
++	var c: Dictionary = _run({"well": true, "flatOut": 3500.0}, 900, 400)
++	ok(c.bad == 0, "... and with the capped draw (%d ticks differ)" % c.bad)
++	SimWell.cfg().draw.mode = "rest"
++
++
++func _init() -> void:
++	_data()
++	_switch()
++	_zones()
++	_drawRest()
++	_drawCapped()
++	_drawSnap()
++	_drawSlots()
++	_whole()
++	print("WELL: %d check(s) failed" % fails)
++	quit(1 if fails > 0 else 0)
+diff --git a/sim/core/tools/well_clips.gd b/sim/core/tools/well_clips.gd
+new file mode 100644
+index 0000000..e970232
+--- /dev/null
++++ b/sim/core/tools/well_clips.gd
+@@ -0,0 +1,175 @@
++extends SceneTree
++## Spike S2's clip matches (the design's section 12, "What Orb gets"): godot --headless --path . --script res://sim/core/tools/well_clips.gd -- --out=<folder> [--commit=<key>]
++## Each scene is a real match from its start (a replay can't carry a body placed by hand), both pads scripted closed-loop on
++## the state, recorded with SimReplay's recorder and written as a match file for Tools' clip kit (node tools/clips/make.mjs
++## --from-match <file> --build <the trial's web build>), with one mark on the moment. Two arms a scene: today (no well, the
++## pair's shared movement) and proposed (the well, the own-body close fight). A trial tool in scratch: never to land.
++
++const BH: float = 75.0
++const TODAY: Dictionary = {"well": false, "wellClose": "pair"}
++const PROPOSED: Dictionary = {"well": true, "wellClose": "own"}
++const TURN: int = 10
++
++var out: String = ""
++var commit: String = ""
++
++
++func _args() -> void:
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--out="):
++			out = a.substr(6)
++		elif a.begins_with("--commit="):
++			commit = a.substr(9)
++
++
++func _in(mx: float = 0.0, my: float = 0.0) -> SimIntent:
++	var i := SimIntent.new()
++	i.mx = mx
++	i.my = my
++	return i
++
++
++func _setup(arm: Dictionary) -> Dictionary:
++	var su: Dictionary = {"intro": false, "flatOut": 3500.0, "travel": 1.5, "v2": [true, true]}
++	su.merge(arm, true)
++	return su
++
++
++## The first slot flies to the rival and holds there at gap units, level with him. Returns the inputs for this tick.
++func _steer(S: SimState, gap: float) -> SimIntent:
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	var dx: float = SimWrap.sdx(a.x, b.x)
++	var d: float = absf(dx)
++	var mx: float = 0.0
++	if d > gap + 300.0:
++		mx = SimMathx.jsign(dx)
++	elif d > gap:
++		mx = 0.5 * SimMathx.jsign(dx)
++	elif d < gap - 300.0:
++		mx = -SimMathx.jsign(dx)   # too close: back off to the gap
++	elif d < gap - 30.0:
++		mx = -0.5 * SimMathx.jsign(dx)
++	return _in(mx, SimMathx.jclamp((b.y - a.y) / 150.0, -1.0, 1.0))
++
++
++func _save(name: String, arm: Dictionary, rp: Dictionary, markTick: int, before: int, note: String) -> void:
++	var doc := {"replay": rp, "marks": [{"kind": "clip", "tick": markTick, "before": before}], "build": {"commit": commit}, "pageSearch": "", "note": note}
++	var path: String = out.path_join(name + ".json")
++	var f := FileAccess.open(path, FileAccess.WRITE)
++	f.store_string(JSON.stringify(doc))
++	f.close()
++	print("clip %s: %d ticks, mark at %d (the %d before it); %s" % [name, int(rp.ticks), markTick, before, note])
++
++
++## A brawl opened by the first slot's light, then sticks(t) from the turn for 240 ticks. The mark covers the second before the
++## turn and the four seconds after it.
++func _brawlScene(name: String, arm: Dictionary, sticks: Callable) -> void:
++	var S := SimCore.createSim()
++	var rec := SimReplay.recorder(S, 4242, {"p1": false, "p2": false}, _setup(arm))
++	var opened: int = -1
++	var turn: int = -1
++	var away: float = 0.0
++	var end: String = ""
++	for t in range(3600):
++		var i0: SimIntent = _in()
++		var i1: SimIntent = _in()
++		if opened < 0:
++			i0 = _steer(S, 2.0 * BH)
++			var a = S.fighters[0]
++			var b = S.fighters[1]
++			if absf(SimWrap.sdx(a.x, b.x)) <= 2.2 * BH and absf(b.y - a.y) < 60.0 and S.dirS.cool <= 0.0:
++				i0.light = true
++				opened = t
++		elif turn < 0 and t >= opened + TURN:
++			turn = t
++			away = -SimMathx.jsign(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x))
++		if turn >= 0:
++			var pr: Array = sticks.call(t - turn, away)
++			i0 = pr[0]
++			i1 = pr[1]
++		rec.step([i0, i1])
++		for e in S.out.fx:
++			if e.type == "cue" and String(e.kind) == "brawl_end" and turn >= 0 and end == "":
++				end = "%s at %d after the turn" % [String(e.text), t - turn]
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if turn >= 0 and t >= turn + 240:
++			break
++	var rp: Dictionary = rec.finish()
++	SimCore.dispose(S)
++	if turn < 0:
++		print("clip %s: NO BRAWL OPENED (not saved)" % name)
++		return
++	_save(name, arm, rp, turn + 240, 300, "opened at %d, turned at %d; %s" % [opened, turn, end if end != "" else "no end in four seconds"])
++
++
++## The first slot flies to sep from the rival, settles, and presses X (a light). charge: first he powers up until his tier
++## reaches it (or gives up after a minute).
++func _pressScene(name: String, arm: Dictionary, sep: float, tier: float) -> void:
++	var S := SimCore.createSim()
++	var rec := SimReplay.recorder(S, 4243, {"p1": false, "p2": false}, _setup(arm))
++	var a = S.fighters[0]
++	var charged: bool = tier <= 1.0
++	var settled: int = -1
++	var pressed: int = -1
++	var what: String = ""
++	var lastForm: int = -100
++	for t in range(9000):
++		var i0: SimIntent = _in()
++		if not charged:
++			if a.tier >= tier:
++				charged = true
++			elif a.act.formReady and t >= lastForm + 30:
++				i0.transform = true   # the tier waits for the transform press (ladder manualTierUp): one tap when a form is ready
++				lastForm = t
++			elif a.act.breakIn < 0:
++				i0.charge = true   # power up until the next form is ready
++		elif pressed < 0:
++			i0 = _steer(S, sep)
++			var d: float = absf(SimWrap.sdx(a.x, S.fighters[1].x))
++			if absf(d - sep) < 40.0 and absf(S.fighters[1].y - a.y) < 60.0:
++				settled = settled if settled >= 0 else t
++				i0 = _in()
++				if t >= settled + 30 and S.dirS.cool <= 0.0:
++					i0.light = true
++					pressed = t
++			else:
++				settled = -1
++		rec.step([i0, _in()])
++		for e in S.out.fx:
++			if e.type == "cue" and pressed >= 0 and what == "":
++				var k: String = String(e.kind)
++				if k == "snap" or k.begins_with("lunge_") or k.begins_with("taunt") or k == "far_taunt":
++					what = k
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if pressed >= 0 and t >= pressed + 90:
++			break
++	var rp: Dictionary = rec.finish()
++	SimCore.dispose(S)
++	if pressed < 0:
++		print("clip %s: NEVER PRESSED (tier %.0f reached: %s; not saved)" % [name, a.tier, str(charged)])
++		return
++	_save(name, arm, rp, pressed + 90, 150, "tier %.0f, pressed at %.1f bh, tick %d; the press became: %s%s" % [a.tier, sep / BH, pressed, what if what != "" else "(no cue)", ", taunting" if DirBands.taunting(a) else ""])
++
++
++func _init() -> void:
++	_args()
++	if out == "":
++		print("usage: -- --out=<folder>")
++		quit(2)
++		return
++	DirAccess.make_dir_recursive_absolute(out)
++	for arm in [TODAY, PROPOSED]:
++		var tag: String = "today" if arm == TODAY else "proposed"
++		_brawlScene("1-walk-away-idle-" + tag, arm, func(t, away): return [_in(away), _in()])
++		_brawlScene("2-walk-away-lights-" + tag, arm, func(t, away):
++			var i1 := _in()
++			i1.light = t % 15 == 0
++			return [_in(away), i1])
++		_brawlScene("3-still-rival-pushes-" + tag, arm, func(t, away): return [_in(), _in(-away)])
++		_pressScene("4a-press-x-tier1-" + tag, arm, 14.0 * BH, 1.0)
++		_pressScene("4b-press-x-tier3-" + tag, arm, 14.0 * BH, 3.0)
++	print("WELL CLIPS done")
++	quit(0)
+diff --git a/sim/core/tools/well_clips_check.gd b/sim/core/tools/well_clips_check.gd
+new file mode 100644
+index 0000000..4834720
+--- /dev/null
++++ b/sim/core/tools/well_clips_check.gd
+@@ -0,0 +1,22 @@
++extends SceneTree
++## Each S2 clip match file replays on this tree exactly as it was recorded (SimReplay.play: every checkpoint and the final
++## hash): godot --headless --path . --script res://sim/core/tools/well_clips_check.gd -- --dir=<folder>. A trial tool in scratch.
++
++func _init() -> void:
++	var dir: String = ""
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--dir="):
++			dir = a.substr(6)
++	var bad: int = 0
++	var n: int = 0
++	for f in DirAccess.get_files_at(dir):
++		if not f.ends_with(".json"):
++			continue
++		n += 1
++		var doc = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(f)))
++		var r: Dictionary = SimReplay.play(doc.replay)
++		print("%s %s: %s" % ["ok  " if r.ok else "FAIL", f, "plays back exactly" if r.ok else "%s at tick %d" % [str(r.reason), int(r.firstBadTick)]])
++		if not r.ok:
++			bad += 1
++	print("WELL CLIPS CHECK: %d of %d files failed" % [bad, n])
++	quit(1 if bad > 0 or n == 0 else 0)
+diff --git a/sim/core/tools/well_read.gd b/sim/core/tools/well_read.gd
+new file mode 100644
+index 0000000..f973aca
+--- /dev/null
++++ b/sim/core/tools/well_read.gd
+@@ -0,0 +1,455 @@
++extends SceneTree
++## Spike S2's readings (docs/ep/proposals/gravity-well-trial-design.html section 12), on the joined trial tree:
++##   godot --headless --path . --script res://sim/core/tools/well_read.gd -- [--part=all|press|brawl|matches|draw] [--matches=40]
++## One line a reading, for the page. A trial tool in scratch: never to land. Every match runs the trial's setup (flat out
++## 3,500, travel 1.5, intent v2) on GW1a's target data (the kick, the slip and the dash on).
++##   press:   rows 4, 5, 6 and 11 (press to contact and to held, the defender's speed at arrival, the computer's answers);
++##   brawl:   rows 2, 3 and 7 (the design's four-second table, both close modes);
++##   draw:    row 1 (the draw on a fighter who isn't silent), scripted;
++##   matches: rows 1, 8 and 9 (computer against computer, both close modes, the well on).
++
++const BH: float = 75.0
++const TODAY: Dictionary = {"well": false, "wellClose": "pair"}
++const PAIR: Dictionary = {"well": true, "wellClose": "pair"}
++const OWN: Dictionary = {"well": true, "wellClose": "own"}
++
++var part: String = "all"
++var nMatch: int = 40
++
++
++func _args() -> void:
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--part="):
++			part = a.substr(7)
++		elif a.begins_with("--matches="):
++			nMatch = int(a.substr(10))
++
++
++func _armName(arm: Dictionary) -> String:
++	if not bool(arm.get("well", false)):
++		return "today" if str(arm.get("wellClose", "pair")) == "pair" else "own, no well"
++	return "well+" + str(arm.get("wellClose", "pair"))
++
++
++## Two fighters sep apart at one height in the air, still (as Encounter's well_dir_check). ai: the second slot is the computer.
++func _mk(sep: float, more: Dictionary, seed_: int = 77, ai: bool = false) -> SimState:
++	var S := SimCore.createSim()
++	var su: Dictionary = {"intro": false, "flatOut": 3500.0, "travel": 1.5, "v2": [true, true]}
++	su.merge(more, true)
++	SimCore.newMatch(S, seed_, {"p1": false, "p2": ai}, su)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	a.x = 3000.0
++	b.x = SimWrap.wrap(3000.0 + sep)
++	a.y = 2500.0
++	b.y = 2500.0
++	for f in [a, b]:
++		f.vx = 0.0
++		f.vy = 0.0
++		f.face = 1.0 if f == a else -1.0
++		if f.wel != null:
++			f.wel.zone = -1
++	S.dirS.cool = 0.0
++	return S
++
++
++func _in(mx: float = 0.0, light: bool = false, heavy: bool = false, my: float = 0.0) -> SimIntent:
++	var i := SimIntent.new()
++	i.mx = mx
++	i.my = my
++	i.light = light
++	i.heavy = heavy
++	return i
++
++
++func _gap(S: SimState) -> float:
++	return absf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x))
++
++
++# ------------------------------------------------------------------------------------------------- rows 4, 5, 6, 11
++
++## A's press (light or heavy) from sep, D as told: "idle", "guard" (held all along), "dodge" (tapped 4 ticks after the press),
++## "side" (holds up). Returns the ticks after the press step to D's first hit landing (contact), to D held (locked), the
++## exchange that held him, D's speed the tick before and after he was held, and what the press became.
++func _pressRun(sep: float, arm: Dictionary, heavy: bool, tier: float, full: bool, dmode: String, ai: bool = false, seed_: int = 77, tierD: float = 1.0) -> Dictionary:
++	var S := _mk(sep, arm, seed_, ai)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	a.tier = tier
++	b.tier = tierD
++	a.power = 100.0 if full else 0.0
++	var r := {"contact": -1, "held": -1, "ex": "", "vBefore": 0.0, "vAfter": 0.0, "snap": false, "lunge": false, "taunt": false, "farKit": false, "aiReact": -1, "appr": 0}
++	var px: float = b.x
++	var py: float = b.y
++	var vs: Array = []
++	for t in range(260):
++		var ia: SimIntent = _in(0.0, t == 0 and not heavy, t == 0 and heavy)
++		var ib: SimIntent = _in()
++		if dmode == "guard":
++			ib.guard = true
++		elif dmode == "dodge" and t == 4:
++			ib.dodge = true
++		elif dmode == "side":
++			ib.my = 1.0
++		SimCore.step(S, [ia, null if ai else ib])
++		if t == 0:
++			r.appr = DirInterrupt.gi(a, DirInterrupt.APPR_LEFT)
++			if ai:
++				r.aiReact = DirInterrupt.gi(b, DirInterrupt.AI_REACT)
++			r.taunt = DirBands.taunting(a)
++		for e in S.out.fx:
++			if e.type == "cue":
++				if String(e.kind) == "snap":
++					r.snap = true
++				elif String(e.kind).begins_with("lunge_"):
++					r.lunge = true
++			if e.type == "damage" and r.contact < 0 and int(e.attacker) == 0 and int(e.victim) == 1:
++				r.contact = t
++		for l in S.out.feed:
++			if String(l.tag).contains("FAR KIT"):
++				r.farKit = true
++		S.out.fx.clear()
++		S.out.feed.clear()
++		vs.append(SimDetMath.hypot(SimWrap.sdx(px, b.x), b.y - py) * 60.0)
++		px = b.x
++		py = b.y
++		if r.held < 0 and b.state == "locked":
++			r.held = t
++			var ex = S.dirS.ex
++			r.ex = ("brawl" if DirBrawl.isBrawl(ex) else String(ex.tag)) if ex != null else "?"
++			r.vBefore = float(vs[t - 1]) if t >= 1 else 0.0
++		if r.held >= 0 and t == r.held + 1:
++			r.vAfter = float(vs[t])
++		if r.contact >= 0 and r.held >= 0 and t > r.held + 1:
++			break
++	SimCore.dispose(S)
++	return r
++
++
++func _what(r: Dictionary) -> String:
++	if r.snap:
++		return "snap"
++	if r.lunge:
++		return "lunge"
++	if r.taunt:
++		return "taunt"
++	return "far"
++
++
++func _press() -> void:
++	print("== row 4: press to contact (ticks from the press to the blow landing on an idle rival), today against the well")
++	var levels: Array = [[1.0, false, "t1"], [4.0, false, "t4 empty"], [4.0, true, "t4 full"]]
++	for heavy in [false, true]:
++		for lv in levels:
++			var cells := PackedStringArray()
++			for g in [4.5, 6.0, 9.0, 12.5, 15.0, 20.0]:
++				var parts := PackedStringArray()
++				for arm in [TODAY, PAIR, OWN]:
++					var r: Dictionary = _pressRun(g * BH, arm, heavy, lv[0], lv[1], "idle")
++					parts.append(("%d" % r.contact if r.contact >= 0 else "-") + ":" + _what(r))
++				cells.append("%.1f bh %s" % [g, "/".join(parts)])
++			print("row4 %s %s (today/well+pair/well+own): %s" % ["heavy" if heavy else "light", lv[2], "; ".join(cells)])
++	print("== row 4b: against a tier 4 rival (his well 20 bh, its edge 23): a light from 15, 20, 23 and 25 bh")
++	for lv in levels:
++		var cells := PackedStringArray()
++		for g in [15.0, 20.0, 23.0, 25.0]:
++			var parts := PackedStringArray()
++			for arm in [TODAY, PAIR]:
++				var r: Dictionary = _pressRun(g * BH, arm, false, lv[0], lv[1], "idle", false, 77, 4.0)
++				parts.append(("%d" % r.contact if r.contact >= 0 else "-") + ":" + _what(r))
++			cells.append("%.1f bh %s" % [g, "/".join(parts)])
++		print("row4b light %s against tier 4 (today/well): %s" % [lv[2], "; ".join(cells)])
++	print("== row 5: press to the defender held, and what held him (idle, guarding, a dodge tapped 4 ticks in)")
++	for lv in [[1.0, false, "t1"], [4.0, true, "t4 full"]]:
++		for dm in ["idle", "guard", "dodge"]:
++			var cells := PackedStringArray()
++			for g in [6.0, 12.5, 15.0, 20.0]:
++				var parts := PackedStringArray()
++				for arm in [TODAY, OWN]:
++					var r: Dictionary = _pressRun(g * BH, arm, false, lv[0], lv[1], dm)
++					parts.append(("%d %s" % [r.held, r.ex]) if r.held >= 0 else "not held")
++				cells.append("%.1f bh %s" % [g, " / ".join(parts)])
++			print("row5 light %s defender %s (today / well+own): %s" % [lv[2], dm, "; ".join(cells)])
++	print("== row 6: the defender's speed the tick before he is held and the tick after (he holds up while it flies)")
++	for lv in [[1.0, false, "t1"], [4.0, true, "t4 full"]]:
++		var cells := PackedStringArray()
++		for g in [9.0, 15.0]:
++			for arm in [PAIR, OWN]:
++				var r: Dictionary = _pressRun(g * BH, arm, false, lv[0], lv[1], "side")
++				cells.append("%.1f bh %s: %.0f then %.0f" % [g, _armName(arm), r.vBefore, r.vAfter])
++		print("row6 %s: %s" % [lv[2], "; ".join(cells)])
++	print("== row 11: the computer's answer to an approach (it answers only one of reactTicks + 2 or more): approach ticks, and how often it chose an answer over 8 seeds")
++	for lv in [[1.0, false, "t1"], [4.0, true, "t4 full"]]:
++		var cells := PackedStringArray()
++		for g in [6.0, 9.0, 12.5, 15.0, 20.0]:
++			for arm in [TODAY, PAIR]:
++				var n: int = 0
++				var ap: int = 0
++				for sd in range(8):
++					var r: Dictionary = _pressRun(g * BH, arm, false, lv[0], lv[1], "idle", true, 100 + sd)
++					ap = int(r.appr) + 1 if int(r.appr) > 0 else 0   # read after the press step, which already counted one tick down: the computer's rule compares the full wind + n
++					if int(r.aiReact) > 0:
++						n += 1
++				cells.append("%.1f bh %s: %d ticks, %d of 8" % [g, "today" if arm == TODAY else "well", ap, n])
++		print("row11 %s: %s" % [lv[2], "; ".join(cells)])
++
++
++# ------------------------------------------------------------------------------------------------- rows 2, 3, 7
++
++## A brawl opened by the first slot's light from 2 bh; from tick TURN each tick's sticks from sticks.call(t - TURN). Reads, from
++## the turn: how it ended and when, how far each body moved, the blows that reached the first slot (landed or guarded), the
++## gap 60 ticks on, and the live ticks his stick was held away while his body stood still. The turn comes as soon as the
++## opening light has landed, so the brawl's one-second idle clock starts with the sticks (the S2 review: at tick 40 it cut
++## every scene without an attack short).
++const TURN: int = 10
++func _scene(arm: Dictionary, sticks: Callable, ticks: int = 240) -> Dictionary:
++	var S := _mk(2.0 * BH, arm)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	SimCore.step(S, [_in(0.0, true), _in()])
++	S.out.fx.clear()
++	S.out.feed.clear()
++	for t in range(TURN - 1):
++		SimCore.step(S, [_in(), _in()])
++		S.out.fx.clear()
++		S.out.feed.clear()
++	var started: bool = S.dirS.ex != null and DirBrawl.isBrawl(S.dirS.ex) and a.state == "locked"
++	var r := {"started": started, "end": "", "endT": -1, "blows": 0, "moved0": 0.0, "moved1": 0.0, "gap60": 0.0, "stood": 0, "awayLive": 0, "firstMove": -1, "drag1": 0.0, "kinds": {}}
++	var ax0: float = a.x
++	var bx0: float = b.x
++	for t in range(ticks):
++		var pr: Array = sticks.call(t)
++		var lx: float = a.x
++		var live: bool = SimCore.step(S, [pr[0], pr[1]])
++		for e in S.out.fx:
++			if e.type == "cue" and String(e.kind) == "brawl_end" and r.end == "":
++				r.end = String(e.text)
++				r.endT = t
++			if e.type == "damage" and int(e.victim) == 0 and int(e.attacker) == 1 and String(e.kind) != "impact" and (r.end == "" or t == r.endT):
++				r.blows += 1   # every blow of the rival's that reached him, landed or guarded (light, medium, heavy, guard ...); not a landing's impact
++				r.kinds[String(e.kind)] = int(r.kinds.get(String(e.kind), 0)) + 1
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if r.end == "" or t <= r.endT:
++			r.moved0 = maxf(r.moved0, absf(SimWrap.sdx(ax0, a.x)))
++			r.moved1 = maxf(r.moved1, absf(SimWrap.sdx(bx0, b.x)))
++		if t == 60:
++			r.gap60 = _gap(S) / BH
++		var awayHeld: bool = (pr[0] as SimIntent).mx < -0.5
++		if awayHeld and live and r.end == "" and a.state == "locked":
++			r.awayLive += 1
++			if absf(SimWrap.sdx(lx, a.x)) < 0.01:
++				r.stood += 1
++		if r.firstMove < 0 and absf((pr[0] as SimIntent).mx) > 0.5 and absf(SimWrap.sdx(ax0, a.x)) > 0.01:
++			r.firstMove = t + 1
++	SimCore.dispose(S)
++	return r
++
++
++func _brawl() -> void:
++	print("== rows 2, 3, 7: the design's four-second table (the first slot opened the brawl; from the turn, 240 ticks; distances in units, the gap in bh)")
++	var scenes: Array = [
++		["you hold away, the rival does nothing", func(t): return [_in(-1.0), _in()]],
++		["you hold away, the rival throws lights", func(t): return [_in(-1.0), _in(0.0, t % 15 == 0)]],
++		["you hold away, the rival winds up heavies", func(t): return [_in(-1.0), _in(0.0, false, t % 40 == 0)]],
++		["you hold away, the rival mixes a heavy every third blow", func(t): return [_in(-1.0), _in(0.0, t % 15 == 0 and (t / 15) % 3 != 2, t % 15 == 0 and (t / 15) % 3 == 2)]],
++		["you do nothing, the rival holds away", func(t): return [_in(), _in(1.0)]],
++		["you do nothing, the rival holds toward", func(t): return [_in(), _in(-1.0)]],
++		["you walk into an idle rival", func(t): return [_in(1.0), _in()]],
++		["you both hold away", func(t): return [_in(-1.0), _in(1.0)]],
++	]
++	for sc in scenes:
++		var cells := PackedStringArray()
++		for arm in [PAIR, OWN]:
++			var r: Dictionary = _scene(arm, sc[1])
++			cells.append("%s: %s%s at %d, blows %d %s, you moved %.0f, rival moved %.0f, gap at 1 s %.2f, stick away and standing %d of %d live ticks, first move %d" % [
++				_armName(arm), "" if r.started else "(no brawl!) ", r.end if r.end != "" else "no end", r.endT, r.blows, str(r.kinds), r.moved0, r.moved1, r.gap60, r.stood, r.awayLive, r.firstMove])
++		print("row7 %s | %s" % [sc[0], " | ".join(cells)])
++
++
++# ------------------------------------------------------------------------------------------------- row 1, scripted
++
++## Row 1's own view of the world, kept apart from SimWell's latch (the S2 review: judging by wel.own only restated the rule):
++## before each step, each fighter's stun, approach and zip, and whether something else has moved him since his last own input
++## (a knock-back event, launched, down, dropped or stunned, cleared by his own stick or hands once free). After a live step,
++## a fighter the draw moved is judged against what held when the draw was computed (the stick and hands are this tick's).
++var _sentFlag: Array = [false, false]
++
++
++func _pre(S: SimState) -> Array:
++	var p: Array = []
++	for k in range(2):
++		var f = S.fighters[k]
++		p.append({"stun": f.stunTicks > 0, "appr": DirBands.pending(f), "zip": DirZip.zipping(f), "sent": bool(_sentFlag[k])})
++	return p
++
++
++func _post(S: SimState) -> void:
++	for e in S.out.fx:
++		if e.type == "knockback" and int(e.victim) >= 0 and int(e.victim) < 2:
++			_sentFlag[int(e.victim)] = true
++	for k in range(2):
++		var f = S.fighters[k]
++		if f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0:
++			_sentFlag[k] = true
++		elif f.state == "free" and f.rush == null and (f.heldMx != 0.0 or f.heldMy != 0.0 or SimWell._hands(f)):
++			_sentFlag[k] = false
++
++
++func _loud(S: SimState, k: int, pre: Array) -> String:
++	var f = S.fighters[k]
++	if f.wel == null or (f.wel.dx == 0 and f.wel.dy == 0):
++		return ""
++	var a: Dictionary = pre[k]
++	var b: Dictionary = pre[1 - k]
++	if f.heldMx != 0.0 or f.heldMy != 0.0:
++		return "stick"
++	if SimWell._hands(f):
++		return "hands"
++	if a.stun:
++		return "stun"
++	if a.sent or b.sent:
++		return "latch"
++	if a.appr or b.appr or a.zip or b.zip:
++		return "approach"
++	return ""
++
++
++## One step for row 1: snapshot, step, judge (live steps only: a frozen step keeps the last live draw), then update the flags.
++func _judged(S: SimState, inputs, counts: Dictionary) -> void:
++	var pre: Array = _pre(S)
++	var live: bool = SimCore.step(S, inputs)
++	if live:
++		for k in range(2):
++			var why: String = _loud(S, k, pre)
++			if why != "":
++				counts[why] = int(counts.get(why, 0)) + 1
++	_post(S)
++
++
++func _draw() -> void:
++	print("== row 1 (scripted): ticks the draw moved a fighter who wasn't silent")
++	for mode in ["rest", "capped"]:
++		SimWell.cfg().draw.mode = mode
++		var counts := {}
++		var ticks: int = 0
++		for g in [5.0, 8.0, 11.0, 13.0]:
++			for sc in range(4):
++				var S := _mk(g * BH, OWN)
++				_sentFlag = [false, false]
++				for t in range(300):
++					var i0 := _in()
++					var i1 := _in()
++					match sc:
++						0:   # one holds his stick, on and off
++							i0.mx = 0.6 if (t / 20) % 2 == 0 else 0.0
++						1:   # one guards, one charges a strike on the right stick in turns
++							i0.guard = (t / 30) % 2 == 0
++							i1.rsHeld = (t / 25) % 2 == 1
++						2:   # presses from range every 70 ticks, both
++							i0.light = t % 70 == 0
++							i1.heavy = t % 70 == 35
++						3:   # silence, then a stick flick
++							i1.mx = -1.0 if t % 90 == 45 else 0.0
++					_judged(S, [i0, i1], counts)
++					S.out.fx.clear()
++					S.out.feed.clear()
++					ticks += 1
++				SimCore.dispose(S)
++		print("row1 scripted, draw %s: %s over %d ticks (rest: 0 is the pass line; capped: the stick, hands, latch and approach rows are that arm's own rule, only stun counts against it)" % [mode, str(counts), ticks])
++	SimWell.cfg().draw.mode = "rest"
++
++
++# ------------------------------------------------------------------------------------------------- rows 1, 8, 9 from matches
++
++func _matches() -> void:
++	print("== rows 8, 9 and 1: %d computer matches a mode, the well on, the draw in silence" % nMatch)
++	for arm in [PAIR, OWN]:
++		var ends := {}
++		var lens: Array = []
++		var brawlTicks: int = 0
++		var allTicks: int = 0
++		var blowsAtExit: Array = []
++		var unwanted: int = 0
++		var farFromBig: int = 0
++		var chargeSnapped: int = 0
++		var loud := {}
++		var ko: int = 0
++		for m in range(nMatch):
++			var S := SimCore.createSim()
++			var su: Dictionary = {"intro": false, "flatOut": 3500.0, "travel": 1.5}
++			su.merge(arm, true)
++			SimCore.newMatch(S, 9001 + m, {"p1": true, "p2": true}, su)
++			var open: int = -1
++			var blows: int = 0
++			_sentFlag = [false, false]
++			for t in range(36000):
++				var charging: Array = [S.fighters[0].state == "charging", S.fighters[1].state == "charging"]
++				var taunting0: Array = [DirBands.taunting(S.fighters[0]), DirBands.taunting(S.fighters[1])]
++				var pre: Array = _pre(S)
++				var live: bool = SimCore.step(S)
++				allTicks += 1
++				if open >= 0:
++					brawlTicks += 1
++				for e in S.out.fx:
++					if e.type == "cue":
++						var k: String = String(e.kind)
++						if k == "brawl_start" and open < 0:
++							open = t
++							blows = 0
++						elif k == "brawl_end" and open >= 0:
++							var why: String = String(e.text)
++							ends[why] = int(ends.get(why, 0)) + 1
++							lens.append(t - open)
++							blowsAtExit.append(blows)
++							open = -1
++						elif k == "snap":
++							var A = S.fighters[int(e.actor)] if e.get("actor") != null else null
++							if A != null:
++								var D = S.fighters[1 - S.fighters.find(A)]
++								if charging[S.fighters.find(D)] and SimWell._dist(A, D) > 12.5 * BH:
++									chargeSnapped += 1
++					elif e.type == "damage" and open >= 0 and int(e.attacker) >= 0 and String(e.kind) != "impact":
++						blows += 1
++				for k in range(2):   # a taunt that began this tick (the S2 review: the FAR KIT line also comes with answers, fly-ins and spent presses)
++					var f = S.fighters[k]
++					var o = S.fighters[1 - k]
++					if not taunting0[k] and DirBands.taunting(f) and f.tier > o.tier:
++						farFromBig += 1
++						if o.wel != null and o.wel.zone == SimWell.IN:
++							unwanted += 1
++				if live:
++					for k in range(2):
++						var why2: String = _loud(S, k, pre)
++						if why2 != "":
++							loud[why2] = int(loud.get(why2, 0)) + 1
++				_post(S)
++				S.out.fx.clear()
++				S.out.feed.clear()
++				if S.game.ko != null and S.game.koT > 2.5:
++					ko += 1
++					break
++			SimCore.dispose(S)
++		lens.sort()
++		var med: int = int(lens[lens.size() / 2]) if not lens.is_empty() else 0
++		var bsum: int = 0
++		for x in blowsAtExit:
++			bsum += int(x)
++		print("row8 %s: %d matches (%d to a K.O.), %.1f min a match; brawls %d (%.1f a match) by end %s; median brawl %d ticks; share of the match in a brawl %.0f%%; blows that reached a fighter a brawl %.1f" % [
++			_armName(arm), nMatch, ko, float(allTicks) / float(nMatch) / 3600.0, lens.size(), float(lens.size()) / float(nMatch), str(ends), med, 100.0 * float(brawlTicks) / maxf(1.0, float(allTicks)), float(bsum) / maxf(1.0, float(blowsAtExit.size()))])
++		print("row9 %s: taunts begun by the bigger fighter %d, of them with the smaller one inside his well %d (%.2f a match); power-ups ended by a snap from beyond 12.5 bh %d" % [_armName(arm), farFromBig, unwanted, float(unwanted) / float(nMatch), chargeSnapped])
++		print("row1 matches %s: the draw on a fighter who wasn't silent %s (0 is the pass line)" % [_armName(arm), str(loud)])
++
++
++func _init() -> void:
++	_args()
++	if part == "all" or part == "press":
++		_press()
++	if part == "all" or part == "brawl":
++		_brawl()
++	if part == "all" or part == "draw":
++		_draw()
++	if part == "all" or part == "matches":
++		_matches()
++	print("WELL READ done")
++	quit(0)
+diff --git a/sim/core/well.gd b/sim/core/well.gd
+new file mode 100644
+index 0000000..33956ba
+--- /dev/null
++++ b/sim/core/well.gd
+@@ -0,0 +1,237 @@
++class_name SimWell
++extends RefCounted
++## The gravity well (spike S2: docs/ep/proposals/gravity-well-trial-design.html sections 4 to 6 and 10 to 11; Game Design's
++## five rulings at the end of docs/design/gravity-well-reading.md). The core's side: each fighter's well (its radius by tier
++## and charge), the zone each fighter stands in against the rival's well (inside, the edge band, outside), and the draw.
++## The press's band read, the snap and the close fight's own-body mode are the director's (DirBands, DirBrawl): they read
++## what this writes. A trial, in scratch: nothing here lands.
++##
++## The switch is data/fight/well.json "enabled" (off), which SimCore.newMatch copies into S.wellOn unless the setup has its
++## own "well"; "wellClose" ("pair" or "own") overrides close.mode, with or without the well (S.wellOwn). With both off, no
++## well state exists, nothing is hashed, and the file is not in a replay's data hash. No draw from S.rng anywhere here.
++## The core may not name the director (the load split): the distance is measured here, and the approach is read through
++## SimDir.
++
++const FILE: String = "res://data/fight/well.json"
++## The well state the gameplay hash reads, only while S.wellOn or S.wellOwn (hash.gd).
++const HASHED: Array = ["zone", "r", "chg", "quiet", "own", "dx", "dy", "ovx", "ovy", "lv", "late"]
++const BH: float = 75.0
++const IN: int = 0
++const EDGE: int = 1
++const OUT: int = 2
++
++static var _d = null
++static var _hash: String = ""
++static var _errors: Array = []
++static var on_: bool = false
++
++
++static func _ensure() -> void:
++	if _d != null:
++		return
++	_errors = []
++	var h := SimHash.Hasher.new()
++	var j = FighterData._load(FILE, "fight/well.json") if FileAccess.file_exists(FILE) else null
++	if not (j is Dictionary):
++		_errors.append("fight/well.json: missing, or not an object")
++		_d = {"enabled": false, "close": {"mode": "pair"}}
++		_hash = h.hex()
++		return
++	_d = j
++	h.text("fight/well.json")
++	FighterData._canon(h, j)
++	_hash = h.hex()
++	on_ = j.get("enabled") == true
++
++
++static func enabled() -> bool:
++	_ensure()
++	return on_
++
++
++## The data's close mode, "pair" or "own".
++static func closeMode() -> String:
++	_ensure()
++	return str(_d.get("close", {}).get("mode", "pair"))
++
++
++static func cfg() -> Dictionary:
++	_ensure()
++	return _d
++
++
++static func dataHash() -> String:
++	_ensure()
++	return _hash
++
++
++static func errors() -> Array:
++	_ensure()
++	return _errors
++
++
++## Tests only: read the file again on the next call.
++static func reload() -> void:
++	_d = null
++
++
++## Whether a match with this setup reads the well's data (the replay's key folds it): the well on, or the own-body mode.
++static func inMatch(setup_: Dictionary) -> bool:
++	return setup_.get("well", enabled()) == true or str(setup_.get("wellClose", closeMode())) == "own"
++
++
++## Each fighter's well state for a new match (SimCore.newMatch). S.wellOn is set by the caller.
++static func setup(S: SimState, setup_: Dictionary = {}) -> void:
++	_ensure()
++	S.wellOwn = str(setup_.get("wellClose", closeMode())) == "own"
++	for f in S.fighters:
++		f.wel = SimState.WellState.new() if (S.wellOn or S.wellOwn) else null
++
++
++## f's own well, in units: by tier and by the charge he holds. Pure.
++static func radius(f) -> float:
++	var c: Dictionary = _d.size
++	var r: float = float(c.baseBh) * BH
++	r *= 1.0 + float(c.tierStep) * (f.tier - 1.0)
++	r *= 1.0 + float(c.chargeGrow) * float(f.wel.chg) / float(c.chargeRiseTicks)
++	return SimMathx.jclamp(r, float(c.minBh) * BH, float(c.maxBh) * BH)
++
++
++## A's zone against D's well now, straight from the distance (for a press before the first write). Pure.
++static func zoneNow(_S: SimState, A, D) -> int:
++	_ensure()
++	return _zone(_dist(A, D), radius(D), -1)
++
++
++## As the director's band distance (centre to centre, the shortest arc and the height together; in three axes when a depth
++## is set), measured here so that the core names no director class.
++static func _dist(a, b) -> float:
++	if a.z != b.z and (a.zT != 0.0 or b.zT != 0.0):
++		return SimDetMath.hypot(SimDetMath.hypot(SimWrap.sdx(a.x, b.x), b.y - a.y), b.z - a.z)
++	return SimDetMath.hypot(SimWrap.sdx(a.x, b.x), b.y - a.y)
++
++
++## The zone at distance d from a well of radius rj, for a fighter now in zone was (-1: none yet). An edge is crossed only
++## half the hysteresis beyond it, as the bands do.
++static func _zone(d: float, rj: float, was: int) -> int:
++	var h: float = float(_d.zones.hysteresisBh) * BH * 0.5 if was >= 0 else 0.0
++	if d <= rj + (h if was == IN else -h):
++		return IN
++	return EDGE if d <= rj + float(_d.zones.edgeBh) * BH + (h if (was == IN or was == EDGE) else -h) else OUT
++
++
++## The other body of f's fight (slot k): the other of the pair. Bodies past the pair have no well to read (-1).
++static func _other(S: SimState, k: int) -> int:
++	if k >= 2 or S.fighters.size() < 2:
++		return -1
++	return 1 - k
++
++
++## The one writer. Once a live tick from SimCore's fight tick, after the control loop and before the bodies step, while
++## S.wellOn. It reads every body as the tick began and then writes them all, so the slot order changes nothing. A face
++## press is read inside the control loop, so it reads the zone written the tick before, as it reads last tick's band.
++static func tick(S: SimState) -> void:
++	var n: int = S.fighters.size()
++	var sz: Dictionary = _d.size
++	var rs := PackedFloat64Array()
++	rs.resize(n)
++	for k in n:
++		var f = S.fighters[k]
++		var up: bool = f.state == "charging" or f.beamCharge != null
++		f.wel.chg = mini(int(sz.chargeRiseTicks), f.wel.chg + 1) if up else maxi(0, f.wel.chg - ceili(float(sz.chargeRiseTicks) / float(sz.chargeFallTicks)))
++		rs[k] = radius(f)
++	var mv: Array = []   # the latches first, every body's, so each fighter's silence reads both from this tick (the S2 review: in one loop slot 0 read the rival's from the last)
++	for k in n:
++		mv.append(_latch(S.fighters[k]))
++	var zs := PackedInt32Array()
++	zs.resize(n)
++	var ds := PackedFloat64Array()
++	ds.resize(n * 2)
++	ds.fill(0.0)
++	for k in n:
++		var f = S.fighters[k]
++		var j: int = _other(S, k)
++		if j < 0:
++			zs[k] = OUT
++			continue
++		var o = S.fighters[j]
++		var d: float = _dist(f, o)
++		zs[k] = _zone(d, rs[j], f.wel.zone)
++		if bool(_d.zones.either) and zs[k] != IN and _zone(d, rs[k], o.wel.zone) == IN:
++			zs[k] = IN   # the second reading: either of you inside the other's well
++		_draw(S, f, o, d, rs[j], ds, k, bool(mv[k]))
++	for k in n:
++		var w = S.fighters[k].wel
++		w.zone = zs[k]
++		w.r = roundi(rs[k])
++		w.dx = roundi(ds[k * 2] * 16.0)
++		w.dy = roundi(ds[k * 2 + 1] * 16.0)
++
++
++## The director calls this where it moves a fighter without a rush or a state of its own (a knock-back's shove): no draw
++## for him, or for the fighter who sent him, until he makes an input of his own.
++static func sent(f) -> void:
++	if f.wel != null:
++		f.wel.own = 0
++
++
++## Whether f holds his stick away from o (the capped draw's halving): beyond awayDead, its part away from o at least awayShare of it.
++static func heldAway(f, o) -> bool:
++	var m: float = SimDetMath.hypot(f.heldMx, f.heldMy)
++	if m <= float(_d.draw.awayDead):
++		return false
++	var away: float = -f.heldMx * SimMathx.jsign(SimWrap.sdx(f.x, o.x))
++	return away >= float(_d.draw.awayShare) * m
++
++
++## Whether f's hands are on anything this tick (the silence's other half): any held or pressed control, or a beam's gather.
++static func _hands(f) -> bool:
++	var i = f.input
++	return i.guard or i.dash or i.light or i.heavy or i.sig or i.lightHeld or i.heavyHeld or i.sigHeld or i.rsHeld or i.rsStart \
++		or i.dodge or i.dodgeHeld or i.sprint or i.escape or i.charge or i.power or i.contextHeld or i.context or f.beamCharge != null
++
++
++## The latch, for every body before any silence is read: launched, down, dropped, stunned, or a rush with no target (a send's
++## slide or drift; an approach's has one) clears it; his own input once free sets it again. Returns whether something else
++## has him this tick.
++static func _latch(f) -> bool:
++	var moved: bool = f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0 \
++		or (f.rush != null and f.rush.tgt == null)
++	if moved:
++		f.wel.own = 0   # something else has him: no draw until he acts
++	elif f.state == "free" and f.rush == null and (f.heldMx != 0.0 or f.heldMy != 0.0 or _hands(f)):
++		f.wel.own = 1   # his own input, once free: the latch is his again
++	return moved
++
++
++## The draw: writes f's wanted movement toward o into ds (units a second). "rest" acts only in silence; "capped" always,
++## halved on a fighter holding away. Never on a fighter something else is moving, never closer than stopBh.
++static func _draw(S: SimState, f, o, d: float, r: float, ds: PackedFloat64Array, k: int, moved: bool) -> void:
++	var dw: Dictionary = _d.draw
++	var rest: bool = f.heldMx == 0.0 and f.heldMy == 0.0   # the stick as held, before any gate: a stun clears the intent's, not these
++	var hands: bool = _hands(f)
++	var silent: bool = rest and not hands and f.state == "free" and f.rush == null and f.stunTicks == 0 \
++		and S.game.ko == null and not SimDir.approaching(f) and not SimDir.approaching(o) and not SimDir.zipping(f) and not SimDir.zipping(o) \
++		and f.wel.own == 1 and o.wel.own == 1   # no approach or zip in hand, his or the rival's (the defender is not moved at all while a snap flies: the design's section 2); and the rival's latch: nobody drifts after a fighter they sent
++	f.wel.quiet = mini(int(dw.quietTicks), f.wel.quiet + 1) if silent else 0
++	var mode: String = str(dw.mode)
++	if mode == "off" or d > r:
++		return
++	var stop: float = float(dw.stopBh) * BH
++	if d <= stop:
++		return
++	var share: float = float(f.wel.quiet) / float(dw.quietTicks)
++	if mode == "capped":   # Game Design's reading: always on, halved on a fighter holding away; while the rival's approach flies, drawn to meet it, and not at all while he holds away or guards
++		if SimDir.approaching(o):
++			share = 0.0 if (heldAway(f, o) or f.input.guard) else 1.0
++		else:
++			share = 0.5 if heldAway(f, o) else 1.0
++		if moved or f.state != "free" or f.rush != null or S.game.ko != null or SimDir.approaching(f) or SimDir.zipping(f):   # (and never during his own approach's crouch or zip: the tell stays still)
++			share = 0.0
++	if share <= 0.0:
++		return
++	var depth: float = SimMathx.jclamp((1.0 - d / r) / (1.0 - float(dw.fullAt)), 0.0, 1.0)
++	var ease: float = SimMathx.jclamp((d - stop) / (float(dw.stopEaseBh) * BH), 0.0, 1.0)
++	var sp: float = float(dw.cap) * SimFighter.flightSpeed(S, f, false) * depth * ease * share
++	ds[k * 2] = SimWrap.sdx(f.x, o.x) / d * sp
++	ds[k * 2 + 1] = (o.y - f.y) / d * sp
+diff --git a/tools/schemas/fight-well.schema.json b/tools/schemas/fight-well.schema.json
+new file mode 100644
+index 0000000..6e7b499
+--- /dev/null
++++ b/tools/schemas/fight-well.schema.json
+@@ -0,0 +1,82 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/fight-well",
++  "title": "fight-well (schema \"fight.well/1\")",
++  "description": "data/fight/well.json: the switch and numbers of the gravity well (spike S2, docs/ep/proposals/gravity-well-trial-design.html section 10). Policy: closed; a key starting with _ is a comment.",
++  "type": "object",
++  "required": ["schema", "enabled", "size", "zones", "draw", "snap", "close"],
++  "properties": {
++    "schema": { "const": "fight.well/1" },
++    "enabled": { "type": "boolean" },
++    "size": {
++      "type": "object",
++      "required": ["baseBh", "tierStep", "chargeGrow", "chargeRiseTicks", "chargeFallTicks", "minBh", "maxBh"],
++      "properties": {
++        "baseBh": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
++        "tierStep": { "type": "number", "minimum": 0, "maximum": 2 },
++        "chargeGrow": { "type": "number", "minimum": 0, "maximum": 2 },
++        "chargeRiseTicks": { "type": "integer", "minimum": 1, "maximum": 600 },
++        "chargeFallTicks": { "type": "integer", "minimum": 1, "maximum": 600 },
++        "minBh": { "type": "number", "minimum": 0, "maximum": 100 },
++        "maxBh": { "type": "number", "minimum": 0, "maximum": 100 }
++      },
++      "additionalProperties": false,
++      "patternProperties": { "^_": true }
++    },
++    "zones": {
++      "type": "object",
++      "required": ["edgeBh", "hysteresisBh", "either"],
++      "properties": {
++        "edgeBh": { "type": "number", "minimum": 0, "maximum": 50 },
++        "hysteresisBh": { "type": "number", "minimum": 0, "maximum": 10 },
++        "either": { "type": "boolean" }
++      },
++      "additionalProperties": false,
++      "patternProperties": { "^_": true }
++    },
++    "draw": {
++      "type": "object",
++      "required": ["mode", "cap", "fullAt", "quietTicks", "stopBh", "stopEaseBh", "awayDead", "awayShare"],
++      "properties": {
++        "mode": { "enum": ["off", "rest", "capped"] },
++        "cap": { "type": "number", "minimum": 0, "maximum": 1 },
++        "fullAt": { "type": "number", "minimum": 0, "exclusiveMaximum": 1 },
++        "quietTicks": { "type": "integer", "minimum": 1, "maximum": 600 },
++        "stopBh": { "type": "number", "minimum": 0, "maximum": 50 },
++        "stopEaseBh": { "type": "number", "exclusiveMinimum": 0, "maximum": 50 },
++        "awayDead": { "type": "number", "minimum": 0, "maximum": 1 },
++        "awayShare": { "type": "number", "minimum": 0, "maximum": 1 }
++      },
++      "additionalProperties": false,
++      "patternProperties": { "^_": true }
++    },
++    "snap": {
++      "type": "object",
++      "required": ["enabled", "floorSpeed", "maxStepBh", "outrun", "graceTicks"],
++      "properties": {
++        "enabled": { "type": "boolean" },
++        "floorSpeed": { "type": "number", "exclusiveMinimum": 0, "maximum": 100000 },
++        "maxStepBh": { "type": "number", "exclusiveMinimum": 0, "maximum": 20 },
++        "outrun": { "type": "boolean" },
++        "graceTicks": { "type": "integer", "minimum": 0, "maximum": 120 }
++      },
++      "additionalProperties": false,
++      "patternProperties": { "^_": true }
++    },
++    "close": {
++      "type": "object",
++      "required": ["mode", "ownMul", "rampTicks", "leaveAfterBlows", "magnetAtRestOnly"],
++      "properties": {
++        "mode": { "enum": ["pair", "own"] },
++        "ownMul": { "type": "number", "minimum": 0, "maximum": 2 },
++        "rampTicks": { "type": "integer", "minimum": 1, "maximum": 120 },
++        "leaveAfterBlows": { "type": "integer", "minimum": 1, "maximum": 20 },
++        "magnetAtRestOnly": { "type": "boolean" }
++      },
++      "additionalProperties": false,
++      "patternProperties": { "^_": true }
++    }
++  },
++  "additionalProperties": false,
++  "patternProperties": { "^_": true }
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index 898f6f1..ae51cb3 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -739,6 +739,10 @@
+       "match": "data/fight/kick.json",
+       "schema": "fight-kick.schema.json"
+     },
++    {
++      "match": "data/fight/well.json",
++      "schema": "fight-well.schema.json"
++    },
+     {
+       "match": "data/fight/power.json",
+       "schema": "fight-power.schema.json"

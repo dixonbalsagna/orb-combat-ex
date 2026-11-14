@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+== row 1 (scripted): ticks the draw moved a fighter who wasn't silent
+row1 scripted, draw rest: {  } over 4800 ticks (rest: 0 is the pass line; capped: the stick, hands, latch and approach rows are that arm's own rule, only stun counts against it)
+row1 scripted, draw capped: { "stick": 319, "hands": 806, "approach": 42 } over 4800 ticks (rest: 0 is the pass line; capped: the stick, hands, latch and approach rows are that arm's own rule, only stun counts against it)
+WELL READ done

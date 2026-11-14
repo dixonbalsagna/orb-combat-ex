@@ -36,6 +36,18 @@ What the check printed:
 - **The snap by tier at flat out 3,500, with an empty power meter: 4,000, 4,373, 5,464, 6,827.** The design's 4,640, 6,090 and 8,070 need a full power meter: tier is 0.8 of the level and the power meter the other 0.2 (`power.json` `level`). Both tables go in the page.
 - Two fighters who let go at 10 bh drift to 2.50 bh and stop there. The fastest draw was 69 a second (cap 107).
 
+## The joined trial (final)
+
+- **The tree:** the base above, then `s2-core-v2.patch`, then Encounter's `../../director/s2/s2-dir.patch` v2 (53570393). It's frozen as a scratch copy, `s2t`, committed as 9f867c5; Tools' gauntlet ran on it.
+- **`s2-core-v2.patch`** replaces `s2-core.patch`: sha1 bc6810b37e089ff6cfd353f4fe41b6a7fad8481c, sha256 ed7bfc91d9de. It adds:
+  - the join's call: in silence the draw also waits while the rival's approach or zip is in hand; the capped arm meets a snap, not while holding away or guarding, and never draws during his own crouch;
+  - the review's fixes: every latch is updated before any silence is read, so slot order changes nothing; the replay key folds `power.json` when the well is on and the energy model off;
+  - three trial tools: `well_read.gd` (the design's readings), `well_clips.gd` (the clip matches), `well_clips_check.gd` (each clip file replays exactly).
+- **The review** (one workflow, approved by the EP: 6 agents, 1,263,550 tokens, no Godot): 22 findings, 14 confirmed, 5 narrowed, 3 refuted. Encounter's v2 fixes their five, the core and the readings take the rest. One is noted and left: the latch also trips on a fighter's own target-less rushes, which only ever holds the draw back (`runs/joined/review_findings.txt`).
+- **Proof on the joined tree** (`runs/joined/`): well_check 0 failed; Encounter's well_dir_check 28 of 28; load split, ratchet 365, lint, validator; **with both switches off, the golden reproduces GW1a's target byte for byte.**
+- **The readings:** the quick parts (`read_quick`, `read_brawl`, `read_draw`) and 40 computer matches a close-fight version (`read_matches`). The page is `trial-page.md`.
+- **The clip matches:** `clips/match-files/`, ten match files (five scenes, today and proposed), each a real match from its start with both pads scripted, a mark on the moment. All ten replay exactly on the trial's code. Tools' clip kit cuts them: `node tools/clips/make.mjs --from-match <file> --build <a web build of s2t>`.
+
 ## Encounter's half (through the EP)
 
 On the same base plus `s2-core.patch`, in Encounter's own scratch copy:
