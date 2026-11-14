@@ -94,9 +94,9 @@ _Built from status.json for 2026-11-13 by tools/build-tracker.mjs, with every ro
 
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-PROCESS-01 | S | major |  |  | reported | Production Ops report to the EP, 2026-11-13: change-control.md and ideas-log.md parked in docs/production/ — Needs Orb's yes to the rule and the playbook pointer (the EP's). | No written change-control rule for the feature freeze and no ideas log exist, and the EP's playbook points to neither. |
-| A-PROCESS-04 | S | major |  |  | reported | Production Ops report to the EP, 2026-11-13: risk-register.md rewritten in docs/production/ | The risk register is the starting set of 2026-09-28, never updated, and lists none of the risks that have since happened. |
-| A-PROCESS-05 | S | major |  |  | reported | Production Ops report to the EP, 2026-11-13: milestones.md and milestone-rows.md parked in docs/production/ | There is no milestone tracker or live roadmap, and the Production Operations director who owns them has no commit in the project's history. |
+| A-PROCESS-01 | S | major |  |  | landed | 3fe3d13e — change-control.md and ideas-log.md landed in 3fe3d13e. Logging and pricing are in force; the post-freeze half waits on Orb's decision 23 (asked at A6). | No written change-control rule for the feature freeze and no ideas log exist, and the EP's playbook points to neither. |
+| A-PROCESS-04 | S | major |  |  | landed | 3fe3d13e — risk-register.md rewritten, landed in 3fe3d13e. | The risk register is the starting set of 2026-09-28, never updated, and lists none of the risks that have since happened. |
+| A-PROCESS-05 | S | major |  |  | landed | 3fe3d13e — milestones.md, milestone-rows.md, status.json and tools/ landed in 3fe3d13e. | There is no milestone tracker or live roadmap, and the Production Operations director who owns them has no commit in the project's history. |
 
 **qa-balance** (9)
 
@@ -166,7 +166,7 @@ _Built from status.json for 2026-11-13 by tools/build-tracker.mjs, with every ro
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-WORLD-01 | M | blocker | GW1 |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the menu never sets that key, and Orb's globe build… |
 
-**Added since the path, outside the register** (4 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They land after GW1a is proven, as their own windows.
+**Added since the path, outside the register** (5 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They land as window GW1c, after GW1b.
 
 | Item | Owner | What | Status | Evidence | Where it came from |
 | --- | --- | --- | --- | --- | --- |
@@ -174,6 +174,7 @@ _Built from status.json for 2026-11-13 by tools/build-tracker.mjs, with every ro
 | ADD-A1-02 | world-environment | Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-04 | rendering-techart | Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
+| ADD-A1-05 | encounter-systems | Launch rebound bug (Encounter Systems, with World): a fighter that bounces off something in the background must not ricochet on an unrealistic path. Done test: no launch rebound leaves a structure or terrain at an angle or speed the contact cannot explain, read over seeded launches, plus Orb's eye at A1. | not started | EP, 2026-11-14 (Orb's clarification in vision.md) | Orb, 2026-11-14 (ideas-log ID-24) |
 
 ## A2. Safe to hand out; two real Steam Decks have run it — 41 rows
 

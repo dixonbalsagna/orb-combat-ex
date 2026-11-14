@@ -27,7 +27,7 @@ export const MILESTONES = [
     window: {
       name: 'GW1 "Main is the game"',
       rows: ['A-AI-05','A-AI-10','A-CODE-01','A-COMBAT-05','A-COMBAT-11','A-COMBAT-14','A-CONTROLS-02','A-CONTROLS-04','A-ENERGY-04','A-ENERGY-05','A-MODES-07','A-WORLD-01'],
-      note: 'GW1a: the golden record is made first on the kept 9 November build\'s own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer\'s perfect-block fix, flight 3500), then one re-record. A-NET-05 (the build id in a replay) lands before the window.',
+      note: 'GW1a: the golden record is made first on the kept 9 November build\'s own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer\'s perfect-block fix, flight 3500), then one re-record. GW1c, after GW1b: the planet scope Orb added (five sizes, terrain step 2, destruction, clipping), its own window. A-NET-05 (the build id in a replay) lands before the window.',
     },
     directors: 'Tools & Pipeline, Simulation & Engine, Encounter Systems, World & Environment, Rendering, Camera, Controls & Game Feel, UI & UX, Audio, Game Design, Combat & Choreography (spike S4), QA & Balance, Performance & Platform, Netcode (the replay\'s build id), Legal, Production Operations, the Executive Producer',
     exit: [
@@ -39,6 +39,7 @@ export const MILESTONES = [
       ['X-05', 'first reading', 'The mode smoke suite exists and has run solo and two players on one PC on Windows and Linux, from the menu, with a pad alone, to a result, a rematch and a quit.'],
       ['X-23, X-26, X-06', 'first readings', 'A frame record and loading times for the desktop build on Orb\'s PC; win rates at Easy, Medium and Hard for a scripted player on Orb\'s scheme, on the build\'s own packed data.'],
       ['Measuring tools', 'first (failing) readings', 'The tools for X-03 (move coverage), X-04, X-13 and X-16 exist and have each produced a first reading; the 1280 by 800 screen sweep exists and has produced stills of every menu.'],
+      ['Planet scope (GW1c)', 'must pass', 'Five sizes selectable, each generates and plays; small, medium and big drawn and measured (tiny and huge per Orb\u0027s open answer); feet within 8 units of the drawn ground; the step 2 re-cut landed. Source: docs/ep/sprints/A1-sprint.md.'],
       ['Spikes S1 to S5', 'one page each', 'Each ends in one page: what was tried, what it cost, the size class now believed, and the question for Orb if there is one. S1 beam, S2 gravity well, S3 horde, S4 move table, S5 Linux picture.'],
     ],
   },

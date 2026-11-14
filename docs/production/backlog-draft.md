@@ -47,11 +47,11 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-PERF-06 | A1 | performance-platform | S | major | not started |  | No loading time is on file for the desktop game with menus, the tile ground and generated planets; the last… |
 | A-PERF-07 | A1 | performance-platform | S | major | not started |  | Memory has never been measured on a desktop build, and growth over time is marked not measured, so the soak's… |
 | A-PERF-08 | A1 | rendering-techart | S | major | briefed |  | The game sets no window: there is no display section in the project file and no fullscreen, resolution,… |
-| A-PROCESS-01 | A1 | production-ops | S | major | reported |  | No written change-control rule for the feature freeze and no ideas log exist, and the EP's playbook points to… |
+| A-PROCESS-01 | A1 | production-ops | S | major | landed |  | No written change-control rule for the feature freeze and no ideas log exist, and the EP's playbook points to… |
 | A-PROCESS-02 | A1 | ep | S | major | reported |  | There is no single backlog: open work sits in the corrective plan, the EP's messages and per-machine memory… |
 | A-PROCESS-03 | A1 | ep | M | major | briefed |  | The working tree carries 14,805 uncommitted paths, including run records, parked work, the terrain plan and… |
-| A-PROCESS-04 | A1 | production-ops | S | major | reported |  | The risk register is the starting set of 2026-09-28, never updated, and lists none of the risks that have… |
-| A-PROCESS-05 | A1 | production-ops | S | major | reported |  | There is no milestone tracker or live roadmap, and the Production Operations director who owns them has no… |
+| A-PROCESS-04 | A1 | production-ops | S | major | landed |  | The risk register is the starting set of 2026-09-28, never updated, and lists none of the risks that have… |
+| A-PROCESS-05 | A1 | production-ops | S | major | landed |  | There is no milestone tracker or live roadmap, and the Production Operations director who owns them has no… |
 | A-PROCESS-06 | A1 | ep | S | major | not started |  | The P0 to P5 roadmap in CLAUDE.md no longer describes the project: no phase gate result is on record, P3 and… |
 | A-PROCESS-07 | A1 | ep | S | major | not started | CD-23 | The corrective plan of 2026-11-07 has not been kept: 13 of 27 rows have no closing entry, 8 items have… |
 | A-PROCESS-08 | A1 | ep | S | minor | reported |  | No weekly token record exists: the EP has no clean figures for the last three weeks, so milestone lengths in… |

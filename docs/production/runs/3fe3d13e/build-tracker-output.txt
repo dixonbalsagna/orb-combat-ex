@@ -1,0 +1,32 @@
+build-tracker: asOf 2026-11-13; rows by milestone: A1 77, A2 41, A3 27, A4 19, A5 16, A6 0; wrote milestones.md, milestone-rows.md and backlog-draft.md
+PASS  every placed id exists in the register
+PASS  every placed row is placed exactly once
+PASS  A1 has 77 rows (the path's count)
+PASS  A2 has 41 rows (the path's count)
+PASS  A3 has 27 rows (the path's count)
+PASS  A4 has 19 rows (the path's count)
+PASS  A5 has 16 rows (the path's count)
+PASS  A6 has 0 rows (the path's count)
+PASS  180 rows placed in all
+PASS  every row has a valid status
+PASS  every added item has a valid status
+PASS  every status override names a placed row
+PASS  landed rows carry a commit id, reported rows a report or record
+PASS  A1: rows that change the fingerprint match the path's window list
+PASS  A2: rows that change the fingerprint match the path's window list
+PASS  A3: rows that change the fingerprint match the path's window list
+PASS  A4: rows that change the fingerprint match the path's window list
+PASS  A5: rows that change the fingerprint match the path's window list
+PASS  A6: rows that change the fingerprint match the path's window list
+PASS  every A1 row is led by a line in an A1 brief
+PASS  the backlog lists every register row exactly once
+PASS  the corrective plan has 27 rows, parsed
+PASS  every corrective item without a closing entry or still open has a register row
+PASS  no held word appears in the backlog
+PASS  every A1 row appears exactly once in the full table
+PASS  every placed row appears exactly once in the full table
+PASS  every A1 row appears exactly once on the page for Orb
+PASS  Orb's page lists every row except the held ones (counts add up)
+PASS  no held word appears on the page for Orb
+PASS  the full table marks every held row
+30 of 30 checks pass

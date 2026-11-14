@@ -6,15 +6,15 @@ _Live page. Last built from status.json for **2026-11-13**. It is rebuilt every 
 
 ## Where the project is
 
-**Milestone A1, "Main is the game Orb plays".** 77 rows: 29 not started, 36 briefed, 7 reported, 5 landed.
+**Milestone A1, "Main is the game Orb plays".** 77 rows: 29 not started, 36 briefed, 4 reported, 8 landed.
 
-**Budget.** A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so A1 pauses for Orb when the all-models meter reads about 66%. The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.
+**Budget.** A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so the old 66% pause is replaced by the EP's reset rule: a reset is pressed at about 85% on the all-models meter or 90% on the Fable meter (Orb only reported that a reset clears both pools). The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.
 
 **Waves.** From tonight: Tools, Simulation, UI, Encounter, World and Rendering build in scratch copies; Game Design, Production Ops and Legal write papers; the stand-in designs and reviews; the EP does the working tree. From Saturday 14 Nov: Camera and VFX (the safety readings, captures one at a time), Controls, Audio, Combat (spike S4), QA (first readings), Performance (desktop frame and load readings, quiet windows only) and Netcode.
 
 | Milestone | What it proves | Rows | Not started | Briefed | Reported | Landed | Tokens (path) | Weeks (path) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A1 (now) | Main is the game Orb plays | 77 | 29 | 36 | 7 | 5 | 55M | 2 to 4 |
+| A1 (now) | Main is the game Orb plays | 77 | 29 | 36 | 4 | 8 | 55M | 2 to 4 |
 | A2 | Safe to hand out; two real Steam Decks have run it | 41 | 39 | 2 | 0 | 0 | 34M | 2 to 4 |
 | A3 | The fight's new rules, and LAN inside the game | 27 | 27 | 0 | 0 | 0 | 53M | 3 to 5 |
 | A4 | Horde, teams, your own planet, the whole fighter | 19 | 19 | 0 | 0 | 0 | 57M | 2 to 3 |
@@ -52,7 +52,7 @@ Also watched: the wait for people (two friends, twice), the weekly token limit, 
 | 9 | A restricted, key-only itch.io page under the working title, if Legal agrees; Orb does the account, page and upload tool | A2 can close | answered | GO |
 | 10 | Licence: all rights reserved through Alpha with a short permission page; public code decided at Beta | A2 can close | answered | GO |
 | 11 | How much of the stamina, energy and body loop is in Alpha (the whole loop as shared rules, numbers per fighter in data) | A2's work-ahead starts (asked day one) | accepted | Go with recommendation on all |
-| 12 | How much gravity well, and does your stick move only you up close (asked after spike S2's clip) | A2's work-ahead starts (asked day one) | open | KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED (no standing yes; ask after spike S2's clip) |
+| 12 | How much gravity well, and does your stick move only you up close (asked after spike S2's clip) | A2's work-ahead starts (asked day one) | partly | Orb's words: KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED. The close fight is decided as B, your stick moves only you (the stand-in's questions, e715c9cc), with Orb's extra weight against "the fight moves". The stop rule (moving the snap to A4) has NO standing yes: it is a question at A3's midpoint. |
 | 13 | LAN at Alpha: for Orb and the trusted second player only, Windows only | A2's work-ahead starts (asked day one) | answered | GO |
 | 14 | Beam stages and the other "workshop this" items: before or after Alpha (the split) | A2's work-ahead starts (asked day one) | accepted | Go with recommendation on all |
 | 15 | The move table's bar for Alpha (the smaller table; the full one at Beta) | A4 starts (asked day one) | answered | FULL TABLE ON BETA, KEEP ITERATING WHAT WE HAVE. |
@@ -92,9 +92,9 @@ The builds, play files, reports and clips Orb keeps are about 2.9 GB in one git-
 
 **What Orb can play.** The first desktop build of their own game: a Windows program that opens on the left-panel menus, on the round planet, with the pad as Orb plays it and flight at 3500. The start menu lists the modes that exist today, lets each player pick a fighter, and has a Quit row.
 
-**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 29 not started, 36 briefed, 7 reported, 5 landed.
+**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 29 not started, 36 briefed, 4 reported, 8 landed.
 
-**Golden window.** GW1 "Main is the game" (12 rows: A-AI-05, A-AI-10, A-CODE-01, A-COMBAT-05, A-COMBAT-11, A-COMBAT-14, A-CONTROLS-02, A-CONTROLS-04, A-ENERGY-04, A-ENERGY-05, A-MODES-07, A-WORLD-01). GW1a: the golden record is made first on the kept 9 November build's own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer's perfect-block fix, flight 3500), then one re-record. A-NET-05 (the build id in a replay) lands before the window.
+**Golden window.** GW1 "Main is the game" (12 rows: A-AI-05, A-AI-10, A-CODE-01, A-COMBAT-05, A-COMBAT-11, A-COMBAT-14, A-CONTROLS-02, A-CONTROLS-04, A-ENERGY-04, A-ENERGY-05, A-MODES-07, A-WORLD-01). GW1a: the golden record is made first on the kept 9 November build's own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer's perfect-block fix, flight 3500), then one re-record. GW1c, after GW1b: the planet scope Orb added (five sizes, terrain step 2, destruction, clipping), its own window. A-NET-05 (the build id in a replay) lands before the window.
 
 **Directors active.** Tools & Pipeline, Simulation & Engine, Encounter Systems, World & Environment, Rendering, Camera, Controls & Game Feel, UI & UX, Audio, Game Design, Combat & Choreography (spike S4), QA & Balance, Performance & Platform, Netcode (the replay's build id), Legal, Production Operations, the Executive Producer
 
@@ -110,6 +110,7 @@ The builds, play files, reports and clips Orb keeps are about 2.9 GB in one git-
 | X-05 | first reading | The mode smoke suite exists and has run solo and two players on one PC on Windows and Linux, from the menu, with a pad alone, to a result, a rematch and a quit. |
 | X-23, X-26, X-06 | first readings | A frame record and loading times for the desktop build on Orb's PC; win rates at Easy, Medium and Hard for a scripted player on Orb's scheme, on the build's own packed data. |
 | Measuring tools | first (failing) readings | The tools for X-03 (move coverage), X-04, X-13 and X-16 exist and have each produced a first reading; the 1280 by 800 screen sweep exists and has produced stills of every menu. |
+| Planet scope (GW1c) | must pass | Five sizes selectable, each generates and plays; small, medium and big drawn and measured (tiny and huge per Orb's open answer); feet within 8 units of the drawn ground; the step 2 re-cut landed. Source: docs/ep/sprints/A1-sprint.md. |
 | Spikes S1 to S5 | one page each | Each ends in one page: what was tried, what it cost, the size class now believed, and the question for Orb if there is one. S1 beam, S2 gravity well, S3 horde, S4 move table, S5 Linux picture. |
 
 **Decisions still open that this milestone needs**
@@ -130,7 +131,7 @@ _None open that this milestone needs._
 | legal-ip | 1 | 0 | 0 | 0 | 1 |
 | orb | 2 | 0 | 0 | 0 | 2 |
 | performance-platform | 3 | 3 | 0 | 0 | 0 |
-| production-ops | 3 | 0 | 0 | 3 | 0 |
+| production-ops | 3 | 0 | 0 | 0 | 3 |
 | qa-balance | 9 | 9 | 0 | 0 | 0 |
 | rendering-techart | 3 | 0 | 3 | 0 | 0 |
 | simulation-engine | 4 | 0 | 4 | 0 | 0 |
@@ -228,9 +229,9 @@ _None open that this milestone needs._
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-PROCESS-01 | No written change-control rule for the feature freeze and no ideas log exist, and the EP's playbook points to neither. | S |  | reported | Production Ops report to the EP, 2026-11-13: change-control.md and ideas-log.md parked in docs/production/ — Needs Orb's yes to the rule and the playbook pointer (the EP's). |
-| A-PROCESS-04 | The risk register is the starting set of 2026-09-28, never updated, and lists none of the risks that have since… | S |  | reported | Production Ops report to the EP, 2026-11-13: risk-register.md rewritten in docs/production/ |
-| A-PROCESS-05 | There is no milestone tracker or live roadmap, and the Production Operations director who owns them has no commit in… | S |  | reported | Production Ops report to the EP, 2026-11-13: milestones.md and milestone-rows.md parked in docs/production/ |
+| A-PROCESS-01 | No written change-control rule for the feature freeze and no ideas log exist, and the EP's playbook points to neither. | S |  | landed | 3fe3d13e — change-control.md and ideas-log.md landed in 3fe3d13e. Logging and pricing are in force; the post-freeze half waits on Orb's decision 23 (asked at A6). |
+| A-PROCESS-04 | The risk register is the starting set of 2026-09-28, never updated, and lists none of the risks that have since… | S |  | landed | 3fe3d13e — risk-register.md rewritten, landed in 3fe3d13e. |
+| A-PROCESS-05 | There is no milestone tracker or live roadmap, and the Production Operations director who owns them has no commit in… | S |  | landed | 3fe3d13e — milestones.md, milestone-rows.md, status.json and tools/ landed in 3fe3d13e. |
 
 **qa-balance** (9)
 
@@ -300,7 +301,7 @@ _None open that this milestone needs._
 | --- | --- | --- | --- | --- | --- |
 | A-WORLD-01 | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the… | M | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
 
-**Added since the path, outside the register** (4 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They land after GW1a is proven, as their own windows.
+**Added since the path, outside the register** (5 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They land as window GW1c, after GW1b.
 
 | Item | Owner | What | Status | Evidence | Where it came from |
 | --- | --- | --- | --- | --- | --- |
@@ -308,6 +309,7 @@ _None open that this milestone needs._
 | ADD-A1-02 | world-environment | Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-04 | rendering-techart | Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
+| ADD-A1-05 | encounter-systems | Launch rebound bug (Encounter Systems, with World): a fighter that bounces off something in the background must not ricochet on an unrealistic path. Done test: no launch rebound leaves a structure or terrain at an angle or speed the contact cannot explain, read over seeded launches, plus Orb's eye at A1. | not started | EP, 2026-11-14 (Orb's clarification in vision.md) | Orb, 2026-11-14 (ideas-log ID-24) |
 
 ## A2. Safe to hand out; two real Steam Decks have run it
 
@@ -341,7 +343,7 @@ _None open that this milestone needs._
 
 **Decisions still open that this milestone needs**
 
-- **12.** How much gravity well, and does your stick move only you up close (asked after spike S2's clip) (needed before A2's work-ahead starts (asked day one)) — open: KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED (no standing yes; ask after spike S2's clip)
+- **12.** How much gravity well, and does your stick move only you up close (asked after spike S2's clip) (needed before A2's work-ahead starts (asked day one)) — partly: Orb's words: KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED. The close fight is decided as B, your stick moves only you (the stand-in's questions, e715c9cc), with Orb's extra weight against "the fight moves". The stop rule (moving the snap to A4) has NO standing yes: it is a question at A3's midpoint.
 
 **Rows by owner** (status in brackets once past "not started"; the full table has each row's text)
 

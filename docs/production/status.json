@@ -3,64 +3,238 @@
   "asOf": "2026-11-13",
   "audit": "docs/ep/alpha/audit-2026-11-13",
   "current": "A1",
-  "defaultStatus": { "status": "not started", "ref": "" },
+  "defaultStatus": {
+    "status": "not started",
+    "ref": ""
+  },
   "ownerDefaults": {
     "A1": {
-      "tools-pipeline": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "simulation-engine": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "ui-ux": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "encounter-systems": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "world-environment": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "rendering-techart": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "game-design": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "legal-ip": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "production-ops": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)" },
-      "camera": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov" },
-      "audio-music": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov" },
-      "combat-choreography": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov" },
-      "controls-feel": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov" },
-      "qa-balance": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov" },
-      "performance-platform": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov" },
-      "netcode-online": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov" }
+      "tools-pipeline": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "simulation-engine": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "ui-ux": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "encounter-systems": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "world-environment": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "rendering-techart": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "game-design": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "legal-ip": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "production-ops": {
+        "status": "briefed",
+        "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)"
+      },
+      "camera": {
+        "status": "not started",
+        "ref": "wave 2, from Saturday 14 Nov"
+      },
+      "audio-music": {
+        "status": "not started",
+        "ref": "wave 2, from Saturday 14 Nov"
+      },
+      "combat-choreography": {
+        "status": "not started",
+        "ref": "wave 2, from Saturday 14 Nov"
+      },
+      "controls-feel": {
+        "status": "not started",
+        "ref": "wave 2, from Saturday 14 Nov"
+      },
+      "qa-balance": {
+        "status": "not started",
+        "ref": "wave 2, from Saturday 14 Nov"
+      },
+      "performance-platform": {
+        "status": "not started",
+        "ref": "wave 2, from Saturday 14 Nov"
+      },
+      "netcode-online": {
+        "status": "not started",
+        "ref": "wave 2, from Saturday 14 Nov"
+      }
     }
   },
   "rows": {
-    "A-ENERGY-02": { "status": "landed", "ref": "970d15a6", "note": "The model page (Game Design). The EP confirms the row closes." },
-    "A-COMBAT-15": { "status": "landed", "ref": "970d15a6", "note": "The six workshop items placed (Game Design). The EP confirms the row closes." },
-    "A-ENERGY-05": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)", "note": "Game Design's comeback numbers landed in 970d15a6; the data change (other effects set to zero) lands in GW1." },
-    "A-CONTROLS-04": { "status": "reported", "ref": "970d15a6", "note": "Game Design's paper on flight 3500 landed; the data default changes in GW1b." },
-    "A-LEGAL-09": { "status": "landed", "ref": "ae01d434", "note": "Legal's ruling on the itch.io page under the working title, on conditions (in RL-261 to RL-266)." },
-    "A-LEGAL-10": { "status": "landed", "ref": "ae01d434", "note": "Legal's permission page and contributor note (ae01d434) plus Orb's licence \"GO\" in vision.md; closed on the EP's word, 2026-11-13." },
-    "A-WORLD-14": { "status": "landed", "ref": "8d157e9a", "note": "Orb accepted decision 2 (\"Go with recommendation on all\", vision.md, 8d157e9a); closed on the EP's word. The default itself lands with A-WORLD-01 in GW1." },
-    "A-PROCESS-01": { "status": "reported", "ref": "Production Ops report to the EP, 2026-11-13: change-control.md and ideas-log.md parked in docs/production/", "note": "Needs Orb's yes to the rule and the playbook pointer (the EP's)." },
-    "A-PROCESS-04": { "status": "reported", "ref": "Production Ops report to the EP, 2026-11-13: risk-register.md rewritten in docs/production/" },
-    "A-PROCESS-05": { "status": "reported", "ref": "Production Ops report to the EP, 2026-11-13: milestones.md and milestone-rows.md parked in docs/production/" },
-    "A-PROCESS-02": { "status": "reported", "ref": "EP row; Production Ops draft in docs/production/backlog-draft.md", "note": "Partial draft: the register and the corrective plan are in; it waits on the EP's owed list, QA's bug list and the parked-folders list. The EP owns and commits it." },
-    "A-PROCESS-03": { "status": "briefed", "ref": "EP's own, under way (docs/ep/sprints/A1-sprint.md)", "note": "Tools' group landed in 191e5e30; one owner's group at a time, screened before each push." },
-    "A-PROCESS-08": { "status": "reported", "ref": "EP row; Production Ops draft in docs/production/token-record.md" },
-    "A-PROCESS-16": { "status": "reported", "ref": "EP row; Production Ops draft in docs/production/done-tests.md" },
-    "A-TOOLS-09": { "status": "briefed", "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)", "note": "Production Ops wrote the tracker paragraph (milestones.md, \"Orb's kept builds\"); Orb's answer on where the second copy lives is still open." },
-    "A-LEGAL-08": { "status": "briefed", "ref": "day-one safety chain (docs/ep/sprints/A1-sprint.md)", "note": "Part 1 landed in 191e5e30 and its nightly in 59c6b195 (Tools). Stays open until the first scheduled reading is recorded." },
-    "A-LEGAL-03": { "status": "briefed", "ref": "day-one safety chain (docs/ep/sprints/A1-sprint.md)", "note": "Started early, in A1, as the path says." },
-    "A-LEGAL-01": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov", "note": "Briefed early for A2 (Camera, Rendering, VFX)." },
-    "A-CAMERA-02": { "status": "not started", "ref": "wave 2, from Saturday 14 Nov", "note": "Briefed early for A2." }
+    "A-ENERGY-02": {
+      "status": "landed",
+      "ref": "970d15a6",
+      "note": "The model page (Game Design). The EP confirms the row closes."
+    },
+    "A-COMBAT-15": {
+      "status": "landed",
+      "ref": "970d15a6",
+      "note": "The six workshop items placed (Game Design). The EP confirms the row closes."
+    },
+    "A-ENERGY-05": {
+      "status": "briefed",
+      "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)",
+      "note": "Game Design's comeback numbers landed in 970d15a6; the data change (other effects set to zero) lands in GW1."
+    },
+    "A-CONTROLS-04": {
+      "status": "reported",
+      "ref": "970d15a6",
+      "note": "Game Design's paper on flight 3500 landed; the data default changes in GW1b."
+    },
+    "A-LEGAL-09": {
+      "status": "landed",
+      "ref": "ae01d434",
+      "note": "Legal's ruling on the itch.io page under the working title, on conditions (in RL-261 to RL-266)."
+    },
+    "A-LEGAL-10": {
+      "status": "landed",
+      "ref": "ae01d434",
+      "note": "Legal's permission page and contributor note (ae01d434) plus Orb's licence \"GO\" in vision.md; closed on the EP's word, 2026-11-13."
+    },
+    "A-WORLD-14": {
+      "status": "landed",
+      "ref": "8d157e9a",
+      "note": "Orb accepted decision 2 (\"Go with recommendation on all\", vision.md, 8d157e9a); closed on the EP's word. The default itself lands with A-WORLD-01 in GW1."
+    },
+    "A-PROCESS-01": {
+      "status": "landed",
+      "ref": "3fe3d13e",
+      "note": "change-control.md and ideas-log.md landed in 3fe3d13e. Logging and pricing are in force; the post-freeze half waits on Orb's decision 23 (asked at A6)."
+    },
+    "A-PROCESS-04": {
+      "status": "landed",
+      "ref": "3fe3d13e",
+      "note": "risk-register.md rewritten, landed in 3fe3d13e."
+    },
+    "A-PROCESS-05": {
+      "status": "landed",
+      "ref": "3fe3d13e",
+      "note": "milestones.md, milestone-rows.md, status.json and tools/ landed in 3fe3d13e."
+    },
+    "A-PROCESS-02": {
+      "status": "reported",
+      "ref": "EP row; Production Ops draft in docs/production/backlog-draft.md",
+      "note": "Partial draft: the register and the corrective plan are in; it waits on the EP's owed list, QA's bug list and the parked-folders list. The EP owns and commits it."
+    },
+    "A-PROCESS-03": {
+      "status": "briefed",
+      "ref": "EP's own, under way (docs/ep/sprints/A1-sprint.md)",
+      "note": "Tools' group landed in 191e5e30; one owner's group at a time, screened before each push."
+    },
+    "A-PROCESS-08": {
+      "status": "reported",
+      "ref": "EP row; Production Ops draft in docs/production/token-record.md"
+    },
+    "A-PROCESS-16": {
+      "status": "reported",
+      "ref": "EP row; Production Ops draft in docs/production/done-tests.md"
+    },
+    "A-TOOLS-09": {
+      "status": "briefed",
+      "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)",
+      "note": "Production Ops wrote the tracker paragraph (milestones.md, \"Orb's kept builds\"); Orb's answer on where the second copy lives is still open."
+    },
+    "A-LEGAL-08": {
+      "status": "briefed",
+      "ref": "day-one safety chain (docs/ep/sprints/A1-sprint.md)",
+      "note": "Part 1 landed in 191e5e30 and its nightly in 59c6b195 (Tools). Stays open until the first scheduled reading is recorded."
+    },
+    "A-LEGAL-03": {
+      "status": "briefed",
+      "ref": "day-one safety chain (docs/ep/sprints/A1-sprint.md)",
+      "note": "Started early, in A1, as the path says."
+    },
+    "A-LEGAL-01": {
+      "status": "not started",
+      "ref": "wave 2, from Saturday 14 Nov",
+      "note": "Briefed early for A2 (Camera, Rendering, VFX)."
+    },
+    "A-CAMERA-02": {
+      "status": "not started",
+      "ref": "wave 2, from Saturday 14 Nov",
+      "note": "Briefed early for A2."
+    }
   },
   "added": [
-    { "id": "ADD-A1-01", "milestone": "A1", "owner": "world-environment", "what": "Five selectable planet sizes (World, with Simulation and Performance): from World's six, five are picked; each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window.", "status": "not started", "ref": "planned in docs/ep/sprints/A1-sprint.md; the stand-in's planet design comes first", "source": "Orb, 2026-11-13 night (ideas-log ID-22)" },
-    { "id": "ADD-A1-02", "milestone": "A1", "owner": "world-environment", "what": "Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows.", "status": "not started", "ref": "planned in docs/ep/sprints/A1-sprint.md", "source": "Orb, 2026-11-13 night (ideas-log ID-22)" },
-    { "id": "ADD-A1-03", "milestone": "A1", "owner": "world-environment", "what": "Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw.", "status": "not started", "ref": "planned in docs/ep/sprints/A1-sprint.md", "source": "Orb, 2026-11-13 night (ideas-log ID-22)" },
-    { "id": "ADD-A1-04", "milestone": "A1", "owner": "rendering-techart", "what": "Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building.", "status": "not started", "ref": "planned in docs/ep/sprints/A1-sprint.md", "source": "Orb, 2026-11-13 night (ideas-log ID-22)" }
+    {
+      "id": "ADD-A1-01",
+      "milestone": "A1",
+      "owner": "world-environment",
+      "what": "Five selectable planet sizes (World, with Simulation and Performance): from World's six, five are picked; each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window.",
+      "status": "not started",
+      "ref": "planned in docs/ep/sprints/A1-sprint.md; the stand-in's planet design comes first",
+      "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
+      "note": "Lands as window GW1c, after GW1b."
+    },
+    {
+      "id": "ADD-A1-02",
+      "milestone": "A1",
+      "owner": "world-environment",
+      "what": "Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows.",
+      "status": "not started",
+      "ref": "planned in docs/ep/sprints/A1-sprint.md",
+      "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
+      "note": "Lands as window GW1c, after GW1b."
+    },
+    {
+      "id": "ADD-A1-03",
+      "milestone": "A1",
+      "owner": "world-environment",
+      "what": "Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw.",
+      "status": "not started",
+      "ref": "planned in docs/ep/sprints/A1-sprint.md",
+      "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
+      "note": "Lands as window GW1c, after GW1b."
+    },
+    {
+      "id": "ADD-A1-04",
+      "milestone": "A1",
+      "owner": "rendering-techart",
+      "what": "Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building.",
+      "status": "not started",
+      "ref": "planned in docs/ep/sprints/A1-sprint.md",
+      "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
+      "note": "Lands as window GW1c, after GW1b."
+    },
+    {
+      "id": "ADD-A1-05",
+      "milestone": "A1",
+      "owner": "encounter-systems",
+      "what": "Launch rebound bug (Encounter Systems, with World): a fighter that bounces off something in the background must not ricochet on an unrealistic path. Done test: no launch rebound leaves a structure or terrain at an angle or speed the contact cannot explain, read over seeded launches, plus Orb's eye at A1.",
+      "status": "not started",
+      "ref": "EP, 2026-11-14 (Orb's clarification in vision.md)",
+      "source": "Orb, 2026-11-14 (ideas-log ID-24)"
+    }
   ],
   "switchRows": [
-    { "date": "2026-11-13", "count": 72, "of": 92, "note": "audit baseline 8901d351, as the path reports it" }
+    {
+      "date": "2026-11-13",
+      "count": 72,
+      "of": 92,
+      "note": "audit baseline 8901d351, as the path reports it"
+    }
   ],
   "switchRowsEveryDays": 2,
   "cdClosed": {
     "CD-05": "6eec6a75: bystanders scatter and the meters read destruction; the audit counts it closed in practice (EP, 2026-11-13). No register row needed."
   },
   "budget": {
-    "line": "A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so A1 pauses for Orb when the all-models meter reads about 66%. The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.",
-    "stopLinePercent": 66
+    "line": "A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so the old 66% pause is replaced by the EP's reset rule: a reset is pressed at about 85% on the all-models meter or 90% on the Fable meter (Orb only reported that a reset clears both pools). The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added."
   },
   "waves": {
     "wave1": "From tonight: Tools, Simulation, UI, Encounter, World and Rendering build in scratch copies; Game Design, Production Ops and Legal write papers; the stand-in designs and reviews; the EP does the working tree.",
@@ -73,28 +247,97 @@
     "lastCopy": "none yet"
   },
   "decisions": {
-    "1": { "status": "answered", "words": "GO" },
-    "2": { "status": "accepted", "words": "Go with recommendation on all" },
-    "3": { "status": "accepted", "words": "Go with recommendation on all" },
-    "4": { "status": "accepted", "words": "Go with recommendation on all" },
-    "5": { "status": "accepted", "words": "Go with recommendation on all" },
-    "6": { "status": "accepted", "words": "Go with recommendation on all" },
-    "7": { "status": "answered", "words": "GO (two Deck friends now, a spare, two held back; no names in the answer as recorded)" },
-    "8": { "status": "answered", "words": "I WILL MAKE THE DISCORD SOON (not made yet)" },
-    "9": { "status": "answered", "words": "GO" },
-    "10": { "status": "answered", "words": "GO" },
-    "11": { "status": "accepted", "words": "Go with recommendation on all" },
-    "12": { "status": "open", "words": "KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED (no standing yes; ask after spike S2's clip)" },
-    "13": { "status": "answered", "words": "GO" },
-    "14": { "status": "accepted", "words": "Go with recommendation on all" },
-    "15": { "status": "answered", "words": "FULL TABLE ON BETA, KEEP ITERATING WHAT WE HAVE." },
-    "16": { "status": "partly", "words": "GO on the horde's first size (three weak enemies at a time); couch line-up, computer partner and planet dials still open" },
-    "17": { "status": "open", "words": "" },
-    "18": { "status": "answered", "words": "GO" },
-    "19": { "status": "direction", "words": "KEEP IMPROVING PERFORMANCE ON ALL LEVELS (the targets stay working targets)" },
-    "20": { "status": "open", "words": "" },
-    "21": { "status": "open", "words": "" },
-    "22": { "status": "open", "words": "" },
-    "23": { "status": "open", "words": "" }
+    "1": {
+      "status": "answered",
+      "words": "GO"
+    },
+    "2": {
+      "status": "accepted",
+      "words": "Go with recommendation on all"
+    },
+    "3": {
+      "status": "accepted",
+      "words": "Go with recommendation on all"
+    },
+    "4": {
+      "status": "accepted",
+      "words": "Go with recommendation on all"
+    },
+    "5": {
+      "status": "accepted",
+      "words": "Go with recommendation on all"
+    },
+    "6": {
+      "status": "accepted",
+      "words": "Go with recommendation on all"
+    },
+    "7": {
+      "status": "answered",
+      "words": "GO (two Deck friends now, a spare, two held back; no names in the answer as recorded)"
+    },
+    "8": {
+      "status": "answered",
+      "words": "I WILL MAKE THE DISCORD SOON (not made yet)"
+    },
+    "9": {
+      "status": "answered",
+      "words": "GO"
+    },
+    "10": {
+      "status": "answered",
+      "words": "GO"
+    },
+    "11": {
+      "status": "accepted",
+      "words": "Go with recommendation on all"
+    },
+    "12": {
+      "status": "partly",
+      "words": "Orb's words: KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED. The close fight is decided as B, your stick moves only you (the stand-in's questions, e715c9cc), with Orb's extra weight against \"the fight moves\". The stop rule (moving the snap to A4) has NO standing yes: it is a question at A3's midpoint."
+    },
+    "13": {
+      "status": "answered",
+      "words": "GO"
+    },
+    "14": {
+      "status": "accepted",
+      "words": "Go with recommendation on all"
+    },
+    "15": {
+      "status": "answered",
+      "words": "FULL TABLE ON BETA, KEEP ITERATING WHAT WE HAVE."
+    },
+    "16": {
+      "status": "partly",
+      "words": "GO on the horde's first size (three weak enemies at a time); couch line-up, computer partner and planet dials still open"
+    },
+    "17": {
+      "status": "open",
+      "words": ""
+    },
+    "18": {
+      "status": "answered",
+      "words": "GO"
+    },
+    "19": {
+      "status": "direction",
+      "words": "KEEP IMPROVING PERFORMANCE ON ALL LEVELS (the targets stay working targets)"
+    },
+    "20": {
+      "status": "open",
+      "words": ""
+    },
+    "21": {
+      "status": "open",
+      "words": ""
+    },
+    "22": {
+      "status": "open",
+      "words": ""
+    },
+    "23": {
+      "status": "open",
+      "words": ""
+    }
   }
 }

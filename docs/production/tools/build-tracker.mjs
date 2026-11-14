@@ -148,7 +148,7 @@ function milestoneSection(m) {
 function addedSection(ms) {
   const a = (status.added || []).filter(x => x.milestone === ms);
   if (!a.length) return '';
-  return `\n\n**Added since the path, outside the register** (${a.length} items; they have no register row, so they are listed apart and not counted in the ${rows[ms].length} rows above). They land after GW1a is proven, as their own windows.\n\n` +
+  return `\n\n**Added since the path, outside the register** (${a.length} items; they have no register row, so they are listed apart and not counted in the ${rows[ms].length} rows above). They land as window GW1c, after GW1b.\n\n` +
     table(['Item', 'Owner', 'What', 'Status', 'Evidence', 'Where it came from'], a.map(x => [x.id, x.owner, x.what, x.status, x.ref, x.source]));
 }
 

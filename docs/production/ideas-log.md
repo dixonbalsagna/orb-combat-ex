@@ -29,7 +29,7 @@ Logged late by Production Operations from the same page of vision.md (the path n
 | # | Date | Who | Their words | EP's line | Size | Moves the fingerprint? | Orb's answer |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | ID-08 | 2026-11-13 | Orb | "yes, overhaul the camera work further, fold advanced systems like this in, make cinematographyy as dynamic and unintrusive as possible" (The Power Lens) | EP to add | To price | To price | Not asked yet |
-| ID-09 | 2026-11-13 | Orb | "I like this idea, keep overhauling the launches and the in-air ping pong attacks with iterations to mechanics like this" (The Brawl Pot) | EP to add | To price | To price | Not asked yet |
+| ID-09 | 2026-11-13 | Orb | "I like this idea, keep overhauling the launches and the in-air ping pong attacks with iterations to mechanics like this" (The Brawl Pot). **2026-11-14: Orb split "ping-ponging" in two; this is the FEATURE half (knock back, zip round faster than they fly, knock back another way): to explore, enhance and keep working on. The bug half is ID-24.** | Continuing feature idea (EP to add the line) | To price | To price | Not asked yet |
 | ID-10 | 2026-11-13 | Orb | "lets find a way to introduce this to high-level late-game fights, this sounds cool" (A Miss Still Lands) | EP to add | To price | To price | Not asked yet |
 | ID-11 | 2026-11-13 | Orb | "this is like a mid-combat event, lots of interactions and clashes should dynamically have outcomes like this, lets get combat variety feeling cool, more like this" (The Pass) | EP to add | To price | To price | Not asked yet |
 | ID-12 | 2026-11-13 | Orb | "good start, I'd like to see this in action, this could look good in high level endgame fights" (The World Flinches First) | EP to add | To price | To price | Not asked yet |
@@ -47,7 +47,9 @@ Logged late by Production Operations from the same page of vision.md (the path n
 
 | # | Date | Who | Their words | EP's line | Size | Moves the fingerprint? | Orb's answer |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ID-22 | 2026-11-13 (night) | Orb | "I do want the planet, terrain, destruction, clipping all worked on heading towards the A1. Five different planet sizes should be achieved along with this." (docs/ep/vision.md, "Starting A1") | Now, in A1: built as parks beside the golden window GW1, landing after GW1a is proven, each as its own window (docs/ep/sprints/A1-sprint.md). The path had planet sizes after Alpha (row A-WORLD-08); this is a scope change Orb made in their own words. | About 12M tokens (the EP's estimate) | Yes (it changes the fingerprint, which is why it lands after GW1a) | Orb's own instruction. The tracker lists the four parts apart from the register (milestones.md, A1). |
+| ID-22 | 2026-11-13 (night) | Orb | "I do want the planet, terrain, destruction, clipping all worked on heading towards the A1. Five different planet sizes should be achieved along with this." (docs/ep/vision.md, "Starting A1") | Now, in A1: built as parks beside the golden window GW1, landing as window GW1c, after GW1b (docs/ep/sprints/A1-sprint.md). The path had planet sizes after Alpha (row A-WORLD-08); this is a scope change Orb made in their own words. | About 12M tokens (the EP's estimate) | Yes (it changes the fingerprint, which is why it lands after GW1a) | Orb's own instruction. The tracker lists the four parts apart from the register (milestones.md, A1). |
+
+| ID-24 | 2026-11-14 | Orb | "the behavior where a fighter bounces off something in the background and then ricochets in an unrealistic and immersion-breaking trajectory is something I want squashed as we head to A1" (the bug half of "ping-ponging"; docs/ep/vision.md, 2026-11-14) | Now, in A1, as a bug fix: tracker item ADD-A1-05 (Encounter Systems with World) | To price | Likely yes | Orb's own instruction |
 
 ## D. Closed by Orb's answer
 
