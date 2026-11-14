@@ -200,6 +200,8 @@ export function extraSeedProblems(x) {
 export function problemsWith(record, now, ids, opts = {}) {
   const out = [];
   if (!record || typeof record !== 'object') return ['there is no recorded full-set pass (tools/flash/release-pass.json)'];
+  // CD-09 (2026-11-13): a record marked superseded is never a pass, for any commit, whatever its hashes say: it was measured with the analyser that counted a counter-phase strobe as 0.5, and a new run replaces it.
+  if (record.superseded && typeof record.superseded === 'object') out.push(`this record is SUPERSEDED (${record.superseded.on || 'no date'}, ${record.superseded.by || 'no owner'}): ${record.superseded.why || 'no reason given'}; a new full-set run (release-pass.mjs --record) replaces it`);
   const interim = record.interim && typeof record.interim === 'object' ? record.interim : null;
   const ownerRec = !!(interim && typeof interim.owner === 'string' && interim.owner.trim());   // Orb's decision (2026-10-18): the verdicts are in the record, not required of it
   if (interim && !ownerRec) {

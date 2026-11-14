@@ -68,6 +68,7 @@ const RECORD_LINES = { hookFixed: true, extraSeeds: EXTRA(), hud: { perSecond: 1
 const good = { ...now, ...RECORD_LINES, rows: ids.map((i) => row(i)) };
 check('a record matching the hashes with every required clip PASS holds', problemsWith(good, now, ids).length === 0);
 check('no record at all does not hold', problemsWith(null, now, ids).length === 1);
+check('a record marked superseded does not hold, even with every hash and row right, and says it is superseded (CD-09)', (() => { const p = problemsWith({ ...good, superseded: { on: '2026-11-13', by: 'CD-09', why: 'measured with the counter-phase tie' } }, now, ids); return p.length === 1 && /SUPERSEDED/.test(p[0]) && /counter-phase/.test(p[0]); })());
 for (const k of Object.keys(now)) check(`a different ${k} does not hold`, problemsWith({ ...good, [k]: 'x' }, now, ids).some((p) => p.startsWith(k)));
 check('a missing row does not hold', problemsWith({ ...good, rows: [row('collapse-normal')] }, now, ids).some((p) => /no row for required clip collapse-reduced/.test(p)));
 check('a row with a red flash does not hold, interim or not (red flashes 0)', problemsWith({ ...good, rows: [row('collapse-normal'), row('collapse-reduced', { red: 1 })] }, now, ids).some((p) => /red flashes/.test(p)));

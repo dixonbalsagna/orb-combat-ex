@@ -43,6 +43,13 @@ try {
   check('it holds the pin\'s and the child\'s readings of every clip, four each', CHILD_CLIPS.every((id) => rec.pinReadings[id].length === 4 && rec.childReadings[id].length === 4));
   check('the engine-flip entry (RL-202) is re-pointed at the child, the template and the end date kept', rec.engineFlip.commit === CHILD && rec.engineFlip.template.tag === 't' && rec.engineFlip.until === '2026-11-15' && rec.engineFlip.ruling === 'RL-202');
   check('the gate passes the child as the pin and refuses the old pin (the record is for the child)', gateProblems(rec, CHILD).length === 0 && gateProblems(rec, PIN).some((m) => /on record is for bbbbbbbb/.test(m)));
+  // CD-09: --check says EXCEPTION for a grandfathered record (exit 0, never the word ok) and ok for a record that passes the limits
+  { const okRec = w('ok.json', { _why: 'w', commit: PIN, date: '2026-11-13', reduced: { primary: 2, area15: 2.5, twoSec: 1.5 } });
+    const gf = w('gf.json', { _why: 'w', commit: PIN, date: '2026-10-27', grandfathered: true, reduced: { primary: 3, area15: 3, twoSec: 3 } });
+    const rg = spawnSync(process.execPath, [join(here, 'signature-gate.mjs'), '--check', '--file', gf, '--pin', PIN], { encoding: 'utf8' });
+    check('--check on a grandfathered record exits 0 and says EXCEPTION, never ok', rg.status === 0 && /signature gate EXCEPTION \(grandfathered, NOT a pass/.test(rg.stdout) && !/signature gate ok/.test(rg.stdout), rg.stdout + rg.stderr);
+    const ro = spawnSync(process.execPath, [join(here, 'signature-gate.mjs'), '--check', '--file', okRec, '--pin', PIN], { encoding: 'utf8' });
+    check('--check on a record that reads within the limits says ok', ro.status === 0 && /signature gate ok/.test(ro.stdout) && !/EXCEPTION/.test(ro.stdout), ro.stdout + ro.stderr); }
   r = spawnSync(process.execPath, [join(here, 'signature-gate.mjs'), '--record-child', join(d, 'child.json')], { encoding: 'utf8' });
   check('missing arguments are refused with the usage', r.status === 2 && /usage/.test(r.stderr));
 } finally { rmSync(d, { recursive: true, force: true }); }

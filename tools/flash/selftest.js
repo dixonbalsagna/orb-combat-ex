@@ -111,6 +111,24 @@ check('a 9% corner strobing 10 a second fails (it passed under the lenient total
 check('a swing of 0.08 (under the 10% step) at 10 a second passes', run(strobe([128, 128, 128], [140, 140, 140], 3, 2)).general.flashes === 0);
 check('a swing between two states both at or above 0.80 passes', run(strobe([235, 235, 235], [255, 255, 255], 3, 2)).pass);
 check('the same swing from just below 0.80 fails (darker state under it)', !run(strobe([225, 225, 225], [255, 255, 255], 3, 2)).pass);
+
+// ---- counter-phase (CD-09, 2026-11-13; audit/2026-11-07 findings K-01 and K-02): two equal regions strobing against each other. The old per-frame rule gave every tie between the two directions to "up", so such a strobe
+// was one endless run and read 0.5 (a pass) where either region alone reads 10. This case fails on that code.
+{
+  const halves = (l, r) => {
+    const data = new Uint8Array(WID * HEI * 4);
+    for (let y = 0; y < HEI; y++) for (let x = 0; x < WID; x++) { const c = x < WID / 2 ? l : r, p = (y * WID + x) * 4; data[p] = c[0]; data[p + 1] = c[1]; data[p + 2] = c[2]; data[p + 3] = 255; }
+    return { w: WID, h: HEI, data };
+  };
+  const counter = (half, seconds) => { const s = [halves(WHITE, BLACK), halves(BLACK, WHITE)], out = []; for (let i = 0; i < Math.round(60 * seconds); i++) out.push(s[Math.floor(i / half) % 2]); return out; };
+  const alone = (half, seconds) => strobe(BLACK, WHITE, half, seconds, [0, 0, 0.5, 1]);   // the left half alone, the right half steady
+  for (const half of [3, 5, 10]) {
+    const cp = run(counter(half, 3)), one = run(alone(half, 3));
+    check(`two equal halves strobing in counter-phase every ${half} frames read as either half alone (${one.general.flashes} a second)`, cp.general.flashes === one.general.flashes && cp.general.flashes > 0.5, `counter-phase ${cp.general.flashes}, alone ${one.general.flashes}`);
+  }
+  check('counter-phase at 10 a second fails the gate (it passed with a reading of 0.5)', !run(counter(3, 3)).pass);
+  check('counter-phase at 2.5 a second passes, as the same half alone does', run(counter(12, 3)).pass && run(alone(12, 3)).pass);
+}
 {
   // slow ramps: black to white over 30 frames and back, twice, are one change each: 4 changes in 2 seconds
   const fr = [];
@@ -288,7 +306,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
   const ok1 = run([wr(1, 'explosion', true, 'ok', 1), wr(20, 'transform', true, 'ok', 1), wr(40, 'body_hit', true, 'ok', 0.17), wr(50, 'block', true, 'ok', 0.03)]);
   check('weights summing to 2.2 in a window pass the budget of 2.5, with two flashes of weight 0.5 or more (cap 3)', ok1.pass && Math.abs(ok1.worstWeight - 2.2) < 1e-9 && ok1.worstBig === 2, JSON.stringify(ok1));
   check('weights summing to 3 in 60 ticks fail the budget even with three flashes (the old count would have passed)', !run([wr(1, 'a', true, 'ok', 1), wr(20, 'b', true, 'ok', 1), wr(40, 'c', true, 'ok', 1)]).pass);
-  check('four flashes of weight 0.5 or more fail the cap of 3 even under the budget', !run([wr(1, 'a', true, 'ok', 0.5), wr(10, 'b', true, 'ok', 0.5), wr(20, 'c', true, 'ok', 0.5), wr(30, 'd', true, 'ok', 0.5)]).pass === true || run([wr(1, 'a', true, 'ok', 0.5), wr(10, 'b', true, 'ok', 0.5), wr(20, 'c', true, 'ok', 0.5), wr(30, 'd', true, 'ok', 0.5)]).worstBig === 4);
+  { const four = run([wr(1, 'a', true, 'ok', 0.5), wr(10, 'b', true, 'ok', 0.5), wr(20, 'c', true, 'ok', 0.5), wr(30, 'd', true, 'ok', 0.5)]); check('four flashes of weight 0.5 or more fail the cap of 3 even under the budget', !four.pass && four.worstBig === 4, JSON.stringify(four)); }
   check('seven small flashes in 60 ticks fail the rate ceiling of 6', !run([1, 5, 10, 15, 20, 25, 30].map((t) => wr(t, 'x', true, 'ok', 0.05))).pass);
   check('six small flashes pass the rate ceiling', run([1, 5, 10, 15, 20, 25].map((t) => wr(t, 'x', true, 'ok', 0.05))).pass);
   check('a below_step row is not a flash', run([wr(1, 'x', true, 'below_step', 0), wr(2, 'x', true, 'below_step', 0), wr(3, 'x', true, 'below_step', 0), wr(4, 'x', true, 'below_step', 0), wr(5, 'x', true, 'below_step', 0), wr(6, 'x', true, 'below_step', 0), wr(7, 'x', true, 'below_step', 0)]).worst === 0);

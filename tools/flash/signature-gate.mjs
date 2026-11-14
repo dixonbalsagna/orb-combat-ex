@@ -108,7 +108,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (!pin) { try { pin = JSON.parse(readFileSync(join(HERE, '..', 'site.json'), 'utf8')).pin; } catch { /* reported */ } }
     const p = gateProblems(record, pin);
     if (p.length) { for (const m of p) console.error(`signature gate FAILED: ${m}`); process.exit(1); }
-    console.log(`signature gate ok: ${String(pin).slice(0, 8)}; reduced ${readingText(record.reduced)} (limit 2.5 / 3 / 2)${record.grandfathered ? ' (grandfathered: the pin Legal ruled on before the condition)' : ''}`);
+    // CD-09 (2026-11-13): a grandfathered record is an exception that exits 0 so the standing pin is not broken, and it is never printed as "ok": a reader of the log must not take it for a pass of the limits.
+    if (record.grandfathered) console.log(`signature gate EXCEPTION (grandfathered, NOT a pass of the limits 2.5 / 3 / 2): ${String(pin).slice(0, 8)}; reduced ${readingText(record.reduced)}; the pin Legal ruled on before the condition`);
+    else console.log(`signature gate ok: ${String(pin).slice(0, 8)}; reduced ${readingText(record.reduced)} (limit 2.5 / 3 / 2)`);
     process.exit(0);
   }
   if (args.includes('--record-child')) {

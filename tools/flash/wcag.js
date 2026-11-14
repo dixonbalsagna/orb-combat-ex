@@ -267,9 +267,13 @@ class Pool {
     this.run = { up: null, down: null };
     this.sat = new Int32Array((w + 1) * (h + 1));
     this.events = levels.map(() => []); this.best = 0; this.bestAt = -1; this.bestDirPx = 0; this.series = new Map();
+    this.last = 'down';   // the direction that led the last frame with any change: a tie goes to the other one (CD-09, 2026-11-13)
   }
   push(k, det, counts) {
-    const dom = counts.up >= counts.down ? 'up' : 'down';
+    // A tie between the two directions (equal regions strobing in counter-phase) goes to the direction opposite to the last frame's, so each frame is a change the other way and the strobe is counted, as either region alone is;
+    // the old rule gave every tie to 'up': one endless run and a reading of about 0.5 for a strobe that reads 10 alone (CD-09, audit/2026-11-07 finding K-01).
+    const dom = counts.up > counts.down ? 'up' : counts.down > counts.up ? 'down' : (this.last === 'up' ? 'down' : 'up');
+    if (counts.up + counts.down > 0) this.last = dom;
     for (const dir of ['up', 'down']) {
       const cnt = dir === dom ? counts[dir] : 0, mask = dir === 'up' ? det.upMask : det.downMask, acc = this.acc[dir];
       if (cnt >= this.poolMin * this.n) {

@@ -1,5 +1,10 @@
 {
   "_why": "A recorded full-set pass of the pixel check (tools/flash/release-pass.mjs --record). tools/build-site.mjs refuses to publish the playable site unless this file matches the commit being published and every row is PASS. Do not edit by hand.",
+  "superseded": {
+    "on": "2026-11-13",
+    "by": "CD-09 (A-LEGAL-08), Tools",
+    "why": "this pass (d3f1ca0e, 2026-10-15) was measured with the analyser that gave every tie between the two change directions to up, so equal regions strobing in counter-phase read about 0.5 where either alone reads 10; the tie is fixed (tools/flash/wcag.js), the set and the tile ground players see changed, and no commit has met the release rule since"
+  },
   "commit": "d3f1ca0e22f39110d69feceb4913ff799d11db5d",
   "recorded": "2026-10-15",
   "contentHash": "6d50d7a0ddd0a4fcd2fc407e29b5d6862eda7811fd45cec9abc25b14898d4988",
