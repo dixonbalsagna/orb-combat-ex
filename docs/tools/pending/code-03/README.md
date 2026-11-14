@@ -54,3 +54,7 @@ A page build's source tree against HEAD 59c6b195: **30 files differ**: 26 data a
 - A saved file's top-level `build` (the build info object of the LAN-style save) is unchanged; this is the replay's own field, which `SimReplay.play` asks of a stamped build.
 - Not done: the shared header builder (one `SimReplay` function for the recorder, the LAN save, the black box and this hook). The review preferred it; Simulation has not parked one. This hook asks `buildId` itself in the meantime, and the four writers can move to the shared one when it exists.
 - A trap I met running the check: an `APPDATA` in Git Bash's `/c/Users/...` form makes Godot's `get_files_at("user://...")` fail on a folder it has just written to (the check's "keeps the newest 20" case then reads 0 files). Use a Windows-style path (`cygpath -w`) when pointing the game's data folder away.
+
+## Re-cut again 2026-11-14 on HEAD f1f91f45 for B1: the header is SimReplay.header's when it exists
+
+`report-hook.patch` is cut again (sha1 `ebe79b6a0480e79b5fa421f529849d01f6157e77`, was 210584948d8f...). `MatchRecorder._begin` now calls `SimReplay.header(seed, setup, ai)` when the tree has it (asked by name), so the recorder, the LAN save, the black box and this hook write one header; without it the by-hand header and the by-name `buildId` fallback stay. The check is 18 cases (the header keys are `SimReplay.header`'s, key for key). Proof and the other B1 Tools pieces: `docs/tools/pending/b1-tools/README.md`.

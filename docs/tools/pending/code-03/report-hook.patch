@@ -23,10 +23,10 @@ index fbe2402..36502a7 100644
 +	return host.record_file("report", tags, note)
 diff --git a/render/core/match_recorder.gd b/render/core/match_recorder.gd
 new file mode 100644
-index 0000000..23faf78
+index 0000000..d3bd5b4
 --- /dev/null
 +++ b/render/core/match_recorder.gd
-@@ -0,0 +1,147 @@
+@@ -0,0 +1,151 @@
 +class_name MatchRecorder
 +extends RefCounted
 +## The match as a replay, on a plain desktop build (register rows A-UI-02 and A-CODE-03, Tools, 2026-11-14). It was the black box of the private page (tools/preview/blackbox.mjs): a few lines of the
@@ -73,15 +73,19 @@ index 0000000..23faf78
 +	var ai: Dictionary = {}
 +	for k in range(S.fighters.size()):
 +		ai["p%d" % (k + 1)] = S.fighters[k].ai != null
-+	replay = {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(_su), "seed": _seed, "setup": _su.duplicate(true), "ai": ai,
-+		"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
-+	# A stamped build names itself in the replay, as SimReplay.recorder does (A-NET-05, the B1 review): SimReplay.buildId() exists once Simulation's replay-build park has landed, and answers "" in a tree with no
-+	# build_info.json. Asked by name so this file compiles before and after that landing; before it a replay carries no build field, exactly as it did.
++	# The header is SimReplay.header's, the one every replay writer uses (A-NET-05, B1: the recorder, the LAN save, the black box and this hook cannot drift): format, versions, the setup's data hash, seed, setup,
++	# AI flags, and the build that made it when this build is stamped. Asked by name so this file compiles and plays before AND after Simulation's replay-build park lands, whichever lands first.
 +	var sr := SimReplay.new()
-+	if sr.has_method("buildId"):
-+		var bid: String = str(sr.call("buildId"))
-+		if bid != "":
-+			replay["build"] = bid
++	if sr.has_method("header"):
++		replay = sr.call("header", _seed, _su, ai)
++	else:
++		replay = {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(_su), "seed": _seed, "setup": _su.duplicate(true), "ai": ai,
++			"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
++		# a tree with buildId and no header (the first cut of replay-build) still names its build, as its recorder does; a tree with neither writes no field, exactly as before
++		if sr.has_method("buildId"):
++			var bid: String = str(sr.call("buildId"))
++			if bid != "":
++				replay["build"] = bid
 +	_last = []
 +	_last2 = []
 +	for _k in range(S.fighters.size()):
@@ -236,10 +240,10 @@ index ae4749b..6da5f64 100644
 +	return j if j is Dictionary else {}
 diff --git a/render/tools/match_recorder_check.gd b/render/tools/match_recorder_check.gd
 new file mode 100644
-index 0000000..48e0e5b
+index 0000000..374e978
 --- /dev/null
 +++ b/render/tools/match_recorder_check.gd
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,150 @@
 +extends SceneTree
 +## The match as a replay on a desktop build (A-UI-02, Tools, 2026-11-14; render/core/match_recorder.gd). Headless, through the real SimHost: a solo match and a couch match are played with scripted intents, the report
 +## and the save are asked for, and the file each leaves in user://reports/ is read back and replayed with SimReplay.play: it must be there, hold the match's kind, mode, build, mark and replay, and reproduce to the
@@ -310,6 +314,16 @@ index 0000000..48e0e5b
 +	var sr_probe := SimReplay.new()
 +	var want_build: String = str(sr_probe.call("buildId")) if sr_probe.has_method("buildId") else ""
 +	_ok(str(rp.get("build", "")) == want_build and (want_build != "" or not rp.has("build")), "the replay names the build exactly when the build is stamped (stamp '%s', replay '%s')" % [want_build, str(rp.get("build", "-"))])
++	# B1: with SimReplay.header present, the recorded replay's header holds exactly the keys SimReplay.header writes (one header for every writer), and without it the keys are the ones this hook wrote before
++	if sr_probe.has_method("header"):
++		var hk: Array = (sr_probe.call("header", int(rp.get("seed", 0)), rp.get("setup", {}), rp.get("ai", {})) as Dictionary).keys()
++		var rk: Array = []
++		for k in ["format", "v", "intent", "data", "seed", "setup", "ai", "ticks", "inputs", "toggles", "checkpoints", "final", "build"]:
++			if rp.has(k):
++				rk.append(k)
++		hk.sort()
++		rk.sort()
++		_ok(hk == rk, "the replay's header keys are SimReplay.header's, key for key (%s | %s)" % [str(hk), str(rk)])
 +	var played: Dictionary = SimReplay.play(rp)
 +	_ok(bool(played.ok) and str(played.final) == live_final, "SimReplay.play reproduces the match to the last tick (%s)" % str(played.get("reason", "")))
 +	# the same match saved again later: a second file, and the report mark of the first stays in the second's marks

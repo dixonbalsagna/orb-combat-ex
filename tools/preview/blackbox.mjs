@@ -186,24 +186,37 @@ export const HOST_FUNCS = [
   '',
 ].join('\n');
 
-// A-NET-05 (a replay names the build that made it; Simulation's SimReplay.buildId()): added to the black box's functions ONLY for a tree whose replay.gd has buildId, so a page build of an older commit still
-// compiles (patchHost's `buildId` option; callers read the tree's replay.gd). The recorded replay then carries "build", and bb_play_start refuses another build's file, with one exception: a tool that films a
-// save made by ANOTHER stamp of the same code (a LAN save carries the kit's own stamp) names that stamp in window.__replay_home, and the file is then checked against it (the data hash still has to match).
-const REC_ANCHOR = '\t\t"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}\n';
+// A-NET-05, B1 (a replay names the build that made it; Simulation's SimReplay.header, buildId and refusal): added to the black box's functions ONLY for a tree whose sim/core/replay.gd has `static func header`,
+// so a page build of an older commit still compiles (patchHost's `header` option; the callers read the tree's replay.gd: B1 review finding 3). With it:
+//   - the recorded replay's header is SimReplay.header(...), the one header every writer uses (it carries "build" when the build is stamped: finding 2's better fix), not a dict written here by hand;
+//   - bb_play_start asks SimReplay.refusal(rp, home) and, when it says no, sets window.__replay_refused to the reason ("format", "build" or "data") and window.__replay_refused_ids to [the file's build, this
+//     page's], so a tool or the page can say WHY a file was refused (finding 6). A tool filming a save made by ANOTHER stamp of the same code (a LAN save carries the kit's own stamp) names that stamp in
+//     window.__replay_home, and the file is then checked against it as `home` (the data hash still has to match: finding 1).
+const REC_ANCHOR = '\t_bb = {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(_bb_su), "seed": _bb_seed, "setup": _bb_su.duplicate(true), "ai": ai,\n\t\t"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}\n';
 const PLAY_ANCHOR = '\tif rp.get("format", "") != SimReplay.FORMAT or int(rp.get("v", 0)) != SimReplay.V or int(rp.get("intent", 0)) != SimIntent.VERSION:\n';
-export const HAS_BUILD_ID = /static func buildId\(/;
-/** Whether a tree's sim/core/replay.gd has SimReplay.buildId (A-NET-05 has landed in it). */
-export function hasBuildId(tree) { const f = join(tree, 'sim', 'core', 'replay.gd'); return existsSync(f) && HAS_BUILD_ID.test(readFileSync(f, 'utf8')); }
-export function withBuildId(funcs) {
-  if (funcs.split(REC_ANCHOR).length !== 2 || funcs.split(PLAY_ANCHOR).length !== 2) throw new Error('tools/preview/blackbox.mjs: the black box functions moved (withBuildId is out of date)');
-  const rec = REC_ANCHOR + '\tif SimReplay.buildId() != "":\n\t\t_bb["build"] = SimReplay.buildId()   # A-NET-05: the build that made it (build_info.json)\n';
+export const HAS_HEADER = /static func header\(/;
+/** Whether a tree's sim/core/replay.gd has SimReplay.header (A-NET-05, B1, has landed in it). */
+export function hasHeader(tree) { const f = join(tree, 'sim', 'core', 'replay.gd'); return existsSync(f) && HAS_HEADER.test(readFileSync(f, 'utf8')); }
+export function withHeader(funcs) {
+  if (funcs.split(REC_ANCHOR).length !== 2 || funcs.split(PLAY_ANCHOR).length !== 2) throw new Error('tools/preview/blackbox.mjs: the black box functions moved (withHeader is out of date)');
+  const rec = '\t_bb = SimReplay.header(_bb_seed, _bb_su, ai)   # the one header every writer uses; it names the build when the build is stamped (A-NET-05, B1)\n';
   const play = '\tvar bb_home: String = String(JavaScriptBridge.eval("window.__replay_home || \'\'", true)) if OS.has_feature("web") else ""   # a tool filming a save of another stamp names it\n' +
-    '\tvar want_build: String = bb_home if bb_home != "" else SimReplay.buildId()\n' +
-    '\tif rp.get("format", "") != SimReplay.FORMAT or int(rp.get("v", 0)) != SimReplay.V or int(rp.get("intent", 0)) != SimIntent.VERSION or String(rp.get("build", "")) != want_build:\n';
-  return funcs.replace(REC_ANCHOR, () => rec).replace(PLAY_ANCHOR, () => play);
+    '\tvar bb_why: String = SimReplay.refusal(rp, bb_home if bb_home != "" else null)\n' +
+    '\tif bb_why != "" and _bb_refused(bb_why, rp):\n';
+  const helper = [
+    '',
+    '',
+    '## A refused playback says why (A-NET-05, B1): the reason and the two build ids go to the page, which a tool or the page reads. Always true: it sits in the `if` of bb_play_start so the `return false` after it is the refusal.',
+    'func _bb_refused(why: String, rp: Dictionary) -> bool:',
+    '\tif OS.has_feature("web"):',
+    '\t\tJavaScriptBridge.eval("window.__replay_refused = \'%s\'; window.__replay_refused_ids = [\'%s\', \'%s\'];" % [why, String(rp.get("build", "")).replace("\'", ""), SimReplay.buildId().replace("\'", "")], true)',
+    '\treturn true',
+    '',
+  ].join('\n');
+  return funcs.replace(REC_ANCHOR, () => rec).replace(PLAY_ANCHOR, () => play) + helper;
 }
 
-/** sim_host.gd with the black box's hooks and functions. Throws, naming the hook, when the file has moved (the preview must then be updated). Keeps the file's line endings. opts.buildId: the tree's replay.gd has SimReplay.buildId (A-NET-05). */
+/** sim_host.gd with the black box's hooks and functions. Throws, naming the hook, when the file has moved (the preview must then be updated). Keeps the file's line endings. opts.header: the tree's replay.gd has SimReplay.header (A-NET-05, B1). */
 export function patchHost(text, opts = {}) {
   const crlf = text.includes('\r\n');
   const nl = (s) => (crlf ? s.replace(/\n/g, '\r\n') : s);
@@ -214,7 +227,7 @@ export function patchHost(text, opts = {}) {
     if (n !== 1) throw new Error(`render/core/sim_host.gd: ${h.name}: expected the line once, found it ${n} times (tools/preview/blackbox.mjs HOOKS is out of date)`);
     out = out.replace(from, () => nl(h.to));
   }
-  return out.replace(/\s*$/, '') + nl(opts.buildId ? withBuildId(HOST_FUNCS) : HOST_FUNCS);
+  return out.replace(/\s*$/, '') + nl(opts.header ? withHeader(HOST_FUNCS) : HOST_FUNCS);
 }
 
 
@@ -533,4 +546,4 @@ export const AUDIO_HEAD = String.raw`
 })();
 `;
 
-export const BB_FINGERPRINT = createHash('sha1').update(JSON.stringify([HOOKS, HOST_FUNCS, PAGE_SCRIPT, AUDIO_HEAD, patchAudio.toString(), patchHaptics.toString(), withBuildId.toString()])).digest('hex').slice(0, 6);
+export const BB_FINGERPRINT = createHash('sha1').update(JSON.stringify([HOOKS, HOST_FUNCS, PAGE_SCRIPT, AUDIO_HEAD, patchAudio.toString(), patchHaptics.toString(), withHeader.toString()])).digest('hex').slice(0, 6);
