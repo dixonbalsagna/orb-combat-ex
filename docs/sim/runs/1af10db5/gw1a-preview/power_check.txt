@@ -1,0 +1,52 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+route: a heavy charged to full, power 0: share 1.000
+route: the launcher, power 0: share 0.500
+route: the launcher, power 1000: share 0.500
+route: the launcher, power 500: share 0.375
+route: the sell's send, power 1000: share 0.500
+route: the turn, power 0: share 0.500
+route: template heavy_clash: share 0.500, speed 1414
+route: template guard_break: share 0.500, speed 1414
+route: template dodge: share 0.250, speed 1000
+route: template trade_blows: share 0.250, speed 1000
+route: template clean_hit_heavy: share 0.500, speed 1414
+route: chain link pressure: share 0.500, speed 1414
+route: chain link clean_hit: share 0.500, speed 1414
+route: chain link heavy_clash: share 0.500, speed 1414
+route: chain link dodge: share 0.500, speed 1414
+route: small pop clean_hit: share 0.125, speed 707
+aimed tier 1: 24 sends at a building, 24 hit it
+aimed tier 4: 24 sends at a building, 23 hit it
+fresh: after 60 s of fight, 1.000
+meteor, on: first tick 12821, fastest 22264, along the line 6420; 6.3 s, 25627 along, top 17759 up
+meteor, on: first tick 12821, fastest 22264, along the line 6420; 6.3 s, 25627 along, top 17759 up
+flight tier 1: flat out 5001 (off 10320), close 1032 (off 1032)
+flight tier 2: flat out 6624 (off 11352), close 1135 (off 1135)
+flight tier 3: flat out 8701 (off 12384), close 1238 (off 1238)
+flight tier 4: flat out 11525 (off 13416), close 1342 (off 1342)
+dash close from 1000 at tier 1, arrival off, in ticks: 11 with the dash and the kick (0.18 s, target 0.40 s); 49 the kick alone; 11 the dash alone; 49 neither
+dash close from 3000 at tier 1, arrival off, in ticks: 35 with the dash and the kick (0.58 s, target 0.80 s); 129 the kick alone; 35 the dash alone; 129 neither
+dash close from 6000 at tier 1, arrival off, in ticks: 71 with the dash and the kick (1.18 s, target 1.40 s); 163 the kick alone; 71 the dash alone; 163 neither
+dash close from 6000 at tier 4, arrival off, in ticks: 32 with the dash and the kick (0.53 s, target 0.75 s); 80 the kick alone; 32 the dash alone; 80 neither
+dash close from 1000 at tier 1, arrival on, in ticks: 15 with the dash and the kick (0.25 s, target 0.40 s); 51 the kick alone; 15 the dash alone; 51 neither
+dash close from 3000 at tier 1, arrival on, in ticks: 39 with the dash and the kick (0.65 s, target 0.80 s); 131 the kick alone; 39 the dash alone; 131 neither
+dash close from 6000 at tier 1, arrival on, in ticks: 75 with the dash and the kick (1.25 s, target 1.40 s); 165 the kick alone; 75 the dash alone; 165 neither
+dash close from 6000 at tier 4, arrival on, in ticks: 36 with the dash and the kick (0.60 s, target 0.75 s); 82 the kick alone; 36 the dash alone; 82 neither
+slip: a tap of 1 at 3,000 apart, his speed from the last held tick: 4000, 3213, 2362, 1512, 1125, 1047 (off, 4 ticks after: 2649)
+slip: a tap of 2 at 3,000 apart, his speed from the last held tick: 4125, 3307, 2418, 1529, 1125, 1047 (off, 4 ticks after: 2727)
+slip: a tap of 5 at 3,000 apart, his speed from the last held tick: 4500, 3588, 2584, 1581, 1125, 1047 (off, 4 ticks after: 2960)
+slip: travelled in 60 ticks at 3000 apart (bh, on/off): stick 4.98/4.98; 1 9.19/12.81; 2 10.05/13.85; 3 10.94/14.92; 4 11.85/16.01; 5 12.79/17.13; 6 13.76/18.28; held 65.67/65.67
+slip: travelled in 60 ticks at 1000 apart (bh, on/off): stick 4.98/4.98; 1 9.19/12.81; 2 10.05/13.85; 3 10.94/14.92; 4 11.85/16.01; 5 12.79/17.13; 6 13.76/18.28; held 65.67/65.67
+trips tier 1: 2, median 841, longest 841
+trips tier 2: 3, median 1748, longest 4750
+trips tier 3: 5, median 1567, longest 5559
+trips tier 4: 3, median 11349, longest 14537
+shares asked for last before a launch: { "0.500": 11, "0.250": 1, "1.000": 1 }
+sends: 13 launches; fastest at tiers 1 to 4: 1444, 2174, 3303, 7001; along the line 1352, 4217, 5529, 13166; 0 past the cap, 0 that glow at tier 2 or under
+rollback: 1400 ticks, 1 launches, 0 differ
+POWER: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/power_check.gd: no SCRIPT ERROR lines
+gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/power_check.gd: the verdict line reports no failures

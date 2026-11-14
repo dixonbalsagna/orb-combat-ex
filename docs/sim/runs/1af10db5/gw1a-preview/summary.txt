@@ -1,0 +1,20 @@
+GW1a preview: a scratch export of 1af10db5 with energy-on.patch and a1-owed's close-rows.patch, and the data of GW1a's target tree (the kept 9 November data with power.json enabled and dash.enabled true) copied over main's data. One Godot job, below normal.
+#### gp
+import 0; parse errors 0
+golden: exit 0 in 197 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 191.4 s
+  REPRODUCES GW1a's target byte for byte (sha256 a2b9ed1c6f487c29)
+parity against GW1a's target through gate.mjs: exit 1 in 419 s; golden check FAILED gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+41:FAIL  the free-flight speed and the locked damping, as reads: tier 1.0, stance 3.0, dash true: one step from rest gave a speed of 9946.3203485508, and flightSpeed says 1393.2
+63:FAIL  hit-stop by weight: a replay with hit-stop by weight on does not carry its data
+65:FAIL  the replay header covers a planet's data: rings.json's turn edited: turn on [true, true], off [false, false], no planet, gen 1, gen 2 [false, true, true]; only the turn's setups should move
+68:FAIL  a match starts on the floor of a lake or the sea: the floor off: a flat start is at 523.407 and 556.608, not 60
+69:FAIL  the run's ground: a coastal home's first ring: turned false, ok true, home held true, 2 reads in 2 frames (want turned, ok, held, a read a frame)
+71:FAIL  the campaign's arc and episode: the cross-back of 0bac000000017334: from 2 to 4, asked -1, column 4 led by { "id": 0, "kind": "city", "place": 10, "arc": -754, "entry": 551, "dir": -1, "preferred": 0 } (want 2 to 4, column 2's unta
+81:FAIL  Animation's view fields: a launch's tier, a hit's stop and tier: the hit's fields: stop 6 (want 7), tier 3.0
+85:FAIL  matches: default seed 1: first full-state difference by tick 11280 (checkpoint 94): f7a0190f293847ce:ecc43758d286914f:0b0d007e3b4de3d5 vs golden 808823af691af277:4ca17283adc4c6c4:fe1e2ed01055a55e; swap seed 1: first full-state diff
+87:FAIL  planet worlds (golden): the planet match {"planet":7,"touch":3} seed 1: first full-state difference by tick 1560 (checkpoint 13): 3fdcfbf6b6b3fc7d:34b6d08011a6a286:79903701492cc4f5 vs golden e09e004a5b52b484:0c12945d48e5c781:b2d075
+power_check on the 9 November data through gate.mjs: exit 0 in 238 s; POWER: 0 check(s) failed
+kick: exit 1 in 53 s; script errors 0; KICK: 2 check(s) failed
+3:FAIL  the switch is off
+8:FAIL  off: the same as a match with no word of it
+== Rendering's checks on sz (the replay size fix on World's stack)

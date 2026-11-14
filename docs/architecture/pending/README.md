@@ -4,6 +4,12 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **Landed in the Sunday batch (4890bdd9), their folders deleted:** `power-travel/` (a setup's `"travel"`, with Netcode's and Tools' grants and the stance-freeze doc lines) and `power-page/` (Tools' page lines: the model on for the page, and the travel slider).
 
+**Parked, sprint A1:** `meters-zero/` (A-ENERGY-05, Orb's decision 6): the old meters change nothing, the comeback is a rule for both fighters (Narrative's grant for the data). Changes the hash: GW1b.
+
+**Parked, sprint A1:** `replay-sizes/` (support for World's five planet sizes): a replay's header is made at the size its setup names, so a sized planet's replay plays in a host bound to another size; applies after World's three parks. No change for medium.
+
+**Parked, sprint A1:** `energy-on/` (A-ENERGY-04): the one energy model and the dash on in main's data (a grant), with the rows written for them off pinned; it replaces `power-flip/`, deleted. Changes the hash: GW1a.
+
 **Parked, sprint A1:** `a1-owed/`: hit-stop by weight's never-cut list (heavy, launch, launch_full: Game Design) and power_check's close times to striking distance with the arrival off and on (needed before GW1a lands the arrival in main's data); the docs' underTicks 12 is edited in place. No state change.
 
 **Parked, sprint A1:** `replay-build/` (A-NET-05): a replay names the build that made it (Tools' stamp, `build_info.json`), and another build's replay is refused before its first tick with a reason and both ids; the sentence is UI's. No state change. Lands before golden window GW1.
@@ -13,7 +19,7 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 **Landed in 6eec6a75, their folders deleted:** `power-dash/` (LT held at the level's flat out at any range, behind its switch, with Encounter's arrive) and `cd05-witness/` (CD-05: the menace hold at the cap gone, Witness from the city wrecked).
 
 **Parked, the one energy model's second half:**
-- `power-flip/`: the data's switch on, with the golden regenerated. It lands after Sunday, once 12 checks of five owners are pinned or re-read; the list is in its README.
+- `power-flip/`: replaced by `energy-on/` (A1), and deleted.
 
 **Landed, its folder deleted:** `parity-wired-sources/` (parity's wired rows after World's no-casualty-feed; a row whose path is gone fails by name).
 

@@ -46,6 +46,16 @@ Each passes on clean HEAD and fails with this park; the baseline is in `docs/sim
 
 **Not this park:** Netcode's `spectator_check --negative-control` misses 9 breaks on clean HEAD as well. Camera's `chase_rush_check`, which the old flip broke, passes (130).
 
+## The GW1a preview: today's code reproduces the target
+
+Today's code (an export of 1af10db5) with `energy-on.patch`, `../a1-owed/close-rows.patch` and the data of GW1a's target tree (the kept 9 November data with these two switches on) copied over main's data:
+- **The golden reproduces GW1a's target byte for byte** (sha256 `a2b9ed1c…`). So once every switch group's data has landed, main's golden is the target.
+- `power_check` passes on that data: 0 failed.
+- **My other gates don't pass on it yet** (A-CODE-02, the gates that only pass with the switches off):
+  - parity fails 9 rows, the golden matches among them. Inside parity's process an earlier row's switches leak into them;
+  - `kick_check` fails 2 rows written for the kick off in the data.
+  - Records in `docs/sim/runs/1af10db5/gw1a-preview/`.
+
 ## Apply
 
 `git -c core.autocrlf=false apply data-power-on.patch energy-on.patch`, on HEAD 78425d6d. Each applies alone. With `../a1-owed/`'s `close-rows.patch` it applies in either order (checked).

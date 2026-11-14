@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+FAIL  the switch is off
+coin: 95% the other way in 15 ticks
+keepTop: from 6,500: peak 2922, at 1,500 2922, closest 188; without: at 1,500 1103
+whole: 7 kicks, 0 plants in 3,600 ticks
+rollback: 11 kicks, 7 plants in the window
+FAIL  off: the same as a match with no word of it
+KICK: 2 check(s) failed

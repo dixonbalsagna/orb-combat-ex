@@ -29,4 +29,4 @@ On bf6c4538 with World's three parks applied (records in `docs/sim/runs/bf6c4538
 - **Golden unchanged.** Parity through `gate.mjs`: exit 0, no SCRIPT ERROR lines, golden check passed, the new row ok.
 - World's `SIZES` check: 0 failed. `replay_xproc`: pass.
 - `size_replay_probe`: big and tiny play back with the static at medium; each header is the same at either static. Before the fix both failed, which is the negative control.
-- Rendering's 15 on the same tree: RGATES_LINE.
+- Rendering's 15 on the same tree: all 15 pass.
