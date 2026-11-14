@@ -125,7 +125,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-CODE-02 | M | major |  | A-CODE-01 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no golden record and was verified by a pack read and a smoke… |
-| A-ENERGY-04 | S | major | GW1 |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only through a code patch the page tool writes, so main does not… |
+| A-ENERGY-04 | S | major | GW1 |  | reported | 201bd3d2 (Sim, committed locally) — parked and gated, waiting for its window (EP status 2, 2026-11-14); World x8, Encounter x4 and Rendering's after_check are pinning. | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only through a code patch the page tool writes, so main does not… |
 | A-ENERGY-05 | M | major | GW1 |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) — Game Design's comeback numbers landed in 970d15a6; the data change (other effects set to zero) lands in GW1. | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in every match: they change damage, energy regain, beam contests… |
 | A-NET-05 | S | major |  |  | reported | parked, held for B1 fixes (EP status 1, 2026-11-14) | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with the same data and different code is run and fails at… |
 
@@ -164,13 +164,13 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-WORLD-01 | M | blocker | GW1 |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the menu never sets that key, and Orb's globe build… |
+| A-WORLD-01 | M | blocker | GW1 |  | reported | 3b6e89b5 (World, committed locally) — parked and gated, waiting for its window (EP status 2, 2026-11-14); lands first in GW1b. | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the menu never sets that key, and Orb's globe build… |
 
 **Added since the path, outside the register** (5 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They land as window GW1c, after GW1b.
 
 | Item | Owner | What | Status | Evidence | Where it came from |
 | --- | --- | --- | --- | --- | --- |
-| ADD-A1-01 | world-environment | Five selectable planet sizes (World, with Simulation and Performance): from World's six, five are picked; each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window. | not started | planned in docs/ep/sprints/A1-sprint.md; the stand-in's planet design comes first | Orb, 2026-11-13 night (ideas-log ID-22) |
+| ADD-A1-01 | world-environment | Five selectable planet sizes (World, with Simulation and Performance): from World's six, five are picked; each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window. | reported | 3b6e89b5 (World, five sizes) and 7321f49b (Sim, replay sizes); GD ruling a046f3d9; Netcode pricing cf909e93 | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-02 | world-environment | Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-04 | rendering-techart | Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |

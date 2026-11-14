@@ -30,7 +30,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-CONTROLS-04 | A1 | game-design | S | major | reported |  | The flight speed the owner preferred (3500) exists only as a slider on the private browser page; the data's… |
 | A-CONTROLS-06 | A1 | controls-feel | M | major | reported |  | No moveset coverage probe exists: the nearest tool presses each input alone for 90 ticks and its saved result… |
 | A-ENERGY-02 | A1 | game-design | S | major | landed |  | No single written page states the model: it is spread over six design pages, the oldest still a proposal that… |
-| A-ENERGY-04 | A1 | simulation-engine | S | major | briefed |  | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only… |
+| A-ENERGY-04 | A1 | simulation-engine | S | major | reported |  | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only… |
 | A-ENERGY-05 | A1 | simulation-engine | M | major | briefed |  | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in… |
 | A-ENERGY-06 | A1 | tools-pipeline | S | major | landed |  | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two… |
 | A-LEGAL-02 | A1 | tools-pipeline | M | blocker | briefed |  | No desktop package for an outside tester can be made today: the build workflow needs a recorded approval file… |
@@ -83,7 +83,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-UI-04 | A1 | ui-ux | M | major | reported |  | Making the Rail the default is unfinished: its switch is off on main, three older HUD checks fail with it on,… |
 | A-UI-06 | A1 | ui-ux | S | major | reported |  | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from… |
 | A-UI-09 | A1 | ui-ux | S | major | reported |  | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every… |
-| A-WORLD-01 | A1 | world-environment | M | blocker | briefed |  | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made… |
+| A-WORLD-01 | A1 | world-environment | M | blocker | reported |  | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made… |
 | A-WORLD-14 | A1 | orb | S | minor | landed |  | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes… |
 | A-ACCESS-01 | A2 | accessibility-localization | S | major | not started |  | There is no accessibility pass or record newer than 2026-10-31 and no runs folder for the area, so the… |
 | A-ACCESS-02 | A2 | ui-ux | S | minor | not started | CD-14 | The Hit pause slider is still shown on the Accessibility page and still has no reader outside the user… |
@@ -323,4 +323,4 @@ From the corrective plan: none. Every item without a closing entry, or with an o
 
 **From QA's bug list** (qa/known-bugs.md; the register's row A-QA-03 says it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09, so it is not the whole bug list). Entries: KB-001 to KB-006 (the pinned prototype, open as coded, no release blocked) and GB-001 to GB-009. Not closed: GB-003 camera jolt on a knock-away (with Camera), GB-004 a design call, GB-005 mountain tumbles (with World), GB-007 rocks round a fast fighter (not reproduced), GB-009 the blaster's balance. Fixed but not re-verified in play: GB-002, GB-006. None has a register row; they are listed apart until QA's rows A-QA-03 and A-QA-07 re-read the list against the played build.
 
-**From the parked folders** (docs/*/pending, file counts read 2026-11-14): accessibility 0, animation 9, architecture 17, art 4, audio 82, camera 53, combat 147, controls 57, director 161, narrative 20, net 2, perf 0, rendering 127, tools 139, ui 41, vfx 51, world 33 (943 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.
+**From the parked folders** (docs/*/pending, file counts read 2026-11-14): accessibility 0, animation 9, architecture 20, art 4, audio 82, camera 53, combat 149, controls 57, director 166, narrative 20, net 2, perf 0, rendering 128, tools 139, ui 43, vfx 51, world 34 (957 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.

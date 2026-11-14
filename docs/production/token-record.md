@@ -14,6 +14,8 @@
 
 **Reading within the week, EP status 1 (2026-11-14, about 02:45):** all-models 53%, Fable 72%. Stand-in specialist work this week so far about 15M tokens; the A1 directors' work is the rest. (The week's row closes at the Friday 19:00 reset.)
 
+**Reading, EP status 2 (Sat 14 Nov, 02:50 PST):** all-models 64%, Fable 87%; the Fable reset waits on Orb (the EP's rule: press at about 85% all-models or 90% Fable).
+
 ## The rate basis the EP gave (to convert tokens to meter points)
 
 - About **1.6 all-models points per 1M tokens on the largest (Fable) model**; about **1 point per 1M on the smaller models** most directors run on. (The audit measured the first: 11 points for 7.0M tokens.)
