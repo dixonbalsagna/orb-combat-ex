@@ -29,6 +29,8 @@ There is no real LAN save yet: `saved\` in `orb-lan-6a30b4c9` and `orb-lan-6eec6
 4. QA reads the saves themselves: the two PCs' files should hold the same inputs; `marks` gives the ticks Orb reported; `frames.slow` against `frames.rollbacks`, and `net` (delay, rollbacks, deepest, checks matched), show any stutter.
 5. QA sends the EP the report folder's path and the verify lines. I read them together with both PCs' `lan-log` files and report.
 
+**Where the raw files stay (Legal RL-267).** Orb and Orb 2's saves, logs and clips stay where they land, in git-ignored `homework/`, and are read in place. An outside tester's raw files would live only in git-ignored `.private/testers/`; LAN is Orb and Orb 2 only for Alpha. None of them is copied into a tracked `docs/*/runs/` folder, a session's scratchpad, a brief or a report. What gets committed is a summary with no names and no paths: verdicts, tick counts, rollback and frame figures.
+
 ## 5. The Windows desktop build and net/ (A-TOOLS-01), a paragraph for Tools
 
 The solo game needs nothing from `net/`. No packed script outside `net/` loads anything from `res://net` or uses a network class; the only mentions are comments in `sim/core/cross.gd`, `sim.gd` and `stage.gd`. Saved matches, replays and "report this" are the sim's and UI's (`sim/core/replay.gd`, the black box in `sim_host.gd`). So the Windows Desktop preset keeps `net/*` in its `exclude_filter` (as Linux and macOS do today), and the packager's check stays as it is: a preset that packs `net/` is refused, which is right (RL-204, condition 1: the privacy line holds only while the game makes no network connection).
