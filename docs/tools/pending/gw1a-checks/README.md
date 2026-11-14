@@ -6,7 +6,7 @@ The EP's first GW1a gate failed `check-scripts`: "57 scripts are neither in CI, 
 
 | Script | Where it stands on the stack |
 | :--- | :--- |
-| `audio/tools/sets_check.gd` | already in CI: the stack's `ci.yml` has the step (Audio's park) |
+| `audio/tools/sets_check.gd` | in CI on the stack: the stack applies `ci-sets-step.patch` (main's `ci.yml` has only the comment) |
 | `render/camera/tests/own_pane_check.gd` | already in CI: the stack's `ci.yml` has the step (Camera's park) |
 | `sim/world/tools/cache_warm_check.gd` | already in CI: `tools/world-checks.json` lists it |
 | `render/tools/match_recorder_check.gd` | **unreviewed** (mine: the report hook's check, A-UI-02) |
@@ -19,7 +19,7 @@ The two unreviewed ones are the whole of the 57. Both are run here, so both go *
 | `ci-gw1a-checks.patch` (sha1 `ca24378e1780fe6f56e968369eec3e935b2cdb4b`) | `.github/workflows/ci.yml`: two steps in the `godot-sim` job, after the cross end negative control: the match recorder check and the match end check, each through `tools/gate.mjs` (the plain form: both scripts `quit(1)` on a failure). Applies to HEAD and to the stack. |
 | `check-scripts.md` (sha1 `ac6d710b700105b960e5901fda007493c9ef85b6`) | `docs/tools/check-scripts.md` as `--write` makes it on the stack with the patch: 267 scripts, 191 in CI, 55 unreviewed; the five new rows. It replaces the table file once the stack has landed (on main today it would list 262). |
 
-**Removed:** `../gw1a-retire/ci-sets-step.patch`. The stack's `ci.yml` already has the audio sets step, so landing the patch as well would put it in twice. The gw1a-retire README says so.
+**Kept:** `../gw1a-retire/ci-sets-step.patch` stays. (My first note here said it was redundant: wrong. The stack's `ci.yml` has the audio sets step only because the EP's stack applies that patch; main's `ci.yml` has just the comment.) Land it with Audio's park as before. `ci-gw1a-checks.patch` applies on top of it or without it: its two steps sit in the `godot-sim` job, a different job, and I checked it applies to both HEAD and the stack.
 
 ## Proof (on a scratch clone of the stack, with the patch applied)
 
