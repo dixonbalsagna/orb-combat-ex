@@ -1,0 +1,47 @@
+[
+ {
+  "key": "PROCESS-X1", "area": "PROCESS",
+  "gap": "Corrective item CD-02's manual unpublish rehearsal is still owed: the take-down workflow exists and has run, but nobody has rehearsed taking the public page down by hand.",
+  "evidence": ["docs/ep/corrective-plan-2026-11-07.md:10", "record:docs/ep/alpha/audit-2026-11-13/reads/RR-09.md"],
+  "criterion": [], "severity": "minor", "alpha": "after", "owner": "orb", "needs_directors": ["tools-pipeline"],
+  "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+  "risk": "The public page is down and the Alpha uses no public page, so nothing depends on this until a public build returns; the risk is that it is forgotten then.",
+  "orb": "", "verified": "no", "source_cd": "CD-02"
+ },
+ {
+  "key": "PROCESS-X2", "area": "PROCESS",
+  "gap": "Corrective item CD-18 is half done: Legal listed 69 process and engineering items to move out of the safety records, and routing them to their owners is still owed.",
+  "evidence": ["docs/ep/corrective-plan-2026-11-07.md:26", "commit:3d628d7b", "record:docs/ep/alpha/audit-2026-11-13/reads/RR-09.md"],
+  "criterion": ["X-02"], "severity": "minor", "alpha": "nice", "owner": "ep", "needs_directors": ["legal-ip"],
+  "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+  "risk": "Until they are routed, the gate list for outside testers may carry items that are not safety gates, or miss ones that are.",
+  "orb": "", "verified": "no", "source_cd": "CD-18"
+ },
+ {
+  "key": "TOOLS-X1", "area": "TOOLS",
+  "gap": "Corrective item CD-21 (stop silent passes: 'grandfathered', 'report only' and 'CHECK' lines that print as exceptions in the site builder and the clip kit) has no commit and no record.",
+  "evidence": ["docs/ep/corrective-plan-2026-11-07.md:29", "record:docs/ep/alpha/audit-2026-11-13/reads/RR-09.md"],
+  "criterion": ["X-02"], "severity": "minor", "alpha": "required", "owner": "tools-pipeline", "needs_directors": [],
+  "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+  "risk": "A gate on the outside-tester list that can pass silently is not a gate; check each X-02 gate's tool for these words before trusting a green line.",
+  "orb": "", "verified": "no", "source_cd": "CD-21"
+ },
+ {
+  "key": "TOOLS-X2", "area": "TOOLS",
+  "gap": "Corrective item CD-25 (one machine-read list of Legal's clip conditions that blocks a public pin) has no commit and no record.",
+  "evidence": ["docs/ep/corrective-plan-2026-11-07.md:33", "record:docs/ep/alpha/audit-2026-11-13/reads/RR-09.md"],
+  "criterion": ["X-34"], "severity": "minor", "alpha": "nice", "owner": "tools-pipeline", "needs_directors": ["legal-ip"],
+  "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+  "risk": "Matters when footage or a build goes public; the Alpha's footage is captured privately.",
+  "orb": "", "verified": "no", "source_cd": "CD-25"
+ },
+ {
+  "key": "TOOLS-X3", "area": "TOOLS",
+  "gap": "Corrective item CD-26 (retire the prototype suites from the deploy gate, retire the flash pixels dry run, rename the CI flash job) has no commit and no record; CI's qa job still runs only the legacy prototype suite.",
+  "evidence": ["docs/ep/corrective-plan-2026-11-07.md:34", "record:docs/ep/alpha/audit-2026-11-13/reads/RR-09.md", "record:docs/ep/alpha/audit-2026-11-13/01-inventory/I-06-net-qa-prototype.md"],
+  "criterion": [], "severity": "minor", "alpha": "nice", "owner": "tools-pipeline", "needs_directors": ["qa-balance"],
+  "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+  "risk": "CI minutes are spent on a frozen prototype while the Godot QA batch runs nowhere.",
+  "orb": "", "verified": "no", "source_cd": "CD-26"
+ }
+]

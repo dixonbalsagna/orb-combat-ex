@@ -1,0 +1,27 @@
+# Orb's answers on the audit's page (2026-11-13, evening)
+
+Orb wrote these on the audit's page (`homework/1 Urgent/0 Alpha audit - where we stand and the path (5 min).md`, git-ignored) after each of the twelve decisions, and told the judgment session: "check file noted by breadcrumb path, answers contained. I want a quality Alpha version". Copied here verbatim so they are in the repository. The Executive Producer records them in `docs/ep/vision.md`; this file is the audit's copy and its reading of what each answer changes. The reading is the auditor's, not Orb's.
+
+| # | The decision, in short | Orb's answer, verbatim | What it settles, and what it leaves open (auditor's reading) |
+| ---: | --- | --- | --- |
+| 1 | Make the main copy the game Orb plays, before any new feature | "GO" | Settled. A1 may start (path decision 1). |
+| 2 | Desktop test builds for named friends once the safety checks are green; two Deck friends now, a spare, two held back | "GO" | Settled as asked. The one-line approval for desktop test builds is still recorded only when the gates are green on a commit (the path's rule), and finding the friends is Orb's action. |
+| 3 | Reports: a new private Discord server, and the delete-on-request promise | "I WILL MAKE THE DISCORD SOON" | Orb will make the server. Not said: that it is a new one and not the existing one, and the delete-on-request promise. Both are Legal's flags (`docs/legal/alpha-discord-flags.md`); the EP confirms them when Orb sets it up. |
+| 4 | A private, key-only itch.io page under the working title before the paid title search, if Legal agrees | "GO" | Settled, on Legal's condition. The account, the page and the upload tool remain Orb's actions. |
+| 5 | Licence: all rights reserved through Alpha, with a permission page; public code decided at Beta | "GO" | Settled. Closes A-LEGAL-10's question; Legal writes the permission page. |
+| 6 | LAN at Alpha: Orb and the trusted second player only, on Windows | "GO" | Settled. The smaller versions of A-NET-02, A-LEGAL-04 and A-PERF-02 stand. |
+| 7 | No campaign at Alpha | "GO" | Settled. This is the X-12 decision; record it with its reason. |
+| 8 | The horde's first size: three weak enemies at a time | "GO" | Settled as the starting size; spike S3 still reports what more would cost. |
+| 9 | The move table's bar for Alpha | "FULL TABLE ON BETA, KEEP ITERATING WHAT WE HAVE." | The full table is Beta's. The auditor reads "keep iterating what we have" as accepting the smaller Alpha version of A-COMBAT-04 (no dead cell; martial and energy rows complete). The EP confirms that reading in one line if it matters to Combat's brief. |
+| 10 | Up close, does your stick move only you? And a standing yes for the stop rule | "KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED" | Not answered yet, by Orb's choice: it stays a workshop item, shown again with spike S2's clip. The standing yes was NOT given, so if the pull is not playable at A3's midpoint, Orb is asked then and nothing moves until the answer. The close-fight part of the gravity well is not built until Orb answers; "player agency must be respected" is the test any proposal is held to. |
+| 11 | Frame rate: 60 on Orb's PC; the Deck decided after A2's first real reading | "KEEP IMPROVING PERFORMANCE ON ALL LEVELS" | A direction, not a number. The audit's proposed targets (X-23, X-24) are not confirmed and not refused; they stay the working targets until Orb sees A2's reading. Frame spikes and loading (A-PERF-05 to 08, A-RENDER-06, A-RENDER-08) are in scope at every milestone. |
+| 12 | The small marks drawn on a fighter during a dash or a press | "LETS TREAT THESE SHAPES AS PLACEHOLDERS FOR DIEGETIC AURAS, GLOWS, FLARES ETC. THAT SHOWCASE GAME MECHANICS WHERE NECESSARY. UI/UX ELEMENTS MUST BE NON-INTRUSIVE, RULE-OF-COOL, PROTECT PLAYER AGENCY AND ENJOYMENT, RESPECT THE SPECTACLE" | **This overrides the audit's recommendation to remove them.** The marks are placeholders: each is to be replaced by an effect that belongs to the fighter and the world (an aura, a glow, a flare) where a mechanic needs showing, and dropped where none does. A-RENDER-13 becomes "replace, mark by mark" (VFX, with Art for the look), behind the look gate. Not said: whether the placeholder shapes may stay in the builds friends get until each is replaced. |
+
+**Orb's overall word:** "I want a quality Alpha version".
+
+## What changes in the plan (for the EP to apply; the audit's files are otherwise left as handed over)
+
+- `05-directives/A1/orb.md`, Amendments: the standing-yes question and the "keep any, or remove all?" question are answered as above; strike them. The marks question becomes "which effect replaces each mark", shown as clips.
+- `05-directives/A1/vfx.md` and `A3/vfx.md` (A-RENDER-13): the row's fix is replacement by diegetic effects, not removal. Its size is likely more than S; VFX prices it after the A1 code read.
+- `04-path-to-alpha.md`, "The marks drawn on the fighters" and "The close-fight question and the stop rule": read with these answers.
+- Decisions table rows 7 to 10, 13, 15, 16 (first part) and 18 are answered. Rows 1 to 6 are answered by Orb's first "GO" only as to row 1; rows 2 to 6 (the default world, the look defaults, the look reference, flight at 3500, the backburnered meters) and rows 11, 12, 14, 16 (rest), 17 and 19 to 23 were not on Orb's page and are still to be asked. None is taken by silence.

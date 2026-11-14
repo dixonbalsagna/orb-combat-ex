@@ -1,0 +1,962 @@
+{
+ "lenses": [
+  {
+   "lens": "missing",
+   "looked_at": "Read whole: docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md; the specification's lines 133-203, 337-551 and 576-706; questions.md; 07-skipped.md; all 270 register rows as one line each (script over 03-gap-register.json and 04-milestone-rows.json, mapping X-01..X-34 to rows and milestones: every criterion has a placed row except X-12, a decision the path carries; all 174 required rows placed). Read the exit-criteria tables of all 22 area files and checked that ANIM, TEXT, ACCESS, AUDIO, CONTROLS, CAMERA, NET, UI, QA, PROCESS and MARKET answer every question the specification set (they do). Briefs read whole or through acceptance criteria: orb.md of A1, A2, A6 (A4, A5 by search); A1 ep, qa-balance; A2 performance-platform, qa-balance, tools-pipeline, legal-ip, controls-feel, community-marketing; A3 legal-ip, netcode-online, tools-pipeline (part); A4 animation, art, combat-choreography, game-design, rendering-techart, ui-ux, camera, legal-ip, tools-pipeline, ep and every Order line; A5 qa-balance, community-marketing, tools-pipeline (part); A6 qa-balance, tools-pipeline (part). Checked directly: .github/workflows/desktop-builds.yml:95-119 and the content-screen workflow header. One suspicion tested and dropped (a personal path entering the public repository through A-PROCESS-03's mass commit: a scan of untracked text files found none). NOT done: nineteen of A1's briefs and A3's fight briefs (Encounter, Simulation, Game Design, World) were searched by keyword only, so a row there whose criteria would not close it could be missed; verify files, 04-drafts, reads and 01-inventory not opened; nothing run in the engine or a browser, no web page read. Output written to docs/ep/alpha/audit-2026-11-13/06-adversarial/missing.md",
+   "criticisms": [
+    {
+     "id": "MIS-01",
+     "weight": "serious",
+     "claim": "The A4 and A5 builds reach outside testers with no line that the 'before an outside tester plays' gate list (X-02) is green on that commit, and no brief asks for a flash reading of a horde wave. A4 is the build that adds the horde (most bodies and effects on screen), two fights on one screen and new form looks.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:202-211",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:244-252",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/ep.md (criteria 5 and 6)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/tools-pipeline.md (criterion 7)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/legal-ip.md (criterion 4)"
+     ],
+     "fix": "Add 'X-02 (must pass) on this commit before the build is uploaded or sent' to the A4 and A5 exits; add a largest-horde-wave clip (both modes) to the standard clip set in Tools' A4 brief and a reading row for it to Legal's A4 brief.",
+     "verdict": "confirmed",
+     "vnote": "A2 and A3 exits carry the gate list; A4 and A5 exits do not, and A4/ep.md criterion 5 lists ten lines without X-02 while criterion 6 sends the build to the two friends. No A4 or A5 brief asks for a flash reading of a horde wave (flash checks there cover only the two-fights clips, the collapse clip and the transformation clip). Partial cover that exists: Legal's A4 criterion 2 holds the outside package until the two-fights clips pass and criterion 5 adds its rows to the gate list; Art's criterion 4 flash-checks the transformation clip; QA's A5 protocol stops a session on a gate not green but is not an exit line.",
+     "fix_ok": "Sound. Smaller: one standing line beside 04-path-to-alpha.md:39 (no build is uploaded or sent to an outside tester unless the X-02 list is green on that commit) covers A3 to A6 at once; keep the horde-wave clip in Tools' A4 brief and Legal's reading row."
+    },
+    {
+     "id": "MIS-02",
+     "weight": "serious",
+     "claim": "The newcomer criteria (X-18, X-19) are never run on a newcomer, and X-01 has no spare tester: the same two friends install at A2, get updates at A3 and A4, and are then the 'real pass' at A6.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:20",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:245",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:280-281",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/orb.md (action 3)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A6/orb.md (action 2)"
+     ],
+     "fix": "Ask Orb for four Deck owners: two for A2 to A4, two held back who first see the game at A6 and give the X-18/X-19 reading. If only two exist, say in the path that X-18 at A6 is a re-install by experienced testers and put that to Orb.",
+     "verdict": "confirmed",
+     "vnote": "Exactly two friends are recruited and the same two are used at A2, for the A3 and A4 updates, and as the 'real pass' at A6. The only reading on true newcomers is A2's, on a draft guide, which the path itself calls 'not a pass yet'. No decision asks for a third or held-back tester.",
+     "fix_ok": "Sound; the fallback (say plainly that A6's X-18 is a re-install by experienced testers and put that to the owner) is the smallest honest version if only two Deck owners exist."
+    },
+    {
+     "id": "MIS-03",
+     "weight": "serious",
+     "claim": "No exit line says anything about known bugs: the candidate can pass X-01 to X-34 with any number of open severe bugs, and nothing inside the totals budgets fixing what Orb's own plays find at A1, A3, A4 and A5.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:280-287",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:24",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A1/qa-balance.md (criteria 8 and 9)",
+      "A-QA-03",
+      "A-QA-07"
+     ],
+     "fix": "Add a criterion X-35: no open bug of the top severity on the candidate, and every open bug of the next severity seen by Orb and carried by name. Give A1, A3, A4 and A5 each a named fix reserve for Orb's play reports, inside the totals.",
+     "verdict": "confirmed",
+     "vnote": "No exit line reads the bug list; A-QA-07's criterion field is empty; A1 criterion 8 accepts 'open'; the only fix reserves are after the two tester rounds; the 25% rework sits outside the 201M. Intake is covered (A3, A4, A6 briefs log every problem with a severity) and path:446 forces newcomer-stopping tester findings to be fixed in-milestone, so the hole is the exit bar and the budget. One weak evidence point: specification line 203 covers lines of the definition, and the definition has no line on known bugs, so this is a recommended addition, not a breach.",
+     "fix_ok": "X-35 is sound. For the reserves, smaller: state that fixes from the owner's plays at A1, A3, A4 and A5 are paid from the 25% rework line and count that line in the weeks, instead of four new reserves."
+    },
+    {
+     "id": "MIS-04",
+     "weight": "moderate",
+     "claim": "Nothing checks that a match file saved by the Linux build plays back to the same result on the Windows build, though every outside tester's report comes from a Steam Deck and will be replayed on a Windows PC.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/03-gap-register.json (no row)",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:286",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A6/qa-balance.md (criterion 6)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/tools-pipeline.md (criterion 4)"
+     ],
+     "fix": "One required row in A2 (Simulation with Tools): the same seeded match on the Windows and Linux exports gives the same gameplay hash, and a report made on Linux verifies on Windows; re-run at A6.",
+     "verdict": "partly",
+     "vnote": "True of the plan: no required row or exit line compares a match or replay between the Windows and Linux builds; the workflow compares Linux with Linux; A-TOOLS-13 is nice-to-have; X-27 names no platform. Too strong about the project: a one-off record exists that the exported Linux program and native Windows printed the same gameplay hash (docs/tools/steam-deck.md:9, older commit), listed as working in PERF.md:85; it is not a standing check and not on today's game. Also a Deck tester in solo, couch or horde leaves no match file today (SAVES.md:101), so 'every report will be replayed' assumes recording those modes do not have.",
+     "fix_ok": "Better: make A-TOOLS-13 required in A2 (its own cost basis is one Windows step that plays the bench and compares the hash) and add 'a replay saved on Linux verifies on Windows' to X-27's reading at A6."
+    },
+    {
+     "id": "MIS-05",
+     "weight": "moderate",
+     "claim": "The Steam Deck round trip (getting the package onto a Deck without a keyboard, and getting the report and bench files off it into the report channel) has no owner and no research before two friends try it; the package is made keyboard-free only at A5.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/07-skipped.md:12",
+      "docs/ep/alpha/audit-2026-11-13/02-areas/web-checks.md:62",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/tools-pipeline.md (criterion 6)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A5/tools-pipeline.md (criterion 7)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A5/performance-platform.md:11"
+     ],
+     "fix": "Move 'no keyboard and no terminal' from A5 to A2 in Tools' brief; add to Performance's A2 brief one sourced page on install, start, update and file hand-back on a Deck, written before the friends' sheet; do the skipped web check first.",
+     "verdict": "partly",
+     "vnote": "True: the two platform look-ups were skipped; the route is 'not a tested path'; the package's Deck steps are unpack and chmod; 'no keyboard and no terminal' is first required at A5; no brief says where the report and bench files land on a Deck or how they are posted. Wrong: 'no owner'. Performance's A2 brief supplies the install and bench steps for the friends' sheet, QA drafts the sheet, and Controls' A2 criterion 5 writes a sourced page on how a hand-added game gets its controls on a Deck. A2 is designed as a first reading that tries both routes, with a failed start fixed in-milestone.",
+     "fix_ok": "Better: do the skipped look-up first and add one criterion to Performance's A2 brief (chosen route, where the two files land, how they are posted from the Deck, each step sourced); move the no-keyboard package work to A2 only if the look-up shows the itch app route does not work."
+    },
+    {
+     "id": "MIS-06",
+     "weight": "moderate",
+     "claim": "Nobody is briefed to design or name the horde's enemies; Legal's A4 brief waits on a look sheet and names that no brief produces.",
+     "where": [
+      "A-MODES-02 (needs_directors)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/art.md:4",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/legal-ip.md:13",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/legal-ip.md:22",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/rendering-techart.md (criterion 8)"
+     ],
+     "fix": "Add Art (one cheap enemy body, as data) and Narrative (names, seen by Orb) to A-MODES-02's supporting directors and A4 briefs ahead of Legal's row; or state in the horde brief that Alpha's enemies are a recolour of an existing body and have Legal read that.",
+     "verdict": "partly",
+     "vnote": "True: no brief produces a weak enemy's body or look (Art supports nothing in A4; Game Design's page covers behaviour; Animation and Rendering are asked for poses and drawing only; A-MODES-02 lists no Art), so Legal's likeness check has nothing to read. Wrong: the naming half. The project's page says a henchman has no name, no insignia and no story and the grade words are design labels (docs/combat/henchmen-grades.md:23), so no Narrative brief is needed; the error is Legal's brief line 13 calling them 'new whole characters with names'.",
+     "fix_ok": "Better: add Art to A-MODES-02 with one criterion in Art's A4 brief (one cheap enemy body as data, or a written statement that Alpha's enemies reuse an existing body with a palette), correct A4/legal-ip.md:13 to 'unnamed; design labels only', and have Legal read the body. No Narrative brief."
+    },
+    {
+     "id": "MIS-07",
+     "weight": "moderate",
+     "claim": "The path's table of criteria it proposes to change claims to be 'in one place' but omits changes the area reviews proposed: X-26 stays a must-pass at 15 seconds on Orb's PC although the area review says a first start cannot meet it; X-23's and X-04's proposals are also dropped without a word.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:318-332",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:284",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:505"
+     ],
+     "fix": "Add X-26, X-23 and X-04 to the table at 04-path-to-alpha.md:322 with the area's wording, or one line each on why the proposal was declined; add the form count to decision 17.",
+     "verdict": "confirmed",
+     "vnote": "The table lists X-03, X-05, X-08, X-10, X-11, X-15, X-21, X-22, X-24 only. The PERF review's proposals for X-26 (first start 30 s and 60 s; 15 and 30 for later starts) and X-23 (desktop program, whole match, p99 limit) appear nowhere in the path, and A6 keeps 15 s with no first-start wording although the last native cold start on file was 14.5 to 15.2 s on an older build. Both area reviews raise three forms; the path plans two and decision 17 does not ask the count.",
+     "fix_ok": "Yes, the smallest sound fix."
+    },
+    {
+     "id": "MIS-08",
+     "weight": "small",
+     "claim": "From A3 the build is two different packages (with LAN for the trusted two, without for outside testers), but A6 speaks of one candidate and no criterion says which package it is read on.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:274",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/tools-pipeline.md (criterion 1)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A6/orb.md (action 1)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A6/tools-pipeline.md (criterion 5)"
+     ],
+     "fix": "One line in A6 and in Tools' A6 brief: which criteria are read on the outside-tester package, which on the trusted-two package, both from the candidate's commit.",
+     "verdict": "confirmed",
+     "vnote": "Two packages from one commit from A3 (if decision 13 is accepted). A6's exit lines and Tools' A6 criteria say 'the candidate' or 'the packaged builds' without naming which package a criterion is read on; only the Deck soak names the tester package. The owner's page asks for the friends' build and one run of each mode in one step, which the friends' package cannot give for LAN.",
+     "fix_ok": "Yes, the smallest sound fix."
+    },
+    {
+     "id": "MIS-09",
+     "weight": "small",
+     "claim": "The tester checklist asks for one row per mode offered with no blank row, but a friend with only a Steam Deck has one controller; no brief says what a Deck tester does about the two-player modes.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A5/qa-balance.md (criterion 2)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A6/qa-balance.md (criterion 1)"
+     ],
+     "fix": "In QA's A5 brief mark the two-player rows 'if you have a second controller', and say in the path that those modes are tested by the owner and the trusted second player only.",
+     "verdict": "confirmed",
+     "vnote": "The checklist has one row per mode offered and passes on no blank row; the outside package includes two on one PC and couch 2v2; nothing tells a tester with one Deck what to do with those rows.",
+     "fix_ok": "Yes, the smallest sound fix."
+    },
+    {
+     "id": "MIS-10",
+     "weight": "small",
+     "claim": "X-07 is marked 'must pass' at A2 on the unplug notice alone; its other two parts (each pad drives its own fighter, player one starts on the left) get a signed manual run only at A4.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:125",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/controls-feel.md (criterion 1)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/controls-feel.md:23"
+     ],
+     "fix": "Reword 04-path-to-alpha.md:125 to 'X-07, the unplug line (must pass)' and move the signed two-pad run to A2, or name A4 as where X-07 passes in full.",
+     "verdict": "confirmed",
+     "vnote": "A2 marks X-07 must-pass and its manual check covers the unplug only; the signed two-pad run is first asked for in A4 criterion 4, and X-07 is not on A6's re-run list. Softening: 'each pad drives its own fighter' is already met by code and tests per the area review, so what is unsigned is the left-side start and the manual run.",
+     "fix_ok": "Sound; cheaper branch: run the existing two-pad checklist (docs/controls/local-two-player.md:51-69, updated for the pause) inside A2's manual check, since two pads are already in use for it."
+    }
+   ]
+  },
+  {
+   "lens": "order",
+   "looked_at": "Written to docs/ep/alpha/audit-2026-11-13/06-adversarial/order.md. Read whole: 04-path-to-alpha.md, 04-milestone-rows.json, every placed row of 03-gap-register.json by script (milestone, owner, size, hash flag, needs, criteria) plus unplaced hash rows. Read in full or criteria+Order: A1 briefs for Tools, Legal, EP, the owner, Encounter, Simulation, QA, Game Design; the Order line of all 100 briefs; the hash statement of every A2-A5 brief; A2 Tools, Camera, owner page; A3 World, owner page; A4 Legal, QA, World, Simulation, EP; A5 Game Design, Performance, Rendering; A6 QA. Scripted an overlap count of files named in own/grant lines per milestone. Checked sim/core/replay.gd:1-12,130-140 and data/fight/power.json:88-104. Not done: no Godot/browser/checks run; area reviews, 07-skipped.md and questions.md not read beyond two greps; did not verify which of the 72 switch rows sit in the replay's data hash (ORD-05 rests on the code's stated rule); most A3/A4/A6 briefs read only at Order and hash lines. Found handled and not raised: hash work in A2 (all briefs defer to GW2), the A1 desktop build vs the missing approval file (Legal A1 criterion 2), the outside testers' package vs LAN code at A3 (separate package with a check), same-file overlaps routed one owner at a time by the EP.",
+   "criticisms": [
+    {
+     "id": "ORD-01",
+     "weight": "serious",
+     "claim": "GW1 has no pass-or-fail test that main became the 9 November game: behaviour changes (meters zeroed, perfect-block fix, two beam input fixes) ride in the same window as the switch flip, and the golden record is made only after the window closes. While the eight switch groups land one at a time main has no valid golden record, so each group's 'own gate run' has nothing to compare against, and A1's claim that 'nothing is meant to be different' rests on stills and the owner's eye.",
+     "where": [
+      "04-path-to-alpha.md:53-54",
+      "04-path-to-alpha.md:99",
+      "05-directives/A1/simulation-engine.md (criteria 3, 5; Constraints)",
+      "05-directives/A1/encounter-systems.md (criteria 3-5)",
+      "05-directives/A1/ep.md (criterion 2)"
+     ],
+     "fix": "Split GW1. GW1a: record the golden first on the kept 9 November tree's packed data (the target), land switch groups only, close A-CODE-01 when main reproduces that golden bit for bit. GW1b, straight after and before the first desktop build: the four riders, then one re-record.",
+     "verdict": "confirmed",
+     "vnote": "GW1's list mixes the switch rows with A-ENERGY-05, A-AI-10, A-COMBAT-05 and A-COMBAT-11 (path:99), and the golden record is made only after A-CODE-01 closes (A1/simulation-engine.md criterion 5). Nothing says what a group's 'own gate run' compares against once the old golden (valid only with switches off, A-CODE-02) no longer fits. One overstatement: a pass-or-fail test of the data does exist (Tools' count of differing switch rows reaching 0, A1/ep.md criterion 2, plus reads of the first build's packed data). What is missing is any test of behaviour.",
+     "fix_ok": "Sound. A kept 9 November tree exists and already replays headless to a saved final hash (tools/feel/feel-selftest.mjs:1), so the target golden can be recorded on it. It costs one extra re-record, and it lets the owner's 9 November play files verify on main at the end of GW1a, which answers most of ORD-05."
+    },
+    {
+     "id": "ORD-02",
+     "weight": "serious",
+     "claim": "The A4 build, and by upload the A5 build, reach the two outside testers with no re-run of the 'before an outside tester plays' gates. A3 has that exit line; A4 and A5 do not, although A4 adds the horde, per-form looks and a second fight drawn on screen, and A5 adds drawn trenches and quality levels.",
+     "where": [
+      "04-path-to-alpha.md:123",
+      "04-path-to-alpha.md:172",
+      "04-path-to-alpha.md:202-211",
+      "04-path-to-alpha.md:244-252",
+      "05-directives/A4/ep.md (criteria 5, 6)",
+      "05-directives/A4/legal-ip.md (criteria 1, 2, 5)",
+      "05-directives/A5/ep.md (criterion 6)"
+     ],
+     "fix": "Add one exit line to A4 and to A5: the A2 gate list is re-run on this commit with records saved before the build is pushed to a channel an outside tester's key can reach; make it the step before A4/ep.md criterion 6 and A5/tools-pipeline.md item 5. Or state that A4/A5 go to a channel the friends' keys cannot see.",
+     "verdict": "confirmed",
+     "vnote": "A3 has the re-run line (path:172). A4's and A5's exit lists have none, while A4/ep.md criterion 6 sends the build to the two Deck friends and A5 puts its build on the same channels (path:250). What exists is narrower: Legal reads only the two-fights clips and says that reading can hold the A4 build back (A4/legal-ip.md criteria 1-2), and per-change flash checks ride on the look gate (A4/rendering-techart.md:25, A5/rendering-techart.md:26). The rule that no tester plays until every safety gate is green on that commit is written only for A6.",
+     "fix_ok": "Yes, the smallest sound fix: one exit line in A4 and in A5, placed before A4/ep.md criterion 6 and A5/tools-pipeline.md item 5."
+    },
+    {
+     "id": "ORD-03",
+     "weight": "moderate",
+     "claim": "Team and horde balance bands are first read after the last window that could move them, are explicitly not tuned, are absent from the numbers window GW4, and must hold on the candidate. X-10's horde run length must also pass in the same milestone as its first reading, against the path's own tool rule.",
+     "where": [
+      "04-path-to-alpha.md:37",
+      "04-path-to-alpha.md:204",
+      "04-path-to-alpha.md:264",
+      "04-path-to-alpha.md:283",
+      "05-directives/A4/qa-balance.md (criteria 1-3, Order)",
+      "05-directives/A5/game-design.md (criteria 1-5)",
+      "05-directives/A6/qa-balance.md (criterion 2)"
+     ],
+     "fix": "Name the team and horde bands and horde run length in GW4's list and in A5/game-design.md's numbers sheet with a QA second table; reword X-10 at A4 to 'frame record must pass; length is a first reading, must pass at A5'.",
+     "verdict": "confirmed",
+     "vnote": "Team and horde bands are first read after GW3 and 'reported, not tuned here' (A4/qa-balance.md criterion 1). GW4 lists only A-AI-02, A-QA-05, A-QA-08 (path:264), no A5 brief names a team or horde band, and A6 requires them to hold. One softening: the horde's run length is not only QA's first reading, because Game Design must show a scripted 5 to 10 minute run inside A4 while GW3 is open (A4/game-design.md criterion 3). The team band and the horde's survival and clear-time bands have no tuning slot.",
+     "fix_ok": "Sound. Team and horde numbers are data, so naming them in GW4 fits its values-only rule; the X-10 rewording is optional given Game Design's A4 criterion 3."
+    },
+    {
+     "id": "ORD-04",
+     "weight": "moderate",
+     "claim": "X-14 (three times the crater width at the top tier) must pass at A4, but the only row behind it (A-WORLD-06) closes in A3 as a measuring tool with tuning forbidden and a hash flag of false; no A4 brief, GW3 entry or owner question carries the change that would make it pass.",
+     "where": [
+      "04-path-to-alpha.md:168",
+      "04-path-to-alpha.md:210",
+      "04-path-to-alpha.md:226",
+      "04-path-to-alpha.md:322-332",
+      "05-directives/A3/world-environment.md (criterion 4, Constraints)",
+      "05-directives/A4/world-environment.md",
+      "03-gap-register.json A-WORLD-06"
+     ],
+     "fix": "Before A3 starts, either add the tier energy change to GW2 as part of A-WORLD-06 (marked hash-changing, sized, with QA re-reading that a base-tier fight does not wreck the planet), or add X-14 to the proposed-changes table and the owner's A3 page as a question.",
+     "verdict": "partly",
+     "vnote": "True: no A4 brief owns X-14's pass, GW3 does not carry it, and X-14 is absent from the proposed-changes table although the area review recommended restating it (WORLD.md:100). Wrong in two places. (1) The 1.32 and 1.48 figures are for the energy model off; A-ENERGY-04 turns it on in GW1, and with it on the same send is about 3.5 times wider at top level by the register's own verify note (radius 356 to 1,244, power-scale.md:54), or about 2.7 by the area review's arithmetic, so A1 may already carry the pass. (2) A decision route exists while a window is open: Game Design owes the EP a recommendation in A3 to keep, restate or tune 'inside this window' (A3/game-design.md:26), and tuning is barred only without the EP's word.",
+     "fix_ok": "A smaller fix is enough: add X-14 to the proposed-changes table with WORLD.md:100's wording as the fallback, say which two levels are compared, and state that the keep, restate or tune choice is made on A3's reading before GW2 closes. No new GW2 row is needed yet."
+    },
+    {
+     "id": "ORD-05",
+     "weight": "moderate",
+     "claim": "Checks that replay the owner's saved play files are scheduled at moments when the game's own rule refuses those files; A-NET-05 is deliberately landed before GW1, which adds a second refusal. X-17 keeps naming 'saved play files' at A3 and A6, after windows that void every file saved so far.",
+     "where": [
+      "04-path-to-alpha.md:55",
+      "04-path-to-alpha.md:71",
+      "04-path-to-alpha.md:99",
+      "04-path-to-alpha.md:287",
+      "05-directives/A1/camera.md:27",
+      "05-directives/A1/controls-feel.md:26",
+      "05-directives/A1/tools-pipeline.md (criterion 5)",
+      "05-directives/A3/encounter-systems.md (criterion 4)",
+      "05-directives/A2/rendering-techart.md (criterion 4)"
+     ],
+     "fix": "State in step 4 that the comparison clip is made on a scratch copy carrying the full 9 November data with only the landing group read from main; give Tools a written tools-only way to re-feed a foreign file's inputs unverified (never in a tester's build); reword X-17 from A3 on to 'the scripted set plus every play file saved on this build'; run A2's fault hunt (A-RENDER-02, A-RENDER-03) on the kept 9 November tree.",
+     "verdict": "partly",
+     "vnote": "True: a replay is refused on other data (replay.gd:135-136), the briefs ask for comparisons at the same ticks of a saved play file on main while its data differs and give no method, the GW1 riders mean the same inputs cannot give the same match for step 6, and X-17 keeps naming the saved play files after windows that void them. Wrong in two places. (1) A tools-only way to re-feed a saved match on changed data already exists: the feel replay patches a scratch copy of the kept tree and runs the whole match open loop (feel.mjs:6, feel.gd:2-5). (2) A2's fault hunt works as written, because Tools replays a file on the kept build of the file's own commit.",
+     "fix_ok": "Smaller fix: no new tool. One sentence in steps 4 and 6 naming the method (scratch copy of the kept tree with the landing group's data, or ORD-01's split so the files verify on main before the riders), and reword X-17 from A3 to 'the scripted set plus play files saved on this build'."
+    },
+    {
+     "id": "ORD-06",
+     "weight": "moderate",
+     "claim": "'The outside-tester safety gates are briefed on day one of A1' is not what the briefs do: the first link (repair of the flash measuring tool, A-LEGAL-08) sits only in Tools' A2 brief, whose Order waits for A1 to have landed, and Tools is A1's heaviest queue. The register records none of these links, so the path's automatic placement check cannot see them.",
+     "where": [
+      "04-path-to-alpha.md:50",
+      "04-path-to-alpha.md:545",
+      "04-path-to-alpha.md:549",
+      "05-directives/A2/tools-pipeline.md (criterion 1, Order)",
+      "05-directives/A2/camera.md (Order)",
+      "05-directives/A1/tools-pipeline.md",
+      "03-gap-register.json A-LEGAL-01, A-PERF-01"
+     ],
+     "fix": "Move A2/tools-pipeline.md criteria 1 and 2 into Tools' A1 brief as its first item; record in the register that A-LEGAL-01 needs A-LEGAL-08, A-RENDER-01, A-RENDER-04, A-CAMERA-01 and that A-PERF-01 needs A-LEGAL-03; re-run the placement check.",
+     "verdict": "confirmed",
+     "vnote": "Camera, VFX and Legal each get a day-one early brief, but the first link, Tools' repair (A-LEGAL-08), appears only in Tools' A2 brief, whose Order waits on A1's landings. Tools' A1 brief never mentions it, and path:103 does not list Tools among those started early; Camera's criterion 2 waits on that repair. A-LEGAL-01 needs nothing and A-PERF-01 needs only A-TOOLS-01 in the register, so the placement check cannot see the chain. Small overstatement: one link is recorded (A-LEGAL-03 needs A-LEGAL-01 and A-LEGAL-08).",
+     "fix_ok": "Sound, with one trim: the row can stay placed in A2. It is enough to send A2/tools-pipeline.md criteria 1 and 2 as a day-one brief, drop their wait on A1's landings, add the missing needs to the register and re-run the placement check."
+    },
+    {
+     "id": "ORD-07",
+     "weight": "moderate",
+     "claim": "X-15 must pass at A3 with no fighter-specific code in the energy, stamina and body systems, but the row that clears that code (A-CODE-05, hash-changing, GW3) closes in A4. The per-system count tool is also briefed twice (A1 Tools, A4 Simulation).",
+     "where": [
+      "04-path-to-alpha.md:166",
+      "04-path-to-alpha.md:211",
+      "05-directives/A3/simulation-engine.md (criterion 4)",
+      "05-directives/A4/simulation-engine.md (criteria 3, 4; Order)",
+      "05-directives/A1/tools-pipeline.md (criterion 10)"
+     ],
+     "fix": "Either move the energy, stamina and body part of A-CODE-05 into GW2 with its share of budget (forms and the count elsewhere stay in GW3), or make A3's X-15 line 'numbers are data per fighter; the per-system count is read' with zero first required at A4. Drop the duplicate tool line from A4.",
+     "verdict": "confirmed",
+     "vnote": "A3 must show no fighter-specific code in the energy, stamina and body systems, yet the row that clears it (A-CODE-05, hash-changing, GW3) closes in A4 with the same zero as its own criterion, including the kit fields keyed by fighter. The per-system count is briefed in A1 (Tools criterion 10) and again in A4 (Tools criterion 6 as well as Simulation criterion 3; the critic named only Simulation). A4's Order calls the ratchet '(A3)' though A-ENERGY-06 is A1.",
+     "fix_ok": "The second option is the smallest sound fix: A3's X-15 line becomes 'numbers are data per fighter; the per-system count is read', zero first required at A4, and the duplicate A4 tool line is dropped."
+    },
+    {
+     "id": "ORD-08",
+     "weight": "moderate",
+     "claim": "The A2 work-ahead that A3's length depends on is gated by answers the path asks for later. Netcode's 12.3M (the largest single load) is to start in A2, but its brief waits on decision 13 and a Legal exception that are both scheduled in A3; decision 13 needs no spike yet is left out of the day-one asks. Simulation's and Encounter's work-ahead likewise wait on decisions 11 to 14 'confirmed', scheduled 'before A3 starts'.",
+     "where": [
+      "04-path-to-alpha.md:50",
+      "04-path-to-alpha.md:147",
+      "04-path-to-alpha.md:485",
+      "04-path-to-alpha.md:545",
+      "05-directives/A3/netcode-online.md (Order)",
+      "05-directives/A3/legal-ip.md (Order)",
+      "05-directives/A2/netcode-online.md (Constraints)",
+      "05-directives/A1/orb.md (questions 8-11)",
+      "05-directives/A3/orb.md (question 6)"
+     ],
+     "fix": "Ask decision 13 on day one of A1 with the others; put Legal's net/ exception in Legal's A2 brief; change path:485 to '11 to 14 confirmed before A2's work-ahead starts, from the spike pages delivered with the A1 build'.",
+     "verdict": "confirmed",
+     "vnote": "Decision 13 is asked 'before A3 starts' (A3/orb.md question 6), not on day one (A1/orb.md asks 11, 12, 14, 15), and needs no spike (path:501). Netcode's 12.3M is meant to start in A2 (path:147), but its brief says 'before this starts: Orb's decision 13; Legal's exception'. Nuance: Legal's exception strictly gates landing on main (A3/legal-ip.md:23), not parked work, so the hard blocker is decision 13, which also sets A-NET-02's size. Simulation's and Encounter's Order lines have the same wording clash with path:147.",
+     "fix_ok": "Sound. The essential part is asking decision 13 on day one and rewording path:485; moving Legal's exception to A2 is helpful but not required for parked work."
+    },
+    {
+     "id": "ORD-09",
+     "weight": "moderate",
+     "claim": "The Deck's default picture level and the redrawn ground both land in A5, after the last Deck reading the path schedules (A4). A5's own brief needs a real Deck bench at the new level but no friend is asked in A5, so X-24's first reading at the level it is judged on is taken on the candidate, where it must pass.",
+     "where": [
+      "04-path-to-alpha.md:20",
+      "04-path-to-alpha.md:37",
+      "04-path-to-alpha.md:244-252",
+      "04-path-to-alpha.md:284",
+      "05-directives/A5/rendering-techart.md (criterion 3)",
+      "05-directives/A5/performance-platform.md (criteria 1, 3)",
+      "05-directives/A5/orb.md"
+     ],
+     "fix": "Add to A5/orb.md and A5/ep.md: push the A5 build (after the gate re-run of ORD-02) to the friends with the five-minute bench ask and count that wait in A5's weeks; or build the three levels in A4 behind the settings row so the A4 update carries them.",
+     "verdict": "confirmed",
+     "vnote": "Rendering needs 'a tester's bench file per level from a Deck' and 'a bench file from a real Deck at the default level', and Performance needs 'a bench file from the A5 build', but A5/orb.md has no action to send the update or ask for a file, and the path schedules Deck readings only at A2, A3, A4 and A6. The first reading at the level X-24 is judged on therefore falls on the candidate.",
+     "fix_ok": "The first option is sound and smallest (an ask in A5/orb.md and A5/ep.md, with the wait counted); it depends on ORD-02's gate re-run before the A5 build reaches the friends."
+    },
+    {
+     "id": "ORD-10",
+     "weight": "moderate",
+     "claim": "A2's range of 1 to 2.5 weeks cannot hold its own serial chain: every gate green, then the owner's recorded approval, then the itch.io rehearsal, then two friends' evenings, which the path itself prices at one to two weeks a round. The 9-week low end of the total inherits the error.",
+     "where": [
+      "04-path-to-alpha.md:20",
+      "04-path-to-alpha.md:24",
+      "04-path-to-alpha.md:29",
+      "04-path-to-alpha.md:145",
+      "05-directives/A2/performance-platform.md (Order)",
+      "05-directives/A2/legal-ip.md (Order)",
+      "05-directives/A2/orb.md (Order)"
+     ],
+     "fix": "State A2 as '1.5 to 2 weeks of work, then the tester round of 1 to 2 weeks, during which A3's GW2 work proceeds'; give the total as about 10 to 17 weeks; let A2's rows close before the friends' files arrive, with X-18, X-19 and X-24 first readings carried by name.",
+     "verdict": "confirmed",
+     "vnote": "A2's goal and exit lines include the two friends' returned files, and the chain before them is serial (gates green, approval, rehearsal). The path prices a tester round at one to two weeks, so a 1-week low end cannot hold. The milestone low ends add up to 9.5 weeks, so the total's low end inherits it.",
+     "fix_ok": "Sound. Note that A3's Order waits on A2 being closed (A3/ep.md:40), so 'A3 proceeds during the tester round' is a real change to the plan and must be written into that Order line too."
+    },
+    {
+     "id": "ORD-11",
+     "weight": "small",
+     "claim": "The Windows-against-Linux planet comparison (X-11) gets its first reading at A4 behind the planet dials although the tool needs neither the dials nor a desktop build. A float difference found then is a generator change discovered at the end of the last window that takes rule changes, and it must pass at A5, whose window takes numbers only.",
+     "where": [
+      "04-path-to-alpha.md:210",
+      "04-path-to-alpha.md:248",
+      "04-path-to-alpha.md:264",
+      "05-directives/A4/world-environment.md (criterion 7, Order)",
+      "03-gap-register.json A-WORLD-09"
+     ],
+     "fix": "Take the seed-only Windows-against-Linux reading in A1 beside spike S5 (remove A-WORLD-09's need of A-WORLD-02); extend the check to the dials in A4.",
+     "verdict": "confirmed",
+     "vnote": "A-WORLD-09 needs A-WORLD-02 in the register, and A1's World brief says outright that 'the cross-platform comparison is a later milestone's'. The digest tool runs headless today and needs no dials and no desktop build. Mitigation: the sim uses its own trig, and a narrow stored-against-Linux check already runs in CI (verify note). The weight 'small' is right.",
+     "fix_ok": "Sound and cheap: take the seed-only reading in A1 and extend it to the dials in A4."
+    },
+    {
+     "id": "ORD-12",
+     "weight": "small",
+     "claim": "In Tools' A1 brief two rows that edit the same CI file have no order between them, and the larger is not ordered against GW1: wiring up to 146 more check scripts (A-CODE-04) before the jobs are split (A-TOOLS-08) and before the switch groups land turns CI red through the stretch of A1 where reading CI after every push matters most.",
+     "where": [
+      "05-directives/A1/tools-pipeline.md (criteria 8, 9; Order)",
+      "03-gap-register.json A-CODE-04, A-TOOLS-08, A-CODE-02, A-UI-04"
+     ],
+     "fix": "Add to the Order line: 'A-TOOLS-08 (split the jobs) before A-CODE-04; the table of 262 scripts in week one; the newly wired checks join CI on GW1's closing commit, on the data as shipped.'",
+     "verdict": "confirmed",
+     "vnote": "The Order line names neither row, both edit the CI workflow, and criterion 8 asks for 'a green CI run that includes them' with no commit named. The register's own risk note on A-CODE-04 says adding checks without splitting jobs slows every push, but no needs link records it. That CI would go red through GW1 is an inference, a fair one given five gates and three HUD checks are known to fail on the switched-on values.",
+     "fix_ok": "Yes, the smallest sound fix: one addition to the Order line."
+    }
+   ]
+  },
+  {
+   "lens": "cost",
+   "looked_at": "Written to docs/ep/alpha/audit-2026-11-13/06-adversarial/cost.md. Read whole: 04-path-to-alpha.md, questions.md, the orb.md of A1, A2, A3, A6, A1/ep.md, A6/ep.md, A3/simulation-engine.md, A4/combat-choreography.md, A4/animation.md. Read in part (token, acceptance and order lines): A1 tools and QA, A3 world, EP and Legal, A4 EP and Legal, A5 Game Design, QA, Legal and Rendering, A6 QA. Scripts over 03-gap-register.json and 04-milestone-rows.json: size classes per milestone (115 placed S rows, 14 of them fingerprint-changing), lead and support load per director, cost basis (234 of 270 rows are 'estimate'), and across the 100 briefs 153 grant lines and 55 briefs requiring a side-by-side. Comparables: terrain-globe-plan.md:315-334, gravity-well.html:431-444, combat-variety-packet.html:80/207/223/473, co-op-2v2.md:28-40 and :86, controller-vision.md:163, docs/qa/chain-3198301f.md:3, docs/tools/gauntlet-build1.md:16, docs/ep/runs/6a30b4c9/README.md, and git log since 2026-10-25 (landing batches, dates of the energy model, right-stick scheme, Rail menus, terrain steps, LAN folder, all flashing commits). Not done: about 80 briefs not read line by line; no evidence line re-verified; nothing run in Godot or a browser; area reviews only searched; no token meter read, so all figures are the project's estimates against the plan's. The weekly pace itself (35M) was not criticised: it is more cautious than the EP's own night figure. Net effect if the criticisms hold: base roughly 265 to 280M before rework instead of 201M, and about 12 to 20 weeks instead of 9 to 16.",
+   "criticisms": [
+    {
+     "id": "COS-01",
+     "weight": "serious",
+     "claim": "Re-running the outside-tester safety gates on later builds is priced at zero in A3 and not required at all in A4 or A5, although the A3 and A4 builds go to the two outside friends as updates; A4 is the build that adds many bodies on screen and body-changing transformations.",
+     "where": [
+      "04-path-to-alpha.md:172",
+      "04-path-to-alpha.md:188",
+      "04-path-to-alpha.md:202-211",
+      "05-directives/A4/ep.md:22",
+      "04-path-to-alpha.md:20"
+     ],
+     "fix": "Add to A4's and A5's exit: the A2 gate list is green with saved records on this commit before the update reaches a friend; not green means no update. Budget each re-run (A3, A4, A5) at about 2M plus a 3M fix reserve at A3 and A4. Or state that A3 and A4 builds go only to Orb and the trusted second player and take the Deck bench from the A2 build only.",
+     "verdict": "partly",
+     "vnote": "True: A3's 48M is the row sum only, the re-run at path:172 has no token line, and neither A4's exit (path:202-211), A4/ep.md nor A5's exit asks for the A2 gate list green on the commit before an update reaches a friend. Wrong: 'not required at all in A4'. A4/legal-ip.md:20 and :36 hold the A4 update to outside testers on the two-fights clips, :23 adds rows to the gate list, and A4/art.md:23 runs the transformation clip in both modes. Path:16 also puts gate runs in the EP's third of each week, outside the token totals. The cited co-op-2v2.md:33 is the wrong line; the sentence is at :37.",
+     "fix_ok": "The exit line for A4 and A5 (gate list green with records on the commit before an update reaches a friend) is the smallest sound fix. The 2M and 3M figures have no basis on file (terrain-globe-plan.md:321 gives 0.25M a gate pass, 0.3M a look gate); a small priced line per re-run is enough."
+    },
+    {
+     "id": "COS-02",
+     "weight": "serious",
+     "claim": "The three largest rows (gravity well, move table, horde) are budgeted below the comparables their own cost basis cites, and the statement that the plan still holds if Orb declines every smaller version (about 19M) is not true.",
+     "where": [
+      "04-path-to-alpha.md:24",
+      "04-path-to-alpha.md:302",
+      "04-path-to-alpha.md:306-308",
+      "A-COMBAT-03",
+      "A-COMBAT-04",
+      "A-MODES-02",
+      "A-AI-01",
+      "05-directives/A3/simulation-engine.md:25",
+      "05-directives/A3/simulation-engine.md:32",
+      "05-directives/A4/combat-choreography.md:32",
+      "05-directives/A4/animation.md:30"
+     ],
+     "fix": "Until S2 to S4 report, carry the well at 12M, the table at 13M (smaller version) and the horde at 16M in the total (+13M). Rewrite line 302: declining all smaller versions costs about 45 to 50M and three to five weeks, naming the well's 20M and the full table.",
+     "verdict": "confirmed",
+     "vnote": "All figures hold. Well: increments 0, 3 and 4 are 2M + 4M + 3M = 9M against an 8M class; increment 2 (3M) joins if the owner says yes to the stick question, which A3/simulation-engine.md:23 requires built as answered; the packet is 28M. Table: 13M for the stick alone and 48M for six increments, against 8M or 4M. Horde: 12M against 14M, and path:65 itself says 12M or 20M. Path:302 is false for the well: the declined case at path:307 is a second increment and one more golden window, unpriced, about 19 to 20M above the class.",
+     "fix_ok": "The +13M carry until S2 to S4 report is sound. The '45 to 50M' figure is not derivable from the files; better to rewrite path:302 to say the well's full packet is about 20M more and one more window, and the full table is unpriced until S4 reports."
+    },
+    {
+     "id": "COS-03",
+     "weight": "serious",
+     "claim": "A2's and A6's week ranges are shorter than their own people steps, and the two friends are asked four times each plus a two-hour run, not twice.",
+     "where": [
+      "04-path-to-alpha.md:20",
+      "04-path-to-alpha.md:145",
+      "04-path-to-alpha.md:280-294",
+      "05-directives/A6/ep.md:19",
+      "05-directives/A2/orb.md:29",
+      "05-directives/A3/orb.md:25"
+     ],
+     "fix": "A2: 2 to 4 weeks. A6: 2.5 to 5. Say which Deck lines may be carried from the commit before the fix round and which need a second ask. Ask three friends so that two finish. Call the first session 60 to 90 minutes.",
+     "verdict": "partly",
+     "vnote": "True: path:20 gives one to two weeks a round while A2's range starts at 1 week and A6's at 1.5; the round cannot start before the gates are green and the approval is recorded; the fix round moves the candidate to a new commit (A6/ep.md:19) and no line says which Deck readings carry or prices a second ask; no spare tester is named; the tar and chmod steps are confirmed. Overstated: path:20 itself states the A3 and A4 bench asks, so 'not twice' is loose wording in the path, not a hidden cost; the two-hour run is one friend, not both. Extra finding: that run is asked 'if one of them is willing' (A6/orb.md:12) while X-25 on a Deck is must-pass (path:285).",
+     "fix_ok": "Sound in direction. Smallest version: raise the lower bounds (A2 from 2 weeks, A6 from 2.5), name the Deck lines that carry across the fix round, and put the third friend and the longer first session to the owner as a question."
+    },
+    {
+     "id": "COS-04",
+     "weight": "moderate",
+     "claim": "The S class (0.25M) is below the project's own floor for one landing; 115 placed rows are S (28.75M) and 14 of them change the fingerprint.",
+     "where": [
+      "04-path-to-alpha.md:18",
+      "04-path-to-alpha.md:53",
+      "A-ENERGY-04",
+      "A-AI-05",
+      "A-AI-10",
+      "A-COMBAT-05",
+      "A-COMBAT-11",
+      "A-COMBAT-14",
+      "A-CONTROLS-04",
+      "A-MODES-07"
+     ],
+     "fix": "Price S at 0.5M (0.8M when visible or fingerprint-changing): +29M to +45M. Or name the batches S rows land in (for example at most twenty landings a milestone), price the landings and say which rows share a gate run.",
+     "verdict": "partly",
+     "vnote": "Every number is right, and A-ENERGY-04 is classed S with a 0.4M basis. But the added cost is overstated: path:16 keeps the EP's reviews, gate runs and rework outside the row tokens and path:24 adds 25% for rework; 8 of the 14 fingerprint-changing S rows share GW1 and the rest share GW2 to GW4, so the 0.4M window is not paid per row. What stays true: a director's own gate pass (0.25M) is the whole S, and path:53 asks a gate run and a side-by-side per switch group.",
+     "fix_ok": "The second option (name the landing batches and which rows share a gate run, and price the landings) is the sound one; a flat re-price to 0.5M or 0.8M double-counts the EP's allowance and the shared windows."
+    },
+    {
+     "id": "COS-05",
+     "weight": "moderate",
+     "claim": "The last numbers window (GW4) is costed at under 2M at the tail of a one-to-two-week milestone, for five coupled targets the record shows are hard to hold.",
+     "where": [
+      "04-path-to-alpha.md:252",
+      "04-path-to-alpha.md:264-266",
+      "05-directives/A5/game-design.md:19-27",
+      "05-directives/A5/qa-balance.md:30",
+      "A-AI-02",
+      "A-QA-05",
+      "A-QA-08"
+     ],
+     "fix": "Class the window L (4M) with its own one to two weeks and at least three read-and-adjust rounds, each an overnight batch. Start the readings in A4 on GW3's numbers. Write what happens if a band is still out after three rounds.",
+     "verdict": "partly",
+     "vnote": "True: the three rows are S + M + S = 1.7M, QA's band and length batches are unpriced supporting work, no number of read-and-adjust rounds or machine nights is written, and the history (5%, 47.5%, 0 of 60) is as cited. Already handled in part: X-06 first readings in A1 (path:75); A-AI-11 sets the match count in A1; QA's A4 batches run on GW3's rules and feed GW4 (A4/qa-balance.md:30); a missed band goes to the EP the same day and a rule change is priced as a scope change (A5/game-design.md:24, :29). Detail: the chain file's 4 hours is the arms stage alone; the 3,200 matches span both stages, so the machine cost is higher than quoted.",
+     "fix_ok": "Class the window L and write the rounds and nights; the 'start readings in A4' part mostly exists already, so it only needs naming as the starting gap for A5."
+    },
+    {
+     "id": "COS-06",
+     "weight": "moderate",
+     "claim": "A1's 2 to 3 weeks does not fit its serial chain or its two heaviest queues (Tools and the EP).",
+     "where": [
+      "04-path-to-alpha.md:49-56",
+      "04-path-to-alpha.md:101",
+      "04-path-to-alpha.md:475",
+      "04-path-to-alpha.md:517-545",
+      "05-directives/A1/ep.md",
+      "05-directives/A1/tools-pipeline.md:37",
+      "05-directives/A1/tools-pipeline.md:51"
+     ],
+     "fix": "A1: 3 to 5 weeks, or split it into A1a (the tree, the patches, the switch groups, the golden record, the first desktop build) and A1b (mode list, measuring tools, spikes), dividing Tools' rows between them. Class A-CODE-04 as L.",
+     "verdict": "partly",
+     "vnote": "Facts hold: eight switch groups (path:53), eight landing batches from 11-06 to 11-09 with none naming a side-by-side, 133 parks in 3c9005ac, A-CODE-04 at M against CI jobs of 23 to 39 minutes. One item is overstated: a8bc66e2 turned on only the Controls and UI switches (its own message and A-CODE-01's basis), so 72 of 92 is mostly groups never flipped, not two days of drift. The path already says Tools is over its 10M line and that such a milestone takes the top of its range (path:517, :545), names risk 1 (path:475) and re-estimates at the end of A1 (path:16). What is missing is a wider upper bound.",
+     "fix_ok": "Widen A1 to about 2 to 4 weeks and class A-CODE-04 as L; the A1a and A1b split is more than is needed."
+    },
+    {
+     "id": "COS-07",
+     "weight": "moderate",
+     "claim": "A-LEGAL-01, the safety gate that holds A2 open, is sized L (4M) against a history that says much more.",
+     "where": [
+      "04-path-to-alpha.md:132",
+      "04-path-to-alpha.md:145",
+      "04-path-to-alpha.md:479",
+      "05-directives/A2/camera.md:29",
+      "A-LEGAL-01",
+      "A-LEGAL-08"
+     ],
+     "fix": "Class it XL (8M) across Camera, Rendering and VFX, book the tokens in A1 where the work starts, and say in A2's range that the Deck round begins only after it is green.",
+     "verdict": "partly",
+     "vnote": "The history is as cited, and both named fixes were a fade and a cross-dissolve, which A2/camera.md:35 now forbids as a way to pass a reading. A2/camera.md:29 admits the class has no comparable, and VFX's share is 0.25M. So L is weakly founded. But two of the fix's three parts exist already: the work is briefed on day one of A1 (path:50) and the Deck session waits while the gate is red (path:479; A2/camera.md:38; path:39).",
+     "fix_ok": "Only the re-class to XL, split across Camera, Rendering and VFX, is needed; the other two parts are already in the plan."
+    },
+    {
+     "id": "COS-08",
+     "weight": "moderate",
+     "claim": "A3's 2 to 3 weeks for one XL and seven L rows through a single golden window is not what comparable features took.",
+     "where": [
+      "04-path-to-alpha.md:153-190",
+      "04-path-to-alpha.md:477"
+     ],
+     "fix": "A3: 3 to 5 weeks. Or split GW2 in two (inputs and the beam; then the loop and the well): a second window costs about 0.4M (terrain-globe-plan.md:321) and one more old-replays-stop notice.",
+     "verdict": "partly",
+     "vnote": "The three precedents are as cited and each took more than a week to reach 'behind a switch'. The path does not hide the risk: path:188 calls A3 the milestone most likely to overrun, path:477 gives a stop rule, and path:147 starts the beam, the well, the numbers and LAN in A2 behind switches, so the real build time is longer than the 2 to 3 weeks shown. The range's upper bound is still tighter than the record supports.",
+     "fix_ok": "Widen to 3 to 5 weeks. Splitting GW2 is sound and cheap (0.4M at terrain-globe-plan.md:321) but adds one more 'old replays stop' notice, so it is the owner's call, not a default."
+    },
+    {
+     "id": "COS-09",
+     "weight": "moderate",
+     "claim": "Machine time is costed nowhere, though every measurement and gate runs on one shared PC that Orb also plays on, and the working-ahead rule maximises contention.",
+     "where": [
+      "04-path-to-alpha.md:22",
+      "04-path-to-alpha.md:75",
+      "04-path-to-alpha.md:280-287"
+     ],
+     "fix": "One machine calendar per milestone in the path: each long run with its hours, nights kept for QA batches, named quiet windows for frame readings, and a cap on sessions working ahead while a reading is due. Add the result to the week ranges.",
+     "verdict": "confirmed",
+     "vnote": "The path carries no machine-time line at all; the machine rules appear only as per-brief constraints. The 4-hour arms stage and its loss to a restart are confirmed. 'Maximises contention' is the reviewer's judgment, but path:22 does ask that no session sits idle while readings needing a quiet machine are due (path:75).",
+     "fix_ok": "Sound. A short list per milestone (long runs with hours, the quiet window for frame readings, who pauses) is enough; a full calendar is more than needed."
+    },
+    {
+     "id": "COS-10",
+     "weight": "moderate",
+     "claim": "The five spikes at 4.5M (0.9M each) cost less than the project's paper packets did, and S3 needs work the plan defers.",
+     "where": [
+      "04-path-to-alpha.md:62-67",
+      "04-path-to-alpha.md:308"
+     ],
+     "fix": "Budget S1 to S3 at 2M each (about 8M for the five). Cut S3 to up to five bodies measured, with the cost of lifting the limit written as an estimate, unless Orb wants the limit lifted in the spike. Order S1 after the X-16 probe exists.",
+     "verdict": "partly",
+     "vnote": "True: 4.5M over five spikes; the two packets cost 2 to 3M and 3.6M with nothing built; S3 asks frame times at six, eight and twelve bodies while the sim holds five, and no brief says how that is measured without the body-limit work. Already handled: the S1 order. A1/encounter-systems.md:33 runs the spike through the X-16 probe if it is ready and says so if not. S4 is a count and S5 one CI job, so 0.9M each is not low for those two.",
+     "fix_ok": "Raise S1 to S3 only (about 6M for the three) and settle S3's body count (five measured, the limit's cost as an estimate); the re-order of S1 is not needed."
+    },
+    {
+     "id": "COS-11",
+     "weight": "moderate",
+     "claim": "The look gate's same-match comparison stops working at the first golden window, and the cost of a new reference after each window is missing.",
+     "where": [
+      "04-path-to-alpha.md:55",
+      "04-path-to-alpha.md:60",
+      "04-path-to-alpha.md:99",
+      "04-path-to-alpha.md:492",
+      "05-directives/A1/ep.md:34"
+     ],
+     "fix": "Split GW1's landing: the flip alone, a desktop build and the comparison on that commit; then the riding fixes. Add to Orb's pages for A3, A4 and A5 a line to name that build as the new reference at each play, and one budget line per milestone for re-making the reference clips.",
+     "verdict": "confirmed",
+     "vnote": "GW1 lands A-AI-10, A-COMBAT-05, A-COMBAT-11, A-ENERGY-05 and A-CONTROLS-04 (all change the fingerprint) before the first desktop build (steps 5 then 6), yet that build is compared at the same ticks of the same replay with the 9 November build, and path:60 says nothing is meant to differ while listing those fixes. Added by this check: A-NET-05 lands before the window so a replay from another build is refused (path:73, :99), which also blocks that replay on the new build. The reference is named once (decision 4) and no page or budget line re-makes it after GW2 to GW4.",
+     "fix_ok": "Sound; it costs one more golden re-record in A1 (about 0.4M). A cheaper form: take the same-replay comparison on the flip-only commit before the riding fixes land, and add the 'name this build as the new reference' line to the owner's A3 to A5 pages."
+    },
+    {
+     "id": "COS-12",
+     "weight": "small",
+     "claim": "Orb's own time and the EP's routing round trips are never added up.",
+     "where": [
+      "04-path-to-alpha.md:20",
+      "04-path-to-alpha.md:483-485",
+      "05-directives/A1/orb.md",
+      "05-directives/A2/orb.md",
+      "05-directives/A3/orb.md",
+      "05-directives/A5/orb.md",
+      "05-directives/A6/orb.md"
+     ],
+     "fix": "A table of Orb's hours per milestone beside the tokens. For each default, the day it takes effect without an answer. The EP writes each grant into the brief when it is sent, so a director stops only for a grant the brief did not foresee.",
+     "verdict": "confirmed",
+     "vnote": "No table adds up the owner's reading and answering time; path:20 counts only the play (two to four days a milestone). The 153 and 41 are exact. Path:483 calls most decisions defaults but gives no day on which a default takes effect. Part of the fix exists: the EP briefs already list the grants expected (A4/ep.md:14). Weight 'small' is right.",
+     "fix_ok": "Sound as written; pre-writing the expected grants into each director's brief is a small step from what the EP briefs already list."
+    }
+   ]
+  },
+  {
+   "lens": "orb-rules",
+   "looked_at": "Read in full: 04-path-to-alpha.md; docs/ep/vision.md from line 1396 to the end, plus keyword search of the earlier part for standing rules (AI disclosure 723-725, in-progress art 842-850 and 1399, forward-facing text 951, cooldowns and caps 1412); docs/ep/taste.md; docs/decisions/0010-look-gate.md; all six 05-directives/*/orb.md; questions.md; 07-skipped.md; specification lines 133-163 and the X-02, X-12, X-17 rows. Read acceptance criteria and Orb's-rules lines of: A1 ui-ux, game-design, legal-ip, narrative-identity, encounter-systems, simulation-engine; A2 vfx, camera, tools-pipeline, community-marketing, legal-ip (and Orb lines of ep, rendering); A3 ui-ux, ep, game-design, encounter-systems, simulation-engine, controls-feel; A4 ep (and gate lines of legal-ip, performance-platform); A5 community-marketing (and gate lines of ep, legal-ip). Keyword searches over all 100 briefs (marks on fighters, fades, dissolves, blur, wipes, cooldowns, caps, lock-outs, slow motion, control-taking, campaign, spending) and a script over 03-gap-register.json for twenty rows. Found nothing adding a health bar, cooldown, time manipulation, dissolve or marker; AI disclosure, in-progress art, spending and public posting are handled in the briefs. NOT done: about seventy briefs were only keyword-searched; area reviews opened only for COMBAT and RENDER; vision.md before line 1396 searched, not read; no code read, so register facts (for example that the marks in ORB-07 are live by default) are as strong as the register; no Godot, browser or web. Output written to docs/ep/alpha/audit-2026-11-13/06-adversarial/orb-rules.md.",
+   "criticisms": [
+    {
+     "id": "ORB-01",
+     "weight": "serious",
+     "claim": "The A4 and A5 builds reach the two outside friends with no re-run of the 'before an outside tester plays' gates on those commits. A3 has the re-run line; A4 (horde, two new forms per fighter, four-fighter picture) and A5 (uploaded to the same itch.io channels) do not. Orb's A3 page says 'send the A3 update' with no 'only after the checks are green', and Orb's A4 page never mentions the update.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:123",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:202-211",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:244-252",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/ep.md:21-22",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/orb.md:25",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A4/orb.md"
+     ],
+     "fix": "Add A3's sentence to A4's and A5's exit criteria (gates on A2's list re-run on this commit; no update to a friend while one is red), add X-02 to A4/ep.md criterion 5, and add 'only after the Executive Producer tells you the checks are green on that build' to A3/orb.md:25 and a matching line to A4/orb.md.",
+     "verdict": "confirmed",
+     "vnote": "A3 has the re-run line (path :172, A3/ep.md:25); A4's and A5's exit lists have none, A4/ep.md:21 lists no X-02 and :22 sends the build to the two friends. The only A4 guard is partial: A4/legal-ip.md:20, :23 and :36 add rows for the new pictures and name the update as waiting on them, but nothing makes the whole list green on the A4 commit. X-02 returns only at A6 (:282). A3/orb.md:25 has no 'after the checks are green'; A4/orb.md never mentions the update. The A5 build goes on the same page (:250).",
+     "fix_ok": "Yes, the proposed fix is the smallest sound one."
+    },
+    {
+     "id": "ORB-02",
+     "weight": "serious",
+     "claim": "The plan lets the default (normal mode) look of the beam clash be changed to pass a flash measurement with the Executive Producer as the last judge. ADR 0010 point 3 says such a change is a creative decision that goes to Orb as clips or does not ship, and that safety is met with warnings and settings, not by degrading the default look. The gate that forces the change also blocks the Deck session, so pressure to accept a changed look is built in.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/vfx.md:19",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/vfx.md:31",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/camera.md:34 (and criteria 3, 4, 6)"
+     ],
+     "fix": "One line in A2/vfx.md, A2/camera.md and A2/ep.md: a change to the normal mode's clash or cuts goes to Orb as a two-clip 'which looks better, or the same?' question with no numbers; if Orb prefers the old look, normal mode stays and the outside testers' package ships with the reduced mode on and locked.",
+     "verdict": "confirmed",
+     "vnote": "A2/vfx.md:19 allows the normal mode to be changed 'by timing and brightness steps'; the judge is the Executive Producer's side-by-side (vfx.md:20, camera.md:25, A2/ep.md:18) and vfx.md:31 / camera.md:34 end the look question at the EP. ADR 0010 point 3 (:10) sends such a change to Orb as clips or it does not ship. camera.md:22 forbids a worse default look but leaves the EP to say what 'worse' is; camera.md:23 makes both modes must-pass and holds the Deck session.",
+     "fix_ok": "The routing line (two clips to Orb, no numbers) is sound and small. The second half is already planned: reduced mode on and locked is gate G7 (02-areas/LEGAL.md:26); whether a locked package may go out with the normal mode's reading still red is for Legal to rule in writing, not for the audit to assume."
+    },
+    {
+     "id": "ORB-03",
+     "weight": "moderate",
+     "claim": "Outside friends read the game's own text (start menu, How to play, hints, match-over card, settings) three builds before Orb marks it. Orb's rule is forward-facing text is seen by Orb before use; the register's own question says 'before outside testers play'; the path places A-TEXT-01 in A5, after the friends play A2 and receive A3 and A4.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:262",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A5/ui-ux.md:21-22",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/orb.md:16"
+     ],
+     "fix": "Move the short list (about 150 lines) and Orb's marking to A2, before the friends' session; A5 keeps only lines changed since. It is an S row with no fingerprint change.",
+     "verdict": "confirmed",
+     "vnote": "A-TEXT-01 sits in A5; its own question says 'before outside testers play'; friends play A2 (:109) and A2/orb.md:16 covers only the note, the notice, the guide and the sheet. Mitigations: three hints already marked (register verify note), and new text in A1 and A4 is shown as written (A1/simulation-engine.md:26, A4/orb.md:30). Register: cost S, hash false.",
+     "fix_ok": "Yes; cut the short list after A1's menu changes land so the mode list's words are in it."
+    },
+    {
+     "id": "ORB-04",
+     "weight": "moderate",
+     "claim": "'Up close, does your stick move only you?' is an item Orb answered 'workshop this'. The path and the register say it is decided before the well is built; two briefs say that until Orb answers, the packet's default is built. That default is today's rule (the stick moves the pair, carrying the rival), the behaviour behind Orb's 'we weren't in control of our fighter', and it lands in a golden window with every zone rule depending on it.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/simulation-engine.md:25",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/orb.md:12",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:500"
+     ],
+     "fix": "Change both brief lines to: the well's close-fight part does not start until Orb has answered from the S2 clip; size and zones may start.",
+     "verdict": "confirmed",
+     "vnote": "Path :500 and the register say the answer comes before the build; both briefs say the packet's default is built meanwhile. COMBAT.md:155 names that default as 'the stick moves the pair', which gravity-well.html:104 files under 'we weren't in control of our fighter'. Orb's answer was 'workshop this' (vision.md:1694).",
+     "fix_ok": "Yes, the smallest sound fix."
+    },
+    {
+     "id": "ORB-05",
+     "weight": "moderate",
+     "claim": "The stop rule cuts part of Orb's most-repeated ask without asking: if the pull is not playable at A3's midpoint the snap moves to the next milestone and 'Orb is told in one line'. Orb's own page frames the same thing as a question, and the path's general rule sends any missed must-pass line to Orb as a choice of three; A3's X-13 lists the well's pull as must pass.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:477",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/ep.md:23",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/simulation-engine.md:24"
+     ],
+     "fix": "Reword the stop rule in the path and both briefs: at the midpoint the Executive Producer brings Orb the one question already written at A3/orb.md:29 and nothing moves until the answer; or ask it in A1 as a standing yes.",
+     "verdict": "confirmed",
+     "vnote": "Three texts state the snap moving as automatic ('Orb is told in one line', A3/ep.md:23); A3/orb.md:29 writes the same event as a question; :39 sends any missed must-pass line to Orb as a choice and :167 lists the well's pull as must-pass. The plan contradicts itself.",
+     "fix_ok": "Yes; asking it once in A1 as a standing yes is the cheaper of the two options."
+    },
+    {
+     "id": "ORB-06",
+     "weight": "moderate",
+     "claim": "Orb is asked to play the A1 build and say whether anything differs from 9 November 'because nothing is meant to be', while the same window zeroes the backburnered hero and villain meters, which act in every match of that build. The brief orders a before-and-after win-rate batch because the Protagonist's only comeback rule hangs on his meter. PLAY THIS lists the small input fixes but not this, and decision 6 is still an open question.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:60",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:99",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A1/orb.md:37",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A1/simulation-engine.md:28"
+     ],
+     "fix": "Move A-ENERGY-05 to GW2 with the new energy rules, or add one PLAY THIS line and one line on Orb's page saying the old meters no longer change the fight and asking whether matches feel easier, harder or flatter.",
+     "verdict": "confirmed",
+     "vnote": "PLAY THIS (:60) and A1/orb.md:37 say nothing is meant to differ, while GW1 (:99) zeroes meters the register says change damage, energy regain, beam contests and the computer's lead, and the brief orders a before-and-after win-rate batch. One weaker part: decision 6 is asked first in A1 (A1/orb.md:15), so it is answered before the build exists.",
+     "fix_ok": "The one-line option (say it in PLAY THIS and on Orb's page, and ask how matches feel) is the smallest sound fix; moving the row to GW2 also works."
+    },
+    {
+     "id": "ORB-07",
+     "weight": "moderate",
+     "claim": "Marks drawn on and round the fighters (charge ring, diamond, double ring, squeezing ring with brackets, ring on the striking hand) are on the taste page's never-ship list, live by default, and left in until A3: they become main's default in A1, go to two outside friends in A2, and sit inside the build proposed as the new look reference. The row is unverified, and Orb is asked to rule mark by mark on something the taste page already rules on.",
+     "where": [
+      "register A-RENDER-13 (placed in A3)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/vfx.md:12",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/orb.md:18",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:492"
+     ],
+     "fix": "Do the code read of A-RENDER-13 in A1, put the clips and the question on Orb's A1 page, and list the marks among the known faults that are not part of the reference in decision 4.",
+     "verdict": "confirmed",
+     "vnote": "The marks are on today's default, not from A1: render_anim.gd:68 has the press styles on and main.gd:165 passes that to the effects; zip.gd:7 and :12-13 describe the ring, diamond, double ring and brackets. So they are in the 9 November build proposed as the reference (:492) and in what the friends get at A2. The timing claim holds; asking Orb per mark is defensible (register risk; vision.md:1656).",
+     "fix_ok": "Yes."
+    },
+    {
+     "id": "ORB-08",
+     "weight": "small",
+     "claim": "The decisions section says most decisions are 'defaults the team will take unless Orb says otherwise; only ten are real choices'. The thirteen left out include creative calls Orb has only answered with 'workshop this' or has open words on: the stamina, energy and body loop (11), which workshop items wait (14), what a transformation changes (17), the default world (2), the terrain workshop (3). It contradicts the page's own 'nothing is built until Orb approves it'.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:483"
+     ],
+     "fix": "Replace the sentence with: every row needs Orb's yes; ten need thought, the rest are likely a one-word answer.",
+     "verdict": "partly",
+     "vnote": "The sentence is as quoted and mislabels creative calls as defaults. But the briefs do not act on it: decisions 2, 3, 11 and 14 are put to Orb as questions on the A1 page and 17 on the A4 page, and :483 itself ends 'nothing is decided for Orb by silence'. So it is a wording fault in one place (also wrong that Orb's page carries only ten), not a plan that takes decisions by default.",
+     "fix_ok": "Yes, the rewording is the right and smallest fix."
+    },
+    {
+     "id": "ORB-09",
+     "weight": "small",
+     "claim": "X-17 is rewritten for A1 and A2 to allow RT + B, and that reading is 'must pass' on the build the friends get. Orb's rule is beams from the right stick only, with the signature inputs named as RT + RB + a flick and RT + a flick. A1 also spends a fingerprint-changing fix (A-COMBAT-11) tightening RT + B that A3 then removes.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:71",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:121",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A1/encounter-systems.md (criterion 4)",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/controls-feel.md (criterion 3)"
+     ],
+     "fix": "State in the path that A1 and A2 read X-17 with a named, temporary exception Orb has seen, and drop A-COMBAT-11 unless Orb wants RT + B kept until A3.",
+     "verdict": "confirmed",
+     "vnote": "X-17 is read with RT + B allowed in A1 and A2, and that reading is missing from 'Exit criteria this audit proposes to change'. A-COMBAT-11 lands in GW1 and its input is removed in A3.",
+     "fix_ok": "Half: add X-17 to the change table as a named temporary reading Orb has seen. Do not drop A-COMBAT-11: it is an S fix for a stray signature found in Orb's own play (questions.md:14), it rides in a window that is open anyway, and it is on the builds the friends play."
+    },
+    {
+     "id": "ORB-10",
+     "weight": "small",
+     "claim": "From A1 the start menu lists all eight modes with unbuilt ones as 'coming', which shows 'Campaign: coming' to outside friends from A2 although the plan recommends no campaign at Alpha and records the decision only at A5; it also shows LAN rows as 'coming' in a tester package the plan says will never have a LAN row.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A1/ui-ux.md:30",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A1/game-design.md:28",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:249"
+     ],
+     "fix": "Mark each mode row 'shown to testers: yes or no' in the mode data file; hide the campaign and LAN rows in the outside testers' package until Orb decides 13 and 18, and ask decision 18 in A1 with the mode names.",
+     "verdict": "confirmed",
+     "vnote": "The eight modes include the campaign (specification :141); A1 shows unbuilt ones as 'coming'; A2 is the same game handed to friends; decisions 13 and 18 are not due until A3 and A5.",
+     "fix_ok": "Yes; smallest form is one 'shown in the testers' package' flag per row in the mode data file, campaign and LAN rows off until Orb answers 13 and 18."
+    },
+    {
+     "id": "ORB-11",
+     "weight": "small",
+     "claim": "Orb's pages still carry team words and unexplained pointers: 'the far kit, the catch, the swat and the taunt', 'the proposal's default is built' (never said which), 'the zip's counter marks', 'the Steam clock', 'press the bench button', and a file path for 'Legal's ten points'.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/orb.md:11",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/orb.md:12",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A3/orb.md:18",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A5/orb.md:31",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/orb.md:10",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/orb.md:12"
+     ],
+     "fix": "Replace each with what it does: 'the long-range moves you get outside the pull', 'today's rule: your stick moves both fighters', 'the small marks drawn on a fighter during a dash', 'the waiting period Steam sets before a page can go live', 'the one-press speed test'.",
+     "verdict": "confirmed",
+     "vnote": "Each phrase is at the line given. The rule is at specification :82 and :777 (plain words, no team nicknames), not in :576-623 as cited. A1/orb.md:38 already says 'one-click speed test', so 'bench button' is also inconsistent between pages.",
+     "fix_ok": "Yes."
+    },
+    {
+     "id": "ORB-12",
+     "weight": "small",
+     "claim": "Orb's A2 page gives as instructions two things that are Orb's to decide: it tells Orb to make a new chat server 'not one that already has members' before the question that asks it, where Orb's words were that they have one to convert; and it states testers 'must be adults' with a private dated note, which is Legal's recommendation. 'Keep the promise to delete a tester's reports' treats a line in a draft note as a promise already made.",
+     "where": [
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/orb.md:10",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/orb.md:12",
+      "docs/ep/alpha/audit-2026-11-13/05-directives/A2/orb.md:21",
+      "docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md:496"
+     ],
+     "fix": "Put the question before the action, say plainly why Legal advises a new server over converting one, and turn the adults-only line and the delete promise into two yes-or-no questions.",
+     "verdict": "partly",
+     "vnote": "True: the action (:10) comes before the question (:21) and never says Orb's own words were to convert a server; the private dated note is Legal's 'recommended' (A2/legal-ip.md:21) written as fact. Weaker: the delete promise is in fact put as a question with a recommendation (:21), only worded as a promise already made (it is a line in a draft note, alpha-tester-note.md:30). Adults-only is Legal's safety condition in the draft note Orb reads before sending (:16), not a free choice.",
+     "fix_ok": "Mostly: reorder, say why Legal advises against converting, and make the dated note and the delete line yes-or-no questions; keep adults-only stated as a condition."
+    }
+   ]
+  },
+  {
+   "lens": "pc-safety-legal",
+   "looked_at": "Read whole: 04-path-to-alpha.md; 02-areas/LEGAL.md (gate list G1 to G20); questions.md; 07-skipped.md; all six orb.md pages; the EP's briefs A1 to A4; Legal's briefs A1 to A4; Tools' briefs A1 and A2; Performance's, Production's, Community & Marketing's and Camera's A2 briefs; Narrative's and part of UI's A5 briefs. Searched across all 100 briefs: itch.io, uploads, keys, friends, the approval file, firewall and real-socket checks, windowed or desktop runs, git state, process counts, direct contact between directors, gate re-runs. Scripts: every brief's \"You own\" line against DIRECTORS.md (all match); save paths against owned and granted paths (no ungranted write found); the register for rows tying a flash reading to a desktop build (none); the untracked tree by type and folder (13,657 pictures, 155 GIFs; 0 files with a home path; 2 with a private network address, both inside the audit's own folder). Read from the project: .github/workflows/desktop-builds.yml:1-61, docs/legal/alpha-tester-note.md, docs/legal/name-screening.md:180-190, docs/camera/pending/cd04/README.md, headers of tools/flash/release-pass.mjs and tools/machine/capture.mjs, .gitignore:20-40. Found clean: no brief asks a director to change git state, message another director or exceed the process caps; real-socket checks stay in CI; the trusted-two and outside-tester packages are kept apart in A3; no flashing question is in the decisions table. Not done: about 60 briefs were searched, not read line by line; no Godot, browser or web, so nothing about itch.io, Discord or GitHub was checked beyond web-checks.md and the workflow's own header (that run files on a public repository are reachable by others is taken from that header and should be confirmed by the EP); the untracked pictures were counted, not viewed. Output file: docs/ep/alpha/audit-2026-11-13/06-adversarial/pc-safety-legal.md",
+   "criticisms": [
+    {
+     "id": "PC--01",
+     "weight": "serious",
+     "claim": "The A4 and A5 builds reach the two outside friends with no re-run of the 'before an outside tester plays' gates; only A3 has that line. A4 adds transformations, a horde and two fights on one screen; A5 adds the quality levels (the Deck default is the picture a friend sees), drawn craters and a numbers window. Any push to a channel with live keys is a hand-out, and A5's update-then-roll-back rehearsal runs on those live channels.",
+     "where": [
+      "04-path-to-alpha.md:123",
+      "04-path-to-alpha.md:172",
+      "04-path-to-alpha.md:203-211",
+      "04-path-to-alpha.md:245-252",
+      "05-directives/A4/ep.md:21-22",
+      "05-directives/A5/ep.md:39",
+      "05-directives/A3/orb.md:25",
+      "05-directives/A4/orb.md"
+     ],
+     "fix": "Add one exit line to A4 and A5: the gates on A2's list are re-run on this commit before any upload to a channel with live keys; put the same condition on Orb's send step in A3/orb.md and A4/orb.md. Rehearse update and roll-back on a separate dummy channel. If the re-run is too dear, do not send A4 to the friends.",
+     "verdict": "confirmed",
+     "vnote": "Only A3 carries the re-run line (path:172, A3/ep.md:25, A3/tools-pipeline.md:30). A4's exit list and A4/ep.md:20 have no X-02 line, yet A4/ep.md:22 sends the build to the two friends; its one safety hold is Legal's two-fights row (A4/legal-ip.md:20, :23). A5's build is not said to go to the friends, but it goes on the live page they hold keys to (path:251, A5/orb.md:12); GW4's 'full gate set' (A5/ep.md:24) is the sim and render gates, not the tester list. A3/orb.md:25 has no 'only when green' condition; A2/orb.md:13 and A6/orb.md:11 do.",
+     "fix_ok": "Sound and small. The exit line for A4 and A5 plus the condition on Orb's send step is enough; the dummy channel for the roll-back rehearsal is a good extra. Tie the line to 'any upload to a channel a friend holds a key to' so A5 is covered without naming the friends."
+    },
+    {
+     "id": "PC--02",
+     "weight": "serious",
+     "claim": "A friend's own bench and report files are planned into the repository, which is public. The friend was told reports go to a private server and can be deleted on request; a committed file cannot be taken back, and 'names removed first' does not cover what the friend typed.",
+     "where": [
+      "05-directives/A2/performance-platform.md:22",
+      "05-directives/A2/ep.md:19",
+      "05-directives/A6/qa-balance.md:17"
+     ],
+     "fix": "One rule in the A2 Legal, Performance, QA and EP briefs: a tester's raw file is never committed; it lives in a git-ignored folder (ignore line added in A1 with A-PROCESS-03) and only the team's own reading (numbers, no quoted notes) goes under docs/*/runs/. Add a delete step to Production's release page.",
+     "verdict": "confirmed",
+     "vnote": "A2/performance-platform.md:22 records 'both files' (a friend's bench file and report file) under docs/perf/runs/<sha>/deck/, a tracked folder in a repository the content screen calls public. The report ends with the tester's free notes (ui_feedback.gd:163-164) and the note promises deletion on request (alpha-tester-note.md:30). No brief keeps a tester's raw file out of git; LEGAL.md:35 keeps only the tester list out. A2/ep.md:19 itself only hands files on.",
+     "fix_ok": "Yes, the smallest sound fix: raw tester files in a git-ignored folder, only the team's own reading committed, plus a delete step. The one line that must change is A2/performance-platform.md:22; the same rule belongs in A6/qa-balance.md:16-17."
+    },
+    {
+     "id": "PC--03",
+     "weight": "serious",
+     "claim": "The plan has CI on a public repository make the game's Windows and Linux programs from A1, weeks before the flash gate is green and before Orb's recorded yes. The existing workflow treats run files as reachable by others. Legal is asked whether Orb's own builds may be made early, but not whether a public run may carry them, in what lock state, or how the build reaches Orb's PC. Off Orb's page.",
+     "where": [
+      "04-path-to-alpha.md:70",
+      "04-path-to-alpha.md:67",
+      "04-path-to-alpha.md:124",
+      "05-directives/A1/tools-pipeline.md:34",
+      "05-directives/A1/tools-pipeline.md:43-44",
+      "05-directives/A1/legal-ip.md:20",
+      "05-directives/A2/tools-pipeline.md:32"
+     ],
+     "fix": "Reword X-29 for A1: CI builds, checks and discards; no game program is kept as a run file until G4 is green and the approval exists; Orb's A1 copy is made on Orb's PC by the same one command. Add to A1/legal-ip.md criterion 2: say whether any CI run on the public repository may keep a game program, locked or not.",
+     "verdict": "partly",
+     "vnote": "True: X-29 must pass at A1 with a CI run making both builds (path:70, A1/tools-pipeline.md:33) before G4 is green (LEGAL.md:23, closing in A2) and before the recorded yes; the workflow keeps game programs as run files for a day and relies on the EP deleting the run. How the build reaches Orb's PC is unstated. Wrong in part: A1/legal-ip.md:20 does ask Legal 'what the workflow must still refuse' and for 'the exact condition Tools should code', which leaves room for the lock state and the run-file question; it just does not name them. The plan also follows the specification's own evidence line for X-29 (spec:196).",
+     "fix_ok": "Rewording X-29 is more than needed and departs from the specification's line. Smaller: add to A1/legal-ip.md criterion 2 that the ruling must say whether a run on the public repository may keep a game program, in what lock state and for how long, and how Orb's copy reaches Orb's PC; Tools codes that condition and keeps no run file until the ruling exists."
+    },
+    {
+     "id": "PC--04",
+     "weight": "moderate",
+     "claim": "The approval step cannot be followed as written. Orb's yes is to be recorded only after every gate is green, but four gates' records come from the package step, and the workflow refuses to build a tester package until the approval file is committed in the commit being built. The approval also expires after 30 days, and A2's yes is five to eleven weeks old by A6. The likely way out is the EP recording the yes early.",
+     "where": [
+      "05-directives/A2/orb.md:13",
+      "05-directives/A2/ep.md:16",
+      "05-directives/A1/tools-pipeline.md:33-34",
+      "05-directives/A6/legal-ip.md:16",
+      "04-path-to-alpha.md:495"
+     ],
+     "fix": "In Legal's A2 ruling (A-TOOLS-06, A2/legal-ip.md:23) split the two acts: 'may build and check a tester package, hand to nobody' (no approval) and 'may hand out commit <sha>' (Orb's yes, checked at the upload step). Put a re-approval line on Orb's A3 to A6 pages, or have the ruling say one yes covers named commits.",
+     "verdict": "partly",
+     "vnote": "The loop is real: G8 (the approval file in the candidate commit, LEGAL.md:27) sits on the list that must be green before the approval is recorded (A2/ep.md:16); G6, G7 and G9 are recorded from the package's routes and verify output; the workflow refuses to build without the committed file (yml:56) and A1/tools-pipeline.md:33 keeps the tester package refused until then. Committing the file also makes a new commit after the gates were read. Wrong in part: freshness is already put to Legal ('how fresh Orb's approval must be', A2/legal-ip.md:23) and A6 records the approval again (A6/legal-ip.md:16). 'The EP records it early' is a guess with no evidence.",
+     "fix_ok": "The split is the right fix and the smallest: 'build and check a tester package, hand to nobody' needs no approval; 'hand out commit <sha>' needs Orb's yes, checked at the upload step. The re-approval line for A3 to A5 can be left to the freshness answer Legal already owes in A2/legal-ip.md:23."
+    },
+    {
+     "id": "PC--05",
+     "weight": "moderate",
+     "claim": "The flash gate reads the browser export; the friends get the Linux desktop program on a 1280 by 800 Deck screen at a Deck quality level. Nothing proves the two draw the same picture over the measured clips, and the path itself expects desktop-against-browser differences. Off Orb's page.",
+     "where": [
+      "02-areas/LEGAL.md:23",
+      "04-path-to-alpha.md:55",
+      "04-path-to-alpha.md:242",
+      "04-path-to-alpha.md:315"
+     ],
+     "fix": "Add one line to G4 in Legal's gate page (A-LEGAL-03): the desktop Linux build's frames match the browser build's over the standard clips' tick windows, at 1280 by 800 and at the Deck's default level, compared in CI under the virtual display from spike S5; a mismatch makes G4 red. Owner: Tools with Rendering.",
+     "verdict": "confirmed",
+     "vnote": "The pass is keyed to the Web preset and a Windows or Linux preset change leaves it alone (release-pass.mjs:10); no register row or brief reads the flash clips on a desktop program. Partial cover exists: A1 compares each desktop build with the browser build by stills at the same ticks of one replay (path:55) and S5 saves one Linux still (path:63). Neither covers the standard clips, 1280 by 800 or the Deck's level.",
+     "fix_ok": "The aim is right but a frame-for-frame match between a desktop driver and a browser is too strict and will fail on harmless differences. Better: run the analyser itself on the Linux desktop build's frames for the standard clips (the desktop capture hook from A2/tools-pipeline.md:39, in CI under S5's virtual display, 1280 by 800, Deck default level) and hold them to the same limits; G4 is red if that reading is missing or over."
+    },
+    {
+     "id": "PC--06",
+     "weight": "moderate",
+     "claim": "A1 step 2 commits or ignores about 14,900 untracked paths into a public repository with no check before the push: 13,657 pictures and 155 GIFs, 79 of them animation review clips (in-progress character art). The only check is a clean git status and a fresh clone; push protection is filed under 'can wait until after Alpha'; the GIFs get no flash verdict.",
+     "where": [
+      "05-directives/A1/ep.md:31",
+      "04-path-to-alpha.md:51",
+      "04-path-to-alpha.md:513",
+      "05-directives/A1/orb.md:29"
+     ],
+     "fix": "Three lines in A1/ep.md criterion 1: run node tools/content-screen.mjs on the staged set before each push; a per-folder table of picture folders marked commit or ignore, with fighter close-ups and review clips ignored by default; every committed GIF carries the analyser's verdict or is ignored. Make Orb's yes to the repository settings (A1 question 14) a precondition of step 2.",
+     "verdict": "partly",
+     "vnote": "Counts hold exactly: 14,936 untracked today; 9,104 jpg, 3,542 webp, 1,011 png, 155 gif; 79 GIFs under art/animation/review. The content screen runs on push in CI; no brief runs it before a push and no line gives committed GIFs the analyser's verdict. Already handled in part: A1/ep.md:31 says in-progress character art and Orb's private files are ignored with a written line, one owner's group at a time, each commit reviewed. Push protection is 'can wait' at path:513 and A-LEGAL-15 is unplaced (path:368), but Orb is asked it in A1 (A1/orb.md:29, A1/ep.md:37); it is not a precondition of step 2.",
+     "fix_ok": "Mostly sound; the 'ignored by default' rule for character art is already in A1/ep.md:31. The smallest additions are two lines in that criterion: run node tools/content-screen.mjs locally on the staged set before each push, and every committed GIF carries the analyser's verdict or is ignored. Asking A1 question 14 before step 2 is a cheap third."
+    },
+    {
+     "id": "PC--07",
+     "weight": "moderate",
+     "claim": "Several criteria need a desktop Godot program drawing a picture on Orb's PC, run by a session, and no rule allows it: sessions never open a Godot window, the guarded launcher drives a browser only, and the one CI job that could start a Windows build is 'drop first'. One brief writes its own exception.",
+     "where": [
+      "05-directives/A1/tools-pipeline.md:34",
+      "05-directives/A1/tools-pipeline.md:35",
+      "05-directives/A1/tools-pipeline.md:43",
+      "05-directives/A2/tools-pipeline.md:39",
+      "05-directives/A2/performance-platform.md:25",
+      "05-directives/A2/performance-platform.md:31"
+     ],
+     "fix": "Add one required A1 line for Tools: a guarded way to take stills and frames from a desktop build (Linux in CI under the virtual display; Windows in CI or as a one-click file Orb starts), with a time limit and below-normal priority. Until it exists the affected criteria say 'Orb starts it' and go on Orb's page. Remove the 'apart from' clause.",
+     "verdict": "partly",
+     "vnote": "True: A1/tools-pipeline.md:33 has each desktop build 'started once and compared by stills', :34 takes a menu still 'through your launcher' (which serves a built site or a page only), and A2/performance-platform.md:25 wants a press-to-picture record on the desktop build on Orb's PC. None is on Orb's page, sessions may not open a Godot window (A1/performance-platform.md:26), and the one CI job that starts Windows is 'drop it first' (A1/tools-pipeline.md:42). Wrong in part: the A1 bench is on Orb's page (A1/orb.md:36), and A2/performance-platform.md:31 reads as that same rule restated, not a new exception, though A2/orb.md gives Orb no bench step. A2 does plan a desktop capture hook, but no guarded way to run it.",
+     "fix_ok": "Sound. Smallest form: make A-TOOLS-13 and S5 required instead of 'drop first' so Windows and Linux stills come from CI, and until then put 'Orb starts it once' on Orb's A1 and A2 pages for the stills, the menu still and the latency record. Reword A2/performance-platform.md:31 to 'the bench is a file Orb starts' rather than strike it."
+    },
+    {
+     "id": "PC--08",
+     "weight": "moderate",
+     "claim": "The itch.io uploads have no named hand in A2, A3 and A4, and A5 and A6 let the EP run the upload on Orb's word, which means using Orb's stored sign-in. The rehearsal's 'a key is claimed' needs a second itch.io account and nobody is named to make it.",
+     "where": [
+      "05-directives/A2/tools-pipeline.md:35",
+      "05-directives/A3/tools-pipeline.md:30",
+      "05-directives/A3/tools-pipeline.md:36",
+      "05-directives/A5/tools-pipeline.md:18",
+      "05-directives/A6/tools-pipeline.md:14",
+      "04-path-to-alpha.md:149"
+     ],
+     "fix": "Make every upload Orb's action on Orb's page for A2, A3 and A4, as A5 and A6 do; strike 'or the EP' from the A5 and A6 Tools briefs; say in A2/orb.md that the rehearsal's key is claimed by the trusted second player on an account they make themselves.",
+     "verdict": "confirmed",
+     "vnote": "A2/tools-pipeline.md:35 has a dummy build 'pushed' and 'a key claimed' with nobody named, and A2/orb.md has no upload step. No A4 brief names who uploads (only A4/ep.md:22). The A5 and A6 Tools briefs say 'Orb or the EP, on Orb's word, runs it', against A2/orb.md:11. Small correction: A3 does carry a rule (A3/tools-pipeline.md:36, with the same 'or on Orb's word') and A3/orb.md:25 gives Orb a 'send' step. That a key needs an account rests on forum threads still to be confirmed (web-checks.md:13).",
+     "fix_ok": "Yes: every upload on Orb's page for A2, A3 and A4, 'or the EP' struck from A3, A5 and A6 (A3/tools-pipeline.md:36 has it too), and the rehearsal's key claimed by the trusted second player on an account they make themselves."
+    },
+    {
+     "id": "PC--09",
+     "weight": "moderate",
+     "claim": "The privacy line a friend agrees to leaves out two outside parties the plan relies on: itch.io (each friend needs an account there to claim a key) and the AI tools that read every report. The one wording Legal is asked to write names only the report server.",
+     "where": [
+      "05-directives/A2/legal-ip.md:22",
+      "05-directives/A2/ep.md:19",
+      "05-directives/A6/qa-balance.md:17"
+     ],
+     "fix": "Add to A2/legal-ip.md criterion 4's wording: you need a free itch.io account to download, and itch.io has its own rules; what you post is read with AI tools on Orb's PC. Legal confirms the sentence and Orb sees it with the rest.",
+     "verdict": "confirmed",
+     "vnote": "Criterion 4's one wording names only the report server 'which a third party runs'. The note names only Discord (alpha-tester-note.md:29) and says AI tools write the game (:7), not that they read reports; A2/ep.md:19 hands the friends' files to four director sessions. Legal's row on 'the itch.io page text' (A2/legal-ip.md:24) is not the privacy line. The itch.io account need is still to be confirmed in the rehearsal.",
+     "fix_ok": "Yes, one added sentence in A2/legal-ip.md criterion 4 is the smallest fix. Make the itch.io half conditional on the rehearsal confirming an account is needed, and let Legal choose the words for the AI-reading half."
+    },
+    {
+     "id": "PC--10",
+     "weight": "moderate",
+     "claim": "The title step has no second branch. Legal's standing condition puts the formal search before any itch.io page; the plan asks Legal to rule otherwise and the acceptance criterion already assumes a yes. If Legal says no, the A2 rehearsal and both tester rounds have nowhere to go, and the search is a spend only Orb can approve.",
+     "where": [
+      "05-directives/A1/legal-ip.md:19",
+      "04-path-to-alpha.md:497",
+      "04-path-to-alpha.md:123",
+      "05-directives/A1/orb.md:30"
+     ],
+     "fix": "One line in A1/legal-ip.md criterion 1 and in decision 9: if the ruling is no, the restricted page goes up under a neutral placeholder name Legal screens in the same row, or Orb is asked about bringing the search forward with its cost. Ask Orb question 15 only after the ruling is written.",
+     "verdict": "partly",
+     "vnote": "True: no branch exists for a 'no'. Decision 9 recommends 'Yes if Legal writes...' (path:497), A2's rehearsal needs the ruling landed (A2/tools-pipeline.md:53), and the search is a spend left to Orb (A1/legal-ip.md:26). Wrong in part: the criterion puts an open question and its check ('no longer contradict it') can be met by either answer. Orb is also not asked on day one: the day-one set is decisions 1 to 6, 11, 12, 14 and 15 (path:51), question 15 on Orb's page is a 'smaller question' (A1/orb.md:24, :30), and Legal's check makes the question match the ruling's wording, so the ruling comes first.",
+     "fix_ok": "Keep only the first half: one line in A1/legal-ip.md criterion 1 and decision 9 saying what happens on a 'no' (a neutral placeholder name Legal screens in the same row, or the search brought forward as a spend question to Orb). The reordering of question 15 is not needed."
+    },
+    {
+     "id": "PC--11",
+     "weight": "moderate",
+     "claim": "A5 puts the words of the flashing notice, and of the settings a tester is told to change, on Orb's keep, rewrite or cut list, with Narrative redrafting and 'every cut is gone' as the check. That puts the delegated topic in front of Orb and lets a safeguard's wording change without Legal. A2 also asks Orb to read the first-screen notice.",
+     "where": [
+      "05-directives/A5/ui-ux.md:21-22",
+      "05-directives/A5/orb.md:11",
+      "05-directives/A5/narrative-identity.md:6",
+      "05-directives/A5/narrative-identity.md:17",
+      "05-directives/A2/orb.md:16"
+     ],
+     "fix": "In A5/ui-ux.md criterion 1: leave the notice's safety sentences, the Reduce flashing row and the package's safety lines off Orb's list, marked 'Legal's words'; a rewrite needs Legal's row, routed by the EP; add a hud_check case that the notice text equals Legal's file. In A2/orb.md:16 show Orb the AI line only.",
+     "verdict": "partly",
+     "vnote": "True: the notice and 'the settings a tester is asked to change' are on Orb's keep, rewrite or cut list with no carve-out (A5/ui-ux.md:21-22), the notice body is Legal's text (ui_notice.gd:20-24), and Narrative's check is a word list only (A5/narrative-identity.md:20). Wrong in part: a changed notice does not pass without Legal, because A5/legal-ip.md:20 needs a sign-off row for the in-game notice on the A5 commit with none open. Whether Orb reading the notice breaks the delegation is a judgement: AQ-02 keeps findings off Orb's page, and a standing rule has Orb see forward-facing text before use. The live risk is 'cut' on a safeguard's words.",
+     "fix_ok": "Smaller than proposed: in A5/ui-ux.md criterion 1 mark the notice's safety sentences, the Reduce flashing row and the package's safety lines as 'Legal's words, not for marking', with any rewrite routed by the EP to Legal. The hud_check equality case is optional since A5/legal-ip.md:20 already re-reads the notice; A2/orb.md:16 can show Orb the AI line only."
+    },
+    {
+     "id": "PC--12",
+     "weight": "small",
+     "claim": "A2 has Orb force a crash 'from the hidden test row' in the build installed from the itch.io test page, which is the package the friends get. A hidden developer row in a tester package cuts against the package's route scan and against the row that removes developer keys in the same milestone.",
+     "where": [
+      "04-path-to-alpha.md:115",
+      "05-directives/A2/orb.md:14"
+     ],
+     "fix": "Say where the forced crash lives: in CI only (A2/tools-pipeline.md:32 already has that test) and in Orb's own unlocked copy. Strike the step from the itch.io install on Orb's page, or name the row in the package check's route list as absent.",
+     "verdict": "partly",
+     "vnote": "True: the 'hidden test row' appears only at path:115 and A2/orb.md:14; no brief builds it, owns it or says whether a tester's package holds it, in the milestone where A-UI-03 makes developer keys do nothing in a tester's package (A2/rendering-techart.md:22). Overstated: the route scan looks for ways to lift the Reduce flashing lock (desktop-package.mjs:172, :386), and a crash row is not shown to trip it.",
+     "fix_ok": "Yes: say the forced crash lives in CI (A2/tools-pipeline.md:32 already has that test) and in Orb's own unlocked copy, and strike it from the itch.io install step at path:115 and A2/orb.md:14."
+    }
+   ]
+  }
+ ]
+}

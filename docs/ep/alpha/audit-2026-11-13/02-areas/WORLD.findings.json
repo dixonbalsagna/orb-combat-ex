@@ -1,0 +1,221 @@
+[
+  {
+    "id": "F-WORLD-01", "kind": "gap",
+    "statement": "On main the round planet is not the game's world: a match with no `planet` setup key plays the old hand-made arena, the menu never sets that key, and Orb's globe build gets it from a preview patch plus world data switches that main ships off.",
+    "evidence": ["sim/core/sim.gd:183", "render/core/main.gd:441-449", "render/core/main.gd:1644", "tools/preview/stack-preview.mjs:6", "data/biomes/water.json:4", "data/biomes/climate.json:4", "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/biomes/water.json:4", "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/biomes/climate.json:4"],
+    "criterion": ["X-11", "X-13", "X-05"], "severity": "blocker", "alpha": "required", "owner": "world-environment",
+    "needs_directors": ["ui-ux", "simulation-engine", "tools-pipeline"], "cost": "M",
+    "cost_basis": "estimate, no comparable: a default change across about seven data switches, one golden window, look gate",
+    "hash": true, "risk": "Flipping the defaults moves every golden and the two builds' data must be re-read from the packed files.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-02", "kind": "gap",
+    "statement": "Custom planet setup has nothing under it: the generator takes a seed only, the planet's size is a constant, and city count, climate and water are fixed numbers in data files, not match settings (same gap as F-MODES-07).",
+    "evidence": ["sim/world/planet.gd:328", "sim/core/constants.gd:21", "data/biomes/planet.json:92", "render/core/main.gd:441-442", "docs/world/planet-overhaul.md:126"],
+    "criterion": ["X-11"], "severity": "blocker", "alpha": "required", "owner": "world-environment",
+    "needs_directors": ["simulation-engine", "ui-ux", "netcode-online", "game-design"], "cost": "L",
+    "cost_basis": "estimate, no comparable; docs/world/planet-overhaul.md:136-142 lists six build steps with no token figure",
+    "hash": true, "risk": "Each dial changes the planet's data hash and the replay key; a dial that is not in the key desyncs LAN.",
+    "orb_question": "For Alpha, is a seed plus three dials (city count, climate, water) at today's one size enough, with sizes after Alpha? Recommended: yes.", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-03", "kind": "gap",
+    "statement": "Terrain step 2 (no shafts, settling, the record list) is built and parked but not on main, held because Camera's chase check failed 4 of 130 rows with it applied; in the played build repeated hits on a planet spot are not held by the shaft cap.",
+    "evidence": ["record:docs/ep/runs/6a30b4c9/README.md", "record:docs/ep/runs/6a30b4c9/chase-rush-fail-with-globe.log", "sim/world/crater.gd:300-303", "docs/world/pending/globe-step2/README.md:18-19 (uncommitted)", "record:docs/world/runs/globe-step2/ (uncommitted)"],
+    "criterion": ["X-14", "X-13"], "severity": "major", "alpha": "required", "owner": "world-environment",
+    "needs_directors": ["camera", "simulation-engine", "rendering-techart"], "cost": "M",
+    "cost_basis": "docs/ep/proposals/terrain-globe-plan.md:327 prices the whole step at about 3M; the build is done, so what remains is the camera jolt, a re-cut on the baseline and a hash window",
+    "hash": true, "risk": "The park was cut on 20713b02 and may no longer apply; a gen 3 replay or LAN save with marks made before it will not replay after it.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-04", "kind": "gap",
+    "statement": "Any ground dug below the shore line reads as sea at once, wherever it is, because the sea is derived from the ground with no source test; the fix (the `flood` switch) exists only in the held step 2 park and ships off there.",
+    "evidence": ["sim/core/field.gd:455-457", "docs/world/pending/globe-step2/README.md:21 (uncommitted)", "docs/world/pending/globe-step2/README.md:45 (uncommitted)", "docs/ep/vision.md:1677", "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/biomes/water.json:4"],
+    "criterion": ["X-13"], "severity": "major", "alpha": "required", "owner": "world-environment",
+    "needs_directors": ["simulation-engine", "rendering-techart"], "depends_on": "F-WORLD-03", "cost": "S",
+    "cost_basis": "inside step 2 (terrain-globe-plan.md:327); the extra is one look gate with a coast crater and an inland crater",
+    "hash": true, "risk": "Whether a view reads the pool from the same value has not been looked at (park README line 61).",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-05", "kind": "gap",
+    "statement": "The ground drawn is not the ground stood on: the tile ground draws only the 16 nearest crater bowls, and the plan records that planet trenches and beam scars are not drawn at all, which fits Orb's reports of clipping, humps in a crater and a flat brown crater.",
+    "evidence": ["render/core/look.gd:596", "docs/ep/proposals/terrain-globe-plan.md:54-58 (uncommitted)", "docs/ep/vision.md:1690", "docs/ep/vision.md:1695", "docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:63-76"],
+    "criterion": ["X-13"], "severity": "major", "alpha": "required", "owner": "rendering-techart",
+    "needs_directors": ["world-environment", "animation", "qa-balance"], "depends_on": "F-WORLD-03", "cost": "L",
+    "cost_basis": "docs/ep/proposals/terrain-globe-plan.md:329, step 4 at about 2.5M",
+    "hash": false, "risk": "The cost of rebuilding tiles is unmeasured (terrain-globe-plan.md:149).",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-06", "kind": "gap",
+    "statement": "X-14's 'three times the crater width at the top tier' is not met by the code's rules for the same blow and no check asserts any ratio: an impact gains 25% energy a tier (1.32 times the width at tier 4), a shot 2.2 times the energy (1.48 times), and with the energy model on the tier term is gone.",
+    "evidence": ["sim/world/crater.gd:55", "sim/world/crater.gd:87-89", "sim/world/crater.gd:112-113", "data/biomes/blast.json (tierEnergy)", "sim/world/tools/blastcheck.gd:17-25", "sim/world/tools/power_world_check.gd:55-56", "net/lan.gd:30"],
+    "criterion": ["X-14"], "severity": "major", "alpha": "required", "owner": "world-environment",
+    "needs_directors": ["game-design", "qa-balance"], "cost": "S",
+    "cost_basis": "estimate, no comparable: one check with the tier varied, plus Game Design's number",
+    "hash": false, "risk": "If the number is met by tuning energies rather than by restating the criterion, the hash moves.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-07", "kind": "gap",
+    "statement": "A skid trench on the planet is cut at one fixed half width of 32 units (about one body height across) at every power, so the mark a slide leaves does not grow with tier.",
+    "evidence": ["sim/world/crater.gd:624", "sim/core/constants.gd:20", "docs/ep/proposals/terrain-globe-plan.md:42 (uncommitted)", "docs/ep/vision.md:1650"],
+    "criterion": ["X-14"], "severity": "major", "alpha": "required", "owner": "world-environment",
+    "needs_directors": ["encounter-systems", "game-design", "qa-balance"], "depends_on": "F-WORLD-03", "cost": "L",
+    "cost_basis": "docs/ep/proposals/terrain-globe-plan.md:328, step 3 at about 2.5M",
+    "hash": true, "risk": "Wider trenches add destruction; the plan allows that only after step 2.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-08", "kind": "gap",
+    "statement": "World sizes (tiny to colossal) exist only as a plan: the planet is 4,800 columns round by a constant, and what each size costs in frame rate has not been measured (the plan's figures are arithmetic).",
+    "evidence": ["sim/core/constants.gd:21", "docs/world/planet-overhaul.md:86", "docs/world/planet-overhaul.md:101-109", "docs/world/planet-overhaul.md:121", "docs/ep/vision.md:1722"],
+    "criterion": ["X-11"], "severity": "major", "alpha": "nice", "owner": "world-environment",
+    "needs_directors": ["simulation-engine", "netcode-online", "performance-platform", "ui-ux"], "depends_on": "F-WORLD-02", "cost": "L",
+    "cost_basis": "estimate, no comparable; planet-overhaul.md:136-142 steps 1 to 3 (size as a variable, the key, small and big)",
+    "hash": true, "risk": "X-11 names size as a pick; if Orb keeps it in Alpha this becomes required.",
+    "orb_question": "Should the size pick wait until after Alpha, with X-11 reworded to seed, city count, climate and water? Recommended: yes; measure small and big first.", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-09", "kind": "gap",
+    "statement": "The planet hash comparison X-11 asks for is not a check: the fingerprint tool prints lines with no verdict and is left out of CI, CI runs on Linux only, and a Windows-against-Linux comparison of a generated planet is not on file (same gap as F-MODES-12).",
+    "evidence": ["sim/world/tools/planet_digest.gd:2-4", "tools/world-checks.json:32", ".github/workflows/ci.yml:389", "sim/world/tools/planet_check.gd:2-4"],
+    "criterion": ["X-11"], "severity": "major", "alpha": "required", "owner": "world-environment",
+    "needs_directors": ["tools-pipeline"], "cost": "S",
+    "cost_basis": "estimate, no comparable: a verdict line on an existing tool and one pinned file per generation",
+    "hash": false, "risk": "A difference in float behaviour between platforms would show first as a LAN mismatch between a Windows PC and a Deck.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-10", "kind": "gap",
+    "statement": "Every LAN match is on the same planet: the LAN code fixes planet 7, touch-down 3 and generation 3 as constants, so a chosen planet cannot reach a second PC (same gap as F-MODES-11).",
+    "evidence": ["net/lan.gd:26", "net/lan.gd:30-32"],
+    "criterion": ["X-11", "X-08"], "severity": "major", "alpha": "required", "owner": "netcode-online",
+    "needs_directors": ["world-environment", "ui-ux"], "depends_on": "F-WORLD-02", "cost": "M",
+    "cost_basis": "estimate, no comparable",
+    "hash": false, "risk": "The setup must travel in the match key so both PCs make the same planet.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-11", "kind": "gap",
+    "statement": "The backburnered hero and villain meters are still fed by the world on every building fall, emptied building and crater, and the retired casualty fields are still in the sim state.",
+    "evidence": ["sim/world/collateral.gd:398-427", "sim/world/collateral.gd:434-444", "sim/world/collateral.gd:448-453", "sim/world/structures.gd:477", "sim/core/state.gd:494", "sim/core/state.gd:508", "data/fighters/RIVAL/meters.json:5", "sim/world/plan.gd:49"],
+    "criterion": ["X-15"], "severity": "minor", "alpha": "nice", "owner": "game-design",
+    "needs_directors": ["world-environment", "simulation-engine"], "cost": "S",
+    "cost_basis": "estimate, no comparable",
+    "hash": true, "risk": "The meters change damage and energy regain (RIVAL meters.json:66-76), so leaving them on tunes the Alpha by a retired system.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-12", "kind": "gap",
+    "statement": "The launch planner still weighs whether a building is lived in (a building with people and full health) through a fighter's care number, and a comment on the wall send says the care roll 'can read people'; Orb's ruling of 2026-11-07 asked for these rows to be re-read.",
+    "evidence": ["sim/director/launch.gd:282", "sim/director/launch.gd:326-327", "sim/director/launch.gd:1283", "sim/world/collateral.gd:372-380", "data/fighters/PROTAGONIST/forms.json:46", "docs/ep/vision.md:1671"],
+    "criterion": [], "severity": "minor", "alpha": "nice", "owner": "encounter-systems",
+    "needs_directors": ["legal-ip", "world-environment"], "cost": "S",
+    "cost_basis": "estimate, no comparable",
+    "hash": true, "risk": "Nobody is hurt either way; the risk is a rule on paper that the code does not match.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-13", "kind": "gap",
+    "statement": "Much of the world is built and switched off and has never been in a played build (craters by material, forest fire, beam aftermath, rivers, plates, the beam-meeting crater), and two modules are reached only by their own checks (liftable wrecks, prop hold points).",
+    "evidence": ["data/biomes/craters.json:4", "data/biomes/fire.json:4", "data/biomes/after.json:4", "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/biomes/craters.json:4", "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/biomes/rivers.json:4", "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/biomes/land.json:67", "sim/world/wrecks.gd:1", "sim/world/props.gd:1"],
+    "criterion": [], "severity": "minor", "alpha": "after", "owner": "world-environment",
+    "needs_directors": ["vfx", "art", "encounter-systems"], "cost": "XL",
+    "cost_basis": "docs/ep/proposals/terrain-globe-plan.md:333, step 8 at about 7M (about 12 switches at 0.5M each)",
+    "hash": true, "risk": "Under the feature freeze these stay off for good unless listed before Alpha.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-14", "kind": "gap",
+    "statement": "The terrain plan, the step 2 design page and their run records are not committed, and several headers and comments are stale (a live module marked 'DRAFT, scratch', another 'NOT YET WIRED', CI's '48 scripts' where 85 run).",
+    "evidence": ["docs/ep/alpha/audit-2026-11-13/baseline-status.txt:750", "docs/ep/alpha/audit-2026-11-13/baseline-status.txt:14645", "sim/world/planet_world.gd:2", "sim/world/settlements.gd:4", ".github/workflows/ci.yml:384", "tools/world-checks.json:2"],
+    "criterion": [], "severity": "minor", "alpha": "nice", "owner": "ep",
+    "needs_directors": ["world-environment"], "cost": "S", "cost_basis": "estimate, no comparable",
+    "hash": false, "risk": "An uncommitted plan can be lost or drift from what the team is working to.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-15", "kind": "gap",
+    "statement": "Orb's reported world problems (ground clipping, three humps in a crater, the flat brown and black crater, the hump of ocean water, the ground drawn higher than the impact) have no row in the bug list and no owner.",
+    "evidence": ["docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:37", "docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:52", "docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:63-64", "docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:73-76", "docs/ep/alpha/audit-2026-11-13/questions.md:16"],
+    "criterion": [], "severity": "minor", "alpha": "required", "owner": "qa-balance",
+    "needs_directors": ["world-environment", "rendering-techart"], "cost": "S", "cost_basis": "estimate, no comparable",
+    "hash": false, "risk": "An outside tester will report the same things with nowhere to file them.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-16", "kind": "gap",
+    "statement": "Repeated bounces off an outcrop and the 'ping pong' rebound off buildings, which Orb reported on three dates, are still open; the plan ties them to a body feeling slope only along the fight's line and buildings always facing it square on (step 7).",
+    "evidence": ["docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:34", "docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:48", "docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:72", "docs/ep/proposals/terrain-globe-plan.md:50-51 (uncommitted)", "docs/ep/vision.md:1687"],
+    "criterion": ["X-13"], "severity": "major", "alpha": "nice", "owner": "world-environment",
+    "needs_directors": ["encounter-systems", "camera", "game-design"], "cost": "L",
+    "cost_basis": "docs/ep/proposals/terrain-globe-plan.md:332, step 7 at about 4M",
+    "hash": true, "risk": "Whether the energy model's one-bounce limit (in Orb's build by setup word) already cut the outcrop bounces is not measured in play.",
+    "orb_question": "", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-17", "kind": "gap",
+    "statement": "Orb's ask for a cheap tessellation engine with destructible, deformable terrain meshes has no design page; the nearest work is the tile ground with five mesh levels and a research note that denser tiles displaced in the vertex stage give the same result.",
+    "evidence": ["docs/ep/vision.md:1695", "render/core/tile_ground.gd:36", "docs/world/ring-any-angle/quality-range.md:153"],
+    "criterion": [], "severity": "minor", "alpha": "after", "owner": "rendering-techart",
+    "needs_directors": ["world-environment", "research-prototyping", "performance-platform"], "cost": "L",
+    "cost_basis": "estimate, no comparable; step 4 of the terrain plan (about 2.5M) covers the part Alpha needs",
+    "hash": false, "risk": "A new mesh system before Alpha would reopen the look gate and every frame-rate record.",
+    "orb_question": "Can the tessellation engine wait until after Alpha, with Alpha getting 'craters and trenches drawn where you stand' (step 4)? Recommended: yes.", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-18", "kind": "gap",
+    "statement": "No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes planet 7, and main's menu matches play the hand-made arena, while Orb has said they have no attachment to the current planet and like random ones.",
+    "evidence": ["docs/ep/vision.md:1719", "net/lan.gd:30", "docs/ep/alpha/audit-2026-11-13/reads/RR-03.md:84-86", "render/core/main.gd:1340-1341"],
+    "criterion": ["X-11"], "severity": "minor", "alpha": "required", "owner": "orb",
+    "needs_directors": ["world-environment", "ui-ux"], "cost": "S", "cost_basis": "a decision, then inside F-WORLD-01",
+    "hash": false, "risk": "A random planet per match makes a tester's report harder to reproduce unless the seed is in the report.",
+    "orb_question": "Should a quick match give a new random planet each time, with the seed shown and saved in reports, and the current planet kept as one preset? Recommended: yes.", "off_orb_page": false
+  },
+  {
+    "id": "F-WORLD-19", "kind": "works",
+    "statement": "Nobody dies: the only calls into the bystander code from damage are `scatter` (people leave or are flung and bounce) and `fell` (structure mass), the casualty counter is never written, and the check with three negative controls is in CI.",
+    "evidence": ["sim/world/collateral.gd:2-7", "sim/world/structures.gd:472-482", "sim/world/blast.gd:182-189", "sim/world/brunt.gd:1212-1291", "sim/core/state.gd:494", "tools/world-checks.json:17", "record:docs/world/runs/c7b0414b/README.md (uncommitted)", "commit:6eec6a75"],
+    "criterion": ["X-13", "X-02"], "severity": "none", "alpha": "n/a", "owner": "world-environment", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-WORLD-20", "kind": "works",
+    "statement": "Nothing pays for a person: the meter gains read structure mass, a building's size class and crater width, and the saved negative controls fail when a gain is made to read who is inside.",
+    "evidence": ["sim/world/collateral.gd:398-444", "data/fighters/RIVAL/meters.json:3", "record:docs/world/runs/c7b0414b/NEGATIVE-CONTROL-2-emptied-gain-reads-who-is-inside.txt (uncommitted)"],
+    "criterion": [], "severity": "none", "alpha": "n/a", "owner": "world-environment", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-WORLD-21", "kind": "works",
+    "statement": "A base-tier fight does not wreck the world's buildings in the saved record: over 22 computer-against-computer matches the share of structure mass lost while the highest tier was 1 was at most 1.7%, against up to 67% by tier 4.",
+    "evidence": ["record:docs/world/runs/c7b0414b/structure-mass-by-tier-matches.txt (uncommitted)", "data/biomes/collateral.json:3"],
+    "criterion": ["X-14"], "severity": "none", "alpha": "n/a", "owner": "world-environment", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-WORLD-22", "kind": "works",
+    "statement": "Powering up on the ground does escalate with tier: its energy is the tier to the power 3.2, which by the radius rule is about 9 times the crater width at tier 4 against tier 1.",
+    "evidence": ["sim/world/crater.gd:56-57", "sim/world/crater.gd:92-93", "sim/world/crater.gd:112-113"],
+    "criterion": ["X-14"], "severity": "none", "alpha": "n/a", "owner": "world-environment", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-WORLD-23", "kind": "works",
+    "statement": "The planet is a seeded pure function built on the project's own trig and integer hashing, its data hash is folded into the replay's, and bit-exact stored vectors are compared in CI's world job.",
+    "evidence": ["sim/world/planet.gd:6", "sim/world/planet.gd:51-57", "sim/world/tools/planet_check.gd:2-4", "sim/world/tools/planet_vectors.json", "ci:43553420852"],
+    "criterion": ["X-11"], "severity": "none", "alpha": "n/a", "owner": "world-environment", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-WORLD-24", "kind": "works",
+    "statement": "World's 85 check scripts run in CI with a step that fails on any unlisted script, and the job passed on the last finished run before the baseline's own.",
+    "evidence": [".github/workflows/ci.yml:387-401", "tools/world-checks.json:5-17", "ci:43553420852"],
+    "criterion": ["X-02"], "severity": "none", "alpha": "n/a", "owner": "world-environment", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-WORLD-25", "kind": "works",
+    "statement": "The round-planet ground exists in the sim and is what Orb's builds play: generation 3 stores the ground as nodes on a cube-sphere and marks as records at planet points (up to 16,384), and both LAN set-ups name it.",
+    "evidence": ["sim/world/field.gd:1-2", "sim/world/store.gd:21-22", "sim/core/field.gd:16", "net/lan.gd:30-32", "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/biomes/field.json:8"],
+    "criterion": ["X-13"], "severity": "none", "alpha": "n/a", "owner": "world-environment", "cost": "n/a", "hash": false
+  }
+]

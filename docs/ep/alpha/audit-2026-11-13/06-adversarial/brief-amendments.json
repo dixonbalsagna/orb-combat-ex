@@ -1,0 +1,172 @@
+{
+ "A1/ep.md": [
+  "Golden window GW1 is split. GW1a: the golden record is made first on the kept 9 November build's own data, as the target; the switch groups land one at a time; A-CODE-01 closes when main reproduces that record bit for bit; the first desktop build and its same-replay comparison are made on that commit. GW1b, straight after: the riders (A-ENERGY-05, A-AI-10, A-COMBAT-05, A-COMBAT-11, A-CONTROLS-04), then one re-record. (ORD-01, COS-11, ORD-05)",
+  "Before each push of the working-tree clean-up (A-PROCESS-03): run `node tools/content-screen.mjs` on the staged set; every committed GIF carries the clip analyser's verdict or is ignored; add the git-ignore line for testers' raw files. (PC-06, PC-02)",
+  "Your milestone page lists the machine's long runs with their hours, the quiet window kept for frame readings, and which sessions pause while a reading is due. (COS-09)",
+  "Tools' repair of the flash measuring chain (A-LEGAL-08, the first two criteria of `A2/tools-pipeline.md`) is sent on day one and does not wait on A1's landings. (ORD-06)",
+  "Decisions 11 to 15 and 18 are put to Orb on day one with 1 to 6. No row is taken by silence: work that depends on an unanswered row waits, and you list what is waiting. (ORD-08, ORB-08, ORB-10)"
+ ],
+ "A1/simulation-engine.md": [
+  "GW1 is split (see `A1/ep.md`, Amendments): record the target golden first on the kept 9 November build's data; A-CODE-02's record for the game as shipped is that target, re-recorded once after GW1b's riders. A-ENERGY-05 lands in GW1b, not with the switch flip. (ORD-01, ORB-06)"
+ ],
+ "A1/tools-pipeline.md": [
+  "Order, added: A-TOOLS-08 (split the CI jobs) before A-CODE-04; the table of check scripts in week one; the newly wired checks join CI on GW1's closing commit, on the data as shipped. A-CODE-04 is now sized L. (ORD-12, COS-06)",
+  "A-TOOLS-13 is required, not optional: a Windows step in CI starts the build, saves a still, plays the bench match and compares its gameplay hash with the Linux run. Spike S5 (a Linux still in CI under a virtual display) is required too. Stills \"through your launcher\" of a desktop program come from CI or from Orb starting it once; no session opens a Godot window. (MIS-04, PC-07)",
+  "The seed-only Windows-against-Linux planet comparison is read here, beside S5 (World's digest tool runs headless today); the dials are added to it in A4. (ORD-11)",
+  "The first desktop build is compared with the 9 November build on GW1a's closing commit, before the riders land. (COS-11)",
+  "Send-ahead from A2: the repair of the flash measuring chain (A-LEGAL-08) starts on day one. (ORD-06)"
+ ],
+ "A1/qa-balance.md": [
+  "The bug list's severity field (A-QA-07) also serves the proposed criterion X-35: no open bug of the top severity on the candidate, and every open bug of the next severity seen by Orb and carried by name. Define the two severities here. (MIS-03)"
+ ],
+ "A1/legal-ip.md": [
+  "Criterion 2, added: the ruling says whether a CI run on the public repository may keep a game program as a run file, in what lock state and for how long, and how Orb's own A1 copy reaches Orb's PC. (PC-03)",
+  "Criterion 1, added: if the ruling on a key-only page before the title search is no, say which follows: a neutral placeholder name that you screen in the same row, or the paid search brought forward as a spend question to Orb. (PC-10)"
+ ],
+ "A1/orb.md": [
+  "Asked on day one with the rest: who plays the two-PC modes at Alpha (decision 13) and no campaign at Alpha (decision 18), so the menu a friend sees shows only modes a friend can use. (ORD-08, ORB-10)",
+  "One standing yes is asked: if the pull into a close fight is not playable halfway through A3, may its snap move to the next milestone without asking again? Recommendation: yes. Without it, you are asked at that point and nothing moves until you answer. (ORB-05)",
+  "The old hero and villain meters no longer change the fight in this build. When you play it, say whether matches feel easier, harder or flatter. (ORB-06)",
+  "You are shown short clips of the small marks drawn on a fighter during a dash and a press (rings, a diamond, brackets) and asked one question: keep any, or remove all? Your rule is nothing on, over or between the fighters; recommendation: remove all. They are listed as faults, not as part of the look your builds are compared against. (ORB-07)",
+  "Until stills can be taken in the cloud checks, you are asked to start the desktop build once so stills can be saved. (PC-07)",
+  "Every answer here needs your yes; nothing is taken as agreed because you did not reply. (ORB-08)"
+ ],
+ "A1/vfx.md": [
+  "Read the code for the marks drawn on and round the fighters (A-RENDER-13) now, list each with its file and line, and hand the EP one clip per mark for Orb's A1 page. The row still closes in A3. (ORB-07)"
+ ],
+ "A1/ui-ux.md": [
+  "The mode list is data, and each mode row carries a \"shown in the testers' package\" flag; the campaign and LAN rows are off in a tester's package until Orb answers decisions 13 and 18. (ORB-10)"
+ ],
+ "A1/world-environment.md": [
+  "The seed-only Windows-against-Linux planet comparison is read in A1 through Tools' CI step; A-WORLD-09 no longer waits on the dials. (ORD-11)"
+ ],
+ "A1/encounter-systems.md": [
+  "A-AI-10, A-COMBAT-05 and A-COMBAT-11 land in GW1b, after main reproduces the 9 November golden record, not with the switch flip. Spike S3 measures up to five weak bodies; the cost of lifting the five-body limit is given as an estimate. (ORD-01, COS-10)"
+ ],
+ "A1/game-design.md": [
+  "A-CONTROLS-04 (flight at 3500) lands in GW1b, after main reproduces the 9 November golden record. Spike S3 measures up to five weak bodies. (ORD-01, COS-10)"
+ ],
+ "A2/ep.md": [
+  "No build is uploaded to a channel an outside tester holds a key to, or sent to one, unless every gate on the \"before an outside tester plays\" list (X-02) is green with saved records on that commit. This is an exit line of this milestone. (MIS-01, ORD-02, COS-01, ORB-01, PC-01)",
+  "A tester's raw report and speed-test files are never committed: they live in a git-ignored folder, and only the team's own reading of them (numbers, no quoted notes) is saved under `docs/*/runs/<sha>/`. A tester's request to delete is carried out on that folder and on the report server. (PC-02)",
+  "Legal's ruling splits two acts: \"build and check a tester package, hand to nobody\" needs no approval; \"hand out commit <sha>\" needs Orb's recorded yes, checked at the upload step. Do not record the yes early to break the loop. (PC-04)",
+  "A change to the ordinary look of the beam clash or of a cut goes to Orb as two clips and one question (which looks better, or the same?), with no numbers; you are not the last judge of it. Whether a locked package may go out with the ordinary look's reading still red is Legal's ruling. (ORB-02)",
+  "A2's rows may close before the friends' files arrive; the Deck's first readings (X-18, X-19, X-24) are then carried by name into A3. Your page lists the machine's long runs and quiet windows. (ORD-10, COS-09)"
+ ],
+ "A2/tools-pipeline.md": [
+  "Criteria 1 and 2 (the repair of the flash measuring chain, A-LEGAL-08) are sent on day one of A1 and do not wait on A1's landings. (ORD-06)",
+  "Once a desktop capture exists, run the clip analyser on the Linux desktop build's own frames for the standard clips, at 1280 by 800 and at the Deck's default picture level; until then gate G4's record says which build it was read on. (PC-05)",
+  "The package step may build and check a tester package with no approval file; the approval is checked at the upload step. (PC-04)",
+  "The forced-crash test lives in CI and in Orb's own unlocked copy, never as a hidden row in a tester's package. The update-and-roll-back rehearsal uses a dummy channel no tester's key can see. Every upload to itch.io is Orb's own action, listed on Orb's page for this milestone; no session uses Orb's sign-in, so \"or the EP\" does not apply. (PC-08) (PC-12, PC-01)"
+ ],
+ "A2/legal-ip.md": [
+  "A tester's raw report and speed-test files are never committed: they live in a git-ignored folder, and only the team's own reading of them (numbers, no quoted notes) is saved under `docs/*/runs/<sha>/`. A tester's request to delete is carried out on that folder and on the report server. (PC-02)",
+  "A-TOOLS-06's ruling splits two acts: \"build and check a tester package, hand to nobody\" (no approval) and \"hand out commit <sha>\" (Orb's yes, checked at upload); say how long a yes stays fresh. (PC-04)",
+  "Criterion 4's privacy wording also says: a free itch.io account is needed to download (if the rehearsal confirms it), and itch.io has its own rules; what a tester posts is read with AI tools on Orb's PC. You choose the words. (PC-09)",
+  "Gate G4 records which build each flash reading was taken on, and is read on the Linux desktop build's own frames once Tools can capture them. Rule whether a locked package may go out while the ordinary look's reading is still red. (PC-05, ORB-02)",
+  "The net/ exception Netcode's work-ahead waits on is ruled here, in A2. (ORD-08)"
+ ],
+ "A2/performance-platform.md": [
+  "A tester's raw report and speed-test files are never committed: they live in a git-ignored folder, and only the team's own reading of them (numbers, no quoted notes) is saved under `docs/*/runs/<sha>/`. A tester's request to delete is carried out on that folder and on the report server. (PC-02)",
+  "Criterion, added: one sourced page on the Deck round trip, written before the friends' sheet: the route chosen for install, start and update; where the report and speed-test files land on a Deck; how they are posted from the Deck. Each step cites the platform's own page. The look-up the audit skipped is done first, through the EP (directors do not browse). Move the \"no keyboard and no terminal\" package work here only if that look-up shows the itch.io app cannot do it. (MIS-05)",
+  "The press-to-picture record on the desktop build is taken by Orb starting the one-click test, or in CI; no session opens a Godot window. (PC-07)"
+ ],
+ "A2/controls-feel.md": [
+  "X-07 must pass in full here: run and sign the existing two-pad checklist (`docs/controls/local-two-player.md`, updated for the pause) inside A2's manual check. (MIS-10)"
+ ],
+ "A2/camera.md": [
+  "A change to the ordinary look of a cut or of the clash goes to Orb, through the EP, as two clips and one look question with no numbers (ADR 0010, point 3). This row is now sized XL, shared with Rendering and VFX. (ORB-02, COS-07)"
+ ],
+ "A2/vfx.md": [
+  "A change to the ordinary look of the beam clash \"by timing and brightness steps\" goes to Orb, through the EP, as two clips and one look question with no numbers; the EP's side-by-side is not the last word on it (ADR 0010, point 3). (ORB-02)"
+ ],
+ "A2/ui-ux.md": [
+  "A-TEXT-01 moves here from A5: cut the short list (about 150 lines a tester meets) after A1's menu changes land, and Orb marks it before a friend plays. A5 keeps only lines changed since. The flashing notice's safety sentences, the Reduce flashing row and the package's safety lines are marked \"Legal's words, not for marking\"; a rewrite of them is routed by the EP to Legal. (ORB-03, PC-11)"
+ ],
+ "A2/orb.md": [
+  "You will be asked to mark about 150 lines of the game's own text in this milestone, before a friend plays, not in A5. (ORB-03)",
+  "The report server, put as a question first: you said you have a server you could convert. Legal advises a new private one, because a converted server has members and history that were never told about testing. Recommendation: a new one. Two more yes-or-no questions: do you want a private dated note of each tester's agreement (Legal recommends it), and do you agree to delete a tester's reports if they ask? Testers being adults is a condition, not a question. (ORB-12)",
+  "Can you find two more Steam Deck owners who will not see the game until the Alpha candidate? They are the true newcomers the install test needs; the two friends who start now will know the game by then. If you can't, the final install test is by experienced testers and the audit says so. A third early tester would help, so that two finish; the first session is 60 to 90 minutes. (MIS-02, COS-03)",
+  "Every upload to the itch.io page is yours to do. The practice key is claimed by your trusted second player on an account they make themselves. (PC-08)",
+  "Forcing a crash is done on your own copy, not on the build installed from the test page. On the first screen you are shown the AI line only. (PC-12, PC-11)"
+ ],
+ "A3/ep.md": [
+  "No build is uploaded to a channel an outside tester holds a key to, or sent to one, unless every gate on the \"before an outside tester plays\" list (X-02) is green with saved records on that commit. This is an exit line of this milestone. (MIS-01, ORD-02, COS-01, ORB-01, PC-01)",
+  "X-15 at A3 reads \"numbers are data per fighter; the count of fighter-specific code is read\"; zero is first required at A4. (ORD-07)",
+  "The gravity well's close-fight part does not start until Orb has answered from spike S2's clip. The stop rule for the snap applies without asking only if Orb gave the standing yes in A1; otherwise it is the question on `A3/orb.md` and nothing moves until the answer. (ORB-04, ORB-05)",
+  "Order: A3's fight work proceeds during A2's tester round; A3 does not wait for the friends' files. X-14's keep, restate or tune choice is made on this milestone's reading before GW2 closes. (ORD-10, ORD-04)"
+ ],
+ "A3/simulation-engine.md": [
+  "Until Orb has answered the close-fight question from spike S2's clip, build size and zones only. Do not build \"the packet's default\" (today's rule, your stick moves both fighters) in its place. The stop rule is Orb's question unless Orb gave the standing yes in A1. This row is carried at 12M until S2 reports. (ORB-04, ORB-05, COS-02)"
+ ],
+ "A3/encounter-systems.md": [
+  "The close-fight part of the gravity well waits for Orb's answer from spike S2's clip; do not build the packet's default meanwhile. (ORB-04)"
+ ],
+ "A3/netcode-online.md": [
+  "Decision 13 (who plays the two-PC modes) is asked on day one of A1 and Legal's net/ exception is ruled in A2, so this work can start behind a switch in A2 as the path intends. (ORD-08)"
+ ],
+ "A3/world-environment.md": [
+  "A-WORLD-06 is the reading X-14 is decided on: say which two power levels are compared, with the energy model on. Keep, restate or tune is chosen before GW2 closes. (ORD-04)"
+ ],
+ "A3/tools-pipeline.md": [
+  "Every upload to itch.io is Orb's own action, listed on Orb's page for this milestone; no session uses Orb's sign-in, so \"or the EP\" does not apply. (PC-08)"
+ ],
+ "A3/orb.md": [
+  "Send the A3 update to your friends only after the Executive Producer tells you the safety checks are green on that build. You are asked to name this build as the new look that later changes are compared against. (ORB-01, COS-11)"
+ ],
+ "A4/ep.md": [
+  "No build is uploaded to a channel an outside tester holds a key to, or sent to one, unless every gate on the \"before an outside tester plays\" list (X-02) is green with saved records on that commit. This is an exit line of this milestone. (MIS-01, ORD-02, COS-01, ORB-01, PC-01) Add X-02 to criterion 5, before criterion 6 sends the build."
+ ],
+ "A4/tools-pipeline.md": [
+  "Add a clip of the largest horde wave, in both modes, to the standard clip set. Drop the duplicate line that builds the per-system count tool; it exists since A1. Every upload to itch.io is Orb's own action, listed on Orb's page for this milestone; no session uses Orb's sign-in, so \"or the EP\" does not apply. (PC-08) (MIS-01, ORD-07)"
+ ],
+ "A4/legal-ip.md": [
+  "Add a reading row for the largest horde wave. Henchmen are unnamed: design labels only, so there is no name to screen; read Art's statement of the enemy body's look instead. (MIS-01, MIS-06)"
+ ],
+ "A4/art.md": [
+  "Supports A-MODES-02: one cheap weak-enemy body as data, or a written statement that Alpha's enemies reuse an existing body with a palette, delivered before Legal's row. (MIS-06)"
+ ],
+ "A4/game-design.md": [
+  "The horde and the move table are carried at 16M and 13M until spikes S3 and S4 report. Art supplies the enemy body's look. (COS-02, MIS-06)"
+ ],
+ "A4/qa-balance.md": [
+  "The team and horde bands read here are the starting gap for A5's numbers window, where they are tuned. (ORD-03)"
+ ],
+ "A4/orb.md": [
+  "Send the A4 update to your friends only after the Executive Producer tells you the safety checks are green on that build. You are asked to name this build as the new look that later changes are compared against. (ORB-01, COS-11)"
+ ],
+ "A5/ep.md": [
+  "No build is uploaded to a channel an outside tester holds a key to, or sent to one, unless every gate on the \"before an outside tester plays\" list (X-02) is green with saved records on that commit. This is an exit line of this milestone. (MIS-01, ORD-02, COS-01, ORB-01, PC-01)",
+  "After the gate re-run, the A5 build goes to the friends with the five-minute speed-test ask, so the Deck's default picture level is read before the candidate; count that wait in A5's weeks. (ORD-09)",
+  "The numbers window GW4 is sized L with one to two weeks of its own: at least three read-and-adjust rounds, each an overnight batch. If a band is still out after three, Orb chooses between another week and shipping with the band stated. (COS-05)"
+ ],
+ "A5/tools-pipeline.md": [
+  "The update-and-roll-back rehearsal runs on a dummy channel no tester's key can see. Every upload to itch.io is Orb's own action, listed on Orb's page for this milestone; no session uses Orb's sign-in, so \"or the EP\" does not apply. (PC-08) (PC-01)"
+ ],
+ "A5/game-design.md": [
+  "GW4's numbers sheet also names the team bands, the horde band and the horde's run length. (ORD-03)"
+ ],
+ "A5/qa-balance.md": [
+  "A second table reads the team and horde bands and the horde's run length in GW4. On the tester checklist, the two-player rows are marked \"if you have a second controller\". (ORD-03, MIS-09)"
+ ],
+ "A5/ui-ux.md": [
+  "A-TEXT-01 moved to A2 (see `A2/ui-ux.md`); here, only lines changed since A2 are marked. The notice's safety sentences are Legal's words and are not on Orb's list. (ORB-03, PC-11)"
+ ],
+ "A5/orb.md": [
+  "After the safety checks are green on this build, send it to your friends and ask each for the five-minute speed test. You are asked to name this build as the new look that later changes are compared against. (ORD-09, COS-11)"
+ ],
+ "A6/ep.md": [
+  "No build is uploaded to a channel an outside tester holds a key to, or sent to one, unless every gate on the \"before an outside tester plays\" list (X-02) is green with saved records on that commit. This is an exit line of this milestone. (MIS-01, ORD-02, COS-01, ORB-01, PC-01)",
+  "Deck readings carry across the fix round only if the fixes touch no drawing or loading code; otherwise a second five-minute ask is made. The outside-tester package carries X-01, X-18, X-19, X-21, X-24, X-32 and the Deck soak; the trusted-two package carries X-08 and the LAN rows of X-05; everything else is read on both, from the one candidate commit. (COS-03, MIS-08)"
+ ],
+ "A6/qa-balance.md": [
+  "A tester's raw report and speed-test files are never committed: they live in a git-ignored folder, and only the team's own reading of them (numbers, no quoted notes) is saved under `docs/*/runs/<sha>/`. A tester's request to delete is carried out on that folder and on the report server. (PC-02)",
+  "Added: X-35, no open bug of the top severity on the candidate, and every open bug of the next severity seen by Orb and carried by name. For X-27: a replay saved by the Linux build verifies on the Windows build. X-18 and X-19 are read on the two held-back newcomers if Orb has them; if not, say in the record that the readers were experienced testers. (MIS-03, MIS-04, MIS-02)"
+ ],
+ "A6/tools-pipeline.md": [
+  "Say for each criterion which package it is read on: outside-tester or trusted-two, both from the candidate's commit. Every upload to itch.io is Orb's own action, listed on Orb's page for this milestone; no session uses Orb's sign-in, so \"or the EP\" does not apply. (PC-08) (MIS-08)"
+ ],
+ "A6/orb.md": [
+  "If you found two held-back Deck owners, they install now from the guide alone; they are the real install test. (MIS-02)"
+ ]
+}

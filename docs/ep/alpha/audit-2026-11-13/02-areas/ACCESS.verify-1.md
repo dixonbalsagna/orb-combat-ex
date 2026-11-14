@@ -1,0 +1,14 @@
+# ACCESS: verifier 1
+
+Commit 8901d351. Read-only check of the three ACCESS findings; nothing was run in Godot or a browser.
+
+| id | verdict | new severity | what I checked | note |
+| :-- | :-- | :-- | :-- | :-- |
+| F-ACCESS-01 | confirmed | unchanged (major) | ui/core/ui_prefs.gd:4-7, 34-39; sim/input/remap.gd:13, 412-425; sim/input/input_data.gd:372-380; ui/core/ui_remap_model.gd:182; ui/tools/hud_check.gd:5877-5880, 7859-7868; I-05-ui-audio-loc.md:9; docs/tools/steam-deck.md:15-23; git grep of .github/workflows for ui/tools, hud_check, text_size_check (no hit) | The two files are `user://ui_prefs.json` and `user://input.json`; the only round trips are in-process ones in hud_check and remap_test, and no record of a restart on Windows or a Deck exists. The failed write is ignored in both paths: ui_prefs.gd:37-38 skips it, and remap.gd:420-423 returns false but the one UI caller (ui_remap_model.gd:182) drops the result. |
+| F-ACCESS-02 | corrected | unchanged (major) | ui/tools/text_size_check.gd:1-7; ui/tools/hud_check.gd:9872-9877, 9948-9954; tools/l10n/overflow_check.gd:1-10, 18-19; I-07-tools-ci.md:72; I-05-ui-audio-loc.md:9; docs/ep/runs/6a30b4c9/gate-full-s415.txt:123; tools/content-screen.json:133; docs/tools/steam-deck.md:15, 19; git grep of .github/workflows (no hit); git ls-tree for 1280x800 or Deck stills (none) | The substance holds: no CI job runs these, no stills at 1280 by 800 exist, and docs/tools/steam-deck.md:19 says Deck text size is "Not checked". Two facts are wrong: only text_size_check.gd:7 plans the screens at 1280 by 800 (hud_check.gd:9876 and 9954 use that size only for the plate row and the Full touch layout, and overflow_check.gd:18-19 has no 1280 by 800 case), and hud_check does have a saved local record (gate-full-s415.txt:123, 8288 checks, 0 failed) while text_size_check is in no gate list or record. |
+| F-ACCESS-03 | confirmed | unchanged (major) | docs/accessibility/audit-2026-10-28.md:1-11; git ls-tree of docs/accessibility at 8901d351 (six entries, no runs folder, no checklist.md); git log of docs/accessibility (newest 8d2e0432 and a1b8bfd8, 2026-10-31); git log since 2026-11-01 for "accessib" (no commit); docs/ep/corrective-plan-2026-11-07.md:22; reads/RR-09.md:32; alpha-audit-specification.md:169, 521 | The newest committed accessibility record is dated 2026-10-31, the checklist the first audit promised (audit-2026-10-28.md:3, "still to write") is not in the tree, and corrective item 14 has an empty progress cell with no commit or record. No file holding a "before an outside tester plays" list was found, and the specification itself (line 521) says it is still to be built. |
+
+Notes for the reader:
+
+- A `docs/accessibility/pending` folder is in the working folder but not in commit 8901d351, so it was not counted as a record.
+- F-ACCESS-02's severity stays major because the criterion (X-22) asks for stills of every screen, which no planned check can supply by itself.

@@ -1,0 +1,653 @@
+[
+  {
+    "area": "CODE",
+    "id": "F-CODE-01",
+    "kind": "gap",
+    "statement": "Main does not hold the game Orb plays: at least 72 of the 92 switch rows differ between main and Orb's solo build, so a fresh clone, CI and the desktop workflow all build a different, mostly switched-off game.",
+    "evidence": [
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-08-data-schemas-switches.md:145",
+      "tools/preview/switches.mjs:13",
+      "docs/tools/runs/6a30b4c9/build-and-smoke.txt:6",
+      "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/fight/kick.json enabled (true; main false)"
+    ],
+    "criterion": [
+      "X-29",
+      "X-02"
+    ],
+    "severity": "blocker",
+    "alpha": "required",
+    "owner": "ep",
+    "cost": "L",
+    "hash": true,
+    "cost_basis": "estimate; the one precedent is commit a8bc66e2 (Controls and UI switches made default), whose cost I did not find on file",
+    "needs_directors": [
+      "simulation-engine",
+      "encounter-systems",
+      "world-environment",
+      "tools-pipeline",
+      "qa-balance"
+    ],
+    "risk": "Making 68 data keys default changes the state hash and the golden record in one move; five gates are written for the switched-off values and will fail until rewritten.",
+    "orb_question": "May the team make the build you played on 9 November the default game on main, row by row, before any new feature work?"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-02",
+    "kind": "gap",
+    "statement": "The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no golden record and was verified by a pack read and a smoke run that only shows ticks advancing.",
+    "evidence": [
+      "tools/preview/bisect.mjs:38",
+      "tools/preview/bisect.mjs:42",
+      "docs/tools/runs/6a30b4c9/build-and-smoke.txt:7",
+      "docs/tools/runs/6a30b4c9/build-and-smoke.txt:8",
+      ".github/workflows/ci.yml:191"
+    ],
+    "criterion": [
+      "X-02",
+      "X-27"
+    ],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "simulation-engine",
+    "cost": "M",
+    "hash": false,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "tools-pipeline",
+      "qa-balance"
+    ],
+    "depends_on": "F-CODE-01",
+    "risk": "A regression that only shows with the switches on reaches Orb or a tester unseen; it would first show as a play report, not a red gate."
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-03",
+    "kind": "gap",
+    "statement": "Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to add the planet entry and a state probe, and main's own menu cannot name a generated planet.",
+    "evidence": [
+      "tools/preview/switches.mjs:7",
+      "tools/preview/switches.mjs:8",
+      "tools/preview/switches.mjs:1027",
+      "render/core/main.gd:441",
+      "tools/preview/switches.mjs:89"
+    ],
+    "criterion": [
+      "X-11",
+      "X-29"
+    ],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "cost": "M",
+    "hash": false,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "ui-ux",
+      "rendering-techart",
+      "world-environment"
+    ],
+    "risk": "The Alpha candidate would be a patched tree, so its commit would not reproduce the build; seen early as a build whose files differ from the commit."
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-04",
+    "kind": "gap",
+    "statement": "CI runs 116 of the 262 check and test scripts outside docs: none of the 45 input tests, none of the 14 audio checks, none of the 7 UI checks (the 11,033-line HUD check included), none of the animation or effects checks, and 5 of 43 director checks.",
+    "evidence": [
+      ".github/workflows/ci.yml:178",
+      ".github/workflows/ci.yml:221",
+      "tools/world-checks.json:3",
+      "docs/ep/gate/run-gate.sh:25",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-01-sim-core-input.md:67",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-02-sim-director.md:51"
+    ],
+    "criterion": [
+      "X-02"
+    ],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "cost": "M",
+    "hash": false,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "controls-feel",
+      "ui-ux",
+      "encounter-systems",
+      "audio-music",
+      "animation",
+      "vfx"
+    ],
+    "risk": "CI jobs already run 23 to 39 minutes (ci.yml:181 records flash 27-28, net 39, world 23-25, the Godot checks 30 and more); adding checks without splitting jobs slows every push."
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-05",
+    "kind": "gap",
+    "statement": "Adding a third fighter needs code today: 365 places in shipped code name exactly two fighters, and per-fighter look tables sit in render and UI code keyed by fighter id.",
+    "evidence": [
+      "tools/ratchet-two-fighter.json:10",
+      "render/core/look.gd:489",
+      "render/vfx/beam_look.gd:16",
+      "render/vfx/glare.gd:23",
+      "ui/core/ui_sim_bridge.gd:14",
+      "sim/director/brawl.gd:2318"
+    ],
+    "criterion": [
+      "X-15"
+    ],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "simulation-engine",
+    "cost": "L",
+    "hash": true,
+    "cost_basis": "estimate, no comparable; the ratchet fell 23 places in the four commits of 2026-11-01 to 2026-11-07",
+    "needs_directors": [
+      "rendering-techart",
+      "vfx",
+      "ui-ux",
+      "encounter-systems",
+      "camera"
+    ],
+    "risk": "The largest counts are in the two riskiest files (split_rig.gd 41, brawl.gd 34); a change there can move the camera or the hash."
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-06",
+    "kind": "gap",
+    "statement": "The sim has no stamina at all, and the built energy model, forms, flight curve, hit-stop by weight, ricochet and cross mail are off on main and off in the build Orb played.",
+    "evidence": [
+      "data/fight/power.json:4",
+      "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/fight/power.json:4",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-01-sim-core-input.md:76",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-09-pending-parks.md:27"
+    ],
+    "criterion": [
+      "X-15"
+    ],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "game-design",
+    "cost": "L",
+    "hash": true,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "simulation-engine",
+      "encounter-systems",
+      "combat-choreography"
+    ],
+    "risk": "Large built systems nobody has played are switched on late; seen early by turning each on in a private build first."
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-07",
+    "kind": "gap",
+    "statement": "No single written page states the energy, stamina and health model: three design pages cover energy and wounds and none of them mentions stamina, which exists only in the proposals of 2026-11-13.",
+    "evidence": [
+      "docs/design/energy-overhaul.md",
+      "docs/design/power-scale.md",
+      "docs/design/spec-wounds.md",
+      "docs/ep/proposals/alpha-feature-workshop-2.html"
+    ],
+    "criterion": [
+      "X-15"
+    ],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "game-design",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-08",
+    "kind": "gap",
+    "statement": "The old greybox HUD, with a health bar and MENACE and ANGUISH bars, is one key press (F2) away in the shipped main scene.",
+    "evidence": [
+      "render/core/main.gd:1546",
+      "render/core/main.gd:264",
+      "render/core/hud.gd:219",
+      "render/core/hud.gd:229",
+      "render/core/hud.gd:232"
+    ],
+    "criterion": [
+      "X-15"
+    ],
+    "severity": "minor",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-09",
+    "kind": "gap",
+    "statement": "The mixed-string switch is recorded ON in both of Orb's builds, but it only flips a data key: the code that would read it is not on main and not in the build.",
+    "evidence": [
+      "tools/preview/switches.mjs:229",
+      "docs/tools/runs/6a30b4c9/switch-list.txt:88",
+      "tools/preview/stack.json:40",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/inventory.md:14"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "combat-choreography"
+    ],
+    "risk": "A build record that says a feature is on when it cannot run misleads whoever reads Orb's play notes."
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-10",
+    "kind": "gap",
+    "statement": "The hero and villain meters, hiding and ambush, and signature variants by biome, all on the backburner, still run in hashed sim code and still read live data.",
+    "evidence": [
+      "sim/core/damage.gd:50",
+      "sim/core/fighter.gd:686",
+      "sim/director/beam.gd:208",
+      "sim/core/fighter_data.gd:20",
+      "data/fighters/RIVAL/meters.json:5",
+      "sim/director/data.gd:11"
+    ],
+    "criterion": [
+      "X-15"
+    ],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "simulation-engine",
+    "cost": "M",
+    "hash": true,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "game-design",
+      "encounter-systems",
+      "world-environment"
+    ],
+    "orb_question": "Should the old hero and villain meters be emptied in data now (they stay in code, switched off) and removed after Alpha?"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-11",
+    "kind": "gap",
+    "statement": "Seven effects modules load data files that do not exist and fall back to numbers written in code.",
+    "evidence": [
+      "render/vfx/glare.gd:47",
+      "render/vfx/glare.gd:48",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-04-render.md:55"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "vfx",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-12",
+    "kind": "gap",
+    "statement": "Code and data that nothing in the game reaches are still tracked: a keyboard class, a swing reader, two world modules, two animation helpers, a stand-alone spike project inside the game tree, and several data files with no reader.",
+    "evidence": [
+      "sim/input/keyboard.gd:1",
+      "sim/director/swing_read.gd",
+      "sim/world/wrecks.gd",
+      "sim/world/props.gd",
+      "render/anim/spike/spike.gd",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-08-data-schemas-switches.md:152"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "after",
+    "owner": "simulation-engine",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "encounter-systems",
+      "world-environment",
+      "animation"
+    ]
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-13",
+    "kind": "gap",
+    "statement": "The JavaScript core is no longer compared with the GDScript sim: CI only checks that the frozen JavaScript still reproduces its own record, while the project instructions still call it the parity oracle.",
+    "evidence": [
+      "sim/README.md:25",
+      "docs/decisions/0006-gdscript-source-of-truth.md:1",
+      ".github/workflows/ci.yml:60",
+      "CLAUDE.md:56",
+      "sim/core/roster.js:5"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "after",
+    "owner": "simulation-engine",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-14",
+    "kind": "gap",
+    "statement": "The export presets leave test and tool code inside every build: the input tests, the render and camera test folders, the UI mock feed, the animation spike and the frozen JavaScript files are not excluded.",
+    "evidence": [
+      "export_presets.cfg:11",
+      "export_presets.cfg:55",
+      "export_presets.cfg:101"
+    ],
+    "criterion": [
+      "X-29"
+    ],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-15",
+    "kind": "gap",
+    "statement": "The saved record of the last gate keeps one summary line per check and no logs, so engine warnings cannot be read back: 43 of its 166 lines end in an engine exit notice, and the two validator warnings are not named.",
+    "evidence": [
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:139",
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:6",
+      "docs/ep/runs/6a30b4c9/chase-rush-fail-with-globe.log:28",
+      "docs/ep/gate/run-gate.sh:48"
+    ],
+    "criterion": [
+      "X-02"
+    ],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-16",
+    "kind": "gap",
+    "statement": "The local gate's copy of CI's worst-case flash count cannot pass (it is handed CI's own temp path), and the focused gate run on the tree that landed has no flash count line of its own, so that count rests on CI alone for 6a30b4c9.",
+    "evidence": [
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:135",
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:136",
+      "docs/ep/runs/6a30b4c9/README.md:3",
+      "docs/ep/runs/6a30b4c9/gate-full-s415.txt:57",
+      "ci:42722446938"
+    ],
+    "criterion": [
+      "X-02"
+    ],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable",
+    "off_orb_page": true
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-17",
+    "kind": "gap",
+    "statement": "Park folders are not a reliable list of unlanded work: 448 park files are untracked, two indexes describe landed work as parked, a tracked tool reads untracked park files, and CI's data job reads a park folder.",
+    "evidence": [
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-09-pending-parks.md:6",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-09-pending-parks.md:46",
+      "tools/preview/stack.json:40",
+      ".github/workflows/ci.yml:79"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "required",
+    "owner": "ep",
+    "cost": "M",
+    "hash": false,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "production-ops",
+      "tools-pipeline"
+    ],
+    "risk": "A feature freeze needs one list of what is in and out; stale parks get re-landed or lost."
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-18",
+    "kind": "gap",
+    "statement": "Twelve switch rows are already at their on value on main and five are held off in every build, so 17 rows of the table no longer describe a choice anyone is making.",
+    "evidence": [
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-08-data-schemas-switches.md:145",
+      "tools/preview/switches.mjs:30",
+      "data/input/timing.json:41",
+      "tools/preview/switches.mjs:157"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable"
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-19",
+    "kind": "gap",
+    "statement": "Change is riskiest in four files of 4,300 to 5,900 lines and a handful of functions of 250 to 670 lines, two of which also hold the most two-fighter references.",
+    "evidence": [
+      "render/anim/anim_fighter.gd",
+      "render/camera/split_rig.gd:3684",
+      "ui/hud/ui_hud.gd",
+      "sim/director/brawl.gd:782",
+      "render/vfx/shots_view.gd:756",
+      "tools/ratchet-two-fighter.json:28"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "after",
+    "owner": "simulation-engine",
+    "cost": "L",
+    "hash": true,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "camera",
+      "animation",
+      "ui-ux",
+      "encounter-systems"
+    ],
+    "risk": "Splitting these during Alpha risks more than it saves; the cost is listed so nobody starts it by accident."
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-20",
+    "kind": "gap",
+    "statement": "Several file headers and comments say the opposite of what the code does (a live stick path described as off, wired modules described as not wired, a check count of 48 where 85 run).",
+    "evidence": [
+      "sim/director/stick.gd:5",
+      "data/input/timing.json:41",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-03-sim-world-biomes.md:48",
+      ".github/workflows/ci.yml:384",
+      "tools/world-checks.json:2"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "after",
+    "owner": "simulation-engine",
+    "cost": "S",
+    "hash": false,
+    "cost_basis": "estimate, no comparable",
+    "needs_directors": [
+      "world-environment",
+      "encounter-systems"
+    ]
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-21",
+    "kind": "works",
+    "statement": "CI passed on the commit of the last build Orb played, and on the latest commit whose run finished; the run on the baseline itself was still in progress when read.",
+    "evidence": [
+      "ci:42722446938",
+      "ci:43553420852",
+      "ci:43554356718"
+    ],
+    "criterion": [
+      "X-02"
+    ],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-22",
+    "kind": "works",
+    "statement": "The two-fighter ratchet runs in CI with its own self-test and passes at 365 against a baseline of 365, down from 388 on 2026-11-01.",
+    "evidence": [
+      ".github/workflows/ci.yml:89",
+      ".github/workflows/ci.yml:91",
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:159",
+      "commit:bf8ec5df",
+      "commit:a8bc66e2"
+    ],
+    "criterion": [
+      "X-15"
+    ],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-23",
+    "kind": "works",
+    "statement": "The determinism lint (no engine trig, random numbers or clock in sim code) runs in CI and in the local gate.",
+    "evidence": [
+      ".github/workflows/ci.yml:86",
+      "tools/lint-determinism.mjs:6",
+      "docs/ep/gate/run-gate.sh:9",
+      "docs/ep/runs/6a30b4c9/gate-full-s415.txt:52"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-24",
+    "kind": "works",
+    "statement": "The GDScript sim is held to its own golden record in CI, the last gate regenerated it with no difference, and a nightly run shows native and web give the same sim bits.",
+    "evidence": [
+      ".github/workflows/ci.yml:191",
+      "docs/ep/runs/6a30b4c9/gate-full-s415.txt:56",
+      "docs/ep/runs/6a30b4c9/gate-full-s415.txt:63",
+      "docs/ep/runs/6a30b4c9/gate-full-s415.txt:146",
+      "ci:43414223230"
+    ],
+    "criterion": [
+      "X-27"
+    ],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "simulation-engine",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-25",
+    "kind": "works",
+    "statement": "No script error appears in the saved records of the last gate, and both CI and the local gate fail a check that prints one.",
+    "evidence": [
+      "docs/ep/gate/run-gate.sh:46",
+      "docs/ep/gate/run-gate.sh:48",
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:166"
+    ],
+    "criterion": [
+      "X-02"
+    ],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-26",
+    "kind": "works",
+    "statement": "Every data file has a schema rule and the validator runs in CI; the last gate read 321 files with 0 errors.",
+    "evidence": [
+      ".github/workflows/ci.yml:81",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-08-data-schemas-switches.md:161",
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:139"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-27",
+    "kind": "works",
+    "statement": "The local gate covers much of what CI leaves out: all 45 input tests, the HUD check (8,288 checks, 0 failed) and the animation check passed on the last full gate.",
+    "evidence": [
+      "docs/ep/gate/run-gate.sh:25",
+      "docs/ep/runs/6a30b4c9/gate-full-s415.txt:59",
+      "docs/ep/runs/6a30b4c9/gate-full-s415.txt:95",
+      "docs/ep/runs/6a30b4c9/gate-full-s415.txt:123"
+    ],
+    "criterion": [
+      "X-02"
+    ],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "ep",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "area": "CODE",
+    "id": "F-CODE-28",
+    "kind": "works",
+    "statement": "A build is stamped with its commit and date and the in-game report reads the stamp.",
+    "evidence": [
+      "tools/write-build-info.mjs:35",
+      "ui/widgets/ui_feedback.gd:88",
+      "ui/hud/ui_hud.gd:3463"
+    ],
+    "criterion": [
+      "X-29"
+    ],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false
+  }
+]

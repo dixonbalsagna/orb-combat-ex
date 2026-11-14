@@ -1,0 +1,109 @@
+[
+  {
+    "id": "F-AUDIO-01", "kind": "gap",
+    "statement": "On main five sound sets are off, so a build made plainly from main has no beam, knock-out, launch, struggle or transformation sound; Orb's build has three of them on only through build switches.",
+    "evidence": ["audio/data/tug_cues.json:4", "audio/data/moment_cues.json:4", "audio/data/carry_cues.json:4", "audio/data/coop_cues.json:4", "audio/data/world_cues.json:4", "record:docs/tools/runs/6a30b4c9/pck-verify.txt:93-95", "tools/preview/switches.mjs:236-244"],
+    "criterion": ["X-13"], "severity": "major", "alpha": "required", "owner": "audio-music", "needs_directors": ["tools-pipeline"],
+    "cost": "S", "cost_basis": "estimate, no comparable (three flag flips and the gate runs)", "hash": false,
+    "risk": "A tester build cut from main without the switch list is quieter than the build Orb approved; seen early by reading the build's packed audio data."
+  },
+  {
+    "id": "F-AUDIO-02", "kind": "gap",
+    "statement": "No sound exists for a building being damaged or collapsing, bystanders scattering, the gravity well, or any menu action, and the fight has no ambience or music bed in any build.",
+    "evidence": ["audio/audio_cues.gd:85-94", "audio/audio_moments.gd:37-58", "audio/audio_world.gd:106-124", "audio/audio_brawl.gd:77-144", "audio/audio_carry.gd:71-102", "audio/data/world_cues.json:4", "docs/ep/alpha/audit-2026-11-13/01-inventory/I-05-ui-audio-loc.md:31"],
+    "criterion": ["X-13"], "severity": "major", "alpha": "required", "owner": "audio-music", "needs_directors": ["ui-ux", "encounter-systems"],
+    "cost": "M", "cost_basis": "estimate, no comparable (new cue rows on existing synths, a menu hook UI must call)", "hash": false,
+    "risk": "New cues may need sim events that do not exist for buildings or the gravity well; check the event feed first.",
+    "orb_question": "Is a dry fight (no ambience, no music) acceptable for Alpha? Recommendation: add one quiet ambience bed and the building and menu sounds; leave bystanders and the gravity well for later."
+  },
+  {
+    "id": "F-AUDIO-03", "kind": "gap",
+    "statement": "Nothing in the area is proved by ear: Audio's pages say nobody has listened, and Orb's latest word (2026-11-09) is that the crackles sounded bad, with no record of whether that was the fixed build.",
+    "evidence": ["docs/audio/crackle.md:3", "docs/audio/crackle.md:55", "docs/audio/first-play-sound.md:3", "docs/ep/vision.md:1703"],
+    "criterion": [], "severity": "major", "alpha": "required", "owner": "audio-music", "needs_directors": [],
+    "cost": "S", "cost_basis": "estimate, no comparable (one listening pass by Orb and a saved record)", "hash": false,
+    "risk": "Outside testers become the first people to hear the game.",
+    "orb_question": "Will you do one ten-minute listening pass on a desktop build before testers get it? Recommendation: yes."
+  },
+  {
+    "id": "F-AUDIO-04", "kind": "gap",
+    "statement": "Sound on the Alpha's platforms (a Windows desktop build, Linux, the Steam Deck) is not evidenced: every proof is the browser build in Chrome, the only audio project setting is web-only, and no CI job runs an audio check.",
+    "evidence": ["project.godot:12-14", "docs/audio/crackle.md:57", "docs/ep/alpha/audit-2026-11-13/01-inventory/I-05-ui-audio-loc.md:9", "docs/ep/alpha/audit-2026-11-13/02-areas/PERF.md:81"],
+    "criterion": ["X-05", "X-19"], "severity": "major", "alpha": "required", "owner": "audio-music", "needs_directors": ["performance-platform", "qa-balance"],
+    "cost": "S", "cost_basis": "estimate, no comparable (one run per platform saving the audio status line, one listen)", "hash": false,
+    "risk": "A silent or crackling Deck build is found by a tester, not the team.", "depends_on": "A Linux desktop build and a Deck tester (PERF area)."
+  },
+  {
+    "id": "F-AUDIO-05", "kind": "gap",
+    "statement": "There is no music: no track has been handed back, the encoder install was not approved, and the pipeline has never run end to end.",
+    "evidence": ["docs/ep/alpha/audit-2026-11-13/01-inventory/I-05-ui-audio-loc.md:31", "docs/legal/asset-origins.md:54", "docs/ep/vision.md:628", "docs/ep/vision.md:698", "audio/music/README.md:3"],
+    "criterion": [], "severity": "minor", "alpha": "nice", "owner": "orb", "needs_directors": ["audio-music", "legal-ip"],
+    "cost": "M", "cost_basis": "estimate, no comparable", "hash": false,
+    "risk": "First real track exposes loop, loudness or terms problems late.",
+    "orb_question": "Does Alpha need music? Recommendation: no; ship with a quiet ambience bed and run the music test after Alpha."
+  },
+  {
+    "id": "F-AUDIO-06", "kind": "gap",
+    "statement": "Stacked impacts overdrive the engine's limiter (peaks +1.1 to +9.3 dBFS before it, up to 2.3% of samples over its threshold) on the mixer path a desktop build uses, and the resulting distortion was never measured or heard.",
+    "evidence": ["docs/audio/crackle.md:34", "docs/audio/crackle.md:36", "audio/audio_voices.gd:19"],
+    "criterion": [], "severity": "minor", "alpha": "nice", "owner": "audio-music", "needs_directors": [],
+    "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+    "risk": "Busy fights sound squashed on desktop even with no stall."
+  },
+  {
+    "id": "F-AUDIO-07", "kind": "gap",
+    "statement": "The pad-only silent start in the browser is half fixed: the engine-side hook and the start-menu line that warns the player are parked, and the getter built for it is read by nothing.",
+    "evidence": ["docs/audio/pad-start.md:26", "docs/audio/pad-start.md:39", "docs/audio/pending/audio-resume/README.md:3", "docs/ui/pending/sound-line/README.md:3-9 (uncommitted)", "audio/audio_voices.gd:281"],
+    "criterion": [], "severity": "minor", "alpha": "nice", "owner": "audio-music", "needs_directors": ["tools-pipeline", "ui-ux"],
+    "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+    "risk": "Affects only private browser looks; the Alpha's platforms are desktop builds."
+  },
+  {
+    "id": "F-AUDIO-08", "kind": "gap",
+    "statement": "Legal's ruling on the music tool rests on summaries of its terms read on 2026-10-04, and says so; no re-read is recorded before a track would ship to outside testers.",
+    "evidence": ["docs/legal/suno-music.md:3", "docs/legal/suno-music.md:15"],
+    "criterion": ["X-32"], "severity": "minor", "alpha": "nice", "owner": "legal-ip", "needs_directors": [],
+    "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+    "risk": "Terms change again before a track ships; matters only if music is in Alpha.", "depends_on": "F-AUDIO-05"
+  },
+  {
+    "id": "F-AUDIO-09", "kind": "gap",
+    "statement": "No audio check runs in CI, and two sound data files (co-op and moments) have no schema rule, so a broken cue file would only warn.",
+    "evidence": ["docs/ep/alpha/audit-2026-11-13/01-inventory/I-05-ui-audio-loc.md:9", "docs/ep/alpha/audit-2026-11-13/01-inventory/I-05-ui-audio-loc.md:41", "audio/data/moment_cues.json:3", "audio/data/coop_cues.json:3"],
+    "criterion": [], "severity": "minor", "alpha": "nice", "owner": "audio-music", "needs_directors": ["tools-pipeline"],
+    "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+    "risk": "A sound regression lands unnoticed because nobody listens and nothing checks."
+  },
+  {
+    "id": "F-AUDIO-10", "kind": "gap",
+    "statement": "Leftovers: the caption babble voice is unreached by the game, a schema rule points at a music file that does not exist, and nine audio parks stay on disk although two are fully on main and one is withdrawn.",
+    "evidence": ["docs/ep/alpha/audit-2026-11-13/01-inventory/I-05-ui-audio-loc.md:30", "tools/schemas/map.json:163", "docs/ep/alpha/audit-2026-11-13/01-inventory/I-09-pending-parks.md:29", "docs/ep/alpha/audit-2026-11-13/01-inventory/I-09-pending-parks.md:49"],
+    "criterion": [], "severity": "minor", "alpha": "after", "owner": "audio-music", "needs_directors": [],
+    "cost": "S", "cost_basis": "estimate, no comparable", "hash": false,
+    "risk": "Stale parks get re-applied over newer code."
+  },
+  {
+    "id": "F-AUDIO-11", "kind": "works",
+    "statement": "The sound pipeline is wired into the game: the host creates the cue reader and voice pool and warms the sound bank at start, and Orb reported that sound worked on a browser build.",
+    "evidence": ["render/core/sim_host.gd:26", "render/core/main.gd:232-234", "docs/ep/vision.md:1646"],
+    "criterion": ["X-13"], "severity": "none", "alpha": "n/a", "owner": "audio-music", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-AUDIO-12", "kind": "works",
+    "statement": "The browser crackle fix is on main and in Orb's build, with saved before-and-after measurements (holes of 66.7 and 106.7 ms gone at 100 and 150 ms stalls).",
+    "evidence": ["commit:d4748ec3", "docs/audio/crackle.md:13-18", "docs/audio/img/crackle/ab-after.json (present, not opened)"],
+    "criterion": [], "severity": "none", "alpha": "n/a", "owner": "audio-music", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-AUDIO-13", "kind": "works",
+    "statement": "Settings has Master, Effects and Voice volume and Mono sound.",
+    "evidence": ["ui/data/settings.json:55", "commit:9979146a"],
+    "criterion": ["X-20"], "severity": "none", "alpha": "n/a", "owner": "ui-ux", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-AUDIO-14", "kind": "works",
+    "statement": "The music paperwork is ahead of the music: a ruling, a notice file, an origin-log row and an About-page sentence held off by a flag until a track ships.",
+    "evidence": ["docs/legal/suno-music.md:44-47", "audio/music/NOTICE.txt:1", "docs/legal/asset-origins.md:54", "ui/data/features.json:8"],
+    "criterion": ["X-32"], "severity": "none", "alpha": "n/a", "owner": "legal-ip", "cost": "n/a", "hash": false
+  }
+]

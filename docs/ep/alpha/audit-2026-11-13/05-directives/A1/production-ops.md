@@ -1,0 +1,34 @@
+# A1: Production Operations
+
+Leads: A-PROCESS-01, A-PROCESS-04, A-PROCESS-05
+Supports: A-PROCESS-02, A-PROCESS-08, A-PROCESS-16, A-TOOLS-09
+
+Goal: Orb can open one page and see which milestone the project is in, what is left in it and what could move the date, and any new idea, Orb's included, has a written place to wait instead of quietly becoming build work.
+
+Context: read first `docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md` (the top section, section A1, "Change control", "The critical path, and the three risks", "Each director's load, by milestone"), `04-milestone-rows.json`, `03-gap-register.md`, `02-areas/PROCESS.md`, `docs/directors/production-ops.md`, `docs/production/risk-register.md`, `docs/ep/playbook.md`, `docs/ep/corrective-plan-2026-11-07.md`.
+- A-PROCESS-01 (S): no written change-control rule for the feature freeze and no ideas log exist, and the EP's playbook points to neither. Evidence: `docs/ep/playbook.md:5` (rules and landing rules, lines 5 to 21: no such line); `docs/ep/alpha/stand-in-directive-2026-11-09.md:109`, `:258`; `docs/ep/ideas/special-moves.md` (the only file under `docs/ep/ideas/`, last changed 2026-10-05).
+- A-PROCESS-04 (S): the risk register is the starting set of 2026-09-28, never updated. Evidence: `docs/production/risk-register.md:1` (11 rows, lines 5 to 15); commit 111b1a17 (the last to touch `docs/production/`); `docs/production/risk-register.md:8`, `:11`. The verifier's note: one row, scope beyond four fighters (`:13`), did happen.
+- A-PROCESS-05 (S): there is no milestone tracker or live roadmap, and this role has no commit in the project's history. Evidence: `docs/production/` holds one file; `docs/ep/briefs/wave1/production-ops.md:5`; `docs/directors/production-ops.md:21`.
+- Supported rows (the EP's and Tools'): A-PROCESS-02 (no single backlog), A-PROCESS-08 (no weekly token record), A-PROCESS-16 (no page of done tests per Alpha feature), A-TOOLS-09 (no backup plan for Orb's kept builds and play files).
+
+You own: `docs/production/`.
+- The pointer from `docs/ep/playbook.md`, and any change to `CLAUDE.md`, `DIRECTORS.md` or the commands, are the EP's: give the exact line you propose under NEEDS FROM EP.
+- You read every director's reports only as the EP passes them to you; you never message a director.
+
+Acceptance criteria:
+1. (A-PROCESS-01, X-33 must pass) `docs/production/change-control.md` holds the six-step rule for the push (A1 to A6), the rule for after A4, the rule for after the freeze and the standing exception, taken from the path's "Change control" section and put in plain words Orb has seen. Check: the EP reads it against the path; Orb's yes to it is recorded by the EP.
+2. (A-PROCESS-01) `docs/production/ideas-log.md` exists with one line per idea (date, who said it, their words, the EP's recommendation of now, a named milestone or after Alpha, a size class, whether it changes the sim's fingerprint, Orb's answer). It opens with the first entries the path names from Orb's answers of 2026-11-13, each with the path's recommendation, and it points to `docs/ep/ideas/special-moves.md` instead of copying it. Check: the entries match the path's list; the playbook line that points to both pages is proposed under NEEDS FROM EP.
+3. (A-PROCESS-05) `docs/production/milestones.md` is the live tracker: for A1 to A6, the goal, the exit lines (must pass, or first reading), the register rows by owner with a status each (not started, briefed, reported, landed with its commit), the golden window, and the token and week ranges from the path. It is built from `04-milestone-rows.json` by a small script or by hand, and a check confirms every A1 row appears exactly once. Check: the count is 77 for A1; a row's status can be traced to a commit or a report.
+4. (A-PROCESS-05) The tracker carries the count the path asks the EP to report every two days: switch rows still differing between main and the 9 November build. You record it each time the EP gives it.
+5. (A-PROCESS-04) The risk register is rewritten for the Alpha push: the three risks the path names and the ones it watches, plus outside testers, the Steam Deck, LAN, the weekly token limit and the single Executive Producer session, each with an owner, an early sign and a guard. Old rows about parked or backburnered mechanics are closed with a date and reason, not deleted. Risks that already happened (for example CI silently broken for 38 pushes, `docs/ep/playbook.md:18`) are listed as happened, with what changed. Check: every risk in the path's section appears; each row has an owner and an early sign.
+6. (A-PROCESS-02, support) From the sources the EP passes you (the corrective plan, the EP's owed list, QA's bug list, the parked folders' list), draft the single backlog as one table keyed by register id, with anything that has no register row listed apart. The EP owns and commits it.
+7. (A-PROCESS-08, support) A committed weekly token record page with one row a week (meter at start and end, tokens briefed, rows landed), filled from the figures the EP gives you; the first two weeks of A1 are what the date is re-estimated from.
+8. (A-PROCESS-16, support) A draft "done test" line for each Alpha feature, taken from the exit criteria X-01 to X-34 and the proposed changes to them, for the EP's page.
+9. (A-TOOLS-09, support) One paragraph for the tracker saying where the second copy of Orb's builds lives once Orb answers, and when it was last made.
+10. Evidence: a short note under `docs/production/runs/<sha>/` listing the checks run for criteria 2 and 3 and their output (corrective item CD-22).
+
+Constraints: about 0.75M tokens at the register's size classes (3 S), an estimate; the supports are drafts on top. Nothing here changes the sim's state hash; no Godot or browser run is needed, and none is to be started. Read only the files this brief names. Plain words throughout: these pages are for Orb, so gloss any team nickname the first time ("park": finished work waiting outside main; "golden window": a landing that changes the sim's fingerprint). Nothing is decided on these pages: the path is a recommendation until Orb approves it, and the tracker says so at the top. Nothing personal about Orb or the testers. Flashing and photosensitivity rows are tracked like any other row but never appear on a page written for Orb to read; keep them in the tracker's full table and out of any summary bound for Orb. No names of existing franchises in the ideas log, even when quoting.
+
+Return: the standard report format (SUMMARY, CHANGES, DECISIONS, NEEDS FROM EP, RISKS, NEXT).
+
+Order: nothing must land first; start on day one, once Orb has approved the path. A-PROCESS-01 must exist before the first new idea of the push is answered. The tracker should exist before the EP's first two-day count. Waiting on you: the EP's rows A-PROCESS-02, A-PROCESS-06, A-PROCESS-08 and A-PROCESS-16; the X-33 exit line of A1; every later milestone's gate review.

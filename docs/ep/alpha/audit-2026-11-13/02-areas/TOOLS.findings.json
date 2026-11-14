@@ -1,0 +1,457 @@
+[
+  {
+    "id": "F-TOOLS-01",
+    "kind": "gap",
+    "statement": "No one command or CI run makes the Windows and Linux desktop builds of the game as the owner plays it: the only desktop workflow has never run, refuses today for want of its approval file, builds main's data unchanged, and refuses any package that carries the LAN code.",
+    "evidence": [
+      ".github/workflows/desktop-builds.yml:15 (by hand only), :52 (refuses without docs/ep/approvals/desktop-test-builds.txt; that folder does not exist on disk)",
+      "gh run list --workflow desktop-builds.yml: 0 runs (read 2026-11-13)",
+      "tools/desktop-package.mjs:219 (refuses a desktop preset that does not exclude net/*)",
+      "export_presets.cfg:55, :101 (Windows and Linux presets exclude net/*)",
+      "net/tools/lan_kit.mjs:2, :120 (the LAN program is a patched scratch copy exported with the Windows preset only)",
+      "docs/tools/runs/6a30b4c9/build-and-smoke.txt:1-5 (the solo copy is a browser build with 87 switch rows on)",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/inventory.md (switch table: main differs from the solo build on 72 of 92 rows)"
+    ],
+    "criterion": ["X-29", "X-05", "X-02"],
+    "severity": "blocker",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["netcode-online", "legal-ip", "performance-platform", "ep"],
+    "cost": "L",
+    "cost_basis": "estimate, no comparable; the workflow and packer exist (588 lines) but need LAN in the package, a Linux LAN path, the switch stack or landed switches, and a first real run",
+    "hash": false,
+    "risk": "The first real run of a never-run workflow will find problems late; run it once on the baseline commit early to see what breaks.",
+    "depends_on": "Legal's re-cut of the desktop package rules (F-TOOLS-06) and the landing of the played build's switches on main (other areas)",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-02",
+    "kind": "gap",
+    "statement": "No itch.io upload pipeline exists: nothing under tools/, .github/, net/ or docs/tools/ names itch.io or its upload tool, and there is no channel list, page set-up note or rehearsal record.",
+    "evidence": [
+      "git grep -i -E 'itch\\.io|\\bbutler\\b' -- tools .github net docs/tools: no match (read 2026-11-13)",
+      ".github/workflows/desktop-builds.yml:163, :171, :179 (the only place a game binary is uploaded: a GitHub artifact kept one day)"
+    ],
+    "criterion": ["X-31"],
+    "severity": "blocker",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["legal-ip", "community-marketing"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable; a script around one outside tool, a channel naming rule, a dummy-build rehearsal and a short guide",
+    "hash": false,
+    "risk": "The upload tool is a download and needs an account key, both the owner's actions; if those wait, the rehearsal waits.",
+    "orb_question": "Will you create the itch.io account and restricted page and install its upload tool yourself when Tools has the checklist ready? Recommendation: yes, in one sitting with Tools' checklist open.",
+    "depends_on": "F-TOOLS-01",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-03",
+    "kind": "gap",
+    "statement": "No rollback procedure or release checklist exists, so nothing says how testers are returned to the previous build or which earlier build is the one to return to.",
+    "evidence": [
+      "git grep -i 'rollback|roll back' -- tools .github docs/tools docs/ep/playbook.md: every hit is netcode rollback, a flash-gate data file or the roster generator, none about releases (read 2026-11-13)",
+      "docs/ep/playbook.md:19-21 (the landing rules cover evidence and build verification, not releases)"
+    ],
+    "criterion": ["X-30"],
+    "severity": "blocker",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["production-ops"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; a one-page checklist plus one rehearsal once the upload pipeline exists",
+    "hash": false,
+    "risk": "A rollback also returns old save and settings files to an older build; the rehearsal should include a settings file written by the newer build.",
+    "depends_on": "F-TOOLS-02",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-04",
+    "kind": "gap",
+    "statement": "Nothing captures a crash or a hang: no game code writes a file when the game dies, the project sets no logging option, and match files are saved only on pause, match end and a pressed report.",
+    "evidence": [
+      "project.godot:1-26 (no logging or debug section)",
+      "git grep 'godot.log|user://logs|file_logging|--log-file' over *.gd, *.mjs, *.cmd, *.ps1, *.cfg, *.godot outside pending folders: no match (read 2026-11-13)",
+      "net/lan.gd:287, :389, :485 (saves on pause, over and report only)",
+      "tools/preview/lan-report.mjs:7, :28 (the report folder gathers saved match files, lan-log files and browser black-box files; no crash file)"
+    ],
+    "criterion": ["X-28", "X-21"],
+    "severity": "blocker",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["performance-platform", "netcode-online", "ui-ux"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable; a log file per run, a last-ticks file written as the match goes, a hang watchdog and a forced-crash test on two platforms",
+    "hash": false,
+    "risk": "A file written every tick can cost frame time; measure it in the bench before it ships.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-05",
+    "kind": "gap",
+    "statement": "The one-press report folder works only on the owner's PC: its launcher is a Windows command file that runs Node against this PC's copy of the repository, so an outside tester or a Steam Deck cannot use it.",
+    "evidence": [
+      "tools/preview/lan-report.mjs:4 (the shortcut points at this repository's copy of the tool), :83",
+      ".gitignore:36-37 (the generated command file names this PC's repository path and is never committed)",
+      "homework/Files/builds/orb-lan-6a30b4c9/Make my report folder.cmd (line 10 calls node with an absolute path on the owner's PC)"
+    ],
+    "criterion": ["X-21", "X-28"],
+    "severity": "blocker",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["netcode-online", "ui-ux"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable; the gathering has to move inside the game or into a script with no outside program, for Windows and Linux, with a size cap",
+    "hash": false,
+    "risk": "A copied LAN folder would carry a personal path inside that command file to testers; check every packaged file for it before any build leaves the PC.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-06",
+    "kind": "gap",
+    "statement": "The desktop package rules were written for private test builds and conflict with an Alpha on itch.io: files are kept one day, the run is deleted after hand-over, no link or mention is allowed, the approval must be under 30 days old, and network play must be absent.",
+    "evidence": [
+      ".github/workflows/desktop-builds.yml:3-9 (test builds only, one day, no link, post or mention; nothing from a run is a release), :52, :163",
+      "tools/desktop-package.mjs:211, :219, :346-348 (the package's privacy line depends on no network code being packed)"
+    ],
+    "criterion": ["X-29", "X-31", "X-32"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "legal-ip",
+    "needs_directors": ["tools-pipeline", "netcode-online"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; a Legal re-cut of two review rows and the matching edits to the packer's checks and README text",
+    "hash": false,
+    "risk": "If the rules are relaxed in the workflow before Legal re-cuts them, the packer's refusals stop meaning anything.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-07",
+    "kind": "gap",
+    "statement": "A build carries a commit and a date but no version number, the Windows program's version fields are empty, no changelog file exists, and whether the game shows its build stamp on screen outside the report is not evidenced.",
+    "evidence": [
+      "tools/write-build-info.mjs:1 (writes commit and date only)",
+      "export_presets.cfg:79-80 (file_version and product_version empty)",
+      "git ls-files | grep -i changelog: only audit/2026-11-07/post-notice-changes.md and audit/disclosure/8-post-notice-changes.md, neither a changelog",
+      "ui/widgets/ui_feedback.gd:88 and net/lan.gd:541 (the only readers of build_info.json in game code)"
+    ],
+    "criterion": ["X-29"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["ui-ux", "production-ops"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; one more field in a 36-line script, a menu line, and a changelog step in the release checklist",
+    "hash": false,
+    "risk": "A version typed by hand drifts from the commit; derive it from a tag or a counter in the same script.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-08",
+    "kind": "gap",
+    "statement": "The Godot check job's time swings from about 35 to 62 minutes on unchanged game code against a 75-minute limit, and the network job has reached 86% of its 60 minutes, so a slow runner or a few new checks turns a clean commit red and blocks the deploy.",
+    "evidence": [
+      "ci:42678877286 (Godot job 61 m 50 s), ci:42686037592 (61 m 22 s), ci:42731797293 (34 m 41 s), ci:42752347377 (network job 51 m 35 s)",
+      ".github/workflows/ci.yml:181 (limit 75, raised from 30 on 2026-11-08 after the job outran it with no failed check), :285 (limit 60), :491 (deploy needs all eight jobs)"
+    ],
+    "criterion": ["X-02"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["netcode-online", "simulation-engine"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; splitting two jobs or running steps side by side, plus a step-time record",
+    "hash": false,
+    "risk": "Alpha adds checks (mode smoke, soak, crash test); without a time budget per job the limit is found by a red run.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-09",
+    "kind": "gap",
+    "statement": "The owner's builds, play files, reports and clips sit in one git-ignored folder of about 2.9 GB on one disk, with no backup plan written anywhere.",
+    "evidence": [
+      ".gitignore:28-29 (homework/ is local only)",
+      "du -sh homework: 2.9G; homework/Files/builds: 1.5G in 18 folders (read 2026-11-13)",
+      "git grep -i 'backup|back up|backed up' -- docs/ep/playbook.md docs/tools/*.md tools/*.mjs tools/preview DIRECTORS.md CLAUDE.md: no match about backups"
+    ],
+    "criterion": ["X-30", "X-34"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["production-ops"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; a copy script with a file list and a check, plus one line in the playbook",
+    "hash": false,
+    "risk": "The kept builds are the only copies of what the owner played and the only rollback source; a disk fault loses them and every replay's player.",
+    "orb_question": "Where should the second copy of your builds and play files live: a second drive you own, or a private cloud folder? Recommendation: a second drive first (free, nothing leaves your home), copied by one command after each play session.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-10",
+    "kind": "gap",
+    "statement": "The playbook's build-verification rule cites a script that is not in the repository and a tool name that matches no file; the tracked check that exists reads browser builds only.",
+    "evidence": [
+      "docs/ep/playbook.md:21 (names `pck-proof` and the stand-in's `check_build.py`)",
+      "git ls-files | grep -i 'check_build|pck-proof': no file",
+      "tools/preview/pck-verify.mjs:4 (takes --web, a browser build's folder)",
+      "docs/ep/alpha/audit-2026-11-13/questions.md (AQ-05: the script lives in a scratch folder, a known gap)"
+    ],
+    "criterion": ["X-02", "X-29"],
+    "severity": "minor",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["ep"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; one tool that reads a desktop program's embedded data the way pck-verify reads a browser pack, and a corrected playbook line",
+    "hash": false,
+    "risk": "A scratch folder can be cleared by a reboot, and then the second check the playbook asks for cannot be repeated.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-11",
+    "kind": "gap",
+    "statement": "On main, a push that queues behind a running CI run is cancelled unrun when a newer push arrives (15 of the last 30 runs), so most commits never get their own result, although the workflow's comment says every main run finishes.",
+    "evidence": [
+      ".github/workflows/ci.yml:23-27",
+      "ci:43554229393, ci:43554014217, ci:43553622347 (cancelled, three of the baseline's four predecessors)",
+      "ci:43554356718 (the baseline's run: created 03:59:13Z, jobs started 04:31Z after the earlier run ended)",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-11-builds-evidence-ci.md (tally: 13 success, 15 cancelled of 30)"
+    ],
+    "criterion": ["X-02"],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; a comment fix and a rule that a candidate commit gets a run started by hand",
+    "hash": false,
+    "risk": "A breaking commit hidden between two pushes is found only by bisecting later.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-12",
+    "kind": "gap",
+    "statement": "The local copy of the cloud checks always shows two failing flash-count lines, because it passes the cloud's temp-folder variable as literal text, so that check is never really mirrored locally and two red lines are read past in every landing record.",
+    "evidence": [
+      "docs/ep/gate/run-gate.sh:45 (script arguments taken as text from ci.yml)",
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:135-136",
+      "docs/ep/runs/6a30b4c9/README.md:3",
+      ".github/workflows/ci.yml:165-171 (the real steps; the second is a negative control that exits non-zero by design)"
+    ],
+    "criterion": ["X-02"],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "ep",
+    "needs_directors": ["tools-pipeline"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; a 51-line script",
+    "hash": false,
+    "risk": "A real local failure of this check would look the same as the two known lines.",
+    "off_orb_page": true
+  },
+  {
+    "id": "F-TOOLS-13",
+    "kind": "gap",
+    "statement": "No CI job ever starts a Windows build: every job runs on Linux, and the desktop workflow reads the Windows program's bytes without running it.",
+    "evidence": [
+      ".github/workflows/desktop-builds.yml:10 (Windows and macOS are read, not run), :41",
+      ".github/workflows/ci.yml:8-9 (runners pinned to ubuntu-24.04)"
+    ],
+    "criterion": ["X-05", "X-28", "X-29"],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "cost_basis": "estimate, no comparable; one Windows-runner step that plays the bench and compares the hash",
+    "hash": false,
+    "risk": "Windows-only faults (paths, line endings, the firewall prompt) are found on the owner's PC or a tester's.",
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-14",
+    "kind": "gap",
+    "statement": "The tools that make and check the owner's builds are outside CI: the LAN folder maker, the report folder, the browser smoke, the browser launcher's self-test and seven other self-tests are run by hand only.",
+    "evidence": [
+      "grep of .github/workflows/*.yml for lan_kit, lan-report, smoke.mjs, machine/selftest, clips-selftest, feel-selftest, gauntlet-selftest, padlab-selftest, lan-clip-selftest, right-stick-selftest, blackbox-ko-check: 0 matches each (read 2026-11-13)",
+      "docs/tools/runs/6a30b4c9/build-and-smoke.txt:6 (the smoke failed on its first run because it clicks a fixed screen point and the start button had moved)"
+    ],
+    "criterion": ["X-05"],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "cost_basis": "estimate, no comparable",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-15",
+    "kind": "gap",
+    "statement": "The desktop workflow builds macOS in the same job as Windows and Linux, CI's world-check comment gives a stale count, and the workflow lint runs twice per push.",
+    "evidence": [
+      ".github/workflows/desktop-builds.yml:106",
+      ".github/workflows/ci.yml:384 (says 48 scripts) against docs/ep/alpha/audit-2026-11-13/01-inventory/I-07-tools-ci.md (the list runs 85)",
+      ".github/workflows/ci.yml:93-96 and .github/workflows/workflow-lint.yml:29-32"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "after",
+    "owner": "tools-pipeline",
+    "cost": "S",
+    "cost_basis": "estimate, no comparable",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-16",
+    "kind": "works",
+    "statement": "CI was fully green on the played commit and on the newest commit with a finished run: all eight check jobs and the deploy passed.",
+    "evidence": [
+      "ci:42722446938 (6a30b4c9, 2026-11-09, nine jobs success)",
+      "ci:43553420852 (35cc89e9, 2026-11-14Z, nine jobs success)",
+      "ci:43554356718 (8901d351: four jobs green, four Godot jobs still running when read)"
+    ],
+    "criterion": ["X-02"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-17",
+    "kind": "works",
+    "statement": "The other scheduled and push workflows are green at the baseline: content screen and workflow lint on 8901d351, the nightly browser-parity run and the daily site watch on 2026-11-13.",
+    "evidence": [
+      "ci:43554356728 (content screen, 8901d351)",
+      "ci:43554356732 (workflow lint, 8901d351)",
+      "ci:43414223230 (web parity, schedule, success)",
+      "ci:43505870115 (player watch, success)"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-18",
+    "kind": "works",
+    "statement": "Every Godot step in CI runs through a wrapper that fails on any script-error line whatever the exit code, and the wrapper has its own self-test in CI.",
+    "evidence": [
+      "tools/gate.mjs (82 lines)",
+      ".github/workflows/ci.yml:145 (gate-selftest), :165, :191 (wrapped steps; 89 mentions of gate.mjs in the file)"
+    ],
+    "criterion": ["X-02"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-19",
+    "kind": "works",
+    "statement": "A tracked tool reads each switch out of a browser build's own packed data and compares it with the build's list; it is self-tested in CI and its record for the played solo build shows 95 keys, 87 rows on and 0 problems.",
+    "evidence": [
+      "tools/preview/pck-verify.mjs:1-5",
+      ".github/workflows/ci.yml:152",
+      "docs/tools/runs/6a30b4c9/build-and-smoke.txt:7",
+      "docs/tools/runs/6a30b4c9/pck-verify.txt"
+    ],
+    "criterion": ["X-29"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-20",
+    "kind": "works",
+    "statement": "Each build the owner played is kept as a byte-checked, read-only copy named by commit and build key (18 folders), which is the raw material for a rollback.",
+    "evidence": [
+      "tools/preview/handover.mjs:1-8",
+      "homework/Files/builds/ (18 folders; newest orb-first-play-6a30b4c9-6627cb9d and orb-lan-6a30b4c9)"
+    ],
+    "criterion": ["X-30"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-21",
+    "kind": "works",
+    "statement": "The build stamp is deterministic (commit and the commit's own date), is packed by all four export presets, and is read by the in-game report and by LAN save files.",
+    "evidence": [
+      "tools/write-build-info.mjs:1-8",
+      "export_presets.cfg:10, :54, :100, :131",
+      "ui/widgets/ui_feedback.gd:88",
+      "net/lan.gd:541"
+    ],
+    "criterion": ["X-29"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-22",
+    "kind": "works",
+    "statement": "The desktop workflow is written to play the exported Linux program headless and fail unless it prints the project's own gameplay hash, then unpack and check each archive; it is a sound design that has never been run.",
+    "evidence": [
+      ".github/workflows/desktop-builds.yml:10 and the bench, hash-match, pack and verify steps that follow line 106",
+      ".github/workflows/ci.yml:133 (the packer's self-test runs in CI)",
+      "gh run list --workflow desktop-builds.yml: 0 runs"
+    ],
+    "criterion": ["X-29"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": false
+  },
+  {
+    "id": "F-TOOLS-23",
+    "kind": "works",
+    "statement": "The flash-count check runs in CI on every push with a negative control that must fail, gates the deploy, and the desktop workflow locks Reduce flashing on before any export.",
+    "evidence": [
+      ".github/workflows/ci.yml:165-172, :491",
+      ".github/workflows/desktop-builds.yml:78",
+      "ci:43553420852 (flash job success)"
+    ],
+    "criterion": ["X-02"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": true
+  },
+  {
+    "id": "F-TOOLS-24",
+    "kind": "works",
+    "statement": "CI's inputs are pinned: the Node version, every action by commit, the runner image, and the Godot engine and templates by checksum.",
+    "evidence": [
+      ".github/workflows/ci.yml:4-11",
+      ".github/actions/setup-godot/action.yml:74 (checksum check of the templates)"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "tools-pipeline",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": false
+  }
+]

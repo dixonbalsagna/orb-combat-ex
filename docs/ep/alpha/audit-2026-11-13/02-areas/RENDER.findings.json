@@ -1,0 +1,585 @@
+[
+  {
+    "id": "F-RENDER-01",
+    "kind": "gap",
+    "statement": "On the globe (tile) ground that every build Orb plays uses, the last pixel flash reading failed in both normal and reduced modes, the standard clips never run with that ground, and no reading exists for 6a30b4c9.",
+    "evidence": [
+      "docs/rendering/runs/d985eb15/crater-look-default.txt:24-27",
+      "docs/rendering/runs/d985eb15/crater-look-default.txt:35-38",
+      "docs/rendering/pending/crater-look-default/README.md:40-41 (uncommitted)",
+      "docs/tools/runs/6a30b4c9/switch-list.txt:36",
+      "docs/tools/runs/6a30b4c9/switch-list.txt:83",
+      "docs/ep/runs/6a30b4c9/gate-focused-s419.txt:148",
+      "docs/ep/alpha/audit-2026-11-13/questions.md:16"
+    ],
+    "criterion": ["X-02"],
+    "severity": "blocker",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["tools-pipeline", "vfx", "art", "legal-ip"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable: a tile-ground clip set, attribution by layer, then a fix and a re-read",
+    "hash": false,
+    "off_orb_page": true,
+    "risk": "The fix may change the look of clashes and collapses, which then needs the look gate; early sign is the first tiles=1 clip set on the candidate.",
+    "depends_on": "F-RENDER-02"
+  },
+  {
+    "id": "F-RENDER-02",
+    "kind": "gap",
+    "statement": "The look Orb plays (globe ground, crater look, meteor trail, the swing camera that rides with it) is switched on only by launch words; on main the default is the older ground, so a plain export shows a different game.",
+    "evidence": [
+      "render/core/main.gd:243-251",
+      "render/core/main.gd:256",
+      "render/core/tile_ground.gd:14",
+      "render/vfx/vfx_look.gd:177",
+      "docs/tools/runs/6a30b4c9/switch-list.txt:32-36",
+      "docs/tools/runs/6a30b4c9/switch-list.txt:83",
+      "net/tools/lan_kit.mjs:127"
+    ],
+    "criterion": ["X-13", "X-23", "X-29"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["tools-pipeline", "vfx", "camera", "qa-balance"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable: flipping defaults is small, re-running every render gate, flash clip and still on the new default is the cost",
+    "hash": false,
+    "risk": "Every CI render check and saved still was made on the old default, so a flip can fail gates that never saw the globe ground; run the gate set on a scratch tree first.",
+    "orb_question": "Should the globe ground, the crater look and the meteor trail become the game's defaults for Alpha, with the old ground kept only as a test word? Recommendation: yes."
+  },
+  {
+    "id": "F-RENDER-03",
+    "kind": "gap",
+    "statement": "Two look bugs from Orb's play of 6a30b4c9, fighters clipping into the ground and a row of three humps in a crater, have no still, no owner, no cause and no row in the bug list.",
+    "evidence": [
+      "docs/qa/runs/6a30b4c9/README.md:33",
+      "docs/ep/vision.md:1690",
+      "docs/ep/alpha/audit-2026-11-13/reads/RR-08.md:73-74",
+      "docs/ep/alpha/audit-2026-11-13/questions.md:16"
+    ],
+    "criterion": ["X-13"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["world-environment", "tools-pipeline", "qa-balance"],
+    "cost": "M",
+    "cost_basis": "estimate; comparable in kind: the feet-in-the-ground look of 2026-11-07 took a World probe, a Rendering probe and three stacked parks (docs/world/orb-looks-1107.md, docs/rendering/pending/crater-clock), cost not recorded",
+    "hash": false,
+    "risk": "If the humps are in the sim's ground and not the picture, the fix moves the state hash; a replay still of Orb's 1646 file settles which."
+  },
+  {
+    "id": "F-RENDER-04",
+    "kind": "gap",
+    "statement": "A thick black diagonal line across the whole picture, found when Tools replayed Orb's 'hump of ocean water' report, has stills but no cause and no owner, and the hump itself was not identified.",
+    "evidence": [
+      "docs/tools/runs/1931a0f8/terrain-step0-stills.md:13",
+      "docs/tools/runs/1931a0f8/terrain-step0-stills.md:7-8",
+      "docs/ep/vision.md:1677"
+    ],
+    "criterion": [],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["world-environment", "camera"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable: the stills and the replay recipe already exist",
+    "hash": false,
+    "risk": "The stills are local and uncommitted (docs/tools/img/terrain-step0-b), so the evidence can be lost; the line may be the split divider or a tile seam, not known."
+  },
+  {
+    "id": "F-RENDER-05",
+    "kind": "gap",
+    "statement": "The black, flat-brown crater has a still and a proven cause (a beam's scorch filled per vertex on coarse tiles), but the fix is on only by a launch word, is parked for main awaiting Orb's yes, and raises the collapse flash reading from 3 to 4.",
+    "evidence": [
+      "docs/rendering/runs/1931a0f8/terrain-step0-a.txt:26",
+      "docs/tools/runs/1931a0f8/terrain-step0-stills.md:12",
+      "docs/rendering/pending/crater-look-default/README.md:3 (uncommitted)",
+      "docs/rendering/pending/crater-look-default/README.md:41 (uncommitted)",
+      "render/core/main.gd:256",
+      "docs/ep/vision.md:1695"
+    ],
+    "criterion": ["X-13"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["art", "world-environment"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable: the park is 22 lines, the open work is attributing and removing its added flash",
+    "hash": false,
+    "off_orb_page": false,
+    "risk": "Orb's wider ask (textures, geometry, a cheap tessellation) can swallow the Alpha if taken whole; fix the look first, scope the workshop apart.",
+    "orb_question": "Is the terrain and impact workshop you asked for on 2026-11-09 part of Alpha, or does Alpha ship today's craters with the black fill removed? Recommendation: the second.",
+    "depends_on": "F-RENDER-01"
+  },
+  {
+    "id": "F-RENDER-06",
+    "kind": "gap",
+    "statement": "The re-entry heat trail exists as a ribbon in the fighter's own energy colours, on only by a launch word; the friction-and-heat colours, smoke particles and heat waves round the fighter that Orb asked for are not built.",
+    "evidence": [
+      "render/vfx/meteor.gd:3-7",
+      "render/vfx/meteor.gd:625-629",
+      "render/vfx/vfx_look.gd:57",
+      "render/vfx/vfx_look.gd:177",
+      "docs/ep/vision.md:1677",
+      "docs/ep/vision.md:1699",
+      "docs/vfx/pending/power-burn/README.md:1 (uncommitted)"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "vfx",
+    "needs_directors": ["rendering-techart", "legal-ip"],
+    "cost": "M",
+    "cost_basis": "estimate; comparable in size: the meteor trail park was 15 files and 2,299 lines (docs/vfx/pending/meteor-trail/README.md:5), cost not recorded",
+    "hash": false,
+    "risk": "A fire-coloured burn round a body was width-capped by Legal (render/vfx/meteor.gd:332); a new heat look needs that review again."
+  },
+  {
+    "id": "F-RENDER-07",
+    "kind": "gap",
+    "statement": "The Settings screen offers 'Effects quality' (auto, high, medium, low) but no game code reads the choice, so changing it does nothing.",
+    "evidence": [
+      "ui/data/options.json:52",
+      "ui/data/settings.json:54",
+      "ui/hud/ui_hud.gd:85",
+      "render/core/main.gd:168-172",
+      "commit:8901d351 (git grep vfx_quality over ui, render, sim, audio: only the three files above)"
+    ],
+    "criterion": ["X-20", "X-24"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["vfx", "ui-ux"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable: one option handler beside the existing ones at render/core/main.gd:217-225",
+    "hash": false,
+    "risk": "A tester on a slow machine sets Low and sees no change; a settings round-trip test that checks the effect, not just the saved value, would catch it."
+  },
+  {
+    "id": "F-RENDER-08",
+    "kind": "gap",
+    "statement": "The quality range Orb asked for (performance to maximum) is a paper ladder and a research prototype: the game has no level picker, no Steam Deck default level, and an automatic step whose 42 frames-a-second threshold pins a 30 frames-a-second machine at low.",
+    "evidence": [
+      "docs/decisions/0012-turntable-and-quality-range.md:9",
+      "docs/perf/quality-range.md:7",
+      "docs/perf/quality-range.md:30",
+      "docs/perf/quality-range.md:119-120",
+      "render/vfx/vfx_hub.gd:156-158",
+      "render/vfx/vfx_look.gd:178",
+      "docs/world/ring-any-angle/quality-range.md:5"
+    ],
+    "criterion": ["X-24"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["performance-platform", "vfx", "ui-ux", "animation"],
+    "cost": "L",
+    "cost_basis": "estimate, no comparable: Performance's page lists resolution, ground density, crowd, effects and animation as separate dials, and says the lowest level needs engineering, not switches (docs/perf/quality-range.md:11)",
+    "hash": false,
+    "risk": "Without a Deck in hand the Deck's default level is a guess; a first Deck frame record should come before the ladder is sized."
+  },
+  {
+    "id": "F-RENDER-09",
+    "kind": "gap",
+    "statement": "Nothing above today's picture exists for Orb's PC: the 'maximum' Orb liked was a research prototype's level, and no build carries a level beyond the current look.",
+    "evidence": [
+      "docs/ep/vision.md:1700",
+      "docs/world/ring-any-angle/quality-range.md:5",
+      "docs/world/ring-any-angle/quality-range.md:118",
+      "render/vfx/vfx_look.gd:170-172"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "after",
+    "owner": "rendering-techart",
+    "needs_directors": ["art", "performance-platform"],
+    "cost": "L",
+    "cost_basis": "estimate, no comparable",
+    "hash": false,
+    "risk": "Extending the top level before the Deck level exists spends effort where no exit criterion asks for it."
+  },
+  {
+    "id": "F-RENDER-10",
+    "kind": "gap",
+    "statement": "No record ties a visible landing to its side-by-side: landings arrive as batches, the gate records of the last five builds name no side-by-side, and 214 of the 229 files in the look-gate picture folder are uncommitted.",
+    "evidence": [
+      "docs/decisions/0010-look-gate.md:8",
+      "commit:3c9005ac (one commit, 133 parks)",
+      "docs/ep/runs/6a30b4c9/README.md:1-8",
+      "record:docs/ep/runs/ (grep for side-by-side or look gate over 091dfac9, 1931a0f8, 4890bdd9, 6eec6a75, 6a30b4c9: no hit)",
+      "docs/ep/alpha/audit-2026-11-13/baseline-status.txt (214 lines under docs/rendering/img/lookgate)"
+    ],
+    "criterion": ["X-02"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "ep",
+    "needs_directors": ["rendering-techart", "vfx", "camera", "tools-pipeline"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable: an index line per landing in the gate record, and a home for the pictures that may not be committed",
+    "hash": false,
+    "risk": "Some pictures show Orb's private replays and character art and are kept out of git on purpose; the index must point to them without publishing them."
+  },
+  {
+    "id": "F-RENDER-11",
+    "kind": "gap",
+    "statement": "The look gate's reference build is still d3f1ca0e of 2026-10-15, which predates the globe ground and everything Orb plays now, so a same-tick side-by-side against it cannot be the same match.",
+    "evidence": [
+      "docs/ep/taste.md:7",
+      "docs/decisions/0010-look-gate.md:9",
+      "tools/flash/side-by-side.mjs:17-22",
+      "commit:d3f1ca0e (2026-10-15)",
+      "commit:8901d351 (git log --since=2026-10-18 over render/core, render/shaders, render/vfx: 66 commits)"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "required",
+    "owner": "ep",
+    "needs_directors": ["camera", "rendering-techart"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable: one line in the taste page on Orb's word",
+    "hash": false,
+    "risk": "Naming a new reference blesses its known look bugs; name it for camera and split only, as the page does today, and list the open bugs beside it.",
+    "orb_question": "Which build is the one you played and liked, to compare new looks against: still the demo of 2026-10-15, or the globe build of 2026-11-09? Recommendation: the 2026-11-09 build, with its open look bugs listed as not part of the reference."
+  },
+  {
+    "id": "F-RENDER-12",
+    "kind": "gap",
+    "statement": "In a 2v2 the other fight is not drawn unless a launch word is passed, the LAN kit's 2v2 launchers do not pass it, and the park that makes it safe to pass is not on main.",
+    "evidence": [
+      "render/core/main.gd:242",
+      "docs/rendering/2v2-drawn-plan.md:7-8",
+      "net/tools/lan_kit.mjs:143-158",
+      "docs/rendering/pending/others-near/README.md:3 (uncommitted)",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-09-pending-parks.md:35"
+    ],
+    "criterion": ["X-08", "X-09"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["vfx", "camera", "ui-ux", "netcode-online", "legal-ip"],
+    "cost": "L",
+    "cost_basis": "estimate, no comparable: the plan names eight owners and four ordered steps (docs/rendering/2v2-drawn-plan.md:12-30)",
+    "hash": false,
+    "risk": "Drawing a second fight's light adds flashes no register counts today, so the bodies-only step should land first."
+  },
+  {
+    "id": "F-RENDER-13",
+    "kind": "gap",
+    "statement": "Nothing has been drawn on Linux or on a Steam Deck, so whether every shader runs on its driver is not evidenced; the reading of the code finds no feature the Compatibility renderer lacks.",
+    "evidence": [
+      "docs/tools/steam-deck.md:25",
+      "project.godot:18-19",
+      "render/core/tile_field.gd:30-31",
+      "render/vfx/shaders/clash_core.gdshaderinc:215",
+      "render/shaders/building.gdshader:407"
+    ],
+    "criterion": ["X-24"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["performance-platform", "tools-pipeline"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable: one windowed Linux run with stills, once a Linux build and a machine exist",
+    "hash": false,
+    "risk": "The points to watch are the float data textures and texture arrays the tile ground reads and the one screen-reading clash shader; a first Deck run that saves a still and the engine's log would show any failure."
+  },
+  {
+    "id": "F-RENDER-14",
+    "kind": "gap",
+    "statement": "The boot warm-up's list does not name the clash, meteor trail or blast-head shaders, the park that warms every first draw in the real pane has waited since 2026-10-22, and no first-draw record exists for 6a30b4c9.",
+    "evidence": [
+      "render/core/warmup.gd:18-38",
+      "render/core/warmup.gd:63",
+      "render/vfx/shaders/clash_air.gdshader",
+      "render/vfx/shaders/meteor.gdshader",
+      "docs/vfx/pending/warm-first-use/README.md:1-5",
+      "docs/perf/page-load-2026-10-31.md:40"
+    ],
+    "criterion": ["X-23", "X-26"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["vfx", "performance-platform"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable: the list is one array; the proof is a first-draw probe on the candidate",
+    "hash": false,
+    "risk": "Whether the boot's walk of the scene's own materials already covers these is not evidenced; a longer list also lengthens a cold start, which X-26 limits."
+  },
+  {
+    "id": "F-RENDER-15",
+    "kind": "gap",
+    "statement": "Auras fall short of the taste page: the three-dimensional aura Orb asked for is parked and absent from main, and today's aura is one shared setting with no per-fighter data.",
+    "evidence": [
+      "docs/ep/taste.md:15",
+      "data/vfx/aura.json:4-7",
+      "render/vfx/aura.gd:3-9",
+      "docs/vfx/pending/aura3d/README.md:3",
+      "commit:8901d351 (git grep VfxAura3D over render: no hit)"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "vfx",
+    "needs_directors": ["rendering-techart", "art", "legal-ip"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable: the park exists and was re-cut twice, but stacks on another unlanded park and awaits Orb's look",
+    "hash": false,
+    "risk": "The park reads the scene's depth behind the body, a kind of read no shader on main does today; it needs a Deck check and a frame cost before it lands.",
+    "orb_question": "Do you want the 3D auras in Alpha, or are today's auras fine until Beta (you said current looks are fine)? Recommendation: after Alpha, unless a look at the parked version changes your mind."
+  },
+  {
+    "id": "F-RENDER-16",
+    "kind": "gap",
+    "statement": "The zip and press effects draw marks on and round the fighters (a charge ring, a diamond, a double ring, a squeezing ring with brackets, a ring on the striking hand), which the taste page lists as never to ship, and they are live by default.",
+    "evidence": [
+      "docs/ep/taste.md:27",
+      "render/vfx/zip.gd:7",
+      "render/vfx/zip.gd:12-14",
+      "render/vfx/reach.gd:785-786",
+      "render/core/main.gd:165",
+      "render/anim/render_anim.gd:68"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "required",
+    "owner": "vfx",
+    "needs_directors": ["game-design", "animation"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable",
+    "hash": false,
+    "risk": "Orb approved the zip's look on a prototype before the no-markers rule of 2026-10-18; removing marks may cost readability, so it needs Orb's eye, not a rule lookup.",
+    "orb_question": "The zip's counter marks and the ring on a striking hand were approved before your no-markers rule: keep them as part of the fight's effects, or remove them? Recommendation: look at one clip of each and decide per mark."
+  },
+  {
+    "id": "F-RENDER-17",
+    "kind": "gap",
+    "statement": "The globe ground that Orb plays on has no check in CI: the tile check's CI step is still parked, and the large effects and animation checks run only by hand.",
+    "evidence": [
+      ".github/workflows/ci.yml:265-277",
+      "docs/tools/pending/ci-tile-check/README.md:1-3 (uncommitted)",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-04-render.md:57"
+    ],
+    "criterion": ["X-02"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "tools-pipeline",
+    "needs_directors": ["rendering-techart", "vfx"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable: the step is written (one patch); CI job time is the constraint (ci.yml:181 raised a job to 75 minutes)",
+    "hash": false,
+    "risk": "CI jobs already ran past their time limits on 2026-11-08; adding checks without splitting jobs can time out."
+  },
+  {
+    "id": "F-RENDER-18",
+    "kind": "gap",
+    "statement": "Leftovers of backburnered ideas are still drawn or read by render code: an ungated F2 key swaps in a greybox HUD with health panels and MENACE and ANGUISH bars, effects read the signature-variants file, and a retired placeholder name is a live match string.",
+    "evidence": [
+      "render/core/main.gd:1546-1548",
+      "render/core/hud.gd:228-233",
+      "render/vfx/biome.gd:58",
+      "render/vfx/glare.gd:23",
+      "render/vfx/aura.gd:115",
+      "docs/ep/taste.md:28"
+    ],
+    "criterion": ["X-15"],
+    "severity": "minor",
+    "alpha": "required",
+    "owner": "rendering-techart",
+    "needs_directors": ["vfx", "ui-ux"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable",
+    "hash": false,
+    "risk": "Tools and checks use the debug keys and the greybox HUD; gate them out of release builds, do not delete them blind."
+  },
+  {
+    "id": "F-RENDER-19",
+    "kind": "gap",
+    "statement": "Seven effect modules keep their numbers in code because their data files do not exist (beam plays, glare, press, reach, shots, building stages, zip), so those numbers have no schema.",
+    "evidence": [
+      "render/vfx/beamplay.gd:77",
+      "render/vfx/glare.gd:47",
+      "render/vfx/press.gd:104",
+      "render/vfx/reach.gd:74",
+      "render/vfx/shots.gd:105",
+      "render/vfx/stages.gd:37",
+      "render/vfx/zip.gd:98",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-04-render.md:55"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "vfx",
+    "needs_directors": ["tools-pipeline"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable",
+    "hash": false,
+    "risk": "Low: presentation only; a copy slip when moving defaults to data would change a look, which the effects check should catch."
+  },
+  {
+    "id": "F-RENDER-20",
+    "kind": "gap",
+    "statement": "The crowd's drawing code still has a path and wording for casualties who 'are simply gone', written before the rule that nobody dies; whether a match can still reach it is not evidenced.",
+    "evidence": [
+      "render/core/crowd_flight.gd:8-9",
+      "render/core/crowd_flight.gd:91",
+      "render/core/planet_view.gd:1710",
+      "commit:6eec6a75"
+    ],
+    "criterion": ["X-13"],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "rendering-techart",
+    "needs_directors": ["world-environment"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable",
+    "hash": false,
+    "risk": "If any figure vanishes without running, a tester reads it as a death; the flight check's count of vanished-without-run figures on the candidate settles it."
+  },
+  {
+    "id": "F-RENDER-21",
+    "kind": "gap",
+    "statement": "The beam clash's air distortion copies the whole frame while a clash is on, and its only frame-cost record is marked invalid by machine load.",
+    "evidence": [
+      "render/vfx/clash_view.gd:8-9",
+      "render/vfx/shaders/clash_core.gdshaderinc:215",
+      "docs/perf/clash-press-2026-10-31.md:39",
+      "docs/decisions/0010-look-gate.md:12"
+    ],
+    "criterion": ["X-23"],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "performance-platform",
+    "needs_directors": ["vfx"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable: one quiet-machine run of the existing clash scene",
+    "hash": false,
+    "risk": "A lighter form with no screen read already exists and is used at the low effects level, so the fallback is in hand."
+  },
+  {
+    "id": "F-RENDER-22",
+    "kind": "works",
+    "statement": "Each fighter's beam has its own look from data (width, ripple, edge, pattern), coloured by the fighter's lane colour and never white at the core.",
+    "evidence": [
+      "render/vfx/beam_look.gd:3-11",
+      "render/vfx/beam_look.gd:14-18",
+      "data/vfx/energy.json:3"
+    ],
+    "criterion": ["X-13"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "vfx",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-RENDER-23",
+    "kind": "works",
+    "statement": "The beam struggle is shown by the beams themselves (width, swells, the meeting point) with no bar or marker, as the taste page asks.",
+    "evidence": [
+      "render/vfx/beam_struggle.gd:3-11",
+      "docs/ep/taste.md:11"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "vfx",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-RENDER-24",
+    "kind": "works",
+    "statement": "The project is set to the Compatibility renderer on every platform, and the shaders avoid flat varyings and depth-texture reads; one shader reads the screen and has a lighter fallback.",
+    "evidence": [
+      "project.godot:18-19",
+      "render/shaders/building.gdshader:407",
+      "render/shaders/terrain.gdshaderinc:171",
+      "render/vfx/clash_view.gd:8-9"
+    ],
+    "criterion": ["X-24"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "rendering-techart",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-RENDER-25",
+    "kind": "works",
+    "statement": "At start-up the game compiles the scene's shaders a few a frame behind a plain line and bar, and draws a list of 21 effect shaders once (plus the two tile shaders when the globe ground is on) so their first use in a fight does not compile.",
+    "evidence": [
+      "render/core/boot.gd:3-14",
+      "render/core/warmup.gd:18-38",
+      "render/core/warmup.gd:63"
+    ],
+    "criterion": ["X-23", "X-26"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "rendering-techart",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-RENDER-26",
+    "kind": "works",
+    "statement": "Orb's 'feet sinking into the ground at the start' was traced to a cause and its three render fixes are on main (each park's patch reverse-applies to the baseline).",
+    "evidence": [
+      "docs/world/orb-looks-1107.md:5-12",
+      "docs/rendering/pending/crater-clock/README.md:3 (uncommitted)",
+      "docs/rendering/pending/fore-profile/README.md:3 (uncommitted)",
+      "docs/rendering/pending/crater-store/README.md:3 (uncommitted)",
+      "commit:4890bdd9"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "rendering-techart",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-RENDER-27",
+    "kind": "works",
+    "statement": "Six render checks run in CI on every push: determinism of the sim under rendering, the seam sweep, the pane sweep, props, and two water checks.",
+    "evidence": [
+      ".github/workflows/ci.yml:265-277"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "rendering-techart",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-RENDER-28",
+    "kind": "works",
+    "statement": "The player's Reduce flashing and Reduced motion choices are handed to the effects' flash register every frame.",
+    "evidence": [
+      "render/core/main.gd:777-778"
+    ],
+    "criterion": ["X-02"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "rendering-techart",
+    "cost": "n/a",
+    "hash": false,
+    "off_orb_page": true
+  },
+  {
+    "id": "F-RENDER-29",
+    "kind": "works",
+    "statement": "The transformation's effects, the aura while charging or attacking, and the world's reaction from the third tier are on by default, and bystanders are drawn running from a blow.",
+    "evidence": [
+      "render/vfx/vfx_look.gd:65-67",
+      "render/core/crowd_flight.gd:3-7"
+    ],
+    "criterion": ["X-13"],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "vfx",
+    "cost": "n/a",
+    "hash": false
+  }
+]

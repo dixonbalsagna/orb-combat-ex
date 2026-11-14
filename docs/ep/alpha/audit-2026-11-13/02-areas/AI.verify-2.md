@@ -1,0 +1,8 @@
+# AI: verifier 2
+
+Read-only check of two findings at 8901d351. Nothing was run; every figure is read from committed files.
+
+| id | verdict | new severity | what I checked | note |
+| --- | --- | --- | --- | --- |
+| F-AI-09 | corrected | minor (unchanged) | `docs/director/runs/6eec6a75/hitstop-row/final/cells.txt:1-2`, `:4`, `:6`; `tools/feel/gauntlet.gd:75-91`; `docs/ep/alpha/alpha-audit-specification.md:175`, `:180` | The averages hold (1,383,534 ticks / 40 / 60 = 576.5 s; 1,021,345 / 40 / 60 = 425.6 s), but 426 s is 7.1 minutes, inside the 6 to 8 minute band (median 345.3 s is under it), so only the Orb's-scheme arm runs long (9.6 min mean, 548.5 s median). The criterion is at specification `:180` (X-13), not `:175` (X-08), and the record is a patched replay tree on 6eec6a75, not the played build's packed data. |
+| F-AI-14 | confirmed | minor (unchanged) | `sim/director/location.gd:103-140`; `sim/director/ai.gd:108-111`, `:175-180`, `:187`, `:259`; `data/fighters/RIVAL/meters.json:5`; `data/fighters/PROTAGONIST/meters.json:5`; `data/fighters/RIVAL/fighter.json:11`; `data/fighters/PROTAGONIST/fighter.json:11`; `sim/core/hiding.gd:5`, `:17`; `docs/ep/vision.md:1735`; `docs/ep/alpha/alpha-audit-specification.md:143`, `:364` | The roam is called live (`ai.gd:180`) and takes its role from which meter a fighter has (`location.gd:116-118`), both fighters have `canHide` false, and the meters are on the backburner list (`vision.md:1735`). Two nuances: the roam reads the meter's presence, not its value, and the tie to X-15 is loose (the specification's own question at `:364` fits better). |

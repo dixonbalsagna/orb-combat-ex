@@ -1,0 +1,417 @@
+[
+  {
+    "id": "F-CAMERA-01",
+    "kind": "gap",
+    "statement": "The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share, follow-through, flight reveal) switches on only when the game is started with the tile-ground word, and the share is 0.0 in main's data against 0.7 in both of Orb's builds, so a plain start from main gives a different camera.",
+    "evidence": [
+      "render/core/main.gd:243-252",
+      "data/camera/swing.json:4",
+      "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/camera/swing.json:4",
+      "build:orb-lan-6a30b4c9:tree/data/camera/swing.json:4",
+      "net/tools/lan_kit.mjs:127",
+      "tools/preview/switches.mjs:60-62"
+    ],
+    "criterion": ["X-13"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "camera",
+    "needs_directors": ["rendering-techart", "tools-pipeline"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (a default flip plus the look gate and the camera gates)",
+    "hash": false,
+    "risk": "An Alpha candidate built without the launch word ships the old camera and nobody notices until a tester plays; read the build's packed data and start line before sign-off."
+  },
+  {
+    "id": "F-CAMERA-02",
+    "kind": "gap",
+    "statement": "The jolt that held terrain step 2 back has no written cause: the record shows only that the chase check fails 4 of 130 rows (0.137 to 0.153 against a 0.10 limit at the tick 96 split) with step 2 alone, where the same rows read 0.053 to 0.068 two builds earlier.",
+    "evidence": [
+      "record:docs/ep/runs/6a30b4c9/README.md:4-5",
+      "record:docs/ep/runs/6a30b4c9/chase-rush-fail-with-globe.log",
+      "record:docs/camera/runs/b34e32e1/sunday-energy/chase_rush_rows.txt:2-6",
+      "render/camera/tests/chase_rush_check.gd:5",
+      "docs/world/pending/globe-step2/README.md (uncommitted; no mention of the camera failure)"
+    ],
+    "criterion": ["X-13", "X-14"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "world-environment",
+    "needs_directors": ["camera"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable (a traced reading of the failing row, then a fix in whichever side moves the picture)",
+    "hash": true,
+    "risk": "If the cause is in how the pane follows the changed ground, later terrain steps will trip the same check; a per-tick trace of the failing row would show which input stepped."
+  },
+  {
+    "id": "F-CAMERA-03",
+    "kind": "gap",
+    "statement": "Two flash safeguards for the camera are parked and not on main: the scroll limit under reduced motion or reduced flashing equals the ordinary one (0.045), and no camera cut asks the flash register although the register has the call.",
+    "evidence": [
+      "render/camera/camera_params.gd:149-150",
+      "render/vfx/flash_registry.gd:290",
+      "docs/camera/pending/cd04/README.md:1-12 (uncommitted)",
+      "record:docs/camera/runs/d41ce393/cd-04/"
+    ],
+    "criterion": ["X-02"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "camera",
+    "needs_directors": ["vfx", "legal-ip", "tools-pipeline"],
+    "cost": "S",
+    "cost_basis": "the park exists and its README says the cut-step table and one reduced-mode reading are what is left; estimate, no recorded cost",
+    "hash": false,
+    "off_orb_page": true,
+    "risk": "Outside testers do not share the owner's standing on safety; the park's own done-when reading has not been taken."
+  },
+  {
+    "id": "F-CAMERA-04",
+    "kind": "gap",
+    "statement": "No camera test or saved record runs at the Steam Deck's 1280 by 800: every camera test fixes 1280 by 720, and UI's own paper says a plate crosses the 30% pane by 70 px at that size when the line leans most.",
+    "evidence": [
+      "render/camera/tests/chase_rush_check.gd:75",
+      "render/camera/tests/split_sweep.gd:33",
+      "render/camera/tests/launch_shots_check.gd:8",
+      "render/camera/tests/split_share_check.gd:24",
+      "docs/ui/split-unequal-fit.md:13",
+      "render/camera/camera_params.gd:410"
+    ],
+    "criterion": ["X-22"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "camera",
+    "needs_directors": ["ui-ux"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (the sweep already takes --size; one run and a set of stills)",
+    "hash": false,
+    "risk": "A framing or overlap fault that shows only at 16:10 would first be seen by an outside tester."
+  },
+  {
+    "id": "F-CAMERA-05",
+    "kind": "gap",
+    "statement": "No picture-in-picture for an ally exists: the only built inset is the slanted panel cut-in for the pair on screen, the damage inset is parked and absent from main, the wider four-fighter frame is parked and paused before its look gate, and Camera's own page argues against an ally window.",
+    "evidence": [
+      "render/camera/split_rig.gd:1988-1996",
+      "docs/camera/pending/damage-inset/README.md (uncommitted)",
+      "docs/camera/pending/others-frame/README.md:1-6 (uncommitted)",
+      "docs/camera/split-vision.md:68-72 (uncommitted)",
+      "docs/ep/vision.md:1715-1716"
+    ],
+    "criterion": [],
+    "severity": "major",
+    "alpha": "nice",
+    "owner": "camera",
+    "needs_directors": ["rendering-techart", "ui-ux", "legal-ip", "performance-platform"],
+    "cost": "M",
+    "cost_basis": "estimate, no comparable; the inset pane it would reuse is costed at one extra world render (docs/camera/damage-inset.md:10)",
+    "hash": false,
+    "orb_question": "Is an ally window required for Alpha's 2v2 modes, or may Alpha ship with the map mark and distance chip only? Recommendation: not required for Alpha; land the wider four-fighter frame first and try one small window as a switch.",
+    "risk": "Orb's rule of nothing over the fighters and the frame-rate limit both bind a window; a mock on a real 2v2 clip would settle it early."
+  },
+  {
+    "id": "F-CAMERA-06",
+    "kind": "gap",
+    "statement": "The rig has no input naming this PC's player: the large pane goes to the one fighter of slots 0 and 1 with no computer driver, so the picture each PC shows in a LAN 1v1 is not evidenced by any saved record, and in LAN 2v2 each PC shows only its own fight until its player is out.",
+    "evidence": [
+      "render/camera/split_rig.gd:895-908",
+      "render/camera/split_rig.gd:636-637",
+      "net/lan.gd:7-12",
+      "docs/ep/vision.md:1662-1663",
+      "docs/camera/split-vision.md:95 (uncommitted)"
+    ],
+    "criterion": ["X-08"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "camera",
+    "needs_directors": ["netcode-online"],
+    "cost": "M",
+    "cost_basis": "Camera's own estimate of about half a session of camera work for a per-PC camera (docs/camera/split-vision.md:19, uncommitted); no recorded token cost",
+    "hash": false,
+    "orb_question": "On two PCs in a 1v1, should each screen favour its own player (as against the computer) or stay an even split? Recommendation: favour the local player.",
+    "risk": "Two humans over LAN may each get the even split Orb called uncomfortable at speed; one still from each PC in a LAN 1v1 would show it."
+  },
+  {
+    "id": "F-CAMERA-07",
+    "kind": "gap",
+    "statement": "Only one of 26 camera test files runs in CI; the big sweep and the check that fails a cut with no written reason run by hand, and the last gate record names the sweep but not the cut-reason check.",
+    "evidence": [
+      ".github/workflows/ci.yml:223",
+      "render/camera/tests/launch_shots_check.gd:103-104",
+      "record:docs/ep/runs/6a30b4c9/gate-focused-s419.txt:3",
+      "docs/ep/alpha/audit-2026-11-13/01-inventory/I-04-render.md:51"
+    ],
+    "criterion": ["X-02"],
+    "severity": "major",
+    "alpha": "required",
+    "owner": "camera",
+    "needs_directors": ["tools-pipeline"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (CI lines plus run time; the tests exist)",
+    "hash": false,
+    "risk": "After the feature freeze a fix elsewhere could bring back a jolt or an unexplained cut with nothing to catch it."
+  },
+  {
+    "id": "F-CAMERA-08",
+    "kind": "gap",
+    "statement": "The written list of cuts is behind the code: the code's table has 13 reasons, and two of them (a cut the player asked for in place of a swing, and the travel budget's safety cut) appear on no page under docs/camera.",
+    "evidence": [
+      "render/camera/camera_params.gd:429-442",
+      "docs/camera/director.md:321-334",
+      "render/camera/split_rig.gd:5288",
+      "render/camera/split_rig.gd:4289",
+      "commit:b4b9e599"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "camera",
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (a page edit)",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-09",
+    "kind": "gap",
+    "statement": "How long the opponent is out of the picture after a launch is printed but never checked: the chase check limits only the player (15 ticks), while saved rows show the rival out for 12 to 29 ticks on the landed code and up to 81 with terrain step 2.",
+    "evidence": [
+      "render/camera/tests/chase_rush_check.gd:214",
+      "record:docs/camera/runs/b34e32e1/sunday-energy/chase_rush_rows.txt:2-5",
+      "record:docs/ep/runs/6a30b4c9/chase-rush-fail-with-globe.log",
+      "docs/ep/vision.md:1320"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "camera",
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (one limit in an existing check, set from a reading)",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-10",
+    "kind": "gap",
+    "statement": "Nothing has been tried since Orb asked on 2026-11-09 for more stylised versions of the hard-line merge and further tuning of the bigger screen share: no camera commit or page follows the Monday batch.",
+    "evidence": [
+      "docs/ep/vision.md:1714-1715",
+      "commit:6eec6a75",
+      "render/camera/split_rig.gd:357"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "camera",
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (two or three switchable line styles with side-by-sides; the share is one number)",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-11",
+    "kind": "gap",
+    "statement": "Camera pages and parks disagree with main: the split vision page still says today's merge has a dissolve though the hard-edge merge is on, the 70/30 page says nobody has played it though both of Orb's builds carry 0.7, and the merge park is already on main.",
+    "evidence": [
+      "docs/camera/split-vision.md:22 (uncommitted)",
+      "render/camera/split_rig.gd:118",
+      "docs/camera/split-unequal.md:5 (uncommitted)",
+      "docs/camera/pending/split-vision/README.md:7"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "camera",
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (page edits and clearing landed parks)",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-12",
+    "kind": "gap",
+    "statement": "Rejected or backburnered looks are still in the camera code behind switches: the cut cross-dissolve, the feathered sweep offered as a future option name, and the hiding hook.",
+    "evidence": [
+      "render/camera/split_view.gd:47",
+      "render/camera/split_view.gd:269-273",
+      "render/camera/split_rig.gd:20",
+      "docs/camera/pending/split-vision/README.md:8",
+      "docs/ep/taste.md:23"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "after",
+    "owner": "camera",
+    "cost": "S",
+    "cost_basis": "the removal patch for the cut dissolve is already parked (docs/camera/pending/split-vision/README.md:8); estimate, no recorded cost",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-13",
+    "kind": "gap",
+    "statement": "The camera's numbers live in code, not data: camera_params.gd holds about 500 constants while data/camera has one file, against the project's rule that numbers live in data (data/camera has no owns line; placed with Camera by its charter's paths).",
+    "evidence": [
+      "render/camera/camera_params.gd:16-628",
+      "data/camera/swing.json:1-6",
+      "DIRECTORS.md:297"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "after",
+    "owner": "camera",
+    "cost": "M",
+    "cost_basis": "estimate, no comparable",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-14",
+    "kind": "gap",
+    "statement": "The director's camera-intent feed is off in main's data and in Orb's build, so the rig's reader for planned beats, do-not-cut spans and story weight gets no cues in play.",
+    "evidence": [
+      "data/director/interrupts.json:573-575",
+      "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/director/interrupts.json:575",
+      "render/camera/split_rig.gd:218",
+      "render/camera/split_rig.gd:1450",
+      "sim/director/camintent.gd:4-5"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "encounter-systems",
+    "needs_directors": ["camera"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (a data flip in a golden window plus the camera gates)",
+    "hash": true,
+    "risk": "The feed's own header says the golden's effects digest folds its cues, so the flip needs a golden window."
+  },
+  {
+    "id": "F-CAMERA-15",
+    "kind": "gap",
+    "statement": "The look gate still compares camera and split changes against the demo of 2026-10-15, though Orb has since chosen the hard-line merge, the 70/30 share and the swing on later builds.",
+    "evidence": [
+      "docs/ep/taste.md:7",
+      "docs/ep/vision.md:1714",
+      "docs/ep/vision.md:1609"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "orb",
+    "needs_directors": ["camera"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (a decision and one line)",
+    "hash": false,
+    "orb_question": "Should the camera's reference build move from the 2026-10-15 demo to the build you last played (6a30b4c9)? Recommendation: yes."
+  },
+  {
+    "id": "F-CAMERA-16",
+    "kind": "gap",
+    "statement": "The known-bugs row for the split-screen jolt on a knock-away is still open and says no measure exists, though the chase check now measures step and jolt in CI.",
+    "evidence": [
+      "qa/known-bugs.md:190",
+      "qa/known-bugs.md:196",
+      "render/camera/tests/chase_rush_check.gd:4-5",
+      ".github/workflows/ci.yml:223"
+    ],
+    "criterion": [],
+    "severity": "minor",
+    "alpha": "nice",
+    "owner": "qa-balance",
+    "needs_directors": ["camera"],
+    "cost": "S",
+    "cost_basis": "estimate, no comparable (a re-read at the baseline and a row edit)",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-17",
+    "kind": "works",
+    "statement": "The hard-line merge Orb prefers is on main: the panes close with a hard edge and a whole line that goes in one frame, and the cut cross-dissolve is off.",
+    "evidence": [
+      "render/camera/split_rig.gd:118",
+      "render/camera/split_rig.gd:4632-4634",
+      "render/camera/split_view.gd:47"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "camera",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-18",
+    "kind": "works",
+    "statement": "The 70/30 split against the computer is built and was in both builds Orb played: the lone human's pane takes the share, the line slides with the panes and evens out for a beam struggle, and UI's fit switch for it is on.",
+    "evidence": [
+      "render/camera/split_rig.gd:357",
+      "render/camera/split_rig.gd:636-638",
+      "render/camera/split_rig.gd:3271-3283",
+      "build:orb-first-play-6a30b4c9-6627cb9d:tree/data/camera/swing.json:4",
+      "ui/data/features.json:33"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "camera",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-19",
+    "kind": "works",
+    "statement": "Every cut the rig marks carries a written reason from a 13-row table in code, and a camera test fails a cut whose reason is missing or unknown.",
+    "evidence": [
+      "render/camera/camera_params.gd:428-442",
+      "render/camera/split_rig.gd:5038-5041",
+      "render/camera/tests/launch_shots_check.gd:103-104"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "camera",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-20",
+    "kind": "works",
+    "statement": "On the code Orb played, the chase check and the split sweep passed in the saved gate, and the chase check runs in CI.",
+    "evidence": [
+      "record:docs/ep/runs/6a30b4c9/gate-focused-s419.txt:3",
+      "record:docs/ep/runs/6a30b4c9/gate-focused-s419.txt:98",
+      ".github/workflows/ci.yml:223"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "camera",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-21",
+    "kind": "works",
+    "statement": "A second live view of the world already exists as the panel cut-in (an inset viewport with full, still and off settings), which is the base a picture-in-picture would reuse.",
+    "evidence": [
+      "render/camera/split_rig.gd:1988",
+      "render/camera/split_view.gd:344-346",
+      "render/core/main.gd:1115-1118",
+      "render/camera/split_rig.gd:175"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "camera",
+    "cost": "n/a",
+    "hash": false
+  },
+  {
+    "id": "F-CAMERA-22",
+    "kind": "works",
+    "statement": "The player's camera settings reach the rig: split against the computer on or off, reduced motion, and world turning (auto, full or cut).",
+    "evidence": [
+      "render/core/main.gd:1105-1107",
+      "ui/tools/hud_check.gd:356"
+    ],
+    "criterion": [],
+    "severity": "none",
+    "alpha": "n/a",
+    "owner": "camera",
+    "cost": "n/a",
+    "hash": false
+  }
+]

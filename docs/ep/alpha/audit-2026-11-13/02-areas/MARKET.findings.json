@@ -1,0 +1,218 @@
+[
+  {
+    "id": "F-MARKET-01", "kind": "gap",
+    "statement": "Nothing for itch.io exists: no page set-up note, key procedure, channel names, upload script or rehearsal record (the same hole as TOOLS F-TOOLS-02, seen from the distribution side).",
+    "evidence": ["git grep -i -E 'itch\\.io|\\bbutler\\b' -- tools .github net render ui sim: one test string, ui/tools/hud_check.gd:9416 (read 2026-11-13)", "docs/ep/alpha/audit-2026-11-13/02-areas/TOOLS.md:60", "docs/ep/alpha/audit-2026-11-13/02-areas/web-checks.md (itch.io table, read 2026-11-13)"],
+    "criterion": ["X-31", "X-30"], "severity": "blocker", "alpha": "required", "owner": "tools-pipeline",
+    "needs_directors": ["community-marketing", "legal-ip"],
+    "cost": "M", "cost_basis": "estimate, no comparable (upload script, channel list, version string, a rehearsal with a dummy build, a one-page checklist for the owner's own actions)",
+    "hash": false, "off_orb_page": false,
+    "depends_on": "TOOLS F-TOOLS-01 (a Windows and a Linux build of the game as played); F-MARKET-08 (title)",
+    "risk": "The rehearsal cannot start until the owner has made the account and page; two itch.io behaviours (whether a key needs an account, how a tester goes back a version) are known only from forum threads.",
+    "orb_question": "Will you create the itch.io account and the key-only page, and install its upload tool, yourself once Tools has a one-page checklist? Recommendation: yes, in one sitting."
+  },
+  {
+    "id": "F-MARKET-02", "kind": "gap",
+    "statement": "There is no fixed shot list: the recipe file covers three of the six named shots and has no recipe for a transformation, a lap of the globe or a LAN 2v2 moment.",
+    "evidence": ["tools/clips/clips.json:57", "tools/clips/clips.json:61", "tools/clips/clips.json:66", "tools/clips/clips.json:78-86", "tools/clips/clips.json:98-107", "render/tools/flash_capture.gd:33-36", "render/tools/flash_capture.gd:363"],
+    "criterion": ["X-34"], "severity": "major", "alpha": "required", "owner": "tools-pipeline",
+    "needs_directors": ["camera", "community-marketing"],
+    "cost": "S", "cost_basis": "adds rows and one or two hook scenes to a kit whose whole build was estimated at 0.5 to 0.8M tokens (docs/tools/clip-capture-audit.md:34; its real cost is not recorded)",
+    "hash": false, "off_orb_page": false, "depends_on": "F-MARKET-04 for the LAN 2v2 shot",
+    "risk": "A shot whose scene writes into the sim (as the hook's staged scenes do) is not a played match; the list should say which shots are staged."
+  },
+  {
+    "id": "F-MARKET-03", "kind": "gap",
+    "statement": "No job renders the shots at a milestone and no archive exists: clips land in a git-ignored folder with no milestone name, no line on what changed and no backup.",
+    "evidence": ["tools/clips/make.mjs:10", ".gitignore:28-29", "homework/Files/clips/ holds one folder, mms-2026-11-10 (local, git-ignored; read 2026-11-13)", "git ls-files | grep -i changelog: no file (read 2026-11-13)", "docs/ep/alpha/audit-2026-11-13/02-areas/TOOLS.md:67"],
+    "criterion": ["X-34"], "severity": "major", "alpha": "required", "owner": "tools-pipeline",
+    "needs_directors": ["production-ops"],
+    "cost": "S", "cost_basis": "estimate, no comparable",
+    "hash": false, "off_orb_page": false, "depends_on": "F-MARKET-02; TOOLS F-TOOLS-09 (backup)",
+    "risk": "Everything kept so far is on one disk; a lost disk loses every earlier milestone's footage and builds.",
+    "orb_question": "Where is the progress archive kept safe? Recommendation: a second disk or a private folder you already have, copied at each milestone."
+  },
+  {
+    "id": "F-MARKET-04", "kind": "gap",
+    "statement": "The capture hook exists only in a browser build, so the Alpha candidate's own Windows and Linux programs cannot be filmed, and a LAN 2v2 shot depends on a replay route whose self-test is in no workflow and which has not yet read a real LAN save.",
+    "evidence": ["render/core/main.gd:299", "tools/preview/lan-clip.mjs:1-6", "grep of .github/workflows/*.yml for lan-clip-selftest: no line (read 2026-11-13)", "docs/ep/alpha/audit-2026-11-13/questions.md:16 (AQ-01, Tools: the first real LAN save through lan-report is owed)"],
+    "criterion": ["X-34"], "severity": "major", "alpha": "required", "owner": "tools-pipeline",
+    "needs_directors": ["netcode-online", "performance-platform", "camera"],
+    "cost": "M", "cost_basis": "estimate, no comparable",
+    "hash": false, "off_orb_page": false, "depends_on": "TOOLS F-TOOLS-01 (one build that holds solo and LAN)",
+    "risk": "The archive would show a browser picture of a game testers play as a desktop program; nothing compares the two pictures."
+  },
+  {
+    "id": "F-MARKET-05", "kind": "gap",
+    "statement": "Footage is made at 960 by 540, shrunk to 480 wide at 12 pictures a second, as GIF or browser-recorded WebM with no MP4, below what the project's own Steam note asks of screenshots and a trailer.",
+    "evidence": ["tools/clips/clips.json:7-14", "tools/clips/make.mjs:9-10", "docs/tools/clip-capture-audit.md:16", "docs/tools/clip-capture-audit.md:32", "docs/marketing/steam-readiness.md:15-16 (the platform's sizes: needs web check)"],
+    "criterion": ["X-34"], "severity": "major", "alpha": "required", "owner": "tools-pipeline",
+    "needs_directors": ["community-marketing"],
+    "cost": "S", "cost_basis": "estimate, no comparable (the picture size is a recipe key and PNG sequences already exist; a full-size run through the launcher's CPU cap is untimed)",
+    "hash": false, "off_orb_page": false,
+    "risk": "Alpha's footage, kept only as small GIFs, cannot be used in a later video; a full-size capture may be slow under the 25% CPU cap.",
+    "orb_question": "May Tools ask you to install a free video encoder when the first teaser is cut? Recommendation: not now; keep full-size picture sequences until Beta is in sight."
+  },
+  {
+    "id": "F-MARKET-06", "kind": "gap",
+    "statement": "Only GIFs get the flash check; WebM video and PNG sequences leave the kit with no verdict, and no page says how a public video is screened.",
+    "evidence": ["tools/clips/make.mjs:251", "tools/clips/make.mjs:277", "tools/clips/make.mjs:345", "tools/clips/make.mjs:282", "tools/clips/make.mjs:349", "docs/tools/clips.md:43"],
+    "criterion": ["X-34", "X-02"], "severity": "major", "alpha": "required", "owner": "tools-pipeline",
+    "needs_directors": ["legal-ip", "accessibility-localization"],
+    "cost": "S", "cost_basis": "estimate, no comparable (the analyser already reads frames; the kit keeps the frames a WebM is made from)",
+    "hash": false, "off_orb_page": true,
+    "risk": "A 15-second clip mark is cut as WebM by default (tools/clips/clips.json:38), so the clips most likely to be passed to a friend are the unscreened ones."
+  },
+  {
+    "id": "F-MARKET-07", "kind": "gap",
+    "statement": "No tester guide says how a tester gets a key, installs on a Steam Deck, updates, or posts a report; the only tester page is Legal's note, which does not mention itch.io.",
+    "evidence": ["git ls-files | grep -i tester: docs/legal/alpha-tester-note.md only (read 2026-11-13)", "grep -n itch docs/legal/alpha-tester-note.md: no line (read 2026-11-13)"],
+    "criterion": ["X-31", "X-18", "X-01"], "severity": "major", "alpha": "required", "owner": "community-marketing",
+    "needs_directors": ["qa-balance", "performance-platform", "legal-ip"],
+    "cost": "S", "cost_basis": "estimate, no comparable",
+    "hash": false, "off_orb_page": false, "depends_on": "F-MARKET-01 (the real steps are known only after the rehearsal)",
+    "risk": "A guide written before the rehearsal will describe steps nobody has done on a Deck."
+  },
+  {
+    "id": "F-MARKET-08", "kind": "gap",
+    "statement": "Legal's own page puts the formal title search before any itch.io page, the title row is still open, and nothing excuses a key-only page (the same point as LEGAL F-LEGAL-09).",
+    "evidence": ["docs/legal/name-screening.md:186", "docs/legal/review-log.md:53", "docs/legal/steam-readiness.md:36"],
+    "criterion": ["X-31"], "severity": "major", "alpha": "required", "owner": "legal-ip",
+    "needs_directors": [],
+    "cost": "S", "cost_basis": "estimate, no comparable (one Legal row; a paid search is the owner's spend, not tokens)",
+    "hash": false, "off_orb_page": false,
+    "risk": "The page is made under a title that later has to change, and every key and guide carries the old one.",
+    "orb_question": "May the key-only page go up under the working title before the paid title search? Recommendation: yes, only if Legal first writes one row saying an unlisted, unpromoted, key-only page is acceptable."
+  },
+  {
+    "id": "F-MARKET-09", "kind": "gap",
+    "statement": "The clips shared so far were staged on a private test copy with behaviour the game does not have (both at top power, a beam on a button, changed speeds, a scratch-only camera), so they cannot be remade from main and are not the game as played.",
+    "evidence": ["homework/Files/clips/mms-2026-11-10/index.txt (local, git-ignored; section 'What is not stock gameplay')", "docs/tools/runs/mms-2026-11-10/takes-towers-and-clash.json", "git grep -l mmcam: only docs/tools/pending/mms-tweaks/ and docs/tools/runs/mms-2026-11-10/ (read 2026-11-13)", "docs/marketing/store-copy-draft.md:103-106"],
+    "criterion": ["X-34"], "severity": "minor", "alpha": "required", "owner": "tools-pipeline",
+    "needs_directors": ["community-marketing"],
+    "cost": "S", "cost_basis": "estimate, no comparable (a rule in the shot list: stock build, stock inputs, real speed, each shot labelled staged or played)",
+    "hash": false, "off_orb_page": false,
+    "risk": "A staged clip used publicly would show moves a player cannot do; two milestones would differ for reasons that are not progress."
+  },
+  {
+    "id": "F-MARKET-10", "kind": "gap",
+    "statement": "No rule says what happens to a shot when an old replay stops playing: a replay is refused on different data, and the page word that plays a saved match is a scratch patch, not game code on main.",
+    "evidence": ["sim/core/replay.gd:7", "sim/core/replay.gd:135", "tools/preview/switches.mjs:538-545", "tools/preview/blackbox-clip.mjs:7"],
+    "criterion": ["X-34", "X-27"], "severity": "minor", "alpha": "required", "owner": "tools-pipeline",
+    "needs_directors": ["simulation-engine"],
+    "cost": "S", "cost_basis": "estimate, no comparable (the rule: a shot is a script of scene, seed and inputs, re-recorded on each milestone; a played replay is kept with its own build)",
+    "hash": false, "off_orb_page": false,
+    "risk": "Shots built on saved replays vanish at the first data change; shots built on recipes survive."
+  },
+  {
+    "id": "F-MARKET-11", "kind": "gap",
+    "statement": "The marketing plan predates Orb's Alpha definition: it stages a public browser build and public itch.io page, advises against Discord, still holds clips for the old placeholder names, and has no timeline counting back from the Steam demo.",
+    "evidence": ["docs/marketing/go-to-market-plan.md:20-22", "docs/marketing/go-to-market-plan.md:129", "docs/marketing/go-to-market-plan.md:146-158", "docs/marketing/go-to-market-plan.md:229", "ui/data/fighter_names.json:5-6", "docs/ep/vision.md:1741", "docs/marketing/steam-readiness.md:50-61"],
+    "criterion": [], "severity": "minor", "alpha": "required", "owner": "community-marketing",
+    "needs_directors": ["legal-ip"],
+    "cost": "S", "cost_basis": "estimate, no comparable",
+    "hash": false, "off_orb_page": false,
+    "risk": "A director briefed from the old plan builds toward a public page the owner has not asked for.",
+    "orb_question": "What should 'Beta in sight' mean, the point where the Steam clock starts? Recommendation: four fighters playable on the Windows and Linux builds and the Alpha testers' reports folded in."
+  },
+  {
+    "id": "F-MARKET-12", "kind": "gap",
+    "statement": "The project's notes disagree with each other on Valve's waiting period and are stale on the licence: three records name different pages for the 21 and 30 days, and two Legal pages still call the code MIT.",
+    "evidence": ["docs/marketing/steam-readiness.md:32", "docs/legal/steam-readiness.md:12", "docs/legal/steam-readiness.md:21", "docs/ep/alpha/audit-2026-11-13/02-areas/web-checks.md (Steam table, read 2026-11-13)", "docs/legal/pre-store-checklist.md:34", "docs/ep/alpha/audit-2026-11-13/questions.md:20 (AQ-04)"],
+    "criterion": [], "severity": "minor", "alpha": "nice", "owner": "legal-ip",
+    "needs_directors": ["community-marketing"],
+    "cost": "S", "cost_basis": "estimate, no comparable",
+    "hash": false, "off_orb_page": false,
+    "risk": "Planning on 30 days is safe under every reading; the risk is someone acting on the stale licence line."
+  },
+  {
+    "id": "F-MARKET-13", "kind": "gap",
+    "statement": "The self-tests of the clip kit, the browser launcher and the LAN clip tool run in no workflow, so the chain the archive depends on can break unseen.",
+    "evidence": ["grep of .github/workflows/*.yml for clips-selftest, machine/selftest, lan-clip-selftest: no line (read 2026-11-13)", "docs/ep/alpha/audit-2026-11-13/01-inventory/I-07-tools-ci.md (Notable 3)"],
+    "criterion": ["X-34"], "severity": "minor", "alpha": "nice", "owner": "tools-pipeline",
+    "needs_directors": [],
+    "cost": "S", "cost_basis": "estimate, no comparable (the halves that need no browser only)",
+    "hash": false, "off_orb_page": false,
+    "risk": "A CI job that starts a browser capture adds minutes and a new way to hang; only the non-browser halves belong there."
+  },
+  {
+    "id": "F-MARKET-14", "kind": "gap",
+    "statement": "Bystanders' run cycles follow the shader's clock, not the tick, so two renders of the same shot differ in the crowd and a side-by-side shows a difference that is not a change in the game.",
+    "evidence": ["render/tools/flash_capture.gd:23-24"],
+    "criterion": ["X-34"], "severity": "minor", "alpha": "nice", "owner": "rendering-techart",
+    "needs_directors": ["tools-pipeline"],
+    "cost": "S", "cost_basis": "estimate, no comparable",
+    "hash": false, "off_orb_page": false,
+    "risk": "A change to the crowd's clock alters the picture, so it needs the look gate's side-by-side."
+  },
+  {
+    "id": "F-MARKET-15", "kind": "gap",
+    "statement": "A player cannot hide the HUD and there is no photo mode; both are absent from the game and neither is in Orb's Alpha definition.",
+    "evidence": ["render/tools/flash_capture.gd:180-181", "render/core/main.gd:299", "docs/tools/clip-capture-audit.md:39"],
+    "criterion": [], "severity": "minor", "alpha": "after", "owner": "ui-ux",
+    "needs_directors": ["tools-pipeline", "camera"],
+    "cost": "M", "cost_basis": "estimate, no comparable",
+    "hash": false, "off_orb_page": false,
+    "orb_question": "Photo mode after Alpha? Recommendation: yes, after Alpha; the scripted shot list does not need it."
+  },
+  {
+    "id": "F-MARKET-16", "kind": "works",
+    "statement": "One command makes seeded, repeatable clips from a kept build out of one recipe file, finding moments from the sim's own events, and six clips made on 2026-11-10 are on record.",
+    "evidence": ["tools/clips/make.mjs:3-11", "tools/clips/clips.json:2", "tools/clips/clips.json:19-30", "record:docs/tools/runs/mms-2026-11-10/screen-results.txt"],
+    "criterion": ["X-34"], "severity": "none", "alpha": "n/a", "owner": "tools-pipeline", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-17", "kind": "works",
+    "statement": "Every clip tool starts its browser through the one guarded launcher, which sets a hard time limit, below-normal priority, a CPU cap and a profile named for its session.",
+    "evidence": ["tools/machine/browser.mjs:5-10", "tools/machine/browser.mjs:197-202", "tools/clips/make.mjs:17", "tools/preview/blackbox-clip.mjs:10"],
+    "criterion": ["X-34"], "severity": "none", "alpha": "n/a", "owner": "tools-pipeline", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-18", "kind": "works",
+    "statement": "A replay reproduces a match from its seed and intents, is refused on different data, and the clip made from a saved match says whether its checkpoints matched the match that was played.",
+    "evidence": ["sim/core/replay.gd:3", "sim/core/replay.gd:7", "sim/core/replay.gd:135", "tools/preview/blackbox-clip.mjs:1-2", "tools/preview/blackbox-clip.mjs:34"],
+    "criterion": ["X-34", "X-27"], "severity": "none", "alpha": "n/a", "owner": "simulation-engine", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-19", "kind": "works",
+    "statement": "The side-by-side tool pairs two captured clips as labelled stills and a GIF and refuses a pair that is not the same scenario and seed.",
+    "evidence": ["tools/flash/side-by-side.mjs:1-4", "tools/flash/side-by-side.mjs:18-19"],
+    "criterion": ["X-34"], "severity": "none", "alpha": "n/a", "owner": "tools-pipeline", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-20", "kind": "works",
+    "statement": "Capture is clean in a browser build: the hook shows no card, notice or intro, a page word hides the HUD without touching the sim, and the kit uses it by default.",
+    "evidence": ["render/tools/flash_capture.gd:9-10", "render/tools/flash_capture.gd:180-181", "tools/clips/clips.json:6"],
+    "criterion": ["X-34"], "severity": "none", "alpha": "n/a", "owner": "tools-pipeline", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-21", "kind": "works",
+    "statement": "Capture pacing is even whatever the PC is doing: the hook runs exactly one tick per picture.",
+    "evidence": ["render/tools/flash_capture.gd:16-18", "render/tools/flash_capture.gd:21-22"],
+    "criterion": ["X-34"], "severity": "none", "alpha": "n/a", "owner": "tools-pipeline", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-22", "kind": "works",
+    "statement": "A clip button (F9, or View and RB) and automatic bookmarks mark moments in a saved match, and the kit cuts a clip for each from the replay.",
+    "evidence": ["tools/preview/blackbox.mjs:258-265", "tools/clips/clips.json:31-39", "tools/clips/make.mjs:4", "tools/clips/make.mjs:326"],
+    "criterion": ["X-34"], "severity": "none", "alpha": "n/a", "owner": "tools-pipeline", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-23", "kind": "works",
+    "statement": "Each build the owner played is kept by commit (18 folders), which is the build half of a milestone archive.",
+    "evidence": ["homework/Files/builds/ (local, git-ignored; 18 folders, newest orb-first-play-6a30b4c9-6627cb9d and orb-lan-6a30b4c9; read 2026-11-13)", "docs/ep/alpha/audit-2026-11-13/02-areas/TOOLS.md:78"],
+    "criterion": ["X-34", "X-30"], "severity": "none", "alpha": "n/a", "owner": "tools-pipeline", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-24", "kind": "works",
+    "statement": "The owner's rules for public material are written where the work will be done: real captures only, no in-progress character art, the AI wording for video descriptions, and publishing held for the owner's approval.",
+    "evidence": ["docs/marketing/steam-readiness.md:21", "docs/marketing/store-copy-draft.md:103-106", "docs/marketing/store-copy-draft.md:121", "docs/marketing/go-to-market-plan.md:96", "docs/marketing/go-to-market-plan.md:110"],
+    "criterion": [], "severity": "none", "alpha": "n/a", "owner": "community-marketing", "cost": "n/a", "hash": false
+  },
+  {
+    "id": "F-MARKET-25", "kind": "works",
+    "statement": "The project's Steam planning figures are on the safe side of the platform pages read on 2026-11-13: 30 days from the fee, two weeks of coming soon, seven business days per review, and a free game never recoups the fee.",
+    "evidence": ["docs/legal/steam-readiness.md:10-12", "docs/marketing/steam-readiness.md:30-32", "docs/ep/alpha/audit-2026-11-13/02-areas/web-checks.md (Steam table, read 2026-11-13)"],
+    "criterion": [], "severity": "none", "alpha": "n/a", "owner": "legal-ip", "cost": "n/a", "hash": false
+  }
+]

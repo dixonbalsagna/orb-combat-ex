@@ -1786,3 +1786,17 @@ In short: the Grudge is out. Take It Standing as packeted is replaced by Orb's a
 3. Is "body" its own number or the core region: "workshop this, core region should be the most important but perhaps separate."
 Also: "I think base attacks should help fill stamina, so attacking with normal face-button attacks should be a respite between special or signature attacks. keep workshopping this."
 - Do specials and signatures cost stamina as well as energy (round two, docs/ep/proposals/alpha-feature-workshop-2.html; to the stand-in, relayed verbatim): "Yes, both". This confirms the stand-in's reading in that page.
+
+**The Alpha audit's twelve decisions, Orb's answers (2026-11-13 night, written on the audit's page, verbatim; the audit's reading in docs/ep/alpha/audit-2026-11-13/08-orb-answers.md).** Orb, to the audit: "check file noted by breadcrumb path, answers contained. I want a quality Alpha version".
+1. Make main the game Orb plays, before any new feature: "GO"
+2. Desktop test builds for named friends once the safety checks are green; two Deck friends now, a spare, two held back: "GO"
+3. Reports on a new private Discord server, with delete on request: "I WILL MAKE THE DISCORD SOON"
+4. A key-only itch.io page under the working title before the paid title search, if Legal agrees: "GO"
+5. Licence: all rights reserved through Alpha with a permission page, public code decided at Beta: "GO"
+6. LAN at Alpha for Orb and Orb 2 only, Windows: "GO"
+7. No campaign at Alpha: "GO"
+8. Horde's first size, three weak enemies at a time: "GO"
+9. The move table's bar: "FULL TABLE ON BETA, KEEP ITERATING WHAT WE HAVE."
+10. Up close, does your stick move only you, and a standing yes for the stop rule: "KEEP WORKSHOPPING, PLAYER AGENCY MUST BE RESPECTED"
+11. Frame rate targets: "KEEP IMPROVING PERFORMANCE ON ALL LEVELS"
+12. The small marks drawn on a fighter during a dash or press: "LETS TREAT THESE SHAPES AS PLACEHOLDERS FOR DIEGETIC AURAS, GLOWS, FLARES ETC. THAT SHOWCASE GAME MECHANICS WHERE NECESSARY. UI/UX ELEMENTS MUST BE NON-INTRUSIVE, RULE-OF-COOL, PROTECT PLAYER AGENCY AND ENJOYMENT, RESPECT THE SPECTACLE"

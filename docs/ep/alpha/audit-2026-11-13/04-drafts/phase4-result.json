@@ -1,0 +1,1229 @@
+{
+ "drafts": [
+  {
+   "angle": "Risk first: order by what is least known. The six things that could be a class bigger than estimated or show Alpha is not reachable (a desktop build of the game Orb actually plays, the first real Steam Deck run, the beam rework, the gravity well, the horde, the move table) are each built or sized by a throwaway trial in A1 or A2, before weeks are committed to work that depends on them. Early milestones are heavy and unglamorous; the first build with new things to press is A3; in exchange the path's length is known from evidence by the end of A2.",
+   "file": "docs/ep/alpha/audit-2026-11-13/04-drafts/path-risk.md",
+   "pace": "About 35M tokens of finished director work a week (range 25M to 50M): roughly 60 to 80% of the weekly allowance, directors mostly on the cheaper models (about 1 meter point per 1M tokens, 1.6 on the largest), about a third of each week going to the Executive Producer's briefs, reviews, gates and rework. The record is thin (no clean weekly figures), so weeks are ranges; A-PROCESS-08 (a weekly token record) is in A1 to tighten them. Token budgets are size classes (S 0.25M, M 1.2M, L 4M, XL 8M) with no comparables. People's time is added: Orb plays each build (2 to 4 days), one Deck friend at A2, two at A6.",
+   "milestones": [
+    {
+     "id": "A1",
+     "name": "Main is the game Orb plays",
+     "goal": "A fresh copy of the repository makes, with one command, the Windows and Linux desktop builds of the game Orb played on 9 November, and the four biggest unknowns in the fight plus a Linux picture have each been tried small.",
+     "play_this": "The first desktop Windows build of Orb's own game, made from main: left-panel (Rail) menus, round planet, the pad as Orb plays it, flight at 3500. New: pause opens its menu, the start menu's d-pad moves evenly, a released stick beam no longer fires later by itself, RT + B only counts just after RT. Try: one full match and say whether anything differs from 9 November (nothing should); press report and check a file appears; look at four trial clips (a beam you can sidestep, the pull into a close fight, six weak enemies, the map of dead button presses) and answer the question under each.",
+     "exit": [
+      "X-29 must pass: one command and one CI run make Windows and Linux builds incl. the solo game, version number shown, changelog entry written",
+      "X-17 must pass on Orb's saved play files and the scripted set: beams from any input other than the right stick or RT + B = 0",
+      "X-27 first held: replay carries its build id; a foreign replay is refused with a plain message",
+      "A golden record exists for the configuration Orb plays and gates run with switches as shipped (A-CODE-02); switch table reduced to real choices",
+      "X-23, X-26, X-06 first readings on the desktop build and its packed data (not passes)",
+      "X-33 must pass: change-control rule and ideas log exist, playbook points to them; one backlog; working tree committed or deliberately ignored",
+      "Measuring tools for X-03, X-04, X-13, X-16 exist with a first reading each; the 1280 by 800 screen sweep has stills of every menu",
+      "Spikes S1 to S5 (beam, gravity well, horde, move table, Linux picture in CI) each end in a one-page size verdict"
+     ],
+     "rows": 72,
+     "window": "GW1 'Main is the game': A-CODE-01 and the default rows it needs, the stray-beam fixes, flight 3500, backburnered meters zeroed (12 hash rows); A-NET-05 lands just before it",
+     "tokens_m": 43.3,
+     "weeks": "1.5 to 2.5",
+     "directors": [
+      "tools-pipeline",
+      "simulation-engine",
+      "encounter-systems",
+      "world-environment",
+      "rendering-techart",
+      "camera",
+      "controls-feel",
+      "ui-ux",
+      "audio-music",
+      "game-design",
+      "combat-choreography",
+      "qa-balance",
+      "performance-platform",
+      "netcode-online",
+      "legal-ip",
+      "production-ops",
+      "ep"
+     ]
+    },
+    {
+     "id": "A2",
+     "name": "Safe to hand out; a real Steam Deck has run it",
+     "goal": "Every gate on the before-an-outside-tester-plays list is green on a commit, and one friend has installed that build on a Steam Deck, played 30 minutes with the Deck's own controls, run the one-press bench and sent back two files.",
+     "play_this": "Same fight as A1 (A1 replays still play), now as the tester package. New: quit with the pad; the report panel works with the pad and saves one small file on any PC; a crash leaves a file saying why; a pulled pad pauses with a notice. Try: install on the old PC from the itch.io test page using only the draft guide; pull a pad mid-match; force a crash and send the report; do the ten-minute listening pass. The Deck friend gets a one-page sheet: install, two matches, press the bench, post two files.",
+     "exit": [
+      "X-02 must pass: gate list exists, each gate has a saved record for this commit, including readings on the globe ground",
+      "X-28 must pass: forced crash on Windows and Linux leaves a file the report picks up",
+      "X-21 must pass: one press saves a report under 10 MB, nothing sent automatically, file checked for account names and paths",
+      "X-18, X-19 first real reading from the friend's sheet (not a pass)",
+      "X-24, X-26 first real Deck frame record and loading times from the one-press bench",
+      "X-30, X-31 must pass as a rehearsal: dummy build on a restricted itch.io page, two channels, key claimed, update applied, previous version restored in one step",
+      "X-25 first reading: two-hour soak on Windows and Linux with memory growth recorded",
+      "X-07 must pass: unplugged pad pauses with a notice; X-20 must pass on Windows and Linux across a real restart",
+      "X-34 started: shot list is one data file, first archive entry rendered from the A1 and A2 builds",
+      "The three unexplained picture faults each have a still, a cause and an owner, or a written cannot-reproduce"
+     ],
+     "rows": 41,
+     "window": "none",
+     "tokens_m": 24.45,
+     "weeks": "1 to 2.5 (top of range is waiting on Orb's account actions and the friend's evening)",
+     "directors": [
+      "camera",
+      "rendering-techart",
+      "vfx",
+      "legal-ip",
+      "accessibility-localization",
+      "tools-pipeline",
+      "performance-platform",
+      "ui-ux",
+      "controls-feel",
+      "audio-music",
+      "qa-balance",
+      "community-marketing",
+      "ep"
+     ]
+    },
+    {
+     "id": "A3",
+     "name": "The fight's new rules, and LAN inside the game",
+     "goal": "In one normal match a beam is aimed with the stick and dodged by moving off its line, both signatures fire from Orb's inputs, stamina, energy and body work as one loop, the pull into a close fight exists, and a second PC joins from a Host or Join row.",
+     "play_this": "New: the right stick aims a beam that flies through space and can be dodged by moving; RT + RB + flick is the energy signature, RT + flick the martial one; stamina (plain blows refill it, specials and signatures spend it, low stamina worsens injuries); fighters are drawn together up close; the start menu lists modes and you pick a fighter; LAN by Host and Join with rematch. Try: dodge beams at near, middle and far range; throw both signatures; fight on empty stamina; get a transformation using the on-screen hint; knock someone into a building and see if they still bounce back; three LAN matches in a row, then pull the cable.",
+     "exit": [
+      "X-16 must pass: scripted sidestep makes the beam miss at three ranges",
+      "X-17 must pass: beams and signatures from any input other than Orb's = 0, for player and computer",
+      "X-15 must pass (resized form): one model page; every energy, stamina and body number is per-fighter data; corrected ratchet finds no fighter-specific code in those systems; no health bar; health reads from the fighter",
+      "X-13 partial must pass: lap, each stance, beam aimed and dodged, both signatures, launch, gravity well's pull, crater, building damaged, bystanders scattering (transformation line required at A4)",
+      "X-14 first reading with the new check (must pass at A4)",
+      "X-08 for LAN 1v1 must pass on two Windows PCs: five matches, no mismatch, rematch and leave, pulled-cable notice on both PCs in the agreed time, all statuses on screen",
+      "X-05 partial: mode smoke suite exists and passes for solo, two on one PC (Windows and Linux) and LAN 1v1 (Windows)",
+      "X-03 reading: unanswered presses counted on this build",
+      "A2's gate list re-run on this commit because the beam changes the picture"
+     ],
+     "rows": 30,
+     "window": "GW2 'The fight's rules': beam, signature inputs, gravity well, unanswered presses, stamina/energy/body and energy numbers as data, plus the terrain rows (11 hash rows)",
+     "tokens_m": 51.95,
+     "weeks": "2 to 3",
+     "directors": [
+      "encounter-systems",
+      "simulation-engine",
+      "game-design",
+      "controls-feel",
+      "world-environment",
+      "rendering-techart",
+      "camera",
+      "vfx",
+      "ui-ux",
+      "netcode-online",
+      "tools-pipeline",
+      "qa-balance",
+      "legal-ip",
+      "performance-platform"
+     ]
+    },
+    {
+     "id": "A4",
+     "name": "Horde, teams, your own planet, the whole fighter",
+     "goal": "Every Alpha mode except the campaign starts from the menu with a pad, plays to a result, rematches and leaves; each fighter has a complete move table at the Alpha bar and two forms beyond base.",
+     "play_this": "New: Horde for one or two players (weak enemies in waves that come back, ending in a result screen); a computer partner so 2v2 can be played alone; couch 2v2 as a team of two against two computers; LAN 2v2 showing all four fighters when fights are near; custom planet from a seed and three dials; a body change as well as an aura on each of two transformations; held LB, RB, RT or LT with a face button now gives its own move. Try: last eight minutes in Horde alone, then with a second pad; make a dry one-city planet and check the second PC gets the same one; press every held button with X, Y, B, A (tap, mash, hold) on both fighters and note any that repeat or do nothing; reach both forms with both fighters.",
+     "exit": [
+      "X-05 must pass on Windows and Linux for every shipped mode (LAN modes on Windows; on Linux by the two-program check in CI)",
+      "X-10 must pass on Orb's PC: 5 to 10 minute horde run with waves, respawn, result screen; 60 held at the largest wave",
+      "X-09 must pass: supported line-ups written and each played from the menu",
+      "X-08 for LAN 2v2 must pass: five matches, both forms, two real PCs",
+      "X-04 must pass: each form reached by script for each fighter, a still per form, a blow in flight during a transformation handled as written",
+      "X-03 must pass at the Alpha bar: no cell without an outcome, no duplicate inside the rows the bar names",
+      "X-13 must pass in full on scripted matches; X-14 must pass",
+      "X-11 dials: same seed and choices give the same planet on both LAN PCs (cross-platform pass at A5)",
+      "X-15 third-fighter line (resized): two-fighter count recorded, cannot rise, zero in energy, stamina, body and forms systems"
+     ],
+     "rows": 20,
+     "window": "GW3 'Many bodies and the full fighter': horde and its computer control, computer ally, per-fighter computer level, custom planet, move table, transformations, third-fighter clean-up (9 required hash rows plus nice A-AI-06); the last window that takes rule changes",
+     "tokens_m": 48.7,
+     "weeks": "2 to 3",
+     "directors": [
+      "game-design",
+      "encounter-systems",
+      "combat-choreography",
+      "simulation-engine",
+      "rendering-techart",
+      "camera",
+      "world-environment",
+      "controls-feel",
+      "art",
+      "animation",
+      "netcode-online",
+      "ui-ux",
+      "qa-balance",
+      "tools-pipeline"
+     ]
+    },
+    {
+     "id": "A5",
+     "name": "A newcomer on a Deck, alone",
+     "goal": "Someone who has never seen the game installs it from the itch.io page with a key and, with only the tester guide and the Deck's own controls, reaches the menu, picks, plays, rematches, changes a setting that persists and sends a report.",
+     "play_this": "No rule changes, so A4 replays still play. New: finished tester guide and checklist; how-to-play describes what is really on screen; the match-over panel no longer covers your fighter's corner; a picture-quality setting that works, with a Deck default; craters and trenches drawn where you stand; a quiet background sound plus building and menu sounds; '(working title)' beside the name. Try: be the tester, following the guide from a blank PC with a real key and marking every guess; mark about 150 lines of tester-facing text; change quality and controls, restart, check they held.",
+     "exit": [
+      "X-18, X-19 must pass as a rehearsal by Orb and the trusted second player from the guide alone",
+      "X-22 must pass: 1280 by 800 sweep finds no clipped or overlapping text, nothing under 9 px (12 px the aim)",
+      "X-20 must pass including the quality level; X-21 and X-32 must pass with Legal's sign-off row per paper and matching privacy words",
+      "X-11 must pass: planet fingerprint matches between Windows and Linux in CI",
+      "X-12 recorded: campaign decision written with its reason",
+      "X-31 must pass with the real build: on both itch.io channels, updated once and rolled back once",
+      "X-34: shot sets from A1 to A5 sit side by side"
+     ],
+     "rows": 14,
+     "window": "none",
+     "tokens_m": 11.95,
+     "weeks": "1",
+     "directors": [
+      "qa-balance",
+      "ui-ux",
+      "rendering-techart",
+      "audio-music",
+      "tools-pipeline",
+      "legal-ip",
+      "narrative-identity",
+      "community-marketing",
+      "performance-platform"
+     ]
+    },
+    {
+     "id": "A6",
+     "name": "The Alpha candidate",
+     "goal": "One commit passes X-01 to X-34, two friends complete the checklist on their Steam Decks, and the feature freeze begins.",
+     "play_this": "Only numbers changed: Easy is easier for someone playing Orb's way, a right-stick-only player can win, matches run 6 to 8 minutes. Try: one match at each difficulty and say whether they feel like three different things. This is the build the friends get; after it, new ideas go in the ideas log.",
+     "exit": [
+      "X-01: two outside testers on Steam Decks return signed checklists",
+      "X-02: every gate green with records for this commit",
+      "X-06: win-rate bands at each difficulty for a scripted player on Orb's scheme, with enough matches to separate bands; team and horde bands",
+      "X-23: 60 held on Orb's PC with no frame over 50 ms; X-24: the agreed Deck figure from a tester's bench file; X-26: loading under 15 s PC, 30 s Deck",
+      "X-25: two-hour soak on Windows and Linux (and one friend's Deck), no crash, hang or script error, memory growth under 10%",
+      "X-27 to X-32 re-read on the candidate; X-33 freeze recorded; X-34 candidate shots archived",
+      "X-03, X-04, X-05, X-13, X-14, X-16, X-17 re-run after the numbers moved"
+     ],
+     "rows": 3,
+     "window": "GW4 'Numbers only': difficulty, right-stick viability and match length tuning; data values only, no rule may change",
+     "tokens_m": 6.7,
+     "weeks": "1.5 to 3 (set by two friends' time and one round of fixes)",
+     "directors": [
+      "qa-balance",
+      "game-design",
+      "encounter-systems",
+      "performance-platform",
+      "tools-pipeline",
+      "legal-ip",
+      "accessibility-localization",
+      "production-ops"
+     ]
+    }
+   ],
+   "resized": [
+    {
+     "id": "A-COMBAT-04",
+     "proposal": "XL to L: no dead cell anywhere; martial and energy rows complete and distinct per fighter; LB, LT, RT rows may share entries where the design says so. Full 55-cell table at Beta. Stays in A4.",
+     "reason": "Largest content job and last big item on the critical path; quality per cell matters more than count. If Orb wants the full table: XL or more, A4 and A6 move about a week."
+    },
+    {
+     "id": "A-COMBAT-03",
+     "proposal": "Scope for Alpha is size, zones and the snap; the far kit, catch, swat and taunt after Alpha. Budget stays XL until spike S2 reports. Stays in A3.",
+     "reason": "Those parts are what 'fighters step in and engage' needs; no well code exists, so the class is a guess. The whole packet would need a second increment and another golden window."
+    },
+    {
+     "id": "A-MODES-02",
+     "proposal": "With A-AI-01: waves of at most three weak bodies at a time inside today's five-body limit, with respawn, a timer and a result screen; bigger waves, graded henchmen after. Budget stays XL + L until spike S3 reports. Stays in A4.",
+     "reason": "Raising the body limit touches the sim, the camera and the Deck's frame rate at once. Bigger waves at Alpha adds L or more to GW3 and makes X-10 on the Deck the top risk."
+    },
+    {
+     "id": "A-CODE-05",
+     "proposal": "L to M: zero fighter-specific code in the energy, stamina, body and forms systems, the remaining count recorded and unable to rise; clearing the other places (365 today) and per-fighter look tables is Beta's first job. Stays in A4.",
+     "reason": "Four fighters is Beta's bar; clearing every place now risks the two working fighters for nothing a tester sees. Clearing all at Alpha is L, about 3M more."
+    },
+    {
+     "id": "A-WORLD-02",
+     "proposal": "L to M: a seed and three dials (city count, climate, water) at today's one size; X-11 reworded; the size pick stays nice row A-WORLD-08. Stays in A4.",
+     "reason": "Sizes need a frame-rate study that does not exist. Sizes at Alpha pulls A-WORLD-08 (L) into GW3 with Deck readings per size."
+    },
+    {
+     "id": "A-CONTROLS-01",
+     "proposal": "M to S: couch 2v2 is two people as a team against two computer fighters; two pad slots confirmed and written as the supported line-up; four pads after Alpha. Stays in A4.",
+     "reason": "No tester needs four pads; a four-way picture does not exist."
+    },
+    {
+     "id": "A-NET-02",
+     "proposal": "L to M: a Host and Join row in the game with the address shown and typed, nothing baked into files, firewall step written for Orb's two PCs; one-step set-up for strangers after Alpha. Stays in A3.",
+     "reason": "Plan assumes LAN stays with Orb and the trusted second player at Alpha. If offered to outside testers: back to L, with A-LEGAL-04 and A-PERF-02 at full size and a real-Deck LAN test, about 6M and one to two weeks."
+    },
+    {
+     "id": "A-LEGAL-04",
+     "proposal": "M to S: a written ruling that the outside testers' package has no LAN row, and the check that proves it. Stays in A3.",
+     "reason": "Same LAN decision."
+    },
+    {
+     "id": "A-PERF-02",
+     "proposal": "M to S: the Linux build includes the network code and the two-program check passes on Linux in CI; a real Deck LAN session after Alpha. Stays in A3.",
+     "reason": "Same LAN decision; keeps X-05 honest on Linux without a Deck LAN test."
+    },
+    {
+     "id": "A-RENDER-06",
+     "proposal": "L to M: three working levels (low, the Deck's default, the PC's default) behind the existing Effects quality row; the ladder up to maximum stays after (A-RENDER-10). Stays in A5.",
+     "reason": "The Deck's first reading at A2 decides what its default must switch off; more levels is polish."
+    },
+    {
+     "id": "A-AUDIO-02",
+     "proposal": "M to S: one quiet background bed, building damage and collapse, menu moves; bystanders, the gravity well and music after. Stays in A5.",
+     "reason": "Orb queued the sound toolset for after the globe arena is settled."
+    },
+    {
+     "id": "A-NET-03",
+     "proposal": "Criterion X-08 reworded from 5 to 10 seconds, keeping today's 8-second rule; the row closes as a pulled-cable test on two real PCs, not a code change. Stays in A3.",
+     "reason": "The register's recommendation; a shorter time risks false drops on a home network."
+    }
+   ],
+   "critical_path": "A-PROCESS-03 (commit the working tree) -> A-CODE-03 and the ten switch groups A-CODE-01 needs -> A-CODE-01 -> A-CODE-02 (golden record for the played game) -> A-TOOLS-01 (one-command desktop build, also needs A-LEGAL-02) -> A-ENERGY-02 (model page) -> A-ENERGY-01 + A-COMBAT-02 in GW2 -> A-COMBAT-04 (move table, with A-COMBAT-06 beside it) in GW3 -> tuning A-AI-02, A-QA-05, A-QA-08 in GW4 -> the candidate's soak and bands and two friends' Deck sessions (X-01). Near-critical beside it: A-TOOLS-01 -> A-TOOLS-02 -> A-QA-01 -> X-01; and A-MODES-01 -> A-MODES-02 -> A-AI-01 -> A-QA-06. The safety chain (A-LEGAL-01, A-LEGAL-08 -> A-LEGAL-03 -> A-PERF-01 on a real Deck) gates the Deck's answer, so it is placed second.",
+   "risks": [
+    "Main cannot simply be made into the game Orb plays: 72 of 92 switch rows differ, patches exist only in a preview tool, the golden record is valid only with switches off, and gates have never run on the played configuration (the readings on the globe ground already fail). If A1 takes three weeks instead of one and a half, everything moves by the difference. Guard: land row by row with a gate run each; nothing from A3 lands until GW1 closes.",
+    "The Steam Deck says no to something: a shader the driver rejects, a frame rate well under 30, text too small at 1280 by 800, or the Deck's controls not arriving as a pad. Guard: a CI job that makes the Linux build draw one still in A1, the real session in A2, a bench file from the same friend at A3 and A4, the Deck's default quality built at A5 from real numbers.",
+    "The fight rework is a class bigger than estimated: beam, signature inputs, stamina loop and gravity well all change the same exchange code in one window, and the beam struggle and the computer's beam play hang off the old beam. Guard: spikes S1 and S2 before it starts, each piece behind its own switch with its own probe, and a stop rule (if the well's first cut is not playable at A3's midpoint, A3 ships size and zones and the snap moves to GW3)."
+   ],
+   "orb": [
+    {
+     "question": "May the team make the 9 November build the default game on main, row by row, before any new feature work?",
+     "recommendation": "Yes.",
+     "blocks": "All of A1, and so everything"
+    },
+    {
+     "question": "The default world: one fixed planet, or a new random planet each match?",
+     "recommendation": "A new random planet each quick match with the seed shown and saved in reports; one fixed planet for a newcomer's first match and for tests.",
+     "blocks": "A-WORLD-01, A-WORLD-14 in GW1 (A1)"
+    },
+    {
+     "question": "Do the globe ground, the crater look with the black fill removed and the meteor trail become defaults, and is the 2026-11-09 terrain workshop part of Alpha?",
+     "recommendation": "Yes to the defaults; the workshop is after Alpha, and Alpha gets craters and trenches drawn where you stand.",
+     "blocks": "A-RENDER-01, A-RENDER-04 in A1; A-WORLD-05 in A5"
+    },
+    {
+     "question": "Which build do new looks get compared against?",
+     "recommendation": "The 2026-11-09 globe build, with its known picture faults listed as not part of the reference.",
+     "blocks": "The look gate for every visible change from A1 on"
+    },
+    {
+     "question": "Flight speed 3500 as the default in every mode, slider dropped until a real setting exists?",
+     "recommendation": "Yes.",
+     "blocks": "A-CONTROLS-04 in GW1"
+    },
+    {
+     "question": "The backburnered hero and villain meters: off, folded in, or retired?",
+     "recommendation": "Keep the comeback as a rule for every fighter, zero every other effect in data now, remove the code after Alpha.",
+     "blocks": "A-ENERGY-05 in GW1"
+    },
+    {
+     "question": "May the team make desktop test builds for named testers, and which friend with a Deck does a first 30-minute session?",
+     "recommendation": "Yes, Windows and Linux; ask one friend now; record the one-line approval when the gates are green and not before.",
+     "blocks": "A2's Deck session, the largest unknown"
+    },
+    {
+     "question": "The report channel for testers.",
+     "recommendation": "A new private server with a channel locked to a tester role; keep the delete-on-request promise; one small file per report, clips left out.",
+     "blocks": "A-LEGAL-07, A-TOOLS-05 in A2"
+    },
+    {
+     "question": "May a restricted, key-only itch.io page go up under the working title before the paid title search, and will Orb do the account, page and upload tool?",
+     "recommendation": "Yes if Legal writes that it is unlisted and unpromoted; one key per named friend; Orb does the three actions in one sitting with Tools' checklist.",
+     "blocks": "A-LEGAL-09, A-TOOLS-02 and the A2 rehearsal"
+    },
+    {
+     "question": "The licence line.",
+     "recommendation": "All rights reserved through Alpha with a short friendly permission page; decide about public code at Beta.",
+     "blocks": "A-LEGAL-10 and the papers in the A2 package"
+    },
+    {
+     "question": "How much of the stamina, energy and body loop is in Alpha, and is 'body' a new number?",
+     "recommendation": "The whole loop as shared rules with per-fighter numbers in data, switched on after QA's comeback measurement; reuse the old hidden health number as the deep number, with the core kept as its own most important part.",
+     "blocks": "A-ENERGY-01 in A3"
+    },
+    {
+     "question": "How much gravity well, and does your stick move only you up close?",
+     "recommendation": "Size, zones and the snap; answer the stick question after seeing spike S2 and before the build starts; RT held stays the charge for Alpha.",
+     "blocks": "A-COMBAT-03 in A3; A-COMBAT-15"
+    },
+    {
+     "question": "LAN at Alpha: for outside friends, or for Orb and the trusted second player?",
+     "recommendation": "Inside the game behind a Host and Join row, played only by the trusted two, Windows only; the outside testers' package has no LAN row.",
+     "blocks": "The size of A-NET-02, A-LEGAL-04, A-PERF-02 in A3 (about 6M and one to two weeks either way)"
+    },
+    {
+     "question": "Beam stages and the other 'workshop this' items: before or after Alpha?",
+     "recommendation": "Beam stages decided from spike S1 and built only if they fit inside the beam rework; close fights decided with the gravity well; nice to have: re-entry trails, a window on your ally, planet dials beyond three; after Alpha: terrain overhaul, High Intensity, the taunt, walking into a beam, the sound toolset.",
+     "blocks": "A-COMBAT-15; what goes in GW2"
+    },
+    {
+     "question": "The move table's bar for Alpha.",
+     "recommendation": "The smaller table (no dead cells; martial and energy rows complete); the full table at Beta.",
+     "blocks": "A-COMBAT-04 in A4, the last big item on the critical path"
+    },
+    {
+     "question": "The horde's first size, couch 2v2's line-up, a computer partner, the custom planet's dials.",
+     "recommendation": "Three weak bodies at a time; two people against two computers; yes, one line-up with a partner; a seed and three dials at one size.",
+     "blocks": "A-MODES-02, A-MODES-03, A-AI-08, A-WORLD-02 in A4"
+    },
+    {
+     "question": "A transformation: aura only or the body too, and how does the second copy of a fighter differ in 2v2?",
+     "recommendation": "One cheap body change per step carried by data; a second body colour per fighter, picked by team.",
+     "blocks": "A-COMBAT-06, A-ANIM-01, A-ANIM-02 in A4"
+    },
+    {
+     "question": "The campaign at Alpha.",
+     "recommendation": "None; record it as the X-12 decision.",
+     "blocks": "Nothing; it removes work"
+    },
+    {
+     "question": "The frame-rate targets.",
+     "recommendation": "60 on Orb's PC; for the Deck wait for A2's real reading, then confirm 30 held with 40 as the aim.",
+     "blocks": "X-23, X-24 at A6; the Deck's default quality at A5"
+    },
+    {
+     "question": "A pad that drops out mid-match pauses with a notice? Keyboard 'works, a pad is recommended'?",
+     "recommendation": "Yes to both.",
+     "blocks": "A-CONTROLS-03 in A2"
+    },
+    {
+     "question": "Is a quiet fight with no music acceptable, and will Orb do a ten-minute listening pass?",
+     "recommendation": "One quiet background bed plus building and menu sounds, no music; yes to the pass, at A2.",
+     "blocks": "A-AUDIO-02, A-AUDIO-03"
+    },
+    {
+     "question": "Will Orb mark about 150 lines of tester-facing text; English only?",
+     "recommendation": "Yes; yes, and say so in the guide.",
+     "blocks": "A-TEXT-01 in A5"
+    },
+    {
+     "question": "After the freeze, does every new idea wait unless Orb lifts it in as a scope change?",
+     "recommendation": "Yes.",
+     "blocks": "X-33 at A6"
+    },
+    {
+     "question": "Can wait: the Steam fee and what 'Beta in sight' means, code signing, photo mode, where the archive's second copy lives, the repository's free safety settings.",
+     "recommendation": "Not before Beta is in sight; not for Alpha; after Alpha; a second drive; yes any day.",
+     "blocks": "Nothing in the path"
+    }
+   ],
+   "total_tokens_m": 187.05,
+   "total_weeks": "8 to 14 weeks (Alpha candidate between mid-January and late February 2027); about 168M tokens if the resizes are accepted; plan 25% on top for rework",
+   "self_check": "Checked by script against 03-gap-register.json, reading the ids back out of the written file (not from my working list). 270 rows; 174 required, each in exactly one milestone (0 missing, 0 placed twice): A1 72 rows (70 required + 2 nice), A2 41 (40 + 1), A3 30, A4 20 (19 + 1), A5 14 (12 + 2), A6 3; 180 placed = 174 required + 6 nice. No row marked after is placed. All 67 'needs' links among placed rows point to the same or an earlier milestone: 0 violations. All 35 required fingerprint-changing rows are in four named golden windows (GW1 12, GW2 11, GW3 9 plus nice A-AI-06, GW4 3); A2 and A5 have none. Pool 68 nice rows, pool + placed = all 74 nice; all 22 after rows listed. No required row is moved out of Alpha; 12 are proposed smaller (or their criterion reworded) with reasons, all still in a milestone. The seven off-page rows are planned normally (six in A2, A-TOOLS-12 in the pool) and no question about that topic is in the decisions table. Token total 187.05M = rows 177.55M + spikes 4.5M + candidate verification 5M, at the register's size classes. Not verified: the spikes' and verification budgets are my own estimates; where a criterion's tool and its fix are the same row I marked the criterion 'first reading' in that milestone and 'must pass' in a later one, except for single-row features with their own test (X-27, X-28, X-07), which pass in the milestone that builds them. One note: the scratchpad is shared with the other planners and a scratch file name of mine (plan.py) collided with one of theirs once; I switched to a private subfolder, read nothing of theirs beyond one stray console summary, and no project file was touched other than the output file."
+  },
+  {
+   "angle": "Modes first: every milestone adds modes that start from the menu with a pad on a real desktop program, run to a result, rematch and leave. A1 makes main the game Orb played and safe to hand out (solo, two players); A2 reaches six modes; A3 all eight (horde, custom planet dials, campaign answered as none); only then is the fight deepened (A4), then the newcomer's path (A5), then a rules-frozen candidate (A6). \"Blockers first\" is read as the safety gates and the blockers to building and handing out a build; the fight's own blockers are designed on paper during A2 and A3 and built in A4.",
+   "file": "docs/ep/alpha/audit-2026-11-13/04-drafts/path-modes.md",
+   "pace": "About 60 points of the weekly meter go to this path (about 60M tokens on the cheaper model or 38M on the largest); weeks are given from 80 points a week (low) to 45 (high), plus half a week or more per milestone for gates, the build, Orb's play and the Steam Deck friends. The record is thin (one night at about 10% was about 13M briefed; one week reached about 82%; no clean weekly figures), and budgets are size classes with no comparables plus a 20% reserve.",
+   "milestones": [
+    {
+     "id": "A1",
+     "name": "Main is the game, safe to hand out",
+     "goal": "The game Orb played on 9 November becomes what a fresh copy builds, as Windows and Linux programs from one command, with every safety gate recorded, and solo and two-player matches started and ended from the left-panel menu (the Rail) with a pad alone.",
+     "play_this": "Start the Windows program, not the browser page. New: the left-panel menu with a list of modes (Solo and Two players work, the rest greyed), a fighter pick per player, the computer's level, a Quit row; flight at 3500 with no slider. Try: a solo match at each level; two pads on one PC; pause mid-match (menu must show); Rematch, leave, Quit on the pad; unplug pad two (game pauses and says so); release a right-stick beam that cannot start (nothing fires late); RT, wait, B (no signature); look at a beam crater (no black fill).",
+     "exit": [
+      "X-29: one command makes the Windows and Linux programs from a commit, solo included, with a shown version number and a changelog line",
+      "X-02: the gate list exists and each gate has a saved record on the A1 commit, including the reading on the globe ground in both modes (pass required before the A2 hand-out)",
+      "X-05 (first two modes): the mode smoke suite exists and its Solo and Two-players rows run menu to result to rematch to quit on Windows and Linux",
+      "X-07: each pad drives its own fighter, player one starts left, a pulled pad pauses with a plain notice",
+      "X-27 (ground work): the played configuration has its own golden record and A1 replays verify on A1",
+      "X-33: the change-control rule and ideas log exist and the playbook points to them",
+      "0 of 92 switch rows differ between a plain build from main and Orb's 9 November build"
+     ],
+     "rows": 67,
+     "window": "W1 'main becomes the played game': CODE-01, AI-05, CONTROLS-02, ENERGY-04, MODES-07, WORLD-01, CONTROLS-04, COMBAT-05, COMBAT-11, COMBAT-14, AI-10; golden records re-made once by CODE-02",
+     "tokens_m": 48,
+     "weeks": "1.5 to 2",
+     "directors": [
+      "ep",
+      "production-ops",
+      "tools-pipeline",
+      "ui-ux",
+      "camera",
+      "rendering-techart",
+      "encounter-systems",
+      "simulation-engine",
+      "controls-feel",
+      "game-design",
+      "combat-choreography",
+      "world-environment",
+      "audio-music",
+      "legal-ip",
+      "accessibility-localization",
+      "qa-balance"
+     ]
+    },
+    {
+     "id": "A2",
+     "name": "Six modes",
+     "goal": "Four more modes start from the menu and end in a result and a rematch (team match on one PC, LAN 1v1, LAN 2v2, a planet picked by seed), a Linux build draws on a real Steam Deck for the first time, and one press saves a small report file on any PC.",
+     "play_this": "New: Team match (two pads as a team against two computers, all four in one picture); Host and Join a LAN match inside the game with rematch and leave on both PCs, and the host's fighter and planet picks reaching both; a Planet row (Random, a typed seed, or the old planet as a preset) with the seed on the result screen; a report key that writes one file under 10 MB. Try: a team match; five LAN 1v1 and five LAN 2v2 matches with the second player, then pull the cable; the same seed twice; the report key; a forced close and restart. First Steam Deck friend, 30 minutes: unzip, start, one solo match with the Deck's controls, run the one-press bench, send back the bench file and a report.",
+     "exit": [
+      "X-05: smoke rows for Team match, LAN 1v1, LAN 2v2 and Planet-by-seed run menu to result to rematch to leave (LAN rows on Windows), A1's rows still green",
+      "X-09: the supported line-up is written (two humans as a team against two computers) and played on two pads; the two copies of a fighter differ by body colour",
+      "X-08: on two real PCs, five LAN 1v1 and five LAN 2v2 matches with no state mismatch in both 2v2 forms; a pulled cable shows a notice on both PCs in the agreed time; every LAN status is on screen",
+      "X-27: a replay carries its build id, a foreign replay is refused with a plain message, an A2 replay verifies to its last tick",
+      "X-21 and X-28 (tools): one press writes a report under 10 MB on Windows and Linux with names and paths removed; a forced crash leaves a file the report picks up",
+      "X-18, X-19, X-24, X-26 (first readings): a Linux build has started and drawn on a real Deck with its controls and sound, and a Deck bench file is on file; frame, loading and memory readings exist for Orb's PC",
+      "X-06 (tools): the scripted player in Orb's scheme lives in QA's folder, runs on packed data with enough matches to separate the bands, and each level has a reading",
+      "X-34 (tools): the shot list is one data file, a job renders it per milestone into a named archive, A1's shots are rendered from the kept A1 build, every clip format gets the safety check",
+      "X-02: every gate green on the A2 commit before the build goes to the Deck friend"
+     ],
+     "rows": 44,
+     "window": "none (no row in A2 changes the state hash)",
+     "tokens_m": 38,
+     "weeks": "1 to 1.5",
+     "directors": [
+      "netcode-online",
+      "rendering-techart",
+      "camera",
+      "controls-feel",
+      "art",
+      "simulation-engine",
+      "tools-pipeline",
+      "performance-platform",
+      "qa-balance",
+      "audio-music",
+      "legal-ip",
+      "ui-ux"
+     ]
+    },
+    {
+     "id": "A3",
+     "name": "All eight",
+     "goal": "The horde mode exists for one or two players, the custom planet has its dials, a lone player can take a computer partner into a team match, the campaign's answer for Alpha is written, and an update has been pushed to and rolled back on a private itch.io page with a dummy build.",
+     "play_this": "New: Horde (one or two players against waves of weak enemies that come back, 5 to 10 minutes, a result screen with the wave reached); Custom planet with three dials (cities, climate, water) beside the seed; a team match with a computer partner at its own level; Easy tuned so a right-stick and LB player wins about 7 in 10. Try: a horde run alone and with a second pad; the largest wave near a city; a dry one-city planet and a wet many-city one; a crater near the shore (no sea unless the sea can reach it); a team match alone with a partner.",
+     "exit": [
+      "X-05: seven modes run menu to result to rematch to leave in the smoke suite on Windows and Linux (LAN rows on Windows) and the campaign has its written decision",
+      "X-12: campaign minimal or none is decided and written with the reason (recommended: none)",
+      "X-10: horde for one and two players, waves arrive and come back, a run lasts 5 to 10 minutes and ends on a result screen, a frame-time record at the largest wave is on file",
+      "X-09: the computer-partner line-up starts from the menu and the computer's level is set per fighter",
+      "X-11: seed, city count, climate and water are match settings; the planet hash comparison prints a verdict, runs in CI, and a Windows-against-Linux comparison is on file",
+      "X-06 (first band): Easy reads at least 70% for the scripted player on A3's packed data",
+      "X-30, X-31: a dummy build pushed to Windows and Linux channels on a restricted page, a key claimed, an update applied, the previous version restored in one step",
+      "X-13, X-16, X-17, X-04, X-15 (tools before A4): the pillar, beam-escape, stray-beam-count and forms probes exist with today's readings; the two-fighter check counts fighter-specific code; the one model page is written",
+      "X-22 (tool): a sweep saves a still of every screen at 1280 by 800",
+      "X-34: the capture hook works in the desktop programs at full size",
+      "The decisions that size A4 are written (how much gravity well, which workshop items)"
+     ],
+     "rows": 23,
+     "window": "W2 'the rules the modes need': MODES-02, AI-01, AI-08, AI-09, WORLD-02, WORLD-03, WORLD-04, AI-02",
+     "tokens_m": 25,
+     "weeks": "1 to 1.5",
+     "directors": [
+      "game-design",
+      "encounter-systems",
+      "world-environment",
+      "qa-balance",
+      "tools-pipeline",
+      "legal-ip",
+      "ui-ux",
+      "rendering-techart",
+      "simulation-engine",
+      "performance-platform",
+      "camera"
+     ]
+    },
+    {
+     "id": "A4",
+     "name": "The whole fight",
+     "goal": "Every pillar shows up in one ordinary match in every mode: beams that leave the fighter and can be side-stepped, both signatures on Orb's inputs, the gravity well, the stamina, energy and body loop, transformations that change the body, a move table with no dead cells, and ground and buildings that answer a blow by its power.",
+     "play_this": "New: hold the right stick to aim a beam and release; it is seen leaving and travelling, and moving off its line makes it miss. RT + RB + a right-stick flick is the energy signature, RT + a flick the martial one; RT + B does nothing special. Up close fighters are drawn together and blows snap; far apart you have the long-range kit. Plain blows refill stamina; specials and signatures spend stamina and energy; a new form eases injuries. Each fighter has its own forms with a body change and a hint for the transform press. A body thrown into a building stays in it. The computer throws right-stick strikes at Medium and Hard. Try: side-step a beam at three distances; both signatures; transform twice; hit a knocked-away rival again in the air; compare a slide trench at base and top power; every face button with LB, RB, RT and LT held. Two short preview looks inside the milestone.",
+     "exit": [
+      "X-13: the checklist probe finds every pillar at least once on scripted 6 to 8 minute matches and on one of Orb's saved play files",
+      "X-16: a scripted defender who moves off the line by more than the beam's width is missed at three ranges",
+      "X-17: 0 beams or signatures from any input but the right stick and the two signature presses, the computer included",
+      "X-04: a scripted match reaches each designed form per fighter (at least two beyond base), a still per form shows a body change, a transformation in progress is not broken by a shot in flight",
+      "X-15: the two-fighter check passes, every energy, stamina and body number is per-fighter data, the grey dummy enters a match from data alone, no health bar is on screen and a record shows health and energy read from the fighter",
+      "X-03 (tool and first reading): the coverage probe presses every cell of the Alpha table and lists empty and duplicate cells; the unanswered-press count is re-made on this build",
+      "X-14 (check and first reading): a check asserts the base-to-top-tier crater and trench ratio, and a base-tier match leaves the planet standing",
+      "The ground drawn is the ground stood on; Orb's two look faults and the black diagonal line each have a still, a cause and a fix or written reason",
+      "Each mark drawn on or round a fighter is removed or kept on Orb's word",
+      "X-05: all smoke rows still green with the new fight"
+     ],
+     "rows": 32,
+     "window": "W3 'the whole fight': COMBAT-01, COMBAT-02, COMBAT-03, COMBAT-04, COMBAT-06, COMBAT-12, ENERGY-01, ENERGY-03, ENERGY-05, ENERGY-10, CODE-05, CONTROLS-05, WORLD-07, WORLD-10, plus nice AI-06, COMBAT-10, ENERGY-11, ENERGY-12",
+     "tokens_m": 62,
+     "weeks": "2 to 3",
+     "directors": [
+      "encounter-systems",
+      "simulation-engine",
+      "game-design",
+      "combat-choreography",
+      "controls-feel",
+      "world-environment",
+      "rendering-techart",
+      "art",
+      "animation",
+      "vfx",
+      "ui-ux",
+      "camera",
+      "audio-music",
+      "qa-balance"
+     ]
+    },
+    {
+     "id": "A5",
+     "name": "The newcomer's path",
+     "goal": "A person who has never seen the game can go from the notice to a finished match and a sent report with a pad alone, at the Steam Deck's screen size, with settings that stick, and the three difficulty levels sit in their bands.",
+     "play_this": "New: the first screen carries the notice and the AI line, the title reads '(working title)'; How to play names pad buttons and only what is on screen; Practice against the grey dummy; a picture-quality setting that works, with a Steam Deck default; the feedback panel works on a pad; quiet background sound and building and menu sounds; settings and remapped buttons survive a restart. Try: play as a newcomer: read the notice, open How to play, change a button and the quality level, quit, start again; one Practice round; a solo match at each level; send a report with only the pad.",
+     "exit": [
+      "X-19: the Linux smoke runs notice, menu, picks, a full match, result, rematch and leave with a pad alone; no keyboard key is named to a pad player",
+      "X-20: a settings round trip across a real restart passes on Windows and Linux; the quality setting is read by the game",
+      "X-22: the 1280 by 800 sweep shows no clipped or overlapping text, smallest text at least 9 px (12 the aim), and the camera's tests run at 1280 by 800",
+      "X-24 (setting): three quality levels and a Steam Deck default exist; the automatic step no longer pins a 30 frames-a-second machine at low",
+      "X-06: the scripted player wins inside the band at each level on A5's packed data, and a right-stick-only player is no longer shut out",
+      "X-03: 0 empty and 0 duplicate cells for both fighters on the Alpha table",
+      "X-13: scripted matches run 6 to 8 minutes; the two fighters are within the balance band",
+      "X-25 (tool): the soak script writes a result file on Windows and Linux; a one-hour trial is on file",
+      "X-01, X-18 (paperwork): the tester guide and Deck checklist exist",
+      "X-32: about 150 tester-facing strings carry Orb's marks",
+      "X-14: the tier ratio check passes"
+     ],
+     "rows": 20,
+     "window": "W4 'final numbers': QA-05 (difficulty bands) and QA-08 (match length), data only; the last state-hash change before Alpha",
+     "tokens_m": 13,
+     "weeks": "about 1",
+     "directors": [
+      "ui-ux",
+      "rendering-techart",
+      "camera",
+      "audio-music",
+      "qa-balance",
+      "game-design",
+      "encounter-systems",
+      "legal-ip",
+      "narrative-identity",
+      "tools-pipeline",
+      "accessibility-localization"
+     ]
+    },
+    {
+     "id": "A6",
+     "name": "The Alpha candidate",
+     "goal": "The A5 game, with nothing in its rules changed, is measured, soaked, pushed to the private itch.io page and played through the checklist by at least two outside friends on Steam Decks; then the feature freeze begins.",
+     "play_this": "New: nothing in the game. This is the build a friend gets, installed from the itch.io page with a key, with the tester guide beside it. Try: install it as the guide says on a second PC; play one match in each of the eight modes; put it beside the A1 build's shots in the archive.",
+     "exit": [
+      "X-01: at least two outside testers on Steam Deck return a completed checklist",
+      "X-02: every gate green with a saved record on the candidate's commit",
+      "X-03 to X-11 and X-13 to X-17: the smoke suite, the probes and QA's batches pass on the candidate's packed data; X-08 again on two real PCs",
+      "X-18, X-19: a tester installs and starts on a Deck from the guide alone in under 10 minutes and plays notice to rematch with the Deck's controls",
+      "X-20, X-21, X-22: settings round trip on a Deck; a Deck-made report under 10 MB posted by the tester; nothing sent automatically",
+      "X-23: 60 frames a second on Orb's PC with no frame over 50 ms outside loading; X-24: 30 held on a Deck at its default level; X-26: loading under 15 s on the PC and 30 s on the Deck",
+      "X-25: two hours computer against computer on each platform, no crash, hang or script error, memory growth under 10%",
+      "X-27, X-28: candidate replays verify, a foreign replay is refused, a forced crash is captured on both platforms",
+      "X-29, X-30, X-31: built by the one command, pushed once through itch's upload tool to both channels, rollback rehearsed on the real page",
+      "X-32: Legal's sign-off row per paperwork item",
+      "X-33: the freeze declared in writing; X-34: the shot list rendered from the candidate beside A1 to A5"
+     ],
+     "rows": 4,
+     "window": "none (rules and numbers frozen from the end of A5)",
+     "tokens_m": 7,
+     "weeks": "1.5 to 2.5",
+     "directors": [
+      "qa-balance",
+      "performance-platform",
+      "tools-pipeline",
+      "rendering-techart",
+      "legal-ip",
+      "accessibility-localization",
+      "community-marketing",
+      "production-ops",
+      "ep"
+     ]
+    }
+   ],
+   "resized": [
+    {
+     "id": "A-MODES-02",
+     "proposal": "XL to L: one or two players against waves of at most three weak bodies on today's five-body limit; bigger waves after Alpha",
+     "reason": "The register's own recommendation; keeps the horde off the frame-rate cliff before a Deck is measured. Otherwise +4M and about a week on A3."
+    },
+    {
+     "id": "A-COMBAT-03",
+     "proposal": "XL to L: the well's size, zones and snap; the far kit, catch, timed swat and taunt after Alpha",
+     "reason": "COMBAT-15's recommendation; X-13 asks only for the well's pull. Otherwise +4M and up to a week on A4."
+    },
+    {
+     "id": "A-COMBAT-04",
+     "proposal": "XL to L: plain and energy rows complete per fighter, other held-button rows shared; X-03 reworded to that table; full table at Beta",
+     "reason": "The register's recommendation; the full table is 55 cells a fighter. Otherwise +4M and a week or more on A4."
+    },
+    {
+     "id": "A-NET-02",
+     "proposal": "L to S: Host and Join inside the game with the address shown or typed and a firewall note for Orb and the second player; outsider set-up after Alpha",
+     "reason": "LAN stays with Orb and the trusted second player in the first Alpha round. Otherwise +3.75M, and LEGAL-04 and PERF-02 return."
+    },
+    {
+     "id": "A-LEGAL-04",
+     "proposal": "M to S: a ruling naming Orb and the second player only, and a tester package built without network code",
+     "reason": "Same LAN decision. Otherwise +1M and a tester package carrying network code and its privacy words."
+    },
+    {
+     "id": "A-PERF-02",
+     "proposal": "Move after Alpha: LAN is Windows-only at Alpha; X-05 and X-08 reworded so the two LAN modes are tested on Windows",
+     "reason": "Its own recommendation (Windows-only first); with LAN kept to two Windows PCs nobody at Alpha can use a Linux LAN build. Otherwise back in A2 at +1.2M with a two-Deck LAN test."
+    },
+    {
+     "id": "A-WORLD-02",
+     "proposal": "L to M: a seed and three dials (city count, climate, water) at one size; the size pick (WORLD-08) after Alpha; X-11 reworded without size",
+     "reason": "The register's recommendation; frame cost per size is unmeasured. Otherwise +7M with WORLD-08 and a frame reading per size on a Deck."
+    },
+    {
+     "id": "A-CONTROLS-01",
+     "proposal": "M to S: write and prove the two-pad line-up (two humans as a team against two computers); four pads after Alpha",
+     "reason": "The recommendation under MODES-03; the input hub's two slots are enough. Otherwise +1M in A2."
+    },
+    {
+     "id": "A-CODE-05",
+     "proposal": "L to M: per-fighter look tables to data, energy, stamina and body rules carry no fighter id, the grey dummy enters a match from data alone; the remaining two-fighter places go down under the count check through Beta",
+     "reason": "X-15's proof at Alpha is one extra body from data; four fighters are Beta's bar. Otherwise +2.8M inside W3."
+    },
+    {
+     "id": "A-RENDER-06",
+     "proposal": "L to M: three working quality levels, a Steam Deck default, the automatic step fixed; anything above today's picture after Alpha",
+     "reason": "X-24 needs a default that holds 30 on a Deck, not a maximum. Otherwise +2.8M in A5."
+    }
+   ],
+   "critical_path": "CODE-01 (main becomes the played game, with its ten switch rows) -> TOOLS-01 (one-command desktop build) -> MODES-01 (the mode list) -> MODES-02 (horde design and rules) -> AI-01 (control of many weak enemies) -> Encounter Systems is then free for COMBAT-02 (signatures on Orb's inputs), beside ENERGY-02 -> ENERGY-01 (the stamina loop) -> COMBAT-04 (move table, needs both) -> CONTROLS-06 (coverage probe) -> QA-05 (difficulty bands on the finished fight) -> QA-02's two-hour soak and the two friends' Steam Deck checklists (X-25, X-01). Encounter Systems sits on five links, so its queue, not the token meter, sets the date; in this order the horde must leave that queue before the fight can enter it.",
+   "risks": [
+    "W1 uncovers more than it lands: the played game has never had its own golden record or full gate run (72 of 92 switch rows differ from main, three menu checks fail with the left-panel menu on, the chase check fails with terrain step 2, the safety reading on the globe ground last failed in both modes); two rounds would slip A1 and everything behind it by a week.",
+    "The fight window (W3) overruns: five large rows across the same three directors, three already cut down from the register's size; if one returns to full size or the beam rewrite breaks the beam struggle and the computer's beam play, A4 becomes four weeks or more.",
+    "The Steam Deck and other people's evenings: no Linux build has ever drawn a picture, the first Deck session is after A2, and a shader failure or a frame rate far under 30 gives Rendering unsized work; the candidate also needs two friends' evenings and a two-hour run that no budget can hurry."
+   ],
+   "orb": [
+    {
+     "question": "May the team make the 9 November build the default game on main, row by row, before any new feature?",
+     "recommendation": "Yes.",
+     "blocks": "All of A1 (CODE-01) and so everything after it."
+    },
+    {
+     "question": "Should the globe ground, the crater look with the black fill removed and the meteor trail be the defaults, and is the 9 November build the one new looks are compared against?",
+     "recommendation": "Yes to both, with its known look faults listed as not part of the reference.",
+     "blocks": "A1's look checks (RENDER-01, RENDER-04, RENDER-11)."
+    },
+    {
+     "question": "May the team make desktop test builds for named testers, with a one-line yes recorded once the gates are green?",
+     "recommendation": "Yes, Windows and Linux.",
+     "blocks": "The A1 build and the A2 hand-out (TOOLS-01, LEGAL-02)."
+    },
+    {
+     "question": "The licence line: all rights reserved through Alpha with a short friendly permission page, deciding about public code at Beta?",
+     "recommendation": "Yes.",
+     "blocks": "The words inside the A1 build (LEGAL-10)."
+    },
+    {
+     "question": "Flight at 3500 for every mode with the slider dropped; a pulled pad pauses the match; the public web page stays offline with its decision back with Orb until after Alpha; the free repository protections switched on?",
+     "recommendation": "Yes to each.",
+     "blocks": "Small A1 rows (CONTROLS-04, CONTROLS-03, PROCESS-12, LEGAL-15)."
+    },
+    {
+     "question": "Are the LAN modes at Alpha for Orb and the trusted second player only, on Windows, inside the game behind Host and Join?",
+     "recommendation": "Yes; outside testers get the solo, same-PC and horde modes. If outside friends get LAN too: about +6M tokens and a week, a Linux LAN build, a tester package with network code, and a two-Deck test in one room.",
+     "blocks": "A2's size (NET-02, LEGAL-04, PERF-02)."
+    },
+    {
+     "question": "Team match on one PC: two pads as a team against two computers, plus one player with a computer partner; four pads after Alpha; a second body colour per fighter picked by team?",
+     "recommendation": "Yes.",
+     "blocks": "A2 (MODES-03, CONTROLS-01, ANIM-02) and A3 (AI-08)."
+    },
+    {
+     "question": "Which friend with a Steam Deck gives 30 minutes after A2?",
+     "recommendation": "Ask one now.",
+     "blocks": "The first Deck reading (PERF-01), the plan's third risk."
+    },
+    {
+     "question": "The report channel: a new private Discord server (or a channel locked to a tester role), and the promise to delete a tester's reports on request?",
+     "recommendation": "A new private server, and keep the promise.",
+     "blocks": "The Deck friend's report in A2 and the tester guide (LEGAL-07)."
+    },
+    {
+     "question": "A new random planet each quick match, seed shown and saved in reports, the current planet kept as a preset for a newcomer's first match and for tests? Also: each LAN screen favours its own player; 'the other PC has gone' within 10 seconds; a ten-minute listening pass on the desktop build.",
+     "recommendation": "Yes to each.",
+     "blocks": "A2's Planet row (WORLD-14), CAMERA-05, NET-03, AUDIO-03."
+    },
+    {
+     "question": "A first horde of at most three weak enemies at a time, and no campaign at Alpha?",
+     "recommendation": "Yes to both.",
+     "blocks": "A3 (MODES-02, X-12)."
+    },
+    {
+     "question": "Custom planet as a seed and three dials at one size, with sizes after Alpha?",
+     "recommendation": "Yes.",
+     "blocks": "A3 (WORLD-02)."
+    },
+    {
+     "question": "May the private, key-only itch.io page go up under the working title before the paid title search, and will Orb make the account, page and keys in one sitting from Tools' checklist?",
+     "recommendation": "Yes, marked '(working title)'; no spending involved.",
+     "blocks": "A3's rehearsal and so A6 (LEGAL-09, TOOLS-02)."
+    },
+    {
+     "question": "How much of the stamina, energy and body loop?",
+     "recommendation": "The whole loop as shared rules with per-fighter numbers in data, the old hidden health number reused as 'body', the backburnered meters zeroed with only the comeback kept as a rule for everyone.",
+     "blocks": "A4's largest design row (ENERGY-01, ENERGY-05, ENERGY-11)."
+    },
+    {
+     "question": "How much gravity well, and which 'workshop this' items before Alpha?",
+     "recommendation": "The well's size, zones and snap, with 'your stick moves only you up close' settled first; beam stages decided inside the beam work; RT held stays the energy charge; the rest after Alpha.",
+     "blocks": "A4 (COMBAT-03, COMBAT-15, COMBAT-02)."
+    },
+    {
+     "question": "The move table: the smaller table for Alpha (plain and energy rows complete, the rest shared)?",
+     "recommendation": "Yes; the full table at Beta.",
+     "blocks": "A4 (COMBAT-04) and what X-03 measures."
+    },
+    {
+     "question": "A transformation: one cheap body change per step? Should the computer throw right-stick strikes at Medium and Hard? Which marks on the fighters stay?",
+     "recommendation": "Yes; yes; one clip of each mark, decided per mark.",
+     "blocks": "A4 (ANIM-01, AI-06, RENDER-13)."
+    },
+    {
+     "question": "Frame-rate targets on Orb's PC and on the Deck?",
+     "recommendation": "60 on Orb's PC; 30 held on the Deck with 40 as the aim.",
+     "blocks": "A6's pass lines (X-23, X-24); can wait until A5."
+    },
+    {
+     "question": "Will Orb mark about 150 tester-facing strings; is a quiet background bed with building and menu sounds and no music right for Alpha; Practice against the dummy as a ninth mode?",
+     "recommendation": "Yes, yes, and yes (Practice is placed in A5; 1.2M returns if declined).",
+     "blocks": "A5 (TEXT-01, AUDIO-02, MODES-12)."
+    },
+    {
+     "question": "The freeze rule; what 'Beta in sight' means; the Steam fee; code signing for Windows?",
+     "recommendation": "Freeze as written; Beta in sight is four fighters playable on Windows and Linux with the testers' reports folded in; no fee before then or before the title is cleared; no code signing for Alpha.",
+     "blocks": "Nothing before the candidate (A6)."
+    }
+   ],
+   "total_tokens_m": 193,
+   "total_weeks": "8 to 11.5 weeks (a candidate between mid January and early February 2027, before any holiday allowance; an estimate, not a target)",
+   "self_check": "Checked by script against 03-gap-register.json, both from the planning assignment and by parsing the written file's \"Gaps closed\" lists (the two agree). 270 rows, 174 required: 173 sit in exactly one milestone (A1 64, A2 42, A3 22, A4 27, A5 14, A6 4), 1 (A-PERF-02) is on the resize-or-move list with its reason; 0 unplaced, 0 placed twice. 17 nice rows placed (A1 3, A2 2, A3 1, A4 5, A5 6), 57 in the named pool, all 22 'after' rows listed. 0 rows sit before a row in their 'needs' field. Of the 50 state-hash rows, 39 are placed in four golden windows (W1 11, W2 8, W3 18, W4 2), 6 are in the pool, 5 are after Alpha; A2 and A6 hold none. The 7 off-Orb's-page rows are planned like the others (6 placed, 1 in the pool) and no question to Orb concerns them. Row costs total 155.9M after the nine resizes (about 193M with a 20% reserve and a 6M fix reserve in A6). Caveats: where a tool and its first reading land in the same milestone, the pass is required from the next milestone (stated in the file); WORLD-06 and QA-01 are worked across two milestones but close once; the only project file written is the draft, in a new 04-drafts folder."
+  },
+  {
+   "angle": "Newcomer first: make the game safe to hand out (A1), then put a real build in two outside Steam Deck testers' hands at the second of five milestones (A2) with solo play working end to end from a guide, so every later milestone reaches them as an update and their findings shape the modes (A3), the fight (A4) and the candidate (A5). The fight's decisions are asked of Orb in A1 and its builders start behind switches during A2 and A3 so the late fight milestone does not set the date.",
+   "file": "docs/ep/alpha/audit-2026-11-13/04-drafts/path-newcomer.md",
+   "pace": "About 20 to 30M tokens of register work land per week (roughly a third of the weekly allowance at the measured meter rates of about 1 point per 1M on the cheaper models and 1.6 on the largest; the rest goes to EP review, gates, rework and Orb's own asks). The record is thin, so weeks are ranges; A-PROCESS-08 starts a real weekly record in A1. Costs are size classes (S 0.25M, M 1.2M, L 4M, XL 8M) with no comparables.",
+   "milestones": [
+    {
+     "id": "A1",
+     "name": "Safe to hand out, and the same game",
+     "goal": "Main holds the game Orb played on 9 November as its default, one command makes Windows and Linux desktop builds of it, and every gate on the before-an-outside-tester-plays list is green on that commit.",
+     "play_this": "A Windows desktop build made from main with no launch words. New: the 9 November game is the default (globe ground, the left-hand panel menus, swing camera, sounds), flight speed 3500, the pause menu appears, the two stray beams are fixed, Easy is tuned, a version number shows, a crash leaves a file. Try: pause with Start and move through the menu; brawl with face buttons for a minute without touching the right stick (no beam); hold RT, wait two seconds, press B; three matches on Easy; look at a fresh crater (no black fill).",
+     "exit": [
+      "X-02: the outside-tester gate list exists and every gate is green on the A1 commit with a saved record per gate",
+      "X-29: one command and one CI run make the Windows and Linux desktop builds, solo included, with a version number shown and a changelog entry",
+      "X-28: a forced-crash test on Windows and on CI Linux leaves a file saying why",
+      "X-27 (first half): replays carry a build id; a foreign replay is refused with a plain message",
+      "X-17 (two known cases): QA's replay of the 9 November match fires no beam at ticks 5220 and 6617",
+      "X-06 (Easy only): the scripted player on Orb's scheme wins 60 to 80% of 40 matches on the build's packed data",
+      "X-33: the change-control rule and ideas log exist and the playbook points to them",
+      "Main equals the played game: no switch row differs between main and the A1 build, and a golden record exists for that configuration"
+     ],
+     "rows": 62,
+     "window": "Window 1, 'Orb's game is the default': A-CODE-01, A-AI-02, A-AI-05, A-CONTROLS-02, A-CONTROLS-04, A-ENERGY-04, A-ENERGY-05, A-MODES-07, A-WORLD-01, A-COMBAT-05, A-COMBAT-11, A-COMBAT-14",
+     "tokens_m": 37.2,
+     "weeks": "2 to 3",
+     "directors": [
+      "Tools & Pipeline",
+      "Executive Producer",
+      "Camera",
+      "Simulation & Engine",
+      "Rendering",
+      "Controls",
+      "World",
+      "Game Design",
+      "QA & Balance",
+      "Encounter Systems",
+      "UI & UX",
+      "Production Operations",
+      "Legal",
+      "Audio",
+      "Combat & Choreography",
+      "Accessibility"
+     ]
+    },
+    {
+     "id": "A2",
+     "name": "First Deck round",
+     "goal": "A friend with a Steam Deck installs from the tester guide alone, reads the notice, picks a mode, fighter and planet, plays a full solo match, keeps a changed setting across a restart, and sends Orb a report in one press.",
+     "play_this": "The Windows and Linux builds downloaded from the restricted itch.io page with a key, as a tester gets them; two outside Deck testers get the same build (round 1). New: a mode row (solo at three levels; two players on one PC), fighter select, a random planet each match with its seed shown, a Quit row, fullscreen and window settings, a working effects-quality setting, the Deck's own controls, one press that saves one small report file. Try: install from the guide on a clean PC; pick Loupe; change a control and a comfort setting, restart; unplug the pad mid-match (it should pause); press report and post the file to the reports channel; transform when the hint appears.",
+     "exit": [
+      "X-18: a Deck tester goes from the guide to a running game in under 10 minutes with no help",
+      "X-19 (solo): notice, menu, picks, full match, result, rematch and leave on the Deck's built-in controls",
+      "X-20: control and comfort settings survive a real restart on Windows and the Deck",
+      "X-21: one press saves one report file under 10 MB; the guide says how to post it; nothing sends data",
+      "X-22: stills of every screen at 1280 by 800 show no clipped text and none under 9 px (12 px the aim)",
+      "X-07: two pads each drive their own fighter; an unplugged pad pauses with a plain notice",
+      "X-24 and X-26 (first numbers, not yet a pass): a frame record and loading times from a real Deck are on file; X-23 and X-26 measured on Orb's PC",
+      "X-30 and X-31: rehearsal with a dummy build: a key claimed, two channels, one update, one roll-back",
+      "X-32: AI disclosure, tester agreement, privacy line and credits inside the build with Legal's sign-off rows",
+      "Round 1 returned: two Deck checklists and two report files (a rehearsal of X-01)"
+     ],
+     "rows": 57,
+     "window": "none (no hash-changing row; testers' replays keep verifying)",
+     "tokens_m": 23.8,
+     "weeks": "1.5 to 2.5 to build, then tester round 1 takes 1 to 2 weeks overlapping A3",
+     "directors": [
+      "UI & UX",
+      "Tools & Pipeline",
+      "Performance & Platform",
+      "Rendering",
+      "QA & Balance",
+      "Legal",
+      "Controls",
+      "Audio",
+      "Camera",
+      "VFX",
+      "Narrative",
+      "Accessibility",
+      "Executive Producer"
+     ]
+    },
+    {
+     "id": "A3",
+     "name": "Every mode starts and ends",
+     "goal": "Every Alpha mode can be started from the menu with a pad, played to a result, rematched and left.",
+     "play_this": "All seven planned modes (campaign recommended as none): solo, two players on one PC, couch 2v2, horde and custom planet in the tester build; LAN 1v1 and 2v2 in the LAN flavour of the Windows build for Orb and the trusted second player. New: horde (waves of up to three weak enemies, 5 to 10 minutes, result screen), couch 2v2 with a computer partner option, Host and Join rows with rematch, custom planet (seed, city count, climate, water), a second colour per fighter, menu and building sounds with a quiet ambience bed, bodies that stop at buildings, Practice. Try: a horde run alone then with a second pad; couch 2v2; five LAN 1v1 and five LAN 2v2 matches, pull the cable once; same seed and dials on both PCs; knock the rival into a building. Includes fixes from round 1.",
+     "exit": [
+      "X-05: one scripted smoke run per mode on Windows and Linux saved with the build (LAN modes on Windows only)",
+      "X-08: five LAN 1v1 and five LAN 2v2 matches on two PCs with no state mismatch; a pulled cable shows a plain notice on both within 10 seconds",
+      "X-09: supported couch line-ups written and each passes the mode smoke",
+      "X-10: a horde run of 5 to 10 minutes ends in a result screen; a frame-time record at the largest wave",
+      "X-11: same seed and dials give the same planet hash on Windows, Linux and both LAN PCs",
+      "X-12: the campaign decision recorded with its reason",
+      "X-25 (tool, first run): the soak script runs two hours on Orb's PC and writes a result file",
+      "X-34 (first archive): the shot list renders clean from the A1, A2 and A3 builds",
+      "Measuring tools ready before A4: probes for X-03, X-04, X-13, X-16, the X-17 count, and the X-15 third-fighter check"
+     ],
+     "rows": 36,
+     "window": "Window 2, 'modes and worlds': A-MODES-02, A-AI-01, A-AI-08, A-AI-09, A-WORLD-02, A-WORLD-03, A-WORLD-04, A-WORLD-10",
+     "tokens_m": 54.6,
+     "weeks": "2.5 to 4",
+     "directors": [
+      "World",
+      "Rendering",
+      "Netcode",
+      "Encounter Systems",
+      "Game Design",
+      "Tools & Pipeline",
+      "QA & Balance",
+      "Camera",
+      "Audio",
+      "Controls",
+      "Legal",
+      "Art",
+      "UI & UX",
+      "Simulation & Engine (gravity well behind a switch)",
+      "Executive Producer"
+     ]
+    },
+    {
+     "id": "A4",
+     "name": "The whole fight",
+     "goal": "In one normal match every pillar shows up and works with the others: dodgeable beams, both signatures on Orb's inputs, the gravity well, stamina with energy and body, visible transformations, and destruction that grows with power.",
+     "play_this": "The Alpha fight in every mode from A3; testers get it as an update. New: a beam is seen leaving the fighter and can be side-stepped; RT + RB + right-stick flick is the energy signature and RT + flick the martial one; up close fighters are drawn together and blows snap; stamina (plain blows refill it, specials and signatures cost it and energy, tired fighters are hurt worse, a new form eases injuries); each fighter's own forms with a visible body change; every button in the move table does something; marks at least three times wider at the top form; craters drawn where you stand; a quality setting with a Deck default. Try: fly off a beam's line; fire both signatures; run out of stamina and recover with plain blows; reach every form with both fighters; compare the same blow at base and top form; play one match with the right stick only.",
+     "exit": [
+      "X-03: the scripted pad presses every cell of the Alpha move table for both fighters; no cell without an outcome; martial and energy rows have no duplicates",
+      "X-04: a scripted match reaches every designed form per fighter, a still per form, and a transformation in progress is respected by shots in flight",
+      "X-13: the Alpha match checklist reads every pillar from one 6 to 8 minute scripted match and one of Orb's saved play files",
+      "X-14: the same blow at the top form makes a crater at least 3 times as wide as at base; no base-form fight wrecks the planet",
+      "X-15: one page states the model; every number in data per fighter; the third-fighter check passes; no health bar on screen",
+      "X-16: a scripted defender side-steps a beam at three ranges",
+      "X-17: beams started by any other input over scripted and saved matches: 0; the computer uses only inputs a player has",
+      "X-06 (pre-read): difficulty bands and match length read on this window's data before it closes",
+      "X-24 groundwork: the quality level picker exists with a Deck default chosen from round 1's frame record"
+     ],
+     "rows": 24,
+     "window": "Window 3, 'the whole fight': A-COMBAT-01, A-COMBAT-02, A-COMBAT-03, A-COMBAT-04, A-COMBAT-06, A-COMBAT-12, A-ENERGY-01, A-ENERGY-03, A-ENERGY-10, A-CODE-05, A-CONTROLS-05, A-WORLD-07, A-AI-10, A-QA-05, A-QA-08, A-AI-06 (a numbers-only fourth window is held in reserve at A5, used only if a band fails)",
+     "tokens_m": 53.2,
+     "weeks": "3 to 4 if the big rows were begun behind switches in A2 and A3; add 2 if they start cold",
+     "directors": [
+      "Simulation & Engine",
+      "Encounter Systems",
+      "Game Design",
+      "Rendering",
+      "World",
+      "Combat & Choreography",
+      "Controls",
+      "Art",
+      "UI & UX",
+      "QA & Balance",
+      "Animation",
+      "Camera",
+      "VFX",
+      "Audio",
+      "Executive Producer"
+     ]
+    },
+    {
+     "id": "A5",
+     "name": "The Alpha candidate",
+     "goal": "Nothing new: the candidate is measured against every criterion, two outside testers on Steam Decks complete the checklist on it, and the feature freeze begins.",
+     "play_this": "The Alpha candidate from the itch.io page, as a tester gets it. New: nothing to play that A4 lacked; frame rate, loading, the two-hour soak, balance and difficulty are measured and on file, and the marketing shots are rendered for all five milestones. Try: the tester checklist from start to finish, on a Deck if one is to hand; then say yes or no to the freeze.",
+     "exit": [
+      "X-01: at least two outside Deck testers return the completed checklist for the candidate (round 2)",
+      "X-02: every outside-tester gate green on the candidate's commit",
+      "X-05: mode smoke passes for every mode on the candidate (LAN on Windows)",
+      "X-06: Easy 60 to 80%, Medium 35 to 55%, Hard 10 to 30% with enough matches to tell bands apart; the two fighters in the balance band on packed data",
+      "X-18 to X-22: re-run on the candidate by the Deck testers",
+      "X-23: 60 frames a second held on Orb's PC, no frame over 50 ms outside loading",
+      "X-24: 30 frames a second held on a real Deck at its default quality level (40 the aim)",
+      "X-25: two-hour soak on Windows and on a Deck with no crash, hang or script error and memory growth under 10%",
+      "X-26: loading under 15 s on Orb's PC and 30 s on the Deck",
+      "X-27: every candidate replay verifies on it; a foreign replay is refused in plain words",
+      "X-28 to X-32: re-run on the candidate's commit",
+      "X-33: the freeze is declared and the ideas log is the only door for new ideas",
+      "X-34: the shot list rendered from the candidate beside the same shots from A1 to A4"
+     ],
+     "rows": 2,
+     "window": "none planned; the reserve numbers-only window only if a band fails",
+     "tokens_m": 9.4,
+     "weeks": "2 to 3, including tester round 2",
+     "directors": [
+      "QA & Balance",
+      "Tools & Pipeline",
+      "Performance & Platform",
+      "Community & Marketing",
+      "Legal",
+      "Accessibility",
+      "UI & UX",
+      "Executive Producer",
+      "the owner of any failing criterion"
+     ]
+    }
+   ],
+   "resized": [
+    {
+     "id": "A-PERF-02",
+     "proposal": "Move after Alpha: LAN at Alpha is Windows only (M row leaves the path).",
+     "reason": "LAN is recommended for Orb and the trusted second player only, on two Windows PCs; no Deck tester would use it. X-05 and X-08 are measured for LAN modes on Windows only. No row needs it."
+    },
+    {
+     "id": "A-NET-02",
+     "proposal": "Resize L to S, stays in A3: a two-PC set-up page for Orb and the trusted second player using Host and Join rows; outsider LAN set-up after Alpha.",
+     "reason": "Making LAN set-up safe for an outsider (firewall step, unsigned program, typed address) is large and no newcomer step needs it."
+    },
+    {
+     "id": "A-LEGAL-04",
+     "proposal": "Resize M to S, stays in A3: one Legal ruling that the tester package carries no network code and the LAN flavour is for the two named players.",
+     "reason": "Follows from keeping LAN to the two; no new package or terms for outsiders."
+    },
+    {
+     "id": "A-CONTROLS-01",
+     "proposal": "Resize M to S, stays in A3: state the supported couch line-ups, keep two human slots, four pads after Alpha.",
+     "reason": "X-09 asks for the supported line-ups to be stated; two friends on a couch is the newcomer's case."
+    },
+    {
+     "id": "A-MODES-02",
+     "proposal": "Resize XL to L, stays in A3: a first horde inside today's five-body limit, waves of at most three weak bodies, respawn, 5 to 10 minutes, result screen.",
+     "reason": "A small horde proves the mode end to end and lets testers say what it lacks before the body limit is raised."
+    },
+    {
+     "id": "A-COMBAT-04",
+     "proposal": "Resize XL to L, stays in A4: martial and energy rows complete and distinct, other held-button rows shared, every cell gives an outcome; full table at Beta.",
+     "reason": "A newcomer needs every press to do something visible; distinct outcomes for all 55 cells a fighter is depth for Beta."
+    }
+   ],
+   "critical_path": "Two chains; the longer wins. (1) The fight chain, set by tokens: A-CODE-01 (main becomes the played game, golden window 1) -> A-ENERGY-02 (the model page) -> A-ENERGY-01 (stamina, energy and body loop) and A-COMBAT-02 (signatures on Orb's inputs) -> A-COMBAT-04 (move table) -> A-CONTROLS-06 (the coverage probe that proves X-03) -> tuning inside golden window 3 -> the candidate; beside it A-COMBAT-03 (the gravity well), the largest single row, waiting on Orb's answer about whose stick moves whom up close. About 8 to 11 weeks of work from A1's close. (2) The newcomer chain, set by people: A-LEGAL-01 and A-LEGAL-08 -> A-LEGAL-03 (gate list green) -> A-LEGAL-02 and A-TOOLS-01 (a desktop build can be made) -> A-PERF-01 (a Linux build draws on a real Deck) -> A-TOOLS-02, A-TOOLS-05, A-LEGAL-05 -> A-QA-01 (guide and checklist) -> tester round 1 -> tester round 2 on the candidate (X-01). Shorter in tokens, but with two waits on volunteers no budget shortens.",
+   "risks": [
+    "The outside-tester gate list does not go green on the globe ground in A1 (A-LEGAL-01, A-LEGAL-08, A-CAMERA-02): until it does no outside tester may play anything and A2 cannot hand out a build.",
+    "The Linux build does not hold up on a real Steam Deck (A-PERF-01): it has never drawn a picture, the shaders have never run on the Deck's driver and the frame rate is unknown; this path meets the risk at A2 on purpose instead of at the candidate.",
+    "The fight window grows: golden window 3 holds 1 XL and 7 L rows with no comparables (gravity well, beam rewrite, stamina loop, signatures, move table) in the area where Orb's workshop ideas arrive fastest; guarded by change control, early decisions and starting behind switches in A2 and A3.",
+    "Smaller fourth: the weekly pace is an estimate; at half the assumed pace every range doubles except the testers' time."
+   ],
+   "orb": [
+    {
+     "question": "May the team make the build you played on 9 November the default game on main, row by row, before any new feature work?",
+     "recommendation": "Yes.",
+     "blocks": "Everything: A-CODE-01, golden window 1, any desktop build (A1)."
+    },
+    {
+     "question": "Which build are new looks compared against, and do the globe ground, crater look and meteor trail become defaults with the black crater fill removed?",
+     "recommendation": "The 9 November globe build, with its open look bugs listed as not part of the reference; yes to the defaults; the terrain workshop waits until after Alpha.",
+     "blocks": "The look gate for every visible change from A1 (A-RENDER-11, A-RENDER-01, A-RENDER-04)."
+    },
+    {
+     "question": "The backburnered hero and villain meters: switch off, fold in, or retire?",
+     "recommendation": "Keep the comeback as a rule for every fighter, zero every other effect in data now, remove the code after Alpha.",
+     "blocks": "Golden window 1 (A-ENERGY-05)."
+    },
+    {
+     "question": "Flight speed 3500 as the default in every mode, and how hard should Easy be for someone playing your way?",
+     "recommendation": "Yes to 3500 with the slider dropped; Easy at least 7 wins in 10.",
+     "blocks": "Golden window 1 and what the first testers meet (A-CONTROLS-04, A-AI-02)."
+    },
+    {
+     "question": "May the EP turn on the repository's free protections, and is the change-control rule agreed?",
+     "recommendation": "Yes to both.",
+     "blocks": "A-PROCESS-07, A-PROCESS-01, X-33 (A1)."
+    },
+    {
+     "question": "When the gates are green, will you record one line saying yes to desktop test builds for named outside testers?",
+     "recommendation": "Yes, at that point and not before.",
+     "blocks": "A-LEGAL-02, A-TOOLS-01, and all of A2."
+    },
+    {
+     "question": "How much of the stamina, energy and body loop is in Alpha?",
+     "recommendation": "The whole loop as shared rules with per-fighter numbers in data, switched on after QA's comeback measurement; body reuses the old hidden health number.",
+     "blocks": "The longest chain (A-ENERGY-02, A-ENERGY-01); needed by the end of A1. If smaller, A4 loses about 2M tokens."
+    },
+    {
+     "question": "How much gravity well is enough, and up close does your stick move only your own fighter?",
+     "recommendation": "Size, zones and the snap for Alpha, starting from the packet's default for the stick; far kit, catch, swat and taunt after Alpha.",
+     "blocks": "The largest row (A-COMBAT-03, A-COMBAT-15); needed by the end of A1."
+    },
+    {
+     "question": "The move table's bar for Alpha, what RT held does once signatures are on RT + flick, and which workshop items come before Alpha?",
+     "recommendation": "The smaller table (martial and energy rows complete, others shared); RT held stays the ki charge; only close fights and beam stages as far as option A needs before Alpha.",
+     "blocks": "A-COMBAT-02, A-COMBAT-04 and the size of A4."
+    },
+    {
+     "question": "Which friends with Steam Decks will test, starting with a first 30-minute session?",
+     "recommendation": "Ask both now so they expect a key in about a month.",
+     "blocks": "A-PERF-01 and tester round 1 (A2)."
+    },
+    {
+     "question": "Will you create the itch.io account and a restricted key-only page under the working title before the paid title search, and install the upload tool?",
+     "recommendation": "Yes, marked as a working title, one key per named friend, in one sitting with Tools' checklist.",
+     "blocks": "A-TOOLS-02, A-LEGAL-09, X-30, X-31 (A2). If no, testers get a zip by hand and update and roll-back cannot be met."
+    },
+    {
+     "question": "The reports channel on Discord and the licence line?",
+     "recommendation": "A new private server with the delete-on-request promise kept; all rights reserved through Alpha with a short permission page, public code decided at Beta.",
+     "blocks": "A-LEGAL-07, A-LEGAL-10, the tester guide and the words in the build (A2)."
+    },
+    {
+     "question": "The default world?",
+     "recommendation": "A new random planet each quick match with the seed shown and saved in reports; the current planet kept as a preset for a first match and tests.",
+     "blocks": "A-WORLD-14 and the planet pick (A2)."
+    },
+    {
+     "question": "Small yes-or-no answers for the tester build (replays kept locally, one report file under 10 MB, the left-hand panel menus as Alpha's menus, result panel placement, a dropped pad pauses, checklist as sign-off, a second drive for backups) and three short sittings (about 150 strings of text, a ten-minute listening pass, one clip per mark drawn round the fighters)?",
+     "recommendation": "Yes to each.",
+     "blocks": "A-UI-02, A-TOOLS-05, A-UI-04, A-UI-05, A-CONTROLS-03, A-QA-01, A-TOOLS-09, A-TEXT-01, A-AUDIO-03, A-RENDER-13 (A2)."
+    },
+    {
+     "question": "LAN at Alpha: for you and the trusted second player only, on Windows, from Host and Join rows?",
+     "recommendation": "Yes.",
+     "blocks": "A-MODES-04, A-NET-02, A-LEGAL-04, A-PERF-02 (A3). Otherwise about 6M tokens, 1 to 2 weeks and a third tester round."
+    },
+    {
+     "question": "Campaign none at Alpha; the first horde's size; the couch 2v2 line-ups and a computer partner; smaller A3 answers (planet dials at one size, second colour, LAN screen favours its own player, dropped PC within 10 seconds, ambience bed)?",
+     "recommendation": "None; waves of at most three weak bodies; two pads against two computers plus one pad with a computer partner, four pads after Alpha; yes to each smaller answer.",
+     "blocks": "X-12, A-MODES-02, A-MODES-03, A-AI-08, A-WORLD-02, A-ANIM-02, A-CAMERA-05, A-NET-03, A-AUDIO-02 (A3)."
+    },
+    {
+     "question": "Later: a transformation's look, the frame rate targets, a two-hour soak by a Deck friend, and what 'Beta in sight' means?",
+     "recommendation": "One cheap body change per form in data; 60 on Orb's PC and 30 held on the Deck with 40 as the aim, confirmed after round 1's bench files; yes, ask one friend at round 2; four fighters playable and the testers' reports folded in, with no Steam fee, code signing or encoder install before then.",
+     "blocks": "A-ANIM-01 (A4), X-23, X-24, A-QA-02, A-MARKET-08 (A5)."
+    }
+   ],
+   "total_tokens_m": 178.2,
+   "total_weeks": "11 to 16 weeks; outside testers first play at about week 4 to 6",
+   "self_check": "Script run against 03-gap-register.json (scratchpad build_path.py): required rows 174; in exactly one milestone 173 (A1 62, A2 51, A3 35, A4 23, A5 2); proposed to move after Alpha 1 (A-PERF-02, with reason; no row needs it); missing 0; placed twice 0; resized in place 5 (A-NET-02, A-LEGAL-04, A-CONTROLS-01, A-MODES-02, A-COMBAT-04); nice rows placed 8, in the pool 66; after rows listed 22; order violations against the needs field 0 (a row and a row it needs may share a milestone, never later); hash rows by milestone A1 12, A2 0, A3 8, A4 16, A5 0, giving three named golden windows plus one numbers-only reserve; other problems 0. Token totals: rows 164.2M (A1 37.2, A2 23.8, A3 48.6, A4 53.2, A5 1.4) plus 14M reserve (6M in A3 for round-1 fixes, 8M in A5) = 178.2M; tokens_m for A3 and A5 include their reserves. Two figures in the file were corrected by hand after generation (resize saving about 15M; window 3 holds 1 XL and 7 L). Only the output file was written in the project; no git state changed, no Godot, browser, web or messages used."
+  }
+ ],
+ "score": {
+  "file_written": "docs/ep/alpha/audit-2026-11-13/04-drafts/scores.md",
+  "scores": [
+   {
+    "angle": "risk",
+    "total": 82,
+    "by_rule": "R1 9 | R2 8 | R3 10 | R4 7 | R5 7 | R6 8 | R7 9 | R8 7 | R9 9 | R10 8. Script: 180 rows placed; 174 of 174 required rows in exactly one milestone, 0 twice, 0 'after' rows placed; 0 rows before a row they need (47 needs links share a milestone); 36 hash rows, all inside 4 named windows (12, 11, 10, 3); A2 and A5 hold none. Milestone tokens reproduce from the register's size classes (177.55M of rows).",
+    "faults": [
+     "R1: A1 and A2 give nothing new to press; A1's page asks the owner to judge four trial clips rather than a build (path-risk.md:40, :94)",
+     "R2: X-05 'exists and passes' at A3 with the smoke suite A-MODES-08 built in A3 (path-risk.md:149); X-03 must pass at A4 with its probe A-CONTROLS-06 built in A4 (path-risk.md:188); X-17 must pass at A1 with its count built in A1 (path-risk.md:51)",
+     "R2/R8: X-08 reworded from 5 to 10 seconds and to two Windows PCs outside the decisions table (path-risk.md:297)",
+     "R4: outside-tester safety gates A-LEGAL-01, A-LEGAL-03, A-LEGAL-08 are in A2, behind a 72-row A1 (path-risk.md:108-120)",
+     "R4: mode list, fighter pick and smoke suite (A-MODES-01, A-MODES-06, A-MODES-08) wait until A3, so the fight is reworked before any mode but solo runs end to end; six of eight modes not playable until A4 (path-risk.md:159-162)",
+     "R5: the fourth window (A-AI-02, A-QA-05, A-QA-08) sits inside the candidate milestone, so every probe is re-run after the candidate's numbers move (path-risk.md:271); fight rules split across GW2 and GW3",
+     "R6: A1 (72 rows, 14,805 uncommitted paths, five trials) in 1.5 to 2.5 weeks and A5 in 1 week are thin (path-risk.md:80, :244); 4.5M for trials and 5M for verification are the planner's own figures",
+     "R8: 23 decisions is not few; rows 16, 17 and 22 each bundle three or four questions (path-risk.md:457-463)",
+     "R9: A-COMBAT-09 is both in the pool and on the after-Alpha list (path-risk.md:376)",
+     "R10: during the push the rule does not say the owner sees and agrees each line, or how fast (path-risk.md:405)"
+    ],
+    "strengths": [
+     "Only draft with all 174 required rows placed; A-PERF-02 kept (smaller) instead of moved out",
+     "Budgets at the register's size classes with the resized total shown beside, so no resize is taken for the owner; 25% rework stated",
+     "Measuring tools earliest: probes for X-03/04/13/16 and the 1280x800 sweep at A1, soak and real-Deck bench at A2",
+     "First real Steam Deck run at A2 plus a Linux-picture trial in CI at A1; bench files asked again at A3 and A4",
+     "Critical path matches the register's longest needs chain; three risks each with a guard, and a stop rule for the gravity well",
+     "Trials (S1 to S5) size the beam, gravity well, horde and move table before weeks are committed; a trial's page counts as a change request"
+    ]
+   },
+   {
+    "angle": "modes",
+    "total": 79,
+    "by_rule": "R1 9 | R2 9 | R3 8 | R4 8 | R5 9 | R6 6 | R7 8 | R8 5 | R9 9 | R10 8. Script: 190 rows placed; 173 of 174 required rows in exactly one milestone (A-PERF-02 moved after Alpha), 0 twice; 0 needs violations (43 share a milestone); 39 hash rows, all inside 4 windows (11, 8, 18, 2); A2 and A6 hold none. Row tokens are 181.95M at register classes; the draft budgets 155.9M with ten resizes already taken.",
+    "faults": [
+     "R3: A-PERF-02, a required blocker, is moved after Alpha by the planner (path-modes.md:257)",
+     "R4: 'blockers first' is reinterpreted so the five fight blockers A-COMBAT-01 to 04 and A-ENERGY-01 land in A4 of 6 (path-modes.md:7); horde and team AI are built on the old fight, then the fight changes under them",
+     "R4/R5: Easy tuned in A3 (A-AI-02) before the rules change in A4 (path-modes.md:121, :138)",
+     "R4: itch.io rehearsal A-TOOLS-02, A-TOOLS-03 is A3, after a friend is handed a build at A2 (path-modes.md:122)",
+     "R2: soak script A-QA-02 (a blocker) not built until A5, so the first two-hour soak is on the candidate (path-modes.md:196, :231); horde's largest wave never read on a Deck before A6 (path-modes.md:118)",
+     "R5: W3 holds 18 hash rows, four of them nice (path-modes.md:176)",
+     "R6: every budget already takes ten resizes the owner has not agreed (path-modes.md:248); highest pace assumed (about 60M a week); 8 to 11.5 weeks excludes the year-end holidays (path-modes.md:25); A2 puts both LAN modes, team match and four L rows in 1 to 1.5 weeks (path-modes.md:105); owner's play counted as about an hour (path-modes.md:27)",
+     "R8: 22 numbered items hold about 35 questions through 'Also:' riders (path-modes.md:314, :318, :321, :333, :341); resizes of A-CODE-05 and A-RENDER-06 have no question; line 307 tells the owner a topic was left off",
+     "R7: part of the critical path is made by the draft's own order (horde ahead of the fight), not by the register (path-modes.md:297)",
+     "R10: no time limit for the recommendation and no rule for testers' findings (path-modes.md:290)"
+    ],
+    "strengths": [
+     "Closest to the specification's order: safety and build blockers, then modes, then the fight, then the newcomer, then a frozen candidate",
+     "One stated tool rule, kept throughout: tool and first reading in one milestone, pass from the next (path-modes.md:13)",
+     "Numbers window closes at A5 and A6 is frozen, so the candidate is measured on numbers that do not move",
+     "Mode list, fighter pick, Quit row and the smoke suite in A1, so every later change is tried in every mode automatically",
+     "Finding that Encounter Systems sits on five links of the critical path and its queue sets the date (path-modes.md:298)",
+     "Decisions grouped by the milestone that needs each answer"
+    ]
+   },
+   {
+    "angle": "newcomer",
+    "total": 76,
+    "by_rule": "R1 8 | R2 7 | R3 8 | R4 6 | R5 8 | R6 8 | R7 7 | R8 6 | R9 9 | R10 9. Script: 181 rows placed; 173 of 174 required rows in exactly one milestone (A-PERF-02 moved after Alpha), 0 twice; 0 needs violations (44 share a milestone); 36 hash rows, all inside 3 windows (12, 8, 16) plus a reserve; A2 and A5 hold none. Row tokens are 177.8M at register classes; the draft budgets 164.2M with five resizes already taken.",
+    "faults": [
+     "R3: A-PERF-02, a required blocker, is moved after Alpha by the planner (path-newcomer.md:266)",
+     "R2: X-06 Easy must pass at A1 on 40 matches (path-newcomer.md:44) while A-AI-11 (40 matches cannot tell bands apart) is in A2",
+     "R2: X-03 and X-14 must pass at A4 with A-CONTROLS-06 and A-WORLD-06 built in A4 (path-newcomer.md:188, :191); X-18, X-20, X-22 must pass at A2 with their tools built in A2 (path-newcomer.md:90-94)",
+     "R2: 'Round 1 returned' is an A2 exit criterion (path-newcomer.md:100) though round 1 runs during A3 (path-newcomer.md:121), so A2 cannot close when stated",
+     "R4: newcomer's path placed ahead of the modes (path-newcomer.md:275); outside testers spend two rounds partly on a game that will change; fight blockers land last with no milestone between them and the candidate; polish and candidate are one milestone",
+     "R4/R5: Easy tuned at A1 (A-AI-02) three milestones before the fight it is tuned for (path-newcomer.md:52, :66)",
+     "R5: tuning rows A-QA-05, A-QA-08 share the window with the rework they tune; the 'reserve' fourth window is likely to be used (path-newcomer.md:213)",
+     "R6: budgets take five resizes as agreed (path-newcomer.md:346); reserve is 14M on 164M, about 8% (path-newcomer.md:22); switch-hidden work is counted in A4's tokens but A2's and A3's weeks (path-newcomer.md:217)",
+     "R7: making main the played game (A-CODE-01) is not among the three risks (path-newcomer.md:337-340)",
+     "R8: 26 items; item 18 holds about ten answers and item 22 five (path-newcomer.md:370, :376)",
+     "R1: A3's playable thing is two builds, a tester build and a LAN flavour (path-newcomer.md:133)"
+    ],
+    "strengths": [
+     "Most usable change-control rule: six numbered steps, one-working-day recommendation, owner's yes before building, like-for-like swap, tester-findings rule, standing exception",
+     "Most careful pace (20 to 30M a week) and people time: 11 to 16 weeks, one to two weeks per volunteer round, 'add 2 weeks if the fight starts cold'",
+     "Outside-tester gates worked from day one of A1 and named as the first risk (A-LEGAL-01, A-LEGAL-08, A-CAMERA-02)",
+     "Update and roll-back routes exercised on real testers several times before the candidate",
+     "Fight decisions asked of the owner at A1, before builders start",
+     "Fewest golden windows (three planned)"
+    ]
+   }
+  ],
+  "best": "risk (path-risk.md), 82 of 100; modes 79, newcomer 76. It is the only draft with all 174 required rows placed, the only one that budgets at the register's classes without taking resizes for the owner, and it builds the measuring tools and gets the first real Steam Deck reading earliest. Its weaknesses (the mode shell and smoke suite late, the safety gates in A2, a numbers window inside the candidate, 23 decisions) are fixable by grafts.",
+  "grafts": [
+   "From modes, into risk's A1: move A-MODES-01, A-MODES-06, A-MODES-11 and A-MODES-08 (mode list, fighter pick, Quit row, mode smoke suite) from risk's A3/A3/A2/A3 to A1; none has a hash flag and A-MODES-08's needs (A-MODES-01, A-TOOLS-01) are then in A1. Solo and two players start from the menu from the first build and the smoke suite exists before X-05 must pass.",
+   "From modes, across risk's milestones: adopt the tool rule of path-modes.md:13 (tool and first reading in one milestone, pass from the next). X-03's pass moves from risk's A4 to A5 with A-CONTROLS-06 staying in A4; X-17's A1 line becomes a reading.",
+   "From modes, risk's A5/A6: move the numbers window (A-QA-05, A-QA-08, A-AI-02) from A6 to the end of A5 as modes' W4 does, so A6 is frozen and the candidate is measured on settled numbers; re-read A-QA-04's balance band at that window as modes does.",
+   "From modes, risk's critical path section: add that Encounter Systems holds the switch rows, beams, signatures, the horde's enemies and the bands, so its queue sets the date (path-modes.md:298).",
+   "From modes, risk's decisions table: group the decisions by the milestone that needs each answer.",
+   "From newcomer, risk's A1: start the outside-tester gates on day one and brief them first (A-LEGAL-01, A-LEGAL-08, A-CAMERA-02, A-LEGAL-03; newcomer has them in A1, risk in A2), and add 'the gate list does not go green on the globe ground' to the risks (path-newcomer.md:338).",
+   "From newcomer, risk's A2: run the first Deck session from a full draft of the tester guide (A-QA-01, still closing in A5) and the real restricted itch.io page (A-TOOLS-02), and ask two friends, not one; make A3 and A4 builds reach them as real updates so X-30 and X-31 are exercised before the candidate.",
+   "From newcomer, risk's A1 decisions: ask the fight's decisions at A1 (stamina loop's extent, how much gravity well, the move table's bar, the 'workshop this' items; path-newcomer.md:358-362) so trials S1, S2 and S4 know what to try.",
+   "From newcomer, risk's change control: use the six numbered steps as the frame (one-working-day recommendation, owner's yes before building, like-for-like swap, tester-findings rule, standing exception; path-newcomer.md:314-326), keeping risk's three tests for 'now' and 'a trial's page is a change request'.",
+   "From newcomer, risk's pace and reserves: show 20 to 30M tokens a week as the low case beside risk's 35M, allow one to two weeks per volunteer round, and hold a named fix reserve after each tester round (6M after round 1, 8M at the candidate)."
+  ],
+  "shared_faults": [
+   "Too many decisions: 22 to 26 numbered items, each bundling more, against a rule that asks for few; none separates what the owner must choose from defaults the owner only needs to hear.",
+   "The same resizes are assumed by all three (horde at three bodies, smaller move table, LAN for the trusted two on Windows, two pads, seed and three dials); modes and newcomer put them in the budgets; none shows the plan if the owner declines (15 to 20M tokens and one to three weeks more).",
+   "Exit criteria are reworded by the planner (X-08, X-05, X-11, X-03; X-15 in risk) inside milestone text rather than raised as criterion changes for the audit and the owner.",
+   "X-03's probe (A-CONTROLS-06) lands with the move table (A-COMBAT-04) in every draft because the register says it needs it; no draft questions that dependency, though a cell-pressing probe could be written against today's table.",
+   "A-CODE-01 and its ten needed rows share one milestone in all three (43 to 47 needs links sit inside single milestones); none gives the order inside A1, where the first risk lives.",
+   "Size classes have no comparables, yet all three give totals to a decimal place; A-PROCESS-08 is in A1 everywhere but no draft names the date the weeks are re-estimated.",
+   "The year-end holidays are in no range; every range runs through late December (only modes notes the omission).",
+   "The first two-hour soak on a real Deck, the horde's largest wave on a Deck, and five LAN 2v2 matches are each first passed at or one milestone before the candidate.",
+   "No milestone says what happens if its exit is missed (slip, cut or ship short); risk has one stop rule, the others none.",
+   "The first desktop build of the played game is assumed to work as an A1 exit; none plans it as its own early step with a look check against the browser build the owner played.",
+   "Directors' load is not checked: each lists who is active but none adds up a director's rows per milestone against what one session lands in a week."
+  ]
+ }
+}

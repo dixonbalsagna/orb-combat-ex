@@ -1,0 +1,1330 @@
+{
+ "areas": [
+  {
+   "area": "LEGAL",
+   "file": "docs/ep/alpha/audit-2026-11-13/02-areas/LEGAL.md",
+   "criteria": [
+    {
+     "id": "X-02",
+     "status": "gap",
+     "note": "The gate list did not exist before this audit; it is now drafted in LEGAL.md (20 gates, each with where its record is saved). 11 of 20 are red at the baseline: the flash reading on the ground players see (clash 6.5 reduced, docs/rendering/runs/d985eb15/crater-look-default.txt:24), the flash measuring chain (CD-09, no commit), the owner's recorded yes for desktop builds (file absent), the package notices (draft notice file), the report-file scan (no tool), tester paperwork, report channel, tester acknowledgement, licence line, title on itch.io, and LAN for outside testers. Tools exist for most gates (CI, run-gate.sh, desktop-package.mjs, content-screen, tools/flash); missing tools: a report-file scan and a sends-nothing check for a LAN-capable build; the flash tool has no clip set on the tile ground. Legal has no docs/legal/runs/ folder."
+    },
+    {
+     "id": "X-32",
+     "status": "gap",
+     "note": "The words exist for every item (docs/legal/alpha-tester-note.md:7,11,12,20,28,29,34) and credits and third-party notices are in the game (ui/widgets/ui_licences.gd:19; ui/data/howto.json:99-105; tools/desktop-package.mjs:297). There is no sign-off row per item: one row, RL-260, is still open on two conditions (docs/legal/review-log.md:289); the tester note is a draft to send; no acknowledgement or adult-confirmation step is recorded; the privacy words differ between README, About page and tester note; the licence line is not recorded. Measuring tool: Legal's review log exists, the per-item rows do not. No proposed numbers in this criterion."
+    }
+   ],
+   "not_evidenced": [
+    "Q3 (part): words for the itch.io page's AI disclosure field are not drafted for Alpha",
+    "Q7 (part): a NOTICES.txt from a real desktop package, because desktop-builds.yml has never run",
+    "Q8 (part): Legal has not confirmed that a restricted itch.io page may precede the title search; its own records say the opposite",
+    "Q9 (part): whether itch.io needs any content or age answer for a restricted page",
+    "Q5 (part): engine and operating-system behaviour, and what a report script adds around the game's files; RR-04 had no answer file so call sites were read directly"
+   ],
+   "counts": {
+    "total": 25,
+    "blocker": 3,
+    "major": 6,
+    "minor": 6,
+    "works": 10,
+    "minors_sampled": 2
+   },
+   "findings": [
+    {
+     "id": "F-LEGAL-01",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "camera",
+     "cost": "L",
+     "hash": false,
+     "crit": [
+      "X-02"
+     ],
+     "s": "On the tile ground that the played build shows, main's beam-clash clip reads 6.5 flashes a second with Reduce flashing on and 5.5 with it off, against a limit of 3, and no pixel reading exists for the played commit 6a30b4c9.",
+     "orb": "",
+     "off": true,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The record reads clash-reduced 6.5 and clash-normal 5.5, both FAIL over 3, on main with tiles=1, and CD-04 is still Open with SCROLL_MAX_REDUCED at 0.045. The 6a30b4c9 run folders hold only the run-pixels self-test line, so no pixel reading of the played commit exists."
+    },
+    {
+     "id": "F-LEGAL-02",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "tools-pipeline",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-02",
+      "X-32",
+      "X-29"
+     ],
+     "s": "No desktop package for an outside tester can be made today: the build workflow needs a recorded approval file that does not exist, the package text step reads a notice file still marked draft, and the workflow has never run.",
+     "orb": "When the gates are green, will you record one line saying yes to desktop test builds for named outside testers? Recommendation: yes, at that point and not before.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The approval file is not tracked, interim is null so the text step falls to the draft notice and throws, and the workflow has zero runs. Only the self-test names the non-draft owner notice, which a real build never sets."
+    },
+    {
+     "id": "F-LEGAL-03",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "legal-ip",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-02"
+     ],
+     "s": "The list of gates that must be green before an outside tester plays did not exist before this audit, and several of its gates have no saved record or no tool.",
+     "orb": "",
+     "off": false,
+     "v": "downgraded",
+     "vsev": "major",
+     "vnote": "True: the specification names the list itself as the missing tool and no tracked file holds one. The list is now drafted in LEGAL.md and the red gates that could harm or stop a tester are already F-LEGAL-01, 02 and 08, so the missing list alone is a paperwork gap, not a second blocker."
+    },
+    {
+     "id": "F-LEGAL-04",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "legal-ip",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-02",
+      "X-08",
+      "X-32"
+     ],
+     "s": "No ruling or package covers an outside tester playing the LAN modes: the locked package refuses any network code, and the LAN folder's terms name only the owner and the trusted second player.",
+     "orb": "In the first Alpha round, are the LAN modes for you and the trusted second player only, or for outside friends too? Recommendation: you two only at first.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The desktop package refuses any res://net script and every desktop preset excludes net/*, while the kit stops unless the WHO PLAYS line names the owner and the second player only. The tester note mentions the two-PC mode in one sentence, but no review row rules on an outside tester using it."
+    },
+    {
+     "id": "F-LEGAL-05",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "legal-ip",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-32",
+      "X-01"
+     ],
+     "s": "The tester note is a draft for the owner to send, its review row is still open on two conditions, and nothing records how a tester confirms being an adult or agrees to the terms.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The note is marked a draft to send and RL-260 is open on Tools' confirmation and the licence choice. The note treats taking part as the age statement (line 11), but no step or record captures a tester's confirmation or agreement."
+    },
+    {
+     "id": "F-LEGAL-06",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "tools-pipeline",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-21",
+      "X-32"
+     ],
+     "s": "Legal asked that report files be checked for account names and file paths before a tester sends them, and no such check exists; the LAN folder's report script points at the owner's own project folder and needs Node.",
+     "orb": "",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "The script line calls node on a path inside the owner's project folder and lan-report.mjs copies every saved file in with no content check. One fact is too wide: a path scrub does exist for the clip records (tools/preview/lan-clip.mjs:24, blackbox-clip.mjs:33), so the gap is the saved files and logs offered for sending."
+    },
+    {
+     "id": "F-LEGAL-07",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "orb",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-21",
+      "X-32"
+     ],
+     "s": "The report channel is undecided: the owner's words were to convert an existing server, Legal's first flag says not to, and no record settles the three items Legal wants settled before the first tester.",
+     "orb": "Will you use a new private server (or a new channel locked to a tester role) for reports, and keep the promise to delete a tester's reports on request? Recommendation: a new private server, and keep the promise.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The owner's words and Legal's first flag are as quoted, and no later line in vision.md or the questions file answers items 1 to 3. questions.md:20 only confirms the files were delivered and settles nothing."
+    },
+    {
+     "id": "F-LEGAL-08",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "tools-pipeline",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-02"
+     ],
+     "s": "The repairs to the flash measuring chain ordered on 2026-11-07 (CD-09) have no commit: the analyser file is unchanged, no flash reading runs on a schedule, the last nightly is from 2026-10-30 on an old commit, and the recorded release pass is for a commit of 2026-10-15.",
+     "orb": "",
+     "off": true,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "No commit names CD-09, the analyser is unchanged since 2026-10-06, the signature gate still prints ok for a grandfathered record, and the release pass is d3f1ca0e of 2026-10-15 with no superseded mark. One part of sub-item 3 exists under CD-19: the daily player watch fails on a nightly older than two days while a game is live, but it takes no reading itself."
+    },
+    {
+     "id": "F-LEGAL-09",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "legal-ip",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-31",
+      "X-32"
+     ],
+     "s": "Whether a restricted, key-only itch.io page may go up before the title search is not confirmed anywhere: Legal's own page and the audit directive both say the search comes before any itch.io page, and the plan row is empty.",
+     "orb": "May the private, key-only itch.io page go up under the working title before the paid title search, if Legal writes that it is unlisted and unpromoted? Recommendation: yes, marked as a working title.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "Legal's page and CD-06 both put the formal search before any itch.io page, the plan row's progress cell is empty and RL-024 is still Open. The only text exempting a restricted page is the specification line that itself says 'confirm with Legal', and no Legal file answers it."
+    },
+    {
+     "id": "F-LEGAL-10",
+     "sev": "minor",
+     "alpha": "required",
+     "owner": "orb",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-32"
+     ],
+     "s": "The owner's one-line licence choice is not on record, so the build says the licence is not chosen yet and no plain permission page exists.",
+     "orb": "Do you agree to keep everything all rights reserved through Alpha, with a short friendly permission page, and decide about public code at Beta? Recommendation: yes.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The rundown asks for one line and offers the permission page only on request; vision.md records no licence answer after the 2026-11-09 request, and the phrase exists only in Legal's own files. The build text and README still say 'not chosen yet' and no permission page exists in the tree."
+    },
+    {
+     "id": "F-LEGAL-11",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "legal-ip",
+     "cost": "S",
+     "hash": false,
+     "crit": [],
+     "s": "Three older Legal pages still recommend the permissive pairing that the current rundown says never to use.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-LEGAL-12",
+     "sev": "minor",
+     "alpha": "required",
+     "owner": "legal-ip",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-32"
+     ],
+     "s": "The privacy words differ between the package README, the in-game About page and the tester note, and none of the words inside a build mention the two-PC link or the report channel.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-LEGAL-13",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "ui-ux",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-32"
+     ],
+     "s": "In a desktop build the AI disclosure is not on the first screen: the start notice carries only the flashing words, and the AI line sits in README.txt and on the About page.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-LEGAL-14",
+     "sev": "minor",
+     "alpha": "after",
+     "owner": "legal-ip",
+     "cost": "S",
+     "hash": false,
+     "crit": [],
+     "s": "The content-rating records disagree with the game: the owner's early answer says graphic violence with a Mature target, bystanders now never die, a finisher marked graphic is still in the data, and the store-readiness list (CD-13) has not been rebuilt.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-LEGAL-15",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "ep",
+     "cost": "S",
+     "hash": false,
+     "crit": [],
+     "s": "The public repository's safety net ordered on 2026-11-07 (CD-11: secret scanning, push protection, a protected main) has no commit or record, and its state today is not evidenced.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The CD-11 plan row has an empty progress cell and no commit or record mentions it. The only recorded state is the 2026-11-07 audit reading (main unprotected, scanning and push protection disabled); nothing later evidences a change, and I did not query the repository settings."
+    }
+   ],
+   "unverified": []
+  },
+  {
+   "area": "MODES",
+   "file": "docs/ep/alpha/audit-2026-11-13/02-areas/MODES.md",
+   "criteria": [
+    {
+     "id": "X-05",
+     "status": "gap",
+     "note": "Only solo and two-players-on-one-PC start from the menu (ui/widgets/ui_menu.gd:8, :74-86; render/core/main.gd:1337-1362). LAN 1v1 and 2v2 start from Windows shortcut files with no rematch (net/lan.gd:386); couch 2v2, horde, custom planet and campaign cannot be started. The mode smoke suite is missing; precursors are tools/preview/smoke.mjs (browser, fixed click points) and tools/preview/wake-steps-padonly.json. Windows and Linux desktop runs: not evidenced (no desktop-builds run listed)."
+    },
+    {
+     "id": "X-09",
+     "status": "gap",
+     "note": "No couch 2v2 line-up is possible: the host starts two-body matches only and the input hub has two slots (sim/input/hub.gd:26-28). The sim's two-fight match exists (sim/core/stage.gd:59-62). Line-ups undecided; the design record's first line-up is two humans against two computer fighters (docs/design/two-v-two.md:20-22). No checklist exists."
+    },
+    {
+     "id": "X-10",
+     "status": "gap",
+     "note": "No horde design page and no code; henchmen grades are paper only (docs/combat/henchmen-grades.md:3); the many-body match holds five bodies with no waves or respawn (sim/core/roster.gd:36-40). Proposed 5 to 10 minutes kept: consistent with the 3 to 7 minute horde stage in docs/design/campaign.md:66. Frame-time at the largest wave is not measurable until a wave exists."
+    },
+    {
+     "id": "X-11",
+     "status": "gap",
+     "note": "No planet picker (render/core/main.gd:441-449) and the generator takes a seed only (sim/world/planet.gd:328), so size, city count, climate and water cannot be chosen. The hash tool exists in part: sim/world/tools/planet_digest.gd prints fingerprints with no verdict and is excluded from tools/world-checks.json:32; CI is Linux only, so no Windows-versus-Linux comparison exists."
+    },
+    {
+     "id": "X-12",
+     "status": "gap",
+     "note": "Not decided. Recommendation: none for Alpha. The campaign is sim groundwork only (sim/core/campaign.gd, run.gd, boons.gd), switched off (data/fight/campaign.json:4), with no host caller beyond sim/core/run.gd:391 and no screen. Orb's decision."
+    }
+   ],
+   "not_evidenced": [
+    "Q1 in part: whether any mode starts, finishes, rematches and leaves on the Windows and Linux desktop builds (only a browser-build smoke record exists; no desktop-builds run is listed)",
+    "Q1 in part: a real two-PC LAN match on 6a30b4c9 (the record on file is the folder's self-test rows)",
+    "Q5 in part: whether the computer can be set to stand still for a practice dummy",
+    "Q6 in part: whether the time cap shows a picture of the planet giving way (only the rule, the pause and the frozen clock were found)",
+    "The EP's pointers on a pause with no menu, the start menu's d-pad and the match-over rail covering the left portrait (questions.md:16) were not confirmed in code"
+   ],
+   "counts": {
+    "total": 22,
+    "blocker": 7,
+    "major": 6,
+    "minor": 4,
+    "works": 5,
+    "minors_sampled": 1
+   },
+   "findings": [
+    {
+     "id": "F-MODES-01",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "ui-ux",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-05",
+      "X-19"
+     ],
+     "s": "The start menu has no list of modes: its rows are one or two players, each player's device, the computer's level, five comfort boxes and Start, so six of the eight Alpha modes have no menu entry.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The menu's rows are players, p1, p2 or ai, five checks and start (plus not_now and back), and the Rail layout reuses the same rows(). No mode row or mode word exists in the menu, the HUD's menu handler or main's Start handler."
+    },
+    {
+     "id": "F-MODES-02",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "game-design",
+     "cost": "XL",
+     "hash": true,
+     "crit": [
+      "X-10",
+      "X-05"
+     ],
+     "s": "The co-op horde mode does not exist: there is no horde design page, the henchmen page says it is paper only, and the sim's many-body match holds at most five bodies with no waves and no respawn.",
+     "orb": "Is a first horde of one or two players against waves of at most three weak bodies at a time (today's five-body limit) enough for Alpha, with bigger waves after? Recommended: yes.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "MAX_BODIES is 5 and there is no wave or respawn code in the sim. The only horde text is paper (henchmen grades, the 2026-10-25 rulings, campaign stage kinds); docs/design has no horde mode page."
+    },
+    {
+     "id": "F-MODES-03",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "rendering-techart",
+     "cost": "L",
+     "hash": false,
+     "crit": [
+      "X-09",
+      "X-05"
+     ],
+     "s": "Couch 2v2 cannot be started: the game's host only ever starts a two-body match, the input hub has two player slots, and the only code that asks the sim for two fights is the LAN program.",
+     "orb": "For Alpha, is couch 2v2 two humans as a team against two computer fighters on a two-way split (the LAN 2v2 line-up)? Recommended: yes; four pads after Alpha.",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "Substance holds: the menu's Start passes only p1 and p2, main.gd has no fights key or flag, and the hub has two slots. Wrong fact: the LAN program is not the only code asking for two fights (check tools do, e.g. render/anim/tools/anim_check.gd:6465 and render/tools/determinism.gd:31), and SimHost.new_match takes any setup, so the limit is the menu path, not the host."
+    },
+    {
+     "id": "F-MODES-04",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "netcode-online",
+     "cost": "L",
+     "hash": false,
+     "crit": [
+      "X-05",
+      "X-08"
+     ],
+     "s": "LAN play is not part of the game a tester would get: it is started by Windows shortcut files on a private program made by patching a scratch copy with the host PC's address baked in, and the desktop export presets leave the network code out.",
+     "orb": "Do outside testers get LAN play inside the Alpha build, or does LAN stay a private two-PC folder? Recommended: inside the build, behind a Host and Join row.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The Windows, Linux and macOS presets exclude net/*, main has no call into NetLan, and the kept build's Host shortcut carries --lan-host=10.0.0.135. The Web preset does not exclude net/, which does not help a desktop tester."
+    },
+    {
+     "id": "F-MODES-05",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "netcode-online",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-05",
+      "X-08"
+     ],
+     "s": "A LAN match cannot be rematched or left to a menu: the program plays one match and tells both players to close both windows.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "lan.gd says \"The match is over. Close both windows\" and the read-me says \"One match only\". The only newMatch in lan.gd (line 342) is the peer's start-up copy, not a rematch."
+    },
+    {
+     "id": "F-MODES-06",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "ui-ux",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-05",
+      "X-19"
+     ],
+     "s": "There is no fighter select: a match's fighters default to the first two ids of the roster file, so player one is always the Protagonist and player two always the rival.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "Slots default to the roster's first two ids, PROTAGONIST then RIVAL, and the menu's Start sends no slots. The sim accepts a slots setup key, but only test tools pass it."
+    },
+    {
+     "id": "F-MODES-07",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "world-environment",
+     "cost": "L",
+     "hash": true,
+     "crit": [
+      "X-11",
+      "X-05",
+      "X-19"
+     ],
+     "s": "Custom planet setup does not exist: the menu has no planet row, and the planet generator takes a seed only, with no input for size, city count, climate or water.",
+     "orb": "If the four dials cannot all land for Alpha, is a seed picker with a few named presets acceptable as the first custom planet? Recommended: yes.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "main.gd's own comment says the menu has no planet choice yet, and the generator's inputs are seed, touch, planetGen and arena, none of which is size, city count, climate or water. \"Seed only\" is slightly loose (three other setup keys exist) but that does not change the finding."
+    },
+    {
+     "id": "F-MODES-08",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "encounter-systems",
+     "cost": "S",
+     "hash": true,
+     "crit": [
+      "X-05",
+      "X-13"
+     ],
+     "s": "On main the rules that end a match as the last played build did (knockout only by a finishing move, wear for an idle player, the last event after the time cap) are switched off, and on only in the two kept builds.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "ending.enabled is false on main and true in both kept builds, and only check tools force it on. A match on main still ends at a KO (sim/core/sim.gd:463), so major rather than blocker is right."
+    },
+    {
+     "id": "F-MODES-09",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "tools-pipeline",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-05"
+     ],
+     "s": "No mode smoke suite exists: the one smoke check drives the browser build by clicking fixed screen points and failed once when the menu layout changed, and the desktop workflow only plays a computer-against-computer bench on Linux with no run on record.",
+     "orb": "",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "Substance holds: no per-mode suite, fixed click points (smoke.mjs:110), one failure when the Rail menu moved the start button, a Linux-only headless bench, and no workflow run on record. One fact is off: a second smoke exists, tools/preview/smoke_match.gd:1-5 (a headless computer-against-computer match with no menu or pad), which does not fill the gap."
+    },
+    {
+     "id": "F-MODES-10",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "rendering-techart",
+     "cost": "L",
+     "hash": false,
+     "crit": [
+      "X-08",
+      "X-09"
+     ],
+     "s": "LAN 2v2 exists only as two humans, one on each PC, against two computer fighters, and each screen shows only its own fight; the owner reported never seeing all four fighters together.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "AI2 gives seats 2 and 4 to the computer, the kit's 2v2 shortcuts never pass --others (off by default at main.gd:242), and two-v-two-lan.md:26 says drawing the other fight is not in the LAN folder. No newer record of all four fighters seen together was found."
+    },
+    {
+     "id": "F-MODES-11",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "netcode-online",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-08",
+      "X-11"
+     ],
+     "s": "Every LAN match is the same match: the seed, the planet and the fighters are constants in the LAN code, so nothing a player picks reaches a LAN game.",
+     "orb": "",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "Seed 77 and planet 7 are constants and no LAN argument changes them, so nothing a player picks reaches a LAN game. The fighters are not constants in the LAN code: the setups carry no slots key, so the sim defaults to the roster's first pair (sim/core/sim.gd:202), and there are three fixed matches chosen by the shortcut flag (net/lan.gd:130), not one."
+    },
+    {
+     "id": "F-MODES-12",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "world-environment",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-11"
+     ],
+     "s": "X-11's planet hash comparison is not a check yet: the planet fingerprint tool prints hashes with no verdict and is left out of the world checks, and every CI job runs on Linux only.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "All four facts hold and nothing compares a planet fingerprint between Windows and Linux. Nuance: planet_check (in the CI run list) already fails on a mismatch with a committed vectors file that includes a places hash, so a verdict-bearing fingerprint exists on Linux only."
+    },
+    {
+     "id": "F-MODES-13",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "ui-ux",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-05",
+      "X-19"
+     ],
+     "s": "With a pad alone a player can go back to the menu but cannot close the game: the pause and match-over lists have no quit row, and the only quit is the keyboard's Escape, which closes the game at once with no question.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "No pause, match-over, start-menu or Rail row closes the game; the only player-reachable quit is Escape in main.gd's unhandled input, with no question. Nuance: while a card or the pause list is open the HUD takes Escape as back, so the instant close happens during plain play."
+    },
+    {
+     "id": "F-MODES-14",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "game-design",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-19"
+     ],
+     "s": "There is no practice mode: the grey reference dummy is third in the roster file but nothing in the menu or host can put it in a match.",
+     "orb": "Should Practice against the dummy be a ninth Alpha mode, as the cheapest way to teach a newcomer? Recommended: yes as nice-to-have, after the mode row and fighter select.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The sim accepts a slots setup that could seat the dummy, but only test tools pass one (sim/core/tools/batch.gd:128, parity.gd:3787); the host and the menu have no row or argument for it. Minor is right, since the vision lists the training sandbox for 1.0."
+    },
+    {
+     "id": "F-MODES-15",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "game-design",
+     "cost": "S",
+     "hash": true,
+     "crit": [
+      "X-13"
+     ],
+     "s": "The time cap is a rules event at 11 minutes (14 in 2v2) with a pause, but no picture of the planet giving way was found in the drawing code, and the cap sits above the 6 to 8 minute match X-13 describes.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-MODES-16",
+     "sev": "minor",
+     "alpha": "after",
+     "owner": "orb",
+     "cost": "n/a",
+     "hash": false,
+     "crit": [
+      "X-12"
+     ],
+     "s": "The campaign is sim groundwork only (about 1,180 lines across three files) with its switch off, no caller in the game beyond one validity check, and no screen; the recommendation is none for Alpha.",
+     "orb": "Ship Alpha with no campaign and record that as the X-12 decision? Recommended: yes; the horde mode carries the campaign's horde stage into Alpha.",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-MODES-17",
+     "sev": "minor",
+     "alpha": "required",
+     "owner": "ui-ux",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-05",
+      "X-22"
+     ],
+     "s": "The Rail menu the owner picked is switched off on main and on only in the played build, so a candidate built from main shows the older menu card.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    }
+   ],
+   "unverified": []
+  },
+  {
+   "area": "COMBAT",
+   "file": "docs/ep/alpha/audit-2026-11-13/02-areas/COMBAT.md",
+   "criteria": [
+    {
+     "id": "X-03",
+     "status": "gap",
+     "note": "RT + X, Y, A are the plain blow (sim/input/layout.gd:522; data/input/timing.json:48); several A and B cells have no outcome; LB, LT and RB rows are shared code, not per fighter. Proposed table should be 55 cells a fighter (X, Y, B by three ways of pressing, A by press and hold, five stances; docs/ep/vision.md:638-643), not 60. Moveset coverage probe does not exist; qa/godot/players.gd and sim/director/tools/stance_check.gd, brawl_cases.gd cover parts only."
+    },
+    {
+     "id": "X-04",
+     "status": "not_evidenced",
+     "note": "Both fighters use the shared three-tier ladder (data/fight/ladder.json:10-13); the Protagonist's own forms are off (data/fight/forms.json:4) and the rival has none. The computer reached tier 3 in Orb's last match while the player stayed at tier 1 (docs/qa/runs/6a30b4c9/beam-trace-orb-1646.txt). Tier 4 in a match, the per-form look and shots landing during a live hold are not evidenced. Transformation probe does not exist. Orb's 'about three' (vision.md:423) matches the ladder's three steps."
+    },
+    {
+     "id": "X-13",
+     "status": "gap",
+     "note": "Missing from any build: a beam dodged by moving off its line, both signatures on Orb's inputs, the gravity well's pull; a player transformation was not seen in Orb's last match. The Alpha match checklist probe does not exist; the cue feed and qa/godot/trace_replay.gd exist to build on."
+    },
+    {
+     "id": "X-16",
+     "status": "gap",
+     "note": "Beams always arrive and position never decides the outcome (sim/director/beamplay.gd:2-4, :55-58, :398-420). Option A is paper only (docs/design/beam-physics.md). Use option A's half-widths (45 units at stage 1 to 170 at stage 6) for 'the beam's width'. Beam escape probe does not exist."
+    },
+    {
+     "id": "X-17",
+     "status": "gap",
+     "note": "Both stray-beam bugs are open (sim/director/beam_move.gd:266-272; sim/director/brawl.gd:3178; no game commit since 6a30b4c9); RT + B is not an input Orb named; bNoBeam is off on main (data/input/timing.json:57). qa/godot/beam_trace.gd exists and lists each beam's inputs; the count over many matches is not built."
+    }
+   ],
+   "not_evidenced": [
+    "Q2 in part: tap, mash and hold inside the LB, LT and RB rows, and per-fighter pieces for the right stick, were not read cell by cell (RR-01 was not on file)",
+    "Q7 in part: whether tier 4 is reached in a normal match, and whether a shot in flight can land during a live transformation",
+    "Q8 in part: whether the opposite-way launch is gone on 6a30b4c9 (no saved record read)",
+    "Q9 in part: whether Orb's presses after a send reached a chase in the 16:46 match",
+    "Q11 in part: the variety packet's increment 4 (readable launch pace, send-offs, landings)",
+    "CI status on 8901d351: gh run list returned nothing in this session"
+   ],
+   "counts": {
+    "total": 26,
+    "blocker": 4,
+    "major": 8,
+    "minor": 7,
+    "works": 7,
+    "minors_sampled": 2
+   },
+   "findings": [
+    {
+     "id": "F-COMBAT-01",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "encounter-systems",
+     "cost": "L",
+     "hash": true,
+     "crit": [
+      "X-16",
+      "X-13"
+     ],
+     "s": "Beam option A is not built: a beam is still an exchange that always reaches its target and is decided by a timed press, not by position.",
+     "orb": "",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "Option A is not built and no beamPhysics key exists, but 'always reaches its target' is wrong: a stick beam aimed more than 35 degrees off the line to him misses (sim/director/beam_aim.gd:8-9; data/director/interrupts.json:308-309, off on main, on in the played build). Inside the cone it still always arrives and moving off the line never makes it miss, so X-16 stays unmet."
+    },
+    {
+     "id": "F-COMBAT-02",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "encounter-systems",
+     "cost": "L",
+     "hash": true,
+     "crit": [
+      "X-13",
+      "X-17",
+      "X-03"
+     ],
+     "s": "Signatures are not on Orb's inputs: RT + RB + flick and RT + flick do not exist, RT + B is the only input, and no martial signature exists for either fighter.",
+     "orb": "Once signatures are on RT + flick, is RT held still the ki charge or the High Intensity switch? Recommendation: keep the charge for Alpha.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "Orb's words at vision.md:1710 are as quoted and the only signature binding is B on the power layer (RT + B); brawl.gd:3179 itself calls it an interim until RT + right stick lands. No martial signature key or template exists for either fighter."
+    },
+    {
+     "id": "F-COMBAT-03",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "simulation-engine",
+     "cost": "XL",
+     "hash": true,
+     "crit": [
+      "X-13"
+     ],
+     "s": "No gravity well exists in code: no well, zones, draw, snap or intent read, only two pieces of the LT speed ruling behind switches.",
+     "orb": "Up close, should your stick move only your own fighter? Recommendation: decide before the well is built, starting from the packet's default.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "No well code, data or switch exists on main or in the played build's switch list. Only bands.arrive and dash/dash.slip are present, both false on main."
+    },
+    {
+     "id": "F-COMBAT-04",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "combat-choreography",
+     "cost": "XL",
+     "hash": true,
+     "crit": [
+      "X-03"
+     ],
+     "s": "The move table is incomplete for both fighters: RT + X, Y and A are the plain blow, several A and B cells have no outcome, and the LB, LT and RB rows are shared code with no per-fighter content.",
+     "orb": "Is Alpha's bar the full table (55 cells a fighter) or the martial and energy rows complete with the other rows shared? Recommendation: the smaller table for Alpha, the full one for Beta.",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "The table is incomplete (RT + X, Y, A are empty cells by the code's own word, interrupt.gd:366-367), but two cells the review calls 'not found' exist: RB + A lays a mine (blast.gd:232-233, mine.enabled true) and A on a held guard is the context deflect or reversal (blast.gd:230-231; interrupt.gd:385-386). LT + A and plain A away from a grab are still empty (interrupt.gd:376-377)."
+    },
+    {
+     "id": "F-COMBAT-05",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "ep",
+     "cost": "M",
+     "hash": true,
+     "crit": [
+      "X-03",
+      "X-13",
+      "X-17"
+     ],
+     "s": "Most of the combat Orb played is off in main's data and on only through the build page's switch rows, so no committed data set is the Alpha's combat.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "Each cited switch is false on main and true at the same line of the played build's data, and no commit since 6a30b4c9 touched sim/ or data/. No committed data set matching the played build was found."
+    },
+    {
+     "id": "F-COMBAT-06",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "encounter-systems",
+     "cost": "S",
+     "hash": true,
+     "crit": [
+      "X-17"
+     ],
+     "s": "A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is doing; open since Orb's last play.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The pending release fires on the first tick its target is free and ends a brawl the player has begun (beam_move.gd:279-281); QA's trace shows it at tick 5220 and nothing has changed since. Precision: at 90 ticks it is dropped with a stick_refused 'late' cue rather than fired (beam_move.gd:266-270), and the move is off on main, on in the played build."
+    },
+    {
+     "id": "F-COMBAT-07",
+     "sev": "minor",
+     "alpha": "required",
+     "owner": "encounter-systems",
+     "cost": "S",
+     "hash": true,
+     "crit": [
+      "X-17"
+     ],
+     "s": "RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule reads state and not time.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The clause tests f.state != \"charging\" and counts no ticks, and QA's replay shows RT + B firing a signature 26 ticks after RT's press. Both switches are off on main and on in the played build, so it applies to the build Orb plays."
+    },
+    {
+     "id": "F-COMBAT-08",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "game-design",
+     "cost": "L",
+     "hash": true,
+     "crit": [
+      "X-04"
+     ],
+     "s": "Transformations are the shared three-tier ladder for both fighters: the Protagonist's own forms are switched off, the rival has none, and the only per-tier look is an aura with placeholder poses.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "Forms are off on main and in the played build, the rival's folder has no forms.json, and data/anim/forms.json:3 says the poses are placeholders. The shared ladder has three thresholds (tiers 2 to 4 over base tier 1)."
+    },
+    {
+     "id": "F-COMBAT-09",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "controls-feel",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-04",
+      "X-13"
+     ],
+     "s": "In Orb's last full match the player's fighter never left tier 1 while the computer reached tier 3; the transform chord has no hint.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "Slot 0 reads tier 1 at all eight of its beam starts up to tick 18516 while slot 1 reads tier 2 then 3; the trace samples beam starts only, so 'never' holds only as far as those samples. A form-ready chip and a Transform hint row are built but switched off (forms_live false, ui/data/features.json:40), so the player gets no hint."
+    },
+    {
+     "id": "F-COMBAT-10",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "world-environment",
+     "cost": "M",
+     "hash": true,
+     "crit": [
+      "X-13"
+     ],
+     "s": "A body that hits a building still bounces back; the settings that would hold it are one switch row held off waiting on a QA read.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The cityHold row (lodgeHold, wallRebound 0.25 to 0, wallStop, wallDepthHold, repeatMarks) is off, 'waiting on QA city read', and main still has wallRebound 0.25 and lodgeHold 'world'. Orb reported the bounce on 2026-11-06 and again on 2026-11-09, and nothing newer on main changes it."
+    },
+    {
+     "id": "F-COMBAT-11",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "qa-balance",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-03",
+      "X-04",
+      "X-13",
+      "X-16",
+      "X-17"
+     ],
+     "s": "No tool measures X-03, X-04, X-13 or X-16, and X-17's trace tool has no count.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "None of the probes the specification names exists and beam_trace lists events without a count. The two ci.yml lines cited are unrelated checks (chase tap, plane), so the claim rests on the search, which found only partial checks (beam_move_check, power_check, transform_shots)."
+    },
+    {
+     "id": "F-COMBAT-12",
+     "sev": "major",
+     "alpha": "nice",
+     "owner": "game-design",
+     "cost": "XL",
+     "hash": true,
+     "crit": [],
+     "s": "Launches are not physics-based: the meteor is an authored curve and no attack has a force or any fighter a weight.",
+     "orb": "Physics-based launches in Alpha or after? Recommendation: after; for Alpha only a force per attack and a weight per fighter in data.",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "'No attack has a force' is wrong: launch beats carry a force in data (data/combat/templates.json:173, light 900 and heavy 1500) and sim/director/launch.gd:178 plans from it. The rest holds: the meteor is one authored curve, no fighter has a weight, and no force threshold decides a launch."
+    },
+    {
+     "id": "F-COMBAT-13",
+     "sev": "major",
+     "alpha": "nice",
+     "owner": "encounter-systems",
+     "cost": "M",
+     "hash": true,
+     "crit": [],
+     "s": "Chaining hits on a flying foe is only the tap chase; the LT chase, a chain window after a knock-back and a midair flurry are off or absent.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "chase.enabled is false, the knock-back's chain is false, and the mixed string that would open a string after a knock has no code in the build. The tap chase is on only in the played build; on main chase.tap.enabled is false too (data/director/interrupts.json:655)."
+    },
+    {
+     "id": "F-COMBAT-14",
+     "sev": "minor",
+     "alpha": "required",
+     "owner": "simulation-engine",
+     "cost": "S",
+     "hash": true,
+     "crit": [
+      "X-04"
+     ],
+     "s": "A live transformation blocks new exchanges but damage has no transformation guard, so 'respected' is not proven for shots already in flight.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-COMBAT-15",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "encounter-systems",
+     "cost": "S",
+     "hash": true,
+     "crit": [
+      "X-15"
+     ],
+     "s": "Backburnered systems still act in the director: menace adds to beam clash power, both meters steer a deflected beam, biome variants shape the signature's aftermath, and hiding code runs inert.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-COMBAT-16",
+     "sev": "minor",
+     "alpha": "required",
+     "owner": "tools-pipeline",
+     "cost": "M",
+     "hash": false,
+     "crit": [],
+     "s": "Only 5 of 65 director checks run in CI; the beam, stick, stance and brawl checks run only on a local stack that is not in the repository.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-COMBAT-17",
+     "sev": "minor",
+     "alpha": "after",
+     "owner": "combat-choreography",
+     "cost": "S",
+     "hash": true,
+     "crit": [],
+     "s": "Two planned-exchange templates have a single outcome, and all templates key on the retired four-stance states.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-COMBAT-18",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "combat-choreography",
+     "cost": "S",
+     "hash": true,
+     "crit": [],
+     "s": "The mixed string's switch reads 'on' in the played build but no game code reads its data file; the feature comes from parked files outside main.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The build's data has enabled true, but sim/director/mixed.gd is neither on main nor in the build's tree; the code exists only in the parked folder. Clearer wording: the switch is on and does nothing because the feature's code is parked and was not in the build."
+    },
+    {
+     "id": "F-COMBAT-19",
+     "sev": "minor",
+     "alpha": "required",
+     "owner": "game-design",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-13"
+     ],
+     "s": "Six of Orb's 'workshop this' combat items have no decision: beam stages, the timed swat, the catch, what RT held does, the taunt before a signature, and whose stick moves whom up close.",
+     "orb": "How much gravity well is enough for Alpha? Recommendation: size, zones and the snap; the far kit and the catch, swat and taunt after Alpha.",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    }
+   ],
+   "unverified": []
+  },
+  {
+   "area": "PERF",
+   "file": "docs/ep/alpha/audit-2026-11-13/02-areas/PERF.md",
+   "criteria": [
+    {
+     "id": "X-18",
+     "status": "not_measurable_today",
+     "note": "No Linux build has been made on GitHub or started with a picture, no tester guide or Deck checklist exists, and nothing has run on a Deck; the 10-minute figure has no record to confirm or change it, keep it as a starting point."
+    },
+    {
+     "id": "X-23",
+     "status": "not_evidenced",
+     "note": "No frame record on 6a30b4c9; on the last measured builds the median is well inside 60 a second (native p50 3.3 ms on d7647634, web p50 12.5 ms on 3c9005ac) but the 50 ms line fails (40 frames over 50 ms in Orb's third play, 25 on main 3c9005ac). Confirm both numbers (50 ms is the project's own hard limit, docs/perf/budgets.md:23); add: measured on the desktop program over a whole 6 to 8 minute match, p99 at most 25 ms. Tool exists in part (--bench, orb-native-bench.ps1); a whole-match native frame record is missing."
+    },
+    {
+     "id": "X-24",
+     "status": "not_measurable_today",
+     "note": "Nothing run on a Deck. Confirm 30 held (matches the project's Low level whose reference machine is the Deck, docs/perf/quality-range.md:119-120, and Orb's words at vision.md:1555); change '40 as the aim' to '60 when it can' since 40 is in no record. No 'default quality level' exists beyond effects quality 'auto' (ui/data/options.json:52). The one-click Linux bench that saves a file does not exist; the old-PC kit and orb-native-bench are Windows only."
+    },
+    {
+     "id": "X-26",
+     "status": "not_evidenced",
+     "note": "No native loading number on a build with menus, tile ground or generated planets; last native reading 14.5 to 15.2 s cold and 5.1 s warm on d7647634, browser page later 29.6 s cold. Keep 15 and 30 for second and later starts; allow a first start 30 s on Orb's PC and 60 on a Deck (cold shader compile). Boot marks exist only as a scratch hook; nothing times start-match to control."
+    },
+    {
+     "id": "X-29",
+     "status": "gap",
+     "note": "desktop-builds.yml has never run and would refuse (no docs/ep/approvals file); it builds main's data (72 of 92 switch rows differ from Orb's build) without LAN; the stamp is a commit and a date, not a version number; no changelog exists."
+    }
+   ],
+   "not_evidenced": [
+    "Q1 in part: whether the LAN program started with no LAN flag plays the solo game with menus",
+    "Q2: no frame, loading or memory measurement exists on 6a30b4c9",
+    "Q4 in part: whether the fixes landed in a8bc66e2 and 1931a0f8 removed the stutter Orb felt (no record after them)",
+    "Q5 in part: no Linux build has started with a window on any commit; the workflow has never run"
+   ],
+   "counts": {
+    "total": 25,
+    "blocker": 4,
+    "major": 7,
+    "minor": 4,
+    "works": 10,
+    "minors_sampled": 1
+   },
+   "findings": [
+    {
+     "id": "F-PERF-01",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "tools-pipeline",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-29",
+      "X-18",
+      "X-05"
+     ],
+     "s": "No desktop build of the solo game as Orb plays it exists, and the one workflow that builds desktop programs has never run, would refuse today, and would build main's switched-off data without LAN play.",
+     "orb": "May the team make desktop test builds for named Alpha testers? Recommended: yes, Windows and Linux.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The workflow has no runs, the approval file it needs is not in the tree, it has no switch step, and its route check refuses a package carrying net/. The only desktop programs kept are six LAN exes, which carry the solo data but are a patched LAN copy with LAN-only launchers, so no solo desktop build exists."
+    },
+    {
+     "id": "F-PERF-02",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "performance-platform",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-18",
+      "X-19",
+      "X-24"
+     ],
+     "s": "No Linux build has ever drawn a picture or run on a Steam Deck; the only Linux run on file is a headless one in a cloud container on 9631fc7.",
+     "orb": "Which friend with a Deck will do a first 30-minute session before any Alpha candidate exists? Recommended: ask one now.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "No record of a drawn Linux frame or a Deck run exists, and no workflow uses a virtual display. CI runs the project headless on Linux with the editor binary on every push, but the only run of an exported Linux binary is the 9631fc7 cloud one."
+    },
+    {
+     "id": "F-PERF-03",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "netcode-online",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-05",
+      "X-08"
+     ],
+     "s": "LAN play has no Linux build path: the LAN kit exports the Windows preset only, the Linux preset excludes the network code, and the launchers are Windows scripts.",
+     "orb": "Is LAN play on a Steam Deck part of Alpha, or Windows-only for the first Alpha build? Recommended: Windows-only first.",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The kit rewrites and exports the Windows preset only and writes only .cmd launchers; nothing in it names Linux. The desktop workflow cannot fill the gap because its checks refuse any package that carries net/."
+    },
+    {
+     "id": "F-PERF-04",
+     "sev": "blocker",
+     "alpha": "required",
+     "owner": "performance-platform",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-24",
+      "X-26"
+     ],
+     "s": "There is no one-click bench a Deck tester can run that saves a file: the existing kits are Windows batch and PowerShell, and the game's own bench prints to the console only.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "Both kits are batch and PowerShell, and the bench's results go to print (plus a page variable on the web); the only file the game writes at quit is --shot's picture. The criterion's own to-build column names this bench as missing."
+    },
+    {
+     "id": "F-PERF-05",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "performance-platform",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-23",
+      "X-26"
+     ],
+     "s": "Nothing about frame rate, loading or memory has been measured on the build Orb last played, and no windowed native frame record exists for any commit after d7647634 (2026-10-27).",
+     "orb": "",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "'Nothing about frame rate' is too strong: the 6a30b4c9 LAN exe's headless loop rows record worst frames and counts over 50 ms (docs/net/runs/6a30b4c9/lan-folder/lan-loop-rows.txt:2-10). They draw nothing, so the substance holds: no drawn frame record, load time or memory reading exists for that build, and I found no windowed native record after d7647634."
+    },
+    {
+     "id": "F-PERF-06",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "rendering-techart",
+     "cost": "M",
+     "hash": false,
+     "crit": [
+      "X-23"
+     ],
+     "s": "The frame spikes Orb has felt since 2026-11-01 are still open: two causes were fixed on main but never re-measured, and the building sweep after a blow and the launch tick's slow loops are recorded as not tried.",
+     "orb": "",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "The building visit sweep is not untried on main: a per-frame visit budget (_visit_budgeted, render/core/planet_view.gd:1058, landed in a8bc66e2) defers off-screen visits, a day after the doc's 'Not tried' on 3c9005ac. So three fixes, not two, sit on main without a re-measure; the launch loops have fix sketches only, and the doc says they are not the stutter's cause (impact-stutter.md:97)."
+    },
+    {
+     "id": "F-PERF-07",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "performance-platform",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-26"
+     ],
+     "s": "No loading time is on file for the desktop game with menus, the tile ground and generated planets; the last native figure predates all three and was already 15 s on a first start.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The 15.2 and 14.5 s cold figures are as cited, and d7647634 has no tile ground, field planet or Rail menu; the later load figures are browser page loads. One nuance: an older planet generator (sim/world/planet.gd) was already in d7647634."
+    },
+    {
+     "id": "F-PERF-08",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "performance-platform",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-25"
+     ],
+     "s": "Memory has never been measured on a desktop build, and growth over time is marked not measured, so the soak's 10% growth line has no baseline.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "Every memory row is the browser's processes, and the growth row reads 'not measured'. The only native memory counters are in scratch hooks with no desktop reading on file, and the repo's soak scripts are sim soaks with no memory line."
+    },
+    {
+     "id": "F-PERF-09",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "rendering-techart",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-19",
+      "X-22",
+      "X-24"
+     ],
+     "s": "The game sets no window: there is no display section in the project file and no fullscreen, resolution, vertical-sync or frame-cap setting in code or in the options.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The project file has no display section and the Display options group has no window, resolution, vsync or frame-cap item. The only vsync call in shipped code is the bench/novsync command-line switch at render/core/main.gd:304-305, not a player setting; all other hits are test tools or research prototypes."
+    },
+    {
+     "id": "F-PERF-10",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "tools-pipeline",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-29"
+     ],
+     "s": "A build carries a commit and a date but no version number, the Windows program has no icon or version text, and no changelog exists.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "build_info.json holds commit and date only, the Windows preset's icon, file_version and product_version are empty, and no changelog or release-notes file is in the tree. project.godot has no config/version either."
+    },
+    {
+     "id": "F-PERF-11",
+     "sev": "major",
+     "alpha": "required",
+     "owner": "performance-platform",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-18",
+      "X-19"
+     ],
+     "s": "No tester guide or Deck checklist exists, and the only Deck words (one README line) point to an unpack-and-chmod route a newcomer without a keyboard is unlikely to finish.",
+     "orb": "",
+     "off": false,
+     "v": "corrected",
+     "vsev": "unchanged",
+     "vnote": "A tester-facing page does exist, docs/legal/alpha-tester-note.md (Legal's draft, 2026-11-09), but it covers age, privacy, flashing and reports only: no install steps, controls or Deck words. The rest holds: the Deck gets one line at tools/desktop-package.mjs:59 after tar and chmod steps, and steam-deck.md is a developer readiness table, not a checklist."
+    },
+    {
+     "id": "F-PERF-12",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "performance-platform",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-23"
+     ],
+     "s": "The budget table and its build gate are stale: the Today column is the browser build of e6fa72ff (2026-10-16), the gate is headed proposed, and no frame-time check runs in CI.",
+     "orb": "",
+     "off": false,
+     "v": "confirmed",
+     "vsev": "unchanged",
+     "vnote": "The Today column is still the e6fa72ff runs of 2026-10-16; the one later edit (7c66f491, 2026-11-01) changed the machine framing, not the readings. The gate is headed proposed and no workflow runs a frame-time or budget check, so minor stands."
+    },
+    {
+     "id": "F-PERF-13",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "audio-music",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-23"
+     ],
+     "s": "Whether stalls crackle the sound on a desktop build is not evidenced: the proven mechanism is the browser build's single-thread audio, and the project's only audio setting is for the web.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-PERF-14",
+     "sev": "minor",
+     "alpha": "nice",
+     "owner": "tools-pipeline",
+     "cost": "S",
+     "hash": false,
+     "crit": [
+      "X-29"
+     ],
+     "s": "The desktop workflow builds Windows, Linux and macOS in one job, so a macOS export failure would stop the two Alpha platforms even though Mac comes after Alpha.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    },
+    {
+     "id": "F-PERF-15",
+     "sev": "minor",
+     "alpha": "after",
+     "owner": "performance-platform",
+     "cost": "S",
+     "hash": false,
+     "crit": [],
+     "s": "ADR 0013 says minimum specs are set before launch with no date, owner or method.",
+     "orb": "",
+     "off": false,
+     "v": "not sampled",
+     "vsev": "",
+     "vnote": ""
+    }
+   ],
+   "unverified": []
+  }
+ ]
+}
