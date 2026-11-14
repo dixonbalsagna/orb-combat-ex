@@ -1,0 +1,142 @@
+== ap (own_pane_check: 4 of 12 checks FAILED)
+  clash normal, fighter 0: out of his pane at most 63 ticks (limit 15) ticks 179 to 241, split, sep 1.00, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks (limit 52, a known loss) ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 63 ticks (limit 15) ticks 179 to 241, split, sep 1.00, launched
+  clash reduced, fighter 1: out of his pane at most 51 ticks (limit 52, a known loss) ticks 114 to 164, opening, sep 0.75, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature normal, fighter 1: out of his pane at most 27 ticks (limit 25, a known loss) ticks 103 to 129, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature reduced, fighter 1: out of his pane at most 27 ticks (limit 25, a known loss) ticks 103 to 129, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 6 ticks (limit 15) ticks 1642 to 1647, split, sep 1.00, locked
+  launchai normal, fighter 1: out of his pane at most 26 ticks (limit 35, a known loss) ticks 479 to 504, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 6 ticks (limit 15) ticks 1642 to 1647, split, sep 1.00, locked
+  launchai reduced, fighter 1: out of his pane at most 26 ticks (limit 35, a known loss) ticks 479 to 504, split, sep 1.00, launched
+== ac (own_pane_check: 12 checks passed)
+  clash normal, fighter 0: out of his pane at most 10 ticks (limit 15) ticks 156 to 165, opening, sep 0.83, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks (limit 52, a known loss) ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 10 ticks (limit 15) ticks 156 to 165, opening, sep 0.83, launched
+  clash reduced, fighter 1: out of his pane at most 51 ticks (limit 52, a known loss) ticks 114 to 164, opening, sep 0.75, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature normal, fighter 1: out of his pane at most 25 ticks (limit 25, a known loss) ticks 109 to 133, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature reduced, fighter 1: out of his pane at most 25 ticks (limit 25, a known loss) ticks 109 to 133, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 3 ticks (limit 15) ticks 1505 to 1507, opening, sep 0.58, free
+  launchai normal, fighter 1: out of his pane at most 35 ticks (limit 35, a known loss) ticks 476 to 510, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 3 ticks (limit 15) ticks 1505 to 1507, opening, sep 0.58, free
+  launchai reduced, fighter 1: out of his pane at most 35 ticks (limit 35, a known loss) ticks 476 to 510, split, sep 1.00, launched
+== ah (own_pane_check: 2 of 12 checks FAILED)
+  clash normal, fighter 0: out of his pane at most 10 ticks (limit 15) ticks 156 to 165, opening, sep 0.83, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks (limit 52, a known loss) ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 99 ticks (limit 15) ticks 156 to 254, split, sep 1.00, launched
+  clash reduced, fighter 1: out of his pane at most 49 ticks (limit 52, a known loss) ticks 114 to 162, opening, sep 0.58, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature normal, fighter 1: out of his pane at most 25 ticks (limit 25, a known loss) ticks 109 to 133, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature reduced, fighter 1: out of his pane at most 25 ticks (limit 25, a known loss) ticks 109 to 133, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 3 ticks (limit 15) ticks 1505 to 1507, opening, sep 0.58, free
+  launchai normal, fighter 1: out of his pane at most 35 ticks (limit 35, a known loss) ticks 476 to 510, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 141 ticks (limit 15) ticks 824 to 964, solo, sep 0.00, launched
+  launchai reduced, fighter 1: out of his pane at most 35 ticks (limit 35, a known loss) ticks 476 to 510, split, sep 1.00, launched
+== st (own_pane_check: 4 of 12 checks FAILED)
+  clash normal, fighter 0: out of his pane at most 11 ticks (limit 15) ticks 156 to 166, opening, sep 0.92, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks (limit 52, a known loss) ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 99 ticks (limit 15) ticks 156 to 254, split, sep 1.00, launched
+  clash reduced, fighter 1: out of his pane at most 48 ticks (limit 52, a known loss) ticks 115 to 162, opening, sep 0.58, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature normal, fighter 1: out of his pane at most 18 ticks (limit 25, a known loss) ticks 134 to 151, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature reduced, fighter 1: out of his pane at most 41 ticks (limit 25, a known loss) ticks 82 to 122, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 3 ticks (limit 15) ticks 1505 to 1507, opening, sep 0.58, free
+  launchai normal, fighter 1: out of his pane at most 26 ticks (limit 35, a known loss) ticks 499 to 524, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 141 ticks (limit 15) ticks 824 to 964, solo, sep 0.00, launched
+  launchai reduced, fighter 1: out of his pane at most 44 ticks (limit 35, a known loss) ticks 428 to 471, split, sep 1.00, launched
+== sw (own_pane_check: 3 of 12 checks FAILED)
+  clash normal, fighter 0: out of his pane at most 11 ticks (limit 15) ticks 156 to 166, opening, sep 0.92, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks (limit 52, a known loss) ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 36 ticks (limit 15) ticks 156 to 191, split, sep 1.00, launched
+  clash reduced, fighter 1: out of his pane at most 50 ticks (limit 52, a known loss) ticks 115 to 164, opening, sep 0.75, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature normal, fighter 1: out of his pane at most 18 ticks (limit 25, a known loss) ticks 134 to 151, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  signature reduced, fighter 1: out of his pane at most 41 ticks (limit 25, a known loss) ticks 82 to 122, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 3 ticks (limit 15) ticks 1505 to 1507, opening, sep 0.58, free
+  launchai normal, fighter 1: out of his pane at most 26 ticks (limit 35, a known loss) ticks 499 to 524, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 5 ticks (limit 15) ticks 1643 to 1647, split, sep 1.00, locked
+  launchai reduced, fighter 1: out of his pane at most 44 ticks (limit 35, a known loss) ticks 428 to 471, split, sep 1.00, launched
+
+== measured before the ceilings (--measure, the refined rule)
+-- ap
+  clash normal, fighter 0: out of his pane at most 63 ticks ticks 179 to 241, split, sep 1.00, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 63 ticks ticks 179 to 241, split, sep 1.00, launched
+  clash reduced, fighter 1: out of his pane at most 51 ticks ticks 114 to 164, opening, sep 0.75, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks 
+  signature normal, fighter 1: out of his pane at most 27 ticks ticks 103 to 129, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks 
+  signature reduced, fighter 1: out of his pane at most 27 ticks ticks 103 to 129, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 6 ticks ticks 1642 to 1647, split, sep 1.00, locked
+  launchai normal, fighter 1: out of his pane at most 26 ticks ticks 479 to 504, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 6 ticks ticks 1642 to 1647, split, sep 1.00, locked
+  launchai reduced, fighter 1: out of his pane at most 26 ticks ticks 479 to 504, split, sep 1.00, launched
+   at: cleanup (core/object/object.cpp:2536)
+   at: clear (core/io/resource.cpp:822)
+-- ac
+  clash normal, fighter 0: out of his pane at most 10 ticks ticks 156 to 165, opening, sep 0.83, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 10 ticks ticks 156 to 165, opening, sep 0.83, launched
+  clash reduced, fighter 1: out of his pane at most 51 ticks ticks 114 to 164, opening, sep 0.75, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks 
+  signature normal, fighter 1: out of his pane at most 25 ticks ticks 109 to 133, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks 
+  signature reduced, fighter 1: out of his pane at most 25 ticks ticks 109 to 133, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 3 ticks ticks 1505 to 1507, opening, sep 0.58, free
+  launchai normal, fighter 1: out of his pane at most 35 ticks ticks 476 to 510, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 3 ticks ticks 1505 to 1507, opening, sep 0.58, free
+  launchai reduced, fighter 1: out of his pane at most 35 ticks ticks 476 to 510, split, sep 1.00, launched
+   at: cleanup (core/object/object.cpp:2536)
+   at: clear (core/io/resource.cpp:822)
+-- ah
+  clash normal, fighter 0: out of his pane at most 10 ticks ticks 156 to 165, opening, sep 0.83, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 99 ticks ticks 156 to 254, split, sep 1.00, launched
+  clash reduced, fighter 1: out of his pane at most 49 ticks ticks 114 to 162, opening, sep 0.58, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks 
+  signature normal, fighter 1: out of his pane at most 25 ticks ticks 109 to 133, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks 
+  signature reduced, fighter 1: out of his pane at most 25 ticks ticks 109 to 133, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 3 ticks ticks 1505 to 1507, opening, sep 0.58, free
+  launchai normal, fighter 1: out of his pane at most 35 ticks ticks 476 to 510, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 141 ticks ticks 824 to 964, solo, sep 0.00, launched
+  launchai reduced, fighter 1: out of his pane at most 35 ticks ticks 476 to 510, split, sep 1.00, launched
+   at: cleanup (core/object/object.cpp:2536)
+   at: clear (core/io/resource.cpp:822)
+-- st (first rule)
+  clash normal, fighter 0: out of his pane at most 11 ticks ticks 156 to 166, opening, sep 0.92, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 99 ticks ticks 156 to 254, split, sep 1.00, launched
+  clash reduced, fighter 1: out of his pane at most 48 ticks ticks 115 to 162, opening, sep 0.58, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks 
+  signature normal, fighter 1: out of his pane at most 18 ticks ticks 134 to 151, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks 
+  signature reduced, fighter 1: out of his pane at most 41 ticks ticks 82 to 122, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 7 ticks ticks 1501 to 1507, opening, sep 0.58, free
+  launchai normal, fighter 1: out of his pane at most 26 ticks ticks 499 to 524, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 141 ticks ticks 824 to 964, solo, sep 0.00, launched
+  launchai reduced, fighter 1: out of his pane at most 44 ticks ticks 428 to 471, split, sep 1.00, launched
+   at: cleanup (core/object/object.cpp:2536)
+   at: clear (core/io/resource.cpp:822)
+-- sw (first rule)
+  clash normal, fighter 0: out of his pane at most 11 ticks ticks 156 to 166, opening, sep 0.92, launched
+  clash normal, fighter 1: out of his pane at most 52 ticks ticks 113 to 164, opening, sep 0.75, locked
+  clash reduced, fighter 0: out of his pane at most 36 ticks ticks 156 to 191, split, sep 1.00, launched
+  clash reduced, fighter 1: out of his pane at most 50 ticks ticks 115 to 164, opening, sep 0.75, locked
+  signature normal, fighter 0: out of his pane at most 0 ticks 
+  signature normal, fighter 1: out of his pane at most 18 ticks ticks 134 to 151, split, sep 1.00, launched
+  signature reduced, fighter 0: out of his pane at most 0 ticks 
+  signature reduced, fighter 1: out of his pane at most 41 ticks ticks 82 to 122, split, sep 1.00, launched
+  launchai normal, fighter 0: out of his pane at most 7 ticks ticks 1501 to 1507, opening, sep 0.58, free
+  launchai normal, fighter 1: out of his pane at most 26 ticks ticks 499 to 524, split, sep 1.00, launched
+  launchai reduced, fighter 0: out of his pane at most 7 ticks ticks 1501 to 1507, opening, sep 0.58, free
+  launchai reduced, fighter 1: out of his pane at most 44 ticks ticks 428 to 471, split, sep 1.00, launched
+   at: cleanup (core/object/object.cpp:2536)
+   at: clear (core/io/resource.cpp:822)
