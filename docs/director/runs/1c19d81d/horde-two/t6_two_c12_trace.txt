@@ -1,0 +1,44 @@
+gate: no SCRIPT ERROR; count 1.2, seed 1, wave 3 traced every 90 ticks (the body that hung between the seats)
+ARM G: gap 113.0, blows 2/4/2, back in each breather 0.0
+  t4591 | p2 fodder ph2 mk0 d0 137 d1 19676 y 22485 st free | p3 fodder ph1 mk1 d0 19882 d1 2764 y 2810 st free | p4 fodder ph0 mk1 d0 7520 d1 27193 y 30000 st free | seats y 22485 2810 gap 19676
+  t4681 | p2 fodder ph3 mk0 d0 71 d1 19381 y 22368 st free | p3 fodder ph2 mk1 d0 19429 d1 300 y 3028 st free | p4 fodder ph4 mk0 d0 182 d1 19577 y 22564 st free | seats y 22389 3028 gap 19406
+  t4771 | p2 speedster ph5 mk1 d0 18680 d1 58 y 3195 st free | p3 bruiser ph2 mk0 d0 144 d1 18658 y 21798 st free | p4 fodder ph2 mk0 d0 230 d1 18530 y 21691 st free | seats y 21834 3195 gap 18684
+  t4861 | p2 bruiser ph1 mk1 d0 18503 d1 3000 y 3179 st free | p3 bruiser ph2 mk0 d0 270 d1 18409 y 21542 st free | p4 fodder ph2 mk0 d0 161 d1 18666 y 21783 st free | seats y 21625 3179 gap 18512
+  t4951 | p2 bruiser ph4 mk1 d0 19441 d1 63 y 2734 st free | p3 fodder ph2 mk0 d0 85 d1 19514 y 22254 st free | p4 fodder ph5 mk1 d0 19434 d1 41 y 2742 st free | seats y 22174 2742 gap 19434
+  t5041 | p2 fodder ph2 mk1 d0 738 d1 18760 y 22006 st free | p3 fodder ph2 mk0 d0 314 d1 18860 y 22064 st free | p4 bruiser ph2 mk0 d0 211 d1 18977 y 22208 st free | seats y 22249 3250 gap 19028
+  t5131 | p2 fodder ph2 mk1 d0 3446 d1 15071 y 18848 st free | p3 fodder ph2 mk0 d0 217 d1 18516 y 22292 st free | p4 bruiser ph2 mk0 d0 186 d1 18655 y 22427 st free | seats y 22284 3777 gap 18510
+  t5221 | p2 fodder ph2 mk1 d0 6421 d1 11728 y 16008 st free | p3 fodder ph2 mk1 d0 18047 d1 102 y 4376 st free | p4 bruiser ph3 mk0 d0 159 d1 18048 y 22331 st free | seats y 22423 4283 gap 18140
+  t5311 | p2 fodder ph2 mk1 d0 5338 d1 12265 y 16721 st free | p3 fodder ph2 mk0 d0 102 d1 17507 y 21959 st free | p4 speedster ph1 mk1 d0 3000 d1 17960 y 22053 st free | seats y 22053 4461 gap 17602
+  t5401 | p2 fodder ph2 mk0 d0 5725 d1 12006 y 16333 st free | p3 fodder ph5 mk1 d0 17733 d1 105 y 4328 st free | p4 speedster ph3 mk0 d0 202 d1 17809 y 22133 st free | seats y 22058 4328 gap 17731
+  t5491 | p2 fodder ph2 mk0 d0 4403 d1 12265 y 17362 st free | p3 bruiser ph1 mk0 d0 1618 d1 16790 y 21765 st free | p4 fodder ph2 mk1 d0 16813 d1 188 y 4956 st free | seats y 21765 5105 gap 16666
+  t5581 | p2 fodder ph2 mk0 d0 4580 d1 12251 y 17154 st free | p3 bruiser ph5 mk0 d0 53 d1 16775 y 21672 st free | p4 fodder ph5 mk1 d0 16808 d1 23 y 4925 st free | seats y 21725 4905 gap 16828
+  t5671 | p2 fodder ph2 mk0 d0 4780 d1 12050 y 17300 st free | p3 fodder ph5 mk0 d0 58 d1 16730 y 21919 st free | p4 bruiser ph5 mk1 d0 16735 d1 82 y 5248 st free | seats y 21919 5251 gap 16725
+  t5761 | p2 fodder ph2 mk1 d0 5068 d1 12507 y 17563 st free | p3 fodder ph1 mk0 d0 706 d1 17651 y 22547 st free | p4 fodder ph2 mk1 d0 17674 d1 185 y 5000 st free | seats y 22547 5099 gap 17558
+  t5851 | p2 fodder ph2 mk1 d0 5165 d1 12852 y 17374 st free | p3 bruiser ph5 mk1 d0 18005 d1 53 y 4526 st free | p4 fodder ph2 mk0 d0 300 d1 18000 y 22341 st free | seats y 22341 4579 gap 17954
+  t5941 | p2 fodder ph2 mk0 d0 4417 d1 13232 y 18006 st free | p3 fodder ph1 mk0 d0 300 d1 17665 y 22323 st free | p4 fodder ph5 mk1 d0 17640 d1 59 y 4822 st free | seats y 22323 4830 gap 17626
+  t6031 | p2 fodder ph2 mk1 d0 3969 d1 13839 y 18524 st free | p3 fodder ph1 mk0 d0 740 d1 17938 y 22323 st free | p4 fodder ph1 mk1 d0 18333 d1 1886 y 4760 st free | seats y 22320 4866 gap 17779
+  t6121 | p2 fodder ph2 mk0 d0 3872 d1 13253 y 18322 st free | p3 fodder ph5 mk1 d0 16876 d1 25 y 5072 st free | p4 fodder ph1 mk0 d0 2759 d1 16653 y 21744 st free | seats y 21744 5092 gap 16854
+  t6211 | p2 fodder ph2 mk1 d0 3773 d1 13559 y 18648 st free | p3 bruiser ph5 mk0 d0 58 d1 17230 y 22196 st free | p4 fodder ph5 mk1 d0 17253 d1 83 y 5106 st free | seats y 22196 5126 gap 17223
+  t6301 | p2 fodder ph2 mk1 d0 3801 d1 14197 y 18685 st free | p3 bruiser ph4 mk0 d0 55 d1 17848 y 22241 st free | p4 fodder ph1 mk1 d0 17786 d1 868 y 4509 st free | seats y 22253 4509 gap 17867
+  t6391 | p2 fodder ph2 mk0 d0 3009 d1 15092 y 19470 st free | p3 fodder ph1 mk1 d0 18371 d1 3000 y 4378 st free | p4 bruiser ph3 mk0 d0 170 d1 18203 y 22581 st free | seats y 22469 4378 gap 18092
+  t6481 | p2 fodder ph2 mk1 d0 3091 d1 14506 y 19352 st free | p3 fodder ph3 mk1 d0 17460 d1 187 y 4974 st free | p4 bruiser ph2 mk0 d0 144 d1 17445 y 22284 st free | seats y 22428 4848 gap 17589
+  t6571 | p2 fodder ph2 mk1 d0 2687 d1 14707 y 19296 st free | p3 fodder ph2 mk1 d0 17499 d1 118 y 4483 st free | p4 speedster ph5 mk0 d0 112 d1 17421 y 22018 st free | seats y 21978 4599 gap 17383
+  t6661 | p2 fodder ph2 mk1 d0 4701 d1 12745 y 17274 st free | p3 fodder ph4 mk0 d0 221 d1 17442 y 21970 st free | p4 fodder ph2 mk1 d0 17381 d1 112 y 4598 st free | seats y 21974 4543 gap 17439
+  t6751 | p2 fodder ph2 mk1 d0 6224 d1 11868 y 16399 st free | p3 fodder ph5 mk0 d0 23 d1 18062 y 22560 st free | p4 speedster ph2 mk0 d0 245 d1 17867 y 22355 st free | seats y 22540 4531 gap 18041
+  t6841 | p2 fodder ph2 mk0 d0 6442 d1 12090 y 15927 st free | p3 fodder ph1 mk1 d0 18607 d1 711 y 3953 st free | p4 speedster ph5 mk0 d0 58 d1 18510 y 22359 st free | seats y 22359 3953 gap 18516
+  t6931 | p2 fodder ph2 mk0 d0 6425 d1 12608 y 16309 st free | p3 bruiser ph5 mk1 d0 19026 d1 58 y 3711 st free | p4 bruiser ph3 mk0 d0 62 d1 19031 y 22719 st free | seats y 22714 3711 gap 19029
+  t7021 | p2 fodder ph2 mk1 d0 4064 d1 14541 y 18280 st free | p3 bruiser ph0 mk1 d0 7729 d1 26219 y 30000 st free | p4 fodder ph0 mk1 d0 7744 d1 26219 y 30000 st free | seats y 22344 3781 gap 18595
+  t7111 | p2 fodder ph2 mk1 d0 3529 d1 13996 y 18278 st free | p3 bruiser ph0 mk1 d0 8239 d1 25724 y 30000 st free | p4 fodder ph0 mk1 d0 8250 d1 25727 y 30000 st free | seats y 21796 4282 gap 17515
+  t7201 | p2 fodder ph2 mk1 d0 3141 d1 13311 y 18112 st free | p3 bruiser ph0 mk1 d0 8771 d1 25204 y 30000 st free | p4 fodder ph0 mk1 d0 8779 d1 25206 y 30000 st free | seats y 21248 4803 gap 16445
+  t7291 | p2 fodder ph2 mk1 d0 2421 d1 12956 y 18279 st free | p3 bruiser ph0 mk1 d0 9375 d1 24703 y 30000 st free | p4 fodder ph0 mk1 d0 9389 d1 24709 y 30000 st free | seats y 20699 5324 gap 15376
+outcomes { "hit": 147, "guarded": 149, "miss": 13, "dodged": 21, "blocked": 4 }; misses ["d 197 dx 38 dy -193 fy 2270 py 2077 st free/free", "d 118 dx 117 dy 5 fy 22970 py 22976 st free/free", "d 119 dx -119 dy -3 fy 2750 py 2747 st free/free", "d 160 dx 62 dy -148 fy 22584 py 22436 st free/free", "d 126 dx -126 dy -14 fy 21703 py 21689 st free/free", "d 125 dx -124 dy -15 fy 6049 py 6034 st free/free"]
+    seed 1 medium,medium: over 1 at 7:38, wave 8, felled 744, body lost ["20%", "15%"], downs [0, 0]; wind-ups 117.0/min (11.9/min while one in flight); spacing pairs 0; over lanes 0; all three circling 0% of 0 ticks with three near; against the stick 0; press unanswered after a hit 0; two in % by wave [82 88 79 91 91 91 89 92]; none in % [1 1 1 1 0 1 0 0]; 12 fodder at 5.0 s; wave 1 felled 67; no body in reach, worst wave ["34%", "46%"]
+PASS  reading 5 (hard): no two pack blows on one player within the spacing, never more wind-ups at a player than its lanes, every run
+PASS  reading 7 (hard): never moved against a held stick outside its own lunge; every press after a landed blow answered, every run (a lunge is at most 10 + 20 ticks by construction, and a dodge or guard calls it off)
+PASS  reading 6: the medium pad sees 30 wind-ups a minute or more, 2 a minute or more while another is in flight, all three only circling at most 60% of the ticks with three near
+INFO  reading 21 with two pads (for information; the model: 68% in wave 1 rising to 88%): two in the fight, % by wave, a run each: [82, 88, 79, 91, 91, 91, 89, 92]
+SUMMARY medium x2, 1 runs: run 7.63 min mean (7.63 to 7.63); body lost 18% mean (15% to 20%); downs 0; cleared 1; waves reached [8]; no body in reach, worst wave 46%
+PASS  reading 8 (two): each run 6:00 to 8:00
+PASS  reading 10: each medium pad of two loses 10 to 35%
+FAIL  reading 10: a seat has no pack body within the lunge's reach for at most 35% of a wave
+PASS  reading 11 (two, Game Design 2026-11-15): twelve fodder in 3 to 6 s between two, on the median with 9 of 10 seeds inside (5.0 to 5.0, median 5.0)

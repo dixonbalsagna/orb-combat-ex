@@ -129,7 +129,7 @@ func _run(seed: int, kinds: Array, ticks: int) -> Dictionary:
 		pads.append(p)
 	var r := {"seed": seed, "pads": kinds, "endT": -1, "over": 0, "wave": 0, "lost": [], "downs": [], "windups": 0, "windupsWhile": 0, "blows": [], "spacingBad": 0,
 		"overLanes": 0, "allCircle": 0, "threeNear": 0, "against": 0, "pressNoAnswer": 0, "stopped": 0, "lungeLong": 0, "waveTicks": [], "twoIn": [], "noneIn": [],
-		"felledW1": -1, "w1Ticks": -1, "noReachMax": [0.0, 0.0], "outcomes": {}, "missD": [], "fodder12": -1, "fodderFells": [], "noPick": 0, "seatTicks": 0}
+		"felledW1": -1, "w1Ticks": -1, "noReachMax": [0.0, 0.0], "noReachW": [], "outcomes": {}, "missD": [], "fodder12": -1, "fodderFells": [], "noPick": 0, "seatTicks": 0}
 	var inFlight: Dictionary = {}   # seat -> wind-ups in flight (count)
 	var lastLand: Dictionary = {}   # seat -> the tick of the last pack blow due
 	var hitAt: Dictionary = {}       # seat -> the tick of the last pack blow that landed
@@ -236,6 +236,7 @@ func _run(seed: int, kinds: Array, ticks: int) -> Dictionary:
 				r.noneIn.append(float(wNone) / float(waveT))
 				for s in range(kinds.size()):
 					r.noReachMax[s] = maxf(float(r.noReachMax[s]), float(nr[s]) / float(waveT))
+				r.noReachW.append(str([curWave, waveT] + nr.slice(0, kinds.size()).map(func(x): return int(round(100.0 * float(x) / float(waveT))))))
 			curWave = S.horde.wave
 			waveT = 0
 			wTwo = 0
@@ -263,6 +264,13 @@ func _run(seed: int, kinds: Array, ticks: int) -> Dictionary:
 						any = true
 				if not any:
 					nr[s] += 1
+		if args.has("trace") and S.horde.wave == int(args.trace) and S.horde.rest == 0 and t % 90 == 0:
+			var line: String = "  t%d" % S.horde.t
+			for k in range(SimHorde.seats, S.fighters.size()):
+				var f = S.fighters[k]
+				line += " | p%d %s ph%d mk%d d0 %.0f d1 %.0f y %.0f st %s" % [k, SimHorde.KINDS[f.hd.kind], f.hd.phase, S.horde.mark[k], DirBands.dist(f, S.fighters[0]), DirBands.dist(f, S.fighters[1]), f.y, f.state]
+			line += " | seats y %.0f %.0f gap %.0f" % [S.fighters[0].y, S.fighters[1].y, DirBands.dist(S.fighters[0], S.fighters[1])]
+			print(line)
 		if S.horde.wave == 1 and S.horde.felled == 12 and r.fodder12 < 0:
 			r.fodder12 = S.horde.t
 		if r.w1Ticks < 0 and S.horde.wave >= 1 and S.horde.rest > 0 and S.horde.wave == 1:
@@ -332,6 +340,8 @@ func _init() -> void:
 			var r: Dictionary = _run(sd, [kind, kind] if two else [kind], ticks)
 			all[kind].append(r)
 			print("RUN " + _fmt(r))
+			if args.has("perwave"):
+				print("  no body in reach by wave [wave, ticks, % seat 0, % seat 1]: " + ", ".join(r.noReachW))
 	_verdicts(all, two)
 	_runs(all, two)
 	print("PROBE done")
@@ -408,12 +418,12 @@ func _runs(all: Dictionary, two: bool) -> void:
 					_say(lost.min() >= 0.10 and lost.max() <= 0.35, "reading 10: each medium pad of two loses 10 to 35%")
 					_say(nr <= 0.35, "reading 10: a seat has no pack body within the lunge's reach for at most 35% of a wave")
 					var f12two: Array = rs.map(func(r): return float(r.fodder12) / 60.0)
-					_say(f12two.min() >= 3.0 and f12two.max() <= 6.0, "reading 11 (two, Game Design 2026-11-15): twelve fodder in 3 to 6 s between two (%.1f to %.1f)" % [f12two.min(), f12two.max()])
+					_say(_band11(f12two, 3.0, 6.0), "reading 11 (two, Game Design 2026-11-15): twelve fodder in 3 to 6 s between two, on the median with 9 of 10 seeds inside (%.1f to %.1f, median %.1f)" % [f12two.min(), f12two.max(), _median(f12two)])
 				else:
 					_say(ts.min() >= 7.0 and ts.max() <= 9.0, "reading 8 (alone): each run 7:00 to 9:00")
 					_say(lost.min() >= 0.20 and lost.max() <= 0.45 and downs == 0, "reading 9: the medium pad loses 20 to 45% and never goes down")
 					var f12: Array = rs.map(func(r): return float(r.fodder12) / 60.0)
-					_say(f12.min() >= 4.0 and f12.max() <= 8.0, "reading 11 (Game Design 2026-11-15): twelve fodder in 4 to 8 s, alone (%.1f to %.1f)" % [f12.min(), f12.max()])
+					_say(_band11(f12, 4.0, 8.0), "reading 11 (Game Design 2026-11-15): twelve fodder in 4 to 8 s alone, on the median with 9 of 10 seeds inside (%.1f to %.1f, median %.1f)" % [f12.min(), f12.max(), _median(f12)])
 			"three":
 				_say(lost.min() >= 0.30 and lost.max() <= 0.60, "reading 9: at 3 presses a second it loses 30 to 60%")
 			"mash":
@@ -422,3 +432,17 @@ func _runs(all: Dictionary, two: bool) -> void:
 				_say(rs.all(func(r): return r.wave >= 6), "reading 9: a slow pad at 2 presses a second reaches wave 6")
 			"idle":
 				print("INFO  reading 9: the idle pad lasts %.2f min mean (model 8:25)" % mean)
+
+
+func _median(xs: Array) -> float:
+	var a: Array = xs.duplicate()
+	a.sort()
+	var n: int = a.size()
+	return 0.0 if n == 0 else (float(a[n / 2]) if n % 2 == 1 else 0.5 * (float(a[n / 2 - 1]) + float(a[n / 2])))
+
+
+## Reading 11's rule (Game Design, 2026-11-15): the median inside the band, and at least 9 seeds in 10 inside it.
+func _band11(xs: Array, lo: float, hi: float) -> bool:
+	var m: float = _median(xs)
+	var inside: int = xs.filter(func(x): return float(x) >= lo and float(x) <= hi).size()
+	return m >= lo and m <= hi and inside * 10 >= xs.size() * 9

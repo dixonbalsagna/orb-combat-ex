@@ -58,6 +58,27 @@ The sources are kept as reference for A4 in `horde-trial/src/` (not a park; noth
 - **The new trade-off is run length.** A tougher pack with ×1.5 bodies makes the two-player run about 1:30 longer than playing alone (7:37), and outside reading 8's band.
 - If Game Design wants the band kept, the count multiplier is the lever: by proportion, ×1.2 instead of ×1.5 gives a run of about 7:40. That's an estimate, not a run.
 
+**Game Design's second ruling (2026-11-15):**
+- The two-player count is **×1.2** (toughMul and gapMul stay).
+- Reading 11 reads on the median, with at least 9 seeds in 10 inside the band. Seed 3 alone then passes.
+
+**At 1.2, with a fix the run found, every reading passes** (10 seeds, records in `runs/1c19d81d/horde-two/`; `horde_check` is 44 of 44):
+
+| Reading (two medium pads) | Line | ×1.2 |
+| :--- | :--- | :--- |
+| 8 | Each run 6:00 to 8:00 | 7:25 to 7:35 (mean 7:31) |
+| 10 | Each loses 10 to 35% | 15 to 21% |
+| 10 | Nobody in reach at most 35% of a wave | worst wave 28% |
+| 11 | Twelve fodder in 3 to 6 s between two | median 5.2 s (4.3 to 5.9) |
+| 5, 6, 7 | | pass |
+
+8. **The fix: the leash's re-mark.** At 1.2 before the fix, seed 1's wave 3 reached 46% with nobody in reach.
+   - The traced run showed one seat's pad up near 22,000 units and the other near 4,000. One body hung between them for the whole wave.
+   - Past the 30 bh leash it re-marked by "fewer bodies", which could pick the farther seat. It re-checked every tick, flipping between the two.
+   - Past the leash a place now re-marks to the nearest seat that is up. Alone nothing changes: there is one seat.
+
+The scripted pads chase the nearest body in height too, so one can climb toward the 24,000 ceiling; a person may not. This bug lives in the pack, not the pads.
+
 ## Findings
 
 1. **The dash's arrival ease held the pack outside its own reach.** `bands.arrive`, which is on in Orb's build, eases any dashing body to `engageBh` (2.5 bh) from its rival and never closer. The pack dashes, and its reach is 1.5 bh, so every pack blow missed. In the trial a pack body is exempt; seats keep the ease toward their mark. The A4 build needs this line.

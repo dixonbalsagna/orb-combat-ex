@@ -188,8 +188,8 @@ func _t2() -> void:
 	var want: int = 0
 	for row in SimHorde.data().waves:
 		for kk in ["fodder", "bruiser", "speedster"]:
-			want += int(floor(float(row[kk]) * 1.5 + 0.5))
-	ok(S3.horde.sent == want and S3.horde.over == 1, "two seats: %d bodies (each wave's count x 1.5, rounded) (%d, over %d)" % [want, S3.horde.sent, S3.horde.over])
+			want += int(floor(float(row[kk]) * float(SimHorde.data().two.countMul) + 0.5))
+	ok(S3.horde.sent == want and S3.horde.over == 1, "two seats: %d bodies (each wave's count x the data's two.countMul, rounded) (%d, over %d)" % [want, S3.horde.sent, S3.horde.over])
 	# the backstop: nothing falls
 	var S4 := _horde()
 	var r4: Dictionary = _scripted(S4, 1 << 30, DirHorde.capTicks() + 10, null, true)

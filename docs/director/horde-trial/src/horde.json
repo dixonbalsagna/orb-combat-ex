@@ -50,7 +50,7 @@
   ],
   "rest": {"ticks": 600, "backBody": 0},
   "down": {"onLastBlow": true, "backAtWaveEnd": true, "backBody": 400, "bodyShare": 1.0},
-  "two": {"countMul": 1.5, "respawnMul": 1.0},
+  "two": {"countMul": 1.2, "respawnMul": 1.0},
   "energyOnFall": {"enabled": false, "fodder": 2, "grunt": 4},
   "result": {"felled": true},
   "cap": {"seconds": 720}

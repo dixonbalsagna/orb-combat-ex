@@ -438,8 +438,25 @@ static func _marks(S: SimState) -> void:
 		if f.hd.kind == 0:
 			if M.out or M.hd.phase == 6:
 				R.mark[k] = _nearestPack(S, f)
-		elif f.hd.phase != 3 and (M.out or M.hd.phase == 7 or DirBands.dist(f, M) > float(_c().play.leashBh) * DirBands.BH):
+		elif f.hd.phase != 3 and (M.out or M.hd.phase == 7):
 			R.mark[k] = _markFor(S)
+		elif f.hd.phase != 3 and DirBands.dist(f, M) > float(_c().play.leashBh) * DirBands.BH:
+			R.mark[k] = _nearestSeat(S, f, R.mark[k])   # past the leash: the nearer seat that is up (by count it could pick the farther, and flip back the next tick: the body hung between two seats far apart)
+
+
+## The nearest seat that is up to f, or `keep` when none is nearer than it.
+static func _nearestSeat(S: SimState, f, keep: int) -> int:
+	var best: int = keep
+	var bd: float = DirBands.dist(f, S.fighters[keep]) if not S.fighters[keep].out and S.fighters[keep].hd.phase != 7 else INF
+	for s in range(SimHorde.seats):
+		var P = S.fighters[s]
+		if P.out or P.hd.phase == 7:
+			continue
+		var d: float = DirBands.dist(f, P)
+		if d < bd:
+			bd = d
+			best = s
+	return best
 
 
 static func _nearestPack(S: SimState, f) -> int:
