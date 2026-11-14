@@ -1,0 +1,5 @@
+anim_check on a fresh export of main (HEAD b12fd311) with gw1a-pins.patch:
+
+water stance: depths [20.0, 60.0, 120.0, 598.0], no fighter read as airborne on the floor
+Anim check  10538 checks
+anim check passed

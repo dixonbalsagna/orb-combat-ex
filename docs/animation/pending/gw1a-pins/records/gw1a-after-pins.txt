@@ -1,0 +1,5 @@
+anim_check on the same copy with gw1a-pins.patch (the zero-failure line is the verdict; no SCRIPT ERROR in the run):
+
+water stance: depths [20.0, 60.0, 120.0, 598.0], no fighter read as airborne on the floor
+Anim check  10538 checks
+anim check passed
