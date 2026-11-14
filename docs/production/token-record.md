@@ -18,6 +18,8 @@
 
 **Reading, EP status 3 (Sat 14 Nov, 03:50 PST):** all-models 66%, Fable 87%; the Fable reset still waits on Orb.
 
+**Reading, EP status 4 (Sat 14 Nov, 04:50 PST):** all-models 68%, Fable 87%; the Fable reset still waits on Orb.
+
 ## The rate basis the EP gave (to convert tokens to meter points)
 
 - About **1.6 all-models points per 1M tokens on the largest (Fable) model**; about **1 point per 1M on the smaller models** most directors run on. (The audit measured the first: 11 points for 7.0M tokens.)

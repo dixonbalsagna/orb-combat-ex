@@ -17,7 +17,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-ANIM-06 | A1 | ep | S | minor | not started |  | The animation runtime, its tools and its data (render/anim, data/anim) are on no director's owns line;… |
 | A-AUDIO-01 | A1 | audio-music | S | major | reported |  | On main five sound sets are off, so a build made plainly from main has no beam, knock-out, launch, struggle… |
 | A-CAMERA-01 | A1 | camera | S | major | reported |  | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share,… |
-| A-CODE-01 | A1 | ep | L | blocker | not started |  | Main does not hold the game Orb plays: 72 of the 92 build switch rows differ between main and Orb's solo… |
+| A-CODE-01 | A1 | ep | L | blocker | reported |  | Main does not hold the game Orb plays: 72 of the 92 build switch rows differ between main and Orb's solo… |
 | A-CODE-02 | A1 | simulation-engine | M | major | briefed |  | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no… |
 | A-CODE-03 | A1 | tools-pipeline | M | major | reported |  | Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to… |
 | A-CODE-04 | A1 | tools-pipeline | L | major | landed |  | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests,… |
@@ -90,12 +90,12 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-ACCESS-04 | A2 | ep | S | minor | not started | CD-14 | Corrective item CD-14 has an empty progress cell and no commit or record names it since 2026-11-07, although… |
 | A-AUDIO-03 | A2 | audio-music | S | major | not started |  | Nothing in the area is proved by ear: Audio's pages say nobody has listened, and Orb's latest word… |
 | A-AUDIO-04 | A2 | audio-music | S | major | not started |  | Sound on the Alpha's platforms (a Windows desktop build, Linux, the Steam Deck) is not evidenced: every proof… |
-| A-CAMERA-02 † | A2 | camera | S | major | not started | CD-04 | (see the full table) |
+| A-CAMERA-02 † | A2 | camera | S | major | reported | CD-04 | (see the full table) |
 | A-CAMERA-03 | A2 | camera | S | major | not started |  | No camera test or saved record runs at the Steam Deck's 1280 by 800: every camera test fixes 1280 by 720, and… |
 | A-CONTROLS-03 | A2 | controls-feel | S | major | not started |  | A pad unplugged mid-match does not pause or show a notice: player two's fighter is handed to the computer and… |
 | A-CONTROLS-07 | A2 | controls-feel | S | major | not started |  | The Steam Deck's built-in controls have never been tried: no run on a Deck or through Steam's pad layer is on… |
 | A-CONTROLS-08 | A2 | performance-platform | S | minor | not started |  | The press-to-picture latency record is not current: it measures the browser build with keyboard presses on 22… |
-| A-LEGAL-01 † | A2 | camera | XL | blocker | not started | CD-04 | (see the full table) |
+| A-LEGAL-01 † | A2 | camera | XL | blocker | reported | CD-04 | (see the full table) |
 | A-LEGAL-03 | A2 | legal-ip | S | major | briefed |  | The list of gates that must be green before an outside tester plays did not exist before this audit, and… |
 | A-LEGAL-05 | A2 | legal-ip | S | major | not started |  | The tester note is a draft for the owner to send, its review row is still open on two conditions, and nothing… |
 | A-LEGAL-06 | A2 | tools-pipeline | M | major | not started |  | Legal asked that report files be checked for account names and file paths before a tester sends them, and no… |
@@ -323,4 +323,4 @@ From the corrective plan: none. Every item without a closing entry, or with an o
 
 **From QA's bug list** (qa/known-bugs.md; the register's row A-QA-03 says it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09, so it is not the whole bug list). Entries: KB-001 to KB-006 (the pinned prototype, open as coded, no release blocked) and GB-001 to GB-009. Not closed: GB-003 camera jolt on a knock-away (with Camera), GB-004 a design call, GB-005 mountain tumbles (with World), GB-007 rocks round a fast fighter (not reproduced), GB-009 the blaster's balance. Fixed but not re-verified in play: GB-002, GB-006. None has a register row; they are listed apart until QA's rows A-QA-03 and A-QA-07 re-read the list against the played build.
 
-**From the parked folders** (docs/*/pending, file counts read 2026-11-14): accessibility 0, animation 9, architecture 22, art 4, audio 82, camera 57, combat 149, controls 57, director 168, narrative 20, net 4, perf 0, rendering 137, tools 139, ui 46, vfx 53, world 36 (983 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.
+**From the parked folders** (docs/*/pending, file counts read 2026-11-14): accessibility 0, animation 9, architecture 21, art 4, audio 82, camera 59, combat 149, controls 57, director 172, narrative 20, net 4, perf 0, rendering 142, tools 140, ui 46, vfx 57, world 41 (1003 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.

@@ -1,0 +1,11 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    hilly places are found on the line (12)
+humps in a bowl of radius 1991 at x 20200 (4 lines): switch off 4, on 0; the floor's deviation from the centre's ground less the profile: off 1230.9, on 1.31
+  ok    with the switch off the bowl has humps (4): the bug, and the check can see it
+  ok    with the switch on no hump stands inside 0.9 of the radius (0)
+  ok    the floor is the centre's ground less the bowl's profile, within 3 units (1.31; the line's chord against the arc)
+  ok    the switch is a read, not a record: the store's hash is the same on and off
+  ok    a peer that read the ground before the dig and one that did not read the same 801 columns
+  ok    beyond the fade (1.45 radii and a margin for the line's arc) the ground is what it is with the switch off (0 columns differ)
+CRATERFLATTEN: 0 check(s) failed

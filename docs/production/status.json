@@ -160,18 +160,19 @@
       "note": "Started early, in A1, as the path says."
     },
     "A-LEGAL-01": {
-      "status": "not started",
-      "ref": "wave 2, from Saturday 14 Nov",
-      "note": "Briefed early for A2 (Camera, Rendering, VFX)."
+      "status": "reported",
+      "ref": "f61eb8c2 (VFX: the clash capture)",
+      "note": "Reported, part of the reading (EP status 4, Sat 14 Nov 04:50)."
     },
     "A-CAMERA-02": {
-      "status": "not started",
-      "ref": "wave 2, from Saturday 14 Nov",
-      "note": "Briefed early for A2."
+      "status": "reported",
+      "ref": "148f4e16, 63d62abd, b3bfa8e7, f1f91f45 (clash attribution plus launch parks)",
+      "note": "Reported (EP status 4, Sat 14 Nov 04:50)."
     },
     "A-NET-05": {
       "status": "reported",
-      "ref": "parked, held for B1 fixes (EP status 1, 2026-11-14)"
+      "ref": "00925b89 (sim re-cut, B1); Netcode stack proof b0135850",
+      "note": "Waits on Tools' piece (EP status 4, Sat 14 Nov 04:50)."
     },
     "A-CONTROLS-02": {
       "status": "reported",
@@ -190,7 +191,7 @@
     },
     "A-CAMERA-01": {
       "status": "reported",
-      "ref": "8fee3caa; launch parks 63d62abd and b3bfa8e7 (parked, gated)",
+      "ref": "8fee3caa; launch parks 63d62abd and b3bfa8e7; GW1a pins a0966bb0 (Camera)",
       "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
     },
     "A-AUDIO-01": {
@@ -322,6 +323,11 @@
       "status": "reported",
       "ref": "be128ccd (Rendering: crater look)",
       "note": "Reported (EP status 3, Sat 14 Nov 03:50)."
+    },
+    "A-CODE-01": {
+      "status": "reported",
+      "ref": "f83c78e9 (the GW1a preview reproduces the target byte for byte on today's code)",
+      "note": "Not closed: main itself must reproduce the target, which waits on GW1a landing (EP status 4, Sat 14 Nov 04:50). Blockers: World's checks park, Sim's gates park, Rendering's foot-slice split."
     }
   },
   "added": [
@@ -360,10 +366,10 @@
       "milestone": "A1",
       "owner": "rendering-techart",
       "what": "Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building.",
-      "status": "not started",
-      "ref": "planned in docs/ep/sprints/A1-sprint.md",
+      "status": "reported",
+      "ref": "ff02e386 (Rendering: clipping, feet) and its GW1a re-cuts",
       "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
-      "note": "Lands as window GW1c, after GW1b."
+      "note": "Part reported (EP status 4, Sat 14 Nov 04:50); the foot-slice split blocks GW1a."
     },
     {
       "id": "ADD-A1-05",
@@ -399,6 +405,12 @@
       "count": 69,
       "of": 87,
       "note": "EP status 3 (Sat 03:50 PST): unchanged. GW1a blockers: World's pins park and Rendering's after_check pin; B1 waits on Sim's header builder"
+    },
+    {
+      "date": "2026-11-14",
+      "count": 69,
+      "of": 87,
+      "note": "EP status 4 (Sat 04:50 PST): unchanged. GW1a blockers: World's checks park, Sim's gates park, Rendering's foot-slice split"
     }
   ],
   "switchRowsEveryDays": 2,
@@ -513,9 +525,9 @@
     }
   },
   "notes": [
-    "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde design) is input to Encounter's spike S3 row, which stays briefed until the trial clip: stand-in 50c41812, Game Design rulings 49db1eff.",
-    "Main is 148f4e16 (21 commits pushed at 03:40; CI on 83a5b963 was green, 148f4e16 is running; 7 local commits held). The parks listed at status 2 are on main as parks or tools, switched off.",
-    "Also: Tools' owner-private desktop notice fix dd4dca9a is part of A-TOOLS-01 and closes nothing; Netcode lan-hash 8007de44 (B1); UI a1-world-menu 611c1c2b and a1-window-row 49fa623e; the net CI split 3c2ff9ac.",
-    "Meters at EP status 3: all-models 66%, Fable 87% (the Fable reset waits on Orb)."
+    "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde): design 50c41812, rulings 49db1eff, trials T1 to T3 reported 73fa513e; Encounter's S3 row stays briefed until the trial clip.",
+    "Main is b0135850 (17 commits pushed; CI on 148f4e16 green); it includes the net CI split 3c2ff9ac and the local-build proof d3d5bd66. Nothing of the played game has landed.",
+    "Also: Tools' owner-private notice dd4dca9a is part of A-TOOLS-01 and closes nothing; Netcode lan-hash 8007de44 (B1); UI a1-world-menu 611c1c2b and a1-window-row 49fa623e.",
+    "Meters at EP status 4: all-models 68%, Fable 87% (the Fable reset waits on Orb)."
   ]
 }

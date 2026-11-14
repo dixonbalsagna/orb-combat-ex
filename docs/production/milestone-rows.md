@@ -14,7 +14,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-CAMERA-01 | S | major |  |  | reported | 8fee3caa; launch parks 63d62abd and b3bfa8e7 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share, follow-through, flight reveal) switches on only when the game… |
+| A-CAMERA-01 | S | major |  |  | reported | 8fee3caa; launch parks 63d62abd and b3bfa8e7; GW1a pins a0966bb0 (Camera) — parked and gated, waiting for its window (EP status 1, 2026-11-14) | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share, follow-through, flight reveal) switches on only when the game… |
 
 **combat-choreography** (1)
 
@@ -45,7 +45,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-ANIM-06 | S | minor |  |  | not started |  | The animation runtime, its tools and its data (render/anim, data/anim) are on no director's owns line; Animation owns only art/animation and docs/animation. |
-| A-CODE-01 | L | blocker | GW1 | A-AI-05 A-AUDIO-01 A-CAMERA-01 A-CODE-03 A-CONTROLS-02 A-ENERGY-04 A-MODES-07 A-MODES-15 A-RENDER-01 A-WORLD-01 | not started |  | Main does not hold the game Orb plays: 72 of the 92 build switch rows differ between main and Orb's solo build, so a fresh clone, CI and any desktop build made from main… |
+| A-CODE-01 | L | blocker | GW1 | A-AI-05 A-AUDIO-01 A-CAMERA-01 A-CODE-03 A-CONTROLS-02 A-ENERGY-04 A-MODES-07 A-MODES-15 A-RENDER-01 A-WORLD-01 | reported | f83c78e9 (the GW1a preview reproduces the target byte for byte on today's code) — Not closed: main itself must reproduce the target, which waits on GW1a landing (EP status 4, Sat 14 Nov 04:50). Blockers: World's checks park, Sim's gates park, Rendering's foot-slice split. | Main does not hold the game Orb plays: 72 of the 92 build switch rows differ between main and Orb's solo build, so a fresh clone, CI and any desktop build made from main… |
 | A-PROCESS-02 | S | major |  |  | reported | EP row; Production Ops draft in docs/production/backlog-draft.md — Partial draft: the register and the corrective plan are in; it waits on the EP's owed list, QA's bug list and the parked-folders list. The EP owns and commits it. | There is no single backlog: open work sits in the corrective plan, the EP's messages and per-machine memory notes, parked folders, a git-ignored homework folder and… |
 | A-PROCESS-03 | M | major |  |  | briefed | EP's own, under way (docs/ep/sprints/A1-sprint.md) — Tools' group landed in 191e5e30; one owner's group at a time, screened before each push. | The working tree carries 14,805 uncommitted paths, including run records, parked work, the terrain plan and three QA tool edits, so the repository does not hold the… |
 | A-PROCESS-06 | S | major |  |  | not started |  | The P0 to P5 roadmap in CLAUDE.md no longer describes the project: no phase gate result is on record, P3 and P4 name systems Orb put on the backburner, and the… |
@@ -127,7 +127,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 | A-CODE-02 | M | major |  | A-CODE-01 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no golden record and was verified by a pack read and a smoke… |
 | A-ENERGY-04 | S | major | GW1 |  | reported | 201bd3d2 (Sim, committed locally) — On main as a park in 148f4e16; Encounter's energy-on pins 720b9fa8 reported; World's pins park and Rendering's after_check pin still block GW1a (EP status 3, Sat 14 Nov 03:50). | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only through a code patch the page tool writes, so main does not… |
 | A-ENERGY-05 | M | major | GW1 |  | reported | 69406d59 (meters set to zero, committed locally) — Reported, lands in GW1b (EP status 3, Sat 14 Nov 03:50); Game Design's comeback numbers landed in 970d15a6. | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in every match: they change damage, energy regain, beam contests… |
-| A-NET-05 | S | major |  |  | reported | parked, held for B1 fixes (EP status 1, 2026-11-14) | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with the same data and different code is run and fails at… |
+| A-NET-05 | S | major |  |  | reported | 00925b89 (sim re-cut, B1); Netcode stack proof b0135850 — Waits on Tools' piece (EP status 4, Sat 14 Nov 04:50). | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with the same data and different code is run and fails at… |
 
 **tools-pipeline** (13)
 
@@ -173,7 +173,7 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 | ADD-A1-01 | world-environment | Five selectable planet sizes (World, with Simulation and Performance): from World's six, five are picked; each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window. | reported | 3b6e89b5 (World, five sizes) and 7321f49b (Sim, replay sizes); GD ruling a046f3d9; Netcode pricing cf909e93 | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-02 | world-environment | Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | reported | 5263c1a6 (World destruction plan); Game Design buildings paper f3a8d64d | Orb, 2026-11-13 night (ideas-log ID-22) |
-| ADD-A1-04 | rendering-techart | Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
+| ADD-A1-04 | rendering-techart | Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building. | reported | ff02e386 (Rendering: clipping, feet) and its GW1a re-cuts | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-05 | encounter-systems | Launch rebound bug (Encounter Systems, with World): a fighter that bounces off something in the background must not ricochet on an unrealistic path. Done test: no launch rebound leaves a structure or terrain at an angle or speed the contact cannot explain, read over seeded launches, plus Orb's eye at A1. | not started | EP, 2026-11-14 (Orb's clarification in vision.md) | Orb, 2026-11-14 (ideas-log ID-24) |
 
 ## A2. Safe to hand out; two real Steam Decks have run it — 41 rows
@@ -195,9 +195,9 @@ _Built from status.json for 2026-11-14 by tools/build-tracker.mjs, with every ro
 
 | Row | Size | Severity | Window | Needs | Status | Evidence | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-CAMERA-02 † | S | major |  |  | not started | wave 2, from Saturday 14 Nov — Briefed early for A2. | Two flash safeguards for the camera are parked and not on main: the scroll limit under reduced motion or reduced flashing equals the ordinary one (0.045), and no camera… |
+| A-CAMERA-02 † | S | major |  |  | reported | 148f4e16, 63d62abd, b3bfa8e7, f1f91f45 (clash attribution plus launch parks) — Reported (EP status 4, Sat 14 Nov 04:50). | Two flash safeguards for the camera are parked and not on main: the scroll limit under reduced motion or reduced flashing equals the ordinary one (0.045), and no camera… |
 | A-CAMERA-03 | S | major |  | A-UI-09 | not started |  | No camera test or saved record runs at the Steam Deck's 1280 by 800: every camera test fixes 1280 by 720, and UI's own paper says a plate crosses the 30% pane by 70 px… |
-| A-LEGAL-01 † | XL | blocker |  | A-CAMERA-01 A-LEGAL-08 A-RENDER-01 A-RENDER-04 | not started | wave 2, from Saturday 14 Nov — Briefed early for A2 (Camera, Rendering, VFX). | On the globe (tile) ground that every build Orb plays uses, the last pixel flash reading failed in both normal and reduced modes (clash 5.5 and 6.5 a second against a… |
+| A-LEGAL-01 † | XL | blocker |  | A-CAMERA-01 A-LEGAL-08 A-RENDER-01 A-RENDER-04 | reported | f61eb8c2 (VFX: the clash capture) — Reported, part of the reading (EP status 4, Sat 14 Nov 04:50). | On the globe (tile) ground that every build Orb plays uses, the last pixel flash reading failed in both normal and reduced modes (clash 5.5 and 6.5 a second against a… |
 
 **controls-feel** (2)
 
