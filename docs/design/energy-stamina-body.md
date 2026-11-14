@@ -82,6 +82,7 @@ Orb's decision 6: keep the comeback as a rule for every fighter, set every other
 | **QA's measurement, before the loop goes on** | **The fighter who falls behind first wins 30 to 45%** of AI-against-AI matches. "Falls behind" means the first to reach a third of the way to the brink. If it's over 45%: cap 0.35. If it's under 30%: don't raise the cap; the loop's form boost comes next |
 
 - **The rival gains the comeback and loses his meter's bonuses,** so QA also reads the two fighters' win rates before and after.
+- **Also zeroed for GW1 (2026-11-15, Simulation's question):** `destroyed_power` (the villain's power from destruction: an unseen power feed for one role, which belongs to the back-burnered personalities, so `bystanders.md`'s 0.07 waits for them), and `region_broken` and `brink` (they feed only the meter whose effects are now zero, so nothing should build up out of sight). Every fighter's ladder then fills alike, from time, charging and damage.
 
 ## 7. The runaway risk: whoever lands blows refuels
 
