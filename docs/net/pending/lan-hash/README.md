@@ -22,6 +22,15 @@ The values and their order don't change, so a saved file is byte for byte what i
 
 `git -c core.autocrlf=false apply replay-build.patch grant-netcode-build.patch grant-tools-build.patch lan-stamp.patch lan-hash.patch` (each in turn: `git apply` checks a list of patches against the original tree, not stacked).
 
+**Can a web build, or a desktop build without threads, reach the worker thread? No.** I checked by reading the code (EP's question for the B1 review):
+- Only `net/lan.gd:258` turns on `hashChecks`, and `_hashLater` runs only when it's on. No other script in the repository sets it: not rollback, desync, the spectator or any other check.
+- `NetLan` is created only by the private LAN kit's patched `render/core/main.gd`, and only when the game starts with `--lan-host`, `--lan-join` or `--lan-loop` (`net/tools/lan_kit.mjs:53-55`).
+- Main's `main.gd`, `sim_host.gd` and every other shipped script outside `net/` never create a `NetLan`, a `NetSession` or a transport (the only mentions are comments).
+- The kit exports only the Windows Desktop preset, which always has threads. `lan_check` runs on desktop Godot, headless.
+- The web page packs `net/`, because the Web preset doesn't exclude it, but nothing on the page starts a LAN session. The desktop builds exclude `net/` entirely.
+
+So no fallback is built. If LAN ever comes to a build without threads (A3's in-game LAN is desktop first, and a browser LAN would be WebRTC), `_hashLater` gets one guard: `if not OS.has_feature("threads")`, hash the checkpoint's copy in the frame, once (the same call, without the thread).
+
 **What it doesn't touch:** the cheap digest every checkpoint (MD5, about 1 ms) and the checkpoint's own snapshot take (1.57 ms), as before. Performance's per-size readings will show the rest.
 
 Runs: `docs/net/runs/29a153f5/lan-hash/` (CD-22).
