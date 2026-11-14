@@ -1,0 +1,57 @@
+hitstop-any re-cut on 578e819e with dash-slip applied first (scratch tree: an export of HEAD, dash-slip's three patches committed as the base, then kick/hitstop_edit.py, hitstop_recut.py (Game Design's numbers, Encounter's ex.kind), hitstop_recut2.py (the review's fixes, Encounter's grant)).
+Note: a first gate run on the tree before the review's fixes was stopped part-way; its shell outlived the stop and overlapped this run for about ten minutes (09:42 to 09:51), two Godot jobs at once. Every check below is pass/fail, and each one's own output is this run's.
+
+== full gate (after the review's fixes)
+hitstop-any sha1 f233d1581e504bf7aa279c4d2048da4f678cc3b0 sha256 8e5d3487d665 11 files
+grant-tools-hitstop sha1 d63a9c81469ff88a53ffb09ef9308469c4dc6748 sha256 6d129b013fba 2 files
+grant-encounter-hitstop sha1 88a5882e615f3ce283e8185295ca01a24c610b5e sha256 2f3966bbd67f 4 files
+import 0; parse errors 0
+validate self-test 0
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+golden: exit 0 in 129 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (174798 ticks), 2 replays
+  golden.json byte-identical
+parity through gate.mjs: exit 0 in 300 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+63:ok    hit-stop by weight
+two_states: exit 0 in 58 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 105 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+rb_ai: exit 0 in 18 s; script errors 0; PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash
+desync: exit 0 in 18 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+xproc: exit 0 in 41 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 700535bee66d8cb8, Easy 3373caa3a4278730
+det: exit 0 in 151 s; script errors 0; determinism passed
+power_check through gate.mjs: exit 0 in 117 s; POWER: 0 check(s) failed
+load_split: exit 0 in 5 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by na
+d_press_decides: exit 0 in 5 s; script errors 0; PRESS: 0 check(s) failed
+d_launch_cost: exit 0 in 322 s; script errors 0; LAUNCH COST: 0 check(s) failed
+d_chase_tap: exit 0 in 6 s; script errors 0; CHASE: 0 check(s) failed
+== Rendering's checks
+after_check: exit 0 in 13 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 59 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 13 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 45 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 43 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 51 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 54 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 7 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 11 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 20 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 21 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 13 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 11 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 14 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 11 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+gate done
+
+== after hitstop_recut3.py (words only: notes and comments): the final patches
+hitstop-any sha1 ce0249c2465437c5ce221796d33e1768a335e366 sha256 8dbf1fb30d2c 11 files
+grant-tools-hitstop sha1 16e929dd0a7576a858c382f8939873bf1452f55f sha256 57a6b833c3e0 2 files
+grant-encounter-hitstop sha1 88a5882e615f3ce283e8185295ca01a24c610b5e sha256 2f3966bbd67f 4 files
+import 0; parse errors 0
+validate self-test 0
+validate 0; 321 files checked, 0 errors, 2 warnings
+golden: exit 0 in 118 s; script errors 0
+  golden.json byte-identical
+parity through gate.mjs: exit 0 in 273 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+hs3 done

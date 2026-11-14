@@ -1,0 +1,30 @@
+ok    the replay header covers a planet's data
+ok    the intent's second word in the hash and the replay
+ok    a struggle, as the host reads it
+ok    a match starts on the floor of a lake or the sea
+ok    the run's ground
+ok    the run's state and carry
+ok    the campaign's arc and episode
+ok    the planet's load
+ok    the calm turn on gen 2
+ok    the match's start in pieces
+ok    the aftermaths
+ok    the curve's shared functions, the brake's control back, the camera feed
+ok    the air brake
+ok    forms: five steps and the slingshot
+ok    forms: Witness and Trial
+ok    Animation's view fields: a launch's tier, a hit's stop and tier
+ok    the intro phase (golden)
+ok    composed intros (golden)
+ok    replay module
+      9 matches, 176002 ticks: every per-tick digest and full-state checkpoint identical
+ok    matches
+ok    human-input replays
+      3 slices, 3 tick-0 states, a planet match of 3600 ticks: identical
+ok    planet worlds (golden)
+      (matches and replays: 132.2 s)
+time  sim tick:  mean 368.4 us, p50 359, p99 994, p99.9 1511, max 7962 us over 179990 ticks of 10 matches
+time  cosmetic consumer and camera (render side): mean 46.0 us, p50 36, p99 183, p99.9 327, max 1190 us over 179990 ticks of 10 matches
+time  318.9 s
+golden check passed
+gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines

@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+res://sim/core/act.gd                1469.0 ms   sim scripts loaded  77 of 152, the director's  0 of 50
+res://sim/core/shots.gd                 0.0 ms   sim scripts loaded  77 of 152, the director's  0 of 50
+res://sim/input/press_read.gd          21.1 ms   sim scripts loaded  78 of 152, the director's  0 of 50
+res://sim/input/aim.gd                 17.0 ms   sim scripts loaded  79 of 152, the director's  0 of 50
+res://sim/director/exchange.gd       1803.2 ms   sim scripts loaded 130 of 152, the director's 48 of 50
+res://sim/core/campaign.gd            330.8 ms   sim scripts loaded 138 of 152, the director's 49 of 50
+res://sim/input/hub.gd                119.4 ms   sim scripts loaded 144 of 152, the director's 49 of 50
+total 3760.6 ms
+SimDir's calls: 28, all found
+SimDir's forwards the core and the world call: 26 (arcStep, arrive, bandsWho, blastBy, blastHit, blastRules, brawlPayMul, brokenProps, calmAtReady, doLaunch, endEx, endingOn, endingWearMul, flightHook, formBreak, holdMove, outsideLanded, pressInStun, propBroke, refillHeld, transformSource, wallKickAt, wallKickMul, waterRiseTicks, waterUnder, zipping), all defined
+ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name

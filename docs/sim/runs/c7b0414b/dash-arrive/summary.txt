@@ -1,0 +1,12 @@
+import 0; parse errors 0
+golden: exit 0 in 139 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (176002 ticks), 2 replays in 135.6 s
+  golden.json byte-identical
+load_split: exit 0 in 4 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name
+load_split_neg: exit 0 in 4 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+6:FAIL: SimDir calls flightHookGone in launch.gd with 2 arguments, which is not a static function of it that takes them
+9:FAIL: res://sim/world/contact.gd calls SimDir.propBroke, which res://sim/core/dir.gd does not define
+12:FAIL: res://sim/world/contact.gd calls the director by SimDir._d: give the call a named forward in res://sim/core/dir.gd
+power: exit 0 in 126 s; script errors 0; POWER: 0 check(s) failed
+arrive: exit 0 in 4 s; script errors 0; ARRIVE: 0 check(s) failed
+parity through gate.mjs: exit 0 in 323 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+done

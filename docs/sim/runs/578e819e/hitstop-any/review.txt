@@ -1,0 +1,29 @@
+Read-only review of the hitstop-any re-cut (2026-11-09): three lenses (the kind path, the numbers, determinism), each finding checked by a skeptic told to refute it.
+CONFIRMED (14, several overlapping):
+- [high] uncutAfter's KO test reads the HP readout, which since S2 is not a KO: the real KO blow gets cut, and every blow on an empty bar keeps its whole stop (sim/core/hitstop.gd:200)
+- [medium] Grapple throw: a heavy whose kind is lost, read from the exchange's stale ex.kind (often 'light') and cut (sim/director/grapple.gd:540)
+- [medium] Double hit (and other blows whose brawl weight differs from bk) read by ex.kind from bk alone: a 6-tick heavy stop cut as a light (sim/director/brawl.gd:3092)
+- [medium] Finisher's final blow (decisive) is named only with hit-stop by weight on; under budgetAny it is read by the reused exchange's kind and cut (sim/director/exchange.gd:1231)
+- [low] Chase heavy blows pass ex = null and no weight, so the heavy is cut (sim/director/chase.gd:331)
+- [low] Planned strikes and links read by the exchange's request kind: in a heavy exchange, openers, mids and link lights escape the cut; in a light one, heavy and ender atoms are cut (sim/director/exchange.gd:483)
+- [low] With only the budget on, frozen() now drops the residue (n ticks frozen), but the damage event's stop and the camera feed still count n + 1 (sim/core/damage.gd:125)
+- [medium] uncutAfter treats the HP readout as a KO: at 0 HP the budget turns off, and a finisher's KO blow can still be cut (sim/core/hitstop.gd:200)
+- [medium] With budgetAny alone, the decisive, ko, launch and launch_full entries in neverCut can never match, and the double hit's heavy stop is cut 6 to 4 (sim/core/hitstop.gd:187)
+- [low] With budgetAny alone, the sim freezes whole ticks but the damage event and cam_intent still count the old n+1 (sim/core/damage.gd:125)
+- [low] The profilers' copies of the step still gate frozen() and live() on S.hitstopOn, so their twin-hash proof fails once budgetAny is on (sim/core/tools/tick_prof.gd:54)
+- [medium] budgetAny quietly switches every hit-stop to whole ticks, but the damage event and the camera cue still count today's n+1 (sim/core/sim.gd:406)
+- [low] Profiler copies of the step still guard frozen()/live() with S.hitstopOn, so their twin-hash check fails once budgetAny is on (sim/director/tools/dir_prof.gd:209)
+- [low] Doc notes now wrong: budget._note says a 2-tick stop is 1 over the budget, and StopState's doc says the budget exists only while hitstopOn (data/fight/hitstop.json:28)
+REFUTED (3):
+- Stale notes on the shared budget: 18% left in docs, and the budget's _note implies a 2-tick stop goes to 1 under hit-stop by weight too
+- net/desync.gd's digest leaves out S.hs while SimHash hashes it. This is an old gap for hit-stop by weight; the change makes it reachable from a second switch
+- The new 'stops' rollback setup isn't in two_states_check's default list, so CI never runs it
+
+WHAT WAS DONE (kick/hitstop_recut2.py, kick/hitstop_recut3.py):
+- the KO clause: uncutAfter no longer reads hp <= 0 as a KO (hp is a readout since wounds S2); parity: a blow on an empty bar is cut (8)
+- weights named with the budget on: DirMelee.weigh and the finisher's naming run while S.hitstopOn or S.hsAny (Encounter's grant); closes the finisher, the grapple throw, the double hit and planned strikes; parity: a finisher's decisive 18 and a throw's heavy 6 in a light exchange, whole
+- whole ticks: the damage event's stop (damage.gd) and the camera cue (camintent.gd, grant) count as the step does with the window there
+- the profilers' copies of the step (tick_prof.gd, dir_prof.gd grant) gate frozen()/live() on S.hs != null as the step does
+- doc notes: budget._note, StopState's doc, the brawl wording
+- left open, Encounter's: a chase blow passes no exchange and no weight, so its heavy is cut
+A closing read-only check of the fixes: all five closed, no regression with both switches off; noted that with the budget on, brawl blows named launch (the close, a sold medium, a level-3 stick charge) are never cut, and chain links and opener atoms in a heavy exchange are cut as lights (Game Design to confirm).

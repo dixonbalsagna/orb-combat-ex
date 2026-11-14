@@ -1,0 +1,50 @@
+HEAD 3aaf0df3
+mine: power.json dash, power.gd, state.gd, hash.gd, fighter.gd, sim.gd, power_check.gd, two_states_check.gd
+grants: net/desync.gd, tools/schemas/fight-power.schema.json (dash, optional), the fixture
+import 0; parse errors 0
+power-dash sha1 fbbba0747886f4b86751558622116bd6c4ae29c0 sha256 1eeb5704f8a8 8 files
+grant-netcode-dash sha1 46980ee2f967c694bf1d663270b1c735ff8383c1 sha256 52ec9d1d88a2 1 files
+grant-tools-dash sha1 78d6365a193cb7720f4cffb47e78395fbd4f6685 sha256 1d9c03a9d9b2 2 files
+validate self-test 0
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+power: exit 0 in 152 s; script errors 0; POWER: 0 check(s) failed
+28:dash close from 1000 at tier 1, in ticks: 12 with the dash and the kick (0.20 s, target 0.40 s); 53 the kick alone; 18 the dash alone; 60 neither
+29:dash close from 3000 at tier 1, in ticks: 36 with the dash and the kick (0.60 s, target 0.80 s); 134 the kick alone; 43 the dash alone; 155 neither
+30:dash close from 6000 at tier 1, in ticks: 72 with the dash and the kick (1.20 s, target 1.40 s); 167 the kick alone; 79 the dash alone; 235 neither
+31:dash close from 6000 at tier 4, in ticks: 32 with the dash and the kick (0.53 s, target 0.75 s); 83 the kick alone; 39 the dash alone; 147 neither
+power_neg: exit 0 in 33 s; script errors 0; POWER negative control: 0 check(s) failed
+24:FAIL  the page's x1.25 along the line (2.00); straight up, once
+25:FAIL  the factor is in the hash
+26:FAIL  a send: the same rise (609.7), sideways by the factor (3348.5 against 3348.5)
+27:FAIL  x0.50 held to the data's range: x2.00
+28:FAIL  the dash at 300, 1,500, 6,000 and 14,000 apart: 1032, 1032, 2733, 5000, his level's flat out
+29:FAIL  at the top, at 300 apart: 1342 (his level's flat out 11525)
+30:FAIL  with the kick, 1,000 apart: 826 on the first tick (off: 826)
+32:FAIL  close from 1000 at tier 1 in 0.88 s with the kick (at most 0.40)
+== Controls' LT probe (the real pad into the sim, the model on, travel 1.5; speed at ticks 3, 6, 12, 24, 48): before (no dash word) and after (--dash)
+lt_before: exit 0 in 10 s; script errors 0;        LT then RB at tick 6:  1872  3169  4647  4585  3997   RB held, then LT:  1872  3169  4647  4585  3997   LT then L
+   600 |   386   657   980  1019  1252 |   386   657   980  1019  1252 |   216   367   547   569   576 |   386   657   980  1019  1252 |   309   526   784   972  1190
+  1500 |   386   657   980  1019  1031 |   386   657   980  1019  1031 |   216   367   547   569   576 |   386   657   980  1019  1031 |   309   526   784   972  1028
+  3000 |   598  1013  1485  1466  1278 |   598  1013  1485  1466  1278 |   334   567   838   847   789 |   597  1011  1483  1463  1276 |   479   811  1193  1412  1299
+  6000 |  1023  1732  2539  2505  2184 |  1023  1732  2539  2505  2184 |   572   970  1433  1448  1350 |  1022  1730  2537  2503  2182 |   818  1387  2040  2414  2220
+ 12000 |  1872  3169  4647  4585  3997 |  1872  3169  4647  4585  3997 |  1047  1776  2622  2649  2470 |  1871  3167  4644  4582  3995 |  1498  2538  3733  4418  4063
+lt_after: exit 0 in 10 s; script errors 0;        LT then RB at tick 6:  1874  3186  4748  4939  4997   RB held, then LT:  1874  3186  4748  4939  4997   LT then L
+   600 |  1874  3186  4748  6269  6722 |  1874  3186  4748  6269  6722 |  1047  1781  2654  3260  3744 |  1874  3186  4748  6269  6722 |  1499  2549  3799  5928  6703
+  1500 |  1874  3186  4748  5136  6657 |  1874  3186  4748  5136  6657 |  1047  1781  2654  2761  3473 |  1874  3186  4748  5136  6657 |  1499  2549  3799  4711  6605
+  3000 |  1874  3186  4748  4939  5985 |  1874  3186  4748  4939  5985 |  1047  1781  2654  2761  2793 |  1874  3186  4748  4939  5985 |  1499  2549  3799  4711  5646
+  6000 |  1874  3186  4748  4939  4997 |  1874  3186  4748  4939  4997 |  1047  1781  2654  2761  2793 |  1874  3186  4748  4939  4997 |  1499  2549  3799  4711  4983
+ 12000 |  1874  3186  4748  4939  4997 |  1874  3186  4748  4939  4997 |  1047  1781  2654  2761  2793 |  1874  3186  4748  4939  4997 |  1499  2549  3799  4711  4983
+golden: exit 0 in 172 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (176002 ticks), 2 replays
+  golden.json byte-identical
+parity through gate.mjs: exit 0 in 363 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+two_states: exit 0 in 64 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 129 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+rb_power: exit 0 in 89 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+desync: exit 0 in 25 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+xproc: exit 0 in 52 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 453341af9db9f44d, Easy aadf83c2590f6eb1
+det: exit 0 in 173 s; script errors 0; determinism passed
+kick: exit 0 in 50 s; script errors 0; KICK: 0 check(s) failed
+load_split: exit 0 in 5 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by na
+done

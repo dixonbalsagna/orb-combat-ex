@@ -1,0 +1,433 @@
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index db5d530..03b1546 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -182,6 +182,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 		_obj(out, act, ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"])
+ 		if S.brakeOn:   # the air brake: only when on, so a match without it hashes as before
+ 			_obj(out, f.brk, SimBrake.HASHED)
++		if S.holdOn:
++			out.append(f.held); out.append(f.clock)
+ 		if S.kickOn:   # the kick: only when on, so a match without it hashes as before
+ 			_obj(out, f.kik, SimKick.HASHED)
+ 			out.append(S.kickInstant); out.append(float(S.kickClimb))
+diff --git a/sim/core/sim.gd b/sim/core/sim.gd
+index 75e5885..a77e42a 100644
+--- a/sim/core/sim.gd
++++ b/sim/core/sim.gd
+@@ -251,6 +251,7 @@ static func _mSetupsA(J: MatchJob) -> void:
+ 	S.depthOn = setup.get("depth", SimDepth.enabled()) == true   # fighters in depth: the data's switch (data/combat/depth.json), or the setup's own for this match
+ 	S.brakeOn = setup.get("brake", SimBrake.enabled()) == true   # the air brake: the data's switch (data/fight/brake.json), or the setup's own for this match
+ 	SimBrake.setup(S)   # each fighter's brake state while the brake is on
++	S.holdOn = setup.get("holdBody", false) == true and S.fighters.size() > 2
+ 	S.kickOn = setup.get("kick", SimKick.enabled()) == true   # the kick and the coin turn: the data's switch (data/fight/kick.json), or the setup's
+ 	SimKick.setup(S, setup)
+ 	J.phase = 4
+@@ -342,6 +343,8 @@ static func _step(S: SimState, inputs) -> bool:
+ 			WorldEpoch.tick(S, false)   # the calm turn's warm runs under a pause too: no hold, so it only reads
+ 		SimFx.tickMark(S, dt, true)
+ 		return false
++	if S.holdOn:
++		return _stepByBody(S, inputs, dt, dtReal)
+ 	if S.dirS.stop > 0.0:
+ 		S.dirS.stop -= dtReal
+ 		if S.hitstopOn:
+@@ -393,6 +396,93 @@ static func _step(S: SimState, inputs) -> bool:
+ 	return true
+ 
+ 
++## A tick with the clock by body. The first pair is the fight an exchange runs in today; the rest are other bodies. Two exchanges will make that a list.
++static func _stepByBody(S: SimState, inputs, dt: float, dtReal: float) -> bool:
++	var world: float = S.T + dt
++	var n: int = S.fighters.size()
++	if not S.holdBegun:
++		S.holdBegun = true
++		for f in S.fighters:
++			f.clock = S.T
++	var held: Array = []
++	for f in S.fighters:
++		var h: bool = f.held > 0.0
++		held.append(h)
++		if h:
++			f.held -= dtReal
++			if S.hitstopOn and f.held < SimHitstop.RESIDUE:   # as SimHitstop.frozen does
++				f.held = 0.0
++		else:
++			f.clock += dt
++	var live: bool = not held[0] and not held[1]
++	S.T = S.fighters[0].clock
++	if live:
++		if S.frame != null:
++			SimSwing.tick(S)
++		if S.epoch != null:
++			WorldEpoch.tick(S, DirCalm.hold(S))
++		if S.hitstopOn:
++			SimHitstop.live(S)
++		SimPause.liveTick(S)
++		if S.game.ko != null:
++			S.game.koT += dt
++			if S.game.koT > 2.2:
++				S.game.ts = 1.0
++	var ord: Array = []
++	if live:
++		ord = [0, 1] if S.rng.next() < 0.5 else [1, 0]
++	for k in range(2, n):
++		ord.append(k)
++	for k in ord:
++		if not held[k]:
++			S.T = S.fighters[k].clock
++			SimControl.control(S, S.fighters[k], inputs[k] if inputs != null and k < inputs.size() else null)
++	for k in range(n):
++		if not held[k]:
++			S.T = S.fighters[k].clock
++			SimFighter.stepFighter(S, S.fighters[k], dt)
++	S.T = S.fighters[0].clock
++	if live:
++		DirExchange.dirUpdate(S, dt)
++		DirBeam.beamStep(S, dt)
++	if live or S.holdWorld:
++		if S.holdWorld:
++			S.T = world
++		SimShots.step(S, dt)
++		WorldWater.step(S)
++		SimMood.tick(S)
++		if S.cata != null and S.cata.ashLeft > 0:
++			SimCata.tick(S)
++		if S.formsOn:
++			SimForms.events(S)
++		WorldCollateral.tick(S)
++	SimFx.tickMark(S, dt, not live)
++	if S.dirS.stop > 0.0:   # whatever this tick asked for holds the exchange's fighters, from the next tick. Every writer will name its own in the build
++		var ex = S.dirS.ex
++		var a = ex.A if ex != null else S.fighters[0]
++		var d = ex.D if ex != null else S.fighters[1]
++		a.held = maxf(a.held, S.dirS.stop)
++		d.held = maxf(d.held, S.dirS.stop)
++		S.dirS.stop = 0.0
++	S.T = world
++	return live
++
++
++## A body changes fights: his clock becomes the new fight's, and every deadline he carries moves with it, so what he had left, he still has. Clocks drift apart by the time each was held.
++static func rebase(f, clock: float) -> void:
++	var d: float = clock - f.clock
++	f.clock = clock
++	for k in STAMPS:
++		f.set(k, f.get(k) + d)
++	if f.beamCharge != null:
++		f.beamCharge += d
++	if f.rush != null:
++		f.rush.end += d
++
++
++const STAMPS: Array = ["hurtT", "breathT", "ambushUntil", "lockBackT", "sigReadyT", "lastAtkT", "exT", "embedCool"]
++
++
+ static func toggleAI(S: SimState, idx: int) -> void:
+ 	var f = S.fighters[idx]
+ 	f.ai = null if f.ai != null else SimState.AiState.new()
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 7066e28..47acc1e 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -83,6 +83,9 @@ var mood := MoodState.new()           # M1 (sim/core/mood.gd): the fight's mood,
+ var pause := PauseState.new()         # Q10 (sim/core/pause.gd): the pausing set pieces' bank and the running pause
+ var intro := IntroState.new()         # the intro phase (sim/core/intro.gd): the pre-clock ticks of a match that asks for it
+ var depthOn: bool = false             # fight lanes: depth is physical (the director's depth.json switch, or the setup's "depth"); off until L4
++var holdOn: bool = false              # the clock by body (a prototype): a hit-stop holds the exchange's fighters, and the world and the others run on
++var holdBegun: bool = false           # ... the bodies' clocks have been set from S.T
++var holdWorld: bool = true            # ... tests only: false keeps the world and the shots under the pair's hold, to compare with a 1v1
+ var kickOn: bool = false              # the kick and the coin turn (sim/core/kick.gd): data/fight/kick.json's switch, or the setup's "kick"
+ var kickInstant: float = 0.8          # ... its share of top speed on the first tick: the data's, or the setup's "instant"
+ var kickClimb: int = 8                # ... and its ticks to top speed: the data's, or the setup's "climbTicks"
+@@ -1044,6 +1047,8 @@ class Fighter:
+ 	var interior = null              # World: the chain inside a tower (world/interior.gd): a Dictionary while he is in it, else null. Hashed only while set
+ 	var act := ActState.new()        # I2a: what the fighter's presses mean now (sim/core/act.gd)
+ 	var style = null                 # M1: StyleState (sim/core/mood.gd)
++	var held: float = 0.0            # the clock by body: seconds left of this body's hold
++	var clock: float = 0.0           # ... and his own clock, which waits while he's held. The sim reads it as S.T while it steps him
+ 	var kik = null                   # the kick: KickState while S.kickOn (sim/core/kick.gd), null otherwise
+ 	var brk = null                   # the air brake: BrakeState while S.brakeOn (sim/core/brake.gd), null otherwise
+ 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
+diff --git a/sim/core/tools/hold_check.gd b/sim/core/tools/hold_check.gd
+new file mode 100644
+index 0000000..1b41db4
+--- /dev/null
++++ b/sim/core/tools/hold_check.gd
+@@ -0,0 +1,276 @@
++extends SceneTree
++## The clock by body, a prototype: godot --headless --path . --script res://sim/core/tools/hold_check.gd
++## Does a fight survive its hit-stop holding only its own fighters? Against a plain 1v1 of the same seed, tick by tick; bystanders move through its holds; a second body's hold; a rollback.
++
++var fails: int = 0
++const WORLDS: Array = [{"intro": false}, {"intro": false, "planet": 7, "touch": 1, "planetGen": 3}, {"intro": false, "planet": 12, "touch": 1, "planetGen": 3}]
++const SEEDS: Array = [77, 5, 101]
++
++
++func ok(c: bool, what: String) -> void:
++	if not c:
++		fails += 1
++		print("FAIL  " + what)
++
++
++func _slots() -> Array:
++	var o: Array = FighterData.order()
++	var out: Array = o.slice(0, 2)
++	var i: int = 0
++	while out.size() < 4:
++		out.append(o[i % o.size()])
++		i += 1
++	return out
++
++
++func _new(seed: int, world: Dictionary, four: bool, hold: bool, keepWorld: bool = false) -> SimState:
++	var su: Dictionary = world.duplicate()
++	if four:
++		su["slots"] = _slots()
++		su["holdBody"] = hold
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {"p1": true, "p2": true}, su)
++	if four:
++		S.holdWorld = keepWorld
++		for k in range(2, 4):
++			S.fighters[k].x = SimWrap.wrap(S.fighters[0].x + 40000.0 + 2000.0 * float(k))
++			S.fighters[k].y = 3000.0
++	return S
++
++
++func _inputs(t: int) -> Array:
++	var a := SimIntent.new()
++	a.mx = 1.0 if t % 120 < 60 else -1.0
++	var b := SimIntent.new()
++	b.mx = -1.0 if t % 200 < 100 else 1.0
++	return [null, null, a, b]
++
++
++func _row(S) -> Array:
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	return [a.x, a.y, a.hp, a.state, b.x, b.y, b.hp, b.state]
++
++
++## A plain 1v1, then the same pair with two bystanders under the clock by body, the world under the pair's hold: the pair's every number on every tick.
++func _same(seed: int, world: Dictionary) -> void:
++	var R := _new(seed, world, false, false)
++	var rows: Array = []
++	var ko: int = -1
++	for t in range(3600):
++		SimCore.step(R)
++		R.out.fx.clear()
++		R.out.feed.clear()
++		rows.append(_row(R))
++		if R.game.ko != null and ko < 0:
++			ko = t
++	SimCore.dispose(R)
++	var S := _new(seed, world, true, true)
++	var by: Array = [S.fighters[2].x, S.fighters[3].x]
++	var first: int = -1
++	var heldTicks: int = 0
++	var movedHeld: int = 0
++	for t in range(3600):
++		var x2: float = S.fighters[2].x
++		var live: bool = SimCore.step(S, _inputs(t))
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if not live:
++			heldTicks += 1
++			if S.fighters[2].x != x2:
++				movedHeld += 1
++		if first < 0 and _row(S) != rows[t]:
++			first = t
++			print("  first difference at tick %d: %s against %s" % [t, str(_row(S)), str(rows[t])])
++	print("same: seed %d %s: %d ticks, %d of them the pair held, a bystander moved on %d; first difference %d (1v1's KO %d)" % [seed, "planet %d" % world.planet if world.has("planet") else "flat", rows.size(), heldTicks, movedHeld, first, ko])
++	ok(first < 0, "the pair's numbers match a 1v1, tick by tick (seed %d, first differ at %d)" % [seed, first])
++	ok(heldTicks > 0 and movedHeld > heldTicks / 2, "a bystander keeps moving through the pair's holds (%d of %d)" % [movedHeld, heldTicks])
++	SimCore.dispose(S)
++
++
++## With the world and shots running on, as Game Design rules: how far does the fight's course move?
++func _worldOn(seed: int, world: Dictionary) -> Dictionary:
++	var S := _new(seed, world, true, true, true)
++	var hits: int = 0
++	var launches: int = 0
++	var t: int = 0
++	while t < 3600 and S.game.ko == null:
++		SimCore.step(S, _inputs(t))
++		for e in S.out.fx:
++			if e.type == "damage":
++				hits += 1
++			if e.type == "launch":
++				launches += 1
++		S.out.fx.clear()
++		S.out.feed.clear()
++		t += 1
++	var out: Dictionary = {"t": t, "hits": hits, "launches": launches, "hash": str(SimHash.stateHash(S).gameplay)}
++	SimCore.dispose(S)
++	return out
++
++
++func _plain(seed: int, world: Dictionary) -> Dictionary:
++	var S := _new(seed, world, false, false)
++	var hits: int = 0
++	var launches: int = 0
++	var t: int = 0
++	while t < 3600 and S.game.ko == null:
++		SimCore.step(S)
++		for e in S.out.fx:
++			if e.type == "damage":
++				hits += 1
++			if e.type == "launch":
++				launches += 1
++		S.out.fx.clear()
++		S.out.feed.clear()
++		t += 1
++	SimCore.dispose(S)
++	return {"t": t, "hits": hits, "launches": launches}
++
++
++## A second body's hold: he stands still, the pair fights on, and his own clock waits.
++func _second() -> void:
++	var S := SimCore.createSim()
++	var su: Dictionary = WORLDS[0].duplicate()
++	su["slots"] = _slots()
++	su["holdBody"] = true
++	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, su)
++	for k in range(2, 4):
++		S.fighters[k].x = SimWrap.wrap(S.fighters[0].x + 40000.0 + 2000.0 * float(k))
++		S.fighters[k].y = 3000.0
++	S.fighters[0].y = 3000.0
++	S.fighters[1].y = 3000.0
++	for t in range(200):
++		SimCore.step(S, _inputs(t))
++	S.out.fx.clear()
++	S.out.feed.clear()
++	var f = S.fighters[2]
++	f.held = 0.2
++	var x0: float = f.x
++	var c0: float = f.clock
++	var pairMoved: int = 0
++	for k in range(13):
++		var p0: float = S.fighters[0].x + S.fighters[1].x
++		var ins: Array = _inputs(200 + k)
++		var pa := SimIntent.new()
++		pa.mx = 1.0
++		ins[0] = pa
++		SimCore.step(S, ins)
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if S.fighters[0].x + S.fighters[1].x != p0:
++			pairMoved += 1
++	ok(f.x == x0, "a held body stays where he is (%.2f moved)" % (f.x - x0))
++	ok(pairMoved > 0, "the pair goes on meanwhile (%d of 13 ticks moved)" % pairMoved)
++	ok(f.clock == c0 and f.held <= 0.0, "his clock waited, and his hold ran out (clock moved %.3f, held %.3f)" % [f.clock - c0, f.held])
++	SimCore.step(S, _inputs(213))
++	ok(f.x != x0, "then he moves")
++	SimCore.dispose(S)
++
++
++## Two runs one hash, and a rollback across holds: the same hash on every tick of the re-run.
++func _rollback(world: Dictionary) -> void:
++	var run := func() -> String:
++		var A := _new(77, world, true, true, true)
++		for t in range(1500):
++			SimCore.step(A, _inputs(t))
++			A.out.fx.clear()
++			A.out.feed.clear()
++		var h: String = str(SimHash.stateHash(A).gameplay)
++		SimCore.dispose(A)
++		return h
++	ok(run.call() == run.call(), "two runs give one hash")
++	var S := _new(77, world, true, true, true)
++	var snap: NetSnapshot = null
++	var hs: Array = []
++	var held: int = 0
++	for t in range(1500):
++		if t == 700:
++			snap = NetSnapshot.take(S)
++		var live: bool = SimCore.step(S, _inputs(t))
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if t >= 700:
++			hs.append(str(SimHash.stateHash(S).gameplay))
++			held += 0 if live else 1
++	NetSnapshot.restore(S, snap)
++	var bad: int = 0
++	for t in range(700, 1500):
++		SimCore.step(S, _inputs(t))
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if str(SimHash.stateHash(S).gameplay) != hs[t - 700]:
++			bad += 1
++	print("rollback: %d ticks, %d of them held, %d differ" % [hs.size(), held, bad])
++	ok(bad == 0 and held > 0, "a rollback across holds is the same on every tick (%d differ, %d held)" % [bad, held])
++	SimCore.dispose(S)
++
++
++## A body moves between fights mid-rush, on clocks that have drifted apart. Without a re-base his rush is wrong by the drift; with one it ends on the tick it would have.
++func _move() -> void:
++	var run := func(mode: int) -> Array:
++		var S := _new(77, WORLDS[0], true, true)
++		for t in range(1500):
++			SimCore.step(S, _inputs(t))
++			S.out.fx.clear()
++			S.out.feed.clear()
++		var f = S.fighters[2]
++		var pair = S.fighters[0]
++		var drift: float = f.clock - pair.clock
++		f.state = "free"
++		var r := SimState.Rush.new()
++		r.px = f.x + 3000.0
++		r.py = f.y
++		r.end = f.clock + 1.0
++		f.rush = r
++		f.sigReadyT = f.clock + 2.0
++		f.hurtT = f.clock - 0.5
++		for t in range(20):
++			SimCore.step(S, [null, null, null, null])
++			S.out.fx.clear()
++			S.out.feed.clear()
++		if mode == 1:
++			f.clock = pair.clock   # on the new fight's clock, the deadlines left as they were
++		elif mode == 2:
++			SimCore.rebase(f, pair.clock)
++		var n: int = 0
++		var held: int = 0
++		while f.rush != null and n < 2000:
++			var live: bool = SimCore.step(S, [null, null, null, null])
++			S.out.fx.clear()
++			S.out.feed.clear()
++			if not live:
++				held += 1
++			n += 1
++		var hurtAgo: float = f.clock - f.hurtT
++		var sigLeft: float = f.sigReadyT - f.clock
++		SimCore.dispose(S)
++		return [drift, n, hurtAgo, sigLeft, held]
++	var a: Array = run.call(0)
++	var b: Array = run.call(1)
++	var c: Array = run.call(2)
++	print("move: drift %.2f s; rush's ticks left: stayed %d, moved with no re-base %d, re-based %d" % [a[0], a[1], b[1], c[1]])
++	ok(absf(a[0]) > 1.0, "the clocks have drifted (%.2f s)" % a[0])
++	ok(b[1] != a[1], "with no re-base the rush is wrong (%d against %d)" % [b[1], a[1]])
++	ok(c[1] == a[1], "re-based, it ends on its tick (%d against %d)" % [c[1], a[1]])
++
++
++func _init() -> void:
++	_move()
++	for w in WORLDS:
++		for sd in SEEDS:
++			_same(sd, w)
++	var a: Array = [0, 0, 0]
++	var b: Array = [0, 0, 0]
++	for w in WORLDS:
++		for sd in SEEDS:
++			var p: Dictionary = _plain(sd, w)
++			var q: Dictionary = _worldOn(sd, w)
++			a[0] += p.t; a[1] += p.hits; a[2] += p.launches
++			b[0] += q.t; b[1] += q.hits; b[2] += q.launches
++	print("world on: over 9 fights: ticks %d against a 1v1's %d, blows %d against %d, launches %d against %d" % [b[0], a[0], b[1], a[1], b[2], a[2]])
++	_second()
++	_rollback(WORLDS[0])
++	_rollback(WORLDS[1])
++	print("HOLD: %d check(s) failed" % fails)
++	quit(1 if fails > 0 else 0)

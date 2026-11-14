@@ -2,7 +2,24 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**Nothing is parked.** `clock-by-body/` is a prototype, not for landing; its README has the proof.
+**Landed in the Sunday batch (4890bdd9), their folders deleted:** `power-travel/` (a setup's `"travel"`, with Netcode's and Tools' grants and the stance-freeze doc lines) and `power-page/` (Tools' page lines: the model on for the page, and the travel slider).
+
+**Parked, sprint A1:** `a1-owed/`: hit-stop by weight's never-cut list (heavy, launch, launch_full: Game Design) and power_check's close times to striking distance with the arrival off and on (needed before GW1a lands the arrival in main's data); the docs' underTicks 12 is edited in place. No state change.
+
+**Parked, sprint A1:** `replay-build/` (A-NET-05): a replay names the build that made it (Tools' stamp, `build_info.json`), and another build's replay is refused before its first tick with a reason and both ids; the sentence is UI's. No state change. Lands before golden window GW1.
+
+**Landed in 6a30b4c9 (Orb's 16:30 build), their folders deleted:** `dash-slip/` (a dash let go before tick 12 eases to the slip's 1,125 a second over 4 ticks, with Encounter's slip-arrive and its undertick grant) and `hitstop-any/` (the freeze budget on any table at Game Design's 12% and ×0.7, heavies never cut, the hp clause gone, weights named with the budget on). The run records are in `docs/sim/runs/592a807b/dash-slip/` and `docs/sim/runs/578e819e/hitstop-any/`.
+
+**Landed in 6eec6a75, their folders deleted:** `power-dash/` (LT held at the level's flat out at any range, behind its switch, with Encounter's arrive) and `cd05-witness/` (CD-05: the menace hold at the cap gone, Witness from the city wrecked).
+
+**Parked, the one energy model's second half:**
+- `power-flip/`: the data's switch on, with the golden regenerated. It lands after Sunday, once 12 checks of five owners are pinned or re-read; the list is in its README.
+
+**Landed, its folder deleted:** `parity-wired-sources/` (parity's wired rows after World's no-casualty-feed; a row whose path is gone fails by name).
+
+**Landed in 1931a0f8, its folder deleted:** `anchor-midpoint/`. The line re-anchors at rest by its midpoint, not fighter a; memo wipes in 40,000 ticks are down from between 166 and 374 to between 6 and 15.
+
+`clock-by-body/` is a prototype, not for landing; its README has the proof.
 
 Landed in the morning batch (a8bc66e2), their folders deleted, for co-op 2v2: `outside-key/` (A1, a setup's `"outside"`), `stage-cap/` (A6, 2v2's time cap on one stage clock), `event-lists/` (the picture's lists on NetLan's fight-1 PC), `outside-shots/` (a shot from outside meets a building or the ground as its shooter's), with Encounter's and World's grants; and `brake-parity/` (parity's air brake rows with the switch either way). The page is `../cross-fights.md`.
 

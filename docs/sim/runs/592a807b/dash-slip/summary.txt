@@ -1,0 +1,136 @@
+== dev pass (scratch export of 592a807b with the three patches): import, power_check, its negative control, Controls' tap probe (handover on, kick and arrive on, travel 1.5)
+import 0; parse errors 0
+power: exit 0 in 121 s; script errors 0; POWER: 0 check(s) failed
+32:slip: a tap of 1 at 3,000 apart, his speed from the last held tick: 4000, 3213, 2362, 1512, 1125, 1047 (off, 4 ticks after: 2649)
+33:slip: a tap of 2 at 3,000 apart, his speed from the last held tick: 4125, 3307, 2418, 1529, 1125, 1047 (off, 4 ticks after: 2727)
+34:slip: a tap of 5 at 3,000 apart, his speed from the last held tick: 4500, 3588, 2584, 1581, 1125, 1047 (off, 4 ticks after: 2960)
+35:slip: travelled in 60 ticks at 3000 apart (bh, on/off): stick 4.98/4.98; 1 9.19/12.81; 2 10.05/13.85; 3 10.94/14.92; 4 11.85/16.01; 5 12.79/17.13; 6 18.28/18.28; held 65.67/65.67
+36:slip: travelled in 60 ticks at 1000 apart (bh, on/off): stick 4.98/4.98; 1 9.19/12.81; 2 10.05/13.85; 3 10.94/14.92; 4 11.85/16.01; 5 12.79/17.13; 6 18.28/18.28; held 65.67/65.67
+power_neg: exit 0 in 40 s; script errors 0; POWER negative control: 0 check(s) failed
+24:FAIL  the page's x1.25 along the line (2.00); straight up, once
+25:FAIL  the factor is in the hash
+26:FAIL  a send: the same rise (609.7), sideways by the factor (3348.5 against 3348.5)
+27:FAIL  x0.50 held to the data's range: x2.00
+28:FAIL  the dash at 300, 1,500, 6,000 and 14,000 apart: 1032, 1032, 2733, 5000, his level's flat out
+29:FAIL  at the top, at 300 apart: 1342 (his level's flat out 11525)
+30:FAIL  with the kick, 1,000 apart: 826 on the first tick (off: 826)
+32:FAIL  close from 1000 at tier 1 in 0.88 s with the kick (at most 0.40)
+53:POWER negative control: 0 check(s) failed
+probe_3000_off: exit 0 in 5 s; script errors 0;        held |         60 |                      37.50 | 5000 5156 5313 5469 5625 5781 5938 6094 6250 6250 6250 6250
+handover true ; slip false ; arrive true ; separation 3000 (40.0 bh)
+      no LT |          0 |                       4.98 | 48 90 128 162 192 219 242 263 282 298 313 326
+          1 |          1 |                      15.05 | 5000 4500 4056 3662 3311 3000 2724 2479 2262 2068 1897 1744
+          2 |          2 |                      16.35 | 5000 5156 4639 4179 3771 3409 3087 2801 2547 2322 2122 1944
+          3 |          3 |                      17.69 | 5000 5156 5313 4777 4302 3880 3506 3173 2878 2615 2382 2176
+          4 |          4 |                      19.06 | 5000 5156 5313 5469 4916 4425 3990 3603 3259 2954 2683 2443
+          5 |          5 |                      20.46 | 5000 5156 5313 5469 5625 5055 4549 4099 3700 3346 3031 2751
+          6 |          6 |                      21.90 | 5000 5156 5313 5469 5625 5781 5194 4672 4209 3797 3432 3107
+          8 |          8 |                      24.88 | 5000 5156 5313 5469 5625 5781 5938 6094 5471 4918 4427 3991
+         12 |         12 |                      30.22 | 5000 5156 5313 5469 5625 5781 5938 6094 6250 6250 6250 6250
+       held |         60 |                      37.50 | 5000 5156 5313 5469 5625 5781 5938 6094 6250 6250 6250 6250
+probe_3000_on: exit 0 in 5 s; script errors 0;        held |         60 |                      37.50 | 5000 5156 5313 5469 5625 5781 5938 6094 6250 6250 6250 6250
+handover true ; slip true ; arrive true ; separation 3000 (40.0 bh)
+      no LT |          0 |                       4.98 | 48 90 128 162 192 219 242 263 282 298 313 326
+          1 |          1 |                       9.88 | 5000 3972 2812 1652 1125 1059 1000 948 902 861 825 793
+          2 |          2 |                      10.95 | 5000 5156 4090 2882 1674 1125 1059 1000 948 902 861 825
+          3 |          3 |                      12.06 | 5000 5156 5313 4207 2951 1695 1125 1059 1000 948 902 861
+          4 |          4 |                      13.20 | 5000 5156 5313 5469 4324 3020 1717 1125 1059 1000 948 902
+          5 |          5 |                      14.38 | 5000 5156 5313 5469 5625 4441 3090 1739 1125 1059 1000 948
+          6 |          6 |                      21.90 | 5000 5156 5313 5469 5625 5781 5194 4672 4209 3797 3432 3107
+          8 |          8 |                      24.88 | 5000 5156 5313 5469 5625 5781 5938 6094 5471 4918 4427 3991
+         12 |         12 |                      30.22 | 5000 5156 5313 5469 5625 5781 5938 6094 6250 6250 6250 6250
+       held |         60 |                      37.50 | 5000 5156 5313 5469 5625 5781 5938 6094 6250 6250 6250 6250
+probe_1000_off: exit 0 in 5 s; script errors 0;        held |         60 |                      10.83 | 5000 5156 5313 5469 5625 5781 5938 6094 2185 1092 546 273
+handover true ; slip false ; arrive true ; separation 1000 (13.3 bh)
+      no LT |          0 |                       4.98 | 48 90 128 162 192 219 242 263 282 298 313 326
+          1 |          1 |                      15.05 | 5000 4500 4056 3662 3311 3000 2724 2479 2262 2068 1897 1744
+          2 |          2 |                      16.35 | 5000 5156 4639 4179 3771 3409 3087 2801 2547 2322 2122 1944
+          3 |          3 |                      17.69 | 5000 5156 5313 4777 4302 3880 3506 3173 2878 2615 2382 2176
+          4 |          4 |                      19.06 | 5000 5156 5313 5469 4916 4425 3990 3603 3259 2954 2683 2443
+          5 |          5 |                      20.46 | 5000 5156 5313 5469 5625 5055 4549 4099 3700 3346 3031 2751
+          6 |          6 |                      21.90 | 5000 5156 5313 5469 5625 5781 5194 4672 4209 3797 3432 3107
+          8 |          8 |                      24.88 | 5000 5156 5313 5469 5625 5781 5938 6094 5471 4918 4427 3991
+         12 |         12 |                      15.08 | 5000 5156 5313 5469 5625 5781 5938 6094 2185 1092 546 273
+       held |         60 |                      10.83 | 5000 5156 5313 5469 5625 5781 5938 6094 2185 1092 546 273
+probe_1000_on: exit 0 in 5 s; script errors 0;        held |         60 |                      10.83 | 5000 5156 5313 5469 5625 5781 5938 6094 2185 1092 546 273
+handover true ; slip true ; arrive true ; separation 1000 (13.3 bh)
+      no LT |          0 |                       4.98 | 48 90 128 162 192 219 242 263 282 298 313 326
+          1 |          1 |                       9.88 | 5000 3972 2812 1652 1125 1059 1000 948 902 861 825 793
+          2 |          2 |                      10.95 | 5000 5156 4090 2882 1674 1125 1059 1000 948 902 861 825
+          3 |          3 |                      12.06 | 5000 5156 5313 4207 2951 1695 1125 1059 1000 948 902 861
+          4 |          4 |                      13.20 | 5000 5156 5313 5469 4324 3020 1717 1125 1059 1000 948 902
+          5 |          5 |                      14.38 | 5000 5156 5313 5469 5625 4441 3090 1739 1125 1059 1000 948
+          6 |          6 |                      21.90 | 5000 5156 5313 5469 5625 5781 5194 4672 4209 3797 3432 3107
+          8 |          8 |                      24.88 | 5000 5156 5313 5469 5625 5781 5938 6094 5471 4918 4427 3991
+         12 |         12 |                      15.08 | 5000 5156 5313 5469 5625 5781 5938 6094 2185 1092 546 273
+       held |         60 |                      10.83 | 5000 5156 5313 5469 5625 5781 5938 6094 2185 1092 546 273
+probe_400_off: exit 0 in 5 s; script errors 0;        held |         60 |                       2.83 | 5000 4374 1687 843 421 240 181 0 0 0 0 0
+handover true ; slip false ; arrive true ; separation 400 (5.3 bh)
+      no LT |          0 |                       4.98 | 48 90 128 162 192 219 242 263 282 298 313 326
+          1 |          1 |                      15.05 | 5000 4500 4056 3662 3311 3000 2724 2479 2262 2068 1897 1744
+          2 |          2 |                      14.80 | 5000 4374 3944 3562 3223 2922 2655 2418 2207 2020 1854 1706
+          3 |          3 |                      10.33 | 5000 4374 1687 1558 1444 1342 1252 1172 1101 1037 981 932
+          4 |          4 |                       8.92 | 5000 4374 1687 843 809 778 751 727 706 687 670 655
+          5 |          5 |                       8.15 | 5000 4374 1687 843 421 434 446 456 465 473 480 487
+          6 |          6 |                       7.76 | 5000 4374 1687 843 421 240 273 302 329 352 373 391
+          8 |          8 |                       7.14 | 5000 4374 1687 843 421 240 181 0 60 113 161 203
+         12 |         12 |                       6.67 | 5000 4374 1687 843 421 240 181 0 0 0 0 0
+       held |         60 |                       2.83 | 5000 4374 1687 843 421 240 181 0 0 0 0 0
+probe_400_on: exit 0 in 5 s; script errors 0;        held |         60 |                       2.83 | 5000 4374 1687 843 421 240 181 0 0 0 0 0
+handover true ; slip true ; arrive true ; separation 400 (5.3 bh)
+      no LT |          0 |                       4.98 | 48 90 128 162 192 219 242 263 282 298 313 326
+          1 |          1 |                       9.88 | 5000 3972 2812 1652 1125 1059 1000 948 902 861 825 793
+          2 |          2 |                      10.55 | 5000 4374 3503 2534 1565 1125 1059 1000 948 902 861 825
+          3 |          3 |                      10.00 | 5000 4374 1687 1490 1341 1192 1119 1054 996 944 899 858
+          4 |          4 |                       8.92 | 5000 4374 1687 843 809 778 751 727 706 687 670 655
+          5 |          5 |                       8.15 | 5000 4374 1687 843 421 434 446 456 465 473 480 487
+          6 |          6 |                       7.76 | 5000 4374 1687 843 421 240 273 302 329 352 373 391
+          8 |          8 |                       7.14 | 5000 4374 1687 843 421 240 181 0 60 113 161 203
+         12 |         12 |                       6.67 | 5000 4374 1687 843 421 240 181 0 0 0 0 0
+       held |         60 |                       2.83 | 5000 4374 1687 843 421 240 181 0 0 0 0 0
+dev done
+
+== gate pass
+dash-slip sha1 3adaf1fc6fe97c757313748dc5c05278f76c448b sha256 a91eb1c97ff6 8 files
+grant-netcode-slip sha1 3aeac55ceed8661477345c88397fea73afd18d8b sha256 070928dc8e26 1 files
+grant-tools-slip sha1 95d6253178ac5be1c516ee37fc4533cfdfe7c0ab sha256 760d167bc56d 2 files
+validate self-test 0
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+preview self-test 1; preview self-test FAILED: 1 of 161 checks
+golden: exit 0 in 119 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (174798 ticks), 2 replays
+  golden.json byte-identical
+parity through gate.mjs: exit 0 in 274 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+power_check through gate.mjs: exit 0 in 125 s; gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/power_check.gd: no SCRIPT ERROR lines gate: C:/Users/<user>/AppData/Local/Pro
+power_check negative control through gate.mjs: exit 0 in 44 s; gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe -- --negative-control: no SCRIPT ERROR lines
+two_states: exit 0 in 60 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 112 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+rb_slip: exit 0 in 60 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+desync: exit 0 in 18 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+xproc: exit 0 in 43 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 700535bee66d8cb8, Easy 3373caa3a4278730
+det: exit 0 in 143 s; script errors 0; determinism passed
+kick: exit 0 in 37 s; script errors 0; KICK: 0 check(s) failed
+load_split: exit 0 in 4 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by na
+== Rendering's checks
+after_check: exit 0 in 14 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 54 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 14 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 50 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 46 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 55 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 56 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 7 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 12 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 20 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 21 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 13 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 12 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 14 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 11 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+gate done
+
+== the preview self-test's one failure was Tools' row list (the new row 'slip' after 'arrive'); added to grant-tools-slip.patch, re-run:
+preview self-test ok: 161 checks
+grant-tools-slip.patch re-cut: sha1 43d818ef5ef41fdb1af4ab5a9e17363601233450 sha256 17c7566fa076, 3 files

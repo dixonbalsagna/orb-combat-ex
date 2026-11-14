@@ -1,0 +1,39 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  past it: tier 1 power 2, 4262 against 2009, BUILDING SMASH, launchT 1.95
+  past it: tier 1 power 4, 4282 against 2019, SMASH ACROSS, launchT 1.76
+  past it: tier 2 power 40, 7749 against 3088, , launchT 1.48
+  past it: tier 2 power 36, 6054 against 3061, , launchT 1.58
+  past it: tier 2 power 37, 6502 against 3065, UPPERCUT, launchT 1.20
+  past it: tier 2 power 38, 5694 against 3075, UPPERCUT, launchT 1.20
+  past it: tier 2 power 41, 9278 against 3093, BUILDING SMASH, launchT 1.80
+  past it: tier 2 power 41, 8925 against 3099, BUILDING SMASH, launchT 1.97
+  past it: tier 3 power 67, 11769 against 4613, , launchT 1.79
+  past it: tier 3 power 66, 13798 against 4599, BUILDING SMASH, launchT 1.80
+  past it: tier 3 power 67, 13310 against 4609, BUILDING SMASH, launchT 1.96
+  past it: tier 3 power 67, 9792 against 4616, UPPERCUT, launchT 1.20
+  past it: tier 4 power 100, 14852 against 7001, BUILDING SMASH, launchT 1.89
+  past it: tier 4 power 100, 10187 against 7001, DRIVE DOWN, launchT 1.59
+  past it: tier 4 power 100, 19762 against 7001, MOUNTAINSIDE, launchT 1.95
+trips tier 1: 1, median 2536, longest 2536
+trips tier 2: 4, median 5858, longest 7703
+trips tier 3: 5, median 4724, longest 8083
+trips tier 4: 2, median 10429, longest 10429
+shares asked for last before a launch: { "0.500": 7, "1.000": 8, "0.250": 1 }
+sends: 16 launches; fastest at tiers 1 to 4: 4282, 9278, 13798, 19762; along the line 8311, 17566, 26062, 38536; 15 past the cap, 6 that glow at tier 2 or under
+FAIL  the page's x1.25 along the line (2.00); straight up, once
+FAIL  the factor is in the hash
+FAIL  a send: the same rise (609.7), sideways by the factor (3348.5 against 3348.5)
+FAIL  x0.50 held to the data's range: x2.00
+FAIL  the dash at 300, 1,500, 6,000 and 14,000 apart: 1032, 1032, 2733, 5000, his level's flat out
+FAIL  at the top, at 300 apart: 1342 (his level's flat out 11525)
+FAIL  with the kick, 1,000 apart: 826 on the first tick (off: 826)
+dash close from 1000 at tier 1, in ticks: 53 with the dash and the kick (0.88 s, target 0.40 s); 53 the kick alone; 60 the dash alone; 60 neither
+FAIL  close from 1000 at tier 1 in 0.88 s with the kick (at most 0.40)
+dash close from 3000 at tier 1, in ticks: 134 with the dash and the kick (2.23 s, target 0.80 s); 134 the kick alone; 155 the dash alone; 155 neither
+FAIL  close from 3000 at tier 1 in 2.23 s with the kick (at most 0.80)
+dash close from 6000 at tier 1, in ticks: 167 with the dash and the kick (2.78 s, target 1.40 s); 167 the kick alone; 235 the dash alone; 235 neither
+FAIL  close from 6000 at tier 1 in 2.78 s with the kick (at most 1.40)
+dash close from 6000 at tier 4, in ticks: 83 with the dash and the kick (1.38 s, target 0.75 s); 83 the kick alone; 147 the dash alone; 147 neither
+FAIL  close from 6000 at tier 4 in 1.38 s with the kick (at most 0.75)
+FAIL  the dash is in the hash
+POWER negative control: 0 check(s) failed

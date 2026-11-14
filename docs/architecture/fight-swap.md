@@ -38,7 +38,7 @@ Each fight is a plain 1v1 to everything that reads `S`: its pair in `S.fighters`
 
 ## One thing to know: the line's anchor
 
-At rest the line's numbers are put back on fight 0's pair as it travels (`_anchorAtRest`, every eighth of the ring). That moves far ground reads in the last digits, so **fight 1 can hang on fight 0 by about 1e-13 units**. It's the same on every machine and in every replay, so it isn't a desync. It's why `fights_check`'s independence test blinds the anchor (`SimSwing.anchorBlind`). With it blinded, fight 1 is identical with fight 0 fighting or idle, on all six runs. Unblinded, two of the six differed in the last digits, at ticks 1722 and 2635.
+At rest the line's numbers are put back on fight 0's pair as it travels (`_anchorAtRest`: once the pair's midpoint is an eighth of the ring from x0, since 1931a0f8; it used to test fighter a, which re-anchored on every tick at rest with the pair a quarter of the ring apart). That moves far ground reads in the last digits, so **fight 1 can hang on fight 0 by about 1e-13 units**. It's the same on every machine and in every replay, so it isn't a desync. It's why `fights_check`'s independence test blinds the anchor (`SimSwing.anchorBlind`). With it blinded, fight 1 is identical with fight 0 fighting or idle, on all six runs. Unblinded, two of the six differed in the last digits, at ticks 1722 and 2635.
 
 The anchor also puts x0 about half a ring from fight 1, so the strip's wrap is under fight 1. A read across it doesn't jump: 0.002 units either side, a point moves 0.000000138 on the unit sphere and the ground 0.0000, and a fighter walks across with at most 0.09 units of height in a tick.
 

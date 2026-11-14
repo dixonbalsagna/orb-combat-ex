@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+SimDir's calls: 28, all found
+SimDir's forwards the core and the world call: 26 (arcStep, arrive, bandsWho, blastBy, blastHit, blastRules, brawlPayMul, brokenProps, calmAtReady, doLaunch, endEx, endingOn, endingWearMul, flightHook, formBreak, holdMove, outsideLanded, pressInStun, propBroke, refillHeld, transformSource, wallKickAt, wallKickMul, waterRiseTicks, waterUnder, zipping), all defined
+-- break 1: SimDir.flightHook calls DirLaunch.flightHookGone
+FAIL: SimDir calls flightHookGone in launch.gd with 2 arguments, which is not a static function of it that takes them
+SimDir's calls: 28, not all found
+-- break 2: SimDir defines no propBroke (WorldContact._smashProp calls it)
+FAIL: res://sim/world/contact.gd calls SimDir.propBroke, which res://sim/core/dir.gd does not define
+SimDir's forwards the core and the world call: 25 (arcStep, arrive, bandsWho, blastBy, blastHit, blastRules, brawlPayMul, brokenProps, calmAtReady, doLaunch, endEx, endingOn, endingWearMul, flightHook, formBreak, holdMove, outsideLanded, pressInStun, refillHeld, transformSource, wallKickAt, wallKickMul, waterRiseTicks, waterUnder, zipping), not all defined
+-- break 3: WorldContact.hookOf calls DirLaunch.flightHook by SimDir._d
+FAIL: res://sim/world/contact.gd calls the director by SimDir._d: give the call a named forward in res://sim/core/dir.gd
+SimDir's forwards the core and the world call: 25 (arcStep, arrive, bandsWho, blastBy, blastHit, blastRules, brawlPayMul, brokenProps, calmAtReady, doLaunch, endEx, endingOn, endingWearMul, formBreak, holdMove, outsideLanded, pressInStun, propBroke, refillHeld, transformSource, wallKickAt, wallKickMul, waterRiseTicks, waterUnder, zipping), not all defined
+PASS  negative control: 3 of 3 breaks caught

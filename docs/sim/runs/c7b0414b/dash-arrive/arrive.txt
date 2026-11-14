@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+      dash from 600, toward: closest 187.5 (mark 187.5), passed false, at the mark by tick 14, the biggest step 54.7, ticks in the last 1.5 bh 5
+      dash from 1500, toward: closest 187.5 (mark 187.5), passed false, at the mark by tick 26, the biggest step 77.2, ticks in the last 1.5 bh 5
+      dash from 3000, toward: closest 187.5 (mark 187.5), passed false, at the mark by tick 66, the biggest step 60.8, ticks in the last 1.5 bh 5
+      plain from 1500, toward: closest 1.6 (mark 187.5), passed true, at the mark by tick 190, the biggest step 7.2, ticks in the last 1.5 bh 14
+      dash from 1500, away: closest 1501.9 (mark 187.5), passed false, at the mark by tick -1, the biggest step 172.0, ticks in the last 1.5 bh 0
+      dash from 1500, toward, off: closest 1.0 (mark 187.5), passed true, at the mark by tick 23, the biggest step 79.5, ticks in the last 1.5 bh 4
+      plain from 1500, toward, off: closest 1.6 (mark 187.5), passed true, at the mark by tick 190, the biggest step 7.2, ticks in the last 1.5 bh 14
+      dash from 1500, away, off: closest 1501.9 (mark 187.5), passed false, at the mark by tick -1, the biggest step 172.0, ticks in the last 1.5 bh 0
+ok    on: from 600, 1,500 and 3,000 he reaches the mark and never comes closer or passes him
+ok    on: no tick moves him more than 3 bh, and the last 1.5 bh take at least 4 ticks (RL-076)
+ok    on: plain flight (no dash) and flying away are untouched
+ok    negative control, off: at that speed he flies through the mark (closest 1.0, passed true)
+ARRIVE: 0 check(s) failed

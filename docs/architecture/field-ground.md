@@ -15,7 +15,7 @@ Simulation & Engine. Stage 5 of `docs/world/ring-any-angle/research.md` T6, on `
 
 1. **Whether the bake is done is never a sim input.** World's load phase makes it before tick 0, and `mayStart` waits.
 2. **Which level a read uses is fixed by the reader, never by what's ready.** Inside `SimField.far()` to `near()`, reads take the bake. Outside, the 128 ground and its records, computing a missing node on the spot.
-3. **A memo never changes a value.** The column memo is a pure function of the frame and the store, and its key is those numbers themselves, so a restored or another state can't read the wrong columns, and a re-run reads no node.
+3. **A memo never changes a value.** The column memo is a pure function of the frame and the store, and its key is those numbers themselves, so a restored or another state can't read the wrong columns, and a re-run reads no node. A record joining the store forgets only the columns and buildings it can reach (`SimField.storeGrew`), because its term in `heightDelta` is exactly nothing anywhere else. That holds only for the store the memo was bound on: any other state, a rollback or a moved line doesn't match, and the memos are laid again whole. `sim/core/tools/memo_check.gd` compares everything the memos hold with a fresh read.
 4. **Three plain float64s,** never a `Vector3`. Trig through `SimDetMath`. Inverse trig through `WorldPlanet`'s own.
 5. **The frame stays unit and square:** each turn re-normalises, or a long match's rounding would drift the line off the sphere.
 

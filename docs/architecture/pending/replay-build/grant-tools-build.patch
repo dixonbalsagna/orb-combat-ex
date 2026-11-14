@@ -1,0 +1,22 @@
+diff --git a/tools/preview/blackbox.mjs b/tools/preview/blackbox.mjs
+index ce389de..b5b24c1 100644
+--- a/tools/preview/blackbox.mjs
++++ b/tools/preview/blackbox.mjs
+@@ -52,6 +52,8 @@ export const HOST_FUNCS = [
+   '\t\tai["p%d" % (k + 1)] = S.fighters[k].ai != null   # as SimReplay.recorder does: the state the match was started in (read before any toggle of this match)',
+   '\t_bb = {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(_bb_su), "seed": _bb_seed, "setup": _bb_su.duplicate(true), "ai": ai,',
+   '\t\t"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}',
++  '\tif SimReplay.buildId() != "":',
++  '\t\t_bb["build"] = SimReplay.buildId()   # A-NET-05: the build that made it (build_info.json)',
+   '\t_bb_last = []',
+   '\t_bb_last2 = []',
+   '\tif OS.has_feature("web"):   # the page counts this match\'s slow frames from here (render side: it measures the browser\'s frame gaps, it reads nothing of the sim)',
+@@ -79,7 +81,7 @@ export const HOST_FUNCS = [
+   '',
+   '',
+   'func bb_play_start(rp: Dictionary) -> bool:',
+-  '\tif rp.get(\"format\", \"\") != SimReplay.FORMAT or int(rp.get(\"v\", 0)) != SimReplay.V or int(rp.get(\"intent\", 0)) != SimIntent.VERSION:',
++  '\tif rp.get(\"format\", \"\") != SimReplay.FORMAT or int(rp.get(\"v\", 0)) != SimReplay.V or int(rp.get(\"intent\", 0)) != SimIntent.VERSION or String(rp.get(\"build\", \"\")) != SimReplay.buildId():',
+   '\t\treturn false',
+   '\tbb_on = false   # a playback is not recorded',
+   '\t_bb_pb_packed = []',

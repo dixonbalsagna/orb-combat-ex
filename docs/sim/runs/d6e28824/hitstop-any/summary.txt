@@ -1,0 +1,31 @@
+HEAD d6e28824
+mine: hitstop.json budgetAny, hitstop.gd, damage.gd, sim.gd, state.gd, hash.gd, replay.gd, parity.gd
+fixture copied
+grants: tools/schemas/fight-hitstop.schema.json (budgetAny, optional)
+import 0; parse errors 0
+hitstop-any sha1 47f16b8185c1169cbf83267fd006efe8aca31f75 sha256 39605ea6563c 9 files
+grant-tools-hitstop sha1 413b00de6ce7935f1ef7b03123e5a69e6b6d2637 sha256 476567227d6b 2 files
+validate self-test 0
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+== the frozen share, AI matches, 8 seeds x 7,200 ticks: today (no budget), the budget on any table; the default arena and planet 7 (the model and the kick on)
+grep: /c/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/cf28c3c4-6e53-4e65-8b1f-2e4c838d2f4c/scratchpad/hto/stops_stops_def_off.txt: No such file or directory
+grep: /c/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/cf28c3c4-6e53-4e65-8b1f-2e4c838d2f4c/scratchpad/hto/stops_stops_def_any.txt: No such file or directory
+grep: /c/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/cf28c3c4-6e53-4e65-8b1f-2e4c838d2f4c/scratchpad/hto/stops_stops_p7_off.txt: No such file or directory
+grep: /c/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/cf28c3c4-6e53-4e65-8b1f-2e4c838d2f4c/scratchpad/hto/stops_stops_p7_any.txt: No such file or directory
+golden: exit 0 in 139 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (176002 ticks), 2 replays in 135.8 s
+  golden.json byte-identical
+parity through gate.mjs: exit 1 in 274 s; golden check FAILED gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+63:FAIL  hit-stop by weight: budget on any table, over it: the KO's blow held 0.15 s (want its whole 0.2; KO false)
+two_states: exit 0 in 43 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 101 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+rb_ai: exit 0 in 17 s; script errors 0; PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash comparisons (every 
+desync: exit 0 in 18 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+xproc: exit 0 in 38 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 453341af9db9f44d, Easy aadf83c2590f6eb1, Medium 83e804b443c
+det: exit 0 in 132 s; script errors 0; determinism passed
+power: exit 0 in 95 s; script errors 0; POWER: 0 check(s) failed
+load_split: exit 0 in 3 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name
+d_press_decides: exit 0 in 5 s; script errors 0; PRESS: 0 check(s) failed
+d_launch_cost: exit 0 in 319 s; script errors 0; LAUNCH COST: 0 check(s) failed
+done

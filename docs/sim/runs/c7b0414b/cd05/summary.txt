@@ -1,0 +1,112 @@
+HEAD c7b0414b
+mine: fighter.gd, state.gd, hash.gd, forms.gd, replay.gd, PROTAGONIST/forms.json (perMass 16.0, ownMass 32.0), parity.gd, cross_check.gd
+grants: World structures.gd (+2) and collateral.gd (-2); Tools fighters-forms.schema.json
+import 0; parse errors 0
+ground_pins: exit 0 in 10 s; script errors 0; GROUND: 2 check(s) failed
+6:  FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+7:  FAIL  the hand-made world and a gen 1 turn hash as before (turn: n=1 988ea85fd0ae96f6)
+BASEPIN planet7/2400=86b12da67f8805a5|planet3/1200=844d219bcbb9d2c1|planet25/4800=6d4ac05dab55a8a6|planet11/2400=ffebed04b37ee210|handmade=d51ad87b4669fc23|turn=n=1 988ea85fd0ae96f6
+pinned: {'planet7/2400': '86b12da67f8805a5', 'planet3/1200': '844d219bcbb9d2c1', 'planet25/4800': '6d4ac05dab55a8a6', 'planet11/2400': 'ffebed04b37ee210', 'handmade': 'd51ad87b4669fc23', 'turn': 'n=1 988ea85fd0ae96f6'}
+ground_check: exit 0 in 10 s; script errors 0; GROUND: 0 check(s) failed
+golden: exit 0 in 153 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (176002 ticks), 2 replays
+replay 0  ticks 3000 (same)  light same  checkpoints equal 0 of 26 (first part equal 0)
+replay 1  ticks 2400 (same)  light same  checkpoints equal 0 of 21 (first part equal 0)
+tick0      different
+wounds     same
+rally      same
+cripple    same
+mood       same
+keyed      same
+rosterHash same
+fightHash  same
+RESULT: light digests and tick counts identical
+cd05-sim sha1 28c8974910b28712f47344d6aa37ad3ab263bbe6 sha256 4c94ec86f8fc 8 files
+golden-regen sha1 c94918a0c9bc6579bb2925a772e13a2e1f1ed714 sha256 857072eac559 1 files
+grant-world-witness sha1 f22cf10246aa75571a488b967529083454e7aee7 sha256 2ebc6e5eb101 2 files
+grant-world-ground-pins sha1 182f8557c69e502b1d1a1465fc93dade53e921a6 sha256 b81cc2614a74 1 files
+grant-tools-forms sha1 86a313c7cf07608b78a03c4611fdd38c4cc6842a sha256 b81645e7fbf7 1 files
+validate self-test 0
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+parity through gate.mjs: exit 0 in 340 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+24:ok    wired numbers change a match
+79:ok    forms: Witness and Trial
+80:ok    menace at the cap decays after its delay, whatever the dead (CD-05)
+cross: exit 0 in 150 s; script errors 0; CROSS: 0 check(s) failed
+cross_neg: exit 0 in 7 s; script errors 0; CROSS negative control: 0 check(s) failed
+4:FAIL  a blow sent across waits on the stage, once (0)
+5:FAIL  ... and lands on the next tick (0.00)
+6:FAIL  ... holding his fight and not the striker's
+8:FAIL  a blow sent across waits on the stage, once (2)
+10:FAIL  a shot from outside, clean, no press: the plain rule, lands as from inside (0.000 against 13.000)
+11:FAIL  a shot from outside, clean, lands as from inside (0.000 against 13.832)
+cross_end: exit 0 in 205 s; script errors 0; CROSSEND: 0 check(s) failed
+fights: exit 0 in 259 s; script errors 0; FIGHTS: 0 check(s) failed
+coop: exit 0 in 24 s; script errors 0; COOP: 0 check(s) failed
+power: exit 0 in 135 s; script errors 0; POWER: 0 check(s) failed
+two_states: exit 0 in 71 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 129 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+xproc: exit 0 in 50 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 453341af9db9f44d, Easy aadf83c2590f6eb1
+xproc_neg: exit 0 in 73 s; script errors 0; PASS negative control: 4 of 4 breaks caught (68.9 s)
+det: exit 0 in 186 s; script errors 0; determinism passed
+det_fights: exit 0 in 245 s; script errors 0; determinism passed
+load_split: exit 0 in 5 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by na
+rb_ai: exit 0 in 21 s; script errors 0; PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash
+rb_field: exit 0 in 54 s; script errors 0; PASS  2 sessions, 1200 confirmed-tick hash comparisons, 0 failure(s)
+rb_fights2: exit 0 in 127 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+desync: exit 0 in 21 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+desync_field: exit 0 in 96 s; script errors 0; PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+lan: exit 0 in 69 s; script errors 0; LAN: 0 check(s) failed
+d_a_press: exit 0 in 7 s; script errors 0; A PRESS: 0 check(s) failed
+d_arc: exit 0 in 12 s; script errors 0; ARC: 0 check(s) failed
+d_bark_reads: exit 0 in 264 s; script errors 0; bark_reads_check: passed
+d_beam_ai: exit 0 in 7 s; script errors 0; BEAM AI: 0 check(s) failed
+d_beam_front: exit 0 in 8 s; script errors 0; FRONT: 0 check(s) failed
+d_beam_move: exit 0 in 6 s; script errors 0; BEAM MOVE: 0 check(s) failed
+d_chase_tap: exit 0 in 7 s; script errors 0; CHASE: 0 check(s) failed
+d_city_push: exit 0 in 8 s; script errors 0; CITY PUSH: 0 check(s) failed
+d_driver: exit 0 in 10 s; script errors 0; DRIVER: 0 check(s) failed
+d_ending: exit 0 in 10 s; script errors 0; ENDING: 0 check(s) failed
+d_floorlift: exit 0 in 25 s; script errors 0; FLOORLIFT: 0 check(s) failed
+d_follow: exit 0 in 14 s; script errors 0; FOLLOW: 0 check(s) failed
+d_knock_wall: exit 0 in 8 s; script errors 0; KNOCK WALL: 0 check(s) failed
+d_launch_cost: exit 0 in 395 s; script errors 0; LAUNCH COST: 0 check(s) failed
+d_location: exit 0 in 10 s; script errors 0; LOCATION: 0 check(s) failed
+d_morning_fixes: exit 0 in 5 s; script errors 0; MORNING FIXES: 0 check(s) failed
+d_outside: exit 0 in 5 s; script errors 0; OUTSIDE: 0 check(s) failed
+d_phrase: exit 0 in 6 s; script errors 0; PHRASE: 0 check(s) failed
+d_plane: exit 0 in 5 s; script errors 0; PLANE: 0 check(s) failed
+d_press_decides: exit 0 in 6 s; script errors 0; PRESS: 0 check(s) failed
+d_push_mode: exit 0 in 4 s; script errors 0; PUSH MODE: 0 check(s) failed
+d_reads: exit 0 in 6 s; script errors 0; reads_check: 16 of 16 passed
+d_relief: exit 0 in 4 s; script errors 0; RELIEF: 0 check(s) failed
+d_sigvariants: exit 0 in 44 s; script errors 0; sigvariants check passed
+d_stance: exit 0 in 8 s; script errors 0; STANCE: 0 check(s) failed
+d_stick: exit 0 in 11 s; script errors 0; STICK: 0 check(s) failed
+d_strike_stages: exit 0 in 5 s; script errors 0; STRIKE STAGES: 0 check(s) failed
+d_sure_reach: exit 0 in 5 s; script errors 0; sure_reach_check: passed
+d_swing: exit 0 in 37 s; script errors 0; SWING: 0 check(s) failed
+d_swing_legal: exit 0 in 70 s; script errors 0; SWING LEGAL: 0 check(s) failed
+d_walk: exit 0 in 21 s; script errors 0; WALK: 0 check(s) failed
+loader: exit 0 in 1999 s; script errors 0; loader check passed
+after_check: exit 0 in 15 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 58 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 15 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 50 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 47 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 57 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 57 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 7 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 13 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 22 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 23 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 14 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 12 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 15 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 12 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+world: exit 0 in 1257 s; world-checks: all 85 passed
+2050:CASUALTYFEED: 9 kills over 3 worlds, 81.0 people died in them
+2051:CASUALTYFEED: 0 check(s) failed
+done

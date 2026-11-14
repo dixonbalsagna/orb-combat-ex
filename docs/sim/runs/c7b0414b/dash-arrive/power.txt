@@ -1,0 +1,30 @@
+route: template guard_break: share 0.500, speed 1414
+route: template dodge: share 0.250, speed 1000
+route: template trade_blows: share 0.250, speed 1000
+route: template clean_hit_heavy: share 0.500, speed 1414
+route: chain link pressure: share 0.500, speed 1414
+route: chain link clean_hit: share 0.500, speed 1414
+route: chain link heavy_clash: share 0.500, speed 1414
+route: chain link dodge: share 0.500, speed 1414
+route: small pop clean_hit: share 0.125, speed 707
+aimed tier 1: 24 sends at a building, 24 hit it
+aimed tier 4: 24 sends at a building, 23 hit it
+fresh: after 60 s of fight, 1.000
+meteor, on: first tick 12821, fastest 12821, along the line 6420; 8.8 s, 10629 along, top 24000 up
+meteor, off: first tick 12821, fastest 12821, along the line 6420; 8.8 s, 10629 along, top 24000 up
+flight tier 1: flat out 5000 (off 10320), close 1023 (off 1023)
+flight tier 2: flat out 6624 (off 11352), close 1125 (off 1125)
+flight tier 3: flat out 8701 (off 12384), close 1228 (off 1228)
+flight tier 4: flat out 11525 (off 13416), close 1330 (off 1330)
+dash close from 1000 at tier 1, in ticks: 12 with the dash and the kick (0.20 s, target 0.40 s); 53 the kick alone; 18 the dash alone; 60 neither
+dash close from 3000 at tier 1, in ticks: 36 with the dash and the kick (0.60 s, target 0.80 s); 134 the kick alone; 43 the dash alone; 155 neither
+dash close from 6000 at tier 1, in ticks: 72 with the dash and the kick (1.20 s, target 1.40 s); 167 the kick alone; 79 the dash alone; 235 neither
+dash close from 6000 at tier 4, in ticks: 32 with the dash and the kick (0.53 s, target 0.75 s); 83 the kick alone; 39 the dash alone; 147 neither
+trips tier 1: 1, median 644, longest 644
+trips tier 2: 4, median 2695, longest 3986
+trips tier 3: 4, median 3184, longest 4287
+trips tier 4: 2, median 17690, longest 17690
+shares asked for last before a launch: { "0.500": 5, "1.000": 8 }
+sends: 13 launches; fastest at tiers 1 to 4: 1837, 3093, 4601, 6791; along the line 2770, 6031, 9001, 12470; 0 past the cap, 0 that glow at tier 2 or under
+rollback: 1400 ticks, 2 launches, 0 differ
+POWER: 0 check(s) failed

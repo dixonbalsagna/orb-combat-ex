@@ -1,0 +1,9 @@
+M 1 frozen 21.2% of 7200 ticks, worst 10 s 32.5%
+M 2 frozen 16.2% of 7200 ticks, worst 10 s 30.0%
+M 3 frozen 24.3% of 7200 ticks, worst 10 s 31.7%
+M 4 frozen 20.5% of 7200 ticks, worst 10 s 33.5%
+M 5 frozen 20.2% of 7200 ticks, worst 10 s 31.8%
+M 6 frozen 19.9% of 7200 ticks, worst 10 s 33.3%
+M 7 frozen 18.1% of 7200 ticks, worst 10 s 30.7%
+M 8 frozen 22.4% of 7200 ticks, worst 10 s 32.5%
+STOPS setup default table false any false: mean frozen 20.3%, matches 8, worst 10 s window 33.5%
