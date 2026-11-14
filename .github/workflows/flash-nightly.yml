@@ -73,12 +73,13 @@ jobs:
             echo "runner: $(nproc) vCPUs, $(free -g | awk '/Mem:/{print $2}') GB; $(google-chrome --version)"
           } >> "$GITHUB_STEP_SUMMARY"
           extra=()
-          limit=2700   # a window (170 ticks is about 23 minutes at the clash rate, plus the skipped ticks) that has not been read in 45 minutes is a finding, not a wait
+          limit=2700   # the clip's own cap (tools/flash/nightly-windows.json capMin): the ticks skipped before a window cost time too (about 2 s a tick on a runner), so a window far into a clip needs more than its captured ticks do
           if [ "${TICKS}" = "full" ]; then limit=15000   # seconds a full clip may take (about 4 hours)
           else
             args=("${CLIP}")
             if [ -n "${TICKS}" ]; then args+=(--ticks "${TICKS}"); fi
             opts=$(node tools/flash/nightly-windows.mjs "${args[@]}")
+            limit=$(node tools/flash/nightly-windows.mjs "${CLIP}" --cap-seconds)
             read -r -a extra <<< "${opts}"
           fi
           node tools/flash/run-pixels.mjs --dir "${RUNNER_TEMP}/web" --path "/index.html?${FLASH_WORDS}" --out "${RUNNER_TEMP}/clips" --clip "${CLIP}" --sizes 960x540 --jobs 1 --cpu-cap 100 --clip-timeout "${limit}" --software "${extra[@]}" | tee "${RUNNER_TEMP}/run-pixels.txt" || true
