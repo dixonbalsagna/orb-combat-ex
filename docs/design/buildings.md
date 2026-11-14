@@ -305,3 +305,16 @@ Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These
 **X-14 reads the model's path.** "3 times at the top tier" means the escalation a player sees across a match, from a fresh start to a fully powered top tier.
 
 **Shots, with the model on (2026-11-15, World's `crater-tiers.md`):** a shot has no speed for the model to read, so **it follows the model through the fighter's level, as a beam's groove does:** its crater energy is its kind's own base (today's value, taken as level 0) × 12.25^level. That's 3.5 times the radius from a fresh base fighter to a full top tier, the same escalation as bodies and beams. **The tier table (1, 2.1, 4.3, 9) is for the model off only.**
+
+## 10. Which wall a knock aims at, with `plans.everywhere` (2026-11-15, World's `pending/everywhere-knock/`)
+
+**The finding.** With the plan streets on, the lane has no front-row wall beside the fight. The knock takes the nearest wall **along the line** inside the 2,212-unit depth window, and that's typically 1,700 to 1,900 units **deep in the background** (`DirLaunch._wall` orders by distance in x and ignores depth).
+
+**Ruling: depth weighs in, and the knock stays inside its 20° bend.** A knock may aim only at a wall **inside a 20° cone around the blow's own line**, in the ground plane: a wall's depth off the line is at most tan 20° (about 0.36) × its distance along the line. **Among the walls inside that cone and within reach, it takes the nearest by true distance.** No wall in the cone means no wall aim: the knock flies its own line and hits whatever stands on it, or nothing.
+
+- **Why:** a launch goes the way of the blow, and the director may bend it at most 20° toward a dramatic target (`overnight-2026-11-08.md` (a)). A wall 1,800 deep and 500 along is 75° off the line. It reads as a fighter flung off into the background, which is the bug half of Orb's ping-pong split ("background ricochets on unrealistic paths"), not the feature.
+- **The player's lean counts:** the cone is around the blow's line, and that line carries whatever depth the stick gave the blow. Leaning toward a tower bends the line toward it, and the cone follows.
+- **Pressing the fight into the city** (Orb, 11-06) is the street turn: Camera turns the shot so a street's front row lies along the line. It's terrain-plan step 7, not a knock aimed into the background.
+- **Data:** `launch.json` `wallCone` 20 (degrees) and `wallBy: "trueDistance"`. The depth window `lanes.json z_back` stays the outer limit.
+- **QA's row:** knocks aimed at a wall more than 20° off the blow's line, **0**.
+- **Encounter builds it after GW1a.**
