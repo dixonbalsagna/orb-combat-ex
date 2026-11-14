@@ -1,0 +1,4 @@
+# Clash on the stack (main 611c1c2b + a-camera-01 + globe-default + crater-look-default), web build, every tick, 1024x768, analysed at 512x384;
+# each counted change put against the camera's per-tick log (the same sim, native): 'camera scroll' = the shown pane moved more than 0.045 of the width a tick in the 6 ticks before
+normal: analyser 4.5 flashes (worst second from 1074); 43 changes, 11 in the camera's scroll; the worst second of the camera-scroll changes alone 3.5 (from 1088); without them 3.0 (from 1381)
+reduced: analyser 5.5 flashes (worst second from 1074); 54 changes, 22 in the camera's scroll; the worst second of the camera-scroll changes alone 5.5 (from 1087); without them 3.0 (from 98)

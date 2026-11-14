@@ -1,0 +1,4 @@
+# Clash, analyser output (tools/flash/analyse-frames.js) on the stack build, both modes
+clip                       frames      size  general  red  area-15%  2 s mem  margin  dips  verdict
+normal                       1499   512x384      4.5    0       5.5        4     0/9     0  FAIL: the primary reading counts 4.5 (over 3); with the area threshold 15% lower it counts 5.5 (over 3); with a 120-frame memory
+reduced (reduced)            1499   512x384      5.5    0       6.5        5    0/11     0  FAIL: the primary reading counts 5.5 (over 3); with the area threshold 15% lower it counts 6.5 (over 3); with a 120-frame memory
