@@ -1,0 +1,25 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+      planet 7: 0 launches in the match and 160 planned (1650 candidates scored, 370 of them the biome's); 0 of 160 plans and 0 of 3600 ticks differ
+ok    planet 7: launches planned (160), the biome's candidates among them (370)
+ok    planet 7: memos on and off, the same hash on every tick
+ok    planet 7: the prop memo is matchProps on 23 of 23 spans (1885 props in all)
+ok    planet 7: a broken prop's column loses it, the same as matchProps (2 props there, 1 after)
+ok    planet 7: after the trees change (a new list, and it shortened) the memo is matchProps again
+ok    planet 7: with the lone trees laid the memo is off and matchProps is read, before and after the trees change; off again it's back
+ok    planet 7: after the strip's ground changes, and back, the memo is matchProps
+ok    planet 7: the ground memo is groundY in a far read on 480 and 480 of 480 reads (59 moved by the crater); groundY outside chooseLaunch
+ok    planet 7: _standing from the memo is the whole read (684 buildings over 24 reads), and leaves out a building that fell
+      planet 12: 1 launches in the match and 160 planned (1624 candidates scored, 324 of them the biome's); 0 of 160 plans and 0 of 3600 ticks differ
+ok    planet 12: launches planned (160), the biome's candidates among them (324)
+ok    planet 12: memos on and off, the same hash on every tick
+ok    planet 12: the prop memo is matchProps on 23 of 23 spans (2154 props in all)
+ok    planet 12: a broken prop's column loses it, the same as matchProps (1 props there, 0 after)
+ok    planet 12: after the trees change (a new list, and it shortened) the memo is matchProps again
+ok    planet 12: with the lone trees laid the memo is off and matchProps is read, before and after the trees change; off again it's back
+ok    planet 12: after the strip's ground changes, and back, the memo is matchProps
+ok    planet 12: the ground memo is groundY in a far read on 480 and 480 of 480 reads (59 moved by the crater); groundY outside chooseLaunch
+ok    planet 12: _standing from the memo is the whole read (1407 buildings over 24 reads), and leaves out a building that fell
+LAUNCH COST: 0 check(s) failed
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

@@ -1,0 +1,144 @@
+diff --git a/sim/core/tools/cross_check.gd b/sim/core/tools/cross_check.gd
+index 2c6bb55..a460198 100644
+--- a/sim/core/tools/cross_check.gd
++++ b/sim/core/tools/cross_check.gd
+@@ -520,7 +520,37 @@ func _outsideWorld() -> void:
+ ## meter: menace (A is fight 0's first body with menace), anguish (the first with anguish), witness (the same, with forms
+ ## on and his Witness at 50). Returns [what it did (hit points the building lost, or how far the ground went down), A's
+ ## meter's change, casualties in the fight it met, menace gained by fight 1's bodies (across; 0 inside)].
++## Every collateral feed to the meters is 0 in data since Game Design's addendum to Orb's decision 6 (2026-11-14). These
++## rows read the shooter's meter from a building he brings down, so for their own runs he has the feeds main had before it
++## (menace: destroyed 0.8, emptied 1 by size 1, 2, 3; anguish: destroyed 0.6, emptied 0.5, failed to protect 1),
++## put back after.
++var _keptFeeds: Array = []
+ func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:
++	var r: Array = _worldHit0(seed, across, what, meter)
++	if not _keptFeeds.is_empty():
++		var md = _keptFeeds[0]
++		md.menaceDestroyed = _keptFeeds[1]
++		md.menaceEmptied = _keptFeeds[2]
++		md.anguishDestroyedSelf = _keptFeeds[3]
++		md.anguishEmptied = _keptFeeds[4]
++		md.anguishFailed = _keptFeeds[5]
++		_keptFeeds = []
++	return r
++
++
++func _feeds(A) -> void:
++	var md = A.md
++	_keptFeeds = [md, md.menaceDestroyed, md.menaceEmptied.duplicate(), md.anguishDestroyedSelf, md.anguishEmptied, md.anguishFailed]
++	if A.hasMenace:
++		md.menaceDestroyed = 0.8
++		md.menaceEmptied = [1.0, 2.0, 3.0]
++	if A.hasAnguish:
++		md.anguishDestroyedSelf = 0.6
++		md.anguishEmptied = 0.5
++		md.anguishFailed = 1.0
++
++
++func _worldHit0(seed: int, across: bool, what: String, meter: String) -> Array:
+ 	var S := _new(seed, true, false, {"forms": true} if meter == "witness" else {})
+ 	var A = null
+ 	for f in S.fighters:
+@@ -530,6 +560,7 @@ func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:
+ 	if A == null:
+ 		SimCore.dispose(S)
+ 		return [0.0, 0.0, 0.0, 0.0]
++	_feeds(A)
+ 	if meter == "witness":
+ 		ok(SimForms.has(S, A), "... and forms for him")
+ 		if not SimForms.has(S, A):
+diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
+index 8b05494..17a8742 100644
+--- a/sim/core/tools/parity.gd
++++ b/sim/core/tools/parity.gd
+@@ -4226,13 +4226,14 @@ func _fightData(g: Dictionary) -> String:
+ ## with menace set, attacks PROTAGONIST through the director, and what PROTAGONIST took must differ (it played seeds until they needed
+ ## replacing three times). composure.below is left out: it only matters while composure's cap is not 0. So, since Orb's decision 6
+ ## (2026-11-13), are regen_penalty's and regen_bonus's caps: they only matter while their perPoint is not 0, and both are 0 in data.
++## And since Game Design's addendum (2026-11-14), anguish source 0's within, menace source 2's minBh and source 3's sizes: each
++## only matters while its source's amount is not 0, and every collateral feed's amount is 0 in data. Their amount rows stay.
+ const WIRED: Array = [
+ 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 0, "perPoint"], 0.2, "kaiTick"],
+ 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 1, "cap"], 0.3, "kaiHit"],
+ 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 2, "cap"], 2.0, "kaiHit"],
+ 	["PROTAGONIST/meters.json", ["meters", "anguish", "decay", "rate"], 3.0, "kaiTick"],
+ 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "amount"], 5.0, "aFell"],
+-	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "within"], 10.0, "aWithin"],
+ 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 1, "amount"], 5.0, "aFell"],
+ 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 2, "amount"], 5.0, "aFell"],
+ 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 3, "amount"], 5.0, "aFell"],
+@@ -4244,9 +4245,7 @@ const WIRED: Array = [
+ 	["RIVAL/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "mFell"],
+ 	["RIVAL/meters.json", ["meters", "menace", "sources", 1, "amount"], 5.0, "mFell"],
+ 	["RIVAL/meters.json", ["meters", "menace", "sources", 2, "amount"], 5.0, "mCrater"],
+-	["RIVAL/meters.json", ["meters", "menace", "sources", 2, "minBh"], 5.0, "mCrater"],
+ 	["RIVAL/meters.json", ["meters", "menace", "sources", 3, "amount"], 5.0, "mEmptied"],
+-	["RIVAL/meters.json", ["meters", "menace", "sources", 3, "sizes"], [4.0, 5.0, 6.0], "mEmptied"],
+ 	["RIVAL/meters.json", ["meters", "menace", "sources", 4, "amount"], 5.0, "mTrauma"],
+ 	["RIVAL/meters.json", ["meters", "menace", "sources", 5, "amount"], 5.0, "mTrauma"],
+ 	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["fillPerSec"], 2.0, "ladderTick"],
+diff --git a/sim/core/tools/power_check.gd b/sim/core/tools/power_check.gd
+index 108b743..792e3f9 100644
+--- a/sim/core/tools/power_check.gd
++++ b/sim/core/tools/power_check.gd
+@@ -33,10 +33,11 @@ func _numbers() -> void:
+ 		ok(near(SimPower.energy(f), row[3], 0.5), "energy: %.2f against %.1f" % [SimPower.energy(f), row[3]])
+ 		ok(near(SimPower.speed(f, 1.0), row[4], 25.0), "full send: %.0f against %.0f" % [SimPower.speed(f, 1.0), row[4]])
+ 		var far: float = SimPower.flatSpeed(S, f, 430.0 * f.spd * SimForms.speedMul(S, f) * 2.4, 1.0)
+-		ok(near(far, row[5] * f.spd, 25.0), "flat out: %.0f against %.0f" % [far, row[5] * f.spd])
++		var wantFar: float = row[5] / 5000.0 * SimPower.flatOut * f.spd   # the table is written for a base of 5,000; the data's base scales it (3,500 since GW1b)
++		ok(near(far, wantFar, 25.0), "flat out: %.0f against %.0f" % [far, wantFar])
+ 	f.tier = 1.0
+ 	f.power = 0.0
+-	ok(near(WorldSlide.launchTravel(1.0, 0.0), 2.0, 1.0e-6) and WorldSlide.launchTravel(0.0, 1.0) == 1.0, "along the line, twice; straight up, once")
++	ok(near(WorldSlide.launchTravel(1.0, 0.0), SimPower.launchTravel, 1.0e-6) and WorldSlide.launchTravel(0.0, 1.0) == 1.0, "along the line, the data's x%.2f; straight up, once" % SimPower.launchTravel)
+ 	for row in [["fullB", 2000.0], ["launcher", 1414.0], ["tap", 707.0], ["firstFlash", 1414.0], ["unlisted", 1000.0], ["templates.heavy_clash", 1414.0], ["templates.guard_break", 1414.0], ["templates.dodge", 1000.0], ["templates.charge_interrupt.heavy", 1414.0], ["knock", 707.0], ["beam.signature", 2000.0], ["beam.guarded", 1000.0], ["finisher.fixed", 1414.0], ["breakLaunch", 2000.0]]:
+ 		ok(near(SimPower.speed(f, SimPower.share(row[0])), row[1], 2.0), "%s at base: %.0f" % [row[0], SimPower.speed(f, SimPower.share(row[0]))])
+ 	ok(SimPower.templateShare("charge_interrupt", "light", 900.0) == 0.25 and SimPower.templateShare("charge_interrupt", "heavy", 1500.0) == 0.5, "a template's light and heavy rows")
+@@ -90,7 +91,7 @@ func _flight() -> void:
+ 				close = maxf(close, sqrt(f.vx * f.vx + f.vy * f.vy))
+ 			got.append([far, close, SimPower.level(f), f.spd])
+ 			SimCore.dispose(S)
+-		var want: float = 5000.0 * SimDetMath.pow(2.305, got[0][2]) * got[0][3]
++		var want: float = SimPower.flatOut * SimDetMath.pow(2.305, got[0][2]) * got[0][3]
+ 		print("flight tier %d: flat out %.0f (off %.0f), close %.0f (off %.0f)" % [tier, got[0][0], got[1][0], got[0][1], got[1][1]])
+ 		ok(near(got[0][0], want, want * 0.02), "tier %d: flat out %.0f against %.0f" % [tier, got[0][0], want])
+ 		ok(got[0][1] == got[1][1], "tier %d: the close dash doesn't change (%.1f, %.1f)" % [tier, got[0][1], got[1][1]])
+@@ -219,14 +220,14 @@ func _dash() -> void:
+ 	var S0 := _dashAt(off, 300.0, 1.0, 0.0)
+ 	var closeOff: float = SimFighter.flightSpeed(S0, S0.fighters[0], true)
+ 	SimCore.dispose(S0)
+-	ok(near(tops[0], 5000.0, 25.0) and tops[0] == tops[1] and tops[1] == tops[2] and tops[2] == tops[3], "the dash at 300, 1,500, 6,000 and 14,000 apart: %.0f, %.0f, %.0f, %.0f, his level's flat out" % tops)
++	ok(near(tops[0], SimPower.flatOut, 25.0) and tops[0] == tops[1] and tops[1] == tops[2] and tops[2] == tops[3], "the dash at 300, 1,500, 6,000 and 14,000 apart: %.0f, %.0f, %.0f, %.0f, his level's flat out" % tops)
+ 	ok(closeOff < 1500.0, "off: the close dash as it was at 300 apart (%.0f)" % closeOff)
+ 	var SM := _dashAt(on, 300.0, 4.0, 100.0)
+ 	var fm = SM.fighters[0]
+ 	var topMax: float = SimFighter.flightSpeed(SM, fm, true)
+-	var wantMax: float = 5000.0 * SimDetMath.pow(2.305, SimPower.level(fm)) * fm.spd
++	var wantMax: float = SimPower.flatOut * SimDetMath.pow(2.305, SimPower.level(fm)) * fm.spd
+ 	SimCore.dispose(SM)
+-	ok(near(topMax, wantMax, wantMax * 0.01) and topMax > 11000.0, "at the top, at 300 apart: %.0f (his level's flat out %.0f)" % [topMax, wantMax])
++	ok(near(topMax, wantMax, wantMax * 0.01) and topMax > 2.0 * SimPower.flatOut, "at the top, at 300 apart: %.0f (his level's flat out %.0f)" % [topMax, wantMax])
+ 	# the response is the kick's (instant and climb, kick.json; the builds play with it on): the first tick, up close
+ 	var onK: Dictionary = on.duplicate()
+ 	onK["kick"] = true
+@@ -243,7 +244,8 @@ func _dash() -> void:
+ 	# play, with the arrival off and on (on, it eases him over the last 1.5 bh to the mark); printed with the kick off
+ 	for arr in [false, true]:
+ 		var arr0: bool = _arrive(arr)
+-		for row in [[1000.0, 1.0, 0.0, 0.4], [3000.0, 1.0, 0.0, 0.8], [6000.0, 1.0, 0.0, 1.4], [6000.0, 4.0, 100.0, 0.75]]:
++		var cs: Dictionary = SimPower._d.get("dash", {}).get("closeSec", {})   # QA's targets: power.json dash.closeSec (Game Design's ruling (c), moved for 3,500 by flight-3500.md)
++		for row in [[1000.0, 1.0, 0.0, float(cs.get("1000", 0.45))], [3000.0, 1.0, 0.0, float(cs.get("3000", 1.0))], [6000.0, 1.0, 0.0, float(cs.get("6000", 1.9))], [6000.0, 4.0, 100.0, 0.9]]:   # at the top from 6,000: 0.9 s (flight-3500.md)
+ 			var got: Array = []
+ 			for su in [onK, offK, on, off]:
+ 				var SC := _dashAt(su, row[0], row[1], row[2])
+@@ -327,7 +329,7 @@ func _slip() -> void:
+ 		print("slip: a tap of %d at 3,000 apart, his speed from the last held tick: %s (off, %d ticks after: %.0f)" % [k, ", ".join(vs), ez,r0[k + ez - 1][1]])
+ 		ok(r[k][1] > sp and firstCut < 0.5, "a tap of %d: the first tick after it is still above the slip (%.0f), and takes %.0f%% of the way: no snap" % [k, r[k][1], firstCut * 100.0])
+ 		ok(mono and r[k + ez - 2][1] > sp and r[k + ez - 1][1] <= sp + 1.0e-6, "a tap of %d: his speed falls to the slip's %.0f on the %dth tick after it, not before" % [k, sp, ez])
+-		ok(r0[k + ez - 1][1] > 2.0 * sp, "off: a tap of %d is still at %.0f %d ticks after it" % [k, r0[k + ez - 1][1], ez])
++		ok(r0[k + ez - 1][1] - sp > (r[k - 1][1] - sp) / 3.0, "off: a tap of %d is still at %.0f %d ticks after it, a third of the way back to his last held %.0f or more" % [k, r0[k + ez - 1][1], ez, r[k - 1][1]])   # (it was twice the slip's speed, written for flat out 5,000)
+ 		ok(r[39][0] < r0[39][0], "a tap of %d carries him less with it on: %.2f bh against %.2f" % [k, r[39][0] / SimDepth.BH, r0[39][0] / SimDepth.BH])
+ 	ok(_slipRun(on if SimPower.slipOn_ else off, 3000.0, _held(2), 40) == _slipRun(none, 3000.0, _held(2), 40), "a match with no word takes the data's slip switch (%s)" % str(SimPower.slipOn_))
+ 	# held underTicks or longer: exactly as with it off

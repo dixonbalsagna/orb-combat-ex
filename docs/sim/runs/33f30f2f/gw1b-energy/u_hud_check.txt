@@ -1,0 +1,1496 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  crown up in 27% of the scripted fight (any fighter)
+  scenario hero_vs_proud      cards<=2 barks<=2 { "cards_shown": 2, "cards_merged": 1, "cards_dropped": 0, "cards_evicted": 0, "cards_withheld": 2, "barks_shown": 3, "barks_cut": 0, "barks_suppressed": 0, "toasts_skipped": 0, "max_cards_visible": 1, "max_barks_visible": 2, "events": 23, "faces_shown": 3, "faces_capped": 0, "banners_move_name": 0 }
+  scenario empress_vs_cyborg  cards<=2 barks<=2 { "cards_shown": 4, "cards_merged": 0, "cards_dropped": 0, "cards_evicted": 0, "cards_withheld": 0, "barks_shown": 2, "barks_cut": 0, "barks_suppressed": 0, "toasts_skipped": 1, "max_cards_visible": 2, "max_barks_visible": 2, "events": 15, "faces_shown": 2, "faces_capped": 0, "banners_move_name": 0 }
+  scenario placeholders       cards<=1 barks<=1 { "cards_shown": 1, "cards_merged": 0, "cards_dropped": 0, "cards_evicted": 0, "cards_withheld": 0, "barks_shown": 0, "barks_cut": 0, "barks_suppressed": 0, "toasts_skipped": 0, "max_cards_visible": 1, "max_barks_visible": 0, "events": 5, "faces_shown": 0, "faces_capped": 0, "banners_move_name": 0 }
+  scenario stress             cards<=2 barks<=2 { "cards_shown": 8, "cards_merged": 1, "cards_dropped": 0, "cards_evicted": 3, "cards_withheld": 7, "barks_shown": 3, "barks_cut": 2, "barks_suppressed": 0, "toasts_skipped": 1, "max_cards_visible": 4, "max_barks_visible": 2, "events": 110, "faces_shown": 3, "faces_capped": 0, "banners_move_name": 0 }
+  scenario controls           cards<=1 barks<=1 { "cards_shown": 0, "cards_merged": 0, "cards_dropped": 0, "cards_evicted": 0, "cards_withheld": 0, "barks_shown": 0, "barks_cut": 0, "barks_suppressed": 0, "toasts_skipped": 0, "max_cards_visible": 0, "max_barks_visible": 0, "events": 13, "faces_shown": 0, "faces_capped": 0, "banners_move_name": 0 }
+  split cost: over 300 frames of a moving split, 150 layer redraws (50 of them chips)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _responsive (res://ui/tools/hud_check.gd:3292)
+       [1] _run (res://ui/tools/hud_check.gd:61)
+       [2] _split_cost (res://ui/tools/hud_check.gd:3215)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _howto_rules (res://ui/tools/hud_check.gd:3416)
+       [1] _run (res://ui/tools/hud_check.gd:62)
+       [2] _responsive (res://ui/tools/hud_check.gd:3307)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _reads_hud (res://ui/tools/hud_check.gd:3503)
+       [1] _run (res://ui/tools/hud_check.gd:63)
+       [2] _howto_rules (res://ui/tools/hud_check.gd:3482)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _feedback_rules (res://ui/tools/hud_check.gd:3652)
+       [1] _run (res://ui/tools/hud_check.gd:64)
+       [2] _reads_hud (res://ui/tools/hud_check.gd:3562)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _hints_rules (res://ui/tools/hud_check.gd:5501)
+       [1] _run (res://ui/tools/hud_check.gd:66)
+       [2] _feedback_rules (res://ui/tools/hud_check.gd:3819)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _incoming_rules (res://ui/tools/hud_check.gd:4455)
+       [1] _run (res://ui/tools/hud_check.gd:70)
+       [2] _energy_rules (res://ui/tools/hud_check.gd:4263)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _display_name_rules (res://ui/tools/hud_check.gd:6668)
+       [1] _run (res://ui/tools/hud_check.gd:73)
+       [2] _stance_badge_rules (res://ui/tools/hud_check.gd:4592)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _about_rules (res://ui/tools/hud_check.gd:6871)
+       [1] _run (res://ui/tools/hud_check.gd:74)
+       [2] _display_name_rules (res://ui/tools/hud_check.gd:6738)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _licences_rules (res://ui/tools/hud_check.gd:9807)
+       [1] _run (res://ui/tools/hud_check.gd:75)
+       [2] _about_rules (res://ui/tools/hud_check.gd:6888)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _first_run_rules (res://ui/tools/hud_check.gd:9744)
+       [1] _run (res://ui/tools/hud_check.gd:76)
+       [2] _licences_rules (res://ui/tools/hud_check.gd:9867)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _rename_rules (res://ui/tools/hud_check.gd:6914)
+       [1] _run (res://ui/tools/hud_check.gd:77)
+       [2] _first_run_rules (res://ui/tools/hud_check.gd:9771)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _press_mark_rules (res://ui/tools/hud_check.gd:7012)
+       [1] _run (res://ui/tools/hud_check.gd:78)
+       [2] _rename_rules (res://ui/tools/hud_check.gd:6959)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _press_mark_rules (res://ui/tools/hud_check.gd:7105)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _notice_rules (res://ui/tools/hud_check.gd:9555)
+       [1] _run (res://ui/tools/hud_check.gd:79)
+       [2] _press_mark_rules (res://ui/tools/hud_check.gd:7130)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _gate_short_rules (res://ui/tools/hud_check.gd:9464)
+       [1] _run (res://ui/tools/hud_check.gd:80)
+       [2] _notice_rules (res://ui/tools/hud_check.gd:9706)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _gate_short_rules (res://ui/tools/hud_check.gd:9464)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _gate_short_rules (res://ui/tools/hud_check.gd:9464)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _gate_short_rules (res://ui/tools/hud_check.gd:9464)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _phone_rules (res://ui/tools/hud_check.gd:9245)
+       [1] _run (res://ui/tools/hud_check.gd:81)
+       [2] _gate_short_rules (res://ui/tools/hud_check.gd:9522)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _paint_turn (res://ui/hud/ui_hud.gd:1874)
+       [3] _draw (res://ui/hud/ui_layer.gd:46)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _paint_turn (res://ui/hud/ui_hud.gd:1874)
+       [3] _draw (res://ui/hud/ui_layer.gd:46)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+ERROR: Rect2 size is negative, this is not supported. Use Rect2.abs() to get a Rect2 with a positive size.
+   at: encloses (./core/math/rect2.h:135)
+   GDScript backtrace (most recent call first):
+       [0] plan (res://ui/widgets/ui_turn.gd:44)
+       [1] turn_plan (res://ui/hud/ui_hud.gd:1842)
+       [2] _update_layers (res://ui/hud/ui_hud.gd:958)
+       [3] _advance (res://ui/hud/ui_hud.gd:544)
+       [4] advance (res://ui/hud/ui_hud.gd:500)
+       [5] _phone_rules (res://ui/tools/hud_check.gd:9268)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _phone_rules (res://ui/tools/hud_check.gd:9293)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _phone_rules (res://ui/tools/hud_check.gd:9314)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _menu_rules (res://ui/tools/hud_check.gd:7742)
+       [1] _run (res://ui/tools/hud_check.gd:82)
+       [2] _phone_rules (res://ui/tools/hud_check.gd:9383)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _rival_pointer_rules (res://ui/tools/hud_check.gd:7926)
+       [1] _run (res://ui/tools/hud_check.gd:83)
+       [2] _menu_rules (res://ui/tools/hud_check.gd:7876)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _many_marker_rules (res://ui/tools/hud_check.gd:8005)
+       [1] _run (res://ui/tools/hud_check.gd:84)
+       [2] _rival_pointer_rules (res://ui/tools/hud_check.gd:7957)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _lost_rival_rules (res://ui/tools/hud_check.gd:8773)
+       [1] _run (res://ui/tools/hud_check.gd:85)
+       [2] _many_marker_rules (res://ui/tools/hud_check.gd:8039)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _damage_facts_rules (res://ui/tools/hud_check.gd:8808)
+       [1] _run (res://ui/tools/hud_check.gd:86)
+       [2] _lost_rival_rules (res://ui/tools/hud_check.gd:8800)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _plain_words_rules (res://ui/tools/hud_check.gd:9110)
+       [1] _run (res://ui/tools/hud_check.gd:90)
+       [2] _menus_rail_rules (res://ui/tools/hud_check.gd:11033)
+       [3] <anonymous lambda> (res://ui/tools/hud_check.gd:10959)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _plain_words_rules (res://ui/tools/hud_check.gd:9110)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _plain_words_rules (res://ui/tools/hud_check.gd:9110)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _plain_words_rules (res://ui/tools/hud_check.gd:9110)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _plain_words_rules (res://ui/tools/hud_check.gd:9110)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _plain_words_rules (res://ui/tools/hud_check.gd:9110)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _plain_words_rules (res://ui/tools/hud_check.gd:9110)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _plain_words_rules (res://ui/tools/hud_check.gd:9110)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _launch_marks_rules (res://ui/tools/hud_check.gd:8559)
+       [1] _run (res://ui/tools/hud_check.gd:91)
+       [2] _plain_words_rules (res://ui/tools/hud_check.gd:9143)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _tug_rules (res://ui/tools/hud_check.gd:8710)
+       [1] _run (res://ui/tools/hud_check.gd:92)
+       [2] _launch_marks_rules (res://ui/tools/hud_check.gd:8645)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _cut_rules (res://ui/tools/hud_check.gd:8517)
+       [1] _run (res://ui/tools/hud_check.gd:93)
+       [2] _tug_rules (res://ui/tools/hud_check.gd:8743)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _loading_rules (res://ui/tools/hud_check.gd:8440)
+       [1] _run (res://ui/tools/hud_check.gd:94)
+       [2] _cut_rules (res://ui/tools/hud_check.gd:8549)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _minimal_hud_rules (res://ui/tools/hud_check.gd:8064)
+       [1] _run (res://ui/tools/hud_check.gd:95)
+       [2] _loading_rules (res://ui/tools/hud_check.gd:8508)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _minimal_hud_rules (res://ui/tools/hud_check.gd:8155)
+       [1] _plate_words (res://ui/tools/hud_check.gd:8055)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _minimal_teach_rules (res://ui/tools/hud_check.gd:8231)
+       [1] _run (res://ui/tools/hud_check.gd:96)
+       [2] _minimal_hud_rules (res://ui/tools/hud_check.gd:8220)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _minimal_join_rules (res://ui/tools/hud_check.gd:8354)
+       [1] _run (res://ui/tools/hud_check.gd:97)
+       [2] _minimal_teach_rules (res://ui/tools/hud_check.gd:8347)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _brawl_marks_rules (res://ui/tools/hud_check.gd:7499)
+       [1] _run (res://ui/tools/hud_check.gd:99)
+       [2] _minimal_join_rules (res://ui/tools/hud_check.gd:8374)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _block_toggle_rules (res://ui/tools/hud_check.gd:9153)
+       [1] _run (res://ui/tools/hud_check.gd:101)
+       [2] _brawl_marks_rules (res://ui/tools/hud_check.gd:7588)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _block_toggle_rules (res://ui/tools/hud_check.gd:9153)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _block_toggle_rules (res://ui/tools/hud_check.gd:9153)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _three_strength_rules (res://ui/tools/hud_check.gd:7174)
+       [1] _run (res://ui/tools/hud_check.gd:103)
+       [2] _block_toggle_rules (res://ui/tools/hud_check.gd:9225)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _three_strength_rules (res://ui/tools/hud_check.gd:7197)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _reduce_flashing_rules (res://ui/tools/hud_check.gd:7446)
+       [1] _three_strength_rules (res://ui/tools/hud_check.gd:7304)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _rf_lock_rules (res://ui/tools/hud_check.gd:7647)
+       [1] _three_strength_rules (res://ui/tools/hud_check.gd:7305)
+       [2] _reduce_flashing_rules (res://ui/tools/hud_check.gd:7485)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _launcher_rules (res://ui/tools/hud_check.gd:7313)
+       [1] _three_strength_rules (res://ui/tools/hud_check.gd:7306)
+       [2] _rf_lock_rules (res://ui/tools/hud_check.gd:7684)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _stances_page_rules (res://ui/tools/hud_check.gd:5193)
+       [1] _frames (res://ui/tools/hud_check.gd:3841)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _stances_page_rules (res://ui/tools/hud_check.gd:5199)
+       [1] _frames (res://ui/tools/hud_check.gd:3841)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _armed_touch_rules (res://ui/tools/hud_check.gd:5231)
+       [1] _run (res://ui/tools/hud_check.gd:106)
+       [2] _stances_page_rules (res://ui/tools/hud_check.gd:5213)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _touch_controls_rules (res://ui/tools/hud_check.gd:5639)
+       [1] _run (res://ui/tools/hud_check.gd:109)
+       [2] _beat_ring_rules (res://ui/tools/hud_check.gd:4730)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _touch_feel_rules (res://ui/tools/hud_check.gd:5714)
+       [1] _run (res://ui/tools/hud_check.gd:110)
+       [2] _touch_controls_rules (res://ui/tools/hud_check.gd:5701)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _settings_rules (res://ui/tools/hud_check.gd:6081)
+       [1] _run (res://ui/tools/hud_check.gd:111)
+       [2] _touch_feel_rules (res://ui/tools/hud_check.gd:5809)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _settings_rules (res://ui/tools/hud_check.gd:6261)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _remap_rules (res://ui/tools/hud_check.gd:6391)
+       [1] _run (res://ui/tools/hud_check.gd:114)
+       [2] _settings_access_rules (res://ui/tools/hud_check.gd:5935)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _remap_rules (res://ui/tools/hud_check.gd:6584)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _pause_menu_rules (res://ui/tools/hud_check.gd:10073)
+       [1] _run (res://ui/tools/hud_check.gd:137)
+       [2] _refusal_compact_rules (res://ui/tools/hud_check.gd:2026)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _faces_rules (res://ui/tools/hud_check.gd:10502)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _two_player_rules (res://ui/tools/hud_check.gd:10588)
+       [1] _run (res://ui/tools/hud_check.gd:139)
+       [2] _faces_rules (res://ui/tools/hud_check.gd:10532)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _sim_pause_rules (res://ui/tools/hud_check.gd:10257)
+       [1] _run (res://ui/tools/hud_check.gd:140)
+       [2] _two_player_rules (res://ui/tools/hud_check.gd:10771)
+  bridge ok: 11553 events consumed over 4200 ticks
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _howto_rules (res://ui/tools/hud_check.gd:3416)
+       [1] _switches_on_rules (res://ui/tools/hud_check.gd:1673)
+       [2] _run (res://ui/tools/hud_check.gd:143)
+       [3] _sim_untouched_rules (res://ui/tools/hud_check.gd:2398)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _about_rules (res://ui/tools/hud_check.gd:6871)
+       [1] _switches_on_rules (res://ui/tools/hud_check.gd:1674)
+       [2] _howto_rules (res://ui/tools/hud_check.gd:3482)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _first_run_rules (res://ui/tools/hud_check.gd:9744)
+       [1] _switches_on_rules (res://ui/tools/hud_check.gd:1675)
+       [2] _about_rules (res://ui/tools/hud_check.gd:6888)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _stances_page_rules (res://ui/tools/hud_check.gd:5193)
+       [1] _frames (res://ui/tools/hud_check.gd:3841)
+WARNING: Nodes with non-equal opposite anchors will have their size overridden after _ready(). 
+If you want to set size, change the anchors or consider using set_deferred().
+   at: _set_size (scene/gui/control.cpp:1519)
+   GDScript backtrace (most recent call first):
+       [0] _stances_page_rules (res://ui/tools/hud_check.gd:5199)
+       [1] _frames (res://ui/tools/hud_check.gd:3841)
+hud_check: 8288 checks, 0 failed
+WARNING: 55 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 9 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

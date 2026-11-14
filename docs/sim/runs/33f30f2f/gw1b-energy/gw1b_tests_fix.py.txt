@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+# gw1b_tests_fix.py <tree>: after gw1b_energy_edit.py, the two rows its first gate found written for the old numbers:
+#  - parity's WIRED rows for anguish source 0's "within", menace source 2's "minBh" and source 3's "sizes": each only matters
+#    while its source's amount is not 0, and since Game Design's addendum every collateral feed's amount is 0 (as the caps
+#    came out in meters-zero). The amount rows stay: they prove each feed is still wired;
+#  - power_check's slip row "off: a tap is still at ..." asked for twice the slip's speed, written for the 5,000 base; it now
+#    asks that, off, the tap is still a third of the way from the slip's speed to his last held speed.
+import sys, os
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    print("edited", rel)
+
+
+edit("sim/core/tools/parity.gd", [
+    ("## (2026-11-13), are regen_penalty's and regen_bonus's caps: they only matter while their perPoint is not 0, and both are 0 in data.\n",
+     "## (2026-11-13), are regen_penalty's and regen_bonus's caps: they only matter while their perPoint is not 0, and both are 0 in data.\n"
+     "## And since Game Design's addendum (2026-11-14), anguish source 0's within, menace source 2's minBh and source 3's sizes: each\n"
+     "## only matters while its source's amount is not 0, and every collateral feed's amount is 0 in data. Their amount rows stay.\n"),
+    ('\t["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "within"], 10.0, "aWithin"],\n', ''),
+    ('\t["RIVAL/meters.json", ["meters", "menace", "sources", 2, "minBh"], 5.0, "mCrater"],\n', ''),
+    ('\t["RIVAL/meters.json", ["meters", "menace", "sources", 3, "sizes"], [4.0, 5.0, 6.0], "mEmptied"],\n', ''),
+])
+edit("sim/core/tools/power_check.gd", [
+    ('\t\tok(r0[k + ez - 1][1] > 2.0 * sp, "off: a tap of %d is still at %.0f %d ticks after it" % [k, r0[k + ez - 1][1], ez])\n',
+     '\t\tok(r0[k + ez - 1][1] - sp > (r[k - 1][1] - sp) / 3.0, "off: a tap of %d is still at %.0f %d ticks after it, a third of the way back to his last held %.0f or more" % [k, r0[k + ez - 1][1], ez, r[k - 1][1]])   # (it was twice the slip\'s speed, written for flat out 5,000)\n'),
+])
+
+# cross_check's shots from outside: the rows read the shooter's menace and anguish from a building he brings down, and
+# every collateral feed is 0 in data now (the menace rows passed as 0 against 0, the anguish row failed). For their own
+# runs they give the shooter the feeds as main had them before the addendum, and put them back, so the rows still show that
+# what a shot from outside does is charged to its shooter.
+edit("sim/core/tools/cross_check.gd", [
+    ("func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:\n",
+     "## Every collateral feed to the meters is 0 in data since Game Design's addendum to Orb's decision 6 (2026-11-14). These\n"
+     "## rows read the shooter's meter from a building he brings down, so for their own runs he has the feeds main had before it\n"
+     "## (menace: destroyed 0.8, emptied 1 by size 1, 2, 3; anguish: destroyed 0.6, emptied 0.5, failed to protect 1),\n"
+     "## put back after.\n"
+     "var _keptFeeds: Array = []\n"
+     "func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:\n"
+     "\tvar r: Array = _worldHit0(seed, across, what, meter)\n"
+     "\tif not _keptFeeds.is_empty():\n"
+     "\t\tvar md = _keptFeeds[0]\n"
+     "\t\tmd.menaceDestroyed = _keptFeeds[1]\n"
+     "\t\tmd.menaceEmptied = _keptFeeds[2]\n"
+     "\t\tmd.anguishDestroyedSelf = _keptFeeds[3]\n"
+     "\t\tmd.anguishEmptied = _keptFeeds[4]\n"
+     "\t\tmd.anguishFailed = _keptFeeds[5]\n"
+     "\t\t_keptFeeds = []\n"
+     "\treturn r\n"
+     "\n"
+     "\n"
+     "func _feeds(A) -> void:\n"
+     "\tvar md = A.md\n"
+     "\t_keptFeeds = [md, md.menaceDestroyed, md.menaceEmptied.duplicate(), md.anguishDestroyedSelf, md.anguishEmptied, md.anguishFailed]\n"
+     "\tif A.hasMenace:\n"
+     "\t\tmd.menaceDestroyed = 0.8\n"
+     "\t\tmd.menaceEmptied = [1.0, 2.0, 3.0]\n"
+     "\tif A.hasAnguish:\n"
+     "\t\tmd.anguishDestroyedSelf = 0.6\n"
+     "\t\tmd.anguishEmptied = 0.5\n"
+     "\t\tmd.anguishFailed = 1.0\n"
+     "\n"
+     "\n"
+     "func _worldHit0(seed: int, across: bool, what: String, meter: String) -> Array:\n"),
+    ('\tok(A != null, "fight 0 has a body with %s" % meter)\n\tif A == null:\n\t\tSimCore.dispose(S)\n\t\treturn [0.0, 0.0, 0.0, 0.0]\n',
+     '\tok(A != null, "fight 0 has a body with %s" % meter)\n\tif A == null:\n\t\tSimCore.dispose(S)\n\t\treturn [0.0, 0.0, 0.0, 0.0]\n\t_feeds(A)\n'),
+])
+print("ok")

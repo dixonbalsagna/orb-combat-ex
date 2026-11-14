@@ -1,0 +1,96 @@
+diff --git a/data/fighters/PROTAGONIST/meters.json b/data/fighters/PROTAGONIST/meters.json
+index f04806f..85df84f 100644
+--- a/data/fighters/PROTAGONIST/meters.json
++++ b/data/fighters/PROTAGONIST/meters.json
+@@ -12,26 +12,30 @@
+       "sources": [
+         {
+           "event": "destroyed",
+-          "amount": 0.3,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 0.3",
+           "whose": "opponent",
+           "within": 3000,
+           "_note": "collateral devastation: a building anyone else brings down within `within` units of him (shortest arc), per unit of mass, times the arena norm. `within` is the reach of every row below too (a fall, a place emptied, the failing to protect)"
+         },
+         {
+           "event": "destroyed",
+-          "amount": 0.6,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 0.6",
+           "whose": "self",
+           "_note": "... and a building he brings down himself"
+         },
+         {
+           "event": "emptied",
+-          "amount": 0.5,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 0.5",
+           "whose": "any",
+           "_note": "a lived-in building emptied within `within` of him (its first damage), times the norm"
+         },
+         {
+           "event": "failed_to_protect",
+-          "amount": 1,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 1",
+           "whose": "self",
+           "_note": "a cost to him, not a reward: a building falls inside the place he is fighting in while he is the nearest fighter to it, per unit of mass, times the norm"
+         }
+diff --git a/data/fighters/RIVAL/meters.json b/data/fighters/RIVAL/meters.json
+index dd64c80..097f42b 100644
+--- a/data/fighters/RIVAL/meters.json
++++ b/data/fighters/RIVAL/meters.json
+@@ -12,26 +12,30 @@
+       "sources": [
+         {
+           "event": "destroyed",
+-          "amount": 0.8,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 0.8",
+           "whose": "self",
+           "_note": "a building his blow, send, beam or body brings down, per unit of its mass (a house 1, a low tower 5, a tall tower 15: power.json absorb), times the arena norm (collateral.json massRef over the structure mass at the start) (bystanders.md section 3)"
+         },
+         {
+           "event": "destroyed_power",
+-          "amount": 0.07,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 0.07",
+           "whose": "self",
+           "_note": "his power from the world: per unit of mass he levels, the same norm. Game Design's first value was 0.22; 0.07 puts a match's power from the world within 20% of what the old 0.09 a person gave (2.5 against 2.6 on the hand-made arena, 5.9 against 5.1 on planet 7, the mean of 16 and 6 AI matches, docs/world/runs/)"
+         },
+         {
+           "event": "crater",
+-          "amount": 1,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 1",
+           "whose": "self",
+           "minBh": 3,
+           "_note": "a crater his send or beam digs, at least minBh body heights across (powering up on the ground does not count)"
+         },
+         {
+           "event": "emptied",
+-          "amount": 1,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 1",
+           "whose": "self",
+           "sizes": [
+             1,
+@@ -42,13 +46,15 @@
+         },
+         {
+           "event": "region_broken",
+-          "amount": 8,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 8",
+           "whose": "opponent",
+           "_note": "combat trauma: a region of the opposing fighter broken (not normalised)"
+         },
+         {
+           "event": "brink",
+-          "amount": 10,
++          "amount": 0,
++          "_zeroed": "0 since Game Design's addendum to Orb's decision 6 (docs/design/energy-stamina-body.md section 6, 2026-11-14): every feed to the meters is 0, so every fighter's ladder fills alike from time, charging and damage. It was 10",
+           "whose": "opponent",
+           "_note": "combat trauma: the opposing fighter reaches the brink (each time; not normalised)"
+         }

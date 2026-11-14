@@ -1,0 +1,56 @@
+grant-data-gw1b sha1 9292df190d85bb90563092a7dcaf4a090784a762 sha256 c6e4128d0c9c 1 files
+gw1b-energy sha1 95a4e5c4525b1813eb9611e50272c480d2756cd7 sha256 e9724bd6b217 3 files
+grant-narrative-feeds sha1 854254638ee5b561d328f9252b2c14716fbf5876 sha256 8fa277d82afa 2 files
+import 0; parse errors 0
+validate self-test 0
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+golden: exit 0 in 114 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (166605 ticks), 2 replays in 109.5 s
+  golden.json MOVED (expected)
+parity (its regenerated golden) through gate.mjs: exit 0 in 274 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+power_check through gate.mjs: exit 0 in 127 s; POWER: 0 check(s) failed
+28:dash close from 1000 at tier 1, arrival off, in ticks: 15 with the dash and the kick (0.25 s, target 0.45 s); 49 the kick alone; 22 the dash alone; 56 neither
+29:dash close from 3000 at tier 1, arrival off, in ticks: 50 with the dash and the kick (0.83 s, target 1.00 s); 140 the kick alone; 57 the dash alone; 157 neither
+30:dash close from 6000 at tier 1, arrival off, in ticks: 101 with the dash and the kick (1.68 s, target 1.90 s); 198 the kick alone; 108 the dash alone; 259 neither
+31:dash close from 6000 at tier 4, arrival off, in ticks: 45 with the dash and the kick (0.75 s, target 0.90 s); 107 the kick alone; 52 the dash alone; 164 neither
+32:dash close from 1000 at tier 1, arrival on, in ticks: 19 with the dash and the kick (0.32 s, target 0.45 s); 51 the kick alone; 25 the dash alone; 58 neither
+33:dash close from 3000 at tier 1, arrival on, in ticks: 53 with the dash and the kick (0.88 s, target 1.00 s); 142 the kick alone; 60 the dash alone; 159 neither
+34:dash close from 6000 at tier 1, arrival on, in ticks: 105 with the dash and the kick (1.75 s, target 1.90 s); 200 the kick alone; 112 the dash alone; 261 neither
+35:dash close from 6000 at tier 4, arrival on, in ticks: 49 with the dash and the kick (0.82 s, target 0.90 s); 109 the kick alone; 56 the dash alone; 167 neither
+power_check negative control: exit 0; POWER negative control: 0 check(s) failed
+cross: exit 0 in 127 s; script errors 0; CROSS: 0 check(s) failed
+cross_end: exit 0 in 161 s; script errors 0; CROSSEND: 0 check(s) failed
+memo: exit 0 in 43 s; script errors 0; MEMO: 0 check(s) failed
+kick: exit 0 in 42 s; script errors 0; KICK: 0 check(s) failed
+two_states: exit 0 in 66 s; script errors 0; PASS  0 failure(s)
+== the other owners' checks that read the meters or flat out (to list)
+w_bystanders_check: exit 1 in 10 s; script errors 0; BYSTANDERS: 2 check(s) failed
+3:  FAIL: the villain fed on the wreck, capped (10.0 menace)
+6:  FAIL: at least one of the matches brought a building down, so the identity is not vacuous
+w_far_people_check: exit 0 in 10 s; script errors 0; FARPEOPLE: 0 check(s) failed
+d_arc_check: exit 1 in 10 s; script errors 0; ARC: 1 check(s) failed
+53:FAIL  the meteor's own bowl (4571)
+d_relief_check: exit 0 in 4 s; script errors 0; RELIEF: 0 check(s) failed
+d_swing_legal_check: exit 0 in 62 s; script errors 0; SWING LEGAL: 0 check(s) failed
+d_arrive_check: exit 0 in 21 s; script errors 0; ARRIVE: 0 check(s) failed
+d_launch_cost_check: exit 0 in 338 s; script errors 0; LAUNCH COST: 0 check(s) failed
+u_hud_check: exit 0 in 273 s; script errors 0; hud_check: 8288 checks, 0 failed
+== Rendering's checks
+after_check: exit 1 in 13 s; FAIL lines 1; script errors 0; after check FAILED (1)
+5:FAIL  the match has a rush in it: the five are reached (0), so the limit is tried
+cue_check: exit 0 in 56 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 14 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 50 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 45 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 57 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 60 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 7 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 12 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 21 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 21 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 14 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 13 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 15 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 13 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+fl2 done

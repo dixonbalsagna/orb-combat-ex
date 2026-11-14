@@ -4,6 +4,12 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **Landed in the Sunday batch (4890bdd9), their folders deleted:** `power-travel/` (a setup's `"travel"`, with Netcode's and Tools' grants and the stance-freeze doc lines) and `power-page/` (Tools' page lines: the model on for the page, and the travel slider).
 
+**Parked, sprint A1:** `gw1b-energy/` (Game Design's addendum to Orb's decisions 5 and 6): `power.json` grant (flat out 3,500, the close times, travel 1.5), every meter feed at 0 (Narrative's grant), and my rows written for the old numbers. Applies after close-rows, energy-on, gates-shipped and meters-zero. Changes the hash: GW1b.
+
+**Parked, sprint A1:** `replay-world/` (the companion to World's a-world-01): a replay of the default world names its planet, and the header's data hash is the planet's. No-op in arena mode. Applies after replay-build and World's globe-step2 and a-world-01; lands with a-world-01 in GW1b.
+
+**Parked, sprint A1:** `gates-shipped/` (A-CODE-02's part for my gates): parity and kick_check pass on main's data and on the 9 November data (parity's floor leak fixed; rows written for switches off name what they test). Test-only. Lands with or before the first switch group in GW1a, after close-rows and energy-on.
+
 **Parked, sprint A1:** `meters-zero/` (A-ENERGY-05, Orb's decision 6): the old meters change nothing, the comeback is a rule for both fighters (Narrative's grant for the data). Changes the hash: GW1b.
 
 **Parked, sprint A1:** `replay-sizes/` (support for World's five planet sizes): a replay's header is made at the size its setup names, so a sized planet's replay plays in a host bound to another size; applies after World's three parks. No change for medium.
