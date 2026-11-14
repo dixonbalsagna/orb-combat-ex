@@ -18,6 +18,8 @@ Records in `docs/sim/runs/f1-s422/fork-frame/`. On a copy of the EP's s422 (the 
 
 ## Not this pin: fork_check's planet 12 is a real fault (World's)
 
+**Fixed by World (b1d9444e, `docs/world/pending/cache-determinism/`).** On the rebuilt GW1a stack (b09d705), `fork_check` passes from a cold cache, and planet 12 gives one state cold and warm (`docs/sim/runs/b09d705-s422/fork-confirm/`). What follows is the fault as found.
+
 `fork_check` fails "planet 12: state differs" on the same tree. **That isn't the rollback:** it's World's field cache, and the check is right to fail.
 - Run on the same tree, the real and the predicted processes give the same state whenever the field cache is in the same condition: both fresh, or both read back from `user://field-cache/`. A fresh bake and a read-back give different states. The EP's run had the real process bake fresh (a cold cache) and the predicted one read it back.
 - After the swing re-lays part of the planet, the read-back world differs from the fresh one in the last bits: 72 ground columns by about 1e-13 (columns 2,372 to 2,714) and 5 building positions by about 3e-11. Each landing grows the difference, and the state hash parts at the fifth landing.
