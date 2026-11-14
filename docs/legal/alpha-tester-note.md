@@ -9,7 +9,7 @@ A private Alpha test of an early fighting game. It is rough, it will break, and 
 ## Who can test
 
 - **Adults only.** By taking part you are telling Orb you are 18 or older.
-- **The build is private.** It was shared with you personally. Please do not pass it on, upload it, post it, stream it or share clips or screenshots of it, and do not give your download key to anyone. If you want to show someone, ask Orb first.
+- **The build is private.** It was shared with you personally. Please do not pass it on, upload it, post it, stream it or share clips or screenshots of it publicly, and do not give your download key to anyone. You may record or screenshot a problem to show Orb, and send it to Orb only. If you want to show the game to someone, ask Orb first. The permission page that came with your key says the same thing in more detail.
 
 ## Your safety
 
