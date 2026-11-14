@@ -1,0 +1,17 @@
+# Signature and collapse, natively (clip_digest, the real main scene, the same sim as Tools' clips): the camera per tick in the seconds VFX flagged (docs/vfx/runs/f1f91f45/signature-collapse-attribution.txt). Step = the pane's move, of the width a tick; zstep = its zoom change (log) a tick.
+## the stack (main 611c1c2b + a-camera-01 + globe-default + crater-look-default) against the stack + cd04 + launch-hold-reduced + launch-wide: IDENTICAL in every flagged second
+signature normal 70-145: identical True; pane 0 step max 0.090 mean 0.008; zoom step max 0.0179
+signature reduced 70-145: identical True; pane 0 step max 0.090 mean 0.008; zoom step max 0.0179
+collapse reduced 1440-1500: identical True; pane 0 step max 0.035 mean 0.007; zoom step max 0.0179
+## signature reduced, the right pane (pane 1) through the facade events (114, 138): it pans 0.054 falling to 0.020 of the width a tick, at the readable size floor (the governor can't zoom out further)
+106 pane1 step 0.0544 ystep 0.0038 zstep 0.0098
+110 pane1 step 0.0459 ystep 0.0035 zstep 0.0021
+114 pane1 step 0.0390 ystep 0.0036 zstep 0.0015
+118 pane1 step 0.0323 ystep 0.0091 zstep 0.0011
+122 pane1 step 0.0252 ystep 0.0135 zstep 0.0008
+126 pane1 step 0.0220 ystep 0.0054 zstep 0.0006
+130 pane1 step 0.0207 ystep 0.0035 zstep 0.0034
+134 pane1 step 0.0210 ystep 0.0031 zstep 0.0085
+138 pane1 step 0.0204 ystep 0.0074 zstep 0.0128
+142 pane1 step 0.0194 ystep 0.0093 zstep 0.0173
+## collapse reduced, 1460-1500: the one view zooms 0.0179 a tick (about 1.07 e-folds a second) throughout, then the split opens at 1482
