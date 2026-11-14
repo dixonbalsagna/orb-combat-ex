@@ -9,6 +9,8 @@
    "grid": {
      "w": 192,
      "h": 96
+diff --git a/data/biomes/water.json b/data/biomes/water.json
+index d4c71423eb54..8c1d309648e1 100644
 --- a/data/biomes/water.json
 +++ b/data/biomes/water.json
 @@ -1,7 +1,7 @@
@@ -29,7 +31,7 @@
    "wade": {
      "below": 75.0
    },
-@@ -58,11 +58,11 @@
+@@ -58,10 +58,10 @@
      "scorchMin": 0.3
    },
    "surface": {
@@ -40,9 +42,8 @@
    "floor": {
 -    "enabled": false
 +    "enabled": true
-   },
-   "flood": {
-     "_about": "B1 on the planet store (docs/world/globe-step2.md; terrain-globe-plan.md 4.3). enabled: a crater, trench or groove dug minDug or more deep looks once for a source of water (the sea, a lake, the biome's table) at radii radii and bearings bearings out to reach units beyond its own radius, and holds water at that level (WorldFill.floodLevelFor; the level goes in the record). Off: no record holds water and the module is as it was.",
+   }
+ }
 --- a/data/biomes/contact.json
 +++ b/data/biomes/contact.json
 @@ -31,7 +31,7 @@
