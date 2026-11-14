@@ -5,7 +5,7 @@ When the data goes on (GW1a: the 9 November build's switches, and Simulation's e
 | File | What |
 | :--- | :--- |
 | `pins-gw1a.diff` | `sim/world/tools/pin.gd` (`WorldPin.shipped()`) and one line at the top of `_init` in 33 checks. Stands on HEAD def3445a (`git apply --check` clean) |
-| `pins-gw1b.diff` | `WorldPin.arena()` and one line in 11 more checks. Stacks after `pins-gw1a.diff` and after `a-world-01` (it calls `WorldDefault`) |
+| `pins-gw1b.diff` | `WorldPin.arena()` and one line in 12 more checks. Stacks after `pins-gw1a.diff` and after `a-world-01` (it calls `WorldDefault`) |
 
 ## How a pin works
 
@@ -19,7 +19,7 @@ Measured on scratch trees of HEAD: GW1a's World rows alone (no energy model); th
 | :--- | :--- |
 | **GW1a's World rows alone** (23) | `floor_check` 3, `arena_check` 2, `climate_check` 2, `power_world_check` 1, `epoch_check` 5, `far_check` 2, `farmap_check` 1, `farsites_check` 1, `field_water_check` 1, `field_lot_check` 3, `fill_check` 2, `gen2_state_check` 5, `ground_check` 5, `lakes_check` 1, `land_check` 1, `planet_check` 3, `ringpick_check` 3, `sea_rules_check` 2, `sites_check` 1, `surface_check` 2, `street_axis_check` 4, `water_warm_check` 1, `struggle_meet_check` 1 (the number is failing rows; every one pins a shipped value, a generation, or a hash recorded on the old data) |
 | **Only with the energy model and the dash** (9, and `wrecks_check`) | `brunt_check` 6, `craters_check` 1, `deepencheck` 1, `interior_check` 3, `repeat_check` 1, `meteor_crater_check` 1, `wall_hold_check` 3, `struggle_dir_check` 1, `bystanders_check` 1; Simulation's list adds `ground_check` 2 and `wrecks_check` 1, which `wrecks_check` is pinned for but not run (it wants the quiet window: about an hour on a loaded machine) |
-| **Only with the mode flip** (GW1b, 11) | `lane_check`, `after_check`, `control_check`, `demostart_check`, `planet_world_check`, `skate_check`, `surface_follow_check`, `fire_check`, `ground_props_check`, `isect_check`, `floor_walk_probe`: each assumes a setup with no planet plays the hand-made arena |
+| **Only with the mode flip** (GW1b, 12) | `depthreads_check` (read statically: it asks the hand-made arena for the crossing at x 46,599; the planet has none, so `ix[0]` is out of bounds at line 19), `lane_check`, `after_check`, `control_check`, `demostart_check`, `planet_world_check`, `skate_check`, `surface_follow_check`, `fire_check`, `ground_props_check`, `isect_check`, `floor_walk_probe`: each assumes a setup with no planet plays the hand-made arena |
 
 Not in the split: `step_check`'s timing line fails under load whatever the data (passes alone), and `wrecks_check`, `depthreads_check` are the two slow ones.
 
@@ -31,7 +31,7 @@ Not in the split: `step_check`'s timing line fails under load whatever the data 
 | The same 32, pinned, on the same data | **all 32 pass** (`with-the-pins-on-GW1a-rows-and-energy-on.txt`) |
 | The same 32, pinned, on today's main data | **all 32 pass**: a pin is a no-op where the data is the old data, so the patch can land before the data (`with-the-pins-on-todays-main-data.txt`) |
 | The 11 mode-only checks with `WorldPin.arena()`, on the GW1a rows and the planet default | all 11 pass |
-| Not covered | `wrecks_check` (pinned, not run), `depthreads_check` (not run on the new data), and the energy model's own re-read rows: the pins keep the off path; a row that should read under the model (the tier ladder at the model's numbers) is a separate job for Encounter and Game Design |
+| Not covered | `wrecks_check` (pinned for GW1a, not run; it also asks `newMatch` for the default world, so it may want `WorldPin.arena()` too: the quiet-window run says), `depthreads_check` (pinned for the mode by static reading, not run), and the energy model's own re-read rows: the pins keep the off path; a row that should read under the model (the tier ladder at the model's numbers) is a separate job for Encounter and Game Design |
 
 ## NEEDS FROM EP
 

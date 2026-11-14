@@ -108,6 +108,16 @@
  	var pick: Array = find()
  	ok(not pick.is_empty(), "a ring with a lake at least 100 deep and 14 columns wide: %s" % str(pick))
  	if pick.is_empty():
+--- a/sim/world/tools/depthreads_check.gd
++++ b/sim/world/tools/depthreads_check.gd
+@@ -10,6 +10,7 @@
+ 
+ 
+ func _init() -> void:
++	WorldPin.arena()   # GW1b: this check tests the hand-made arena lanes (data/biomes/world.json mode is planet now: no crossing at x 46,599); WorldPin sets it in memory
+ 	var S := SimCore.createSim()
+ 	SimCore.newMatch(S, 1, {}, {"intro": false})
+ 	var BH: float = 75.0
 --- a/sim/world/tools/pin.gd
 +++ b/sim/world/tools/pin.gd
 @@ -32,3 +32,8 @@
