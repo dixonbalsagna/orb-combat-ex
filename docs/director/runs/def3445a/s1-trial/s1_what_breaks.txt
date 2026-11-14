@@ -1,0 +1,28 @@
+01:55:02 wall_return h=900 exit 0, script errors 0
+01:55:11 wall_return h=1800 exit 0, script errors 0
+01:55:20 space=0 beam_front_check exit 0: FRONT: 0 check(s) failed
+01:55:28 space=0 beam_move_check exit 0: BEAM MOVE: 0 check(s) failed
+01:55:37 space=0 beam_ai_check exit 0: BEAM AI: 0 check(s) failed
+01:55:43 space=0 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+01:55:50 space=0 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+01:55:56 space=0 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+01:56:05 space=0 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+01:56:19 space=0 stick_check exit 0: STICK: 0 check(s) failed
+01:56:26 space=0 press_decides_check exit 0: PRESS: 0 check(s) failed
+01:56:35 space=0 a_press_check exit 0: A PRESS: 0 check(s) failed
+01:56:41 space=0 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+01:56:47 space=0 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+01:56:56 space=1 beam_front_check exit 1: FRONT: 3 check(s) failed
+01:57:04 space=1 beam_move_check exit 1: BEAM MOVE: 6 check(s) failed
+01:57:15 space=1 beam_ai_check exit 1: BEAM AI: 4 check(s) failed
+01:57:21 space=1 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+01:57:27 space=1 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+01:57:33 space=1 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+01:57:42 space=1 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+01:57:56 space=1 stick_check exit 0: STICK: 0 check(s) failed
+01:58:04 space=1 press_decides_check exit 0: PRESS: 0 check(s) failed
+01:58:13 space=1 a_press_check exit 0: A PRESS: 0 check(s) failed
+01:58:20 space=1 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+01:58:26 space=1 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+01:58:26 interrupts.json put back (the trial's own block kept):  1 file changed, 1 insertion(+)
+01:58:26 q_i done

@@ -1,0 +1,5 @@
+ok    negative control (the throw read as before): after a refused release aimed up, the signature fires wide
+ok    fixed: after a refused release aimed up, the signature fires at him
+ok    no refused release first: the signature fires at him
+ok    a stick beam aimed up that fires still goes where it was aimed (wide)
+AIM THROW: 0 check(s) failed

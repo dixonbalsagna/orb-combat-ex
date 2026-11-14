@@ -1,0 +1,11 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+      after a refused release, blind: refused 1, beams fired 1, fired wide 1
+      after a refused release, fixed: refused 1, beams fired 1, fired wide 0
+      no refused release, fixed: refused 0, beams fired 1, fired wide 0
+      a stick beam that fires, fixed: refused 0, beams fired 1, fired wide 1
+ok    negative control (the throw read as before): after a refused release aimed up, the signature fires wide
+ok    fixed: after a refused release aimed up, the signature fires at him
+ok    no refused release first: the signature fires at him
+ok    a stick beam aimed up that fires still goes where it was aimed (wide)
+AIM THROW: 0 check(s) failed

@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+"""SPIKE S1, the trial (scratch only, never a park): the beam in space, from the stand-in's docs/ep/proposals/beam-in-space-trial-design.html
+with Game Design's rulings (docs/design/beam-physics.md, "Spike S1's rulings", 97df40b8):
+- the stick beam's own move fires a beam that is a thing in space, not an exchange: its front moves at 6,000 + 2,400 a stage, hits within
+  its half-width (45 + 25 a stage) plus a body (40), reaches 4,200 + 1,200 a stage (72 bh base at stage 2, 136 full at stage 6), spends
+  itself past it, and stops where it enters the ground (towers it goes through: the carve already breaks them);
+- the release fires after the 6-tick tell, never later, or is refused at once with a word (no ki, the KO, something else playing);
+- the shooter is planted from the release for the tell and the stage's lit time; the defender is never held before contact;
+- only the front hits, each body once: off the line, nothing (MISS when the beam ends); a body that can't act (down, stunned, free under
+  18 ticks) is passed through (PASS), except a launched body takes one beam touch per launch; a dodge tap in the 12 ticks before is
+  passed through (DODGE); a fresh guard press in the 12 before is the powerful block's stop (DEFLECT); a held guard is GUARD; else HIT,
+  launched along the beam's own line;
+- assist 15 degrees for player and computer; the shove is off (it lives only on the old path, the filmed comparison);
+- the computer points its stick at its rival (the nearest of 32 directions) and doesn't start a hold past its stage's reach.
+Behind interrupts.json beamPlays.space.enabled (off) or DirBeamSpace.setForce. python s1t_build.py <tree>"""
+import sys, os
+root = sys.argv[1]
+
+
+def edit(rel, pairs):
+    p = os.path.join(root, rel)
+    s = open(p, encoding='utf8', newline='').read()
+    crlf = '\r\n' in s
+    s = s.replace('\r\n', '\n')
+    for a, b in pairs:
+        assert s.count(a) == 1, (rel, s.count(a), a[:100])
+        s = s.replace(a, b)
+    if crlf:
+        s = s.replace('\n', '\r\n')
+    open(p, 'w', encoding='utf8', newline='').write(s)
+
+
+edit('sim/core/state.gd', [
+    ('\tvar stopAt: float = -1.0     # ... how far along it stopped on one, -1 while it hasn\'t\n',
+     '\tvar stopAt: float = -1.0     # ... how far along it stopped on one, -1 while it hasn\'t\n'
+     '\tvar sv: float = 0.0          # SPIKE S1: the beam in space: its front\'s speed, units a tick (0: today\'s beam)\n'
+     '\tvar hw: float = 0.0          # ... the half-width that hits\n'
+     '\tvar stage: int = 0           # ... its stage\n'
+     '\tvar touched: int = 0         # ... bodies its front has crossed, a bit each\n'
+     '\tvar hitAny: bool = false     # ... it touched someone (hit, guard, block)\n'
+     '\tvar off: float = -1.0        # ... the target\'s distance from its line as the front passed him (-1: never passed)\n'
+     '\tvar reachS: float = 0.0      # ... its reach, before the ground stopped it\n'),
+])
+
+edit('data/director/interrupts.json', [
+    ('  "beamPlays": {\n    "enabled": true,\n',
+     '  "beamPlays": {\n    "enabled": true,\n'
+     '    "space": {"enabled": false, "frontSpeed": {"base": 6000, "perStage": 2400}, "hitHalfWidth": {"base": 45, "perStage": 25}, "length": {"base": 4200, "perStage": 1200}, "bodyR": 40, "assistDeg": 15, "dodgeTicks": 12, "perfectTicks": 12, "_note": "SPIKE S1 (scratch only): the beam in space, Game Design\'s rulings of 2026-11-14"},\n'),
+])
+
+open(os.path.join(root, 'sim/director/beam_space.gd'), 'w', encoding='utf8', newline='\n').write('''class_name DirBeamSpace
+extends RefCounted
+## SPIKE S1 (scratch only, never landed): the beam in space (the stand-in's beam-in-space-trial-design.html; Game Design's rulings,
+## beam-physics.md "Spike S1's rulings"). A stick beam is a thing in space, not an exchange: it leaves the hand on a fixed line, its front
+## moves at its stage's speed, and only the front hits, each body once. State: three integers after DirBands' on f.act.dirI (LT: a beam
+## touched him in this launch; GP: his last fresh guard press, tick plus 1; PL: the tick his plant ends, plus 1).
+
+const CHEST: float = 36.0
+const LT: int = 0
+const GP: int = 1
+const PL: int = 2
+const N: int = 3
+static var _force: int = -1
+
+
+static func setForce(v: int) -> void:
+	_force = v
+
+
+static func cfg() -> Dictionary:
+	return DirBeamPlay.data().get("space", {})
+
+
+static func on() -> bool:
+	return DirBeamMove.on() and DirBeamAim.on() and (bool(cfg().get("enabled", false)) if _force < 0 else _force == 1)
+
+
+static func speed(st: int) -> float:
+	return float(cfg().frontSpeed.base) + float(cfg().frontSpeed.perStage) * float(st - 1)
+
+
+static func half(st: int) -> float:
+	return float(cfg().hitHalfWidth.base) + float(cfg().hitHalfWidth.perStage) * float(st - 1)
+
+
+static func reach(st: int) -> float:
+	return float(cfg().length.base) + float(cfg().length.perStage) * float(st - 1)
+
+
+static func _b() -> int:
+	return DirBands._hb() + DirBands.AH_N
+
+
+static func _g(f, k: int) -> int:
+	var i: int = _b() + k
+	return f.act.dirI[i] if i < f.act.dirI.size() else 0
+
+
+static func _s(f, k: int, v: int) -> void:
+	DirPlane._size(f)
+	if f.act.dirI.size() < _b() + N:
+		f.act.dirI.resize(_b() + N)
+	f.act.dirI[_b() + k] = v
+
+
+## Each live tick (DirExchange._update): a launch's beam touch clears once he's no longer launched; a fresh guard press is noted.
+static func tick(S: SimState) -> void:
+	if not on():
+		return
+	for f in S.fighters:
+		if f.state != "launched" and _g(f, LT) != 0:
+			_s(f, LT, 0)
+		if f.input != null and f.input.guardPress:
+			_s(f, GP, S.tick + 1)
+
+
+## The shooter is planted from the release for the tell and the stage's lit time.
+static func plant(S: SimState, f, st: int) -> void:
+	var lit: float = maxf(0.0, DirBeamMove.lasts(f))
+	_s(f, PL, S.tick + int(DirBeamPlay.frontCfg().releaseTell) + int(ceil(lit * DirData.TICKS_PER_SEC)) + 1)
+
+
+static func planted(S: SimState, f) -> bool:
+	return on() and S.tick < _g(f, PL) - 1
+
+
+## The computer's stick: the nearest of the 32 directions to its rival's chest (0 is right, counter-clockwise, 11.25 degrees apart).
+static func sectorTo(S: SimState, f, o) -> int:
+	var dx: float = SimWrap.sdx(f.x, o.x)
+	var dy: float = (o.y + CHEST) - (f.y + 38.0)
+	var best: int = 0
+	var bd: float = -2.0
+	for k in range(32):
+		var r: float = float(k) * 11.25 * SimMathx.PI / 180.0
+		var d: float = SimDetMath.cos(r) * dx + SimDetMath.sin(r) * dy
+		if d > bd:
+			bd = d
+			best = k
+	return best
+
+
+## The line: where the stick was thrown, snapped onto the rival's chest within assistDeg; with nothing thrown, at him.
+static func _line(S: SimState, A, D, ox: float, oy: float) -> Array:
+	var tx: float = SimWrap.sdx(ox, D.x)
+	var ty: float = (D.y + CHEST) - oy
+	var L: float = maxf(SimDetMath.hypot(tx, ty), 1.0)
+	var a: int = DirBeamAim._g(A, DirBeamAim.B_THROW) & 63
+	DirBeamAim._s(A, DirBeamAim.B_THROW, 0)
+	if a == 0:
+		return [tx / L, ty / L]
+	var r: float = float(a - 1) * 11.25 * SimMathx.PI / 180.0
+	var ux: float = SimDetMath.cos(r)
+	var uy: float = SimDetMath.sin(r)
+	if (ux * tx + uy * ty) / L >= SimDetMath.cos(float(cfg().assistDeg) * SimMathx.PI / 180.0):
+		return [tx / L, ty / L]
+	return [ux, uy]
+
+
+## The ground stops a beam where it enters (Game Design: it doesn't run on underground): the first point of its line under the ground.
+static func _groundStop(S: SimState, ox: float, oy: float, ux: float, uy: float, len: float) -> float:
+	var s: float = 36.0
+	while s < len:
+		if oy + uy * s < WorldTerrain.groundY(S, SimWrap.wrap(ox + ux * s)):
+			return s
+		s += 36.0
+	return len
+
+
+static func fire(S: SimState, A, st: int) -> void:
+	var D = DirBrawl.rivalOf(S, A)
+	var ox: float = A.x
+	var oy: float = A.y + 38.0
+	var d: Array = _line(S, A, D, ox, oy)
+	var full: float = reach(st)   # (plain units: 4,200 is 56 bh, as the design's table; not times the feature scale)
+	var stop: float = _groundStop(S, ox, oy, float(d[0]), float(d[1]), full)
+	DirBeam.fireBeam(S, A, ox, oy, float(d[0]), float(d[1]), stop, "")
+	var b = S.beams[S.beams.size() - 1]
+	b.sv = speed(st) * SimConst.DT
+	b.hw = half(st)
+	b.stage = st
+	b.reachS = full
+	b.life = stop / b.sv * SimConst.DT + maxf(0.0, DirBeamMove.lasts(A))
+	SimFx.cue(S, A, "beam_fire", "space", str(st))
+	var s: float = SimCross._along(b, 1.0, D.x, D.y + CHEST, D.z, b.hw + float(cfg().bodyR))
+	if s >= 0.0 and s <= stop:
+		SimFx.cue(S, D, "beam_warn", str(int(ceil(s / b.sv))), "space")
+
+
+## Each tick a beam in space moves its front from s0 to s1 (DirBeam.beamStep): each body it crosses is tested once.
+static func touch(S: SimState, b, s0: float, s1: float) -> void:
+	var f = DirBrawl.rivalOf(S, b.A)
+	var bt: int = SimCross.bit(f)
+	if (b.touched & bt) != 0:
+		return
+	var dx: float = SimWrap.sdx(b.ox, f.x)
+	var dy: float = (f.y + CHEST) - b.oy
+	var s: float = dx * b.ux + dy * b.uy
+	if s <= s0 or s > s1:
+		return
+	b.touched |= bt
+	var off: float = absf(dx * b.uy - dy * b.ux)
+	b.off = off
+	if off > b.hw + float(cfg().bodyR):
+		return   # off its line as the front went by: nothing
+	if not _canAct(S, f):
+		if f.state == "launched" and _g(f, LT) == 0:
+			_s(f, LT, 1)   # a launched body takes one beam touch per launch (Game Design, ruling 2)
+		else:
+			SimFx.beamOutcome(S, b.A, f, "PASS")
+			return
+	elif S.tick - f.act.dodgeTick < int(cfg().dodgeTicks):
+		SimFx.beamOutcome(S, b.A, f, "DODGE")
+		return
+	b.stopAt = s
+	b.hitAny = true
+	_contact(S, b, f)
+
+
+static func _canAct(S: SimState, f) -> bool:
+	if f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0:
+		return false
+	return DirBeamMove.freeLong(S, f)
+
+
+static func _contact(S: SimState, b, f) -> void:
+	var A = b.A
+	var gp: int = _g(f, GP)
+	if gp > 0 and S.tick - (gp - 1) <= int(cfg().perfectTicks):
+		DirInterrupt.deflect(S, f)
+		SimFx.beamOutcome(S, A, f, "DEFLECT")
+		return
+	var guard: bool = f.stance == 1.0
+	var dmg: float = DirBeamMove.hitDamage(A, (200.0 if guard else 230.0) * DirBeam.sigDamageMul())
+	if S.dirS.ex != null:
+		SimDir.endEx(S, S.dirS.ex)
+	SimDamage.hit(S, null, A, f, dmg, {"kind": "beam", "ignoreStance": not guard, "stop": 0.14, "shake": 16.0, "big": true})
+	DirLaunch.doLaunch(S, A, f, {"name": "BEAM", "ux": b.ux, "uy": b.uy * 0.6 + 0.12}, SimPower.sendForce(S, A, 1300.0 if guard else 2600.0, "beam.guarded" if guard else "beam.signature"))
+	SimFx.beamOutcome(S, A, f, "GUARD" if guard else "HIT")
+
+
+## A beam's life ends: if it touched nobody, MISS (the probe reads how far off its line the target was as its front passed, -1 never).
+static func ended(S: SimState, b) -> void:
+	if b.hitAny:
+		return
+	SimFx.beamOutcome(S, b.A, DirBrawl.rivalOf(S, b.A), "MISS")
+	SimFx.cue(S, b.A, "beam_miss", str(int(b.off)), "space")
+''')
+
+edit('sim/director/beam.gd', [
+    ('\t\tvar tv: int = DirBeamPlay.travel(S, b)\n\t\tif tv > 0:\n\t\t\tnp = DirBeamPlay.front(b, tv)   # the beam plays: it reaches the defender at a set tick, at any distance\n\t\tvar s0: float = b.p * b.len\n\t\tvar s1: float = np * b.len\n',
+     '\t\tvar tv: int = DirBeamPlay.travel(S, b)\n\t\tif tv > 0:\n\t\t\tnp = DirBeamPlay.front(b, tv)   # the beam plays: it reaches the defender at a set tick, at any distance\n'
+     '\t\tif b.sv > 0.0:\n\t\t\ttv = 0\n\t\t\tnp = SimMathx.jmin(1.0, b.p + b.sv / maxf(1.0, b.len))   # SPIKE S1: the beam in space: its front at its own speed\n'
+     '\t\t\tif b.p < 1.0:\n\t\t\t\tDirBeamSpace.touch(S, b, b.p * b.len, np * b.len)\n'
+     '\t\tvar s0: float = b.p * b.len\n\t\tvar s1: float = np * b.len\n'),
+    ('\t\tif b.t > b.life:\n\t\t\tif tv > 0:\n\t\t\t\tDirInterrupt.si(b.A, DirInterrupt.BEAM_TRAVEL, 0)\n\t\t\tS.beams.remove_at(i)\n',
+     '\t\tif b.t > b.life:\n\t\t\tif tv > 0:\n\t\t\t\tDirInterrupt.si(b.A, DirInterrupt.BEAM_TRAVEL, 0)\n\t\t\tif b.sv > 0.0:\n\t\t\t\tDirBeamSpace.ended(S, b)   # SPIKE S1\n\t\t\tS.beams.remove_at(i)\n'),
+])
+
+edit('sim/director/beam_move.gd', [
+    ('static func tryFire(S: SimState, f) -> bool:\n\tvar st: int = _g(f, M_PEND)\n\tif st <= 0:\n\t\treturn true\n',
+     'static func tryFire(S: SimState, f) -> bool:\n\tvar st: int = _g(f, M_PEND)\n\tif st <= 0:\n\t\treturn true\n'
+     '\tif DirBeamSpace.on():\n\t\treturn _spaceFire(S, f, st)   # SPIKE S1: the beam in space fires after the tell, never later\n'),
+    ('## The hold is over without a beam: lost, cancelled or refused.\n',
+     '## SPIKE S1: the release fires after releaseTell from the release, or is refused at once with a word. No wait for the target.\n'
+     'static func _spaceFire(S: SimState, f, st: int) -> bool:\n'
+     '\tif DirBrawl._now(S) - (_g(f, M_PAT) - 1) < int(DirBeamPlay.frontCfg().releaseTell):\n'
+     '\t\treturn false   # the lit hand: the tell\n'
+     '\tif S.game.ko != null or f.ki < float(cfg().price[st - 1]):\n'
+     '\t\tSimFx.cue(S, f, "stick_refused", "beam", "ki")\n'
+     '\t\tf.beamCharge = null\n'
+     '\t\tlost(f)\n'
+     '\t\treturn true\n'
+     '\tvar ex = DirBrawl.exOf(S)\n'
+     '\tif ex != null:\n'
+     '\t\tif DirBrawl.isBrawl(ex) and ex.branch == "" and not ex.cancel and (ex.A == f or ex.D == f) and not DirBrawl._setPiece(ex):\n'
+     '\t\t\tDirBrawl.end(S, ex, "beam")\n'
+     '\t\telse:\n'
+     '\t\t\tSimFx.cue(S, f, "stick_refused", "beam", "busy")\n'
+     '\t\t\tf.beamCharge = null\n'
+     '\t\t\tlost(f)\n'
+     '\t\t\treturn true\n'
+     '\tf.ki = maxf(0.0, f.ki - float(cfg().price[st - 1]))\n'
+     '\t_s(f, M_FIRED, st)\n'
+     '\t_s(f, M_PEND, 0)\n'
+     '\t_s(f, M_COUNT, 0)\n'
+     '\t_s(f, M_STAGE, 0)\n'
+     '\tif f.ai != null:\n'
+     '\t\tf.sigReadyT = S.T + DirBeam.sigCooldown(f)\n'
+     '\tSimFx.cue(S, f, "beam_stage", str(st), "")\n'
+     '\tf.beamCharge = null\n'
+     '\tDirBeamSpace.plant(S, f, st)\n'
+     '\tDirBeamSpace.fire(S, f, st)\n'
+     '\treturn true\n'
+     '\n'
+     '\n'
+     '## The hold is over without a beam: lost, cancelled or refused.\n'),
+    ('\tif not freeLong(S, DirBrawl.rivalOf(S, f)):\n\t\tSimFx.cue(S, f, "stick_refused", "beam", "soon")',
+     '\tif not DirBeamSpace.on() and not freeLong(S, DirBrawl.rivalOf(S, f)):\n\t\tSimFx.cue(S, f, "stick_refused", "beam", "soon")'),
+    ('\t_s(f, M_AIT, clampi(int(SimMathx.jround(float(n) * share)), 1, n))\n\t_aiStick(S, f, i)\n\ti.rsStart = true\n',
+     '\t_s(f, M_AIT, clampi(int(SimMathx.jround(float(n) * share)), 1, n))\n'
+     '\tif DirBeamSpace.on() and absf(SimWrap.sdx(f.x, DirBrawl.rivalOf(S, f).x)) > DirBeamSpace.reach(_g(f, M_AIT)):\n'
+     '\t\t_s(f, M_AIT, 0)\n\t\treturn false   # SPIKE S1: the computer doesn\'t fire past its stage\'s reach\n'
+     '\t_aiStick(S, f, i)\n\ti.rsStart = true\n'),
+    ('\t\ti.rsRelease = true\n\t\ti.rsMask = DirStick.RB\n\t\ti.stanceMask |= DirStick.RB\n\t\treturn true\n\t_aiStick(S, f, i)\n',
+     '\t\ti.rsRelease = true\n\t\ti.rsMask = DirStick.RB\n\t\ti.stanceMask |= DirStick.RB\n'
+     '\t\tif DirBeamSpace.on():\n\t\t\ti.rsAim = DirBeamSpace.sectorTo(S, f, DirBrawl.rivalOf(S, f))   # SPIKE S1: it points like a player\n'
+     '\t\treturn true\n\t_aiStick(S, f, i)\n'),
+    ('\ti.rsDir = SimStrikeRead.RIGHT if SimWrap.sdx(f.x, o.x) >= 0.0 else SimStrikeRead.LEFT\n',
+     '\ti.rsDir = SimStrikeRead.RIGHT if SimWrap.sdx(f.x, o.x) >= 0.0 else SimStrikeRead.LEFT\n'
+     '\tif DirBeamSpace.on():\n\t\ti.rsAim = DirBeamSpace.sectorTo(S, f, o)   # SPIKE S1: it points its stick at its rival\n'),
+])
+
+edit('sim/director/stick.gd', [
+    ('static func holdMove(S: SimState, f) -> float:\n\tif DirBeamMove.pending(f):\n',
+     'static func holdMove(S: SimState, f) -> float:\n\tif DirBeamSpace.planted(S, f):\n\t\treturn 0.0   # SPIKE S1: planted from the release for the tell and its lit time\n\tif DirBeamMove.pending(f):\n'),
+])
+
+edit('sim/director/exchange.gd', [
+    ('\tDirPace.note(S)   # paceMatch: the player\'s own pace, for easy\'s strings\n',
+     '\tDirPace.note(S)   # paceMatch: the player\'s own pace, for easy\'s strings\n\tDirBeamSpace.tick(S)   # SPIKE S1\n'),
+])
+print('spike S1 trial applied to', root)

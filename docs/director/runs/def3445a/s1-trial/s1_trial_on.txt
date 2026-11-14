@@ -1,0 +1,43 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+S1T on  stage 1 (fired 1) gap 1500 stands : HIT     contact +15 ticks, off the line -1 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 1500 flying : MISS    contact +61 ticks, off the line 85 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 1500 dash15 : HIT     contact +15 ticks, off the line -1 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 1500 dashing: MISS    contact +61 ticks, off the line 211 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 3000 stands : HIT     contact +30 ticks, off the line -1 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 3000 flying : MISS    contact +61 ticks, off the line 172 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 3000 dash15 : MISS    contact +61 ticks, off the line 240 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 3000 dashing: MISS    contact +61 ticks, off the line 1107 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 4000 stands : HIT     contact +40 ticks, off the line -1 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 4000 flying : MISS    contact +61 ticks, off the line 230 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 4000 dash15 : MISS    contact +61 ticks, off the line 721 (hits within 85), release to fire 6, held before false
+S1T on  stage 1 (fired 1) gap 4000 dashing: MISS    contact +61 ticks, off the line -1 (hits within 85), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 1500 stands : HIT     contact +8 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 1500 flying : HIT     contact +8 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 1500 dash15 : HIT     contact +8 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 1500 dashing: HIT     contact +11 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 3000 stands : HIT     contact +16 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 3000 flying : HIT     contact +16 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 3000 dash15 : HIT     contact +16 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 3000 dashing: MISS    contact +90 ticks, off the line 583 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 6000 stands : HIT     contact +33 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 6000 flying : MISS    contact +90 ticks, off the line 190 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 6000 dash15 : MISS    contact +90 ticks, off the line 742 (hits within 135), release to fire 6, held before false
+S1T on  stage 3 (fired 3) gap 6000 dashing: MISS    contact +90 ticks, off the line -1 (hits within 135), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 1500 stands : HIT     contact +5 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 1500 flying : HIT     contact +5 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 1500 dash15 : HIT     contact +5 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 1500 dashing: HIT     contact +9 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 3000 stands : HIT     contact +10 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 3000 flying : HIT     contact +10 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 3000 dash15 : HIT     contact +10 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 3000 dashing: MISS    contact +124 ticks, off the line 337 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 6000 stands : HIT     contact +20 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 6000 flying : HIT     contact +20 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 6000 dash15 : HIT     contact +19 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+S1T on  stage 6 (fired 6) gap 6000 dashing: MISS    contact +124 ticks, off the line -1 (hits within 210), release to fire 6, held before false
+== X-16 rows (hit = HIT or GUARD; a moving target is flying, dash15 or dashing)
+S1T stage 1 | 1500: stan hit, flyi miss, dash hit, dash miss | 3000: stan hit, flyi miss, dash miss, dash miss | 4000: stan hit, flyi miss, dash miss, dash miss
+S1T stage 3 | 1500: stan hit, flyi hit, dash hit, dash hit | 3000: stan hit, flyi hit, dash hit, dash miss | 6000: stan hit, flyi miss, dash miss, dash miss
+S1T stage 6 | 1500: stan hit, flyi hit, dash hit, dash hit | 3000: stan hit, flyi hit, dash hit, dash miss | 6000: stan hit, flyi hit, dash hit, dash miss
+S1T bands: moving target beyond 3,000 hit 2 of 9 (band 10 to 30%); moving inside 1,500 hit 7 of 9 (band 40 to 70%); beams late or a target held before contact: 0

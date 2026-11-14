@@ -1,0 +1,16 @@
+01:46:06 render after exit 0: after check passed
+01:46:25 render depth exit 0: depth check passed
+01:47:27 render flash exit 0: flash check passed
+01:48:27 render flash_reg exit 0: flash register check passed
+01:49:40 render flight exit 0: flight check passed
+01:50:59 render ground exit 0: ground check passed
+01:51:09 render hud_words exit 0: hud words check passed
+01:51:24 render lane exit 0: lane check passed
+01:51:51 render open exit 0: open check passed
+01:52:18 render pane exit 0: pane check passed
+01:52:35 render patch exit 0: patch check passed
+01:52:51 render shape exit 0: shape check passed
+01:53:10 render sky exit 0: sky check passed
+01:53:26 render stage exit 0: stage check passed
+01:54:47 render cue exit 0: cue check passed
+01:54:47 lane render done
