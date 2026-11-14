@@ -1,0 +1,13 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index ffc430f..42d4fdd 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -248,7 +248,7 @@
+     "_note": "The buried fighter (agency-pass.md sections 7 and 14.5; sim/director/bury.gd; World's embed holds him down for its own ticks, data/biomes/contact.json embed.ticks). followTicks: his rival's first attack press this soon after the burial is the free follow-up. A physical press is a dive: the director flies him to the crater at dive.speed (units a second, the light charge's; at least dive.minTicks), and the blow must land by landByTick of the burial, otherwise there is no follow-up. It is one heavy blow of 'damage' that he cannot answer, free of ki, with no launch, and it makes his crater 'deepen' times as deep as it was (WorldCrater.deepen). An energy press is the other free blow: a charged shot of blast.damage, free of ki, that arrives from any distance (data/fight/shots.json arriveTicks). He is held until the blow lands, never past landByTick; nothing of his stops a follow-up on its way. One follow-up to a burial. guardFromTick: his guard counts from this tick, or once the follow-up is used. burstFromTick: his burst throws him out, not before this tick; an AI bursts only when no follow-up is coming, with its rival within burstWithinBh (ai.json buriedBurst). safeTicks: out of the crater he is safe this long: no exchange starts on him and a shot passes"
+   },
+   "ending": {
+-    "enabled": false,
++    "enabled": true,
+     "idleSec": 60.0,
+     "idleWearMul": 2.0,
+     "pushSec": 90.0,

@@ -1,0 +1,313 @@
+diff --git a/data/director/ai.json b/data/director/ai.json
+index 3c18d8e..a7cf686 100644
+--- a/data/director/ai.json
++++ b/data/director/ai.json
+@@ -11,7 +11,7 @@
+   "beamAnswer": 0.35,
+   "_beamAnswer": "kept for readers of the old shape: the medium level's value. The director reads levels.<level>.beamAnswer",
+   "sigPick": 0.025,
+-  "vsHuman": {"enabled": false, "sigPick": 0.04, "kiAt": 45.0, "kiHigh": 1.5, "kiLow": 0.5, "firstMin": 25.0, "firstMax": 45.0, "firstWait": 54.0, "gapSec": 25.0, "_note": "An AI's beams against a human (docs/design/rule-of-cool-map.md section 5). sigPick x kiHigh with the human on kiAt or more, x kiLow under it. Its first comes between firstMin and firstMax, seeded, when the human can pay, and by firstWait at the latest: it fires at the next gap between exchanges, so 54 lands by 60. gapSec: the least between its signatures. AI against AI uses plain sigPick."},
++  "vsHuman": {"enabled": true, "sigPick": 0.04, "kiAt": 45.0, "kiHigh": 1.5, "kiLow": 0.5, "firstMin": 25.0, "firstMax": 45.0, "firstWait": 54.0, "gapSec": 25.0, "_note": "An AI's beams against a human (docs/design/rule-of-cool-map.md section 5). sigPick x kiHigh with the human on kiAt or more, x kiLow under it. Its first comes between firstMin and firstMax, seeded, when the human can pay, and by firstWait at the latest: it fires at the next gap between exchanges, so 54 lands by 60. gapSec: the least between its signatures. AI against AI uses plain sigPick."},
+   "digInBy": {"RIVAL": 1},
+   "digInBoth": false,
+   "digInMax": 2,
+@@ -53,7 +53,7 @@
+   "levels": {
+     "_note": "beamAnswer: control-rules.md section 10 (0.15, 0.35, 0.60). perfectBlockMul: its share of the perfectBlock rates above (0.32, 0.45, 0.55: QA's baseline on 9da6e07, docs/qa/baseline-9da6e07.md, which brings the three levels to 7.67, 13.13 and 18.26 perfect blocks per 100 melee exchanges against bands of 3 to 8, 5 to 15 and 12 to 20; they were 0.35, 0.6 and 0.9). guardRepeat: weight added to its Guard choice while the rival repeats one attack. punish: the chance it attacks in the punish window after it blocked a whole string, and punishHeavy the share of those attacks that are heavies. reversal: [after 2 s of guard with over 25 ki, otherwise]; medium is R4 (50%, 20%). breakGuard: the share of its attacks that are heavies against a rival it has found guarding twice running. riposte: the chance it takes its riposte after a perfect block. burstAtLink: the chain link at which it bursts out (0: never). launchIntent: the chance its heavy is thrown with a direction, to launch (the earned launch's third rule; its stick is its flight path, so this stands for a player's tilt). heldHeavy: the chance it charges a heavy by holding it (the first rule).",
+     "easy": {
+-      "forms": {"holdS": 0}, "brawl": {"tapGap": 12, "tapGapMax": 12, "paceMatch": {"enabled": false, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 27, "_note": "Game Design, gauntlet-plan.md section 6: easy matches the player's pace. On: the gap between its taps in a brawl string is never shorter than the player's recent gap between attack presses (the median of his last windowSec seconds of face presses and stick strikes; guards don't count), between floor and ceiling ticks; with fewer than two presses in that time, ceiling. Against another computer (no human), noHuman. It changes when easy throws, never worth, stats or reads. Off: tapGap to tapGapMax, as before."}, "string": [2, 4], "guardShare": 0.2, "guardTicks": [20, 60], "grapple": {"catch": 0.02, "pummel": 0.4, "tech": 0.15}, "anywhere": {"launcher": 0.15, "inString": 0.05, "answer": 0.25}, "recoil": {"flip": 0.3, "counter": 0.5}, "perfectMul": 0.21, "nudgeShare": 0.35, "walkOut": 0.1, "mixMedium": 0.002, "mixHeavy": 0.001, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0, "burst": 0.05, "digIn": 0.3, "giveGround": 0.1, "follow": 0.3, "launcher": 0.15, "charge": 0.15, "energy": 0.06, "breakGuard": 0.06, "mediumVsHeavies": 0.15, "perfectVsHeavy": 0.05, "perfectVsMash": 0.01},
++      "forms": {"holdS": 0}, "brawl": {"tapGap": 12, "tapGapMax": 12, "paceMatch": {"enabled": true, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 27, "_note": "Game Design, gauntlet-plan.md section 6: easy matches the player's pace. On: the gap between its taps in a brawl string is never shorter than the player's recent gap between attack presses (the median of his last windowSec seconds of face presses and stick strikes; guards don't count), between floor and ceiling ticks; with fewer than two presses in that time, ceiling. Against another computer (no human), noHuman. It changes when easy throws, never worth, stats or reads. Off: tapGap to tapGapMax, as before."}, "string": [2, 4], "guardShare": 0.2, "guardTicks": [20, 60], "grapple": {"catch": 0.02, "pummel": 0.4, "tech": 0.15}, "anywhere": {"launcher": 0.15, "inString": 0.05, "answer": 0.25}, "recoil": {"flip": 0.3, "counter": 0.5}, "perfectMul": 0.21, "nudgeShare": 0.35, "walkOut": 0.1, "mixMedium": 0.002, "mixHeavy": 0.001, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0, "burst": 0.05, "digIn": 0.3, "giveGround": 0.1, "follow": 0.3, "launcher": 0.15, "charge": 0.15, "energy": 0.06, "breakGuard": 0.06, "mediumVsHeavies": 0.15, "perfectVsHeavy": 0.05, "perfectVsMash": 0.01},
+       "vsShooter": {"guardShare": 0, "enderShare": 0.5, "heavyApproachShare": 0.05},
+       "zipShare": 0.08, "flightShare": 0.12, "zipHeavyShare": 0.2, "zipCounter": 0, "zipDodge": 0, "zipPunish": 0.2, "zipExit": 0,
+       "beamAnswer": 0.15, "wallKick": 0.15,
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index ffc430f..4eaecf9 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "director.interrupts/1",
+-  "carryRound": {"enabled": false, "deadZone": 0.3, "_note": "Game Design (beams-third-play.md, the dodge exchange; gauntlet-plan.md section 8): you only go round after him if you're still pressing toward him. On: in a planned exchange where the defender stepped round to the far side (a dodge with side cross), the attacker's follow rush (a rush with a side) runs only if he is a computer or still pressing toward the defender: the left stick past deadZone toward him, or an attack button or the strike stick still held. Otherwise he stays where he is, the set piece ends, and he is free. Off: the follow always carries him round."},
++  "carryRound": {"enabled": true, "deadZone": 0.3, "_note": "Game Design (beams-third-play.md, the dodge exchange; gauntlet-plan.md section 8): you only go round after him if you're still pressing toward him. On: in a planned exchange where the defender stepped round to the far side (a dodge with side cross), the attacker's follow rush (a rush with a side) runs only if he is a computer or still pressing toward the defender: the left stick past deadZone toward him, or an attack button or the strike stick still held. Otherwise he stays where he is, the set piece ends, and he is free. Off: the follow always carries him round."},
+   "_about": "Control-scheme step 3 (ADR 0008; control-rules.md sections 1, 2 and 6): the costs, cooldowns and windows of what a fighter does inside an exchange, read by sim/director/interrupt.gd (DirInterrupt). Game Design's numbers. Ticks are sim ticks (60 a second); ki is out of 100. The perfect block's lockout and assist factor are Controls' (data/input/timing.json perfectBlock), and its stagger and riposte lengths are Combat's (templates.json profiles.dynamic.perfectBlock).",
+   "perfectBlock": {
+     "ki": 8,
+@@ -78,7 +78,7 @@
+     "enabled": true,
+     "closeBh": 3,
+     "midBh": 12.5,
+-    "engageBh": 2.5, "arrive": {"enabled": false, "easeBh": 1.5, "easeK": 0.5, "floorUnits": 4.0, "slipHoldTicks": 13, "_slipHoldTicks": "with the slip on (power.json dash.slip, Simulation's): from the dash's press until this many ticks after it, the arrival eases him into striking distance even once LT is let go, so near him a tap is a step to the mark and a beat there (13: today's lunge, when every tap was a 13-tick dash); 0: no hold, only the slip's carry is eased", "_note": "Game Design's overnight ruling (c) (docs/design/overnight-2026-11-08.md), Encounter's piece: LT's high speed eases into striking distance (engageBh, where an approach ends) over the last easeBh body heights, and never through it. Each tick of free flight with the dash held, the part of his velocity that closes on his rival may close all the room down to the ease's edge, then easeK of what is left of the ease, and at least floorUnits (to the mark); at the mark it closes nothing. The rest of his velocity is his own. Off: as before."}, "return": {"enabled": true, "minTicks": 40, "windTicks": 10, "firstWindTicks": 10, "forTicks": 600, "meetMinTicks": 8, "_note": "The return from a send (Orb, 2026-10-15). A fighter free again after a launch, a knock-back or a fall is returning for forTicks at most, until his first blow back. His approach back lasts minTicks at least and crouches windTicks before it moves; his first blow back lands firstWindTicks later than it would, with a windup cue (text return). A press of his rival on that approach, past the crouch and meetMinTicks or more before he arrives, meets it in the middle."},
++    "engageBh": 2.5, "arrive": {"enabled": true, "easeBh": 1.5, "easeK": 0.5, "floorUnits": 4.0, "slipHoldTicks": 13, "_slipHoldTicks": "with the slip on (power.json dash.slip, Simulation's): from the dash's press until this many ticks after it, the arrival eases him into striking distance even once LT is let go, so near him a tap is a step to the mark and a beat there (13: today's lunge, when every tap was a 13-tick dash); 0: no hold, only the slip's carry is eased", "_note": "Game Design's overnight ruling (c) (docs/design/overnight-2026-11-08.md), Encounter's piece: LT's high speed eases into striking distance (engageBh, where an approach ends) over the last easeBh body heights, and never through it. Each tick of free flight with the dash held, the part of his velocity that closes on his rival may close all the room down to the ease's edge, then easeK of what is left of the ease, and at least floorUnits (to the mark); at the mark it closes nothing. The rest of his velocity is his own. Off: as before."}, "return": {"enabled": true, "minTicks": 40, "windTicks": 10, "firstWindTicks": 10, "forTicks": 600, "meetMinTicks": 8, "_note": "The return from a send (Orb, 2026-10-15). A fighter free again after a launch, a knock-back or a fall is returning for forTicks at most, until his first blow back. His approach back lasts minTicks at least and crouches windTicks before it moves; his first blow back lands firstWindTicks later than it would, with a windup cue (text return). A press of his rival on that approach, past the crouch and meetMinTicks or more before he arrives, meets it in the middle."},
+     "lunge": {
+       "speed": 4000,
+       "minTicks": 3,
+@@ -102,7 +102,7 @@
+     },
+     "_note": "The ranged press (agency-pass.md section 1; sim/director/bands.gd). The bands are measured centre to centre, the shortest arc and the height together, in body heights (75 u): close within closeBh, mid to midBh, far beyond. A close press starts its exchange at once. A press from farther off starts only the attacker's approach: it ends engageBh from the rival, on the attacker's own side and at the rival's height, and the exchange is planned then (the wind-up follows). The rival is free until it ends. lunge (the mid band) and far.light, far.heavy (the far band, by the press's weight): the approach lasts the distance to cover at 'speed' (units a second), in whole ticks, at least minTicks and at most maxTicks. Until the far taunt and the held charge are built a far press flies in on a tap, at about the speed it had (4000 u a second; it was 2600 with the wind-up inside the flight); the charge's own flight (light 0.5 to 1.5 s, heavy 0.8 to 2.0 s) comes with the hold. On a slope the end point is brought in until the pair is inside the close band",
+     "follow": {
+-      "enabled": false,
++      "enabled": true,
+       "ticks": 150,
+       "_note": "A far press follows him (docs/design/rule-of-cool-map.md row 42; sim/director/follow.gd): for this long after a send or knock-back he threw, a far tap flies after the target, at the far band's price. Otherwise it's the taunt."
+     },
+@@ -157,7 +157,7 @@
+     },
+     "stopTicks": 1,
+     "driver": {
+-      "enabled": false,
++      "enabled": true,
+       "kind": "charged",
+       "levels": [30, 54, 84],
+       "ki": [10.0, 14.0, 18.0, 24.0],
+@@ -248,7 +248,7 @@
+     "_note": "The buried fighter (agency-pass.md sections 7 and 14.5; sim/director/bury.gd; World's embed holds him down for its own ticks, data/biomes/contact.json embed.ticks). followTicks: his rival's first attack press this soon after the burial is the free follow-up. A physical press is a dive: the director flies him to the crater at dive.speed (units a second, the light charge's; at least dive.minTicks), and the blow must land by landByTick of the burial, otherwise there is no follow-up. It is one heavy blow of 'damage' that he cannot answer, free of ki, with no launch, and it makes his crater 'deepen' times as deep as it was (WorldCrater.deepen). An energy press is the other free blow: a charged shot of blast.damage, free of ki, that arrives from any distance (data/fight/shots.json arriveTicks). He is held until the blow lands, never past landByTick; nothing of his stops a follow-up on its way. One follow-up to a burial. guardFromTick: his guard counts from this tick, or once the follow-up is used. burstFromTick: his burst throws him out, not before this tick; an AI bursts only when no follow-up is coming, with its rival within burstWithinBh (ai.json buriedBurst). safeTicks: out of the crater he is safe this long: no exchange starts on him and a shot passes"
+   },
+   "ending": {
+-    "enabled": false,
++    "enabled": true,
+     "idleSec": 60.0,
+     "idleWearMul": 2.0,
+     "pushSec": 90.0,
+@@ -256,7 +256,7 @@
+     "_note": "How a match always ends (docs/design/spec-wounds.md 1b-end; sim/director/ending.gd). idleSec, idleWearMul: a player with no input for this long takes this much more wear. pushSec: after this long, on the brink he's opened (docs/design/power-scale.md section 3). The time cap is finishers.json timeCapAt: both go on the brink and Rallies stop. lastAt: the less worn gets his finisher, with no contest, or level wear is a no-contest."
+   },
+   "stances": {
+-    "enabled": false,
++    "enabled": true,
+     "pushBh": 2.0,
+     "stepPastBh": 0.8,
+     "circle": {
+@@ -270,11 +270,11 @@
+     },
+     "_note": "The stances on a blow (docs/design/pad-first-press.md; sim/director/stance.gd). LB + X, the check: the guard stays up through it. LB + Y, the push: he's shoved back pushBh. LT + X, the step strike: the attacker comes out stepPastBh beyond him. First values."
+   },
+-  "beamStruggle": {"enabled": false, "endEvent": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "pushMode": {"enabled": false, "default": "stick", "values": ["stick", "face"], "reserved": ["third"], "perPlayer": true, "_note": "What a player presses to push (playable-build.md section 3), his own option, carried in the match setup per slot (setup.pushMode: a list by slot, or one word for all). stick: a flick of the right stick toward the rival on the beat pushes, away lets go, and the face buttons do nothing. face: X, Y or B, and A lets go, as below. The same window and push for both. third is reserved. enabled false: face for everyone, as before."}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
++  "beamStruggle": {"enabled": true, "endEvent": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "pushMode": {"enabled": true, "default": "stick", "values": ["stick", "face"], "reserved": ["third"], "perPlayer": true, "_note": "What a player presses to push (playable-build.md section 3), his own option, carried in the match setup per slot (setup.pushMode: a list by slot, or one word for all). stick: a flick of the right stick toward the rival on the beat pushes, away lets go, and the face buttons do nothing. face: X, Y or B, and A lets go, as below. The same window and push for both. third is reserved. enabled false: face for everyone, as before."}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
+   "beamPlays": {
+     "enabled": true,
+     "front": {
+-      "enabled": false,
++      "enabled": true,
+       "rows": {
+         "snap": {"floor": 6, "ceil": 20, "speed": 14000.0},
+         "level1": {"floor": 10, "ceil": 30, "speed": 12000.0},
+@@ -291,7 +291,7 @@
+       "holdMove": 0.1,
+       "shoveSec": 0.25,
+       "ownMove": {
+-        "enabled": false,
++        "enabled": true,
+         "freeTicks": 18,
+         "maxWaitTicks": 90,
+         "stageTicks": [12, 28, 46, 66, 90, 120],
+@@ -300,12 +300,12 @@
+         "dmgUnit": 96,
+         "lastsSec": [0.33, 0.6, 0.9, 1.1, 1.3, 1.5],
+         "topDrainPerSec": 4.0,
+-        "ai": false,
++        "ai": true,
+         "aiStage": {"easy": 0.5, "medium": 0.75, "hard": 1.0},
+         "_note": "The stick beam as its own move (docs/design/beams-third-play.md section 2; playable-build.md section 2; beam-answers-2.md section 1; docs/director/beams-own-move-plan.md step 1). The RB hold is the charge: nobody is locked by it, and it never fires by itself. Its stages: the count is 2 + round(4 x level), level from tier and power as power-scale.md has it, taken as the charge starts; stage s is reached at stageTicks[s-1] live ticks held, and no higher than the energy affords. Holding at the top costs topDrainPerSec, stepping down a stage when it can't pay. The release pays price[s-1] and starts the beam's exchange at the fire, with no signature wait: in a brawl the brawl gives way then. It fires only once its target has been free to act freeTicks (0.3 s); the lit hand holds till then, up to maxWaitTicks, then it's refused. Its hit does dmgUnit x dmgMul[s-1] (96, 153, 230, 268, 307, 345; a guarded hit the same share of the guard's: Game Design, playable-build.md section 2), and it lasts lastsSec[s-1] past its arrival. While the stick holds a charge, a beam's or a strike's, his energy doesn't refill (SimDir.refillHeld), from the press to the release."
+       },
+       "aim": {
+-        "enabled": false,
++        "enabled": true,
+         "assistDeg": 35,
+         "_note": "A beam on RB and the right stick fires where the stick aims (docs/controls/beam-aim-feel.md): within assistDeg of the line to him it's a shot at him, as before; wider, it goes where it was aimed and misses him. Needs Controls' beam-aim reader (switches.beamAim) for the throw's aim. The signature is aimed at him, always."
+       },
+@@ -371,16 +371,16 @@
+     "idleTicks": 60,
+     "heldPressTicks": 10,
+     "oneRuleB": {
+-      "enabled": false,
++      "enabled": true,
+       "_note": "One rule for B, everywhere (docs/design/press-decides.md section 1): a tap staggers, a tap with B lit is the launcher, past the first flash a knock-back, the full flash a send. Flow, strings and blows taken no longer decide whether a heavy sends. launcher.anywhere stays off."
+     },
+     "pressWait": {
+-      "enabled": false,
++      "enabled": true,
+       "maxTicks": 600,
+       "_note": "A press waits for the blow in hand, however long, one slot, the newest wins; a stun or the brawl's end clears it, and says so; a held button has been building since the press (docs/design/press-decides.md sections 3 and 5). maxTicks is only a backstop. Off: heldPressTicks."
+     },
+     "chargeClose": {
+-      "enabled": false,
++      "enabled": true,
+       "firstBh": 3,
+       "fullBh": 6,
+       "maxTicks": 12,
+@@ -594,7 +594,7 @@
+   },
+   "calmTurn": {
+     "_note": "The calm-moment turn, the director's part (sim/director/calm.gd; docs/director/calm-turn.md; Game Design's rulings-2026-10-19b.md section 1 with 1e, and rulings-2026-10-22.md 5a; the EP's of 2026-10-22: no ring read on the swap tick, the warm rate at most 32; World's WorldEpoch). The ask: at a pausing form step (full or short; live is not one) the pivot is the pair's midpoint as the pause starts and one ring is warmed, only a bearing that keeps the ground rule there being taken; at a launch's send the pivot is predicted (between the rest and the launcher, on the side it was sent), a bearing preferred that keeps the rule at the predicted spread plus predictMargin (with none, the smallest), and World's smallest bearing's ring is warmed with it as the fallback. The pick is by what a turn brings into view (score by kind: a rival's home, a landmark, a city, a town, his own home). The host warms the columns over the ticks to the moment, warmCols to warmColsMax a frame (the calm_turn cue carries the rate); when that is not enough by the moment, the pick waits, warming, for a later one, and a new send or pause keeps a waiting pick whose pair keeps its ground rule (else cancels it and asks again). The hold: the warm read done; the ground under each fighter moved at most World's moveMax (his distance from the pivot times the sine of the angle) at the chosen angle or the fallback's, where they stand; no exchange, approach, beam clash, taunt, flip, counter-rush, waiting attack or open finisher; and a moment: the first formTicks live ticks after a pausing form step's pause, or a fighter at rest from a send within landedTicks with both down or set (under setSpeed units a second); and World's calm. enabled false (or World's turn off): nothing runs.",
+-    "enabled": false,
++    "enabled": true,
+     "landedTicks": 45,
+     "setSpeed": 60,
+     "warmCols": 16,
+@@ -608,7 +608,7 @@
+     "_note": "A player's attack press reacts on its own tick (Controls' T1; the EP's brief of 2026-10-22 after Performance's input-latency-2026-10-22.md, where a light first reacted 5 ticks late: the opening cooldown). Only a player's presses (the AI's are as before). skipOpenCool: his request is not held by the match's opening cooldown (SimCore.newMatch's 0.6 s) while no exchange has started this match; a cooldown after an exchange still holds it. ackQueued: a request still waiting after the drain is acknowledged on its press tick, the cue press_ack, text queued, source its cell, n the tick it is due when the wait is a cooldown (else -1), amount the ticks to it. capTicks and setPieceCapTicks (Game Design's 7a): after an exchange ends the cooldown holds a player's request at most capTicks, after a set piece's end setPieceCapTicks (a signature's exchange, a finisher, a template tagged with one of setPieceTags, a throw); it is kept and thrown at the cap. The AI keeps the whole cooldown. capTicks -1: off.",
+     "skipOpenCool": true,
+     "ackQueued": true,
+-    "refusedCue": false,
++    "refusedCue": true,
+     "refusedBurstTicks": 2,
+     "capTicks": 6,
+     "setPieceCapTicks": 12,
+@@ -652,7 +652,7 @@
+     "_note": "The chase of a launch is the zip (sim/director/chase.gd; Game Design's rulings-2026-10-22.md 7c; brawl-second-pass.md section 16). A player presses X or Y with LT held while his own launch flies; the AI chases at a send of its own on its level's chaseShare (ai.json; times skyMul when the send goes up into open sky), no sooner than its reaction time. Either pays the zip's ki (the strike's or the heavy's); without it there is no chase. The chase is a rush at the body re-aimed each live tick at speedMul times his speed, never under minSpeed u/s. Within catchBh of him while he flies the zip's blow lands and sends him on (the launch planner from where he is, at sendForce, the chaser's stick its tilt); when his landing comes first it arrives at his landing, for the first move; at most maxTicks. enabled false: nothing runs.",
+     "enabled": false,
+     "tap": {
+-      "enabled": false,
++      "enabled": true,
+       "priceStep": 1.5,
+       "nextTicks": 20,
+       "holdTicks": 24,
+@@ -677,7 +677,7 @@
+   },
+   "grapple": {
+     "_note": "The grapple's director side, slice G1 (sim/director/grapple.gd; Game Design's docs/design/grapple.md; docs/director/grapple-director.md). enabled: false, A in a brawl is as before (an empty press). catch: tell, the ticks from A's press in a brawl to its landing (a blow that lands on him in them stops it); tech, the caught fighter's A within this many ticks of the landing breaks it; whiffOpen, a catch out of reach leaves him open this long. clinch: max ticks from the tie-up; a pulse every `pulse` ticks; an A inside `window` of one claims it, sharp inside `sharp`; the grip runs from -grip to grip; leadGuard, the catcher's lead on a rival who guards, winds or charges; partBh, both part this far past striking distance at the time and the tech; pushBh and pushFirstMove, the push-off's parting and the pusher's first move; aiOffsets, the AI's pummels off the pulse (never sharp). throw: acrossBh, a throw across is a knock-back this long; upBh and upOpen, a throw up lifts him this far and he is open this long; bury, a throw down to the ground buries him this long (both openings). lockout: the ticks a grab is refused after each attempt, and for both after a clinch ends with nobody thrown; noRegrab: a thrown fighter can't be grabbed for this long. G2: when both pummel one pulse the one nearer it by the tick takes the step; clinch.timeFirstMove, the grip's leader's first move at the time (the brawl lets go; at even it goes on); throw.ai, the AI's throw weights: down and up (halved while it lacks the launcher's ki), across scaled by 1 + (-care) x careW x the people within popR body heights of where he would land (over the planet reference, WorldStructures.popNearRef). throw.worth: a throw lands worth this many brawl lights (a heavy), before what it hands the brawl (2026-10-18). Later slices add Game Design's vicious, damage, wear, lead and pin, brace, braceRest and carry.",
+-    "enabled": false,
++    "enabled": true,
+     "catch": {"tell": 10, "tech": 8, "whiffOpen": 20},
+     "clinch": {"max": 60, "timeThrows": true, "pulse": 20, "window": 4, "sharp": 2, "grip": 2, "leadGuard": 1, "partBh": 1.5, "pushBh": 3, "pushFirstMove": 20, "timeFirstMove": 20, "aiOffsets": [-4, -3, 3, 4]},
+     "throw": {"acrossBh": 8, "upBh": 4, "upOpen": 16, "bury": 20, "worth": 6, "ai": {"down": 1.0, "up": 0.7, "across": 0.7, "careW": 1.5, "popR": 3}},
+@@ -759,7 +759,7 @@
+     },
+     "dodgeConvertTicks": 8,
+     "flightStrikes": {
+-      "enabled": false,
++      "enabled": true,
+       "rangeBh": [
+         0,
+         12.5
+@@ -864,7 +864,7 @@
+     "_note": "The zip, slice Z1 (sim/director/zip.gd; docs/design/melee-press-feel.md section 2c). LT with X (strike) or Y (heavy) in band: ki paid at the press; tellTicks of tell; inTicks (the range by distance) on the way in; reachBefore ticks in reach before his blow and reachAfter after it; outTicks on the way out, plus 1 for each out.bhPerTick body heights of path past out.freeBh, out.maxTicks at most. heldTicks: the button kept down this long past the tell is the held reading (a zip strike is then in reach heldReachBefore ticks before its blow). floor: no way in or out is under max(minTicks, the distance in bh over bhPerTick, rounded up) (Legal RL-076). exit: awayBh more with the stick straight away, capBh at most from the rival; a blocked point slides slideDeg at a time, probes at most, to a point clear by clearBh. bowBh: the bow of a way out that passes the rival (over him; under him with the stick down and room beneath) or clears the ground. towardDeg, awayDeg, exitSteps: Game Design's stick rules. mul, reel (a zip strike) and stagger (a zip heavy) by reading. counter: a tech strike pressed from techBefore ticks before the arrival, or a heavy landing from heavyBefore ticks before it, until his blow lands, cancels the blow; a tech counter staggers him staggerTicks and is worth a skill strike times mul. knockdownTicks: the drop when a shot hits him on the way out. dodgeConvertTicks: a face press this soon after LT's press takes the dodge back."
+   },
+   "water": {
+-    "enabled": false,
++    "enabled": true,
+     "surfaceTicks": 30,
+     "riseTicks": 10,
+     "_note": "Game Design's rulings-2026-10-26 row 6 (on 23b item 7): a fighter whose drop (the zip's knock-down) takes him under the water surfaces within surfaceTicks live ticks of going under, whatever he presses, rising over the last riseTicks; he counts as landed when he surfaces (a rally's end). A launched body is World's surfacing rule (data/biomes/water.json surface). Waded water is not under. A fighter who dives by himself is never brought up (sim/director/water.gd, DirWater)."
+diff --git a/data/director/launch.json b/data/director/launch.json
+index cdc0733..3cc7459 100644
+--- a/data/director/launch.json
++++ b/data/director/launch.json
+@@ -1,7 +1,7 @@
+ {
+   "schema": "director.launch/1",
+   "_about": "The launch planner's landing-mix numbers (sim/director/launch.gd, DirLaunch; balance-targets.md section 19; docs/combat/launch-vectors.md). DRIVE DOWN (the old SLAM DOWN) sends the target down and forward, at an angle set by its height above the ground, with no draw. The straight-down slam is its own gated candidate, CRATER SLAM. Heights are in body heights (1 bh is 75 units).",
+-  "sideFromBlowOnly": false,
++  "sideFromBlowOnly": true,
+   "_sideFromBlowOnly": "Game Design's overnight ruling (a), docs/design/overnight-2026-11-08.md: a launch goes the way of the blow, and only the stick picks the far side. On: the curve (arc heavyFull) keeps the punch's way when the stick picks no side (none, up or down), away still sends him back past; and the planner offers no candidate on the far side of the rival (as with the contact block). Off: as before, the curve may turn to the landing score's better arrival and the planner may offer a mountainside or building behind.",
+   "drive": {
+     "lowDeg": 25.0,
+@@ -108,11 +108,11 @@
+     "_note": "The knock-back: a short send that is not a launch across the map (agency-pass.md section 3; Combat's brawl-endings-and-trades.md section 2). score: its base score against the launch candidates (it was the planner's NONE, 25). distBh: how far it sends the rival, in body heights, by the striker's tier (Combat's proposal). On the ground (within groundWithinBh of it, not over the sea) with groundMode 'skid' it is a low send with no travel boost that the ground-contact model skids: skidSpeed is its speed by tier, in units a second, sized to slide about distBh on open ground, and skidUy its small lift. Otherwise ('shove', or in the air: the drift) the rival is carried back distBh over driftTicks and stays upright. chain: whether a chain window may open after it"
+   },
+   "arc": {
+-    "enabled": false,
++    "enabled": true,
+     "minForms": 2,
+     "budget": 3,
+     "meteorBudget": 1,
+-    "firstMeteor": false,
++    "firstMeteor": true,
+     "blastKeep": 0.2,
+     "gapSec": 20.0,
+     "wholeRing": 153600.0,
+diff --git a/data/director/stick.json b/data/director/stick.json
+index b3f234a..0a3fb4e 100644
+--- a/data/director/stick.json
++++ b/data/director/stick.json
+@@ -35,7 +35,7 @@
+   "quickRecover": 7,
+   "chargeRecover": 16,
+   "armour": {
+-    "enabled": false,
++    "enabled": true,
+     "fromTicks": 12,
+     "beamFromTicks": 0,
+     "mediumUntilTicks": 28,
+@@ -51,14 +51,14 @@
+   },
+   "autoGoTicks": 68,
+   "strikeStages": {
+-    "enabled": false,
++    "enabled": true,
+     "stageTicks": [12, 28, 46, 66, 90, 120],
+     "levelCap": 3,
+     "topDrainPerSec": 2.0,
+     "_note": "The plain hold's stages (docs/director/beams-own-move-plan.md step 2; playable-build.md section 2; beam-answers-2.md section 1). A right-stick strike's hold climbs the beam's ladder: its count is 2 + round(4 x level), taken at the request; stage s comes at stageTicks[s-1] live ticks from the request, no higher than its level's price (levels, over the quick's) affords. It never goes by itself (autoGoTicks is ignored with this on), and at the top it costs topDrainPerSec, stepping down when it can't pay. Its blow lands at the stage up to levelCap: damage and stun stop growing at stage 3, and the stages past it are for the swat and the punch."
+   },
+   "lungeLight": {
+-    "enabled": false,
++    "enabled": true,
+     "_note": "The stick's quick strike at range (docs/ep/proposals/controller-vision.md section 5: a flick lands in about 11 ticks up close and about 25 at range, by the heavy lunge). On: from the middle band, out of any exchange, it asks for the light lunge and lands as a light on arrival: the light's time and worth, with the stick's direction, its stun and its carry. Up close and in a brawl it is the stick's own blow as before."
+   },
+   "repeatSec": 3.0,
+@@ -66,7 +66,7 @@
+   "pendTicks": 9,
+   "bufferTicks": 9,
+   "fullSend": {
+-    "enabled": false,
++    "enabled": true,
+     "atStage": "top",
+     "share": 1.0,
+     "bendDeg": 20,
+@@ -78,20 +78,20 @@
+     "_note": "Game Design, slam-and-pace.md section 1: a stick strike held to his top stage sends when it lands, in the family of its direction, at share of a full B: down on a foe in the air the slam (more than airBh body heights over the ground), down on the ground the down send from where he stands (World's embed), up skyward, toward across, away across (behind him once the turning send exists). A quick flick or a hold short of the top never sends. bendDeg is the planner's own bend (not read here yet). Off: as before."
+   },
+   "flickKeep": {
+-    "enabled": false,
++    "enabled": true,
+     "recoverTicks": 20,
+     "_note": "Game Design's rulings (docs/design/gauntlet-plan.md section 5, rulings 1 to 3): a flick that can't start now is held, the newest only, quietly, and becomes his first blow out, its direction read then. Stunned, reeling or in a planned exchange with no window of his open: up to pendFollow.maxTicks. Launched, down or dropped: at most recoverTicks old when he's free (the face queue's 20), or refused recovering. A set piece: refused at once, set_piece. One his rival's planned exchange took is held the same way, never told answered. Off: bufferTicks, and answered."
+   },
+   "pendFollow": {
+-    "enabled": false,
++    "enabled": true,
+     "maxTicks": 90,
+     "_note": "A stick strike waiting for its blow follows its request: queued, it waits up to maxTicks; answered by a planned exchange or refused, it's told at once (stick_refused answered or refused). A hold the answer swept up becomes the charge on his first free tick, counting from then, nothing banked (Game Design, 2026-11-02). Off, it lapses after pendTicks as late, whatever happened."
+   },
+   "flickRun": {
+-    "enabled": false,
++    "enabled": true,
+     "points": 1.5,
+     "_note": "A landed quick flick counts in its striker's run, points of it, with the steal on top (Game Design, stick-lands.md, 2026-11-02): a light's 1 first, and a medium's 3 if stick-only still lost every trade break. At 1 it lost all 48 of 48 to the easy AI; at 3 it won 45 of 45. 1.5: Game Design's lever 1 for stick-only and Orb's scheme (gauntlet-plan.md sections 3 and 5, 2026-11-07)."
+-  },  "lightStops": true,
++  },  "lightStops": false,
+   "softWorth": 1.7,
+   "softReel": 6,
+   "softRunOff": 2,
+diff --git a/data/director/swing.json b/data/director/swing.json
+index 973a4fd..3e88a15 100644
+--- a/data/director/swing.json
++++ b/data/director/swing.json
+@@ -33,7 +33,7 @@
+     "tallSamples": 5
+   },
+   "_note": "DirSwing, the choreographer's swing (docs/world/ring-any-angle/encounter.md section 2; game-design.md sections 2, 9, 10, 11, 13). It scores and asks; the rates, ramps and law are the core's (data/fight/swing.json). Every number is a first value. restTicks: at rest this long before a landing. restOut: ticks of an ease it asks for. stallTicks: a swing running this long, the law having slowed it, rests. sweep: the small class's allowance in units a second, which sizes a jolt. Off until World's place list and the look gate are in.",
+-  "enabled": false,
++  "enabled": true,
+   "minDeg": 2.0,
+   "bigMin": 16.0,
+   "maxDeg": 180.0,
+@@ -74,7 +74,7 @@
+     "sec": 6.0,
+     "reach": 6000.0,
+     "shareCap": {
+-      "enabled": false,
++      "enabled": true,
+       "max": 0.4,
+       "after": 3,
+       "_note": "Brawl swings at most max of the match's big swings, once there have been after of them (Game Design's 40% cap for any cause but a launch; QA read 44% on the kept build)."
+@@ -182,7 +182,7 @@
+     "recencySec": 12.0,
+     "leanDeg": 60.0,
+     "leanReach": 6000.0,
+-    "yieldToLaunch": false
++    "yieldToLaunch": true
+   },
+   "nudge": {
+     "enabled": true,

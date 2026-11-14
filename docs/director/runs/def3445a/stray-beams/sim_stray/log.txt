@@ -1,0 +1,52 @@
+23:37:27 parity exit 0: golden check passed
+23:38:10 validate: 321 files checked, 0 errors, 2 warnings; selftest: self-test: 10093 of 10093 checks passed
+23:38:11 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+23:38:18 a_press_check exit 0: A PRESS: 0 check(s) failed
+23:38:29 arc_check exit 0: ARC: 0 check(s) failed
+23:38:54 arrive_check exit 0: ARRIVE: 0 check(s) failed
+23:43:26 bark_reads_check exit 0: bark_reads_check: passed
+23:43:35 beam_ai_check exit 0: BEAM AI: 0 check(s) failed
+23:43:44 beam_front_check exit 0: FRONT: 0 check(s) failed
+23:43:50 beam_move_check exit 0: BEAM MOVE: 0 check(s) failed
+23:43:56 carry_round_check exit 0: CARRY ROUND: 0 check(s) failed
+23:44:04 chase_tap_check exit 0: CHASE: 0 check(s) failed
+23:44:14 city_push_check exit 0: CITY PUSH: 0 check(s) failed
+23:44:25 driver_check exit 0: DRIVER: 0 check(s) failed
+23:44:39 ending_check exit 0: ENDING: 0 check(s) failed
+23:44:46 ending_team_check exit 0: ENDING TEAM: 0 check(s) failed
+23:44:53 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+23:45:03 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+23:45:41 floorlift_check exit 0: FLOORLIFT: 0 check(s) failed
+23:45:57 follow_check exit 0: FOLLOW: 0 check(s) failed
+23:46:05 full_send_check exit 0: FULL SEND: 0 check(s) failed
+23:46:14 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+23:53:43 launch_cost_check exit 0: LAUNCH COST: 0 check(s) failed
+23:53:58 launch_cuts_check exit 0: LAUNCH CUTS: 0 check(s) failed
+23:54:08 location_check exit 0: LOCATION: 0 check(s) failed
+23:54:14 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+23:54:22 outside_check exit 0: OUTSIDE: 0 check(s) failed
+23:54:28 pace_check exit 0: PACE: 0 check(s) failed
+23:54:37 phrase_check exit 0: PHRASE: 0 check(s) failed
+23:54:44 plane_check exit 0: PLANE: 0 check(s) failed
+23:54:50 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+23:54:58 press_decides_check exit 0: PRESS: 0 check(s) failed
+23:55:04 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+23:55:12 reads_check exit 0: reads_check: 16 of 16 passed
+23:55:18 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+23:55:23 relief_check exit 0: RELIEF: 0 check(s) failed
+23:56:17 sigvariants_check exit 0: sigvariants check passed
+23:56:28 stance_check exit 0: STANCE: 0 check(s) failed
+23:56:43 stick_check exit 0: STICK: 0 check(s) failed
+23:56:50 stick_lunge_check exit 0: STICK LUNGE: 0 check(s) failed
+23:56:57 stray_beam_check exit 0: STRAY BEAMS: 0 check(s) failed
+23:57:03 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+23:57:09 sure_reach_check exit 0: sure_reach_check: passed
+23:57:48 swing_check exit 0: SWING: 0 check(s) failed
+23:59:05 swing_legal_check exit 0: SWING LEGAL: 0 check(s) failed
+23:59:27 walk_check exit 0: WALK: 0 check(s) failed
+00:00:35 core two_states_check exit 0: PASS  0 failure(s)
+00:00:41 core load_split exit 0: 
+00:00:41 lane sim done
+00:01:00 input b_no_beam_test exit 0: b_no_beam_test: 103 checks, 0 failed
+00:04:16 input b_no_beam_layouts_test exit 0: b_no_beam_layouts_test: 4 checks, 0 failed
+00:04:18 input layout_test exit 0: layout_test: 131 checks, 0 failed

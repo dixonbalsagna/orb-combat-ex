@@ -1,0 +1,54 @@
+diff --git a/sim/director/tools/city_push_check.gd b/sim/director/tools/city_push_check.gd
+--- a/sim/director/tools/city_push_check.gd
++++ b/sim/director/tools/city_push_check.gd
+@@ -113,10 +113,10 @@
+ 
+ func _turn() -> void:
+ 	var sl: Dictionary = DirSwing.cfg().slam
++	DirSwing.setForce(0)   # (the setup with the director's swing off, whatever the data says: the 9 November rows have it on, and a swing running or resting would block the slam's)
+ 	var r: Array = _cityPair(FIELD, true)   # (its own turn first, with the director's swing off, so nothing rests it)
+ 	var S: SimState = r[0]
+ 	var bi: int = r[1]
+-	DirSwing.setForce(1)
+ 	sl["enabled"] = true
+ 	if bi < 0:
+ 		_expect(false, "a building to slam into")
+@@ -128,6 +128,7 @@
+ 		SimCore.step(S, [null, null])
+ 		S.out.fx.clear()
+ 	var before: float = float(WorldStructures.streetAxis(S, bi).alongSin)
++	DirSwing.setForce(1)
+ 	DirSwing.atImpact(S, A, D, bi)
+ 	var started: bool = S.swing.active and String(S.swing.cause) == "slam"
+ 	for _k in range(600):
+@@ -141,26 +142,26 @@
+ 	_expect(absf(after) < absf(before) - 0.1, "and when it's done the line runs nearer down the street behind the building")
+ 	SimCore.dispose(S)
+ 	# a lodge among the tick's events starts it too
+-	DirSwing.setForce(-1)
++	DirSwing.setForce(0)
+ 	var r2: Array = _cityPair(FIELD, true)
+-	DirSwing.setForce(1)
+ 	var S2: SimState = r2[0]
+ 	var b2: int = r2[1]
+ 	for _k in range(30):
+ 		SimCore.step(S2, [null, null])
+ 		S2.out.fx.clear()
++	DirSwing.setForce(1)
+ 	SimFx.lodge(S2, S2.fighters[1], S2.buildings[b2], S2.fighters[1].x, S2.fighters[1].y, 0.5, 1, S2.fighters[0])
+ 	DirSwing._impacts(S2)
+ 	_expect(S2.swing.active and String(S2.swing.cause) == "slam", "a lodge in the tick's events starts it")
+ 	SimCore.dispose(S2)
+ 	sl["enabled"] = false
+-	DirSwing.setForce(-1)
++	DirSwing.setForce(0)
+ 	var r3: Array = _cityPair(FIELD, true)
+-	DirSwing.setForce(1)
+ 	var S3: SimState = r3[0]
+ 	for _k in range(30):
+ 		SimCore.step(S3, [null, null])
+ 		S3.out.fx.clear()
++	DirSwing.setForce(1)
+ 	DirSwing.atImpact(S3, S3.fighters[0], S3.fighters[1], int(r3[1]))
+ 	_expect(not (S3.swing.active and String(S3.swing.cause) == "slam"), "off, a slam turns nothing")
+ 	SimCore.dispose(S3)

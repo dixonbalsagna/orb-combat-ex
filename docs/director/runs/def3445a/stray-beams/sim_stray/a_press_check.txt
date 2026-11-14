@@ -1,0 +1,11 @@
+ok    off, close: press_ack
+ok    off, close: no brawl
+ok    close: brawl_start
+ok    close: grapple_catch
+ok    close: a brawl
+ok    the middle band: taunt_start
+ok    the middle band: no brawl
+ok    the far band: taunt_start
+ok    the far band: no brawl
+A PRESS: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

@@ -1,0 +1,13 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index ffc430f..c78ef21 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -226,7 +226,7 @@
+     "provisional": true,
+     "cooldownSec": 15,
+     "damageMul": 0.6,
+-    "_note": "Game Design's provisional signature limit (agency-pass.md section 5; Orb's to revisit once he has played the energy slice). provisional true: a signature recharges in cooldownSec and does damageMul of its damage; it still costs 45 ki. false: the fighter's own sigCooldown (120 s) and full damage, as before. QA's band to watch: signatures deal at most 30% of a match's damage"
++    "_note": "Game Design's provisional signature limit (agency-pass.md section 5; Orb's to revisit once they have played the energy slice). provisional true: a signature recharges in cooldownSec and does damageMul of its damage; it still costs 45 ki. false: the fighter's own sigCooldown (120 s) and full damage, as before. QA's band to watch: signatures deal at most 30% of a match's damage"
+   },
+   "buried": {
+     "enabled": true,

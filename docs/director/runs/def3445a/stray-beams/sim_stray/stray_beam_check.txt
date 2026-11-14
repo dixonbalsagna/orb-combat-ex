@@ -1,0 +1,12 @@
+ok    on: a Y press after the release drops the waiting beam (replaced), and no beam comes
+ok    on: a guard press after the release drops it too
+ok    on: with nothing pressed it still fires once the target is free (+56 ticks)
+ok    on: a press on the release's own tick is part of the release: it still waits
+ok    on, at close range: a Y that begins a brawl after the release: the beam is dropped and doesn't end the brawl
+ok    negative control, off: after a guard press the waiting beam fires later anyway (+56 ticks)
+ok    negative control, off: after the brawl's Y the waiting beam fires later (brawl ended by it true)
+ok    RT + B on RT's own tick, and 12 live ticks after, is still the signature
+ok    B 13 live ticks after RT, and 26 (Orb's 6617), is the heavy
+ok    negative control, the window unread (RT held, not charging): 26 after is still the signature
+ok    the switches off: nothing is written for RT (387 slots before and after)
+STRAY BEAMS: 0 check(s) failed
