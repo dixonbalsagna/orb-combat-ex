@@ -1,0 +1,111 @@
+diff --git a/data/fight/hitstop.json b/data/fight/hitstop.json
+index c16ba68..27a28c0 100644
+--- a/data/fight/hitstop.json
++++ b/data/fight/hitstop.json
+@@ -18,7 +18,7 @@
+   "cutMul": 0.7,
+   "cutFloor": 2,
+   "cutDeepMul": 0.5,
+-  "_cut": "Game Design's second step (rulings-2026-10-22.md 5b): over the budget, every stop under a decisive blow is x cutMul, rounded, at least cutFloor, until the share falls back under; over budget.deepShare, x cutDeepMul in place of cutMul, against stutter (7d: no ten-second block over 40% frozen). Decisive blows and the KO are never cut, and a stop of 0 stays 0",
++  "_cut": "Game Design's second step (rulings-2026-10-22.md 5b): over the budget, every stop under a decisive blow is x cutMul, rounded, at least cutFloor, until the share falls back under; over budget.deepShare, x cutDeepMul in place of cutMul, against stutter (7d: no ten-second block over 40% frozen). Decisive blows, the KO, launches and heavies are never cut (Game Design, 2026-11-13: the same list as budgetAny's), and a stop of 0 stays 0",
+   "budgetAny": {"enabled": false, "cutFloor": 1, "neverCut": ["decisive", "ko", "launch", "launch_full", "heavy"]},
+   "_budgetAny": "Game Design's gauntlet-plan.md sections 7 and 8: the budget applies to whichever table is live, the brawl's included. With this on, or a setup's \"hitstopBudget\", the window below counts every frozen tick even with hit-stop by weight off, and over it a hit's passed stop is x cutMul (x cutDeepMul over the deep line, the stutter cap), at least this cutFloor. The weights in neverCut (decisive, the KO, a launch's held moment, and a heavy, Game Design's of 2026-11-09) are never cut, and a blow that breaks a region or KOs keeps its stop. Blows name their weight with the budget on (DirMelee.weigh); a blow that names none is read by its exchange's kind (light, medium, heavy)",
+   "budget": {
+diff --git a/docs/architecture/feel-core.md b/docs/architecture/feel-core.md
+index 1b4161b..5a1dfdd 100644
+--- a/docs/architecture/feel-core.md
++++ b/docs/architecture/feel-core.md
+@@ -125,8 +125,8 @@ Game Design's `rulings-2026-10-22.md` 5b, after Encounter measured 30% of AI v A
+ | **The table:** a mashed or burst light 2, a tapped light 3, a medium 5, a heavy 8, a launch or a close 12, a full launch 14, decisive 20, the KO 24 at most | `ticks` in `hitstop.json` |
+ | **A mash flows** (`rulings-2026-10-22.md` 6): only a mash's first blow stops, for 2; its later blows, each within 12 ticks of the last, carry no stop | **Applied in e90590b8** (after the re-cut): `light_flow` 0, the weight Encounter names for a mash's later blows (`light_mash`, 2, for its first). A 0 freezes nothing, so the budget never counts it, and the cut's floor never raises it to 2 |
+ | **The budget is 12%** (Game Design's numbers of 2026-11-09, `gauntlet-plan.md` section 7; it was 18%) | Of a rolling 10 s of fight (`windowS` 10, live seconds in buckets): 72 frozen ticks |
+-| **The second step:** over the budget, every stop under a decisive blow ×0.7, rounded, at least 2, until the share falls back under. Decisive blows are never cut | `cutMul` 0.7 (it was 0.75), `cutFloor` 2. Over the budget: 2, 2, 4, 6, 8, 10 for the six weights from `light_mash` up to decisive (a flowing blow stays 0) (half up, as the sim rounds); 20 and 24 for decisive and the KO. The old mashed-light floor, the one lever that didn't bite, is gone |
+-| **The deep step** (`rulings-2026-10-22.md` 7d): no ten-second block over 40% frozen; in one, the step is ×0.5 (rounded, at least 2) in place of ×0.7. Decisive blows are never cut, and the match's share stays at most 12% | **Applied in e90590b8** with the mash flow: `cutDeepMul` 0.5 and `budget.deepShare` 0.4 (240 frozen ticks of the same rolling 10 s). Over the deep line: 2, 2, 3, 4, 6, 7 for the six weights from `light_mash` up to decisive (a flowing blow stays 0); 20 and 24 for decisive and the KO. The line is the window's own, frozen ticks against 600 live ticks, the measure of Encounter's probe and QA's blocks. It can't promise a block never passes 40%: a 2 can't be cut, and decisive blows and the KO never are. The probe's read: with the mash flow no block passed 40% (worst 29%), and without it the deep step took 20 blocks over 40% to 16 |
++| **The second step:** over the budget, every stop under a decisive blow ×0.7, rounded, at least 2, until the share falls back under. Decisive blows, the KO, launches and heavies are never cut (Game Design, 2026-11-13) | `cutMul` 0.7 (it was 0.75), `cutFloor` 2. Over the budget: 2, 2, 4 for `light_mash`, `light` and `medium`, and the heavy, launch and full launch whole (8, 12, 14). Before Game Design's list of 2026-11-13 it was 2, 2, 4, 6, 8, 10 for the six weights from `light_mash` up to decisive (a flowing blow stays 0) (half up, as the sim rounds); 20 and 24 for decisive and the KO. The old mashed-light floor, the one lever that didn't bite, is gone |
++| **The deep step** (`rulings-2026-10-22.md` 7d): no ten-second block over 40% frozen; in one, the step is ×0.5 (rounded, at least 2) in place of ×0.7. Decisive blows, the KO, launches and heavies are never cut, and the match's share stays at most 12% | **Applied in e90590b8** with the mash flow: `cutDeepMul` 0.5 and `budget.deepShare` 0.4 (240 frozen ticks of the same rolling 10 s). Over the deep line: 2, 2, 3 for `light_mash`, `light` and `medium`, and the heavy and launches whole (a flowing blow stays 0; before 2026-11-13: 2, 2, 3, 4, 6, 7); 20 and 24 for decisive and the KO. The line is the window's own, frozen ticks against 600 live ticks, the measure of Encounter's probe and QA's blocks. It can't promise a block never passes 40%: a 2 can't be cut, and decisive blows and the KO never are. The probe's read: with the mash flow no block passed 40% (worst 29%), and without it the deep step took 20 blocks over 40% to 16 |
+ 
+ **Whole ticks, a finding of the core's.** The step counts a stop down in seconds: `S.dirS.stop -= 1/60` each frozen tick, until it isn't above 0. Taking 1/60 from n/60 n times leaves about 1e-17 for every n of 3 or more, so **a stop froze one tick more than asked:** a 4 held 5, and the brawl's heavy 6 holds 7 today. With the switch on, `frozen()` drops the residue (anything under 1e-9 s), so a stop of n ticks freezes n. The damage event's `stop` field counts the same way (`SimFx.stopTicks(stop, whole)`).
+ 
+@@ -134,4 +134,4 @@ Game Design's `rulings-2026-10-22.md` 5b, after Encounter measured 30% of AI v A
+ 
+ **For Encounter:** `brawl.gd`'s `int(ceil(maxf(0.0, S.dirS.stop) * TICKS_PER_SEC))` (the slide held for the blow's stop) can read n + 1 for a stop of n ticks set as n / 60, by the same float. Their windows that "end at least 5 live ticks after the freeze" should count the freeze in whole ticks.
+ 
+-**The check** ("hit-stop by weight", re-cut): the new table; a heavy and a light merging at 8; the budget 72 of 10 s; over it the cut values above, with decisive and the KO uncut; the deep line 240, a heavy 6 a tick under it, the deep values over it, and a flowing blow holding no stop while the clock runs on; 10 s of fight later the budget is back; a stop of n ticks freezes n for every n in the table, and the event's field says so; with the switch off, `stopTicks` still counts today's n + 1.
++**The check** ("hit-stop by weight", re-cut): the new table; a heavy and a light merging at 8; the budget 72 of 10 s; over it the cut values above, with decisive and the KO uncut; the deep line 240, a medium 4 a tick under it, the deep values over it, and a flowing blow holding no stop while the clock runs on; 10 s of fight later the budget is back; a stop of n ticks freezes n for every n in the table, and the event's field says so; with the switch off, `stopTicks` still counts today's n + 1.
+diff --git a/sim/core/hitstop.gd b/sim/core/hitstop.gd
+index 2809716..b519b34 100644
+--- a/sim/core/hitstop.gd
++++ b/sim/core/hitstop.gd
+@@ -14,7 +14,8 @@ extends RefCounted
+ ##   the budget:  the frozen ticks of the last windowS (10) seconds of fight (live seconds, in buckets) are counted,
+ ##                whatever froze them. Over `share` (12%) of it, every stop under a decisive blow is x cutMul (0.7,
+ ##                rounded, at least cutFloor 2) until the share falls back under (Game Design's rulings-2026-10-22.md
+-##                5b). Decisive blows and the KO are never cut. Stops merge (the longer one holds); they never add.
++##                5b). Decisive blows, the KO, launches and heavies are never cut (Game Design, 2026-11-13). Stops merge (the longer one
++##                holds); they never add.
+ ##   the deep step: over `deepShare` (40%) of the window, the step is x cutDeepMul (0.5, rounded, at least cutFloor)
+ ##                in place of x cutMul, against stutter: no ten-second block over 40% frozen (Game Design's
+ ##                rulings-2026-10-22.md 7d).
+@@ -28,7 +29,7 @@ extends RefCounted
+ 
+ const FILE: String = "res://data/fight/hitstop.json"
+ const WEIGHTS: Array = ["light_flow", "light_mash", "light", "medium", "heavy", "launch", "launch_full", "decisive", "ko"]
+-const NEVER_CUT: Array = ["decisive", "ko"]
++const NEVER_CUT: Array = ["decisive", "ko", "heavy", "launch", "launch_full"]   # Game Design 2026-11-13: as the budget on any table's list (budgetAny.neverCut)
+ const RESIDUE: float = 1.0e-9   # seconds: far under a tick, far over the count-down's float residue
+ 
+ static var _d = null
+diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
+index b94bfe4..e84676a 100644
+--- a/sim/core/tools/parity.gd
++++ b/sim/core/tools/parity.gd
+@@ -5479,7 +5479,8 @@ func _hitstopAny() -> String:
+ 
+ ## Hit-stop by weight (sim/core/hitstop.gd). Off: a hit's stop is the one passed, and a stop's count-down is today's.
+ ## On: each weight's ticks; a hit that names none keeps the one passed; stops merge; over the budget every stop under
+-## a decisive blow is x0.7 (rounded, at least 2) and decisive blows are not, and 10 s of fight later the budget is
++## a decisive blow is x0.7 (rounded, at least 2) and decisive blows, the KO, launches and heavies are not (Game Design,
++## 2026-11-13), and 10 s of fight later the budget is
+ ## back; a stop of n ticks freezes n; a broken region's decisive and the KO's cap (in ko).
+ func _hitstop() -> String:
+ 	if not SimHitstop.errors().is_empty():
+@@ -5520,30 +5521,30 @@ func _hitstop() -> String:
+ 	S.dirS.stop = 0.0
+ 	for i in range(SimHitstop.budgetTicks):
+ 		SimHitstop.frozen(S)
+-	var cut: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 4, "heavy": 6, "launch": 8, "launch_full": 10, "decisive": 20, "ko": 24}
++	var cut: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 4, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24}
+ 	for w in cut:
+ 		if SimHitstop.ticks(S, w) != cut[w]:
+-			return "over the budget, %s holds %d (want %d: x0.7, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), cut[w]]
++			return "over the budget, %s holds %d (want %d: x0.7, rounded, at least 2; decisive, the KO, launches and heavies never cut)" % [w, SimHitstop.ticks(S, w), cut[w]]
+ 	# the deep step (Game Design's 7d): over 40% of the window, x0.5, rounded, at least 2
+ 	if SimHitstop.deepTicks != 240:
+ 		return "the deep line is %d ticks (want 40%% of 10 s, 240)" % SimHitstop.deepTicks
+ 	for i in range(SimHitstop.deepTicks - SimHitstop.budgetTicks - 1):
+ 		SimHitstop.frozen(S)
+-	if SimHitstop.ticks(S, "heavy") != 6:
+-		return "a tick under the deep line, a heavy holds %d (want 6: x0.7)" % SimHitstop.ticks(S, "heavy")
++	if SimHitstop.ticks(S, "medium") != 4:
++		return "a tick under the deep line, a medium holds %d (want 4: x0.7)" % SimHitstop.ticks(S, "medium")
+ 	SimHitstop.frozen(S)
+-	var deep: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 3, "heavy": 4, "launch": 6, "launch_full": 7, "decisive": 20, "ko": 24}
++	var deep: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 3, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24}
+ 	for w in deep:
+ 		if SimHitstop.ticks(S, w) != deep[w]:
+-			return "over the deep line, %s holds %d (want %d: x0.5, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), deep[w]]
++			return "over the deep line, %s holds %d (want %d: x0.5, rounded, at least 2; decisive, the KO, launches and heavies never cut)" % [w, SimHitstop.ticks(S, w), deep[w]]
+ 	var h0: String = SimHash.stateHash(S).gameplay
+ 	for i in range(SimHitstop.windowS * 60 - 1):
+ 		SimHitstop.live(S)
+-	if SimHitstop.ticks(S, "heavy") != 4:
++	if SimHitstop.ticks(S, "medium") != 3:
+ 		return "the budget came back before 10 s of fight"
+ 	SimHitstop.live(S)
+-	if SimHitstop.ticks(S, "heavy") != 8 or S.hs.sum != 0 or SimHash.stateHash(S).gameplay == h0:
+-		return "10 s of fight later: a heavy %d (want 8), %d frozen ticks counted; the budget's state not hashed" % [SimHitstop.ticks(S, "heavy"), S.hs.sum]
++	if SimHitstop.ticks(S, "medium") != 5 or S.hs.sum != 0 or SimHash.stateHash(S).gameplay == h0:
++		return "10 s of fight later: a medium %d (want 5), %d frozen ticks counted; the budget's state not hashed" % [SimHitstop.ticks(S, "medium"), S.hs.sum]
+ 	# a mash flows (Game Design's 6): a flowing blow holds no stop, and the clock runs on
+ 	S.dirS.stop = 0.0
+ 	var tf: float = S.T

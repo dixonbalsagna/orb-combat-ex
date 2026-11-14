@@ -1,0 +1,64 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  past it: tier 1 power 2, 4262 against 2009, BUILDING SMASH, launchT 1.95
+  past it: tier 1 power 4, 5874 against 2019, MOUNTAINSIDE, launchT 1.95
+  past it: tier 2 power 40, 7749 against 3088, , launchT 1.48
+  past it: tier 2 power 36, 6054 against 3061, , launchT 1.58
+  past it: tier 2 power 37, 6502 against 3065, UPPERCUT, launchT 1.20
+  past it: tier 2 power 38, 5694 against 3075, UPPERCUT, launchT 1.20
+  past it: tier 2 power 41, 9278 against 3093, BUILDING SMASH, launchT 1.95
+  past it: tier 2 power 41, 4053 against 3095, BUILDING SMASH, launchT 1.95
+  past it: tier 3 power 67, 11769 against 4613, , launchT 1.79
+  past it: tier 3 power 66, 13798 against 4599, BUILDING SMASH, launchT 1.80
+  past it: tier 3 power 67, 13325 against 4616, BUILDING SMASH, launchT 1.96
+  past it: tier 3 power 69, 9183 against 4643, BUILDING SMASH, launchT 1.58
+  past it: tier 3 power 67, 9792 against 4616, UPPERCUT, launchT 1.20
+  past it: tier 4 power 100, 14852 against 7001, BUILDING SMASH, launchT 1.95
+  past it: tier 4 power 100, 21004 against 7001, BUILDING SMASH, launchT 1.86
+trips tier 1: 2, median 15585, longest 15585
+trips tier 2: 4, median 3013, longest 8582
+trips tier 3: 5, median 4724, longest 8083
+trips tier 4: 2, median 63720, longest 63720
+shares asked for last before a launch: { "0.500": 6, "1.000": 9, "0.250": 1 }
+sends: 16 launches; fastest at tiers 1 to 4: 5874, 9278, 13798, 21004; along the line 11454, 18092, 26092, 38688; 15 past the cap, 6 that glow at tier 2 or under
+FAIL  the page's x1.25 along the line (2.00); straight up, once
+FAIL  the factor is in the hash
+FAIL  a send: the same rise (609.7), sideways by the factor (3348.5 against 3348.5)
+FAIL  x0.50 held to the data's range: x2.00
+FAIL  the dash at 300, 1,500, 6,000 and 14,000 apart: 1032, 1032, 2733, 5000, his level's flat out
+FAIL  at the top, at 300 apart: 1342 (his level's flat out 11525)
+FAIL  with the kick, 1,000 apart: 826 on the first tick (off: 826)
+dash close from 1000 at tier 1, arrival off, in ticks: 49 with the dash and the kick (0.82 s, target 0.40 s); 49 the kick alone; 56 the dash alone; 56 neither
+FAIL  close from 1000 at tier 1 in 0.82 s with the kick, arrival off (at most 0.40)
+dash close from 3000 at tier 1, arrival off, in ticks: 129 with the dash and the kick (2.15 s, target 0.80 s); 129 the kick alone; 151 the dash alone; 151 neither
+FAIL  close from 3000 at tier 1 in 2.15 s with the kick, arrival off (at most 0.80)
+dash close from 6000 at tier 1, arrival off, in ticks: 163 with the dash and the kick (2.72 s, target 1.40 s); 163 the kick alone; 231 the dash alone; 231 neither
+FAIL  close from 6000 at tier 1 in 2.72 s with the kick, arrival off (at most 1.40)
+dash close from 6000 at tier 4, arrival off, in ticks: 80 with the dash and the kick (1.33 s, target 0.75 s); 80 the kick alone; 143 the dash alone; 143 neither
+FAIL  close from 6000 at tier 4 in 1.33 s with the kick, arrival off (at most 0.75)
+dash close from 1000 at tier 1, arrival on, in ticks: 51 with the dash and the kick (0.85 s, target 0.40 s); 51 the kick alone; 58 the dash alone; 58 neither
+FAIL  close from 1000 at tier 1 in 0.85 s with the kick, arrival on (at most 0.40)
+dash close from 3000 at tier 1, arrival on, in ticks: 131 with the dash and the kick (2.18 s, target 0.80 s); 131 the kick alone; 153 the dash alone; 153 neither
+FAIL  close from 3000 at tier 1 in 2.18 s with the kick, arrival on (at most 0.80)
+dash close from 6000 at tier 1, arrival on, in ticks: 165 with the dash and the kick (2.75 s, target 1.40 s); 165 the kick alone; 233 the dash alone; 233 neither
+FAIL  close from 6000 at tier 1 in 2.75 s with the kick, arrival on (at most 1.40)
+dash close from 6000 at tier 4, arrival on, in ticks: 82 with the dash and the kick (1.37 s, target 0.75 s); 82 the kick alone; 146 the dash alone; 146 neither
+FAIL  close from 6000 at tier 4 in 1.37 s with the kick, arrival on (at most 0.75)
+FAIL  the dash is in the hash
+slip: a tap of 1 at 3,000 apart, his speed from the last held tick: 4000, 3600, 3245, 2929, 2649, 2401 (off, 4 ticks after: 2649)
+FAIL  a tap of 1: his speed falls to the slip's 1125 on the 4th tick after it, not before
+FAIL  a tap of 1 carries him less with it on: 10.84 bh against 10.84
+slip: a tap of 2 at 3,000 apart, his speed from the last held tick: 4125, 3711, 3343, 3017, 2727, 2470 (off, 4 ticks after: 2727)
+FAIL  a tap of 2: his speed falls to the slip's 1125 on the 4th tick after it, not before
+FAIL  a tap of 2 carries him less with it on: 11.87 bh against 11.87
+slip: a tap of 5 at 3,000 apart, his speed from the last held tick: 4500, 4044, 3639, 3279, 2960, 2677 (off, 4 ticks after: 2960)
+FAIL  a tap of 5: his speed falls to the slip's 1125 on the 4th tick after it, not before
+FAIL  a tap of 5 carries him less with it on: 15.12 bh against 15.12
+FAIL  a press in the brake ends it (ticks left 0, then 0) and the dash is his again (4279)
+slip: travelled in 60 ticks at 3000 apart (bh, on/off): stick 4.98/4.98; 1 12.81/12.81; 2 13.85/13.85; 3 14.92/14.92; 4 16.01/16.01; 5 17.13/17.13; 6 18.28/18.28; held 65.67/65.67
+slip: travelled in 60 ticks at 1000 apart (bh, on/off): stick 4.98/4.98; 1 12.81/12.81; 2 13.85/13.85; 3 14.92/14.92; 4 16.01/16.01; 5 17.13/17.13; 6 18.28/18.28; held 65.67/65.67
+FAIL  the slip's brake is in the hash
+POWER negative control: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe -- --negative-control: no SCRIPT ERROR lines

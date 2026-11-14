@@ -1,0 +1,84 @@
+diff --git a/sim/core/tools/power_check.gd b/sim/core/tools/power_check.gd
+index 1855409..067a352 100644
+--- a/sim/core/tools/power_check.gd
++++ b/sim/core/tools/power_check.gd
+@@ -164,7 +164,22 @@ func _dashAt(su: Dictionary, gap: float, tier: float, power_: float) -> SimState
+ 	return S
+ 
+ 
+-## Ticks from the press until he's within 1.5 bh of the other, who stands still; and his speed on ticks 1 to 12.
++## Striking distance: the arrival's mark (interrupts.json bands.engageBh, 2.5 bh), where an approach ends with the arrival
++## on. Game Design's close times run to it (overnight-2026-11-08.md (c): "from LT's press to striking distance").
++func _mark() -> float:
++	return float(DirBands.data().get("engageBh", 2.5)) * DirBands.BH
++
++
++## The arrival's switch for the rows that follow (in memory: interrupts.json bands.arrive.enabled); returns what it was.
++func _arrive(on_: bool) -> bool:
++	var a: Dictionary = DirBands.data().get("arrive", {})
++	var was: bool = a.get("enabled", false) == true
++	a["enabled"] = on_
++	return was
++
++
++## Ticks from the press until he's at striking distance of the other (_mark(), with half a unit's grace for the float),
++## who stands still; and his speed on ticks 1 to 12.
+ func _dashRun(S: SimState, cap: int) -> Array:
+ 	var f = S.fighters[0]
+ 	var o = S.fighters[1]
+@@ -184,7 +199,7 @@ func _dashRun(S: SimState, cap: int) -> Array:
+ 		S.out.feed.clear()
+ 		if speeds.size() < 12:
+ 			speeds.append(absf(f.vx))
+-		if absf(SimWrap.sdx(f.x, ox)) <= 1.5 * SimDepth.BH:
++		if absf(SimWrap.sdx(f.x, ox)) <= _mark() + 0.5:
+ 			return [t + 1, speeds]
+ 	return [-1, speeds]
+ 
+@@ -223,16 +238,20 @@ func _dash() -> void:
+ 	var r2: Array = _dashRun(S2, 12)
+ 	SimCore.dispose(S2)
+ 	ok(rr[1].size() > 0 and rr[1][0] >= 1000.0, "with the kick, 1,000 apart: %.0f on the first tick (off: %.0f)" % [rr[1][0] if rr[1].size() > 0 else -1.0, r2[1][0] if r2[1].size() > 0 else -1.0])
+-	# Game Design's close times, the other standing still: asserted with the kick on, as the builds play; printed with it off
+-	for row in [[1000.0, 1.0, 0.0, 0.4], [3000.0, 1.0, 0.0, 0.8], [6000.0, 1.0, 0.0, 1.4], [6000.0, 4.0, 100.0, 0.75]]:
+-		var got: Array = []
+-		for su in [onK, offK, on, off]:
+-			var SC := _dashAt(su, row[0], row[1], row[2])
+-			got.append(_dashRun(SC, 600)[0])
+-			SimCore.dispose(SC)
+-		var sec: float = float(got[0]) / 60.0
+-		print("dash close from %.0f at tier %d, in ticks: %d with the dash and the kick (%.2f s, target %.2f s); %d the kick alone; %d the dash alone; %d neither" % [row[0], int(row[1]), got[0], sec, row[3], got[1], got[2], got[3]])
+-		ok(got[0] > 0 and sec <= row[3], "close from %.0f at tier %d in %.2f s with the kick (at most %.2f)" % [row[0], int(row[1]), sec, row[3]])
++	# Game Design's close times to striking distance, the other standing still: asserted with the kick on, as the builds
++	# play, with the arrival off and on (on, it eases him over the last 1.5 bh to the mark); printed with the kick off
++	for arr in [false, true]:
++		var arr0: bool = _arrive(arr)
++		for row in [[1000.0, 1.0, 0.0, 0.4], [3000.0, 1.0, 0.0, 0.8], [6000.0, 1.0, 0.0, 1.4], [6000.0, 4.0, 100.0, 0.75]]:
++			var got: Array = []
++			for su in [onK, offK, on, off]:
++				var SC := _dashAt(su, row[0], row[1], row[2])
++				got.append(_dashRun(SC, 600)[0])
++				SimCore.dispose(SC)
++			var sec: float = float(got[0]) / 60.0
++			print("dash close from %.0f at tier %d, arrival %s, in ticks: %d with the dash and the kick (%.2f s, target %.2f s); %d the kick alone; %d the dash alone; %d neither" % [row[0], int(row[1]), "on" if arr else "off", got[0], sec, row[3], got[1], got[2], got[3]])
++			ok(got[0] > 0 and sec <= row[3], "close from %.0f at tier %d in %.2f s with the kick, arrival %s (at most %.2f)" % [row[0], int(row[1]), sec, "on" if arr else "off", row[3]])
++		_arrive(arr0)
+ 	# off moves nothing, and on is in the hash
+ 	var A := _new(off)
+ 	var B := _new(FIELD)
+@@ -282,6 +301,7 @@ func _held(k: int) -> Array:
+ 
+ 
+ func _slip() -> void:
++	var arr0: bool = _arrive(false)   # the brake's own rows: the arrival off whatever the data says (Encounter's slip hold, which keys on the slip, is arrive_check's)
+ 	var on: Dictionary = FIELD.duplicate()
+ 	on["dash"] = true
+ 	on["kick"] = true
+@@ -341,6 +361,7 @@ func _slip() -> void:
+ 	var E := _new({"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": false, "dash": true, "slip": true})
+ 	ok(not E.slipOn, "with the model off the word does nothing")
+ 	SimCore.dispose(E)
++	_arrive(arr0)
+ 
+ 
+ ## Each real route to a send, and the share it ends up with: through DirBrawl._send, the rally's turn, a chain link's own beat and a launch beat with the earned gate's multiplier. Reading a

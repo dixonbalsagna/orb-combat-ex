@@ -31,6 +31,26 @@ Simulation, 2026-11-01, for Game Design's `docs/design/power-scale.md`, with Com
 
 **The factor along the line is a static** (`SimPower.trav`), bound each step, as the arena's statics are, because `WorldSlide.launchTravel` takes no state. Two matches stepped in turn, one on and one off, are each what they'd be alone.
 
+## How far a launch carries: the page's slider (landed in 4890bdd9)
+
+Orb found high-speed launches "cool but a little too fast" (Game Design's `slam-and-pace.md` section 2). **A setup's `"travel"` sets the factor along the line for its match** (`S.powerTravel`, bound into `SimPower.trav` each step), held to `power.json`'s `travel` range of 1.25 to 2.0. With no word it's `launchTravel` (2.0). Orb tries 1.25 to 2 with a page slider, and Game Design's lever is 1.5, then 1.25.
+- It changes only how far along the line a send carries: **the rise is the same, and the sideways speed goes by the factor.** Energy, the crater and the buildings read the send's own speed, as before.
+- It's hashed with the model on, and so is Netcode's desync digest. A replay carries it in its setup. **With the model off it does nothing.**
+- **For Sunday's play the page turns the model on** (Tools' page lines: `"power": true` unless `?power=0`, and the slider sends `"travel"`). The data stays off, so the golden is byte-identical.
+- **The data's own switch on** is parked separately (`pending/power-flip/`), to land after Sunday. Twelve checks of five other owners were written for the model off and need their owners' pins first. The list is in that README.
+- The reach table below is at ×2. At ×1.25 a send across (a 0.32 rise) keeps about 68% of the sideways speed it has at ×2, with the same rise and so the same time in the air, so its reach comes to about 68% of the table's.
+
+## A tapped LT: the slip's brake (landed in 6a30b4c9)
+
+Game Design's (c): "a tapped LT is still the slip". With the flat-out dash, a tap carried him about 31 bh at range (Controls, `docs/controls/runs/d240cef1/`). **`power.json`'s `dash.slip`, or a setup's `"slip"`, only with the dash on:** a dash let go before tick 12 (`underTicks`) eases from its speed on the release to the slip's 1,125 a second (the slip bound's 1.5 bh in 6 ticks) over 4 ticks, by a smoothstep. A dash held 12 ticks or longer is untouched, tick for tick. A new press ends the brake.
+- **12 is the pad's own tap/hold line** (`timing.json` `tapHold.holdStart`): a press shorter than the sprint's start is a tap. It was 6 when the brake was first parked; Encounter's slip-arrive grant moved it, and it landed with that park in 6a30b4c9.
+- `SimPower.slip` runs in free flight after the stick sets his velocity and before Encounter's arrival.
+- `SimPower.slipNote` clears it outside his own free flight.
+- Its state is hashed while it's on.
+- It works with Controls' `dashHandover` on. With the 12-tick lunge every tap is a 13-tick dash.
+- **Encounter's slip-arrive** keeps the arrival's ease through the brake and the coast, and holds a tap at striking distance to tick 13, as today's lunge did. With both, no press is carried further than before at any range (Encounter's matrix, `docs/director/pending/slip-arrive/`).
+- A tap at 3,000 apart goes from 31 bh down to 10 to 22 bh (presses of 1 to 11 ticks). The 1.5 bh bound isn't met, because each held tick before the release already moves him 1.1 bh. The levers are Game Design's: `slip.speed`, and the kick's first ticks.
+
 ## How far a send goes
 
 Real flights through `doLaunch`, `launchTravel` ×2, started 100 units up, median of 14 starts on planets 7 and 12. Thin samples: read them to the nearest 500. Planet 3 is hillier and shorter.

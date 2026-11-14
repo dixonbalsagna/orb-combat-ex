@@ -1,0 +1,50 @@
+Owed items (sprint A1) on a scratch export of 0cda3796 with kick/nevercut_edit.py and kick/closerows_edit.py (the park's two patches). One Godot job at a time, below normal.
+never-cut sha1 0887b92507849e9e81c70c72d3b6caedae2393b0 sha256 313bd585bbce 4 files
+close-rows sha1 f84a5bd97e5eb7a6ee201adf0343fedb14a18800 sha256 76ab6e1c0d19 1 files
+import 0; parse errors 0
+validate self-test 0
+validate 0; 321 files checked, 0 errors, 2 warnings
+lint 0
+golden: exit 0 in 142 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (174798 ticks), 2 replays in 137.0 s
+  golden.json byte-identical
+parity through gate.mjs: exit 0 in 340 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+63:ok    hit-stop by weight
+power_check (shipped data) through gate.mjs: exit 0 in 173 s; POWER: 0 check(s) failed
+28:dash close from 1000 at tier 1, arrival off, in ticks: 11 with the dash and the kick (0.18 s, target 0.40 s); 49 the kick alone; 17 the dash alone; 56 neither
+29:dash close from 3000 at tier 1, arrival off, in ticks: 35 with the dash and the kick (0.58 s, target 0.80 s); 129 the kick alone; 42 the dash alone; 151 neither
+30:dash close from 6000 at tier 1, arrival off, in ticks: 71 with the dash and the kick (1.18 s, target 1.40 s); 163 the kick alone; 78 the dash alone; 231 neither
+31:dash close from 6000 at tier 4, arrival off, in ticks: 32 with the dash and the kick (0.53 s, target 0.75 s); 80 the kick alone; 39 the dash alone; 143 neither
+32:dash close from 1000 at tier 1, arrival on, in ticks: 15 with the dash and the kick (0.25 s, target 0.40 s); 51 the kick alone; 21 the dash alone; 58 neither
+33:dash close from 3000 at tier 1, arrival on, in ticks: 39 with the dash and the kick (0.65 s, target 0.80 s); 131 the kick alone; 46 the dash alone; 153 neither
+34:dash close from 6000 at tier 1, arrival on, in ticks: 75 with the dash and the kick (1.25 s, target 1.40 s); 165 the kick alone; 82 the dash alone; 233 neither
+35:dash close from 6000 at tier 4, arrival on, in ticks: 36 with the dash and the kick (0.60 s, target 0.75 s); 82 the kick alone; 43 the dash alone; 146 neither
+scratch: bands.arrive.enabled true in the data
+power_arrive_data: exit 0 in 183 s; script errors 0; POWER: 0 check(s) failed
+28:dash close from 1000 at tier 1, arrival off, in ticks: 11 with the dash and the kick (0.18 s, target 0.40 s); 49 the kick alone; 17 the dash alone; 56 neither
+29:dash close from 3000 at tier 1, arrival off, in ticks: 35 with the dash and the kick (0.58 s, target 0.80 s); 129 the kick alone; 42 the dash alone; 151 neither
+30:dash close from 6000 at tier 1, arrival off, in ticks: 71 with the dash and the kick (1.18 s, target 1.40 s); 163 the kick alone; 78 the dash alone; 231 neither
+31:dash close from 6000 at tier 4, arrival off, in ticks: 32 with the dash and the kick (0.53 s, target 0.75 s); 80 the kick alone; 39 the dash alone; 143 neither
+32:dash close from 1000 at tier 1, arrival on, in ticks: 15 with the dash and the kick (0.25 s, target 0.40 s); 51 the kick alone; 21 the dash alone; 58 neither
+33:dash close from 3000 at tier 1, arrival on, in ticks: 39 with the dash and the kick (0.65 s, target 0.80 s); 131 the kick alone; 46 the dash alone; 153 neither
+34:dash close from 6000 at tier 1, arrival on, in ticks: 75 with the dash and the kick (1.25 s, target 1.40 s); 165 the kick alone; 82 the dash alone; 233 neither
+35:dash close from 6000 at tier 4, arrival on, in ticks: 36 with the dash and the kick (0.60 s, target 0.75 s); 82 the kick alone; 43 the dash alone; 146 neither
+48:POWER: 0 check(s) failed
+power_check negative control through gate.mjs: exit 0 in 80 s; POWER negative control: 0 check(s) failed
+== Rendering's checks
+after_check: exit 0 in 30 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 80 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 22 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 73 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 67 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 78 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 90 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 11 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 18 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 28 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 28 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 18 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 15 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 20 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 16 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+gate done

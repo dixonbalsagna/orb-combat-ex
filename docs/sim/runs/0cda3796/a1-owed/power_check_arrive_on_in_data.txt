@@ -1,0 +1,50 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+route: a heavy charged to full, power 0: share 1.000
+route: the launcher, power 0: share 0.500
+route: the launcher, power 1000: share 0.500
+route: the launcher, power 500: share 0.375
+route: the sell's send, power 1000: share 0.500
+route: the turn, power 0: share 0.500
+route: template heavy_clash: share 0.500, speed 1414
+route: template guard_break: share 0.500, speed 1414
+route: template dodge: share 0.250, speed 1000
+route: template trade_blows: share 0.250, speed 1000
+route: template clean_hit_heavy: share 0.500, speed 1414
+route: chain link pressure: share 0.500, speed 1414
+route: chain link clean_hit: share 0.500, speed 1414
+route: chain link heavy_clash: share 0.500, speed 1414
+route: chain link dodge: share 0.500, speed 1414
+route: small pop clean_hit: share 0.125, speed 707
+aimed tier 1: 24 sends at a building, 23 hit it
+aimed tier 4: 24 sends at a building, 23 hit it
+fresh: after 60 s of fight, 1.000
+meteor, on: first tick 12821, fastest 12821, along the line 6420; 8.8 s, 10629 along, top 24000 up
+meteor, off: first tick 12821, fastest 12821, along the line 6420; 8.8 s, 10629 along, top 24000 up
+flight tier 1: flat out 5000 (off 10320), close 1023 (off 1023)
+flight tier 2: flat out 6624 (off 11352), close 1125 (off 1125)
+flight tier 3: flat out 8701 (off 12384), close 1228 (off 1228)
+flight tier 4: flat out 11525 (off 13416), close 1330 (off 1330)
+dash close from 1000 at tier 1, arrival off, in ticks: 11 with the dash and the kick (0.18 s, target 0.40 s); 49 the kick alone; 17 the dash alone; 56 neither
+dash close from 3000 at tier 1, arrival off, in ticks: 35 with the dash and the kick (0.58 s, target 0.80 s); 129 the kick alone; 42 the dash alone; 151 neither
+dash close from 6000 at tier 1, arrival off, in ticks: 71 with the dash and the kick (1.18 s, target 1.40 s); 163 the kick alone; 78 the dash alone; 231 neither
+dash close from 6000 at tier 4, arrival off, in ticks: 32 with the dash and the kick (0.53 s, target 0.75 s); 80 the kick alone; 39 the dash alone; 143 neither
+dash close from 1000 at tier 1, arrival on, in ticks: 15 with the dash and the kick (0.25 s, target 0.40 s); 51 the kick alone; 21 the dash alone; 58 neither
+dash close from 3000 at tier 1, arrival on, in ticks: 39 with the dash and the kick (0.65 s, target 0.80 s); 131 the kick alone; 46 the dash alone; 153 neither
+dash close from 6000 at tier 1, arrival on, in ticks: 75 with the dash and the kick (1.25 s, target 1.40 s); 165 the kick alone; 82 the dash alone; 233 neither
+dash close from 6000 at tier 4, arrival on, in ticks: 36 with the dash and the kick (0.60 s, target 0.75 s); 82 the kick alone; 43 the dash alone; 146 neither
+slip: a tap of 1 at 3,000 apart, his speed from the last held tick: 4000, 3213, 2362, 1512, 1125, 1047 (off, 4 ticks after: 2649)
+slip: a tap of 2 at 3,000 apart, his speed from the last held tick: 4125, 3307, 2418, 1529, 1125, 1047 (off, 4 ticks after: 2727)
+slip: a tap of 5 at 3,000 apart, his speed from the last held tick: 4500, 3588, 2584, 1581, 1125, 1047 (off, 4 ticks after: 2960)
+slip: travelled in 60 ticks at 3000 apart (bh, on/off): stick 4.98/4.98; 1 9.19/12.81; 2 10.05/13.85; 3 10.94/14.92; 4 11.85/16.01; 5 12.79/17.13; 6 13.76/18.28; held 65.67/65.67
+slip: travelled in 60 ticks at 1000 apart (bh, on/off): stick 4.98/4.98; 1 9.19/12.81; 2 10.05/13.85; 3 10.94/14.92; 4 11.85/16.01; 5 12.79/17.13; 6 13.76/18.28; held 65.67/65.67
+trips tier 1: 5, median 613, longest 1717
+trips tier 2: 2, median 607, longest 607
+trips tier 3: 6, median 1871, longest 5642
+trips tier 4: 3, median 3308, longest 4461
+shares asked for last before a launch: { "0.500": 4, "1.000": 14, "0.250": 1 }
+sends: 19 launches; fastest at tiers 1 to 4: 2021, 2237, 4623, 7001; along the line 3940, 3250, 9014, 13652; 0 past the cap, 0 that glow at tier 2 or under
+rollback: 1400 ticks, 1 launches, 0 differ
+POWER: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
