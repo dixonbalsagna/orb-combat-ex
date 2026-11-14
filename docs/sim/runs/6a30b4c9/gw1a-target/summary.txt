@@ -1,0 +1,13 @@
+== t0: tree files 1259, power.json sha256 bf511e9f859fad2f
+import 0; parse errors 0
+golden t0: exit 0 in 180 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (178830 ticks), 2 replays in 175.2 s
+  golden-target-t0.json sha256 e861d898627df5d7c7cb38ce1d58a9279d5df3c82ce2ab07c6b41391d9bb36d8
+ta: power.json enabled true, dash.enabled true
+== ta: tree files 1259, power.json sha256 6b094e3bcef27740
+import 0; parse errors 0
+golden ta: exit 0 in 167 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 159.4 s
+  golden-target-ta.json sha256 a2b9ed1c6f487c29dcfab5b43e4b1745a52209c7069bc64003934c857d2e971d
+main's golden (switches off) vs t0 (the kept data): intro, introComposed, matches (9 of 9 entries), planet, replays (2 of 2 entries), rosterHash, tick0, tick0Values
+t0 vs ta (the energy words in data): intro, introComposed, matches (9 of 9 entries), planet, replays (2 of 2 entries), tick0, tick0Values
+main's golden vs ta: intro, introComposed, matches (9 of 9 entries), planet, replays (2 of 2 entries), rosterHash, tick0, tick0Values
+gw1a done

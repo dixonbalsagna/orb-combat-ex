@@ -1,0 +1,24 @@
+extends SceneTree
+## Scratch (Simulation, A-NET-05): the build check's negative control. A dev tree records a short match; the same replay
+## stamped by another build is refused as "build" before its first tick; with the check left out (SimReplay.blindBuild),
+## the very same file runs to its last tick, so the refusal is the check's and nothing else's.
+
+func _init() -> void:
+	var S := SimCore.createSim()
+	var rec := SimReplay.recorder(S, 7, {"p1": true, "p2": true})
+	for t in range(300):
+		rec.step([null, null])
+	var rp: Dictionary = rec.finish()
+	SimCore.dispose(S)
+	var home := "6a30b4c 2026-11-09T22:48:31.940Z"
+	var foreign: Dictionary = rp.duplicate(true)
+	foreign["build"] = "1234567 2026-11-01T10:00:00.000Z"
+	var a: Dictionary = SimReplay.play(foreign, home)
+	print("check on:  reason=%s firstBadTick=%d build=%s home=%s" % [a.reason, a.firstBadTick, str(a.get("build", "")), str(a.get("home", ""))])
+	SimReplay.blindBuild = true
+	var b: Dictionary = SimReplay.play(foreign, home)
+	SimReplay.blindBuild = false
+	print("check off: ok=%s reason=%s final=%s (ticks %d)" % [str(b.ok), b.reason, str(b.final).substr(0, 16), int(rp.ticks)])
+	var good: bool = a.reason == "build" and b.ok
+	print("RB NEGATIVE CONTROL %s" % ("ok: refused with the check, runs to its last tick without it" if good else "FAILED"))
+	quit(0 if good else 1)

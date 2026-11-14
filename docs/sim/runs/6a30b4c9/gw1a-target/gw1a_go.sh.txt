@@ -1,0 +1,67 @@
+#!/bin/sh
+# gw1a_go.sh <scratchpad>: GW1a's target golden (sprint A1), on copies of the kept 9 November build's tree
+# (homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/tree, read only: copied, never written). Two records:
+#   t0: the tree exactly as kept (its own sim and its data, with the page's switch rows flipped);
+#   ta: the same, with the two energy words the page put in every match's setup written into its data instead:
+#       power.json "enabled" true and its dash's "enabled" true (the page's other setup words, travel 2.0 and flatOut
+#       5000 from its sliders' first values, already equal the data's).
+# Each: --import, then the tree's own sim/core/tools/golden.gd. One Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/gw1a_out"
+K="/c/Users/<user>/Documents/Claude Proj/Breakers-Like/homework/Files/builds/orb-first-play-6a30b4c9-6627cb9d/tree"
+rm -rf "${NS:?}/gw1a_out" "${NS:?}/gw1a_t0" "${NS:?}/gw1a_ta"; mkdir -p "$O" "$NS/gwapp"; export APPDATA="$(cygpath -w "$NS/gwapp")"
+for v in t0 ta; do
+	D="$NS/gw1a_$v"
+	cp -r "$K" "$D" || exit 1
+	chmod -R u+w "$D"   # the kept folder's files are read-only, and cp keeps that: the copy must be writable (the golden writes its file; ta edits its data)
+	cd "$D" || exit 1
+	case "$(pwd -P)" in */scratchpad/gw1a_t0|*/scratchpad/gw1a_ta) ;; *) echo refusing; exit 1 ;; esac
+	if [ "$v" = ta ]; then
+		python - "$D/data/fight/power.json" <<'EOF'
+import sys, json
+p = sys.argv[1]
+s = open(p, encoding="utf-8", newline="").read()
+a = '  "enabled": false,\n'
+assert s.count(a) == 1, "top switch"
+s = s.replace(a, '  "enabled": true,\n', 1)
+b = '"dash": {"enabled": false,'
+assert s.count(b) == 1, "dash switch"
+s = s.replace(b, '"dash": {"enabled": true,', 1)
+j = json.loads(s)
+assert j["enabled"] is True and j["dash"]["enabled"] is True
+open(p, "w", encoding="utf-8", newline="").write(s)
+print("ta: power.json enabled true, dash.enabled true")
+EOF
+	fi
+	echo "== $v: tree files $(find . -type f | wc -l), power.json sha256 $(sha256sum data/fight/power.json | cut -c1-16)"
+	timeout 900 "$G" --headless --path . --import > "$O/import_$v.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import_$v.txt")"
+	cp sim/core/test/golden.json "$O/golden_kept_$v.json"
+	s=$(date +%s); timeout 900 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_$v.txt" 2>&1; echo "golden $v: exit $? in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR' "$O/golden_$v.txt"); $(grep 'wrote' "$O/golden_$v.txt" | cut -c1-150)"
+	cp sim/core/test/golden.json "$O/golden-target-$v.json"
+	echo "  golden-target-$v.json sha256 $(sha256sum "$O/golden-target-$v.json" | cut -c1-64)"
+done
+python - "$O" <<'EOF'
+import json, sys, os
+O = sys.argv[1]
+main = json.load(open(os.path.join(O, "golden_kept_t0.json"), encoding="utf-8"))
+t0 = json.load(open(os.path.join(O, "golden-target-t0.json"), encoding="utf-8"))
+ta = json.load(open(os.path.join(O, "golden-target-ta.json"), encoding="utf-8"))
+def cmp(a, b, name):
+    out = []
+    for k in sorted(set(a) | set(b)):
+        if k in ("godot", "generatedBy"):
+            continue
+        if a.get(k) != b.get(k):
+            if isinstance(a.get(k), list) and isinstance(b.get(k), list) and len(a[k]) == len(b[k]):
+                n = sum(1 for x, y in zip(a[k], b[k]) if x != y)
+                out.append("%s (%d of %d entries)" % (k, n, len(a[k])))
+            else:
+                out.append(k)
+    print("%s: %s" % (name, ", ".join(out) if out else "identical"))
+cmp(main, t0, "main's golden (switches off) vs t0 (the kept data)")
+cmp(t0, ta, "t0 vs ta (the energy words in data)")
+cmp(main, ta, "main's golden vs ta")
+EOF
+echo gw1a done
