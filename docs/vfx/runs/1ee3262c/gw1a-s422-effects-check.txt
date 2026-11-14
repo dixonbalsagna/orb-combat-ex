@@ -1,0 +1,19 @@
+effects_check on the EP's s422 (GW1a stack; a copy without .git, art and research), BEFORE the pins (54 s): 1,160 ok, 6 FAIL + 1 SCRIPT ERROR:
+63:  FAIL a plunge throws more than a skip (29 > 37)
+64:  FAIL the plunge schedules its rebound
+72:  FAIL with the floor off a splash on the sea is the plunge, as it was
+846:  FAIL the Anti-hero's line is drawn from 95 knots where the Protagonist's takes 95
+851:  FAIL with the switch on the hub lays the line (0 points) and the burn is not laid
+852:SCRIPT ERROR: Trying to assign value of type 'Nil' to a variable of type 'Vector4'.
+1223:  FAIL each real cue's tell draws (a ground line and its tick) the tick it starts (70 of 71)
+1264:effects check FAILED (6)
+
+AFTER the pins (docs/vfx/pending/gw1a-pins): 1169 ok, 0 FAIL, no SCRIPT ERROR; effects check passed
+new row: ok   with the data's own floor setting (floor on) a splash on the sea is a slap on the sheet, as in the played build
+
+hash_check on the same copy after the pins (639 s on a busy machine): every sim-hash comparison 'same as the sim alone' (seeds 12345, 4, 7, 3600 ticks, six ways); the verdict is FAILED by the ghost tally, not by a hash: ghosts in the real matches (every source, Rendering's after-images included): most limb-ghosts at once 4 (4 at most), of one limb 4 (2 at most); whole-figure ghosts of one fighter: asked for 10 before the budget, drawn 5 with it (5 at most, m12), Rendering's shown after-images alone 5; ticks over the budget as drawn 0, ticks Rendering's alone are over it 0, ticks over a limb limit 25
+
+hash_check on the same copy after the pins (639 s on a busy machine): every sim-hash comparison reads 'same as the sim alone' (seeds 12345, 4 and 7, 3,600 ticks, six ways, the split screen too). The verdict is FAILED by the ghost tally, not by a hash:
+ghosts in the real matches (every source, Rendering's after-images included): most limb-ghosts at once 4 (4 at most), of one limb 4 (2 at most); whole-figure ghosts of one fighter: asked for 10 before the budget, drawn 5 with it (5 at most, m12), Rendering's shown after-images alone 5; ticks over the budget as drawn 0, ticks Rendering's alone are over it 0, ticks over a limb limit 25
+worst tick: seed 4, tick 3384, slot 1: five after-images from Rendering alone on one fighter, with VFX asking zip 2 and heavy 3. The check's rule 'ticks over a limb limit = 0' fails with 25 ticks (most ghosts of one limb 4, 2 at most).
+On my own GW1a look stack (main + globe-default + crater-look-default + meteor-default + foot-slice) the same hash_check passed (docs/vfx/runs/e7d544ea). Which of the extra parks in s422 raises Rendering's after-images I have not found.
