@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workshop: your answers, worked through</title>
+<style>
+:root{--bg:#f7f5f0;--ink:#1d1c1a;--mute:#5d5a54;--card:#ffffff;--line:#d9d4c8;--go:#1f6f4a;--warn:#8a5a00;--stop:#8c2f2f;--accent:#9a3412;--code:#f0ede6;--b1:#2f7d5b;--b2:#b7791f;--b3:#3b6ea5;--b4:#8c2f2f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#17171a;--ink:#ecebe7;--mute:#a7a39a;--card:#202024;--line:#3a3a40;--go:#6fcf9b;--warn:#e6b566;--stop:#e08a8a;--accent:#f0a57a;--code:#2a2a30;--b1:#6fcf9b;--b2:#e6b566;--b3:#8fb8e8;--b4:#e08a8a}}
+:root[data-theme="dark"]{--bg:#17171a;--ink:#ecebe7;--mute:#a7a39a;--card:#202024;--line:#3a3a40;--go:#6fcf9b;--warn:#e6b566;--stop:#e08a8a;--accent:#f0a57a;--code:#2a2a30;--b1:#6fcf9b;--b2:#e6b566;--b3:#8fb8e8;--b4:#e08a8a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 Georgia,"Times New Roman",serif}
+main{max-width:860px;margin:0 auto;padding:28px 16px 80px}
+h1{font-size:2rem;line-height:1.15;margin:.2em 0 .1em}h2{font-size:1.4rem;margin:2.2em 0 .5em;padding-top:.6em;border-top:2px solid var(--line)}
+h3{font-size:1.15rem;margin:1.3em 0 .3em}h4{font:600 .82rem/1.3 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:1.1em 0 .3em}
+p{margin:.5em 0}.sub{color:var(--mute);font-style:italic}ul,ol{margin:.3em 0 .6em;padding-left:1.25em}li{margin:.3em 0}
+.box{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 18px;margin:14px 0}
+.q{border-left:5px solid var(--accent)}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:.95rem}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{font:600 .8rem system-ui,sans-serif;color:var(--mute)}
+.tag{display:inline-block;font:600 .75rem system-ui,sans-serif;padding:1px 8px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.go{color:var(--go)}.warn{color:var(--warn)}.stop{color:var(--stop)}.quote{color:var(--mute);font-style:italic}
+pre{background:var(--code);padding:10px;border-radius:5px;overflow-x:auto;font:12.5px/1.45 Consolas,Menlo,monospace}
+code{font:.85em Consolas,Menlo,monospace;background:var(--code);padding:1px 4px;border-radius:3px}
+details{margin-top:.8em;border-top:1px dashed var(--line);padding-top:.5em}summary{cursor:pointer;font:600 .85rem system-ui,sans-serif;color:var(--mute)}
+a{color:var(--accent)}
+#toy{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}@media (max-width:680px){#toy{grid-template-columns:1fr}}
+.bar{height:16px;background:var(--code);border-radius:4px;overflow:hidden;margin:2px 0 8px}.bar i{display:block;height:100%}
+.lab{font:600 .8rem system-ui,sans-serif;color:var(--mute);display:flex;justify-content:space-between}
+button{font:600 .85rem system-ui,sans-serif;padding:7px 10px;margin:3px 4px 3px 0;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}button:disabled{opacity:.45;cursor:default}
+#log{font:.88rem/1.4 system-ui,sans-serif;color:var(--mute);min-height:7.5em}#log div:first-child{color:var(--ink)}
+svg text{font:600 13px system-ui,sans-serif;fill:var(--ink)}svg .s{font-weight:400;font-size:11.5px;fill:var(--mute)}
+</style></head><body><main>
+
+<h1>Workshop: your answers, worked through</h1>
+<p class="sub">From Orb's stand-in, 13 November 2026. A follow-up to "Twenty ideas for the fight". The stand-in is an estimate of Orb and holds none of Orb's approvals. Everything here is a proposal: nothing is briefed or built. Your own words are quoted where they decide something.</p>
+
+<h2>The two-minute version</h2>
+<ul>
+<li><b>Your answers are recorded.</b> I passed them to the EP word for word, so the weekend's audit reads them with the packet.</li>
+<li><b>Your stamina, energy, body and injuries loop works.</b> I turned your four rules into numbers and tried them. A fighter who is out of stamina takes the same five heavy blows four times worse on the body than a rested one. There is a toy below so you can feel it.</li>
+<li><b>Your absorb idea replaces Take It Standing:</b> hold LB, then tap RB as the blow lands. It fits a combination you already approved, the defensive stance plus the energy stance.</li>
+<li><b>"More like The Pass"</b> becomes one table of clashes: whenever two committed moves meet, something happens, on one shared rule.</li>
+<li><b>Out:</b> The Grudge. <b>Campaign only:</b> Weights Off, The Long Lap, What He Wants. <b>Late-game only:</b> A Miss Still Lands, The World Flinches First.</li>
+</ul>
+<p><b>Three small questions for you</b> are at the end of the loop section. Nothing else needs you.</p>
+
+<h2>Where each idea stands after your answers</h2>
+<table>
+<tr><th>Idea</th><th>Now</th><th>Your words</th></tr>
+<tr><td>Stamina, Energy, Body</td><td><span class="tag go">Workshopped below</span></td><td class="quote">"this should play in with the injuries"</td></tr>
+<tr><td>The Power Lens</td><td><span class="tag go">Yes</span></td><td class="quote">"yes, overhaul the camera work further"</td></tr>
+<tr><td>The Brawl Pot</td><td><span class="tag go">Yes</span></td><td class="quote">"I like this idea"</td></tr>
+<tr><td>Take It Standing</td><td><span class="tag warn">Replaced by your absorb</span></td><td class="quote">"holding the LB guard and then timing hitting the energy RB"</td></tr>
+<tr><td>A Miss Still Lands</td><td><span class="tag go">Yes, late-game</span></td><td class="quote">"introduce this to high-level late-game fights"</td></tr>
+<tr><td>The Pass</td><td><span class="tag go">Yes, and more like it</span></td><td class="quote">"lots of interactions and clashes should dynamically have outcomes like this"</td></tr>
+<tr><td>The World Flinches First</td><td><span class="tag go">Yes, late-game; show you first</span></td><td class="quote">"I'd like to see this in action"</td></tr>
+<tr><td>The Grudge</td><td><span class="tag stop">Out</span></td><td class="quote">"I don't like this"</td></tr>
+<tr><td>Send Him On</td><td><span class="tag go">Yes</span></td><td class="quote">"this sounds great, lets try to fold this into our control scheme"</td></tr>
+<tr><td>Seeing Through It</td><td><span class="tag go">Yes</span></td><td class="quote">"cool"</td></tr>
+<tr><td>What Goes Up</td><td><span class="tag warn">Reshaped below</span></td><td class="quote">"I do like the idea of flinging debris at the opponent"</td></tr>
+<tr><td>The Domino, no cap</td><td><span class="tag go">Yes, with the horde mode</span></td><td class="quote">"as long as its choreographed dynamically, feels emergent"</td></tr>
+<tr><td>Weights Off</td><td><span class="tag warn">Campaign only</span></td><td class="quote">"some kind of gambit best used in campaign mode, not versus"</td></tr>
+<tr><td>The Power-Up Contest</td><td><span class="tag warn">An occasional clash, below</span></td><td class="quote">"I wouldn't want to see this every time there's a power up"</td></tr>
+<tr><td>Slipstream</td><td><span class="tag warn">Workshop, below</span></td><td class="quote">"lets make sure a feature like this keeps the game fun"</td></tr>
+<tr><td>The Planet Rings</td><td><span class="tag warn">Workshop, below</span></td><td class="quote">"cool destruction physics would be great, i want more emergent systems"</td></tr>
+<tr><td>Height Is Power</td><td><span class="tag warn">Workshop, below</span></td><td class="quote">"lets workshop this"</td></tr>
+<tr><td>Late-Landing Blows</td><td><span class="tag warn">One fighter's speed, later</span></td><td class="quote">"I don't really want to lean into time-manipulation ... just extremely high speed"</td></tr>
+<tr><td>Pour It In</td><td><span class="tag go">Yes, as a co-op unlock</span></td><td class="quote">"lots of synergy abilities should make co-op fun"</td></tr>
+<tr><td>The Long Lap</td><td><span class="tag warn">Campaign beat</span></td><td class="quote">"campaign episode sounds good"</td></tr>
+<tr><td>The Wind-Up Throw</td><td><span class="tag warn">Workshop, below</span></td><td class="quote">"lets workshop this"</td></tr>
+<tr><td>What He Wants</td><td><span class="tag warn">Campaign beat</span></td><td class="quote">"workshop this for a campaign beat"</td></tr>
+<tr><td>The Onlookers</td><td><span class="tag warn">Maybe, as an option</span></td><td class="quote">"potentially could be annoying in-game"</td></tr>
+<tr><td>The Band Follows</td><td><span class="tag go">Yes, workshop</span></td><td class="quote">"sounds like a great idea"</td></tr>
+</table>
+
+<h2>1. The loop: body, stamina, energy, injuries and forms</h2>
+<p>You gave four rules. Here they are as one loop, with a fifth piece you asked for: a reason to reach new forms.</p>
+
+<svg viewBox="0 0 820 300" role="img" aria-label="The loop: body feeds stamina, stamina feeds energy, energy feeds forms; hits make injuries, worse when stamina is low, and injuries let hits through to the body" style="width:100%;height:auto">
+<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--mute)"/></marker></defs>
+<g fill="none" stroke="var(--mute)" stroke-width="1.6" marker-end="url(#ar)">
+<path d="M150,70 H250"/><path d="M400,70 H500"/><path d="M650,70 H718"/>
+<path d="M325,200 V102"/><path d="M400,232 H500"/><path d="M575,205 C575,150 120,150 95,102"/>
+<path d="M760,100 C760,170 420,150 345,102" stroke-dasharray="5 4"/>
+</g>
+<g stroke-width="2" fill="var(--card)">
+<rect x="20" y="40" width="130" height="60" rx="8" stroke="var(--b4)"/><rect x="250" y="40" width="150" height="60" rx="8" stroke="var(--b1)"/>
+<rect x="500" y="40" width="150" height="60" rx="8" stroke="var(--b3)"/><rect x="720" y="40" width="85" height="60" rx="8" stroke="var(--b2)"/>
+<rect x="250" y="202" width="150" height="60" rx="8" stroke="var(--mute)"/><rect x="500" y="202" width="150" height="60" rx="8" stroke="var(--b4)"/>
+</g>
+<text x="85" y="66" text-anchor="middle">Body</text><text class="s" x="85" y="84" text-anchor="middle">barely refills</text>
+<text x="325" y="66" text-anchor="middle">Stamina</text><text class="s" x="325" y="84" text-anchor="middle">back in seconds</text>
+<text x="575" y="66" text-anchor="middle">Energy</text><text class="s" x="575" y="84" text-anchor="middle">back in tens of seconds</text>
+<text x="762" y="75" text-anchor="middle">Forms</text>
+<text x="325" y="228" text-anchor="middle">A hit lands</text><text class="s" x="325" y="246" text-anchor="middle">on head, arms or legs</text>
+<text x="575" y="228" text-anchor="middle">Injuries</text><text class="s" x="575" y="246" text-anchor="middle">per body part</text>
+<text class="s" x="200" y="60" text-anchor="middle">faster regen</text><text class="s" x="450" y="60" text-anchor="middle">faster gain</text><text class="s" x="684" y="60" text-anchor="middle">pays for</text>
+<text class="s" x="372" y="150" text-anchor="start">low stamina: worse injury</text><text class="s" x="450" y="222" text-anchor="middle">becomes</text>
+<text class="s" x="130" y="146" text-anchor="start">an injured part lets hits through</text>
+<text class="s" x="640" y="150" text-anchor="start">a new form refills stamina</text>
+</svg>
+
+<h3>Your four rules, with starting numbers</h3>
+<table>
+<tr><th>Your rule</th><th>As a number</th><th>What it does to a fight</th></tr>
+<tr><td>"high body gives a bonus to stamina regeneration"</td><td>Stamina comes back at 22 a second, times 0.6 at an empty body, rising to 1.2 at a full one.</td><td>A healthy fighter recovers their wind about twice as fast as a wrecked one.</td></tr>
+<tr><td>"high stamina keeps energy gain boosted"</td><td>All energy gain is times 0.75 at empty stamina, rising to 1.25 at full.</td><td>Charging while rested is two thirds faster than charging while winded. Catch your breath first, then power up.</td></tr>
+<tr><td>"taking damage with low stamina increases severity of injuries"</td><td>Each hit's injury is times 1.0 at full stamina, rising to 1.6 at empty.</td><td>Getting caught winded is what really hurts. Stamina is your armour.</td></tr>
+<tr><td>"taking damage with injuries starts affecting body"</td><td>None of a hit reaches the body through a sound part. Through a bruised part, 15% does; battered, 35%; broken, 60%.</td><td>The body is safe until something is injured. After that, protecting the injured part matters.</td></tr>
+</table>
+
+<h3>The fifth piece: why you reach for a new form</h3>
+<ul>
+<li><b>A new form is the reset.</b> Stamina refills at once and its ceiling rises by 15. Every injury eases by a step. The body does not heal: a form gets you back in the fight, it doesn't undo it.</li>
+<li><b>The hurt fighter gets there sooner.</b> Taking a hit fills your form meter faster the lower your body is, up to 1.8 times. Being beaten down is what pushes a fighter past their limit.</li>
+<li><b>The rested fighter gets there sooner too,</b> by the energy rule above. So both the fighter who is winning cleanly and the one being broken have their own road to the next form, and they arrive in different states.</li>
+</ul>
+
+<h3>What I found when I tried the numbers</h3>
+<table>
+<tr><th>Test</th><th>Rested</th><th>Out of stamina</th></tr>
+<tr><td>Five heavy blows to the arms: how injured</td><td>56 of 100 (battered)</td><td>80 of 100 (broken)</td></tr>
+<tr><td>The same five blows: lost from the body</td><td>4</td><td>16</td></tr>
+<tr><td>Heavy blows to one part until the body gives out</td><td>21</td><td>13</td></tr>
+<tr><td>Form meter from one heavy hit taken</td><td>8 (healthy body)</td><td>12.5 (body at 30)</td></tr>
+</table>
+<p>So the loop does what you described: stamina decides how bad a beating is, injuries decide when it reaches the body, and a form is the way back.</p>
+
+<h3>Try it</h3>
+<p class="sub">The game shows no bars. These are here only so you can watch the numbers move.</p>
+<div class="box"><div id="toy">
+<div>
+<div class="lab"><span>Body</span><span id="vb"></span></div><div class="bar"><i id="bb" style="background:var(--b4)"></i></div>
+<div class="lab"><span>Stamina</span><span id="vs"></span></div><div class="bar"><i id="bs" style="background:var(--b1)"></i></div>
+<div class="lab"><span>Energy</span><span id="ve"></span></div><div class="bar"><i id="be" style="background:var(--b3)"></i></div>
+<div class="lab"><span>Form meter</span><span id="vm"></span></div><div class="bar"><i id="bm" style="background:var(--b2)"></i></div>
+<div class="lab"><span>Head</span><span id="vh"></span></div><div class="bar"><i id="bh" style="background:var(--mute)"></i></div>
+<div class="lab"><span>Arms</span><span id="va"></span></div><div class="bar"><i id="ba" style="background:var(--mute)"></i></div>
+<div class="lab"><span>Legs</span><span id="vl"></span></div><div class="bar"><i id="bl" style="background:var(--mute)"></i></div>
+</div>
+<div>
+<h4>You do</h4>
+<button onclick="act('fly')">Fly flat out 3 s</button><button onclick="act('mash')">Mash 2 s</button><button onclick="act('rest')">Rest 1 s</button><button onclick="act('charge')">Charge 2 s</button><button id="tf" onclick="act('form')">Transform</button>
+<h4>You take</h4>
+<button onclick="act('jab')">A jab to the head</button><button onclick="act('arms')">A heavy to the arms</button><button onclick="act('legs')">A heavy to the legs</button><button onclick="act('guard')">A heavy, guarded</button>
+<h4>What happened</h4><div id="log"></div>
+<button onclick="reset()">Start again</button>
+</div></div></div>
+<p><b>Things to try:</b> take five heavies to the arms while rested, then start again, fly and mash until stamina is gone, and take the same five. Then charge while winded, and again after a second of rest.</p>
+
+<h3>How you read it with no bars</h3>
+<p>The first packet's biggest finding was that every hidden number needs its own signal. For these four:</p>
+<table>
+<tr><th>Number</th><th>You read it from</th></tr>
+<tr><td>Stamina</td><td>Breathing and posture: heaving shoulders, a sagging stance, slower flat-out flight. A slow heartbeat in your own pad when low.</td></tr>
+<tr><td>Energy</td><td>The aura: how large and how steady.</td></tr>
+<tr><td>Injuries</td><td>The part itself: an arm that hangs, a leg that drags, torn clothing there. You picked all of these in October.</td></tr>
+<tr><td>Body</td><td>How the fighter stands back up and how their voice sounds: slower to rise, strained lines. Damage on the torso that stays through a transformation, as you ruled.</td></tr>
+</table>
+
+<h3>What keeps it fair</h3>
+<ul>
+<li><b>It must not become a slide you can't climb out of.</b> Three ways back: a new form resets stamina; the hurt fighter's form meter fills faster; and stamina always comes back in seconds if you break away.</li>
+<li><b>No press is ever refused for stamina.</b> Out of stamina you are winded: weaker blows, slower flight, and stamina you lack is paid from energy, with its own sound and pad cue so it is never silent.</li>
+<li><b>Guarding costs stamina.</b> So holding the guard forever drains the very thing that protects you, which is the rule you set in September: the defensive stance is punished more the longer it is held.</li>
+</ul>
+
+<details><summary>For the team: the rules as pseudocode</summary>
+<pre>
+# sim/core/vitals.gd (new), switch data/fight/vitals.json "enabled": false. All numbers are data.
+static func regen_rate(f) -> float:                      # rule 1: body feeds stamina
+    var r = C.staminaRegen * (C.bodyRegenLow + C.bodyRegenSpan * f.body / 100.0)
+    if SimWounds.battered(f, SimWounds.LEGS): r *= C.legsMul
+    return r
+
+static func energy_mul(f) -> float:                      # rule 2: stamina feeds energy
+    return C.energyLow + C.energySpan * f.stamina / f.staminaMax
+
+static func on_hit(S, A, D, region: int, dmg: float, guarded: bool) -> void:
+    var wear = dmg * (1.0 + C.severityMax * (1.0 - D.stamina / D.staminaMax))   # rule 3
+    if guarded:
+        wear *= C.guardTakes
+        pay(S, D, STAMINA, dmg * C.guardCost, "guard")
+    var to_body = wear * C.spill[SimWounds.stage(D, region)]                    # rule 4
+    SimWounds.addWear(S, D, region, wear - to_body)
+    D.body = maxf(0.0, D.body - to_body)
+    SimForms.gain(S, D, dmg * C.formTake * (1.0 + C.formHurtBoost * (1.0 - D.body / 100.0)))
+    SimForms.gain(S, A, dmg * C.formDeal)
+
+static func on_form(S, f) -> void:                       # the reset
+    f.staminaMax += C.formStamina;  f.stamina = f.staminaMax
+    for r in SimWounds.REGIONS: SimWounds.ease(S, f, r, C.formMend)   # the body is not healed
+
+static func pay(S, f, pool: int, cost: float, why: String) -> void:
+    var take = minf(f.stamina, cost);  f.stamina -= take
+    if cost > take:                                       # nothing is refused: energy pays, with its cue
+        f.ki = maxf(0.0, f.ki - (cost - take) * C.fallThrough)
+        SimFx.cue(S, f, "stamina_fallthrough", "", why)
+</pre>
+<p>Open for Game Design: whether "body" is a new number or the existing core region renamed (the toy treats it as its own number); how this replaces the two mends the wounds system already has; and the first step the reviewers named, moving the 51 fixed energy numbers in the code into data.</p>
+</details>
+
+<div class="box q"><h3>Three small questions</h3>
+<ol>
+<li><b>Does a new form ease injuries, or only refill stamina?</b> I think ease them by a step, so a transformation visibly straightens a fighter up. The body stays hurt either way.</li>
+<li><b>Should the hurt fighter's form meter fill faster?</b> I think yes. It is the comeback you asked for in September ("the trailing fighter gets help"), and it makes being beaten down the road to a new form.</li>
+<li><b>Is the body its own number, or the fighter's core?</b> I think its own number: head, arms and legs get injured, and the body is what's left to lose. Game Design should confirm it fits the knockout rule.</li>
+</ol></div>
+
+<h2>2. The Absorb (your version of Take It Standing)</h2>
+<p class="quote">"holding the LB guard and then timing hitting the energy RB that could be a way of absorbing the kinetic and some of the damage if timed well"</p>
+<ul>
+<li><b>You press:</b> hold LB to guard, then tap RB as the blow lands.</li>
+<li><b>If you time it:</b> the blow's force is swallowed. You are not knocked back or launched, and you take about 60% of the damage. It costs energy in proportion to the force you absorbed.</li>
+<li><b>If you miss:</b> an ordinary guarded hit, and the energy is still spent.</li>
+<li><b>What you see:</b> the fighter's own aura snaps tight around them and the ground under their feet takes the force instead. The attacker feels a hard dead stop in their pad.</li>
+<li><b>Why it fits:</b> in October you confirmed LB plus RB as its own combination, "defensive ki". This is its timed move. Every fighter has it, as you ruled.</li>
+<li><b>Where each fighter differs:</b> the window, the share of damage and the cost are rows in each fighter's data. Loupe's "On the Chin" stays his own stronger version: he can hold it, and what he absorbs feeds his climb.</li>
+<li><b>One idea to try later:</b> the force you absorbed is carried into your next blow. That would tie it to The Brawl Pot.</li>
+</ul>
+
+<h2>3. Inside the well, outside it, and what happens when moves meet</h2>
+<p class="quote">"within the gravity well they are using their close range attacks, outside the well each fighters' abilities are altered"</p>
+<p>So greater power draws the weaker fighter in, as the gravity well already plans. The "wind" that held him off is dropped. Here is the same press in each place:</p>
+<table>
+<tr><th>You press</th><th>Outside the well</th><th>At its edge</th><th>Inside it</th></tr>
+<tr><td>X, Y, B</td><td>Tap to taunt, hold to charge in</td><td>A short lunge</td><td>A blow, at once</td></tr>
+<tr><td>LT + attack</td><td>The long strike: your flight speed carries into the blow</td><td>The zip strike</td><td>A step to any side</td></tr>
+<tr><td>Right stick</td><td>Beams and charged strikes</td><td>Stick strikes that snap to him</td><td>Stick strikes; Send Him On against a dash</td></tr>
+<tr><td>RT</td><td>Power up safely</td><td>Power up, and your well grows</td><td>Power up at your peril</td></tr>
+</table>
+<p><b>What keeps it fair:</b> the pull never moves you against a held stick; it only decides where a blow lands when you press. A weaker fighter drawn in gets the faster form meter from the loop above.</p>
+
+<h3>The clash table: "more like The Pass"</h3>
+<p class="quote">"lots of interactions and clashes should dynamically have outcomes like this"</p>
+<p>The idea: whenever two committed moves meet, there is an event, and every one of them is decided the same way, by a single beat both players can hit. Several of these you already picked in October; the table puts them in one family.</p>
+<table>
+<tr><th>These meet</th><th>The event</th><th>State</th></tr>
+<tr><td>Two zip strikes</td><td><b>The Pass:</b> they cross, land back to back, one buckles</td><td>New</td></tr>
+<tr><td>Two rushes, a heavy in one</td><td><b>The fist clash:</b> a shockwave, a crater under them</td><td>Yours, planned</td></tr>
+<tr><td>Two rushes, both light</td><td><b>The blur exchange</b> across the sky</td><td>Yours, planned</td></tr>
+<tr><td>Two beams</td><td><b>The beam struggle</b></td><td>Built</td></tr>
+<tr><td>Two grabs</td><td><b>The grapple lock</b> in mid-air</td><td>Yours, planned</td></tr>
+<tr><td>Two power-ups, inside each other's wells</td><td><b>The Power-Up Contest:</b> auras shove until one is blown back</td><td>New; rare by design</td></tr>
+<tr><td>A dash into a ready defender</td><td><b>Send Him On</b>, or the Absorb</td><td>New</td></tr>
+<tr><td>A beam into a ready defender</td><td>Swat, walk through, split, catch</td><td>Yours, in workshop</td></tr>
+</table>
+<p><b>On the Power-Up Contest:</b> you said not every power-up. It only happens when both fighters choose to power up while already inside each other's wells, which is a risky thing for both to do. Powering up at a distance stays exactly as it is.</p>
+
+<h2>4. Debris you can fling</h2>
+<p class="quote">"I do like the idea of flinging debris at the opponent"</p>
+<p>Drop the random rain. Keep the part you liked, and hang it on something you already picked: at high power, rubble floats up around a fighter.</p>
+<ul>
+<li><b>The floating rubble is ammunition.</b> Near a piece: B bats it at your rival, A grabs it to throw, a right-stick blast breaks it into a spray.</li>
+<li><b>Big craters and broken buildings make more of it,</b> so where the fight has been decides what there is to throw.</li>
+<li><b>It is real:</b> each piece is a body that flies and lands by the same rules as a launched fighter, on the weight scale you approved. A thrown piece hits like its weight and speed.</li>
+<li><b>It never takes a press meant for your rival:</b> only when your stick points at the piece.</li>
+<li><b>Late-game by nature,</b> because rubble only floats from the third power level up.</li>
+</ul>
+
+<h2>5. The late-game pair</h2>
+<p>You asked for A Miss Still Lands and The World Flinches First to arrive in high-level, late-game fights. Both can be switched on by power level in data:</p>
+<ul>
+<li><b>A Miss Still Lands</b> from the third power level: below it, a miss is just a miss.</li>
+<li><b>The World Flinches First</b> grows with power: a faint stir at low power, the full reaction of ground and water at the top. I'll ask for a clip for you before anything is decided, as you asked to see it in action.</li>
+</ul>
+
+<h2>6. For the campaign</h2>
+<table>
+<tr><th>Idea</th><th>As a campaign beat</th></tr>
+<tr><td>Weights Off</td><td>A gambit offered between fights: carry a handicap into the next fight for a better reward, and throw it off for a surge when you choose. Never in versus.</td></tr>
+<tr><td>The Long Lap</td><td>A training episode: a race once round the planet against your rival with all the fighting left on.</td></tr>
+<tr><td>What He Wants</td><td>Each boss enters wanting two or three things, and the story beat before the fight hints at them. Deny him one and he changes how he fights.</td></tr>
+<tr><td>Co-op unlocks</td><td>Pour It In as the first unlock. Then: the Domino relay (one bunches the swarm, the other sends a body through it), covering your partner from a beam, and passing a launched enemy between you.</td></tr>
+</table>
+
+<h2>7. The rest of your "workshop this" list</h2>
+<ul>
+<li><b>Slipstream.</b> To keep it fun and fair, try the narrow version first: you can only ride the wake of a fighter you have just launched. It makes flying after them feel earned and feeds the mid-air rallies you asked for, and nobody running away gets chased down by a rule.</li>
+<li><b>The Planet Rings.</b> As destruction physics more than an attack: a huge slam sends a shock through the ground that topples buildings already damaged, sloshes water out of craters and shakes loose rubble for the flinging above. Fighters on the ground get a bounce, not a punishment. Only the biggest slams go right round.</li>
+<li><b>Height Is Power.</b> The honest version is the long strike aimed down: dive flat out and your real speed goes into the blow and the crater. Miss, and you make the crater yourself.</li>
+<li><b>Late-Landing Blows.</b> No time tricks: pure speed. Blows too fast for the eye, where the sound and the impact catch up a moment later. Best kept for the speedster you listed for the roster, or as a finishing move.</li>
+<li><b>The Wind-Up Throw.</b> Sound as pitched: after a grab lands, circle the right stick to whirl him, let go to throw. It fits what you said in October about the right stick taking patterns, and your thumb is free because the grab has already landed.</li>
+<li><b>The Onlookers.</b> As an option in settings, sparse, and never during a clash, so it can be turned off if it grates.</li>
+<li><b>The Band Follows.</b> It fits the audio toolset you have queued. The first question is practical: whether your music tool can give each track as separate layers. I'll ask for that to be checked.</li>
+</ul>
+
+<h2>What happens next</h2>
+<ul>
+<li><b>Nothing is briefed.</b> The weekend's audit reads the first packet with your answers and places what you said yes to on the path to Alpha.</li>
+<li><b>The loop is the one that matters for Alpha,</b> because Alpha needs an energy, stamina and health system anyway. If you answer the three small questions, Game Design has what it needs to write the real design page.</li>
+<li><b>Cost of this page:</b> small. No agents; I worked the numbers and the toy in this session.</li>
+</ul>
+
+<script>
+// The loop model for the workshop toy. Pure functions over a plain state; no page access.
+var K = {
+  staminaRegen: 22,      // a second, at "normal" body
+  bodyRegenLow: 0.6,     // regen factor at body 0
+  bodyRegenSpan: 0.6,    // added at body 100 (so 1.2 at full body)
+  energyLow: 0.75,       // energy gain factor at stamina 0
+  energySpan: 0.5,       // added at full stamina (so 1.25)
+  energyTrickle: 5,      // a second
+  energyCharge: 30,      // a second while charging
+  severityMax: 0.6,      // extra injury when winded (so 1.6 times)
+  spill: [0, 0.15, 0.35, 0.6], // share of a hit that reaches the body, by that part's injury stage
+  stages: [25, 50, 80],  // bruised, battered, broken
+  flatOut: 6, mash: 12,  // stamina a second
+  guardCost: 0.8, guardTakes: 0.38,
+  formDeal: 0.6, formTake: 0.4, formHurtBoost: 0.8, formCharge: 8,
+  formStamina: 15, formMend: 20, formEnergy: 50,
+  fallThrough: 2          // energy paid per point of stamina you lack
+};
+function fresh() {
+  return { body: 100, stamina: 100, staminaMax: 100, energy: 40, inj: { head: 0, arms: 0, legs: 0 }, form: 0, meter: 0, log: [] };
+}
+function stageOf(v) { return v >= K.stages[2] ? 3 : v >= K.stages[1] ? 2 : v >= K.stages[0] ? 1 : 0; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function regenRate(s) {
+  var r = K.staminaRegen * (K.bodyRegenLow + K.bodyRegenSpan * s.body / 100);
+  if (stageOf(s.inj.legs) >= 2) r *= 0.85;
+  return r;
+}
+function energyMul(s) { return K.energyLow + K.energySpan * s.stamina / s.staminaMax; }
+function severity(s) { return 1 + K.severityMax * (1 - s.stamina / s.staminaMax); }
+function say(s, t) { s.log.unshift(t); if (s.log.length > 6) s.log.pop(); }
+function spend(s, amount) {            // stamina first; what it lacks is paid from energy
+  var take = Math.min(s.stamina, amount);
+  s.stamina -= take;
+  var lack = amount - take;
+  if (lack > 0) { var e = Math.min(s.energy, lack * K.fallThrough); s.energy -= e; return true; }
+  return false;
+}
+function rest(s, sec) {
+  s.stamina = clamp(s.stamina + regenRate(s) * sec, 0, s.staminaMax);
+  s.energy = clamp(s.energy + K.energyTrickle * energyMul(s) * sec, 0, 100);
+  say(s, 'Rested ' + sec + ' s: stamina comes back at ' + regenRate(s).toFixed(0) + ' a second.');
+}
+function fly(s, sec) {
+  var burned = spend(s, K.flatOut * sec);
+  say(s, 'Flew flat out ' + sec + ' s.' + (burned ? ' Out of stamina: the rest came out of energy.' : ''));
+}
+function mash(s, sec) {
+  var burned = spend(s, K.mash * sec);
+  var dealt = 4 * 6 * sec * (s.stamina <= 0 ? 0.8 : 1);
+  s.meter = clamp(s.meter + dealt * K.formDeal, 0, 100);
+  say(s, 'Mashed ' + sec + ' s, dealt ' + dealt.toFixed(0) + '.' + (burned ? ' Winded: blows at 0.8 strength, and energy paid the difference.' : ''));
+}
+function charge(s, sec) {
+  var m = energyMul(s);
+  s.energy = clamp(s.energy + K.energyCharge * m * sec, 0, 100);
+  s.meter = clamp(s.meter + K.formCharge * m * sec, 0, 100);
+  s.stamina = clamp(s.stamina + regenRate(s) * sec, 0, s.staminaMax);
+  say(s, 'Charged ' + sec + ' s at ' + m.toFixed(2) + ' times the normal rate (stamina sets it).');
+}
+function hit(s, part, dmg, guarded) {
+  var sev = severity(s), wear = dmg * sev;
+  if (guarded) { wear *= K.guardTakes; spend(s, dmg * K.guardCost); }
+  var st = stageOf(s.inj[part]), toBody = wear * K.spill[st];
+  s.inj[part] = clamp(s.inj[part] + wear - toBody, 0, 100);
+  s.body = clamp(s.body - toBody, 0, 100);
+  s.meter = clamp(s.meter + dmg * K.formTake * (1 + K.formHurtBoost * (1 - s.body / 100)), 0, 100);
+  say(s, (guarded ? 'Guarded a ' : 'Took a ') + dmg + ' to the ' + part + ': injury times ' + sev.toFixed(2) + (toBody > 0.05 ? ', and ' + toBody.toFixed(1) + ' reached the body.' : ', none reached the body.'));
+}
+function canTransform(s) { return s.meter >= 100 && s.energy >= K.formEnergy && s.form < 3; }
+function transform(s) {
+  if (!canTransform(s)) { say(s, 'Not ready: the form needs a full meter and ' + K.formEnergy + ' energy.'); return false; }
+  s.form += 1; s.meter = 0; s.energy -= K.formEnergy;
+  s.staminaMax += K.formStamina; s.stamina = s.staminaMax;
+  for (var p in s.inj) s.inj[p] = clamp(s.inj[p] - K.formMend, 0, 100);
+  say(s, 'New form: stamina refilled with a higher ceiling, every injury eased by ' + K.formMend + '. The body did not heal.');
+  return true;
+}
+
+var S = fresh();
+function pct(v, max) { return Math.max(0, Math.min(100, 100 * v / max)) + '%'; }
+var STAGE = ['sound', 'bruised', 'battered', 'broken'];
+function draw() {
+  function set(id, v, max, txt) { document.getElementById('b' + id).style.width = pct(v, max); document.getElementById('v' + id).textContent = txt; }
+  set('b', S.body, 100, S.body.toFixed(0));
+  set('s', S.stamina, S.staminaMax, S.stamina.toFixed(0) + ' of ' + S.staminaMax + (S.stamina <= 0 ? ' (winded)' : ''));
+  set('e', S.energy, 100, S.energy.toFixed(0));
+  set('m', S.meter, 100, S.meter.toFixed(0) + (S.form ? ' (form ' + S.form + ')' : ''));
+  set('h', S.inj.head, 100, S.inj.head.toFixed(0) + ' ' + STAGE[stageOf(S.inj.head)]);
+  set('a', S.inj.arms, 100, S.inj.arms.toFixed(0) + ' ' + STAGE[stageOf(S.inj.arms)]);
+  set('l', S.inj.legs, 100, S.inj.legs.toFixed(0) + ' ' + STAGE[stageOf(S.inj.legs)]);
+  document.getElementById('tf').disabled = !canTransform(S);
+  var L = document.getElementById('log'); L.innerHTML = '';
+  S.log.forEach(function (t) { var d = document.createElement('div'); d.textContent = t; L.appendChild(d); });
+}
+function act(k) {
+  if (k === 'fly') fly(S, 3); else if (k === 'mash') mash(S, 2); else if (k === 'rest') rest(S, 1); else if (k === 'charge') charge(S, 2);
+  else if (k === 'form') transform(S); else if (k === 'jab') hit(S, 'head', 4, false); else if (k === 'arms') hit(S, 'arms', 12, false);
+  else if (k === 'legs') hit(S, 'legs', 12, false); else if (k === 'guard') hit(S, 'arms', 12, true);
+  if (S.body <= 0) say(S, 'The body has given out: this fighter is on the brink.');
+  draw();
+}
+function reset() { S = fresh(); draw(); }
+draw();
+</script>
+</main></body></html>
