@@ -1,0 +1,25 @@
+The heat-glow control and an as-played reduced clash reading (VFX, 2026-11-14; EP only)
+
+STACK: main 4327cfbb + Rendering's globe-default, crater-look-default, foot-slice (+ its hash_check grant) + VFX's meteor-default; scratch tree from git archive, web export, no page words. Heat glow off = Rendering's heat_glow_off.scratch.patch (v_heat to 0 in terrain.gdshaderinc, both terms), a second export. tools/flash/run-pixels.mjs --jobs 1, one clip at a time, below-normal, none starved or void. Primary general count of all four readings (960x540 and 1024x768, scale 1 and 2), the tick of the worst second, and the counted-flash events in the blast window (ticks 1050 to 1130).
+
+READINGS
+  clash normal,  heat glow off     6.5 | 6.5 | 6.5 | 6.5   all at tick 1075   (582 s)   events in the 1050-1130 window: 13
+  clash reduced, heat glow off     6.5 | 5.5 | 5.5 | 5.5   all at tick 1075   (596 s)   window: 13
+  clash reduced, AS PLAYED         5.5 | 5.5 | 5.5 | 5.5   all at tick 1075   (588 s)   window: 14
+ For reference, on the previous stack (main e7d544ea, same patches): clash normal as played 4.5 | 4.5 | 5.5 | 5.5, window 12; crater floor tone off, the same; blast pieces off 3.5 | 4.5 | 5.5 | 5.5.
+
+WHAT THE CONTROL SAYS
+- The ground's heat glow is not the cause. Switching it off does not lower the worst second in either mode: reduced reads 6.5 / 5.5 / 5.5 / 5.5 against 5.5 as played (no better, one reading a point worse), and normal reads 6.5 against 4.5 / 5.5 on the previous commit. Switching it off may make the clash slightly worse: the glow may soften the step between the crater's opening and its surroundings. (The normal anchor is on the previous commit; I did not recapture it, so "worse" in normal is one step less certain than "no better".)
+- With the earlier controls: the clash look off, the crater floor's warm tone off, my blast pieces off, and now the heat glow off, no switch of an effect lowers the clash's worst second (tick 1075 in every run, normal and reduced). The cause is not one of these effects.
+
+WHAT THE FRAMES SAY (the as-played reduced clip, left and right pane, share of each pane whose luminance changes by more than 0.10 against the previous tick)
+  ticks 1071 to 1074: left 0.7 to 2.2%, right 0.1 to 0.2% (quiet)
+  tick 1075: left 17.8%, right 4.3% (the blast lands and the left pane's picture shifts)
+  ticks 1076 to 1085: left 4.5 to 11.7% a tick, right 0.4 to 7.4%
+  ticks 1086 to 1089: left 35.9, 39.3, 40.4, 32.3% a tick, right under 2% (the whole left pane's picture moving: not a local glow)
+  ticks 1090 to 1099: left 7 to 19%
+ The mean luminance of the whole frame moves by only 3 grey levels in this second (95.5 to 99.3). The counted changes are large areas of the left pane shifting position and tone from tick to tick, which is what a moving camera over the tile ground does: the left pane follows the blasted fighter. They are not a bright flash.
+
+ATTRIBUTION (a reading, supported by five controls that remove nothing; not a control of the camera itself)
+The clash's worst second is the camera's: the left pane's view moves fast after the blast (up to 40% of the pane changing per tick), over the tile ground and the crater's new geometry. It is the same kind of cause as the signature's and the collapse's: scenery changing under a moving camera. Camera's reduced scroll governor (cd04) and its cuts through ask_cut are the camera half; the crater's own shape appearing in a few ticks is a ground-geometry change (World's crater opening), which no effect switch removes.
+NEXT CONTROL (if the EP wants it): the camera itself: a clip with the camera's follow held fixed on the clash's point for the same second (Camera's switch), or Camera's cd04 stacked; if the second drops, the number is the camera's.
