@@ -12,6 +12,8 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | 2026-11-13 | 2% at the audit's start (the week began Fri 13 Nov 19:00); **26% at its end (21:52)**; week still open | 3% at the audit's start; **49% at its end (21:52)**; week still open | about 18.5M for the audit; about 67M briefed for A1 in all, planet scope included (EP, 2026-11-13) | 5 by the tracker on 2026-11-13 (A-ENERGY-02, A-COMBAT-15, A-LEGAL-09, A-LEGAL-10, A-WORLD-14; the last two are decisions); EP to confirm they fall in this week | for the audit alone: (26 minus 2) points / 18.5M = about 1.3 all-models points per 1M (a blend of the rates below); the Fable meter moved 46 points | Week still open. A1 may use up to about 40% of this week; the old 66% pause is replaced by the EP's reset rule (below). Wave 2 starts Sat 14 Nov. |
 
+**Reading within the week, EP status 1 (2026-11-14, about 02:45):** all-models 53%, Fable 72%. Stand-in specialist work this week so far about 15M tokens; the A1 directors' work is the rest. (The week's row closes at the Friday 19:00 reset.)
+
 ## The rate basis the EP gave (to convert tokens to meter points)
 
 - About **1.6 all-models points per 1M tokens on the largest (Fable) model**; about **1 point per 1M on the smaller models** most directors run on. (The audit measured the first: 11 points for 7.0M tokens.)

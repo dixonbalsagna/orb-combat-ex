@@ -1,6 +1,6 @@
 {
   "_about": "The one file the tracker's status comes from. The Executive Producer's status messages change this file (Production Operations edits it), then `node docs/production/tools/build-tracker.mjs` rebuilds milestones.md and milestone-rows.md. Allowed row statuses: not started, briefed, reported, landed. A landed row needs a commit id in ref; a reported row needs a report or record in ref.",
-  "asOf": "2026-11-13",
+  "asOf": "2026-11-14",
   "audit": "docs/ep/alpha/audit-2026-11-13",
   "current": "A1",
   "defaultStatus": {
@@ -145,14 +145,14 @@
       "ref": "EP row; Production Ops draft in docs/production/done-tests.md"
     },
     "A-TOOLS-09": {
-      "status": "briefed",
-      "ref": "wave 1 brief (docs/ep/sprints/A1-sprint.md)",
-      "note": "Production Ops wrote the tracker paragraph (milestones.md, \"Orb's kept builds\"); Orb's answer on where the second copy lives is still open."
+      "status": "landed",
+      "ref": "f391fec4",
+      "note": "Landed f391fec4 (plan). Orb's answer on where the second copy lives is still open; last copy made: none yet."
     },
     "A-LEGAL-08": {
       "status": "briefed",
       "ref": "day-one safety chain (docs/ep/sprints/A1-sprint.md)",
-      "note": "Part 1 landed in 191e5e30 and its nightly in 59c6b195 (Tools). Stays open until the first scheduled reading is recorded."
+      "note": "Part 1 landed in 191e5e30, its nightly in 59c6b195 and 781a82ac (Tools). Stays open until the first scheduled reading is recorded."
     },
     "A-LEGAL-03": {
       "status": "briefed",
@@ -168,6 +168,130 @@
       "status": "not started",
       "ref": "wave 2, from Saturday 14 Nov",
       "note": "Briefed early for A2."
+    },
+    "A-NET-05": {
+      "status": "reported",
+      "ref": "parked, held for B1 fixes (EP status 1, 2026-11-14)"
+    },
+    "A-CONTROLS-02": {
+      "status": "reported",
+      "ref": "ac0ae1f7 (parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-CONTROLS-06": {
+      "status": "reported",
+      "ref": "ff078f12 (parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-AI-05": {
+      "status": "reported",
+      "ref": "1c50e759 (parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-CAMERA-01": {
+      "status": "reported",
+      "ref": "8fee3caa (parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-AUDIO-01": {
+      "status": "reported",
+      "ref": "Audio's working tree (parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-UI-01": {
+      "status": "reported",
+      "ref": "aae0a38e (UI's stack, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-MODES-01": {
+      "status": "reported",
+      "ref": "aae0a38e (UI's stack, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-MODES-06": {
+      "status": "reported",
+      "ref": "aae0a38e (UI's stack, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-MODES-11": {
+      "status": "reported",
+      "ref": "aae0a38e (UI's stack, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-MODES-15": {
+      "status": "reported",
+      "ref": "aae0a38e (UI's stack, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-UI-04": {
+      "status": "reported",
+      "ref": "aae0a38e (UI's stack, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-UI-06": {
+      "status": "reported",
+      "ref": "aae0a38e (UI's stack, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-UI-09": {
+      "status": "reported",
+      "ref": "aae0a38e (UI's stack, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-CODE-03": {
+      "status": "reported",
+      "ref": "e702e058 (parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-UI-02": {
+      "status": "reported",
+      "ref": "e702e058 (parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-MODES-08": {
+      "status": "reported",
+      "ref": "e702e058 (parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-COMBAT-05": {
+      "status": "reported",
+      "ref": "QA acceptance 752c381f (stray-beams, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-COMBAT-11": {
+      "status": "reported",
+      "ref": "QA acceptance 752c381f (stray-beams, parked, gated)",
+      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+    },
+    "A-TOOLS-08": {
+      "status": "landed",
+      "ref": "047d4037",
+      "note": "Also f391fec4 (EP status 1)."
+    },
+    "A-TOOLS-10": {
+      "status": "landed",
+      "ref": "047d4037",
+      "note": "Also f391fec4 (EP status 1)."
+    },
+    "A-TOOLS-13": {
+      "status": "landed",
+      "ref": "047d4037",
+      "note": "Also f391fec4 (EP status 1)."
+    },
+    "A-TOOLS-15": {
+      "status": "landed",
+      "ref": "f391fec4",
+      "note": "A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer."
+    },
+    "A-CODE-04": {
+      "status": "landed",
+      "ref": "f391fec4",
+      "note": "A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer."
+    },
+    "A-ENERGY-06": {
+      "status": "landed",
+      "ref": "f391fec4",
+      "note": "A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer."
     }
   },
   "added": [
@@ -227,6 +351,12 @@
       "count": 72,
       "of": 92,
       "note": "audit baseline 8901d351, as the path reports it"
+    },
+    {
+      "date": "2026-11-14",
+      "count": 69,
+      "of": 87,
+      "note": "data rows, read by tools/preview/switch-diff.mjs (EP status 1); nothing has landed on the game yet, GW1a lands as one window. The count basis changed from the audit's 92 switch rows to 87 data rows"
     }
   ],
   "switchRowsEveryDays": 2,
@@ -339,5 +469,9 @@
       "status": "open",
       "words": ""
     }
-  }
+  },
+  "notes": [
+    "Spike S5 (the Linux picture) is landed: 1c3eebf3.",
+    "Token figures at EP status 1 (2026-11-14 about 02:45): all-models 53%, Fable 72%. Stand-in specialist work this week so far about 15M tokens; the A1 directors' work is the rest."
+  ]
 }

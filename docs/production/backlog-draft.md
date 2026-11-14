@@ -1,6 +1,6 @@
 # Backlog (draft): one table keyed by register id
 
-_Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Production Operations drafts). Built for 2026-11-13 by tools/build-tracker.mjs from the audit's register (270 rows), the tracker's status and the corrective plan of 2026-11-07. Rows marked † are held to the EP's tables (see milestones.md). Status words as in the tracker; "not placed" is a row outside the milestones (the nice-to-have pool, or after Alpha)._
+_Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Production Operations drafts). Built for 2026-11-14 by tools/build-tracker.mjs from the audit's register (270 rows), the tracker's status and the corrective plan of 2026-11-07. Rows marked † are held to the EP's tables (see milestones.md). Status words as in the tracker; "not placed" is a row outside the milestones (the nice-to-have pool, or after Alpha)._
 
 **What is still missing from this draft.** The sources the EP passes: the EP's owed-by-owner list, QA's bug list (the register notes it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09: row A-QA-03) and the list of parked folders (494 uncommitted paths under pending/). Anything in those that has no register row goes in the last table, with a source and an owner; nothing is dropped.
 
@@ -10,39 +10,39 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-AI-03 | A1 | qa-balance | S | major | not started |  | Medium and Hard have no win-rate record for Orb's scheme on any build since 2026-11-01; the only figures on a… |
 | A-AI-04 | A1 | qa-balance | S | major | not started |  | No win rate has been measured on the played build's own packed data: every record was made on a scratch tree… |
-| A-AI-05 | A1 | encounter-systems | S | major | briefed |  | Main's computer-opponent data is not the played build's: Easy's pace matching, the beam pacing against a… |
+| A-AI-05 | A1 | encounter-systems | S | major | reported |  | Main's computer-opponent data is not the played build's: Easy's pace matching, the beam pacing against a… |
 | A-AI-10 | A1 | encounter-systems | S | minor | briefed |  | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on… |
 | A-AI-11 | A1 | qa-balance | S | minor | not started |  | Forty matches a cell cannot tell neighbouring bands apart (about 15 points either way), and the drop the EP… |
 | A-AI-13 | A1 | encounter-systems | S | minor | briefed |  | The parked one-versus-many work was last rebuilt on 2026-10-16 and applies by exact-text patches; whether it… |
 | A-ANIM-06 | A1 | ep | S | minor | not started |  | The animation runtime, its tools and its data (render/anim, data/anim) are on no director's owns line;… |
-| A-AUDIO-01 | A1 | audio-music | S | major | not started |  | On main five sound sets are off, so a build made plainly from main has no beam, knock-out, launch, struggle… |
-| A-CAMERA-01 | A1 | camera | S | major | not started |  | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share,… |
+| A-AUDIO-01 | A1 | audio-music | S | major | reported |  | On main five sound sets are off, so a build made plainly from main has no beam, knock-out, launch, struggle… |
+| A-CAMERA-01 | A1 | camera | S | major | reported |  | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share,… |
 | A-CODE-01 | A1 | ep | L | blocker | not started |  | Main does not hold the game Orb plays: 72 of the 92 build switch rows differ between main and Orb's solo… |
 | A-CODE-02 | A1 | simulation-engine | M | major | briefed |  | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no… |
-| A-CODE-03 | A1 | tools-pipeline | M | major | briefed |  | Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to… |
-| A-CODE-04 | A1 | tools-pipeline | L | major | briefed |  | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests,… |
-| A-COMBAT-05 | A1 | encounter-systems | S | major | briefed |  | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is… |
+| A-CODE-03 | A1 | tools-pipeline | M | major | reported |  | Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to… |
+| A-CODE-04 | A1 | tools-pipeline | L | major | landed |  | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests,… |
+| A-COMBAT-05 | A1 | encounter-systems | S | major | reported |  | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is… |
 | A-COMBAT-08 | A1 | qa-balance | M | major | not started |  | No tool measures X-03 (move coverage), X-04 (forms reached), X-13 (the pillars in one match) or X-16 (beam… |
-| A-COMBAT-11 | A1 | encounter-systems | S | minor | briefed |  | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule… |
+| A-COMBAT-11 | A1 | encounter-systems | S | minor | reported |  | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule… |
 | A-COMBAT-14 | A1 | combat-choreography | S | minor | not started |  | The mixed string's switch reads 'on' in the played build but no game code reads its data file; the feature… |
 | A-COMBAT-15 | A1 | game-design | S | minor | landed |  | Six of Orb's 'workshop this' combat items have no decision: beam stages, the timed swat, the catch, what RT… |
-| A-CONTROLS-02 | A1 | controls-feel | M | major | not started |  | The pad as the owner plays it is not the default in data: eleven input switches are off on main and on in… |
+| A-CONTROLS-02 | A1 | controls-feel | M | major | reported |  | The pad as the owner plays it is not the default in data: eleven input switches are off on main and on in… |
 | A-CONTROLS-04 | A1 | game-design | S | major | reported |  | The flight speed the owner preferred (3500) exists only as a slider on the private browser page; the data's… |
-| A-CONTROLS-06 | A1 | controls-feel | M | major | not started |  | No moveset coverage probe exists: the nearest tool presses each input alone for 90 ticks and its saved result… |
+| A-CONTROLS-06 | A1 | controls-feel | M | major | reported |  | No moveset coverage probe exists: the nearest tool presses each input alone for 90 ticks and its saved result… |
 | A-ENERGY-02 | A1 | game-design | S | major | landed |  | No single written page states the model: it is spread over six design pages, the oldest still a proposal that… |
 | A-ENERGY-04 | A1 | simulation-engine | S | major | briefed |  | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only… |
 | A-ENERGY-05 | A1 | simulation-engine | M | major | briefed |  | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in… |
-| A-ENERGY-06 | A1 | tools-pipeline | S | major | briefed |  | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two… |
+| A-ENERGY-06 | A1 | tools-pipeline | S | major | landed |  | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two… |
 | A-LEGAL-02 | A1 | tools-pipeline | M | blocker | briefed |  | No desktop package for an outside tester can be made today: the build workflow needs a recorded approval file… |
 | A-LEGAL-09 | A1 | legal-ip | S | major | landed | CD-06 | Whether a restricted, key-only itch.io page may go up before the title search is not confirmed anywhere:… |
 | A-LEGAL-10 | A1 | orb | S | minor | landed |  | The owner's one-line licence choice is not on record, so the build says the licence is not chosen yet and no… |
-| A-MODES-01 | A1 | ui-ux | M | blocker | briefed |  | The start menu has no list of modes: its rows are one or two players, each player's device, the computer's… |
-| A-MODES-06 | A1 | ui-ux | M | blocker | briefed |  | There is no fighter select: a match's fighters default to the first two ids of the roster file, so player one… |
+| A-MODES-01 | A1 | ui-ux | M | blocker | reported |  | The start menu has no list of modes: its rows are one or two players, each player's device, the computer's… |
+| A-MODES-06 | A1 | ui-ux | M | blocker | reported |  | There is no fighter select: a match's fighters default to the first two ids of the roster file, so player one… |
 | A-MODES-07 | A1 | encounter-systems | S | major | briefed |  | On main the rules that end a match as the last played build did (knockout only by a finishing move, wear for… |
-| A-MODES-08 | A1 | tools-pipeline | M | major | briefed |  | No mode smoke suite exists: the one smoke check drives the browser build by clicking fixed screen points and… |
-| A-MODES-11 | A1 | ui-ux | S | major | briefed |  | With a pad alone a player can go back to the menu but cannot close the game: the pause and match-over lists… |
-| A-MODES-15 | A1 | ui-ux | S | minor | briefed |  | The Rail menu the owner picked is switched off on main and on only in the played build, so a candidate built… |
-| A-NET-05 | A1 | simulation-engine | S | major | briefed |  | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a… |
+| A-MODES-08 | A1 | tools-pipeline | M | major | reported |  | No mode smoke suite exists: the one smoke check drives the browser build by clicking fixed screen points and… |
+| A-MODES-11 | A1 | ui-ux | S | major | reported |  | With a pad alone a player can go back to the menu but cannot close the game: the pause and match-over lists… |
+| A-MODES-15 | A1 | ui-ux | S | minor | reported |  | The Rail menu the owner picked is switched off on main and on only in the played build, so a candidate built… |
+| A-NET-05 | A1 | simulation-engine | S | major | reported |  | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a… |
 | A-PERF-04 | A1 | performance-platform | S | major | not started |  | Nothing about frame rate, loading or memory has been measured on the build Orb last played, and no windowed… |
 | A-PERF-06 | A1 | performance-platform | S | major | not started |  | No loading time is on file for the desktop game with menus, the tile ground and generated planets; the last… |
 | A-PERF-07 | A1 | performance-platform | S | major | not started |  | Memory has never been measured on a desktop build, and growth over time is marked not measured, so the soak's… |
@@ -73,16 +73,16 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-SAVES-01 | A1 | qa-balance | S | major | not started |  | No record on file shows a replay saved by the baseline build verifying to its last tick on that build, and… |
 | A-TOOLS-01 | A1 | tools-pipeline | L | blocker | briefed | CD-12 | No one command or CI run makes the Windows and Linux desktop builds of the game as Orb plays it, the solo… |
 | A-TOOLS-07 | A1 | tools-pipeline | S | major | briefed |  | A build carries a commit and a date but no version number, the Windows program's version fields are empty, no… |
-| A-TOOLS-08 | A1 | tools-pipeline | S | major | briefed |  | The Godot check job's time swings from about 35 to 62 minutes on unchanged game code against a 75-minute… |
-| A-TOOLS-09 | A1 | tools-pipeline | S | major | briefed |  | The owner's builds, play files, reports and clips sit in one git-ignored folder of about 2.9 GB on one disk,… |
-| A-TOOLS-10 | A1 | tools-pipeline | S | minor | briefed |  | The playbook's build-verification rule cites a script that is not in the repository and a tool name that… |
-| A-TOOLS-13 | A1 | tools-pipeline | S | minor | briefed |  | No CI job ever starts a Windows build: every job runs on Linux, and the desktop workflow reads the Windows… |
-| A-TOOLS-15 | A1 | tools-pipeline | S | minor | briefed | CD-21 | Corrective item CD-21 (stop silent passes: 'grandfathered', 'report only' and 'CHECK' lines that print as… |
-| A-UI-01 | A1 | ui-ux | S | blocker | briefed |  | With the Rail menus on (as in the build Orb played), the pause menu's slide-in is timed on a HUD clock that… |
-| A-UI-02 | A1 | tools-pipeline | M | blocker | briefed |  | On main, and so in any plain desktop build, the one-press report and 'Save this match' save nothing: the hook… |
-| A-UI-04 | A1 | ui-ux | M | major | briefed |  | Making the Rail the default is unfinished: its switch is off on main, three older HUD checks fail with it on,… |
-| A-UI-06 | A1 | ui-ux | S | major | briefed |  | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from… |
-| A-UI-09 | A1 | ui-ux | S | major | briefed |  | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every… |
+| A-TOOLS-08 | A1 | tools-pipeline | S | major | landed |  | The Godot check job's time swings from about 35 to 62 minutes on unchanged game code against a 75-minute… |
+| A-TOOLS-09 | A1 | tools-pipeline | S | major | landed |  | The owner's builds, play files, reports and clips sit in one git-ignored folder of about 2.9 GB on one disk,… |
+| A-TOOLS-10 | A1 | tools-pipeline | S | minor | landed |  | The playbook's build-verification rule cites a script that is not in the repository and a tool name that… |
+| A-TOOLS-13 | A1 | tools-pipeline | S | minor | landed |  | No CI job ever starts a Windows build: every job runs on Linux, and the desktop workflow reads the Windows… |
+| A-TOOLS-15 | A1 | tools-pipeline | S | minor | landed | CD-21 | Corrective item CD-21 (stop silent passes: 'grandfathered', 'report only' and 'CHECK' lines that print as… |
+| A-UI-01 | A1 | ui-ux | S | blocker | reported |  | With the Rail menus on (as in the build Orb played), the pause menu's slide-in is timed on a HUD clock that… |
+| A-UI-02 | A1 | tools-pipeline | M | blocker | reported |  | On main, and so in any plain desktop build, the one-press report and 'Save this match' save nothing: the hook… |
+| A-UI-04 | A1 | ui-ux | M | major | reported |  | Making the Rail the default is unfinished: its switch is off on main, three older HUD checks fail with it on,… |
+| A-UI-06 | A1 | ui-ux | S | major | reported |  | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from… |
+| A-UI-09 | A1 | ui-ux | S | major | reported |  | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every… |
 | A-WORLD-01 | A1 | world-environment | M | blocker | briefed |  | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made… |
 | A-WORLD-14 | A1 | orb | S | minor | landed |  | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes… |
 | A-ACCESS-01 | A2 | accessibility-localization | S | major | not started |  | There is no accessibility pass or record newer than 2026-10-31 and no runs folder for the area, so the… |
@@ -319,8 +319,8 @@ From the corrective plan: none. Every item without a closing entry, or with an o
 
 
 
-From the EP's owed list, QA's bug list and the parked folders: waiting for the EP to pass them. Format for each line: source, item, owner, horizon, note.
+From the EP's owed list, QA's bug list and the parked folders: passed by the EP on 2026-11-14 and not yet merged into this table (owed list: docs/ep/sprints/A1-sprint.md; QA's bug list: qa/known-bugs.md and docs/qa/runs/6a30b4c9; parked folders: docs/*/pending). Format for each line: source, item, owner, horizon, note.
 
 | Source | Item | Owner | Horizon | Notes |
 | --- | --- | --- | --- | --- |
-| (waiting for the EP) |  |  |  |  |
+| (sources passed, not yet merged) |  |  |  |  |

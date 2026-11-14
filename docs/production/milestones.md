@@ -1,31 +1,36 @@
 # Milestone tracker
 
-_Live page. Last built from status.json for **2026-11-13**. It is rebuilt every two days when the Executive Producer sends status (tools/build-tracker.mjs; nothing on this page is typed by hand except the words in status.json). Production Operations keeps it; the Executive Producer is the only source of status._
+_Live page. Last built from status.json for **2026-11-14**. It is rebuilt every two days when the Executive Producer sends status (tools/build-tracker.mjs; nothing on this page is typed by hand except the words in status.json). Production Operations keeps it; the Executive Producer is the only source of status._
 
 **Nothing on this page decides anything.** The path to Alpha (docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md) is the audit's recommendation. Orb accepted the first group of the path's decisions on 2026-11-13 (table below); every other milestone, size and week range stays a recommendation until Orb approves it.
 
 ## Where the project is
 
-**Milestone A1, "Main is the game Orb plays".** 77 rows: 29 not started, 36 briefed, 4 reported, 8 landed.
+**Milestone A1, "Main is the game Orb plays".** 77 rows: 25 not started, 14 briefed, 23 reported, 15 landed.
 
 **Budget.** A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so the old 66% pause is replaced by the EP's reset rule: a reset is pressed at about 85% on the all-models meter or 90% on the Fable meter (Orb only reported that a reset clears both pools). The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.
 
 **Waves.** From tonight: Tools, Simulation, UI, Encounter, World and Rendering build in scratch copies; Game Design, Production Ops and Legal write papers; the stand-in designs and reviews; the EP does the working tree. From Saturday 14 Nov: Camera and VFX (the safety readings, captures one at a time), Controls, Audio, Combat (spike S4), QA (first readings), Performance (desktop frame and load readings, quiet windows only) and Netcode.
 
+**Note.** Spike S5 (the Linux picture) is landed: 1c3eebf3.
+
+**Note.** Token figures at EP status 1 (2026-11-14 about 02:45): all-models 53%, Fable 72%. Stand-in specialist work this week so far about 15M tokens; the A1 directors' work is the rest.
+
 | Milestone | What it proves | Rows | Not started | Briefed | Reported | Landed | Tokens (path) | Weeks (path) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A1 (now) | Main is the game Orb plays | 77 | 29 | 36 | 4 | 8 | 55M | 2 to 4 |
+| A1 (now) | Main is the game Orb plays | 77 | 25 | 14 | 23 | 15 | 55M | 2 to 4 |
 | A2 | Safe to hand out; two real Steam Decks have run it | 41 | 39 | 2 | 0 | 0 | 34M | 2 to 4 |
 | A3 | The fight's new rules, and LAN inside the game | 27 | 27 | 0 | 0 | 0 | 53M | 3 to 5 |
 | A4 | Horde, teams, your own planet, the whole fighter | 19 | 19 | 0 | 0 | 0 | 57M | 2 to 3 |
 | A5 | A newcomer on a Deck, alone; the last numbers settle | 16 | 16 | 0 | 0 | 0 | 16M | 1.5 to 3 |
 | A6 | The Alpha candidate, frozen | 0 | 0 | 0 | 0 | 0 | 13M | 2.5 to 5 |
 
-**Switch rows still differing between main and the 9 November build: 72 of 92** (2026-11-13; audit baseline 8901d351, as the path reports it). The Executive Producer reports this count every 2 days; the next is due 2026-11-15. It must reach 0 for A-CODE-01 to close.
+**Switch rows still differing between main and the 9 November build: 69 of 87** (2026-11-14; data rows, read by tools/preview/switch-diff.mjs (EP status 1); nothing has landed on the game yet, GW1a lands as one window. The count basis changed from the audit's 92 switch rows to 87 data rows). The Executive Producer reports this count every 2 days; the next is due 2026-11-16. It must reach 0 for A-CODE-01 to close.
 
 | Date | Still differing | Of | Note |
 | --- | --- | --- | --- |
 | 2026-11-13 | 72 | 92 | audit baseline 8901d351, as the path reports it |
+| 2026-11-14 | 69 | 87 | data rows, read by tools/preview/switch-diff.mjs (EP status 1); nothing has landed on the game yet, GW1a lands as one window. The count basis changed from the audit's 92 switch rows to 87 data rows |
 
 ## What could move the date
 
@@ -92,7 +97,7 @@ The builds, play files, reports and clips Orb keeps are about 2.9 GB in one git-
 
 **What Orb can play.** The first desktop build of their own game: a Windows program that opens on the left-panel menus, on the round planet, with the pad as Orb plays it and flight at 3500. The start menu lists the modes that exist today, lets each player pick a fighter, and has a Quit row.
 
-**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 29 not started, 36 briefed, 4 reported, 8 landed.
+**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 25 not started, 14 briefed, 23 reported, 15 landed.
 
 **Golden window.** GW1 "Main is the game" (12 rows: A-AI-05, A-AI-10, A-CODE-01, A-COMBAT-05, A-COMBAT-11, A-COMBAT-14, A-CONTROLS-02, A-CONTROLS-04, A-ENERGY-04, A-ENERGY-05, A-MODES-07, A-WORLD-01). GW1a: the golden record is made first on the kept 9 November build's own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer's perfect-block fix, flight 3500), then one re-record. GW1c, after GW1b: the planet scope Orb added (five sizes, terrain step 2, destruction, clipping), its own window. A-NET-05 (the build id in a replay) lands before the window.
 
@@ -121,11 +126,11 @@ _None open that this milestone needs._
 
 | Owner | Rows | Not started | Briefed | Reported | Landed |
 | --- | --- | --- | --- | --- | --- |
-| audio-music | 1 | 1 | 0 | 0 | 0 |
-| camera | 1 | 1 | 0 | 0 | 0 |
+| audio-music | 1 | 0 | 0 | 1 | 0 |
+| camera | 1 | 0 | 0 | 1 | 0 |
 | combat-choreography | 1 | 1 | 0 | 0 | 0 |
-| controls-feel | 2 | 2 | 0 | 0 | 0 |
-| encounter-systems | 6 | 0 | 6 | 0 | 0 |
+| controls-feel | 2 | 0 | 0 | 2 | 0 |
+| encounter-systems | 6 | 0 | 3 | 3 | 0 |
 | ep | 16 | 12 | 1 | 3 | 0 |
 | game-design | 3 | 0 | 0 | 1 | 2 |
 | legal-ip | 1 | 0 | 0 | 0 | 1 |
@@ -134,22 +139,22 @@ _None open that this milestone needs._
 | production-ops | 3 | 0 | 0 | 0 | 3 |
 | qa-balance | 9 | 9 | 0 | 0 | 0 |
 | rendering-techart | 3 | 0 | 3 | 0 | 0 |
-| simulation-engine | 4 | 0 | 4 | 0 | 0 |
-| tools-pipeline | 13 | 0 | 13 | 0 | 0 |
-| ui-ux | 8 | 0 | 8 | 0 | 0 |
+| simulation-engine | 4 | 0 | 3 | 1 | 0 |
+| tools-pipeline | 13 | 0 | 3 | 3 | 7 |
+| ui-ux | 8 | 0 | 0 | 8 | 0 |
 | world-environment | 1 | 0 | 1 | 0 | 0 |
 
 **audio-music** (1)
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-AUDIO-01 | On main five sound sets are off, so a build made plainly from main has no beam, knock-out, launch, struggle or… | S |  | not started | wave 2, from Saturday 14 Nov |
+| A-AUDIO-01 | On main five sound sets are off, so a build made plainly from main has no beam, knock-out, launch, struggle or… | S |  | reported | Audio's working tree (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
 
 **camera** (1)
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-CAMERA-01 | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share,… | S |  | not started | wave 2, from Saturday 14 Nov |
+| A-CAMERA-01 | The camera Orb played (swing, peak launch shot, launch director, close brawl, readable size, 70/30 share,… | S |  | reported | 8fee3caa (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
 
 **combat-choreography** (1)
 
@@ -161,18 +166,18 @@ _None open that this milestone needs._
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-CONTROLS-02 | The pad as the owner plays it is not the default in data: eleven input switches are off on main and on in both played… | M | GW1 | not started | wave 2, from Saturday 14 Nov |
-| A-CONTROLS-06 | No moveset coverage probe exists: the nearest tool presses each input alone for 90 ticks and its saved result is from a… | M |  | not started | wave 2, from Saturday 14 Nov |
+| A-CONTROLS-02 | The pad as the owner plays it is not the default in data: eleven input switches are off on main and on in both played… | M | GW1 | reported | ac0ae1f7 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-CONTROLS-06 | No moveset coverage probe exists: the nearest tool presses each input alone for 90 ticks and its saved result is from a… | M |  | reported | ff078f12 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
 
 **encounter-systems** (6)
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-AI-05 | Main's computer-opponent data is not the played build's: Easy's pace matching, the beam pacing against a human, and the… | S | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
+| A-AI-05 | Main's computer-opponent data is not the played build's: Easy's pace matching, the beam pacing against a human, and the… | S | GW1 | reported | 1c50e759 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
 | A-AI-10 | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on main: its… | S | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
 | A-AI-13 (nice) | The parked one-versus-many work was last rebuilt on 2026-10-16 and applies by exact-text patches; whether it still… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-COMBAT-05 | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is doing; open… | S | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-COMBAT-11 | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule reads state… | S | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
+| A-COMBAT-05 | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is doing; open… | S | GW1 | reported | QA acceptance 752c381f (stray-beams, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-COMBAT-11 | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule reads state… | S | GW1 | reported | QA acceptance 752c381f (stray-beams, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
 | A-MODES-07 | On main the rules that end a match as the last played build did (knockout only by a finishing move, wear for an idle… | S | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
 
 **ep** (16)
@@ -262,38 +267,38 @@ _None open that this milestone needs._
 | A-CODE-02 | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no golden… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
 | A-ENERGY-04 | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only through a… | S | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
 | A-ENERGY-05 | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in every match:… | M | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) — Game Design's comeback numbers landed in 970d15a6; the data change (other effects set to zero) lands in GW1. |
-| A-NET-05 | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
+| A-NET-05 | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with… | S |  | reported | parked, held for B1 fixes (EP status 1, 2026-11-14) |
 
 **tools-pipeline** (13)
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-CODE-03 | Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to add the… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-CODE-04 | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests, 5 of 65… | L |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-ENERGY-06 | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two fighters" and… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
+| A-CODE-03 | Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to add the… | M |  | reported | e702e058 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-CODE-04 | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests, 5 of 65… | L |  | landed | f391fec4 — A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer. |
+| A-ENERGY-06 | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two fighters" and… | S |  | landed | f391fec4 — A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer. |
 | A-LEGAL-02 | No desktop package for an outside tester can be made today: the build workflow needs a recorded approval file that does… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-MODES-08 | No mode smoke suite exists: the one smoke check drives the browser build by clicking fixed screen points and failed… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
+| A-MODES-08 | No mode smoke suite exists: the one smoke check drives the browser build by clicking fixed screen points and failed… | M |  | reported | e702e058 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
 | A-TOOLS-01 | No one command or CI run makes the Windows and Linux desktop builds of the game as Orb plays it, the solo game… | L |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
 | A-TOOLS-07 | A build carries a commit and a date but no version number, the Windows program's version fields are empty, no changelog… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-TOOLS-08 | The Godot check job's time swings from about 35 to 62 minutes on unchanged game code against a 75-minute limit, and the… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-TOOLS-09 | The owner's builds, play files, reports and clips sit in one git-ignored folder of about 2.9 GB on one disk, with no… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) — Production Ops wrote the tracker paragraph (milestones.md, "Orb's kept builds"); Orb's answer on where the second copy lives is still open. |
-| A-TOOLS-10 | The playbook's build-verification rule cites a script that is not in the repository and a tool name that matches no… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-TOOLS-13 | No CI job ever starts a Windows build: every job runs on Linux, and the desktop workflow reads the Windows program's… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-TOOLS-15 | Corrective item CD-21 (stop silent passes: 'grandfathered', 'report only' and 'CHECK' lines that print as exceptions in… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-UI-02 | On main, and so in any plain desktop build, the one-press report and 'Save this match' save nothing: the hook that… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
+| A-TOOLS-08 | The Godot check job's time swings from about 35 to 62 minutes on unchanged game code against a 75-minute limit, and the… | S |  | landed | 047d4037 — Also f391fec4 (EP status 1). |
+| A-TOOLS-09 | The owner's builds, play files, reports and clips sit in one git-ignored folder of about 2.9 GB on one disk, with no… | S |  | landed | f391fec4 — Landed f391fec4 (plan). Orb's answer on where the second copy lives is still open; last copy made: none yet. |
+| A-TOOLS-10 | The playbook's build-verification rule cites a script that is not in the repository and a tool name that matches no… | S |  | landed | 047d4037 — Also f391fec4 (EP status 1). |
+| A-TOOLS-13 | No CI job ever starts a Windows build: every job runs on Linux, and the desktop workflow reads the Windows program's… | S |  | landed | 047d4037 — Also f391fec4 (EP status 1). |
+| A-TOOLS-15 | Corrective item CD-21 (stop silent passes: 'grandfathered', 'report only' and 'CHECK' lines that print as exceptions in… | S |  | landed | f391fec4 — A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer. |
+| A-UI-02 | On main, and so in any plain desktop build, the one-press report and 'Save this match' save nothing: the hook that… | M |  | reported | e702e058 (parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
 
 **ui-ux** (8)
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-MODES-01 | The start menu has no list of modes: its rows are one or two players, each player's device, the computer's level, five… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-MODES-06 | There is no fighter select: a match's fighters default to the first two ids of the roster file, so player one is always… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-MODES-11 | With a pad alone a player can go back to the menu but cannot close the game: the pause and match-over lists have no… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-MODES-15 | The Rail menu the owner picked is switched off on main and on only in the played build, so a candidate built from main… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-UI-01 | With the Rail menus on (as in the build Orb played), the pause menu's slide-in is timed on a HUD clock that the game… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-UI-04 | Making the Rail the default is unfinished: its switch is off on main, three older HUD checks fail with it on, Tools'… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-UI-06 | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from the bottom… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-UI-09 | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every screen at… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
+| A-MODES-01 | The start menu has no list of modes: its rows are one or two players, each player's device, the computer's level, five… | M |  | reported | aae0a38e (UI's stack, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-MODES-06 | There is no fighter select: a match's fighters default to the first two ids of the roster file, so player one is always… | M |  | reported | aae0a38e (UI's stack, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-MODES-11 | With a pad alone a player can go back to the menu but cannot close the game: the pause and match-over lists have no… | S |  | reported | aae0a38e (UI's stack, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-MODES-15 | The Rail menu the owner picked is switched off on main and on only in the played build, so a candidate built from main… | S |  | reported | aae0a38e (UI's stack, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-UI-01 | With the Rail menus on (as in the build Orb played), the pause menu's slide-in is timed on a HUD clock that the game… | S |  | reported | aae0a38e (UI's stack, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-UI-04 | Making the Rail the default is unfinished: its switch is off on main, three older HUD checks fail with it on, Tools'… | M |  | reported | aae0a38e (UI's stack, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-UI-06 | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from the bottom… | S |  | reported | aae0a38e (UI's stack, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-UI-09 | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every screen at… | S |  | reported | aae0a38e (UI's stack, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
 
 **world-environment** (1)
 
