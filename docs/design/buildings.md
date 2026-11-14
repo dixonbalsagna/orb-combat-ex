@@ -282,3 +282,24 @@ Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These
 - **Simulation regenerates the golden** when they land.
 
 **2026-11-07, on Encounter's launch-cuts park: the cheap-score bound is dropped.** It dropped no building in 72 launches (360 aims), crowded hero launches included, because the most a building could score carries the drama cap, the pity ramp, the stick's and town's bonuses and the noise's 8, and the villain has no bound at all. A cut that never fires buys nothing for its code and the keyed noise. **The cap of 3 and the one flight stay,** and the noise stays as it is (not keyed by candidate). The pity counter is as today. QA's off-then-on city read is unchanged.
+
+## 9. Towers at tier 1, and crater width by tier (2026-11-15, World's `destruction-a1.md` and `pending/wall-hold-on/`)
+
+**(1) Does a tier-1 send punch through one tower? No: `towerPunches[0]` stays 0.**
+- **At tier 1 a tower holds him.** That's the wall slam, and he stays at the face, which is the fix for Orb's "ping pong ball". **The building remembers,** so the second and third sends bring it down, tier for tier.
+- **Why:** power has weight, and escalation has to read across tiers (P3's exit). It also matches the energy model: a base send has about 4.9 of energy against a low tower's 5, so it goes through houses and stops in a tower (`power-scale.md`'s table). If tier 1 punched towers, tier 3's going through them would mean nothing.
+- **Houses:** a tier-1 send already goes through houses, so repeats rarely matter for one. `repeatMarks` 2 applies to every building alike, and no rule of a house's own is needed.
+- **Split the key** (World's risk): the building memory goes on, but **the old crater repeat on gen 1 and 2 worlds stays off.** Nobody asked for craters that widen on the hand-made arena, and it would be a visible change before GW1a. The globe's crater repeat keeps its own switch.
+
+**(2) A-WORLD-06, crater width at the top tier (X-14 asks about 3 times).**
+
+| Path | The numbers |
+| :--- | :--- |
+| **With the energy model on** (it lands in GW1b, A-ENERGY-04), the path that counts from then on | **No tier table. The model decides:** radius 160 × √E with E = 4.94 × 12.25^level. From a fresh base fighter to the top tier at full power that's **356 to 1,244, 3.5 times.** Tier for tier at equal power it's **about 2.7 times** (tier 4's level is 0.8 above tier 1's) |
+| **With the model off** (old arenas, tests, anything it doesn't cover) | **A tier table of energy multipliers: 1, 2.1, 4.3 and 9** for tiers 1 to 4. That's radius 1, 1.45, 2.07 and 3.0 times, replacing today's 25% a tier (1.32 times at tier 4). Shots take the same table in place of their flat 2.2 |
+
+**World's check** asserts:
+- **with the model on:** fresh base to top tier at full power, at least 3 times (it reads 3.5); tier for tier at equal power, between 2.5 and 3.5;
+- **with the model off:** the table's 3.0 at tier 4, within 5%.
+
+**X-14 reads the model's path.** "3 times at the top tier" means the escalation a player sees across a match, from a fresh start to a fully powered top tier.
