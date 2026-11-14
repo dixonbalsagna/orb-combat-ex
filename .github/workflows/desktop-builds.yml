@@ -109,7 +109,8 @@ jobs:
         run: |
           sha=$(git rev-parse HEAD)
           echo "sha=${sha}" >> "$GITHUB_OUTPUT"
-          echo "building ${sha} for ${AUDIENCE}, Reduce flashing locked on${ORBS_YES:+, Orb's yes of ${ORBS_YES}}"
+          echo "building ${sha} for ${AUDIENCE}, Reduce flashing locked on"
+          if [ -n "${ORBS_YES}" ]; then echo "Orb's yes of ${ORBS_YES}"; fi
       # The interim's terms hold for a download too: one word in this checkout's ui/data/features.json, before the import and every export below.
       - name: Lock Reduce flashing on
         run: node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"

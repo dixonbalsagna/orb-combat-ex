@@ -30,3 +30,6 @@ jobs:
         run: node tools/check-workflows-selftest.mjs
       - name: Every file under .github/workflows and .github/actions parses
         run: node tools/check-workflows.mjs
+      # The shell inside every run: step parses too (bash -n): the YAML lint skips block scalars, and run 43582095368 of the desktop builds failed on a runner on a quoting error in one (2026-11-14).
+      - name: The shell scripts in every run step parse (self-test, then the files)
+        run: node tools/check-workflow-shell-selftest.mjs && node tools/check-workflow-shell.mjs

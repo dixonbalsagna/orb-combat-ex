@@ -17,3 +17,7 @@ node tools/player-watch.mjs
 ```
 
 To change a content rule, edit `tools/content-screen.json` (its words are Legal's lists: `docs/legal/never-use-words.md`; a new franchise word is Legal's to add).
+
+## The shell inside the run steps parses (2026-11-14)
+
+`node tools/check-workflow-shell.mjs` reads every `run:` of every workflow and action file (a block scalar or a one-line value), replaces each `${{ expression }}` with a placeholder and asks bash to parse the script (`bash -n`: it parses and runs nothing). A step with `shell: pwsh`, `powershell`, `cmd` or `python` is skipped. It is in the workflow lint (`workflow-lint.yml`), after the YAML lint, with a self-test of 11 checks that plants the bug that made it: desktop-builds run 43582095368 failed on a runner at "The commit being built" with `unexpected EOF while looking for matching '`, an apostrophe inside `${VAR:+...}` in a double-quoted echo. The YAML lint skips block scalars, so no check had parsed that script. What this does not catch: a script that parses and still fails when it runs (a missing file, a wrong flag, a command that does not exist on the runner).

@@ -1,0 +1,24 @@
+// Self-test of tools/check-workflow-shell.mjs (Tools, 2026-11-14): the bug of run 43582095368 is found, and what is not bash or not a syntax error passes.  node tools/check-workflow-shell-selftest.mjs
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { runScripts, shellProblems } from './check-workflow-shell.mjs';
+let bad = 0, n = 0;
+const check = (name, ok, extra) => { n++; if (!ok) { bad++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
+const wf = (body) => `jobs:\n  j:\n    steps:\n${body}`;
+const BUG = `      - name: x\n        run: |\n          echo "building \${sha}\${ORBS_YES:+, Orb's yes of \${ORBS_YES}}"\n`;
+check('the apostrophe inside ${VAR:+...} of run 43582095368 is found', shellProblems(wf(BUG)).length === 1, JSON.stringify(shellProblems(wf(BUG))));
+check('the fixed form passes', shellProblems(wf(`      - name: x\n        run: |\n          echo "building"\n          if [ -n "\${ORBS_YES}" ]; then echo "Orb's yes of \${ORBS_YES}"; fi\n`)).length === 0);
+check('an unclosed if is found', shellProblems(wf(`      - name: x\n        run: |\n          if [ -n "a" ]; then echo a\n`)).length === 1);
+check('a one-line quoted run is read and parsed', shellProblems(wf(`      - run: 'echo "a" | tee b'\n`)).length === 0 && shellProblems(wf(`      - run: 'echo "a'\n`)).length === 1);
+check('a ${{ expression }} is replaced, not parsed as shell', shellProblems(wf(`      - run: echo "\${{ github.sha }}" && echo \${{ inputs.x == 'y' }}\n`)).length === 0);
+check('a pwsh step is skipped (it is not bash)', shellProblems(wf(`      - name: p\n        shell: pwsh\n        run: |\n          $x = @{ a = 1 }; if ($x) { Write-Host "it's" \n`)).length === 0);
+check('a step after a pwsh step is still parsed', shellProblems(wf(`      - name: p\n        shell: pwsh\n        run: |\n          Write-Host 'a'\n      - name: q\n        run: |\n          echo "a\n`)).length === 1);
+check('the line named is the run: line', shellProblems(wf(BUG))[0].line === 5, String(shellProblems(wf(BUG))[0] && shellProblems(wf(BUG))[0].line));
+check('runScripts finds every run of a file', runScripts(wf(`      - run: echo a\n      - name: b\n        run: |\n          echo b\n          echo c\n`)).map((r) => r.script.trim()).join('|') === 'echo a|echo b\necho c');
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '.github', 'workflows');
+const real = readFileSync(join(root, 'desktop-builds.yml'), 'utf8');
+check('the real desktop-builds.yml parses and its pwsh step is not read as bash', shellProblems(real).length === 0, JSON.stringify(shellProblems(real)));
+check('the real desktop-builds.yml has the scripts the check should read (more than 20)', runScripts(real).length > 20, String(runScripts(real).length));
+console.log(`check-workflow-shell selftest: ${n} checks, ${bad} failed`);
+process.exit(bad ? 1 : 0);
