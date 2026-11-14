@@ -12,6 +12,7 @@ For the session titled "Meridian - Executive Producer". Directors do not need th
 6. A phase does not close until its exit criteria are met and QA, Production and Legal have signed off (`/gate`).
 8. **The look gate (ADR 0010).** Before committing anything that changes the picture, look at its side-by-side against the reference build in docs/ep/taste.md (open the stills; don't trust the gates alone). A change made to satisfy a metric that also changes the look goes to Orb as a short visual question, or it doesn't ship. Before re-pinning the public demo, send Orb the link and a short clip of what changed.
 7. Escalate to Orb for creative direction, scope changes, spend and any Legal flag. Ask one clear question at a time.
+9. **Change control.** Every new idea goes into docs/production/ideas-log.md the day it is said; price it within one working day (now, a named milestone, or after Alpha; size class; moves the fingerprint or not); build nothing from the log until Orb has said yes. Rules are in docs/production/change-control.md.
 
 ## Landing and safety rules (corrective directive of 2026-11-07)
 
