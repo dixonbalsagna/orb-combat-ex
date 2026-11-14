@@ -1,0 +1,29 @@
+The four failing input tests on the GW1a stack (a copy of s422: main plus every 9 November switch group), BEFORE the pins:
+
+== b_no_beam_test
+FAIL  interim: RT + B (tap, 80 units) is still the signature beam: ["press_ack", "grapple_pulse", "grapple_end", "brawl_end", "exchange_end"]
+FAIL  interim: RT + B (held, 80 units) is still the signature beam: ["press_ack", "grapple_pulse", "grapple_end", "brawl_end", "exchange_end"]
+FAIL  interim: B 15 ticks into an RT channel (past the 12-tick window, tap, 212 units) fires no signature: ["brawl_end", "exchange_end", "attack", "beam_charge", "beam_window", "beam_fire", "beam_outcome", "chase_ready"]
+FAIL  interim: B 15 ticks into an RT channel (past the 12-tick window, held, 212 units) fires no signature: ["brawl_end", "exchange_end", "attack", "beam_charge", "beam_window", "beam_fire", "beam_outcome", "chase_ready"]
+FAIL  interim: B 20 ticks into an RT channel (past the 12-tick window, tap, 212 units) fires no signature: ["brawl_end", "exchange_end", "attack", "beam_charge", "beam_window", "beam_fire", "beam_outcome", "chase_ready"]
+FAIL  interim: B 20 ticks into an RT channel (past the 12-tick window, held, 212 units) fires no signature: ["brawl_end", "exchange_end", "attack", "beam_charge", "beam_window", "beam_fire", "beam_outcome", "chase_ready"]
+FAIL  interim: B 40 ticks into an RT channel (past the 12-tick window, tap, 212 units) fires no signature: ["brawl_end", "exchange_end", "attack", "beam_charge", "beam_window", "beam_fire", "beam_outcome", "chase_ready"]
+FAIL  interim: B 40 ticks into an RT channel (past the 12-tick window, held, 212 units) fires no signature: ["brawl_end", "exchange_end", "attack", "beam_charge", "beam_window", "beam_fire", "beam_outcome", "chase_ready"]
+b_no_beam_test: 103 checks, 8 failed
+
+== brake_ready_test
+FAIL  real event: with the brake off nothing rumbles
+brake_ready_test: 15 checks, 1 failed
+
+== dash_handover_test
+FAIL  on: a tap let go at tick 4 carries him less than 2 body heights beyond the stick alone (8.23)
+dash_handover_test: 15 checks, 1 failed
+
+== t1_latency_test
+FAIL  ACK: light west (pad, 150 units, held) is acknowledged by a press_ack on the press tick (first ack: never in 12 ticks)
+FAIL  ACK: light west (pad, 150 units, tapped) is acknowledged by a press_ack on the press tick (first ack: never in 12 ticks)
+FAIL  ACK: heavy north (pad, 150 units, held) is acknowledged by a press_ack on the press tick (first ack: never in 12 ticks)
+FAIL  ACK: heavy north (pad, 150 units, tapped) is acknowledged by a press_ack on the press tick (first ack: never in 12 ticks)
+FAIL  ACK: signature east (pad, 150 units, held) is acknowledged by a press_ack on the press tick (first ack: never in 12 ticks)
+FAIL  ACK: signature east (pad, 150 units, tapped) is acknowledged by a press_ack on the press tick (first ack: never in 12 ticks)
+t1_latency_test: 62 checks, 6 failed
