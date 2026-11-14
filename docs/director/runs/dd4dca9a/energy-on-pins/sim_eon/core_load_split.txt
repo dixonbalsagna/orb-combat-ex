@@ -1,0 +1,1 @@
+ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name

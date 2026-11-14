@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+plans compared: 5024 over 20 matches (default from seed 1)
+     988  chain
+      27  finisher
+       1  melee:CHARGE INTERRUPT
+     181  melee:CLASH SHOCKWAVE
+     537  melee:DODGE & COUNTER
+     424  melee:DODGE & READ
+     267  melee:GUARD BREAK
+     327  melee:HEAVY CLASH — COUNTERED
+     256  melee:HEAVY CLASH — WON
+     238  melee:PRESSURE — GUARD HOLDS
+     149  melee:PRESSURE — GUARD HOLDS → COUNTER
+     151  melee:PURSUIT — CAUGHT
+     161  melee:PURSUIT — TARGET SLIPS AWAY
+    1232  melee:TRADE BLOWS
+      47  sig:CLASH
+      10  sig:DODGE
+       2  sig:ESCAPE
+      12  sig:GUARD
+      14  sig:HIT
+loader check passed

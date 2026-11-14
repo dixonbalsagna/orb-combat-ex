@@ -1,0 +1,7 @@
+ok    3 blows leaning, then B: at least 70% reach it (10 of 10)
+ok    no lean: it's today's rate (8 against 10)
+ok    worth doesn't move (25.73 against 25.73)
+ok    off: no wall
+ok    off: no slot
+WALK: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

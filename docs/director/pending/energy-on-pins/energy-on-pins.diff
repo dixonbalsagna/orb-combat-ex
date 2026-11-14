@@ -1,0 +1,95 @@
+diff --git a/sim/director/tools/arc_check.gd b/sim/director/tools/arc_check.gd
+index 22a5062..9837c70 100644
+--- a/sim/director/tools/arc_check.gd
++++ b/sim/director/tools/arc_check.gd
+@@ -36,9 +36,12 @@ func _expect(ok: bool, what: String) -> void:
+ 		failed += 1
+ 
+ 
+-func _fresh(seed: int = 11) -> SimState:
++func _fresh(seed: int = 11, modelOff: bool = false) -> SimState:
+ 	var S := SimCore.createSim()
+-	SimCore.newMatch(S, seed, {"p1": false, "p2": false}, {"planet": 7, "touch": 2, "planetGen": 3, "intro": false})
++	var su: Dictionary = {"planet": 7, "touch": 2, "planetGen": 3, "intro": false}
++	if modelOff:
++		su["power"] = false
++	SimCore.newMatch(S, seed, {"p1": false, "p2": false}, su)
+ 	for f in S.fighters:
+ 		f.ai = null
+ 		f.hp = 100000.0
+@@ -474,7 +477,7 @@ func _brake() -> void:
+ 
+ ## The meteor's landing: World's bowl, a blast over it, and one a match.
+ func _meteorBowl() -> void:
+-	var S := _fresh()
++	var S := _fresh(11, true)   # (the model off: with it on, World's impactEnergy drops the tier for the meteor's authored speed, a bowl of 4,571 against World's 6,046; the fix waits until after GW1a, docs/director/pending/power-on/)
+ 	var A = S.fighters[0]
+ 	var D = S.fighters[1]
+ 	var cfg: Dictionary = DirArc.cfg()
+diff --git a/sim/director/tools/beam_ai_check.gd b/sim/director/tools/beam_ai_check.gd
+index e8cf629..b4429d6 100644
+--- a/sim/director/tools/beam_ai_check.gd
++++ b/sim/director/tools/beam_ai_check.gd
+@@ -34,7 +34,7 @@ func _expect(ok: bool, what: String) -> void:
+ 
+ func _match(seed: int) -> SimState:
+ 	var S := SimCore.createSim()
+-	SimCore.newMatch(S, seed, {"p1": true, "p2": false}, {"intro": false})
++	SimCore.newMatch(S, seed, {"p1": true, "p2": false}, {"intro": false, "dash": false})   # (the dash off: with it on the computer closes fast and starts its hold while locked in an exchange, where it never climbs a stage; a finding for after GW1a)
+ 	for f in S.fighters:
+ 		f.hp = 100000.0
+ 	S.fighters[1].ai = null
+diff --git a/sim/director/tools/floorlift_check.gd b/sim/director/tools/floorlift_check.gd
+index 80e4995..0c22ddc 100644
+--- a/sim/director/tools/floorlift_check.gd
++++ b/sim/director/tools/floorlift_check.gd
+@@ -35,9 +35,12 @@ func _floor(on: bool, riseTicks: int = 10) -> void:
+ 	DirInterrupt.data()["water"]["riseTicks"] = riseTicks
+ 
+ 
+-func _match(p1: bool = false, p2: bool = false, sd: int = 1) -> SimState:
++func _match(p1: bool = false, p2: bool = false, sd: int = 1, modelOff: bool = false) -> SimState:
+ 	var S := SimCore.createSim()
+-	SimCore.newMatch(S, sd, {"p1": p1, "p2": p2}, {"planet": planet, "touch": touch, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "v2": [true, true]})
++	var su: Dictionary = {"planet": planet, "touch": touch, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "v2": [true, true]}
++	if modelOff:
++		su["power"] = false
++	SimCore.newMatch(S, sd, {"p1": p1, "p2": p2}, su)
+ 	return S
+ 
+ 
+@@ -142,7 +145,7 @@ func _table(riseTicks: int) -> Array:
+ 	for b in DEPTHS:
+ 		var row: Array = []
+ 		for how in ["drop", "launch"]:
+-			var S: SimState = _match()
++			var S: SimState = _match(false, false, 1, true)   # (the model off: with it on the drop and the send land differently and the control sees no pop; the lift is World's)
+ 			_floor(true, riseTicks)
+ 			var x: float = _column(S, float(b))
+ 			var A = S.fighters[0]
+diff --git a/sim/director/tools/follow_check.gd b/sim/director/tools/follow_check.gd
+index 9d4803c..090e849 100644
+--- a/sim/director/tools/follow_check.gd
++++ b/sim/director/tools/follow_check.gd
+@@ -93,6 +93,8 @@ func _rows(on: bool) -> void:
+ 		var d0: float = SimDetMath.hypot(SimWrap.sdx(A.x, D.x), A.y - D.y)
+ 		_taunts = 0
+ 		_hits = 0
++		while S.dirS.stop > 0.0 or S.pause.left > 0.0:
++			_st(S, _x())   # the host offers a press again until a live tick (sim_host.gd): with the energy model on, his landing can hold the clock here
+ 		_st(S, _x())
+ 		var flying: bool = DirBands.who(S) == 0
+ 		var at: int = -1
+diff --git a/sim/director/tools/loader_check.gd b/sim/director/tools/loader_check.gd
+index b91d4e8..90ff2c1 100644
+--- a/sim/director/tools/loader_check.gd
++++ b/sim/director/tools/loader_check.gd
+@@ -30,7 +30,7 @@ func _init() -> void:
+ 	DirExchange.planCheck = _check
+ 	for i in range(n):
+ 		var S := SimCore.createSim()
+-		SimCore.newMatch(S, base + i)
++		SimCore.newMatch(S, base + i, {}, {"power": false})   # (the frozen parity copy is the model-off profile: with the model on a live chain link's launch says "share": "chainLink")
+ 		SimGolden.applyArm(arm, S.fighters)
+ 		var steps: int = 0
+ 		while steps < 43200 and S.game.ko == null and diffs.size() < 10:

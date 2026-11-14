@@ -1,0 +1,6 @@
+FAIL  the computer's beam starts as a hold, and its exchange comes at the release (-2008 ticks later)
+FAIL  nobody is locked while it charges (0 ticks in an exchange, 10 its rival locked)
+FAIL  it lets go at a stage, pays that stage (-1.0), and fires
+FAIL  its pacing keeps its signature wait (ready at 0.0)
+ok    off, the computer's signature is the old request: no hold, its exchange locks its rival (91 ticks)
+BEAM AI: 4 check(s) failed

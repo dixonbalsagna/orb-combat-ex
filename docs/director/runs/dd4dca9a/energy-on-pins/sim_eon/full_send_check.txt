@@ -1,0 +1,12 @@
+ok    on: down at the top on a foe in the air is the slam: he's sent down (-600)
+ok    on: at tier 1 the slam is CRATER SLAM and digs a crater where he lands (r 405)
+ok    on: at tier 2 the slam is CRATER SLAM and digs a crater where he lands (r 534)
+ok    negative control, craterSlam off: the planner's DRIVE DOWN, and no crater where he lands
+ok    on: down at the top on a foe on the ground: the down send from where he stands (bury)
+ok    on: up at the top sends him up (589)
+ok    on: toward at the top sends him across (1008)
+ok    on: a hold short of the top never sends
+ok    on: a quick down flick on a foe in the air doesn't send, and gives UI's hint cue
+ok    off: as before, no send
+ok    the top, with the plain hold's stages off, is level 3
+FULL SEND: 0 check(s) failed
