@@ -1,0 +1,42 @@
+06:59:32 a_press_check exit 0: A PRESS: 0 check(s) failed
+06:59:48 arc_check exit 1: ARC: 1 check(s) failed
+07:00:25 arrive_check exit 0: ARRIVE: 0 check(s) failed
+07:06:43 bark_reads_check exit 0: bark_reads_check: passed
+07:06:50 beam_ai_check exit 1: BEAM AI: 1 check(s) failed
+07:06:57 beam_front_check exit 1: FRONT: 4 check(s) failed
+07:07:03 beam_move_check exit 0: BEAM MOVE: 0 check(s) failed
+07:07:08 carry_round_check exit 0: CARRY ROUND: 0 check(s) failed
+07:07:14 chase_tap_check exit 0: CHASE: 0 check(s) failed
+07:07:28 city_push_check exit 0: CITY PUSH: 0 check(s) failed
+07:07:39 driver_check exit 0: DRIVER: 0 check(s) failed
+07:07:50 ending_check exit 0: ENDING: 0 check(s) failed
+07:07:55 ending_team_check exit 0: ENDING TEAM: 0 check(s) failed
+07:08:00 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+07:08:07 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+07:08:41 floorlift_check exit 1: FLOORLIFT: 1 check(s) failed
+07:08:59 follow_check exit 0: FOLLOW: 0 check(s) failed
+07:09:05 full_send_check exit 0: FULL SEND: 0 check(s) failed
+07:09:15 knock_wall_check exit 1: KNOCK WALL: 1 check(s) failed
+07:09:28 launch_cuts_check exit 0: LAUNCH CUTS: 0 check(s) failed
+07:09:39 location_check exit 0: LOCATION: 0 check(s) failed
+07:09:44 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+07:09:49 outside_check exit 0: OUTSIDE: 0 check(s) failed
+07:09:54 pace_check exit 0: PACE: 0 check(s) failed
+07:10:00 phrase_check exit 0: PHRASE: 0 check(s) failed
+07:10:05 plane_check exit 0: PLANE: 0 check(s) failed
+07:10:10 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+07:10:16 press_decides_check exit 0: PRESS: 0 check(s) failed
+07:10:21 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+07:10:27 reads_check exit 0: reads_check: 16 of 16 passed
+07:10:32 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+07:10:37 relief_check exit 0: RELIEF: 0 check(s) failed
+07:11:29 sigvariants_check exit 0: sigvariants check passed
+07:11:38 stance_check exit 0: STANCE: 0 check(s) failed
+07:11:50 stick_check exit 0: STICK: 0 check(s) failed
+07:11:54 stick_lunge_check exit 0: STICK LUNGE: 0 check(s) failed
+07:12:00 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+07:12:05 sure_reach_check exit 0: sure_reach_check: passed
+07:12:54 swing_check exit 0: SWING: 0 check(s) failed
+07:14:18 swing_legal_check exit 0: SWING LEGAL: 0 check(s) failed
+07:14:51 walk_check exit 1: WALK: 1 check(s) failed
+07:14:58 well_dir_check exit 0: 

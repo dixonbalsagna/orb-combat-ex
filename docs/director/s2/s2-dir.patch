@@ -1,0 +1,717 @@
+diff --git a/sim/director/bands.gd b/sim/director/bands.gd
+index 60df4d8..7c3a858 100644
+--- a/sim/director/bands.gd
++++ b/sim/director/bands.gd
+@@ -188,13 +188,27 @@ static func _weightName(weight: int) -> String:
+ 	return "heavy" if weight == SimAct.HEAVY else "light"
+ 
+ 
++## The band a press reads (spike S2, the gravity well): the close band stays the band's own; outside it, with the well on, the middle if A
++## is inside D's well or on its edge (SimWell's zone, written once a tick; straight from the distance before the first write), else
++## the far. With the well off, the band as it was. Read on a press's path only: the computer's choices, zips, the chase tap and the grab
++## keep today's edges.
++static func pressBand(S: SimState, A, D) -> int:
++	var b: int = band(A, D)
++	if not S.wellOn or A.wel == null or b == CLOSE:
++		return b
++	var z: int = A.wel.zone
++	if z < 0:
++		z = SimWell.zoneNow(S, A, D)
++	return MID if z <= SimWell.EDGE else FAR
++
++
+ ## A's press from outside the close band: his move toward D starts and nothing else is decided. It ends engageBh from
+ ## D, on A's own side and at D's height, after the band's ticks: the lunge's, the far flight's, or the charge's for
+ ## his weight. opn is the opening the press held (a riposte, a reversal, a punish): it is kept for the engage.
+ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, opn: int = 0, charge: bool = false) -> void:
+ 	var c: Dictionary = data()
+ 	var d: float = dist(A, D)
+-	var b: int = band(A, D)
++	var b: int = pressBand(S, A, D)   # (the well: inside it the middle band reaches as far as the well and its edge)
+ 	var eng: float = float(c.engageBh) * BH
+ 	var m: Dictionary = c.lunge
+ 	if b == FAR:
+@@ -203,6 +217,14 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
+ 	if cr:
+ 		m = DirRecoil.cfg().counterRush
+ 	var n: int = clampi(int(ceil(maxf(0.0, d - eng) / float(m.speed) * DirData.TICKS_PER_SEC)), int(m.minTicks), int(m.maxTicks))
++	# The snap (the gravity well): the middle band's approach with the well's speed, the faster of the lunge's 4,000 and flat out for his
++	# level (Game Design's S2 ruling 1), with no 20-tick ceiling but never more than maxStepBh a tick. At tier 1 it is today's lunge.
++	var snap: bool = S.wellOn and A.wel != null and bool(SimWell.cfg().snap.enabled) and not charge and not cr and b == MID
++	if snap:
++		var w: Dictionary = SimWell.cfg().snap
++		var sp: float = maxf(float(w.floorSpeed), SimPower.flatFor(S, A))
++		n = maxi(int(m.minTicks), int(ceil(maxf(0.0, d - eng) / sp * DirData.TICKS_PER_SEC)))
++		n = maxi(n, int(ceil(maxf(0.0, d - eng) / (float(w.maxStepBh) * BH))))
+ 	# The mid-band lunge winds up before it moves (melee-press-feel.md section 2b): a crouch the defender can read.
+ 	var wind: int = int(c.lunge.get("windupTicks", {}).get("light" if DirStick.pending(A) else _weightName(weight), 0)) if (b == MID and not charge and not cr) else 0   # (the counter-rush has no crouch)
+ 	var ret: bool = DirBrawl.returning(S, A) and not cr
+@@ -233,6 +255,9 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
+ 		_startCue(S, A, D, "return", "charge" if charge else ("lunge" if b == MID else "far"), wind, n)   # for Camera to catch him, and VFX and Animation to show him coming
+ 	var what: String = ": CHARGES" if charge else (": LUNGE" if b == MID else ": FLIES IN")
+ 	SimEvents.feed(S, A.name + " " + String(DirExchange.KIND[weight]).to_upper() + what, NAMES[b] + " band, " + SimMathx.jstr(SimMathx.jround(d / BH)) + " bh; " + ("he winds up for " + str(wind) + " ticks; " if wind > 0 else "") + "the exchange starts at the wind-up, in " + str(wind + n) + " ticks")
++	if snap:
++		SimEvents.feed(S, A.name + " SNAP", SimMathx.jstr(SimMathx.jround(d / BH)) + " bh into a well of " + SimMathx.jstr(SimMathx.jround(float(D.wel.r) / BH)) + " bh, in " + str(wind + n) + " ticks")
++		SimFx.cue(S, A, "snap", str(wind + n), String(D.keys))
+ 	_aiChoose(S, D, wind + n)
+ 
+ 
+@@ -284,8 +309,10 @@ static func farPressNow(S: SimState, A, weight: int, entry: int) -> bool:
+ 	if (A.state != "free" and A.state != "charging") or A.stunTicks > 0 or DirInterrupt.opening(S, A) != 0 or DirRecoil.flipping(S, A) or DirWallKick.pushing(S, A):
+ 		return false
+ 	var D = SimRoster.opp(S, A)
+-	if band(A, D) != FAR:
++	if pressBand(S, A, D) != FAR:
+ 		return false
++	if S.wellOn and A.wel != null:
++		SimEvents.feed(S, A.name + " FAR KIT, outside the well", SimMathx.jstr(SimMathx.jround(dist(A, D) / BH)) + " bh; the well is " + SimMathx.jstr(SimMathx.jround(float(D.wel.r) / BH)) + " bh")
+ 	A.state = "free"
+ 	if taunting(D):
+ 		meet(S, A, D, weight, entry, S.tick)
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index 9f89762..861fc44 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -274,6 +274,12 @@ static func starts(S: SimState, ex, kind: String, opn: int, fu: bool, dState: St
+ 
+ ## The brawl begins with A's press (DirExchange._start, in place of the plan). An attacker who arrived by a lunge
+ ## wound his heavy up on the way.
++## The close fight's own-body mode (spike S2: well.json close.mode "own", or the setup's "wellClose"): each fighter's stick moves his own
++## body, a body is solid, and a fighter holding away breaks clear on the leaveAfterBlows-th blow that reaches him. Set at a brawl's start
++## and each of its ticks.
++static var ownOn: bool = false
++
++
+ static func begin(S: SimState, ex, kind: String) -> void:
+ 	var c: Dictionary = cfg()
+ 	var big: bool = kind == "heavy" and bigLunge(ex.A, DirExchange.planTick if DirExchange.planTick >= 0 else S.tick)   # his press was B: the heavy
+@@ -305,6 +311,25 @@ static func begin(S: SimState, ex, kind: String) -> void:
+ 	_s(ex.A, CARRY_X, int(round(cx * float(c.carryShare) * 16.0)))
+ 	_s(ex.A, CARRY_Y, int(round(cy * float(c.carryShare) * 16.0)))
+ 	_s(ex.A, CARRY_N, int(c.carryTicks))
++	ownOn = S.wellOwn and ex.A.wel != null and ex.D.wel != null
++	if ownOn:
++		# Own bodies: each keeps carryShare of his own speed, fading over carryTicks, in place of the pair's summed drift. Nobody is
++		# stopped dead by the other's arrival.
++		for f in [ex.A, ex.D]:
++			var fx: float = f.vx
++			var fy: float = f.vy
++			if f == ex.A and (DirExchange.engaging or f.rush != null):
++				var lx: float = SimWrap.sdx(f.x, ex.D.x)
++				var ly: float = ex.D.y - f.y
++				var ll: float = SimDetMath.hypot(lx, ly)
++				fx = lx / ll * _flySpeed(S, f) if ll > 0.0 else 0.0
++				fy = ly / ll * _flySpeed(S, f) if ll > 0.0 else 0.0
++			_s(f, CARRY_X, int(round(fx * float(c.carryShare) * 16.0)))
++			_s(f, CARRY_Y, int(round(fy * float(c.carryShare) * 16.0)))
++			_s(f, CARRY_N, int(c.carryTicks))
++			f.wel.ovx = 0
++			f.wel.ovy = 0
++			f.wel.lv = 0
+ 	# Both are held from now, and the pair moves as its centre does (_move).
+ 	var pre: float = SimDetMath.hypot(ex.A.vx, ex.A.vy) * SimConst.DT   # what his own flight may have moved him on this tick already
+ 	for f in [ex.A, ex.D]:
+@@ -461,7 +486,15 @@ static func over(S: SimState, ex, why: String) -> void:
+ 	DirGrapple.over(S, ex, why)   # a catch or a clinch ends with the brawl
+ 	var said: bool = ex.tag != "ZIP"   # a zip's ticks in reach were never announced as a brawl: nothing ends
+ 	ex.branch = why
+-	if why != "walk":
++	var keepOwn: bool = ownOn and (why == "apart" or why == "idle" or why == "broke")   # own bodies: each walks on at his own speed
++	if ownOn:
++		for f in [ex.A, ex.D]:
++			if f.wel != null:
++				f.wel.ovx = 0
++				f.wel.ovy = 0
++				f.wel.lv = 0
++			_s(f, CARRY_N, 0)
++	if why != "walk" and not keepOwn:
+ 		for f in [ex.A, ex.D]:
+ 			if f.state == "locked":
+ 				f.vx = 0.0   # the pair's drift ends with the brawl; two who walk out keep theirs
+@@ -780,6 +813,8 @@ static func press(S: SimState, f, st: int, energy: bool = false) -> void:
+ ## The launcher (section 3): a B thrown while the rival's stagger holds its window open winds for
+ ## launcher.windupTicks, always lands, and launches.
+ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, already: bool = false, energy: bool = false, floor: bool = false) -> int:
++	if ownOn and f.wel != null:
++		f.wel.lv = 0   # the break-away's count: his own attack resets it
+ 	var ex = S.dirS.ex
+ 	var c: Dictionary = cfg()
+ 	var now: int = _now(S)
+@@ -1418,6 +1453,8 @@ static func contact(S: SimState, ex, b) -> void:
+ 	if _setPiece(ex):
+ 		over(S, ex, "break")   # the blow broke a limb: the break launch plays in this exchange
+ 		return
++	if ownOn and _broke(S, ex, o):
++		return   # he held away through the blows: he breaks clear
+ 	if DirInterrupt.gi(f, DirInterrupt.LANDED) == landed0:
+ 		# Blocked: it chips, and no run changes. A heavy on a guard staggers the blocker in place (the set guard and
+ 		# the fresh one are C2b's). A shot on a guard wore him by the blocked shot's rule, and no more.
+@@ -3009,12 +3046,179 @@ static func _alone(ex, f) -> bool:
+ 	return st[0] * SimWrap.sdx(o.x, f.x) + st[1] * (f.y - o.y) >= 0.0
+ 
+ 
++## Own bodies: the stick that moves f's own body in a brawl. A player's, as he holds it; staggered, the way he leans at nudge.stagger. The
++## computer's is its nudge, which was written to steer the pair: toward its rival it follows, and where it pushed away it holds still (a
++## retune is Encounter's, after the trial).
++static func _ownStick(ex, f) -> PackedFloat64Array:
++	var o = ex.D if f == ex.A else ex.A
++	var ux: float = 0.0
++	var uy: float = 0.0
++	if f.stunTicks <= 0:
++		var st: PackedFloat64Array = stick(ex, f)
++		ux = st[0]
++		uy = st[1]
++		if f.ai != null and ux * SimWrap.sdx(f.x, o.x) + uy * (o.y - f.y) < 0.0:
++			ux = 0.0
++			uy = 0.0
++	elif f.ai == null:
++		ux = f.heldMx * float(cfg().nudge.stagger)
++		uy = f.heldMy * float(cfg().nudge.stagger)
++	var ul: float = SimDetMath.hypot(ux, uy)
++	if ul > 1.0:
++		ux /= ul
++		uy /= ul
++	return PackedFloat64Array([ux, uy])
++
++
++## Own bodies: f's stick is at rest (the magnet works only while both are).
++static func _atRest(ex, f) -> bool:
++	var st: PackedFloat64Array = _ownStick(ex, f)
++	return SimDetMath.hypot(st[0], st[1]) <= SimAct.awayDead
++
++
++## Own bodies: f's own stick pushes into o (a solid body stops him, and only him: DirMelee.contactTick).
++static func pushesIn(ex, f, o) -> bool:
++	var st: PackedFloat64Array = _ownStick(ex, f)
++	var lx: float = SimWrap.sdx(f.x, o.x)
++	var ly: float = o.y - f.y
++	var ll: float = SimDetMath.hypot(lx, ly)
++	return ll > 0.0 and (st[0] * lx + st[1] * ly) / ll > SimAct.awayDead
++
++
++## Own bodies: f holds his stick away from o, read as held (a heavy's stagger zeroes the gated stick, not this). The computer: only when
++## it has chosen to walk out.
++static func _heldAway(ex, f, o) -> bool:
++	if f.ai != null:
++		return _g(f, AI_PART) > 0
++	if SimDetMath.hypot(f.heldMx, f.heldMy) <= SimAct.awayDead:
++		return false
++	return SimAim.angle_off_away_deg(f.heldMx, f.heldMy, 1 if SimWrap.sdx(o.x, f.x) >= 0.0 else -1) <= int(cfg().partDeg)
++
++
++## Own bodies (Game Design's S2 ruling 3): a blow reached o, landed or guarded. Held away, it counts; on the leaveAfterBlows-th he breaks
++## clear and the brawl ends as "broke". A stun, a stagger or a grab stops the walk: the count pauses, unchanged. True when it ended.
++static func _broke(S: SimState, ex, o) -> bool:
++	if o.wel == null:
++		return false
++	var f = ex.A if o == ex.D else ex.D
++	if o.stunTicks > 0 or DirGrapple.holds(o) or not _heldAway(ex, o, f):
++		return false
++	o.wel.lv += 1
++	if o.wel.lv < int(SimWell.cfg().close.leaveAfterBlows):
++		return false
++	end(S, ex, "broke")
++	return true
++
++
++## Own bodies, once a brawl tick in place of _move: each fighter's stick moves his own body at close.ownMul of his flight (as the pair's
++## nudge did), ramped over close.rampTicks; his part of the speed the brawl began with fades over carryTicks. Kept per body: the live
++## gate (no stick during a zip's ticks in reach, a double hit or a grab), a step in carrying him (his stick waits), the guard's and the
++## stagger's factors, the step's cap, a building's face and a slope, each at his own place. Inside the give leash the giver's stick moves
++## him by _giveStep; past it he walks at his own pace. Every own movement is counted on a winder's gap, or heavies land from too far.
++static func _moveOwn(S: SimState, ex) -> void:
++	var c: Dictionary = cfg()
++	var wc: Dictionary = SimWell.cfg().close
++	var A = ex.A
++	var D = ex.D
++	var dt: float = SimConst.DT
++	var live: bool = not quiet(ex) and _g(A, DBL_AT) == 0 and not DirGrapple.holds(A) and not DirGrapple.holds(D)
++	var gv = _giver(S, ex)
++	var d0: float = DirBands.dist(A, D)
++	var leash: float = float(DirData.contact().offset) + float(c.give.leashBh) * DirInterrupt.BH
++	var cap: float = float(c.maxStepBh) * DirInterrupt.BH / dt
++	var nx := PackedFloat64Array([A.x, D.x])
++	var ny := PackedFloat64Array([A.y, D.y])
++	for k in range(2):
++		var f = A if k == 0 else D
++		var st: PackedFloat64Array = _ownStick(ex, f) if live else PackedFloat64Array([0.0, 0.0])
++		var ux: float = st[0]
++		var uy: float = st[1]
++		if gv == f and _alone(ex, f) and d0 < leash:
++			ux = 0.0   # inside the give leash his stick moves him by _giveStep
++			uy = 0.0
++		var tgt: float = float(wc.ownMul) * _flySpeed(S, f)
++		if f.stance == 1.0 and _g(f, LINE) == 0:
++			tgt *= float(c.nudge.guard)   # he guards
++		var acc: float = float(wc.ownMul) * _flySpeed(S, f) / maxf(1.0, float(int(wc.rampTicks)))
++		var vx: float = float(f.wel.ovx) / 16.0
++		var vy: float = float(f.wel.ovy) / 16.0
++		vx += clampf(ux * tgt - vx, -acc, acc)
++		vy += clampf(uy * tgt - vy, -acc, acc)
++		if f.rush != null:
++			vx = 0.0   # a step in carries him: his stick waits for his arrival, the other keeps his
++			vy = 0.0
++		f.wel.ovx = int(round(vx * 16.0))
++		f.wel.ovy = int(round(vy * 16.0))
++		var wx: float = vx
++		var wy: float = vy
++		var cn: int = _g(f, CARRY_N)
++		if cn > 0:
++			var share: float = float(cn) / maxf(1.0, float(int(c.carryTicks)))
++			wx += float(_g(f, CARRY_X)) / 16.0 * share
++			wy += float(_g(f, CARRY_Y)) / 16.0 * share
++			_s(f, CARRY_N, cn - 1)
++		if f.rush != null:
++			wx = 0.0
++			wy = 0.0
++		var wl: float = SimDetMath.hypot(wx, wy)
++		if wl > cap:
++			wx *= cap / wl
++			wy *= cap / wl
++		if wx != 0.0 or wy != 0.0:
++			# A building's face, at his own place: along it the step goes on, straight into it he goes up and over.
++			var cl: float = float(c.nudge.clearBh) * DirInterrupt.BH
++			var sl: float = SimDetMath.hypot(wx, wy)
++			if _walled(S, SimWrap.wrap(f.x + wx * dt + wx / sl * cl), f.y + wy * dt + wy / sl * cl) and not _walled(S, f.x, f.y):
++				var okx: bool = wx != 0.0 and not _walled(S, SimWrap.wrap(f.x + wx * dt + SimMathx.jsign(wx) * cl), f.y)
++				var oky: bool = wy != 0.0 and not _walled(S, f.x, f.y + wy * dt + SimMathx.jsign(wy) * cl)
++				if okx and (not oky or absf(wx) >= absf(wy)):
++					wy = 0.0
++				elif oky:
++					wx = 0.0
++				elif not _walled(S, f.x, f.y + sl * dt + cl):
++					wx = 0.0
++					wy = sl
++				else:
++					wx = 0.0
++					wy = 0.0
++		if wx != 0.0:
++			# A slope lifts him; the whole step keeps to the cap (the step across halves until it does; too steep, he goes up it).
++			var fit: bool = false
++			var across: float = absf(wx)
++			for _j in range(5):
++				var lift: float = SimFighter.floorFor(S, f, SimWrap.wrap(f.x + wx * dt), _gz()) - (f.y + wy * dt)
++				if lift <= 0.0 or SimDetMath.hypot(wx * dt, wy * dt + lift) <= cap * dt:
++					fit = true
++					break
++				wx *= 0.5
++			if not fit:
++				wx = 0.0
++				wy = maxf(wy, across)
++		_s(f, PMOVE_X, _g(f, MOVE_X))
++		_s(f, PMOVE_Y, _g(f, MOVE_Y))
++		_s(f, MOVE_X, int(round(wx * 16.0)))
++		_s(f, MOVE_Y, int(round(wy * 16.0)))
++		nx[k] = SimWrap.wrap(f.x + wx * dt)
++		ny[k] = f.y + wy * dt
++	# What the two own steps do to the gap is counted on a winder's gap, as giving ground is (_giveStep): the core makes the steps next.
++	var d1: float = SimDetMath.hypot(SimWrap.sdx(nx[0], nx[1]), ny[1] - ny[0])
++	for f in [A, D]:
++		if _g(f, GAPV_ON) == 1:
++			_s(f, GAPV, maxi(0, _g(f, GAPV) + int(round((d1 - d0) * 16.0))))
++	carryOn(ex)
++
++
+ ## Both fighters are given the pair's velocity, over what the core's damping keeps. Once a tick from _move, and again
+ ## after each blow (DirExchange.runBeat): a strike places its attacker and stops him, and the pair's drift carries on.
+ static func carryOn(ex) -> void:
+ 	if not isBrawl(ex) or ex.branch != "" or ex.A.state != "locked" or ex.D.state != "locked":
+ 		return
+ 	var keep: float = SimFighter.lockedKeep(SimConst.DT)
++	if ownOn:
++		for f in [ex.A, ex.D]:
++			f.vx = float(_g(f, MOVE_X)) / 16.0 / keep   # own bodies: each his own step (_moveOwn)
++			f.vy = float(_g(f, MOVE_Y)) / 16.0 / keep
++		return
+ 	for f in [ex.A, ex.D]:
+ 		f.vx = float(_g(ex.A, MOVE_X)) / 16.0 / keep
+ 		f.vy = float(_g(ex.A, MOVE_Y)) / 16.0 / keep
+@@ -3789,6 +3993,7 @@ static func tick(S: SimState, ex) -> void:
+ 		return
+ 	var c: Dictionary = cfg()
+ 	var now: int = _now(S)
++	ownOn = S.wellOwn and ex.A.wel != null and ex.D.wel != null
+ 	DirGrapple.tick(S, ex)   # the catch, the clinch and their exits (DirGrapple)
+ 	if S.dirS.ex != ex or ex.branch != "":
+ 		return
+@@ -3811,6 +4016,8 @@ static func tick(S: SimState, ex) -> void:
+ 			return
+ 		if not SimAct.peek(f).is_empty():
+ 			SimAct.clear(f)
++		if ownOn and f.stunTicks <= 0 and not _heldAway(ex, f, o):
++			f.wel.lv = 0   # the break-away's count: letting go of away resets it (a stun or a stagger pauses it)
+ 		if _g(f, SAFE_UNTIL) < 0 and f.stunTicks <= 0:
+ 			_s(f, SAFE_UNTIL, S.tick + int(c.flurry.closeGuardTicks))   # he has recovered from a close: he cannot be closed on again for this long
+ 		if not _windOn(o):
+@@ -3861,14 +4068,17 @@ static func tick(S: SimState, ex) -> void:
+ 		return
+ 	# The walk-out: both hold away for partTicks full ticks running, and the brawl lets go, free. It ends partTicks
+ 	# after the tick the later stick was first read, never sooner.
+-	if not quiet(ex) and not DirGrapple.holds(ex.A) and _g(ex.A, DBL_AT) == 0 and ex.t > SimConst.DT * 1.5 and _parting(S, ex):
++	if not ownOn and not quiet(ex) and not DirGrapple.holds(ex.A) and _g(ex.A, DBL_AT) == 0 and ex.t > SimConst.DT * 1.5 and _parting(S, ex):   # (own bodies: no walk-out count; the gap opens as they walk)
+ 		_s(ex.A, PART_N, _g(ex.A, PART_N) + 1)
+ 		if _g(ex.A, PART_N) > int(c.partTicks):
+ 			end(S, ex, "walk")
+ 			return
+ 	else:
+ 		_s(ex.A, PART_N, 0)
+-	_move(S, ex)
++	if ownOn:
++		_moveOwn(S, ex)
++	else:
++		_move(S, ex)
+ 	# A press from a gap closes it over ticks, as part of the blow (_throw).
+ 	var stepping: bool = false
+ 	for f in [ex.A, ex.D]:
+@@ -3908,7 +4118,8 @@ static func tick(S: SimState, ex) -> void:
+ 		return
+ 	var ct: Dictionary = DirData.contact()
+ 	var pull: float = float(c.pullBhPerSec) * DirInterrupt.BH * SimConst.DT * 0.5
+-	if ex.A.rush == null and ex.D.rush == null and gv == null and not stepping:
++	var magnet: bool = not ownOn or not bool(SimWell.cfg().close.magnetAtRestOnly) or (_atRest(ex, ex.A) and _atRest(ex, ex.D))   # own bodies: only while both sticks rest
++	if ex.A.rush == null and ex.D.rush == null and gv == null and not stepping and magnet:
+ 		var was := [ex.A.x, ex.A.y, ex.D.x, ex.D.y]
+ 		if absf(d) > float(ct.offset):
+ 			var px: float = minf((absf(d) - float(ct.offset)) * 0.5, pull)
+diff --git a/sim/director/exchange.gd b/sim/director/exchange.gd
+index 53a2650..b736744 100644
+--- a/sim/director/exchange.gd
++++ b/sim/director/exchange.gd
+@@ -307,7 +307,7 @@ static func _start(S: SimState, A, kind: String) -> int:
+ 	# (a riposte, a reversal, a punish) begins its approach through the cooldown and is kept for the engage.
+ 	if kind != "sig" and not engaging and DirBands.on() and not fu:
+ 		var pt: int = planTick if planTick >= 0 else S.tick
+-		var bd: int = DirBands.band(A, D)
++		var bd: int = DirBands.pressBand(S, A, D)   # (the gravity well: the press's band)
+ 		# The far taunt is a challenge: the rival's attack press while it plays answers it, and both rush to meet.
+ 		if DirBands.taunting(D) and opn == 0:
+ 			if bd != DirBands.CLOSE:
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index edf3b3b..40e583b 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -1379,5 +1379,6 @@ static func tick(S: SimState) -> void:
+ 
+ ## No launch in the old profiles: the strike shoves the (locked) target back along the attacker's facing.
+ static func knockBack(S: SimState, att, tgt) -> void:
++	SimWell.sent(tgt)   # the gravity well: a shove with no rush; no draw until his own next input
+ 	tgt.vx += att.face * KNOCKBACK
+ 	SimFx.ring(S, tgt.x, tgt.y + 34.0, 300.0, "#ffffff", 0.25, 12.0)
+diff --git a/sim/director/melee.gd b/sim/director/melee.gd
+index 3ecd9f5..b58c482 100644
+--- a/sim/director/melee.gd
++++ b/sim/director/melee.gd
+@@ -130,6 +130,17 @@ static func contactTick(S: SimState, ex) -> void:
+ 	if absf(dx) >= minS or absf(A.y - D.y) >= BODY_H or A.rush != null or D.rush != null or A.state == "launched" or D.state == "launched" or DirStick.carrying(A) or DirStick.carrying(D):
+ 		return
+ 	var push: float = (minS - absf(dx)) * 0.5
++	if DirBrawl.ownOn and DirBrawl.isBrawl(ex):
++		# Own bodies (Game Design's S2 ruling 4): a body is solid. Only the one whose own stick pushes in is moved back; with both pushing,
++		# or neither (an overlap a blow's placement left), half each as before. Nobody's stick moves the other player.
++		var ia: bool = DirBrawl.pushesIn(ex, A, D)
++		var id: bool = DirBrawl.pushesIn(ex, D, A)
++		if ia and not id:
++			A.x = SimWrap.wrap(A.x - s * push * 2.0)
++			return
++		if id and not ia:
++			D.x = SimWrap.wrap(D.x + s * push * 2.0)
++			return
+ 	A.x = SimWrap.wrap(A.x - s * push)
+ 	D.x = SimWrap.wrap(D.x + s * push)
+ 
+diff --git a/sim/director/recoil.gd b/sim/director/recoil.gd
+index 097e54f..abea04e 100644
+--- a/sim/director/recoil.gd
++++ b/sim/director/recoil.gd
+@@ -72,6 +72,8 @@ static func _ai() -> Dictionary:
+ ## A knock-back has just been sent (DirLaunch.knock): tgt's window opens. kind: 1 the skid, 2 the upright slide, 3 the
+ ## drift. dist: its length in units; endTick: when it is reckoned to end.
+ static func knocked(S: SimState, att, tgt, dist: float, kind: int, endTick: int) -> void:
++	if tgt != null:
++		SimWell.sent(tgt)   # the gravity well: no draw for him, or the one who sent him, until his own next input
+ 	if not on() or tgt == null or not tgt.act.v2:
+ 		return
+ 	var c: Dictionary = cfg()
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index 8f11c54..f4fdc87 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -517,7 +517,7 @@ static func _go(S: SimState, f, dir: int, mask: int, quiet: bool = false) -> voi
+ static func _lungeLight(S: SimState, f) -> bool:
+ 	if not on() or not bool(cfg().get("lungeLight", {}).get("enabled", false)) or f.act.mode == 1 or DirBrawl.exOf(S) != null:
+ 		return false
+-	return DirBands.band(f, DirBrawl.rivalOf(S, f)) == DirBands.MID
++	return DirBands.pressBand(S, f, DirBrawl.rivalOf(S, f)) == DirBands.MID   # (inside a well a flick is the light snap)
+ 
+ 
+ ## A press he couldn't act on: it goes on his first tick free inside bufferTicks; past that it's refused, said once.
+diff --git a/sim/director/tools/well_dir_check.gd b/sim/director/tools/well_dir_check.gd
+new file mode 100644
+index 0000000..4539950
+--- /dev/null
++++ b/sim/director/tools/well_dir_check.gd
+@@ -0,0 +1,264 @@
++extends SceneTree
++## Spike S2, the gravity well, the director's half (scratch; never to land): godot --headless --path . --script res://sim/director/tools/well_dir_check.gd
++## The press's band (DirBands.pressBand) at the zones; the snap against today's lunge; the knock-backs' latch; the close fight's own-body
++## mode (Game Design's S2 rulings 3 and 4): a stick moves its own body, nobody's stick moves the other player, a body is solid, the magnet
++## only with both sticks at rest, the walk-out on the third blow ("broke"). Today's pair mode is the negative control for each own row.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL  " + what)
++	else:
++		print("ok    " + what)
++
++
++## Two players, sep apart at one height in the air, still: the trial's setup (flat out 3,500, travel 1.5).
++func _mk(sep: float, more: Dictionary = {}) -> SimState:
++	var S := SimCore.createSim()
++	var su: Dictionary = {"well": true, "intro": false, "flatOut": 3500.0, "travel": 1.5, "v2": [true, true]}
++	su.merge(more, true)
++	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, su)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	a.x = 3000.0
++	b.x = SimWrap.wrap(3000.0 + sep)
++	a.y = 2500.0
++	b.y = 2500.0
++	for f in [a, b]:
++		f.vx = 0.0
++		f.vy = 0.0
++		f.face = 1.0 if f == a else -1.0
++		if f.wel != null:
++			f.wel.zone = -1
++	S.dirS.cool = 0.0
++	return S
++
++
++func _in(mx: float = 0.0, light: bool = false, heavy: bool = false) -> SimIntent:
++	var i := SimIntent.new()
++	i.mx = mx
++	i.light = light
++	i.heavy = heavy
++	return i
++
++
++func _step(S: SimState, i0 = null, i1 = null) -> void:
++	SimCore.step(S, [i0 if i0 != null else _in(), i1 if i1 != null else _in()])
++	S.out.feed.clear()
++
++
++func _bh(n: float) -> float:
++	return n * 75.0
++
++
++## The press's band at a gap: the well's answer, read straight from the distance.
++func _band(sep: float, more: Dictionary, tierA: float = 1.0, tierD: float = 1.0) -> int:
++	var S := _mk(sep, more)
++	S.fighters[0].tier = tierA
++	S.fighters[1].tier = tierD
++	return DirBands.pressBand(S, S.fighters[0], S.fighters[1])
++
++
++func _t_band() -> void:
++	print("-- the press's band")
++	ok(_band(_bh(14.0), {"well": false}) == DirBands.FAR and _band(_bh(8.0), {"well": false}) == DirBands.MID, "the well off: the band as it was (8 bh middle, 14 far)")
++	ok(_band(_bh(8.0), {}) == DirBands.MID, "tier 1: 8 bh is inside the well: the middle")
++	ok(_band(_bh(14.0), {}) == DirBands.MID, "tier 1: 14 bh is on its edge (12.5 to 15.5): the middle, where today it is the far")
++	ok(_band(_bh(17.0), {}) == DirBands.FAR, "tier 1: 17 bh is outside: the far kit")
++	ok(_band(_bh(19.0), {}, 1.0, 4.0) == DirBands.MID and _band(_bh(19.0), {}, 4.0, 1.0) == DirBands.FAR, "a tier 4 well reaches a tier 1 fighter from 19 bh; the tier 4 fighter, outside the small well, has the far kit")
++	ok(_band(_bh(2.0), {}) == DirBands.CLOSE, "the close band stays the band's own")
++
++
++## A press of X at a gap: the ticks to the engage (APPR_LEFT, the wind-up and the flight), and whether it snapped.
++func _press(sep: float, more: Dictionary, tierA: float = 1.0, full: bool = false) -> Dictionary:
++	var S := _mk(sep, more)
++	var a = S.fighters[0]
++	a.tier = tierA
++	if full:
++		a.power = 100.0
++	var cues: Array = []
++	var feed: Array = []
++	SimCore.step(S, [_in(0.0, true), _in()])
++	for e in S.out.fx:
++		if e.type == "cue":
++			cues.append(String(e.kind))
++	for l in S.out.feed:
++		feed.append(String(l.tag) + ": " + String(l.sub))
++	S.out.fx.clear()
++	S.out.feed.clear()
++	return {"S": S, "left": DirInterrupt.gi(a, DirInterrupt.APPR_LEFT), "wind": DirInterrupt.gi(a, DirInterrupt.APPR_WIND), "snap": cues.has("snap"), "feed": " ".join(feed)}
++
++
++func _t_snap() -> void:
++	print("-- the snap")
++	for bh in [6.0, 9.0, 12.0]:
++		var on: Dictionary = _press(_bh(bh), {})
++		var off: Dictionary = _press(_bh(bh), {"well": false})
++		ok(on.left == off.left and on.left > 0 and on.snap, "tier 1 from %.0f bh: the snap is today's lunge, %d ticks to the engage (today %d)" % [bh, on.left, off.left])
++	var e: Dictionary = _press(_bh(15.0), {})
++	var eng: float = _bh(2.5)
++	var want: int = int(e.wind) + maxi(3, int(ceil((_bh(15.0) - eng) / 4000.0 * 60.0)))
++	ok(e.snap and e.left == want, "tier 1 from 15 bh, the well's edge: a snap (today a taunt), %d ticks (the lunge's 4,000 with no 20-tick ceiling: %d)" % [e.left, want])
++	var o: Dictionary = _press(_bh(17.0), {})
++	ok(not o.snap and o.left == 0 and o.feed.contains("FAR KIT") and DirBands.taunting(o.S.fighters[0]), "tier 1 from 17 bh, outside: no snap, the far kit (a tap taunts), and the feed says so")
++	var t1: Dictionary = _press(_bh(12.0), {}, 1.0)
++	var t4: Dictionary = _press(_bh(12.0), {}, 4.0, true)
++	var flat4: float = SimPower.flatFor(t4.S, t4.S.fighters[0])
++	var n4: int = int(t4.left) - int(t4.wind)
++	var floorN: int = int(ceil((_bh(12.0) - eng) / _bh(3.0)))
++	ok(int(t4.left) < int(t1.left) and n4 >= floorN, "tier 4 from 12 bh flies faster (%d ticks against %d; flat out %.0f), never more than 3 bh a tick (at least %d of flight)" % [t4.left, t1.left, flat4, floorN])
++	# the defender is free and unmoved while it flies
++	var r: Dictionary = _press(_bh(9.0), {})
++	var S: SimState = r.S
++	var d = S.fighters[1]
++	var x0: float = d.x
++	var still: bool = true
++	var gi := _in()
++	gi.guard = true   # (his hands on the guard: the core's draw, which acts on a silent fighter, is not the snap's)
++	for t in range(int(r.left) - 1):
++		_step(S, null, gi)
++		still = still and d.x == x0 and d.state == "free"
++	ok(still, "the defender is free and unmoved by the snap while it flies (%d ticks)" % (int(r.left) - 1))
++
++
++func _t_latch() -> void:
++	print("-- the knock-backs' latch")
++	var S := _mk(_bh(4.0))
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	b.wel.own = 1
++	DirRecoil.knocked(S, a, b, 300.0, 1, S.tick + 20)
++	var k1: bool = b.wel.own == 0
++	b.wel.own = 1
++	DirLaunch.knockBack(S, a, b)
++	ok(k1 and b.wel.own == 0, "DirRecoil.knocked and DirLaunch.knockBack set the latch: no draw until his own next input")
++
++
++## A brawl begun by A's light from 2 bh; then each tick the sticks given. Returns the run's readings.
++func _brawl(own: bool, sticks: Callable, ticks: int, seed_more: Dictionary = {}) -> Dictionary:
++	var more: Dictionary = {"wellClose": "own" if own else "pair"}
++	more.merge(seed_more, true)
++	var S := _mk(_bh(2.0), more)
++	_step(S, _in(0.0, true))
++	var ex = S.dirS.ex
++	var r := {"S": S, "started": ex != null and DirBrawl.isBrawl(ex), "end": "", "endT": -1, "xs0": [], "xs1": [], "vx0After": 0.0}
++	for t in range(ticks):
++		var pair: Array = sticks.call(S, t)
++		SimCore.step(S, [pair[0], pair[1]])
++		for e in S.out.fx:
++			if e.type == "cue" and String(e.kind) == "brawl_end" and r.end == "":
++				r.end = String(e.text)
++				r.endT = t
++		S.out.fx.clear()
++		S.out.feed.clear()
++		r.xs0.append(S.fighters[0].x)
++		r.xs1.append(S.fighters[1].x)
++		if r.end != "" and t == r.endT + 2:
++			r.vx0After = S.fighters[0].vx
++	return r
++
++
++func _moved(xs: Array, from: int, to: int) -> float:
++	var m: float = 0.0
++	for t in range(from + 1, mini(to, xs.size())):
++		m = maxf(m, absf(SimWrap.sdx(float(xs[from]), float(xs[t]))))
++	return m
++
++
++func _t_own() -> void:
++	print("-- the close fight's own-body mode (and today's, as the control)")
++	# Walking away from an idle rival, after the first blow has played out (40 ticks)
++	var away := func(S_, t): return [_in(-1.0 if t >= 40 else 0.0), _in()]
++	var ro: Dictionary = _brawl(true, away, 200)
++	var rp: Dictionary = _brawl(false, away, 200)
++	var dMoveOwn: float = _moved(ro.xs1, 40, ro.endT if ro.endT > 0 else 200)
++	var dMovePair: float = _moved(rp.xs1, 40, rp.endT if rp.endT > 0 else 200)
++	ok(ro.started and dMoveOwn < 0.5, "own: holding away from an idle rival, the rival is not moved (%.1f units)" % dMoveOwn)
++	ok(rp.started and dMovePair > 5.0, "control, today's pair: the rival is dragged (%.1f units)" % dMovePair)
++	var gOpen: float = absf(SimWrap.sdx(float(ro.xs0[ro.endT]), float(ro.xs1[ro.endT]))) - absf(SimWrap.sdx(float(ro.xs0[40]), float(ro.xs1[40]))) if ro.endT > 40 else 0.0
++	ok((ro.end == "apart" or ro.end == "idle") and gOpen > 10.0 and absf(ro.vx0After) > 10.0, "own: the gap opens as he walks (%.0f units); the brawl lets go as \"%s\" at tick %d (a second without an attack, or 4.5 bh) and he walks on (%.0f a second)" % [gOpen, ro.end, ro.endT, ro.vx0After])
++	# Walking into an idle rival: he stops against him, who is not moved
++	var into := func(S_, t): return [_in(1.0 if t >= 40 else 0.0), _in()]
++	var ri: Dictionary = _brawl(true, into, 120)
++	var rip: Dictionary = _brawl(false, into, 120)
++	var iEnd: int = ri.endT if ri.endT > 40 else 120   # (inside the brawl: once it lets go, free flight is today's)
++	var dInto: float = _moved(ri.xs1, 40, iEnd)
++	var gapEnd: float = absf(SimWrap.sdx(float(ri.xs0[iEnd - 1]), float(ri.xs1[iEnd - 1])))
++	ok(dInto < 0.5 and gapEnd >= float(DirData.contact().minSeparation) - 0.5, "own: walking into an idle rival, he stops against him (gap %.0f) and the rival is not moved (%.1f)" % [gapEnd, dInto])
++	var pEnd: int = rip.endT if rip.endT > 40 else 120
++	ok(_moved(rip.xs1, 40, pEnd) > 5.0, "control, today's pair: the pair slides (%.1f)" % _moved(rip.xs1, 40, pEnd))
++	# A stick pushed from rest moves his own body that way within 2 ticks
++	var S := _mk(_bh(2.0), {"wellClose": "own"})
++	_step(S, _in(0.0, true))
++	for t in range(40):
++		_step(S)
++	var a = S.fighters[0]
++	var b = S.fighters[1]
++	var x0: float = a.x
++	var bx0: float = b.x
++	var first: int = -1
++	for t in range(6):
++		_step(S, _in(0.0, false), _in(1.0))   # (the rival pushes toward him, then away: only the rival's own body moves)
++		if first < 0 and absf(SimWrap.sdx(bx0, b.x)) > 0.01:
++			first = t + 1
++	ok(first >= 1 and first <= 2 and absf(SimWrap.sdx(x0, a.x)) < 0.5, "own: a stick pushed from rest moves his own body within %d tick(s); the other is not moved (%.2f)" % [first, absf(SimWrap.sdx(x0, a.x))])
++	# Walking away from a rival throwing lights: he breaks clear on the third blow that reaches him
++	var lights := func(S_, t): return [_in(-1.0 if t >= 20 else 0.0), _in(0.0, t >= 20 and t % 15 == 0)]
++	var rl: Dictionary = _brawl(true, lights, 400)
++	ok(rl.end == "broke" and rl.endT > 20 and rl.endT - 20 < 120, "own: holding away from a rival throwing lights, he breaks clear as \"%s\" %d ticks after he turned away" % [rl.end, rl.endT - 20])
++	var rlp: Dictionary = _brawl(false, lights, 400)
++	ok(rlp.end != "broke", "control, today's pair: no \"broke\" (it ended as \"%s\")" % rlp.end)
++	# The magnet: only with both sticks at rest
++	var Sm := _mk(_bh(2.0), {"wellClose": "own"})
++	_step(Sm, _in(0.0, true))
++	for t in range(40):
++		_step(Sm)
++	Sm.fighters[1].x = SimWrap.wrap(Sm.fighters[0].x + _bh(3.5))   # set them apart, inside the brawl
++	var g0: float = absf(SimWrap.sdx(Sm.fighters[0].x, Sm.fighters[1].x))
++	for t in range(10):
++		_step(Sm, null, _in(0.0))   # both at rest
++	var g1: float = absf(SimWrap.sdx(Sm.fighters[0].x, Sm.fighters[1].x))
++	ok(g1 < g0 - 1.0, "own: both sticks at rest, the magnet draws them in (%.0f to %.0f)" % [g0, g1])
++	var Sn := _mk(_bh(2.0), {"wellClose": "own"})
++	_step(Sn, _in(0.0, true))
++	for t in range(40):
++		_step(Sn)
++	Sn.fighters[1].x = SimWrap.wrap(Sn.fighters[0].x + _bh(3.5))
++	var bm: float = Sn.fighters[0].x
++	for t in range(10):
++		var iu := _in()
++		iu.my = 1.0   # one stick held (up): no magnet on anybody
++		_step(Sn, iu, _in())
++	ok(absf(SimWrap.sdx(bm, Sn.fighters[0].x)) < 0.5 and absf(SimWrap.sdx(Sn.fighters[0].x, Sn.fighters[1].x)) >= _bh(3.5) - 0.5, "own: with one stick held, no magnet: neither is drawn along the line")
++
++
++func _t_hash() -> void:
++	print("-- the hash")
++	var hs: Array = []
++	for run in range(2):
++		var S := _mk(_bh(9.0), {"wellClose": "own"})
++		var h: Array = []
++		for t in range(600):
++			var i0 := _in(1.0 if (t / 100) % 2 == 0 else -1.0, t % 23 == 0)
++			var i1 := _in(-1.0 if (t / 70) % 2 == 0 else 1.0, t % 31 == 0)
++			_step(S, i0, i1)
++			S.out.fx.clear()
++			if t % 60 == 59:
++				h.append(SimHash.stateHash(S).gameplay)
++		hs.append(h)
++	ok(hs[0] == hs[1], "both switches on: two runs, one hash (10 readings)")
++
++
++func _init() -> void:
++	_t_band()
++	_t_snap()
++	_t_latch()
++	_t_own()
++	_t_hash()
++	print("WELL DIR: %d check(s), %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)

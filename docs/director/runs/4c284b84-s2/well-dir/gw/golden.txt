@@ -1,0 +1,2 @@
+wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 159.9 s
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).
