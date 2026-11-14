@@ -1,10 +1,10 @@
 --- a/ui/data/options.json	2026-11-14 02:46:07.431823200 -0800
-+++ b/ui/data/options.json	2026-11-14 02:55:39.539337900 -0800
++++ b/ui/data/options.json	2026-11-14 03:03:33.798146100 -0800
 @@ -49,6 +49,7 @@
      "glyph_style": { "default": "neutral", "group": "display", "label": "Glyph style", "help": "The look of the button glyphs. Neutral is our own position diamond with letters. A device family's own letters wait for a license check.", "choices": ["neutral"] },
      "hitstop_scale": { "default": 1.0, "group": "accessibility", "label": "Hit pause", "help": "How long the game pauses for a moment on a heavy hit, from half to full.", "accessibility": true, "min": 0.5, "max": 1.0, "step": 0.05 },
      "hotseat_alt_layout": { "default": false, "group": "controls", "label": "Alternate hot-seat keyboard layout", "help": "A second keyboard layout for two players on one keyboard. Off keeps the default layout." },
-+    "window_mode": {"default": "fullscreen", "group": "display", "label": "Window", "help": "Full screen fills the screen. Windowed opens a window you can move and resize. The change takes effect at once. Not shown in the browser, which has its own full screen.", "choices": ["fullscreen", "windowed"]},
++    "window_mode": {"default": "fullscreen", "group": "display", "label": "Window", "help": "Full screen fills the screen. Windowed opens a window you can move and resize. The change takes effect at once.", "choices": ["fullscreen", "windowed"]},
      "vfx_quality": { "default": "auto", "group": "display", "label": "Effects quality", "help": "How much debris, dust and cracking the effects draw. Auto picks by how fast the game is running; the others fix it. Fewer effects never hide a warning.", "choices": ["auto", "high", "medium", "low"] },
      "haptics": { "default": true, "group": "accessibility", "label": "Vibration", "help": "A short buzz on your pad or phone when you can transform. It is never the only signal: the screen says the same.", "accessibility": true },
      "keep_hints": { "default": false, "group": "accessibility", "label": "Keep tutorial hints up", "help": "In the guided first match, a hint stays on screen after you have done what it asks, until the next hint replaces it.", "accessibility": true },
@@ -59,7 +59,7 @@
  				continue   # a row for something that is not live yet is not listed
  			if key == "reduce_flashing" and UiData.rf_locked():
 --- a/localization/pseudo/ui/data/options.json	2026-11-14 02:48:51.306321300 -0800
-+++ b/localization/pseudo/ui/data/options.json	2026-11-14 02:56:10.987221800 -0800
++++ b/localization/pseudo/ui/data/options.json	2026-11-14 03:03:34.292300300 -0800
 @@ -435,6 +435,16 @@
        "label": "[ÅÅĺţééŕñááţéé ĥöţ-šééááţ ķééýýböááŕď ĺááýýööüţ]",
        "help": "[ÅÅ šééçööñď ķééýýbööááŕď ĺááýýööüüţ fööŕ ţŵöö pĺááýýééŕš ööñ ööñéé ķééýýbööááŕď. ÖÖff ķéééépš ţĥéé ďééfááüüĺţ ĺááýýööüţ.]"
@@ -68,7 +68,7 @@
 +      "default": "fullscreen",
 +      "group": "display",
 +      "label": "[Ŵíñďöŵ]",
-+      "help": "[Füüĺĺ šçŕééééñ fííĺĺš ţĥéé šçŕééééñ. Ŵííñďööŵééď ööpééñš áá ŵííñďööŵ ýýööüü çááñ möövéé ááñď ŕééšíížéé. Ţĥéé çĥááñĝéé ţááķééš ééffééçţ ááţ ööñçéé. Ñööţ šĥööŵñ ííñ ţĥéé bŕööŵšééŕ, ŵĥííçĥ ĥááš ííţš ööŵñ füüĺĺ šçŕééééñ. ~~~~~~~~~~~~~~~~]",
++      "help": "[Füüĺĺ šçŕééééñ fííĺĺš ţĥéé šçŕééééñ. Ŵííñďööŵééď ööpééñš áá ŵííñďööŵ ýýööüü çááñ möövéé ááñď ŕééšíížéé. Ţĥéé çĥááñĝéé ţááķééš ééffééçţ ááţ ööñçéé. ~~~~~~]",
 +      "choices": [
 +        "fullscreen",
 +        "windowed"
@@ -78,7 +78,7 @@
        "default": "auto",
        "group": "display",
 --- a/localization/pseudo/ui/data/settings.json	2026-11-14 02:48:51.307321000 -0800
-+++ b/localization/pseudo/ui/data/settings.json	2026-11-14 02:56:10.988748900 -0800
++++ b/localization/pseudo/ui/data/settings.json	2026-11-14 03:03:34.293298400 -0800
 @@ -115,6 +115,7 @@
        "id": "display",
        "title": "[Ďííšpĺáý]",
@@ -99,7 +99,7 @@
        "arena": "[Åŕéñá]",
        "simple-pad": "[Šímpĺé]"
 --- a/docs/ui/strings.md	2026-11-14 02:48:51.426067200 -0800
-+++ b/docs/ui/strings.md	2026-11-14 02:56:11.140133200 -0800
++++ b/docs/ui/strings.md	2026-11-14 03:03:34.411532200 -0800
 @@ -1,6 +1,6 @@
  # Every player-facing string in ui/data, by where it shows
  
@@ -209,7 +209,7 @@
 -| 842 | Keep tutorial hints up | `options:options.keep_hints.label` | |
 -| 843 | In the guided first match, a hint stays on screen after you have done what it asks, until the next hint replaces it. | `options:options.keep_hints.help` | |
 +| 838 | Window | `options:options.window_mode.label` | |
-+| 839 | Full screen fills the screen. Windowed opens a window you can move and resize. The change takes effect at once. Not shown in the browser, which has its own full screen. | `options:options.window_mode.help` | |
++| 839 | Full screen fills the screen. Windowed opens a window you can move and resize. The change takes effect at once. | `options:options.window_mode.help` | |
 +| 840 | Effects quality | `options:options.vfx_quality.label` | |
 +| 841 | How much debris, dust and cracking the effects draw. Auto picks by how fast the game is running; the others fix it. Fewer effects never hide a warning. | `options:options.vfx_quality.help` | |
 +| 842 | Vibration | `options:options.haptics.label` | |
