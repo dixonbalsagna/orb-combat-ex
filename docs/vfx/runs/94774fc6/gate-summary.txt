@@ -1,0 +1,5 @@
+run: main 94774fc6 + docs/vfx/pending/shared-register (v2) + struggle-ring-shape, in a scratch tree from git archive; Godot 4.7.2 headless; below-normal priority
+effects_check: 1167 ok, 0 FAIL; verdict: effects check passed
+flash_reg_check: flash register check passed
+validate: 319 files checked, 0 errors, 2 warnings
+(the 2 validate warnings are Audio's coop_cues.json and moment_cues.json, no schema)

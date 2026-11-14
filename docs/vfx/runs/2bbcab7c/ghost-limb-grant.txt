@@ -1,0 +1,7 @@
+Rendering's ghost-limb grant (docs/rendering/pending/gw1a-checks/grant-vfx-ghost-limb.patch, b96a9be0) on the EP's s422 (GW1a stack; a copy without .git, art and research; s422 unchanged since 08:55) with VFX's gw1a-pins applied (VFX, 2026-11-14)
+
+effects_check: 1169 ok, 0 FAIL; effects check passed; 52 s
+hash_check (seeds 12345, 4, 7; 3,600 ticks; six ways, the split screen too): hash check passed; every sim hash 'same as the sim alone'; 618 s on a busy machine
+ghost tally: ghosts in the real matches (every source, Rendering's after-images included): most limb-ghosts at once 4 (4 at most), of one limb 2 (2 at most); whole-figure ghosts of one fighter: asked for 10 before the budget, drawn 5 with it (5 at most, m12), Rendering's shown after-images alone 5; ticks over the budget as drawn 0, ticks Rendering's alone are over it 0, ticks over a limb limit 0
+
+Before the grant (docs/vfx/runs/1ee3262c/gw1a-s422-effects-check.txt): hash_check FAILED by the ghost tally with 25 ticks over a limb limit and 4 ghosts of one limb at most (2 allowed). After: 0 ticks over a limb limit, of one limb 2 at most, 4 on the screen in all (4 allowed).

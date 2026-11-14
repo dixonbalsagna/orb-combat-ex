@@ -1,0 +1,38 @@
+== duo_night_normal
+wc_duo_night_normal           520   640x360        3    0         4        3     0/6     0  FAIL: with the area threshold 15% lower it counts 4 (over 3)
+
+frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVER GATE: over 2.5 on the primary reading). See docs/tools/flash-check.md.
+== duocat_night_normal
+wc_duocat_night_normal        520   640x360        5    0         5        2    2/10     0  FAIL: the primary reading counts 5 (over 3); with the area threshold 15% lower it counts 5 (over 3)
+
+frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVER GATE: over 2.5 on the primary reading). See docs/tools/flash-check.md.
+== duo_night_reduced
+wc_duo_night_reduced (reduced)    520   640x360        5    0       5.5        5    1/10     0  FAIL: the primary reading counts 5 (over 3); with the area threshold 15% lower it counts 5.5 (over 3); with a 120-frame memory it counts 5 (over 3)
+
+frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVER GATE: over 2.5 on the primary reading). See docs/tools/flash-check.md.
+== duocat_night_reduced
+wc_duocat_night_reduced (reduced)    520   640x360        5    0         5      3.5    0/10     0  FAIL: the primary reading counts 5 (over 3); with the area threshold 15% lower it counts 5 (over 3); with a 120-frame memory it counts 3.5 (over 3)
+
+frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVER GATE: over 2.5 on the primary reading). See docs/tools/flash-check.md.
+== duo_day_normal
+wc_duo_day_normal             520   640x360        3    0         3        2     0/6     0  OVER GATE: the primary reading counts 3 (over our gate of 2.5)
+
+frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVER GATE: over 2.5 on the primary reading). See docs/tools/flash-check.md.
+== duocat_day_normal
+wc_duocat_day_normal          520   640x360        3    0         3      1.5     2/6     0  OVER GATE: the primary reading counts 3 (over our gate of 2.5)
+
+frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVER GATE: over 2.5 on the primary reading). See docs/tools/flash-check.md.
+== duo_day_reduced
+wc_duo_day_reduced (reduced)    520   640x360        4    0         4        4     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a 120-frame memory it counts 4 (over 3)
+
+frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVER GATE: over 2.5 on the primary reading). See docs/tools/flash-check.md.
+== duocat_day_reduced
+wc_duocat_day_reduced (reduced)    520   640x360      2.5    0       2.5      2.5     1/5     0  PASS
+
+An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see: docs/tools/flash-check.md. This is not a clearance.)
+
+Controls (the other fight's bodies drawn, its effects off, ?of=0):
+clip                       frames      size  general  red  area-15%  2 s mem  margin  dips  verdict
+wc_ctl_night_normal           520   640x360        3    0         4        3     0/6     0  FAIL: with the area threshold 15% lower it counts 4 (over 3)
+wc_ctl_night_reduced (reduced)    520   640x360        5    0         5        5    1/10     0  FAIL: the primary reading counts 5 (over 3); with the area threshold 15% lower it counts 5 (over 3); with a 120-frame memory it counts 5 (over 3)
+(day controls not run: stopped at the safe pause)

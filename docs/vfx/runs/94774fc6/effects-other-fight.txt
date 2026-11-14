@@ -1,0 +1,15 @@
+144:  ok   the owner's tier decides (the other fighter is tier 1)
+944:the other fight
+947:  ok   feeding drains nothing of the other fight's events and leaves fight 0 in S after every call
+950:  ok   normal: the other fight's first beam is granted, its second gives way and its calm form is counted; the own fight's beam is not refused (true false true, calm 1)
+953:  ok   reduced: the other fight's beam is calm and counted (1.20), the own fight's weight-1 beam is granted (true)
+954:  ok   4,000 ticks of saturating random asks (the own fight at its caps all the time, the other fight asking on half the ticks: far more than any fight makes): the own fight keeps 124 of the 172 f
+956:  ok   an other fight off screen counts for nothing (0.0); the tick it swings into view its last second is counted (1.0)
+959:  ok   the other fight's catastrophe event waits out the gap of the own fight's (cat_gap); the own fight's is not held by the other's (ok)
+962:  ok   the other fights' effects are off by default, on a desktop run and on the page
+963:  ok   switching the other fights on locks Reduce flashing on, whatever the setting is written as
+964:  ok   the other fight's hub holds the main hub's register on channel 2 (fight 1 + 1), and the register has one clock: the main hub's (1500 ticks on, 1500 off)
+965:  ok   with the other fight drawn, the own fight's asks are the same rows as without it (9 against 9), none refused by the sum, and the sim's hash is the same
+966:  ok   1,500 ticks of two computer fights: the sum over both stays under 2.5 (worst 0.34), with 1 rows from the other fight in the one register ({ 2: { "granted": 1, "refused": 0, "calm": 1, "weig
+967:  ok   the other fight's beam is told full, then calm (counted), then later when the calm form does not fit; the own fight's beam is still full (full calm later full)
+987:  ok   a shot from outside is its shooter's, in the other fight (p3), not this fight's last fighter's; an own shot is its owner's; none is null

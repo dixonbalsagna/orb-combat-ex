@@ -1,0 +1,27 @@
+the shared register
+  ok   normal: the other fight's first beam is granted, its second gives way and its calm form is counted; the own fight's beam is not refused (true false true, calm 1)
+  ok   the sum is the own beam, the other's beam and the other's calm form (2.20), under the 2.5 gate; the channels are counted apart
+  ok   a hundred refused asks never hold more than 0.3 of calm weight (0.20), the rest are left to the source's calm form and counted in calm_unfit (99)
+  ok   reduced: the other fight's beam is calm and counted (1.20), the own fight's weight-1 beam is granted (true)
+  ok   4,000 ticks of saturating random asks (the own fight at its caps all the time, the other fight asking on half the ticks: far more than any fight makes): the own fight keeps 124 of the 172 flashes it gets alone beside the other fight's (321 differences, 234 refused by the gate over the sum, counted)
+  ok   the log's worst sum over any second, both fights together, is 2.49: under the 2.5 gate
+  ok   an other fight off screen counts for nothing (0.0); the tick it swings into view its last second is counted (1.0)
+  ok   what happened off screen more than a second before it comes into view is not counted (2 kept, 0 counted)
+  ok   two catastrophe events with the same counter, one in each fight, are two events (ids are made per channel), the second not refused for the first
+  ok   the other fight's catastrophe event waits out the gap of the own fight's (cat_gap); the own fight's is not held by the other's (ok)
+  ok   normal: both fights' catastrophe events in the same second: the light on screen peaks at 1.00 of one event's 1.00 and the steepest tick is 0.103 (the floor's is 0.104)
+  ok   calm: both fights' catastrophe events in the same second: the light on screen peaks at 0.60 of one event's 0.60 and the steepest tick is 0.036 (the floor's is 0.063)
+  ok   the other fights' effects are off by default, on a desktop run and on the page
+  ok   switching the other fights on locks Reduce flashing on, whatever the setting is written as
+  ok   the other fight's hub holds the main hub's register on channel 2 (fight 1 + 1), and the register has one clock: the main hub's (1500 ticks on, 1500 off)
+  ok   with the other fight drawn, the own fight's asks are the same rows as without it (9 against 9), none refused by the sum, and the sim's hash is the same
+  ok   1,500 ticks of two computer fights: the sum over both stays under 2.5 (worst 0.34), with 1 rows from the other fight in the one register ({ 2: { "granted": 1, "refused": 0, "calm": 1, "weight": 0.03352670209394 }, 0: { "granted": 2, "refused": 7, "calm": 0, "weight": 0.33526702093938 } })
+  ok   the other fight's beam is told full, then calm (counted), then later when the calm form does not fit; the own fight's beam is still full (full calm later full)
+  ok   a flash that does not fit is told how long to wait (60 ticks for one of weight 2)
+  ok   after the wait it asked for (60 ticks) the whole flash is granted
+  ok   normal: two whole-screen cuts in a second are cut, the third is told ease (wait 58); a cut under the step threshold costs nothing; the sum stays under 2.5 (2.0)
+  ok   reduced: one whole-screen cut a second; the second is told ease (wait 59): the frame eases or holds, never a dissolve
+  ok   cuts that change a hundredth of the frame are weighed by their area: all 4 fit in a second
+  ok   a hard cut is the screen's own whatever channel was set around it, and the channel is put back
+  ok   normal: a whole-screen cut every 20 ticks for 10 s: the worst second weighs 2.00 (limit 2.5), 10 cuts eased or held
+  ok   reduced: a whole-screen cut every 20 ticks for 10 s: the worst second weighs 1.00 (limit 1.0), 20 cuts eased or held
