@@ -1812,3 +1812,66 @@ Also: "I think base attacks should help fill stamina, so attacking with normal f
 - the workshop-items split.
 It also accepts the EP's A1 budget of up to about 40% of this week.
 **Added scope for A1:** the planet, terrain, destruction and clipping are worked on toward A1, with five planet sizes.
+
+**Backfill: Orb's homework answers not yet recorded word for word (found by the EP's homework audit, 2026-11-14; each copied verbatim from the homework page named, which is git-ignored).** Most of these decisions were already recorded as team summaries; these are Orb's own words. The names answers in "2 Up Next/01 Names - home grounds" read as if written with an AI assistant's help (Gemini is used for creative work only: its text is not sign-off), so they're recorded as written there, for Orb to confirm.
+- *1 Urgent/2 Arena - meteor launch, your eye (5 min).md*:
+  - Q2 Which carries better: long arc or shorter parabola: "see 1"
+  - Q5 Orange plume through a city at low altitude: "see 4"
+  - Q6 Ignition colour: launched fighter's or launcher's: "see 4"
+- *2 Up Next/01 Names - home grounds (5 min).md*:
+  - Q1 Grist's ground (the water): "| 1 | Grist's ground (the water) /  /  | **a** *(Slipway)* — or **b** *(Capstan)*"
+  - Q2 Loupe's ground (the high ground): "| 2 | Loupe's ground (the high ground) /  /  | **d** *(Strata)* — or **a** *(Parallax)*"
+  - Q3 Empress Orza's ground (the open ground): "| 3 | Empress Orza's ground (the open ground) /  /  | **a** *(Vellum)* — or **b** *(Gonfalon)*"
+  - Q4 Bolus's ground (the wreckage): "| 4 | Bolus's ground (the wreckage) /  /  | **c** *(Gantry)* — or **a** *(Dross)*"
+  - Q5 Ending ban: four homes only (h) or every place name (e): "| 5 | The ending ban: only the four homes (**h**), or every place name (**e**)? /  /  | **e** /  /  |  (and in the preamble: "you should definitely select **`e` (every place name)** on Question 5 to purge those generic fantasy suffixes planet-wide.")"
+  - Q6 Guardrails set (y/n): "| 6 | The guardrails below: **y** or **n** /  /  | **y**"
+  - Section 6 watch-list: MC-047, Cyborg hunger lines, MC-237, Rival's glasses (keep/change): "MC-047: "**Keep.** He is referring to his own mechanical digestive grinder; it is a general bark, not targeted at Grist's name." Cyborg's hunger: "**Keep.** The character's core gimmick is insatiable bio-mechanical hunger; the rule only bans characters making jokes about the word "Bolus"." MC-237: "**Keep.** Her bladed silk mantle is her weapon; talking about her cape is essential to her fight animations." Rival's glasses: "**Keep.** Adjusting and protecting his glasses is his physical signature; just never compare him to a jeweler's loupe in dialogue.""
+  - Clarification note on guardrails 1 and 2 (name puns): "> **Clarification on Guardrail #1 & #2:** The proper-noun moratorium only prohibits *explicit verbal puns on the dictionary definition of a character's or place's name* (e.g., nobody tells Grist "I'll grind you into flour," and nobody says "Don't slip up at Slipway"). Characters must still freely reference their own physical gear, bodies, and combat gimmicks—Bolus talks about eating/calories, Empress Orza talks about her silk mantle, and Loupe talks about his glasses/frames."
+- *4 Just to Watch/effects/beam-struggle/README.md*:
+  - Tug bar (quoted earlier note): "absolutely awful"
+- *5 Done/old laptop (answered).md*:
+  - Can you borrow an old laptop for a test: "**Answered 2026-10-31:** no laptop, but a 10+ year old gaming PC: i5 6600K, GTX 1080 8 GB, 16 GB RAM at 2133 MHz. Now a test in 2 Up Next."
+- *5 Done/arena - feel test (answered).md*:
+  - Test 2: does flying low feel faster: "I couldn't find the view button, "View button: the low line, on and off. " didn't make sense, I couldn't really figure out what the matching option was under "the view" category, I think it will look okay, as long as all the ground clipping issues are dealt with reasonably, sometimes hills and land features in the foreground look strange when the fighters move close to them"
+- *5 Done/combat - energy attacks (answered)/README.md*:
+  - C6 beam struggle: "we're working on the new beam system as i type this"
+  - Q1 is this the energy system you had in mind: "(b) Yes, with changes (say which clip and step).<----see my notes. I like the direction let's make it really special."
+- *5 Done/older/11-lines-the-brawl.md*:
+  - Quick Q: retire rival's rank joke?: "[x] keep the rank joke now and then. Direction Note: Keep the contractions so he sounds natural in a high-speed fistfight, but definitely keep the ranking and tier obsession. An analytical, supremacist fighter who constantly grades his opponent mid-brawl is a strong character hook—just phrase it like live trash talk ("You're third-rate", "Barely top ten") rather than stiff, robotic prose."
+  - Quick Q: 'petitioner'/'sir' frequency: "[x] now and then. Direction Note: With a twelve-word ceiling, repeating a title in every line eats up rhythm and makes them sound like one-note NPCs. Use "petitioner" for the Empress only once or twice per match when she is looking down her nose at someone. Drop "sir" and the waiter/chef gimmick entirely from the Cyborg (see the full Cyborg overhaul below)."
+  - Quick Q: strength of 'Pathetic.': "[x] sharper. Direction Note: "Pathetic" is overused in fighting scripts. Let the Rival and Empress use sharper, more specific venom: amateur, eyesore, dead weight, third-rate, insect, clown, warm-up, scrap."
+- *5 Done/older/19-one-versus-many.md*:
+  - Q1: how many of three hit at once: "[x] All three, if they are in reach - [x] Your call. The lone fighter should be able to dynamically alternate attacks between opponents to keep combat free-flowing, I want to avoid the cliche of enemies standing around waiting for their turn, but I also want it to be cool rather than unfair and overwhelming for the solo fighter. though it should be a little risky for the solo fighter, there should be payoffs like being able to launch an opponent, grab the other one, fly with them at great speed, then launch them at a collision angle with the first opponent sent flying. as long as there are opportunities for the solo fighter to show off and to cause great damage in outnumbered fights it will feel more rewarding rather than punishing."
+  - Q2: who the lone fighter's attack goes to: "[x] Your call. fight choreographer needs extra leeway and help to make these dynamic and exciting. I want brainstorms on what, if any, new systems can supplement our existing fight choreographer to make this really achievable."
+  - Q4: where a 2v2's second fight goes: "[x] Your call. again, let's empower the fight choreographer while maintaining player's feeling of agency. rule of cool always applies."
+  - Q5: can a 2v2's two 1v1s merge: "[x] Your call. depends on how close, and the context: two fighters on the same team could launch their opponents at the same time to cause a collision, then if one player decides to rush the two while they are stunned in midair this would be the 2v1 should his teammate wait around. the choreographer should always look for opportunities to seamlessly make the fight dynamically produce emergent combos and teamfight synergies."
+- *5 Done/older/22-planet-slice.md*:
+  - Q3: damage stays between fights: "[x] Yes: a city you flatten stays flattened the next time that planet comes up. - [x] Your call. <-- the course of the story campaign should keep the destruction, of course starting a new story should begin everything anew."
+- *5 Done/older/23-launch-hint-and-branches.md*:
+  - Q1: how the witnessed branch feels: "[x] A cold quiet (as written) - [x] Your call. <-- maybe the dynamic narrative could achieve "angry" in certain circumstances. lets say, just spitballing: there are five levels. player picked our protagonist. First level is a training level where the player fights against another 'good guy'. the next level opens a split to two paths, either the city, or the island, each offering a permanent buff. after completing four levels, the player has managed to keep civilian deaths below a minimum level. The big bad guy on the last level dynamically picks an apocalyptic-level attack and turns an entire city into a crater. the angry form is achieved this way. please take this idea and run some focused research into game loops that can accomodate this episodic style of brawler."
+- *5 Done/older/4-watch-and-listen.md*:
+  - E. The crossing: "i think it looks good, I would like to see it in motion and in my own gameplay testing"
+  - E. The skyline: "This is the first time I've seen how varied the buildings are, the skyline looks great, individual buildings could use more details so up-close the players dont just see a bunch of dark grid lines"
+  - F. HUD teaching mock reaction: "definitely needs editing and language improvement, tidy it up, "the bolt's land" the bolt owns land? "Ink on the dark scrim" no clue what this means, scrim is a piece of cloth? or short for scrimmage?"
+  - Sky/fog flight reaction: "I got to see a little evening lighting, but unfortunately the fighters flew underwater around dusk, so it was just a lot of dark ocean lighting. looked good from what I could tell, the distant mountains looked right, good sky color."
+- *5 Done/older/41b-custom-web-engine-build.md*:
+  - May the team build its own Godot web engine: "(a) yes (Orb, 27 October). Tools is starting it."
+- *5 Done/older/42-custom-web-engine-release.md*:
+  - Publish custom web engine as a GitHub Release: "yes (2026-10-28). Published: https://github.com/dixonbalsagna/orb-combat-ex/releases/tag/web-template-4.7.2-lazy-1. The demo switches to it after the flashing checks are recorded on it."
+- *5 Done/older/5-city-and-depth.md*:
+  - 5f. Fighter lodged in a building: what does the other do: "[x] Wait until I play it - Notes: I want fights to be fast paced, so if this adds balance or opportunities for the attacker to land heavier energy barrages or something similar, this may be a good way to incentivize knockback attacks."
+  - 6. Anything else about the city: "its looking great, I cant remember exactly which screenshots I've seen but last week I had an impression that the skyscrapers were too packed and crowded and the black-and-grey grid appearance would be confusing close-up, some of the screencaps I reviewed today lessened that opinion though, and the high-altitude view of the skyline really impressed me. I like that it looks taller with high-rises clustered in a denser city center, then smaller buildings on the outskirts."
+- *5 Done/older/6-look-and-defaults.md*:
+  - 6. Phone controls worry: "[x] Notes on what worries you: --> I'm just cynical based on my own preferences, I still want to find out what is feasible but I want the base PC experience put first and foremost."
+- *5 Done/older/PICK-forms-and-rewards.md*:
+  - 3. The thirty keepsakes: "[x] Good as a set - Notes: as far as people playing this game, people tend to like collectibles, whether these collectibles can be accumulated for bragging rights, or upgrades, or traded for cosmetics, I like the direction this is taking."
+- *Files/old-pages/0 PLAY THIS - the new build (15 min).md*:
+  - Try 1: Beams (hold RB + right stick to charge, release to fire): "keep refining this, I had trouble getting a good beam, I did successfully hit at least one or two, but most of the time I got interrupted or just failed to sufficiently charge one."
+  - Try 2: Charging (a light hit shouldn't stop a right-stick charge past 0.2 s): "keep refining this"
+  - Try 3: The chase (tap X/Y/B while the launched fighter is airborne): "this felt chaotic, we need this refined, get the flight speed and everything under control"
+  - Try 4: An idle match should not end before you can power up: "didnt leave it idle, just played one full match, but I never got the option to transform, but my opponent did"
+  - Try 5: Frame rate (fly far apart, launch into hills): "knockbacks and some destruction seemed to struggle"
+  - Try 6: The hill at the start (nothing should disappear): "didnt notice anything disappear during play"
+  - Try 7: B by how long you hold it (tap/launcher/knockback/launch): "keep tightening this up, the face buttons are on the right track, still some responsiveness we can get between the different face buttons"
+  - Try 8: Presses wait (a buffered B after Y still charges): "Keep refining this"
+  - Try 9: Nothing is silent (dropped presses play a sound and mark the button): "sound effects present"
