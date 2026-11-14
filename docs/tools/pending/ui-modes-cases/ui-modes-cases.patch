@@ -1,0 +1,107 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 84ea414..0449d36 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -144702,6 +144702,102 @@
+       ],
+       "expect": null
+     },
++    {
++      "id": "ui-modes-unknown-key",
++      "schema": "ui-modes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/extra": 1
++          },
++          "file": "ui/data/modes.json"
++        }
++      ],
++      "expect": {
++        "rule": "additionalProperties",
++        "pointer": "/extra"
++      }
++    },
++    {
++      "id": "ui-modes-schema-version-wrong",
++      "schema": "ui-modes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/schema": 2
++          },
++          "file": "ui/data/modes.json"
++        }
++      ],
++      "expect": {
++        "rule": "const",
++        "pointer": "/schema"
++      }
++    },
++    {
++      "id": "ui-modes-list-empty",
++      "schema": "ui-modes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/modes": []
++          },
++          "file": "ui/data/modes.json"
++        }
++      ],
++      "expect": {
++        "rule": "minItems",
++        "pointer": "/modes"
++      }
++    },
++    {
++      "id": "ui-modes-id-bad-pattern",
++      "schema": "ui-modes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/modes/0/id": "Solo!"
++          },
++          "file": "ui/data/modes.json"
++        }
++      ],
++      "expect": {
++        "rule": "pattern",
++        "pointer": "/modes/0/id"
++      }
++    },
++    {
++      "id": "ui-modes-state-unknown",
++      "schema": "ui-modes.schema.json",
++      "mutate": [
++        {
++          "set": {
++            "/modes/0/state": "soon"
++          },
++          "file": "ui/data/modes.json"
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/modes/0/state"
++      }
++    },
++    {
++      "id": "ui-modes-ready-without-players",
++      "schema": "ui-modes.schema.json",
++      "mutate": [
++        {
++          "del": [
++            "/modes/0/players"
++          ],
++          "file": "ui/data/modes.json"
++        }
++      ],
++      "expect": {
++        "rule": "required",
++        "pointer": "/modes/0"
++      }
++    },
+     {
+       "id": "director-interrupts-brawlc2-valid",
+       "schema": "director-interrupts.schema.json",

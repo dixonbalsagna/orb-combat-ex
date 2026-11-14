@@ -1,5 +1,5 @@
 diff --git a/tools/preview/preview-selftest.mjs b/tools/preview/preview-selftest.mjs
-index 3569ef3..356918d 100644
+index 3569ef3..377aa95 100644
 --- a/tools/preview/preview-selftest.mjs
 +++ b/tools/preview/preview-selftest.mjs
 @@ -10,7 +10,13 @@ import { join } from 'node:path';
@@ -26,7 +26,7 @@ index 3569ef3..356918d 100644
 +  {
 +    const ids = new Set(IDS), landed = new Set(LANDED_IDS);
 +    check('GW1a: every retired row is out of the live table, and none is both retired and kept', LANDED_IDS.every((id) => !ids.has(id)) && landed.size === LANDED_IDS.length && LANDED_IDS.length === RETIRED_ROWS.length && RETIRED_ROWS.every((r) => landed.has(r.id)));
-+    check('GW1a: the kept rows are the ones the golden window did not land (the water group, the held city rows, the rows whose files are not in main yet, and the three page rows)', IDS.length === 19 && [...IDS].sort().join() === 'aimCuts,airBrake,blackbox,cityHold,floor,gen3,go,hitstopAny,kick,mixed,phrases,powerPace,slamTurn,slip,surface,wallPush,wallPushAi,water,waterWarm', IDS.join());
++    check('GW1a: the kept rows are the ones the golden window did not land (the water group, the held city rows, the rows whose files are not in main yet, and the three page rows; the Combat rows phrases and mixed retire with the Combat park)', IDS.length === 17 && [...IDS].sort().join() === 'aimCuts,airBrake,blackbox,cityHold,floor,gen3,go,hitstopAny,kick,powerPace,slamTurn,slip,surface,wallPush,wallPushAi,water,waterWarm', IDS.join());
 +    check('GW1a: the old table is the live rows and the retired ones together, 93 rows with no id twice', HIST_ROWS.length === 93 && new Set(HIST_ROWS.map((s) => s.id)).size === 93 && HIST_ROWS.every((s) => s !== undefined));
 +    check('GW1a: a kept row never needs a retired one (the cascade would turn it off for a switch that is not there)', SWITCHES.every((s) => s.needs.every((n) => ids.has(n))));
 +    check('GW1a: asking to turn a landed row on or off is said so, not called unknown and not silently ignored', (() => { const r = resolve(['tiles', 'gen2']), r2 = resolve([], SWITCHES, ['rightStick']); return r.landed.join() === 'tiles,gen2' && r.unknown.length === 0 && r.active.join() === resolve([]).active.join() && r2.landed.join() === 'rightStick' && resolve(['nonsense']).unknown.join() === 'nonsense' && resolve(['nonsense']).landed.length === 0; })());
@@ -91,10 +91,10 @@ index 72d231d..b7953c3 100644
    const g = { godot, godotNode: o.godotNode };
 diff --git a/tools/preview/retired-rows.json b/tools/preview/retired-rows.json
 new file mode 100644
-index 0000000..83dd0e1
+index 0000000..5d5e42e
 --- /dev/null
 +++ b/tools/preview/retired-rows.json
-@@ -0,0 +1,1488 @@
+@@ -0,0 +1,1524 @@
 +{
 + "keptNeedsBefore": {
 +  "floor": [
@@ -106,12 +106,6 @@ index 0000000..83dd0e1
 +  ],
 +  "slip": [
 +   "arrive"
-+  ],
-+  "phrases": [
-+   "rightStick"
-+  ],
-+  "mixed": [
-+   "rightStick"
 +  ]
 + },
 + "_about": "The switch rows the golden window GW1a landed as main's own data (tools/preview/switches.mjs LANDED_IDS), as they were before: id, file, key, from, to. Kept as the record of what landed and as the selftest's fixtures for the flip engine. Written by the retirement, 2026-11-14.",
@@ -1429,6 +1423,27 @@ index 0000000..83dd0e1
 +   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
 +  },
 +  {
++   "id": "phrases",
++   "file": "data/combat/phrases.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"phrases\": DirPhrase.on()",
++   "probeIf": {
++    "file": "sim/director/phrase.gd",
++    "text": "static func on"
++   },
++   "what": "each fighter's phrases (Combat's lists, Encounter's hook; rule-of-cool-map.md row 1): a press inside a phrase takes its next piece, a mash counts as part of it. data/combat/phrases.json enabled. Waits for the phrases and hook parks",
++   "index": 82,
++   "evidence": "Combat park (docs/combat/pending/gw1a-rows) sets enabled true in data/combat/phrases.json; the GW1a scratch tree does not hold the file"
++  },
++  {
 +   "id": "craterlook",
 +   "url": "craterlook=1",
 +   "presentIf": {
@@ -1495,6 +1510,27 @@ index 0000000..83dd0e1
 +   "what": "beams that travel, and the window to answer (Encounter, docs/director/pending/beam-front; row 40 of rule-of-cool-map.md): the beam takes ticks from hand to him, the hit is decided at arrival, and he can fire back, dodge in the last 14 ticks or block. data/director/interrupts.json beamPlays.front.enabled. Waits until the tree has Encounter's park",
 +   "index": 86,
 +   "evidence": "the GW1a scratch tree holds the row's value (to) in main's data"
++  },
++  {
++   "id": "mixed",
++   "file": "data/combat/mixed.json",
++   "path": [
++    "enabled"
++   ],
++   "from": false,
++   "to": true,
++   "needs": [
++    "rightStick"
++   ],
++   "optional": true,
++   "probe": "\"mixed\": DirMixed.on()",
++   "probeIf": {
++    "file": "sim/director/mixed.gd",
++    "text": "static func on"
++   },
++   "what": "the mixed string (Combat, Orb's clip C9; docs/design/energy-overhaul.md section 21): a send or a knock opens a string across any range, and in it a tapped far heavy is a lob aimed where he is going, timed to land as he does. data/combat/mixed.json enabled. Needs the right hand. A prototype nobody has played. Waits until the tree has Combat's park (docs/combat/pending/mixed-string)",
++   "index": 88,
++   "evidence": "Combat park (docs/combat/pending/gw1a-rows) sets enabled true in data/combat/mixed.json; the GW1a scratch tree does not hold the file"
 +  },
 +  {
 +   "id": "struggle",
@@ -1676,43 +1712,11 @@ index 817d35e..fb07871 100644
  import { findPython, snapshotTree, loadManifest, patchFiles, ownerOfPath, readOwners, tryApply, applyStack, missingNeeds, flipAll, runValidate, attributeErrors, errorBlocks, stackKey, changesBetween, checkScratch, runStack, describeReport } from './stack.mjs';
  
  const here = dirname(fileURLToPath(import.meta.url));
-diff --git a/tools/preview/switch-diff.mjs b/tools/preview/switch-diff.mjs
-index 7f10064..6200556 100644
---- a/tools/preview/switch-diff.mjs
-+++ b/tools/preview/switch-diff.mjs
-@@ -1,9 +1,9 @@
- // How many switch rows still differ between main and a kept build's packed data (Tools, 2026-11-14; register rows A-CODE-03 criterion 2 and A-CODE-01, "the EP reads it every two days").
- //
--//   node tools/preview/switch-diff.mjs [--build <kept folder, or part of its name>] [--rev HEAD] [--list] [--json out.json] [--fail-over N]
-+//   node tools/preview/switch-diff.mjs [--build <kept folder, or part of its name>] [--rev HEAD | --tree <a folder of data files>] [--list] [--json out.json] [--fail-over N]
- //
- // The kept build (default: orb-first-play-6a30b4c9-6627cb9d, the 9 November build Orb played) holds, inside its index.pck, the data the game ran on. main is the commit named by --rev (default HEAD):
--// the committed files, never the working tree. For every data row of the switch table (tools/preview/switches.mjs) the value at the row's key (and at each of its `more` keys) is read from both and
-+// the committed files, never the working tree. --tree names a FOLDER instead (read only: a scratch tree of a stack, to ask what the diff will be once it lands; a file the folder does not hold counts as absent). For every data row of the switch table (tools/preview/switches.mjs) the value at the row's key (and at each of its `more` keys) is read from both and
- // compared. A row DIFFERS when any of its keys holds another value in main than in the build, or exists in only one of them. A row that is not data (a page word, a setup key) is counted apart.
- // As each owner's group lands on main (GW1a), its rows leave this list; the closing count is 0. Node built-ins and git only; nothing is built or run.
- import { execFileSync } from 'node:child_process';
-@@ -70,12 +70,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
-   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
-   try {
-     const dir = resolveBuild(opt('--build'));
--    const rev = opt('--rev', 'HEAD');
-+    const treeDir = opt('--tree', null);
-+    const rev = treeDir ? 'tree ' + treeDir : opt('--rev', 'HEAD');
-     const buf = readFileSync(join(dir, 'web', 'index.pck'));
-     const files = packFiles(buf);
-     const cacheB = new Map(), cacheM = new Map();
-     const buildJson = (f) => { if (!cacheB.has(f)) cacheB.set(f, packJson(buf, files, f)); return cacheB.get(f); };
-     const mainJson = (f) => {
-+      if (treeDir) { if (!cacheM.has(f)) { let v = null; try { v = JSON.parse(readFileSync(join(resolve(treeDir), ...f.split('/')), 'utf8').replace(/^﻿/, '')); } catch { /* absent */ } cacheM.set(f, v); } return cacheM.get(f); }
-       if (!cacheM.has(f)) { let v = null; try { v = JSON.parse(execFileSync('git', ['show', `${rev}:${f}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).replace(/^﻿/, '')); } catch { /* not in main */ } cacheM.set(f, v); }
-       return cacheM.get(f);
-     };
 diff --git a/tools/preview/switches.mjs b/tools/preview/switches.mjs
-index 278c871..53a7a23 100644
+index 278c871..a70d347 100644
 --- a/tools/preview/switches.mjs
 +++ b/tools/preview/switches.mjs
-@@ -10,240 +10,357 @@
+@@ -10,240 +10,359 @@
  import { createHash } from 'node:crypto';
  import { BB_FINGERPRINT } from './blackbox.mjs';
  
@@ -1721,7 +1725,7 @@ index 278c871..53a7a23 100644
 +// (or, where main's value moved on, would put the old one back): the page build neither flips them nor lists them, and the launch words of the look group (tiles, craterlook, meteor) are no longer added.
 +// LANDED_IDS names them. smoke.mjs reads them as on when it works out what the running game must report; resolve() says so when someone asks to turn one off. node tools/preview/switch-diff.mjs --tree <a tree>
 +// is the proof: after the GW1a stack the rows still differing from the 9 November build are the ones kept here.
-+export const LANDED_IDS = ["gen2","biome","interrupts","calmTurn","turn","rightStick","quickRead","hapticLadder","specialsOff","signatureRtOnly","beamAim","hapticRefused","hapticIncoming","webRumble","settle","splitShare","chaseTap","chargeArmour","power","chargeClose","pressWait","oneRuleB","beamAim2","nodeWarm","stickPend","joltYield","brawlShareCap","swing","everywhere","arc","ending","follow","lightStops","grapple","driver","driverOnRb","beamMove","stallKeep","hapticImpact","dodgeHeld","hapticStages","refusedCue","strikeStages","beamMoveAi","pushMode","pushUi","pushUi2","flightStrikes","stickLungeLight","flickKeep","flickRun","fullSend","chordPick","bNoBeam","bNoBeamKeepRt","arrive","dashHandover","carryRound","paceMatch","inertKnock","sideFromBlowOnly","chargeLostCue","menusRail","stances","vsHuman","firstMeteor","beamFront","struggle","soundTug","soundMoments","soundCarry","tiles","craterlook","meteor"];
++export const LANDED_IDS = ["gen2","biome","interrupts","calmTurn","turn","rightStick","quickRead","hapticLadder","specialsOff","signatureRtOnly","beamAim","hapticRefused","hapticIncoming","webRumble","settle","splitShare","chaseTap","chargeArmour","power","chargeClose","pressWait","oneRuleB","beamAim2","nodeWarm","stickPend","joltYield","brawlShareCap","swing","everywhere","arc","ending","follow","lightStops","grapple","driver","driverOnRb","beamMove","stallKeep","hapticImpact","dodgeHeld","hapticStages","refusedCue","strikeStages","beamMoveAi","pushMode","pushUi","pushUi2","flightStrikes","stickLungeLight","flickKeep","flickRun","fullSend","chordPick","bNoBeam","bNoBeamKeepRt","arrive","dashHandover","carryRound","paceMatch","inertKnock","sideFromBlowOnly","chargeLostCue","menusRail","stances","vsHuman","firstMeteor","beamFront","struggle","soundTug","soundMoments","soundCarry","tiles","craterlook","meteor","phrases","mixed"];
 +// The probes of the retired rows stay: the page still reads what the running game says each one is (window.__preview), so the smoke check goes on verifying that main's own data turned the thing on.
 +export const LANDED_PROBES = [
 + {
@@ -1981,6 +1985,14 @@ index 278c871..53a7a23 100644
 +  }
 + },
 + {
++  "id": "phrases",
++  "probe": "\"phrases\": DirPhrase.on()",
++  "probeIf": {
++   "file": "sim/director/phrase.gd",
++   "text": "static func on"
++  }
++ },
++ {
 +  "id": "beamFront",
 +  "probe": "\"beamFront\": DirBeamPlay.frontOn()",
 +  "probeIf": {
@@ -2231,9 +2243,8 @@ index 278c871..53a7a23 100644
 -    probe: '"stances": DirStance.on()', probeIf: { file: 'sim/director/stance.gd', text: 'static func on' },
 -    what: 'LB and LT on a blow (Encounter, docs/director/pending/stances; pad-first-press.md): the check, the push and the rest differ. data/director/interrupts.json stances.enabled. Needs the stick. Waits for the stances park' },
 -  { id: 'phrases', file: 'data/combat/phrases.json', path: ['enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
-+  { id: 'phrases', file: 'data/combat/phrases.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
-     probe: '"phrases": DirPhrase.on()', probeIf: { file: 'sim/director/phrase.gd', text: 'static func on' },
-     what: 'each fighter\'s phrases (Combat\'s lists, Encounter\'s hook; rule-of-cool-map.md row 1): a press inside a phrase takes its next piece, a mash counts as part of it. data/combat/phrases.json enabled. Waits for the phrases and hook parks' },
+-    probe: '"phrases": DirPhrase.on()', probeIf: { file: 'sim/director/phrase.gd', text: 'static func on' },
+-    what: 'each fighter\'s phrases (Combat\'s lists, Encounter\'s hook; rule-of-cool-map.md row 1): a press inside a phrase takes its next piece, a mash counts as part of it. data/combat/phrases.json enabled. Waits for the phrases and hook parks' },
 -  { id: 'craterlook', url: 'craterlook=1', presentIf: { file: 'render/core/tile_ground.gd', text: 'crater_look' }, needs: ['tiles'], optional: true,
 -    what: 'Art\'s crater and scar looks (Rendering, 2026-11-01i; docs/art/crater-look.md): walls in two rings toned by their facing, a warm floor, a burn for the scar. A page word on a local page, on the tile ground only. Waits for the crater-scar-look park' },
 -  { id: 'vsHuman', file: 'data/director/ai.json', path: ['vsHuman', 'enabled'], from: false, to: true, needs: [], optional: true,
@@ -2247,9 +2258,8 @@ index 278c871..53a7a23 100644
      probe: '"kick": SimKick.enabled()', probeIf: { file: 'sim/core/kick.gd', text: 'static func enabled' },
      what: 'the kick and the coin turn (Simulation, docs/architecture/kick.md; rule-of-cool-map.md row 23): flat out from under half of top speed leaves at `instant` of top speed on the first tick (default 0.8) and reaches top speed over `climbTicks` (default 8) (Orb: instant, or at least instant to about 80%); a stick flip above half of top speed brakes, plants and kicks the other way. The overspeed is its own switch and off. Page words to try values: ?instant=0.9&climbTicks=4 (the printed sample addresses). data/fight/kick.json enabled. A setup\'s "kick" overrides it for a match: the page word ?kick=1 puts true in the setup, ?kick=off puts false (to compare). Waits until the tree has Simulation\'s park (docs/architecture/pending/kick)' },
 -  { id: 'mixed', file: 'data/combat/mixed.json', path: ['enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
-+  { id: 'mixed', file: 'data/combat/mixed.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
-     probe: '"mixed": DirMixed.on()', probeIf: { file: 'sim/director/mixed.gd', text: 'static func on' },
-     what: 'the mixed string (Combat, Orb\'s clip C9; docs/design/energy-overhaul.md section 21): a send or a knock opens a string across any range, and in it a tapped far heavy is a lob aimed where he is going, timed to land as he does. data/combat/mixed.json enabled. Needs the right hand. A prototype nobody has played. Waits until the tree has Combat\'s park (docs/combat/pending/mixed-string)' },
+-    probe: '"mixed": DirMixed.on()', probeIf: { file: 'sim/director/mixed.gd', text: 'static func on' },
+-    what: 'the mixed string (Combat, Orb\'s clip C9; docs/design/energy-overhaul.md section 21): a send or a knock opens a string across any range, and in it a tapped far heavy is a lob aimed where he is going, timed to land as he does. data/combat/mixed.json enabled. Needs the right hand. A prototype nobody has played. Waits until the tree has Combat\'s park (docs/combat/pending/mixed-string)' },
 -  { id: 'struggle', file: 'data/director/interrupts.json', path: ['beamStruggle', 'enabled'], from: false, to: true, needs: [], optional: true,
 -    probe: '"struggle": DirBeam.struggleOn()', probeIf: { file: 'sim/director/beam.gd', text: 'static func struggleOn' },
 -    alt: { add: 'struggle=off', label: 'the beam struggle OFF (Encounter\'s page word; on by default here)' },
@@ -2266,7 +2276,7 @@ index 278c871..53a7a23 100644
  ];
  
  export const IDS = SWITCHES.map((s) => s.id);
-@@ -378,7 +495,8 @@ export function resolve(off = [], table = SWITCHES, on = []) {
+@@ -378,7 +497,8 @@ export function resolve(off = [], table = SWITCHES, on = []) {
    const IDS = table.map((s) => s.id);
    const want = new Set(off.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
    const wantOn = new Set(on.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
@@ -2276,7 +2286,7 @@ index 278c871..53a7a23 100644
    // a row with `held` (a reason) is off in a build unless asked for with --on: it is on the list, off, with its reason (the city rows wait on QA's read)
    const held = table.filter((s) => s.held && !wantOn.has(s.id)).map((s) => ({ id: s.id, why: s.held }));
    const heldIds = new Set(held.map((h) => h.id));
-@@ -392,7 +510,7 @@ export function resolve(off = [], table = SWITCHES, on = []) {
+@@ -392,7 +512,7 @@ export function resolve(off = [], table = SWITCHES, on = []) {
        if (missing.length) { active.delete(sw.id); cascaded.push({ id: sw.id, because: missing }); again = true; }
      }
    }
