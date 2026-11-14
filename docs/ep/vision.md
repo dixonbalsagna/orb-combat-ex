@@ -1742,3 +1742,40 @@ Orb wants an audit of the whole project over the weekend on Fable 5.2, which the
 5. Command names (/sprint-plan and /sprint, replacing /crunch and /overnight): "that works".
 6. When /sprint needs Orb: "go with recommended" (the item is set aside and the rest carries on; a full stop only for a safety rule, a Legal flag, or anything that would spend money or go public).
 "I briefly read through the specification, I approve it".
+
+**The Alpha feature brainstorm, Orb's answers (2026-11-13, about 19:40, to the stand-in, relayed verbatim; packet docs/ep/proposals/alpha-feature-brainstorm.html):**
+
+The five questions:
+1. Take It Standing, every fighter or Loupe's alone: "lets fold this into the mechanics available to every character, keep workshopping ways to make Loupe and every fighter have a unique identity"
+2. Does greater power draw the weaker fighter in, or hold him off: "I need this as a underlying mechanic to sell the idea of the fighters stepping in and engaging each other. within the gravity well they are using their close range attacks, outside the well each fighters' abilities are altered. lets workshop this and find a way to complement our systems and keep combat engaging and fair-feeling."
+3. May a right-stick flick send a dashing attacker flying, using his own speed: "this sounds great, lets try to fold this into our control scheme."
+4. The henchmen domino, capped or until the speed runs out: "go with your recommendation" (the stand-in's: until the speed runs out)
+5. "Fight weakened, then unleash", Loupe's or everyone's: "I go with your recommendation, keep workshopping this to make sure gameplay feels fair" (the stand-in's: keep it Loupe's; plain handicaps with no surge in custom setup)
+
+On each idea:
+- Stamina, Energy, Body: "this should play in with the injuries. high body gives a bonus to stamina regeneration. high stamina keeps energy energy gain boosted. taking damage with low stamina increases severity of injuries. taking damage with injuries starts affecting body. help me workshop this and make an engaging system that keeps fights fresh and encourages reaching new forms."
+- The Power Lens: "yes, overhaul the camera work further, fold advanced systems like this in, make cinematographyy as dynamic and unintrusive as possible"
+- The Brawl Pot: "I like this idea, keep overhauling the launches and the in-air ping pong attacks with iterations to mechanics like this"
+- Take It Standing: "I'm not so sure about this one, if theres another way to do this, like holding the LB guard and then timing hitting the energy RB that could be a way of absorbing the kinetic and some of the damage if timed well"
+- A Miss Still Lands: "lets find a way to introduce this to high-level late-game fights, this sounds cool"
+- The Pass: "this is like a mid-combat event, lots of interactions and clashes should dynamically have outcomes like this, lets get combat variety feeling cool, more like this"
+- The World Flinches First: "good start, I'd like to see this in action, this could look good in high level endgame fights"
+- The Grudge: "I don't like this"
+- Send Him On: "cool"
+- Seeing Through It: "cool"
+- What Goes Up: "I'm not sure about this, I do like the idea of flinging debris at the opponent, lets workshop this"
+- The Domino, with no cap: "sounds cool, having slight advantages through tactical sells like this makes it engaging to be outnumbered, as long as its choreographed dynamically, feels emergent"
+- Weights Off: "sounds like some kind of gambit best used in campaign mode, not versus"
+- The Power-Up Contest: "I wouldn't want to see this every time there's a power up but if its some sort of mid-combat event it could be cool, keep workshopping this"
+- Slipstream: "workshop this, lets make sure a feature like this keeps the game fun and engaging"
+- The Planet Rings: "this sounds like a cool integration into the physics of the game, lets workshop something like this, cool destruction physics would be great, i want more emergent systems"
+- Height Is Power: "lets workshop this"
+- Late-Landing Blows: "this sounds like it could be a specific characters ability, or a finishing move, but I don't really want to lean into time-manipulation in my game's universe, just extremely high speed"
+- Pour It In: "yes lots of synergy abilities should make co-op fun, add opportunities for extra synergy ability unlocks for the co-op campaign"
+- The Long Lap: "campaign episode sounds good, workshop this for a campaign beat"
+- The Wind-Up Throw: "lets workshop this"
+- What He Wants: "workshop this for a campaign beat"
+- The Onlookers: "possible, potentially could be annoying in-game, but it could be interesting and cool"
+- The Band Follows: "lets workshop this, sounds like a great idea"
+
+In short: the Grudge is out. Take It Standing as packeted is replaced by Orb's absorb idea (hold LB, time RB), for every fighter. No time manipulation in the game's universe, "just extremely high speed".
