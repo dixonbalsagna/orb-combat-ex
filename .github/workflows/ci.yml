@@ -90,6 +90,8 @@ jobs:
       - name: Two-fighter ratchet (shipped code names no more places than the baseline)
         run: node tools/ratchet-two-fighter.mjs
       # The fighter-specific code ratchet (A-ENERGY-06; X-15): the energy, stamina, body and forms systems may not name a fighter by his id more often than the baseline (0 on 2026-11-14)
+      - name: Godot QA tooling self-test (QA's batch readers and acceptance skeletons on synthetic records; no Godot; 33 checks)
+        run: node qa/godot/selftest.js
       - name: Mode smoke runner self-test (a result is read as pass or fail; the game's data folder is moved off the real one; A-MODES-08)
         run: node tools/smoke/mode-smoke-selftest.mjs
       - name: Fighter-specific code ratchet self-test
