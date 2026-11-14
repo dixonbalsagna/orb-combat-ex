@@ -105,6 +105,34 @@
  	if j.has("globe"):
  		G_FLOOR = float(j.globe.get("floor", -2080.0))
  		G_CEIL = float(j.globe.get("ceil", 960.0))
+--- a/sim/world/blast.gd
++++ b/sim/world/blast.gd
+@@ -64,6 +64,16 @@
+ 	return r
+ 
+ 
++## A shot's crater energy: the kind's own base (craterETap to craterE by charge), times, with the energy model off, the shooter's tier from tierEnergy (data/biomes/blast.json), and, with it on, the model's
++## 12.25 to the level (SimPower.energyTop ^ level): a fresh base fighter's shot is the base, a top-tier fighter's at full power digs 3.5 times the radius, as a beam's groove does (Game Design, docs/design/buildings.md
++## section 9; A-WORLD-06). Pure: f needs tier and power.
++static func craterEnergy(S: SimState, f, k: Dictionary, charge: float) -> float:
++	var e: float = lerpf(float(k.get("craterETap", k.craterE)), float(k.craterE), charge)
++	if S.powerOn:
++		return e * SimDetMath.pow(SimPower.energyTop, SimPower.level(f))
++	return e * float(data().tierEnergy[clampi(int(f.tier), 1, 4) - 1])
++
++
+ static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1, shooter = null) -> Dictionary:
+ 	var res := {"crater": null, "levelled": 0}
+ 	var D: Dictionary = data()
+@@ -78,7 +88,7 @@
+ 		return res
+ 	var g: float = WorldTerrain.groundY(S, x, z)
+ 	var sp: float = maxf(SimDetMath.hypot(vx, vy), 0.000001)
+-	var E: float = lerpf(float(k.get("craterETap", k.craterE)), float(k.craterE), charge) * float(D.tierEnergy[ti])
++	var E: float = craterEnergy(S, f, k, charge)
+ 	var air: float = maxf(0.0, y - g)   # a burst above the ground (a mine in the air, a shot that ran out of life): the bowl fades with the height
+ 	if air > 0.0:
+ 		E *= maxf(0.0, 1.0 - air / (float(k.get("airReach", 6.0)) * 75.0))
 --- a/tools/schemas/biomes-craters.schema.json
 +++ b/tools/schemas/biomes-craters.schema.json
 @@ -45,6 +45,17 @@
@@ -173,12 +201,13 @@
      "floor": -2080.0,
 --- /dev/null
 +++ b/sim/world/tools/tier_ratio_check.gd
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,120 @@
 +extends SceneTree
 +# A-WORLD-06: the crater's width at the top tier is about three times the base (X-14; Game Design's numbers, docs/design/buildings.md section 6.2; docs/world/crater-tiers.md).
 +#   godot --headless --path . --script res://sim/world/tools/tier_ratio_check.gd
 +# With the energy model on, the model decides: from a fresh base fighter to the top tier at full power at least 3 times, and tier for tier at equal power between 2.5 and 3.5.
-+# With it off, the tier table (craters.json tier: energy 1, 2.1, 4.3, 9) makes the radius 1, 1.45, 2.07 and 3.0 times: the top tier's 3.0 within 5 percent. Shots (blast.json tierEnergy) read the same numbers.
++# With it off, the tier table (craters.json tier: energy 1, 2.1, 4.3, 9) makes the radius 1, 1.45, 2.07 and 3.0 times: the top tier's 3.0 within 5 percent. Shots (blast.json tierEnergy) read the same numbers with the model off;
++# with it on a shot's crater energy is the kind's own base times 12.25 to the level, 3.5 times the radius from a fresh base fighter to a full top tier (Game Design, docs/design/buildings.md section 9).
 +# The table rows set the table themselves (WorldCraters.setTier), so they test the rule whether the data's switch is on or off; two rows read the data's own words.
 +var fails: int = 0
 +
@@ -206,9 +235,9 @@
 +	var shots_off: bool = te.size() == 4 and absf(float(te[3]) - 2.2) < 1.0e-9
 +	ok(shots_on or shots_off, "shots: blast.json tierEnergy is today's (1, 1.3, 1.7, 2.2) or the table (1, 2.1, 4.3, 9): %s" % str(te))
 +	if WorldCraters.tierOn():
-+		ok(shots_on and absf(float(te[1]) - 2.1) < 1.0e-9 and absf(float(te[2]) - 4.3) < 1.0e-9, "with the tier table on, shots read the same numbers (%s)" % str(te))
++		ok(shots_on and absf(float(te[1]) - 2.1) < 1.0e-9 and absf(float(te[2]) - 4.3) < 1.0e-9, "with the tier table on, shots read the same numbers with the model off (%s)" % str(te))
 +	else:
-+		ok(shots_off, "with the tier table off, shots are today's (%s)" % str(te))
++		ok(shots_off, "with the tier table off, shots are today's with the model off (%s)" % str(te))
 +	var was_on: bool = WorldCraters.tierOn()
 +	var was_tab: PackedFloat64Array = WorldCraters.tierTable()
 +	var table := PackedFloat64Array([1.0, 2.1, 4.3, 9.0])
@@ -258,6 +287,38 @@
 +			worst = "%.2f at power %d" % [q, int(pw)]
 +	ok(good, "model on: tier for tier at equal power it is between 2.5 and 3.5 times (tier 4 over tier 1 at power 0 reads %.2f)" % (_r(SimPower.fullSpeed({"tier": 4.0, "power": 0.0}), 4.0, Son) / _r(SimPower.fullSpeed({"tier": 1.0, "power": 0.0}), 1.0, Son)) + worst)
 +	ok(is_equal_approx(WorldCrater.impactEnergy(900.0, 4.0, Son), 1.0), "model on: no tier term, table or not (E 1 at 900 a second)")
++	# --- shots: the model off reads blast.json tierEnergy, the model on the kind's base times 12.25 to the level
++	var Dk: Dictionary = WorldBlast.data()
++	var on_ok: bool = true
++	var off_ok: bool = true
++	var base_ok: bool = true
++	var seen: int = 0
++	var qon: float = 0.0
++	var qoff: float = 0.0
++	for kn in Dk.kinds:
++		var kk: Dictionary = Dk.kinds[kn]
++		seen += 1
++		var e0: float = WorldBlast.craterEnergy(Son, fresh, kk, 1.0)
++		var e1: float = WorldBlast.craterEnergy(Son, top, kk, 1.0)
++		qon = WorldCrater.radiusOf(e1, true) / WorldCrater.radiusOf(e0, true)
++		if absf(qon - 3.5) > 0.01:
++			on_ok = false
++		if not is_equal_approx(e0, float(kk.craterE)):
++			base_ok = false
++		var f1 := {"tier": 1.0, "power": 0.0}
++		var f4 := {"tier": 4.0, "power": 0.0}
++		qoff = WorldCrater.radiusOf(WorldBlast.craterEnergy(Soff, f4, kk, 1.0), true) / WorldCrater.radiusOf(WorldBlast.craterEnergy(Soff, f1, kk, 1.0), true)
++		var want: float = sqrt(float(te[3]) / float(te[0]))
++		if absf(qoff - want) > 0.001:
++			off_ok = false
++	ok(seen >= 4 and on_ok and base_ok, "model on: a shot's crater is the kind's base at level 0 and %.2f times the radius from a fresh base fighter to a full top tier, for each of %d kinds" % [qon, seen])
++	ok(off_ok, "model off: a tier-4 shot digs %.3f times a tier-1 shot's radius, the square root of blast.json tierEnergy's last over its first (%.3f)" % [qoff, sqrt(float(te[3]) / float(te[0]))])
++	if shots_on:
++		ok(absf(qoff - 3.0) <= 0.15, "model off, table: a tier-4 shot is 3.0 times (within 5 percent): %.3f" % qoff)
++	var alt := {"tier": 4.0, "power": 0.0}
++	var kk0: Dictionary = Dk.kinds[Dk.kinds.keys()[0]]
++	var qt: float = WorldCrater.radiusOf(WorldBlast.craterEnergy(Son, alt, kk0, 1.0), true) / WorldCrater.radiusOf(WorldBlast.craterEnergy(Son, fresh, kk0, 1.0), true)
++	ok(qt >= 2.5 and qt <= 3.5, "model on: tier for tier at equal power a shot is between 2.5 and 3.5 times (tier 4 over tier 1 reads %.2f)" % qt)
 +	WorldCraters.setTier(was_on, was_tab)
 +	print("TIERRATIO: %d check(s) failed" % fails)
 +	quit()
