@@ -1,0 +1,16 @@
+# The quick-match draw's planets on the globe ground (the EP, before GW1b): 7 (the reference), 12, 3, 13 and 17.
+# Build: a web export of main e56d372c + Camera's a-camera-01 + Tools' A-CODE-03 + my look-recut (the globe ground and the crater look on by
+# default), the tree my look-recut gate ran on (runs/e56d372c/look-recut.txt). Address: /index.html?flashcap=1&planet=N&touch=3 (A-CODE-03's
+# planet entry). Scene: the capture hook's beamduel, seed 12345, stills at ticks 1, 151, 301, 451 and 601, one capture at a time through Tools'
+# launcher. (The hook's ai scene ignores the page's world words: its setup is empty, so the globe ground's setup_of gave planet 7 to all five;
+# the first attempt's stills were all planet 7 and are not used.)
+# Stills (uncommitted, they show fighters): docs/rendering/img/lookgate/planets-p<N>-t00001.png ... -t00601.png.
+# Pixels off planet 7's by more than 24 (of 255), per still: tick 1: 12 79%, 3 47%, 13 56%, 17 45%; tick 301: 70%, 51%, 60%, 64%; tick 601:
+# 67%, 51%, 57%, 61%. Each is its own world.
+# What they show, by eye (tick 301): every planet's ground drawn whole, no holes, no missing or black tiles, the horizon and the sky in place:
+#   12: a beach and the open sea (one fighter over the water); a row of dark spikes in the near foreground of the beach: to look at (rocks of
+#       the biome, or the foreground rule's teeth);
+#   3:  a town of brick houses, a road and a green slope; one pane close on a grey building's wall;
+#   13: a city of towers over grey rubble ground;
+#   17: a town and a river: the river reads as two bands of water with a strip of ground between them: to look at (a bend of the river,
+#       or the water sheet drawn over the bank).

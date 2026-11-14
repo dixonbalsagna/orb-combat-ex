@@ -1,0 +1,11 @@
+--- a/render/vfx/tools/hash_check.gd
++++ b/render/vfx/tools/hash_check.gd
+@@ -108,7 +108,7 @@
+ ## The sim alone, as the parity tools run it: [[tick, hash], ...] every EVERY ticks, then the last tick.
+ func _pure(seed: int) -> Array:
+ 	var S := SimCore.createSim()
+-	SimCore.newMatch(S, seed)
++	SimCore.newMatch(S, seed, {}, RenderTileGround.setup_of({}) if RenderTileGround.on else {})   # the setup the host sends: with the globe ground on, its planet keys (as Rendering's determinism tool, _as_host)
+ 	var V := SimFxView.new(seed)
+ 	var out: Array = []
+ 	var t: int = 0

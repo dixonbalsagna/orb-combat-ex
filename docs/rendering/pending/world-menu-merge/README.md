@@ -32,4 +32,8 @@ World's patch as filed doesn't apply on the stack. Its `_on_menu_started` hunk a
 ## Proof
 
 - It applies on the stack above (`git apply`).
-- **The gates on the full GW1b stack are owed:** import, my 15 checks, World's `world_default_check` and UI's `hud_check`. That's after the look and clipping reports.
+- **On the full GW1b stack** (`docs/rendering/runs/4f06e7a3/world-menu-merge.txt`):
+  - the stack is main 4f06e7a3 + Camera + A-CODE-03 + `look-recut/` + UI's pause-clock, start-flow and its grant, replay-words, menu-fixes, screen-sweep, rail-default and world-menu + World's A-WORLD-01 new files and Simulation's grant for it + this merge;
+  - it imports clean, and `golden.json` is byte-identical (the data's world mode is still the arena until GW1a's switches flip it);
+  - the five ground checks pass, World's `world_default_check` fails 0, UI's `hud_check` passes 8,546 checks with 0 failed, and the render gates pass 20 of 20.
+  - The run was stopped once for the GW1a foot-slice gate and finished on the same tree; the record says which parts came from which.

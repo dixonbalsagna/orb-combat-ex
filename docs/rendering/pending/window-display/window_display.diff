@@ -1,0 +1,79 @@
+--- a/project.godot
++++ b/project.godot
+@@ -13,6 +13,13 @@
+ 
+ general/default_playback_type.web=0
+ 
++[display]
++
++; A desktop build starts full screen at the screen's own size, so a 1280 by 800 screen is filled; the web page keeps its canvas.
++; The Display row's Window changes it (render/core/main.gd _apply_display; A-PERF-08). Vertical sync stays on, Godot's default.
++window/size/mode=3
++window/size/mode.web=0
++
+ [rendering]
+ 
+ renderer/rendering_method="gl_compatibility"
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -303,6 +303,7 @@
+ 	_sky_args()
+ 	if args.has("bench") or args.has("novsync"):
+ 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
++	_apply_display(true)   # a saved Window choice (A-PERF-08)
+ 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
+ 
+ 
+@@ -1149,6 +1150,41 @@
+ 		var fn: String = "set_latch_charge" if key.begins_with("latch_charge") else "set_charges_off"
+ 		if host.hub.has_method(fn):   # Controls' two functions are not in the hub yet; the guard goes when they land
+ 			host.hub.call(fn, bool(value), 1 if key.ends_with("_p2") else 0)
++	elif key == "window_mode":   # the Display row's Window (A-PERF-08)
++		_apply_display(false)
++
++
++## The window, from the Display row's Window (A-PERF-08; UI's row, "fullscreen" or "windowed"). The project file starts a
++## desktop build full screen at the screen's own size (display/window/size/mode), so a 1280 by 800 screen is filled. A saved
++## "windowed" makes it a window at the start, and a change on the Settings screen does so at once. The web page owns its
++## canvas. A headless run, a tool, the capture hook, a bench and a scripted run keep the window they were given, and so does
++## a start whose command line names one of Godot's own window flags (WINDOW_FLAGS). Vertical sync is a fixed choice: on
++## (Godot's default), off only for --bench and --novsync. There's no frame cap: the sync caps the frame rate.
++func _apply_display(at_start: bool) -> void:
++	if DisplayServer.get_name() == "headless" or OS.has_feature("web") or get_parent() != get_tree().root:
++		return
++	if manual or flashcap != null or args.has("bench") or args.has("frames") or args.has("shot"):
++		return
++	var windowed: bool = str(ui_hud.opts.get("window_mode", "fullscreen")) == "windowed"
++	if at_start:
++		if not windowed:
++			return
++		for a in OS.get_cmdline_args():
++			if WINDOW_FLAGS.has(a):
++				return
++	var mode: int = DisplayServer.window_get_mode()
++	var full: bool = mode == DisplayServer.WINDOW_MODE_FULLSCREEN or mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN
++	if not windowed:
++		if not full:
++			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
++		return
++	if not full:
++		return   # already a window, maximised or not: the player's size stays
++	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
++	var area: Rect2i = DisplayServer.screen_get_usable_rect(DisplayServer.window_get_current_screen())
++	var wsize := Vector2i(mini(WINDOWED_SIZE.x, int(area.size.x * 0.9)), mini(WINDOWED_SIZE.y, int(area.size.y * 0.9)))
++	DisplayServer.window_set_size(wsize)
++	DisplayServer.window_set_position(area.position + (area.size - wsize) / 2)
+ 
+ 
+ ## The Remap screen changed a player's layout (UI's remap_slot_changed: the layout, its rows and whose it is). UI has
+@@ -1629,6 +1665,10 @@
+ 		host.release_all()
+ 
+ 
++## Godot's own command-line window flags: a start that names one keeps that window (_apply_display).
++const WINDOW_FLAGS: Array = ["-f", "--fullscreen", "-w", "--windowed", "-m", "--maximized", "--resolution"]
++## The window the Display row's "windowed" opens, centred, within nine tenths of the screen's usable area.
++const WINDOWED_SIZE := Vector2i(1280, 720)
+ ## UI's options for Controls' two charge settings: slot 0's, and with _p2 slot 1's.
+ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
+ ## UI's options for Controls' right-hand attacks (SimInputHub): each is slot 0's, and with _p2 slot 1's. They are listed in Settings only while timing.json switches.rightStick is on.

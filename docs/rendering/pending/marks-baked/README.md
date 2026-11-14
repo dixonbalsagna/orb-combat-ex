@@ -1,10 +1,10 @@
-# The store's grooves drawn, and bowls by the fighters (A1 clipping, part 2)
+# The store's grooves drawn, and feet on the ground they stand on (A1 clipping, part 2)
 
-Parked by Rendering on 2026-11-14, sprint A1's clipping item: terrain plan step 4, "feet on the ground you see", cut down to what's under the fighters (the stand-in's planet design, §5). **It stacks on `feet-ground`.** Cut on main 83a5b963 with feet-ground (4aa3ecc4) applied; every figure is in `docs/rendering/runs/83a5b963/marks-baked.txt`. Two files:
-- **`marks_baked.diff`** (sha1 10a4a514, 373 lines): `render/core/tile_field.gd`, `tile_ground.gd`, `look.gd`, `planet_view.gd`, and the new gate `render/tools/feet_check.gd`;
+Parked by Rendering on 2026-11-14, sprint A1's clipping item: terrain plan step 4, "feet on the ground you see", cut down to what's under the fighters (the stand-in's planet design, §5). **It stacks on `feet-ground` and `foot-slice`** (`foot-slice/` carries the `_tile_foot_slice` fix this park first had, for GW1a). Two files:
+- **`marks_baked.diff`** (sha1 1e50522a, 422 lines; re-cut 2026-11-14 for the groove remainder): `render/core/tile_field.gd`, `tile_ground.gd`, `look.gd`, and the new gate `render/tools/feet_check.gd`;
 - **`grant-world-store.patch`** (sha1 0e606aaa, 47 lines; **a grant**, World's file `sim/world/store.gd`): one new read-only function. It applies on main as it is.
 
-No hash change, no state written.
+Main 83a5b963 + `feet_ground.diff` + `foot_slice.diff` + `marks_baked.diff` applies in that order and gives the tree the gates ran on. No hash change, no state written.
 
 ## What it fixes
 
@@ -15,49 +15,49 @@ After feet-ground, 796 of the 875 samples left with feet under the drawn ground 
 - **`WorldStore.parts`** (the grant): `heightDelta`'s two halves at a point, the craters' sum and the grooves' least, through the same index and arithmetic. Read only. `heightDelta` is `y < 0 ? min(x, y) : x`.
 - **The tiles carry the grooves.**
   - On a field world, a tile at level 1 or finer takes `heightDelta` less the craters' sum at each node: the part the vertex stage's 16 bowls don't draw.
-  - A new store record asks again for the tiles it reaches: a groove, a trench segment, or a crater (which changes the less-craters part). Those are read at its points and a half width either way, at levels 1 to 4.
+  - A new store record asks again for every tile its footprint crosses: points every half tile per level, along a trench from end to end and across to its reach, corners included. That covers a groove, a trench segment, or a crater (which changes the less-craters part).
   - The rebakes are filled before any new tile, into their own slot (`_store` reuses a present key's layer).
-- **The lift's ground takes off only the craters' sum,** so a fighter's feet follow the drawn ground at every moment.
-  - On a groove not yet baked, he stands on the drawn, undug ground.
-  - A tile stored after the frame's lift reads gets the bodies' columns read again at the end of the fill, so the feet never lag a frame.
-  - The lift's fade compares his height with the full stand ground, bowls included. Before, it compared with the ground without craters, so a fighter deep in a big crater lost his lift and sank: seed 3's 52-unit sink at a rim.
+- **The lift's ground takes off only the craters' sum,** so a fighter's feet follow the drawn ground. On a groove not yet baked, he stands on the drawn, undug ground. A tile stored after the frame's lift reads gets the bodies' columns read again at the end of the fill.
+- **A body's own column takes his own lift** (`_body_at`).
+  - The lift is looked up by column, in `lift()` and in `globe_place`, and it was read at the column's middle. On a narrow trench's wall the drawn ground changes by tens of units across one column's 32 units.
+  - Every frame, each body's column, and the neighbour he's nearest, take the lift read at his exact place, and the ground the lift's fade compares him with. A column he leaves is read at its middle again.
+  - The table is uploaded only when a value changed.
+- **The lift's fade** compares his height with the full stand ground, bowls included. Before, a fighter deep in a big crater lost his lift and sank: seed 3's 52-unit sink at a rim.
 - **Bowls by the fighters:**
   - every bowl within its reach plus `BOWL_FEET_REACH` (300) of a body is drawn before the bowls nearest the camera;
-  - a bowl under a body on the ground (within `BOWL_FEET_LIFT`, 30) opens at once, at first sight or the moment he stands in it, since the sim dug it at once;
+  - a bowl under a body on the ground (within `BOWL_FEET_LIFT`, 30) opens at once, since the sim dug it at once;
   - the quarter-second opening stays everywhere else.
-- **`PlanetView._tile_foot_slice`** returns on a second pane (`source != null`). It shares the first pane's foot arrays but not its seen list, so it read past the end: the "Out of bounds get index" Camera saw about 280 times a digest run, on main too.
 
 ## Result
 
-The feet probe: 10 seeds of 1,800 ticks on the tile ground, 4,014 standing samples.
+The feet probe and the gate: 10 seeds of 1,800 ticks on the tile ground, 4,014 standing samples.
 
-| | main | feet-ground | + this park |
-|---|---|---|---|
-| feet under the drawn ground by over 8 units | 892, worst 194.9 | 875, worst 215.8 | **99, worst 22.0** |
-| ... in the first 600 frames | 170 | 153 | **0** |
-| ... a bowl still opening / the lift not read | 17 / 147 | 17 / 43 | **0 / 0** |
-| feet floating over 8 units | 41, worst 16.3 | 0 | 26, worst 21.8 |
-| seeds with nothing sunk over 8 | 0 of 10 | 4 of 10 | **7 of 10** |
+| | main | feet-ground | first cut | **this cut** |
+|---|---|---|---|---|
+| feet off the drawn ground by over 8 units, either way (the gate's count) | 933 | 875 | 125 (3.1%) | **42 (1.0%)** |
+| ... sunk / floating | 892 / 41 | 875 / 0 | 99 / 26 | **42 / 0** |
+| the worst | 194.9 | 215.8 | 22.0 | **19.0** |
+| seeds with nothing over 8 | 0 of 10 | 4 of 10 | 7 of 10 | **8 of 10** |
 
-Proof on the same tree: it imports clean, `golden.json` is byte-identical, the tile, lake water, cover water, sweep and ground checks pass, and the render gates pass 20 of 20.
+`docs/rendering/runs/83a5b963/marks-baked-2.txt`, on main 83a5b963 + feet-ground:
+- it imports clean, and `golden.json` is byte-identical;
+- the tile, lake water, cover water, sweep and ground checks pass, and the render gates pass 20 of 20;
+- the feet gate passes at 3%.
 
-What's left, all on store marks the tiles don't draw yet (78 of the 99 by the probe's own sorting):
-- seed 1: 73 samples, up to 22 units;
-- seed 2: 5, up to 9.9;
-- seed 7: 21, 8.0 to 8.7.
+How the remainder was found: `groove-remainder.txt` (the footprint ask), `-2` (per-frame reads: no change), `-3` (the body's own lift), `-4` (the fade's ground: no change).
 
-They're likely a rebake that hasn't landed yet, or a groove narrower than the tile's node spacing where no finer tile is loaded. The floating samples are mostly seed 1's too (21, up to 21.8).
+What's left (42):
+- **seed 1: 21 samples, up to 19 units, on one trench's lip.** The strip's rows draw a column's residual deform flat across the column (`offset_at` and `ground_offset4`'s `gf(i, 2)`), while the sim interpolates the deform between columns (`WorldTerrain.groundY`). Where the deform drops sharply from one column to the next (21.9 to about 0 here), the two disagree inside the column. The fix: draw the residual the sim's way, interpolated, in both. That changes what the rows draw, so it comes with its own look gate.
+- **seed 7: 21 samples at 8.0 to 8.8.** These aren't on store marks; likely the same kind of small interpolation difference.
 
 ## The feet check as a gate
 
-`render/tools/feet_check.gd` (the design page's §6): 10 seeds through the game's own main, every standing frame. It passes when no sample is more than 25 units off either way, and at most 3% are more than 8 off. It needs the tile ground (on by default with globe-default, else `--tiles`). It's a long gate, about 20 minutes, so run it below normal priority. Its verdict on this park (`docs/rendering/runs/83a5b963/feet-check-gate.txt`): **fails by a hair.** 125 of 4,014 samples (3.1%) are more than 8 units off, against a line of 3%; the worst is 22.0, within 25. The 125 are seeds 1 (94), 2 (9) and 7 (21) and one sample in seed 9, the groove remainder above. Two ways to land it, for the EP:
-- as a measurement that reports but doesn't block, until the groove remainder is fixed;
-- at 4% now, ratcheting to 3% and then lower as the remainder goes.
+`render/tools/feet_check.gd` (the design page's §6): 10 seeds through the game's own main, every standing frame. It passes when no sample is more than 25 units off either way, and at most 3% are more than 8 off. It needs the tile ground (on by default with globe-default, else `--tiles`). It's a long gate, about 20 minutes, so run it below normal priority.
 
-I haven't changed the line to make this park pass.
+**The line is a ratchet** (the EP, 2026-11-14): 4% while feet stood on undrawn grooves, **3% with this cut** (it passes at 1.0%), then lower. The first cut failed 3% by a hair (`feet-check-gate.txt`, 3.1%) and passed at 4% (`feet-check-gate-4.txt`). The count can move by a few samples from run to run: the tiles are filled on a time budget, so a loaded machine moves when a rebake lands. The worst and the share hold.
 
 ## Owed before it lands
 
-- **The grant** for `sim/world/store.gd` (`WorldStore.parts`).
-- **The web rebake cost,** in a quiet window (Performance; terrain plan step 4's measure). The probe counts rebakes (`RenderTileField.rebakes`) but times nothing.
+- **The grant** for `sim/world/store.gd` (`WorldStore.parts`); the EP has sent it to World.
+- **The web rebake cost,** in a quiet window (Performance; terrain plan step 4's measure). The footprint ask queues more tiles per mark than the first cut did; the probe counts rebakes (`RenderTileField.rebakes`) but times nothing.
 - **The look gate:** a side-by-side on Orb's replay where a groove or trench lies under a fighter, against the 9 November build. Also the flash readings on the tile ground (wave 2).

@@ -1,0 +1,12 @@
+# The groove remainder: marks-baked with the rebake ask over each mark's whole footprint and each body's own column lifted at his own place (_body_at), on main 83a5b963 + feet-ground; the diagnostic feet probe, seeds 1, 2 and 7 (the gate's failing seeds), 1800 ticks, --tiles
+# before (runs/83a5b963/marks-baked.txt): seed 1 under 73 (worst 22.0), seed 2 under 5 (worst 9.9), seed 7 under 21 (worst 8.7)
+import 0 errors 0
+exit 0
+  seed 1, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 21
+seed 1, 1800 frames: standing samples 1104; drawn vs stood over 8: 381 (worst 92.5); feet under the drawn ground over 8: 21 (worst 19.0; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 21); feet over it by 8: 0 (worst 4.5)
+  seed 2, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 2, 1800 frames: standing samples 163; drawn vs stood over 8: 78 (worst 107.6); feet under the drawn ground over 8: 0 (worst 0.1; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 0); feet over it by 8: 0 (worst 0.9)
+  seed 7, of the rest: the drawn frame off the sim's by over 16 units 0; a crater drawn otherwise than the sim's (not among the 16 drawn, or elsewhere) 0; a store mark the tile ground doesn't draw (scorch, trench) 0
+seed 7, 1800 frames: standing samples 359; drawn vs stood over 8: 26 (worst 34.5); feet under the drawn ground over 8: 21 (worst 8.8; in the first 600 frames 0; a bowl opening 0, the lift not read 0, the rest 21); feet over it by 8: 0 (worst 0.9)
+ALL, of the rest: frame off 0; crater drawn otherwise 0; undrawn store mark 21
+ALL 3 seeds: standing samples 1626; drawn vs stood over 8: 485 (worst 107.6); feet under the drawn ground over 8: 42 (worst 19.0; first 600 frames 0; bowl opening 0, lift not read 0, rest 42); feet over it by 8: 0 (worst 4.5)

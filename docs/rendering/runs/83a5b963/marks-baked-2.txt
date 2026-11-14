@@ -1,0 +1,25 @@
+# marks-baked re-cut (the rebake ask over each mark's whole footprint; a body's own column lifted at his own place, the fade's ground too; the feet gate at 3%) on main 83a5b963 + feet-ground (4aa3ecc4)
+marks_baked.diff 2e51b794, 462 lines (render/core/tile_field.gd, tile_ground.gd, look.gd, planet_view.gd, render/tools/feet_check.gd; the store.gd grant unchanged)
+import 0 errors 0
+golden.json byte-identical to main's
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+## the feet gate (render/tools/feet_check.gd 139f1cf8), --tiles, seeds 1 to 10, 1800 ticks
+exit 0
+ok   seed 1: 1104 standing samples, 21 over 8 units, the worst 19.0
+ok   seed 2: 163 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 3: 345 standing samples, 0 over 8 units, the worst 5.8
+ok   seed 4: 679 standing samples, 0 over 8 units, the worst 6.0
+ok   seed 5: 77 standing samples, 0 over 8 units, the worst 0.8
+ok   seed 6: 88 standing samples, 0 over 8 units, the worst 0.8
+FAIL seed 7: 359 standing samples, 21 over 8 units, the worst 8.8
+ok   seed 8: 155 standing samples, 0 over 8 units, the worst 1.6
+ok   seed 9: 950 standing samples, 0 over 8 units, the worst 0.8
+ok   seed 10: 94 standing samples, 0 over 8 units, the worst 4.1
+ok   10 seeds: 4014 standing samples, 42 over 8 units (1.0%, at most 3%), the worst 19.0 (at most 25)
+feet check passed

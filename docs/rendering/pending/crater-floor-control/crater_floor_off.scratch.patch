@@ -1,0 +1,11 @@
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -248,7 +248,7 @@
+ 			float cl = dot(-vec2(cos(cf), sin(cf)), normalize(sun_dir.xz));
+ 			int ct = cl > 0.35 ? 0 : (cl < -0.35 ? 2 : 1);
+ 			earth = mix(biome_tone(v_ba, 6 + ct), biome_tone(v_bb, 6 + ct), zf);
+-			if (cs < crater_rings.w || cd >= crater_rings.z) {
++			if (false && (cs < crater_rings.w || cd >= crater_rings.z)) {   // SCRATCH, VFX's flash control only: the floor's warm tone off (the floor takes the inner wall's tone); never lands
+ 				// The floor: warm, in flat stripes at slightly different slants.
+ 				float cz = dot(v_q.xz, vec2(0.83, 0.55)) + 0.35 * tile_tri(v_q.x * 0.31 - v_q.z * 0.17);
+ 				earth = mix(biome_tone(v_ba, 8), biome_tone(v_bb, 8), zf) * crater_steps.y * (1.0 + crater_steps.z * (mod(floor(cz / crater_steps.w), 3.0) - 1.0));

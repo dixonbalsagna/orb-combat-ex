@@ -1,6 +1,6 @@
 # The game's window: full screen on a desktop, a Window row to change it (A-PERF-08)
 
-Parked by Rendering on 2026-11-14 for sprint A1. The game set no window: the project file had no display section, so a desktop build opened Godot's default 1152 by 648 window, and the Steam Deck's 1280 by 800 screen wasn't filled (`docs/tools/steam-deck.md`). `window_display.diff` (sha1 SHA, LINES lines, cut on main BASE) changes two files:
+Parked by Rendering on 2026-11-14 for sprint A1. The game set no window: the project file had no display section, so a desktop build opened Godot's default 1152 by 648 window, and the Steam Deck's 1280 by 800 screen wasn't filled (`docs/tools/steam-deck.md`). `window_display.diff` (sha1 4316eeb9, 79 lines, cut on main 3c2ff9ac) changes two files. It also applies on the whole A1 stack of `main.gd` (Camera, A-CODE-03, `look-recut/`, UI's grants, `world-menu-merge/`). **The project-file change waits until after GW1a lands** (the EP), so the full flash set it triggers runs once.
 
 - **`project.godot` (a grant):** a `[display]` section:
   - `window/size/mode=3` starts a desktop build full screen (borderless, at the screen's own size), so any screen is filled, a 1280 by 800 one included;
@@ -25,13 +25,16 @@ What stays the same:
 
 ## Proof
 
-On main BASE with this park (`docs/rendering/runs/BASE/window-display.txt`): PROOF.
+On main 3c2ff9ac with this park (`docs/rendering/runs/3c2ff9ac/window-display.txt`):
+- it imports clean;
+- a probe reads the project's settings as the game does: the window mode 3 on a desktop, 0 for the web build, vertical sync 1, the base size still 1152 by 648;
+- `main.gd` compiles with `_apply_display`;
+- `golden.json` is byte-identical;
+- the tile, lake water, cover water, sweep and ground checks pass, and the render gates pass 20 of 20.
 
 The window itself can't be seen headless, and Godot runs here are headless only. The first desktop build (A-TOOLS-01) is the check: started with no arguments, it should open full screen; with `--windowed` it should open a window; the Window row should switch between the two. Whether the HUD and the split hold at 16:10 is UI's and Camera's to look at (steam-deck.md).
 
 ## Owed
 
-- **UI's row** (`ui/data/settings.json`, `ui/hud/ui_hud.gd`'s option defaults):
-  - `window_mode` in the Display group: "Full screen" or "Windowed", default `"fullscreen"`, saved like the others, and not listed on the web (the browser has its own full screen);
-  - main.gd reads it through `option_changed` and `opts.get("window_mode", "fullscreen")`, so this park works before the row lands, and the row works the day it does.
+- **UI's row** is parked: `docs/ui/pending/a1-window-row/` has `window_mode`, Full screen or Windowed, default `"fullscreen"`, not listed on the web. Its key and values are the ones `_apply_display` reads. main.gd reads it through `option_changed` and `opts.get("window_mode", "fullscreen")`, so either can land first.
 - **The full flash set (RL-128):** a change to `project.godot` runs it. It should change nothing, since the web build's window is untouched and headless runs ignore the window mode. The EP plans it to run once: with another project-file change in the same landing if there is one.
