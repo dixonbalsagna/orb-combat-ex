@@ -49,6 +49,18 @@
       "ticks": 180,
       "capMin": 100,
       "from": "Measured 2026-11-14 (hardware, 960x540, export of f1f91f45): the full clip reads its worst second at ticks 78 to 125 (events 78, 81, 82, 86, 112, 115, 125), so the window starts at tick 1 and runs 180 ticks. The reading is on the line of 3 and moves by half a flash to one flash from run to run: the full clip read 3.5 and then 3, the window read 3, 2.5 and 2.5 (the reduced window matched its full reading exactly). Treat a signature window as a tripwire within one flash of the line, not as the clip's number."
+    },
+    "rushcity-normal": {
+      "skip": 640,
+      "ticks": 240,
+      "capMin": 150,
+      "from": "Measured 2026-11-21 (hardware, 960x540, export of main d168a518, nightly page words, machine load 21 to 56 percent, 12 frames a second): the full clip FAILS at primary 4.5, area-15% 6, two-second memory 4.5, red 0; the worst second is ticks 761 to 815 (events 761, 785, 787, 789, 796, 799, 807, 810, 815). The window of 240 ticks from 641 (120 ticks of lead-in for the memory) picks the same events (121 to 175 of the window) and the same four readings, 4.5 / 0 / 6 / 4.5. Cost on a runner not measured: 640 skipped ticks at about 2.2 s is about 24 minutes, then 240 captured ticks; capMin 150 allows about 2 minutes a captured tick."
+    },
+    "rushcity-reduced": {
+      "skip": 640,
+      "ticks": 240,
+      "capMin": 150,
+      "from": "Measured 2026-11-21 (same export, same machine and words): the full clip FAILS at primary 5.5, area-15% 7, two-second memory 5.5, red 0; the worst second is ticks 785 to 841 (events 785, 787, 789, 796, 799, 807, 809, 815, 825, 839, 841). The window of 240 ticks from 641 picks the same events and the same readings, 5.5 / 0 / 7 / 5.5. Same cost note as rushcity-normal."
     }
   },
   "defaultCapMin": 45

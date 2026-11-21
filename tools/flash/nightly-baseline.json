@@ -1,0 +1,67 @@
+{
+  "_about": "The nightly flash reading's RECORDED VALUES (the EP, 2026-11-21): each clip's four readings (primary, red, area-15% and two-second memory) as the worst of the six scheduled nights of 15 to 20 November 2026 (collapse-normal excepted: the EP recorded it at its five-night value, 2 on the primary, area and memory readings, with no allowance, so the one noisy night of 19 November is NOT in it) (runs 43711627577, 43870618754, 44094333781, 44311081706, 44533410579, 44741476400; all on commit 09aa0f44; docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md). tools/flash/nightly-ci.mjs --baseline turns the nightly red when a clip reads WORSE than its recorded value on any of the four, when a clip has no recorded value, or when a reading is missing; it is green only when every clip equals or beats its recorded value. This file is read ONLY by the nightly: the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line and do not use it. Several of these values are OVER the line of 3 (the clash clips, signature reduced): they are recorded as they are, so the nightly says nothing new about them until they get worse. Update a value by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.",
+  "recorded": "2026-11-21",
+  "basis": "the worst of the six nights per reading (clash-night-normal: of five, 16 Nov was not read), except collapse-normal: its five-night value, 2 / 2 / 2 (the EP, 2026-11-21: no allowance; a noisy night going red is the tripwire doing its job and a slip from 2 to 3 must show). The one night it read 3 / 3 / 4, 19 Nov, is left out on purpose. rushcity-normal and rushcity-reduced (2026-11-21, the EP: main fails them and the nightly says so honestly) are recorded from the local full reading of main d168a518 (hardware, 960x540, the nightly page words; the window the runner reads picks the same events and the same four numbers), NOT from a scheduled night: the first scheduled nights may read differently in software, and a value is changed only by hand with the EP's word.",
+  "clips": {
+    "clash-normal": {
+      "primary": 4.5,
+      "red": 0,
+      "area15": 4.5,
+      "twoSec": 4.5
+    },
+    "clash-reduced": {
+      "primary": 6.5,
+      "red": 0,
+      "area15": 6.5,
+      "twoSec": 6.5
+    },
+    "collapse-normal": {
+      "primary": 2,
+      "red": 0,
+      "area15": 2,
+      "twoSec": 2
+    },
+    "collapse-reduced": {
+      "primary": 3,
+      "red": 0,
+      "area15": 3,
+      "twoSec": 2.5
+    },
+    "signature-normal": {
+      "primary": 3,
+      "red": 0,
+      "area15": 2.5,
+      "twoSec": 2.5
+    },
+    "signature-reduced": {
+      "primary": 4,
+      "red": 0,
+      "area15": 5,
+      "twoSec": 2.5
+    },
+    "clash-night-normal": {
+      "primary": 3.5,
+      "red": 0,
+      "area15": 4.5,
+      "twoSec": 3.5
+    },
+    "clash-night-reduced": {
+      "primary": 5.5,
+      "red": 0,
+      "area15": 5.5,
+      "twoSec": 5.5
+    },
+    "rushcity-normal": {
+      "primary": 4.5,
+      "red": 0,
+      "area15": 6,
+      "twoSec": 4.5
+    },
+    "rushcity-reduced": {
+      "primary": 5.5,
+      "red": 0,
+      "area15": 7,
+      "twoSec": 5.5
+    }
+  }
+}

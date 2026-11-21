@@ -1,0 +1,18 @@
+diff --git a/tools/flash/release-pass.json b/tools/flash/release-pass.json
+index b0fecb5..2a857e5 100644
+--- a/tools/flash/release-pass.json
++++ b/tools/flash/release-pass.json
+@@ -5,6 +5,13 @@
+     "by": "CD-09 (A-LEGAL-08), Tools",
+     "why": "this pass (d3f1ca0e, 2026-10-15) was measured with the analyser that gave every tie between the two change directions to up, so equal regions strobing in counter-phase read about 0.5 where either alone reads 10; the tie is fixed (tools/flash/wcag.js), the set and the tile ground players see changed, and no commit has met the release rule since"
+   },
++  "toRedo": [
++    {
++      "on": "2026-11-21",
++      "by": "Tools, at the EP's word",
++      "why": "Two scenes of the required set changed their staging after the last recorded run, and their pixel readings must be redone in the next full pass (none has been taken). (1) mashdummy, both pairings, normal and reduced (4 clips): since d168a518 the heavy at the end of its 600-tick cycle is tapped every 45 ticks from tick 480 (three heavies where there was one: with energy on a single heavy was planned as a knock back, so the scene never launched), in tools/flash/flash_worst.gd and render/tools/flash_capture.gd. The headless register recount of the new staging passes (worst weight 2.12 of 2.5 normal, 1 of 1 reduced), but the three-heavy clip has not been captured or read. (2) signaturedummy, both pairings, normal and reduced (4 clips): sources.json now gives it 3,600 ticks (was 1,800) so a building falls in it, and a clip is as long as its scenario, so each of its clips is twice as long to capture and read as before. This record is superseded and holds for no commit; the note is for whoever records the next pass."
++    }
++  ],
+   "commit": "d3f1ca0e22f39110d69feceb4913ff799d11db5d",
+   "recorded": "2026-10-15",
+   "contentHash": "6d50d7a0ddd0a4fcd2fc407e29b5d6862eda7811fd45cec9abc25b14898d4988",

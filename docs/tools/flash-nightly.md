@@ -1,6 +1,6 @@
 # The nightly flash reading on a runner: first speed trial (Tools, 2026-11-14; for the EP, not for Orb)
 
-`.github/workflows/flash-nightly.yml` reads eight clips on GitHub's runners with software rendering: clash, collapse, signature and clash-night, each in the normal and the reduced mode. `tools/flash/nightly-ci.mjs` turns each clip's reading into the night's verdict (line 3 on the primary reading, the 15% area, the two-second memory; exit 2 when a clip was not read, never a pass). Self-tests: `nightly-ci-selftest.mjs` (27 checks), `player-watch-selftest.mjs` (30), both in CI.
+`.github/workflows/flash-nightly.yml` reads ten clips on GitHub's runners with software rendering: clash, collapse, signature, clash-night and rushcity (since 2026-11-21), each in the normal and the reduced mode. `tools/flash/nightly-ci.mjs` turns each clip's reading into the night's verdict (line 3 on the primary reading, the 15% area, the two-second memory; exit 2 when a clip was not read, never a pass). Self-tests: `nightly-ci-selftest.mjs` (27 checks), `player-watch-selftest.mjs` (30), both in CI.
 
 ## The speed trial (run 43575965534, 14 November 2026, 08:28 to 08:59 UTC)
 
@@ -88,3 +88,33 @@ Full local readings of the four clips (the nightly's page words, one at a time, 
 - **Signature's worst moment is in the first two seconds**, which is why the earlier window of 120 ticks from tick 1 read 2 and 3. **Collapse-reduced's worst is the clip's last second**, which a window from tick 1 never reached; its window now ends at tick 1500 (the worst moment may run on past it, into time the clip does not play).
 - **Memory needs lead-in.** The two-second memory reading ignores the first 120 frames of a clip, so a window needs about 120 ticks before the moment: a window of 130 ticks from 1371 read the right primary but a memory of 1 for collapse-reduced; 160 from 1341 reads 2.5, as the full clip does.
 - **Costs on a runner** are not measured for these windows: collapse about 20 to 50 s a tick plus about 2 s a skipped tick, so collapse has a 210-minute cap (the job limit is 300); signature has 100 minutes.
+
+## The recorded values: the nightly says only what changed (the EP, 2026-11-21; for the EP, not for Orb)
+
+Six scheduled nights (15 to 20 November, `docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md`) were red for the same known reason: the clash clips and signature-reduced read over the line of 3 and the nightly asked "is it over the line". It now asks "is it worse than it was recorded", against `tools/flash/nightly-baseline.json`:
+
+- **Red** when a clip reads **worse** than its recorded value on any of the four readings (primary, red, area-15%, two-second memory) (exit 4); when a clip has **no recorded value** (a new clip, exit 5); when a clip, or one of its readings, was **not read** (exit 2, as before).
+- **Green** only when every clip **equals or beats** its recorded value. A clip that is over the line AS RECORDED is noted on the run ("over the line of 3, as recorded") and is not red; a clip that reads better is noted too.
+- **The recorded values are the worst of the six nights per reading** (the five nights for clash-night normal: 16 November was not read), recorded as they are, over the line included. **The exception is collapse-normal, recorded at its five-night value, 2 on the primary, area and memory readings, with no allowance (the EP, 2026-11-21):** the one noisy night, 19 November (3 / 3 / 4), is left out on purpose, a noisy night going red is the tripwire doing its job, and a slip from 2 to 3 must show.
+- **What it does not touch:** the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line, unchanged; `nightly-ci.mjs` without `--baseline` is the old verdict, and its self-test still holds it. Nothing that guards a player is loosened.
+- **Updating a value** is by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.
+- Proof: the self-test (47 checks, 27 before) covers each reading one step worse, a new clip, a missing reading, equal and better, the real file; and the six real nights replayed through it: 46 of the 48 clip-nights are green; the two that are not are 16 November's clash-night normal (not read) and 19 November's collapse-normal (3 / 3 / 4 against its recorded 2 / 2 / 2: red, as ruled).
+
+## rushcity joins the nightly (the EP, 2026-11-21; for the EP, not for Orb)
+
+Rendering's B-20 capture of main ed1591cb failed `rushcity` (3.5 normal, 4.5 reduced) and the nightly did not read it: the matrix was the four families clash, collapse, signature and clash-night. `rushcity-normal` and `rushcity-reduced` are now in the matrix, in the verdict's `EXPECTED` list, in `nightly-windows.json` and in `nightly-baseline.json`; two self-test checks keep the matrix and the verdict's list equal and give each clip a window.
+
+**The full local reading of main d168a518** (hardware rendering, 960x540, the nightly's page words, one capture at a time at below-normal priority; the machine's CPU was sampled every 20 s: 28 to 56 percent, median 37, never saturated; the capture rate was 12 frames a second and the guard's loads before and after were 47/41 and 21/26, so both readings stand):
+
+| Clip | Primary | Red | Area-15% | Two-second memory | Worst second (event ticks) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| rushcity-normal | 4.5 | 0 | 6 | 4.5 | 761 to 815 (761, 785, 787, 789, 796, 799, 807, 810, 815) |
+| rushcity-reduced | 5.5 | 0 | 7 | 5.5 | 785 to 841 (785, 787, 789, 796, 799, 807, 809, 815, 825, 839, 841) |
+
+These are higher than Rendering's B-20 numbers (3.5 and 4.5). I have not compared the two captures' page words and sizes, so neither disproves the other; the nightly's own words are the ones above.
+
+**The window** is 240 ticks from tick 641 (120 ticks of lead-in for the memory, then the whole worst second and the ticks after it), the same for both clips. Read on the same export (the machine at 30 to 40 percent), it picks the same events (121 to 175 of the window, which are the clip's 761 to 815) and the same four numbers: 4.5 / 0 / 6 / 4.5 and 5.5 / 0 / 7 / 5.5.
+
+**The baseline records main's FAIL as it is** (4.5 / 0 / 6 / 4.5 and 5.5 / 0 / 7 / 5.5). The nightly judges "worse than recorded", so it is green on these clips while they read the same or better and red when one reads worse, is new or is not read. A fix that lowers a reading is noted as better; lowering the recorded value is by hand, with the EP's word. The values come from the hardware full reading, not from a scheduled night: the first scheduled nights read the window in software and may differ by a flash either way (signature's did), and then the EP decides whether to re-record.
+
+**Not proven:** the cost of the window on a runner (640 skipped ticks at about 2.2 s is about 24 minutes, then 240 captured ticks at an unmeasured software rate; capMin 150 against a job limit of 300), and the first scheduled reading of these two clips.
