@@ -107,6 +107,17 @@ export async function smoke({ dir, on = IDS, planet = 7, timeoutS = 240, shot, s
         await sleep(2500);
         const after = (await read()) || before;
         if (after.tick > before.tick + 30) { notes.push(`the match was running after ${tries} rounds of clicks`); break; }
+        const menu = (after && after.menu) || null;   // the A1 menus (after GW1a): press the keys the menu answers, by its own rows, instead of clicking screen points
+        if (menu && Array.isArray(menu.rows)) {
+          const keyOf = { down: ['ArrowDown', 'ArrowDown', 40], accept: ['Enter', 'Enter', 13] };
+          const want = (menu.page === '' || menu.page === 'modes') ? 'solo' : menu.page === 'setup' ? 'start' : null;   // the list of modes: solo; the setup: Start
+          if (want && menu.rows.includes(want)) {
+            const at = Math.max(0, Number(menu.focus) || 0), to = menu.rows.indexOf(want);
+            if (at !== to) { for (let k = 0; k < (to - at + menu.rows.length) % menu.rows.length; k++) { await press(keyOf.down, 120); await sleep(150); } }
+            await press(keyOf.accept, 120); await sleep(1500);
+          } else await sleep(1000);
+          continue;
+        }
         await click(1099, 195); await sleep(1200); await click(640, 503); await sleep(1200); await click(1133, 651); await sleep(1200);   // each round: close a card if one is up, start if the menu is up (a click on the running game does nothing); the Rail menus' "I understand, start" sits at the bottom right (1133, 651 of 1280 by 720)
       }
       const t1 = ((await read()) || p).tick;

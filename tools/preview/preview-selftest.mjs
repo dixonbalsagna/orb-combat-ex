@@ -144,12 +144,21 @@ const P = patchMain(MAIN);
 check('the patch routes the three planet reads through the entry', !/_planet_next\.duplicate\(\)\n/.test(P.split('func _preview_planet')[0]) && P.split('func _preview_planet')[0].split('_preview_planet()').length - 1 === 3);
 check('the patch adds the per-frame probe call and both functions', /host\.advance\(delta, vp\.x, vp\.y\)\n\tif args\.has\("preview"\):\n\t\t_preview_probe\(\)/.test(P) && /func _preview_planet\(\)/.test(P) && /func _preview_probe\(\)/.test(P));
 check('the patch keeps CRLF files CRLF throughout', (() => { const c = patchMain(MAIN.split('\n').join(CR + '\n')); return !/[^\r]\n/.test(c.replace(/^\n/, '')); })());
-// A-CODE-03 (2026-11-14): once main has the planet entry itself (_planet_setup), the three planet edits are skipped and the scratch entry is not wired in; the rest of the patch still applies
+// S-06 (2026-11-21, the stand-in's GW1a review): once main has the planet entry itself (_planet_setup, A-CODE-03), the three starts are routed through the page's setup (_preview_planet) with main's REAL call sites, read from render/core/main.gd, and the page's base IS _planet_setup();
+// before this the three edits were skipped and every page word that function carries (travel, flat-out and their sliders, power, dash, tier, peak, kick, hit-stop) reached no match
 {
-  const LANDED = MAIN.replace('\t\treturn _planet_next.duplicate()\n', '\t\treturn _planet_setup()\n').replace('\tsu.merge(_planet_next)\n', '\tsu.merge(_planet_setup())\n').replace('\t\tvar su: Dictionary = _planet_next.duplicate()\n', '\t\tvar su: Dictionary = _planet_setup()\n') + '\nfunc _planet_setup() -> Dictionary:\n\treturn {}\n';
+  const real = readFileSync(new URL('../../render/core/main.gd', import.meta.url), 'utf8');
+  const LANDED = real.includes('func _planet_setup(') ? real : MAIN + '\nfunc _planet_setup() -> Dictionary:\n\treturn {}\n';
   let P2 = null, err = null;
-  try { P2 = patchMain(LANDED); } catch (e) { err = e.message; }
-  check('a main.gd that has the planet entry takes the patch (no anchor error) and routes nothing through the scratch entry', err === null && P2 !== null && !P2.split('func _preview_planet')[0].includes('_preview_planet()') && P2.includes('_planet_setup()'), String(err));
+  const words = { kickWord: true, tierWord: true, hitstopWord: true, powerWord: true, dashWord: true };
+  try { P2 = patchMain(LANDED, [], {}, words); } catch (e) { err = e.message; }
+  const body = P2 === null ? '' : P2.slice(P2.indexOf('func _preview_planet_base'), P2.indexOf('func _preview_planet() ->'));
+  check('a main.gd that has the planet entry takes the patch (no anchor error)', err === null && P2 !== null, String(err));
+  check('S-06: the three starts of main read the page\'s setup (_preview_planet), and none still reads _planet_setup() directly', P2 !== null && !/(:=\s*|\()_planet_setup\(\)/.test(P2.split('func _preview_planet')[0]) && P2.split('func _preview_planet')[0].split('_preview_planet()').length - 1 === 3);
+  check('S-06: the page\'s base is main\'s own entry, so a menu-started planet and ?planet=N still work', P2 !== null && /func _preview_planet_base\(\) -> Dictionary:\n\tvar d: Dictionary = _planet_setup\(\)\n[\s\S]*\treturn d\n/.test(P2));
+  check('S-06: the page words reach the match setup through that function (travel, flat-out, tier, peak, kick, hit-stop, dash)', P2 !== null && /d\["travel"\]/.test(P2) && /d\["flatOut"\]/.test(P2) && /d\["startTier"\]/.test(P2) && /d\["kick"\]/.test(P2) && /d\["hitstop"\]/.test(P2) && /d\["dash"\]/.test(P2), body.slice(0, 80));
+  check('S-06: a row\'s setup key (gen3: planetGen 3) is added when the address names the planet', (() => { try { const q = patchMain(LANDED, [], { planetGen: 3 }, {}); return /if args\.has\("planet"\) and _planet_next\.is_empty\(\):\n\t\td\.merge\(\{"planetGen": 3\}\)/.test(q); } catch (e) { return false; } })());
+  check('S-06: a main WITHOUT the planet entry is routed by the older edits as before', (() => { const q = patchMain(MAIN); return q.split('func _preview_planet')[0].split('_preview_planet()').length - 1 === 3 && !q.includes('_planet_setup'); })());
   check('and still gets the per-frame probe call and the options of the URL', P2 !== null && /host\.advance\(delta, vp\.x, vp\.y\)\n\tif args\.has\("preview"\):\n\t\t_preview_probe\(\)/.test(P2) && /const URL_ARGS: Array = \["planet"/.test(P2));
   check('the probe adds to window.__preview and does not replace it (main publishes the base fields itself)', /Object\.assign\(window\.__preview \|\| \{\}/.test(planetFunc()));
 }

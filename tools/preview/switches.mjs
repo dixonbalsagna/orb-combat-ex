@@ -750,13 +750,13 @@ export const PLANET_FUNC = [
   '\t\thp.append(snappedf(f.hp, 0.1))',
   '\tvar probe: Dictionary = {"tick": host.ticks, "planetGen": WorldClimate.genNow(), "fine": st.fineCols.size(), "planet": not st.planetRing.is_empty(), "dataGen": int(WorldClimate.data().get("gen", 1)),',
   '\t\t"biome": DirLaunch.biomeOn(), "water": WorldFill.on(), "surface": WorldFill.surfaceOn(), "floor": WorldFill.floorOn(), "interrupts": DirWater.on(st), "turn": (WorldEpoch.enabled({}) and bool(DirCalm.cfg().get("enabled", false))), "turns": (st.epoch.n if st.epoch != null else -1),',
-  '\t\t"errors": WorldFill.dataErrors(), "hp": hp}',
+  '\t\t"errors": WorldFill.dataErrors(), "hp": hp, "menu": ({"page": ui_hud._menu_page, "rows": ui_hud._menu_rows(), "focus": ui_hud._menu_focus} if ui_hud.is_start_menu_open() else null)}',
   '\tJavaScriptBridge.eval("window.__preview = Object.assign(window.__preview || {}, %s);" % JSON.stringify(probe), true)',
   '',
 ].join('\n');
 
 export function planetFunc(extra = [], setup = {}, opts = {}) {
-  const line = '\t\t"errors": WorldFill.dataErrors(), "hp": hp}';
+  const line = '\t\t"errors": WorldFill.dataErrors(), "hp": hp, "menu": ({"page": ui_hud._menu_page, "rows": ui_hud._menu_rows(), "focus": ui_hud._menu_focus} if ui_hud.is_start_menu_open() else null)}';
   if (!PLANET_FUNC.includes(line)) throw new Error('tools/preview/switches.mjs: the probe line moved (planetFunc is out of date)');
   const swingsOff = [
     '## Scratch (tools/preview): ?swings=off on a LOCAL page turns DirSwing off before a match starts (Encounter\'s page word; DirSwing.setForce(0)).',
@@ -1088,6 +1088,12 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     '',
   ].join('\n');
   let out = extra.length ? PLANET_FUNC.replace(line, () => `\t\t${extra.join(', ')},\n${line}`) : PLANET_FUNC;
+  if (opts.mainSetup) {   // main has its own planet entry (_planet_setup): the page's base IS it, and the rows' setup keys are added when the address names the planet, as before
+    const baseBody = 'func _preview_planet() -> Dictionary:\n\tif not _planet_next.is_empty():\n\t\treturn _planet_next.duplicate()\n\tif args.has("planet"):\n\t\treturn {"planet": int(args["planet"]), "touch": int(args.get("touch", 3))}\n\treturn {}\n';
+    if (!out.includes(baseBody)) throw new Error('tools/preview/switches.mjs: the page\'s planet entry moved (planetFunc is out of date)');
+    const ks = Object.entries(setup).map(([k, v]) => `"${k}": ${JSON.stringify(v)}`);
+    out = out.replace(baseBody, () => 'func _preview_planet() -> Dictionary:\n\tvar d: Dictionary = _planet_setup()\n' + (ks.length ? `\tif args.has("planet") and _planet_next.is_empty():\n\t\td.merge({${ks.join(', ')}})\n` : '') + '\treturn d\n');
+  }
   if (opts.sticks) {
     const callAt = "\tif frames % 20 != 0 and not args.has(\"reel\"):";
     if (!out.includes(callAt)) throw new Error('tools/preview/switches.mjs: the probe cadence line moved (planetFunc is out of date)');
@@ -1115,7 +1121,7 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     out = out.replace(head, () => kickWord + 'func _preview_planet_base() -> Dictionary:\n');
   }
   const keys = Object.entries(setup);
-  if (keys.length) {
+  if (keys.length && !opts.mainSetup) {
     const ret = '\t\treturn {"planet": int(args["planet"]), "touch": int(args.get("touch", 3))}';
     if (!out.includes(ret)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
     out = out.replace(ret, () => ret.replace('}', () => `${keys.map(([k, v]) => `, "${k}": ${JSON.stringify(v)}`).join('')}}`));
@@ -1127,6 +1133,9 @@ const EDITS = [
   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n', skipIf: 'func _planet_setup(' },
   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n', skipIf: 'func _planet_setup(' },
   { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n', skipIf: 'func _planet_setup(' },
+  { name: 'the match setup\'s planet part (main\'s own entry: the no-intro and hook starts)', from: '\t\tvar plain := _planet_setup()\n', to: '\t\tvar plain := _preview_planet()\n', onlyIf: 'func _planet_setup(' },
+  { name: 'the match setup\'s planet part (main\'s own entry: the intro start)', from: '\tsu.merge(_planet_setup())\n', to: '\tsu.merge(_preview_planet())\n', onlyIf: 'func _planet_setup(' },
+  { name: 'the menu start without intros (main\'s own entry)', from: '\t\tvar su := _planet_setup()\n', to: '\t\tvar su := _preview_planet()\n', onlyIf: 'func _planet_setup(' },
   { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "travel", "circle", "nohud", ' },
   { name: 'the menu choices before the HUD loads them', from: '\tui_hud.menu_changed.connect(_on_menu_changed)\n', to: '\t_preview_go()\n\tui_hud.menu_changed.connect(_on_menu_changed)\n' },
   { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tif args.has("splitshare"):\n\t\t_pv_split_share()\n\tif args.has("audiolog"):\n\t\t_pv_aud_tick()   # the engine\'s own mixer, read only\n\tif args.has("replay"):\n\t\t_preview_replay()   # a saved black box match played again\n\tif args.has("script"):\n\t\t_preview_script()   # the scripted pad: its events for the coming tick are set before it runs\n\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
@@ -1141,13 +1150,14 @@ export function patchMain(text, extra = [], setup = {}, opts = {}) {
   const nl = (s) => (crlf ? s.replace(/\n/g, '\r\n') : s);
   let out = text;
   for (const e of EDITS) {
-    if (e.skipIf && out.includes(nl(e.skipIf))) continue;   // main has this edit as its own code already
+    if (e.skipIf && out.includes(nl(e.skipIf))) continue;   // main has this edit as its own code already (a main with _planet_setup is routed by the onlyIf edits above instead: S-06)
+    if (e.onlyIf && !out.includes(nl(e.onlyIf))) continue;
     const from = nl(e.from);
     const n = out.split(from).length - 1;
     if (n !== 1) throw new Error(`render/core/main.gd: ${e.name}: expected the line once, found it ${n} times (tools/preview/switches.mjs EDITS is out of date)`);
     out = out.replace(from, () => nl(e.to));
   }
-  return out.replace(/\s*$/, '') + nl(planetFunc(extra, setup, opts));
+  return out.replace(/\s*$/, '') + nl(planetFunc(extra, setup, { ...opts, mainSetup: text.includes('func _planet_setup(') }));
 }
 
 /** The kick's takeoff values for Orb to try (Simulation's data/fight/kick.json: the default is 0.8 and 8). Printed as addresses beside the page's own, each one the page's address plus these words. */

@@ -1,10 +1,10 @@
 diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
-index 84ea414..eb3325a 100644
+index 5b1352b..6ecd6b6 100644
 --- a/tools/fixtures/cases.json
 +++ b/tools/fixtures/cases.json
-@@ -313987,6 +313987,198 @@
-         "rule": "maximum",
-         "pointer": "/splitShare"
+@@ -314218,6 +314218,198 @@
+         "rule": "enum",
+         "pointer": "/flatMode"
        }
 +    },
 +    {

@@ -302,3 +302,12 @@ Never start Chrome from your own script (CLAUDE.md, machine discipline). Use `no
 ## The private preview (2026-10-30)
 
 `node tools/preview/preview.mjs` builds main with the new planet's switches on in a scratch copy, checks that it boots and plays, and serves it on 127.0.0.1 for Orb's own browser; `--off <switch>` per switch to compare. Never published; the tree, `tools/site.json` and the live pin are untouched. [preview.md](preview.md).
+
+## Landed parks of Tools (index; the parked folders are cleared once a park is in)
+
+| Park | Landed | What it was, and what to know |
+| :--- | :--- | :--- |
+| `code-03` (report hook, planet entry) | 9254c968 (GW1a) | `MatchRecorder` and the hook that records every non-web match (A-UI-02), with the planet entry `_planet_setup()` in `main.gd` (A-CODE-03). **Correction (2026-11-21):** the park's README said the hook works "with no UI change" and that the player's words "stay UI's". That was wrong: the hook is set on every build that is not the web page, so the HUD swaps SEND for SAVE REPORT on every desktop build and shows the LAN sentence ("Saved reports go in the 'saved' folder beside the game") while the recorder writes to the game's own data folder (`user://reports`): the stand-in's S-04. UI's fix lands with the next push. The recorder's own rules (S-05): its check writes only to its own folder, and a player's "Save this match" file is never pruned (the cap of 20 is for automatic files) |
+| `memory-under-model-cases`, `camera-swing-cases`, `ui-modes-cases` | GW1a | invalid cases for World's `heldMul` line, Camera's and UI's schema lines |
+| `ci-sets-step`, `ci-gw1a-checks` | GW1a | the audio sets check, the match recorder check and the match end check in CI |
+| `gw1a-retire`, `check-scripts.md` | GW1a | 85 preview switch rows retired (8 stay); the scripts table at 268 scripts, 55 unreviewed |
