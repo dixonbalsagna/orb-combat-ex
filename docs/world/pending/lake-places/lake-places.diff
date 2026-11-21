@@ -59,7 +59,7 @@
          "indexFrontBH": { "type": "number", "minimum": -60, "maximum": 60, "description": "With everywhere, the depth in front of the line (z positive toward the camera), in fighter heights (bh = 75 units), past which a planet-fixed building's FRONT FACE (its z plus half its depth) is not indexed (so not struck, and Rendering's rule has lowered it): -2 (-150 units); a first-ring block's face is -2.5." },
 --- /dev/null
 +++ b/sim/world/tools/lake_places_check.gd
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,67 @@
 +extends SceneTree
 +# No town stands under a lake's water (World, sim/world/plan.gd layFree, data/biomes/field.json plans.lakeMax; docs/world/lake-places.md). With plans.everywhere on, the planet's free places are laid on it and the lakes
 +# are records laid on the ring's plan; a place laid on a lake's bed was a town under water (34 of 3,835 buildings on planet 7, touch 3, up to 611 units deep: Animation's water_tile_check found the lakes undrawn and fighters
@@ -101,6 +101,10 @@
 +
 +
 +func _init() -> void:
++	# the lakes as the plan makes them: plans.lakeSpill (lake-shore) would shrink them to the real basins and leave no town in water to find; the key is set in memory only, whether or not the file has it
++	var plans: Dictionary = WorldField.data().get("plans", {})
++	var spill_was = plans.get("lakeSpill", null)
++	plans["lakeSpill"] = false
 +	var planet: int = 7
 +	var touch: int = 3
 +	for a in OS.get_cmdline_user_args():
@@ -115,6 +119,10 @@
 +	ok(float(on[2]) <= 8.0 + 1.0 and int(on[1]) <= 3, "lakeMax 8: no building's base is under more than 8 of water (%d in water over 1, deepest %.1f)" % [on[1], on[2]])
 +	ok(int(on[0]) >= int(float(off[0]) * 0.97) and int(on[0]) < int(off[0]), "and the towns stay: %d of %d buildings are laid (at least 97 percent, and some were dropped)" % [on[0], off[0]])
 +	WorldPlan.lakeMaxOverride = -2.0
++	if spill_was == null:
++		plans.erase("lakeSpill")
++	else:
++		plans["lakeSpill"] = spill_was
 +	WorldFieldCache.enabledOverride = -1
 +	WorldPlan.everywhereOverride = -1
 +	print("LAKEPLACES: %d check(s) failed" % fails)
