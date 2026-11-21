@@ -1,2 +1,3 @@
-GW1a's data/biomes/field.json put over main's data, nothing else: the check fails the same way (dry 5 beyond 6, lake up to 681.5 above).
-GW1a's water.json, contact.json, climate.json and rings.json each, over main's data: main's result unchanged (dry ok, lake finding 59.2 above and 35.6 below).
+GW1a stack, then the same plus World's lake-places (code and lakeMax 8) and Rendering's water-everywhere (World's grant, two lines of tile_field.gd): sea 51 ok; dry 4 beyond 6 (31.9) -> ok (1.8); lake 17 of 17 beyond 6 (683.8 above) -> 17 ok (0.0); wade ok; shore rows unchanged (4 at or over 150).
+GW1a's data/biomes/field.json (plans.everywhere) over main's data reproduces the undrawn lakes (earlier bisect, coarse tiles).
+The earlier coarse-tile numbers (levels 1 and 2 only: dry 5 beyond 6 at 32.6, lake up to 681.5; main's data lake 59.2 above and 35.6 below) are superseded by these.

@@ -232,7 +232,7 @@ It replaces `stances.circle` and the LT lane of `stances`, and lets the zip star
 | Piece | Ruling | Data |
 | :--- | :--- | :--- |
 | **Only he is held** | The slammed fighter is held at the face, and the rest of the fight goes on | `brunt.lodgeHold` "world" to "body" |
-| **No ping-pong** | He stays at the face for the hold, with no bounce back out | New `brunt.wallRebound` 0 (today's 0.25 of his speed) |
+| **No rebound off the wall** (the ricochet Orb likened to a ping pong ball, the bug Encounter and World own; not the in-air chain, which is the ping-pong rally) | He stays at the face for the hold, with no bounce back out | New `brunt.wallRebound` 0 (today's 0.25 of his speed) |
 | **The world turns on impact** | A slam can start a big swing, easing the city toward the street behind the building, up to 45°, from the contact, under the rate law (60°/s in builds). It counts in the 6 to 12 big swings | A new swing cause, `slam` |
 
 ### The follow-through window
@@ -241,7 +241,7 @@ It replaces `stances.circle` and the LT lane of `stances`, and lets the zip star
 
 | You press, in the window | What happens |
 | :--- | :--- |
-| **B with the left stick toward him** | **The tower ladder,** as ruled: at base he's driven into the tower and lodges, at tier 2 he goes through one tower and on into the next, and from tier 3 through as many as his energy carries (`power-scale.md`). **Here a tapped B drives him,** because he's already pinned: it's the one place a tap isn't just a stagger. A weak send through a tower stays never |
+| **B with the left stick toward him** | **The tower ladder,** as ruled: at base he's driven into the tower's face and held there (re-ruled 2026-11-20), at tier 2 he goes through one tower and on into the next, and from tier 3 through as many as his energy carries (`power-scale.md`). **Here a tapped B drives him,** because he's already pinned: it's the one place a tap isn't just a stagger. A weak send through a tower stays never |
 | **Y** | **Slammed again** into the same face: a medium's blow and a second slam. The building remembers (`wallMemory` 0.25), so repeated slams break it, by `giveWay` 2 |
 | **LT + toward, and a face button** | **The line flight strike, stopping in front of him** rather than passing through into the wall. Its blow lands as you arrive |
 | **Anything else** | As normal |

@@ -89,3 +89,9 @@ If the arms feel alike, the busier one wins: it's a horde.
 - **QA's row becomes:** a lone medium pad clears the rest of a wave in at most 30 s, in at least 9 of 10 runs.
 
 **For A4, a real gap:** a player who only blasts can't fell anything, because shots lower a weak fighter's hit points but never spend its toughness. **The shot as a pack blow joins A4:** a shot that lands on a pack body spends toughness by its weight, a bolt as a light and a charged or heavy shot as a heavy, so an energy fighter can fight the horde.
+
+**Mashing against the pack (2026-11-20, the stand-in's `horde-questions-after-clip.md`):** a pad that only mashes X clears the run in 4:38 losing 10%, while the medium pad, guarding half the time, takes about 7:30 and loses about a third. **Acceptable for the first version, but not for the mode.**
+- Fodder are meant to be mown down, and the first version has none of the grades' own reactions.
+- **Those reactions are the designed answer to pure mashing,** and they come with the second step (`henchmen-grades.md`): a bruiser guards its front against lights, a speedster sidesteps the first light, and a third light staggers a grunt.
+- **The second step's band:** a pad that only mashes loses **at least as much of the body** as the medium pad, and clears **no more than 20% faster.** Guarding has to pay in Horde too.
+- **With the stamina loop on,** mashed blows refill little and guarding costs stamina, so the balance moves again. QA re-reads it then.

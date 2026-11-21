@@ -46,3 +46,16 @@ Owner: Game Design. 2026-11-15, on World's park (`docs/world/pending/planet-size
 - **QA:** places reached and buildings fallen, by size.
 
 **Confirmed for GW1c (2026-11-15):** "unchanged on medium, big and huge" means **today's absolute launch numbers**, the values medium flies now, on all three. Encounter has made `DirArc` absolute on every whole planet. Before that, big and huge would have flown the meteor 2 and 4 times higher, which is not what was ruled. Only tiny and small take `arcBySize`'s caps.
+
+## 4. Lakes that end in the air (2026-11-20, World's `pending/lake-shore/`)
+
+**The finding:** the lake generator floods a valley's level only out to twice the lake's width, so about half of every lake's shore is open, and the water ends in the air over a hillside (by up to 2,898 units). It's in Orb's 9 November build too. With true hydrology only 148 of 13,327 lake nodes are real.
+
+**My recommendation: option 2, carve the basins, in the terrain window (GW2, with the terrain rows).** Each lake stays where the plan put it, at its level, and the ground round its valley is dug into a bowl that holds it.
+- **Why not 1** (real basins only): it's honest, but it deletes almost every lake. Lakes are part of what makes a planet read as a place, and Orb asked for planets that are "recognizable but novel" with water as one of the dials.
+- **Why not wait for 3** (a real lake planner): it's the right long-term answer, but it's after Alpha, and water standing in the air over a hillside is a visible fault for every outside tester until then. Option 2 doesn't block 3: the planner can replace the carve later.
+- **The cost:** carving changes the planet's ground, so the hash, the tiles and Rendering's water. One hash window, shared with GW2's terrain rows, which re-record the golden anyway.
+
+**This is mine and World's to decide, not a question for Orb.** It fixes a visible fault in the direction Orb already set ("math based, procedural terrain"). Nothing in it changes what Orb asked for. **Orb sees it through the look gate:** a side-by-side of planet 7's lakes, carved against the 9 November build, before the EP lands it (ADR 0010). If the carve changes a lake Orb knows in a way that reads worse, Orb's eye decides there.
+
+**Until GW2, the slab lakes stay,** as in Orb's build, with the tile fix drawing them where the fighters stand.

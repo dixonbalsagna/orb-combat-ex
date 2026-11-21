@@ -134,7 +134,7 @@ Orb: early, "a well-earned power hit could send an opponent through the side of 
 
 | Tier | A power send into towers | A plain send into a tower |
 | ---: | :--- | :--- |
-| 1 | **Into the tower.** He goes in through the face, lodges inside it and recovers there (§6.4) | The wall slam (§2): it holds him |
+| 1 | **Into the face.** He breaks the face and is held embedded in it, still in view, and recovers there (§6.4). Lodging deeper inside the floors comes after Alpha, with the interior chain (re-ruled 2026-11-20) | The wall slam (§2): it holds him |
 | 2 | Through one tower, and into the second | The wall slam |
 | 3 | Through two, and into the third. The two he went through are cracked at the core (§6.2) | Into it |
 | 4 | **Through three, which pancake,** and on into the ground beyond them: **a crater whose blast levels the towers near it** | Through one, and into the second |
@@ -182,7 +182,7 @@ Orb plays both before choosing. The switch is `lodge.mode` in World's data. Both
 
 | Row | Bound |
 | :--- | :--- |
-| A power send at tier 1 into a tower | Lodges inside it, every time (hard) |
+| A power send at tier 1 into a tower | Held embedded in the broken face, every time (hard; re-ruled 2026-11-20) |
 | A power send at tier 4 with three towers on its line | Goes through all three, and all three come down (hard) |
 | A falling stack hurts anybody but the fighter it was aimed at | Never (hard) |
 | The holds, in each mode | As the table (hard) |
@@ -343,3 +343,7 @@ Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These
   - Low towers already go through at one mark, and houses are unchanged.
 - **§9's "the second and third sends bring it down" now holds on the model's path too.**
 - **World's check:** three sends of 1.7 bring a mass-15 tower down, and two sends of 3.4 do.
+
+**Two corrections (2026-11-20, the stand-in's `memory-under-the-model.md`):**
+- **Where a base send ends at a tower: at the face, embedded in it, as the code does.** The face breaks around him, he's held there in view, and he recovers there. The other pages that said "lodges inside" are corrected (§6's tier table and QA row, `power-scale.md`'s through-buildings row, `playable-build.md`'s tower ladder). Lodging deeper inside the floors waits for the interior chain, after Alpha. **Why the face:** he stays visible (the camera's "always see yourself"), and it's the hold that fixes Orb's ping pong ball.
+- **"Brought down" by the third send means its struck floors break, not the whole tower.** World's record (20, 20 and 18 floors standing; 0 of 24 towers down) is the intended look at base. **The memory shows as a hole, and the next send at that height goes through the hole** ("its floors there are gone: nothing to hold him") **into the street beyond.** That's pressing the fight into the city, earned by repeated hits. **The tower itself falls** by its own fall rules once enough floors are gone (by World's arithmetic, the 4th to 10th send at base), and **outright from tier 3 and 4** (the pancake). Power has weight: base hits hole a skyscraper, and top-tier hits level it. §9's line is to be read this way.

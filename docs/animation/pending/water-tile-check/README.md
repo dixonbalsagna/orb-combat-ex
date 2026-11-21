@@ -1,26 +1,27 @@
-# Water on the globe ground: a check, and a fault it finds on the GW1a stack (Animation, 2026-11-20, parked)
+# Water on the globe ground: a check, re-parked with the finer tiles (Animation, 2026-11-20)
 
-The EP's item after the step-up: a fighter standing on the sea on the globe ground, read against Rendering's ground (the tile field), and whether the stance reads right in play. Design, numbers and the in-play read: `docs/animation/water-tile-check.md` (inside `water-tile-check.patch`).
+The EP's item after the step-up: a fighter standing on the sea on the globe ground, read against Rendering's ground (the tile field). Rendering's read of the first cut's two leftover places was right: the check asked only for tile levels 1 and 2 (128-unit nodes); with levels 3 and 4 loaded, as the camera does in play, they clear. This re-park asks for levels 3 and 4 at each place and 64 units either side and keeps World's shore-level rows. Design, numbers and the in-play read: `docs/animation/water-tile-check.md` (inside `water-tile-check.patch`).
 
 ## Files
 
 | File | What |
 | :--- | :--- |
-| `water-tile-check.patch` (sha1 6c8b2875) | new `render/anim/tools/water_tile_check.gd` (+ uid): on the planet ring (planet 7, gen 3), 240 places, the sim's floor against the tile field's drawn ground and water, the feet as the shared placement lifts them; gates sea, dry, wade; the lake line is a finding (`--strict` fails on it); `--verbose` lists every place beyond 6 units. `render/anim/tools/anim_check.gd`: `_test_water_stance_globe` (the globe twin of the water-stance row: a deep sea, a lake and a wade, floor on, grounded stance). New `docs/animation/water-tile-check.md`. Applies on HEAD 2402ab83 and on the GW1a stack (s422), checked. No data, schema or sim file touched; no grant needed |
+| `water-tile-check.patch` (sha1 4b67f4dc) | new `render/anim/tools/water_tile_check.gd` (+ uid): 240 places on the planet ring (planet 7, gen 3), levels 3 and 4 asked at each place and 64 either side; gates sea, dry, wade; `--strict` makes the lake line a gate; the shore rows (every place the sim's water begins, over 16-unit steps; two body heights) are a finding, a gate under `--shore`; `--verbose` lists every place beyond a tolerance. `render/anim/tools/anim_check.gd`: `_test_water_stance_globe` (unchanged). New `docs/animation/water-tile-check.md`. Applies on HEAD dbe17b79 and on the GW1a stack (s422), checked. No data, schema or sim file touched; no grant |
 
-## Results
+## Result (`records/`)
 
-| Where | `water_tile_check` | `_test_water_stance_globe` |
+| Data | `--strict` | shore |
 | :--- | :--- | :--- |
-| **main (2402ab83)** | **passed**: sea 51 places on the drawn water (0.0 at worst), dry 149 (2.8), wade 23 (under the surface by 44.2 at most, under the 75 line); lake finding: 17 places, 14 beyond 6, up to 59.2 above the drawn surface and 35.6 below | green; `anim_check` 0 failed, 10,539 checks |
-| **the GW1a stack** | **FAILED**: dry 5 beyond 6 (32.6 above), lake 17 of 17 beyond 6, **up to 681.5 above the drawn ground** | green (the stance is a ground stance on the floor it is given) |
+| **GW1a stack** + floor-rise grant | **FAILED**: dry 4 beyond 6 (31.9), lake 17 of 17 beyond 6, **up to 683.8 above the drawn ground** | 26 shores, 4 at or over 150 |
+| **GW1b's data** (that + World's `lake-places` with `lakeMax` 8 + Rendering's `water-everywhere`) | **passed**: sea 51 (0.0), dry 149 (1.8 at worst), wade 23 (34.7 under), lake 17 of 17 within 6 (0.0 above or below). Rendering's two places: x 32,000 now 1.8, x 22,400 now 0.0 | the same 26, the same 4 at or over 150 |
 
-## The fault (report; not Animation's to fix)
+`_test_water_stance_globe` is green on every build (a deep sea, a lake and a wade: grounded stance, 0.0 off the floor); `anim_check` on main with the patch was 0 failed, 10,539 checks (records).
 
-On the GW1a stack **the lakes have no drawn water and the fighters stand in the air over them.** Cause, bisected: GW1a's `data/biomes/field.json` (`everywhere` true) alone reproduces it on main's data; with it, the tile field's `water_top` finds no water at the 17 lake places (and 5 shallow-lake places), while the sim keeps its lake levels and the water floor stands a fighter on them: up to 681 units, nine body heights, over the drawn lake bed. Read in play (a hand-staged scene on the stack's real renderer): deep sea right, wade right, **both lakes: fighters in the air with nothing drawn under them.** On main's data the lakes are drawn, but the sim's one level and the tiles' per-node levels differ (59.2 above, 35.6 below): smaller, and the same two owners. Owners: World (lake levels) and Rendering (the tile field's water under `everywhere`). `records/`.
+## The shore-level fault, World's (the rows kept)
+
+`water_tile_check --shore` fails on GW1b's data: the sim's lake level sits far above its shore at four places: x 21,824 (ground 533.3, floor 989.5, 456.2 above), **x 24,000 (ground 1,266.9, floor 2,062.5, 795.6 above)**, x 27,904 (1,561.3, 1,807.5, 246.2), x 93,216 (1,899.6, 2,323.8, 424.2). The ground climbs smoothly through each edge; the floor jumps to the level. A lake surface cannot sit above its shore. `records/gw1b-data-strict-verbose.txt` (the `shore` lines). The step-up retake's real lift (x 23,800 to 24,001, 118 to 184 units a tick for five ticks) is this fault's x 24,000 edge.
 
 ## What is not covered
 
-- One planet and 240 places; other planets and sizes are not read (constants at the top of the script).
-- The in-play read is of four hand-staged places, once; no picture is kept (no fighter picture goes in git).
-- The check is not in CI (that list is not Animation's): `godot --headless --path . --script res://render/anim/tools/water_tile_check.gd`; on the stack today it exits 1.
+- One planet and 240 places; the constants are at the top of the script.
+- Not in CI (Tools' question, once the shore fault is fixed: `--strict` alone is green on GW1b's data today, `--shore` is not).

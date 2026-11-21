@@ -1,0 +1,7 @@
+water on the globe ground: planet 7 gen 3, 240 places, 0 cells of S.water (all zero: the sea is in the tile field); tiles of levels 3 and 4 asked at each place and 64 either side
+ok   sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+FAIL dry: 161 places, the feet are 31.9 from the drawn ground at worst (4 over 6)
+ok   wade: 11 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 34.7 at most (wade.below 75; 0 out of range)
+FAIL lake: 17 places where the sim holds a lake's level, the feet are 17 beyond 6 of the drawn surface; up to 683.8 above it and -0.0 below
+FINDING shore: 26 places round the ring where the sim's water begins, the first wet column is 795.6 deep at worst (SHORE_TOL 150; 4 at or over)
+water tile check FAILED

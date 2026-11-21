@@ -1,0 +1,29 @@
+  wade x 9600: ground -23.8, the sim's floor -23.8, drawn ground -23.8, drawn water 0.0, feet -23.8, gap -23.8
+  wade x 10240: ground -30.7, the sim's floor -30.7, drawn ground -30.7, drawn water 0.0, feet -30.7, gap -30.7
+  wade x 23040: ground 939.1, the sim's floor 964.9, drawn ground 939.1, drawn water 989.5, feet 964.9, gap -24.6
+  wade x 25600: ground 2048.7, the sim's floor 2048.7, drawn ground 2048.7, drawn water 2062.5, feet 2048.7, gap -13.8
+  wade x 26240: ground 2042.9, the sim's floor 2042.9, drawn ground 2042.9, drawn water 2062.5, feet 2042.9, gap -19.5
+  wade x 48640: ground 647.1, the sim's floor 655.9, drawn ground 647.1, drawn water 689.0, feet 655.9, gap -33.1
+  wade x 50560: ground 656.5, the sim's floor 656.5, drawn ground 656.5, drawn water 689.0, feet 656.5, gap -32.5
+  wade x 51840: ground 678.2, the sim's floor 678.2, drawn ground 678.2, drawn water 689.0, feet 678.2, gap -10.7
+  wade x 90240: ground 2730.8, the sim's floor 2730.8, drawn ground 2730.8, drawn water 2748.7, feet 2730.8, gap -17.9
+  wade x 93440: ground 1845.4, the sim's floor 1877.3, drawn ground 1845.4, drawn water 1898.8, feet 1877.3, gap -21.6
+  wade x 94080: ground 1889.2, the sim's floor 1889.2, drawn ground 1889.2, drawn water 1898.8, feet 1889.2, gap -9.6
+  wade x 94720: ground 1875.4, the sim's floor 1875.4, drawn ground 1875.4, drawn water 1898.8, feet 1875.4, gap -23.4
+  wade x 97280: ground 1521.7, the sim's floor 1550.5, drawn ground 1521.7, drawn water 1573.6, feet 1550.5, gap -23.1
+  wade x 122240: ground -19.7, the sim's floor -19.7, drawn ground -19.7, drawn water 0.0, feet -19.7, gap -19.7
+  wade x 128640: ground -67.1, the sim's floor -7.9, drawn ground -67.1, drawn water 0.0, feet -7.9, gap -7.9
+  wade x 130560: ground -20.4, the sim's floor -20.4, drawn ground -20.4, drawn water 0.0, feet -20.4, gap -20.4
+  wade x 147200: ground -24.4, the sim's floor -24.4, drawn ground -24.3, drawn water 0.0, feet -24.4, gap -24.4
+  wade x 147840: ground -34.7, the sim's floor -34.7, drawn ground -34.7, drawn water 0.0, feet -34.7, gap -34.7
+water on the globe ground: planet 7 gen 3, 240 places, 0 cells of S.water (all zero: the sea is in the tile field); tiles of levels 3 and 4 asked at each place and 64 either side
+ok   sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+ok   dry: 149 places, the feet are 1.8 from the drawn ground at worst (0 over 6)
+ok   wade: 23 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 34.7 at most (wade.below 75; 0 out of range)
+ok      lake: 17 places where the sim holds a lake's level, the feet are 0 beyond 6 of the drawn surface; up to 0.0 above it and 0.0 below
+  shore x 21824: the first wet column x 21824 has ground 533.3 under a floor at 989.5 (456.2 deep)
+  shore x 24000: the first wet column x 24000 has ground 1266.9 under a floor at 2062.5 (795.6 deep)
+  shore x 27904: the first wet column x 27888 has ground 1561.3 under a floor at 1807.5 (246.2 deep)
+  shore x 93216: the first wet column x 93200 has ground 1899.6 under a floor at 2323.8 (424.2 deep)
+FINDING shore: 26 places round the ring where the sim's water begins, the first wet column is 795.6 deep at worst (SHORE_TOL 150; 4 at or over)
+water tile check passed
