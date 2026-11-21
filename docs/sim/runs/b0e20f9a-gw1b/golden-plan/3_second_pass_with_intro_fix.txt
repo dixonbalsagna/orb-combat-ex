@@ -1,0 +1,32 @@
+== A. steps 1-4 (arena), recipes v2
+golden_a: exit 0 in 153 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 148.3 s
+parity_a: exit 0 in 368 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SC
+50:ok    composed intros
+84:ok    composed intros (golden)
+90:      3 slices, 3 tick-0 states, a planet match of 3600 ticks: identical
+a_frame_check: exit 0 in 60 s; script errors 0; PASS
+a_cross_check: exit 0 in 138 s; script errors 0; CROSS: 0 check(s) failed
+a_cross_end_check: exit 0 in 217 s; script errors 0; CROSSEND: 0 check(s) failed
+a_fights_check: exit 1 in 258 s; script errors 0; FIGHTS: 1 check(s) failed
+18:FAIL  swings rest while apart: fight 0 is the 1v1 (differs at 1067, close at -1)
+golden_a_intro: exit 0 in 155 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 151.6 s
+  arena: the intro fix leaves the golden byte for byte
+== B. + the flip, recipes v2, the intro fix
+import 0; parse errors 0
+golden_b_cold: exit 0 in 222 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 217.4 s
+golden_b_warm: exit 0 in 215 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 210.2 s
+  the golden made twice, cold then warm: ONE file
+parity_b: exit 0 in 664 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SC
+50:ok    composed intros
+84:ok    composed intros (golden)
+90:      3 slices, 3 tick-0 states, a planet match of 3600 ticks: identical
+b_frame_check: exit 0 in 55 s; script errors 0; PASS
+b_cross_check: exit 0 in 129 s; script errors 0; CROSS: 0 check(s) failed
+b_cross_end_check: exit 0 in 203 s; script errors 0; CROSSEND: 0 check(s) failed
+b_fights_check: exit 1 in 241 s; script errors 0; FIGHTS: 1 check(s) failed
+18:FAIL  swings rest while apart: fight 0 is the 1v1 (differs at 1067, close at -1)
+== C. fights_check on main itself
+import 0
+m0_fights_check: exit 1 in 251 s; script errors 0; FIGHTS: 1 check(s) failed
+18:FAIL  swings rest while apart: fight 0 is the 1v1 (differs at 1067, close at -1)
+b6 done

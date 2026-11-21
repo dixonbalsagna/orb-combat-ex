@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+# gw1b_golden_edit.py <tree>: GW1b's golden plan (docs/architecture/pending/gw1b-golden/), for step 20 with the one re-record.
+#  - the recipes: two of the nine computer matches (default seed 1, and seed 11's KO) and both scripted replays take
+#    "world": "arena", so the hand-made arena keeps a reference; the other seven play the round planet once the flip is in;
+#    PLANET_MATCH names generation 3 (planet 7, touch 3, gen 3: the world Orb played) and records its first crater and first
+#    slide, which parity requires (the GW1a review's S-07; path-round-2's "a crater and a slide");
+#  - parity re-runs each match and replay with its recorded set-up;
+#  - my rows that are about the hand-made arena run in arena mode (GW1b review B-02): nine of parity's (not the composed
+#    intros: a real fault on the planet), and cross_check, cross_end_check and fights_check whole (their stages are written on
+#    the arena); frame_check's two "off a field world" matches take "world": "arena".
+import sys, os
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    print("edited", rel)
+
+
+ARENA_NOTE = ("   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; "
+              "this one keeps the arena's reference")
+
+edit("sim/core/tools/golden_recipes.gd", [
+    ('const MATCHES: Array = [["default", 1], ["swap", 1], ["mirror-villain", 1], ["mirror-hero", 1],\n'
+     '\t["default-flip", 2], ["swap-flip", 2], ["mirror-villain-flip", 2], ["mirror-hero-flip", 2], ["default", 11, 43200]]\n',
+     '## GW1b: [arm, seed, cap, setup]. Two take "world": "arena" (default seed 1, and seed 11\'s KO), so the hand-made arena keeps a\n'
+     '## reference once the mode is planet; the other seven name no world, so they play the world the game starts on (planet 7,\n'
+     '## touch 3, generation 3) after the flip.\n'
+     'const MATCHES: Array = [["default", 1, 18000, {"world": "arena"}], ["swap", 1], ["mirror-villain", 1], ["mirror-hero", 1],\n'
+     '\t["default-flip", 2], ["swap-flip", 2], ["mirror-villain-flip", 2], ["mirror-hero-flip", 2], ["default", 11, 43200, {"world": "arena"}]]\n'),
+    ('\t\tg.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP))\n',
+     '\t\tg.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {}))\n'),
+    ('\tfor rp in [scriptedReplay(11, 3000, false, [1500, 2100]), scriptedReplay(12, 2400, true, [])]:\n'
+     '\t\tg.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp)})\n',
+     '\tfor rp in [scriptedReplay(11, 3000, false, [1500, 2100]), scriptedReplay(12, 2400, true, [])]:\n'
+     '\t\trp["setup"] = {"world": "arena"}' + ARENA_NOTE + ' (the scripted replays were written on it)\n'
+     '\t\tg.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp, CAP, rp.setup.duplicate(true))})\n'),
+    ('static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dictionary = {}) -> Dictionary:\n',
+     '## firsts: event types to watch ({type: -1}); each takes the tick it first came, and the result carries them (the planet\n'
+     '## match\'s crater and slide).\n'
+     'static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dictionary = {}, firsts: Dictionary = {}) -> Dictionary:\n'),
+    ('\t\tSimHash.hashFx(h, S.out.fx)\n\t\tV.consume(S, S.out.fx)\n',
+     '\t\tSimHash.hashFx(h, S.out.fx)\n'
+     '\t\tif not firsts.is_empty():\n'
+     '\t\t\tfor e in S.out.fx:\n'
+     '\t\t\t\tif firsts.has(e.type) and int(firsts[e.type]) < 0:\n'
+     '\t\t\t\t\tfirsts[e.type] = steps\n'
+     '\t\tV.consume(S, S.out.fx)\n'),
+    ('\tif not setup.is_empty():\n\t\tresult["setup"] = setup.duplicate(true)\n',
+     '\tif not setup.is_empty():\n\t\tresult["setup"] = setup.duplicate(true)\n'
+     '\tif not firsts.is_empty():\n\t\tresult["firsts"] = firsts.duplicate(true)\n'),
+    ('const PLANET_MATCH: Dictionary = {"seed": 1, "cap": 3600, "setup": {"planet": 7, "touch": 3}}\n',
+     '## The world the game starts on and Orb played: planet 7, touch 3, generation 3 (GW1b; it played the data\'s generation before).\n'
+     '## Seed 1 has its first slide at tick 250 and its first crater at 318 (the probe of 2026-11-21); the golden keeps both\n'
+     '## ticks and parity asks for both.\n'
+     'const PLANET_MATCH: Dictionary = {"seed": 1, "cap": 3600, "setup": {"planet": 7, "touch": 3, "planetGen": 3}}\n'
+     'const PLANET_FIRSTS: Dictionary = {"crater": -1, "slide": -1}\n'),
+    ('"match": goldenRun("default", int(PLANET_MATCH.seed), null, int(PLANET_MATCH.cap), PLANET_MATCH.setup.duplicate(true))}\n',
+     '"match": goldenRun("default", int(PLANET_MATCH.seed), null, int(PLANET_MATCH.cap), PLANET_MATCH.setup.duplicate(true), PLANET_FIRSTS.duplicate(true))}\n'),
+])
+
+edit("sim/core/tools/parity.gd", [
+    ('\t\tvar got: Dictionary = SimGolden.goldenRun(m.arm, int(m.seed), null, int(m.get("cap", SimGolden.CAP)))\n',
+     '\t\tvar got: Dictionary = SimGolden.goldenRun(m.arm, int(m.seed), null, int(m.get("cap", SimGolden.CAP)), m.get("setup", {}).duplicate(true))   # with its recorded set-up (GW1b: two take the arena)\n'),
+    ('\t\tvar got: Dictionary = SimGolden.goldenRun("default", int(r.replay.seed), r.replay)\n',
+     '\t\tvar got: Dictionary = SimGolden.goldenRun("default", int(r.replay.seed), r.replay, SimGolden.CAP, r.replay.get("setup", {}).duplicate(true))\n'),
+    ('\tvar got: Dictionary = SimGolden.goldenRun("default", int(pm.seed), null, int(pm.cap), pm.setup.duplicate(true))\n',
+     '\tvar got: Dictionary = SimGolden.goldenRun("default", int(pm.seed), null, int(pm.cap), pm.setup.duplicate(true), SimGolden.PLANET_FIRSTS.duplicate(true))\n'
+     '\tvar fs: Dictionary = got.get("firsts", {})\n'
+     '\tif int(fs.get("crater", -1)) < 0 or int(fs.get("slide", -1)) < 0 or JSON.stringify(fs) != JSON.stringify(m.get("firsts", {})):\n'
+     '\t\treturn "the planet match\'s crater and slide: %s (golden %s); it must have both" % [JSON.stringify(fs), JSON.stringify(m.get("firsts", {}))]\n'),
+    ('func check(name: String, err) -> void:\n',
+     '## A row about the hand-made arena, run in arena mode whatever world.json says (GW1b review B-02: once the mode is planet, a\n'
+     '## match that names no world plays planet 7). The mode is put back after.\n'
+     'func _arena(row: Callable) -> String:\n'
+     '\tvar m0: String = WorldDefault.K_MODE\n'
+     '\tWorldDefault.K_MODE = "arena"\n'
+     '\tvar r = row.call()\n'
+     '\tWorldDefault.K_MODE = m0\n'
+     '\treturn r\n'
+     '\n'
+     '\n'
+     'func check(name: String, err) -> void:\n'),
+    ('\tcheck("arm setups", _armSetups())\n', '\tcheck("arm setups", _arena(_armSetups))\n'),
+    ('\tcheck("the view\'s particles carry their depth", _partDepth())\n', '\tcheck("the view\'s particles carry their depth", _arena(_partDepth))\n'),
+    ('\tcheck("a fighter\'s depth outside a flight, and the contact rule", _depthStep())\n', '\tcheck("a fighter\'s depth outside a flight, and the contact rule", _arena(_depthStep))\n'),
+    ('\tcheck("the intro phase", _intro())\n', '\tcheck("the intro phase", _arena(_intro))\n'),
+    ('\tcheck("shots: buildings, wild deflects, the spray, mines", _shots2())\n', '\tcheck("shots: buildings, wild deflects, the spray, mines", _arena(_shots2))\n'),
+    ('\tcheck("the replay header covers a planet\'s data", _planetHeader())\n', '\tcheck("the replay header covers a planet\'s data", _arena(_planetHeader))   # its "no planet" is the arena; its planets are named\n'),
+    ('\tcheck("the planet\'s load", _planetLoad())\n', '\tcheck("the planet\'s load", _arena(_planetLoad))   # its running match is the arena; its planet is named\n'),
+    ('\tcheck("the match\'s start in pieces", _matchStart())\n', '\tcheck("the match\'s start in pieces", _arena(_matchStart))   # its two starts with no planet are the arena\'s; its planet start is named\n'),
+    ('\tcheck("forms: Witness and Trial", _formBranches())\n', '\tcheck("forms: Witness and Trial", _arena(_formBranches))\n'),
+])
+
+WHOLE = ('\tWorldDefault.K_MODE = "arena"   # this check\'s stages are written on the hand-made arena (GW1b review B-02: once the mode is planet, '
+         'a match that names no world plays planet 7). A 2v2 on the planet is World\'s and Encounter\'s to cover\n')
+edit("sim/core/tools/cross_check.gd", [
+    ('func _init() -> void:\n\tnegative = OS.get_cmdline_user_args().has("--negative-control")\n\t_run()\n',
+     'func _init() -> void:\n' + WHOLE + '\tnegative = OS.get_cmdline_user_args().has("--negative-control")\n\t_run()\n'),
+])
+edit("sim/core/tools/cross_end_check.gd", [
+    ('func _init() -> void:\n\tnegative = OS.get_cmdline_user_args().has("--negative-control")\n\tif negative:\n',
+     'func _init() -> void:\n' + WHOLE + '\tnegative = OS.get_cmdline_user_args().has("--negative-control")\n\tif negative:\n'),
+])
+edit("sim/core/tools/fights_check.gd", [
+    ('func _init() -> void:\n\tfor a in OS.get_cmdline_user_args():\n\t\tif a == "--long":\n',
+     'func _init() -> void:\n' + WHOLE + '\tfor a in OS.get_cmdline_user_args():\n\t\tif a == "--long":\n'),
+])
+edit("sim/core/tools/frame_check.gd", [
+    ('func _off() -> void:\n\tvar S := SimCore.createSim()\n\tSimCore.newMatch(S, 5, {"p1": true, "p2": true})\n',
+     'func _off() -> void:\n\tvar S := SimCore.createSim()\n\tSimCore.newMatch(S, 5, {"p1": true, "p2": true}, {"world": "arena"})   # off a field world: the hand-made arena, named (GW1b)\n'),
+    ('\tvar off := SimCore.createSim()\n\tSimCore.newMatch(off, 5, {"p1": true, "p2": true})\n',
+     '\tvar off := SimCore.createSim()\n\tSimCore.newMatch(off, 5, {"p1": true, "p2": true}, {"world": "arena"})   # off a field world: the hand-made arena, named (GW1b)\n'),
+])
+print("ok")

@@ -4,6 +4,10 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **Landed in the Sunday batch (4890bdd9), their folders deleted:** `power-travel/` (a setup's `"travel"`, with Netcode's and Tools' grants and the stance-freeze doc lines) and `power-page/` (Tools' page lines: the model on for the page, and the travel slider).
 
+**Parked, sprint A1:** `gw1b-golden/` (GW1b's one re-record, step 20): the plan, and the recipes and arena pins patch (two matches and the replays on the arena, the planet match on generation 3 with a crater and a slide). Applies after steps 1 to 4.
+
+**Parked, sprint A1:** `intro-store/` (GW1b, before the flip; with a grant to World's `store.gd`): a played intro and a skipped one leave the planet store's entrance craters in the same order. Golden byte for byte on the arena.
+
 **Parked, sprint A1:** `floor-rise-unpin/` (GW1b): World's floor-rise grant to `fighter.gd` approved; parity's lake row drops its `"dash": false` pin. Applies after the GW1a stack, with World's grant. The golden moves (GW1b).
 
 **Parked, sprint A1:** `boxkey-gw1c/` (for GW1c, owed before colossal is offered): SimField's box keys pack 20 bits an index, so no planet size or reach can alias them (the old offset of 64 did past a radius of 131,072). Golden byte for byte.

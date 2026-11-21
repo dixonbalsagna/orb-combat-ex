@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+# intro_store_edit.py <tree>: the composed intro on a planet (parity's "composed intros", red once the flip is in). SimIntro keeps
+# the two entrance craters in the order of the start spots whoever landed first, but only in S.craters: World's planet store got
+# them in landing order, and its running hash reads them in order, so a played intro and a skipped one left different states.
+#  - World's grant, sim/world/store.gd: swapBlocks(S, mid): the records [0, mid) and [mid, n) change places and the running hash
+#    is folded again from the first record, each at its kind's length (LEN);
+#  - mine, sim/core/intro.gd: at the second landing, when the left spot's fighter lands second, the store's two landings' blocks
+#    are swapped the same way (the store is empty when a match starts, so the first lander's records are [0, the count before
+#    this dig)).
+import sys, os
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    print("edited", rel)
+
+
+edit("sim/world/store.gd", [
+    ("static func _push(S, rec: Array) -> int:\n",
+     "## Each kind's record length, as add, addCrack, addScorch and addTrench push it: the running hash folds that many numbers.\n"
+     "const LEN: Array = [12, 11, 9, 11]\n"
+     "\n"
+     "\n"
+     "## The records [0, mid) and [mid, n) change places, and the running hash is folded again from the first record, each at its\n"
+     "## kind's length (Simulation's grant, GW1b: SimIntro keeps the two entrance craters in the order of the start spots whoever\n"
+     "## landed first, and a landing's dig can add more than its crater). The index is dropped and rebuilt on its next read;\n"
+     "## SimField's memos see the new hash and rebuild.\n"
+     "static func swapBlocks(S, mid: int) -> void:\n"
+     "\tvar n: int = int(S.storeN)\n"
+     "\tif mid <= 0 or mid >= n:\n"
+     "\t\treturn\n"
+     "\tvar head = S.store.slice(0, mid * STRIDE)\n"
+     "\tvar tail = S.store.slice(mid * STRIDE, n * STRIDE)\n"
+     "\tvar k: int = 0\n"
+     "\tfor v in tail:\n"
+     "\t\tS.store[k] = v\n"
+     "\t\tk += 1\n"
+     "\tfor v in head:\n"
+     "\t\tS.store[k] = v\n"
+     "\t\tk += 1\n"
+     "\tvar h: int = 0\n"
+     "\tfor i in range(n):\n"
+     "\t\tvar o: int = i * STRIDE\n"
+     "\t\th = _fold(h, Array(S.store.slice(o, o + int(LEN[int(S.store[o])]))))   # (the store is packed; the fold takes an Array)\n"
+     "\tS.storeHash = h\n"
+     "\t_ix.erase(S.get_instance_id())\n"
+     "\n"
+     "\n"
+     "static func _push(S, rec: Array) -> int:\n"),
+])
+
+edit("sim/core/intro.gd", [
+    ("\tif craterE > 0.0 and WorldWater.burialOK(S, f.x):   # with the floor on, water 37.5 deep or more holds him above the bed: nothing is dug and the cue's radius is 0 (Game Design's rulings 2026-10-30 row 13)\n"
+     "\t\tvar rec = WorldCrater.dig(S, f.x, craterE, null, \"impact\", 0.0, 1.0)\n",
+     "\tif craterE > 0.0 and WorldWater.burialOK(S, f.x):   # with the floor on, water 37.5 deep or more holds him above the bed: nothing is dug and the cue's radius is 0 (Game Design's rulings 2026-10-30 row 13)\n"
+     "\t\tvar m0: int = int(S.storeN)   # the planet store before this dig: empty when a match starts, so at the second landing the first lander's records are [0, m0)\n"
+     "\t\tvar rec = WorldCrater.dig(S, f.x, craterE, null, \"impact\", 0.0, 1.0)\n"),
+    ("\t\t\t\tS.craters[n - 1] = S.craters[n - 2]\n\t\t\t\tS.craters[n - 2] = rec\n",
+     "\t\t\t\tS.craters[n - 1] = S.craters[n - 2]\n\t\t\t\tS.craters[n - 2] = rec\n"
+     "\t\t\t\tif m0 > 0 and int(S.storeN) > m0:\n"
+     "\t\t\t\t\tWorldStore.swapBlocks(S, m0)   # and a planet's store the same way, the left spot's records first: its running hash reads them in order (GW1b)\n"),
+])
+print("ok")

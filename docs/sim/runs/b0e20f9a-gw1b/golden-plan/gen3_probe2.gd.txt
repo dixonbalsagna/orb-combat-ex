@@ -1,0 +1,8 @@
+extends SceneTree
+## Scratch probe: PLANET_MATCH's own conditions (SimGolden.goldenRun, the default arm, no intro key: the intro's end state;
+## planet 7, touch 3, generation 3, cap 3600): each seed's first crater and first slide. Never to land.
+func _init() -> void:
+	for seed in range(1, 31):
+		var r: Dictionary = SimGolden.goldenRun("default", seed, null, 3600, {"planet": 7, "touch": 3, "planetGen": 3}, {"crater": -1, "slide": -1})
+		print("seed %d: %s, %d ticks" % [seed, str(r.firsts), int(r.ticks)])
+	quit(0)

@@ -30,6 +30,32 @@ Simulation, 2026-11-20, sprint A1. The GW1b review (`docs/ep/reviews/GW1b-review
 | After step 20 | Simulation | the one re-record; parity; two runs, one file; Rendering's 15, with World's ground re-pin in |
 | After the re-record | QA | the reference lanes on the new golden |
 
-## Open
+## The patch: the recipes and my arena pins (built and gated; lands at step 20 with the re-record)
 
-- The recipe change and its probe are built after gw1b-energy's re-cut gate (one Godot job at a time). The patch lands at step 20 with the re-record, not before.
+| Patch | Files | sha1 | sha256 starts |
+| :--- | :--- | :--- | :--- |
+| `gw1b-golden.patch` | `sim/core/tools/{golden_recipes,parity,cross_check,cross_end_check,fights_check,frame_check}.gd` | ee5abe0189fe3670d45f48037d21df1e7cf59888 | 8752f445beea |
+
+Apply on main (b0e20f9a) after GW1b's steps 1 to 4 (checked). It needs A-WORLD-01's `WorldDefault` and its `"world"` key. Tests and recipes only: no sim code.
+
+- **The recipes** (`golden_recipes.gd`):
+  - default seed 1, seed 11's KO match and both scripted replays take `"world": "arena"`; the other seven matches name no world;
+  - **`PLANET_MATCH` is planet 7, touch 3, generation 3, seed 29.** It keeps its first crater and first slide (ticks 818 and 583), and parity asks for both. Seed 1 had a crater but no slide under the golden's own conditions (`probe_gen3`, `gen3_probe2`);
+  - parity re-runs each match and replay with its recorded set-up.
+- **My rows about the hand-made arena** (the review's B-02), found with the flip on a scratch stack:
+  - **parity:** nine rows run in arena mode, through a small wrapper that puts the mode back: the arm set-ups, the view's particles at depth, a fighter's depth and the contact rule, the intro phase's flat start, the shots' buildings, the replay header's "no planet", the planet's load (its running match), the match's start in pieces (its two starts with no planet), and forms' Witness. Each row's planets are named, so they're unchanged;
+  - **cross_check, cross_end_check, fights_check:** the whole check in arena mode (their 2v2 stages are written on the arena). A 2v2 on the planet is World's and Encounter's to cover;
+  - **frame_check:** its two "off a field world" matches take `"world": "arena"`.
+- **Not pinned: parity's "composed intros".** It's a real fault on the planet, fixed in `../intro-store/`, which lands before step 20.
+
+## Proof (records: `docs/sim/runs/b0e20f9a-gw1b/golden-plan/`)
+
+- **Steps 1 to 4 on main, arena mode:** the golden is byte for byte main's. Parity passes, with replay-world's row ("a replay of the default world names its planet"). World's `world_default_check` passes.
+- **Steps 1 to 4 + this patch, arena:** golden regenerated (it moves: the planet match and the recorded set-ups); **parity exit 0** (the planet match "3,600 ticks: identical", its crater and slide kept); `frame_check`, `cross_check`, `cross_end_check` pass.
+- **Steps 1 to 4 + the flip + this patch + `../intro-store/`:**
+  - the golden made from a cold field cache and then a warm one: **one file**;
+  - **parity exit 0 through `gate.mjs`**, every row;
+  - `frame_check`, `cross_check`, `cross_end_check` pass.
+- **Before the pins, with the flip:** parity failed 10 rows, cross_check 7, cross_end_check 3, frame_check 4 (`parity_planet_before_pins.txt`, `1_steps1-4_and_flip_red_rows.txt`).
+- **Not the flip's:** `fights_check`'s "swings rest while apart" fails the same way on a plain export of main as it stands, b0e20f9a (`fights_check_on_main.txt`). It isn't in CI. It's my check, and I look at it after GW1b.
+- **My other checks with the flip:** `power_check`, `kick_check`, `two_states`, `fork_check`, `field_static_check`, `memo_check`, `places_check`, `rec_check`, `replay_xproc_check`, `ceil_check`, `coop_check`, `loop_check`, `load_split`: all pass unpinned.

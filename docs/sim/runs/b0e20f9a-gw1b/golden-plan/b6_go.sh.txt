@@ -1,0 +1,47 @@
+#!/bin/sh
+# b6_go.sh <scratchpad>: the GW1b golden plan, second pass: recipes v2 (seed 29), the pins' data load, the intro's store order fix.
+#   A. b4 (steps 1-4, arena): golden, parity, the four checks; then the intro fix: the golden byte for byte (the arena's store is empty)
+#   B. b4f (+ the flip, recipes v2, the intro fix): golden cold then warm (one file), parity (all rows), the four checks
+#   C. fights_check on a plain export of main (is "swings rest while apart" main's own?)
+# ONE Godot job at a time, below normal (a long run).
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/b6o"
+R="/c/Users/<user>/Documents/Claude Proj/Breakers-Like"
+C="$NS/b6app/Godot/app_userdata/Orb Combat EX/field-cache"
+rm -rf "${NS:?}/b6o"; mkdir -p "$O" "$NS/b6app"; export APPDATA="$(cygpath -w "$NS/b6app")"
+run() { name="$1"; t="$2"; shift 2; s=$(date +%s); timeout "$t" "$G" --headless --path . --script "$@" > "$O/$name.txt" 2>&1; code=$?; echo "$name: exit $code in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR\|Parse Error' "$O/$name.txt"); $(grep -v 'WARNING\|at: \|^$\|ERROR: \|wait_to_finish' "$O/$name.txt" | tail -1 | cut -c1-150)"; grep -n "^FAIL\|^  FAIL" "$O/$name.txt" | head -12 | cut -c1-260; }
+par() { s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/$1.txt" 2>&1; echo "$1: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/$1.txt" | tail -2 | tr '\n' ' ' | cut -c1-160)"; grep -n "^FAIL" "$O/$1.txt" | head -10 | cut -c1-240; grep -n "planet match of\|composed intros" "$O/$1.txt" | head -3 | cut -c1-200; }
+echo "== A. steps 1-4 (arena), recipes v2"
+cd "$NS/b4" || exit 1
+case "$(pwd -P)" in */scratchpad/b4) ;; *) echo refusing; exit 1 ;; esac
+cp sim/core/test/golden.json "$O/golden_main.json"
+run golden_a 1200 res://sim/core/tools/golden.gd
+cp sim/core/test/golden.json "$O/golden_a.json"
+par parity_a
+for c in frame_check cross_check cross_end_check fights_check; do run "a_$c" 2400 "res://sim/core/tools/$c.gd"; done
+python -I "$NS/kick/intro_store_edit.py" "$NS/b4" > "$O/intro_edit_a.txt" 2>&1 || { echo "the intro fix did not apply on b4"; cat "$O/intro_edit_a.txt"; }
+run golden_a_intro 1200 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$O/golden_a.json" && echo "  arena: the intro fix leaves the golden byte for byte" || echo "  arena: the intro fix MOVED the golden"
+cp "$O/golden_main.json" sim/core/test/golden.json
+echo "== B. + the flip, recipes v2, the intro fix"
+cd "$NS/b4f" || exit 1
+case "$(pwd -P)" in */scratchpad/b4f) ;; *) echo refusing; exit 1 ;; esac
+timeout 900 "$G" --headless --path . --import > "$O/import_b.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import_b.txt")"
+rm -rf "${C:?}"
+run golden_b_cold 2400 res://sim/core/tools/golden.gd
+cp sim/core/test/golden.json "$O/golden_b.json"
+run golden_b_warm 2400 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$O/golden_b.json" && echo "  the golden made twice, cold then warm: ONE file" || echo "  the golden made twice: the files DIFFER"
+par parity_b
+cp "$O/golden_main.json" sim/core/test/golden.json
+for c in frame_check cross_check cross_end_check fights_check; do run "b_$c" 2400 "res://sim/core/tools/$c.gd"; done
+echo "== C. fights_check on main itself"
+rm -rf "${NS:?}/m0"; sh "$NS/mkbase3.sh" "$NS/m0" > /dev/null || exit 1
+cd "$NS/m0" || exit 1
+case "$(pwd -P)" in */scratchpad/m0) ;; *) echo refusing; exit 1 ;; esac
+timeout 900 "$G" --headless --path . --import > "$O/import_m0.txt" 2>&1; echo "import $?"
+run m0_fights_check 2400 res://sim/core/tools/fights_check.gd
+echo b6 done

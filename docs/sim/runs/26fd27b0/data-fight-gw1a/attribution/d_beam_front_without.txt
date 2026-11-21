@@ -1,0 +1,96 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+      plays on true, at fire true, front on true
+ok    the floor at no distance
+ok    the floor plus the distance at its speed (54)
+ok    the ceiling across a planet
+ok    the snap's ceiling
+ok    600 away: the window opens, 41 ticks to arrival
+ok    600 away: nothing lands before the front
+ok    600 away: the window closes once (1)
+ok    600 away: it lands on arrival
+ok    2400 away: the window opens, 54 ticks to arrival
+ok    2400 away: nothing lands before the front
+ok    2400 away: the window closes once (1)
+ok    2400 away: it lands on arrival
+ok    9000 away: the window opens, 60 ticks to arrival
+ok    9000 away: nothing lands before the front
+ok    9000 away: the window closes once (1)
+ok    9000 away: it lands on arrival
+ok    a dodge too early: he takes it
+ok    a dodge near arrival: he's clear
+ok    the front's dodge: 18 before, 2 after
+ok    a dodge -19 from arrival: he takes it
+ok    a dodge -18 from arrival: he's clear
+ok    a dodge 1 from arrival: he's clear
+      pressed 18 after his, mask 4, sig: the struggle starts 46 after his press (he fires at about 48)
+ok    a sig pressed 18 ticks into the charge answers it as he fires (46)
+      pressed 38 after his, mask 4, sig: the struggle starts 46 after his press (he fires at about 48)
+ok    a sig pressed 38 ticks into the charge answers it as he fires (46)
+      pressed 18 after his, mask 2, sig: the struggle starts -1 after his press (he fires at about 48)
+FAIL  a sig pressed 18 ticks into the charge answers it as he fires (-1)
+      pressed 38 after his, mask 2, sig: the struggle starts -1 after his press (he fires at about 48)
+FAIL  a sig pressed 38 ticks into the charge answers it as he fires (-1)
+      pressed 18 after his, mask 2, stick: the struggle starts 46 after his press (he fires at about 48)
+ok    a stick pressed 18 ticks into the charge answers it as he fires (46)
+      pressed 38 after his, mask 2, stick: the struggle starts 46 after his press (he fires at about 48)
+ok    a stick pressed 38 ticks into the charge answers it as he fires (46)
+      stationary true, fired from 58: moved 0 in the charge, 58 apart as it leaves, 41 ticks to arrive
+ok    stationary, from 58: he stays where he is (0)
+      stationary true, fired from 3000: moved 0 in the charge, 3000 apart as it leaves, 59 ticks to arrive
+ok    stationary, from 3000: he stays where he is (0)
+      stationary false, fired from 58: moved 682 in the charge, 675 apart as it leaves, 41 ticks to arrive
+ok    off, point blank: the stand-off's kick (675)
+ok    held 36: the hold shows as the charge
+      held 36: it fires 7 ticks after the release, moved 0
+ok    held 36: it fires on the release (7)
+ok    held 36: he stays where he is (0)
+ok    held 60: the hold shows as the charge
+      held 60: it fires 7 ticks after the release, moved 0
+ok    held 60: it fires on the release (7)
+ok    held 60: he stays where he is (0)
+ok    the hold shows as the charge
+      holding, flat out: 43 u/s, against 430 with no hold or dash
+ok    he barely moves, and the dash does nothing (43 of 430)
+ok    ... as he flies, with the kick's overspeed on or off (43)
+ok    a dodge or guard press drops it, and it stops showing
+ok    ... and he has his speed back
+ok    the kite's hold isn't a charge
+ok    ... and no beam comes of it
+      from 58: 675 apart 16 ticks after the fire, 41 ticks to arrive
+ok    up close, the firing throws him back to the stand-off (675)
+ok    ... and the shooter stays put
+ok    ... no damage, no stun
+ok    ... he keeps his hands: he can fire back
+ok    from far off, nothing moves him
+      aim true, sector 0: held 0 deg, beam's rise 0.00, at him true, he took 95
+ok    aim true, sector 0: a shot at him
+ok    the charge's aim follows the stick (0)
+      aim true, sector 8: held 90 deg, beam's rise 1.00, at him false, he took 0
+ok    aim true, sector 8: it goes where it was aimed, wide of him
+ok    the charge's aim follows the stick (90)
+ok    ... it rises as aimed, and the exchange is over (1.00)
+      aim true, sector 2: held 22 deg, beam's rise 0.00, at him true, he took 95
+ok    aim true, sector 2: a shot at him
+ok    the charge's aim follows the stick (22)
+      aim true, sector 4: held 45 deg, beam's rise 0.71, at him false, he took 0
+ok    aim true, sector 4: it goes where it was aimed, wide of him
+ok    the charge's aim follows the stick (45)
+ok    ... it rises as aimed, and the exchange is over (0.71)
+      aim false, sector 8: held -1 deg, beam's rise 0.00, at him true, he took 95
+ok    aim false, sector 8: a shot at him
+ok    can't pay: no answer, and the press says why
+      the struggle's start: answered at once -1.000, late -1.000
+FAIL  a fire-back starts a struggle
+FAIL  a late one meets nearer his hands
+ok    and no further than the data lets it
+ok    can't pay, no answer
+ok    the window's open on the receiver
+ok    and not on the shooter
+ok    the stick's fire-back, at level 1's ki
+ok    and that's a struggle
+ok    at its price (12: the smallest stage's with the beam's own move on)
+ok    two runs, one hash
+ok    off: no window cue
+ok    off: it's off
+FRONT: 4 check(s) failed

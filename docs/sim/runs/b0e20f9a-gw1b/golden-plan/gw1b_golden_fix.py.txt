@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+# gw1b_golden_fix.py <tree>: after gw1b_golden_edit.py, what its first gate found:
+#  - PLANET_MATCH seed 29: under the golden's own conditions (the intro's end state, the default arm) seed 1 has a crater but
+#    no slide in 3,600 ticks; seed 29 has its first slide at 583 and its first crater at 818 (the probe of 2026-11-21);
+#  - parity compares the firsts as whole numbers (the golden file reads them back as floats);
+#  - WorldDefault loads its data on first use and sets the mode then: a check that sets the arena before any match had it set
+#    back to the data's planet. The three whole-check pins and parity's wrapper load it first.
+import sys, os
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    print("edited", rel)
+
+
+edit("sim/core/tools/golden_recipes.gd", [
+    ("## Seed 1 has its first slide at tick 250 and its first crater at 318 (the probe of 2026-11-21); the golden keeps both\n"
+     "## ticks and parity asks for both.\n"
+     'const PLANET_MATCH: Dictionary = {"seed": 1, "cap": 3600, "setup": {"planet": 7, "touch": 3, "planetGen": 3}}\n',
+     "## Seed 29 has its first slide at tick 583 and its first crater at 818 under the golden's own conditions (the intro's end\n"
+     "## state, the default arm; the probe of 2026-11-21: seed 1 had a crater and no slide); the golden keeps both ticks and parity\n"
+     "## asks for both.\n"
+     'const PLANET_MATCH: Dictionary = {"seed": 29, "cap": 3600, "setup": {"planet": 7, "touch": 3, "planetGen": 3}}\n'),
+])
+edit("sim/core/tools/parity.gd", [
+    ('\tif int(fs.get("crater", -1)) < 0 or int(fs.get("slide", -1)) < 0 or JSON.stringify(fs) != JSON.stringify(m.get("firsts", {})):\n',
+     '\tvar gf: Dictionary = m.get("firsts", {})\n'
+     '\tif int(fs.get("crater", -1)) < 0 or int(fs.get("slide", -1)) < 0 or int(fs.get("crater", -1)) != int(gf.get("crater", -2)) or int(fs.get("slide", -1)) != int(gf.get("slide", -2)):   # whole ticks (the file reads them back as floats)\n'),
+    ('func _arena(row: Callable) -> String:\n\tvar m0: String = WorldDefault.K_MODE\n',
+     'func _arena(row: Callable) -> String:\n\tWorldDefault.data()   # its data loaded first: a first load would set the mode again\n\tvar m0: String = WorldDefault.K_MODE\n'),
+])
+OLD = '\tWorldDefault.K_MODE = "arena"   # this check\'s stages are written on the hand-made arena'
+NEW = '\tWorldDefault.data()   # its data loaded first: a first load would set the mode back to the data\'s\n\tWorldDefault.K_MODE = "arena"   # this check\'s stages are written on the hand-made arena'
+for rel in ["sim/core/tools/cross_check.gd", "sim/core/tools/cross_end_check.gd", "sim/core/tools/fights_check.gd"]:
+    edit(rel, [(OLD, NEW)])
+print("ok")

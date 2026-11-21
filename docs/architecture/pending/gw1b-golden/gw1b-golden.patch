@@ -1,0 +1,253 @@
+diff --git a/sim/core/tools/cross_check.gd b/sim/core/tools/cross_check.gd
+index 2c6bb55..ff452d4 100644
+--- a/sim/core/tools/cross_check.gd
++++ b/sim/core/tools/cross_check.gd
+@@ -652,5 +652,7 @@ func _run() -> void:
+ 
+ 
+ func _init() -> void:
++	WorldDefault.data()   # its data loaded first: a first load would set the mode back to the data's
++	WorldDefault.K_MODE = "arena"   # this check's stages are written on the hand-made arena (GW1b review B-02: once the mode is planet, a match that names no world plays planet 7). A 2v2 on the planet is World's and Encounter's to cover
+ 	negative = OS.get_cmdline_user_args().has("--negative-control")
+ 	_run()
+diff --git a/sim/core/tools/cross_end_check.gd b/sim/core/tools/cross_end_check.gd
+index b05a436..fe1d28c 100644
+--- a/sim/core/tools/cross_end_check.gd
++++ b/sim/core/tools/cross_end_check.gd
+@@ -283,6 +283,8 @@ func _ai() -> void:
+ 
+ 
+ func _init() -> void:
++	WorldDefault.data()   # its data loaded first: a first load would set the mode back to the data's
++	WorldDefault.K_MODE = "arena"   # this check's stages are written on the hand-made arena (GW1b review B-02: once the mode is planet, a match that names no world plays planet 7). A 2v2 on the planet is World's and Encounter's to cover
+ 	negative = OS.get_cmdline_user_args().has("--negative-control")
+ 	if negative:
+ 		SimCross.blind = 4
+diff --git a/sim/core/tools/fights_check.gd b/sim/core/tools/fights_check.gd
+index c0782a4..0727beb 100644
+--- a/sim/core/tools/fights_check.gd
++++ b/sim/core/tools/fights_check.gd
+@@ -435,6 +435,8 @@ func _negative() -> void:
+ 
+ 
+ func _init() -> void:
++	WorldDefault.data()   # its data loaded first: a first load would set the mode back to the data's
++	WorldDefault.K_MODE = "arena"   # this check's stages are written on the hand-made arena (GW1b review B-02: once the mode is planet, a match that names no world plays planet 7). A 2v2 on the planet is World's and Encounter's to cover
+ 	for a in OS.get_cmdline_user_args():
+ 		if a == "--long":
+ 			ticks = 3600
+diff --git a/sim/core/tools/frame_check.gd b/sim/core/tools/frame_check.gd
+index 1aa4bbd..6ad6c60 100644
+--- a/sim/core/tools/frame_check.gd
++++ b/sim/core/tools/frame_check.gd
+@@ -68,7 +68,7 @@ func _init() -> void:
+ 
+ func _off() -> void:
+ 	var S := SimCore.createSim()
+-	SimCore.newMatch(S, 5, {"p1": true, "p2": true})
++	SimCore.newMatch(S, 5, {"p1": true, "p2": true}, {"world": "arena"})   # off a field world: the hand-made arena, named (GW1b)
+ 	ok(S.frame == null and S.swing == null and S.bX.is_empty(), "off: no frame, no swing, no poses")
+ 	ok(not SimSwing.ask(S, {"deg": 30.0}), "off: a swing is refused")
+ 	step(S, 60)
+@@ -536,7 +536,7 @@ func _bases() -> void:
+ ## A rush rides over the ground, and the stretch's ceiling holds over a real fight's every column, ground and sea.
+ func _ceilAndRush() -> void:
+ 	var off := SimCore.createSim()
+-	SimCore.newMatch(off, 5, {"p1": true, "p2": true})
++	SimCore.newMatch(off, 5, {"p1": true, "p2": true}, {"world": "arena"})   # off a field world: the hand-made arena, named (GW1b)
+ 	ok(SimField.groundCeilAt(off, 100) == INF, "ceil: infinity off a field world")
+ 	SimCore.dispose(off)
+ 	for row in [[3, 2, 22], [7, 2, 11]]:
+diff --git a/sim/core/tools/golden_recipes.gd b/sim/core/tools/golden_recipes.gd
+index 0633c72..fc915fb 100644
+--- a/sim/core/tools/golden_recipes.gd
++++ b/sim/core/tools/golden_recipes.gd
+@@ -13,8 +13,11 @@ const STREAM_IDS: Array = ["vfx.spark", "vfx.debris", "vfx.dust", "vfx.splash",
+ ## 17-match set made the golden check slow; the batch tools cover the seeds this dropped).
+ ## D1a: plus one match with the 12-minute cap that ends in a finisher and a KO (seed 11, KO + 3 s at 19084 ticks, the
+ ## shortest of seeds 1 to 15), so the match goldens keep a KO at k 0.034. [arm, seed, cap]; the cap defaults to CAP.
+-const MATCHES: Array = [["default", 1], ["swap", 1], ["mirror-villain", 1], ["mirror-hero", 1],
+-	["default-flip", 2], ["swap-flip", 2], ["mirror-villain-flip", 2], ["mirror-hero-flip", 2], ["default", 11, 43200]]
++## GW1b: [arm, seed, cap, setup]. Two take "world": "arena" (default seed 1, and seed 11's KO), so the hand-made arena keeps a
++## reference once the mode is planet; the other seven name no world, so they play the world the game starts on (planet 7,
++## touch 3, generation 3) after the flip.
++const MATCHES: Array = [["default", 1, 18000, {"world": "arena"}], ["swap", 1], ["mirror-villain", 1], ["mirror-hero", 1],
++	["default-flip", 2], ["swap-flip", 2], ["mirror-villain-flip", 2], ["mirror-hero-flip", 2], ["default", 11, 43200, {"world": "arena"}]]
+ const CAP: int = 18000
+ ## Everything that comes from a fighter's definition, so an arm moves the whole fighter. D1a fix: the meters (hasAnguish,
+ ## hasMenace, from da5fb09), the kit, the Rally rule, the wound data and the finisher key used to stay with the slot, so a
+@@ -110,10 +113,11 @@ static func build() -> Dictionary:
+ 	g.keyed = keyedHash()
+ 	g.matches = []
+ 	for m in MATCHES:
+-		g.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP))
++		g.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {}))
+ 	g.replays = []
+ 	for rp in [scriptedReplay(11, 3000, false, [1500, 2100]), scriptedReplay(12, 2400, true, [])]:
+-		g.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp)})
++		rp["setup"] = {"world": "arena"}   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; this one keeps the arena's reference (the scripted replays were written on it)
++		g.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp, CAP, rp.setup.duplicate(true))})
+ 	g.planet = planetGolden()   # last, so every key before it is as it was
+ 	return g
+ 
+@@ -524,7 +528,9 @@ static func _full(S: SimState, V: SimFxView, cam: SimCamera) -> String:
+ ## One golden run. Every tick folds a light digest (time, rng, fighters' core numbers and state, feed lines, fx events);
+ ## every CHECK_EVERY ticks and at the end the full state is recorded (sim, reference cosmetic view, camera). With a
+ ## replay the run applies its AI toggles and intents for exactly replay.ticks; without, it runs to KO + 3 s or 18000.
+-static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dictionary = {}) -> Dictionary:
++## firsts: event types to watch ({type: -1}); each takes the tick it first came, and the result carries them (the planet
++## match's crater and slide).
++static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dictionary = {}, firsts: Dictionary = {}) -> Dictionary:
+ 	var S := SimCore.createSim()
+ 	var cam := SimCamera.new()
+ 	SimCore.newMatch(S, seed, replay.ai if replay != null else {}, setup)
+@@ -559,6 +565,10 @@ static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dic
+ 			h.text(l.sub)
+ 		S.out.feed.clear()
+ 		SimHash.hashFx(h, S.out.fx)
++		if not firsts.is_empty():
++			for e in S.out.fx:
++				if firsts.has(e.type) and int(firsts[e.type]) < 0:
++					firsts[e.type] = steps
+ 		V.consume(S, S.out.fx)
+ 		S.out.fx.clear()
+ 		if steps % CHECK_EVERY == 0:
+@@ -566,6 +576,8 @@ static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dic
+ 	var result := {"arm": arm, "seed": seed, "cap": cap, "ticks": steps, "light": h.hex(), "checkpoints": checkpoints, "final": _full(S, V, cam)}
+ 	if not setup.is_empty():
+ 		result["setup"] = setup.duplicate(true)
++	if not firsts.is_empty():
++		result["firsts"] = firsts.duplicate(true)
+ 	SimCore.dispose(S)
+ 	return result
+ 
+@@ -645,7 +657,12 @@ static func compareRun(got: Dictionary, want: Dictionary, label: String) -> Stri
+ ## World's slice hashes, the tick-0 gameplay hash of planet matches (the Whole ring and the Half), and one AI match.
+ const PLANET_SLICES: Array = [[7, 3], [7, 9], [11, 2]]
+ const PLANET_TICK0: Array = [["7/3", {"planet": 7, "touch": 3}], ["11/2", {"planet": 11, "touch": 2}], ["7/3/half", {"planet": 7, "touch": 3, "arena": {"cols": 2400}}]]
+-const PLANET_MATCH: Dictionary = {"seed": 1, "cap": 3600, "setup": {"planet": 7, "touch": 3}}
++## The world the game starts on and Orb played: planet 7, touch 3, generation 3 (GW1b; it played the data's generation before).
++## Seed 29 has its first slide at tick 583 and its first crater at 818 under the golden's own conditions (the intro's end
++## state, the default arm; the probe of 2026-11-21: seed 1 had a crater and no slide); the golden keeps both ticks and parity
++## asks for both.
++const PLANET_MATCH: Dictionary = {"seed": 29, "cap": 3600, "setup": {"planet": 7, "touch": 3, "planetGen": 3}}
++const PLANET_FIRSTS: Dictionary = {"crater": -1, "slide": -1}
+ 
+ 
+ static func planetSlices() -> Dictionary:
+@@ -668,4 +685,4 @@ static func planetTick0() -> Dictionary:
+ 
+ 
+ static func planetGolden() -> Dictionary:
+-	return {"slices": planetSlices(), "tick0": planetTick0(), "match": goldenRun("default", int(PLANET_MATCH.seed), null, int(PLANET_MATCH.cap), PLANET_MATCH.setup.duplicate(true))}
++	return {"slices": planetSlices(), "tick0": planetTick0(), "match": goldenRun("default", int(PLANET_MATCH.seed), null, int(PLANET_MATCH.cap), PLANET_MATCH.setup.duplicate(true), PLANET_FIRSTS.duplicate(true))}
+diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
+index 69db836..5768a04 100644
+--- a/sim/core/tools/parity.gd
++++ b/sim/core/tools/parity.gd
+@@ -52,7 +52,7 @@ func _init() -> void:
+ 	check("one versus many: what the core counts of a guard", _guardRules())
+ 	check("wired numbers change a match", _wiredNumbers())
+ 	check("keyed draws", _keyedDraws(g))
+-	check("arm setups", _armSetups())
++	check("arm setups", _arena(_armSetups))
+ 	check("intent pack", _intentPack())
+ 	check("exp past its scaling's reach", _expGuard())
+ 	check("a stun ends the held states", _stunGate())
+@@ -72,16 +72,16 @@ func _init() -> void:
+ 	check("a medium blow, rule by rule", _mediumWeight())
+ 	check("a blow that names its region", _namedRegion())
+ 	check("no tier past the ladder's last", _tierCap())
+-	check("the view's particles carry their depth", _partDepth())
++	check("the view's particles carry their depth", _arena(_partDepth))
+ 	check("depth in the core", _depth())
+-	check("a fighter's depth outside a flight, and the contact rule", _depthStep())
+-	check("the intro phase", _intro())
++	check("a fighter's depth outside a flight, and the contact rule", _arena(_depthStep))
++	check("the intro phase", _arena(_intro))
+ 	check("composed intros", _introComposed())
+ 	check("the intro's default facts and the take", _introDefault())
+ 	check("the last stand", _lastStand())
+ 	check("a hidden fighter is found when he charges or is launched", _foundAnnounced())
+ 	check("shots", _plainShots())
+-	check("shots: buildings, wild deflects, the spray, mines", _shots2())
++	check("shots: buildings, wild deflects, the spray, mines", _arena(_shots2))
+ 	check("agency lines", _agencyLines())
+ 	check("a clash's meeting point", _clashMid())
+ 	check("SimMathx.PI and TAU", _piTau())
+@@ -91,7 +91,7 @@ func _init() -> void:
+ 	check("the launch's curve", _flight())
+ 	check("hit-stop by weight", _hitstop())
+ 	check("the ricochet's glance", _ricochet())
+-	check("the replay header covers a planet's data", _planetHeader())
++	check("the replay header covers a planet's data", _arena(_planetHeader))   # its "no planet" is the arena; its planets are named
+ 	check("the intent's second word in the hash and the replay", _rightWord())
+ 	check("a struggle, as the host reads it", _inStruggle())
+ 	check("a match starts on the floor of a lake or the sea", _floorStart())
+@@ -100,14 +100,14 @@ func _init() -> void:
+ 	check("the run's state and carry", _runState())
+ 	check("the campaign's arc and episode", _campaign())
+ 	_mainWorld(false)   # ... and the switches as they were
+-	check("the planet's load", _planetLoad())
++	check("the planet's load", _arena(_planetLoad))   # its running match is the arena; its planet is named
+ 	check("the calm turn on gen 2", _calmGen2())
+-	check("the match's start in pieces", _matchStart())
++	check("the match's start in pieces", _arena(_matchStart))   # its two starts with no planet are the arena's; its planet start is named
+ 	check("the aftermaths", _aftermaths())
+ 	check("the curve's shared functions, the brake's control back, the camera feed", _shared())
+ 	check("the air brake", _brake())
+ 	check("forms: five steps and the slingshot", _forms())
+-	check("forms: Witness and Trial", _formBranches())
++	check("forms: Witness and Trial", _arena(_formBranches))
+ 	check("menace at the cap decays after its delay, whatever the dead (CD-05)", _menaceCap())
+ 	check("Animation's view fields: a launch's tier, a hit's stop and tier", _animFields())
+ 	check("the intro phase (golden)", "" if SimGolden.introHash() == g.get("intro", "") else "differs")
+@@ -140,6 +140,17 @@ func _dropFixtures(dir: String) -> void:
+ 
+ ## err is "" for a pass. Anything else fails, including null: a check that stops on a script error returns null, and must
+ ## not read as a pass.
++## A row about the hand-made arena, run in arena mode whatever world.json says (GW1b review B-02: once the mode is planet, a
++## match that names no world plays planet 7). The mode is put back after.
++func _arena(row: Callable) -> String:
++	WorldDefault.data()   # its data loaded first: a first load would set the mode again
++	var m0: String = WorldDefault.K_MODE
++	WorldDefault.K_MODE = "arena"
++	var r = row.call()
++	WorldDefault.K_MODE = m0
++	return r
++
++
+ func check(name: String, err) -> void:
+ 	if err is String and err == "":
+ 		print("ok    " + name)
+@@ -226,7 +237,7 @@ func _matches(g: Dictionary) -> String:
+ 	var bad: Array = []
+ 	var ticks: int = 0
+ 	for m in g.matches:
+-		var got: Dictionary = SimGolden.goldenRun(m.arm, int(m.seed), null, int(m.get("cap", SimGolden.CAP)))
++		var got: Dictionary = SimGolden.goldenRun(m.arm, int(m.seed), null, int(m.get("cap", SimGolden.CAP)), m.get("setup", {}).duplicate(true))   # with its recorded set-up (GW1b: two take the arena)
+ 		ticks += got.ticks
+ 		var e := SimGolden.compareRun(got, m, "%s seed %d" % [m.arm, int(m.seed)])
+ 		if e != "":
+@@ -239,7 +250,7 @@ func _matches(g: Dictionary) -> String:
+ 
+ func _replays(g: Dictionary) -> String:
+ 	for r in g.replays:
+-		var got: Dictionary = SimGolden.goldenRun("default", int(r.replay.seed), r.replay)
++		var got: Dictionary = SimGolden.goldenRun("default", int(r.replay.seed), r.replay, SimGolden.CAP, r.replay.get("setup", {}).duplicate(true))
+ 		var e := SimGolden.compareRun(got, r.run, "replay seed %d" % int(r.replay.seed))
+ 		if e != "":
+ 			return e
+@@ -5825,7 +5836,11 @@ func _planetGolden(g: Dictionary) -> String:
+ 	var pm: Dictionary = SimGolden.PLANET_MATCH
+ 	if int(m.seed) != int(pm.seed) or int(m.cap) != int(pm.cap) or JSON.stringify(m.get("setup", {})) != JSON.stringify(JSON.parse_string(JSON.stringify(pm.setup))):
+ 		return "the planet match's recipe (%s) is not the golden's (%s): regenerate" % [JSON.stringify(pm), JSON.stringify(m.get("setup", {}))]
+-	var got: Dictionary = SimGolden.goldenRun("default", int(pm.seed), null, int(pm.cap), pm.setup.duplicate(true))
++	var got: Dictionary = SimGolden.goldenRun("default", int(pm.seed), null, int(pm.cap), pm.setup.duplicate(true), SimGolden.PLANET_FIRSTS.duplicate(true))
++	var fs: Dictionary = got.get("firsts", {})
++	var gf: Dictionary = m.get("firsts", {})
++	if int(fs.get("crater", -1)) < 0 or int(fs.get("slide", -1)) < 0 or int(fs.get("crater", -1)) != int(gf.get("crater", -2)) or int(fs.get("slide", -1)) != int(gf.get("slide", -2)):   # whole ticks (the file reads them back as floats)
++		return "the planet match's crater and slide: %s (golden %s); it must have both" % [JSON.stringify(fs), JSON.stringify(m.get("firsts", {}))]
+ 	var e: String = SimGolden.compareRun(got, m, "the planet match %s seed %d" % [JSON.stringify(pm.setup), int(pm.seed)])
+ 	if e != "":
+ 		return e

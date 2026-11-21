@@ -1,0 +1,9 @@
+r_flight_without: exit 1 in 158 s; script errors 0; flight check FAILED (1)
+8:FAIL  seed 12345 tick 2068: building 236 shows 1 standing, 0 people there
+r_flash_reg_without: exit 0 in 137 s; script errors 0; flash register check passed
+ M data/fight/brake.json
+ M data/fight/hitstop.json
+ M data/fight/kick.json
+ M data/fight/ladder.json
+ M data/fight/power.json
+g5 done

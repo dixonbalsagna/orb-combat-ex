@@ -1,0 +1,87 @@
+== A. steps 1-4, arena mode
+import 0; parse errors 0
+golden_a: exit 0 in 160 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 156.2 s
+  steps 1-4: golden.json byte-identical to main's (expected: arena mode)
+parity, steps 1-4: exit 0 in 381 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+86:ok    a replay of the default world names its planet
+world_default: exit 0 in 47 s; script errors 0; WORLDDEFAULT: 0 check(s) failed
+gen3_probe: exit 0 in 97 s; script errors 0; seed 30: first crater -1, first slide 1816
+seed 1: first crater 318, first slide 250
+seed 2: first crater 1006, first slide -1
+seed 3: first crater 441, first slide 753
+seed 4: first crater 819, first slide 2139
+seed 5: first crater 473, first slide -1
+seed 6: first crater 2144, first slide 837
+seed 7: first crater 2149, first slide 1244
+seed 8: first crater 4002, first slide 929
+seed 9: first crater 4522, first slide 1467
+seed 10: first crater 4439, first slide 1450
+seed 11: first crater 3371, first slide 2147
+seed 12: first crater -1, first slide 268
+seed 13: first crater 1456, first slide 3268
+seed 14: first crater -1, first slide 1035
+seed 15: first crater -1, first slide 562
+seed 16: first crater 3942, first slide 3858
+seed 17: first crater 3869, first slide -1
+seed 18: first crater 327, first slide 536
+seed 19: first crater 3643, first slide 959
+seed 20: first crater 741, first slide -1
+seed 21: first crater 2068, first slide 1525
+seed 22: first crater 847, first slide 3627
+seed 23: first crater 1404, first slide 1512
+seed 24: first crater -1, first slide 2872
+seed 25: first crater 730, first slide -1
+seed 26: first crater 1320, first slide 2047
+seed 27: first crater 2976, first slide 2976
+seed 28: first crater 535, first slide 2124
+seed 29: first crater 3874, first slide 468
+seed 30: first crater -1, first slide 1816
+== B. steps 1-4 + the flip (mode planet)
+4:  "mode": "planet",
+golden_b: exit 0 in 257 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (178929 ticks), 2 replays in 252.3 s
+  the flip: golden.json MOVED (expected)
+parity, the flip (its regenerated golden): exit 1 in 696 s
+26:FAIL  arm setups: default-flip: setup and applyArm differ by tick 0
+46:FAIL  the view's particles carry their depth: the ground at depth reads 1089.4169314119 over a plane lowered to 960.480420286934
+48:FAIL  a fighter's depth outside a flight, and the contact rule: the camera's start for the default match reads 76700.0, or depth is on
+49:FAIL  the intro phase: intro false did not give the flat start
+50:FAIL  composed intros: double_drop, slot 1 first, gap 30: the state at the clock is not the one the setup's skip gives
+55:FAIL  shots: buildings, wild deflects, the spray, mines: no building in reach of the plane with clear air beside it
+65:FAIL  the replay header covers a planet's data: density.json edited: no planet, gen 1, gen 2 moved [true, false, true], not only gen 2
+80:FAIL  the planet's load: the planet's load: refused cold false, gen 1 never true, progress climbs true, phases ["plates", "climate", "places", "ring", "done"] (want plates, climate, places, ring, done), the match starts false and is the cold one's true, mak
+82:FAIL  the match's start in pieces: the match's start in pieces: { "intro": false }: 8 pieces, same true, progress climbs true; { "intro": "skip" }: 8 pieces, same true, progress climbs true; { "planet": 7, "touch": 3, "intro": false }: 8 pieces, same true, 
+87:FAIL  forms: Witness and Trial: a building of mass 1.0 the rival brought down near him gave Witness 0.0, not 16.0
+power_check, the flip: exit 0 in 187 s; POWER: 0 check(s) failed
+b_cross_check: exit 1 in 261 s; script errors 0; CROSS: 7 check(s) failed
+3:FAIL  ... it went over (clean, no press: the plain rule)
+4:FAIL  ... it went over (clean)
+5:FAIL  ... it went over (guarded)
+6:FAIL  ... it went over (dodged)
+7:FAIL  ... his guard takes some of it (0.00 against 0.00)
+8:FAIL  a shot passes a partner in the other fight and flies on
+9:FAIL  a shot on someone held lands the first tick his fight is live (over -1, live again -1, landed -1)
+b_cross_end_check: exit 1 in 330 s; script errors 0; CROSSEND: 3 check(s) failed
+3:FAIL  a shot from outside reaches the finished fight's winner (0.0)
+4:FAIL  ... his wear and the brink as they stood
+5:FAIL  ... his times on the new clock: what he had left, less the tick (0.0000 against -109.1883)
+b_field_static_check: exit 0 in 223 s; script errors 0; FIELDSTATIC: 0 check(s) failed
+b_fork_check: exit 0 in 68 s; script errors 0; FORK: 0 check(s) failed
+b_frame_check: exit 1 in 65 s; script errors 0; FAILED
+3:FAIL  off: no frame, no swing, no poses
+4:FAIL  off: a swing is refused
+5:FAIL  off: nothing reads the field
+13:FAIL  ceil: infinity off a field world
+22:FAILED
+b_kick_check: exit 0 in 72 s; script errors 0; KICK: 0 check(s) failed
+b_load_split: exit 0 in 4 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by name
+b_memo_check: exit 0 in 68 s; script errors 0; MEMO: 0 check(s) failed
+b_places_check: exit 0 in 27 s; script errors 0; PLACES: 0 check(s) failed
+b_rec_check: exit 0 in 45 s; script errors 0; REC: 0 check(s) failed
+b_replay_xproc_check: exit 0 in 77 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 5d87a70d91c76dad, Easy 20dd5cd0be91e72e, Medium 75837884e1ee7125 (600
+b_ceil_check: exit 0 in 71 s; script errors 0; CEIL: 0 check(s) failed
+b_fights_check: exit 1 in 270 s; script errors 0; FIGHTS: 1 check(s) failed
+18:FAIL  swings rest while apart: fight 0 is the 1v1 (differs at 1067, close at -1)
+b_coop_check: exit 0 in 32 s; script errors 0; COOP: 0 check(s) failed
+b_loop_check: exit 0 in 18 s; script errors 0; LOOP: 0 check(s) failed
+b_two_states: exit 0 in 264 s; script errors 0; PASS  0 failure(s)
+b4 done

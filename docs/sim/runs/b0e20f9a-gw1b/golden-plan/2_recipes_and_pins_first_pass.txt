@@ -1,0 +1,37 @@
+== A. steps 1-4 (arena) + the recipe change and pins
+gw1b-golden sha1 c97ebbb39076070678af86dc9db473bc23de8483 sha256 3e1edcb8bd82 6 files
+import 0; parse errors 0
+golden_a: exit 0 in 150 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 145.3 s
+parity, arena + recipes (its regenerated golden): exit 1 in 345 s; golden check FAILED gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SC
+90:FAIL  planet worlds (golden): the planet match's crater and slide: {"crater":252,"slide":-1} (golden {"crater":252.0,"slide":-1.0}); it must have both
+a_frame_check: exit 0 in 55 s; script errors 0; PASS
+a_cross_check: exit 0 in 128 s; script errors 0; CROSS: 0 check(s) failed
+a_cross_end_check: exit 0 in 204 s; script errors 0; CROSSEND: 0 check(s) failed
+a_fights_check: exit 1 in 245 s; script errors 0; FIGHTS: 1 check(s) failed
+18:FAIL  swings rest while apart: fight 0 is the 1v1 (differs at 1067, close at -1)
+== B. + the flip (planet)
+import 0; parse errors 0
+golden_b_cold: exit 0 in 206 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 202.0 s
+golden_b_warm: exit 0 in 203 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 198.8 s
+  the golden made twice, a cold cache then a warm one: ONE file
+parity, the flip + recipes + pins (its regenerated golden): exit 1 in 602 s
+50:FAIL  composed intros: double_drop, slot 1 first, gap 30: the state at the clock is not the one the setup's skip gives
+90:FAIL  planet worlds (golden): the planet match's crater and slide: {"crater":252,"slide":-1} (golden {"crater":252.0,"slide":-1.0}); it must have both
+87:      9 matches, 184833 ticks: every per-tick digest and full-state checkpoint identical
+88:ok    matches
+b_frame_check: exit 0 in 55 s; script errors 0; PASS
+b_cross_check: exit 1 in 244 s; script errors 0; CROSS: 7 check(s) failed
+3:FAIL  ... it went over (clean, no press: the plain rule)
+4:FAIL  ... it went over (clean)
+5:FAIL  ... it went over (guarded)
+6:FAIL  ... it went over (dodged)
+7:FAIL  ... his guard takes some of it (0.00 against 0.00)
+8:FAIL  a shot passes a partner in the other fight and flies on
+9:FAIL  a shot on someone held lands the first tick his fight is live (over -1, live again -1, landed -1)
+b_cross_end_check: exit 1 in 283 s; script errors 0; CROSSEND: 3 check(s) failed
+3:FAIL  a shot from outside reaches the finished fight's winner (0.0)
+4:FAIL  ... his wear and the brink as they stood
+5:FAIL  ... his times on the new clock: what he had left, less the tick (0.0000 against -109.1883)
+b_fights_check: exit 1 in 264 s; script errors 0; FIGHTS: 1 check(s) failed
+18:FAIL  swings rest while apart: fight 0 is the 1v1 (differs at 1067, close at -1)
+b5 done

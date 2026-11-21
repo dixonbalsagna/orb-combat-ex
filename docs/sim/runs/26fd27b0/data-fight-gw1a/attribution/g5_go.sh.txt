@@ -1,0 +1,18 @@
+#!/bin/sh
+# g5_go.sh <scratchpad>: whose are Rendering.s flight_check 20 and flash_reg_check 2 on the GW1a stack? The same tree (g3) with
+# data-fight-gw1a stashed: if they fail the same way without the grant, they're the stack's, not the grant's. ONE Godot job, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; T="$NS/g3"; O="$NS/g5o"
+rm -rf "${NS:?}/g5o"; mkdir -p "$O" "$NS/g3app"; export APPDATA="$(cygpath -w "$NS/g3app")"
+cd "$T" || exit 1
+case "$(pwd -P)" in */scratchpad/g3) ;; *) echo refusing; exit 1 ;; esac
+run() { name="$1"; t="$2"; shift 2; s=$(date +%s); timeout "$t" "$G" --headless --path . --script "$@" > "$O/$name.txt" 2>&1; echo "$name: exit $? in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR\|Parse Error' "$O/$name.txt"); $(grep -v 'WARNING\|at: \|^$\|ERROR: \|wait_to_finish' "$O/$name.txt" | tail -1 | cut -c1-150)"; grep -n "^FAIL" "$O/$name.txt" | head -16 | cut -c1-200; }
+git stash -q || exit 1
+git status --short | head -3
+run r_flight_without 1200 res://render/tools/flight_check.gd
+run r_flash_reg_without 1200 res://render/tools/flash_reg_check.gd
+git stash pop -q || exit 1
+git status --short | head -6
+echo g5 done

@@ -1,0 +1,30 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+trade: drift 3.00 s; the rush's ticks left: stayed 60, traded 60; the cooldown left after 1.000, 1.000
+apart: a swing under way rested 15 ticks after a fighter left
+swing rollback: 34 ticks of swing in 60, 0 differ
+wrap: across it a point moves 0.000000138, the ground 0.0000
+wrap: a fighter walked across it: true; his most height in a tick 0.00
+same: seed 77 flat: first difference -1, fights first close -1, the 1v1's line first turned -1, the two fights' -1; held 206 and 136, each alone 183 and 113; blows 134 and 75; clocks 26.57 and 27.73
+same: seed 5 flat: first difference -1, fights first close -1, the 1v1's line first turned -1, the two fights' -1; held 220 and 248, each alone 180 and 208; blows 152 and 179; clocks 26.33 and 25.87
+same: seed 101 flat: first difference -1, fights first close -1, the 1v1's line first turned -1, the two fights' -1; held 248 and 187, each alone 219 and 158; blows 180 and 133; clocks 25.87 and 26.88
+same: seed 77 7: first difference 1067, fights first close -1, the 1v1's line first turned 574, the two fights' -1; held 202 and 189, each alone 177 and 164; blows 114 and 129; clocks 26.63 and 26.85
+same: seed 5 7: first difference 279, fights first close -1, the 1v1's line first turned 133, the two fights' -1; held 226 and 243, each alone 191 and 208; blows 166 and 164; clocks 26.23 and 25.95
+same: seed 101 7: first difference 146, fights first close -1, the 1v1's line first turned 143, the two fights' -1; held 259 and 148, each alone 232 and 121; blows 176 and 104; clocks 25.68 and 27.53
+same: seed 77 12: first difference 120, fights first close -1, the 1v1's line first turned 119, the two fights' -1; held 177 and 181, each alone 167 and 171; blows 99 and 101; clocks 27.05 and 26.98
+same: seed 5 12: first difference 663, fights first close -1, the 1v1's line first turned 127, the two fights' -1; held 167 and 243, each alone 146 and 222; blows 96 and 164; clocks 27.22 and 25.95
+same: seed 101 12: first difference 291, fights first close -1, the 1v1's line first turned 179, the two fights' -1; held 197 and 174, each alone 174 and 151; blows 164 and 107; clocks 26.72 and 27.10
+switch on: first difference 1067, close -1, 0 ticks of swing
+FAIL  swings rest while apart: fight 0 is the 1v1 (differs at 1067, close at -1)
+alone: seed 77 flat: fight 1 with fight 0 fighting or idle: first difference -1
+alone: seed 5 flat: fight 1 with fight 0 fighting or idle: first difference -1
+alone: seed 77 7: fight 1 with fight 0 fighting or idle: first difference -1
+alone: seed 5 7: fight 1 with fight 0 fighting or idle: first difference -1
+alone: seed 77 12: fight 1 with fight 0 fighting or idle: first difference -1
+alone: seed 5 12: fight 1 with fight 0 fighting or idle: first difference -1
+rollback flat: 700 ticks, held 93 and 83, 0 differ
+rollback 7: 700 ticks, held 70 and 98, 0 differ
+FIGHTS digest d5771915d370579c 1cc9f6cd2138e1c3e54c67ccedf81b6e abfb569d1056df2c bd40508883b341de9fb4008d6f1e89b5
+FIGHTS: 1 check(s) failed
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

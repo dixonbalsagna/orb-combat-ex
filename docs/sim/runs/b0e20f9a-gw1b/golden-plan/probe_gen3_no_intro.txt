@@ -1,0 +1,34 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+seed 1: first crater 318, first slide 250
+seed 2: first crater 1006, first slide -1
+seed 3: first crater 441, first slide 753
+seed 4: first crater 819, first slide 2139
+seed 5: first crater 473, first slide -1
+seed 6: first crater 2144, first slide 837
+seed 7: first crater 2149, first slide 1244
+seed 8: first crater 4002, first slide 929
+seed 9: first crater 4522, first slide 1467
+seed 10: first crater 4439, first slide 1450
+seed 11: first crater 3371, first slide 2147
+seed 12: first crater -1, first slide 268
+seed 13: first crater 1456, first slide 3268
+seed 14: first crater -1, first slide 1035
+seed 15: first crater -1, first slide 562
+seed 16: first crater 3942, first slide 3858
+seed 17: first crater 3869, first slide -1
+seed 18: first crater 327, first slide 536
+seed 19: first crater 3643, first slide 959
+seed 20: first crater 741, first slide -1
+seed 21: first crater 2068, first slide 1525
+seed 22: first crater 847, first slide 3627
+seed 23: first crater 1404, first slide 1512
+seed 24: first crater -1, first slide 2872
+seed 25: first crater 730, first slide -1
+seed 26: first crater 1320, first slide 2047
+seed 27: first crater 2976, first slide 2976
+seed 28: first crater 535, first slide 2124
+seed 29: first crater 3874, first slide 468
+seed 30: first crater -1, first slide 1816
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

@@ -1,0 +1,26 @@
+d_beam_front_without: exit 1 in 6 s; script errors 0; FRONT: 4 check(s) failed
+31:FAIL  a sig pressed 18 ticks into the charge answers it as he fires (-1)
+33:FAIL  a sig pressed 38 ticks into the charge answers it as he fires (-1)
+84:FAIL  a fire-back starts a struggle
+85:FAIL  a late one meets nearer his hands
+a_anim_without: exit 1 in 1189 s; script errors 1; anim check FAILED (14)
+352:FAIL  slope test: the ankle is 116.10 u off the ground with the feet placed and 116.10 without
+353:FAIL  the grip as five stages: the reach, the tie-up by grade, the pummel, the set and the cave, the end: ["PROTAGONIST: the leader\'s hips do not go down a stage at a time (32.0, 32.0, 32.0)", "P
+354:FAIL  the grapple's end as a throw: every send plays the thrower's own sequence clean and hands back: ["PROTAGONIST thrown_down: a pelvis moves 8.41 units in a tick (8 at most: a throw is a quick 
+355:FAIL  per-tick work: the match used to compare them launches a fighter (0 launched samples), so the ragdoll's flail is in the comparison
+356:FAIL  follow-through: antihero su_heel: the pelvis steps at most 2.3 units a tick in the 13 ticks after the second blow's contact (2.4 without; at most 12 and 0.75 of the before)
+357:FAIL  solve carry: su_hammer: the striking upper arm turns at most 66 degrees a tick after the contact (49 without; at most 36 and no more than without)
+358:FAIL  zip view heavy exit 0: the way in is 3 ticks and was drawn on 3, the way out 11 and 11 (4 each at least, all drawn)
+359:FAIL  zip view heavy exit 1: the way in is 3 ticks and was drawn on 3, the way out 11 and 11 (4 each at least, all drawn)
+360:FAIL  zip view: the exits came out home, home and home
+361:FAIL  zip view: the three exits do not differ in via, pass or tilt (home//back, home//back, home//back)
+362:FAIL  zip view: a far-side pass is drawn 0.0 toward the camera, not 24.0 (the pass depth)
+363:FAIL  zip view countered: the end was done, 0 NaN, 0 violations
+364:FAIL  zip view caught: no zip of eight seeds against the hard AI ended caught (the punish)
+365:FAIL  standing on the water: the pair at [] deep holds the ground stance with the floor on and off: []
+ M data/fight/brake.json
+ M data/fight/hitstop.json
+ M data/fight/kick.json
+ M data/fight/ladder.json
+ M data/fight/power.json
+g4 done
