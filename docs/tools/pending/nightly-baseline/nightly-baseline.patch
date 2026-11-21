@@ -1,0 +1,270 @@
+diff --git a/.github/workflows/flash-nightly.yml b/.github/workflows/flash-nightly.yml
+index 53b1d7f..c008534 100644
+--- a/.github/workflows/flash-nightly.yml
++++ b/.github/workflows/flash-nightly.yml
+@@ -83,16 +83,16 @@ jobs:
+             read -r -a extra <<< "${opts}"
+           fi
+           node tools/flash/run-pixels.mjs --dir "${RUNNER_TEMP}/web" --path "/index.html?${FLASH_WORDS}" --out "${RUNNER_TEMP}/clips" --clip "${CLIP}" --sizes 960x540 --jobs 1 --cpu-cap 100 --clip-timeout "${limit}" --software "${extra[@]}" | tee "${RUNNER_TEMP}/run-pixels.txt" || true
+-      - name: The night's verdict (red when the clip crosses the line of 3 on any reading or could not be read)
++      - name: The night's verdict (red when the clip reads worse than its recorded value, is new, or could not be read; green when it equals or beats the record in tools/flash/nightly-baseline.json)
+         env:
+           CLIP: ${{ matrix.clip }}
+         run: |
+           set +e
+-          node tools/flash/nightly-ci.mjs "${RUNNER_TEMP}/clips" --expect "${CLIP}" --md "${RUNNER_TEMP}/verdict.md" | tee "${RUNNER_TEMP}/verdict.txt"
++          node tools/flash/nightly-ci.mjs "${RUNNER_TEMP}/clips" --expect "${CLIP}" --baseline tools/flash/nightly-baseline.json --md "${RUNNER_TEMP}/verdict.md" | tee "${RUNNER_TEMP}/verdict.txt"
+           code=${PIPESTATUS[0]}
+           { echo; cat "${RUNNER_TEMP}/verdict.md" 2>/dev/null || echo 'no verdict was written'; } >> "$GITHUB_STEP_SUMMARY"
+-          # 0 clean, 3 a finding (a warning on the run, not red); 1 over the line and 2 not read are red
+-          if [ "$code" = "1" ] || [ "$code" = "2" ]; then exit "$code"; fi
++          # with the baseline: 0 every reading equals or beats its recorded value; 4 worse than recorded, 5 a clip with no recorded value and 2 not read are red (1 and 3 are the absolute line's and are not used here)
++          if [ "$code" = "1" ] || [ "$code" = "2" ] || [ "$code" = "4" ] || [ "$code" = "5" ]; then exit "$code"; fi
+           exit 0
+       - name: Keep the reading (summary and verdict, 30 days)
+         if: always()
+diff --git a/docs/tools/flash-nightly.md b/docs/tools/flash-nightly.md
+index f99b680..3a5e730 100644
+--- a/docs/tools/flash-nightly.md
++++ b/docs/tools/flash-nightly.md
+@@ -88,3 +88,14 @@ Full local readings of the four clips (the nightly's page words, one at a time,
+ - **Signature's worst moment is in the first two seconds**, which is why the earlier window of 120 ticks from tick 1 read 2 and 3. **Collapse-reduced's worst is the clip's last second**, which a window from tick 1 never reached; its window now ends at tick 1500 (the worst moment may run on past it, into time the clip does not play).
+ - **Memory needs lead-in.** The two-second memory reading ignores the first 120 frames of a clip, so a window needs about 120 ticks before the moment: a window of 130 ticks from 1371 read the right primary but a memory of 1 for collapse-reduced; 160 from 1341 reads 2.5, as the full clip does.
+ - **Costs on a runner** are not measured for these windows: collapse about 20 to 50 s a tick plus about 2 s a skipped tick, so collapse has a 210-minute cap (the job limit is 300); signature has 100 minutes.
++
++## The recorded values: the nightly says only what changed (the EP, 2026-11-21; for the EP, not for Orb)
++
++Six scheduled nights (15 to 20 November, `docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md`) were red for the same known reason: the clash clips and signature-reduced read over the line of 3 and the nightly asked "is it over the line". It now asks "is it worse than it was recorded", against `tools/flash/nightly-baseline.json`:
++
++- **Red** when a clip reads **worse** than its recorded value on any of the four readings (primary, red, area-15%, two-second memory) (exit 4); when a clip has **no recorded value** (a new clip, exit 5); when a clip, or one of its readings, was **not read** (exit 2, as before).
++- **Green** only when every clip **equals or beats** its recorded value. A clip that is over the line AS RECORDED is noted on the run ("over the line of 3, as recorded") and is not red; a clip that reads better is noted too.
++- **The recorded values are the worst of the six nights per reading** (the five nights for clash-night normal: 16 November was not read). They are recorded as they are, over the line included. collapse-normal's value is loose (primary 3, two-second memory 4) because of one night, 19 November, against 2 on the other five: a real slip from 2 to 3 would hide inside it. Say if you want it tightened to 2 with a noise allowance.
++- **What it does not touch:** the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line, unchanged; `nightly-ci.mjs` without `--baseline` is the old verdict, and its self-test still holds it. Nothing that guards a player is loosened.
++- **Updating a value** is by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.
++- Proof: the self-test (46 checks, 27 before) covers each reading one step worse, a new clip, a missing reading, equal and better, the real file; and the six real nights replayed through it: 47 of the 48 clip-nights are green, the 48th is 16 November's clash-night normal, which was not read.
+diff --git a/docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md b/docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md
+index c8876b1..b970dcb 100644
+--- a/docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md
++++ b/docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md
+@@ -39,4 +39,4 @@ The worst reading of the six nights is the clash clip in the reduced mode at **6
+ - Not a reading of the game Orb plays: it is main's Web export (Godot's standard 4.7.2 Web templates: the scheduled nightly installs them and never used the custom template, whatever `tools/site.json` says), software rendering, at 960x540.
+ - Not new numbers for the pin: no pin moves on these.
+ - The flash numbers go to the EP only (Orb's word, 2026-11-01).
+-- GitHub emails the repository owner about a failed scheduled run: six emails, one a night, for the same expected reason. Tell me if the nightly should be made to say "known red" (an expected-over list in `tools/flash/nightly-windows.json`) so only a change turns it red; that is a design choice, not done here.
++- GitHub emails the repository owner about a failed scheduled run: six emails, one a night, for the same expected reason. **Decided 2026-11-21 (the EP):** the nightly is now judged against recorded values and turns red only on a clip that reads worse than the record, a new clip or a missing reading; **the six-night values above, taken as the worst of the six per reading, are that baseline** (`tools/flash/nightly-baseline.json`; `docs/tools/flash-nightly.md` says how it works). The outside-tester gate and the release pass still read the absolute line.
+diff --git a/tools/flash/nightly-ci-selftest.mjs b/tools/flash/nightly-ci-selftest.mjs
+index 8d9ae0f..1064039 100644
+--- a/tools/flash/nightly-ci-selftest.mjs
++++ b/tools/flash/nightly-ci-selftest.mjs
+@@ -1,7 +1,7 @@
+ // Self-test of tools/flash/nightly-ci.mjs, the verdict of the scheduled flash reading (CD-09; A-LEGAL-08). Node built-ins only; no browser, no build.
+ //   node tools/flash/nightly-ci-selftest.mjs
+ import { spawnSync } from 'node:child_process';
+-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
++import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { dirname, join } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+@@ -60,6 +60,38 @@ check('the expected set is a parameter (the night-sky clip joins it later)', jud
+ const text = report(judge(clean()));
+ check('the report is a table with a verdict line', /^clip +primary +red +area-15% +2 s mem/.test(text) && /nightly flash reading: flash reading clean$/.test(text));
+ 
++// the expected-over baseline (the EP, 2026-11-21): red when worse than recorded, new, or not read; green when every clip equals or beats its recorded value; the line of 3 is not what it asks
++{
++  const bl = Object.fromEntries(EXPECTED.map((id) => [id, { primary: 4.5, red: 0, area15: 4.5, twoSec: 4.5 }]));
++  const equal = () => EXPECTED.map((id) => row(id, 4.5));
++  check('baseline: every clip exactly at its recorded value is green (0) although 4.5 is over the line of 3', judge(equal(), { baseline: bl }).code === 0 && judge(equal(), { baseline: bl }).lines.some((l) => /as recorded/.test(l)));
++  rows = equal(); rows[0] = row('clash-normal', 2);
++  check('baseline: a clip that reads better is green and says so', judge(rows, { baseline: bl }).code === 0 && judge(rows, { baseline: bl }).lines.some((l) => /better than its recorded/.test(l)));
++  for (const [what, r] of [['primary', row('clash-normal', 5, 0, 4.5, 4.5)], ['area-15%', row('clash-normal', 4.5, 0, 5, 4.5)], ['two-second memory', row('clash-normal', 4.5, 0, 4.5, 5)], ['red', row('clash-normal', 4.5, 0.5, 4.5, 4.5)]]) {
++    rows = equal(); rows[0] = r;
++    check(`baseline: ${what} one step worse than recorded is red (4)`, judge(rows, { baseline: bl }).code === 4 && new RegExp(`WORSE THAN RECORDED clash-normal: ${what.replace('%', '%')}`).test(judge(rows, { baseline: bl }).problems.join('\n')), judge(rows, { baseline: bl }).problems.join(' | '));
++  }
++  rows = equal(); rows.push(row('mash-normal', 1));
++  check('baseline: a clip with no recorded value is red (5) when it is expected', judge(rows, { baseline: bl, expected: [...EXPECTED, 'mash-normal'] }).code === 5 && /NEW CLIP mash-normal/.test(judge(rows, { baseline: bl, expected: [...EXPECTED, 'mash-normal'] }).problems.join('')));
++  rows = equal().filter((r) => r.id !== 'signature-reduced');
++  check('baseline: a missing clip is still red (2)', judge(rows, { baseline: bl }).code === 2);
++  rows = equal(); rows[2] = { id: 'collapse-normal', result: { general: { flashes: 4.5 }, red: { flashes: 0 }, combined: {} } };
++  check('baseline: a missing area-15% or two-second-memory reading is red (2), never a pass', judge(rows, { baseline: bl }).code === 2 && /reading is missing/.test(judge(rows, { baseline: bl }).problems.join('')));
++  rows = equal(); rows[0] = row('clash-normal', 5); rows[1] = { id: 'clash-reduced', error: 'x' };
++  check('baseline: not read outranks worse (2 before 4), and worse outranks nothing else here', judge(rows, { baseline: bl }).code === 2);
++  check('baseline: without it the verdict is the absolute line as before', judge(equal()).code === 1 && judge(equal(), { baseline: null }).code === 1);
++  const t2 = report(judge(equal(), { baseline: bl }));
++  check('baseline: the report says what it compared', /nightly flash reading: every clip equals or beats its recorded value$/.test(t2));
++  check('baseline: the report of a worse reading says so', /A CLIP READS WORSE THAN ITS RECORDED VALUE$/.test(report(judge([row('clash-normal', 5, 0, 4.5, 4.5), ...EXPECTED.slice(1).map((id) => row(id, 4.5))], { baseline: bl }))));
++  // the real file: every clip the night reads has all four recorded numbers, and a night that reads exactly those numbers is green
++  const real = JSON.parse(readFileSync(join(here, 'nightly-baseline.json'), 'utf8')).clips;
++  check('the real baseline file records all four readings of every clip the night reads', EXPECTED.every((id) => real[id] && ['primary', 'red', 'area15', 'twoSec'].every((k) => typeof real[id][k] === 'number')) && Object.keys(real).length === EXPECTED.length);
++  const atReal = EXPECTED.map((id) => row(id, real[id].primary, real[id].red, real[id].area15, real[id].twoSec));
++  check('the real baseline: a night that reads exactly the recorded values is green', judge(atReal, { baseline: real }).code === 0);
++  const worseReal = atReal.map((r) => ({ ...r })); worseReal[0] = row(EXPECTED[0], real[EXPECTED[0]].primary + 0.5, real[EXPECTED[0]].red, real[EXPECTED[0]].area15, real[EXPECTED[0]].twoSec);
++  check('the real baseline: half a step worse on one clip is red', judge(worseReal, { baseline: real }).code === 4);
++}
++
+ // the command, end to end, on a folder of summary files
+ const d = mkdtempSync(join(tmpdir(), 'nightly-ci-'));
+ try {
+@@ -78,6 +110,17 @@ try {
+   check('the command exits 2 when half the clips are missing', r.status === 2, r.stdout + r.stderr);
+   r = spawnSync(process.execPath, [join(here, 'nightly-ci.mjs')], { encoding: 'utf8' });
+   check('no folder given: the usage and exit 2', r.status === 2 && /usage/.test(r.stderr));
++  // --baseline, end to end: the real file, a night that reads exactly the recorded values (green), one reading half a step worse (4), a baseline that cannot be read (2)
++  const realB = JSON.parse(readFileSync(join(here, 'nightly-baseline.json'), 'utf8')).clips;
++  const atB = EXPECTED.map((id) => row(id, realB[id].primary, realB[id].red, realB[id].area15, realB[id].twoSec));
++  mkdirSync(join(d, 'c')); writeFileSync(join(d, 'c', 'summary.json'), JSON.stringify(atB));
++  r = spawnSync(process.execPath, [join(here, 'nightly-ci.mjs'), join(d, 'c'), '--baseline', join(here, 'nightly-baseline.json')], { encoding: 'utf8' });
++  check('the command with --baseline exits 0 on a night that reads exactly the recorded values', r.status === 0 && /equals or beats its recorded value/.test(r.stdout), r.stdout + r.stderr);
++  atB[0] = row(EXPECTED[0], realB[EXPECTED[0]].primary + 0.5, 0, realB[EXPECTED[0]].area15, realB[EXPECTED[0]].twoSec); writeFileSync(join(d, 'c', 'summary.json'), JSON.stringify(atB));
++  r = spawnSync(process.execPath, [join(here, 'nightly-ci.mjs'), join(d, 'c'), '--baseline', join(here, 'nightly-baseline.json')], { encoding: 'utf8' });
++  check('the command with --baseline exits 4 when a clip reads worse than recorded', r.status === 4 && /WORSE THAN RECORDED/.test(r.stdout), r.stdout + r.stderr);
++  r = spawnSync(process.execPath, [join(here, 'nightly-ci.mjs'), join(d, 'c'), '--baseline', join(d, 'nope.json')], { encoding: 'utf8' });
++  check('a baseline that cannot be read is exit 2', r.status === 2 && /cannot be read/.test(r.stderr));
+ } finally { rmSync(d, { recursive: true, force: true }); }
+ 
+ console.log(failed ? `nightly-ci self-test FAILED: ${failed} of ${ran}` : `nightly-ci self-test ok: ${ran} checks`);
+diff --git a/tools/flash/nightly-ci.mjs b/tools/flash/nightly-ci.mjs
+index 4825742..276f85d 100644
+--- a/tools/flash/nightly-ci.mjs
++++ b/tools/flash/nightly-ci.mjs
+@@ -13,6 +13,12 @@
+ //   1  TAKE-DOWN LINE: a clip over the line on any reading (primary, area-15%, two-second memory, or red read directly)
+ //   2  a clip was not read (an error, no result, or the clip set is not the expected one): a missing clip is never a pass
+ //   3  FINDING: no clip over the line, but a clip over our gate of 2.5 on the primary reading (a warning on the run, not a red run)
++//   With --baseline <file> (tools/flash/nightly-baseline.json, the recorded values of 2026-11-21) the nightly asks something else: not "is it over the line" but "is it worse than it was recorded":
++//   0  every clip equals or beats its recorded value on all four readings (a clip over the line AS RECORDED is noted and is not red)
++//   2  a clip, or one of its four readings, was not read (as above)
++//   4  WORSE: a clip reads worse than its recorded value on any of the four readings (red)
++//   5  NEW: a clip has no recorded value in the baseline (red)
++//   The line, the gate and the codes 1 and 3 are not used in that mode; without --baseline nothing changes. The outside-tester gate (G21) and the release pass never read this file.
+ // When more than one applies the smaller of 2, 1 comes first: 2, then 1, then 3.
+ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+ import { join, resolve } from 'node:path';
+@@ -37,8 +43,9 @@ export function readingOf(row) {
+  * The night's verdict from the summary rows ({ id, error?, result }). `expected` is the clip ids that must each be present and read (default EXPECTED), `line` the take-down line.
+  * Returns { code, lines (the text), rows (what was read), problems }. Pure.
+  */
+-export function judge(rows, { expected = EXPECTED, line = TAKE_DOWN_LINE } = {}) {
+-  const out = { code: 0, lines: [], rows: [], problems: [] };
++export function judge(rows, { expected = EXPECTED, line = TAKE_DOWN_LINE, baseline = null } = {}) {
++  const out = { code: 0, lines: [], rows: [], problems: [], baseline: !!baseline };
++  const worse = [], fresh = [], better = [];
+   const byId = new Map((rows || []).map((r) => [r && r.id, r]));
+   const notRead = [], over = [], finding = [];
+   for (const id of expected) {
+@@ -49,12 +56,26 @@ export function judge(rows, { expected = EXPECTED, line = TAKE_DOWN_LINE } = {})
+     if (!rd) { notRead.push(`${id}: the row holds no analyser result`); continue; }
+     if (rd.primary === null || rd.red === null) { notRead.push(`${id}: the primary or the red count is missing`); continue; }
+     out.rows.push({ id, ...rd });
++    if (baseline) {   // the recorded values: worse is red, equal or better is green, over the line as recorded is a note
++      const b = baseline[id];
++      if (!b) { fresh.push(`${id}: no recorded value in the baseline`); continue; }
++      for (const [name, key] of [['primary', 'primary'], ['area-15%', 'area15'], ['two-second memory', 'twoSec'], ['red', 'red']]) {
++        const v = rd[key], was = b[key];
++        if (typeof was !== 'number') { fresh.push(`${id}: the baseline has no ${name} value`); continue; }
++        if (v === null) { notRead.push(`${id}: the ${name} reading is missing (the baseline has ${was})`); continue; }
++        if (v > was) worse.push(`${id}: ${name} reads ${v}, worse than its recorded ${was}`);
++        else if (v < was) better.push(`${id}: ${name} reads ${v}, better than its recorded ${was}`);
++        if (v > line && v <= was) out.lines.push(`note: ${id}: ${name} reads ${v}, over the line of ${line}, as recorded (${was})`);
++      }
++      continue;
++    }
+     for (const [name, v] of [['primary', rd.primary], ['area-15%', rd.area15], ['two-second memory', rd.twoSec], ['red', rd.red]]) if (v !== null && v > line) over.push(`${id}: ${name} reads ${v}, over the line of ${line}`);
+     if (rd.primary > OUR_GATE && rd.primary <= line) finding.push(`${id}: primary reads ${rd.primary}, over our gate of ${OUR_GATE}`);
+   }
+   for (const id of byId.keys()) if (id && !expected.includes(id)) out.lines.push(`note: the summary also holds ${id}, which is not in tonight's set`);
+-  out.problems = [...notRead.map((m) => `NOT READ ${m}`), ...over.map((m) => `OVER THE LINE ${m}`), ...finding.map((m) => `FINDING ${m}`)];
+-  out.code = notRead.length ? 2 : over.length ? 1 : finding.length ? 3 : 0;
++  out.problems = [...notRead.map((m) => `NOT READ ${m}`), ...over.map((m) => `OVER THE LINE ${m}`), ...finding.map((m) => `FINDING ${m}`), ...fresh.map((m) => `NEW CLIP ${m}`), ...worse.map((m) => `WORSE THAN RECORDED ${m}`)];
++  for (const m of better) out.lines.push(`note: ${m} (update tools/flash/nightly-baseline.json by hand, with the EP's word, if it stays better)`);
++  out.code = baseline ? (notRead.length ? 2 : fresh.length ? 5 : worse.length ? 4 : 0) : (notRead.length ? 2 : over.length ? 1 : finding.length ? 3 : 0);
+   return out;
+ }
+ 
+@@ -62,7 +83,7 @@ export function judge(rows, { expected = EXPECTED, line = TAKE_DOWN_LINE } = {})
+ export function report(j, line = TAKE_DOWN_LINE) {
+   const head = `${'clip'.padEnd(20)} ${'primary'.padStart(7)} ${'red'.padStart(4)} ${'area-15%'.padStart(8)} ${'2 s mem'.padStart(8)}`;
+   const body = j.rows.map((r) => `${r.id.padEnd(20)} ${String(r.primary).padStart(7)} ${String(r.red).padStart(4)} ${String(r.area15 === null ? 'n/a' : r.area15).padStart(8)} ${String(r.twoSec === null ? 'n/a' : r.twoSec).padStart(8)}`);
+-  const verdict = { 0: 'flash reading clean', 1: `TAKE-DOWN LINE (${line}) CROSSED`, 2: 'A CLIP WAS NOT READ (never a pass)', 3: `FINDING: over our gate of ${OUR_GATE}, within the line` }[j.code];
++  const verdict = { 0: j.baseline ? 'every clip equals or beats its recorded value' : 'flash reading clean', 1: `TAKE-DOWN LINE (${line}) CROSSED`, 2: 'A CLIP WAS NOT READ (never a pass)', 3: `FINDING: over our gate of ${OUR_GATE}, within the line`, 4: 'A CLIP READS WORSE THAN ITS RECORDED VALUE', 5: 'A CLIP HAS NO RECORDED VALUE (a new clip)' }[j.code];
+   return [head, ...body, ...j.lines, ...j.problems, `nightly flash reading: ${verdict}`].join('\n');
+ }
+ 
+@@ -88,10 +109,15 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
+   const a = process.argv.slice(2);
+   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
+   const where = a.find((x, i) => !x.startsWith('--') && !(i > 0 && a[i - 1].startsWith('--')));
+-  if (!where) { console.error('usage: node tools/flash/nightly-ci.mjs <folder with summary.json files, or one summary.json> [--md <file>] [--line 3] [--expect id,id]'); process.exit(2); }
++  if (!where) { console.error('usage: node tools/flash/nightly-ci.mjs <folder with summary.json files, or one summary.json> [--md <file>] [--line 3] [--expect id,id] [--baseline <file>]'); process.exit(2); }
+   const line = Number(opt('--line', TAKE_DOWN_LINE));
+   const expected = opt('--expect') ? opt('--expect').split(',') : EXPECTED;
+-  const j = judge(readSummaries(where), { expected, line });
++  let baseline = null;
++  if (opt('--baseline')) {
++    try { baseline = JSON.parse(readFileSync(resolve(opt('--baseline')), 'utf8')).clips; } catch (e) { console.error(`nightly-ci: the baseline ${opt('--baseline')} cannot be read: ${e.message}`); process.exit(2); }
++    if (!baseline || typeof baseline !== 'object') { console.error('nightly-ci: the baseline has no "clips" object'); process.exit(2); }
++  }
++  const j = judge(readSummaries(where), { expected, line, baseline });
+   const text = report(j, line);
+   console.log(text);
+   if (opt('--md')) writeFileSync(resolve(opt('--md')), '```\n' + text + '\n```\n');
+diff --git a/tools/flash/nightly-baseline.json b/tools/flash/nightly-baseline.json
+new file mode 100644
+index 0000000..64cd221
+--- /dev/null
++++ b/tools/flash/nightly-baseline.json
+@@ -0,0 +1,55 @@
++{
++  "_about": "The nightly flash reading's RECORDED VALUES (the EP, 2026-11-21): each clip's four readings (primary, red, area-15% and two-second memory) as the worst of the six scheduled nights of 15 to 20 November 2026 (runs 43711627577, 43870618754, 44094333781, 44311081706, 44533410579, 44741476400; all on commit 09aa0f44; docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md). tools/flash/nightly-ci.mjs --baseline turns the nightly red when a clip reads WORSE than its recorded value on any of the four, when a clip has no recorded value, or when a reading is missing; it is green only when every clip equals or beats its recorded value. This file is read ONLY by the nightly: the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line and do not use it. Several of these values are OVER the line of 3 (the clash clips, signature reduced): they are recorded as they are, so the nightly says nothing new about them until they get worse. Update a value by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.",
++  "recorded": "2026-11-21",
++  "basis": "the worst of the six nights per reading (clash-night-normal: of five, 16 Nov was not read). collapse-normal's value is loose (primary 3, area 3, two-second memory 4) because of one night, 19 Nov, against 2 on the other five.",
++  "clips": {
++    "clash-normal": {
++      "primary": 4.5,
++      "red": 0,
++      "area15": 4.5,
++      "twoSec": 4.5
++    },
++    "clash-reduced": {
++      "primary": 6.5,
++      "red": 0,
++      "area15": 6.5,
++      "twoSec": 6.5
++    },
++    "collapse-normal": {
++      "primary": 3,
++      "red": 0,
++      "area15": 3,
++      "twoSec": 4
++    },
++    "collapse-reduced": {
++      "primary": 3,
++      "red": 0,
++      "area15": 3,
++      "twoSec": 2.5
++    },
++    "signature-normal": {
++      "primary": 3,
++      "red": 0,
++      "area15": 2.5,
++      "twoSec": 2.5
++    },
++    "signature-reduced": {
++      "primary": 4,
++      "red": 0,
++      "area15": 5,
++      "twoSec": 2.5
++    },
++    "clash-night-normal": {
++      "primary": 3.5,
++      "red": 0,
++      "area15": 4.5,
++      "twoSec": 3.5
++    },
++    "clash-night-reduced": {
++      "primary": 5.5,
++      "red": 0,
++      "area15": 5.5,
++      "twoSec": 5.5
++    }
++  }
++}
