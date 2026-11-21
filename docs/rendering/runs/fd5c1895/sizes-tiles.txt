@@ -1,0 +1,234 @@
+# The tile ground at five sizes, step 1 (sizes_tiles.diff c16b87dc, 132 lines) on main fd5c1895 + World's GW1c stack + feet-ground + foot-slice + marks-baked (store-parts)
+import 0 errors 0
+golden.json byte-identical to the stack's
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+## the feet gate, medium (3%), --tiles, seeds 1 to 10
+exit 0
+ok   10 seeds: 3236 standing samples, 21 over 8 units (0.6%, at most 3%), the worst 16.6 (at most 25)
+feet check passed
+## the feet check at small (planetSize small), --tiles, seeds 1 to 3
+exit 0
+ok   seed 1: 171 standing samples, 0 over 8 units, the worst 1.1
+ok   seed 2: 35 standing samples, 0 over 8 units, the worst 1.1
+ok   seed 3: 62 standing samples, 0 over 8 units, the worst 1.1
+ok   3 seeds: 268 standing samples, 0 over 8 units (0.0%, at most 3%), the worst 1.1 (at most 25)
+feet check passed
+## the feet check at big (planetSize big), --tiles, seeds 1 to 3
+exit 0
+SCRIPT ERROR: Out of bounds get index '544509' (on base: 'PackedByteArray')
+SCRIPT ERROR: Out of bounds get index '544509' (on base: 'PackedByteArray')
+SCRIPT ERROR: Out of bounds get index '544513' (on base: 'PackedByteArray')
+SCRIPT ERROR: Out of bounds get index '544517' (on base: 'PackedByteArray')
+SCRIPT ERROR: Out of bounds get index '544521' (on base: 'PackedByteArray')
+SCRIPT ERROR: Out of bounds get index '544525' (on base: 'PackedByteArray')
+## with World's field memo keyed by the size too (grant-world-field-size-key.patch 6883b121): before it, big's run stopped on 42,330 script errors (WorldField.ensure, field.gd:257: a medium planet 7's field, 301 nodes a side, kept by the seed alone and read at big's 600)
+## the feet check at small (planetSize small), --tiles, seeds 1 to 3
+exit 0, script errors 0
+ok   seed 1: 330 standing samples, 9 over 8 units, the worst 18.8
+ok   seed 2: 259 standing samples, 0 over 8 units, the worst 4.8
+ok   seed 3: 89 standing samples, 0 over 8 units, the worst 0.9
+ok   3 seeds: 678 standing samples, 9 over 8 units (1.3%, at most 3%), the worst 18.8 (at most 25)
+feet check passed
+## the feet check at big (planetSize big), --tiles, seeds 1 to 3
+exit 1, script errors 0
+ok   seed 1: 227 standing samples, 0 over 8 units, the worst 0.9
+FAIL seed 2: 170 standing samples, 28 over 8 units, the worst 8.3
+ok   seed 3: 397 standing samples, 0 over 8 units, the worst 1.0
+FAIL 3 seeds: 794 standing samples, 28 over 8 units (3.5%, at most 3%), the worst 8.3 (at most 25)
+feet check FAILED
+## off-medium nodes read through WorldField.sample (the ground SimField reads: World's lattice, its triangles, refined cells' sub-nodes) in place of the planet's function (heightOf): seed 2 at big stood in a crater 8.3 units under the drawn ground, the tile's base 7.6 over the sim's lattice there
+## the feet check at small (planetSize small), --tiles, seeds 1 to 10
+exit 0, script errors 0
+ok   seed 1: 330 standing samples, 9 over 8 units, the worst 18.8
+ok   seed 2: 259 standing samples, 0 over 8 units, the worst 4.8
+ok   seed 3: 89 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 4: 270 standing samples, 4 over 8 units, the worst 17.8
+FAIL seed 5: 168 standing samples, 23 over 8 units, the worst 25.0
+ok   seed 6: 175 standing samples, 0 over 8 units, the worst 5.6
+ok   seed 7: 322 standing samples, 0 over 8 units, the worst 2.8
+ok   seed 8: 423 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 9: 299 standing samples, 5 over 8 units, the worst 13.8
+ok   seed 10: 90 standing samples, 0 over 8 units, the worst 6.2
+ok   10 seeds: 2425 standing samples, 41 over 8 units (1.7%, at most 3%), the worst 25.0 (at most 25)
+feet check passed
+## the feet check at big (planetSize big), --tiles, seeds 1 to 10
+exit 1, script errors 0
+ok   seed 1: 227 standing samples, 0 over 8 units, the worst 0.9
+FAIL seed 2: 170 standing samples, 21 over 8 units, the worst 8.3
+ok   seed 3: 397 standing samples, 0 over 8 units, the worst 1.0
+FAIL seed 4: 379 standing samples, 41 over 8 units, the worst 35.0
+ok   seed 5: 57 standing samples, 0 over 8 units, the worst 1.0
+FAIL seed 6: 902 standing samples, 38 over 8 units, the worst 22.9
+ok   seed 7: 486 standing samples, 0 over 8 units, the worst 1.0
+FAIL seed 8: 205 standing samples, 23 over 8 units, the worst 14.1
+ok   seed 9: 252 standing samples, 2 over 8 units, the worst 8.8
+ok   seed 10: 399 standing samples, 0 over 8 units, the worst 1.0
+FAIL 10 seeds: 3474 standing samples, 125 over 8 units (3.6%, at most 3%), the worst 35.0 (at most 25)
+feet check FAILED
+## re-cut: medium's two branches read World's lattice size (big and huge fall on it as medium does: levels 0 to 2 on its baked nodes); tiny and small read WorldField.sample. (The previous run: every off-medium node read the planet's function, and big's fine levels never arrived in 650 ticks: seed 2 stood on level 0.)
+## the feet check at small (planetSize small), --tiles, seeds 1 to 10
+exit 0, script errors 0
+ok   seed 1: 330 standing samples, 9 over 8 units, the worst 18.8
+ok   seed 2: 259 standing samples, 0 over 8 units, the worst 4.8
+ok   seed 3: 89 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 4: 270 standing samples, 4 over 8 units, the worst 17.8
+FAIL seed 5: 168 standing samples, 23 over 8 units, the worst 25.0
+ok   seed 6: 175 standing samples, 0 over 8 units, the worst 5.6
+ok   seed 7: 322 standing samples, 0 over 8 units, the worst 2.8
+ok   seed 8: 423 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 9: 299 standing samples, 5 over 8 units, the worst 13.8
+ok   seed 10: 90 standing samples, 0 over 8 units, the worst 6.2
+ok   10 seeds: 2425 standing samples, 41 over 8 units (1.7%, at most 3%), the worst 25.0 (at most 25)
+feet check passed
+## the feet check at big (planetSize big), --tiles, seeds 1 to 10
+exit 1, script errors 0
+ok   seed 1: 227 standing samples, 0 over 8 units, the worst 0.9
+FAIL seed 2: 170 standing samples, 25 over 8 units, the worst 8.3
+ok   seed 3: 397 standing samples, 0 over 8 units, the worst 1.0
+FAIL seed 4: 379 standing samples, 49 over 8 units, the worst 35.0
+ok   seed 5: 57 standing samples, 0 over 8 units, the worst 1.0
+FAIL seed 6: 902 standing samples, 42 over 8 units, the worst 22.9
+ok   seed 7: 486 standing samples, 0 over 8 units, the worst 1.0
+FAIL seed 8: 205 standing samples, 23 over 8 units, the worst 14.1
+ok   seed 9: 252 standing samples, 2 over 8 units, the worst 8.8
+ok   seed 10: 399 standing samples, 0 over 8 units, the worst 1.0
+FAIL 10 seeds: 3474 standing samples, 141 over 8 units (4.1%, at most 3%), the worst 35.0 (at most 25)
+feet check FAILED
+## the feet check with the split screen attached, as the game has it (main attaches it unless --nosplit; tools run without), each fighter read through the pane nearest him. Without it, big's seed 2 put the fighters 67,763 units apart with the one camera 33,000 units from each: the far one's ground was rightly level 0 there, and the check read it.
+## the feet check at big, --tiles --split, seeds 1 to 10
+exit 1, script errors 0
+ok   seed 1: 227 standing samples, 0 over 8 units, the worst 0.9
+FAIL seed 2: 170 standing samples, 6 over 8 units, the worst 70.7
+ok   seed 3: 397 standing samples, 0 over 8 units, the worst 5.2
+FAIL seed 4: 379 standing samples, 28 over 8 units, the worst 35.0
+ok   seed 5: 57 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 6: 902 standing samples, 25 over 8 units, the worst 22.9
+ok   seed 7: 486 standing samples, 5 over 8 units, the worst 9.8
+FAIL seed 8: 205 standing samples, 23 over 8 units, the worst 14.1
+ok   seed 9: 252 standing samples, 5 over 8 units, the worst 12.2
+ok   seed 10: 399 standing samples, 1 over 8 units, the worst 8.2
+FAIL 10 seeds: 3474 standing samples, 93 over 8 units (2.7%, at most 3%), the worst 70.7 (at most 25)
+feet check FAILED
+## the feet check at small, --tiles --split, seeds 1 to 10
+exit 1, script errors 0
+ok   seed 1: 330 standing samples, 9 over 8 units, the worst 18.8
+ok   seed 2: 259 standing samples, 0 over 8 units, the worst 4.8
+FAIL seed 3: 89 standing samples, 30 over 8 units, the worst 133.5
+FAIL seed 4: 270 standing samples, 132 over 8 units, the worst 208.5
+FAIL seed 5: 168 standing samples, 28 over 8 units, the worst 88.2
+FAIL seed 6: 175 standing samples, 6 over 8 units, the worst 15.3
+ok   seed 7: 322 standing samples, 0 over 8 units, the worst 4.1
+FAIL seed 8: 423 standing samples, 38 over 8 units, the worst 110.4
+FAIL seed 9: 299 standing samples, 49 over 8 units, the worst 64.1
+FAIL seed 10: 90 standing samples, 15 over 8 units, the worst 143.2
+FAIL 10 seeds: 2425 standing samples, 307 over 8 units (12.7%, at most 3%), the worst 208.5 (at most 25)
+feet check FAILED
+## the feet check at medium, --tiles --split, seeds 1 to 10
+exit 1, script errors 0
+ok   seed 1: 666 standing samples, 6 over 8 units, the worst 9.0
+FAIL seed 2: 163 standing samples, 57 over 8 units, the worst 149.1
+FAIL seed 3: 373 standing samples, 6 over 8 units, the worst 149.3
+ok   seed 4: 510 standing samples, 5 over 8 units, the worst 11.8
+ok   seed 5: 77 standing samples, 0 over 8 units, the worst 0.8
+ok   seed 6: 88 standing samples, 0 over 8 units, the worst 0.8
+FAIL seed 7: 359 standing samples, 77 over 8 units, the worst 152.8
+ok   seed 8: 155 standing samples, 0 over 8 units, the worst 1.6
+ok   seed 9: 751 standing samples, 3 over 8 units, the worst 9.3
+ok   seed 10: 94 standing samples, 0 over 8 units, the worst 4.1
+FAIL 10 seeds: 3236 standing samples, 154 over 8 units (4.8%, at most 3%), the worst 152.8 (at most 25)
+feet check FAILED
+## the feet check with the split attached, each fighter read through the nearest of the panes the split renders this frame (SplitFrame.active). (The run before chose among every pane, and a pane the split had stopped rendering kept its camera and bowls from the match before.)
+## the feet check at big, --tiles --split, seeds 1 to 10
+exit 1, script errors 0
+ok   seed 1: 227 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 2: 170 standing samples, 2 over 8 units, the worst 14.4
+ok   seed 3: 397 standing samples, 0 over 8 units, the worst 5.2
+FAIL seed 4: 379 standing samples, 28 over 8 units, the worst 35.0
+ok   seed 5: 57 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 6: 902 standing samples, 23 over 8 units, the worst 22.9
+ok   seed 7: 486 standing samples, 5 over 8 units, the worst 9.8
+FAIL seed 8: 205 standing samples, 23 over 8 units, the worst 14.1
+ok   seed 9: 252 standing samples, 5 over 8 units, the worst 12.2
+ok   seed 10: 399 standing samples, 1 over 8 units, the worst 8.2
+FAIL 10 seeds: 3474 standing samples, 87 over 8 units (2.5%, at most 3%), the worst 35.0 (at most 25)
+feet check FAILED
+## the feet check at small, --tiles --split, seeds 1 to 10
+exit 127, script errors 0
+## the feet check with the split attached, each fighter read through the nearest of the panes the split renders this frame (SplitFrame.active). (The run before chose among every pane, and a pane the split had stopped rendering kept its camera and bowls from the match before.)
+## the feet check at big, --tiles --split, seeds 1 to 10
+exit 1, script errors 0
+ok   seed 1: 227 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 2: 170 standing samples, 2 over 8 units, the worst 14.4
+ok   seed 3: 397 standing samples, 0 over 8 units, the worst 5.2
+FAIL seed 4: 379 standing samples, 28 over 8 units, the worst 35.0
+ok   seed 5: 57 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 6: 902 standing samples, 23 over 8 units, the worst 22.9
+ok   seed 7: 486 standing samples, 5 over 8 units, the worst 9.8
+FAIL seed 8: 205 standing samples, 23 over 8 units, the worst 14.1
+ok   seed 9: 252 standing samples, 5 over 8 units, the worst 12.2
+ok   seed 10: 399 standing samples, 1 over 8 units, the worst 8.2
+FAIL 10 seeds: 3474 standing samples, 87 over 8 units (2.5%, at most 3%), the worst 35.0 (at most 25)
+feet check FAILED
+## the feet check at small, --tiles --split, seeds 1 to 10
+exit 1, script errors 0
+ok   seed 1: 330 standing samples, 9 over 8 units, the worst 18.8
+ok   seed 2: 259 standing samples, 0 over 8 units, the worst 4.8
+ok   seed 3: 89 standing samples, 0 over 8 units, the worst 6.5
+FAIL seed 4: 270 standing samples, 47 over 8 units, the worst 15.0
+FAIL seed 5: 168 standing samples, 23 over 8 units, the worst 25.0
+FAIL seed 6: 175 standing samples, 6 over 8 units, the worst 15.3
+ok   seed 7: 322 standing samples, 0 over 8 units, the worst 4.1
+ok   seed 8: 423 standing samples, 5 over 8 units, the worst 14.0
+FAIL seed 9: 299 standing samples, 35 over 8 units, the worst 13.8
+ok   seed 10: 90 standing samples, 0 over 8 units, the worst 6.2
+FAIL 10 seeds: 2425 standing samples, 125 over 8 units (5.2%, at most 3%), the worst 25.0 (at most 25)
+feet check FAILED
+## the feet check at medium, --tiles --split, seeds 1 to 10
+exit 0, script errors 0
+ok   seed 1: 666 standing samples, 6 over 8 units, the worst 9.0
+ok   seed 2: 163 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 3: 373 standing samples, 0 over 8 units, the worst 2.5
+ok   seed 4: 510 standing samples, 5 over 8 units, the worst 11.8
+ok   seed 5: 77 standing samples, 0 over 8 units, the worst 0.8
+ok   seed 6: 88 standing samples, 0 over 8 units, the worst 0.8
+FAIL seed 7: 359 standing samples, 21 over 8 units, the worst 16.6
+ok   seed 8: 155 standing samples, 0 over 8 units, the worst 1.6
+ok   seed 9: 751 standing samples, 3 over 8 units, the worst 9.3
+ok   seed 10: 94 standing samples, 0 over 8 units, the worst 4.1
+ok   10 seeds: 3236 standing samples, 35 over 8 units (1.1%, at most 3%), the worst 16.6 (at most 25)
+feet check passed
+## with rows-interp too (rows_interp.diff b36ee1a9): big's seed 4 stood at 0.91 of the way from column 5,713 (deform +37.26) to the next, and the rows drew column 5,713's whole residual where the sim interpolates (the case rows-interp fixes, at any size)
+## the feet check at big, --tiles --split, seeds 1 to 10, + rows-interp
+exit 0, script errors 0
+ok   seed 1: 227 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 2: 170 standing samples, 2 over 8 units, the worst 14.4
+ok   seed 3: 397 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 4: 379 standing samples, 0 over 8 units, the worst 1.8
+ok   seed 5: 57 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 6: 902 standing samples, 2 over 8 units, the worst 14.3
+ok   seed 7: 486 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 8: 205 standing samples, 1 over 8 units, the worst 11.0
+ok   seed 9: 252 standing samples, 2 over 8 units, the worst 8.9
+ok   seed 10: 399 standing samples, 0 over 8 units, the worst 1.4
+ok   10 seeds: 3474 standing samples, 7 over 8 units (0.2%, at most 3%), the worst 14.4 (at most 25)
+feet check passed
+## the feet check at small, --tiles --split, seeds 1 to 10, + rows-interp
+exit 0, script errors 0
+ok   seed 1: 330 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 2: 259 standing samples, 0 over 8 units, the worst 2.2
+ok   seed 3: 89 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 4: 270 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 5: 168 standing samples, 0 over 8 units, the worst 2.2
+ok   seed 6: 175 standing samples, 0 over 8 units, the worst 2.2
+ok   seed 7: 322 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 8: 423 standing samples, 0 over 8 units, the worst 0.9
+ok   seed 9: 299 standing samples, 0 over 8 units, the worst 1.0
+ok   seed 10: 90 standing samples, 0 over 8 units, the worst 2.2
+ok   10 seeds: 2425 standing samples, 0 over 8 units (0.0%, at most 3%), the worst 2.2 (at most 25)
+feet check passed

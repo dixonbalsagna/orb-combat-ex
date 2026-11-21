@@ -99,6 +99,7 @@ func _run() -> void:
 		var n: int = 0
 		var over: int = 0
 		var w: float = 0.0
+		var off_pane: int = 0   # --split: samples of a fighter outside every rendered pane's view (no picture shows his feet)
 		while main.host.ticks < t_end and not (S.game.ko != null and S.game.koT > 3.0):
 			main.frame(1.0 / 60.0)
 			if main.host.loading() or S != main.host.S:
@@ -123,6 +124,9 @@ func _run() -> void:
 						if dd < bd:
 							bd = dd
 							pane = pw
+					if bd > pane.cam_rig.half_width(1280.0) * 1.25:
+						off_pane += 1
+						continue
 					P = pane.planet
 					tf = P.tile_field
 				var tg = pane._tiles
@@ -137,7 +141,7 @@ func _run() -> void:
 				w = maxf(w, gap)
 				if gap > OVER:
 					over += 1
-		print("%s seed %d: %d standing samples, %d over %.0f units, the worst %.1f" % ["ok  " if (w <= WORST and float(over) <= SHARE * float(maxi(n, 1))) else "FAIL", seed, n, over, OVER, w])
+		print("%s seed %d: %d standing samples, %d over %.0f units, the worst %.1f%s" % ["ok  " if (w <= WORST and float(over) <= SHARE * float(maxi(n, 1))) else "FAIL", seed, n, over, OVER, w, (" (%d outside every pane, not read)" % off_pane) if SPLIT else ""])
 		n_all += n
 		n_over += over
 		worst = maxf(worst, w)

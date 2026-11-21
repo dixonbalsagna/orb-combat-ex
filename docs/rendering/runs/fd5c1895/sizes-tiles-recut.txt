@@ -1,0 +1,14 @@
+# The re-cut sizes diff at medium (sizes_tiles.diff 4477705c, 158 lines) + World's field-memo grant (6883b121), on main fd5c1895 + World's GW1c stack + feet-ground + foot-slice + marks-baked (store-parts)
+tile_field.gd carries the diff
+golden.json byte-identical to the stack's
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+## the feet gate, medium (3%), --tiles, seeds 1 to 10
+exit 0
+ok   10 seeds: 3236 standing samples, 21 over 8 units (0.6%, at most 3%), the worst 16.6 (at most 25)
+feet check passed
