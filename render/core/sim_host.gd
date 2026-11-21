@@ -49,6 +49,7 @@ var fx_usec: int = 0            # cost of the last fx consume and camera step
 var _prev := PackedFloat64Array()
 var _cur := PackedFloat64Array()
 var _skip_intro: int = 0        # skip_intro(): 0 not asked, 1 for the next pre-clock tick, 2 until the intro ends
+var recorder := MatchRecorder.new()   # the match as a replay, for the report and "Save this match" on a desktop build (render/core/match_recorder.gd): reads only
 var setup_used: Dictionary = {} # the whole setup the last match started from (the hub's keys, then the caller's): a match input like the seed, so a reference sim or a replay starts from the same one
 var _intro_mem: Dictionary = {} # the session's intro memory: a pair of roster ids -> {seed, n, avoid} (intro_record). Never saved, and never in the sim
 const INTRO_AVOID: int = 5      # Narrative's rule: the last five scenarios a pair opened with
@@ -101,6 +102,7 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 		return
 	_skip_intro = 0
 	setup_used = su.duplicate(true)
+	recorder.arm(seed, ai, su)
 	if stepped_start:   # the match's start in pieces: the head now, the rest a piece a frame (load_step), the loading screen between them
 		match_job = SimCore.beginMatch(S, seed, ai, su)
 		_start_args = [su, remember]
@@ -445,6 +447,7 @@ func tick(vw: float, vh: float) -> void:
 	elif not pre:
 		_skip_intro = 0
 	var t0: int = Time.get_ticks_usec()
+	recorder.before_step(S, inputs)   # reads the tick's intents; SimCore.step below gets the very same inputs
 	if SimCore.step(S, inputs):
 		hub.consumed()
 	elif pausing or pre:
@@ -549,6 +552,7 @@ func release_all() -> void:
 
 
 func toggle_ai(idx: int) -> void:
+	recorder.toggle(S, idx)
 	SimCore.toggleAI(S, idx)
 
 
@@ -683,3 +687,16 @@ func _capture() -> PackedFloat64Array:
 
 static func _wlerp(a: float, b: float, t: float) -> float:
 	return SimWrap.wrap(a + SimWrap.sdx(a, b) * t)
+
+
+## The match so far as a file in user://reports/ (MatchRecorder.save): reason report, save, over or quit; the file's name, or "" when there is nothing to save. Nothing leaves the PC.
+func record_file(reason: String, tag: String = "", note: String = "") -> String:
+	return recorder.save(S, reason, tag, note, _record_build_info())
+
+
+## res://build_info.json (the commit and its date, written before an export by tools/write-build-info.mjs), or {} when the build has none.
+static func _record_build_info() -> Dictionary:
+	if not FileAccess.file_exists("res://build_info.json"):
+		return {}
+	var j = JSON.parse_string(FileAccess.get_file_as_string("res://build_info.json"))
+	return j if j is Dictionary else {}

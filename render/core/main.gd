@@ -187,6 +187,8 @@ func _ready() -> void:
 	ui_hud.settings_closed.connect(_release_overlay)
 	# The panel cut-in's border takes each fighter's lane colour from UI (it fires at the HUD's first advance).
 	ui_hud.lane_colors_changed.connect(_on_lane_colors)
+	if not OS.has_feature("web"):
+		ui_hud.lan_report_fn = _record_report   # A-UI-02: a solo or couch match is kept as a file in user://reports/ (MatchRecorder); the web page has its own download
 	# The pause menu's "hand player two back to the AI" entry.
 	ui_hud.player_two_leave_requested.connect(_on_player_two_leave)
 	ui_hud.form_prompt_shown.connect(_on_form_prompt)
@@ -422,9 +424,9 @@ func _mb_attach() -> bool:
 ## accepted and does nothing.)
 func _match_setup(seed: int = 0) -> Dictionary:
 	if manual or args.has("nointro") or args.has("bench") or args.has("flashcap"):
-		return _planet_next.duplicate()
+		return _planet_setup()
 	var su: Dictionary = {"intro": host.intro_record(seed)}
-	su.merge(_planet_next)
+	su.merge(_planet_setup())
 	su.merge(_ai_part())
 	return su
 
@@ -436,6 +438,32 @@ var _ai_level: String = ""
 
 func _ai_part() -> Dictionary:
 	return {"aiLevel": _ai_level} if _ai_level != "" else {}
+
+
+## The state probe (A-CODE-03, 2026-11-14; it was a scratch patch of the private page): `?preview=1` on the web publishes window.__preview twice a second for the smoke check and the page tools: the tick, the planet's
+## generation, what the world's switches read as in the running game, and the fighters' hit points. Read only: it writes nothing to the sim and changes nothing the player sees. Off without the option.
+func _publish_probe() -> void:
+	if frames % 20 != 0 or not OS.has_feature("web") or host == null or host.S == null:
+		return
+	var st = host.S
+	var hp: Array = []
+	for f in st.fighters:
+		hp.append(snappedf(f.hp, 0.1))
+	var probe: Dictionary = {"tick": host.ticks, "planetGen": WorldClimate.genNow(), "fine": st.fineCols.size(), "planet": not st.planetRing.is_empty(), "dataGen": int(WorldClimate.data().get("gen", 1)),
+		"biome": DirLaunch.biomeOn(), "water": WorldFill.on(), "surface": WorldFill.surfaceOn(), "floor": WorldFill.floorOn(), "interrupts": DirWater.on(st), "turn": (WorldEpoch.enabled({}) and bool(DirCalm.cfg().get("enabled", false))), "turns": (st.epoch.n if st.epoch != null else -1),
+		"errors": WorldFill.dataErrors(), "hp": hp}
+	JavaScriptBridge.eval("window.__preview = Object.assign(window.__preview || {}, %s);" % JSON.stringify(probe), true)
+
+
+## The planet part of the next match's setup (A-CODE-03, 2026-11-14; it was a scratch patch of the private page, tools/preview/switches.mjs): the menu's own (planet_part, held in _planet_next) when it names one,
+## else the option `planet=N` of the page address or the command line (a generated planet; `touch` is 3, the golden planet matches' value, unless given). {} when neither names a planet, as before.
+## The one place the three starts below read, so the early start, Start and the hook's start always agree.
+func _planet_setup() -> Dictionary:
+	if not _planet_next.is_empty():
+		return _planet_next.duplicate()
+	if args.has("planet"):
+		return {"planet": int(args["planet"]), "touch": int(args.get("touch", 3))}
+	return {}
 
 
 ## The planet a menu's choices name, as the match's setup keys (planet, planetGen, touch, arena); {} while they name none (the menu has no such choice yet: the campaign's and the planet picker's
@@ -800,6 +828,8 @@ func frame(delta: float) -> void:
 	host.sky.advance(host.S, (float(host.ticks) + host.acc / SimConst.DT) * SimConst.DT)
 	PaneWorld.flash_calm = host.vfx.reduced_motion or host.vfx.reduced_flashing   # the register's reduced mode: the grooves glow and char faintly
 	var n: int = host.advance(delta, vp.x, vp.y)
+	if args.has("preview"):
+		_publish_probe()
 	if args.has("flash-soak") and frames % 40 == 0 and not FlashSet.ids().is_empty():
 		var ids: Array = FlashSet.ids()
 		fire_flash(0, ids[(frames / 40) % ids.size()])
@@ -1343,7 +1373,7 @@ func _on_menu_started(cfg: Dictionary) -> void:
 	if bool(cfg.get("intros", true)):
 		start_match(sd, ai)
 	else:
-		var su: Dictionary = _planet_next.duplicate()
+		var su: Dictionary = _planet_setup()
 		su.merge(_ai_part())
 		start_match(sd, ai, su)
 	_planet_next = {}
@@ -1640,8 +1670,8 @@ const HOLD_STYLE_OPTIONS := {"guard_style": "guard", "manoeuvre_style": "dodge",
 ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
 ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
 ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
-const LOCAL_ONLY_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
-const URL_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+const LOCAL_ONLY_ARGS: Array = ["planet", "touch", "preview", "craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+const URL_ARGS: Array = ["planet", "touch", "preview", "craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
@@ -1777,3 +1807,9 @@ static func _dist(v) -> String:
 	if v.size() == 0:
 		return "n/a"
 	return "mean %.3f  p50 %.3f  p95 %.3f  p99 %.3f  max %.3f" % [_mean(v), _pct(v, 0.5), _pct(v, 0.95), _pct(v, 0.99), _pct(v, 1.0)]
+
+
+## The HUD's report and "Save this match" on a plain desktop build (A-UI-02, 2026-11-14): the match so far as a file in user://reports/ (SimHost.record_file, MatchRecorder). Nothing leaves the PC. The file's name, "" when
+## there is nothing to save or the file could not be written (the HUD then says so).
+func _record_report(tags: String, note: String) -> String:
+	return host.record_file("report", tags, note)
