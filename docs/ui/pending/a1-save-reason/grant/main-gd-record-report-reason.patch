@@ -1,0 +1,10 @@
+--- a/render/core/main.gd	2026-11-20 20:32:48.959677300 -0800
++++ b/render/core/main.gd	2026-11-20 20:32:49.008512700 -0800
+@@ -1832,5 +1832,5 @@
+ 
+ ## The HUD's report and "Save this match" on a plain desktop build (A-UI-02, 2026-11-14): the match so far as a file in user://reports/ (SimHost.record_file, MatchRecorder). Nothing leaves the PC. The file's name, "" when
+ ## there is nothing to save or the file could not be written (the HUD then says so).
+-func _record_report(tags: String, note: String) -> String:
+-	return host.record_file("report", tags, note)
++func _record_report(tags: String, note: String, reason: String = "report") -> String:
++	return host.record_file(reason, tags, note)   # reason "save" is the HUD's "Save this match" (a file the player chose to keep: the recorder never prunes it); F9 and the feedback panel stay "report"
