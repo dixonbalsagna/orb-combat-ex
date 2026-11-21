@@ -514,3 +514,50 @@ No finding was refuted whole. These claims inside findings did not hold.
 - Limits. Nothing was run. Several checkers' corrections reached the report writer cut short; only the parts that could be read or confirmed in the files were used. Two checkers confirmed that the game's default start plays generation 3 once the globe ground is on, and one doubted it; the lines were read again for this page (S-07's evidence) and the two are right.
 
 Cost: about 4.3M tokens (32 agents: 6 reviewers, 25 checkers, 1 writer). A first attempt earlier the same evening stopped on the weekly limit with nothing written and cost about 1.6M more.
+
+## Delta re-check on the rebuilt tree (2026-11-20, about 20:50)
+
+The review above read the applied tree as cut at 17:30 (s422, commit 3917885). The EP rebuilt it after the evening's re-cuts (s423: commit b986c0f is the stack, b66ba58 adds Tools' cases). This section covers only what changed between the two. Read by hand by one reviewer: a file-by-file compare of the two trees, a check-only reverse apply of each changed park on the new tree, and a read of every changed line outside `docs/`. Nothing was run, and the EP's gate on the new tree had written no result yet when this was read.
+
+**Verdict: the rebuilt tree holds exactly what was meant to change, and nothing else. No new finding blocks the landing.**
+
+### What differs between the two trees, outside `docs/`
+
+17 files. 13 come from five parks; 4 come from main itself moving on and are not part of the stack.
+
+| Files | From | Meant to change? |
+| :--- | :--- | :--- |
+| `data/art/biomes.json` | Art's `docs/art/pending/gw1a-biomes/biomes.patch` | Yes: S-02 |
+| `render/core/match_recorder.gd`, `render/tools/match_recorder_check.gd` | Tools' re-cut `docs/tools/pending/code-03/report-hook.patch` | Yes: S-05 |
+| `sim/world/tools/wrecks_check.gd`, `repeat_check.gd`, `wall_hold_check.gd` | World's current `docs/world/pending/checks-gw1a/pins-gw1a.diff` | Yes: S-19 |
+| `sim/world/brunt.gd`, `sim/world/tools/memory_model_check.gd` and its `.uid`, `data/biomes/brunt.json`, `tools/schemas/biomes-brunt.schema.json`, `tools/world-checks.json` | World's `docs/world/pending/memory-under-model/memory-under-model.diff` | Yes: the EP's decision on M-04 of the memory review, to land it with GW1a |
+| `tools/fixtures/cases.json` | Tools' `docs/tools/pending/memory-under-model-cases` | Yes: six cases for the new `heldMul` key |
+| `.gitignore`, `tools/flash/signature-gate.json`, `tools/site-template-selftest.mjs`, `tools/site.json` | Main's own commits since d55c612f (`git diff --stat d55c612f HEAD` outside `docs/` lists exactly these four) | Not the stack's |
+
+Each of the five parks reverse-applies cleanly on the new tree (`git apply --check -R`, nothing written), so the tree holds each park's current file in full.
+
+### The named fixes
+
+| Finding | State on the rebuilt tree | Evidence |
+| :--- | :--- | :--- |
+| S-02, Art's tundra colours | **In.** The tree's `data/art/biomes.json` is byte-equal to the kept 9 November build's file | `cmp` against the kept build's `tree/data/art/biomes.json` |
+| S-05, the recorder's check wrote into and pruned the game's real reports folder | **Fixed.** The check now saves only into its own folder (`user://reports_check_main`, through `MatchRecorder.test_dir`), removes it at the end, and asserts that the game's own folder is "exactly as it was". A second change goes further than asked: a file the player chose to keep (its name ends `-save.json`) is never counted or pruned, with a row that proves it survives 25 newer automatic reports | `render/core/match_recorder.gd` (the new `test_dir`, the `where` line, the `-save.json` test in `_prune`); `render/tools/match_recorder_check.gd` (the `SCRATCH` folder and the last five rows) |
+| S-19, the tree held World's older pins | **Fixed.** The three changed checks match the current pins: `wrecks_check` stages the thrower's tier and asserts growth on both paths with no KNOWN FAULT wording; `repeat_check`'s house row prints OFF-PATH; `wall_hold_check` counts towers that lost a floor and asserts more with the memory than without | the three files' compare, s422 to s423 |
+| The memory park under the pins (memory review, R-3) | **In, and consistent.** `wall_hold_check` sets `heldMul` 2.0 inside its own rows and puts 1.0 back; the tree's `brunt.gd` has the key and the rule. Shipped values are inert: `heldMul` 1.0, `repeatMarks` 0, `lodgeHold` "world", `wallRebound` 0.25 | the tree's `data/biomes/brunt.json:5`, `:48`, `:51`, `:70` |
+| Tools' review of the schema line (memory review, R-4) | **Done.** Tools approved the line and added six cases | `docs/tools/pending/memory-under-model-cases/README.md` |
+
+### The golden
+
+The tree's `sim/core/test/golden.json` still has the target's checksum (a2b9ed1c...971d), the same as before. Whether the rebuilt sim reproduces it is the gate's to show; that run had no result on file when this was read.
+
+### Three notes, none blocking
+
+| # | Note | What to do |
+| :--- | :--- | :--- |
+| D-1 | `data/biomes/brunt.json` now differs from the kept 9 November build's file by one line (`"heldMul": 1.0`), and its closed schema by one property. The value is inert, but "main's data is the 9 November build's" now has one more named exception beside the ones the READMEs already explain | A line in the landing note. The gate's golden result is the proof that it moves nothing |
+| D-2 | `memory_model_check` joins the World check list in this landing. World ran it on main; its record on a tree with GW1a's data (the energy model on by default) is the gate's run on s423 | Read its line in the gate's result before landing |
+| D-3 | Still to come, by the EP's note: UI's `a1-save-reason`, as a small delta after this. It was not in the tree and is not covered here | A look at that one patch when it is added |
+
+Unchanged by the rebuild, as the EP ruled: launch distance stays 2.0 in this landing (S-01), the new start menu stays on (S-03), and the planet type in the golden is owed at the next re-record (S-07). The other majors remain dated follow-ups.
+
+Cost of this re-check: about 0.2M tokens of the reviewer's own reading; no agents.
