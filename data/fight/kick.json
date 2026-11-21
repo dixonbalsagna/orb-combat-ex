@@ -1,7 +1,7 @@
 {
   "schema": "fight.kick/1",
-  "enabled": false,
-  "_enabled": "the kick and the coin turn (docs/architecture/kick.md): a setup's \"kick\" overrides it for a match. Off, nothing runs and nothing is hashed",
+  "enabled": true,
+  "_enabled": "the kick and the coin turn (docs/architecture/kick.md): a setup's \"kick\" overrides it for a match. Off, nothing runs and nothing is hashed. On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off.",
   "stickOn": 0.5,
   "_stickOn": "how far the stick must be over for flat-out flight to count",
   "startBelow": 0.5,

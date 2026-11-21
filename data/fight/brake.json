@@ -1,8 +1,8 @@
 {
   "_note": "The air brake (Game Design, docs/design/buildings.md section 7.2; sim/core/brake.gd; docs/architecture/brake-core.md). Speeds are a send's own speed, the launch's traversal factor divided out, in units a second.",
   "schema": "fight.brake/1",
-  "enabled": false,
-  "_enabled": "the one switch. SimCore.newMatch copies it into S.brakeOn unless the match's setup has its own \"brake\". Off: no brake, no brake state hashed, no air_brake event, and this file is not in a replay's data hash",
+  "enabled": true,
+  "_enabled": "the one switch. SimCore.newMatch copies it into S.brakeOn unless the match's setup has its own \"brake\". Off: no brake, no brake state hashed, no air_brake event, and this file is not in a replay's data hash. On since GW1a (sprint A1): the 9 November build Orb played had it on; it was off.",
   "window": {
     "minTicks": 8,
     "maxTicks": 20,
