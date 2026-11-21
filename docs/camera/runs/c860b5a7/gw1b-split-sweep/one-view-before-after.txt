@@ -1,0 +1,30 @@
+# The wide-hold fix's effect on one-view frames: every real match in split_sweep (on the 44-line stack, the planet), the rig before and after
+# one-view ticks; under 60% of the split line (the readability rule); at the floor (drawn at R_FLOOR, 0.032, within 2%); the smallest drawn height (of the screen); layout changes
+== before
+real match 3 | one-view ticks 3448, under 60% of the split line 22, at the floor 20, smallest 0.0320, layout changes 4
+real match 10 | one-view ticks 3552, under 60% of the split line 0, at the floor 0, smallest 0.0454, layout changes 2
+real match 17 | one-view ticks 3496, under 60% of the split line 0, at the floor 0, smallest 0.0418, layout changes 2
+real match 3 human 1 | one-view ticks 2874, under 60% of the split line 71, at the floor 63, smallest 0.0320, layout changes 9
+real match 10 human 0 | one-view ticks 3600, under 60% of the split line 0, at the floor 0, smallest 0.0697, layout changes 0
+real match 17 human 1 | one-view ticks 2898, under 60% of the split line 26, at the floor 24, smallest 0.0320, layout changes 6
+real match 3 pitch 49 | one-view ticks 2675, under 60% of the split line 0, at the floor 0, smallest 0.1019, layout changes 20
+real match 17 full | one-view ticks 26730, under 60% of the split line 7, at the floor 3, smallest 0.0323, layout changes 68
+real match 3 pitch 49 full | one-view ticks 22019, under 60% of the split line 0, at the floor 0, smallest 0.0576, layout changes 120
+real match 10 human 1 full | one-view ticks 10364, under 60% of the split line 201, at the floor 181, smallest 0.0311, layout changes 58
+real match 3 full (rig sees slot 0 as the human) | one-view ticks 25616, under 60% of the split line 4, at the floor 0, smallest 0.0326, layout changes 36
+real match 3 full (rig sees two humans) | one-view ticks 25625, under 60% of the split line 4, at the floor 0, smallest 0.0326, layout changes 36
+real match 10 pitch 49 full (rig sees two humans) | one-view ticks 24021, under 60% of the split line 0, at the floor 0, smallest 0.0540, layout changes 175
+== after
+real match 3 | one-view ticks 3422, under 60% of the split line 2, at the floor 1, smallest 0.0326, layout changes 4
+real match 10 | one-view ticks 3552, under 60% of the split line 0, at the floor 0, smallest 0.0454, layout changes 2
+real match 17 | one-view ticks 3496, under 60% of the split line 0, at the floor 0, smallest 0.0418, layout changes 2
+real match 3 human 1 | one-view ticks 2676, under 60% of the split line 12, at the floor 5, smallest 0.0325, layout changes 13
+real match 10 human 0 | one-view ticks 3600, under 60% of the split line 0, at the floor 0, smallest 0.0697, layout changes 0
+real match 17 human 1 | one-view ticks 2876, under 60% of the split line 4, at the floor 2, smallest 0.0325, layout changes 6
+real match 3 pitch 49 | one-view ticks 2675, under 60% of the split line 0, at the floor 0, smallest 0.1019, layout changes 20
+real match 17 full | one-view ticks 26718, under 60% of the split line 5, at the floor 1, smallest 0.0325, layout changes 68
+real match 3 pitch 49 full | one-view ticks 22019, under 60% of the split line 0, at the floor 0, smallest 0.0576, layout changes 120
+real match 10 human 1 full | one-view ticks 10192, under 60% of the split line 33, at the floor 14, smallest 0.0325, layout changes 58
+real match 3 full (rig sees slot 0 as the human) | one-view ticks 25616, under 60% of the split line 4, at the floor 0, smallest 0.0326, layout changes 36
+real match 3 full (rig sees two humans) | one-view ticks 25625, under 60% of the split line 4, at the floor 0, smallest 0.0326, layout changes 36
+real match 10 pitch 49 full (rig sees two humans) | one-view ticks 24021, under 60% of the split line 0, at the floor 0, smallest 0.0540, layout changes 175

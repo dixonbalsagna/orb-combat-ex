@@ -1,0 +1,40 @@
+# The four camera checks red on the 44-line stack: before (with gw1b-split-sweep), the cause, and after this park
+chase_rush_check  stack: chase_rush_check: 130 checks, 1 failed | stack on the arena: chase_rush_check: 130 checks, 1 failed
+cross_ko_check  stack: cross_ko_check: 1 of 21 checks FAILED | stack on the arena: cross_ko_check: 21 checks passed
+split_vision_check  stack: split_vision_check: 11 checks, 1 failed | stack on the arena: split_vision_check: 11 checks, 1 failed
+swing_places_check  stack: swing_places_check: 3 of 33 checks FAILED | stack on the arena: swing_places_check: 33 checks passed
+
+## split_vision: merges per seed (3,600 ticks, eased merge) on the stack
+SV seed 12345: 1 merges
+SV seed 2: 0 merges
+SV seed 3: 0 merges
+SV seed 4: 0 merges
+SV seed 5: 1 merges
+SV seed 7: 1 merges
+
+## chase_rush's chain row (seed 2, 4 taps) at other gaps between the taps
+gap 35 seed 2, 0 after the send, 4 taps, share 0.7: 2 catches
+gap 45 seed 2, 0 after the send, 4 taps, share 0.7: 3 catches
+gap 55 seed 2, 0 after the send, 4 taps, share 0.7: 4 catches
+gap 70 seed 2, 0 after the send, 4 taps, share 0.7: 2 catches
+gap 90 seed 2, 0 after the send, 4 taps, share 0.7: 2 catches
+
+## cross_ko's handover (scratch trace, the flight case: pane 1's anchor, e and its slot, around the across shot's start)
+CKR 359 anchor1 446,449 e 0.143 eslot 1 solo_w 0.472 acw 0.000 fx1 78651 f1x 78651 won 0 lax 0.500 sep 1.00
+CKR 360 anchor1 431,449 e 0.095 eslot 1 solo_w 0.444 acw 0.000 fx1 78651 f1x 78651 won 0 lax 0.500 sep 1.00
+CKR 361 anchor1 417,450 e 0.048 eslot 1 solo_w 0.417 acw 0.000 fx1 78651 f1x 78651 won 0 lax 0.500 sep 1.00
+CKR 362 anchor1 402,450 e 0.000 eslot -1 solo_w 0.389 acw 0.000 fx1 78651 f1x 78651 won 0 lax 0.500 sep 1.00
+CKR 363 anchor1 282,452 e 0.052 eslot 0 solo_w 0.441 acw 0.083 fx1 78651 f1x 78651 won 0 lax 0.762 sep 1.00
+CKR 364 anchor1 282,452 e 0.104 eslot 0 solo_w 0.493 acw 0.167 fx1 78651 f1x 78651 won 0 lax 0.745 sep 1.00
+CKR 365 anchor1 282,452 e 0.156 eslot 0 solo_w 0.545 acw 0.250 fx1 78651 f1x 78651 won 0 lax 0.729 sep 1.00
+CKT 361 j 0.000 step 0.013,-0.000 z 1.1429 solo / mode solo rush true wx 115365 wy 1864 wz
+CKT 362 j 0.000 step 0.013,-0.000 z 1.1330 solo / mode split rush true wx 115481 wy 1859 w
+CKT 363 j 0.083 step 0.095,0.001 z 1.1237 solo across/follow mode solo rush true wx 115598
+CKT 364 j 0.093 step 0.002,-0.000 z 1.1152 solo across/follow mode solo rush true wx 11571
+CKT 365 j 0.000 step 0.002,-0.000 z 1.1075 solo across/follow mode solo rush true wx 11583
+
+## after this park
+swing_places_check: swing_places_check: 33 checks passed
+split_vision_check: split_vision_check: 13 checks passed
+chase_rush_check: chase_rush_check: 130 checks passed
+cross_ko_check: cross_ko_check: 21 checks passed

@@ -1,0 +1,37 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 2df9182..b2db0d7 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -843,8 +843,8 @@ func _update_trigger(S: SimState) -> void:
+ 		# It runs only between the split line and the floor: below the floor the shared view cannot zoom out any more.
+ 		var floor_r: float = maxf(CamParams.R_FLOOR, CamParams.MIN_PX / vh)
+ 		var dwell: float = CamParams.SPLIT_DWELL + (CamParams.WIDE_HOLD if _sep_rate > 500.0 and r_now > floor_r else 0.0)
+-		if r_now <= floor_r:
+-			dwell = 0.0
++		if r_now <= floor_r or CamParams.BODY_H * _mz / vh <= floor_r * 1.02:
++			dwell = 0.0   # (the one view drawn at its floor, the governor's zoom-out for speed included: holding can't zoom out any more)
+ 		var held: bool = nocut_hold and not out_of_frame and not knocked_apart and _no_cut(S)
+ 		if held and _below_t >= dwell and age_ok and guard_ok:
+ 			nocut_holds += 1
+diff --git a/render/camera/tests/split_sweep.gd b/render/camera/tests/split_sweep.gd
+index 7bfd9c3..b3c1322 100644
+--- a/render/camera/tests/split_sweep.gd
++++ b/render/camera/tests/split_sweep.gd
+@@ -115,6 +115,7 @@ var trace_t1: float = 0.0
+ 
+ 
+ func _initialize() -> void:
++	WorldPin.arena()   # GW1b: the staged rows play the hand-made arena they were built on (data/biomes/world.json mode is planet now); the real matches play the planet (_real_match)
+ 	for a in OS.get_cmdline_user_args():
+ 		if a.begins_with("--seeds="):
+ 			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
+@@ -4566,7 +4567,9 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
+ 		return   # --only= names a scenario row; the real matches (minutes each) run for --only=real... and for a full run
+ 	var limit: int = ticks if ticks > 0 else match_ticks
+ 	_begin("real match %d%s%s%s%s" % [seed, (" human %d" % human) if human >= 0 else "", (" pitch %d" % int(pitch)) if pitch > 0.0 else "", " full" if ticks > 0 else "", (" (rig sees slot %d as the human)" % rig_human if rig_human < 2 else " (rig sees two humans)") if rig_human >= 0 else ""])
++	WorldDefault.setForTest(String(WorldDefault.data().get("mode", "planet")), false)   # a real match plays the data's default world (the planet since GW1b): Orb's game
+ 	SimCore.newMatch(_S, seed, {"p1": human != 0, "p2": human != 1}, setup)
++	WorldPin.arena()   # (and the staged rows after it play the arena again)
+ 	_rig.pitch_deg = pitch
+ 	_rig.reset(_S, vw, vh)
+ 	_watch_first()
