@@ -1,0 +1,12 @@
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -334,6 +334,9 @@
+ 	_build_queue.clear()   # a match started while the boot builds the panes (the notice's Start): those steps were the old match's
+ 	var own: bool = not (setup is Dictionary)
+ 	var su: Dictionary = _match_setup(seed) if own else setup
++	if strip_ground and not su.has("planet") and not su.has("world"):
++		su = su.duplicate()
++		su["world"] = "arena"   # a tool pinned to the old strip ground plays the hand-made arena, whatever world the data names by default (WorldDefault, GW1b)
+ 	host.new_match(seed, ai, RenderTileGround.setup_of(su) if RenderTileGround.on else su, own)
+ 	if host.loading():
+ 		ui_hud.show_loading(host.load_phase(), host.load_progress())   # frame() steps the load; the match is built when it is made (_match_built)

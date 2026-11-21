@@ -1,0 +1,27 @@
+# strip_arena.diff 9c60c1a1 on my copy of the GW1a stack (s422, main 809e93e5 then) + World's a-world-01, its sim and host grants, default-gate and data-switches-gw1b (world.json mode planet); gb0 import errors 0
+## gb0 (the flip, no pin)
+after_check exit 0: after check passed
+cover_water_check exit 1: cover water check FAILED (2)
+depth_check exit 1: depth check FAILED: 2
+ground_check exit 0: ground check passed
+lake_water_check exit 1: lake water check FAILED (2)
+open_check exit 1: open check FAILED: 14
+patch_check exit 1: patch check FAILED (1)
+props_check exit 1: props check FAILED (1)
+seam_sweep exit 0: seam sweep passed
+shape_check exit 1: shape check FAILED (2)
+sky_check exit 1: sky check FAILED (1)
+sweep_check exit 1: sweep check FAILED (4)
+## gb1 (the flip + strip_arena)
+after_check exit 0: after check passed
+cover_water_check exit 0: cover water check passed
+depth_check exit 0: depth check passed
+ground_check exit 0: ground check passed
+lake_water_check exit 0: lake water check passed
+open_check exit 0: open check passed
+patch_check exit 0: patch check passed
+props_check exit 0: props check passed
+seam_sweep exit 0: seam sweep passed
+shape_check exit 0: shape check passed
+sky_check exit 0: sky check passed
+sweep_check exit 0: sweep check passed
