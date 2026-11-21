@@ -362,7 +362,7 @@ func _open() -> void:
 	net.configure = setUp
 
 
-## The /24 of an address, as a prefix: "10.0.0." for 10.0.0.135.
+## The /24 of an address, as a prefix: "192.168.1." for 192.168.1.20.
 static func prefixOf(addr: String) -> String:
 	return addr.left(addr.rfind(".") + 1)
 

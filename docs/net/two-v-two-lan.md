@@ -124,7 +124,7 @@ i5 6600K, GTX 1080, 16 GB. **The graphics card is well above our budget** of an 
 **Built: `docs/net/lan-v1.md` has the scripts and the exact words Orb reads. One known approval, once, on one PC. It can't be zero with native.** The PC that hosts waits on a port (`listen` in `net/enet_transport.gd`), which is what makes Windows ask, and it needs an Administrator's yes. The PC that joins only calls out (`dial`) and shouldn't be asked. **This is from reading the code. It hasn't been run,** because ENet stays off Orb's PC and CI has no Windows firewall.
 
 1. **The main PC hosts, always.** Its network is classed Public, and ZeroTier is on it too.
-2. **One small script, run once, adds the rule.** Orb's told first and clicks yes once. It allows only the game, one port and addresses from `10.0.0.x`, so ZeroTier members can't reach it. Whether that rule stops Windows asking is untested, so the first try needs Orb warned.
+2. **One small script, run once, adds the rule.** Orb's told first and clicks yes once. It allows only the game, one port and addresses from the main PC's own home network (its /24, for example `192.168.1.x`), so ZeroTier members can't reach it. Whether that rule stops Windows asking is untested, so the first try needs Orb warned.
 3. **Two shortcuts, no menu:** Host on the main PC, Join on the old PC with the address already in it. A real menu is UI's job later.
 4. **The same build on both.** The game already refuses a different version or different data.
 

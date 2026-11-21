@@ -1,6 +1,6 @@
 // Makes the private LAN test's folder (docs/net/lan-v1.md): a plain 1v1 between two PCs. It edits a SCRATCH COPY of the project, exports it and writes the shortcuts. It starts no game and opens no port.
 // The public desktop builds stay as they are: they exclude net/ (Legal RL-204), and nothing here goes on main. So the two lines the game needs are patched in here, and this stops if they no longer fit.
-//   node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135 [--build=NAME] [--no-export]
+//   node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=192.168.1.20 [--build=NAME] [--no-export]
 // --build: only for a tree with no page stamp (build_info.json with an id); a kept build's tree has one, and the kit's stamp builds on it (A-NET-05).
 // --tree: a copy of main, or of the tree Tools' stack exported for the kept build (its sim_host steps through the black box's _bb_step).
 import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';

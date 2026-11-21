@@ -82,10 +82,10 @@ It plays back through the project's own replay path: `node tools/preview/blackbo
 ## Making the folder
 
 ```
-node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135
+node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=192.168.1.20
 ```
 
-Build it on the main PC: the kit stops if the address isn't that PC's own. `10.0.0.135` comes from Performance's look on 2026-10-31.
+Build it on the main PC, with that PC's own home-network address: the kit stops if the address isn't the PC's own. `192.168.1.20` is only an example; no real address is written in this repository.
 
 **From a kept build:** the kept folder holds only `sim/`, `data/`, `net/` and `project.godot`. So the whole tree is made again with Tools' own stack code, with no Godot, from the kept commit. Then two checks show it's the build Orb played: those four parts byte for byte against the kept `tree/`, and every file in the folder's game against the kept page's `index.pck`, by the MD5 each package stores per file. Both scripts are kept in Netcode's scratch.
 

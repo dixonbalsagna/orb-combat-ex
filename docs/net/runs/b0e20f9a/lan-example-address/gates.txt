@@ -1,0 +1,2 @@
+a01_lan_check gate exit 0, SCRIPT ERROR 0 :: LAN: 0 check(s) failed  [lan_check.gd --ticks=1200]
+b01_lan_check gate exit 0, SCRIPT ERROR 0 :: LAN: 0 check(s) failed  [lan_check.gd --ticks=1200 --negative-control]
