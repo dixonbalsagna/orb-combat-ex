@@ -1,0 +1,21 @@
+# The re-read with Rendering's drawn_at (docs/rendering/pending/drawn-at, 984e12f9, applied to a copy of szs): what the mesh draws, read-only
+# The sampler (CamGround) asks pane i's tile ground drawn_at(d); 0.0 reads as unknown. The crane (scratch) still acts only when the eye is under the drawn ground + 20.
+
+## Openings (seed 12345, AI v AI through main, split attached, --tiles): eye, and the worst drawn clearance on the sight lines to each fighter
+da_small: crane max 0 deg; eye short max 0; sight clearance worst A 53 B 54 units
+da_medium: crane max 0 deg; eye short max 0; sight clearance worst A 44 B 45 units
+da_small_duel: crane max 0 deg; eye short max 0; sight clearance worst A 58 B 59 units
+(da_small_duel = small with beamduel's staging: the rival 1,000 on, both set down)
+
+## The 9 clips through main, default view, --tiles, medium: the eye (crane) and every sight line pane 0 shows (blocked fighter-ticks)
+ai:1           eye under the drawn ground: 0 ticks, up to 0 units (tick None), crane up to 0.00 deg | sight lines blocked: 0 fighter-ticks
+ai:106         eye under the drawn ground: 0 ticks, up to 0 units (tick None), crane up to 0.00 deg | sight lines blocked: 0 fighter-ticks
+ai:38          eye under the drawn ground: 0 ticks, up to 0 units (tick None), crane up to 0.00 deg | sight lines blocked: 0 fighter-ticks
+ai:4           eye under the drawn ground: 0 ticks, up to 0 units (tick None), crane up to 0.00 deg | sight lines blocked: 0 fighter-ticks
+ai:5           eye under the drawn ground: 0 ticks, up to 0 units (tick None), crane up to 0.00 deg | sight lines blocked: 0 fighter-ticks
+collapse       eye under the drawn ground: 186 ticks, up to 128 units (tick 3), crane up to 0.48 deg | sight lines blocked: 0 fighter-ticks
+mashcity       eye under the drawn ground: 0 ticks, up to 0 units (tick None), crane up to 0.00 deg | sight lines blocked: 0 fighter-ticks
+rushcity       eye under the drawn ground: 0 ticks, up to 0 units (tick None), crane up to 0.00 deg | sight lines blocked: 0 fighter-ticks
+signaturecity  eye under the drawn ground: 0 ticks, up to 0 units (tick None), crane up to 0.00 deg | sight lines blocked: 0 fighter-ticks
+
+Before drawn_at (height_at, unclamped): the eye read up to 441 units under, crane 200-1,000 ticks a clip, up to 10.6 deg (sampler-findings.txt).
