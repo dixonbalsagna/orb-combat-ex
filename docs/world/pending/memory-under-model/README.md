@@ -55,3 +55,5 @@ With `heldMul` a held hit (E below the mass) can clear the covered floors, and i
 
 - **R-2:** the `heldMul` 2.0 row, `repeatMarks` 2 and the lodge flip **together**, in the wall-hold window after Orb has played the private build. Not GW1b; the README says so in every place now.
 - **R-1: where the fighter ends up when a held hit breaks floors**, stated and checked. A held hit (E below the mass) under `heldMul` can clear the covered floors; three things can then read the hit as a "collapse" or a "pancake" and set `passes`: the core wearing out (`b.hp <= 0` in `_applyFloors`), a cleared span longer than `TUNNEL_MAX` (the `pancake` drop), and the floors above falling through the gap. Each of the three lets him out of the far face at `keepHi` (0.8) and into the next link. The M-03 rule above closes all three (a held body stays held under the model), and a row checks the first (core wear); a pancake row needs a tower with a cleared span and is not staged.
+
+**Status 2026-11-21: `memory-under-model.diff` LANDED in GW1a (b0e20f9a) and is removed; `memory-under-model-data.diff` (the wall-hold window, held for Orb's private play) stays.**

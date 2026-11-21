@@ -1,0 +1,160 @@
+# The World list on the GW1a tree + a-world-01 + default-gate + the flip (data/biomes/world.json mode planet), BEFORE the arena pins (World, 2026-11-20)
+# Each line: check: verdict; FAIL rows follow. 89 checks.
+burial_check: BURIAL: 0 check(s) failed
+floor_check:     FAIL  the floor off: on the hand-made world only the open sea (the original ground under RESERVOIR_BASE) is sea to seaAt, as it always was
+floor_check:     FAIL  the hand-made world has 0 sea columns 75 or more deep and 1711 shallower to read
+floor_check:     FAIL  the floor on, hand-made world: every column 75 or more deep is sea, its sheet is seaTop's value, and no shallower column is sea (0, 0, 0, 1348) shallow column 0 (water 0.0) is sea
+floor_check:     FAIL  an open-sea column (-1) and a column of the shallows 40 to 70 deep (-1) to dig in
+floor_check:     FAIL  a stretch of three dry coast columns within a few columns of the sea to dig a bay in (-1)
+floor_check: FLOOR: 5 check(s) failed
+lane_check: LANES: 0 check(s) failed
+props_wet_check: PROPSWET: 0 check(s) failed
+after_check: AFTER: 0 check(s) failed
+arena_check:     FAIL  a default match after a small one is today's world (4,800 columns, 118 buildings)
+arena_check:     FAIL  a bad arena (under 600, over 4,800, odd, even but not a multiple of 8, a string, a fraction, no columns, not a dictionary, or no planet) is the planet's own 4,800
+arena_check: ARENA: 2 check(s) failed
+b_check: B: 0 check(s) failed
+blastcheck: BLAST: 0 check(s) failed
+blockcheck: BLOCK: 0 check(s) failed
+brunt_check:     FAIL  every flight ends held at a wall or lodged in its last building (133 of 134; 105 held, 28 lodged)
+brunt_check: BRUNT: 1 check(s) failed
+calm_read_check: CALMREAD: 0 check(s) failed
+campaign_check: CAMPAIGN: 0 check(s) failed
+climate_check: CLIMATE: 0 check(s) failed
+collateral_check: COLLATERAL: 0 check(s) failed
+power_world_check: POWERWORLD: 0 check(s) failed
+memory_model_check: MEMORYMODEL: 0 check(s) failed
+control_check: CONTROL: 0 check(s) failed
+craters_check:     FAIL  mud: a slam in wetland digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 0.8, 1.2, 0.2)
+craters_check:     FAIL  frost: a slam in tundra digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 1.0, 0.8, 1.6)
+craters_check:     FAIL  litter: a slam in jungle digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 1.0, 1.0, 1.0)
+craters_check:     FAIL  crust: a slam in volcanic digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 0.9, 0.9, 0.8)
+craters_check:     FAIL  turf: a slam in savanna digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 1.0, 1.0, 1.1)
+craters_check:     FAIL  a beam's strip digs its own row: burnt grass reads ash, the savanna beside it turf
+craters_check:     FAIL  touchBuilt on: plains dig the soil row
+craters_check:     FAIL  crater_shape: the crater event's surface is the material (mud) and eventFor gives the bowl as dug with its row (embedMul 1.8, mud_splash)
+craters_check:     FAIL  fill water: the mud bowl (69.7 deep) holds water to the wetland's table (6.0 below the ground), and reads flooded
+craters_check:     FAIL  fill waterNearSea: a shingle bowl 13 columns from the sea fills to the sea (0.0 deep), one 420 columns away stays dry
+craters_check:     FAIL  refill: the mud bowl's centre fills back from -0.0 to -2.9 deep (40%) over 240 ticks by an aftermath job (-1.4 at 120), and the job ends
+craters_check:     FAIL  refill: the water in a closing mud bowl keeps its level (30.00, then 32.90)
+craters_check:     FAIL  breakThrough: a slam on a floe 12 above the sea breaks it: a 0-column slot cut below the sea and filled (0 deep at the centre), and contact does not embed him
+craters_check:     FAIL  the cut is the FLOE SPLIT aftermath's (after.gd split calls breakThrough): 2 columns, 40 below the sea, filled
+craters_check:     FAIL  mud: a slam in wetland digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 0.8, 1.2, 0.2)
+craters_check:     FAIL  frost: a slam in tundra digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 1.0, 0.8, 1.6)
+craters_check:     FAIL  litter: a slam in jungle digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 1.0, 1.0, 1.0)
+craters_check:     FAIL  crust: a slam in volcanic digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 0.9, 0.9, 0.8)
+craters_check:     FAIL  turf: a slam in savanna digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 1.0, 1.0, 1.1)
+craters_check:     FAIL  a beam's strip digs its own row: burnt grass reads ash, the savanna beside it turf
+craters_check:     FAIL  touchBuilt on: plains dig the soil row
+craters_check:     FAIL  crater_shape: the crater event's surface is the material (mud) and eventFor gives the bowl as dug with its row (embedMul 1.8, mud_splash)
+craters_check:     FAIL  fill water: the mud bowl (69.7 deep) holds water to the wetland's table (6.0 below the ground), and reads flooded
+craters_check:     FAIL  fill waterNearSea: a shingle bowl 13 columns from the sea fills to the sea (0.0 deep), one 420 columns away stays dry
+craters_check:     FAIL  refill: the mud bowl's centre fills back from -0.0 to -2.9 deep (40%) over 240 ticks by an aftermath job (-1.4 at 120), and the job ends
+craters_check:     FAIL  refill: the water in a closing mud bowl keeps its level (30.00, then 32.90)
+craters_check:     FAIL  breakThrough: a slam on a floe 12 above the sea breaks it: a 0-column slot cut below the sea and filled (0 deep at the centre), and contact does not embed him
+craters_check:     FAIL  the cut is the FLOE SPLIT aftermath's (after.gd split calls breakThrough): 2 columns, 40 below the sea, filled
+craters_check: CRATERS CHECK: 28 failed
+deepencheck:     FAIL  deepen by 1.2 makes the crater 1.2 times as deep (86.2 to 17.2 units)
+deepencheck:     FAIL  the ground at the centre is lower by about a fifth of the depth (0.0 to 0.0)
+deepencheck:     FAIL  a bowl at the radius cap is deepened (132 to 26; a second dig made 158)
+deepencheck:     FAIL  deepen by 1.2 makes the crater 1.2 times as deep (86.2 to 17.2 units)
+deepencheck:     FAIL  the ground at the centre is lower by about a fifth of the depth (0.0 to 0.0)
+deepencheck:     FAIL  with the energy model on there is no ordinary cap: a second blow at the same place digs a wider bowl (3200, then 3840) and deepen raises that bowl by a fifth (844.8 to 169.0)
+deepencheck: DEEPEN: 6 check(s) failed
+demostart_check: DEMOSTART: 0 check(s) failed
+density_check: DENSITY: 0 check(s) failed
+depthreads_check: DEPTHREADS: 0 check(s) failed
+directcheck: DIRECT: 0 check(s) failed
+epoch_check:     FAIL  WorldWater.init over the hand-made world and 15 planet rings (11 of them with sea): the same water as the original laps, bit for bit
+epoch_check: EPOCH: 1 check(s) failed
+far_check: FAR: 0 check(s) failed
+farmap_check: FARMAP: 0 check(s) failed
+farsites_check:     FAIL  a Whole ring's too (a great circle, 4,800 columns); the hand-made world has none
+farsites_check: FARSITES: 1 check(s) failed
+field_check: FIELD: 0 check(s) failed
+field_plan_check: FIELDPLAN: 0 check(s) failed
+field_crater_check: FIELDCRATER: 0 check(s) failed
+field_water_check: FIELDWATER: 0 check(s) failed
+field_lot_check: FIELDLOT: 0 check(s) failed
+everywhere_check: EVERYWHERE: 0 check(s) failed
+far_people_check: FARPEOPLE: 0 check(s) failed
+places_cache_check: PLACESCACHE: 0 check(s) failed
+field_crack_check: FIELDCRACK: 0 check(s) failed
+field_scorch_check: FIELDSCORCH: 0 check(s) failed
+field_trench_check: FIELDTRENCH: 0 check(s) failed
+field_cache_check: FIELDCACHE: 0 check(s) failed
+planet_cache_check: PLANETCACHE: 0 check(s) failed
+field_load_check: FIELDLOAD: 0 check(s) failed
+field_records_check: FIELDRECORDS: 0 check(s) failed
+fill_check:     FAIL  on: the same trench opens a fill window and one water_fill cue (cause -, front 0 units/s, rate 0/s, 0 columns)
+fill_check:     FAIL  on: the trench is wet (0 columns) with its surface at the sea's level (-20.00) and the window closed after 0 steps
+fill_check:     FAIL  a hole in a desert far from water stays dry
+fill_check:     FAIL  a hole in a wetland far from water seeps full to its table (surface 260.8, the ground's 30 less 6), cue cause sea with no front
+fill_check:     FAIL  a jungle hole shallower than its water table (45) stays dry
+fill_check:     FAIL  a send along a dug scar: dry it skims 6 times, flooded 6 (the sea's rules: at most 6, 85% kept each)
+fill_check:     FAIL  a slam into a flooded crater throws one ring wave (water_wave) and pushes a fighter at the surface 0 units outward, over 7 steps
+fill_check:     FAIL  the cost: four open fills cost 407 us a step against today's worst of 253, and a tick with nothing open costs 1.20 us
+fill_check: FILL: 8 check(s) failed
+store_check: STORE: 0 check(s) failed
+fire_check: FIRE: 0 check(s) failed
+gen2_state_check: STATE: 0 check(s) failed
+ground_check:     FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+ground_check:     FAIL  the hand-made world and a gen 1 turn hash as before (turn: n=1 b76414d235362c67)
+ground_check:     FAIL  the brake on each fine biome is the surface's own times the profile's grip and rough (wetland 0.80, ice sheet 1.30, plains 1.30) ["forest: soil 1.300 vs 1.645", "mountains: soil 1.300 vs 1.040", "ice_sheet:
+ground_check:     FAIL  the bounce's keep, the tumble band and the trench read each fine biome's absorb, rough and furrow
+ground_check:     FAIL  WorldContact.lookAt gives each fine biome's look class (ice_sheet soil, wetland paving, jungle snow, volcanic sand, beach paving, a city column its paving)
+ground_check:     FAIL  cover on gen 2 ground: jungle bare submerged, jungle with a tree submerged, jungle above 90 <null>, highland low ridge, highland above 40 <null>, savanna <null>
+ground_check:     FAIL  a hand-made match built after a gen 2 one starts with no fine columns (newMatch clears them), so live() is false
+ground_check:     FAIL  over the same flat ground a fast skid runs 1269 on ice, 1269 on plains and 1269 in a wetland
+ground_check:     FAIL  soft ground eats a bounce (the steep launch goes 237 over a wetland, 237 on a beach, 237 on plains)
+ground_check: GROUND: 9 check(s) failed
+ground_props_check: GROUNDPROPS: 0 check(s) failed
+host_check: HOST: 0 check(s) failed
+interior_check: INTERIOR: 0 check(s) failed
+isect_check: ISECT: 0 check(s) failed
+lakes_check: LAKES: 0 check(s) failed
+default_gate_check: DEFAULTGATE: 0 check(s) failed
+land_check: LAND: 0 check(s) failed
+minecheck: MINE: 0 check(s) failed
+noise_check: NOISE: 0 check(s) failed
+planet_check: PLANET: 0 check(s) failed
+planet_world_check: PLANETWORLD: 0 check(s) failed
+props_check: PROPS: 0 check(s) failed
+repeat_check:     FAIL  and the ground at its centre is lower than after the first impact (0.0 against 0.0)
+repeat_check:     FAIL  and the ground at its centre is lower than after the first impact (0.0 against 0.0)
+repeat_check: REPEAT: 2 check(s) failed
+ringpick_check: RINGPICK: 0 check(s) failed
+rivers_check: RIVERS: 0 check(s) failed
+sea_rules_check:     FAIL  on a world without a lake seaTop is exactly 0 over the sea and NO_SEA elsewhere (so every line reads as it did)
+sea_rules_check:     FAIL  a deep lake at altitude: seaTop is its surface (800), and dry land beside it has none
+sea_rules_check:     FAIL  a fighter below a lake's surface flies at 0.55 of his speed as in the sea, and above it at full
+sea_rules_check: SEARULES: 3 check(s) failed
+beam_grid_check: BEAMGRID: 0 check(s) failed
+cache_warm_check: CACHEWARM: 0 check(s) failed
+sites_check: SITES: 0 check(s) failed
+skate_check: SKATE: 0 check(s) failed
+stagecheck: STAGE: 0 check(s) failed
+step_check: STEP: 0 check(s) failed
+surface_check: SURFACE: 0 check(s) failed
+meteor_crater_check: METEORCRATER: 0 check(s) failed
+through_check: THROUGH: 0 check(s) failed
+surface_follow_check: SURFFOLLOW: 0 check(s) failed
+switchon_check: SWITCHON: 0 check(s) failed
+wall_check:     FAIL  a lodge event carries x, y, z and the hold seconds, after a building_hit with keep 0 (5 lodges, 5 well formed)
+wall_check:     FAIL  lodgeHold body: the body is stunned for the hold
+wall_check: WALL: 2 check(s) failed
+wrecks_check: WRECKS: 0 check(s) failed
+street_axis_check:     FAIL a world with no frame answers as a street along the line (found true)
+street_axis_check: STREETAXIS: 1 check(s) failed
+water_warm_check: WATERWARM: 0 check(s) failed
+water_read_check: WATERREAD: 0 check(s) failed
+landmark_spare_check: LANDMARKSPARE: 0 check(s) failed
+lot_reach_check: LOTREACH: 0 check(s) failed
+relax_check: RELAX: 0 check(s) failed
+node_warm_check: NODEWARM: 0 check(s) failed
+wall_hold_check: WALLHOLD: 0 check(s) failed
+world_default_check: WORLDDEFAULT: 0 check(s) failed
+struggle_meet_check: STRUGGLEMEET: 0 check(s) failed
+struggle_dir_check: STRUGGLEDIR: 0 check(s) failed
+bystanders_check: BYSTANDERS: 0 check(s) failed
+floor_walk_probe: FLOORWALK: 0 check(s) failed

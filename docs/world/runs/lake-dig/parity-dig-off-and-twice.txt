@@ -1,0 +1,28 @@
+# State hash (gameplay) of a gen 3 match, 240 ticks, planets 7/12/3 touches 3/1/2, spill off and on (World scratch s25b: the stack WITHOUT the dig code; s25: with the dig code and no lakeDig key = off; then the dig forced on, each run twice)
+## without the dig code
+HASH planet 7 touch 3 spill 0 dig 0: b5394f680f72c4ce
+HASH planet 7 touch 3 spill 1 dig 0: b5394f680f72c4ce
+HASH planet 12 touch 1 spill 0 dig 0: d81ef456b1e3494b
+HASH planet 12 touch 1 spill 1 dig 0: d81ef456b1e3494b
+HASH planet 3 touch 2 spill 0 dig 0: e91fe997cc83eee7
+HASH planet 3 touch 2 spill 1 dig 0: e91fe997cc83eee7
+## with the dig code, the switch off (digOverride 0; with no key the dig is off the same way, LAKEDIG has the row)
+HASH planet 7 touch 3 spill 0 dig 0: b5394f680f72c4ce
+HASH planet 7 touch 3 spill 1 dig 0: b5394f680f72c4ce
+HASH planet 12 touch 1 spill 0 dig 0: d81ef456b1e3494b
+HASH planet 12 touch 1 spill 1 dig 0: d81ef456b1e3494b
+HASH planet 3 touch 2 spill 0 dig 0: e91fe997cc83eee7
+HASH planet 3 touch 2 spill 1 dig 0: e91fe997cc83eee7
+## with the dig forced on, each run twice
+HASH planet 7 touch 3 spill 0 dig 1: b5394f680f72c4ce
+HASH again               : b5394f680f72c4ce
+HASH planet 7 touch 3 spill 1 dig 1: b5394f680f72c4ce
+HASH again               : b5394f680f72c4ce
+HASH planet 12 touch 1 spill 0 dig 1: d81ef456b1e3494b
+HASH again               : d81ef456b1e3494b
+HASH planet 12 touch 1 spill 1 dig 1: dc3381d69d0a7f9f
+HASH again               : dc3381d69d0a7f9f
+HASH planet 3 touch 2 spill 0 dig 1: e91fe997cc83eee7
+HASH again               : e91fe997cc83eee7
+HASH planet 3 touch 2 spill 1 dig 1: e91fe997cc83eee7
+HASH again               : e91fe997cc83eee7

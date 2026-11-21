@@ -1,0 +1,23 @@
+      plans.lakeDig in the shipped data: a row is there (this check forces the dig on with the code's numbers)
+      planet 7 touch 3: 6 lakes; spill only: 79 water nodes; dug: 2 lakes dug, 655 water nodes, 1012 dug nodes (0 on a face edge, 0 twins stored), 0 of 337 shore links open (worst 0.0), deepest dug point 241.6, steepest bowl 0.226, edge step 0.00; the match is made in 4430 ms (spill only 4484)
+      planet 12 touch 1: 2 lakes; spill only: 29 water nodes; dug: 2 lakes dug, 300 water nodes, 698 dug nodes (54 on a face edge, 27 twins stored), 0 of 229 shore links open (worst 0.0), deepest dug point 141.5, steepest bowl 0.241, edge step 0.33; the match is made in 3755 ms (spill only 3718)
+      planet 3 touch 2: 4 lakes; spill only: 40 water nodes; dug: 2 lakes dug, 367 water nodes, 749 dug nodes (24 on a face edge, 12 twins stored), 0 of 233 shore links open (worst 0.0), deepest dug point 138.8, steepest bowl 0.226, edge step 0.56; the match is made in 4410 ms (spill only 4198)
+  ok   the dig digs: 6 of 12 lakes dug (2459 dug nodes)
+  ok   and holds more water than the spill alone: 1322 water nodes against 148
+  ok   0 open shore links on the dug ground: 0
+  ok   no dug point is deeper than 300 under its lake's level (the deepest 241.6, every dug node sampled)
+  ok   the bowl is no steeper than 0.33 between its nodes (the steepest 0.241)
+      face edges: 78 dug nodes lie on an edge of the cube's faces, 39 twins stored, the biggest step of the dug amount across an edge 0.56
+  ok   the ground does not step across an edge of the cube's faces where a bowl crosses it (the dug amount differs by 0.56 at most, the dig being up to 300)
+  ok   control (no walls): the lakes as the plan made them have 642 open shore links, so the row above can fail
+  ok   control (at most 300): a dig allowed to 1,000 on a steeper bowl is deeper than 300 (1000), so the depth row can fail
+  ok   control: a dig allowed to 100 stays within it (100.0) and the depth is read, not assumed
+  ok   control (edges): without the twins the ground steps across an edge by 209.5, so the edge row can fail
+  ok   control: minNodes above every lake digs no lake and gives the spill's water (0 dug lakes, 79 against 79 nodes)
+  ok   control: the dig off digs nothing
+      planet 7 touch 3, places on the whole planet, lakeMax 8: dig off 3835 buildings, 0 in water over 1 (deepest 0.0); dig on 3834 buildings, 0 in water over 1 (deepest 0.0)
+      planet 12 touch 1, places on the whole planet, lakeMax 8: dig off 3705 buildings, 0 in water over 1 (deepest 0.0); dig on 3704 buildings, 0 in water over 1 (deepest 0.0)
+      planet 3 touch 2, places on the whole planet, lakeMax 8: dig off 3872 buildings, 0 in water over 1 (deepest 0.0); dig on 3872 buildings, 1 in water over 1 (deepest 27.2)
+      FINDING: 1 building(s) stand in water over 1 in the dug lakes against 0 without the dig, the deepest 27.2 (the trim reads the ground at a building's centre; its pad is flat across the footprint, so a building at a bowl's shore can end up deeper than lakeMax)
+  ok   the dig adds at most 3 buildings in water over 1 (1 with it, 0 without)
+LAKEDIG: 0 check(s) failed

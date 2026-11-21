@@ -1,0 +1,16 @@
+diff --git a/tools/schemas/biomes-field.schema.json b/tools/schemas/biomes-field.schema.json
+index 7648055..8099bcd 100644
+--- a/tools/schemas/biomes-field.schema.json
++++ b/tools/schemas/biomes-field.schema.json
+@@ -32,2 +32,3 @@
+         "indexBackBH": { "type": "number", "minimum": 0, "maximum": 200, "description": "With everywhere, the depth behind the line, in fighter heights, out to which a building is indexed if that is further than swing.json indexBand: the background lane's far edge (44.5)." },
++        "lakeDig": { "type": "object", "additionalProperties": false, "properties": { "on": { "type": "boolean", "description": "Needs plans.lakeSpill. Each gen 3 lake is cut into a bowl inside its planned footprint (docs/world/lake-dig.md). Off: the real basins the spill leaves. No key: off." }, "maxDepth": { "type": "number", "minimum": 1, "maximum": 2000, "description": "Ground at most this far over a lake's level is dug, and no dug point is deeper than this under it (units)." }, "slope": { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "The bowl falls from the new shore at no more than this (rise over run)." }, "minNodes": { "type": "integer", "minimum": 0, "maximum": 8000, "description": "A lake whose dug water is under this many nodes is not dug (40: about 25 to 30 body heights across)." } }, "description": "The lake dig (GW2): the ring plan's lakes made real by cutting a bowl, with no wall." },
+         "lakeSpill": { "type": "boolean", "description": "A gen 3 planet's lake level is held to what the land holds in 2D: the lower of the ring plan's level and the spill (the lowest pass out of the basin). Off: the plan's level, flooded out to a distance, so the water can meet dry land far above its shore (docs/world/lake-shore.md)." },
+diff --git a/tools/world-checks.json b/tools/world-checks.json
+index 19f921d..bd88b09 100644
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -17,2 +17,3 @@
+     "street_axis_check",
++    "lake_dig_check",
+     "water_warm_check", "water_read_check", "landmark_spare_check", "lot_reach_check", "relax_check", "node_warm_check",

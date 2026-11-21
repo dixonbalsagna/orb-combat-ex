@@ -1,0 +1,59 @@
+data
+  ok    sizes.json loads clean ([])
+  ok    five sizes are offered, smallest first (["tiny", "small", "medium", "big", "huge"])
+  ok    the sixth, colossal, is data that is off
+  ok    medium is 4,800; no size, or no planet to size, is medium
+every offered size plays
+  ok    tiny: the match is bound to 1280 columns round, an arena of the same, a radius of 6519
+  ok    tiny: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 1.6 s, shared machine: void as a measurement)
+  ok    small: the match is bound to 2560 columns round, an arena of the same, a radius of 13038
+  ok    small: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.8 s, shared machine: void as a measurement)
+  ok    medium: the match is bound to 4800 columns round, an arena of the same, a radius of 24446
+  ok    medium: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.5 s, shared machine: void as a measurement)
+  ok    big: the match is bound to 9600 columns round, an arena of the same, a radius of 48892
+  ok    big: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 3.1 s, shared machine: void as a measurement)
+  ok    huge: the match is bound to 19200 columns round, an arena of the same, a radius of 97785
+  ok    huge: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.6 s, shared machine: void as a measurement)
+the same setup twice
+  ok    tiny: the same setup plays the same match (hash at tick 600)
+  ok    big: the same setup plays the same match (hash at tick 600)
+medium
+  ok    medium named plays byte for byte the match medium unnamed plays (hash at tick 120)
+ERROR: SimCore.newMatch: setup.planetSize enormous is not a size in sizes.json (["tiny", "small", "medium", "big", "huge", "colossal"]); medium plays
+   GDScript backtrace (most recent call first):
+       [0] nameOf (res://sim/world/size.gd:86)
+       [1] colsOf (res://sim/world/size.gd:96)
+       [2] _mHead (res://sim/core/sim.gd:162)
+       [3] step (res://sim/core/sim.gd:118)
+       [4] newMatch (res://sim/core/sim.gd:62)
+       [5] _match (res://sim/world/tools/size_check.gd:26)
+       [6] _init (res://sim/world/tools/size_check.gd:67)
+  ok    a size the data does not have plays medium
+buildings stay under a small planet's play height (Game Design, planet-sizes.md)
+  ok    tiny: the tallest of 49 buildings is 1956, within 1956 (0.3 of the radius 6519)
+  ok    small: the tallest of 102 buildings is 3911, within 3911 (0.3 of the radius 13038)
+  ok    medium: no cap, the tallest building is 4875 (the data's landmarks stand as they were)
+  ok    big: no cap, the tallest building is 4875 (the data's landmarks stand as they were)
+... and on the plan path (plans everywhere on: the places are laid by plan and memoised; a medium match first, then the small ones)
+  ok    tiny, plans on after a medium match: the tallest of 539 buildings is 1956, within 1956
+  ok    tiny, plans on: the same setup plays the same match twice
+  ok    small, plans on after a medium match: the tallest of 1277 buildings is 3911, within 3911
+  ok    small, plans on: the same setup plays the same match twice
+  ok    the kept places' key carries the size when it is not medium (medium's is as it was), so a tiny planet never reads a medium planet's towers
+the spawn pair is within a launch of a town or city, at every size
+  ok    75 spawns (5 sizes x the pool's planets x touches): all within a base launch's reach (6600) of a place; the farthest is 6476
+the host's loader (strict) makes a planet at its size
+  ok    a big planet that is not made is not ready, and asking leaves the host's static (4,800) as it was
+  ok    beginning its load leaves the static as it was
+  ok    the load, run to its end at the planet's own size, makes it ready (and the static is still 4,800)
+  ok    a strict match on it starts (planetNC 9600, a frame, none refused)
+a big planet's store
+  ok    a crater dug here and one half way round the huge planet are two records
+  ok    each place's box lists its own record only (no aliasing across the planet)
+  ok    each centre reads its own bowl's depth
+  FAIL  two boxes of the huge planet that a 64 offset would give one key have two (the store's key)
+  FAIL  and in the water records' grid
+  ok    two boxes past huge's radius that its old offset of 98 gave one key have two (both grids)
+  ok    (the pair is real: with the old offset of 98 those two boxes had one key, in both grids)
+  FAIL  no two boxes share a key in three slabs of 224 x 224 boxes (112 boxes either way from the centre): 64224 shared in the store, 64224 in the water records
+SIZES: 3 check(s) failed (negative control)

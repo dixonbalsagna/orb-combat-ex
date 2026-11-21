@@ -1,0 +1,14 @@
+diff --git a/data/biomes/sizes.json b/data/biomes/sizes.json
+index ad73f5d..db7f85b 100644
+--- a/data/biomes/sizes.json
++++ b/data/biomes/sizes.json
+@@ -4,5 +4,7 @@
+   "default": "medium",
++  "reliefRef": 11000,
++  "reliefTop": 6739,
+   "sizes": {
+-    "tiny":     { "cols": 1280, "spawnReach": 6600,  "arenaCols": 1280, "bakeStride": 4,  "offered": true, "maxBuildingShare": 0.3, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
+-    "small":    { "cols": 2560, "spawnReach": 6600,  "arenaCols": 2560, "bakeStride": 4,  "offered": true, "maxBuildingShare": 0.3, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
++    "tiny":     { "cols": 1280, "spawnReach": 6600,  "arenaCols": 1280, "bakeStride": 4,  "offered": true, "maxBuildingShare": 0.3, "maxReliefShare": 0.3, "reliefKnee": 0.6, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
++    "small":    { "cols": 2560, "spawnReach": 6600,  "arenaCols": 2560, "bakeStride": 4,  "offered": true, "maxBuildingShare": 0.3, "maxReliefShare": 0.3, "reliefKnee": 0.6, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
+     "medium":   { "cols": 4800,  "arenaCols": 4800, "bakeStride": 4,  "offered": true },

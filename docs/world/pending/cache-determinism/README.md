@@ -27,3 +27,5 @@ Land the first on HEAD with GW1a (it needs nothing else). If gw1c-world-fix has 
 
 - The memo is now keyed by the exact shift, so it holds more entries for the first ring (one per ring); it is cleared whole at 192 as before.
 - `shiftBucketOverride` is a test switch in a sim file; it is false everywhere but the negative control.
+
+**Status 2026-11-21: `cache-determinism.diff` LANDED in GW1a (b0e20f9a) and is removed; `cache-determinism.after-gw1c-fix.diff` (the GW1c form) stays.**

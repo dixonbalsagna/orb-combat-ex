@@ -1,0 +1,70 @@
+# depthreads_check and wrecks_check on a clean export of main b0e20f9a (GW1a landed), below-normal priority, one Godot at a time (World, 2026-11-21)
+::group::depthreads_check
+  ok    at a crossing's middle home is the crossing (kind 1, 47475.0, 0.0)
+  ok    in a street, off a crossing: the lane's middle, x kept (kind 0, hz 0.0)
+  ok    in a block row at street level: the nearest street's middle (kind 2, hz 0.0)
+  ok    in a cross street between two streets: the nearest street's middle (kind 2)
+  ok    in an avenue the room is the whole band (-2190 to 165)
+  ok    in a street between blocks the room is the street (-165 to 165)
+  ok    above every roof the room is the band again
+  ok    nearestFace agrees with brute force on 4000 random points (2685 with a face in reach, 0 disagree)
+  cost: nearestFace 61.5 us a call (4000 calls)
+  cost: home 3.6 us a call
+  cost: depthRoom 19.1 us a call
+  cost: crossingNear (3 bh) 8.8 us a call
+  ok    a crossing within 3 bh of a point near one is found ([47475.021484375, 0.0, 111.803398874989])
+  ok    a body 40 units over a roof stands on it (roof at 3038)
+  ok    a body inside the building's height reads the ground (the roof is not under it)
+  ok    a body beside the footprint does not stand on its roof
+  cost: standingAt 10.1 us a call
+DEPTHREADS: 0 check(s) failed
+gate: <path> --script res://sim/world/tools/depthreads_check.gd: no SCRIPT ERROR lines
+gate: <path> --script res://sim/world/tools/depthreads_check.gd: the verdict line reports no failures
+::endgroup::
+::group::wrecks_check
+--- the energy model and the dash OFF (main before GW1a)
+  ok    wrecks.json is clean ([])
+  ok    no wreck stands where nothing has fallen: the query returns nothing
+  houses 83: wreckMass 0.50 to 5.98 (median 1.08); towers 35: 2.06 to 56.86 (median 16.15); lifts [2.0, 6.0, 16.0, 57.0]
+  ok    the city has a house in the front row (hp 108, 241 wide)
+  ok    a house that falls is a wreck, and empty
+  ok    beside it, the query returns the wreck's id and mass (id 108, mass 0.72)
+  ok    a lift under its mass returns nothing, and says heavy
+  ok    within 2 body heights of its box it is found; past it, sideways or above, it is not
+  ok    with people in a building beside it (there are) the wreck is not offered (RL-183)
+  ok    RL-186: while a district flight runs (people of 2 building(s) still to leave, on the street) the wreck is not offered, though no building beside it holds anyone
+  ok    when the flight is over, it is offered again
+  ok    a fighter standing at the wreck does not refuse it (RL-186: combatants are not counted)
+  ok    a wreck with anyone in it is not offered
+  ok    tier 1: landing on a tower the scrap takes 135 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 2: landing on a tower the scrap takes 303 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 3: landing on a tower the scrap takes 527 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 4: landing on a tower the scrap takes 819 hp off the structures (0 levelled) and the wreck is spent
+  ok    a spent wreck cannot be hurled again or offered
+  ok    the scrap does more to structures as the tier rises (hp taken: [134.649106587749, 302.960489822421, 527.375667468674, 819.115398408801])
+  ok    the burst is the same twice, and changes the state (hashed through the spent wreck's mark and the damage)
+--- the energy model and the dash ON (Orb's real path)
+  ok    wrecks.json is clean ([])
+  ok    no wreck stands where nothing has fallen: the query returns nothing
+  houses 83: wreckMass 0.50 to 5.98 (median 1.08); towers 35: 2.06 to 56.86 (median 16.15); lifts [2.0, 6.0, 16.0, 57.0]
+  ok    the city has a house in the front row (hp 108, 241 wide)
+  ok    a house that falls is a wreck, and empty
+  ok    beside it, the query returns the wreck's id and mass (id 108, mass 0.72)
+  ok    a lift under its mass returns nothing, and says heavy
+  ok    within 2 body heights of its box it is found; past it, sideways or above, it is not
+  ok    with people in a building beside it (there are) the wreck is not offered (RL-183)
+  ok    RL-186: while a district flight runs (people of 2 building(s) still to leave, on the street) the wreck is not offered, though no building beside it holds anyone
+  ok    when the flight is over, it is offered again
+  ok    a fighter standing at the wreck does not refuse it (RL-186: combatants are not counted)
+  ok    a wreck with anyone in it is not offered
+  ok    tier 1: landing on a tower the scrap takes 135 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 2: landing on a tower the scrap takes 269 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 3: landing on a tower the scrap takes 438 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 4: landing on a tower the scrap takes 644 hp off the structures (0 levelled) and the wreck is spent
+  ok    a spent wreck cannot be hurled again or offered
+  ok    the scrap does more to structures as the tier rises (hp taken: [134.649106587749, 269.298213175483, 437.60959641017, 644.071559844728])
+  ok    the burst is the same twice, and changes the state (hashed through the spent wreck's mark and the damage)
+WRECKS: 0 check(s) failed
+gate: <path> --script res://sim/world/tools/wrecks_check.gd: no SCRIPT ERROR lines
+gate: <path> --script res://sim/world/tools/wrecks_check.gd: the verdict line reports no failures
+::endgroup::

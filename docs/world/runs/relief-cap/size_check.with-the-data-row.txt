@@ -1,0 +1,43 @@
+  ok    sizes.json loads clean ([])
+  ok    five sizes are offered, smallest first (["tiny", "small", "medium", "big", "huge"])
+  ok    the sixth, colossal, is data that is off
+  ok    medium is 4,800; no size, or no planet to size, is medium
+  ok    tiny: the match is bound to 1280 columns round, an arena of the same, a radius of 6519
+  ok    tiny: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 1.3 s, shared machine: void as a measurement)
+  ok    small: the match is bound to 2560 columns round, an arena of the same, a radius of 13038
+  ok    small: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 1.4 s, shared machine: void as a measurement)
+  ok    medium: the match is bound to 4800 columns round, an arena of the same, a radius of 24446
+  ok    medium: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 1.9 s, shared machine: void as a measurement)
+  ok    big: the match is bound to 9600 columns round, an arena of the same, a radius of 48892
+  ok    big: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 3.1 s, shared machine: void as a measurement)
+  ok    huge: the match is bound to 19200 columns round, an arena of the same, a radius of 97785
+  ok    huge: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 5.1 s, shared machine: void as a measurement)
+  ok    tiny: the same setup plays the same match (hash at tick 600)
+  ok    big: the same setup plays the same match (hash at tick 600)
+  ok    medium named plays byte for byte the match medium unnamed plays (hash at tick 120)
+  ok    a size the data does not have plays medium
+  ok    tiny: the tallest of 72 buildings is 1956, within 1956 (0.3 of the radius 6519)
+  ok    small: the tallest of 128 buildings is 3911, within 3911 (0.3 of the radius 13038)
+  ok    medium: no cap, the tallest building is 4875 (the data's landmarks stand as they were)
+  ok    big: no cap, the tallest building is 4875 (the data's landmarks stand as they were)
+  ok    tiny, plans on after a medium match: the tallest of 597 buildings is 1956, within 1956
+  ok    tiny, plans on: the same setup plays the same match twice
+  ok    small, plans on after a medium match: the tallest of 1242 buildings is 3911, within 3911
+  ok    small, plans on: the same setup plays the same match twice
+  ok    the kept places' key carries the size when it is not medium (medium's is as it was), so a tiny planet never reads a medium planet's towers
+  ok    75 spawns (5 sizes x the pool's planets x touches): all within a base launch's reach (6600) of a place; the farthest is 6476
+  ok    a big planet that is not made is not ready, and asking leaves the host's static (4,800) as it was
+  ok    beginning its load leaves the static as it was
+  ok    the load, run to its end at the planet's own size, makes it ready (and the static is still 4,800)
+  ok    a strict match on it starts (planetNC 9600, a frame, none refused)
+  ok    a crater dug here and one half way round the huge planet are two records
+  ok    each place's box lists its own record only (no aliasing across the planet)
+  ok    each centre reads its own bowl's depth
+  ok    two boxes of the huge planet that a 64 offset would give one key have two (the store's key)
+  ok    and in the water records' grid
+  ok    two boxes past huge's radius that its old offset of 98 gave one key have two (both grids)
+  ok    (the pair is real: with the old offset of 98 those two boxes had one key, in both grids)
+  ok    no two boxes share a key in three slabs of 224 x 224 boxes (112 boxes either way from the centre): 0 shared in the store, 0 in the water records
+  ok    a field made at tiny (80 nodes an edge) is not returned for medium (300): two fields, each its own planet's
+  ok    and asking again at tiny gives the tiny field back (the memo holds both)
+SIZES: 0 check(s) failed

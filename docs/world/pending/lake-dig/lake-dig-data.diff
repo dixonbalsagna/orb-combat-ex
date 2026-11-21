@@ -1,0 +1,10 @@
+diff --git a/data/biomes/field.json b/data/biomes/field.json
+index a082fc8..6eb7df2 100644
+--- a/data/biomes/field.json
++++ b/data/biomes/field.json
+@@ -23,3 +23,4 @@
+     "farReach": 9000,
+-    "farShare": 1.0
++    "farShare": 1.0,
++    "lakeDig": { "on": true, "maxDepth": 300, "slope": 0.33, "minNodes": 40 }
+   },

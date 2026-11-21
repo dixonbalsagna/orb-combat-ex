@@ -1,0 +1,8 @@
+# ground_check and planet_world_check after ground-repin.diff (the old play's six hashes re-recorded on the GW1a tree) and the reworded planet_world_check row
+planet_world_check: PLANETWORLD: 0 check(s) failed
+ground_check: GROUND: 0 check(s) failed
+
+# ground_check on the same tree with the 15 data files of other directors (fight, director, input, combat, camera) put back to HEAD, repin NOT applied: GROUND: 0 check(s) failed (this proves the cause of the two rows)
+
+# Bisect (2026-11-20, same tree, original six hashes): hook in sim.gd removed: 2 rows fail; s424 brunt.gd: 2 fail; arena() and hook both removed: 2 fail (so not a-world-01, default-gate or the flip).
+# Data put back to HEAD: fight+timing 2 fail; director 2 fail; combat+camera 2 fail; fight+timing+director 0 fail; director + brake 2; + hitstop 2; + kick 2; + brake,hitstop,kick 0; + ladder,power,timing 2.

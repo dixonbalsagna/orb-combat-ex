@@ -33,3 +33,7 @@
 - ~~wrecks-power~~: not needed (staging, see the table).
 - The meteor bowl: Encounter's `gw1b-riders` (the EP's pick); World's `meteor-power` is held unless Game Design says otherwise.
 - `crater-tiers` and `bystanders-gw1b` are parked and cover what they cover; nothing above depends on them.
+
+## GW1b (2026-11-20, B-09): the arena pins and ground_check's hashes
+
+25 checks call `WorldPin.arena()` (they test the hand-made arena or the old default world; the mode is `planet` after the flip). `ground_check`'s two hash rows are the one class that is neither a pin nor a fault: they are the old play's hashes, and every director's play data moves them, so they are re-recorded with the golden (`ground-repin.diff`). See `pending/checks-gw1a/README.md`.

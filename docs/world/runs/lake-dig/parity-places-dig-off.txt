@@ -1,0 +1,16 @@
+# The places and the state hash (240 ticks) of a gen 3 match, places on the whole planet, lakeMax 8, the spill on; planets 7/12/3 touches 3/1/2 (LD-06: the eight-corner test runs only where the dig is on)
+## the stack WITHOUT the dig code (World scratch s25b)
+HASH planet 7 touch 3 dig 0: 3835 buildings, bDir 1510482115; b5394f680f72c4ce
+HASH planet 12 touch 1 dig 0: 3705 buildings, bDir 235614138; d81ef456b1e3494b
+HASH planet 3 touch 2 dig 0: 3872 buildings, bDir 627892887; e91fe997cc83eee7
+## the dig code present, the switch off: the places (count and a hash of every building's direction) and the state hash are identical
+HASH planet 7 touch 3 dig 0: 3835 buildings, bDir 1510482115; b5394f680f72c4ce
+HASH planet 12 touch 1 dig 0: 3705 buildings, bDir 235614138; d81ef456b1e3494b
+HASH planet 3 touch 2 dig 0: 3872 buildings, bDir 627892887; e91fe997cc83eee7
+## the dig on, each run twice (the dug lakes drop the buildings that stood in their water: 3834, 3704 and 3868 of 3835, 3705 and 3872)
+HASH planet 7 touch 3 dig 1: 3834 buildings, bDir 1244885211; 490731e8120b5dfa
+HASH again                   : 3834 buildings, bDir 1244885211; 490731e8120b5dfa
+HASH planet 12 touch 1 dig 1: 3704 buildings, bDir 4054256101; dc3381d69d0a7f9f
+HASH again                   : 3704 buildings, bDir 4054256101; dc3381d69d0a7f9f
+HASH planet 3 touch 2 dig 1: 3868 buildings, bDir 1922420842; 8eaedf978d0f816a
+HASH again                   : 3868 buildings, bDir 1922420842; 8eaedf978d0f816a

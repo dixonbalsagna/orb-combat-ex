@@ -1,0 +1,22 @@
+# water_tile_check --strict --shore --verbose, planet 7 touch 3, GW1a stack + lakeSpill true + lakeMax 8 + the dig on (with the corner test)
+  wade x 9600: ground -23.8, the sim's floor -23.8, drawn ground -23.8, drawn water 0.0, feet -23.8, gap -23.8
+  wade x 10240: ground -30.7, the sim's floor -30.7, drawn ground -30.7, drawn water 0.0, feet -30.7, gap -30.7
+  wade x 48640: ground 554.1, the sim's floor 554.1, drawn ground 554.1, drawn water 576.5, feet 554.1, gap -22.4
+  wade x 49280: ground 563.9, the sim's floor 563.9, drawn ground 563.9, drawn water 576.5, feet 563.9, gap -12.6
+  wade x 49920: ground 568.4, the sim's floor 568.4, drawn ground 568.3, drawn water 576.5, feet 568.3, gap -8.2
+  wade x 50560: ground 525.0, the sim's floor 553.0, drawn ground 525.0, drawn water 576.5, feet 552.6, gap -23.9
+  wade x 51840: ground 566.6, the sim's floor 566.6, drawn ground 566.6, drawn water 576.5, feet 566.6, gap -9.9
+  wade x 90240: ground 2484.0, the sim's floor 2484.0, drawn ground 2484.0, drawn water 2501.1, feet 2484.0, gap -17.1
+  wade x 90880: ground 2491.6, the sim's floor 2491.6, drawn ground 2491.6, drawn water 2501.1, feet 2491.6, gap -9.5
+  wade x 122240: ground -19.7, the sim's floor -19.7, drawn ground -19.7, drawn water 0.0, feet -19.7, gap -19.7
+  wade x 128640: ground -67.1, the sim's floor -7.9, drawn ground -67.1, drawn water 0.0, feet -7.9, gap -7.9
+  wade x 130560: ground -20.4, the sim's floor -20.4, drawn ground -20.4, drawn water 0.0, feet -20.4, gap -20.4
+  wade x 147200: ground -24.4, the sim's floor -24.4, drawn ground -24.3, drawn water 0.0, feet -24.4, gap -24.4
+  wade x 147840: ground -34.7, the sim's floor -34.7, drawn ground -34.7, drawn water 0.0, feet -34.7, gap -34.7
+water on the globe ground: planet 7 gen 3, 240 places, 0 cells of S.water (all zero: the sea is in the tile field); tiles of levels 3 and 4 asked at each place and 64 either side
+ok   sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+ok   dry: 169 places, the feet are 1.8 from the drawn ground at worst (0 over 6)
+ok   wade: 18 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 34.7 at most (wade.below 75; 0 out of range)
+ok      lake: 2 places where the sim holds a lake's level, the feet are 0 beyond 6 of the drawn surface; up to 0.0 above it and 0.0 below
+ok      shore: 10 places round the ring where the sim's water begins, the first wet column is 78.5 deep at worst (SHORE_TOL 150; 0 at or over)
+water tile check passed

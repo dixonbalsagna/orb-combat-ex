@@ -1,0 +1,21 @@
+diff --git a/sim/world/tools/ground_check.gd b/sim/world/tools/ground_check.gd
+index 49fe966..6ec073a 100644
+--- a/sim/world/tools/ground_check.gd
++++ b/sim/world/tools/ground_check.gd
+@@ -7,9 +7,9 @@ var fails: int = 0
+ # gen 1 gameplay hashes at the given ticks, recorded before window 2 (base_hash.gd)
+-const BASE: Dictionary = {   # re-pinned 2026-11-08 for CD-05 (Simulation: casSeen left the fighter's hash; World: mass0 and massLost joined it): one-time moves, taken from the stack, not a tree with edits
+-	"planet7/2400": "d0b2c384410de916",
+-	"planet3/1200": "48c10af10d3cd18e",
+-	"planet25/4800": "2b648d9136cc9b89",
+-	"planet11/2400": "d63f4576c3050146",
+-	"handmade": "3d293451a97a0a8c",
+-	"turn": "n=1 92eea3dda225b78c",
++const BASE: Dictionary = {   # re-pinned 2026-11-20 for the GW1a tree (the other directors' fight, director and input data move the old play's hash: stick, brake, hitstop, kick, ladder, power, timing; docs/world/pins-and-the-model.md); before that 2026-11-08 for CD-05 (Simulation: casSeen left the fighter's hash; World: mass0 and massLost joined it): one-time moves, taken from the stack, not a tree with edits
++	"planet7/2400": "5b60d7a246a76524",
++	"planet3/1200": "245997b3570dec98",
++	"planet25/4800": "14e4b7874dbc4a57",
++	"planet11/2400": "16977f95e49c906a",
++	"handmade": "518568120ba17e64",
++	"turn": "n=1 b76414d235362c67",
+ }
