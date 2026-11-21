@@ -1,16 +1,55 @@
+diff --git a/docs/net/a1-wave2.md b/docs/net/a1-wave2.md
+index 2565840..e443186 100644
+--- a/docs/net/a1-wave2.md
++++ b/docs/net/a1-wave2.md
+@@ -15,7 +15,7 @@ This covers the brief `docs/ep/alpha/audit-2026-11-13/05-directives/A1/netcode-o
+ Decision 2 is a random planet each quick match, with a fixed one for a newcomer's first match and for tests.
+ - **Through A1:** LAN keeps planet 7 (`NetLan.SETUP`). It's a test match between Orb's two PCs, and decision 2 keeps a fixed planet for tests. Nothing is built.
+ - **In A3, with LAN inside the game (A-NET-02):** the host draws the planet's seed and sends it in the hello. The joiner adopts it, so both PCs build the same planet, and the seed is shown and saved in the report as it is in the solo quick match.
+-- **What it takes:** one field in the hello and the joiner adopting it (PROTO 5 to 6); the match key built from the agreed setup; `lan_check` rows for both PCs on the host's seed, with a control where the joiner keeps its own. The saved file already carries the setup in its replay, so the report and its replay follow with no change.
++- **What it takes:** one field in the hello and the joiner adopting it (PROTO 6 to 7, after GW1b's digest bump to 6); the match key built from the agreed setup; `lan_check` rows for both PCs on the host's seed, with a control where the joiner keeps its own. The saved file already carries the setup in its replay, so the report and its replay follow with no change.
+ - **Cost:** about 0.1M tokens, no sim change and no change to the state fingerprint. A planet generated at match start also adds its build time to the join, which World's planet work measures.
+ 
+ ## 4. Orb's first real LAN save through the report tool (A-SAVES-01), steps for QA
+diff --git a/docs/net/planet-sizes-net.md b/docs/net/planet-sizes-net.md
+index 49a22cd..ab2925c 100644
+--- a/docs/net/planet-sizes-net.md
++++ b/docs/net/planet-sizes-net.md
+@@ -9,9 +9,9 @@ World's five sizes (`docs/world/pending/planet-sizes/`, setup key `planetSize`,
+ - The setup itself never goes over the wire. NetLan's setups are constants in the game on both PCs, so LAN plays whatever size those constants name. Today they name none, which is medium (World: "a size the data does not have plays medium").
+ - A saved match's replay carries the setup, so a report replays at its own size with no change.
+ 
+-**What's missing,** for A3, when the host chooses (LAN inside the game, A-NET-02): the hello carries the agreed setup (size and planet seed), and the joiner adopts it. That's the same PROTO 6 change already priced for the planet seed (`docs/net/a1-wave2.md` §3). The size is one more field: about 0.1M tokens for both together, with `lan_check` rows for a joiner on another size (refused today, adopted after) and a control.
++**What's missing,** for A3, when the host chooses (LAN inside the game, A-NET-02): the hello carries the agreed setup (size and planet seed), and the joiner adopts it. That's the same PROTO 7 change already priced for the planet seed (`docs/net/a1-wave2.md` §3). The size is one more field: about 0.1M tokens for both together, with `lan_check` rows for a joiner on another size (refused today, adopted after) and a control.
+ 
+-**A smaller gap:** `dataHash` covers the combat and roster data, not `data/biomes/sizes.json`. Two PCs with the same size key but different size data would build different planets. The first checkpoint (60 ticks) would catch that as a desync, not the handshake as a refusal. Both PCs run one LAN folder, so it can't happen on LAN today. The clean fix is for the hello to compare the build id (A-NET-05's `SimReplay.buildId()`), which covers all data and code; I can park that with the PROTO 6 work.
++**A smaller gap:** `dataHash` covers the combat and roster data, not `data/biomes/sizes.json`. Two PCs with the same size key but different size data would build different planets. The first checkpoint (60 ticks) would catch that as a desync, not the handshake as a refusal. Both PCs run one LAN folder, so it can't happen on LAN today. The clean fix is for the hello to compare the build id (A-NET-05's `SimReplay.buildId()`), which covers all data and code; I can park that with the PROTO 7 work.
+ 
+ ## 2. The snapshot at huge: join and rollback
+ 
 diff --git a/net/desync.gd b/net/desync.gd
-index a46aadc..45d0b2f 100644
+index a46aadc..bb37a50 100644
 --- a/net/desync.gd
 +++ b/net/desync.gd
-@@ -28,6 +28,7 @@ const WALK_SKIP: Array = ["out", "worldId"]
+@@ -28,6 +28,8 @@ const WALK_SKIP: Array = ["out", "worldId"]
  
  static var aiBlind: bool = false   # tests only: the digest leaves out the AI's timers (desync_check's negative control)
  static var wordBlind: bool = false # tests only: the digest leaves out the intent's second word (word_check's negative control)
++static var restBlind: bool = false    # tests only: the digest leaves out the fighter fields SimHash reads beyond FIGHTER (_fighterRest), as before (desync_check's coverage control)
 +static var dirIBlind: bool = false    # tests only: the digest leaves out the fighters' director integers, as before they were in it (the controls)
  static var fdmgBlind: bool = false    # tests only: the digest leaves out the buildings' floor damage, as before it was in it (desync_check's control)
  static var marksBlind: bool = false   # tests only: the digest leaves out the buildings' marks, as before they were in it (desync_check's control)
  static var swingBlind: bool = false   # tests only: the digest leaves out the line, the swing and the store (swing_check's negative control)
-@@ -118,7 +119,14 @@ static func _digest(S: SimState) -> String:
+@@ -77,6 +79,8 @@ static func _digest(S: SimState) -> String:
+ 				v.append(ai.t); v.append(ai.atk); v.append(ai.sT); v.append(ai.sOff); v.append(ai.st)
+ 		if word2:
+ 			v.append(SimIntent.pack2(f.input))   # the word nothing may read yet is still in the state: a lost one shows here, not when the director first reads it
++		if not restBlind:
++			_fighterRest(v, md, S, f)
+ 	v.append(S.buildings.size())
+ 	if S.bound():   # the per-tick fields from the state's arrays, as SimHash reads them: a snapshot's records read the live state's (docs/architecture/packed-structures.md)
+ 		for i in range(S.buildings.size()):
+@@ -118,7 +122,14 @@ static func _digest(S: SimState) -> String:
  		_fields(v, md, S.frame, SimState.Frame.HASHED)
  		_fields(v, md, S.swing, SimSwing.HASHED)
  		v.append(S.storeN); v.append(S.storeHash >> 32); v.append(S.storeHash & 0xFFFFFFFF)
@@ -25,8 +64,81 @@ index a46aadc..45d0b2f 100644
  	for k in TERRAIN:
  		var a = S.get(k)
  		var bytes: PackedByteArray = a if a is PackedByteArray else a.to_byte_array()
+@@ -127,6 +138,59 @@ static func _digest(S: SimState) -> String:
+ 	return md.finish().hex_encode()
+ 
+ 
++## Each fighter's fields SimHash reads beyond FIGHTER, the AI's timers and the second word (sim/core/hash.gd's fighter block), in its order. Where
++## SimHash appends a value only while it is set, the digest takes it always: its numbers needn't match any older digest's (PROTO 6). The kick,
++## the slip and the director's integers are read further on, as before. desync_check's coverage row changes each of these on a planet state and
++## the digest must move.
++const FIGHTER_REST: Array = ["launchPower", "wetT", "ctrlT", "skateV", "skateDir", "skateTv", "boon", "brink", "stunTicks", "wallZ", "rally", "rallied", "rallies",
++	"rallyCool", "breathWear", "id", "sigReadyT", "limbBreaks", "brinkSetups", "brinkOpen", "brinkEx", "flightHits"]
++const ACT_HASHED: Array = ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"]   # as SimHash's fighter block lists them
++const RUSH_HASHED: Array = ["off", "end", "arc", "x0", "y0", "dur", "loop", "lr", "lm", "lu", "ls", "px", "py", "pz"]
++const STYLE_HASHED: Array = ["bi", "filled", "label", "leaveT", "shiftAt", "runKind", "runLen", "runMax", "sigLanded"]
++
++static func _fighterRest(v: PackedFloat64Array, md: HashingContext, S: SimState, f) -> void:
++	_fields(v, md, f, FIGHTER_REST)
++	var r = f.rush
++	if r == null:
++		v.append(-1.0)
++	else:
++		v.append(float(_idx(S.fighters, r.tgt)) if r.tgt != null else -2.0)
++		_fields(v, md, r, RUSH_HASHED)
++	v.append(float(_idx(S.fighters, f.launchBy)))
++	if f.lastSeen != null:
++		_fields(v, md, f.lastSeen, ["x", "y"])
++	else:
++		v.append(-1.0)
++	_fields(v, md, f.input, SimHash.INTENT)   # the intent's first word, as SimHash reads it (its second is read above, with the stick on)
++	for ri in range(4):
++		v.append(float(f.wear[ri])); v.append(float(f.stage[ri]))
++	if f.interior != null:
++		_fields(v, md, f.interior, ["b", "dir", "E", "k", "bn", "t", "i"])
++	_fields(v, md, f.act, ACT_HASHED)
++	if S.brakeOn and f.brk != null:
++		_fields(v, md, f.brk, SimBrake.HASHED)
++	if S.formsOn and f.form != null:
++		_fields(v, md, f.form, SimForms.HASHED)
++	if S.flightOn and f.flt != null:
++		_fields(v, md, f.flt, SimFlight.HASHED)
++	if S.ricOn:
++		_fields(v, md, f, SimRicochet.HASHED)
++	v.append(float(f.act.queue.size()))
++	for rq in f.act.queue:
++		for x in rq:
++			v.append(float(x))
++	v.append(float(f.splashed.size()))
++	for x in f.splashed:
++		v.append(float(x))
++	var st = f.style
++	if st != null:
++		for arr in [st.cur, st.buckets, st.win, st.total, st.enterT, st.leftAt]:
++			v.append(float(arr.size()))
++			for x in arr:
++				v.append(float(x))
++		_fields(v, md, st, STYLE_HASHED)
++
++
+ ## A building's floor damage, as SimHash reads it (one value a floor, allocated on the first local hit): its index, the size and the values, only
+ ## where it isn't empty, so a match with none digests as before.
+ static func _fdmg(v: PackedFloat64Array, i: int, fd: PackedFloat32Array) -> void:
+diff --git a/net/handshake.gd b/net/handshake.gd
+index b6715fb..b2eb2dc 100644
+--- a/net/handshake.gd
++++ b/net/handshake.gd
+@@ -18,7 +18,7 @@ extends RefCounted
+ ## the delay sizes the session's first inputs (NetSession._init fills `delay` ticks), so a peer that asks for millions would
+ ## freeze this one (the audit's F-10). No chooser proposes more than NetDelay's maxDelay.
+ 
+-const PROTO: int = 5   # 2: game packets may carry the AI's takeovers (rollback.md section 13). 3: the digest reads the AI's timers, the match key holds the data hash. 4: game packets may carry the second word (section 14), and the digest reads it. 5: the digest reads a field world's line, swing and store (section 15)
++const PROTO: int = 6   # 2: game packets may carry the AI's takeovers (rollback.md section 13). 3: the digest reads the AI's timers, the match key holds the data hash. 4: game packets may carry the second word (section 14), and the digest reads it. 5: the digest reads a field world's line, swing and store (section 15). 6 (GW1b): the digest reads the buildings' marks and floor damage, every fighter field SimHash reads and the director's per-fighter integers, so a GW1a build and a GW1b build, whose digests differ, refuse each other at the hello instead of reporting false desyncs
+ 
+ static var keyPlain: bool = false   # tests only: the match key leaves out the data hash (transport_check's negative control)
+ static var capDelay: bool = true    # tests only: off for lan_check's negative control (a huge proposal is taken)
 diff --git a/net/tools/desync_check.gd b/net/tools/desync_check.gd
-index 18a8492..d313469 100644
+index 18a8492..9733511 100644
 --- a/net/tools/desync_check.gd
 +++ b/net/tools/desync_check.gd
 @@ -5,7 +5,7 @@ extends SceneTree
@@ -38,10 +150,102 @@ index 18a8492..d313469 100644
  ##     checkpoint the one before, the two digests crossed, and a report (NetDesync.report) whose field walk finds the
  ##     difference against the other peer and against the divergent peer's own replay, and none on the clean peer's
  ##     replay. The reports are written to --out. An injection the sim itself erases before the checkpoint (a fighter's
-@@ -46,6 +46,15 @@ var INJECT: Dictionary = {
+@@ -46,6 +46,107 @@ var INJECT: Dictionary = {
  	"director": func(S: SimState) -> void: S.dirS.cool += 1e-6,
  }
  
++## The stand-in's N-2: every fighter field SimHash reads (its fighter block) moves the digest. A match on this setup with the bots to tick 300, so
++## the rush, the style and the act's state are live; then each field of fighter 1 is changed once, the digest compared with the untouched one,
++## and put back. Returns {n, moved, still: the fields that didn't move it}.
++func _coverage(seed: int, setup: Dictionary) -> Dictionary:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, aiFlags, setup)
++	var bots: Array = [NetBot.new(seed, 0), NetBot.new(seed, 1)]
++	for t in range(300):
++		var ins: Array = []
++		for k in range(S.fighters.size()):
++			ins.append(NetSession.intentOf(bots[k].next(), bots[k].word) if k < 2 else SimIntent.unpack(NetSession.NEUTRAL))
++		SimCore.step(S, ins)
++		S.out.feed.clear(); S.out.fx.clear()
++	var f = S.fighters[1]
++	var base: String = NetDesync.digest(S)
++	var out := {"n": 0, "moved": 0, "still": []}
++	var tryField := func(name: String, o: Object, k: String) -> void:
++		if o == null:
++			return
++		var was = o.get(k)
++		var now = _bumped(was)
++		if now == null:
++			return
++		o.set(k, now)
++		out.n = int(out.n) + 1
++		if NetDesync.digest(S) != base:
++			out.moved = int(out.moved) + 1
++		else:
++			out.still.append(name)
++		o.set(k, was)
++	for k in NetDesync.FIGHTER_REST:
++		tryField.call(k, f, k)
++	if f.rush != null:
++		for k in NetDesync.RUSH_HASHED:
++			tryField.call("rush." + k, f.rush, k)
++	tryField.call("lastSeen.x", f.lastSeen, "x")
++	for k in ["mx", "light", "guard"]:
++		tryField.call("input." + k, f.input, k)
++	for k in NetDesync.ACT_HASHED:
++		tryField.call("act." + k, f.act, k)
++	if S.brakeOn and f.brk != null:
++		for k in SimBrake.HASHED:
++			tryField.call("brk." + k, f.brk, k)
++	if S.formsOn and f.form != null:
++		for k in SimForms.HASHED:
++			tryField.call("form." + k, f.form, k)
++	if S.flightOn and f.flt != null:
++		for k in SimFlight.HASHED:
++			tryField.call("flt." + k, f.flt, k)
++	if S.ricOn:
++		for k in SimRicochet.HASHED:
++			tryField.call("ric." + k, f, k)
++	if f.style != null:
++		for k in NetDesync.STYLE_HASHED:
++			tryField.call("style." + k, f.style, k)
++	for pair in [["wear[0]", f.wear], ["stage[0]", f.stage]]:   # an element of an array: changed and put back the same way
++		var arr: Array = pair[1]
++		var was0 = arr[0]
++		arr[0] = int(was0) + 1
++		out.n = int(out.n) + 1
++		if NetDesync.digest(S) != base:
++			out.moved = int(out.moved) + 1
++		else:
++			out.still.append(pair[0])
++		arr[0] = was0
++	f.splashed.append(1.0)
++	out.n = int(out.n) + 1
++	if NetDesync.digest(S) != base:
++		out.moved = int(out.moved) + 1
++	else:
++		out.still.append("splashed")
++	f.splashed.remove_at(f.splashed.size() - 1)
++	SimCore.dispose(S)
++	return out
++
++
++## A field's value changed once, by its type; null for an object or a container (not changed here).
++static func _bumped(x):
++	match typeof(x):
++		TYPE_FLOAT:
++			return x + 0.5
++		TYPE_INT:
++			return x + 1
++		TYPE_BOOL:
++			return not x
++		TYPE_STRING:
++			return x + "x"
++		TYPE_STRING_NAME:
++			return StringName(String(x) + "x")
++	return null
++
++
 +## Whether a match on this setup is on the planet (a field world, with a frame): the default since the planet flip, and the planet setups.
 +static func _fieldWorld(seed: int, su: Dictionary) -> bool:
 +	var S := SimCore.createSim()
@@ -54,7 +258,7 @@ index 18a8492..d313469 100644
  ## Whether a match on this setup plays the energy model: the data's switch, or the setup's "power".
  static func _powerOn(seed: int, su: Dictionary) -> bool:
  	var S := SimCore.createSim()
-@@ -134,6 +143,8 @@ func _init() -> void:
+@@ -134,6 +235,8 @@ func _init() -> void:
  	if INJECT.has("fighter_x") and not setup.has("fights") and _powerOn(seeds[0], setup):   # a match with the energy model (the LAN setups, and every setup once the data has it on: GW1a): x heals, so his health
  		INJECT.erase("fighter_x")
  		INJECT["fighter_hp"] = func(S: SimState) -> void: S.fighters[1].hp -= 1.0
@@ -63,3 +267,31 @@ index 18a8492..d313469 100644
  	if setup.has("fights"):
  		aiFlags = NetLan.AI2
  		if setup.get("outside", false) and not NetLan.outsideKeyed():
+@@ -147,6 +250,11 @@ func _init() -> void:
+ 	if negative:
+ 		_negative(seeds, setup, ticks, every, delay, profiles)
+ 		return
++	if not setup.has("fights"):   # the stand-in's N-2: every fighter field SimHash reads moves the digest (one fight's fighters; the two-fight setups read the same function)
++		var cov := _coverage(seeds[0], setup)
++		print("  %s coverage: %d of %d fighter fields SimHash reads move the digest%s" % ["ok  " if cov.still.is_empty() else "FAIL", cov.moved, cov.n, "" if cov.still.is_empty() else " (not: %s)" % str(cov.still)])
++		if not cov.still.is_empty() or int(cov.n) < 40:
++			failures += 1
+ 	var objects0: int = int(Performance.get_monitor(Performance.OBJECT_COUNT))
+ 	var runs: int = 0
+ 	var checks: int = 0
+@@ -212,6 +320,15 @@ func _negative(seeds: Array, setup: Dictionary, ticks: int, every: int, delay: i
+ 				caught += 1
+ 			else:
+ 				missed += 1
++	if not setup.has("fights"):
++		NetDesync.restBlind = true   # the digest without the fighter fields beyond FIGHTER, as it was: the coverage row must find fields that don't move it
++		var covB := _coverage(seeds[0], setup)
++		NetDesync.restBlind = false
++		print("  %s rest-blind digest: %d of %d fighter fields don't move it" % ["caught" if not covB.still.is_empty() else "MISSED", covB.still.size(), covB.n])
++		if not covB.still.is_empty():
++			caught += 1
++		else:
++			missed += 1
+ 	NetDesync.marksBlind = true   # the digest without the buildings' marks, as it was: a marks-only divergence must pass it, and the check must say so
+ 	for seed in seeds:
+ 		var refM := _straight(seed, setup, ticks, every, delay)

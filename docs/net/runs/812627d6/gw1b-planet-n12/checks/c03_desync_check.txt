@@ -1,0 +1,47 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX desync check   Godot 4.7.2-stable (official)   setup field   600 ticks   checkpoint every 60   delay 2
+  ok   coverage: 56 of 56 fighter fields SimHash reads move the digest
+seed 1  straight: 10 checkpoints, digest 2831 us mean, SimHash.stateHash 25685 us
+  ok   clean   lan     checkpoints matched   9  rollbacks    0  
+  ok   clean   p120    checkpoints matched   9  rollbacks  353  
+  ok   rng         lan     desync at 240 (agreed to 180): first field S.rng.a (3448579135 vs 3448579136), 6 field(s) listed
+  ok   rng         p120    desync at 240 (agreed to 180): first field S.rng.a (3448579135 vs 3448579136), 6 field(s) listed
+  ok   building_hp lan     desync at 240 (agreed to 180): first field S.bHp[0] (91.053429563668 (bits 4056c36b63d525fc) vs 92.053429563668 (bits 4057036b63d525fc)), 1 field(s) listed
+  ok   building_hp p120    desync at 240 (agreed to 180): first field S.bHp[0] (91.053429563668 (bits 4056c36b63d525fc) vs 92.053429563668 (bits 4057036b63d525fc)), 1 field(s) listed
+  ok   building_marks lan     desync at 240 (agreed to 180): first field S.bMarks[0] (1 vs 0), 1 field(s) listed
+  ok   building_marks p120    desync at 240 (agreed to 180): first field S.bMarks[0] (1 vs 0), 1 field(s) listed
+  ok   building_fdmg lan     desync at 240 (agreed to 180): first field S.bFdmg[0].size() (2 vs 0), 1 field(s) listed
+  ok   building_fdmg p120    desync at 240 (agreed to 180): first field S.bFdmg[0].size() (2 vs 0), 1 field(s) listed
+  ok   terrain     lan     desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   terrain     p120    desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   mood        lan     desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   mood        p120    desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   director    lan     desync at 240 (agreed to 180): first field S.T (3.48333333333333 (bits 400bddddddddddcd) vs 3.49999999999999 (bits 400bffffffffffef)), 8 field(s) listed
+  ok   director    p120    desync at 240 (agreed to 180): first field S.T (3.48333333333333 (bits 400bddddddddddcd) vs 3.49999999999999 (bits 400bffffffffffef)), 8 field(s) listed
+  ok   fighter_hp  lan     desync at 240 (agreed to 180): first field S.fighters[1].hp (1558.82671240825 (bits 40985b4e8db29273) vs 1559.82671240825 (bits 40985f4e8db29273)), 1 field(s) listed
+  ok   fighter_hp  p120    desync at 240 (agreed to 180): first field S.fighters[1].hp (1558.82671240825 (bits 40985b4e8db29273) vs 1559.82671240825 (bits 40985f4e8db29273)), 1 field(s) listed
+seed 2  straight: 10 checkpoints, digest 2574 us mean, SimHash.stateHash 24534 us
+  ok   clean   lan     checkpoints matched   9  rollbacks    0  
+  ok   clean   p120    checkpoints matched   9  rollbacks  401  
+  ok   rng         lan     desync at 240 (agreed to 180): first field S.rng.a (481224379 vs 481224378), 4 field(s) listed
+  ok   rng         p120    desync at 240 (agreed to 180): first field S.rng.a (481224379 vs 481224378), 4 field(s) listed
+  ok   building_hp lan     desync at 240 (agreed to 180): first field S.bHp[0] (91.053429563668 (bits 4056c36b63d525fc) vs 92.053429563668 (bits 4057036b63d525fc)), 1 field(s) listed
+  ok   building_hp p120    desync at 240 (agreed to 180): first field S.bHp[0] (91.053429563668 (bits 4056c36b63d525fc) vs 92.053429563668 (bits 4057036b63d525fc)), 1 field(s) listed
+  ok   building_marks lan     desync at 240 (agreed to 180): first field S.bMarks[0] (1 vs 0), 1 field(s) listed
+  ok   building_marks p120    desync at 240 (agreed to 180): first field S.bMarks[0] (1 vs 0), 1 field(s) listed
+  ok   building_fdmg lan     desync at 240 (agreed to 180): first field S.bFdmg[0].size() (2 vs 0), 1 field(s) listed
+  ok   building_fdmg p120    desync at 240 (agreed to 180): first field S.bFdmg[0].size() (2 vs 0), 1 field(s) listed
+  ok   terrain     lan     desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   terrain     p120    desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   mood        lan     desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   mood        p120    desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   director    lan     desync at 240 (agreed to 180): first field S.T (3.31666666666666 (bits 400a888888888879) vs 3.33333333333333 (bits 400aaaaaaaaaaa9b)), 8 field(s) listed
+  ok   director    p120    desync at 240 (agreed to 180): first field S.T (3.31666666666666 (bits 400a888888888879) vs 3.33333333333333 (bits 400aaaaaaaaaaa9b)), 8 field(s) listed
+  ok   fighter_hp  lan     desync at 240 (agreed to 180): first field S.fighters[1].hp (1412.90079982708 (bits 4096139a6b451624) vs 1413.90079982708 (bits 4096179a6b451624)), 1 field(s) listed
+  ok   fighter_hp  p120    desync at 240 (agreed to 180): first field S.fighters[1].hp (1412.90079982708 (bits 4096139a6b451624) vs 1413.90079982708 (bits 4096179a6b451624)), 1 field(s) listed
+objects alive before 1735, after 1736
+PASS  36 runs, 36 checkpoints matched, 0 failure(s)
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe --ticks=600 --profiles=lan,p120: no SCRIPT ERROR lines
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

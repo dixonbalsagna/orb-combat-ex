@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX swing check   Godot 4.7.2-stable (official)   600 ticks   protocol 6   right stick true   negative control
+straight: swings asked 15, ticks with one running 555 of 600, store length at most 12
+  control swing      p120  bad hashes  290, first at 24, digests off the straight run 18
+  control frame      p120  bad hashes  290, first at 24, digests off the straight run 18
+  control store      p120  bad hashes  278, first at 36, digests off the straight run 18
+  control norollback p120  bad hashes  298, first at 8, digests off the straight run 18
+  control swing      far   bad hashes  293, first at 16, digests off the straight run 18
+  control frame      far   bad hashes  293, first at 16, digests off the straight run 18
+  control store      far   bad hashes  285, first at 32, digests off the straight run 18
+  control norollback far   bad hashes  298, first at 8, digests off the straight run 18
+  control motion     far   peers on full and slow reported at tick 60
+  control slow cap   far   top rate 60.0 against 30
+  control uncapped   far   worst 138.6 degrees against the bound 40
+apart: a straight run has a swing on 333 ticks and the pairs apart on 166 of 600
+  control apart, a body of the other fight moved on one peer only: desync true
+swing check passed: 149 checks, 0 failed
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe -- --negative-control: no SCRIPT ERROR lines
+WARNING: 167579 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 5 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
