@@ -70,10 +70,10 @@ index 5925026..54cb290 100644
  	RenderAnim.debug_checks = false
 diff --git a/wpN/render/anim/tools/water_tile_check.gd b/render/anim/tools/water_tile_check.gd
 new file mode 100644
-index 0000000..b7e925f
+index 0000000..0000000
 --- /dev/null
 +++ b/render/anim/tools/water_tile_check.gd
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,159 @@
 +extends SceneTree
 +## The stance on water on the globe ground (Animation, docs/animation/water-tile-check.md; the EP's brief of 2026-11-20). On the globe ground a match is a planet slice and the sim's S.water is all zero (the sea lives in the tile
 +## field), so `anim_check`'s water-stance row, which picks its water out of S.water, runs on the strip ground. This check reads the planet's ring instead: at 240 places round it (every 640 units) the sim's floor
@@ -86,7 +86,12 @@ index 0000000..b7e925f
 +##   lake    the sim says sea but its floor is a lake's level (not 0): the feet against the drawn lake surface, within TOL (gate under `--strict`, a finding without it).
 +## And the shore rows: along the whole ring at 16-unit steps, wherever the sim's water begins (`seaAt` flips), the depth of the first wet column over its ground must be under SHORE_TOL, two body heights (a lake's surface cannot
 +## sit above its shore: World's shore-level fault, measured at x 23,992 to 24,008 and two more edges on the GW1a stack). A finding without `--shore`, a gate with it.
-+## Headless: no picture. Run with --path . --script. `--strict`: the lake line is a gate. `--shore`: the shore line is a gate. `--verbose`: every place beyond the tolerance.
++## GW2 PINS (the EP's ruling of 2026-11-21: the lake group is out of GW1b): the lake rows, the shallow-lake places and the shore rows hold only with World's lake group in (`lake-places` with `lakeMax` and Rendering's
++## `water-everywhere`, which draws every lake at the sim's level) and World's open shore-level fault fixed. Without them the sim holds lake levels the tile field draws no water for, and a body stands up to 684 units over a drawn lake bed.
++## So by default those three lines are PINS: printed, counted, and not gates, and the check passes on GW1b without the lake group (and with it). `--lakes` makes the lake and shallow-lake lines gates (GW2, once the lake group lands);
++## `--shore` makes the shore line one (World's fault); `--gw2` is both; `--strict` is `--lakes` (the name Rendering and the EP have used).
++##   shallow the sim says dry but its floor stands the body above the ground (the water floor's wade lift, the bed to half the depth) while the tiles draw no water there: the same fault at a lake's margin (a `dry` place of the first cuts).
++## Headless: no picture. Run with --path . --script. `--verbose`: every place beyond the tolerance.
 +const TOL: float = 6.0
 +const STEP: float = 640.0
 +const N: int = 240
@@ -96,8 +101,8 @@ index 0000000..b7e925f
 +
 +func _init() -> void:
 +	var args: PackedStringArray = OS.get_cmdline_user_args()
-+	var strict: bool = args.has("--strict")
-+	var shore_gate: bool = args.has("--shore")
++	var lakes_gate: bool = args.has("--lakes") or args.has("--strict") or args.has("--gw2")
++	var shore_gate: bool = args.has("--shore") or args.has("--gw2")
 +	var verbose: bool = args.has("--verbose")
 +	WorldClimate.useGen(RenderTileGround.gen)
 +	var S := SimCore.createSim()
@@ -110,7 +115,7 @@ index 0000000..b7e925f
 +		pass
 +	while not fd.boot_near(100000):
 +		pass
-+	var kinds := {"sea": [], "wade": [], "dry": [], "lake": []}
++	var kinds := {"sea": [], "wade": [], "dry": [], "lake": [], "shallow": []}
 +	var water_cells := 0
 +	for i in range(SimConst.NC):
 +		if S.water[i] >= WorldWater.MIN_DEPTH:
@@ -155,6 +160,8 @@ index 0000000..b7e925f
 +			kind = "lake"
 +		elif wet and wt > h + 1.0:
 +			kind = "wade"
++		elif fl - gs > TOL:
++			kind = "shallow"
 +		(kinds[kind] as Array).append({"x": x, "gap": feet - top, "under": top - feet, "fl": fl, "g": gs, "wt": wt})
 +		if verbose and absf(feet - top) > TOL:
 +			print("  %s x %.0f: ground %.1f, the sim's floor %.1f, drawn ground %.1f, drawn water %s, feet %.1f, gap %.1f" % [kind, x, gs, fl, h, ("%.1f" % wt) if wet else "none", feet, feet - top])
@@ -184,13 +191,21 @@ index 0000000..b7e925f
 +	var lbad: int = 0
 +	var lup: float = 0.0
 +	var ldown: float = 0.0
-+	for e in kinds["lake"]:
-+		if absf(float(e.gap)) > TOL:
-+			lbad += 1
-+		lup = maxf(lup, float(e.gap))
-+		ldown = minf(ldown, float(e.gap))
-+	print("%s lake: %d places where the sim holds a lake's level, the feet are %d beyond %.0f of the drawn surface; up to %.1f above it and %.1f below" % [("FAIL" if strict else "FINDING") if lbad > 0 else "ok     ", (kinds["lake"] as Array).size(), lbad, TOL, lup, -ldown])
-+	if strict and lbad > 0:
++	var lkinds: Array = []
++	for kk in ["lake", "shallow"]:
++		var bad2: int = 0
++		var up2: float = 0.0
++		var down2: float = 0.0
++		for e in kinds[kk]:
++			if absf(float(e.gap)) > TOL:
++				bad2 += 1
++			up2 = maxf(up2, float(e.gap))
++			down2 = minf(down2, float(e.gap))
++		lbad += bad2
++		lup = maxf(lup, up2)
++		ldown = minf(ldown, down2)
++		print("%s %s: %d places%s, the feet are %d beyond %.0f of the drawn %s; up to %.1f above it and %.1f below" % [("FAIL" if lakes_gate else "PIN GW2") if bad2 > 0 else "ok     ", kk, (kinds[kk] as Array).size(), " where the sim holds a lake's level" if kk == "lake" else " where the water floor lifts him over ground the tiles draw dry", bad2, TOL, "lake surface" if kk == "lake" else "ground", up2, -down2])
++	if lakes_gate and lbad > 0:
 +		fails += 1
 +	# the shore rows
 +	var n_shore := 0
@@ -213,7 +228,7 @@ index 0000000..b7e925f
 +					print("  shore x %.0f: the first wet column x %.0f has ground %.1f under a floor at %.1f (%.1f deep)" % [x2, wx, WorldTerrain.groundY(S, wx), WorldWater.floorAt(S, wx), depth])
 +		prev_sea = sea2
 +		prev_x = x2
-+	print("%s shore: %d places round the ring where the sim's water begins, the first wet column is %.1f deep at worst (SHORE_TOL %.0f; %d at or over)" % [("FAIL" if shore_gate else "FINDING") if sbad > 0 else "ok     ", n_shore, sworst, SHORE_TOL, sbad])
++	print("%s shore: %d places round the ring where the sim's water begins, the first wet column is %.1f deep at worst (SHORE_TOL %.0f; %d at or over)" % [("FAIL" if shore_gate else "PIN GW2") if sbad > 0 else "ok     ", n_shore, sworst, SHORE_TOL, sbad])
 +	if shore_gate and sbad > 0:
 +		fails += 1
 +	print("water tile check %s" % ("passed" if fails == 0 else "FAILED"))

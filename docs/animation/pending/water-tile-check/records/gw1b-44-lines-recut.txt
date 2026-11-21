@@ -1,0 +1,14 @@
+GW1b's 44-line apply list (docs/ep/reviews/GW1b-stack.txt minus its four lake lines) on HEAD 77f3411e, then this patch. Planet 7, gen 3, 240 places. Three runs of the re-cut script:
+
+== no flags (the GW1b gate): water tile check passed
+ok     sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+ok     dry: 157 places, the feet are 1.8 from the drawn ground at worst (0 over 6)
+ok     wade: 11 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 34.7 at most (wade.below 75; 0 out of range)
+PIN GW2 lake: 17 places where the sim holds a lake's level, the feet are 17 beyond 6 of the drawn lake surface; up to 683.8 above it and -0.0 below
+PIN GW2 shallow: 4 places where the water floor lifts him over ground the tiles draw dry, the feet are 4 beyond 6 of the drawn ground; up to 31.9 above it and -0.0 below
+PIN GW2 shore: 26 places round the ring where the sim's water begins, the first wet column is 795.6 deep at worst (SHORE_TOL 150; 4 at or over)
+
+== --strict (= --lakes): water tile check FAILED (lake 17, shallow 4 gate; shore still a pin)
+== --gw2 (lakes + shore): water tile check FAILED (lake 17, shallow 4, shore 4 at or over 150)
+
+The four "shallow" places (they read as `dry` 4 beyond 6 before the re-cut, see gw1b-44-lines-before-recut-verbose.txt): x 23,040 (ground 939.1, floor 964.9, 25.8 above), x 48,640 (647.1, 655.9, 8.8), x 93,440 (1,845.4, 1,877.3, 31.9), x 97,280 (1,521.7, 1,550.5, 28.8). The sim's floor is above the ground (the water floor's wade lift at a lake's margin) and the tiles draw no water there: the lake group's fault at its edge, not a separate one. With World's lake-places and Rendering's water-everywhere in (records/gw1b-data-strict-verbose.txt) the same places read dry 149 at 1.8 worst and lake 17 at 0.0.
