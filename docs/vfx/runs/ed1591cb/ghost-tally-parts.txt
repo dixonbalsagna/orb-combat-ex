@@ -1,0 +1,15 @@
+ghost tally reads the drawn after-image list (VFX, 2026-11-21): scratch tree = main ed1591cb + GW1b steps 1 to 6 (a-world-01 and its sim grant, replay-world, meters-zero + its Narrative grant, gw1b-energy's three patches; step 4's pins skipped, checks only); all eight patches applied clean
+
+BEFORE (baseline, after_check seed 8, 14 s): FAIL  on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [4, 5]): 3 differ, first at seed 8, tick 119, fighter 1: 1 drawn, the tally reads 2
+
+AFTER the fix + the one-line Rendering grant:
+ok    seed 8, 900 ticks: at most 5 after-images are drawn round a fighter on any tick ([4, 5]; the limit is 5), and VFX's tally takes one to be shown 5 ticks
+ok    a match has a rush in it: the five are reached (5, seed 8), so the limit is tried
+ok    on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [4, 5])
+ok    eight alive round one fighter: 5 are drawn, and the three left out are the oldest
+ok    one within 24 units of its fighter is not drawn and takes no place: the five off him are all drawn (5)
+ok    a short beam's tail is where it always was (900 units at half a pixel a unit and wider views, bright), and a calm beam's at any size
+ok    a planet-crossing beam (32,058 units): its bright tail uncovers at most 1000 pixels a tick at any zoom (the cap is 1000; it was 34087 in one tick at 0.85 pixels a unit), only ever moves away, an
+after_check, default seed: 7 ok, 0 FAIL
+effects_check: 1173 ok, 0 FAIL; effects check passed; (4 new rows under 'the ghost tally reads the drawn list')
+hash_check (seeds 12345, 4, 7; 3600 ticks; six ways): hash check passed; 627 s on a busy machine
