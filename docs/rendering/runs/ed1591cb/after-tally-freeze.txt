@@ -1,0 +1,69 @@
+# after_check's tally row on GW1b steps 1 to 6 (main ed1591cb + a-world-01, its sim grant, replay-world, pins-gw1b, meters-zero + its Narrative grant, gw1b-energy's three patches): after_probe.gd (scratch), after_check's own loop, seed 8, ticks 112 to 120
+# the fighters stand still from 112 to 119 (a freeze); the tally (VfxGhostTally.after) holds its countdown; the fx view (sim/core/view/fx.gd) ages its parts by dt * 0.1 while frozen; at 119 the oldest one's age passes its life (0.0933 > 0.0917): not drawn, still counted
+tick 116: drawn [0, 2], tally after_now [0, 2] (alive [0, 3]); fighters (tick pose) [[89975.5, 37.8], [90033.5, 37.8]]; views (drawn, cam-relative) [[-22.4, 37.8], [35.6, 37.8]]; cam_x 89997.9
+   tally: slot 1, 1 ticks left, at (90085.3, 58.7), born 109; 55.9 from his tick pose, away 0.964
+   tally: slot 1, 2 ticks left, at (90066.3, 50.7), born 110; 35.3 from his tick pose, away 0.233
+   tally: slot 1, 3 ticks left, at (90048.7, 43.4), born 111; 16.2 from his tick pose, away 0.000
+   view : age 0.0550 of 0.0917 (shown true), at (90048.7, 43.4); owner 1, 16.2 from his drawn view, away 0.000, skipped false
+   view : age 0.0883 of 0.0917 (shown true), at (90085.3, 58.7); owner 1, 55.9 from his drawn view, away 0.964, skipped false
+   view : age 0.0717 of 0.0917 (shown true), at (90066.3, 50.7); owner 1, 35.3 from his drawn view, away 0.233, skipped false
+tick 117: drawn [0, 2], tally after_now [0, 2] (alive [0, 3]); fighters (tick pose) [[89975.5, 37.8], [90033.5, 37.8]]; views (drawn, cam-relative) [[-22.8, 37.8], [35.2, 37.8]]; cam_x 89998.3
+   tally: slot 1, 1 ticks left, at (90085.3, 58.7), born 109; 55.9 from his tick pose, away 0.964
+   tally: slot 1, 2 ticks left, at (90066.3, 50.7), born 110; 35.3 from his tick pose, away 0.233
+   tally: slot 1, 3 ticks left, at (90048.7, 43.4), born 111; 16.2 from his tick pose, away 0.000
+   view : age 0.0567 of 0.0917 (shown true), at (90048.7, 43.4); owner 1, 16.2 from his drawn view, away 0.000, skipped false
+   view : age 0.0900 of 0.0917 (shown true), at (90085.3, 58.7); owner 1, 55.9 from his drawn view, away 0.964, skipped false
+   view : age 0.0733 of 0.0917 (shown true), at (90066.3, 50.7); owner 1, 35.3 from his drawn view, away 0.233, skipped false
+tick 118: drawn [0, 2], tally after_now [0, 2] (alive [0, 3]); fighters (tick pose) [[89975.5, 37.8], [90033.5, 37.8]]; views (drawn, cam-relative) [[-23.2, 37.8], [34.8, 37.8]]; cam_x 89998.7
+   tally: slot 1, 1 ticks left, at (90085.3, 58.7), born 109; 55.9 from his tick pose, away 0.964
+   tally: slot 1, 2 ticks left, at (90066.3, 50.7), born 110; 35.3 from his tick pose, away 0.233
+   tally: slot 1, 3 ticks left, at (90048.7, 43.4), born 111; 16.2 from his tick pose, away 0.000
+   view : age 0.0583 of 0.0917 (shown true), at (90048.7, 43.4); owner 1, 16.2 from his drawn view, away 0.000, skipped false
+   view : age 0.0917 of 0.0917 (shown true), at (90085.3, 58.7); owner 1, 55.9 from his drawn view, away 0.964, skipped false
+   view : age 0.0750 of 0.0917 (shown true), at (90066.3, 50.7); owner 1, 35.3 from his drawn view, away 0.233, skipped false
+tick 119: drawn [0, 1], tally after_now [0, 2] (alive [0, 3]); fighters (tick pose) [[89975.5, 37.8], [90033.5, 37.8]]; views (drawn, cam-relative) [[-23.6, 37.8], [34.4, 37.8]]; cam_x 89999.1
+   tally: slot 1, 1 ticks left, at (90085.3, 58.7), born 109; 55.9 from his tick pose, away 0.964
+   tally: slot 1, 2 ticks left, at (90066.3, 50.7), born 110; 35.3 from his tick pose, away 0.233
+   tally: slot 1, 3 ticks left, at (90048.7, 43.4), born 111; 16.2 from his tick pose, away 0.000
+   view : age 0.0600 of 0.0917 (shown true), at (90048.7, 43.4); owner 1, 16.2 from his drawn view, away 0.000, skipped false
+   view : age 0.0933 of 0.0917 (shown false), at (90085.3, 58.7); owner 1, 55.9 from his drawn view, away 0.964, skipped false
+   view : age 0.0767 of 0.0917 (shown true), at (90066.3, 50.7); owner 1, 35.3 from his drawn view, away 0.233, skipped false
+tick 120: drawn [0, 0], tally after_now [0, 1] (alive [0, 2]); fighters (tick pose) [[89975.5, 37.8], [90033.5, 37.8]]; views (drawn, cam-relative) [[-23.9, 37.8], [34.1, 37.8]]; cam_x 89999.4
+   tally: slot 1, 1 ticks left, at (90066.3, 50.7), born 110; 35.3 from his tick pose, away 0.233
+   tally: slot 1, 2 ticks left, at (90048.7, 43.4), born 111; 16.2 from his tick pose, away 0.000
+   view : age 0.0767 of 0.0917 (shown true), at (90048.7, 43.4); owner 1, 16.2 from his drawn view, away 0.000, skipped false
+   view : age 0.1100 of 0.0917 (shown false), at (90085.3, 58.7); owner 1, 55.9 from his drawn view, away 0.964, skipped false
+   view : age 0.0933 of 0.0917 (shown false), at (90066.3, 50.7); owner 1, 35.3 from his drawn view, away 0.233, skipped false
+   tally: slot 1, 1 ticks left, at (90048.7, 43.4), born 111; 72.3 from his tick pose, away 1.000
+   tally: slot 1, 5 ticks left, at (90033.5, 37.8), born 121; 56.8 from his tick pose, away 0.978
+   view : age 0.0933 of 0.0917 (shown false), at (90048.7, 43.4); owner 1, 72.3 from his drawn view, away 1.000, skipped false
+   view : age 0.1267 of 0.0917 (shown false), at (90085.3, 58.7); owner 1, 110.7 from his drawn view, away 1.000, skipped false
+   view : age 0.1100 of 0.0917 (shown false), at (90066.3, 50.7); owner 1, 90.6 from his drawn view, away 1.000, skipped false
+   view : age 0.0167 of 0.0917 (shown true), at (90033.5, 37.8); owner 1, 56.8 from his drawn view, away 0.978, skipped false
+   tally: slot 1, 4 ticks left, at (90033.5, 37.8), born 121; 113.7 from his tick pose, away 1.000
+   tally: slot 1, 5 ticks left, at (89976.7, 37.8), born 122; 56.8 from his tick pose, away 0.978
+   view : age 0.1100 of 0.0917 (shown false), at (90048.7, 43.4); owner 1, 129.0 from his drawn view, away 1.000, skipped false
+   view : age 0.1433 of 0.0917 (shown false), at (90085.3, 58.7); owner 1, 166.8 from his drawn view, away 1.000, skipped false
+   view : age 0.1267 of 0.0917 (shown false), at (90066.3, 50.7); owner 1, 147.1 from his drawn view, away 1.000, skipped false
+   view : age 0.0333 of 0.0917 (shown true), at (90033.5, 37.8); owner 1, 113.7 from his drawn view, away 1.000, skipped false
+   view : age 0.0167 of 0.0917 (shown true), at (89976.7, 37.8); owner 1, 56.8 from his drawn view, away 0.978, skipped false
+   tally: slot 1, 3 ticks left, at (90033.5, 37.8), born 121; 170.5 from his tick pose, away 1.000
+   tally: slot 1, 4 ticks left, at (89976.7, 37.8), born 122; 113.7 from his tick pose, away 1.000
+   tally: slot 1, 5 ticks left, at (89919.8, 37.8), born 123; 56.8 from his tick pose, away 0.978
+   view : age 0.1267 of 0.0917 (shown false), at (90048.7, 43.4); owner 1, 185.8 from his drawn view, away 1.000, skipped false
+   view : age 0.1600 of 0.0917 (shown false), at (90085.3, 58.7); owner 1, 223.3 from his drawn view, away 1.000, skipped false
+   view : age 0.1433 of 0.0917 (shown false), at (90066.3, 50.7); owner 1, 203.7 from his drawn view, away 1.000, skipped false
+   view : age 0.0500 of 0.0917 (shown true), at (90033.5, 37.8); owner 1, 170.5 from his drawn view, away 1.000, skipped false
+   view : age 0.0333 of 0.0917 (shown true), at (89976.7, 37.8); owner 1, 113.7 from his drawn view, away 1.000, skipped false
+   view : age 0.0167 of 0.0917 (shown true), at (89919.8, 37.8); owner 1, 56.8 from his drawn view, away 0.978, skipped false
+   tally: slot 1, 2 ticks left, at (90033.5, 37.8), born 121; 170.5 from his tick pose, away 1.000
+   tally: slot 1, 3 ticks left, at (89976.7, 37.8), born 122; 113.7 from his tick pose, away 1.000
+   tally: slot 1, 4 ticks left, at (89919.8, 37.8), born 123; 56.8 from his tick pose, away 0.978
+   view : age 0.1433 of 0.0917 (shown false), at (90048.7, 43.4); owner 1, 185.8 from his drawn view, away 1.000, skipped false
+   view : age 0.0333 of 0.0917 (shown true), at (89919.8, 37.8); owner 1, 56.8 from his drawn view, away 0.978, skipped false
+   view : age 0.1600 of 0.0917 (shown false), at (90066.3, 50.7); owner 1, 203.7 from his drawn view, away 1.000, skipped false
+   view : age 0.0667 of 0.0917 (shown true), at (90033.5, 37.8); owner 1, 170.5 from his drawn view, away 1.000, skipped false
+   view : age 0.0500 of 0.0917 (shown true), at (89976.7, 37.8); owner 1, 113.7 from his drawn view, away 1.000, skipped false
+AFTER_CLEAR (24.0, 60.0), AFTER_LIFE 0.0917, after_ticks 5, AFTER_MAX 5
+   at: cleanup (core/object/object.cpp:2536)
+   at: clear (core/io/resource.cpp:822)

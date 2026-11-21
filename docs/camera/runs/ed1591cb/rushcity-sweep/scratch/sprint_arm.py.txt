@@ -1,0 +1,16 @@
+# The one view's scroll governor reads the pair's own speed as well as its camera's: its camera's speed (_vsm_m, smoothed) rises only as the
+# camera moves, after a sprint has started, so the zoom came out late and the picture's step peaked at 0.07 to 0.08 of the width at the start of
+# rushcity's sprints (main ed1591cb). The middle's speed from the fighters' own velocity arms it as the sprint starts; the zoom still eases out
+# at the governor's own rate (GOV_TAU). A launched body keeps its own rules (the governor isn't read then, as before).
+import sys
+p = sys.argv[1] + "/render/camera/split_rig.gd"
+s = open(p, encoding="utf-8", newline="").read()
+a = '''		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
+'''
+assert s.count(a) == 1
+s = s.replace(a, '''		# the pair's own speed (their middle's, from their velocities) arms it as a sprint starts; the camera's own speed comes only as it moves
+		var v_mid: float = Vector2(0.5 * (float(A.vx) + float(B.vx)), 0.5 * (float(A.vy) + float(B.vy))).length()
+		gov_m = _scroll_gov(maxf(maxf(_vsm_m, _gov_armed()), v_mid), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
+''')
+open(p, "w", encoding="utf-8", newline="").write(s)
+print("ok")

@@ -1,0 +1,39 @@
+# B-20: gw1b-energy's look gate. left = 9 Nov build 6a30b4c9 (power=1&flatout=3500; travel 2.0 and dash off: its data, the hook can't set them); right = GW1b steps 1 to 6 on main ed1591cb (flight 3,500, travel 1.5, dash on). Seed 12345, 600 ticks.
+rushcity normal left: 600 frames; flash: An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see:
+rushcity normal right: 600 frames; flash: frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVE
+rushcity reduced left: 600 frames; flash: An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see:
+rushcity reduced right: 600 frames; flash: frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVE
+  side-by-side rushcity: still: b20-rushcity-reduced-t00540.png
+  side-by-side rushcity: gif: b20-rushcity-reduced.gif, 200 frames of 963x277, 9655 KB
+launchai normal left: 600 frames; flash: An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see:
+launchai normal right: 600 frames; flash: An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see:
+launchai reduced left: 600 frames; flash: An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see:
+launchai reduced right: 600 frames; flash: An automated flash check based on WCAG 2.3.1 (general flash, red flash and area), run on recorded gameplay, found no failure. (1 clip; the reading and what it cannot see:
+  side-by-side launchai: still: b20-launchai-reduced-t00540.png
+  side-by-side launchai: gif: b20-launchai-reduced.gif, 200 frames of 963x277, 9290 KB
+## attribution: main ed1591cb alone (the GW1a tree: flight 5,000, travel 2.0), the same scene and words as the GW1b side
+rushcity normal main: 600 frames; flash: frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVE
+rushcity reduced main: 600 frames; flash: frame analysis: 1 of 1 clips are not PASS under the combined rule (FAIL: over 3 on the primary reading, with the area threshold 15% lower or with a two-second memory; OVE
+## the combined rule's readings (primary / lower / higher / stricter; transitions):
+  rushcity_normal_left: PASS, 2 / 2 / 1.5 / 1; worst second at tick 566; 16 transitions
+  rushcity_reduced_left: PASS, 2 / 2 / 1.5 / 1; worst second at tick 566; 18 transitions
+  rushcity_normal_main: FAIL, 3.5 / 4.5 / 3.5 / 1.5; worst second at tick 388; 29 transitions
+  rushcity_reduced_main: FAIL, 4.5 / 4.5 / 4.5 / 1.5; worst second at tick 382; 30 transitions
+  rushcity_normal_right: OVER GATE, 3 / 3 / 3 / 2; worst second at tick 316; 25 transitions
+  rushcity_reduced_right: OVER GATE, 3 / 3 / 3 / 3; worst second at tick 574; 25 transitions
+  launchai_normal_left: PASS, 1.5 / 1.5 / 1 / 1; worst second at tick 311; 19 transitions
+  launchai_reduced_left: PASS, 1 / 1 / 1 / 1; worst second at tick 356; 14 transitions
+  launchai_normal_right: PASS, 1 / 2 / 1 / 0.5; worst second at tick 217; 22 transitions
+  launchai_reduced_right: PASS, 1 / 2 / 1 / 0.5; worst second at tick 221; 21 transitions
+## (left = the 9 Nov build 6a30b4c9: rushcity runs in a city block there, launchai in the same town street as main's; main = ed1591cb alone; right = GW1b steps 1 to 6)
+## main ed1591cb alone, more of the new world: rushcity seed 7, ai seed 12345
+  rushcity seed 7 normal main: PASS, 2 / 3 / 2 / 1; worst second at tick 272; 18 transitions
+  rushcity seed 7 reduced main: PASS, 2 / 3 / 2 / 2; worst second at tick 272; 20 transitions
+  ai seed 12345 normal main: OVER GATE, 3 / 3 / 1 / 1; worst second at tick 273; 27 transitions
+  ai seed 12345 reduced main: OVER GATE, 3 / 3 / 2 / 1; worst second at tick 273; 27 transitions
+## the contrast lever: calm-tones arm A (calm_tones_a.diff, reduced mode only) on GW1b steps 1 to 6
+  ai seed 12345 normal on GW1b: PASS, 1 / 1 / 1 / 1; worst second at tick 425; 15 transitions
+  ai seed 12345 reduced on GW1b: PASS, 1 / 1 / 1 / 1; worst second at tick 501; 11 transitions
+  rushcity seed 12345 reduced on GW1b + calm arm A: PASS, 2 / 3 / 2 / 1; worst second at tick 316; 17 transitions
+  ai seed 12345 reduced on GW1b + calm arm A: PASS, 1 / 1 / 1 / 1; worst second at tick 501; 12 transitions
+  (labels of the last two lines corrected by hand: the script's label for the arm A runs split into words; the order was g6 ai normal, g6 ai reduced, g6a rushcity reduced, g6a ai reduced)

@@ -1,0 +1,46 @@
+# The one view's scroll governor holds its zoom-out through a brief stop (GOV_HOLD): it bound for a fast stretch, the pair stopped to turn, the view
+# zoomed back in, and the next stretch panned at the bigger zoom (rushcity on main ed1591cb: 45 -> 68 px on the turn, then 0.06 to 0.066 of the
+# width a tick). While it bound within the last GOV_HOLD seconds the one view doesn't zoom in past where it is; it comes in, eased, after.
+import sys
+t = sys.argv[1]
+
+
+def edit(path, pairs):
+    p = t + "/" + path
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        assert s.count(a) == 1, (path, s.count(a), a[:90])
+        s = s.replace(a, b)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+
+
+edit("render/camera/camera_params.gd", [
+    ('''const GOV_TAU: float = 0.2             # a zoom-out the scroll governor asks for is taken with this time constant (and at the transition's rate cap)
+''', '''const GOV_TAU: float = 0.2             # a zoom-out the scroll governor asks for is taken with this time constant (and at the transition's rate cap)
+const GOV_HOLD: float = 0.6            # ... and in the one view it holds its zoom-out this long after it last bound: a brief stop or turn doesn't zoom back in for the next stretch
+'''),
+])
+edit("render/camera/split_rig.gd", [
+    ('''var _gov_bind_m: bool = false                          # ... and the merged camera's
+''', '''var _gov_bind_m: bool = false                          # ... and the merged camera's
+var _gov_bind_m_t: float = -100.0                      # ... when it last bound (the hold through a brief stop, CamParams.GOV_HOLD)
+'''),
+    ('''	_gov_bind_m = gov_m < 0.999
+''', '''	_gov_bind_m = gov_m < 0.999
+	if _gov_bind_m:
+		_gov_bind_m_t = time
+'''),
+])
+# the hold: where the merged shadow camera eases its zoom, no zoom in while the hold lasts
+p = t + "/render/camera/split_rig.gd"
+s = open(p, encoding="utf-8", newline="").read()
+a = '''		var kzm: float = km
+		if _gov_bind_m and mt.z < _mz:
+			kzm = maxf(km, 1.0 - exp(-DT / CamParams.GOV_TAU))
+'''
+assert s.count(a) == 1, s.count(a)
+s = s.replace(a, a + '''		if not reduced_motion and time - _gov_bind_m_t < CamParams.GOV_HOLD and mt.z > _mz:
+			mt.z = _mz   # the governor's hold: no zoom in through a brief stop after a fast stretch (eased in after it)
+''')
+open(p, "w", encoding="utf-8", newline="").write(s)
+print("ok")

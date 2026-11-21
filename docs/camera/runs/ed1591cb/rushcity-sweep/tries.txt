@@ -1,0 +1,29 @@
+# Two camera tries on rushcity's sweep (main ed1591cb, scratch, seed 12345, 600 ticks; neither parked)
+
+## 1. Sprint arming (the one view's governor reads the pair's own speed as well as its camera's): no effect
+  normal: step mean 0.0448, ticks over 0.03 472, over 0.045 306; fighter drawn height (px at 720p) min 25, p10 35, median 43
+  reduced: step mean 0.0448, ticks over 0.03 469, over 0.045 302; fighter drawn height (px at 720p) min 25, p10 35, median 43
+The peaks aren't the governor's lag.
+
+## What the peaks are (default view): the sprinter's turn at tick 300 slows the pair, the view zooms in (45 -> 68 px), and the next stretch pans at the bigger zoom
+315 merged step 0.0295 zstep 0.0179 px 55.5
+316 merged step 0.0240 zstep 0.0179 px 56.5
+317 merged step 0.0184 zstep 0.0179 px 57.5
+318 merged step 0.0128 zstep 0.0179 px 58.6
+319 merged step 0.0190 zstep 0.0179 px 59.6
+320 merged step 0.0254 zstep 0.0179 px 60.7
+321 merged step 0.0520 zstep 0.0179 px 61.8
+322 merged step 0.0589 zstep 0.0179 px 62.9
+323 merged step 0.0660 zstep 0.0179 px 64.0
+324 merged step 0.0612 zstep 0.0179 px 65.2
+325 merged step 0.0288 zstep 0.0177 px 66.4
+326 merged step 0.0040 zstep 0.0165 px 67.5
+
+## 2. The governor's hold (no zoom in for 0.6 s after it last bound): the steps come down, the fighters stay small
+main (default view):
+  reduced: step mean 0.0449, ticks over 0.03 472, over 0.045 308; fighter drawn height (px at 720p) min 25, p10 35, median 43
+hold:
+  normal: step mean 0.0401, ticks over 0.03 401, over 0.045 255; fighter drawn height (px at 720p) min 23, p10 24, median 43
+  reduced: step mean 0.0413, ticks over 0.03 438, over 0.045 256; fighter drawn height (px at 720p) min 23, p10 25, median 43
+  main  default view: ticks over 0.055: 77 | around 316 max 0.080 mean 0.0253 | around 382 max 0.070 mean 0.0438 | around 388 max 0.075 mean 0.0443
+  hold  default view: ticks over 0.055: 52 | around 316 max 0.063 mean 0.0169 | around 382 max 0.067 mean 0.0356 | around 388 max 0.071 mean 0.0384

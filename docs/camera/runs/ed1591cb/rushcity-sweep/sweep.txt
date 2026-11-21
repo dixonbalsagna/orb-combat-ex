@@ -1,0 +1,19 @@
+# rushcity's camera sweep on main ed1591cb (scratch copy; clip_digest with a per-tick print: the picture's step in widths a tick, the fighter's drawn height in px at 720p). Seed 12345, 600 ticks.
+
+## Both modes, around Rendering's worst seconds (316, 382, 388, 574)
+normal: step mean 0.0449; ticks over 0.03: 472, over 0.045: 308 (of 600); cuts 4
+   around 316: step max 0.080 mean 0.0253, modes ['merged', 'slam']
+   around 382: step max 0.070 mean 0.0438, modes ['merged']
+   around 388: step max 0.075 mean 0.0443, modes ['merged']
+   around 574: step max 0.051 mean 0.0505, modes ['split']
+reduced: step mean 0.0449; ticks over 0.03: 469, over 0.045: 303 (of 600); cuts 4
+   around 316: step max 0.080 mean 0.0253, modes ['merged', 'slam']
+   around 382: step max 0.070 mean 0.0438, modes ['merged']
+   around 388: step max 0.075 mean 0.0443, modes ['merged']
+   around 574: step max 0.051 mean 0.0505, modes ['split']
+
+## Default view, the scroll budget under Reduce flashing (governor aims at 0.9 of it; its floor in the one view is R_FLOOR, 23 px)
+main (0.045):
+  reduced: step mean 0.0449, ticks over 0.03 472, over 0.045 308; fighter drawn height (px at 720p) min 25, p10 35, median 43
+0.03 (cd04's number, scratch):
+  reduced: step mean 0.0425, ticks over 0.03 447, over 0.045 272; fighter drawn height (px at 720p) min 23, p10 27, median 43
