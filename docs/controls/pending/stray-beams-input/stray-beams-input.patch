@@ -1,9 +1,9 @@
 diff --git a/sim/input/test/stray_beams_input_test.gd b/sim/input/test/stray_beams_input_test.gd
 new file mode 100644
-index 0000000..88478c5
+index 0000000..c74cf12
 --- /dev/null
 +++ b/sim/input/test/stray_beams_input_test.gd
-@@ -0,0 +1,158 @@
+@@ -0,0 +1,167 @@
 +extends SceneTree
 +## Headless checks, through the real hub, for the two stray beams of Orb's 9 November play (Encounter's park docs/director/pending/stray-beams/; A-COMBAT-05 and A-COMBAT-11; Controls' acceptance item 6):
 +##  1. RT + B at the last tick of its window and one tick after (switches bNoBeam and bNoBeamKeepRt on, tapHold.holdStart 12): from a pad the layout makes RT a charge on its 12th tick (the intent's `charge` bit, tick 11 from the press),
@@ -11,6 +11,7 @@ index 0000000..88478c5
 +##     (Orb's tick 6617: RT, a blow, B 26 ticks later) B is the heavy. (Encounter's own check feeds intents with no charge bit and counts the window to 12 ticks; a pad cannot reach that last tick.)
 +##  2. A stick beam let go of that cannot start (its target is held, so the release waits) is dropped by a face press made after the release (ownMove.dropOnPress): no beam comes, the cue is stick_refused beam replaced;
 +##     with nothing pressed it still fires once the target is free.
++## The fight is idle when RT is pressed (_fresh waits the opening brawl of the GW1a data out), so a clock tick is a live tick and the window is read as written.
 +## It needs Encounter's `stray-beams.diff` applied (its brawl.gd window and dropOnPress); on a tree without it the rows marked (fix) fail, which is the control. From the repo root:
 +##   godot --headless --path . --script res://sim/input/test/stray_beams_input_test.gd
 +## Exit 0 if every check passes.
@@ -57,10 +58,18 @@ index 0000000..88478c5
 +	S.fighters[1].x = SimWrap.wrap(S.fighters[0].x + dist)
 +	S.fighters[1].y = S.fighters[0].y
 +	var quiet := SimIntent.new()
-+	for t in range(30):
++	# 30 ticks to settle, then until the fight is idle: on the GW1a data (the 9 Nov bands) two fighters 212 units apart open their own brawl, and the window counts live ticks, so a hit-stop inside the brawl
++	# would leave B 12 clock ticks after RT still inside it. The rule is tested from an idle fight, where a clock tick is a live tick.
++	var idle_since: int = 0
++	var waited: int = 0
++	while waited < 30 or (waited - idle_since < 40 and waited < 600):
 +		SimCore.step(S, [hub.intent(0), quiet])
 +		hub.consumed()
++		if S.dirS.ex != null:
++			idle_since = waited
 +		S.out.fx.clear()
++		waited += 1
++	ok(S.dirS.ex == null, "setup: the fight is idle before RT is pressed (no exchange)")
 +	return S
 +
 +

@@ -1,10 +1,14 @@
-# stray-beams-input (park, on HEAD 51b840f5 plus Encounter's stray-beams): A-CONTROLS-06 acceptance item 6
+# stray-beams-input (park, re-cut 2026-11-21 on main 61248961 plus Encounter's stray-beams re-cut): A-CONTROLS-06 acceptance item 6
 
 Controls, 2026-11-14. Input tests, through the real hub, for the two stray beams of Orb's 9 November play: RT + B at the last tick of its window and one tick after, and a stick beam let go of that cannot start. Records: `docs/controls/runs/51b840f5/stray-beams-input-test.txt` (CD-22).
 
+## The re-cut (2026-11-21, GW1b B-17)
+
+On the GW1a data one row failed on the stack: "RT, then B 12 ticks later (one tick after the window) is the heavy", a beam fired. **The staging was wrong, not the rule:** on the 9 November bands two fighters 212 units apart open their own brawl during the settle (an exchange is already running when RT is pressed). RT's window counts live ticks, so a hit-stop inside that brawl leaves B 12 clock ticks after RT still inside it. The test now waits for an idle fight (no exchange for 40 ticks, a setup check says so) before RT, so a clock tick is a live tick and the rule is read as written, with no row loosened. Passes on main plus the re-cut (21 checks: the 12, and one setup check per match); the control without the fix fails the same three (fix) rows as before; the whole input suite is 46 of 46 on the stack (`docs/controls/runs/61248961/stray-beams-input/stray-beams-input-recut.txt`).
+
 ## Apply
 
-After Encounter's `docs/director/pending/stray-beams/` (`stray-beams.diff`, `grant-tools-schema.patch`): `git -c core.autocrlf=false -c core.eol=lf apply docs/controls/pending/stray-beams-input/stray-beams-input.patch`. Two new files in Controls' path: `sim/input/test/stray_beams_input_test.gd` (+ `.uid`). No existing file changes, no switch, no schema. It pins its own switches, so it does not depend on the pad group.
+After Encounter's `docs/director/pending/stray-beams/` (the re-cut) (`stray-beams.diff`, `grant-tools-schema.patch`): `git -c core.autocrlf=false -c core.eol=lf apply docs/controls/pending/stray-beams-input/stray-beams-input.patch`. Two new files in Controls' path: `sim/input/test/stray_beams_input_test.gd` (+ `.uid`). No existing file changes, no switch, no schema. It pins its own switches, so it does not depend on the pad group.
 
 ## What it checks (12)
 
