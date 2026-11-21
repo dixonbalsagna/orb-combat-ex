@@ -1,0 +1,18 @@
+lakeSpill 0
+  x 23960.0 ground 1215.8 floor 1215.8 level none
+  x 23976.0 ground 1236.1 floor 1435.0 level 1435.0
+  x 24008.0 ground 1276.6 floor 2062.5 level 2062.5
+  x 24120.0 ground 1395.5 floor 2062.5 level 2062.5
+  x 21792.0 ground 516.9 floor 516.9 level 516.9
+  x 21824.0 ground 533.3 floor 989.5 level 989.5
+  x 27872.0 ground 1570.0 floor 2062.5 level 2062.5
+  x 27904.0 ground 1552.5 floor 1552.5 level none
+lakeSpill 1
+  x 23960.0 ground 1215.8 floor 1215.8 level none
+  x 23976.0 ground 1236.1 floor 1236.1 level none
+  x 24008.0 ground 1276.6 floor 1276.6 level none
+  x 24120.0 ground 1395.5 floor 1395.5 level none
+  x 21792.0 ground 516.9 floor 516.9 level none
+  x 21824.0 ground 533.3 floor 533.3 level none
+  x 27872.0 ground 1570.0 floor 1570.0 level none
+  x 27904.0 ground 1552.5 floor 1552.5 level none

@@ -41,3 +41,5 @@ Finding (Animation, `docs/animation/pending/water-tile-check/`): with `field.jso
 
 - The lakes' towns are not laid with `lakeMax` 8: 35 buildings of 3,835 on planet 7 touch 3 (0.9 percent); other planets not counted (the check takes `--planet` and `--touch`).
 - With the gate off for pad worlds, water now draws where `recordWater` says over places on lake shores: the shore towns stand beside drawn water as a lake is, which is the picture the sim already stands fighters on.
+
+**Re-cut 2026-11-20 (GW1b review): lake-places.diff now stacks after cache-determinism** (the GW1a tree: both edit the statics at plan.gd line 38; this one is cut on HEAD plus cache-determinism, the field.json and schema hunks with one line of context). Order tested from a clean HEAD export: data-switches-gw1a, cache-determinism, floor-rise, lake-places, memory-under-model, lake-shore, then the data rows. The `world-checks.json` lines of these parks each sit in their own gap.

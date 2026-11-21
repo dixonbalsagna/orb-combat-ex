@@ -1,6 +1,6 @@
-# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-14)
+# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-21)
 
-267 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **191 run in CI**, 20 more run in the landing gate only, 1 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
+268 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **192 run in CI**, 20 more run in the landing gate only, 1 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
 
 | Folder | Scripts | CI | Gate only | Not run | Unreviewed |
 | :--- | ---: | ---: | ---: | ---: | ---: |
@@ -13,7 +13,7 @@
 | sim/core/tools | 16 | 12 | 0 | 0 | 4 |
 | sim/director/tools | 44 | 6 | 1 | 0 | 37 |
 | sim/input/test | 45 | 44 | 1 | 0 | 0 |
-| sim/world/tools | 85 | 85 | 0 | 0 | 0 |
+| sim/world/tools | 86 | 86 | 0 | 0 | 0 |
 | tools/l10n | 1 | 0 | 0 | 0 | 1 |
 | ui/tools | 7 | 0 | 1 | 0 | 6 |
 
@@ -247,6 +247,7 @@
 | sim/world/tools/landmark_spare_check.gd | CI |  |
 | sim/world/tools/lane_check.gd | CI + gate |  |
 | sim/world/tools/lot_reach_check.gd | CI |  |
+| sim/world/tools/memory_model_check.gd | CI |  |
 | sim/world/tools/meteor_crater_check.gd | CI |  |
 | sim/world/tools/minecheck.gd | CI + gate |  |
 | sim/world/tools/node_warm_check.gd | CI |  |

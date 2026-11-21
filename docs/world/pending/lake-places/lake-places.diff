@@ -1,22 +1,25 @@
 --- a/sim/world/plan.gd
 +++ b/sim/world/plan.gd
-@@ -38,6 +38,15 @@
+@@ -38,9 +38,18 @@
  ## The most the ground may depart from a straight slope between a free building's centre and a corner of its plan footprint (plans.maxFootSlope, units; 0 or less: no limit). A building over a cliff or a step of another record
  ## is not laid (like one in the sea): its underside would show (docs/world/lot-gap.md). A smooth slope, however steep, passes: the lot's tilt and the view's plinth answer that. `footSlopeOverride` (a test's) is used when it is 0 or more.
  static var footSlopeOverride: float = -1.0
 +static var lakeMaxOverride: float = -2.0       # tests only: -2 the data's plans.lakeMax, else this
-+
-+
+ static var shiftBucketOverride: bool = false   # tests only: the memo key as it was (the shift to the nearest 8 units), so a check can show the fault the exact key removed (cache_warm_check --negative-control)
+ 
+ 
 +## How deep a lake's or a river's water may stand over a building's base before the building is not laid (units; plans.lakeMax, -1 or no key: off, today). A place laid on a lake's bed is a town under water: with everywhere
 +## on, free places are laid on the planet and the lakes are records, so the planet's towns stood in them (docs/world/lake-places.md).
 +static func lakeMax() -> float:
 +	if lakeMaxOverride > -1.5:
 +		return lakeMaxOverride
 +	return float(WorldField.data().get("plans", {}).get("lakeMax", -1.0))
- 
- 
++
++
  static func maxFootSlope() -> float:
-@@ -443,11 +452,16 @@
+ 	if footSlopeOverride >= 0.0:
+ 		return footSlopeOverride
+@@ -446,11 +455,16 @@
  	var kept: Array = []
  	var gmax: float = maxFootSlope()
  	var cliffed: int = 0
@@ -33,7 +36,7 @@
  		if gmax > 0.0 and _overhangs(S, P, id, yaw, float(e.x) - float(geo.xc), float(e.z), 0.5 * float(e.w), 0.5 * float(e.d), g0, gmax):
  			cliffed += 1
  			continue
-@@ -462,7 +476,7 @@
+@@ -465,7 +479,7 @@
  		b["u"] = float(e.x) - float(geo.xc)
  		b["v"] = float(e.z)
  		kept.append(b)
@@ -44,24 +47,16 @@
  ## Is the ground steeper than `slope` (rise over run) between the footprint's centre and any of eight points on the circle round it (radius r, the half diagonal: a footprint turned to any line has its corners on it)? Read from
 --- a/data/biomes/field.json
 +++ b/data/biomes/field.json
-@@ -16,6 +16,7 @@
-     "farPeople": false,
-     "farAnguish": false,
+@@ -18,2 +18,3 @@
      "maxFootSlope": 0.7,
 +    "lakeMax": -1,
      "indexFrontBH": -2.0,
-     "indexBackBH": 45.0,
-     "farReach": 9000,
 --- a/tools/schemas/biomes-field.schema.json
 +++ b/tools/schemas/biomes-field.schema.json
-@@ -27,6 +27,7 @@
-         "farAnguish": { "type": "boolean", "description": "On (with farPeople), a far town's people count toward the hero's anguish by their place's share when it is first posed, and feed nothing else: not menace, power, Witness or mood." },
-         "farShare": { "type": "number", "minimum": 0, "maximum": 4, "description": "A far place, wholly lost, counts toward the hero's anguish as this many first-ring places' worth of people (the average one's); a part lost counts in proportion to the place's own people, so a larger place does not cost more by size (Legal RL-228 term 3)." },
+@@ -29,2 +29,3 @@
          "maxFootSlope": { "type": "number", "minimum": 0, "maximum": 10, "description": "With everywhere, the steepest ground (rise over run) allowed between a free building's centre and any of eight points on the circle round its footprint; a building on a cliff is not laid (docs/world/lot-gap.md). A hillside town stands on 0.3 to 0.6, a cliff is 3 or more. 0: no limit." },
 +        "lakeMax": { "type": "number", "minimum": -1, "maximum": 200, "description": "With everywhere, how deep a lake's or a river's water may stand over a free building's base before the building is not laid (units): a place laid on a lake's bed was a town under water (docs/world/lake-places.md). -1: off (every building is laid, as before)." },
          "indexFrontBH": { "type": "number", "minimum": -60, "maximum": 60, "description": "With everywhere, the depth in front of the line (z positive toward the camera), in fighter heights (bh = 75 units), past which a planet-fixed building's FRONT FACE (its z plus half its depth) is not indexed (so not struck, and Rendering's rule has lowered it): -2 (-150 units); a first-ring block's face is -2.5." },
-         "indexBackBH": { "type": "number", "minimum": 0, "maximum": 200, "description": "With everywhere, the depth behind the line, in fighter heights, out to which a building is indexed if that is further than swing.json indexBand: the background lane's far edge (44.5)." },
-         "farReach": { "type": "number", "minimum": 500, "maximum": 40000, "description": "A far place is posed (its people wake, and join the anguish's norm) when a fighter is within this many units of its first building." },
 --- /dev/null
 +++ b/sim/world/tools/lake_places_check.gd
 @@ -0,0 +1,59 @@
@@ -126,7 +121,7 @@
 +	quit(0 if fails == 0 else 1)
 --- a/tools/world-checks.json
 +++ b/tools/world-checks.json
-@@ -6,2 +6,3 @@
-     "power_world_check",
+@@ -5,2 +5,3 @@
+     "after_check", "arena_check", "b_check", "blastcheck", "blockcheck", "brunt_check", "calm_read_check", "campaign_check", "climate_check", "collateral_check",
 +    "lake_places_check",
-     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
+     "power_world_check",

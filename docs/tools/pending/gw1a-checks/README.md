@@ -17,7 +17,7 @@ The two unreviewed ones are the whole of the 57. Both are run here, so both go *
 | File | What |
 | :--- | :--- |
 | `ci-gw1a-checks.patch` (sha1 `ca24378e1780fe6f56e968369eec3e935b2cdb4b`) | `.github/workflows/ci.yml`: two steps in the `godot-sim` job, after the cross end negative control: the match recorder check and the match end check, each through `tools/gate.mjs` (the plain form: both scripts `quit(1)` on a failure). Applies to HEAD and to the stack. |
-| `check-scripts.md` (sha1 `ac6d710b700105b960e5901fda007493c9ef85b6`) | `docs/tools/check-scripts.md` as `--write` makes it on the stack with the patch: 267 scripts, 191 in CI, 55 unreviewed; the five new rows. It replaces the table file once the stack has landed (on main today it would list 262). |
+| `check-scripts.md` (sha1 `8f988d2f953dbb6672e21885cb2fc11eb07a5009`, re-generated 2026-11-21 with World's memory-under-model on the stack: 268 scripts, 192 in CI, 55 unreviewed) | `docs/tools/check-scripts.md` as `--write` makes it on the stack with the patch: 267 scripts, 191 in CI, 55 unreviewed; the five new rows. It replaces the table file once the stack has landed (on main today it would list 262). |
 
 **Kept:** `../gw1a-retire/ci-sets-step.patch` stays. (My first note here said it was redundant: wrong. The stack's `ci.yml` has the audio sets step only because the EP's stack applies that patch; main's `ci.yml` has just the comment.) Land it with Audio's park as before. `ci-gw1a-checks.patch` applies on top of it or without it: its two steps sit in the `godot-sim` job, a different job, and I checked it applies to both HEAD and the stack.
 

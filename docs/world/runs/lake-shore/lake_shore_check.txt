@@ -1,0 +1,11 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+      planet 7 touch 3: 6 lakes; off: 6641 nodes, 642 of 1101 shore links open (worst 2898); on: 79 nodes, 0 of 42 open (worst 0.0)
+      planet 12 touch 1: 2 lakes; off: 3122 nodes, 236 of 460 shore links open (worst 763); on: 29 nodes, 0 of 20 open (worst 0.0)
+      planet 3 touch 2: 4 lakes; off: 3564 nodes, 526 of 869 shore links open (worst 802); on: 40 nodes, 0 of 36 open (worst 0.0)
+  ok   off: lakes' water meets dry land above its shore (1404 shore links open, the worst 2898 units)
+  ok   lakeSpill: no lake's water begins above its shore: 0 open shore links
+  ok   and some water stays: 148 nodes of the 13327 the plan's levels held (only the real basins: the rest was water over slopes)
+LAKESHORE: 0 check(s) failed
+WARNING: 22 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

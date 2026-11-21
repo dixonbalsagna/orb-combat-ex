@@ -1,0 +1,178 @@
+--- a/sim/world/waterrec.gd
++++ b/sim/world/waterrec.gd
+@@ -19,6 +19,7 @@
+ const BAND: float = 9000.0          # rivers are planned within this lateral distance of the ring
+ 
+ static var _ix: Dictionary = {}     # state instance id -> {recs (the array), grid, big}
++static var spillOverride: int = -1   # tests only: -1 the data's plans.lakeSpill, 0 off, 1 on
+ 
+ 
+ static func _R() -> float:
+@@ -38,6 +39,15 @@
+ 
+ 
+ ## ===================================================================== lakes
++## Whether a lake's level is held to what the land holds in 2D (field.json plans.lakeSpill; off: the ring plan's level, flooded 2D out to a distance, as before). The ring's plan reads a valley on one line and its level is that
++## line's rim; in 2D the basin may open sideways below it, and the flood used to stop at a distance, so the water met dry land far above its shore (a slab of water over a hillside, up to 2,900 units). With it on the level is the
++## lower of the plan's and the spill (the lowest pass out of the basin: out of its bound, into a lake planned before it, or down to the sea), and the water is the nodes the flood reaches below that.
++static func spillOn() -> bool:
++	if spillOverride >= 0:
++		return spillOverride == 1
++	return bool(WorldField.data().get("plans", {}).get("lakeSpill", false))
++
++
+ ## A lake record from a ring lake entry [first column, last column, level, width]: the seed is the lowest of its columns' points; the flood runs on the field's canonical nodes from the seed's cell.
+ ## `claimed` is shared by the lakes of one plan, planned from the lowest level up: nodes a lake holds are not entered by the next.
+ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary, lk: Array, base: PackedFloat32Array, id: int, claimed: Dictionary = {}) -> Dictionary:
+@@ -69,7 +79,51 @@
+ 			if F.h[idx] < bh:
+ 				bh = F.h[idx]
+ 				best = idx
+-	if bh < level:
++	if bh < level and spillOn():
++		var heap: Array = [[bh, best]]   # [pass height, node], ascending: the lowest pass out of the seed first (a node's pass is the highest ground on the best way to it)
++		var seen2: Dictionary = {best: true}
++		var spill: float = 1.0e18
++		var members: Array = []
++		var lastp: float = bh
++		while not heap.is_empty():
++			var top: Array = heap.pop_front()
++			var pp: float = float(top[0])
++			if pp >= minf(level, spill):
++				break
++			if members.size() >= MAX_NODES:
++				spill = minf(spill, pp)   # a basin that large is a sea: the level is held where the flood stopped
++				break
++			var cur2: int = int(top[1])
++			members.append([cur2, pp])
++			lastp = pp
++			var cf2: int = cur2 / s2
++			var rem3: int = cur2 - cf2 * s2
++			var j3: int = rem3 / F.side
++			var i3: int = rem3 - j3 * F.side
++			for nb2 in [[i3 - 1, j3], [i3 + 1, j3], [i3, j3 - 1], [i3, j3 + 1]]:
++				var nj: int = _nodeAcross(F, cf2, nb2[0], nb2[1])
++				if seen2.has(nj):
++					continue
++				seen2[nj] = true
++				var p2: float = maxf(pp, float(F.h[nj]))
++				if claimed.has(nj) or not _within(F, nj, q, maxr) or float(F.h[nj]) < WorldTerrain.TRIM_G:
++					spill = minf(spill, p2)   # out of its bound, into a lake planned before it, or down to the sea: the water cannot stand above this pass
++					continue
++				var lo: int = 0
++				var hi: int = heap.size()
++				while lo < hi:
++					var mid: int = (lo + hi) / 2
++					if float(heap[mid][0]) <= p2:
++						lo = mid + 1
++					else:
++						hi = mid
++				heap.insert(lo, [p2, nj])
++		var lvl: float = minf(level, spill)
++		level = maxf(lvl, bh)   # never under the seed's own ground
++		for mm in members:
++			if float(mm[1]) < level:   # a node whose pass out of the seed is the level or more is not under water at it: the water would run off through it
++				nodes[int(mm[0])] = true
++	elif bh < level:
+ 		var stack: Array = [best]
+ 		var seen: Dictionary = {best: true}
+ 		while not stack.is_empty() and seen.size() < MAX_NODES:
+--- a/data/biomes/field.json
++++ b/data/biomes/field.json
+@@ -20,2 +20,3 @@
+     "indexBackBH": 45.0,
++    "lakeSpill": false,
+     "farReach": 9000,
+--- a/tools/schemas/biomes-field.schema.json
++++ b/tools/schemas/biomes-field.schema.json
+@@ -31,2 +31,3 @@
+         "indexBackBH": { "type": "number", "minimum": 0, "maximum": 200, "description": "With everywhere, the depth behind the line, in fighter heights, out to which a building is indexed if that is further than swing.json indexBand: the background lane's far edge (44.5)." },
++        "lakeSpill": { "type": "boolean", "description": "A gen 3 planet's lake level is held to what the land holds in 2D: the lower of the ring plan's level and the spill (the lowest pass out of the basin). Off: the plan's level, flooded out to a distance, so the water can meet dry land far above its shore (docs/world/lake-shore.md)." },
+         "farReach": { "type": "number", "minimum": 500, "maximum": 40000, "description": "A far place is posed (its people wake, and join the anguish's norm) when a fighter is within this many units of its first building." },
+--- /dev/null
++++ b/sim/world/tools/lake_shore_check.gd
+@@ -0,0 +1,78 @@
++extends SceneTree
++# No lake's water begins above its shore (World, sim/world/waterrec.gd lakeOf, data/biomes/field.json plans.lakeSpill; docs/world/lake-shore.md). A gen 3 planet's lake is the ring plan's level (a valley's rim on one line) flooded
++# in 2D out to a distance. The land round it can open sideways below that level, and the flood used to stop at the distance, so the water ended in the air over a hillside: on planet 7 every lake had about half of its shore
++# links open (the ground beyond the water below its level), the worst 2,898 units. With lakeSpill the level is the lower of the plan's and the spill (the lowest pass out of the basin) and no link is open.
++#   godot --headless --path . --script res://sim/world/tools/lake_shore_check.gd
++var fails: int = 0
++
++
++func ok(cond: bool, what: String) -> void:
++	if cond:
++		print("  ok   ", what)
++	else:
++		fails += 1
++		print("  FAIL ", what)
++
++
++## [lakes, nodes, shore links, open links (a node with water in it beside a node outside the lake whose ground is below the level by more than 1), the deepest open one] over the planet's lake records.
++func _read(planet: int, touch: int, spill: int) -> Array:
++	WorldClimate.useGen(3)
++	WorldWaterRec.spillOverride = spill
++	WorldFieldCache.enabledOverride = 0
++	WorldPlanet.forget()
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 4, {}, {"planet": planet, "touch": touch, "planetGen": 3, "intro": false})
++	var F: WorldField.Field = WorldField.of(WorldPlanet.make(planet))
++	var s2: int = F.side * F.side
++	var lakes: int = 0
++	var nn: int = 0
++	var edge: int = 0
++	var open: int = 0
++	var worst: float = 0.0
++	for rec in S.fieldRecs:
++		if str(rec.k) != "lake":
++			continue
++		lakes += 1
++		var level: float = float(rec.level)
++		for idx in rec.nodes:
++			nn += 1
++			if float(F.h[idx]) >= level - 1.0:
++				continue   # a node at or above the level holds no water: a shore, not an edge of the water
++			var cf: int = int(idx) / s2
++			var rem: int = int(idx) - cf * s2
++			var j: int = rem / F.side
++			var i: int = rem - j * F.side
++			for nb in [[i - 1, j], [i + 1, j], [i, j - 1], [i, j + 1]]:
++				var ni: int = WorldWaterRec._nodeAcross(F, cf, nb[0], nb[1])
++				if not rec.nodes.has(ni):
++					edge += 1
++					if float(F.h[ni]) < level - 1.0:
++						open += 1
++						worst = maxf(worst, level - float(F.h[ni]))
++	SimCore.dispose(S)
++	return [lakes, nn, edge, open, worst]
++
++
++func _init() -> void:
++	var cases: Array = [[7, 3], [12, 1], [3, 2]]
++	var tot_off: int = 0
++	var tot_on: int = 0
++	var worst_off: float = 0.0
++	var nodes_off: int = 0
++	var nodes_on: int = 0
++	for c in cases:
++		var off: Array = _read(int(c[0]), int(c[1]), 0)
++		var on: Array = _read(int(c[0]), int(c[1]), 1)
++		print("      planet %d touch %d: %d lakes; off: %d nodes, %d of %d shore links open (worst %.0f); on: %d nodes, %d of %d open (worst %.1f)" % [c[0], c[1], off[0], off[1], off[3], off[2], off[4], on[1], on[3], on[2], on[4]])
++		tot_off += int(off[3])
++		tot_on += int(on[3])
++		worst_off = maxf(worst_off, float(off[4]))
++		nodes_off += int(off[1])
++		nodes_on += int(on[1])
++	ok(tot_off > 100 and worst_off > 500.0, "off: lakes' water meets dry land above its shore (%d shore links open, the worst %.0f units)" % [tot_off, worst_off])
++	ok(tot_on == 0, "lakeSpill: no lake's water begins above its shore: %d open shore links" % tot_on)
++	ok(nodes_on > 0, "and some water stays: %d nodes of the %d the plan's levels held (only the real basins: the rest was water over slopes)" % [nodes_on, nodes_off])
++	WorldWaterRec.spillOverride = -1
++	WorldFieldCache.enabledOverride = -1
++	print("LAKESHORE: %d check(s) failed" % fails)
++	quit(0 if fails == 0 else 1)
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -7,2 +7,3 @@
+     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
++    "lake_shore_check",
+     "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
