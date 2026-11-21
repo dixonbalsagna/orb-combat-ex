@@ -117,3 +117,44 @@ Yes.
 ## How this was done
 
 One reviewer read the park, the code it touches, Game Design's page and the run records, and checked the arithmetic in a scratch model. No agents were used. The page under "Background" cost about 2.4M tokens in two attempts (the first stopped on the weekly limit); this review itself cost under 0.2M.
+
+## Re-check of the re-parked version (commit fe7dbc8a, 2026-11-20, about 20:35)
+
+World re-parked the fix with Game Design's held-hit rule. Read the same way: by one reviewer, by hand, nothing run. Both diffs were tried with `git apply --check` on main and on a scratch copy of the GW1a tree's files; they apply on both, the data row after the code.
+
+**Verdict: the code can land. It is still inert as shipped (`heldMul` 1.0, `repeatMarks` 0). Two things are owed before the 2.0 row is switched on: R-1 and R-2.**
+
+### What happened to the first review's findings
+
+| Finding | Now | Evidence |
+| :--- | :--- | :--- |
+| M-01, the damage basis | **Fixed.** A held hit with `heldMul` above 1 counts on the covered floors' undamaged strength (`sumS0`), so earlier damage now builds up. The two rows Game Design named run as real hits in a row and pass: 1.7 three times leaves 20, 20, 18 floors of 20; 3.4 twice leaves 20, 18; 7.5 once leaves 18. With `heldMul` 1 the old expression is kept, in the same order of operations, so nothing moves | the diff's `_outcomePower` line and `outcomeDmg`; `memory_model_check` rows `_sends(...)`; `docs/world/runs/memory-under-model/memory_model_check.txt` |
+| M-02, `heldMul` moves the golden by itself | **Fixed in the data, not yet in the words.** It ships at 1.0 and the 2.0 row is its own diff. See R-2 | `memory-under-model-data.diff`; the schema line in the same code diff |
+| M-03, a held hit that breaks floors turning into a pass | **Still open.** See R-1 | |
+| M-04, GW1a's pin words | **Settled by the EP:** the park lands with GW1a. The re-cut pin now sets `heldMul` itself, so it needs the park in the same stack. See R-3 | `docs/world/pending/checks-gw1a/pins-gw1a.diff:508`, `:533`, `:567` |
+| m-05, no golden or gate record | **Half done.** The README now says the golden is unchanged; no parity, lint, load-split or two-fighter count record is in the run folder | `docs/world/runs/memory-under-model/` (nine files, all World checks) |
+| m-08, real-sequence rows | **Done for the held hit** (three rows through `hit`). Still none for the meteor's pass or for the planner against the outcome on a marked tower | the check |
+| m-06, m-07, m-09 to m-11 | unchanged | |
+
+### Still owed
+
+**R-1 (MAJOR, before the 2.0 row goes on). What happens to the fighter when a held hit breaks floors is not stated or checked.** With `heldMul` 2 a held hit now does reach the "punch" outcome, as the new rows show. The floors are cleared, but the three rows only count standing floors; none asserts where the fighter ends up. Two paths lead to a pass the fighter did not have the energy for:
+- a second held hit beside floors already cleared makes a gap of more than two floors (`TUNNEL_MAX` 2, `brunt.gd:83`), the stack above drops (`:1234-1237`), and `hit` then treats the hit as passing with `keepHi` of the speed (`:991`, `:999`);
+- each held hit also wears the core by a quarter of its damage (`:1229`); with twice the damage on the undamaged strength that comes sooner, and a collapse passes the same way.
+
+The README's own words are "a hold breaks floors, and the core goes by its own rule". Game Design's are "still held" (`docs/design/buildings.md:341`). Fix: World states the rule (held at the face when the tower gives way under a held hit, or through at a named speed), adds a row that asserts the fighter's state after such a hit, and checks the planner's lookahead predicts the same. Owner: World, with Game Design.
+
+**R-2 (MAJOR, a wording fix). The README places the 2.0 row in GW1b; the EP places it in the wall-hold window.** The README's file table calls `memory-under-model-data.diff` "the GW1b data row", and its last section says "the data row with GW1b" and "it flips in the GW1b window with the other data rows". The EP's note to the stand-in says the row goes in the wall-hold window. The EP's placement is the sound one: without `repeatMarks` 2 the row would change every held hit in the reference matches while giving only part of what Game Design ruled (three sends of 1.7 would still break nothing, because no mark lowers the mass). Fix: the README names the wall-hold window, and says the row and `repeatMarks` 2 flip together. Owner: World.
+
+### Smaller points
+
+| # | What | Evidence | Fix | Owner |
+| :--- | :--- | :--- | :--- | :--- |
+| R-3 | The current GW1a pins set `WorldBrunt.cfg().heldMul` and assert that floors break, so `pins-gw1a.diff` now depends on this park. Applied without it, `wall_hold_check`'s row would fail | `pins-gw1a.diff:508`, `:567` | Stack `memory-under-model.diff` before or with the pins, and say so in both READMEs | World, EP |
+| R-4 | The README says "No grant", but the diff adds a line to `tools/schemas/biomes-brunt.schema.json`, which is Tools' file. That schema is closed and already has cases in `tools/fixtures/cases.json` | the diff's schema hunk; `biomes-brunt.schema.json:335` | Tools reviews the line and adds cases for the new key (under 1, over 8, wrong type), as it did for the wall cone | Tools |
+| R-5 | The basis changes with the number: at exactly 1.0 a held hit counts on the weakened strength, and at anything above 1.0 on the undamaged strength. So 1.01 is not "one percent more" | the diff: `if hm > 1.0 else` | Say so in the schema's description, or give the basis its own key | World |
+| R-6 | When a held hit breaks floors, the bystanders of those floors are all sent running. The cap for a held hit (`heldDeathShare` 0.6) applies only to a crack. Nobody dies: `bystanders_check` reports "81.0 people ran in the scatter runs, none died" | `brunt.gd:1204-1213`, `:1217-1219`; `docs/world/runs/memory-under-model/bystanders_check.txt` | Game Design says whether the cap should cover a held break too | Game Design |
+| R-7 | A tower too short to have floors (under five) keeps the old held damage; `heldMul` is not read there | `brunt.gd:410-413`, unchanged by the diff | A line in the README | World |
+| R-8 | The 3.4 row is staged at mid-height, where a fighter covers two floors. On a single covered floor (the top or bottom floor, or beside a gap) 3.4 is 0.3% under the line on the second send, by arithmetic | the first review's M-01 table | Note it, or stage one row there | World |
+
+Cost of this re-check: under 0.2M tokens of the reviewer's own reading; no agents.
