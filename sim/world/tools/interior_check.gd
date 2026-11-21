@@ -104,7 +104,9 @@ func fingerprint(ev: Array) -> String:
 	return h.hex()
 
 
-func _init() -> void:
+func _run(model: bool) -> void:
+	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	for a in OS.get_cmdline_user_args():
 		if a == "--show":
 			show = true
@@ -156,7 +158,10 @@ func _init() -> void:
 					ok(e.keep == 0.7 and e.ny == 1.0, "%s: a floor he goes through keeps 0.7 and its normal points up" % tag)
 			if tier >= 3.0:
 				var hasCeil: bool = cs.any(func(e): return e.kind == "ceiling" and e.punch)
-				ok(hasCeil or en[0].end in ["exit", "fall_out"], "%s: from tier 3 the ceiling is reached (or he left first: %s)" % [tag, en[0].end])
+				if not model:
+					ok(hasCeil or en[0].end in ["exit", "fall_out"], "%s: from tier 3 the ceiling is reached (or he left first: %s)" % [tag, en[0].end])
+				else:
+					print("      OFF-PATH under the model: the ceiling by tier: the reach of a send is its energy (its speed), not its tier, and a send bounces off the ground at most once (power.json contact.maxTerrainBounces 1); the row stages a tier")
 			else:
 				ok(not cs.any(func(e): return e.kind == "ceiling" and e.punch and e.keep == 0.4), "%s: below tier 3 no ceiling reverses him" % tag)
 			if tier == 1.0:
@@ -169,7 +174,10 @@ func _init() -> void:
 	var evb: Array = chain(Sb, tower(Sb), 1.0, 1.7, true, 3500.0, 0.5)
 	var csb: Array = shape(evb).cs
 	var bounces: Array = csb.filter(func(e): return e.k > 0.0 and not e.punch and e.keep > 0.0)
-	ok(bounces.size() >= 1 and bounces.size() <= 3 and bounces[0].keep == 0.45 and csb.size() - 1 <= 5 and shape(evb).en[0].end == "lodge", "a fast steep send at tier 1 bounces off the held floor (%s)" % names(evb))
+	if not model:
+		ok(bounces.size() >= 1 and bounces.size() <= 3 and bounces[0].keep == 0.45 and csb.size() - 1 <= 5 and shape(evb).en[0].end == "lodge", "a fast steep send at tier 1 bounces off the held floor (%s)" % names(evb))
+	else:
+		print("      OFF-PATH under the model: the floor bounce: the reach of a send is its energy (its speed), not its tier, and a send bounces off the ground at most once (power.json contact.maxTerrainBounces 1); the row stages a tier")
 	var Ss := fresh(1)
 	var evs: Array = chain(Ss, tower(Ss), 1.0, 1.7, true, 800.0, 0.5)
 	ok(shape(evs).cs.filter(func(e): return e.keep > 0.0 and not e.punch and e.k > 0.0).is_empty() and shape(evs).en[0].end == "lodge", "under 900 he lodges on the held floor (%s)" % names(evs))
@@ -282,5 +290,10 @@ func _init() -> void:
 	ok(runs > 60 and bad == 0 and worstC <= 5 and worstT <= 2.5001, "%d random chains: one end each, at most %d contacts, longest %.2f s, none left running (ends %s; %d bounces, %d links to a next tower)" % [runs, worstC, worstT, str(ends), bounced, links])
 	ok(bounced > 0, "bounces happen in the random chains")
 	c.interiorChain = 0
+
+
+func _init() -> void:
+	_run(false)
+	_run(true)
 	print("INTERIOR: %d check(s) failed" % fails)
 	quit()

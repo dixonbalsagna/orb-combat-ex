@@ -36,6 +36,7 @@ func run_alone(setup: Dictionary, ticks: int) -> String:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	# --- 1: the ring memo's key carries the generation. A gen 1 match on an explicit ring, a gen 2 match on the same ring, the gen 1 match again.
 	var probe: SimState = mk({"planet": 7, "touch": 0, "arena": {"cols": 2400}, "intro": false})
 	var ring: Dictionary = {"cols": 2400, "c": [hx(probe.planetRing.c[0]), hx(probe.planetRing.c[1]), hx(probe.planetRing.c[2])], "t": [hx(probe.planetRing.t[0]), hx(probe.planetRing.t[1]), hx(probe.planetRing.t[2])]}

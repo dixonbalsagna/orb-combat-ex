@@ -40,6 +40,7 @@ func _find(S: SimState, kind: String):
 
 
 func _init() -> void:
+	WorldPin.shipped()   # GW1a: this check tests the path main shipped before the data went on (docs/world/world-default.md); WorldPin sets it in memory
 	var planet: int = 7
 	var touch: int = 1
 	for a in OS.get_cmdline_user_args():

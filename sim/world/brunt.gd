@@ -29,7 +29,7 @@ const CHAIN_MIN_SP: float = 500.0
 const BRUNT_PATH: String = "res://data/biomes/brunt.json"
 const BRUNT_SCHEMA: String = "biomes.brunt/1"
 const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (a key it does carry overrides)
-	"bruntMul": 1.8, "tierFactor": [0.12, 0.27, 0.47, 0.73], "specialTier": 4,
+	"bruntMul": 1.8, "heldMul": 1.0, "tierFactor": [0.12, 0.27, 0.47, 0.73], "specialTier": 4,
 	"chainMax": [1, 2, 3, 4], "chainSpecial": 5, "houseLink": 0.5, "houseKeep": 0.6,
 	"towerPunches": [0, 1, 99, 99], "giveWay": 2.0, "wallMemory": 0.25, "wallMin": 0.25, "heldDeathShare": 0.6,
 	"lodgeSeconds": [0.5, 0.5, 0.7, 0.9], "lodgeSpecialSeconds": 0.9, "lodgeDump": 1.0,
@@ -394,10 +394,24 @@ static func keepAfter(E: float, m: float) -> float:
 	return clampf(sqrt(maxf(E - m, 0.0) / maxf(E, 1.0e-9)), 0.0, 1.0)
 
 
+## A building's memory under the power model (Orb, homework 30: a send into a building already marked meets it one tier higher for each mark, up to repeatMarks; Game Design, buildings.md section 9: the building remembers, so
+## the second and third sends bring it down). With the model on there is no tier to raise, so a mark is one tier of the model's own step, the level a tier is worth (SimPower.tierShare over the three steps between tier 1 and 4),
+## and it shows as the building's weakening: it takes that much less of the body's energy to go through it. The factor is energyTop to the minus (tierShare / 3) per mark: about 0.51 for one, 0.26 for two. 1.0 with no marks or
+## with repeatMarks 0 (marks are not counted then), so with the memory off nothing changes.
+static var _memoryOff: bool = false   # tests only: the old behaviour (memory_model_check --negative-control)
+
+
+static func _memory(b) -> float:
+	var n: int = mini(b.marks, int(cfg().repeatMarks))
+	if n <= 0 or _memoryOff:
+		return 1.0
+	return SimDetMath.pow(SimPower.energyTop, -(SimPower.tierShare / 3.0) * float(n))
+
+
 ## The ladder under the power model: a building takes its mass of the body's energy, (spN / speedUnit) squared. A body with at least that much goes through (a house collapses, a tower is punched through) and keeps the root of what is
 ## left; with less it is held, a crack or a dent by how much of the mass it had. No tier, link or punch table is read: the energy is the whole budget, so a send can only go through what it can pay for.
 static func _outcomePower(S: SimState, b, y: float, spN: float) -> Dictionary:
-	var m: float = massOf(b)
+	var m: float = massOf(b) * _memory(b)
 	var u: float = SimPower.speedUnit
 	var E: float = spN * spN / (u * u)
 	var through: bool = E >= m
@@ -413,7 +427,8 @@ static func _outcomePower(S: SimState, b, y: float, spN: float) -> Dictionary:
 		return w
 	if probe.hit.is_empty():
 		return probe   # its floors there are gone: nothing to hold him
-	var oc: Dictionary = outcomeDmg(S, b, y, (2.0 if through else E / m) * probe.sumS)
+	var hm: float = float(cfg().heldMul)
+	var oc: Dictionary = outcomeDmg(S, b, y, 2.0 * probe.sumS if through else (E / m * hm * probe.sumS0 if hm > 1.0 else E / m * probe.sumS))   # a held body stops in the building: all its energy goes into the few floors it covers, by what they were (heldMul 2: twice E over the mass of their undamaged strength, so each hit weakens them for the next; 1: as before)
 	if through:
 		oc.keep = keep
 	else:
@@ -480,20 +495,22 @@ static func outcomeDmg(S: SimState, b, y: float, dmg: float) -> Dictionary:
 		if hit.is_empty():
 			return {"floors": true, "k": k, "hit": hit, "sumS": 0.0, "dmg": dmg, "ratio": 999.0, "outcome": "punch", "pass": true, "keep": float(cfg().keepFree)}
 		var sumS: float = 0.0
+		var sumS0: float = 0.0   # the same floors undamaged: a held hit under the energy model is by this (heldMul), so the walls' memory shows
 		var cm: Dictionary = cfg()
 		var haveD: bool = b.fdmg.size() == b.floors
 		for j in hit:
 			var st: float = floorStr(b, j)
+			sumS0 += st
 			if haveD and b.fdmg[j] > 0.0:   # a building that remembers its walls: damage already taken weakens the floor (not below wallMin of it)
 				st = maxf(st * float(cm.wallMin), st - float(cm.wallMemory) * b.fdmg[j])
 			sumS += st
 		var ratio: float = dmg / sumS
 		if ratio >= 1.0:
 			var keep: float = clampf(float(cm.keepHi) - float(cm.keepK) * sumS / float(cm.keepRef), float(cm.keepMin), float(cm.keepHi))
-			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "punch", "pass": true, "keep": keep}
+			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "sumS0": sumS0, "dmg": dmg, "ratio": ratio, "outcome": "punch", "pass": true, "keep": keep}
 		if ratio >= 0.4:
-			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "crack", "pass": false, "keep": 0.0}
-		return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "dent", "pass": false, "keep": 0.0}
+			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "sumS0": sumS0, "dmg": dmg, "ratio": ratio, "outcome": "crack", "pass": false, "keep": 0.0}
+		return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "sumS0": sumS0, "dmg": dmg, "ratio": ratio, "outcome": "dent", "pass": false, "keep": 0.0}
 	var r: float = dmg / b.maxhp
 	var cw: Dictionary = cfg()
 	var keepw: float = clampf(float(cw.keepHi) - float(cw.keepK) * b.maxhp / float(cw.keepRef), float(cw.keepMin), float(cw.keepHi))
@@ -988,7 +1005,9 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		WorldStructures.damageBuilding(S, b, oc.dmg, by, "burst", cx, evt)
 		if not b.alive:
 			hitText = "collapse"
-	var passes: bool = oc.pass or hitText == "collapse" or hitText == "pancake"
+	# Under the energy model a body held by a tower (less energy than its mass) stays held when his hit brings it down (a collapse is the building's own energy, not his; Game Design, buildings.md, M-03): he holds at the face
+	# for the hold and drops with the rubble at no added speed, and is never carried through at keepHi. With heldMul above 1 (the held hit that can break the covered floors); with 1 nothing changes here
+	var passes: bool = oc.pass or ((hitText == "collapse" or hitText == "pancake") and not (S.powerOn and bool(oc.get("held", false)) and float(cfg().heldMul) > 1.0))
 	var broke: bool = passes
 	var inside: bool = WorldInterior.eligible(S, f, b)   # the chain inside a tower (world/interior.gd), behind brunt.json interiorChain: he goes on inside, the face is passed either way
 	if inside:

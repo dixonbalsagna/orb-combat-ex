@@ -18,7 +18,9 @@ func fresh(seed: int = 1) -> SimState:
 	return S
 
 
-func _init() -> void:
+func _run(model: bool) -> void:
+	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	var S := fresh(1)
 	var c: Dictionary = WorldBrunt.cfg()
 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
@@ -67,8 +69,14 @@ func _init() -> void:
 				t4_ok += 1
 	ok(t1_through == 0, "a tier-1 body never goes through an intact tower (%d of %d speed and height pairs pass)" % [t1_through, t1_n])
 	ok(t2_second_through == 0, "at tier 2 a second tower holds him (the first may be punched: %d of %d)" % [t2_first, t1_n])
-	ok(t3_ok == t3_n, "at tier 3 a tower the body has the strength to punch lets him through, and one it cannot holds him (%d of %d)" % [t3_ok, t3_n])
-	ok(t4_ok == t4_n, "at tier 4 the same (%d of %d)" % [t4_ok, t4_n])
+	if not model:
+		ok(t3_ok == t3_n, "at tier 3 a tower the body has the strength to punch lets him through, and one it cannot holds him (%d of %d)" % [t3_ok, t3_n])
+	else:
+		print("      OFF-PATH under the model: the punch by tier: a building takes its mass of the body\'s energy and a send goes through while it has it (power_world_check: masses 1, 5 and 15, a base send through a house); the tier ladder this row counts is not Orb\'s path")
+	if not model:
+		ok(t4_ok == t4_n, "at tier 4 the same (%d of %d)" % [t4_ok, t4_n])
+	else:
+		print("      OFF-PATH under the model: the punch by tier (tier 4): a building takes its mass of the body\'s energy and a send goes through while it has it (power_world_check: masses 1, 5 and 15, a base send through a house); the tier ladder this row counts is not Orb\'s path")
 	# a house is gone through at every tier and speed
 	var house_ok: int = 0
 	var house_n: int = 0
@@ -78,7 +86,10 @@ func _init() -> void:
 			house_n += 1
 			if oh.pass and oh.outcome == "collapse" and absf(oh.keep - float(c.houseKeep)) < 0.0001 and oh.dmg >= hs.hp:
 				house_ok += 1
-	ok(house_ok == house_n, "a house is gone through at every tier and speed, at houseKeep, and the hit kills it (%d of %d)" % [house_ok, house_n])
+	if not model:
+		ok(house_ok == house_n, "a house is gone through at every tier and speed, at houseKeep, and the hit kills it (%d of %d)" % [house_ok, house_n])
+	else:
+		print("      OFF-PATH under the model: a house by tier and speed: a building takes its mass of the body\'s energy and a send goes through while it has it (power_world_check: masses 1, 5 and 15, a base send through a house); the tier ladder this row counts is not Orb\'s path")
 	# the building that remembers its walls: three walls and the fourth goes through
 	var Sw := fresh(1)
 	var tw2 = null   # a median tower (9 to 15 floors): a 20-floor one holds a tier-1 body for good (its weakened floors still beat his hit)
@@ -102,7 +113,10 @@ func _init() -> void:
 		for j in o.hit:
 			tw2.fdmg[j] += o.dmg
 		walls += 1
-	ok(passed and walls >= 2 and walls <= 8, "a tier-1 tower of %d floors and %.0f hit points gives way after %d walls at speed 1400 (the data's giveWay %.1f; a median tower of 13 floors: about 3)" % [tw2.floors, tw2.maxhp, walls, float(c.giveWay)])
+	if not model:
+		ok(passed and walls >= 2 and walls <= 8, "a tier-1 tower of %d floors and %.0f hit points gives way after %d walls at speed 1400 (the data's giveWay %.1f; a median tower of 13 floors: about 3)" % [tw2.floors, tw2.maxhp, walls, float(c.giveWay)])
+	else:
+		print("      OFF-PATH under the model: giveWay by tier: a building takes its mass of the body\'s energy and a send goes through while it has it (power_world_check: masses 1, 5 and 15, a base send through a house); the tier ladder this row counts is not Orb\'s path")
 	# flights: every flight that touches a building ends held or lodged; a chain never uses more links than its cap
 	var rg := SimRng.new(404)
 	var flights: int = 0
@@ -176,8 +190,19 @@ func _init() -> void:
 					t1_tower_punch += 1
 	ok(flights > 40, "%d flights touched a building" % flights)
 	ok(ended_ok == flights, "every flight ends held at a wall or lodged in its last building (%d of %d; %d held, %d lodged)" % [ended_ok, flights, held_n, lodges])
-	ok(lodge_hold_ok == flights, "the last hit holds the body for the tier's seconds (%d of %d)" % [lodge_hold_ok, flights])
-	ok(cap_ok == flights, "no chain uses more links than its tier's cap, a house half (%d of %d)" % [cap_ok, flights])
+	if not model:
+		ok(lodge_hold_ok == flights, "the last hit holds the body for the tier's seconds (%d of %d)" % [lodge_hold_ok, flights])
+	else:
+		print("      OFF-PATH under the model: the hold by tier: a building takes its mass of the body\'s energy and a send goes through while it has it (power_world_check: masses 1, 5 and 15, a base send through a house); the tier ladder this row counts is not Orb\'s path")
+	if not model:
+		ok(cap_ok == flights, "no chain uses more links than its tier's cap, a house half (%d of %d)" % [cap_ok, flights])
+	else:
+		print("      OFF-PATH under the model: the link cap by tier: a building takes its mass of the body\'s energy and a send goes through while it has it (power_world_check: masses 1, 5 and 15, a base send through a house); the tier ladder this row counts is not Orb\'s path")
 	ok(t1_tower_punch == 0, "a tier-1 flight never punches an unmarked tower (%d did)" % t1_tower_punch)
+
+
+func _init() -> void:
+	_run(false)
+	_run(true)
 	print("BRUNT: %d check(s) failed" % fails)
 	quit()

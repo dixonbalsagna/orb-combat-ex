@@ -18,6 +18,7 @@ func ring_of(P: WorldPlanet.Planet, cols: int, a: float, b: float) -> Dictionary
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	# --- the places beside a ring: farColumn(ring, col, z) is where the place stands
 	var worst: float = 0.0
 	var listed: int = 0

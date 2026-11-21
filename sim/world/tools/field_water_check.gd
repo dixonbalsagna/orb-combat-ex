@@ -21,6 +21,7 @@ func _match(planet: int, touch: int) -> SimState:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	WorldClimate.useGen(3)
 	var S: SimState = null
 	var pl: int = 0

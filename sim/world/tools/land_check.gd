@@ -15,6 +15,7 @@ func unit_from(rng: SimRng) -> Array:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	ok(WorldLand.dataErrors().is_empty() and int(WorldClimate.data().gen) == 1, "land.json is clean and the data's generation is still 1 (%s)" % str(WorldLand.dataErrors()))
 	WorldClimate.useGen(1)
 	var P1 := WorldPlanet.make(7)

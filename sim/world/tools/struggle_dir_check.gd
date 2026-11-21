@@ -58,6 +58,7 @@ func _run(seed_: int, cap: int) -> Dictionary:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped; docs/world/pins-and-the-model.md
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var n: int = int(args[0]) if args.size() > 0 else 8
 	var seed0: int = int(args[1]) if args.size() > 1 else 1

@@ -32,7 +32,9 @@ func kill(S: SimState, b) -> void:
 	WorldStructures.damageBuilding(S, b, 1.0e9, S.fighters[0], "implode", b.x, 0.0)
 
 
-func _init() -> void:
+func _run(model: bool) -> void:
+	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	ok(WorldWrecks.dataErrors().is_empty(), "wrecks.json is clean (%s)" % str(WorldWrecks.dataErrors()))
 	var S := fresh(1)
 	var f = S.fighters[0]
@@ -134,6 +136,7 @@ func _init() -> void:
 		for o in St.buildings:
 			hp0 += maxf(o.hp, 0.0)
 		var tg = St.buildings[tgt0.idx]
+		St.fighters[0].tier = tier   # the thrower's tier is the ladder's, and with the energy model on his level (SimPower.level reads his tier and power): the scrap grows with it
 		var n: int = WorldWrecks.burst(St, bt.idx, tg.x, WorldStructures.baseY(St, tg), tier, St.fighters[0])
 		var hp1: float = 0.0
 		for o in St.buildings:
@@ -150,5 +153,10 @@ func _init() -> void:
 	WorldWrecks.burst(St2, b.idx, b.x, 0.0, 3.0, St2.fighters[0])
 	WorldWrecks.burst(S3, b.idx, b.x, 0.0, 3.0, S3.fighters[0])
 	ok(str(SimHash.stateHash(St2).gameplay) == str(SimHash.stateHash(S3).gameplay) and str(SimHash.stateHash(St2).gameplay) != str(SimHash.stateHash(fresh(1)).gameplay), "the burst is the same twice, and changes the state (hashed through the spent wreck's mark and the damage)")
+
+
+func _init() -> void:
+	_run(false)
+	_run(true)
 	print("WRECKS: %d check(s) failed" % fails)
 	quit()

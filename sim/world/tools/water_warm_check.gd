@@ -106,6 +106,7 @@ func _run(planet: int, touch: int, cols: int) -> Dictionary:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--cols="):
 			COLS = int(a.substr(7))

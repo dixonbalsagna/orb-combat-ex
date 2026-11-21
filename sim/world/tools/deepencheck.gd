@@ -10,7 +10,9 @@ func fresh() -> SimState:
 	SimCore.newMatch(S, 1, {}, {"intro": false})
 	S.out.fx.clear()
 	return S
-func _init() -> void:
+func _run(model: bool) -> void:
+	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	print("== deepen, slideObstacle, bump ==")
 	var X: float = 89600.0 + 3000.0
 	var S := fresh()
@@ -31,8 +33,13 @@ func _init() -> void:
 	var rc2 = WorldCrater.dig(S2, X, 400.0, S2.fighters[1], "impact")
 	var oldd: float = rc2.depth
 	var again = WorldCrater.dig(S2, X, 400.0 * 1.44, S2.fighters[1], "impact")
+	var dep_before: float = again.depth if again != null else -1.0   # deepen changes the record in place
 	var nd2: float = WorldCrater.deepen(S2, X, S2.fighters[1], 1.2)
-	ok(nd2 > oldd * 1.19, "a bowl at the radius cap is deepened (%.0f to %.0f; a second dig made %s)" % [oldd, nd2, "nothing" if again == null else "%.0f" % again.depth])
+	if not model:
+		ok(nd2 > oldd * 1.19, "a bowl at the radius cap is deepened (%.0f to %.0f; a second dig made %s)" % [oldd, nd2, "nothing" if again == null else "%.0f" % again.depth])
+	else:
+		var ar_: float = again.r if again != null else -1.0
+		ok(again != null and ar_ > rc2.r and nd2 > dep_before * 1.19, "with the energy model on there is no ordinary cap: a second blow at the same place digs a wider bowl (%.0f, then %.0f) and deepen raises that bowl by a fifth (%.1f to %.1f)" % [rc2.r, ar_, dep_before, nd2])
 	var nan: bool = false
 	for v in S2.deform:
 		if is_nan(v):
@@ -57,5 +64,10 @@ func _init() -> void:
 	f.y = WorldTerrain.groundY(S3, f.x)
 	var dmg: float = WorldContact.bump(S3, f, S3.fighters[1], found[2].kind, 870.0)
 	ok(dmg > 4.0 and dmg < 7.0 and f.hp < 1000.0, "a bump at 870 speed costs %.1f hp" % dmg)
+
+
+func _init() -> void:
+	_run(false)
+	_run(true)
 	print("DEEPEN: %d check(s) failed" % fails)
 	quit(1 if fails > 0 else 0)

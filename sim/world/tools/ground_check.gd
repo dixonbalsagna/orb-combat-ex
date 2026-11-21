@@ -67,6 +67,7 @@ func trees_on_treed_ground(S: SimState) -> bool:
 
 
 func _init() -> void:
+	WorldPin.shipped()   # GW1a: OFF-PATH by construction: this check pins the hashes the old play recorded, so it plays the old path, energy model and dash off; docs/world/pins-and-the-model.md
 	# --- the data
 	var errs: Array = WorldGround.dataErrors()
 	var fine: Array = WorldClimate.data().fine

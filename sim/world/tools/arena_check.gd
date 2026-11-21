@@ -29,6 +29,7 @@ func play(setup: Dictionary, seed: int, ticks: int) -> Dictionary:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	var ticks: int = 3600
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--ticks="):

@@ -38,6 +38,7 @@ static func everywhere() -> bool:
 ## The most the ground may depart from a straight slope between a free building's centre and a corner of its plan footprint (plans.maxFootSlope, units; 0 or less: no limit). A building over a cliff or a step of another record
 ## is not laid (like one in the sea): its underside would show (docs/world/lot-gap.md). A smooth slope, however steep, passes: the lot's tilt and the view's plinth answer that. `footSlopeOverride` (a test's) is used when it is 0 or more.
 static var footSlopeOverride: float = -1.0
+static var shiftBucketOverride: bool = false   # tests only: the memo key as it was (the shift to the nearest 8 units), so a check can show the fault the exact key removed (cache_warm_check --negative-control)
 
 
 static func maxFootSlope() -> float:
@@ -78,7 +79,7 @@ static func farReach() -> float:
 ## A far place's laid plan (its buildings with their planet points and ground, its districts, its lots) is a pure function of the planet and the data, not of the ring: only a building's strip x and z read the ring,
 ## and they are two reads from its planet point. So the whole set is kept in the field cache (WorldFieldCache.writeBlob, one blob a planet, `var_to_bytes`) and a warm match start reads it back: the plans' geometry
 ## and the bake's ground reads, about 1 s native, are not done again. Not kept while rivers are on (a river cuts the ground the lots read, and it is read through the ring).
-const PLACES_REV: int = 1
+const PLACES_REV: int = 2   # 2: the layouts the kept places hold are made for their exact shift (docs/world/field-cache-determinism.md); rev 1 blobs hold the history-dependent ones
 
 
 static func placesKey(P: WorldPlanet.Planet) -> String:
@@ -130,7 +131,9 @@ static func yawOf(P: WorldPlanet.Planet, id: int) -> float:
 
 ## The plan of a place in its own frame: {"b": buildings (generate's dicts, x re-centred as "u", z as "v"), "dist": districts, "xc": the centre x of the stand-in strip}. Memoised by planet, place and the data.
 static func geometry(P: WorldPlanet.Planet, id: int, shift: float = 0.0) -> Dictionary:
-	var key: String = "%d/%d/%d/%s/%s/%d" % [P.seed, id, int(P.kind[id]), WorldSettle.dataHash(), WorldField.dataHash(), int(round(shift / 8.0))]
+	# The shift is in the key exactly (its bits), not to the nearest 8 units: the layout is a pure function of the shift it is made for, so a memo hit gives what a fresh make would. With the shift rounded in the key, a layout made for
+	# 1.7 (the first ring's aligned shift) answered a call for 0 (a free place's) or the reverse, whichever came first: a world read back from the places cache differed from a fresh one in the last bits (docs/world/field-cache-determinism.md).
+	var key: String = "%d/%d/%d/%s/%s/%d" % [P.seed, id, int(P.kind[id]), WorldSettle.dataHash(), WorldField.dataHash(), (int(round(shift / 8.0)) if shiftBucketOverride else PackedFloat64Array([shift]).to_byte_array().decode_s64(0))]
 	if _memo.has(key):
 		return _memo[key]
 	var NC: int = SimConst.NC

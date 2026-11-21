@@ -35,6 +35,12 @@
     "_about": {
       "type": "string"
     },
+    "heldMul": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 8,
+      "description": "The energy model's held hit: a body that is held by a tower (less energy than the tower's mass) stops in it, so all its energy goes into the few floors it covers: the hit does heldMul times E over the mass of the covered floors' strength (Game Design, buildings.md section 9: 2). 1: E over the mass, as before. Read only with the model on."
+    },
     "bruntMul": {
       "type": "number",
       "exclusiveMinimum": 0,

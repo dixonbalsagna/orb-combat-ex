@@ -57,6 +57,7 @@ func dive(vx: float, vy: float) -> Dictionary:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	ok(WorldFill.dataErrors().is_empty(), "water.json is clean (%s)" % str(WorldFill.dataErrors()))
 	ok(not WorldFill.surfaceOn() and WorldFill.surfaceTicks() == 30, "the surfacing rule ships off, at 30 ticks")
 	var S0 := fresh()

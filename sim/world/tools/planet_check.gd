@@ -24,6 +24,7 @@ func pointOf(r: SimRng) -> Array:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	var write: bool = OS.get_cmdline_user_args().has("--write")
 	# ---- 1. the data
 	ok(WorldPlanet.dataErrors().is_empty(), "planet.json loads clean (%s)" % str(WorldPlanet.dataErrors()))

@@ -143,6 +143,7 @@ func writes_by_function(src: String) -> Dictionary:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped; docs/world/pins-and-the-model.md
 	SimInputData.load_and_apply()
 	var ran_total: float = 0.0
 	# ---- 1. scatter: nothing rises, nobody is removed

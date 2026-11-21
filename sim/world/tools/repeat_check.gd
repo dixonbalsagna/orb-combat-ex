@@ -57,7 +57,9 @@ func send(S: SimState, b, tier: float = 2.0):
 	return hit
 
 
-func _init() -> void:
+func _run(model: bool) -> void:
+	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	var c: Dictionary = WorldBrunt.cfg()
 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
 	ok(int(c.repeatMarks) == 0 and float(c.repeatCraterGrow) == 1.25, "the switch is off in the data (repeatMarks %d), the crater factor 1.25" % int(c.repeatMarks))
@@ -93,7 +95,10 @@ func _init() -> void:
 		var r3: float = hb[3].amount / hb[0].amount
 		var w1: float = tf[2] / tf[1]
 		var w2: float = tf[3] / tf[1]
-		ok(absf(r1 - w1) < 0.02 * w1 and absf(r2 - w2) < 0.02 * w2 and absf(r3 - w2) < 0.02 * w2, "the same send does %.2fx, %.2fx, then %.2fx the first one's damage (the ladder's %.2f and %.2f, capped)" % [r1, r2, r3, w1, w2])
+		if not model:
+			ok(absf(r1 - w1) < 0.02 * w1 and absf(r2 - w2) < 0.02 * w2 and absf(r3 - w2) < 0.02 * w2, "the same send does %.2fx, %.2fx, then %.2fx the first one's damage (the ladder's %.2f and %.2f, capped)" % [r1, r2, r3, w1, w2])
+		else:
+			print("      OFF-PATH under the model: this row measures a house, which the model always goes through (the damage it does is the house's hit points whatever the marks, and Game Design: houses rarely matter); a tower's memory under the model is memory_model_check's")
 	else:
 		ok(false, "four sends gave four events")
 	# --- the planner reads the same
@@ -134,5 +139,10 @@ func _init() -> void:
 	var q1 = WorldCrater.dig(Go, X + 30.0, 1.0, Go.fighters[1], "impact", 0.0, 1.0)
 	ok(q0 != null and (q1 == null or q1.r <= q0.r * 1.001), "off: a second impact beside it is today's (the same size or too dented to dig)")
 	c.repeatMarks = 0
+
+
+func _init() -> void:
+	_run(false)
+	_run(true)
 	print("REPEAT: %d check(s) failed" % fails)
 	quit()

@@ -4,10 +4,12 @@
     "burial_check", "floor_check", "lane_check", "props_wet_check",
     "after_check", "arena_check", "b_check", "blastcheck", "blockcheck", "brunt_check", "calm_read_check", "campaign_check", "climate_check", "collateral_check",
     "power_world_check",
+    "memory_model_check",
     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
     "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
     "land_check", "minecheck", "noise_check", "planet_check", "planet_world_check", "props_check", "repeat_check", "ringpick_check", "rivers_check", "sea_rules_check",
     "beam_grid_check",
+    "cache_warm_check",
     "sites_check", "skate_check", "stagecheck", "step_check", "surface_check", "meteor_crater_check", "through_check", "surface_follow_check", "switchon_check", "wall_check", "wrecks_check",
     "street_axis_check",
     "water_warm_check", "water_read_check", "landmark_spare_check", "lot_reach_check", "relax_check", "node_warm_check",
@@ -18,6 +20,7 @@
     "floor_walk_probe"
   ],
   "leaveOut": {
+    "pin": "helper: WorldPin.shipped() sets main's pre-GW1a data in memory for the checks that test the old path, no verdict",
     "b_heights": "measurement: prints percentiles of dry land on B plates, no verdict",
     "calm_digest": "measurement: prints the calm turn's swap tick and gameplay hashes, no verdict",
     "campaign_turns": "measurement: how often the campaign ring turns, for tuning, no verdict",

@@ -24,6 +24,7 @@ func slicehash(seed: int, cols: int) -> Array:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	ok(WorldClimate.dataErrors().is_empty() and int(WorldClimate.data().gen) == 1, "climate.json is clean and the default generation is 1 (%s)" % str(WorldClimate.dataErrors()))
 	WorldClimate.useGen(0)
 	# --- generation 1 is what it was, to the bit: the slice hashes the stored planet gave before gen 2 existed

@@ -23,7 +23,9 @@ func _match(planet: int, touch: int) -> SimState:
 	return S
 
 
-func _init() -> void:
+func _run(model: bool) -> void:
+	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	var planet: int = 7
 	var touch: int = 1
 	for a in OS.get_cmdline_user_args():
@@ -39,7 +41,10 @@ func _init() -> void:
 	var S := _match(planet, touch)
 	var x: float = S.fighters[0].x
 	var ord = WorldCrater.dig(S, x, E, S.fighters[0], "impact", 0.0, 1.0, false)
-	ok(ord != null and absf(ord.r - WorldCrater.ORD_R_MAX) < 0.5, "an ordinary dig of that energy is held to 8 bh (%.0f)" % (ord.r if ord != null else -1.0))
+	if not model:
+		ok(ord != null and absf(ord.r - WorldCrater.ORD_R_MAX) < 0.5, "an ordinary dig of that energy is held to 8 bh (%.0f)" % (ord.r if ord != null else -1.0))
+	else:
+		ok(ord != null and ord.r > WorldCrater.ORD_R_MAX + 0.5 and ord.r <= WorldCrater.R_MAX + 0.5, "with the energy model on the ordinary cap is lifted (power-world.md): an ordinary dig of that energy digs %.0f, above 8 bh (%.0f) and within R_MAX (%.0f)" % [(ord.r if ord != null else -1.0), WorldCrater.ORD_R_MAX, WorldCrater.R_MAX])
 	# the meteor's
 	S = _match(planet, touch)
 	x = S.fighters[0].x
@@ -72,5 +77,10 @@ func _init() -> void:
 	var S4 := _match(planet, touch)
 	var a4 = WorldCrater.dig(S4, S4.fighters[0].x, 9.0, S4.fighters[0], "impact", 0.0, 1.0, true, NAN, PackedFloat64Array(), false)
 	ok(a3 != null and a4 != null and a3.r == a4.r and a3.depth == a4.depth and a3.rim == a4.rim, "meteor off is the old dig (special r %.0f both ways)" % (a3.r if a3 != null else -1.0))
+
+
+func _init() -> void:
+	_run(false)
+	_run(true)
 	print("METEORCRATER: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

@@ -81,7 +81,11 @@ func _slam(seed: int, tier: float) -> Array:
 
 
 ## Three sends at one tower: [how many of the 24 towers fell].
+var _broken: int = 0   # the last _repeats's towers that lost a floor or fell (a held hit under the energy model breaks the covered floors; the tower stands until its core goes)
+
+
 func _repeats(marks: int) -> int:
+	_broken = 0
 	WorldBrunt.cfg().repeatMarks = marks
 	var down: int = 0
 	for sd in range(1, 13):
@@ -89,11 +93,16 @@ func _repeats(marks: int) -> int:
 			var S := SimCore.createSim()
 			SimCore.newMatch(S, sd, {}, {"intro": false})
 			S.out.fx.clear()
+			WorldBrunt.cfg().heldMul = 2.0 if S.powerOn else 1.0   # Game Design's held hit (buildings.md section 9): with the model on, twice E over the mass
 			var tw = _tower(S)
 			if tw == null:
 				continue
 			var A = S.fighters[1]
 			var D = S.fighters[0]
+			var up0: int = 0
+			for j in range(tw.floors):
+				if WorldBrunt.isStanding(tw, j):
+					up0 += 1
 			for k in range(3):
 				if not tw.alive:
 					break
@@ -118,12 +127,21 @@ func _repeats(marks: int) -> int:
 					g += 1
 			if not tw.alive:
 				down += 1
+			var up1: int = 0
+			for j in range(tw.floors):
+				if tw.alive and WorldBrunt.isStanding(tw, j):
+					up1 += 1
+			if up1 < up0:
+				_broken += 1
 			SimCore.dispose(S)
 	WorldBrunt.cfg().repeatMarks = 0
+	WorldBrunt.cfg().heldMul = 1.0
 	return down
 
 
-func _init() -> void:
+func _run(model: bool) -> void:
+	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	var c: Dictionary = WorldBrunt.cfg()
 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
 	ok(c.lodgeHold == "world" and absf(float(c.wallRebound) - 0.25) < 1.0e-9 and float(c.wallStop) == 1.0 and int(c.wallDepthHold) == 0 and int(c.repeatMarks) == 0, "the data's defaults are today's behaviour (lodgeHold %s, wallRebound %s, wallStop %s, wallDepthHold %s, repeatMarks %s)" % [c.lodgeHold, str(c.wallRebound), str(c.wallStop), str(c.wallDepthHold), str(c.repeatMarks)])
@@ -164,14 +182,27 @@ func _init() -> void:
 	ok(offN >= 12, "%d wall slams staged on towers (seeds 1 to 8, tiers 1 to 3)" % offN)
 	print("      today: the whole fight frozen %.2f s at the hit; pushed %.0f units off the face (more than 150 off in %d of %d); depth home in %.0f ticks" % [offFreeze / float(offN), offPeak / float(offN), offFar, offN, offHome / float(offN)])
 	print("      set on: the whole fight frozen %.2f s; pushed %.0f units off the face (more than 150 off in %d of %d); depth home in %.0f ticks" % [onFreeze / float(onN), onPeak / float(onN), onFar, onN, onHome / float(onN)])
-	ok(offFreeze / float(offN) >= 0.45 and offFar == offN, "today the fight freezes at the hit and he is thrown off the face (%d of %d)" % [offFar, offN])
+	if not model:
+		ok(offFreeze / float(offN) >= 0.45 and offFar == offN, "today the fight freezes at the hit and he is thrown off the face (%d of %d)" % [offFar, offN])
+	else:
+		ok(offFreeze / float(offN) >= 0.45 and offPeak / float(offN) <= 150.0, "with the energy model on, until the wall-hold data: the fight still freezes at the hit (%.2f s) and he is pushed %.0f units off the face (the throw is no longer the 1,154 of the old path; ceiling 150 on the average, it may only come down)" % [offFreeze / float(offN), offPeak / float(offN)])
 	ok(onFreeze == 0.0, "set on: nothing freezes the whole fight (only he is held)")
 	ok(onFar == 0 and onPeak / float(onN) <= 40.0, "set on: he stays at the face for the hold (%.0f units off on average)" % [onPeak / float(onN)])
 	ok(onHome / float(onN) > 28.0, "set on: his depth stays for the hold and then eases home (%.0f ticks)" % [onHome / float(onN)])
 	ok(twice, "the same slam twice gives one hash")
 	var d0: int = _repeats(0)
+	var b0: int = _broken
 	var d2: int = _repeats(2)
-	print("      three sends at one tower, 24 towers: %d fall with the building's memory off, %d with repeatMarks 2" % [d0, d2])
-	ok(d0 == 0 and d2 >= 20, "the building remembers: repeats break it (0 fall off, %d of 24 with repeatMarks 2)" % d2)
+	var b2: int = _broken
+	print("      three sends at one tower, 24 towers: %d fall with the building's memory off, %d with repeatMarks 2; %d and %d lost a floor or fell" % [d0, d2, b0, b2])
+	if not model:
+		ok(d0 == 0 and d2 >= 20, "the building remembers: repeats break it (0 fall off, %d of 24 with repeatMarks 2)" % d2)
+	else:
+		ok(b2 > b0 and d2 >= d0, "with the energy model on a mark is one model tier of the building's mass and a held hit does heldMul 2 (Game Design, buildings.md section 9; memory_model_check): three sends at the model's energy break the covered floors of %d of 24 towers with the memory against %d without (%d and %d fall)" % [b2, b0, d2, d0])
+
+
+func _init() -> void:
+	_run(false)
+	_run(true)
 	print("WALLHOLD: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

@@ -11,6 +11,7 @@ func ok(c: bool, w: String) -> void:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	# the hand-made world (no lake): seaTop is 0 over its sea and nothing elsewhere, as `y < 0 and seaAt` was
 	var S1 := SimCore.createSim()
 	SimCore.newMatch(S1, 1, {}, {"intro": false})

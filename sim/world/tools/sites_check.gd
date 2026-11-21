@@ -24,6 +24,7 @@ func changes(a: PackedByteArray) -> int:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	ok(WorldSites.dataErrors().is_empty() and int(WorldClimate.data().gen) == 1, "sites.json is clean (%s) and the data's generation is still 1" % str(WorldSites.dataErrors()))
 	var seeds: Array = [7, 3, 11, 25, 42, 101]
 	var bad: Array = []

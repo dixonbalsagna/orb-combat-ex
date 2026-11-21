@@ -74,6 +74,7 @@ func wetCols(S: SimState, lo: int, hi: int) -> int:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	ok(WorldFill.dataErrors().is_empty(), "water.json is clean (%s)" % str(WorldFill.dataErrors()))
 	ok(not WorldFill.on(), "the switch (data/biomes/water.json enabled) is off in the data")
 	WorldFill.on()

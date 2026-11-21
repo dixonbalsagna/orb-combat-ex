@@ -20,6 +20,7 @@ func gen2_match(sd: int, touch: int, turn: bool) -> SimState:
 
 
 func _init() -> void:
+	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
 	ok(WorldLakes.dataErrors().is_empty() and int(WorldClimate.data().gen) == 1, "lakes.json is clean (%s) and the data's generation is still 1" % str(WorldLakes.dataErrors()))
 	# a hand-made profile: one valley between two crests, one pit too shallow, one valley by a town, one in a desert
 	var n: int = 600
