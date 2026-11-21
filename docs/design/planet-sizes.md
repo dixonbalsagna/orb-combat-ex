@@ -59,3 +59,19 @@ Owner: Game Design. 2026-11-15, on World's park (`docs/world/pending/planet-size
 **This is mine and World's to decide, not a question for Orb.** It fixes a visible fault in the direction Orb already set ("math based, procedural terrain"). Nothing in it changes what Orb asked for. **Orb sees it through the look gate:** a side-by-side of planet 7's lakes, carved against the 9 November build, before the EP lands it (ADR 0010). If the carve changes a lake Orb knows in a way that reads worse, Orb's eye decides there.
 
 **Until GW2, the slab lakes stay,** as in Orb's build, with the tile fix drawing them where the fighters stand.
+
+### 4b. Re-ruled on World's price (2026-11-20)
+
+**World's price:** keeping each lake at the plan's level means raising walls on the downhill shore, not digging. On planet 7 that's 642 open shore links needing walls with a median of 426 units, p90 1,704 and a maximum of 2,898: about 90 million square units of new ground. **Walls are out.** They'd be dams and ridges perched on hillsides, which is a worse fault than the slabs.
+
+**The pick: dig down at the spill level, with a depth cap,** in GW2's terrain window:
+- **each lake's level is its spill level,** the lowest pass out (`lakeSpill`'s rule), so the water is honest;
+- **inside the lake's planned footprint, ground no more than 300 units (4 bh) above that level is dug into a bowl below it,** sloping no steeper than 1 in 3 from the new shore. Ground higher than the cap stays, as shore or island;
+- **a lake that ends up under a quarter of its planned area isn't dug at all** and keeps only its real basin, or is dry ground;
+- so lakes on gentle land keep a fair size, lakes on steep slopes shrink, nothing rises, and no pit is deeper than 4 bh.
+
+- **Why not real basins only:** it's honest and costs only a data flip, but it leaves almost no lakes (planet 7: 79 of 6,641 nodes). It's **the fallback:** if the look gate's side-by-side of planet 7 reads worse with the capped dig, `lakeSpill` on and nothing dug.
+- **Why not wait for the planner:** it still comes after Alpha (option 3), and the capped dig is the kind of tool it would use. Nothing here blocks it.
+- **Still mine and World's, not a question for Orb.** Orb sees it at the look gate.
+- **The tile lines that draw lakes** follow this pick in GW2, and `lakeMax` alone goes in GW1b (no towns on lake beds), as you said.
+- **Data:** `field.json` `plans.lakeSpill` true, `plans.lakeDig: { "maxDepth": 300, "slope": 0.33, "minAreaShare": 0.25 }`. World's check reads 0 open shore links and no dug point deeper than 300.
