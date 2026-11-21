@@ -1,0 +1,20 @@
+# water-everywhere probes (scratch): x 31,936 to 32,064 under plans.everywhere, the check's own setup; first as the check reads (levels 1 and 2 asked), then with levels 3 and 4 too
+## as the check reads
+x 31936 (col 998): groundY 516.80, floor 516.80 | sample 477.00, heightOf 477.00, sample+records 516.80, heightOf+records 516.80, store 0.00 | drawn 557.88 | lift 23.85 (table base 525.51)
+x 31968 (col 999): groundY 536.54, floor 536.54 | sample 462.04, heightOf 462.04, sample+records 536.54, heightOf+records 536.54, store 0.00 | drawn 551.97 | lift 5.25 (table base 549.35)
+x 32000 (col 1000): groundY 563.54, floor 563.54 | sample 447.32, heightOf 447.32, sample+records 563.54, heightOf+records 563.54, store 0.00 | drawn 557.24 | lift -18.75 (table base 578.65)
+x 32016 (col 1000): groundY 578.87, floor 578.87 | sample 439.97, heightOf 439.97, sample+records 578.65, heightOf+records 578.65, store 0.00 | drawn 559.90 | lift -18.75 (table base 578.65)
+x 32032 (col 1001): groundY 594.20, floor 594.20 | sample 432.63, heightOf 432.63, sample+records 594.20, heightOf+records 594.20, store 0.00 | drawn 562.57 | lift -43.10 (table base 609.65)
+x 32064 (col 1002): groundY 624.42, floor 624.42 | sample 417.99, heightOf 417.99, sample+records 624.42, heightOf+records 624.42, store 0.00 | drawn 575.86 | lift -52.70 (table base 637.88)
+## with the finest levels
+x 31936 (col 998): groundY 516.80, floor 516.80 | sample 477.00, heightOf 477.00, sample+records 516.80, heightOf+records 516.80, store 0.00 | drawn 522.19 | lift 0.61 (table base 525.51)
+x 31968 (col 999): groundY 536.54, floor 536.54 | sample 462.04, heightOf 462.04, sample+records 536.54, heightOf+records 536.54, store 0.00 | drawn 540.28 | lift 4.18 (table base 549.35)
+x 32000 (col 1000): groundY 563.54, floor 563.54 | sample 447.32, heightOf 447.32, sample+records 563.54, heightOf+records 563.54, store 0.00 | drawn 562.46 | lift -2.90 (table base 578.65)
+x 32016 (col 1000): groundY 578.87, floor 578.87 | sample 439.97, heightOf 439.97, sample+records 578.65, heightOf+records 578.65, store 0.00 | drawn 575.75 | lift -2.90 (table base 578.65)
+x 32032 (col 1001): groundY 594.20, floor 594.20 | sample 432.63, heightOf 432.63, sample+records 594.20, heightOf+records 594.20, store 0.00 | drawn 591.79 | lift -9.27 (table base 609.65)
+x 32064 (col 1002): groundY 624.42, floor 624.42 | sample 417.99, heightOf 417.99, sample+records 624.42, heightOf+records 624.42, store 0.00 | drawn 620.08 | lift -2.17 (table base 637.88)
+## with World's grant and GW1b's data (wge: everywhere, lake-places, lakeMax 8), the finest levels loaded: x 22,400 (the lake place the check reads 12.9 under) and x 32,000
+x 22336 (col 698) water_top 989.50: groundY 795.92, floor 989.50 | sample 795.92, heightOf 795.92, sample+records 795.92, heightOf+records 795.92, store 0.00 | drawn 795.92 | lift -0.00 (table base 815.67)
+x 22400 (col 700) water_top 989.50: groundY 865.37, floor 989.50 | sample 865.37, heightOf 865.37, sample+records 865.37, heightOf+records 865.37, store 0.00 | drawn 865.37 | lift -0.00 (table base 878.70)
+x 22432 (col 701) water_top 989.50: groundY 887.75, floor 989.50 | sample 887.75, heightOf 887.75, sample+records 887.75, heightOf+records 887.75, store 0.00 | drawn 887.75 | lift -0.00 (table base 892.35)
+x 32000 (col 1000) water_top -1000000000.00: groundY 563.54, floor 563.54 | sample 447.32, heightOf 447.32, sample+records 563.54, heightOf+records 563.54, store 0.00 | drawn 562.46 | lift -2.90 (table base 578.65)

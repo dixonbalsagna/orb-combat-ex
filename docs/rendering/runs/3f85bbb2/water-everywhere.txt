@@ -1,0 +1,52 @@
+# water-everywhere = World's grant-rendering-tile-water.patch (d753545f) on HEAD 3f85bbb2 + Animation's water-tile-check (scratch)
+## GW1b's data (plans.everywhere true, World's lake-places.diff + lake-places-data.diff: lakeMax 8): water_tile_check --strict --verbose
+exit 1
+  wade x 9600: ground -23.8, the sim's floor -23.8, drawn ground -24.5, drawn water 0.0, feet -23.8, gap -23.8
+  wade x 10240: ground -30.7, the sim's floor -30.7, drawn ground -26.3, drawn water 0.0, feet -30.7, gap -30.7
+  lake x 22400: ground 865.4, the sim's floor 989.5, drawn ground 839.9, drawn water 989.5, feet 976.6, gap -12.9
+  wade x 23040: ground 939.1, the sim's floor 964.9, drawn ground 949.4, drawn water 989.5, feet 982.0, gap -7.5
+  wade x 25600: ground 2048.7, the sim's floor 2048.7, drawn ground 2049.6, drawn water 2062.5, feet 2050.0, gap -12.5
+  wade x 26240: ground 2042.9, the sim's floor 2042.9, drawn ground 2045.1, drawn water 2062.5, feet 2045.8, gap -16.6
+  dry x 32000: ground 563.5, the sim's floor 563.5, drawn ground 557.2, drawn water none, feet 544.8, gap -12.5
+  wade x 48640: ground 647.1, the sim's floor 655.9, drawn ground 647.1, drawn water 689.0, feet 655.9, gap -33.1
+  wade x 50560: ground 656.5, the sim's floor 656.5, drawn ground 656.5, drawn water 689.0, feet 656.5, gap -32.5
+  wade x 51840: ground 678.2, the sim's floor 678.2, drawn ground 678.2, drawn water 689.0, feet 678.2, gap -10.7
+  wade x 90240: ground 2730.8, the sim's floor 2730.8, drawn ground 2730.4, drawn water 2748.7, feet 2730.6, gap -18.1
+  wade x 93440: ground 1845.4, the sim's floor 1877.3, drawn ground 1846.6, drawn water 1898.8, feet 1879.1, gap -19.8
+  wade x 94720: ground 1875.4, the sim's floor 1875.4, drawn ground 1874.9, drawn water 1898.8, feet 1874.8, gap -24.0
+  wade x 97280: ground 1521.7, the sim's floor 1550.5, drawn ground 1521.7, drawn water 1573.6, feet 1550.5, gap -23.1
+  wade x 122240: ground -19.7, the sim's floor -19.7, drawn ground -17.8, drawn water 0.0, feet -19.7, gap -19.7
+  wade x 128640: ground -67.1, the sim's floor -7.9, drawn ground -67.2, drawn water 0.0, feet -7.9, gap -7.9
+  wade x 130560: ground -20.4, the sim's floor -20.4, drawn ground -20.1, drawn water 0.0, feet -20.4, gap -20.4
+  wade x 147200: ground -24.4, the sim's floor -24.4, drawn ground -24.1, drawn water 0.0, feet -24.4, gap -24.4
+  wade x 147840: ground -34.7, the sim's floor -34.7, drawn ground -34.8, drawn water 0.0, feet -34.7, gap -34.7
+ok   sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+FAIL dry: 150 places, the feet are 12.5 from the drawn ground at worst (1 over 6)
+ok   wade: 22 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 34.7 at most (wade.below 75; 0 out of range)
+FINDING lake (finding): 17 places where the sim holds a lake's level, the feet are 1 beyond 6 of the drawn surface; up to 0.0 above it and 12.9 below
+water tile check FAILED
+## main's own data (everywhere false), the grant alone: water_tile_check, against Animation's main record (sea 51 at 0.0; dry 149 at 2.8; wade 23 at 44.2; lake 17, 14 beyond 6, 59.2 above / 35.6 below)
+exit 0
+ok   sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+ok   dry: 149 places, the feet are 2.8 from the drawn ground at worst (0 over 6)
+ok   wade: 23 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 34.7 at most (wade.below 75; 0 out of range)
+FINDING lake (finding): 17 places where the sim holds a lake's level, the feet are 1 beyond 6 of the drawn surface; up to 0.0 above it and 12.9 below
+water tile check passed
+golden.json byte-identical to HEAD's
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+## for the record: GW1a's data before any fix (wt0) and with the gate line alone (wt3), --strict
+  wt0: ok   sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+  wt0: FAIL dry: 161 places, the feet are 32.6 from the drawn ground at worst (5 over 6)
+  wt0: ok   wade: 11 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 34.7 at most (wade.below 75; 0 out of range)
+  wt0: FINDING lake (finding): 17 places where the sim holds a lake's level, the feet are 17 beyond 6 of the drawn surface; up to 681.5 above it and -0.0 below
+  wt3: ok   sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+  wt3: FAIL dry: 150 places, the feet are 12.5 from the drawn ground at worst (1 over 6)
+  wt3: ok   wade: 22 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 44.2 at most (wade.below 75; 0 out of range)
+  wt3: FINDING lake (finding): 17 places where the sim holds a lake's level, the feet are 14 beyond 6 of the drawn surface; up to 59.2 above it and 35.6 below
+  (wt4, the gate line alone on main's data, read as Animation's main record: sea 51 at 0.0, dry 149 at 2.8, wade 23 at 44.2, lake 14 beyond 6 at 59.2 / 35.6)

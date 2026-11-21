@@ -1,0 +1,20 @@
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -539,7 +539,7 @@
+ 			if place_w > 0.0 and not _has_pads:
+ 				var col: float = px / SimConst.COL
+ 				h = lerpf(h, lerpf(float(_S.base[pc]), float(_S.base[(pc + 1) % SimConst.NC]), col - floor(col)), place_w)
+-	if _job_recs and _job_wet and place_w < 0.5:
++	if _job_recs and _job_wet and (place_w < 0.5 or _has_pads):   # with World's lots a place's ground is in the records and recordWater reads it: no band to keep the water out of (it hid every lake near any building)
+ 		wet = WorldField.recordWater(_S, dp[0], dp[1], dp[2], h)
+ 	if place_w > 0.5:
+ 		var pn: String = WorldBiomes.biomeAt(px)
+@@ -610,7 +610,7 @@
+ 			if ws.is_empty():
+ 				return -1.0e9
+ 			var q: int = clampi(int((pt - float(j)) * float(CELLS) + 1.5), 0, TEX - 1) * TEX + clampi(int((ps - float(i)) * float(CELLS) + 1.5), 0, TEX - 1)
+-			return h + ws[q] if ws[q] > 0.0 else -1.0e9
++			return float((_hs[lay] as PackedFloat32Array)[q]) + ws[q] if ws[q] > 0.0 else -1.0e9   # the node's own ground and depth, as the sheet draws them: the lake's level, not the point's ground plus the node's depth
+ 	return -1.0e9
+ 
+ 
