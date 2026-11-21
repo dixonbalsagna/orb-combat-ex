@@ -1,0 +1,40 @@
+#!/bin/sh
+# w1_go.sh <scratchpad>: gw1b-energy RE-CUT on the GW1a stack (B-04, B-22): the EP s422 at 3917885 + meters-zero refreshed (committed) + kick/gw1b_energy_edit.py + kick/gw1b_tests_fix.py, the slip ON.
+# meters-zero committed as the base. Patches; import; golden (moves); parity against it; power_check and its negative control;
+# my flat-out readers; two_states; the other owners' checks that read the meters or flat out (to list); Rendering's 15.
+# ONE Godot job at a time, below normal (a long run).
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; T="$NS/w1"; O="$NS/w1o"
+rm -rf "${NS:?}/w1o"; mkdir -p "$O" "$NS/w1app"; export APPDATA="$(cygpath -w "$NS/w1app")"
+cd "$T" || exit 1
+case "$(pwd -P)" in */scratchpad/w1) ;; *) echo refusing; exit 1 ;; esac
+run() { name="$1"; t="$2"; shift 2; s=$(date +%s); timeout "$t" "$G" --headless --path . --script "$@" > "$O/$name.txt" 2>&1; code=$?; echo "$name: exit $code in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR\|Parse Error' "$O/$name.txt"); $(grep -v 'WARNING\|at: \|^$\|ERROR: \|wait_to_finish' "$O/$name.txt" | tail -1 | cut -c1-150)"; grep -n "^FAIL\|^  FAIL" "$O/$name.txt" | head -6 | cut -c1-240; }
+git diff --binary -- data/fight/power.json > "$O/grant-data-gw1b.patch"
+git diff --binary -- sim/core > "$O/gw1b-energy.patch"
+git diff --binary -- data/fighters > "$O/grant-narrative-feeds.patch"
+for p in grant-data-gw1b gw1b-energy grant-narrative-feeds; do echo "$p sha1 $(sha1sum "$O/$p.patch" | cut -c1-40) sha256 $(sha256sum "$O/$p.patch" | cut -c1-12) $(grep -c '^diff --git' "$O/$p.patch") files"; done
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+node tools/validate.js --self-test > "$O/validate_self.txt" 2>&1; echo "validate self-test $?"
+node tools/validate.js > "$O/validate.txt" 2>&1; echo "validate $?; $(tail -1 "$O/validate.txt" | cut -c1-80)"
+node tools/lint-determinism.mjs > "$O/lint.txt" 2>&1; echo "lint $?"
+cp sim/core/test/golden.json "$O/golden_head.json"
+run golden 900 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$O/golden_head.json" && echo "  golden.json byte-identical (unexpected)" || echo "  golden.json MOVED (expected)"
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity.txt" 2>&1; echo "parity (its regenerated golden) through gate.mjs: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL" "$O/parity.txt" | head -8 | cut -c1-240
+cp "$O/golden_head.json" sim/core/test/golden.json
+s=$(date +%s); node tools/gate.mjs --verdict -- "$GW" --headless --path . --script res://sim/core/tools/power_check.gd > "$O/power.txt" 2>&1; echo "power_check through gate.mjs: exit $? in $(( $(date +%s) - s )) s; $(grep 'POWER' "$O/power.txt" | tail -1)"
+grep -n "^FAIL\|dash close" "$O/power.txt" | head -12 | cut -c1-230
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/power_check.gd -- --negative-control > "$O/power_neg.txt" 2>&1; echo "power_check negative control: exit $?; $(grep 'POWER' "$O/power_neg.txt" | tail -1)"
+run cross 1800 res://sim/core/tools/cross_check.gd
+run cross_end 1800 res://sim/core/tools/cross_end_check.gd
+run memo 1800 res://sim/core/tools/memo_check.gd
+run kick 900 res://sim/core/tools/kick_check.gd
+run two_states 2400 res://sim/core/tools/two_states_check.gd -- --setups=default,power,dash,slip,fights
+echo "== (others: see the GW1b review steps 7 and 8)"
+echo "== Rendering's checks"
+sh "$NS/n/rgates.sh" "$T" "$O" 2>&1 | tail -18
+echo w1 done

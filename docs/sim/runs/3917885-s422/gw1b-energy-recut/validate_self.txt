@@ -1,0 +1,2 @@
+self-test: 10110 of 10110 checks passed
+  parser 327 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 194; data cases 8364

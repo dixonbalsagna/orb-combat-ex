@@ -29,4 +29,8 @@ Records in `docs/sim/runs/b09d705-s422/floor-rise-review/`. On copies of the fin
   - `power_check` (through `gate.mjs`), `kick_check`, `two_states`: pass.
   - Rendering's 15: all pass.
 - **The control, this companion without the grant:** parity's lake row fails ("he is 19.175 under his floor" at tick 0). So the grant is what makes the row pass.
-- **Not mine:** Encounter's `floorlift_check` fails its "fight" row (a lift of 144.54 in one tick, 1,758 ticks over the old 7.5 limit). That's the rule working: a RIVAL who was already 21 units inside a rising floor moved 53 units onto a steeper part and was lifted by the floor's own climb, and is still 14 under it. The row's limit should read `riseMax` plus the climb, as World says. Whether a 144-unit pop on a bank that steep reads well is a look call for Game Design.
+- **Not mine:** Encounter's `floorlift_check` fails its "fight" row (a lift of 144.54 in one tick, 1,758 ticks over the old 7.5 limit). That's the rule working: a RIVAL who was already 21 units inside a rising floor moved 53 units onto a steeper part and was lifted by the floor's own climb, and is still 14 under it. The row's limit should read `riseMax` plus the climb, as World says (Encounter's `director/floorlift-rise`, GW1b step 15).
+
+## The look call: ruled
+
+Game Design ruled on 2026-11-20 (`docs/design/buildings.md`, "A rising lake floor onto a steep bank"): **keep the sim's one-tick lift, uncapped**, and the view covers it (Animation's `docs/animation/pending/step-up`). The picture that ruling leans on is being retaken in the default look (the GW1b review's B-08). Steps 16 (this park with World's grant) and 18 (step-up) land in the same batch.

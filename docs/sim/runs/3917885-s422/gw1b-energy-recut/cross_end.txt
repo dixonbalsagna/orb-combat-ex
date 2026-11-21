@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  rejoin: the second KO's moment over at tick 377, his launch landed at 677, rejoined at 677
+  seed 61: first out at -1, rejoined 0, ended false at 45000, out []
+  seed 62: first out at -1, rejoined 0, ended false at 45000, out []
+CROSSEND: 0 check(s) failed

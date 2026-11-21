@@ -1,0 +1,45 @@
+grant-data-gw1b sha1 be0e018e6f35276baed71f482691f11e5483d383 sha256 468109e9fda6 1 files
+gw1b-energy sha1 09796c4d03a6e4cc75cf1824359bd48e273f54f7 sha256 9ab2a2044513 3 files
+grant-narrative-feeds sha1 854254638ee5b561d328f9252b2c14716fbf5876 sha256 8fa277d82afa 2 files
+import 0; parse errors 0
+validate self-test 0
+validate 0; 322 files checked, 0 errors, 2 warnings
+lint 0
+golden: exit 0 in 154 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (187200 ticks), 2 replays in 149.1 s
+  golden.json MOVED (expected)
+parity (its regenerated golden) through gate.mjs: exit 0 in 372 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+power_check through gate.mjs: exit 0 in 199 s; POWER: 0 check(s) failed
+28:dash close from 1000 at tier 1, arrival off, in ticks: 15 with the dash and the kick (0.25 s, target 0.45 s); 49 the kick alone; 15 the dash alone; 49 neither
+29:dash close from 3000 at tier 1, arrival off, in ticks: 50 with the dash and the kick (0.83 s, target 1.00 s); 140 the kick alone; 50 the dash alone; 140 neither
+30:dash close from 6000 at tier 1, arrival off, in ticks: 101 with the dash and the kick (1.68 s, target 1.90 s); 198 the kick alone; 101 the dash alone; 198 neither
+31:dash close from 6000 at tier 4, arrival off, in ticks: 45 with the dash and the kick (0.75 s, target 0.90 s); 107 the kick alone; 45 the dash alone; 107 neither
+32:dash close from 1000 at tier 1, arrival on, in ticks: 19 with the dash and the kick (0.32 s, target 0.45 s); 51 the kick alone; 19 the dash alone; 51 neither
+33:dash close from 3000 at tier 1, arrival on, in ticks: 53 with the dash and the kick (0.88 s, target 1.00 s); 142 the kick alone; 53 the dash alone; 142 neither
+34:dash close from 6000 at tier 1, arrival on, in ticks: 105 with the dash and the kick (1.75 s, target 1.90 s); 200 the kick alone; 105 the dash alone; 200 neither
+35:dash close from 6000 at tier 4, arrival on, in ticks: 49 with the dash and the kick (0.82 s, target 0.90 s); 109 the kick alone; 49 the dash alone; 109 neither
+power_check negative control: exit 0; POWER negative control: 0 check(s) failed
+cross: exit 0 in 143 s; script errors 0; CROSS: 0 check(s) failed
+cross_end: exit 0 in 274 s; script errors 0; CROSSEND: 0 check(s) failed
+memo: exit 0 in 68 s; script errors 0; MEMO: 0 check(s) failed
+kick: exit 0 in 44 s; script errors 0; KICK: 0 check(s) failed
+two_states: exit 0 in 272 s; script errors 0; PASS  0 failure(s)
+== (others: see the GW1b review steps 7 and 8)
+== Rendering's checks
+after_check: exit 1 in 21 s; FAIL lines 1; script errors 0; after check FAILED (1)
+6:FAIL  on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [4, 5]): 3 differ, first at seed 8, tick 119, fighter 1: 1 drawn, the tally reads 2
+cue_check: exit 0 in 207 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 18 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 135 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 147 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 195 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 70 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 9 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 27 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 24 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 65 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 17 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 14 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 16 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 23 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+w1 done

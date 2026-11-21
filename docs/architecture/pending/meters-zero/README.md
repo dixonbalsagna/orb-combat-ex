@@ -29,12 +29,14 @@ Simulation, 2026-11-14, sprint A1 (`05-directives/A1/simulation-engine.md`, crit
 
 ## Apply
 
-`git -c core.autocrlf=false apply meters-zero.patch grant-narrative-meters.patch`, on HEAD 8007de44 (checked again on 148f4e16: it applies and reproduces the tested tree).
+`git -c core.autocrlf=false apply meters-zero.patch grant-narrative-meters.patch`, **on the GW1a tree** (re-cut on 2026-11-20 on the EP's final GW1a stack, s422 `gw1a-final` 3917885: the GW1b review's B-22, since GW1a's never-cut changed the context of parity's hunk). The change is line for line the one first cut and gated on 8007de44: only the context moved. GW1b's step 5.
 
 | Patch | Owner | sha1 | sha256 starts |
 | :--- | :--- | :--- | :--- |
-| `meters-zero.patch` (`damage.gd`, `fighter_data.gd`, `parity.gd`) | mine | 5ad4d852cdd7de21d1df2a896fb3ef8cbd72ab1a | 25ae18f3ecb6 |
+| `meters-zero.patch` (`damage.gd`, `fighter_data.gd`, `parity.gd`) | mine | 12b6e164bbbcfef9b3c6d94481c4acae219757d6 | c1c35ea15617 |
 | `grant-narrative-meters.patch` (both fighters' `meters.json`) | Narrative | 3ca8eea1c7a76ee1d9bc9c442edaae84feeb445f | 045b45f1a5df |
+
+(The first cut, on 8007de44, was `meters-zero.patch` 5ad4d852cdd7de21d1df2a896fb3ef8cbd72ab1a.) The re-cut tree's gate is gw1b-energy's (`docs/sim/runs/3917885-s422/gw1b-energy-recut/`), which stands on it.
 
 **The golden moves** (9 matches, 173,718 ticks on main's data): the rival's comeback. It's re-recorded once after GW1b's riders (A-CODE-02).
 

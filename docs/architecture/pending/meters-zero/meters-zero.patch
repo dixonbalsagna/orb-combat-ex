@@ -30,7 +30,7 @@ index c20a9aa..13ba4f6 100644
  const PENALTIES: Array = ["coreKiRegen", "legsSpeed", "legsLockBreak", "staggerTicks", "dazeTicks", "armsGuardMul", "armsBrokenMul", "headParryNarrow", "headDefence", "legsSlip", "armsBrokenLightMul", "armsBrokenMediumMul", "legsBrokenGuardScale"]
  const BLOWS: Array = ["heavy", "beam", "guard_break", "chain"]
 diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
-index b94bfe4..4471dc2 100644
+index 43b33e9..a862d45 100644
 --- a/sim/core/tools/parity.gd
 +++ b/sim/core/tools/parity.gd
 @@ -90,6 +90,7 @@ func _init() -> void:
@@ -41,7 +41,7 @@ index b94bfe4..4471dc2 100644
  	check("the ricochet's glance", _ricochet())
  	check("the replay header covers a planet's data", _planetHeader())
  	check("the intent's second word in the hash and the replay", _rightWord())
-@@ -4221,10 +4222,10 @@ func _fightData(g: Dictionary) -> String:
+@@ -4277,10 +4278,10 @@ func _fightData(g: Dictionary) -> String:
  ## differ from its result with the real data. No probe plays a match, so a changed opening cannot break a row (the old
  ## check played seeds and needed new ones after B2 and after the terrain fixes). The end-to-end row is forced as well: RIVAL,
  ## with menace set, attacks PROTAGONIST through the director, and what PROTAGONIST took must differ (it played seeds until they needed
@@ -54,7 +54,7 @@ index b94bfe4..4471dc2 100644
  	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 1, "cap"], 0.3, "kaiHit"],
  	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 2, "cap"], 2.0, "kaiHit"],
  	["PROTAGONIST/meters.json", ["meters", "anguish", "decay", "rate"], 3.0, "kaiTick"],
-@@ -4234,7 +4235,6 @@ const WIRED: Array = [
+@@ -4290,7 +4291,6 @@ const WIRED: Array = [
  	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 2, "amount"], 5.0, "aFell"],
  	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 3, "amount"], 5.0, "aFell"],
  	["RIVAL/meters.json", ["meters", "menace", "effects", 0, "perPoint"], 0.3, "vorrTick"],
@@ -62,7 +62,7 @@ index b94bfe4..4471dc2 100644
  	["RIVAL/meters.json", ["meters", "menace", "effects", 1, "cap"], 1.0, "vorrHit"],
  	["RIVAL/meters.json", ["meters", "menace", "effects", 2, "perPoint"], 50.0, "beam"],
  	["RIVAL/meters.json", ["meters", "menace", "decay", "rate"], 3.0, "vorrTick"],
-@@ -5477,6 +5477,53 @@ func _hitstopAny() -> String:
+@@ -5535,6 +5535,53 @@ func _hitstopAny() -> String:
  	return ""
  
  
@@ -115,4 +115,4 @@ index b94bfe4..4471dc2 100644
 +
  ## Hit-stop by weight (sim/core/hitstop.gd). Off: a hit's stop is the one passed, and a stop's count-down is today's.
  ## On: each weight's ticks; a hit that names none keeps the one passed; stops merge; over the budget every stop under
- ## a decisive blow is x0.7 (rounded, at least 2) and decisive blows are not, and 10 s of fight later the budget is
+ ## a decisive blow is x0.7 (rounded, at least 2) and decisive blows, the KO, launches and heavies are not (Game Design,

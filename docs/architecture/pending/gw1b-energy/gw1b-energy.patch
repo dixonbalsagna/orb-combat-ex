@@ -49,10 +49,10 @@ index 2c6bb55..a460198 100644
  		ok(SimForms.has(S, A), "... and forms for him")
  		if not SimForms.has(S, A):
 diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
-index 8b05494..17a8742 100644
+index a862d45..0d308df 100644
 --- a/sim/core/tools/parity.gd
 +++ b/sim/core/tools/parity.gd
-@@ -4226,13 +4226,14 @@ func _fightData(g: Dictionary) -> String:
+@@ -4280,13 +4280,14 @@ func _fightData(g: Dictionary) -> String:
  ## with menace set, attacks PROTAGONIST through the director, and what PROTAGONIST took must differ (it played seeds until they needed
  ## replacing three times). composure.below is left out: it only matters while composure's cap is not 0. So, since Orb's decision 6
  ## (2026-11-13), are regen_penalty's and regen_bonus's caps: they only matter while their perPoint is not 0, and both are 0 in data.
@@ -68,7 +68,7 @@ index 8b05494..17a8742 100644
  	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 1, "amount"], 5.0, "aFell"],
  	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 2, "amount"], 5.0, "aFell"],
  	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 3, "amount"], 5.0, "aFell"],
-@@ -4244,9 +4245,7 @@ const WIRED: Array = [
+@@ -4298,9 +4299,7 @@ const WIRED: Array = [
  	["RIVAL/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "mFell"],
  	["RIVAL/meters.json", ["meters", "menace", "sources", 1, "amount"], 5.0, "mFell"],
  	["RIVAL/meters.json", ["meters", "menace", "sources", 2, "amount"], 5.0, "mCrater"],
