@@ -1,0 +1,18 @@
+# The reds on the EP's s426 as given (its wc.log): ground_check 1, beam_grid_check 3, wall_check 6, wall_hold_check 1
+1244:  FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+1274:GROUND: 1 check(s) failed
+1847:  FAIL before the grid the buildings by the shooter take damage
+1848:  FAIL with the grid they lose at least a fifth less
+1850:  FAIL the beam still carves its path (0 hp across it, 0 before)
+1853:BEAMGRID: 3 check(s) failed
+2074:  FAIL  a tier-1 body at a tower is a wall: building_hit outcome wall, keep 0 ([])
+2075:  FAIL  and the floor_hit says how it broke ([])
+2077:  FAIL  he is staggered at least 24 ticks after the rebound (0 left when he is down)
+2079:  FAIL  the wall slam is twice the hit: 0.0 against 0.0 with wallSlamMul 1
+2080:  FAIL  a lodge event carries x, y, z and the hold seconds, after a building_hit with keep 0 (0 lodges, 0 well formed)
+2081:  FAIL  lodgeHold body: the body is stunned for the hold
+2082:WALL: 6 check(s) failed
+2274:  FAIL 2 wall slams staged on towers (seeds 1 to 8, tiers 1 to 3)
+2284:WALLHOLD: 1 check(s) failed
+
+# Bisect (World scratch v2 = clean main + the s426 setup patches in order, one group at a time): beam_grid_check and wall_check after steps 1-8: pass; after 9-14 (meters-zero, gw1b-energy x3, bystanders): wall_check 6 red; with the three gw1b-energy patches reversed: pass; with only grant-data-gw1b.patch (power.json launchTravel 1.5): 6 red; with WorldPin.launchTravelOld(): pass, wall_hold_check pass; through step 16 beam_grid_check passes, steps 17-26: 3 red; with beam-aim-throw and bounce-count reversed: 3 red; with stray-beams (+ its input patch) reversed: 0 red; probe: fireTick -1 with it, 48 without; dropOnPress off: still -1; powerPress true on the staging step: 12,506 hp with the grid against 30,286, 3 down against 27
