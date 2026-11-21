@@ -1,0 +1,65 @@
+diff --git a/net/desync.gd b/net/desync.gd
+index a46aadc..45d0b2f 100644
+--- a/net/desync.gd
++++ b/net/desync.gd
+@@ -28,6 +28,7 @@ const WALK_SKIP: Array = ["out", "worldId"]
+ 
+ static var aiBlind: bool = false   # tests only: the digest leaves out the AI's timers (desync_check's negative control)
+ static var wordBlind: bool = false # tests only: the digest leaves out the intent's second word (word_check's negative control)
++static var dirIBlind: bool = false    # tests only: the digest leaves out the fighters' director integers, as before they were in it (the controls)
+ static var fdmgBlind: bool = false    # tests only: the digest leaves out the buildings' floor damage, as before it was in it (desync_check's control)
+ static var marksBlind: bool = false   # tests only: the digest leaves out the buildings' marks, as before they were in it (desync_check's control)
+ static var swingBlind: bool = false   # tests only: the digest leaves out the line, the swing and the store (swing_check's negative control)
+@@ -118,7 +119,14 @@ static func _digest(S: SimState) -> String:
+ 		_fields(v, md, S.frame, SimState.Frame.HASHED)
+ 		_fields(v, md, S.swing, SimSwing.HASHED)
+ 		v.append(S.storeN); v.append(S.storeHash >> 32); v.append(S.storeHash & 0xFFFFFFFF)
++	if not dirIBlind:   # each fighter's director integers (act.dirI: stamps and counters), as SimHash reads them, after their sizes: on the planet a divergence can live only here for hundreds of ticks
++		for f in S.fighters:
++			v.append(float(f.act.dirI.size()))
+ 	md.update(v.to_byte_array())
++	if not dirIBlind:
++		for f in S.fighters:
++			if f.act.dirI.size() > 0:
++				md.update(f.act.dirI.to_byte_array())
+ 	for k in TERRAIN:
+ 		var a = S.get(k)
+ 		var bytes: PackedByteArray = a if a is PackedByteArray else a.to_byte_array()
+diff --git a/net/tools/desync_check.gd b/net/tools/desync_check.gd
+index 18a8492..d313469 100644
+--- a/net/tools/desync_check.gd
++++ b/net/tools/desync_check.gd
+@@ -5,7 +5,7 @@ extends SceneTree
+ ##     digest at that tick, and the peers agreed on all but the last few checkpoints;
+ ##   - injected divergence: one peer's state is changed once, at a tick that is not a checkpoint, by each of a set of
+ ##     injections (one RNG bit, one ulp of a fighter's x, a building's hp, a building's marks (its memory), a building's floor damage, a terrain column, the mood's casualty count,
+-##     the director's cool-down). Both peers report a desync at the first checkpoint after it, with the last agreed
++##     the director's cool-down, or on the planet its stop timer, which the cool-down's reset doesn't touch). Both peers report a desync at the first checkpoint after it, with the last agreed
+ ##     checkpoint the one before, the two digests crossed, and a report (NetDesync.report) whose field walk finds the
+ ##     difference against the other peer and against the divergent peer's own replay, and none on the clean peer's
+ ##     replay. The reports are written to --out. An injection the sim itself erases before the checkpoint (a fighter's
+@@ -46,6 +46,15 @@ var INJECT: Dictionary = {
+ 	"director": func(S: SimState) -> void: S.dirS.cool += 1e-6,
+ }
+ 
++## Whether a match on this setup is on the planet (a field world, with a frame): the default since the planet flip, and the planet setups.
++static func _fieldWorld(seed: int, su: Dictionary) -> bool:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {"p1": true, "p2": true}, su)
++	var on: bool = S.frame != null
++	SimCore.dispose(S)
++	return on
++
++
+ ## Whether a match on this setup plays the energy model: the data's switch, or the setup's "power".
+ static func _powerOn(seed: int, su: Dictionary) -> bool:
+ 	var S := SimCore.createSim()
+@@ -134,6 +143,8 @@ func _init() -> void:
+ 	if INJECT.has("fighter_x") and not setup.has("fights") and _powerOn(seeds[0], setup):   # a match with the energy model (the LAN setups, and every setup once the data has it on: GW1a): x heals, so his health
+ 		INJECT.erase("fighter_x")
+ 		INJECT["fighter_hp"] = func(S: SimState) -> void: S.fighters[1].hp -= 1.0
++	if INJECT.has("director") and _fieldWorld(seeds[0], setup):   # on the planet the cool-down resets before the next checkpoint (healed by 240, seed 1); the stop timer keeps a change of the same size
++		INJECT["director"] = func(S: SimState) -> void: S.dirS.stop += 1e-6
+ 	if setup.has("fights"):
+ 		aiFlags = NetLan.AI2
+ 		if setup.get("outside", false) and not NetLan.outsideKeyed():

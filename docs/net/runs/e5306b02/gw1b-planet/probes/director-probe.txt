@@ -1,0 +1,8 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+stop is float, dirI size 0
+  cool    at 240: SimHash same (healed), digest same
+  exN     at 240: SimHash differs, digest differs
+  stop    at 240: SimHash differs, digest differs
+  dirI14  at 240: SimHash same (healed), digest same
+  dirI64  at 240: SimHash differs, digest differs

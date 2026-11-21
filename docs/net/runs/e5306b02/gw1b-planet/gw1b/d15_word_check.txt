@@ -1,0 +1,10 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX word check   Godot 4.7.2-stable (official)   600 ticks   protocol 5
+  lan    bad ticks 0   rollbacks    0   mispredicted    0   deepest  0   words held  677   wire 412996 bytes
+  p120   bad ticks 0   rollbacks  405   mispredicted  562   deepest  4   words held  676   wire 497300 bytes
+  far    bad ticks 0   rollbacks  349   mispredicted  619   deepest 13   words held  677   wire 737276 bytes
+word check passed: 646 checks, 0 failed
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe res://net/tools/word_check.gd --: no SCRIPT ERROR lines
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

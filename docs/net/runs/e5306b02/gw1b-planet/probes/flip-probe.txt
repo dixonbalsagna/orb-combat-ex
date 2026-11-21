@@ -1,0 +1,39 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+planet world: true, depth on: false
+  300: hash same digest same
+  310: hash DIFFERS
+  320: hash DIFFERS
+  330: hash DIFFERS
+  340: hash DIFFERS
+  350: hash DIFFERS
+  360: hash DIFFERS digest same
+    diff at 360: { "path": "S.fighters[1].act.dirI[14]", "a": "525961", "b": "525857" }
+    diff at 360: { "path": "S.fighters[1].act.dirI[64]", "a": "525928", "b": "525888" }
+    diff at 360: { "path": "S.fighters[1].act.dirI[65]", "a": "525960", "b": "525856" }
+    diff at 360: { "path": "S.fighters[1].act.dirI[66]", "a": "525961", "b": "525857" }
+  370: hash DIFFERS
+  380: hash DIFFERS
+  390: hash DIFFERS
+  400: hash DIFFERS
+  410: hash DIFFERS
+  420: hash DIFFERS digest same
+  430: hash DIFFERS
+  440: hash DIFFERS
+  450: hash DIFFERS
+  460: hash DIFFERS
+  470: hash DIFFERS
+  480: hash DIFFERS digest same
+  490: hash DIFFERS
+  500: hash DIFFERS
+  510: hash DIFFERS
+  520: hash DIFFERS
+  530: hash DIFFERS
+  540: hash DIFFERS digest same
+  550: hash DIFFERS
+  560: hash DIFFERS
+  570: hash DIFFERS
+  580: hash DIFFERS
+  590: hash same
+  600: hash same digest same
+

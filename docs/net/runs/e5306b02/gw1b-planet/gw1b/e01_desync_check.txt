@@ -1,0 +1,19 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX desync check   Godot 4.7.2-stable (official)   setup default   600 ticks   checkpoint every 60   delay 2
+  ok   clean         lan     checkpoints matched   9  rollbacks    0  
+  ok   ai_t          lan     desync at 240 (agreed to 180): first field S.fighters[1].ai.t (1.33220371591563 (bits 3ff550b4d7f77a0b) vs 1.33220271591563 (bits 3ff550b3cb880000)), 1 field(s) listed
+  ok   ai_atk        lan     desync at 240 (agreed to 180): first field S.fighters[1].ai.atk (0.43333433333333 (bits 3fdbbbbfed79a3e9) vs 0.43333333333333 (bits 3fdbbbbbbbbbbbbc)), 1 field(s) listed
+  ok   ai_sT         lan     desync at 240 (agreed to 180): first field S.fighters[1].ai.sT (0.000001 vs 0.0), 1 field(s) listed
+  ok   ai_sOff       lan     desync at 240 (agreed to 180): first field S.fighters[1].ai.sOff (0.000001 vs 0.0), 1 field(s) listed
+  ok   ai_st         lan     desync at 240 (agreed to 180): first field S.fighters[1].ai.st (1.0 vs 0.0), 1 field(s) listed
+  ok   clean         p120    checkpoints matched   9  rollbacks  353  
+  ok   ai_t          p120    desync at 240 (agreed to 180): first field S.fighters[1].ai.t (1.33220371591563 (bits 3ff550b4d7f77a0b) vs 1.33220271591563 (bits 3ff550b3cb880000)), 1 field(s) listed
+  ok   ai_atk        p120    desync at 240 (agreed to 180): first field S.fighters[1].ai.atk (0.43333433333333 (bits 3fdbbbbfed79a3e9) vs 0.43333333333333 (bits 3fdbbbbbbbbbbbbc)), 1 field(s) listed
+  ok   ai_sT         p120    desync at 240 (agreed to 180): first field S.fighters[1].ai.sT (0.000001 vs 0.0), 1 field(s) listed
+  ok   ai_sOff       p120    desync at 240 (agreed to 180): first field S.fighters[1].ai.sOff (0.000001 vs 0.0), 1 field(s) listed
+  ok   ai_st         p120    desync at 240 (agreed to 180): first field S.fighters[1].ai.st (1.0 vs 0.0), 1 field(s) listed
+PASS  AI timers: 0 failure(s)
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe --ticks=600 --profiles=lan,p120: no SCRIPT ERROR lines
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
