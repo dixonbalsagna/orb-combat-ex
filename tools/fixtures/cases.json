@@ -253887,6 +253887,93 @@
       }
     },
     {
+      "id": "biomes-brunt-heldmul-valid-1",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/heldMul": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-brunt-heldmul-valid-2",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/heldMul": 2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-brunt-heldmul-valid-8",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/heldMul": 8
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "biomes-brunt-heldmul-under-1",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/heldMul": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/heldMul"
+      }
+    },
+    {
+      "id": "biomes-brunt-heldmul-over-8",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/heldMul": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/heldMul"
+      }
+    },
+    {
+      "id": "biomes-brunt-heldmul-wrong-type",
+      "schema": "biomes-brunt.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/brunt.json",
+          "set": {
+            "/heldMul": "2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/heldMul"
+      }
+    },
+    {
       "id": "bench-empty-ok",
       "schema": "fighter-bench.schema.json",
       "mutate": [
