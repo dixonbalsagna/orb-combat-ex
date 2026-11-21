@@ -1,0 +1,201 @@
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 84ea414..8f41f9a 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -294132,6 +294132,196 @@
+         "pointer": "/refine/sub"
+       }
+     },
++    {
++      "id": "biomes-field-lakemax-valid-off",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeMax": -1
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "biomes-field-lakemax-valid-zero",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeMax": 0
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "biomes-field-lakemax-valid-8",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeMax": 8
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "biomes-field-lakemax-valid-200",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeMax": 200
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "biomes-field-lakemax-string",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeMax": "8"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/plans/lakeMax"
++      }
++    },
++    {
++      "id": "biomes-field-lakemax-under-minus-1",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeMax": -1.5
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/plans/lakeMax"
++      }
++    },
++    {
++      "id": "biomes-field-lakemax-over-200",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeMax": 201
++          }
++        }
++      ],
++      "expect": {
++        "rule": "maximum",
++        "pointer": "/plans/lakeMax"
++      }
++    },
++    {
++      "id": "biomes-field-lakemax-null",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeMax": null
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/plans/lakeMax"
++      }
++    },
++    {
++      "id": "biomes-field-lakespill-valid-true",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeSpill": true
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "biomes-field-lakespill-valid-false",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeSpill": false
++          }
++        }
++      ],
++      "expect": null
++    },
++    {
++      "id": "biomes-field-lakespill-string",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeSpill": "true"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/plans/lakeSpill"
++      }
++    },
++    {
++      "id": "biomes-field-lakespill-number",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeSpill": 1
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/plans/lakeSpill"
++      }
++    },
++    {
++      "id": "biomes-field-lakespill-null",
++      "schema": "biomes-field.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/field.json",
++          "set": {
++            "/plans/lakeSpill": null
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/plans/lakeSpill"
++      }
++    },
+     {
+       "id": "density-enabled-not-boolean",
+       "schema": "biomes-density.schema.json",
