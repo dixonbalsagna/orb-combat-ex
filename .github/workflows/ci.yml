@@ -275,6 +275,8 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/flight_shots_check.gd'
       - name: Camera launch shots check (the launch shots)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/launch_shots_check.gd'
+      - name: Camera own pane check (the player always sees himself, in the real scenes, both modes)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/own_pane_check.gd'
       - name: Camera peak retry check (the peak shot retry)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/peak_retry_check.gd'
       - name: Camera peak shot check (the peak launch shot)

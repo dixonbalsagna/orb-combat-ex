@@ -64,6 +64,9 @@ func _merge() -> void:
 
 func _power() -> void:
 	# one flight, both at power 4: the split must open at about the same distance as at power 1
+	# (pinned to the field world as main lays it: World's plans.everywhere, on in the 9 November data, lays every place and moves the ground
+	# under this staged flight. split_ignores_power is a switch only this check turns on; no build reads it)
+	WorldPlan.everywhereOverride = 0
 	var at: Array = []
 	for tier in [1.0, 4.0]:
 		var S: SimState = _match(12345)
@@ -96,6 +99,7 @@ func _power() -> void:
 		at.append(open_at)
 		_ok(open_at > 0.0, "power %.0f: the split never opened" % tier)
 		_ok(biggest <= CamParams.R_SPLIT * SplitRig.DT / CamParams.SPLIT_POWER_EASE + 1e-9, "the line jumped %f in a tick" % biggest)
+	WorldPlan.everywhereOverride = -1
 	print("the split opened at %.0f apart at power 1, %.0f at power 4" % [at[0], at[1]])
 	_ok(absf(float(at[0]) - float(at[1])) < 0.1 * float(at[0]), "the split's distance moved with power: %.0f and %.0f" % [at[0], at[1]])
 

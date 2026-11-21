@@ -35,6 +35,9 @@ func _flat(name: String, mode: String, tier: float, speed: float, lost_max: int)
 
 func _reveal() -> void:
 	# a long flight opens out, eased, and comes back; a short one doesn't
+	# (pinned to the field world as main lays it: each row drops the staged pair 900 units to the ground in one tick as its flight ends,
+	# and World's plans.everywhere, on in the 9 November data, moves that ground)
+	WorldPlan.everywhereOverride = 0
 	for row in [[3.0, 8000.0, 6.0, true], [1.0, 4200.0, 6.0, true], [3.0, 8000.0, 0.7, false], [3.0, 8000.0, 6.0, false, "off"]]:
 		var S: SimState = _match(float(row[0]))
 		var rig = _rig(S, _mode_rig("", row.size() < 5))
@@ -65,6 +68,7 @@ func _reveal() -> void:
 		if bool(row[3]):
 			_ok(float(widest[0]) >= float(row[1]) * 0.85 and float(widest[0]) <= float(row[1]) * 1.15, "the reveal's width was %f against %f" % [float(widest[0]), float(row[1])])
 		_ok(rig.reveal_w == 0.0, "the reveal didn't come back")
+	WorldPlan.everywhereOverride = -1
 
 
 func _follow() -> void:
