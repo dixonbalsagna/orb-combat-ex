@@ -1,0 +1,49 @@
+diff --git a/data/art/biomes.json b/data/art/biomes.json
+index 0857672a..0fd85689 100644
+--- a/data/art/biomes.json
++++ b/data/art/biomes.json
+@@ -2122,9 +2122,9 @@
+         ],
+         "subsoil": "#5a5448",
+         "rock": [
+-          "#787878",
+-          "#6e6e74",
+-          "#4a4a52"
++          "#8c8270",
++          "#777472",
++          "#504d4e"
+         ],
+         "vegetation": [
+           "#768a55",
+@@ -2148,9 +2148,9 @@
+         }
+       },
+       "far_ladder": {
+-        "far1": "#a1b1ac",
+-        "far2": "#90a095",
+-        "far3": "#7e8d7a"
++        "far1": "#a2b2ac",
++        "far2": "#91a195",
++        "far3": "#7f8e7a"
+       },
+       "orbit": "#a1ac96",
+       "profile": {
+@@ -2268,15 +2268,15 @@
+       "_colour_vision": {
+         "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+         "worst_aura_dE00": {
+-          "protan": 14,
++          "protan": 15.1,
+           "deutan": 14,
+           "tritan": 14
+         },
+         "failing_tones": []
+       },
+       "readability": {
+-        "worst_aura_dE00": 24.2,
+-        "worst_body_dE00": 22.3
++        "worst_aura_dE00": 24.7,
++        "worst_body_dE00": 22.1
+       }
+     },
+     "taiga": {
