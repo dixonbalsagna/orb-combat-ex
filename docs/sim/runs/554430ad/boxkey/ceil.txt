@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+fight planet 7: 6000 of 6000 stretches said, 0 under the read's ceiling, 0 under a far read, worst 0.000; it stands 787 above the read's ceiling on average; 67 records
+fight planet 12: 6000 of 6000 stretches said, 9 under the read's ceiling, 0 under a far read, worst 114.404; it stands 726 above the read's ceiling on average; 27 records
+hash: as it fills 4c4b73266bb43b50, whole from the start 4c4b73266bb43b50, never there 4c4b73266bb43b50
+rollback: 700 ticks, 0 differ
+CEIL: 0 check(s) failed
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

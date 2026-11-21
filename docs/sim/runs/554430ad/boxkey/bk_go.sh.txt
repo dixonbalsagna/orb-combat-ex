@@ -1,0 +1,39 @@
+#!/bin/sh
+# bk_go.sh <scratchpad>: SimField._boxKey's 20-bit packing (kick/boxkey_edit.py) on bk = HEAD. Patch; import; validate, lint,
+# ratchet, load split; the golden byte for byte; ceil_check and its negative control; parity through gate.mjs; Rendering's 15;
+# then an apply check on World's planet-sizes stack (no Godot). ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; T="$NS/bk"; O="$NS/bko"
+R="/c/Users/<user>/Documents/Claude Proj/Breakers-Like"
+rm -rf "${NS:?}/bko"; mkdir -p "$O" "$NS/bkapp"; export APPDATA="$(cygpath -w "$NS/bkapp")"
+cd "$T" || exit 1
+case "$(pwd -P)" in */scratchpad/bk) ;; *) echo refusing; exit 1 ;; esac
+run() { name="$1"; t="$2"; shift 2; s=$(date +%s); timeout "$t" "$G" --headless --path . --script "$@" > "$O/$name.txt" 2>&1; code=$?; echo "$name: exit $code in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR\|Parse Error' "$O/$name.txt"); $(grep -v 'WARNING\|at: \|^$\|ERROR: \|wait_to_finish' "$O/$name.txt" | tail -1 | cut -c1-150)"; grep -n "^FAIL\|^  FAIL\|^negative\|box keys" "$O/$name.txt" | head -8 | cut -c1-240; }
+git -c core.autocrlf=false diff --binary -- sim/core > "$O/boxkey.patch"
+echo "boxkey sha1 $(sha1sum "$O/boxkey.patch" | cut -c1-40) sha256 $(sha256sum "$O/boxkey.patch" | cut -c1-12) $(grep -c '^diff --git' "$O/boxkey.patch") files"
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+node tools/validate.js > "$O/validate.txt" 2>&1; echo "validate $?; $(tail -1 "$O/validate.txt" | cut -c1-80)"
+node tools/lint-determinism.mjs > "$O/lint.txt" 2>&1; echo "lint $?"
+node tools/ratchet-two-fighter.mjs > "$O/ratchet.txt" 2>&1; echo "ratchet $?; $(tail -1 "$O/ratchet.txt")"
+run load_split 600 res://sim/core/tools/load_split.gd
+cp sim/core/test/golden.json "$O/golden_head.json"
+run golden 900 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$O/golden_head.json" && echo "  golden.json byte-identical (expected)" || echo "  golden.json MOVED (unexpected)"
+cp "$O/golden_head.json" sim/core/test/golden.json
+run ceil 1800 res://sim/core/tools/ceil_check.gd
+run ceil_neg 1800 res://sim/core/tools/ceil_check.gd -- --negative-control
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity.txt" 2>&1; echo "parity through gate.mjs: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL" "$O/parity.txt" | head -6 | cut -c1-200
+echo "== Rendering's checks"
+sh "$NS/n/rgates.sh" "$T" "$O" 2>&1 | tail -18
+echo "== apply check on World's planet-sizes stack"
+rm -rf "${NS:?}/bkps"; mkdir -p "$NS/bkps"
+git -C "$R" -c core.autocrlf=false archive HEAD | tar -x -C "$NS/bkps"
+cd "$NS/bkps" || exit 1
+case "$(pwd -P)" in */scratchpad/bkps) ;; *) echo refusing; exit 1 ;; esac
+for p in "$R/docs/world/pending/planet-sizes/planet-sizes.diff" "$R/docs/world/pending/planet-sizes/grant-simulation-sizes.patch"; do git -c core.autocrlf=false apply --check "$p" >/dev/null 2>&1 && { git -c core.autocrlf=false apply "$p" && echo "applied $(basename "$p")"; } || echo "does not apply on HEAD alone (it stacks on World's other parks): $(basename "$p")"; done
+git -c core.autocrlf=false apply --check "$O/boxkey.patch" && echo "  boxkey.patch applies here"
+echo bk done

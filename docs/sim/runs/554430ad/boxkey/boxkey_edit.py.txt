@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+# boxkey_edit.py <tree>: SimField._boxKey packs a box's three indices 20 bits each (owed before colossal is offered: with the old
+# offset of 64 a radius past 131,072 units, 64 boxes of 2,048, aliased). The keys are only ever looked up (_cr and _rise are never
+# walked or hashed), so their values change nothing a match computes: the golden is byte for byte. ceil_check: a row that no two
+# boxes share a key out to colossal's radius and 16 boxes past it; its negative control shows the old offset aliasing there.
+import sys, os
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    print("edited", rel)
+
+
+edit("sim/core/field.gd", [
+    ("static func _boxKey(ix: int, iy: int, iz: int) -> int:\n\treturn ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)\n",
+     "## A box's key: its three indices packed 20 bits each, offset so none is negative. It's exact for any index within 524,288 boxes\n"
+     "## of the centre, a billion units, so no planet size and no reach can give two boxes one key (the old offset of 64 aliased past a\n"
+     "## radius of 131,072 units: colossal's is 195,571). The keys are only ever looked up (_cr and _rise are never walked or hashed),\n"
+     "## so their values change nothing a match computes.\n"
+     "const _KOFF: int = 1 << 19\n"
+     "const _KM: int = 1 << 20\n"
+     "static func _boxKey(ix: int, iy: int, iz: int) -> int:\n"
+     "\treturn ((ix + _KOFF) * _KM + (iy + _KOFF)) * _KM + (iz + _KOFF)\n"),
+])
+
+edit("sim/core/tools/ceil_check.gd", [
+    ("func _negative() -> void:\n",
+     "## The box keys (SimField._boxKey): no two boxes share one out to colossal's radius (38,400 columns: 195,571 units, 96 boxes of\n"
+     "## 2,048) and 16 boxes past it, on three slabs through the planet. The pair below shared a key under the old offset of 64.\n"
+     "func _keys() -> void:\n"
+     "\tvar seen: Dictionary = {}\n"
+     "\tvar dup: int = 0\n"
+     "\tvar n: int = 0\n"
+     "\tfor iz in [-112, 0, 111]:\n"
+     "\t\tfor ix in range(-112, 112):\n"
+     "\t\t\tfor iy in range(-112, 112):\n"
+     "\t\t\t\tvar k: int = SimField._boxKey(ix, iy, iz)\n"
+     "\t\t\t\tif seen.has(k):\n"
+     "\t\t\t\t\tdup += 1\n"
+     "\t\t\t\tseen[k] = true\n"
+     "\t\t\t\tn += 1\n"
+     "\tok(dup == 0, \"the box keys: %d boxes out to 112 from the centre (colossal's radius is 96), %d sharing a key\" % [n, dup])\n"
+     "\tok(SimField._boxKey(0, 33, 0) != SimField._boxKey(1, -95, 0) and SimField._boxKey(95, -95, 95) != SimField._boxKey(-95, 95, -95), \"two of colossal's boxes that the old offset gave one key have two\")\n"
+     "\n"
+     "\n"
+     "## The old key, for the negative control.\n"
+     "func _oldKey(ix: int, iy: int, iz: int) -> int:\n"
+     "\treturn ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)\n"
+     "\n"
+     "\n"
+     "func _negative() -> void:\n"
+     "\tok(_oldKey(0, 33, 0) == _oldKey(1, -95, 0), \"the old offset of 64 gives two of colossal's boxes one key (the keys row would catch it)\")\n"),
+    ("\t_craters()\n\t_fights(FIELD)\n", "\t_keys()\n\t_craters()\n\t_fights(FIELD)\n"),
+])
+print("ok")

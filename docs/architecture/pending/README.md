@@ -4,6 +4,12 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **Landed in the Sunday batch (4890bdd9), their folders deleted:** `power-travel/` (a setup's `"travel"`, with Netcode's and Tools' grants and the stance-freeze doc lines) and `power-page/` (Tools' page lines: the model on for the page, and the travel slider).
 
+**Parked, sprint A1:** `boxkey-gw1c/` (for GW1c, owed before colossal is offered): SimField's box keys pack 20 bits an index, so no planet size or reach can alias them (the old offset of 64 did past a radius of 131,072). Golden byte for byte.
+
+**Parked, sprint A1:** `frame-gw1a/` (a GW1a pin, test-only): frame_check's rollback row waits for the first moment a swing can run (with the 9 November data the computer has a beam out at tick 240). Its README also records fork_check's planet 12 as a real fault of World's field cache with `field.everywhere` on.
+
+**Parked, sprint A1:** `data-fight-gw1a/` (a data grant): the five `data/fight` rows GW1a's stack left different from the kept 9 November tree (brake, budgetAny, kick, ladder chargePerSec 2, the slip). With World's water hunk and Combat's gw1a-rows, the stack reproduces GW1a's target golden byte for byte. Applies after the GW1a stack.
+
 **Parked, sprint A1:** `gw1b-energy/` (Game Design's addendum to Orb's decisions 5 and 6): `power.json` grant (flat out 3,500, the close times, travel 1.5), every meter feed at 0 (Narrative's grant), and my rows written for the old numbers. Applies after close-rows, energy-on, gates-shipped and meters-zero. Changes the hash: GW1b.
 
 **Parked, sprint A1:** `replay-world/` (the companion to World's a-world-01): a replay of the default world names its planet, and the header's data hash is the planet's. No-op in arena mode. Applies after replay-build and World's globe-step2 and a-world-01; lands with a-world-01 in GW1b.

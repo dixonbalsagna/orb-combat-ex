@@ -1,0 +1,64 @@
+diff --git a/sim/core/field.gd b/sim/core/field.gd
+index 9e9fadd..326a999 100644
+--- a/sim/core/field.gd
++++ b/sim/core/field.gd
+@@ -546,8 +546,14 @@ static func groundCeilAt(S: SimState, col_: int) -> float:
+ const CEIL_BOX: float = 2048.0
+ 
+ 
++## A box's key: its three indices packed 20 bits each, offset so none is negative. It's exact for any index within 524,288 boxes
++## of the centre, a billion units, so no planet size and no reach can give two boxes one key (the old offset of 64 aliased past a
++## radius of 131,072 units: colossal's is 195,571). The keys are only ever looked up (_cr and _rise are never walked or hashed),
++## so their values change nothing a match computes.
++const _KOFF: int = 1 << 19
++const _KM: int = 1 << 20
+ static func _boxKey(ix: int, iy: int, iz: int) -> int:
+-	return ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)
++	return ((ix + _KOFF) * _KM + (iy + _KOFF)) * _KM + (iz + _KOFF)
+ 
+ 
+ ## An upper bound on the same far reads as groundCeilAt, on any line, with no read of the ground: a flight above this is above all of them, whatever line the plan is on. INF where
+diff --git a/sim/core/tools/ceil_check.gd b/sim/core/tools/ceil_check.gd
+index c8e7af7..15f5088 100644
+--- a/sim/core/tools/ceil_check.gd
++++ b/sim/core/tools/ceil_check.gd
+@@ -214,7 +214,31 @@ func _sameHash() -> void:
+ 
+ 
+ ## The breaks: rims forgotten, the table cut, the records dropped. Each must show.
++## The box keys (SimField._boxKey): no two boxes share one out to colossal's radius (38,400 columns: 195,571 units, 96 boxes of
++## 2,048) and 16 boxes past it, on three slabs through the planet. The pair below shared a key under the old offset of 64.
++func _keys() -> void:
++	var seen: Dictionary = {}
++	var dup: int = 0
++	var n: int = 0
++	for iz in [-112, 0, 111]:
++		for ix in range(-112, 112):
++			for iy in range(-112, 112):
++				var k: int = SimField._boxKey(ix, iy, iz)
++				if seen.has(k):
++					dup += 1
++				seen[k] = true
++				n += 1
++	ok(dup == 0, "the box keys: %d boxes out to 112 from the centre (colossal's radius is 96), %d sharing a key" % [n, dup])
++	ok(SimField._boxKey(0, 33, 0) != SimField._boxKey(1, -95, 0) and SimField._boxKey(95, -95, 95) != SimField._boxKey(-95, 95, -95), "two of colossal's boxes that the old offset gave one key have two")
++
++
++## The old key, for the negative control.
++func _oldKey(ix: int, iy: int, iz: int) -> int:
++	return ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)
++
++
+ func _negative() -> void:
++	ok(_oldKey(0, 33, 0) == _oldKey(1, -95, 0), "the old offset of 64 gives two of colossal's boxes one key (the keys row would catch it)")
+ 	var S := _new(false)
+ 	_ready_(S)
+ 	var x: float = float(_said(S) + 32) * SimConst.COL
+@@ -258,6 +282,7 @@ func _init() -> void:
+ 	if negative:
+ 		_negative()
+ 		return
++	_keys()
+ 	_craters()
+ 	_fights(FIELD)
+ 	_fights({"intro": false, "planet": 12, "touch": 1, "planetGen": 3})
