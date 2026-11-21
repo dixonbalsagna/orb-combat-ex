@@ -1888,3 +1888,5 @@ It also accepts the EP's A1 budget of up to about 40% of this week.
 Orb's correction (2026-11-14, verbatim): "its late and I counted wrong, it was four questions not five, to clarify". The stand-in asked four questions, not five.
 
 **Quiet time, Orb (2026-11-14, about 13:20 PST, to the EP, verbatim):** "lets get everything reigned in and paused safely for quiet time" (The EP paused sprint A1: every director stops safely and idles, the hourly check-in is stopped, and the EP's own gate run is stopped.)
+
+**Back to work, Orb (2026-11-20, about 17:30 PST, to the EP, verbatim):** "get everything going again, utilize my stand-in to the fullest" (The EP resumed sprint A1 and gave the stand-in a full specialist queue, starting at once because this week's unused Fable tokens lapse at the 19:00 reset.)
