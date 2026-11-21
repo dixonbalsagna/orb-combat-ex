@@ -23,7 +23,7 @@ index fbe2402..36502a7 100644
 +	return host.record_file("report", tags, note)
 diff --git a/render/core/match_recorder.gd b/render/core/match_recorder.gd
 new file mode 100644
-index 0000000..a2814a2
+index 0000000..295464c
 --- /dev/null
 +++ b/render/core/match_recorder.gd
 @@ -0,0 +1,157 @@
@@ -43,7 +43,7 @@ index 0000000..a2814a2
 +const KIND: String = "orb-solo-match"
 +const DIR: String = "user://reports"
 +static var test_dir: String = ""         # a test's own folder (match_recorder_check sets it, nothing in the game does): while it is set a save with no folder goes there and never to the player's DIR or into its prune
-+const KEEP: int = 20                  # the newest files kept in the folder: the player's disk is not the game's to fill
++const KEEP: int = 20                  # the newest AUTOMATIC files kept in the folder (reports, over, quit): the player's disk is not the game's to fill. A file the player chose to keep (reason save) is never counted and never pruned
 +const MAX_TICKS: int = 60 * 60 * 30   # half an hour of match: a longer one stops being recorded (its replay is still valid as far as it goes)
 +
 +var armed: bool = false
@@ -173,11 +173,11 @@ index 0000000..a2814a2
 +	return fname
 +
 +
-+## The newest KEEP files stay; older ones of this kind go (only files this class writes: the "solo-" ones).
++## The newest KEEP automatic files stay; older ones of this kind go (only files this class writes: the "solo-" ones). A "Save this match" file (its name ends -save.json) is never counted and never deleted: silently deleting what a player chose to keep is data loss (the EP, 2026-11-21).
 +static func _prune(dir: String) -> void:
 +	var names: Array = []
 +	for n in DirAccess.get_files_at(dir):
-+		if n.begins_with("solo-") and n.ends_with(".json"):
++		if n.begins_with("solo-") and n.ends_with(".json") and not n.ends_with("-save.json"):
 +			names.append(n)
 +	names.sort()   # the name carries the commit, then the time: sorted by time within a build
 +	var by_time: Array = names.duplicate()
@@ -246,10 +246,10 @@ index ae4749b..6da5f64 100644
 +	return j if j is Dictionary else {}
 diff --git a/render/tools/match_recorder_check.gd b/render/tools/match_recorder_check.gd
 new file mode 100644
-index 0000000..7fa3032
+index 0000000..50caa03
 --- /dev/null
 +++ b/render/tools/match_recorder_check.gd
-@@ -0,0 +1,178 @@
+@@ -0,0 +1,197 @@
 +extends SceneTree
 +## The match as a replay on a desktop build (A-UI-02, Tools, 2026-11-14; render/core/match_recorder.gd). Headless, through the real SimHost: a solo match and a couch match are played with scripted intents, the report
 +## and the save are asked for, and the file each leaves in user://reports/ is read back and replayed with SimReplay.play: it must be there, hold the match's kind, mode, build, mark and replay, and reproduce to the
@@ -419,6 +419,25 @@ index 0000000..7fa3032
 +		DirAccess.remove_absolute(dir.path_join(n))
 +	DirAccess.remove_absolute(dir)
 +	rec = null
++
++	# the player's own "Save this match" file is never pruned (the EP's ruling on S-05 (b), 2026-11-21): it survives 25 automatic reports that are all NEWER than it, and the automatic ones are cut to the newest KEEP
++	var keep_host := SimHost.new()
++	keep_host.new_match(77, {"p1": false, "p2": true}, {"intro": false})
++	_play(keep_host, [0], 30)
++	var kept: String = keep_host.record_file("save")
++	_ok(kept != "" and kept.ends_with("-save.json") and FileAccess.file_exists(SCRATCH + "/" + kept), "a saved match is written to the check's own folder (%s)" % kept)
++	for n in range(25):
++		var rf := FileAccess.open(SCRATCH + "/" + "solo-bbbbbbbb-main-29990101-0000%02d-report.json" % n, FileAccess.WRITE)
++		rf.store_string("{}")
++		rf.close()
++	MatchRecorder._prune(SCRATCH)
++	var after: PackedStringArray = DirAccess.get_files_at(SCRATCH)
++	var autos: int = 0
++	for n in after:
++		if n.begins_with("solo-bbbbbbbb") and n.ends_with("-report.json"):
++			autos += 1
++	_ok(after.has(kept), "the player's saved match survives 25 automatic reports, all newer than it")
++	_ok(autos == MatchRecorder.KEEP, "and the automatic reports are cut to the newest %d (%d left)" % [MatchRecorder.KEEP, autos])
 +
 +	for n in DirAccess.get_files_at(SCRATCH):
 +		DirAccess.remove_absolute(SCRATCH + "/" + n)
