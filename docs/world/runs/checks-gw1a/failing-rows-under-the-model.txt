@@ -26,3 +26,5 @@ FAIL  on: a gen 2 match (planet 3, 2400 ticks) digs 0 shaped crater(s) on its ne
 == ground_check
 FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
 FAIL  the hand-made world and a gen 1 turn hash as before (turn: n=1 838649c53fbb1ded)
+
+**Correction 2026-11-20:** the `wrecks_check` row above was staging, not a fault: see `docs/world/pins-and-the-model.md`. It now passes in both passes with the thrower's tier set (hp taken with the model on: 134.6, 269.3, 437.6, 644.1).

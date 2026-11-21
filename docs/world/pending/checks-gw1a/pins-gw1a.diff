@@ -572,19 +572,15 @@
  	ok(WorldWrecks.dataErrors().is_empty(), "wrecks.json is clean (%s)" % str(WorldWrecks.dataErrors()))
  	var S := fresh(1)
  	var f = S.fighters[0]
-@@ -142,7 +144,10 @@
- 		counts.append(hp0 - hp1)
- 		if tier == 4.0:
- 			ok(WorldWrecks.burst(St, bt.idx, bt.x, 0.0, tier, St.fighters[0]) == -1 and WorldWrecks.pick(St, bt.x, 0.0, bt.z, top).is_empty(), "a spent wreck cannot be hurled again or offered")
--	ok(counts[0] <= counts[1] and counts[1] <= counts[2] and counts[2] <= counts[3] and counts[3] > counts[0], "the scrap does more to structures as the tier rises (hp taken: %s)" % str(counts))
-+	if not model:
-+		ok(counts[0] <= counts[1] and counts[1] <= counts[2] and counts[2] <= counts[3] and counts[3] > counts[0], "the scrap does more to structures as the tier rises (hp taken: %s)" % str(counts))
-+	else:
-+		ok(counts[0] <= counts[1] and counts[1] <= counts[2] and counts[2] <= counts[3], "KNOWN FAULT (owed: wrecks-power): with the energy model on the scrap does the same to structures at every tier (hp taken: %s); ceiling: it never does less as the tier rises" % str(counts))
- 	var St2 := fresh(1)
- 	kill(St2, St2.buildings[b.idx])
- 	var S3 := fresh(1)
-@@ -150,5 +155,10 @@
+@@ -134,6 +136,7 @@
+ 		for o in St.buildings:
+ 			hp0 += maxf(o.hp, 0.0)
+ 		var tg = St.buildings[tgt0.idx]
++		St.fighters[0].tier = tier   # the thrower's tier is the ladder's, and with the energy model on his level (SimPower.level reads his tier and power): the scrap grows with it
+ 		var n: int = WorldWrecks.burst(St, bt.idx, tg.x, WorldStructures.baseY(St, tg), tier, St.fighters[0])
+ 		var hp1: float = 0.0
+ 		for o in St.buildings:
+@@ -150,5 +153,10 @@
  	WorldWrecks.burst(St2, b.idx, b.x, 0.0, 3.0, St2.fighters[0])
  	WorldWrecks.burst(S3, b.idx, b.x, 0.0, 3.0, S3.fighters[0])
  	ok(str(SimHash.stateHash(St2).gameplay) == str(SimHash.stateHash(S3).gameplay) and str(SimHash.stateHash(St2).gameplay) != str(SimHash.stateHash(fresh(1)).gameplay), "the burst is the same twice, and changes the state (hashed through the spent wreck's mark and the damage)")

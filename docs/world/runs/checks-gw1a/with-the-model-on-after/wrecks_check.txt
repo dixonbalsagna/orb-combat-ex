@@ -36,10 +36,10 @@ Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
   ok    a fighter standing at the wreck does not refuse it (RL-186: combatants are not counted)
   ok    a wreck with anyone in it is not offered
   ok    tier 1: landing on a tower the scrap takes 135 hp off the structures (0 levelled) and the wreck is spent
-  ok    tier 2: landing on a tower the scrap takes 135 hp off the structures (0 levelled) and the wreck is spent
-  ok    tier 3: landing on a tower the scrap takes 135 hp off the structures (0 levelled) and the wreck is spent
-  ok    tier 4: landing on a tower the scrap takes 135 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 2: landing on a tower the scrap takes 269 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 3: landing on a tower the scrap takes 438 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 4: landing on a tower the scrap takes 644 hp off the structures (0 levelled) and the wreck is spent
   ok    a spent wreck cannot be hurled again or offered
-  ok    KNOWN FAULT (owed: wrecks-power): with the energy model on the scrap does the same to structures at every tier (hp taken: [134.649106587749, 134.649106587749, 134.649106587749, 134.649106587749]); ceiling: it never does less as the tier rises
+  ok    the scrap does more to structures as the tier rises (hp taken: [134.649106587749, 269.298213175483, 437.60959641017, 644.071559844728])
   ok    the burst is the same twice, and changes the state (hashed through the spent wreck's mark and the damage)
 WRECKS: 0 check(s) failed

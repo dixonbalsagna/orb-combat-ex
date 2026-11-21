@@ -31,7 +31,7 @@ Not in the split: `step_check`'s timing line fails under load whatever the data 
 | The same 32, pinned, on the same data | **all 32 pass** (`with-the-pins-on-GW1a-rows-and-energy-on.txt`) |
 | The same 32, pinned, on today's main data | **all 32 pass**: a pin is a no-op where the data is the old data, so the patch can land before the data (`with-the-pins-on-todays-main-data.txt`) |
 | The 11 mode-only checks with `WorldPin.arena()`, on the GW1a rows and the planet default | all 11 pass |
-| Not covered | `depthreads_check` (pinned for the mode by static reading, not run; waits for the quiet window), the energy model's own re-read rows beyond the ones named in `docs/world/pins-and-the-model.md`. `wrecks_check` now runs, with the model on, on the s422 tree: its one failing row is a ceiling (owed: wrecks-power) |
+| Not covered | `depthreads_check` (pinned for the mode by static reading, not run; waits for the quiet window), the energy model's own re-read rows beyond the ones named in `docs/world/pins-and-the-model.md`. `wrecks_check` runs with the model on on the s422 tree and passes (its failing row was staging: the thrower's tier is now set) |
 
 ## Re-cut 2026-11-14 (GW1a review blocker 1): the model is no longer pinned off where it matters
 
