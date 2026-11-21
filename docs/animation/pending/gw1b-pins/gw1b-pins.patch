@@ -1,0 +1,35 @@
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index a86dc17..70b2bb1 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -63,7 +63,8 @@ func _stage_y(S: SimState, x: float) -> float:
+ ##   flight strikes (`DirZip.setFsForce`): the zip-view rows start a plain zip by `DirZip.start` and an AI exit; with flight strikes ON the zip is the one grammar of paths read from the left stick and the staged exit
+ ##   is not the path's, so every exit comes out "home".
+ ##   globe ground (`RenderTileGround.on`, the default since Orb's decision 3 of 2026-11-13): the water-stance row picks a sea cell out of `S.water`, and on the globe ground the match is a planet slice whose `S.water` is all zero
+-##   (the sea lives in the tile field), so the row finds no water and stands nobody on it. It runs on the strip ground, the world it reads the sim's water from; the globe ground's own stance on water has no row yet.
++##   (the sea lives in the tile field), so the row finds no water and stands nobody on it. It runs on the strip ground, the world it reads the sim's water from; the globe ground's own stance on water is `_test_water_stance_globe` and `tools/water_tile_check.gd`.
++##   the default world (`WorldDefault`, GW1b): once a match with no planet plays planet 7, the strip ground alone is not the hand-made world, so the same pin holds the arena too (`WorldDefault.setForTest`) and gives the mode back after.
+ func _pin_floor_off() -> bool:
+ 	var was: bool = WorldFill.floorOn()
+ 	WorldFill.setFloor(false)
+@@ -94,14 +95,16 @@ func _pin_flight_strikes_restore(was: int) -> void:
+ 	DirZip.setFsForce(was)
+ 
+ 
+-func _pin_strip_ground() -> bool:
+-	var was: bool = RenderTileGround.on
++func _pin_strip_ground() -> Array:
++	var was: Array = [RenderTileGround.on, WorldDefault.mode(), WorldDefault.K_RANDOM]
+ 	RenderTileGround.on = false
++	WorldDefault.setForTest("arena", false)   # GW1b: a match with no planet plays planet 7 (data/biomes/world.json mode); the hand-made arena is the world that has S.water
+ 	return was
+ 
+ 
+-func _pin_strip_ground_restore(was: bool) -> void:
+-	RenderTileGround.on = was
++func _pin_strip_ground_restore(was: Array) -> void:
++	RenderTileGround.on = bool(was[0])
++	WorldDefault.setForTest(String(was[1]), bool(was[2]))
+ 
+ 
+ func _test_slope() -> void:

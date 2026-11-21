@@ -6,7 +6,7 @@ The EP's item after the step-up: a fighter standing on the sea on the globe grou
 
 | File | What |
 | :--- | :--- |
-| `water-tile-check.patch` (sha1 4b67f4dc) | new `render/anim/tools/water_tile_check.gd` (+ uid): 240 places on the planet ring (planet 7, gen 3), levels 3 and 4 asked at each place and 64 either side; gates sea, dry, wade; `--strict` makes the lake line a gate; the shore rows (every place the sim's water begins, over 16-unit steps; two body heights) are a finding, a gate under `--shore`; `--verbose` lists every place beyond a tolerance. `render/anim/tools/anim_check.gd`: `_test_water_stance_globe` (unchanged). New `docs/animation/water-tile-check.md`. Applies on HEAD dbe17b79 and on the GW1a stack (s422), checked. No data, schema or sim file touched; no grant |
+| `water-tile-check.patch` (sha1 0f8ee10a; re-cut 2026-11-21: the doc `docs/animation/water-tile-check.md` is already tracked on main, so the patch no longer carries it) | new `render/anim/tools/water_tile_check.gd` (+ uid): 240 places on the planet ring (planet 7, gen 3), levels 3 and 4 asked at each place and 64 either side; gates sea, dry, wade; `--strict` makes the lake line a gate; the shore rows (every place the sim's water begins, over 16-unit steps; two body heights) are a finding, a gate under `--shore`; `--verbose` lists every place beyond a tolerance. `render/anim/tools/anim_check.gd`: `_test_water_stance_globe` (unchanged). New `docs/animation/water-tile-check.md`. Applies on HEAD ed1591cb and on World's GW1b stage-1 stack (checked). No data, schema or sim file touched; no grant |
 
 ## Result (`records/`)
 

@@ -1,0 +1,3 @@
+validate: 323 files checked, 0 errors, 2 warnings
+self-test: 10135 of 10136 checks passed, 1 FAILED: 'coverage: biomes-world.schema.json: at least three invalid cases' (World's a-world-01 schema; the same on World's own tree before my patches)
+two-fighter ratchet ok: 365 against a baseline of 365
