@@ -49,7 +49,7 @@ On the stack with wall-cone: `git -c core.autocrlf=false -c core.eol=lf apply la
 
 | Patch | Owner | sha1 | sha256 starts |
 | :--- | :--- | :--- | :--- |
-| `launch-cone.diff` (the re-cut; the first cut was 031c647c): `sim/director/launch.gd`, `swing.gd`, `tools/walk_check.gd`, the new `tools/launch_cone_check.gd` | Encounter | 0dfc6cc92b92070abd5784f20588d79cb7446127 | bb464bfcd5cc |
+| `launch-cone.diff` (re-cut for B-17; before it 0dfc6cc9, and the first cut 031c647c): `sim/director/launch.gd`, `swing.gd`, `tools/walk_check.gd`, the new `tools/launch_cone_check.gd`, and five seeds in `tools/bark_reads_check.gd` | Encounter | a541d1fdff785928bf0eac12269db97c2bdbfd81 | 800973e08eb1 |
 
 ## Proof
 
@@ -67,6 +67,10 @@ Run on main 4327cfbb + energy-on + gates-shipped + energy-on-pins + gw1a-pins + 
 
 - **The golden moves:** it changes which launches are offered whenever buildings are near, so it rides GW1b with its re-record.
 - **Game Design confirmed both readings** (§10): the blow's line is the line before the launch's own turn, so a launch's big swing is held to 16° to 20°; and a front-row building on a plan-streets world is the street turn's, not the walk's. Nothing here stops the swing's other causes (the chase, the brawl, the story) from turning the world.
+
+## Re-cut for B-17 (2026-11-21): bark_reads_check's seeds
+
+On the GW1b stack (main b0e20f9a), `bark_reads_check` failed from this park on: its row "low_health_swing fired in the seeded matches" saw none in its three seeded matches, because the cone changes those matches. The check now runs five seeds (12345, 777, 31337, 4242, 2026), and all three beats fire across them. On the GW1a data this park moves the golden in 1 of 11 rows (match 2, from checkpoint 91). The lane is in `docs/director/runs/b0e20f9a/b17-lane/`.
 
 ## Re-cut (2026-11-15): Game Design's ruling on a running swing
 

@@ -1,0 +1,4 @@
+      today's walls, cones on (20 degrees): 30 matches, 232 launches, 14 building hits, 13 wall slams (0.43 a match)
+      of the wall slams: thrown back 13 (0.43 a match), pulled home in the air 11 (0.37 a match), off the blow's line 3
+      per match [walls, thrown, pulled]: [[1, 1, 1], [1, 1, 0], [0, 0, 0], [0, 0, 0], [1, 1, 1], [0, 0, 0], [1, 1, 1], [0, 0, 0], [1, 1, 1], [1, 1, 1], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 1, 1], [0, 0, 0], [1, 1, 1], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 1, 0], [1, 1, 1], [1, 1, 1], [1, 1, 1], [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 1, 1], [0, 0, 0]]
+BOUNCE COUNT: 0 check(s) failed

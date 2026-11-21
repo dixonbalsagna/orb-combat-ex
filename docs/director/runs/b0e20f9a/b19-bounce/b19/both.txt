@@ -1,0 +1,5 @@
+      the lodge (cityHold + hold-air), cones on (20 degrees): 30 matches, 232 launches, 15 building hits, 14 wall slams (0.47 a match)
+      of the wall slams: thrown back 0 (0.00 a match), pulled home in the air 0 (0.00 a match), off the blow's line 4
+      per match [walls, thrown, pulled]: [[1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 0, 0], [2, 0, 0], [0, 0, 0], [1, 0, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 0, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [2, 0, 0], [0, 0, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [2, 0, 0], [0, 0, 0]]
+ok    the lodge: nobody thrown back off a wall (0 of 14 slams)
+BOUNCE COUNT: 0 check(s) failed

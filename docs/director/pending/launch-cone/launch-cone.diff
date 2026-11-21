@@ -56,7 +56,7 @@ index 37092bc..32e5763 100644
  ## distance in plan. A plain send on buildings.md 6.1's ladder. It reads standing buildings only, and care as a flat weight, never
  ## who is inside. A player's stick held another way wins. Null when there's none, and always with it off.
 diff --git a/sim/director/swing.gd b/sim/director/swing.gd
-index a0c030b..ac48832 100644
+index d3fc9f0..412449c 100644
 --- a/sim/director/swing.gd
 +++ b/sim/director/swing.gd
 @@ -692,12 +692,21 @@ static func _restSec() -> float:
@@ -81,6 +81,28 @@ index a0c030b..ac48832 100644
  	if cap < float(c.bigMin):
  		_explain(S, "launch", [], false, "", 0)
  		return null
+diff --git a/sim/director/tools/bark_reads_check.gd b/sim/director/tools/bark_reads_check.gd
+index 21896d3..8d322bd 100644
+--- a/sim/director/tools/bark_reads_check.gd
++++ b/sim/director/tools/bark_reads_check.gd
+@@ -7,7 +7,7 @@ extends SceneTree
+ ##   - each read says what it claims, checked against the sim at the tick: a low-health speaker's core is battered or worse,
+ ##     a break is a long pulled-back brawl and its speaker one of the two in it, an after-chain blow follows his chain_end;
+ ##   - control: the hp read the sheet first proposed would hold for most blows of a match.
+-##   godot --headless --path . --script res://sim/director/tools/bark_reads_check.gd -- [--seeds=12345,777,31337] [--ticks=54000]
++##   godot --headless --path . --script res://sim/director/tools/bark_reads_check.gd -- [--seeds=12345,777,31337,4242,2026] [--ticks=54000]
+ ## Last line: "bark_reads_check: passed" or "bark_reads_check: FAILED (n)".
+ 
+ const READS: Array = ["low_health_swing", "exchange_break", "after_chain"]
+@@ -152,7 +152,7 @@ func _line(l: Dictionary) -> String:
+ 
+ 
+ func _initialize() -> void:
+-	var seeds: Array = [12345, 777, 31337]
++	var seeds: Array = [12345, 777, 31337, 4242, 2026]   # (five: with the launch cone the three beats are rarer, and each must fire in the seeded matches)
+ 	var ticks: int = 54000
+ 	for a in OS.get_cmdline_user_args():
+ 		if a.begins_with("--seeds="):
 diff --git a/sim/director/tools/launch_cone_check.gd b/sim/director/tools/launch_cone_check.gd
 new file mode 100644
 index 0000000..371190c

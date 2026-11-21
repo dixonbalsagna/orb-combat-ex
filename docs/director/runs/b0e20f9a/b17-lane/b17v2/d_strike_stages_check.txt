@@ -1,0 +1,10 @@
+ok    a top fighter's plain hold climbs six stages by the clock, its level capped at 3: [0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 3, 3, 3]
+ok    at the top (2 of 2) a second's hold costs 2 (2.000)
+ok    under the top's price it steps down: stage 1
+ok    with the stages, a top fighter's hold let go at 47 ticks lands at level 3 (stage 3 at 46): level 3
+ok    a base fighter has 2 stages: the same hold lands at level 2: level 2
+ok    with the stages, held 200 ticks it never goes by itself
+ok    a top fighter's hold to stage 5 lands at level 3, its blow's top: level 3
+ok    off, the same hold lands at the stick's own level 2: level 2
+ok    off, it goes by itself near autoGoTicks: after 68 ticks
+STRIKE STAGES: 0 check(s) failed

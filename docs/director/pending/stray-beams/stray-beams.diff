@@ -1,9 +1,9 @@
 diff --git a/data/director/interrupts.json b/data/director/interrupts.json
-index ffc430f..56ebf02 100644
+index 4070872..d783f3a 100644
 --- a/data/director/interrupts.json
 +++ b/data/director/interrupts.json
 @@ -294,6 +294,8 @@
-         "enabled": false,
+         "enabled": true,
          "freeTicks": 18,
          "maxWaitTicks": 90,
 +        "dropOnPress": true,
@@ -12,10 +12,10 @@ index ffc430f..56ebf02 100644
          "price": [12, 20, 32, 38, 44, 50],
          "dmgMul": [1.0, 1.6, 2.4, 2.8, 3.2, 3.6],
 diff --git a/sim/director/beam_move.gd b/sim/director/beam_move.gd
-index c7c1883..4f63095 100644
+index 9f8c0a5..d5cb842 100644
 --- a/sim/director/beam_move.gd
 +++ b/sim/director/beam_move.gd
-@@ -262,6 +262,11 @@ static func tryFire(S: SimState, f) -> bool:
+@@ -264,6 +264,11 @@ static func tryFire(S: SimState, f) -> bool:
  	var st: int = _g(f, M_PEND)
  	if st <= 0:
  		return true
@@ -27,7 +27,7 @@ index c7c1883..4f63095 100644
  	var D = DirBrawl.rivalOf(S, f)
  	if DirBrawl._now(S) - (_g(f, M_PAT) - 1) > int(cfg().maxWaitTicks):
  		SimFx.cue(S, f, "stick_refused", "beam", "late")   # his target was never free long enough
-@@ -299,6 +304,19 @@ static func tryFire(S: SimState, f) -> bool:
+@@ -301,6 +306,19 @@ static func tryFire(S: SimState, f) -> bool:
  	return true
  
  
@@ -121,6 +121,85 @@ index 53a2650..b637d81 100644
  	if S.dirS.cool > 0.0:
  		S.dirS.cool -= dt
  	DirBands.tick(S)   # the approach before an exchange: it counts down, and the exchange starts at its end
+diff --git a/sim/director/tools/beam_front_check.gd b/sim/director/tools/beam_front_check.gd
+index bda7e01..f0d2df9 100644
+--- a/sim/director/tools/beam_front_check.gd
++++ b/sim/director/tools/beam_front_check.gd
+@@ -79,6 +79,7 @@ func _fire(S: SimState) -> void:
+ 	var a := SimIntent.new()
+ 	a.sig = true
+ 	a.stanceMask = 4   # the charging stance: B is the signature, and RB's is the Driver's
++	a.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
+ 	_step(S, a)
+ 	var guard: int = 0
+ 	while _fireAt < 0 and guard < 400:
+@@ -228,12 +229,14 @@ func _litHand() -> void:
+ 		var a := SimIntent.new()
+ 		a.sig = true
+ 		a.stanceMask = 4
++		a.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
+ 		_step(S, a)
+ 		S.fighters[1].sigReadyT = 0.0
+ 		for _k in range(int(row[0]) - 1):
+ 			_step(S)
+ 		var y := SimIntent.new()
+ 		y.stanceMask = int(row[1])
++		y.powerPress = int(row[1]) == 4   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
+ 		if String(row[2]) == "sig":
+ 			y.sig = true
+ 		else:
+@@ -332,6 +335,7 @@ func _cantPay() -> void:
+ 	var a := SimIntent.new()
+ 	a.sig = true
+ 	a.stanceMask = 4
++	a.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
+ 	_step(S, a)
+ 	for _k in range(10):
+ 		_step(S)
+@@ -339,6 +343,7 @@ func _cantPay() -> void:
+ 	var y := SimIntent.new()
+ 	y.sig = true
+ 	y.stanceMask = 4
++	y.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
+ 	SimCore.step(S, [SimIntent.new(), y])
+ 	var said: bool = false
+ 	for e in S.out.fx:
+diff --git a/sim/director/tools/morning_fixes_check.gd b/sim/director/tools/morning_fixes_check.gd
+index a66065c..2853afb 100644
+--- a/sim/director/tools/morning_fixes_check.gd
++++ b/sim/director/tools/morning_fixes_check.gd
+@@ -153,6 +153,7 @@ func _fireBack() -> void:
+ 		var sg := SimIntent.new()
+ 		sg.sig = true
+ 		sg.stanceMask = 4
++		sg.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
+ 		_step(S, sg)
+ 		for _k in range(240):
+ 			if DirBeamPlay.windowOpen(S, D):
+diff --git a/sim/director/tools/outside_check.gd b/sim/director/tools/outside_check.gd
+index 5356545..e2bcd9f 100644
+--- a/sim/director/tools/outside_check.gd
++++ b/sim/director/tools/outside_check.gd
+@@ -251,6 +251,7 @@ func _beamStop() -> void:
+ 		if k == 0:
+ 			h.sig = true
+ 			h.stanceMask = 4   # the charging stance: B is the signature (beam_front_check's _fire)
++			h.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
+ 		_step(S, h)
+ 		warned = warned or DirOutside._g(D, DirOutside.O_WARN) != 0
+ 		fired = fired or not S.beams.is_empty()
+diff --git a/sim/director/tools/push_mode_check.gd b/sim/director/tools/push_mode_check.gd
+index c797d37..cd71ad2 100644
+--- a/sim/director/tools/push_mode_check.gd
++++ b/sim/director/tools/push_mode_check.gd
+@@ -85,6 +85,7 @@ func _toStruggle(S: SimState) -> bool:
+ 	var sg := SimIntent.new()
+ 	sg.sig = true
+ 	sg.stanceMask = 4   # the charging stance: B is the signature
++	sg.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
+ 	_step(S, sg)
+ 	for _k in range(240):
+ 		if DirBeamPlay.windowOpen(S, D):
 diff --git a/sim/director/tools/stray_beam_check.gd b/sim/director/tools/stray_beam_check.gd
 new file mode 100644
 index 0000000..366cdba

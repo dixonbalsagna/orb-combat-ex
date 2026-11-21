@@ -51,10 +51,10 @@ index 63d8a51..f153fed 100644
  	var r: float = deg * SimMathx.PI / 180.0
  	var ux: float = SimDetMath.cos(r)
 diff --git a/sim/director/beam_move.gd b/sim/director/beam_move.gd
-index c7c1883..d35792a 100644
+index d5cb842..74bb6bc 100644
 --- a/sim/director/beam_move.gd
 +++ b/sim/director/beam_move.gd
-@@ -286,6 +286,7 @@ static func tryFire(S: SimState, f) -> bool:
+@@ -293,6 +293,7 @@ static func tryFire(S: SimState, f) -> bool:
  	DirExchange.ownBeam = false
  	if r != DirExchange.STARTED:
  		return false
@@ -76,10 +76,10 @@ index d71c563..57ea6ed 100644
  		var tell: int = maxi(int(frontCfg().releaseTell), int(round((float(fb.t) - ex.t) * DirData.TICKS_PER_SEC)) - held)
 diff --git a/sim/director/tools/aim_throw_check.gd b/sim/director/tools/aim_throw_check.gd
 new file mode 100644
-index 0000000..d300624
+index 0000000..dd3a484
 --- /dev/null
 +++ b/sim/director/tools/aim_throw_check.gd
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,121 @@
 +extends SceneTree
 +## The third stray beam: a stick throw its release never fired doesn't aim the next beam (docs/director/pending/stray-beams/, A1; the stand-in's
 +## read of beam_aim.gd and stick.gd). The beam's own move and the stick's aim on, as Orb's build plays them:
@@ -190,6 +190,7 @@ index 0000000..d300624
 +		sig.sig = true
 +		sig.power = true
 +		sig.stanceMask = 4   # RT held: B is the signature
++		sig.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
 +		_step(S, sig)
 +	for _k in range(200):
 +		_step(S)

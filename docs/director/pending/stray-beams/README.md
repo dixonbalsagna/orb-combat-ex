@@ -1,6 +1,6 @@
 # Parked: the two stray beams from Orb's 9 November play (GW1b riders)
 
-Encounter, 2026-11-13, sprint A1 wave 1 (A-COMBAT-05, A-COMBAT-11). QA's replay of `orb-first-play-20261109-1646.json` (`docs/qa/runs/6a30b4c9/README.md`) found both. **Off on main's data today, so the golden doesn't move**. They act once the 9 November rows are main's (GW1a), and land in GW1b.
+Encounter, 2026-11-13, sprint A1 wave 1 (A-COMBAT-05, A-COMBAT-11). QA's replay of `orb-first-play-20261109-1646.json` (`docs/qa/runs/6a30b4c9/README.md`) found both. **On the GW1a data (main since b0e20f9a) its switches are on, and it moves the golden: both human-input replays, from their second checkpoint (no match row)** (the GW1b review's B-17; the lane is in `docs/director/runs/b0e20f9a/b17-lane/`). They act once the 9 November rows are main's (GW1a), and land in GW1b.
 
 ## 1. Tick 5220: a stick beam let go and refused never fires later into something else (A-COMBAT-05)
 
@@ -29,11 +29,15 @@ Encounter, 2026-11-13, sprint A1 wave 1 (A-COMBAT-05, A-COMBAT-11). QA's replay 
 
 ## Apply
 
-On main def3445a: `git -c core.autocrlf=false -c core.eol=lf apply stray-beams.diff grant-tools-schema.patch dash-probe.diff`. Each applies alone.
+On main b0e20f9a (GW1a), after `../launch-cone/` in the GW1b order: `git -c core.autocrlf=false -c core.eol=lf apply stray-beams.diff grant-tools-schema.patch dash-probe.diff`.
+
+**Re-cut for B-17 (2026-11-21):**
+- `interrupts.json`'s context line now reads `"enabled": true`, since GW1a turned the beam's own move on. The plain apply failed at line 294.
+- Four checks now press RT on the tick they fire the signature with RT held: `beam_front_check`, `morning_fixes_check`, `outside_check`, `push_mode_check`. With GW1a's `bNoBeam` and `bNoBeamKeepRt` on, RT + B is the signature only inside RT's window after its press, and a real pad's RT is pressed on its first tick. Without the press, their B was the heavy and their beam rows failed (21, 3, 2 and 1 rows on the stack).
 
 | Patch | Owner | sha1 |
 | :--- | :--- | :--- |
-| `stray-beams.diff` (`sim/director/beam_move.gd`, `brawl.gd`, `exchange.gd`, `data/director/interrupts.json` `ownMove.dropOnPress`, the new check `stray_beam_check.gd`) | Encounter | ff15d3e2e513b6d582f13cff0eb2cef0c24fee5d |
+| `stray-beams.diff` (re-cut for B-17; the first cut was ff15d3e2): `sim/director/beam_move.gd`, `brawl.gd`, `exchange.gd`, `data/director/interrupts.json` `ownMove.dropOnPress`, the new check `stray_beam_check.gd`, and the RT press in `beam_front_check`, `morning_fixes_check`, `outside_check`, `push_mode_check` | Encounter | 2c748f23d44af5cdd26bf00896ecabb3aed05459 |
 | `grant-tools-schema.patch` (`tools/schemas/director-interrupts.schema.json`: `ownMove.dropOnPress`, optional) | Tools (schema grant) | 952f78d01ed97a54477d0aa54ebc2875010ca1ca |
 | `dash-probe.diff` (`sim/director/tools/dash_probe.gd`: flight's data default) | Encounter | 8f9b58791c13357a8d40a98d31ff9185cc3b658f |
 
@@ -57,7 +61,7 @@ On main def3445a: `git -c core.autocrlf=false -c core.eol=lf apply stray-beams.d
 ## Proof
 
 The gates ran on main def3445a plus `stray-beams.diff` and the schema grant. Records are in `docs/director/runs/def3445a/stray-beams/`, and every output went through `tools/gate.mjs` with no SCRIPT ERROR.
-- **The golden check passed, so the golden doesn't move:** the switches are off on main's data.
+- On main def3445a, where the switches were off, the golden didn't move. **On the GW1a data it does:** both human-input replays, from their second checkpoint. The B-17 lane has every director check passing on the full GW1b stack.
 - Validate 0 errors; self-test 10,093 of 10,093; ratchet 365.
 - **All 43 director checks pass** (every one but `loader_check`), `stray_beam_check` with them. So do the beam move's, the beam AI's, the struggle's, the strike stages', the stick's, the flight strikes' and the morning fixes' checks, which all run with the beam's own move forced on.
 - The core checks `two_states` and `load_split` pass.

@@ -1,0 +1,1 @@
+FAIL  window: RT, then B 12 ticks later (one tick after the window) is the heavy, no beam: ["press_refused", "brawl_end", "beam_charge", "beam_window", "beam_fire", "chase_ready"]

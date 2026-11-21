@@ -42,7 +42,7 @@ Records are in `docs/director/runs/1c19d81d/gw1b-riders/`, and every output went
 - **Negative controls:**
   - With the pins off and the two code fixes taken out, `arc_check` fails 1 (the bowl at 4,571) and `beam_ai_check` fails 4.
   - With the anguish weight back at 2, `swing_legal_check` fails 3.
-- **The golden fails with energy-on, as it must, with exactly the same lines with and without the riders** (base worktree compared). The riders' switches (the arc, the swing, the computer's own beam move) are off in main's data, so nothing here moves main's golden today. With the 9 November switches on (GW1a), all three change play: re-record in GW1b.
+- **On the GW1a data (main b0e20f9a) the riders move 9 of the golden's 11 rows**, from early on: matches 0 to 7, and match 8, which ran 40,833 ticks, now runs to the backstop (43,200). Tick 0 and the two replays don't move. The lane is in `docs/director/runs/b0e20f9a/b17-lane/` (the GW1b review's B-17). Earlier, on main's data with energy-on: the golden failed with exactly the same lines with and without the riders (base worktree compared). The riders' switches (the arc, the swing, the computer's own beam move) are off in main's data, so nothing here moves main's golden today. With the 9 November switches on (GW1a), all three change play: re-record in GW1b.
 - These core checks pass: `two_states` and `load_split`. Validate: 0 errors; self-test 10,093 of 10,093. The two-fighter count is 365 of 365.
 - **Render:** 14 of 15 pass. `after_check` fails one row ("the match has a rush in it: the five are reached (0)"). It fails identically on the base without the riders, so it comes with energy-on, not this park.
 

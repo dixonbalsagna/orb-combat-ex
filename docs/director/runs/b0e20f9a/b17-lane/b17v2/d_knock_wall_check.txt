@@ -1,0 +1,31 @@
+ok    off, in reach: aimed false
+ok    on, in reach: aimed true
+ok    on, in reach: the wall takes him (2)
+ok    on, past its reach: aimed false
+ok    on, 1,200 away at tier 4: aimed true
+ok    on, 1,200 away at tier 4: the wall takes him (2)
+ok    on, behind him: aimed false
+ok    tier 1 on a tower: not through it (wall)
+ok    the cone: knocks aimed at a wall more than 20 degrees off the blow's line, 0 (Game Design's QA row; 14 aimed)
+ok    negative control, today's rule (no cone, along the line): some aim more than 20 degrees off (24)
+ok    visit off: no slot, no cost
+ok    an unused town: leaving costs
+ok    landing in it doesn't
+ok    after its sends, leaving costs nothing
+ok    and it's marked down
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    a built place on the line is a candidate (13)
+KNOCK WALL: 0 check(s) failed
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).

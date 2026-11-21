@@ -1,0 +1,4 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+FAIL  window: RT, then B 12 ticks later (one tick after the window) is the heavy, no beam: ["press_refused", "brawl_end", "beam_charge", "beam_window", "beam_fire", "chase_ready"]
+stray_beams_input_test: 12 checks, 1 failed

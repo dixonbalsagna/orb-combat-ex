@@ -1,0 +1,126 @@
+00:10:07 a_press_check exit 0: A PRESS: 0 check(s) failed
+00:10:13 aim_throw_check exit 1: AIM THROW: 3 check(s) failed
+00:10:29 arc_check exit 0: ARC: 0 check(s) failed
+00:11:06 arrive_check exit 0: ARRIVE: 0 check(s) failed
+00:16:53 bark_reads_check exit 1: bark_reads_check: FAILED (1)
+00:17:02 beam_ai_check exit 0: BEAM AI: 0 check(s) failed
+00:17:11 beam_front_check exit 1: FRONT: 21 check(s) failed
+00:17:17 beam_move_check exit 0: BEAM MOVE: 0 check(s) failed
+00:17:22 carry_round_check exit 0: CARRY ROUND: 0 check(s) failed
+00:17:28 chase_tap_check exit 0: CHASE: 0 check(s) failed
+00:17:43 city_push_check exit 0: CITY PUSH: 0 check(s) failed
+00:17:55 driver_check exit 0: DRIVER: 0 check(s) failed
+00:18:07 ending_check exit 0: ENDING: 0 check(s) failed
+00:18:12 ending_team_check exit 0: ENDING TEAM: 0 check(s) failed
+00:18:17 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+00:18:24 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+00:18:58 floorlift_check exit 0: FLOORLIFT: 0 check(s) failed
+00:19:16 follow_check exit 0: FOLLOW: 0 check(s) failed
+00:19:23 full_send_check exit 0: FULL SEND: 0 check(s) failed
+00:20:02 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+00:21:26 launch_cone_check exit 0: LAUNCH CONE: 0 check(s) failed
+00:29:18 launch_cost_check exit 0: LAUNCH COST: 0 check(s) failed
+00:29:33 launch_cuts_check exit 0: LAUNCH CUTS: 0 check(s) failed
+00:29:33 lane dirA done
+00:47:29 loader_check exit 0: loader check passed
+00:47:42 location_check exit 0: LOCATION: 0 check(s) failed
+00:48:34 match_end_check exit 0: MATCH END: 0 check(s) failed
+00:48:39 morning_fixes_check exit 1: MORNING FIXES: 3 check(s) failed
+00:48:44 outside_check exit 1: OUTSIDE: 2 check(s) failed
+00:48:49 pace_check exit 0: PACE: 0 check(s) failed
+00:48:55 phrase_check exit 0: PHRASE: 0 check(s) failed
+00:49:00 plane_check exit 0: PLANE: 0 check(s) failed
+00:49:05 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+00:49:11 press_decides_check exit 0: PRESS: 0 check(s) failed
+00:49:15 push_mode_check exit 1: PUSH MODE: 1 check(s) failed
+00:49:21 reads_check exit 0: reads_check: 16 of 16 passed
+00:49:26 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+00:49:30 relief_check exit 0: RELIEF: 0 check(s) failed
+00:50:21 sigvariants_check exit 0: sigvariants check passed
+00:50:30 stance_check exit 0: STANCE: 0 check(s) failed
+00:50:42 stick_check exit 0: STICK: 0 check(s) failed
+00:50:47 stick_lunge_check exit 0: STICK LUNGE: 0 check(s) failed
+00:50:52 stray_beam_check exit 0: STRAY BEAMS: 0 check(s) failed
+00:50:57 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+00:51:02 sure_reach_check exit 0: sure_reach_check: passed
+00:51:48 swing_check exit 0: SWING: 0 check(s) failed
+00:53:08 swing_legal_check exit 0: SWING LEGAL: 0 check(s) failed
+00:53:27 walk_check exit 0: WALK: 0 check(s) failed
+00:53:27 lane dirB done
+01:19:09 golden at c15c9e2 (main b0e20f9a (GW1a)) exit 0
+01:21:44 golden at b4916fb (gw1b-riders) exit 0
+01:24:18 golden at 4842093 (index-stage) exit 0
+01:26:50 golden at e4a8af9 (wall-cone + grant + Tools' cases) exit 0
+01:26:50 lane goldA done
+01:19:07 golden at 4000908 (launch-cone) exit 0
+01:21:42 golden at 8069fd0 (stray-beams (re-cut) + grant + dash-probe + Controls' stray-) exit 0
+01:24:17 golden at f4f5a42 (beam-aim-throw) exit 0
+01:24:17 lane goldB done
+00:53:31 agency_input_test exit 0: 
+00:53:34 aim_test exit 0: 
+00:56:34 b_no_beam_layouts_test exit 0: 
+00:56:49 b_no_beam_test exit 0: 
+00:56:51 beam_aim_test exit 0: 
+00:56:53 brake_grapple_test exit 0: 
+00:56:58 brake_ready_test exit 0: 
+00:57:00 charge_lost_test exit 0: 
+00:57:03 charge_test exit 0: 
+00:57:05 chord_pick_test exit 0: 
+00:57:11 dash_handover_test exit 0: 
+00:57:13 dodge_held_test exit 0: 
+00:57:15 flight_strike_b_test exit 0: 
+00:57:17 full_send_haptic_test exit 0: 
+00:57:19 haptics_test exit 0: 
+00:57:28 hold_toggle_test exit 0: 
+00:57:34 hub_test exit 0: 
+00:57:43 impact_haptics_test exit 0: 
+00:57:46 inert_knock_test exit 0: 
+00:57:51 join_test exit 0: 
+00:57:53 layout_test exit 0: 
+00:57:55 left_hand_test exit 0: 
+00:57:58 mode_test exit 0: 
+00:58:00 pad_first_press_test exit 0: 
+00:58:02 params_cache_test exit 0: 
+00:58:06 press_read_test exit 0: 
+00:58:08 push_stick_test exit 0: 
+00:58:10 quick_read_test exit 0: 
+00:58:13 refusal_cue_test exit 0: 
+00:58:15 refusals_test exit 0: 
+00:58:17 remap_test exit 0: 
+00:58:19 stage_cue_test exit 0: 
+00:58:21 stage_haptics_test exit 0: 
+00:58:23 stall_keep_test exit 0: 
+00:58:25 stance_test exit 0: 
+00:58:28 stick_feel_test exit 0: 
+00:58:33 stray_beams_input_test exit 1: FAIL  window: RT, then B 12 ticks later (one tick after the window) is the heavy, no beam: ["press_refused", "brawl_end", "beam_charge", "beam_window"
+00:58:38 strike_gate_test exit 0: 
+00:58:40 strike_hub_test exit 0: 
+00:58:42 strike_read_test exit 0: 
+00:58:44 struggle_test exit 0: 
+00:58:50 t1_latency_test exit 0: 
+00:58:52 take_back_claw_test exit 0: 
+00:58:57 touch_full_test exit 0: 
+00:59:30 touch_glue_test exit 0: 
+00:59:36 touch_test exit 0: 
+00:59:36 lane input done
+00:53:41 render after exit 0: after check passed
+00:53:56 render depth exit 0: depth check passed
+00:56:08 render flash exit 0: flash check passed
+00:58:22 render flash_reg exit 0: flash register check passed
+01:01:05 render flight exit 0: flight check passed
+01:02:02 render ground exit 0: ground check passed
+01:02:09 render hud_words exit 0: hud words check passed
+01:02:30 render lane exit 0: lane check passed
+01:02:52 render open exit 0: open check passed
+01:03:52 render pane exit 0: pane check passed
+01:04:05 render patch exit 0: patch check passed
+01:04:17 render shape exit 0: shape check passed
+01:04:31 render sky exit 0: sky check passed
+01:04:50 render stage exit 0: stage check passed
+01:07:32 render cue exit 0: cue check passed
+01:07:32 validate: 322 files checked, 0 errors, 2 warnings; lint: determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/world, sim/input
+01:07:33 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+01:13:16 parity exit 1: golden check FAILED
+01:16:10 two_states exit 0: PASS  0 failure(s)
+01:16:14 load_split exit 0: 
+01:16:14 lane render done

@@ -1,0 +1,6 @@
+ok    the ending is on in the data (interrupts.json ending.enabled: the 9 November rows)
+ok    a finishing move: two computers fight until one falls to a finisher, before the cap
+ok    wear on an idle player: he's opened on the brink and falls to the computer's finisher
+ok    the last event after the time cap: the one with less wear gets his finisher and the other falls
+MATCH END: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

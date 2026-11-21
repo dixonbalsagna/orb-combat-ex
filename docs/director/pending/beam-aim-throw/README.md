@@ -19,11 +19,13 @@ The throw belongs to the beam its release starts.
 
 ## Apply
 
-On main def3445a: `git -c core.autocrlf=false -c core.eol=lf apply beam-aim-throw.diff`. It applies alone, and after `../stray-beams/`.
+On main b0e20f9a (GW1a), after `../stray-beams/` in the GW1b order: `git -c core.autocrlf=false -c core.eol=lf apply beam-aim-throw.diff`.
+
+**Re-cut for B-17 (2026-11-21):** `aim_throw_check` presses RT on the tick it fires the signature with RT held, as stray-beams' four checks now do. With GW1a's data and stray-beams' RT window, its B was otherwise the heavy and three of its rows failed.
 
 | Patch | Owner | sha1 |
 | :--- | :--- | :--- |
-| `beam-aim-throw.diff` (`sim/director/beam_aim.gd`, `beam_move.gd`, `beamplay.gd`; the new check `aim_throw_check.gd`) | Encounter | 43a450db2cf25ef198ff09f466d707c8659f6437 |
+| `beam-aim-throw.diff` (re-cut for B-17; the first cut was 43a450db): `sim/director/beam_aim.gd`, `beam_move.gd`, `beamplay.gd`; the new check `aim_throw_check.gd` | Encounter | 624485ae0a42632fce4b3fe9da22039b02667716 |
 
 ## The check
 
@@ -39,7 +41,7 @@ On main def3445a: `git -c core.autocrlf=false -c core.eol=lf apply beam-aim-thro
 ## Proof
 
 The gates ran on main def3445a plus this park. Records are in `docs/director/runs/def3445a/beam-aim-throw/`, and every output went through `tools/gate.mjs` with no SCRIPT ERROR.
-- **The golden check passed, so the golden doesn't move:** the aim is off on main's data.
+- On main def3445a the golden didn't move. **On the GW1a data no gameplay row moves** (every match's and replay's gameplay digest is the same), but one full-state checkpoint each in matches 0 and 7 differs (checkpoints 117 and 61). The re-record in GW1b takes it with the others (`docs/director/runs/b0e20f9a/b17-lane/`).
 - Validate 0 errors; self-test 10,093 of 10,093; ratchet 365.
 - **All 43 director checks pass** (all but `loader_check`), `aim_throw_check` with them. So do the beam move's, beam front's, beam AI's, struggle's and strike stages' checks.
 - The core checks `two_states` and `load_split` pass.

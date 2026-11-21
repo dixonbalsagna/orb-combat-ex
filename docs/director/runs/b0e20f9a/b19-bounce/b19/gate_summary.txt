@@ -1,0 +1,4 @@
+gate: <scratch>/g/b19/today.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/b19/lodge.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/b19/cones.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/b19/both.txt: no SCRIPT ERROR lines

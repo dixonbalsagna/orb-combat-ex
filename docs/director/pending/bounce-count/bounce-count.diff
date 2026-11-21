@@ -1,0 +1,108 @@
+diff --git a/sim/director/tools/bounce_count.gd b/sim/director/tools/bounce_count.gd
+new file mode 100644
+index 0000000..6762765
+--- /dev/null
++++ b/sim/director/tools/bounce_count.gd
+@@ -0,0 +1,102 @@
++extends SceneTree
++## Orb's ping-pong bug, counted (the GW1b review's B-19): godot --headless --path . --script res://sim/director/tools/bounce_count.gd -- [--matches=30] [--ticks=18000] [--lodge]
++## Computer against computer on the 9 November page's planet (7, touch 3, generation 3), the data as it is. For every wall slam (a building_hit
++## whose building holds the body: the text "wall") it reads, per match:
++##   thrown back  his speed along the line reverses off the face (World's wallRebound, a quarter of his speed): the bounce back to the strip
++##   pulled home  his depth comes back toward the fight's line by half or more while he is still in the air (the mid-air pull of stepZ)
++##   off the line the building more than 20 degrees off the blow's line in the ground plane (the background ricochet the cones stop)
++## --lodge sets World's held cityHold row in memory (data/biomes/brunt.json: lodgeHold body, wallRebound 0, wallStop 0, wallDepthHold 1,
++## repeatMarks 2); with the hold-air grant in the tree, a held body isn't pulled home through the air. With --lodge: thrown back 0.
++
++var args: Dictionary = {}
++var fails: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	if not c:
++		fails += 1
++	print(("ok    " if c else "FAIL  ") + what)
++
++
++func _init() -> void:
++	for a in OS.get_cmdline_user_args():
++		var kv: PackedStringArray = a.trim_prefix("--").split("=")
++		args[kv[0]] = kv[1] if kv.size() > 1 else "1"
++	var matches: int = int(args.get("matches", "30"))
++	var ticks: int = int(args.get("ticks", "18000"))
++	var lodge: bool = args.has("lodge")
++	if lodge:
++		var cm: Dictionary = WorldBrunt.cfg()
++		cm["lodgeHold"] = "body"
++		cm["wallRebound"] = 0.0
++		cm["wallStop"] = 0.0
++		cm["wallDepthHold"] = 1
++		cm["repeatMarks"] = 2
++	var cone: float = float(DirLaunch.data().knockBack.get("wall", {}).get("wallCone", 0.0))
++	var tot := {"launches": 0, "hits": 0, "walls": 0, "thrown": 0, "pulled": 0, "offLine": 0}
++	var perMatch: Array = []
++	for m in range(matches):
++		var S := SimCore.createSim()
++		SimCore.newMatch(S, 41 + m, {"p1": true, "p2": true}, {"planet": 7, "touch": 3, "planetGen": 3, "intro": false})
++		var r := {"launches": 0, "hits": 0, "walls": 0, "thrown": 0, "pulled": 0, "offLine": 0}
++		var watch: Dictionary = {}   # slot -> [the wall's tick, |z - line| at the slam, the launch's start x, z]
++		var start: Dictionary = {}   # slot -> [x, z, direction] when the launch began
++		var pre: Array = []
++		for t in range(ticks):
++			pre.clear()
++			for f in S.fighters:
++				pre.append([f.x, f.z, f.vx, f.state])
++			SimCore.step(S)
++			for e in S.out.fx:
++				if e.type == "launch":
++					r.launches += 1
++					var k0: int = int(e.actor)
++					if k0 >= 0 and k0 < S.fighters.size():
++						start[k0] = [float(pre[k0][0]), float(pre[k0][1]), SimMathx.jsign(float(e.ux)) if float(e.ux) != 0.0 else SimMathx.jsign(S.fighters[k0].vx)]
++				elif e.type == "building_hit":
++					r.hits += 1
++					if String(e.outcome) != "wall":
++						continue
++					r.walls += 1
++					var k: int = int(e.actor)
++					if k < 0 or k >= S.fighters.size():
++						continue
++					var f = S.fighters[k]
++					var dir0: float = SimMathx.jsign(float(pre[k][2]))
++					if dir0 != 0.0 and f.vx * dir0 < 0.0:
++						r.thrown += 1
++					watch[k] = [t, absf(f.z)]   # his depth off the fight's line (the plane, depth 0)
++					if start.has(k):
++						var st: Array = start[k]
++						var b = S.buildings[int(e.b)]
++						var along: float = SimWrap.sdx(float(st[0]), float(b.x)) * float(st[2]) - float(b.w) * 0.5
++						var off: float = maxf(0.0, absf(float(b.z) - float(st[1])) - float(b.d) * 0.5)
++						var deg: float = atan2(off, maxf(along, 0.001)) * 180.0 / PI if along > 0.0 else 90.0
++						if deg > 20.01:
++							r.offLine += 1
++			# the mid-air pull: a body still in the air after a wall whose depth has come halfway home
++			for k in watch.keys():
++				var f = S.fighters[k]
++				var w: Array = watch[k]
++				if f.state != "launched" or t - int(w[0]) > 240:
++					watch.erase(k)
++					continue
++				if float(w[1]) > 40.0 and absf(f.z) <= float(w[1]) * 0.5:
++					r.pulled += 1
++					watch.erase(k)
++			S.out.fx.clear()
++			S.out.feed.clear()
++			if SimCore.ended(S):
++				break
++		SimCore.dispose(S)
++		perMatch.append(r)
++		for key in tot.keys():
++			tot[key] = int(tot[key]) + int(r[key])
++	var mx: float = float(matches)
++	print("      %s, cones %s (%.0f degrees): %d matches, %d launches, %d building hits, %d wall slams (%.2f a match)" % ["the lodge (cityHold + hold-air)" if lodge else "today's walls", "on" if cone > 0.0 else "off", cone, matches, tot.launches, tot.hits, tot.walls, float(tot.walls) / mx])
++	print("      of the wall slams: thrown back %d (%.2f a match), pulled home in the air %d (%.2f a match), off the blow's line %d" % [tot.thrown, float(tot.thrown) / mx, tot.pulled, float(tot.pulled) / mx, tot.offLine])
++	print("      per match [walls, thrown, pulled]: %s" % str(perMatch.map(func(x): return [int(x.walls), int(x.thrown), int(x.pulled)])))
++	if lodge:
++		ok(int(tot.thrown) == 0, "the lodge: nobody thrown back off a wall (%d of %d slams)" % [tot.thrown, tot.walls])
++	print("BOUNCE COUNT: %d check(s) failed" % fails)
++	quit(1 if fails > 0 else 0)
