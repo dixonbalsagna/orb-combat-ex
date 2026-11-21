@@ -314074,6 +314074,54 @@
         "rule": "maximum",
         "pointer": "/splitShare"
       }
+    },
+    {
+      "id": "camera-swing-piece-not-boolean",
+      "schema": "camera-swing.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/pieces/swingView": "yes"
+          },
+          "file": "data/camera/swing.json"
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pieces/swingView"
+      }
+    },
+    {
+      "id": "camera-swing-piece-unknown",
+      "schema": "camera-swing.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/pieces/zoomWobble": true
+          },
+          "file": "data/camera/swing.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/pieces/zoomWobble"
+      }
+    },
+    {
+      "id": "camera-swing-flatmode-unknown",
+      "schema": "camera-swing.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/flatMode": "sideways"
+          },
+          "file": "data/camera/swing.json"
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/flatMode"
+      }
     }
   ],
   "text": [
