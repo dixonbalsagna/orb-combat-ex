@@ -82,3 +82,10 @@ If the arms feel alike, the busier one wins: it's a horde.
 - **Why:** the design's beat 5, "the other finishes the wave, the first gets up at the rest", is the co-op story. A wave sized for two that one player can't clear ends the run on a partner's mistake instead.
 - **On Orb's question 4:** the answer stays "not yet more than three". This rule is about the count for whoever is still standing.
 - **Encounter builds it after GW1a. QA's row:** a medium pad left alone at mid-wave clears it in at least 8 of 10 runs.
+
+**The lone-player rule after Encounter's retraction (2026-11-20):** the clip script's blasts were the cause, not the game, and a lone pad clears the wave 10 of 10 either way: about 38 s without the rule and 21 s with it. **Keep the rule.**
+- **The downed partner waits half as long:** they're out until the wave is cleared. That's Orb's own reason against leaving a player watching.
+- **The one still up meets a pace made for one.**
+- **QA's row becomes:** a lone medium pad clears the rest of a wave in at most 30 s, in at least 9 of 10 runs.
+
+**For A4, a real gap:** a player who only blasts can't fell anything, because shots lower a weak fighter's hit points but never spend its toughness. **The shot as a pack blow joins A4:** a shot that lands on a pack body spends toughness by its weight, a bolt as a light and a charged or heavy shot as a heavy, so an energy fighter can fight the horde.
