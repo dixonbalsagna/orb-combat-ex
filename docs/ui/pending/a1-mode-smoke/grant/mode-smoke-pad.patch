@@ -1,5 +1,5 @@
 --- a/tools/smoke/mode_smoke.gd	2026-11-20 20:37:06.535352000 -0800
-+++ b/tools/smoke/mode_smoke.gd	2026-11-20 20:41:12.415799700 -0800
++++ b/tools/smoke/mode_smoke.gd	2026-11-20 21:04:49.849481700 -0800
 @@ -1,11 +1,14 @@
  extends SceneTree
 -## The mode smoke (A-MODES-08, X-05 first reading; Tools, 2026-11-14): the real main scene, headless, driven through the menus BY ROW NAME, not by screen points: one mode a run, to a result, a rematch and the way back out.
@@ -136,7 +136,7 @@
  	if out_path != "":
  		var f := FileAccess.open(out_path, FileAccess.WRITE)
  		if f != null:
-@@ -91,6 +150,8 @@
+@@ -91,8 +150,16 @@
  
  
  func _run() -> void:
@@ -144,8 +144,16 @@
 +	root.size = Vector2i(1280, 800)   # (set once the window exists: a headless window starts tiny)
  	await _frames(40)
  	hud = main.ui_hud
++	# the game makes its first planet at boot (the round planet is the default): every press goes to the loading screen until it is done, so the smoke waits for the load to end before it presses anything
++	var load_t0: int = Time.get_ticks_msec()
++	while hud != null and hud.is_loading() and Time.get_ticks_msec() - load_t0 < 180000:
++		await _frames(10)
++	if hud != null and Time.get_ticks_msec() - load_t0 > 500:
++		print("note  the boot's planet load took %d ms before the menu could be pressed" % (Time.get_ticks_msec() - load_t0))
  	if hud == null:
-@@ -105,31 +166,52 @@
+ 		_step("the HUD exists", false)
+ 		_finish()
+@@ -105,31 +172,52 @@
  	if not opened_by_game:
  		hud.show_start_menu(false)
  		await _frames(3)
@@ -215,7 +223,7 @@
  	var t0: int = Time.get_ticks_msec()
  	while Time.get_ticks_msec() - t0 < 60000 and not (main.host.S != null and int(main.host.ticks) > 30 and not hud.is_start_menu_open()):
  		await _frames(2)
-@@ -140,57 +222,68 @@
+@@ -140,57 +228,68 @@
  		return
  	var humans: Array = [0, 1] if want_two else [0]
  	_step("the match is of the mode: the bodies' AI flags", (main.host.S.fighters[0].ai == null) and ((main.host.S.fighters[1].ai == null) == want_two), "p1 human %s, p2 human %s" % [str(main.host.S.fighters[0].ai == null), str(main.host.S.fighters[1].ai == null)])
@@ -308,7 +316,7 @@
 +		_step("Quit asks 'Close the game?' with Stay lit", false, "no quit row to press")
  	_finish()
 --- a/tools/smoke/mode-smoke.mjs	2026-11-20 20:37:06.550888400 -0800
-+++ b/tools/smoke/mode-smoke.mjs	2026-11-20 20:41:12.423578800 -0800
++++ b/tools/smoke/mode-smoke.mjs	2026-11-20 21:00:48.477544300 -0800
 @@ -4,7 +4,7 @@
  //   --godot: default the GODOT environment variable. --path: default the repository. --out: default docs/tools/runs/<commit8>/ (one file: mode-smoke-<mode>-<platform>.json).
  //   Exit 0 when every step of every mode passed; 1 when a step failed; 2 when the game did not start or wrote no result (a run that reads nothing is not a pass).
@@ -341,7 +349,7 @@
      }
    } finally {
 --- a/tools/smoke/mode-smoke-selftest.mjs	2026-11-20 20:37:06.565928200 -0800
-+++ b/tools/smoke/mode-smoke-selftest.mjs	2026-11-20 20:37:38.330841400 -0800
++++ b/tools/smoke/mode-smoke-selftest.mjs	2026-11-20 21:00:48.477544300 -0800
 @@ -2,16 +2,18 @@
  import { readResult, isolatedEnv } from './mode-smoke.mjs';
  let bad = 0, n = 0;
@@ -366,7 +374,7 @@
  const env = isolatedEnv({ APPDATA: 'real', HOME: 'real', X: '1' }, '/tmp/x');
  check('the data folders are moved off the real ones', !Object.values({ a: env.APPDATA, b: env.HOME, c: env.XDG_DATA_HOME, d: env.LOCALAPPDATA }).some((v) => v === 'real') && env.X === '1');
 --- a/docs/tools/mode-smoke.md	2026-11-20 20:37:06.593442400 -0800
-+++ b/docs/tools/mode-smoke.md	2026-11-20 20:37:38.330841400 -0800
++++ b/docs/tools/mode-smoke.md	2026-11-20 21:00:48.478543800 -0800
 @@ -1,5 +1,7 @@
  # The mode smoke (A-MODES-08, Tools, 2026-11-14)
  

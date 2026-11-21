@@ -1,0 +1,82 @@
+--- a/ui/hud/ui_hud.gd	2026-11-20 21:06:51.951351500 -0800
++++ b/ui/hud/ui_hud.gd	2026-11-20 21:06:52.069108700 -0800
+@@ -975,7 +975,7 @@
+ 	_turn_step()
+ 	_l_turn.update_sig(UiTurn.sig(turn_plan()) if _turn_open else null)
+ 	if _menu_kind and _notice_open:
+-		_l_notice.update_sig(UiMenu.sig(menu_plan()) if not _set_open else null)
++		_l_notice.update_sig(UiMenu.sig(menu_plan()) if (not _set_open and not is_loading()) else null)   # not while a planet is being made: the loading screen shows alone (its input is the loading screen's)
+ 	else:
+ 		_l_notice.update_sig(UiNotice.sig(notice_plan()) if (_notice_open and (_notice_gate and not _set_open or not _notice_gate)) else null)
+ 	_l_gate_back.update_sig([_set_open] if (_notice_open and _notice_gate) else null)
+@@ -2136,6 +2136,11 @@
+ 	_l_loading.update_sig(null)
+ 
+ 
++## Whether the start menu is on the screen: open, and no planet being made (it waits behind the loading screen, which answers every press).
++func start_menu_visible() -> bool:
++	return _notice_open and _menu_kind and not is_loading()
++
++
+ func is_loading() -> bool:
+ 	return not _load_state.is_empty()
+ 
+@@ -2151,7 +2156,8 @@
+ 
+ func _paint_notice(ci: CanvasItem) -> void:
+ 	if _menu_kind and _notice_open:
+-		UiMenu.draw(ci, menu_plan())
++		if not is_loading():
++			UiMenu.draw(ci, menu_plan())   # while a planet is being made the start menu waits: it would answer no press (they all go to the loading screen) and hide the loading screen's words
+ 		return
+ 	if _notice_open and (_notice_gate and not _set_open or not _notice_gate):
+ 		UiNotice.draw(ci, notice_plan())
+--- a/ui/tools/hud_check.gd	2026-11-20 21:06:51.969339200 -0800
++++ b/ui/tools/hud_check.gd	2026-11-20 21:06:52.082157700 -0800
+@@ -90,6 +90,7 @@
+ 	await _pause_clock_rules()
+ 	await _menus_a1_rules()
+ 	await _menus_a1_extra_rules()
++	await _boot_load_menu_rules()
+ 	await _plain_words_rules()
+ 	await _launch_marks_rules()
+ 	await _tug_rules()
+@@ -11451,3 +11452,38 @@
+ 	hud.queue_free()
+ 	UiData.set_feature("menus_rail", false)
+ 	UiData.set_feature("menu_modes", false)
++
++
++# --- The start menu waits for the boot's planet (GW1a's round planet is made at boot: the menu drew over the loading screen and answered nothing) -----------
++
++func _boot_load_menu_rules() -> void:
++	UiData.set_feature("menus_rail", true)
++	UiData.set_feature("menu_modes", true)
++	UiPrefs.path = "user://ui_prefs_test_bootload.json"
++	if FileAccess.file_exists(UiPrefs.path):
++		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
++	var hud := UiHud.new()
++	hud.size = Vector2(1280, 800)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	for i in range(10):
++		hud.advance(1.0 / 60.0)
++	hud.show_start_menu(false)
++	var open_ok: bool = hud.start_menu_visible() and str(hud.menu_plan().get("page", "")) == "modes"
++	hud.show_loading("places", 0.2)
++	var hidden: bool = not hud.start_menu_visible() and hud.is_start_menu_open()
++	var e := InputEventJoypadButton.new()
++	e.button_index = JOY_BUTTON_A
++	e.pressed = true
++	hud._unhandled_input(e)
++	var inert: bool = str(hud.menu_plan().get("page", "")) == "modes"   # every press goes to the loading screen while it is up
++	hud.hide_loading()
++	var back_ok: bool = hud.start_menu_visible()
++	hud._unhandled_input(e)
++	var answers: bool = str(hud.menu_plan().get("page", "")) == "setup"
++	_ok(open_ok and hidden and inert and back_ok and answers, "boot load: the start menu is not on the screen while a planet is being made (the loading screen shows alone), and is, and answers A, as soon as the load ends (%s %s %s %s %s)" % [open_ok, hidden, inert, back_ok, answers])
++	hud.hide_photo_notice(false)
++	hud.queue_free()
++	UiData.set_feature("menu_modes", false)
++	UiData.set_feature("menus_rail", false)
