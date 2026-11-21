@@ -1,5 +1,14 @@
 --- a/sim/world/brunt.gd
 +++ b/sim/world/brunt.gd
+@@ -29,7 +29,7 @@
+ const BRUNT_PATH: String = "res://data/biomes/brunt.json"
+ const BRUNT_SCHEMA: String = "biomes.brunt/1"
+ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (a key it does carry overrides)
+-	"bruntMul": 1.8, "tierFactor": [0.12, 0.27, 0.47, 0.73], "specialTier": 4,
++	"bruntMul": 1.8, "heldMul": 1.0, "tierFactor": [0.12, 0.27, 0.47, 0.73], "specialTier": 4,
+ 	"chainMax": [1, 2, 3, 4], "chainSpecial": 5, "houseLink": 0.5, "houseKeep": 0.6,
+ 	"towerPunches": [0, 1, 99, 99], "giveWay": 2.0, "wallMemory": 0.25, "wallMin": 0.25, "heldDeathShare": 0.6,
+ 	"lodgeSeconds": [0.5, 0.5, 0.7, 0.9], "lodgeSpecialSeconds": 0.9, "lodgeDump": 1.0,
 @@ -394,10 +394,24 @@
  	return clampf(sqrt(maxf(E - m, 0.0) / maxf(E, 1.0e-9)), 0.0, 1.0)
  
@@ -26,9 +35,70 @@
  	var u: float = SimPower.speedUnit
  	var E: float = spN * spN / (u * u)
  	var through: bool = E >= m
+@@ -413,7 +427,8 @@
+ 		return w
+ 	if probe.hit.is_empty():
+ 		return probe   # its floors there are gone: nothing to hold him
+-	var oc: Dictionary = outcomeDmg(S, b, y, (2.0 if through else E / m) * probe.sumS)
++	var hm: float = float(cfg().heldMul)
++	var oc: Dictionary = outcomeDmg(S, b, y, 2.0 * probe.sumS if through else (E / m * hm * probe.sumS0 if hm > 1.0 else E / m * probe.sumS))   # a held body stops in the building: all its energy goes into the few floors it covers, by what they were (heldMul 2: twice E over the mass of their undamaged strength, so each hit weakens them for the next; 1: as before)
+ 	if through:
+ 		oc.keep = keep
+ 	else:
+@@ -480,20 +495,22 @@
+ 		if hit.is_empty():
+ 			return {"floors": true, "k": k, "hit": hit, "sumS": 0.0, "dmg": dmg, "ratio": 999.0, "outcome": "punch", "pass": true, "keep": float(cfg().keepFree)}
+ 		var sumS: float = 0.0
++		var sumS0: float = 0.0   # the same floors undamaged: a held hit under the energy model is by this (heldMul), so the walls' memory shows
+ 		var cm: Dictionary = cfg()
+ 		var haveD: bool = b.fdmg.size() == b.floors
+ 		for j in hit:
+ 			var st: float = floorStr(b, j)
++			sumS0 += st
+ 			if haveD and b.fdmg[j] > 0.0:   # a building that remembers its walls: damage already taken weakens the floor (not below wallMin of it)
+ 				st = maxf(st * float(cm.wallMin), st - float(cm.wallMemory) * b.fdmg[j])
+ 			sumS += st
+ 		var ratio: float = dmg / sumS
+ 		if ratio >= 1.0:
+ 			var keep: float = clampf(float(cm.keepHi) - float(cm.keepK) * sumS / float(cm.keepRef), float(cm.keepMin), float(cm.keepHi))
+-			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "punch", "pass": true, "keep": keep}
++			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "sumS0": sumS0, "dmg": dmg, "ratio": ratio, "outcome": "punch", "pass": true, "keep": keep}
+ 		if ratio >= 0.4:
+-			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "crack", "pass": false, "keep": 0.0}
+-		return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "dent", "pass": false, "keep": 0.0}
++			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "sumS0": sumS0, "dmg": dmg, "ratio": ratio, "outcome": "crack", "pass": false, "keep": 0.0}
++		return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "sumS0": sumS0, "dmg": dmg, "ratio": ratio, "outcome": "dent", "pass": false, "keep": 0.0}
+ 	var r: float = dmg / b.maxhp
+ 	var cw: Dictionary = cfg()
+ 	var keepw: float = clampf(float(cw.keepHi) - float(cw.keepK) * b.maxhp / float(cw.keepRef), float(cw.keepMin), float(cw.keepHi))
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -2,6 +2,7 @@
+   "schema": "biomes.brunt/1",
+   "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him. A held slab bounces at interiorBounceSpeed or more between interiorBounceTanMin and interiorBounceTanMax (40 and 70 degrees), keeping interiorBounceKeep of the normal speed and interiorBounceTangent of the along-slab speed; he leaves a tower by the far face into the next link with interiorLinkSpeed or more (buildings.md section 7.3). Repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts (each one tier higher for the next send) and the most repeats a crater grows; repeatCraterGrow the radius factor a repeat asks.",
+   "bruntMul": 1.8,
++  "heldMul": 1.0,
+   "tierFactor": [
+     0.12,
+     0.27,
+--- a/tools/schemas/biomes-brunt.schema.json
++++ b/tools/schemas/biomes-brunt.schema.json
+@@ -35,6 +35,12 @@
+     "_about": {
+       "type": "string"
+     },
++    "heldMul": {
++      "type": "number",
++      "minimum": 1,
++      "maximum": 8,
++      "description": "The energy model's held hit: a body that is held by a tower (less energy than the tower's mass) stops in it, so all its energy goes into the few floors it covers: the hit does heldMul times E over the mass of the covered floors' strength (Game Design, buildings.md section 9: 2). 1: E over the mass, as before. Read only with the model on."
++    },
+     "bruntMul": {
+       "type": "number",
+       "exclusiveMinimum": 0,
 --- /dev/null
 +++ b/sim/world/tools/memory_model_check.gd
-@@ -0,0 +1,117 @@
+@@ -0,0 +1,171 @@
 +extends SceneTree
 +# A building remembers under the energy model (World, sim/world/brunt.gd _memory, _outcomePower; Orb, homework 30: a send into a building already marked meets it one tier higher for each mark, up to repeatMarks; Game Design,
 +# docs/design/buildings.md sections 6.1 and 9). With the model on there is no tier to raise (the check of checks-gw1a found `repeatMarks` inert on Orb's path), so a mark is one tier of the model's own step and shows as the building's
@@ -134,6 +204,27 @@
 +	D.z = lw.z
 +	WorldBrunt.hit(S2, D, lw, D.y, lw.x - lw.w * 0.5, 1.0)
 +	ok(lw.marks == 1 and WorldBrunt._memory(lw) < mm0, "a send that strikes a building marks it (%d) and the next meets it weaker (factor %.3f)" % [lw.marks, WorldBrunt._memory(lw)])
++	# --- the held hit (Game Design, buildings.md section 9: heldMul 2): a held body stops in the building, so the hit is 2 x E over the mass of the covered floors' undamaged strength
++	var tf: int = tall.floors
++	var s1: Array = _sends(1.0, 1.7, 3)
++	var s2: Array = _sends(2.0, 1.7, 3)
++	var s3: Array = _sends(2.0, 3.4, 2)
++	var s4: Array = _sends(2.0, 7.5, 1)
++	ok(s1[2] == tf, "heldMul 1 (as before): three sends of 1.7 break no floor of a mass-15 tower (standing %s of %d)" % [str(s1), tf])
++	ok(s2[0] == tf and s2[1] == tf and s2[2] < tf, "heldMul 2: three sends of 1.7 bring the covered floors down, on the third (standing %s of %d)" % [str(s2), tf])
++	ok(s3[0] == tf and s3[1] < tf, "heldMul 2: two sends of 3.4 do, on the second (%s of %d)" % [str(s3), tf])
++	ok(s4[0] < tf, "heldMul 2: a send of 7.5 breaks them on the first, held (%s of %d)" % [str(s4), tf])
++	# houses are unchanged by it, and a low tower still goes through at one mark: the pass flags are the same
++	c.repeatMarks = 2
++	c.heldMul = 1.0
++	var hk1: Dictionary = _hit(S, house, mlow * 0.5, 1)
++	var lw1: Array = [bool(_hit(S, low, mlow * 0.8, 0).pass), bool(_hit(S, low, mlow * 0.8, 1).pass), bool(_hit(S, low, mlow * 0.8, 2).pass)]
++	c.heldMul = 2.0
++	var hk2: Dictionary = _hit(S, house, mlow * 0.5, 1)
++	var lw2: Array = [bool(_hit(S, low, mlow * 0.8, 0).pass), bool(_hit(S, low, mlow * 0.8, 1).pass), bool(_hit(S, low, mlow * 0.8, 2).pass)]
++	c.heldMul = 1.0
++	ok(str(hk1) == str(hk2) and lw1 == lw2, "houses are unchanged by heldMul and a low tower holds, then goes through at one mark and two, as at heldMul 1 (%s)" % str(lw2))
++
 +	c.repeatMarks = 0
 +	WorldBrunt._memoryOff = false
 +	if neg:
@@ -141,6 +232,39 @@
 +		fails = 0 if fails >= 3 else 1
 +	print("MEMORYMODEL: %d check(s) failed" % fails)
 +	quit(0 if fails == 0 else 1)
++
++
++## n sends of energy E at tower b in turn, each a real WorldBrunt.hit at the covered floors (the middle of the tower); returns the standing floors after each.
++func _sends(heldMul: float, E: float, n: int) -> Array:
++	var S := _match()
++	var tw = _find(S, "tall")
++	var c: Dictionary = WorldBrunt.cfg()
++	c.heldMul = heldMul
++	c.repeatMarks = 2
++	tw.marks = 0
++	var A = S.fighters[1]
++	var D = S.fighters[0]
++	var out: Array = []
++	for k in range(n):
++		A.tier = 1.0
++		D.state = "launched"
++		D.launchBy = A
++		D.launchT = 1.0
++		D.vx = _sp(E)
++		D.vy = 0.0
++		D.x = tw.x - tw.w * 0.5 - 1.0
++		D.y = WorldStructures.baseY(S, tw) + 0.5 * tw.h
++		D.z = tw.z
++		WorldBrunt.hit(S, D, tw, D.y, tw.x - tw.w * 0.5, 1.0)
++		var up: int = 0
++		for j in range(tw.floors):
++			if WorldBrunt.isStanding(tw, j):
++				up += 1
++		out.append(up if tw.alive else 0)
++	c.heldMul = 1.0
++	c.repeatMarks = 0
++	SimCore.dispose(S)
++	return out
 +
 +
 +func _mark(b, n: int):

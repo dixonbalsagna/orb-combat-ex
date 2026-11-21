@@ -10,4 +10,9 @@ Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
   ok   a tall tower that holds at every mark takes 1.95x then 3.80x the first send's damage (1 over the step: 1.95, 3.80)
   ok   a house is gone through unmarked and marked
   ok   a send that strikes a building marks it (1) and the next meets it weaker (factor 0.513)
+  ok   heldMul 1 (as before): three sends of 1.7 break no floor of a mass-15 tower (standing [20, 20, 20] of 20)
+  ok   heldMul 2: three sends of 1.7 bring the covered floors down, on the third (standing [20, 20, 18] of 20)
+  ok   heldMul 2: two sends of 3.4 do, on the second ([20, 18] of 20)
+  ok   heldMul 2: a send of 7.5 breaks them on the first, held ([18] of 20)
+  ok   houses are unchanged by heldMul and a low tower holds, then goes through at one mark and two, as at heldMul 1 ([false, true, true])
 MEMORYMODEL: 0 check(s) failed

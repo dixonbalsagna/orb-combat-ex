@@ -11,7 +11,7 @@ Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
   ok   set on: he stays at the face for the hold (18 units off on average)
   ok   set on: his depth stays for the hold and then eases home (41 ticks)
   ok   the same slam twice gives one hash
-      three sends at one tower, 24 towers: 0 fall with the building's memory off, 24 with repeatMarks 2
+      three sends at one tower, 24 towers: 0 fall with the building's memory off, 24 with repeatMarks 2; 12 and 24 lost a floor or fell
   ok   the building remembers: repeats break it (0 fall off, 24 of 24 with repeatMarks 2)
 --- the energy model and the dash ON (Orb's real path)
   ok   brunt.json loads clean ([])
@@ -24,6 +24,6 @@ Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
   ok   set on: he stays at the face for the hold (18 units off on average)
   ok   set on: his depth stays for the hold and then eases home (41 ticks)
   ok   the same slam twice gives one hash
-      three sends at one tower, 24 towers: 0 fall with the building's memory off, 0 with repeatMarks 2
-  ok   with the energy model on a mark is one model tier of the building's mass (memory_model_check); three sends at the model's energy do not bring a mass-15 tower down with or without it (0 fall off, 0 of 24 with repeatMarks 2; Game Design's call, see pins-and-the-model.md); ceiling: memory never makes it worse
+      three sends at one tower, 24 towers: 0 fall with the building's memory off, 0 with repeatMarks 2; 0 and 24 lost a floor or fell
+  ok   with the energy model on a mark is one model tier of the building's mass and a held hit does heldMul 2 (Game Design, buildings.md section 9; memory_model_check): three sends at the model's energy break the covered floors of 24 of 24 towers with the memory against 0 without (0 and 0 fall)
 WALLHOLD: 0 check(s) failed
