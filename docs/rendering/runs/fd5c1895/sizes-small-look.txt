@@ -1,0 +1,35 @@
+# small's look (sizes stills, frame 1): the camera, the fighters and the drawn ground on each sight line (small_probe.gd, scratch; the stills' seed 12345, AI v AI through main, --tiles; 'in view' is the drawn ground less the globe's bend from the pivot; BLOCKS: above the straight sight line, before the foreground clamp)
+## small
+size small: PLANET_NC 2560, R 13038, LEVEL0 2, frame x0 40960
+tick 32: camera at view (x -0, y 1121, z 1362), world x 36601, fov 30.0
+  fighter x 40796 y 1080 (sim ground 1075) | 4195 along from the camera
+    [13%: depth 1192, sight 1122, drawn 6256, in view 5636 BLOCKS] [25%: depth 1022, sight 1123, drawn 4964, in view 4502 BLOCKS] [38%: depth 851, sight 1124, drawn 3298, in view 2971 BLOCKS] [50%: depth 681, sight 1125, drawn 2357, in view 2142 BLOCKS] [63%: depth 511, sight 1126, drawn 1552, in view 1425 BLOCKS] [75%: depth 341, sight 1127, drawn 1168, in view 1107] [88%: depth 170, sight 1129, drawn 1044, in view 1024]
+  fighter x 41136 y 1078 (sim ground 1070) | 4535 along from the camera
+    [13%: depth 1192, sight 1122, drawn 6188, in view 5581 BLOCKS] [25%: depth 1022, sight 1122, drawn 4781, in view 4340 BLOCKS] [38%: depth 851, sight 1123, drawn 3126, in view 2826 BLOCKS] [50%: depth 681, sight 1124, drawn 2149, in view 1962 BLOCKS] [63%: depth 511, sight 1125, drawn 1409, in view 1309 BLOCKS] [75%: depth 341, sight 1126, drawn 1115, in view 1075] [88%: depth 170, sight 1127, drawn 1038, in view 1031]
+tick 90: camera at view (x -1, y 1287, z 1207), world x 40788, fov 30.0
+  fighter x 40896 y 1138 (sim ground 1068) | 108 along from the camera
+    [13%: depth 1056, sight 1274, drawn 1111, in view 1068] [25%: depth 905, sight 1262, drawn 1082, in view 1050] [38%: depth 754, sight 1250, drawn 1051, in view 1029] [50%: depth 604, sight 1238, drawn 1032, in view 1018] [63%: depth 453, sight 1225, drawn 1025, in view 1017] [75%: depth 302, sight 1213, drawn 1031, in view 1027] [88%: depth 151, sight 1201, drawn 1044, in view 1043]
+  fighter x 40838 y 1138 (sim ground 1070) | 50 along from the camera
+    [13%: depth 1056, sight 1274, drawn 1115, in view 1072] [25%: depth 905, sight 1262, drawn 1086, in view 1054] [38%: depth 754, sight 1250, drawn 1055, in view 1033] [50%: depth 604, sight 1238, drawn 1036, in view 1022] [63%: depth 453, sight 1225, drawn 1028, in view 1020] [75%: depth 302, sight 1213, drawn 1032, in view 1028] [88%: depth 151, sight 1201, drawn 1045, in view 1044]
+tick 330: camera at view (x -0, y 1376, z 1212), world x 40866, fov 30.0
+  fighter x 40797 y 1207 (sim ground 974) | -69 along from the camera
+    [13%: depth 1060, sight 1361, drawn 1086, in view 1043] [25%: depth 909, sight 1346, drawn 1073, in view 1042] [38%: depth 757, sight 1331, drawn 1049, in view 1027] [50%: depth 606, sight 1317, drawn 1034, in view 1020] [63%: depth 454, sight 1302, drawn 1028, in view 1020] [75%: depth 303, sight 1287, drawn 1032, in view 1029] [88%: depth 151, sight 1272, drawn 1046, in view 1045]
+  fighter x 40895 y 1189 (sim ground 961) | 29 along from the camera
+    [13%: depth 1060, sight 1359, drawn 1082, in view 1039] [25%: depth 909, sight 1342, drawn 1066, in view 1034] [38%: depth 757, sight 1325, drawn 1041, in view 1019] [50%: depth 606, sight 1308, drawn 1028, in view 1014] [63%: depth 454, sight 1290, drawn 1024, in view 1016] [75%: depth 303, sight 1273, drawn 1030, in view 1026] [88%: depth 151, sight 1256, drawn 1043, in view 1042]
+## medium
+size medium: PLANET_NC 4800, R 24446, LEVEL0 3, frame x0 76800
+tick 32: camera at view (x -0, y 1319, z 1371), world x 78569, fov 30.0
+  fighter x 76766 y 1301 (sim ground 1299) | -1803 along from the camera
+    [13%: depth 1199, sight 1323, drawn 1529, in view 1455 BLOCKS] [25%: depth 1028, sight 1327, drawn 1497, in view 1443 BLOCKS] [38%: depth 857, sight 1331, drawn 1466, in view 1430 BLOCKS] [50%: depth 685, sight 1335, drawn 1447, in view 1425 BLOCKS] [63%: depth 514, sight 1339, drawn 1412, in view 1399 BLOCKS] [75%: depth 343, sight 1343, drawn 1366, in view 1361 BLOCKS] [88%: depth 171, sight 1347, drawn 1336, in view 1336]
+  fighter x 76976 y 1319 (sim ground 1315) | -1593 along from the camera
+    [13%: depth 1199, sight 1325, drawn 1530, in view 1454 BLOCKS] [25%: depth 1028, sight 1332, drawn 1500, in view 1444 BLOCKS] [38%: depth 857, sight 1338, drawn 1470, in view 1431 BLOCKS] [50%: depth 685, sight 1344, drawn 1456, in view 1430 BLOCKS] [63%: depth 514, sight 1350, drawn 1427, in view 1412 BLOCKS] [75%: depth 343, sight 1356, drawn 1380, in view 1373 BLOCKS] [88%: depth 171, sight 1363, drawn 1338, in view 1335]
+tick 90: camera at view (x -0, y 1496, z 1215), world x 77230, fov 30.0
+  fighter x 77454 y 1323 (sim ground 1323) | 225 along from the camera
+    [13%: depth 1063, sight 1480, drawn 1488, in view 1464] [25%: depth 911, sight 1465, drawn 1469, in view 1452] [38%: depth 759, sight 1450, drawn 1441, in view 1429] [50%: depth 607, sight 1435, drawn 1415, in view 1407] [63%: depth 455, sight 1419, drawn 1397, in view 1392] [75%: depth 304, sight 1404, drawn 1378, in view 1376] [88%: depth 152, sight 1389, drawn 1351, in view 1351]
+  fighter x 77396 y 1323 (sim ground 1305) | 167 along from the camera
+    [13%: depth 1063, sight 1480, drawn 1487, in view 1463] [25%: depth 911, sight 1465, drawn 1468, in view 1451] [38%: depth 759, sight 1450, drawn 1441, in view 1428] [50%: depth 607, sight 1435, drawn 1413, in view 1405] [63%: depth 455, sight 1419, drawn 1394, in view 1389] [75%: depth 304, sight 1404, drawn 1373, in view 1371] [88%: depth 152, sight 1389, drawn 1347, in view 1346]
+tick 330: camera at view (x -0, y 1510, z 1166), world x 77581, fov 30.0
+  fighter x 77610 y 1345 (sim ground 1327) | 29 along from the camera
+    [13%: depth 1020, sight 1496, drawn 1483, in view 1461] [25%: depth 875, sight 1482, drawn 1463, in view 1447] [38%: depth 729, sight 1467, drawn 1447, in view 1436] [50%: depth 583, sight 1453, drawn 1435, in view 1428] [63%: depth 437, sight 1438, drawn 1424, in view 1420] [75%: depth 292, sight 1424, drawn 1402, in view 1400] [88%: depth 146, sight 1410, drawn 1371, in view 1370]
+  fighter x 77552 y 1345 (sim ground 1324) | -29 along from the camera
+    [13%: depth 1020, sight 1496, drawn 1483, in view 1461] [25%: depth 875, sight 1482, drawn 1463, in view 1447] [38%: depth 729, sight 1467, drawn 1445, in view 1434] [50%: depth 583, sight 1453, drawn 1432, in view 1425] [63%: depth 437, sight 1438, drawn 1419, in view 1415] [75%: depth 292, sight 1424, drawn 1396, in view 1394] [88%: depth 146, sight 1410, drawn 1364, in view 1364]

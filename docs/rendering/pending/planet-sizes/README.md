@@ -54,3 +54,9 @@ Rendering, on the EP's order: "the sizes with the level-0 tile scaling". It foll
    - Every failure without it is the case `rows-interp` fixes, at any size. Big's seed 4 is the worst: he stood at 0.91 of the way from a column with a +37-unit deform spike to the next. The sim interpolates between the two columns; the rows drew the first column's whole residual.
    - With it, all three sizes meet the ratchet the EP set for when it lands: at most 0.5% over 8, nothing over 12.
    - So this park lands after `rows-interp`.
+6. **The stills** (2026-11-20, `docs/rendering/img/sizes/`, not committed):
+   - Medium (a town under a hillside) and big (a snowy forest) look right: the fighters are on the ground, the split opens cleanly, and there are no holes or seams.
+   - **Small's frame 1 is real relief, not the tiles** (`runs/fd5c1895/sizes-small-look.txt`). At the opening the camera starts 4,200 units along the line from the fighters, at height 1,121. The ground between rises to 6,256, so the camera is inside a mountain. Its near ground is coarse because the tiles load finely round the fighters, hence the big facets.
+   - By tick 90 the camera is at the fighters and every sight line is clear.
+   - A 6,256 peak on a 13,038 radius is World's relief at small, uncapped (only buildings are capped there, at 0.3 of the radius). The fix is World's and Art's (a relief cap by size), or Camera's (an opening that keeps clear of the ground).
+   - Small's later frames (dark wedges in the beamduel's split panes) aren't read yet: the probe's AI match doesn't stage the beam duel.
