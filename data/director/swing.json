@@ -33,7 +33,7 @@
     "tallSamples": 5
   },
   "_note": "DirSwing, the choreographer's swing (docs/world/ring-any-angle/encounter.md section 2; game-design.md sections 2, 9, 10, 11, 13). It scores and asks; the rates, ramps and law are the core's (data/fight/swing.json). Every number is a first value. restTicks: at rest this long before a landing. restOut: ticks of an ease it asks for. stallTicks: a swing running this long, the law having slowed it, rests. sweep: the small class's allowance in units a second, which sizes a jolt. Off until World's place list and the look gate are in.",
-  "enabled": false,
+  "enabled": true,
   "minDeg": 2.0,
   "bigMin": 16.0,
   "maxDeg": 180.0,
@@ -74,7 +74,7 @@
     "sec": 6.0,
     "reach": 6000.0,
     "shareCap": {
-      "enabled": false,
+      "enabled": true,
       "max": 0.4,
       "after": 3,
       "_note": "Brawl swings at most max of the match's big swings, once there have been after of them (Game Design's 40% cap for any cause but a launch; QA read 44% on the kept build)."
@@ -182,7 +182,7 @@
     "recencySec": 12.0,
     "leanDeg": 60.0,
     "leanReach": 6000.0,
-    "yieldToLaunch": false
+    "yieldToLaunch": true
   },
   "nudge": {
     "enabled": true,
