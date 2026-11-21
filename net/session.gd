@@ -261,7 +261,7 @@ static func predictWord(w: int) -> int:
 ## The intent a packed pair stands for: what every run of a tick, a spectator and a straight run step the sim with.
 static func intentOf(p: int, w: int = 0) -> SimIntent:
 	var i: SimIntent = SimIntent.unpack(p)
-	if w != 0:
+	if w != 0 and SimInputData.right_stick_on():   # the second word only with the right stick on, as SimReplay.play reads it
 		SimIntent.unpack2(w, i)
 	return i
 

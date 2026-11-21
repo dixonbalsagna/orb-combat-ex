@@ -44,6 +44,15 @@ var INJECT: Dictionary = {
 	"director": func(S: SimState) -> void: S.dirS.cool += 1e-6,
 }
 
+## Whether a match on this setup plays the energy model: the data's switch, or the setup's "power".
+static func _powerOn(seed: int, su: Dictionary) -> bool:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed, {"p1": true, "p2": true}, su)
+	var on: bool = S.powerOn
+	SimCore.dispose(S)
+	return on
+
+
 ## name -> the change to P2's AI, for --ai-timers (the timers NetDesync.digest reads).
 var AI_INJECT: Dictionary = {
 	"ai_t": func(S: SimState) -> void: S.fighters[1].ai.t += 1e-6,
@@ -107,8 +116,9 @@ func _init() -> void:
 			print("FAIL  --setup=kick tests nothing unless the bots kick")
 			quit(1)
 			return
-	if setupName == "lan":   # the LAN 1v1 on the planet with the energy model: an ulp of x heals before the next checkpoint (seeds 1 and 2), so the fighter's change is a whole unit here
-		INJECT["fighter_x"] = func(S: SimState) -> void: S.fighters[1].x = S.fighters[1].x + 1.0
+	if INJECT.has("fighter_x") and not setup.has("fights") and _powerOn(seeds[0], setup):   # a match with the energy model (the LAN setups, and every setup once the data has it on: GW1a): x heals, so his health
+		INJECT.erase("fighter_x")
+		INJECT["fighter_hp"] = func(S: SimState) -> void: S.fighters[1].hp -= 1.0
 	if setup.has("fights"):
 		aiFlags = NetLan.AI2
 		if setup.get("outside", false) and not NetLan.outsideKeyed():

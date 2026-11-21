@@ -407,10 +407,10 @@ func _init() -> void:
 		_close(r)
 		ticks = savedN
 		var bare: Dictionary = NetLan.SETUP.duplicate(true)
-		bare.erase("power")
+		bare["power"] = false   # the word off, not left out: with the model on in the data (GW1a), a setup without the word plays it anyway
 		var bp: Array = _setupPower(bare)
-		print("control, a LAN setup without its power word: the model on %s, travel %.2f" % [str(bp[0]), bp[1]])
-		ok(not bp[0], "a LAN setup without its power word must be caught with the model off")
+		print("control, a LAN setup with its power word off: the model on %s, travel %.2f" % [str(bp[0]), bp[1]])
+		ok(not bp[0], "a LAN setup with its power word off must be caught with the model off")
 		var noSlip: Dictionary = NetLan.SETUP.duplicate(true)
 		noSlip["slip"] = false
 		var sp: Array = _setupPower(noSlip)
