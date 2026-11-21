@@ -1,0 +1,2 @@
+GW1a's data/biomes/field.json put over main's data, nothing else: the check fails the same way (dry 5 beyond 6, lake up to 681.5 above).
+GW1a's water.json, contact.json, climate.json and rings.json each, over main's data: main's result unchanged (dry ok, lake finding 59.2 above and 35.6 below).

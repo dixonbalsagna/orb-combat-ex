@@ -64,3 +64,8 @@ docs/*/runs/**/solo-*.json
 docs/*/runs/**/lan-*-*.json
 docs/animation/runs/*/step-up/*.gif
 docs/animation/runs/*/step-up/*.png
+docs/animation/runs/**/*.gif
+docs/animation/runs/**/*.png
+art/animation/review/air-brake/
+art/animation/review/flight-strikes/
+docs/animation/private-img/

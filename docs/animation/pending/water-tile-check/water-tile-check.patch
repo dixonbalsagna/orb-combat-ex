@@ -1,0 +1,220 @@
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index 5925026..54cb290 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -3589,6 +3589,57 @@ func _test_water_stance() -> void:
+ 	print("water stance: depths %s, no fighter read as airborne on the floor" % str(seen))
+ 
+ 
++## The stance on water on the globe ground (docs/animation/water-tile-check.md). `_test_water_stance` picks its water out of S.water, which is all zero on a planet slice, so it runs on the strip ground; this is its globe-ground twin: the
++## match is the planet slice the globe ground starts (`RenderTileGround.on`), the pair is put at a deep sea place, a place where the sim waits at a lake's level, and a place below sea level the sim calls dry (a wade), with the water floor
++## on, and the body must read as standing (no airborne weight, both grounded, within 8 units of the floor) at each. Where the feet are against the DRAWN water is `tools/water_tile_check.gd`'s (it needs the tile field).
++func _test_water_stance_globe() -> void:
++	var was_tiles: bool = RenderTileGround.on
++	var was_floor: bool = WorldFill.floorOn()
++	RenderTileGround.on = true
++	RenderAnim._fighters.clear()
++	main.start_match(7, {"p1": false, "p2": false})
++	for i in range(6):
++		main.frame(1.0 / 60.0)
++	var S: SimState = main.host.S
++	var bad: Array = []
++	var seen: Array = []
++	if S.frame == null:
++		bad.append("the match is not a planet slice (S.frame is null)")
++	var want := {"deep sea": [], "lake": [], "wade": []}
++	for c in range(SimConst.NC):
++		var x: float = (float(c) + 0.5) * SimConst.COL
++		var g: float = WorldTerrain.groundY(S, x)
++		var sea: bool = WorldTerrain.seaAt(S, x)
++		WorldFill.setFloor(true)
++		var fl: float = WorldWater.floorAt(S, x)
++		var wide := true
++		for d in [-96.0, 96.0, 192.0]:   # the pair stands 60 apart: the neighbours must be the same kind
++			if WorldTerrain.seaAt(S, x + float(d)) != sea:
++				wide = false
++		if not wide:
++			continue
++		if sea and g < -100.0 and absf(fl) < 0.01 and (want["deep sea"] as Array).is_empty():
++			(want["deep sea"] as Array).append(c)
++		elif sea and absf(fl) > 0.01 and (want["lake"] as Array).is_empty():
++			(want["lake"] as Array).append(c)
++		elif not sea and g < WorldWater.SHORE_WET and (want["wade"] as Array).is_empty():
++			(want["wade"] as Array).append(c)
++	for kind in want:
++		var cols: Array = want[kind]
++		if cols.is_empty():
++			bad.append("no %s place on this planet's ring to stand a pair on" % kind)
++			continue
++		RenderAnim._fighters.clear()
++		var r: Dictionary = _water_stance_probe(S, int(cols[0]), true)
++		seen.append("%s col %d: airborne %.2f, grounded %d, %.1f off the floor" % [kind, int(cols[0]), r.air, r.grounded, r.h])
++		if r.air > 0.0 or r.grounded != 2 or r.h > 8.0:
++			bad.append("%s (column %d): airborne weight %.2f, grounded %d of 2, %.0f off the floor" % [kind, int(cols[0]), r.air, r.grounded, r.h])
++	WorldFill.setFloor(was_floor)
++	RenderTileGround.on = was_tiles
++	_expect(bad.is_empty(), "standing on the water, globe ground: the pair holds the ground stance at a deep sea, a lake and a wade with the floor on: %s" % str(bad))
++	print("water stance, globe ground: %s" % " | ".join(seen))
++
++
+ func _test_tick_fast() -> void:
+ 	var fast: Array = _tick_hash(true, 1200)
+ 	var before: Array = _tick_hash(false, 1200)
+@@ -7882,6 +7933,7 @@ func _run() -> void:
+ 	_test_beam_aim()
+ 	_test_held()
+ 	_test_water_stance()   # last: it runs a match with the floor switched on, and what that leaves in the sim's statics is not undone
++	_test_water_stance_globe()   # after it, for the same reason: it too leaves the floor as it found it
+ 	RenderAnim.enabled = true
+ 	RenderAnim.style_override = ""
+ 	RenderAnim.debug_checks = false
+diff --git a/wpN/render/anim/tools/water_tile_check.gd b/render/anim/tools/water_tile_check.gd
+new file mode 100644
+index 0000000..c294bb5
+--- /dev/null
++++ b/render/anim/tools/water_tile_check.gd
+@@ -0,0 +1,96 @@
++extends SceneTree
++## The stance on water on the globe ground (Animation, docs/animation/water-tile-check.md; the EP's brief of 2026-11-20). On the globe ground a match is a planet slice and the sim's S.water is all zero (the sea lives in the tile
++## field), so `anim_check`'s water-stance row, which picks its water out of S.water, runs on the strip ground. This check reads the planet's ring instead: at 240 places round it (every 640 units) the sim's floor
++## (`WorldWater.floorAt`, the water floor on) against the tile field's drawn ground and water (`RenderTileField.height_at`, `water_top`), the fighter's feet taken as the shared placement lifts them (`lift`). Four kinds of place:
++##   sea     the sim says sea and its floor is the sea's level (0): the feet are on the drawn water, within TOL (gate);
++##   wade    the sim says dry but the tiles draw water over its ground (an inland depression below sea level, a shallow, a lake the sim has no level for): the feet are in it, under the drawn surface by less than wade.below
++##           and never above it by more than TOL (gate: a body is never waist-deep or more where the rule says he wades, and never hovers over it);
++##   dry     no drawn water: the feet are on the drawn ground, within TOL (gate);
++##   lake    the sim says sea but its floor is a lake's level (not 0): the feet against the drawn lake surface (a FINDING, not a gate: the sim holds one level for a lake, the tiles draw the level at each node).
++## Headless: no picture. Run with --path . --script. `--strict` makes the findings fail.
++const TOL: float = 6.0   # (and `--verbose` lists every place beyond it)
++const STEP: float = 640.0
++const N: int = 240
++
++func _init() -> void:
++	var strict: bool = OS.get_cmdline_user_args().has("--strict")
++	var verbose: bool = OS.get_cmdline_user_args().has("--verbose")
++	WorldClimate.useGen(RenderTileGround.gen)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 4, {}, {"planet": RenderLook.TILE_PLANET, "touch": 3, "planetGen": RenderTileGround.gen, "intro": false})
++	WorldFill.setFloor(true)
++	var wade_below: float = WorldFill.wadeBelow()
++	var fd := RenderTileField.new()
++	fd.begin(S)
++	while not fd.boot(100000):
++		pass
++	while not fd.boot_near(100000):
++		pass
++	var kinds := {"sea": [], "wade": [], "dry": [], "lake": []}
++	var water_cells := 0
++	for i in range(SimConst.NC):
++		if S.water[i] >= WorldWater.MIN_DEPTH:
++			water_cells += 1
++	for k in range(N):
++		var x: float = float(k) * STEP
++		fd.ask_around(x, S.frame)
++		var g2 := 0
++		while fd.asked_left() > 0 and g2 < 40:
++			fd.fill(200000)
++			g2 += 1
++		fd.keep_off(x, 80)
++		var d: Vector3 = fd.dir_at(x, 0.0, S.frame)
++		var fl: float = WorldWater.floorAt(S, x)
++		var gs: float = WorldTerrain.groundY(S, x)
++		var h: float = fd.height_at(d)
++		var wt: float = fd.water_top(d)
++		var wet: bool = wt > -1.0e8
++		var top: float = wt if wet else h
++		var feet: float = fl + fd.lift(x, fl, 0.0)
++		var sea: bool = WorldTerrain.seaAt(S, x)
++		var kind: String = "dry"
++		if sea and absf(fl) < 0.01:
++			kind = "sea"
++		elif sea:
++			kind = "lake"
++		elif wet and wt > h + 1.0:
++			kind = "wade"
++		(kinds[kind] as Array).append({"x": x, "gap": feet - top, "under": top - feet, "fl": fl, "g": gs, "wt": wt})
++		if verbose and absf(feet - top) > TOL:
++			print("  %s x %.0f: ground %.1f, the sim's floor %.1f, drawn ground %.1f, drawn water %s, feet %.1f, gap %.1f" % [kind, x, gs, fl, h, ("%.1f" % wt) if wet else "none", feet, feet - top])
++	var fails: int = 0
++	print("water on the globe ground: planet %d gen %d, %d places, %d cells of S.water (all zero: the sea is in the tile field)" % [RenderLook.TILE_PLANET, RenderTileGround.gen, N, water_cells])
++	for kind in ["sea", "dry"]:
++		var worst: float = 0.0
++		var bad: int = 0
++		for e in kinds[kind]:
++			worst = maxf(worst, absf(float(e.gap)))
++			if absf(float(e.gap)) > TOL:
++				bad += 1
++		var ok: bool = bad == 0
++		if not ok:
++			fails += 1
++		print("%s %s: %d places, the feet are %.1f from the drawn %s at worst (%d over %.0f)" % ["ok  " if ok else "FAIL", kind, (kinds[kind] as Array).size(), worst, "water" if kind == "sea" else "ground", bad, TOL])
++	var deepest: float = 0.0
++	var over: int = 0
++	for e in kinds["wade"]:
++		deepest = maxf(deepest, float(e.under))
++		if float(e.under) >= wade_below or float(e.under) < -TOL:
++			over += 1
++	var wok: bool = over == 0
++	if not wok:
++		fails += 1
++	print("%s wade: %d places where the tiles draw water over what the sim calls dry ground, the feet under the surface by %.1f at most (wade.below %.0f; %d out of range)" % ["ok  " if wok else "FAIL", (kinds["wade"] as Array).size(), deepest, wade_below, over])
++	var lbad: int = 0
++	var lup: float = 0.0
++	var ldown: float = 0.0
++	for e in kinds["lake"]:
++		if absf(float(e.gap)) > TOL:
++			lbad += 1
++		lup = maxf(lup, float(e.gap))
++		ldown = minf(ldown, float(e.gap))
++	print("%s lake (finding): %d places where the sim holds a lake's level, the feet are %d beyond %.0f of the drawn surface; up to %.1f above it and %.1f below" % ["FINDING" if lbad > 0 else "ok     ", (kinds["lake"] as Array).size(), lbad, TOL, lup, -ldown])
++	if strict and lbad > 0:
++		fails += 1
++	print("water tile check %s" % ("passed" if fails == 0 else "FAILED"))
++	quit(1 if fails > 0 else 0)
+diff --git a/wpN/render/anim/tools/water_tile_check.gd.uid b/render/anim/tools/water_tile_check.gd.uid
+new file mode 100644
+index 0000000..bba0bda
+--- /dev/null
++++ b/render/anim/tools/water_tile_check.gd.uid
+@@ -0,0 +1 @@
++uid://h2e36xwha5wu
+diff --git a/wpN/docs/animation/water-tile-check.md b/docs/animation/water-tile-check.md
+new file mode 100644
+index 0000000..ce14ad4
+--- /dev/null
++++ b/docs/animation/water-tile-check.md
+@@ -0,0 +1,35 @@
++# The stance on water on the globe ground (Animation, 2026-11-20, a check; parked)
++
++The EP's item after GW1a: a fighter standing on the sea on the globe ground, read against Rendering's ground (the tile field), and whether the stance reads right in play.
++
++## Why a new check
++
++On the globe ground (`RenderTileGround.on`, the default since Orb's decision 3) a match is a planet slice and the sim's `S.water` is all zero: the sea lives in the tile field. `_test_water_stance` picks its water out of `S.water`, so it can only run on the strip ground (the GW1a pins say so). Nothing read the globe ground's own water.
++
++## What was built
++
++- **`render/anim/tools/water_tile_check.gd`** (standalone, headless, `--script`; `--strict` makes the finding fail): on the planet ring (planet 7, gen 3, the globe ground's own) at 240 places 640 units apart, the sim's floor with the water floor on (`WorldWater.floorAt`) against the tile field's drawn ground and water (`height_at`, `water_top`), the fighter's feet taken as the shared placement lifts them (`lift`). Gates: **sea** (the sim says sea at level 0): feet on the drawn water within 6 units; **dry** (no drawn water): feet on the drawn ground within 6; **wade** (the tiles draw water over what the sim calls dry): feet under the surface by less than `wade.below` (75) and never above it by more than 6. **lake** (the sim holds a lake's level) is a finding, not a gate.
++- **`_test_water_stance_globe`** in `anim_check.gd` (the globe twin of `_test_water_stance`): the match is the planet slice, the pair is put at a deep sea place, a lake place and a wade place with the floor on, and the body must read as standing (no airborne weight, both grounded, within 8 units of the floor). It leaves the floor and the ground switch as it found them.
++
++## What it found (planet 7, gen 3, 240 places)
++
++| Kind | Places | Feet against the drawn surface |
++| :--- | :--- | :--- |
++| sea (level 0) | 51 | on it: 0.0 at worst |
++| no drawn water | 149 | on the ground: 2.8 at worst |
++| wade (drawn water over what the sim calls dry: inland depressions below sea level, shallows, a lake with no level) | 23 | under the surface by 44.2 at most, under the 75 wade line: he is waist-deep, which is the rule |
++| **lake (the sim holds one level)** | 17 | **14 of 17 beyond 6 units: up to 59.2 above the drawn surface and 35.6 below** |
++
++**Does the stance read right in play?** On the sea, yes: he stands on the drawn water, grounded stance, nothing hovering or sunk (`_test_water_stance_globe`: deep sea, lake and wade all grounded, 0.0 off the floor). In a wade, yes as designed (shin to waist deep under the line). **In the lakes, no, as a sim-and-ground disagreement and not an animation one:** the sim keeps one level for a lake and the tiles draw the water at each node's own level (the drawn level of one lake runs 2,689 to 2,775 across its width on this ring; the sim's is 2,748.7 throughout), so a fighter standing on the sim's level can hover up to 59 units (0.8 body heights) above the drawn lake or stand 36 under it. The body's stance is right (it is a ground stance on the floor it was given); the floor is not where the picture's water is. That is World's lake level against Rendering's tile water, not Animation's: report only, and the check's `lake` line is where to watch it (`--strict` fails on it; on main's data it is a finding, on the GW1a stack it is the fault below).
++
++## On the GW1a stack: a real fault the check catches
++
++The same check on the GW1a stack (s422, `data/biomes/field.json` `everywhere` true) **fails**: `dry` 5 places beyond 6 (up to 32.6 above the drawn ground) and `lake` 17 of 17 beyond 6, **up to 681.5 units above the drawn ground** (about nine body heights), none below. `--verbose` lists them (lakes at x 22,400, 24,320 to 27,520, 49,280 to 55,040, 88,960 to 95,360). The cause is one row: put GW1a's `field.json` over main's data and nothing else, and the same numbers come back (no other GW1a biome file does; the water, contact, climate and ring files each leave main's result unchanged). With `everywhere` on, **the tile field draws no water at all over the lakes** (`water_top` finds none at the 17 lake places, nor at the 5 shallow-lake places that read as `dry`), while the sim keeps its lake levels and the water floor stands a fighter on them.
++
++**Read in play** (a hand-staged scene on the stack's real renderer, the idle pair put down at a deep sea, two lakes and a wade; no picture is kept, fighters' pictures stay out of git): the **deep sea** is right (both on the drawn water); the **wade** is right (feet in the shallows by the shore); at **both lakes the fighters stand in the air**, one over empty sky with no ground in view, the other against the buildings behind, with no drawn water or ground under them. The animation's stance is a ground stance on the floor it is given (`_test_water_stance_globe` is green on the stack, grounded and 0.0 off the floor at a deep sea, a lake and a wade); the floor is where the sim put it and the picture draws neither lake water nor a bed there. Owner: World (the lake levels) and Rendering (the tile field's water under `everywhere`); the fix is theirs, and this check is the gate for it: run it, expect `water tile check passed`.
++
++## Not shown
++
++- One planet (7, gen 3) and 240 places; other planets and sizes are not read. The check takes a planet and a step as constants.
++- Read from data, not from a picture: no clip of it in play (no fighter picture goes in git).
++- Not wired into CI (that list is not Animation's); `godot --headless --path . --script res://render/anim/tools/water_tile_check.gd` is the line.

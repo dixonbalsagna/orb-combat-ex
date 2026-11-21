@@ -1,0 +1,3 @@
+water stance, globe ground: deep sea col 0: airborne 0.00, grounded 2, 0.0 off the floor | lake col 685: airborne 0.00, grounded 2, 0.0 off the floor | wade col 286: airborne 0.00, grounded 2, 0.0 off the floor
+Anim check  10539 checks
+anim check passed
