@@ -1,7 +1,7 @@
 # Parked: a knock aims only at a wall inside its 20° cone, nearest by true distance (GW1b rider)
 
 Encounter, 2026-11-15, sprint A1. Game Design's ruling is `docs/design/buildings.md` section 10. It's the background-ricochet half of Orb's ping-pong bug.
-- **Built on the GW1a stack:** main + energy-on + gates-shipped + energy-on-pins + `../gw1a-pins/` + `../index-stage/`.
+- **Built on the GW1a stack** (main + energy-on + gates-shipped + energy-on-pins + `../gw1a-pins/`) **plus `../index-stage/`, which is a GW1b step**: it isn't in the GW1a tree, and it goes in just before this park (the GW1b review's B-16).
 - `knock_wall_check` is re-cut on top of index-stage.
 
 ## What it does
@@ -30,7 +30,9 @@ Encounter, 2026-11-15, sprint A1. Game Design's ruling is `docs/design/buildings
 | The 9 November target (every place laid) | 14 of 24 aimed; **0 more than 20° off the line** (worst 18.1°) | 24 aimed; **24 more than 20° off** (worst 86.3°): every knock aimed into the background |
 | Main's | 18 aimed; 0 more than 20° off (worst 19.5°) | 24 aimed; 24 more than 20° off (worst 87.9°) |
 
-In reach, on the 9 November data the rule picks building 867 and the knock aims at it, and the wall takes him. On main's street the cone holds no wall a flight reaches from there, and the knock aims at none: the ruling's "no wall in the cone means it flies its line".
+**The "in reach" rows are staged where a wall is inside the cone and a tier-4 flight reaches it** (re-cut for the GW1b review's B-18). The check tries the indexed buildings near the start in turn. If none qualifies, the rows fail: they never pass with no wall to aim at. "on, in reach" needs the rule's wall to exist (`want >= 0`) and the knock to aim at it. The aim is read right after the knock, before the flight clears it, so "the wall takes him" prints on every aimed row.
+- The 9 November data: building 867, the first tried. The rule's wall 867, aimed at 867, and the wall takes him (2 hits).
+- Main's data: building 166, the second tried. The rule's wall 166, aimed at 166, the wall takes him (1). The first cut's row passed there with nothing to aim at (the rule's wall -1, aimed at -1): that was B-18's fault.
 
 ## Apply
 
@@ -38,12 +40,14 @@ On the stack above: `git -c core.autocrlf=false -c core.eol=lf apply wall-cone.d
 
 | Patch | Owner | sha1 |
 | :--- | :--- | :--- |
-| `wall-cone.diff`: `sim/director/launch.gd`, `data/director/launch.json`, `sim/director/tools/knock_wall_check.gd` | Encounter | 4068751bb1cfa9b53dfc7b332157e7eb69d619ca |
+| `wall-cone.diff` (re-cut for B-18; only `knock_wall_check.gd` changed; the first cut was 4068751b): `sim/director/launch.gd`, `data/director/launch.json`, `sim/director/tools/knock_wall_check.gd` | Encounter | 52e4a5b11473bdd4b1be933528e58ab32ca397a7 |
 | `grant-tools-schema.patch`: `tools/schemas/director-launch.schema.json`, the two keys in `knockBack.wall` (closed) | Tools | 39fe5bb27940ddbbebaa4a4342e5489c1387a14e |
 
 ## Proof
 
-Records are in `docs/director/runs/4327cfbb/wall-cone/`, and every output went through `tools/gate.mjs`.
+**The B-18 re-cut** (records in `docs/director/runs/4327cfbb/wall-cone-v2/`, gated, no script error): `knock_wall_check` 0 failed on the 9 November data (wall-cone's tree) and on main's data (with launch-cone too), with the rows above. Only the check changed, so the rest of the first cut's proof below stands. The re-cut applies on index-stage, and `../launch-cone/launch-cone.diff` still applies on top of it.
+
+Records of the first cut are in `docs/director/runs/4327cfbb/wall-cone/`, and every output went through `tools/gate.mjs`.
 - **Every director check passes on the 9 November data with the rider:** 41 of 41.
 - **The golden gives the same lines with and without the rider** on that data. Both fail against main's golden, which is energy-on's and the target data's move.
   - The rider changes nothing while the knock's wall aim is off, and **`knockBack.wall.enabled` is false in both main's data and the 9 November data**.

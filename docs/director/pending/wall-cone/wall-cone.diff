@@ -79,7 +79,7 @@ index edf3b3b..37092bc 100644
  		walls = [[bd, best]]   # the building he walked him to
  	if walls.is_empty():
 diff --git a/sim/director/tools/knock_wall_check.gd b/sim/director/tools/knock_wall_check.gd
-index a511b8b..95f5773 100644
+index a511b8b..7793545 100644
 --- a/sim/director/tools/knock_wall_check.gd
 +++ b/sim/director/tools/knock_wall_check.gd
 @@ -10,6 +10,7 @@ var failed: int = 0
@@ -90,7 +90,7 @@ index a511b8b..95f5773 100644
  	_visit()
  	DirLaunch.setWallForce(-1)
  	DirVisit.setForce(-1)
-@@ -62,14 +63,72 @@ func _firstWall(S: SimState, A, D) -> int:
+@@ -62,14 +63,105 @@ func _firstWall(S: SimState, A, D) -> int:
  		var gap: float = absf(dx) - q.w * 0.5
  		var dz: float = float(q.z) - float(D.z)
  		if dx * s > 0.0 and gap > 0.0 and gap <= reach and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and D.y <= WorldStructures.baseY(S, q) + WorldStructures.curH(q):
@@ -162,37 +162,86 @@ index a511b8b..95f5773 100644
 +	_expect(off[2] > 0, "negative control, today's rule (no cone, along the line): some aim more than 20 degrees off (%d)" % off[2])
 +
 +
++## The "in reach" staging: [building, gap from its near side, the rule's wall there, its face's depth, buildings tried]; building -1 when none
++## near the start has a wall inside the cone that a tier-4 flight reaches. The row's own building first, then the index near the start.
++func _inReach(first: int, reach: float, cone: float) -> Array:
++	var S := _start()
++	var ids: Array = [first]
++	for bi in WorldStructures.near(S, S.fighters[0].x, 6000.0):
++		if not ids.has(bi):
++			ids.append(bi)
++	SimCore.dispose(S)
++	var tried: int = 0
++	for bi in ids:
++		if tried >= 24:
++			break
++		S = _start()
++		var b = S.buildings[bi]
++		if not b.alive or WorldSettle.noTarget(b.landmark):
++			SimCore.dispose(S)
++			continue
++		tried += 1
++		var fz: float = absf(WorldBrunt.faceZ(b))
++		var gap: float = maxf(80.0, fz / tan(cone) + 20.0) if cone > 0.0 else 80.0
++		if gap > reach:
++			SimCore.dispose(S)
++			continue
++		_place(S, bi, gap, 1.0, false)
++		S.fighters[0].tier = 4.0
++		var want: int = _firstWall(S, S.fighters[0], S.fighters[1])
++		SimCore.dispose(S)
++		if want >= 0:
++			return [bi, gap, want, fz, tried]
++	return [-1, 0.0, -1, 0.0, tried]
++
++
  ## Puts the target `gap` from the building's near side, with the attacker behind him, side -1 or 1 the way he'd go.
  func _place(S: SimState, i: int, gap: float, side: float, behind: bool = false) -> void:
  	var b = S.buildings[i]
-@@ -92,7 +151,10 @@ func _rows() -> void:
+@@ -92,18 +184,33 @@ func _rows() -> void:
  	var reach: float = float(DirLaunch.data().knockBack.distBh[3]) * DirLaunch.BH
  	SimCore.dispose(S)
  	print("      the building: %d, its face %.0f off the plane; a tier-4 knock's reach %.0f" % [i, fz, reach])
 -	for row in [["off, in reach", 0, 80.0, false, false], ["on, in reach", 1, 80.0, false, true], ["on, past its reach", 1, 1800.0, false, false], ["on, 1,200 away at tier 4", 1, 1200.0, false, true], ["on, behind him", 1, 80.0, true, false]]:
++	# The "in reach" rows (the GW1b review's B-18): staged where a wall is inside the cone and a tier-4 flight reaches it, the indexed
++	# buildings near the start tried in turn (Game Design's cone: a building fz deep is aimed at only from fz / tan(cone) along). None
++	# found fails the row: it never passes with no wall to aim at.
 +	var cone: float = float(DirLaunch.data().knockBack.wall.get("wallCone", 0.0)) * PI / 180.0
-+	var inReach: float = maxf(80.0, fz / tan(cone) + 20.0) if cone > 0.0 else 80.0   # (Game Design's cone: a building fz deep is aimed at only from fz / tan(cone) along)
-+	print("      in reach, inside the cone: %.0f from its near side" % inReach)
-+	for row in [["off, in reach", 0, inReach, false, false], ["on, in reach", 1, inReach, false, true], ["on, past its reach", 1, 1800.0, false, false], ["on, 1,200 away at tier 4", 1, 1200.0, false, true], ["on, behind him", 1, 80.0, true, false]]:
++	var st: Array = _inReach(i, reach, cone)
++	if int(st[0]) >= 0:
++		print("      in reach, inside the cone: building %d (its face %.0f off the plane), %.0f from its near side; the rule's wall %d (%d tried)" % [int(st[0]), float(st[3]), float(st[1]), int(st[2]), int(st[4])])
++	else:
++		_expect(false, "in reach: no wall inside the cone that a tier-4 flight reaches, among %d indexed buildings near the start: the rows can't be staged" % int(st[4]))
++	for row in [["off, in reach", 0, float(st[1]), false, false, int(st[0])], ["on, in reach", 1, float(st[1]), false, true, int(st[0])], ["on, past its reach", 1, 1800.0, false, false, i], ["on, 1,200 away at tier 4", 1, 1200.0, false, true, i], ["on, behind him", 1, 80.0, true, false, i]]:
++		if int(row[5]) < 0:
++			continue
  		DirLaunch.setWallForce(int(row[1]))
  		S = _start()
- 		_place(S, i, float(row[2]), 1.0, bool(row[3]))
-@@ -103,7 +165,8 @@ func _rows() -> void:
+-		_place(S, i, float(row[2]), 1.0, bool(row[3]))
++		_place(S, int(row[5]), float(row[2]), 1.0, bool(row[3]))
+ 		var A = S.fighters[0]
+ 		var D = S.fighters[1]
+ 		A.tier = 4.0
+ 		var want: int = _firstWall(S, A, D)
  		DirLaunch.knock(S, A, D)
- 		var aimed: bool = int(D.aimB) == i if String(row[0]) != "on, 1,200 away at tier 4" else int(D.aimB) >= 0   # at that range a nearer wall may take him
+-		var aimed: bool = int(D.aimB) == i if String(row[0]) != "on, 1,200 away at tier 4" else int(D.aimB) >= 0   # at that range a nearer wall may take him
++		var aim0: int = int(D.aimB)   # read now: the flight clears it when it ends
++		var aimed: bool = aim0 == int(row[5]) if String(row[0]) != "on, 1,200 away at tier 4" else aim0 >= 0   # at that range a nearer wall may take him
++		if String(row[0]) == "off, in reach":
++			aimed = aim0 >= 0   # off: no wall at all
  		if String(row[0]) == "on, in reach":
 -			aimed = want >= 0 and int(D.aimB) == want   # (the nearest indexed wall along the line his flight reaches: the staged one, or a nearer one in another row)
-+			aimed = int(D.aimB) == want   # (where the rule says: the nearest indexed wall by true distance inside the cone that a flight reaches, or none)
-+			print("      on, in reach: the rule's wall %d, aimed at %d" % [want, int(D.aimB)])
++			aimed = want >= 0 and aim0 == want   # (the nearest indexed wall by true distance inside the cone that a flight reaches; the staging guarantees one)
++			print("      on, in reach: the rule's wall %d, aimed at %d" % [want, aim0])
  		var hit: int = 0
  		var guard: int = 0
  		while D.state == "launched" and guard < 600:
-@@ -115,7 +178,7 @@ func _rows() -> void:
+@@ -115,7 +222,7 @@ func _rows() -> void:
  			S.out.fx.clear()
  			guard += 1
  		_expect(aimed == bool(row[4]), "%s: aimed %s" % [row[0], str(aimed)])
 -		if bool(row[4]):
-+		if bool(row[4]) and int(D.aimB) >= 0:
++		if bool(row[4]) and aim0 >= 0:
  			_expect(hit > 0, "%s: the wall takes him (%d)" % [row[0], hit])
  		SimCore.dispose(S)
  	# a tier-1 body meets a tower and stays out of it

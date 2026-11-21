@@ -1,0 +1,37 @@
+      the building: 867, its face 188 off the plane; a tier-4 knock's reach 600
+      in reach, inside the cone: building 867 (its face 188 off the plane), 535 from its near side; the rule's wall 867 (1 tried)
+ok    off, in reach: aimed false
+      on, in reach: the rule's wall 867, aimed at 867
+ok    on, in reach: aimed true
+ok    on, in reach: the wall takes him (2)
+ok    on, past its reach: aimed false
+ok    on, 1,200 away at tier 4: aimed true
+ok    on, 1,200 away at tier 4: the wall takes him (2)
+ok    on, behind him: aimed false
+ok    tier 1 on a tower: not through it (wall)
+      knocks staged beside 24 buildings: with the cone 14 aimed, 0 more than 20 degrees off the line (worst 18.1); today's rule 24 aimed, 24 more than 20 off (worst 86.3)
+ok    the cone: knocks aimed at a wall more than 20 degrees off the blow's line, 0 (Game Design's QA row; 14 aimed)
+ok    negative control, today's rule (no cone, along the line): some aim more than 20 degrees off (24)
+ok    visit off: no slot, no cost
+      in town by biome: true
+ok    an unused town: leaving costs
+ok    landing in it doesn't
+ok    after its sends, leaving costs nothing
+ok    and it's marked down
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    the frame is back
+ok    a built place on the line is a candidate (13)
+      worst carry against the place: 90.8% (last place 22873 away)
+KNOCK WALL: 0 check(s) failed
+rc=0

@@ -1,0 +1,2 @@
+gate: <scratch>/g/b18/knock_9nov.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/b18/knock_main.txt: no SCRIPT ERROR lines
