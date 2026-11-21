@@ -12,8 +12,10 @@ var names: Dictionary = {}
 
 
 func _init() -> void:
+	WorldPlan.everywhereOverride = 0   # (the field world as main shipped it: with plans.everywhere on, the buildings it walks to are another street)
 	_rows()
 	DirWalk.setForce(-1)
+	WorldPlan.everywhereOverride = -1
 	print("WALK: %d check(s) failed" % failed)
 	quit(1 if failed > 0 else 0)
 

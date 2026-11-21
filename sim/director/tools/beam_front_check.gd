@@ -152,8 +152,10 @@ func _midAfter(k: int) -> float:
 
 
 func _fireBack() -> void:
+	SimInputData.pin_switches_off()   # (main's pad: RB + B fires back. In the 9 November pad RB + B is the Driver (driverOnRb))
 	var soon: float = _midAfter(2)
 	var late: float = _midAfter(40)
+	SimInputData.load_and_apply()
 	print("      the struggle's start: answered at once %.3f, late %.3f" % [soon, late])
 	_expect(soon >= 0.0, "a fire-back starts a struggle")
 	_expect(late > soon + 0.05, "a late one meets nearer his hands")
@@ -219,6 +221,7 @@ func _tapAtArrival(off: int) -> bool:
 
 ## The charge's press: 30 and 10 ticks before he fires, RT + B, RB + B or RB and the stick, it's held and goes as he fires. ([press] ticks after his.)
 func _litHand() -> void:
+	SimInputData.pin_switches_off()   # (main's pad: B answers a beam. In the 9 November pad B never fires one (bNoBeam); its answer is the stick, these rows' last two)
 	DirStick.setForce(1)
 	for row in [[18, 4, "sig"], [38, 4, "sig"], [18, 2, "sig"], [38, 2, "sig"], [18, 2, "stick"], [38, 2, "stick"]]:
 		var S := _fresh(2400.0)
@@ -249,6 +252,7 @@ func _litHand() -> void:
 		_expect(clashAt >= 40 and clashAt <= 60, "a %s pressed %d ticks into the charge answers it as he fires (%d)" % [row[2], row[0], clashAt])
 		SimCore.dispose(S)
 	DirStick.setForce(-1)
+	SimInputData.load_and_apply()   # (the data's pad again)
 
 
 ## Stationary (Orb, first play): nothing moves him in the charge. With it off, the old rise and the stand-off.

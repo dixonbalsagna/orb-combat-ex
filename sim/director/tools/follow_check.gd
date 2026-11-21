@@ -93,6 +93,8 @@ func _rows(on: bool) -> void:
 		var d0: float = SimDetMath.hypot(SimWrap.sdx(A.x, D.x), A.y - D.y)
 		_taunts = 0
 		_hits = 0
+		while S.dirS.stop > 0.0 or S.pause.left > 0.0:
+			_st(S, _x())   # the host offers a press again until a live tick (sim_host.gd): with the energy model on, his landing can hold the clock here
 		_st(S, _x())
 		var flying: bool = DirBands.who(S) == 0
 		var at: int = -1

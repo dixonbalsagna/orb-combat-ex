@@ -35,9 +35,12 @@ func _floor(on: bool, riseTicks: int = 10) -> void:
 	DirInterrupt.data()["water"]["riseTicks"] = riseTicks
 
 
-func _match(p1: bool = false, p2: bool = false, sd: int = 1) -> SimState:
+func _match(p1: bool = false, p2: bool = false, sd: int = 1, modelOff: bool = false) -> SimState:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, sd, {"p1": p1, "p2": p2}, {"planet": planet, "touch": touch, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "v2": [true, true]})
+	var su: Dictionary = {"planet": planet, "touch": touch, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "v2": [true, true]}
+	if modelOff:
+		su["power"] = false
+	SimCore.newMatch(S, sd, {"p1": p1, "p2": p2}, su)
 	return S
 
 
@@ -142,7 +145,7 @@ func _table(riseTicks: int) -> Array:
 	for b in DEPTHS:
 		var row: Array = []
 		for how in ["drop", "launch"]:
-			var S: SimState = _match()
+			var S: SimState = _match(false, false, 1, true)   # (the model off: with it on the drop and the send land differently and the control sees no pop; the lift is World's)
 			_floor(true, riseTicks)
 			var x: float = _column(S, float(b))
 			var A = S.fighters[0]

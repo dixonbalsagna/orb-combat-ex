@@ -9,10 +9,12 @@ var failed: int = 0
 
 
 func _init() -> void:
+	WorldPlan.everywhereOverride = 0   # (the field world as main shipped it: World's plans.everywhere, on in the 9 November data, lays every place and moves the street this check stages)
 	_rows()
 	_visit()
 	DirLaunch.setWallForce(-1)
 	DirVisit.setForce(-1)
+	WorldPlan.everywhereOverride = -1
 	print("KNOCK WALL: %d check(s) failed" % failed)
 	quit(1 if failed > 0 else 0)
 

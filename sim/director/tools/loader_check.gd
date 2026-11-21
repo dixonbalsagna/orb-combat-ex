@@ -30,7 +30,7 @@ func _init() -> void:
 	DirExchange.planCheck = _check
 	for i in range(n):
 		var S := SimCore.createSim()
-		SimCore.newMatch(S, base + i)
+		SimCore.newMatch(S, base + i, {}, {"power": false})   # (the frozen parity copy is the model-off profile: with the model on a live chain link's launch says "share": "chainLink")
 		SimGolden.applyArm(arm, S.fighters)
 		var steps: int = 0
 		while steps < 43200 and S.game.ko == null and diffs.size() < 10:
