@@ -30,8 +30,10 @@ Everything in the fight itself: every blow, dash, launch, beam and crater should
 
 | What | On 9 November | In this build | When it goes back |
 | :--- | :--- | :--- | :--- |
-| **How far a launched fighter flies** | Your link set it to 1.5 | 2.0, so a launched fighter travels about a third farther | The next landing sets 1.5 for good |
-| **Top flying speed** | Your longer match used 3,500, the speed you chose | 5,000, the old starting value | The next landing sets 3,500 for good |
+| **How far a launched fighter flies** | Your link set it to 1.5 | 2.0, so a launched fighter travels about a third farther | 1.5 comes in the next batch |
+| **Top flying speed** | Your longer match used 3,500, the speed you chose | 5,000, the old starting value | 3,500 comes in the next batch |
+
+This build has no link, so it cannot carry those two values the way your 9 November copy did. They become the game's own values in the next batch.
 
 One more thing: match files you saved on 9 November will not play in this build. It tells you so in plain words instead of failing halfway.
 
@@ -57,7 +59,7 @@ These are built or being built and come in the landings after this one:
 - a stick beam you let go of no longer firing later on its own;
 - the round planet as the world every match starts on by default, with lakes drawn properly;
 - buildings that remember being hit;
-- the five planet sizes.
+- planets in more than one size: small, medium and big come first.
 
 ---
 
@@ -71,11 +73,11 @@ Facts this draft rests on, and what to confirm when the build exists:
 | Pause slides in | `docs/ui/pending/a1-pause-clock/README.md` | A real pause in the built game, with Reduce motion off |
 | Start pauses | Read from `ui/hud/ui_hud.gd` (`JOY_BUTTON_START`); not tried | Try it on a pad |
 | The version line and its example | `docs/ui/pending/a1-menu-fixes/README.md` section 2 | The real version number in the build |
-| Launch distance 2.0 against Orb's 1.5; top speed 5,000 against 3,500 | `docs/ep/reviews/GW1a-standin.md` S-01 and your ruling to keep 2.0 in GW1a; `data/fight/power.json:108` (`flatOut` 5000) and `:110`; `docs/architecture/pending/gw1b-energy/README.md:8-10`. Orb's two 9 November plays used flat-out 5,000 and 3,500 (`docs/qa/runs/6a30b4c9/README.md:3`) | If the build is handed over with the 9 November link words (travel 1.5, flat-out 3,500), delete the "Two differences" table. If the first build Orb gets is after GW1b, delete it too and move the first two lines of "not in this build yet" up into "What you will notice" |
+| Launch distance 2.0 against Orb's 1.5; top speed 5,000 against 3,500 | `docs/ep/reviews/GW1a-standin.md` S-01 and your ruling to keep 2.0 in GW1a; `data/fight/power.json:108` (`flatOut` 5000) and `:110`; `docs/architecture/pending/gw1b-energy/README.md:8-10`. Orb's two 9 November plays used flat-out 5,000 and 3,500 (`docs/qa/runs/6a30b4c9/README.md:3`) | Settled by the EP on 2026-11-20: the table stays, because the desktop build has no link words. If the first build Orb gets turns out to be after GW1b, delete it and move the first two lines of "not in this build yet" up into "What you will notice" |
 | Old play files are refused in plain words | `docs/ep/reviews/GW1a-standin.md` S-08; `docs/ui/pending/a1-replay-words/README.md` | That the refusal shows on screen and not only in a log; S-08 was open on 2026-11-20 |
 | "The game can save the match as a file" | `docs/tools/pending/code-03/README.md` (the report hook) | Which button or row saves, and that the folder it names is right (S-04 was open: desktop builds named the wrong folder). I left the button out because I could not confirm it |
 | The tundra colours | Your commit 59ca7a47 puts Art's 9 November colours into GW1a, so nothing to tell Orb | |
-| "Lakes drawn properly", "buildings that remember", "five sizes" in the later list | `docs/ep/reviews/GW1b-review.md`, `memory-under-model-review.md`, `GW1c-readiness.md` | Drop any line whose landing has slipped out of A1. Per your ruling, A1 offers small, medium and big unless tiny and huge are drawn and measured, so "the five planet sizes" may need to read "three planet sizes" |
+| "Lakes drawn properly", "buildings that remember", "five sizes" in the later list | `docs/ep/reviews/GW1b-review.md`, `memory-under-model-review.md`, `GW1c-readiness.md` | Drop any line whose landing has slipped out of A1. The sizes line already reads "small, medium and big come first", per your ruling |
 
 The question for Orb is the one already waiting in homework ("Decide - words in the new menus"). It is asked once here, with no recommendation, because the words are Orb's taste.
 
