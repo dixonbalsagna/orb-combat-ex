@@ -1,44 +1,5 @@
---- a/ui/data/options.json	2026-11-14 02:46:07.431823200 -0800
-+++ b/ui/data/options.json	2026-11-14 03:03:33.798146100 -0800
-@@ -49,6 +49,7 @@
-     "glyph_style": { "default": "neutral", "group": "display", "label": "Glyph style", "help": "The look of the button glyphs. Neutral is our own position diamond with letters. A device family's own letters wait for a license check.", "choices": ["neutral"] },
-     "hitstop_scale": { "default": 1.0, "group": "accessibility", "label": "Hit pause", "help": "How long the game pauses for a moment on a heavy hit, from half to full.", "accessibility": true, "min": 0.5, "max": 1.0, "step": 0.05 },
-     "hotseat_alt_layout": { "default": false, "group": "controls", "label": "Alternate hot-seat keyboard layout", "help": "A second keyboard layout for two players on one keyboard. Off keeps the default layout." },
-+    "window_mode": {"default": "fullscreen", "group": "display", "label": "Window", "help": "Full screen fills the screen. Windowed opens a window you can move and resize. The change takes effect at once.", "choices": ["fullscreen", "windowed"]},
-     "vfx_quality": { "default": "auto", "group": "display", "label": "Effects quality", "help": "How much debris, dust and cracking the effects draw. Auto picks by how fast the game is running; the others fix it. Fewer effects never hide a warning.", "choices": ["auto", "high", "medium", "low"] },
-     "haptics": { "default": true, "group": "accessibility", "label": "Vibration", "help": "A short buzz on your pad or phone when you can transform. It is never the only signal: the screen says the same.", "accessibility": true },
-     "keep_hints": { "default": false, "group": "accessibility", "label": "Keep tutorial hints up", "help": "In the guided first match, a hint stays on screen after you have done what it asks, until the next hint replaces it.", "accessibility": true },
---- a/ui/data/settings.json	2026-11-14 02:46:07.449329000 -0800
-+++ b/ui/data/settings.json	2026-11-14 02:55:48.454237200 -0800
-@@ -51,7 +51,7 @@
-     ] },
-     { "id": "alerts", "title": "Beam alerts", "items": ["alert_preset", "alert_preset_p2", "alert_edge", "alert_edge_p2", "alert_edge_width", "alert_edge_width_p2", "alert_caption", "alert_caption_p2", "alert_caption_size", "alert_caption_size_p2", "alert_caption_pos", "alert_caption_pos_p2", "alert_early", "alert_early_p2", "alert_which", "alert_which_p2", "alert_glint", "alert_glint_p2", "alert_air", "alert_air_p2", "alert_sound", "alert_sound_p2", "alert_sound_volume", "alert_sound_volume_p2", "alert_rumble", "alert_rumble_p2", "alert_rumble_strength", "alert_rumble_strength_p2"] },
-     { "id": "camera", "title": "Camera", "items": ["camera_zoom", "camera_shake", "camera_launch_follow", "world_turning", "camera_panels", "split_solo"] },
--    { "id": "display", "title": "Display", "items": ["vfx_quality", "hud_sides", "you_marker", "info_flashes", "brink_cue", "silhouette", "planet_map", "region_label"] },
-+    { "id": "display", "title": "Display", "items": ["window_mode", "vfx_quality", "hud_sides", "you_marker", "info_flashes", "brink_cue", "silhouette", "planet_map", "region_label"] },
-     { "id": "sound", "title": "Sound", "items": ["volume_master", "volume_effects", "volume_voice", "mono_audio"] },
-     { "id": "access", "title": "Accessibility", "items": ["colour_vision", "text_size", "reduced_motion", "reduce_flashing", { "action": "photo_notice", "label": "Flashing effects notice", "value": "Read", "help": "The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that no independent photosensitivity analyzer has been run." }, "captions", "edge_captions", "crown_always", "thickness", "hitstop_scale", "keep_hints", "haptics"] },
-     { "id": "cosmetics", "title": "Cosmetics", "items": ["unlock_all"] }
-@@ -60,6 +60,7 @@
-   "hidden": ["glyph_style"],
-   "hidden_note": "glyph_style has one choice.",
-   "labels": {
-+    "window_mode": { "fullscreen": "Full screen", "windowed": "Windowed" },
-     "pad_preset": { "arena": "Arena", "simple-pad": "Simple" },
-     "struggle_push": { "stick": "Right stick", "face": "Face buttons" },
-     "struggle_push_p2": { "stick": "Right stick", "face": "Face buttons" },
---- a/ui/hud/ui_hud.gd	2026-11-14 02:47:17.901738700 -0800
-+++ b/ui/hud/ui_hud.gd	2026-11-14 02:55:48.461743300 -0800
-@@ -56,6 +56,7 @@
- 	"latch_charge_p2": false,
- 	"charges_off": false,      # three strengths: every press is a tap
- 	"charges_off_p2": false,
-+	"window_mode": "fullscreen",   # the desktop game's window: "fullscreen" (the default) or "windowed"; the host applies it (docs/rendering/pending/window-display); the row is not listed on the web
- 	"reduced_motion": false,   # no flicker, shimmer, shrinking rings or slide-ins; every cue still has a shape
- 	"captions": true,          # bracketed gesture tags on barks
- 	"edge_captions": false,    # a short line at the bottom edge names a cue as it happens (accessibility, off by default)
---- a/ui/widgets/ui_settings.gd	2026-11-14 02:46:08.067704400 -0800
-+++ b/ui/widgets/ui_settings.gd	2026-11-14 02:55:48.462245700 -0800
+--- a/ui/widgets/ui_settings.gd	2026-11-20 20:39:51.509343200 -0800
++++ b/ui/widgets/ui_settings.gd	2026-11-20 20:40:01.131998800 -0800
 @@ -32,6 +32,9 @@
  ## The screen's rows in order: {kind, key, label, help, enabled, ...}. A section is a heading row then its items. `needs` is a feature
  ## flag; without it the row is listed but disabled. An id with no option in options.json is skipped.
@@ -58,8 +19,37 @@
  			if HIDE_UNTIL.has(key) and not UiData.feature(str(HIDE_UNTIL[key])):
  				continue   # a row for something that is not live yet is not listed
  			if key == "reduce_flashing" and UiData.rf_locked():
---- a/localization/pseudo/ui/data/options.json	2026-11-14 02:48:51.306321300 -0800
-+++ b/localization/pseudo/ui/data/options.json	2026-11-14 03:03:34.292300300 -0800
+--- a/ui/data/options.json	2026-11-20 20:39:51.621137900 -0800
++++ b/ui/data/options.json	2026-11-20 20:40:01.096350400 -0800
+@@ -49,6 +49,7 @@
+     "glyph_style": { "default": "neutral", "group": "display", "label": "Glyph style", "help": "The look of the button glyphs. Neutral is our own position diamond with letters. A device family's own letters wait for a license check.", "choices": ["neutral"] },
+     "hitstop_scale": { "default": 1.0, "group": "accessibility", "label": "Hit pause", "help": "How long the game pauses for a moment on a heavy hit, from half to full.", "accessibility": true, "min": 0.5, "max": 1.0, "step": 0.05 },
+     "hotseat_alt_layout": { "default": false, "group": "controls", "label": "Alternate hot-seat keyboard layout", "help": "A second keyboard layout for two players on one keyboard. Off keeps the default layout." },
++    "window_mode": {"default": "fullscreen", "group": "display", "label": "Window", "help": "Full screen fills the screen. Windowed opens a window you can move and resize. The change takes effect at once.", "choices": ["fullscreen", "windowed"]},
+     "vfx_quality": { "default": "auto", "group": "display", "label": "Effects quality", "help": "How much debris, dust and cracking the effects draw. Auto picks by how fast the game is running; the others fix it. Fewer effects never hide a warning.", "choices": ["auto", "high", "medium", "low"] },
+     "haptics": { "default": true, "group": "accessibility", "label": "Vibration", "help": "A short buzz on your pad or phone when you can transform. It is never the only signal: the screen says the same.", "accessibility": true },
+     "keep_hints": { "default": false, "group": "accessibility", "label": "Keep tutorial hints up", "help": "In the guided first match, a hint stays on screen after you have done what it asks, until the next hint replaces it.", "accessibility": true },
+--- a/ui/data/settings.json	2026-11-20 20:39:51.730874300 -0800
++++ b/ui/data/settings.json	2026-11-20 20:40:01.103351500 -0800
+@@ -51,7 +51,7 @@
+     ] },
+     { "id": "alerts", "title": "Beam alerts", "items": ["alert_preset", "alert_preset_p2", "alert_edge", "alert_edge_p2", "alert_edge_width", "alert_edge_width_p2", "alert_caption", "alert_caption_p2", "alert_caption_size", "alert_caption_size_p2", "alert_caption_pos", "alert_caption_pos_p2", "alert_early", "alert_early_p2", "alert_which", "alert_which_p2", "alert_glint", "alert_glint_p2", "alert_air", "alert_air_p2", "alert_sound", "alert_sound_p2", "alert_sound_volume", "alert_sound_volume_p2", "alert_rumble", "alert_rumble_p2", "alert_rumble_strength", "alert_rumble_strength_p2"] },
+     { "id": "camera", "title": "Camera", "items": ["camera_zoom", "camera_shake", "camera_launch_follow", "world_turning", "camera_panels", "split_solo"] },
+-    { "id": "display", "title": "Display", "items": ["vfx_quality", "hud_sides", "you_marker", "info_flashes", "brink_cue", "silhouette", "planet_map", "region_label"] },
++    { "id": "display", "title": "Display", "items": ["window_mode", "vfx_quality", "hud_sides", "you_marker", "info_flashes", "brink_cue", "silhouette", "planet_map", "region_label"] },
+     { "id": "sound", "title": "Sound", "items": ["volume_master", "volume_effects", "volume_voice", "mono_audio"] },
+     { "id": "access", "title": "Accessibility", "items": ["colour_vision", "text_size", "reduced_motion", "reduce_flashing", { "action": "photo_notice", "label": "Flashing effects notice", "value": "Read", "help": "The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that no independent photosensitivity analyzer has been run." }, "captions", "edge_captions", "crown_always", "thickness", "hitstop_scale", "keep_hints", "haptics"] },
+     { "id": "cosmetics", "title": "Cosmetics", "items": ["unlock_all"] }
+@@ -60,6 +60,7 @@
+   "hidden": ["glyph_style"],
+   "hidden_note": "glyph_style has one choice.",
+   "labels": {
++    "window_mode": { "fullscreen": "Full screen", "windowed": "Windowed" },
+     "pad_preset": { "arena": "Arena", "simple-pad": "Simple" },
+     "struggle_push": { "stick": "Right stick", "face": "Face buttons" },
+     "struggle_push_p2": { "stick": "Right stick", "face": "Face buttons" },
+--- a/localization/pseudo/ui/data/options.json	2026-11-20 20:39:51.871500400 -0800
++++ b/localization/pseudo/ui/data/options.json	2026-11-20 20:40:01.143533200 -0800
 @@ -435,6 +435,16 @@
        "label": "[ÅÅĺţééŕñááţéé ĥöţ-šééááţ ķééýýböááŕď ĺááýýööüţ]",
        "help": "[ÅÅ šééçööñď ķééýýbööááŕď ĺááýýööüüţ fööŕ ţŵöö pĺááýýééŕš ööñ ööñéé ķééýýbööááŕď. ÖÖff ķéééépš ţĥéé ďééfááüüĺţ ĺááýýööüţ.]"
@@ -77,8 +67,8 @@
      "vfx_quality": {
        "default": "auto",
        "group": "display",
---- a/localization/pseudo/ui/data/settings.json	2026-11-14 02:48:51.307321000 -0800
-+++ b/localization/pseudo/ui/data/settings.json	2026-11-14 03:03:34.293298400 -0800
+--- a/localization/pseudo/ui/data/settings.json	2026-11-20 20:39:51.988462400 -0800
++++ b/localization/pseudo/ui/data/settings.json	2026-11-20 20:40:01.148535400 -0800
 @@ -115,6 +115,7 @@
        "id": "display",
        "title": "[Ďííšpĺáý]",
@@ -98,8 +88,18 @@
      "pad_preset": {
        "arena": "[Åŕéñá]",
        "simple-pad": "[Šímpĺé]"
---- a/docs/ui/strings.md	2026-11-14 02:48:51.426067200 -0800
-+++ b/docs/ui/strings.md	2026-11-14 03:03:34.411532200 -0800
+--- a/ui/hud/ui_hud.gd	2026-11-20 20:39:52.061568000 -0800
++++ b/ui/hud/ui_hud.gd	2026-11-20 20:40:01.111919900 -0800
+@@ -56,6 +56,7 @@
+ 	"latch_charge_p2": false,
+ 	"charges_off": false,      # three strengths: every press is a tap
+ 	"charges_off_p2": false,
++	"window_mode": "fullscreen",   # the desktop game's window: "fullscreen" (the default) or "windowed"; the host applies it (docs/rendering/pending/window-display); the row is not listed on the web
+ 	"reduced_motion": false,   # no flicker, shimmer, shrinking rings or slide-ins; every cue still has a shape
+ 	"captions": true,          # bracketed gesture tags on barks
+ 	"edge_captions": false,    # a short line at the bottom edge names a cue as it happens (accessibility, off by default)
+--- a/docs/ui/strings.md	2026-11-20 20:39:52.109905600 -0800
++++ b/docs/ui/strings.md	2026-11-20 20:40:01.157040900 -0800
 @@ -1,6 +1,6 @@
  # Every player-facing string in ui/data, by where it shows
  
@@ -1016,17 +1016,17 @@
 +| 1146 | Empress Orza | `fighter_names:names.empress.name` | |
 +| 1147 | Bolus | `fighter_names:names.cyborg.name` | |
  
---- a/ui/tools/hud_check.gd	2026-11-14 02:48:02.342495900 -0800
-+++ b/ui/tools/hud_check.gd	2026-11-14 02:56:57.304639400 -0800
+--- a/ui/tools/hud_check.gd	2026-11-20 20:39:52.287694100 -0800
++++ b/ui/tools/hud_check.gd	2026-11-20 20:40:15.743532600 -0800
 @@ -91,6 +91,7 @@
  	await _menus_a1_rules()
  	await _menus_a1_extra_rules()
  	await _menus_world_rules()
 +	await _window_row_rules()
+ 	await _save_reason_rules()
  	await _plain_words_rules()
  	await _launch_marks_rules()
- 	await _tug_rules()
-@@ -11562,3 +11563,52 @@
+@@ -11616,3 +11617,52 @@
  	e.button_index = button
  	e.pressed = true
  	return e

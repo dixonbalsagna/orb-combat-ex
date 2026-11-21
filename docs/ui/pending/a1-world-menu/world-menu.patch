@@ -1,5 +1,5 @@
---- a/ui/core/ui_modes.gd	2026-11-14 01:03:53.990434300 -0800
-+++ b/ui/core/ui_modes.gd	2026-11-14 02:47:17.887931100 -0800
+--- a/ui/core/ui_modes.gd	2026-11-20 20:39:49.734711400 -0800
++++ b/ui/core/ui_modes.gd	2026-11-20 20:39:52.024545800 -0800
 @@ -101,6 +101,66 @@
  	return out
  
@@ -67,8 +67,8 @@
  ## The pair a first menu shows: the first two pickable fighters, or one twice when the roster has one.
  static func default_pair() -> Array:
  	var fs: Array = fighters()
---- a/ui/widgets/ui_menu.gd	2026-11-14 01:03:54.369118000 -0800
-+++ b/ui/widgets/ui_menu.gd	2026-11-14 02:47:17.898520100 -0800
+--- a/ui/widgets/ui_menu.gd	2026-11-20 20:39:49.870151300 -0800
++++ b/ui/widgets/ui_menu.gd	2026-11-20 20:39:52.033547200 -0800
 @@ -115,6 +115,8 @@
  			else:
  				out.append("ai")
@@ -166,8 +166,8 @@
  		elif _is_radio(id):
  			var chosen: String = str(int(cfg.get("players", 1))) if id == "players" else (level_of(cfg.get("ai_level", DEFAULT_LEVEL)) if id == "ai" else str(cfg.get(id, "kb")))
  			for it in p["items"]:
---- a/ui/widgets/ui_pause.gd	2026-11-14 01:03:54.399383600 -0800
-+++ b/ui/widgets/ui_pause.gd	2026-11-14 02:47:17.898520100 -0800
+--- a/ui/widgets/ui_pause.gd	2026-11-20 20:39:49.996843500 -0800
++++ b/ui/widgets/ui_pause.gd	2026-11-20 20:39:52.044053700 -0800
 @@ -304,6 +304,9 @@
  	var foot_texts: Array = []
  	if status != "":
@@ -178,8 +178,8 @@
  	if where_text != "":
  		foot_texts.append(where_text)
  	var widest_word: float = 0.0
---- a/ui/widgets/ui_feedback.gd	2026-11-14 01:03:54.453202100 -0800
-+++ b/ui/widgets/ui_feedback.gd	2026-11-14 02:47:17.898520100 -0800
+--- a/ui/widgets/ui_feedback.gd	2026-11-20 20:39:50.119510400 -0800
++++ b/ui/widgets/ui_feedback.gd	2026-11-20 20:39:52.051562700 -0800
 @@ -84,6 +84,19 @@
  	return "%s%s" % [info.get("os", ""), ", mobile" if bool(info.get("mobile", false)) else ""]
  
@@ -208,8 +208,8 @@
  		"%s: %s" % [word("setup"), setup],
  		"%s: %s" % [word("time"), tm],
  		"%s: %s" % [word("screen"), screen],
---- a/ui/hud/ui_hud.gd	2026-11-14 01:03:54.241352300 -0800
-+++ b/ui/hud/ui_hud.gd	2026-11-14 02:47:17.901738700 -0800
+--- a/ui/hud/ui_hud.gd	2026-11-20 20:39:50.241675800 -0800
++++ b/ui/hud/ui_hud.gd	2026-11-20 20:39:52.061568000 -0800
 @@ -148,6 +148,7 @@
  var _l_pmenu: UiLayer
  var _pm_open := false
@@ -316,8 +316,8 @@
  		"match_time": snappedf(hub.t_now, 0.1), "over": hub.match_over, "winner": winner_name, "settings": UiFeedback.settings_line(opts), "note": _fb_text.text}
  
  
---- a/ui/data/terms.json	2026-11-14 01:03:54.277279400 -0800
-+++ b/ui/data/terms.json	2026-11-14 02:47:17.898520100 -0800
+--- a/ui/data/terms.json	2026-11-20 20:39:50.363154600 -0800
++++ b/ui/data/terms.json	2026-11-20 20:39:52.082074200 -0800
 @@ -89,7 +89,7 @@
    },
    "prompt": { "load_plates": "Raising the continents", "load_climate": "Setting the winds and weather", "load_rivers": "Cutting the rivers", "load_places": "Founding the towns", "load_ring": "Laying out the ground", "load_back": "Back to the menu", "special": "SPECIAL", "transform": "TRANSFORM", "attack": "ATTACK", "attack_hint": "TAP  HOLD  SWIPE UP", "guard": "GUARD", "guard_hint": "HOLD", "power": "POWER", "power_hint": "HOLD", "move": "MOVE", "move_hint": "FLICK TO DODGE",
@@ -327,8 +327,8 @@
      "pause_new_ask": "Start a new match?", "pause_new_yes": "New match", "pause_new_no": "Keep playing", "pause_resume_key": "P", "pause_howto_key": "F1", "pause_new_key": "N",
      "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "Keep hitting, then press the lit button to launch your rival.", "over_wins": "{name} wins", "over_wins_team": "{a} and {b} win", "teach_beam": "Hold right stick: beam. Let go to fire.", "teach_beam_keys": "Hold the arrows: beam. Let go to fire.", "cross_out": "You're out. Your partner fights on", "refuse_no_energy": "No energy", "refuse_too_late": "Too late", "refuse_no_reach": "Tap to chase", "refuse_face_late": "Too late", "refuse_no_answer": "Didn't start", "refuse_stun_limit": "Already stunned", "refuse_queue_expired": "Too slow", "refuse_block_lockout": "Block cooling", "refuse_close": "Too close", "refuse_ki": "No energy", "refuse_hit": "Hit", "refuse_taken": "Hit", "refuse_soon": "Too soon", "refuse_cooling": "Cooling", "refuse_late": "Too late", "refuse_chase": "Tap to chase", "refuse_stunned": "Stunned", "refuse_chase_no_ki": "No energy", "refuse_chase_late": "Too late", "refuse_off_beat": "Off the beat", "refuse_locked": "Locked in", "refuse_launched": "In flight", "refuse_down": "Knocked down", "refuse_queue_full": "Too many presses", "refuse_not_yours": "Their move", "refuse_recovering": "Recovering", "refuse_set_piece": "In a move", "refuse_chord": "One at a time", "refuse_busy": "Busy", "refuse_not_ready": "Not ready", "refuse_charging": "Charging", "refuse_warding": "Warding", "pause_save": "Save this match", "save_done_web": "Saved to your Downloads folder", "save_none": "This build can't save a match file yet", "report_saved": "Report saved: {file}", "report_saved_web": "Report saved to your Downloads folder", "report_failed": "Could not save the report", "report_none": "This build can't save a report yet", "report_where": "Saved reports go in the 'saved' folder beside the game.", "fb_save": "SAVE REPORT", "teach_report_pad": "Press View + RB to report a problem", "teach_report_keys": "Press F9 to report a problem", "outside_start": "Going for the other fight's foe", "outside_whiff": "Missed the other fight's foe", "outside_landed": "Hit the other fight's foe", "outside_taken": "Hit from the other fight", "outside_broken": "Your finisher was broken", "alert_outside": "BEAM FROM THE OTHER FIGHT", "struggle_buttons": "Press on the beat", "struggle_stick": "Flick toward them on the beat", "teach_slam": "Hold to slam", "teach_chase": "Tap an attack to chase. It lands as you catch them.", "teach_flick": "Hold for a beam", "teach_fire_back": "RB + right stick: fire back", "legend_beam": "Beam (hold to charge)", "legend_beam_toggle": "Beam (toggle to charge)", "legend_blast": "Blast (flick)", "howto_plan_noforms": "You are the fighter. Fly, dodge, guard, hit light or heavy, hold power, call your signature.", "over_no_contest": "No contest: nobody played", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "alert_incoming": "BEAM INCOMING", "alert_charging": "BEAM CHARGING", "alert_fire_back": "FIRE BACK", "alert_dodge": "DODGE", "remap_swapped": "{layout}, swapped", "remap_strike_key": "Strike key", "remap_strike_key_help": "A strike in the direction you are holding. For a keyboard, or a controller with one stick.", "remap_brace_key": "Brace", "remap_brace_key_help": "Brace against the blow you expect, in the direction you hold. No stick flick needed.", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
    "planet": "EVERHOLD",
---- a/ui/data/feedback.json	2026-11-14 01:03:54.278277500 -0800
-+++ b/ui/data/feedback.json	2026-11-14 02:47:17.898520100 -0800
+--- a/ui/data/feedback.json	2026-11-20 20:39:50.571904900 -0800
++++ b/ui/data/feedback.json	2026-11-20 20:39:52.088328700 -0800
 @@ -17,6 +17,7 @@
      "title": "ORB COMBAT EX - PLAYTEST FEEDBACK",
      "build": "Build",
@@ -337,8 +337,8 @@
      "setup": "Setup",
      "time": "Match time",
      "screen": "Screen",
---- a/localization/pseudo/ui/data/terms.json	2026-11-14 01:03:54.556852100 -0800
-+++ b/localization/pseudo/ui/data/terms.json	2026-11-14 02:48:51.307321000 -0800
+--- a/localization/pseudo/ui/data/terms.json	2026-11-20 20:39:50.695382800 -0800
++++ b/localization/pseudo/ui/data/terms.json	2026-11-20 20:39:52.093836800 -0800
 @@ -202,6 +202,15 @@
      "rail_hint_back_modes": "[Báçķ]",
      "rail_hint_change_fighter": "[Çĥáñĝé]",
@@ -355,8 +355,8 @@
      "version_build_line": "[Vééŕšííööñ {v} (büüííĺď {commit}, {date}) ]",
      "rail_hint_back": "[Báçķ]",
      "rail_hint_choose_change": "[Çĥööööšéé ááñď çĥááñĝé]",
---- a/localization/pseudo/ui/data/feedback.json	2026-11-14 01:03:54.509479400 -0800
-+++ b/localization/pseudo/ui/data/feedback.json	2026-11-14 02:48:51.304324200 -0800
+--- a/localization/pseudo/ui/data/feedback.json	2026-11-20 20:39:50.956394200 -0800
++++ b/localization/pseudo/ui/data/feedback.json	2026-11-20 20:39:52.098891800 -0800
 @@ -35,6 +35,7 @@
      "title": "[ÖÖŔB ÇÖÖMBÅÅŢ ÉÉX - PĹÅÅÝÝŢÉÉŠŢ FÉÉÉÉĎBÅÅÇĶ ]",
      "build": "[Büíĺď]",
@@ -365,8 +365,8 @@
      "setup": "[Šéţüp]",
      "time": "[Mááţçĥ ţíímé]",
      "screen": "[Šçŕééñ]",
---- a/docs/ui/strings.md	2026-11-14 01:03:40.453084100 -0800
-+++ b/docs/ui/strings.md	2026-11-14 02:48:51.426067200 -0800
+--- a/docs/ui/strings.md	2026-11-20 20:39:51.087749700 -0800
++++ b/docs/ui/strings.md	2026-11-20 20:39:52.109905600 -0800
 @@ -1,6 +1,6 @@
  # Every player-facing string in ui/data, by where it shows
  
@@ -3376,20 +3376,20 @@
 +| 1142 | Empress Orza | `fighter_names:names.empress.name` | |
 +| 1143 | Bolus | `fighter_names:names.cyborg.name` | |
  
---- a/ui/tools/hud_check.gd	2026-11-14 01:05:09.440195900 -0800
-+++ b/ui/tools/hud_check.gd	2026-11-14 02:48:02.342495900 -0800
+--- a/ui/tools/hud_check.gd	2026-11-20 20:39:51.202626900 -0800
++++ b/ui/tools/hud_check.gd	2026-11-20 20:39:52.287694100 -0800
 @@ -90,6 +90,7 @@
  	await _pause_clock_rules()
  	await _menus_a1_rules()
  	await _menus_a1_extra_rules()
 +	await _menus_world_rules()
+ 	await _save_reason_rules()
  	await _plain_words_rules()
  	await _launch_marks_rules()
- 	await _tug_rules()
-@@ -11451,3 +11452,113 @@
+@@ -11505,3 +11506,113 @@
+ 	_ok(seen.size() == 1 and (seen[0] as Array).size() == 2, "save reason: a hook of two arguments is called with two, as before")
+ 	hud.lan_report_fn = Callable()
  	hud.queue_free()
- 	UiData.set_feature("menus_rail", false)
- 	UiData.set_feature("menu_modes", false)
 +
 +
 +# --- The first match across sessions, the world line, the planet size row (GW1b, GW1c; docs/ui/menus-a1.md sections 9 to 11) -------------------
@@ -3500,8 +3500,8 @@
 +	e.button_index = button
 +	e.pressed = true
 +	return e
---- a/docs/ui/menus-a1.md	2026-11-14 01:03:40.530683900 -0800
-+++ b/docs/ui/menus-a1.md	2026-11-14 02:48:50.901804600 -0800
+--- a/docs/ui/menus-a1.md	2026-11-20 20:39:51.324358100 -0800
++++ b/docs/ui/menus-a1.md	2026-11-20 20:39:52.167062900 -0800
 @@ -36,3 +36,15 @@
  ## 8. Tiny windows
  

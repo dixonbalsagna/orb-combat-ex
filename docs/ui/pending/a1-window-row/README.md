@@ -2,7 +2,7 @@
 
 The UI half of Rendering's `docs/rendering/pending/window-display` (the desktop build opens full screen; the host applies this row). **Land with or after that park, after GW1a**; the stack before it is `a1-world-menu` (apply last).
 
-`window-row.patch` (`patch -p1` / `git apply`; dry-run clean on the stack through `a1-world-menu`, and the whole stack equals the tree the gate ran on): `ui/data/options.json` (`window_mode`), `ui/data/settings.json` (the Display group's first row and the two words), `ui/hud/ui_hud.gd` (the option's default in `opts`), `ui/widgets/ui_settings.gd` (the row is not listed on the web), the regenerated pseudo-locale and `docs/ui/strings.md`, `ui/tools/hud_check.gd` (`_window_row_rules`).
+`window-row.patch` (`patch -p1` / `git apply`; re-cut 2026-11-20 on top of `a1-save-reason` and `a1-world-menu`; dry-run clean on that stack, and the whole stack equals the tree the gate ran on): `ui/data/options.json` (`window_mode`), `ui/data/settings.json` (the Display group's first row and the two words), `ui/hud/ui_hud.gd` (the option's default in `opts`), `ui/widgets/ui_settings.gd` (the row is not listed on the web), the regenerated pseudo-locale and `docs/ui/strings.md`, `ui/tools/hud_check.gd` (`_window_row_rules`).
 
 - **The row:** "Window" in Settings, Display group, **Full screen** (default) or **Windowed**, stepped with Left and Right or A like every choice, saved with the other options.
 - **Not on the web:** the browser has its own full screen, so `UiSettings.rows()` leaves the row out there (`WEB_HIDDEN`; the option itself still exists and keeps its default).
