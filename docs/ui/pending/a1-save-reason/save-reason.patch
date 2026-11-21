@@ -1,6 +1,6 @@
---- a/ui/hud/ui_hud.gd	2026-11-14 02:55:48.461743300 -0800
-+++ b/ui/hud/ui_hud.gd	2026-11-20 20:34:09.101969600 -0800
-@@ -89,7 +89,7 @@
+--- a/ui/hud/ui_hud.gd	2026-11-20 20:38:19.699338700 -0800
++++ b/ui/hud/ui_hud.gd	2026-11-20 20:38:19.820660400 -0800
+@@ -88,7 +88,7 @@
  }
  var insets := Vector4.ZERO     # left, top, right, bottom safe-area insets from the host (phone notches)
  
@@ -9,7 +9,7 @@
  var _save_status: String = ""
  var _save_until: float = 0.0
  var _report_t: float = -100.0          # the HUD clock at the last report (one a second: a held chord or a second press must not save twice)
-@@ -3793,10 +3793,18 @@
+@@ -3769,10 +3769,18 @@
  
  
  ## "Save this match" on the match-over card: the host saves it (LAN: the same report call, with the player's note), else the web page downloads it, else it says plainly that this build cannot. The card stays open and says what happened for a few seconds.
@@ -29,20 +29,20 @@
  		_save_status = UiData.fmt("prompt.report_saved", {"file": file}) if file != "" else UiData.t("prompt.report_failed")
  	elif UiWebClip.available():
  		UiWebClip.download_text("orb-combat-match-%s.json" % str(rec.get("seed", "x")), JSON.stringify(rec, "  "))
---- a/ui/tools/hud_check.gd	2026-11-14 02:56:57.304639400 -0800
-+++ b/ui/tools/hud_check.gd	2026-11-20 20:33:14.083325200 -0800
-@@ -92,6 +92,7 @@
+--- a/ui/tools/hud_check.gd	2026-11-20 20:38:19.777580800 -0800
++++ b/ui/tools/hud_check.gd	2026-11-20 20:38:19.822670600 -0800
+@@ -90,6 +90,7 @@
+ 	await _pause_clock_rules()
+ 	await _menus_a1_rules()
  	await _menus_a1_extra_rules()
- 	await _menus_world_rules()
- 	await _window_row_rules()
 +	await _save_reason_rules()
  	await _plain_words_rules()
  	await _launch_marks_rules()
  	await _tug_rules()
-@@ -11612,3 +11613,56 @@
- 	hud.set_option("window_mode", "sideways")
- 	_ok(str(hud.opts["window_mode"]) == "fullscreen", "window row (hud): a value that is not a choice becomes the default, Full screen (a hand-edited saved file never leaves the window in a mode the host does not know)")
+@@ -11451,3 +11452,56 @@
  	hud.queue_free()
+ 	UiData.set_feature("menus_rail", false)
+ 	UiData.set_feature("menu_modes", false)
 +
 +
 +# --- "Save this match" tells the host it is a save (S-42; Tools' recorder never prunes a save) --------------------------------------
