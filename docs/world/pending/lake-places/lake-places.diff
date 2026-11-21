@@ -1,0 +1,132 @@
+--- a/sim/world/plan.gd
++++ b/sim/world/plan.gd
+@@ -38,6 +38,15 @@
+ ## The most the ground may depart from a straight slope between a free building's centre and a corner of its plan footprint (plans.maxFootSlope, units; 0 or less: no limit). A building over a cliff or a step of another record
+ ## is not laid (like one in the sea): its underside would show (docs/world/lot-gap.md). A smooth slope, however steep, passes: the lot's tilt and the view's plinth answer that. `footSlopeOverride` (a test's) is used when it is 0 or more.
+ static var footSlopeOverride: float = -1.0
++static var lakeMaxOverride: float = -2.0       # tests only: -2 the data's plans.lakeMax, else this
++
++
++## How deep a lake's or a river's water may stand over a building's base before the building is not laid (units; plans.lakeMax, -1 or no key: off, today). A place laid on a lake's bed is a town under water: with everywhere
++## on, free places are laid on the planet and the lakes are records, so the planet's towns stood in them (docs/world/lake-places.md).
++static func lakeMax() -> float:
++	if lakeMaxOverride > -1.5:
++		return lakeMaxOverride
++	return float(WorldField.data().get("plans", {}).get("lakeMax", -1.0))
+ 
+ 
+ static func maxFootSlope() -> float:
+@@ -443,11 +452,16 @@
+ 	var kept: Array = []
+ 	var gmax: float = maxFootSlope()
+ 	var cliffed: int = 0
++	var drowned: int = 0
++	var lake_max: float = lakeMax()
+ 	for e in geo.b:
+ 		var q: Array = pointOf(P, id, yaw, float(e.x) - float(geo.xc), float(e.z))
+ 		var g0: float = WorldField.applyRecords(S, q[0], q[1], q[2], WorldField.heightBake(P, q[0], q[1], q[2]), P)
+ 		if g0 < WorldTerrain.TRIM_G:
+ 			continue
++		if lake_max >= 0.0 and WorldField.recordWater(S, q[0], q[1], q[2], g0, P) > lake_max:   # under a lake's or a river's water: not laid
++			drowned += 1
++			continue
+ 		if gmax > 0.0 and _overhangs(S, P, id, yaw, float(e.x) - float(geo.xc), float(e.z), 0.5 * float(e.w), 0.5 * float(e.d), g0, gmax):
+ 			cliffed += 1
+ 			continue
+@@ -462,7 +476,7 @@
+ 		b["u"] = float(e.x) - float(geo.xc)
+ 		b["v"] = float(e.z)
+ 		kept.append(b)
+-	return {"buildings": kept, "dist": geo.dist, "yaw": yaw, "cliffed": cliffed}
++	return {"buildings": kept, "dist": geo.dist, "yaw": yaw, "cliffed": cliffed, "drowned": drowned}
+ 
+ 
+ ## Is the ground steeper than `slope` (rise over run) between the footprint's centre and any of eight points on the circle round it (radius r, the half diagonal: a footprint turned to any line has its corners on it)? Read from
+--- a/data/biomes/field.json
++++ b/data/biomes/field.json
+@@ -16,6 +16,7 @@
+     "farPeople": false,
+     "farAnguish": false,
+     "maxFootSlope": 0.7,
++    "lakeMax": -1,
+     "indexFrontBH": -2.0,
+     "indexBackBH": 45.0,
+     "farReach": 9000,
+--- a/tools/schemas/biomes-field.schema.json
++++ b/tools/schemas/biomes-field.schema.json
+@@ -27,6 +27,7 @@
+         "farAnguish": { "type": "boolean", "description": "On (with farPeople), a far town's people count toward the hero's anguish by their place's share when it is first posed, and feed nothing else: not menace, power, Witness or mood." },
+         "farShare": { "type": "number", "minimum": 0, "maximum": 4, "description": "A far place, wholly lost, counts toward the hero's anguish as this many first-ring places' worth of people (the average one's); a part lost counts in proportion to the place's own people, so a larger place does not cost more by size (Legal RL-228 term 3)." },
+         "maxFootSlope": { "type": "number", "minimum": 0, "maximum": 10, "description": "With everywhere, the steepest ground (rise over run) allowed between a free building's centre and any of eight points on the circle round its footprint; a building on a cliff is not laid (docs/world/lot-gap.md). A hillside town stands on 0.3 to 0.6, a cliff is 3 or more. 0: no limit." },
++        "lakeMax": { "type": "number", "minimum": -1, "maximum": 200, "description": "With everywhere, how deep a lake's or a river's water may stand over a free building's base before the building is not laid (units): a place laid on a lake's bed was a town under water (docs/world/lake-places.md). -1: off (every building is laid, as before)." },
+         "indexFrontBH": { "type": "number", "minimum": -60, "maximum": 60, "description": "With everywhere, the depth in front of the line (z positive toward the camera), in fighter heights (bh = 75 units), past which a planet-fixed building's FRONT FACE (its z plus half its depth) is not indexed (so not struck, and Rendering's rule has lowered it): -2 (-150 units); a first-ring block's face is -2.5." },
+         "indexBackBH": { "type": "number", "minimum": 0, "maximum": 200, "description": "With everywhere, the depth behind the line, in fighter heights, out to which a building is indexed if that is further than swing.json indexBand: the background lane's far edge (44.5)." },
+         "farReach": { "type": "number", "minimum": 500, "maximum": 40000, "description": "A far place is posed (its people wake, and join the anguish's norm) when a fighter is within this many units of its first building." },
+--- /dev/null
++++ b/sim/world/tools/lake_places_check.gd
+@@ -0,0 +1,59 @@
++extends SceneTree
++# No town stands under a lake's water (World, sim/world/plan.gd layFree, data/biomes/field.json plans.lakeMax; docs/world/lake-places.md). With plans.everywhere on, the planet's free places are laid on it and the lakes
++# are records laid on the ring's plan; a place laid on a lake's bed was a town under water (34 of 3,835 buildings on planet 7, touch 3, up to 611 units deep: Animation's water_tile_check found the lakes undrawn and fighters
++# standing in the air over them). With lakeMax a building whose base is under more water than that is not laid.
++#   godot --headless --path . --script res://sim/world/tools/lake_places_check.gd -- [--planet=7] [--touch=3]
++var fails: int = 0
++
++
++func ok(cond: bool, what: String) -> void:
++	if cond:
++		print("  ok   ", what)
++	else:
++		fails += 1
++		print("  FAIL ", what)
++
++
++## [buildings, buildings standing in lake or river water deeper than 1, the deepest, how many were not laid (the drowned count of layFree's places)].
++func _read(planet: int, touch: int, lake_max: float) -> Array:
++	WorldClimate.useGen(3)
++	WorldPlan.everywhereOverride = 1
++	WorldPlan.lakeMaxOverride = lake_max
++	WorldFieldCache.enabledOverride = 0   # a kept place is restored as it was laid, so the check lays them cold
++	WorldPlanet.forget()
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 4, {}, {"planet": planet, "touch": touch, "planetGen": 3, "intro": false})
++	var wet: int = 0
++	var worst: float = 0.0
++	var n: int = 0
++	for i in range(S.buildings.size()):
++		if not S.buildings[i].alive or i * 3 + 2 >= S.bDir.size():
++			continue
++		n += 1
++		var w: float = WorldField.recordWater(S, S.bDir[i * 3], S.bDir[i * 3 + 1], S.bDir[i * 3 + 2], SimField.buildingGround(S, i))
++		if w > 1.0:
++			wet += 1
++			worst = maxf(worst, w)
++	SimCore.dispose(S)
++	return [n, wet, worst]
++
++
++func _init() -> void:
++	var planet: int = 7
++	var touch: int = 3
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--planet="):
++			planet = int(a.substr(9))
++		elif a.begins_with("--touch="):
++			touch = int(a.substr(8))
++	var off: Array = _read(planet, touch, -1.0)
++	var on: Array = _read(planet, touch, 8.0)
++	print("      planet %d, touch %d: lakeMax off: %d buildings, %d in water over 1 (deepest %.0f); lakeMax 8: %d buildings, %d in water over 1 (deepest %.1f)" % [planet, touch, off[0], off[1], off[2], on[0], on[1], on[2]])
++	ok(int(off[1]) >= 5 and float(off[2]) > 40.0, "off: the towns stand in lakes (the fault: %d buildings, the deepest %.0f)" % [off[1], off[2]])
++	ok(float(on[2]) <= 8.0 + 1.0 and int(on[1]) <= 3, "lakeMax 8: no building's base is under more than 8 of water (%d in water over 1, deepest %.1f)" % [on[1], on[2]])
++	ok(int(on[0]) >= int(float(off[0]) * 0.97) and int(on[0]) < int(off[0]), "and the towns stay: %d of %d buildings are laid (at least 97 percent, and some were dropped)" % [on[0], off[0]])
++	WorldPlan.lakeMaxOverride = -2.0
++	WorldFieldCache.enabledOverride = -1
++	WorldPlan.everywhereOverride = -1
++	print("LAKEPLACES: %d check(s) failed" % fails)
++	quit(0 if fails == 0 else 1)
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -6,2 +6,3 @@
+     "power_world_check",
++    "lake_places_check",
+     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",

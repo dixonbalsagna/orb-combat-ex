@@ -1,0 +1,39 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  wade x 9600: ground -23.8, the sim's floor -23.8, drawn ground -24.5, drawn water 0.0, feet -23.8, gap -23.8
+  wade x 10240: ground -30.7, the sim's floor -30.7, drawn ground -26.3, drawn water 0.0, feet -30.7, gap -30.7
+  lake x 22400: ground 865.4, the sim's floor 989.5, drawn ground 839.9, drawn water none, feet 976.6, gap 136.7
+  dry x 23040: ground 939.1, the sim's floor 964.9, drawn ground 949.4, drawn water none, feet 982.0, gap 32.6
+  lake x 24320: ground 1488.2, the sim's floor 2062.5, drawn ground 1491.6, drawn water none, feet 2062.5, gap 570.8
+  lake x 24960: ground 1935.7, the sim's floor 2062.5, drawn ground 1935.7, drawn water none, feet 2062.4, gap 126.7
+  lake x 27520: ground 1768.6, the sim's floor 2062.5, drawn ground 1769.5, drawn water none, feet 2062.5, gap 293.0
+  dry x 32000: ground 563.5, the sim's floor 563.5, drawn ground 557.2, drawn water none, feet 544.8, gap -12.5
+  dry x 48640: ground 647.1, the sim's floor 655.9, drawn ground 647.2, drawn water none, feet 656.4, gap 9.2
+  lake x 49280: ground 593.3, the sim's floor 689.0, drawn ground 593.3, drawn water none, feet 689.0, gap 95.7
+  lake x 49920: ground 600.1, the sim's floor 689.0, drawn ground 600.1, drawn water none, feet 689.0, gap 88.8
+  lake x 53120: ground 606.4, the sim's floor 689.0, drawn ground 606.4, drawn water none, feet 689.0, gap 82.6
+  lake x 53760: ground 472.1, the sim's floor 689.0, drawn ground 472.1, drawn water none, feet 689.0, gap 216.9
+  lake x 54400: ground 336.6, the sim's floor 689.0, drawn ground 337.1, drawn water none, feet 689.0, gap 351.9
+  lake x 55040: ground 399.9, the sim's floor 689.0, drawn ground 399.9, drawn water none, feet 689.0, gap 289.1
+  lake x 88960: ground 2573.4, the sim's floor 2748.7, drawn ground 2572.7, drawn water none, feet 2748.7, gap 175.9
+  lake x 89600: ground 2457.9, the sim's floor 2748.7, drawn ground 2457.9, drawn water none, feet 2748.7, gap 290.8
+  lake x 90880: ground 2612.2, the sim's floor 2748.7, drawn ground 2610.6, drawn water none, feet 2748.7, gap 138.1
+  lake x 91520: ground 2384.7, the sim's floor 2748.7, drawn ground 2384.7, drawn water none, feet 2748.7, gap 364.0
+  lake x 92160: ground 2301.2, the sim's floor 2748.7, drawn ground 2299.1, drawn water none, feet 2748.7, gap 449.6
+  lake x 92800: ground 2064.9, the sim's floor 2748.7, drawn ground 2067.2, drawn water none, feet 2748.7, gap 681.5
+  dry x 93440: ground 1845.4, the sim's floor 1877.3, drawn ground 1846.6, drawn water none, feet 1879.1, gap 32.5
+  lake x 95360: ground 1808.5, the sim's floor 1898.8, drawn ground 1807.0, drawn water none, feet 1897.7, gap 90.7
+  dry x 97280: ground 1521.7, the sim's floor 1550.5, drawn ground 1521.7, drawn water none, feet 1550.5, gap 28.8
+  wade x 122240: ground -19.7, the sim's floor -19.7, drawn ground -17.8, drawn water 0.0, feet -19.7, gap -19.7
+  wade x 128640: ground -67.1, the sim's floor -7.9, drawn ground -67.2, drawn water 0.0, feet -7.9, gap -7.9
+  wade x 130560: ground -20.4, the sim's floor -20.4, drawn ground -20.1, drawn water 0.0, feet -20.4, gap -20.4
+  wade x 147200: ground -24.4, the sim's floor -24.4, drawn ground -24.1, drawn water 0.0, feet -24.4, gap -24.4
+  wade x 147840: ground -34.7, the sim's floor -34.7, drawn ground -34.8, drawn water 0.0, feet -34.7, gap -34.7
+water on the globe ground: planet 7 gen 3, 240 places, 0 cells of S.water (all zero: the sea is in the tile field)
+ok   sea: 51 places, the feet are 0.0 from the drawn water at worst (0 over 6)
+FAIL dry: 161 places, the feet are 32.6 from the drawn ground at worst (5 over 6)
+ok   wade: 11 places where the tiles draw water over what the sim calls dry ground, the feet under the surface by 34.7 at most (wade.below 75; 0 out of range)
+FINDING lake (finding): 17 places where the sim holds a lake's level, the feet are 17 beyond 6 of the drawn surface; up to 681.5 above it and -0.0 below
+water tile check FAILED
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

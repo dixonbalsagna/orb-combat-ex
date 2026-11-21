@@ -1,0 +1,11 @@
+--- a/data/biomes/field.json
++++ b/data/biomes/field.json
+@@ -16,7 +16,7 @@
+     "farPeople": false,
+     "farAnguish": false,
+     "maxFootSlope": 0.7,
+-    "lakeMax": -1,
++    "lakeMax": 8,
+     "indexFrontBH": -2.0,
+     "indexBackBH": 45.0,
+     "farReach": 9000,
