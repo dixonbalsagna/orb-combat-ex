@@ -1,0 +1,18 @@
+      2 t1041 lcOpen slot 1 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t1081 lcOpen slot 1 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t1156 lcOpen slot 0 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t1283 lcOpen slot 1 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t1382 lcOpen slot 1 power false why perfect_block stagger 20 minStagger 12.0 quiet false ownStun 0
+      2 t1435 lcOpen slot 1 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t1550 lcOpen slot 1 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t1554 throwB slot 1 power false ki 72.9 launcherKi 5.0 paid false lcOpen true dazed false any false linked false bMash false -> lau true
+      2 t1568 bigLanded slot 1 power false launcher true ready false charged false charge 0.0 pow - landed 1 flow 0 oneRule true
+      2 t1643 lcOpen slot 1 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t1762 lcOpen slot 0 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      4 t343 lcOpen slot 1 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t347 throwB slot 1 power false ki 59.2 launcherKi 5.0 paid false lcOpen true dazed false any false linked false bMash false -> lau true
+      2 t347 throwB slot 1 power false ki 59.3 launcherKi 5.0 paid false lcOpen true dazed false any false linked false bMash false -> lau true
+      4 t361 bigLanded slot 1 power false launcher true ready true charged false charge 0.0 pow - landed 1 flow 0 oneRule true
+      4 t361 launchBeat slot 1 tpl brawl tag BRAWL kind heavy forced true why [the launcher] heavy true landed 1 flow 0 power false
+      4 t57 lcOpen slot 1 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t788 lcOpen slot 0 power false why flurry stagger 12 minStagger 12.0 quiet false ownStun 0

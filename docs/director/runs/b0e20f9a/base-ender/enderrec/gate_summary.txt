@@ -1,0 +1,6 @@
+gate: <scratch>/g/enderrec/mashdummy_power_off.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/mashdummy_power_on.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/staged_flurry_then_B_off_10.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/staged_flurry_then_B_off_3.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/staged_flurry_then_B_on_10.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/staged_flurry_then_B_on_3.txt: no SCRIPT ERROR lines

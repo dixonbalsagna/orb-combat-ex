@@ -1,0 +1,6 @@
+      power true: the close staggers 12 ticks against launcher.minStagger 12; the launcher opened at 26; B at 29: UPPERCUT launched, speed 1433
+ok    a base flurry's close opens the launcher (its stagger 12, the launcher's minimum 12)
+ok    a base string's ender launches: B three ticks after the opening (UPPERCUT, speed 1433)
+ok    ... and pressed inside the close's hit-stop, kept as the host keeps it (UPPERCUT, speed 1433)
+ok    negative control: launcher.minStagger 13, one above the close's stagger: nothing opens and the B doesn't launch (no plan)
+BASE ENDER: 0 check(s) failed

@@ -1,0 +1,100 @@
+diff --git a/sim/director/tools/base_ender_check.gd b/sim/director/tools/base_ender_check.gd
+new file mode 100644
+index 0000000..871acb6
+--- /dev/null
++++ b/sim/director/tools/base_ender_check.gd
+@@ -0,0 +1,94 @@
++extends SceneTree
++## A string's ender launches (Game Design, docs/design/buildings.md, the mashdummy paragraph; the physics packet's rule), under the data as it is
++## (main's energy model on). A base fighter in reach of an idle dummy throws a flurry of X; its close staggers the dummy and opens the launcher;
++## B, the heavy (pad B is the layout's signature action, read as the heavy by DirBrawl.isB), thrown into the opening is the launcher and
++## launches. Rows:
++##   - the close's stagger reaches launcher.minStagger, so a base flurry opens the launcher (the margin is printed: it was 12 against 12)
++##   - a base string's ender launches: B three ticks after the opening (its hit-stop over)
++##   - the same B pressed inside the close's hit-stop (one tick after the opening) is kept as the host keeps it (render/core/sim_host.gd
++##     consumes a pad's edges only after a live tick) and launches too
++##   - negative control: launcher.minStagger one above the close's stagger: nothing opens, and the same B doesn't launch
++##   godot --headless --path . --script res://sim/director/tools/base_ender_check.gd
++## Ends on the verdict line.
++
++var fails: int = 0
++
++
++func ok(c: bool, what: String) -> void:
++	if not c:
++		fails += 1
++	print(("ok    " if c else "FAIL  ") + what)
++
++
++## One staging: the flurry, then B at the opening + at (or, with no opening, at the tick it would have come). Returns what it saw.
++func _run(at: int, keep: bool) -> Dictionary:
++	SimInputData.load_and_apply()   # the pad's switches as main ships them (bNoBeam: B is the heavy)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 11, {"p1": false, "p2": false}, {"intro": false, "v2": [true, true], "slots": ["PROTAGONIST", "REFERENCE"]})
++	for f in S.fighters:
++		f.ai = null
++		f.hp = 100000.0
++		f.ki = 100.0
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	D.x = SimWrap.wrap(A.x + 58.0)
++	D.y = A.y
++	for _t in range(5):
++		SimCore.step(S, [SimIntent.new(), SimIntent.new()])
++		S.out.fx.clear()
++		S.out.feed.clear()
++	var r := {"power": S.powerOn, "openAt": -1, "stagger": -1, "launch": false, "speed": 0.0, "plan": "", "bAt": -1}
++	var pending: bool = false
++	var closeAt: int = -1
++	for t in range(220):
++		var i := SimIntent.new()
++		i.light = t < 30 and t % 6 == 0 and closeAt < 0
++		var from: int = r.openAt if r.openAt >= 0 else closeAt
++		if from >= 0 and t == from + at and r.bAt < 0:
++			i.sig = true
++			r.bAt = t
++			pending = keep
++		if from >= 0 and r.bAt >= 0 and t < r.bAt + 3:
++			i.sigHeld = true
++		if pending:
++			i.sig = true
++			i.sigHeld = true
++		var live: bool = SimCore.step(S, [i, SimIntent.new()])
++		if live:
++			pending = false
++		for f in S.out.feed:
++			if String(f.tag).ends_with("CLOSES") and closeAt < 0:
++				closeAt = t
++				var m := RegEx.create_from_string("for (\\d+) ticks")
++				var mm = m.search(String(f.sub))
++				if mm != null:
++					r.stagger = int(mm.get_string(1))
++		for e in S.out.fx:
++			if e.type == "cue" and String(e.kind) == "launcher_open" and int(e.actor) == 0 and r.openAt < 0:
++				r.openAt = t
++			elif e.type == "launch_plan" and int(e.actor) == 0:
++				r.plan = String(e.chosen)
++			elif e.type == "launch" and int(e.target) == 0:
++				r.launch = true
++				r.speed = float(e.amount)
++		S.out.fx.clear()
++		S.out.feed.clear()
++	SimCore.dispose(S)
++	return r
++
++
++func _init() -> void:
++	var lc: Dictionary = DirBrawl.cfg().launcher
++	var minS: int = int(lc.minStagger)
++	var a: Dictionary = _run(3, false)
++	print("      power %s: the close staggers %d ticks against launcher.minStagger %d; the launcher opened at %d; B at %d: %s %s, speed %.0f" % [str(a.power), int(a.stagger), minS, int(a.openAt), int(a.bAt), a.plan, "launched" if a.launch else "no launch", float(a.speed)])
++	ok(int(a.stagger) >= minS and int(a.openAt) >= 0, "a base flurry's close opens the launcher (its stagger %d, the launcher's minimum %d)" % [int(a.stagger), minS])
++	ok(bool(a.launch) and a.plan != "KNOCK BACK", "a base string's ender launches: B three ticks after the opening (%s, speed %.0f)" % [a.plan, float(a.speed)])
++	var b: Dictionary = _run(1, true)
++	ok(bool(b.launch) and b.plan != "KNOCK BACK", "... and pressed inside the close's hit-stop, kept as the host keeps it (%s, speed %.0f)" % [b.plan, float(b.speed)])
++	lc["minStagger"] = int(a.stagger) + 1
++	var c: Dictionary = _run(3, false)
++	lc["minStagger"] = minS
++	ok(int(c.openAt) < 0 and not bool(c.launch), "negative control: launcher.minStagger %d, one above the close's stagger: nothing opens and the B doesn't launch (%s)" % [int(a.stagger) + 1, c.plan if c.plan != "" else "no plan"])
++	print("BASE ENDER: %d check(s) failed" % fails)
++	quit(1 if fails > 0 else 0)

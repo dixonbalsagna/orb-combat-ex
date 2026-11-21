@@ -1,0 +1,11 @@
+      4 t1094 lcOpen slot 1 power true why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      4 t1117 lcOpen slot 1 power true why perfect_block stagger 20 minStagger 12.0 quiet false ownStun 0
+      4 t1258 lcOpen slot 1 power true why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      4 t243 lcOpen slot 0 power true why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      4 t546 launchBeat slot 0 tpl clean_hit tag CLEAN HIT kind light forced false why [] heavy false landed 2 flow 2 power true
+      4 t568 launchBeat slot 0 tpl clean_hit tag CLEAN HIT kind light forced false why [] heavy false landed 3 flow 2 power true
+      4 t58 lcOpen slot 1 power true why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      4 t678 lcOpen slot 1 power true why flurry stagger 12 minStagger 12.0 quiet false ownStun 0
+      2 t937 throwB slot 1 power true ki 70.3 launcherKi 5.0 paid false lcOpen false dazed false any false linked false bMash false -> lau false
+      2 t937 throwB slot 1 power true ki 71.0 launcherKi 5.0 paid false lcOpen false dazed false any false linked false bMash false -> lau false
+      4 t965 bigLanded slot 1 power true launcher false ready false charged false charge 0.0 pow - landed 4 flow 0 oneRule true

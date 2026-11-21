@@ -1,0 +1,6 @@
+gate: <scratch>/g/enderrec/check_main.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/buf1.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/buf2.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/at1.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/at3.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/enderrec/at1_stop.txt: no SCRIPT ERROR lines

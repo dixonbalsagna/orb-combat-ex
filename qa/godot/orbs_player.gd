@@ -11,7 +11,7 @@ const Chk = preload("res://qa/godot/checklist_core.gd")
 
 var hub: SimInputHub
 var held: Array = [{}, {}]
-var mode: String = "orbs"   # --mode=orbs (Orb's scheme), charge (B held about 50 ticks and let go, again and again: the charged heavy) or tap (B tapped): the two attack pads of the perfect-block pairing (A-AI-10); slot 0 only, with --solo
+var mode: String = "orbs"   # --mode=orbs (strikes and the guard; with --beamevery a stick beam too), kit (all of them and the face buttons), masher (X every 8 ticks), beams (only a stick beam, with --beamevery=120), charge (B held about 50 ticks and let go, again and again: the charged heavy) or tap (B tapped): the two attack pads of the perfect-block pairing (A-AI-10); slot 0 only, with --solo
 var pbpend: Array = []   # slot 0 blows waiting for what the computer did: [kind, tick, landing tick, share]
 var dbg: bool = false
 var pbres := {}   # kind -> {n, pb, guard, hit, none}; pbActor: perfect-block staggers by the actor staggered
@@ -159,7 +159,7 @@ func _btn(i: int, name: String, down: bool) -> void:
 
 
 func _drive(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumberGenerator, every: int, hold: int) -> void:
-	if mode != "orbs":
+	if mode == "charge" or mode == "tap" or mode == "masher":
 		_drive_attack(i, S, t, st, rng)
 		return
 	var me = S.fighters[i]
@@ -193,7 +193,9 @@ func _drive(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumberGenera
 					st.bPhase = 0
 					st.bAt = t + every + rng.randi_range(-every / 5, every / 5)
 	var beaming: bool = int(st.bPhase) != 0
-	if not beaming:
+	if mode == "kit":
+		_kit_faces(i, t, st, rng, beaming)
+	if not beaming and mode != "beams":
 		if t >= int(st.next):
 			var d: int = rng.randi_range(1, 4)
 			match d:
@@ -225,6 +227,26 @@ func _drive(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumberGenera
 		st.lbTo = -1
 
 
+## The whole kit (Game Design, gauntlet-plan section 9): Orb's scheme (strikes, the held guard, a stick beam at the stated pace) with the face buttons added: X tapped every 14 to 26 ticks and B held 50 ticks and let go every 300 to 390, neither while a beam is being thrown.
+func _kit_faces(i: int, t: int, st: Dictionary, rng: RandomNumberGenerator, beaming: bool) -> void:
+	if int(st.get("bUntil2", -1)) >= 0:
+		if t >= int(st.bUntil2):
+			_btn(i, "east", false)
+			st.bUntil2 = -1
+			st.bNext = t + rng.randi_range(300, 390)
+	elif t >= int(st.get("bNext", 200)) and not beaming:
+		_btn(i, "east", true)
+		st.bUntil2 = t + 50
+	if int(st.get("xUntil", -1)) >= 0:
+		if t >= int(st.xUntil):
+			_btn(i, "west", false)
+			st.xUntil = -1
+			st.xNext = t + rng.randi_range(14, 26)
+	elif t >= int(st.get("xNext", 30)) and not beaming and int(st.get("bUntil2", -1)) < 0:
+		_btn(i, "west", true)
+		st.xUntil = t + 2
+
+
 ## The attack pads of the perfect-block pairing: the left stick walks at the foe; `charge` holds B (east: the heavy, the only blow that charges) for 50 ticks and lets go, then waits 40 to 60; `tap` taps B for 3 ticks every 40 to 60. Nothing else: no guard, no beam, no strike.
 func _drive_attack(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumberGenerator) -> void:
 	var me = S.fighters[i]
@@ -232,6 +254,16 @@ func _drive_attack(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumbe
 	var dx: float = SimWrap.sdx(me.x, foe.x)
 	var dy: float = foe.y - me.y
 	hub.pad_stick(i, signf(dx) if absf(dx) > 110.0 else 0.0, signf(dy) if absf(dy) > 40.0 else 0.0)
+	if mode == "masher":
+		if int(st.get("xUntil", -1)) >= 0:
+			if t >= int(st.xUntil):
+				_btn(i, "west", false)
+				st.xUntil = -1
+		elif t >= int(st.next):
+			_btn(i, "west", true)
+			st.xUntil = t + 2
+			st.next = t + 8
+		return
 	if int(st.get("yUntil", -1)) >= 0:
 		if t >= int(st.yUntil):
 			_btn(i, "east", false)

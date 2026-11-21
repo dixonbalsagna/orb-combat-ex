@@ -1,0 +1,5 @@
+      power true, PROTAGONIST vs REFERENCE, B held 3
+      t0 BRAWL: PROTAGONIST and REFERENCE in reach: every press is a blow
+      t26 PROTAGONIST CLOSES: REFERENCE staggers in place for 12 ticks
+      t26 LAUNCHER OPEN (flurry)
+      t85 BRAWL ENDS: idle: 5 and 0 blows in 76 ticks

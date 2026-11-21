@@ -1,0 +1,19 @@
+      power true, PROTAGONIST vs REFERENCE, B held 3
+      t0 BRAWL: PROTAGONIST and REFERENCE in reach: every press is a blow
+      t26 PROTAGONIST CLOSES: REFERENCE staggers in place for 12 ticks
+      t26 LAUNCHER OPEN (flurry)
+      t27 before the step: hit-stop 0.0333, slot 0 state locked, its stun 0, B pressed false
+      t28 before the step: hit-stop 0.0167, slot 0 state locked, its stun 0, B pressed true
+      t29 before the step: hit-stop 0.0000, slot 0 state locked, its stun 0, B pressed false
+      t29 cue press_ack held b
+      t30 before the step: hit-stop 0.0000, slot 0 state locked, its stun 0, B pressed false
+      t30 cue blow heavy lunge
+      t30 cue launcher_close used 
+      t30 cue windup start b
+      t43 LAUNCH: UPPERCUT (earned: the launcher): UPPERCUT 26  |  DRIVE DOWN 10  |  SMASH ACROSS -72
+      t43 BRAWL ENDS: launch: 6 and 0 blows in 34 ticks
+      t43 cue windup end b
+      t43 PLAN UPPERCUT (landed before 0, flow 0) UPPERCUT 26|DRIVE DOWN 10|SMASH ACROSS -72
+      t43 cue chase_ready  
+      t43 LAUNCH speed 1433
+      t43 cue brawl_end launch 
