@@ -1,0 +1,48 @@
+# The window of 2026-11-20 (the EP's go), one clip at a time through Tools' run-pixels (below-normal, four readings, none starved or void)
+# before = g1 with the GW1a stack's camera (s422's split_rig and camera_params); after = + gw1b-scape-side + gw1b-keep-human. Web exports of the scratch tree g1.
+
+START rush_a 17:36:53
+END rush_a rc=1 17:59:47
+  rushcity-normal: FAIL, primary 5 general 0 red, area-15% 6, 2 s memory 4.5, 0 dips, 710s, worst of 4 readings (960x540 at scale 2)
+  rushcity-reduced: FAIL, primary 5.5 general 0 red, area-15% 7.5, 2 s memory 5.5, 0 dips, 664s, worst of 4 readings (1024x768 at scale 2)
+START sig_a 17:59:47
+END sig_a rc=1 18:18:39
+  signature-normal: FAIL, primary 3 general 0 red, area-15% 3.5, 2 s memory 3, 0 dips, 568s, worst of 4 readings (1024x768 at scale 2)
+  signature-reduced: FAIL, primary 3 general 0 red, area-15% 3, 2 s memory 3.5, 0 dips, 564s, worst of 4 readings (960x540 at scale 1)
+START ai106_a 18:18:39
+END ai106_a rc=0 18:31:48
+  ai-106-normal: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 2, 0 dips, 399s, worst of 4 readings (960x540 at scale 1)
+  ai-106-reduced: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 2, 0 dips, 390s, worst of 4 readings (960x540 at scale 1)
+START rush_b 18:31:48
+END rush_b rc=1 18:50:13
+  rushcity-normal: FAIL, primary 5 general 0 red, area-15% 6, 2 s memory 4.5, 0 dips, 559s, worst of 4 readings (960x540 at scale 2)
+  rushcity-reduced: FAIL, primary 5.5 general 0 red, area-15% 7, 2 s memory 5.5, 0 dips, 546s, worst of 4 readings (960x540 at scale 2)
+START sig_b 18:50:14
+END sig_b rc=1 19:07:04
+  signature-normal: FAIL, primary 3 general 0 red, area-15% 3.5, 2 s memory 3, 0 dips, 557s, worst of 4 readings (960x540 at scale 2)
+  signature-reduced: FAIL, primary 3 general 0 red, area-15% 3, 2 s memory 3.5, 0 dips, 454s, worst of 4 readings (960x540 at scale 1)
+START ai106_b 19:07:05
+END ai106_b rc=0 19:20:04
+  ai-106-normal: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 2, 0 dips, 392s, worst of 4 readings (960x540 at scale 1)
+  ai-106-reduced: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 2, 0 dips, 387s, worst of 4 readings (960x540 at scale 1)
+START clash_stack 19:20:04
+END clash_stack rc=0 19:28:12
+  clash-reduced: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 2.5, 0 dips, 488s, worst of 4 readings (1024x768 at scale 1)
+START clash_nov9 19:28:12
+END clash_nov9 rc=0 19:37:46
+  clash-reduced: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 2.5, 0 dips, 575s, worst of 4 readings (1024x768 at scale 1)
+
+w2_ai106_a     ai-106-normal      960x540 s1: 2.5 @968 | 960x540 s2: 2.5 @968 | 1024x768 s1: 1.5 @471 | 1024x768 s2: 1.5 @471 | fps 13.31
+w2_ai106_a     ai-106-reduced     960x540 s1: 2.5 @968 | 960x540 s2: 2.5 @968 | 1024x768 s1: 1.5 @471 | 1024x768 s2: 1.5 @62 | fps 14
+w2_ai106_b     ai-106-normal      960x540 s1: 2.5 @968 | 960x540 s2: 2.5 @968 | 1024x768 s1: 1.5 @471 | 1024x768 s2: 1.5 @471 | fps 13.87
+w2_ai106_b     ai-106-reduced     960x540 s1: 2.5 @968 | 960x540 s2: 2.5 @968 | 1024x768 s1: 1.5 @471 | 1024x768 s2: 1.5 @62 | fps 14.11
+w2_clash_nov9  clash-reduced      960x540 s1: 1.5 @353 | 960x540 s2: 1.5 @353 | 1024x768 s1: 2.5 @353 | 1024x768 s2: 2.5 @353 | fps 8.83
+w2_clash_stack clash-reduced      960x540 s1: 1.5 @353 | 960x540 s2: 1.5 @353 | 1024x768 s1: 2.5 @353 | 1024x768 s2: 2.5 @353 | fps 12.25
+w2_rush_a      rushcity-normal    960x540 s1: 4.5 @757 | 960x540 s2: 4.5 @757 | 1024x768 s1: 5 @377 | 1024x768 s2: 5 @376 | fps 8.49
+w2_rush_a      rushcity-reduced   960x540 s1: 5.5 @785 | 960x540 s2: 5.5 @785 | 1024x768 s1: 5.5 @359 | 1024x768 s2: 5.5 @788 | fps 9.23
+w2_rush_b      rushcity-normal    960x540 s1: 4.5 @761 | 960x540 s2: 4.5 @761 | 1024x768 s1: 5 @377 | 1024x768 s2: 5 @376 | fps 13.12
+w2_rush_b      rushcity-reduced   960x540 s1: 5.5 @785 | 960x540 s2: 5.5 @785 | 1024x768 s1: 5.5 @359 | 1024x768 s2: 5.5 @788 | fps 13.72
+w2_sig_a       signature-normal   960x540 s1: 3 @1155 | 960x540 s2: 3 @1155 | 1024x768 s1: 2.5 @819 | 1024x768 s2: 3 @1156 | fps 9.28
+w2_sig_a       signature-reduced  960x540 s1: 2.5 @908 | 960x540 s2: 2.5 @817 | 1024x768 s1: 2.5 @819 | 1024x768 s2: 3 @1156 | fps 9.31
+w2_sig_b       signature-normal   960x540 s1: 3 @1155 | 960x540 s2: 3 @856 | 1024x768 s1: 2.5 @822 | 1024x768 s2: 3 @1156 | fps 9.28
+w2_sig_b       signature-reduced  960x540 s1: 2.5 @908 | 960x540 s2: 2.5 @806 | 1024x768 s1: 2.5 @819 | 1024x768 s2: 3 @1156 | fps 13.79

@@ -1,0 +1,7 @@
+# Where before and after differ (share of pixels off by more than 8 in any channel, per frame; scratch fdiff.cjs). Camera digests changed: ai-106 151-1071, rushcity 480-1231 (signature isn't in the digest's clip list).
+ai-106-reduced: frames 1200; over 1%: 119 in runs 73-73 152-259 931-939 947-947; over 10%: 155-252 254-256; worst 85.5% at 210
+rushcity-reduced: frames 1500; over 1%: 112 in runs 57-59 93-96 128-133 481-483 671-680 724-742 1108-1174; over 10%: 724-738 740-742 1111-1124; worst 31.0% at 1120
+signature-reduced: frames 1500; over 1%: 103 in runs 118-157 159-180 232-238 873-880 1285-1310; over 10%: 118-156 232-238 1290-1310; worst 45.2% at 136
+
+# The clash, default view: the kept 9 November page (words tiles=1&meteor=loud&planet=7, --legacy-hook) against the GW1a stack (a-camera-01's)
+clash: frames 1500; over 1%: 1500 in runs 1-end; over 10%: 454-460; worst 11.6% at 457
