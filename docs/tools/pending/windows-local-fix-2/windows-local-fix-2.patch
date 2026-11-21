@@ -1,0 +1,17 @@
+diff --git a/.github/workflows/desktop-builds.yml b/.github/workflows/desktop-builds.yml
+index 844542e..644f524 100644
+--- a/.github/workflows/desktop-builds.yml
++++ b/.github/workflows/desktop-builds.yml
+@@ -374,9 +374,11 @@ jobs:
+           echo "${TEMPLATES_SHA512}  templates.tpz" | sha512sum -c -
+           dest="${APPDATA}/Godot/export_templates/4.7.2.stable"
+           mkdir -p "${dest}"
+-          7z e -y templates.tpz templates/version.txt templates/windows_release_x86_64.exe -o"${dest}" > /dev/null
++          # the console wrapper is its own template (windows_release_x86_64_console.exe): with the preset asking for it the export copies it beside the exe as orb-combat-ex.console.exe (run 44897597667: with only the windowed template the preset's value of 2 wrote nothing)
++          7z e -y templates.tpz templates/version.txt templates/windows_release_x86_64.exe templates/windows_release_x86_64_console.exe -o"${dest}" > /dev/null
+           rm templates.tpz
+           ls -l "${dest}"
++          test -f "${dest}/windows_release_x86_64_console.exe"
+           echo "GODOT=${RUNNER_TEMP}/godot-win/Godot_v${GODOT_VERSION}_win64_console.exe" >> "$GITHUB_ENV"
+           "${RUNNER_TEMP}/godot-win/Godot_v${GODOT_VERSION}_win64_console.exe" --version
+       # The same preparation of this checkout as the first job (the lock, the version fields, ETC2/ASTC import), so the exe is the one the first job packs; the route scan and the notices were done by the first job.

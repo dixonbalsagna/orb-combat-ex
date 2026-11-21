@@ -14,3 +14,7 @@ Run [44896954723](https://github.com/dixonbalsagna/orb-combat-ex/actions/runs/44
 **What failed:** `./orb-combat-ex.console.exe: No such file or directory` (exit 127). The export wrote `orb-combat-ex.exe` alone. The Windows preset has `debug/export_console_wrapper=1`, which is "debug exports only", and the job exports release; "debug and release" is 2.
 
 **The fix** is parked in `docs/tools/pending/windows-local-fix/`: a step that sets the Windows preset's value to 2 in that runner's checkout only. Not yet proven: whether Godot 4.7.2 then writes the wrapper on a release export, and everything after it (the bench's stdout through the wrapper, the hash comparison with the Linux build, the window and the still under ANGLE/WARP).
+
+## Second dispatch (run 44897597667, main 5bf9ff46, same inputs): failed at the same step
+
+With the wrapper step landed the preset reads `debug/export_console_wrapper=2` for Windows (the log lines show 69:=2, 115:=1, 148:=1), the export ran, and again only `orb-combat-ex.exe` (121 MB) was written; the bench step failed with the same "No such file" (exit 127). Cause: the console wrapper is a separate template (`windows_release_x86_64_console.exe`) and the job's `7z e` installed only the windowed one. Fix parked: `docs/tools/pending/windows-local-fix-2/`. First failed run of the EP's allowance of three after it.
