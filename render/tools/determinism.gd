@@ -62,7 +62,7 @@ func _run() -> void:
 		if intro:
 			ok = await _intro_runs(seed) and ok
 			continue
-		var pure: Array = _pure(seed, FIGHTS if fights else {})
+		var pure: Array = _pure(seed, _as_host(FIGHTS if fights else {}))
 		var n: int = pure.size() - 1
 		var last: int = pure[n][0]
 		var runs: Dictionary = {
@@ -89,6 +89,7 @@ func _intro_runs(seed: int) -> bool:
 		main.manual = false   # the game's own setup, with the host's intro memory
 		var su: Dictionary = main.host.hub.setup()
 		su.merge(main._match_setup(seed), true)
+		su = _as_host(su)
 		main.manual = true
 		var pure: Array = _pure(seed, su)
 		var n: int = pure.size() - 1
@@ -101,6 +102,11 @@ func _intro_runs(seed: int) -> bool:
 		ok = ok and diff == ""
 		print("seed %d, %-12s intro %s: %d checkpoints to tick %d, %s" % [seed, w[0], str(su.get("intro")), pure.size(), pure[n][0], "same as the sim alone" if diff == "" else "DIFFERS: " + diff])
 	return ok
+
+
+## A setup as the host sends it: with the globe ground on, the planet's keys too (RenderTileGround.setup_of, main.start_match).
+func _as_host(su: Dictionary) -> Dictionary:
+	return RenderTileGround.setup_of(su) if RenderTileGround.on else su
 
 
 ## The sim alone, as the parity tools run it: [[tick, hash], ...] every EVERY ticks, then the last tick. setup: the

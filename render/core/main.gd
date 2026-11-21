@@ -91,6 +91,7 @@ var particles: ParticleView
 var host: SimHost
 var started: bool = false
 var manual: bool = false          # tools call frame() or render_view() themselves
+var strip_ground: bool = false    # a tool's: the old strip ground, as --notiles (set before the main scene enters the tree)
 var _attach_pending: bool = false   # the split view waits for the boot's match, started in pieces (_match_built attaches it)
 var _match_ever: bool = false     # a match has been built in this session (a load that is cancelled before the first one starts a plain one under the menu)
 var _planet_next: Dictionary = {} # the planet part of the next menu-started match's setup (planet_part), merged by _match_setup
@@ -242,7 +243,8 @@ func _ready() -> void:
 		add_child(boot)
 		boot.begin([pane], RenderLook.BOOT_WORDS)
 	SimHost.draw_others = args.has("others")   # 2v2: the other fight drawn; off; --others, ?others=1 on a local page
-	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
+	RenderTileGround.on = not args.has("notiles") and not strip_ground   # the globe ground: on (Orb's decision 3, 2026-11-13; A-RENDER-01);
+	# --notiles, ?notiles=1 on a local page, or a tool's strip_ground: the old strip ground for a test. The camera's block below follows it.
 	# The camera Orb played on 9 November, from Camera's data (data/camera/swing.json "pieces", A-CAMERA-01), at a plain start. The swing and the
 	# peak launch also need the globe ground drawn: the peak shot's widest view needs the globe (docs/camera/swing-view.md), so on the flat ground
 	# they stay off.
@@ -261,7 +263,8 @@ func _ready() -> void:
 	RenderTileGround.share = float(args.get("tileshare", 100.0)) / 100.0
 	RenderTileGround.gen = int(args.get("tilegen", 3))
 	RenderTileGround.fore_tone = not args.has("nofore")
-	RenderTileGround.crater_look = args.has("craterlook")
+	RenderTileGround.crater_look = not args.has("nocraterlook")   # Art's crater and scar look on the tile ground: on (Orb's decision 3, 2026-11-13;
+	# A-RENDER-04: the black fill gone); --nocraterlook, ?nocraterlook=1 on a local page, the old full-width scar to compare
 	host.stepped_start = not manual and not args.has("syncstart") and not args.has("flashcap")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
 	if args.has("human"):
@@ -1673,8 +1676,8 @@ const HOLD_STYLE_OPTIONS := {"guard_style": "guard", "manoeuvre_style": "dodge",
 ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
 ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
 ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
-const LOCAL_ONLY_ARGS: Array = ["planet", "touch", "preview", "craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
-const URL_ARGS: Array = ["planet", "touch", "preview", "craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+const LOCAL_ONLY_ARGS: Array = ["planet", "touch", "preview", "craterlook", "nocraterlook", "others", "tiles", "notiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+const URL_ARGS: Array = ["planet", "touch", "preview", "craterlook", "nocraterlook", "others", "tiles", "notiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

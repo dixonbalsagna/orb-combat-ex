@@ -28,6 +28,7 @@ func _initialize() -> void:
 	root.add_child(vpn)
 	main = load("res://render/main.tscn").instantiate()
 	main.manual = true
+	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
 	vpn.add_child(main)
 	_run.call_deferred()
 

@@ -44,6 +44,7 @@ func _initialize() -> void:
 	root.add_child(vpn)
 	main = load("res://render/main.tscn").instantiate()
 	main.manual = true
+	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (A-RENDER-01's classing run)
 	vpn.add_child(main)
 	_run.call_deferred()
 
@@ -116,6 +117,7 @@ func _check(S: SimState, label: String) -> void:
 			fails.append("%s: column %d, the bowl formula at z = 0 is %.4f off deform" % [label, i, d])
 			break
 	var fresh := GroundField.new()
+	fresh.tile_field = gfld.tile_field   # as the kept one: on the tile ground a crater the store holds is held in both
 	fresh.rebuild(S)
 	if fresh.lists != gfld.lists or fresh.g != gfld.g or fresh.cdata != gfld.cdata:
 		fails.append("%s: a rebuild from state differs from the kept-up-to-date field (lists %s, residual %s, craters %s)" % [label, fresh.lists == gfld.lists, fresh.g == gfld.g, fresh.cdata == gfld.cdata])
