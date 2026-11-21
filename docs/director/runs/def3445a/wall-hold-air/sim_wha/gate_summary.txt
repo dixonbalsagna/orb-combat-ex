@@ -1,0 +1,13 @@
+gate: <scratch>/g/sim_wha/city_push_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/core_load_split.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/core_two_states_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/flight_strike_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/follow_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/knock_wall_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/parity.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/plane_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/swing_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/w_brunt_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/w_wall_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/w_wall_hold_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_wha/wall_return_check.txt: no SCRIPT ERROR lines

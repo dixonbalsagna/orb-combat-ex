@@ -1,0 +1,15 @@
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index b2b17fe..8296322 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -1759,6 +1759,10 @@
+                   "type": "integer",
+                   "minimum": 0
+                 },
++                "dropOnPress": {
++                  "type": "boolean",
++                  "description": "A player's waiting stick-beam release is dropped once he presses for anything else after letting go (DirBeamMove.dropsOnPress; A-COMBAT-05)."
++                },
+                 "stageTicks": {
+                   "type": "array",
+                   "items": {

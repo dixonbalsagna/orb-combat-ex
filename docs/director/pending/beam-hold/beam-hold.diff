@@ -1,0 +1,361 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index 9e03606..93793c0 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -277,9 +277,12 @@
+       "standoffBh": 9.0,
+       "stationary": true,
+       "releaseTell": 6,
++      "holdFromTicks": 12,
++      "holdMove": 0.1,
++      "shoveSec": 0.25,
+       "dodgeBefore": 18,
+       "dodgeAfter": 2,
+-      "_note": "Beams that travel (docs/design/rule-of-cool-map.md section 5, row 40). stationary: nothing moves the shooter in a beam's charge, so no rise and no stand-off, and a stick's hold is the charge: it fires on the release, after what's left of the charge's warning and at least releaseTell (Orb, first play). dodgeBefore, dodgeAfter: a dodge counts this many ticks either side of the front's arrival, and the hit lands dodgeAfter past it (Game Design's ruling). rows: ticks from hand to him, the floor plus the distance at this speed, up to the ceiling. answerKi: a fire-back by the stick inside the window, at level 1's ki. meetMax: how far past the middle a late answer's struggle can start, toward his hands."
++      "_note": "Beams that travel (docs/design/rule-of-cool-map.md section 5, row 40). stationary: nothing moves the shooter in a beam's charge, so no rise and no stand-off, and a stick's hold is the charge: it fires on the release, after what's left of the charge's warning and at least releaseTell (Orb, first play). holdFromTicks, holdMove: past this the hold leaves him this share of his flying speed, and no dash. shoveSec: from under standoffBh the firing throws the other back to it over this long, no damage or stun (docs/design/power-scale.md, the last section). dodgeBefore, dodgeAfter: a dodge counts this many ticks either side of the front's arrival, and the hit lands dodgeAfter past it (Game Design's ruling). rows: ticks from hand to him, the floor plus the distance at this speed, up to the ceiling. answerKi: a fire-back by the stick inside the window, at level 1's ki. meetMax: how far past the middle a late answer's struggle can start, toward his hands."
+     },
+     "travelTicks": 20,
+     "afterTicks": 42,
+diff --git a/sim/core/dir.gd b/sim/core/dir.gd
+index 20d1e0d..1b1ec5e 100644
+--- a/sim/core/dir.gd
++++ b/sim/core/dir.gd
+@@ -37,6 +37,11 @@ static func zipping(f) -> bool:
+ 	return _d("zip.gd").zipping(f)
+ 
+ 
++## DirStick.holdMove: what holding a beam leaves of his flying speed.
++static func holdMove(S: SimState, f) -> float:
++	return _d("stick.gd").holdMove(S, f)
++
++
+ ## DirEnding.wearMul: what the ending does to a wound's wear.
+ static func endingWearMul(f) -> float:
+ 	return _d("ending.gd").wearMul(f)
+diff --git a/sim/core/fighter.gd b/sim/core/fighter.gd
+index aba1775..d3a66e6 100644
+--- a/sim/core/fighter.gd
++++ b/sim/core/fighter.gd
+@@ -523,6 +523,10 @@ static func formBreak(S: SimState, f) -> void:
+ ## velocity toward the stick times this (the vertical toward 0.85 of it). One read for the director and the view.
+ static func flightSpeed(S: SimState, f, dash: bool) -> float:
+ 	var sp: float = 430.0 * f.spd * SimForms.speedMul(S, f)   # the tier's step (with forms: his own steps, by the coil's factor on his form)
++	var hold: float = SimDir.holdMove(S, f)
++	if hold != 1.0:
++		sp *= hold   # holding a beam: he barely moves, and has no dash
++		dash = false
+ 	if SimWounds.battered(f, SimWounds.LEGS):
+ 		sp *= f.wd.legsSpeed
+ 	if f.stance == 2.0:
+@@ -639,7 +643,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
+ 		else:
+ 			var sp: float = flightSpeed(S, f, i.dash)
+ 			var k: float = 1.0 - SimDetMath.pow(0.0008, dt)
+-			if S.kickOn:
++			if S.kickOn and SimDir.holdMove(S, f) == 1.0:
+ 				SimKick.move(S, f, i, sp, k)
+ 			else:
+ 				f.vx += (i.mx * sp - f.vx) * k
+diff --git a/sim/director/beamplay.gd b/sim/director/beamplay.gd
+index eaaf763..4b021dd 100644
+--- a/sim/director/beamplay.gd
++++ b/sim/director/beamplay.gd
+@@ -138,6 +138,26 @@ static func fromStick(S: SimState, f, held: int) -> void:
+ 		fb.t = ex.t + float(tell) / DirData.TICKS_PER_SEC
+ 
+ 
++## Up close, the firing throws the other back to the stand-off, ahead of the front, like a shock wave: no damage and no stun, and he keeps his
++## hands, so he can still answer. It stops at a wall. Returns where he'll be.
++static func _shove(S: SimState, A, D) -> float:
++	if not stationary():
++		return D.x
++	var x: float = standoffX(S, D, A, D.y)
++	if x == D.x:
++		return x
++	var r := SimState.Rush.new()
++	r.px = x
++	r.py = D.y
++	r.pz = D.z
++	r.end = S.T + float(frontCfg().shoveSec)
++	D.rush = r
++	D.vx = 0.0
++	D.vy = 0.0
++	SimFx.cue(S, D, "beam_shove", "", "")
++	return x
++
++
+ ## Where the shooter's charge takes him: a signature from under the stand-off, by anyone, kicks him back, so the fronts don't meet at their
+ ## hands. He stops at a wall: ground or a roof that stands above where he's rising to. Off, or already far enough, he stays where he is.
+ static func standoffX(S: SimState, A, D, y: float) -> float:
+@@ -214,12 +234,13 @@ static func held(f, o) -> int:
+ static func fire(S: SimState, ex, args) -> void:
+ 	var A = ex.A
+ 	var D = ex.D
+-	var dist: float = maxf(float(args.dist), absf(SimWrap.sdx(A.x, D.x))) if frontOn() else float(args.dist)   # (the stand-off has moved him since it was planned)
++	var toX: float = _shove(S, A, D)
++	var dist: float = maxf(float(args.dist), absf(SimWrap.sdx(A.x, toX))) if frontOn() else float(args.dist)   # (the stand-off has moved him since it was planned)
+ 	var tv: int = frontTicks(dist, "signature") if frontOn() else int(data().travelTicks)
+ 	var len: float = SimMathx.jmin(4200.0 * SimConst.WS, dist + float(A.ld.beamOvershoot[DirBeam._tierIx(A)]) * SimConst.WS)
+ 	var ox: float = A.x
+ 	var oy: float = A.y + 38.0
+-	var dxs: float = SimWrap.sdx(ox, D.x)
++	var dxs: float = SimWrap.sdx(ox, toX)
+ 	var dyy: float = (D.y + 36.0) - oy
+ 	var L: float = SimDamage.jor(SimDetMath.hypot(dxs, dyy), 1.0)
+ 	DirBeam.fireBeam(S, A, ox, oy, dxs / L, dyy / L, len, String(args.variant))
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index f29bd0c..ab50b1d 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -1391,6 +1391,7 @@ static func contact(S: SimState, ex, b) -> void:
+ 		if energy != "":
+ 			_eLand(S, ex, f, o, energy, "armour")
+ 		return   # it met a heavy's armour: its damage, and nothing more (no run, no reel, no close)
++	DirStick.holdHit(S, o)
+ 	if energy != "":
+ 		_eLand(S, ex, f, o, energy, "hit", energy == "blast" and _g(f, RUN) >= RUN_U * int(c.energy.reach.blast.enderRun))
+ 	# A wound blow ends the wind-up it lands on: a medium's always, a heavy's before its armour holds a medium.
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index eec9638..a22a33f 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -210,6 +210,26 @@ static func mediumHolds(S: SimState, o) -> bool:
+ 	return heldFor(S, o) >= int(cfg().armour.mediumUntilTicks)
+ 
+ 
++## What's left of his flying speed: past the quick flick, holding a beam, he barely moves, with no dash (SimFighter.flightSpeed, by SimDir).
++## 1 otherwise. A kite's hold isn't a charge, so it keeps his speed.
++static func holdMove(S: SimState, f) -> float:
++	if not on() or _g(f, ST_ON) != 3 or f.beamCharge == null or not DirBeamPlay.stationary() or heldFor(S, f) < int(DirBeamPlay.frontCfg().holdFromTicks):
++		return 1.0
++	return float(DirBeamPlay.frontCfg().holdMove)
++
++
++static func _holdLost(S: SimState, f) -> void:
++	_clear(f)
++	f.beamCharge = null
++	SimFx.cue(S, f, "stick_refused", "beam", "taken")
++
++
++## A blow its armour didn't take has landed on him (DirBrawl.contact): a beam's hold is lost.
++static func holdHit(S: SimState, o) -> void:
++	if on() and _g(o, ST_ON) == 3 and DirBeamPlay.stationary():
++		_holdLost(S, o)
++
++
+ ## A charged strike met nothing (DirBrawl.contact): a dodge or a step back has made it miss, and he's open.
+ static func missed(S: SimState, f, a: Dictionary) -> void:
+ 	if armourOn() and int(a.get("stickL", 0)) > 0:
+@@ -348,8 +368,8 @@ static func _start(S: SimState, f, i) -> void:
+ 			return   # a beam's coming: in its window it fires at once and the fronts meet; in its charge it fires as he fires
+ 		_s(f, ST_ON, 3)   # the energy layer's stick is the beam: it fires on the release
+ 		_s(f, ST_AT, DirBrawl._now(S) + 1)
+-		if DirBeamPlay.stationary():
+-			f.beamCharge = S.T   # the hold is the charge, and shows
++		if DirBeamPlay.stationary() and (mask & LT) == 0:
++			f.beamCharge = S.T   # the hold is the charge, and shows (the kite's isn't one: power-scale.md, the last section)
+ 		SimFx.cue(S, f, "stick_start", NAMES[dir], str(mask))
+ 		return
+ 	if _cant(S, f):
+@@ -478,13 +498,11 @@ static func tick(S: SimState, dt: float) -> void:
+ 		if _g(f, ST_ON) == 0:
+ 			continue
+ 		if _g(f, ST_ON) == 3:
+-			if DirBeamPlay.stationary() and ((f.state != "free" and f.state != "charging") or f.stunTicks > 0):
+-				_clear(f)   # something took him: the charge is lost
+-				f.beamCharge = null
+-				SimFx.cue(S, f, "stick_refused", "beam", "taken")
++			if DirBeamPlay.stationary() and (f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0):
++				_holdLost(S, f)   # something took him
+ 				continue
+ 			if i.rsRelease or not i.rsHeld:
+-				_beamGo(S, f, int(i.rsLevel) if i.rsRelease else int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1), true)), DirBrawl._now(S) - (_g(f, ST_AT) - 1))
++				_beamGo(S, f, 0 if (DirBeamPlay.stationary() and f.beamCharge == null) else (int(i.rsLevel) if i.rsRelease else int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1), true))), DirBrawl._now(S) - (_g(f, ST_AT) - 1))
+ 			continue
+ 		var ex = S.dirS.ex
+ 		var b = _beat(ex, f)
+@@ -538,6 +556,8 @@ static func _cancel(S: SimState, f) -> void:
+ 		_s(f, ST_BUF, 0)
+ 	if _g(f, ST_ON) == 0:
+ 		return
++	if _g(f, ST_ON) == 3 and DirBeamPlay.stationary():
++		f.beamCharge = null   # the hold was the charge, and it's dropped
+ 	var ex = S.dirS.ex
+ 	if ex != null and DirBrawl._g(f, DirBrawl.LINE) != 0:
+ 		DirBrawl._wEnd(S, f, DirBrawl.MEDIUM, 3)
+diff --git a/sim/director/tools/beam_front_check.gd b/sim/director/tools/beam_front_check.gd
+index 61c7868..7df9132 100644
+--- a/sim/director/tools/beam_front_check.gd
++++ b/sim/director/tools/beam_front_check.gd
+@@ -272,6 +272,9 @@ func _standoff() -> void:
+ 		SimCore.dispose(S)
+ 	cfg["stationary"] = true
+ 	_release()
++	_holdMoves()
++	_kite()
++	_shoved()
+ 
+ 
+ ## The stick: the hold's the charge and shows, and it fires on the release, after what's left of the warning.
+@@ -341,3 +344,119 @@ func _cantPay() -> void:
+ 	_expect(said, "can't pay: no answer, and the press says why")
+ 	SimCore.dispose(S)
+ 
++
++## Past 0.2 s he barely moves, with no dash; a flick's first ticks move as ever.
++func _holdMoves() -> void:
++	DirStick.setForce(1)
++	var S := _fresh(6000.0)
++	var A = S.fighters[0]
++	var w := SimIntent.new()
++	w.rsStart = true
++	w.rsHeld = true
++	w.rsDir = SimStrikeRead.RIGHT
++	w.rsMask = DirStick.RB
++	w.stanceMask = DirStick.RB
++	w.mx = -1.0
++	w.dash = true
++	_step(S, w)
++	for _k in range(90):
++		var h := SimIntent.new()
++		h.rsHeld = true
++		h.rsDir = SimStrikeRead.RIGHT
++		h.rsMask = DirStick.RB
++		h.stanceMask = DirStick.RB
++		h.mx = -1.0
++		h.dash = true
++		_step(S, h)
++	var x0: float = A.x
++	var top: float = SimFighter.flightSpeed(S, A, true)
++	for _k in range(30):
++		var h := SimIntent.new()
++		h.rsHeld = true
++		h.rsDir = SimStrikeRead.RIGHT
++		h.rsMask = DirStick.RB
++		h.stanceMask = DirStick.RB
++		h.mx = -1.0
++		h.dash = true
++		_step(S, h)
++	var went: float = absf(SimWrap.sdx(x0, A.x)) * 2.0
++	_expect(A.beamCharge != null, "the hold shows as the charge")
++	var free: float = 430.0 * A.spd * SimForms.speedMul(S, A)
++	print("      holding, flat out: %.0f u/s, against %.0f with no hold or dash" % [went, free])
++	_expect(top <= free * 0.1 * 1.4, "he barely moves, and the dash does nothing (%.0f of %.0f)" % [top, free])
++	_expect(went <= free * 0.2, "... as he flies, with the kick's overspeed on or off (%.0f)" % went)
++	var cn := SimIntent.new()
++	cn.rsCancel = true
++	cn.rsDir = SimStrikeRead.RIGHT
++	cn.rsMask = DirStick.RB
++	_step(S, cn)
++	_expect(A.beamCharge == null and DirStick._g(A, DirStick.ST_ON) == 0, "a dodge or guard press drops it, and it stops showing")
++	_expect(SimFighter.flightSpeed(S, A, false) > free * 0.5, "... and he has his speed back")
++	SimCore.dispose(S)
++	DirStick.setForce(-1)
++
++
++## The kite (LT + RB): a hold charges nothing, and the release is the quick blast.
++func _kite() -> void:
++	DirStick.setForce(1)
++	var S := _fresh(2400.0)
++	var A = S.fighters[0]
++	var m: int = DirStick.RB | DirStick.LT
++	var w := SimIntent.new()
++	w.rsStart = true
++	w.rsHeld = true
++	w.rsDir = SimStrikeRead.RIGHT
++	w.rsMask = m
++	w.stanceMask = m
++	_step(S, w)
++	for _k in range(60):
++		var h := SimIntent.new()
++		h.rsHeld = true
++		h.rsDir = SimStrikeRead.RIGHT
++		h.rsMask = m
++		h.stanceMask = m
++		_step(S, h)
++	_expect(A.beamCharge == null, "the kite's hold isn't a charge")
++	var r := SimIntent.new()
++	r.rsRelease = true
++	r.rsDir = SimStrikeRead.RIGHT
++	r.rsMask = m
++	r.rsLevel = 3
++	r.stanceMask = m
++	_fireAt = -1
++	_step(S, r)
++	for _k in range(80):
++		_step(S)
++	_expect(_fireAt < 0, "... and no beam comes of it")
++	SimCore.dispose(S)
++	DirStick.setForce(-1)
++
++
++## Up close the firing throws the other back to 9 bh over 0.25 s: no damage and no stun, and he can still answer. Far off, nothing.
++func _shoved() -> void:
++	var need: float = float(DirBeamPlay.frontCfg().standoffBh) * DirInterrupt.BH
++	var S := _fresh(58.0)
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var x0: float = A.x
++	var hp: float = D.hp
++	_fire(S)
++	var t0: int = S.tick
++	for _k in range(16):
++		_step(S)
++	var gap: float = absf(SimWrap.sdx(A.x, D.x))
++	print("      from 58: %.0f apart 16 ticks after the fire, %d ticks to arrive" % [gap, _openN - t0])
++	_expect(gap >= need - 40.0, "up close, the firing throws him back to the stand-off (%.0f)" % gap)
++	_expect(absf(SimWrap.sdx(x0, A.x)) < 1.0, "... and the shooter stays put")
++	_expect(D.hp == hp and D.stunTicks == 0, "... no damage, no stun")
++	_expect(DirBeamPlay.fireBack(S, D), "... he keeps his hands: he can fire back")
++	SimCore.dispose(S)
++	var S2 := _fresh(3000.0)
++	var d2 = S2.fighters[1]
++	var x2: float = d2.x
++	_fire(S2)
++	for _k in range(16):
++		_step(S2)
++	_expect(absf(SimWrap.sdx(x2, d2.x)) < 1.0, "from far off, nothing moves him")
++	SimCore.dispose(S2)
++
+diff --git a/sim/director/tools/stick_check.gd b/sim/director/tools/stick_check.gd
+index 8eba20f..ab2914b 100644
+--- a/sim/director/tools/stick_check.gd
++++ b/sim/director/tools/stick_check.gd
+@@ -205,6 +205,13 @@ func _armour() -> void:
+ 		_step(S2, h, light if k == 16 else null)
+ 	print("      a light on a beam's hold: he took %.1f, stun %d, holding %s" % [hp2 - A2.hp, A2.stunTicks, str(DirStick._g(A2, DirStick.ST_ON) == 3)])
+ 	_expect(DirStick._g(A2, DirStick.ST_ON) == 3 and hp2 - A2.hp <= float(DirBrawl.cfg().light.damage) * 0.31, "a light on a beam's hold: it goes on, at 30%")
++	var rel: SimIntent = _word(false, true, false, SimStrikeRead.LEFT, 2)
++	rel.rsMask = DirStick.RB
++	rel.stanceMask = DirStick.RB
++	_step(S2, rel)
++	for _k in range(60):
++		_step(S2)
++	print("      let go in the brawl: exchange %s, beams %d, charge showing %s" % [S2.dirS.ex.kind if S2.dirS.ex != null else "none", S2.beams.size(), str(A2.beamCharge != null)])
+ 	SimCore.dispose(S2)
+ 	# A dodge makes it miss, and he's open.
+ 	var S3 := _pair()
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 5051ffb..a65a20e 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -1691,6 +1691,19 @@
+             "releaseTell": {
+               "type": "integer",
+               "minimum": 0
++            },
++            "holdFromTicks": {
++              "type": "integer",
++              "minimum": 0
++            },
++            "holdMove": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1
++            },
++            "shoveSec": {
++              "type": "number",
++              "minimum": 0
+             }
+           },
+           "required": [

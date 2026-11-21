@@ -1,0 +1,216 @@
+diff --git a/data/director/stick.json b/data/director/stick.json
+index df6b6ee..022c5ee 100644
+--- a/data/director/stick.json
++++ b/data/director/stick.json
+@@ -36,2 +36,9 @@
+   "chargeRecover": 16,
++  "armour": {
++    "enabled": false,
++    "fromTicks": 12,
++    "mediumUntilTicks": 30,
++    "missOpenTicks": 20,
++    "_note": "Past the quick flick a hold has B's armour, a beam's on the stick too (docs/design/power-scale.md section 2). From fromTicks (0.2 s) a light never stops it, and does heavy.armour.lightMul of its damage. A medium stops it before mediumUntilTicks (level 2, 0.5 s). A heavy, a beam or a grab stops it. A dodge makes a charged strike miss, and he's open for missOpenTicks (0.33 s)."
++  },
+   "autoGoTicks": 68,
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index 4119a40..f29bd0c 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -1248,2 +1248,3 @@ static func contact(S: SimState, ex, b) -> void:
+ 			_s(f, FREE_AT, S.tick + int(_wcfg(kind).recoverWhiff))   # a wound blow that met nothing: the punish
++			DirStick.missed(S, f, a)
+ 			if wind:
+@@ -1266,2 +1267,3 @@ static func contact(S: SimState, ex, b) -> void:
+ 		_miss(S, ex, f, o, kind, wind, energy)
++		DirStick.missed(S, f, a)
+ 		return
+@@ -1274,2 +1276,3 @@ static func contact(S: SimState, ex, b) -> void:
+ 		_miss(S, ex, f, o, kind, wind, energy, true)
++		DirStick.missed(S, f, a)
+ 		if zipOnly and S.dirS.ex == ex and ex.branch == "" and not _setPiece(ex):
+@@ -1309,2 +1312,8 @@ static func contact(S: SimState, ex, b) -> void:
+ 			armour = true
++	if not armour and not special and DirStick.armoured(S, o):   # a charge on the stick has B's armour (power-scale.md section 2)
++		if not wound:
++			armour = true
++			dmg *= float(c.heavy.armour.lightMul)
++		elif kind == MEDIUM and DirStick.mediumHolds(S, o):
++			armour = true
+ 	if kind == MEDIUM and energy == "" and not special and (ex.sD if o == ex.D else ex.sA) == 1.0:
+@@ -3168,3 +3177,3 @@ static func winding(S: SimState, f) -> Dictionary:
+ 	var share: float = DirArc.chargeShare(S, f, ch, n) if (kind == BIG and _g(f, CHG) > 0) else 0.0
+-	return {"strength": STRENGTH[kind], "n": maxi(0, n), "left": (_g(f, CONTACT) - now) if _g(f, LINE) == 1 else -1, "armoured": kind == BIG and _g(f, FLAV) == 0, "charge": share,
++	return {"strength": STRENGTH[kind], "n": maxi(0, n), "left": (_g(f, CONTACT) - now) if _g(f, LINE) == 1 else -1, "armoured": (kind == BIG and _g(f, FLAV) == 0) or DirStick.armoured(S, f), "charge": share,
+ 		"launcher": _g(f, FLAV) == 2, "energy": _g(f, FLAV) == 1}
+@@ -3945,3 +3954,3 @@ static func aiInput(S: SimState, f) -> void:
+ 	# The rival winds a heavy: a medium that lands while one still ends it. One draw for each wind-up it sees.
+-	if oh > 0 and _g(o, LINE) != 0 and _g(o, KIND) == BIG and _g(o, FLAV) == 0 and _g(f, AI_SAW) != oh:
++	if oh > 0 and _g(o, LINE) != 0 and ((_g(o, KIND) == BIG and _g(o, FLAV) == 0) or DirStick.armoured(S, o)) and _g(f, AI_SAW) != oh:
+ 		_s(f, AI_SAW, oh)
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index df6f030..e657493 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -11,3 +11,5 @@ class_name DirStick
+ ##    with the ladder Controls' reader has.
+-##  - Bare at every level: any blow that lands on his wind-up ends it, and the charge is lost.
++##  - Bare at every level: any blow that lands on his wind-up ends it, and the charge is lost. With armour.enabled (power-scale.md section 2),
++##    past the quick flick a hold has B's armour, a beam's on the stick too: a light never stops it, and does lightMul of its damage. A medium
++##    stops it before mediumUntilTicks. A heavy, a beam or a grab stops it. A dodge makes it miss, and he's open for missOpenTicks.
+ ## State: integers after DirSwing's on f.act.dirI.
+@@ -47,2 +49,3 @@ static var _force: int = -1   # tools: -1 Controls' switch, 0 off, 1 on
+ static var _rd = null         # Controls' reader, for its numbers and its ladder; holds no one's stick
++static var _armourForce: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+ 
+@@ -183,2 +186,36 @@ static func chargedPiece(S: SimState, f, dir: int) -> String:
+ 
++static func setArmourForce(v: int) -> void:
++	_armourForce = v
++
++
++static func armourOn() -> bool:
++	return on() and (bool(cfg().get("armour", {}).get("enabled", false)) if _armourForce < 0 else _armourForce == 1)
++
++
++## How long this hold has run, in live ticks.
++static func heldFor(S: SimState, o) -> int:
++	return DirBrawl._now(S) - (_g(o, ST_AT) - 1)
++
++
++## True while he's holding a charge past the quick flick, a strike's or a beam's.
++static func armoured(S: SimState, o) -> bool:
++	if not armourOn():
++		return false
++	var st: int = _g(o, ST_ON)
++	return (st == 2 or st == 3) and heldFor(S, o) >= int(cfg().armour.fromTicks)
++
++
++## ... and a medium no longer stops it.
++static func mediumHolds(S: SimState, o) -> bool:
++	return heldFor(S, o) >= int(cfg().armour.mediumUntilTicks)
++
++
++## A charged strike met nothing (DirBrawl.contact): a dodge or a step back has made it miss, and he's open.
++static func missed(S: SimState, f, a: Dictionary) -> void:
++	if armourOn() and int(a.get("stickL", 0)) > 0:
++		var open: int = int(cfg().armour.missOpenTicks)
++		DirBrawl._s(f, DirBrawl.FREE_AT, S.tick + open)
++		DirBrawl._s(f, DirBrawl.OPEN_UNTIL, DirBrawl._now(S) + open)
++
++
+ ## True while a blow landing on him ends what he's winding: the stick's strike is bare. With lightStops false a quick flick isn't ended by a
+@@ -447,2 +484,5 @@ static func tick(S: SimState, dt: float) -> void:
+ 		if b == null or DirBrawl._g(f, DirBrawl.LINE) == 0:
++			if armoured(S, f) and ex == null and SimRoster.opp(S, f).act.dodgeTick >= S.tick - 2:
++				missed(S, f, {"stickL": 1})   # he dodged out from under it
++				SimFx.cue(S, f, "stick_refused", NAMES[_g(f, ST_DIR)], "dodged")
+ 			_clear(f)   # a blow ended it, or the exchange did
+diff --git a/sim/director/tools/stick_check.gd b/sim/director/tools/stick_check.gd
+index 6bd4b28..8eba20f 100644
+--- a/sim/director/tools/stick_check.gd
++++ b/sim/director/tools/stick_check.gd
+@@ -11,2 +11,3 @@ func _init() -> void:
+ 	DirStick.setForce(1)
++	DirStick.setArmourForce(0)
+ 	_quick()
+@@ -33,2 +34,5 @@ func _init() -> void:
+ 	_levelThreeAll()
++	DirStick.setArmourForce(1)
++	_armour()
++	DirStick.setArmourForce(-1)
+ 	DirStick.setForce(-1)
+@@ -164,2 +168,63 @@ func _guarded() -> void:
+ 
++## Past the flick a hold has B's armour (power-scale.md section 2): a light takes 30% and it goes on, a medium stops it only before level 2,
++## a heavy always, and the beam's hold is armoured too.
++func _armour() -> void:
++	var light := SimIntent.new()
++	light.light = true
++	var medium := SimIntent.new()
++	medium.heavy = true
++	var heavy := SimIntent.new()
++	heavy.sig = true
++	for row in [["light", light, 16, true], ["medium", medium, 2, false], ["medium", medium, 30, true], ["heavy", heavy, 14, false]]:
++		var S := _pair()
++		var A = S.fighters[0]
++		_step(S, _word(true, false, true, SimStrikeRead.LEFT, 0))
++		var hp: float = A.hp
++		var lost: int = -1
++		for k in range(60):
++			_step(S, _word(false, false, true, SimStrikeRead.LEFT, 0), row[1] if k == int(row[2]) else null)
++			if lost < 0 and DirStick._g(A, DirStick.ST_ON) != 2 and k > 8:
++				lost = k
++		print("      a %s pressed %d ticks into the hold: %s, he took %.1f" % [row[0], row[2], ("the charge was lost at %d" % lost) if lost >= 0 else "the charge goes on", hp - A.hp])
++		_expect((lost < 0) == bool(row[3]), "a %s pressed %d ticks in: the charge %s" % [row[0], row[2], "goes on" if bool(row[3]) else "is lost"])
++		if String(row[0]) == "light":
++			_expect(hp - A.hp > 0.0 and hp - A.hp <= float(DirBrawl.cfg().light.damage) * 0.31, "... at 30%% of its damage (%.1f of %.1f)" % [hp - A.hp, float(DirBrawl.cfg().light.damage)])
++		SimCore.dispose(S)
++	# The beam's hold.
++	var S2 := _pair()
++	var A2 = S2.fighters[0]
++	var w: SimIntent = _word(true, false, true, SimStrikeRead.LEFT, 0)
++	w.rsMask = DirStick.RB
++	w.stanceMask = DirStick.RB
++	_step(S2, w)
++	var hp2: float = A2.hp
++	for k in range(40):
++		var h: SimIntent = _word(false, false, true, SimStrikeRead.LEFT, 0)
++		h.rsMask = DirStick.RB
++		h.stanceMask = DirStick.RB
++		_step(S2, h, light if k == 16 else null)
++	print("      a light on a beam's hold: he took %.1f, stun %d, holding %s" % [hp2 - A2.hp, A2.stunTicks, str(DirStick._g(A2, DirStick.ST_ON) == 3)])
++	_expect(DirStick._g(A2, DirStick.ST_ON) == 3 and hp2 - A2.hp <= float(DirBrawl.cfg().light.damage) * 0.31, "a light on a beam's hold: it goes on, at 30%")
++	SimCore.dispose(S2)
++	# A dodge makes it miss, and he's open.
++	var S3 := _pair()
++	var A3 = S3.fighters[0]
++	S3.fighters[1].act.v2 = true
++	_step(S3, _word(true, false, true, SimStrikeRead.LEFT, 0))
++	for _k in range(18):
++		_step(S3, _word(false, false, true, SimStrikeRead.LEFT, 0))
++	var dg := SimIntent.new()
++	dg.dodge = true
++	dg.mx = 1.0   # the stick away: in a brawl a dodge leaves only so
++	_hits = 0
++	_step(S3, _word(false, false, true, SimStrikeRead.LEFT, 0), dg)
++	for _k in range(3):
++		_step(S3, _word(false, false, true, SimStrikeRead.LEFT, 0))
++	var open: int = DirBrawl._g(A3, DirBrawl.OPEN_UNTIL) - DirBrawl._now(S3)
++	print("      dodged: %d hits, charge %d, open %d more ticks, exchange %s" % [_hits, DirStick._g(A3, DirStick.ST_ON), open, str(S3.dirS.ex != null)])
++	_expect(_hits == 0 and DirStick._g(A3, DirStick.ST_ON) == 0, "a dodge makes it miss")
++	_expect(open >= int(DirStick.cfg().armour.missOpenTicks) - 6, "... and he's open for 0.33 s (%d)" % open)
++	SimCore.dispose(S3)
++
++
+ func _bare() -> void:
+diff --git a/tools/schemas/director-stick.schema.json b/tools/schemas/director-stick.schema.json
+index 9fa60e6..c440908 100644
+--- a/tools/schemas/director-stick.schema.json
++++ b/tools/schemas/director-stick.schema.json
+@@ -118,2 +118,26 @@
+       "minimum": 0
++    },
++    "armour": {
++      "type": "object",
++      "properties": {
++        "_note": {
++          "type": "string"
++        },
++        "enabled": {
++          "type": "boolean"
++        },
++        "fromTicks": {
++          "type": "integer",
++          "minimum": 0
++        },
++        "mediumUntilTicks": {
++          "type": "integer",
++          "minimum": 0
++        },
++        "missOpenTicks": {
++          "type": "integer",
++          "minimum": 0
++        }
++      },
++      "additionalProperties": false
+     }

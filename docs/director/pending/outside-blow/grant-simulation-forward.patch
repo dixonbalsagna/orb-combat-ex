@@ -1,0 +1,29 @@
+diff --git a/sim/core/cross.gd b/sim/core/cross.gd
+index a1f07eb..42785c4 100644
+--- a/sim/core/cross.gd
++++ b/sim/core/cross.gd
+@@ -235,6 +235,8 @@ static func _land(S: SimState, it, D) -> void:
+ 	if it.kind == "mine":   # the director's mine rule, but for its knock: his guard takes it, else it's clean
+ 		o = {"kind": "blast", "weight": "medium", "shot": it.o.get("power", 3.0), "ignoreStance": not guarding(D), "shake": 7.0}
+ 	SimDamage.hit(S, null, A, D, it.dmg, o)
++	if it.kind == "blow":
++		SimDir.outsideLanded(S, A, D, o)   # Encounter's: what a blow from outside does to the fight it lands in
+ 
+ 
+ ## Up and guarding: what a mine's blast or a beam from outside meets, as the director's rules read it.
+diff --git a/sim/core/dir.gd b/sim/core/dir.gd
+index ed35561..3cf8f96 100644
+--- a/sim/core/dir.gd
++++ b/sim/core/dir.gd
+@@ -62,6 +62,11 @@ static func arcStep(S: SimState, f, dt: float) -> bool:
+ 	return _d("arc.gd").step(S, f, dt)
+ 
+ 
++## DirOutside.landed: a blow from another fight has landed on D, in his fight (SimCross._land).
++static func outsideLanded(S: SimState, A, D, o: Dictionary) -> void:
++	_d("outside.gd").landed(S, A, D, o)
++
++
+ ## DirExchange.endEx: the running exchange ends (a K.O. inside one).
+ static func endEx(S: SimState, ex) -> void:
+ 	_d("exchange.gd").endEx(S, ex)

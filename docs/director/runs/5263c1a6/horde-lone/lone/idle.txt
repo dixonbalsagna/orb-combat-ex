@@ -1,0 +1,24 @@
+      seed 1: wave 3 of 81 bodies, seat 0 down at 5838 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 80.3 s
+            (idle partner: seat 0 went down never)
+      seed 2: wave 3 of 81 bodies, seat 0 down at 5717 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 77.3 s
+            (idle partner: seat 0 went down never)
+      seed 3: wave 3 of 81 bodies, seat 0 down at 5541 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 76.9 s
+            (idle partner: seat 0 went down never)
+      seed 4: wave 3 of 81 bodies, seat 0 down at 5716 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 88.0 s
+            (idle partner: seat 0 went down never)
+      seed 5: wave 3 of 81 bodies, seat 0 down at 5410 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 77.4 s
+            (idle partner: seat 0 went down never)
+      seed 6: wave 3 of 81 bodies, seat 0 down at 5489 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 74.3 s
+            (idle partner: seat 0 went down never)
+      seed 7: wave 3 of 81 bodies, seat 0 down at 5545 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 73.0 s
+            (idle partner: seat 0 went down never)
+      seed 8: wave 3 of 81 bodies, seat 0 down at 5712 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 71.0 s
+            (idle partner: seat 0 went down never)
+      seed 9: wave 3 of 81 bodies, seat 0 down at 5787 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 6.0 (one-player 4.0); cleared in 86.0 s
+            (idle partner: seat 0 went down never)
+      seed 10: wave 3 of 81 bodies, seat 0 down at 5534 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 70.7 s
+            (idle partner: seat 0 went down never)
+      the rule on: the pad left alone cleared 10 of 10; clear times [80.3, 77.3, 76.9, 88.0, 77.4, 74.3, 73.0, 71.0, 86.0, 70.7]
+INFO  an idle partner (up, not playing): the other pad cleared 10 of 10
+HORDE LONE: 0 check(s) failed
+rc=0

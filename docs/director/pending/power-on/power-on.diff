@@ -1,0 +1,155 @@
+diff --git a/sim/director/arc.gd b/sim/director/arc.gd
+index 97a0fbe..2765469 100644
+--- a/sim/director/arc.gd
++++ b/sim/director/arc.gd
+@@ -107,7 +107,7 @@ static func _impact(S: SimState, f, c: Dictionary, g: float) -> void:
+ 	var by = f.launchBy
+ 	var tier: float = float(by.tier) if by != null else 4.0
+ 	var n: int = S.craters.size()
+-	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier, S), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)
++	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)   # (its landing speed is data, not a speed the energy model gave: the tier counts, model on or off, so the bowl is World's, meteor-crater.md)
+ 	f.hopped = true
+ 	if S.craters.size() > n:
+ 		_blast(S, f.x, f.z, float(S.craters[S.craters.size() - 1].r), by, c)
+diff --git a/sim/director/melee.gd b/sim/director/melee.gd
+index 5fab6ef..739a042 100644
+--- a/sim/director/melee.gd
++++ b/sim/director/melee.gd
+@@ -67,7 +67,12 @@ static func weightOfClass(o) -> String:
+ 
+ ## The send holds a launch's stop (14), a full launch's (16: launch anywhere's full power), or a set piece's
+ ## decisive one (a break or finisher launch). Only while hit-stop by weight is on.
+-static func holdSend(S: SimState, special: bool, power: float) -> void:
++## With Simulation's readable launch budget on (power.json `readable`, slam-and-pace.md section 2), an ordinary send holds instead its
++## held moment by share: heldTicks[0] (14) for a lit launcher's share, up to heldTicks[1] (18) for a full send's, and with heldUncut the
++## freeze budget never cuts it. key: the send's energy share (its `share` path); a set piece keeps its decisive stop.
++static func holdSend(S: SimState, special: bool, power: float, key: String = "") -> void:
++	if not special and _heldByShare(S, key):
++		return
+ 	if not S.hitstopOn:
+ 		return
+ 	if special:
+@@ -78,6 +83,27 @@ static func holdSend(S: SimState, special: bool, power: float) -> void:
+ 		SimHitstop.hold(S, "launch")
+ 
+ 
++## The readable budget's held moment, when Simulation's block is there and on. True when it held.
++static func _heldByShare(S: SimState, key: String) -> bool:
++	var rf := Callable(SimPower, "readable")
++	if not rf.is_valid():
++		return false
++	var rd = rf.call()
++	if not (rd is Dictionary) or not bool(rd.get("enabled", false)):
++		return false
++	var ht: Array = rd.get("heldTicks", [14, 18])
++	var lo: float = SimPower.share("launcher")
++	var hi: float = SimPower.share("fullB")
++	var s: float = SimPower.share(key) if key != "" else lo
++	var t: float = clampf((s - lo) / maxf(0.001, hi - lo), 0.0, 1.0)
++	var n: int = int(SimMathx.jround(float(ht[0]) + (float(ht[1]) - float(ht[0])) * t))
++	if bool(rd.get("heldUncut", true)) or not S.hitstopOn:
++		SimClock.hold(S, float(n) * SimConst.DT)   # the eye catches the start, and the camera gets its head start: never cut
++	else:
++		SimClock.hold(S, float(SimHitstop.ticks(S, "launch") if n <= 0 else n) * SimConst.DT)
++	return true
++
++
+ ## Beat "slip": the escaping defender breaks away from the pursuit.
+ static func opSlip(S: SimState, ex, _args) -> void:
+ 	var A = ex.A
+@@ -517,7 +543,7 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
+ 		DirBrawl.paySend(tgt, lpow * kf)   # 9a: a launcher's send pays on its journey (after the send: its launch number)
+ 	DirRally.onSend(S, att, tgt, (lpow * kf) if lpow >= 0.0 else -1.0, args, r.best)   # 23d 6: a full send opens a rally
+ 	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
+-	holdSend(S, longOnly or (args != null and bool(args.get("decisive", false))), (lpow * kf) if lpow >= 0.0 else 1.0)   # hit-stop by weight: the send holds a launch's stop
++	holdSend(S, longOnly or (args != null and bool(args.get("decisive", false))), (lpow * kf) if lpow >= 0.0 else 1.0, String(args.get("share", "")) if args != null else "")   # hit-stop by weight: the send holds a launch's stop (the readable budget: its held moment by share)
+ 	DirCamIntent.launched(S, tgt)   # the camera-intent feed: with the launch curve, the touchdown is the curve's
+ 	DirCalm.atSend(S, att, tgt, r.best)   # the calm-moment turn: the moment after this landing is coming, so World is asked now
+ 	DirSwing.atSend(S, att, tgt, r.best)   # the swing starts as the hit-stop ends, and rests before contact
+diff --git a/sim/director/tools/follow_check.gd b/sim/director/tools/follow_check.gd
+index 9d4803c..090e849 100644
+--- a/sim/director/tools/follow_check.gd
++++ b/sim/director/tools/follow_check.gd
+@@ -93,6 +93,8 @@ func _rows(on: bool) -> void:
+ 		var d0: float = SimDetMath.hypot(SimWrap.sdx(A.x, D.x), A.y - D.y)
+ 		_taunts = 0
+ 		_hits = 0
++		while S.dirS.stop > 0.0 or S.pause.left > 0.0:
++			_st(S, _x())   # the host offers a press again until a live tick (sim_host.gd): with the energy model on, his landing can hold the clock here
+ 		_st(S, _x())
+ 		var flying: bool = DirBands.who(S) == 0
+ 		var at: int = -1
+diff --git a/sim/director/tools/launch_hold_check.gd b/sim/director/tools/launch_hold_check.gd
+new file mode 100644
+index 0000000..be240ae
+--- /dev/null
++++ b/sim/director/tools/launch_hold_check.gd
+@@ -0,0 +1,61 @@
++extends SceneTree
++## The held moment on a launch, by share (Game Design, slam-and-pace.md section 2; docs/director/pending/launch-hold/):
++##   godot --headless --path . --script res://sim/director/tools/launch_hold_check.gd
++## - readable on: a lit launcher's send holds heldTicks[0] (14), a full send's heldTicks[1] (18), a share between them in proportion, and a
++##   share under the launcher's holds the least
++## - with heldUncut, the freeze budget never cuts it, even with hit-stop by weight on and the budget over
++## - a set piece keeps its decisive stop
++## - readable off (or no block): as before; with hit-stop by weight off, a send holds nothing
++## Reads SimPower.readable() (Simulation's). Ends on the verdict line.
++
++var failed: int = 0
++
++
++func _init() -> void:
++	var rf := Callable(SimPower, "readable")
++	if not rf.is_valid():
++		print("FAIL  SimPower.readable() is missing (Simulation's grant)")
++		print("LAUNCH HOLD: 1 check(s) failed")
++		quit(1)
++		return
++	var rd: Dictionary = rf.call()
++	var on0: bool = bool(rd.get("enabled", false))
++	rd["enabled"] = true
++	var lit: int = _held("launcher", false, false)
++	var full: int = _held("fullB", false, false)
++	var mid: int = _held("chainLink", false, false)
++	var tap: int = _held("tap", false, false)
++	var cut: int = _held("launcher", true, true)
++	rd["enabled"] = false
++	var off: int = _held("launcher", false, false)
++	var offFull: int = _held("fullB", false, false)
++	rd["enabled"] = on0
++	print("      held ticks: lit launcher %d, full send %d, chain link %d, tap %d, budget over %d; off %d / %d" % [lit, full, mid, tap, cut, off, offFull])
++	_expect(lit == 14 and full == 18, "on: a lit launcher holds 14, a full send 18")
++	_expect(mid == 14 and tap == 14, "on: a share at or under the launcher's holds the least (14)")
++	_expect(cut == 14, "on: with the freeze budget over and hit-stop by weight on, it isn't cut (14)")
++	_expect(off == 0 and offFull == 0, "off: as before (hit-stop by weight off, a send holds nothing)")
++	print("LAUNCH HOLD: %d check(s) failed" % failed)
++	quit(1 if failed > 0 else 0)
++
++
++func _expect(ok: bool, what: String) -> void:
++	print(("ok    " if ok else "FAIL  ") + what)
++	if not ok:
++		failed += 1
++
++
++## The ticks a send of this share holds. hitstop: hit-stop by weight on; over: its freeze budget over.
++func _held(key: String, hitstop: bool, over: bool) -> int:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 3, {"p1": true, "p2": true}, {"intro": false})
++	S.dirS.stop = 0.0
++	S.hitstopOn = hitstop
++	if over:
++		SimHitstop.setup(S)
++		for _k in range(400):
++			SimHitstop.frozen(S)   # a long run of frozen ticks: the budget is over
++	DirMelee.holdSend(S, false, 1.0, key)
++	var n: int = int(round(S.dirS.stop / SimConst.DT))
++	SimCore.dispose(S)
++	return n
+diff --git a/sim/director/tools/launch_hold_check.gd.uid b/sim/director/tools/launch_hold_check.gd.uid
+new file mode 100644
+index 0000000..ac419c1
+--- /dev/null
++++ b/sim/director/tools/launch_hold_check.gd.uid
+@@ -0,0 +1 @@
++uid://d0s3keqn171m8

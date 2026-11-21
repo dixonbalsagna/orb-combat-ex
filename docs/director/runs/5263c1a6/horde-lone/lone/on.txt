@@ -1,0 +1,20 @@
+      seed 1: wave 3 of 81 bodies, seat 0 down at 5838 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 22.3 s
+      seed 2: wave 3 of 81 bodies, seat 0 down at 5717 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 19.9 s
+      seed 3: wave 3 of 81 bodies, seat 0 down at 5541 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 21.4 s
+      seed 4: wave 3 of 81 bodies, seat 0 down at 5716 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 21.1 s
+      seed 5: wave 3 of 81 bodies, seat 0 down at 5410 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 25.8 s
+      seed 6: wave 3 of 81 bodies, seat 0 down at 5489 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 19.5 s
+      seed 7: wave 3 of 81 bodies, seat 0 down at 5545 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 22.5 s
+      seed 8: wave 3 of 81 bodies, seat 0 down at 5712 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 22.9 s
+      seed 9: wave 3 of 81 bodies, seat 0 down at 5787 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 4.0 (one-player 4.0); cleared in 20.9 s
+      seed 10: wave 3 of 81 bodies, seat 0 down at 5534 with 40 left; lone 1, gap 90 -> 113, left 40 -> 33 (want 33), live bodies kept true, first spawn 1.0 (one-player 1.0); cleared in 20.5 s
+      the rule on: the pad left alone cleared 10 of 10; clear times [22.3, 19.9, 21.4, 21.1, 25.8, 19.5, 22.5, 22.9, 20.9, 20.5]
+ok    QA's row: a medium pad left alone at mid-wave clears it in at least 8 of 10 (10 of 10)
+ok    at the down: one player up, the gap back to the one-player 113 (from 90)
+ok    at the down: the wave's remaining count x 1/countMul (40 -> 33)
+ok    at the down: the live bodies keep their toughness
+ok    after the down: a new spawn comes at one-player toughness (1.0)
+ok    the next wave: two-player values back, seat 0 up (gap 90)
+ok    two runs of seed 1 give one hash (9f48e1f2958d1629)
+HORDE LONE: 0 check(s) failed
+rc=0

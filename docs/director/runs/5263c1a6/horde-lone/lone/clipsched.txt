@@ -1,0 +1,9 @@
+seed 1: 34253 ticks (9.5 min), missing []; beats w1 20 (w1), beaten 7269 (w4), guarded 7318 (w4), blocked 7823 (w4), hit 8081 (w4), join 8082 (w4), blast 8436 (w4), down 33778 (w4), downSeat 1 (w4); hp left 0 0
+      join at 8082: seat 0 hp 1491, wave 4
+      blast try at 8436 from seat 1: fired true, the body hit true, the partner spared true
+      horde_down: seat 1 at 33778 (wave 4)
+      horde_down: seat 0 at 34252 (wave 4)
+      the match ended at 34252
+      B presses 0
+      chosen: seed 1, 4 marks, 44 s, missing []
+HORDE CLIPS: 0 check(s) failed

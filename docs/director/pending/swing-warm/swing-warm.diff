@@ -1,0 +1,69 @@
+diff --git a/sim/director/swing.gd b/sim/director/swing.gd
+index 55e0ab8..b544189 100644
+--- a/sim/director/swing.gd
++++ b/sim/director/swing.gd
+@@ -181,20 +181,47 @@ static func places(S: SimState, P, fr: Dictionary, maxD: float) -> Array:
+ 
+ ## Which places have any building laid near them, once a world: buildings don't move on the planet, so this holds for the match.
+ static func _builtPlaces(S: SimState, P) -> PackedByteArray:
+-	var key: String = str(S.frame.seed) + ":" + str(S.bDir.size()) + ":" + (str(S.bDir[0]) if S.bDir.size() > 0 else "")
++	var key: String = _builtKeyOf(S)
+ 	if key == _builtKey:
+ 		return _builtMemo
+-	var out := PackedByteArray()
+-	out.resize(P.n)
++	_builtStep(S, P, P.n)   # whatever the warm hasn't done yet
++	return _builtMemo
++
++
++static func _builtKeyOf(S: SimState) -> String:
++	return str(S.frame.seed) + ":" + str(S.bDir.size()) + ":" + (str(S.bDir[0]) if S.bDir.size() > 0 else "")
++
++
++const BUILT_PER_TICK: int = 6   # places a live tick the warm reads (each walks the buildings until one is near)
++static var _partKey: String = ""
++static var _part := PackedByteArray()
++static var _partNext: int = 0
++
++
++## The place table, `count` places further on: done, it becomes the memo. The same table whichever ticks build it.
++static func _builtStep(S: SimState, P, count: int = BUILT_PER_TICK) -> void:
++	if S.frame == null:
++		return
++	var key: String = _builtKeyOf(S)
++	if key == _builtKey:
++		return
++	if key != _partKey:
++		_partKey = key
++		_part = PackedByteArray()
++		_part.resize(P.n)
++		_partNext = 0
+ 	var least: float = SimDetMath.cos(float(cfg().buildings.placeNear) / SimField.R)
+-	for i in range(P.n):
+-		for b in range(S.bDir.size() / 3):
++	var nb: int = S.bDir.size() / 3
++	var end: int = mini(P.n, _partNext + count)
++	for i in range(_partNext, end):
++		for b in range(nb):
+ 			if P.px[i] * S.bDir[b * 3] + P.py[i] * S.bDir[b * 3 + 1] + P.pz[i] * S.bDir[b * 3 + 2] >= least:
+-				out[i] = 1
++				_part[i] = 1
+ 				break
+-	_builtKey = key
+-	_builtMemo = out
+-	return out
++	_partNext = end
++	if _partNext >= P.n:
++		_builtKey = key
++		_builtMemo = _part
+ 
+ 
+ ## Each standing building within maxD of the point that may be aimed at: its distance, its bearing as places reads one, its
+@@ -952,6 +979,7 @@ static func _nudgeTick(S: SimState) -> void:
+ static func tick(S: SimState, dt: float) -> void:
+ 	if dt <= 0.0 or not on(S):
+ 		return
++	_builtStep(S, _planet(S))   # the place table, a few places a tick from the fight's start: the first offer's dearest read, spread out
+ 	var sw = S.swing
+ 	var waiting: int = _g(S, W_PDEG)
+ 	if waiting != 0:

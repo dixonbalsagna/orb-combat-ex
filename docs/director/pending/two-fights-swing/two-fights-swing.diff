@@ -1,0 +1,30 @@
+diff --git a/sim/director/swing.gd b/sim/director/swing.gd
+index 189a173..e873103 100644
+--- a/sim/director/swing.gd
++++ b/sim/director/swing.gd
+@@ -97,14 +97,23 @@ static func _b() -> int:
+ 	return DirPlane._base() + DirPlane.PL_N
+ 
+ 
++## Who keeps the swing director's memory: the match's first body. It's the line's memory, so there's one copy, whichever fight the
++## swap has in S (docs/architecture/fight-swap.md); in the line's own tick S.fighters is everyone, fight 0 first.
++static func _anchor(S: SimState):
++	var st = S.stage
++	if st == null or st.cur == SimStage.WHOLE or st.cur == 0:
++		return S.fighters[0]
++	return st.fights[0].fighters[0]
++
++
+ static func _g(S: SimState, k: int) -> int:
+-	var d: PackedInt32Array = S.fighters[0].act.dirI
++	var d: PackedInt32Array = _anchor(S).act.dirI
+ 	var i: int = _b() + k
+ 	return d[i] if i < d.size() else 0
+ 
+ 
+ static func _s(S: SimState, k: int, v: int) -> void:
+-	var f = S.fighters[0]
++	var f = _anchor(S)
+ 	DirPlane._size(f)
+ 	if f.act.dirI.size() < _b() + W_N:
+ 		f.act.dirI.resize(_b() + W_N)

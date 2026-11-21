@@ -1,0 +1,528 @@
+diff --git a/data/director/launch.json b/data/director/launch.json
+index 4b9a9b3..b8621d1 100644
+--- a/data/director/launch.json
++++ b/data/director/launch.json
+@@ -54,11 +54,23 @@
+       "minD": 3000.0,
+       "reach": [8000.0, 13000.0, 20000.0, 25600.0],
+       "arrive": 20.0,
+-      "drySec": 45.0,
++      "drySec": 90.0,
+       "dryRampSec": 60.0,
+       "dry": 12.0,
+       "_note": "A town is a visit (docs/world/ring-any-angle/game-design.md section 15's addendum). leave: what a landing away from standing buildings costs, in a town with under sends; mark: what a landing among them costs for markSec after. near: a landing's reach for a standing building. A place within cone degrees of the line ahead, minD to its tier's reach, is a candidate scoring arrive, plus up to dry from drySec with no send."
+     },
++    "sea": {
++      "enabled": false,
++      "after": 30.0,
++      "bonus": 25.0,
++      "arrive": 20.0,
++      "driftAfter": 30.0,
++      "driftReach": 3000.0,
++      "driftSpeed": 150.0,
++      "coastStep": 500.0,
++      "coastEvery": 30,
++      "_note": "A dull stretch at open sea (docs/world/ring-any-angle/game-design.md section 15's open-sea addendum). after: seconds before a send's landing on land gains bonus, and the first land ahead is a candidate scoring arrive. driftAfter, driftReach, driftSpeed: a locked brawl eases toward land this close, in units a second, and any held stick cancels it that tick. A body in the water or sent resets the clock."
++    },
+     "bruntFromTier": 2,
+     "bruntPrefer": 40.0,
+     "stickWins": 200.0,
+@@ -85,7 +97,8 @@
+     "impactPerSpeed": 0.018,
+     "wall": {
+       "enabled": false,
+-      "base": 1.0,
++      "base": 0.6,
++      "stickToward": 1.0,
+       "care": 0.5,
+       "reach": 1500.0,
+       "distMul": 3.0,
+@@ -93,7 +106,7 @@
+       "speed": [1100.0, 1300.0, 1500.0, 1800.0],
+       "uy": [0.05, 0.12, 0.25, 0.4, 0.6, 0.8],
+       "clear": 20.0,
+-      "_note": "A knock-back that aims at a wall (docs/world/ring-any-angle/game-design.md section 15). base less care x this care: the chance it aims when a wall is in reach, so care is a flat weight. reach, distMul: a wall along the line within the lesser of reach and distMul of the knock's own distance, in the band WorldBrunt.candidates reads for depth, and he goes all the way to it. speed: by tier, with no travel boost, a plain send on buildings.md 6.1's ladder; perUnit: at least this many units a second per unit away, so it reaches. uy: the lifts tried, lowest first, so ground rising to a pad can still be cleared. clear: how far above the building's base he must meet the wall; a quarter of it clears the ground on the way."
++      "_note": "A knock-back that aims at a wall (docs/world/ring-any-angle/game-design.md section 15). base less care x this care: the chance it aims with a wall in reach and no stick, so care is a flat weight; stickToward: with the stick toward it. reach, distMul: a wall along the line within the lesser of reach and distMul of the knock's own distance, in the band WorldBrunt.candidates reads for depth, and he goes all the way to it. speed: by tier, with no travel boost, a plain send on buildings.md 6.1's ladder; perUnit: at least this many units a second per unit away, so it reaches. uy: the lifts tried, lowest first, so ground rising to a pad can still be cleared. clear: how far above the building's base he must meet the wall; a quarter of it clears the ground on the way."
+     },
+     "_wear": "A knock-back hurts (agency-pass.md section 13, rule 4): a knock-back the director carries (the upright slide, the drift in the air) costs 'wear' of a launch's impact at the speed he is carried: wear x impactPerSpeed x distance over its time. impactPerSpeed is World's single-impact figure (damage per unit a second of the first contact, sim/world/contact.gd). The skid of 4 bh and over is a journey and pays World's own slide wear",
+     "_slide": "slideUnderBh: a ground knock-back shorter than this is the upright slide: the director carries him back distBh along the ground over slideTicks (Combat's 18), with no launch, no journey and no trench. At this length and over it is the skid: a launch whose plan carries slide 'feet' and the distance in units, for World's slide on the feet",
+diff --git a/data/director/swing.json b/data/director/swing.json
+index 5537975..8054f81 100644
+--- a/data/director/swing.json
++++ b/data/director/swing.json
+@@ -112,7 +112,7 @@
+     "leave": 26.0,
+     "leaveLaunch": 40.0,
+     "placeNear": 4000.0,
+-    "drySec": 45.0,
++    "drySec": 90.0,
+     "dryRampSec": 60.0,
+     "dry": 6.0
+   },
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index 8a2de8e..b7895be 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -2826,6 +2826,7 @@ static func _move(S: SimState, ex) -> void:
+ 		wx += float(_g(A, CARRY_X)) / 16.0 * share
+ 		wy += float(_g(A, CARRY_Y)) / 16.0 * share
+ 		_s(A, CARRY_N, cn - 1)
++	wx += DirVisit.drift(S, ex)   # a dull brawl at sea, with land in sight
+ 	# A player's held stick always moves the pair his way (Orb's rule: he can always move, outside knock-backs,
+ 	# staggers and hit-stop): by nudge.floor of his own nudge at least, whatever the AI's stick, the speed the brawl
+ 	# began with or the centre's old drift say. Two players who oppose each other still cancel.
+diff --git a/sim/director/exchange.gd b/sim/director/exchange.gd
+index c92f3a7..4f44831 100644
+--- a/sim/director/exchange.gd
++++ b/sim/director/exchange.gd
+@@ -640,6 +640,8 @@ static func dirUpdate(S: SimState, dt: float) -> void:
+ 	DirRally.tick(S)   # 23d: the daze, and each rally's end
+ 	DirPlane.tick(S, dt)   # with depth off, a fighter eases back to the plane after a flight (rulings-2026-10-30f row 9)
+ 	DirSwing.tick(S, dt)   # the choreographer's swing (docs/world/ring-any-angle/encounter.md)
++	if dt > 0.0:
++		DirVisit.seaTick(S)
+ 	DirStick.tick(S, dt)   # the right stick's strike (docs/design/right-hand-attacks-rulings.md section 2)
+ 
+ 
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index 48b6122..e28e3a8 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -274,6 +274,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
+ 		var popL: float = WorldStructures.popNear(S, lx, CARE_R)
+ 		k.s += (-A.care) * CARE_W * popL
+ 		k.s += DirVisit.cost(S, D, lx)
++		k.s += DirVisit.seaBonus(S, lx)
+ 		# Distance and new ground only count when the landing is open ground: long hauls carry the fight to empty land.
+ 		if popL <= OPEN_POP:
+ 			k.s += DIST_W * SimMathx.jmin(k.travel, DIST_CAP) / DIST_UNIT * (float(town.get("distMul", 1.0)) if inTown else 1.0) * (float(biome().get("distMul", {}).get(WorldBiomes.fineNameAt(lx), 1.0)) if bon else 1.0)   # from a settlement the haul out is worth less; biome on: open country more, closed less
+@@ -1027,14 +1028,17 @@ static func _wall(S: SimState, att, tgt, s: float, dist: float):
+ 	var walked: Array = DirWalk.wall(S, att, s)
+ 	if not (bool(w.get("enabled", false)) if _wallForce < 0 else _wallForce == 1) and walked.is_empty():
+ 		return null
+-	var chance: float = float(w.base) - float(att.care) * float(w.care)
+-	if chance < 1.0 and SimRng.keyed(int(S.game.seed), "knock.wall", S.dirS.exN * 64 + int(tgt.launchN)) >= chance:
+-		return null
++	var toward: bool = not walked.is_empty()
+ 	if att.ai == null and S.dirS.ex != null:
+ 		var pt: int = phrase(S, S.dirS.ex, att)
+ 		var tilt: int = (pt >> 4) & 15 if pt >= 0 else 0
+-		if tilt > 0 and [0.0, 0.7071, 1.0, 0.7071, 0.0, -0.7071, -1.0, -0.7071][tilt - 1] * s <= 0.0:
+-			return null
++		if tilt > 0:
++			if [0.0, 0.7071, 1.0, 0.7071, 0.0, -0.7071, -1.0, -0.7071][tilt - 1] * s <= 0.0:
++				return null
++			toward = true   # the stick's vote wins
++	var chance: float = float(w.stickToward) if toward else float(w.base) - float(att.care) * float(w.care)
++	if chance < 1.0 and SimRng.keyed(int(S.game.seed), "knock.wall", S.dirS.exN * 64 + int(tgt.launchN)) >= chance:
++		return null
+ 	var reach: float = minf(float(w.reach), dist * float(w.distMul))   # so a short ender with a wall far off stays a short ender
+ 	var best = null
+ 	var bd: float = 1.0e18
+diff --git a/sim/director/tools/building_read.gd b/sim/director/tools/building_read.gd
+index 68e3d08..77a9b90 100644
+--- a/sim/director/tools/building_read.gd
++++ b/sim/director/tools/building_read.gd
+@@ -13,6 +13,7 @@ func _init() -> void:
+ 	var cap: int = 25200
+ 	var wall: int = -1
+ 	var visit: int = -1
++	var sea: int = -1
+ 	var a: PackedStringArray = OS.get_cmdline_user_args()
+ 	for s in a:
+ 		if s.begins_with("--cap="):
+@@ -21,16 +22,20 @@ func _init() -> void:
+ 			wall = int(s.substr(7))
+ 		elif s.begins_with("--visit="):
+ 			visit = int(s.substr(8))
++		elif s.begins_with("--sea="):
++			sea = int(s.substr(6))
+ 		elif s.is_valid_int():
+ 			seeds = int(s)
+ 	DirLaunch.setWallForce(wall)
+ 	DirVisit.setForce(visit)
++	DirVisit.setSeaForce(sea)
+ 	for v in [["off", 0], ["on", 1]]:
+ 		DirSwing.setForce(int(v[1]))
+ 		print("BUILDINGS " + JSON.stringify(_batch(String(v[0]), seeds, cap)))
+ 	DirSwing.setForce(-1)
+ 	DirLaunch.setWallForce(-1)
+ 	DirVisit.setForce(-1)
++	DirVisit.setSeaForce(-1)
+ 	quit(0)
+ 
+ 
+@@ -47,7 +52,7 @@ func _town(S: SimState, f) -> bool:
+ 
+ func _batch(name: String, seeds: int, cap: int) -> Dictionary:
+ 	var r := {"swings": name, "fights": 0, "fromTown": 0, "minutes": snappedf(float(cap) / 3600.0, 0.1), "sends": 0, "crossed": 0, "fell": 0, "bodyHits": 0, "noSend": 0, "firstInside90": 0, "beats": 0, "planned": 0,
+-		"plannedInTown": {"1": 0, "2": 0, "3": 0, "4": 0}, "sendsInTown": {"1": 0, "2": 0, "3": 0, "4": 0}, "knocksInTown": 0, "knocksAimed": 0, "knockHits": 0, "swingStarts": 0, "within1500": 0, "samples": 0, "civLost": 0.0, "wallsInReach": 0, "placesVisited": 0, "sendsFromTown": 0, "firstInside90All": 0, "perFightSends": [], "perFightFell": []}
++		"plannedInTown": {"1": 0, "2": 0, "3": 0, "4": 0}, "sendsInTown": {"1": 0, "2": 0, "3": 0, "4": 0}, "knocksInTown": 0, "knocksAimed": 0, "knockHits": 0, "swingStarts": 0, "within1500": 0, "samples": 0, "civLost": 0.0, "seaSamples": 0, "seaStays": [], "wallsInReach": 0, "placesVisited": 0, "sendsFromTown": 0, "firstInside90All": 0, "perFightSends": [], "perFightFell": []}
+ 	for pk in WORLDS:
+ 		for sd in range(seeds):
+ 			var S := SimCore.createSim()
+@@ -59,6 +64,7 @@ func _batch(name: String, seeds: int, cap: int) -> Dictionary:
+ 			var sends: int = 0
+ 			DirLaunch.wallSeen = 0
+ 			var visited: Dictionary = {}
++			var seaFrom: int = -1
+ 			var first: int = -1
+ 			var knockAim: Array = [false, false]
+ 			var ticks: int = 0
+@@ -98,6 +104,14 @@ func _batch(name: String, seeds: int, cap: int) -> Dictionary:
+ 				S.out.fx.clear()
+ 				S.out.feed.clear()
+ 				if t % 60 == 0:
++					var atSea: bool = WorldBiomes.biomeAt(S.fighters[0].x) == "ocean" and WorldBiomes.biomeAt(S.fighters[1].x) == "ocean"
++					if atSea:
++						r.seaSamples += 1
++						if seaFrom < 0:
++							seaFrom = t
++					elif seaFrom >= 0:
++						r.seaStays.append((t - seaFrom) / 60)
++						seaFrom = -1
+ 					var f = S.fighters[0]
+ 					r.samples += 1
+ 					if S.frame != null:
+diff --git a/sim/director/tools/knock_wall_check.gd b/sim/director/tools/knock_wall_check.gd
+index b70eb3f..283474a 100644
+--- a/sim/director/tools/knock_wall_check.gd
++++ b/sim/director/tools/knock_wall_check.gd
+@@ -9,10 +9,17 @@ var failed: int = 0
+ 
+ 
+ func _init() -> void:
++	var wall: Dictionary = DirLaunch.data().knockBack.wall
++	var base: float = float(wall.base)
++	wall["base"] = 1.0
+ 	_rows()
++	wall["base"] = base
++	_share()
+ 	_visit()
++	_sea()
+ 	DirLaunch.setWallForce(-1)
+ 	DirVisit.setForce(-1)
++	DirVisit.setSeaForce(-1)
+ 	print("KNOCK WALL: %d check(s) failed" % failed)
+ 	quit(1 if failed > 0 else 0)
+ 
+@@ -190,3 +197,77 @@ func _visit() -> void:
+ 	_expect(found > 0, "a built place on the line is a candidate (%d)" % found)
+ 	print("      worst carry against the place: %.1f%% (last place %.0f away)" % [bestErr * 100.0, best])
+ 	SimCore.dispose(S)
++
++
++## With no stick, a wall in reach is taken at about the data's base.
++func _share() -> void:
++	DirLaunch.setWallForce(1)
++	var S := _start()
++	var i: int = _front(S)
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	_place(S, i, 80.0, 1.0)
++	A.tier = 4.0
++	var took: int = 0
++	var n: int = 200
++	for k in range(n):
++		S.dirS.exN = k
++		took += 1 if DirLaunch._wall(S, A, D, 1.0, 600.0) != null else 0
++	var share: float = float(took) / float(n)
++	_expect(share >= 0.5 and share <= 0.7, "no stick: a wall in reach is taken %.0f%% of the time" % (share * 100.0))
++	SimCore.dispose(S)
++
++
++## The sea: its clock, what resets it, the landing's bonus, the drift and the stick's cancel.
++func _sea() -> void:
++	DirVisit.setSeaForce(1)
++	var S := _start()
++	for _k in range(1900):
++		SimCore.step(S, [SimIntent.new(), SimIntent.new()])
++		S.out.fx.clear()
++		S.out.feed.clear()
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var w: float = SimConst.W
++	var seaX: float = -1.0
++	var shore: float = -1.0
++	for k in range(400):
++		var x: float = w * float(k) / 400.0
++		if not DirVisit._isLand(x) and DirVisit._isLand(SimWrap.wrap(x + 1200.0)) and not DirVisit._isLand(SimWrap.wrap(x - 1200.0)):
++			seaX = x
++			shore = SimWrap.wrap(x + 1200.0)
++			break
++	_expect(seaX >= 0.0, "this planet has a coast on the line")
++	if seaX < 0.0:
++		SimCore.dispose(S)
++		return
++	for f in [A, D]:
++		f.x = seaX
++		f.y = WorldWater.surfaceAt(S, seaX) + 300.0
++		f.vx = 0.0
++		f.vy = 0.0
++		f.wet = false
++	D.x = SimWrap.wrap(seaX + 40.0)
++	DirVisit.seaTick(S)
++	_expect(DirVisit._g(S, DirVisit.V_SEA) != 0, "over open sea, the clock starts")
++	DirVisit._s(S, DirVisit.V_SEA, maxi(1, DirBrawl._now(S) + 1 - int(31.0 * DirData.TICKS_PER_SEC)))
++	_expect(DirVisit.seaSecs(S) > 30.0, "and it runs (%.0f s)" % DirVisit.seaSecs(S))
++	_expect(DirVisit.seaBonus(S, shore) > 0.0 and DirVisit.seaBonus(S, seaX) == 0.0, "a landing on land gains, and on the sea doesn't")
++	var c: int = DirVisit._coast(seaX, 3000.0, 500.0)
++	_expect(c == 3, "land in sight, that way (%d)" % c)
++	var cand: Array = []
++	DirVisit.setForce(-1)
++	A.face = 1.0
++	DirVisit._seaOffer(S, A, D, cand, 3000.0, 1.0, 1.0)
++	_expect(cand.size() == 1 and int(cand[0].arrive) == -1, "the first land ahead is a candidate")
++	D.wet = true
++	DirVisit.seaTick(S)
++	_expect(DirVisit._g(S, DirVisit.V_SEA) == 0, "a body in the water resets the clock")
++	D.wet = false
++	SimCore.dispose(S)
++	DirVisit.setSeaForce(0)
++	var S2 := _start()
++	var n0: int = S2.fighters[0].act.dirI.size()
++	DirVisit.seaTick(S2)
++	_expect(S2.fighters[0].act.dirI.size() == n0 and DirVisit.seaBonus(S2, 0.0) == 0.0, "off: no slot, no bonus")
++	SimCore.dispose(S2)
+diff --git a/sim/director/visit.gd b/sim/director/visit.gd
+index 38cc0d0..2f683d2 100644
+--- a/sim/director/visit.gd
++++ b/sim/director/visit.gd
+@@ -6,15 +6,93 @@ extends RefCounted
+ 
+ const V_SENDS: int = 0   # sends into a building in the town the fight is in
+ const V_SENT: int = 1    # the live tick of the last, plus 1
+-const V_N: int = 2
++const V_SEA: int = 2     # the live tick the fight's dull stretch at sea began, plus 1
++const V_COAST: int = 3   # the way to land within drift's reach, 1 or -1 plus 2, read now and then; 0 none
++const V_N: int = 4
+ 
+ static var _force: int = -1   # tools: -1 the data's switch, 0 off, 1 on
++static var _seaForce: int = -1
+ 
+ 
+ static func setForce(v: int) -> void:
+ 	_force = v
+ 
+ 
++static func setSeaForce(v: int) -> void:
++	_seaForce = v
++
++
++static func seaCfg() -> Dictionary:
++	return DirLaunch.data().get("town", {}).get("sea", {})
++
++
++static func seaOn() -> bool:
++	return bool(seaCfg().get("enabled", false)) if _seaForce < 0 else _seaForce == 1
++
++
++static func _isLand(x: float) -> bool:
++	return WorldBiomes.biomeAt(x) != "ocean"
++
++
++## Once a live tick: how long the fight has been dull at sea. A body in the water or sent resets it: a sea fight that's being a sea
++## fight isn't pulled away.
++static func seaTick(S: SimState) -> void:
++	if not seaOn():
++		return
++	var at: int = _g(S, V_SEA)
++	var dull: bool = true
++	for f in S.fighters:
++		if _isLand(f.x) or f.state == "launched" or f.wet or f.y < WorldWater.surfaceAt(S, f.x):
++			dull = false
++			break
++	if not dull:
++		if at != 0:
++			_s(S, V_SEA, 0)
++			_s(S, V_COAST, 0)
++		return
++	var now: int = DirBrawl._now(S)
++	if at == 0:
++		_s(S, V_SEA, now + 1)
++		return
++	if now % int(seaCfg().coastEvery) == 0:
++		_s(S, V_COAST, _coast(S.fighters[0].x, float(seaCfg().driftReach), float(seaCfg().coastStep)))
++
++
++## The way to the nearest land within reach, plus 2; 0 for none.
++static func _coast(x: float, reach: float, step: float) -> int:
++	var d: float = step
++	while d <= reach:
++		if _isLand(SimWrap.wrap(x + d)):
++			return 3
++		if _isLand(SimWrap.wrap(x - d)):
++			return 1
++		d += step
++	return 0
++
++
++static func seaSecs(S: SimState) -> float:
++	var at: int = _g(S, V_SEA)
++	return float(DirBrawl._now(S) - (at - 1)) / DirData.TICKS_PER_SEC if at > 0 else 0.0
++
++
++## A landing on land or at a built place, from a dull stretch at sea: lever 1. 0 otherwise.
++static func seaBonus(S: SimState, x: float) -> float:
++	if not seaOn() or seaSecs(S) < float(seaCfg().after):
++		return 0.0
++	return float(seaCfg().bonus) if _isLand(x) else 0.0
++
++
++## The brawl's drift toward land in sight: lever 2. Slow, and any held stick cancels it that tick. 0 otherwise.
++static func drift(S: SimState, ex) -> float:
++	if not seaOn() or seaSecs(S) < float(seaCfg().driftAfter) or _g(S, V_COAST) == 0:
++		return 0.0
++	for f in [ex.A, ex.D]:
++		var st: PackedFloat64Array = DirBrawl.stick(ex, f)
++		if st[0] != 0.0 or st[1] != 0.0:
++			return 0.0
++	return float(_g(S, V_COAST) - 2) * float(seaCfg().driftSpeed)
++
++
+ static func cfg() -> Dictionary:
+ 	return DirLaunch.data().get("town", {}).get("visit", {})
+ 
+@@ -79,15 +157,40 @@ static func cost(S: SimState, D, x: float) -> float:
+ 	return 0.0
+ 
+ 
++## From a dull stretch at sea: the first land ahead within his tier's reach is a landing, the carry solved to reach it.
++static func _seaOffer(S: SimState, A, D, c: Array, force: float, tierF: float, f: float) -> void:
++	var v: Dictionary = cfg()
++	var maxD: float = float(v.reach[clampi(int(A.tier) - 1, 0, 3)])
++	var step: float = float(seaCfg().coastStep) * 2.0
++	var d: float = step
++	while d <= maxD and not _isLand(SimWrap.wrap(D.x + f * d)):
++		d += step
++	if d > maxD:
++		return
++	var uy: float = DirLaunch.ACROSS_UY
++	var trav: float = WorldSlide.launchTravel(f, uy)
++	var t0: float = maxf(float(DirLaunch.predictFlight(S, D.x, D.y, WorldSlide.launchVX(f, uy, force * tierF), uy * force * tierF, trav).travel), 1.0)
++	var fm: float = clampf(SimDetMath.pow((d + step) / t0, float(v.solvePow)), 0.05, DirLaunch.HAUL_FM_MAX)
++	c.append({"name": "SMASH ACROSS", "ux": f, "uy": uy, "fm": fm, "arrive": -1, "s": float(seaCfg().arrive)})
++
++
+ ## Before a plan: a fight that's out of its town starts its next one's count; each place with buildings on the line, ahead, inside
+ ## his tier's reach, is one more candidate, with its carry solved.
+ static func offer(S: SimState, A, D, c: Array, force: float, tierF: float, f: float, longOnly: bool, fresh: bool) -> void:
++	if not on() and not seaOn():
++		return
+ 	if not on():
++		if not longOnly and not fresh and seaSecs(S) >= float(seaCfg().after):
++			_seaOffer(S, A, D, c, force, tierF, f)
+ 		return
+ 	if _g(S, V_SENDS) > 0 and not inTown(D):
+ 		_s(S, V_SENDS, 0)
+-	if S.frame == null or longOnly or fresh:
++	if longOnly or fresh:
+ 		return   # fresh scales each candidate's force after this, so a carry solved here would land short
++	if seaOn() and seaSecs(S) >= float(seaCfg().after):
++		_seaOffer(S, A, D, c, force, tierF, f)
++	if S.frame == null:
++		return
+ 	var v: Dictionary = cfg()
+ 	var maxD: float = float(v.reach[clampi(int(A.tier) - 1, 0, 3)])
+ 	var fr: Dictionary = DirSwing._frame(S, D.x)
+diff --git a/tools/fixtures/virtual/data/director/swing.json b/tools/fixtures/virtual/data/director/swing.json
+index 5607cf9..7f9aab0 100644
+--- a/tools/fixtures/virtual/data/director/swing.json
++++ b/tools/fixtures/virtual/data/director/swing.json
+@@ -158,7 +158,7 @@
+     "townCount": 3,
+     "sends": 2,
+     "leave": 26.0,
+-    "drySec": 45.0,
++    "drySec": 90.0,
+     "dryRampSec": 60.0,
+     "dry": 6.0,
+     "keepNear": 8000.0,
+diff --git a/tools/schemas/director-launch.schema.json b/tools/schemas/director-launch.schema.json
+index adf6857..9b5c7b8 100644
+--- a/tools/schemas/director-launch.schema.json
++++ b/tools/schemas/director-launch.schema.json
+@@ -311,6 +311,61 @@
+             "sends",
+             "solvePow"
+           ]
++        },
++        "sea": {
++          "type": "object",
++          "patternProperties": {
++            "^_": {}
++          },
++          "additionalProperties": false,
++          "properties": {
++            "after": {
++              "type": "number",
++              "minimum": 0
++            },
++            "bonus": {
++              "type": "number",
++              "minimum": 0
++            },
++            "arrive": {
++              "type": "number",
++              "minimum": 0
++            },
++            "driftAfter": {
++              "type": "number",
++              "minimum": 0
++            },
++            "driftReach": {
++              "type": "number",
++              "minimum": 0
++            },
++            "driftSpeed": {
++              "type": "number",
++              "minimum": 0
++            },
++            "enabled": {
++              "type": "boolean"
++            },
++            "coastStep": {
++              "type": "number",
++              "exclusiveMinimum": 0
++            },
++            "coastEvery": {
++              "type": "integer",
++              "minimum": 1
++            }
++          },
++          "required": [
++            "after",
++            "arrive",
++            "bonus",
++            "coastEvery",
++            "coastStep",
++            "driftAfter",
++            "driftReach",
++            "driftSpeed",
++            "enabled"
++          ]
+         }
+       },
+       "additionalProperties": false,
+@@ -500,6 +555,11 @@
+             "distMul": {
+               "type": "number",
+               "minimum": 0
++            },
++            "stickToward": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1
+             }
+           },
+           "required": [
+@@ -511,7 +571,8 @@
+             "speed",
+             "uy",
+             "clear",
+-            "distMul"
++            "distMul",
++            "stickToward"
+           ]
+         }
+       },

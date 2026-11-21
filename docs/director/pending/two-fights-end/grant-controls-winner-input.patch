@@ -1,0 +1,15 @@
+diff --git a/sim/input/control.gd b/sim/input/control.gd
+index 7c283e0..fb83a65 100644
+--- a/sim/input/control.gd
++++ b/sim/input/control.gd
+@@ -6,8 +6,8 @@ class_name SimControl
+ static func control(S: SimState, f, intent) -> void:
+ 	var i: SimIntent = f.input
+ 	SimIntent.clearIntent(i)
+-	if S.game.ko != null:
+-		return
++	if S.game.ko != null and not (S.stage != null and SimCross.on(S) and not f.out):
++		return   # (2v2: his fight is finished and he's standing: he goes on, to the other fight)
+ 	if f.ai != null:
+ 		DirAI.aiInput(S, f)
+ 	elif intent != null:

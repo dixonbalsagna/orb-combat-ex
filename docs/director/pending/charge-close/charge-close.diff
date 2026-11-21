@@ -1,0 +1,436 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index e1b3baf..de00273 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -341,6 +341,13 @@
+     },
+     "idleTicks": 60,
+     "heldPressTicks": 10,
++    "chargeClose": {
++      "enabled": false,
++      "firstBh": 3,
++      "fullBh": 6,
++      "maxTicks": 12,
++      "_note": "A released charge closes the gap (docs/design/press-decides.md section 2): past the first flash it travels up to firstBh to him, at the full flash fullBh, over at most maxTicks; the stick from stage 2 and 3 likewise. Stepping back doesn't beat it; a dodge, a guard or a perfect block does."
++    },
+     "stringLapseTicks": 30,
+     "recoil": 1,
+     "tradeTicks": 2,
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index ab50b1d..a31e8fe 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -1258,7 +1258,7 @@ static func contact(S: SimState, ex, b) -> void:
+ 	# The reach, read as it lands. A blow by rule (the double hit's, a sure one, a zip's) keeps the strike's own limit.
+ 	var ct: Dictionary = DirData.contact()
+ 	var far: float = (absf(SimWrap.sdx(f.x, o.x)) if (_lg(o, LA_POP_UNTIL) > S.tick or _lg(f, LA_POP_UNTIL) > S.tick) else DirBands.dist(f, o)) - float(ct.offset) + (0.0 if special else float(_g(f, PRE)) / 16.0)   # past striking distance, with what its own step through its reach has covered added back
+-	if _g(f, GAPV_ON) == 1 and wound and not special and not DirArc.banked(S, f):   # a banked stun: he's where the stick's carry put him, in reach, and no gap counts
++	if _g(f, GAPV_ON) == 1 and wound and not special and not DirArc.banked(S, f) and not chargeCloses(a):   # a banked stun: he's where the stick's carry put him, in reach, and no gap counts
+ 		far = float(_g(f, GAPV)) / 16.0   # a blow with a wind-up: the gap as counted since it began (tick, _giveStep)
+ 	_s(f, PRE, 0)
+ 	_s(f, GAPV_ON, 0)
+@@ -3275,6 +3275,9 @@ static func _letGo(S: SimState, ex, f, lead: int, charge: float) -> void:
+ 			b.args["dmg"] = lerpf(float(ch.worth[0]), float(ch.worth[1]), charge) * _unit()
+ 			if charge >= 1.0:
+ 				DirInterrupt.si(f, DirInterrupt.PHRASE_P, DirInterrupt.gi(f, DirInterrupt.PHRASE_P) | (DirAlchemy.HELD << 8))   # held to full: a launch's earner
++		if charge >= 0.0:
++			var cc: Dictionary = c.get("chargeClose", {})
++			lead = closeIn(S, f, o, float(cc.get("fullBh" if charge >= 1.0 else "firstBh", 0.0)), lead)
+ 		b.t = ex.t + (float(lead) - 0.25) / DirData.TICKS_PER_SEC
+ 		_s(f, LINE, 1)
+ 		_s(f, CHG, 3)
+@@ -3287,6 +3290,30 @@ static func _letGo(S: SimState, ex, f, lead: int, charge: float) -> void:
+ 		return
+ 
+ 
++## A released charge closes the gap (chargeClose.enabled; press-decides.md section 2): it travels up to `bh` body heights to him, over at most
++## maxTicks, so stepping back doesn't beat it. Returns the live ticks to its contact: `lead` when it doesn't need to travel or can't reach.
++static func closeIn(S: SimState, f, o, bh: float, lead: int) -> int:
++	var cc: Dictionary = cfg().get("chargeClose", {})
++	if not bool(cc.get("enabled", false)) or bh <= 0.0:
++		return lead
++	var gap: float = DirBands.dist(f, o) - float(DirData.contact().offset)
++	if gap <= 0.0 or gap > bh * DirInterrupt.BH:
++		return lead
++	var most: float = float(cc.fullBh) * DirInterrupt.BH
++	var ticks: int = clampi(int(ceil(gap / (most / float(cc.maxTicks)))), lead, int(cc.maxTicks))
++	var r := SimState.Rush.new()
++	r.tgt = o
++	r.off = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(o.x, f.x)), -f.face) * float(DirData.contact().offset)
++	r.end = S.T + float(ticks) * SimConst.DT
++	f.rush = r
++	_s(f, GAPV_ON, 0)   # it's at him: what the rival gave on the way no longer counts
++	return ticks
++
++
++static func chargeCloses(a: Dictionary) -> bool:
++	return bool(cfg().get("chargeClose", {}).get("enabled", false)) and (bool(a.get("charged", false)) or int(a.get("stickL", 0)) >= 2)
++
++
+ ## A heavy landed clean. A tap staggers him in place. The launcher launches him when a launch is ready; while it
+ ## rests it is the hammer, and staggers him in place. A charged heavy knocks him back, and at a full charge it launches him. A launch is aimed
+ ## by the stick's quarter.
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index a22a33f..6395caa 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -466,8 +466,14 @@ static func _release(S: SimState, ex, f, b, lvl: int) -> void:
+ 		var p: String = chargedPiece(S, f, dir)
+ 		if p != "":
+ 			b.args["piece"] = p
+-	b.t = ex.t + dt * 0.75   # it lands on the next live tick
+-	DirBrawl._s(f, DirBrawl.CONTACT, DirBrawl._now(S) + 1)
++	var cc: Dictionary = DirBrawl.cfg().get("chargeClose", {})
++	var bh: float = float(cc.get("fullBh", 0.0)) if l >= 3 else (float(cc.get("firstBh", 0.0)) if l == 2 else 0.0)
++	var o = ex.D if f == ex.A else ex.A
++	var lead: int = DirBrawl.closeIn(S, f, o, bh, 1)   # (press-decides.md section 2: from stage 2 a hold closes the gap too)
++	if lead > 1:
++		b.args["stickReach"] = maxf(float(b.args.stickReach), bh)
++	b.t = ex.t + dt * (float(lead) - 0.25)   # it lands on the next live tick, or as it arrives
++	DirBrawl._s(f, DirBrawl.CONTACT, DirBrawl._now(S) + lead)
+ 	_clear(f)
+ 	SimFx.cue(S, f, "stick_release", NAMES[dir], str(l))
+ 
+diff --git a/sim/director/tools/press_decides_check.gd b/sim/director/tools/press_decides_check.gd
+new file mode 100644
+index 0000000..6a1d23a
+--- /dev/null
++++ b/sim/director/tools/press_decides_check.gd
+@@ -0,0 +1,295 @@
++extends SceneTree
++## Game Design's docs/design/press-decides.md, each rule behind its own switch, on an idle dummy with real presses: a released charge closes the
++## gap; a press waits for the blow in hand and a hold builds while it waits, and a stun clears it; one rule for B; the circle's price and what
++## stops it; the stick's steal. Off, nothing changes.
++##   godot --headless --path . --script res://sim/director/tools/press_decides_check.gd
++## Ends on the verdict line.
++
++var failed: int = 0
++var _cues: Array = []
++var _tapped: Array = []
++
++
++func _init() -> void:
++	DirStick.setForce(1)
++	DirStance.setForce(1)
++	var b: Dictionary = DirBrawl.cfg()
++	if b.has("chargeClose"):
++		_close(b)
++	if b.has("pressWait"):
++		_wait(b)
++	if b.has("oneRuleB"):
++		_rule(b)
++	if DirStance.cfg().has("circle"):
++		_circle(DirStance.cfg())
++	if DirStick.cfg().has("steal"):
++		_steal(DirStick.cfg())
++	DirStance.setForce(-1)
++	DirStick.setForce(-1)
++	print("PRESS: %d check(s) failed" % failed)
++	quit(1 if failed > 0 else 0)
++
++
++func _expect(ok: bool, what: String) -> void:
++	print(("ok    " if ok else "FAIL  ") + what)
++	if not ok:
++		failed += 1
++
++
++func _pair(gap: float = 58.0, brawl: bool = true) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {"p1": false, "p2": false}, {"intro": false})
++	for f in S.fighters:
++		f.ai = null
++		f.act.v2 = true
++		f.ki = 100.0
++		f.hp = 100000.0
++	S.fighters[1].x = SimWrap.wrap(S.fighters[0].x + gap)
++	S.fighters[1].y = S.fighters[0].y + 200.0
++	S.fighters[0].y = S.fighters[1].y
++	for _k in range(5):
++		_step(S)
++	if brawl:
++		_tap(S, _press(true, false, false))
++		for _k in range(30):
++			_step(S)
++	return S
++
++
++func _step(S: SimState, a: SimIntent = null, d: SimIntent = null) -> bool:
++	_cues = []
++	var live: bool = SimCore.step(S, [a if a != null else SimIntent.new(), d if d != null else SimIntent.new()])
++	for e in S.out.fx:
++		if e.type == "cue":
++			_cues.append(String(e.kind) + ":" + String(e.text))
++		elif e.type == "launch_plan":
++			_cues.append("send:" + String(e.chosen))
++	S.out.fx.clear()
++	S.out.feed.clear()
++	return live
++
++
++func _tap(S: SimState, i: SimIntent, d: SimIntent = null) -> void:
++	for _k in range(30):
++		if _step(S, i, d):
++			_tapped = _cues.duplicate()
++			return
++
++
++func _press(light: bool, heavy: bool, sig: bool, mask: int = 0) -> SimIntent:
++	var i := SimIntent.new()
++	i.light = light
++	i.heavy = heavy
++	i.sig = sig
++	i.stanceMask = mask
++	return i
++
++
++func _sent(list: Array) -> String:
++	for c in list:
++		if String(c).begins_with("send:"):
++			return String(c).substr(5)
++	return ""
++
++
++## Holds B for `hold` ticks, the rival stepping back if `walk`, then lets go. Returns [what was sent, whether it missed, damage].
++func _charge(S: SimState, hold: int, walk: bool) -> Array:
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var away: float = signf(SimWrap.sdx(A.x, D.x))
++	var first := _press(false, false, true)
++	first.sigHeld = true
++	_tap(S, first)
++	var hp: float = D.hp
++	for _k in range(hold):
++		var h := SimIntent.new()
++		h.sigHeld = true
++		var m := SimIntent.new()
++		if walk:
++			m.mx = away
++		_step(S, h, m)
++	var sent: String = ""
++	var missed: bool = false
++	for _k in range(30):
++		var m2 := SimIntent.new()
++		if walk:
++			m2.mx = away
++		_step(S, null, m2)
++		missed = missed or _cues.has("miss:gave_ground") or _cues.has("miss:reach")
++		if sent == "":
++			sent = _sent(_cues)
++	return [sent, missed, hp - D.hp]
++
++
++## (2) A released charge, at a rival stepping back: off it can miss; on, it closes up to 3 bh past the first flash and 6 at the full flash.
++func _close(b: Dictionary) -> void:
++	for on_ in [false, true]:
++		b.chargeClose.enabled = on_
++		for hold in [36, 46]:
++			var S := _pair()
++			var r: Array = _charge(S, hold, true)
++			print("      charge close %s, held %d, rival stepping back: sent '%s', missed %s, %.0f taken" % [str(on_), hold, r[0], str(r[1]), r[2]])
++			if on_:
++				_expect(not bool(r[1]) and float(r[2]) > 0.0, "charge close on, held %d: it reaches him" % hold)
++			SimCore.dispose(S)
++	# Too far: past fullBh it doesn't fly.
++	b.chargeClose.enabled = true
++	var S2 := _pair()
++	S2.fighters[1].x = SimWrap.wrap(S2.fighters[0].x + 58.0 + 8.0 * DirInterrupt.BH)
++	var r2: Array = _charge(S2, 46, false)
++	print("      8 bh away: sent '%s', %.0f taken" % [r2[0], r2[2]])
++	_expect(float(r2[2]) == 0.0, "past fullBh it doesn't travel to him")
++	SimCore.dispose(S2)
++	b.chargeClose.enabled = false
++
++
++## (3) and (5): a press waits for the blow in hand, and a hold builds while it waits; a stun clears it, and a press in a stun is told.
++func _wait(b: Dictionary) -> void:
++	for on_ in [false, true]:
++		b.pressWait.enabled = on_
++		var S := _pair()
++		var y := _press(false, true, false)
++		y.heavyHeld = true
++		_tap(S, y)
++		var first := _press(false, false, true)
++		first.sigHeld = true
++		first.heavyHeld = true
++		_tap(S, first)
++		var lapsed: bool = false
++		var full: int = -1
++		for k in range(80):
++			var h := SimIntent.new()
++			h.sigHeld = true
++			h.heavyHeld = k < 13
++			_step(S, h)
++			lapsed = lapsed or _cues.has("press_ack:lapsed")
++			if full < 0 and _cues.has("charge_full:"):
++				full = k + 1
++		print("      press wait %s: B held from during Y's wind-up: lapsed %s, full charge %d ticks after the B" % [str(on_), str(lapsed), full])
++		if on_:
++			_expect(not lapsed and full > 0 and full <= 48, "press wait on: the hold built since the press, so the flash comes on time (%d)" % full)
++		else:
++			_expect(lapsed and full < 0, "press wait off: the press lapses and the hold comes to nothing")
++		SimCore.dispose(S)
++	b.pressWait.enabled = true
++	# A stun clears the waiting press, and says so.
++	var S2 := _pair()
++	var A2 = S2.fighters[0]
++	var y2 := _press(false, true, false)
++	y2.heavyHeld = true
++	_tap(S2, y2)
++	_tap(S2, _press(false, false, true))
++	A2.stunTicks = 10
++	var told: bool = false
++	var heavies: int = 0
++	for _k in range(40):
++		_step(S2)
++		told = told or _cues.has("press_ack:stunned")
++		if _cues.has("blow:heavy"):
++			heavies += 1
++	_expect(told and heavies == 0, "a stun clears the waiting press, and says so")
++	SimCore.dispose(S2)
++	# A press in a stun is told.
++	var S3 := _pair()
++	S3.fighters[0].stunTicks = 8
++	_step(S3, _press(false, true, false))
++	_expect(_cues.has("press_ack:stunned"), "a press in a stun is told, not silent")
++	SimCore.dispose(S3)
++	b.pressWait.enabled = false
++
++
++## (1) One rule for B.
++func _rule(b: Dictionary) -> void:
++	b.oneRuleB.enabled = true
++	var S := _pair()
++	_tap(S, _press(false, false, true))
++	var said: Array = []
++	for _k in range(40):
++		_step(S)
++		said.append_array(_cues)
++	_expect(said.has("stagger:heavy") and _sent(said) == "", "a tapped B in a brawl is a stagger (%s)" % str(said.filter(func(c): return String(c).begins_with("stagger") or String(c).begins_with("send") or String(c).begins_with("recoil"))))
++	SimCore.dispose(S)
++	var S2 := _pair(160.0, false)
++	_tap(S2, _press(false, false, true))
++	var said2: Array = []
++	for _k in range(80):
++		_step(S2)
++		said2.append_array(_cues)
++	var sent2: String = _sent(said2)
++	print("      a tapped B starting an exchange from 160: sent '%s', his stun %d" % [sent2, S2.fighters[1].stunTicks])
++	_expect(sent2 != "KNOCK BACK", "a tapped B starting an exchange isn't a knock-back")
++	SimCore.dispose(S2)
++	for row in [[36, "KNOCK BACK"], [46, ""]]:
++		var S3 := _pair()
++		var r: Array = _charge(S3, int(row[0]), false)
++		print("      held %d: sent '%s'" % [row[0], r[0]])
++		if String(row[1]) == "KNOCK BACK":
++			_expect(r[0] == "KNOCK BACK", "past the first flash: a knock-back")
++		else:
++			_expect(r[0] != "" and r[0] != "KNOCK BACK", "the full flash: a send (%s)" % r[0])
++		SimCore.dispose(S3)
++	b.oneRuleB.enabled = false
++
++
++## (4) The circle: 10 ki, x1.5 inside 3 s; a light doesn't stop it.
++func _circle(st: Dictionary) -> void:
++	var c: Dictionary = st.circle
++	c.enabled = true
++	var S := _pair()
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var paid: Array = []
++	for _n in range(3):
++		A.ki = 100.0
++		_tap(S, _press(false, true, false, 8))
++		paid.append(snappedf(100.0 - A.ki, 0.1))
++		for _k in range(40):
++			_step(S)
++	print("      three in a row: paid %s" % str(paid))
++	_expect(paid.size() == 3 and absf(paid[0] - 10.0) < 1.5 and absf(paid[1] - 15.0) < 1.5 and absf(paid[2] - 22.5) < 1.5, "10 ki, then x1.5 each inside 3 s")
++	SimCore.dispose(S)
++	var S2 := _pair()
++	var A2 = S2.fighters[0]
++	var D2 = S2.fighters[1]
++	var side: float = SimWrap.sdx(D2.x, A2.x)
++	_tap(S2, _press(false, true, false, 8))
++	var landed: bool = false
++	var hp: float = D2.hp
++	for k in range(30):
++		_step(S2, null, _press(true, false, false) if k == 3 else null)
++		landed = landed or D2.hp < hp
++	print("      a light at him as he rises: he's on side %.0f, his medium landed %s" % [SimWrap.sdx(D2.x, A2.x), str(landed)])
++	_expect(landed and signf(SimWrap.sdx(D2.x, A2.x)) == -signf(side), "a light doesn't stop it")
++	SimCore.dispose(S2)
++	c.enabled = false
++
++
++## The stick's steal: a quick flick on a rival with a run takes it.
++func _steal(sc: Dictionary) -> void:
++	sc.steal.enabled = true
++	var S := _pair()
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	DirBrawl._s(D, DirBrawl.RUN, 3 * DirBrawl.RUN_U)
++	var w := SimIntent.new()
++	w.rsStart = true
++	w.rsHeld = true
++	w.rsDir = SimStrikeRead.LEFT if SimWrap.sdx(A.x, D.x) < 0.0 else SimStrikeRead.RIGHT
++	_step(S, w)
++	var stole: String = ""
++	for k in range(30):
++		var h := SimIntent.new()
++		if k < 3:
++			h.rsHeld = true
++			h.rsDir = w.rsDir
++		elif k == 3:
++			h.rsRelease = true
++			h.rsDir = w.rsDir
++		_step(S, h)
++		for c in _cues:
++			if String(c).begins_with("stick_steal:"):
++				stole = String(c).substr(12)
++	print("      the steal: took '%s', his run now %d, mine %d" % [stole, DirBrawl._g(D, DirBrawl.RUN), DirBrawl._g(A, DirBrawl.RUN)])
++	_expect(stole == "3" and DirBrawl._g(D, DirBrawl.RUN) == 0, "a quick flick takes his run")
++	SimCore.dispose(S)
++	sc.steal.enabled = false
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 4f47b89..772ed34 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -3276,6 +3276,30 @@
+           "patternProperties": {
+             "^_": true
+           }
++        },
++        "chargeClose": {
++          "type": "object",
++          "patternProperties": {
++            "^_": {}
++          },
++          "additionalProperties": false,
++          "properties": {
++            "enabled": {
++              "type": "boolean"
++            },
++            "firstBh": {
++              "type": "number",
++              "minimum": 0
++            },
++            "fullBh": {
++              "type": "number",
++              "minimum": 0
++            },
++            "maxTicks": {
++              "type": "integer",
++              "minimum": 1
++            }
++          }
+         }
+       },
+       "description": "The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.",
+diff --git a/sim/director/tools/press_decides_check.gd.uid b/sim/director/tools/press_decides_check.gd.uid
+new file mode 100644
+index 0000000..ece5d61
+--- /dev/null
++++ b/sim/director/tools/press_decides_check.gd.uid
+@@ -0,0 +1 @@
++uid://dkajessuo5dyf

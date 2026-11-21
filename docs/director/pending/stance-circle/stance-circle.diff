@@ -1,0 +1,230 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index bc0edfe..a35be0c 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -258,6 +258,15 @@
+     "enabled": false,
+     "pushBh": 2.0,
+     "stepPastBh": 0.8,
++    "circle": {
++      "enabled": false,
++      "ticks": 24,
++      "riseBh": 1.3,
++      "ki": 10,
++      "repeatMul": 1.5,
++      "repeatSec": 3.0,
++      "_note": "LT + Y in reach, the circle (docs/design/press-decides.md section 4; the input waits for Orb's pick of three clips). He flies round the rival in one curve of riseBh over ticks, and the medium lands as he arrives on the far side. ki, times repeatMul for each one inside repeatSec. A light doesn't stop it; a heavy or a grab does."
++    },
+     "_note": "The stances on a blow (docs/design/pad-first-press.md; sim/director/stance.gd). LB + X, the check: the guard stays up through it. LB + Y, the push: he's shoved back pushBh. LT + X, the step strike: the attacker comes out stepPastBh beyond him. First values."
+   },
+   "beamStruggle": {"enabled": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index 1aebfc4..d8c2804 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -954,6 +954,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
+ 	if inFl and wound and not energy and not lau:
+ 		cell = _mashCell(cell)   # a mashed medium or heavy: the grind or the advance, when Combat's recipes name it
+ 	DirStance.note(f, args, st)
++	lead = DirStance.circle(S, f, o, args, lead)
+ 	var piece: String = DirStick.piece(S, f, args) if args.has("stick") else ""   # first, so a medium's draw doesn't take a place in his last two
+ 	if piece == "" and bolt and _g(f, BOLT_N) >= 1:
+ 		piece = _boltRun(S, f, args)
+@@ -1262,7 +1263,7 @@ static func contact(S: SimState, ex, b) -> void:
+ 	# The reach, read as it lands. A blow by rule (the double hit's, a sure one, a zip's) keeps the strike's own limit.
+ 	var ct: Dictionary = DirData.contact()
+ 	var far: float = (absf(SimWrap.sdx(f.x, o.x)) if (_lg(o, LA_POP_UNTIL) > S.tick or _lg(f, LA_POP_UNTIL) > S.tick) else DirBands.dist(f, o)) - float(ct.offset) + (0.0 if special else float(_g(f, PRE)) / 16.0)   # past striking distance, with what its own step through its reach has covered added back
+-	if _g(f, GAPV_ON) == 1 and wound and not special and not DirArc.banked(S, f) and not chargeCloses(a):   # a banked stun: he's where the stick's carry put him, in reach, and no gap counts
++	if _g(f, GAPV_ON) == 1 and wound and not special and not DirArc.banked(S, f) and not a.has("circle") and not chargeCloses(a):   # a banked stun: he's where the stick's carry put him, in reach, and no gap counts
+ 		far = float(_g(f, GAPV)) / 16.0   # a blow with a wind-up: the gap as counted since it began (tick, _giveStep)
+ 	_s(f, PRE, 0)
+ 	_s(f, GAPV_ON, 0)
+@@ -1320,6 +1321,8 @@ static func contact(S: SimState, ex, b) -> void:
+ 			dmg *= float(c.heavy.armour.lightMul)
+ 		elif kind == MEDIUM and DirStick.mediumHolds(S, o):
+ 			armour = true
++	if not armour and not special and not wound and DirStance.circling(o):
++		armour = true   # a light doesn't stop the circle (press-decides.md section 4)
+ 	if kind == MEDIUM and energy == "" and not special and (ex.sD if o == ex.D else ex.sA) == 1.0:
+ 		dmg *= float(c.medium.guardChipMul)   # a medium on a guard chips double, and tires it twice as fast
+ 	var landed0: int = DirInterrupt.gi(f, DirInterrupt.LANDED)
+@@ -1482,6 +1485,7 @@ static func _reel(S: SimState, f, ticks: int) -> void:
+ ## f was staggered: his blow on its way is lost, and his string is over.
+ static func _drop(S: SimState, ex, f) -> void:
+ 	var role: String = "A" if f == ex.A else "D"
++	DirStance.dropped(f)
+ 	for b in ex.beats:
+ 		if not b.done and b.op == "strike" and b.args != null and b.args.get("brawl", false) and String(b.args.a) == role:
+ 			b.done = true
+diff --git a/sim/director/stance.gd b/sim/director/stance.gd
+index 4cdaeb0..d87e67f 100644
+--- a/sim/director/stance.gd
++++ b/sim/director/stance.gd
+@@ -2,6 +2,8 @@ class_name DirStance
+ extends RefCounted
+ ## The stances on a blow (docs/design/pad-first-press.md): the same worth and wind-up as ever, and one felt difference. LB + X, the check: his
+ ## guard stays up through it. LB + Y, the push: he's shoved back. LT + X, the step strike: he moves through the blow and comes out past him.
++## LT + Y, the circle (circle.enabled; press-decides.md section 4): he flies round the rival in one curve, over him or, with the stick down,
++## under him, and the medium lands as he arrives on the far side. A light doesn't stop it; a heavy or a grab does. Its input waits for Orb's pick.
+ ## They move bodies with the stick's own carry (DirStick). Combat's parked stance split gives the looks. Off, no slot is sized.
+ 
+ const S_CHECK: int = 0   # 1 while a check of his is on its way
+@@ -10,6 +12,7 @@ const S_N: int = 1
+ const CHECK: int = 1
+ const PUSH: int = 2
+ const STEP: int = 3
++const CIRCLE: int = 4
+ 
+ static var _force: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+ 
+@@ -53,11 +56,59 @@ static func note(f, args: Dictionary, st: int) -> void:
+ 		kind = CHECK if st == 0 else PUSH
+ 	elif (m & DirStick.LT) != 0 and st == 0:
+ 		kind = STEP
++	elif (m & DirStick.LT) != 0 and st == 1 and circleOn() and not args.has("energy"):
++		kind = CIRCLE
+ 	if kind != 0:
+ 		args["stanceBlow"] = kind
+ 	_s(f, S_CHECK, 1 if kind == CHECK else 0)
+ 
+ 
++static func circleOn() -> bool:
++	return on() and bool(cfg().get("circle", {}).get("enabled", false))
++
++
++## True while he's flying a circle: a light landing on him doesn't stop it.
++static func circling(f) -> bool:
++	return on() and _g(f, S_CHECK) == 2
++
++
++## The circle's blow goes on his line (DirBrawl._throw): he sets off, and it lands as he arrives. Returns the live ticks to its contact.
++static func circle(S: SimState, f, o, args: Dictionary, lead: int) -> int:
++	if int(args.get("stanceBlow", 0)) != CIRCLE:
++		return lead
++	var c: Dictionary = cfg().circle
++	var ticks: int = maxi(lead, int(c.ticks))
++	var more: float = DirStanceCost.pay(S, f, c) - float(DirBrawl.cfg().medium.ki)
++	if more > 0.0:
++		f.ki = maxf(0.0, f.ki - more)
++	var side: float = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(o.x, f.x)), -f.face)   # his side of the rival
++	var rise: float = float(c.riseBh) * DirInterrupt.BH
++	var over: bool = float(f.input.my) >= -0.5 or o.y - rise < SimFighter.floorFor(S, o, o.x, o.z) + DirInterrupt.BH
++	var r := SimState.Rush.new()
++	r.tgt = o
++	r.off = -side * float(DirData.contact().offset)
++	r.arc = (1.0 if -side >= 0.0 else -1.0) * (rise if over else -rise)   # (Rush.arc bows to the mover's left: up when he travels toward +x)
++	r.end = S.T + float(ticks) * SimConst.DT
++	f.rush = r
++	f.vx = 0.0
++	f.vy = 0.0
++	args["circle"] = true
++	args["wind"] = true
++	DirBrawl._s(f, DirBrawl.HOLD_AT, DirBrawl._now(S))
++	DirBrawl._s(f, DirBrawl.CHG, 3)   # it lands as he arrives, whatever the button does
++	_s(f, S_CHECK, 2)
++	SimFx.cue(S, f, "stance_circle", "over" if over else "under", "")
++	SimFx.rush(S, f, o, S.tick + ticks)
++	return ticks
++
++
++## His blow was lost on the way (DirBrawl._drop): he stops where he is.
++static func dropped(f) -> void:
++	if on() and _g(f, S_CHECK) == 2:
++		_s(f, S_CHECK, 0)
++		f.rush = null
++
++
+ ## His blow has landed or gone (DirBrawl.contact).
+ static func done(f) -> void:
+ 	if on() and _g(f, S_CHECK) != 0:
+diff --git a/sim/director/stance_cost.gd b/sim/director/stance_cost.gd
+new file mode 100644
+index 0000000..65ab1d3
+--- /dev/null
++++ b/sim/director/stance_cost.gd
+@@ -0,0 +1,35 @@
++class_name DirStanceCost
++extends RefCounted
++## The circle's price (press-decides.md section 4): circle.ki, times circle.repeatMul for each one he flew inside circle.repeatSec. Off, no
++## slot is sized. State: integers on f.act.dirI after DirBeamAim's.
++
++const C_AT: int = 0   # the live tick of his last circle, plus 1
++const C_N: int = 1    # circles in a row, each inside repeatSec of the one before
++const C_SZ: int = 2
++
++
++static func _b() -> int:
++	return DirBeamAim._b() + DirBeamAim.B_N
++
++
++static func _g(f, k: int) -> int:
++	var d: PackedInt32Array = f.act.dirI
++	var i: int = _b() + k
++	return d[i] if i < d.size() else 0
++
++
++static func _s(f, k: int, v: int) -> void:
++	DirPlane._size(f)
++	if f.act.dirI.size() < _b() + C_SZ:
++		f.act.dirI.resize(_b() + C_SZ)
++	f.act.dirI[_b() + k] = v
++
++
++## What this circle costs, and it's counted.
++static func pay(S: SimState, f, c: Dictionary) -> float:
++	var now: int = DirBrawl._now(S)
++	var at: int = _g(f, C_AT)
++	var n: int = _g(f, C_N) if (at > 0 and float(now - (at - 1)) <= float(c.repeatSec) * DirData.TICKS_PER_SEC) else 0
++	_s(f, C_AT, now + 1)
++	_s(f, C_N, n + 1)
++	return float(c.ki) * SimDetMath.pow(float(c.repeatMul), float(n))
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 0c3cb5e..ec79423 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -4872,6 +4872,38 @@
+         "stepPastBh": {
+           "type": "number",
+           "minimum": 0
++        },
++        "circle": {
++          "type": "object",
++          "patternProperties": {
++            "^_": {}
++          },
++          "additionalProperties": false,
++          "properties": {
++            "enabled": {
++              "type": "boolean"
++            },
++            "ticks": {
++              "type": "integer",
++              "minimum": 1
++            },
++            "riseBh": {
++              "type": "number",
++              "minimum": 0
++            },
++            "ki": {
++              "type": "number",
++              "minimum": 0
++            },
++            "repeatMul": {
++              "type": "number",
++              "minimum": 0
++            },
++            "repeatSec": {
++              "type": "number",
++              "minimum": 0
++            }
++          }
+         }
+       },
+       "required": [
+diff --git a/sim/director/stance_cost.gd.uid b/sim/director/stance_cost.gd.uid
+new file mode 100644
+index 0000000..24f56d8
+--- /dev/null
++++ b/sim/director/stance_cost.gd.uid
+@@ -0,0 +1 @@
++uid://du2fcpq6rihmf

@@ -30,6 +30,13 @@ Encounter, 2026-11-15, sprint A1. These are the match files for the trial's clip
 - **Seat 1** is the medium pad from the join on. For the blast it holds RB and presses X with the partner between it and a weak fighter, holding the energy family through the wind-up. Both pads hold their blows for that second, so only the shot reaches the body.
 - **The button strip** draws one pad: the kit picks the slot with the most inputs, which is seat 0. From the join on, seat 0's pad is idle, so the strip shows nothing in the join and blast window. If the strip should follow seat 1 there, it's Tools' call.
 
+## Correction (2026-11-20): the lone-pad finding was the script's
+
+The "doesn't clear the wave" below came from this recorder, not the game. After its scripted blast, the pads send the "auto" family (-1), which keeps the last family, so every later X from seat 1 is an energy shot. A shot doesn't spend a weak fighter's toughness, so nothing falls (`../horde-trial.md`, "One player left up").
+- Marks 1 to 3 are unaffected up to and including the blast. In mark 3's last half second, after the blast, seat 1's next X may be a shot too.
+- **The `-down` file's mark 4 shows the fault, not the game: don't use it.**
+- A re-recording would need the pads to send the physical family (0) outside the blast.
+
 ## Not in the clip, against the design's list
 
 - **Beat 3, "B: one sent through a building", can't happen in this build.** A Horde B launches the body by the knock-out fallback's plain launch (`DirHorde._fell`), with no aimed building. A building is struck only by an aimed flight (`WorldBrunt.checkHit` reads `f.aimB`), so 25 B presses beside buildings struck none. The fix is to route the Horde's B through the launch planner: a small change to the trial's director half and a re-run of T3 to T6.

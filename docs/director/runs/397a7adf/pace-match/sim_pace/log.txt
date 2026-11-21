@@ -1,0 +1,14 @@
+23:36:21 parity exit 0: golden check passed
+23:37:07 validate: 321 files checked, 0 errors, 2 warnings; selftest: self-test: 10093 of 10093 checks passed
+23:37:07 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+23:37:13 pace_check exit 0: PACE: 0 check(s) failed
+23:37:20 a_press_check exit 0: A PRESS: 0 check(s) failed
+23:37:27 press_decides_check exit 0: PRESS: 0 check(s) failed
+23:37:32 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+23:37:40 beam_ai_check exit 0: BEAM AI: 0 check(s) failed
+23:37:45 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+23:37:50 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+23:38:03 stick_check exit 0: STICK: 0 check(s) failed
+23:38:13 ending_check exit 0: ENDING: 0 check(s) failed
+23:38:21 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+23:38:21 lane sim done

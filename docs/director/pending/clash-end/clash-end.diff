@@ -1,0 +1,74 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index b283860..1ea537e 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -271,3 +271,3 @@
+   },
+-  "beamStruggle": {"enabled": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
++  "beamStruggle": {"enabled": false, "endEvent": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
+   "beamPlays": {
+diff --git a/sim/director/beam.gd b/sim/director/beam.gd
+index ea6e745..19c20ce 100644
+--- a/sim/director/beam.gd
++++ b/sim/director/beam.gd
+@@ -300,2 +300,22 @@ static func _cue(S: SimState, f, o, name: String, text: String, mid: float, sour
+ 
++## The struggle's end, for VFX's shockwave and World's crater (beamStruggle.endEvent; Orb's note): the cue beam_clash_end. text the
++## outcome (win: overwhelmed or run out on his side; break: he let go; draw: they detonated), x, y, z the meeting point in the world,
++## amount the point (0 at A's hands to 1 at D's), energy the clash's (both beams' damage at the pair's mean tier), winner and loser
++## their slots (-1 at a draw), n the surges it took, source the ending as beam_end names it (time, overwhelmed, letgo, detonate). Called
++## once for any ending. Off, nothing is emitted. (World's struggle-meeting-point call goes here, ahead of the switch: its own.)
++static func _clashEnd(S: SimState, A, D, W, L, outcome: String, how: String, mid: float, st: Dictionary) -> void:
++	if not bool(_bs().get("endEvent", false)):
++		return
++	SimFx.cue(S, W if W != null else A, "beam_clash_end", outcome, how)
++	var e = S.out.fx[S.out.fx.size() - 1]
++	e.x = SimWrap.wrap(A.x + SimWrap.sdx(A.x, D.x) * mid)
++	e.y = A.y + 38.0 + (D.y - A.y) * mid
++	e.z = A.z + (D.z - A.z) * mid
++	e.amount = mid
++	e.energy = 2.0 * 260.0 * sigDamageMul() * (float(A.tier) + float(D.tier)) * 0.5
++	e.winner = float(S.fighters.find(W)) if W != null else -1.0
++	e.loser = float(S.fighters.find(L)) if L != null else -1.0
++	e.n = int(st.surgesA) + int(st.surgesD)
++
++
+ static func _struggleBeat(ex):
+@@ -419,2 +439,3 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
+ 			_cue(S, Wn, Ls, "beam_end", "time", mid, "letgo")
++			_clashEnd(S, A, D, Wn, Ls, "break", "letgo", mid, st)
+ 			SimEvents.feed(S, Ls.name + " LETS GO", "he slips aside and the beam carries on past him")
+@@ -428,2 +449,3 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
+ 			_cue(S, Wn, Ls, "beam_end", "overwhelmed", mid)
++			_clashEnd(S, A, D, Wn, Ls, "win", "overwhelmed", mid, st)
+ 			SimEvents.feed(S, Ls.name + " OVERWHELMED", "the meeting point reached him")
+@@ -445,2 +467,3 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
+ 		_cue(S, null, null, "beam_end", "detonate", mid)
++		_clashEnd(S, A, D, null, null, "draw", "detonate", mid, st)
+ 		SimEvents.feed(S, "THE BEAMS DETONATE", "the struggle ran out in the middle")
+@@ -451,2 +474,3 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
+ 		_cue(S, Wn2, Ls2, "beam_end", "time", mid)
++		_clashEnd(S, A, D, Wn2, Ls2, "win", "time", mid, st)
+ 		SimEvents.feed(S, Ls2.name + " GIVES WAY", "the struggle ran out on his side")
+diff --git a/sim/director/tools/struggle_read.gd b/sim/director/tools/struggle_read.gd
+index e9f4599..5ee333f 100644
+--- a/sim/director/tools/struggle_read.gd
++++ b/sim/director/tools/struggle_read.gd
+@@ -107,2 +107,6 @@ func _init() -> void:
+ 						r.strays += 1
++				elif ck == "beam_clash_end":
++					r["clashEnd:" + String(e.text)] = int(r.get("clashEnd:" + String(e.text), 0)) + 1
++					if not r.has("clashEndAt"):
++						r["clashEndAt"] = "x %.0f y %.0f z %.1f energy %.0f surges %d winner %d" % [e.x, e.y, e.z, e.energy, int(e.n), int(e.winner)]
+ 				elif ck == "beam_end" and st != null:
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 5c89735..6929d40 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -3799,2 +3799,6 @@
+         },
++        "endEvent": {
++          "type": "boolean",
++          "description": "At the struggle's end, the cue beam_clash_end: the meeting point, the outcome, the energy (VFX's shockwave, World's crater)."
++        },
+         "pulseTicks": {

@@ -1,0 +1,15 @@
+ok    the lane table is the sim's (218 floats) and fits the ground shader: 15 strips (16 at most), 11 districts (16), 17 avenues (24)
+ok    a world with no lane table paints nothing (no stand-in)
+ok    every look in the data (8) has its colours and windows here
+ok    every look whose windows cover more than 30% of its wall carries the contrast budget (0.085 of relative luminance, under the tenth the frame analyser counts), and its towers are massed in its shadow tone
+ok    each of the 20 shapes builds at three sizes, the body first and on the ground: no wall over the sim's height or width (a roof's eaves at most 13% out), ornaments at most 15% above it, and the walls 85% of the width or more near the to
+ok    seed 1: none of the 118 buildings' 280 parts has a wall over the sim's height (0.00 over, ornaments' allowance counted) or its width (0.00) but for a roof's eaves (4% of the width); the walls fill 86% of the width or more near the top
+ok    each landmark in this world (lighthouse, chimney_stack, clock_tower, ledger_hall, crown_tower, village_hall, hill_chapel) has a treatment of its own
+ok    a stepped tower's parts: all show when it is whole, only an ornament over the sim's height; they scale with its hit points; with its top floors gone the caps and ornaments go and nothing stands over its height; a shell has neither and
+ok    the planet view: an instance for each of the 280 parts (the body's is the building's own, none shared), and each part's texel carries its shape and its look
+ok    a tower at half its hit points is drawn to the sim's height (1121 of 1725); a stepped tower with three floors out opens them in its skirt as in its body
+ok    the rows' haze: none on the front block, 0.14 on the back block, 0.49 on the scenery row
+ok    the ground shader has the table's 15 strips, its 17 avenues and the two block lanes ((-187.5, -825.0, -1200.0, -1837.5))
+shape check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+ERROR: 9 resources still in use at exit (run with --verbose for details).

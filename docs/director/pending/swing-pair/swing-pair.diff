@@ -1,0 +1,123 @@
+diff --git a/data/director/swing.json b/data/director/swing.json
+index 5537975..3a3f10b 100644
+--- a/data/director/swing.json
++++ b/data/director/swing.json
+@@ -42,3 +42,9 @@
+     "sec": 6.0,
+-    "reach": 6000.0
++    "reach": 6000.0,
++    "shareCap": {
++      "enabled": false,
++      "max": 0.4,
++      "after": 3,
++      "_note": "Brawl swings at most max of the match's big swings, once there have been after of them (Game Design's 40% cap for any cause but a launch; QA read 44% on the kept build)."
++    }
+   },
+@@ -144,3 +150,4 @@
+     "leanDeg": 60.0,
+-    "leanReach": 6000.0
++    "leanReach": 6000.0,
++    "yieldToLaunch": false
+   },
+diff --git a/sim/director/swing.gd b/sim/director/swing.gd
+index 534a3a4..65c37ef 100644
+--- a/sim/director/swing.gd
++++ b/sim/director/swing.gd
+@@ -23,3 +23,3 @@ const W_LAST: int = 0     # the live tick of the last big swing, plus 1
+ const W_JOLT: int = 1     # ... of the last small one
+-const W_CAUSE: int = 2    # index in CAUSES, plus 1
++const W_CAUSE: int = 2    # index in CAUSES, plus 1; with brawl.shareCap on, plus 16 x the match's big swings and 65536 x its brawl ones
+ const W_SIZE: int = 3     # its size in degrees
+@@ -59,2 +59,3 @@ static var _builtKey: String = ""         # _builtPlaces' memo, by the world: a
+ static var _builtMemo := PackedByteArray()
++static var _joltDue: Dictionary = {}   # one tick (jolt.yieldToLaunch): a jolt atBlow asked, sent at tick's end; never kept past it
+ 
+@@ -546,3 +547,6 @@ static func _take(S: SimState, cause: String, A, top: Dictionary, spec: Dictiona
+ 	_s(S, W_LAST, now + 1)
++	var counts: int = _g(S, W_CAUSE) & ~15
+ 	_s(S, W_CAUSE, CAUSES.find(cause) + 1)
++	if _shareOn():
++		_s(S, W_CAUSE, CAUSES.find(cause) + 1 + counts + 16 + (65536 if cause == "brawl" else 0))   # the match's big swings, and its brawl ones
+ 	_s(S, W_NCAUSE, CAUSES.find(cause) + 1)
+@@ -717,2 +721,4 @@ static func atBlow(S: SimState, A, D, weight: float) -> void:
+ 	var j: Dictionary = c.jolt
++	if bool(j.get("yieldToLaunch", false)) and _g(S, W_PDEG) != 0:
++		return   # a launch's swing is waiting for its hit-stop to end: a jolt now would start on its tick (QA: 52 of 2,395 gaps were 0 s)
+ 	var now: int = DirBrawl._now(S)
+@@ -735,2 +741,11 @@ static func atBlow(S: SimState, A, D, weight: float) -> void:
+ 	var deg: float = sgn * size
++	if bool(j.get("yieldToLaunch", false)):
++		_joltDue = {"a": S.fighters.find(A), "deg": deg, "score": score, "pv": pv}
++		return   # it goes at the tick's end, unless the same blow's launch has started its own swing by then (tick)
++	_joltGo(S, A, deg, score, pv)
++
++
++## The jolt's ask, and what it leaves for the next.
++static func _joltGo(S: SimState, A, deg: float, score: float, pv: float) -> void:
++	var now: int = DirBrawl._now(S)
+ 	if not SimSwing.ask(S, {"deg": deg, "cause": "small", "blow": true, "pivotX": pv}):
+@@ -778,2 +793,8 @@ static func _brawlTick(S: SimState) -> void:
+ 		return
++	if _shareOn():
++		var cw: int = _g(S, W_CAUSE)
++		var bigN: int = (cw >> 4) & 4095
++		var brN: int = (cw >> 16) & 4095
++		if bigN >= int(c.shareCap.after) and float(brN + 1) / float(bigN + 1) > float(c.shareCap.max):
++			return   # brawl swings at their share of the match's big ones: Game Design's cap for any cause but a launch
+ 	_offer(S, "brawl", ex.A, ex.D, float(c.sec), float(c.reach), false)
+@@ -781,2 +802,6 @@ static func _brawlTick(S: SimState) -> void:
+ 
++static func _shareOn() -> bool:
++	return bool(cfg().get("brawl", {}).get("shareCap", {}).get("enabled", false))
++
++
+ ## An AI flying flat out with no human holding a direction: its flight may swing at a chase's rate (section 13's last row).
+@@ -964,2 +989,4 @@ static func _nudgeTick(S: SimState) -> void:
+ static func tick(S: SimState, dt: float) -> void:
++	var jd: Dictionary = _joltDue
++	_joltDue = {}
+ 	if dt <= 0.0 or not on(S):
+@@ -971,2 +998,4 @@ static func tick(S: SimState, dt: float) -> void:
+ 		SimSwing.ask(S, {"deg": float(waiting) / 4096.0, "cause": "launch", "pivotX": float(_g(S, W_PPV)) / 16.0, "restBy": _g(S, W_PBY)})
++	if not jd.is_empty() and not (sw.active and int(sw.age) == 0 and String(sw.cause) != "small"):
++		_joltGo(S, S.fighters[int(jd.a)], float(jd.deg), float(jd.score), float(jd.pv))   # no big swing started this tick: the jolt goes
+ 	if sw.active and not _resting(sw):
+diff --git a/tools/schemas/director-swing.schema.json b/tools/schemas/director-swing.schema.json
+index 8a6dd54..41ea9c5 100644
+--- a/tools/schemas/director-swing.schema.json
++++ b/tools/schemas/director-swing.schema.json
+@@ -198,2 +198,28 @@
+           "minimum": 0
++        },
++        "shareCap": {
++          "type": "object",
++          "properties": {
++            "enabled": {
++              "type": "boolean"
++            },
++            "max": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1
++            },
++            "after": {
++              "type": "integer",
++              "minimum": 0
++            },
++            "_note": {
++              "type": "string"
++            }
++          },
++          "required": [
++            "enabled",
++            "max",
++            "after"
++          ],
++          "additionalProperties": false
+         }
+@@ -441,2 +467,5 @@
+           "minimum": 0
++        },
++        "yieldToLaunch": {
++          "type": "boolean"
+         }

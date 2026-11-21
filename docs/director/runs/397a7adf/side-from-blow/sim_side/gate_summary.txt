@@ -1,0 +1,9 @@
+gate: <scratch>/g/sim_side/arc_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_side/driver_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_side/ending_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_side/follow_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_side/full_send_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_side/launch_cuts_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_side/parity.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_side/sigvariants_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_side/stick_check.txt: no SCRIPT ERROR lines

@@ -16,6 +16,8 @@ gate: <scratch>/g/lcgm2/flight_strike_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/floorlift_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/follow_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/full_send_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/lcgm2/golden_off.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/lcgm2/golden_rider.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/knock_wall_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/launch_cone_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/launch_cuts_check.txt: no SCRIPT ERROR lines
@@ -23,6 +25,7 @@ gate: <scratch>/g/lcgm2/location_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/morning_fixes_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/outside_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/pace_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/lcgm2/parity.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/phrase_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/plane_check.txt: no SCRIPT ERROR lines
 gate: <scratch>/g/lcgm2/press_answers_check.txt: no SCRIPT ERROR lines

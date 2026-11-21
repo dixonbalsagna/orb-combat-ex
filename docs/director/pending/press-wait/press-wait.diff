@@ -1,0 +1,141 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index de00273..d711d88 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -341,6 +341,11 @@
+     },
+     "idleTicks": 60,
+     "heldPressTicks": 10,
++    "pressWait": {
++      "enabled": false,
++      "maxTicks": 600,
++      "_note": "A press waits for the blow in hand, however long, one slot, the newest wins; a stun or the brawl's end clears it, and says so; a held button has been building since the press (docs/design/press-decides.md sections 3 and 5). maxTicks is only a backstop. Off: heldPressTicks."
++    },
+     "chargeClose": {
+       "enabled": false,
+       "firstBh": 3,
+diff --git a/sim/core/dir.gd b/sim/core/dir.gd
+index 1b1ec5e..c348d3b 100644
+--- a/sim/core/dir.gd
++++ b/sim/core/dir.gd
+@@ -42,6 +42,11 @@ static func holdMove(S: SimState, f) -> float:
+ 	return _d("stick.gd").holdMove(S, f)
+ 
+ 
++## DirBrawl.pressInStun: a press a stun is about to clear.
++static func pressInStun(S: SimState, f, i) -> void:
++	_d("brawl.gd").pressInStun(S, f, i)
++
++
+ ## DirEnding.wearMul: what the ending does to a wound's wear.
+ static func endingWearMul(f) -> float:
+ 	return _d("ending.gd").wearMul(f)
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index a31e8fe..1815418 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -483,6 +483,10 @@ static func over(S: SimState, ex, why: String) -> void:
+ static func end(S: SimState, ex, why: String) -> void:
+ 	if S.dirS.ex != ex:
+ 		return
++	if bool(cfg().get("pressWait", {}).get("enabled", false)):
++		for f in [ex.A, ex.D]:
++			if _g(f, HELD_P) != 0:
++				_s(f, HELD_P, 0)   # the brawl's end clears a waiting press
+ 	over(S, ex, why)
+ 	for b in ex.beats:
+ 		b.done = true
+@@ -3314,6 +3318,15 @@ static func chargeCloses(a: Dictionary) -> bool:
+ 	return bool(cfg().get("chargeClose", {}).get("enabled", false)) and (bool(a.get("charged", false)) or int(a.get("stickL", 0)) >= 2)
+ 
+ 
++## A press made while a stun holds him (SimControl, before the stun clears it): with pressWait on it's told, so no press is silent. It doesn't
++## wait: Game Design's rule clears a press in a stun.
++static func pressInStun(S: SimState, f, i) -> void:
++	if f.ai != null or not (i.light or i.heavy or i.sig) or not bool(cfg().get("pressWait", {}).get("enabled", false)):
++		return
++	var a = _ev(S, f, "press_ack", "stunned", _cellOf(2 if i.sig else (1 if i.heavy else 0)))
++	a.n = S.tick
++
++
+ ## A heavy landed clean. A tap staggers him in place. The launcher launches him when a launch is ready; while it
+ ## rests it is the hammer, and staggers him in place. A charged heavy knocks him back, and at a full charge it launches him. A launch is aimed
+ ## by the stick's quarter.
+@@ -3734,13 +3747,20 @@ static func tick(S: SimState, ex) -> void:
+ 		if (hp & 7) > 1 and _g(f, LINE) == 0 and not _wound(_g(f, KIND)):
+ 			_s(f, FREE_AT, mini(_g(f, FREE_AT), _g(f, LAND_AT) + int(c.light.recover)))   # a wound blow kept behind a light: the mix-up
+ 		if hp != 0:
+-			if S.tick - _g(f, HELD_AT) > int(c.heldPressTicks) and not ((hp & 7) == 3 and DirArc.banked(S, f)):   # (a B in a banked stun waits for his line: the stick's recovery is longer than the hold)
++			var pw: bool = bool(c.get("pressWait", {}).get("enabled", false))
++			if pw and f.stunTicks > 0:
++				_s(f, HELD_P, 0)   # a stun clears it, so a press never comes out long after its moment (press-decides.md section 3)
++				var st0 = _ev(S, f, "press_ack", "lapsed", _cellOf((hp & 7) - 1))
++				st0.n = _g(f, HELD_AT)
++				st0.text = "stunned"
++			elif S.tick - _g(f, HELD_AT) > (int(c.pressWait.maxTicks) if pw else int(c.heldPressTicks)) and not ((hp & 7) == 3 and DirArc.banked(S, f)):   # (a B in a banked stun waits for his line: the stick's recovery is longer than the hold)
+ 				_s(f, HELD_P, 0)
+ 				if (hp & 32) == 0:   # a blow of the floor pace was no press: it has no ack
+ 					var a = _ev(S, f, "press_ack", "lapsed", _cellOf((hp & 7) - 1))
+ 					a.n = _g(f, HELD_AT)
+ 			elif _free(S, f):
+-				_throw(S, f, (hp & 7) - 1, _g(f, HELD_AT), false, false, (hp & 8) != 0, (hp & 16) != 0, (hp & 32) != 0)
++				var built: bool = pw and (hp & 8) == 0 and (hp & 7) > 1 and _down(f, BIG if (hp & 7) == 3 else MEDIUM)   # still held: it's been building since the press (section 5)
++				_throw(S, f, (hp & 7) - 1, _g(f, HELD_AT), false, built, (hp & 8) != 0, (hp & 16) != 0, (hp & 32) != 0)
+ 		_burstTick(S, ex, f, now)
+ 		_floorTick(S, ex, f)
+ 		# His string is over when nothing of his was thrown or landed for a while.
+diff --git a/sim/director/tools/press_decides_check.gd b/sim/director/tools/press_decides_check.gd
+index 6a1d23a..44e81f6 100644
+--- a/sim/director/tools/press_decides_check.gd
++++ b/sim/director/tools/press_decides_check.gd
+@@ -278,6 +278,10 @@ func _steal(sc: Dictionary) -> void:
+ 	_step(S, w)
+ 	var stole: String = ""
+ 	for k in range(30):
++		if stole == "":
++			DirBrawl._s(D, DirBrawl.RUN, 3 * DirBrawl.RUN_U)   # a trade on: both have landed lately, so his run holds
++			DirBrawl._s(D, DirBrawl.LL_AT, S.tick)
++			DirBrawl._s(A, DirBrawl.LL_AT, S.tick)
+ 		var h := SimIntent.new()
+ 		if k < 3:
+ 			h.rsHeld = true
+diff --git a/sim/input/control.gd b/sim/input/control.gd
+index 2a6a275..7c283e0 100644
+--- a/sim/input/control.gd
++++ b/sim/input/control.gd
+@@ -12,6 +12,8 @@ static func control(S: SimState, f, intent) -> void:
+ 		DirAI.aiInput(S, f)
+ 	elif intent != null:
+ 		SimIntent.applyIntent(i, intent)
++	if f.stunTicks > 0:
++		SimDir.pressInStun(S, f, i)
+ 	SimWounds.gateIntent(f, i)   # S3a: stagger, daze and broken legs
+ 	if f.act.v2:
+ 		# I2a: a v2 slot's stance follows its held states (SimAct); today's stance field is not read for it.
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 772ed34..6ced5ec 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -3300,6 +3300,22 @@
+               "minimum": 1
+             }
+           }
++        },
++        "pressWait": {
++          "type": "object",
++          "patternProperties": {
++            "^_": {}
++          },
++          "additionalProperties": false,
++          "properties": {
++            "enabled": {
++              "type": "boolean"
++            },
++            "maxTicks": {
++              "type": "integer",
++              "minimum": 0
++            }
++          }
+         }
+       },
+       "description": "The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.",

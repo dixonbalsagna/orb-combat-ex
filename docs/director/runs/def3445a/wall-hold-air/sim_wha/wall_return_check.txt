@@ -1,0 +1,6 @@
+ok    wall slams staged: 16 from 100 up, 8 from 900 up
+ok    today: every slam throws him back off the face, and his depth comes home while he's still in the air
+ok    cityHold with the grant: nobody thrown back, nothing freezes the fight
+ok    cityHold with the grant: his depth comes home after he lands (0% and 3% in the air), inside 240 ticks
+ok    negative control, cityHold as built: from 900 up the fall outlasts the hold and his depth comes home in the air (100%)
+WALL RETURN: 0 check(s) failed

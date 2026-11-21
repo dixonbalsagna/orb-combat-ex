@@ -1,0 +1,188 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index 9589fff..ce3dc97 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -388,6 +388,7 @@
+       "closeMaxTicks": 4,
+       "closeMaxBh": 0.6,
+       "closeSlackBh": 0.07,
++      "sureWaitTicks": 6,
+       "lightReachBh": 0.6,
+       "edgeBh": 0.033
+     },
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index ff86d54..da3745e 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -1193,6 +1193,35 @@ static func _tradeTick(S: SimState, ex) -> void:
+ 
+ # ---------------------------------------------------------------- a blow lands
+ 
++## True when a sure blow waits a tick (QA's 10.reach): a rival carried off as it comes, by a recoil flip out of the stagger,
++## can leave it beyond contact.reach even after a closing step. He takes the step, and the blow comes a tick later, for at
++## most give.sureWaitTicks; a blow still out of reach then meets nothing, as any other from out there. A double hit's and a
++## zip's keep to their own rules. In reach, nothing here runs.
++static func sureWaits(S: SimState, ex, b) -> bool:
++	var a = b.args
++	if not bool(a.get("sure", false)) or bool(a.get("double", false)) or bool(a.get("zip", false)) or ex.branch != "":
++		return false
++	var f = ex.A if a.a == "A" else ex.D
++	var o = ex.D if a.a == "A" else ex.A
++	var ct: Dictionary = DirData.contact()
++	if absf(SimWrap.sdx(f.x, o.x)) <= float(ct.reach) or f.stunTicks > 0 or f.state != "locked" or o.state != "locked":
++		return false
++	var most: int = int(cfg().give.sureWaitTicks)
++	if most <= 0:
++		return false
++	var d: float = absf(SimWrap.sdx(f.x, o.x)) if (_lg(o, LA_POP_UNTIL) > S.tick or _lg(f, LA_POP_UNTIL) > S.tick) else DirBands.dist(f, o)
++	if d > float(ct.reach) * float(ct.placementReaches):
++		return false   # past the strike's own limit: contact's miss, as it was
++	_stepIn(S, ex, f, o, 1)
++	var waited: int = int(a.get("waited", 0))
++	if absf(SimWrap.sdx(f.x, o.x)) <= float(ct.reach) or waited >= most:
++		a["stepped"] = true
++		return false
++	a["waited"] = waited + 1
++	DirExchange.schedule(ex, ex.t + 0.75 / DirData.TICKS_PER_SEC, "strike", a)
++	return true
++
++
+ ## A blow of the brawl lands (DirExchange.runBeat, in place of the planned strike): the reach, read as it lands; the
+ ## strike; then what it did. A wound blow has a reach past striking distance (medium.reachBh, heavy.reachBh, and up to
+ ## heavy.charge.reachBh as a charge fills); out of it, it misses, and he is open for its recoverWhiff. A blow that
+@@ -1238,9 +1267,11 @@ static func contact(S: SimState, ex, b) -> void:
+ 	if far > reach:   # the very edge of a reach (give.edgeBh) doesn't connect
+ 		_miss(S, ex, f, o, kind, wind, energy)
+ 		return
+-	_stepIn(S, ex, f, o, 1)   # he is placed for the contact, and never further than a closing step
++	if not a.has("stepped"):
++		_stepIn(S, ex, f, o, 1)   # he is placed for the contact, and never further than a closing step
++	a.erase("stepped")   # sureWaits has placed him this tick
+ 	var zipOnly: bool = bool(a.get("zip", false)) and not bool(a.get("sure", false)) and not bool(a.get("double", false))
+-	if (not special or zipOnly) and absf(SimWrap.sdx(f.x, o.x)) > float(ct.reach):
++	if (not special or zipOnly or a.has("waited")) and absf(SimWrap.sdx(f.x, o.x)) > float(ct.reach):
+ 		# Placed, the two still stand beyond the strike's reach: it meets nothing. No damaging strike of a brawl lands
+ 		# from beyond contact.reach of horizontal distance, whatever its own reach said before the step. A zip's blow
+ 		# keeps to it too: its exit is then read as for a blow that did not land.
+diff --git a/sim/director/exchange.gd b/sim/director/exchange.gd
+index 36a872c..e163e9e 100644
+--- a/sim/director/exchange.gd
++++ b/sim/director/exchange.gd
+@@ -426,6 +426,8 @@ static func runBeat(S: SimState, ex, b) -> void:
+ 				who.lastAtkT = S.T
+ 		"strike":
+ 			if a.get("brawl", false):
++				if DirBrawl.sureWaits(S, ex, b):
++					return   # a sure blow still out of reach comes a tick later
+ 				DirBrawl.contact(S, ex, b)   # a brawl's blow: it lands, and its line, its string and its close follow
+ 				DirBrawl.carryOn(ex)   # the strike placed its attacker and stopped him: the pair's drift carries on
+ 				DirBrawl.afterBlow(S, ex, b)   # a press kept behind this blow is thrown as it lands
+diff --git a/sim/director/tools/sure_reach_check.gd b/sim/director/tools/sure_reach_check.gd
+new file mode 100644
+index 0000000..8178698
+--- /dev/null
++++ b/sim/director/tools/sure_reach_check.gd
+@@ -0,0 +1,87 @@
++extends SceneTree
++## A sure blow and contact.reach (QA's 10.reach; DirBrawl.sureWaits). A real brawl is run to, then the rival is put out of
++## reach and a sure blow thrown: it waits, closes and lands in reach; a rival held out of reach makes it meet nothing; and
++## with give.sureWaitTicks 0 it lands from too far, which is the fault this check would catch.
++##   godot --headless --path . --script res://sim/director/tools/sure_reach_check.gd
++
++var failed: int = 0
++
++
++func _init() -> void:
++	var rc: float = float(DirData.contact().reach)
++	var most: int = int(DirBrawl.cfg().give.sureWaitTicks)
++	var r: Dictionary = _case(60.0, false)
++	_expect(int(r.hits) == 1 and float(r.dx) <= rc, "out of reach, it lands in reach (%d hit at %.1f, reach %.1f)" % [int(r.hits), float(r.dx), rc])
++	_expect(int(r.waited) >= 1 and int(r.waited) <= most, "it waited %d tick(s)" % int(r.waited))
++	r = _case(60.0, true)
++	_expect(int(r.hits) == 0, "a rival held out of reach: it meets nothing (%d hits, waited %d)" % [int(r.hits), int(r.waited)])
++	r = _case(0.0, false)
++	_expect(int(r.hits) == 1 and int(r.waited) == 0, "in reach, it doesn't wait (waited %d, %d hit)" % [int(r.waited), int(r.hits)])
++	DirBrawl.cfg().give.sureWaitTicks = 0
++	r = _case(60.0, false)
++	DirBrawl.cfg().give.sureWaitTicks = most
++	_expect(int(r.hits) == 1 and float(r.dx) > rc, "negative control, no wait: it lands from too far (%.1f), so this check can see the fault" % float(r.dx))
++	print("sure_reach_check: %s" % ("passed" if failed == 0 else "FAILED (%d)" % failed))
++	quit(1 if failed > 0 else 0)
++
++
++func _expect(ok: bool, what: String) -> void:
++	print(("ok    " if ok else "FAIL  ") + what)
++	if not ok:
++		failed += 1
++
++
++## Plays seed 1 to a brawl with both fighters locked and no blow on the way, puts D gap units past striking distance, and
++## throws A's sure blow with a lead of one tick. Returns the damaging hits on D, the distance at the first, and the waits.
++func _case(gap: float, hold: bool) -> Dictionary:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {"p1": true, "p2": true}, {})
++	var ex = null
++	var found := false
++	while S.tick < 20000 and not found:
++		SimCore.step(S)
++		S.out.fx.clear()
++		S.out.feed.clear()
++		ex = S.dirS.ex
++		found = ex != null and DirBrawl.isBrawl(ex) and ex.branch == "" and ex.A.state == "locked" and ex.D.state == "locked" and ex.A.stunTicks == 0 and ex.D.stunTicks == 0 and _noStrike(ex)
++	var out := {"hits": 0, "dx": 0.0, "waited": 0}
++	if not found:
++		_expect(false, "no brawl to test in")
++		return out
++	var f = ex.A
++	var o = ex.D
++	var off: float = float(DirData.contact().offset) + gap
++	var side: float = SimMathx.jsign(SimWrap.sdx(f.x, o.x))
++	o.x = SimWrap.wrap(f.x + side * off)
++	o.y = f.y
++	DirBrawl.blowAt(S, ex, f, DirBrawl.LIGHT, 1, 1.0, {"sure": true})
++	var arg = null
++	for b in ex.beats:
++		if not b.done and b.op == "strike" and b.args != null and bool(b.args.get("sure", false)):
++			arg = b.args
++	var slot: int = S.fighters.find(o)
++	var me: int = S.fighters.find(f)
++	for _k in range(24):
++		if hold:
++			o.x = SimWrap.wrap(f.x + side * off)
++		SimCore.step(S)
++		for e in S.out.fx:
++			if e.type == "damage" and e.number and e.amount > 0.0 and int(e.victim) == slot and int(e.attacker) == me:
++				out.hits += 1
++				if int(out.hits) == 1:
++					out.dx = absf(SimWrap.sdx(f.x, o.x))
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if S.dirS.ex != ex or int(out.hits) > 0:
++			break
++	if arg != null:
++		out.waited = int(arg.get("waited", 0))
++	SimCore.dispose(S)
++	return out
++
++
++func _noStrike(ex) -> bool:
++	for b in ex.beats:
++		if not b.done and b.op == "strike":
++			return false
++	return true
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 0489e35..c536389 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -2361,6 +2361,11 @@
+               "minimum": 0,
+               "description": "The farthest a close goes, in body heights (at most the leash: rule brawl-order)."
+             },
++            "sureWaitTicks": {
++              "type": "integer",
++              "minimum": 0,
++              "description": "How many ticks a sure blow waits for its attacker to close, when the rival is carried beyond contact.reach as it comes. 0: it lands from where the closing step leaves him."
++            },
+             "closeSlackBh": {
+               "type": "number",
+               "minimum": 0,

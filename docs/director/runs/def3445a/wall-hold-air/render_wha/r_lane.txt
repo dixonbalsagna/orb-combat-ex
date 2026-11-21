@@ -1,0 +1,13 @@
+ok    with the option off nothing is remapped: each fighter's aura colour is the sim's, to the bit
+ok    protan: each fighter's aura colour is UI's lane colour for him under the preset, on the same views (the body wears the palette with that accent, nothing rebuilt), and the body colours are left alone
+ok    deutan: each fighter's aura colour is UI's lane colour for him under the preset, on the same views (the body wears the palette with that accent, nothing rebuilt), and the body colours are left alone
+ok    tritan: each fighter's aura colour is UI's lane colour for him under the preset, on the same views (the body wears the palette with that accent, nothing rebuilt), and the body colours are left alone
+ok    every pane's views have the preset's colour, and the views keep their hooks (a head flash still asks the register)
+ok    off again: the sim's colours, to the bit, on the same views, and the body wears its own palette again
+ok    a new match with the option off builds its views once: nothing is rebuilt for a change that is none
+ok    CSS's insets scale from the page's pixels to the viewport's (a phone upright: top 141, bottom 102), and a bad answer gives none
+ok    a phone's safe rectangle against its window gives the four insets (on its side: (132.0, 0.0, 132.0, 63.0)), and a full safe area gives none
+ok    a desktop run hands UI no insets
+lane check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+ERROR: 9 resources still in use at exit (run with --verbose for details).

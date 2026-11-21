@@ -1,0 +1,177 @@
+diff --git a/sim/director/beamplay.gd b/sim/director/beamplay.gd
+index ca10c5f..08e93ff 100644
+--- a/sim/director/beamplay.gd
++++ b/sim/director/beamplay.gd
+@@ -85,3 +85,3 @@ static func _arrival(D, A) -> int:
+ static func windowOpen(S: SimState, f) -> bool:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	return ex != null and ex.kind == "sig" and ex.D == f and ex.branch == "" and frontOn() and _beat(ex, "beamReach") != null
+@@ -91,3 +91,3 @@ static func windowOpen(S: SimState, f) -> bool:
+ static func charging(S: SimState, f) -> bool:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	return ex != null and ex.kind == "sig" and ex.D == f and ex.branch == "" and frontOn() and _beat(ex, "beamFire") != null
+@@ -130,3 +130,3 @@ static func fromStick(S: SimState, f, held: int) -> void:
+ 		return
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex == null or ex.kind != "sig" or ex.A != f:
+@@ -205,3 +205,3 @@ static func fireBack(S: SimState, f) -> bool:
+ 	f.ki -= float(frontCfg().answerKi)
+-	_answerNow(S, S.dirS.ex, "heavy_blast")
++	_answerNow(S, DirBrawl.exOf(S), "heavy_blast")
+ 	return true
+@@ -587,3 +587,3 @@ static func aiPlan(S: SimState, ex, answers: bool) -> void:
+ static func aiMayDodge(S: SimState, f) -> bool:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex == null or ex.kind != "sig" or ex.D != f or ex.branch != "" or not on():
+@@ -604,3 +604,3 @@ static func aiMayDodge(S: SimState, f) -> bool:
+ static func aiDir(S: SimState, f) -> float:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex == null or ex.kind != "sig" or ex.D != f or ex.branch != "" or not on():
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index d8c2804..5a8ab50 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -214,2 +214,11 @@ static func _doubleLeft(ex) -> bool:
+ ## True when ex is a brawl.
++## The running exchange, and a fighter's rival: the director's one place for each, for the 2v2 restructure (tools/ratchet-two-fighter.mjs).
++static func exOf(S: SimState):
++	return S.dirS.ex
++
++
++static func rivalOf(S: SimState, f):
++	return SimRoster.opp(S, f)
++
++
+ static func isBrawl(ex) -> bool:
+diff --git a/sim/director/chase_tap.gd b/sim/director/chase_tap.gd
+index 0e1b8c8..60c7b9d 100644
+--- a/sim/director/chase_tap.gd
++++ b/sim/director/chase_tap.gd
+@@ -80,3 +80,3 @@ static func sent(S: SimState, att, plan: Dictionary) -> void:
+ static func _target(S: SimState, A):
+-	var D = SimRoster.opp(S, A)
++	var D = DirBrawl.rivalOf(S, A)
+ 	if D.state != "launched" or D.launchBy != A or D.launchSpecial or _g(A, T_KNOCK) == 1:
+@@ -120,3 +120,3 @@ static func refuses(S: SimState, f) -> bool:
+ 		return true
+-	return _target(S, f) != null and DirBands.band(f, SimRoster.opp(S, f)) != DirBands.CLOSE
++	return _target(S, f) != null and DirBands.band(f, DirBrawl.rivalOf(S, f)) != DirBands.CLOSE
+ 
+@@ -127,3 +127,3 @@ static func holds(S: SimState, A, kind: String) -> bool:
+ 		return false
+-	if A.state == "free" and S.dirS.ex == null and A.stunTicks <= 0:
++	if A.state == "free" and DirBrawl.exOf(S) == null and A.stunTicks <= 0:
+ 		return false
+@@ -143,3 +143,3 @@ static func takes(S: SimState, A, kind: String) -> bool:
+ 	var pick: int = _pick(A, kind)
+-	if pick == 0 or A.state != "free" or A.stunTicks > 0 or S.dirS.ex != null or S.game.ko != null:
++	if pick == 0 or A.state != "free" or A.stunTicks > 0 or DirBrawl.exOf(S) != null or S.game.ko != null:
+ 		return false
+@@ -179,3 +179,3 @@ static func _during(S: SimState, A, kind: String) -> void:
+ 	var paid: float = float(_g(A, T_PAID)) / 16.0
+-	var D = SimRoster.opp(S, A)
++	var D = DirBrawl.rivalOf(S, A)
+ 	var cost: float = 0.0
+@@ -221,3 +221,3 @@ static func tick(S: SimState) -> void:
+ 			continue
+-		if A.state == "free" and S.dirS.ex == null and A.stunTicks <= 0:
++		if A.state == "free" and DirBrawl.exOf(S) == null and A.stunTicks <= 0:
+ 			_s(A, T_HOLD, 0)
+@@ -313,6 +313,6 @@ static func _rising(S: SimState, A) -> void:
+ 		return
+-	var D = SimRoster.opp(S, A)
++	var D = DirBrawl.rivalOf(S, A)
+ 	var now: int = DirBrawl._now(S)
+ 	var w: int = _g(A, T_RISEW)
+-	if S.game.ko != null or S.dirS.ex != null or D.state == "launched" and (w & 4) != 0 or (A.state != "free" and A.rush == null) or now - (at - 1) > int(cfg().get("riseTicks", 60)):
++	if S.game.ko != null or DirBrawl.exOf(S) != null or D.state == "launched" and (w & 4) != 0 or (A.state != "free" and A.rush == null) or now - (at - 1) > int(cfg().get("riseTicks", 60)):
+ 		_s(A, T_RISE, 0)
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index 3860f67..bafa240 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -117,3 +117,3 @@ static func relative(S: SimState, f, rsDir: int) -> int:
+ 	if rsDir == SimStrikeRead.LEFT or rsDir == SimStrikeRead.RIGHT:
+-		var o = SimRoster.opp(S, f)
++		var o = DirBrawl.rivalOf(S, f)
+ 		var right: bool = SimWrap.sdx(f.x, o.x) >= 0.0
+@@ -465,3 +465,3 @@ static func _waiting(S: SimState, f) -> void:
+ static func _planned(S: SimState, f) -> bool:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	return ex != null and not DirBrawl.isBrawl(ex) and (ex.A == f or ex.D == f)
+@@ -474,3 +474,3 @@ static func _cant(S: SimState, f) -> bool:
+ 		return true
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex == null or ex.ext != null:
+@@ -500,3 +500,3 @@ static func pendFollow() -> bool:
+ static func _followed(S: SimState, f, pat: int) -> bool:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex != null and not DirBrawl.isBrawl(ex) and (ex.A == f or ex.D == f):
+@@ -607,6 +607,6 @@ static func tick(S: SimState, dt: float) -> void:
+ 			continue
+-		var ex = S.dirS.ex
++		var ex = DirBrawl.exOf(S)
+ 		var b = _beat(ex, f)
+ 		if b == null or DirBrawl._g(f, DirBrawl.LINE) == 0:
+-			if armoured(S, f) and ex == null and SimRoster.opp(S, f).act.dodgeTick >= S.tick - 2:
++			if armoured(S, f) and ex == null and DirBrawl.rivalOf(S, f).act.dodgeTick >= S.tick - 2:
+ 				missed(S, f, {"stickL": 1})   # he dodged out from under it
+@@ -661,3 +661,3 @@ static func _cancel(S: SimState, f) -> void:
+ 		f.beamCharge = null   # the hold was the charge, and it's dropped
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex != null and DirBrawl._g(f, DirBrawl.LINE) != 0:
+@@ -686,3 +686,3 @@ static func _carry(S: SimState, o) -> void:
+ static func inStruggle(S: SimState, f) -> bool:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	return S.game.clash != null or (ex != null and (f == ex.A or f == ex.D) and (ex.tpl == "finisher" or ex.branch == "finisher"))
+diff --git a/sim/director/swing.gd b/sim/director/swing.gd
+index 65c37ef..189a173 100644
+--- a/sim/director/swing.gd
++++ b/sim/director/swing.gd
+@@ -126,3 +126,3 @@ static func restRule(S: SimState) -> String:
+ 		return "meteor"
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex != null:
+@@ -687,3 +687,3 @@ static func atPause(S: SimState, A) -> void:
+ 		return
+-	_offer(S, "form", A, SimRoster.opp(S, A), float(c.form.sec), float(c.form.reach), false)
++	_offer(S, "form", A, DirBrawl.rivalOf(S, A), float(c.form.sec), float(c.form.reach), false)
+ 
+@@ -782,3 +782,3 @@ static func _brawlTick(S: SimState) -> void:
+ 		return
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	var now: int = DirBrawl._now(S)
+@@ -812,4 +812,4 @@ static func _fleeTick(S: SimState) -> void:
+ 	for f in S.fighters:
+-		if f.ai != null and _flat(S, f) and absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x)) > float(c.minGap):
+-			_offer(S, "flee", f, SimRoster.opp(S, f), float(c.sec), float(c.reach), false)
++		if f.ai != null and _flat(S, f) and absf(SimWrap.sdx(f.x, DirBrawl.rivalOf(S, f).x)) > float(c.minGap):
++			_offer(S, "flee", f, DirBrawl.rivalOf(S, f), float(c.sec), float(c.reach), false)
+ 			return
+@@ -856,3 +856,3 @@ static func _flyer(S: SimState):
+ 	for f in S.fighters:
+-		if _flat(S, f) and absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x)) > float(cfg().nudge.rivalBeyond):
++		if _flat(S, f) and absf(SimWrap.sdx(f.x, DirBrawl.rivalOf(S, f).x)) > float(cfg().nudge.rivalBeyond):
+ 			if f.ai == null:
+@@ -974,3 +974,3 @@ static func _nudgeTick(S: SimState) -> void:
+ 	_s(S, W_SCORE, 0)
+-	var o = SimRoster.opp(S, f)
++	var o = DirBrawl.rivalOf(S, f)
+ 	var pv: float = float(o.x) if SimSwing._standing(S, o) else SimWrap.wrap(f.x + 0.5 * SimWrap.sdx(f.x, o.x))
+@@ -1001,3 +1001,3 @@ static func tick(S: SimState, dt: float) -> void:
+ 	if sw.active and not _resting(sw):
+-		var ex = S.dirS.ex
++		var ex = DirBrawl.exOf(S)
+ 		if restRule(S) != "" or int(sw.age) >= int(cfg().stallTicks):   # (a swing the law has all but stopped lets the next one come)

@@ -1,0 +1,95 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index 4ba76d2..ef1627c 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -248,10 +248,11 @@
+   },
+   "ending": {
+     "enabled": false,
+-    "idleSec": 10.0,
+-    "idleWearMul": 3.0,
++    "idleSec": 60.0,
++    "idleWearMul": 2.0,
++    "pushSec": 90.0,
+     "lastAt": 720.0,
+-    "_note": "How a match always ends (docs/design/spec-wounds.md 1b-end; sim/director/ending.gd). idleSec, idleWearMul: a player with no input for this long takes this much more wear, and on the brink he's opened. The time cap is finishers.json timeCapAt: both go on the brink and Rallies stop. lastAt: the less worn gets his finisher, with no contest, or level wear is a no-contest."
++    "_note": "How a match always ends (docs/design/spec-wounds.md 1b-end; sim/director/ending.gd). idleSec, idleWearMul: a player with no input for this long takes this much more wear. pushSec: after this long, on the brink he's opened (docs/design/power-scale.md section 3). The time cap is finishers.json timeCapAt: both go on the brink and Rallies stop. lastAt: the less worn gets his finisher, with no contest, or level wear is a no-contest."
+   },
+   "stances": {
+     "enabled": false,
+diff --git a/sim/director/ending.gd b/sim/director/ending.gd
+index 0f165fa..938d8cd 100644
+--- a/sim/director/ending.gd
++++ b/sim/director/ending.gd
+@@ -1,8 +1,8 @@
+ class_name DirEnding
+ extends RefCounted
+ ## How a match always ends (docs/design/spec-wounds.md 1b-end). A KO only comes from a finisher, and hit points end nothing.
+-## - A player with no input for idleSec: the wear he takes is idleWearMul times, and on the brink he's opened, so his rival's next decisive
+-##   win is the finisher, unless the rival's idle too. Any input ends it at once. An AI is never idle.
++## - A player with no input for idleSec: the wear he takes is idleWearMul times. After pushSec, on the brink he's opened, so his rival's next
++##   decisive win is the finisher, unless the rival's idle too. Any input ends it at once. An AI is never idle.
+ ## - The time cap (finishers.json timeCapAt): both go on the brink, Rallies stop, and every decisive win is a finisher (DirExchange.decisive).
+ ## - lastAt: the fighter with less wear gets his finisher, with no contest; level wear with anyone playing breaks by seed. Nobody's played
+ ##   since the cap, and wear level: a no-contest, and a cue.
+@@ -55,6 +55,11 @@ static func idle(f) -> bool:
+ 	return on() and f.ai == null and _g(f, E_IDLE) >= int(float(cfg().idleSec) * DirData.TICKS_PER_SEC)
+ 
+ 
++## Long enough that the finisher's pushed on him.
++static func pushed(f) -> bool:
++	return on() and f.ai == null and _g(f, E_IDLE) >= int(float(cfg().pushSec) * DirData.TICKS_PER_SEC)
++
++
+ ## SimWounds.addWear's factor.
+ static func wearMul(f) -> float:
+ 	return float(cfg().idleWearMul) if idle(f) else 1.0
+@@ -102,7 +107,7 @@ static func tick(S: SimState) -> void:
+ 	for k in [0, 1]:
+ 		var f = pair[k]
+ 		var o = pair[1 - k]
+-		if idle(f) and f.brink and not f.brinkOpen and not idle(o):
++		if pushed(f) and f.brink and not f.brinkOpen and not idle(o):
+ 			DirExchange._openBrink(S, o, f)
+ 	if not S.game.timeCap:
+ 		return
+diff --git a/sim/director/tools/ending_check.gd b/sim/director/tools/ending_check.gd
+index a723922..4dd7267 100644
+--- a/sim/director/tools/ending_check.gd
++++ b/sim/director/tools/ending_check.gd
+@@ -74,14 +74,17 @@ func _idle() -> void:
+ 	P2.wear[SimWounds.CORE] = int(P2.wd.stageAt[2])
+ 	SimWounds.updateStages(S2, P2)
+ 	_run(S2, sec + 2, null, _moving())
+-	_expect(P2.brink and P2.brinkOpen, "idle on the brink, the rival playing: he's open")
++	_expect(P2.brink and not P2.brinkOpen, "idle on the brink for the wear's time: he isn't pushed yet")
++	var push: int = int(float(DirEnding.cfg().pushSec) * DirData.TICKS_PER_SEC)
++	_run(S2, push - sec, null, _moving())
++	_expect(P2.brink and P2.brinkOpen, "idle on the brink for the push's time, the rival playing: he's open")
+ 	SimCore.dispose(S2)
+ 	# both idle: nothing's opened
+ 	var S3 := _fresh()
+ 	var P3 = S3.fighters[0]
+ 	P3.wear[SimWounds.CORE] = int(P3.wd.stageAt[2])
+ 	SimWounds.updateStages(S3, P3)
+-	_run(S3, sec + 60)
++	_run(S3, int(float(DirEnding.cfg().pushSec) * DirData.TICKS_PER_SEC) + 60)
+ 	_expect(not P3.brinkOpen, "both idle: nobody's opened")
+ 	SimCore.dispose(S3)
+ 	# an AI is never idle
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 61da6fb..d583a92 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -4748,6 +4748,11 @@
+         "lastAt": {
+           "type": "number",
+           "minimum": 0
++        },
++        "pushSec": {
++          "type": "number",
++          "minimum": 0,
++          "description": "After this long with no input, on the brink he's opened."
+         }
+       },
+       "required": [

@@ -1,0 +1,11 @@
+gate: <scratch>/g/sim_pace/a_press_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/beam_ai_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/ending_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/flick_keep_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/flight_strike_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/morning_fixes_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/pace_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/parity.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/press_decides_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/refusal_reasons_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_pace/stick_check.txt: no SCRIPT ERROR lines

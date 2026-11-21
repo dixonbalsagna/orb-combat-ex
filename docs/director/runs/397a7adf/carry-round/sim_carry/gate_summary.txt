@@ -1,0 +1,11 @@
+gate: <scratch>/g/sim_carry/a_press_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/carry_round_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/ending_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/flick_keep_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/follow_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/parity.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/press_decides_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/reads_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/refusal_reasons_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/stance_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_carry/stick_check.txt: no SCRIPT ERROR lines

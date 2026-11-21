@@ -1,0 +1,14 @@
+      seed 1: wave 3 of 81 bodies, seat 0 down at 5838 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 38.2 s
+      seed 2: wave 3 of 81 bodies, seat 0 down at 5717 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 36.0 s
+      seed 3: wave 3 of 81 bodies, seat 0 down at 5541 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept false, first spawn 1.5 (one-player 1.0); cleared in 36.6 s
+      seed 4: wave 3 of 81 bodies, seat 0 down at 5716 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 37.7 s
+      seed 5: wave 3 of 81 bodies, seat 0 down at 5410 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 38.6 s
+      seed 6: wave 3 of 81 bodies, seat 0 down at 5489 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 38.5 s
+      seed 7: wave 3 of 81 bodies, seat 0 down at 5545 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 37.0 s
+      seed 8: wave 3 of 81 bodies, seat 0 down at 5712 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 44.6 s
+      seed 9: wave 3 of 81 bodies, seat 0 down at 5787 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 6.0 (one-player 4.0); cleared in 41.7 s
+      seed 10: wave 3 of 81 bodies, seat 0 down at 5534 with 40 left; lone 0, gap 90 -> 90, left 40 -> 40 (want 33), live bodies kept true, first spawn 1.5 (one-player 1.0); cleared in 37.6 s
+      the rule off (negative control): the pad left alone cleared 10 of 10; clear times [38.2, 36.0, 36.6, 37.7, 38.6, 38.5, 37.0, 44.6, 41.7, 37.6]
+INFO  the rule off: the pad left alone cleared 10 of 10
+HORDE LONE: 0 check(s) failed
+rc=0

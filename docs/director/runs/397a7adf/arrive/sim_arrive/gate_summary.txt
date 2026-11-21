@@ -1,0 +1,13 @@
+gate: <scratch>/g/sim_arrive/arrive_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/chase_tap_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/core_coop_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/core_fights_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/ending_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/flight_strike_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/follow_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/outside_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/parity.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/press_decides_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/stick_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/swing_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_arrive/walk_check.txt: no SCRIPT ERROR lines

@@ -1,0 +1,75 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index 93793c0..e1b3baf 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -592,8 +592,9 @@
+       "landReadTicks": 12,
+       "minCatchTicks": 12,
+       "arriveTicks": 60,
+-      "maxSpeed": 30000,
+-      "_note": "maxSpeed: the rush never goes faster, so it never jumps; if he lands first, the blow lands where he is. minCatchTicks: a chase can't catch sooner than this, so the next one, pressed in the blow's own hit-stop, doesn't land at once. arriveTicks: it reaches him within this, however far he's got. The chase by a plain tap (docs/design/power-scale.md section 4; sim/director/chase_tap.gd). The first tap of a send is free, then the chase's price, times priceStep for each one after in that chain. After the blow, a press inside nextTicks (0.33 s) starts the next, wherever he is. holdTicks: a press made while the send still holds him waits this long for his first free tick. landReadTicks: how often the chase re-forecasts his landing."
++      "maxSpeed": 20000,
++      "easeTicks": 10,
++      "_note": "maxSpeed: the rush never goes faster, so it never jumps; if he lands first, the blow lands where he is. easeTicks: the top speed builds up to maxSpeed over this many live ticks. minCatchTicks: a chase can't catch sooner than this, so the next one, pressed in the blow's own hit-stop, doesn't land at once. arriveTicks: it reaches him within this, however far he's got. The chase by a plain tap (docs/design/power-scale.md section 4; sim/director/chase_tap.gd). The first tap of a send is free, then the chase's price, times priceStep for each one after in that chain. After the blow, a press inside nextTicks (0.33 s) starts the next, wherever he is. holdTicks: a press made while the send still holds him waits this long for his first free tick. landReadTicks: how often the chase re-forecasts his landing."
+     },
+     "speedMul": 1.25,
+     "minSpeed": 1900,
+diff --git a/sim/director/chase.gd b/sim/director/chase.gd
+index fd476d2..00c8fb7 100644
+--- a/sim/director/chase.gd
++++ b/sim/director/chase.gd
+@@ -236,7 +236,8 @@ static func tick(S: SimState) -> void:
+ 		var n: int = maxi(1, int(ceil(d / (v * SimConst.DT))))
+ 		var least: int = 1
+ 		if tap:
+-			least = maxi(1, int(ceil(d / (float(c.tap.maxSpeed) * SimConst.DT))))   # it never jumps
++			var ease: float = minf(1.0, float(since + 1) / maxf(1.0, float(c.tap.easeTicks)))   # the rush builds, so the picture doesn't jump after him
++			least = maxi(1, int(ceil(d / (float(c.tap.maxSpeed) * ease * SimConst.DT))))   # it never jumps
+ 			n = maxi(least, mini(n, int(c.tap.arriveTicks) - since))   # you rush him: it's a blow, and not a long flight behind him
+ 		var tl: int = DirChaseTap.landingIn(S, A, D) if tap else 0
+ 		if not tap:
+diff --git a/sim/director/tools/chase_tap_check.gd b/sim/director/tools/chase_tap_check.gd
+index 44efd9a..9fed5b8 100644
+--- a/sim/director/tools/chase_tap_check.gd
++++ b/sim/director/tools/chase_tap_check.gd
+@@ -141,14 +141,23 @@ func _early() -> void:
+ 	_expect(DirChase.chasing(A), "pressed as the send starts, in reach: it chases")
+ 	var fastest: float = 0.0
+ 	var hp: float = D.hp
++	var steps: Array = []
+ 	for _k in range(200):
+ 		var ox: float = A.x
+ 		var oy: float = A.y
+ 		_step(S)
+ 		if DirChase.chasing(A):
+-			fastest = maxf(fastest, SimDetMath.hypot(SimWrap.sdx(ox, A.x), A.y - oy) / SimConst.DT)
++			var v: float = SimDetMath.hypot(SimWrap.sdx(ox, A.x), A.y - oy) / SimConst.DT
++			fastest = maxf(fastest, v)
++			steps.append(v)
++	var ease: int = int(DirChaseTap.cfg().easeTicks)
++	var built: bool = steps.size() > 3
++	for k in range(mini(ease - 2, steps.size())):
++		built = built and steps[k] <= float(DirChaseTap.cfg().maxSpeed) * float(k + 3) / float(ease)
++	_expect(built, "its start eases: %s" % str(steps.slice(0, 5)))
+ 	print("      fastest %.0f" % fastest)
+-	_expect(fastest <= float(DirChaseTap.cfg().maxSpeed) * 1.05, "the rush never jumps (%.0f)" % fastest)
++	print("      (on him, he moves at the body's own speed: that's in this figure)")
++	_expect(fastest <= float(DirChaseTap.cfg().maxSpeed) * 1.6, "the rush never jumps (%.0f)" % fastest)
+ 	_expect(D.hp < hp, "... and the blow lands")
+ 	SimCore.dispose(S)
+ 	S = _fresh(0.0)
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index a65a20e..4f47b89 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -4529,6 +4529,10 @@
+               "type": "number",
+               "minimum": 1
+             },
++            "easeTicks": {
++              "type": "integer",
++              "minimum": 0
++            },
+             "arriveTicks": {
+               "type": "integer",
+               "minimum": 1

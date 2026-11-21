@@ -1,0 +1,25 @@
+ok    depth off, a real match of 300 ticks: no building has a lobby, nothing opens, and every part of all 118 buildings says so
+ok    depth on: a building has a lobby by its shape and its floors as built (5 or more: 30 of 118 buildings), and its texel says which kind it is; 5 tall buildings of other shapes have none; no tall building is among those the patch may sin
+ok    a pair in the front street in front of a tower: nothing opens
+ok    Camera's rule for a near tower: the lens 300 units from its near face and the pair in front of it, nothing opens; with Camera's depth follow on its lobby opens (1.00); the lens back at 700 units, it shuts
+ok    the pair suddenly in the middle street behind the tower: its lobby opens, one storey of 2 floors (307 units) from the ground; the sight line to 30 units over their heads passes at 130, under its ceiling at 281, and the tower takes no 
+ok    it fades in: at most 10936 pixels a tick (the budget is 18750), over 18 ticks (no fewer than 18)
+ok    the tower does not sink and is not among the buildings the patch lowers
+ok    VFX's clear query behind the open lobby: a point on the lobby's face is hidden (0), one on the wall above it is not (1), nor one at the fight's depth (1) or behind the fight (1); the hub's callable answers the same
+ok    the pair back in the front street: the lobby holds for 0.75 s, then fades out at no more than 9375 pixels a tick (9375 is half the budget) over 23 ticks, and is shut
+ok    Camera's request off: nothing is asked and the lobby shuts; on again, it opens
+ok    Camera's cut flag: one tick after the pair is behind the tower 6% of its lobby is through; on a cut the next frame all of it is
+ok    the pair moved 12000 units along the street between two ticks under a camera already there: the patch's ends are within 60 units of the camera on that frame, and the lobby opens
+ok    the pair lifted 387 units, over the lobby's ceiling: the tower takes its share of the patch, at most 10936 pixels a tick (the lobby is 0% open meanwhile); back on the ground it gives the share up and its lobby is open
+ok    the tower damaged to stages [1, 2, 3] while its lobby is open, with RenderLook.OPEN_DAMAGED on: the lobby stays open at each and the tower takes no share of the patch; whole again (the tool's own state), its lobby is open
+ok    the tower's ground floor cleared by a brunt: the lobby starts to shut at once (92% two ticks on) and is shut, the tower takes the patch, and with the pair gone and back behind it, it does not open
+ok    what holds a cleared floor up: the tower's wall is its outermost from the ground; its core reads whole, cracked under 35% of its hit points and broken under 15%; a stepped tower's widest skirt is outermost from the ground, the next fr
+ok    Camera's cut flag: a pane's request carries `cut` when the frame's clear says so, keeps the rest of its request, and the frame's own dictionary is not changed; with no cut, or no clear, the request is as given
+ok    a stepped tower (a landmark, 9 parts): its lobby is open, its widest part on the ground is the shell that carries the colonnade (part 1, not the core), every other part is marked as inside it, and each part knows the shell's footprint
+ok    behind a low building (warehouse, 3 floors) in the middle street: it has no lobby; the patch is handed to the blocks' material (radius 122 pixels)
+ok    behind the low building a thing on its face in front of the fight, inside the patch, is hidden (0.00 left), and one at the fight's depth is not (1)
+ok    Camera's near-clip rule: a low building 450 units from the lens stands as its stub, and 150 units from it is under its footing; a tower as near is neither
+ok    on every tick of all of it, no tall building sinks, and no building without a lobby opens one
+open check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+ERROR: 9 resources still in use at exit (run with --verbose for details).

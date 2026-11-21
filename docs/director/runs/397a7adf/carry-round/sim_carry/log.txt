@@ -1,0 +1,14 @@
+23:20:47 parity exit 0: golden check passed
+23:21:38 validate: 321 files checked, 0 errors, 2 warnings; selftest: self-test: 10093 of 10093 checks passed
+23:21:39 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+23:21:44 carry_round_check exit 0: CARRY ROUND: 0 check(s) failed
+23:21:51 press_decides_check exit 0: PRESS: 0 check(s) failed
+23:21:59 stance_check exit 0: STANCE: 0 check(s) failed
+23:22:07 a_press_check exit 0: A PRESS: 0 check(s) failed
+23:22:14 reads_check exit 0: reads_check: 16 of 16 passed
+23:22:20 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+23:22:25 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+23:22:38 stick_check exit 0: STICK: 0 check(s) failed
+23:22:50 ending_check exit 0: ENDING: 0 check(s) failed
+23:23:04 follow_check exit 0: FOLLOW: 0 check(s) failed
+23:23:04 lane sim done

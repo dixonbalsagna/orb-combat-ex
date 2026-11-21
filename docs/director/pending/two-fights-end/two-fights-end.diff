@@ -1,0 +1,227 @@
+diff --git a/sim/director/ai.gd b/sim/director/ai.gd
+index 1f514f9..5a84daa 100644
+--- a/sim/director/ai.gd
++++ b/sim/director/ai.gd
+@@ -58,6 +58,8 @@ static func aiInput(S: SimState, f) -> void:
+ 	i.mode = 0   # the physical family, unless this tick's press is a blast (below)
+ 	if DirOutside.aiAnswer(S, f, i):
+ 		return   # 2v2: a beam of the other fight has it first on its line: it dodges
++	if DirOutside.aiRescue(S, f, i):
++		return   # 2v2: its partner in the other fight is on the brink: it comes
+ 	if f.act.formReady and not _formHold(S, f, o):
+ 		i.transform = true
+ 	if DirBrawl.inBrawl(S, f):
+diff --git a/sim/director/outside.gd b/sim/director/outside.gd
+index be0a85b..864dc24 100644
+--- a/sim/director/outside.gd
++++ b/sim/director/outside.gd
+@@ -15,7 +15,8 @@ const O_KIND: int = 3   # the blow: 1 the light, 2 the heavy
+ const O_WARN: int = 4   # a beam of the other fight has him first on its line: 1 told, 2 told and the AI answers with a dodge
+ const O_TEAM: int = 5   # on the one struck: the S.tick a blow from outside last landed on him, plus 1
+ const O_APART: int = 6  # on the match's first body: the S.tick the pairs went apart, plus 1; 0 while they're together
+-const O_N: int = 7
++const O_BRINK: int = 7  # 1 once his brink's call has gone, for this brink
++const O_N: int = 8
+ 
+ static var _force: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+ 
+@@ -60,11 +61,13 @@ static func takes(S: SimState, A, kind: String) -> bool:
+ 	var ex = DirBrawl.exOf(S)
+ 	if ex != null and (ex.A == A or ex.D == A):
+ 		return false   # his own exchange takes it
+-	var D = focusAcross(S, A, _reach())
++	var over: bool = S.game.ko != null   # his fight is finished: his focus is across, however far, and a press pursues
++	var D = focusAcross(S, A, SimConst.W * 0.5 if over else _reach())
+ 	if D == null:
+ 		return false
++	var travel: int = int(ceil(DirBands.dist(A, D) / (float(DirChaseTap.cfg().get("maxSpeed", 20000.0)) * SimConst.DT))) if over else 0
+ 	_s(A, O_KEY, int(String(D.keys).substr(1)))
+-	_s(A, O_UNTIL, DirBrawl._now(S) + int(ceil(float(cfg().get("waitSec", 0.5)) * DirData.TICKS_PER_SEC)) + 1)
++	_s(A, O_UNTIL, DirBrawl._now(S) + travel + int(ceil(float(cfg().get("waitSec", 0.5)) * DirData.TICKS_PER_SEC)) + 1)
+ 	_s(A, O_KIND, 2 if kind == "heavy" else 1)
+ 	_toward(S, A, D)
+ 	SimFx.cue(S, A, "outside", "start", String(D.keys))
+@@ -123,6 +126,64 @@ static func joinScore(S: SimState, A, D, lx: float) -> float:
+ 	return float(c.get("w", 8.0)) * gain / cap
+ 
+ 
++## The brink's call: on his brink's first moment, the cue brink_call, once a brink (Audio's line, UI's map). It's the rescue's cue.
++static func _call(S: SimState, f) -> void:
++	if not f.brink:
++		if _g(f, O_BRINK) != 0:
++			_s(f, O_BRINK, 0)
++		return
++	if _g(f, O_BRINK) == 0:
++		_s(f, O_BRINK, 1)
++		SimFx.cue(S, f, "brink_call", String(f.keys), "")
++		SimEvents.feed(S, f.name + " CALLS", "on the brink: his partner's cue to come")
++
++
++## His partner, in the other fight: the one who started on his team's other slot (p1 and p3, p2 and p4); null for none.
++static func partnerOf(S: SimState, f):
++	var k: int = int(String(f.keys).substr(1))
++	return SimCross.body(S, "p" + str(((k - 1 + 2) % 4) + 1))
++
++
++## The AI's input (DirAI.aiInput, after aiAnswer): a computer fighter whose fight is finished flies to the other fight, at its nearest
++## enemy; one whose partner in the other fight is on the brink drops his own fight and comes, flat out, at the one who has him there. In
++## reach and on an opening, his press is a blow from outside. True when it took the tick.
++static func aiRescue(S: SimState, f, i) -> bool:
++	if not on(S) or f.state != "free":
++		return false
++	var ex = DirBrawl.exOf(S)
++	if ex != null and (ex.A == f or ex.D == f):
++		return false
++	var X = null
++	var best: float = INF
++	if S.game.ko != null:
++		if f.out:
++			return false
++		if SimCross.enemies(S, SimCross.team(f)).is_empty():
++			return false
++		if _g(f, O_KEY) == 0:
++			i.light = true   # whoever finishes first flies to the other fight, with no input needed: the press pursues, as a player's does
++		return true
++	else:
++		var P = partnerOf(S, f)
++		if P == null or not P.brink or S.fighters.has(P):
++			return false
++		for g in SimCross.enemies(S, SimCross.team(f)):
++			var d: float = absf(SimWrap.sdx(P.x, g.x))
++			if d < best:
++				best = d
++				X = g
++	if X == null:
++		return false
++	var dx: float = SimWrap.sdx(f.x, X.x)
++	if absf(dx) > _reach() * 0.8:
++		i.mx = signf(dx)
++		i.dash = true
++		i.my = clampf((X.y - f.y) / 400.0, -1.0, 1.0)
++	elif open(S, X) and _g(f, O_KEY) == 0:
++		i.light = true
++	return true
++
++
+ ## His focus, when it's across: the nearest enemy of the other fight within reach, if he's nearer than his own rival or his own fight
+ ## is over; else null.
+ static func focusAcross(S: SimState, A, reach: float):
+@@ -173,13 +234,14 @@ static func tick(S: SimState, dt: float) -> void:
+ 	_beamStopped(S)
+ 	for f in S.fighters:
+ 		_warn(S, f)
++		_call(S, f)
+ 	for A in S.fighters:
+ 		var key: int = _g(A, O_KEY)
+ 		if key == 0:
+ 			continue
+ 		var D = SimCross.body(S, "p" + str(key))
+-		if D == null or A.state != "free" or D.state == "launched":
+-			_s(A, O_KEY, 0)
++		if D == null or A.state != "free" or D.state == "launched" or S.fighters.has(D):
++			_s(A, O_KEY, 0)   # (gone, busy, or come into this fight: the rejoin)
+ 			continue
+ 		if not open(S, D):
+ 			_s(A, O_DONE, 0)
+diff --git a/sim/director/tools/outside_check.gd b/sim/director/tools/outside_check.gd
+index 0bcafd2..5356545 100644
+--- a/sim/director/tools/outside_check.gd
++++ b/sim/director/tools/outside_check.gd
+@@ -21,6 +21,9 @@ func _init() -> void:
+ 	_shotAcross()
+ 	_teamStun()
+ 	_join()
++	_brink()
++	_winner(true)
++	_winner(false)
+ 	DirOutside.setForce(0)
+ 	_off()
+ 	DirOutside.setForce(-1)
+@@ -73,7 +76,7 @@ func _step(S: SimState, i = null, i3 = null, i4 = null) -> void:
+ 			outs.append(r.out)
+ 	for o in outs:
+ 		for e in o.fx:
+-			if e.type == "cue" and String(e.kind).begins_with("outside"):
++			if e.type == "cue" and (String(e.kind).begins_with("outside") or String(e.kind) == "brink_call"):
+ 				_cues.append(String(e.kind) + ":" + String(e.text) + ("/" + String(e.source) if String(e.source) != "" else ""))
+ 		o.fx.clear()
+ 		o.feed.clear()
+@@ -347,3 +350,78 @@ func _join() -> void:
+ 	_expect(fresh == 0.0 and t > 0.0 and w < 0.0 and ko == 0.0, "after a while apart a send scores the way of the other fight; not before, not at two on one")
+ 	SimCore.dispose(S)
+ 
++
++## The brink's call: once a brink; and a computer partner comes, and strikes from outside on an opening.
++func _brink() -> void:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 21, {"p1": true, "p2": false, "p3": false, "p4": false}, {"intro": false, "fights": 2, "cross": true})
++	var q: Array = []
++	for k in ["p1", "p2", "p3", "p4"]:
++		for f in SimStage.bodies(S):
++			if f.keys == k:
++				q.append(f)
++	for f in q:
++		f.hp = 100000.0
++	var A = q[0]
++	_put(q[1], A.x - 3000.0 * A.face, A)
++	_put(q[2], A.x + 6000.0 * A.face, A)
++	_put(q[3], A.x + 6100.0 * A.face, A)
++	for _k in range(3):
++		_step(S)
++	q[2].brink = true
++	q[3].stunTicks = 400
++	var calls: int = 0
++	var started: bool = false
++	var d0: float = absf(SimWrap.sdx(A.x, q[3].x))
++	var hp: float = q[3].hp
++	for _k in range(400):
++		_step(S)
++		for c in _cues:
++			if String(c).begins_with("outside:start"):
++				started = true
++			if String(c).begins_with("brink_call"):
++				calls += 1
++		if hp - q[3].hp > 0.0:
++			break
++	print("      his partner on the brink 6,000 off: he came from %.0f to %.0f; blow from outside %s; the one who had him took %.0f" % [d0, absf(SimWrap.sdx(A.x, q[3].x)), str(started), hp - q[3].hp])
++	_expect(calls == 1, "the brink's call goes once (%d)" % calls)
++	_expect(absf(SimWrap.sdx(A.x, q[3].x)) < d0 * 0.5 and hp - q[3].hp > 0.0, "a computer partner comes when his partner's on the brink, and strikes from outside")
++	SimCore.dispose(S)
++
++
++## His fight finished: a computer winner flies to the other fight unasked; a human's press pursues across, however far.
++func _winner(ai: bool) -> void:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 21, {"p1": ai, "p2": false, "p3": false, "p4": false}, {"intro": false, "fights": 2, "cross": true})
++	var q: Array = []
++	for k in ["p1", "p2", "p3", "p4"]:
++		for f in SimStage.bodies(S):
++			if f.keys == k:
++				q.append(f)
++	for f in q:
++		if f != q[0]:
++			f.ai = null
++	var A = q[0]
++	_put(q[1], A.x + 80.0 * A.face, A)
++	_put(q[2], A.x + 9000.0 * A.face, A)
++	_put(q[3], A.x + 9100.0 * A.face, A)
++	q[2].hp = 100000.0
++	q[3].hp = 100000.0
++	for _k in range(3):
++		_step(S)
++	q[1].hp = 0.0
++	SimDamage.ko(S, q[1], A)   # (as cross_end_check: his fight is finished)
++	for _k in range(5):
++		_step(S)
++	q[3].stunTicks = 600
++	var d0: float = absf(SimWrap.sdx(A.x, q[3].x))
++	var hp: float = q[3].hp
++	var koed: bool = S.game.ko != null
++	for k in range(500):
++		_step(S, _x() if (not ai and k == 0) else null)
++		if hp - q[3].hp > 0.0:
++			break
++	print("      %s winner, his fight %s: from %.0f to %.0f of the other fight; it took %.0f" % ["a computer" if ai else "a human", "finished" if koed else "NOT finished", d0, absf(SimWrap.sdx(A.x, q[3].x)), hp - q[3].hp])
++	_expect(koed and hp - q[3].hp > 0.0, "%s winner goes to the other fight and strikes from outside" % ("a computer" if ai else "a human's press: his"))
++	SimCore.dispose(S)
++

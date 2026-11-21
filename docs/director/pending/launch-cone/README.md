@@ -75,4 +75,6 @@ The first cut took a running swing's remaining turn off the cone, so while a swi
 **Proof of the re-cut** (records in `docs/director/runs/4327cfbb/launch-cone-v2/`, every output gated, no script error):
 - GD's QA row, 30 matches on the 9 November data: 0 of 20 aimed launches more than 20° off (worst 18.7°).
 - Every director check passes on both data sets: 42 of 42. `walk_check` reaches 7 of 10 on both.
-- **Stopped for quiet time (2026-11-15):** the golden on and off, parity, validate, lint and ratchet weren't re-run for the re-cut; the first cut's are above. Next step: `gates_lcone.sh <tree> <out> gold` on ga and gm, then report.
+- The golden moves as the first cut's did: with the rider on and off on the same tree, 1 of 11 rows differs on each data set (the 9 November data: match 6 from checkpoint 130; main's: match 0 from checkpoint 133).
+- `parity.gd`'s lines are identical to the first cut's on both trees (all before any launch: the stack's data against main's golden).
+- Validate: 0 errors. The determinism lint is clean. The two-fighter count is 365 of 365.

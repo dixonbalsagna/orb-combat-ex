@@ -1,0 +1,75 @@
+ok    the switch off: no pick, no swing (0, 0)
+ok    the switch off: nothing in the swing's slots (0)
+ok    gen 2: no line, so the switch does nothing
+ok    planet 7: it came to rest (86 ticks)
+ok    planet 7 side 1: a 71.0 degree turn brings city 1 onto the line (0.000 off)
+ok    planet 7: the place is still listed
+ok    planet 7: it came to rest (128 ticks)
+ok    planet 7 side -1: a 112.9 degree turn brings city 3 onto the line (0.000 off)
+ok    planet 7: the place is still listed
+ok    planet 7: a place to turn onto
+ok    planet 7: the frame is back
+ok    planet 7: the hash is the same after a plan's read
+ok    planet 7: the poses are back
+ok    planet 7: the plan read another line: the ground 3000 on, 1294.5 against 686.3
+ok    planet 3: it came to rest (45 ticks)
+ok    planet 3 side 1: a 29.5 degree turn brings city 1 onto the line (0.000 off)
+ok    planet 3: the place is still listed
+ok    planet 3: it came to rest (37 ticks)
+ok    planet 3 side -1: a -21.8 degree turn brings city 2 onto the line (0.000 off)
+ok    planet 3: the place is still listed
+ok    planet 3: a place to turn onto
+ok    planet 3: the frame is back
+ok    planet 3: the hash is the same after a plan's read
+ok    planet 3: the poses are back
+ok    planet 3: the plan read another line: the ground 3000 on, 404.4 against 421.8
+ok    planet 11: it came to rest (115 ticks)
+ok    planet 11 side 1: a 99.7 degree turn brings city 1 onto the line (0.000 off)
+ok    planet 11: the place is still listed
+ok    planet 11: it came to rest (76 ticks)
+ok    planet 11 side -1: a 60.4 degree turn brings city 3 onto the line (0.000 off)
+ok    planet 11: the place is still listed
+ok    planet 11: a place to turn onto
+ok    planet 11: the frame is back
+ok    planet 11: the hash is the same after a plan's read
+ok    planet 11: the poses are back
+ok    planet 11: the plan read another line: the ground 3000 on, 816.9 against 491.6
+ok    planet 13: it came to rest (106 ticks)
+ok    planet 13 side 1: a -90.6 degree turn brings city 2 onto the line (0.000 off)
+ok    planet 13: the place is still listed
+ok    planet 13: it came to rest (94 ticks)
+ok    planet 13 side -1: a 78.4 degree turn brings city 0 onto the line (0.000 off)
+ok    planet 13: the place is still listed
+ok    planet 13: a place to turn onto
+ok    planet 13: the frame is back
+ok    planet 13: the hash is the same after a plan's read
+ok    planet 13: the poses are back
+ok    planet 13: the plan read another line: the ground 3000 on, 393.6 against 830.1
+ok    planet 7: two runs, one hash
+ok    planet 7: swings ran (5, of which 5 big, on 149 ticks)
+ok    planet 7: no plan left its frame in place (0)
+ok    planet 7: at rest, once the far poses are done, the worst pose is 0.000 off the line (5 rests)
+ok    planet 7: on the rest's own tick, the worst pose a plan can ask about is 0.000 off the line
+ok    planet 11: two runs, one hash
+ok    planet 11: swings ran (8, of which 8 big, on 302 ticks)
+ok    planet 11: no plan left its frame in place (0)
+ok    planet 11: at rest, once the far poses are done, the worst pose is 0.000 off the line (8 rests)
+ok    planet 11: on the rest's own tick, the worst pose a plan can ask about is 0.000 off the line
+ok    a running swing before the rule
+ok    a rest rule rests it (tower)
+ok    and doesn't ask again
+ok    it's down in its ease
+ok    the pick is taken
+ok    asked to rest 69 live ticks after a 12-tick stop: rests at 83
+ok    the angle gave way to the time: 54.0
+ok    and the line moved
+ok    a swing past stallTicks rests
+ok    in a town, standing buildings are offered (9)
+ok    a turn that loses them costs (16, most 0.67)
+ok    the cost is leave times the share lost (17.33)
+ok    after its sends, a turn costs nothing (0)
+ok    the turn rested (384)
+ok    only built places count as towns (8 of 54; with places everywhere, all of them are built)
+ok    after a turn, no target stands off the fight's depth (0 of 21)
+SWING: 0 check(s) failed
+WARNING: 19 ObjectDB instances were leaked at exit (run with `--verbose` for details).

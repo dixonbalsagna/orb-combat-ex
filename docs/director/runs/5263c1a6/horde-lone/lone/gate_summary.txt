@@ -1,0 +1,6 @@
+gate: <scratch>/g/lone/on.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/lone/off.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/lone/idle.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/lone/horde_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/lone/clipsched.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/lone/stall-trace.txt: no SCRIPT ERROR lines

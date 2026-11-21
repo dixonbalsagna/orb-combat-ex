@@ -1,0 +1,89 @@
+diff --git a/data/director/stick.json b/data/director/stick.json
+index 022c5ee..7d09a08 100644
+--- a/data/director/stick.json
++++ b/data/director/stick.json
+@@ -41,6 +41,13 @@
+     "missOpenTicks": 20,
+     "_note": "Past the quick flick a hold has B's armour, a beam's on the stick too (docs/design/power-scale.md section 2). From fromTicks (0.2 s) a light never stops it, and does heavy.armour.lightMul of its damage. A medium stops it before mediumUntilTicks (level 2, 0.5 s). A heavy, a beam or a grab stops it. A dodge makes a charged strike miss, and he's open for missOpenTicks (0.33 s)."
+   },
++  "steal": {
++    "enabled": false,
++    "max": 3,
++    "reelBase": 6,
++    "reelPer": 2,
++    "_note": "The stick steals his run, for QA's arm (docs/design/stick-lands.md): a quick flick from no stance that lands clean takes his run to 0, yours rises by what was taken, at most max, and he reels reelBase + reelPer each point. The AI never steals."
++  },
+   "autoGoTicks": 68,
+   "repeatSec": 3.0,
+   "carryTicks": 12,
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index 0166227..e10a83b 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -296,6 +296,7 @@ static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
+ 	var stun: int = int(round(float(lv.stun) * float(dr.get("stunMul", 1.0))))
+ 	var now: int = DirBrawl._now(S)
+ 	DirBrawl._s(f, DirBrawl.LAST_AT, S.tick)   # he acted: a level 3's hold doesn't run out the brawl's idle clock
++	_steal(S, f, o, a, lvl)   # first: the stun that follows breaks his run
+ 	var trade: bool = DirBrawl._g(o, DirBrawl.LINE) == 1 and DirBrawl._g(o, DirBrawl.CONTACT) == now
+ 	var stuns: bool = not trade and _g(o, ST_STUN) == 0 and not (lvl == 0 and _g(f, ST_SOFT) == 1)
+ 	if lvl == 0 and _g(f, ST_GUARD) == 1 and not lightStops():
+@@ -343,6 +344,23 @@ static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
+ 	e.n = stun if stuns else 0
+ 
+ 
++## The stick steals his run (steal.enabled, for QA's arm; stick-lands.md): a quick flick from no stance that lands clean takes his run to 0, and
++## yours rises by what was taken, at most steal.max; he stumbles reelBase + reelPer for each point. Never the AI's, so a beginner mashing
++## against the computer is never stolen from. A steal takes his run, so he's only stolen from once a run.
++static func _steal(S: SimState, f, o, a: Dictionary, lvl: int) -> void:
++	var c: Dictionary = cfg().get("steal", {})
++	if not bool(c.get("enabled", false)) or lvl != 0 or int(a.get("stickMask", 0)) != 0 or f.ai != null:
++		return
++	var taken: int = mini(DirBrawl._g(o, DirBrawl.RUN) / DirBrawl.RUN_U, int(c.max))
++	if taken <= 0:
++		return
++	DirBrawl._s(o, DirBrawl.RUN, 0)
++	DirBrawl._s(f, DirBrawl.RUN, DirBrawl._g(f, DirBrawl.RUN) + taken * DirBrawl.RUN_U)
++	DirBrawl._reel(S, o, int(c.reelBase) + int(c.reelPer) * taken)
++	var e = DirBrawl._ev(S, f, "stick_steal", str(taken))
++	e.target = float(S.fighters.find(o))
++
++
+ # ---- the tick -----------------------------------------------------------------------------------------------------
+ 
+ static func _beat(ex, f):
+diff --git a/tools/schemas/director-stick.schema.json b/tools/schemas/director-stick.schema.json
+index c440908..b1b557c 100644
+--- a/tools/schemas/director-stick.schema.json
++++ b/tools/schemas/director-stick.schema.json
+@@ -140,6 +140,30 @@
+         }
+       },
+       "additionalProperties": false
++    },
++    "steal": {
++      "type": "object",
++      "patternProperties": {
++        "^_": {}
++      },
++      "additionalProperties": false,
++      "properties": {
++        "enabled": {
++          "type": "boolean"
++        },
++        "max": {
++          "type": "integer",
++          "minimum": 0
++        },
++        "reelBase": {
++          "type": "integer",
++          "minimum": 0
++        },
++        "reelPer": {
++          "type": "integer",
++          "minimum": 0
++        }
++      }
+     }
+   }
+ }

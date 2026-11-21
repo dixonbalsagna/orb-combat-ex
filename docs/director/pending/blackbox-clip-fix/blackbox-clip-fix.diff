@@ -1,0 +1,32 @@
+diff --git a/render/core/sim_host.gd b/render/core/sim_host.gd
+index 77d93ce..4dce5b9 100644
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -678,6 +678,14 @@ func bb_play_start(rp: Dictionary) -> bool:
+ 
+ 
+ func _bb_pb_step() -> bool:
++	if _bb_pb_t == 0:
++		seed = int(_bb_pb.get("seed", 0)) & 0xFFFFFFFF
++		SimCore.newMatch(S, seed, _bb_pb.get("ai", {}), _bb_pb.get("setup", {}))   # scratch: the recorded match exactly as SimReplay.play starts it, with no hub setup merged in
++		_started(_bb_pb.get("setup", {}), false)
++		for k in range(S.fighters.size()):
++			var want_ai: bool = bool(_bb_pb.get("ai", {}).get("p%d" % (k + 1), true))
++			if (S.fighters[k].ai != null) != want_ai:
++				SimCore.toggleAI(S, k)
+ 	while _bb_pb_ti < _bb_pb.toggles.size() and int(_bb_pb.toggles[_bb_pb_ti][0]) == _bb_pb_t:
+ 		SimCore.toggleAI(S, int(_bb_pb.toggles[_bb_pb_ti][1]))
+ 		_bb_pb_ti += 1
+diff --git a/render/tools/flash_capture.gd b/render/tools/flash_capture.gd
+index 4912690..b4b4ae7 100644
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -314,6 +314,8 @@ func drive(sc: String, t: int, S: SimState) -> void:
+ 		"plumevolc":      # a volcanic impact's plume, with its steady ember chips
+ 			_plume(t, S, "volcanic")
+ 		"ai":           # the real AI match, forms readied at 300 and 1500, a tier raised at 900
++			if not main.host._bb_pb.is_empty():
++				return   # scratch: a playback of a saved match is that match, with nothing staged into it
+ 			_ready_forms(S, t, FORM_TICKS)
+ 			if t == 900:
+ 				S.fighters[0].tier = 3.0

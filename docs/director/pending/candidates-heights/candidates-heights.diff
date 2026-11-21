@@ -1,0 +1,56 @@
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index e7bc6db..f3fd843 100644
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -547,23 +547,42 @@ static func _candidatesRead(S: SimState, D) -> Array:
+ 		var d: float = absf(dx) - b.w * 0.5
+ 		if d < BR_MIN or d > BR_MAX:
+ 			continue
+-		if D.y > WorldStructures.baseY(S, b) + WorldStructures.curH(b) + 40.0:
+-			continue
+ 		sides[0 if dx < 0.0 else 1].append([_cheap(b, popCap), bi, d])
+ 	var out: Array = []
+ 	for s in sides:
++		# Whether his height clears a building is the costly part (its ground), so it's only asked of those the choice reaches: the highest
++		# scores in turn, then the nearest in turn. A building it isn't asked of couldn't have changed the choice.
+ 		s.sort_custom(func(p, q): return p[0] > q[0] or (p[0] == q[0] and p[1] < q[1]))
+-		for k in range(mini(BR_PRESELECT, s.size())):
+-			out.append(s[k][1])
+-		var nearest = null   # the nearest building on this side, whatever its score: the street's own front
++		var clears: Dictionary = {}
++		var took: int = 0
+ 		for e in s:
+-			if nearest == null or e[2] < nearest[2] or (e[2] == nearest[2] and e[1] < nearest[1]):
+-				nearest = e
+-		if nearest != null and not out.has(nearest[1]):
+-			out.append(nearest[1])
++			if took >= BR_PRESELECT:
++				break
++			if _clears(S, D, e[1], clears):
++				out.append(e[1])
++				took += 1
++		if took == 0:
++			continue   # none clears: no nearest either
++		s.sort_custom(func(p, q): return p[2] < q[2] or (p[2] == q[2] and p[1] < q[1]))
++		for e in s:   # the nearest building on this side, whatever its score: the street's own front
++			if _clears(S, D, e[1], clears):
++				if not out.has(e[1]):
++					out.append(e[1])
++				break
+ 	return out
+ 
+ 
++## He isn't above this building's top by more than the margin. memo: this side's answers so far.
++static func _clears(S: SimState, D, bi: int, memo: Dictionary) -> bool:
++	var v = memo.get(bi)
++	if v != null:
++		return v
++	var b = S.buildings[bi]
++	var r: bool = D.y <= WorldStructures.baseY(S, b) + WorldStructures.curH(b) + 40.0
++	memo[bi] = r
++	return r
++
++
+ ## The launch that brings the target D (launched by A with the given force and tier factor) into building b, or null:
+ ## the first uy in AIM_UY whose flight enters b above the ground and below its top at AIM_MIN_SP or more. The result has
+ ## the plan fields the launch needs (ux, uy, fm) and "brunt": {"b", "hit", "chain", "deaths", "z1", "aimD"}.

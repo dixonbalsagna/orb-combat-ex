@@ -1,0 +1,227 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index a6bad53..d6f5116 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -274,9 +274,11 @@
+       "answerKi": 40.0,
+       "meetMax": 0.3,
+       "standoffBh": 9.0,
++      "stationary": true,
++      "releaseTell": 6,
+       "dodgeBefore": 18,
+       "dodgeAfter": 2,
+-      "_note": "Beams that travel (docs/design/rule-of-cool-map.md section 5, row 40). dodgeBefore, dodgeAfter: a dodge counts this many ticks either side of the front's arrival, and the hit lands dodgeAfter past it (Game Design's ruling). rows: ticks from hand to him, the floor plus the distance at this speed, up to the ceiling. answerKi: a fire-back by the stick inside the window, at level 1's ki. meetMax: how far past the middle a late answer's struggle can start, toward his hands."
++      "_note": "Beams that travel (docs/design/rule-of-cool-map.md section 5, row 40). stationary: nothing moves the shooter in a beam's charge, so no rise and no stand-off, and a stick's hold is the charge: it fires on the release, after what's left of the charge's warning and at least releaseTell (Orb, first play). dodgeBefore, dodgeAfter: a dodge counts this many ticks either side of the front's arrival, and the hit lands dodgeAfter past it (Game Design's ruling). rows: ticks from hand to him, the floor plus the distance at this speed, up to the ceiling. answerKi: a fire-back by the stick inside the window, at level 1's ki. meetMax: how far past the middle a late answer's struggle can start, toward his hands."
+     },
+     "travelTicks": 20,
+     "afterTicks": 42,
+diff --git a/sim/director/beam.gd b/sim/director/beam.gd
+index 783a77d..ea6e745 100644
+--- a/sim/director/beam.gd
++++ b/sim/director/beam.gd
+@@ -19,14 +19,20 @@ static func _setLoser(S: SimState, ex, out: String) -> void:
+ static func opBeamCharge(S: SimState, ex, args) -> void:
+ 	var A = ex.A
+ 	var D = ex.D
+-	A.beamCharge = S.T
++	var still: bool = DirBeamPlay.stationary()
++	if not still or A.beamCharge == null:   # (a stick's hold has been charging already)
++		A.beamCharge = S.T
+ 	DirBeamPlay.chargeCue(S, ex, true)
+ 	SimFx.banner(S, A.sigName.to_upper(), A.aura, 1.1)
+-	var r := SimState.Rush.new()
+-	r.py = SimMathx.jmin(SimConst.CEILING - 200.0, D.y + args.rise)
+-	r.px = DirBeamPlay.standoffX(S, A, D, r.py)
+-	r.end = S.T + 0.55
+-	A.rush = r
++	if still:
++		A.vx = 0.0
++		A.vy = 0.0
++	else:
++		var r := SimState.Rush.new()
++		r.py = SimMathx.jmin(SimConst.CEILING - 200.0, D.y + args.rise)
++		r.px = DirBeamPlay.standoffX(S, A, D, r.py)
++		r.end = S.T + 0.55
++		A.rush = r
+ 	SimFx.ring(S, A.x, A.y + 40.0, 260.0, A.aura, 0.8, 10.0)
+ 	# Step 2b: an AI defender may answer the beam, by the same rule as a player: its own signature (45 ki and the cooldown
+ 	# over), or else a heavy blast (40 ki). How often is its difficulty (control-rules.md §10); the press comes in the tell.
+diff --git a/sim/director/beamplay.gd b/sim/director/beamplay.gd
+index 53a732e..eaaf763 100644
+--- a/sim/director/beamplay.gd
++++ b/sim/director/beamplay.gd
+@@ -117,6 +117,27 @@ static func stickAnswer(S: SimState, f) -> bool:
+ 	return true
+ 
+ 
++## Orb, on first play: "holding the right stick should start the charging, letting go should release the attack, the fighter should more or
++## less remain stationary." With this on nothing moves him in a beam's charge: no rise to the rival's height and no stand-off.
++static func stationary() -> bool:
++	return frontOn() and bool(frontCfg().get("stationary", false))
++
++
++## A beam from the stick's hold has started: the hold was its charge, so it goes when he lets go, after what's left of the charge's warning
++## and at least releaseTell. held: the ticks he held it.
++static func fromStick(S: SimState, f, held: int) -> void:
++	if not stationary():
++		return
++	var ex = S.dirS.ex
++	if ex == null or ex.kind != "sig" or ex.A != f:
++		f.beamCharge = null   # no beam came of it
++		return
++	var fb = _beat(ex, "beamFire")
++	if fb != null:
++		var tell: int = maxi(int(frontCfg().releaseTell), int(round((float(fb.t) - ex.t) * DirData.TICKS_PER_SEC)) - held)
++		fb.t = ex.t + float(tell) / DirData.TICKS_PER_SEC
++
++
+ ## Where the shooter's charge takes him: a signature from under the stand-off, by anyone, kicks him back, so the fronts don't meet at their
+ ## hands. He stops at a wall: ground or a roof that stands above where he's rising to. Off, or already far enough, he stays where he is.
+ static func standoffX(S: SimState, A, D, y: float) -> float:
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index 573e8bd..f916069 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -311,6 +311,8 @@ static func _start(S: SimState, f, i) -> void:
+ 			return   # a beam's coming: in its window it fires at once and the fronts meet; in its charge it fires as he fires
+ 		_s(f, ST_ON, 3)   # the energy layer's stick is the beam: it fires on the release
+ 		_s(f, ST_AT, DirBrawl._now(S) + 1)
++		if DirBeamPlay.stationary():
++			f.beamCharge = S.T   # the hold is the charge, and shows
+ 		SimFx.cue(S, f, "stick_start", NAMES[dir], str(mask))
+ 		return
+ 	if _cant(S, f):
+@@ -436,8 +438,13 @@ static func tick(S: SimState, dt: float) -> void:
+ 		if _g(f, ST_ON) == 0:
+ 			continue
+ 		if _g(f, ST_ON) == 3:
++			if DirBeamPlay.stationary() and ((f.state != "free" and f.state != "charging") or f.stunTicks > 0):
++				_clear(f)   # something took him: the charge is lost
++				f.beamCharge = null
++				SimFx.cue(S, f, "stick_refused", "beam", "taken")
++				continue
+ 			if i.rsRelease or not i.rsHeld:
+-				_beamGo(S, f, int(i.rsLevel) if i.rsRelease else int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1), true)))
++				_beamGo(S, f, int(i.rsLevel) if i.rsRelease else int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1), true)), DirBrawl._now(S) - (_g(f, ST_AT) - 1))
+ 			continue
+ 		var ex = S.dirS.ex
+ 		var b = _beat(ex, f)
+@@ -465,15 +472,17 @@ static var firing: bool = false   # not state: true for one call
+ 
+ ## A first cut of the beam on the stick, on what plays today: a quick is the heavy blast, in place of the snap-beam; a charge
+ ## is the beam B holds now, fired at him at its own price. The snap-beam, the aim latched at the settle and the sweep are next.
+-static func _beamGo(S: SimState, f, lvl: int) -> void:
++static func _beamGo(S: SimState, f, lvl: int, held: int) -> void:
+ 	_clear(f)
+ 	SimFx.cue(S, f, "stick_release", "beam", str(lvl))
+ 	if lvl <= 0:
++		f.beamCharge = null
+ 		DirBlast.press(S, f, SimAct.SIG)
+ 	else:
+ 		firing = true   # it's the stick's beam, and not a press of B
+ 		DirExchange.requestAttack(S, f, "sig")
+ 		firing = false
++		DirBeamPlay.fromStick(S, f, held)
+ 
+ 
+ ## The left hand's cancel: a guard press or a dodge ends a started charge, and it's lost.
+diff --git a/sim/director/tools/beam_front_check.gd b/sim/director/tools/beam_front_check.gd
+index ba3da7f..61c7868 100644
+--- a/sim/director/tools/beam_front_check.gd
++++ b/sim/director/tools/beam_front_check.gd
+@@ -251,20 +251,72 @@ func _litHand() -> void:
+ 	DirStick.setForce(-1)
+ 
+ 
+-## From point blank he kicks back with his rise, so the front has somewhere to cross; from far off he doesn't.
++## Stationary (Orb, first play): nothing moves him in the charge. With it off, the old rise and the stand-off.
+ func _standoff() -> void:
+-	for row in [[58.0, true], [3000.0, false]]:
++	var cfg: Dictionary = DirBeamPlay.frontCfg()
++	for row in [[58.0, true], [3000.0, true], [58.0, false]]:
++		cfg["stationary"] = bool(row[1])
+ 		var S := _fresh(float(row[0]))
+ 		var A = S.fighters[0]
++		S.fighters[1].y = A.y + 200.0
+ 		var x0: float = A.x
++		var y0: float = A.y
+ 		_fire(S)
+ 		var gap: float = absf(SimWrap.sdx(A.x, S.fighters[1].x))
+-		print("      fired from %.0f: %.0f apart as it leaves, moved %.0f, %d ticks to arrive" % [row[0], gap, absf(SimWrap.sdx(x0, A.x)), _openN - _fireAt])
++		var moved: float = SimDetMath.hypot(SimWrap.sdx(x0, A.x), A.y - y0)
++		print("      stationary %s, fired from %.0f: moved %.0f in the charge, %.0f apart as it leaves, %d ticks to arrive" % [str(row[1]), row[0], moved, gap, _openN - _fireAt])
+ 		if bool(row[1]):
+-			_expect(gap >= float(DirBeamPlay.frontCfg().standoffBh) * 75.0 - 40.0, "point blank: he's kicked back to the stand-off (%.0f)" % gap)
++			_expect(moved < 1.0, "stationary, from %.0f: he stays where he is (%.0f)" % [row[0], moved])
+ 		else:
+-			_expect(absf(SimWrap.sdx(x0, A.x)) < 1.0, "from far off: he stays where he is")
++			_expect(gap >= float(cfg.standoffBh) * 75.0 - 40.0, "off, point blank: the stand-off's kick (%.0f)" % gap)
+ 		SimCore.dispose(S)
++	cfg["stationary"] = true
++	_release()
++
++
++## The stick: the hold's the charge and shows, and it fires on the release, after what's left of the warning.
++func _release() -> void:
++	DirStick.setForce(1)
++	for hold in [36, 60]:
++		var S := _fresh(2400.0)
++		var A = S.fighters[0]
++		var x0: float = A.x
++		var y0: float = A.y
++		var w := SimIntent.new()
++		w.rsStart = true
++		w.rsHeld = true
++		w.rsDir = SimStrikeRead.RIGHT
++		w.rsMask = DirStick.RB
++		w.stanceMask = DirStick.RB
++		_step(S, w)
++		var showing: bool = true
++		for _k in range(hold - 1):
++			var h := SimIntent.new()
++			h.rsHeld = true
++			h.rsDir = SimStrikeRead.RIGHT
++			h.rsMask = DirStick.RB
++			h.stanceMask = DirStick.RB
++			_step(S, h)
++			showing = showing and A.beamCharge != null
++		_expect(showing, "held %d: the hold shows as the charge" % hold)
++		var r := SimIntent.new()
++		r.rsRelease = true
++		r.rsDir = SimStrikeRead.RIGHT
++		r.rsMask = DirStick.RB
++		r.rsLevel = 2
++		r.stanceMask = DirStick.RB
++		_fireAt = -1
++		_step(S, r)
++		var n: int = 0
++		while _fireAt < 0 and n < 80:
++			_step(S)
++			n += 1
++		var moved: float = SimDetMath.hypot(SimWrap.sdx(x0, A.x), A.y - y0)
++		print("      held %d: it fires %d ticks after the release, moved %.0f" % [hold, n, moved])
++		_expect(n <= maxi(int(DirBeamPlay.frontCfg().releaseTell), 48 - hold) + 2, "held %d: it fires on the release (%d)" % [hold, n])
++		_expect(moved < 1.0, "held %d: he stays where he is (%.0f)" % [hold, moved])
++		SimCore.dispose(S)
++	DirStick.setForce(-1)
+ 
+ 
+ func _cantPay() -> void:
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 0a0f3a7..e036711 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -1684,6 +1684,13 @@
+             "standoffBh": {
+               "type": "number",
+               "minimum": 0
++            },
++            "stationary": {
++              "type": "boolean"
++            },
++            "releaseTell": {
++              "type": "integer",
++              "minimum": 0
+             }
+           },
+           "required": [

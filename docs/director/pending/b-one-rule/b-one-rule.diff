@@ -1,0 +1,96 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index d711d88..138b503 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -341,6 +341,10 @@
+     },
+     "idleTicks": 60,
+     "heldPressTicks": 10,
++    "oneRuleB": {
++      "enabled": false,
++      "_note": "One rule for B, everywhere (docs/design/press-decides.md section 1): a tap staggers, a tap with B lit is the launcher, past the first flash a knock-back, the full flash a send. Flow, strings and blows taken no longer decide whether a heavy sends. launcher.anywhere stays off."
++    },
+     "pressWait": {
+       "enabled": false,
+       "maxTicks": 600,
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index 1815418..1aebfc4 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -3327,6 +3327,12 @@ static func pressInStun(S: SimState, f, i) -> void:
+ 	a.n = S.tick
+ 
+ 
++## One rule for B (oneRuleB.enabled; press-decides.md section 1): how long it was held decides, in a brawl or starting one. A tap staggers, a
++## tap with B lit is the launcher, past the first flash a knock-back, the full flash a send. Flow, strings and blows taken no longer decide.
++static func oneRule() -> bool:
++	return bool(cfg().get("oneRuleB", {}).get("enabled", false))
++
++
+ ## A heavy landed clean. A tap staggers him in place. The launcher launches him when a launch is ready; while it
+ ## rests it is the hammer, and staggers him in place. A charged heavy knocks him back, and at a full charge it launches him. A launch is aimed
+ ## by the stick's quarter.
+@@ -3367,6 +3373,9 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
+ 		else:
+ 			_knock(S, ex, f, o, 0.0, int(a.get("aim", 0)))
+ 		return
++	if oneRule():
++		_stagger(S, ex, f, o, int(c.heavy.staggerTicks), "heavy")   # one rule for B: a tap is a stagger, always (press-decides.md section 1)
++		return
+ 	if DirRecoil.heavyRecoil(S, ex, f, o):
+ 		return   # Game Design's 1a: a clean tapped heavy recoils him 1.5 bh, in place of the stagger
+ 	_stagger(S, ex, f, o, int(c.heavy.staggerTicks), "heavy")
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index d03a0cd..232f3af 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -918,6 +918,8 @@ static func earned(S: SimState, ex, att, tgt) -> String:
+ 		return ""
+ 	if ((p >> 8) & 3) == DirAlchemy.HELD:
+ 		return "a held heavy"
++	if DirBrawl.oneRule():
++		return ""   # one rule for B: nothing but the hold earns a send (press-decides.md section 1)
+ 	var landed: int = DirInterrupt.gi(att, DirInterrupt.LANDED)
+ 	var fl: Dictionary = DirRecipe.cfg().get("flow", {})   # data/director/alchemy.json
+ 	if fl.get("enabled", false):
+diff --git a/sim/director/melee.gd b/sim/director/melee.gd
+index f2c5432..81ec0a8 100644
+--- a/sim/director/melee.gd
++++ b/sim/director/melee.gd
+@@ -411,6 +411,13 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
+ 		why = String(args.get("why", "forced")) if forced else (DirLaunch.earned(S, ex, att, tgt) if ends != "level" else "")
+ 		if why == "":
+ 			var heavy: bool = DirLaunch.heavyBlow(S, ex, att) and ends != "level"
++			if heavy and DirBrawl.oneRule() and not forced:
++				# one rule for B: a tapped heavy starting an exchange staggers, as in a brawl; it isn't a knock-back
++				DirInterrupt.si(ex.A, DirInterrupt.LAST_END, DirInterrupt.END_STAY)
++				SimFx.launchPlan(S, att, tgt, "", "STAY")
++				tgt.stunTicks = maxi(tgt.stunTicks, int(DirBrawl.cfg().heavy.staggerTicks))
++				SimEvents.feed(S, "STAGGERED", "a tapped heavy: one rule for B")
++				return
+ 			# A blur always closes (section 13): the light that follows enderAfter landed strikes is the blur's own ender,
+ 			# a knock-back the player did not have to earn, at enderDist of the distance. Never a launch.
+ 			var bl: Dictionary = DirLaunch.data().get("blur", {})
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 6ced5ec..9d1e1ac 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -3316,6 +3316,18 @@
+               "minimum": 0
+             }
+           }
++        },
++        "oneRuleB": {
++          "type": "object",
++          "patternProperties": {
++            "^_": {}
++          },
++          "additionalProperties": false,
++          "properties": {
++            "enabled": {
++              "type": "boolean"
++            }
++          }
+         }
+       },
+       "description": "The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.",

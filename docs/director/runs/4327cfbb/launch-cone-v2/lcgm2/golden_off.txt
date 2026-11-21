@@ -1,0 +1,1 @@
+wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (169765 ticks), 2 replays in 125.5 s

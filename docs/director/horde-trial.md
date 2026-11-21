@@ -18,7 +18,7 @@ The sources are kept as reference for A4 in `horde-trial/src/` (not a park; noth
 | T5 | Going down and getting up (400 back at the wave's end); the second seat joining, leaving and coming back | Reading 15 | **Pass:** in the list and reading its pad the tick after the join; a leave keeps the body; coming back never raises it or lifts a downed seat; a replay with three toggles reproduces |
 | T6 | The probe: medium ×10 alone and ×10 with two; 3-a-second, mash, slow, idle, guard-tapper and dodge-tapper ×3; the medium pad on the page's 240 arm and on row D, ×5 each | Readings 8 to 11 | Below |
 | T7 | Frame cost at two and five bodies | | **Waits for the EP's quiet window** |
-| T8 | The clip | Match files that replay exactly | **Match files done** (`horde-trial/clips/`); Tools cuts them. Not in the clip: B through a building (below) and the design's beat 5 (one pad alone never clears a two-player wave) |
+| T8 | The clip | Match files that replay exactly | **Match files done** (`horde-trial/clips/`); Tools cuts them. Not in the clip: B through a building (below) and the design's beat 5 (the recorder's own fault, see "One player left up") |
 
 `horde_check` passes 44 of 44. With the switch off: load split passes, and the two-fighter count is 365 of 365.
 
@@ -97,9 +97,38 @@ The scripted pads chase the nearest body in height too, so one can climb toward 
 - About 0.3M tokens for Encounter and Simulation.
 - The render side (Camera 37, audio 18, host and HUD 13, VFX 12, animation 6, net 3) is as the design says, and not walked.
 
+## One player left up (built 2026-11-20, Game Design's ruling of 2026-11-15)
+
+Built in the trial tree (scratch commit `751eb0a` on `1aadbbd`). The step is `src/lone_build.py`, after `t4_build.py`; the check is `src/horde_lone_check.gd`.
+- **The rule:** while only one played seat is up (in the run, not away, not down), in a wave sized for two or with two played, the pack plays one-player values at once and until the next wave:
+  - the lane gap goes back to the one-player value, and a lane waiting out the two-player gap waits the difference;
+  - new spawns come at one-player toughness;
+  - the wave's remaining count × 1/`countMul`, taken from the bodies still to send, the largest kind first;
+  - the live bodies keep their toughness.
+- **The state:** two new hashed fields on the run, `size2` and `lone`. The data switch is `two.lone` (`true`); the check turns it off for its negative control.
+
+**`horde_lone_check`:** two medium pads play to the middle of wave 3, and seat 0 goes down there.
+
+| | Seat 1 clears the wave | Time to clear |
+| :--- | ---: | :--- |
+| **The rule on** (QA's row: at least 8 of 10) | **10 of 10** | 19.5 to 25.8 s |
+| The rule off (negative control) | 10 of 10 | 36.0 to 44.6 s |
+| Seat 0 stops playing but stays up (the rule can't trigger) | 10 of 10 | 70.7 to 88.0 s |
+
+- At the down: the gap goes from 90 to 113, the wave's remaining count from 40 to 33, the live bodies keep their toughness, and a new spawn comes at one-player toughness. At the next wave, two-player values are back and seat 0 is up.
+- Two runs give one hash. `horde_check` passes 44 of 44. With the switch off, the golden is byte-identical to the tree before the change.
+- Records are in `runs/5263c1a6/horde-lone/`.
+
+**The finding behind the ruling was my clip script's, not the game's.** In the T8 recordings the remaining pad never cleared the wave because of the script:
+- After its scripted blast (RB + X), the script's pad sent the "auto" family (-1), which keeps the last family. So every later X was an energy shot.
+- A shot lowers a weak fighter's hit points but doesn't spend its toughness (the shot as a pack blow is left out, below). Bodies at 0 hit points fought on, and the wave never fell (`stall-trace.txt`).
+- A real pad sends the physical family once RB is released (`layout.gd`), so a player doesn't meet this.
+- With the script's fault out of the way, the remaining pad clears the wave even without the rule, as the table shows. The rule still halves the time.
+
 ## Not done
 
 - T7 (the EP's quiet window). T8's capture is Tools' (the film variant of the capture hook, and Camera's many-body frame).
 - **A Horde B never strikes a building.** It launches the body by the knock-out fallback's plain launch (`DirHorde._fell`), with no aimed building, and a building is struck only by an aimed flight (`WorldBrunt.checkHit` reads `f.aimB`). Routing the Horde's B through the launch planner is A4 work, after the launch-cone rider lands, so it honours the cone.
 - `net/desync.gd`'s horde lines (the design's 6.1) are not written. The trial's hash lines are in `hash.gd` only.
 - The A3 body share, the beam in space, the shot as a pack blow (`blow.shot`), energy for a fall, and the result screen are left out, as the design leaves them for later or for other owners.
+  - **What leaving out the shot means in play:** a player's energy shot lowers a weak fighter's hit points but never spends its toughness, so it never fells one, and a body at 0 hit points fights on. A player who only blasts can't clear a wave.

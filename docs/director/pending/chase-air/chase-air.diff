@@ -1,0 +1,391 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index a35be0c..2ae8baa 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -624,7 +624,10 @@
+       "arriveTicks": 60,
+       "maxSpeed": 20000,
+       "easeTicks": 10,
+-      "_note": "maxSpeed: the rush never goes faster, so it never jumps; if he lands first, the blow lands where he is. easeTicks: the top speed builds up to maxSpeed over this many live ticks. minCatchTicks: a chase can't catch sooner than this, so the next one, pressed in the blow's own hit-stop, doesn't land at once. arriveTicks: it reaches him within this, however far he's got. The chase by a plain tap (docs/design/power-scale.md section 4; sim/director/chase_tap.gd). The first tap of a send is free, then the chase's price, times priceStep for each one after in that chain. After the blow, a press inside nextTicks (0.33 s) starts the next, wherever he is. holdTicks: a press made while the send still holds him waits this long for his first free tick. landReadTicks: how often the chase re-forecasts his landing."
++      "minAirTicks": 40,
++      "riseTicks": 60,
++      "riseRushTicks": 20,
++      "_note": "minAirTicks: a catch holds him up at least this many live ticks, his flight paced along its path, unless B drove him down (power-scale.md section 4). riseTicks: a tap that reaches his landing waits up to this long for him to get up, and lands then as an ordinary blow he can guard; if he got up out of reach, the chaser rushes to him in riseRushTicks at most. maxSpeed: the rush never goes faster, so it never jumps. easeTicks: the top speed builds up to maxSpeed over this many live ticks. minCatchTicks: a chase can't catch sooner than this, so the next one, pressed in the blow's own hit-stop, doesn't land at once. arriveTicks: it reaches him within this, however far he's got. The chase by a plain tap (docs/design/power-scale.md section 4; sim/director/chase_tap.gd). The first tap of a send is free, then the chase's price, times priceStep for each one after in that chain. After the blow, a press inside nextTicks (0.33 s) starts the next, wherever he is. holdTicks: a press made while the send still holds him waits this long for his first free tick. landReadTicks: how often the chase re-forecasts his landing."
+     },
+     "speedMul": 1.25,
+     "minSpeed": 1900,
+diff --git a/sim/director/arc.gd b/sim/director/arc.gd
+index 327d0ed..ce8301a 100644
+--- a/sim/director/arc.gd
++++ b/sim/director/arc.gd
+@@ -279,6 +279,8 @@ static func _ticks(r: Dictionary) -> int:
+ 
+ ## A tick of a launched fighter (SimFighter.stepLaunched, first). True when the curve moved him.
+ static func step(S: SimState, f, dt: float) -> bool:
++	if DirChaseTap.hangStep(S, f, dt):
++		return true   # a catch's hang paces him (DirChaseTap): this is the core's hook for a launched body
+ 	if not on() or _g(f, A_ROW) == 0:
+ 		return false
+ 	if dt <= 0.0:
+diff --git a/sim/director/chase.gd b/sim/director/chase.gd
+index 00c8fb7..a5b1b4c 100644
+--- a/sim/director/chase.gd
++++ b/sim/director/chase.gd
+@@ -316,6 +316,7 @@ static func _catch(S: SimState, A, D) -> void:
+ 		DirRally.onLink(S, A, D, kind, r.best)   # 23d 6: a rally's link
+ 		if DirChaseTap.on() and A.ai == null:
+ 			DirChaseTap.caught(S, A, D)   # (he's on a new launch number now)
++			DirChaseTap.hang(S, A, D, kind == "spike")
+ 	_end(S, A, D, "catch")
+ 
+ 
+diff --git a/sim/director/chase_tap.gd b/sim/director/chase_tap.gd
+index 827c311..a7475c9 100644
+--- a/sim/director/chase_tap.gd
++++ b/sim/director/chase_tap.gd
+@@ -5,7 +5,8 @@ extends RefCounted
+ ##  - The first tap of a send is free. Then the chase's price, times priceStep for each one after in that chain.
+ ##  - A press during the rush picks the blow, the newest wins: X the strike, Y the heavy, B drives him down at Y's price. It never queues.
+ ##  - After a send or the blow, a press inside nextTicks starts a chase, wherever he's got to. No press and he peels off.
+-##  - On the meteor's curve every tap flies to his landing, for the first move: no blow and no apex spike yet (row 7).
++##  - A catch holds him up: his flight from it takes at least minAirTicks, on the path the planner gave it, unless B drove him down.
++##  - A tap that reaches his landing (he came down first, or the meteor's curve) lands as he gets up, an ordinary blow he can guard.
+ ##  - A press made while the send still holds him goes on his first free tick, inside holdTicks. No press is silent.
+ ## A knock-back isn't a send, and a stick strike never sends: neither starts one. The AI doesn't use this: it keeps chase.enabled's own route.
+ ## Behind interrupts.json chase.tap.enabled (false: nothing here runs, and no slot is sized). State: integers on f.act.dirI after DirPhrase's.
+@@ -19,7 +20,12 @@ const T_READ: int = 5   # the live tick of that forecast, plus 1
+ const T_HOLD: int = 6   # a press waiting for his first free tick: 1 X, 2 Y, 3 B, plus 4 x (its live tick + 1)
+ const T_PAID: int = 7   # what this chase has cost him, x 16
+ const T_KNOCK: int = 8  # 1 when his last launch was a knock-back
+-const T_N: int = 9
++const T_RISE: int = 9   # on the chaser: the live tick his blow reached the landing, plus 1, while it waits for him to get up
++const T_RISEW: int = 10 # ... and its blow: 1 the strike, 2 the heavy; plus 4 while he rushes to him, and T_RISE is then its arrival, plus 1
++const T_HK: int = 11    # on the body sent: his hang's pace, x 4096 (0: none)
++const T_HEND: int = 12  # ... the live tick it ends, plus 1
++const T_HLN: int = 13   # ... and the launch number it's for, plus 1
++const T_N: int = 14
+ 
+ const X: int = 1
+ const Y: int = 2
+@@ -199,6 +205,7 @@ static func tick(S: SimState) -> void:
+ 	if not on():
+ 		return
+ 	for A in S.fighters:
++		_rising(S, A)
+ 		var h: int = _g(A, T_HOLD)
+ 		if h == 0:
+ 			continue
+@@ -229,6 +236,8 @@ static func landingIn(S: SimState, A, D) -> int:
+ 		var land: Dictionary = DirLaunch.predictFlight(S, D.x, D.y, D.vx / maxf(D.launchT, 0.001), D.vy, D.launchT)
+ 		_s(A, T_READ, now + 1)
+ 		_s(A, T_LAND, now + 1 + int(ceil(float(land.get("t", 99.0)) * DirData.TICKS_PER_SEC)))
++	if _g(D, T_HK) != 0 and _g(D, T_HLN) == D.launchN + 1:
++		return maxi(_g(A, T_LAND) - 1 - now, _g(D, T_HEND) - 1 - now)   # his hang lands him as it ends
+ 	return _g(A, T_LAND) - 1 - now
+ 
+ 
+@@ -239,12 +248,88 @@ static func caught(S: SimState, A, D) -> void:
+ 	_s(A, T_PAID, 0)
+ 
+ 
+-## He came down before the catch: the blow lands where he lands. It doesn't send him: he's already down.
++## He came down before the catch, or this chase flew to a curve's landing: the blow waits for him to get up (_rising).
+ static func landed(S: SimState, A, D, heavy: bool) -> void:
+ 	_s(A, T_PAID, 0)
+-	if _g(A, T_CURVE) == 1:
+-		_s(A, T_CURVE, 0)
+-		return   # for the first move
+-	if S.game.ko != null or A.state != "free" or DirBands.dist(A, D) > float(DirChase.cfg().get("catchBh", 1.5)) * DirInterrupt.BH:
++	_s(A, T_CURVE, 0)
++	if S.game.ko != null or A.state != "free":
++		return
++	_s(A, T_RISE, DirBrawl._now(S) + 1)
++	_s(A, T_RISEW, 2 if heavy else 1)
++
++
++## The blow that reached his landing lands as he gets up, an ordinary blow he can guard (power-scale.md, "a tap that reaches a landing":
++## it replaces "for the first move", and stands in for the meteor's apex spike). If he got up out of reach (a crater's bounce carries him
++## off), the chaser rushes to him, in riseRushTicks at most, and it lands as he arrives: the follow-up always hits something. It lapses after
++## riseTicks, or if either is busy by then.
++static func _rising(S: SimState, A) -> void:
++	var at: int = _g(A, T_RISE)
++	if at == 0:
++		return
++	var D = SimRoster.opp(S, A)
++	var now: int = DirBrawl._now(S)
++	var w: int = _g(A, T_RISEW)
++	if S.game.ko != null or S.dirS.ex != null or D.state == "launched" and (w & 4) != 0 or (A.state != "free" and A.rush == null) or now - (at - 1) > int(cfg().get("riseTicks", 60)):
++		_s(A, T_RISE, 0)
++		return
++	if (w & 4) == 0 and (D.state == "launched" or D.embedT > 0):
++		_s(A, T_RISE, now + 1)   # still coming down (a curve's chaser gets there first), or embedded: riseTicks counts from his get-up
++		return
++	if D.state != "free" or ((w & 4) != 0 and now < at - 1):
++		return   # still down, or on the way to him
++	var reach: float = 2.0 * float(DirChase.cfg().get("catchBh", 1.5)) * DirInterrupt.BH
++	if DirBands.dist(A, D) > reach and (w & 4) == 0:
++		var ticks: int = clampi(int(ceil(DirBands.dist(A, D) / (float(cfg().maxSpeed) * SimConst.DT))), 2, int(cfg().get("riseRushTicks", 20)))
++		var r := SimState.Rush.new()
++		r.tgt = D
++		r.off = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(D.x, A.x)), -A.face) * float(DirData.contact().offset)
++		r.end = S.T + float(ticks) * SimConst.DT
++		A.rush = r
++		A.vx = 0.0
++		A.vy = 0.0
++		_s(A, T_RISE, now + 1 + ticks)
++		_s(A, T_RISEW, w | 4)
++		return
++	_s(A, T_RISE, 0)
++	if DirBands.dist(A, D) > reach:
+ 		return
+-	DirChase.blow(S, A, D, heavy)
++	var heavy: bool = (w & 3) == 2
++	var dmg: float = float(DirZip.cfg().get("heavy", {}).get("damage", 132.0)) if heavy else float(DirBrawl.cfg().get("light", {}).get("damage", 26.0))
++	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
++	SimDamage.hit(S, null, A, D, dmg, {"kind": "zip", "stop": 0.08 if heavy else 0.05, "shake": 9.0 if heavy else 5.0})
++	DirChase._cue(S, A, D, "rise")
++
++
++## After a catch's send (DirChase._catch): he stays up at least minAirTicks, unless B drove him down. It's a hit's hang, not more energy:
++## his flight is paced along the path the planner gave it, so where he goes, what he hits and where he lands don't change.
++static func hang(S: SimState, A, D, spike: bool) -> void:
++	var n: int = int(cfg().get("minAirTicks", 0))
++	if n <= 0 or spike or D.state != "launched":
++		return
++	var land: Dictionary = DirLaunch.predictFlight(S, D.x, D.y, D.vx / maxf(D.launchT, 0.001), D.vy, D.launchT)
++	var phys: float = float(land.get("t", 99.0)) * DirData.TICKS_PER_SEC
++	if phys >= float(n):
++		return
++	_s(D, T_HK, maxi(1, int(round(maxf(phys, 1.0) / float(n + 3) * 4096.0))))   # (3 to spare: a smaller step lands a hair sooner)
++	_s(D, T_HEND, DirBrawl._now(S) + n + 3 + 1)
++	_s(D, T_HLN, D.launchN + 1)
++	_s(A, T_READ, 0)   # the chaser's forecast reads the hang from now
++
++
++static var _inHang: bool = false   # (while hangStep steps him: the core's hook calls back in)
++
++
++## The core's hook for a launched body (DirArc.step, first): true when his hang stepped him, at its pace. A new send or its end clears it.
++static func hangStep(S: SimState, f, dt: float) -> bool:
++	if _inHang or dt <= 0.0 or not on():
++		return false
++	var hk: int = _g(f, T_HK)
++	if hk == 0:
++		return false
++	if _g(f, T_HLN) != f.launchN + 1 or DirBrawl._now(S) >= _g(f, T_HEND) - 1:
++		_s(f, T_HK, 0)
++		return false
++	_inHang = true
++	SimFighter.stepLaunched(S, f, dt * float(hk) / 4096.0)
++	_inHang = false
++	return true
+diff --git a/sim/director/tools/chase_tap_check.gd b/sim/director/tools/chase_tap_check.gd
+index 9fed5b8..6d5f155 100644
+--- a/sim/director/tools/chase_tap_check.gd
++++ b/sim/director/tools/chase_tap_check.gd
+@@ -1,7 +1,8 @@
+ extends SceneTree
+ ## The chase after a launch, by a plain tap (docs/design/power-scale.md section 4): no LT, the first tap free, the price rising, the newest
+-## press picks the blow, B drives him down, the 0.33 s to the next, a knock-back and a stick strike don't start one, a meteor's curve goes to
+-## the landing, a press made while the send holds him waits, off nothing runs. Two runs, one hash.
++## press picks the blow, B drives him down, a catch holds him up, the 0.33 s to the next, a knock-back and a stick strike don't start one, a
++## tap that reaches a landing lands as he gets up and can be guarded, a meteor's curve goes to the landing, a press made while the send holds
++## him waits, off nothing runs. Two runs, one hash.
+ ##   godot --headless --path . --script res://sim/director/tools/chase_tap_check.gd
+ ## Ends on the verdict line.
+ 
+@@ -18,6 +19,7 @@ func _init() -> void:
+ 	_prices()
+ 	_newest()
+ 	_drive()
++	_hang()
+ 	_noKi()
+ 	_next()
+ 	_knock()
+@@ -73,10 +75,13 @@ func _press(S: SimState, kind: String) -> SimIntent:
+ 	return i
+ 
+ 
+-func _step(S: SimState, i = null) -> bool:
++func _step(S: SimState, i = null, d = null) -> bool:
+ 	_acks = []
+ 	_cues = []
+-	var live: bool = SimCore.step(S, [i if i != null else SimIntent.new(), SimIntent.new()])
++	var live: bool = SimCore.step(S, [i if i != null else SimIntent.new(), d if d != null else SimIntent.new()])
++	for e in S.out.fx:
++		if e.type == "launch_plan":
++			_cues.append("send:" + String(e.chosen))
+ 	for e in S.out.fx:
+ 		if e.type == "cue":
+ 			if e.kind == "press_ack":
+@@ -160,26 +165,44 @@ func _early() -> void:
+ 	_expect(fastest <= float(DirChaseTap.cfg().maxSpeed) * 1.6, "the rush never jumps (%.0f)" % fastest)
+ 	_expect(D.hp < hp, "... and the blow lands")
+ 	SimCore.dispose(S)
+-	S = _fresh(0.0)
+-	A = S.fighters[0]
+-	D = S.fighters[1]
+-	_send(S)
+-	_gone(S, 10)
+-	D.vx = 0.0
+-	D.x = SimWrap.wrap(A.x + 9000.0)
+-	D.vy = -3000.0
+-	D.y = SimFighter.floorFor(S, D, D.x, D.z) + 700.0
+-	hp = D.hp
+-	_tap(S, "heavy")
+-	var landed: bool = false
+-	var k: int = 0
+-	while DirChase.chasing(A) and k < 120:
+-		_step(S)
+-		landed = landed or D.state != "launched"
+-		k += 1
+-	print("      he'd landed: %s, %d ticks, %.0f taken, %.0f apart" % [str(landed), k, hp - D.hp, DirBands.dist(A, D)])
+-	_expect(not DirChase.chasing(A) and D.hp <= hp - float(DirZip.cfg().heavy.damage) * 0.9, "he comes down first: the blow still lands on him (%.0f)" % (hp - D.hp))
+-	SimCore.dispose(S)
++	var took: Array = []
++	for guard in [false, true]:
++		S = _fresh(0.0)
++		A = S.fighters[0]
++		D = S.fighters[1]
++		_send(S)
++		_gone(S, 10)
++		D.vx = 0.0
++		D.x = SimWrap.wrap(A.x + 9000.0)
++		D.vy = -3000.0
++		D.y = SimFighter.floorFor(S, D, D.x, D.z) + 700.0
++		hp = D.hp
++		_tap(S, "heavy")
++		var g := SimIntent.new()
++		g.guard = guard
++		var landed: bool = false
++		var downSeen: bool = false
++		var k: int = 0
++		var at: int = -1
++		var state: String = ""
++		while k < 240:
++			_step(S, null, g)
++			if not landed and D.state != "launched":
++				landed = true
++				hp = D.hp   # (his landing's own impact is taken by now)
++			downSeen = downSeen or D.state == "down"
++			k += 1
++			if _cues.has("chase:rise"):
++				at = k
++				state = D.state
++				break
++		took.append(hp - D.hp)
++		print("      %s: he'd landed %s, down %s; the blow landed at %d with him %s, %.0f taken" % ["guarding" if guard else "open", str(landed), str(downSeen), at, state, hp - D.hp])
++		if not guard:
++			_expect(downSeen and state == "free" and D.hp <= hp - float(DirZip.cfg().heavy.damage) * 0.9, "he comes down first: the blow waits, and lands as he gets up (%.0f)" % (hp - D.hp))
++		else:
++			_expect(float(took[1]) > 0.0 and float(took[1]) < 0.6 * float(took[0]), "... an ordinary blow: his guard takes it (%.0f against %.0f)" % [took[1], took[0]])
++		SimCore.dispose(S)
+ 
+ 
+ ## The hint's cue: once a send, for a player, and not for a knock-back.
+@@ -262,6 +285,61 @@ func _drive() -> void:
+ 	SimCore.dispose(S)
+ 
+ 
++## A catch holds him up: at least minAirTicks in the air after it, on the path the planner gave him. B's drive doesn't.
++func _hang() -> void:
++	var minAir: int = int(DirChaseTap.cfg().minAirTicks)
++	var lands: Array = []
++	for mode in [0, 1, 2]:   # a short send down: no hang, the catch's hang, the hang asked for B's drive
++		var S2 := _fresh(100.0)
++		var A2 = S2.fighters[0]
++		var D2 = S2.fighters[1]
++		D2.x = SimWrap.wrap(A2.x + 150.0)
++		D2.y = SimFighter.floorFor(S2, D2, D2.x, D2.z) + 300.0
++		DirLaunch.doLaunch(S2, A2, D2, {"name": "SLAM DOWN", "ux": 0.4, "uy": -0.9}, 1600.0, false)
++		if mode > 0:
++			DirChaseTap.hang(S2, A2, D2, mode == 2)
++		var k2: int = 0
++		while D2.state == "launched" and k2 < 300:
++			_step(S2)
++			k2 += 1
++		lands.append([k2, D2.x])
++		SimCore.dispose(S2)
++	var apart: float = absf(SimWrap.sdx(float(lands[0][1]), float(lands[1][1])))
++	print("      a short send down: %d ticks in the air plain, %d with the hang, landing %.1f apart; B's drive %d" % [lands[0][0], lands[1][0], apart, lands[2][0]])
++	_expect(int(lands[0][0]) < minAir and int(lands[1][0]) >= minAir and apart < 0.25 * DirInterrupt.BH, "a short send is held up to minAirTicks, and he lands where he would")
++	_expect(int(lands[2][0]) == int(lands[0][0]), "B's drive isn't held up")
++	for drive in [false]:
++		var S := _fresh(100.0)
++		_send(S)
++		_gone(S, 5)
++		var A = S.fighters[0]
++		var D = S.fighters[1]
++		D.x = SimWrap.wrap(A.x + 150.0)
++		D.vx = 0.0
++		D.vy = 0.0
++		D.y = SimFighter.floorFor(S, D, D.x, D.z) + 450.0   # caught low, so his send is short
++		var n0: int = D.launchN
++		_tap(S, "light")
++		if drive:
++			_step(S, SimIntent.new())
++			_tap(S, "sig")
++		var at: int = -1
++		var air: int = -1
++		var hung: int = 0
++		for k in range(400):
++			_step(S)
++			if at < 0 and D.launchN > n0:
++				at = k
++				hung = DirChaseTap._g(D, DirChaseTap.T_HK)
++				print("      at the catch: %s, %.0f up, sent at %.0f, %.0f" % [str(_cues.filter(func(c): return String(c).begins_with("send:"))), D.y - SimFighter.floorFor(S, D, D.x, D.z), D.vx, D.vy])
++			elif at >= 0 and D.state != "launched":
++				air = k - at
++				break
++		print("      %s: caught at %d, sent at %.0f, %.0f, then %d ticks in the air, hang pace %.2f" % ["a real catch", at, D.vx, D.vy, air, float(hung) / 4096.0])
++		_expect(at >= 0 and air >= minAir, "after a real catch he's up at least minAirTicks (%d)" % air)
++		SimCore.dispose(S)
++
++
+ func _noKi() -> void:
+ 	var S := _fresh(0.0)
+ 	_send(S)
+@@ -366,9 +444,17 @@ func _curve() -> void:
+ 	var off: float = absf(SimWrap.sdx(A.x, float(land.x)))
+ 	print("      %d ticks left when pressed; he's down after %d, the chaser %.0f from the landing" % [left, k, off])
+ 	_expect(off < 400.0, "... he's at the landing as he lands (%.0f)" % off)
+-	_expect(not caught, "... with no blow")
+-	_gone(S, 10)
+-	_expect(not DirChase.chasing(A), "... and it's over, for the first move")
++	_expect(not caught, "... with no catch on the way")
++	var risen: String = ""
++	var hp2: float = D.hp
++	for _k in range(120):
++		_step(S)
++		if _cues.has("chase:rise"):
++			risen = D.state
++			break
++	print("      the blow at his landing: %s, %.0f taken" % [risen, hp2 - D.hp])
++	_expect(risen == "free", "... and the tap lands as he gets up")
++	_expect(not DirChase.chasing(A), "... and it's over")
+ 	SimCore.dispose(S)
+ 	DirArc.setForce(-1)
+ 
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index ec79423..1a09390 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -4602,6 +4602,18 @@
+               "type": "integer",
+               "minimum": 0
+             },
++            "minAirTicks": {
++              "type": "integer",
++              "minimum": 0
++            },
++            "riseTicks": {
++              "type": "integer",
++              "minimum": 1
++            },
++            "riseRushTicks": {
++              "type": "integer",
++              "minimum": 2
++            },
+             "arriveTicks": {
+               "type": "integer",
+               "minimum": 1

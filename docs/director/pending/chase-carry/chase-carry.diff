@@ -1,0 +1,194 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index 2ae8baa..b283860 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -627,7 +627,9 @@
+       "minAirTicks": 40,
+       "riseTicks": 60,
+       "riseRushTicks": 20,
+-      "_note": "minAirTicks: a catch holds him up at least this many live ticks, his flight paced along its path, unless B drove him down (power-scale.md section 4). riseTicks: a tap that reaches his landing waits up to this long for him to get up, and lands then as an ordinary blow he can guard; if he got up out of reach, the chaser rushes to him in riseRushTicks at most. maxSpeed: the rush never goes faster, so it never jumps. easeTicks: the top speed builds up to maxSpeed over this many live ticks. minCatchTicks: a chase can't catch sooner than this, so the next one, pressed in the blow's own hit-stop, doesn't land at once. arriveTicks: it reaches him within this, however far he's got. The chase by a plain tap (docs/design/power-scale.md section 4; sim/director/chase_tap.gd). The first tap of a send is free, then the chase's price, times priceStep for each one after in that chain. After the blow, a press inside nextTicks (0.33 s) starts the next, wherever he is. holdTicks: a press made while the send still holds him waits this long for his first free tick. landReadTicks: how often the chase re-forecasts his landing."
++      "carryTicks": 8,
++      "hangMinPace": 0,
++      "_note": "minAirTicks: a catch holds him up at least this many live ticks, his flight paced along its path, unless B drove him down (power-scale.md section 4). hangMinPace: 0 as ruled; above it, a hang's pace never falls under it, and a send too short for minAirTicks at that pace hangs for less (Tools' film: about 2% after a low catch). carryTicks: at a catch the chaser keeps the speed he caught him at and eases to a stop over this many live ticks (Camera's read: 10,175 to 0 in one tick before). riseTicks: a tap that reaches his landing waits up to this long for him to get up, and lands then as an ordinary blow he can guard; if he got up out of reach, the chaser rushes to him in riseRushTicks at most. maxSpeed: the rush never goes faster, so it never jumps. easeTicks: the top speed builds up to maxSpeed over this many live ticks. minCatchTicks: a chase can't catch sooner than this, so the next one, pressed in the blow's own hit-stop, doesn't land at once. arriveTicks: it reaches him within this, however far he's got. The chase by a plain tap (docs/design/power-scale.md section 4; sim/director/chase_tap.gd). The first tap of a send is free, then the chase's price, times priceStep for each one after in that chain. After the blow, a press inside nextTicks (0.33 s) starts the next, wherever he is. holdTicks: a press made while the send still holds him waits this long for his first free tick. landReadTicks: how often the chase re-forecasts his landing."
+     },
+     "speedMul": 1.25,
+     "minSpeed": 1900,
+diff --git a/sim/director/chase.gd b/sim/director/chase.gd
+index a5b1b4c..150c802 100644
+--- a/sim/director/chase.gd
++++ b/sim/director/chase.gd
+@@ -273,6 +273,8 @@ static func _catch(S: SimState, A, D) -> void:
+ 		A.rush = null
+ 		_end(S, A, D, "teched")
+ 		return   # 23d 8: he teched its arrival
++	if DirChaseTap.on() and A.ai == null:
++		DirChaseTap.carry(S, A, D)   # (before the blow sends him on: the speed it caught him at)
+ 	blow(S, A, D, _g(A, CH_W) == 2 or kind == "spike")
+ 	if DirChaseTap.on() and A.ai == null:
+ 		DirChaseTap.caught(S, A, D)
+diff --git a/sim/director/chase_tap.gd b/sim/director/chase_tap.gd
+index a7475c9..0e1b8c8 100644
+--- a/sim/director/chase_tap.gd
++++ b/sim/director/chase_tap.gd
+@@ -25,7 +25,10 @@ const T_RISEW: int = 10 # ... and its blow: 1 the strike, 2 the heavy; plus 4 wh
+ const T_HK: int = 11    # on the body sent: his hang's pace, x 4096 (0: none)
+ const T_HEND: int = 12  # ... the live tick it ends, plus 1
+ const T_HLN: int = 13   # ... and the launch number it's for, plus 1
+-const T_N: int = 14
++const T_CT: int = 14    # on the chaser: the catch's carry, live ticks left
++const T_CVX: int = 15   # ... the speed he caught him at, x 16
++const T_CVY: int = 16
++const T_N: int = 17
+ 
+ const X: int = 1
+ const Y: int = 2
+@@ -205,6 +208,7 @@ static func tick(S: SimState) -> void:
+ 	if not on():
+ 		return
+ 	for A in S.fighters:
++		_carryStep(S, A)
+ 		_rising(S, A)
+ 		var h: int = _g(A, T_HOLD)
+ 		if h == 0:
+@@ -241,6 +245,47 @@ static func landingIn(S: SimState, A, D) -> int:
+ 	return _g(A, T_LAND) - 1 - now
+ 
+ 
++## The catch's carry (Camera's read: the chaser went from 10,175 to 0 in one tick): he keeps the speed he caught him at and eases down
++## over carryTicks. Called before the blow sends D on. His speed is this tick's step of the rush (the chase lays a new rush each tick,
++## so its start is where he stood as the tick began); with no rush to read, D's own.
++static func carry(S: SimState, A, D) -> void:
++	var n: int = int(cfg().get("carryTicks", 0))
++	if n <= 0:
++		return
++	var vx: float = float(D.vx)
++	var vy: float = float(D.vy)
++	var r = A.rush
++	if r != null and float(r.dur) > 0.0:
++		vx = SimWrap.sdx(float(r.x0), A.x) / SimConst.DT
++		vy = (A.y - float(r.y0)) / SimConst.DT
++	var v: float = SimDetMath.hypot(vx, vy)
++	var most: float = float(cfg().maxSpeed)
++	if v > most:
++		vx *= most / v
++		vy *= most / v
++	_s(A, T_CT, n)
++	_s(A, T_CVX, int(round(vx * 16.0)))
++	_s(A, T_CVY, int(round(vy * 16.0)))
++
++
++## Each live tick of the carry: the speed falls as (1 - t) squared, so it starts at his own and settles to nothing. A rush or a state
++## that isn't free ends it.
++static func _carryStep(S: SimState, A) -> void:
++	var left: int = _g(A, T_CT)
++	if left <= 0:
++		return
++	_s(A, T_CT, left - 1)
++	if A.state != "free" or A.rush != null:
++		_s(A, T_CT, 0)
++		return
++	var n: float = float(int(cfg().get("carryTicks", 1)))
++	var k: float = float(left - 1) / n
++	k *= k
++	var dt: float = SimConst.DT
++	A.x = SimWrap.wrap(A.x + float(_g(A, T_CVX)) / 16.0 * k * dt)
++	A.y = maxf(A.y + float(_g(A, T_CVY)) / 16.0 * k * dt, SimFighter.floorFor(S, A, A.x, A.z))
++
++
+ ## His blow has landed in the air.
+ static func caught(S: SimState, A, D) -> void:
+ 	_s(A, T_AT, DirBrawl._now(S) + 1)
+@@ -310,8 +355,14 @@ static func hang(S: SimState, A, D, spike: bool) -> void:
+ 	var phys: float = float(land.get("t", 99.0)) * DirData.TICKS_PER_SEC
+ 	if phys >= float(n):
+ 		return
+-	_s(D, T_HK, maxi(1, int(round(maxf(phys, 1.0) / float(n + 3) * 4096.0))))   # (3 to spare: a smaller step lands a hair sooner)
+-	_s(D, T_HEND, DirBrawl._now(S) + n + 3 + 1)
++	var pace: float = maxf(phys, 1.0) / float(n + 3)   # (3 to spare: a smaller step lands a hair sooner)
++	var least: float = float(cfg().get("hangMinPace", 0.0))
++	var ticks: int = n + 3
++	if least > 0.0 and pace < least:
++		pace = least   # Tools' film: no slower than this, so a short send hangs less than minAirTicks
++		ticks = int(ceil(maxf(phys, 1.0) / pace)) + 1
++	_s(D, T_HK, maxi(1, int(round(pace * 4096.0))))
++	_s(D, T_HEND, DirBrawl._now(S) + ticks + 1)
+ 	_s(D, T_HLN, D.launchN + 1)
+ 	_s(A, T_READ, 0)   # the chaser's forecast reads the hang from now
+ 
+diff --git a/sim/director/tools/chase_tap_check.gd b/sim/director/tools/chase_tap_check.gd
+index 6d5f155..36c88bb 100644
+--- a/sim/director/tools/chase_tap_check.gd
++++ b/sim/director/tools/chase_tap_check.gd
+@@ -20,6 +20,7 @@ func _init() -> void:
+ 	_newest()
+ 	_drive()
+ 	_hang()
++	_carry()
+ 	_noKi()
+ 	_next()
+ 	_knock()
+@@ -340,6 +341,44 @@ func _hang() -> void:
+ 		SimCore.dispose(S)
+ 
+ 
++## The catch's carry: the chaser doesn't stop dead. His speed the tick after the catch is most of what it was, and it falls to nothing
++## over carryTicks with no step bigger than a third of it.
++func _carry() -> void:
++	var S := _fresh(100.0)
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	_send(S)
++	_gone(S, 20)
++	_tap(S, "light")
++	var speeds: Array = []
++	var at: int = -1
++	var ox: float = A.x
++	var oy: float = A.y
++	for k in range(120):
++		var was: bool = DirChase.chasing(A)
++		if not _step(S):
++			continue   # a hit-stop holds everything: the speeds are of live ticks
++		var v: float = SimDetMath.hypot(SimWrap.sdx(ox, A.x), A.y - oy) / SimConst.DT
++		ox = A.x
++		oy = A.y
++		speeds.append(v)
++		if was and not DirChase.chasing(A) and at < 0:
++			at = speeds.size() - 1
++		if at >= 0 and speeds.size() - at > int(DirChaseTap.cfg().carryTicks) + 3:
++			break
++	var near: Array = speeds.slice(maxi(0, at - 2), mini(speeds.size(), at + int(DirChaseTap.cfg().carryTicks) + 3))
++	var steps: Array = []
++	for v in near:
++		steps.append(snappedf(float(v), 1.0))
++	print("      the chaser's speed around the catch: %s" % str(steps))
++	var before: float = float(speeds[at - 1]) if at > 0 else 0.0
++	var worst: float = 0.0
++	for i in range(at, mini(speeds.size() - 1, at + int(DirChaseTap.cfg().carryTicks) + 1)):
++		worst = maxf(worst, float(speeds[i]) - float(speeds[i + 1]))
++	_expect(at > 0 and before > 0.0 and worst <= before / 3.0, "the catch doesn't stop him dead: no tick falls more than a third (%.0f of %.0f)" % [worst, before])
++	SimCore.dispose(S)
++
++
+ func _noKi() -> void:
+ 	var S := _fresh(0.0)
+ 	_send(S)
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 1a09390..5c89735 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -4614,6 +4614,15 @@
+               "type": "integer",
+               "minimum": 2
+             },
++            "carryTicks": {
++              "type": "integer",
++              "minimum": 0
++            },
++            "hangMinPace": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1
++            },
+             "arriveTicks": {
+               "type": "integer",
+               "minimum": 1

@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+      (seed 1: the first exchange dodge/read, his stance 2)
+      (seed 1: the first exchange dodge/read, his stance 2)
+      (seed 1: the first exchange dodge/read, his stance 2)
+      stick toward: found true (seed 1, dodge/read), sides swapped true, set piece ticks 75, free at the end true, stayed cue false
+      let go: found true (seed 1, dodge/read), sides swapped false, set piece ticks 17, free at the end true, stayed cue true
+      let go, off: found true (seed 1, dodge/read), sides swapped true, set piece ticks 75, free at the end true, stayed cue false
+ok    on, the stick toward him: he follows round, the sides swap
+ok    on, the stick let go: he stays on his side, the set piece ends at the follow (17 ticks against 75), and he's free
+ok    negative control, off: let go, he's carried round anyway
+CARRY ROUND: 0 check(s) failed

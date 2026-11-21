@@ -1,0 +1,14 @@
+seed 1: 34253 ticks (9.5 min), missing []; beats w1 20 (w1), beaten 7269 (w4), guarded 7318 (w4), blocked 7823 (w4), hit 8081 (w4), join 8082 (w4), blast 8436 (w4), down 33778 (w4), downSeat 1 (w4); hp left 0 0
+      TRACE +0s up 44 left 41 gap 90 | p2 speedster ph4 mk0 w2.0 hp1545 d0 170 d1 3093 | p3 fodder ph2 mk0 w1.0 hp1600 d0 40 d1 3021 | p4 fodder ph2 mk0 w1.0 hp1600 d0 304 d1 3162 | s1 st free y 3791 ph2 hp 1600
+      TRACE +15s up 39 left 36 gap 90 | p2 fodder ph4 mk0 w1.5 hp1585 d0 187 d1 389 | p3 fodder ph2 mk0 w1.0 hp1311 d0 184 d1 319 | p4 bruiser ph2 mk1 w5.0 hp1401 d0 172 d1 206 | s1 st free y 3625 ph2 hp 1572
+      TRACE +30s up 39 left 36 gap 90 | p2 fodder ph3 mk0 w1.5 hp1504 d0 80 d1 183 | p3 fodder ph4 mk0 w1.0 hp934 d0 48 d1 210 | p4 bruiser ph3 mk1 w5.0 hp1097 d0 226 d1 12 | s1 st free y 3625 ph2 hp 1495
+      TRACE +45s up 39 left 36 gap 90 | p2 fodder ph4 mk0 w1.5 hp1415 d0 234 d1 431 | p3 fodder ph2 mk0 w1.0 hp609 d0 302 d1 243 | p4 bruiser ph4 mk1 w5.0 hp868 d0 170 d1 203 | s1 st free y 3625 ph2 hp 1429
+      TRACE +60s up 39 left 36 gap 90 | p2 fodder ph3 mk0 w1.5 hp1312 d0 45 d1 202 | p3 fodder ph4 mk0 w1.0 hp136 d0 197 d1 404 | p4 bruiser ph4 mk1 w5.0 hp535 d0 203 d1 291 | s1 st free y 3625 ph2 hp 1377
+      TRACE +75s up 39 left 36 gap 90 | p2 fodder ph3 mk0 w1.5 hp1260 d0 113 d1 305 | p3 fodder ph2 mk0 w1.0 hp0 d0 287 d1 63 | p4 bruiser ph2 mk1 w5.0 hp166 d0 173 d1 217 | s1 st free y 3625 ph2 hp 1325
+      TRACE +90s up 39 left 36 gap 90 | p2 fodder ph2 mk0 w1.5 hp1106 d0 23 d1 215 | p3 fodder ph4 mk0 w1.0 hp0 d0 50 d1 277 | p4 bruiser ph4 mk1 w5.0 hp0 d0 170 d1 200 | s1 st free y 3625 ph2 hp 1277
+      TRACE +105s up 39 left 36 gap 90 | p2 fodder ph4 mk0 w1.5 hp1009 d0 197 d1 397 | p3 fodder ph2 mk0 w1.0 hp0 d0 127 d1 157 | p4 bruiser ph4 mk1 w5.0 hp0 d0 398 d1 199 | s1 st free y 3625 ph2 hp 1220
+      TRACE +120s up 39 left 36 gap 90 | p2 fodder ph3 mk0 w1.5 hp840 d0 38 d1 266 | p3 fodder ph2 mk0 w1.0 hp0 d0 99 d1 251 | p4 bruiser ph4 mk1 w5.0 hp0 d0 391 d1 192 | s1 st free y 3625 ph2 hp 1170
+      TRACE +135s up 39 left 36 gap 90 | p2 fodder ph4 mk0 w1.5 hp670 d0 118 d1 335 | p3 fodder ph4 mk0 w1.0 hp0 d0 64 d1 194 | p4 bruiser ph4 mk1 w5.0 hp0 d0 171 d1 120 | s1 st free y 3625 ph2 hp 1115
+      TRACE +150s up 39 left 36 gap 90 | p2 fodder ph4 mk0 w1.5 hp544 d0 237 d1 179 | p3 fodder ph2 mk0 w1.0 hp0 d0 216 d1 158 | p4 bruiser ph4 mk1 w5.0 hp0 d0 290 d1 67 | s1 st free y 3625 ph2 hp 1025
+      horde_down: seat 1 at 33778 (wave 4)
+      horde_down: seat 0 at 34252 (wave 4)

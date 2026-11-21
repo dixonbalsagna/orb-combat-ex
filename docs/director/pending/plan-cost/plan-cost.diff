@@ -1,0 +1,90 @@
+diff --git a/data/combat/launch_biome.json b/data/combat/launch_biome.json
+index e35108a..012276e 100644
+--- a/data/combat/launch_biome.json
++++ b/data/combat/launch_biome.json
+@@ -91,6 +91,7 @@
+         "_about": "a send into one big prop on the line: a lone tree, a boulder, a berg or one of World's rocks (lichen_rock, lava_rock), the way BUILDING SMASH takes a building but with no people and no chain. Offered when such a prop stands on the predicted line within reachBh. The prop breaks (World) and the body stops at it",
+         "sends": "across", "uy": 0.05,
+         "props": ["lone_tree", "boulder", "berg", "lichen_rock", "lava_rock"], "reachBh": 40.0,
++        "aimTicks": 120, "aimTicksAll": 480, "_aimTicks": "Encounter, plan cost (docs/perf/preview-deform-launch-2026-10-30.md #1): the search's bound, in ticks: one flight, and all of them in a plan. Every flight that broke a prop did so within 110 ticks.",
+         "aimFm": [1.0, 1.25, 1.6, 2.0, 2.5, 3.0], "_aimFm": "Encounter, prop-reach: the forces the planner tries in turn, times the launch's own, until World's flight breaks a prop on the line ahead (the first that does is the plan's, and the candidate is offered only then); 3.0 is the long haul's cap (launch.gd HAUL_FM_MAX). A launch anywhere's send keeps its own force",
+         "_props": "Game Design, rulings-2026-10-28 item 3: outcrop matched no World kind, so World's own rocks take its place (data/biomes/ground.json: lichen_rock in tundra, lava_rock in volcanic). Score 16 (Combat, 2026-10-29, once prop-reach let it find its props): in launchbiome_batch --on (seeds 1 to 32, 6 matches each) it is taken in 8 of 61 launches where offered (13.1%; 10 gave 3.4%, 14 8.2%, 20 22.4%), inside QA's 5 to 30% and below CLIFFSIDE's 26.5%, one prop being a smaller set piece than a cliff face",
+         "score": 16.0, "hero": 2.0, "villain": 2.0,
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index e8c469f..fcb5d08 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -375,7 +375,8 @@ static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bo
+ 	if (vq.is_empty() and pq.is_empty()) or not WorldGround.live():
+ 		return
+ 	var preach: float = float(pq.get("reachBh", 0.0)) * BH
+-	var near: Array = _propsNear(S, D.x - maxf(float(vq.get("withinBh", 0.0)) * BH, preach), D.x + maxf(float(vq.get("withinBh", 0.0)) * BH, preach))
++	var vent: float = float(vq.get("withinBh", 0.0)) * BH
++	var near: Array = _propsNear(S, D.x - (vent if f > 0.0 else maxf(vent, preach)), D.x + (maxf(vent, preach) if f > 0.0 else vent))   # PROP SMASH looks only ahead
+ 	if not vq.is_empty():
+ 		for p in near:
+ 			if String(p.kind) == "vent" and absf(SimWrap.sdx(D.x, p.x)) <= float(vq.withinBh) * BH:
+@@ -388,10 +389,12 @@ static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bo
+ 		# PROP SMASH is aimed as BUILDING SMASH is (World's W6 finding: a plan whose flight stopped short of its prop, or
+ 		# passed over a low one): the first force of the row's aimFm, the row's own first, whose flight breaks a prop on
+ 		# the line ahead. A launch anywhere's send keeps its own force (its length is its power's, as with the long haul).
++		# The search runs whole in the plan's one frame, so it is bounded in ticks: aimTicks a flight, aimTicksAll in all.
+ 		var props: Array = _propTargets(S, D, near, pq.props, f, preach)
+ 		if not props.is_empty():
++			_aimLeft = int(pq.aimTicksAll)
+ 			for fm in ([1.0] if fresh else pq.get("aimFm", [1.0])):
+-				var hit: int = _propFlight(S, A, D, f, float(pq.uy), pf * float(fm), props)
++				var hit: int = _propFlight(S, A, D, f, float(pq.uy), pf * float(fm), props, null, int(pq.aimTicks))
+ 				if hit >= 0:
+ 					c.append(_bc(pq, "PROP SMASH", f, float(pq.uy), pers, 0.0, {"land": props[hit].x, "prop": props[hit].kind, "fm": float(fm)}))
+ 					break
+@@ -402,13 +405,12 @@ static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bo
+ ## column's props), and top is its height above the ground; a column whose props World does not smash has none.
+ static func _propTargets(S: SimState, D, near: Array, kinds: Array, f: float, reach: float) -> Array:
+ 	var out: Array = []
+-	var broken: PackedInt32Array = brokenProps(S)
+ 	for p in near:
+ 		var d: float = SimWrap.sdx(D.x, p.x) * f
+ 		if not kinds.has(String(p.kind)) or d < 0.0 or d > reach or out.any(func(q): return int(q.col) == int(p.col)):
+ 			continue
+ 		var here: Array = []
+-		for q in WorldGround.matchProps(S, float(p.x) - SimConst.COL, float(p.x) + SimConst.COL, broken):
++		for q in near:   # a whole column: near is cut at column edges
+ 			if int(q.col) == int(p.col):
+ 				here.append(q)
+ 		var pick: int = WorldGround.smashIn(here)
+@@ -422,6 +424,10 @@ static func _propTargets(S: SimState, D, near: Array, kinds: Array, f: float, re
+ 	return out
+ 
+ 
++## The ticks PROP SMASH's search has left in this plan: set as the search starts and read only inside it, so it is no state.
++static var _aimLeft: int = 0
++
++
+ ## The prop a send of (ux, uy) at force F breaks, as World's flight would play it: an index into props
+ ## (_propTargets), or -1 when the journey ends first. The body is the one doLaunch and WorldContact.toBody make, and
+ ## each tick is the runtime's (WorldContact.stepFighter): moveAir, the path's prop test, groundPhase in the air;
+@@ -429,7 +435,11 @@ static func _propTargets(S: SimState, D, near: Array, kinds: Array, f: float, re
+ ## path ahead, and he lower than its top (over it, it stands, and a later tick may still meet it). Reads only. Like
+ ## WorldContact.journey it reads the ground as it is now, not as the flight changes it (a landing's crater, a skid's
+ ## trench, the rubble of what it breaks). rec (tools only): when an Array, it gets his [x, y] at the end of each tick.
+-static func _propFlight(S: SimState, A, D, ux: float, uy: float, F: float, props: Array, rec = null) -> int:
++## With limit above 0 the search is bounded: it gives up past the furthest prop, and after limit ticks of this flight or
++## _aimLeft of the plan's (counted in ticks, never in time, so every machine and every replay gives up at the same tick).
++static func _propFlight(S: SimState, A, D, ux: float, uy: float, F: float, props: Array, rec = null, limit: int = 0) -> int:
++	var far: float = float(props[props.size() - 1].x) if limit > 0 else 0.0
++	var dirF: float = 1.0 if ux >= 0.0 else -1.0
+ 	var tv: float = WorldSlide.launchTravel(ux, uy)
+ 	var b: WorldContact.Body = WorldContact.launchBody(D.x, D.y, ux * F * tv, uy * F, tv, A.tier, D.y < WorldWater.seaTop(S, D.x), D.z)
+ 	b.dir = 1.0 if ux >= 0.0 else -1.0
+@@ -454,6 +464,10 @@ static func _propFlight(S: SimState, A, D, ux: float, uy: float, F: float, props
+ 			rec.append([b.x, b.y])
+ 		if hit >= 0 or b.done:
+ 			return hit
++		if limit > 0:
++			_aimLeft -= 1
++			if t + 1 >= limit or _aimLeft <= 0 or SimWrap.sdx(b.x, far) * dirF < 0.0:
++				return -1
+ 		ev.clear()
+ 	return -1
+ 

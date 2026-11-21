@@ -1,0 +1,18 @@
+ok    off, in reach: aimed false
+ok    on, in reach: aimed true
+ok    on, in reach: the wall takes him (1)
+ok    on, past its reach: aimed false
+ok    on, 1,200 away at tier 4: aimed true
+ok    on, 1,200 away at tier 4: the wall takes him (3)
+ok    on, behind him: aimed false
+ok    tier 1 on a tower: not through it (wall)
+ok    visit off: no slot, no cost
+ok    an unused town: leaving costs
+ok    landing in it doesn't
+ok    after its sends, leaving costs nothing
+ok    and it's marked down
+ok    the frame is back
+ok    the frame is back
+ok    a built place on the line is a candidate (2)
+KNOCK WALL: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

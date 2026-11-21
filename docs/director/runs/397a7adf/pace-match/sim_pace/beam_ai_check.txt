@@ -1,0 +1,6 @@
+ok    the computer's beam starts as a hold, and its exchange comes at the release (29 ticks later)
+ok    nobody is locked while it charges (0 ticks in an exchange, 0 its rival locked)
+ok    it lets go at a stage, pays that stage (20.0), and fires
+ok    its pacing keeps its signature wait (ready at 70.0)
+ok    off, the computer's signature is the old request: no hold, its exchange locks its rival (91 ticks)
+BEAM AI: 0 check(s) failed

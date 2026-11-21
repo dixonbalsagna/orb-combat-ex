@@ -1,0 +1,721 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index b283860..c4aa096 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -611,6 +611,21 @@
+     "rushBlowTicks": 20,
+     "towardDot": 0.5
+   },
++  "outside": {
++    "enabled": false,
++    "reachBh": 3.0,
++    "waitSec": 0.5,
++    "whiffTicks": 20,
++    "damageMul": 1.0,
++    "shotReachBh": 40.0,
++    "teamRestunTicks": 24,
++    "aiDodge": {
++      "easy": 0.3,
++      "medium": 0.6,
++      "hard": 0.85
++    },
++    "_note": "teamRestunTicks: one stun a string across a team, a blow from outside keeps him from being free of the team's blows this long. shotReachBh: a blast press with his focus across fires at the enemy of the other fight within it (SimCross.fireAt). aiDodge: a warned AI's chance to answer a beam from the other fight with a dodge, by its level. 2v2, a blow from outside (Game Design's Hits across fights, docs/design/two-v-two.md): a press with no exchange of his own, when an enemy of the other fight is within reachBh and nearer than his own rival, goes to him and lands only on an opening; he hovers waitSec for one, else whiffs and is open whiffTicks. One an opening. Only in a two-fight match with cross on."
++  },
+   "chase": {
+     "_note": "The chase of a launch is the zip (sim/director/chase.gd; Game Design's rulings-2026-10-22.md 7c; brawl-second-pass.md section 16). A player presses X or Y with LT held while his own launch flies; the AI chases at a send of its own on its level's chaseShare (ai.json; times skyMul when the send goes up into open sky), no sooner than its reaction time. Either pays the zip's ki (the strike's or the heavy's); without it there is no chase. The chase is a rush at the body re-aimed each live tick at speedMul times his speed, never under minSpeed u/s. Within catchBh of him while he flies the zip's blow lands and sends him on (the launch planner from where he is, at sendForce, the chaser's stick its tilt); when his landing comes first it arrives at his landing, for the first move; at most maxTicks. enabled false: nothing runs.",
+     "enabled": false,
+diff --git a/sim/director/ai.gd b/sim/director/ai.gd
+index 1181e67..1f514f9 100644
+--- a/sim/director/ai.gd
++++ b/sim/director/ai.gd
+@@ -56,6 +56,8 @@ static func aiInput(S: SimState, f) -> void:
+ 	# unless it holds one on purpose (forms: _formHold).
+ 	f.act.v2 = true
+ 	i.mode = 0   # the physical family, unless this tick's press is a blast (below)
++	if DirOutside.aiAnswer(S, f, i):
++		return   # 2v2: a beam of the other fight has it first on its line: it dodges
+ 	if f.act.formReady and not _formHold(S, f, o):
+ 		i.transform = true
+ 	if DirBrawl.inBrawl(S, f):
+diff --git a/sim/director/blast.gd b/sim/director/blast.gd
+index 817474f..e1de24c 100644
+--- a/sim/director/blast.gd
++++ b/sim/director/blast.gd
+@@ -176,6 +176,15 @@ static func _fire(S: SimState, f, weight: int, charge: float) -> void:
+ 		DirInterrupt.si(f, DirInterrupt.BLAST_LAST, S.tick)
+ 		o2["group"] = g
+ 		_spray(S, f, o2, gap)
++	var X = DirOutside.shotAcross(S, f)
++	if X != null:
++		f.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(f.x, X.x)), f.face)
++		var sx = SimCross.fireAt(S, f, kind, X, {"dmg": o2.dmg} if o2.has("dmg") else {})   # 2v2: his focus is across, so it's made in that fight
++		if sx == null:
++			return   # the cap on live shots there: the press is spent
++		f.ki -= float(w.ki)
++		SimEvents.feed(S, f.name + " FIRES ACROSS", "at " + String(X.keys) + ", of the other fight")
++		return
+ 	f.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(f.x, o.x)), f.face)
+ 	var sh = SimShots.fire(S, slot, kind, o2)
+ 	if sh == null:
+diff --git a/sim/director/brawl.gd b/sim/director/brawl.gd
+index 5a8ab50..03ea45a 100644
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -828,7 +828,8 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
+ 		DirInterrupt.si(f, DirInterrupt.LANDED, 0)
+ 		if _g(f, BLOWS) + _g(o, BLOWS) > 0:
+ 			_newString(S, ex)
+-		DirStick.newString(o)
++		if not DirOutside.holdsStun(S, o):
++			DirStick.newString(o)   # (2v2: not while a blow from outside keeps him from being free of the team's blows)
+ 	var d: int = _closeTicks(f, o)   # the gap it closes on the way: it lands this much later
+ 	if d > 0 and DirRecoil.counter(S, f):
+ 		d = 0   # out of his recoil flip (Game Design's 1a): the counter-rush closes the gap at once
+diff --git a/sim/director/exchange.gd b/sim/director/exchange.gd
+index b3efb6e..54090c4 100644
+--- a/sim/director/exchange.gd
++++ b/sim/director/exchange.gd
+@@ -54,6 +54,8 @@ static func _request(S: SimState, A, kind: String) -> void:
+ 		return
+ 	if DirDriver.takes(S, A, kind):
+ 		return   # RB + B: the Driver gathers
++	if DirOutside.takes(S, A, kind):
++		return   # 2v2: a blow from outside, on an enemy of the other fight
+ 	var big: bool = DirBrawl.isB(A, kind)   # B with no stance held is the heavy (brawl-second-pass.md section 2)
+ 	if not DirBrawl.holding:
+ 		DirAlchemy.log(S, A, SimAct.HEAVY if big else KIND.find(kind), A.act.mode, big)   # the press log (a hold's own press is the director's, and not in it)
+@@ -645,6 +647,7 @@ static func dirUpdate(S: SimState, dt: float) -> void:
+ 	DirPlane.tick(S, dt)   # with depth off, a fighter eases back to the plane after a flight (rulings-2026-10-30f row 9)
+ 	DirSwing.tick(S, dt)   # the choreographer's swing (docs/world/ring-any-angle/encounter.md)
+ 	DirStick.tick(S, dt)   # the right stick's strike (docs/design/right-hand-attacks-rulings.md section 2)
++	DirOutside.tick(S, dt)   # 2v2: a blow from outside lands on an opening, waits or whiffs
+ 
+ 
+ static func _update(S: SimState, dt: float) -> void:
+diff --git a/sim/director/outside.gd b/sim/director/outside.gd
+new file mode 100644
+index 0000000..a174abe
+--- /dev/null
++++ b/sim/director/outside.gd
+@@ -0,0 +1,219 @@
++class_name DirOutside
++extends RefCounted
++## 2v2: a blow from outside (Game Design's "Hits across fights" 1 and 2, docs/design/two-v-two.md), on Simulation's SimCross
++## (docs/architecture/cross-fights.md). A press of his with no exchange of his own running, when an enemy of the other fight is in reach
++## and nearer than his own rival (or his own is out), is a single blow from outside: he goes to him and it lands only on an opening (a
++## stun, a stagger or a daze, the recovery after a blow of his own or a whiff). If he isn't open, he hovers in reach up to waitSec for
++## one, and if none comes it's a whiff: he's open whiffTicks. One blow from outside an opening. It lands in the other fight on its clock,
++## through SimDamage.hit (his guard answers it), and never sends, knocks back or stuns. What it does there is landed's.
++## Behind interrupts.json outside.enabled, only with SimCross on. State: integers on f.act.dirI after DirStanceCost's.
++
++const O_KEY: int = 0    # the enemy he's going for: his starting slot, 1 to 4; 0 none
++const O_UNTIL: int = 1  # the live tick his hover ends, plus 1
++const O_DONE: int = 2   # 1 once his blow has landed on this opening: no second until the enemy's been shut a tick
++const O_KIND: int = 3   # the blow: 1 the light, 2 the heavy
++const O_WARN: int = 4   # a beam of the other fight has him first on its line: 1 told, 2 told and the AI answers with a dodge
++const O_TEAM: int = 5   # on the one struck: the S.tick a blow from outside last landed on him, plus 1
++const O_N: int = 6
++
++static var _force: int = -1   # tools: -1 the data's switch, 0 off, 1 on
++
++
++static func setForce(v: int) -> void:
++	_force = v
++
++
++static func cfg() -> Dictionary:
++	return DirInterrupt.data().get("outside", {})
++
++
++static func on(S: SimState) -> bool:
++	return SimCross.on(S) and (bool(cfg().get("enabled", false)) if _force < 0 else _force == 1)
++
++
++static func _b() -> int:
++	return DirStanceCost._b() + DirStanceCost.C_SZ
++
++
++static func _g(f, k: int) -> int:
++	var d: PackedInt32Array = f.act.dirI
++	var i: int = _b() + k
++	return d[i] if i < d.size() else 0
++
++
++static func _s(f, k: int, v: int) -> void:
++	DirPlane._size(f)
++	if f.act.dirI.size() < _b() + O_N:
++		f.act.dirI.resize(_b() + O_N)
++	f.act.dirI[_b() + k] = v
++
++
++static func _reach() -> float:
++	return float(cfg().get("reachBh", 3.0)) * DirInterrupt.BH
++
++
++## His attack press (DirExchange._request): true when it's a blow from outside, and taken.
++static func takes(S: SimState, A, kind: String) -> bool:
++	if not on(S) or (kind != "light" and kind != "heavy") or A.state != "free":
++		return false
++	var ex = DirBrawl.exOf(S)
++	if ex != null and (ex.A == A or ex.D == A):
++		return false   # his own exchange takes it
++	var D = focusAcross(S, A, _reach())
++	if D == null:
++		return false
++	_s(A, O_KEY, int(String(D.keys).substr(1)))
++	_s(A, O_UNTIL, DirBrawl._now(S) + int(ceil(float(cfg().get("waitSec", 0.5)) * DirData.TICKS_PER_SEC)) + 1)
++	_s(A, O_KIND, 2 if kind == "heavy" else 1)
++	_toward(S, A, D)
++	SimFx.cue(S, A, "outside", "start", String(D.keys))
++	return true
++
++
++## One stun a string, across a team (Game Design): while a blow from outside landed on him inside teamRestunTicks, he isn't free of the
++## team's blows, so a partner's new string doesn't let the stick stun him again (DirBrawl, at a string's start).
++static func holdsStun(S: SimState, o) -> bool:
++	if not on(S):
++		return false
++	var at: int = _g(o, O_TEAM)
++	return at > 0 and S.tick - (at - 1) <= int(cfg().get("teamRestunTicks", 24))
++
++
++## His focus, when it's across: the nearest enemy of the other fight within reach, if he's nearer than his own rival or his own fight
++## is over; else null.
++static func focusAcross(S: SimState, A, reach: float):
++	var near: Array = SimCross.enemiesNear(S, A, reach)
++	if near.is_empty():
++		return null
++	var D = near[0]
++	var R = DirBrawl.rivalOf(S, A)
++	if R != null and S.game.ko == null and DirBands.dist(A, R) <= DirBands.dist(A, D):
++		return null   # his focus is his own rival
++	return D
++
++
++## A blast press with his focus across (DirBlast._fire): the enemy it's fired at, or null for his own rival as today.
++static func shotAcross(S: SimState, A):
++	if not on(S):
++		return null
++	var ex = DirBrawl.exOf(S)
++	if ex != null and (ex.A == A or ex.D == A):
++		return null
++	return focusAcross(S, A, float(cfg().get("shotReachBh", 40.0)) * DirInterrupt.BH)
++
++
++## He goes to him, beside him on this side, at the tap chase's speed.
++static func _toward(S: SimState, A, D) -> void:
++	var d: float = DirBands.dist(A, D)
++	var r := SimState.Rush.new()
++	r.tgt = D
++	r.off = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(D.x, A.x)), -A.face) * float(DirData.contact().offset)
++	var speed: float = float(DirChaseTap.cfg().get("maxSpeed", 20000.0))
++	r.end = S.T + float(maxi(1, int(ceil(d / (speed * SimConst.DT))))) * SimConst.DT
++	A.rush = r
++	A.vx = 0.0
++	A.vy = 0.0
++
++
++## True while D is open: a stun, a stagger or a daze, or the recovery after a blow of his own or a whiff.
++static func open(S: SimState, D) -> bool:
++	return D.stunTicks > 0 or DirBrawl._g(D, DirBrawl.FREE_AT) > S.tick
++
++
++## Once a live tick (DirExchange's update): each blow from outside on its way lands on an opening, waits, or whiffs.
++static func tick(S: SimState, dt: float) -> void:
++	if dt <= 0.0 or not on(S):
++		return
++	_beamStopped(S)
++	for f in S.fighters:
++		_warn(S, f)
++	for A in S.fighters:
++		var key: int = _g(A, O_KEY)
++		if key == 0:
++			continue
++		var D = SimCross.body(S, "p" + str(key))
++		if D == null or A.state != "free" or D.state == "launched":
++			_s(A, O_KEY, 0)
++			continue
++		if not open(S, D):
++			_s(A, O_DONE, 0)
++		elif _g(A, O_DONE) == 0 and DirBands.dist(A, D) <= _reach():
++			_hit(S, A, D)
++			continue
++		if DirBrawl._now(S) >= _g(A, O_UNTIL) - 1:
++			_s(A, O_KEY, 0)
++			DirBrawl._s(A, DirBrawl.FREE_AT, S.tick + int(cfg().get("whiffTicks", 20)))   # a whiff: he's open, as anyone is
++			SimFx.cue(S, A, "outside", "whiff", String(D.keys))
++
++
++## A beam of this fight's exchange stopped on an enemy of the other fight (SimCross.beams: b.stopAt): its own target takes no planned
++## outcome, and the exchange ends. The one it stopped on took SimCross's hit in his own fight.
++static func _beamStopped(S: SimState) -> void:
++	var ex = DirBrawl.exOf(S)
++	if ex == null or S.game.clash != null:
++		return
++	for b in S.beams:
++		if b.A == ex.A and float(b.stopAt) >= 0.0:
++			SimEvents.feed(S, "THE BEAM STOPS", ex.A.name + "'s beam met " + String(b.first) + " of the other fight first: " + ex.D.name + " is spared it")
++			SimFx.cue(S, ex.A, "beam_stopped", String(b.first), "")
++			DirExchange.endEx(S, ex)
++			return
++
++
++## Whoever is first on a beam's line from the other fight is told, once, from that moment (Game Design: diving onto the line gives you
++## less time). The AI answers with a dodge at its level's aiDodge rate, drawn once a warning.
++static func _warn(S: SimState, f) -> void:
++	var b = SimCross.warned(S, f)
++	if b == null:
++		if _g(f, O_WARN) != 0:
++			_s(f, O_WARN, 0)
++		return
++	if _g(f, O_WARN) != 0:
++		return
++	SimFx.cue(S, f, "beam_warn", String(b.A.keys) if b.A != null else "", "")
++	var answers: bool = false
++	if f.ai != null:
++		var rates: Dictionary = cfg().get("aiDodge", {})
++		var rate: float = float(rates.get(String(DirAI.skill().get("level", "medium")), 0.0))
++		answers = SimRng.keyed(int(S.game.seed), "outside.warn", S.tick * 8 + S.fighters.find(f)) < rate
++	_s(f, O_WARN, 2 if answers else 1)
++
++
++## The AI's input (DirAI.aiInput, first): a warned AI that answers holds a dodge, and does nothing else that tick.
++static func aiAnswer(S: SimState, f, i) -> bool:
++	if not on(S) or _g(f, O_WARN) != 2:
++		return false
++	i.dodge = true
++	return true
++
++
++static func _hit(S: SimState, A, D) -> void:
++	var heavy: bool = _g(A, O_KIND) == 2
++	var dmg: float = float(DirZip.cfg().get("heavy", {}).get("damage", 132.0)) if heavy else float(DirBrawl.cfg().get("light", {}).get("damage", 26.0))
++	dmg *= float(cfg().get("damageMul", 1.0))
++	A.rush = null
++	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
++	SimCross.strike(S, A, D, dmg, {"kind": "outside", "weight": "heavy" if heavy else "light", "stop": 0.08 if heavy else 0.05, "shake": 9.0 if heavy else 5.0})
++	_s(A, O_DONE, 1)
++	_s(A, O_KEY, 0)
++	SimFx.cue(S, A, "outside", "hit", String(D.keys))
++
++
++## A blow from outside has landed on D, in his fight (SimCross._land, through SimDir.outsideLanded): on someone landing a finisher it
++## breaks it, his victim free and still on the brink; on someone in a string it ends his string, his run with it (a blow he'd thrown
++## still lands). Otherwise it's the damage and the hold, and the exchange runs on.
++static func landed(S: SimState, A, D, _o: Dictionary) -> void:
++	if not bool(cfg().get("enabled", false)) and _force != 1:
++		return
++	SimFx.cue(S, D, "outside_hit", String(A.keys), "")
++	_s(D, O_TEAM, S.tick + 1)
++	var ex = DirBrawl.exOf(S)
++	if ex == null or (ex.A != D and ex.D != D):
++		return
++	if ex.A == D and (ex.tpl == "finisher" or ex.branch == "finisher" or DirExchange.finisherPlanned(ex)):
++		SimEvents.feed(S, "FINISHER BROKEN", A.name + "'s blow from outside breaks " + D.name + "'s finisher")
++		SimFx.cue(S, D, "outside_hit", String(A.keys), "finisher")
++		DirExchange.endEx(S, ex)
++		return
++	if DirBrawl.isBrawl(ex) and DirBrawl._g(D, DirBrawl.STR_ON) == 1:
++		DirBrawl._strEnd(D)
+diff --git a/sim/director/outside.gd.uid b/sim/director/outside.gd.uid
+new file mode 100644
+index 0000000..3f28d0e
+--- /dev/null
++++ b/sim/director/outside.gd.uid
+@@ -0,0 +1 @@
++uid://cjkjke5lmiiie
+diff --git a/sim/director/tools/outside_check.gd b/sim/director/tools/outside_check.gd
+new file mode 100644
+index 0000000..1720a27
+--- /dev/null
++++ b/sim/director/tools/outside_check.gd
+@@ -0,0 +1,320 @@
++extends SceneTree
++## 2v2's blow from outside (DirOutside, Game Design's "Hits across fights" 1 and 2), on a match of two fights with cross on: it lands
++## only on an opening, waits for one or whiffs, one an opening, never on a partner, and what it does in the fight it lands in. Off,
++## nothing crosses.
++##   godot --headless --path . --script res://sim/director/tools/outside_check.gd
++## Ends on the verdict line.
++
++var failed: int = 0
++var _cues: Array = []
++
++
++func _init() -> void:
++	DirOutside.setForce(1)
++	_opening()
++	_waits()
++	_whiff()
++	_once()
++	_ownFirst()
++	_string()
++	_beamStop()
++	_shotAcross()
++	_teamStun()
++	DirOutside.setForce(0)
++	_off()
++	DirOutside.setForce(-1)
++	print("OUTSIDE: %d check(s) failed" % failed)
++	quit(1 if failed > 0 else 0)
++
++
++func _expect(ok: bool, what: String) -> void:
++	print(("ok    " if ok else "FAIL  ") + what)
++	if not ok:
++		failed += 1
++
++
++## Four bodies, the fights apart by setup: p1 (A, fight 0) and p4 (his enemy in fight 1) put close; p2, A's own rival, far off.
++func _new() -> Array:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 21, {"p1": false, "p2": false, "p3": false, "p4": false}, {"intro": false, "fights": 2, "cross": true})
++	var q: Array = []
++	for k in ["p1", "p2", "p3", "p4"]:
++		for f in SimStage.bodies(S):
++			if f.keys == k:
++				q.append(f)
++	for f in q:
++		f.ai = null
++		f.hp = 100000.0
++		f.ki = 100.0
++	var A = q[0]
++	_put(q[1], A.x - 2400.0 * A.face, A)
++	_put(q[2], A.x + 2600.0 * A.face, A)
++	_put(q[3], A.x + 140.0 * A.face, A)
++	for _k in range(3):
++		_step(S)
++	return [S, q]
++
++
++func _put(f, x: float, ref) -> void:
++	f.x = SimWrap.wrap(x)
++	f.y = ref.y
++	f.z = ref.z
++	f.vx = 0.0
++	f.vy = 0.0
++
++
++func _step(S: SimState, i = null, i3 = null, i4 = null) -> void:
++	_cues = []
++	SimCore.step(S, [i if i != null else SimIntent.new(), SimIntent.new(), i3 if i3 != null else SimIntent.new(), i4 if i4 != null else SimIntent.new()])
++	var outs: Array = [S.out]
++	for r in S.stage.fights:
++		if r.out != null and r.out != S.out:
++			outs.append(r.out)
++	for o in outs:
++		for e in o.fx:
++			if e.type == "cue" and String(e.kind).begins_with("outside"):
++				_cues.append(String(e.kind) + ":" + String(e.text) + ("/" + String(e.source) if String(e.source) != "" else ""))
++		o.fx.clear()
++		o.feed.clear()
++
++
++func _said(list: Array, prefix: String) -> bool:
++	for c in list:
++		if String(c).begins_with(prefix):
++			return true
++	return false
++
++
++func _x() -> SimIntent:
++	var i := SimIntent.new()
++	i.light = true
++	return i
++
++
++## His enemy across, stunned: X goes to him and the blow lands in his fight.
++func _opening() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var q: Array = r[1]
++	var D = q[3]
++	D.stunTicks = 40
++	var hp: float = D.hp
++	_step(S, _x())
++	var said: Array = _cues.duplicate()
++	for _k in range(20):
++		_step(S)
++	print("      stunned across: said %s; he took %.0f" % [str(said), hp - D.hp])
++	_expect(_said(said, "outside:start") and hp - D.hp > 0.0, "a blow from outside lands on an enemy across who's open")
++	SimCore.dispose(S)
++
++
++## Not open as he arrives: he hovers, and it lands on the opening that comes inside waitSec.
++func _waits() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var D = r[1][3]
++	var hp: float = D.hp
++	_step(S, _x())
++	for k in range(30):
++		if k == 12:
++			D.stunTicks = 20
++		_step(S)
++	print("      open 12 ticks in: he took %.0f" % (hp - D.hp))
++	_expect(hp - D.hp > 0.0, "he hovers in reach and it lands on the opening that comes")
++	SimCore.dispose(S)
++
++
++## No opening inside waitSec: a whiff, and he's open.
++func _whiff() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var A = r[1][0]
++	var D = r[1][3]
++	var hp: float = D.hp
++	_step(S, _x())
++	var whiffed: bool = false
++	for _k in range(50):
++		_step(S)
++		whiffed = whiffed or _said(_cues, "outside:whiff")
++	print("      never open: whiffed %s, he took %.0f, his line free in %d" % [str(whiffed), hp - D.hp, DirBrawl._g(A, DirBrawl.FREE_AT) - S.tick])
++	_expect(whiffed and hp - D.hp == 0.0, "no opening: a whiff, and nothing lands")
++	SimCore.dispose(S)
++
++
++## One an opening: a second press in the same stun lands nothing more.
++func _once() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var D = r[1][3]
++	D.stunTicks = 60
++	_step(S, _x())
++	for _k in range(15):
++		_step(S)
++	var hp1: float = D.hp
++	_step(S, _x())
++	for _k in range(15):
++		_step(S)
++	print("      a second press in the same stun: he took %.0f more" % (hp1 - D.hp))
++	_expect(hp1 - D.hp == 0.0, "one blow from outside an opening")
++	SimCore.dispose(S)
++
++
++## His own rival nearer: the press is his own fight's.
++func _ownFirst() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var q: Array = r[1]
++	var A = q[0]
++	_put(q[1], A.x + 60.0 * A.face, A)
++	q[3].stunTicks = 40
++	_step(S, _x())
++	print("      his own rival at 60: said %s" % str(_cues))
++	_expect(not _said(_cues, "outside:start"), "his own rival nearer: no blow from outside")
++	SimCore.dispose(S)
++
++
++## In the fight it lands in: on someone in a string, it ends his string and his run. Fight 1's pair trade blows, then his blow lands.
++func _string() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var q: Array = r[1]
++	var A = q[0]
++	var C = q[2]
++	var D = q[3]
++	_put(C, D.x + 60.0 * A.face, D)
++	var ranAt: int = -1
++	var hit: bool = false
++	var strBefore: int = 0
++	var runBefore: int = 0
++	for k in range(140):
++		var i3: SimIntent = _x() if k % 7 == 0 else null
++		var i4: SimIntent = _x() if k % 7 == 3 else null
++		var i1: SimIntent = null
++		if k == 60:
++			strBefore = DirBrawl._g(D, DirBrawl.STR_ON)
++			runBefore = DirBrawl._g(D, DirBrawl.RUN)
++			i1 = _x()
++		_step(S, i1, i3, i4)
++		for c in _cues:
++			if String(c).begins_with("outside_hit:") and not hit:
++				hit = true
++				ranAt = k
++		if hit:
++			break
++	print("      in a trade across: his string %d and run %d as the press went; the blow landed at %d: string %d, run %d" % [strBefore, runBefore, ranAt, DirBrawl._g(D, DirBrawl.STR_ON), DirBrawl._g(D, DirBrawl.RUN)])
++	_expect(hit, "a blow from outside lands on a man in a trade of his own")
++	_expect(not hit or DirBrawl._g(D, DirBrawl.STR_ON) == 0, "... and ends his string, his run with it")
++	SimCore.dispose(S)
++
++
++## Off: nothing crosses.
++func _off() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var D = r[1][3]
++	D.stunTicks = 40
++	var hp: float = D.hp
++	_step(S, _x())
++	for _k in range(20):
++		_step(S)
++	_expect(hp - D.hp == 0.0 and not _said(_cues, "outside:start"), "off: nothing crosses")
++	SimCore.dispose(S)
++
++
++## A beam whose line meets an enemy of the other fight first: he's warned, it stops on him, and the beam's own target is spared its
++## outcome, the exchange over.
++func _beamStop() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var q: Array = r[1]
++	var A = q[0]
++	var R = q[1]
++	var D = q[3]
++	_put(R, A.x + 1600.0 * A.face, A)
++	_put(D, A.x + 700.0 * A.face, A)
++	A.ki = 100.0
++	var hpR: float = R.hp
++	var hpD: float = D.hp
++	var warned: bool = false
++	var stopped: bool = false
++	DirBeamPlay.setFrontForce(1)
++	var fc: Dictionary = DirBeamPlay.frontCfg()
++	var was = fc.get("stationary", false)
++	fc["stationary"] = true   # the shooter stays put: the beam runs level, along the ground
++	var fired: bool = false
++	for k in range(300):
++		var h := SimIntent.new()
++		if k == 0:
++			h.sig = true
++			h.stanceMask = 4   # the charging stance: B is the signature (beam_front_check's _fire)
++		_step(S, h)
++		warned = warned or DirOutside._g(D, DirOutside.O_WARN) != 0
++		fired = fired or not S.beams.is_empty()
++		for b in S.beams:
++			stopped = stopped or float(b.stopAt) >= 0.0
++		if fired and S.dirS.ex == null:
++			break
++	print("      a beam at his rival 1,600 off, an enemy across at 700 on its line: fired %s, warned %s, stopped %s; the rival took %.0f, the enemy across %.0f" % [str(fired), str(warned), str(stopped), hpR - R.hp, hpD - D.hp])
++	_expect(fired and stopped and warned, "a beam meets an enemy across first: he's warned, and it stops on him")
++	_expect(hpR - R.hp == 0.0, "... and its own target is spared it, the exchange over")
++	fc["stationary"] = was
++	DirBeamPlay.setFrontForce(-1)
++	SimCore.dispose(S)
++
++
++## A blast press with his focus across: the shot is made in the other fight, at him, and lands there; the ki is paid as for any shot.
++func _shotAcross() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var q: Array = r[1]
++	var A = q[0]
++	var D = q[3]
++	_put(D, A.x + 1500.0 * A.face, A)
++	A.act.v2 = true   # (the pad's path: its intent's mode is read)
++	var bd: Dictionary = DirBlast.data()
++	var was = bd.get("enabled", false)
++	bd["enabled"] = true   # the energy family's blasts (off on main)
++	var hp: float = D.hp
++	var ki: float = A.ki
++	var made: bool = false
++	for k in range(120):
++		var i: SimIntent = null
++		if k == 0:
++			i = _x()
++			i.mode = 1   # the energy family: X is a bolt
++		elif k < 3:
++			i = SimIntent.new()
++			i.mode = 1
++		_step(S, i)
++		made = made or not S.stage.fights[1].shots.is_empty()
++		if D.hp < hp:
++			break
++	print("      a bolt with his focus across, the enemy 1,500 off: made in his fight %s, he took %.0f, ki %.0f to %.0f" % [str(made), hp - D.hp, ki, A.ki])
++	_expect(made and hp - D.hp > 0.0, "a blast press with his focus across fires into the other fight, and it lands there")
++	bd["enabled"] = was
++	SimCore.dispose(S)
++
++
++## One stun a string across a team: a blow from outside holds his stick-stun from resetting for teamRestunTicks.
++func _teamStun() -> void:
++	var r: Array = _new()
++	var S: SimState = r[0]
++	var q: Array = r[1]
++	var A = q[0]
++	var D = q[3]
++	SimStage.enter(S, 1)
++	var before: bool = DirOutside.holdsStun(S, D)
++	DirOutside.landed(S, A, D, {})
++	var at: int = S.tick
++	var held: bool = DirOutside.holdsStun(S, D)
++	SimStage.enter(S, 0)
++	var n: int = int(DirOutside.cfg().get("teamRestunTicks", 24))
++	for _k in range(n + 2):
++		_step(S)
++	SimStage.enter(S, 1)
++	var after: bool = DirOutside.holdsStun(S, D)
++	SimStage.enter(S, 0)
++	print("      before a blow from outside %s; as it lands %s; %d ticks on %s" % [str(before), str(held), S.tick - at, str(after)])
++	_expect(not before and held and not after, "a blow from outside holds his stun from resetting, for teamRestunTicks only")
++	SimCore.dispose(S)
++
+diff --git a/sim/director/tools/outside_check.gd.uid b/sim/director/tools/outside_check.gd.uid
+new file mode 100644
+index 0000000..3a1c692
+--- /dev/null
++++ b/sim/director/tools/outside_check.gd.uid
+@@ -0,0 +1 @@
++uid://4pw31c1mdfgg
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 5c89735..0c03f9e 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -4527,6 +4527,57 @@
+       ],
+       "additionalProperties": false
+     },
++    "outside": {
++      "type": "object",
++      "properties": {
++        "enabled": {
++          "type": "boolean"
++        },
++        "reachBh": {
++          "type": "number",
++          "minimum": 0
++        },
++        "waitSec": {
++          "type": "number",
++          "minimum": 0
++        },
++        "whiffTicks": {
++          "type": "integer",
++          "minimum": 0
++        },
++        "damageMul": {
++          "type": "number",
++          "minimum": 0
++        },
++        "shotReachBh": {
++          "type": "number",
++          "minimum": 0
++        },
++        "teamRestunTicks": {
++          "type": "integer",
++          "minimum": 0
++        },
++        "aiDodge": {
++          "type": "object",
++          "additionalProperties": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
++          }
++        },
++        "_note": {
++          "type": "string"
++        }
++      },
++      "required": [
++        "enabled",
++        "reachBh",
++        "waitSec",
++        "whiffTicks",
++        "damageMul"
++      ],
++      "additionalProperties": false
++    },
+     "chase": {
+       "type": "object",
+       "description": "The chase of a launch is the zip (Game Design's 7c).",

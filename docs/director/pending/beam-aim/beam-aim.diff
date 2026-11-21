@@ -1,0 +1,274 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index 138b503..bc0edfe 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -280,6 +280,11 @@
+       "holdFromTicks": 12,
+       "holdMove": 0.1,
+       "shoveSec": 0.25,
++      "aim": {
++        "enabled": false,
++        "assistDeg": 35,
++        "_note": "A beam on RB and the right stick fires where the stick aims (docs/controls/beam-aim-feel.md): within assistDeg of the line to him it's a shot at him, as before; wider, it goes where it was aimed and misses him. Needs Controls' beam-aim reader (switches.beamAim) for the throw's aim. The signature is aimed at him, always."
++      },
+       "dodgeBefore": 18,
+       "dodgeAfter": 2,
+       "_note": "Beams that travel (docs/design/rule-of-cool-map.md section 5, row 40). stationary: nothing moves the shooter in a beam's charge, so no rise and no stand-off, and a stick's hold is the charge: it fires on the release, after what's left of the charge's warning and at least releaseTell (Orb, first play). holdFromTicks, holdMove: past this the hold leaves him this share of his flying speed, and no dash. shoveSec: from under standoffBh the firing throws the other back to it over this long, no damage or stun (docs/design/power-scale.md, the last section). dodgeBefore, dodgeAfter: a dodge counts this many ticks either side of the front's arrival, and the hit lands dodgeAfter past it (Game Design's ruling). rows: ticks from hand to him, the floor plus the distance at this speed, up to the ceiling. answerKi: a fire-back by the stick inside the window, at level 1's ki. meetMax: how far past the middle a late answer's struggle can start, toward his hands."
+diff --git a/sim/director/beam_aim.gd b/sim/director/beam_aim.gd
+new file mode 100644
+index 0000000..63d8a51
+--- /dev/null
++++ b/sim/director/beam_aim.gd
+@@ -0,0 +1,93 @@
++class_name DirBeamAim
++extends RefCounted
++## A beam fires where the stick aims (docs/controls/beam-aim-feel.md; behind beamPlays.front.aim.enabled, off). RB and the right stick only: the
++## signature is aimed at him, always (beam-answers.md).
++##  - While he charges, his aim is the stick's sector (rsAim, 0 to 31, 0 is right and counter-clockwise), for the arm and the beam's elevation in
++##    the view: aimDeg, and the cue beam_aim each time it moves.
++##  - The throw takes rsAim on the release edge; with nothing there (0 is also right), the last aim he held.
++##  - Within assistDeg of the line to him it's a shot at him, as today: it can be answered, and it reaches him. Wider than that it goes where it
++##    was aimed and misses him: it carves what it crosses, the exchange ends at once, and the cue beam_wide says so.
++## State: integers on f.act.dirI after DirChaseTap's.
++
++const B_AIM: int = 0     # the sector he's aiming now, plus 1; 0 none
++const B_THROW: int = 1   # the sector thrown, plus 1; 0 none
++const B_N: int = 2
++
++static var _force: int = -1   # tools: -1 the data's switch, 0 off, 1 on
++
++
++static func setForce(v: int) -> void:
++	_force = v
++
++
++static func cfg() -> Dictionary:
++	return DirBeamPlay.frontCfg().get("aim", {})
++
++
++static func on() -> bool:
++	return DirBeamPlay.stationary() and (bool(cfg().get("enabled", false)) if _force < 0 else _force == 1)
++
++
++static func _b() -> int:
++	return DirChaseTap._b() + DirChaseTap.T_N
++
++
++static func _g(f, k: int) -> int:
++	var d: PackedInt32Array = f.act.dirI
++	var i: int = _b() + k
++	return d[i] if i < d.size() else 0
++
++
++static func _s(f, k: int, v: int) -> void:
++	DirPlane._size(f)
++	if f.act.dirI.size() < _b() + B_N:
++		f.act.dirI.resize(_b() + B_N)
++	f.act.dirI[_b() + k] = v
++
++
++## Each live tick of a beam's hold (DirStick.tick): the aim follows the stick.
++static func holding(S: SimState, f, i) -> void:
++	if not on() or not i.rsHeld or (int(i.rsMask) & DirStick.LT) != 0:
++		return
++	var a: int = int(i.rsAim) + 1
++	if a != _g(f, B_AIM):
++		_s(f, B_AIM, a)
++		SimFx.cue(S, f, "beam_aim", "", str(a - 1))
++
++
++## The hold's let go (DirStick._beamGo): the aim the throw takes.
++static func thrown(f, i) -> void:
++	if not on():
++		return
++	var a: int = (int(i.rsAim) + 1) if (i.rsRelease and int(i.rsAim) != 0) else _g(f, B_AIM)
++	_s(f, B_THROW, a)
++	_s(f, B_AIM, 0)
++
++
++## His aim in degrees while he holds a beam (0 is toward +x on the screen, counter-clockwise), or NAN when he isn't aiming: for the arm and the
++## beam's elevation in the view.
++static func aimDeg(f) -> float:
++	var a: int = _g(f, B_AIM)
++	return NAN if a == 0 else float(a - 1) * 11.25
++
++
++## At the beam's fire (DirBeamPlay.fire): the direction it was thrown, or [] for a shot at him (none thrown, or within assistDeg of him). The
++## throw is used once.
++static func wide(S: SimState, A, ox: float, oy: float, tx: float, ty: float) -> Array:
++	if not on():
++		return []
++	var a: int = _g(A, B_THROW)
++	_s(A, B_THROW, 0)
++	if a == 0:
++		return []
++	var deg: float = float(a - 1) * 11.25
++	var r: float = deg * SimMathx.PI / 180.0
++	var ux: float = SimDetMath.cos(r)
++	var uy: float = SimDetMath.sin(r)
++	var dx: float = SimWrap.sdx(ox, tx)
++	var dy: float = ty - oy
++	var L: float = SimDamage.jor(SimDetMath.hypot(dx, dy), 1.0)
++	var cosOff: float = (ux * dx + uy * dy) / L
++	if cosOff >= SimDetMath.cos(float(cfg().assistDeg) * SimMathx.PI / 180.0):
++		return []   # near enough: at him
++	return [ux, uy]
+diff --git a/sim/director/beamplay.gd b/sim/director/beamplay.gd
+index 4b021dd..ca10c5f 100644
+--- a/sim/director/beamplay.gd
++++ b/sim/director/beamplay.gd
+@@ -138,6 +138,24 @@ static func fromStick(S: SimState, f, held: int) -> void:
+ 		fb.t = ex.t + float(tell) / DirData.TICKS_PER_SEC
+ 
+ 
++## Fired wide of him (DirBeamAim): it goes where it was aimed and carves what it crosses. Nobody's answering it, so the exchange ends now and
++## both are free.
++static func _fireWide(S: SimState, ex, A, ux: float, uy: float, variant: String) -> void:
++	var len: float = 4200.0 * SimConst.WS
++	DirBeam.fireBeam(S, A, A.x, A.y + 38.0, ux, uy, len, variant)
++	var tv: int = frontTicks(len, "signature")
++	var b = S.beams[S.beams.size() - 1]
++	b.life += float(tv) * SimConst.DT
++	DirInterrupt.si(A, DirInterrupt.BEAM_TRAVEL, tv)
++	DirInterrupt.si(A, DirInterrupt.BEAM_REACH, int(len))
++	SimFx.cue(S, A, "beam_fire", "", "")
++	SimFx.cue(S, A, "beam_wide", "", "")
++	SimEvents.feed(S, A.sigName + " FIRES WIDE", "where he aimed, away from " + ex.D.name)
++	for bt in ex.beats:
++		bt.done = true
++	DirExchange.schedule(ex, ex.t + SimConst.DT, "nop")
++
++
+ ## Up close, the firing throws the other back to the stand-off, ahead of the front, like a shock wave: no damage and no stun, and he keeps his
+ ## hands, so he can still answer. It stops at a wall. Returns where he'll be.
+ static func _shove(S: SimState, A, D) -> float:
+@@ -234,6 +252,10 @@ static func held(f, o) -> int:
+ static func fire(S: SimState, ex, args) -> void:
+ 	var A = ex.A
+ 	var D = ex.D
++	var aimed: Array = DirBeamAim.wide(S, A, A.x, A.y + 38.0, D.x, D.y + 36.0)
++	if not aimed.is_empty():
++		_fireWide(S, ex, A, float(aimed[0]), float(aimed[1]), String(args.variant))
++		return
+ 	var toX: float = _shove(S, A, D)
+ 	var dist: float = maxf(float(args.dist), absf(SimWrap.sdx(A.x, toX))) if frontOn() else float(args.dist)   # (the stand-off has moved him since it was planned)
+ 	var tv: int = frontTicks(dist, "signature") if frontOn() else int(data().travelTicks)
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index 6395caa..0166227 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -504,10 +504,12 @@ static func tick(S: SimState, dt: float) -> void:
+ 		if _g(f, ST_ON) == 0:
+ 			continue
+ 		if _g(f, ST_ON) == 3:
++			DirBeamAim.holding(S, f, i)
+ 			if DirBeamPlay.stationary() and (f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0):
+ 				_holdLost(S, f)   # something took him
+ 				continue
+ 			if i.rsRelease or not i.rsHeld:
++				DirBeamAim.thrown(f, i)
+ 				_beamGo(S, f, 0 if (DirBeamPlay.stationary() and f.beamCharge == null) else (int(i.rsLevel) if i.rsRelease else int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1), true))), DirBrawl._now(S) - (_g(f, ST_AT) - 1))
+ 			continue
+ 		var ex = S.dirS.ex
+diff --git a/sim/director/tools/beam_front_check.gd b/sim/director/tools/beam_front_check.gd
+index 7df9132..7aa9935 100644
+--- a/sim/director/tools/beam_front_check.gd
++++ b/sim/director/tools/beam_front_check.gd
+@@ -275,6 +275,7 @@ func _standoff() -> void:
+ 	_holdMoves()
+ 	_kite()
+ 	_shoved()
++	_aimed()
+ 
+ 
+ ## The stick: the hold's the charge and shows, and it fires on the release, after what's left of the warning.
+@@ -460,3 +461,54 @@ func _shoved() -> void:
+ 	_expect(absf(SimWrap.sdx(x2, d2.x)) < 1.0, "from far off, nothing moves him")
+ 	SimCore.dispose(S2)
+ 
++
++## The stick aims an RB beam: near him it's a shot at him; up, it goes up and he's untouched; the charge's aim follows the stick. Off, at him.
++func _aimed() -> void:
++	DirStick.setForce(1)
++	for row in [[true, 0, true], [true, 8, false], [true, 2, true], [true, 4, false], [false, 8, true]]:
++		DirBeamAim.setForce(1 if bool(row[0]) else 0)
++		var S := _fresh(2400.0)
++		var A = S.fighters[0]
++		var D = S.fighters[1]
++		var hp: float = D.hp
++		var w := SimIntent.new()
++		w.rsStart = true
++		w.rsHeld = true
++		w.rsDir = SimStrikeRead.RIGHT
++		w.rsMask = DirStick.RB
++		w.stanceMask = DirStick.RB
++		w.rsAim = int(row[1])
++		_step(S, w)
++		var seen: int = -1
++		for _k in range(50):
++			var h := SimIntent.new()
++			h.rsHeld = true
++			h.rsDir = SimStrikeRead.RIGHT
++			h.rsMask = DirStick.RB
++			h.stanceMask = DirStick.RB
++			h.rsAim = int(row[1])
++			_step(S, h)
++			seen = int(DirBeamAim.aimDeg(A)) if not is_nan(DirBeamAim.aimDeg(A)) else seen
++		var r := SimIntent.new()
++		r.rsRelease = true
++		r.rsDir = SimStrikeRead.RIGHT
++		r.rsMask = DirStick.RB
++		r.rsLevel = 2
++		r.rsAim = int(row[1])
++		r.stanceMask = DirStick.RB
++		_step(S, r)
++		var uy: float = 0.0
++		for _k in range(120):
++			_step(S)
++			if not S.beams.is_empty():
++				uy = maxf(uy, float(S.beams[0].uy))
++		var at: bool = D.hp < hp or _open > 0
++		print("      aim %s, sector %d: held %d deg, beam's rise %.2f, at him %s, he took %.0f" % [str(row[0]), row[1], seen, uy, str(at), hp - D.hp])
++		_expect(at == bool(row[2]), "aim %s, sector %d: %s" % [str(row[0]), row[1], "a shot at him" if bool(row[2]) else "it goes where it was aimed, wide of him"])
++		if bool(row[0]):
++			_expect(seen == int(row[1]) * 11 + int(int(row[1]) * 0.25), "the charge's aim follows the stick (%d)" % seen)
++		if bool(row[0]) and not bool(row[2]):
++			_expect(uy >= SimDetMath.sin(float(row[1]) * 11.25 * SimMathx.PI / 180.0) - 0.05 and S.dirS.ex == null, "... it rises as aimed, and the exchange is over (%.2f)" % uy)
++		SimCore.dispose(S)
++	DirBeamAim.setForce(-1)
++	DirStick.setForce(-1)
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 9d1e1ac..0c3cb5e 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -1704,6 +1704,23 @@
+             "shoveSec": {
+               "type": "number",
+               "minimum": 0
++            },
++            "aim": {
++              "type": "object",
++              "patternProperties": {
++                "^_": {}
++              },
++              "additionalProperties": false,
++              "properties": {
++                "enabled": {
++                  "type": "boolean"
++                },
++                "assistDeg": {
++                  "type": "number",
++                  "minimum": 0,
++                  "maximum": 180
++                }
++              }
+             }
+           },
+           "required": [
+diff --git a/sim/director/beam_aim.gd.uid b/sim/director/beam_aim.gd.uid
+new file mode 100644
+index 0000000..7ad667d
+--- /dev/null
++++ b/sim/director/beam_aim.gd.uid
+@@ -0,0 +1 @@
++uid://btltss5yejfyw

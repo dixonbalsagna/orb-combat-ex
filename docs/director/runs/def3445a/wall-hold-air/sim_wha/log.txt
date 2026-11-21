@@ -1,0 +1,16 @@
+02:05:23 parity exit 0: golden check passed
+02:06:11 validate: 321 files checked, 0 errors, 2 warnings; selftest: self-test: 10093 of 10093 checks passed
+02:06:12 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+02:06:32 wall_return_check exit 0: WALL RETURN: 0 check(s) failed
+02:06:43 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+02:06:53 city_push_check exit 0: CITY PUSH: 0 check(s) failed
+02:07:02 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+02:07:19 follow_check exit 0: FOLLOW: 0 check(s) failed
+02:08:04 swing_check exit 0: SWING: 0 check(s) failed
+02:08:10 plane_check exit 0: PLANE: 0 check(s) failed
+02:09:25 core two_states_check exit 0: PASS  0 failure(s)
+02:09:32 core load_split exit 0: 
+02:09:32 lane sim done
+02:09:41 world wall_check exit 0: WALL: 0 check(s) failed
+02:10:00 world brunt_check exit 0: BRUNT: 0 check(s) failed
+02:10:16 world wall_hold_check exit 0: WALLHOLD: 0 check(s) failed

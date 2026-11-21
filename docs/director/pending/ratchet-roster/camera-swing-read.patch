@@ -1,0 +1,22 @@
+diff --git a/sim/director/swing_read.gd b/sim/director/swing_read.gd
+index 23aa17d..7317c12 100644
+--- a/sim/director/swing_read.gd
++++ b/sim/director/swing_read.gd
+@@ -105,7 +105,7 @@ static func _heavy(b) -> bool:
+ 
+ ## A heavy blow just landed: the exchange's clock is just past a heavy strike's beat.
+ static func _beatDone(S: SimState, R: Dictionary) -> bool:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex == null:
+ 		return false
+ 	for b in ex.beats:
+@@ -116,7 +116,7 @@ static func _beatDone(S: SimState, R: Dictionary) -> bool:
+ 
+ ## A heavy or a launch is about to land: the view is tightening on it.
+ static func _anticipating(S: SimState, R: Dictionary) -> bool:
+-	var ex = S.dirS.ex
++	var ex = DirBrawl.exOf(S)
+ 	if ex == null:
+ 		return false
+ 	for b in ex.beats:

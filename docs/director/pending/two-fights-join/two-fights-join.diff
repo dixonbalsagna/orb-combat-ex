@@ -1,0 +1,179 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index c4aa096..f648a18 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -619,12 +619,16 @@
+     "damageMul": 1.0,
+     "shotReachBh": 40.0,
+     "teamRestunTicks": 24,
++    "join": {
++      "afterSec": 60.0,
++      "w": 8.0
++    },
+     "aiDodge": {
+       "easy": 0.3,
+       "medium": 0.6,
+       "hard": 0.85
+     },
+-    "_note": "teamRestunTicks: one stun a string across a team, a blow from outside keeps him from being free of the team's blows this long. shotReachBh: a blast press with his focus across fires at the enemy of the other fight within it (SimCross.fireAt). aiDodge: a warned AI's chance to answer a beam from the other fight with a dodge, by its level. 2v2, a blow from outside (Game Design's Hits across fights, docs/design/two-v-two.md): a press with no exchange of his own, when an enemy of the other fight is within reachBh and nearer than his own rival, goes to him and lands only on an opening; he hovers waitSec for one, else whiffs and is open whiffTicks. One an opening. Only in a two-fight match with cross on."
++    "_note": "join: after the pairs have been apart afterSec, a send scores the way of the other fight, w for a landing a sixth of the loop nearer (not while a team is two on one). teamRestunTicks: one stun a string across a team, a blow from outside keeps him from being free of the team's blows this long. shotReachBh: a blast press with his focus across fires at the enemy of the other fight within it (SimCross.fireAt). aiDodge: a warned AI's chance to answer a beam from the other fight with a dodge, by its level. 2v2, a blow from outside (Game Design's Hits across fights, docs/design/two-v-two.md): a press with no exchange of his own, when an enemy of the other fight is within reachBh and nearer than his own rival, goes to him and lands only on an opening; he hovers waitSec for one, else whiffs and is open whiffTicks. One an opening. Only in a two-fight match with cross on."
+   },
+   "chase": {
+     "_note": "The chase of a launch is the zip (sim/director/chase.gd; Game Design's rulings-2026-10-22.md 7c; brawl-second-pass.md section 16). A player presses X or Y with LT held while his own launch flies; the AI chases at a send of its own on its level's chaseShare (ai.json; times skyMul when the send goes up into open sky), no sooner than its reaction time. Either pays the zip's ki (the strike's or the heavy's); without it there is no chase. The chase is a rush at the body re-aimed each live tick at speedMul times his speed, never under minSpeed u/s. Within catchBh of him while he flies the zip's blow lands and sends him on (the launch planner from where he is, at sendForce, the chaser's stick its tilt); when his landing comes first it arrives at his landing, for the first move; at most maxTicks. enabled false: nothing runs.",
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index 232f3af..f76e370 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -290,6 +290,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
+ 		if k.name == S.dirS.lastLaunch2:
+ 			k.s -= REPEAT_2
+ 		k.s += DirRally.variety(S, A, k)   # 23d 13: a rally's variety (0 outside one)
++		k.s += DirOutside.joinScore(S, A, D, lx)   # 2v2: after a while apart, the way of the other fight scores
+ 	# Stable sort by score, highest first: an insertion sort keeps equal scores in candidate order.
+ 	for i in range(1, c.size()):
+ 		var key = c[i]
+diff --git a/sim/director/outside.gd b/sim/director/outside.gd
+index a174abe..be0a85b 100644
+--- a/sim/director/outside.gd
++++ b/sim/director/outside.gd
+@@ -14,7 +14,8 @@ const O_DONE: int = 2   # 1 once his blow has landed on this opening: no second
+ const O_KIND: int = 3   # the blow: 1 the light, 2 the heavy
+ const O_WARN: int = 4   # a beam of the other fight has him first on its line: 1 told, 2 told and the AI answers with a dodge
+ const O_TEAM: int = 5   # on the one struck: the S.tick a blow from outside last landed on him, plus 1
+-const O_N: int = 6
++const O_APART: int = 6  # on the match's first body: the S.tick the pairs went apart, plus 1; 0 while they're together
++const O_N: int = 7
+ 
+ static var _force: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+ 
+@@ -79,6 +80,49 @@ static func holdsStun(S: SimState, o) -> bool:
+ 	return at > 0 and S.tick - (at - 1) <= int(cfg().get("teamRestunTicks", 24))
+ 
+ 
++## The pairs' time apart, kept once, on the match's first body, in fight 0's tick.
++static func _apartClock(S: SimState) -> void:
++	var f = DirSwing._anchor(S)
++	if SimStage.together(S):
++		if _g(f, O_APART) != 0:
++			_s(f, O_APART, 0)
++	elif _g(f, O_APART) == 0:
++		_s(f, O_APART, S.tick + 1)
++
++
++## The sends that bring the fights together (Game Design): once the pairs have been apart join.afterSec, a send scores the way of the
++## other fight, for everyone, computer fighters too: join.w for a landing a sixth of the loop nearer it, less for less, and the same
++## against one that takes him away. Nothing while a team is two on one. lx is the candidate's landing (DirLaunch.chooseLaunch).
++static func joinScore(S: SimState, A, D, lx: float) -> float:
++	if not on(S) or S.game.ko != null:
++		return 0.0
++	var st = S.stage
++	var at: int = _g(DirSwing._anchor(S), O_APART)
++	var c: Dictionary = cfg().get("join", {})
++	if at == 0 or float(S.tick - (at - 1)) < float(c.get("afterSec", 60.0)) * DirData.TICKS_PER_SEC:
++		return 0.0
++	var sum: float = 0.0
++	var n: int = 0
++	var x0: float = 0.0
++	for i in range(st.fights.size()):
++		if i == st.cur:
++			continue
++		var r = st.fights[i]
++		if r.game != null and r.game.ko != null:
++			return 0.0   # two on one: the fights have met
++		for g in r.fighters:
++			if n == 0:
++				x0 = g.x
++			sum += SimWrap.sdx(x0, g.x)   # (from the other fight's own first: an average from here splits across the half ring)
++			n += 1
++	if n == 0:
++		return 0.0
++	var mid: float = SimWrap.wrap(x0 + sum / float(n))
++	var cap: float = SimConst.W / 6.0
++	var gain: float = clampf(absf(SimWrap.sdx(D.x, mid)) - absf(SimWrap.sdx(lx, mid)), -cap, cap)
++	return float(c.get("w", 8.0)) * gain / cap
++
++
+ ## His focus, when it's across: the nearest enemy of the other fight within reach, if he's nearer than his own rival or his own fight
+ ## is over; else null.
+ static func focusAcross(S: SimState, A, reach: float):
+@@ -124,6 +168,8 @@ static func open(S: SimState, D) -> bool:
+ static func tick(S: SimState, dt: float) -> void:
+ 	if dt <= 0.0 or not on(S):
+ 		return
++	if S.stage.cur == 0:
++		_apartClock(S)
+ 	_beamStopped(S)
+ 	for f in S.fighters:
+ 		_warn(S, f)
+diff --git a/sim/director/tools/outside_check.gd b/sim/director/tools/outside_check.gd
+index 1720a27..0bcafd2 100644
+--- a/sim/director/tools/outside_check.gd
++++ b/sim/director/tools/outside_check.gd
+@@ -20,6 +20,7 @@ func _init() -> void:
+ 	_beamStop()
+ 	_shotAcross()
+ 	_teamStun()
++	_join()
+ 	DirOutside.setForce(0)
+ 	_off()
+ 	DirOutside.setForce(-1)
+@@ -318,3 +319,31 @@ func _teamStun() -> void:
+ 	_expect(not before and held and not after, "a blow from outside holds his stun from resetting, for teamRestunTicks only")
+ 	SimCore.dispose(S)
+ 
++
++## The sends that bring the fights together: after a while apart, a landing toward the other fight scores, away from it costs; not before,
++## and not at two on one.
++func _join() -> void:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 21, {"p1": false, "p2": false, "p3": false, "p4": false}, {"intro": false, "fights": 2, "cross": true})
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	for _k in range(3):
++		_step(S)
++	var other: float = SimWrap.wrap(D.x + 20000.0)
++	var gi: int = 0
++	for g in S.stage.fights[1].fighters:
++		g.x = SimWrap.wrap(other + 100.0 * float(gi))   # the other fight off to one side, a fifth of the way round
++		gi += 1
++	var toward: float = SimWrap.wrap(D.x + signf(SimWrap.sdx(D.x, other)) * 3000.0)
++	var away: float = SimWrap.wrap(D.x - signf(SimWrap.sdx(D.x, other)) * 3000.0)
++	var fresh: float = DirOutside.joinScore(S, A, D, toward)
++	DirOutside._s(A, DirOutside.O_APART, S.tick - int(70.0 * DirData.TICKS_PER_SEC) + 1)
++	var t: float = DirOutside.joinScore(S, A, D, toward)
++	var w: float = DirOutside.joinScore(S, A, D, away)
++	S.stage.fights[1].game.ko = {"winner": 2}
++	var ko: float = DirOutside.joinScore(S, A, D, toward)
++	S.stage.fights[1].game.ko = null
++	print("      apart a moment: %.2f; 70 s apart: toward %.2f, away %.2f; two on one %.2f" % [fresh, t, w, ko])
++	_expect(fresh == 0.0 and t > 0.0 and w < 0.0 and ko == 0.0, "after a while apart a send scores the way of the other fight; not before, not at two on one")
++	SimCore.dispose(S)
++
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index 0c03f9e..56085cc 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -4557,6 +4557,23 @@
+           "type": "integer",
+           "minimum": 0
+         },
++        "join": {
++          "type": "object",
++          "properties": {
++            "afterSec": {
++              "type": "number",
++              "minimum": 0
++            },
++            "w": {
++              "type": "number"
++            }
++          },
++          "required": [
++            "afterSec",
++            "w"
++          ],
++          "additionalProperties": false
++        },
+         "aiDodge": {
+           "type": "object",
+           "additionalProperties": {

@@ -1,0 +1,256 @@
+diff --git a/data/director/interrupts.json b/data/director/interrupts.json
+index 3b8962f..ffc430f 100644
+--- a/data/director/interrupts.json
++++ b/data/director/interrupts.json
+@@ -78,7 +78,7 @@
+     "enabled": true,
+     "closeBh": 3,
+     "midBh": 12.5,
+-    "engageBh": 2.5, "arrive": {"enabled": false, "easeBh": 1.5, "easeK": 0.5, "floorUnits": 4.0, "_note": "Game Design's overnight ruling (c) (docs/design/overnight-2026-11-08.md), Encounter's piece: LT's high speed eases into striking distance (engageBh, where an approach ends) over the last easeBh body heights, and never through it. Each tick of free flight with the dash held, the part of his velocity that closes on his rival may close all the room down to the ease's edge, then easeK of what is left of the ease, and at least floorUnits (to the mark); at the mark it closes nothing. The rest of his velocity is his own. Off: as before."}, "return": {"enabled": true, "minTicks": 40, "windTicks": 10, "firstWindTicks": 10, "forTicks": 600, "meetMinTicks": 8, "_note": "The return from a send (Orb, 2026-10-15). A fighter free again after a launch, a knock-back or a fall is returning for forTicks at most, until his first blow back. His approach back lasts minTicks at least and crouches windTicks before it moves; his first blow back lands firstWindTicks later than it would, with a windup cue (text return). A press of his rival on that approach, past the crouch and meetMinTicks or more before he arrives, meets it in the middle."},
++    "engageBh": 2.5, "arrive": {"enabled": false, "easeBh": 1.5, "easeK": 0.5, "floorUnits": 4.0, "slipHoldTicks": 13, "_slipHoldTicks": "with the slip on (power.json dash.slip, Simulation's): from the dash's press until this many ticks after it, the arrival eases him into striking distance even once LT is let go, so near him a tap is a step to the mark and a beat there (13: today's lunge, when every tap was a 13-tick dash); 0: no hold, only the slip's carry is eased", "_note": "Game Design's overnight ruling (c) (docs/design/overnight-2026-11-08.md), Encounter's piece: LT's high speed eases into striking distance (engageBh, where an approach ends) over the last easeBh body heights, and never through it. Each tick of free flight with the dash held, the part of his velocity that closes on his rival may close all the room down to the ease's edge, then easeK of what is left of the ease, and at least floorUnits (to the mark); at the mark it closes nothing. The rest of his velocity is his own. Off: as before."}, "return": {"enabled": true, "minTicks": 40, "windTicks": 10, "firstWindTicks": 10, "forTicks": 600, "meetMinTicks": 8, "_note": "The return from a send (Orb, 2026-10-15). A fighter free again after a launch, a knock-back or a fall is returning for forTicks at most, until his first blow back. His approach back lasts minTicks at least and crouches windTicks before it moves; his first blow back lands firstWindTicks later than it would, with a windup cue (text return). A press of his rival on that approach, past the crouch and meetMinTicks or more before he arrives, meets it in the middle."},
+     "lunge": {
+       "speed": 4000,
+       "minTicks": 3,
+diff --git a/sim/director/bands.gd b/sim/director/bands.gd
+index 88e0ba3..60df4d8 100644
+--- a/sim/director/bands.gd
++++ b/sim/director/bands.gd
+@@ -61,9 +61,57 @@ static func arriveOn() -> bool:
+ 	return on() and bool(data().get("arrive", {}).get("enabled", false))
+ 
+ 
++## The slip (power.json dash.slip, Simulation's; only with it on): a dash let go before its underTicks eases to the slip's speed
++## (SimPower.slipping), then free flight takes him on. Its carry eases into striking distance too, never through it: the brake's
++## ticks, and after them any speed above his own flight's top (the plain flight a stick gives him, a diagonal's included). Plain
++## flight is never faster than that, so it is untouched.
++static var blindSlip: bool = false   # tests only: the slip's carry left unread
++## The slip's hold (arrive.slipHoldTicks): one slot after DirPace's on f.act.dirI, the dash's press tick plus 1, written only with
++## the slip on.
++const AH_PRESS: int = 0
++const AH_N: int = 1
++
++
++static func _hb() -> int:
++	return DirPace._b() + DirPace.PC_N
++
++
++static func _hg(f) -> int:
++	var i: int = _hb() + AH_PRESS
++	return f.act.dirI[i] if i < f.act.dirI.size() else 0
++
++
++static func _hs(f, v: int) -> void:
++	DirPlane._size(f)
++	if f.act.dirI.size() < _hb() + AH_N:
++		f.act.dirI.resize(_hb() + AH_N)
++	f.act.dirI[_hb() + AH_PRESS] = v
++
++
++## With the slip on: notes the dash's press (its first held tick: SimPower.slip has counted it as 1), and says the hold is on (the
++## press was less than slipHoldTicks ago).
++static func slipHold(S: SimState, f) -> bool:
++	if not S.slipOn or blindSlip:
++		return false
++	if f.input.dash and f.dashT == 1:
++		_hs(f, S.tick + 1)
++	var at: int = _hg(f) - 1
++	return at >= 0 and S.tick - at < int(data().arrive.get("slipHoldTicks", 0))
++
++
++static func slipCarry(S: SimState, f) -> bool:
++	if not S.slipOn or blindSlip:
++		return false
++	var own: float = SimFighter.flightSpeed(S, f, false) * maxf(1.0, SimDetMath.hypot(f.input.mx, 0.85 * f.input.my))
++	return SimPower.slipping(f) or SimDetMath.hypot(f.vx, f.vy) > own + 1.0
++
++
+ static func arrive(S: SimState, f, dt: float) -> void:
+-	if not arriveOn() or f.state != "free" or f.rush != null or f.input == null or not f.input.dash or dt <= 0.0:
++	if not arriveOn() or f.state != "free" or f.rush != null or f.input == null or dt <= 0.0:
+ 		return
++	var hold: bool = slipHold(S, f)   # (it notes the press, so it is asked first)
++	if not f.input.dash and not hold and not slipCarry(S, f):
++		return   # neither the dash held nor its slip's carry: his own flight
+ 	var o = DirBrawl.rivalOf(S, f)
+ 	if o == null or o == f:
+ 		return
+diff --git a/sim/director/tools/arrive_check.gd b/sim/director/tools/arrive_check.gd
+index 688be0e..941d9aa 100644
+--- a/sim/director/tools/arrive_check.gd
++++ b/sim/director/tools/arrive_check.gd
+@@ -8,6 +8,18 @@ extends SceneTree
+ ##   (RL-076); the last 1.5 bh take at least 4 ticks
+ ## - on: with the dash let go (plain flight), and flying away (both at his own speed), nothing changes (the same path as off)
+ ## - off (the negative control): at that speed he flies through the mark
++## The slip (Simulation's power.json dash.slip, by the setup's "slip"; the model, the dash and the kick on, as the builds play them):
++## a tapped LT, let go before tick 6, from 400 apart (5.3 bh, Controls' row where a tap passed him), the rival standing still.
++## - on: a tap of 1 to 5 ticks with the stick let go with it never comes inside the mark, and never passes him
++## - on: with the stick held toward him, he crosses the mark no faster than his own flight (the stick's, as from a standstill)
++## - far from him (3,000 apart), taps and holds, and a dash held all the way at 400, move exactly as with the slip's carry unread
++## - the slip on, plain flight toward him (no LT), straight and on the diagonal, moves as with the carry unread
++## - the slip off, a tap moves as with the carry unread
++## - the negative control (the carry unread): a tap passes inside the mark
++## The slip's hold (arrive.slipHoldTicks 13): near him a tap is a step to the mark and a beat there, as today's 13-tick lunge.
++## - at 400 apart, a press of 1 to 12 with the stick held 60 ticks travels no further than today's (the slip off, a 13-tick dash)
++## - a tap of 1 to 5 with the stick let go with it never comes inside the mark
++## - slipHoldTicks 0 (the negative control): a press of 1 with the stick held travels further than today's
+ ## Ends on the verdict line.
+ 
+ var failed: int = 0
+@@ -43,10 +55,142 @@ func _init() -> void:
+ 	_expect(steps, "on: no tick moves him more than 3 bh, and the last 1.5 bh take at least 4 ticks (RL-076)")
+ 	_expect(plainOn.track == plainOff.track and awayOn.track == awayOff.track, "on: plain flight (no dash) and flying away are untouched")
+ 	_expect(offFast.closest < mark - 20.0 or offFast.passed, "negative control, off: at that speed he flies through the mark (closest %.1f, passed %s)" % [offFast.closest, str(offFast.passed)])
++	_slipRows(mark)
+ 	print("ARRIVE: %d check(s) failed" % failed)
+ 	quit(1 if failed > 0 else 0)
+ 
+ 
++const SLIP: Dictionary = {"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": true, "dash": true, "kick": true, "slip": true, "travel": 1.5}
++
++
++## The slip's rows (the arrival on throughout).
++func _slipRows(mark: float) -> void:
++	var c: Dictionary = DirBands.data()
++	var a0 = c.get("arrive", {}).duplicate()
++	c.arrive["enabled"] = true
++	var pure: Array = []
++	var held: Array = []
++	var crossOk: bool = true
++	for k in range(1, 6):
++		pure.append(_tap(SLIP, 400.0, k, false))
++		var h: Dictionary = _tap(SLIP, 400.0, k, true)
++		DirBands.blindSlip = true
++		var hb: Dictionary = _tap(SLIP, 400.0, k, true)
++		DirBands.blindSlip = false
++		held.append("tap %d: %.2f bh (unread %.2f)" % [k, h.travel / DirBands.BH, hb.travel / DirBands.BH])
++		crossOk = crossOk and h.crossV <= h.plain + 1.0
++		print("      slip, a tap of %d at 400 with the stick held 60 ticks: crosses the mark at %.0f a second (his own flight %.0f; unread %.0f)" % [k, h.crossV, h.plain, hb.crossV])
++	var alone: Dictionary = _tap(SLIP, 400.0, 0, true)
++	print("      slip, travelled in 60 ticks at 400 apart, the stick held (bh): %s; the stick alone %.2f" % ["; ".join(held), alone.travel / DirBands.BH])
++	var ok: bool = true
++	for r in pure:
++		print("      slip, a tap of %d at 400 with the stick let go with it: closest %.1f (mark %.1f), passed %s, leap %.2f bh" % [r.k, r.closest, mark, str(r.passed), r.travel / DirBands.BH])
++		ok = ok and r.closest >= mark - 1.0 and not r.passed
++	_expect(ok, "slip on: a tap of 1 to 5 ticks with the stick let go never comes inside the mark or passes him")
++	_expect(crossOk, "slip on: with the stick held toward him, he crosses the mark no faster than his own flight")
++	var same: bool = true
++	for k in [1, 2, 5, 6, 60]:
++		var a: Dictionary = _tap(SLIP, 3000.0, k, true)
++		DirBands.blindSlip = true
++		var b: Dictionary = _tap(SLIP, 3000.0, k, true)
++		DirBands.blindSlip = false
++		same = same and a.track == b.track
++	var h60: Dictionary = _tap(SLIP, 400.0, 60, true)
++	DirBands.blindSlip = true
++	var h60b: Dictionary = _tap(SLIP, 400.0, 60, true)
++	DirBands.blindSlip = false
++	_expect(same and h60.track == h60b.track, "far from him (3,000 apart) taps of 1, 2, 5 and holds of 6, 60, and a dash held all the way at 400, move as with the carry unread")
++	var plainSame: bool = true
++	for dg in [false, true]:
++		var p: Dictionary = _tap(SLIP, 400.0, 0, true, dg)
++		DirBands.blindSlip = true
++		var pb: Dictionary = _tap(SLIP, 400.0, 0, true, dg)
++		DirBands.blindSlip = false
++		plainSame = plainSame and p.track == pb.track
++	_expect(plainSame, "the slip on: plain flight toward him (no LT), straight and on the diagonal, moves as with the carry unread")
++	var off: Dictionary = SLIP.duplicate()
++	off["slip"] = false
++	var so: Dictionary = _tap(off, 400.0, 2, false)
++	DirBands.blindSlip = true
++	var sob: Dictionary = _tap(off, 400.0, 2, false)
++	var neg: Dictionary = _tap(SLIP, 400.0, 1, false)
++	DirBands.blindSlip = false
++	_expect(so.track == sob.track, "the slip off: a tap moves as with the carry unread")
++	_expect(neg.closest < mark - 20.0 or neg.passed, "negative control, the carry unread: a tap of 1 passes inside the mark (closest %.1f, passed %s)" % [neg.closest, str(neg.passed)])
++	_holdRows(mark)
++	c["arrive"] = a0
++
++
++## The slip's hold's rows (the arrival on, slipHoldTicks 13 unless the row says).
++func _holdRows(mark: float) -> void:
++	var c: Dictionary = DirBands.data()
++	var h0 = c.arrive.get("slipHoldTicks", 0)
++	c.arrive["slipHoldTicks"] = 13
++	var off: Dictionary = SLIP.duplicate()
++	off["slip"] = false
++	var today: Dictionary = _tap(off, 400.0, 13, true)
++	var line := PackedStringArray()
++	var noWorse: bool = true
++	for k in range(1, 13):
++		var r: Dictionary = _tap(SLIP, 400.0, k, true)
++		line.append("%d: %.2f" % [k, r.travel / DirBands.BH])
++		noWorse = noWorse and r.travel <= today.travel + 0.75
++	print("      hold 13, travelled in 60 ticks at 400 apart, the stick held (bh): %s; today (a 13-tick dash, the slip off) %.2f" % ["; ".join(line), today.travel / DirBands.BH])
++	_expect(noWorse, "hold 13: at 400 apart a press of 1 to 12 with the stick held travels no further than today's 13-tick dash (%.2f bh, within 0.01 bh)" % (today.travel / DirBands.BH))
++	var ok: bool = true
++	for k in range(1, 6):
++		var p: Dictionary = _tap(SLIP, 400.0, k, false)
++		print("      hold 13, a tap of %d at 400 with the stick let go with it: closest %.1f (mark %.1f), passed %s" % [k, p.closest, mark, str(p.passed)])
++		ok = ok and p.closest >= mark - 1.0 and not p.passed
++	_expect(ok, "hold 13: a tap of 1 to 5 with the stick let go never comes inside the mark or passes him")
++	c.arrive["slipHoldTicks"] = 0
++	var neg: Dictionary = _tap(SLIP, 400.0, 1, true)
++	_expect(neg.travel > today.travel + 0.75, "negative control, hold 0: a press of 1 with the stick held travels further than today's (%.2f bh against %.2f)" % [neg.travel / DirBands.BH, today.travel / DirBands.BH])
++	c.arrive["slipHoldTicks"] = h0
++
++
++## A tap of k ticks of LT (0: none; 60: held all the way) from gap apart, the stick toward him with it (and held for 60 ticks if
++## holdStick; up as well on the diagonal), the rival held still: closest, passed, travel, his speed on the tick he first comes inside
++## the mark.
++func _tap(su: Dictionary, gap: float, k: int, holdStick: bool, diag: bool = false) -> Dictionary:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, su)
++	var f = S.fighters[0]
++	var o = S.fighters[1]
++	f.x = SimWrap.wrap(o.x - gap)
++	f.y = 6000.0
++	o.y = 6000.0
++	f.vx = 0.0
++	f.vy = 0.0
++	var ox: float = o.x
++	var x0: float = f.x
++	var mark: float = float(DirBands.data().engageBh) * DirBands.BH
++	var out := {"k": k, "closest": 1e9, "passed": false, "travel": 0.0, "crossV": 0.0, "plain": SimFighter.flightSpeed(S, f, false), "track": PackedStringArray()}
++	for t in range(60):
++		var i := SimIntent.new()
++		i.mx = 1.0 if (holdStick or t < k) else 0.0
++		i.my = i.mx if diag else 0.0
++		i.dash = t < k
++		o.x = ox
++		o.y = 6000.0
++		o.vx = 0.0
++		o.vy = 0.0
++		SimCore.step(S, [i, null])
++		S.out.fx.clear()
++		S.out.feed.clear()
++		var dx: float = SimWrap.sdx(f.x, o.x)
++		var d: float = absf(dx)
++		if out.crossV == 0.0 and d < mark - 0.5:
++			out.crossV = maxf(SimDetMath.hypot(f.vx, f.vy), 0.001)
++		out.closest = minf(out.closest, d)
++		if dx < 0.0:
++			out.passed = true
++		out.track.append("%.3f,%.3f" % [SimWrap.sdx(x0, f.x), f.y])
++	out.travel = absf(SimWrap.sdx(x0, f.x))
++	SimCore.dispose(S)
++	return out
++
++
+ func _expect(ok: bool, what: String) -> void:
+ 	print(("ok    " if ok else "FAIL  ") + what)
+ 	if not ok:
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index a9fe4fe..b2b17fe 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -433,7 +433,8 @@
+             "enabled": {"type": "boolean"},
+             "easeBh": {"type": "number", "minimum": 0},
+             "easeK": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+-            "floorUnits": {"type": "number", "minimum": 0}
++            "floorUnits": {"type": "number", "minimum": 0},
++            "slipHoldTicks": {"type": "integer", "minimum": 0, "maximum": 120}
+           }
+         },
+         "engageBh": {

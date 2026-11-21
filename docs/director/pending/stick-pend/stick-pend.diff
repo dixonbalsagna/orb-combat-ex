@@ -1,0 +1,436 @@
+diff --git a/data/director/stick.json b/data/director/stick.json
+index 7d09a08..05aa49c 100644
+--- a/data/director/stick.json
++++ b/data/director/stick.json
+@@ -53,7 +53,16 @@
+   "carryTicks": 12,
+   "pendTicks": 9,
+   "bufferTicks": 9,
+-  "lightStops": true,
++  "pendFollow": {
++    "enabled": false,
++    "maxTicks": 90,
++    "_note": "A stick strike waiting for its blow follows its request: queued, it waits up to maxTicks; answered by a planned exchange or refused, it's told at once (stick_refused answered or refused). A hold the answer swept up becomes the charge on his first free tick, counting from then, nothing banked (Game Design, 2026-11-02). Off, it lapses after pendTicks as late, whatever happened."
++  },
++  "flickRun": {
++    "enabled": false,
++    "points": 3,
++    "_note": "A landed quick flick counts in its striker's run, points of it, with the steal on top (Game Design, stick-lands.md, 2026-11-02): a light's 1 first, and a medium's 3 if stick-only still lost every trade break. At 1 it lost all 48 of 48 to the easy AI; at 3 it won 45 of 45. Game Design's to tune."
++  },  "lightStops": true,
+   "softWorth": 1.7,
+   "softReel": 6,
+   "softRunOff": 2,
+diff --git a/sim/director/stick.gd b/sim/director/stick.gd
+index e10a83b..3860f67 100644
+--- a/sim/director/stick.gd
++++ b/sim/director/stick.gd
+@@ -28,11 +28,13 @@ const ST_CY: int = 8     # ... the height to go, x 16
+ const ST_Q0: int = 9     # the last quick strike's live tick, plus 1, by direction 1 to 4
+ const ST_Q1: int = 13    # the one before it
+ const ST_RL: int = 17    # a release before the wind-up ended (a long lunge, a request still waiting): its level, plus 1
+-const ST_BUF: int = 18   # a press waiting for him to be able to act: its direction, plus (the mask + 1) x 8; 0 none
++const ST_BUF: int = 18   # a press waiting for him to be able to act: its direction, plus (the mask + 1) x 8, plus SWEPT; 0 none
+ const ST_BAT: int = 19   # the live tick it was made, plus 1
+ const ST_SOFT: int = 20   # a light has landed on this flick: it still lands, at softWorth, with no stun (lightStops false)
+ const ST_GUARD: int = 21  # this flick is on the guard layer: his guard holds through its wind-up and drops for its recovery (lightStops false)
+ const ST_N: int = 22
++const SWEPT: int = 4096  # on ST_BUF: a hold a planned exchange swept up, waiting for his first free tick (pendFollow)
++const RL_SWEPT: int = 16  # on ST_RL: this strike is that swept hold, so its level counts from its own request
+ 
+ const UP: int = 1
+ const DOWN: int = 2
+@@ -297,6 +299,7 @@ static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
+ 	var now: int = DirBrawl._now(S)
+ 	DirBrawl._s(f, DirBrawl.LAST_AT, S.tick)   # he acted: a level 3's hold doesn't run out the brawl's idle clock
+ 	_steal(S, f, o, a, lvl)   # first: the stun that follows breaks his run
++	_flickRun(S, f, o, lvl)
+ 	var trade: bool = DirBrawl._g(o, DirBrawl.LINE) == 1 and DirBrawl._g(o, DirBrawl.CONTACT) == now
+ 	var stuns: bool = not trade and _g(o, ST_STUN) == 0 and not (lvl == 0 and _g(f, ST_SOFT) == 1)
+ 	if lvl == 0 and _g(f, ST_GUARD) == 1 and not lightStops():
+@@ -344,6 +347,17 @@ static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
+ 	e.n = stun if stuns else 0
+ 
+ 
++## A landed flick counts in its striker's run as a light does (flickRun.enabled; Game Design, stick-lands.md, 2026-11-02): flickRun.points,
++## on top of the steal. As a light's, it doesn't add on a staggered rival unless the brawl's flurry says so.
++static func _flickRun(S: SimState, f, o, lvl: int) -> void:
++	var c: Dictionary = cfg().get("flickRun", {})
++	if not bool(c.get("enabled", false)) or lvl != 0:
++		return
++	DirBrawl._s(f, DirBrawl.LAND_AT, S.tick)   # his string goes on, as a light's landing keeps it: else its lapse spends the run
++	if o.stunTicks <= 0 or bool(DirBrawl.cfg().flurry.get("staggeredAddsRun", false)):
++		DirBrawl._s(f, DirBrawl.RUN, DirBrawl._g(f, DirBrawl.RUN) + int(round(float(c.points) * float(DirBrawl.RUN_U))))
++
++
+ ## The stick steals his run (steal.enabled, for QA's arm; stick-lands.md): a quick flick from no stance that lands clean takes his run to 0, and
+ ## yours rises by what was taken, at most steal.max; he stumbles reelBase + reelPer for each point. Never the AI's, so a beginner mashing
+ ## against the computer is never stolen from. A steal takes his run, so he's only stolen from once a run.
+@@ -403,12 +417,14 @@ static func _start(S: SimState, f, i) -> void:
+ 
+ 
+ ## The request goes in.
+-static func _go(S: SimState, f, dir: int, mask: int) -> void:
++static func _go(S: SimState, f, dir: int, mask: int, quiet: bool = false) -> void:
+ 	if DirChaseTap.refuses(S, f):
+-		SimFx.cue(S, f, "stick_refused", NAMES[dir], "chase")   # it can't reach him in the air, and it never sends
++		if not quiet:
++			SimFx.cue(S, f, "stick_refused", NAMES[dir], "chase")   # it can't reach him in the air, and it never sends
+ 		return
+ 	if f.ki < float(DirBrawl.cfg().medium.ki):
+-		SimFx.cue(S, f, "stick_refused", NAMES[dir], "ki")   # the press would throw a lighter blow: it never becomes another
++		if not quiet:
++			SimFx.cue(S, f, "stick_refused", NAMES[dir], "ki")   # the press would throw a lighter blow: it never becomes another
+ 		return
+ 	if _g(f, ST_PEND) != 0:
+ 		SimFx.cue(S, f, "stick_refused", NAMES[_g(f, ST_PEND) & 7], "replaced")   # the newest only: the one it replaces is told
+@@ -417,6 +433,14 @@ static func _go(S: SimState, f, dir: int, mask: int) -> void:
+ 	_s(f, ST_PAT, DirBrawl._now(S) + 1)
+ 	_s(f, ST_AT, DirBrawl._now(S) + 1)
+ 	DirExchange.requestAttack(S, f, "heavy")
++	if pendFollow() and _g(f, ST_PEND) != 0:
++		var slot: int = S.fighters.find(f)
++		for e in S.out.fx:
++			if String(e.type) == "cue" and String(e.kind) == "press_ack" and String(e.text) == "refused" and int(e.actor) == slot:
++				_s(f, ST_PEND, 0)
++				if not quiet:
++					SimFx.cue(S, f, "stick_refused", NAMES[dir], "refused")   # (the first move is his rival's): told now, not as late
++				return
+ 
+ 
+ ## A press he couldn't act on: it goes on his first tick free inside bufferTicks; past that it's refused, said once.
+@@ -424,12 +448,23 @@ static func _waiting(S: SimState, f) -> void:
+ 	var b: int = _g(f, ST_BUF)
+ 	if b == 0:
+ 		return
+-	if not _cant(S, f):
++	var swept: bool = (b & SWEPT) != 0
++	if not _cant(S, f) and not (swept and _planned(S, f)):
+ 		_s(f, ST_BUF, 0)
+-		_go(S, f, b & 7, (b >> 3) - 1)
+-	elif DirBrawl._now(S) - (_g(f, ST_BAT) - 1) >= int(cfg().bufferTicks):
++		if not swept or f.input.rsHeld:
++			_go(S, f, b & 7, ((b >> 3) & 511) - 1, swept)   # (a swept hold goes only if he's still holding it, and quietly: its press was told)
++			if swept:
++				_s(f, ST_RL, _g(f, ST_RL) | RL_SWEPT)
++	elif DirBrawl._now(S) - (_g(f, ST_BAT) - 1) >= (int(cfg().pendFollow.maxTicks) if swept else int(cfg().bufferTicks)):
+ 		_s(f, ST_BUF, 0)
+-		SimFx.cue(S, f, "stick_refused", NAMES[b & 7], str((b >> 3) - 1))
++		if not swept:
++			SimFx.cue(S, f, "stick_refused", NAMES[b & 7], str(((b >> 3) & 511) - 1))
++
++
++## A planned exchange holds him, window or no window: a swept hold waits for the end of it, his first free tick.
++static func _planned(S: SimState, f) -> bool:
++	var ex = S.dirS.ex
++	return ex != null and not DirBrawl.isBrawl(ex) and (ex.A == f or ex.D == f)
+ 
+ 
+ ## True when this press can't become a blow: he's been sent, a long stun holds him, or a planned exchange or set piece is playing with no
+@@ -455,6 +490,44 @@ static func carrying(f) -> bool:
+ 	return on() and _g(f, ST_CT) > 0
+ 
+ 
++static func pendFollow() -> bool:
++	return on() and bool(cfg().get("pendFollow", {}).get("enabled", false))
++
++
++## pendFollow: a request still on its way keeps the stick's blow waiting with it, and one his rival answered is told at once (QA's meteor
++## bot found both said "late"). While his request is queued it waits, up to pendFollow.maxTicks. True when this tick is handled, so the
++## usual lapse doesn't run.
++static func _followed(S: SimState, f, pat: int) -> bool:
++	var ex = S.dirS.ex
++	if ex != null and not DirBrawl.isBrawl(ex) and (ex.A == f or ex.D == f):
++		var pend: int = _g(f, ST_PEND)
++		_s(f, ST_PEND, 0)
++		if (_g(f, ST_RL) & RL_SWEPT) != 0:
++			return true   # the swept hold's own go, answered again: its press was told once, and it's over
++		SimFx.cue(S, f, "stick_refused", NAMES[pend & 7], "answered")   # a planned exchange took the request: his rival's answer, not lateness
++		if f.input.rsHeld:
++			sweep(S, f, pend)
++		return true
++	if DirBrawl._now(S) - (pat - 1) > int(cfg().pendFollow.maxTicks):
++		return false
++	return not f.act.queue.is_empty()
++
++
++## A hold a planned exchange swept up (Game Design, 2026-11-02): it becomes the charge on his first free tick, counting from then, with
++## nothing banked. It waits in the buffer up to pendFollow.maxTicks.
++static func sweep(S: SimState, f, pend: int) -> void:
++	_s(f, ST_BUF, (pend & 511) | SWEPT)
++	_s(f, ST_BAT, DirBrawl._now(S) + 1)
++
++
++## The level of a release: the stick's own; for a swept hold, no more than he's held since its request went in, on his first free tick.
++static func _relLevel(S: SimState, f, i) -> int:
++	var l: int = int(i.rsLevel)
++	if (_g(f, ST_RL) & RL_SWEPT) != 0:
++		l = mini(l, int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1))))
++	return l
++
++
+ ## True while a request of his is waiting for its blow.
+ static func pending(f) -> bool:
+ 	return on() and _g(f, ST_PEND) != 0
+@@ -511,9 +584,11 @@ static func tick(S: SimState, dt: float) -> void:
+ 		else:
+ 			_waiting(S, f)
+ 		if i.rsRelease and (_g(f, ST_PEND) != 0 or _g(f, ST_ON) == 1):
+-			_s(f, ST_RL, int(i.rsLevel) + 1)   # the edge is one tick: the blow's level is kept for when its wind-up ends
++			_s(f, ST_RL, (_g(f, ST_RL) & RL_SWEPT) | (_relLevel(S, f, i) + 1))   # the edge is one tick: the blow's level is kept for when its wind-up ends
+ 		var pat: int = _g(f, ST_PAT)
+-		if _g(f, ST_PEND) != 0 and DirBrawl._now(S) - (pat - 1) > int(cfg().pendTicks) and not DirBands.pending(f):
++		if _g(f, ST_PEND) != 0 and pendFollow() and _followed(S, f, pat):
++			pass
++		elif _g(f, ST_PEND) != 0 and DirBrawl._now(S) - (pat - 1) > int(cfg().pendTicks) and not DirBands.pending(f):
+ 			_s(f, ST_PEND, 0)   # no blow came of it, and it doesn't become some other blow: what it asked for goes too
+ 			SimAct.clear(f)
+ 			if (DirBrawl._g(f, DirBrawl.HELD_P) & 7) == 2:
+@@ -540,12 +615,12 @@ static func tick(S: SimState, dt: float) -> void:
+ 			continue
+ 		var c: Dictionary = cfg()
+ 		var since: int = DirBrawl._now(S) - (_g(f, ST_AT) - 1)
+-		var kept: int = _g(f, ST_RL)
++		var kept: int = _g(f, ST_RL) & 15   # (the swept mark aside)
+ 		var due: bool = b.t <= ex.t + dt * 1.25
+ 		if kept > 1 and due:
+ 			_release(S, ex, f, b, kept - 1)
+ 		elif _g(f, ST_ON) == 2 and (i.rsRelease or not i.rsHeld or since >= int(c.autoGoTicks)):
+-			_release(S, ex, f, b, int(i.rsLevel) if i.rsRelease else int(_reader().level_at(since)))
++			_release(S, ex, f, b, _relLevel(S, f, i) if i.rsRelease else int(_reader().level_at(since)))
+ 		elif i.rsHeld and not i.rsRelease and kept == 0 and due:
+ 			_s(f, ST_ON, 2)
+ 			b.t += dt   # still out as its wind-up ends: the blow waits for the release
+diff --git a/sim/director/tools/press_decides_check.gd b/sim/director/tools/press_decides_check.gd
+index 44e81f6..6b58f0e 100644
+--- a/sim/director/tools/press_decides_check.gd
++++ b/sim/director/tools/press_decides_check.gd
+@@ -24,6 +24,12 @@ func _init() -> void:
+ 		_circle(DirStance.cfg())
+ 	if DirStick.cfg().has("steal"):
+ 		_steal(DirStick.cfg())
++	if DirStick.cfg().has("pendFollow"):
++		_pend(DirStick.cfg(), b)
++		_swept(DirStick.cfg())
++		_sweptQuiet(DirStick.cfg())
++	if DirStick.cfg().has("flickRun"):
++		_flickRun(DirStick.cfg())
+ 	DirStance.setForce(-1)
+ 	DirStick.setForce(-1)
+ 	print("PRESS: %d check(s) failed" % failed)
+@@ -62,6 +68,10 @@ func _step(S: SimState, a: SimIntent = null, d: SimIntent = null) -> bool:
+ 	for e in S.out.fx:
+ 		if e.type == "cue":
+ 			_cues.append(String(e.kind) + ":" + String(e.text))
++			if String(e.kind) == "stick_refused" and int(e.actor) == 0:
++				_cues.append("refused/" + String(e.get("source")))
++			if String(e.kind) == "stick_release" and int(e.actor) == 0:
++				_cues.append("rlevel/" + String(e.get("source")))
+ 		elif e.type == "launch_plan":
+ 			_cues.append("send:" + String(e.chosen))
+ 	S.out.fx.clear()
+@@ -297,3 +307,154 @@ func _steal(sc: Dictionary) -> void:
+ 	_expect(stole == "3" and DirBrawl._g(D, DirBrawl.RUN) == 0, "a quick flick takes his run")
+ 	SimCore.dispose(S)
+ 	sc.steal.enabled = false
++
++
++## A stick strike waiting for its blow follows its request: told at once when refused or answered.
++func _pend(sc: Dictionary, _b: Dictionary) -> void:
++	for on_ in [false, true]:
++		sc.pendFollow.enabled = on_
++		# Refused: the first move is his rival's, and the flick is out of reach.
++		var S := _pair(400.0, false)
++		var A = S.fighters[0]
++		DirBrawl._s(A, DirBrawl.MOVE_AT, S.tick + 300)
++		var when: Dictionary = _flick(S, 30)
++		print("      pendFollow %s, refused by the first move: %s" % [str(on_), str(when)])
++		if on_:
++			_expect(when.get("refused/refused", -1) == 0 and not when.has("refused/late"), "pendFollow on: a refused flick is told at once, as refused")
++		else:
++			_expect(when.has("refused/late"), "pendFollow off: a refused flick says late")
++		SimCore.dispose(S)
++	sc.pendFollow.enabled = false
++
++
++## A quick flick toward him, then n ticks: the first tick of each cue of his, from the flick.
++func _flick(S: SimState, n: int) -> Dictionary:
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var w := SimIntent.new()
++	w.rsStart = true
++	w.rsHeld = true
++	w.rsDir = SimStrikeRead.LEFT if SimWrap.sdx(A.x, D.x) < 0.0 else SimStrikeRead.RIGHT
++	var seen: Dictionary = {}
++	for k in range(n):
++		var h: SimIntent = w if k == 0 else SimIntent.new()
++		if k > 0 and k < 3:
++			h.rsHeld = true
++			h.rsDir = w.rsDir
++		elif k == 3:
++			h.rsRelease = true
++			h.rsDir = w.rsDir
++		_step(S, h)
++		for c in _cues:
++			if String(c).begins_with("stick") or String(c).begins_with("refused/"):
++				var key: String = String(c) if String(c).begins_with("refused/") else String(c).split(":")[0] + ":"
++				if not seen.has(key):
++					seen[key] = k
++	return seen
++
++
++## A hold swept up by a planned exchange goes on his first free tick, and its level counts from then.
++func _swept(sc: Dictionary) -> void:
++	sc.pendFollow.enabled = true
++	var S := _pair()
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var dir: int = DirStick.TOWARD
++	DirStick.sweep(S, A, dir | (1 << 3))
++	A.stunTicks = 20   # (what the planned exchange's answer did to him)
++	var w := SimIntent.new()
++	w.rsHeld = true
++	w.rsDir = SimStrikeRead.LEFT if SimWrap.sdx(A.x, D.x) < 0.0 else SimStrikeRead.RIGHT
++	var startAt: int = -1
++	var released: int = -1
++	var lvl: int = -1
++	var k: int = 0
++	while k < 120 and released < 0:
++		var h := SimIntent.new()
++		h.rsDir = w.rsDir
++		if startAt < 0 or k - startAt < 20:
++			h.rsHeld = true
++			h.rsLevel = 3   # the stick's own count runs from the first press: well past level 1
++		else:
++			h.rsRelease = true
++			h.rsLevel = 3
++		_step(S, h)
++		for c in _cues:
++			if String(c).begins_with("stick_start") and startAt < 0:
++				startAt = k
++			if String(c).begins_with("rlevel/") and released < 0:
++				released = k
++				lvl = int(String(c).substr(7))
++		k += 1
++	print("      a swept hold: it went at %d (his stun was 20), released at %d; the level kept %d" % [startAt, released, lvl])
++	_expect(startAt >= 18 and startAt <= 24, "a swept hold goes on his first free tick")
++	_expect(lvl >= 0 and lvl < 3, "... and its level counts from then, not from the first press (%d)" % lvl)
++	SimCore.dispose(S)
++	sc.pendFollow.enabled = false
++
++
++## A landed quick flick adds a light's point to its striker's run.
++func _flickRun(sc: Dictionary) -> void:
++	for on_ in [false, true]:
++		sc.flickRun.enabled = on_
++		var S := _pair()
++		var A = S.fighters[0]
++		var D = S.fighters[1]
++		var run0: int = DirBrawl._g(A, DirBrawl.RUN)
++		var w := SimIntent.new()
++		w.rsStart = true
++		w.rsHeld = true
++		w.rsDir = SimStrikeRead.LEFT if SimWrap.sdx(A.x, D.x) < 0.0 else SimStrikeRead.RIGHT
++		_step(S, w)
++		var hit: bool = false
++		var after: int = run0
++		for k in range(30):
++			var h := SimIntent.new()
++			h.rsDir = w.rsDir
++			if k < 2:
++				h.rsHeld = true
++			elif k == 2:
++				h.rsRelease = true
++			_step(S, h)
++			if not hit and _cues.any(func(c): return String(c).begins_with("stick_hit")):
++				hit = true
++				after = DirBrawl._g(A, DirBrawl.RUN)
++		print("      flickRun %s: the flick landed %s; his run %d to %d quarters" % [str(on_), str(hit), run0, after])
++		if on_:
++			_expect(hit and after - run0 == int(round(float(sc.flickRun.points) * float(DirBrawl.RUN_U))), "flickRun on: a landed flick adds flickRun.points to his run")
++		else:
++			_expect(hit and after == run0, "flickRun off: a flick builds no run of his own")
++		SimCore.dispose(S)
++	sc.flickRun.enabled = false
++
++
++## A swept hold doesn't go again while a planned exchange holds him, and its press is told once at most.
++func _sweptQuiet(sc: Dictionary) -> void:
++	sc.pendFollow.enabled = true
++	var S := _pair(400.0, false)
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var w := SimIntent.new()
++	w.rsDir = SimStrikeRead.LEFT if SimWrap.sdx(A.x, D.x) < 0.0 else SimStrikeRead.RIGHT
++	DirStick.sweep(S, A, DirStick.TOWARD | (1 << 3))
++	var refused: int = 0
++	var acks: int = 0
++	var went: int = -1
++	for k in range(90):
++		var h := SimIntent.new()
++		h.rsHeld = true
++		h.rsDir = w.rsDir
++		var ex = S.dirS.ex
++		_step(S, h)
++		for c in _cues:
++			if String(c).begins_with("stick_refused"):
++				refused += 1
++			if String(c).begins_with("press_ack"):
++				acks += 1
++		if went < 0 and DirStick._g(A, DirStick.ST_BUF) == 0:
++			went = k
++	print("      a swept hold, the stick held 90 ticks from 400 away: it went at %d; refusals said %d, press acks %d" % [went, refused, acks])
++	_expect(refused <= 1 and acks <= 2, "a swept hold goes once: no refusal every tick (%d)" % refused)
++	SimCore.dispose(S)
++	sc.pendFollow.enabled = false
++
+diff --git a/tools/schemas/director-stick.schema.json b/tools/schemas/director-stick.schema.json
+index b1b557c..da7cd38 100644
+--- a/tools/schemas/director-stick.schema.json
++++ b/tools/schemas/director-stick.schema.json
+@@ -98,6 +98,46 @@
+       "type": "integer",
+       "minimum": 0
+     },
++    "flickRun": {
++      "type": "object",
++      "properties": {
++        "enabled": {
++          "type": "boolean"
++        },
++        "points": {
++          "type": "number",
++          "minimum": 0
++        },
++        "_note": {
++          "type": "string"
++        }
++      },
++      "required": [
++        "enabled",
++        "points"
++      ],
++      "additionalProperties": false
++    },
++    "pendFollow": {
++      "type": "object",
++      "properties": {
++        "enabled": {
++          "type": "boolean"
++        },
++        "maxTicks": {
++          "type": "integer",
++          "minimum": 1
++        },
++        "_note": {
++          "type": "string"
++        }
++      },
++      "required": [
++        "enabled",
++        "maxTicks"
++      ],
++      "additionalProperties": false
++    },
+     "lightStops": {
+       "type": "boolean"
+     },
