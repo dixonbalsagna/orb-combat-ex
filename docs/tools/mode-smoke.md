@@ -1,5 +1,7 @@
 # The mode smoke (A-MODES-08, Tools, 2026-11-14)
 
+**Re-pointed at the A1 menus (UI & UX, 2026-11-20): the run presses real pad buttons (the engine's input path: D-pad, A, B, Start) through the list of modes, the setup (a fighter, intros, Start), the match-over card, the pause menu and Quit's question, at 1280 by 800; it reads the lit row back by name from the menu's own plan; a start menu with no Quit row FAILS (it no longer counts as "not built"); and each run saves `mode-smoke-<mode>-<platform>.json` (`input: "pad"`, `window`, `natural_result`) to `docs/tools/runs/<commit>/` or `--out`. The match is still ended by the smoke when the scripted humans have not finished it (`natural_result` says which).** The original text follows, for the parts that did not change.
+
 One mode a run, through the real main scene, headless, **by row name** (never by screen points): the start menu, the row "players" (one person, two people), intros off, the row "start", a match that runs, scripted humans playing, a result card, a rematch ("again"), the pause menu, "menu" back to the start menu, and a look for the start menu's "quit" row.
 
 ```

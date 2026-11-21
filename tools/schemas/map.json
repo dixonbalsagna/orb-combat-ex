@@ -168,6 +168,10 @@
       "schema": "ui-features.schema.json"
     },
     {
+      "match": "ui/data/modes.json",
+      "schema": "ui-modes.schema.json"
+    },
+    {
       "match": "ui/data/faces.json",
       "schema": "ui-faces.schema.json"
     },

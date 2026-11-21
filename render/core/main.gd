@@ -200,6 +200,7 @@ func _ready() -> void:
 	ui_hud.menu_changed.connect(_on_menu_changed)
 	ui_hud.loading_back_requested.connect(_on_loading_back)
 	ui_hud.menu_started.connect(_on_menu_started)   # the start menu's Start, and the match-over card's Play again (docs/ui/start-menu.md)
+	ui_hud.quit_requested.connect(func(): get_tree().quit())   # "Close the game" answered yes on the start menu, the pause menu or the match-over card (docs/ui/menus-a1.md)
 	ui_hud.option_changed.connect(_on_option_changed)
 	# The hub's defaults go into the HUD first (its legend and prompts show the layouts in use) ...
 	ui_hud.set_option("pad_preset", host.hub.pad_preset)
@@ -430,10 +431,13 @@ func _mb_attach() -> bool:
 ## accepted and does nothing.)
 func _match_setup(seed: int = 0) -> Dictionary:
 	if manual or args.has("nointro") or args.has("bench") or args.has("flashcap"):
-		return _planet_setup()
+		var plain := _planet_setup()
+		plain.merge(_slots_part())
+		return plain
 	var su: Dictionary = {"intro": host.intro_record(seed)}
 	su.merge(_planet_setup())
 	su.merge(_ai_part())
+	su.merge(_slots_part())
 	return su
 
 
@@ -444,6 +448,15 @@ var _ai_level: String = ""
 
 func _ai_part() -> Dictionary:
 	return {"aiLevel": _ai_level} if _ai_level != "" else {}
+
+
+## The two fighters the start menu's pick names (UI: the menu config's p1_fighter and p2_fighter, roster ids). Part of every match's setup after the menu has run ("slots", read and checked by SimCore:
+## a pick the roster does not have plays the default pair), so New match and Play again keep it; empty until then.
+var _slots: Array = []
+
+
+func _slots_part() -> Dictionary:
+	return {"slots": _slots.duplicate()} if _slots.size() == 2 else {}
 
 
 ## The state probe (A-CODE-03, 2026-11-14; it was a scratch patch of the private page): `?preview=1` on the web publishes window.__preview twice a second for the smoke check and the page tools: the tick, the planet's
@@ -1376,11 +1389,13 @@ func _on_menu_started(cfg: Dictionary) -> void:
 	var sd: int = fresh_seed()
 	_planet_next = planet_part(cfg)
 	_ai_level = str(cfg.get("ai_level", ""))
+	_slots = [str(cfg["p1_fighter"]), str(cfg["p2_fighter"])] if (cfg.has("p1_fighter") and cfg.has("p2_fighter")) else []
 	if bool(cfg.get("intros", true)):
 		start_match(sd, ai)
 	else:
-		var su: Dictionary = _planet_setup()
+		var su := _planet_setup()
 		su.merge(_ai_part())
+		su.merge(_slots_part())
 		start_match(sd, ai, su)
 	_planet_next = {}
 	var pads: Array = Input.get_connected_joypads()
@@ -1630,7 +1645,7 @@ func _unhandled_input(e: InputEvent) -> void:
 				_flash_key(e)
 				return
 			if code == "Escape" and not OS.has_feature("web"):
-				get_tree().quit()
+				ui_hud.request_quit()   # asks "Close the game?" first (the A1 menus); with them off it closes at once, as before
 				return
 			if fkey:
 				return
@@ -1817,5 +1832,5 @@ static func _dist(v) -> String:
 
 ## The HUD's report and "Save this match" on a plain desktop build (A-UI-02, 2026-11-14): the match so far as a file in user://reports/ (SimHost.record_file, MatchRecorder). Nothing leaves the PC. The file's name, "" when
 ## there is nothing to save or the file could not be written (the HUD then says so).
-func _record_report(tags: String, note: String) -> String:
-	return host.record_file("report", tags, note)
+func _record_report(tags: String, note: String, reason: String = "report") -> String:
+	return host.record_file(reason, tags, note)   # reason "save" is the HUD's "Save this match" (a file the player chose to keep: the recorder never prunes it); F9 and the feedback panel stay "report"

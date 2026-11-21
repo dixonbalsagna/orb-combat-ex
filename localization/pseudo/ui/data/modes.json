@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "note": "The start menu's list of modes (docs/ui/menus-a1.md), in the order the list shows them. A row appears when its mode lands: change its state from \"coming\" to \"ready\" and give it the number of people who play (players) and, when it needs one, the setup the match starts with. `testers` says whether the row is shown in the testers' package (features.json testers_package): the campaign and the network row are off for testers until Orb answers decisions 13 and 18. `mirror_pick` says whether two players may pick the same fighter: false until the two can be told apart on screen (a second colour, decision 17). Every label and line is for Orb to read before it is used.",
+  "mirror_pick": false,
+  "modes": [
+    {
+      "id": "solo",
+      "label": "[ÅÅĝááííñšţ ţĥéé çöömpüüţéŕ]",
+      "detail": "[ÝÝööüü ááĝááííñšţ ţĥéé çöömpüüţéŕ, ááţ ţĥéé ĺéévééĺ ýýööüü çĥööööšé.]",
+      "state": "ready",
+      "players": 1,
+      "testers": true
+    },
+    {
+      "id": "versus",
+      "label": "[Ţŵöö pĺááýýééŕš, ööñéé PÇ]",
+      "detail": "[Ţŵöö pééööpĺéé ööñ ţĥííš PÇ, ééááçĥ ööñ áá çööñţŕööĺĺééŕ ööŕ ĥááĺf ţĥéé ķééýýbööááŕď. ~~~]",
+      "state": "ready",
+      "players": 2,
+      "testers": true
+    },
+    {
+      "id": "couch_2v2",
+      "label": "[Ţŵöö ááĝááííñšţ ţŵöö, ööñéé PÇ]",
+      "detail": "[Ţŵöö ţééáámš ööf ţŵöö ööñ ţĥííš PÇ. ~]",
+      "state": "coming",
+      "testers": true
+    },
+    {
+      "id": "horde",
+      "label": "[Ĥöŕďé]",
+      "detail": "[ÝÝööüü ááñď áá fŕííééñď ááĝááííñšţ ŵáávééš ööf ŵééááķééŕ fííĝĥţééŕš.]",
+      "state": "coming",
+      "testers": true
+    },
+    {
+      "id": "practice",
+      "label": "[Pŕááçţíçé]",
+      "detail": "[ÅÅ fííĝĥţééŕ ţĥááţ šţááñďš šţííĺĺ, ţöö ţŕýý möövééš ööñ. ~~~~]",
+      "state": "coming",
+      "testers": true
+    },
+    {
+      "id": "custom_planet",
+      "label": "[Çüüšţööm pĺááñéţ]",
+      "detail": "[Pííçķ ţĥéé pĺááñééţ ááñď šĥáápéé ííţ bééfööŕéé ţĥéé mááţçĥ. ~~]",
+      "state": "coming",
+      "testers": true
+    },
+    {
+      "id": "lan",
+      "label": "[Pĺááýý öövééŕ áá ñééţŵöŕķ]",
+      "detail": "[Ĥööšţ áá mááţçĥ ööŕ ĵööííñ ööñéé ööñ ýýööüüŕ ĺööçááĺ ñééţŵööŕķ. ]",
+      "state": "coming",
+      "testers": false
+    },
+    {
+      "id": "campaign",
+      "label": "[Çáámpáíĝñ]",
+      "detail": "[ÅÅ ŕüüñ ööf fííĝĥţš ááçŕööšš ţĥéé pĺááñééţ. ~~]",
+      "state": "coming",
+      "testers": false
+    }
+  ]
+}

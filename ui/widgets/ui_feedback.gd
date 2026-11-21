@@ -84,8 +84,35 @@ static func platform_line(info: Dictionary) -> String:
 	return "%s%s" % [info.get("os", ""), ", mobile" if bool(info.get("mobile", false)) else ""]
 
 
+## A test's stand-in for build_info.json (empty: the file is read). The game never sets it.
+static var info_override: Dictionary = {}
+
+
+## "2026-11-14" as "14 November 2026"; the text itself when it is not a date.
+static func long_date(iso: String) -> String:
+	var months: PackedStringArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+	var parts: PackedStringArray = iso.substr(0, 10).split("-")
+	if parts.size() == 3 and parts[0].is_valid_int() and parts[1].is_valid_int() and parts[2].is_valid_int() and int(parts[1]) >= 1 and int(parts[1]) <= 12:
+		return "%d %s %s" % [int(parts[2]), months[int(parts[1]) - 1], parts[0]]
+	return iso
+
+
+## The line a menu shows (A-TOOLS-07; docs/tools/version.md): "Version 0.1.7", or with `with_build` "Version 0.1.7 (build 59c6b195, 14 November 2026)" (the match-over card, so a report says which build it came from). "" when
+## the build has no version (a build made before the number: the line is left out, never "unknown").
+static func version_line(with_build: bool) -> String:
+	var info: Dictionary = build_info()
+	var v: String = str(info.get("version", ""))
+	if v == "":
+		return ""
+	if with_build and str(info.get("commit", "")) != "":
+		return UiData.fmt("prompt.version_build_line", {"v": v, "commit": str(info["commit"]).substr(0, 8), "date": long_date(str(info.get("date", "")))})
+	return UiData.fmt("prompt.version_line", {"v": v})
+
+
 ## {commit, date} from res://build_info.json if the build wrote one (CI does); {} otherwise.
 static func build_info() -> Dictionary:
+	if not info_override.is_empty():
+		return info_override
 	if not FileAccess.file_exists("res://build_info.json"):
 		return {}
 	var f := FileAccess.open("res://build_info.json", FileAccess.READ)

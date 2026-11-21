@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/ui-modes",
+  "title": "ui modes (schema 1)",
+  "description": "ui/data/modes.json: the start menu's list of modes (docs/ui/menus-a1.md). Version field: schema. Policy: closed; keys starting with '_' are comments. A mode row has an id, a label, a state (ready or coming) and whether the testers' package shows it; a ready row says how many people play.",
+  "type": "object",
+  "required": [
+    "schema",
+    "modes"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "mirror_pick": {
+      "type": "boolean"
+    },
+    "modes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/mode"
+      }
+    }
+  },
+  "patternProperties": {
+    "^_": true
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "mode": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "state",
+        "testers"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "state": {
+          "enum": [
+            "ready",
+            "coming"
+          ]
+        },
+        "players": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "testers": {
+          "type": "boolean"
+        }
+      },
+      "if": {
+        "properties": {
+          "state": {
+            "const": "ready"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "players"
+        ]
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "additionalProperties": false
+    }
+  }
+}

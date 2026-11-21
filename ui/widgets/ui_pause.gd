@@ -13,13 +13,31 @@ const ENTRIES_OVER: Array = ["again", "menu", "feedback"]
 ## The same with "Save this match" (features.json save_match): a small file of this match, in plain words.
 const ENTRIES_OVER_SAVE: Array = ["again", "save", "menu", "feedback"]
 const CONFIRM: Array = ["new_yes", "new_no"]
+## Quit's question (features.json menu_modes): "Close the game?", asked once.
+const CONFIRM_QUIT: Array = ["quit_yes", "quit_no"]
 const KEYS: Dictionary = {"resume": "pause_resume_key", "howto": "pause_howto_key", "new": "pause_new_key"}
 
 
-static func ids(confirm: bool, two: bool = false, over: bool = false) -> Array:
+static func ids(confirm: bool, two: bool = false, over: bool = false, quit_ask: bool = false) -> Array:
+	if quit_ask:
+		return CONFIRM_QUIT
+	var base: Array
 	if over and not confirm:
-		return ENTRIES_OVER_SAVE if UiData.feature("save_match") else ENTRIES_OVER
-	return CONFIRM if confirm else (ENTRIES_TWO if two else ENTRIES)
+		base = ENTRIES_OVER_SAVE if UiData.feature("save_match") else ENTRIES_OVER
+	else:
+		base = CONFIRM if confirm else (ENTRIES_TWO if two else ENTRIES)
+	if not confirm and quit_listed():
+		base = base + ["quit"]
+	return base
+
+
+## Whether the pause list and the match-over list carry a Quit row: with the A1 menus on, on a build that can close (not the browser, which has no window to close).
+static func quit_listed() -> bool:
+	return UiData.feature("menu_modes") and (quit_row_shown or not OS.has_feature("web"))
+
+
+## A picture switch (the demo's ?quitrow): list the Quit row in the browser's demo too, so a still can show it. The game never sets it.
+static var quit_row_shown: bool = false
 
 
 static func label(id: String) -> String:
@@ -34,9 +52,10 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 		var rp: Dictionary = rail_plan(vp, s, dp, st)
 		if bool(rp["fits"]):
 			return rp   # the Rail (docs/ui/menus-rail.md); where it does not fit, the card below is laid out as before
-	var confirm: bool = bool(st.get("confirm", false))
+	var quit_ask: bool = bool(st.get("quit_ask", false))
+	var confirm: bool = bool(st.get("confirm", false)) or quit_ask
 	var over: bool = bool(st.get("over", false))
-	var list: Array = ids(confirm, bool(st.get("two", false)), over)
+	var list: Array = ids(confirm and not quit_ask, bool(st.get("two", false)), over, quit_ask)
 	var status: String = str(st.get("status", "")) if not confirm else ""   # a short line under the buttons (Save this match says what happened); it takes the join line's place for its moment
 	var where_text: String = str(st.get("where", "")) if not confirm else ""   # where saved reports go (a LAN build)
 	var p2_join: bool = bool(st.get("join", false)) and not confirm and status == ""
@@ -50,7 +69,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var fs_body: int = UiText.px(22.0, cs)
 	var fs_small: int = UiText.px(18.0, cs)
 	var gap: float = maxf(10.0 * cs, 6.0)
-	var title: String = UiData.t("prompt.pause_new_ask") if confirm else (UiData.t("prompt.pause_over_title") if over else UiData.t("prompt.pause_title"))
+	var title: String = UiData.t("prompt.pause_quit_ask") if quit_ask else (UiData.t("prompt.pause_new_ask") if confirm else (UiData.t("prompt.pause_over_title") if over else UiData.t("prompt.pause_title")))
 	var title_h: float = UiText.height(fs_title) * 1.15 + gap
 	var avail_w: float = vp.x - 2.0 * margin - 2.0 * pad
 	var avail_h: float = vp.y - 2.0 * my - 2.0 * pad
@@ -100,17 +119,17 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 		var r := Rect2(card.position.x + pad + float(col) * (bw + gap), card.position.y + pad + title_h + float(row) * (tm + gap), bw, tm)
 		var id: String = str(list[i])
 		items.append({"id": id, "label": label(id), "key": UiData.t("prompt." + str(KEYS[id])) if (KEYS.has(id) and not touch) else "", "rect": r})
-	var fits: bool = Rect2(Vector2.ZERO, vp).encloses(card) and UiText.width(title, fs_title) <= cw - 2.0 * pad
+	var fits: bool = UiRail.holds(Rect2(Vector2.ZERO, vp), card) and UiText.width(title, fs_title) <= cw - 2.0 * pad
 	for jl in join_lines:
 		if UiText.width(str(jl), fs_small) > cw - 2.0 * pad + 0.5:
 			fits = false   # a foot line (a file name too long for the card) would spill over its edge
 	for it in items:
 		var need: float = UiText.width(str(it["label"]), fs_body) + (UiText.width(str(it["key"]), fs_small) + gap * 2.0 if str(it["key"]) != "" else 0.0) + 16.0
-		if need > bw or not card.encloses(it["rect"]) or (it["rect"] as Rect2).size.y < tm - 0.01:
+		if need > bw or not UiRail.holds(card, it["rect"]) or (it["rect"] as Rect2).size.y < tm - 0.01:
 			fits = false
 	var join_pos := Vector2(card.position.x + pad, card.end.y - pad - float(join_lines.size()) * lh_small + UiText.ascent(fs_small))
 	return {"join_lines": join_lines, "join_pos": join_pos, "lh_small": lh_small, "card": card, "title": title, "title_pos": Vector2(card.position.x + pad, card.position.y + pad + UiText.ascent(fs_title)), "items": items, "cols": cols, "tm": tm,
-		"fs_body": fs_body, "fs_title": fs_title, "fs_small": fs_small, "fits": fits, "bw": bw, "focus": int(st.get("focus", 0)), "confirm": confirm, "two": bool(st.get("two", false)), "join": join, "touch": touch, "cs": cs, "pad": pad, "gap": gap,
+		"fs_body": fs_body, "fs_title": fs_title, "fs_small": fs_small, "fits": fits, "bw": bw, "focus": int(st.get("focus", 0)), "confirm": confirm, "quit_ask": quit_ask, "two": bool(st.get("two", false)), "join": join, "touch": touch, "cs": cs, "pad": pad, "gap": gap,
 		"facts_lines": facts_lines, "facts_pos": Vector2(card.position.x + pad, card.position.y + pad + UiText.height(fs_title) * 1.15 + gap * 0.5 + UiText.ascent(fs_small))}
 
 
@@ -142,7 +161,7 @@ static func moved(p: Dictionary, focus: int, dx: int, dy: int) -> int:
 
 static func sig(p: Dictionary) -> Array:
 	if p.has("rail"):
-		return ["rail", str(p["title"]), int((p["card"] as Rect2).size.x), int(p["vp_y"]), int(float(p["cs"]) * 100.0), int(p["focus"]), p["confirm"], p["two"], p["join"], str(p["facts_lines"]), str(p["join_lines"]), p["device"], p["style"], int(float(p["slide"]) * 40.0), int(float(p["bar_t"]) * 40.0), int(float(p["bar_y"]))]
+		return ["rail", str(p["title"]), str(p.get("version", "")), int((p["card"] as Rect2).size.x), int(p["vp_y"]), int(float(p["cs"]) * 100.0), int(p["focus"]), p["confirm"], p["two"], p["join"], str(p["facts_lines"]), str(p["join_lines"]), p["device"], p["style"], int(float(p["slide"]) * 40.0), int(float(p["bar_t"]) * 40.0), int(float(p["bar_y"]))]
 	return [int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(p["cs"] * 100.0), p["touch"], int(p["focus"]), p["confirm"], p["two"], p["join"], str(p["facts_lines"]), str(p["join_lines"])]
 
 
@@ -195,10 +214,11 @@ static func draw(ci: CanvasItem, p: Dictionary) -> void:
 static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dictionary:
 	var m: Dictionary = UiRail.metrics(vp, s, dp)
 	var cs: float = float(m["cs"])
-	var confirm: bool = bool(st.get("confirm", false))
+	var quit_ask: bool = bool(st.get("quit_ask", false))
+	var confirm: bool = bool(st.get("confirm", false)) or quit_ask
 	var over: bool = bool(st.get("over", false))
 	var two: bool = bool(st.get("two", false))
-	var list: Array = ids(confirm, two, over)
+	var list: Array = ids(confirm and not quit_ask, two, over, quit_ask)
 	var device: String = str(st.get("device", "kbd"))
 	var style: String = str(st.get("style", "neutral"))
 	var reduced: bool = bool(st.get("reduced", false))
@@ -220,7 +240,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	# The title block: a small line over the screen's name (the result, on the match-over card).
 	var win: String = str(st.get("win", ""))
 	var kicker: String = UiData.t("prompt.rail_over") if (over and not confirm and win != "") else UiData.t("prompt.rail_kicker")
-	var title: String = UiData.t("prompt.pause_new_ask") if confirm else (win if (over and win != "") else (UiData.t("prompt.rail_over") if over else UiData.t("prompt.rail_paused")))
+	var title: String = UiData.t("prompt.pause_quit_ask") if quit_ask else (UiData.t("prompt.pause_new_ask") if confirm else (win if (over and win != "") else (UiData.t("prompt.rail_over") if over else UiData.t("prompt.rail_paused"))))
 	var title_lines: PackedStringArray = UiText.wrap(title, fs_title, rw - x0 * 2.0)
 	var top: float = maxf(vp.y * 0.07, 28.0 * cs)
 	var lh_title: float = UiText.height(fs_title) * 1.1
@@ -256,7 +276,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	# The hint strip: what the player's own device presses, wrapped inside the rail.
 	var hint_gh: float = maxf(26.0 * cs, 22.0)
 	var hint_fs: int = fs_small
-	var back_word: String = UiData.t("prompt.rail_hint_keep") if confirm else (UiData.t("prompt.rail_hint_again") if (over and UiData.feature("versus_flow")) else UiData.t("prompt.rail_hint_resume"))
+	var back_word: String = UiData.t("prompt.pause_quit_no") if quit_ask else UiData.t("prompt.rail_hint_keep") if confirm else (UiData.t("prompt.rail_hint_again") if (over and UiData.feature("versus_flow")) else UiData.t("prompt.rail_hint_resume"))
 	var pairs: Array = [["move", UiData.t("prompt.rail_hint_choose")], ["accept", UiData.t("prompt.rail_hint_select")], ["back", back_word]]
 	var entries: Array = UiRail.hint_entries(device, style, pairs, hint_gh, hint_fs)
 	var hint_lines: Array = []   # each [first entry, one past the last] on one line
@@ -271,7 +291,9 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 		line_w += (gap * 3.0 if i > from_i else 0.0) + w
 	hint_lines.append([from_i, entries.size()])
 	var hint_lh: float = hint_gh * 1.5
-	var hint_top: float = vp.y - maxf(vp.y * 0.04, 12.0) - hint_lh * float(hint_lines.size())
+	var version: String = str(st.get("version", ""))
+	var ver: Dictionary = UiRail.version_block(vp, x0, fs_small, version)
+	var hint_top: float = vp.y - maxf(vp.y * 0.04, 12.0) - hint_lh * float(hint_lines.size()) - float(ver["h"])
 	# The detail card on the right: the facts, then what a save did and where saved reports go (quieter).
 	var facts: Array = []
 	for ft in st.get("facts", []):
@@ -313,12 +335,12 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 		if UiText.width(str(tl), fs_title) > rw - x0 * 1.5:
 			fits = false
 	if has_card:
-		fits = fits and Rect2(Vector2.ZERO, vp).encloses(card) and card.position.x >= rw + gap and widest_word <= inner + 0.5
+		fits = fits and UiRail.holds(Rect2(Vector2.ZERO, vp), card) and card.position.x >= rw + gap and widest_word <= inner + 0.5
 	if chip_text != "":
-		fits = fits and chip.position.x >= rw + gap and Rect2(Vector2.ZERO, vp).encloses(chip) and (not has_card or chip.end.y + gap <= card.position.y)
+		fits = fits and chip.position.x >= rw + gap and UiRail.holds(Rect2(Vector2.ZERO, vp), chip) and (not has_card or chip.end.y + gap <= card.position.y)
 	fits = fits and hints_fit(entries, hint_lines, gap * 3.0, rw - x0 * 2.0)
 	for it in items:
-		if (it["rect"] as Rect2).size.y < tm - 0.01 or not rail.encloses(it["rect"]):
+		if (it["rect"] as Rect2).size.y < tm - 0.01 or not UiRail.holds(rail, it["rect"]):
 			fits = false
 	var focus: int = clampi(int(st.get("focus", 0)), 0, maxi(list.size() - 1, 0))
 	var bar_since: float = float(st.get("bar_since", 99.0))
@@ -330,10 +352,10 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	for d in detail:
 		facts_lines.append(str((d as Dictionary)["t"]))
 	return {"rail": true, "card": rail, "title": title, "title_lines": title_lines, "title_pos": title_pos, "kicker": kicker, "kicker_pos": Vector2(x0, top + UiText.ascent(fs_kicker)), "lh_title": lh_title,
-		"items": items, "row_ys": row_ys, "cols": 1, "tm": tm, "fs_body": fs_r, "fs_title": fs_title, "fs_small": fs_small, "fs_kicker": fs_kicker, "fits": fits, "bw": row_w, "focus": focus, "confirm": confirm, "two": two,
+		"items": items, "row_ys": row_ys, "cols": 1, "tm": tm, "fs_body": fs_r, "fs_title": fs_title, "fs_small": fs_small, "fs_kicker": fs_kicker, "fits": fits, "bw": row_w, "focus": focus, "confirm": confirm, "quit_ask": quit_ask, "two": two,
 		"join": p2_join or status != "" or where_text != "", "touch": false, "cs": cs, "pad": cpad, "gap": gap, "lh_small": lh_small, "x0": x0, "detail": detail, "detail_card": card, "has_card": has_card,
 		"card_kicker": UiData.t("prompt.rail_this_match") if has_card else "", "chip": chip, "chip_text": chip_text, "join_lines": join_lines, "join_pos": Vector2.ZERO, "facts_lines": facts_lines, "facts_pos": Vector2.ZERO,
-		"hints": entries, "hint_lines": hint_lines, "hint_gh": hint_gh, "hint_fs": hint_fs, "hint_top": hint_top, "hint_lh": hint_lh, "device": device, "style": style, "vp_y": vp.y,
+		"version": version, "version_pos": ver["pos"], "hints": entries, "hint_lines": hint_lines, "hint_gh": hint_gh, "hint_fs": hint_fs, "hint_top": hint_top, "hint_lh": hint_lh, "device": device, "style": style, "vp_y": vp.y,
 		"slide": UiRail.slide(float(st.get("since", 99.0)), reduced), "bar_t": 1.0 if (reduced or prev < 0) else clampf(bar_since / UiRail.BAR_SECS, 0.0, 1.0), "bar_y": UiRail.bar_y(row_ys, focus, prev, bar_since, reduced)}
 
 
@@ -376,6 +398,8 @@ static func draw_rail(ci: CanvasItem, p: Dictionary) -> void:
 		var lit: bool = absf(r.position.y - by) < r.size.y * 0.5
 		UiRail.draw_row_text(ci, Rect2(r.position + shift, r.size), str(it["label"]), str(it["key"]), lit, int(p["fs_body"]), int(p["fs_small"]))
 	var entries: Array = p["hints"]
+	if str(p["version"]) != "":
+		UiText.draw(ci, str(p["version"]), (p["version_pos"] as Vector2) + shift, int(p["fs_small"]), Color(dim, 0.8), -1)
 	var hy: float = float(p["hint_top"]) + float(p["hint_lh"]) * 0.5
 	for ln in p["hint_lines"]:
 		UiRail.draw_hints(ci, entries.slice(int(ln[0]), int(ln[1])), float(p["x0"]) + off, hy, float(p["hint_gh"]), int(p["hint_fs"]), float(p["gap"]) * 3.0, 1.0)

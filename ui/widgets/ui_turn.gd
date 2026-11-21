@@ -42,7 +42,7 @@ static func plan(vp: Vector2, s: float, dp: float) -> Dictionary:
 	var by: float = y
 	var btn := Rect2(card.get_center().x - bw * 0.5, card.end.y - pad - tm, bw, tm)
 	return {"card": card, "icon": icon, "title_lines": title_lines, "body_lines": body_lines, "title_y": ty, "body_y": by, "lh_t": lh_t, "lh_b": lh_b, "fs_t": fs_t, "fs_b": fs_b,
-		"button": btn, "label": label, "pad": pad, "cs": cs, "tm": tm, "fits": Rect2(Vector2.ZERO, vp).encloses(card) and card.encloses(btn) and by + float(body_lines.size()) * lh_b <= btn.position.y}
+		"button": btn, "label": label, "pad": pad, "cs": cs, "tm": tm, "fits": UiRail.holds(Rect2(Vector2.ZERO, vp), card) and UiRail.holds(card, btn) and by + float(body_lines.size()) * lh_b <= btn.position.y}
 
 
 static func hit(p: Dictionary, pos: Vector2) -> bool:

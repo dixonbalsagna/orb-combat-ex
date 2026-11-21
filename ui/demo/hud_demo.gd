@@ -33,6 +33,12 @@ func _ready() -> void:
 	UiHud.notice_auto = args.has("notice")
 	if args.has("three"):
 		UiData.set_feature("three_strengths", true)   # the three-strength HUD (--three)
+	if args.has("modes"):
+		UiData.set_feature("menu_modes", true)   # --modes: the A1 start menu (docs/ui/menus-a1.md): the list of modes, then the setup; --mpick=solo|versus opens the setup, --mquit asks Quit's question, --mtesters is the testers' package
+	if args.has("quitrow"):
+		UiPause.quit_row_shown = true   # --quitrow: the Quit row listed in the browser's demo too (it has no window to close; the game never sets this)
+	if args.has("mtesters"):
+		UiData.set_feature("testers_package", true)
 	if args.has("rail"):
 		UiData.set_feature("menus_rail", true)   # --rail: the Rail menus (docs/ui/menus-rail.md); --rdevice=pad draws the pad's buttons in the hints, --rdown=N moves the lit row down N rows, --rreduced cuts the motion
 	if args.has("rh"):
@@ -251,6 +257,8 @@ func _ready() -> void:
 			hud.pause_menu_action("down")
 		if args.has("pconfirm"):
 			hud.pause_menu_choose("new")
+		if args.has("pquit"):
+			hud.pause_menu_choose("quit")
 	if args.has("report"):
 		hud.report_now(0)   # --report (with --lan): F9 pressed: the legend row says what was saved
 	if args.has("over"):
@@ -270,10 +278,14 @@ func _ready() -> void:
 	if args.has("howto"):
 		hud.show_howto(args.has("firstrun"), int(args["howto"]) if str(args["howto"]).is_valid_int() else 0)
 	if args.has("menu"):
-		hud.show_start_menu(false)   # the start menu (--menu=2 with two players)
+		hud.show_start_menu(args.has("mmid"))   # the start menu (--menu=2 with two players; --mmid as opened from a match)
 		if str(args["menu"]) == "2":
 			hud._menu_cfg["players"] = 2
 			hud._menu_invalidate()
+	if args.has("mpick") and hud.is_start_menu_open():
+		hud._menu_activate(str(args["mpick"]))
+	if args.has("mquit") and hud.is_start_menu_open():
+		hud._menu_activate("quit")
 	if args.has("rdevice"):
 		hud._set_device = str(args["rdevice"])
 	if args.has("rreduced"):

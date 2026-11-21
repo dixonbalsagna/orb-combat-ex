@@ -1,6 +1,6 @@
 # The Rail menus (UI & UX, 2026-11-09; Orb picked mockup A on 2026-11-09: "rail looks great, keep going")
 
-**Status: built behind a switch, off.** `menus_rail` in `ui/data/features.json` (false). With it off every screen is exactly as before. The mockup is `docs/ui/mockups/menus-modern/a-rail.html`; the design pass and the choices behind it are in `docs/ui/menus-modern.md`. This page is what the code does.
+**Status: main's default (sprint A1, A-MODES-15 and A-UI-04).** `menus_rail` in `ui/data/features.json` is true; set false, every screen is exactly as it was before the Rail. Built behind a switch on 2026-11-09 and on in Orb's builds through the build tool's row; the row goes now that main ships it on. The Rail's checks run at 1280 by 800 (the Steam Deck's) as well, and every Rail screen has a still in `docs/ui/runs/<sha>/screen-sweep/`. The mockup is `docs/ui/mockups/menus-modern/a-rail.html`; the design pass and the choices behind it are in `docs/ui/menus-modern.md`. This page is what the code does.
 
 ## 1. What changed
 
@@ -41,10 +41,14 @@ The demo's web build takes `?rail` with any screen: `?rail&menu`, `?rail&menu=2&
 
 ## 7. Tests
 
-`_menus_rail_rules` in hud_check: the switch ships off and the old plans are untouched with it off; every new word exists; the ease and the slide are monotone, 180 and 140 ms, cut under Reduce motion; at eleven sizes, touch on and off, kbd and pad, the pause plan in five states (pause, new match, two people with the join line, match over with a saved file, a LAN pause), the start menu in three (one player, two, mid-match) and Settings all fit, every control is a real target inside its panel, the detail and chip clear the rail, the hints show one device only, Legal's notice is the plan's text word for word, and the narrow or short sizes keep today's layout; the lit bar sits on the focused row, slides and cuts; the plan keys change with the animation step; in the HUD the rail slides in and holds, the D-pad moves the lit row and the hints switch to the pad, Reduce motion cuts, LB, RB, Q, E and a click move between tabs, and with the switch off Q and E do nothing and RB pages as before.
+`_menus_rail_rules` in hud_check: the switch ships off and the old plans are untouched with it off; every new word exists; the ease and the slide are monotone, 180 and 140 ms, cut under Reduce motion; at twelve sizes (1280 by 800 among them), touch on and off, kbd and pad, the pause plan in five states (pause, new match, two people with the join line, match over with a saved file, a LAN pause), the start menu in three (one player, two, mid-match) and Settings all fit, every control is a real target inside its panel, the detail and chip clear the rail, the hints show one device only, Legal's notice is the plan's text word for word, and the narrow or short sizes keep today's layout; the lit bar sits on the focused row, slides and cuts; the plan keys change with the animation step; in the HUD the rail slides in and holds, the D-pad moves the lit row and the hints switch to the pad, Reduce motion cuts, LB, RB, Q, E and a click move between tabs, and with the switch off Q and E do nothing and RB pages as before.
 
 ## 8. Left for later
 
 - **Comfort switches** stay on the Start screen (Orb has not answered the question in docs/ui/menus-modern.md section 8).
 - **Reset this page (Y)** from the mockup is not built (nothing in the HUD resets a page yet); the hint strip does not show it.
 - **Phone layouts** are parked (ADR 0011).
+
+## 9. Switches that go with it (GW1a's left-panel menus group; sprint A1)
+
+Shipped on with the Rail: `slam_hint` ("Hold to slam", the teaching line for the stick's slam) in `ui/data/features.json`, and the two beam-struggle push defaults `struggle_push` and `struggle_push_p2` set to **stick** (Controls' pushUi and pushUi2, `ui/data/options.json`). The push defaults teach the right stick's push, which only means something while the sim's push mode is on (`beamStruggle.pushMode.enabled`, Encounter's); they land with or after it, and the older rules that were written for the face default or for the hint off are rewritten or pinned in `hud_check` with the reason.

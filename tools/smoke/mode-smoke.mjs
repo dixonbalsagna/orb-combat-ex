@@ -4,7 +4,7 @@
 //   --godot: default the GODOT environment variable. --path: default the repository. --out: default docs/tools/runs/<commit8>/ (one file: mode-smoke-<mode>-<platform>.json).
 //   Exit 0 when every step of every mode passed; 1 when a step failed; 2 when the game did not start or wrote no result (a run that reads nothing is not a pass).
 //   Under a Godot run the game can leave a Godot process behind if it hangs: the run is stopped by its own PID after --limit seconds (default 240).
-// A row that a build does not have (the start menu's "quit" today) counts as ok with the detail "not built": the result file says so, and docs/tools/mode-smoke.md lists what is not built.
+// The run presses REAL PAD BUTTONS through the A1 menus at 1280 by 800 (UI & UX, 2026-11-20): a result that does not say input "pad" is not a pass, and a step marked "not built" is a failure (a build with no Quit row fails).
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -22,7 +22,9 @@ export function readResult(doc, mode) {
   const steps = Array.isArray(doc.steps) ? doc.steps : [];
   if (!steps.length) problems.push('the result has no steps');
   const failed = steps.filter((s) => !s.ok).map((s) => s.name);
-  const notBuilt = steps.filter((s) => s.ok && s.detail === 'not built').map((s) => s.name);
+  const notBuilt = steps.filter((s) => s.detail === 'not built').map((s) => s.name);
+  if (doc.input !== 'pad') problems.push('the run did not drive the menus with pad presses (input is "' + doc.input + '")');
+  if (notBuilt.length) problems.push('a step is marked not built: ' + notBuilt.join('; '));
   // a smoke that stopped early (the last step is not the way back to the menu / the quit row) did not get through
   const names = steps.map((s) => String(s.name));
   if (steps.length && !names.some((n) => /quit/.test(n))) problems.push('the run stopped before its last step (the start menu\'s quit row was never looked for)');
@@ -83,7 +85,9 @@ async function main() {
       if (!r.doc) { code = Math.max(code, 2); console.error(`mode-smoke: ${mode}: no result file${r.timedOut ? ' (stopped at the time limit)' : ''}`); continue; }
       if (!read.ok) code = Math.max(code, 1);
       const record = { ...r.doc, platform, commit, checked: read.ok ? 'pass' : 'fail', problems: read.problems, notBuilt: read.notBuilt };
-      writeFileSync(join(outDir, `mode-smoke-${mode}-${platform}.json`), JSON.stringify(record, null, 2) + '\n');
+      const file = join(outDir, `mode-smoke-${mode}-${platform}.json`);
+      writeFileSync(file, JSON.stringify(record, null, 2) + '\n');
+      console.log(`mode-smoke: result saved: ${file}`);
       console.log(`mode-smoke: ${mode} on ${platform}: ${read.ok ? 'PASS' : 'FAIL'}${read.failed.length ? ' (failed: ' + read.failed.join('; ') + ')' : ''}${read.problems.length ? ' (' + read.problems.join('; ') + ')' : ''}`);
     }
   } finally {

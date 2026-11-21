@@ -316,7 +316,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, 
 		var ry: float = body.position.y + float(rec["y"]) - scroll
 		var rect := Rect2(body.position.x, ry, row_w, float(rec["h"]))
 		rec["rect"] = rect
-		rec["visible"] = rect.intersects(body)
+		rec["visible"] = UiRail.meets(rect, body)
 		if rec["kind"] == HEADING:
 			rec["label_x"] = rect.position.x
 			rec["label_y"] = rect.position.y + rect.size.y - lh * 0.3
@@ -385,7 +385,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, 
 		"max_scroll": max_scroll, "scroll": scroll, "stack": stack, "hint": hint_text, "hint_lines": hint_lines, "help_lines": help_lines, "help_base": base_lines, "help_need": help_need, "help_scroll": int(st.get("help_scroll", 0)), "sbw": sbw, "bad": bad, "gap": gap, "focus": int(st.get("focus", -1)),
 		"status": status, "confirm": conf_rects, "confirm_labels": confirm}
 	for cr2 in conf_rects:
-		if not card.encloses(cr2):
+		if not UiRail.holds(card, cr2):
 			bad += 1
 	out["bad"] = bad
 	out["fits"] = fits and bad == 0 and body.size.y >= tm

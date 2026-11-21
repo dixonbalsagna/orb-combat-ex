@@ -38,6 +38,7 @@ signal pause_menu_opened                   # the pause menu opened: the host fre
 signal pause_menu_closed(reason: String)   # it closed: "resume" (the host unfreezes) or "new" (the host unfreezes and starts a match)
 signal pause_entry(entry: String)          # an entry was chosen: resume, howto, settings, feedback, about, new (then new_yes or new_no)
 signal new_match_requested                 # New match was confirmed
+signal quit_requested                      # Quit was confirmed ("Close the game?" answered yes, from the start menu, the pause menu or the match-over card): the host closes the game; on the web there is no Quit row
 signal lane_colors_changed(a: Color, b: Color)   # a fighter's lane colour (its aura, used for its plate, bark and face borders) changed: the host passes them to SplitView.set_panel_colors
 signal player_two_leave_requested          # the pause menu's "Player two: hand back to the AI" was chosen: the host gives slot 1 back to the AI
 signal howto_closed(first_run: bool)   # it closed (from a first run it has then been marked seen)
@@ -87,7 +88,7 @@ var opts: Dictionary = {
 }
 var insets := Vector4.ZERO     # left, top, right, bottom safe-area insets from the host (phone notches)
 
-var lan_report_fn: Callable = Callable()   # (tags: String, note: String) -> String: the host saves a report now (LAN: host.lan.report, Netcode) and answers the file name, "" on failure; unset, the web page downloads one and anything else says it cannot yet (docs/ui/lan-report.md)
+var lan_report_fn: Callable = Callable()   # (tags: String, note: String[, reason: String]) -> String: the host saves a report now (LAN: host.lan.report, Netcode) and answers the file name, "" on failure; unset, the web page downloads one and anything else says it cannot yet (docs/ui/lan-report.md)
 var _save_status: String = ""
 var _save_until: float = 0.0
 var _report_t: float = -100.0          # the HUD clock at the last report (one a second: a held chord or a second press must not save twice)
@@ -147,6 +148,7 @@ var _lane_sent: Array = [Color(0, 0, 0, 0), Color(0, 0, 0, 0)]
 var _l_pmenu: UiLayer
 var _pm_open := false
 var _pm_confirm := false              # New match is asking "Start a new match?"
+var _pm_quit := false                 # the pause card is asking "Close the game?"
 var _pm_focus := 0                    # index into UiPause.ids(_pm_confirm)
 var _pm_down := ""                    # the button a press started on (a release over the same one chooses it)
 var _l_remap: UiLayer
@@ -227,6 +229,9 @@ var _turn_anyway := false             # "Play upright anyway" was pressed this s
 var _l_turn: UiLayer
 var _menu_kind := false               # the notice slot is showing the start menu (UiMenu), not the gate's text
 var _menu_focus := 0
+var _menu_page := ""                 # the A1 start menu's page (UiMenu.PAGE_MODES, PAGE_SETUP, PAGE_QUIT); "" is the single card of before (features.json menu_modes, and only where the Rail is usable)
+var _menu_version := ""              # the version line on the list of modes (from the host's report context), read when the menu opens
+var _ut := 0.0                       # the menus' own clock (the Rail's slides): it runs while the game is held, unlike _t (A-UI-01: the game advances the HUD by 0 while the sim is paused)
 var _set_t0 := -99.0                  # the HUD clock when Settings opened (the Rail slides in from it)
 var _menu_t0 := -99.0                 # the HUD clock when the start menu opened (the Rail slides in from it)
 var _menu_seen := 0                   # the focus the Rail last saw, to notice a move
@@ -494,7 +499,20 @@ func _anchor(slot: int) -> Dictionary:
 	return a
 
 
+## The menus' clock moves with the game's when the game runs, and by real time when it does not (the pause menu, the start menu: the host advances the HUD by 0), so a menu always slides in.
+func _process(delta: float) -> void:
+	if _dt <= 0.0:
+		_ut += delta
+
+
+## The menus' clock by hand (a test that plays the game's paused frames: set_process(false), advance(0.0), advance_ui(dt)).
+func advance_ui(dt: float) -> void:
+	_ut += dt
+
+
 func advance(dt: float) -> void:
+	if dt > 0.0:
+		_ut += dt
 	_anchor_memo = [null, null]
 	_anchor_memo_on = true
 	_advance(dt)
@@ -957,7 +975,7 @@ func _update_layers() -> void:
 	_turn_step()
 	_l_turn.update_sig(UiTurn.sig(turn_plan()) if _turn_open else null)
 	if _menu_kind and _notice_open:
-		_l_notice.update_sig(UiMenu.sig(menu_plan()) if not _set_open else null)
+		_l_notice.update_sig(UiMenu.sig(menu_plan()) if (not _set_open and not is_loading()) else null)   # not while a planet is being made: the loading screen shows alone (its input is the loading screen's)
 	else:
 		_l_notice.update_sig(UiNotice.sig(notice_plan()) if (_notice_open and (_notice_gate and not _set_open or not _notice_gate)) else null)
 	_l_gate_back.update_sig([_set_open] if (_notice_open and _notice_gate) else null)
@@ -1628,6 +1646,20 @@ func _menu_load() -> void:
 	for k in ["p1", "p2"]:
 		if not ["kb", "pad"].has(str(_menu_cfg[k])):
 			_menu_cfg[k] = "kb"
+	if UiData.feature("menu_modes"):
+		var pair: Array = UiModes.default_pair()
+		_menu_cfg["p1_fighter"] = UiModes.fighter_of(s.get("p1_fighter", pair[0]), 0)
+		_menu_cfg["p2_fighter"] = UiModes.fighter_of(s.get("p2_fighter", pair[1]), 1)
+		_menu_cfg["mode"] = str(s.get("mode", ""))
+		_menu_fix_pair()
+
+
+## Two players may not pick the same fighter until the two can be told apart on screen (modes.json mirror_pick): the second one moves on to the next.
+func _menu_fix_pair() -> void:
+	if UiModes.mirror_ok() or not _menu_cfg.has("p1_fighter"):
+		return
+	if str(_menu_cfg["p1_fighter"]) == str(_menu_cfg["p2_fighter"]):
+		_menu_cfg["p2_fighter"] = UiModes.fighter_step(str(_menu_cfg["p2_fighter"]), 1, true)
 
 
 ## Open the start menu: at boot, and from the pause menu's Main menu or the match-over card. It holds the match like the gate (nothing of it is shown) and Start hands the
@@ -1639,7 +1671,9 @@ func show_start_menu(mid_match: bool = false) -> void:
 	_menu_kind = true
 	_menu_mid = mid_match
 	_menu_focus = 0
-	_menu_t0 = _t
+	_menu_page = UiMenu.PAGE_MODES if _menu_modes_on() else ""
+	_menu_version = _version_line(false)
+	_menu_t0 = _ut
 	_menu_seen = 0
 	_menu_prev = -1
 	_menu_bar_t0 = -99.0
@@ -1677,12 +1711,145 @@ func menu_plan() -> Dictionary:
 	if _menu_focus != _menu_seen:   # the Rail's lit bar slides from the row it left (UI state only)
 		_menu_prev = _menu_seen
 		_menu_seen = _menu_focus
-		_menu_bar_t0 = _t
-	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed(), "device": _set_device, "style": str(opts["glyph_style"]), "since": _t - _menu_t0, "prev": _menu_prev, "bar_since": _t - _menu_bar_t0, "reduced": bool(opts["reduced_motion"])})
+		_menu_bar_t0 = _ut
+	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed(), "device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _menu_t0, "prev": _menu_prev, "bar_since": _ut - _menu_bar_t0, "reduced": bool(opts["reduced_motion"]), "page": _menu_page, "version": _menu_version})
 
 
 func _menu_rows() -> Array:
+	if _menu_page != "":
+		return UiMenu.rows_page(_menu_page, _menu_cfg, _menu_mid, _menu_not_now_allowed())
 	return UiMenu.rows(_menu_cfg, _menu_mid, _menu_not_now_allowed())
+
+
+## The host's Escape (a keyboard's only way to close the game): with the A1 menus it asks first, wherever the player is (the start menu's own question, the pause menu's question over a match); with them off it closes as it always did.
+func request_quit() -> void:
+	if not UiData.feature("menu_modes"):
+		quit_requested.emit()
+		return
+	if _notice_open and _menu_kind and _menu_page != "":
+		_menu_go(UiMenu.PAGE_QUIT, 1)
+		return
+	if _pm_open:
+		_pm_confirm = false
+		_pm_quit = true
+		_pm_focus = 1
+		_l_pmenu.invalidate()
+		return
+	if _notice_open or _howto_open or _fb_open or _set_open or _rm_open or _turn_open:
+		return   # another card has the screen: its own Back closes it, Escape is not a way past it
+	show_pause_menu()
+	_pm_quit = true
+	_pm_focus = 1
+	_l_pmenu.invalidate()
+
+
+## Whether the start menu is the A1 one (a list of modes, then the setup): the switch is on and the screen is one the Rail lays out.
+func _menu_modes_on() -> bool:
+	if not (UiData.feature("menu_modes") and UiRail.usable(layout.vp, bool(opts["touch_ui"]))):
+		return false
+	# Both pages must fit this screen (they have no card to fall back to): else the single card stays.
+	var st := {"cfg": _menu_cfg, "mid_match": _menu_mid, "not_now": _menu_not_now_allowed(), "focus": 0, "safe": Rect2(), "version": _version_line(false)}
+	for pg in [UiMenu.PAGE_MODES, UiMenu.PAGE_SETUP]:
+		st["page"] = pg
+		var pl: Dictionary = UiMenu.rail_list_plan(layout.vp, layout.s, dp, st) if pg == UiMenu.PAGE_MODES else UiMenu.rail_plan(layout.vp, layout.s, dp, st)
+		if not bool(pl["fits"]):
+			return false
+	return true
+
+
+## "Version <the build's commit>" from the host's report context, or "" when it has none.
+func _version_line(with_build: bool = false) -> String:
+	return UiFeedback.version_line(with_build)
+
+
+## Go to a page of the start menu with the lit row at `focus`; the lit bar does not slide across the change.
+func _menu_go(page: String, focus: int) -> void:
+	_menu_page = page
+	_menu_focus = focus
+	_menu_seen = focus
+	_menu_prev = -1
+	_menu_bar_t0 = -99.0
+	_menu_invalidate()
+
+
+func _menu_fighter_step(row: String, d: int) -> void:
+	var slot: int = 0 if row == "f1" else 1
+	var pair: Array = UiModes.pair_step([str(_menu_cfg.get("p1_fighter", "")), str(_menu_cfg.get("p2_fighter", ""))], slot, d)
+	_menu_cfg["p1_fighter"] = str(pair[0])
+	_menu_cfg["p2_fighter"] = str(pair[1])
+
+
+## What a press, Enter or A does on a row of the A1 pages.
+func _menu_activate(row: String) -> void:
+	if not UiModes.mode(row).is_empty():
+		if UiModes.ready(row):
+			_menu_cfg["players"] = UiModes.players(row)
+			_menu_cfg["mode"] = row
+			_menu_fix_pair()
+			_menu_go(UiMenu.PAGE_SETUP, 0)
+		return   # a mode that is not built yet says so in its card and cannot be started
+	match row:
+		"quit":
+			_menu_go(UiMenu.PAGE_QUIT, 1)   # Stay is where the focus starts: the game is not closed by a stray Enter
+		"quit_no":
+			_menu_go(UiMenu.PAGE_MODES, maxi(UiMenu.rows_page(UiMenu.PAGE_MODES, _menu_cfg, _menu_mid, _menu_not_now_allowed()).find("quit"), 0))
+		"quit_yes":
+			quit_requested.emit()
+		"back":
+			if _menu_page == UiMenu.PAGE_SETUP:
+				_menu_go(UiMenu.PAGE_MODES, maxi(UiMenu.rows_page(UiMenu.PAGE_MODES, _menu_cfg, _menu_mid, _menu_not_now_allowed()).find(str(_menu_cfg.get("mode", ""))), 0))
+			else:
+				hide_photo_notice(false)
+		"not_now":
+			_menu_not_now()
+		"start":
+			_menu_start()
+		"p1", "p2":
+			_menu_cfg[row] = "pad" if str(_menu_cfg.get(row, "kb")) == "kb" else "kb"
+		"ai":
+			_menu_cfg["ai_level"] = UiMenu.level_step(str(_menu_cfg.get("ai_level", UiMenu.DEFAULT_LEVEL)), 1, true)
+		"f1", "f2":
+			_menu_fighter_step(row, 1)
+		_:
+			if UiMenu.CHECKS.has(row):
+				_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
+	if _notice_open and _menu_kind:
+		_menu_invalidate()
+
+
+## The A1 pages' d-pad, keys and Enter: Up and Down wrap at both ends, Left and Right change only the lit row's own value, Back goes up a page.
+func _menu_page_action(act: String, row: String, rows: Array) -> void:
+	match act:
+		"up":
+			_menu_focus = UiMenu.moved(_menu_focus, -1, rows.size(), true)
+		"down":
+			_menu_focus = UiMenu.moved(_menu_focus, 1, rows.size(), true)
+		"left", "right":
+			var d: int = -1 if act == "left" else 1
+			if row == "p1" or row == "p2":
+				_menu_cfg[row] = "kb" if d < 0 else "pad"
+			elif row == "ai":
+				_menu_cfg["ai_level"] = UiMenu.level_step(str(_menu_cfg.get("ai_level", UiMenu.DEFAULT_LEVEL)), d, false)
+			elif row == "f1" or row == "f2":
+				_menu_fighter_step(row, d)
+			elif UiMenu.CHECKS.has(row):
+				_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
+		"accept":
+			_menu_activate(row)
+			return
+		"back":
+			match _menu_page:
+				UiMenu.PAGE_SETUP:
+					_menu_activate("back")
+				UiMenu.PAGE_QUIT:
+					_menu_activate("quit_no")
+				_:
+					if _menu_mid:
+						hide_photo_notice(false)
+					elif _menu_not_now_allowed():
+						_menu_not_now()
+			return
+	_menu_invalidate()
 
 
 func _menu_invalidate() -> void:
@@ -1698,11 +1865,14 @@ func menu_action(act: String) -> void:
 	var rows: Array = _menu_rows()
 	_menu_focus = clampi(_menu_focus, 0, rows.size() - 1)
 	var row: String = str(rows[_menu_focus])
+	if _menu_page != "":
+		_menu_page_action(act, row, rows)
+		return
 	match act:
 		"up":
-			_menu_focus = UiMenu.moved(_menu_focus, -1, rows.size())
+			_menu_focus = UiMenu.moved(_menu_focus, -1, rows.size(), true)   # the start menu wraps at both ends (A-UI-06)
 		"down":
-			_menu_focus = UiMenu.moved(_menu_focus, 1, rows.size())
+			_menu_focus = UiMenu.moved(_menu_focus, 1, rows.size(), true)
 		"left", "right":
 			var d: int = -1 if act == "left" else 1
 			if row == "players":
@@ -1740,6 +1910,23 @@ func menu_action(act: String) -> void:
 
 func _menu_press(h: Dictionary) -> void:
 	var row: String = str(h.get("row", ""))
+	if _menu_page != "":
+		var prs: Array = _menu_rows()
+		if prs.has(row):
+			_menu_focus = prs.find(row)
+		match str(h.get("kind", "")):
+			"cycle":
+				_menu_fighter_step(row, int(h["value"]))
+				_menu_invalidate()
+			"radio":
+				if row == "ai":
+					_menu_cfg["ai_level"] = UiMenu.level_of(str(h["value"]))
+				else:
+					_menu_cfg[row] = str(h["value"])
+				_menu_invalidate()
+			_:
+				_menu_activate(row)
+		return
 	match str(h.get("kind", "")):
 		"radio":
 			if row == "players":
@@ -1772,6 +1959,7 @@ func _menu_start() -> void:
 		_menu_cfg["players"] = 1   # Player 2 chose a controller there is none for: the page starts against the computer, never with a body standing still
 	if UiData.feature("versus_flow") and _menu_via_pad and int(_menu_cfg.get("players", 1)) == 1 and str(_menu_cfg.get("p1", "kb")) == "kb" and _pads_connected() > 0:
 		_menu_cfg["p1"] = "pad"   # Start was pressed on a pad with Player 1 still on the keyboard (a saved choice): the person is on the pad, and slot 1 must not be left to nobody
+	_menu_fix_pair()
 	var cfg: Dictionary = _menu_cfg.duplicate()
 	if UiData.rf_locked():
 		cfg["reduce_flashing"] = true   # locked on (Legal's addendum 10): the box is not offered, and nothing saved or sent can say Off
@@ -1813,11 +2001,7 @@ func _menu_input(event: InputEvent) -> void:
 			_menu_via_pad = true
 			match event.button_index:
 				JOY_BUTTON_DPAD_UP:
-					if UiData.feature("versus_flow") and _menu_focus <= 0 and _menu_kind and _notice_open:
-						_menu_focus = _menu_rows().size() - 1   # up from the top wraps to the last row (Start), so a pad reaches it in one press
-						_menu_invalidate()
-					else:
-						menu_action("up")
+					menu_action("up")   # wraps like Down does (A-UI-06): Up from the top is the last row, Down from the last is the first
 				JOY_BUTTON_DPAD_DOWN:
 					menu_action("down")
 				JOY_BUTTON_DPAD_LEFT:
@@ -1952,6 +2136,11 @@ func hide_loading() -> void:
 	_l_loading.update_sig(null)
 
 
+## Whether the start menu is on the screen: open, and no planet being made (it waits behind the loading screen, which answers every press).
+func start_menu_visible() -> bool:
+	return _notice_open and _menu_kind and not is_loading()
+
+
 func is_loading() -> bool:
 	return not _load_state.is_empty()
 
@@ -1967,7 +2156,8 @@ func _paint_loading(ci: CanvasItem) -> void:
 
 func _paint_notice(ci: CanvasItem) -> void:
 	if _menu_kind and _notice_open:
-		UiMenu.draw(ci, menu_plan())
+		if not is_loading():
+			UiMenu.draw(ci, menu_plan())   # while a planet is being made the start menu waits: it would answer no press (they all go to the loading screen) and hide the loading screen's words
 		return
 	if _notice_open and (_notice_gate and not _set_open or not _notice_gate):
 		UiNotice.draw(ci, notice_plan())
@@ -2111,9 +2301,10 @@ func show_pause_menu(over: bool = false) -> void:
 	_pm_over = over
 	_pm_open = true
 	_pm_confirm = false
+	_pm_quit = false
 	_pm_focus = 0
 	_pm_down = ""
-	_pm_t0 = _t
+	_pm_t0 = _ut
 	_pm_seen = 0
 	_pm_prev = -1
 	_pm_bar_t0 = -99.0
@@ -2127,6 +2318,7 @@ func _pm_close(reason: String) -> void:
 	_pm_over = false
 	_pm_open = false
 	_pm_confirm = false
+	_pm_quit = false
 	_pm_down = ""
 	_l_pmenu.update_sig(null)
 	pause_menu_closed.emit(reason)
@@ -2144,9 +2336,9 @@ func pause_menu_plan() -> Dictionary:
 	if _pm_focus != _pm_seen:   # the Rail's lit bar slides from the row it left (UI state only)
 		_pm_prev = _pm_seen
 		_pm_seen = _pm_focus
-		_pm_bar_t0 = _t
-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "where": UiData.t("prompt.report_where") if lan_report_fn.is_valid() else "",
-		"device": _set_device, "style": str(opts["glyph_style"]), "since": _t - _pm_t0, "prev": _pm_prev, "bar_since": _t - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else ""})
+		_pm_bar_t0 = _ut
+	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "quit_ask": _pm_quit, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "where": UiData.t("prompt.report_where") if lan_report_fn.is_valid() else "",
+		"device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _pm_t0, "prev": _pm_prev, "bar_since": _ut - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else "", "version": _version_line(_pm_over)})
 
 
 func _paint_pmenu(ci: CanvasItem) -> void:
@@ -2193,6 +2385,15 @@ func pause_menu_choose(id: String) -> void:
 		"new_no":
 			_pm_confirm = false
 			_pm_focus = UiPause.ids(false, _humans() >= 2, _pm_over).find("new")
+		"quit":
+			_pm_quit = true
+			_pm_focus = 1   # Stay is where the focus starts: the game is not closed by a stray Enter
+		"quit_no":
+			_pm_quit = false
+			_pm_focus = maxi(UiPause.ids(false, _humans() >= 2, _pm_over).find("quit"), 0)
+		"quit_yes":
+			_pm_quit = false
+			quit_requested.emit()
 		"p2_leave":
 			player_two_leave_requested.emit()
 	_l_pmenu.invalidate()
@@ -2203,7 +2404,7 @@ func pause_menu_action(act: String) -> void:
 	if not _pm_open:
 		return
 	var p: Dictionary = pause_menu_plan()
-	var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2, _pm_over)
+	var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2, _pm_over, _pm_quit)
 	_pm_focus = clampi(_pm_focus, 0, list.size() - 1)
 	match act:
 		"up":
@@ -2217,7 +2418,9 @@ func pause_menu_action(act: String) -> void:
 		"accept":
 			pause_menu_choose(str(list[clampi(_pm_focus, 0, list.size() - 1)]))
 		"back":
-			if _pm_confirm:
+			if _pm_quit:
+				pause_menu_choose("quit_no")
+			elif _pm_confirm:
 				pause_menu_choose("new_no")
 			elif _pm_over and UiData.feature("versus_flow"):
 				_pm_focus = maxi(list.find("again"), 0)   # the match is over: there is nothing to resume, and the card is shown once. Back brings the focus to Play again
@@ -2290,7 +2493,7 @@ func _pause_input(event: InputEvent) -> void:
 			var id: String = UiPause.hit(pause_menu_plan(), event.position)
 			if event.pressed:
 				_pm_down = id
-				var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2, _pm_over)
+				var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2, _pm_over, _pm_quit)
 				if id != "" and list.has(id):
 					_pm_focus = list.find(id)
 					_l_pmenu.invalidate()
@@ -2386,7 +2589,7 @@ func show_settings(focus_key: String = "") -> void:
 		return
 	UiSettings.two_humans = _humans() >= 2
 	_set_open = true
-	_set_t0 = _t
+	_set_t0 = _ut
 	_set_scroll = 0.0
 	_set_drag = {}
 	_set_axis = {}
@@ -2439,7 +2642,7 @@ func settings_focus() -> int:
 
 ## What the Settings plan is asked for: the focus, the scroll and the help's scroll, the last device, and (for the Rail) the glyph style, the time since it opened and Reduce motion.
 func _settings_st() -> Dictionary:
-	return {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll, "style": str(opts["glyph_style"]), "since": _t - _set_t0, "reduced": bool(opts["reduced_motion"])}
+	return {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll, "style": str(opts["glyph_style"]), "since": _ut - _set_t0, "reduced": bool(opts["reduced_motion"])}
 
 
 func settings_plan() -> Dictionary:
@@ -3572,10 +3775,18 @@ func match_record() -> Dictionary:
 
 
 ## "Save this match" on the match-over card: the host saves it (LAN: the same report call, with the player's note), else the web page downloads it, else it says plainly that this build cannot. The card stays open and says what happened for a few seconds.
+## Ask the host to save with a reason: "report" (F9 and the feedback panel; the host's automatic reports, pruned to the newest 20) or "save" ("Save this match": a file the player chose to keep, which the recorder never prunes).
+## A hook that takes only (tags, note) is called as it always was and the reason is left to the host (the LAN hook); one that takes a third argument gets it.
+func _report_save(tags: String, note: String, reason: String) -> String:
+	if lan_report_fn.get_argument_count() >= 3:
+		return str(lan_report_fn.call(tags, note, reason))
+	return str(lan_report_fn.call(tags, note))
+
+
 func save_match() -> String:
 	var rec: Dictionary = match_record()
 	if lan_report_fn.is_valid():
-		var file: String = str(lan_report_fn.call("", _fb_text.text))
+		var file: String = _report_save("", _fb_text.text, "save")
 		_save_status = UiData.fmt("prompt.report_saved", {"file": file}) if file != "" else UiData.t("prompt.report_failed")
 	elif UiWebClip.available():
 		UiWebClip.download_text("orb-combat-match-%s.json" % str(rec.get("seed", "x")), JSON.stringify(rec, "  "))

@@ -34,8 +34,8 @@ func _set_controls_switches(on: bool) -> void:
 	for k in CONTROLS_SWITCHES:
 		if sw.has(k) or on:
 			sw[k] = on
-	sw["driverOnRb"] = false   # Controls leaves this one off in the shipped data
-	sw["dodgeHeld"] = false    # and this one
+	sw["driverOnRb"] = false   # pinned off for the older rules, which were written for the pad without it (the shipped data has it on once the pad group has landed; the rules that read the shipped state turn it on themselves)
+	sw["dodgeHeld"] = false    # and this one the same way
 	SimInputData.timing["switches"] = sw
 	SimInputData.clear_overrides()
 	SimInputData.invalidate()
@@ -87,6 +87,11 @@ func _run() -> void:
 	await _retired_words_rules()
 	await _report_this_rules()
 	await _menus_rail_rules()
+	await _pause_clock_rules()
+	await _menus_a1_rules()
+	await _menus_a1_extra_rules()
+	await _save_reason_rules()
+	await _boot_load_menu_rules()
 	await _plain_words_rules()
 	await _launch_marks_rules()
 	await _tug_rules()
@@ -769,6 +774,9 @@ func _live_on() -> void:
 	UiData.set_feature("beam_teach", false)     # and without the beam teaching lines (the older rules look at the old words)
 	UiData.set_feature("struggle_teach", false)  # and without the clash rows and the refusal words (the older rules look at the legend as it was)
 	UiData.set_feature("refusal_words", false)
+	UiData.set_feature("menus_rail", false)   # the older rules look at the cards the Rail replaces on a desktop screen (they are still the layout of a small or touch screen); the Rail's own rules turn it on themselves
+	UiData.set_feature("menu_modes", false)   # the older rules look at the single start card and at the pause lists without Quit (the A1 rules turn it on themselves)
+	UiData.set_feature("slam_hint", false)    # the older rules look at the legend and the teaching row without the "Hold to slam" hint (shipped on since A1)
 	UiData.set_feature("report_this", false)   # the first-matches line about reporting and the match-over card's Save this match are newer than the older rules, which look at the teaching row and the card as they were
 	UiData.set_feature("save_match", false)
 	for k in ["forms_live", "specials_live", "brace_live", "vanish_live"]:
@@ -1568,15 +1576,15 @@ func _refusal_struggle_rules() -> void:
 	UiData.set_feature("right_hand", true)   # the right-hand attacks on: the stick push exists
 	hud.advance(1.0 / 60.0)   # the first frame gives each model its person's choice and starts the match clock
 	await process_frame
-	var def_ok: bool = hud.hub.model(0).push_mode == "face" and hud.hub.model(1).push_mode == "face"   # the fallback: while the stick push is inert in a struggle, everyone is taught the face buttons
-	hud.set_option("struggle_push_p2", "stick")
+	var def_ok: bool = str(o1["default"]) == "stick" and str(o2["default"]) == "stick" and hud.hub.model(0).push_mode == "stick" and hud.hub.model(1).push_mode == "stick"   # the shipped default is the right stick's push (pushUi and pushUi2, on since A1 with the push mode in the sim)
+	hud.set_option("struggle_push_p2", "face")
 	hud.advance(1.0 / 60.0)
 	await process_frame
-	var held_mid: bool = hud.hub.model(1).push_mode == "face"   # the match clock is running: a change in Options is next match's
+	var held_mid: bool = hud.hub.model(1).push_mode == "stick"   # the match clock is running: a change in Options is next match's
 	hud.hub.reset()
 	hud.advance(1.0 / 60.0)
 	await process_frame
-	var synced: bool = hud.hub.model(0).push_mode == "face" and hud.hub.model(1).push_mode == "stick" and held_mid
+	var synced: bool = hud.hub.model(0).push_mode == "stick" and hud.hub.model(1).push_mode == "face" and held_mid
 	hud.hub.reset()   # (a new match: the push modes are read again)
 	UiData.set_feature("right_hand", false)   # with them off there is no stick push: everyone is taught the face buttons, and the row is not listed
 	hud.advance(1.0 / 60.0)
@@ -1613,7 +1621,7 @@ func _refusal_struggle_rules() -> void:
 	_ok(quiet_before and up_in_struggle, "struggle teach: the legend that had gone quiet stays up for the whole of one of the first struggles (quiet before %s, up in the struggle %s)" % [str(quiet_before), str(up_in_struggle)])
 	hud.queue_free()
 	await process_frame
-	_ok(str(o1["default"]) == "face" and str(o2["default"]) == "face" and (o1["choices"] as Array) == ["stick", "face"] and in_controls and words_ok and def_ok and synced, "struggle teach: Beam struggle push is a Controls row for each player (Right stick by default, or Face buttons), and the HUD gives each fighter their person's choice")
+	_ok(str(o1["default"]) == "stick" and str(o2["default"]) == "stick" and (o1["choices"] as Array) == ["stick", "face"] and in_controls and words_ok and def_ok and synced, "struggle teach: Beam struggle push is a Controls row for each player (Right stick by default, or Face buttons), and the HUD gives each fighter their person's choice")
 	_live_on()
 
 
@@ -2037,7 +2045,9 @@ func _slam_hint_rules() -> void:
 	if FileAccess.file_exists(UiPrefs.path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
 	UiData.set_feature("beam_teach", null)
-	UiData.set_feature("slam_hint", null)   # the shipped state (off until Encounter's slam is on)
+	UiData.set_feature("slam_hint", null)   # the shipped state (on since A1: the hint ships with the stick's slam)
+	var shipped_on: bool = UiData.feature("slam_hint")
+	UiData.set_feature("slam_hint", false)
 	var hub := _refusal_rules_hub()
 	var m: UiFighterModel = hub.model(0)
 	_slam_cue(hub, 0)
@@ -2059,9 +2069,9 @@ func _slam_hint_rules() -> void:
 	UiPrefs.set_value("taught_slam_n", 0)
 	_slam_cue(hub, 0)
 	var needs_teach: bool = m.teach == ""   # it rides the teaching lines: with them off it is quiet
-	_ok(shipped_off and said, "slam hint: off as shipped (no word, no count); on, Encounter's slam_hint cue says 'Hold to slam' with the stick's glyph for 1.5 s")
+	_ok(shipped_on and shipped_off and said, "slam hint: ships on (A1); with the switch off no word and no count; on, Encounter's slam_hint cue says 'Hold to slam' with the stick's glyph for 1.5 s")
 	_ok(computer_quiet and third_ok and limit_ok and needs_teach, "slam hint: not for the computer, only the first three times, and not with the teaching lines off")
-	UiData.set_feature("slam_hint", null)
+	UiData.set_feature("slam_hint", false)   # back to the older rules' pin
 	UiData.set_feature("beam_teach", null)
 	if FileAccess.file_exists(UiPrefs.path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
@@ -10794,9 +10804,10 @@ func _rail_key(hud: UiHud, keycode: int) -> void:
 
 
 func _menus_rail_rules() -> void:
-	# The switch ships off; with it off every plan is today's.
+	# The switch ships on (A1: the Rail is main's default); with it off every plan is today's.
 	UiData.set_feature("menus_rail", null)
-	_ok(not UiData.feature("menus_rail"), "menus rail: the switch ships off")
+	_ok(UiData.feature("menus_rail"), "menus rail: the switch ships on")
+	UiData.set_feature("menus_rail", false)
 	for k in ["rail_kicker", "rail_paused", "rail_over", "rail_this_match", "rail_hint_choose", "rail_hint_select", "rail_hint_resume", "rail_hint_keep", "rail_hint_again", "rail_hint_not_now", "rail_hint_tabs", "rail_hint_back",
 			"rail_hint_choose_change", "rail_p2_leave", "rail_start_title", "rail_read_first", "rail_you", "rail_against", "rail_the_computer", "rail_now_default"]:
 		_ok(UiData.t("prompt." + k) != "prompt." + k, "menus rail: the word %s exists" % k)
@@ -10821,7 +10832,7 @@ func _menus_rail_rules() -> void:
 		last = e
 	_ok(monotone and UiRail.ease_out(0.0) == 0.0 and UiRail.ease_out(1.0) == 1.0, "menus rail: the ease only goes forward")
 	# Geometry at every size: wide enough sizes get the Rail and fit; short or narrow ones and touch keep today's card.
-	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1366, 768), 1.0], [Vector2(1600, 1000), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(2560, 1080), 1.0], [Vector2(1000, 600), 1.0], [Vector2(1024, 576), 1.0],
+	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1280, 800), 1.0], [Vector2(1366, 768), 1.0], [Vector2(1600, 1000), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(2560, 1080), 1.0], [Vector2(1000, 600), 1.0], [Vector2(1024, 576), 1.0],
 		[Vector2(844, 390), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(390, 844), 1.0]]
 	for cse in cases:
 		var sz: Vector2 = cse[0]
@@ -11021,8 +11032,8 @@ func _menus_rail_rules() -> void:
 	var h0: Dictionary = hud.menu_plan()
 	hud.menu_action("down")
 	var h1: Dictionary = hud.menu_plan()
-	for i in range(12):
-		hud.menu_action("down")
+	for i in range(((hud.menu_plan()["rows"] as Array).find("start")) - 1):
+		hud.menu_action("down")   # (the start menu wraps now, A-UI-06: walk exactly to the buttons)
 	var hend: Dictionary = hud.menu_plan()
 	_ok(_is_rail(h0) and int(h1["focus"]) == 1 and str((hend["rows"] as Array)[int(hend["focus"])]) in ["start", "not_now"] and not bool(hend["bar_vis"]), "menus rail (hud): down walks the choices to the buttons")
 	hud.menu_action("up")
@@ -11030,4 +11041,503 @@ func _menus_rail_rules() -> void:
 	_ok(true, "menus rail (hud): the start menu answers up and down")
 	hud.hide_photo_notice(false)
 	hud.queue_free()
-	UiData.set_feature("menus_rail", null)
+	UiData.set_feature("menus_rail", false)   # back to the older rules' pin
+
+
+## A-UI-01: the Rail's pause menu opens the way the game opens it. The game holds the sim while the pause menu is open and advances the HUD by 0 (render/core/main.gd: ui_hud.advance(0.0 if host.paused else delta)),
+## so a slide timed on the HUD's own clock never started and the menu stayed off the screen. The menus have their own clock now: it runs by the game's step when the game runs and by real time when it does not.
+func _pause_clock_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_pause_clock.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiData.set_feature("menus_rail", true)
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.set_option("reduced_motion", false)
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	hud.set_process(false)   # by hand, so the count is exact: the frames of a held game are advance(0.0) and the menus' clock
+	hud.show_pause_menu()
+	var at_open: float = float(hud.pause_menu_plan()["slide"])
+	for i in range(30):
+		hud.advance(0.0)
+		hud.advance_ui(1.0 / 60.0)
+	var held: Dictionary = hud.pause_menu_plan()
+	_ok(bool(held.has("rail")) and at_open < 0.2 and float(held["slide"]) == 1.0 and (held["card"] as Rect2).size.x > 0.0, "pause clock: pausing with the clock stopped (advance 0.0 each frame) the rail slides in and settles (%.2f at open, %.2f half a second on)" % [at_open, float(held["slide"])])
+	hud.pause_menu_action("down")
+	for i in range(4):
+		hud.advance(0.0)
+		hud.advance_ui(1.0 / 60.0)
+	var mid: Dictionary = hud.pause_menu_plan()
+	var ys: Array = mid["row_ys"]
+	_ok(float(mid["bar_y"]) > float(ys[0]) and float(mid["bar_y"]) < float(ys[1]), "pause clock: with the clock stopped the lit bar still slides to the next row")
+	hud._pm_close("test")
+	# The old behaviour, for the record: with no menu clock the slide never leaves 0 (the fault the case above catches).
+	var stuck := UiHud.new()
+	stuck.size = Vector2(1280, 720)
+	root.add_child(stuck)
+	await process_frame
+	stuck.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	stuck.set_process(false)
+	stuck.advance(1.0 / 60.0)
+	stuck.show_pause_menu()
+	for i in range(30):
+		stuck.advance(0.0)
+	_ok(float(stuck.pause_menu_plan()["slide"]) == 0.0, "pause clock: without the menus' clock a held game's slide stays at 0 (what Orb saw)")
+	stuck.queue_free()
+	# Real time: the HUD's own process step moves the menus' clock while the game advances it by 0.
+	var live := UiHud.new()
+	live.size = Vector2(1280, 720)
+	root.add_child(live)
+	await process_frame
+	live.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	live.advance(1.0 / 60.0)
+	live.show_pause_menu()
+	var t0: int = Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t0 < 400:
+		live.advance(0.0)
+		await process_frame
+	_ok(float(live.pause_menu_plan()["slide"]) == 1.0, "pause clock: in real time (the HUD's process step) a held game's rail is in place after 0.4 s")
+	live.hide_settings()
+	live.queue_free()
+	# Reduce motion: in place at once.
+	hud.set_option("reduced_motion", true)
+	hud.show_pause_menu()
+	_ok(float(hud.pause_menu_plan()["slide"]) == 1.0, "pause clock: with Reduce motion on the menu is in place at once")
+	hud._pm_close("test")
+	hud.queue_free()
+	UiData.set_feature("menus_rail", false)   # back to the older rules' pin
+
+
+# --- The A1 start menu: modes, setup, fighters, Quit (docs/ui/menus-a1.md) ------------------------------------------------------
+
+## A pad button or a key, one press, into the menus as the player's hand does it (they read `_unhandled_input`).
+func _a1_press(hud: UiHud, button: int) -> void:
+	var e := InputEventJoypadButton.new()
+	e.button_index = button
+	e.pressed = true
+	hud._unhandled_input(e)
+
+
+func _menus_a1_rules() -> void:
+	UiData.set_feature("menus_rail", true)
+	UiData.set_feature("menu_modes", true)
+	UiData.set_feature("testers_package", null)
+	# The words.
+	for k in ["modes_title", "setup_title", "mode_coming", "mode_not_ready", "menu_quit", "pause_quit", "pause_quit_ask", "pause_quit_yes", "pause_quit_no", "menu_f1", "menu_f2", "menu_fc", "no_mirror", "version_line"]:
+		_ok(UiData.t("prompt." + k) != "prompt." + k, "a1 menus: the word %s exists" % k)
+	# The data: modes.json and the roster.
+	var ids: Array = []
+	var shape_ok := true
+	for m in UiModes.data().get("modes", []):
+		var mid: String = str((m as Dictionary).get("id", ""))
+		if mid == "" or ids.has(mid) or str((m as Dictionary).get("label", "")) == "" or not ["ready", "coming"].has(str((m as Dictionary).get("state", ""))) or not (m as Dictionary).has("testers"):
+			shape_ok = false
+		if str((m as Dictionary).get("state", "")) == "ready" and not [1, 2].has(int((m as Dictionary).get("players", 0))):
+			shape_ok = false
+		ids.append(mid)
+	_ok(shape_ok and ids.size() >= 6 and UiModes.ready("solo") and UiModes.ready("versus") and not UiModes.ready("horde") and not UiModes.ready("nope"), "a1 menus: modes.json has an id, a label, a state and a testers flag on every row; solo and two players are ready, the rest are coming")
+	var all_n: int = UiModes.modes().size()
+	UiData.set_feature("testers_package", true)
+	var tester_ids: Array = []
+	for m in UiModes.modes():
+		tester_ids.append(str((m as Dictionary)["id"]))
+	UiData.set_feature("testers_package", null)
+	_ok(not tester_ids.has("campaign") and not tester_ids.has("lan") and tester_ids.has("solo") and tester_ids.size() == all_n - 2 and UiModes.modes().size() == all_n, "a1 menus: in the testers' package the campaign and the network rows are left out, and only there")
+	var roster = JSON.parse_string(FileAccess.get_file_as_string("res://data/fighters/roster.json"))
+	var pick: Array = UiModes.fighters()
+	var no_ref := true
+	for id in pick:
+		if str(id) == "REFERENCE":
+			no_ref = false
+	_ok(pick.size() >= 2 and no_ref and roster is Array and pick.size() == (roster as Array).size() - 1 and str(pick[0]) == str((roster as Array)[0]), "a1 menus: the fighters to pick come from the roster file, in its order, without the practice dummy (%s)" % str(pick))
+	var a: String = str(pick[0])
+	var b: String = str(pick[1])
+	var sw: Array = UiModes.pair_step([a, b], 0, 1)
+	var sw2: Array = UiModes.pair_step([a, b], 1, 1)
+	_ok(not UiModes.mirror_ok() and UiModes.fighter_step(a, 1, true) == b and UiModes.fighter_step(b, 1, true) == a and UiModes.fighter_step(a, -1, false) == a and sw == [b, a] and sw2 == [b, a], "a1 menus: the list wraps, and with no mirror pick a step onto the other player's fighter swaps the two (a roster of two can still be picked from)")
+	# Plans at every size.
+	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1280, 800), 1.0], [Vector2(1366, 768), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(2560, 1080), 1.0], [Vector2(1000, 600), 1.0], [Vector2(844, 390), 1.0], [Vector2(390, 844), 1.0]]
+	for cse in cases:
+		var sz: Vector2 = cse[0]
+		var dpv: float = cse[1]
+		var lay := UiLayout.new()
+		lay.dp = dpv
+		lay.compute(sz, false)
+		var rail_ok: bool = sz.x >= UiRail.MIN_W and sz.y >= UiRail.MIN_H and sz.x >= sz.y * 1.3
+		for dev in ["kbd", "pad"]:
+			for page in ["modes", "quit", "setup"]:
+				for mode in ["solo", "versus", "mid"]:
+					if page != "setup" and mode == "versus":
+						continue
+					var cfg := {"players": 2 if mode == "versus" else 1, "p1": "kb", "p2": "pad", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true, "p1_fighter": str(pick[0]), "p2_fighter": str(pick[1])}
+					var st := {"focus": 0, "cfg": cfg, "mid_match": mode == "mid", "not_now": false, "device": dev, "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "safe": Rect2(), "page": page, "version": "Version 6a30b4c9" if sz.y >= 800.0 else ""}
+					var p: Dictionary = UiMenu.plan(sz, lay.s, dpv, false, st)
+					var is_rail: bool = p.has("rail")
+					var tag := "a1 menus %dx%d %s %s %s" % [int(sz.x), int(sz.y), dev, page, mode]
+					if not rail_ok or sz.y < 700.0:
+						_ok(true, "%s: too small or not wide for the pages: the HUD keeps the single card there (UiHud._menu_modes_on asks the plans whether they fit)" % tag)
+						continue
+					var hits_ok := true
+					for it in p["items"]:
+						var h: Dictionary = UiMenu.hit(p, (it["rect"] as Rect2).get_center())
+						if str(h.get("row", "")) != str(it["row"]) or (it["rect"] as Rect2).size.y < float(p["tm"]) - 0.01 or not Rect2(Vector2.ZERO, sz).encloses(it["rect"]):
+							hits_ok = false
+					for i in range((p["items"] as Array).size()):
+						for j in range(i + 1, (p["items"] as Array).size()):
+							if (p["items"][i]["rect"] as Rect2).intersects(p["items"][j]["rect"]):
+								hits_ok = false
+					var notice_ok := true
+					if page == "setup" and mode != "mid":
+						notice_ok = " ".join(p["notice_lines"]) == UiMenu.notice(cfg)
+					_ok(is_rail and bool(p["fits"]) and hits_ok and notice_ok, "%s: fits, every control is a target on screen, none overlap, Legal's notice word for word where it shows" % tag)
+	# The pages' rows.
+	var cfg1 := {"players": 1, "p1": "kb", "p2": "kb", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true, "p1_fighter": a, "p2_fighter": b}
+	var cfg2: Dictionary = cfg1.duplicate()
+	cfg2["players"] = 2
+	var setup1: Array = UiMenu.rows_page("setup", cfg1, false, false)
+	var setup2: Array = UiMenu.rows_page("setup", cfg2, false, false)
+	_ok(setup1.slice(0, 4) == ["p1", "f1", "ai", "f2"] and setup2.slice(0, 4) == ["p1", "f1", "p2", "f2"] and setup1.back() == "back" and setup1[setup1.size() - 2] == "start" and setup1.size() == setup2.size(), "a1 menus: the setup's rows are Player 1, its fighter, the computer's level or Player 2, that fighter, the boxes, Start, Back; the two cases are the same length")
+	var mrows: Array = UiMenu.rows_page("modes", cfg1, false, false)
+	_ok(mrows.slice(0, UiModes.modes().size()) == ids.slice(0, UiModes.modes().size()) and mrows.has("quit") == UiPause.quit_listed() and UiMenu.rows_page("modes", cfg1, true, false).has("back"), "a1 menus: the list's rows are the modes from the data, then Back to the match mid-match and Quit")
+	# The HUD: opened as the game opens it, a pad alone.
+	UiPrefs.path = "user://ui_prefs_test_a1.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	var started: Array = []
+	hud.menu_started.connect(func(c): started.append(c))
+	var quits: Array = [0]
+	hud.quit_requested.connect(func(): quits[0] += 1)
+	hud.show_start_menu(false)
+	var p0: Dictionary = hud.menu_plan()
+	_ok(str(p0.get("page", "")) == "modes" and p0.has("rail") and str((p0["rows"] as Array)[0]) == ids[0], "a1 menus (hud): the start menu opens on the list of modes")
+	var session: Array = []
+	var rec := func(what: String) -> void:
+		var pl: Dictionary = hud.menu_plan()
+		session.append("%s -> page %s, lit row %s" % [what, str(pl["page"]), str((pl["rows"] as Array)[int(pl["focus"])])])
+	rec.call("opened")
+	var n_rows: int = (hud.menu_plan()["rows"] as Array).size()
+	_a1_press(hud, JOY_BUTTON_DPAD_UP)
+	rec.call("D-pad up from the top")
+	var wrapped_up: bool = int(hud.menu_plan()["focus"]) == n_rows - 1
+	_a1_press(hud, JOY_BUTTON_DPAD_DOWN)
+	rec.call("D-pad down from the last")
+	var wrapped_down: bool = int(hud.menu_plan()["focus"]) == 0
+	_ok(wrapped_up and wrapped_down, "a1 menus (hud): on the list Up from the top is the last row and Down from the last is the first")
+	# A mode that is not built cannot be started.
+	var coming_idx: int = -1
+	for i in range(ids.size()):
+		if not UiModes.ready(str(ids[i])):
+			coming_idx = i
+			break
+	for i in range(coming_idx):
+		_a1_press(hud, JOY_BUTTON_DPAD_DOWN)
+	rec.call("D-pad down to %s" % str(ids[coming_idx]))
+	_a1_press(hud, JOY_BUTTON_A)
+	rec.call("A on it (coming)")
+	_ok(str(hud.menu_plan()["page"]) == "modes" and started.is_empty(), "a1 menus (hud): A on a mode that is not built does nothing")
+	# Solo: the setup, every row, every direction.
+	for i in range(coming_idx):
+		_a1_press(hud, JOY_BUTTON_DPAD_UP)
+	_a1_press(hud, JOY_BUTTON_A)
+	rec.call("A on the first mode")
+	var sp: Dictionary = hud.menu_plan()
+	_ok(str(sp["page"]) == "setup" and int(hud.menu_config()["players"]) == 1 and (sp["rows"] as Array).slice(0, 4) == ["p1", "f1", "ai", "f2"], "a1 menus (hud): A on solo opens the setup with one player")
+	var rows_now: Array = hud.menu_plan()["rows"]
+	var cross_ok := true
+	var cross_why := ""
+	for ri in range(rows_now.size()):
+		for dir in [JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_DOWN]:
+			hud._menu_go("setup", ri)
+			var before_cfg: Dictionary = hud.menu_config()
+			var before_rows: Array = hud.menu_plan()["rows"]
+			var lit: String = str(before_rows[ri])
+			_a1_press(hud, dir)
+			var after_cfg: Dictionary = hud.menu_config()
+			var after_rows: Array = hud.menu_plan()["rows"]
+			if after_rows != before_rows:
+				cross_ok = false
+				cross_why = "rows changed on %s with %s" % [lit, str(dir)]
+			for k in before_cfg:
+				if str(before_cfg[k]) != str(after_cfg.get(k, "")):
+					var own: bool = (k == lit) or (lit == "ai" and k == "ai_level") or ((lit == "f1" or lit == "f2") and (k == "p1_fighter" or k == "p2_fighter"))   # a fighter step onto the other player's fighter swaps the two (no mirror pick): the one exception, and the rows never change
+					if not own:
+						cross_ok = false
+						cross_why = "%s changed %s with %s" % [lit, str(k), str(dir)]
+			if (dir == JOY_BUTTON_DPAD_UP or dir == JOY_BUTTON_DPAD_DOWN):
+				var want: int = posmod(ri + (-1 if dir == JOY_BUTTON_DPAD_UP else 1), rows_now.size())
+				if int(hud.menu_plan()["focus"]) != want:
+					cross_ok = false
+					cross_why = "up/down at row %d went to %d" % [ri, int(hud.menu_plan()["focus"])]
+	_ok(cross_ok, "a1 menus (hud): on every row of the setup, in all four directions: Up and Down wrap at both ends, and Left or Right changes only the lit row's own value (a fighter step may swap the two fighters) and never the rows (%s)" % cross_why)
+	# The fighters.
+	hud._menu_go("setup", 1)
+	var f_before: String = str(hud.menu_config()["p1_fighter"])
+	_a1_press(hud, JOY_BUTTON_DPAD_RIGHT)
+	rec.call("D-pad right on Player 1 fighter")
+	var f1: String = str(hud.menu_config()["p1_fighter"])
+	var f2: String = str(hud.menu_config()["p2_fighter"])
+	_ok(f1 != f_before and f1 != f2 and pick.has(f1) and pick.has(f2), "a1 menus (hud): Left and Right pick the next fighter from the roster; the other player's is never the same (a step onto it swaps them)")
+	for i in range(6):
+		_a1_press(hud, JOY_BUTTON_DPAD_RIGHT)
+	_ok(str(hud.menu_config()["p1_fighter"]) != str(hud.menu_config()["p2_fighter"]), "a1 menus (hud): however many presses, the two players never hold the same fighter while a mirror pick is off")
+	# Back goes up a page; solo is lit again.
+	_a1_press(hud, JOY_BUTTON_B)
+	rec.call("B")
+	_ok(str(hud.menu_plan()["page"]) == "modes" and str((hud.menu_plan()["rows"] as Array)[int(hud.menu_plan()["focus"])]) == "solo", "a1 menus (hud): B on the setup goes back to the list with the mode lit")
+	# Two players and Start with a pad alone.
+	_a1_press(hud, JOY_BUTTON_DPAD_DOWN)
+	_a1_press(hud, JOY_BUTTON_A)
+	rec.call("A on the second mode")
+	var vp2: Dictionary = hud.menu_plan()
+	_ok(str(vp2["page"]) == "setup" and int(hud.menu_config()["players"]) == 2 and (vp2["rows"] as Array).slice(0, 4) == ["p1", "f1", "p2", "f2"], "a1 menus (hud): A on the second mode opens the setup for two players")
+	hud._menu_go("setup", (vp2["rows"] as Array).find("start"))
+	_a1_press(hud, JOY_BUTTON_A)
+	rec.call("A on Start")
+	var sent: Dictionary = started.back() if not started.is_empty() else {}
+	_ok(started.size() == 1 and int(sent.get("players", 0)) == 2 and pick.has(str(sent.get("p1_fighter", ""))) and pick.has(str(sent.get("p2_fighter", ""))) and str(sent.get("p1_fighter", "")) != str(sent.get("p2_fighter", "")) and str(sent.get("mode", "")) == "versus", "a1 menus (hud): Start tells the host once, with the mode, the players and the two fighters")
+	# Quit: asks once.
+	hud.show_start_menu(false)
+	var qi: int = (hud.menu_plan()["rows"] as Array).find("quit")
+	hud._menu_go("modes", qi)
+	_a1_press(hud, JOY_BUTTON_A)
+	rec.call("A on Quit")
+	var qp: Dictionary = hud.menu_plan()
+	_ok(str(qp["page"]) == "quit" and quits[0] == 0 and (qp["rows"] as Array) == ["quit_yes", "quit_no"] and str((qp["rows"] as Array)[int(qp["focus"])]) == "quit_no", "a1 menus (hud): Quit asks first, with Stay lit, and nothing has closed")
+	_a1_press(hud, JOY_BUTTON_B)
+	rec.call("B on the question")
+	_ok(str(hud.menu_plan()["page"]) == "modes" and quits[0] == 0, "a1 menus (hud): B on the question stays")
+	_a1_press(hud, JOY_BUTTON_A)
+	_a1_press(hud, JOY_BUTTON_DPAD_UP)
+	_a1_press(hud, JOY_BUTTON_A)
+	rec.call("A on Close the game")
+	_ok(quits[0] == 1, "a1 menus (hud): the second answer closes the game, once")
+	hud.hide_photo_notice(false)
+	# The pause list and the match-over list.
+	var pids: Array = UiPause.ids(false, false, false)
+	var oids: Array = UiPause.ids(false, false, true)
+	_ok(pids.back() == "quit" and oids.back() == "quit" and UiPause.ids(false, false, false, true) == ["quit_yes", "quit_no"], "a1 menus: the pause list and the match-over list end with Quit, and Quit asks")
+	hud.show_pause_menu()
+	var qrow: int = UiPause.ids(false, false, false).find("quit")
+	hud._pm_focus = qrow
+	hud.pause_menu_action("accept")
+	var pq: Dictionary = hud.pause_menu_plan()
+	_ok(bool(pq["quit_ask"]) and str(pq["title"]).to_lower().contains("close the game") and hud.pause_menu_focus() == 1 and quits[0] == 1, "a1 menus (hud): Quit on the pause menu asks with Stay lit")
+	hud.pause_menu_action("back")
+	_ok(not bool(hud.pause_menu_plan()["quit_ask"]) and quits[0] == 1, "a1 menus (hud): B on the question goes back to the list")
+	hud.pause_menu_choose("quit")
+	hud.pause_menu_choose("quit_yes")
+	_ok(quits[0] == 2, "a1 menus (hud): Close the game from the pause menu tells the host")
+	hud._pm_close("test")
+	# With the switch off nothing of the A1 menu shows: the old card, no Quit row.
+	UiData.set_feature("menu_modes", false)
+	hud.show_start_menu(false)
+	var off_p: Dictionary = hud.menu_plan()
+	_ok(str(off_p.get("page", "x")) == "" and not UiPause.ids(false, false, false).has("quit") and not UiPause.ids(false, false, true).has("quit"), "a1 menus (hud): with menu_modes off the start menu is the single card and the lists have no Quit row")
+	# Up and Down on the single card wrap too (A-UI-06).
+	var old_rows: Array = hud._menu_rows()
+	hud._menu_focus = 0
+	hud.menu_action("up")
+	var old_up: bool = hud._menu_focus == old_rows.size() - 1
+	hud.menu_action("down")
+	_ok(old_up and hud._menu_focus == 0, "a1 menus (hud): on the single card, Up from the top is the last row and Down from the last is the first")
+	hud.hide_photo_notice(false)
+	# The host's Escape asks first: on the start menu with its own question, in a match with the pause menu's; with the switch off it closes as it always did.
+	UiData.set_feature("menu_modes", true)
+	var q0: int = quits[0]
+	hud.show_start_menu(false)
+	hud.request_quit()
+	var esc_menu: bool = str(hud.menu_plan()["page"]) == "quit" and quits[0] == q0
+	hud.hide_photo_notice(false)
+	hud.request_quit()
+	var esc_match: bool = hud.is_pause_menu_open() and bool(hud.pause_menu_plan()["quit_ask"]) and hud.pause_menu_focus() == 1 and quits[0] == q0
+	hud._pm_close("test")
+	UiData.set_feature("menu_modes", false)
+	hud.request_quit()
+	var esc_off: bool = quits[0] == q0 + 1
+	UiData.set_feature("menu_modes", true)
+	_ok(esc_menu and esc_match and esc_off, "a1 menus (hud): Escape no longer closes the game with no question: the start menu and a match ask first (%s %s), and with the switch off it closes as before (%s)" % [esc_menu, esc_match, esc_off])
+	hud.queue_free()
+	UiData.set_feature("menu_modes", false)   # back to the pin of the older rules
+	UiData.set_feature("menus_rail", false)   # back to the older rules' pin
+	print("SESSION (a pad on the start menu, presses and the lit row):")
+	for line in session:
+		print("  ", line)
+
+
+# --- Tiny windows and the version line (docs/ui/menus-a1.md; docs/tools/version.md) -------------------------------------------------
+
+func _menus_a1_extra_rules() -> void:
+	# A window too small to lay out must not make Godot print "Rect2 size is negative" on every frame (the headless smoke's): a negative rectangle never "fits" and is never asked.
+	_ok(not UiRail.holds(Rect2(0, 0, 10, 10), Rect2(1, 1, -2, 3)) and not UiRail.holds(Rect2(0, 0, -10, 10), Rect2(1, 1, 2, 3)) and UiRail.holds(Rect2(0, 0, 10, 10), Rect2(1, 1, 2, 3)) and not UiRail.holds(Rect2(0, 0, 10, 10), Rect2(5, 5, 20, 3)), "tiny windows: holds() is false for a negative rectangle and true for one that is inside")
+	_ok(not UiRail.meets(Rect2(0, 0, 10, 10), Rect2(1, 1, -2, 3)) and UiRail.meets(Rect2(0, 0, 10, 10), Rect2(5, 5, 20, 3)) and not UiRail.meets(Rect2(0, 0, 10, 10), Rect2(50, 50, 2, 3)), "tiny windows: meets() is false for a negative rectangle and says whether two real ones touch")
+	for on in [false, true]:
+		UiData.set_feature("menus_rail", on)
+		UiData.set_feature("menu_modes", on)
+		for sz in [Vector2(0, 0), Vector2(1, 1), Vector2(64, 64), Vector2(160, 90), Vector2(320, 180)]:
+			var lay := UiLayout.new()
+			lay.dp = 1.0
+			lay.compute(sz, false)
+			var cfg := {"players": 1, "p1": "kb", "p2": "kb", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true, "p1_fighter": "PROTAGONIST", "p2_fighter": "RIVAL"}
+			var pm: Dictionary = UiMenu.plan(sz, lay.s, 1.0, false, {"focus": 0, "cfg": cfg, "not_now": true, "safe": Rect2()})
+			var pp: Dictionary = UiPause.plan(sz, lay.s, 1.0, false, {"focus": 0})
+			var ps: Dictionary = UiSettings.plan(sz, lay.s, 1.0, false, {"focus": 1, "scroll": 0.0}, {})
+			var small: bool = sz.x <= 64.0
+			_ok(pm is Dictionary and pp is Dictionary and ps is Dictionary and (not small or (not bool(pm["fits"]) and not bool(pp["fits"]) and not bool(ps["fits"]))), "tiny windows %dx%d (Rail %s): the start menu, the pause menu and Settings plan without error (and, under 65 pixels wide, say they do not fit)" % [int(sz.x), int(sz.y), str(on)])
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)
+	# The version line: "Version 0.1.7"; with the build on the match-over card; nothing when the build has no number.
+	UiFeedback.info_override = {"version": "0.1.7", "commit": "59c6b195abcdef", "date": "2026-11-14"}
+	_ok(UiFeedback.version_line(false) == "Version 0.1.7" and UiFeedback.version_line(true) == "Version 0.1.7 (build 59c6b195, 14 November 2026)", "version line: 'Version 0.1.7', and with the build 'Version 0.1.7 (build 59c6b195, 14 November 2026)' (%s)" % UiFeedback.version_line(true))
+	_ok(UiFeedback.long_date("2026-11-14") == "14 November 2026" and UiFeedback.long_date("2026-01-02T10:00:00Z") == "2 January 2026" and UiFeedback.long_date("junk") == "junk" and UiFeedback.long_date("2026-13-01") == "2026-13-01", "version line: the date is written out in words, and anything that is not a date is left as it is")
+	UiFeedback.info_override = {"commit": "59c6b195"}
+	_ok(UiFeedback.version_line(false) == "" and UiFeedback.version_line(true) == "", "version line: a build with no version number shows no line, never 'unknown'")
+	UiFeedback.info_override = {"version": "0.1.7", "commit": "59c6b195abcdef", "date": "2026-11-14"}
+	UiData.set_feature("menus_rail", true)
+	UiData.set_feature("menu_modes", true)
+	var lay2 := UiLayout.new()
+	lay2.compute(Vector2(1280, 800), false)
+	var pb := {"focus": 0, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "win": ""}
+	var without: Dictionary = UiPause.plan(Vector2(1280, 800), lay2.s, 1.0, false, pb)
+	var withv: Dictionary = pb.duplicate()
+	withv["version"] = UiFeedback.version_line(false)
+	var pv: Dictionary = UiPause.plan(Vector2(1280, 800), lay2.s, 1.0, false, withv)
+	_ok(str(pv["version"]) == "Version 0.1.7" and float(pv["hint_top"]) < float(without["hint_top"]) and bool(pv["fits"]) and (pv["version_pos"] as Vector2).y > float(pv["hint_top"]) + float(pv["hint_lh"]) and (pv["version_pos"] as Vector2).y < 800.0, "version line: the pause menu carries it at the foot of the rail under the hints (the hints move up by its height) and fits")
+	var cfgv := {"players": 1, "p1": "kb", "p2": "kb", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true, "p1_fighter": "PROTAGONIST", "p2_fighter": "RIVAL"}
+	for pg in ["modes", "setup", "quit"]:
+		var mp: Dictionary = UiMenu.plan(Vector2(1280, 800), lay2.s, 1.0, false, {"focus": 0, "cfg": cfgv, "not_now": false, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "safe": Rect2(), "page": pg, "version": "Version 0.1.7"})
+		_ok(str(mp["version"]) == "Version 0.1.7" and bool(mp["fits"]) and (mp["version_pos"] as Vector2).y > float(mp["hint_top"]), "version line: the start menu's %s page carries it at the foot of the rail" % pg)
+	# In the HUD: the pause menu says the number, the match-over card the number with the build, the start menu the number; and with no number there is no line.
+	UiPrefs.path = "user://ui_prefs_test_a1x.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 800)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	hud.show_pause_menu()
+	var v_pause: String = str(hud.pause_menu_plan().get("version", "x"))
+	hud._pm_close("test")
+	hud.show_pause_menu(true)
+	var v_over: String = str(hud.pause_menu_plan().get("version", "x"))
+	hud._pm_close("test")
+	hud.show_start_menu(false)
+	var v_menu: String = str(hud.menu_plan().get("version", "x"))
+	hud.hide_photo_notice(false)
+	_ok(v_pause == "Version 0.1.7" and v_over == "Version 0.1.7 (build 59c6b195, 14 November 2026)" and v_menu == "Version 0.1.7", "version line (hud): the pause menu says the number, the match-over card the number and the build, the start menu the number (%s | %s | %s)" % [v_pause, v_over, v_menu])
+	UiFeedback.info_override = {"commit": "59c6b195"}
+	hud.show_pause_menu()
+	var v_none: String = str(hud.pause_menu_plan().get("version", "x"))
+	hud._pm_close("test")
+	_ok(v_none == "", "version line (hud): with no number in the build the pause menu has no line")
+	UiFeedback.info_override = {}
+	hud.queue_free()
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)
+
+
+# --- "Save this match" tells the host it is a save (S-42; Tools' recorder never prunes a save) --------------------------------------
+
+class ReportSink extends RefCounted:
+	var calls: Array = []
+
+	func rec(tags: String, note: String, reason: String = "report") -> String:
+		calls.append([tags, note, reason])
+		return "solo-test-%s.json" % reason
+
+
+func _save_reason_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_save_reason.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	var sink := ReportSink.new()
+	hud.lan_report_fn = Callable(sink, "rec")
+	hud._fb_text.text = "keep this one"
+	hud.save_match()
+	var save_call: Array = sink.calls.back() if not sink.calls.is_empty() else []
+	_ok(save_call == ["", "keep this one", "save"], "save reason: 'Save this match' tells a host whose hook takes a reason that this is a save (%s)" % str(save_call))
+	sink.calls.clear()
+	UiData.set_feature("report_this", true)   # (the older rules pin it off)
+	for i in range(70):
+		hud.advance(1.0 / 60.0)
+	hud.report_now(0)
+	UiData.set_feature("report_this", false)
+	_ok(sink.calls.size() == 1 and (sink.calls[0] as Array)[2] == "report", "save reason: F9 is still a report (the hook's own default)")
+	sink.calls.clear()
+	hud.show_feedback("pause")
+	hud.toggle_feedback_tag("bug")
+	hud.save_report()
+	_ok(sink.calls.size() == 1 and (sink.calls[0] as Array)[0] == "bug" and (sink.calls[0] as Array)[2] == "report", "save reason: the feedback panel's SAVE REPORT is a report")
+	hud.hide_feedback()
+	# A hook of two arguments (the LAN hook) is called as before.
+	var seen: Array = []
+	hud.lan_report_fn = func(tags: String, note: String) -> String:
+		seen.append([tags, note])
+		return "saved/report-0001.json"
+	hud.save_match()
+	_ok(seen.size() == 1 and (seen[0] as Array).size() == 2, "save reason: a hook of two arguments is called with two, as before")
+	hud.lan_report_fn = Callable()
+	hud.queue_free()
+
+
+# --- The start menu waits for the boot's planet (GW1a's round planet is made at boot: the menu drew over the loading screen and answered nothing) -----------
+
+func _boot_load_menu_rules() -> void:
+	UiData.set_feature("menus_rail", true)
+	UiData.set_feature("menu_modes", true)
+	UiPrefs.path = "user://ui_prefs_test_bootload.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 800)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	hud.show_start_menu(false)
+	var open_ok: bool = hud.start_menu_visible() and str(hud.menu_plan().get("page", "")) == "modes"
+	hud.show_loading("places", 0.2)
+	var hidden: bool = not hud.start_menu_visible() and hud.is_start_menu_open()
+	var e := InputEventJoypadButton.new()
+	e.button_index = JOY_BUTTON_A
+	e.pressed = true
+	hud._unhandled_input(e)
+	var inert: bool = str(hud.menu_plan().get("page", "")) == "modes"   # every press goes to the loading screen while it is up
+	hud.hide_loading()
+	var back_ok: bool = hud.start_menu_visible()
+	hud._unhandled_input(e)
+	var answers: bool = str(hud.menu_plan().get("page", "")) == "setup"
+	_ok(open_ok and hidden and inert and back_ok and answers, "boot load: the start menu is not on the screen while a planet is being made (the loading screen shows alone), and is, and answers A, as soon as the load ends (%s %s %s %s %s)" % [open_ok, hidden, inert, back_ok, answers])
+	hud.hide_photo_notice(false)
+	hud.queue_free()
+	UiData.set_feature("menu_modes", false)
+	UiData.set_feature("menus_rail", false)

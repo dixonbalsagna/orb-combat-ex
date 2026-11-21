@@ -86,10 +86,47 @@ static func rows(cfg: Dictionary, mid_match: bool, not_now: bool = false) -> Arr
 	return out
 
 
+## The A1 start menu's pages (docs/ui/menus-a1.md; features.json menu_modes): the list of modes, the match's setup, and Quit's question. Without a page the menu is the single card it always was.
+const PAGE_MODES := "modes"
+const PAGE_SETUP := "setup"
+const PAGE_QUIT := "quit"
+
+
+## The focusable rows of a page, in order. Modes: every mode in the list (ids from data), then Back to the match (mid-match), Not now (the web) and Quit (anywhere that can close). Setup: Player 1's device and
+## fighter, then the computer's level or player two's device, then that player's fighter, the comfort boxes, Start and Back (to the list). Quit: the two answers.
+static func rows_page(page: String, cfg: Dictionary, mid_match: bool, not_now: bool) -> Array:
+	var out: Array = []
+	match page:
+		PAGE_MODES:
+			for m in UiModes.modes():
+				out.append(str((m as Dictionary)["id"]))
+			if mid_match:
+				out.append("back")
+			if not_now:
+				out.append("not_now")
+			if UiPause.quit_listed():
+				out.append("quit")
+		PAGE_QUIT:
+			out = ["quit_yes", "quit_no"]
+		_:
+			out = ["p1", "f1"]
+			if int(cfg.get("players", 1)) == 2:
+				out.append("p2")
+			else:
+				out.append("ai")
+			out.append("f2")
+			out.append_array(checks())
+			out.append_array(["start", "back"])
+	return out
+
+
 static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) -> Dictionary:
 	if UiRail.usable(vp, touch):
+		var pg: String = str(st.get("page", ""))
+		if pg == PAGE_MODES or pg == PAGE_QUIT:
+			return rail_list_plan(vp, s, dp, st)   # these pages have no card to fall back to: the HUD only shows them where the Rail is usable
 		var rp: Dictionary = rail_plan(vp, s, dp, st)
-		if bool(rp["fits"]):
+		if bool(rp["fits"]) or pg == PAGE_SETUP:
 			return rp   # the Rail (docs/ui/menus-rail.md); where it does not fit, the card below is laid out as before
 	var cfg: Dictionary = st.get("cfg", {})
 	var mid: bool = bool(st.get("mid_match", false))
@@ -260,15 +297,15 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	if mid:
 		items.append({"row": "back", "kind": "button", "value": "", "label": word("back"), "rect": back})
 		row_boxes["back"] = back
-	var fits: bool = Rect2(Vector2.ZERO, vp).encloses(card)
+	var fits: bool = UiRail.holds(Rect2(Vector2.ZERO, vp), card)
 	for it in items:
 		var r: Rect2 = it["rect"]
-		if not card.encloses(r) or r.size.y < tm - 0.01:
+		if not UiRail.holds(card, r) or r.size.y < tm - 0.01:
 			fits = false
 	# No two controls overlap.
 	for i in range(items.size()):
 		for j in range(i + 1, items.size()):
-			if (items[i]["rect"] as Rect2).intersects(items[j]["rect"]):
+			if UiRail.meets(items[i]["rect"], items[j]["rect"]):
 				fits = false
 	if float(best["total_h"]) > area.size.y + 0.5:
 		fits = false
@@ -299,14 +336,16 @@ static func hit(p: Dictionary, pos: Vector2) -> Dictionary:
 
 
 ## The focus after a move along the rows (up and down), staying put at the ends.
-static func moved(focus: int, d: int, count: int) -> int:
+static func moved(focus: int, d: int, count: int, wrap: bool = false) -> int:
+	if wrap and count > 0:
+		return posmod(focus + d, count)   # the start menu wraps at both ends (A-UI-06): Up from the top is the last row and Down from the last is the first
 	return clampi(focus + d, 0, count - 1)
 
 
 static func sig(p: Dictionary) -> Array:
 	if p.has("rail"):
 		var rc: Dictionary = p["cfg"]
-		return ["rail", int((p["rail_rect"] as Rect2).size.x), int(p["vp_y"]), int(float(p["cs"]) * 100.0), int(p["focus"]), int(p["fs"]), int(rc.get("players", 1)), str(rc.get("p1", "")), str(rc.get("p2", "")), str(rc.get("ai_level", "")),
+		return ["rail", str(p.get("page", "")), str(rc.get("p1_fighter", "")), str(rc.get("p2_fighter", "")), str(p.get("version", "")), int((p["rail_rect"] as Rect2).size.x), int(p["vp_y"]), int(float(p["cs"]) * 100.0), int(p["focus"]), int(p["fs"]), int(rc.get("players", 1)), str(rc.get("p1", "")), str(rc.get("p2", "")), str(rc.get("ai_level", "")),
 			bool(rc.get("intros", true)), bool(rc.get("reduce_flashing", true)), bool(rc.get("shake", true)), bool(rc.get("captions", true)), bool(rc.get("guide", true)), str(p["note_text"]), p["device"], p["style"],
 			int(float(p["slide"]) * 40.0), int(float(p["bar_t"]) * 40.0), int(float(p["bar_y"])), bool(p["bar_vis"])]
 	var c: Rect2 = p["card"]
@@ -410,7 +449,8 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var cfg: Dictionary = st.get("cfg", {})
 	var mid: bool = bool(st.get("mid_match", false))
 	var not_now: bool = bool(st.get("not_now", false))
-	var list: Array = rows(cfg, mid, not_now)
+	var page: String = str(st.get("page", ""))
+	var list: Array = rows_page(page, cfg, mid, not_now) if page == PAGE_SETUP else rows(cfg, mid, not_now)
 	var m: Dictionary = UiRail.metrics(vp, s, dp)
 	var cs: float = float(m["cs"])
 	var tm: float = float(m["tm"])
@@ -431,7 +471,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var floor_px: int = int(UiLook.text_floor)
 	# The title block.
 	var top: float = maxf(vp.y * 0.07, 28.0 * cs)
-	var title: String = UiData.t("prompt.rail_start_title")
+	var title: String = UiData.t("prompt.setup_title") if page == PAGE_SETUP else UiData.t("prompt.rail_start_title")
 	var title_lines: PackedStringArray = UiText.wrap(title, fs_title, rw - x0 * 2.0)
 	var lh_title: float = UiText.height(fs_title) * 1.1
 	var y: float = top + UiText.height(fs_kicker) * 1.3
@@ -455,11 +495,13 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 		rows_fit = true
 		var fs_o: int = maxi(int(round(float(fs_val) * float(fs_r) / float(fs_row))), 11)
 		for id1 in rail_ids:
-			var need: float = UiText.width(word(id1), fs_r) + maxf(rh * 0.7, 24.0)
+			var need: float = UiText.width(_label(id1, cfg), fs_r) + maxf(rh * 0.7, 24.0)
 			if _is_radio(id1):
 				for o in _options(id1):
 					need += UiText.width(str(o[1]), fs_o) + opt_pad * 2.0 + gap
 				need += 16.0 * cs
+			elif _is_cycle(id1):
+				need += _widest_fighter(fs_o) + maxf(rh * 1.0, 48.0) + 16.0 * cs
 			else:
 				need += tog_w + 16.0 * cs
 			if need > row_w:
@@ -475,7 +517,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var radio_rows: Array = []
 	var yy: float = y
 	for id2 in rail_ids:
-		var h: float = rh if _is_radio(id2) else rh_sub
+		var h: float = rh if (_is_radio(id2) or _is_cycle(id2)) else rh_sub
 		var r := Rect2(rx, yy, row_w, h)
 		row_boxes[id2] = r
 		row_ys.append(yy)
@@ -490,13 +532,23 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 			for i in range(opts.size()):
 				items.append({"row": id2, "kind": "radio", "value": str(opts[i][0]), "label": str(opts[i][1]), "rect": rects[i]})
 			radio_rows.append({"id": id2, "label": word(id2), "inline": true, "opt_ws": [], "h": h})
+		elif _is_cycle(id2):
+			var chev: float = maxf(h * 0.5, 24.0)
+			var ex2: float = r.end.x - maxf(h * 0.25, 10.0)
+			var vw: float = _widest_fighter(fs_o2)
+			var right_r := Rect2(ex2 - chev, r.position.y, chev, h)
+			var value_r := Rect2(right_r.position.x - vw, r.position.y, vw, h)
+			var left_r := Rect2(value_r.position.x - chev, r.position.y, chev, h)
+			items.append({"row": id2, "kind": "cycle", "part": "left", "value": "-1", "label": "", "rect": left_r})
+			items.append({"row": id2, "kind": "cycle", "part": "value", "value": "1", "label": "", "rect": value_r})
+			items.append({"row": id2, "kind": "cycle", "part": "right", "value": "1", "label": "", "rect": right_r})
 		else:
 			items.append({"row": id2, "kind": "check", "value": "", "label": word(id2), "rect": r})
 		yy += h + gap
 	var rows_end: float = yy - gap
 	# The hint strip at the foot of the rail.
 	var hint_gh: float = maxf(26.0 * cs, 22.0)
-	var back_word: String = UiData.t("prompt.rail_hint_not_now") if not_now else (word("back") if mid else "")
+	var back_word: String = UiData.t("prompt.rail_hint_back") if page == PAGE_SETUP else (UiData.t("prompt.rail_hint_not_now") if not_now else (word("back") if mid else ""))
 	var pairs: Array = [["move", UiData.t("prompt.rail_hint_choose")], ["accept", UiData.t("prompt.rail_hint_select")]]
 	if back_word != "":
 		pairs.append(["back", back_word])
@@ -513,7 +565,9 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 		line_w += (gap * 3.0 if i > from_i else 0.0) + w2
 	hint_lines.append([from_i, entries.size()])
 	var hint_lh: float = hint_gh * 1.5
-	var hint_top: float = vp.y - maxf(vp.y * 0.04, 12.0) - hint_lh * float(hint_lines.size())
+	var version: String = str(st.get("version", ""))
+	var ver: Dictionary = UiRail.version_block(vp, x0, fs_small, version)
+	var hint_top: float = vp.y - maxf(vp.y * 0.04, 12.0) - hint_lh * float(hint_lines.size()) - float(ver["h"])
 	# The right side: the notice card, the "this match" card, Reduce flashing's line, the buttons.
 	var margin: float = maxf(vp.x * 0.04, 24.0)
 	var cw: float = minf(vp.x - rw - margin * 2.0, 780.0 * maxf(cs, 1.0))
@@ -530,6 +584,9 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 		against_val = word("pad" if str(cfg.get("p2", "kb")) == "pad" else "kb") + ", " + word("p2")
 	else:
 		against_val = UiData.t("prompt.rail_the_computer") + ", " + word("ai_" + level_of(cfg.get("ai_level", DEFAULT_LEVEL)))
+	if page == PAGE_SETUP:
+		you_val = UiData.display_name(str(cfg.get("p1_fighter", ""))) + ", " + you_val
+		against_val = UiData.display_name(str(cfg.get("p2_fighter", ""))) + ", " + against_val
 	kv.append([UiData.t("prompt.rail_you"), you_val])
 	kv.append([UiData.t("prompt.rail_against"), against_val])
 	var note_text: String = ""
@@ -539,6 +596,8 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 		note_text = word("both_kb")
 	elif bool(st.get("pad_missing", false)):
 		note_text = word("no_pad")
+	if page == PAGE_SETUP and not UiModes.mirror_ok():
+		note_text = (note_text + " " if note_text != "" else "") + UiData.t("prompt.no_mirror")
 	var sub_lines: PackedStringArray = UiText.wrap(rf_line(cfg), fs_small, cw)
 	var lh_s: float = UiText.height(fs_small) * 1.2
 	var fs_n_used: int = fs_n
@@ -574,8 +633,9 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var buttons: Array = [{"row": "start", "kind": "button", "value": "", "label": word("start"), "rect": start_r}]
 	for bid in ["not_now", "back"]:
 		if list.has(bid):
-			var bw2: float = UiText.width(word(bid), fs_b) + bpad * 1.6
-			buttons.append({"row": bid, "kind": "button", "value": "", "label": word(bid), "rect": Rect2(bx - bw2, by, bw2, bh)})
+			var blabel: String = UiData.t("prompt.rail_hint_back") if (bid == "back" and page == PAGE_SETUP) else word(bid)
+			var bw2: float = UiText.width(blabel, fs_b) + bpad * 1.6
+			buttons.append({"row": bid, "kind": "button", "value": "", "label": blabel, "rect": Rect2(bx - bw2, by, bw2, bh)})
 			bx -= bw2 + gap * 2.0
 	for b in buttons:
 		items.append(b)
@@ -593,21 +653,21 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var screen := Rect2(Vector2.ZERO, vp)
 	for it in items:
 		var rr: Rect2 = it["rect"]
-		if not screen.encloses(rr) or rr.size.y < tm - 0.01:
+		if not UiRail.holds(screen, rr) or rr.size.y < tm - 0.01:
 			fits = false
 	for i in range(items.size()):
 		for j in range(i + 1, items.size()):
-			if (items[i]["rect"] as Rect2).intersects(items[j]["rect"]):
+			if UiRail.meets(items[i]["rect"], items[j]["rect"]):
 				fits = false
 	var focus: int = clampi(int(st.get("focus", 0)), 0, list.size() - 1)
 	var bar_since: float = float(st.get("bar_since", 99.0))
 	var prev: int = int(st.get("prev", -1))
 	var bar_vis: bool = focus < rail_ids.size()
-	return {"rail": true, "card": screen, "rail_rect": rail, "title": title, "title_lines": title_lines, "title_pos": title_pos, "kicker": UiData.t("prompt.rail_kicker"), "kicker_pos": Vector2(x0, top + UiText.ascent(fs_kicker)), "lh_title": lh_title,
+	return {"rail": true, "page": page, "card": screen, "rail_rect": rail, "title": title, "title_lines": title_lines, "title_pos": title_pos, "kicker": UiData.t("prompt.rail_kicker"), "kicker_pos": Vector2(x0, top + UiText.ascent(fs_kicker)), "lh_title": lh_title,
 		"items": items, "rows": list, "row_boxes": row_boxes, "row_ys": row_ys, "rail_ids": rail_ids, "radio_rows": radio_rows, "fs": fs_r, "fs_o": fs_o2, "fs_s": fs_small, "fs_kicker": fs_kicker, "fs_title": fs_title, "fs_val": fs_val, "fs_n": fs_n_used, "fs_b": fs_b,
 		"fits": fits, "tm": tm, "pad": cp, "gap": gap, "cs": cs, "focus": focus, "touch": false, "cfg": cfg, "stack": false, "total_h": vp.y, "area_h": vp.y, "x0": x0, "tog": Vector2(tog_w, tog_h),
 		"notice_card": notice_card, "notice_lines": notice_lines, "notice_pos": notice_card.position, "lh": lh_n, "mid": mid, "sum_card": sum_card, "kv": kv, "kv_lh": kv_lh, "note_text": note_text, "note_lines": note_lines, "note_pos": Vector2(), "note_w": inner, "lh_s": lh_s,
-		"sub_lines": sub_lines, "sub_pos": sub_pos, "hints": entries, "hint_lines": hint_lines, "hint_gh": hint_gh, "hint_fs": fs_small, "hint_top": hint_top, "hint_lh": hint_lh, "device": device, "style": style, "vp_y": vp.y,
+		"sub_lines": sub_lines, "sub_pos": sub_pos, "version": version, "version_pos": ver["pos"], "hints": entries, "hint_lines": hint_lines, "hint_gh": hint_gh, "hint_fs": fs_small, "hint_top": hint_top, "hint_lh": hint_lh, "device": device, "style": style, "vp_y": vp.y,
 		"slide": UiRail.slide(float(st.get("since", 99.0)), reduced), "bar_t": 1.0 if (reduced or prev < 0) else clampf(bar_since / UiRail.BAR_SECS, 0.0, 1.0),
 		"bar_y": UiRail.bar_y(row_ys, focus, prev, bar_since, reduced) if bar_vis else 0.0, "bar_vis": bar_vis}
 
@@ -616,7 +676,30 @@ static func _is_radio(id: String) -> bool:
 	return id in ["players", "p1", "p2", "ai"]
 
 
+## A row that steps through a list (the fighters): its label, then the chosen one between two arrows.
+static func _is_cycle(id: String) -> bool:
+	return id in ["f1", "f2"]
+
+
+## A rail row's label: the fighter rows say whose they are ("Computer's fighter" when the computer plays).
+static func _label(id: String, cfg: Dictionary) -> String:
+	if id == "f2":
+		return word("f2" if int(cfg.get("players", 1)) == 2 else "fc")
+	return word(id)
+
+
+## The widest fighter name at a size (the arrows' value space).
+static func _widest_fighter(fs: int) -> float:
+	var w: float = 0.0
+	for id in UiModes.fighters():
+		w = maxf(w, UiText.width(UiData.display_name(str(id)), fs))
+	return w + 12.0
+
+
 static func draw_rail(ci: CanvasItem, p: Dictionary) -> void:
+	if str(p.get("page", "")) == PAGE_MODES or str(p.get("page", "")) == PAGE_QUIT:
+		draw_list_rail(ci, p)
+		return
 	var vp: Vector2 = ci.size if ci is Control else Vector2(1920, 1080)
 	var cs: float = float(p["cs"])
 	var cfg: Dictionary = p["cfg"]
@@ -650,8 +733,24 @@ static func draw_rail(ci: CanvasItem, p: Dictionary) -> void:
 		var r: Rect2 = boxes[id]
 		var rs := Rect2(r.position + shift, r.size)
 		var lit: bool = bool(p["bar_vis"]) and absf(r.position.y - by) < r.size.y * 0.5
-		UiRail.draw_row_text(ci, rs, word(id), "", lit, fs, int(p["fs_val"]))
-		if _is_radio(id):
+		UiRail.draw_row_text(ci, rs, _label(id, cfg), "", lit, fs, int(p["fs_val"]))
+		if _is_cycle(id):
+			var fkey: String = str(cfg.get("p1_fighter" if id == "f1" else "p2_fighter", ""))
+			var dimc: Color = Color(dark, 0.8) if lit else Color(dim, 0.95)
+			var inkc: Color = dark if lit else ink
+			for itc in p["items"]:
+				if str(itc["row"]) != id or str(itc["kind"]) != "cycle":
+					continue
+				var rc: Rect2 = itc["rect"]
+				var rcs := Rect2(rc.position + shift, rc.size)
+				match str(itc["part"]):
+					"left":
+						UiIcons.chevron(ci, rcs.get_center(), rcs.size.y * 0.18, -1.0, maxf(2.0, cs * 2.5), dimc)
+					"right":
+						UiIcons.chevron(ci, rcs.get_center(), rcs.size.y * 0.18, 1.0, maxf(2.0, cs * 2.5), dimc)
+					"value":
+						UiText.draw(ci, UiData.display_name(fkey), Vector2(rcs.get_center().x, rcs.get_center().y + float(fs_o) * 0.35), fs_o, inkc, 0)
+		elif _is_radio(id):
 			var chosen: String = str(int(cfg.get("players", 1))) if id == "players" else (level_of(cfg.get("ai_level", DEFAULT_LEVEL)) if id == "ai" else str(cfg.get(id, "kb")))
 			for it in p["items"]:
 				if str(it["row"]) != id or str(it["kind"]) != "radio":
@@ -673,6 +772,8 @@ static func draw_rail(ci: CanvasItem, p: Dictionary) -> void:
 			var kx: float = tr.end.x - tg.y * 0.5 if on2 else tr.position.x + tg.y * 0.5
 			var knob: Color = (ink if on2 else Color(dark, 0.8)) if lit else (dark if on2 else Color(dim, 0.95))
 			ci.draw_circle(Vector2(kx, tr.get_center().y), tg.y * 0.34, knob)
+	if str(p["version"]) != "":
+		UiText.draw(ci, str(p["version"]), (p["version_pos"] as Vector2) + shift, int(p["fs_s"]), Color(dim, 0.8), -1)
 	# The hint strip.
 	var entries: Array = p["hints"]
 	var hy: float = float(p["hint_top"]) + float(p["hint_lh"]) * 0.5
@@ -716,4 +817,198 @@ static func draw_rail(ci: CanvasItem, p: Dictionary) -> void:
 		UiText.draw(ci, str(it2["label"]), Vector2(brs.get_center().x, brs.get_center().y + float(p["fs_b"]) * 0.35), int(p["fs_b"]), Color(0.09, 0.07, 0.04) if primary else ink, 0)
 		if focus_id == str(it2["row"]):
 			UiIcons.rrect(ci, brs.grow(4.0 * cs), brs.size.y * 0.3, Color(0, 0, 0, 0), ink, 3.0)
+	UiText.no_outline = false
+
+
+# --- The A1 pages: the list of modes and Quit's question (docs/ui/menus-a1.md) ---------------------------------------------------
+
+## A rail of plain rows and a card for the lit one: the modes (a row each; the ones not built yet say "Coming" and cannot be started), Back to the match, Not now, Quit; or Quit's two answers. `st` is as for `plan`
+## with page "modes" or "quit", plus {device, style, since, prev, bar_since, reduced, version}. Same keys as `rail_plan`, so the HUD's input and the sig work on every page.
+static func rail_list_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dictionary:
+	var cfg: Dictionary = st.get("cfg", {})
+	var page: String = str(st.get("page", PAGE_MODES))
+	var mid: bool = bool(st.get("mid_match", false))
+	var not_now: bool = bool(st.get("not_now", false))
+	var list: Array = rows_page(page, cfg, mid, not_now)
+	var m: Dictionary = UiRail.metrics(vp, s, dp)
+	var cs: float = float(m["cs"])
+	var tm: float = float(m["tm"])
+	var x0: float = float(m["x0"])
+	var gap: float = float(m["gap"])
+	var rw: float = maxf(float(m["rw"]), clampf(vp.x * 0.34, 340.0, 520.0 * maxf(cs, 1.0)))
+	var rail := Rect2(0.0, 0.0, rw, vp.y)
+	var rx: float = x0 * 0.55
+	var row_w: float = rw - rx * 2.0
+	var device: String = str(st.get("device", "kbd"))
+	var style: String = str(st.get("style", "neutral"))
+	var reduced: bool = bool(st.get("reduced", false))
+	var fs_kicker: int = int(m["fs_kicker"])
+	var fs_title: int = int(m["fs_title"])
+	var fs_row: int = int(m["fs_row"])
+	var fs_val: int = int(m["fs_val"])
+	var fs_small: int = int(m["fs_small"])
+	var top: float = maxf(vp.y * 0.04, 20.0 * cs)   # a list can be long: its header sits higher than the other screens'
+	var title: String = UiData.t("prompt.pause_quit_ask") if page == PAGE_QUIT else UiData.t("prompt.modes_title")
+	var title_lines: PackedStringArray = UiText.wrap(title, fs_title, rw - x0 * 2.0)
+	var lh_title: float = UiText.height(fs_title) * 1.1
+	var y: float = top + UiText.height(fs_kicker) * 1.3
+	var title_pos := Vector2(x0, y + UiText.ascent(fs_title))
+	y += lh_title * float(title_lines.size()) + gap * 3.0
+	# The rows: label at the left, "Coming" (or nothing) at the right.
+	var labels: Array = []
+	var values: Array = []
+	var details: Array = []
+	var enabled: Array = []
+	for id in list:
+		var sid: String = str(id)
+		var md: Dictionary = UiModes.mode(sid)
+		if not md.is_empty():
+			labels.append(str(md.get("label", sid)))
+			var ready: bool = UiModes.ready(sid)
+			values.append("" if ready else UiData.t("prompt.mode_coming"))
+			details.append(str(md.get("detail", "")))
+			enabled.append(ready)
+		else:
+			var lab: String = sid
+			match sid:
+				"back":
+					lab = word("back")
+				"not_now":
+					lab = word("not_now")
+				"quit":
+					lab = UiData.t("prompt.menu_quit")
+				"quit_yes":
+					lab = UiData.t("prompt.pause_quit_yes")
+				"quit_no":
+					lab = UiData.t("prompt.pause_quit_no")
+			labels.append(lab)
+			values.append("")
+			details.append("")
+			enabled.append(true)
+	var rh: float = maxf(tm, float(m["rh"]) * 0.92)
+	var fs_r: int = fs_row
+	var lo: int = maxi(int(floor(float(fs_row) * 0.8)), maxi(int(UiLook.text_floor), 12))
+	var rows_fit: bool = false
+	while fs_r >= lo:
+		rows_fit = true
+		for i in range(list.size()):
+			if UiText.width(str(labels[i]), fs_r) + UiText.width(str(values[i]), fs_val) + maxf(rh * 1.2, 40.0) > row_w:
+				rows_fit = false
+		if rows_fit:
+			break
+		fs_r -= 1
+	fs_r = maxi(fs_r, lo)
+	var items: Array = []
+	var row_boxes: Dictionary = {}
+	var row_ys: Array = []
+	var yy: float = y
+	for i in range(list.size()):
+		var r := Rect2(rx, yy, row_w, rh)
+		var sid2: String = str(list[i])
+		row_boxes[sid2] = r
+		row_ys.append(yy)
+		items.append({"row": sid2, "kind": "mode" if not UiModes.mode(sid2).is_empty() else "button", "value": "ready" if bool(enabled[i]) else "coming", "label": str(labels[i]), "rect": r})
+		yy += rh + gap * 0.5
+	var rows_end: float = yy - gap * 0.5
+	# The hint strip.
+	var hint_gh: float = maxf(26.0 * cs, 22.0)
+	var back_word: String = UiData.t("prompt.pause_quit_no") if page == PAGE_QUIT else (word("back") if mid else (UiData.t("prompt.rail_hint_not_now") if not_now else ""))
+	var pairs: Array = [["move", UiData.t("prompt.rail_hint_choose")], ["accept", UiData.t("prompt.rail_hint_select")]]
+	if back_word != "":
+		pairs.append(["back", back_word])
+	var entries: Array = UiRail.hint_entries(device, style, pairs, hint_gh, fs_small)
+	var hint_lines: Array = []
+	var line_w: float = 0.0
+	var from_i: int = 0
+	for i in range(entries.size()):
+		var w2: float = float(entries[i]["w"])
+		if i > from_i and line_w + gap * 3.0 + w2 > rw - x0 * 2.0:
+			hint_lines.append([from_i, i])
+			from_i = i
+			line_w = 0.0
+		line_w += (gap * 3.0 if i > from_i else 0.0) + w2
+	hint_lines.append([from_i, entries.size()])
+	var hint_lh: float = hint_gh * 1.5
+	var version: String = str(st.get("version", ""))
+	var ver: Dictionary = UiRail.version_block(vp, x0, fs_small, version)
+	var hint_top: float = vp.y - maxf(vp.y * 0.04, 12.0) - hint_lh * float(hint_lines.size()) - float(ver["h"])
+	# The card for the lit row, on the right.
+	var margin: float = maxf(vp.x * 0.04, 24.0)
+	var cw: float = minf(vp.x - rw - margin * 2.0, 560.0 * maxf(cs, 1.0))
+	var cx: float = vp.x - margin - cw
+	var cp: float = maxf(24.0 * cs, 14.0)
+	var inner: float = cw - cp * 2.0
+	var fs_n: int = UiText.px(21.0, cs)
+	var focus: int = clampi(int(st.get("focus", 0)), 0, maxi(list.size() - 1, 0))
+	var card_lines: Array = []
+	var card_kicker: String = ""
+	var card := Rect2()
+	if page == PAGE_MODES and focus < list.size() and str(details[focus]) != "":
+		card_kicker = str(labels[focus])
+		for wl in UiText.wrap(str(details[focus]), fs_n, inner):
+			card_lines.append({"t": str(wl), "dim": false})
+		if not bool(enabled[focus]):
+			for wl2 in UiText.wrap(UiData.t("prompt.mode_not_ready"), fs_n, inner):
+				card_lines.append({"t": str(wl2), "dim": true})
+		var lh_n: float = UiText.height(fs_n) * 1.25
+		card = Rect2(cx, top, cw, cp * 2.0 + UiText.height(fs_kicker) * 1.5 + lh_n * float(card_lines.size()))
+	var version_pos: Vector2 = ver["pos"]
+	var fits: bool = rows_fit and rows_end + gap <= hint_top and title_lines.size() <= 2
+	for tl in title_lines:
+		if UiText.width(str(tl), fs_title) > rw - x0 * 1.5:
+			fits = false
+	if card.size.x > 0.0:
+		fits = fits and card.position.x >= rw + gap and UiRail.holds(Rect2(Vector2.ZERO, vp), card)
+	fits = fits and UiPause.hints_fit(entries, hint_lines, gap * 3.0, rw - x0 * 2.0)
+	for it in items:
+		if (it["rect"] as Rect2).size.y < tm - 0.01 or not UiRail.holds(rail, it["rect"]):
+			fits = false
+	var bar_since: float = float(st.get("bar_since", 99.0))
+	var prev: int = int(st.get("prev", -1))
+	return {"rail": true, "page": page, "card": Rect2(Vector2.ZERO, vp), "rail_rect": rail, "title": title, "title_lines": title_lines, "title_pos": title_pos, "kicker": UiData.t("prompt.rail_kicker"), "kicker_pos": Vector2(x0, top + UiText.ascent(fs_kicker)), "lh_title": lh_title,
+		"items": items, "rows": list, "row_boxes": row_boxes, "row_ys": row_ys, "rail_ids": list, "radio_rows": [], "fs": fs_r, "fs_o": fs_val, "fs_s": fs_small, "fs_kicker": fs_kicker, "fs_title": fs_title, "fs_val": fs_val, "fs_n": fs_n, "fs_b": fs_r,
+		"fits": fits, "tm": tm, "pad": cp, "gap": gap, "cs": cs, "focus": focus, "touch": false, "cfg": cfg, "stack": false, "total_h": vp.y, "area_h": vp.y, "x0": x0, "tog": Vector2.ZERO,
+		"labels": labels, "values": values, "enabled": enabled, "card_rect": card, "card_kicker": card_kicker, "card_lines": card_lines, "mid": mid, "note_text": "", "version": version, "version_pos": version_pos,
+		"hints": entries, "hint_lines": hint_lines, "hint_gh": hint_gh, "hint_fs": fs_small, "hint_top": hint_top, "hint_lh": hint_lh, "device": device, "style": style, "vp_y": vp.y,
+		"slide": UiRail.slide(float(st.get("since", 99.0)), reduced), "bar_t": 1.0 if (reduced or prev < 0) else clampf(bar_since / UiRail.BAR_SECS, 0.0, 1.0),
+		"bar_y": UiRail.bar_y(row_ys, focus, prev, bar_since, reduced), "bar_vis": true}
+
+
+static func draw_list_rail(ci: CanvasItem, p: Dictionary) -> void:
+	var vp: Vector2 = ci.size if ci is Control else Vector2(1920, 1080)
+	var cs: float = float(p["cs"])
+	var rail: Rect2 = p["rail_rect"]
+	var sl: float = float(p["slide"])
+	var off: float = -(1.0 - sl) * rail.size.x
+	var coff: float = (1.0 - sl) * (vp.x - rail.size.x)
+	var shift := Vector2(off, 0.0)
+	var ink := Color(UiLook.col(UiLook.INK))
+	var dim := Color(UiLook.col(UiLook.INK_DIM))
+	UiText.no_outline = true
+	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.02, 0.03, 0.06, 1.0))
+	UiRail.draw_panel(ci, rail, off)
+	UiText.draw(ci, str(p["kicker"]).to_upper(), (p["kicker_pos"] as Vector2) + shift, int(p["fs_kicker"]), Color(dim, 0.9), -1)
+	var tp: Vector2 = (p["title_pos"] as Vector2) + shift
+	for tl in p["title_lines"]:
+		UiText.draw(ci, str(tl), tp, int(p["fs_title"]), ink, -1)
+		tp.y += float(p["lh_title"])
+	var items: Array = p["items"]
+	var by: float = float(p["bar_y"])
+	if not items.is_empty():
+		var r0: Rect2 = (items[0] as Dictionary)["rect"]
+		UiRail.draw_bar(ci, Rect2(Vector2(r0.position.x + off, by), r0.size), cs)
+	for i in range(items.size()):
+		var r: Rect2 = (items[i] as Dictionary)["rect"]
+		var lit: bool = absf(r.position.y - by) < r.size.y * 0.5
+		UiRail.draw_row_text(ci, Rect2(r.position + shift, r.size), str((p["labels"] as Array)[i]), str((p["values"] as Array)[i]), lit, int(p["fs"]), int(p["fs_val"]), bool((p["enabled"] as Array)[i]))
+	var entries: Array = p["hints"]
+	var hy: float = float(p["hint_top"]) + float(p["hint_lh"]) * 0.5
+	for ln in p["hint_lines"]:
+		UiRail.draw_hints(ci, entries.slice(int(ln[0]), int(ln[1])), float(p["x0"]) + off, hy, float(p["hint_gh"]), int(p["hint_fs"]), float(p["gap"]) * 3.0, 1.0)
+		hy += float(p["hint_lh"])
+	var cr: Rect2 = p["card_rect"]
+	if cr.size.x > 0.0:
+		UiRail.draw_card(ci, Rect2(cr.position + Vector2(coff, 0.0), cr.size), str(p["card_kicker"]), p["card_lines"], int(p["fs_kicker"]), int(p["fs_n"]), cs)
+	if str(p["version"]) != "":
+		UiText.draw(ci, str(p["version"]), (p["version_pos"] as Vector2) + shift, int(p["fs_s"]), Color(dim, 0.8), -1)
 	UiText.no_outline = false

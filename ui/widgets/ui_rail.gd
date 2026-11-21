@@ -13,6 +13,24 @@ const MIN_W := 1000.0
 const MIN_H := 600.0
 
 
+## A rectangle that is a real one: not negative in either direction. A plan for a window that is too small to lay out (the headless smoke's, the first frame's) can make a width or a height negative, and Godot answers
+## `encloses` or `intersects` on such a Rect2 with an ERROR line on every frame; the plans ask these two instead, and a negative one simply does not fit.
+static func holds(outer: Rect2, inner: Rect2) -> bool:
+	return outer.size.x >= 0.0 and outer.size.y >= 0.0 and inner.size.x >= 0.0 and inner.size.y >= 0.0 and outer.encloses(inner)
+
+
+static func meets(a: Rect2, b: Rect2) -> bool:
+	return a.size.x >= 0.0 and a.size.y >= 0.0 and b.size.x >= 0.0 and b.size.y >= 0.0 and a.intersects(b)
+
+
+## The version line's place at the foot of the rail, under the hint strip (A-TOOLS-07; docs/tools/version.md): {h: the height it takes (0 with no line), pos: its baseline}. The plans lift the hint strip by `h`.
+static func version_block(vp: Vector2, x0: float, fs: int, text: String) -> Dictionary:
+	if text == "":
+		return {"h": 0.0, "pos": Vector2.ZERO}
+	var h: float = UiText.height(fs) * 1.3
+	return {"h": h, "pos": Vector2(x0, vp.y - maxf(vp.y * 0.04, 12.0) - UiText.height(fs) * 0.3)}
+
+
 ## Whether the Rail lays this screen out: the switch is on, it is not a touch screen (phone work is parked, ADR 0011), and the screen is wide and tall enough for the rail and its detail. Anything else keeps the old layout.
 static func usable(vp: Vector2, touch: bool) -> bool:
 	return UiData.feature("menus_rail") and not touch and vp.x >= MIN_W and vp.y >= MIN_H and vp.x >= vp.y * 1.3

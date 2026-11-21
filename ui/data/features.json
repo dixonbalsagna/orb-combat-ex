@@ -32,7 +32,7 @@
     "legend_beam": true,
     "split_fit": true,
     "chip_clear": true,
-    "slam_hint": false,
+    "slam_hint": true,
     "report_this": true,
     "save_match": true,
     "legend_quiet": true,
@@ -46,6 +46,8 @@
     "alert_vfx": false,
     "alert_audio": false,
     "alert_rumble": false,
-    "menus_rail": false
+    "menus_rail": true,
+    "menu_modes": true,
+    "testers_package": false
   }
 }
