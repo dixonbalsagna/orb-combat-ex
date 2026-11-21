@@ -1,7 +1,7 @@
 {
   "schema": "biomes.climate/1",
   "_about": "Planet generation 2 (docs/world/planet-gen2.md; WorldClimate): the biome of a point from a climate, not from noise bands. gen: the generation a planet is made by (1 is the stored planet as it was, bit for bit; 2 reads this file); a setup may name its own (planetGen). Temperature falls with latitude (cos of it to tPow) and with height (lapse per hScale units) with a little noise; moisture is the sea's reach carried downwind row by row on a coarse grid (the sea recharges it, land rains it out by rain0 a cell and by rainOro for every oroH units of climb, so a range casts a rain shadow), blended with the latitude bands (wet at the equator, dry near 30 degrees, wet near 60) and a little noise. The biome is the table's cell for the two (tempEdges and moistEdges are the upper edges of each band), with coast (beach), wet lowland (wetland), rocky highland, mountain and volcanic overrides. fine lists the biomes (ids 0 to 6 are the stored planet's, 7 and after are new); alias is the stored biome a consumer that knows only those sees (the renderer and the director until they learn the new ones); color is for maps and stills.",
-  "gen": 1,
+  "gen": 2,
   "grid": {
     "w": 192,
     "h": 96

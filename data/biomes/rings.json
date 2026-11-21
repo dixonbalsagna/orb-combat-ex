@@ -44,7 +44,7 @@
   "usedCos": 0.9976,
   "usedPenalty": 0.5,
   "turn": {
-    "on": 0,
+    "on": 1,
     "maxTurns": 4,
     "gapSeconds": 60.0,
     "driftDeg": 40.0,

@@ -12,7 +12,7 @@
     "bandsCity": 2,
     "bandsTown": 1,
     "pitchBH": 32,
-    "everywhere": false,
+    "everywhere": true,
     "farPeople": false,
     "farAnguish": false,
     "maxFootSlope": 0.7,
