@@ -139,10 +139,13 @@ jobs:
   # the flash register's log: more than 3 granted flashes in any 60 ticks (1 under reduced flashing) fails. It is a count of the sources that ask the register,
   # not a luminance measurement and not a clearance; the pixel half runs over captured frames (tools/flash/analyse-frames.js) and is not in CI yet.
   # The negative control proves the chain can fail: four flashes the register cannot refuse must make the recount fail.
-  flash:
-    name: Flash count (worst cases, flash register)
+  # The flash count, in three jobs (the EP, 2026-11-21). It was one job that played 82 runs of the worst cases one after another (about 57 minutes: 42 runs of 28 to 31 s and 40 `ai` runs of 55 s, measured on run 44881357568) after
+  # about 9 minutes of node self-tests, under a limit of 45, and was cancelled. The self-tests are their own job, the cases are five parallel sets (one runner each, the run files kept one day), and `flash` (the same id and name as
+  # before) downloads the five sets and recounts them as ONE: a scenario missing from any set still fails the recount, as it did.
+  flash-selftests:
+    name: Flash analysers and scripts (self-tests)
     runs-on: ubuntu-24.04
-    timeout-minutes: 45   # was 30: 2026-11-08 the job outran it (measured: flash 27-28, net 39, world 23-25+, godot-parity 30+ minutes); no check had failed
+    timeout-minutes: 30   # budget 20; measured 8 to 9 (run 44881357568: the node self-tests that were the first half of the one flash job)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -202,18 +205,66 @@ jobs:
         run: node tools/check-site-hook-selftest.mjs --require-browser
       - name: "Phone note self-test (a phone sees Legal's RL-201 note before the flashing notice and its button starts nothing; a computer, a tablet and a touch laptop see none)"
         run: node tools/site-phone-note-selftest.mjs --require-browser
+
+  flash-cases:
+    name: Flash count, ${{ matrix.set }} (the worst cases played)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30   # budget 20; each set plays 11 to 13 minutes of cases (82 runs measured on run 44881357568: 42 of 28 to 31 s, 40 `ai` runs of 55 s) and about 2 minutes of set-up
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { set: scenes-1, args: '--only=mash,mashcity,clash,signature,signaturecity,rushcity,transform,collapse,plumedesert,plumeice,plumevolc' }
+          - { set: scenes-2, args: '--only=mashdummy,ring,launchai,clashcity,signaturedummy,blastdummy' }
+          # the `ai` scenario is one run per pairing and seed of tools/flash/sources.json (PROTAGONIST and RIVAL, PROTAGONIST and REFERENCE, RIVAL and REFERENCE); each set plays one pairing with its own seeds
+          - { set: ai-1, args: '--only=ai --slots=PROTAGONIST,RIVAL --seeds=4,39,104,106,7,9,43' }
+          - { set: ai-2, args: '--only=ai --slots=PROTAGONIST,REFERENCE --seeds=98,100,74,4,49,8,13' }
+          - { set: ai-3, args: '--only=ai --slots=RIVAL,REFERENCE --seeds=15,29,107,88,100,36' }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-godot
       - name: Import project
         run: '"$GODOT" --headless --path . --import'
-      - name: Play the worst cases
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://tools/flash/flash_worst.gd -- --out="${RUNNER_TEMP}/flash"'
-      - name: Recount the register's log
-        run: node tools/flash/check-log.js "${RUNNER_TEMP}/flash"
+      - name: Play the worst cases of this set
+        env:
+          ARGS: ${{ matrix.args }}
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://tools/flash/flash_worst.gd -- --out="${RUNNER_TEMP}/flash" ${ARGS}'
       - name: Negative control (the recount must fail on four unrefusable flashes)
+        if: matrix.set == 'scenes-1'
         run: |
           "$GODOT" --headless --path . --script res://tools/flash/flash_worst.gd -- --only=mash --ticks=300 --negative-control --out="${RUNNER_TEMP}/flash-neg"
           if node tools/flash/check-log.js "${RUNNER_TEMP}/flash-neg" --allow-missing > "${RUNNER_TEMP}/flash-neg.txt"; then echo "the negative control passed: the check cannot fail"; exit 1; fi
           grep -q "in the 60 ticks from" "${RUNNER_TEMP}/flash-neg.txt"
+      - name: Keep the run files of this set for the recount (one day)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: flash-run-${{ matrix.set }}
+          path: ${{ runner.temp }}/flash
+          retention-days: 1
+          if-no-files-found: error
+
+  flash:
+    name: Flash count (worst cases, flash register)
+    needs: flash-cases
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15   # budget 10; downloads the five sets and recounts them as one (a few seconds of node)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - name: The run files of the five sets, together
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: flash-run-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/flash
+      - name: Recount the register's log (every scenario of the required set, from all five sets)
+        run: node tools/flash/check-log.js "${RUNNER_TEMP}/flash"
 
   # The GDScript port against the JS reference sim's golden vectors, plus the render
   # checks. The sim job above does not set GODOT, so `npm test --prefix sim` skips its
@@ -666,7 +717,7 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: [qa, sim, data, flash, godot-parity, godot-sim, godot-roll-render, godot-audio-vfx, net, net-2, world, site]
+    needs: [qa, sim, data, flash-selftests, flash, godot-parity, godot-sim, godot-roll-render, godot-audio-vfx, net, net-2, world, site]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
