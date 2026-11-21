@@ -1,0 +1,8 @@
+gate: <scratch>/g/fr/before_9nov.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/fr/before_main.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/fr/final_9nov.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/fr/final_main.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/fr/final_main_nogrant.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/fr/pinoff_main.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/fr/probe_9nov.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/fr/variant_9nov.txt: no SCRIPT ERROR lines
