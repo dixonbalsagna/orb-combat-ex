@@ -4,6 +4,8 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **Landed in the Sunday batch (4890bdd9), their folders deleted:** `power-travel/` (a setup's `"travel"`, with Netcode's and Tools' grants and the stance-freeze doc lines) and `power-page/` (Tools' page lines: the model on for the page, and the travel slider).
 
+**Parked, sprint A1:** `floor-rise-unpin/` (GW1b): World's floor-rise grant to `fighter.gd` approved; parity's lake row drops its `"dash": false` pin. Applies after the GW1a stack, with World's grant. The golden moves (GW1b).
+
 **Parked, sprint A1:** `boxkey-gw1c/` (for GW1c, owed before colossal is offered): SimField's box keys pack 20 bits an index, so no planet size or reach can alias them (the old offset of 64 did past a radius of 131,072). Golden byte for byte.
 
 **Parked, sprint A1:** `frame-gw1a/` (a GW1a pin, test-only): frame_check's rollback row waits for the first moment a swing can run (with the 9 November data the computer has a beam out at tick 240). Its README also records fork_check's planet 12 as a real fault of World's field cache with `field.everywhere` on.

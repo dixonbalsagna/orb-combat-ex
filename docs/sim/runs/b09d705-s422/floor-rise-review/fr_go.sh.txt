@@ -1,0 +1,39 @@
+#!/bin/sh
+# fr_go.sh <scratchpad>: review of World's floor-rise grant (docs/world/pending/floor-rise/) on the GW1a stack (b09d705 copies).
+#   fr: the stack + World's floor-rise.diff + the grant + parity's lake row unpinned (kick/unpin_lake.py)
+#   f2: the stack + the unpin only (the control: the lake row should fail without the grant)
+# ONE Godot job at a time, below normal (a long run).
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/fro"
+rm -rf "${NS:?}/fro"; mkdir -p "$O" "$NS/frapp"; export APPDATA="$(cygpath -w "$NS/frapp")"
+run() { name="$1"; t="$2"; shift 2; s=$(date +%s); timeout "$t" "$G" --headless --path . --script "$@" > "$O/$name.txt" 2>&1; code=$?; echo "$name: exit $code in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR\|Parse Error' "$O/$name.txt"); $(grep -v 'WARNING\|at: \|^$\|ERROR: \|wait_to_finish' "$O/$name.txt" | tail -1 | cut -c1-150)"; grep -n "^FAIL\|^  FAIL" "$O/$name.txt" | head -6 | cut -c1-240; }
+echo "== fr: the stack + the grant + the unpin"
+cd "$NS/fr" || exit 1
+case "$(pwd -P)" in */scratchpad/fr) ;; *) echo refusing; exit 1 ;; esac
+git -c core.autocrlf=false diff -- sim/core/tools/parity.gd > "$O/parity-lake-unpin.patch"
+echo "parity-lake-unpin sha1 $(sha1sum "$O/parity-lake-unpin.patch" | cut -c1-40) sha256 $(sha256sum "$O/parity-lake-unpin.patch" | cut -c1-12)"
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+run floor_rise 1200 res://sim/world/tools/floor_rise_check.gd
+run floor_rise_neg 1200 res://sim/world/tools/floor_rise_check.gd -- --negative-control
+run floor 1200 res://sim/world/tools/floor_check.gd
+cp sim/core/test/golden.json "$O/golden_stack.json"
+run golden 900 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$O/golden_stack.json" && echo "  golden.json byte-identical (unexpected with the dash on)" || echo "  golden.json MOVED (expected: GW1b)"
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity.txt" 2>&1; echo "parity (the unpinned lake row; its regenerated golden) through gate.mjs: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL\|lake or the sea" "$O/parity.txt" | head -6 | cut -c1-240
+cp "$O/golden_stack.json" sim/core/test/golden.json
+s=$(date +%s); node tools/gate.mjs --verdict -- "$GW" --headless --path . --script res://sim/core/tools/power_check.gd > "$O/power.txt" 2>&1; echo "power_check through gate.mjs: exit $? in $(( $(date +%s) - s )) s; $(grep 'POWER' "$O/power.txt" | tail -1)"
+run kick 900 res://sim/core/tools/kick_check.gd
+run two_states 2400 res://sim/core/tools/two_states_check.gd -- --setups=default,power,dash,slip,fights
+run d_floorlift 1800 res://sim/director/tools/floorlift_check.gd
+echo "== Rendering's checks on fr"
+sh "$NS/n/rgates.sh" "$NS/fr" "$O" 2>&1 | tail -18
+echo "== f2: the stack + the unpin only (the control)"
+cd "$NS/f2" || exit 1
+case "$(pwd -P)" in */scratchpad/f2) ;; *) echo refusing; exit 1 ;; esac
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity_control.txt" 2>&1; echo "control parity (unpinned, no grant) through gate.mjs: exit $? in $(( $(date +%s) - s )) s"
+grep -n "^FAIL" "$O/parity_control.txt" | head -6 | cut -c1-260
+echo fr done

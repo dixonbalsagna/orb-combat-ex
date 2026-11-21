@@ -1,0 +1,37 @@
+== fr: the stack + the grant + the unpin
+parity-lake-unpin sha1 528d264356b2f8e6cb5a881cabe2d914839d9fef sha256 b37fd4cb4738
+import 0; parse errors 0
+floor_rise: exit 0 in 6 s; script errors 0; FLOORRISE: 0 check(s) failed
+floor_rise_neg: exit 0 in 5 s; script errors 0; FLOORRISE: 0 check(s) failed
+6:  FAIL with the start place he lands on the floor where it ends (526.730 of 534.143), whatever his speed
+floor: exit 0 in 31 s; script errors 0; FLOOR: 0 check(s) failed
+golden: exit 0 in 147 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (184833 ticks), 2 replays in 142.4 s
+  golden.json MOVED (expected: GW1b)
+parity (the unpinned lake row; its regenerated golden) through gate.mjs: exit 0 in 353 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+68:ok    a match starts on the floor of a lake or the sea
+power_check through gate.mjs: exit 0 in 190 s; POWER: 0 check(s) failed
+kick: exit 0 in 39 s; script errors 0; KICK: 0 check(s) failed
+two_states: exit 0 in 226 s; script errors 0; PASS  0 failure(s)
+d_floorlift: exit 1 in 34 s; script errors 0; FLOORLIFT: 1 check(s) failed
+24:FAIL  fight: 20160 AI ticks on the bed, 28751 of them under his floor, 786 reposes in a brawl: largest lift 144.54 a tick, 1758 over the limit 7.5 (RIVAL free at 49914 (moved 53), from 2207.4 to 2352.0 (floor 2365.7, ground 2026.8) no ru
+== Rendering's checks on fr
+after_check: exit 0 in 14 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 170 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 14 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 146 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 143 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 188 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 58 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 8 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 22 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 22 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 62 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 14 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 12 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 15 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 20 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+== f2: the stack + the unpin only (the control)
+control parity (unpinned, no grant) through gate.mjs: exit 1 in 336 s
+68:FAIL  a match starts on the floor of a lake or the sea: the floor on, intro false, tick 0: he is 19.175 under his floor
+fr done

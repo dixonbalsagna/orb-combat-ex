@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+# unpin_lake.py <tree>: parity's spawn-floor lake row drops its "dash": false pin (World's floor rise, GW1b: a free fighter low
+# along a rising lake floor no longer outruns floorFor's rise limit).
+import sys, os
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+p = os.path.join(T, "sim/core/tools/parity.gd")
+s = open(p, encoding="utf-8", newline="").read()
+a = ('\tvar lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2, "dash": false}   # its touch-down is in a lake. The dash off: at its speed a free fighter low along a rising lake floor outruns floorFor\'s rise limit (riseMax a tick) and sits up to about 2.3 units inside it for a tick or two, a finding for World (A-ENERGY-04\'s park)\n')
+b = ('\tvar lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2}   # its touch-down is in a lake. (The dash was off here until World\'s floor rise, GW1b: floorFor now lets a fighter climb a rising lake floor along his own step, so at the dash\'s speed he no longer sits inside it)\n')
+assert s.count(a) == 1, s.count(a)
+s = s.replace(a, b, 1)
+open(p, "w", encoding="utf-8", newline="").write(s)
+print("unpinned")

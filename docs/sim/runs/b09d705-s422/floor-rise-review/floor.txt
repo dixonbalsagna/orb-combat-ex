@@ -1,0 +1,48 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok    water.json is clean ([])
+  ok    the floor ships off, and wade.below is 75
+  ok    feet(d): the bed in water up to 37.5 deep, 25 at 50, nothing at 75 and below (the sheet), no step anywhere
+  ok    the curve has no step: the largest change over 0.01 units of depth is 0.0100
+  ok    tundra's 46-deep column: 29.0 of him under the sheet (the ruling says 29)
+  ok    the floor loads only with surface.enabled and interrupts water.enabled, and its error names both (off, anything goes)
+  ok    either half missing is an error
+  ok    the most a body under his floor rises in a tick is wade.below over riseTicks: 7.5 at 10 ticks
+  ok    the floor off: floorAt is exactly the ground, everywhere on the hand-made world
+  ok    the hand-made world has 48479 wet samples to read
+  ok    the floor is continuous across the sea's edge and the shallows: no step (excess 0.000000000), 0.0002 across a column boundary
+  ok    never under the ground, never over the surface (0, 0)
+  ok    on the bed to 37.5 deep and on the sheet from 75 (0 off the bed, 0 off the sheet)
+  ok    mid-sea the floor is the sea level, 0 (the sheet)
+  ok    groundY is still the sea bed there (-2638): a power-up's crater reads it
+  ok    the floor off: on the hand-made world only the open sea (the original ground under RESERVOIR_BASE) is sea to seaAt, as it always was
+  ok    the hand-made world has 1481 sea columns 75 or more deep and 33 shallower to read
+  ok    the floor on, hand-made world: every column 75 or more deep is sea, its sheet is seaTop's value, and no shallower column is sea (0, 0, 0, 0) 
+  ok    an open-sea column (605) and a column of the shallows 40 to 70 deep (4003) to dig in
+  ok    a 300-deep crater in the open sea's bed leaves his floor on the sheet: 0.0000 before, 0.0000 after, the bed there -1481.7
+  ok    a 300-deep crater in the shallows (41 deep) leaves his floor where it was: -33.907 before, -33.907 after, the ground there -341.1
+  ok    a stretch of three dry coast columns within a few columns of the sea to dig a bay in (711)
+  ok    a bay dug on the coast and filled by the sea is a fill, not the ring's water: the floor is its ground (-293.3, -293.3)
+  ok    8 gen 2 rings with an open sea read: 4255 sea columns 75 or more deep, 515 shallower
+  ok    gen 2 seas: never under the ground or over the surface, on the bed to 37.5 and on the sheet from 75, every deep column sea and its sheet seaTop's value (0 breaks) 
+  ok    and the floor is continuous through them: no step (excess 0.000000000), 0.0013 across a column boundary
+  ok    14 of the 18 rings hold a lake to read (14 deeper than wade.below)
+  ok    lakes and rivers: never under the ground or over the surface, on the bed to 37.5 and on the sheet from 75 (0 breaks; wet samples 7/1:6874 3/0:6315 3/1:3502 3/2:4301 11/0:7546 11/1:9143 11/2:2061 21/1:4924 21/2:9013 25/0:4858 25/2:6346 42/0:1694 42/1:575 42/2:10635 )
+  ok    and the floor is continuous through them: no step (excess 0.000000000), 0.0013 across a column boundary
+  ok    a lake column to test on
+  ok    d=30, floor off: sea false (from 100, as before), waded false (water v2 is off)
+  ok    d=30, floor on: sea false, waded true (wade.below 75 for a lake, with water v2 off)
+  ok    d=60, floor off: sea false (from 100, as before), waded false (water v2 is off)
+  ok    d=60, floor on: sea false, waded true (wade.below 75 for a lake, with water v2 off)
+  ok    d=80, floor off: sea false (from 100, as before), waded false (water v2 is off)
+  ok    d=80, floor on: sea true, waded false (wade.below 75 for a lake, with water v2 off)
+  ok    d=99, floor off: sea false (from 100, as before), waded false (water v2 is off)
+  ok    d=99, floor on: sea true, waded false (wade.below 75 for a lake, with water v2 off)
+  ok    d=120, floor off: sea true (from 100, as before), waded false (water v2 is off)
+  ok    d=120, floor on: sea true, waded false (wade.below 75 for a lake, with water v2 off)
+  ok    a 300-deep crater in the lake's bed leaves his floor where it was: 509.56 before, 509.56 after (depth 43.09 and 43.09), and the ground there is 198.4
+  ok    a 40-deep fill in a hole on high ground never lifts or holds him: the floor is the ground (841.5, 841.5)
+  ok    dry ground: the floor is the ground with the switch on
+FLOOR: 0 check(s) failed
+WARNING: 49 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

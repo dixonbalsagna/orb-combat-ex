@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   the lake floor is on
+  ok   the lake has a bank that climbs more than 14 units over 40 ([37938.0, 37978.0, 519.230308532715, 534.142593383789])
+  ok   without the start place the rise is riseMax (7.5): he is lifted to 526.73 of the floor's 534.14
+  FAIL with the start place he lands on the floor where it ends (526.730 of 534.143), whatever his speed
+  ok   the lake has a column where the floor stands more than 45 above the ground
+  ok   a floor that changes in time at his own place still eases him (519.79: 30 under, lifted by riseMax 7.5)
+  ok   no start place: today's rule, bit for bit (526.730309)
+  ok   negative control (no start place): the rule rows fail (1 did)
+FLOORRISE: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
