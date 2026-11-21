@@ -1,0 +1,12 @@
+# X-13 scripted matches: orbs_player.gd, both slots on Orb's scheme (default arm), 20 matches, seeds 1 to 20, 6a30b4c9 packed data
+matches 20, slot wins [8,12], beams by slot [260,277], beam sources (X-17) [{"stick":268},{"stick":281}], chunk median lengths 709.9/705 s, beams neither stick nor RT + B: 0
+lap: seen in 0 of 20 matches, median first tick -
+stances: seen in 0 of 20 matches, median first tick -
+beam_off: seen in 0 of 20 matches, median first tick -
+signatures: seen in 20 of 20 matches, median first tick 2430
+launch: seen in 20 of 20 matches, median first tick 953
+well: seen in 0 of 20 matches, median first tick -
+crater: seen in 20 of 20 matches, median first tick 1282
+building: seen in 20 of 20 matches, median first tick 910
+bystanders: seen in 20 of 20 matches, median first tick 598
+transform: seen in 0 of 20 matches, median first tick -

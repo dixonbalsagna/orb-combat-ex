@@ -1,0 +1,12 @@
+# masher medium chunk 0
+GAUNTLET {"arm":"masher","beams":0,"budgetStopped":false,"capped":0,"done":30,"draws":0,"foeBeams":296,"hits":64798,"hitsTaken":30585,"level":"medium","lost":27,"medianSec":317.5,"n":30,"noControl":639875,"presses":89890,"refused":14236,"refusedBy":{"press_chase_no_ki/x":14,"press_double/x":31,"press_refused/down":8,"press_refused/launched":85,"press_refused/locked":3549,"press_refused/queue_expired":1417,"press_refused/queue_full":476,"press_refused/x":4467,"press_stunned/x":4189},"ticks":719604,"timeouts":0,"won":3}
+EXIT 0 matches 30 seed 1
+# masher medium chunk 1
+GAUNTLET {"arm":"masher","beams":0,"budgetStopped":false,"capped":0,"done":30,"draws":0,"foeBeams":301,"hits":63606,"hitsTaken":30385,"level":"medium","lost":28,"medianSec":319.8,"n":30,"noControl":622194,"presses":86590,"refused":13088,"refusedBy":{"press_chase_no_ki/x":12,"press_double/x":43,"press_refused/down":12,"press_refused/launched":95,"press_refused/locked":3459,"press_refused/queue_expired":1359,"press_refused/queue_full":428,"press_refused/x":4029,"press_stunned/x":3651},"ticks":693225,"timeouts":0,"won":2}
+EXIT 0 matches 30 seed 31
+# beam medium chunk 0
+GAUNTLET {"arm":"beam","beams":1449,"budgetStopped":false,"capped":0,"done":30,"draws":0,"foeBeams":82,"hits":29467,"hitsTaken":20658,"level":"medium","lost":29,"medianSec":382.6,"n":30,"noControl":569216,"presses":74067,"refused":24971,"refusedBy":{"press_double/x":31,"press_refused/down":35,"press_refused/launched":244,"press_refused/locked":11050,"press_refused/queue_expired":2465,"press_refused/queue_full":214,"press_refused/x":7669,"press_stunned/x":1864,"stick/close":24,"stick/ki":5,"stick/late":21,"stick/soon":827,"stick/taken":522},"ticks":698777,"timeouts":0,"won":1}
+EXIT 0 matches 30 seed 1
+# beam medium chunk 1
+GAUNTLET {"arm":"beam","beams":1410,"budgetStopped":false,"capped":0,"done":30,"draws":0,"foeBeams":84,"hits":29651,"hitsTaken":20859,"level":"medium","lost":27,"medianSec":368.6,"n":30,"noControl":564853,"presses":73455,"refused":24082,"refusedBy":{"press_double/x":46,"press_refused/down":32,"press_refused/launched":273,"press_refused/locked":10355,"press_refused/queue_expired":2363,"press_refused/queue_full":253,"press_refused/x":7562,"press_stunned/x":1854,"stick/close":16,"stick/ki":2,"stick/late":27,"stick/soon":799,"stick/taken":500},"ticks":693559,"timeouts":0,"won":3}
+EXIT 0 matches 30 seed 31

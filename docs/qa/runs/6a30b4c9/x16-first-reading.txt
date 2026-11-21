@@ -1,0 +1,7 @@
+# X-16: scripted defender sidestep at three ranges (qa/godot/x16_sidestep.gd), 20 trials a range, seeds 1 to 20, 6a30b4c9's packed data; rerun 2026-11-20 after the pad-binding fix
+X16 {"dataHash":"408bdf028c0c49be","ranges":{"2500":{"avoidedShare":0.0,"beamsFired":20,"medianClimb":0.0,"outcomes":{"HIT":20},"refusals":{}},"300":{"avoidedShare":0.0,"beamsFired":20,"medianClimb":0.0,"outcomes":{"HIT":20},"refusals":{}},"6000":{"avoidedShare":0.0,"beamsFired":20,"medianClimb":0.0,"outcomes":{"HIT":20},"refusals":{}}},"sidestep":40,"trials":20,"verdict":"FAIL"}
+# debug of one trial at 2,500 units (--debug): the target is locked from the moment the stick beam is thrown until it hits
+t=87 beam_stage:2 state0=locked state1=locked
+t=94 beam_window:start / beam_fire (both locked)
+t=151 beam_window:end state0=locked state1=launched
+# the first run (2026-11-14) fired no beam at 300 units: the test bound its pad with an X press, which started a lunge and a brawl at that range; the bind is now a guard press

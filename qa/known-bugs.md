@@ -1,4 +1,4 @@
-# Known bugs in the prototype
+# Known bugs in Orb Combat EX (the Godot game, and the pinned prototype it is checked against)
 
 Owner: QA and Balance. Subject: `prototype/index.html` at commit `7233c96`, pinned until the port proves parity. Nothing here is fixed in the prototype; each entry says whether the report is true, how to reproduce it, and what it does to the baseline (`baseline-p0.md`). `Line` numbers are at that commit.
 
@@ -15,18 +15,18 @@ Reports come from Combat and Choreography (their IDs `CC-nnn` are in `docs/comba
 
 **Horizon tag and closing step (audit CD-23, added 2026-11-07).** Every entry below, and the table that follows, carries two fields. **Horizon** is the earliest release the bug blocks, in the review log's words: `private` (Orb's own PC, the LAN and private tests), `web` (a public page or the public pin) or `store` (a store page, a desktop download or internet play); `none` where it blocks no release (a fact about the pinned prototype only). **Closing step** is what ends the entry: (1) open the thing the entry names (the code, data or file) at its pin and at HEAD, not the entry's own words; (2) if it is met, mark it fixed with the date and the commit or file and line that shows it; (3) if only partly met, leave it open with what is left; (4) at each baseline (a pin move, a store step, or the audit's own re-check) QA reads every open entry against the code again, and nothing stays open because nobody looked. A fix that QA has not seen in play is marked "fixed, not re-verified". The horizons in the table are QA's first reading; the owner of an entry confirms or changes its tag.
 
-| ID | Status at 2026-11-07 | Horizon | Closing step |
-| :--- | :--- | :--- | :--- |
-| KB-001 to KB-006 | open as coded: the prototype is pinned at `7233c96` and "nothing here is fixed in the prototype" | none (the pinned prototype ships nowhere; they bear on parity with the Godot sim) | The Godot sim is checked for each behaviour at the next parity read; each entry then closes as "not present in the port" or opens as a GB entry. Until then the checks keep asserting the bug is present |
-| GB-001 | **fixed 658c95b1**, read at HEAD (`split_view.gd` `attach()`) | private (closed) | done |
-| GB-002 | fixed 8fd6aba, reopened, fixed again 632f6c9; not re-verified in play | web | QA reads `render/shaders/sky.gdshader` and `_sky_react` at HEAD (reaction off by default), then Orb or a clip on a current build confirms; then closed |
-| GB-003 | open, with Camera | web | Camera names the commit; QA reads it at HEAD and closes it, or asks for a camera-motion band |
-| GB-004 | open, a design call, not a fault | private | Game Design rules; closed as "ruled" with the row |
-| GB-005 | open, with World | web | World names the commit; QA's `5c.bounces` and `5c.long` rows read it at HEAD |
-| GB-006 | fixed cce8a59; not re-verified in play | web | Animation's `lead_scan` passing at HEAD plus a clip of a launch; then closed |
-| GB-007 | open, with VFX and Rendering; not reproduced | web | VFX names the commit (shorter fade or world-space pieces) or shows it does not reproduce; QA reads `rocks.gd` at HEAD |
-| GB-008 | **fixed fd381c6**, confirmed df05b9f | private (closed) | done |
-| GB-009 | finish fixed in df05b9f; the blaster's balance is open | private | Game Design rules whether any shot counts at the brink; closed when E4, E5 are inside their bands or the rule is written |
+| ID | Status at 2026-11-07 | Horizon | Severity | Closing step |
+| :--- | :--- | :--- | :--- | :--- |
+| KB-001 to KB-006 | open as coded: the prototype is pinned at `7233c96` and "nothing here is fixed in the prototype" | none (the pinned prototype ships nowhere; they bear on parity with the Godot sim) | S4 | The Godot sim is checked for each behaviour at the next parity read; each entry then closes as "not present in the port" or opens as a GB entry. Until then the checks keep asserting the bug is present |
+| GB-001 | **fixed 658c95b1**, read at HEAD (`split_view.gd` `attach()`) | private (closed) | S3 | done |
+| GB-002 | fixed 8fd6aba, reopened, fixed again 632f6c9; not re-verified in play | web | S3 | QA reads `render/shaders/sky.gdshader` and `_sky_react` at HEAD (reaction off by default), then Orb or a clip on a current build confirms; then closed |
+| GB-003 | open, with Camera | web | S3 | Camera names the commit; QA reads it at HEAD and closes it, or asks for a camera-motion band |
+| GB-004 | open, a design call, not a fault | private | S4 | Game Design rules; closed as "ruled" with the row |
+| GB-005 | open, with World | web | S3 | World names the commit; QA's `5c.bounces` and `5c.long` rows read it at HEAD |
+| GB-006 | fixed cce8a59; not re-verified in play | web | S3 | Animation's `lead_scan` passing at HEAD plus a clip of a launch; then closed |
+| GB-007 | open, with VFX and Rendering; not reproduced | web | S3 | VFX names the commit (shorter fade or world-space pieces) or shows it does not reproduce; QA reads `rocks.gd` at HEAD |
+| GB-008 | **fixed fd381c6**, confirmed df05b9f | private (closed) | S3 | done |
+| GB-009 | finish fixed in df05b9f; the blaster's balance is open | private | S3 | Game Design rules whether any shot counts at the brink; closed when E4, E5 are inside their bands or the rule is written |
 
 **Checks.** `qa/tests/known-bugs.test.js` has one check per bug asserting that it is still present. It passes today. When a behaviour changes it fails with "KB-00x appears fixed", and the fix is to set the verdict below to `fixed` (with the commit), then turn the check into a regression test for the corrected behaviour. A last check keeps this register and the test file in step.
 
@@ -209,6 +209,67 @@ QA has no band for any of the three yet. For GB-005 the harness already counts b
 **Not the same as** the "bolt-only cannot finish" finding of the energy baseline: E1 (a bolt-only masher against a melee masher) finishes 40 of 40, because the melee masher closes in and ends up in a finisher; E2 (against the medium AI) wins 57.5%, above its 20 to 40% band.
 **Question for Game Design / Combat:** should a brink fighter be finishable by blasts alone (a last blast at the brink, a charged shot, a signature)? If not, the E4/E5 script needs to close in for the finisher, and QA will add a `chase` option to the scripted players; the band for E5 (40 to 60%) cannot be measured until one of the two happens.
 **Status: finish fixed in slice 12 (df05b9f), balance open.** E4, E5 and the slow mix finish 40 of 40. The blaster now wins 87.5% (fast) and 82.5% (slow mix) against a timed melee script that never guards or dodges, and a mixed blaster 57.5% against the medium AI (starting band 25 to 45). Whether that is the rule (any shot counts, window 120) or the unresponsive script is for Game Design; QA has no answer from the scripts alone.
+
+## Problems Orb reported in play, 2026-11-01 to 2026-11-09 (the 52 of `docs/ep/alpha/audit-2026-11-13/reads/RR-08.md`)
+
+Added 2026-11-14 (A-QA-03). Numbers `PR-001` to `PR-052` are RR-08's rows 1 to 52. Statuses are QA's reading from the records named; "not re-read at HEAD" means QA has not opened the thing since the report, so the status is the report's. **Severity** (A-QA-07): **S1 Blocker** a tester cannot start, finish, leave or report (a menu or pause that does not show, a crash, a lost save); **S2 Major** a fight moment the game promises fails or misleads, or control is taken from the player; **S3 Minor** looks or feels wrong and play goes on; **S4 Polish**. The proposed criterion X-35 reads S1 as "no open one on the candidate" and S2 as "every open one seen by Orb and carried by name". **Horizon** is the earliest release the bug blocks (private: Orb's own PC and LAN; web: a public page or pin; store: a store page). **Closing step** for every row: open it at its pin and at HEAD (read the code, data or a replay), mark it fixed with the commit, or leave it open with what is left.
+
+| ID | Date | Build | The problem (shortened) | Severity | Horizon | Status | Owner |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| PR-001 | 2026-11-01 | not stated | a green tube popped up behind him after he hit the ground | S3 | web | open: not re-read at HEAD | Rendering, VFX |
+| PR-002 | 2026-11-01 | not stated | the mountain with a house on the hill is opened up, its hollow interior shows | S3 | web | open: not re-read at HEAD | World |
+| PR-003 | 2026-11-01 | not stated | flight overtuned, way too fast; the split screen takes half the screen | S2 | private | open: flight 3,500 is the planned default (Orb 2026-11-09 felt it manageable; GW1b), the split-screen part is Camera's | Game Design, Camera |
+| PR-004 | 2026-11-01 | not stated | firing a beam, the character slowly drifts, then fires | S3 | private | open: not re-read at HEAD; the beam-still park (docs/director/pending/beam-still) is the fix, not landed | Encounter |
+| PR-005 | 2026-11-01 | not stated | player 1 should always be on the left, player 2 on the right | S3 | private | open: a design rule, not read at HEAD | Game Design, Camera |
+| PR-006 | 2026-11-01 | not stated | a charge with the right stick is interrupted by a small attack | S2 | private | fixed in part: chargeArmour is on in 6a30b4c9 (heavy charges are armoured); on Orb's 1726 file 3 of 17 heavy charges were still lost to a stagger or the brawl's end (docs/qa/runs/c974e451/README.md section 3) | Encounter |
+| PR-007 | 2026-11-01 | not stated | rumble works, no sound effects | S2 | private | fixed by 2026-11-08: Orb, in the 1726 file, "sounds were working just fine"; commit not named | Audio |
+| PR-008 | 2026-11-01 | not stated | the first match against a player who did not fight back ended quickly, no chance to power up | S3 | private | open: design (Game Design) | Game Design |
+| PR-009 | 2026-11-01 | not stated | excessive terrain bounces: six or seven off an outcrop | S3 | web | open: this is GB-005, with World | World |
+| PR-010 | 2026-11-01 | not stated | launches seem to cause frame spikes | S2 | private | open: cause found (Performance 3a489e73: PROP SMASH's flight aim), the benched fix has not landed | Performance, Encounter |
+| PR-011 | 2026-11-01 | old PC test | the same frame drops from impacts on the old PC | S2 | private | open: as row 10 | Performance |
+| PR-012 | 2026-11-01 | old PC test | the ground draws much higher than where the fighter seems to impact | S3 | web | open: the A1 clipping scope | Rendering, World |
+| PR-013 | 2026-11-01 | old PC test | the skyscrapers look like townhouses stretched extremely high | S4 | web | open: not re-read at HEAD | Rendering, World |
+| PR-014 | 2026-11-01 | second play | getting knockbacks feels very arbitrary | S2 | private | open: not re-read at HEAD | Encounter, Game Design |
+| PR-015 | 2026-11-01 | second play | hard to charge up an attack when every hit seems to interrupt | S2 | private | fixed in part: as row 6 | Encounter |
+| PR-016 | 2026-11-01 | second play | still no sound effects (all sound settings on) | S2 | private | fixed by 2026-11-08: as row 7; commit not named | Audio |
+| PR-017 | 2026-11-02 | 10d8b8cf | a "Confusing" tag on a match, no sentence | S4 | private | cannot reproduce: a tag with no description to act on | QA |
+| PR-018 | 2026-11-06 | 10d8b8cf | control taken away: forced into a side switch, then a beam fired at me | S2 | private | fixed in part: the 0.3 s free rule for a beam and the carryRound switch are in 6a30b4c9's list; QA has not measured it | Encounter |
+| PR-019 | 2026-11-06 | 10d8b8cf | could not fire a beam at close range, the opponent could | S2 | private | fixed: the stick beam is thrown at contact in Orb's 1646 file (6a30b4c9) and half the computer's beams in the c974e451 baseline start at 58 units | Encounter |
+| PR-020 | 2026-11-06 | 10d8b8cf | at high speed impacts the frames stutter and the audio crackles | S2 | private | open: not re-read at HEAD | Performance, Audio |
+| PR-021 | 2026-11-06 | 10d8b8cf | the fighter kept attacking up a mountainside after Orb let go | S2 | private | cannot reproduce: QA's replay (2026-11-06) shows the sim never made slot 0 attack on its own; the recorded intent carried input | QA |
+| PR-022 | 2026-11-06 | circle=1 page | LT + Y worked very strangely | S3 | private | fixed by 2026-11-09: Orb, "zip attacks have improved the most" (1646 answers); commit not named | Controls, Combat |
+| PR-023 | 2026-11-06 | circle=1 page | the fighter that hit a building bounced back like a ping pong ball | S2 | private | open: Encounter's cityHold is the fix (A1); QA's city read waits for it | Encounter |
+| PR-024 | 2026-11-07 | LAN a8bc66e2 | slam with the right stick, did not give the mega slam | S3 | private | open: not re-read at HEAD | Encounter |
+| PR-025 | 2026-11-07 | LAN a8bc66e2 | fighter speed confusing; high speed launches a little too fast | S3 | private | open: flight 3,500 and travel 1.5 are the levers (GW1b) | Game Design |
+| PR-026 | 2026-11-07 | LAN a8bc66e2 | sound effects not audible until the first pause | S2 | private | open: the web page's audio starts after a first gesture; not re-read at HEAD | Audio, Tools |
+| PR-027 | 2026-11-07 | LAN a8bc66e2 | terrain does not match the characters' hitboxes; clipping into the ground | S3 | web | open: the A1 clipping scope | Rendering, World |
+| PR-028 | 2026-11-07 | LAN a8bc66e2 | ripples on the right of the screen crawl toward the left | S4 | web | open: not re-read at HEAD | Rendering, VFX |
+| PR-029 | 2026-11-07 | first 2v2 | stuttering, inconsistent | S2 | private | open: frame spikes track rollbacks (docs/qa/runs/091dfac9/lan-log-seed77-read.md) | Netcode, Performance |
+| PR-030 | 2026-11-07 | first 2v2 | the old PC's camera locked onto one player; never saw all four fighters | S3 | private | open: Camera's others-frame park is not landed | Camera |
+| PR-031 | 2026-11-08 | 091dfac9 LAN | background buildings disappear and reappear | S3 | private | open: hypothesis (not tested) that it is the picture after a rollback re-run | Netcode, Rendering |
+| PR-032 | 2026-11-08 | 091dfac9 LAN | a patch of air forced me upwards, like an invisible wall | S2 | private | cannot reproduce: the LAN match was not saved, nothing to replay | Netcode, QA |
+| PR-033 | 2026-11-08 | 1931a0f8 | firing beams without intending to, not RB + right stick | S2 | private | fixed in part: B never fires a beam, 6eec6a75 (bNoBeam); the late stick beam is the stray-beams park, not landed | Controls, Encounter |
+| PR-034 | 2026-11-08 | 1931a0f8 | the opponent's beam hit me from far below, off my screen | S2 | private | open: by design today (a beam always arrives); the A3 beam rebuild | Game Design, Encounter, Camera |
+| PR-035 | 2026-11-08 | 1931a0f8 | another beam from far under me sent me flying | S2 | private | open: as row 34 | Game Design, Encounter |
+| PR-036 | 2026-11-08 | 1931a0f8 | the first meteor knocked the opponent opposite to the punch | S2 | private | fixed in 6eec6a75 (sideFromBlowOnly); QA's side-from-blow arms not yet read | Encounter |
+| PR-037 | 2026-11-08 | 1931a0f8 | the trail arc does not match the flight; the trail is too long | S3 | web | open: the drawing (QA: the sim's landing prediction ends within 630 units) | VFX, Rendering |
+| PR-038 | 2026-11-08 | 1931a0f8 | textures gone to a flat brown inside a crater | S3 | web | open: cause found, the black crater is beam scorch (Rendering bf29f9ba); the look fix is held | Rendering |
+| PR-039 | 2026-11-08 | 1931a0f8 | a distorted landscape and a hump of ocean water | S3 | web | open: needs a still of seed 3687423 | World, Rendering |
+| PR-040 | 2026-11-08 | 1931a0f8 | beams feel arbitrary | S2 | private | open: the baseline is read (docs/qa/runs/c974e451); the A3 beam rebuild | Game Design, Encounter |
+| PR-041 | 2026-11-08 | 1931a0f8 | charge attacks interrupted arbitrarily | S2 | private | fixed in part: as row 6 | Encounter |
+| PR-042 | 2026-11-08 21:52 | not stated | LT high speed not quite fast enough, but it sped up when further apart | S3 | private | open: not re-read at HEAD | Game Design |
+| PR-043 | 2026-11-08 21:52 | not stated | in close-up fights we did not feel in control of our fighter | S2 | private | open: Encounter's control audit | Encounter |
+| PR-044 | 2026-11-09 | 6a30b4c9 | a combination of face buttons fired a beam, without the stick | S2 | private | open: a stick beam fired late into a brawl (tick 5220); the stray-beams park fixes it (acceptance 3: late 12.8% to 0.5%), not landed | Encounter |
+| PR-045 | 2026-11-09 | 6a30b4c9 | the game is paused with no menu; the feedback form cannot be seen | S1 | web | open: not re-read at HEAD | UI |
+| PR-046 | 2026-11-09 | 6a30b4c9 | wants to knock the opponent back and chain more hits while they fly | S3 | private | open: a design request | Game Design, Combat |
+| PR-047 | 2026-11-09 | 6a30b4c9 | knocked into a building, they bounce back to the strip like a ping pong ball | S2 | private | open: as row 23 | Encounter |
+| PR-048 | 2026-11-09 | 6a30b4c9 | ground clipping with the character models | S3 | web | open: the A1 clipping scope (as rows 12 and 27) | Rendering, World |
+| PR-049 | 2026-11-09 | 6a30b4c9 | a row of three humps in a crater | S3 | web | open: not re-read at HEAD | VFX, Rendering |
+| PR-050 | 2026-11-09 | 6a30b4c9 | the start menu's d-pad: up and down inconsistent, left and right move the option underneath | S2 | web | open: not re-read at HEAD; the Rail menus are in 6a30b4c9 | UI |
+| PR-051 | 2026-11-09 | not stated | the black crater looks out of place | S3 | web | open: as row 38 | Rendering |
+| PR-052 | 2026-11-09 | not stated | the crackles sounded bad | S3 | private | open: as row 20 | Audio |
+
+Counts: 52 accounted for. Status: fixed 5, fixed in part 5, open 39, cannot reproduce 3. Severity: S1 1, S2 26, S3 22, S4 3. A row that names a fix as "not landed" or "held" stays open. Row 9 is GB-005; rows 6, 15 and 41 are one subject; rows 23 and 47 are one subject; rows 34 and 35 are one subject; rows 38 and 51 are one subject; rows 20 and 52 are one subject; rows 33 and 44 are two causes of one report.
 
 ---
 

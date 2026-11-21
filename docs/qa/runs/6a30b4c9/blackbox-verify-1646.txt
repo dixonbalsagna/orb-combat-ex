@@ -1,0 +1,3 @@
+# blackbox-verify on Orb's 1646 file (a match over, with a final hash) on the 6a30b4c9 tree (scratch copy, no patches)
+BLACKBOX OK ticks=19388 final=27cf5381b18eb2cd
+# the 1625 file is a cut-short play (no final hash, no checkpoints): nothing to compare but the run to its last tick

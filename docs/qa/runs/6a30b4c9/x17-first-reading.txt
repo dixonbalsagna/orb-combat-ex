@@ -1,0 +1,16 @@
+# X-17: beam starts by source, slot 0, Orb's saved files, each on its own build's tree (qa/godot/x17_count.gd; rerun 2026-11-20 with the 5-tick stage window)
+## build 6a30b4c9 (files 20261109-1625 and 20261109-1646)
+X17 play1109a.json stick 0, rtb 0, other 0, ticks 2040
+X17 play1109b.json stick 7, rtb 1, other 0, ticks 19388
+X17 TOTAL stick 7, rtb 1, other 0
+## build 1931a0f8 (files 20261108-1714 and 20261108-1726)
+X17 play1108.json stick 2, rtb 0, other 2, ticks 13382
+OTHER play1108.json t=3326 last 12 ticks: 3315:- 3316:- 3317:- 3318:- 3319:- 3320:- 3321:- 3322:- 3323:- 3324:- 3325:- 3326:sig+sigHeld
+OTHER play1108.json t=8096 last 12 ticks: 8085:mask8 8086:mask8 8087:mask8 8088:mask8 8089:mask8 8090:mask8 8091:mask8 8092:mask8 8093:mask8 8094:sig+sigHeld+mask8 8095:sig+sigHeld+mask8 8096:sig+sigHeld+mask8
+X17 play1108b.json stick 6, rtb 0, other 4, ticks 18503
+OTHER play1108b.json t=3808 last 12 ticks: 3797:sigHeld+mask8 3798:sigHeld+mask8 3799:sigHeld+mask8 3800:sigHeld+mask8 3801:sigHeld+mask8 3802:sigHeld+mask8 3803:mask8 3804:mask8 3805:mask8 3806:mask8 3807:mask8 3808:sig+sigHeld+mask8
+OTHER play1108b.json t=7246 last 12 ticks: 7235:mask8 7236:mask8 7237:mask8 7238:mask8 7239:mask8 7240:mask8 7241:mask8 7242:mask8 7243:mask8 7244:mask8 7245:mask8 7246:sig+sigHeld+mask8
+OTHER play1108b.json t=11488 last 12 ticks: 11477:mask8 11478:mask8 11479:mask8 11480:mask8 11481:mask8 11482:mask8 11483:mask8 11484:mask8 11485:mask8 11486:mask8 11487:mask8 11488:sig+sigHeld+mask8
+OTHER play1108b.json t=14987 last 12 ticks: 14976:sig+sigHeld+dodge+mask8 14977:sig+sigHeld+dodge+mask8 14978:sig+sigHeld+dodge+mask8 14979:sigHeld+mask8 14980:sigHeld+mask8 14981:sigHeld+mask8 14982:sigHeld+mask8 14983:mask8 14984:mask8 14985:mask8 14986:mask8 14987:sig+sigHeld+mask8
+X17 TOTAL stick 8, rtb 0, other 6
+## scripted set: orbs_player.gd, both slots. At the 5-tick window, 20 matches (6a30b4c9 data): 537 beams, 0 neither stick nor RT + B (x13-scripted-matches.txt). The 200 matches of the balance reading ran at the 2-tick window and counted 31 of 5,326 beams as other; the three QA read were stage-to-charge gaps of 3 ticks (stick beams), and the 20-match rerun at 5 ticks has none.

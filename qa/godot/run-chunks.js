@@ -18,7 +18,7 @@ for (let k = 0; k < chunks; k++) {
   const c = spawn(GODOT, ['--headless', '--path', root, '--script', script, '--', String(n), String(seed), ...extra], { stdio: ['ignore', 'pipe', 'pipe'] });
   try { os.setPriority(c.pid, os.constants.priority.PRIORITY_BELOW_NORMAL); } catch (e) { /* stays at the priority it has */ }
   kids.push(c);
-  c.stdout.on('data', d => { for (const l of String(d).split('\n')) if (/^(GAUNTLET|STICKPLAY|RECORDS|SCRIPT ERROR|ERROR)/.test(l)) o.write(l + '\n'); });
+  c.stdout.on('data', d => { for (const l of String(d).split('\n')) if (/^(GAUNTLET|ORBS|STICKPLAY|RECORDS|MEM|SCRIPT ERROR|ERROR)/.test(l)) o.write(l + '\n'); });
   c.stderr.on('data', d => { for (const l of String(d).split('\n')) if (/SCRIPT ERROR/.test(l)) o.write(l + '\n'); });
   c.on('exit', code => { o.write(`EXIT ${code} matches ${n} seed ${seed}\n`); o.end(); if (--left === 0) process.exit(0); });
 }

@@ -1,0 +1,36 @@
+# easy chunk 0
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":67,"draws":0,"foeBeams":760,"hits":45481,"hitsTaken":48437,"level":"easy","lost":34,"medianSec":564.6,"n":67,"noControl":2063042,"presses":58811,"refused":7536,"refusedBy":{"press_chase_late/y":4,"press_refused/locked":2386,"press_refused/queue_expired":1100,"press_refused/queue_full":11,"stick/cancel":6,"stick/chase":57,"stick/hit":1,"stick/late":2192,"stick/not_yours":864,"stick/recovering":304,"stick/set_piece":611},"ticks":2271542,"timeouts":0,"won":33}
+EXIT 0 matches 67 seed 1
+# easy chunk 1
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":67,"draws":0,"foeBeams":703,"hits":45152,"hitsTaken":45346,"level":"easy","lost":23,"medianSec":557.2,"n":67,"noControl":2066094,"presses":58954,"refused":10227,"refusedBy":{"press_chase_late/y":4,"press_refused/locked":5138,"press_refused/queue_expired":1129,"press_refused/queue_full":17,"stick/cancel":5,"stick/chase":102,"stick/hit":1,"stick/late":2127,"stick/not_yours":771,"stick/recovering":300,"stick/set_piece":633},"ticks":2276606,"timeouts":0,"won":44}
+EXIT 0 matches 67 seed 68
+# easy chunk 2
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":66,"draws":0,"foeBeams":702,"hits":45708,"hitsTaken":46594,"level":"easy","lost":35,"medianSec":563.9,"n":66,"noControl":2100137,"presses":59707,"refused":10038,"refusedBy":{"press_chase_late/y":8,"press_refused/locked":4975,"press_refused/queue_expired":1039,"press_refused/queue_full":14,"stick/cancel":3,"stick/chase":105,"stick/late":2183,"stick/not_yours":814,"stick/recovering":285,"stick/set_piece":612},"ticks":2304440,"timeouts":0,"won":31}
+EXIT 0 matches 66 seed 135
+# medium chunk 0
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":67,"draws":0,"foeBeams":246,"hits":20284,"hitsTaken":63612,"level":"medium","lost":67,"medianSec":284.9,"n":67,"noControl":1061304,"presses":30814,"refused":3081,"refusedBy":{"press_chase_late/y":6,"press_refused/locked":291,"press_refused/queue_expired":469,"press_refused/queue_full":28,"stick/cancel":70,"stick/chase":48,"stick/hit":6,"stick/late":747,"stick/not_yours":613,"stick/recovering":238,"stick/set_piece":565},"ticks":1149891,"timeouts":0,"won":0}
+EXIT 0 matches 67 seed 1
+# medium chunk 1
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":67,"draws":0,"foeBeams":255,"hits":20840,"hitsTaken":64536,"level":"medium","lost":67,"medianSec":289.4,"n":67,"noControl":1073384,"presses":31187,"refused":2823,"refusedBy":{"press_chase_late/y":3,"press_refused/locked":121,"press_refused/queue_expired":379,"press_refused/queue_full":16,"stick/cancel":66,"stick/chase":35,"stick/hit":4,"stick/late":803,"stick/not_yours":584,"stick/recovering":229,"stick/set_piece":583},"ticks":1162362,"timeouts":0,"won":0}
+EXIT 0 matches 67 seed 68
+# medium chunk 2
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":66,"draws":0,"foeBeams":225,"hits":20027,"hitsTaken":62383,"level":"medium","lost":66,"medianSec":279.3,"n":66,"noControl":1040002,"presses":30227,"refused":2790,"refusedBy":{"press_chase_late/y":2,"press_chase_no_ki/y":1,"press_refused/locked":108,"press_refused/queue_expired":375,"press_refused/queue_full":19,"stick/cancel":76,"stick/chase":25,"stick/hit":3,"stick/late":774,"stick/not_yours":609,"stick/recovering":226,"stick/set_piece":572},"ticks":1124774,"timeouts":0,"won":0}
+EXIT 0 matches 66 seed 135
+# hard chunk 0
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":67,"draws":0,"foeBeams":212,"hits":16064,"hitsTaken":65018,"level":"hard","lost":67,"medianSec":254.4,"n":67,"noControl":940499,"presses":29891,"refused":3284,"refusedBy":{"press_chase_late/y":2,"press_refused/locked":180,"press_refused/queue_expired":341,"press_refused/queue_full":19,"press_stunned/y":1,"stick/cancel":150,"stick/chase":38,"stick/hit":8,"stick/late":1053,"stick/not_yours":700,"stick/recovering":255,"stick/set_piece":537},"ticks":1033922,"timeouts":0,"won":0}
+EXIT 0 matches 67 seed 1
+# hard chunk 1
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":67,"draws":0,"foeBeams":217,"hits":16553,"hitsTaken":64985,"level":"hard","lost":67,"medianSec":255.2,"n":67,"noControl":955452,"presses":30291,"refused":3255,"refusedBy":{"press_chase_late/y":4,"press_refused/locked":98,"press_refused/queue_expired":363,"press_refused/queue_full":15,"stick/cancel":187,"stick/chase":25,"stick/hit":9,"stick/late":1073,"stick/not_yours":722,"stick/recovering":232,"stick/set_piece":527},"ticks":1050559,"timeouts":0,"won":0}
+EXIT 0 matches 67 seed 68
+# hard chunk 2
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":66,"draws":0,"foeBeams":208,"hits":15936,"hitsTaken":64980,"level":"hard","lost":66,"medianSec":259.0,"n":66,"noControl":933064,"presses":29791,"refused":3352,"refusedBy":{"press_chase_late/y":3,"press_refused/locked":109,"press_refused/queue_expired":394,"press_refused/queue_full":19,"press_stunned/y":1,"stick/cancel":180,"stick/chase":33,"stick/hit":9,"stick/late":1103,"stick/not_yours":707,"stick/recovering":251,"stick/set_piece":543},"ticks":1030006,"timeouts":0,"won":0}
+EXIT 0 matches 66 seed 135
+# easy extension (seeds 201 to 400) chunk 0
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":67,"draws":0,"foeBeams":620,"hits":46200,"hitsTaken":45876,"level":"easy","lost":20,"medianSec":551.6,"n":67,"noControl":2100510,"presses":59684,"refused":11264,"refusedBy":{"press_chase_late/y":6,"press_refused/locked":6370,"press_refused/queue_expired":1070,"press_refused/queue_full":21,"stick/cancel":4,"stick/chase":67,"stick/late":2117,"stick/not_yours":700,"stick/recovering":273,"stick/set_piece":636},"ticks":2304145,"timeouts":0,"won":47}
+EXIT 0 matches 67 seed 201
+# easy extension (seeds 201 to 400) chunk 1
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":67,"draws":0,"foeBeams":674,"hits":43981,"hitsTaken":44958,"level":"easy","lost":18,"medianSec":522.2,"n":67,"noControl":1995093,"presses":57153,"refused":8677,"refusedBy":{"press_chase_late/y":10,"press_refused/locked":3524,"press_refused/queue_expired":1242,"press_refused/queue_full":19,"stick/cancel":3,"stick/chase":102,"stick/hit":1,"stick/late":2122,"stick/not_yours":742,"stick/recovering":268,"stick/set_piece":644},"ticks":2204320,"timeouts":0,"won":49}
+EXIT 0 matches 67 seed 268
+# easy extension (seeds 201 to 400) chunk 2
+GAUNTLET {"arm":"orbs","beams":0,"budgetStopped":false,"capped":0,"done":66,"draws":0,"foeBeams":638,"hits":43397,"hitsTaken":45777,"level":"easy","lost":26,"medianSec":541.0,"n":66,"noControl":1978237,"presses":56586,"refused":8316,"refusedBy":{"press_chase_late/y":8,"press_refused/locked":3272,"press_refused/queue_expired":1086,"press_refused/queue_full":14,"stick/cancel":5,"stick/chase":117,"stick/late":2085,"stick/not_yours":799,"stick/recovering":288,"stick/set_piece":642},"ticks":2182616,"timeouts":0,"won":40}
+EXIT 0 matches 66 seed 335

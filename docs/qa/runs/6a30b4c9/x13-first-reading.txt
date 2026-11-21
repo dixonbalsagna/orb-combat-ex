@@ -1,0 +1,64 @@
+# X-13: the match checklist's ten items on Orb's saved files (qa/godot/checklist.gd; rerun 2026-11-20)
+## build 6a30b4c9 (tree: the build's own packed data)
+CHECKLIST play1109a.json 2040 ticks (0.6 min); no KO by the last tick
+ITEM play1109a.json lap: NOT SEEN
+ITEM play1109a.json stances: NOT SEEN (slot 0: none, LT)
+ITEM play1109a.json beam_off: NOT SEEN
+ITEM play1109a.json signatures: NOT SEEN (fighter 0 {}, fighter 1 {})
+ITEM play1109a.json launch: seen at tick 1624
+ITEM play1109a.json well: NOT SEEN (no such event in this build)
+ITEM play1109a.json crater: seen at tick 36
+ITEM play1109a.json building: NOT SEEN
+ITEM play1109a.json bystanders: seen at tick 959 (crowd_state)
+ITEM play1109a.json transform: NOT SEEN
+CHECKLIST_SUMMARY play1109a.json 3 of 10 seen
+CHECKLIST play1109b.json 19388 ticks (5.4 min); slot 0 won (slot 1 was knocked out)
+ITEM play1109b.json lap: NOT SEEN
+ITEM play1109b.json stances: seen at tick 19387 (slot 0: none, LB, RB, RT, LT)
+ITEM play1109b.json beam_off: NOT SEEN
+ITEM play1109b.json signatures: NOT SEEN (fighter 0 {"rtb":1,"stick":7}, fighter 1 {"computer":2})
+ITEM play1109b.json launch: seen at tick 826
+ITEM play1109b.json well: NOT SEEN (no such event in this build)
+ITEM play1109b.json crater: seen at tick 36
+ITEM play1109b.json building: seen at tick 1000 (building_stage)
+ITEM play1109b.json bystanders: seen at tick 1000 (evacuate)
+ITEM play1109b.json transform: seen at tick 9453
+CHECKLIST_SUMMARY play1109b.json 6 of 10 seen
+## build 1931a0f8 (tree: that build's own packed data)
+CHECKLIST play1108.json 13382 ticks (3.7 min); slot 0 won (slot 1 was knocked out)
+ITEM play1108.json lap: NOT SEEN
+ITEM play1108.json stances: NOT SEEN (slot 0: none, RB, RT, LT)
+ITEM play1108.json beam_off: seen at tick 3417 (DODGE after moving 300 off the line)
+ITEM play1108.json signatures: NOT SEEN (fighter 0 {"other":2,"stick":2}, fighter 1 {"computer":7})
+ITEM play1108.json launch: seen at tick 921
+ITEM play1108.json well: NOT SEEN (no such event in this build)
+ITEM play1108.json crater: seen at tick 36
+ITEM play1108.json building: seen at tick 956 (building_stage)
+ITEM play1108.json bystanders: seen at tick 2090 (crowd_state)
+ITEM play1108.json transform: seen at tick 7361
+CHECKLIST_SUMMARY play1108.json 6 of 10 seen
+CHECKLIST play1108b.json 18503 ticks (5.1 min); slot 0 won (slot 1 was knocked out)
+ITEM play1108b.json lap: NOT SEEN
+ITEM play1108b.json stances: NOT SEEN (slot 0: none, RB, LT)
+ITEM play1108b.json beam_off: seen at tick 15078 (DODGE after moving 300 off the line)
+ITEM play1108b.json signatures: NOT SEEN (fighter 0 {"other":4,"stick":6}, fighter 1 {"computer":7})
+ITEM play1108b.json launch: seen at tick 1099
+ITEM play1108b.json well: NOT SEEN (no such event in this build)
+ITEM play1108b.json crater: seen at tick 36
+ITEM play1108b.json building: seen at tick 1112 (building_stage)
+ITEM play1108b.json bystanders: seen at tick 1095 (crowd_state)
+ITEM play1108b.json transform: NOT SEEN
+CHECKLIST_SUMMARY play1108b.json 5 of 10 seen
+
+# X-13 scripted matches: orbs_player.gd, both slots on Orb's scheme (default arm), 20 matches, seeds 1 to 20, 6a30b4c9 packed data
+matches 20, slot wins [8,12], beams by slot [260,277], beam sources (X-17) [{"stick":268},{"stick":281}], chunk median lengths 709.9/705 s, beams neither stick nor RT + B: 0
+lap: seen in 0 of 20 matches, median first tick -
+stances: seen in 0 of 20 matches, median first tick -
+beam_off: seen in 0 of 20 matches, median first tick -
+signatures: seen in 20 of 20 matches, median first tick 2430
+launch: seen in 20 of 20 matches, median first tick 953
+well: seen in 0 of 20 matches, median first tick -
+crater: seen in 20 of 20 matches, median first tick 1282
+building: seen in 20 of 20 matches, median first tick 910
+bystanders: seen in 20 of 20 matches, median first tick 598
+transform: seen in 0 of 20 matches, median first tick -

@@ -1,0 +1,2 @@
+# orbs_player.gd smoke: 2 matches, both slots on Orb's scheme with the stick beam every 420 ticks (6a30b4c9 data, seeds 1 and 2)
+ORBS {"arm":"default","beamEvery":420,"beamHold":50,"beamSources":[{"stick":20},{"stick":29}],"beamsBySlot":[19,29],"done":2,"draws":0,"flicksBySlot":[1652,1709],"hitsBySlot":[725,933],"matches":[[1,1,"PROTAGONIST","RIVAL"],[2,1,"PROTAGONIST","RIVAL"]],"medianSec":702.2,"namesSlots":["PROTAGONIST","RIVAL"],"timeouts":0,"winsBySlot":[0,2]}
