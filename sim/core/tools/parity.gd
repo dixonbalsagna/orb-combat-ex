@@ -95,9 +95,11 @@ func _init() -> void:
 	check("the intent's second word in the hash and the replay", _rightWord())
 	check("a struggle, as the host reads it", _inStruggle())
 	check("a match starts on the floor of a lake or the sea", _floorStart())
+	_mainWorld(true)   # the run's and the campaign's rows run on the world switches they were built on (main's, before GW1a; the campaign isn't in Alpha)
 	check("the run's ground", _runGround())
 	check("the run's state and carry", _runState())
 	check("the campaign's arc and episode", _campaign())
+	_mainWorld(false)   # ... and the switches as they were
 	check("the planet's load", _planetLoad())
 	check("the calm turn on gen 2", _calmGen2())
 	check("the match's start in pieces", _matchStart())
@@ -3229,7 +3231,7 @@ func _flightReads() -> String:
 	var seen := {}
 	for c in [[1.0, 0.0, false, false, 600.0], [3.0, 1.0, false, false, 600.0], [2.0, 2.0, true, false, 600.0], [1.0, 3.0, false, true, 600.0], [4.0, 0.0, false, true, 6000.0]]:
 		var S := SimCore.createSim()
-		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false, "power": false, "kick": false})   # with the energy model on, flat out reads his power, which the step fills first (power_check's flight rows); the kick off: its takeoff is not the plain lag this reads
 		var f = S.fighters[0]
 		var o = S.fighters[1]
 		f.y = WorldTerrain.groundY(S, f.x) + 900.0
@@ -3255,7 +3257,7 @@ func _flightReads() -> String:
 	if seen.size() < 5:
 		return "flightSpeed gave the same speed for different tiers, stances and dashes"
 	var L := SimCore.createSim()
-	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"intro": false})
+	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"intro": false, "power": false})
 	var g = L.fighters[0]
 	g.y = WorldTerrain.groundY(L, g.x) + 900.0
 	g.state = "locked"
@@ -4444,7 +4446,7 @@ func _destructionProbe(S: SimState, kind: String) -> Array:
 ## the values it produced as text. A result starting with "!" means the probe could not set its scenario up.
 func _wiredProbe(kind: String) -> String:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, 3)
+	SimCore.newMatch(S, 3, {}, {"power": false})   # the numbers as wired with the energy model off (with it on, the ladder's launch step is 1 by design)
 	var kai = S.fighters[0]
 	var vorr = S.fighters[1]
 	var out: Array = []
@@ -4761,8 +4763,8 @@ func _animFields() -> String:
 			break
 	if dmg == null:
 		return "a hit sent no damage event"
-	if dmg.tier != 3.0 or dmg.stop != SimFx.stopTicks(S.dirS.stop) or dmg.stop < 1:
-		return "the hit's fields: stop %d (want %d), tier %s" % [dmg.stop, SimFx.stopTicks(S.dirS.stop), str(dmg.tier)]
+	if dmg.tier != 3.0 or dmg.stop != SimFx.stopTicks(S.dirS.stop, S.hs != null) or dmg.stop < 1:   # whole ticks whenever the freeze budget's window is there (the budget on any table is on in the 9 November data)
+		return "the hit's fields: stop %d (want %d), tier %s" % [dmg.stop, SimFx.stopTicks(S.dirS.stop, S.hs != null), str(dmg.tier)]
 	S.out.fx.clear()
 	var frozen: int = 0
 	while not SimCore.step(S):
@@ -4803,6 +4805,8 @@ func _animFields() -> String:
 ## patience; a release with a coil adds the surge, the armour and the lasting gain by its share and spends the coil; the
 ## gains, and today's for a fighter without steps; a release of live steps never pauses; the hold and the release are
 ## told, for a fighter without steps too; a forms match replays, with the forms data in its data hash.
+## Forms' rows play with the energy model off: with it on, a step's launch gain and a Witness form's are 1 by design
+## (power-core.md: no multiplier takes a send past its share).
 func _forms() -> String:
 	if not SimForms.errors().is_empty():
 		return "the forms data: " + "; ".join(SimForms.errors())
@@ -4819,7 +4823,7 @@ func _forms() -> String:
 	var dt: float = SimConst.DT
 	# the five steps, taken one at a time
 	var M := SimCore.createSim()
-	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"forms": true})
+	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
 	var p = M.fighters[0]
 	var r = M.fighters[1]
 	if not M.formsOn or p.fd == null or r.fd != null or p.form == null or r.form == null:
@@ -4864,7 +4868,7 @@ func _forms() -> String:
 	SimCore.dispose(M)
 	# banked: four steps ready at 65 while he waits, a fifth at 100; one release takes all five
 	var B := SimCore.createSim()
-	SimCore.newMatch(B, 5, {"p1": false, "p2": false}, {"forms": true})
+	SimCore.newMatch(B, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
 	p = B.fighters[0]
 	r = B.fighters[1]
 	B.out.fx.clear()
@@ -4936,7 +4940,7 @@ func _forms() -> String:
 	SimCore.dispose(B)
 	# the coil starts at the first break after the step came ready: inside an exchange it coils nothing
 	var X := SimCore.createSim()
-	SimCore.newMatch(X, 5, {"p1": false, "p2": false}, {"forms": true})
+	SimCore.newMatch(X, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
 	p = X.fighters[0]
 	X.dirS.ex = SimState.Exchange.new()
 	p.power = 20.0
@@ -4951,7 +4955,7 @@ func _forms() -> String:
 	SimCore.dispose(X)
 	# a release of live steps never pauses the fight
 	var L := SimCore.createSim()
-	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"forms": true})
+	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
 	p = L.fighters[0]
 	p.power = 20.0
 	SimForms.readyTick(L, p, dt)
@@ -4967,7 +4971,7 @@ func _forms() -> String:
 	SimCore.dispose(L)
 	# a fighter without steps: his hold and his one-step take are told
 	var N := SimCore.createSim()
-	SimCore.newMatch(N, 5, {"p1": false, "p2": false}, {"forms": true})
+	SimCore.newMatch(N, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
 	r = N.fighters[1]
 	r.power = 40.0
 	r.act.formReady = true
@@ -5028,7 +5032,7 @@ func _menaceCap() -> String:
 func _formBranches() -> String:
 	var dt: float = SimConst.DT
 	var M := SimCore.createSim()
-	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"forms": true})
+	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"forms": true, "power": false})
 	var p = M.fighters[0]
 	var r = M.fighters[1]
 	if p.fd == null or p.fd.branchAt != [2, 4]:
@@ -5157,7 +5161,7 @@ func _formBranches() -> String:
 	SimCore.dispose(M)
 	# ties: the first to Trial, then to the branch he is on; one pick for a release that passes II and IV
 	var T := SimCore.createSim()
-	SimCore.newMatch(T, 6, {"p1": false, "p2": false}, {"forms": true})
+	SimCore.newMatch(T, 6, {"p1": false, "p2": false}, {"forms": true, "power": false})
 	p = T.fighters[0]
 	p.power = 35.0
 	SimForms.readyTick(T, p, dt)
@@ -5177,7 +5181,7 @@ func _formBranches() -> String:
 		return "a tie on Trial went to %s" % p.form.branch
 	SimCore.dispose(T)
 	var U := SimCore.createSim()
-	SimCore.newMatch(U, 7, {"p1": false, "p2": false}, {"forms": true})
+	SimCore.newMatch(U, 7, {"p1": false, "p2": false}, {"forms": true, "power": false})
 	p = U.fighters[0]
 	p.power = 65.0
 	SimForms.readyTick(U, p, dt)
@@ -5533,7 +5537,8 @@ func _hitstopAny() -> String:
 
 ## Hit-stop by weight (sim/core/hitstop.gd). Off: a hit's stop is the one passed, and a stop's count-down is today's.
 ## On: each weight's ticks; a hit that names none keeps the one passed; stops merge; over the budget every stop under
-## a decisive blow is x0.7 (rounded, at least 2) and decisive blows are not, and 10 s of fight later the budget is
+## a decisive blow is x0.7 (rounded, at least 2) and decisive blows, the KO, launches and heavies are not (Game Design,
+## 2026-11-13), and 10 s of fight later the budget is
 ## back; a stop of n ticks freezes n; a broken region's decisive and the KO's cap (in ko).
 func _hitstop() -> String:
 	if not SimHitstop.errors().is_empty():
@@ -5541,17 +5546,17 @@ func _hitstop() -> String:
 	var e: String = _hitstopAny()
 	if e != "":
 		return e
-	if SimReplay.dataHash({"hitstop": true}) == SimReplay.dataHash({"hitstop": false}):
+	if SimReplay.dataHash({"hitstop": true, "hitstopBudget": false}) == SimReplay.dataHash({"hitstop": false, "hitstopBudget": false}):   # the budget on any table off on both sides: with it on, the file is folded either way
 		return "a replay with hit-stop by weight on does not carry its data"
 	var O := SimCore.createSim()
-	SimCore.newMatch(O, 5, {"p1": false, "p2": false}, {"hitstop": false})
+	SimCore.newMatch(O, 5, {"p1": false, "p2": false}, {"hitstop": false, "hitstopBudget": false})   # the budget on any table off too: with it on (the 9 November data) the window exists either way
 	O.dirS.stop = 0.0
 	SimDamage.hit(O, null, O.fighters[0], O.fighters[1], 1.0, {"weight": "heavy", "stop": 0.2})
 	if O.hs != null or O.dirS.stop != 0.2:
 		return "off: a hit naming a weight held %s (want the 0.2 it passed)" % str(O.dirS.stop)
 	SimCore.dispose(O)
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"hitstop": true})
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"hitstop": true, "hitstopBudget": false})   # hit-stop by weight alone: with the budget on any table on too (the 9 November data), its floor of 1 and its never-cut list replace the table's
 	var A = S.fighters[0]
 	var D = S.fighters[1]
 	var want: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 3, "medium": 5, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24}
@@ -5574,30 +5579,30 @@ func _hitstop() -> String:
 	S.dirS.stop = 0.0
 	for i in range(SimHitstop.budgetTicks):
 		SimHitstop.frozen(S)
-	var cut: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 4, "heavy": 6, "launch": 8, "launch_full": 10, "decisive": 20, "ko": 24}
+	var cut: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 4, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24}
 	for w in cut:
 		if SimHitstop.ticks(S, w) != cut[w]:
-			return "over the budget, %s holds %d (want %d: x0.7, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), cut[w]]
+			return "over the budget, %s holds %d (want %d: x0.7, rounded, at least 2; decisive, the KO, launches and heavies never cut)" % [w, SimHitstop.ticks(S, w), cut[w]]
 	# the deep step (Game Design's 7d): over 40% of the window, x0.5, rounded, at least 2
 	if SimHitstop.deepTicks != 240:
 		return "the deep line is %d ticks (want 40%% of 10 s, 240)" % SimHitstop.deepTicks
 	for i in range(SimHitstop.deepTicks - SimHitstop.budgetTicks - 1):
 		SimHitstop.frozen(S)
-	if SimHitstop.ticks(S, "heavy") != 6:
-		return "a tick under the deep line, a heavy holds %d (want 6: x0.7)" % SimHitstop.ticks(S, "heavy")
+	if SimHitstop.ticks(S, "medium") != 4:
+		return "a tick under the deep line, a medium holds %d (want 4: x0.7)" % SimHitstop.ticks(S, "medium")
 	SimHitstop.frozen(S)
-	var deep: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 3, "heavy": 4, "launch": 6, "launch_full": 7, "decisive": 20, "ko": 24}
+	var deep: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 3, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24}
 	for w in deep:
 		if SimHitstop.ticks(S, w) != deep[w]:
-			return "over the deep line, %s holds %d (want %d: x0.5, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), deep[w]]
+			return "over the deep line, %s holds %d (want %d: x0.5, rounded, at least 2; decisive, the KO, launches and heavies never cut)" % [w, SimHitstop.ticks(S, w), deep[w]]
 	var h0: String = SimHash.stateHash(S).gameplay
 	for i in range(SimHitstop.windowS * 60 - 1):
 		SimHitstop.live(S)
-	if SimHitstop.ticks(S, "heavy") != 4:
+	if SimHitstop.ticks(S, "medium") != 3:
 		return "the budget came back before 10 s of fight"
 	SimHitstop.live(S)
-	if SimHitstop.ticks(S, "heavy") != 8 or S.hs.sum != 0 or SimHash.stateHash(S).gameplay == h0:
-		return "10 s of fight later: a heavy %d (want 8), %d frozen ticks counted; the budget's state not hashed" % [SimHitstop.ticks(S, "heavy"), S.hs.sum]
+	if SimHitstop.ticks(S, "medium") != 5 or S.hs.sum != 0 or SimHash.stateHash(S).gameplay == h0:
+		return "10 s of fight later: a medium %d (want 5), %d frozen ticks counted; the budget's state not hashed" % [SimHitstop.ticks(S, "medium"), S.hs.sum]
 	# a mash flows (Game Design's 6): a flowing blow holds no stop, and the clock runs on
 	S.dirS.stop = 0.0
 	var tf: float = S.T
@@ -5820,12 +5825,19 @@ func _piTau() -> String:
 ## The read is this match's: a state reused after a match with depth on and a crater where he starts begins as a new one does.
 ## Landing above the bed digs nothing, and the cue stays at the sheet with a radius of 0; on the bed the crater stays; with the floor off it digs as ever (Game Design's rulings 2026-10-30 row 13).
 func _floorStart() -> String:
-	var lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2}   # its touch-down is in a lake
+	var lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2, "dash": false}   # its touch-down is in a lake. The dash off: at its speed a free fighter low along a rising lake floor outruns floorFor's rise limit (riseMax a tick) and sits up to about 2.3 units inside it for a tick or two, a finding for World (A-ENERGY-04's park)
 	var fresh := func(mode) -> SimState:
 		var N := SimCore.createSim()
 		SimCore.newMatch(N, 1, {}, lake.merged({"intro": mode}))
 		return N
 	var err: String = ""
+	var surf: bool = WorldFill.surfaceOn()   # the switches as the data (or an earlier row) had them, put back at the end: the 9 November data has all three on
+	var flo: bool = WorldFill.floorOn()
+	var water: Dictionary = DirInterrupt.data()["water"]
+	var drop = water["enabled"]
+	WorldFill.setSurface(false)   # the floor off: as main's data had all three when these rows were written
+	WorldFill.setFloor(false)
+	water["enabled"] = false
 	var S: SimState = fresh.call(false)
 	if S.fighters[0].y != 60.0 or S.fighters[1].y != 60.0:
 		err = "the floor off: a flat start is at %.3f and %.3f, not 60" % [S.fighters[0].y, S.fighters[1].y]
@@ -5837,9 +5849,6 @@ func _floorStart() -> String:
 	if err == "" and S.craters.size() != 2:
 		err = "the floor off: the intro's end state dug %d craters in the lake, not 2" % S.craters.size()
 	SimCore.dispose(S)
-	var surf: bool = WorldFill.surfaceOn()
-	var water: Dictionary = DirInterrupt.data()["water"]
-	var drop = water["enabled"]
 	WorldFill.setSurface(true)
 	WorldFill.setFloor(true)
 	water["enabled"] = true
@@ -5907,7 +5916,7 @@ func _floorStart() -> String:
 		err = "the floor on: a state reused after a match with depth on starts him at %.3f, a new one at %.3f" % [R.fighters[0].y, want0]
 	SimCore.dispose(R)
 	water["enabled"] = drop
-	WorldFill.setFloor(false)
+	WorldFill.setFloor(flo)   # as found (it was put back to off, which leaked into every later row on data with the floor on)
 	WorldFill.setSurface(surf)
 	var plain := SimCore.createSim()
 	SimCore.newMatch(plain, 1, {}, {"intro": false})   # the process's arena and generation as the checks after this read them
@@ -6117,7 +6126,7 @@ func _planetHeader() -> String:
 	var mc: Array = read.call(calmSetups, calmH)
 	var mn: Array = moved.call()
 	turn.gapSeconds = gap
-	if err == "" and (mt != [true, true] or mc != [false, false] or mn != [false, false, false]):
+	if err == "" and (mt != [true, true] or mc != [false, false] or mn != [false, WorldEpoch.enabled(g1), WorldEpoch.enabled(g2)]):   # a setup with no turn key turns as the data says (rings.json on: 1 in the 9 November data)
 		err = "rings.json's turn edited: turn on %s, off %s, no planet, gen 1, gen 2 %s; only the turn's setups should move" % [str(mt), str(mc), str(mn)]
 	turn["_note"] = "a note"
 	mt = read.call(turnSetups, turnH)
@@ -6344,6 +6353,28 @@ func _ricochet() -> String:
 ## and its setup (read back from JSON, as a header is) building the match on that ring; with that arena in `used`,
 ## another ring and no repeat; the boss on the Whole circle through his home, under Game Design's waiver when it
 ## misses Whole's minimum, and on his claim when no other place stands. The data ships off.
+## The world switches the run's and the campaign's rows were built on (main's data before GW1a): generation 1, the ring's
+## turn off, the water's floor and surface off, the director's water off. The campaign isn't in Alpha (Orb's decision 7):
+## re-reading it on the shipped world (generation 2, the turn and the water on) is World's when it comes back. On that
+## data a seeded arc's cross-back place is asked but not offered at column 4. on: set them; off: put back what was found.
+var _mw: Array = []
+func _mainWorld(on_: bool) -> void:
+	var water: Dictionary = DirInterrupt.data()["water"]
+	if on_:
+		_mw = [WorldClimate.curGen, WorldEpoch.data().get("on", 0), WorldFill.floorOn(), WorldFill.surfaceOn(), water["enabled"]]
+		WorldClimate.useGen(1)
+		WorldEpoch.data()["on"] = 0
+		WorldFill.setFloor(false)
+		WorldFill.setSurface(false)
+		water["enabled"] = false
+	else:
+		WorldClimate.curGen = int(_mw[0])
+		WorldEpoch.data()["on"] = _mw[1]
+		WorldFill.setFloor(bool(_mw[2]))
+		WorldFill.setSurface(bool(_mw[3]))
+		water["enabled"] = _mw[4]
+
+
 func _runGround() -> String:
 	SimRun.reload()
 	if not SimRun.errors().is_empty():
@@ -6530,8 +6561,25 @@ func _campaign() -> String:
 	# left one has it asked at column 4 and offered there, leading the sites (World's prefer)
 	if int(a1.back) != SimCampaign.crossBackPlace(a1) or (int(a1.back) >= 0 and not a1.columns[SimCampaign.crossTo - 1].any(func(x): return int(x.place) == int(a1.back))):
 		return "the cross-back of %s: asked %d, column 2's untaken place %d" % [arcId, int(a1.back), SimCampaign.crossBackPlace(a1)]
-	var backArc: String = "0bac000000017334"   # its rise leaves place 12 untaken; World offers it again at column 4
-	var ab: Dictionary = SimCampaignRun.play(backArc, "filler_arc", 60).arc
+	var backArc: String = ""
+	var ab: Dictionary = {}
+	var unoffered: String = ""
+	for k in range(24):   # the first seeded arc that leaves column 2 a place untaken and has it offered, leading, at column 4: under main's switches-off data the first tried, 0bac000000017334 (place 12)
+		var id: String = "0bac%012x" % (0x17334 + k)
+		var tr: Dictionary = SimCampaignRun.play(id, "filler_arc", 60).arc
+		if int(tr.back) < 0:
+			continue
+		var ld: Dictionary = tr.columns[SimCampaign.crossTo - 1][0] if tr.columns.size() >= SimCampaign.crossTo and not tr.columns[SimCampaign.crossTo - 1].is_empty() else {}
+		if not ld.is_empty() and int(ld.place) == int(tr.back) and int(ld.preferred) == 1:
+			backArc = id
+			ab = tr
+			break
+		if unoffered == "":
+			unoffered = "%s asked place %d, and column 4 was led by %s" % [id, int(tr.back), str(ld)]
+	if unoffered != "":
+		print("parity note (for World, the campaign): a cross-back place asked but not offered at column 4: %s" % unoffered)
+	if backArc == "":
+		return "the cross-back: none of 24 seeded arcs from 0bac000000017334 had column 2's untaken place offered, leading, at column 4 (first asked and not offered: %s)" % unoffered
 	var lead: Dictionary = ab.columns[SimCampaign.crossTo - 1][0] if ab.columns.size() >= SimCampaign.crossTo and not ab.columns[SimCampaign.crossTo - 1].is_empty() else {}
 	if SimCampaign.crossFrom != 2 or SimCampaign.crossTo != 4 or int(ab.back) < 0 or int(ab.back) != SimCampaign.crossBackPlace(ab) or lead.is_empty() or int(lead.place) != int(ab.back) or int(lead.preferred) != 1:
 		return "the cross-back of %s: from %d to %d, asked %d, column 4 led by %s (want 2 to 4, column 2's untaken place asked, leading and preferred)" % [backArc, SimCampaign.crossFrom, SimCampaign.crossTo, int(ab.back), str(lead)]

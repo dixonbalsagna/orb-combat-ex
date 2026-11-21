@@ -374,7 +374,11 @@ func _swing() -> void:
 func _rollback() -> void:
 	var S := start3()
 	step(S, 240)
-	ok(SimSwing.ask(S, {"deg": 60.0, "rate": 60.0, "cause": "launch"}), "rollback: a swing runs")
+	var waited: int = 0
+	while (S.beams.size() > 0 or SimStage.halts(S)) and waited < 600:   # a swing rightly waits out a beam in flight or a halt (SimSwing.ask): from tick 240, the first moment one can run (with the 9 November data the computer has a beam out at 240)
+		step(S, 1)
+		waited += 1
+	ok(SimSwing.ask(S, {"deg": 60.0, "rate": 60.0, "cause": "launch"}), "rollback: a swing runs (from tick %d)" % (240 + waited))
 	step(S, 10)
 	var snap: NetSnapshot = NetSnapshot.take(S)
 	var fwd: Array = []

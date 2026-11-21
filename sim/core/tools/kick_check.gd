@@ -69,7 +69,7 @@ func _keep() -> void:
 	var run := func(keep: bool, sep: float, dir: float) -> Array:
 		SimKick.keepTop = keep
 		var S := SimCore.createSim()
-		SimCore.newMatch(S, 77, {"p1": false, "p2": false}, {"kick": true, "intro": false})
+		SimCore.newMatch(S, 77, {"p1": false, "p2": false}, {"kick": true, "intro": false, "dash": false})   # keepTop against the traversal's old fall: that ramp exists only with the dash at any range off (power.json's dash, on in the data since A1)
 		var f = S.fighters[0]
 		var o = S.fighters[1]
 		f.x = 40000.0
@@ -326,7 +326,8 @@ func _whole() -> void:
 	print("rollback: %d kicks, %d plants in the window" % [r.kicks, r.plants])
 	var off: Dictionary = _run(false, 600)
 	var dflt: Dictionary = _run(null, 600)
-	ok(off.h == dflt.h, "off: the same as a match with no word of it")
+	var on6: Dictionary = _run(true, 600)
+	ok((on6 if SimKick.enabled() else off).h == dflt.h, "a match with no word plays as the data's switch says (%s)" % str(SimKick.enabled()))
 	ok(off.kicks == 0, "off: no kick told")
 	var S := _mk(9000.0)
 	var h0: String = SimHash.stateHash(S).gameplay
@@ -342,7 +343,10 @@ func _whole() -> void:
 
 func _init() -> void:
 	ok(SimKick.errors().is_empty(), "the data loads: %s" % str(SimKick.errors()))
-	ok(not SimKick.enabled(), "the switch is off")
+	var N := SimCore.createSim()
+	SimCore.newMatch(N, 5, {"p1": false, "p2": false}, {"intro": false})
+	ok(N.kickOn == SimKick.enabled(), "a match with no word takes the data's switch (%s)" % str(SimKick.enabled()))   # off on main, on in the 9 November data
+	SimCore.dispose(N)
 	ok(not SimKick.overOn, "the overspeed's switch is off")
 	var D := _mk(3000.0)
 	ok(D.kickInstant == SimKick.instant and D.kickClimb == SimKick.climbTicks, "with no word in the setup, the data's values")

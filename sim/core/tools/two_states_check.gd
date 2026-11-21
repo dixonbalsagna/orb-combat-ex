@@ -35,7 +35,7 @@ const SETUPS: Dictionary = {   # rollback_check.gd's
 	"calm": {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}},
 	"turn": {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}},   # calm, with a turn decided at tick TURN_AT
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world, with a swing asked every SWING_EVERY ticks
-	"power": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true},   # one energy model (sim/core/power.gd)
+	"power": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": false},   # one energy model (sim/core/power.gd) off: it is on in the data since sprint A1, so every other setup has it
 	"travel": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.25},   # ... with the page's slider at x1.25 along the line
 	"stops": {"intro": false, "hitstopBudget": true},   # the freeze budget on whichever table is live (hitstop.json's budgetAny)
 	"dash": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "dash": true},   # ... with LT held fast at any range (power.json's dash)

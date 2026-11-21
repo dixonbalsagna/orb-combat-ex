@@ -1,7 +1,7 @@
 class_name SimPower
 extends RefCounted
 ## One energy model (docs/design/power-scale.md, Game Design), Simulation's part: how fast a send leaves, how far along the line it carries, and flat-out flight, from a fighter's level.
-## The switch is data/fight/power.json "enabled" (off), which SimCore.newMatch copies into S.powerOn unless the setup has its own "power". With it off, nothing here changes a number.
+## The switch is data/fight/power.json "enabled" (on in main's data since sprint A1, A-ENERGY-04), which SimCore.newMatch copies into S.powerOn unless the setup has its own "power". With it off, nothing here changes a number.
 ## A setup's "flatOut" tries another base for flat-out flight, inside the data's range (Orb's slider, a page word), and its "travel" another factor along the line (launchTravel), inside the data's
 ## travel range (the page's ?travel= slider, x1.25 to x2). No draw from S.rng anywhere here, and a level is read from what's hashed.
 

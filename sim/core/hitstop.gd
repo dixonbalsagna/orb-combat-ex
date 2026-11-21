@@ -14,7 +14,8 @@ extends RefCounted
 ##   the budget:  the frozen ticks of the last windowS (10) seconds of fight (live seconds, in buckets) are counted,
 ##                whatever froze them. Over `share` (12%) of it, every stop under a decisive blow is x cutMul (0.7,
 ##                rounded, at least cutFloor 2) until the share falls back under (Game Design's rulings-2026-10-22.md
-##                5b). Decisive blows and the KO are never cut. Stops merge (the longer one holds); they never add.
+##                5b). Decisive blows, the KO, launches and heavies are never cut (Game Design, 2026-11-13). Stops merge (the longer one
+##                holds); they never add.
 ##   the deep step: over `deepShare` (40%) of the window, the step is x cutDeepMul (0.5, rounded, at least cutFloor)
 ##                in place of x cutMul, against stutter: no ten-second block over 40% frozen (Game Design's
 ##                rulings-2026-10-22.md 7d).
@@ -28,7 +29,7 @@ extends RefCounted
 
 const FILE: String = "res://data/fight/hitstop.json"
 const WEIGHTS: Array = ["light_flow", "light_mash", "light", "medium", "heavy", "launch", "launch_full", "decisive", "ko"]
-const NEVER_CUT: Array = ["decisive", "ko"]
+const NEVER_CUT: Array = ["decisive", "ko", "heavy", "launch", "launch_full"]   # Game Design 2026-11-13: as the budget on any table's list (budgetAny.neverCut)
 const RESIDUE: float = 1.0e-9   # seconds: far under a tick, far over the count-down's float residue
 
 static var _d = null

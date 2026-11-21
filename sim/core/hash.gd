@@ -102,7 +102,7 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	_obj(out, S.mood, ["t", "sec", "v", "band", "cand", "candT", "act", "beats", "onceMask", "cause", "aggression", "crowd", "casGiven", "lastCombo", "breaks"])
 	_obj(out, S.pause, ["left", "kind", "version", "actor", "bank", "acc", "sinceEnd", "seen", "total", "count"])   # Q10
 	out.append(S.depthOn)   # fight lanes (L0)
-	if S.powerOn:   # one energy model: only when on, so a match without it hashes as before
+	if S.powerOn:   # one energy model (on in the data since sprint A1): only when on, so a match with it off hashes as before
 		out.append(S.powerFlat)
 		out.append(S.powerTravel)
 		if S.dashOn:   # the dash at any range: only when on, so a match without it hashes as before
