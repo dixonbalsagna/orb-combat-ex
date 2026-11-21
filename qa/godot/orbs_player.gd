@@ -1,7 +1,7 @@
 extends SceneTree
 ## QA's scripted player on Orb's scheme, both slots (sprint A1, A-QA-09): two pads on the real input hub play whole seeded matches against each other, each one as Orb plays: the right thumb flicks a strike (three ticks out, one every 30 to 48 ticks),
 ## LB is HELD from the foe's wind-up until contact (his windup end cue, a blow taken, or 90 ticks), the left stick walks at the foe, and the right stick beam is thrown at a stated pace.
-##   godot --headless --path <tree copy with qa/godot/qa_planet.gd> --script res://qa/godot/orbs_player.gd -- <matches> <baseSeed> [--arm=default|swap|default-flip|swap-flip] [--beamevery=420] [--beamhold=50] [--capsec=900] [--wall=300] [--budget=3600]
+##   godot --headless --path <tree copy with qa/godot/qa_planet.gd> --script res://qa/godot/orbs_player.gd -- <matches> <baseSeed> [--solo] [--arm=default|swap|default-flip|swap-flip] [--beamevery=420] [--beamhold=50] [--capsec=900] [--wall=300] [--budget=3600]
 ## THE BEAM, at a stated pace: every --beamevery ticks (default 420, 7 s; a jitter of up to a fifth either way from the seed) a pad holds RB and leans the right stick toward the foe for --beamhold ticks (default 50: stage 3 comes at about 46), lets the stick go to
 ## fire, and RB a few ticks after. No other pace than that one; --beamevery=0 turns the beam off (the strikes and the guard alone).
 ## The arm is QA's own (records.gd): `swap` puts each fighter in the other's slot, so a win rate by FIGHTER is read from default and swap together. The setup is QaPlanet's (QA_PLANET) and `intro` false, power model as the setup says.
@@ -11,6 +11,10 @@ const Chk = preload("res://qa/godot/checklist_core.gd")
 
 var hub: SimInputHub
 var held: Array = [{}, {}]
+var mode: String = "orbs"   # --mode=orbs (Orb's scheme), charge (B held about 50 ticks and let go, again and again: the charged heavy) or tap (B tapped): the two attack pads of the perfect-block pairing (A-AI-10); slot 0 only, with --solo
+var pbpend: Array = []   # slot 0 blows waiting for what the computer did: [kind, tick, landing tick, share]
+var dbg: bool = false
+var pbres := {}   # kind -> {n, pb, guard, hit, none}; pbActor: perfect-block staggers by the actor staggered
 
 
 func _init() -> void:
@@ -21,6 +25,7 @@ func _init() -> void:
 	var capsec: float = 900.0
 	var wall: float = 300.0
 	var budget: float = 3600.0
+	var solo: bool = false   # --solo: one pad (slot 0) against the computer (the level QA_PLANET sets with level=), the single-pad player of X-06
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--arm="):
 			arm = a.substr(6)
@@ -34,6 +39,12 @@ func _init() -> void:
 			wall = float(a.substr(7))
 		elif a.begins_with("--budget="):
 			budget = float(a.substr(9))
+		elif a == "--solo":
+			solo = true
+		elif a.begins_with("--mode="):
+			mode = a.substr(7)
+		elif a == "--debug":
+			dbg = true
 		else:
 			pos.append(a)
 	var n: int = int(pos[0]) if pos.size() > 0 else 10
@@ -59,7 +70,7 @@ func _init() -> void:
 			stopped = true
 			break
 		var seed_: int = base + m
-		var S := _make(seed_, arm)
+		var S := _make(seed_, arm, solo)
 		if QaPlanet.fellBack(S, seed_):
 			quit(3)
 			return
@@ -68,6 +79,7 @@ func _init() -> void:
 		rng.seed = seed_
 		var chk = Chk.new()
 		chk.begin(S)
+		pbpend.clear()
 		var st: Array = []
 		for i in range(2):
 			st.append({"next": 20 + 7 * i, "rsTo": -1, "aim": Vector2.ZERO, "lbTo": -1, "foeOpen": false, "foeT": -100, "bAt": (every + rng.randi_range(-every / 5, every / 5)) if every > 0 else -1, "bPhase": 0, "bUntil": -1})
@@ -77,9 +89,9 @@ func _init() -> void:
 		var cap: int = int(capsec * 60.0)
 		var dend = load("res://sim/director/ending.gd") if ResourceLoader.exists("res://sim/director/ending.gd") else null
 		for t in range(cap):
-			for i in range(2):
+			for i in range(1 if solo else 2):
 				_drive(i, S, t, st[i], rng, every, hold)
-			_step(S, t, st, beams, flicks, hits, src, other_log, chk)
+			_step(S, t, st, beams, flicks, hits, src, other_log, chk, solo)
 			if S.game.ko != null and koSeen < 0:
 				koSeen = t
 			if koSeen >= 0 and S.game.koT > 3.0:
@@ -112,26 +124,27 @@ func _init() -> void:
 		SimCore.dispose(S)
 	lens.sort()
 	var med: float = lens[lens.size() / 2] if lens.size() > 0 else 0.0
-	var out := {"arm": arm, "n": n, "done": done, "budgetStopped": stopped, "winsBySlot": wins, "draws": draws, "timeouts": timeouts, "beamsBySlot": beams, "beamSources": src, "checklist": chk_seen, "otherBeams": other_log, "flicksBySlot": flicks, "hitsBySlot": hits, "namesSlots": names, "beamEvery": every, "beamHold": hold,
+	var out := {"arm": arm, "n": n, "done": done, "budgetStopped": stopped, "winsBySlot": wins, "draws": draws, "timeouts": timeouts, "beamsBySlot": beams, "beamSources": src, "checklist": chk_seen, "otherBeams": other_log, "flicksBySlot": flicks, "hitsBySlot": hits, "namesSlots": names, "solo": solo, "mode": mode, "perfectBlock": pbres, "beamEvery": every, "beamHold": hold,
 		"medianSec": snappedf(med, 0.1), "dataHash": str(SimReplay.dataHash({})), "matches": by_match}
 	print("ORBS " + JSON.stringify(out))
 	quit()
 
 
-func _make(seed_: int, arm: String) -> SimState:
+func _make(seed_: int, arm: String, solo: bool = false) -> SimState:
 	hub = SimInputHub.new()
 	held = [{}, {}]
 	var su: Dictionary = QaPlanet.setup(seed_, hub.setup())
 	su["intro"] = false
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed_, {"p1": false, "p2": false}, su)
+	SimCore.newMatch(S, seed_, {"p1": false, "p2": solo}, su)
 	SimGolden.applyArm(arm, S.fighters)
 	hub.set_pad_has_right_stick(0, true)
 	hub.set_pad_has_right_stick(1, true)
 	hub.pad_button(0, "west", true)   # one press each, in slot order, so pad 0 drives slot 0 and pad 1 slot 1
 	hub.pad_button(0, "west", false)
-	hub.pad_button(1, "west", true)
-	hub.pad_button(1, "west", false)
+	if not solo:
+		hub.pad_button(1, "west", true)
+		hub.pad_button(1, "west", false)
 	return S
 
 
@@ -146,6 +159,9 @@ func _btn(i: int, name: String, down: bool) -> void:
 
 
 func _drive(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumberGenerator, every: int, hold: int) -> void:
+	if mode != "orbs":
+		_drive_attack(i, S, t, st, rng)
+		return
 	var me = S.fighters[i]
 	var foe = S.fighters[1 - i]
 	var dx: float = SimWrap.sdx(me.x, foe.x)
@@ -209,12 +225,29 @@ func _drive(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumberGenera
 		st.lbTo = -1
 
 
-func _step(S: SimState, t: int, st: Array, beams: Array, flicks: Array, hits: Array, src: Array, other_log: Array, chk) -> void:
-	hub.set_humans(true, true)
+## The attack pads of the perfect-block pairing: the left stick walks at the foe; `charge` holds B (east: the heavy, the only blow that charges) for 50 ticks and lets go, then waits 40 to 60; `tap` taps B for 3 ticks every 40 to 60. Nothing else: no guard, no beam, no strike.
+func _drive_attack(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumberGenerator) -> void:
+	var me = S.fighters[i]
+	var foe = S.fighters[1 - i]
+	var dx: float = SimWrap.sdx(me.x, foe.x)
+	var dy: float = foe.y - me.y
+	hub.pad_stick(i, signf(dx) if absf(dx) > 110.0 else 0.0, signf(dy) if absf(dy) > 40.0 else 0.0)
+	if int(st.get("yUntil", -1)) >= 0:
+		if t >= int(st.yUntil):
+			_btn(i, "east", false)
+			st.yUntil = -1
+			st.next = t + rng.randi_range(40, 60)
+	elif t >= int(st.next):
+		_btn(i, "east", true)
+		st.yUntil = t + (50 if mode == "charge" else 3)
+
+
+func _step(S: SimState, t: int, st: Array, beams: Array, flicks: Array, hits: Array, src: Array, other_log: Array, chk, solo: bool = false) -> void:
+	hub.set_humans(true, not solo)
 	var hb: Object = hub
-	for i in range(2):
+	for i in range(1 if solo else 2):
 		hb.call("set_struggle", i, SimDir.inStruggle(S, S.fighters[i]))
-	var its: Array = [hub.intent(0), hub.intent(1)]
+	var its: Array = [hub.intent(0), null if solo else hub.intent(1)]
 	var pausing: bool = S.pause.left > 0
 	if SimCore.step(S, its):
 		hub.consumed()
@@ -257,6 +290,53 @@ func _step(S: SimState, t: int, st: Array, beams: Array, flicks: Array, hits: Ar
 			if at >= 0 and at <= 1 and vi >= 0 and vi <= 1 and at != vi:
 				hits[at] += 1
 				st[vi].foeOpen = false   # contact: the guard goes down
+	_pair(S, t)
 	hub.on_events(S.out.fx)
 	S.out.fx.clear()
 	S.out.feed.clear()
+
+
+## The perfect-block pairing (A-AI-10): each blow of slot 0 (a `blow` cue: text release is a charged heavy, share in e.x; light, medium or heavy is a plain blow) waits for what the computer did to it within its landing and 12 ticks: a perfect block (the cue stagger:perfect_block whose actor is slot 0: his blow was turned), a guard (damage of kind guard on the computer), a hit (any other damage by slot 0 on the computer) or nothing.
+func _pair(S: SimState, t: int) -> void:
+	for e in S.out.fx:
+		if e.type == "cue" and int(e.actor) == 0 and str(e.kind) == "blow":
+			var tx: String = str(e.text)
+			if dbg and (tx == "release" or tx == "heavy"):
+				print("DBGBLOW t=%d %s x=%.2f n=%d ki=%.0f state=%s" % [t, tx, float(e.x), int(e.n), S.fighters[0].ki, S.fighters[0].state])
+			if tx == "release":
+				pbpend.append(["charged" if float(e.x) >= 1.0 else "partial", t, int(e.n) - S.tick + t, float(e.x)])
+			elif tx == "light" or tx == "medium" or tx == "heavy":
+				pbpend.append(["plain", t, t + 10, 0.0])
+		if e.type == "cue" and str(e.kind) == "stagger" and str(e.text) == "perfect_block":
+			var ai: int = int(e.actor)
+			var pa: Array = pbres.get("pbStaggerByActor", [0, 0])
+			if ai >= 0 and ai <= 1:
+				pa[ai] = int(pa[ai]) + 1
+			pbres["pbStaggerByActor"] = pa
+			if ai == 0:
+				_pb_resolve(t, "pb")
+		elif e.type == "damage" and int(e.attacker) == 0 and int(e.victim) == 1:
+			_pb_resolve(t, "guard" if str(e.kind) == "guard" else "hit")
+	var keep: Array = []
+	for w in pbpend:
+		if t > int(w[2]) + 12:
+			_pb_count(str(w[0]), "none")
+		else:
+			keep.append(w)
+	pbpend = keep
+
+
+func _pb_resolve(t: int, how: String) -> void:
+	for i in range(pbpend.size()):
+		var w: Array = pbpend[i]
+		if t >= int(w[1]) and t <= int(w[2]) + 12:
+			_pb_count(str(w[0]), how)
+			pbpend.remove_at(i)
+			return
+
+
+func _pb_count(kind: String, how: String) -> void:
+	var r: Dictionary = pbres.get(kind, {"n": 0, "pb": 0, "guard": 0, "hit": 0, "none": 0})
+	r.n = int(r.n) + 1
+	r[how] = int(r[how]) + 1
+	pbres[kind] = r

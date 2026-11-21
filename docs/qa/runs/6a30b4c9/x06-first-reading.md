@@ -48,3 +48,14 @@ The gauntlet's other arms were run at Medium on the same 6a30b4c9 tree: the **ma
 - **The script is the weakest of the pads.** `orbs` plays the strike stick and the guard only; it throws no beam and presses no X, Y or B. The X-masher, which only mashes X, wins 8.3% against the same Medium and lands about twice the hits it takes; the beam pad throws 2,859 beams. A stick-only pad has lost to Medium in every reading QA has made (0 of 60 on 2026-11-06 on an earlier build, against 26.7% for the masher). So the 0 of 200 is largely what the script leaves out of "plays like Orb".
 - **The game is also hard at Medium, whichever pad.** The best pads QA has win 6.7% and 8.3% at Medium on this build, against a proposed band of 35 to 55%. An earlier build gave the masher 49.7% at Medium (300 matches, 2026-11-07, main with the page's switches); the same pad wins 8.3% here, so Medium is harder on 6a30b4c9 for a mashing pad, or the setup differs (this run: planet 7, the energy model on, travel 1.5). No scripted pad is inside the proposed Medium band.
 - **What is not known:** what a person who plays like Orb wins at Medium. Orb's own saved plays against Easy were won (the 1646 file: slot 0 won; the earlier 1714 and 1726 files too), but Orb's play at Medium is not in a file. The proposed bands cannot be judged from scripted pads alone; the next reading is a player that mixes strikes, face buttons, the guard and beams (`qa/godot/orbs_player.gd` plays that scheme on both slots, and a single-pad version against the computer is the next change).
+
+## A single-pad player on Orb's scheme against the computer, with the beam (run 2026-11-20, same tree, seeds 1 to 100)
+
+`qa/godot/orbs_player.gd --solo`: one pad, slot 0, against the computer: a right-stick strike every 30 to 48 ticks, LB held from the foe's wind-up to contact, the left stick at the foe, **and a right-stick beam every 420 ticks (hold 50)**, no face button. Lines in `x06-single-pad-lines.txt`.
+
+| Level | Matches | Won | Win rate | 95% interval (Wilson) | Proposed band | Pad's beams (a match) | Computer's beams |
+| :--- | ---: | ---: | ---: | :--- | :--- | ---: | ---: |
+| Easy | 100 | 100 | **100.0%** | 96.3 to 100.0% | 60 to 80% | 2,695 (27) | 856 |
+| Medium | 100 | 6 | **6.0%** | 2.8 to 12.5% | 35 to 55% | 2,404 (24) | 245 |
+
+**What it says.** Adding the beam to the stick-and-guard pad takes Easy from 61.0% (the gauntlet's `orbs`, no beam) to **100.0%: every one of 100 matches** (above the proposed 60 to 80%), and Medium from 0 of 200 to 6 of 100, **still far under the 35 to 55% band.** So the beam is what makes Orb's scheme win at Easy, and Medium is a cliff: 100% at Easy, 6% at Medium for the same pad. The computer lands almost 3 hits for each one the pad lands at Medium (77,911 against 28,899). Hard was not run for this pad; the stick-only pad's 0 of 200 and the masher's under 10% at Medium make any Hard win unlikely.

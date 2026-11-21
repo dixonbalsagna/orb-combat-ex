@@ -178,6 +178,9 @@ func _qa_tick(S, rec: Dictionary, n: int) -> void:
 		rec["ctl"] = {}
 		rec["ctlMin"] = {}
 		rec["_win"] = [-1, -1]
+		rec["cityHits"] = []   # every building_hit of a body (cityHold read, EP 2026-11-20): t, victim, outcome, z (depth at the hit), spd, pre-vx; then bounced (its vx flipped against the way it was going, at 10% or more of its speed, within 40 ticks), pauseMax (the longest fight freeze within 40 ticks), homeTicks (ticks until its depth was within a tenth of the hit depth, or 300), homeAir (it was still launched when it got home)
+		rec["_pvx"] = [0.0, 0.0]
+		rec["pauseTicks"] = 0
 		rec["launchGeo"] = []   # every launch: t, by (the sender), sent, ux/uy (the direction the sim set), amt (the speed asked of doLaunch: 1.0 is a curve, DirArc.send), side (the sent body's place against the sender, signed), face, plan (the planner's pick within 120 ticks), ai
 	var fs2: Array = S.fighters
 	var beams: Array = rec.beamGeo
@@ -189,6 +192,10 @@ func _qa_tick(S, rec: Dictionary, n: int) -> void:
 					beams[bi].out = str(e.kind)
 					beams[bi].ot = n
 					break
+		elif e.type == "building_hit":
+			var bv: int = int(e.actor)
+			if bv >= 0 and bv < 2:
+				rec.cityHits.append({"t": n, "v": bv, "out": str(e.get("outcome")), "z": snappedf(float(e.z), 1.0), "spd": snappedf(float(e.get("spd")), 0.01), "pvx": snappedf(float(rec._pvx[bv]), 1.0), "bounced": false, "pauseMax": 0, "homeTicks": -1, "homeAir": false, "_run": 0})
 		elif e.type == "launch_plan":
 			rec["_lp"] = [n, str(e.chosen)]
 		elif e.type == "launch":
@@ -231,6 +238,28 @@ func _qa_tick(S, rec: Dictionary, n: int) -> void:
 						beams[bi].out = "STRUGGLE"
 						beams[bi].ot = n
 						break
+	var pz: bool = S.pause.left > 0 or not bool(rec.get("_stepped", true))
+	if pz:
+		rec.pauseTicks = int(rec.pauseTicks) + 1
+	for ch in rec.cityHits:
+		var age: int = n - int(ch.t)
+		if age < 0 or age > 300:
+			continue
+		var bf = fs2[int(ch.v)]
+		if age >= 3 and age <= 40:
+			var pv: float = float(ch.pvx)
+			if absf(pv) > 1.0 and bf.vx * pv < 0.0 and absf(bf.vx) >= 0.10 * absf(pv):
+				ch.bounced = true
+			if pz:
+				ch._run = int(ch._run) + 1
+				ch.pauseMax = maxi(int(ch.pauseMax), int(ch._run))
+			else:
+				ch._run = 0
+		if int(ch.homeTicks) < 0 and age >= 1 and absf(float(bf.z)) <= 0.1 * absf(float(ch.z)):
+			ch.homeTicks = age
+			ch.homeAir = str(bf.state) == "launched"
+	for bi2 in range(2):
+		rec._pvx[bi2] = fs2[bi2].vx
 	var ex = DirBrawl.exOf(S)
 	var brawl_on: bool = ex != null and DirBrawl.isBrawl(ex) and ex.branch == "" and not DirBrawl._setPiece(ex)
 	var mn: String = str(n / 3600)
@@ -410,7 +439,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			rec["_hsrel"] = int(hs.get("relT", -1))
 			rec["_hsx"] = int(hs.get("xT", -1))
 		else:
-			SimCore.step(S)
+			rec["_stepped"] = SimCore.step(S)   # false on a hit-stop tick (the clock was held): the wall's fight freeze is the clock hold, not a set-piece pause
 		ticks += 1
 		for e in S.out.fx:   # a place is VISITED once a fighter within 1,500 units of one of its buildings (true ground distance over the footprint, depth included) was there as it fell (Game Design 2026-11-06: broken by contact)
 			if e.type == "building_fall":
