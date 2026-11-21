@@ -1,0 +1,216 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 9c658a8..49f50e1 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -155,6 +155,8 @@ jobs:
+           node-version: '24.19.0'
+       - name: Flash analysers' self-test
+         run: node tools/flash/selftest.js
++      - name: Flash split self-test (the five sets of flash-cases written as flash_worst.gd names them, merged and recounted as one; a set short or a scene without its events fails; no Godot)
++        run: node tools/flash/split-merge-selftest.mjs
+       - name: Release-pass rules self-test (what makes a recorded pass stale)
+         run: node tools/flash/release-pass-selftest.mjs
+       # The interim playable site (Legal's interim terms): the gate, the links, the shipped defaults and the expiry are checked on a stub export, every way they can be broken.
+diff --git a/docs/tools/dummy-ring-scenes.md b/docs/tools/dummy-ring-scenes.md
+index c84b22c..d8ed8ec 100644
+--- a/docs/tools/dummy-ring-scenes.md
++++ b/docs/tools/dummy-ring-scenes.md
+@@ -8,7 +8,7 @@ All three are in `tools/flash/sources.json` (a scenario may now carry `slotsList
+ 
+ | Scene | Fighters | What player one does (a pad, as a person would) | Clips |
+ |---|---|---|---|
+-| `mashdummy` | PROTAGONIST v REFERENCE, RIVAL v REFERENCE (the dummy stands idle) | A cycle of 600 ticks: X mashed at the fastest tap (every 4 ticks), Y mashed, X held (the burst), RB held and X mashed in reach (the energy mash), RB and B (the blast), then B to launch and X after it (the launcher chain). Ki kept full | 4 |
++| `mashdummy` | PROTAGONIST v REFERENCE, RIVAL v REFERENCE (the dummy stands idle) | A cycle of 600 ticks: X mashed at the fastest tap (every 4 ticks), Y mashed, X held (the burst), RB held and X mashed in reach (the energy mash), RB and B (the blast), then B tapped every 45 ticks to launch (a single tap launched before energy was on; since GW1a a heavy is as likely to be planned as a knock back, so the scene taps it about three times) and X after it (the launcher chain). Ki kept full | 4 |
+ | `ring` | PROTAGONIST v RIVAL with 1 guard (3 bodies), PROTAGONIST v RIVAL with 3 guards (5 bodies); the guards fight | X mashed, Y now and then, the signature once in 300 ticks. Ki kept full | 4 |
+ | `launchai` | the default pair, the real AI | B tapped every 45 ticks, walking into reach. In the seed's 1,800 ticks he launches the AI twice and is launched once | 2 |
+ 
+@@ -109,3 +109,7 @@ Schema keys: joints.json `slew.free_arm_deg` and `wing.runtime`; press_styles `h
+ - **A rehearsal** is `NO_RECORD=1 bash tools/flash/interim-run.sh <commit> <from> <expires> <dir>`: the whole set, the second captures, the nightly-style seeds, and `tools/flash/run-table.mjs` writes `table.md` (every clip against addendum 10: 3 or under on the primary, red 0, with the worst second and its sources); nothing is recorded, built or published.
+ - **Tightened (the EP's shape schemas of b328017b):** anim-brake (poses named and checked to exist, lean_deg 0 to 90 and ordered, weights 0 to 1, ticks at least 1), anim-chain (the same; keeps 0 to 1; counts at least 1; the three "poses" are sequences, so a pose or a sequence), anim-guard-pass (contacts are a MAP of any contact key, not today's 28; each must be a real pose, `now` at most `was` and at most the hand goal), anim-throws (all five sends, each throw a sequence that exists and has a grip, no grip that no send uses). Rules `anim-brake-*`, `anim-chain-pose`, `anim-guard-pass-*`, `anim-throws-*`; 19 cases; the old generated cases whose bound moved were corrected.
+ - **vfx-catastrophe (fbfdf182):** the policy line said the tremor block is closed, which also refused a `_note` there; now closed except underscore keys in both places, and a rule `vfx-catastrophe-order`: the calm onset and settling are never quicker than the normal ones, the sprite tiers ascend, every pair runs low to high. 10 cases with VFX's three. `apply-vfx-catastrophe-cases.cjs` is dropped.
++
++## 2026-11-21: what GW1a changed in two scenes
++
++CI run 44885894433 (the first run of the split) failed its recount on `mashdummy` (no `launch`) and `signaturedummy` (no `building_fall`), four runs each; the split itself merged all five sets. The same two scenes read on b20020b4 (the last green run): `signaturedummy` five buildings down in 1,800 ticks, `mashdummy` a launch. On HEAD with energy on, the same 1,800 ticks stage 43 building hits and no fall, and the heavy at the end of the mash cycle is a knock back. So `mashdummy` taps its heavy every 45 ticks (one launch in each pairing) and `signaturedummy` plays 3,600 ticks (five buildings down with PROTAGONIST, six with RIVAL; a fall comes between 2,400 and 3,600 ticks with PROTAGONIST). The guards themselves (`launch` 1, `building_fall` 1) are unchanged.
+diff --git a/render/tools/flash_capture.gd b/render/tools/flash_capture.gd
+index d28e4d3..30580d8 100644
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -439,7 +439,7 @@ func _rush(t: int, S: SimState) -> void:
+ 
+ ## Player one against the idle training dummy (Legal RL-139: a mash-on-the-dummy scene for each fighter, in both modes), on a cycle of 600 ticks: the light mashed at the fastest tap
+ ## (every 4 ticks), the medium mashed, the light held (the burst), the light mashed with energy held (RB: the energy mash in reach), the blast (energy held, the heavy), then a heavy
+-## to launch and the light after it (the launcher chain). Ki kept full; he walks to the dummy and stays in reach.
++## to launch (the heavy tapped every 45 ticks from tick 480 of the cycle: with energy on one heavy is planned as a knock back as often as a launch, so a single tap no longer launched, GW1a) and the light after it (the launcher chain). Ki kept full; he walks to the dummy and stays in reach.
+ func _mash_dummy(t: int, S: SimState) -> void:
+ 	_walk_in(S, 200.0)
+ 	S.fighters[0].ki = 100.0
+@@ -447,7 +447,7 @@ func _mash_dummy(t: int, S: SimState) -> void:
+ 	_btn(0, "rb", u >= 300 and u < 480)
+ 	_btn(0, "west", (u < 120 and _tap(t, 4, 0)) or (u >= 240 and u < 300) or (u >= 300 and u < 420 and _tap(t, 4, 0)) or (u >= 500 and _tap(t, 6, 0)))
+ 	_btn(0, "north", u >= 120 and u < 240 and _tap(t, 6, 0))
+-	_btn(0, "east", (u >= 420 and u < 480 and u % 30 < 12) or (u >= 480 and u < 490))
++	_btn(0, "east", (u >= 420 and u < 480 and u % 30 < 12) or (u >= 480 and u % 45 < 8))
+ 
+ 
+ ## Player one against the ring, the AI and his guards: the light mashed, the medium now and then, the signature once in a cycle of 300.
+diff --git a/tools/ci-budgets.json b/tools/ci-budgets.json
+index 8079273..c2064cc 100644
+--- a/tools/ci-budgets.json
++++ b/tools/ci-budgets.json
+@@ -4,9 +4,9 @@
+     "qa": { "limitMin": 15, "budgetMin": 10, "measuredMin": "1", "runs": "43553420852, 43554356718, 43569719695" },
+     "sim": { "limitMin": 20, "budgetMin": 13, "measuredMin": "1 to 3", "runs": "43553420852, 43554356718, 43569719695" },
+     "data": { "limitMin": 15, "budgetMin": 10, "measuredMin": "1", "runs": "43553420852, 43554356718, 43569719695" },
+-    "flash-selftests": { "limitMin": 30, "budgetMin": 20, "measuredMin": "8 to 9 (run 44881357568: the node self-tests, the first half of the one flash job); the first run of the split is to be recorded", "runs": "44881357568" },
+-    "flash-cases": { "limitMin": 30, "budgetMin": 20, "measuredMin": "expected 11 to 13 a set (82 runs measured on run 44881357568: 42 of 28 to 31 s and 40 ai runs of 55 s, 57 minutes in all, split into five); the first run of the split is to be recorded", "runs": "44881357568" },
+-    "flash": { "limitMin": 15, "budgetMin": 10, "measuredMin": "expected 1 (download and recount); the one job it replaces was cancelled at 45 on run 44881357568 (it needed about 67); the first run of the split is to be recorded", "runs": "44881357568" },
++    "flash-selftests": { "limitMin": 30, "budgetMin": 20, "measuredMin": "8.0 (run 44885894433)", "runs": "44885894433" },
++    "flash-cases": { "limitMin": 30, "budgetMin": 20, "measuredMin": "8.6 to 11.3 a set (run 44885894433: ai-1 8.6, ai-2 8.9, ai-3 9.2, scenes-1 9.5, scenes-2 11.3); signaturedummy goes from 1,800 to 3,600 ticks after that run, so scenes-2 is expected near 13, to be recorded", "runs": "44885894433" },
++    "flash": { "limitMin": 15, "budgetMin": 10, "measuredMin": "0.6 (run 44885894433: download and recount)", "runs": "44885894433" },
+     "godot-parity": { "limitMin": 45, "budgetMin": 30, "measuredMin": "23.8 on 2026-11-14 with the twelve camera steps in (run 43582259423); earlier 16 to 20 without them", "runs": "43554356718, 43569719695, 43582259423" },
+     "godot-sim": { "limitMin": 45, "budgetMin": 30, "measuredMin": "15.4 on 2026-11-14 with the 44 input tests in (run 43582259423)", "runs": "43554356718, 43569719695, 43582259423" },
+     "godot-roll-render": { "limitMin": 45, "budgetMin": 30, "measuredMin": "25.9 on 2026-11-14 with the mode smoke in (run 43582259423); earlier 20 to 25", "runs": "43554356718, 43569719695, 43582259423" },
+diff --git a/tools/flash/flash_worst.gd b/tools/flash/flash_worst.gd
+index bab8d95..82150be 100644
+--- a/tools/flash/flash_worst.gd
++++ b/tools/flash/flash_worst.gd
+@@ -380,7 +380,7 @@ func _rush(t: int, S: SimState) -> void:
+ 
+ ## Player one against the idle training dummy (Legal RL-139: a mash-on-the-dummy scene for each fighter, in both modes), on a cycle of 600 ticks: the light mashed at the fastest tap
+ ## (every 4 ticks), the medium mashed, the light held (the burst), the light mashed with energy held (RB: the energy mash in reach), the blast (energy held, the heavy), then a heavy
+-## to launch and the light after it (the launcher chain). Ki kept full; he walks to the dummy and stays in reach.
++## to launch (the heavy tapped every 45 ticks from tick 480 of the cycle: with energy on one heavy is planned as a knock back as often as a launch, so a single tap no longer launched, GW1a) and the light after it (the launcher chain). Ki kept full; he walks to the dummy and stays in reach.
+ func _mash_dummy(t: int, S: SimState) -> void:
+ 	_walk_in(S, 200.0)
+ 	S.fighters[0].ki = 100.0
+@@ -388,7 +388,7 @@ func _mash_dummy(t: int, S: SimState) -> void:
+ 	_btn(0, "rb", u >= 300 and u < 480)
+ 	_btn(0, "west", (u < 120 and _tap(t, 4, 0)) or (u >= 240 and u < 300) or (u >= 300 and u < 420 and _tap(t, 4, 0)) or (u >= 500 and _tap(t, 6, 0)))
+ 	_btn(0, "north", u >= 120 and u < 240 and _tap(t, 6, 0))
+-	_btn(0, "east", (u >= 420 and u < 480 and u % 30 < 12) or (u >= 480 and u < 490))
++	_btn(0, "east", (u >= 420 and u < 480 and u % 30 < 12) or (u >= 480 and u % 45 < 8))
+ 
+ 
+ ## Player one against the ring, the AI and his guards: the light mashed, the medium now and then, the signature once in a cycle of 300.
+diff --git a/tools/flash/sources.json b/tools/flash/sources.json
+index 74bf7ca..bc8414a 100644
+--- a/tools/flash/sources.json
++++ b/tools/flash/sources.json
+@@ -208,7 +208,7 @@
+         "damage": 30,
+         "building_fall": 1
+       },
+-      "ticks": 1800,
++      "ticks": 3600,
+       "seeds": [
+         12345
+       ]
+diff --git a/tools/flash/split-merge-selftest.mjs b/tools/flash/split-merge-selftest.mjs
+new file mode 100644
+index 0000000..1475739
+--- /dev/null
++++ b/tools/flash/split-merge-selftest.mjs
+@@ -0,0 +1,102 @@
++// Self-test of the flash count's split (the EP, 2026-11-21): the five sets of ci.yml's `flash-cases` matrix, written the way flash_worst.gd writes them, merged the way the `flash` job merges them
++// (one folder, merge-multiple), and recounted as one by tools/flash/check-log.js. No Godot: the run files are synthetic, one per file name the real tool would write, each with the events its
++// scenario exists to show. It proves the PARTITION (every scenario and every pairing seed in exactly one set, no file name written by two sets, the recount of the union passing, and the recount
++// of the union without any one set failing), not the sim: whether a scene still shows its events on HEAD is what the real run says (run 44885894433 failed on that, not on the merge).
++//   node tools/flash/split-merge-selftest.mjs
++// The naming below is a copy of flash_worst.gd's `_run` (label from the slots, a seed suffix when the entry has more than one seed): if that changes, this changes with it.
++import { spawnSync } from 'node:child_process';
++import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const here = dirname(fileURLToPath(import.meta.url));
++const root = join(here, '..', '..');
++const read = (f) => readFileSync(join(root, f), 'utf8').replace(/\r\n/g, '\n');
++let bad = 0, n = 0;
++const check = (name, ok, why = '') => { n++; if (!ok) { bad++; console.log(`FAIL  ${name}${why ? ': ' + why : ''}`); } else console.log(`ok    ${name}`); };
++
++const ci = read('.github/workflows/ci.yml');
++const sources = JSON.parse(read('tools/flash/sources.json'));
++const roster = JSON.parse(read('data/fighters/roster.json'));
++
++// ---- the matrix, from ci.yml
++const jobText = (id) => { const m = ci.match(new RegExp(`\\n  ${id}:\\n[\\s\\S]*?(?=\\n  [A-Za-z0-9_-]+:\\n|$)`)); return m ? m[0] : ''; };
++const cases = jobText('flash-cases');
++const sets = [...cases.matchAll(/- \{ set: ([\w-]+), args: '([^']*)' \}/g)].map((m) => ({ set: m[1], args: m[2].trim().split(/\s+/) }));
++check('flash-cases has a matrix of sets', sets.length >= 2, String(sets.length));
++check('the sets have distinct names', new Set(sets.map((s) => s.set)).size === sets.length);
++check('flash-cases uploads one artifact a set, named flash-run-<set>', /name: flash-run-\$\{\{ matrix\.set \}\}/.test(cases));
++const merge = jobText('flash');
++check('flash needs flash-cases, downloads flash-run-* merged into one folder, and recounts that folder', /needs: flash-cases/.test(merge) && /pattern: flash-run-\*/.test(merge) && /merge-multiple: true/.test(merge) && /check-log\.js "\$\{RUNNER_TEMP\}\/flash"/.test(merge) && /path: \$\{\{ runner\.temp \}\}\/flash/.test(merge));
++check('every set writes its run files to the folder the upload reads', /--out="\$\{RUNNER_TEMP\}\/flash"/.test(cases) && /path: \$\{\{ runner\.temp \}\}\/flash\n/.test(cases));
++const deploy = jobText('deploy');
++check('deploy needs flash and flash-selftests', /needs: \[[^\]]*\bflash-selftests\b[^\]]*\]/.test(deploy) && /needs: \[[^\]]*\bflash\b[^\]]*\]/.test(deploy));
++
++// ---- the file names a set writes (flash_worst.gd `_run`), and a run file for each
++const opt = (args, name) => { const a = args.find((x) => x.startsWith(name + '=')); return a ? a.slice(name.length + 1).split(',') : []; };
++function runsOf(args) {
++  const only = opt(args, '--only'), slotsOverride = opt(args, '--slots'), seedOverride = opt(args, '--seeds').map(Number);
++  const out = [];
++  for (const sd of sources.scenarios) {
++    if (only.length && !only.includes(sd.id)) continue;
++    let runs;
++    if (sd.pairings) runs = sources.pairings.map((p) => ({ slots: p.slots, seeds: p.seeds, need: p.needSignatures }));
++    else if (sd.slotsList) runs = sd.slotsList.map((sl) => ({ slots: sl, seeds: [12345] }));
++    else runs = [{ slots: [], seeds: [12345] }];
++    if (slotsOverride.length) runs = [{ slots: slotsOverride, seeds: runs[0].seeds, need: (sources.pairings.find((p) => p.slots.join() === slotsOverride.join()) || {}).needSignatures }];
++    for (const r of runs) {
++      const defaultPair = r.slots.length === 0 || (r.slots.length === 2 && r.slots[0] === roster[0] && r.slots[1] === roster[1]);
++      const label = defaultPair ? '' : '-' + r.slots.join('-');
++      const seeds = seedOverride.length ? seedOverride : r.seeds;
++      for (const seed of seeds) for (const reduced of [false, true]) {
++        const name = `flash-${sd.id}-${reduced ? 'reduced' : 'normal'}${label}${r.seeds.length === 1 ? '' : '-' + seed}.json`;
++        const events = { damage: 500, ...(sd.minEvents || {}) };
++        for (const [k, v] of Object.entries(events)) events[k] = Math.max(v, 1) * 2;
++        for (const id of r.need || []) events['sig:' + id] = 1;
++        out.push({ name, run: { scenario: sd.id, seed, reduced, ticks: sd.ticks, slots: defaultPair ? [] : r.slots, asked: 1, rows: [[10, 0, 'body_hit', true, 'ok']], summary: { granted: 1, worst_second: 1, worst_weight: 1 }, events, reduce_flashing: reduced, flash_calm: reduced, reduced_seen: reduced } });
++      }
++    }
++  }
++  return out;
++}
++// the default pair (the roster's first two fighters) is handed to `_play` as [], and the run file records the slots it played: the pair, so an `ai` run of the default pair records it
++const fixSlots = (r) => { if (r.run.scenario === 'ai' && !r.run.slots.length) r.run.slots = [roster[0], roster[1]]; return r; };
++
++const dir = mkdtempSync(join(tmpdir(), 'flash-split-'));
++try {
++  const perSet = sets.map((s) => ({ ...s, files: runsOf(s.args).map(fixSlots) }));
++  const owner = new Map();
++  let collide = [];
++  for (const s of perSet) for (const f of s.files) { if (owner.has(f.name)) collide.push(`${f.name} (${owner.get(f.name)} and ${s.set})`); owner.set(f.name, s.set); }
++  check('no file name is written by two sets (a merge would silently overwrite one)', collide.length === 0, collide.slice(0, 4).join('; '));
++  // what the one-job run (no --only) would write
++  const whole = runsOf([]).map((f) => f.name).sort();
++  const union = [...owner.keys()].sort();
++  check('the sets together write exactly the files the one-job run writes', JSON.stringify(whole) === JSON.stringify(union), `one job ${whole.length}, sets ${union.length}`);
++  check('every set writes at least one run', perSet.every((s) => s.files.length > 0));
++
++  const write = (d, files) => { mkdirSync(d, { recursive: true }); for (const f of files) writeFileSync(join(d, f.name), JSON.stringify(f.run)); };
++  const recount = (d) => spawnSync(process.execPath, [join(here, 'check-log.js'), d], { encoding: 'utf8' });
++  // the five sets, each in its own folder (an artifact), merged into one (merge-multiple)
++  for (const s of perSet) write(join(dir, 'artifact-' + s.set), s.files);
++  const merged = join(dir, 'merged');
++  for (const s of perSet) write(merged, s.files);
++  const all = recount(merged);
++  check('the merged recount passes (every scenario of the required set, every pairing seed, both modes)', all.status === 0, (all.stdout.match(/PROBLEM[^\n]*/g) || [all.stdout.slice(-200)]).slice(0, 3).join(' | '));
++  // one set short: the recount must fail and name something missing
++  for (const s of perSet) {
++    const d = join(dir, 'without-' + s.set);
++    for (const t of perSet) if (t.set !== s.set) write(d, t.files);
++    const r = recount(d);
++    check(`the recount fails without set ${s.set}`, r.status === 1 && /is missing|never show/.test(r.stdout));
++  }
++  // a scene that does not show its events fails the recount, as run 44885894433 did
++  const weak = perSet.flatMap((s) => s.files).map((f) => (f.run.scenario === 'mashdummy' ? { ...f, run: { ...f.run, events: { ...f.run.events, launch: 0 } } } : f));
++  const dw = join(dir, 'weak');
++  write(dw, weak);
++  const rw = recount(dw);
++  check('a mashdummy that never launches fails the recount, naming the launch', rw.status === 1 && /scenario mashdummy seed 12345 \((normal|reduced)\) did not show launch/.test(rw.stdout));
++} finally { rmSync(dir, { recursive: true, force: true }); }
++console.log(`${n - bad} of ${n} checks passed`);
++process.exit(bad ? 1 : 0);

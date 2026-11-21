@@ -155,6 +155,8 @@ jobs:
           node-version: '24.19.0'
       - name: Flash analysers' self-test
         run: node tools/flash/selftest.js
+      - name: Flash split self-test (the five sets of flash-cases written as flash_worst.gd names them, merged and recounted as one; a set short or a scene without its events fails; no Godot)
+        run: node tools/flash/split-merge-selftest.mjs
       - name: Release-pass rules self-test (what makes a recorded pass stale)
         run: node tools/flash/release-pass-selftest.mjs
       # The interim playable site (Legal's interim terms): the gate, the links, the shipped defaults and the expiry are checked on a stub export, every way they can be broken.

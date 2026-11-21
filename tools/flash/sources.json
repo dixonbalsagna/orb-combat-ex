@@ -208,7 +208,7 @@
         "damage": 30,
         "building_fall": 1
       },
-      "ticks": 1800,
+      "ticks": 3600,
       "seeds": [
         12345
       ]

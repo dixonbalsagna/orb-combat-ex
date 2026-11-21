@@ -439,7 +439,7 @@ func _rush(t: int, S: SimState) -> void:
 
 ## Player one against the idle training dummy (Legal RL-139: a mash-on-the-dummy scene for each fighter, in both modes), on a cycle of 600 ticks: the light mashed at the fastest tap
 ## (every 4 ticks), the medium mashed, the light held (the burst), the light mashed with energy held (RB: the energy mash in reach), the blast (energy held, the heavy), then a heavy
-## to launch and the light after it (the launcher chain). Ki kept full; he walks to the dummy and stays in reach.
+## to launch (the heavy tapped every 45 ticks from tick 480 of the cycle: with energy on one heavy is planned as a knock back as often as a launch, so a single tap no longer launched, GW1a) and the light after it (the launcher chain). Ki kept full; he walks to the dummy and stays in reach.
 func _mash_dummy(t: int, S: SimState) -> void:
 	_walk_in(S, 200.0)
 	S.fighters[0].ki = 100.0
@@ -447,7 +447,7 @@ func _mash_dummy(t: int, S: SimState) -> void:
 	_btn(0, "rb", u >= 300 and u < 480)
 	_btn(0, "west", (u < 120 and _tap(t, 4, 0)) or (u >= 240 and u < 300) or (u >= 300 and u < 420 and _tap(t, 4, 0)) or (u >= 500 and _tap(t, 6, 0)))
 	_btn(0, "north", u >= 120 and u < 240 and _tap(t, 6, 0))
-	_btn(0, "east", (u >= 420 and u < 480 and u % 30 < 12) or (u >= 480 and u < 490))
+	_btn(0, "east", (u >= 420 and u < 480 and u % 30 < 12) or (u >= 480 and u % 45 < 8))
 
 
 ## Player one against the ring, the AI and his guards: the light mashed, the medium now and then, the signature once in a cycle of 300.
