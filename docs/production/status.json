@@ -1,6 +1,6 @@
 {
   "_about": "The one file the tracker's status comes from. The Executive Producer's status messages change this file (Production Operations edits it), then `node docs/production/tools/build-tracker.mjs` rebuilds milestones.md and milestone-rows.md. Allowed row statuses: not started, briefed, reported, landed. A landed row needs a commit id in ref; a reported row needs a report or record in ref.",
-  "asOf": "2026-11-14",
+  "asOf": "2026-11-20",
   "audit": "docs/ep/alpha/audit-2026-11-13",
   "current": "A1",
   "defaultStatus": {
@@ -172,12 +172,12 @@
     "A-NET-05": {
       "status": "landed",
       "ref": "f068b697",
-      "note": "Batch B1 pushed: f068b697 (Simulation, replay-build), 39f03a97 (Netcode grant), 30d5922d (lan-stamp), f70afd08 (lan-hash); gated in scratch on every CI script with the golden unchanged, re-check review clean. CI on f70afd08 running (EP status 6, Sat 14 Nov 07:50)."
+      "note": "Landed with B1 (f068b697..f70afd08); the EP's \"parked\" was stale (EP, 2026-11-20)."
     },
     "A-CONTROLS-02": {
-      "status": "reported",
-      "ref": "ac0ae1f7 (parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "7d232b6f",
+      "note": "Pad group and pins. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-CONTROLS-06": {
       "status": "reported",
@@ -185,74 +185,74 @@
       "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
     },
     "A-AI-05": {
-      "status": "reported",
-      "ref": "1c50e759 (parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "c3507bfc",
+      "note": "Director rows. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-CAMERA-01": {
-      "status": "reported",
-      "ref": "8fee3caa; launch parks 63d62abd and b3bfa8e7; GW1a pins a0966bb0 (Camera)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "d83c38dd",
+      "note": "Also 8ab87d98, b77a59c2, 89e7c1a7. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-AUDIO-01": {
-      "status": "reported",
-      "ref": "Audio's working tree (parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "c0eb9918",
+      "note": "Sound sets and the range fix. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-UI-01": {
-      "status": "reported",
-      "ref": "aae0a38e (UI's stack, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "e5618ab3",
+      "note": "Pause clock. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-MODES-01": {
-      "status": "reported",
-      "ref": "aae0a38e (UI's stack, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "e5618ab3",
+      "note": "UI A1 menus (start flow). GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-MODES-06": {
-      "status": "reported",
-      "ref": "aae0a38e (UI's stack, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "e5618ab3",
+      "note": "UI A1 menus (fighter pick). GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-MODES-11": {
-      "status": "reported",
-      "ref": "aae0a38e (UI's stack, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "e5618ab3",
+      "note": "UI A1 menus (Quit row). GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-MODES-15": {
-      "status": "reported",
-      "ref": "aae0a38e (UI's stack, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "e5618ab3",
+      "note": "Rail by default. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-UI-04": {
-      "status": "reported",
-      "ref": "aae0a38e (UI's stack, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "e5618ab3",
+      "note": "Rail by default. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-UI-06": {
-      "status": "reported",
-      "ref": "aae0a38e (UI's stack, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "e5618ab3",
+      "note": "Menu fixes (d-pad). GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-UI-09": {
       "status": "reported",
-      "ref": "aae0a38e (UI's stack, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "ref": "aae0a38e (UI's stack); screen-sweep doc in e5618ab3",
+      "note": "Stays reported until UI confirms the stills of every menu exist (EP, 2026-11-20)."
     },
     "A-CODE-03": {
-      "status": "reported",
-      "ref": "e702e058 (parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "9254c968",
+      "note": "Planet entry and probe. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-UI-02": {
-      "status": "reported",
-      "ref": "5963d224 (report-hook re-cut, committed locally; e702e058 before)",
-      "note": "The re-cut no longer blocks GW1a (EP status 3, Sat 14 Nov 03:50)."
+      "status": "landed",
+      "ref": "9254c968",
+      "note": "Report hook; the re-cut 5963d224 is a park commit. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-MODES-08": {
-      "status": "reported",
-      "ref": "e702e058 (parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "e5618ab3",
+      "note": "Mode smoke suite; earlier park e702e058. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-COMBAT-05": {
       "status": "reported",
@@ -277,7 +277,7 @@
     "A-TOOLS-13": {
       "status": "landed",
       "ref": "047d4037",
-      "note": "Also f391fec4 (EP status 1)."
+      "note": "Written, not run: a Windows build job exists in CI but has not been run (EP status, Fri 20 Nov 23:55 PST). Landed 047d4037 and f391fec4."
     },
     "A-TOOLS-15": {
       "status": "landed",
@@ -295,9 +295,9 @@
       "note": "A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer."
     },
     "A-ENERGY-04": {
-      "status": "reported",
-      "ref": "201bd3d2 (Sim, committed locally)",
-      "note": "On main as a park in 148f4e16; Encounter's energy-on pins 720b9fa8 reported; World's pins park and Rendering's after_check pin still block GW1a (EP status 3, Sat 14 Nov 03:50)."
+      "status": "landed",
+      "ref": "490e610d",
+      "note": "Energy on; pins e4666d82, f733d704, 88b51569. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-WORLD-01": {
       "status": "reported",
@@ -315,24 +315,39 @@
       "note": "An A3 row reported early (EP status 3, Sat 14 Nov 03:50); the destruction plan came with it."
     },
     "A-RENDER-01": {
-      "status": "reported",
-      "ref": "be128ccd (Rendering: globe default; VFX meteor-default e56d372c)",
-      "note": "Reported (EP status 3, Sat 14 Nov 03:50)."
+      "status": "landed",
+      "ref": "ae41bc06",
+      "note": "Globe ground default; VFX fc0c0a12 (meteor default). GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-RENDER-04": {
-      "status": "reported",
-      "ref": "be128ccd (Rendering: crater look)",
-      "note": "Reported (EP status 3, Sat 14 Nov 03:50)."
+      "status": "landed",
+      "ref": "ae41bc06",
+      "note": "Crater look default. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-CODE-01": {
-      "status": "reported",
-      "ref": "f83c78e9 (the GW1a preview reproduces the target byte for byte on today's code)",
-      "note": "Not closed: main itself must reproduce the target, which waits on GW1a landing (EP status 4, Sat 14 Nov 04:50). Blockers: World's checks park, Sim's gates park, Rendering's foot-slice split."
+      "status": "landed",
+      "ref": "9254c968",
+      "note": "Closes: golden equals the target, switch-diff 0 of 5 data rows. Proof in 490e610d; last pins b0e20f9a. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-WORLD-06": {
       "status": "reported",
       "ref": "ee2cf459 (World: crater tiers)",
       "note": "An A3 row reported early (EP status 5, Sat 14 Nov 05:50)."
+    },
+    "A-CODE-02": {
+      "status": "landed",
+      "ref": "490e610d",
+      "note": "Target golden, gates shipped, the GW1a frame. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
+    },
+    "A-MODES-07": {
+      "status": "landed",
+      "ref": "c3507bfc",
+      "note": "Match-end check and ending rows. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
+    },
+    "A-COMBAT-14": {
+      "status": "landed",
+      "ref": "e77ad69a",
+      "note": "Combat GW1a rows. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     }
   },
   "added": [
@@ -428,6 +443,12 @@
       "count": 69,
       "of": 87,
       "note": "EP status 6 (Sat 07:50 PST): unchanged, moves at GW1a. GW1a is being assembled: a manifest of 33 steps applies clean. Open gaps: Simulation's data-fight-gw1a (five fight rows, bisecting a residual golden difference, interrupts.json), Tools' switch-row retirement and ui-modes cases"
+    },
+    {
+      "date": "2026-11-20",
+      "count": 0,
+      "of": 5,
+      "note": "EP status (Fri 23:55 PST): GW1a landed (b20020b4..b0e20f9a: 25 per-owner commits, uid, Tools' retire, World's ground re-pin); gate clean on the s423 full run and s424 targeted re-runs; golden equals the target. The basis changed again: 5 data rows remain after Tools' retirement of the settled rows (was 69 of 87 before GW1a)"
     }
   ],
   "switchRowsEveryDays": 2,
@@ -542,9 +563,9 @@
     }
   },
   "notes": [
+    "GW1a landed on main: b20020b4..b0e20f9a (25 per-owner commits plus uid, Tools' retire and World's ground re-pin). Gate clean on the s423 full run and s424 targeted re-runs. Golden equals the target. Switch-diff against the 9 November build: 0 of 5 data rows. The 22 rows it closes are marked landed with their commits (mapping confirmed 2026-11-20).",
+    "Rows now in main from the 9 November build: S-01 travel 2.0, S-02 Art biomes, S-03 menu_modes ON, M-04 memory under the model (inert), S-05 and S-42 saves never pruned. Next: Orb's first desktop build from this main, then GW1b (20 steps, planet flip last).",
     "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde): trials T1 to T6 reported; Encounter's S3 row stays briefed until the trial clip.",
-    "Main is at B1 (f70afd08); CI on f70afd08 is running. 8 local commits are held, all parks: Combat gw1a-rows fd5c1895, World water re-cut 31f6a8bd and bystanders bcb7e935, Audio sound-sets patch 26fd27b0, Camera READMEs, Rendering report 4 30930158.",
-    "Batch B1 (A-NET-05, the build id in a replay) has landed; it lands before GW1, as the path asks.",
-    "Meters at EP status 6: all-models 74%, Fable 87% (the Fable reset waits on Orb)."
+    "Batch B1 (A-NET-05, the build id in a replay) landed before GW1."
   ]
 }
