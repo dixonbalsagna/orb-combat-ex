@@ -1,0 +1,13 @@
+moments_check exit 0 FAILs 0
+coop_check exit 0 FAILs 0
+host_check exit 0 FAILs 0
+brawl_check exit 0 FAILs 0
+carry_check exit 0 FAILs 0
+tug_check exit 0 FAILs 0
+tone_check exit 0 FAILs 0
+status_check exit 0 FAILs 0
+web_policy_check exit 0 FAILs 0
+beat_check exit 0 FAILs 0
+babble_check exit 0 FAILs 0
+warm_check exit 0 FAILs 0
+sets_check exit 0 FAILs 0
