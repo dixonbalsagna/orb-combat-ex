@@ -5,7 +5,7 @@ applied replay-build.patch: exit 0
 applied grant-netcode-build.patch: exit 0
 applied lan-stamp.patch: exit 0
 applied lan-hash.patch: exit 0
-kit exit 0: kit in <user>\AppData\Local\Temp\claude\bb5aa63790efa20b\879b4c35-3465-4ddb-bf73-1a63538915f3\scratchpad\kit22, build 00925b89-fbb7b255, host 10.0.0.135, rule for 10.0.0.0/24
+kit exit 0: kit in <user>\AppData\Local\Temp\claude\bb5aa63790efa20b\879b4c35-3465-4ddb-bf73-1a63538915f3\scratchpad\kit22, build 00925b89-fbb7b255, host <home address>, rule for its /24
 host-lan: exit 0, script errors 0
 join-lan: exit 0, script errors 0
 saved: lan-00925b89-main-20261114-043630-test.json, lan-00925b89-old-20261114-043657-test.json

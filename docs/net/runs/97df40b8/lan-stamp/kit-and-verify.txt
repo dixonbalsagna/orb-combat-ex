@@ -1,6 +1,6 @@
 # The kit on the page tree at HEAD 681aa09a (Tools' stamp) with replay-build.patch applied and this park's net/; no --build.
 replay-build applied to the page tree: exit 0; buildId in replay.gd: 1; refusal in desync.gd: 1
-kit exit 0: kit in <user>\AppData\Local\Temp\claude\bb5aa63790efa20b\879b4c35-3465-4ddb-bf73-1a63538915f3\scratchpad\kit21, build 681aa09a-a156d7d7, host 10.0.0.135, rule for 10.0.0.0/24
+kit exit 0: kit in <user>\AppData\Local\Temp\claude\bb5aa63790efa20b\879b4c35-3465-4ddb-bf73-1a63538915f3\scratchpad\kit21, build 681aa09a-a156d7d7, host <home address>, rule for its /24
 host-lan: exit 0, script errors 0; 2026-11-14T00:42:09; Connected, input wait 2 ticks; tick 1, delay 2, rollbacks 0, deepest 0, checks matched 0, ping 0.9 
 join-lan: exit 0, script errors 0; 2026-11-14T00:42:43; Connected, input wait 2 ticks; tick 600, delay 2, rollbacks 0, deepest 0, checks matched 9, ping 16
 saved: lan-681aa09a-old-20261114-004243-test.json

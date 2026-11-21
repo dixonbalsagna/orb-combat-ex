@@ -1,0 +1,5 @@
+# main b0e20f9a + docs/ui/pending/s04-report-where/s04-report-where.patch + docs/net/pending/lan-report-where/lan-report-where.patch; the kit (--build=b0e20f9a) with an export; three --lan-loop rows, 400 frames, the LAN log's 'report where:' line
+kit in <user>\AppData\Local\Temp\claude\bb5aa63790efa20b\879b4c35-3465-4ddb-bf73-1a63538915f3\scratchpad\kitrw, build b0e20f9a, host <home address>, rule for its /24
+host-lan: script errors 0; 2026-11-21T00:01:11; report where: Saved reports go in the 'saved' folder beside the game.; tick -1
+host-lan-control: script errors 0; 2026-11-21T00:01:28; report where: Saved reports go in this folder: %APPDATA%\Godot\app_userdata\Orb Combat EX\reports Paste it into the address bar of a folder window to open it.; tick -1
+join-lan: script errors 0; 2026-11-21T00:01:44; report where: Saved reports go in the 'saved' folder beside the game.; tick -1
