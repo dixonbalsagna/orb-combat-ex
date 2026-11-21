@@ -334,3 +334,101 @@ jobs:
             ${{ runner.temp }}/still/game-err.txt
           retention-days: 1
           if-no-files-found: warn
+
+  # A-TOOLS-13 on the owner-private route (the EP, 2026-11-21): the Windows exe is MADE ON A WINDOWS RUNNER, so no artifact crosses from the Linux job and nothing is uploaded (Legal RL-262: an owner-private run keeps nothing).
+  # It exports the commit the first job built with Godot's Windows editor and the Windows release template (both pinned and SHA-512 checked), starts the exe, plays the same bench match headless and compares its gameplay
+  # hash with the Linux build's (a job OUTPUT, text), then starts the game with a window and takes one still of the screen. The still is not kept (a kept file is an upload): the summary says whether the game stayed up and
+  # how many distinct colours the picture had, and shows the game's first lines. An outside-testers run uses the two jobs above instead, which test the packed zip itself. Never run on a runner before: read the first run.
+  windows-local:
+    if: inputs.audience == 'owner-private'
+    name: Windows build made and started on a Windows runner (owner-private, nothing uploaded)
+    needs: desktop
+    runs-on: windows-2025
+    timeout-minutes: 60
+    env:
+      FRAMES: ${{ inputs.frames }}
+      LINUX_HASH: ${{ needs.desktop.outputs.linux_hash }}
+      SHA: ${{ needs.desktop.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.desktop.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      # The Windows editor and the one template the Windows preset uses, each SHA-512 checked against the release's SHA512-SUMS.txt (the same templates.tpz pin as .github/actions/setup-godot).
+      - name: Install Godot 4.7.2 for Windows and its Windows release template
+        working-directory: ${{ runner.temp }}
+        env:
+          GODOT_VERSION: 4.7.2-stable
+          GODOT_ZIP_SHA512: 83decd58fdf67b9d657958a1ae6bf1929c20785315a81effe245874cdc57acb709bf868e00778a96984338c1b29dafdb453c6847747694621c6ecf5da2259993
+          TEMPLATES_SHA512: ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079
+        run: |
+          set -euo pipefail
+          curl -fsSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_win64.exe.zip"
+          echo "${GODOT_ZIP_SHA512}  godot.zip" | sha512sum -c -
+          7z x -y godot.zip -o"${RUNNER_TEMP}/godot-win" > /dev/null
+          rm godot.zip
+          curl -fsSL -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          echo "${TEMPLATES_SHA512}  templates.tpz" | sha512sum -c -
+          dest="${APPDATA}/Godot/export_templates/4.7.2.stable"
+          mkdir -p "${dest}"
+          7z e -y templates.tpz templates/version.txt templates/windows_release_x86_64.exe -o"${dest}" > /dev/null
+          rm templates.tpz
+          ls -l "${dest}"
+          echo "GODOT=${RUNNER_TEMP}/godot-win/Godot_v${GODOT_VERSION}_win64_console.exe" >> "$GITHUB_ENV"
+          "${RUNNER_TEMP}/godot-win/Godot_v${GODOT_VERSION}_win64_console.exe" --version
+      # The same preparation of this checkout as the first job (the lock, the version fields, ETC2/ASTC import), so the exe is the one the first job packs; the route scan and the notices were done by the first job.
+      - name: Prepare this checkout as the first job does
+        run: |
+          node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"
+          node tools/desktop-package.mjs version --root "${GITHUB_WORKSPACE}"
+          node tools/desktop-package.mjs astc --root "${GITHUB_WORKSPACE}"
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Write build_info.json
+        run: node tools/write-build-info.mjs --commit "${SHA}"
+      - name: Export Windows (release, Compatibility, x86_64, pck embedded) on the Windows runner
+        run: |
+          mkdir -p "${RUNNER_TEMP}/export/windows"
+          "$GODOT" --headless --path . --export-release "Windows Desktop" "${RUNNER_TEMP}/export/windows/orb-combat-ex.exe"
+          ls -l "${RUNNER_TEMP}/export/windows"
+      # The console wrapper (debug/export_console_wrapper=1 in the preset) is the same engine and the same pck with a console, so its stdout is the bench's; the shipped exe is the windowed one beside it.
+      - name: The exported Windows build starts and plays the bench match
+        working-directory: ${{ runner.temp }}/export/windows
+        run: './orb-combat-ex.console.exe --headless --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-windows.txt"'
+      - name: The Windows and Linux gameplay hashes match
+        run: |
+          w=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-windows.txt" || true)
+          echo "windows: ${w:-none}"
+          echo "linux:   ${LINUX_HASH:-none}"
+          if [ -z "$w" ] || [ "$w" != "${LINUX_HASH}" ]; then echo "the Windows build does not play the same match as the Linux build"; exit 1; fi
+          { echo '### Windows bench (made and run on a Windows runner)'; echo; echo "- the Windows build printed: $w"; echo "- the Linux build printed:   ${LINUX_HASH}"; echo '- they match'; } >> "$GITHUB_STEP_SUMMARY"
+      # The windowed exe is started on the runner's own desktop through ANGLE (Direct3D with software WARP: a hosted runner has no GPU), one still is taken and measured, and NOT kept. If the window does not open or the picture is one flat colour the job fails and the summary has what the game printed.
+      - name: Start the game with a window and measure one still of the screen (not kept)
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:RUNNER_TEMP 'export\windows\orb-combat-ex.exe'
+          $out = Join-Path $env:RUNNER_TEMP 'still'
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $log = Join-Path $out 'game.txt'
+          $p = Start-Process -FilePath $exe -ArgumentList '--rendering-driver','opengl3_angle','--resolution','1280x720' -PassThru -RedirectStandardOutput $log -RedirectStandardError (Join-Path $out 'game-err.txt')
+          Start-Sleep -Seconds 30
+          $alive = -not $p.HasExited
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $seen = New-Object 'System.Collections.Generic.HashSet[int]'
+          for ($y = 0; $y -lt $bmp.Height; $y += 9) { for ($x = 0; $x -lt $bmp.Width; $x += 9) { [void]$seen.Add($bmp.GetPixel($x, $y).ToArgb()) } }
+          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+          $fence = '```'
+          $lines = @('### Windows build opened a window (made on a Windows runner; the still is not kept)', '', "- the game was still running after 30 s: $alive", "- the screen: $($b.Width)x$($b.Height), $($seen.Count) distinct colours in a sample", '', 'the first lines the game printed:', '', $fence)
+          $lines += (Get-Content $log -TotalCount 25 -ErrorAction SilentlyContinue)
+          $lines += (Get-Content (Join-Path $out 'game-err.txt') -TotalCount 25 -ErrorAction SilentlyContinue)
+          $lines += $fence
+          $lines | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if (-not $alive) { throw 'the game did not stay up for 30 seconds' }
+          if ($seen.Count -lt 8) { throw "the screen is nearly one colour ($($seen.Count) in the sample)" }
