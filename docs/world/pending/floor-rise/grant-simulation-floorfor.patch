@@ -1,0 +1,83 @@
+--- a/sim/core/fighter.gd
++++ b/sim/core/fighter.gd
+@@ -13,14 +13,20 @@
+ ## and never while the water has him under after a drop (SimDir.waterUnder): the floor does not snap a body up, it applies once the surfacing ends (Game Design rulings 2026-10-30 row 3).
+ ## A body below it rises toward it at most WorldWater.riseMax a tick (wade.below over the surfacing's riseTicks: 7.5), from `from` (the height his tick began at, his own when not given), whatever he presses: a drop's end or
+ ## a get-up in water 37.5 to 75 deep lifts him over ticks, not in one (rulings 2026-10-30 row 9). His height is the state; nothing is kept.
+-static func floorFor(S: SimState, f, x: float, z: float, from: float = NAN) -> float:
++## xo, zo: the place his tick began at (NAN: where he stands, f.x and f.z, which is today's rule bit for bit). The ease above is for the floor that changes in time at his own place (a fill window rising, a wave, a surfacing); a floor that
++## only climbs along his path is continuous in space and needs none. So the rise is riseMax plus all the floor's climb between where he was and where he is: the floor at (x, z) less the floor at (xo, zo), when it climbs
++## (docs/world/floor-rise-dash.md). At a dash's speed (25 to 83 units a tick) a floor under his next place can stand 12 above his old height: without the climb he sat 2.26 units inside it for a tick or two.
++static func floorFor(S: SimState, f, x: float, z: float, from: float = NAN, xo: float = NAN, zo: float = NAN) -> float:
+ 	var g: float = WorldTerrain.groundY(S, x, z)
+ 	if WorldFill.floorOn() and f.state != "dropped" and f.state != "launched" and not SimDir.waterUnder(f):
+ 		var fl: float = WorldWater.floorAt(S, x, z)
+ 		var y0: float = f.y if is_nan(from) else from
+ 		if y0 >= fl:
+ 			return fl
+-		return maxf(g, minf(fl, y0 + WorldWater.riseMax(SimDir.waterRiseTicks())))
++		var climb: float = 0.0
++		if not is_nan(xo):
++			climb = maxf(0.0, fl - WorldWater.floorAt(S, xo, z if is_nan(zo) else zo))
++		return maxf(g, minf(fl, y0 + WorldWater.riseMax(SimDir.waterRiseTicks()) + climb))
+ 	return g
+ 
+ 
+@@ -314,6 +320,8 @@
+ 	var r = f.rush
+ 	if r == null:
+ 		return
++	var xs0: float = f.x   # where the tick found him: the floor's climb to where this step puts him is not eased (floorFor's xo, zo)
++	var zs0: float = f.z
+ 	var tx: float = r.tgt.x + r.off if r.tgt != null else r.px
+ 	var ty: float = r.tgt.y if r.tgt != null else r.py
+ 	var rem: float = r.end - S.T
+@@ -324,13 +332,13 @@
+ 		ty = fin[1]
+ 	if rem <= dt:
+ 		f.x = SimWrap.wrap(tx)
+-		f.y = SimMathx.jmax(ty, floorFor(S, f, tx, 0.0))
++		f.y = SimMathx.jmax(ty, floorFor(S, f, tx, 0.0, NAN, xs0, 0.0))
+ 		if S.depthOn:
+ 			f.z = clampf(tz, SimDepth.zBack, SimDepth.zFront)
+ 			f.zT = f.z   # he stays where the rush took him
+ 			f.vz = 0.0
+ 			f.vzX = 0.0
+-			f.y = SimMathx.jmax(ty, floorFor(S, f, tx, f.z))   # on the ground at his depth
++			f.y = SimMathx.jmax(ty, floorFor(S, f, tx, f.z, NAN, xs0, zs0))   # on the ground at his depth
+ 		f.rush = null
+ 		f.vx = 0.0
+ 		f.vy = 0.0
+@@ -359,7 +367,7 @@
+ 	if S.depthOn:
+ 		f.z = clampf(f.z + (tz - f.z) * k, SimDepth.zBack, SimDepth.zFront)
+ 	if S.frame != null:   # a field world: a rush's line rides up over what's between (its ground is rougher than a ring's, and pads stand proud): 107 fighter ticks under the ground against gen 2's 14, up to 150 units. No other world changes
+-		f.y = maxf(f.y, floorFor(S, f, f.x, f.z if S.depthOn else 0.0))
++		f.y = maxf(f.y, floorFor(S, f, f.x, f.z if S.depthOn else 0.0, NAN, xs0, zs0 if S.depthOn else 0.0))
+ 
+ 
+ ## A fighter's depth, only when S.depthOn (docs/architecture/depth-core.md). No stick steers it.
+@@ -747,7 +755,7 @@
+ 			SimDir.arrive(S, f, dt)   # Encounter's arrival: the dash eases into striking distance, never through it (bands.arrive, off)
+ 			f.x = SimWrap.wrap(f.x + f.vx * dt)
+ 			f.y += f.vy * dt
+-			var g: float = floorFor(S, f, f.x, f.z, y0)   # at his depth (the plane's when depth is off); with the floor on, the floor of the water he is over
++			var g: float = floorFor(S, f, f.x, f.z, y0, x0, z0)   # at his depth (the plane's when depth is off); with the floor on, the floor of the water he is over
+ 			if f.y < g:
+ 				f.y = g
+ 				if f.vy < 0.0:
+@@ -817,12 +825,12 @@
+ 			f.vz *= keep
+ 			f.vzX *= keep
+ 		f.x = SimWrap.wrap(f.x + f.vx * dt)
+-		f.y = SimMathx.jmax(floorFor(S, f, f.x, f.z, y0), f.y + f.vy * dt)
++		f.y = SimMathx.jmax(floorFor(S, f, f.x, f.z, y0, x0, z0), f.y + f.vy * dt)
+ 	if S.depthOn:
+ 		stepDepth(S, f, dt)   # his depth: the director's velocity, his home, the band
+ 		if not rushed and f.state != "launched" and f.state != "down":
+ 			contact(S, f, x0, y0, z0)   # and the buildings: he stops at a face, and the rest of his step slides
+-			var gz: float = floorFor(S, f, f.x, f.z, y0)   # the floor at the depth he has come to
++			var gz: float = floorFor(S, f, f.x, f.z, y0, x0, z0)   # the floor at the depth he has come to
+ 			if f.y < gz:
+ 				f.y = gz
+ 	if S.game.ko == null:

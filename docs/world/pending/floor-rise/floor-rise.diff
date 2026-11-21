@@ -1,0 +1,110 @@
+--- /dev/null
++++ b/sim/world/tools/floor_rise_check.gd
+@@ -0,0 +1,101 @@
++extends SceneTree
++# A fighter moving along a rising lake floor follows it (World, sim/core/fighter.gd floorFor's xo, zo; docs/world/floor-rise-dash.md; Simulation's finding in docs/architecture/pending/energy-on): with the lake floor on, a free fighter flying low
++# over a floor that climbs along his path used to sit inside it for a tick or two at a dash's speed, because the floor's ease (WorldWater.riseMax a tick, for a floor that changes in time at his own place) also met a floor that only climbs
++# along his path. The rise is now riseMax plus the floor's climb between where his tick began and where it ends.
++#   godot --headless --path . --script res://sim/world/tools/floor_rise_check.gd -- [--negative-control]
++# --negative-control calls floorFor without the start place (the old rule): the rows must then fail (the check passes when they do).
++var fails: int = 0
++var neg: bool = false
++
++
++func ok(cond: bool, what: String) -> void:
++	if cond:
++		print("  ok   ", what)
++	else:
++		fails += 1
++		print("  FAIL ", what)
++
++
++func _match(dash: bool) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "power": true, "dash": dash})
++	return S
++
++
++## How far the worst free fighter sat inside the floor under him over ticks 1 to 40 (0 for never).
++func _inside(dash: bool) -> float:
++	var S := _match(dash)
++	var worst: float = 0.0
++	for t in range(40):
++		SimCore.step(S)
++		S.out.fx.clear()
++		for f in S.fighters:
++			if f.state != "launched" and f.state != "dropped":
++				worst = maxf(worst, SimFighter.floorFor(S, f, f.x, f.z) - f.y)
++	SimCore.dispose(S)
++	return worst
++
++
++func _init() -> void:
++	neg = OS.get_cmdline_user_args().has("--negative-control")
++	WorldClimate.useGen(2)
++	WorldFill.K_ON = true
++	WorldFill.K_SURF_ON = true
++	WorldFill.K_FLOOR_ON = true
++	ok(WorldFill.floorOn(), "the lake floor is on")
++	# --- the rule, on a floor that climbs: a fighter who stood on the floor where his tick began lands on it where it ends, at any speed
++	var S := _match(false)
++	var f = S.fighters[0]
++	var found: Array = []
++	var x: float = f.x - 1500.0
++	while found.is_empty() and x < f.x + 1500.0:
++		var a: float = WorldWater.floorAt(S, x, 0.0)
++		var b: float = WorldWater.floorAt(S, x + 40.0, 0.0)
++		if b - a > 14.0:   # a climb of more than 14 units over 40: more than riseMax a tick (7.5)
++			found = [x, x + 40.0, a, b]
++		x += 8.0
++	ok(not found.is_empty(), "the lake has a bank that climbs more than 14 units over 40 (%s)" % str(found))
++	if not found.is_empty():
++		var xo: float = found[0]
++		var xn: float = found[1]
++		var fo: float = found[2]
++		var fn: float = found[3]
++		f.state = "free"
++		f.y = fo
++		f.z = 0.0
++		var rise: float = WorldWater.riseMax(SimDir.waterRiseTicks())
++		var old_rule: float = SimFighter.floorFor(S, f, xn, 0.0, fo)
++		var new_rule: float = SimFighter.floorFor(S, f, xn, 0.0, fo, NAN if neg else xo, 0.0)
++		ok(is_equal_approx(old_rule, minf(fn, fo + rise)) and old_rule < fn - 1.0, "without the start place the rise is riseMax (%.1f): he is lifted to %.2f of the floor's %.2f" % [rise, old_rule, fn])
++		ok(is_equal_approx(new_rule, fn), "with the start place he lands on the floor where it ends (%.3f of %.3f), whatever his speed" % [new_rule, fn])
++		# the ease still covers the time change at his own place: where the floor stands well above the ground (deep water) a body 30 under it, at the same place, is lifted by riseMax and no more
++		var deep: float = NAN
++		var xd: float = f.x - 3000.0
++		while is_nan(deep) and xd < f.x + 3000.0:
++			if WorldWater.floorAt(S, xd, 0.0) - WorldTerrain.groundY(S, xd, 0.0) > 45.0:
++				deep = xd
++			xd += 8.0
++		ok(not is_nan(deep), "the lake has a column where the floor stands more than 45 above the ground")
++		if not is_nan(deep):
++			var fd: float = WorldWater.floorAt(S, deep, 0.0)
++			f.y = fd - 30.0
++			var stay: float = SimFighter.floorFor(S, f, deep, 0.0, fd - 30.0, NAN if neg else deep, 0.0)
++			ok(is_equal_approx(stay, fd - 30.0 + rise), "a floor that changes in time at his own place still eases him (%.2f: 30 under, lifted by riseMax %.1f)" % [stay, rise])
++		# no start place given: today's rule, bit for bit
++		var plain: float = SimFighter.floorFor(S, f, xn, 0.0, fo)
++		ok(plain == old_rule, "no start place: today's rule, bit for bit (%.6f)" % plain)
++	SimCore.dispose(S)
++	# --- the match: a computer fighter flying low along a rising lake floor at the dash's speed (parity's spawn-floor lake)
++	if not neg:
++		var on: float = _inside(true)
++		var off: float = _inside(false)
++		ok(on <= 0.001, "dash on: a free fighter never sits inside the floor under him over 40 ticks (%.3f)" % on)
++		ok(off <= 0.001, "dash off: the same (%.3f)" % off)
++	WorldFill.K_ON = false
++	WorldFill.K_SURF_ON = false
++	WorldFill.K_FLOOR_ON = false
++	if neg:
++		ok(fails >= 1, "negative control (no start place): the rule rows fail (%d did)" % fails)
++		fails = 0 if fails >= 1 else 1
++	print("FLOORRISE: %d check(s) failed" % fails)
++	quit(0 if fails == 0 else 1)
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -6,2 +6,3 @@
+     "power_world_check",
++    "floor_rise_check",
+     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
