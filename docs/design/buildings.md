@@ -327,3 +327,19 @@ Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These
 3. **The risk (no building offered while a running swing has more than 20° left to turn, 4 of 10 staged runs):** **measure the cone from the blow's actual line at the contact tick, wherever the running swing has got to by then. The turn still to come doesn't refuse candidates,** because reading 1 caps any further turn the launch itself adds. If nothing is in the cone, the launch flies its own line, which is always right.
 
 **A rising lake floor onto a steep bank (2026-11-20, World's `pending/floor-rise/`):** **keep the sim's one-tick lift, uncapped.** Nobody ever stands inside terrain, and Orb's clipping complaint outranks a pop. **The view covers it instead:** a floor lift of more than 0.5 bh in one tick plays Animation's short step-up (the landing crouch's opening frames), and the camera's own ease absorbs the rest. Nothing is ever drawn inside the bank. It's rare: it needs a fighter already inside a rising floor stepping onto a 2.6-in-1 bank.
+
+**Building memory under the energy model (2026-11-20, World's `pending/memory-under-model/`):** under the model, three sends at a tall tower (mass 15) never brought it down: a held hit does E/m of the covered floors' strength (0.11 for a send of 1.7), and one mark is worth one model tier (×1.95, then ×3.80).
+
+**The lever is the damage a hold does: a held hit does 2 × E/m** (`brunt.json` `heldMul` **2.0**, model path only). **A mark stays one model tier, and a tower's mass stays 15.**
+- **Why that lever:**
+  - A held body stops in the building, so all of its energy goes into the few floors it covers. Spreading it over the whole tower's mass undercounts where it lands.
+  - It matches the wall slam, which already doubles the hit on the body (`wallSlamMul` 2).
+  - The mass would also change what a send goes through at every tier, and so would the collateral feeds that read it. A bigger mark would break "one tier higher" in the model's own step.
+- **What it gives,** by World's arithmetic (a floor breaks when one hit's damage reaches its strength, less 25% of what it has taken):
+  - **any send of 1.7 or more brings a tall tower's covered floors down on the third send;**
+  - a send of 3.4 or more does it on the second;
+  - a send of 7.5 or more cracks them on the first, still held;
+  - and at 15 or more it goes straight through, as before.
+  - Low towers already go through at one mark, and houses are unchanged.
+- **§9's "the second and third sends bring it down" now holds on the model's path too.**
+- **World's check:** three sends of 1.7 bring a mass-15 tower down, and two sends of 3.4 do.
