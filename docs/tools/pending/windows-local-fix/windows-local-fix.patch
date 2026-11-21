@@ -1,0 +1,27 @@
+diff --git a/.github/workflows/desktop-builds.yml b/.github/workflows/desktop-builds.yml
+index 7d0b9a4..844542e 100644
+--- a/.github/workflows/desktop-builds.yml
++++ b/.github/workflows/desktop-builds.yml
+@@ -389,12 +389,21 @@ jobs:
+         run: '"$GODOT" --headless --path . --import'
+       - name: Write build_info.json
+         run: node tools/write-build-info.mjs --commit "${SHA}"
++      # Run 44896954723 (the first dispatch, on d168a518): the export made orb-combat-ex.exe alone, and the bench step found no orb-combat-ex.console.exe. The preset's debug/export_console_wrapper=1 means "debug exports only" and this is a
++      # release export; 2 is "debug and release". The value is changed in THIS RUNNER'S checkout only (the preset in the repository, the desktop package and the Linux and macOS exports are not touched, and nothing from this job is kept),
++      # so the exe that is exported is the one the packages ship, plus the console wrapper beside it, which is the same engine and the same pck.
++      - name: Ask the Windows preset for the console wrapper on a release export (this runner's checkout only)
++        run: |
++          awk '/^name="Windows Desktop"/{w=1} /^name="Linux"/{w=0} w && /^debug\/export_console_wrapper=1/{sub(/=1/,"=2")} {print}' export_presets.cfg > export_presets.new
++          mv export_presets.new export_presets.cfg
++          if [ "$(grep -c '^debug/export_console_wrapper=2' export_presets.cfg)" != "1" ]; then echo "the Windows preset's console wrapper was not set exactly once"; exit 1; fi
++          grep -n 'export_console_wrapper' export_presets.cfg
+       - name: Export Windows (release, Compatibility, x86_64, pck embedded) on the Windows runner
+         run: |
+           mkdir -p "${RUNNER_TEMP}/export/windows"
+           "$GODOT" --headless --path . --export-release "Windows Desktop" "${RUNNER_TEMP}/export/windows/orb-combat-ex.exe"
+           ls -l "${RUNNER_TEMP}/export/windows"
+-      # The console wrapper (debug/export_console_wrapper=1 in the preset) is the same engine and the same pck with a console, so its stdout is the bench's; the shipped exe is the windowed one beside it.
++      # The console wrapper (asked for in the step above) is the same engine and the same pck with a console, so its stdout is the bench's; the shipped exe is the windowed one beside it.
+       - name: The exported Windows build starts and plays the bench match
+         working-directory: ${{ runner.temp }}/export/windows
+         run: './orb-combat-ex.console.exe --headless --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-windows.txt"'
