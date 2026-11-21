@@ -561,3 +561,27 @@ The tree's `sim/core/test/golden.json` still has the target's checksum (a2b9ed1c
 Unchanged by the rebuild, as the EP ruled: launch distance stays 2.0 in this landing (S-01), the new start menu stays on (S-03), and the planet type in the golden is owed at the next re-record (S-07). The other majors remain dated follow-ups.
 
 Cost of this re-check: about 0.2M tokens of the reviewer's own reading; no agents.
+
+### The small delta after the rebuild: UI's `a1-save-reason` (2026-11-20, about 20:50)
+
+Read by hand: `docs/ui/pending/a1-save-reason/save-reason.patch` and its grant `grant/main-gd-record-report-reason.patch`. Both apply clean on the rebuilt tree's files (`git apply --check` on a scratch copy). Neither was in the tree when the section above was written.
+
+**Verdict: fine to add. It closes S-42 ("Save this match" was filed as a plain report) and makes Tools' never-prune rule reach the player's own saves.**
+
+| Point | Finding | Evidence |
+| :--- | :--- | :--- |
+| What it does | "Save this match" now tells the game the file is a save. The other two ways to save (the report key and the feedback panel) still send a plain report | `save-reason.patch`: `save_match()` calls `_report_save("", _fb_text.text, "save")`; the tree's `ui/hud/ui_hud.gd:3735` and `:3751` are untouched and call the hook with two arguments |
+| The chain is complete with the grant | The game's hook gains a third argument that defaults to "report" and passes it to the recorder, which names the file by its reason and never prunes a name ending `-save.json` | the grant's two lines in `render/core/main.gd`; the tree's `render/core/main.gd:192` wires that function as the hook; `render/core/match_recorder.gd` `_prune` |
+| Older hooks keep working | A hook that takes two arguments (the LAN one) is called with two, as before. The patch asks the hook how many arguments it takes | `_report_save`: `lan_report_fn.get_argument_count() >= 3` |
+| It writes nothing to the game's state | UI and one host function only | the two patches' file lists |
+| The check | Four new rows: a save reaches a three-argument hook as "save", the report key and the panel stay "report", a two-argument hook gets two. The README names a negative control | `save-reason.patch`, `_save_reason_rules` |
+
+Three notes, none blocking:
+
+| # | Note | What to do |
+| :--- | :--- | :--- |
+| D-4 | The two pieces only work together. With the UI patch alone the reason is dropped and the save can still be pruned; the README says so | Land both in the same commit |
+| D-5 | No single check walks the whole way on a built game, from the menu row to a kept file. The HUD's rows and the recorder's rows each prove their half | The EP's planned try of the save row on the real build covers it: save once, and check the file's name ends `-save.json` |
+| D-6 | In a LAN match "Save this match" still reaches the LAN saver as a plain report, because that hook takes two arguments. Whether the LAN saver ever deletes old files was not read | A line to Netcode |
+
+The README's gate was a partial run (816 checks, the menu rules only), so the full menu check on the stacked tree is the EP's gate run.
