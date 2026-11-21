@@ -1,0 +1,155 @@
+# GW1b apply list, built by test (Orb's stand-in, landing reviewer of sprint A1, 2026-11-21)
+#
+# What this is: the GW1b patches in landing order, one "ap" line each, in the style of the EP's setup
+# script (ap = the EP's apply function; P = the repo's docs folder, as P="$R/docs" in that script).
+# It starts from the 20-step order and the "Pending" table of docs/ep/reviews/GW1b-review.md and is
+# updated from the parks as they are now (every docs/*/pending README that says GW1b, World's
+# docs/world/planet-stack-recut.md stage 1, and the EP's list of what is new since the review).
+#
+# Tested on main dce749fc64ab87dab32d2b0051e108d368fd8e53 (GW1a landed at b0e20f9a).
+# Tested by applying each patch in order on a clean export; nothing was run in Godot.
+# Each patch: "git -c core.autocrlf=false apply --check", then "git -c core.autocrlf=false apply",
+# plain (no --3way, no reduced context), one at a time, on a "git archive HEAD" export. The whole list
+# was applied twice from a fresh export: 48 of 48 apply, the flip last.
+#
+# Patches in the list: 48.
+#
+# The sha1 is of the patch file as it sits in its park folder today. Several are NOT committed yet
+# (untracked: animation/gw1b-pins, intro-store, bounce-count, ghost-tally-parts, floor-walk-probe.diff;
+# modified since the last commit: pins-gw1b.diff, launch-cone.diff, stray-beams.diff, beam-aim-throw.diff,
+# stray-beams-input.patch). Every sha1 a README states matches its file.
+#
+# Node only, on the fully stacked export (not Godot):
+#   node tools/validate.js               323 files checked, 0 errors, 2 warnings
+#   node tools/validate.js --self-test   10140 of 10141; 1 FAILED: "coverage: biomes-world.schema.json:
+#                                        at least three invalid cases" (review B-10, still open; see NOT PARKED YET)
+#   node tools/world-checks.mjs --verify "ok, 91 checks run in CI" (planet-stack stage 1 says 91)
+#   node tools/check-scripts-table.mjs   NOT run: it needs "git ls-files" and the export is not a repository
+#
+# ---------------------------------------------------------------------------------------------------
+# 1. The world's code, with the mode still "arena" (golden byte for byte; review steps 1 to 3 + B-13)
+ap "$P/world/pending/a-world-01/a-world-01.diff"   # sha1 26ca62dc203929d748649edb66f7e9cc436a7cf8  WorldDefault, world.json (mode arena), its schema, world_default_check
+ap "$P/world/pending/a-world-01/grant-simulation-sim.patch"   # sha1 1b2ba35e95de69ba5a6707aaba348829de42349a  Simulation's beginMatch line: apply the default world
+ap "$P/architecture/pending/replay-world/replay-world.patch"   # sha1 9e80651d10e2857f30c6329c1d0f879e85a57877  a replay of the default world names its planet; parity row
+ap "$P/world/pending/a-world-01/default-gate.diff"   # sha1 2c03761198772f4e4eb2427668034b2aa39384e5  default_gate_check (B-13) and its run-list line
+ap "$P/world/pending/a-world-01/grant-rendering-host.patch"   # sha1 9fed7a3a6d6329b7c070f27b34c8bc38163c0742  Rendering's sim_host: default applied before the load gate (B-13)
+#
+# 2. Pins for the flip (no-ops while the mode is arena)
+ap "$P/world/pending/checks-gw1a/pins-gw1b.diff"   # sha1 3e8f50d1c2085803826dfd661e87a5f0ea4f98c3  World's arena pins, 26 checks + pin.gd (re-cut on b0e20f9a, B-09)
+ap "$P/animation/pending/gw1b-pins/gw1b-pins.patch"   # sha1 aed02606a78517c9e922d81d4b1168361cf6383c  anim_check's water-stance pin also holds the arena
+ap "$P/rendering/pending/strip-arena/strip_arena.diff"   # sha1 9c60c1a112298e3f30b93cb2e39e76b48d9590ab  strip-ground tools ask for world "arena" (12 render checks)
+#
+# 3. Energy and meters (review steps 5 to 7)
+ap "$P/architecture/pending/meters-zero/meters-zero.patch"   # sha1 12b6e164bbbcfef9b3c6d94481c4acae219757d6  old meters change nothing; the comeback for both (re-cut, B-22)
+ap "$P/architecture/pending/meters-zero/grant-narrative-meters.patch"   # sha1 3ca8eea1c7a76ee1d9bc9c442edaae84feeb445f  Narrative's meters.json effects at 0
+ap "$P/architecture/pending/gw1b-energy/grant-data-gw1b.patch"   # sha1 be0e018e6f35276baed71f482691f11e5483d383  power.json: flat out 3,500, close times, travel 1.5; slip stays on (re-cut, B-04)
+ap "$P/architecture/pending/gw1b-energy/gw1b-energy.patch"   # sha1 09796c4d03a6e4cc75cf1824359bd48e273f54f7  power_check, parity, cross_check rows for the new numbers
+ap "$P/architecture/pending/gw1b-energy/grant-narrative-feeds.patch"   # sha1 854254638ee5b561d328f9252b2c14716fbf5876  Narrative's meters.json: every feed at 0
+ap "$P/world/pending/bystanders-gw1b/bystanders-gw1b.diff"   # sha1 d542e2ba5cd5f0c90ba1cd4fb2da3620918bcc9b  bystanders_check re-read for the zeroed feeds
+#
+# 4. The director's riders (review steps 8 to 13, B-16, B-30; Encounter's B-17 lane order)
+ap "$P/director/pending/gw1b-riders/gw1b-riders.diff"   # sha1 76d967bee6c40922c8978507c400daa8363bdedb  meteor bowl tier, computer's beam hold, swing reads no meter
+ap "$P/director/pending/index-stage/index-stage.diff"   # sha1 821afb4a99585182be4b6faedcb89c98b52b16c6  knock_wall and walk checks stage from the index (B-16)
+ap "$P/director/pending/wall-cone/wall-cone.diff"   # sha1 52e4a5b11473bdd4b1be933528e58ab32ca397a7  a knock aims only at a wall in its 20-degree cone (re-cut, B-18)
+ap "$P/director/pending/wall-cone/grant-tools-schema.patch"   # sha1 39fe5bb27940ddbbebaa4a4342e5489c1387a14e  Tools' schema: wallCone, wallBy
+ap "$P/tools/pending/wall-cone-cases/wall-cone-cases.patch"   # sha1 43e39a094dc93615432839bf9dee811d358e8e36  Tools' five cases for the two keys
+ap "$P/director/pending/launch-cone/launch-cone.diff"   # sha1 a541d1fdff785928bf0eac12269db97c2bdbfd81  every aimed launch inside the cone (re-cut for B-17: bark_reads seeds)
+ap "$P/director/pending/stray-beams/stray-beams.diff"   # sha1 2c748f23d44af5cdd26bf00896ecabb3aed05459  dropOnPress; RT + B only in RT's window (re-cut for B-17)
+ap "$P/director/pending/stray-beams/grant-tools-schema.patch"   # sha1 952f78d01ed97a54477d0aa54ebc2875010ca1ca  Tools' schema: ownMove.dropOnPress
+ap "$P/director/pending/stray-beams/dash-probe.diff"   # sha1 8f9b58791c13357a8d40a98d31ff9185cc3b658f  dash_probe reads flight's data default (tool only)
+ap "$P/controls/pending/stray-beams-input/stray-beams-input.patch"   # sha1 f85cf485f97e191dbc244f438ecc9fcd83f9d7d6  Controls' input test for the stray beams (re-cut: idle fight first)
+ap "$P/director/pending/beam-aim-throw/beam-aim-throw.diff"   # sha1 624485ae0a42632fce4b3fe9da22039b02667716  a throw that fired no beam aims no later beam (re-cut for B-17)
+ap "$P/director/pending/bounce-count/bounce-count.diff"   # sha1 a7eb64f3395d193712c1b36d74038551bb559409  bounce_count.gd, a counting tool (B-19); new file only
+#
+# 5. The desync digest (Netcode; both READMEs say "for GW1b"; digest only, no sim file)
+ap "$P/net/pending/desync-marks/desync-marks.patch"   # sha1 6fe3d7a82919e123484551cc0c5a779c2e286069  the cheap digest reads building marks
+ap "$P/net/pending/desync-fdmg/desync-fdmg.patch"   # sha1 12bf1ab81ea3da346cfceedfa481b417c857deed  the cheap digest reads floor damage (after desync-marks)
+#
+# 6. Floor rise (review steps 15, 16 and 18, one batch as floor-rise and floor-rise-unpin ask)
+ap "$P/director/pending/floorlift-rise/floorlift-rise.diff"   # sha1 0228351542c12551948edead229967c5aa78503b  floorlift_check reads the floor-rise rule
+ap "$P/world/pending/floor-rise/grant-simulation-floorfor.patch"   # sha1 e1e7ce0968fb272cc20ca90d86bcfa8ad158b12a  Simulation's fighter.gd: floorFor takes the tick's start place
+ap "$P/world/pending/floor-rise/floor-rise.diff"   # sha1 f6acbd49ae5305f40922c05e661103641cb98acb  floor_rise_check and its run-list line
+ap "$P/world/pending/floor-rise/floor-walk-probe.diff"   # sha1 76d4e1ffc372f57e288c76a6ab0ded66d9547d6f  floor_walk_probe measures the pop beyond the floor's own rise (new)
+ap "$P/architecture/pending/floor-rise-unpin/parity-lake-unpin.patch"   # sha1 528d264356b2f8e6cb5a881cabe2d914839d9fef  parity's lake row takes the dash again
+ap "$P/animation/pending/step-up/step-up.patch"   # sha1 5c37d7aa45d07f3fcb12931bd5d7caf9b9f8c3a0  the step-up crouch when a floor lifts a fighter (view only)
+ap "$P/animation/pending/step-up/step-up-schema.patch"   # sha1 71c0cf080de9630f5c050c4fc604ec58edcd7310  Tools' schema: step_up block (validate fails without it)
+ap "$P/tools/pending/step-up-cases/step-up-cases.patch"   # sha1 dd5ef0c0871502c43a4b55c72354512bf39fcfa8  Tools' 13 step_up cases
+#
+# 7. Lakes. docs/world/planet-stack-recut.md:15 puts these in stage 1 (GW1b), and
+#    docs/world/pending/lake-places/README.md calls lakeMax 8 "the GW1b row"; the EP was holding the lake
+#    parks together. To keep holding them, drop these four lines (nothing else in this list needs them).
+#    The data row sets lakeMax only; no lakeSpill or lakeDig.
+ap "$P/world/pending/lake-places/lake-places.diff"   # sha1 bf386bb7a13470c40a557b7c71a1f3db5dca0616  lakeMax (off at -1), its schema line, lake_places_check
+ap "$P/world/pending/lake-places/grant-rendering-tile-water.patch"   # sha1 d753545fb001310a1d0ae808ab6c0cbef6f4838d  Rendering's two tile_field lines (same file as water_everywhere.diff)
+ap "$P/world/pending/lake-places/lake-places-data.diff"   # sha1 2315b6b415dde2bcd9a33094208ee54df172e895  data row: plans.lakeMax 8
+ap "$P/animation/pending/water-tile-check/water-tile-check.patch"   # sha1 0f8ee10a0587fa437338cec25b2e2b1e3a829218  water_tile_check (not in CI), re-cut without the tracked doc
+#
+# 8. Look and camera (render only; after every sim change)
+ap "$P/rendering/pending/join-press/join_press.diff"   # sha1 5e92331e34be16d94e2820f03cbe19b610c75994  a joining player's press is not a move (sim_host, one line)
+ap "$P/vfx/pending/ghost-tally-parts/apply.patch"   # sha1 4d208b611db6f5b78e64a13ada9b4ac9a4fab9bc  VFX's ghost tally reads the drawn after-images
+ap "$P/vfx/pending/ghost-tally-parts/grant-rendering-fxview.patch"   # sha1 1a6fa5ac4ab72ddb339114e62d7c532fa61c24d1  Rendering's grant: vfx.fx_view in sim_host
+ap "$P/camera/pending/gw1b-scape-side/gw1b-scape-side.patch"   # sha1 089fe5f4c14e147716a0fcf77e55a5e3305517a6  the landscape shot keeps its side
+ap "$P/camera/pending/gw1b-keep-human/gw1b-keep-human.patch"   # sha1 1cef7de7d25f191793a681101aace98cd9d4d7e7  the one view aims for its human (after scape-side)
+#
+# 9. The golden and intro-store (intro-store must land before the flip; the golden's patch does NOT
+#    apply on this list: see DOES NOT APPLY)
+ap "$P/architecture/pending/intro-store/grant-world-store.patch"   # sha1 f12828acb303b0cbcbebb202c434c3ec94673c25  World's store.gd: WorldStore.swapBlocks (World approved)
+ap "$P/architecture/pending/intro-store/intro-store.patch"   # sha1 e6214dca6aa3275b1a492cfd044bfa3be2c5e7ab  played and skipped intros leave the store in one order
+#
+# 10. THE FLIP (last, its own commit)
+ap "$P/world/pending/a-world-01/data-switches-gw1b.diff"   # sha1 4d0ceaceb4aa4dca7a934a91828d16b4e0572df1  world.json mode "planet", nothing else (random.enabled stays false)
+#
+# ---------------------------------------------------------------------------------------------------
+# LEFT OUT ON PURPOSE
+#   world/pending/wall-hold-split/wall-hold-data.diff     switches the lodge hold on (B-05); also fails on main: "patch failed: data/biomes/brunt.json:66"
+#   world/pending/wall-hold-split/wall-hold-split.diff    stands on GW1c's globe-step2 (B-06); fails on main: "patch failed: sim/world/crater.gd:199"
+#   world/pending/wall-hold-on/wall-hold-data.diff        the lodge hold row (B-05; a-world-01/README.md "Out of GW1b"); it applies on main, left out anyway
+#   world/pending/wall-hold-on/wall-hold-pins.diff        goes with the wall-hold window, not GW1b
+#   world/pending/memory-under-model/memory-under-model-data.diff   heldMul 2.0; its README:8 "Not in GW1b"
+#   camera/pending/gw1b-chase-rebase/gw1b-chase-rebase.patch   loosens a limit (B-21); applies on main, left out anyway
+#   world/pending/a-world-01/grant-rendering-main.patch   superseded (B-07); fails on main: "patch failed: render/core/main.gd:1337"
+#   rendering/pending/water-everywhere/water_everywhere.diff   the same file as World's grant-rendering-tile-water.patch (both sha1 d753545f...); World's is taken
+#   tools/pending/lake-places-cases/lake-places-cases.patch   applies, but 5 of its 13 cases are lakeSpill's, whose schema line is in lake-shore.diff (GW2):
+#                                                         with it in this list the self-test reads 5 more FAILs ("unknown property" at /plans/lakeSpill)
+#   tools/pending/world-schema-cases/world-schema-cases.patch   its README:17 parks it for GW1c with planet-sizes; with it in this list the biomes-world
+#                                                         coverage row passes but the six biomes-sizes cases fail (self-test 10148 of 10155, 7 FAILED)
+#   world/pending/lake-shore/ (lakeSpill), world/pending/lake-dig/ (lakeDig)   GW2 (planet-stack-recut.md stage 3); the lake parks the EP holds
+#   rendering/pending/world-menu-merge, ui/pending/a1-world-menu, rendering/pending/fore-clamp   the quick-match draw: a later data step (B-03, B-07)
+#   rendering/pending/calm-tones (arm A)                  a look question for Orb, the EP's and Tools' follow-up to the B-20 record (its README:74)
+#   GW1c parks (globe-step2, planet-sizes, gw1c-world, store-parts, box-key-20bit, crater-tiers, relief-cap-gw1c, boxkey-gw1c, replay-sizes,
+#   planet-sizes-meteor)                                  GW1c, not GW1b
+#   camera/pending/gw1a-pins, gw1a-pins-2, gw1b-chase-measure   landed in GW1a (gw1a-pins-2 and chase-measure reverse-apply on main)
+#   world/pending/checks-gw1a/ground-repin.diff           deleted by World: "nothing moved" (checks-gw1a/README.md:63)
+#   docs/animation/step-up.md (untracked in the working tree)   step-up.patch creates it on a clean export; remove or stage the copy first (B-44)
+#
+# DOES NOT APPLY
+#   architecture/pending/gw1b-golden/gw1b-golden.patch   # sha1 ee5abe0189fe3670d45f48037d21df1e7cf59888
+#     After meters-zero.patch: "error: patch failed: sim/core/tools/parity.gd:91".
+#     Tried before meters-zero (straight after the pins): it applies, and then meters-zero.patch fails
+#     ("error: patch failed: sim/core/tools/parity.gd:90") and gw1b-energy.patch with it (":4280").
+#     Cause: meters-zero adds a check line between "hit-stop by weight" and "the ricochet's glance", which
+#     is inside the golden's hunk context. The golden was cut on main + steps 1 to 4 only (its README:39).
+#     Informational, not part of the test: on the full list it passes "apply --check -C1". Owner: Simulation (re-cut).
+#
+# NOT PARKED YET
+#   Tools' CI lines (or check-scripts.json reasons) for stray_beam_check, aim_throw_check, launch_cone_check (B-23), and bounce_count.gd:
+#     no file under docs/tools, tools/ or .github names them; the scripts-table check was not run here.
+#   Tools' six biomes-world cases alone (B-10): the self-test is red by one row on this list without them.
+#   Tools' lakeMax-only cases (lake-places-cases carries lake-shore's lakeSpill cases).
+#   Simulation's gw1b-golden re-cut on meters-zero (above). Without it the arena pins it carries are missing: its README records
+#     parity 10 rows, cross_check 7, cross_end_check 3 and frame_check 4 red with the flip before those pins.
+#   Camera's fight-3 feed-forward ease: Camera found no safe camera-side fix; docs/camera/runs/d55c612f/fight3/findings.txt
+#     "Until then fight 3 keeps its ceiling (0.111)" (it needs a sim set-down event).
+#   Records, not patches: B-20's record exists (docs/rendering/runs/ed1591cb/b20-gw1b-energy.txt). No lake-water side-by-side was found
+#     (water-everywhere/README.md:47 asks for one). No launch-cone side-by-side was found under docs/director/runs (B-15). Camera's look
+#     gate for scape-side and keep-human is committed (7719a9e0) though gw1b-scape-side/README.md:24 still reads "Owed before landing".
+#
+# AFTER THE LAST LINE (as the parks say)
+#   1. One full gate with the mode on "planet" on exactly this tree, every owner's pins in (gw1b-golden README, "Before step 20"):
+#      World's whole list (91 in CI) and floor_walk_probe; Encounter's director set; Controls' input suite; Rendering's 15 and its 12
+#      strip-ground checks; Animation's anim_check and water_tile_check --strict; Camera's chase_rush, launch_shots, own_pane once on the
+#      finished tree (review step 19); VFX's after_check and effects_check; Netcode's desync_check; validate and self-test.
+#   2. World: re-cut checks-gw1a's ground re-pin only if ground_check moves on this tree (any play-data change moves its six hashes).
+#   3. Simulation, after the flip: land the re-cut gw1b-golden.patch, then THE ONE RE-RECORD of sim/core/test/golden.json, made from a
+#      cold field cache and again warm (one file), parity exit 0 through gate.mjs, Rendering's 15 (gw1b-golden/README.md, "Who re-reads what").
+#   4. QA: the reference lanes on the new golden.
