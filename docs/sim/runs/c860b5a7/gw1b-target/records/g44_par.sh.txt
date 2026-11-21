@@ -1,0 +1,14 @@
+#!/bin/sh
+# g44_par.sh <scratchpad>: parity through gate.mjs on the 44-line GW1b tree with the re-recorded golden and the two row fixes.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/g44o"
+export APPDATA="$(cygpath -w "$NS/g44app")"
+cd "$NS/g44" || exit 1
+case "$(pwd -P)" in */scratchpad/g44) ;; *) echo refusing; exit 1 ;; esac
+cmp -s sim/core/test/golden.json "$O/golden_cold.json" && echo "golden in the tree is the re-record" || echo "golden in the tree is NOT the re-record"
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity2.txt" 2>&1; echo "parity2: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity2.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL" "$O/parity2.txt" | head -10 | cut -c1-240
+grep -n "the last stand\|shared functions\|lake\|planet match of\|composed intros" "$O/parity2.txt" | head -8 | cut -c1-200
+echo "rows ok $(grep -c '^ok' "$O/parity2.txt"), FAIL $(grep -c '^FAIL' "$O/parity2.txt")"

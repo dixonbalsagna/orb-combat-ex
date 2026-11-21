@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+# gw1b_golden_g44.py <tree>: after gw1b_golden_edit.py and gw1b_golden_fix.py, what parity found on the 44-line GW1b tree
+# (main c860b5a7, the lakes out, the flip in):
+#  - the last stand's free signature: Encounter's stray-beams makes RT + B the signature only with RT pressed on the tick or
+#    inside its window (Controls' bNoBeam and bNoBeamKeepRt, both on). The row held RT only; it now presses it on the tick, as
+#    stray-beams did for four director checks. The game is right: with RT pressed the free signature fires, every expectation holds;
+#  - the curve's shared functions: predict() is a forecast, and on a field world it reads the far ground (every farStride-th
+#    column, interpolated: SimField's header), so its touchdown can come a tick before the flight's. The row asks for the same
+#    tick, which holds where the ground is read one way: the hand-made arena. It runs there.
+import sys, os
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    print("edited", rel)
+
+
+edit("sim/core/tools/parity.gd", [
+    ("\ta.input.stanceMask = 4   # a stance held: with three strengths B alone is the heavy\n",
+     "\ta.input.stanceMask = 4   # a stance held: with three strengths B alone is the heavy\n"
+     "\ta.input.powerPress = true   # and RT pressed on this tick: with Controls' bNoBeam and bNoBeamKeepRt, RT + B is the signature only inside RT's window (stray-beams, GW1b)\n"),
+    ('\tcheck("the curve\'s shared functions, the brake\'s control back, the camera feed", _shared())\n',
+     '\tcheck("the curve\'s shared functions, the brake\'s control back, the camera feed", _arena(_shared))   # predict() reads a field world\'s far ground, so its touchdown can come a tick early there: the same tick is the arena\'s\n'),
+])
+print("ok")

@@ -1,0 +1,28 @@
+Probes on the 44-line GW1b tree (main c860b5a7 + the 44 lines, the flip in, gw1b-golden re-cut steps 1-2), 2026-11-21.
+Godot 4.7.2-stable, headless, one job.
+
+== ls_probe.gd (parity's two red rows, planet mode and arena mode)
+[planet] lastStandTicks 1200 ... a.state free d.state free v2 false mode 0 band 1 moveLocked false inClash false hidden false/false
+[planet] no-ki request: ex false
+[planet] free request: ex false kind - ki 0.0 left 600 fx [] feed []
+[arena] lastStandTicks 1200 ... a.state free d.state free v2 false mode 0 band 1 moveLocked false inClash false hidden false/false
+[arena] no-ki request: ex false
+[arena] free request: ex false kind - ki 0.0 left 600 fx [] feed []
+  -> the last stand row fails in arena mode too: not the flip's.
+[planet] send { "ux": 0.95, "uy": 0.3 }: predict 122, flight 122
+[planet] send { "ux": 0.6, "uy": 0.8 }: predict 256, flight 257
+[arena] send { "ux": 0.95, "uy": 0.3 }: predict 149, flight 149
+[arena] send { "ux": 0.6, "uy": 0.8 }: predict 274, flight 274
+
+== pr_probe.gd (the second send on the planet, tick by tick; then the last stand with RT pressed on the tick)
+start x 77250.00 y 1660.80 vx 1748.571 vy 1920.000 aimB -1 floorOn true
+t 254 flight x 79866.046 y 1640.758 state launched | ground (near) 1593.847 | track x 79866.046 y 1640.758 floor (far) 1594.580
+t 255 flight x 79868.104 y 1618.210 state launched | ground (near) 1594.121 | track x 79868.104 y 1618.210 floor (far) 1594.832
+t 256 flight x 79870.213 y 1594.788 state launched | ground (near) 1594.402 | track x 79870.213 y 1594.788 floor (far) 1595.090
+t 257 flight x 79872.370 y 1594.695 state down, contacts 1 (its impact's crater: the ground under it reads 1518.402 after)
+  -> the flight and predict()'s track are at the same place every tick. At tick 256 the body is 0.386 above the ground the flight
+     reads and 0.302 below the far ground predict() reads (SimField: a far read takes every farStride-th column and interpolates).
+     predict() calls the touchdown a tick early. By design on a field world; on the arena the two reads are one.
+last stand, no ki, RT pressed: ex false
+last stand, free, RT pressed: ex true kind sig ki 0.0 left 0 used 1 cooldown true
+  -> with RT pressed on the tick (stray-beams: RT + B is the signature only inside RT's window), every expectation of the row holds.

@@ -34,21 +34,32 @@ Simulation, 2026-11-20, sprint A1. The GW1b review (`docs/ep/reviews/GW1b-review
 
 | Patch | Files | sha1 | sha256 starts |
 | :--- | :--- | :--- | :--- |
-| `gw1b-golden.patch` | `sim/core/tools/{golden_recipes,parity,cross_check,cross_end_check,fights_check,frame_check}.gd` | ee5abe0189fe3670d45f48037d21df1e7cf59888 | 8752f445beea |
+| `gw1b-golden.patch` | `sim/core/tools/{golden_recipes,parity,cross_check,cross_end_check,fights_check,frame_check}.gd` | 30e3e54049270f0e00db704209b44cae7b658acc | 64855a42cb23 |
 
-Apply on main (b0e20f9a) after GW1b's steps 1 to 4 (checked). It needs A-WORLD-01's `WorldDefault` and its `"world"` key. Tests and recipes only: no sim code.
+**Re-cut 2026-11-21 (the EP's NB-1).** Apply on main c860b5a7 after the 44 lines of `docs/ep/reviews/GW1b-stack.txt` (every `ap` line but the lake group, its lines 82 to 85), so after the flip: `git -c core.autocrlf=false apply gw1b-golden.patch` (checked). The first cut (ee5abe01) was made on main b0e20f9a + steps 1 to 4, and meters-zero's line in parity broke its context. Tests and recipes only: no sim code. **The one re-record made on that tree is parked: `docs/sim/runs/c860b5a7/gw1b-target/golden-target.json`.**
 
 - **The recipes** (`golden_recipes.gd`):
   - default seed 1, seed 11's KO match and both scripted replays take `"world": "arena"`; the other seven matches name no world;
-  - **`PLANET_MATCH` is planet 7, touch 3, generation 3, seed 29.** It keeps its first crater and first slide (ticks 818 and 583), and parity asks for both. Seed 1 had a crater but no slide under the golden's own conditions (`probe_gen3`, `gen3_probe2`);
+  - **`PLANET_MATCH` is planet 7, touch 3, generation 3, seed 29.** It keeps its first crater and first slide, and parity asks for both: ticks 818 and 583 on steps 1 to 4, and **739 and 1922 on the 44-line tree**. Seed 1 had a crater but no slide under the golden's own conditions (`probe_gen3`, `gen3_probe2`);
   - parity re-runs each match and replay with its recorded set-up.
 - **My rows about the hand-made arena** (the review's B-02), found with the flip on a scratch stack:
   - **parity:** nine rows run in arena mode, through a small wrapper that puts the mode back: the arm set-ups, the view's particles at depth, a fighter's depth and the contact rule, the intro phase's flat start, the shots' buildings, the replay header's "no planet", the planet's load (its running match), the match's start in pieces (its two starts with no planet), and forms' Witness. Each row's planets are named, so they're unchanged;
   - **cross_check, cross_end_check, fights_check:** the whole check in arena mode (their 2v2 stages are written on the arena). A 2v2 on the planet is World's and Encounter's to cover;
   - **frame_check:** its two "off a field world" matches take `"world": "arena"`.
+- **Two more parity rows, found on the 44-line tree** (`docs/sim/runs/c860b5a7/gw1b-target/records/probes.txt`):
+  - **"the last stand"** now presses RT on the tick of its free signature. Encounter's stray-beams makes RT + B the signature only inside RT's window, and the row only held RT. It failed in arena mode too. With RT pressed, the game does everything the row asks;
+  - **"the curve's shared functions"** runs in arena mode. On a field world predict() reads the far ground, so its touchdown can come a tick before the flight's (256 against 257).
 - **Not pinned: parity's "composed intros".** It's a real fault on the planet, fixed in `../intro-store/`, which lands before step 20.
 
-## Proof (records: `docs/sim/runs/b0e20f9a-gw1b/golden-plan/`)
+## Proof
+
+**The re-cut on the 44-line tree** (records: `docs/sim/runs/c860b5a7/gw1b-target/`):
+- all 44 lines applied in order on a clean export of main c860b5a7, the flip last, then this patch;
+- the golden made from a cold field cache and again warm: **one file** (sha256 `833df9ef5df4`);
+- **parity exit 0 through `gate.mjs`**, 86 rows, golden check passed. That includes "a match starts on the floor of a lake or the sea": `../floor-rise-unpin/`'s row belongs without the lakes;
+- `frame_check`, `cross_check`, `cross_end_check` pass, and so do Rendering's 15, `ground_check` included.
+
+**The first cut** (records: `docs/sim/runs/b0e20f9a-gw1b/golden-plan/`):
 
 - **Steps 1 to 4 on main, arena mode:** the golden is byte for byte main's. Parity passes, with replay-world's row ("a replay of the default world names its planet"). World's `world_default_check` passes.
 - **Steps 1 to 4 + this patch, arena:** golden regenerated (it moves: the planet match and the recorded set-ups); **parity exit 0** (the planet match "3,600 ticks: identical", its crater and slide kept); `frame_check`, `cross_check`, `cross_end_check` pass.

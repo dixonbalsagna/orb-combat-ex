@@ -1,0 +1,30 @@
+#!/bin/sh
+# g44_go.sh <scratchpad>: NB-1. The 44-line GW1b tree (main c860b5a7, lakes out) + the re-cut gw1b-golden:
+#   import; THE ONE RE-RECORD from a cold field cache, again warm (one file); the planet match's firsts; parity through gate.mjs;
+#   frame_check, cross_check, cross_end_check; Rendering's 15.
+# ONE Godot job at a time, below normal (a long run).
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/g44o"
+C="$NS/g44app/Godot/app_userdata/Orb Combat EX/field-cache"
+rm -rf "${NS:?}/g44o"; mkdir -p "$O" "$NS/g44app"; export APPDATA="$(cygpath -w "$NS/g44app")"
+run() { name="$1"; t="$2"; shift 2; s=$(date +%s); timeout "$t" "$G" --headless --path . --script "$@" > "$O/$name.txt" 2>&1; code=$?; echo "$name: exit $code in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR\|Parse Error' "$O/$name.txt"); $(grep -v 'WARNING\|at: \|^$\|ERROR: \|wait_to_finish' "$O/$name.txt" | tail -1 | cut -c1-150)"; grep -n "^FAIL\|^  FAIL" "$O/$name.txt" | head -12 | cut -c1-260; }
+par() { s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/$1.txt" 2>&1; echo "$1: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/$1.txt" | tail -2 | tr '\n' ' ' | cut -c1-160)"; grep -n "^FAIL" "$O/$1.txt" | head -10 | cut -c1-240; grep -n "planet match of\|composed intros\|lake" "$O/$1.txt" | head -6 | cut -c1-200; }
+cd "$NS/g44" || exit 1
+case "$(pwd -P)" in */scratchpad/g44) ;; *) echo refusing; exit 1 ;; esac
+cp sim/core/test/golden.json "$O/golden_main.json"
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+rm -rf "${C:?}"
+run golden_cold 2400 res://sim/core/tools/golden.gd
+cp sim/core/test/golden.json "$O/golden_cold.json"
+run golden_warm 2400 res://sim/core/tools/golden.gd
+cmp -s sim/core/test/golden.json "$O/golden_cold.json" && echo "  the golden made twice, cold then warm: ONE file" || echo "  the golden made twice: the files DIFFER"
+cp sim/core/test/golden.json "$O/golden_warm.json"
+python -I -c "import json,sys; g=json.load(open(sys.argv[1])); ms=[m for m in g.get('matches',[]) if m.get('setup',{}).get('planet')==7]; print('  planet match firsts:', [m.get('firsts') for m in ms], 'seeds', [m.get('seed') for m in ms])" sim/core/test/golden.json
+par parity
+for c in frame_check cross_check cross_end_check; do run "$c" 2400 "res://sim/core/tools/$c.gd"; done
+echo "== Rendering's 15"
+sh "$NS/n/rgates.sh" "$NS/g44" "$O/rg"
+echo g44 done

@@ -1,0 +1,62 @@
+extends SceneTree
+# ls_probe.gd: parity's two red rows on the 44-line GW1b tree, in planet mode (the data's, after the flip) and arena mode.
+#  1. the last stand's free signature (_lastStandGates): what differs at the request;
+#  2. the shared functions' predict() against the flight (_shared, the second send).
+
+func _ls(mode: String) -> void:
+	WorldDefault.data()
+	WorldDefault.K_MODE = mode
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false})
+	var a = S.fighters[0]
+	var d = S.fighters[1]
+	print("[%s] lastStandTicks %s planet %s cols %s phase %s a.state %s d.state %s a.x %.1f d.x %.1f a.y %.1f d.y %.1f v2 %s mode %s band %s moveLocked %s inClash %s hidden %s/%s" % [mode, str(a.wd.lastStandTicks), str(S.get("planet")), str(S.get("cols")), str(S.get("phase")), a.state, d.state, a.x, d.x, a.y, d.y, str(a.act.v2), str(a.act.mode), str(DirBands.band(a, d)), str(DirBrawl.moveLocked(S, a)), str(DirBeam.inClash(S, a)), str(a.get("hidden")), str(d.get("hidden"))])
+	S.dirS.cool = 0.0
+	a.ki = 0.0
+	a.sigReadyT = S.T + 100.0
+	a.input.stanceMask = 4
+	DirExchange.requestAttack(S, a, "sig")
+	print("[%s] no-ki request: ex %s" % [mode, str(S.dirS.ex != null)])
+	a.lastStandUsed = true
+	a.lastStandLeft = 600
+	S.out.fx.clear()
+	S.out.feed.clear()
+	DirExchange.requestAttack(S, a, "sig")
+	var types: Array = []
+	for e in S.out.fx:
+		types.append(str(e.type) + ("/" + str(e.get("kind")) if e.has("kind") else ""))
+	print("[%s] free request: ex %s kind %s ki %s left %d fx %s feed %s" % [mode, str(S.dirS.ex != null), str(S.dirS.ex.kind if S.dirS.ex != null else "-"), str(a.ki), a.lastStandLeft, str(types), str(S.out.feed.slice(0, 6))])
+	SimCore.dispose(S)
+
+
+func _sh(mode: String) -> void:
+	WorldDefault.data()
+	WorldDefault.K_MODE = mode
+	for dir in [{"ux": 0.95, "uy": 0.3}, {"ux": 0.6, "uy": 0.8}]:
+		var M := SimCore.createSim()
+		SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"flight": true})
+		var A = M.fighters[0]
+		var D = M.fighters[1]
+		D.y = WorldTerrain.groundY(M, D.x) + 400.0
+		DirLaunch.doLaunch(M, A, D, dir, 2400.0, false)
+		var pr: PackedFloat64Array = SimFlight.predict(M, D.x, D.y, D.vx, D.vy, D.aimB)
+		var land: int = -1
+		var why: String = ""
+		for t in range(1, 900):
+			SimCore.step(M, [null, null])
+			M.out.fx.clear()
+			M.out.feed.clear()
+			if D.state != "launched" or D.jContacts > 0 or D.slide > 0.0 or D.wet or D.flightHits > 0:
+				land = t
+				why = "state %s contacts %d slide %.2f wet %s hits %d x %.1f y %.2f ground %.2f" % [D.state, D.jContacts, D.slide, str(D.wet), D.flightHits, D.x, D.y, WorldTerrain.groundY(M, D.x)]
+				break
+		print("[%s] send %s: predict %s, flight %d (%s)" % [mode, str(dir), str(pr.slice(0, 4)), land, why])
+		SimCore.dispose(M)
+
+
+func _init() -> void:
+	for mode in ["planet", "arena"]:
+		_ls(mode)
+	for mode in ["planet", "arena"]:
+		_sh(mode)
+	quit(0)
