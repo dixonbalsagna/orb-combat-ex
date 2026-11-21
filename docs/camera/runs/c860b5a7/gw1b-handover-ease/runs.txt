@@ -1,0 +1,36 @@
+# gw1b-handover-ease on the 44-line stack (+ gw1b-split-sweep + gw1b-camera-checks), cross_ko without its ceiling
+
+## the handover, before (scratch trace, pane 1's anchor around the across shot's start)
+CKR 359 anchor1 446,449 e 0.143 eslot 1 solo_w 0.472 acw 0.000 fx1 78651 f1x 78651 won 0 lax 0.500 sep 1.00
+CKR 360 anchor1 431,449 e 0.095 eslot 1 solo_w 0.444 acw 0.000 fx1 78651 f1x 78651 won 0 lax 0.500 sep 1.00
+CKR 361 anchor1 417,450 e 0.048 eslot 1 solo_w 0.417 acw 0.000 fx1 78651 f1x 78651 won 0 lax 0.500 sep 1.00
+CKR 362 anchor1 402,450 e 0.000 eslot -1 solo_w 0.389 acw 0.000 fx1 78651 f1x 78651 won 0 lax 0.500 sep 1.00
+CKR 363 anchor1 282,452 e 0.052 eslot 0 solo_w 0.441 acw 0.083 fx1 78651 f1x 78651 won 0 lax 0.762 sep 1.00
+CKR 364 anchor1 282,452 e 0.104 eslot 0 solo_w 0.493 acw 0.167 fx1 78651 f1x 78651 won 0 lax 0.745 sep 1.00
+CKR 365 anchor1 282,452 e 0.156 eslot 0 solo_w 0.545 acw 0.250 fx1 78651 f1x 78651 won 0 lax 0.729 sep 1.00
+
+## cross_ko's notes, after
+  first KO: ["ko", "-", "across"], back at tick 341, jolt 0.010, cuts {  }
+  flight: ["ko", "-", "across"], flew 77107 units, out at most 1 ticks, jolt 0.038 (tick 909 pane 0 across) from the hand back, 0.018 round the rush's start and stop, 0.043 through it (the close-up's own start 0.007), cuts { "side_swap": 1 }, lead ramp 11 ticks
+
+## a first cut eased every anchor step over 24 px without a cut: split_sweep then failed two rows (a layout's change of sides carried the old anchor across the divider)
+FAIL  antipode right reduced motion: fighter 0 anchor (456.6726, 480.541) is not in its own pane (weight 0.00)
+FAIL  real match 17 full: fighter 0 anchor (639.3474, 373.403) is not in its own pane (weight 0.00)
+## so the ease takes in only a step in the tick a shot's slot changes (a handover); a layout's change has its own rules
+
+## every camera check on the stack, after
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+flight_shots_check     flight_shots_check: 632 checks passed 
+launch_shots_check     launch_shots_check: 1029 checks passed 
+own_pane_check         own_pane_check: 12 checks passed 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed
