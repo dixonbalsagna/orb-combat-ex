@@ -1,0 +1,130 @@
+# opening-clear (GW1c, on the planet-sizes stack): the camera keeps its eye out of the drawn ground. Each tick the rig asks the drawn ground (Rendering's
+# tile field, read-only, through CamGround, which main hands it) how high the ground is at the camera's eye and just behind it; where the eye would be
+# under it plus CLEAR_MARGIN, a crane eases in (a pitch about the aim point: the eye rises and comes nearer, the fighters keep their place), and eases out
+# where the ground is clear. Unknown ground (no tile loaded, or no tile ground) holds the crane, never lowers it. Never a cut: the tilt changes by at most
+# CLEAR_RATE_DEG a tick, under PITCH_CUT_DEG.
+import sys
+t = sys.argv[1]
+
+
+def edit(path, pairs):
+    p = t + "/" + path
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        assert s.count(a) == 1, (path, s.count(a), a[:90])
+        s = s.replace(a, b)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+
+
+open(t + "/render/camera/cam_ground.gd", "w", encoding="utf-8", newline="").write('''class_name CamGround
+extends RefCounted
+## The drawn ground as the camera may read it (Rendering's word, 2026-11-20): RenderTileField.dir_at and height_at, read-only, on the main thread in
+## the render step, never from the sim; nothing here writes the field, forces a fill or asks for a tile. Main hands the rig one of these with a
+## function that returns the planet's tile field, or null on the strip ground (no tiles). A place with no tile loaded is unknown (NAN), not clear:
+## through the field's has_ground when it has one, else a height of exactly 0.0 (what height_at returns there) is taken as unknown.
+
+var field_fn: Callable
+
+
+func _init(fn: Callable = Callable()) -> void:
+	field_fn = fn
+
+
+## The drawn ground's height at world x and depth (from the fighters' plane, positive toward the camera), in the view (the globe's bend lowers it
+## by its distance from the camera's place, `along`), or NAN when it isn't known.
+func height(S: SimState, x: float, depth: float, along: float = 0.0) -> float:
+	var tf = field_fn.call() if field_fn.is_valid() else null
+	if tf == null:
+		return NAN
+	var d: Vector3 = tf.dir_at(x, depth, RenderTileGround._shown_frame(S))
+	if tf.has_method("has_ground"):
+		if not tf.has_ground(d):
+			return NAN
+	var h: float = tf.height_at(d)
+	if not tf.has_method("has_ground") and h == 0.0:
+		return NAN
+	return h - (depth * depth + along * along) / (2.0 * SimField.R)
+''')
+
+edit("render/camera/camera_params.gd", [
+    ('''const PITCH_CUT_DEG: float = 1.0       # a change of angle bigger than this in a tick is a cut (an authored jump); an eased tilt is a camera move
+''', '''const PITCH_CUT_DEG: float = 1.0       # a change of angle bigger than this in a tick is a cut (an authored jump); an eased tilt is a camera move
+const CLEAR_MARGIN: float = 80.0        # the camera's eye is kept this far above the drawn ground at it and just behind it (opening-clear)
+const CLEAR_BEHIND: Array = [0.0, 150.0, 300.0]   # ... read at the eye's depth and this much farther back
+const CLEAR_RATE_DEG: float = 0.5       # ... the crane's tilt changes by at most this a tick (under PITCH_CUT_DEG: a move, never a cut)
+const CLEAR_TAU_IN: float = 0.20        # ... and eases in with this time constant (seconds) ...
+const CLEAR_TAU_OUT: float = 0.80       # ... and out with this one
+const CLEAR_MAX_DEG: float = 40.0       # ... at most
+'''),
+])
+
+edit("render/camera/split_rig.gd", [
+    ('''var _pitch_now: float = 0.0              # the pitch in use: the player's plus a shot's (the transformation's low break)
+''', '''var _pitch_now: float = 0.0              # the pitch in use: the player's plus a shot's (the transformation's low break)
+var ground: CamGround = null              # the drawn ground the camera may read (main hands it when the tile ground is on); null: no crane
+var clear_pitch: float = 0.0              # the crane that keeps the camera's eye out of the drawn ground, degrees (opening-clear)
+var clear_lift_want: float = 0.0          # (for the tests: the eye's shortfall under the ground plus the margin, units, last tick)
+'''),
+    ('''	# (a shot's own low angle and the swing's: the lower, which meets its ease at 0; a high angle takes the swing's on top)
+	_pitch_now = pitch_deg + (_shot_pitch + swing_angle if _shot_pitch > 0.0 else minf(_shot_pitch, minf(swing_angle, _rv_ang)))
+''', '''	# (a shot's own low angle and the swing's: the lower, which meets its ease at 0; a high angle takes the swing's on top)
+	_pitch_now = pitch_deg + (_shot_pitch + swing_angle if _shot_pitch > 0.0 else minf(_shot_pitch, minf(swing_angle, _rv_ang)))
+	if ground != null:
+		_clear_tick(S)
+		_pitch_now += clear_pitch
+'''),
+    ('''## The vertical extent of the pair on the screen, in world units:''', '''## The crane that keeps the camera's eye out of the drawn ground (opening-clear). From the frame drawn last tick, each shown pane's eye (CameraRig's
+## orbit: SplitFrame.project) is checked against the drawn ground at it and just behind it (CLEAR_BEHIND); the foreground rule already lowers the ground
+## between the eye and the fighters' line, so that isn't read. Where the eye is short of the ground plus CLEAR_MARGIN, the tilt that raises it that much
+## (the eye orbits the aim point at the lens distance) is the target; the crane eases toward it, at most CLEAR_RATE_DEG a tick. Unknown ground holds it.
+func _clear_tick(S: SimState) -> void:
+	var f: SplitFrame = _cur
+	if f == null or _cut_now:
+		return
+	var want: float = 0.0
+	var unknown: bool = false
+	var lift_max: float = 0.0
+	for i in range(2):
+		if not (i == 0 or f.shows(i)):
+			continue
+		var zoom: float = maxf(float(f.cam_z[i]), 1.0e-4)
+		var p: float = deg_to_rad(f.pitch)
+		var dist: float = vh / (2.0 * zoom * CamParams.TAN_HALF_FOV)
+		var eye_y: float = float(f.cam_y[i]) + 0.2 * vh / zoom + dist * sin(p)
+		var eye_d: float = float(f.focus_z[i]) + dist * cos(p)
+		var short: float = 0.0
+		for back in CamParams.CLEAR_BEHIND:
+			var h: float = ground.height(S, float(f.cam_x[i]), eye_d + float(back))
+			if is_nan(h):
+				unknown = true
+				continue
+			short = maxf(short, h + CamParams.CLEAR_MARGIN - eye_y)
+		lift_max = maxf(lift_max, short)
+		if short > 0.0:
+			# the tilt about the aim point that raises the eye by `short` (from the base pitch, without this crane's own share)
+			var base: float = p - deg_to_rad(clear_pitch)
+			var s_new: float = clampf(sin(p) + short / maxf(dist, 1.0), -0.99, 0.99)
+			want = maxf(want, rad_to_deg(asin(s_new) - base))
+		else:
+			want = maxf(want, clear_pitch + rad_to_deg(asin(clampf(sin(p) + short / maxf(dist, 1.0), -0.99, 0.99)) - p))   # how much of the crane may go
+	clear_lift_want = lift_max
+	want = clampf(want, 0.0, CamParams.CLEAR_MAX_DEG)
+	if unknown and want < clear_pitch:
+		want = clear_pitch   # unknown ground holds the crane: it isn't clear
+	var tau: float = CamParams.CLEAR_TAU_IN if want > clear_pitch else CamParams.CLEAR_TAU_OUT
+	var step_deg: float = (want - clear_pitch) * (1.0 - exp(-DT / tau))
+	clear_pitch += clampf(step_deg, -CamParams.CLEAR_RATE_DEG, CamParams.CLEAR_RATE_DEG)
+	if clear_pitch < 0.01 and want <= 0.0:
+		clear_pitch = 0.0
+
+
+## The vertical extent of the pair on the screen, in world units:'''),
+])
+
+edit("render/core/main.gd", [
+    ('''	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)
+''', '''	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)
+	split_rig.ground = CamGround.new(func(): return planet.tile_field if RenderTileGround.on and planet != null else null)   # the camera keeps its eye out of the drawn ground (Camera's opening-clear; read-only)
+'''),
+])
+print("ok")

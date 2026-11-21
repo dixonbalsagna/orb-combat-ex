@@ -1,0 +1,25 @@
+# opening-clear, built in scratch on Rendering's szs (a copy) and NOT parked: what the drawn-ground sampler reads
+# The sampler: RenderTileField.dir_at + height_at at the camera's eye (CameraRig's orbit, SplitFrame.project), less the globe's bend; has_ground isn't on the field yet, so 0.0 reads as unknown.
+# 'short' = the drawn ground + 20 (CLEAR_MARGIN) above the eye, units: over 20 means the eye is under height_at's ground.
+
+## The opening probe (seed 12345, AI v AI through main, split attached, --tiles)
+small: crane max 0 deg; eye short max 0
+medium: crane max 0.62 deg; eye short max 15
+big: crane max 0 deg; eye short max 0
+small with beamduel's staging (rival 1,000 on, both set down): crane 0; the sight lines clear by 36-141 (see probe.txt for the run without the split)
+
+## The 9 clips through main, default view, --tiles, medium (clip_digest + a scratch print)
+ai:1           crane active  328 ticks, largest 6.33 deg; eye under the field's ground by up to 441 units (tick 157)
+ai:106         crane active  600 ticks, largest 5.57 deg; eye under the field's ground by up to 280 units (tick 609)
+ai:38          crane active 1018 ticks, largest 6.81 deg; eye under the field's ground by up to 191 units (tick 1147)
+ai:4           crane active  947 ticks, largest 10.61 deg; eye under the field's ground by up to 148 units (tick 404)
+ai:5           crane active  264 ticks, largest 0.35 deg; eye under the field's ground by up to 0 units (tick 110)
+collapse       crane active  215 ticks, largest 0.84 deg; eye under the field's ground by up to 128 units (tick 3)
+mashcity       crane active  234 ticks, largest 1.19 deg; eye under the field's ground by up to 106 units (tick 5)
+rushcity       crane active  242 ticks, largest 1.40 deg; eye under the field's ground by up to 140 units (tick 5)
+signaturecity  crane active  603 ticks, largest 3.65 deg; eye under the field's ground by up to 140 units (tick 5)
+
+## Forced (CLEAR_MARGIN 400, scratch): the crane eases 0 -> 9.4 deg over 2 s, no cut, the eye rises 1,222 -> 1,419, the fighter's screen height holds
+
+## Reading
+The sampler finds the eye under height_at's ground for long stretches of ordinary medium fights, while medium's stills look right. So either the tile ground's foreground rule already lowers the drawn ground at the eye (then the crane would tilt Orb's camera for nothing on screen), or medium has burials no one has seen. Which it is needs Rendering's word on what is drawn at the eye, and a still at one of these ticks (ai:4 tick 1-20, ai:1 tick 157).

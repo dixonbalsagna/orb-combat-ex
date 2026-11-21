@@ -55,7 +55,18 @@ func _run() -> void:
 	var pane = main.pane
 	var tf = pane.planet.tile_field
 	var rg: SplitRig = main.split_rig
+	if OS.get_cmdline_user_args().has("--duel"):
+		# the beamduel scene's staging (render/tools/flash_capture.gd _duel, t == 0): the rival 1,000 units on, both set on the ground, still
+		var A0 = S.fighters[0]
+		var D0 = S.fighters[1]
+		D0.x = SimWrap.wrap(A0.x + 1000.0)
+		for f0 in [A0, D0]:
+			f0.y = WorldTerrain.groundY(S, f0.x)
+			f0.vx = 0.0
+			f0.vy = 0.0
 	print("size %s R %.0f" % [SIZE, SimField.R])
+	if OS.get_cmdline_user_args().has("--nocrane"):
+		rg.set("ground", null)
 	while main.host.ticks < 130:
 		main.frame(1.0 / 60.0)
 		var t: int = main.host.ticks
@@ -66,5 +77,5 @@ func _run() -> void:
 		var cx: float = pane.view_cam_x
 		var A = S.fighters[0]
 		var B = S.fighters[1]
-		print("OP %d intro %s phase %s solo %s/%s mode %s sep %.2f e %.2f rig_cam %.0f,%.0f,%.4f view_x %.0f cam_yz %.0f,%.0f pitch %.1f A %.0f,%.0f %s B %.0f,%.0f %s clearA %.0f clearB %.0f" % [t, str(rg.intro_active), str(rg.get("_in_phase")), rg.solo_kind, rg.solo_phase, fr.mode, fr.sep, fr.e, fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], cx, cam.y, cam.z, fr.pitch, A.x, A.y, A.state, B.x, B.y, B.state, _clear(S, pane, tf, cx, cam, A), _clear(S, pane, tf, cx, cam, B)])
+		print("OP %d intro %s phase %s solo %s/%s mode %s sep %.2f e %.2f rig_cam %.0f,%.0f,%.4f view_x %.0f cam_yz %.0f,%.0f pitch %.1f A %.0f,%.0f %s B %.0f,%.0f %s clearA %.0f clearB %.0f crane %.2f short %.0f a_scr %.0f,%.0f cut %s" % [t, str(rg.intro_active), str(rg.get("_in_phase")), rg.solo_kind, rg.solo_phase, fr.mode, fr.sep, fr.e, fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], cx, cam.y, cam.z, fr.pitch, A.x, A.y, A.state, B.x, B.y, B.state, _clear(S, pane, tf, cx, cam, A), _clear(S, pane, tf, cx, cam, B), float(rg.get("clear_pitch") if rg.get("clear_pitch") != null else 0.0), float(rg.get("clear_lift_want") if rg.get("clear_lift_want") != null else 0.0), fr.screen_pos(0, A.x, A.y + CamParams.CHEST, float(A.z)).x, fr.screen_pos(0, A.x, A.y + CamParams.CHEST, float(A.z)).y, str(fr.cut)])
 	quit(0)
