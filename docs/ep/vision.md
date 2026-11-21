@@ -1892,3 +1892,5 @@ Orb's correction (2026-11-14, verbatim): "its late and I counted wrong, it was f
 **Back to work, Orb (2026-11-20, about 17:30 PST, to the EP, verbatim):** "get everything going again, utilize my stand-in to the fullest" (The EP resumed sprint A1 and gave the stand-in a full specialist queue, starting at once because this week's unused Fable tokens lapse at the 19:00 reset.)
 
 **To the stand-in, Orb (2026-11-20, about 19:50 PST, typed in the stand-in's session, relayed verbatim):** "my fable tokens maxed out, I need you to continue where you left off and coordinate your work with EP. check-in with EP every two hours"
+
+**EP note (2026-11-20), on the entry of 2026-11-14 "The stand-in's five questions":** what Orb accepted "on all of them" is recorded in the stand-in's questions page, docs/ep/reviews/stand-in-questions-2026-11-14.md. On planet sizes, that was tiny to huge as five sizes. Whether tiny and huge must be drawn and measured within A1 is still Orb's open answer on the sprint report. Until Orb answers, A1 offers small, medium and big in the menu (the GW1c readiness review, C-05).
