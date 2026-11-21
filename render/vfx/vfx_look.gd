@@ -174,7 +174,8 @@ const HEADS_DEFAULT: bool = false            # the blasts' heads in the beam's l
 const FLIGHT_DEFAULT: bool = false         # the flight lines (meteor.gd flight terms; docs/vfx/flight-lines.md): off until Orb has seen them
 const CLASH_WAVE_DEFAULT: bool = false       # the beam clash's shockwave at the meeting point (clash_wave.gd; docs/vfx/clash-shockwave.md): off until Orb has seen it
 const OTHER_FIGHTS_DEFAULT: bool = false    # the other fights' effects in a 2v2 match (stage_feed.gd; docs/vfx/other-fights.md): off until Orb has seen them
-const METEOR_DEFAULT: bool = false          # the meteor trail (meteor.gd, meteor_view.gd; docs/vfx/meteor-trail.md): off until Orb has seen it
+const METEOR_DEFAULT: bool = true           # the meteor trail (meteor.gd, meteor_view.gd; docs/vfx/meteor-trail.md): ON, as Orb plays it (GW1a, A-RENDER-01: no launch word needed); ?meteor=quiet picks the base values on a local page
+const METEOR_PROFILE: String = "loud"       # the profile the default runs with (data/vfx/meteor.json `profiles`): Orb's build plays ?meteor=loud
 const PERF_DEFAULT: bool = false             # the Performance level's pool caps (perf.gd, data/vfx/perf.json; docs/vfx/perf-level.md): off until the quality ladder asks for it
 const MARKS_BY_QUALITY: Array = [0, 6, 10]        # live marks per fighter
 const OUTER_BY_QUALITY: Array = [false, true, true]

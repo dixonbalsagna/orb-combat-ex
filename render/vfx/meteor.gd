@@ -50,6 +50,8 @@ static func page_word() -> String:
 				_word = "quiet" if kv[1] == "1" else kv[1]
 	if _word != "":
 		set_profile(_word)
+	elif VfxLook.METEOR_DEFAULT:
+		set_profile(VfxLook.METEOR_PROFILE)      # the default is on: it runs with the profile Orb plays, with no word
 	return _word
 
 
@@ -309,8 +311,14 @@ static func flat_out_of(S, f) -> float:
 		if g != f:
 			sep = absf(SimWrap.sdx(f.x, g.x))
 			break
-	var boost: float = 1.0 + (SimConst.TRAV_FREE - 1.0) * clampf((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
-	return sp / boost * SimConst.TRAV_FREE
+	var ramp: float = clampf((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
+	var k: float = SimConst.TRAV_FREE      # the far end over the close dash: the traversal factor, or with the one energy model (S.powerOn) his level's flat out over the close dash (SimPower.flatSpeed)
+	if S.powerOn:
+		var plain: float = 430.0 * f.spd * SimForms.speedMul(S, f) * 2.4
+		k = maxf(S.powerFlat * SimDetMath.pow(SimPower.flatGrowth, SimPower.level(f)) * f.spd / plain, 1.0)
+		if SimPower.dashAnyRangeOn(S):
+			ramp = 1.0      # LT held, the dash on: flat out at any range (SimFighter.flightSpeed)
+	return sp / (1.0 + (k - 1.0) * ramp) * k
 
 
 ## The speed's share: nothing under `from_k` of flat out, full at flat out.

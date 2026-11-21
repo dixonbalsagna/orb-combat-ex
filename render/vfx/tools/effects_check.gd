@@ -359,6 +359,10 @@ func _water_v2() -> void:
 
 func _water(S: SimState) -> void:
 	print("water")
+	# Orb's 9 November data has World's water floor and surface ON (WorldFill.floorOn), so a body that meets the sea lands on the sheet (a slap) and there is no plunge column and no rebound. The rows below that read the
+	# plunge, its rebound and the old splash are the FLOOR-OFF path (World's switch, as it was), so they run with the floor pinned off; the data's own setting is read at the end of this function.
+	var floor_default: bool = WorldFill.floorOn()
+	WorldFill.setFloor(false)
 	var sx: float = 0.0
 	while sx < SimConst.W:
 		var wet: bool = true
@@ -532,6 +536,13 @@ func _water(S: SimState) -> void:
 	_tick(S, hsm, [sp_ev.call(8)])
 	_check(hsm.water.slaps == 0 and hsm.debris.spawned == 0, "a splash of 8 (a skip's own) is not a slap either")
 	WorldFill.setFloor(floor_was)
+	# What Orb plays: the data's own floor setting. With it on, the same splash on the sea is a landing on the sheet (a slap), not a plunge; with it off, the plunge.
+	WorldFill.setFloor(floor_default)
+	var hdef := VfxHub.new()
+	hdef.reset(S, 4)
+	_tick(S, hdef, [sp_ev.call(14)])
+	_check(hdef.water.slaps == (1 if floor_default else 0) and hdef.water.plunges == (0 if floor_default else 1), "with the data's own floor setting (floor %s) a splash on the sea is a %s, as in the played build" % ["on" if floor_default else "off", "slap on the sheet" if floor_default else "plunge"])
+	WorldFill.setFloor(floor_default)
 	# The data file is optional: with it gone every number falls back to the same default.
 	var saved: Dictionary = VfxWater._data
 	VfxWater._data = {}
@@ -4312,7 +4323,8 @@ func _real() -> void:
 					seen_zip[key] = true
 					tot["charge" if z.one_way else "lunge"] += 1
 					view.update(h, host, 1.0, S.fighters[z.slot].x, 1.0, 1500.0)
-					if view.count >= 2 and z.wind >= 1.0 and z.mv >= 1.0:
+					var need: int = 2 if absf(SimWrap.sdx(z.ox, z.px)) > 0.5 else 1      # a ground line and its tick; a zip that arrives straight above or below his start has no ground line, so its tick alone is the tell
+					if view.count >= need and z.wind >= 1.0 and z.mv >= 1.0:
 						tot["tells"] += 1
 					if h.zip.violations.size() > 0:
 						tot["short"] += 1
@@ -6395,7 +6407,8 @@ func _meteor() -> void:
 	SimCore.newMatch(S, 6)
 	var fp = S.fighters[0]
 	var fr = S.fighters[1]
-	# Data: the compiled defaults are the file's frame (a file edit that forgets the default is caught here).
+	# Data: the compiled defaults are the file's frame (a file edit that forgets the default is caught here). The base values are the `quiet` profile: the default runs `loud` over them.
+	VfxMeteor.set_profile("quiet")
 	var drift: String = ""
 	for k in VfxMeteor.DEFAULT_FRAME:
 		var dv = VfxMeteor.DEFAULT_FRAME[k]
@@ -6637,7 +6650,12 @@ func _meteor() -> void:
 	# The hub: off by default, nothing runs; on, it lays the path from the same ticks.
 	var h := VfxHub.new()
 	h.reset(S, 5)
-	_check(h.meteor_enabled == false and VfxLook.METEOR_DEFAULT == false, "the meteor switch is off by default")
+	_check(h.meteor_enabled == true and VfxLook.METEOR_DEFAULT == true and VfxLook.METEOR_PROFILE == "loud", "the meteor trail is on by default (GW1a), with the loud profile")
+	VfxMeteor._word = "?"      # read the word again: the lines above set other profiles
+	VfxMeteor.page_word()
+	_check(VfxMeteor.fp("wide_k") == 1.0 and VfxMeteor.fp("pan_k") < 0.2, "with no word, the default runs the loud profile (a wide ribbon at full strength, dimmed by the camera's sweep): wide_k %.1f pan_k %.1f" % [VfxMeteor.fp("wide_k"), VfxMeteor.fp("pan_k")])
+	h.meteor_burn_enabled = false      # the test that follows is the switch off
+	h.meteor_enabled = false
 	fp.x = 1000.0
 	fp.y = gy + 3000.0
 	for i in range(60):
@@ -7126,11 +7144,12 @@ func _flight_lines() -> void:
 	# The switch: off by default; on, the hub lays a flight line from the same ticks, without the burn.
 	var h := VfxHub.new()
 	h.reset(S, 5)
-	_check(h.flight_enabled == false and VfxLook.FLIGHT_DEFAULT == false and h.meteor_enabled == false, "the flight lines are off by default, and the ribbon is not running")
+	_check(h.flight_enabled == false and VfxLook.FLIGHT_DEFAULT == false and h.meteor_burn_enabled == VfxLook.METEOR_DEFAULT, "the flight lines are off by default (the ribbon runs for the meteor's burn, which follows its own default)")
 	var hf := VfxHub.new()
 	hf.reset(S, 5)
 	hf.flight_enabled = true
 	hf.meteor_enabled = true
+	hf.meteor_burn_enabled = false      # the lines without the burn
 	var f0 = S.fighters[0]
 	f0.tier = 4.0
 	f0.state = "idle"

@@ -107,7 +107,7 @@ var calm_lock: bool = true       # Reduce flashing is locked on while the other 
 var flash_ch: int = 0            # the register's channel for this hub: 0 the screen's own fight, 1 and up an other fight (stage_feed.gd)
 var shares_register: bool = false   # this hub is a feeder of the main hub's register (adopt_register): it never resets, clocks or sizes it
 var is_other: bool = false      # an other fight's hub (stage_feed.gd): it reads Animation's view of that fight (RenderAnim.fight_view), and leaves the shared colour-blind table to the main hub
-var meteor_burn_enabled: bool = VfxLook.METEOR_DEFAULT or VfxMeteor.page_word() != ""   # the meteor burn: off by default (a local preview page can turn it on with the word ?meteor=1, =quiet or =loud): with it off nothing here runs and nothing draws
+var meteor_burn_enabled: bool = VfxMeteor.page_word() != "" or VfxLook.METEOR_DEFAULT   # the meteor burn: off by default (a local preview page can turn it on with the word ?meteor=1, =quiet or =loud): with it off nothing here runs and nothing draws
 var flight_enabled: bool = VfxLook.FLIGHT_DEFAULT or VfxMeteor.flight_word() != ""   # the flight lines (docs/vfx/flight-lines.md): off by default; a local preview page turns them on with ?flight=1, =quiet or =loud. They use the meteor trail's ribbon
 var meteor_enabled: bool = meteor_burn_enabled or flight_enabled      # the ribbon runs and draws while either is on
 var perf_level: bool = VfxLook.PERF_DEFAULT       # the Performance level (perf.gd): a smaller pool, a burst's overflow batched over a few ticks, spawns on the far side skipped, fewer timed jobs a tick; off by default and then not read at all
