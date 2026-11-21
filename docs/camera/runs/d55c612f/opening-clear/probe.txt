@@ -1,0 +1,54 @@
+# The opening's camera on the small planet (Rendering's planet-sizes finding 6). Rendering's szs tree (a copy), seed 12345, AI v AI through main, --tiles --size=small
+# clearA/clearB: the worst clearance of the drawn ground under the sight line to each fighter, units (negative = the ground blocks it)
+
+## Without the split view (as small_probe.gd and the tools run): the render pane's own follow, starting about 33,000 units away
+1  rig 40960,1070,0.7111  view_x 8030  cam_yz 340,2239  clearA -3338  clearB -1886
+2  rig 40960,1070,0.7111  view_x 10109  cam_yz 396,2193  clearA -2750  clearB -2388
+3  rig 40960,1070,0.7111  view_x 12056  cam_yz 449,2150  clearA -2190  clearB -3491
+4  rig 40960,1070,0.7111  view_x 13880  cam_yz 499,2110  clearA -2383  clearB -3760
+5  rig 40960,1070,0.7111  view_x 15590  cam_yz 545,2073  clearA -3427  clearB -3447
+6  rig 40960,1070,0.7111  view_x 17191  cam_yz 589,2038  clearA -3741  clearB -2743
+7  rig 40960,1070,0.7111  view_x 18691  cam_yz 630,2005  clearA -3581  clearB -2935
+8  rig 40960,1070,0.7111  view_x 20097  cam_yz 668,1972  clearA -3014  clearB -3725
+12  rig 40960,1070,0.7111  view_x 24887  cam_yz 797,1850  clearA -3377  clearB -3917
+16  rig 40960,1070,0.7111  view_x 28577  cam_yz 898,1733  clearA -3857  clearB -4037
+20  rig 40960,1070,0.7111  view_x 31421  cam_yz 978,1624  clearA -4007  clearB -4156
+24  rig 40960,1070,0.7111  view_x 33612  cam_yz 1039,1524  clearA -4209  clearB -4372
+28  rig 40960,1070,0.7111  view_x 35300  cam_yz 1085,1433  clearA -4555  clearB -4574
+32  rig 40960,1070,0.7111  view_x 36601  cam_yz 1121,1362  clearA -4671  clearB -4667
+36  rig 40960,1070,0.7111  view_x 37603  cam_yz 1148,1313  clearA -3801  clearB -3766
+40  rig 40960,1070,0.7111  view_x 38373  cam_yz 1170,1277  clearA -2034  clearB -2010
+44  rig 40960,1070,0.7111  view_x 38964  cam_yz 1187,1251  clearA -1245  clearB -1230
+48  rig 40960,1070,0.7111  view_x 39418  cam_yz 1200,1231  clearA -683  clearB -668
+52  rig 40960,1070,0.7111  view_x 39765  cam_yz 1210,1220  clearA -416  clearB -409
+56  rig 40960,1070,0.7111  view_x 40031  cam_yz 1219,1219  clearA -165  clearB -159
+60  rig 40960,1070,0.7111  view_x 40234  cam_yz 1228,1222  clearA -59  clearB -55
+64  rig 40960,1070,0.7111  view_x 40388  cam_yz 1236,1228  clearA 3  clearB 6
+68  rig 40960,1070,0.7111  view_x 40505  cam_yz 1245,1237  clearA 60  clearB 62
+72  rig 40960,1070,0.7111  view_x 40593  cam_yz 1253,1245  clearA 88  clearB 94
+
+## With the split view attached (as the game and the web page do): the rig's camera, at the fighters from tick 1
+1  rig 40960,1070,0.7114  view_x 40960  cam_yz 1222,1417  clearA 34  clearB 43
+2  rig 40960,1071,0.7121  view_x 40960  cam_yz 1222,1416  clearA 35  clearB 43
+3  rig 40960,1072,0.7133  view_x 40960  cam_yz 1223,1415  clearA 36  clearB 44
+4  rig 40960,1072,0.7151  view_x 40960  cam_yz 1223,1413  clearA 37  clearB 44
+5  rig 40961,1073,0.7173  view_x 40960  cam_yz 1223,1409  clearA 37  clearB 45
+6  rig 40961,1073,0.7200  view_x 40961  cam_yz 1223,1405  clearA 37  clearB 46
+7  rig 40961,1074,0.7229  view_x 40961  cam_yz 1223,1400  clearA 37  clearB 47
+8  rig 40961,1075,0.7259  view_x 40961  cam_yz 1223,1394  clearA 39  clearB 48
+12  rig 40963,1085,0.7445  view_x 40962  cam_yz 1228,1364  clearA 52  clearB 54
+16  rig 40964,1105,0.7671  view_x 40963  cam_yz 1242,1323  clearA 72  clearB 74
+20  rig 40965,1117,0.7877  view_x 40964  cam_yz 1253,1287  clearA 85  clearB 86
+24  rig 40966,1119,0.8042  view_x 40965  cam_yz 1253,1259  clearA 85  clearB 88
+28  rig 40966,1119,0.8170  view_x 40966  cam_yz 1251,1238  clearA 84  clearB 89
+32  rig 40966,1119,0.8270  view_x 40967  cam_yz 1250,1222  clearA 83  clearB 90
+36  rig 40961,1119,0.8347  view_x 40963  cam_yz 1249,1210  clearA 83  clearB 90
+40  rig 40953,1119,0.8406  view_x 40955  cam_yz 1248,1201  clearA 83  clearB 90
+44  rig 40943,1118,0.8455  view_x 40945  cam_yz 1246,1193  clearA 81  clearB 88
+48  rig 40934,1117,0.8489  view_x 40937  cam_yz 1244,1188  clearA 78  clearB 87
+52  rig 40926,1118,0.8479  view_x 40928  cam_yz 1245,1187  clearA 74  clearB 94
+56  rig 40918,1122,0.8429  view_x 40920  cam_yz 1249,1193  clearA 74  clearB 102
+60  rig 40909,1127,0.8364  view_x 40912  cam_yz 1255,1202  clearA 76  clearB 108
+64  rig 40901,1135,0.8285  view_x 40903  cam_yz 1263,1213  clearA 80  clearB 118
+68  rig 40893,1142,0.8208  view_x 40895  cam_yz 1271,1225  clearA 85  clearB 127
+72  rig 40884,1150,0.8134  view_x 40886  cam_yz 1280,1236  clearA 90  clearB 135

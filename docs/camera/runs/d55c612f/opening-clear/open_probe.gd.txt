@@ -1,0 +1,70 @@
+extends SceneTree
+## SCRATCH (Camera, 2026-11-20): the opening's camera at a planet size (Rendering's planet-sizes finding 6). The sizes stills' match (seed 12345,
+## AI v AI, the default planet at the size) through main; every few ticks of the opening: the rig's state, its camera against the drawn one, the
+## fighters, and the worst clearance of the drawn ground under the sight line to each fighter (negative: the ground blocks it).
+## Usage: --script res://render/tools/open_probe.gd -- --tiles --size=small|medium
+
+var main: Node
+var SIZE: String = "small"
+
+
+func _initialize() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--size="):
+			SIZE = a.substr(7)
+	var vpn := SubViewport.new()
+	vpn.size = Vector2i(960, 540)
+	root.add_child(vpn)
+	main = load("res://render/main.tscn").instantiate()
+	main.manual = true
+	vpn.add_child(main)
+	_run.call_deferred()
+
+
+func _clear(S: SimState, pane, tf, cx: float, cam: Vector3, F) -> float:
+	var worst: float = 1.0e9
+	for q in range(1, 16):
+		var t: float = float(q) / 16.0
+		var px: float = cx + SimWrap.sdx(cx, float(F.x)) * t
+		var pz: float = cam.z * (1.0 - t)
+		var sight: float = cam.y + (float(F.y) + 50.0 - cam.y) * t
+		var d: Vector3 = tf.dir_at(px, pz, RenderTileGround._shown_frame(S))
+		var h: float = tf.height_at(d)
+		var along: float = SimWrap.sdx(pane._tiles._pivot_x if pane._tiles != null else cx, px)
+		var hv: float = h - (pz * pz + along * along) / (2.0 * SimField.R)
+		worst = minf(worst, sight - hv)
+	return worst
+
+
+func _run() -> void:
+	await process_frame
+	if OS.get_cmdline_user_args().has("--split"):
+		var sv := SplitView.new()
+		main.split_view = sv
+		main.add_child(sv)
+		main._sync_split_options()
+		sv.attach(main)
+	main.started = true
+	RenderTileField.steady_fill = true
+	var ws: Dictionary = main._match_setup(12345)
+	ws["planetSize"] = SIZE
+	main.start_match(12345, {"p1": true, "p2": true}, ws)
+	while main.host.loading():
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var pane = main.pane
+	var tf = pane.planet.tile_field
+	var rg: SplitRig = main.split_rig
+	print("size %s R %.0f" % [SIZE, SimField.R])
+	while main.host.ticks < 130:
+		main.frame(1.0 / 60.0)
+		var t: int = main.host.ticks
+		if t % 4 != 0 and t > 8:
+			continue
+		var fr: SplitFrame = rg.current()
+		var cam: Vector3 = pane.cam_rig.position
+		var cx: float = pane.view_cam_x
+		var A = S.fighters[0]
+		var B = S.fighters[1]
+		print("OP %d intro %s phase %s solo %s/%s mode %s sep %.2f e %.2f rig_cam %.0f,%.0f,%.4f view_x %.0f cam_yz %.0f,%.0f pitch %.1f A %.0f,%.0f %s B %.0f,%.0f %s clearA %.0f clearB %.0f" % [t, str(rg.intro_active), str(rg.get("_in_phase")), rg.solo_kind, rg.solo_phase, fr.mode, fr.sep, fr.e, fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], cx, cam.y, cam.z, fr.pitch, A.x, A.y, A.state, B.x, B.y, B.state, _clear(S, pane, tf, cx, cam, A), _clear(S, pane, tf, cx, cam, B)])
+	quit(0)
