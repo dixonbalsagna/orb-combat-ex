@@ -1,0 +1,60 @@
+--- a/audio/audio_web.gd
++++ b/audio/audio_web.gd
+@@ -198,6 +198,12 @@
+ 	return ok and bool(_js.running)
+ 
+ 
++## True when the page's player is there and its context is NOT running: the browser is holding sound back (no key, click or touch yet, and
++## a pad may not count). AudioVoices holds every one-shot cue while this is true (docs/audio/pending/held-when-blocked).
++func blocked() -> bool:
++	return ok and not running()
++
++
+ ## Make sure the page has this stream's samples (16-bit mono PCM, as the bank's AudioStreamWAV holds them), once. They go as a base64 string:
+ ## the JavaScript bridge passes numbers, strings and objects, not byte arrays.
+ func ensure(key: String, stream: AudioStreamWAV) -> void:
+--- a/audio/audio_voices.gd
++++ b/audio/audio_voices.gd
+@@ -16,6 +16,7 @@
+ var mix: Dictionary = {}
+ var played: int = 0
+ var dropped: int = 0
++var held: int = 0              # cues not taken at all while the browser held the sound back (web only; not drops)
+ var web: AudioWeb = null       # the browser-direct one-shots (audio_web.gd): on the web only, null everywhere else and with ?webvoices=0
+ var _web_db: Dictionary = {}   # bus name -> the last level (dB) sent to the page
+ var _shell_at: int = -100000      # web_blocked(): when the page shell was last asked, and what it said
+@@ -269,7 +270,7 @@
+ 		# The engine's own context is not a global of the page; the page shell keeps a reference to every AudioContext it is made
+ 		# (docs/audio/pending/audio-resume/shell-snippet.js) and answers for them: the state, the clock, the rate and the output latency.
+ 		if web != null:
+-			s += " | web: " + web.status()
++			s += " | web: " + web.status() + " | held %d" % held
+ 		s += " | ctx " + str(JavaScriptBridge.eval("(function(){try{return window.__audioShell&&window.__audioShell.state?window.__audioShell.state():'no shell hook'}catch(e){return 'error ('+e+')'}})()"))
+ 	return s
+ 
+@@ -302,6 +303,9 @@
+ 	bank.last_ask_ms = Time.get_ticks_msec()      # the cue traffic: the warm-up's budget reads it when the host has not said
+ 	if cue.sound == "" and cue.stop_group != "":
+ 		return stop_group(cue.stop_group, cue.fade_ms)
++	if web != null and web.blocked() and not cue.update:
++		held += 1      # the page's context is not running: a Godot player would start on the engine's frozen context and stay "playing" until it wakes, filling the pool (the 29% drops of 2026-11-07) and then sounding all at once
++		return false
+ 	var dx: float = 0.0 if cue.ambient else SimWrap.sdx(cam_x, cue.x)
+ 	if cue.update:
+ 		return update_group(cue.group, cue.gain_db + distance_db(absf(dx)), cue.pitch, cue.ramp_ms, dx * zoom)
+--- a/audio/tools/web_policy_check.gd
++++ b/audio/tools/web_policy_check.gd
+@@ -102,8 +102,12 @@
+ 	lp.loop = true
+ 	ok(v.play(lp, 0.0, 1.0) and w.plays.size() == before, "a looped cue is a Godot player's")
+ 	w.is_running = false
++	w.ok = true      # the player is installed but its context is not running: the browser is holding sound back
+ 	var nr := cue("impact.medium")
+-	ok(v.play(nr, 0.0, 1.0) and w.plays.size() == before, "while the page's context is not running the Godot player takes it (nothing is queued for a click)")
++	var held0: int = v.held
++	var act0: int = v.active()
++	ok(not v.play(nr, 0.0, 1.0) and w.plays.size() == before and v.held == held0 + 1 and v.active() == act0, "while the page's context is not running the cue is held: nothing is queued for a click, no Godot player starts on the frozen engine context, and it is counted as held, not dropped")
++	ok(v.dropped == 0, "a held cue is not a drop")
+ 	w.is_running = true
+ 
+ 	print("3. the voices' rules hold for page voices")

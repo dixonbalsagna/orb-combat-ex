@@ -1,0 +1,241 @@
+
+the scratch world has: ocean, village, plains, city, forest, desert, mountains
+1. parked: with `enabled` false nothing is made
+  ok    no bed, no surface, no step (0), and the switch is off in the data
+2. the bed: start, level, crossfade, the hold, the fight's duck, height
+  ok    the first tick starts the bed of the biome (desert): looped, ambient, in group amb.a, on the Ambience bus
+  ok    it starts low and the same tick's update brings it up over the fade (2400 ms, to -1.2 dB)
+  ok    then nothing while nothing changes (0 updates, 0 restarts in 90 ticks)
+  ok    ten hard blows duck the bed (-9.2 dB against -1.2, never more than 8 dB down)
+  ok    ten quiet seconds later it is back (-1.8 dB against -1.2; an update goes only when the level has moved half a dB)
+  ok    high above the ground (a full 900 units) the desert bed is +4 dB over its level (0.7, wanted 1.0)
+  ok    they stay in mountains: the bed changes after 120 ticks (tick 120)
+  ok    the old bed is stopped with the fade in the same tick, and the new one is in the other group
+  ok    a short visit to the next biome (100 ticks) does not change the bed
+3. the surface at a place
+  ok    desert: sand (wanted sand)
+  ok    mountains: rock (wanted rock)
+  ok    plains: grass (wanted grass)
+  ok    forest: mud (wanted mud)
+  ok    city: paving (wanted paving)
+  ok    in the ocean, at the water: water
+  ok    and well above it: not water
+  ok    a rubble heap on the ground: rubble
+3b. the fine biomes of planet generation 2
+  ok    all 15 fine biomes of climate.json have a row and a bed
+  ok    every ground and soil in the data is a ground that has sounds
+  ok    with no fine columns the biome is the stored biome's name (plains)
+  ok    stale fine columns of another world (no stored columns here) are not read
+  ok    fine 11 reads as wetland: ground mud, bed amb.marsh
+  ok    fine 5 reads as ice_sheet: ground snow, bed amb.icefield
+  ok    fine 12 reads as beach: ground sand, bed amb.shore
+  ok    fine 13 reads as highland: ground rock, bed amb.highland
+  ok    fine 7 reads as jungle: ground mud, bed amb.jungle
+  ok    fine 8 reads as savanna: ground grass, bed amb.savanna
+  ok    fine 14 reads as volcanic: ground rock, bed amb.volcanic
+  ok    fine 10 reads as taiga: ground grass, bed amb.taiga
+  ok    fine 9 reads as tundra: ground snow, bed amb.tundra
+  ok    fine 6 reads as sea_ice: ground snow, bed amb.seaice
+  ok    a city keeps its own bed over the fine column under it (city)
+  ok    a village keeps its own bed over the fine column under it (village)
+  ok    a pair over wetland has the marsh bed (amb.marsh)
+  ok    warm_beds names the fine beds the ring has: amb.city, amb.village, amb.marsh
+4. blows, landings, slides, skims, splashes and craters
+  ok    a blow 30 units off the sand ground has its scuff, surf.sand.hit
+  ok    a blow 600 units up has none
+  ok    a tap too small has none
+  ok    a big blow's scuff is louder and lower than a small one's (-5.5 dB x0.82 against -14.4 dB x1.24)
+  ok    a landing on rock plays the rock's hit
+  ok    a slow one is quieter and higher (-11.8 dB x0.98 against -4.1 dB x0.82)
+  ok    a touch (100 a second) is silent
+  ok    soil in plains is made of its own ground (surf.grass.hit)
+  ok    soil in forest is made of its own ground (surf.mud.hit)
+  ok    a bounce on sand is a softer sand hit
+  ok    nine samples along a slide give three drags (3)
+  ok    a drag is the surface's slide sound (surf.sand.slide)
+  ok    a skip off the water is the water's hit
+  ok    a big splash is louder than a small one (-0.9 dB against -9.5 dB)
+  ok    a bigger crater's layer is louder and lower (-1.1 dB x0.72 against -7.5 dB x1.03)
+  ok    a scratch of a crater (0.1) has none
+  ok    the same seed gives the same layers twice
+5. footfall
+  ok    a fighter walking on the ground steps: 8 steps in 4 s slowly, 15 fast; the one standing still makes none
+  ok    in the air there are none (0)
+  ok    a step is quiet and high, and the feet alternate (x1.27, x1.46)
+5b. water v2: a fill, a wave, a douse
+  ok    a sea fill is one rushing swell at the front's start, in its own group
+  ok    the swell is cut with a 350 ms fade
+  ok    when the fill settles: 1.0 s later (tick +60)
+  ok    a table's seep is the trickle, quieter than a sea fill of the same dig (-8.6 dB against -5.2 dB)
+  ok    a deeper dig is louder and lower (-0.4 dB x0.79 against -10.7 dB x1.20)
+  ok    a tiny fill holds the shortest swell, a long one the longest (stops at +[36, 90, 144] ticks)
+  ok    the fills in turn take 4 groups and then the first again (water.fill.0, water.fill.1, water.fill.2, water.fill.3, water.fill.0)
+  ok    a ring wave is one heavy slosh at the slam
+  ok    a douse is a short hiss, bigger for more columns wet (-1.4 dB against -11.5 dB)
+  ok    the sim's own fill (a trench by the sea) makes a swell (2 water cues, first surf.water.fill at -8.8 dB)
+  ok    and the fire it reaches goes out with a hiss (the sim sent water_douse)
+  ok    and a slam into the sea's deep water makes the wave's slosh (1)
+  ok    seed 4 with water v2 on: the sim hash is unchanged by the set and the cue log is the same twice (0 water cues)
+  ok    seed 777 with water v2 on: the sim hash is unchanged by the set and the cue log is the same twice (0 water cues)
+6. the sounds: render, loop, and how they are heard
+  ok    amb.surf renders clean (10.00 s, peak 0.25)
+  ok    amb.surf loops without a seam (jump 0.00330, mean step 0.00764)
+amb.surf              411 Hz heard    22.8 |  76.1 |   1.1 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.surf is low: centroid 411 Hz (limit 520), 0.0% over 2 kHz (limit 3%)
+  ok    amb.village renders clean (10.00 s, peak 0.25)
+  ok    amb.village loops without a seam (jump 0.00407, mean step 0.00767)
+amb.village           339 Hz heard    28.0 |  71.9 |   0.1 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.village is low: centroid 339 Hz (limit 450), 0.0% over 2 kHz (limit 3%)
+  ok    amb.plains renders clean (10.00 s, peak 0.25)
+  ok    amb.plains loops without a seam (jump 0.00658, mean step 0.00579)
+amb.plains            369 Hz heard    21.4 |  78.3 |   0.3 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.plains is low: centroid 369 Hz (limit 480), 0.0% over 2 kHz (limit 3%)
+  ok    amb.city renders clean (10.00 s, peak 0.25)
+  ok    amb.city loops without a seam (jump 0.02412, mean step 0.00628)
+amb.city              238 Hz heard    53.6 |  46.3 |   0.0 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.city is low: centroid 238 Hz (limit 320), 0.0% over 2 kHz (limit 3%)
+  ok    amb.forest renders clean (10.00 s, peak 0.25)
+  ok    amb.forest loops without a seam (jump 0.04128, mean step 0.00986)
+amb.forest            386 Hz heard    19.0 |  80.6 |   0.4 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.forest is low: centroid 386 Hz (limit 500), 0.0% over 2 kHz (limit 3%)
+  ok    amb.desert renders clean (10.00 s, peak 0.25)
+  ok    amb.desert loops without a seam (jump 0.00371, mean step 0.00790)
+amb.desert            438 Hz heard    14.6 |  84.3 |   1.1 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.desert is low: centroid 438 Hz (limit 550), 0.0% over 2 kHz (limit 3%)
+  ok    amb.mountains renders clean (10.00 s, peak 0.25)
+  ok    amb.mountains loops without a seam (jump 0.00513, mean step 0.00486)
+amb.mountains         280 Hz heard    49.1 |  50.9 |   0.0 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.mountains is low: centroid 280 Hz (limit 380), 0.0% over 2 kHz (limit 3%)
+  ok    amb.icefield renders clean (10.00 s, peak 0.13)
+  ok    amb.icefield loops without a seam (jump 0.00013, mean step 0.00116)
+amb.icefield          227 Hz heard    67.1 |  32.9 |   0.0 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.icefield is low: centroid 227 Hz (limit 400), 0.0% over 2 kHz (limit 3%)
+  ok    amb.seaice renders clean (10.00 s, peak 0.16)
+  ok    amb.seaice loops without a seam (jump 0.00231, mean step 0.00297)
+amb.seaice            356 Hz heard    28.4 |  71.3 |   0.3 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.seaice is low: centroid 356 Hz (limit 450), 0.0% over 2 kHz (limit 3%)
+  ok    amb.savanna renders clean (10.00 s, peak 0.25)
+  ok    amb.savanna loops without a seam (jump 0.00292, mean step 0.00514)
+amb.savanna           358 Hz heard    29.5 |  70.2 |   0.3 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.savanna is low: centroid 358 Hz (limit 500), 0.0% over 2 kHz (limit 3%)
+  ok    amb.taiga renders clean (10.00 s, peak 0.25)
+  ok    amb.taiga loops without a seam (jump 0.00477, mean step 0.00569)
+amb.taiga             319 Hz heard    31.6 |  68.3 |   0.1 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.taiga is low: centroid 319 Hz (limit 450), 0.0% over 2 kHz (limit 3%)
+  ok    amb.highland renders clean (10.00 s, peak 0.25)
+  ok    amb.highland loops without a seam (jump 0.00074, mean step 0.00423)
+amb.highland          281 Hz heard    45.0 |  54.9 |   0.0 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.highland is low: centroid 281 Hz (limit 400), 0.0% over 2 kHz (limit 3%)
+  ok    amb.volcanic renders clean (10.00 s, peak 0.25)
+  ok    amb.volcanic loops without a seam (jump 0.00819, mean step 0.00489)
+amb.volcanic          336 Hz heard    36.5 |  63.1 |   0.4 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.volcanic is low: centroid 336 Hz (limit 400), 0.0% over 2 kHz (limit 3%)
+  ok    amb.shore renders clean (10.00 s, peak 0.25)
+  ok    amb.shore loops without a seam (jump 0.00147, mean step 0.00771)
+amb.shore             428 Hz heard    21.7 |  77.0 |   1.3 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.shore is low: centroid 428 Hz (limit 560), 0.0% over 2 kHz (limit 3%)
+  ok    amb.tundra renders clean (10.00 s, peak 0.08)
+  ok    amb.tundra loops without a seam (jump 0.00056, mean step 0.00103)
+amb.tundra            260 Hz heard    52.9 |  47.1 |   0.0 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.tundra is low: centroid 260 Hz (limit 360), 0.0% over 2 kHz (limit 3%)
+  ok    amb.marsh renders clean (12.00 s, peak 0.25)
+  ok    amb.marsh loops without a seam (jump 0.01173, mean step 0.00643)
+amb.marsh             305 Hz heard    36.9 |  63.1 |   0.1 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.marsh is low: centroid 305 Hz (limit 400), 0.0% over 2 kHz (limit 3%)
+  ok    amb.jungle renders clean (12.00 s, peak 0.25)
+  ok    amb.jungle loops without a seam (jump 0.00069, mean step 0.00948)
+amb.jungle            417 Hz heard    13.9 |  85.6 |   0.6 |   0.0 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    amb.jungle is low: centroid 417 Hz (limit 520), 0.0% over 2 kHz (limit 3%)
+  ok    surf.sand.hit renders clean (0.31 s, peak 0.32)
+surf.sand.hit         561 Hz heard    13.4 |  76.7 |   8.7 |   1.1 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.sand.hit is low: centroid 561 Hz (limit 680), 1.2% over 2 kHz (limit 4%)
+  ok    surf.sand.slide renders clean (0.53 s, peak 0.20)
+surf.sand.slide       650 Hz heard     4.0 |  81.1 |  13.6 |   1.2 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.sand.slide is low: centroid 650 Hz (limit 780), 1.3% over 2 kHz (limit 4%)
+  ok    surf.snow.hit renders clean (0.20 s, peak 0.25)
+surf.snow.hit         374 Hz heard    16.0 |  82.5 |   1.3 |   0.1 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.snow.hit is low: centroid 374 Hz (limit 480), 0.1% over 2 kHz (limit 4%)
+  ok    surf.snow.slide renders clean (0.48 s, peak 0.16)
+surf.snow.slide       533 Hz heard     6.0 |  88.4 |   4.7 |   0.8 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.snow.slide is low: centroid 533 Hz (limit 650), 0.8% over 2 kHz (limit 4%)
+  ok    surf.mud.hit renders clean (0.23 s, peak 0.35)
+surf.mud.hit          371 Hz heard    45.3 |  51.3 |   3.0 |   0.3 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.mud.hit is low: centroid 371 Hz (limit 480), 0.4% over 2 kHz (limit 4%)
+  ok    surf.mud.slide renders clean (0.60 s, peak 0.20)
+surf.mud.slide        370 Hz heard    31.3 |  66.4 |   2.0 |   0.3 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.mud.slide is low: centroid 370 Hz (limit 480), 0.3% over 2 kHz (limit 4%)
+  ok    surf.water.hit renders clean (0.45 s, peak 0.32)
+surf.water.hit        600 Hz heard     4.0 |  85.3 |   9.4 |   1.2 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.water.hit is low: centroid 600 Hz (limit 720), 1.3% over 2 kHz (limit 4%)
+  ok    surf.water.slide renders clean (0.36 s, peak 0.20)
+surf.water.slide      630 Hz heard     4.5 |  83.0 |  11.2 |   1.3 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.water.slide is low: centroid 630 Hz (limit 750), 1.4% over 2 kHz (limit 4%)
+  ok    surf.rock.hit renders clean (0.24 s, peak 0.40)
+surf.rock.hit         315 Hz heard    68.1 |  28.3 |   3.1 |   0.5 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.rock.hit is low: centroid 315 Hz (limit 430), 0.6% over 2 kHz (limit 4%)
+  ok    surf.rock.slide renders clean (0.50 s, peak 0.22)
+surf.rock.slide       643 Hz heard     2.2 |  88.0 |   8.3 |   1.5 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.rock.slide is low: centroid 643 Hz (limit 760), 1.6% over 2 kHz (limit 4%)
+  ok    surf.grass.hit renders clean (0.16 s, peak 0.25)
+surf.grass.hit        587 Hz heard     7.9 |  82.6 |   8.3 |   1.1 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.grass.hit is low: centroid 587 Hz (limit 680), 1.2% over 2 kHz (limit 4%)
+  ok    surf.grass.slide renders clean (0.41 s, peak 0.16)
+surf.grass.slide      676 Hz heard     6.9 |  76.0 |  14.6 |   2.4 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.grass.slide is low: centroid 676 Hz (limit 780), 2.5% over 2 kHz (limit 4%)
+  ok    surf.rubble.hit renders clean (0.37 s, peak 0.35)
+surf.rubble.hit       252 Hz heard    67.3 |  32.0 |   0.6 |   0.1 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.rubble.hit is low: centroid 252 Hz (limit 340), 0.1% over 2 kHz (limit 4%)
+  ok    surf.rubble.slide renders clean (0.48 s, peak 0.22)
+surf.rubble.slide     356 Hz heard     5.3 |  94.2 |   0.5 |   0.1 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.rubble.slide is low: centroid 356 Hz (limit 460), 0.1% over 2 kHz (limit 4%)
+  ok    surf.paving.hit renders clean (0.17 s, peak 0.40)
+surf.paving.hit       588 Hz heard    35.2 |  50.5 |  12.1 |   2.1 |   0.2   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.paving.hit is low: centroid 588 Hz (limit 700), 2.2% over 2 kHz (limit 4%)
+  ok    surf.paving.slide renders clean (0.45 s, peak 0.20)
+surf.paving.slide     769 Hz heard     1.0 |  78.8 |  17.9 |   2.2 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.paving.slide is low: centroid 769 Hz (limit 880), 2.3% over 2 kHz (limit 4%)
+  ok    surf.water.fill renders clean (2.95 s, peak 0.35)
+surf.water.fill       491 Hz heard    21.2 |  73.7 |   4.5 |   0.6 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.water.fill is low: centroid 491 Hz (limit 650), 0.6% over 2 kHz (limit 4%)
+  ok    surf.water.seep renders clean (2.34 s, peak 0.16)
+surf.water.seep       501 Hz heard    14.7 |  77.4 |   6.9 |   0.9 |   0.0   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.water.seep is low: centroid 501 Hz (limit 650), 1.0% over 2 kHz (limit 4%)
+  ok    surf.water.wave renders clean (1.10 s, peak 0.50)
+surf.water.wave       547 Hz heard    15.9 |  75.3 |   7.5 |   1.2 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.water.wave is low: centroid 547 Hz (limit 650), 1.3% over 2 kHz (limit 4%)
+  ok    surf.water.hiss renders clean (0.34 s, peak 0.25)
+surf.water.hiss       620 Hz heard     7.5 |  80.5 |  10.6 |   1.3 |   0.1   (under 250 | 250-1k | 1-2k | 2-4k | over 4k)
+  ok    surf.water.hiss is low: centroid 620 Hz (limit 800), 1.4% over 2 kHz (limit 5%)
+  ok    with the set on, the bank's extras include every surface sound (20); warming them takes 287 ms
+  ok    warm_beds names the beds this world needs: amb.surf, amb.village, amb.plains, amb.city, amb.forest, amb.desert, amb.mountains
+  (rendering those beds: 939 ms)
+7. the ambient voice through AudioVoices
+  ok    the bed loops, on the Ambience bus
+  ok    one bed voice, in the middle of the picture whatever the camera (x 0.0)
+  ok    it is fading up (-35.7 dB after 0.3 s)
+  ok    and has reached its level (-5.8 dB, the biome's is -4.0)
+  ok    at most 2 bed voices (1)
+  ok    a surface layer leaves the bed alone
+  ok    a stop request fades it out
+8. real matches with the set on
+  ok    seed 4: the sim hash is unchanged by the set (cf88232bfe9cf8bf)
+  ok    seed 4: the cue log is the same twice (69834bebb51e)
+  ok    seed 4: 49 bed cues in 3600 ticks, 56 surface layers (56.0 a minute)
+  ok    seed 4: all the audio takes 26 microseconds a tick on average, the set on (a tick is 16,667)
+  ok    seed 12345: the sim hash is unchanged by the set (eee608fa91a4791c)
+  ok    seed 12345: the cue log is the same twice (4b440376fb01)
+  ok    seed 12345: 64 bed cues in 3600 ticks, 136 surface layers (136.0 a minute)
+  ok    seed 12345: all the audio takes 27 microseconds a tick on average, the set on (a tick is 16,667)
+  ok    seed 777: the sim hash is unchanged by the set (e1424a6f7e23232a)
+  ok    seed 777: the cue log is the same twice (ad59917cda5f)
+  ok    seed 777: 58 bed cues in 3600 ticks, 91 surface layers (91.0 a minute)
+  ok    seed 777: all the audio takes 28 microseconds a tick on average, the set on (a tick is 16,667)
+9. a real generation 2 planet
+  ok    a real generation 2 ring (planet 7) reads as 10 biomes, each with a row: ocean, beach, forest, wetland, taiga, ice_sheet, tundra, highland, city, jungle
+  ok    warm_beds names its beds: amb.surf, amb.shore, amb.forest, amb.marsh, amb.taiga, amb.icefield, amb.tundra, amb.highland, amb.city, amb.jungle
+  ok    seed 1 on a generation 2 ring: the sim hash is unchanged by the set (8763dd1b85bc0cb1)
+  ok    seed 1: the cue log is the same twice (d942cd6e5841); beds heard: amb.savanna, amb.plains
+  ok    seed 2 on a generation 2 ring: the sim hash is unchanged by the set (1a9467c22f2becdf)
+  ok    seed 2: the cue log is the same twice (dfb08322408d); beds heard: amb.city, amb.mountains
+
+world check passed

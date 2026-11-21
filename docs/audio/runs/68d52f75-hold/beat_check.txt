@@ -1,0 +1,21 @@
+
+1. how much of a hit is still sounding when its window closes
+   (window ends 5, 6 and 8 ticks after the hit for a light, a medium and a heavy: 83, 100 and 133 ms)
+   impact.light         at the window's end:  -35.1 dB under its loudest 10 ms; down 20 dB by   51 ms
+   impact.light.lite    at the window's end: -180.0 dB under its loudest 10 ms; down 20 dB by   25 ms
+   impact.medium        at the window's end:  -20.6 dB under its loudest 10 ms; down 20 dB by   96 ms
+   impact.medium.grind  at the window's end:  -21.6 dB under its loudest 10 ms; down 20 dB by   95 ms
+   impact.heavy         at the window's end:  -11.6 dB under its loudest 10 ms; down 20 dB by  185 ms
+   impact.guard         at the window's end:  -37.6 dB under its loudest 10 ms; down 20 dB by   57 ms
+  ok    a light is mostly gone when its window closes (-40.6 dB)
+2. can the tok be heard on top of the hit it follows, and does it hide the hit
+   offset = how long after the hit's start the tok plays; SNR = the tok's band over the hit's own energy in that band, over the tok's first 60 ms
+   tok on impact.light (worst over the three steps)  +  0 ms:  -7.9 dB  + 17 ms:   1.7 dB  + 33 ms:  10.5 dB  + 50 ms:  20.7 dB  +100 ms:  45.8 dB
+  ok    from 33 ms into a hit (where the tok is made to start) the tok is over the hit in its own band (worst 10.5 dB)
+   impact.light over perfect.tok: the hit's first 60 ms is 10.7 dB above the tok's
+  ok    a hit leads a tok in its first 60 ms, so a tok never hides it
+3. is the launcher's ping findable over the music (the stand-in 180 BPM loop, its band 400 to 3000 Hz)
+   ping at +1.0 dB: its first 150 ms is 5.8 dB over the music, 9.8 dB with the music's 4 dB duck
+  ok    the ping is at least 9 dB over the music in its band with the duck (the old ring was 9.9)
+
+beat check passed

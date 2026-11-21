@@ -198,6 +198,12 @@ func running() -> bool:
 	return ok and bool(_js.running)
 
 
+## True when the page's player is there and its context is NOT running: the browser is holding sound back (no key, click or touch yet, and
+## a pad may not count). AudioVoices holds every one-shot cue while this is true (docs/audio/pending/held-when-blocked).
+func blocked() -> bool:
+	return ok and not running()
+
+
 ## Make sure the page has this stream's samples (16-bit mono PCM, as the bank's AudioStreamWAV holds them), once. They go as a base64 string:
 ## the JavaScript bridge passes numbers, strings and objects, not byte arrays.
 func ensure(key: String, stream: AudioStreamWAV) -> void:

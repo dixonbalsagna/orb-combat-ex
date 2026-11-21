@@ -102,8 +102,12 @@ func _run() -> void:
 	lp.loop = true
 	ok(v.play(lp, 0.0, 1.0) and w.plays.size() == before, "a looped cue is a Godot player's")
 	w.is_running = false
+	w.ok = true      # the player is installed but its context is not running: the browser is holding sound back
 	var nr := cue("impact.medium")
-	ok(v.play(nr, 0.0, 1.0) and w.plays.size() == before, "while the page's context is not running the Godot player takes it (nothing is queued for a click)")
+	var held0: int = v.held
+	var act0: int = v.active()
+	ok(not v.play(nr, 0.0, 1.0) and w.plays.size() == before and v.held == held0 + 1 and v.active() == act0, "while the page's context is not running the cue is held: nothing is queued for a click, no Godot player starts on the frozen engine context, and it is counted as held, not dropped")
+	ok(v.dropped == 0, "a held cue is not a drop")
 	w.is_running = true
 
 	print("3. the voices' rules hold for page voices")

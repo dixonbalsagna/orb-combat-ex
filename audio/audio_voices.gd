@@ -16,6 +16,7 @@ var bank: AudioBank
 var mix: Dictionary = {}
 var played: int = 0
 var dropped: int = 0
+var held: int = 0              # cues not taken at all while the browser held the sound back (web only; not drops)
 var web: AudioWeb = null       # the browser-direct one-shots (audio_web.gd): on the web only, null everywhere else and with ?webvoices=0
 var _web_db: Dictionary = {}   # bus name -> the last level (dB) sent to the page
 var _shell_at: int = -100000      # web_blocked(): when the page shell was last asked, and what it said
@@ -269,7 +270,7 @@ func status_line() -> String:
 		# The engine's own context is not a global of the page; the page shell keeps a reference to every AudioContext it is made
 		# (docs/audio/pending/audio-resume/shell-snippet.js) and answers for them: the state, the clock, the rate and the output latency.
 		if web != null:
-			s += " | web: " + web.status()
+			s += " | web: " + web.status() + " | held %d" % held
 		s += " | ctx " + str(JavaScriptBridge.eval("(function(){try{return window.__audioShell&&window.__audioShell.state?window.__audioShell.state():'no shell hook'}catch(e){return 'error ('+e+')'}})()"))
 	return s
 
@@ -302,6 +303,9 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 	bank.last_ask_ms = Time.get_ticks_msec()      # the cue traffic: the warm-up's budget reads it when the host has not said
 	if cue.sound == "" and cue.stop_group != "":
 		return stop_group(cue.stop_group, cue.fade_ms)
+	if web != null and web.blocked() and not cue.update:
+		held += 1      # the page's context is not running: a Godot player would start on the engine's frozen context and stay "playing" until it wakes, filling the pool (the 29% drops of 2026-11-07) and then sounding all at once
+		return false
 	var dx: float = 0.0 if cue.ambient else SimWrap.sdx(cam_x, cue.x)
 	if cue.update:
 		return update_group(cue.group, cue.gain_db + distance_db(absf(dx)), cue.pitch, cue.ramp_ms, dx * zoom)

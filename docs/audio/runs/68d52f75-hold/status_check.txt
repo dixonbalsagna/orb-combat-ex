@@ -1,0 +1,20 @@
+
+     audio: played 0 dropped 0 live 0 | lost 0 waiting 0 warming false | 44100 Hz 0 ms out Default | master peak -200 dB | trim m 0 e 0 v 0 dB | buses Master 0, Sfx 0, SfxMuffled 0, Voice -2, Music -8, VoiceMuffled -2, Alert 0, Ambience -4
+  ok    it says played 0 dropped 0 live 0
+  ok    it says lost 0 waiting 0
+  ok    it says warming false
+  ok    it says Hz
+  ok    it says master peak
+  ok    it says trim m 0 e 0 v 0 dB
+  ok    it says buses Master
+  ok    it says Sfx 0
+  ok    it says SfxMuffled
+  ok    it says Voice -2
+  ok    and nothing of the browser off the web
+  ok    a cue plays
+  ok    played and live count it (audio: played 1 dropped 0 live 1 | lost 0 waiting 0 warming )
+  ok    calling it again changes nothing
+  ok    a muted effects trim shows as e -80
+  ok    and back to e 0
+
+status check passed
