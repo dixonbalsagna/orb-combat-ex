@@ -158,6 +158,13 @@ func step(S: SimState, events: Array, press: VfxPress, zip: VfxZip, frozen: bool
 			var u2: int = VfxZip.echoes_alive(tt, int(VfxZip.p("echoes")))
 			if red:
 				u2 = mini(u2, 1)
+			if enforce:
+				# f01 holds for both together: a zip leg's echoes stand on the limb slot * 2 as his tech blows' do, and the blow's echoes come first (they are the
+				# blow itself), so the leg's take what is left of that limb's two and of the screen's four (GW1a's data puts a tech blow and a tech zip leg on the same ticks).
+				var all_now: int = 0
+				for k0 in limb_now:
+					all_now += int(limb_now[k0])
+				u2 = mini(u2, maxi(0, mini(LIMB_MAX - int(limb_now.get(z.slot * 2, 0)), LIMB_ALL_MAX - all_now)))
 			if u2 > 0:
 				limb_now[z.slot * 2] = int(limb_now.get(z.slot * 2, 0)) + u2
 				ech[z.slot] += u2

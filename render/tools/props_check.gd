@@ -33,6 +33,7 @@ func _initialize() -> void:
 	root.add_child(vpn)
 	main = load("res://render/main.tscn").instantiate()
 	main.manual = true
+	main.strip_ground = true   # the old strip ground: this check's rules are the strip world's (gen 2 spots, a hand-made world), as look-recut's other pins
 	vpn.add_child(main)
 	_run.call_deferred()
 
