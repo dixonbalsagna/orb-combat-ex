@@ -1,0 +1,33 @@
+# Fight 3's jolt (launch_shots AI fight 3, energy model, 0.110 against 0.10), with the 9 November data, on the GW1a stack + gw1b-scape-side + gw1b-keep-human
+
+## The cause (scratch ls_trace.gd: the one view's target height _pmy and its height _my, the frame before each tick)
+2522 PMY 1854.3 MY 1854.3 mode merged
+2523 PMY 1854.3 MY 1854.3 mode merged
+2524 PMY 1854.3 MY 1854.3 mode merged
+2525 PMY 1854.3 MY 1854.3 mode merged
+2526 PMY 1854.3 MY 1854.3 mode merged
+2527 PMY 1854.3 MY 1854.3 mode merged
+2528 PMY 1854.3 MY 1854.3 mode merged
+2529 PMY 1854.3 MY 1854.3 mode merged
+2530 PMY 1854.3 MY 1854.3 mode merged
+2531 PMY 1732.5 MY 1732.5 mode opening
+2532 PMY 1732.5 MY 1732.5 mode opening
+2533 PMY 1732.5 MY 1732.5 mode opening
+At 2531 a grapple's lock sets the rival down 300 units in one tick. The pair's middle steps 121.8 units, and the follow's velocity feed-forward (target + v DT (1-k)/k) lands exactly on the new target in one tick, whatever the step: a 0.108-of-the-width step, then a stop.
+
+## Three camera-side tries (none parked)
+1. Ease the feed-forward's speed (1,500 units a second a tick): fight 3 0.110 -> 0.042, but every clip's digest changes by hundreds of ticks: every vertical move starts slower. Too broad.
+2. Treat a one-tick step over 140 units as no motion (as x does at the antipode): misses it (the step is 121.8, inside real flight speeds; the fastest is about 8,000 units a second).
+3. Take out a fighter's step beyond his own speed (over 60 units): fight 3 -> 0.041, fights 1 and 2 smoother, but other set-downs the feed-forward handled by jumping now drift:
+   ai:1           largest picture offset 0.231 of the width at (1676, 'opening')
+   ai:106         largest picture offset 0.207 of the width at (2567, 'opening')
+   ai:38          largest picture offset 0.046 of the width at (837, 'merged')
+   ai:4           largest picture offset 0.013 of the width at (3377, 'slam')
+   ai:5           largest picture offset 0.887 of the width at (2566, 'merged')
+   collapse       largest picture offset 0.121 of the width at (797, 'opening')
+   mashcity       largest picture offset 0.000 of the width at None
+   rushcity       largest picture offset 0.000 of the width at None
+   signaturecity  largest picture offset 0.099 of the width at (691, 'merged')
+
+## Conclusion
+A camera-side rule can't tell a lock's set-down from the other jumps the feed-forward already meets by jumping. The fix needs the sim to mark a set-down (an fx event with the body and the step), so the camera re-frames that and nothing else. Until then fight 3 keeps its ceiling (0.111).
