@@ -1,5 +1,14 @@
 --- a/sim/world/field.gd
 +++ b/sim/world/field.gd
+@@ -31,7 +31,7 @@ static var _d: Dictionary = {}
+ static var _loaded: bool = false
+ static var _errors: Array = []
+ static var _hash: String = ""
+-static var _fields: Dictionary = {}     # seed -> Field (a few: each holds about 3.2 MB when whole)
++static var _fields: Dictionary = {}     # _fkey(seed): the seed and the size -> Field (a few: each holds about 3.2 MB when whole)
+ static var _lf: int = 0                 # locate's answer: the face and the point in it, in cells
+ static var _la: float = 0.0
+ static var _lb: float = 0.0
 @@ -142,8 +142,9 @@ static func bakeStride() -> int:
  
  ## The field of planet P (a gen 3 planet): memoised by the seed. Only a few are kept, the oldest made first out.

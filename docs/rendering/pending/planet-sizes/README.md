@@ -12,12 +12,12 @@ Rendering, on the EP's order: "the sizes with the level-0 tile scaling". It foll
 | File | What |
 |---|---|
 | `sizes_tiles.diff` (4477705c, 158 lines) | `render/core/tile_field.gd`, `tile_ground.gd`. Gated at medium: `sizes-tiles-recut.txt`. |
-| `grant-world-field-size-key.patch` (6883b121) | World's `sim/world/field.gd`: the field memo keyed by the size too. World is reviewing it. |
+| `grant-world-field-size-key.patch` (c48936a3) | World's `sim/world/field.gd`: the field memo keyed by the size too. World approved it (2026-11-20); its "seed -> Field" comment is fixed here as they asked (code unchanged from 6883b121). |
 | `feet_check_size.gd` (2aed6e9a) | A scratch copy of `feet-ground`'s feet check with `--size` (World's `planetSize`) and `--split`. With `--split` it reads each fighter through the nearest pane the split renders, and skips a fighter outside every pane's view. When this lands, these flags should go into the real check. |
 
 ## The export
 
-`ln/szw_site/` in my scratchpad: szs plus a scratch size word in the flash hook's film setup (`ln/tg/size_word.py`; not a park). It loads the beamduel scene at a size: `/index.html?flashcap=1&size=small|medium|big`, then `window.__flashcap.start("beamduel", {seed: 12345})`. Performance can read frames from it at each size; the planet is World's default (7, gen 3).
+`ln/szw_site/` in my scratchpad: szs plus a scratch size word in the flash hook's film setup (`ln/tg/size_word.py`; not a park). It loads the beamduel scene at a size: `/index.html?flashcap=1&tiles=1&size=small|medium|big`, then `window.__flashcap.start("beamduel", {seed: 12345})`. Performance can read frames from it at each size; the planet is World's default (7, gen 3). `tiles=1` is needed: this stack's base predates the globe ground being on by default, and without a planet in the setup every size plays medium (`WorldPlanetSize.nameOf`).
 
 ## What the diff does
 
