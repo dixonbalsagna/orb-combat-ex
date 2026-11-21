@@ -7,6 +7,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { templateZip, pageStamp, commitDate } from './stack-preview.mjs';
+import { useHistoricTable } from './retired-rows.mjs';
+useHistoricTable();   // GW1a: these checks were written on the switch table as it was before the retirement of the rows main's own data landed (retired-rows.mjs); they go on proving the engine on it
 import { findPython, snapshotTree, loadManifest, patchFiles, ownerOfPath, readOwners, tryApply, applyStack, missingNeeds, flipAll, runValidate, attributeErrors, errorBlocks, stackKey, changesBetween, checkScratch, runStack, describeReport } from './stack.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));

@@ -12,13 +12,13 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Cdp, launchBrowser, serve, browserExe } from '../machine/browser.mjs';
-import { IDS, errorSwitch } from './switches.mjs';
+import { IDS, LANDED_IDS, errorSwitch } from './switches.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** What the probe must read, given the switches that are on. Pure. */
 export function expectations(on, { planet = true } = {}) {
-  const set = new Set(on);
+  const set = new Set([...on, ...LANDED_IDS.filter((id) => !IDS.includes(id))]);   // a row main's own data landed (GW1a) is on in the running game whether or not the preview flipped it
   return {
     planet,
     planetGen: set.has('gen2') ? 2 : 1,

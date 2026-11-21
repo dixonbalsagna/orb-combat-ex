@@ -1,19 +1,19 @@
-# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-14)
+# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-21)
 
-262 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **186 run in CI**, 20 more run in the landing gate only, 1 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
+268 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **192 run in CI**, 20 more run in the landing gate only, 1 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
 
 | Folder | Scripts | CI | Gate only | Not run | Unreviewed |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| audio/tools | 14 | 12 | 1 | 1 | 0 |
+| audio/tools | 15 | 13 | 1 | 1 | 0 |
 | net/tools | 10 | 10 | 0 | 0 | 0 |
 | render/anim/tools | 3 | 0 | 1 | 0 | 2 |
-| render/camera/tests | 13 | 13 | 0 | 0 | 0 |
-| render/tools | 24 | 4 | 15 | 0 | 5 |
+| render/camera/tests | 14 | 14 | 0 | 0 | 0 |
+| render/tools | 25 | 5 | 15 | 0 | 5 |
 | render/vfx/tools | 2 | 2 | 0 | 0 | 0 |
 | sim/core/tools | 16 | 12 | 0 | 0 | 4 |
-| sim/director/tools | 43 | 5 | 1 | 0 | 37 |
+| sim/director/tools | 44 | 6 | 1 | 0 | 37 |
 | sim/input/test | 45 | 44 | 1 | 0 | 0 |
-| sim/world/tools | 84 | 84 | 0 | 0 | 0 |
+| sim/world/tools | 86 | 86 | 0 | 0 | 0 |
 | tools/l10n | 1 | 0 | 0 | 0 | 1 |
 | ui/tools | 7 | 0 | 1 | 0 | 6 |
 
@@ -28,6 +28,7 @@
 | audio/tools/coop_check.gd | CI |  |
 | audio/tools/host_check.gd | GATE |  |
 | audio/tools/moments_check.gd | CI |  |
+| audio/tools/sets_check.gd | CI |  |
 | audio/tools/status_check.gd | CI |  |
 | audio/tools/tone_check.gd | CI |  |
 | audio/tools/tug_check.gd | CI |  |
@@ -52,6 +53,7 @@
 | render/camera/tests/cross_ko_check.gd | CI |  |
 | render/camera/tests/flight_shots_check.gd | CI |  |
 | render/camera/tests/launch_shots_check.gd | CI |  |
+| render/camera/tests/own_pane_check.gd | CI |  |
 | render/camera/tests/peak_retry_check.gd | CI |  |
 | render/camera/tests/peak_shot_check.gd | CI |  |
 | render/camera/tests/split_share_check.gd | CI |  |
@@ -75,6 +77,7 @@
 | render/tools/hud_words_check.gd | GATE |  |
 | render/tools/lake_water_check.gd | CI |  |
 | render/tools/lane_check.gd | GATE |  |
+| render/tools/match_recorder_check.gd | CI |  |
 | render/tools/open_check.gd | GATE |  |
 | render/tools/outline_check.gd | UNREVIEWED |  |
 | render/tools/pane_check.gd | GATE |  |
@@ -126,6 +129,7 @@
 | sim/director/tools/launch_cuts_check.gd | UNREVIEWED |  |
 | sim/director/tools/loader_check.gd | UNREVIEWED |  |
 | sim/director/tools/location_check.gd | UNREVIEWED |  |
+| sim/director/tools/match_end_check.gd | CI |  |
 | sim/director/tools/morning_fixes_check.gd | UNREVIEWED |  |
 | sim/director/tools/outside_check.gd | UNREVIEWED |  |
 | sim/director/tools/pace_check.gd | UNREVIEWED |  |
@@ -200,6 +204,7 @@
 | sim/world/tools/brunt_check.gd | CI + gate |  |
 | sim/world/tools/burial_check.gd | CI + gate |  |
 | sim/world/tools/bystanders_check.gd | CI |  |
+| sim/world/tools/cache_warm_check.gd | CI |  |
 | sim/world/tools/calm_read_check.gd | CI |  |
 | sim/world/tools/campaign_check.gd | CI + gate |  |
 | sim/world/tools/climate_check.gd | CI + gate |  |
@@ -242,6 +247,7 @@
 | sim/world/tools/landmark_spare_check.gd | CI |  |
 | sim/world/tools/lane_check.gd | CI + gate |  |
 | sim/world/tools/lot_reach_check.gd | CI |  |
+| sim/world/tools/memory_model_check.gd | CI |  |
 | sim/world/tools/meteor_crater_check.gd | CI |  |
 | sim/world/tools/minecheck.gd | CI + gate |  |
 | sim/world/tools/node_warm_check.gd | CI |  |

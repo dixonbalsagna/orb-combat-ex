@@ -19,6 +19,7 @@ import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, save
 import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
 import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
 import { patchHost, patchAudio, patchHaptics, injectPage, hasHeader, BB_FINGERPRINT } from './blackbox.mjs';
+import { isOn } from './switches.mjs';
 import { shellSnippet, injectShell } from '../lib/audio-shell.mjs';
 import { setWebCustomTemplate } from '../flash/web-preset.mjs';
 import { fetchTemplate } from '../site-template.mjs';
@@ -102,6 +103,7 @@ export async function buildStackPreview(o) {
   };
   const pl = plan(repo, r.commit, { off: o.off || [], on: o.on || [], pending: pend.rows, read });
   const out = { sha: r.commit, subject: r.subject, report: r, stackLines: describeReport(r), active: pl.active, waiting: pl.waiting, held: pl.held, cascaded: pl.cascaded, urlWords: pl.urlWords, alts: pl.alts, table: pl.table, unknown: pl.unknown, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, dir: null, web: null, meta: null, scriptErrors: [] };
+  if (pl.landed && pl.landed.length) throw new Error(`${pl.landed.join(', ')} ${pl.landed.length > 1 ? 'are' : 'is'} main's own data since GW1a: there is no switch to turn on or off here`);
   if (pl.unknown.length) throw new Error(`unknown switch ${pl.unknown.join(', ')}`);
   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
   const tz = templateZip(o.template, repo);
@@ -123,7 +125,7 @@ export async function buildStackPreview(o) {
   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify(pageStamp(r.commit, commitDate(repo, r.commit), parksIn.length, key))}\n`);
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));
+  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: isOn(pl.active, 'struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, dashWord: pl.dashWord, circleWord: pl.circleWord }));
   if (pl.active.includes('blackbox')) { const af = join(tree, 'audio', 'audio_voices.gd'); if (existsSync(af)) writeFileSync(af, patchAudio(readFileSync(af, 'utf8'))); writeFileSync(mainFile, patchHaptics(readFileSync(mainFile, 'utf8'))); }
   if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'), { header: hasHeader(tree) })); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
   if (pl.active.includes('blackbox')) {   // Encounter's fix (2026-11-02): during a playback of a saved match the hook's ai scene stages nothing into it (the forms at 300 and 1500, the tier at 900, the stage at 1200)
