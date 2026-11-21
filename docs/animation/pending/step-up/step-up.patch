@@ -1,0 +1,234 @@
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index 54e75de..aee2bbd 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -155,6 +155,9 @@ var _gl_ld_t0: float = -10.0           # the landing's start, weight, surface ro
+ var _gl_ld_p: float = 0.0
+ var _gl_ld_row: String = "soil"
+ var _gl_ld_dir: float = 0.0
++var _gl_ld_ticks: float = -1.0         # the landing's own length in ticks, or a step-up's (-1: the landing row's)
++var _gl_prev_y: float = 0.0             # his height and place as the last solve read them (the step-up reads a floor's lift from them; nothing is written)
++var _gl_prev_x: float = 0.0
+ var _gl_surface_override: String = ""
+ var _lo_act: float = 0.0               # flight locomotion: how far it is on (it stands aside while he is busy), eased
+ var _lo_have: bool = false
+@@ -967,8 +970,23 @@ func _ground_layer(S: SimState, f, dt: float) -> void:
+ 			_gl_ld_p = clampf(-_gl_prev_vy / float(LD.get("ref_vy", 1400.0)), 0.12, 1.0)
+ 			_gl_ld_row = surf_key
+ 			_gl_ld_dir = signf(vf) if absf(vf) > 40.0 else 0.0
++			_gl_ld_ticks = -1.0
++		elif _gl_grounded and grounded and bool(G.get("step_up", {}).get("enabled", false)):
++			# the step-up (Game Design, docs/design/buildings.md 2026-11-20; World's floor-rise): the floor lifted him by more than `min_bh` body heights since the last solve while he stayed on it (a bank under a rising lake floor), so the
++			# sim moved him up in one tick. The view plays the landing crouch's opening frames, `ticks` of them; the body is never moved down into the bank (nothing is ever drawn inside it). A hop, a fall or a jump of place is not a lift.
++			var SU: Dictionary = G.step_up
++			var lift: float = f.y - _gl_prev_y
++			if lift > float(SU.get("min_bh", 0.5)) * float(SU.get("bh", 75.0)) and absf(SimWrap.sdx(_gl_prev_x, f.x)) <= float(SU.get("max_move", 200.0)) and vy < float(TO.get("min_vy", 150.0)):
++				_gl_ld_t0 = T
++				_gl_ld_p = clampf(lift / maxf(float(SU.get("bh", 75.0)) * float(SU.get("ref_bh", 2.0)), 1.0), float(SU.get("p_min", 0.5)), 1.0)
++				_gl_ld_row = surf_key
++				_gl_ld_dir = 0.0
++				_gl_ld_ticks = float(SU.get("ticks", 12))
++				debug["step_ups"] = int(debug.get("step_ups", 0)) + 1
+ 	_gl_grounded = grounded
+ 	_gl_prev_vy = vy
++	_gl_prev_y = f.y
++	_gl_prev_x = f.x
+ 	_gl_have = true
+ 	var calm: float = 0.5 if RenderAnim.reduced_motion else 1.0
+ 	var a: float = _gl_act * calm
+@@ -1015,9 +1033,10 @@ func _ground_layer(S: SimState, f, dt: float) -> void:
+ 	# the landing: the hips sink by how fast he arrived, the knees flex, he settles; by surface
+ 	var LD2: Dictionary = G.land
+ 	var LR: Dictionary = G.get("surfaces", {}).get(_gl_ld_row, {})
+-	var lt: float = (T - _gl_ld_t0) / (maxf(float(LD2.get("ticks", 18)) * float(LR.get("ticks", 1.0)), 6.0) * DT)
++	var ldn: float = maxf(_gl_ld_ticks if _gl_ld_ticks > 0.0 else float(LD2.get("ticks", 18)) * float(LR.get("ticks", 1.0)), 6.0)
++	var lt: float = (T - _gl_ld_t0) / (ldn * DT)
+ 	if _gl_ld_t0 > -5.0 and lt < 1.0:
+-		var lr: float = minf(6.0 / maxf(float(LD2.get("ticks", 18)) * float(LR.get("ticks", 1.0)), 6.0), 0.5)   # in over 6 ticks at the least
++		var lr: float = minf(6.0 / ldn, 0.5)   # in over 6 ticks at the least
+ 		var env: float = smoothstep(0.0, lr, lt) * (1.0 - smoothstep(lr, 1.0, lt))
+ 		var sk2: Array = LD2.get("sink", [3.0, 9.5])
+ 		var fl2: Array = LD2.get("flex", [0.2, 0.62])
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index 5925026..3816509 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -4206,6 +4206,131 @@ func _gl_run(who: String, course: Array, ticks: int, off: bool, surface: String)
+ 	return res
+ 
+ 
++## The step-up (docs/animation/step-up.md; Game Design, docs/design/buildings.md 2026-11-20): when the floor lifts a grounded fighter by more than half a body height between two solves (World's floor-rise: the sim moves him up in one tick,
++## uncapped), the body plays the landing crouch's opening frames, read from the sim's height and never written to it. The bank is raised under him by hand here (the terrain's deform, and his height set to the new floor, as the sim's
++## floor-rise does in one tick: the test's own writes), the body solved on the real rig.
++## Rows, both fighters: a lift of 0.9 body heights crouches the pelvis by the landing's sink and lets go inside 14 ticks, without a pop; a lift of 0.3 does nothing; a jump of place (400 sideways) does nothing; a rise from the air
++## does nothing; a lift with the row off does nothing; nothing is NaN or past a joint limit; the body is never moved down (the root offset's height stays 0).
++## A flat piece of dry land for the step-up rows: the first place whose ground, 160 and 320 units either side, is within 4 units of its own and well over the sea (a bank raised on it is a floor of its own, not under water).
++func _step_site(S: SimState) -> float:
++	for c in range(SimConst.NC):
++		var x: float = float(c) * SimConst.COL
++		var g: float = WorldTerrain.groundY(S, x)
++		if g < 30.0:
++			continue
++		var flat := true
++		for d in [-320.0, -160.0, 160.0, 320.0, 480.0]:
++			if absf(WorldTerrain.groundY(S, x + float(d)) - g) > 4.0:
++				flat = false
++				break
++		if flat:
++			return x
++	return -1.0
++
++
++func _step_run(who: String, lift: float, dx: float, in_air: bool, row_on: bool) -> Dictionary:
++	main.start_match(4, {"p1": false, "p2": false})
++	for i in range(10):
++		main.frame(1.0 / 60.0)
++	var S: SimState = main.host.S
++	var f0 = S.fighters[0]
++	var f1 = S.fighters[1]
++	RenderAnim._fighters.clear()
++	f0.id = who
++	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
++	var site: float = _step_site(S)
++	if site < 0.0:
++		return {"nan": 0, "viol": 0, "pel": [], "root_y": 0.0, "step_ups": 0, "nosite": true}
++	f0.x = site
++	f1.x = site + 900.0
++	var g0: float = WorldWater.floorAt(S, f0.x, f0.z)
++	f0.y = g0 + (40.0 if in_air else 0.0)
++	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
++	f0.state = "free"
++	f1.state = "free"
++	f0.face = 1.0
++	f0.vx = 0.0
++	f0.vy = 0.0
++	var su: Dictionary = AnimData.ground_motion.get("step_up", {})
++	var was_on: bool = bool(su.get("enabled", false))
++	su["enabled"] = row_on
++	var res := {"nan": 0, "viol": 0, "pel": [], "root_y": 0.0, "step_ups": 0}
++	for k in range(60):
++		S.tick = 9700 + k
++		S.T = 970.0 + float(k) / 60.0
++		if k == 30:
++			# the floor rises under (or ahead of) him by `lift` in a bank 41 columns wide, and the sim, as World's floor-rise does, puts him on the new floor in the same tick
++			var cc: int = int(SimWrap.wrap(f0.x + dx) / SimConst.COL)
++			for c in range(cc - 20, cc + 21):
++				S.deform[(c + SimConst.NC) % SimConst.NC] += lift
++			f0.x += dx
++			f0.y = WorldWater.floorAt(S, f0.x, f0.z)
++		var te := SimState.FxEvent.new()
++		te.type = "tick"
++		te.dt = 1.0 / 60.0
++		te.frozen = false
++		RenderAnim.consume(S, [te])
++		RenderAnim.debug_checks = true
++		var a0: AnimFighter = RenderAnim.solve(S, f0)
++		RenderAnim.solve(S, f1)
++		RenderAnim.debug_checks = false
++		for i in range(AnimRig.N):
++			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
++				res.nan += 1
++		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
++		(res.pel as Array).append(a0.socket("pelvis").y)
++		res.root_y = minf(float(res.root_y), a0.root_off.y)
++		res.step_ups = int(a0.debug.get("step_ups", 0))
++	su["enabled"] = was_on
++	return res
++
++
++func _test_step_up() -> void:
++	AnimData.load_every_wave()
++	var bad: Array = []
++	var seen: Array = []
++	for who in ["PROTAGONIST", "RIVAL"]:
++		var on: Dictionary = _step_run(who, 0.9 * 75.0, 0.0, false, true)
++		if on.has("nosite"):
++			bad.append("no flat dry land to stage the step-up on")
++			break
++		# the pelvis against the same staging with no lift at all (it breathes a little by itself): positive is the crouch
++		var calm: Dictionary = _step_run(who, 0.0, 0.0, false, true)
++		var crouch: float = 0.0
++		var last: int = 29
++		var step: float = 0.0
++		for k in range(30, 60):
++			var dev: float = float((calm.pel as Array)[k]) - float((on.pel as Array)[k])
++			crouch = maxf(crouch, dev)
++			if absf(dev) > 0.3:
++				last = k
++			step = maxf(step, absf(float((on.pel as Array)[k]) - float((on.pel as Array)[k - 1]) - (float((calm.pel as Array)[k]) - float((calm.pel as Array)[k - 1]))))
++		seen.append("%s crouch %.1f over %d ticks, step %.2f" % [who.substr(0, 1), crouch, last - 29, step])
++		if int(on.nan) > 0 or int(on.viol) > 0:
++			bad.append("%s: NaN %d, joint past a limit %d" % [who, int(on.nan), int(on.viol)])
++		if crouch < 2.0 or crouch > 9.0:
++			bad.append("%s: a lift of 0.9 body heights crouches the pelvis %.2f units (2 to 9 wanted)" % [who, crouch])
++		if last - 29 > 14:
++			bad.append("%s: the crouch lasts %d ticks (14 at most)" % [who, last - 29])
++		if step > 3.2:
++			bad.append("%s: the pelvis moves %.2f units in a solve over its own (3.2 at most: the idle body solves on twos)" % [who, step])
++		if float(on.root_y) < -0.001:
++			bad.append("%s: the body was moved down by %.2f (never into the bank)" % [who, float(on.root_y)])
++		if int(on.step_ups) != 1:
++			bad.append("%s: %d step-ups for one lift" % [who, int(on.step_ups)])
++		# each of these against the same staging with no lift
++		for c in [["a lift of 0.3 body heights", 0.3 * 75.0, 0.0, false, true], ["a jump of place (400 sideways)", 0.9 * 75.0, 400.0, false, true], ["a rise from the air", 0.9 * 75.0, 0.0, true, true], ["the row off", 0.9 * 75.0, 0.0, false, false]]:
++			var off: Dictionary = _step_run(who, float(c[1]), float(c[2]), bool(c[3]), bool(c[4]))
++			var ref: Dictionary = _step_run(who, 0.0, float(c[2]), bool(c[3]), true)
++			var dm: float = 0.0
++			for k in range(30, 60):
++				dm = maxf(dm, absf(float((off.pel as Array)[k]) - float((ref.pel as Array)[k])))
++			if dm > 0.05 or int(off.step_ups) != 0:
++				bad.append("%s: %s moved the pelvis %.2f (%d step-ups)" % [who, String(c[0]), dm, int(off.step_ups)])
++	_expect(bad.is_empty(), "step-up: %s" % str(bad))
++	print("step-up: %d problems; %s" % [bad.size(), "; ".join(seen)])
++
++
+ func _test_ground_motion() -> void:
+ 	AnimData.load_every_wave()
+ 	var bad: Array = []
+@@ -7795,6 +7920,7 @@ func _run() -> void:
+ 	_test_heavy_arm()
+ 	await _test_ragdoll()
+ 	_test_slope()
++	_test_step_up()
+ 	_test_hits()
+ 	_test_weight_aim()
+ 	_test_defender()
+diff --git a/data/anim/ground_motion.json b/data/anim/ground_motion.json
+index 80bcc25..b4e27b2 100644
+--- a/data/anim/ground_motion.json
++++ b/data/anim/ground_motion.json
+@@ -5,6 +5,7 @@
+   "gait": {"min_speed": 40.0, "full_speed": 130.0, "run_speed": 520.0, "max_speed": 900.0, "stride": 64.0, "thigh": [0.12, 0.46], "knee": [0.4, 1.0], "bob": [0.5, 1.7], "twist": [0.02, 0.07], "lean_deg": 2.5},
+   "takeoff": {"min_vy": 150.0, "ticks": 12, "kick": 0.32, "stretch": 0.18, "lift": 1.6},
+   "land": {"min_vy": 140.0, "ref_vy": 1400.0, "ticks": 18, "sink": [2.4, 6.2], "flex": [0.2, 0.62], "knee": 1.15},
++  "step_up": {"enabled": true, "min_bh": 0.5, "bh": 75.0, "max_move": 200.0, "ref_bh": 2.0, "p_min": 0.5, "ticks": 12, "_about": "The step-up (docs/animation/step-up.md; Game Design, docs/design/buildings.md 2026-11-20): a grounded fighter whose floor lifted him by more than min_bh body heights (bh units each) between two solves, moving at most max_move units sideways, plays the landing crouch's opening frames over `ticks` (in over 6, out over 6; the landing's sink and flex, at a strength of the lift over ref_bh body heights, never under p_min). Render only: the lift is read from the sim's height, nothing is written."},
+   "surfaces": {
+     "soil": {"sink": 1.0, "ticks": 1.0, "slide": 0.0, "stumble": 0.0, "lift": 1.0, "amp": 1.0},
+     "paving": {"sink": 0.8, "ticks": 0.8, "slide": 0.0, "stumble": 0.0, "lift": 1.0, "amp": 1.05},
+diff --git a/spN/docs/animation/step-up.md b/docs/animation/step-up.md
+new file mode 100644
+index 0000000..26fe8fa
+--- /dev/null
++++ b/docs/animation/step-up.md
+@@ -0,0 +1,21 @@
++# The step-up (Animation, 2026-11-20; parked for GW1b)
++
++Game Design's ruling (`docs/design/buildings.md`, 2026-11-20): the sim keeps World's one-tick floor lift uncapped (`docs/world/pending/floor-rise/`: a free fighter on a rising lake floor, or stepping onto a steep bank, is put on the floor in one tick, never inside it), and **the view covers it**: a lift of more than 0.5 body heights in one tick plays a short step-up, the landing crouch's opening frames, and the camera's own ease absorbs the rest. Nothing is drawn inside the bank.
++
++## What was built
++
++- **The rule** (`AnimFighter._ground_layer`, `render/anim/anim_fighter.gd`): the layer reads the fighter's height and place at each solve (`_gl_prev_y`, `_gl_prev_x`; read only, nothing written). If he was grounded and still is, his height rose by more than `min_bh` (0.5) body heights since the last solve, he moved at most `max_move` (200) units sideways, and he is not rising on his own (`vy` under the take-off's minimum), it starts the landing crouch with the step-up's own length. A hop, a fall, a rise from the air and a jump of place (a respawn, a teleport) are not lifts.
++- **The look:** the landing's own sink and flex (`land` row, by surface), at a strength of the lift over `ref_bh` (2) body heights and never under `p_min` (0.5), over `ticks` 12 (in over 6, out over 6: the "opening frames" of an 18-tick landing, let go early). A 0.9 body-height lift is a 5.4-unit crouch of the pelvis on a 75-unit body, both fighters. The body is never moved down into the bank. It stands aside while he is busy (an exchange, a rush, a hold, a launch), as the landing does.
++- **The data:** `data/anim/ground_motion.json` `step_up` (`enabled`, `min_bh`, `bh`, `max_move`, `ref_bh`, `p_min`, `ticks`), with its schema (`step-up-schema.patch`, tools/schemas/anim-ground-motion.schema.json: optional block). Off by `enabled: false`.
++- **The check:** `_test_step_up` (both fighters, on the real rig). A bank is raised under him by hand (the terrain's deform, and his height set to the new floor, as the sim does in one tick) on flat dry land; rows: a 0.9 body-height lift crouches the pelvis 2 to 9 units (5.4 measured) and lets go inside 14 ticks (12), without a pop (2.59 units in a solve, under the idle body's twos), one step-up for one lift, no NaN or joint past a limit, the body's height offset never negative (never into the bank); a 0.3 lift, a jump of place (400 sideways), a rise from the air and the row off each leave the pelvis as it was with no lift (to 0.05).
++
++## Proof
++
++- `anim_check` on the GW1a stack plus World's floor-rise grant: 0 failed, 10,556 checks (10,538 before; the step-up adds `_test_step_up`'s). On main with the patch: see the park's README.
++- The look gate's side-by-side: `docs/animation/runs/a25e9d9b/step-up/` (GIFs and a contact sheet, A without the step-up, B with it).
++
++## Not shown, not proven
++
++- **The lift is staged by hand in the clip** (the bank raised and the fighter put on it, as World's floor-rise does): the sim's own lift needs a fighter inside a rising floor stepping onto a 2.6-in-1 bank, which Game Design calls rare. The check reads the sim's height, so a real lift reads the same; no real match in the repository produced one.
++- **A rush or an exchange in progress** does not play it (the ground layer stands aside); the camera's ease covers those.
++- **The size:** 5 units of a 75-unit body is a small dip at the fight camera's distance. It reads in a close still; at the shipped camera it is a hitch, not a gesture, which is the ruling's intent. If Orb wants it bolder it is `p_min` and the land row's sink.

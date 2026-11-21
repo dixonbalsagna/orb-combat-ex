@@ -1,0 +1,3 @@
+step-up: 0 problems; P crouch 5.4 over 12 ticks, step 2.59; R crouch 5.4 over 12 ticks, step 2.59
+Anim check  10556 checks
+anim check passed
