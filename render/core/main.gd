@@ -243,15 +243,18 @@ func _ready() -> void:
 		boot.begin([pane], RenderLook.BOOT_WORDS)
 	SimHost.draw_others = args.has("others")   # 2v2: the other fight drawn; off; --others, ?others=1 on a local page
 	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
-	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
-	split_rig.peak_launch = RenderTileGround.on
-	split_rig.launch_director = RenderTileGround.on
-	split_rig.close_brawl = RenderTileGround.on
-	split_rig.readable = RenderTileGround.on
-	split_rig.split_share = float(CamPlaces.data().get("splitShare", 0.0)) if RenderTileGround.on else 0.0
-	split_rig.follow_through = RenderTileGround.on
-	split_rig.flight_reveal = RenderTileGround.on
-	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)
+	# The camera Orb played on 9 November, from Camera's data (data/camera/swing.json "pieces", A-CAMERA-01), at a plain start. The swing and the
+	# peak launch also need the globe ground drawn: the peak shot's widest view needs the globe (docs/camera/swing-view.md), so on the flat ground
+	# they stay off.
+	split_rig.swing_view = CamPlaces.piece("swingView") and RenderTileGround.on
+	split_rig.peak_launch = CamPlaces.piece("peakLaunch") and RenderTileGround.on
+	split_rig.launch_director = CamPlaces.piece("launchDirector")
+	split_rig.close_brawl = CamPlaces.piece("closeBrawl")
+	split_rig.readable = CamPlaces.piece("readable")
+	split_rig.split_share = float(CamPlaces.data().get("splitShare", 0.0))
+	split_rig.follow_through = CamPlaces.piece("followThrough")
+	split_rig.flight_reveal = CamPlaces.piece("flightReveal")
+	split_rig.flat_mode = String(args.get("flat", CamPlaces.flat_mode()))   # flat=wide or flat=hold still chooses it, for a comparison (launch-director.md)
 	RenderTileGround.rate = float(args.get("tilerate", 0.0))
 	RenderTileGround.quick = args.has("tilequick")
 	RenderTileGround.near_mode = int(args.get("nearmode", RenderLook.TILE_NEAR_DEFAULT))

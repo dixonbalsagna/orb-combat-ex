@@ -10,6 +10,21 @@
   "properties": {
     "schema": { "const": "camera.swing/1" },
     "splitShare": { "type": "number", "minimum": 0, "maximum": 1 },
+    "pieces": {
+      "type": "object",
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false,
+      "properties": {
+        "swingView": { "type": "boolean" },
+        "peakLaunch": { "type": "boolean" },
+        "launchDirector": { "type": "boolean" },
+        "closeBrawl": { "type": "boolean" },
+        "readable": { "type": "boolean" },
+        "followThrough": { "type": "boolean" },
+        "flightReveal": { "type": "boolean" }
+      }
+    },
+    "flatMode": { "enum": ["", "wide", "hold"] },
     "peakRate": { "type": "number", "exclusiveMinimum": 0, "maximum": 3 }
   }
 }

@@ -27,6 +27,16 @@ static func data() -> Dictionary:
 		_d = j
 	return _d
 
+## One of the camera pieces Orb played (data/camera/swing.json "pieces", A-CAMERA-01): off when the data doesn't name it.
+static func piece(key: String) -> bool:
+	var p = data().get("pieces", {})
+	return p is Dictionary and bool(p.get(key, false))
+
+
+## A flat send's shot from the data: "wide", "hold" or "" (none).
+static func flat_mode() -> String:
+	return String(data().get("flatMode", ""))
+
 const _TALL_RINGS: Array = [0.5, 1.0]
 const _TALL_SPOKES: int = 8
 
