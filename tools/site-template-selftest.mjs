@@ -153,14 +153,13 @@ check('RL-202: the entry waives the signature limit and nothing else (a collapse
 check('RL-202: a stale entry fails by itself (flipEntryProblems): past its date, for another pin, whole and live is empty', flipEntryProblems(ENTRY, cfg(), '2026-11-02').length === 1 && flipEntryProblems(ENTRY, cfg({ pin: 'c'.repeat(40) }), '2026-10-29').length === 1 && flipEntryProblems(ENTRY, cfg(), '2026-10-29').length === 0 && flipEntryProblems(undefined, cfg(), '2026-12-31').length === 0 && flipEntryProblems({ ruling: 'RL-202' }, cfg(), '2026-10-29').length === 1);
 check('RL-202: noWorseProblems is exported and equal numbers have none', noWorseProblems(flipRec(), PIN).length === 0);
 {
-  // the tree's own files: the entry in signature-gate.json names the pin of site.json and the zip web-template.json pins, and (on a fixed date, so this never rots) the real record passes with the real data
+  // the tree's own files, after Legal's RL-202 ended on 2026-11-15: signature-gate.json carries no engineFlip entry, site.json says "standard" (the one-step rollback), and the custom record, which reads worse than the reduced limit, is refused
+  // by RL-195 with nothing to excuse it (the record's readings are unchanged: they equal the standard build's on every number, which no longer lets it through)
   const gate = JSON.parse(readFileSync(join(here, 'flash', 'signature-gate.json'), 'utf8')), site = JSON.parse(readFileSync(join(here, 'site.json'), 'utf8')), real = JSON.parse(readFileSync(join(here, 'web-template.json'), 'utf8'));
-  const e = gate.engineFlip;
-  check('the tree: the engineFlip entry names RL-202, the site pin, the pinned zip\'s tag and SHA-512, and ends on 2026-11-15', !!e && e.ruling === 'RL-202' && e.commit === site.pin && e.commit === gate.commit && e.until === '2026-11-15' && e.template.sha512 === real.sha512 && real.url.includes(`/releases/download/${e.template.tag}/`), JSON.stringify(e && e.template));
-  const ctx = loadCtx(join(here, '..'), '2026-10-29');
-  check('the tree: with "custom", the real record passes the real check on 2026-10-29 (RL-202), and the real readings equal the standard build\'s on every number', recordProblems(real, { ...site, template: 'custom' }, ctx).length === 0 && noWorseProblems(real, site.pin).length === 0, JSON.stringify(recordProblems(real, { ...site, template: 'custom' }, ctx)));
-  check('the tree: the same record on 2026-11-16 is refused by RL-195 (the entry has ended)', recordProblems(real, { ...site, template: 'custom' }, loadCtx(join(here, '..'), '2026-11-16')).some((m) => /worse than 2\.5.*ended on 2026-11-15/.test(m)));
-  check('the tree: site.json says "custom" (the flip), and "standard" is the one-step rollback the check accepts', site.template === 'custom' && templateOf({ ...site, template: 'standard' }) === 'standard');
+  check('the tree: the engineFlip entry is gone (RL-202 ended on 2026-11-15; the signature limit applies to every engine in full)', !('engineFlip' in gate));
+  check('the tree: with "custom", the real record is refused by RL-195 (its reduced reading is over 2.5 / 3 / 2 and there is no entry that excuses it)', recordProblems(real, { ...site, template: 'custom' }, loadCtx(join(here, '..'), '2026-11-21')).some((m) => /worse than 2\.5.*there is no engineFlip entry/.test(m)));
+  check('the tree: the real readings still equal the standard build\'s on every number (a fact about the record, not a pass)', noWorseProblems(real, site.pin).length === 0);
+  check('the tree: site.json says "standard" (the site is offline and the custom engine may not serve), and the check accepts it', site.template === 'standard' && templateOf(site) === 'standard');
 }
 
 // the zip
