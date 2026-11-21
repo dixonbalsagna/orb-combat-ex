@@ -60,3 +60,10 @@ Rendering, on the EP's order: "the sizes with the level-0 tile scaling". It foll
    - By tick 90 the camera is at the fighters and every sight line is clear.
    - A 6,256 peak on a 13,038 radius is World's relief at small, uncapped (only buildings are capped there, at 0.3 of the radius). The fix is World's and Art's (a relief cap by size), or Camera's (an opening that keeps clear of the ground).
    - Small's later frames (dark wedges in the beamduel's split panes) aren't read yet: the probe's AI match doesn't stage the beam duel.
+7. **Small's later frames: the dark wedges** (2026-11-20; stills `sizes-smallfix-*` and `sizes-smallnorows-*`, not committed).
+   - With `fore_fix.diff` on top, small's left pane is clearer (the fighter and the plateau show), but the wedges stay. So the clamp isn't their cause.
+   - With a scratch `norows` word (the strip rows' band shut on the tiles), the dark brown is gone and the same zigzag shapes stand as grey rock faces.
+   - So the colour is the rows' scorch, the beam's groove band. It fills whole triangles, because the vertices near that pane's camera are hundreds of units apart.
+   - The shape is small's steep relief drawn with coarse triangles: the same relief as frame 1, World's relief cap.
+   - Not yet known: why the near ground at the split pane's camera is still coarse at frame 451. The guess, unproven: small's fill is slower, because off the lattice every node reads `WorldField.sample`. That needs the web build: headless doesn't draw the split's second pane.
+   - A fix on my side if wanted: apply the rows' band (dent and scorch) only on tiles fine enough to hold a groove (level 3 and finer), so a coarse tile isn't painted.
