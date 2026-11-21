@@ -24,7 +24,7 @@ index 53b1d7f..c008534 100644
        - name: Keep the reading (summary and verdict, 30 days)
          if: always()
 diff --git a/docs/tools/flash-nightly.md b/docs/tools/flash-nightly.md
-index f99b680..3a5e730 100644
+index f99b680..e26ea30 100644
 --- a/docs/tools/flash-nightly.md
 +++ b/docs/tools/flash-nightly.md
 @@ -88,3 +88,14 @@ Full local readings of the four clips (the nightly's page words, one at a time,
@@ -38,12 +38,12 @@ index f99b680..3a5e730 100644
 +
 +- **Red** when a clip reads **worse** than its recorded value on any of the four readings (primary, red, area-15%, two-second memory) (exit 4); when a clip has **no recorded value** (a new clip, exit 5); when a clip, or one of its readings, was **not read** (exit 2, as before).
 +- **Green** only when every clip **equals or beats** its recorded value. A clip that is over the line AS RECORDED is noted on the run ("over the line of 3, as recorded") and is not red; a clip that reads better is noted too.
-+- **The recorded values are the worst of the six nights per reading** (the five nights for clash-night normal: 16 November was not read). They are recorded as they are, over the line included. collapse-normal's value is loose (primary 3, two-second memory 4) because of one night, 19 November, against 2 on the other five: a real slip from 2 to 3 would hide inside it. Say if you want it tightened to 2 with a noise allowance.
++- **The recorded values are the worst of the six nights per reading** (the five nights for clash-night normal: 16 November was not read), recorded as they are, over the line included. **The exception is collapse-normal, recorded at its five-night value, 2 on the primary, area and memory readings, with no allowance (the EP, 2026-11-21):** the one noisy night, 19 November (3 / 3 / 4), is left out on purpose, a noisy night going red is the tripwire doing its job, and a slip from 2 to 3 must show.
 +- **What it does not touch:** the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line, unchanged; `nightly-ci.mjs` without `--baseline` is the old verdict, and its self-test still holds it. Nothing that guards a player is loosened.
 +- **Updating a value** is by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.
-+- Proof: the self-test (46 checks, 27 before) covers each reading one step worse, a new clip, a missing reading, equal and better, the real file; and the six real nights replayed through it: 47 of the 48 clip-nights are green, the 48th is 16 November's clash-night normal, which was not read.
++- Proof: the self-test (47 checks, 27 before) covers each reading one step worse, a new clip, a missing reading, equal and better, the real file; and the six real nights replayed through it: 46 of the 48 clip-nights are green; the two that are not are 16 November's clash-night normal (not read) and 19 November's collapse-normal (3 / 3 / 4 against its recorded 2 / 2 / 2: red, as ruled).
 diff --git a/docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md b/docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md
-index c8876b1..b970dcb 100644
+index c8876b1..44e6352 100644
 --- a/docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md
 +++ b/docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md
 @@ -39,4 +39,4 @@ The worst reading of the six nights is the clash clip in the reduced mode at **6
@@ -51,9 +51,70 @@ index c8876b1..b970dcb 100644
  - Not new numbers for the pin: no pin moves on these.
  - The flash numbers go to the EP only (Orb's word, 2026-11-01).
 -- GitHub emails the repository owner about a failed scheduled run: six emails, one a night, for the same expected reason. Tell me if the nightly should be made to say "known red" (an expected-over list in `tools/flash/nightly-windows.json`) so only a change turns it red; that is a design choice, not done here.
-+- GitHub emails the repository owner about a failed scheduled run: six emails, one a night, for the same expected reason. **Decided 2026-11-21 (the EP):** the nightly is now judged against recorded values and turns red only on a clip that reads worse than the record, a new clip or a missing reading; **the six-night values above, taken as the worst of the six per reading, are that baseline** (`tools/flash/nightly-baseline.json`; `docs/tools/flash-nightly.md` says how it works). The outside-tester gate and the release pass still read the absolute line.
++- GitHub emails the repository owner about a failed scheduled run: six emails, one a night, for the same expected reason. **Decided 2026-11-21 (the EP):** the nightly is now judged against recorded values and turns red only on a clip that reads worse than the record, a new clip or a missing reading; **the six-night values above, taken as the worst of the six per reading (collapse-normal at its five-night value, 2 / 2 / 2: the EP's ruling), are that baseline** (`tools/flash/nightly-baseline.json`; `docs/tools/flash-nightly.md` says how it works). The outside-tester gate and the release pass still read the absolute line.
+diff --git a/tools/flash/nightly-baseline.json b/tools/flash/nightly-baseline.json
+new file mode 100644
+index 0000000..870be0a
+--- /dev/null
++++ b/tools/flash/nightly-baseline.json
+@@ -0,0 +1,55 @@
++{
++  "_about": "The nightly flash reading's RECORDED VALUES (the EP, 2026-11-21): each clip's four readings (primary, red, area-15% and two-second memory) as the worst of the six scheduled nights of 15 to 20 November 2026 (collapse-normal excepted: the EP recorded it at its five-night value, 2 on the primary, area and memory readings, with no allowance, so the one noisy night of 19 November is NOT in it) (runs 43711627577, 43870618754, 44094333781, 44311081706, 44533410579, 44741476400; all on commit 09aa0f44; docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md). tools/flash/nightly-ci.mjs --baseline turns the nightly red when a clip reads WORSE than its recorded value on any of the four, when a clip has no recorded value, or when a reading is missing; it is green only when every clip equals or beats its recorded value. This file is read ONLY by the nightly: the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line and do not use it. Several of these values are OVER the line of 3 (the clash clips, signature reduced): they are recorded as they are, so the nightly says nothing new about them until they get worse. Update a value by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.",
++  "recorded": "2026-11-21",
++  "basis": "the worst of the six nights per reading (clash-night-normal: of five, 16 Nov was not read), except collapse-normal: its five-night value, 2 / 2 / 2 (the EP, 2026-11-21: no allowance; a noisy night going red is the tripwire doing its job and a slip from 2 to 3 must show). The one night it read 3 / 3 / 4, 19 Nov, is left out on purpose.",
++  "clips": {
++    "clash-normal": {
++      "primary": 4.5,
++      "red": 0,
++      "area15": 4.5,
++      "twoSec": 4.5
++    },
++    "clash-reduced": {
++      "primary": 6.5,
++      "red": 0,
++      "area15": 6.5,
++      "twoSec": 6.5
++    },
++    "collapse-normal": {
++      "primary": 2,
++      "red": 0,
++      "area15": 2,
++      "twoSec": 2
++    },
++    "collapse-reduced": {
++      "primary": 3,
++      "red": 0,
++      "area15": 3,
++      "twoSec": 2.5
++    },
++    "signature-normal": {
++      "primary": 3,
++      "red": 0,
++      "area15": 2.5,
++      "twoSec": 2.5
++    },
++    "signature-reduced": {
++      "primary": 4,
++      "red": 0,
++      "area15": 5,
++      "twoSec": 2.5
++    },
++    "clash-night-normal": {
++      "primary": 3.5,
++      "red": 0,
++      "area15": 4.5,
++      "twoSec": 3.5
++    },
++    "clash-night-reduced": {
++      "primary": 5.5,
++      "red": 0,
++      "area15": 5.5,
++      "twoSec": 5.5
++    }
++  }
++}
 diff --git a/tools/flash/nightly-ci-selftest.mjs b/tools/flash/nightly-ci-selftest.mjs
-index 8d9ae0f..1064039 100644
+index 8d9ae0f..65a5370 100644
 --- a/tools/flash/nightly-ci-selftest.mjs
 +++ b/tools/flash/nightly-ci-selftest.mjs
 @@ -1,7 +1,7 @@
@@ -65,7 +126,7 @@ index 8d9ae0f..1064039 100644
  import { tmpdir } from 'node:os';
  import { dirname, join } from 'node:path';
  import { fileURLToPath } from 'node:url';
-@@ -60,6 +60,38 @@ check('the expected set is a parameter (the night-sky clip joins it later)', jud
+@@ -60,6 +60,40 @@ check('the expected set is a parameter (the night-sky clip joins it later)', jud
  const text = report(judge(clean()));
  check('the report is a table with a verdict line', /^clip +primary +red +area-15% +2 s mem/.test(text) && /nightly flash reading: flash reading clean$/.test(text));
  
@@ -99,12 +160,14 @@ index 8d9ae0f..1064039 100644
 +  check('the real baseline: a night that reads exactly the recorded values is green', judge(atReal, { baseline: real }).code === 0);
 +  const worseReal = atReal.map((r) => ({ ...r })); worseReal[0] = row(EXPECTED[0], real[EXPECTED[0]].primary + 0.5, real[EXPECTED[0]].red, real[EXPECTED[0]].area15, real[EXPECTED[0]].twoSec);
 +  check('the real baseline: half a step worse on one clip is red', judge(worseReal, { baseline: real }).code === 4);
++  const cn = real['collapse-normal'];
++  check('the real baseline records collapse-normal at its five-night value, 2 on the primary, area and memory readings, so a slip to 2.5 is red (the EP, 2026-11-21: no allowance)', cn.primary === 2 && cn.area15 === 2 && cn.twoSec === 2 && judge([row('collapse-normal', 2.5, 0, 2, 2)], { baseline: real, expected: ['collapse-normal'] }).code === 4 && judge([row('collapse-normal', 2, 0, 2, 2)], { baseline: real, expected: ['collapse-normal'] }).code === 0);
 +}
 +
  // the command, end to end, on a folder of summary files
  const d = mkdtempSync(join(tmpdir(), 'nightly-ci-'));
  try {
-@@ -78,6 +110,17 @@ try {
+@@ -78,6 +112,17 @@ try {
    check('the command exits 2 when half the clips are missing', r.status === 2, r.stdout + r.stderr);
    r = spawnSync(process.execPath, [join(here, 'nightly-ci.mjs')], { encoding: 'utf8' });
    check('no folder given: the usage and exit 2', r.status === 2 && /usage/.test(r.stderr));
@@ -207,64 +270,3 @@ index 4825742..276f85d 100644
    const text = report(j, line);
    console.log(text);
    if (opt('--md')) writeFileSync(resolve(opt('--md')), '```\n' + text + '\n```\n');
-diff --git a/tools/flash/nightly-baseline.json b/tools/flash/nightly-baseline.json
-new file mode 100644
-index 0000000..64cd221
---- /dev/null
-+++ b/tools/flash/nightly-baseline.json
-@@ -0,0 +1,55 @@
-+{
-+  "_about": "The nightly flash reading's RECORDED VALUES (the EP, 2026-11-21): each clip's four readings (primary, red, area-15% and two-second memory) as the worst of the six scheduled nights of 15 to 20 November 2026 (runs 43711627577, 43870618754, 44094333781, 44311081706, 44533410579, 44741476400; all on commit 09aa0f44; docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md). tools/flash/nightly-ci.mjs --baseline turns the nightly red when a clip reads WORSE than its recorded value on any of the four, when a clip has no recorded value, or when a reading is missing; it is green only when every clip equals or beats its recorded value. This file is read ONLY by the nightly: the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line and do not use it. Several of these values are OVER the line of 3 (the clash clips, signature reduced): they are recorded as they are, so the nightly says nothing new about them until they get worse. Update a value by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.",
-+  "recorded": "2026-11-21",
-+  "basis": "the worst of the six nights per reading (clash-night-normal: of five, 16 Nov was not read). collapse-normal's value is loose (primary 3, area 3, two-second memory 4) because of one night, 19 Nov, against 2 on the other five.",
-+  "clips": {
-+    "clash-normal": {
-+      "primary": 4.5,
-+      "red": 0,
-+      "area15": 4.5,
-+      "twoSec": 4.5
-+    },
-+    "clash-reduced": {
-+      "primary": 6.5,
-+      "red": 0,
-+      "area15": 6.5,
-+      "twoSec": 6.5
-+    },
-+    "collapse-normal": {
-+      "primary": 3,
-+      "red": 0,
-+      "area15": 3,
-+      "twoSec": 4
-+    },
-+    "collapse-reduced": {
-+      "primary": 3,
-+      "red": 0,
-+      "area15": 3,
-+      "twoSec": 2.5
-+    },
-+    "signature-normal": {
-+      "primary": 3,
-+      "red": 0,
-+      "area15": 2.5,
-+      "twoSec": 2.5
-+    },
-+    "signature-reduced": {
-+      "primary": 4,
-+      "red": 0,
-+      "area15": 5,
-+      "twoSec": 2.5
-+    },
-+    "clash-night-normal": {
-+      "primary": 3.5,
-+      "red": 0,
-+      "area15": 4.5,
-+      "twoSec": 3.5
-+    },
-+    "clash-night-reduced": {
-+      "primary": 5.5,
-+      "red": 0,
-+      "area15": 5.5,
-+      "twoSec": 5.5
-+    }
-+  }
-+}
