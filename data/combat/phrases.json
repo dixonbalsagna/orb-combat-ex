@@ -1,7 +1,7 @@
 {
   "schema": "combat.phrases/1",
   "_about": "Each fighter's phrases, written by docs/combat/pending/phrases/gen_phrases.mjs from a fixed seed (rule-of-cool-map.md row 1): don't edit by hand. A press inside a phrase takes its next piece in place of the pool's draw, and one outside falls back to the pool. Worth and timing are the cell's, unchanged. b: X, Y or stick. g: tap, mash or hold; a stick's flick or hold, with dir. piece: one blow; pieces: a mash or a held X's blows, in turn. enders: the last blow's piece by place class, read once at that blow. Reader rules: docs/combat/pending/phrases/README.md",
-  "enabled": false,
+  "enabled": true,
   "generator": {
     "seed": 20261004,
     "version": 1
