@@ -1,0 +1,174 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+--- the energy model and the dash OFF (main before GW1a)
+  ok    brunt.json loads clean ([])
+  ok    the switch is off in the data (interiorChain 0)
+  ok    Game Design's values stand in the data (keep 0.4 and 0.7, 5 contacts, 3 bounces, stop 15, cap 2.5 s, ceiling from tier 3)
+  ok    there is a tower to launch at (33 floors, 675 wide)
+  ok    switch off: no interior event, no interior state
+  ok    tier 1 down: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 1 down: one interior_end, after the last contact
+  ok    tier 1 down: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 1 down: at most 5 contacts after the face (3), t 0.50 s <= 2.5, the end counts them
+  ok    tier 1 down: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 1 down: below tier 3 no ceiling reverses him
+  ok    tier 1 down: tier 1 breaks no slab
+  ok    tier 1 down: each broken slab went through the floors machinery (0 floor_hit punches for 0 broken slabs)
+  ok    tier 2 down: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 2 down: one interior_end, after the last contact
+  ok    tier 2 down: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 2 down: at most 5 contacts after the face (4), t 0.92 s <= 2.5, the end counts them
+  ok    tier 2 down: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 2 down: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 2 down: below tier 3 no ceiling reverses him
+  ok    tier 2 down: each broken slab went through the floors machinery (1 floor_hit punches for 1 broken slabs)
+  ok    tier 3 down: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 3 down: one interior_end, after the last contact
+  ok    tier 3 down: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 3 down: at most 5 contacts after the face (4), t 0.90 s <= 2.5, the end counts them
+  ok    tier 3 down: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 3 down: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 3 down: a ceiling that breaks keeps 0.4 (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down
+  ok    tier 3 down: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 3 down: from tier 3 the ceiling is reached (or he left first: lodge)
+  ok    tier 3 down: each broken slab went through the floors machinery (3 floor_hit punches for 3 broken slabs)
+  ok    tier 4 down: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 4 down: one interior_end, after the last contact
+  ok    tier 4 down: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 4 down: at most 5 contacts after the face (3), t 2.45 s <= 2.5, the end counts them
+  ok    tier 4 down: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 4 down: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 4 down: a ceiling that breaks keeps 0.4 (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down
+  ok    tier 4 down: from tier 3 the ceiling is reached (or he left first: exit)
+  ok    tier 4 down: each broken slab went through the floors machinery (2 floor_hit punches for 2 broken slabs)
+  ok    tier 1 up: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 1 up: one interior_end, after the last contact
+  ok    tier 1 up: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 1 up: at most 5 contacts after the face (3), t 0.50 s <= 2.5, the end counts them
+  ok    tier 1 up: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 1 up: below tier 3 no ceiling reverses him
+  ok    tier 1 up: tier 1 breaks no slab
+  ok    tier 1 up: each broken slab went through the floors machinery (0 floor_hit punches for 0 broken slabs)
+  ok    tier 2 up: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 2 up: one interior_end, after the last contact
+  ok    tier 2 up: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 2 up: at most 5 contacts after the face (4), t 0.92 s <= 2.5, the end counts them
+  ok    tier 2 up: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 2 up: a ceiling that breaks keeps 0.7 (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down
+  ok    tier 2 up: below tier 3 no ceiling reverses him
+  ok    tier 2 up: each broken slab went through the floors machinery (1 floor_hit punches for 1 broken slabs)
+  ok    tier 3 up: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 3 up: one interior_end, after the last contact
+  ok    tier 3 up: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 3 up: at most 5 contacts after the face (3), t 0.43 s <= 2.5, the end counts them
+  ok    tier 3 up: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 3 up: a ceiling that breaks keeps 0.4 (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down
+  ok    tier 3 up: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 3 up: from tier 3 the ceiling is reached (or he left first: lodge)
+  ok    tier 3 up: each broken slab went through the floors machinery (2 floor_hit punches for 2 broken slabs)
+  ok    tier 4 up: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 4 up: one interior_end, after the last contact
+  ok    tier 4 up: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 4 up: at most 5 contacts after the face (4), t 2.50 s <= 2.5, the end counts them
+  ok    tier 4 up: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 4 up: a ceiling that breaks keeps 0.4 (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down
+  ok    tier 4 up: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 4 up: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 4 up: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 4 up: from tier 3 the ceiling is reached (or he left first: capped)
+  ok    tier 4 up: each broken slab went through the floors machinery (5 floor_hit punches for 4 broken slabs)
+  ok    a fast steep send at tier 1 bounces off the held floor (face floor16 ceiling17 floor16 END:lodge)
+  ok    under 900 he lodges on the held floor (face floor16 END:lodge)
+  ok    shallower than 40 degrees to the slab he lodges (face floor16 END:lodge)
+  ok    a send at tangent 0.15 (outside 15 to 60 degrees) takes today's path
+  ok    a send at tangent 2.50 (outside 15 to 60 degrees) takes today's path
+  ok    a house takes today's path
+  ok    the same launch twice: the same events, the same state hash (6a33809e)
+  ok    the token is closed when the chain ends (chainEvt 0.0)
+  ok    a chain that starts with no token takes one (chainEvt 1.0)
+  ok    mid-chain the state hashes and the hash moves with it (inside: b9c5e42f then aea1318c, before 6f600ff7)
+  ok    158 random chains: one end each, at most 4 contacts, longest 2.50 s, none left running (ends { "exit": 50, "lodge": 73, "fall_out": 33, "capped": 2 }; 38 bounces, 14 links to a next tower)
+  ok    bounces happen in the random chains
+--- the energy model and the dash ON (Orb's real path)
+  ok    brunt.json loads clean ([])
+  ok    the switch is off in the data (interiorChain 0)
+  ok    Game Design's values stand in the data (keep 0.4 and 0.7, 5 contacts, 3 bounces, stop 15, cap 2.5 s, ceiling from tier 3)
+  ok    there is a tower to launch at (33 floors, 675 wide)
+  ok    switch off: no interior event, no interior state
+  ok    tier 1 down: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 1 down: one interior_end, after the last contact
+  ok    tier 1 down: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 1 down: at most 5 contacts after the face (1), t 0.82 s <= 2.5, the end counts them
+  ok    tier 1 down: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 1 down: below tier 3 no ceiling reverses him
+  ok    tier 1 down: tier 1 breaks no slab
+  ok    tier 1 down: each broken slab went through the floors machinery (1 floor_hit punches for 0 broken slabs)
+  ok    tier 2 down: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 2 down: one interior_end, after the last contact
+  ok    tier 2 down: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 2 down: at most 5 contacts after the face (2), t 1.60 s <= 2.5, the end counts them
+  ok    tier 2 down: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 2 down: a floor he goes through keeps 0.7 and its normal points up
+  ok    tier 2 down: below tier 3 no ceiling reverses him
+  ok    tier 2 down: each broken slab went through the floors machinery (2 floor_hit punches for 1 broken slabs)
+  ok    tier 3 down: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 3 down: one interior_end, after the last contact
+  ok    tier 3 down: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 3 down: at most 5 contacts after the face (1), t 2.50 s <= 2.5, the end counts them
+  ok    tier 3 down: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 3 down: a floor he goes through keeps 0.7 and its normal points up
+      OFF-PATH under the model: the ceiling by tier: the reach of a send is its energy (its speed), not its tier, and a send bounces off the ground at most once (power.json contact.maxTerrainBounces 1); the row stages a tier
+  ok    tier 3 down: each broken slab went through the floors machinery (2 floor_hit punches for 1 broken slabs)
+  ok    tier 4 down: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 4 down: one interior_end, after the last contact
+  ok    tier 4 down: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 4 down: at most 5 contacts after the face (1), t 2.50 s <= 2.5, the end counts them
+  ok    tier 4 down: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 4 down: a floor he goes through keeps 0.7 and its normal points up
+      OFF-PATH under the model: the ceiling by tier: the reach of a send is its energy (its speed), not its tier, and a send bounces off the ground at most once (power.json contact.maxTerrainBounces 1); the row stages a tier
+  ok    tier 4 down: each broken slab went through the floors machinery (2 floor_hit punches for 1 broken slabs)
+  ok    tier 1 up: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 1 up: one interior_end, after the last contact
+  ok    tier 1 up: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 1 up: at most 5 contacts after the face (1), t 0.82 s <= 2.5, the end counts them
+  ok    tier 1 up: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 1 up: below tier 3 no ceiling reverses him
+  ok    tier 1 up: tier 1 breaks no slab
+  ok    tier 1 up: each broken slab went through the floors machinery (1 floor_hit punches for 0 broken slabs)
+  ok    tier 2 up: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 2 up: one interior_end, after the last contact
+  ok    tier 2 up: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 2 up: at most 5 contacts after the face (2), t 1.60 s <= 2.5, the end counts them
+  ok    tier 2 up: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 2 up: a ceiling that breaks keeps 0.7 (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down
+  ok    tier 2 up: below tier 3 no ceiling reverses him
+  ok    tier 2 up: each broken slab went through the floors machinery (2 floor_hit punches for 1 broken slabs)
+  ok    tier 3 up: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 3 up: one interior_end, after the last contact
+  ok    tier 3 up: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 3 up: at most 5 contacts after the face (1), t 2.50 s <= 2.5, the end counts them
+  ok    tier 3 up: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 3 up: a ceiling that breaks keeps 0.4 (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down
+      OFF-PATH under the model: the ceiling by tier: the reach of a send is its energy (its speed), not its tier, and a send bounces off the ground at most once (power.json contact.maxTerrainBounces 1); the row stages a tier
+  ok    tier 3 up: each broken slab went through the floors machinery (2 floor_hit punches for 1 broken slabs)
+  ok    tier 4 up: the entry face first (k 0, stop 15, nx -1)
+  ok    tier 4 up: one interior_end, after the last contact
+  ok    tier 4 up: the contacts are numbered 0, 1, 2 ... in order
+  ok    tier 4 up: at most 5 contacts after the face (1), t 2.50 s <= 2.5, the end counts them
+  ok    tier 4 up: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall
+  ok    tier 4 up: a ceiling that breaks keeps 0.4 (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down
+      OFF-PATH under the model: the ceiling by tier: the reach of a send is its energy (its speed), not its tier, and a send bounces off the ground at most once (power.json contact.maxTerrainBounces 1); the row stages a tier
+  ok    tier 4 up: each broken slab went through the floors machinery (2 floor_hit punches for 1 broken slabs)
+      OFF-PATH under the model: the floor bounce: the reach of a send is its energy (its speed), not its tier, and a send bounces off the ground at most once (power.json contact.maxTerrainBounces 1); the row stages a tier
+  ok    under 900 he lodges on the held floor (face floor16 END:lodge)
+  ok    shallower than 40 degrees to the slab he lodges (face! floor15 END:lodge)
+  ok    a send at tangent 0.15 (outside 15 to 60 degrees) takes today's path
+  ok    a send at tangent 2.50 (outside 15 to 60 degrees) takes today's path
+  ok    a house takes today's path
+  ok    the same launch twice: the same events, the same state hash (6c50b47c)
+  ok    the token is closed when the chain ends (chainEvt 0.0)
+  ok    a chain that starts with no token takes one (chainEvt 1.0)
+  ok    mid-chain the state hashes and the hash moves with it (inside: 531b8b96 then 66f37eec, before fbfab593)
+  ok    158 random chains: one end each, at most 5 contacts, longest 2.50 s, none left running (ends { "exit": 59, "lodge": 82, "capped": 3, "fall_out": 14 }; 36 bounces, 11 links to a next tower)
+  ok    bounces happen in the random chains
+INTERIOR: 0 check(s) failed

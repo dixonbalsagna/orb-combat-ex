@@ -1,0 +1,24 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok   the setup's power switch is the match's (off false, on true)
+  ok   off: tier 4 at 900 a second is E 1.75, as before (1.75)
+  ok   on: no tier term (900 is E 1, 2,700 is E 9)
+  ok   off: an ordinary blow of E 100 is held to 600 (600)
+  ok   on: the same energy digs 1600, 160 x root E (1600)
+  ok   the planet has a house, a low tower and a tall tower to test on
+  ok   masses 1, 5 and 15 (1, 5, 15)
+  ok   a base send (E 4.94) goes through a house and keeps 0.89 of its speed
+  ok   E 4.94 does not go through a low tower (mass 5), whatever the tier: crack
+  ok   E 6 does, and keeps the root of what is left (0.41)
+  ok   E 14 is held by a tall tower (mass 15): crack
+  ok   a maximum send (E 60.5) goes through 4 tall towers (Game Design: 4), speed falling as it goes
+  ok   chain cap: off the tier's links (1 and 4), on the energy is the budget
+  ok   off: the tier factor is the tier's row (0.73, 0.12)
+  ok   on: the level decides, not the tier: base 0.12, top 0.73
+  ok   on: a middle level reads between the rows (0.45), and the hold follows the level (0.9 s at the top)
+  ok   off: the bounces a send may take go with the tier (tier 4: 3, tier 1: 1)
+  ok   on: one bounce a send at most, whatever the tier
+  ok   on: no journey of eight shallow tier-4 sends bounces off the ground more than once (0; off: 2), and the contacts of the worst are 3 (off: 4)
+POWERWORLD: 0 check(s) failed
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

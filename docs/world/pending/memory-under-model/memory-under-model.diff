@@ -1,0 +1,154 @@
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -394,10 +394,24 @@
+ 	return clampf(sqrt(maxf(E - m, 0.0) / maxf(E, 1.0e-9)), 0.0, 1.0)
+ 
+ 
++## A building's memory under the power model (Orb, homework 30: a send into a building already marked meets it one tier higher for each mark, up to repeatMarks; Game Design, buildings.md section 9: the building remembers, so
++## the second and third sends bring it down). With the model on there is no tier to raise, so a mark is one tier of the model's own step, the level a tier is worth (SimPower.tierShare over the three steps between tier 1 and 4),
++## and it shows as the building's weakening: it takes that much less of the body's energy to go through it. The factor is energyTop to the minus (tierShare / 3) per mark: about 0.51 for one, 0.26 for two. 1.0 with no marks or
++## with repeatMarks 0 (marks are not counted then), so with the memory off nothing changes.
++static var _memoryOff: bool = false   # tests only: the old behaviour (memory_model_check --negative-control)
++
++
++static func _memory(b) -> float:
++	var n: int = mini(b.marks, int(cfg().repeatMarks))
++	if n <= 0 or _memoryOff:
++		return 1.0
++	return SimDetMath.pow(SimPower.energyTop, -(SimPower.tierShare / 3.0) * float(n))
++
++
+ ## The ladder under the power model: a building takes its mass of the body's energy, (spN / speedUnit) squared. A body with at least that much goes through (a house collapses, a tower is punched through) and keeps the root of what is
+ ## left; with less it is held, a crack or a dent by how much of the mass it had. No tier, link or punch table is read: the energy is the whole budget, so a send can only go through what it can pay for.
+ static func _outcomePower(S: SimState, b, y: float, spN: float) -> Dictionary:
+-	var m: float = massOf(b)
++	var m: float = massOf(b) * _memory(b)
+ 	var u: float = SimPower.speedUnit
+ 	var E: float = spN * spN / (u * u)
+ 	var through: bool = E >= m
+--- /dev/null
++++ b/sim/world/tools/memory_model_check.gd
+@@ -0,0 +1,117 @@
++extends SceneTree
++# A building remembers under the energy model (World, sim/world/brunt.gd _memory, _outcomePower; Orb, homework 30: a send into a building already marked meets it one tier higher for each mark, up to repeatMarks; Game Design,
++# docs/design/buildings.md sections 6.1 and 9). With the model on there is no tier to raise (the check of checks-gw1a found `repeatMarks` inert on Orb's path), so a mark is one tier of the model's own step and shows as the building's
++# weakening: it takes energyTop ^ (-tierShare / 3) of its mass per mark (about 0.51, then 0.26) of the body's energy.
++#   godot --headless --path . --script res://sim/world/tools/memory_model_check.gd -- [--negative-control]
++# --negative-control makes `_memory` 1 (the old behaviour): the memory rows must then fail (the check passes when they do).
++var fails: int = 0
++var neg: bool = false
++
++
++func ok(cond: bool, what: String) -> void:
++	if cond:
++		print("  ok   ", what)
++	else:
++		fails += 1
++		print("  FAIL ", what)
++
++
++func _match() -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"intro": false, "power": true})
++	return S
++
++
++## The first standing building of a kind in the front row: "house", "low" (a tower under powerLowTowerMaxH) or "tall".
++func _find(S: SimState, kind: String):
++	var lim: float = float(WorldBrunt.cfg().powerLowTowerMaxH)
++	for b in S.buildings:
++		if not b.alive or int(b.row) != 1:
++			continue
++		var house: bool = WorldBrunt.isHouse(b)
++		if (kind == "house" and house) or (kind == "low" and not house and b.h < lim and b.floors >= WorldBrunt.FLOORS_MIN) or (kind == "tall" and not house and b.h >= lim):
++			return b
++	return null
++
++
++## The speed that carries energy E in the model's unit.
++func _sp(E: float) -> float:
++	return SimPower.speedUnit * sqrt(E)
++
++
++func _hit(S: SimState, b, E: float, marks: int) -> Dictionary:
++	b.marks = marks
++	return WorldBrunt.outcomeOf(S, b, WorldStructures.baseY(S, b) + 0.5 * b.h, _sp(E), 1.0)
++
++
++func _init() -> void:
++	neg = OS.get_cmdline_user_args().has("--negative-control")
++	var S := _match()
++	ok(S.powerOn, "the match has the energy model on")
++	var c: Dictionary = WorldBrunt.cfg()
++	var step: float = SimDetMath.pow(SimPower.energyTop, -(SimPower.tierShare / 3.0))
++	var low = _find(S, "low")
++	var tall = _find(S, "tall")
++	var house = _find(S, "house")
++	ok(low != null and tall != null and house != null, "the match has a house, a low tower and a tall tower")
++	var mlow: float = WorldBrunt.massOf(low)
++	var mtall: float = WorldBrunt.massOf(tall)
++	# --- memory off (repeatMarks 0): marks do nothing, bit for bit
++	c.repeatMarks = 0
++	var a0: Dictionary = _hit(S, low, 3.0, 0)
++	var a1: Dictionary = _hit(S, low, 3.0, 2)
++	ok(str(a0) == str(a1), "repeatMarks 0: a marked building is met as an unmarked one, bit for bit")
++	ok(WorldBrunt._memory(low) == 1.0, "... and its memory factor is exactly 1")
++	# --- memory on (repeatMarks 2)
++	c.repeatMarks = 2
++	if neg:
++		WorldBrunt._memoryOff = true
++	ok(absf(WorldBrunt._memory(_mark(low, 0)) - 1.0) < 1.0e-12 and absf(WorldBrunt._memory(_mark(low, 1)) - step) < 1.0e-12 and absf(WorldBrunt._memory(_mark(low, 2)) - step * step) < 1.0e-12 and absf(WorldBrunt._memory(_mark(low, 4)) - step * step) < 1.0e-12, "the factor is one model tier a mark (%.3f, %.3f), capped at repeatMarks" % [step, step * step])
++	# a send with less energy than a low tower's mass: held; marked once, it has enough
++	var E: float = mlow * 0.8   # 80 percent of the mass: held when unmarked
++	var h0: Dictionary = _hit(S, low, E, 0)
++	var h1: Dictionary = _hit(S, low, E, 1)
++	var h2: Dictionary = _hit(S, low, E, 2)
++	ok(not bool(h0.pass) and bool(h1.pass) and bool(h2.pass), "a send of %.1f against a low tower's %.1f: held unmarked, through at one mark (mass %.2f) and at two" % [E, mlow, mlow * step])
++	ok(float(h2.keep) > float(h1.keep) and float(h1.keep) > 0.0, "and it keeps more of its speed through a twice marked one (%.2f, then %.2f)" % [float(h1.keep), float(h2.keep)])
++	# a send a tall tower holds at every mark: the damage it does rises by the step each mark (the hold's damage is energy over mass)
++	var Et: float = mtall * step * step * 0.9   # held even at two marks
++	var d0: float = float(_hit(S, tall, Et, 0).dmg)
++	var d1: float = float(_hit(S, tall, Et, 1).dmg)
++	var d2: float = float(_hit(S, tall, Et, 2).dmg)
++	var held_all: bool = not bool(_hit(S, tall, Et, 0).pass) and not bool(_hit(S, tall, Et, 1).pass) and not bool(_hit(S, tall, Et, 2).pass)
++	ok(held_all and d0 > 0.0 and absf(d1 / d0 - 1.0 / step) < 0.02 * (1.0 / step) and absf(d2 / d0 - 1.0 / (step * step)) < 0.02 / (step * step), "a tall tower that holds at every mark takes %.2fx then %.2fx the first send's damage (1 over the step: %.2f, %.2f)" % [d1 / maxf(d0, 1.0e-9), d2 / maxf(d0, 1.0e-9), 1.0 / step, 1.0 / (step * step)])
++	# a house is gone through at every mark (Game Design: houses rarely matter)
++	var k0: Dictionary = _hit(S, house, mlow, 0)
++	var k2: Dictionary = _hit(S, house, mlow, 2)
++	ok(bool(k0.pass) and bool(k2.pass), "a house is gone through unmarked and marked")
++	# the hit itself marks the building (repeatMarks above 0), and the next send meets it weaker
++	var S2 := _match()
++	var lw = _find(S2, "low")
++	var A = S2.fighters[1]
++	var D = S2.fighters[0]
++	lw.marks = 0
++	var mm0: float = WorldBrunt._memory(lw)
++	A.tier = 2.0
++	D.state = "launched"
++	D.launchBy = A
++	D.launchT = 1.0
++	D.vx = _sp(E)
++	D.vy = 0.0
++	D.x = lw.x - lw.w * 0.5 - 1.0
++	D.y = WorldStructures.baseY(S2, lw) + 0.5 * lw.h
++	D.z = lw.z
++	WorldBrunt.hit(S2, D, lw, D.y, lw.x - lw.w * 0.5, 1.0)
++	ok(lw.marks == 1 and WorldBrunt._memory(lw) < mm0, "a send that strikes a building marks it (%d) and the next meets it weaker (factor %.3f)" % [lw.marks, WorldBrunt._memory(lw)])
++	c.repeatMarks = 0
++	WorldBrunt._memoryOff = false
++	if neg:
++		ok(fails >= 3, "negative control (no memory): the memory rows fail (%d did)" % fails)
++		fails = 0 if fails >= 3 else 1
++	print("MEMORYMODEL: %d check(s) failed" % fails)
++	quit(0 if fails == 0 else 1)
++
++
++func _mark(b, n: int):
++	b.marks = n
++	return b
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -6,2 +6,3 @@
+     "power_world_check",
++    "memory_model_check",
+     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
