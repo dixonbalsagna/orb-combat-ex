@@ -1,0 +1,42 @@
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -1005,7 +1005,9 @@
+ 		WorldStructures.damageBuilding(S, b, oc.dmg, by, "burst", cx, evt)
+ 		if not b.alive:
+ 			hitText = "collapse"
+-	var passes: bool = oc.pass or hitText == "collapse" or hitText == "pancake"
++	# Under the energy model a body held by a tower (less energy than its mass) stays held when his hit brings it down (a collapse is the building's own energy, not his): without this a held hit that breaks the covered floors
++	# (heldMul) could carry him through the falling tower at keepHi, and on into a next link, with energy he did not have (GW1b review M-03)
++	var passes: bool = oc.pass or ((hitText == "collapse" or hitText == "pancake") and not (S.powerOn and bool(oc.get("held", false))))
+ 	var broke: bool = passes
+ 	var inside: bool = WorldInterior.eligible(S, f, b)   # the chain inside a tower (world/interior.gd), behind brunt.json interiorChain: he goes on inside, the face is passed either way
+ 	if inside:
+--- a/sim/world/tools/memory_model_check.gd
++++ b/sim/world/tools/memory_model_check.gd
+@@ -124,6 +124,26 @@
+ 	c.heldMul = 1.0
+ 	ok(str(hk1) == str(hk2) and lw1 == lw2, "houses are unchanged by heldMul and a low tower holds, then goes through at one mark and two, as at heldMul 1 (%s)" % str(lw2))
+ 
++	# a held body stays held when his hit brings the tower down (GW1b review M-03): a tower with 1 hit point left, a send of half its mass
++	c.heldMul = 2.0
++	c.repeatMarks = 2
++	var S3 := _match()
++	var t3 = _find(S3, "tall")
++	t3.hp = 1.0
++	var A3 = S3.fighters[1]
++	var D3 = S3.fighters[0]
++	A3.tier = 1.0
++	D3.state = "launched"
++	D3.launchBy = A3
++	D3.launchT = 1.0
++	D3.vx = _sp(WorldBrunt.massOf(t3) * 0.5)
++	D3.vy = 0.0
++	D3.x = t3.x - t3.w * 0.5 - 1.0
++	D3.y = WorldStructures.baseY(S3, t3) + 0.5 * t3.h
++	D3.z = t3.z
++	WorldBrunt.hit(S3, D3, t3, D3.y, t3.x - t3.w * 0.5, 1.0)
++	ok(not t3.alive and D3.vx < -1.0 and D3.flightHits >= 1, "a held body stays held when his hit brings the tower down: it fell, and he comes off the face (vx %.0f), not on through it or lodged in the breach" % D3.vx)
++	c.heldMul = 1.0
+ 	c.repeatMarks = 0
+ 	WorldBrunt._memoryOff = false
+ 	if neg:

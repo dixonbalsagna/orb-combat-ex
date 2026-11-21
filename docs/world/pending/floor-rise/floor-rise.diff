@@ -104,7 +104,7 @@
 +	quit(0 if fails == 0 else 1)
 --- a/tools/world-checks.json
 +++ b/tools/world-checks.json
-@@ -6,2 +6,3 @@
-     "power_world_check",
+@@ -4,2 +4,3 @@
+     "burial_check", "floor_check", "lane_check", "props_wet_check",
 +    "floor_rise_check",
-     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
+     "after_check", "arena_check", "b_check", "blastcheck", "blockcheck", "brunt_check", "calm_read_check", "campaign_check", "climate_check", "collateral_check",
