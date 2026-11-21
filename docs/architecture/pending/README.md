@@ -8,25 +8,15 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **Parked, sprint A1:** `boxkey-gw1c/` (for GW1c, owed before colossal is offered): SimField's box keys pack 20 bits an index, so no planet size or reach can alias them (the old offset of 64 did past a radius of 131,072). Golden byte for byte.
 
-**Parked, sprint A1:** `frame-gw1a/` (a GW1a pin, test-only): frame_check's rollback row waits for the first moment a swing can run (with the 9 November data the computer has a beam out at tick 240). Its README also records fork_check's planet 12 as a real fault of World's field cache with `field.everywhere` on.
-
-**Parked, sprint A1:** `data-fight-gw1a/` (a data grant): the five `data/fight` rows GW1a's stack left different from the kept 9 November tree (brake, budgetAny, kick, ladder chargePerSec 2, the slip). With World's water hunk and Combat's gw1a-rows, the stack reproduces GW1a's target golden byte for byte. Applies after the GW1a stack.
-
 **Parked, sprint A1:** `gw1b-energy/` (Game Design's addendum to Orb's decisions 5 and 6): `power.json` grant (flat out 3,500, the close times, travel 1.5), every meter feed at 0 (Narrative's grant), and my rows written for the old numbers. Applies after close-rows, energy-on, gates-shipped and meters-zero. Changes the hash: GW1b.
 
 **Parked, sprint A1:** `replay-world/` (the companion to World's a-world-01): a replay of the default world names its planet, and the header's data hash is the planet's. No-op in arena mode. Applies after replay-build and World's globe-step2 and a-world-01; lands with a-world-01 in GW1b.
-
-**Parked, sprint A1:** `gates-shipped/` (A-CODE-02's part for my gates): parity and kick_check pass on main's data and on the 9 November data (parity's floor leak fixed; rows written for switches off name what they test). Test-only. Lands with or before the first switch group in GW1a, after close-rows and energy-on.
 
 **Parked, sprint A1:** `meters-zero/` (A-ENERGY-05, Orb's decision 6): the old meters change nothing, the comeback is a rule for both fighters (Narrative's grant for the data). Changes the hash: GW1b.
 
 **Parked, sprint A1:** `replay-sizes/` (support for World's five planet sizes): a replay's header is made at the size its setup names, so a sized planet's replay plays in a host bound to another size; applies after World's three parks. No change for medium.
 
-**Parked, sprint A1:** `energy-on/` (A-ENERGY-04): the one energy model and the dash on in main's data (a grant), with the rows written for them off pinned; it replaces `power-flip/`, deleted. Changes the hash: GW1a.
-
-**Parked, sprint A1:** `a1-owed/`: hit-stop by weight's never-cut list (heavy, launch, launch_full: Game Design) and power_check's close times to striking distance with the arrival off and on (needed before GW1a lands the arrival in main's data); the docs' underTicks 12 is edited in place. No state change.
-
-**Parked, sprint A1:** `replay-build/` (A-NET-05): a replay names the build that made it (Tools' stamp, `build_info.json`), and another build's replay is refused before its first tick with a reason and both ids; the sentence is UI's. No state change. Lands before golden window GW1.
+**Landed in GW1a (b0e20f9a), their folders deleted:** `a1-owed/` (hit-stop by weight's never-cut list; power_check's close rows), `energy-on/` (A-ENERGY-04: the one energy model and the dash on in main's data), `gates-shipped/` (parity and kick_check on the 9 November data), `frame-gw1a/` (frame_check's rollback row waits out a beam) and `data-fight-gw1a/` (the five data/fight rows at the 9 November values). Earlier, with B1 (f068b697): `replay-build/` (a replay names the build that made it).
 
 **Landed in 6a30b4c9 (Orb's 16:30 build), their folders deleted:** `dash-slip/` (a dash let go before tick 12 eases to the slip's 1,125 a second over 4 ticks, with Encounter's slip-arrive and its undertick grant) and `hitstop-any/` (the freeze budget on any table at Game Design's 12% and ×0.7, heavies never cut, the hp clause gone, weights named with the budget on). The run records are in `docs/sim/runs/592a807b/dash-slip/` and `docs/sim/runs/578e819e/hitstop-any/`.
 

@@ -23,7 +23,7 @@ Simulation, 2026-11-14, sprint A1. Game Design's addendum to Orb's decisions 5 a
 
 ## Apply (re-cut on the GW1a tree, 2026-11-20: the GW1b review's B-04 and B-22)
 
-**On the GW1a tree, after `../meters-zero/` (both patches; GW1b's step 5). This is GW1b's step 6.**
+**On main since GW1a landed (b0e20f9a), after GW1b's steps 1 to 4 and `../meters-zero/` (both patches; step 5): checked. This is GW1b's step 6.**
 `git -c core.autocrlf=false apply grant-data-gw1b.patch gw1b-energy.patch grant-narrative-feeds.patch`
 
 - **The slip stays on.** `power.json` keeps its whole `dash` object on one line, so the first cut (made on main's data, where the slip was off) carried `"slip": {"enabled": false` on both sides of that line. GW1a turned the slip on in the same line. The re-cut is made on the GW1a tree, so the line now carries the slip **on** on both sides. Only `flight.flatOut`, `launchTravel`, `dash.closeSec` and their notes change. **Don't hand-apply the `dash` line from the old cut.**

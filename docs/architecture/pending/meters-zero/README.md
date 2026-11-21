@@ -29,7 +29,7 @@ Simulation, 2026-11-14, sprint A1 (`05-directives/A1/simulation-engine.md`, crit
 
 ## Apply
 
-`git -c core.autocrlf=false apply meters-zero.patch grant-narrative-meters.patch`, **on the GW1a tree** (re-cut on 2026-11-20 on the EP's final GW1a stack, s422 `gw1a-final` 3917885: the GW1b review's B-22, since GW1a's never-cut changed the context of parity's hunk). The change is line for line the one first cut and gated on 8007de44: only the context moved. GW1b's step 5.
+`git -c core.autocrlf=false apply meters-zero.patch grant-narrative-meters.patch`, **on main since GW1a landed (b0e20f9a), after GW1b's steps 1 to 4 (checked)**, i.e. on the GW1a tree (re-cut on 2026-11-20 on the EP's final GW1a stack, s422 `gw1a-final` 3917885: the GW1b review's B-22, since GW1a's never-cut changed the context of parity's hunk). The change is line for line the one first cut and gated on 8007de44: only the context moved. GW1b's step 5.
 
 | Patch | Owner | sha1 | sha256 starts |
 | :--- | :--- | :--- | :--- |

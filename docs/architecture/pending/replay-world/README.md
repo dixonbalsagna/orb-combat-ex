@@ -20,7 +20,7 @@ World's line in `SimCore.beginMatch` plays the data's default world for a setup 
 
 ## Apply
 
-After `../replay-build/` and World's `globe-step2` and `a-world-01`: `git -c core.autocrlf=false apply replay-world.patch`.
+**GW1b step 3:** on main (b0e20f9a, with replay-build landed in B1), after World's `a-world-01.diff` and `grant-simulation-sim.patch` (steps 1 and 2). Checked on 2026-11-20: it applies there, without globe-step2. `git -c core.autocrlf=false apply replay-world.patch`.
 
 | Patch | Files | sha1 | sha256 starts |
 | :--- | :--- | :--- | :--- |

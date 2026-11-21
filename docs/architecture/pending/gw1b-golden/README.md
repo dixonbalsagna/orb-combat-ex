@@ -26,7 +26,8 @@ Simulation, 2026-11-20, sprint A1. The GW1b review (`docs/ep/reviews/GW1b-review
 | :--- | :--- | :--- |
 | Each of steps 5 to 19 | the step's owner | parity against the step's regenerated golden; the step's lane |
 | Before step 20 | every director, through the EP | their checks with the mode on `planet`; pins parked |
-| After step 20 | Simulation | the one re-record; parity; two runs, one file; Rendering's 15 |
+| Just before step 20 | World | re-cut `docs/world/pending/checks-gw1a/ground-repin.diff` (the six hashes of `render/tools/ground_check.gd`) on the exact GW1b tree: any change to play data moves them. It lands in the same step as the re-record |
+| After step 20 | Simulation | the one re-record; parity; two runs, one file; Rendering's 15, with World's ground re-pin in |
 | After the re-record | QA | the reference lanes on the new golden |
 
 ## Open
