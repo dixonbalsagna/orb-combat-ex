@@ -23,10 +23,10 @@ index fbe2402..36502a7 100644
 +	return host.record_file("report", tags, note)
 diff --git a/render/core/match_recorder.gd b/render/core/match_recorder.gd
 new file mode 100644
-index 0000000..361a577
+index 0000000..a2814a2
 --- /dev/null
 +++ b/render/core/match_recorder.gd
-@@ -0,0 +1,155 @@
+@@ -0,0 +1,157 @@
 +class_name MatchRecorder
 +extends RefCounted
 +## The match as a replay, on a plain desktop build (register rows A-UI-02 and A-CODE-03, Tools, 2026-11-14). It was the black box of the private page (tools/preview/blackbox.mjs): a few lines of the
@@ -42,6 +42,7 @@ index 0000000..361a577
 +
 +const KIND: String = "orb-solo-match"
 +const DIR: String = "user://reports"
++static var test_dir: String = ""         # a test's own folder (match_recorder_check sets it, nothing in the game does): while it is set a save with no folder goes there and never to the player's DIR or into its prune
 +const KEEP: int = 20                  # the newest files kept in the folder: the player's disk is not the game's to fill
 +const MAX_TICKS: int = 60 * 60 * 30   # half an hour of match: a longer one stops being recorded (its replay is still valid as far as it goes)
 +
@@ -150,24 +151,25 @@ index 0000000..361a577
 +
 +## The match as a file in user://reports/. reason: report, save, over, quit. Returns the file's name ("" when there is nothing to save or the file could not be written).
 +## `build` is res://build_info.json's content ({} when the build has none).
-+func save(S: SimState, reason: String, tag: String, note: String, build: Dictionary, dir: String = DIR) -> String:
++func save(S: SimState, reason: String, tag: String, note: String, build: Dictionary, dir: String = "") -> String:
 +	if not armed or replay.is_empty():
 +		return ""
 +	if reason == "report":
 +		marks.append({"tick": int(replay.ticks), "kind": "report", "tag": tag.left(80), "note": note.left(2000), "at": Time.get_datetime_string_from_system()})
++	var where: String = dir if dir != "" else (test_dir if test_dir != "" else DIR)   # the folder asked for, else a test's, else the player's
 +	var rp: Dictionary = snapshot(S)
 +	var commit: String = str(build.get("commit", "unknown")).left(8)
 +	var dt: Dictionary = Time.get_datetime_dict_from_system()
 +	var fname: String = "solo-%s-main-%04d%02d%02d-%02d%02d%02d-%s.json" % [commit, int(dt.year), int(dt.month), int(dt.day), int(dt.hour), int(dt.minute), int(dt.second), reason]
-+	if DirAccess.make_dir_recursive_absolute(dir) != OK:
++	if DirAccess.make_dir_recursive_absolute(where) != OK:
 +		return ""
 +	var doc := {"kind": KIND, "pc": "main", "slot": 0, "mode": mode_of(S), "build": build, "reason": reason, "savedAt": Time.get_datetime_string_from_system(), "tick": int(rp.get("ticks", 0)), "marks": marks.duplicate(true), "replay": rp}
-+	var f := FileAccess.open(dir.path_join(fname), FileAccess.WRITE)
++	var f := FileAccess.open(where.path_join(fname), FileAccess.WRITE)
 +	if f == null:
 +		return ""
 +	f.store_string(JSON.stringify(doc))
 +	f.close()
-+	_prune(dir)
++	_prune(where)
 +	return fname
 +
 +
@@ -244,10 +246,10 @@ index ae4749b..6da5f64 100644
 +	return j if j is Dictionary else {}
 diff --git a/render/tools/match_recorder_check.gd b/render/tools/match_recorder_check.gd
 new file mode 100644
-index 0000000..606f071
+index 0000000..7fa3032
 --- /dev/null
 +++ b/render/tools/match_recorder_check.gd
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,178 @@
 +extends SceneTree
 +## The match as a replay on a desktop build (A-UI-02, Tools, 2026-11-14; render/core/match_recorder.gd). Headless, through the real SimHost: a solo match and a couch match are played with scripted intents, the report
 +## and the save are asked for, and the file each leaves in user://reports/ is read back and replayed with SimReplay.play: it must be there, hold the match's kind, mode, build, mark and replay, and reproduce to the
@@ -285,8 +287,20 @@ index 0000000..606f071
 +		host.film_in[int(k)] = null
 +
 +
++const SCRATCH: String = "user://reports_check_main"   # every save of this check goes here (MatchRecorder.test_dir): the game's own user://reports is never written to or pruned (the GW1a review, S-05)
++
++
++## The game's own reports folder as a list (name, size, time of each file; and whether the folder is there at all), to compare before and after.
++func _real_folder() -> Array:
++	var out: Array = ["exists=%s" % str(DirAccess.dir_exists_absolute("user://reports"))]
++	for n in DirAccess.get_files_at("user://reports"):
++		out.append("%s %d %d" % [n, FileAccess.get_file_as_bytes("user://reports/" + n).size(), FileAccess.get_modified_time("user://reports/" + n)])
++	out.sort()
++	return out
++
++
 +func _read(name: String) -> Dictionary:
-+	var path: String = "user://reports/" + name
++	var path: String = SCRATCH + "/" + name
 +	if not FileAccess.file_exists(path):
 +		return {}
 +	var j = JSON.parse_string(FileAccess.get_file_as_string(path))
@@ -294,7 +308,8 @@ index 0000000..606f071
 +
 +
 +func _run() -> void:
-+	DirAccess.make_dir_recursive_absolute("user://reports")
++	var real_before: Array = _real_folder()
++	MatchRecorder.test_dir = SCRATCH
 +	# nothing started: nothing to save
 +	_ok(SimHost.new().record_file("report") == "", "a host with no match started has nothing to save and answers the empty name")
 +
@@ -405,9 +420,12 @@ index 0000000..606f071
 +	DirAccess.remove_absolute(dir)
 +	rec = null
 +
-+	for n in _made:
-+		if n != "":
-+			DirAccess.remove_absolute("user://reports/" + n)
++	for n in DirAccess.get_files_at(SCRATCH):
++		DirAccess.remove_absolute(SCRATCH + "/" + n)
++	DirAccess.remove_absolute(SCRATCH)
++	MatchRecorder.test_dir = ""
++	_ok(_real_folder() == real_before, "the game's own reports folder is exactly as it was (the same files, sizes and times, or no folder at all): the check wrote nothing into it and pruned nothing from it")
++	_ok(not DirAccess.dir_exists_absolute(SCRATCH), "and the check's own folder is gone again")
 +	print("match_recorder_check: %d checks, %d failed" % [checks, fails])
 +	quit(1 if fails > 0 else 0)
 diff --git a/render/tools/match_recorder_check.gd.uid b/render/tools/match_recorder_check.gd.uid
