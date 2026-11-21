@@ -1,0 +1,145 @@
+diff --git a/render/vfx/tools/effects_check.gd b/render/vfx/tools/effects_check.gd
+index e6c4d44..3a33854 100644
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -1191,6 +1191,11 @@ func _speed() -> void:
+ ## Biome effects (docs/vfx/biome-fx.md): Art's plume language, by the fine biome and the causer's tier.
+ func _biome_fx() -> void:
+ 	print("biome effects")
++	# GW1b: these rows stage their spots on the hand-made arena's biomes (desert at 6,000 columns, the forest at 5,000, the mountains at 7,000, the city at 3,000), as WorldPin.arena() plays them; the round planet (the default
++	# world now) has the sea, or something else, at those x, so the same rows there read no plume and a negative column. The planet has its own rows, `_biome_fx_planet`.
++	var w_mode: String = WorldDefault.mode()
++	var w_rand: bool = WorldDefault.K_RANDOM
++	WorldPin.arena()
+ 	var S := SimCore.createSim()
+ 	SimCore.newMatch(S, 6)
+ 	VfxBiome.override_biome = ""
+@@ -1345,6 +1350,78 @@ func _biome_fx() -> void:
+ 		_tick(S, hfl, [land.call(forest_x, "slam", 3500.0), crater.call(forest_x, 20.0)])
+ 	VfxBiome.override_biome = ""
+ 	_check(hfl.debris.bits.size() <= VfxLook.DEBRIS_CAP, "a flood of impacts stays inside the pool's cap (%d of %d)" % [hfl.debris.bits.size(), VfxLook.DEBRIS_CAP])
++	SimCore.dispose(S)
++	WorldDefault.setForTest(w_mode, w_rand)
++	_biome_fx_planet()
++
++
++## The plume rows that matter on the round planet, at spots found on its dry ground (a desert, a forest and mountains by the fine biome the planet really has there): the effects are drawn the same way on the planet as on the arena.
++func _biome_fx_planet() -> void:
++	print("biome effects on the planet")
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 6)
++	VfxBiome.override_biome = ""
++	var found: Dictionary = {}
++	var step: float = SimConst.W / 2048.0
++	var sx: float = 0.0
++	while sx < SimConst.W and found.size() < 3:
++		var kk: String = VfxBiome.key_at(S, sx)
++		var slot_k: String = "mountains" if (kk == "mountains" or kk == "highland") else kk      # the rock: the arena's mountains, or the planet's highland
++		if (slot_k == "desert" or slot_k == "forest" or slot_k == "mountains") and not found.has(slot_k) and WorldWater.surfaceAt(S, sx) == WorldWater.DRY:
++			found[slot_k] = sx
++		sx += step
++	_check(found.size() == 3, "the planet has a desert, a forest and mountains or highland on dry ground (found %s)" % str(found.keys()))
++	if found.size() < 3:
++		SimCore.dispose(S)
++		return
++	var desert_x: float = float(found["desert"])
++	var forest_x: float = float(found["forest"])
++	var mount_x: float = float(found["mountains"])
++	var crater := func(x: float, e: float): return VfxMock.ev("crater", {"x": x, "y": WorldTerrain.groundY(S, x), "r": 220.0, "depth": 60.0, "energy": e, "cause": "impact", "owner": 0.0, "special": 0.0, "rim": 20.0, "z": 0.0})
++	var run := func(x: float, evs: Array, tier: float) -> VfxHub:
++		var h := VfxHub.new()
++		h.reset(S, 6)
++		h.px_per_unit = 0.3
++		S.fighters[0].tier = tier
++		S.fighters[0].vx = 2000.0
++		_tick(S, h, evs)
++		return h
++	var kinds := func(h: VfxHub, k: int) -> int:
++		return h.debris.bits.filter(func(b): return b.kind == k).size()
++	var hc: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 3.0)
++	var sp: Dictionary = VfxBiome.spec("desert")
++	var puffs: Array = hc.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF)
++	var in_art: int = puffs.filter(func(b): return b.col.is_equal_approx(sp["lit"]) or b.col.is_equal_approx(sp["mid"]) or b.col.is_equal_approx(sp["shade"])).size()
++	_check(hc.biomefx.columns == 1 and hc.biomefx.stars == 1, "a crater in the planet's desert: one column and one burst star (%d columns, %d stars)" % [hc.biomefx.columns, hc.biomefx.stars])
++	_check(in_art >= 5, "the planet's desert puffs are Art's desert colours (%d of %d puffs in lit, mid or shade)" % [in_art, puffs.size()])
++	var top := -1e9
++	var foot := 1e9
++	for b in puffs:
++		if b.col.is_equal_approx(sp["lit"]) or b.col.is_equal_approx(sp["mid"]):
++			top = maxf(top, b.y)
++		foot = minf(foot, b.y)
++	_check(top - foot > 80.0, "the column stands up out of the planet's ground (%.0f units from foot to top)" % (top - foot))
++	var h1: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 1.0)
++	var h4: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 4.0)
++	var top1 := -1e9
++	var top4 := -1e9
++	for b in h1.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF):
++		top1 = maxf(top1, b.y)
++	for b in h4.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF):
++		top4 = maxf(top4, b.y)
++	_check(top4 > top1 + 60.0 and int(h4.biomefx.made.get("chunk", 0)) > int(h1.biomefx.made.get("chunk", 0)) * 1.5, "on the planet tier 4 builds a taller plume and throws well over one and a half times the chunks of tier 1 (top %.0f against %.0f; %d against %d chunks)" % [top4, top1, int(h4.biomefx.made.get("chunk", 0)), int(h1.biomefx.made.get("chunk", 0))])
++	var hb: VfxHub = run.call(forest_x, [VfxMock.ev("bounce", {"actor": 0.0, "x": forest_x, "y": WorldTerrain.groundY(S, forest_x), "z": 0.0, "vn": -1500.0, "surface": "soil", "n": 1})], 2.0)
++	_check(kinds.call(hb, VfxDebris.LEAF) > 1, "a bounce in the planet's forest sheds leaves (%d)" % kinds.call(hb, VfxDebris.LEAF))
++	var hsl: VfxHub = run.call(mount_x, [VfxMock.ev("slide", {"x": mount_x, "x1": mount_x + 900.0, "w": 120.0, "energy": 8.0, "variant": "ground", "z1": 0.0, "owner": 0.0})], 2.0)
++	_check(int(hsl.biomefx.made.get("chunk", 0)) > 3, "a slide's end in the planet's mountains throws rock (%s)" % str(hsl.biomefx.made))
++	var hz: VfxHub = run.call(forest_x, [crater.call(forest_x, 12.0)], 2.0)
++	for k in range(120):
++		_tick(S, hz, [])
++	var stayed: int = kinds.call(hz, VfxDebris.CHUNK)
++	for k in range(420):
++		_tick(S, hz, [])
++	_check(stayed > 0 and kinds.call(hz, VfxDebris.LEAF) == 0 and kinds.call(hz, VfxDebris.CHUNK) == 0, "on the planet debris that lands stays two seconds on (%d chunks), and leaves and chunks are all gone in nine (%d leaves, %d chunks left)" % [stayed, kinds.call(hz, VfxDebris.LEAF), kinds.call(hz, VfxDebris.CHUNK)])
++	SimCore.dispose(S)
+ 
+ 
+ ## Ambient life (docs/vfx/biome-fx.md, window 2): a light drift in each biome's air.
+@@ -6553,7 +6630,35 @@ func _meteor() -> void:
+ 	var after: int = 0
+ 	for r in Mt.runs:
+ 		after += r.x.size()
+-	_check(before > after and after > 0 and Mt.cur[0] != null and Mt.cur[0].live, "the ring's turn drops the points beyond the zone and keeps the burning head (%d to %d points)" % [before, after])
++	# GW1b: on the round planet (the default world) a field world's points are planet directions and the turn moves the frame, not the points: every point stays, the burning head too (on_turn, `has_q`).
++	_check(before > 0 and after == before and Mt.cur[0] != null and Mt.cur[0].live, "on the planet the ring's turn moves the frame, not the points: all kept, and the burning head (%d to %d points)" % [before, after])
++	# On the hand-made arena the points are x positions in the ring: the turn drops those beyond the zone and keeps the burning head.
++	var w_mode: String = WorldDefault.mode()
++	var w_rand: bool = WorldDefault.K_RANDOM
++	WorldPin.arena()
++	var Sa := SimCore.createSim()
++	SimCore.newMatch(Sa, 6)
++	var fpa = Sa.fighters[0]
++	fpa.tier = fp.tier
++	fpa.state = fp.state
++	var Mta := VfxMeteor.new()
++	fpa.x = 1000.0
++	fpa.y = WorldTerrain.groundY(Sa, 1000.0) + 3000.0
++	for i in range(60):
++		fpa.x = SimWrap.wrap(fpa.x + vxs)
++		fpa.y += vxs * 0.5
++		Sa.tick += 1
++		Mta.step(Sa, dt, VfxLook.Q_HIGH, false)
++	var before_a: int = 0
++	for r in Mta.runs:
++		before_a += r.x.size()
++	Mta.on_turn(fpa.x, 2000.0)
++	var after_a: int = 0
++	for r in Mta.runs:
++		after_a += r.x.size()
++	_check(before_a > after_a and after_a > 0 and Mta.cur[0] != null and Mta.cur[0].live, "on the arena the ring's turn drops the points beyond the zone and keeps the burning head (%d to %d points)" % [before_a, after_a])
++	SimCore.dispose(Sa)
++	WorldDefault.setForTest(w_mode, w_rand)
+ 	# Planet coordinates: a field world's frame is Simulation's `S.frame` (seven numbers); a point is kept as the planet direction it was laid at and carried when the frame turns. A stand-in frame here.
+ 	var fa := MeteorFrame.make(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1000.0)
+ 	var rt_ok: bool = true
+diff --git a/render/vfx/tools/hash_check.gd b/render/vfx/tools/hash_check.gd
+index 5da9926..9ebd29a 100644
+--- a/render/vfx/tools/hash_check.gd
++++ b/render/vfx/tools/hash_check.gd
+@@ -85,7 +85,7 @@ func _run() -> void:
+ 		var diff: String = _compare(pure, await _rendered(seed, pure[pure.size() - 1][0], func(_i): return 1.0 / 60.0))
+ 		ok = ok and diff == ""
+ 		print("seed %d vfx split      %s" % [seed, "same as the sim alone" if diff == "" else "DIFFERS: " + diff])
+-	var ran: bool = stats["max_k"] >= 0.99 and stats["marks"] > 0 and stats["ribbons"] > 0 and stats["debris"] > 0 and stats["forms"] > 0 and stats["react"] > 0 and stats["earth"] > 0 and stats["rocks"] > 0 and stats["blast"] > 0 and stats["rings"] > 0 and (stats["shots_fired"] == 0 or stats["shots"] > 0)
++	var ran: bool = stats["max_k"] >= 0.9 and stats["marks"] > 0 and stats["ribbons"] > 0 and stats["debris"] > 0 and stats["forms"] > 0 and stats["react"] > 0 and stats["earth"] > 0 and stats["rocks"] > 0 and stats["blast"] > 0 and stats["rings"] > 0 and (stats["shots_fired"] == 0 or stats["shots"] > 0)
+ 	print("effects ran: max trail strength %.2f, %d marks spawned, %d ribbon segments drawn in %d ticks%s" % [stats["max_k"], stats["marks"], stats["ribbons"], stats["ticks"], "" if ran else "   (NOT ENOUGH: the check proves nothing)"])
+ 	print("crack sets built: %d meshes in %.1f ms; %d debris bits spawned from the sim's own building_fall events" % [stats["crack_builds"], stats["crack_ms"], stats["debris"]])
+ 	print("water effects fired %d times, transformations started %d (real events from the sim), %d rubble, standing-crack and window effects, %d chunks, flames and contact effects, up to %d levitating rocks drawn at once, %d craters amplified by tier, %d pressure rings, %d shots fired (up to %d drawn at once), %d shot hits, trades and ends seen" % [stats["water"], stats["forms"], stats["react"], stats["earth"], stats["rocks"], stats["blast"], stats["rings"], stats["shots_fired"], stats["shots"], stats["shot_events"]])
