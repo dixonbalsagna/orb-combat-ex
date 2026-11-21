@@ -130,16 +130,3 @@ index e6c4d44..3a33854 100644
  	# Planet coordinates: a field world's frame is Simulation's `S.frame` (seven numbers); a point is kept as the planet direction it was laid at and carried when the frame turns. A stand-in frame here.
  	var fa := MeteorFrame.make(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1000.0)
  	var rt_ok: bool = true
-diff --git a/render/vfx/tools/hash_check.gd b/render/vfx/tools/hash_check.gd
-index 5da9926..9ebd29a 100644
---- a/render/vfx/tools/hash_check.gd
-+++ b/render/vfx/tools/hash_check.gd
-@@ -85,7 +85,7 @@ func _run() -> void:
- 		var diff: String = _compare(pure, await _rendered(seed, pure[pure.size() - 1][0], func(_i): return 1.0 / 60.0))
- 		ok = ok and diff == ""
- 		print("seed %d vfx split      %s" % [seed, "same as the sim alone" if diff == "" else "DIFFERS: " + diff])
--	var ran: bool = stats["max_k"] >= 0.99 and stats["marks"] > 0 and stats["ribbons"] > 0 and stats["debris"] > 0 and stats["forms"] > 0 and stats["react"] > 0 and stats["earth"] > 0 and stats["rocks"] > 0 and stats["blast"] > 0 and stats["rings"] > 0 and (stats["shots_fired"] == 0 or stats["shots"] > 0)
-+	var ran: bool = stats["max_k"] >= 0.9 and stats["marks"] > 0 and stats["ribbons"] > 0 and stats["debris"] > 0 and stats["forms"] > 0 and stats["react"] > 0 and stats["earth"] > 0 and stats["rocks"] > 0 and stats["blast"] > 0 and stats["rings"] > 0 and (stats["shots_fired"] == 0 or stats["shots"] > 0)
- 	print("effects ran: max trail strength %.2f, %d marks spawned, %d ribbon segments drawn in %d ticks%s" % [stats["max_k"], stats["marks"], stats["ribbons"], stats["ticks"], "" if ran else "   (NOT ENOUGH: the check proves nothing)"])
- 	print("crack sets built: %d meshes in %.1f ms; %d debris bits spawned from the sim's own building_fall events" % [stats["crack_builds"], stats["crack_ms"], stats["debris"]])
- 	print("water effects fired %d times, transformations started %d (real events from the sim), %d rubble, standing-crack and window effects, %d chunks, flames and contact effects, up to %d levitating rocks drawn at once, %d craters amplified by tier, %d pressure rings, %d shots fired (up to %d drawn at once), %d shot hits, trades and ends seen" % [stats["water"], stats["forms"], stats["react"], stats["earth"], stats["rocks"], stats["blast"], stats["rings"], stats["shots_fired"], stats["shots"], stats["shot_events"]])
