@@ -1,0 +1,6 @@
+a01_desync_check gate exit 0, SCRIPT ERROR 0 :: PASS  18 runs, 18 checkpoints matched, 0 failure(s)  [desync_check.gd --seeds=1 --ticks=600 --profiles=lan,p120]
+a02_desync_check gate exit 0, SCRIPT ERROR 0 :: PASS  36 runs, 36 checkpoints matched, 0 failure(s)  [desync_check.gd --setup=lan --seeds=1,2 --ticks=600 --profiles=lan,p120]
+a03_rollback_check gate exit 0, SCRIPT ERROR 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)  [rollback_check.gd --seeds=1 --ticks=300 --profiles=lan,p80j,p200]
+b01_desync_check gate exit 0, SCRIPT ERROR 0 :: PASS  negative control: 9 break(s) caught, 0 missed  [desync_check.gd --seeds=1 --ticks=600 --profiles=lan,p120 --negative-control]
+b02_desync_check gate exit 0, SCRIPT ERROR 0 :: PASS  negative control: 18 break(s) caught, 0 missed  [desync_check.gd --setup=lan --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control]
+b03_rollback_check gate exit 0, SCRIPT ERROR 0 :: PASS  negative control: 4 break(s) caught, 0 missed  [rollback_check.gd --seeds=1 --ticks=240 --profiles=lan,p80j,p200 --negative-control]
