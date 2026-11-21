@@ -90,7 +90,10 @@ func _run() -> void:
 
 
 func _parked() -> void:
-	print("1. parked: with `enabled` false nothing is made")
+	print("1. dormant: with `enabled` false nothing is made")
+	ok(cues.carry.enabled(), "the switch is ON in the data (main's default since A-AUDIO-01: Orb's build had it on)")
+	cues.carry.cfg["enabled"] = false      # in memory only: the off path is still tested
+	cues.tug.cfg["enabled"] = false
 	cues.reset(5)
 	var t: int = 200000
 	var n: int = 0
@@ -99,7 +102,7 @@ func _parked() -> void:
 	for e in list:
 		n += tick(t, [e]).size()
 		t += 20
-	ok(n == 0 and not cues.carry.enabled(), "none of the ten makes a cue (%d), and the switch is off in the data" % n)
+	ok(n == 0 and not cues.carry.enabled(), "none of the ten makes a cue (%d), and the switch reads off when it is set off" % n)
 
 
 func _struggle() -> void:

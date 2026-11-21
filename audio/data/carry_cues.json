@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "note": "Sound that carries what the HUD no longer draws (Orb's minimalist rule, 2026-10-18; docs/design/minimal-hud.md, docs/research/readable-speed.md; docs/audio/carry.md). PARKED behind `enabled`: false. The beam struggle's groove and cracks (with the base struggle in tug_cues.json), the grip's clasp, creak, thud and refusal, the ready form's sting and the coil's hum, the air brake's skid, the rush, and the perfect block. Same lower, chunkier family as the hits. Needs a schema from Tools (a warning until then).",
-  "enabled": false,
+  "note": "Sound that carries what the HUD no longer draws (Orb's minimalist rule, 2026-10-18; docs/design/minimal-hud.md, docs/research/readable-speed.md; docs/audio/carry.md). ON since A-AUDIO-01 (2026-11-14), as in the build Orb played on 9 November; `enabled` false switches it off. The beam struggle's groove and cracks (with the base struggle in tug_cues.json), the grip's clasp, creak, thud and refusal, the ready form's sting and the coil's hum, the air brake's skid, the rush, and the perfect block. Same lower, chunkier family as the hits. Needs a schema from Tools (a warning until then).",
+  "enabled": true,
   "drones": {
     "coil": {
       "rate": 32000,

@@ -64,8 +64,9 @@ func _run() -> void:
 		ev("shot_clash", {"x": 4050.0, "y": 100.0}), cue("arc_send", "meteor", 0), ev("crater", {"x": 4300.0, "y": 50.0, "energy": 20.0}),
 	]
 
-	print("1. switched off (as shipped): nothing")
-	ok(not cues.moments.enabled(), "the switch is off in the data")
+	print("1. switched off (in memory; main ships it ON since A-AUDIO-01): nothing")
+	ok(cues.moments.enabled(), "the switch is ON in the data (Orb's build had it on)")
+	cues.moments.cfg["enabled"] = false
 	cues.reset(12)
 	var n_off: int = 0
 	for e in staged:
@@ -162,7 +163,7 @@ func _run() -> void:
 				elif c.variant < 0 or c.variant >= bank.variants(c.sound):
 					all_ok = false
 					why = "variant out of range for " + c.sound
-				elif not (is_finite(c.gain_db) and is_finite(c.pitch) and is_finite(c.x) and is_finite(c.y)) or c.pitch < 0.4 or c.pitch > 2.0 or c.gain_db < -20.0 or c.gain_db > 8.0:
+				elif not (is_finite(c.gain_db) and is_finite(c.pitch) and is_finite(c.x) and is_finite(c.y)) or c.pitch < 0.4 or c.pitch > 2.0 or c.gain_db < (-40.0 if (c.loop or c.ambient or c.update) else -20.0) or c.gain_db > 8.0:      # a struggle bed (and its updates) sits well under the hits: tug_cues.json bed.hi runs from -28 to -10 dB on purpose, and up to +5 semitones
 					all_ok = false
 					why = "number out of range for %s: gain %.1f pitch %.2f" % [c.sound, c.gain_db, c.pitch]
 			M.out.fx.clear()

@@ -78,7 +78,9 @@ func _clash(mid: float) -> void:
 
 
 func _dormant() -> void:
-	print("1. parked: with `enabled` false the five cues make nothing")
+	print("1. dormant: with `enabled` false the five cues make nothing")
+	ok(cues.tug.enabled(), "the switch is ON in the data (main's default since A-AUDIO-01: Orb's build had it on)")
+	cues.tug.cfg["enabled"] = false      # in memory only: the off path is still tested
 	cues.reset(5)
 	_clash(0.5)
 	var t: int = 100000
@@ -87,7 +89,7 @@ func _dormant() -> void:
 		n += tick(t, [e]).size()
 		t += 20
 	ok(n == 0, "no cue from any of them (%d)" % n)
-	ok(not cues.tug.enabled(), "and the switch is off in the data")
+	ok(not cues.tug.enabled(), "and the switch reads off when it is set off")
 
 
 func _struggle() -> void:
@@ -254,7 +256,7 @@ func _voices() -> void:
 	var upd: Array = tick(t + 6, [])
 	var moved: int = 0
 	for c in upd:
-		if v.play(c, cam, 1.0):
+		if c.update and v.play(c, cam, 1.0):      # the two drones' updates only: the carry set's one-shot cracks, made when the point jumps past its thresholds, are cues too, not voices that moved
 			moved += 1
 	ok(moved == 2, "an update finds both voices")
 	await create_timer(0.35).timeout

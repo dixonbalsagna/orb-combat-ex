@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "note": "The beam struggle's sound (docs/audio/launch-and-tug.md; audio/audio_tug.gd). PARKED behind `enabled`: false until Encounter's beam-struggle window is on main. The bed is two looped drones (drone.bed.lo, drone.bed.hi) whose gain, pitch and place follow the meeting point; the pulse, surge, stray, lock and end are one-shots in the lower family (Orb, 2026-10-16). Needs a schema from Tools (a warning until then).",
-  "enabled": false,
+  "note": "The beam struggle's sound (docs/audio/launch-and-tug.md; audio/audio_tug.gd). ON since A-AUDIO-01 (2026-11-14), as in the build Orb played on 9 November; `enabled` false switches it off. It makes cues only while the beam struggle runs (Encounter's window). The bed is two looped drones (drone.bed.lo, drone.bed.hi) whose gain, pitch and place follow the meeting point; the pulse, surge, stray, lock and end are one-shots in the lower family (Orb, 2026-10-16). Needs a schema from Tools (a warning until then).",
+  "enabled": true,
   "drones": {
     "bed.lo": {
       "rate": 32000,

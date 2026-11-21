@@ -129,7 +129,7 @@ func _run() -> void:
 					bad = "no such sound %s (seed %d)" % [c.sound, sd]
 				elif c.variant < 0 or c.variant >= bank.variants(c.sound):
 					bad = "variant out of range for %s (seed %d)" % [c.sound, sd]
-				elif not (is_finite(c.gain_db) and is_finite(c.pitch) and is_finite(c.x) and is_finite(c.y)) or c.pitch < 0.4 or c.pitch > 2.0 or c.gain_db < -20.0 or c.gain_db > 8.0:
+				elif not (is_finite(c.gain_db) and is_finite(c.pitch) and is_finite(c.x) and is_finite(c.y)) or c.pitch < 0.4 or c.pitch > 2.0 or c.gain_db < (-40.0 if (c.loop or c.ambient or c.update) else -20.0) or c.gain_db > 8.0:      # a struggle bed (and its updates) sits well under the hits: tug_cues.json bed.hi runs from -28 to -10 dB on purpose, and up to +5 semitones
 					bad = "number out of range for %s: gain %.1f pitch %.2f (seed %d)" % [c.sound, c.gain_db, c.pitch, sd]
 				if c.sound == "impact.whiff":
 					tick_whiffs += 1
