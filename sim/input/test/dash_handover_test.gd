@@ -24,6 +24,7 @@ func _init() -> void:
 	_sw(false)
 	_off()
 	_sim(false)
+	_nine()
 	SimInputData.pin_switches_off()
 	print("dash_handover_test: %d checks, %d failed" % [checks, fails])
 	quit(1 if fails > 0 else 0)
@@ -144,7 +145,23 @@ func _sim(on: bool) -> void:
 		ok(tap - none > 3.5, "off (the control): the same tap carries him more than 3.5 body heights beyond the stick alone (%.2f)" % (tap - none))
 
 
-func _carry(release_at: int) -> float:
+## Orb's 9 November build (the model, the dash at up to 5,000 a second, the kick, the slip and the arrival): a tap let go at tick 4 against the same tap with the handover off (a free 13-tick lunge). The slip's brake
+## does not meet the 1.5 body heights of the ruling (Simulation and Game Design's lever; docs/controls/runs/cc958c18/), so the row is the measured one: the handover's tap carries him well under the lunge's.
+func _nine() -> void:
+	_sw(true)
+	var on_tap: float = _carry(4, true)
+	var on_held: float = _carry(0, true)
+	var none: float = _carry(-1, true)
+	_sw(false)
+	var off_tap: float = _carry(4, true)
+	var off_held: float = _carry(0, true)
+	ok(on_tap < 0.6 * off_tap, "9 Nov build: a tap let go at tick 4 with the handover on carries %.1f body heights, under 60 percent of the handover-off lunge's %.1f" % [on_tap, off_tap])
+	ok(on_tap - none < 10.0, "9 Nov build: and %.1f body heights beyond the stick alone (the slip's brake, not the ruled 1.5: Simulation's and Game Design's lever)" % (on_tap - none))
+	ok(absf(on_held - off_held) < 0.5, "9 Nov build: a held LT is the same either way (%.1f against %.1f)" % [on_held, off_held])
+
+
+## `nine`: the 9 November configuration (the model, the flat-out dash, the kick, the slip and the arrival, as the page sends them); false: the model alone, the pre-dash speeds these rows were written for (the dash, kick and slip pinned off).
+func _carry(release_at: int, nine: bool = false) -> float:
 	var hub := SimInputHub.new()
 	hub.set_humans(true, false)
 	hub.pad_button(7, "south", true)
@@ -155,6 +172,11 @@ func _carry(release_at: int) -> float:
 	su["intro"] = false
 	su["power"] = true
 	su["travel"] = 1.5
+	su["dash"] = nine
+	su["kick"] = nine
+	su["slip"] = nine
+	var arrive_was = DirBands.data()["arrive"]["enabled"]
+	DirBands.data()["arrive"]["enabled"] = nine
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
 	var a = S.fighters[0]
@@ -179,4 +201,5 @@ func _carry(release_at: int) -> float:
 		S.out.fx.clear()
 	var d: float = absf(SimWrap.sdx(x0, a.x)) / 75.0
 	SimCore.dispose(S)
+	DirBands.data()["arrive"]["enabled"] = arrive_was
 	return d

@@ -23,6 +23,8 @@ func _init() -> void:
 	sw["hapticRefused"] = true
 	sw["hapticStages"] = false
 	sw["hapticImpact"] = false
+	sw["chargeLostCue"] = false   # these checks are of the stick_refused knock for a charge a blow took; chargeLostCue (on in the shipped data) turns it into the lost-charge pulse, which charge_lost_test checks
+	sw["flickKept"] = false   # and of refuseTicks 30: flickKept (on in the shipped data) waits refuseTicksKept 120, which flick_kept's own checks (below) cover
 	SimInputData.timing["switches"] = sw
 	SimInputData.clear_overrides()
 	SimInputData.invalidate()

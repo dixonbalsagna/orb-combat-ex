@@ -52,6 +52,9 @@ func _case(dev: String, code: String, what: String, dist: float, hold: bool) -> 
 		hub.pad_button(7, "south", false)
 		hub.take_joins()
 		hub.set_humans(true, false)
+		for k in range(2):   # the joining A press is spent off the sim: left in the first intent it is a tap of A, which the 9 Nov data (bands.taunt) makes a taunt that eats the first press
+			hub.intent(0)
+			hub.consumed()
 	var su: Dictionary = hub.setup()
 	su["intro"] = false
 	var S := SimCore.createSim()

@@ -51,6 +51,8 @@ func _switches(right: bool, refused: bool, ladder: bool = false) -> void:
 	sw["specialsOff"] = false
 	sw["hapticRefused"] = refused
 	sw["hapticLadder"] = ladder
+	sw["hapticStages"] = false   # the hub's own ladder pulses (checks G) are the path with the director's stage cues off; hapticStages (on in the shipped data) hands them to the cues, which stage_cue_test checks
+	sw["flickKept"] = false   # and the hub's "no answer" after refuseTicks 30 (checks F); flickKept (on in the shipped data) waits 120
 	SimInputData.timing["switches"] = sw
 	SimInputData.clear_overrides()
 	SimInputData.invalidate()

@@ -95,7 +95,7 @@ func _staged() -> void:
 	ok(s.ready.is_empty() and s.reqs.is_empty(), "real event: a set piece's send tells no ready and rumbles nothing")
 	# the brake off: no state, no event, no rumble
 	var M := SimCore.createSim()
-	SimCore.newMatch(M, 5, {"p1": false, "p2": false})
+	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"brake": false})   # the setup's word: the brake is on in the 9 Nov data (data/fight/brake.json enabled), so the off path is asked for
 	var D = M.fighters[1]
 	D.y = WorldTerrain.groundY(M, D.x) + 400.0
 	M.out.fx.clear()

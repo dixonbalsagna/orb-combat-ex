@@ -298,7 +298,7 @@ static func haptic_impact_on() -> bool:
 ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
 static func pin_switches_off() -> void:
 	var sw: Dictionary = timing.get("switches", {})
-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "dashHandover", "flickKept", "inertKnock", "chargeLostCue", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "dashHandover", "flickKept", "inertKnock", "chargeLostCue", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "hapticStages", "dodgeHeld"]:
 		sw[k] = false
 	timing["switches"] = sw
 	clear_overrides()
