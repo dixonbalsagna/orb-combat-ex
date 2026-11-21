@@ -46,7 +46,7 @@
       "ok": true
     },
     {
-      "detail": "tick 32",
+      "detail": "tick 31",
       "name": "a match is running: the tick advances",
       "ok": true
     },
@@ -71,7 +71,7 @@
       "ok": true
     },
     {
-      "detail": "tick 813, seed 6960565 to 5746629",
+      "detail": "tick 812, seed 7425763 to 760211",
       "name": "a rematch ('again', chosen with the pad) starts a new match that runs",
       "ok": true
     },

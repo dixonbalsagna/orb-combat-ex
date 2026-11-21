@@ -86,6 +86,7 @@ func _run() -> void:
 	await _damage_facts_rules()
 	await _retired_words_rules()
 	await _report_this_rules()
+	await _report_where_rules()
 	await _menus_rail_rules()
 	await _pause_clock_rules()
 	await _menus_a1_rules()
@@ -8961,6 +8962,7 @@ func _report_this_rules() -> void:
 		calls.append([tags, note])
 		return "saved/report-0001.json"
 	hud.lan_report_fn = good
+	hud.report_lan = true   # this part plays a LAN host's hook (its sentence); the desktop's is _report_where_rules
 	await run.call(45)   # past the one-a-second gap
 	m0.teach = ""
 	_key_press(hud, KEY_F9)
@@ -11541,3 +11543,76 @@ func _boot_load_menu_rules() -> void:
 	hud.queue_free()
 	UiData.set_feature("menu_modes", false)
 	UiData.set_feature("menus_rail", false)
+
+
+# --- Where saved reports go (S-04: a desktop build named the LAN folder; the recorder writes user://reports) ---------------------------------
+
+func _report_where_rules() -> void:
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)
+	var win_dir := "C:/Users/<user>/AppData/Roaming/Godot/app_userdata/Orb Combat EX/reports"
+	var win: String = UiFeedback.report_place("Windows", win_dir, "C:\\Users\\<user>\\AppData\\Roaming", "C:\\Users\\<user>")
+	var lin: String = UiFeedback.report_place("Linux", "/home/<user>/.local/share/godot/app_userdata/Orb Combat EX/reports", "", "/home/<user>")
+	var mac: String = UiFeedback.report_place("macOS", "/Users/<user>/Library/Application Support/Godot/app_userdata/Orb Combat EX/reports", "", "/Users/<user>")
+	var other: String = UiFeedback.report_place("Linux", "/mnt/data/orbcombat/reports", "", "/home/<user>")
+	_ok(win == "Saved reports go in this folder: %APPDATA%\\Godot\\app_userdata\\Orb Combat EX\\reports Paste it into the address bar of a folder window to open it.", "report where: on Windows the folder is written from %%APPDATA%% with backslashes, no user name, and says how to open it (%s)" % win)
+	_ok(lin == "Saved reports go in this folder: ~/.local/share/godot/app_userdata/Orb Combat EX/reports" and mac == "Saved reports go in this folder: ~/Library/Application Support/Godot/app_userdata/Orb Combat EX/reports" and other == "Saved reports go in this folder: /mnt/data/orbcombat/reports" and UiFeedback.report_place("Windows", "", "", "") == "", "report where: on Linux and macOS the home folder is written ~, a folder outside it in full, and with no folder nothing (%s | %s)" % [lin, mac])
+	_ok(not win.contains("'saved' folder") and not win.contains("beside the game"), "report where: the desktop sentence does not send anyone to the LAN build's 'saved' folder")
+	# In the HUD.
+	UiPrefs.path = "user://ui_prefs_test_where.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 800)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	var saved := func(_tags: String, _note: String) -> String: return "report-0001.json"
+	_ok(hud.report_where() == "" and not hud.report_lan, "report where (hud): a build with no report hook says nothing about where")
+	hud.lan_report_fn = saved
+	# A desktop build: the hook is set and it is not a LAN host's.
+	var real: String = UiFeedback.report_place(OS.get_name(), ProjectSettings.globalize_path(MatchRecorder.DIR), OS.get_environment("APPDATA"), OS.get_environment("HOME"))
+	var desk: String = hud.report_where()
+	_ok(desk == real and desk.contains("Orb Combat EX") and desk.contains("reports") and not desk.contains("'saved' folder"), "report where (hud): a desktop build names the folder the recorder writes (user://reports, %s)" % desk)
+	hud.show_pause_menu()
+	var foot: String = _foot_text(hud)
+	hud._pm_close("test")
+	_ok(foot.contains("Orb Combat EX") and not foot.contains("'saved' folder"), "report where (hud): the pause screen says it on a desktop build, not the LAN sentence")
+	hud.show_feedback("pause")
+	hud.feedback_action("save")
+	_ok(str(hud._fb_texts()[1]) == desk and str(hud._fb_texts()[0]) == "Report saved: report-0001.json", "report where (hud): the feedback panel's saved state says the same")
+	hud.hide_feedback()
+	# A LAN build: the host says so, and the LAN sentence shows.
+	hud.report_lan = true
+	hud.show_pause_menu()
+	var foot_lan: String = _foot_text(hud)
+	hud._pm_close("test")
+	hud.show_feedback("pause")
+	hud.feedback_action("save")
+	var note_lan: String = str(hud._fb_texts()[1])
+	hud.hide_feedback()
+	_ok(hud.report_where() == "Saved reports go in the 'saved' folder beside the game." and foot_lan.contains("'saved' folder") and note_lan.contains("'saved' folder"), "report where (hud): on a LAN build (the host sets report_lan) the pause screen and the panel keep the 'saved' folder sentence")
+	hud.queue_free()
+	await process_frame
+	# Fit: the longest sentence (Windows, with its tip) on the pause card and the panel, Rail on and off.
+	var bad := PackedStringArray()
+	for on in [false, true]:
+		UiData.set_feature("menus_rail", on)
+		UiData.set_feature("menu_modes", on)
+		for sz in [Vector2(1280, 720), Vector2(1280, 800), Vector2(1920, 1080), Vector2(1366, 768), Vector2(844, 390)]:
+			var lay := UiLayout.new()
+			lay.compute(sz, false)
+			var pp: Dictionary = UiPause.plan(sz, lay.s, 1.0, false, {"focus": 0, "join": true, "where": win, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "win": ""})
+			var pc: Dictionary = UiFeedback.plan(sz, lay.s, 1.0, false, UiFeedback.STATE_COPIED, "Report saved: report-2026-11-20-1432-save.json", win, false)
+			if not bool(pp["fits"]) or not bool(pc["fits"]):
+				bad.append("%s rail %s (%s %s)" % [str(sz), str(on), pp["fits"], pc["fits"]])
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)
+	_ok(bad.is_empty(), "report where: the Windows sentence fits on the pause card and the panel's saved state at five sizes, Rail on and off (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"

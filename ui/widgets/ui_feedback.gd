@@ -97,6 +97,26 @@ static func long_date(iso: String) -> String:
 	return iso
 
 
+## Where a desktop build's saved reports are (S-04; the recorder writes user://reports): the sentence the pause card and the feedback panel's second state say. `user_dir` is the real folder
+## (ProjectSettings.globalize_path("user://reports")); on Windows the start of it that is the player's %APPDATA% is written as %APPDATA% (it pastes into a folder window's address bar and does not
+## carry the player's name), elsewhere the start that is the home folder is written as ~. `os_name` is OS.get_name(). "" when there is no folder to name.
+static func report_place(os_name: String, user_dir: String, appdata: String, home: String) -> String:
+	if user_dir == "":
+		return ""
+	var path: String = user_dir.replace("\\", "/")
+	var win: bool = os_name == "Windows"
+	if win:
+		var ad: String = appdata.replace("\\", "/").rstrip("/")
+		if ad != "" and path.to_lower().begins_with(ad.to_lower() + "/"):
+			path = "%APPDATA%" + path.substr(ad.length())
+		path = path.replace("/", "\\")
+	else:
+		var hm: String = home.rstrip("/")
+		if hm != "" and path.begins_with(hm + "/"):
+			path = "~" + path.substr(hm.length())
+	return UiData.fmt("prompt.report_where_pc_win" if win else "prompt.report_where_pc", {"path": path})
+
+
 ## The line a menu shows (A-TOOLS-07; docs/tools/version.md): "Version 0.1.7", or with `with_build` "Version 0.1.7 (build 59c6b195, 14 November 2026)" (the match-over card, so a report says which build it came from). "" when
 ## the build has no version (a build made before the number: the line is left out, never "unknown").
 static func version_line(with_build: bool) -> String:

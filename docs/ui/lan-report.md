@@ -27,8 +27,20 @@ In a LAN match nobody can stop to write a report: the other person keeps playing
 
 - **The feedback panel gains SAVE REPORT** (on a LAN build only, when the host has set the hook; otherwise the panel is as it was). It calls `lan_report_fn(tags, note)`: the ticked tags as their ids joined by commas (`bug,confusing`; the tags are Bug, Felt unfair, Confusing, Loved it) and the note box's text. It then shows the panel's second state: "Report saved: <file>" and "Saved reports go in the 'saved' folder beside the game."
 - **On a LAN build the panel does not offer SEND** (the public GitHub issue link): reports go to the private saved folder instead.
-- **The pause screen says where saves go** (LAN build only): one line under the buttons, "Saved reports go in the 'saved' folder beside the game."
+- **The pause screen says where saves go** (when the host has set the hook): one line under the buttons. On a LAN build (the host sets `report_lan`) it is "Saved reports go in the 'saved' folder beside the game."; on a desktop build it names the real folder (section 4a).
 - **Save this match** is a new entry on the match-over card (Play again, Save this match, Main menu, Send feedback), switch `save_match` (on). On a LAN build it saves through the same hook (empty tags, the note from the panel if any); on the web page it downloads `orb-combat-match-<seed>.json`; with neither it says "This build can't save a match file yet". The card says what happened for eight seconds, in the same line as the pause screen's foot.
+
+## 4a. Which folder the words name (S-04, 2026-11-20)
+
+The hook is set on every desktop build (render/core/main.gd: `lan_report_fn = _record_report`, which keeps the match as a file in `user://reports`, MatchRecorder), so the HUD cannot tell a LAN host from a plain desktop build by the hook. It asks the host's flag, **`ui_hud.report_lan`** (off by default):
+
+| Build | Flag | The sentence (pause screen, and the panel's saved state) |
+| :--- | :--- | :--- |
+| Desktop, solo or couch | off | "Saved reports go in this folder: %APPDATA%\Godot\app_userdata\Orb Combat EX\reports Paste it into the address bar of a folder window to open it." (Windows) / "...: ~/.local/share/godot/app_userdata/Orb Combat EX/reports" (Linux; macOS: ~/Library/Application Support/Godot/app_userdata/Orb Combat EX/reports) |
+| LAN host | on (the LAN host sets it with its hook) | "Saved reports go in the 'saved' folder beside the game." |
+| No hook (the web page) | n/a | nothing |
+
+`UiFeedback.report_place()` writes the real folder (`ProjectSettings.globalize_path("user://reports")`) with the start that is the player's `%APPDATA%` (Windows) or home folder (elsewhere) abbreviated, so the sentence is short and carries no user name; a folder outside both is written in full. hud_check compares it with `MatchRecorder.DIR`, so the words cannot drift from the folder the recorder writes.
 
 ## 4. What the host sets (for Netcode, through the EP)
 
@@ -37,6 +49,8 @@ ui_hud.lan_report_fn = func(tags: String, note: String) -> String:
 	return host.lan.report(tags, note)   # the file name written, "" on failure
 ```
 One line where the HUD's other hooks are set (render/core/main.gd, a grant). With it unset every LAN-only piece is hidden or says it cannot, so the UI patch is safe to land first.
+
+A LAN host also sets `ui_hud.report_lan = true` with it (section 4a); without that the HUD names the desktop folder.
 
 **The web page's record** (`UiHud.match_record()`, also what a host may call): `{schema "orb-combat-match-record/1", saved_at (unix s), build {commit, date}, seed, setup, match_time (s), over, winner, settings (one line), note}`. A LAN host writes its own record in `host.lan.report`; the UI never shapes it.
 

@@ -217,6 +217,7 @@ func _ready() -> void:
 		tg["form"]["url"] = "https://forms.example.test/f?t={title}&b={body}"
 		UiFeedback.target_override = str(args["target"])
 	if args.has("lan"):
+		hud.report_lan = true
 		hud.lan_report_fn = func(_tags, _note) -> String: return "saved/report-2026-11-08-1432.json"   # --lan: a LAN host's report hook (Save report in the feedback panel, the pause screen's line, F9)
 	if args.has("ko"):
 		hud.consume({"type": "ko", "winner": 0, "loser": 1})

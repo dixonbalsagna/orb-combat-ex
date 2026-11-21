@@ -1,6 +1,6 @@
 {
   "input": "pad",
-  "mode": "two",
+  "mode": "solo",
   "natural_result": false,
   "pass": true,
   "platform": "windows",
@@ -21,13 +21,13 @@
       "ok": true
     },
     {
-      "detail": "lit: versus",
-      "name": "the mode row 'versus' is reached with the D-pad",
+      "detail": "lit: solo",
+      "name": "the mode row 'solo' is reached with the D-pad",
       "ok": true
     },
     {
-      "detail": "players 2, page setup",
-      "name": "A opens the setup for two people",
+      "detail": "players 1, page setup",
+      "name": "A opens the setup for one person against the computer",
       "ok": true
     },
     {
@@ -51,7 +51,7 @@
       "ok": true
     },
     {
-      "detail": "p1 human true, p2 human true",
+      "detail": "p1 human true, p2 human false",
       "name": "the match is of the mode: the bodies' AI flags",
       "ok": true
     },
@@ -71,7 +71,7 @@
       "ok": true
     },
     {
-      "detail": "tick 812, seed 1548967 to 6957009",
+      "detail": "tick 812, seed 6689565 to 3852769",
       "name": "a rematch ('again', chosen with the pad) starts a new match that runs",
       "ok": true
     },
@@ -81,7 +81,7 @@
       "ok": true
     },
     {
-      "detail": "rows: resume,howto,settings,feedback,about,p2_leave,menu,new,quit",
+      "detail": "rows: resume,howto,settings,feedback,about,menu,new,quit",
       "name": "P opens the pause menu, Quit among its rows (the pad's Start needs a connected pad)",
       "ok": true
     },

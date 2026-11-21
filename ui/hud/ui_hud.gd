@@ -89,6 +89,7 @@ var opts: Dictionary = {
 var insets := Vector4.ZERO     # left, top, right, bottom safe-area insets from the host (phone notches)
 
 var lan_report_fn: Callable = Callable()   # (tags: String, note: String[, reason: String]) -> String: the host saves a report now (LAN: host.lan.report, Netcode) and answers the file name, "" on failure; unset, the web page downloads one and anything else says it cannot yet (docs/ui/lan-report.md)
+var report_lan: bool = false           # the host's report hook is a LAN host's (the saved folder beside the game); a desktop build leaves it off and the HUD names the folder the recorder writes (user://reports)
 var _save_status: String = ""
 var _save_until: float = 0.0
 var _report_t: float = -100.0          # the HUD clock at the last report (one a second: a held chord or a second press must not save twice)
@@ -2337,7 +2338,7 @@ func pause_menu_plan() -> Dictionary:
 		_pm_prev = _pm_seen
 		_pm_seen = _pm_focus
 		_pm_bar_t0 = _ut
-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "quit_ask": _pm_quit, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "where": UiData.t("prompt.report_where") if lan_report_fn.is_valid() else "",
+	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "quit_ask": _pm_quit, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "where": report_where(),
 		"device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _pm_t0, "prev": _pm_prev, "bar_since": _ut - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else "", "version": _version_line(_pm_over)})
 
 
@@ -3727,6 +3728,15 @@ func _report_slot(device: int) -> int:
 	return 0
 
 
+## Where saved reports go, in words (S-04): the LAN sentence on a LAN build, the real folder on a desktop build, nothing with no hook.
+func report_where() -> String:
+	if not lan_report_fn.is_valid():
+		return ""
+	if report_lan:
+		return UiData.t("prompt.report_where")
+	return UiFeedback.report_place(OS.get_name(), ProjectSettings.globalize_path("user://reports"), OS.get_environment("APPDATA"), OS.get_environment("HOME"))
+
+
 ## Save a report now for this person; returns the file name ("" when nothing was saved or it was not a moment to: a computer, a screen open, loading, or a second press inside a second).
 func report_now(slot: int) -> String:
 	if not UiData.feature("report_this") or is_loading() or _notice_open or _pm_open or _set_open or _howto_open or _fb_open or _rm_open or _t - _report_t < REPORT_GAP:
@@ -3888,7 +3898,7 @@ func _fb_texts() -> Array:
 			note = UiFeedback.target_word("review") + " " + str(sd.get("too_long", ""))
 	if _fb_saved != "" and _fb_state == UiFeedback.STATE_COPIED:
 		status = _fb_saved   # after SAVE REPORT: what happened, and where reports go
-		note = UiData.t("prompt.report_where")
+		note = report_where()
 	return [status, note]
 
 
