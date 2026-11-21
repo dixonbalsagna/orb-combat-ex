@@ -24,7 +24,7 @@ The source of truth is `docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md`, sec
    - the switch groups land as main's data one owner at a time, in this order: pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus. Each comes with its own gate run and side-by-side;
    - A-CODE-01 closes when main reproduces the target record bit for bit.
 6. **GW1b:** the riders, straight after: the meters set to zero, the stray-beam fixes, flight 3500 and the rest of the path's list.
-7. **The first desktop build** (A-TOOLS-01): Windows, then Linux, compared by stills on the same replay.
+7. **The first desktop build** (A-TOOLS-01): straight after GW1a lands (the path's amendment), Windows, then Linux, compared by stills on the same replay. It carries travel 2.0 and flat-out 5,000; 1.5 and 3,500 come with GW1b, and Orb's notes say so.
 8. **Beside it all, on scratch copies:**
    - the mode list, fighter pick, quit row and mode smoke suite;
    - the measuring tools;
@@ -102,3 +102,25 @@ The original plan, kept for the record:
 Orb has two Fable-only resets, valid to 8 March 2027. Unused, they're lost.
 - **Reset 1, during A1:** when the Fable meter reaches about 90% while the all-models meter is under about 60% and stand-in work is queued. Expected this week or next. Orb presses it, and the EP says when.
 - **Reset 2, during A3:** the fight's new rules (beam, signatures, stamina, the gravity well) are the heaviest design and review work on the path. Expected December or January. If A3 slips past mid-February, use it in whatever week the Fable meter fills first, before 8 March.
+
+## EP rulings, 2026-11-20 (from the stand-in's reviews: docs/ep/reviews/GW1a-standin.md, GW1b-review.md, GW1c-readiness.md)
+
+- **GW1a contents:**
+  - It reproduces the target golden (travel 2.0; S-01). 1.5 lands with gw1b-energy.
+  - Art's 9 November tundra colours join it (S-02, docs/art/pending/gw1a-biomes).
+  - The mode list and fighter pick stay on as A1 deliverables beyond the 9 Nov build; their words can still change (S-03).
+  - memory-under-model's code lands with it, inert (M-04).
+  - Tools' report hook writes its check into its own folder and never prunes a player's saved match (S-05). UI's HUD passes "save" for "Save this match" (S-42).
+- **GW1b:**
+  - It follows the stand-in's 20-step order, with the planet flip LAST as its own commit, one full planet-mode gate and one golden re-record. The golden recipes name the round planet (S-07).
+  - The flip turns the planet mode on only; the random quick-match draw stays off until fore-clamp lands.
+  - Out of GW1b:
+    - both wall-hold data diffs and heldMul 2.0: the wall-hold window, after Orb plays the private build ("Wait until I play it");
+    - wall-hold-split: GW1c;
+    - grant-rendering-main: superseded by world-menu-merge;
+    - gw1b-chase-rebase: held until Orb answers the camera question.
+- **GW1c:** the planet stack re-cuts on main after GW1a and GW1b. A1 offers small, medium and big in the menu unless tiny and huge are drawn and measured (C-05; Orb's answer is open).
+- **Faults found tonight, all in Orb's build:**
+  - the field cache (fixed, b1d9444e, in GW1a);
+  - lakes with plans everywhere: no water drawn, and water starting above its shore (World and Rendering, GW1b);
+  - building memory inert under the model (memory-under-model, plus heldMul for the wall-hold window).
