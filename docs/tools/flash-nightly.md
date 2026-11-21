@@ -48,7 +48,7 @@ The window picks the same worst second and the same primary reading as the full 
 
 ## Not done
 
-The scheduled run (a night with no dispatch) has not happened yet; its first reading is the next to record. `tools/ci-budgets-check.mjs --runs 3` waits for three runs of the other jobs on 047d4037 or later. The full local readings of signature, collapse and the other clash modes are long runs (under the long-run rules, one at a time, below-normal) and are the way their windows get measured.
+The scheduled run (a night with no dispatch) has happened six times, 15 to 20 November 2026, every night red as expected (the clash clips and signature-reduced read over the line of 3; one night a clip timed out and one night collapse-normal read 3): the record is `docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md` (for the EP, not for Orb). All six read the one commit 09aa0f44, so they add no new reading, and the nightly turns red every night for the same known reason until it is told which readings are expected. `tools/ci-budgets-check.mjs --runs 3` waits for three runs of the other jobs on 047d4037 or later. The full local readings of signature, collapse and the other clash modes are long runs (under the long-run rules, one at a time, below-normal) and are the way their windows get measured.
 
 ## The windows on a runner: run 43585295274 (by hand, 14 November 2026, 10:26 to 11:58 UTC; for the EP, not for Orb)
 
