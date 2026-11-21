@@ -153,16 +153,6 @@
      "globe": {
        "type": "object",
        "description": "The planet store's rules for a mark (WorldCraters.globe*; docs/world/globe-step2.md). Optional: missing, the defaults are these numbers with repeats 0. Read whether or not the module is on.",
---- a/tools/world-checks.json
-+++ b/tools/world-checks.json
-@@ -12,6 +12,7 @@
-     "street_axis_check",
-     "size_check",
-     "crater_flatten_check",
-+    "tier_ratio_check",
-     "water_warm_check", "water_read_check", "landmark_spare_check", "lot_reach_check", "relax_check", "node_warm_check",
-     "wall_hold_check",
-     "struggle_meet_check",
 --- a/sim/world/tools/power_world_check.gd
 +++ b/sim/world/tools/power_world_check.gd
 @@ -52,7 +52,8 @@

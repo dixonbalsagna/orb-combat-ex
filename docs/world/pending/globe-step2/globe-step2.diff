@@ -1,363 +1,40 @@
---- a/sim/world/store.gd
-+++ b/sim/world/store.gd
-@@ -18,13 +18,23 @@
- const KIND_CRACK: int = 1
- const KIND_SCORCH: int = 2
- const KIND_TRENCH: int = 3
-+const KIND_SCAR: int = 5             # a directed beam groove A to B: a groove cut to its depth, like a trench (nothing makes one yet: terrain step 3)
-+const KIND_HEAP: int = 6             # a rubble cone at a planet point (nothing makes one yet: step 5)
-+const KIND_MERGE: int = 7            # appended at the cap for older small marks far from every fighter (nothing makes one yet: step 6); a bowl, read as a crater
- const STRIDE: int = 16
-+## The numbers every record keeps at the end of its 16 (terrain-globe-plan.md 4.2), all folded into storeHash with the rest of the record:
-+const O_LIP: int = 11                # a trench's or scar's lip height: the raised bank at its edge (0 until step 3)
-+const O_MAT: int = 12                # a crater's material class, a code into WorldGround.LOOKS (0 until craters-by-material feeds it)
-+const O_REP: int = 13                # a crater's repeat count: 0 for a first blow, one more than the record it supersedes
-+const O_WATER: int = 14              # the level this record's water stands at (B1, WorldFill.levelFor), DRY when it has no source
-+const O_SUP: int = 15                # the record this one supersedes, or -1 for none
-+const DRY: float = -1.0e9            # the water slot of a record that holds none
- const MAX: int = 16384               # records; add refuses past it
- const BOX: float = 1024.0            # the grid's box, in units
- const REACH_R: float = 2.0           # a crater reaches this many bowl radii (the apron ends at 1 + RIM_OUT)
- const CRACK_WIDTH: float = 24.0      # a crack's half width in units: full intensity within it, falling to nothing at twice it
- 
--static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid}: the derived index
-+static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid, sup}: the derived index (sup: the records another supersedes, a pure function of the store)
- 
- 
- static func _key(ix: int, iy: int, iz: int) -> int:
-@@ -62,7 +72,7 @@
- 			var c3: float = S.store[o + 1 + a] * R
- 			lo[a] = c3 - reach3
- 			hi[a] = c3 + reach3
--	elif kind == KIND_CRACK or kind == KIND_TRENCH:
-+	elif kind == KIND_CRACK or kind == KIND_TRENCH or kind == KIND_SCAR:
- 		var reach: float = S.store[o + 8] * 2.0
- 		for a in range(3):
- 			var p: float = S.store[o + 1 + a] * R
-@@ -90,9 +100,13 @@
- 	var ent: Dictionary = _ix.get(id, {})
- 	if ent.is_empty() or int(ent.n) != int(S.storeN) or int(ent.hash) != int(S.storeHash):
- 		var grid: Dictionary = {}
-+		var sup: Dictionary = {}
- 		for k in range(int(S.storeN)):
- 			_list(grid, S, k)
--		ent = {"n": int(S.storeN), "hash": int(S.storeHash), "grid": grid}
-+			var sk: int = int(S.store[k * STRIDE + O_SUP])
-+			if sk >= 0:
-+				sup[sk] = true
-+		ent = {"n": int(S.storeN), "hash": int(S.storeHash), "grid": grid, "sup": sup}
- 		if _ix.size() > 16:
- 			_ix.clear()
- 		_ix[id] = ent
-@@ -109,28 +123,43 @@
- 	if _ix.has(id):
- 		var e: Dictionary = _ix[id]
- 		live = int(e.n) == n and int(e.hash) == int(S.storeHash)
-+	var full: Array = []   # all STRIDE numbers, the slots at their defaults (no water, supersedes nothing) when the caller gave fewer: what is folded into the hash is what is stored
- 	for k in range(STRIDE):
--		S.store.append(float(rec[k]) if k < rec.size() else 0.0)
-+		if k < rec.size():
-+			full.append(float(rec[k]))
-+		else:
-+			full.append(DRY if k == O_WATER else (-1.0 if k == O_SUP else 0.0))
-+	for k in range(STRIDE):
-+		S.store.append(full[k])
- 	var h0: int = int(S.storeHash)
--	S.storeHash = _fold(h0, rec)
-+	S.storeHash = _fold(h0, full)
- 	S.storeN = n + 1
- 	if S is SimState:   # (a check's fake state has no line)
--		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again
-+		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again (a record that supersedes another reaches at least as far as it, so its reach is the union)
- 	if live:
- 		var ent: Dictionary = _ix[id]
- 		_list(ent.grid, S, n)
-+		if full[O_SUP] >= 0.0:
-+			ent.sup[int(full[O_SUP])] = true
- 		ent.n = n + 1
- 		ent.hash = int(S.storeHash)
- 	return n
- 
- 
- ## Adds a crater at the unit direction (px, py, pz) to S's store; returns its index, or -1 when the store is full (the caller keeps its S.deform write then). `cause`: 0 impact, 1 beam, 2 powerup, 3 other.
--static func add(S, px: float, py: float, pz: float, r: float, depth: float, rim: float, energy: float, cause: int, owner: int, t: float, special: int) -> int:
--	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner])
-+## sup: the record this one supersedes (a repeat blow grown into the old crater), or -1; rep: its repeat count; water: the level its water stands at (WorldFill.levelFor), or DRY; mat: its material class.
-+static func add(S, px: float, py: float, pz: float, r: float, depth: float, rim: float, energy: float, cause: int, owner: int, t: float, special: int, sup: int = -1, rep: int = 0, water: float = DRY, mat: int = 0) -> int:
-+	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner, mat, rep, water, sup])
- 
- 
--## The height the store adds at a unit direction: the sum of every crater's bowl, rim and apron there.
-+## The height the store adds at a unit direction: the bowls, rims and aprons of the craters (and merged marks) there, a heap's cone, the deepest groove of the trenches, scars and scorch (grooves never sum) and the
-+## highest lip of a trench; a record another supersedes is not read. Held between the floor and the ceiling (the strip's, craters.json globe).
- static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
-+	return heightDeltaX(S, qx, qy, qz, -1)
-+
-+
-+## heightDelta as if record `skip` were not in the store (the shaft cap and the settling read the ground without the record the new crater supersedes). -1 skips nothing.
-+static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float:
- 	if int(S.storeN) == 0:
- 		return 0.0
- 	var R: float = _R()
-@@ -139,30 +168,44 @@
- 	if not ent.grid.has(key):
- 		return 0.0
- 	var lst: PackedInt32Array = ent.grid[key]
-+	var sup: Dictionary = ent.sup
- 	var sum: float = 0.0
- 	var groove: float = 0.0
-+	var lip: float = 0.0
- 	for k in lst:
-+		if k == skip or (not sup.is_empty() and sup.has(k)):
-+			continue
- 		var o: int = k * STRIDE
- 		var kd: int = int(S.store[o])
--		if kd == KIND_TRENCH:
-+		if kd == KIND_TRENCH or kd == KIND_SCAR:
- 			groove = minf(groove, _trench(S, o, qx, qy, qz, R))
-+			if S.store[o + O_LIP] > 0.0:
-+				lip = maxf(lip, _lip(S, o, qx, qy, qz, R))
- 			continue
--		if kd != KIND_CRATER and kd != KIND_SCORCH:
-+		if kd != KIND_CRATER and kd != KIND_SCORCH and kd != KIND_MERGE and kd != KIND_HEAP:
- 			continue
- 		var dx: float = (qx - S.store[o + 1]) * R
- 		var dy: float = (qy - S.store[o + 2]) * R
- 		var dz: float = (qz - S.store[o + 3]) * R
- 		var d: float = sqrt(dx * dx + dy * dy + dz * dz)
--		if kd == KIND_CRATER:
-+		if kd == KIND_CRATER or kd == KIND_MERGE:
- 			var u: float = d / S.store[o + 4]
- 			if u < 2.0:
- 				sum += WorldCrater.profile(u, S.store[o + 5], S.store[o + 6])
-+		elif kd == KIND_HEAP:
-+			var uh: float = d / S.store[o + 4]
-+			if uh < 1.0:
-+				var th: float = 1.0 - uh * uh
-+				sum += S.store[o + 5] * th * th
- 		else:
- 			var us: float = d / S.store[o + 4]
- 			if us < 1.0:
- 				var ts: float = 1.0 - us * us
- 				groove = minf(groove, -S.store[o + 5] * ts * ts)
--	return minf(sum, groove) if groove < 0.0 else sum
-+	# A groove is cut to its depth below the ground: where the marks are below the original ground (sum <= 0) it takes the lower of the two, where they stand above it (a rim, an apron, a heap) it cuts down from there.
-+	# The lower of the two alone left a cliff as high as the rim at the groove's edge, where the groove (about 0) took over from a rim (up to 0.4 of a bowl's depth).
-+	var h: float = ((minf(sum, groove) if sum <= 0.0 else sum + groove) if groove < 0.0 else sum) + lip
-+	return clampf(h, WorldCraters.globeFloor(), WorldCraters.globeCeil())
- 
- 
- ## ===================================================================== cracks
-@@ -284,8 +327,93 @@
- ## ===================================================================== trenches
- ## The groove a knockback slide cuts along its path (WorldCrater.carveSegment): from planet point a to b, `depth` deep (a target, never exceeded), `halfWidth` wide. The ground is the lower of the craters' sum and the
- ## deepest trench or scorch groove there (heightDelta). Returns the record's index, or -1 when the store is full.
--static func addTrench(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int) -> int:
--	return _push(S, [KIND_TRENCH, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner])
-+## lip: the height of the raised bank at its edge (0: none, as ever); water: the level its water stands at (WorldFill.levelForSegment), or DRY.
-+static func addTrench(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int, lip: float = 0.0, water: float = DRY) -> int:
-+	var sg: Array = WorldGlobe.settleGroove(depth, halfWidth)   # a groove on the planet is never a wall: widened to the angle of repose (craters.json globe.repose)
-+	depth = sg[0]
-+	halfWidth = sg[1]
-+	return _push(S, [KIND_TRENCH, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner, lip, 0.0, 0.0, water, -1.0])
-+
-+
-+## A directed beam groove from planet point a to b (KIND_SCAR): the same groove as a trench (depth cut to its target, never summed), `halfWidth` wide. Nothing writes one yet (terrain step 3).
-+static func addScar(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int, lip: float = 0.0, water: float = DRY) -> int:
-+	var sg: Array = WorldGlobe.settleGroove(depth, halfWidth)
-+	depth = sg[0]
-+	halfWidth = sg[1]
-+	return _push(S, [KIND_SCAR, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner, lip, 0.0, 0.0, water, -1.0])
-+
-+
-+## A rubble cone at planet point p (KIND_HEAP): `height` at the centre falling to nothing at `radius`, held to a slope of 1 in 1 (the cone is height x (1 - u^2)^2, steepest at 1.54 height / radius). Nothing writes one yet (step 5).
-+static func addHeap(S, p: Array, radius: float, height: float, t: float, owner: int) -> int:
-+	return _push(S, [KIND_HEAP, p[0], p[1], p[2], radius, minf(height, radius / 1.54), 0.0, 0.0, t, 0.0, 3.0, owner, 0.0, 0.0, DRY, -1.0])
-+
-+
-+## A merged mark (KIND_MERGE): a bowl standing for older small marks (step 6); read as a crater.
-+static func addMerge(S, p: Array, r: float, depth: float, rim: float, t: float) -> int:
-+	return _push(S, [KIND_MERGE, p[0], p[1], p[2], r, depth, rim, 0.0, t, 0.0, 3.0, -1.0, 0.0, 0.0, DRY, -1.0])
-+
-+
-+## The index of the newest crater a blow at unit direction (qx, qy, qz) repeats: an impact crater (not superseded) whose centre is within `frac` of its own radius of the point, or -1.
-+static func recentImpact(S, qx: float, qy: float, qz: float, frac: float) -> int:
-+	if int(S.storeN) == 0:
-+		return -1
-+	var R: float = _R()
-+	var ent: Dictionary = _index(S)
-+	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
-+	if not ent.grid.has(key):
-+		return -1
-+	var best: int = -1
-+	for k in ent.grid[key]:
-+		var o: int = k * STRIDE
-+		if int(S.store[o]) != KIND_CRATER or int(S.store[o + 10]) != 0 or ent.sup.has(k) or k <= best:
-+			continue
-+		var dx: float = (qx - S.store[o + 1]) * R
-+		var dy: float = (qy - S.store[o + 2]) * R
-+		var dz: float = (qz - S.store[o + 3]) * R
-+		if sqrt(dx * dx + dy * dy + dz * dz) <= frac * S.store[o + 4]:
-+			best = k
-+	return best
-+
-+
-+## A record's centre (for a segment, its start) and its radius (a crater's, a trench's half width).
-+static func centreOf(S, k: int) -> Array:
-+	var o: int = k * STRIDE
-+	return [S.store[o + 1], S.store[o + 2], S.store[o + 3]]
-+
-+
-+static func radiusOf(S, k: int) -> float:
-+	var o: int = k * STRIDE
-+	return S.store[o + 8] if int(S.store[o]) == KIND_TRENCH or int(S.store[o]) == KIND_SCAR else S.store[o + 4]
-+
-+
-+static func repeatsOf(S, k: int) -> int:
-+	return int(S.store[k * STRIDE + O_REP])
-+
-+
-+## The level record k's water stands at, or DRY.
-+static func waterOf(S, k: int) -> float:
-+	return S.store[k * STRIDE + O_WATER]
-+
-+
-+## True when another record supersedes record k.
-+static func superseded(S, k: int) -> bool:
-+	return _index(S).sup.has(k)
-+
-+
-+## The records whose reach touches the unit direction (their indices, in order, the superseded ones left out): what is under a point, for the water's level and a check's reading.
-+static func at(S, qx: float, qy: float, qz: float) -> PackedInt32Array:
-+	var out := PackedInt32Array()
-+	if int(S.storeN) == 0:
-+		return out
-+	var R: float = _R()
-+	var ent: Dictionary = _index(S)
-+	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
-+	if not ent.grid.has(key):
-+		return out
-+	for k in ent.grid[key]:
-+		if not ent.sup.has(k):
-+			out.append(k)
-+	return out
- 
- 
- ## The trench groove at a unit direction (<= 0): -depth x the smoothed fall-off over the half width, the deepest of the trenches reaching it.
-@@ -322,3 +450,108 @@
- 		return 0.0
- 	var s: float = 1.0 - u * u
- 	return -S.store[o + 7] * s * s
-+
-+
-+## The raised bank at the edge of a groove (a trench's or a scar's lip slot): `lip` high on a ring from 0.85 to 1.6 half widths from the segment, a parabola with its crest at 1.225 half widths.
-+static func _lip(S, o: int, qx: float, qy: float, qz: float, R: float) -> float:
-+	var ex: float = S.store[o + 4] - S.store[o + 1]
-+	var ey: float = S.store[o + 5] - S.store[o + 2]
-+	var ez: float = S.store[o + 6] - S.store[o + 3]
-+	var e2: float = ex * ex + ey * ey + ez * ez
-+	var t: float = 0.0
-+	if e2 > 1.0e-24:
-+		t = clampf(((qx - S.store[o + 1]) * ex + (qy - S.store[o + 2]) * ey + (qz - S.store[o + 3]) * ez) / e2, 0.0, 1.0)
-+	var dx: float = (qx - (S.store[o + 1] + ex * t)) * R
-+	var dy: float = (qy - (S.store[o + 2] + ey * t)) * R
-+	var dz: float = (qz - (S.store[o + 3] + ez * t)) * R
-+	var u: float = sqrt(dx * dx + dy * dy + dz * dz) / S.store[o + 8]
-+	if u <= 0.85 or u >= 1.6:
-+		return 0.0
-+	var w: float = (u - 0.85) / 0.75
-+	return S.store[o + O_LIP] * 4.0 * w * (1.0 - w)
-+
-+
-+## The distance in units from the unit direction to a segment record's line (a trench's or a scar's A to B).
-+static func _segDist(S, o: int, qx: float, qy: float, qz: float, R: float) -> float:
-+	var ex: float = S.store[o + 4] - S.store[o + 1]
-+	var ey: float = S.store[o + 5] - S.store[o + 2]
-+	var ez: float = S.store[o + 6] - S.store[o + 3]
-+	var e2: float = ex * ex + ey * ey + ez * ez
-+	var t: float = 0.0
-+	if e2 > 1.0e-24:
-+		t = clampf(((qx - S.store[o + 1]) * ex + (qy - S.store[o + 2]) * ey + (qz - S.store[o + 3]) * ez) / e2, 0.0, 1.0)
-+	var dx: float = (qx - (S.store[o + 1] + ex * t)) * R
-+	var dy: float = (qy - (S.store[o + 2] + ey * t)) * R
-+	var dz: float = (qz - (S.store[o + 3] + ez * t)) * R
-+	return sqrt(dx * dx + dy * dy + dz * dz)
-+
-+
-+## True when the unit direction is inside record k's hole: within a crater's lip, or within a groove's half width of its line.
-+static func _inside(S, k: int, qx: float, qy: float, qz: float, R: float) -> bool:
-+	var o: int = k * STRIDE
-+	var kd: int = int(S.store[o])
-+	if kd == KIND_TRENCH or kd == KIND_SCAR:
-+		return _segDist(S, o, qx, qy, qz, R) < S.store[o + 8]
-+	if kd == KIND_CRATER or kd == KIND_MERGE:
-+		var dx: float = (qx - S.store[o + 1]) * R
-+		var dy: float = (qy - S.store[o + 2]) * R
-+		var dz: float = (qz - S.store[o + 3]) * R
-+		return sqrt(dx * dx + dy * dy + dz * dz) < S.store[o + 4]
-+	return false
-+
-+
-+## The level the water stands at in the holes that reach the unit direction (the highest of the records there that hold water), or DRY. A record holds water only if WorldFill.floodLevelFor found a source when it was made.
-+static func waterLevelAt(S, qx: float, qy: float, qz: float) -> float:
-+	if int(S.storeN) == 0:
-+		return DRY
-+	var R: float = _R()
-+	var ent: Dictionary = _index(S)
-+	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
-+	if not ent.grid.has(key):
-+		return DRY
-+	var best: float = DRY
-+	for k in ent.grid[key]:
-+		var lv: float = S.store[k * STRIDE + O_WATER]
-+		if lv <= DRY * 0.5 or ent.sup.has(k) or lv <= best:
-+			continue
-+		if _inside(S, k, qx, qy, qz, R):
-+			best = lv
-+	return best
-+
-+
-+## The level of the highest water held by a record whose hole overlaps a new one of radius `radius` at unit direction q (their reaches closer than the two radii together), or DRY: a trench cut on from a flooded one, or a bowl dug in a flooded crater, takes its level.
-+static func overlappingWater(S, q: Array, radius: float) -> float:
-+	if int(S.storeN) == 0:
-+		return DRY
-+	var R: float = _R()
-+	var ent: Dictionary = _index(S)
-+	var best: float = DRY
-+	var seen: Dictionary = {}
-+	var cx: float = q[0] * R
-+	var cy: float = q[1] * R
-+	var cz: float = q[2] * R
-+	for ix in range(_box(cx - radius), _box(cx + radius) + 1):
-+		for iy in range(_box(cy - radius), _box(cy + radius) + 1):
-+			for iz in range(_box(cz - radius), _box(cz + radius) + 1):
-+				var key: int = _key(ix, iy, iz)
-+				if not ent.grid.has(key):
-+					continue
-+				for k in ent.grid[key]:
-+					if seen.has(k):
-+						continue
-+					seen[k] = true
-+					var o: int = k * STRIDE
-+					var lv: float = S.store[o + O_WATER]
-+					if lv <= DRY * 0.5 or ent.sup.has(k) or lv <= best:
-+						continue
-+					var d: float = _segDist(S, o, q[0], q[1], q[2], R) if (int(S.store[o]) == KIND_TRENCH or int(S.store[o]) == KIND_SCAR) else _chord(S, o, q, R)
-+					if d < radius + radiusOf(S, k):
-+						best = lv
-+	return best
-+
-+
-+static func _chord(S, o: int, q: Array, R: float) -> float:
-+	var dx: float = (q[0] - S.store[o + 1]) * R
-+	var dy: float = (q[1] - S.store[o + 2]) * R
-+	var dz: float = (q[2] - S.store[o + 3]) * R
-+	return sqrt(dx * dx + dy * dy + dz * dz)
+diff --git a/data/biomes/craters.json b/data/biomes/craters.json
+index 8094ac4..c2a5bb4 100644
+--- a/data/biomes/craters.json
++++ b/data/biomes/craters.json
+@@ -10,2 +10,12 @@
+   },
++  "globe": {
++    "_about": "The planet store's rules for a mark (docs/world/globe-step2.md; terrain-globe-plan.md 4.3), read whether or not the module is on. floor and ceil hold the store's ground between them (the strip's -260 and +120 x 8). repose: the wall slope past which a new crater settles wider and shallower (volume kept). repeats: how many times a blow on one spot grows its crater into the old one (0 is off: each blow digs its own, held by the shaft cap; the radius factor is brunt.json repeatCraterGrow). settle: the settling on or off. settleGrooves: a trench or scar is also widened to the angle of repose (off: Camera's chase_rush_check moves with it; step 3 sets trench widths by force). furrow: a glancing impact also cuts a short trench behind it along its heading (off until step 3's trenches are looked at).",
++    "floor": -2080.0,
++    "ceil": 960.0,
++    "repose": 1.25,
++    "repeats": 0,
++    "settle": true,
++    "settleGrooves": false,
++    "furrow": false
++  },
+   "classes": {
+diff --git a/data/biomes/water.json b/data/biomes/water.json
+index 8c1d309..46f470e 100644
+--- a/data/biomes/water.json
++++ b/data/biomes/water.json
+@@ -65,2 +65,10 @@
+     "enabled": true
++  },
++  "flood": {
++    "_about": "B1 on the planet store (docs/world/globe-step2.md; terrain-globe-plan.md 4.3). enabled: a crater, trench or groove dug minDug or more deep looks once for a source of water (the sea, a lake, the biome's table) at radii radii and bearings bearings out to reach units beyond its own radius, and holds water at that level (WorldFill.floodLevelFor; the level goes in the record). Off: no record holds water and the module is as it was.",
++    "enabled": false,
++    "minDug": 6.0,
++    "reach": 1150.0,
++    "radii": 4,
++    "bearings": 8
+   }
+diff --git a/sim/world/crater.gd b/sim/world/crater.gd
+index 73a9734..e81e5df 100644
 --- a/sim/world/crater.gd
 +++ b/sim/world/crater.gd
-@@ -181,18 +181,41 @@
- 
- 
+@@ -183,3 +183,21 @@ static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx:
  static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
 -	if kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
 +	_gQ = []
@@ -380,8 +57,7 @@
 +				x = SimField.sx
 +	elif kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
  		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
- 		x = rp[0]
- 		energy = rp[1]
+@@ -188,3 +206,6 @@ static func _digRead(S: SimState, x: float, energy: float, cause, kind: String,
  	if not S.depthOn:
 -		return _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
 +		var rn = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
@@ -389,19 +65,12 @@
 +		_gSup = -1
 +		return rn
  	var zz: float = z
- 	if is_nan(zz):
- 		zz = float(cause.z) if (cause != null and "z" in cause) else 0.0
- 	var k: int = WorldTerrain.enterRow(S, WorldTerrain.rowOfZ(zz))
- 	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
+@@ -195,2 +216,4 @@ static func _digRead(S: SimState, x: float, energy: float, cause, kind: String,
  	WorldTerrain.leaveRow(S, k)
 +	_gQ = []
 +	_gSup = -1
  	if rec != null and k >= 0 and not _lastLive:   # a crater held in the planet store has no strip rows to dig: its bowl is radial about its planet point
- 		_digNeighbours(S, rec, k, shape[WorldCraters.S_STEEP] if shape.size() > 0 else 1.0)
- 	return rec
-@@ -203,6 +226,31 @@
- ## as ever UNTIL the state has a frame (S.frame, Simulation's read-through): then the ground is the field plus the store, and the deform write stops so the bowl is not counted twice (`_lastLive`, read by dig).
- static var pointHook: Callable = Callable()
+@@ -205,2 +228,27 @@ static var pointHook: Callable = Callable()
  static var _lastLive: bool = false
 +static var _gQ: Array = []      # the dig's planet point when a repeat moved it to the old crater's centre (set by _digRead, read by _dig and _record, cleared after)
 +static var _gSup: int = -1      # ... the store record the new crater supersedes
@@ -429,11 +98,7 @@
 +static func _globeLive(S: SimState) -> bool:
 +	return S.planetGen >= 3 and ("store" in S) and ("frame" in S) and S.frame != null and int(S.storeN) < WorldStore.MAX
  
- 
- static func _pointOf(S: SimState, x: float) -> Array:
-@@ -220,14 +268,14 @@
- 
- 
+@@ -222,6 +270,6 @@ static func _pointOf(S: SimState, x: float) -> Array:
  ## Adds the crater to the store; true when it is held there. Nothing happens off gen 3 or on a state without the store's fields.
 -static func _record(S: SimState, xw: float, R: float, d: float, hr: float, E: float, kind: String, cause, special: bool) -> bool:
 +static func _record(S: SimState, xw: float, R: float, d: float, hr: float, E: float, kind: String, cause, special: bool, qp: Array = [], sup: int = -1, rep: int = 0, lv: float = WorldStore.DRY) -> bool:
@@ -442,16 +107,12 @@
 -	var q: Array = _pointOf(S, xw)
 +	var q: Array = qp if not qp.is_empty() else _pointOf(S, xw)
  	if q.is_empty():
- 		return false
+@@ -229,3 +277,3 @@ static func _record(S: SimState, xw: float, R: float, d: float, hr: float, E: fl
  	var ci: int = 0 if kind == "impact" else (1 if kind == "beam" else (2 if kind == "powerup" else 3))
 -	return WorldStore.add(S, q[0], q[1], q[2], R, d, hr, E, ci, int(_slot(S, cause)), S.T, 1 if special else 0) >= 0
 +	return WorldStore.add(S, q[0], q[1], q[2], R, d, hr, E, ci, int(_slot(S, cause)), S.T, 1 if special else 0, sup, rep, lv) >= 0
  
- 
- ## The bowl's shape at u (in R) inside the lip is t * t, 1 at the centre and 0 at the lip, for t = 1 - u^2 today; steep (craters.json) changes the power of u.
-@@ -296,9 +344,18 @@
- 	var xw: float = SimWrap.wrap(x)
- 	var c0: int = _col(xw)
+@@ -298,5 +346,14 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
  	var y0: float = WorldTerrain.groundY(S, xw)
 -	var nr: int = int(round(RING_K * R / COL))
 -	var ring: float = (S.deform[(c0 - nr + NC) % NC] + S.deform[(c0 + nr) % NC]) * 0.5
@@ -469,11 +130,7 @@
 +		var ring: float = (S.deform[(c0 - nr + NC) % NC] + S.deform[(c0 + nr) % NC]) * 0.5
 +		relief = ring - S.deform[c0]
  	var dRaw: float = R0 * DEPTH_RATIO * sD * (GRAZE_MIN + (1.0 - GRAZE_MIN) * clampf(vert, 0.0, 1.0))
- 	var d: float = minf(dRaw, RELIEF_MAX_RATIO * R0 * sD - relief)
- 	if d < MIN_DEPTH:
-@@ -307,13 +364,23 @@
- 	var volFrac: float = RIM_VOL_LOW + (RIM_VOL_HIGH - RIM_VOL_LOW) * rt * rt * (3.0 - 2.0 * rt)
- 	var dt: float = d / sD   # the depth today's bowl would have had, for today's rim
+@@ -309,5 +366,13 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
  	var hr: float = minf(dt * volFrac * RIM_H_PER_VOL, RIM_DEPTH_MAX * dt) * sRim
 +	if glob and WorldCraters.globeSettle():   # the wall eased to the angle of repose: wider and shallower, the volume kept, held to the cap and the shaft cap again
 +		var st: Array = WorldGlobe.settle(S, qg, R, d, hr, rcap, RELIEF_MAX_RATIO * R0 * sD, relief, _gSup)
@@ -488,29 +145,22 @@
 +	var lv: float = WorldFill.floodLevelFor(S, qg, R, d) if glob else WorldStore.DRY   # B1: where water could come from (off unless water.json flood.enabled)
 +	var stored: bool = _record(S, xw, R, d, hr, E, kind, cause, special, qg if glob else [], _gSup if glob else -1, _gRep if glob else 0, lv)
  	var live: bool = stored and ("frame" in S) and S.frame != null   # the read-through reads the store: no strip bowl
- 	_lastLive = live
- 	if live:
+@@ -316,2 +381,4 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
  		minG = y0 - d
 +		if glob and kind == "impact" and WorldCraters.globeFurrow():   # the furrow: a glancing blow makes a short trench behind it, along the true heading, through the rim (terrain-globe-plan.md 4.3)
 +			_furrow(S, qg, xw, R, d, dirx, cause, lv)
  	var pre := PackedFloat32Array()   # the deform before this crater, for the furrow's target
- 	pre.resize(2 * n + 1)
- 	var pinD: PackedByteArray = WorldStructures.pinned(S, c0, n)   # the rim and apron skip footings (T4 extended)
-@@ -621,7 +688,8 @@
- 		var ta: Array = _pointOf(S, SimWrap.wrap(xa))
- 		var tb: Array = _pointOf(S, SimWrap.wrap(xb))
+@@ -623,3 +690,4 @@ static func _carveSegment(S: SimState, xa: float, xb: float, depth: float, paved
  		if not ta.is_empty() and not tb.is_empty():
 -			tlive = WorldStore.addTrench(S, ta, tb, depth, SimConst.COL, S.T, -1) >= 0 and ("frame" in S) and S.frame != null
 +			var tlv: float = WorldFill.floodLevelForSegment(S, ta, tb, depth, SimConst.COL) if S.planetGen >= 3 else WorldStore.DRY   # B1: a trench cut on from the coast fills along its length (off unless water.json flood.enabled)
 +			tlive = WorldStore.addTrench(S, ta, tb, depth, SimConst.COL, S.T, -1, 0.0, tlv) >= 0 and ("frame" in S) and S.frame != null
  	var base: PackedFloat32Array = S.base
- 	var dfm: PackedFloat32Array = S.deform
- 	var crk: PackedFloat32Array = S.crack
+diff --git a/sim/world/craters.gd b/sim/world/craters.gd
+index 83ea991..c82a81a 100644
 --- a/sim/world/craters.gd
 +++ b/sim/world/craters.gd
-@@ -34,6 +34,80 @@
- static var K_BUILT: bool = false
- static var K_SCALES: bool = true
+@@ -36,2 +36,76 @@ static var K_SCALES: bool = true
  static var _shapes: Array = []   # per look code: the shape, or an empty array for no row (today's bowl)
 +## The planet store's rules for a mark (craters.json globe, optional; terrain-globe-plan.md 4.3). floor and ceil hold the store's ground (the strip's -260 and +120 x WS); repose is the wall slope past which a new crater
 +## settles wider and shallower; repeats is how many times a blow on one spot grows the crater (0: off, each blow digs its own, held by the shaft cap) and grow the radius factor each asks (brunt.json repeatCraterGrow).
@@ -587,11 +237,7 @@
 +	G_REPEATS = repeats
 +	G_SETTLE = settle
  
- 
- static func data() -> Dictionary:
-@@ -74,6 +148,13 @@
- 	_errors = []
- 	_d = {}
+@@ -76,2 +150,9 @@ static func _load() -> void:
  	_shapes = []
 +	G_FLOOR = -2080.0
 +	G_CEIL = 960.0
@@ -601,19 +247,14 @@
 +	G_FURROW = false
 +	G_SETTLE_G = false
  	for k in range(WorldGround.LOOKS.size()):
- 		_shapes.append(NONE)
- 	var f := FileAccess.open(PATH, FileAccess.READ)
-@@ -114,10 +195,22 @@
- 		var mt = j.meteor
- 		if not (mt is Dictionary) or float(mt.get("eMult", 0.0)) < 1.0 or float(mt.get("rMax", 0.0)) < 600.0:
+@@ -116,2 +197,6 @@ static func _load() -> void:
  			_errors.append("craters.json: meteor needs eMult (at least 1) and rMax (at least 600)")
 +	if j.has("globe"):
 +		var gl = j.globe
 +		if not (gl is Dictionary) or float(gl.get("floor", -1.0)) >= 0.0 or float(gl.get("ceil", 1.0)) <= 0.0 or float(gl.get("repose", 1.25)) < 0.5 or int(gl.get("repeats", 0)) < 0 or int(gl.get("repeats", 0)) > 8:
 +			_errors.append("craters.json: globe is {floor below 0, ceil above 0, repose at least 0.5, repeats 0 to 8, settle}")
  	if not _errors.is_empty():
- 		for k in range(_shapes.size()):
- 			_shapes[k] = NONE
+@@ -120,2 +205,10 @@ static func _load() -> void:
  		return
 +	if j.has("globe"):
 +		G_FLOOR = float(j.globe.get("floor", -2080.0))
@@ -624,13 +265,27 @@
 +		G_FURROW = bool(j.globe.get("furrow", false))
 +		G_SETTLE_G = bool(j.globe.get("settleGrooves", false))
  	_d = j
- 	_parsed = j
- 	K_ON = bool(j.enabled)
+diff --git a/sim/world/field.gd b/sim/world/field.gd
+index dd8d4d4..1964907 100644
+--- a/sim/world/field.gd
++++ b/sim/world/field.gd
+@@ -706,4 +706,5 @@ static func applyRecords(S, qx: float, qy: float, qz: float, h: float, planet =
+ static func recordWater(S, qx: float, qy: float, qz: float, h: float, planet = null) -> float:
++	var flood: float = WorldFill.floodDepth(S, qx, qy, qz, h)   # the water the holes the fight dug hold (B1; 0 with water.json flood off)
+ 	if S.fieldRecs.is_empty():
+-		return 0.0
++		return flood
+ 	var best: float = 0.0
+@@ -727,3 +728,3 @@ static func recordWater(S, qx: float, qy: float, qz: float, h: float, planet = n
+ 				best = maxf(best, float(bl[1]) - h)
+-	return maxf(best, lakeBest)
++	return maxf(maxf(best, lakeBest), flood)
+ 
+diff --git a/sim/world/fill.gd b/sim/world/fill.gd
+index f122992..bcfeae3 100644
 --- a/sim/world/fill.gd
 +++ b/sim/world/fill.gd
-@@ -37,6 +37,11 @@
- static var K_SURF_ON: bool = false
- static var K_SURF_TICKS: int = 30
+@@ -39,2 +39,7 @@ static var K_SURF_TICKS: int = 30
  static var K_FLOOR_ON: bool = false
 +static var K_FLOOD_ON: bool = false        # B1 on the planet store (water.json flood.enabled): a hole dug with a source of water near it holds water at the source's level
 +static var K_FLOOD_MINDUG: float = 6.0     # a hole dug less than this deep looks for no source
@@ -638,20 +293,12 @@
 +static var K_FLOOD_RADII: int = 4          # ... at this many radii
 +static var K_FLOOD_BEARINGS: int = 8       # ... on this many of WorldGlobe's bearings (8 at most)
  
- 
- static func data() -> Dictionary:
-@@ -157,6 +162,8 @@
- 			_errors.append("water.json: table names %s, which climate.json does not have" % String(k))
- 	if j.has("surface") and (not (j.surface is Dictionary) or int(j.surface.ticks) < 2):
+@@ -159,2 +164,4 @@ static func _load() -> void:
  		_errors.append("water.json: surface is {enabled, ticks} with ticks at least 2")
 +	if j.has("flood") and (not (j.flood is Dictionary) or float(j.flood.get("minDug", 0.0)) <= 0.0 or float(j.flood.get("reach", 0.0)) <= 0.0 or int(j.flood.get("radii", 0)) < 1 or int(j.flood.get("bearings", 0)) < 1 or int(j.flood.get("bearings", 0)) > 8):
 +		_errors.append("water.json: flood is {enabled, minDug above 0, reach above 0, radii at least 1, bearings 1 to 8}")
  	var fp: String = floorProblem(j, _dropWaterOn() if j.has("floor") and j.floor is Dictionary and bool(j.floor.get("enabled", false)) else true)
- 	if fp != "":
- 		_errors.append(fp)
-@@ -190,6 +197,104 @@
- 	K_SURF_ON = bool(j.surface.enabled) if j.has("surface") else false
- 	K_SURF_TICKS = int(j.surface.ticks) if j.has("surface") else 30
+@@ -192,2 +199,100 @@ static func _load() -> void:
  	K_FLOOR_ON = bool(j.floor.enabled) if j.has("floor") else false
 +	K_FLOOD_ON = bool(j.flood.enabled) if j.has("flood") else false
 +	K_FLOOD_MINDUG = float(j.flood.minDug) if j.has("flood") else 6.0
@@ -752,30 +399,9 @@
 +	var lv: float = WorldStore.waterLevelAt(S, qx, qy, qz)
 +	return maxf(0.0, lv - h) if lv > WorldStore.DRY * 0.5 else 0.0
  
- 
- ## Water shallower than this at x is waded: a body passing through it is not dragged or sunk (it still skims). False with water v2 off, unless the floor is on: wade.below is the floor's line too (rulings 2026-10-30 row 4).
---- a/sim/world/field.gd
-+++ b/sim/world/field.gd
-@@ -704,8 +704,9 @@
- 
- ## The water the records hold at a unit direction whose ground (after applyRecords) is `h`: the deepest of the lakes and rivers there, in units; 0 for none. The sea is not a record: it is derived from the ground.
- static func recordWater(S, qx: float, qy: float, qz: float, h: float, planet = null) -> float:
-+	var flood: float = WorldFill.floodDepth(S, qx, qy, qz, h)   # the water the holes the fight dug hold (B1; 0 with water.json flood off)
- 	if S.fieldRecs.is_empty():
--		return 0.0
-+		return flood
- 	var best: float = 0.0
- 	var lakeBest: float = 0.0
- 	var lakeLevel: float = 1.0e30
-@@ -725,7 +726,7 @@
- 			var bl: Array = WorldWaterRec.riverBed(P, rec, qx, qy, qz)
- 			if not bl.is_empty():
- 				best = maxf(best, float(bl[1]) - h)
--	return maxf(best, lakeBest)
-+	return maxf(maxf(best, lakeBest), flood)
- 
- 
- ## The bake hash's hasher at its start (the text _hashBake begins with): the bake folds each node in as it comes, in bake order, so the hash is ready the moment the last node is, with no call of its own.
+diff --git a/b/sim/world/globe.gd b/sim/world/globe.gd
+new file mode 100644
+index 0000000..2dac7e8
 --- /dev/null
 +++ b/sim/world/globe.gd
 @@ -0,0 +1,127 @@
@@ -906,10 +532,471 @@
 +	var d2: float = minf(d / (kk * kk), maxf(0.0, reliefMax * (R2 / R) - relief_))
 +	var hr2: float = hr * (d2 / d) if d > 0.0 else hr
 +	return [R2, d2, hr2]
+diff --git a/b/sim/world/globe.gd.uid b/sim/world/globe.gd.uid
+new file mode 100644
+index 0000000..13b8d19
 --- /dev/null
 +++ b/sim/world/globe.gd.uid
 @@ -0,0 +1 @@
 +uid://yp3j72gqcjqj
+diff --git a/sim/world/store.gd b/sim/world/store.gd
+index 786dab6..d3c0b4f 100644
+--- a/sim/world/store.gd
++++ b/sim/world/store.gd
+@@ -20,3 +20,13 @@ const KIND_SCORCH: int = 2
+ const KIND_TRENCH: int = 3
++const KIND_SCAR: int = 5             # a directed beam groove A to B: a groove cut to its depth, like a trench (nothing makes one yet: terrain step 3)
++const KIND_HEAP: int = 6             # a rubble cone at a planet point (nothing makes one yet: step 5)
++const KIND_MERGE: int = 7            # appended at the cap for older small marks far from every fighter (nothing makes one yet: step 6); a bowl, read as a crater
+ const STRIDE: int = 16
++## The numbers every record keeps at the end of its 16 (terrain-globe-plan.md 4.2), all folded into storeHash with the rest of the record:
++const O_LIP: int = 11                # a trench's or scar's lip height: the raised bank at its edge (0 until step 3)
++const O_MAT: int = 12                # a crater's material class, a code into WorldGround.LOOKS (0 until craters-by-material feeds it)
++const O_REP: int = 13                # a crater's repeat count: 0 for a first blow, one more than the record it supersedes
++const O_WATER: int = 14              # the level this record's water stands at (B1, WorldFill.levelFor), DRY when it has no source
++const O_SUP: int = 15                # the record this one supersedes, or -1 for none
++const DRY: float = -1.0e9            # the water slot of a record that holds none
+ const MAX: int = 16384               # records; add refuses past it
+@@ -26,3 +36,3 @@ const CRACK_WIDTH: float = 24.0      # a crack's half width in units: full inten
+ 
+-static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid}: the derived index
++static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid, sup}: the derived index (sup: the records another supersedes, a pure function of the store)
+ 
+@@ -64,3 +74,3 @@ static func _list(grid: Dictionary, S, k: int) -> void:
+ 			hi[a] = c3 + reach3
+-	elif kind == KIND_CRACK or kind == KIND_TRENCH:
++	elif kind == KIND_CRACK or kind == KIND_TRENCH or kind == KIND_SCAR:
+ 		var reach: float = S.store[o + 8] * 2.0
+@@ -92,5 +102,9 @@ static func _index(S) -> Dictionary:
+ 		var grid: Dictionary = {}
++		var sup: Dictionary = {}
+ 		for k in range(int(S.storeN)):
+ 			_list(grid, S, k)
+-		ent = {"n": int(S.storeN), "hash": int(S.storeHash), "grid": grid}
++			var sk: int = int(S.store[k * STRIDE + O_SUP])
++			if sk >= 0:
++				sup[sk] = true
++		ent = {"n": int(S.storeN), "hash": int(S.storeHash), "grid": grid, "sup": sup}
+ 		if _ix.size() > 16:
+@@ -111,9 +125,15 @@ static func _push(S, rec: Array) -> int:
+ 		live = int(e.n) == n and int(e.hash) == int(S.storeHash)
++	var full: Array = []   # all STRIDE numbers, the slots at their defaults (no water, supersedes nothing) when the caller gave fewer: what is folded into the hash is what is stored
+ 	for k in range(STRIDE):
+-		S.store.append(float(rec[k]) if k < rec.size() else 0.0)
++		if k < rec.size():
++			full.append(float(rec[k]))
++		else:
++			full.append(DRY if k == O_WATER else (-1.0 if k == O_SUP else 0.0))
++	for k in range(STRIDE):
++		S.store.append(full[k])
+ 	var h0: int = int(S.storeHash)
+-	S.storeHash = _fold(h0, rec)
++	S.storeHash = _fold(h0, full)
+ 	S.storeN = n + 1
+ 	if S is SimState:   # (a check's fake state has no line)
+-		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again
++		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again (a record that supersedes another reaches at least as far as it, so its reach is the union)
+ 	if live:
+@@ -121,2 +141,4 @@ static func _push(S, rec: Array) -> int:
+ 		_list(ent.grid, S, n)
++		if full[O_SUP] >= 0.0:
++			ent.sup[int(full[O_SUP])] = true
+ 		ent.n = n + 1
+@@ -127,8 +149,15 @@ static func _push(S, rec: Array) -> int:
+ ## Adds a crater at the unit direction (px, py, pz) to S's store; returns its index, or -1 when the store is full (the caller keeps its S.deform write then). `cause`: 0 impact, 1 beam, 2 powerup, 3 other.
+-static func add(S, px: float, py: float, pz: float, r: float, depth: float, rim: float, energy: float, cause: int, owner: int, t: float, special: int) -> int:
+-	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner])
++## sup: the record this one supersedes (a repeat blow grown into the old crater), or -1; rep: its repeat count; water: the level its water stands at (WorldFill.levelFor), or DRY; mat: its material class.
++static func add(S, px: float, py: float, pz: float, r: float, depth: float, rim: float, energy: float, cause: int, owner: int, t: float, special: int, sup: int = -1, rep: int = 0, water: float = DRY, mat: int = 0) -> int:
++	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner, mat, rep, water, sup])
+ 
+ 
+-## The height the store adds at a unit direction: the sum of every crater's bowl, rim and apron there.
++## The height the store adds at a unit direction: the bowls, rims and aprons of the craters (and merged marks) there, a heap's cone, the deepest groove of the trenches, scars and scorch (grooves never sum) and the
++## highest lip of a trench; a record another supersedes is not read. Held between the floor and the ceiling (the strip's, craters.json globe).
+ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
++	return heightDeltaX(S, qx, qy, qz, -1)
++
++
++## heightDelta as if record `skip` were not in the store (the shaft cap and the settling read the ground without the record the new crater supersedes). -1 skips nothing.
++static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float:
+ 	if int(S.storeN) == 0:
+@@ -141,11 +170,17 @@ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
+ 	var lst: PackedInt32Array = ent.grid[key]
++	var sup: Dictionary = ent.sup
+ 	var sum: float = 0.0
+ 	var groove: float = 0.0
++	var lip: float = 0.0
+ 	for k in lst:
++		if k == skip or (not sup.is_empty() and sup.has(k)):
++			continue
+ 		var o: int = k * STRIDE
+ 		var kd: int = int(S.store[o])
+-		if kd == KIND_TRENCH:
++		if kd == KIND_TRENCH or kd == KIND_SCAR:
+ 			groove = minf(groove, _trench(S, o, qx, qy, qz, R))
++			if S.store[o + O_LIP] > 0.0:
++				lip = maxf(lip, _lip(S, o, qx, qy, qz, R))
+ 			continue
+-		if kd != KIND_CRATER and kd != KIND_SCORCH:
++		if kd != KIND_CRATER and kd != KIND_SCORCH and kd != KIND_MERGE and kd != KIND_HEAP:
+ 			continue
+@@ -155,3 +190,3 @@ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
+ 		var d: float = sqrt(dx * dx + dy * dy + dz * dz)
+-		if kd == KIND_CRATER:
++		if kd == KIND_CRATER or kd == KIND_MERGE:
+ 			var u: float = d / S.store[o + 4]
+@@ -159,2 +194,7 @@ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
+ 				sum += WorldCrater.profile(u, S.store[o + 5], S.store[o + 6])
++		elif kd == KIND_HEAP:
++			var uh: float = d / S.store[o + 4]
++			if uh < 1.0:
++				var th: float = 1.0 - uh * uh
++				sum += S.store[o + 5] * th * th
+ 		else:
+@@ -164,3 +204,6 @@ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
+ 				groove = minf(groove, -S.store[o + 5] * ts * ts)
+-	return minf(sum, groove) if groove < 0.0 else sum
++	# A groove is cut to its depth below the ground: where the marks are below the original ground (sum <= 0) it takes the lower of the two, where they stand above it (a rim, an apron, a heap) it cuts down from there.
++	# The lower of the two alone left a cliff as high as the rim at the groove's edge, where the groove (about 0) took over from a rim (up to 0.4 of a bowl's depth).
++	var h: float = ((minf(sum, groove) if sum <= 0.0 else sum + groove) if groove < 0.0 else sum) + lip
++	return clampf(h, WorldCraters.globeFloor(), WorldCraters.globeCeil())
+ 
+@@ -286,4 +329,89 @@ static func layScorch(S, pointOfX: Callable) -> int:
+ ## deepest trench or scorch groove there (heightDelta). Returns the record's index, or -1 when the store is full.
+-static func addTrench(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int) -> int:
+-	return _push(S, [KIND_TRENCH, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner])
++## lip: the height of the raised bank at its edge (0: none, as ever); water: the level its water stands at (WorldFill.levelForSegment), or DRY.
++static func addTrench(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int, lip: float = 0.0, water: float = DRY) -> int:
++	var sg: Array = WorldGlobe.settleGroove(depth, halfWidth)   # a groove on the planet is never a wall: widened to the angle of repose (craters.json globe.repose)
++	depth = sg[0]
++	halfWidth = sg[1]
++	return _push(S, [KIND_TRENCH, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner, lip, 0.0, 0.0, water, -1.0])
++
++
++## A directed beam groove from planet point a to b (KIND_SCAR): the same groove as a trench (depth cut to its target, never summed), `halfWidth` wide. Nothing writes one yet (terrain step 3).
++static func addScar(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int, lip: float = 0.0, water: float = DRY) -> int:
++	var sg: Array = WorldGlobe.settleGroove(depth, halfWidth)
++	depth = sg[0]
++	halfWidth = sg[1]
++	return _push(S, [KIND_SCAR, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner, lip, 0.0, 0.0, water, -1.0])
++
++
++## A rubble cone at planet point p (KIND_HEAP): `height` at the centre falling to nothing at `radius`, held to a slope of 1 in 1 (the cone is height x (1 - u^2)^2, steepest at 1.54 height / radius). Nothing writes one yet (step 5).
++static func addHeap(S, p: Array, radius: float, height: float, t: float, owner: int) -> int:
++	return _push(S, [KIND_HEAP, p[0], p[1], p[2], radius, minf(height, radius / 1.54), 0.0, 0.0, t, 0.0, 3.0, owner, 0.0, 0.0, DRY, -1.0])
++
++
++## A merged mark (KIND_MERGE): a bowl standing for older small marks (step 6); read as a crater.
++static func addMerge(S, p: Array, r: float, depth: float, rim: float, t: float) -> int:
++	return _push(S, [KIND_MERGE, p[0], p[1], p[2], r, depth, rim, 0.0, t, 0.0, 3.0, -1.0, 0.0, 0.0, DRY, -1.0])
++
++
++## The index of the newest crater a blow at unit direction (qx, qy, qz) repeats: an impact crater (not superseded) whose centre is within `frac` of its own radius of the point, or -1.
++static func recentImpact(S, qx: float, qy: float, qz: float, frac: float) -> int:
++	if int(S.storeN) == 0:
++		return -1
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
++	if not ent.grid.has(key):
++		return -1
++	var best: int = -1
++	for k in ent.grid[key]:
++		var o: int = k * STRIDE
++		if int(S.store[o]) != KIND_CRATER or int(S.store[o + 10]) != 0 or ent.sup.has(k) or k <= best:
++			continue
++		var dx: float = (qx - S.store[o + 1]) * R
++		var dy: float = (qy - S.store[o + 2]) * R
++		var dz: float = (qz - S.store[o + 3]) * R
++		if sqrt(dx * dx + dy * dy + dz * dz) <= frac * S.store[o + 4]:
++			best = k
++	return best
++
++
++## A record's centre (for a segment, its start) and its radius (a crater's, a trench's half width).
++static func centreOf(S, k: int) -> Array:
++	var o: int = k * STRIDE
++	return [S.store[o + 1], S.store[o + 2], S.store[o + 3]]
++
++
++static func radiusOf(S, k: int) -> float:
++	var o: int = k * STRIDE
++	return S.store[o + 8] if int(S.store[o]) == KIND_TRENCH or int(S.store[o]) == KIND_SCAR else S.store[o + 4]
++
++
++static func repeatsOf(S, k: int) -> int:
++	return int(S.store[k * STRIDE + O_REP])
++
++
++## The level record k's water stands at, or DRY.
++static func waterOf(S, k: int) -> float:
++	return S.store[k * STRIDE + O_WATER]
++
++
++## True when another record supersedes record k.
++static func superseded(S, k: int) -> bool:
++	return _index(S).sup.has(k)
++
++
++## The records whose reach touches the unit direction (their indices, in order, the superseded ones left out): what is under a point, for the water's level and a check's reading.
++static func at(S, qx: float, qy: float, qz: float) -> PackedInt32Array:
++	var out := PackedInt32Array()
++	if int(S.storeN) == 0:
++		return out
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
++	if not ent.grid.has(key):
++		return out
++	for k in ent.grid[key]:
++		if not ent.sup.has(k):
++			out.append(k)
++	return out
+ 
+@@ -324 +452,106 @@ static func _trench(S, o: int, qx: float, qy: float, qz: float, R: float) -> flo
+ 	return -S.store[o + 7] * s * s
++
++
++## The raised bank at the edge of a groove (a trench's or a scar's lip slot): `lip` high on a ring from 0.85 to 1.6 half widths from the segment, a parabola with its crest at 1.225 half widths.
++static func _lip(S, o: int, qx: float, qy: float, qz: float, R: float) -> float:
++	var ex: float = S.store[o + 4] - S.store[o + 1]
++	var ey: float = S.store[o + 5] - S.store[o + 2]
++	var ez: float = S.store[o + 6] - S.store[o + 3]
++	var e2: float = ex * ex + ey * ey + ez * ez
++	var t: float = 0.0
++	if e2 > 1.0e-24:
++		t = clampf(((qx - S.store[o + 1]) * ex + (qy - S.store[o + 2]) * ey + (qz - S.store[o + 3]) * ez) / e2, 0.0, 1.0)
++	var dx: float = (qx - (S.store[o + 1] + ex * t)) * R
++	var dy: float = (qy - (S.store[o + 2] + ey * t)) * R
++	var dz: float = (qz - (S.store[o + 3] + ez * t)) * R
++	var u: float = sqrt(dx * dx + dy * dy + dz * dz) / S.store[o + 8]
++	if u <= 0.85 or u >= 1.6:
++		return 0.0
++	var w: float = (u - 0.85) / 0.75
++	return S.store[o + O_LIP] * 4.0 * w * (1.0 - w)
++
++
++## The distance in units from the unit direction to a segment record's line (a trench's or a scar's A to B).
++static func _segDist(S, o: int, qx: float, qy: float, qz: float, R: float) -> float:
++	var ex: float = S.store[o + 4] - S.store[o + 1]
++	var ey: float = S.store[o + 5] - S.store[o + 2]
++	var ez: float = S.store[o + 6] - S.store[o + 3]
++	var e2: float = ex * ex + ey * ey + ez * ez
++	var t: float = 0.0
++	if e2 > 1.0e-24:
++		t = clampf(((qx - S.store[o + 1]) * ex + (qy - S.store[o + 2]) * ey + (qz - S.store[o + 3]) * ez) / e2, 0.0, 1.0)
++	var dx: float = (qx - (S.store[o + 1] + ex * t)) * R
++	var dy: float = (qy - (S.store[o + 2] + ey * t)) * R
++	var dz: float = (qz - (S.store[o + 3] + ez * t)) * R
++	return sqrt(dx * dx + dy * dy + dz * dz)
++
++
++## True when the unit direction is inside record k's hole: within a crater's lip, or within a groove's half width of its line.
++static func _inside(S, k: int, qx: float, qy: float, qz: float, R: float) -> bool:
++	var o: int = k * STRIDE
++	var kd: int = int(S.store[o])
++	if kd == KIND_TRENCH or kd == KIND_SCAR:
++		return _segDist(S, o, qx, qy, qz, R) < S.store[o + 8]
++	if kd == KIND_CRATER or kd == KIND_MERGE:
++		var dx: float = (qx - S.store[o + 1]) * R
++		var dy: float = (qy - S.store[o + 2]) * R
++		var dz: float = (qz - S.store[o + 3]) * R
++		return sqrt(dx * dx + dy * dy + dz * dz) < S.store[o + 4]
++	return false
++
++
++## The level the water stands at in the holes that reach the unit direction (the highest of the records there that hold water), or DRY. A record holds water only if WorldFill.floodLevelFor found a source when it was made.
++static func waterLevelAt(S, qx: float, qy: float, qz: float) -> float:
++	if int(S.storeN) == 0:
++		return DRY
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
++	if not ent.grid.has(key):
++		return DRY
++	var best: float = DRY
++	for k in ent.grid[key]:
++		var lv: float = S.store[k * STRIDE + O_WATER]
++		if lv <= DRY * 0.5 or ent.sup.has(k) or lv <= best:
++			continue
++		if _inside(S, k, qx, qy, qz, R):
++			best = lv
++	return best
++
++
++## The level of the highest water held by a record whose hole overlaps a new one of radius `radius` at unit direction q (their reaches closer than the two radii together), or DRY: a trench cut on from a flooded one, or a bowl dug in a flooded crater, takes its level.
++static func overlappingWater(S, q: Array, radius: float) -> float:
++	if int(S.storeN) == 0:
++		return DRY
++	var R: float = _R()
++	var ent: Dictionary = _index(S)
++	var best: float = DRY
++	var seen: Dictionary = {}
++	var cx: float = q[0] * R
++	var cy: float = q[1] * R
++	var cz: float = q[2] * R
++	for ix in range(_box(cx - radius), _box(cx + radius) + 1):
++		for iy in range(_box(cy - radius), _box(cy + radius) + 1):
++			for iz in range(_box(cz - radius), _box(cz + radius) + 1):
++				var key: int = _key(ix, iy, iz)
++				if not ent.grid.has(key):
++					continue
++				for k in ent.grid[key]:
++					if seen.has(k):
++						continue
++					seen[k] = true
++					var o: int = k * STRIDE
++					var lv: float = S.store[o + O_WATER]
++					if lv <= DRY * 0.5 or ent.sup.has(k) or lv <= best:
++						continue
++					var d: float = _segDist(S, o, q[0], q[1], q[2], R) if (int(S.store[o]) == KIND_TRENCH or int(S.store[o]) == KIND_SCAR) else _chord(S, o, q, R)
++					if d < radius + radiusOf(S, k):
++						best = lv
++	return best
++
++
++static func _chord(S, o: int, q: Array, R: float) -> float:
++	var dx: float = (q[0] - S.store[o + 1]) * R
++	var dy: float = (q[1] - S.store[o + 2]) * R
++	var dz: float = (q[2] - S.store[o + 3]) * R
++	return sqrt(dx * dx + dy * dy + dz * dz)
+diff --git a/b/sim/world/tools/globe_audit.gd b/sim/world/tools/globe_audit.gd
+new file mode 100644
+index 0000000..191ade0
+--- /dev/null
++++ b/sim/world/tools/globe_audit.gd
+@@ -0,0 +1,120 @@
++extends SceneTree
++## The terrain audit, ported to the planet store (terrain-globe-plan.md step 0 and 2; the strip's is terrain_audit.gd). From the repo root:
++##   godot --headless --path . --script res://sim/world/tools/globe_audit.gd -- [firstSeed=1] [count=40] [ticks=3600] [maxSteps=6] [settleGrooves=0]
++## Plays AI-vs-AI matches on gen 3 planets (7, 12, 3, 13, 17 in turn) and at the end samples the store's ground (WorldStore.heightDelta, the marks alone) along eight bearings out from every live record, at
++## the strip's 32-unit spacing, and counts steps of more than one body height (75) between neighbours. Prints a line a match and, last, GLOBEAUDIT: the matches over maxSteps steps (the goal: 0 to 6 a match over 40 seeds).
++## Also the deepest centre of a live crater against its radius (the shaft measure: 0.26 at most), the records by kind, and that the audit found marks (a globe match with none is an audit that saw nothing, and fails).
++## Changes nothing in a match and draws nothing from S.rng. The long run goes at below-normal priority (CLAUDE.md).
++
++const BH: float = 75.0
++const PLANETS: Array = [7, 12, 3, 13, 17]
++const SPACING: float = 32.0
++
++
++func _init() -> void:
++	var a: Array = OS.get_cmdline_user_args()
++	var first: int = int(a[0]) if a.size() > 0 else 1
++	var count: int = int(a[1]) if a.size() > 1 else 40
++	var ticks: int = int(a[2]) if a.size() > 2 else 3600
++	var maxSteps: int = int(a[3]) if a.size() > 3 else 6
++	if a.size() > 4:   # the fifth word: 1 puts the groove settling on (globe.settleGrooves), 0 leaves it as shipped
++		WorldCraters.setSettleGrooves(int(a[4]) == 1)
++	var over: int = 0
++	var empty: int = 0
++	var worst: int = 0
++	var totSteps: int = 0
++	var shaftMax: float = 0.0
++	for m in range(count):
++		var seed: int = first + m
++		var r: Dictionary = _match(seed, PLANETS[(seed - 1) % PLANETS.size()], ticks)
++		if int(r.steps) > 0:
++			print("   steps by the kinds of record there: %s" % str(r.kinds))
++		print("seed %d planet %d: %d records (%d craters, %d trenches), %d superseded, %d steps over 1 bh (%d from the craters alone), the deepest crater relief when dug (ring against centre) %.3f of its radius" % [seed, PLANETS[(seed - 1) % PLANETS.size()], r.n, r.craters, r.trenches, r.sup, r.steps, r.csteps, r.shaft])
++		totSteps += int(r.steps)
++		worst = maxi(worst, int(r.steps))
++		shaftMax = maxf(shaftMax, float(r.shaft))
++		if int(r.steps) > maxSteps:
++			over += 1
++		if int(r.n) == 0:
++			empty += 1
++	print("steps over 1 bh a match: total %d, worst %d, goal at most %d; deepest centre %.3f of its radius (goal 0.26)" % [totSteps, worst, maxSteps, shaftMax])
++	print("GLOBEAUDIT: %d match(es) over %d steps, %d with no marks" % [over, maxSteps, empty])
++	quit(0)
++
++
++func _match(seed: int, planet: int, ticks: int) -> Dictionary:
++	WorldClimate.useGen(3)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, {"intro": false, "planet": planet, "touch": 1 + seed % 3, "planetGen": 3})
++	for t in range(ticks):
++		if S.game.ko != null:
++			break
++		SimCore.step(S, null)
++		S.out.fx.clear()
++		S.out.feed.clear()
++	var out := {"n": int(S.storeN), "craters": 0, "trenches": 0, "sup": 0, "steps": 0, "shaft": 0.0, "csteps": 0, "kinds": {}}
++	var seen: Dictionary = {}   # the places a step was counted at, to a 16-unit cell: a step the records round it all see is one step
++	var C := SimState.new()      # the live craters alone: the shaft measure (a groove through a bowl is not a shaft) and the steps craters make
++	var ck: Array = []
++	var R: float = SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
++	for k in range(int(S.storeN)):
++		var o: int = k * WorldStore.STRIDE
++		var kd: int = int(S.store[o])
++		if WorldStore.superseded(S, k):
++			out.sup += 1
++			continue
++		if kd == WorldStore.KIND_CRATER:
++			out.craters += 1
++			var rr: float = S.store[o + 4]
++			var c: Array = WorldStore.centreOf(S, k)
++			ck.append(k)
++			WorldStore.add(C, c[0], c[1], c[2], rr, S.store[o + 5], S.store[o + 6], S.store[o + 7], int(S.store[o + 10]), int(S.store[o + 11]), S.store[o + 8], int(S.store[o + 9]))
++			out.shaft = maxf(out.shaft, WorldGlobe.relief(C, c, 1.2 * rr) / rr)   # the crater's relief just after it was dug: the ring at 1.2 R against its centre, in the craters made so far (a later neighbour's rim raises the ring and is not the shaft)
++		elif kd == WorldStore.KIND_TRENCH or kd == WorldStore.KIND_SCAR:
++			out.trenches += 1
++		else:
++			continue
++		var q: Array = WorldStore.centreOf(S, k)
++		var reach: float = (S.store[o + 4] * 2.2) if kd == WorldStore.KIND_CRATER else (S.store[o + 8] * 3.0 + 600.0)
++		var b: Array = WorldGlobe.basis(q)
++		for bi in range(8):
++			var prev: float = WorldStore.heightDelta(S, q[0], q[1], q[2])
++			var d: float = SPACING
++			while d <= reach:
++				var p: Array = WorldGlobe.pointAt(q, b, bi, d)
++				var h: float = WorldStore.heightDelta(S, p[0], p[1], p[2])
++				if absf(h - prev) > BH:
++					var cell: String = "%d,%d,%d" % [int(floor(p[0] * R / 16.0)), int(floor(p[1] * R / 16.0)), int(floor(p[2] * R / 16.0))]
++					if not seen.has(cell):
++						seen[cell] = true
++						out.steps += 1
++						var ks: String = ""
++						for kk in WorldStore.at(S, p[0], p[1], p[2]):
++							var kn: String = ["crater", "crack", "scorch", "trench", "?", "scar", "heap", "merge"][int(S.store[kk * WorldStore.STRIDE])]
++							if not ks.contains(kn):
++								ks += kn + " "
++						out.kinds[ks] = int(out.kinds.get(ks, 0)) + 1
++				prev = h
++				d += SPACING
++	# the craters alone: the deepest centre against its radius, and the steps their bowls make
++	var cseen: Dictionary = {}
++	for i in range(int(C.storeN)):
++		var oc: int = i * WorldStore.STRIDE
++		var qc: Array = WorldStore.centreOf(C, i)
++		var rc: float = C.store[oc + 4]
++		var bc: Array = WorldGlobe.basis(qc)
++		for bi in range(8):
++			var pv: float = WorldStore.heightDelta(C, qc[0], qc[1], qc[2])
++			var dc: float = SPACING
++			while dc <= rc * 2.2:
++				var pc: Array = WorldGlobe.pointAt(qc, bc, bi, dc)
++				var hc: float = WorldStore.heightDelta(C, pc[0], pc[1], pc[2])
++				if absf(hc - pv) > BH:
++					var cell2: String = "%d,%d,%d" % [int(floor(pc[0] * R / 16.0)), int(floor(pc[1] * R / 16.0)), int(floor(pc[2] * R / 16.0))]
++					if not cseen.has(cell2):
++						cseen[cell2] = true
++						out.csteps += 1
++				pv = hc
++				dc += SPACING
++	SimCore.dispose(S)
++	return out
+diff --git a/b/sim/world/tools/globe_audit.gd.uid b/sim/world/tools/globe_audit.gd.uid
+new file mode 100644
+index 0000000..767730f
+--- /dev/null
++++ b/sim/world/tools/globe_audit.gd.uid
+@@ -0,0 +1 @@
++uid://bsi2umvmo3xpi
+diff --git a/b/sim/world/tools/globe_check.gd b/sim/world/tools/globe_check.gd
+new file mode 100644
+index 0000000..c53a22a
 --- /dev/null
 +++ b/sim/world/tools/globe_check.gd
 @@ -0,0 +1,493 @@
@@ -1406,177 +1493,18 @@
 +		if SimField.col(C, i) != ga[i]:
 +			bad2 += 1
 +	ok(bad2 == 0, "... and a third state that never rolled back (%d differ)" % bad2)
+diff --git a/b/sim/world/tools/globe_check.gd.uid b/sim/world/tools/globe_check.gd.uid
+new file mode 100644
+index 0000000..0335530
 --- /dev/null
 +++ b/sim/world/tools/globe_check.gd.uid
 @@ -0,0 +1 @@
 +uid://dtru2xovqdux3
---- /dev/null
-+++ b/sim/world/tools/globe_audit.gd
-@@ -0,0 +1,120 @@
-+extends SceneTree
-+## The terrain audit, ported to the planet store (terrain-globe-plan.md step 0 and 2; the strip's is terrain_audit.gd). From the repo root:
-+##   godot --headless --path . --script res://sim/world/tools/globe_audit.gd -- [firstSeed=1] [count=40] [ticks=3600] [maxSteps=6] [settleGrooves=0]
-+## Plays AI-vs-AI matches on gen 3 planets (7, 12, 3, 13, 17 in turn) and at the end samples the store's ground (WorldStore.heightDelta, the marks alone) along eight bearings out from every live record, at
-+## the strip's 32-unit spacing, and counts steps of more than one body height (75) between neighbours. Prints a line a match and, last, GLOBEAUDIT: the matches over maxSteps steps (the goal: 0 to 6 a match over 40 seeds).
-+## Also the deepest centre of a live crater against its radius (the shaft measure: 0.26 at most), the records by kind, and that the audit found marks (a globe match with none is an audit that saw nothing, and fails).
-+## Changes nothing in a match and draws nothing from S.rng. The long run goes at below-normal priority (CLAUDE.md).
-+
-+const BH: float = 75.0
-+const PLANETS: Array = [7, 12, 3, 13, 17]
-+const SPACING: float = 32.0
-+
-+
-+func _init() -> void:
-+	var a: Array = OS.get_cmdline_user_args()
-+	var first: int = int(a[0]) if a.size() > 0 else 1
-+	var count: int = int(a[1]) if a.size() > 1 else 40
-+	var ticks: int = int(a[2]) if a.size() > 2 else 3600
-+	var maxSteps: int = int(a[3]) if a.size() > 3 else 6
-+	if a.size() > 4:   # the fifth word: 1 puts the groove settling on (globe.settleGrooves), 0 leaves it as shipped
-+		WorldCraters.setSettleGrooves(int(a[4]) == 1)
-+	var over: int = 0
-+	var empty: int = 0
-+	var worst: int = 0
-+	var totSteps: int = 0
-+	var shaftMax: float = 0.0
-+	for m in range(count):
-+		var seed: int = first + m
-+		var r: Dictionary = _match(seed, PLANETS[(seed - 1) % PLANETS.size()], ticks)
-+		if int(r.steps) > 0:
-+			print("   steps by the kinds of record there: %s" % str(r.kinds))
-+		print("seed %d planet %d: %d records (%d craters, %d trenches), %d superseded, %d steps over 1 bh (%d from the craters alone), the deepest crater relief when dug (ring against centre) %.3f of its radius" % [seed, PLANETS[(seed - 1) % PLANETS.size()], r.n, r.craters, r.trenches, r.sup, r.steps, r.csteps, r.shaft])
-+		totSteps += int(r.steps)
-+		worst = maxi(worst, int(r.steps))
-+		shaftMax = maxf(shaftMax, float(r.shaft))
-+		if int(r.steps) > maxSteps:
-+			over += 1
-+		if int(r.n) == 0:
-+			empty += 1
-+	print("steps over 1 bh a match: total %d, worst %d, goal at most %d; deepest centre %.3f of its radius (goal 0.26)" % [totSteps, worst, maxSteps, shaftMax])
-+	print("GLOBEAUDIT: %d match(es) over %d steps, %d with no marks" % [over, maxSteps, empty])
-+	quit(0)
-+
-+
-+func _match(seed: int, planet: int, ticks: int) -> Dictionary:
-+	WorldClimate.useGen(3)
-+	var S := SimCore.createSim()
-+	SimCore.newMatch(S, seed, {}, {"intro": false, "planet": planet, "touch": 1 + seed % 3, "planetGen": 3})
-+	for t in range(ticks):
-+		if S.game.ko != null:
-+			break
-+		SimCore.step(S, null)
-+		S.out.fx.clear()
-+		S.out.feed.clear()
-+	var out := {"n": int(S.storeN), "craters": 0, "trenches": 0, "sup": 0, "steps": 0, "shaft": 0.0, "csteps": 0, "kinds": {}}
-+	var seen: Dictionary = {}   # the places a step was counted at, to a 16-unit cell: a step the records round it all see is one step
-+	var C := SimState.new()      # the live craters alone: the shaft measure (a groove through a bowl is not a shaft) and the steps craters make
-+	var ck: Array = []
-+	var R: float = SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
-+	for k in range(int(S.storeN)):
-+		var o: int = k * WorldStore.STRIDE
-+		var kd: int = int(S.store[o])
-+		if WorldStore.superseded(S, k):
-+			out.sup += 1
-+			continue
-+		if kd == WorldStore.KIND_CRATER:
-+			out.craters += 1
-+			var rr: float = S.store[o + 4]
-+			var c: Array = WorldStore.centreOf(S, k)
-+			ck.append(k)
-+			WorldStore.add(C, c[0], c[1], c[2], rr, S.store[o + 5], S.store[o + 6], S.store[o + 7], int(S.store[o + 10]), int(S.store[o + 11]), S.store[o + 8], int(S.store[o + 9]))
-+			out.shaft = maxf(out.shaft, WorldGlobe.relief(C, c, 1.2 * rr) / rr)   # the crater's relief just after it was dug: the ring at 1.2 R against its centre, in the craters made so far (a later neighbour's rim raises the ring and is not the shaft)
-+		elif kd == WorldStore.KIND_TRENCH or kd == WorldStore.KIND_SCAR:
-+			out.trenches += 1
-+		else:
-+			continue
-+		var q: Array = WorldStore.centreOf(S, k)
-+		var reach: float = (S.store[o + 4] * 2.2) if kd == WorldStore.KIND_CRATER else (S.store[o + 8] * 3.0 + 600.0)
-+		var b: Array = WorldGlobe.basis(q)
-+		for bi in range(8):
-+			var prev: float = WorldStore.heightDelta(S, q[0], q[1], q[2])
-+			var d: float = SPACING
-+			while d <= reach:
-+				var p: Array = WorldGlobe.pointAt(q, b, bi, d)
-+				var h: float = WorldStore.heightDelta(S, p[0], p[1], p[2])
-+				if absf(h - prev) > BH:
-+					var cell: String = "%d,%d,%d" % [int(floor(p[0] * R / 16.0)), int(floor(p[1] * R / 16.0)), int(floor(p[2] * R / 16.0))]
-+					if not seen.has(cell):
-+						seen[cell] = true
-+						out.steps += 1
-+						var ks: String = ""
-+						for kk in WorldStore.at(S, p[0], p[1], p[2]):
-+							var kn: String = ["crater", "crack", "scorch", "trench", "?", "scar", "heap", "merge"][int(S.store[kk * WorldStore.STRIDE])]
-+							if not ks.contains(kn):
-+								ks += kn + " "
-+						out.kinds[ks] = int(out.kinds.get(ks, 0)) + 1
-+				prev = h
-+				d += SPACING
-+	# the craters alone: the deepest centre against its radius, and the steps their bowls make
-+	var cseen: Dictionary = {}
-+	for i in range(int(C.storeN)):
-+		var oc: int = i * WorldStore.STRIDE
-+		var qc: Array = WorldStore.centreOf(C, i)
-+		var rc: float = C.store[oc + 4]
-+		var bc: Array = WorldGlobe.basis(qc)
-+		for bi in range(8):
-+			var pv: float = WorldStore.heightDelta(C, qc[0], qc[1], qc[2])
-+			var dc: float = SPACING
-+			while dc <= rc * 2.2:
-+				var pc: Array = WorldGlobe.pointAt(qc, bc, bi, dc)
-+				var hc: float = WorldStore.heightDelta(C, pc[0], pc[1], pc[2])
-+				if absf(hc - pv) > BH:
-+					var cell2: String = "%d,%d,%d" % [int(floor(pc[0] * R / 16.0)), int(floor(pc[1] * R / 16.0)), int(floor(pc[2] * R / 16.0))]
-+					if not cseen.has(cell2):
-+						cseen[cell2] = true
-+						out.csteps += 1
-+				pv = hc
-+				dc += SPACING
-+	SimCore.dispose(S)
-+	return out
---- /dev/null
-+++ b/sim/world/tools/globe_audit.gd.uid
-@@ -0,0 +1 @@
-+uid://bsi2umvmo3xpi
---- a/data/biomes/craters.json
-+++ b/data/biomes/craters.json
-@@ -8,6 +8,16 @@
-     "eMult": 9.0,
-     "rMax": 6100.0
-   },
-+  "globe": {
-+    "_about": "The planet store's rules for a mark (docs/world/globe-step2.md; terrain-globe-plan.md 4.3), read whether or not the module is on. floor and ceil hold the store's ground between them (the strip's -260 and +120 x 8). repose: the wall slope past which a new crater settles wider and shallower (volume kept). repeats: how many times a blow on one spot grows its crater into the old one (0 is off: each blow digs its own, held by the shaft cap; the radius factor is brunt.json repeatCraterGrow). settle: the settling on or off. settleGrooves: a trench or scar is also widened to the angle of repose (off: Camera's chase_rush_check moves with it; step 3 sets trench widths by force). furrow: a glancing impact also cuts a short trench behind it along its heading (off until step 3's trenches are looked at).",
-+    "floor": -2080.0,
-+    "ceil": 960.0,
-+    "repose": 1.25,
-+    "repeats": 0,
-+    "settle": true,
-+    "settleGrooves": false,
-+    "furrow": false
-+  },
-   "classes": {
-     "paving": { "radius": 1.0, "depth": 1.0, "rim": 1.0, "steep": 1.0, "cracks": "slabs_tilted", "ejecta": "slab_chunks" },
-     "rock": { "radius": 0.9, "depth": 0.8, "rim": 0.6, "steep": 1.4, "cracks": "star", "ejecta": "blocks" },
---- a/data/biomes/water.json
-+++ b/data/biomes/water.json
-@@ -63,5 +63,13 @@
-   },
-   "floor": {
-     "enabled": false
-+  },
-+  "flood": {
-+    "_about": "B1 on the planet store (docs/world/globe-step2.md; terrain-globe-plan.md 4.3). enabled: a crater, trench or groove dug minDug or more deep looks once for a source of water (the sea, a lake, the biome's table) at radii radii and bearings bearings out to reach units beyond its own radius, and holds water at that level (WorldFill.floodLevelFor; the level goes in the record). Off: no record holds water and the module is as it was.",
-+    "enabled": false,
-+    "minDug": 6.0,
-+    "reach": 1150.0,
-+    "radii": 4,
-+    "bearings": 8
-   }
- }
+diff --git a/tools/schemas/biomes-craters.schema.json b/tools/schemas/biomes-craters.schema.json
+index 82afe42..0aeaa8b 100644
 --- a/tools/schemas/biomes-craters.schema.json
 +++ b/tools/schemas/biomes-craters.schema.json
-@@ -45,6 +45,22 @@
-         "rMax": { "type": "number", "minimum": 600, "maximum": 8320 }
-       }
+@@ -47,2 +47,18 @@
      },
 +    "globe": {
 +      "type": "object",
@@ -1595,13 +1523,11 @@
 +      }
 +    },
      "classes": {
-       "type": "object",
-       "description": "One row per look class (WorldGround.LOOKS); a class without a row digs today's bowl.",
+diff --git a/tools/schemas/biomes-water.schema.json b/tools/schemas/biomes-water.schema.json
+index 9e900f6..9d85eee 100644
 --- a/tools/schemas/biomes-water.schema.json
 +++ b/tools/schemas/biomes-water.schema.json
-@@ -255,6 +255,20 @@
-         "cols": { "type": "integer", "minimum": 0, "maximum": 480 }
-       }
+@@ -257,2 +257,16 @@
      },
 +    "flood": {
 +      "type": "object",
@@ -1618,19 +1544,15 @@
 +      }
 +    },
      "floor": {
-       "type": "object",
-       "required": [
+diff --git a/tools/world-checks.json b/tools/world-checks.json
+index ebb4704..5e95b56 100644
 --- a/tools/world-checks.json
 +++ b/tools/world-checks.json
-@@ -15,9 +15,11 @@
-     "struggle_meet_check",
-     "struggle_dir_check",
+@@ -23,2 +23,3 @@
      "bystanders_check",
 +    "globe_check",
      "floor_walk_probe"
-   ],
+@@ -26,2 +27,3 @@
    "leaveOut": {
 +    "globe_audit": "soak: 40 AI matches on gen 3 planets, steps over 1 body height in the store ground (the goal 0 to 6 a match); minutes long, run by hand at below-normal priority",
-     "b_heights": "measurement: prints percentiles of dry land on B plates, no verdict",
-     "calm_digest": "measurement: prints the calm turn's swap tick and gameplay hashes, no verdict",
-     "campaign_turns": "measurement: how often the campaign ring turns, for tuning, no verdict",
+     "pin": "helper: WorldPin.shipped() sets main's pre-GW1a data in memory for the checks that test the old path, no verdict",

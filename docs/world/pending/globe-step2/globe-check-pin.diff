@@ -1,0 +1,8 @@
+diff --git a/sim/world/tools/globe_check.gd b/sim/world/tools/globe_check.gd
+index bc1a97a..fa884b4 100644
+--- a/sim/world/tools/globe_check.gd
++++ b/sim/world/tools/globe_check.gd
+@@ -53,2 +53,3 @@ func _init() -> void:
+ 	WorldGlobe.blind = negative
++	WorldPin.shipped()   # GW1a: OFF-PATH by construction: this check was written for the world before GW1a (an ordinary blow's dig cap of 600, the sea's level carried as 0 by water v1), so it plays the old path, energy model and dash off and water v2 off; docs/world/pins-and-the-model.md
+ 	_slots()

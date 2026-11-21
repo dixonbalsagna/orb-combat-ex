@@ -1,8 +1,8 @@
 diff --git a/sim/world/field.gd b/sim/world/field.gd
-index dd8d4d4..2bd8f55 100644
+index 08a74b2..0e5cb06 100644
 --- a/sim/world/field.gd
 +++ b/sim/world/field.gd
-@@ -699,2 +699,6 @@ static func applyRecords(S, qx: float, qy: float, qz: float, h: float, planet =
+@@ -707,2 +707,6 @@ static func applyRecords(S, qx: float, qy: float, qz: float, h: float, planet =
  				out = float(bl[0])
 +		elif kind == "lake" and rec.has("dug"):   # GW2: the lake's bowl (plans.lakeDig) is cut into the ground before the pads and the water read it
 +			if P == null:
@@ -10,24 +10,24 @@ index dd8d4d4..2bd8f55 100644
 +			out = WorldWaterRec.dugGround(of(P), rec, qx, qy, qz, out)
  	if padW > 0.0:   # the pads: toward their weighted mean height, by the smaller of one and the total weight (one pad: its height inside its footprint exactly; two overlapping: their weighted mean, smooth, whatever the order)
 diff --git a/sim/world/plan.gd b/sim/world/plan.gd
-index 78d12ea..50847d9 100644
+index 2a254d8..e535502 100644
 --- a/sim/world/plan.gd
 +++ b/sim/world/plan.gd
 @@ -41,2 +41,3 @@ static var footSlopeOverride: float = -1.0
  static var lakeMaxOverride: float = -2.0       # tests only: -2 the data's plans.lakeMax, else this
 +static var digCornersOff: bool = false         # tests only: the dug lakes' eight-corner test of a building's footprint off (the negative control of lake_dig_check's buildings row)
  static var shiftBucketOverride: bool = false   # tests only: the memo key as it was (the shift to the nearest 8 units), so a check can show the fault the exact key removed (cache_warm_check --negative-control)
-@@ -459,2 +460,3 @@ static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionar
+@@ -464,2 +465,3 @@ static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionar
  	var lake_max: float = lakeMax()
 +	var dig_corners: bool = lake_max >= 0.0 and not digCornersOff and WorldWaterRec.spillOn() and not WorldWaterRec.digCfg().is_empty()   # only where the dig is on: with it off the places are exactly what they were
  	for e in geo.b:
-@@ -467,2 +469,5 @@ static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionar
+@@ -472,2 +474,5 @@ static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionar
  			continue
 +		if dig_corners and _cornersDrowned(S, P, id, yaw, float(e.x) - float(geo.xc), float(e.z), 0.5 * float(e.w), 0.5 * float(e.d), lake_max):   # a dug lake's shore is a slope and the pad is flat across the footprint: the centre alone can read dry while a corner stands deep
 +			drowned += 1
 +			continue
  		if gmax > 0.0 and _overhangs(S, P, id, yaw, float(e.x) - float(geo.xc), float(e.z), 0.5 * float(e.w), 0.5 * float(e.d), g0, gmax):
-@@ -484,2 +489,14 @@ static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionar
+@@ -489,2 +494,14 @@ static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionar
  
 +## Is the water over any of eight points on the circle round the footprint's centre (the half diagonal: the footprint turned to any line has its corners on it) deeper than `lake_max`? The same points as _overhangs.
 +static func _cornersDrowned(S: SimState, P: WorldPlanet.Planet, id: int, yaw: float, u: float, v: float, hw: float, hd: float, lake_max: float) -> bool:
@@ -314,10 +314,10 @@ index 0000000..f546f2a
 +	print("LAKEDIG: %d check(s) failed" % fails)
 +	quit(0 if fails == 0 else 1)
 diff --git a/sim/world/waterrec.gd b/sim/world/waterrec.gd
-index 2ce299f..5711256 100644
+index 8f4f77e..32ba6ba 100644
 --- a/sim/world/waterrec.gd
 +++ b/sim/world/waterrec.gd
-@@ -40,2 +40,286 @@ static func _box(v: float) -> int:
+@@ -49,2 +49,286 @@ static func _box(v: float) -> int:
  
 +## ===================================================================== the dig (GW2)
 +## With plans.lakeSpill a lake sits at its spill level, which on most of the generator's lakes is far under the ring plan's: the plan read a valley on one line and the planet's own ground does not hold it. The dig makes the
@@ -604,11 +604,11 @@ index 2ce299f..5711256 100644
 +
 +
  ## ===================================================================== lakes
-@@ -57,2 +341,3 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
+@@ -66,2 +350,3 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
  	var level: float = float(lk[2])
 +	var planLevel: float = level   # the ring plan's level, before the spill lowers it (the dig's footprint is what this reaches)
  	var m: int = first
-@@ -144,2 +429,16 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
+@@ -153,2 +438,16 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
  					stack.append(ni)
 +	var dug: Dictionary = {}
 +	var dcfg: Dictionary = digCfg()
@@ -625,14 +625,14 @@ index 2ce299f..5711256 100644
 +			nodes = keep
 +			dug = dg.dug
  	for idx in nodes:   # the nodes this lake holds are claimed: a lake planned after it (a higher level) stops at its shore
-@@ -149,2 +448,4 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
+@@ -158,2 +457,4 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
  	var far2: float = 0.0
 +	for idx in dug:   # the dug nodes are held too, and inside the lake's reach
 +		claimed[idx] = true
  	for idx in nodes:
-@@ -159,3 +460,43 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
+@@ -168,3 +469,43 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
  		far2 = maxf(far2, dx * dx + dy * dy + dz * dz)
--	return {"k": "lake", "id": id, "c": q, "r": sqrt(far2) + 2.0 * float(F.N > 0) * (38400.0 / float(F.N)), "level": level, "nodes": nodes, "face": face}
+-	return {"k": "lake", "id": id, "c": q, "r": sqrt(far2) + 2.0 * float(F.N > 0) * (float(SimConst.PLANET_NC) * SimConst.COL / 4.0 / float(F.N)), "level": level, "nodes": nodes, "face": face}
 +	for idx in dug:
 +		var f3: int = int(idx) / s2
 +		var rem4: int = int(idx) - f3 * s2
@@ -643,7 +643,7 @@ index 2ce299f..5711256 100644
 +		var ey: float = (d3[1] - q[1]) * R
 +		var ez: float = (d3[2] - q[2]) * R
 +		far2 = maxf(far2, ex * ex + ey * ey + ez * ez)
-+	var rec: Dictionary = {"k": "lake", "id": id, "c": q, "r": sqrt(far2) + 2.0 * float(F.N > 0) * (38400.0 / float(F.N)), "level": level, "nodes": nodes, "face": face}
++	var rec: Dictionary = {"k": "lake", "id": id, "c": q, "r": sqrt(far2) + 2.0 * float(F.N > 0) * (float(SimConst.PLANET_NC) * SimConst.COL / 4.0 / float(F.N)), "level": level, "nodes": nodes, "face": face}
 +	if not dug.is_empty():
 +		rec["dug"] = dug
 +	return rec

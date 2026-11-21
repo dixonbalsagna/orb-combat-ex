@@ -111,7 +111,7 @@ index 402f6dd..b2db146 100644
 +	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
  	var pick: Array = find()
 diff --git a/sim/world/tools/ground_check.gd b/sim/world/tools/ground_check.gd
-index d1cf7c2..49fe966 100644
+index 34b9245..4fae1af 100644
 --- a/sim/world/tools/ground_check.gd
 +++ b/sim/world/tools/ground_check.gd
 @@ -70,2 +70,3 @@ func _init() -> void:
@@ -142,6 +142,14 @@ index 038c650..1908e5b 100644
  func _init() -> void:
 +	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
  	var S := SimCore.createSim()
+diff --git a/sim/world/tools/memory_model_check.gd b/sim/world/tools/memory_model_check.gd
+index 9ec22a4..8ae2d7e 100644
+--- a/sim/world/tools/memory_model_check.gd
++++ b/sim/world/tools/memory_model_check.gd
+@@ -48,2 +48,3 @@ func _init() -> void:
+ 	neg = OS.get_cmdline_user_args().has("--negative-control")
++	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now: no planet in a set-up plays planet 7); WorldPin sets it in memory
+ 	var S := _match()
 diff --git a/sim/world/tools/pin.gd b/sim/world/tools/pin.gd
 index 5cf7989..1de107f 100644
 --- a/sim/world/tools/pin.gd

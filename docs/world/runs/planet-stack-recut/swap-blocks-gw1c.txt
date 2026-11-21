@@ -1,0 +1,13 @@
+# globe_check swap rows on main + GW1b + Simulation's grant-world-store.patch + globe-step2 (World scratch u1; the two old-world rows fail there as in stage 2 until globe-check-pin.diff)
+## the grant as it is (a LEN-based fold, no O_SUP remap): the swap rows FAIL
+a block swap keeps what it supersedes
+  FAIL  after the swap every superseded index points at the same record ({ 3: 0, 4: 5, 5: 4, 1: 0, 2: 3 })
+  FAIL  and it is the store, and the hash, that pushing the blocks in the swapped order makes
+  ok    control: an index left unmoved names another record
+## with swap-blocks-gw1c.diff (fold all STRIDE numbers, move every O_SUP): the swap rows pass
+a block swap keeps what it supersedes
+  ok    after the swap every superseded index points at the same record ({ 3: 0, 4: 3, 5: 2, 1: 0, 2: 1 })
+  ok    and it is the store, and the hash, that pushing the blocks in the swapped order makes
+  ok    control: an index left unmoved names another record
+GLOBE: 2 check(s) failed
+gate: <path> --script res://sim/world/tools/globe_check.gd: verdict: GLOBE: 2 check(s) failed

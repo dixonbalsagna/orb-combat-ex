@@ -56,3 +56,5 @@ With the places laid on the whole planet, `lakeMax` 8 and the spill on, the firs
 - The cache keys: `lakeDig` is in `field.json`, whose hash is in a saved match's key; shipped off there is no key and no change.
 - The tiles read the dug ground through the same records. A lake record's `r` reaches the farthest dug node, but Rendering's `_records_reach` was not widened for it: watch the tiles at a bowl's edge in the look gate.
 - The water's node lookup (`lakeDepth`) is by the face a point is on; the dug lakes' nodes now carry their twins, the undug lakes' do not (as before).
+
+**Re-cut on main b0e20f9a, 2026-11-21** (`docs/world/planet-stack-recut.md`, records `docs/world/runs/planet-stack-recut/`): `lake-dig.diff` and `grant-tools-lake-dig.patch` re-cut (gw1c-world changed the lake record's reach line; the check list moved).

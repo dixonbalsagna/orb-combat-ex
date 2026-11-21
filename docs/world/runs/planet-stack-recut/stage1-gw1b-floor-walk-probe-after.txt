@@ -1,0 +1,23 @@
+# floor_walk_probe with floor-walk-probe.diff (the pop measured beyond what the floor itself rose)
+::group::floor_walk_probe
+  ok    a ring with a lake at least 100 deep and 14 columns wide: [7, 1, 1510, 65]
+  ok    549 ticks in the lake's water to read
+  ok    never under the floor (0 ticks)
+  ok    stick down in the water: on the floor every tick the floor does not fall away under him (1 ticks off it; 85 ticks he is following a falling floor down)
+  ok    and on the sheet where the lake is deep: 298 ticks at exactly the surface rules ask about (seaTop), so never 'below' it
+  ok    an ordinary walk stays on the floor: the largest change of height in one tick is 5.57, under the rise limit 7.5 (a fighter's own speed is 7.17 a tick)
+  ok    control, floor off: he sinks under the surface of the deep water (358 ticks under it)
+  ok    a lake with a 60 to 70 deep shoulder: the floor is 65.7 above the bed there
+  ok    real getup: he rises at most 7.50 a tick (limit 7.5) over 9 ticks and ends on his floor (gap 0.000000)
+  ok    control getup, riseTicks 1 (no limit): he is lifted 65.7 in one tick, the bug Simulation measured
+  ok    real drop: he rises at most 7.50 a tick (limit 7.5) over 9 ticks and ends on his floor (gap 0.000000)
+  ok    control drop, riseTicks 1 (no limit): he is lifted 65.7 in one tick, the bug Simulation measured
+  ok    left from the beach: 677 ticks in the sea's water, never under the floor except 0 ticks the floor outruns the rise limit on a steep shore (0 otherwise)
+  ok    no pop on the way out (the largest change of height in a tick beyond what the floor itself rose 2.73, limit 7.5), and he ends on the sheet: 672 ticks at exactly seaTop, ends at y 0.000 (seaTop 0.000)
+  ok    control, floor off: he sinks to the sea bed (538 ticks more than 50 under the surface of water over 100 deep)
+  ok    the hand-made world has a beach to walk out from (1)
+  ok    (floor off, end of the walk: x 51732 y 2309.6 ground 2309.6)
+FLOORWALK: 0 check(s) failed
+gate: <path> --script res://sim/world/tools/floor_walk_probe.gd: no SCRIPT ERROR lines
+gate: <path> --script res://sim/world/tools/floor_walk_probe.gd: the verdict line reports no failures
+::endgroup::

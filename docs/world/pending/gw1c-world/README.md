@@ -45,3 +45,5 @@ Game Design ruled the sizes (`docs/design/planet-sizes.md`): the spawn pair with
 **Proof.** `SIZES` 0 failed on the shipped data and with the GW1a flips applied (before the fix, with the flips: 1 FAIL, `big` did not replay to the same hash); negative control (the keys as they were): 3 FAIL, the tallest 4,875 on tiny and small and the key row. Runs: `docs/world/runs/gw1c-world/size-check-fix-*.txt` and `size-check-flipped-before-fix.txt`.
 
 **Note.** The same fault would show in any size-keyed value kept by seed alone; the others (planet memo, slice memo, store and water grid keys, the field disk cache) carry the size already (checked).
+
+**Re-cut on main b0e20f9a, 2026-11-21** (`docs/world/planet-stack-recut.md`, records `docs/world/runs/planet-stack-recut/`): `gw1c-world-fix.diff` re-cut (the geometry key line merged with the landed cache-determinism form).

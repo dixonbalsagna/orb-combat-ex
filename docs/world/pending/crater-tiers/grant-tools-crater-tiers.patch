@@ -1,0 +1,8 @@
+diff --git a/tools/world-checks.json b/tools/world-checks.json
+index 636dc7c..0ba7444 100644
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -19,2 +19,3 @@
+     "crater_flatten_check",
++    "tier_ratio_check",
+     "water_warm_check", "water_read_check", "landmark_spare_check", "lot_reach_check", "relax_check", "node_warm_check",

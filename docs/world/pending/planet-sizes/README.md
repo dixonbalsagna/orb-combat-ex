@@ -6,7 +6,7 @@ Design, numbers and what is not built: `docs/world/planet-sizes.md`. Runs: `docs
 | :--- | :--- |
 | `planet-sizes.diff` | World's: `sim/world/size.gd` (`WorldPlanetSize`) with its `.uid`, `data/biomes/sizes.json` and `tools/schemas/biomes-sizes.schema.json` (+ the `tools/schemas/map.json` entry), the place counts per size read in `planet.gd`, the planet memo's key, the slice memo's key, `WorldField.cells()` and the bake stride by size, the grid keys of the store and the water records, the planet disk cache's key, `size_check.gd` and `size_probe.gd` with their `.uid`s and the two lines in `tools/world-checks.json` (the probe under leaveOut) |
 | `grant-simulation-sizes.patch` | Simulation's: `constants.gd` (`PLANET_NC` a static, `PLANET_NC_MEDIUM`, `setPlanet`), `state.gd` (`planetNC`), `sim.gd` (set at the top of the match, bound again every piece and every tick like the arena's length, the arena's default), `field.gd` (the match key's memo), `planet_load.gd` (the host's loader asks and makes the planet at the setup's size and puts the host's static back) |
-| `grant-rendering-meteor.patch` | Rendering's `render/vfx/meteor.gd`: a `const` radius from `PLANET_NC` (which is no longer a constant) becomes `SimField.R` |
+| ~~`grant-rendering-meteor.patch`~~ | **Removed 2026-11-21 (EP): VFX's `planet-sizes-meteor` is the one that lands at GW1c** (it fixes the same `const` radius in `render/vfx/meteor.gd`, and only one of the two can go in). Without one of them the project does not compile once `PLANET_NC` is a variable |
 
 ## The five
 
@@ -33,7 +33,7 @@ Design, numbers and what is not built: `docs/world/planet-sizes.md`. Runs: `docs
 ## NEEDS FROM EP
 
 - **Simulation:** `grant-simulation-sizes.patch` (five files). Before colossal is ever offered: `SimField._boxKey`'s offset (a radius past 131,000 units aliases), the same fix the store got.
-- **Rendering:** `grant-rendering-meteor.patch`, and the look of every size. `render/core/tile_field.gd` hard-codes the medium planet (the face edge 38,400 and 300 cells at lines 371, 447, 456, 508 to 522, 624), `planet_view.gd` 570 to 575 (the copies of the planet), `look.gd` far-city counts. The sim plays big and huge; no picture of them has been made.
+- **Rendering:** the look of every size (the meteor file is VFX's `planet-sizes-meteor`). `render/core/tile_field.gd` hard-codes the medium planet (the face edge 38,400 and 300 cells at lines 371, 447, 456, 508 to 522, 624), `planet_view.gd` 570 to 575 (the copies of the planet), `look.gd` far-city counts. The sim plays big and huge; no picture of them has been made.
 - **UI:** a size row in the menu (`WorldPlanetSize.names(true)`, the setup key `planetSize`); with a random quick match the size is the data's or the menu's.
 - **Netcode:** the handshake's setup comparison names the size (it is in the setup), and the snapshot at huge.
 - **Art and Game Design:** tiny's relief against its radius (a 4,875 tower on a 6,519 radius) and the per-size tuning.
@@ -49,3 +49,5 @@ Design, numbers and what is not built: `docs/world/planet-sizes.md`. Runs: `docs
 ## NEXT
 
 After the gate: Rendering's tile work, UI's row, Performance's readings. Then the world's ranges, rivers and coasts (the planet's engineering, planet-overhaul section 5) can be built on a size knob that exists.
+
+**2026-11-21:** World's meteor grant is taken out of the GW1c list (VFX's lands instead). The stage runs of `docs/world/planet-stack-recut.md` used World's only to make the scratch tree compile.

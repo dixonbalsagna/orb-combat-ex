@@ -27,3 +27,5 @@ The rule, the numbers and what the check asserts: `docs/world/crater-tiers.md`. 
 ## RISKS
 
 - Two checks assumed the 25 percent term: `meteor_crater_check` is pinned to it (its numbers were taken there), `power_world_check` reads the table when it is on. A check written later that assumes a tier-4 impact is E 1.75 will go red on the flipped data.
+
+**Re-cut on main b0e20f9a, 2026-11-21** (`docs/world/planet-stack-recut.md`, records `docs/world/runs/planet-stack-recut/`): `crater-tiers.diff` re-cut without its check-list hunk; the line is `grant-tools-crater-tiers.patch` (Tools).

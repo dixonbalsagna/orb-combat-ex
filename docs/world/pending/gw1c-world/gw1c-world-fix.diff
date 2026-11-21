@@ -1,8 +1,8 @@
+diff --git a/sim/world/plan.gd b/sim/world/plan.gd
+index 78d12ea..2a254d8 100644
 --- a/sim/world/plan.gd
 +++ b/sim/world/plan.gd
-@@ -82,7 +82,12 @@
- 
- 
+@@ -94,3 +94,8 @@ const PLACES_REV: int = 2   # 2: the layouts the kept places hold are made for t
  static func placesKey(P: WorldPlanet.Planet) -> String:
 -	return "places|rev %d|seed %d|%s|%s|%s|%s" % [PLACES_REV, P.seed, WorldPlanet.dataHash(3), WorldField.dataHash(), WorldSettle.dataHash(), str(Engine.get_version_info().get("string", ""))]
 +	return "places|rev %d|seed %d|%s|%s|%s|%s%s" % [PLACES_REV, P.seed, WorldPlanet.dataHash(3), WorldField.dataHash(), WorldSettle.dataHash(), str(Engine.get_version_info().get("string", "")), _sizeTag()]
@@ -12,22 +12,16 @@
 +static func _sizeTag() -> String:
 +	return "" if SimConst.PLANET_NC == SimConst.PLANET_NC_MEDIUM else "|cols %d" % SimConst.PLANET_NC
  
- 
- static func placesCached() -> bool:
-@@ -130,7 +135,7 @@
- 
- ## The plan of a place in its own frame: {"b": buildings (generate's dicts, x re-centred as "u", z as "v"), "dist": districts, "xc": the centre x of the stand-in strip}. Memoised by planet, place and the data.
- static func geometry(P: WorldPlanet.Planet, id: int, shift: float = 0.0) -> Dictionary:
--	var key: String = "%d/%d/%d/%s/%s/%d" % [P.seed, id, int(P.kind[id]), WorldSettle.dataHash(), WorldField.dataHash(), int(round(shift / 8.0))]
-+	var key: String = "%d/%d/%d/%s/%s/%d%s" % [P.seed, id, int(P.kind[id]), WorldSettle.dataHash(), WorldField.dataHash(), int(round(shift / 8.0)), _sizeTag()]
+@@ -144,3 +149,3 @@ static func geometry(P: WorldPlanet.Planet, id: int, shift: float = 0.0) -> Dict
+ 	# 1.7 (the first ring's aligned shift) answered a call for 0 (a free place's) or the reverse, whichever came first: a world read back from the places cache differed from a fresh one in the last bits (docs/world/field-cache-determinism.md).
+-	var key: String = "%d/%d/%d/%s/%s/%d" % [P.seed, id, int(P.kind[id]), WorldSettle.dataHash(), WorldField.dataHash(), (int(round(shift / 8.0)) if shiftBucketOverride else PackedFloat64Array([shift]).to_byte_array().decode_s64(0))]
++	var key: String = "%d/%d/%d/%s/%s/%d%s" % [P.seed, id, int(P.kind[id]), WorldSettle.dataHash(), WorldField.dataHash(), (int(round(shift / 8.0)) if shiftBucketOverride else PackedFloat64Array([shift]).to_byte_array().decode_s64(0)), _sizeTag()]
  	if _memo.has(key):
- 		return _memo[key]
- 	var NC: int = SimConst.NC
+diff --git a/sim/world/tools/size_check.gd b/sim/world/tools/size_check.gd
+index 9693e54..b0ae229 100644
 --- a/sim/world/tools/size_check.gd
 +++ b/sim/world/tools/size_check.gd
-@@ -80,6 +80,32 @@
- 		else:
- 			ok(tallest > 4000.0, "%s: no cap, the tallest building is %.0f (the data's landmarks stand as they were)" % [nm, tallest])
+@@ -82,2 +82,28 @@ func _init() -> void:
  		SimCore.dispose(Sb)
 +	print("... and on the plan path (plans everywhere on: the places are laid by plan and memoised; a medium match first, then the small ones)")
 +	WorldPlan.everywhereOverride = 1
@@ -56,5 +50,3 @@
 +	ok(not km.contains("cols") and WorldPlan.placesKey(P7) == km and ks.size() == 4 and ks[0] != km and ks[1] != km and ks[2] != km and ks[3] != km and ks[0] != ks[1] and ks[2] != ks[3], "the kept places' key carries the size when it is not medium (medium's is as it was), so a tiny planet never reads a medium planet's towers")
 +	WorldPlan.everywhereOverride = -1
  	print("the spawn pair is within a launch of a town or city, at every size")
- 	var reach: float = 6600.0   # a base send reach (planet-overhaul.md 4.3)
- 	var unreached: int = 0

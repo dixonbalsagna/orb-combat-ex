@@ -77,3 +77,7 @@ Changes that are on with the shipped data and move a result only where it matter
 ## NEXT
 
 Land order above, then step 3 (trenches at every power) on this record list: `addTrench` already takes `lip` and `water`, and `addScar` exists.
+
+**Re-cut on main b0e20f9a, 2026-11-21** (`docs/world/planet-stack-recut.md`, records `docs/world/runs/planet-stack-recut/`): `globe-step2.diff` re-cut (the water.json and check-list hunks moved); new `globe-check-pin.diff` (`globe_check` is off-path: WorldPin.shipped()).
+
+**Swap-blocks (2026-11-21, EP):** `swap-blocks-gw1c.diff` makes Simulation's `WorldStore.swapBlocks` (the intro's two blocks) right on this store: it folds all STRIDE numbers as `_push` does and moves every `O_SUP` with the records it names; `globe_check` has the rows and a control. Apply-after note: `grant-world-store.apply-after.md`.

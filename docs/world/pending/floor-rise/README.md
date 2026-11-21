@@ -35,3 +35,5 @@ Rule and reasoning: `docs/world/floor-rise-dash.md` (Simulation's finding: with 
 
 - It moves the hash of every match with the floor on where a fighter's own step climbs a floor: GW1b, with the golden.
 - A cliff in the lake floor (a pad, a bank) now lifts him in one tick; the old rule had him clip for ticks.
+
+**Re-cut on main b0e20f9a, 2026-11-21** (`docs/world/planet-stack-recut.md`, records `docs/world/runs/planet-stack-recut/`): new `floor-walk-probe.diff`: `floor_walk_probe` measures the pop beyond what the floor itself rose (the floor rise's lift is uncapped by ruling); it lands with `floor-rise.diff`.
