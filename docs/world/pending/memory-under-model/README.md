@@ -4,8 +4,8 @@
 
 | File | What |
 | :--- | :--- |
-| `memory-under-model.diff` | World's: `sim/world/brunt.gd` (`_memory`, `heldMul`, `sumS0`, both used in `_outcomePower`; `_memoryOff` for tests), `data/biomes/brunt.json` (`heldMul` **1.0**: off) and its schema, `sim/world/tools/memory_model_check.gd` (new, `MEMORYMODEL`, in CI) and its line in `tools/world-checks.json`. No grant. Applies strictly on HEAD |
-| `memory-under-model-data.diff` | The GW1b data row: `heldMul` **2.0** (Game Design's lever, below). Off in the shipped data, on in the GW1b row |
+| `memory-under-model.diff` | World's: `sim/world/brunt.gd` (`_memory`, `heldMul`, `sumS0`, both used in `_outcomePower`; `_memoryOff` for tests), `data/biomes/brunt.json` (`heldMul` **1.0**: off) and its schema, `sim/world/tools/memory_model_check.gd` (new, `MEMORYMODEL`, in CI) and its line in `tools/world-checks.json`. No grant to another owner's file: the schema line for `heldMul` is in this diff and **Tools adds its invalid cases** (they are reviewing it). Applies strictly on HEAD |
+| `memory-under-model-data.diff` | The data row: `heldMul` **2.0** (Game Design's lever, below). Off in the shipped data. **Not in GW1b** (EP, M-02): it goes in the wall-hold window with the lodge and `repeatMarks`, which waits for Orb to play the private build first |
 
 ## The rule
 
@@ -39,14 +39,19 @@ The finding (three sends of the model's energy did not bring a mass-15 tower dow
 
 ## NEEDS FROM EP
 
-- **Land** with the model's other World work in GW1b: the code is inert until `repeatMarks` is above 0 (the `wall-hold-data` row of `wall-hold-split`, GW2) and, for the held hit, until the `heldMul` row (`memory-under-model-data.diff`) goes on; so the code can land first, and the data row with GW1b.
-- **Simulation**: the `heldMul` row changes a held hit's damage on the model path (the hash where a body is held by a tower), so it flips in the GW1b window with the other data rows.
+- **Land** the code with GW1a (it is inert: `repeatMarks` 0 and `heldMul` 1.0). The data rows (`repeatMarks` 2 of `wall-hold-data`, `heldMul` 2.0 of `memory-under-model-data.diff`, the lodge) go together in the wall-hold window, after Orb has played the private build.
+- **Simulation**: the `heldMul` row changes a held hit's damage on the model path (the hash where a body is held by a tower), so it flips in the wall-hold window, not GW1b.
 
 ## RISKS
 
 - `_memory` reads `SimPower` (`energyTop`, `tierShare`), so a change to the model's level step changes a mark's worth; both are Simulation's data.
 - The planner (`chainPlan`, `outcomeOf` via `tierAt`) meets the marked building through the same `_outcomePower`, so aims see the weakened mass; not separately measured.
 
-## M-03 (stand-in's review): a held body that brings the tower down — proposal for Game Design, not applied
+## M-03: a held body that brings the tower down stays held (Game Design ruled, buildings.md; folded in)
 
-With `heldMul` a held hit (E below the mass) can have a ratio of 1 or more, so the covered floors break (outcome "punch"); if the core then goes (or the span pancakes) the hit reads "collapse" or "pancake" and `hit()` sets `passes` true, so a body that did not have the energy to go through leaves at `keepHi` (0.8 of his speed) and may chain into the next building: speed (and so energy) he did not have. **Proposed rule: under the energy model a held body stays held when his hit brings the tower down** (the collapse is the building's own energy, not his): `passes = oc.pass or ((collapse or pancake) and not (S.powerOn and oc.held))`. A tower with 1 hit point left and a send of half its mass: with the rule he comes off the face at -616, held, with the tower down; without it he ends at 0, lodged in the breach (and with a building behind, on through at 0.8). `proposal-m03-held-stays-held.diff` (brunt.gd and one row in `memory_model_check`; the row fails without the rule); applies on top of `memory-under-model.diff`. The other reading (he goes on, with `keepAfter` of what the tower took) is Game Design's to choose; I did not apply either.
+With `heldMul` a held hit (E below the mass) can clear the covered floors, and if the core then goes (or the span pancakes) `hit()` read the hit as a collapse or a pancake and let him out of the far face at `keepHi` (0.8), maybe into the next link: speed he did not have. **Game Design: a held body that brings a tower down stays held**: he holds at the face for the hold, then drops with the rubble at **no added speed**, and is never carried through. Built: `passes` is not set by a collapse or a pancake when the body is held, under the model, **with `heldMul` above 1** (so the shipped data, `heldMul` 1.0, is untouched: the rule goes live with the 2.0 row, in the wall-hold window). Two rows in `MEMORYMODEL` (a tower with 1 hit point left, a send of half its mass): with `wallRebound` 0 (the wall-hold data) he is held at the face with vx exactly 0 and did not go through it (no mark in `splashed`); with the shipped `wallRebound` 0.25 he comes off the face by that share of his speed (-616 of 2,465: the data's own rebound, not added speed) and never forward. Both rows fail without the rule (he goes through: 1 mark).
+
+## R-1 and R-2 (the stand-in's re-check)
+
+- **R-2:** the `heldMul` 2.0 row, `repeatMarks` 2 and the lodge flip **together**, in the wall-hold window after Orb has played the private build. Not GW1b; the README says so in every place now.
+- **R-1: where the fighter ends up when a held hit breaks floors**, stated and checked. A held hit (E below the mass) under `heldMul` can clear the covered floors; three things can then read the hit as a "collapse" or a "pancake" and set `passes`: the core wearing out (`b.hp <= 0` in `_applyFloors`), a cleared span longer than `TUNNEL_MAX` (the `pancake` drop), and the floors above falling through the gap. Each of the three lets him out of the far face at `keepHi` (0.8) and into the next link. The M-03 rule above closes all three (a held body stays held under the model), and a row checks the first (core wear); a pancake row needs a tower with a cleared span and is not staged.

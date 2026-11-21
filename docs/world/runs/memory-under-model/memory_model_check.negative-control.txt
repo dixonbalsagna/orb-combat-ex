@@ -15,5 +15,7 @@ Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
   FAIL heldMul 2: two sends of 3.4 do, on the second ([20, 20] of 20)
   ok   heldMul 2: a send of 7.5 breaks them on the first, held ([18] of 20)
   ok   houses are unchanged by heldMul and a low tower holds, then goes through at one mark and two, as at heldMul 1 ([false, false, false])
+  ok   wallRebound 0: the tower fell, and he is held at the face with no speed added (vx 0, and he did not go through it: 0 marks)
+  ok   the shipped wallRebound 0.25: he comes off the face by that share of his speed at most (vx -616 of 2465) and never forward
   ok   negative control (no memory): the memory rows fail (7 did)
 MEMORYMODEL: 0 check(s) failed
