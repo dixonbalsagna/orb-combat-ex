@@ -1,0 +1,204 @@
+diff --git a/sim/core/mathx.gd b/sim/core/mathx.gd
+index ff8f4dc..ca5a0a1 100644
+--- a/sim/core/mathx.gd
++++ b/sim/core/mathx.gd
+@@ -59,6 +59,29 @@ static func jstr(x: float) -> String:
+ 	return str(x)
+ 
+ 
++## A float as text with n decimals (0 to 6), the same on every platform. printf ("%.nf") for every value but an exact
++## half, a value exactly between two n-decimal results, which goes to the even one: glibc's and musl's rule (Linux, the
++## web). The Windows build's printf rounds that half away from zero, so "%.1f" % -22.25 read "-22.3" there and "-22.2"
++## on Linux and the web, in text the golden hashes (the swing planner's feed line; CI, 2026-11-22). Any other value is
++## printed alike everywhere (17 significant digits name a double, so no platform's rounding lands a non-half on a half).
++## A half at n decimals is exactly k + j / 2^(n+1) with j odd, so the test scales by a power of two and is exact; so is
++## |v| * 10^n for it, below 2^52. Use it for any number a sim text shows with decimals.
++static func fixed(v: float, n: int) -> String:
++	var a: float = absf(v)
++	var p: int = 1
++	for i in range(n):
++		p *= 10
++	var fr: float = (a - floorf(a)) * float(1 << (n + 1))
++	if fr == floorf(fr) and int(fr) % 2 == 1 and a * float(p) < 4.0e15:
++		var lo: int = int(floorf(a * float(p)))
++		var k: int = lo if lo % 2 == 0 else lo + 1
++		var t: String = str(k / p)
++		if n > 0:
++			t += "." + str(k % p).pad_zeros(n)
++		return ("-" if v < 0.0 else "") + t
++	return ("%." + str(n) + "f") % v
++
++
+ ## A float64 from its bit pattern, 16 hex digits with the high word first. GDScript's literal parser is not
+ ## correctly rounded for long literals, so long constants are built this way.
+ static func f64(hex: String) -> float:
+diff --git a/sim/core/test/golden.json b/sim/core/test/golden.json
+index 87d2952..2c32154 100644
+--- a/sim/core/test/golden.json
++++ b/sim/core/test/golden.json
+@@ -13419,7 +13419,7 @@
+    "seed": 2,
+    "cap": 18000,
+    "ticks": 18000,
+-   "light": "a8c663b84748e0be",
++   "light": "c1b9f67b806bc6d7",
+    "checkpoints": [
+     "4408b49d003fbc3f:8d548a45c9362954:2d8f73acd2d0aedd",
+     "51128afce6daf69e:5df5e628a94109c0:f17773a445146a12",
+@@ -13580,7 +13580,7 @@
+    "seed": 2,
+    "cap": 18000,
+    "ticks": 18000,
+-   "light": "69140510d1d9f971",
++   "light": "be6df1cf39c74ba6",
+    "checkpoints": [
+     "532c15a168f83341:8d548a45c9362954:2d8f73acd2d0aedd",
+     "2c57eed7e38a45eb:e6a37181ec97cb03:098b5b0920c1fcfd",
+diff --git a/sim/core/tools/golden_recipes.gd b/sim/core/tools/golden_recipes.gd
+index fc915fb..6ebf74c 100644
+--- a/sim/core/tools/golden_recipes.gd
++++ b/sim/core/tools/golden_recipes.gd
+@@ -19,6 +19,8 @@ const STREAM_IDS: Array = ["vfx.spark", "vfx.debris", "vfx.dust", "vfx.splash",
+ const MATCHES: Array = [["default", 1, 18000, {"world": "arena"}], ["swap", 1], ["mirror-villain", 1], ["mirror-hero", 1],
+ 	["default-flip", 2], ["swap-flip", 2], ["mirror-villain-flip", 2], ["mirror-hero-flip", 2], ["default", 11, 43200, {"world": "arena"}]]
+ const CAP: int = 18000
++## The scripted replays: [seed, ticks, both, the ticks P2's AI toggles]. Each plays the hand-made arena (GW1b).
++const REPLAYS: Array = [[11, 3000, false, [1500, 2100]], [12, 2400, true, []]]
+ ## Everything that comes from a fighter's definition, so an arm moves the whole fighter. D1a fix: the meters (hasAnguish,
+ ## hasMenace, from da5fb09), the kit, the Rally rule, the wound data and the finisher key used to stay with the slot, so a
+ ## swapped "RIVAL" kept PROTAGONIST's anguish. The parity gate's "arm setups" check holds applyArm equal to newMatch's setup.
+@@ -113,15 +115,26 @@ static func build() -> Dictionary:
+ 	g.keyed = keyedHash()
+ 	g.matches = []
+ 	for m in MATCHES:
+-		g.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {}))
++		g.matches.append(matchEntry(m))
+ 	g.replays = []
+-	for rp in [scriptedReplay(11, 3000, false, [1500, 2100]), scriptedReplay(12, 2400, true, [])]:
+-		rp["setup"] = {"world": "arena"}   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; this one keeps the arena's reference (the scripted replays were written on it)
+-		g.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp, CAP, rp.setup.duplicate(true))})
++	for p in REPLAYS:
++		g.replays.append(replayEntry(p))
+ 	g.planet = planetGolden()   # last, so every key before it is as it was
+ 	return g
+ 
+ 
++## One MATCHES row as the golden runs it, with its recorded setup (web_parity.gd runs the same).
++static func matchEntry(m: Array) -> Dictionary:
++	return goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {})
++
++
++## One REPLAYS row as the golden runs it: the scripted replay and its run.
++static func replayEntry(p: Array) -> Dictionary:
++	var rp: Dictionary = scriptedReplay(p[0], p[1], p[2], p[3])
++	rp["setup"] = {"world": "arena"}   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; this one keeps the arena's reference (the scripted replays were written on it)
++	return {"replay": rp, "run": goldenRun("default", rp.seed, rp, CAP, rp.setup.duplicate(true))}
++
++
+ static func constants() -> Array:
+ 	var got: Array = [SimDetMath.PIO2_1, SimDetMath.PIO2_1T, SimDetMath.INVPIO2, SimDetMath.LN2_HI, SimDetMath.LN2_LO, SimDetMath.INVLN2, SimDetMath.SQRT2, SimDetMath.SQRT_HALF]
+ 	got.append_array(Array(SimDetMath.SIN_C))
+@@ -665,12 +678,20 @@ const PLANET_MATCH: Dictionary = {"seed": 29, "cap": 3600, "setup": {"planet": 7
+ const PLANET_FIRSTS: Dictionary = {"crater": -1, "slide": -1}
+ 
+ 
++## The slices are generation 2's, named: WorldPlanet reads the generation in force, which is the last match's (a planet
++## match leaves its own, 3, and an arena match none), so unnamed they moved with whatever ran before (web parity, 2026-11-22).
++const PLANET_SLICES_GEN: int = 2
++
++
+ static func planetSlices() -> Dictionary:
+ 	var out := {}
+ 	SimConst.setArena(SimConst.PLANET_NC)   # a slice is cut for the arena's length: the Whole ring's
++	var g0: int = WorldClimate.curGen
++	WorldClimate.useGen(PLANET_SLICES_GEN)
+ 	for pt in PLANET_SLICES:
+ 		var sl = WorldPlanet.sliceFor(int(pt[0]), int(pt[1]))
+ 		out["%d/%d" % [pt[0], pt[1]]] = "%08x" % WorldPlanet.sliceHash(sl) if sl != null else "none"
++	WorldClimate.useGen(g0)
+ 	return out
+ 
+ 
+diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
+index de8ed1e..a1acc9e 100644
+--- a/sim/core/tools/parity.gd
++++ b/sim/core/tools/parity.gd
+@@ -85,6 +85,7 @@ func _init() -> void:
+ 	check("agency lines", _agencyLines())
+ 	check("a clash's meeting point", _clashMid())
+ 	check("SimMathx.PI and TAU", _piTau())
++	check("a number with decimals reads the same on every platform", _fixedText())
+ 	check("the blow cue's run stays out of the hash", _cueRun())
+ 	check("the run's rare boons", _boons())
+ 	check("the catastrophe's blast cloud and ash", _cata())
+@@ -5875,6 +5876,13 @@ func _planetGolden(g: Dictionary) -> String:
+ 	for k in want.slices:
+ 		if sl.get(k, "") != want.slices[k]:
+ 			return "slice %s: %s, golden %s" % [k, sl.get(k, ""), want.slices[k]]
++	var g0: int = WorldClimate.curGen
++	WorldClimate.useGen(3)   # as a planet match leaves it: the slices name their own generation, so they don't move
++	var sl3: Dictionary = SimGolden.planetSlices()
++	var gAfter: int = WorldClimate.curGen
++	WorldClimate.useGen(g0)
++	if JSON.stringify(sl3) != JSON.stringify(sl) or gAfter != 3:
++		return "the slices follow the generation in force (after a planet match: %s), or don't put it back (%d)" % [JSON.stringify(sl3), gAfter]
+ 	var t0: Dictionary = SimGolden.planetTick0()
+ 	for k in want.tick0:
+ 		if t0.get(k, "") != want.tick0[k]:
+@@ -5909,6 +5917,23 @@ func _piTau() -> String:
+ 	return ""
+ 
+ 
++## SimMathx.fixed: an exact half goes to the even result whatever the platform's printf does (Windows rounds it away from
++## zero, glibc and musl to even: the swing planner's feed line read "-22.3" on Windows and "-22.2" on Linux, CI
++## 2026-11-22), and every other value reads as printf prints it. On Linux and the web these rows hold with or without the
++## fix; on Windows they fail without it.
++func _fixedText() -> String:
++	var rows: Array = [[0.25, 1, "0.2"], [-22.25, 1, "-22.2"], [22.75, 1, "22.8"], [1.25, 1, "1.2"], [-0.25, 1, "-0.2"], [2.5, 0, "2"],
++		[3.5, 0, "4"], [-0.5, 0, "-0"], [0.125, 2, "0.12"], [0.375, 2, "0.38"], [-0.0625, 3, "-0.062"], [1234.5, 0, "1234"],
++		[0.15, 1, "0.1"], [0.35, 1, "0.3"], [1.0 / 3.0, 2, "0.33"], [-17.3, 1, "-17.3"], [5.0, 1, "5.0"], [0.5, 1, "0.5"], [12345.678, 2, "12345.68"]]
++	for r in rows:
++		var got: String = SimMathx.fixed(float(r[0]), int(r[1]))
++		if got != String(r[2]):
++			return "SimMathx.fixed(%s, %d) reads %s, not %s" % [SimMathx.bits(float(r[0])), int(r[1]), got, r[2]]
++	if DirSwing._n(-22.25) != "-22.2" or DirSwing._n(1.25) != "1.2":
++		return "the swing planner's feed numbers don't go through SimMathx.fixed (%s, %s)" % [DirSwing._n(-22.25), DirSwing._n(1.25)]
++	return ""
++
++
+ ## SimReplay.dataHash(setup) names a planet's data by the generation the setup plays and not the one in force, and a
+ ## setup without a planet reads none of it (determinism.md section 10). An edited file is stood for by its cached hash.
+ ## With the floor on, every way into a match stands him on it (a flat start, the intro's end state, a played intro's fall over it) and none leaves him under it for his first ticks; with it off, the flat start's 60 and the ground, as ever.
+diff --git a/sim/core/tools/web_parity.gd b/sim/core/tools/web_parity.gd
+index 16214b4..18500e0 100644
+--- a/sim/core/tools/web_parity.gd
++++ b/sim/core/tools/web_parity.gd
+@@ -44,11 +44,10 @@ func _ready() -> void:
+ 	_add("keyed", func(): return SimGolden.keyedHash())
+ 	for k in range(SimGolden.MATCHES.size()):
+ 		var m: Array = SimGolden.MATCHES[k]
+-		_add("matches." + str(k), func(): return SimGolden.goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else SimGolden.CAP))
+-	var rps: Array = [[11, 3000, false, [1500, 2100]], [12, 2400, true, []]]
+-	for k in range(rps.size()):
+-		var p: Array = rps[k]
+-		_add("replays." + str(k), func(): return _replay(p))
++		_add("matches." + str(k), func(): return SimGolden.matchEntry(m))   # as build() runs it, with its recorded setup (GW1b: two play the arena)
++	for k in range(SimGolden.REPLAYS.size()):
++		var p: Array = SimGolden.REPLAYS[k]
++		_add("replays." + str(k), func(): return SimGolden.replayEntry(p))
+ 	_add("planet", func(): return SimGolden.planetGolden())
+ 	# extras, after the golden's keys (so those run as build() runs them): what ships switched off today
+ 	var on: Dictionary = {"depth": true, "brake": true, "forms": true, "flight": true, "hitstop": true, "ricochet": true}
+@@ -97,12 +96,6 @@ func _runGround(run: String) -> Array:
+ 	return outv
+ 
+ 
+-## build()'s replay entry: the scripted replay and its run.
+-func _replay(p: Array) -> Dictionary:
+-	var rp: Dictionary = SimGolden.scriptedReplay(p[0], p[1], p[2], p[3])
+-	return {"replay": rp, "run": SimGolden.goldenRun("default", rp.seed, rp)}
+-
+-
+ func _add(key: String, f: Callable) -> void:
+ 	jobs.append([key, f])
+ 

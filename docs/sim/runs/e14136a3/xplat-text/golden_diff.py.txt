@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+# golden_diff.py <a> <b>: every JSON path where two golden files differ (values printed short).
+import json, sys
+
+a = json.load(open(sys.argv[1], encoding="utf-8"))
+b = json.load(open(sys.argv[2], encoding="utf-8"))
+out = []
+
+
+def walk(x, y, p):
+    if type(x) != type(y):
+        out.append((p, x, y))
+        return
+    if isinstance(x, dict):
+        for k in sorted(set(x) | set(y)):
+            if k not in x or k not in y:
+                out.append((p + "." + k, x.get(k, "<none>"), y.get(k, "<none>")))
+            else:
+                walk(x[k], y[k], p + "." + k)
+    elif isinstance(x, list):
+        if len(x) != len(y):
+            out.append((p + "[len]", len(x), len(y)))
+        for i in range(min(len(x), len(y))):
+            walk(x[i], y[i], "%s[%d]" % (p, i))
+    elif x != y:
+        out.append((p, x, y))
+
+
+walk(a, b, "")
+print("golden files: %d difference(s)" % len(out))
+for p, x, y in out[:20]:
+    print("  %s: %s -> %s" % (p, str(x)[:60], str(y)[:60]))

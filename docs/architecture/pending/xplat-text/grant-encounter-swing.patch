@@ -1,0 +1,13 @@
+diff --git a/sim/director/swing.gd b/sim/director/swing.gd
+index 412449c..484bad2 100644
+--- a/sim/director/swing.gd
++++ b/sim/director/swing.gd
+@@ -559,7 +559,7 @@ static func _tallAhead(_S: SimState, P, fr: Dictionary, turn: float) -> float:
+ # ---- deciding -----------------------------------------------------------------------------------------
+ 
+ static func _n(v: float) -> String:
+-	return "%.1f" % v
++	return SimMathx.fixed(v, 1)   # the same text on every platform: printf's "%.1f" rounds an exact half (a score of 22.25) up on Windows and to even on Linux and the web (Simulation's grant, 2026-11-22)
+ 
+ 
+ static func _sign(v: float) -> String:

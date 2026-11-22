@@ -1,0 +1,74 @@
+extends SceneTree
+# tape_probe.gd [out dir] [keys]: the golden's matches 5 and 6 (swap-flip and mirror-villain-flip, seed 2, on the planet),
+# run as SimGolden.build() runs them, with a hasher that records its tape: every 32-bit word it folds, and every text
+# it folds with the word index it starts at. The tape lets a script fold the light digest again with each text formatted
+# another way (Linux's and the web's rounding of an exact half, against the Windows build's).
+# Writes <out>/tape_<k>.bin (the words, u32 little-endian), <out>/tape_<k>.json (texts with their start index, the
+# light digest, and the arm/seed).
+
+class TapeHasher extends SimHash.Hasher:
+	var words := PackedInt64Array()
+	var texts: Array = []
+	var inText: bool = false
+
+	func u(w: int) -> void:
+		words.append(w & 0xFFFFFFFF)
+		super.u(w)
+
+	func text(s: String) -> void:
+		texts.append([words.size(), s])
+		super.text(s)
+
+
+func _run(k: int, outDir: String) -> void:
+	var m: Array = SimGolden.MATCHES[k]
+	var setup: Dictionary = (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {}
+	var cap: int = int(m[2]) if m.size() > 2 else SimGolden.CAP
+	var S := SimCore.createSim()
+	var cam := SimCamera.new()
+	SimCore.newMatch(S, int(m[1]), {}, setup)
+	var V := SimFxView.new(int(m[1]))
+	SimGolden.applyArm(String(m[0]), S.fighters)
+	var h := TapeHasher.new()
+	var steps: int = 0
+	while steps < cap and not (S.game.ko != null and S.game.koT > 3.0):
+		SimCore.step(S, null)
+		cam.camStep(S, S.dt, 1200.0, 700.0)
+		steps += 1
+		h.num(S.T)
+		h.num(float(S.rng.state_i32()))
+		for f in S.fighters:
+			for key in ["x", "y", "vx", "vy", "hp", "ki", "power", "tier", "stance"]:
+				h.num(f.get(key))
+			h.text(f.state)
+		for l in S.out.feed:
+			h.num(l.t)
+			h.text(l.tag)
+			h.text(l.sub)
+		S.out.feed.clear()
+		SimHash.hashFx(h, S.out.fx)
+		V.consume(S, S.out.fx)
+		S.out.fx.clear()
+	var bin := PackedByteArray()
+	bin.resize(h.words.size() * 4)
+	for i in range(h.words.size()):
+		bin.encode_u32(i * 4, h.words[i])
+	var f := FileAccess.open(outDir.path_join("tape_%d.bin" % k), FileAccess.WRITE)
+	f.store_buffer(bin)
+	f.close()
+	var j := FileAccess.open(outDir.path_join("tape_%d.json" % k), FileAccess.WRITE)
+	j.store_string(JSON.stringify({"arm": m[0], "seed": m[1], "ticks": steps, "light": h.hex(), "words": h.words.size(), "texts": h.texts}))
+	j.close()
+	print("match %d (%s seed %d): %d ticks, light %s, %d words, %d texts" % [k, m[0], m[1], steps, h.hex(), h.words.size(), h.texts.size()])
+	SimCore.dispose(S)
+
+
+func _init() -> void:
+	var a: PackedStringArray = OS.get_cmdline_user_args()
+	var outDir: String = a[0] if a.size() > 0 else "user://"
+	var keys: Array = [5, 6]
+	if a.size() > 1:
+		keys = Array(a[1].split(",")).map(func(x): return int(x))
+	for k in keys:
+		_run(k, outDir)
+	quit(0)

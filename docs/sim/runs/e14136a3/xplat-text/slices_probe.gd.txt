@@ -1,0 +1,23 @@
+extends SceneTree
+# slices_probe.gd: SimGolden.planetSlices() reads WorldClimate.genNow(), the last match's generation (curGen) unless a tool
+# set one. Which generation gives the golden's slices? And what is curGen just before build()'s planetGolden()?
+
+func _init() -> void:
+	var g: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://sim/core/test/golden.json"))
+	var want: String = JSON.stringify(g.planet.slices)
+	print("data gen %d, curGen at start %d" % [int(WorldClimate.data().get("gen", 1)), WorldClimate.curGen])
+	for gen in [0, 2, 3]:
+		WorldClimate.useGen(gen)
+		var s: String = JSON.stringify(SimGolden.planetSlices())
+		print("gen %d: slices %s the golden's" % [gen, "MATCH" if s == want else "differ from"])
+	WorldClimate.useGen(0)
+	# build()'s order just before planetGolden(): the last replay is the arena's
+	for p in [[11, 3000, false, [1500, 2100]], [12, 2400, true, []]]:
+		var rp: Dictionary = SimGolden.scriptedReplay(p[0], p[1], p[2], p[3])
+		rp["setup"] = {"world": "arena"}
+		SimGolden.goldenRun("default", rp.seed, rp, SimGolden.CAP, rp.setup.duplicate(true))
+		print("after an arena replay: curGen %d" % WorldClimate.curGen)
+	var m: Array = SimGolden.MATCHES[7]
+	SimGolden.goldenRun(m[0], m[1], null, 600, {})
+	print("after a planet match (600 ticks): curGen %d" % WorldClimate.curGen)
+	quit(0)

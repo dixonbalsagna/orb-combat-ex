@@ -1,0 +1,3 @@
+golden files: 2 difference(s)
+  .matches[5].light: a8c663b84748e0be -> c1b9f67b806bc6d7
+  .matches[6].light: 69140510d1d9f971 -> be6df1cf39c74ba6

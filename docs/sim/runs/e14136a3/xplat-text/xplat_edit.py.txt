@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+# xplat_edit.py <tree>: CI red on GW1b (run 45046244728): text the golden hashes read differently on Windows.
+#  - mine, sim/core/mathx.gd: SimMathx.fixed(v, n), a float as n-decimal text that is the same on every platform: printf
+#    for every value but an exact half, which it rounds to even (glibc's and musl's rule; the Windows build's printf rounds
+#    it away from zero);
+#  - Encounter's (grant), sim/director/swing.gd: the swing planner's _n() uses it;
+#  - mine, golden_recipes.gd: the matches and replays as build() runs them in one place each (matchEntry, replayEntry,
+#    REPLAYS), so web_parity.gd runs the same; planetSlices() names its generation (2, the golden's) instead of reading
+#    the last match's (a planet match leaves 3);
+#  - mine, web_parity.gd: the golden's keys through those;
+#  - mine, parity.gd: a row for the halves (SimMathx.fixed and the swing line), and the planet row reads the slices with a
+#    planet match's generation left in force too.
+import sys, os
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    print("edited", rel)
+
+
+edit("sim/core/mathx.gd", [
+    ("## A float64 from its bit pattern, 16 hex digits with the high word first.",
+     "## A float as text with n decimals (0 to 6), the same on every platform. printf (\"%.nf\") for every value but an exact\n"
+     "## half, a value exactly between two n-decimal results, which goes to the even one: glibc's and musl's rule (Linux, the\n"
+     "## web). The Windows build's printf rounds that half away from zero, so \"%.1f\" % -22.25 read \"-22.3\" there and \"-22.2\"\n"
+     "## on Linux and the web, in text the golden hashes (the swing planner's feed line; CI, 2026-11-22). Any other value is\n"
+     "## printed alike everywhere (17 significant digits name a double, so no platform's rounding lands a non-half on a half).\n"
+     "## A half at n decimals is exactly k + j / 2^(n+1) with j odd, so the test scales by a power of two and is exact; so is\n"
+     "## |v| * 10^n for it, below 2^52. Use it for any number a sim text shows with decimals.\n"
+     "static func fixed(v: float, n: int) -> String:\n"
+     "\tvar a: float = absf(v)\n"
+     "\tvar p: int = 1\n"
+     "\tfor i in range(n):\n"
+     "\t\tp *= 10\n"
+     "\tvar fr: float = (a - floorf(a)) * float(1 << (n + 1))\n"
+     "\tif fr == floorf(fr) and int(fr) % 2 == 1 and a * float(p) < 4.0e15:\n"
+     "\t\tvar lo: int = int(floorf(a * float(p)))\n"
+     "\t\tvar k: int = lo if lo % 2 == 0 else lo + 1\n"
+     "\t\tvar t: String = str(k / p)\n"
+     "\t\tif n > 0:\n"
+     "\t\t\tt += \".\" + str(k % p).pad_zeros(n)\n"
+     "\t\treturn (\"-\" if v < 0.0 else \"\") + t\n"
+     "\treturn (\"%.\" + str(n) + \"f\") % v\n"
+     "\n"
+     "\n"
+     "## A float64 from its bit pattern, 16 hex digits with the high word first."),
+])
+
+edit("sim/director/swing.gd", [
+    ('static func _n(v: float) -> String:\n\treturn "%.1f" % v\n',
+     'static func _n(v: float) -> String:\n\treturn SimMathx.fixed(v, 1)   # the same text on every platform: printf\'s "%.1f" rounds an exact half (a score of 22.25) up on Windows and to even on Linux and the web (Simulation\'s grant, 2026-11-22)\n'),
+])
+
+edit("sim/core/tools/golden_recipes.gd", [
+    ("const CAP: int = 18000\n",
+     "const CAP: int = 18000\n"
+     "## The scripted replays: [seed, ticks, both, the ticks P2's AI toggles]. Each plays the hand-made arena (GW1b).\n"
+     "const REPLAYS: Array = [[11, 3000, false, [1500, 2100]], [12, 2400, true, []]]\n"),
+    ("\tg.matches = []\n"
+     "\tfor m in MATCHES:\n"
+     "\t\tg.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {}))\n"
+     "\tg.replays = []\n"
+     "\tfor rp in [scriptedReplay(11, 3000, false, [1500, 2100]), scriptedReplay(12, 2400, true, [])]:\n"
+     "\t\trp[\"setup\"] = {\"world\": \"arena\"}   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; this one keeps the arena's reference (the scripted replays were written on it)\n"
+     "\t\tg.replays.append({\"replay\": rp, \"run\": goldenRun(\"default\", rp.seed, rp, CAP, rp.setup.duplicate(true))})\n",
+     "\tg.matches = []\n"
+     "\tfor m in MATCHES:\n"
+     "\t\tg.matches.append(matchEntry(m))\n"
+     "\tg.replays = []\n"
+     "\tfor p in REPLAYS:\n"
+     "\t\tg.replays.append(replayEntry(p))\n"),
+    ("static func constants() -> Array:\n",
+     "## One MATCHES row as the golden runs it, with its recorded setup (web_parity.gd runs the same).\n"
+     "static func matchEntry(m: Array) -> Dictionary:\n"
+     "\treturn goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {})\n"
+     "\n"
+     "\n"
+     "## One REPLAYS row as the golden runs it: the scripted replay and its run.\n"
+     "static func replayEntry(p: Array) -> Dictionary:\n"
+     "\tvar rp: Dictionary = scriptedReplay(p[0], p[1], p[2], p[3])\n"
+     "\trp[\"setup\"] = {\"world\": \"arena\"}   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; this one keeps the arena's reference (the scripted replays were written on it)\n"
+     "\treturn {\"replay\": rp, \"run\": goldenRun(\"default\", rp.seed, rp, CAP, rp.setup.duplicate(true))}\n"
+     "\n"
+     "\n"
+     "static func constants() -> Array:\n"),
+    ("static func planetSlices() -> Dictionary:\n"
+     "\tvar out := {}\n"
+     "\tSimConst.setArena(SimConst.PLANET_NC)   # a slice is cut for the arena's length: the Whole ring's\n"
+     "\tfor pt in PLANET_SLICES:\n"
+     "\t\tvar sl = WorldPlanet.sliceFor(int(pt[0]), int(pt[1]))\n"
+     "\t\tout[\"%d/%d\" % [pt[0], pt[1]]] = \"%08x\" % WorldPlanet.sliceHash(sl) if sl != null else \"none\"\n"
+     "\treturn out\n",
+     "## The slices are generation 2's, named: WorldPlanet reads the generation in force, which is the last match's (a planet\n"
+     "## match leaves its own, 3, and an arena match none), so unnamed they moved with whatever ran before (web parity, 2026-11-22).\n"
+     "const PLANET_SLICES_GEN: int = 2\n"
+     "\n"
+     "\n"
+     "static func planetSlices() -> Dictionary:\n"
+     "\tvar out := {}\n"
+     "\tSimConst.setArena(SimConst.PLANET_NC)   # a slice is cut for the arena's length: the Whole ring's\n"
+     "\tvar g0: int = WorldClimate.curGen\n"
+     "\tWorldClimate.useGen(PLANET_SLICES_GEN)\n"
+     "\tfor pt in PLANET_SLICES:\n"
+     "\t\tvar sl = WorldPlanet.sliceFor(int(pt[0]), int(pt[1]))\n"
+     "\t\tout[\"%d/%d\" % [pt[0], pt[1]]] = \"%08x\" % WorldPlanet.sliceHash(sl) if sl != null else \"none\"\n"
+     "\tWorldClimate.useGen(g0)\n"
+     "\treturn out\n"),
+])
+
+edit("sim/core/tools/web_parity.gd", [
+    ("\tfor k in range(SimGolden.MATCHES.size()):\n"
+     "\t\tvar m: Array = SimGolden.MATCHES[k]\n"
+     "\t\t_add(\"matches.\" + str(k), func(): return SimGolden.goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else SimGolden.CAP))\n"
+     "\tvar rps: Array = [[11, 3000, false, [1500, 2100]], [12, 2400, true, []]]\n"
+     "\tfor k in range(rps.size()):\n"
+     "\t\tvar p: Array = rps[k]\n"
+     "\t\t_add(\"replays.\" + str(k), func(): return _replay(p))\n",
+     "\tfor k in range(SimGolden.MATCHES.size()):\n"
+     "\t\tvar m: Array = SimGolden.MATCHES[k]\n"
+     "\t\t_add(\"matches.\" + str(k), func(): return SimGolden.matchEntry(m))   # as build() runs it, with its recorded setup (GW1b: two play the arena)\n"
+     "\tfor k in range(SimGolden.REPLAYS.size()):\n"
+     "\t\tvar p: Array = SimGolden.REPLAYS[k]\n"
+     "\t\t_add(\"replays.\" + str(k), func(): return SimGolden.replayEntry(p))\n"),
+    ("## build()'s replay entry: the scripted replay and its run.\n"
+     "func _replay(p: Array) -> Dictionary:\n"
+     "\tvar rp: Dictionary = SimGolden.scriptedReplay(p[0], p[1], p[2], p[3])\n"
+     "\treturn {\"replay\": rp, \"run\": SimGolden.goldenRun(\"default\", rp.seed, rp)}\n"
+     "\n"
+     "\n",
+     ""),
+])
+
+edit("sim/core/tools/parity.gd", [
+    ('\tcheck("SimMathx.PI and TAU", _piTau())\n',
+     '\tcheck("SimMathx.PI and TAU", _piTau())\n'
+     '\tcheck("a number with decimals reads the same on every platform", _fixedText())\n'),
+    ("## SimReplay.dataHash(setup) names a planet's data by the generation the setup plays and not the one in force, and a\n",
+     "## SimMathx.fixed: an exact half goes to the even result whatever the platform's printf does (Windows rounds it away from\n"
+     "## zero, glibc and musl to even: the swing planner's feed line read \"-22.3\" on Windows and \"-22.2\" on Linux, CI\n"
+     "## 2026-11-22), and every other value reads as printf prints it. On Linux and the web these rows hold with or without the\n"
+     "## fix; on Windows they fail without it.\n"
+     "func _fixedText() -> String:\n"
+     "\tvar rows: Array = [[0.25, 1, \"0.2\"], [-22.25, 1, \"-22.2\"], [22.75, 1, \"22.8\"], [1.25, 1, \"1.2\"], [-0.25, 1, \"-0.2\"], [2.5, 0, \"2\"],\n"
+     "\t\t[3.5, 0, \"4\"], [-0.5, 0, \"-0\"], [0.125, 2, \"0.12\"], [0.375, 2, \"0.38\"], [-0.0625, 3, \"-0.062\"], [1234.5, 0, \"1234\"],\n"
+     "\t\t[0.15, 1, \"0.1\"], [0.35, 1, \"0.3\"], [1.0 / 3.0, 2, \"0.33\"], [-17.3, 1, \"-17.3\"], [5.0, 1, \"5.0\"], [0.5, 1, \"0.5\"], [12345.678, 2, \"12345.68\"]]\n"
+     "\tfor r in rows:\n"
+     "\t\tvar got: String = SimMathx.fixed(float(r[0]), int(r[1]))\n"
+     "\t\tif got != String(r[2]):\n"
+     "\t\t\treturn \"SimMathx.fixed(%s, %d) reads %s, not %s\" % [SimMathx.bits(float(r[0])), int(r[1]), got, r[2]]\n"
+     "\tif DirSwing._n(-22.25) != \"-22.2\" or DirSwing._n(1.25) != \"1.2\":\n"
+     "\t\treturn \"the swing planner's feed numbers don't go through SimMathx.fixed (%s, %s)\" % [DirSwing._n(-22.25), DirSwing._n(1.25)]\n"
+     "\treturn \"\"\n"
+     "\n"
+     "\n"
+     "## SimReplay.dataHash(setup) names a planet's data by the generation the setup plays and not the one in force, and a\n"),
+    ("\tvar sl: Dictionary = SimGolden.planetSlices()\n"
+     "\tfor k in want.slices:\n"
+     "\t\tif sl.get(k, \"\") != want.slices[k]:\n"
+     "\t\t\treturn \"slice %s: %s, golden %s\" % [k, sl.get(k, \"\"), want.slices[k]]\n",
+     "\tvar sl: Dictionary = SimGolden.planetSlices()\n"
+     "\tfor k in want.slices:\n"
+     "\t\tif sl.get(k, \"\") != want.slices[k]:\n"
+     "\t\t\treturn \"slice %s: %s, golden %s\" % [k, sl.get(k, \"\"), want.slices[k]]\n"
+     "\tvar g0: int = WorldClimate.curGen\n"
+     "\tWorldClimate.useGen(3)   # as a planet match leaves it: the slices name their own generation, so they don't move\n"
+     "\tvar sl3: Dictionary = SimGolden.planetSlices()\n"
+     "\tvar gAfter: int = WorldClimate.curGen\n"
+     "\tWorldClimate.useGen(g0)\n"
+     "\tif JSON.stringify(sl3) != JSON.stringify(sl) or gAfter != 3:\n"
+     "\t\treturn \"the slices follow the generation in force (after a planet match: %s), or don't put it back (%d)\" % [JSON.stringify(sl3), gAfter]\n"),
+])
+print("ok")

@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+# tape_fold.py <dir> <k> <linux light>: fold a tape_probe.gd tape again (SimHash.Hasher in Python), first as recorded
+# (must give the Windows light digest), then with every text's exact-half numbers rounded as glibc and musl round them
+# (half to even on the exact binary value) instead of the Windows build's half away from zero. Prints each text changed.
+import json, re, struct, sys
+from decimal import Decimal
+
+D, K, WANT = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+M = 0xFFFFFFFF
+
+
+def imul(x, y):
+    return (x * (y & 0xFFFF) + (((x * (y >> 16)) & 0xFFFF) << 16)) & M
+
+
+class H:
+    def __init__(self):
+        self.a, self.b = 0x811c9dc5, 0x9e3779b9
+
+    def u(self, w):
+        self.a = imul((self.a ^ w) & M, 16777619)
+        x = imul(((self.b ^ w) + 0x7f4a7c15) & M, 0x85ebca6b)
+        self.b = (x ^ (x >> 13)) & M
+
+    def hex(self):
+        return "%08x%08x" % (self.a, self.b)
+
+
+raw = open("%s/tape_%d.bin" % (D, K), "rb").read()
+words = struct.unpack("<%dI" % (len(raw) // 4), raw)
+meta = json.load(open("%s/tape_%d.json" % (D, K), encoding="utf-8"))
+texts = meta["texts"]   # [start word index, text]
+
+NUM = re.compile(r"(?<![\w.])(-?)(\d+)\.(\d+)(?![\w.])")
+
+
+def linux(s):
+    """The text as glibc/musl would print it, where the Windows build rounded an exact half away from zero."""
+    changed = []
+
+    def fix(m):
+        sign, ip, fp = m.group(1), m.group(2), m.group(3)
+        d = len(fp)
+        p = Decimal(ip + "." + fp)
+        half = Decimal(1).scaleb(-d) / 2
+        c = p - half   # the exact half Windows would have rounded up (away from zero) to p
+        if c <= 0:
+            return m.group(0)
+        if Decimal(float(c)) != c:
+            return m.group(0)   # no double sits exactly on that half: not a tie
+        if int(fp[-1]) % 2 == 0:
+            return m.group(0)   # half to even gives p too
+        q = p - Decimal(1).scaleb(-d)
+        out = sign + ("%." + str(d) + "f") % q if False else sign + format(q, "." + str(d) + "f")
+        changed.append((m.group(0), out, str(c)))
+        return out
+
+    return NUM.sub(fix, s), changed
+
+
+def fold(edit):
+    h = H()
+    ti = 0
+    i = 0
+    n = len(words)
+    hits = []
+    while i < n:
+        if ti < len(texts) and texts[ti][0] == i:
+            s = texts[ti][1]
+            ln = len(s) + 1
+            if edit:
+                s2, ch = linux(s)
+                if ch:
+                    hits.append((ti, s, s2, ch))
+                s = s2
+            for chx in s:
+                h.u(ord(chx))
+            h.u(0xff)
+            i += ln
+            ti += 1
+            continue
+        h.u(words[i])
+        i += 1
+    return h.hex(), hits
+
+
+a, _ = fold(False)
+print("as recorded: %s (Windows golden %s)" % (a, meta["light"]))
+b, hits = fold(True)
+print("with Linux's rounding of exact halves: %s (CI, Linux and web: %s) -> %s" % (b, WANT, "MATCH" if b == WANT else "no match"))
+print("%d text(s) changed" % len(hits))
+for ti, s, s2, ch in hits[:40]:
+    print("  text %d: %r\n     -> %r   %s" % (ti, s, s2, "; ".join("%s from the exact %s -> %s" % (x, c, y) for x, y, c in ch)))

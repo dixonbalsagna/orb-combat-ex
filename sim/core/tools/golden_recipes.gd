@@ -19,6 +19,8 @@ const STREAM_IDS: Array = ["vfx.spark", "vfx.debris", "vfx.dust", "vfx.splash", 
 const MATCHES: Array = [["default", 1, 18000, {"world": "arena"}], ["swap", 1], ["mirror-villain", 1], ["mirror-hero", 1],
 	["default-flip", 2], ["swap-flip", 2], ["mirror-villain-flip", 2], ["mirror-hero-flip", 2], ["default", 11, 43200, {"world": "arena"}]]
 const CAP: int = 18000
+## The scripted replays: [seed, ticks, both, the ticks P2's AI toggles]. Each plays the hand-made arena (GW1b).
+const REPLAYS: Array = [[11, 3000, false, [1500, 2100]], [12, 2400, true, []]]
 ## Everything that comes from a fighter's definition, so an arm moves the whole fighter. D1a fix: the meters (hasAnguish,
 ## hasMenace, from da5fb09), the kit, the Rally rule, the wound data and the finisher key used to stay with the slot, so a
 ## swapped "RIVAL" kept PROTAGONIST's anguish. The parity gate's "arm setups" check holds applyArm equal to newMatch's setup.
@@ -113,13 +115,24 @@ static func build() -> Dictionary:
 	g.keyed = keyedHash()
 	g.matches = []
 	for m in MATCHES:
-		g.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {}))
+		g.matches.append(matchEntry(m))
 	g.replays = []
-	for rp in [scriptedReplay(11, 3000, false, [1500, 2100]), scriptedReplay(12, 2400, true, [])]:
-		rp["setup"] = {"world": "arena"}   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; this one keeps the arena's reference (the scripted replays were written on it)
-		g.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp, CAP, rp.setup.duplicate(true))})
+	for p in REPLAYS:
+		g.replays.append(replayEntry(p))
 	g.planet = planetGolden()   # last, so every key before it is as it was
 	return g
+
+
+## One MATCHES row as the golden runs it, with its recorded setup (web_parity.gd runs the same).
+static func matchEntry(m: Array) -> Dictionary:
+	return goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {})
+
+
+## One REPLAYS row as the golden runs it: the scripted replay and its run.
+static func replayEntry(p: Array) -> Dictionary:
+	var rp: Dictionary = scriptedReplay(p[0], p[1], p[2], p[3])
+	rp["setup"] = {"world": "arena"}   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; this one keeps the arena's reference (the scripted replays were written on it)
+	return {"replay": rp, "run": goldenRun("default", rp.seed, rp, CAP, rp.setup.duplicate(true))}
 
 
 static func constants() -> Array:
@@ -665,12 +678,20 @@ const PLANET_MATCH: Dictionary = {"seed": 29, "cap": 3600, "setup": {"planet": 7
 const PLANET_FIRSTS: Dictionary = {"crater": -1, "slide": -1}
 
 
+## The slices are generation 2's, named: WorldPlanet reads the generation in force, which is the last match's (a planet
+## match leaves its own, 3, and an arena match none), so unnamed they moved with whatever ran before (web parity, 2026-11-22).
+const PLANET_SLICES_GEN: int = 2
+
+
 static func planetSlices() -> Dictionary:
 	var out := {}
 	SimConst.setArena(SimConst.PLANET_NC)   # a slice is cut for the arena's length: the Whole ring's
+	var g0: int = WorldClimate.curGen
+	WorldClimate.useGen(PLANET_SLICES_GEN)
 	for pt in PLANET_SLICES:
 		var sl = WorldPlanet.sliceFor(int(pt[0]), int(pt[1]))
 		out["%d/%d" % [pt[0], pt[1]]] = "%08x" % WorldPlanet.sliceHash(sl) if sl != null else "none"
+	WorldClimate.useGen(g0)
 	return out
 
 

@@ -85,6 +85,7 @@ func _init() -> void:
 	check("agency lines", _agencyLines())
 	check("a clash's meeting point", _clashMid())
 	check("SimMathx.PI and TAU", _piTau())
+	check("a number with decimals reads the same on every platform", _fixedText())
 	check("the blow cue's run stays out of the hash", _cueRun())
 	check("the run's rare boons", _boons())
 	check("the catastrophe's blast cloud and ash", _cata())
@@ -5875,6 +5876,13 @@ func _planetGolden(g: Dictionary) -> String:
 	for k in want.slices:
 		if sl.get(k, "") != want.slices[k]:
 			return "slice %s: %s, golden %s" % [k, sl.get(k, ""), want.slices[k]]
+	var g0: int = WorldClimate.curGen
+	WorldClimate.useGen(3)   # as a planet match leaves it: the slices name their own generation, so they don't move
+	var sl3: Dictionary = SimGolden.planetSlices()
+	var gAfter: int = WorldClimate.curGen
+	WorldClimate.useGen(g0)
+	if JSON.stringify(sl3) != JSON.stringify(sl) or gAfter != 3:
+		return "the slices follow the generation in force (after a planet match: %s), or don't put it back (%d)" % [JSON.stringify(sl3), gAfter]
 	var t0: Dictionary = SimGolden.planetTick0()
 	for k in want.tick0:
 		if t0.get(k, "") != want.tick0[k]:
@@ -5906,6 +5914,23 @@ func _piTau() -> String:
 		return "pi %s, tau %s (want 400921fb54442d18 and twice it)" % [SimMathx.bits(SimMathx.PI), SimMathx.bits(SimMathx.TAU)]
 	if SimMathx.PI != PI or SimMathx.TAU != TAU:
 		return "the engine's PI or TAU is another double on this build: the swaps would move a result"
+	return ""
+
+
+## SimMathx.fixed: an exact half goes to the even result whatever the platform's printf does (Windows rounds it away from
+## zero, glibc and musl to even: the swing planner's feed line read "-22.3" on Windows and "-22.2" on Linux, CI
+## 2026-11-22), and every other value reads as printf prints it. On Linux and the web these rows hold with or without the
+## fix; on Windows they fail without it.
+func _fixedText() -> String:
+	var rows: Array = [[0.25, 1, "0.2"], [-22.25, 1, "-22.2"], [22.75, 1, "22.8"], [1.25, 1, "1.2"], [-0.25, 1, "-0.2"], [2.5, 0, "2"],
+		[3.5, 0, "4"], [-0.5, 0, "-0"], [0.125, 2, "0.12"], [0.375, 2, "0.38"], [-0.0625, 3, "-0.062"], [1234.5, 0, "1234"],
+		[0.15, 1, "0.1"], [0.35, 1, "0.3"], [1.0 / 3.0, 2, "0.33"], [-17.3, 1, "-17.3"], [5.0, 1, "5.0"], [0.5, 1, "0.5"], [12345.678, 2, "12345.68"]]
+	for r in rows:
+		var got: String = SimMathx.fixed(float(r[0]), int(r[1]))
+		if got != String(r[2]):
+			return "SimMathx.fixed(%s, %d) reads %s, not %s" % [SimMathx.bits(float(r[0])), int(r[1]), got, r[2]]
+	if DirSwing._n(-22.25) != "-22.2" or DirSwing._n(1.25) != "1.2":
+		return "the swing planner's feed numbers don't go through SimMathx.fixed (%s, %s)" % [DirSwing._n(-22.25), DirSwing._n(1.25)]
 	return ""
 
 

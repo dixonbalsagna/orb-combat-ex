@@ -1,0 +1,26 @@
+The cause, proven on Windows (main fab66fc7 = b624340a's sim), 2026-11-22. Godot 4.7.2-stable, headless.
+
+1. Windows Godot's printf rounds an exact half away from zero; glibc and musl (Linux CI, the web build) round it to even (fmt.gd.txt):
+   "%.1f" % 0.25  -> Windows 0.3   Linux 0.2
+   "%.1f" % 12.25 -> Windows 12.3  Linux 12.2
+   "%.2f" % 0.125 -> Windows 0.13  Linux 0.12
+   "%.0f" % 2.5   -> Windows 3     Linux 2
+   (every non-half value prints alike)
+
+2. tape_probe.gd records every word and text the per-tick digest folds for matches 5 and 6. As recorded it gives the
+   Windows golden's digests (a8c663b84748e0be, 69140510d1d9f971). The texts with an x.25 number are all the swing
+   planner's feed line (sim/director/swing.gd _n(), "%.1f"): 20 lines in swap-flip seed 2, 15 in mirror-villain-flip
+   seed 2, e.g. "... recent -22.3; next -30 ridge -32.2; stay 0; not taken" (the score is exactly -22.25).
+
+3. The same run with only _n() rounding an exact x.25 the Linux way gives CI's Linux and web digests exactly:
+   match 5 (swap-flip seed 2): light c1b9f67b806bc6d7  (CI: c1b9f67b806bc6d7)
+   match 6 (mirror-villain-flip seed 2): light be6df1cf39c74ba6  (CI: be6df1cf39c74ba6)
+   So the swing line is the only cause. The sim itself is identical: every checkpoint agrees.
+
+4. Web parity's "planet: slices" (slices_probe.gd.txt): planetSlices() named no generation and read the one in force.
+   data gen 2, curGen at start 0
+   gen 0 / gen 2: slices MATCH the golden's; gen 3: slices differ
+   after an arena replay: curGen 0; after a planet match: curGen 3
+   build() runs the arena replays just before it (gen 2); web_parity.gd ran its replays without their arena setup, so on
+   the planet (gen 3). Run order inside a test process, not a leak into a game: every match sets its generation as it
+   starts (WorldClimate.genFor(setup)).

@@ -59,6 +59,29 @@ static func jstr(x: float) -> String:
 	return str(x)
 
 
+## A float as text with n decimals (0 to 6), the same on every platform. printf ("%.nf") for every value but an exact
+## half, a value exactly between two n-decimal results, which goes to the even one: glibc's and musl's rule (Linux, the
+## web). The Windows build's printf rounds that half away from zero, so "%.1f" % -22.25 read "-22.3" there and "-22.2"
+## on Linux and the web, in text the golden hashes (the swing planner's feed line; CI, 2026-11-22). Any other value is
+## printed alike everywhere (17 significant digits name a double, so no platform's rounding lands a non-half on a half).
+## A half at n decimals is exactly k + j / 2^(n+1) with j odd, so the test scales by a power of two and is exact; so is
+## |v| * 10^n for it, below 2^52. Use it for any number a sim text shows with decimals.
+static func fixed(v: float, n: int) -> String:
+	var a: float = absf(v)
+	var p: int = 1
+	for i in range(n):
+		p *= 10
+	var fr: float = (a - floorf(a)) * float(1 << (n + 1))
+	if fr == floorf(fr) and int(fr) % 2 == 1 and a * float(p) < 4.0e15:
+		var lo: int = int(floorf(a * float(p)))
+		var k: int = lo if lo % 2 == 0 else lo + 1
+		var t: String = str(k / p)
+		if n > 0:
+			t += "." + str(k % p).pad_zeros(n)
+		return ("-" if v < 0.0 else "") + t
+	return ("%." + str(n) + "f") % v
+
+
 ## A float64 from its bit pattern, 16 hex digits with the high word first. GDScript's literal parser is not
 ## correctly rounded for long literals, so long constants are built this way.
 static func f64(hex: String) -> float:

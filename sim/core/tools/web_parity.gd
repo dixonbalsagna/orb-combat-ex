@@ -44,11 +44,10 @@ func _ready() -> void:
 	_add("keyed", func(): return SimGolden.keyedHash())
 	for k in range(SimGolden.MATCHES.size()):
 		var m: Array = SimGolden.MATCHES[k]
-		_add("matches." + str(k), func(): return SimGolden.goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else SimGolden.CAP))
-	var rps: Array = [[11, 3000, false, [1500, 2100]], [12, 2400, true, []]]
-	for k in range(rps.size()):
-		var p: Array = rps[k]
-		_add("replays." + str(k), func(): return _replay(p))
+		_add("matches." + str(k), func(): return SimGolden.matchEntry(m))   # as build() runs it, with its recorded setup (GW1b: two play the arena)
+	for k in range(SimGolden.REPLAYS.size()):
+		var p: Array = SimGolden.REPLAYS[k]
+		_add("replays." + str(k), func(): return SimGolden.replayEntry(p))
 	_add("planet", func(): return SimGolden.planetGolden())
 	# extras, after the golden's keys (so those run as build() runs them): what ships switched off today
 	var on: Dictionary = {"depth": true, "brake": true, "forms": true, "flight": true, "hitstop": true, "ricochet": true}
@@ -95,12 +94,6 @@ func _runGround(run: String) -> Array:
 		var r: Dictionary = SimGolden.goldenRun("default", g.matchSeed(), null, 600, su)
 		outv.append({"setup": su, "score": SimMathx.bits(float(g.result.score)), "ok": g.result.ok, "light": r.light, "final": r.final})
 	return outv
-
-
-## build()'s replay entry: the scripted replay and its run.
-func _replay(p: Array) -> Dictionary:
-	var rp: Dictionary = SimGolden.scriptedReplay(p[0], p[1], p[2], p[3])
-	return {"replay": rp, "run": SimGolden.goldenRun("default", rp.seed, rp)}
 
 
 func _add(key: String, f: Callable) -> void:
