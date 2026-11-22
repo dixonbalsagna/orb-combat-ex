@@ -692,12 +692,21 @@ static func _restSec() -> float:
 	return float(cfg().restTicks) / DirData.TICKS_PER_SEC
 
 
+## The blow's actual line at contact (Game Design, buildings.md section 10): the frame as it is now, wherever a running swing has got to,
+## and before any plan's turn. DirLaunch measures the launch's cone in it.
+static func actualFrame(S: SimState):
+	return _was if _was != null else S.frame
+
+
 ## A launch's pick, or null, with its feed line.
 static func _launchPick(S: SimState, A, D, force: float):
 	var c: Dictionary = cfg()
 	var t: float = force * float(c.fit.secPerForce)
 	var reach: float = force * float(c.fit.reachPerForce) * SimPower.distScale()
 	var cap: float = minf(float(c.maxDeg), SimSwing.mostFor(t - _restSec(), "launch"))
+	var cone: float = float(DirLaunch.data().knockBack.get("wall", {}).get("wallCone", 0.0))
+	if cone > 0.0:
+		cap = minf(cap, cone)   # (Game Design, buildings.md section 10: a launch's target stays inside the cone around the blow's line, a turn of the world included)
 	if cap < float(c.bigMin):
 		_explain(S, "launch", [], false, "", 0)
 		return null

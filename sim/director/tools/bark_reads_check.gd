@@ -7,7 +7,7 @@ extends SceneTree
 ##   - each read says what it claims, checked against the sim at the tick: a low-health speaker's core is battered or worse,
 ##     a break is a long pulled-back brawl and its speaker one of the two in it, an after-chain blow follows his chain_end;
 ##   - control: the hp read the sheet first proposed would hold for most blows of a match.
-##   godot --headless --path . --script res://sim/director/tools/bark_reads_check.gd -- [--seeds=12345,777,31337] [--ticks=54000]
+##   godot --headless --path . --script res://sim/director/tools/bark_reads_check.gd -- [--seeds=12345,777,31337,4242,2026] [--ticks=54000]
 ## Last line: "bark_reads_check: passed" or "bark_reads_check: FAILED (n)".
 
 const READS: Array = ["low_health_swing", "exchange_break", "after_chain"]
@@ -152,7 +152,7 @@ func _line(l: Dictionary) -> String:
 
 
 func _initialize() -> void:
-	var seeds: Array = [12345, 777, 31337]
+	var seeds: Array = [12345, 777, 31337, 4242, 2026]   # (five: with the launch cone the three beats are rarer, and each must fire in the seeded matches)
 	var ticks: int = 54000
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--seeds="):

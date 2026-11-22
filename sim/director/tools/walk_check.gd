@@ -12,8 +12,14 @@ var names: Dictionary = {}
 
 
 func _init() -> void:
+	# A lane world with the ring held still (Game Design, buildings.md section 10: the walk reaches a wall inside the blow's cone; a
+	# street's front row, 187.5 off the line, is the street turn's, terrain-plan step 7). The swing has its own checks.
+	WorldPlan.everywhereOverride = 0
+	DirSwing.setForce(0)
 	_rows()
 	DirWalk.setForce(-1)
+	DirSwing.setForce(-1)
+	WorldPlan.everywhereOverride = -1
 	print("WALK: %d check(s) failed" % failed)
 	quit(1 if failed > 0 else 0)
 
@@ -98,12 +104,20 @@ func _run(i: int, gap: float, lean: float, blows: int, hold: int = 46) -> Array:
 	return [reached, lost]
 
 
+## Inside the launch's cone from this check's staging, 700 along (Game Design, buildings.md section 10): a deeper building is not offered.
+func _inCone(b) -> bool:
+	var cone: float = float(DirLaunch.data().knockBack.get("wall", {}).get("wallCone", 0.0))
+	if cone <= 0.0:
+		return true
+	return maxf(0.0, absf(float(b.z)) - float(b.d) * 0.5) <= tan(cone * PI / 180.0) * 700.0
+
+
 func _rows() -> void:
 	var S := _fresh()
 	var ids: Array = []
 	for i in range(S.buildings.size()):
 		var b = S.buildings[i]
-		if b.alive and not WorldSettle.noTarget(b.landmark) and absf(WorldBrunt.faceZ(b)) <= 800.0 and WorldStructures.inBand(S, float(b.z), float(b.d)):   # (one of the index, as a knock aims: World's everywhere_check rows)
+		if b.alive and not WorldSettle.noTarget(b.landmark) and absf(WorldBrunt.faceZ(b)) <= 800.0 and WorldStructures.inBand(S, float(b.z), float(b.d)) and _inCone(b):   # (one of the index, as a knock aims: World's everywhere_check rows; and inside the cone from 700 along)
 			ids.append(i)
 	SimCore.dispose(S)
 	var pick: Array = []

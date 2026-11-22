@@ -219,7 +219,17 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	if not walked.is_empty() and not cands.has(int(walked[0])) and (DirWalk.reachWalked() or all.has(int(walked[0]))):
 		cands.append(int(walked[0]))   # (and the cap never drops it: with the cuts off it's in World's list, and aimed)
 	var shared: Dictionary = _sharedAims(S, A, D, cands, force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly) if cuts else {}
+	# The one cone (knockBack.wall.wallCone): Game Design's second ruling, every aimed send. It is measured from the blow's actual line at
+	# contact, wherever a running swing has got to (Game Design, 2026-11-15): the plan may read a turned line (the swing's pick for this
+	# launch, or the line a running swing ends on), so each building is placed in the frame as it is now. The pick's own turn is capped at
+	# the cone (DirSwing._launchPick); the turn a running swing has still to make refuses nothing. No building in the cone: the launch
+	# flies its own line.
+	var aimCone: float = float(data().knockBack.get("wall", {}).get("wallCone", 0.0))
+	var coneFr = DirSwing.actualFrame(S)
+	var coneSlope: float = _lineSlope(A, D)
 	for bi in cands:
+		if aimCone > 0.0 and not _inConeDeg(aimCone, _coneAt(S, D, bi, f, coneSlope, coneFr)):
+			continue   # outside the blow's cone, in the ground plane: no smash into it and no send inside it (the background ricochet of Orb's ping-pong)
 		var plan = shared[bi] if shared.has(bi) else WorldBrunt.aim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly)   # fresh: the launcher's send into a building, x its freshness
 		if plan != null and fwdOnly and float(plan.ux) * f < 0.0:
 			plan = null
@@ -1292,6 +1302,34 @@ static func _inCone(w: Dictionary, at: PackedFloat64Array) -> bool:
 		return true
 	var a: float = cone * SimMathx.PI / 180.0
 	return at[1] <= SimDetMath.sin(a) / SimDetMath.cos(a) * at[0] + 1e-9
+
+
+## Inside a cone of deg degrees: the planner's test.
+static func _inConeDeg(deg: float, at: PackedFloat64Array) -> bool:
+	var a: float = deg * SimMathx.PI / 180.0
+	return at[1] <= SimDetMath.sin(a) / SimDetMath.cos(a) * at[0] + 1e-9
+
+
+## Building bi against the blow's line, as _wallAt, with the building placed in the frame fr (SimSwing's pose of it, read, not written):
+## [along, off, true distance]. With no frame (the swing off) or no planet directions, the building as it stands.
+static func _coneAt(S: SimState, tgt, bi: int, s: float, slope: float, fr) -> PackedFloat64Array:
+	var b = S.buildings[bi]
+	var bx: float = float(b.x)
+	var bz: float = float(b.z)
+	var q: PackedFloat64Array = S.bDir
+	if fr != null and q.size() == S.bX.size() * 3 and bi * 3 + 2 < q.size():
+		var nx: float = fr.ty * fr.pz - fr.tz * fr.py
+		var ny: float = fr.tz * fr.px - fr.tx * fr.pz
+		var nz: float = fr.tx * fr.py - fr.ty * fr.px
+		var qx: float = q[bi * 3]
+		var qy: float = q[bi * 3 + 1]
+		var qz: float = q[bi * 3 + 2]
+		bz = SimField.R * WorldPlanet.asinf(qx * nx + qy * ny + qz * nz)
+		bx = SimWrap.wrap(fr.x0 + SimField.R * WorldPlanet.atan2f(qx * fr.tx + qy * fr.ty + qz * fr.tz, qx * fr.px + qy * fr.py + qz * fr.pz))
+	var along: float = SimWrap.sdx(tgt.x, bx) * s - b.w * 0.5
+	var zl: float = float(tgt.z) + slope * along
+	var off: float = maxf(0.0, absf(bz - zl) - float(b.d) * 0.5)
+	return PackedFloat64Array([along, off, SimDetMath.hypot(along, off)])
 
 
 ## A knock-back that aims at a wall (game-design.md section 15): a standing building on the side he goes, inside the knock's own
