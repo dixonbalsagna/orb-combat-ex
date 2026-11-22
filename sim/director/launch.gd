@@ -1270,6 +1270,30 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 		SimDamage.hurt(S, tgt, wear, att)
 
 
+## The blow's line in the ground plane, as a depth slope along x: the depth the stick gave the blow. No knock carries a depth of its own
+## today (its flight is along x at the target's depth), so 0; with fighters in depth this is where the blow's depth is read.
+static func _lineSlope(_att, _tgt) -> float:
+	return 0.0
+
+
+## A wall's place against the blow's line (Game Design, buildings.md section 10): [along, off, true distance]. along: its near side's
+## distance along the line; off: the depth from the line to its footprint (0 when the line passes through it).
+static func _wallAt(tgt, b, s: float, slope: float) -> PackedFloat64Array:
+	var along: float = SimWrap.sdx(tgt.x, b.x) * s - b.w * 0.5
+	var zl: float = float(tgt.z) + slope * along
+	var off: float = maxf(0.0, absf(float(b.z) - zl) - float(b.d) * 0.5)
+	return PackedFloat64Array([along, off, SimDetMath.hypot(along, off)])
+
+
+## Inside the knock's cone: off the line at most tan(wallCone) x along it. With wallCone 0 (or no key), every wall is (today's rule).
+static func _inCone(w: Dictionary, at: PackedFloat64Array) -> bool:
+	var cone: float = float(w.get("wallCone", 0.0))
+	if cone <= 0.0:
+		return true
+	var a: float = cone * SimMathx.PI / 180.0
+	return at[1] <= SimDetMath.sin(a) / SimDetMath.cos(a) * at[0] + 1e-9
+
+
 ## A knock-back that aims at a wall (game-design.md section 15): a standing building on the side he goes, inside the knock's own
 ## distance in plan. A plain send on buildings.md 6.1's ladder. It reads standing buildings only, and care as a flat weight, never
 ## who is inside. A player's stick held another way wins. Null when there's none, and always with it off.
@@ -1290,10 +1314,12 @@ static func _wall(S: SimState, att, tgt, s: float, dist: float):
 	var best = null
 	var bd: float = 1.0e18
 	var walls: Array = []   # [distance, building], nearest first (the first found on a tie)
+	var slope: float = _lineSlope(att, tgt)
+	var byTrue: bool = String(w.get("wallBy", "line")) == "trueDistance"
 	if not walked.is_empty():
 		var wb = S.buildings[int(walked[0])]
 		var wd: float = SimWrap.sdx(tgt.x, wb.x) * s - wb.w * 0.5
-		if wd > 0.0 and wd <= float(walked[1]):
+		if wd > 0.0 and wd <= float(walked[1]) and _inCone(w, _wallAt(tgt, wb, s, slope)):   # (a walked wall too stays inside the cone)
 			best = wb
 			bd = wd
 	for bi in (WorldStructures.near(S, tgt.x, reach) if best == null else []):
@@ -1310,10 +1336,14 @@ static func _wall(S: SimState, att, tgt, s: float, dist: float):
 			continue
 		var dz: float = float(b.z) - float(tgt.z)
 		if d <= reach and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and tgt.y <= WorldStructures.baseY(S, b) + WorldStructures.curH(b):
+			var wa: PackedFloat64Array = _wallAt(tgt, b, s, slope)
+			if not _inCone(w, wa):
+				continue   # outside the blow's cone: a wall deep in the background is not his way (the background ricochet of Orb's ping-pong)
+			var key: float = wa[2] if byTrue else d   # the order: true distance (Game Design), or along the line (today's)
 			var at: int = walls.size()
-			while at > 0 and float(walls[at - 1][0]) > d:
+			while at > 0 and float(walls[at - 1][2]) > key:
 				at -= 1
-			walls.insert(at, [d, b])
+			walls.insert(at, [d, b, key])
 	if best != null:
 		walls = [[bd, best]]   # the building he walked him to
 	if walls.is_empty():

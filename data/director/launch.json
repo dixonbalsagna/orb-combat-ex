@@ -101,6 +101,9 @@
       "speed": [1100.0, 1300.0, 1500.0, 1800.0],
       "uy": [0.05, 0.12, 0.25, 0.4, 0.6, 0.8],
       "clear": 20.0,
+      "wallCone": 20.0,
+      "wallBy": "trueDistance",
+      "_wallCone": "Game Design, buildings.md section 10: a knock aims only at a wall inside a cone of wallCone degrees around the blow's own line (in the ground plane; the stick's depth included), nearest by true distance (wallBy trueDistance; line: along the line only, as before). No wall in the cone: no wall aim, he flies his line. 0: no cone. The depth window stays the outer limit",
       "_note": "A knock-back that aims at a wall (docs/world/ring-any-angle/game-design.md section 15). base less care x this care: the chance it aims when a wall is in reach, so care is a flat weight. reach, distMul: a wall along the line within the lesser of reach and distMul of the knock's own distance, in the band WorldBrunt.candidates reads for depth, and he goes all the way to it. speed: by tier, with no travel boost, a plain send on buildings.md 6.1's ladder; perUnit: at least this many units a second per unit away, so it reaches. uy: the lifts tried, lowest first, so ground rising to a pad can still be cleared. clear: how far above the building's base he must meet the wall; a quarter of it clears the ground on the way."
     },
     "_wear": "A knock-back hurts (agency-pass.md section 13, rule 4): a knock-back the director carries (the upright slide, the drift in the air) costs 'wear' of a launch's impact at the speed he is carried: wear x impactPerSpeed x distance over its time. impactPerSpeed is World's single-impact figure (damage per unit a second of the first contact, sim/world/contact.gd). The skid of 4 bh and over is a journey and pays World's own slide wear",
