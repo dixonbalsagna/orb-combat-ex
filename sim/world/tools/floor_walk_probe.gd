@@ -236,13 +236,14 @@ func _init() -> void:
 			if float(q[5]) > -1.0e17 and float(q[1]) == float(q[5]):
 				ssheet += 1
 			if k > 0:
-				smax = maxf(smax, absf(float(q[1]) - float((son[k - 1] as Array)[1])))
+				var fup: float = maxf(0.0, float(q[2]) - float((son[k - 1] as Array)[2]))   # with the floor rise (floor-rise.diff) his one-tick lift is the rise limit plus what the floor itself rose that tick (docs/design/buildings.md: the lift is uncapped): a pop is the change beyond that
+				smax = maxf(smax, absf(float(q[1]) - float((son[k - 1] as Array)[1])) - fup)
 		for q2 in soff:
 			if float((q2 as Array)[4]) > 100.0 and float((q2 as Array)[1]) < float((q2 as Array)[5]) - 50.0 and float((q2 as Array)[5]) > -1.0e17:
 				soffFloor += 1
 		var sl: Array = son[son.size() - 1]
 		ok(swet > 40 and sbelow == 0, "%s from the beach: %d ticks in the sea's water, never under the floor except %d ticks the floor outruns the rise limit on a steep shore (%d otherwise)" % ["right" if dir > 0 else "left", swet, slimit, sbelow])
-		ok(smax <= WorldWater.riseMax(10) + 1.0e-6 and ssheet > 40 and float(sl[1]) == float(sl[5]), "no pop on the way out (the largest change of height in a tick %.2f, limit %.1f), and he ends on the sheet: %d ticks at exactly seaTop, ends at y %.3f (seaTop %.3f)" % [smax, WorldWater.riseMax(10), ssheet, float(sl[1]), float(sl[5])])
+		ok(smax <= WorldWater.riseMax(10) + 1.0e-6 and ssheet > 40 and float(sl[1]) == float(sl[5]), "no pop on the way out (the largest change of height in a tick beyond what the floor itself rose %.2f, limit %.1f), and he ends on the sheet: %d ticks at exactly seaTop, ends at y %.3f (seaTop %.3f)" % [smax, WorldWater.riseMax(10), ssheet, float(sl[1]), float(sl[5])])
 		ok(soffFloor > 40, "control, floor off: he sinks to the sea bed (%d ticks more than 50 under the surface of water over 100 deep)" % soffFloor)
 	ok(coasts >= 1, "the hand-made world has a beach to walk out from (%d)" % coasts)
 	var lastOff: Array = off[off.size() - 1]
