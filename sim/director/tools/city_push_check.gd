@@ -111,10 +111,12 @@ func _aiLean() -> void:
 	SimCore.dispose(S)
 
 
+## The turn rows stage the pair with no computer (GW1b follow-up): with both fighters the computer's, it fired its signature in the
+## settle, and the beam's rest (DirSwing.restRule) rightly blocked the slam the row forces.
 func _turn() -> void:
 	var sl: Dictionary = DirSwing.cfg().slam
 	DirSwing.setForce(0)   # (the setup with the director's swing off, whatever the data says: the 9 November rows have it on, and a swing running or resting would block the slam's)
-	var r: Array = _cityPair(FIELD, true)   # (its own turn first, with the director's swing off, so nothing rests it)
+	var r: Array = _cityPair(FIELD, false)   # (its own turn first, with the director's swing off, so nothing rests it)
 	var S: SimState = r[0]
 	var bi: int = r[1]
 	sl["enabled"] = true
@@ -143,7 +145,7 @@ func _turn() -> void:
 	SimCore.dispose(S)
 	# a lodge among the tick's events starts it too
 	DirSwing.setForce(0)
-	var r2: Array = _cityPair(FIELD, true)
+	var r2: Array = _cityPair(FIELD, false)
 	var S2: SimState = r2[0]
 	var b2: int = r2[1]
 	for _k in range(30):
@@ -156,7 +158,7 @@ func _turn() -> void:
 	SimCore.dispose(S2)
 	sl["enabled"] = false
 	DirSwing.setForce(0)
-	var r3: Array = _cityPair(FIELD, true)
+	var r3: Array = _cityPair(FIELD, false)
 	var S3: SimState = r3[0]
 	for _k in range(30):
 		SimCore.step(S3, [null, null])

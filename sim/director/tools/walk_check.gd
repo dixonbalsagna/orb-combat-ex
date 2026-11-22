@@ -12,6 +12,7 @@ var names: Dictionary = {}
 
 
 func _init() -> void:
+	WorldPin.launchTravelOld()   # (GW1b follow-up) its rows were written for the launch travel before GW1b's energy addendum (2.0, now 1.5): at 1.5, 6 of 10 B launches after three leaning blows reach the wall, against the 70% row
 	# A lane world with the ring held still (Game Design, buildings.md section 10: the walk reaches a wall inside the blow's cone; a
 	# street's front row, 187.5 off the line, is the street turn's, terrain-plan step 7). The swing has its own checks.
 	WorldPlan.everywhereOverride = 0

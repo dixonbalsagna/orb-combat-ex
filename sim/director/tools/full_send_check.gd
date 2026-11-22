@@ -10,11 +10,16 @@ extends SceneTree
 ## - off: as before, no send
 ## The top stage is read at the release (level 3 with the plain hold's stages off). A real brawl is played to (seed 1, the computer on both
 ## sides), then the blow is landed by hand. Ends on the verdict line.
+## GW1b follow-up: the rows above play the hand-made arena (WorldPin.arena(): written for it). Planet copies: on planet 7 the slam is CRATER
+## SLAM and digs a crater at tiers 1 and 2, and with craterSlam off the plan is DRIVE DOWN (there the landing's own impact may still dig:
+## the planet's ground answers a send at speed, so the arena's 'no crater' doesn't carry).
 
 var failed: int = 0
+const PLANET: Dictionary = {"planet": 7}   # the default world's planet, named (the rows above pin the arena)
 
 
 func _init() -> void:
+	WorldPin.arena()   # the rows were written for the hand-made arena (GW1b moved the default world to the planet)
 	DirStick.setForce(1)
 	DirBeamMove.setStrikeForce(0)
 	var sc: Dictionary = DirStick.cfg()
@@ -25,6 +30,11 @@ func _init() -> void:
 	var cs0: bool = bool(sc.fullSend.get("craterSlam", false))
 	sc.fullSend["craterSlam"] = false
 	var noCrater: Dictionary = _case(DirStick.DOWN, 8.0, 3, true, 1, true)
+	sc.fullSend["craterSlam"] = cs0
+	var pSlam: Dictionary = _case(DirStick.DOWN, 8.0, 3, true, 1, true, PLANET)
+	var pSlam2: Dictionary = _case(DirStick.DOWN, 8.0, 3, true, 2, true, PLANET)
+	sc.fullSend["craterSlam"] = false
+	var pNo: Dictionary = _case(DirStick.DOWN, 8.0, 3, true, 1, true, PLANET)
 	sc.fullSend["craterSlam"] = cs0
 	var ground: Dictionary = _case(DirStick.DOWN, 0.0, 3, true)
 	var up: Dictionary = _case(DirStick.UP, 0.0, 3, true)
@@ -38,12 +48,17 @@ func _init() -> void:
 	DirBeamMove.setStrikeForce(-1)
 	DirStick.setForce(-1)
 	noCrater.name += ", craterSlam off"
-	for r in [slam, slam2, noCrater, ground, up, across, short, quick, off]:
+	pSlam.name += ", the planet"
+	pSlam2.name += ", the planet"
+	pNo.name += ", craterSlam off, the planet"
+	for r in [slam, slam2, noCrater, pSlam, pSlam2, pNo, ground, up, across, short, quick, off]:
 		print("      %s: cue %s, plan %s, brawl ended %s, launched %s, rose %.0f, moved %.0f; craters where he landed %d (r %.0f)" % [r.name, str(r.cue), r.plan, str(r.ended), str(r.launched), r.rose, r.moved, r.craters, r.r])
 	_expect(slam.found and slam.cue == "stick_full_send/slamDown" and slam.ended and slam.launched and slam.rose < -50.0, "on: down at the top on a foe in the air is the slam: he's sent down (%.0f)" % slam.rose)
 	_expect(slam.found and slam.tier == 1 and slam.plan == "CRATER SLAM" and slam.craters > 0, "on: at tier 1 the slam is CRATER SLAM and digs a crater where he lands (r %.0f)" % slam.r)
 	_expect(slam2.found and slam2.tier == 2 and slam2.cue == "stick_full_send/slamDown" and slam2.plan == "CRATER SLAM" and slam2.craters > 0, "on: at tier 2 the slam is CRATER SLAM and digs a crater where he lands (r %.0f)" % slam2.r)
 	_expect(noCrater.found and noCrater.cue == "stick_full_send/slamDown" and noCrater.plan == "DRIVE DOWN" and noCrater.craters == 0, "negative control, craterSlam off: the planner's DRIVE DOWN, and no crater where he lands")
+	_expect(pSlam.found and pSlam.tier == 1 and pSlam.plan == "CRATER SLAM" and pSlam.craters > 0 and pSlam2.found and pSlam2.tier == 2 and pSlam2.plan == "CRATER SLAM" and pSlam2.craters > 0, "the planet: at tiers 1 and 2 the slam is CRATER SLAM and digs a crater where he lands (r %.0f, %.0f)" % [pSlam.r, pSlam2.r])
+	_expect(pNo.found and pNo.cue == "stick_full_send/slamDown" and pNo.plan == "DRIVE DOWN", "the planet, craterSlam off: the planner's DRIVE DOWN (craters where he landed %d: the landing's own impact)" % pNo.craters)
 	_expect(ground.found and ground.cue == "stick_full_send/bury" and ground.ended, "on: down at the top on a foe on the ground: the down send from where he stands (bury)")
 	_expect(up.found and up.cue == "stick_full_send/skyward" and up.ended and up.rose > 50.0, "on: up at the top sends him up (%.0f)" % up.rose)
 	_expect(across.found and across.cue == "stick_full_send/across" and across.ended and across.moved > 100.0, "on: toward at the top sends him across (%.0f)" % across.moved)
@@ -63,9 +78,9 @@ func _expect(ok: bool, what: String) -> void:
 
 ## clear: the pair is moved to the nearest clear ground first (no crater within its radius and 800 more, no sea, the ground undented),
 ## so a bowl there isn't hidden by World's relief cap (WorldCrater._dig digs nothing into ground already that deep).
-func _case(dir: int, bh: float, lvl: int, top: bool, tier: int = 1, clear: bool = false) -> Dictionary:
+func _case(dir: int, bh: float, lvl: int, top: bool, tier: int = 1, clear: bool = false, su: Dictionary = {}) -> Dictionary:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, 1, {"p1": true, "p2": true}, {})
+	SimCore.newMatch(S, 1, {"p1": true, "p2": true}, su.duplicate(true))
 	var ex = null
 	var found := false
 	while S.tick < 20000 and not found:

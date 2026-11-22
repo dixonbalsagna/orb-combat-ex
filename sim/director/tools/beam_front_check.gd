@@ -14,6 +14,7 @@ var _fireAt: int = -1
 
 
 func _init() -> void:
+	WorldPin.arena()   # (GW1b follow-up) its rows were written for the hand-made arena; on the planet the stand-off shove met a wall on any rising ground, a real fault parked on its own (docs/director/pending/beam-standoff-planet/)
 	var bs: Dictionary = DirBeam._bs()
 	bs["enabled"] = true
 	DirBeamPlay.setFrontForce(1)

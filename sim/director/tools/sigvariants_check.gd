@@ -27,6 +27,7 @@ func ok(cond: bool, what: String) -> void:
 
 
 func _init() -> void:
+	WorldPin.arena()   # gen 1 is the hand-made world: a match that names none played it until GW1b moved the default to the planet
 	var matches: int = 6
 	var ticks: int = 7200
 	for a in OS.get_cmdline_user_args():

@@ -7,7 +7,10 @@ extends SceneTree
 ##   - each read says what it claims, checked against the sim at the tick: a low-health speaker's core is battered or worse,
 ##     a break is a long pulled-back brawl and its speaker one of the two in it, an after-chain blow follows his chain_end;
 ##   - control: the hp read the sheet first proposed would hold for most blows of a match.
-##   godot --headless --path . --script res://sim/director/tools/bark_reads_check.gd -- [--seeds=12345,777,31337,4242,2026] [--ticks=54000]
+## The emitter's own properties (off, the hash, the drains) are the same on any match, so they run on the --full seeds only (4242: it
+## fires all three beats); every seed plays the read-checked match (each read holds, the control, the beats fire), the ones the beats
+## need (GW1b follow-up: 10 matches, not 30; CI's step had grown to 26 minutes).
+##   godot --headless --path . --script res://sim/director/tools/bark_reads_check.gd -- [--seeds=12345,777,31337,4242,2026] [--full=4242] [--ticks=54000]
 ## Last line: "bark_reads_check: passed" or "bark_reads_check: FAILED (n)".
 
 const READS: Array = ["low_health_swing", "exchange_break", "after_chain"]
@@ -153,10 +156,13 @@ func _line(l: Dictionary) -> String:
 
 func _initialize() -> void:
 	var seeds: Array = [12345, 777, 31337, 4242, 2026]   # (five: with the launch cone the three beats are rarer, and each must fire in the seeded matches)
+	var full: Array = [4242]   # the emitter's own properties, on one seed
 	var ticks: int = 54000
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--seeds="):
 			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
+		elif a.begins_with("--full="):
+			full = Array(a.substr(7).split(",")).map(func(s): return int(s))
 		elif a.begins_with("--ticks="):
 			ticks = int(a.substr(8))
 	var reads: Dictionary = NarrativeBarks._load().get("reads", {})
@@ -164,16 +170,21 @@ func _initialize() -> void:
 	_ok(not bool(NarrativeBarks._load().get("enabled", true)), "the switch is off in the data file")
 	_cases(reads)
 	var total: Dictionary = {}
+	var fullRan: int = 0
 	for sd in seeds:
-		var plain: Dictionary = _run(sd, ticks, null, 1)
-		var off: Dictionary = _run(sd, ticks, _bare(reads), 1)
-		var noReads: Dictionary = _run(sd, ticks, _bare({}), 1)
-		_ok(off.log.map(_line) == noReads.log.map(_line), "seed %d: with no lines for the three beats the reads change nothing said" % sd)
 		var on: Dictionary = _run(sd, ticks, _over(reads), 1, true)
-		_ok(on.hash == plain.hash and off.hash == plain.hash, "seed %d: the gameplay hash is the same with the emitter on" % sd)
-		for ch in [7, 60]:
-			var c: Dictionary = _run(sd, ticks, _over(reads), ch)
-			_ok(c.log.map(_line) == on.log.map(_line), "seed %d: draining %d ticks at a time says the same lines" % [sd, ch])
+		var offN: int = -1
+		if full.has(sd):
+			fullRan += 1
+			var plain: Dictionary = _run(sd, ticks, null, 1)
+			var off: Dictionary = _run(sd, ticks, _bare(reads), 1)
+			var noReads: Dictionary = _run(sd, ticks, _bare({}), 1)
+			offN = off.log.size()
+			_ok(off.log.map(_line) == noReads.log.map(_line), "seed %d: with no lines for the three beats the reads change nothing said" % sd)
+			_ok(on.hash == plain.hash and off.hash == plain.hash, "seed %d: the gameplay hash is the same with the emitter on" % sd)
+			for ch in [7, 60]:
+				var c: Dictionary = _run(sd, ticks, _over(reads), ch)
+				_ok(c.log.map(_line) == on.log.map(_line), "seed %d: draining %d ticks at a time says the same lines" % [sd, ch])
 		_ok(on.bad.is_empty(), "seed %d: every read's bark holds against the sim (%d not): %s" % [sd, on.bad.size(), str(on.bad)])
 		var by: Dictionary = {}
 		for l in on.log:
@@ -189,8 +200,9 @@ func _initialize() -> void:
 			if byLine.has(key):
 				_ok(int(on.log[i].tick) - int(byLine[key]) >= 180 * 60, "seed %d: a line inside its cooldown" % sd)
 			byLine[key] = int(on.log[i].tick)
-		print("seed ", sd, ": ", on.ticks / 60, " s, ", on.log.size(), " barks, gap >= ", gapMin, " ticks, ", by, " | off ", off.log.size(), " | blows with hp <= 20%: ", on.hpLow, " of ", on.hits)
+		print("seed ", sd, ": ", on.ticks / 60, " s, ", on.log.size(), " barks, gap >= ", gapMin, " ticks, ", by, " | off ", (str(offN) if offN >= 0 else "(not a full seed)"), " | blows with hp <= 20%: ", on.hpLow, " of ", on.hits)
 		_ok(float(on.hpLow) / float(maxi(1, on.hits)) > 0.5, "seed %d: the control: hp under 20%% for most blows" % sd)
+	_ok(fullRan > 0, "the emitter's own properties ran on a full seed (%s)" % str(full))
 	for b in READS:
 		_ok(int(total.get(b, 0)) > 0, "%s fired in the seeded matches" % b)
 	print("totals over the seeds: ", total)

@@ -15,6 +15,7 @@ var _cues: Array = []
 
 
 func _init() -> void:
+	WorldPin.arena()   # (GW1b follow-up) its rows were written for the hand-made arena; on the planet the stand-off shove met a wall on any rising ground, a real fault parked on its own (docs/director/pending/beam-standoff-planet/)
 	DirStick.setForce(1)
 	DirBeamPlay.setFrontForce(1)
 	DirBeamMove.setForce(1)

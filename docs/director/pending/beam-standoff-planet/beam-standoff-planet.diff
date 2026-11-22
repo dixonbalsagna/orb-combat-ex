@@ -1,0 +1,69 @@
+diff --git a/sim/director/beamplay.gd b/sim/director/beamplay.gd
+index 57ea6ed..7b61ac4 100644
+--- a/sim/director/beamplay.gd
++++ b/sim/director/beamplay.gd
+@@ -169,7 +169,7 @@ static func _shove(S: SimState, A, D) -> float:
+ 		return x
+ 	var r := SimState.Rush.new()
+ 	r.px = x
+-	r.py = D.y
++	r.py = maxf(D.y, SimFighter.floorFor(S, D, x, D.z))   # on the ground where it rose under him (standoffX rides gentle ground up)
+ 	r.pz = D.z
+ 	r.end = S.T + float(frontCfg().shoveSec)
+ 	D.rush = r
+@@ -180,7 +180,9 @@ static func _shove(S: SimState, A, D) -> float:
+ 
+ 
+ ## Where the shooter's charge takes him: a signature from under the stand-off, by anyone, kicks him back, so the fronts don't meet at their
+-## hands. He stops at a wall: ground or a roof that stands above where he's rising to. Off, or already far enough, he stays where he is.
++## hands. He stops at a wall: ground or a roof rising steeper than the wall rule (WorldContact.K_WALL, a slide's) above the height he goes
++## at, which is y and rides gentler ground up, so a slope of the planet doesn't stop him (GW1b follow-up: on the planet a fighter on the
++## ground met a wall at the first step of any rise). Off, or already far enough, he stays where he is.
+ static func standoffX(S: SimState, A, D, y: float) -> float:
+ 	if not frontOn():
+ 		return A.x
+@@ -192,12 +194,16 @@ static func standoffX(S: SimState, A, D, y: float) -> float:
+ 	var x: float = A.x
+ 	var went: float = 0.0
+ 	var step: float = 32.0
++	var h: float = maxf(y, SimFighter.floorFor(S, A, x, A.z))   # the height he goes at: y, or the ground he rides up
+ 	while went < need:
+-		var nx: float = SimWrap.wrap(x + side * minf(step, need - went))
+-		if SimFighter.floorFor(S, A, nx, A.z) > y:
+-			break
++		var d: float = minf(step, need - went)
++		var nx: float = SimWrap.wrap(x + side * d)
++		var fl: float = SimFighter.floorFor(S, A, nx, A.z)
++		if fl > h + d * WorldContact.K_WALL:
++			break   # a wall: ground or a roof rising steeper than the wall rule
++		h = maxf(h, fl)
+ 		x = nx
+-		went += step
++		went += d
+ 	return x
+ 
+ 
+diff --git a/sim/director/tools/beam_front_check.gd b/sim/director/tools/beam_front_check.gd
+index e445053..f0d2df9 100644
+--- a/sim/director/tools/beam_front_check.gd
++++ b/sim/director/tools/beam_front_check.gd
+@@ -14,7 +14,6 @@ var _fireAt: int = -1
+ 
+ 
+ func _init() -> void:
+-	WorldPin.arena()   # (GW1b follow-up) its rows were written for the hand-made arena; on the planet the stand-off shove met a wall on any rising ground, a real fault parked on its own (docs/director/pending/beam-standoff-planet/)
+ 	var bs: Dictionary = DirBeam._bs()
+ 	bs["enabled"] = true
+ 	DirBeamPlay.setFrontForce(1)
+diff --git a/sim/director/tools/beam_move_check.gd b/sim/director/tools/beam_move_check.gd
+index 1b78705..1fbc14e 100644
+--- a/sim/director/tools/beam_move_check.gd
++++ b/sim/director/tools/beam_move_check.gd
+@@ -15,7 +15,6 @@ var _cues: Array = []
+ 
+ 
+ func _init() -> void:
+-	WorldPin.arena()   # (GW1b follow-up) its rows were written for the hand-made arena; on the planet the stand-off shove met a wall on any rising ground, a real fault parked on its own (docs/director/pending/beam-standoff-planet/)
+ 	DirStick.setForce(1)
+ 	DirBeamPlay.setFrontForce(1)
+ 	DirBeamMove.setForce(1)
