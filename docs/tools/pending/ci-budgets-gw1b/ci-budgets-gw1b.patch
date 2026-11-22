@@ -1,0 +1,193 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 0cd7a6a..8205d5b 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -496,7 +496,7 @@ jobs:
+   godot-roll-render-c:
+     name: Godot headless checks 3 of 3, c (bark reads)
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 45   # budget 30 min; measured 19.0 on run 45053322332 (bark reads 18.6; 9.0 on the last green run)
++    timeout-minutes: 60   # budget 40 min; the bark reads are ONE step of 26.4 minutes on run 45069273235 (9.0 on d168a518, 18.6 on bce578a7, 26.4 now: it grows with the runner and the planet), which cannot be cut here, so the limit is 60; its owner is asked whether it can run fewer matches
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+         with:
+@@ -556,7 +556,7 @@ jobs:
+   godot-vfx-hash:
+     name: Godot headless check (the VFX hash)
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 60   # budget 40 min; not measured to the end on a runner yet (18.2 before GW1b, over 21 after); budget 40 is two thirds of 60. If the first run needs more than 40, the check's owner is asked to cut it (seeds or ticks are the owner's call, not CI's)
++    timeout-minutes: 60   # budget 40 min; measured 19.2 on run 45069273235 (18.2 on d168a518 as a step of godot-audio-vfx; it was over 21 and cancelled on bce578a7), so the limit keeps a factor of three over the last measurement, for a slow runner; if a run needs more than 40, its owner (VFX) is asked, through the EP, to cut it
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+         with:
+@@ -572,9 +572,9 @@ jobs:
+   # Each check's last Godot line is its verdict (PASS or FAIL); tools/gate.mjs then adds its own line about SCRIPT ERROR lines.
+   # net is two jobs since 2026-11-22 (net, net-b): it took 35.9 of 45 minutes on GW1b (run 45053322332).
+   net:
+-    name: Network checks 1 of 5 (desync, spectator, delay, transport, rollback AIs, depth)
++    name: Network checks 1 of 6 (desync, spectator, delay, transport, rollback AIs)
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 45   # budget 30 min; estimated 18 of the 35.9 measured on run 45053322332
++    timeout-minutes: 45   # budget 30 min; measured 31.1 on run 45069273235, over the budget: desync 9.4, spectator 1.6, transport 5.3, rollback AIs 5.2 and the three pairs now in net-2 (sim AI 4.9, depth 2.8, planet2 about 1.4); about 22 without them
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+         with:
+@@ -607,23 +607,11 @@ jobs:
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai --seeds=1 --ticks=600 --profiles=lan,p120,far'
+       - name: Rollback check, fighter AIs to a KO, negative control (a restore with one wrong RNG bit, a missed rollback and an impure AI must be caught)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai --seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control'
+-      - name: Rollback check, sim AI as P2 (the AI inside the tick, re-run by rollbacks)
+-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai=sim --seeds=1 --ticks=600 --profiles=lan,p120,far'
+-      - name: Rollback check, sim AI as P2, negative control (the same breaks must be caught)
+-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai=sim --seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control'
+-      - name: Rollback check, depth setup (fight lanes with depth physical, scripted inputs)
+-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=depth --seeds=1 --ticks=300 --profiles=lan,p120,far'
+-      - name: Rollback check, depth setup, negative control (a wrong restore and a missed rollback must be caught)
+-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=depth --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+-      - name: Rollback check, planet2 setup (a gen 2 ring planet, as QA plays them)
+-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far'
+-      - name: Rollback check, planet2 setup, negative control (a wrong restore and a missed rollback must be caught)
+-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+ 
+   net-b:
+-    name: Network checks 2 of 5 (takeover, dropped peer, calm turn, swing)
++    name: Network checks 2 of 6 (takeover, dropped peer, calm turn)
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 45   # budget 30 min; estimated 17 of the 35.9 measured on run 45053322332 (takeover pair 5.3, dropped peer pair 2.9, calm turn 1.1, swing pair 7.3)
++    timeout-minutes: 45   # budget 30 min; measured 27.5 on run 45069273235 with the swing pair (11.3, now net-5): takeover pair 8.9, dropped peer pair 4.7, calm turn 1.9; about 16 without it
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+         with:
+@@ -641,6 +629,18 @@ jobs:
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --drop=150 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+       - name: Rollback check, the calm turn under rollback (rollbacks across the swap)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=calm --turn-at=300 --seeds=1 --ticks=600 --profiles=lan,p120,far'
++
++  net-5:
++    name: Network checks 6 of 6 (swing)
++    runs-on: ubuntu-24.04
++    timeout-minutes: 45   # budget 30 min; the swing pair measured 11.3 on run 45069273235 (5.5 and 5.8), 12 with the set-up
++    steps:
++      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          persist-credentials: false
++      - uses: ./.github/actions/setup-godot
++      - name: Import project
++        run: '"$GODOT" --headless --path . --import'
+       # A swing under rollback (docs/net/rollback.md section 15): a forced flip of a swing and of the store, the rate bound, the digest on a field world
+       - name: Swing check (late inputs flip a swing, the line and store restore, the correction stays in the rate bound)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/swing_check.gd -- --right-stick'
+@@ -651,9 +651,9 @@ jobs:
+   # the kick, and the two-process ENet proofs (they open ports on 127.0.0.1, UDP 47100 and 47102, with no outside service: CI only, never on Orb's PC). The same steps as before, in the same order, none changed.
+   # net-2 is three jobs since 2026-11-22 (net-2, net-3, net-4): on GW1b the one job needed about 57 minutes against its 45 (run 45053322332: cancelled in the kick check after 40 minutes of the first 14 steps; the last green run took 25).
+   net-2:
+-    name: Network checks 3 of 5 (second word, right stick, two-PC)
++    name: Network checks 3 of 6 (second word, right stick, two-PC, rollback sim AI, depth, planet2)
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 45   # budget 30 min; measured 14.3 minutes of checks on run 45053322332 (4.3, 6.2, 2.1, 0.8, 0.9)
++    timeout-minutes: 45   # budget 30 min; measured 9.8 on run 45069273235 (second word pair, right stick, two-PC pair); with the rollback sim AI, depth and planet2 pairs from net (9.1 there) about 19
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+         with:
+@@ -673,11 +673,23 @@ jobs:
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/two_pc_check.gd -- --self-test --ticks=900'
+       - name: Two-PC check, negative control (each deliberate change must be caught)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/two_pc_check.gd -- --negative-control --ticks=900'
++      - name: Rollback check, sim AI as P2 (the AI inside the tick, re-run by rollbacks)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai=sim --seeds=1 --ticks=600 --profiles=lan,p120,far'
++      - name: Rollback check, sim AI as P2, negative control (the same breaks must be caught)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai=sim --seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control'
++      - name: Rollback check, depth setup (fight lanes with depth physical, scripted inputs)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=depth --seeds=1 --ticks=300 --profiles=lan,p120,far'
++      - name: Rollback check, depth setup, negative control (a wrong restore and a missed rollback must be caught)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=depth --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
++      - name: Rollback check, planet2 setup (a gen 2 ring planet, as QA plays them)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far'
++      - name: Rollback check, planet2 setup, negative control (a wrong restore and a missed rollback must be caught)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+ 
+   net-3:
+-    name: Network checks 4 of 5 (LAN game side, field rollback, the kick)
++    name: Network checks 4 of 6 (LAN game side, field rollback, the kick)
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 45   # budget 30 min; LAN game side pair measured 16.2 (11.4 and 4.8; 3.3 on the last green run) and the field rollback control 1.0 on run 45053322332; the four kick steps never ran on GW1b (about 3.1 before it, expected about 6): about 24 in all, an estimate until the first run
++    timeout-minutes: 45   # budget 30 min; measured 19.9 on run 45069273235 (LAN game side pair 9.8, the kick steps 9.0, the field rollback control 0.7)
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+         with:
+@@ -703,9 +715,9 @@ jobs:
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --setup=kick --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control'
+ 
+   net-4:
+-    name: Network checks 5 of 5 (field desync, two-process ENet)
++    name: Network checks 5 of 6 (field desync, two-process ENet)
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 45   # budget 30 min; the field desync pair measured 11.5 (8.3 and 3.2) on run 45053322332; the three ENet steps never ran on GW1b (3.6 before it, expected about 7): about 19 in all, an estimate until the first run
++    timeout-minutes: 45   # budget 30 min; measured 12.9 on run 45069273235 (the field desync pair and the three ENet steps)
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+         with:
+@@ -841,7 +853,7 @@ jobs:
+ 
+   deploy:
+     name: Deploy to GitHub Pages
+-    needs: [qa, sim, data, flash-selftests, flash, godot-parity, godot-parity-b, godot-parity-c, godot-sim, godot-roll-render, godot-roll-render-b, godot-roll-render-c, godot-audio-vfx, godot-vfx-hash, net, net-b, net-2, net-3, net-4, world, site]
++    needs: [qa, sim, data, flash-selftests, flash, godot-parity, godot-parity-b, godot-parity-c, godot-sim, godot-roll-render, godot-roll-render-b, godot-roll-render-c, godot-audio-vfx, godot-vfx-hash, net, net-b, net-2, net-3, net-4, net-5, world, site]
+     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+     runs-on: ubuntu-24.04
+     timeout-minutes: 10
+diff --git a/tools/ci-budgets.json b/tools/ci-budgets.json
+index 8cae830..133f0ea 100644
+--- a/tools/ci-budgets.json
++++ b/tools/ci-budgets.json
+@@ -1,28 +1,29 @@
+ {
+   "_about": "The written time budget of every job of .github/workflows/ci.yml (A-TOOLS-08, 2026-11-14). limitMin is the job's timeout-minutes; budgetMin is what the job may take on a run (the rule: no job runs above about two thirds of its limit on three consecutive runs). measuredMin is the last measured range, in minutes, and the runs it came from. node tools/ci-budgets-check.mjs reads this file against ci.yml (every job has an entry, the limit is the entry's, the budget is two thirds of it or less) and, with --runs, against the last successful runs of GitHub.",
+   "jobs": {
+-    "qa": { "limitMin": 15, "budgetMin": 10, "measuredMin": "1", "runs": "43553420852, 43554356718, 43569719695" },
++    "qa": { "limitMin": 15, "budgetMin": 10, "measuredMin": "1.1", "runs": "45069273235" },
+     "sim": { "limitMin": 20, "budgetMin": 13, "measuredMin": "1 to 3", "runs": "43553420852, 43554356718, 43569719695" },
+     "data": { "limitMin": 15, "budgetMin": 10, "measuredMin": "1", "runs": "43553420852, 43554356718, 43569719695" },
+-    "flash-selftests": { "limitMin": 30, "budgetMin": 20, "measuredMin": "8.0 (run 44885894433)", "runs": "44885894433" },
+-    "flash-cases": { "limitMin": 30, "budgetMin": 20, "measuredMin": "8.6 to 11.3 a set (run 44885894433: ai-1 8.6, ai-2 8.9, ai-3 9.2, scenes-1 9.5, scenes-2 11.3); signaturedummy goes from 1,800 to 3,600 ticks after that run, so scenes-2 is expected near 13, to be recorded", "runs": "44885894433" },
+-    "flash": { "limitMin": 15, "budgetMin": 10, "measuredMin": "0.6 (run 44885894433: download and recount)", "runs": "44885894433" },
+-    "godot-parity": { "limitMin": 45, "budgetMin": 30, "measuredMin": "14.8 on run 45053322332, 2026-11-22 (GDScript parity, load split, places); the first part of the old godot-parity, which took 42.6 on GW1b", "runs": "45053322332" },
+-    "godot-parity-b": { "limitMin": 45, "budgetMin": 30, "measuredMin": "16.2 on run 45053322332 (two states pair, kick, replays pair); part of the old godot-parity", "runs": "45053322332" },
+-    "godot-parity-c": { "limitMin": 45, "budgetMin": 30, "measuredMin": "13.4 on run 45053322332 (fork pair, memo pair, chase, camera); part of the old godot-parity", "runs": "45053322332" },
+-    "godot-sim": { "limitMin": 45, "budgetMin": 30, "measuredMin": "15.4 on 2026-11-14 with the 44 input tests in (run 43582259423)", "runs": "43554356718, 43569719695, 43582259423" },
+-    "godot-roll-render": { "limitMin": 45, "budgetMin": 30, "measuredMin": "11.3 on run 45053322332, 2026-11-22 (rollback and field checks); the first part of the old godot-roll-render, which took 42.5 on GW1b", "runs": "45053322332" },
+-    "godot-roll-render-b": { "limitMin": 45, "budgetMin": 30, "measuredMin": "14.4 on run 45053322332 (render determinism, sweeps, mode smoke); part of the old godot-roll-render", "runs": "45053322332" },
+-    "godot-roll-render-c": { "limitMin": 45, "budgetMin": 30, "measuredMin": "19.0 on run 45053322332 (bark reads alone); part of the old godot-roll-render", "runs": "45053322332" },
+-    "godot-audio-vfx": { "limitMin": 30, "budgetMin": 20, "measuredMin": "9.2 on run 45053322332, 2026-11-22 (13 audio checks and the effects check; the hash check has its own job)", "runs": "45053322332" },
+-    "godot-vfx-hash": { "limitMin": 60, "budgetMin": 40, "measuredMin": "not yet measured to the end: 18.2 on d168a518 (as a step of godot-audio-vfx), cancelled at 21.0 on bce578a7 (GW1b, run 45053322332); local on the planet 590 to 847 s; record the first run", "runs": "45053322332" },
+-    "net": { "limitMin": 45, "budgetMin": 30, "measuredMin": "about 18 (the first part of the old net, which took 35.9 on run 45053322332, 2026-11-22); record the first run", "runs": "45053322332" },
+-    "net-b": { "limitMin": 45, "budgetMin": 30, "measuredMin": "about 17 (the second part of the old net: takeover, dropped peer, calm turn, swing); record the first run", "runs": "45053322332" },
+-    "net-2": { "limitMin": 45, "budgetMin": 30, "measuredMin": "14.8 on run 45053322332, 2026-11-22 (second word pair, right stick, two-PC pair); the first part of the old net-2, which needed about 57 on GW1b", "runs": "45053322332" },
+-    "net-3": { "limitMin": 45, "budgetMin": 30, "measuredMin": "about 24: LAN game side pair 16.2 and the field rollback control 1.0 measured on run 45053322332, the four kick steps estimated (they never ran on GW1b); record the first run", "runs": "45053322332" },
+-    "net-4": { "limitMin": 45, "budgetMin": 30, "measuredMin": "about 19: the field desync pair 11.5 measured on run 45053322332, the three ENet steps estimated (they never ran on GW1b); record the first run", "runs": "45053322332" },
+-    "world": { "limitMin": 30, "budgetMin": 20, "measuredMin": "about 14 a shard (shard 1: 12.6 of checks plus the floorlift and plane steps, shard 2: 10.6, shard 3: 8.9, each plus about 1 of set-up), from the per-check times of run 45053322332 on 2026-11-22 (one job, 33.9 minutes); record the first run of the shards", "runs": "45053322332" },
+-    "site": { "limitMin": 20, "budgetMin": 13, "measuredMin": "1", "runs": "43553420852, 43554356718, 43569719695" },
+-    "deploy": { "limitMin": 10, "budgetMin": 6, "measuredMin": "0", "runs": "43553420852, 43554356718, 43569719695" }
++    "flash-selftests": { "limitMin": 30, "budgetMin": 20, "measuredMin": "7.8", "runs": "45069273235" },
++    "flash-cases": { "limitMin": 30, "budgetMin": 20, "measuredMin": "9.7 to 13.6 a set (ai-1 13.6, ai-2 11.1, ai-3 9.7, scenes-1 10.3, scenes-2 10.6)", "runs": "45069273235" },
++    "flash": { "limitMin": 15, "budgetMin": 10, "measuredMin": "0.5", "runs": "45069273235" },
++    "godot-parity": { "limitMin": 45, "budgetMin": 30, "measuredMin": "14.3", "runs": "45069273235" },
++    "godot-parity-b": { "limitMin": 45, "budgetMin": 30, "measuredMin": "16.4", "runs": "45069273235" },
++    "godot-parity-c": { "limitMin": 45, "budgetMin": 30, "measuredMin": "18.6", "runs": "45069273235" },
++    "godot-sim": { "limitMin": 45, "budgetMin": 30, "measuredMin": "21.4", "runs": "45069273235" },
++    "godot-roll-render": { "limitMin": 45, "budgetMin": 30, "measuredMin": "9.9", "runs": "45069273235" },
++    "godot-roll-render-b": { "limitMin": 45, "budgetMin": 30, "measuredMin": "13.9", "runs": "45069273235" },
++    "godot-roll-render-c": { "limitMin": 60, "budgetMin": 40, "measuredMin": "26.9 (26.4 for the one step, the bark reads; 9.0 on d168a518, 18.6 on bce578a7)", "runs": "45069273235" },
++    "godot-audio-vfx": { "limitMin": 30, "budgetMin": 20, "measuredMin": "5.9", "runs": "45069273235" },
++    "godot-vfx-hash": { "limitMin": 60, "budgetMin": 40, "measuredMin": "19.2 (18.2 on d168a518 as a step of godot-audio-vfx; over 21 and cancelled with it on bce578a7)", "runs": "45069273235" },
++    "net": { "limitMin": 45, "budgetMin": 30, "measuredMin": "was 31.1 over the budget of 30 (desync 9.4, spectator 1.6, transport 5.3, rollback AIs 5.2, sim AI 4.9, depth 2.8, planet2 about 1.4); after the rebalance expected about 22, from the same steps", "runs": "45069273235" },
++    "net-b": { "limitMin": 45, "budgetMin": 30, "measuredMin": "was 27.5 (takeover pair 8.9, dropped peer pair 4.7, calm turn 1.9, swing pair 11.3); after the rebalance expected about 16", "runs": "45069273235" },
++    "net-5": { "limitMin": 45, "budgetMin": 30, "measuredMin": "new: the swing pair, 11.3 in the first run (5.5 and 5.8), expected 12 with the set-up", "runs": "45069273235" },
++    "net-2": { "limitMin": 45, "budgetMin": 30, "measuredMin": "was 9.8; after the rebalance it also runs the rollback sim AI, depth and planet2 pairs (9.1 in the first run): expected about 19", "runs": "45069273235" },
++    "net-3": { "limitMin": 45, "budgetMin": 30, "measuredMin": "19.9 (LAN game side pair 9.8, the kick steps 9.0, field rollback control 0.7)", "runs": "45069273235" },
++    "net-4": { "limitMin": 45, "budgetMin": 30, "measuredMin": "12.9 (the field desync pair and the three ENet steps)", "runs": "45069273235" },
++    "world": { "limitMin": 30, "budgetMin": 20, "measuredMin": "14.2 (shard 1 14.2, shard 2 9.6, shard 3 9.4)", "runs": "45069273235" },
++    "site": { "limitMin": 20, "budgetMin": 13, "measuredMin": "1.0", "runs": "45069273235" },
++    "deploy": { "limitMin": 10, "budgetMin": 6, "measuredMin": "0.1", "runs": "45069273235" }
+   }
+ }
