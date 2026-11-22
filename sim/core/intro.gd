@@ -480,6 +480,7 @@ static func _land(S: SimState, k: int) -> void:
 	var top: float = WorldWater.floorAt(S, f.x) + fallHeight
 	var r: float = 0.0
 	if craterE > 0.0 and WorldWater.burialOK(S, f.x):   # with the floor on, water 37.5 deep or more holds him above the bed: nothing is dug and the cue's radius is 0 (Game Design's rulings 2026-10-30 row 13)
+		var m0: int = int(S.storeN)   # the planet store before this dig: empty when a match starts, so at the second landing the first lander's records are [0, m0)
 		var rec = WorldCrater.dig(S, f.x, craterE, null, "impact", 0.0, 1.0)
 		if rec != null:
 			r = rec.r
@@ -487,6 +488,8 @@ static func _land(S: SimState, k: int) -> void:
 			if it.dug != 0 and k == leftSlot(S) and n >= 2 and S.craters[n - 1] == rec:   # the left spot's fighter landed second
 				S.craters[n - 1] = S.craters[n - 2]
 				S.craters[n - 2] = rec
+				if m0 > 0 and int(S.storeN) > m0:
+					WorldStore.swapBlocks(S, m0)   # and a planet's store the same way, the left spot's records first: its running hash reads them in order (GW1b)
 			it.dug |= 1 << k
 	f.y = WorldWater.floorAt(S, f.x)   # the ground, or with the floor of a lake or the sea on the floor, which a crater in the bed leaves where it was
 	it.landed |= 1 << k
