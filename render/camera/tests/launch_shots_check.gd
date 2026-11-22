@@ -18,10 +18,11 @@ var allmoves: bool = false
 ## nothing else may. Lost is the subject off the frame in a run of ticks: a launch's climb may leave the top for the first 0.8 s, on Research's reading.
 const LIMITS: Dictionary = {"jolt": 0.06, "release": 0.30, "release_zoom": 0.03, "zjolt": 0.012, "lost": 50, "small": 90, "off": 15}
 const RELEASE_TICKS: int = 10
-## GW1a ceilings, AI fight -> its largest jolt: with the 9 November data, fight 2 jumps 0.263 of the width in a tick in the one view (tick 3219,
-## both free, no cut) and fight 3 steps 0.110 with the energy model. Real, pinned at today's numbers (they may only come down); the fix is
-## owed for GW1b (docs/camera/pending/gw1a-pins/README.md).
-const KNOWN_JOLT: Dictionary = {2: 0.263, 3: 0.111}
+## Ceilings, AI fight -> its largest jolt: with the 9 November data, fight 3 steps 0.110 with the energy model (tick 2532: a grapple lock moves
+## the rival 300 units down in a tick as the split opens, and the shared view's height follows on the opening's first tick). Real, pinned at
+## today's number (it may only come down); the fix is owed (docs/camera/pending/gw1b-scape-side/README.md). Fight 2's 0.263 was the landscape
+## shot's lean flipping sides, fixed.
+const KNOWN_JOLT: Dictionary = {3: 0.111}
 
 
 func _ok(cond: bool, what: String) -> void:

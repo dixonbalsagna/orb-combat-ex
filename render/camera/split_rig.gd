@@ -280,6 +280,7 @@ var _scape_new_t: float = 0.0
 var _scape_due: float = -1.0                # a crossing or a landmark waits to be shown until this time (-1 none) ...
 var _scape_kind: String = ""
 var _scape_x: float = 0.0                   # ... toward where the new ground or the landmark is
+var _scape_side: float = 1.0                # the side the landscape shot leans to, set as it starts and kept to its end (a lean that followed the sign flipped when the pair's middle passed the landmark)
 var _scape_t: float = -1.0                  # the running shot's time (-1 none), its weight, its angle and the angle it last set
 var _scape_w: float = 0.0
 var _scape_pitch: float = 0.0
@@ -2927,7 +2928,7 @@ func _merged_target(S: SimState) -> Vector3:
 		z = maxf(z, _read_z(ahead, dy_pair))
 	if _scape_t >= 0.0 and _scape_w > 0.0:
 		# the landscape shot leans toward the new ground or the landmark, both fighters kept inside 0.42 of the width
-		var sh_l: float = CamParams.SCAPE_LEAN * vw / maxf(z, 0.001) * smoothstep(0.0, 1.0, _scape_w) * signf(SimWrap.sdx(mx, _scape_x))
+		var sh_l: float = CamParams.SCAPE_LEAN * vw / maxf(z, 0.001) * smoothstep(0.0, 1.0, _scape_w) * _scape_side
 		var hf_l: float = 0.42 * vw / maxf(z, 0.001)
 		var da_l: float = SimWrap.sdx(mx, A.x)
 		var db_l: float = SimWrap.sdx(mx, B.x)
@@ -5140,6 +5141,7 @@ func _scape_tick(S: SimState) -> void:
 	_scape_w = 0.0
 	_scape_due = -1.0
 	_scape_last_t = time
+	_scape_side = -1.0 if SimWrap.sdx(mid, _scape_x) < 0.0 else 1.0
 	_scape_wide = clampf(CamParams.SCAPE_MIN_R / maxf(r_now, 0.001), CamParams.SCAPE_WIDE, 1.0)
 	_scape_pitch = _ground_low(CamParams.SCAPE_PITCH, _mz * _scape_wide)
 	if absf(_scape_pitch) < 1.0:
