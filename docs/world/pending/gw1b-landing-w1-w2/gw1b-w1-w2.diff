@@ -32,7 +32,7 @@ index 4f099b2..a75e1e1 100644
 +
  ## Tests only (GW1b): a setup that names no planet plays the hand-made arena, as it did before the default world moved to the round planet (data/biomes/world.json mode). For a check that tests the arena or a default world.
 diff --git a/sim/world/tools/wall_check.gd b/sim/world/tools/wall_check.gd
-index 005a0ac..6bf9b7a 100644
+index 005a0ac..ae0524a 100644
 --- a/sim/world/tools/wall_check.gd
 +++ b/sim/world/tools/wall_check.gd
 @@ -27,3 +27,3 @@ func tower(S: SimState, lo: int = 9, hi: int = 15):
@@ -49,7 +49,7 @@ index 005a0ac..6bf9b7a 100644
  	c.lodgeHold = "world"
 +	# landing review W-2: the wall at the SHIPPED launch travel (1.5). The staging above keeps travel 2.0 (3,000 units from the tower); a force-2,000 send at 1.5 reaches about 2,250, so these rows stand the body there and prove the wall rules at the travel the game plays
 +	WorldPin.launchTravelShipped()
-+	for tier in [1.0]:   # tier 1 only, as the rows above: the aim finds no plan to a tower for a tier-2 or tier-3 body at either travel or any gap (the staged send is a tier-1 wall)
++	for tier in [1.0]:   # tier 1 only, as the rows above: a tier-2 or tier-3 body does reach the tower (the aim finds an arc, arrival speed 1,537 and 1,809 at 2,250) but no building_hit event is scored: he smashes the face (building_stage and debris events, the tower loses hp) and lands and slides past, so there is no wall slam to assert
 +		var S5 := fresh(1)
 +		var D5 = S5.fighters[0]
 +		var ev5: Array = fly(S5, S5.fighters[1], D5, tower(S5), tier, 2000.0, 2250.0)
@@ -59,7 +59,7 @@ index 005a0ac..6bf9b7a 100644
 +	WorldPin.launchTravelOld()
  	print("WALL: %d check(s) failed" % fails)
 diff --git a/sim/world/tools/wall_hold_check.gd b/sim/world/tools/wall_hold_check.gd
-index bb1e051..2e8eccd 100644
+index bb1e051..a344c71 100644
 --- a/sim/world/tools/wall_hold_check.gd
 +++ b/sim/world/tools/wall_hold_check.gd
 @@ -32,3 +32,3 @@ func _tower(S: SimState):
@@ -99,7 +99,7 @@ index bb1e051..2e8eccd 100644
 +			n += 1
 +			freeze += a[0]
 +			peak += a[1]
-+	ok(n >= 6, "%d wall slams staged on towers at the shipped travel (seeds 1 to 8, tiers 1 to 3, 2,250 units out: the towers the aim finds a plan to; at least 12 of 24 at travel 2.0 and 3,000 units)" % n)
++	ok(n >= 6, "%d wall slams staged on towers at the shipped travel (seeds 1 to 8, tiers 1 to 3, 2,250 units out: the slams that end as a wall, the tier-1 ones; at least 12 of 24 at travel 2.0 and 3,000 units)" % n)
 +	if n > 0:
 +		ok(freeze / float(n) >= 0.45 and peak / float(n) <= 150.0, "at the shipped travel, with the energy model on and the wall-hold data as it stands: the fight freezes at the hit (%.2f s) and he is pushed %.0f units off the face (at most 150 on average)" % [freeze / float(n), peak / float(n)])
 +	ok(twice, "at the shipped travel the same slam twice gives one hash")

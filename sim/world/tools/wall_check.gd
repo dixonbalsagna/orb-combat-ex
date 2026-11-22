@@ -113,7 +113,7 @@ func _init() -> void:
 	c.lodgeHold = "world"
 	# landing review W-2: the wall at the SHIPPED launch travel (1.5). The staging above keeps travel 2.0 (3,000 units from the tower); a force-2,000 send at 1.5 reaches about 2,250, so these rows stand the body there and prove the wall rules at the travel the game plays
 	WorldPin.launchTravelShipped()
-	for tier in [1.0]:   # tier 1 only, as the rows above: the aim finds no plan to a tower for a tier-2 or tier-3 body at either travel or any gap (the staged send is a tier-1 wall)
+	for tier in [1.0]:   # tier 1 only, as the rows above: a tier-2 or tier-3 body does reach the tower (the aim finds an arc, arrival speed 1,537 and 1,809 at 2,250) but no building_hit event is scored: he smashes the face (building_stage and debris events, the tower loses hp) and lands and slides past, so there is no wall slam to assert
 		var S5 := fresh(1)
 		var D5 = S5.fighters[0]
 		var ev5: Array = fly(S5, S5.fighters[1], D5, tower(S5), tier, 2000.0, 2250.0)

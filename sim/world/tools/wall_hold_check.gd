@@ -222,7 +222,7 @@ func _shipped() -> void:
 			n += 1
 			freeze += a[0]
 			peak += a[1]
-	ok(n >= 6, "%d wall slams staged on towers at the shipped travel (seeds 1 to 8, tiers 1 to 3, 2,250 units out: the towers the aim finds a plan to; at least 12 of 24 at travel 2.0 and 3,000 units)" % n)
+	ok(n >= 6, "%d wall slams staged on towers at the shipped travel (seeds 1 to 8, tiers 1 to 3, 2,250 units out: the slams that end as a wall, the tier-1 ones; at least 12 of 24 at travel 2.0 and 3,000 units)" % n)
 	if n > 0:
 		ok(freeze / float(n) >= 0.45 and peak / float(n) <= 150.0, "at the shipped travel, with the energy model on and the wall-hold data as it stands: the fight freezes at the hit (%.2f s) and he is pushed %.0f units off the face (at most 150 on average)" % [freeze / float(n), peak / float(n)])
 	ok(twice, "at the shipped travel the same slam twice gives one hash")
