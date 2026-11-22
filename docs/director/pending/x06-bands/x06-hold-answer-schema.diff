@@ -1,0 +1,63 @@
+diff --git a/tools/schemas/director-ai.schema.json b/tools/schemas/director-ai.schema.json
+index eb6bd3f..762d586 100644
+--- a/tools/schemas/director-ai.schema.json
++++ b/tools/schemas/director-ai.schema.json
+@@ -484,6 +484,12 @@
+                   "maximum": 1,
+                   "description": "Its perfect block against a heavy it sees wound in a brawl."
+                 },
++                "holdAnswer": {
++                  "type": "number",
++                  "minimum": 0,
++                  "maximum": 1,
++                  "description": "The chance it answers a visible hold (the rival's B held on a fist's heavy) during the hold, one draw a hold after reactTicks: a grab in reach, else a step out of reach (brawl.gd _aiVsHold)."
++                },
+                 "paceMatch": {
+                   "type": "object",
+                   "description": "Easy matches the player's pace (DirPace; gauntlet-plan.md section 6): a string's tap gap is never shorter than the median of his last windowSec seconds of attack presses, between floor and ceiling; noHuman against another computer.",
+@@ -1149,6 +1155,12 @@
+                   "maximum": 1,
+                   "description": "Its perfect block against a heavy it sees wound in a brawl."
+                 },
++                "holdAnswer": {
++                  "type": "number",
++                  "minimum": 0,
++                  "maximum": 1,
++                  "description": "The chance it answers a visible hold (the rival's B held on a fist's heavy) during the hold, one draw a hold after reactTicks: a grab in reach, else a step out of reach (brawl.gd _aiVsHold)."
++                },
+                 "paceMatch": {
+                   "type": "object",
+                   "description": "Easy matches the player's pace (DirPace; gauntlet-plan.md section 6): a string's tap gap is never shorter than the median of his last windowSec seconds of attack presses, between floor and ceiling; noHuman against another computer.",
+@@ -1814,6 +1826,12 @@
+                   "maximum": 1,
+                   "description": "Its perfect block against a heavy it sees wound in a brawl."
+                 },
++                "holdAnswer": {
++                  "type": "number",
++                  "minimum": 0,
++                  "maximum": 1,
++                  "description": "The chance it answers a visible hold (the rival's B held on a fist's heavy) during the hold, one draw a hold after reactTicks: a grab in reach, else a step out of reach (brawl.gd _aiVsHold)."
++                },
+                 "paceMatch": {
+                   "type": "object",
+                   "description": "Easy matches the player's pace (DirPace; gauntlet-plan.md section 6): a string's tap gap is never shorter than the median of his last windowSec seconds of attack presses, between floor and ceiling; noHuman against another computer.",
+diff --git a/tools/schemas/director-interrupts.schema.json b/tools/schemas/director-interrupts.schema.json
+index b2b17fe..dcae0ea 100644
+--- a/tools/schemas/director-interrupts.schema.json
++++ b/tools/schemas/director-interrupts.schema.json
+@@ -4799,6 +4799,15 @@
+               "type": "number",
+               "minimum": 0,
+               "description": "A throw lands worth this many brawl lights (a heavy), before what it hands the brawl."
++            },
++            "holdBreak": {
++              "type": "object",
++              "description": "A throw out of a clinch whose catch stopped a held B (Game Design, 2026-11-21): worthMul times worth, and noRegrab does not start. Absent: as any throw.",
++              "properties": {
++                "worthMul": {"type": "number", "minimum": 0, "description": "The hold-break throw's worth, as a share of worth."}
++              },
++              "required": ["worthMul"],
++              "additionalProperties": false
+             }
+           },
+           "required": [

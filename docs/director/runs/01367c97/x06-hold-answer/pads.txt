@@ -1,0 +1,11 @@
+X-06 hold answer: QA's player (qa/godot/orbs_player.gd --solo), QA's planet (gen=3;planets=7;touches=3;cols=4800;power=1;travel=1.5), 2026-11-21.
+Tree: main 01367c97 (sim, data, schemas and qa/godot unchanged to 68d52f75) + x06-medium.diff + x06-hold-answer.diff + x06-hold-answer-schema.diff. holdAnswer as parked (easy 0.25, medium 0.5, hard 0.8) unless a row says a test value.
+Command: godot --headless --path . --script res://qa/godot/orbs_player.gd -- <count> <first seed> --solo --mode=charge --beamevery=0 (or --mode=kit), QA_PLANET level=<level>
+
+Medium 0.5, charge pad, seeds 1-20: "dataHash":"850f54058a75c7fa" "medianSec":462.5 "charged":{"guard":24,"hit":689,"n":1089,"none":25,"pb":351} "winsBySlot":[15,5]  script errors 0
+Medium 0.5, charge pad, seeds 21-40: "dataHash":"850f54058a75c7fa" "medianSec":470.7 "charged":{"guard":35,"hit":707,"n":1065,"none":17,"pb":306} "winsBySlot":[20,0]  script errors 0
+Medium 0.5, whole-kit pad, seeds 1-20: "dataHash":"850f54058a75c7fa" "medianSec":392.4 "charged":{"guard":9,"hit":38,"n":67,"none":1,"pb":19} "winsBySlot":[5,15]  script errors 0
+Medium 0.8 (test value), charge pad, seeds 1-20: "dataHash":"8d62092dd6b10af2" "medianSec":520.6 "charged":{"guard":16,"hit":537,"n":843,"none":25,"pb":265} "winsBySlot":[6,14]  script errors 0
+Medium 1.0 (test value), charge pad, seeds 1-20: "dataHash":"9a38bb0aeb991790" "medianSec":475.0 "charged":{"guard":0,"hit":386,"n":564,"none":31,"pb":147} "winsBySlot":[2,18]  script errors 0
+Easy 0.25, charge pad, seeds 1-20: "dataHash":"28456adb5a158d1f" "medianSec":296.2 "charged":{"guard":33,"hit":667,"n":730,"none":2,"pb":28} "winsBySlot":[20,0]  script errors 0
+Easy 0.5 (test value), charge pad, seeds 1-20: "dataHash":"9c0be3ff7f4d4aa9" "medianSec":375.6 "charged":{"guard":37,"hit":693,"n":790,"none":21,"pb":39} "winsBySlot":[20,0]  script errors 0

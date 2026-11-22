@@ -1,0 +1,35 @@
+hold_answer_check on main 01367c97 + x06-medium.diff (ccea61aa) + x06-hold-answer.diff (187686f1) + schema (16d8e330), 2026-11-21:
+      drawn, in reach: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_up (damage 72.5, noRegrab left -92)
+ok    drawn, in reach: it grabs after its reaction time, never sooner (+14 against 14)
+ok    ... the clinch starts one ahead (a grab beats the armour) and the charge never lands
+      the hold-break's throw: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_down (damage 72.5, noRegrab left -77)
+      the same, holdBreak absent: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_down (damage 48.4, noRegrab left 120)
+ok    the hold-break's throw is worth 1.50 times the throw (72.5 against 48.4; holdBreak.worthMul 1.50)
+ok    ... and leaves no noRegrab (-77 ticks left; without the rule, 120)
+      drawn, 1.2 bh out: hold from live tick 6 (gap 1.18 bh at +14); closes in from +14; catch at +28, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown throw_across (damage 72.5, noRegrab left -89)
+ok    drawn, out of reach but close enough: it closes in (+14) and grabs before the first flash (+28, the flash at +32)
+      drawn, 2.3 bh out: hold from live tick 6 (gap 2.28 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +50 (charge 1.00); dodge at +50 (ki 15); miss dodged, punished true, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    drawn, too far to close in time: it doesn't close in or grab; it dodges the release (+50 against +50) at the dodge-cancel's ki (15)
+ok    ... the charge meets nothing (the miss cue says dodged) and the computer punishes him while he is open
+      drawn, a lockout: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +48 (charge 1.00); dodge at +49 (ki 15); miss dodged, punished true, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    drawn, no catch to be had (a lockout): the same dodge, miss and punish
+ok    in every drawn hold it never guards and never gives ground
+ok    one draw a hold, keyed by its start: of 2,000 holds, easy 0.496 (data 0.50), medium 0.806 (data 0.80), hard 0.948 (data 0.95)
+      negative control: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +56 (charge 1.00); dodge at +-1 (ki 0); miss none, punished false, landed true; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    negative control: holdAnswer 0 and the old answers at 0: nothing answers the hold, and the charge reaches its release at full
+HOLD ANSWER: 0 check(s) failed
+
+The first build's check (hold answer 97052644, 9 rows), for the record:
+      drawn, in reach, held to full: hold from live tick 6; catch pressed at +14, clinch true (lead 1); gives ground from +-1; release at +-1 (charge -1.00, gap -1.00 bh); landed false, missed false (), punished false
+ok    drawn, in reach: it grabs after its reaction time, never sooner (+14 against 14)
+ok    ... the catch lands and the clinch starts one ahead for the computer (a grab beats the armour)
+ok    ... and the charge never lands: the clinch stopped the wind-up
+      drawn, no catch to be had, let go before the first flash: hold from live tick 6; catch pressed at +-1, clinch false (lead 0); gives ground from +14; release at +-1 (charge -1.00, gap -1.00 bh); landed false, missed true (gave_ground), punished true
+ok    drawn, no catch to be had: it steps out of reach after its reaction time (+14), and doesn't grab
+ok    ... the heavy let go before its first flash meets nothing: the miss cue says gave_ground
+ok    ... and the computer punishes him while he is open
+      (printed) drawn, no catch, held to full: hold from live tick 6; catch pressed at +-1, clinch false (lead 0); gives ground from +14; release at +58 (charge 1.00, gap 2.40 bh); landed true, missed false (), punished false
+ok    one draw a hold, keyed by its start: of 2,000 holds, easy 0.244 (data 0.25), medium 0.496 (data 0.50), hard 0.806 (data 0.80)
+      negative control: hold from live tick 6; catch pressed at +-1, clinch false (lead 0); gives ground from +-1; release at +56 (charge 1.00, gap 0.00 bh); landed true, missed false (), punished false
+ok    negative control: holdAnswer 0 and the old answers at 0: nothing answers the hold, and the charge reaches its release at full
+HOLD ANSWER: 0 check(s) failed

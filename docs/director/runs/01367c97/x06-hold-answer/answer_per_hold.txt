@@ -1,0 +1,7 @@
+What the hold answer did with each hold: QA charge pad, 4 matches, seeds 1 to 4, Medium, main 01367c97 + x06-medium.diff + x06-hold-answer.diff (+ schema),
+scratch print lines only. The pad won 4 of 4.
+holds at reaction time: 365; drawn at holdAnswer 0.5: 182 (50%)
+drawn, a catch to be had: 160 (in reach 173); drawn, the rival just thrown (noRegrab): 22; lockouts: 0
+grabs pressed by the answer: 159, at +ticks after the hold began: {14: 117, 15: 2, 16: 4, 17: 3, 18: 6, 19: 5, 20: 7, 21: 1, 22: 4, 23: 3, 28: 6, 29: 1} (14 is the reaction time; later ones waited for the line to come free)
+steps out of reach: 29 (no catch to be had: 23; out of reach: 6)
+the computer's catches that landed in reach (clinch or throw), the answer's and the old catch share's: 168; refused: 0; stopped in the tell: 0

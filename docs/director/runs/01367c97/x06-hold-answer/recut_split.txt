@@ -1,0 +1,17 @@
+The first cut's three failures, split by key (main 01367c97 + one key of x06-medium.diff 6fe839ae), and the re-cut's noHuman 8:
+paceMatch only, chase_tap: CHASE: 1 check(s) failed
+FAIL  off: no slot is sized (673)
+paceMatch only, floorlift: FLOORLIFT: 1 check(s) failed
+FAIL  fight: 20160 AI ticks on the bed, 24169 of them under his floor, 631 reposes in a brawl: largest lift 85.99 a tick, 2 over the limit 7.5 (PROTAGONIST free at 48820 (moved -57), from 2253.8 to 23
+paceMatch only, match_end: MATCH END: 1 check(s) failed
+FAIL  a finishing move: two computers fight until one falls to a finisher, before the cap
+perfectVsHeavy only, chase_tap: CHASE: 0 check(s) failed
+perfectVsHeavy only, floorlift: FLOORLIFT: 0 check(s) failed
+perfectVsHeavy only, match_end: MATCH END: 0 check(s) failed
+paceMatch with noHuman 8, chase_tap (before the row's fix): CHASE: 1 check(s) failed
+FAIL  off: no slot is sized (673)
+paceMatch with noHuman 8, floorlift: FLOORLIFT: 0 check(s) failed
+paceMatch with noHuman 8, match_end: MATCH END: 0 check(s) failed
+
+On main 01367c97 alone: CHASE: 0 check(s) failed;FLOORLIFT: 0 check(s) failed;MATCH END: 0 check(s) failed; parity 0 FAIL rows
+On main + the first cut alone: CHASE: 1 check(s) failed;FLOORLIFT: 1 check(s) failed;MATCH END: 1 check(s) failed; parity 5 FAIL rows; loader loader check passed

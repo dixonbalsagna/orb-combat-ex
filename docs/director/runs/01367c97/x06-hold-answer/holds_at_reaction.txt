@@ -1,0 +1,7 @@
+Where the computer stands when its reaction time (14 ticks) to a held B is up: QA charge pad (orbs_player --solo --mode=charge --beamevery=0),
+4 matches, seeds 1 to 4, Medium, main 01367c97 + x06-medium.diff, scratch print lines in brawl.gd only (no behaviour change). The pad won 4 of 4.
+holds seen at reaction time: 171; charged releases: 177 (full: 163)
+gap past striking distance at reaction time: within a light's reach (0.6 bh, the catch's) 163 of 171; median 0.00 bh, max 0.71 bh
+the computer free to act then (line free, no reel, no stun): 132 of 171; a blow of its own on its line: 19
+a catch lockout or a rival just thrown: 0; in a tell or clinch: 0; the button still down: 170
+gap at a full charge's release: median 0.20 bh, max 1.30 bh (chargeClose carries a full charge 6 bh)

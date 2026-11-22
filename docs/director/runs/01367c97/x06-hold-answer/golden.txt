@@ -1,0 +1,84 @@
+Golden (sim/core/tools/golden.gd), 2026-11-21.
+
+First cut of the candidate (x06-medium.diff 6fe839ae, noHuman 27). G0: main 01367c97 + x06-medium. G1: G0 + the hold answer with holdAnswer 0 at all three levels. G2: G0 + the hold answer as parked.
+== G0 against G1 (the answer off: nothing may move)
+sections equal: 21 (checkEvery, constants, cripple, fightHash, format, intro, introComposed, keyed, mood, planet, powexplog, rally, rng, rosterHash, sincos, streamSeeds, tick0, tick0Values, v, wounds, wrap)
+sections differing: 0 (none)
+matches identical: 9 of 9
+replays identical: 2 of 2
+== G0 against G2 (as parked)
+sections equal: 21 (checkEvery, constants, cripple, fightHash, format, intro, introComposed, keyed, mood, planet, powexplog, rally, rng, rosterHash, sincos, streamSeeds, tick0, tick0Values, v, wounds, wrap)
+sections differing: 0 (none)
+  matches 8 (seed 11): first differing checkpoint 27 of 361; other fields ['final', 'light']; replay input same
+matches identical: 8 of 9
+replays identical: 2 of 2
+
+Re-cut candidate (x06-medium.diff ccea61aa, noHuman 8). R0: main 01367c97 + the re-cut. R1: R0 + the hold answer with holdAnswer 0. R2: R0 + the hold answer as parked (97052644 + schema b05a1255).
+== R0 against R1 (the answer off)
+sections equal: 21 (checkEvery, constants, cripple, fightHash, format, intro, introComposed, keyed, mood, planet, powexplog, rally, rng, rosterHash, sincos, streamSeeds, tick0, tick0Values, v, wounds, wrap)
+sections differing: 0 (none)
+matches identical: 9 of 9
+replays identical: 2 of 2
+== R0 against R2 (as parked)
+sections equal: 21 (checkEvery, constants, cripple, fightHash, format, intro, introComposed, keyed, mood, planet, powexplog, rally, rng, rosterHash, sincos, streamSeeds, tick0, tick0Values, v, wounds, wrap)
+sections differing: 0 (none)
+  matches 2 (seed 1): first differing checkpoint 35 of 151; other fields ['final', 'light']; replay input same
+  matches 3 (seed 1): first differing checkpoint 8 of 151; other fields ['final', 'light']; replay input same
+  matches 8 (seed 11): first differing checkpoint 62 of 361; other fields ['final', 'light']; replay input same
+matches identical: 6 of 9
+replays identical: 2 of 2
+== main's golden (sim/core/test/golden.json at 01367c97) against R0 (the re-cut candidate alone)
+sections equal: 20 (checkEvery, constants, cripple, fightHash, format, intro, introComposed, keyed, mood, powexplog, rally, rng, rosterHash, sincos, streamSeeds, tick0, tick0Values, v, wounds, wrap)
+sections differing: 1 (planet)
+  matches 0 (seed 1): first differing checkpoint 53 of 151; other fields ['final', 'light']; replay input same
+  matches 2 (seed 1): first differing checkpoint 84 of 151; other fields ['final', 'light']; replay input same
+  matches 3 (seed 1): first differing checkpoint 145 of 151; other fields ['final', 'light']; replay input same
+  matches 4 (seed 2): first differing checkpoint 3 of 151; other fields ['final', 'light']; replay input same
+  matches 5 (seed 2): first differing checkpoint 3 of 151; other fields ['final', 'light']; replay input same
+  matches 6 (seed 2): first differing checkpoint 3 of 151; other fields ['final', 'light']; replay input same
+  matches 7 (seed 2): first differing checkpoint 3 of 151; other fields ['final', 'light']; replay input same
+  matches 8 (seed 11): first differing checkpoint 24 of 361; other fields ['final', 'light', 'ticks']; replay input same
+matches identical: 1 of 9
+  replays 0 (seed 11): first differing checkpoint None of 0; other fields ['run']; replay input same
+  replays 1 (seed 12): first differing checkpoint None of 0; other fields ['run']; replay input same
+replays identical: 0 of 2
+== main's golden against G0 (the first cut alone)
+sections equal: 18 (checkEvery, constants, cripple, fightHash, format, keyed, mood, powexplog, rally, rng, rosterHash, sincos, streamSeeds, tick0, tick0Values, v, wounds, wrap)
+sections differing: 3 (intro, introComposed, planet)
+  matches 0 (seed 1): first differing checkpoint 3 of 151; other fields ['final', 'light']; replay input same
+  matches 1 (seed 1): first differing checkpoint 3 of 151; other fields ['final', 'light']; replay input same
+  matches 2 (seed 1): first differing checkpoint 3 of 151; other fields ['final', 'light']; replay input same
+  matches 3 (seed 1): first differing checkpoint 3 of 151; other fields ['final', 'light']; replay input same
+  matches 4 (seed 2): first differing checkpoint 1 of 151; other fields ['final', 'light']; replay input same
+  matches 5 (seed 2): first differing checkpoint 1 of 151; other fields ['final', 'light']; replay input same
+  matches 6 (seed 2): first differing checkpoint 1 of 151; other fields ['final', 'light']; replay input same
+  matches 7 (seed 2): first differing checkpoint 1 of 151; other fields ['final', 'light']; replay input same
+  matches 8 (seed 11): first differing checkpoint 2 of 361; other fields ['final', 'light', 'ticks']; replay input same
+matches identical: 0 of 9
+  replays 0 (seed 11): first differing checkpoint None of 0; other fields ['run']; replay input same
+  replays 1 (seed 12): first differing checkpoint None of 0; other fields ['run']; replay input same
+replays identical: 0 of 2
+
+Combined-ruling re-cut (hold answer 187686f1 + schema 16d8e330 on the re-cut candidate). Q1: all off (holdAnswer 0 at every level, grapple.throw.holdBreak absent). Q2: as parked.
+== R0 (the re-cut candidate alone) against Q1 (all off)
+sections equal: 21 (checkEvery, constants, cripple, fightHash, format, intro, introComposed, keyed, mood, planet, powexplog, rally, rng, rosterHash, sincos, streamSeeds, tick0, tick0Values, v, wounds, wrap)
+sections differing: 0 (none)
+matches identical: 9 of 9
+replays identical: 2 of 2
+== R0 against Q2 (as parked)
+sections equal: 20 (checkEvery, constants, cripple, fightHash, format, intro, introComposed, keyed, mood, powexplog, rally, rng, rosterHash, sincos, streamSeeds, tick0, tick0Values, v, wounds, wrap)
+sections differing: 1 (planet)
+  matches 0 (seed 1): first differing checkpoint 48 of 151; other fields ['final', 'light']; replay input same
+  matches 1 (seed 1): first differing checkpoint 15 of 151; other fields ['final', 'light']; replay input same
+  matches 2 (seed 1): first differing checkpoint 15 of 151; other fields ['final', 'light']; replay input same
+  matches 3 (seed 1): first differing checkpoint 8 of 151; other fields ['final', 'light']; replay input same
+  matches 4 (seed 2): first differing checkpoint 7 of 151; other fields ['final', 'light']; replay input same
+  matches 5 (seed 2): first differing checkpoint 7 of 151; other fields ['final', 'light']; replay input same
+  matches 6 (seed 2): first differing checkpoint 7 of 151; other fields ['final', 'light']; replay input same
+  matches 7 (seed 2): first differing checkpoint 7 of 151; other fields ['final', 'light']; replay input same
+  matches 8 (seed 11): first differing checkpoint 21 of 361; other fields ['final', 'light']; replay input same
+matches identical: 0 of 9
+  replays 0 (seed 11): first differing checkpoint None of 0; other fields ['run']; replay input same
+replays identical: 1 of 2
+xq1: xq1 exit 0; wrote sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (187200 ticks), 2 replays in 150.8 s
+xq2: xq2 exit 0; wrote sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (187200 ticks), 2 replays in 150.5 s

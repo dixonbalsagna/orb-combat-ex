@@ -1,0 +1,3 @@
+The same at Easy with holdAnswer 0.5 (a test value; the park has 0.25): QA charge pad, 4 matches, seeds 1 to 4, scratch print lines only. The pad won 4 of 4.
+holds at reaction time: 335; drawn: 173; drawn with a catch to be had: 141; drawn with the rival just thrown (noRegrab): 31; lockouts: 1
+grabs pressed: 155; catches landed in reach: 161; throws by the computer: 146; parted with nobody thrown: 0; steps out of reach: 51; catches stopped in the tell: 1
