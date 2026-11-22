@@ -46,3 +46,23 @@ The charge pad's full charges (1,905): 140 met nothing, 542 perfect-blocked, 59 
 | Every pad does better at Easy than at Medium | **FAIL for the charge pad**: 22.5% at Easy against 50.0% at Medium (the other four pass) |
 
 **Reading.** The Easy cells moved too against 7b69eafc (kit 72.5% to 65.0%, strike 45.0% to 17.5%, charge 57.5% to 22.5%; the masher 40.0% to 45.0% and beams 52.5% to 45.0% are unchanged to within noise), so GW1b's main moved Easy as well. The charge pad is now harder at Easy (22.5%, the same hold-answer chance 0.65) than at Medium (50.0%, repetition: the first hold 0, the second 0.4, the third 0.9): at Medium a charge pad's early holds go unanswered, which is what the order line catches. Records: `docs/qa/runs/bce578a7/x06-landing-lines.txt`, `x06-landing-order-table.md`.
+
+## The GW1b bisect (EP's order; Medium kit, 40 each, seeds 1 to 40, jobs 2 below normal)
+
+Each tree is a prefix of `git log 7b69eafc..b624340a` (oldest first), exported clean, with my `orbs_player.gd` over it: **b0** 7b69eafc; **b1** 2dd33c0d (after the stray-beams commits: 28 commits, which also hold a-world-01, replay-world, bounce-count, beam-aim-throw, floor-rise, step-up and the desync marks); **b2** 088264b3 (after launch-cone and wall-cone); **b3** b099e7fb (after meters-zero and gw1b-energy); **b4** 3aaac98c (the flip); **bce578a7** (read before). Two passes: no diffs (the EP's order), and `x06-medium.diff` alone (it applies clean on all five).
+
+| Tree | Kit, no diffs | Kit, `x06-medium.diff` alone | Beams a match (no diffs / candidate) |
+| :--- | :--- | :--- | :--- |
+| b0 7b69eafc | 2 of 40, 5.0% (1.4 to 16.5) | **13 of 40, 32.5%** (20.1 to 48.0) | 19.0 / 20.5 |
+| b1 after stray-beams | 2 of 40, 5.0% | **5 of 40, 12.5%** (5.5 to 26.1) | 17.9 / 19.9 |
+| b2 after launch-cone and wall-cone | 2 of 40, 5.0% | **9 of 40, 22.5%** (12.3 to 37.5) | 17.7 / 17.9 |
+| b3 after meters-zero and gw1b-energy | 4 of 40, 10.0% (4.0 to 23.1) | **7 of 40, 17.5%** (8.7 to 32.0) | 18.7 / 18.6 |
+| b4 the flip | 2 of 40, 5.0% | **4 of 40, 10.0%** (4.0 to 23.1) | 17.9 / 19.7 |
+| bce578a7 | 2 of 40, 5.0% | 4 of 40, 10.0% | 17.9 / 19.7 |
+
+**Reading.**
+- **With no diffs the kit is flat at 5% (2, 2, 2, 4, 2, 2 of 40) at every cut, including 7b69eafc.** The kit never won more than a handful of matches on main, so no group moves the no-diffs read, and the bisect cannot be run on it.
+- **With the candidate alone the kit steps down: 32.5, 12.5, 22.5, 17.5, 10.0, 10.0%.** The biggest single step is the first group, 32.5% to 12.5%, 20 points (Newcombe about 1.6 to 37): the stray-beams group, but that prefix holds 28 commits, and the interval's lower edge is barely above zero. The later steps (up 10 at b2, down 5 at b3, down 7.5 at the flip) are each inside the noise at 40 a cell. The total, 32.5% to 10.0%, is 22.5 points (Newcombe 4.5 to 39.1).
+- **The kit's stick beam is not the cause:** beams a match are within 17.7 to 20.5 on every tree (the same pad, all by stick).
+- **b4 and bce578a7 play the same:** identical hit totals (24,579 and 34,087 with no diffs) and the same kit rates; nothing after the flip moves the kit.
+- **What 40 a cell cannot say:** whether the first group alone or all four together carry the fall. To split the first group, and to settle b0 against b1, 120 a cell on those two (about 20 minutes each) and then a finer cut inside the 28 commits. Records: `docs/qa/runs/bce578a7/x06-bisect-lines.txt`.
