@@ -12,10 +12,8 @@ var names: Dictionary = {}
 
 
 func _init() -> void:
-	WorldPlan.everywhereOverride = 0   # (the field world as main shipped it: with plans.everywhere on, the buildings it walks to are another street)
 	_rows()
 	DirWalk.setForce(-1)
-	WorldPlan.everywhereOverride = -1
 	print("WALK: %d check(s) failed" % failed)
 	quit(1 if failed > 0 else 0)
 
@@ -105,7 +103,7 @@ func _rows() -> void:
 	var ids: Array = []
 	for i in range(S.buildings.size()):
 		var b = S.buildings[i]
-		if b.alive and not WorldSettle.noTarget(b.landmark) and absf(WorldBrunt.faceZ(b)) <= 800.0:
+		if b.alive and not WorldSettle.noTarget(b.landmark) and absf(WorldBrunt.faceZ(b)) <= 800.0 and WorldStructures.inBand(S, float(b.z), float(b.d)):   # (one of the index, as a knock aims: World's everywhere_check rows)
 			ids.append(i)
 	SimCore.dispose(S)
 	var pick: Array = []
