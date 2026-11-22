@@ -32,7 +32,7 @@ func _step(S: SimState, rig: SplitRig) -> SplitFrame:
 func _merge() -> void:
 	var closings: int = 0
 	var left_apart: float = 0.0
-	for seed in [12345, 2]:
+	for seed in [12345, 2, 5]:   # (seed 5 since GW1b: with its slower flight the first two give one merge between them, and the row needs two to judge)
 		var S: SimState = _match(seed)
 		var rig := SplitRig.new()
 		rig.eased_merge = true

@@ -37,6 +37,7 @@ func _rest_frame(_S = null) -> PackedFloat64Array:
 
 
 func _initialize() -> void:
+	WorldPin.arena()   # GW1b: this check makes its own turned frame and poses a landmark on the hand-made arena (data/biomes/world.json mode is planet now, with the sim's own frame)
 	_math()
 	_rig_same_at_rest()
 	_rig_turned()

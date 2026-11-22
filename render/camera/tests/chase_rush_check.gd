@@ -243,7 +243,7 @@ func _initialize() -> void:
 	for wait in [0, 8, 20]:
 		_one(1, wait, 0.7, 1)
 	_one(1, 8, 0.0, 1)
-	_one(2, 0, 0.7, 4, 35)
+	_one(2, 0, 0.7, 4, 55)   # (55 ticks between the taps since GW1b: at its slower flight a catch takes longer, and 35 caught him twice in a chain of four)
 	if FileAccess.file_exists("res://data/fight/power.json"):
 		power = true
 		for row in [[false, 1], [true, 1], [true, 0]]:
