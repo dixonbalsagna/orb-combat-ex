@@ -306965,6 +306965,313 @@
       }
     },
     {
+      "id": "anim-ground-motion-step-up-valid",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ground-motion-step-up-underscore-key-ok",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12,
+              "_why": "a note"
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ground-motion-step-up-ticks-under-12",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 11
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/step_up/ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-ticks-over-60",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 61
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/step_up/ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-ticks-not-integer",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/step_up/ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-p_min-over-1",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 1.5,
+              "ticks": 12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/step_up/p_min"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-ref_bh-zero",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 0,
+              "p_min": 0.5,
+              "ticks": 12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/step_up/ref_bh"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-bh-zero",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 0,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/step_up/bh"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-max_move-negative",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": -1,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/step_up/max_move"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-min_bh-over-10",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 11,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/step_up/min_bh"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-enabled-not-boolean",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": "yes",
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/step_up/enabled"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-key-required-enabled",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/step_up"
+      }
+    },
+    {
+      "id": "anim-ground-motion-step-up-unknown-key",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/step_up": {
+              "enabled": true,
+              "min_bh": 0.5,
+              "bh": 75,
+              "max_move": 200,
+              "ref_bh": 2,
+              "p_min": 0.5,
+              "ticks": 12,
+              "speed": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/step_up/speed"
+      }
+    },
+    {
       "id": "anim-reactions-valid",
       "schema": "anim-reactions.schema.json",
       "mutate": [
