@@ -7,6 +7,8 @@
 //   - a duplicate key in one mapping;
 //   - indentation that goes deeper where nothing opened a block, or that falls back to no enclosing level;
 //   - a sequence item and a mapping key mixed at one level.
+//   and, for a workflow file (a top-level `jobs:`), what GitHub refuses at once although the text is fine YAML (run 45058728995, 2026-11-22: "Job 'deploy' depends on unknown job 'net-b-4'", a needs list a
+//   script had mangled): a `needs:` entry that names no job of the file, names the job itself, is listed twice, or closes a cycle; and a `matrix.` expression in a job that has no `strategy:`.
 // Block scalars (| and >) and their content are skipped; comments are stripped outside quotes. It is a lint for the way these files are written here, not a YAML parser: a file it passes can still be
 // refused by GitHub for a reason that is not syntax (an unknown key, a bad expression); a file it fails is wrong.
 //   node tools/check-workflows.mjs [<file or folder>...]     default: .github/workflows and .github/actions (every .yml and .yaml)
@@ -124,6 +126,57 @@ export function lintYaml(text) {
   return problems;
 }
 
+/** The job-level problems of a workflow text: [{ line, message }] (empty for a text with no top-level `jobs:`). Text-based like the rest of this file: a job is a two-space key under `jobs:`. */
+export function lintJobs(text) {
+  const raw = String(text).replace(/\r\n/g, '\n').split('\n');
+  const problems = [];
+  const err = (line, message) => problems.push({ line, message });
+  let at = raw.findIndex((l) => /^jobs:\s*$/.test(l));
+  if (at < 0) return problems;
+  const jobs = [];   // { id, from, to } (0-based line range, to exclusive)
+  for (let i = at + 1; i < raw.length; i++) {
+    if (/^\S/.test(raw[i]) && !/^\s*#/.test(raw[i])) { if (jobs.length) jobs[jobs.length - 1].to = i; break; }
+    const j = /^  ([A-Za-z0-9_-]+):\s*$/.exec(raw[i]);
+    if (j) { if (jobs.length) jobs[jobs.length - 1].to = i; jobs.push({ id: j[1], from: i, to: raw.length }); }
+  }
+  const ids = new Set(jobs.map((j) => j.id));
+  const needs = new Map();
+  for (const job of jobs) {
+    const body = raw.slice(job.from, job.to);
+    const hasStrategy = body.some((l) => /^    strategy:\s*$/.test(l));
+    for (let k = 0; k < body.length; k++) {
+      const line = stripComment(body[k]);
+      if (!hasStrategy && /(\$\{\{[^}]*\bmatrix\.|\bif:\s*.*\bmatrix\.)/.test(line)) err(job.from + k + 1, `job ${job.id} uses a matrix expression but has no strategy: matrix`);
+    }
+    const ni = body.findIndex((l) => /^    needs:/.test(l));
+    if (ni < 0) continue;
+    const first = stripComment(body[ni]).replace(/^    needs:/, '').trim();
+    let list = [];
+    if (first.startsWith('[')) list = first.replace(/^\[|\]\s*$/g, '').split(',').map((s) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+    else if (first) list = [first.replace(/^["']|["']$/g, '')];
+    else for (let k = ni + 1; k < body.length; k++) { const mm = /^      - (.+?)\s*$/.exec(stripComment(body[k])); if (mm) list.push(mm[1].replace(/^["']|["']$/g, '')); else if (body[k].trim() !== '' && !/^\s*#/.test(body[k])) break; }
+    const seen = new Set();
+    for (const n of list) {
+      if (!ids.has(n)) err(job.from + ni + 1, `job ${job.id} depends on unknown job '${n}' (GitHub refuses the whole file)`);
+      else if (n === job.id) err(job.from + ni + 1, `job ${job.id} needs itself`);
+      if (seen.has(n)) err(job.from + ni + 1, `job ${job.id} lists '${n}' twice in needs`);
+      seen.add(n);
+    }
+    needs.set(job.id, list.filter((n) => ids.has(n) && n !== job.id));
+  }
+  // a cycle: depth-first from every job
+  const state = new Map();
+  const visit = (id, path) => {
+    if (state.get(id) === 2) return;
+    if (state.get(id) === 1) { const j = jobs.find((x) => x.id === id); err(j.from + 1, `needs form a cycle: ${[...path.slice(path.indexOf(id)), id].join(' -> ')}`); return; }
+    state.set(id, 1);
+    for (const n of needs.get(id) || []) visit(n, [...path, id]);
+    state.set(id, 2);
+  };
+  for (const j of jobs) visit(j.id, []);
+  return problems;
+}
+
 /** The yml/yaml files under a path (a file, or a folder searched downwards). */
 function filesUnder(p) {
   if (!existsSync(p)) return [];
@@ -137,7 +190,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const files = roots.flatMap((r) => filesUnder(resolve(r))).sort();
   if (!files.length) { console.error('check-workflows: no yml or yaml file found'); process.exit(2); }
   let bad = 0;
-  for (const f of files) for (const p of lintYaml(readFileSync(f, 'utf8'))) { console.error(`${f}:${p.line}: ${p.message}`); bad++; }
+  for (const f of files) { const t = readFileSync(f, 'utf8'); for (const p of [...lintYaml(t), ...lintJobs(t)]) { console.error(`${f}:${p.line}: ${p.message}`); bad++; } }
   if (bad) { console.error(`check-workflows FAILED: ${bad} problem${bad === 1 ? '' : 's'} in ${files.length} files`); process.exit(1); }
   console.log(`check-workflows ok: ${files.length} files`);
 }

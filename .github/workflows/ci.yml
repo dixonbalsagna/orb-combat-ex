@@ -841,7 +841,7 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: [qa, sim, data, flash-selftests, flash, godot-parity, godot-parity-b, godot-parity-c, godot-sim, godot-roll-render, godot-roll-render-b, godot-roll-render-c, godot-audio-vfx, godot-vfx-hash, net, net-2, net-3, net, net-b-4, world, site]
+    needs: [qa, sim, data, flash-selftests, flash, godot-parity, godot-parity-b, godot-parity-c, godot-sim, godot-roll-render, godot-roll-render-b, godot-roll-render-c, godot-audio-vfx, godot-vfx-hash, net, net-b, net-2, net-3, net-4, world, site]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
