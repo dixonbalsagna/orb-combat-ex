@@ -13,8 +13,11 @@ const STREAM_IDS: Array = ["vfx.spark", "vfx.debris", "vfx.dust", "vfx.splash", 
 ## 17-match set made the golden check slow; the batch tools cover the seeds this dropped).
 ## D1a: plus one match with the 12-minute cap that ends in a finisher and a KO (seed 11, KO + 3 s at 19084 ticks, the
 ## shortest of seeds 1 to 15), so the match goldens keep a KO at k 0.034. [arm, seed, cap]; the cap defaults to CAP.
-const MATCHES: Array = [["default", 1], ["swap", 1], ["mirror-villain", 1], ["mirror-hero", 1],
-	["default-flip", 2], ["swap-flip", 2], ["mirror-villain-flip", 2], ["mirror-hero-flip", 2], ["default", 11, 43200]]
+## GW1b: [arm, seed, cap, setup]. Two take "world": "arena" (default seed 1, and seed 11's KO), so the hand-made arena keeps a
+## reference once the mode is planet; the other seven name no world, so they play the world the game starts on (planet 7,
+## touch 3, generation 3) after the flip.
+const MATCHES: Array = [["default", 1, 18000, {"world": "arena"}], ["swap", 1], ["mirror-villain", 1], ["mirror-hero", 1],
+	["default-flip", 2], ["swap-flip", 2], ["mirror-villain-flip", 2], ["mirror-hero-flip", 2], ["default", 11, 43200, {"world": "arena"}]]
 const CAP: int = 18000
 ## Everything that comes from a fighter's definition, so an arm moves the whole fighter. D1a fix: the meters (hasAnguish,
 ## hasMenace, from da5fb09), the kit, the Rally rule, the wound data and the finisher key used to stay with the slot, so a
@@ -110,10 +113,11 @@ static func build() -> Dictionary:
 	g.keyed = keyedHash()
 	g.matches = []
 	for m in MATCHES:
-		g.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP))
+		g.matches.append(goldenRun(m[0], m[1], null, m[2] if m.size() > 2 else CAP, (m[3] as Dictionary).duplicate(true) if m.size() > 3 else {}))
 	g.replays = []
 	for rp in [scriptedReplay(11, 3000, false, [1500, 2100]), scriptedReplay(12, 2400, true, [])]:
-		g.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp)})
+		rp["setup"] = {"world": "arena"}   # the hand-made arena, named (GW1b): once the mode is planet a match that names no world plays planet 7; this one keeps the arena's reference (the scripted replays were written on it)
+		g.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp, CAP, rp.setup.duplicate(true))})
 	g.planet = planetGolden()   # last, so every key before it is as it was
 	return g
 
@@ -524,7 +528,9 @@ static func _full(S: SimState, V: SimFxView, cam: SimCamera) -> String:
 ## One golden run. Every tick folds a light digest (time, rng, fighters' core numbers and state, feed lines, fx events);
 ## every CHECK_EVERY ticks and at the end the full state is recorded (sim, reference cosmetic view, camera). With a
 ## replay the run applies its AI toggles and intents for exactly replay.ticks; without, it runs to KO + 3 s or 18000.
-static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dictionary = {}) -> Dictionary:
+## firsts: event types to watch ({type: -1}); each takes the tick it first came, and the result carries them (the planet
+## match's crater and slide).
+static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dictionary = {}, firsts: Dictionary = {}) -> Dictionary:
 	var S := SimCore.createSim()
 	var cam := SimCamera.new()
 	SimCore.newMatch(S, seed, replay.ai if replay != null else {}, setup)
@@ -559,6 +565,10 @@ static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dic
 			h.text(l.sub)
 		S.out.feed.clear()
 		SimHash.hashFx(h, S.out.fx)
+		if not firsts.is_empty():
+			for e in S.out.fx:
+				if firsts.has(e.type) and int(firsts[e.type]) < 0:
+					firsts[e.type] = steps
 		V.consume(S, S.out.fx)
 		S.out.fx.clear()
 		if steps % CHECK_EVERY == 0:
@@ -566,6 +576,8 @@ static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dic
 	var result := {"arm": arm, "seed": seed, "cap": cap, "ticks": steps, "light": h.hex(), "checkpoints": checkpoints, "final": _full(S, V, cam)}
 	if not setup.is_empty():
 		result["setup"] = setup.duplicate(true)
+	if not firsts.is_empty():
+		result["firsts"] = firsts.duplicate(true)
 	SimCore.dispose(S)
 	return result
 
@@ -645,7 +657,12 @@ static func compareRun(got: Dictionary, want: Dictionary, label: String) -> Stri
 ## World's slice hashes, the tick-0 gameplay hash of planet matches (the Whole ring and the Half), and one AI match.
 const PLANET_SLICES: Array = [[7, 3], [7, 9], [11, 2]]
 const PLANET_TICK0: Array = [["7/3", {"planet": 7, "touch": 3}], ["11/2", {"planet": 11, "touch": 2}], ["7/3/half", {"planet": 7, "touch": 3, "arena": {"cols": 2400}}]]
-const PLANET_MATCH: Dictionary = {"seed": 1, "cap": 3600, "setup": {"planet": 7, "touch": 3}}
+## The world the game starts on and Orb played: planet 7, touch 3, generation 3 (GW1b; it played the data's generation before).
+## Seed 29 has its first slide at tick 583 and its first crater at 818 under the golden's own conditions (the intro's end
+## state, the default arm; the probe of 2026-11-21: seed 1 had a crater and no slide); the golden keeps both ticks and parity
+## asks for both.
+const PLANET_MATCH: Dictionary = {"seed": 29, "cap": 3600, "setup": {"planet": 7, "touch": 3, "planetGen": 3}}
+const PLANET_FIRSTS: Dictionary = {"crater": -1, "slide": -1}
 
 
 static func planetSlices() -> Dictionary:
@@ -668,4 +685,4 @@ static func planetTick0() -> Dictionary:
 
 
 static func planetGolden() -> Dictionary:
-	return {"slices": planetSlices(), "tick0": planetTick0(), "match": goldenRun("default", int(PLANET_MATCH.seed), null, int(PLANET_MATCH.cap), PLANET_MATCH.setup.duplicate(true))}
+	return {"slices": planetSlices(), "tick0": planetTick0(), "match": goldenRun("default", int(PLANET_MATCH.seed), null, int(PLANET_MATCH.cap), PLANET_MATCH.setup.duplicate(true), PLANET_FIRSTS.duplicate(true))}

@@ -68,7 +68,7 @@ func _init() -> void:
 
 func _off() -> void:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, 5, {"p1": true, "p2": true})
+	SimCore.newMatch(S, 5, {"p1": true, "p2": true}, {"world": "arena"})   # off a field world: the hand-made arena, named (GW1b)
 	ok(S.frame == null and S.swing == null and S.bX.is_empty(), "off: no frame, no swing, no poses")
 	ok(not SimSwing.ask(S, {"deg": 30.0}), "off: a swing is refused")
 	step(S, 60)
@@ -536,7 +536,7 @@ func _bases() -> void:
 ## A rush rides over the ground, and the stretch's ceiling holds over a real fight's every column, ground and sea.
 func _ceilAndRush() -> void:
 	var off := SimCore.createSim()
-	SimCore.newMatch(off, 5, {"p1": true, "p2": true})
+	SimCore.newMatch(off, 5, {"p1": true, "p2": true}, {"world": "arena"})   # off a field world: the hand-made arena, named (GW1b)
 	ok(SimField.groundCeilAt(off, 100) == INF, "ceil: infinity off a field world")
 	SimCore.dispose(off)
 	for row in [[3, 2, 22], [7, 2, 11]]:

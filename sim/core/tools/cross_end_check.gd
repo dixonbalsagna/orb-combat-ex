@@ -283,6 +283,8 @@ func _ai() -> void:
 
 
 func _init() -> void:
+	WorldDefault.data()   # its data loaded first: a first load would set the mode back to the data's
+	WorldDefault.K_MODE = "arena"   # this check's stages are written on the hand-made arena (GW1b review B-02: once the mode is planet, a match that names no world plays planet 7). A 2v2 on the planet is World's and Encounter's to cover
 	negative = OS.get_cmdline_user_args().has("--negative-control")
 	if negative:
 		SimCross.blind = 4
