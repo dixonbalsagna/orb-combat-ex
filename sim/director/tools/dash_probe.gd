@@ -1,6 +1,7 @@
 extends SceneTree
 ## Encounter's measure of LT's high speed against distance (the EP's overnight brief item 1; Game Design overnight-2026-11-08.md (c)):
-##   godot --headless --path . --script res://sim/director/tools/dash_probe.gd [-- --power=1 --level=0|max]
+##   godot --headless --path . --script res://sim/director/tools/dash_probe.gd [-- --power=1 --level=0|max --flat=<units a second>]
+## Flat-out flight is the data's default (power.json flight.flatOut: 3,500 from GW1b, Orb's decision 5; docs/design/flight-3500.md), or --flat=.
 ## LT pressed and held on tick 0 with the stick toward the rival, as the layout reads it (the dodge edge, the lunge's dash for lungeTicks,
 ## the sprint from holdStart), the rival standing still (no computer). For each start gap: the speed on tick 1, the peak and its tick,
 ## and the ticks to striking distance (1.5 bh between them) and to the first exchange. Prints one row a gap; no verdict (a measure).
@@ -12,20 +13,28 @@ const STRIKE: float = 112.5   # 1.5 bh: striking distance (Game Design's arrival
 func _init() -> void:
 	var power: bool = true
 	var lvl: String = "0"
+	var flat: float = -1.0   # -1: the data's default
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--power="):
 			power = a.substr(8) == "1"
 		elif a.begins_with("--level="):
 			lvl = a.substr(8)
-	print("dash probe: power %s, level %s" % [str(power), lvl])
+		elif a.begins_with("--flat="):
+			flat = float(a.substr(7))
+	print("dash probe: power %s, level %s, flat-out %s" % [str(power), lvl, ("the data's" if flat < 0.0 else str(flat))])
 	for gap in GAPS:
-		_row(gap, power, lvl)
+		_row(gap, power, lvl, flat)
 	quit(0)
 
 
-func _row(gap: float, power: bool, lvl: String) -> void:
+func _row(gap: float, power: bool, lvl: String, flat: float) -> void:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false, "power": power, "travel": 1.5, "flatOut": 5000.0, "planet": 7})   # build 2's page setup
+	var su: Dictionary = {"intro": false, "power": power, "travel": 1.5, "planet": 7}   # the page's setup, with flight's data default (Game Design, flight-3500.md)
+	if flat > 0.0:
+		su["flatOut"] = flat
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
+	if gap == GAPS[0]:
+		print("  flat-out flight in this match: %.0f" % S.powerFlat)
 	var A = S.fighters[0]
 	var D = S.fighters[1]
 	for f in S.fighters:
