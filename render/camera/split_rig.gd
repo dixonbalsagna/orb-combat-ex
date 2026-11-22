@@ -2775,6 +2775,7 @@ func _snap_focus(S: SimState, i: int) -> void:
 
 
 func _snap_cameras(S: SimState) -> void:
+	_anch_ok = [false, false]   # a snap lands where it's aimed: no anchor ease carried over
 	_oz_valid = false
 	_od_valid = false
 	_snap_focus_depth(S)
@@ -3519,6 +3520,12 @@ var _tb_lost: Array = [0.0, 0.0]                       # seconds the pane has ha
 var _tb_cut_t: Array = [-1.0e9, -1.0e9]                # when each pane last cut for the budget
 var travel_limited: int = 0                            # ticks a pane's displayed camera was held to the budget (counted for the tests)
 var travel_cuts: int = 0                               # cuts the budget made (counted for the tests)
+var _anch_prev: Array = [Vector2.ZERO, Vector2.ZERO]   # each pane's anchor as drawn last tick (the anchor's jump ease, CamParams.ANCHOR_JUMP_*)
+var _anch_off: Array = [Vector2.ZERO, Vector2.ZERO]    # ... the jump it is easing out
+var _anch_ok: Array = [false, false]
+var _ho_eslot: int = -1                                # the shot's slots last tick (a handover is a change of them)
+var _ho_solo: int = -1
+var anchor_eases: int = 0                              # (counted for the tests: anchor steps taken into the ease)
 var _anchors: Array = [Vector2.ZERO, Vector2.ZERO]
 var _anchors_rep: Array = [Vector2.ZERO, Vector2.ZERO]   # what the frame reports: the anchor, moved at most ANCHOR_REPORT_STEP of the width a tick (the cameras are built from the true one)
 var _anchors_rep_ok: bool = false
@@ -4094,8 +4101,29 @@ func _update_cameras(S: SimState) -> void:
 func _outputs(S: SimState) -> void:
 	_sim_f = S.fighters.slice(0, 2)
 	var w: float = 1.0 - _smootherstep(sep)
+	# a shot handing the screen to another pane this tick (the slot a shot takes changed): the only step an anchor's ease takes in; a layout's
+	# change of sides or divider has its own rules and lands at once
+	var handover: bool = e_slot != _ho_eslot or solo_slot != _ho_solo
+	_ho_eslot = e_slot
+	_ho_solo = solo_slot
 	for i in range(2):
 		_anchors[i] = _anchor(S, i) + Vector2(float(_plead[i]), 0.0)
+		# a step of the anchor over ANCHOR_JUMP_PX without a cut (a shot handing the screen to another pane drops this pane's ease out of the last one)
+		# is taken into an offset that eases out: the picture moves at the anchors' own pace, never in one tick. A cut lands where it's aimed.
+		if _cut_now or not bool(_anch_ok[i]):
+			_anch_off[i] = Vector2.ZERO
+		else:
+			var shown: Vector2 = Vector2(_anchors[i]) + Vector2(_anch_off[i])
+			var jump: Vector2 = Vector2(_anch_prev[i]) - shown
+			if handover and jump.length() > CamParams.ANCHOR_JUMP_PX:
+				_anch_off[i] = Vector2(_anch_off[i]) + jump
+				anchor_eases += 1
+			_anch_off[i] = Vector2(_anch_off[i]) * exp(-DT / CamParams.ANCHOR_JUMP_TAU)
+			if Vector2(_anch_off[i]).length() < 0.5:
+				_anch_off[i] = Vector2.ZERO
+		_anchors[i] = Vector2(_anchors[i]) + Vector2(_anch_off[i])
+		_anch_prev[i] = _anchors[i]
+		_anch_ok[i] = true
 		# (read only by the blends below: _blend_cam takes the shared camera whole at w = 1, so in one view only a shot's subject needs his)
 		if not lean_step or w < 1.0 or (solo_slot == i and solo_w > 0.0):
 			_owns[i] = _cam_from_focus(i, _zo[i], _anchors[i], float(S.fighters[i].z) - float(_fz[i]))

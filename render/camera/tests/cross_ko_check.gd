@@ -147,11 +147,6 @@ func _read(S: SimState, watch) -> void:
 	prev = f.duplicate()
 
 
-## A ceiling (GW1b, real, the fix owed: docs/camera/pending/gw1b-camera-checks/README.md): on the planet, as the across shot gives the screen to
-## the winner, the other pane, still easing out of the close-up, drops that ease in one tick (its anchor 120 px; a jolt of 0.093). It may only come down.
-const HANDOVER_JOLT_CEIL: float = 0.094
-
-
 func _firstThenLast() -> void:
 	var S := _new(51, true)
 	var q: Array = _four(S)
@@ -162,7 +157,7 @@ func _firstThenLast() -> void:
 	_ok(rec.back_at >= 0 and rec.wreck_slot < 0, "... it hands back, and no wreck (%s)" % str(rec.kinds))
 	_ok(rig.solo_kind == "across" and rec.across_slot == S.fighters.find(q[0]), "... then the winner's pane has the screen (%s, slot %d)" % [rig.solo_kind, rec.across_slot])
 	_ok(not SimCore.ended(S) and S.game.ko != null, "... the match goes on, the fight keeping its KO")
-	_ok(float(rec.jolt) <= maxf(JOLT_LIMIT, HANDOVER_JOLT_CEIL), "... every move eases: a jolt of %.3f (%s)" % [rec.jolt, rec.jolt_at])
+	_ok(float(rec.jolt) <= JOLT_LIMIT, "... every move eases: a jolt of %.3f (%s)" % [rec.jolt, rec.jolt_at])
 	_ok(rec.cuts.is_empty(), "... and nothing cuts (%s)" % str(rec.cuts))
 	notes.append("first KO: %s, back at tick %d, jolt %.3f, cuts %s" % [str(rec.kinds), rec.back_at, rec.jolt, str(rec.cuts)])
 	_ko(S, q[3], q[2])

@@ -627,3 +627,5 @@ const SHAKE_FALLOFF: float = 4000.0   # a shake event at this distance from a pa
 const SHAKE_FAR: float = 0.35         # ... and the pane farther from the event gets this share of it
 const SHAKE_DECAY: float = 0.02       # per second, the fx consumer's decay
 const MODE_CHANGE_GAP: float = 0.8
+const ANCHOR_JUMP_PX: float = 24.0      # a pane's anchor that steps more than this in the tick a shot hands the screen to another pane ...
+const ANCHOR_JUMP_TAU: float = 0.25     # ... eases to its new place with this time constant (the anchors' own pace), never in one tick
