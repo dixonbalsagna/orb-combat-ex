@@ -5899,7 +5899,7 @@ func _piTau() -> String:
 ## The read is this match's: a state reused after a match with depth on and a crater where he starts begins as a new one does.
 ## Landing above the bed digs nothing, and the cue stays at the sheet with a radius of 0; on the bed the crater stays; with the floor off it digs as ever (Game Design's rulings 2026-10-30 row 13).
 func _floorStart() -> String:
-	var lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2, "dash": false}   # its touch-down is in a lake. The dash off: at its speed a free fighter low along a rising lake floor outruns floorFor's rise limit (riseMax a tick) and sits up to about 2.3 units inside it for a tick or two, a finding for World (A-ENERGY-04's park)
+	var lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2}   # its touch-down is in a lake. (The dash was off here until World's floor rise, GW1b: floorFor now lets a fighter climb a rising lake floor along his own step, so at the dash's speed he no longer sits inside it)
 	var fresh := func(mode) -> SimState:
 		var N := SimCore.createSim()
 		SimCore.newMatch(N, 1, {}, lake.merged({"intro": mode}))
