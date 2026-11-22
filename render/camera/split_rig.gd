@@ -280,6 +280,8 @@ var _scape_new_t: float = 0.0
 var _scape_due: float = -1.0                # a crossing or a landmark waits to be shown until this time (-1 none) ...
 var _scape_kind: String = ""
 var _scape_x: float = 0.0                   # ... toward where the new ground or the landmark is
+var keep_human: bool = true                 # the one view aims for its one human when the drawn zoom lags its own (CamParams.KEEP_HUMAN_IN)
+var keep_human_ticks: int = 0               # (counted for the tests)
 var _scape_side: float = 1.0                # the side the landscape shot leans to, set as it starts and kept to its end (a lean that followed the sign flipped when the pair's middle passed the landmark)
 var _scape_t: float = -1.0                  # the running shot's time (-1 none), its weight, its angle and the angle it last set
 var _scape_w: float = 0.0
@@ -3394,6 +3396,15 @@ func _refine_cam(cam: Vector3, fx: float, fy: float, fz: float, target: Vector2)
 	return Vector3(cx, clampf(cy, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP), cam.z)
 
 
+## The perspective scale of a fighter at his depth against the focus depth fz0, at zoom z (a screen offset over z times this is world units).
+func _depth_s_at(f, fz0: float, z: float) -> float:
+	var zz: float = float(f.z) - fz0
+	if zz == 0.0:
+		return 1.0
+	var d: float = CamParams.K_FACTOR * vh / z
+	return maxf(d / maxf(d - zz, 1.0), CamParams.DEPTH_S_MIN)
+
+
 ## The perspective scale of fighter i at the depth he has now, for the pane's current zoom.
 func _depth_s(S: SimState, i: int, z: float) -> float:
 	var zz: float = float(S.fighters[i].z) - float(_fz[i])
@@ -4149,6 +4160,23 @@ func _outputs(S: SimState) -> void:
 				var aimed: Vector3 = _cam_from_focus(i, z_held, _anchors[i], fz_i)
 				var k_aim: float = smoothstep(0.02, 0.15, z_mis)
 				o = Vector3(SimWrap.wrap(o.x + SimWrap.sdx(o.x, aimed.x) * k_aim), lerpf(o.y, aimed.y, k_aim), z_held)
+			elif w >= 0.999 and z_mis > 0.02 and _ov_kind == "" and solo_kind == "" and keep_human:
+				# The one view's half of it: the drawn zoom is narrower than the view it aimed for, so a pair flying apart faster than the
+				# zoom may come out slides past both edges. Aim for the one human: his chest is kept KEEP_HUMAN_IN of the width inside
+				# the frame at the drawn zoom, taken in as the mismatch grows (2% to 15%), so nothing pops. No human, or two: as before.
+				var hs: int = _human_slot(S)
+				if hs >= 0:
+					var fh = S.fighters[hs]
+					var px: float = SplitFrame.project(o.x, o.y, z_held, _pitch_now, vw, vh, fh.x, fh.y + CamParams.CHEST, float(fh.z) - fzo_i).x   # where he's drawn: with his depth and the pitch
+					var m_in: float = CamParams.KEEP_HUMAN_IN * vw
+					var push: float = 0.0
+					if px > vw - m_in:
+						push = (px - (vw - m_in)) / (z_held * _depth_s_at(fh, fzo_i, z_held))
+					elif px < m_in:
+						push = (px - m_in) / (z_held * _depth_s_at(fh, fzo_i, z_held))
+					if push != 0.0:
+						o = Vector3(SimWrap.wrap(o.x + push * smoothstep(0.02, 0.15, z_mis)), o.y, o.z)
+						keep_human_ticks += 1
 			o.z = z_held
 		_lens_d[i] = fzo_i + CamParams.K_FACTOR * vh / maxf(o.z, 0.05)
 		_lens_ok[i] = true

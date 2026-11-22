@@ -11,9 +11,10 @@ const OFF_LIMIT: int = 15
 ## Losses the camera already has on the GW1a camera (a-camera-01 + cd04), both modes, pinned as ceilings that may only come down (a fix is
 ## owed for each, docs/camera/pending/own-pane/README.md): the beam lock's one view on player one with player two off screen (clash), and
 ## player two at the divider's edge after a beam or blow sends him (signature, launchai). Anything else holds the 15-tick limit.
-## With GW1a's whole data (the 9 November target), the signature scene adds two: the one view loses player one for 26 ticks after his beam
-## sends player two (ticks 125 to 150), and player two for 48 after a send (860 to 907). The clash and launchai losses read 0 there.
-const KNOWN: Dictionary = {"clash/1": 52, "signature/0": 26, "signature/1": 48, "launchai/1": 35}
+## With GW1a's whole data (the 9 November target), the signature scene adds one: player two for 48 ticks after a send (860 to 907; the
+## player is launched and the camera goes with him, and the computer leaves the one view 25 ticks before the launch shot starts). The
+## clash and launchai losses read 0 there. (Player one's 26 ticks after his beam were the one view's lagging zoom: it now aims for him.)
+const KNOWN: Dictionary = {"clash/1": 52, "signature/1": 48, "launchai/1": 35}
 var clips: Array = ["clash", "signature", "launchai"]
 var modes: Array = ["normal", "reduced"]
 var measure: bool = false
