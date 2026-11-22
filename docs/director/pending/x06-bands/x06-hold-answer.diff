@@ -1,12 +1,12 @@
 diff --git a/data/director/ai.json b/data/director/ai.json
-index ffa9fe8..db7fb2d 100644
+index ffa9fe8..499f800 100644
 --- a/data/director/ai.json
 +++ b/data/director/ai.json
 @@ -37,6 +37,7 @@
    "reactTicks": 14,
    "answerTicks": 28,
    "_far": "The far band and the free approach (sim/director/bands.gd). reactTicks: the AI's reaction time to a rival's approach; an approach shorter than this gets no answer. answerTicks: how long after a rival's far taunt begins it presses its answer (past a heavy's 16-tick hold, so it answers a taunt and not a charge being gathered). Per level: farTaunt, the chance its attack beat in the far band is a taunt (a tap); farCharge, the chance it is otherwise a charge (it holds the button); below 1 it sometimes holds the beat instead, which measured slower (matches ran to the time cap at 0.5). After 6 s with no exchange it always charges. farHeavy: when it charges with a heavy, the chance it stays a heavy charge (slow and committed); otherwise it charges light. answerTaunt: the chance it answers a rival's far taunt with an attack press. approachReact: [guard, dodge, meet], the chances it answers a rival's approach by guarding, by dodging or by pressing to meet him; otherwise it carries on as it was",
-+  "_holdAnswer": "Per level, brawl.holdAnswer (Game Design, docs/design/gauntlet-plan.md, 2026-11-21; sim/director/brawl.gd _aiVsHold): the chance it answers a visible hold, the rival's B held on a fist's heavy: one draw a hold, read after reactTicks. In a light's reach it grabs (the catch beats the armour and stops the wind-up: a hold-break, interrupts.json grapple.throw.holdBreak); out of it, it closes in and grabs when it reaches that reach before the charge's first flash; otherwise it dodges the release at the dodge-cancel's price, so the blow meets nothing, and punishes him while he is open. It never guards or gives ground against a hold it answers. Easy 0.5, Medium 0.8, Hard 0.95. Absent or 0: nothing drawn",
++  "_holdAnswer": "Per level, brawl.holdAnswer (Game Design, docs/design/gauntlet-plan.md, 2026-11-21; sim/director/brawl.gd _aiVsHold): the chance it answers a visible hold, the rival's B held on a fist's heavy: one draw a hold, read after reactTicks. In a light's reach it grabs (the catch beats the armour and stops the wind-up: a hold-break, interrupts.json grapple.throw.holdBreak); out of it, it closes in and grabs when it reaches that reach before the charge's first flash; otherwise it dodges the release at the dodge-cancel's price, so the blow meets nothing, and punishes him while he is open. It never guards or gives ground against a hold it answers. Easy 0.65, Medium 0.5, Hard 0.95 (Game Design, gauntlet-plan.md section 10, after QA's final read). Absent or 0: nothing drawn",
    "_brawl": "Each level's brawl block (sim/director/brawl.gd aiInput; melee-press-feel.md section 2b). In a brawl the AI chooses when its last choice has played out, not on the stance timer. tapGap: the ticks between its lights (12 to 6 is 5 to 10 blows a second). string: it throws this many lights, drawn in the range, and then, if interrupts.json brawl.enderAfter of them landed, closes with a heavy at enderShare. rashHeavy: the chance it still throws that heavy into a rival's running flurry, whose close would stop it (1 always, 0 never): the masher's wins come from these. guardShare: the share of its choices that are a guard, held for guardTicks (drawn in the range), after which it must attack. heavyAfterClose (melee-press-feel.md section 9d): when a flurry's close has landed on it, the chance its next action, as its stagger ends, is a heavy. Each level's vsShooter block is what it does against a shooter (a rival who has fired lately and landed no melee blow: interrupts.json brawl.shooter): guardShare and enderShare replace the brawl block's in a brawl with him, so it does not guard and seldom throws the ender that would knock him back to his range; heavyApproachShare is the chance its attack from outside reach is the approach a bolt does not stop, the heavy lunge or the heavy charge. perfectMul: its perfect-block rate inside a brawl, as a share of its rate outside (perfectBlock times the level's perfectBlockMul); it weighs one against a light at most once in interrupts.json brawl.aiPerfectEveryTicks. Three of Game Design's levers for its answers to a string (melee-press-feel.md section 9c) are built and read when a level sets them, and are not set yet: answerBy (it answers a rival's paced string, not a flurry, by this landed blow with a guard, after reactTicks), guardMaxTicks (how long that guard is held before it must attack) and attackIntoGap (while it guards, when the rival has thrown nothing for this many ticks its own string goes in). Without the parry the guard alone costs it, so they wait for B2. A heavy against a rival who is guarding comes at the level's breakGuard, a held heavy at heldHeavy times earnerUse, and the signature at sigPick. anywhere.answer: the chance it guesses, when a rival's blow lands clean on it, that a launcher follows, and times its guard to it (interrupts.json brawl.launcher.anywhere.answer). Easy's is 0.25, from 0.2 (rulings-2026-10-26 items 43 and 44): the newcomer against easy read 97.0% at 0.2 with the pop dose, and 88.5% at 0.25 on 200 matches (Wilson 83.3 to 92.2, inside the 82 to 92 aimed at; docs/qa/rally-read-fa6f727a.md, fifth addendum)",
    "stance": {
      "repick": [0.7, 1.6],
@@ -15,7 +15,7 @@ index ffa9fe8..db7fb2d 100644
      "_note": "beamAnswer: control-rules.md section 10 (0.15, 0.35, 0.60). perfectBlockMul: its share of the perfectBlock rates above (0.32, 0.45, 0.55: QA's baseline on 9da6e07, docs/qa/baseline-9da6e07.md, which brings the three levels to 7.67, 13.13 and 18.26 perfect blocks per 100 melee exchanges against bands of 3 to 8, 5 to 15 and 12 to 20; they were 0.35, 0.6 and 0.9). guardRepeat: weight added to its Guard choice while the rival repeats one attack. punish: the chance it attacks in the punish window after it blocked a whole string, and punishHeavy the share of those attacks that are heavies. reversal: [after 2 s of guard with over 25 ki, otherwise]; medium is R4 (50%, 20%). breakGuard: the share of its attacks that are heavies against a rival it has found guarding twice running. riposte: the chance it takes its riposte after a perfect block. burstAtLink: the chain link at which it bursts out (0: never). launchIntent: the chance its heavy is thrown with a direction, to launch (the earned launch's third rule; its stick is its flight path, so this stands for a player's tilt). heldHeavy: the chance it charges a heavy by holding it (the first rule).",
      "easy": {
 -      "forms": {"holdS": 0}, "brawl": {"tapGap": 12, "tapGapMax": 12, "paceMatch": {"enabled": true, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 27, "_note": "Game Design, gauntlet-plan.md section 6: easy matches the player's pace. On: the gap between its taps in a brawl string is never shorter than the player's recent gap between attack presses (the median of his last windowSec seconds of face presses and stick strikes; guards don't count), between floor and ceiling ticks; with fewer than two presses in that time, ceiling. Against another computer (no human), noHuman. It changes when easy throws, never worth, stats or reads. Off: tapGap to tapGapMax, as before."}, "string": [2, 4], "guardShare": 0.2, "guardTicks": [20, 60], "grapple": {"catch": 0.02, "pummel": 0.4, "tech": 0.15}, "anywhere": {"launcher": 0.15, "inString": 0.05, "answer": 0.25}, "recoil": {"flip": 0.3, "counter": 0.5}, "perfectMul": 0.21, "nudgeShare": 0.35, "walkOut": 0.1, "mixMedium": 0.002, "mixHeavy": 0.001, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0, "burst": 0.05, "digIn": 0.3, "giveGround": 0.1, "follow": 0.3, "launcher": 0.15, "charge": 0.15, "energy": 0.06, "breakGuard": 0.06, "mediumVsHeavies": 0.15, "perfectVsHeavy": 0.05, "perfectVsMash": 0.01},
-+      "forms": {"holdS": 0}, "brawl": {"tapGap": 12, "tapGapMax": 12, "paceMatch": {"enabled": true, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 27, "_note": "Game Design, gauntlet-plan.md section 6: easy matches the player's pace. On: the gap between its taps in a brawl string is never shorter than the player's recent gap between attack presses (the median of his last windowSec seconds of face presses and stick strikes; guards don't count), between floor and ceiling ticks; with fewer than two presses in that time, ceiling. Against another computer (no human), noHuman. It changes when easy throws, never worth, stats or reads. Off: tapGap to tapGapMax, as before."}, "string": [2, 4], "guardShare": 0.2, "guardTicks": [20, 60], "grapple": {"catch": 0.02, "pummel": 0.4, "tech": 0.15}, "anywhere": {"launcher": 0.15, "inString": 0.05, "answer": 0.25}, "recoil": {"flip": 0.3, "counter": 0.5}, "perfectMul": 0.21, "nudgeShare": 0.35, "walkOut": 0.1, "mixMedium": 0.002, "mixHeavy": 0.001, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0, "burst": 0.05, "digIn": 0.3, "giveGround": 0.1, "follow": 0.3, "launcher": 0.15, "charge": 0.15, "energy": 0.06, "breakGuard": 0.06, "mediumVsHeavies": 0.15, "perfectVsHeavy": 0.05, "holdAnswer": 0.5, "perfectVsMash": 0.01},
++      "forms": {"holdS": 0}, "brawl": {"tapGap": 12, "tapGapMax": 12, "paceMatch": {"enabled": true, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 27, "_note": "Game Design, gauntlet-plan.md section 6: easy matches the player's pace. On: the gap between its taps in a brawl string is never shorter than the player's recent gap between attack presses (the median of his last windowSec seconds of face presses and stick strikes; guards don't count), between floor and ceiling ticks; with fewer than two presses in that time, ceiling. Against another computer (no human), noHuman. It changes when easy throws, never worth, stats or reads. Off: tapGap to tapGapMax, as before."}, "string": [2, 4], "guardShare": 0.2, "guardTicks": [20, 60], "grapple": {"catch": 0.02, "pummel": 0.4, "tech": 0.15}, "anywhere": {"launcher": 0.15, "inString": 0.05, "answer": 0.25}, "recoil": {"flip": 0.3, "counter": 0.5}, "perfectMul": 0.21, "nudgeShare": 0.35, "walkOut": 0.1, "mixMedium": 0.002, "mixHeavy": 0.001, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0, "burst": 0.05, "digIn": 0.3, "giveGround": 0.1, "follow": 0.3, "launcher": 0.15, "charge": 0.15, "energy": 0.06, "breakGuard": 0.06, "mediumVsHeavies": 0.15, "perfectVsHeavy": 0.05, "holdAnswer": 0.65, "perfectVsMash": 0.01},
        "vsShooter": {"guardShare": 0, "enderShare": 0.5, "heavyApproachShare": 0.05},
        "zipShare": 0.08, "flightShare": 0.12, "zipHeavyShare": 0.2, "zipCounter": 0, "zipDodge": 0, "zipPunish": 0.2, "zipExit": 0,
        "beamAnswer": 0.15, "wallKick": 0.15,
@@ -24,7 +24,7 @@ index ffa9fe8..db7fb2d 100644
      },
      "medium": {
 -      "forms": {"holdS": 10, "whenAbove": true}, "brawl": {"tapGap": 8, "tapGapMax": 11, "paceMatch": {"enabled": true, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 8, "_note": "X-06 candidate (Encounter, 2026-11-21): Medium matches the player's pace as Easy does (the same floor and ceiling): a single pad on Orb's scheme went from 4 of 50 to 9 of 30 with it, and its hits from 1 to 2.6 against the computer's to even; noHuman 8, Medium's own tapGap floor, so a computer against another computer keeps Medium's pace as shipped (Easy's 27 slowed computer fights and failed match_end_check and floorlift_check); off main until QA's measurement is in"}, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "grapple": {"catch": 0.04, "pummel": 0.65, "tech": 0.3}, "anywhere": {"launcher": 0.35, "inString": 0.12, "answer": 0.25}, "recoil": {"flip": 0.6, "counter": 0.7}, "perfectMul": 0.15, "nudgeShare": 0.3, "walkOut": 0.2, "mixMedium": 0.004, "mixHeavy": 0.002, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0.2, "burst": 0.08, "digIn": 0.55, "giveGround": 0.45, "follow": 0.6, "launcher": 0.25, "charge": 0.15, "energy": 0.12, "breakGuard": 0.1, "mediumVsHeavies": 0.4, "perfectVsHeavy": 0.3, "perfectVsMash": 0.02},
-+      "forms": {"holdS": 10, "whenAbove": true}, "brawl": {"tapGap": 8, "tapGapMax": 11, "paceMatch": {"enabled": true, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 8, "_note": "X-06 candidate (Encounter, 2026-11-21): Medium matches the player's pace as Easy does (the same floor and ceiling): a single pad on Orb's scheme went from 4 of 50 to 9 of 30 with it, and its hits from 1 to 2.6 against the computer's to even; noHuman 8, Medium's own tapGap floor, so a computer against another computer keeps Medium's pace as shipped (Easy's 27 slowed computer fights and failed match_end_check and floorlift_check); off main until QA's measurement is in"}, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "grapple": {"catch": 0.04, "pummel": 0.65, "tech": 0.3}, "anywhere": {"launcher": 0.35, "inString": 0.12, "answer": 0.25}, "recoil": {"flip": 0.6, "counter": 0.7}, "perfectMul": 0.15, "nudgeShare": 0.3, "walkOut": 0.2, "mixMedium": 0.004, "mixHeavy": 0.002, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0.2, "burst": 0.08, "digIn": 0.55, "giveGround": 0.45, "follow": 0.6, "launcher": 0.25, "charge": 0.15, "energy": 0.12, "breakGuard": 0.1, "mediumVsHeavies": 0.4, "perfectVsHeavy": 0.3, "holdAnswer": 0.8, "perfectVsMash": 0.02},
++      "forms": {"holdS": 10, "whenAbove": true}, "brawl": {"tapGap": 8, "tapGapMax": 11, "paceMatch": {"enabled": true, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 8, "_note": "X-06 candidate (Encounter, 2026-11-21): Medium matches the player's pace as Easy does (the same floor and ceiling): a single pad on Orb's scheme went from 4 of 50 to 9 of 30 with it, and its hits from 1 to 2.6 against the computer's to even; noHuman 8, Medium's own tapGap floor, so a computer against another computer keeps Medium's pace as shipped (Easy's 27 slowed computer fights and failed match_end_check and floorlift_check); off main until QA's measurement is in"}, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "grapple": {"catch": 0.04, "pummel": 0.65, "tech": 0.3}, "anywhere": {"launcher": 0.35, "inString": 0.12, "answer": 0.25}, "recoil": {"flip": 0.6, "counter": 0.7}, "perfectMul": 0.15, "nudgeShare": 0.3, "walkOut": 0.2, "mixMedium": 0.004, "mixHeavy": 0.002, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0.2, "burst": 0.08, "digIn": 0.55, "giveGround": 0.45, "follow": 0.6, "launcher": 0.25, "charge": 0.15, "energy": 0.12, "breakGuard": 0.1, "mediumVsHeavies": 0.4, "perfectVsHeavy": 0.3, "holdAnswer": 0.5, "perfectVsMash": 0.02},
        "vsShooter": {"guardShare": 0, "enderShare": 0.45, "heavyApproachShare": 0.1},
        "zipShare": 0.25, "flightShare": 0.65, "zipHeavyShare": 0.3, "zipCounter": 0.2, "zipDodge": 0.1, "zipPunish": 0.75, "zipExit": 0.3,
        "beamAnswer": 0.35, "wallKick": 0.35,
@@ -256,10 +256,10 @@ index 6382a7d..8f9efa2 100644
  	var c: Dictionary = DirBrawl.cfg()
 diff --git a/sim/director/tools/hold_answer_check.gd b/sim/director/tools/hold_answer_check.gd
 new file mode 100644
-index 0000000..ce0ce10
+index 0000000..546b49a
 --- /dev/null
 +++ b/sim/director/tools/hold_answer_check.gd
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,249 @@
 +extends SceneTree
 +## The computer answers a visible hold during the hold (Game Design's rulings, docs/design/gauntlet-plan.md, 2026-11-21; DirBrawl._aiVsHold;
 +## ai.json levels.<level>.brawl.holdAnswer; interrupts.json grapple.throw.holdBreak). A player in a brawl with the computer, at Medium,
@@ -272,12 +272,15 @@ index 0000000..ce0ce10
 +##   - drawn, no catch to be had (a lockout): the same dodge and punish
 +##   - in every drawn hold: it never guards and never gives ground
 +##   - one draw a hold, keyed by its start: of 2,000 holds, each level's share within 3 points
++##   - the exploit is closed: a charge-only pad (QA's charge pad, played by this script) doesn't win every Medium match on QA's planet
++##     settings (it won 40 of 40 before the answer; X-06's A1 exit, gauntlet-plan.md section 10)
 +##   - negative control: holdAnswer 0, with the old answers (the catch share and giving ground) at 0: nothing answers, the charge reaches
 +##     its release at full
 +##   godot --headless --path . --script res://sim/director/tools/hold_answer_check.gd
 +## Ends on the verdict line.
 +
 +var fails: int = 0
++const PAD_SEEDS: int = 6   # the charge-only pad's Medium matches: QA's seeds 1 to 6
 +
 +
 +func ok(c: bool, what: String) -> void:
@@ -396,6 +399,55 @@ index 0000000..ce0ce10
 +	return r
 +
 +
++## A charge-only pad against the computer at Medium: QA's charge pad (qa/godot/orbs_player.gd --mode=charge), played by this script through
++## intents: its stick walks at the computer (past 110 units across, 40 up or down), it holds B 50 ticks, lets go and waits 40 to 60 (a
++## generator seeded by the match). QA's planet settings (QA_PLANET gen=3;planets=7;touches=3;cols=4800;power=1;travel=1.5;level=medium),
++## to a KO, a no-contest or the 900-second cap. Returns [the winner's slot, -1 a no-contest, -2 the cap; the ticks played].
++func _padMatch(seed: int) -> Array:
++	SimInputData.load_and_apply()
++	var su := {"v2": [true, true], "assists": [[], []], "planet": 7, "touch": 3, "arena": {"cols": 4800}, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "aiLevel": "medium"}
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {"p1": false, "p2": true}, su)
++	var P = S.fighters[0]
++	var C = S.fighters[1]
++	var rng := RandomNumberGenerator.new()
++	rng.seed = seed
++	var next: int = 20
++	var until: int = -1
++	var result: int = -2
++	var koAt: int = -1
++	for t in range(54000):
++		var i := SimIntent.new()
++		var dx: float = SimWrap.sdx(P.x, C.x)
++		var dy: float = C.y - P.y
++		i.mx = signf(dx) if absf(dx) > 110.0 else 0.0
++		i.my = signf(dy) if absf(dy) > 40.0 else 0.0
++		if until >= 0:
++			if t >= until:
++				until = -1
++				next = t + rng.randi_range(40, 60)
++			else:
++				i.sigHeld = true
++		elif t >= next:
++			i.sig = true
++			i.sigHeld = true
++			until = t + 50
++		SimCore.step(S, [i, null])
++		S.out.fx.clear()
++		S.out.feed.clear()
++		if S.game.ko != null and koAt < 0:
++			koAt = t
++		if koAt >= 0 and S.game.koT > 3.0:
++			result = 1 if S.game.ko == P else 0
++			break
++		if DirEnding.noContest(S):
++			result = -1
++			break
++	var n: int = S.tick
++	SimCore.dispose(S)
++	return [result, n]
++
++
 +func _line(what: String, r: Dictionary) -> void:
 +	print("      %s: hold from live tick %d (gap %.2f bh at +%d); closes in from +%d; catch at +%d, clinch %s (lead %d); release at +%d (charge %.2f); dodge at +%d (ki %.0f); miss %s, punished %s, landed %s; guarded %s, gave ground %s; thrown %s (damage %.1f, noRegrab left %d)" % [what, int(r.oh), float(r.gapReact), int(r.react), int(r.closed), int(r.catchLive), str(r.clinch), int(r.lead), int(r.release), float(r.relCharge), int(r.dodge), float(r.kiPaid), r.miss if r.miss != "" else "none", str(r.punish), str(r.landed), str(r.guarded), str(r.gave), r.thrown if r.thrown != "" else "no", float(r.throwDmg), int(r.noGrabAfter)])
 +
@@ -439,6 +491,18 @@ index 0000000..ce0ce10
 +		shares.append("%s %.3f (data %.2f)" % [lvl, float(n) / 2000.0, want])
 +		good = good and absf(float(n) / 2000.0 - want) <= 0.03 and want > 0.0
 +	ok(good, "one draw a hold, keyed by its start: of 2,000 holds, %s" % ", ".join(shares))
++	var pads: Array = []
++	var padWins: int = 0
++	var cpuWins: int = 0
++	for sd in range(1, PAD_SEEDS + 1):
++		var m: Array = _padMatch(sd)
++		pads.append("%d: %s in %d ticks" % [sd, "the pad" if int(m[0]) == 0 else ("the computer" if int(m[0]) == 1 else ("no contest" if int(m[0]) == -1 else "the cap")), int(m[1])])
++		if int(m[0]) == 0:
++			padWins += 1
++		elif int(m[0]) == 1:
++			cpuWins += 1
++	print("      the charge-only pad at Medium (holdAnswer %.2f), seeds 1 to %d: %s" % [float(DirAI.skill().levels.medium.brawl.get("holdAnswer", 0.0)), PAD_SEEDS, "; ".join(pads)])
++	ok(cpuWins >= 1 and padWins < PAD_SEEDS, "the exploit is closed: the charge-only pad doesn't win every Medium match (the pad %d, the computer %d, of %d)" % [padWins, cpuWins, PAD_SEEDS])
 +	var z: Dictionary = _run(60, {"answer": 0.0, "quiet": true})
 +	_line("negative control", z)
 +	ok(int(z.catchLive) < 0 and int(z.dodge) < 0 and int(z.closed) < 0 and float(z.relCharge) >= 1.0, "negative control: holdAnswer 0 and the old answers at 0: nothing answers the hold, and the charge reaches its release at full")

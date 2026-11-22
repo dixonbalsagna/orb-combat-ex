@@ -16,6 +16,7 @@ One page a reading: what it measures, the tool and command, the tree and data, t
 | cityHold city read (Encounter's fix for the ping-pong) | thrown back 44.1% to 2.0% of building hits; freezes 92.9% to 27.5%; depth home in the air 76.0% to 4.8%; no cost in buildings fallen or match length; nobody lost | `cityhold-city-read.md` | `runs/gw1a-s423/cityhold-city-table.md` |
 | A-AI-10, the computer's perfect block against charged heavies | Easy 4.3%, Medium 15.1%, Hard 28.4% (Wilson 95%: 3.5 to 5.2, 13.8 to 16.6, 26.7 to 30.2); a charge-only pad wins 60 of 60 at Easy and Medium, 14 of 60 at Hard | `a-ai-10-perfect-block.md` | `runs/6a30b4c9/a-ai-10-perfect-block-*` |
 | X-06, Encounter's Medium candidate, five pads | candidate on: strike 0 of 40, masher 15.0%, beams 0 of 40, charge 100% (exploit open), kit 32.5% (0% without it) | `x06-medium-candidate.md` | `runs/17a8dd6c/` |
+| X-06 final read, five pads at three levels (main b04de5d5 + Encounter's three x06-bands diffs, 40 a cell) | kit Easy 80.0% / Medium 12.5% / Hard 0 of 40 (bands 60-80 / 35-55 / 10-30); **Medium charge pad 1 of 40 (2.5%, under the 20% floor)**; strike 0, masher 15.0%, beams 0 at Medium; Easy charge 95% (over 80) | `x06-final-read.md` | `runs/b04de5d5/x06-final-read-*` |
 | A-QA-03 and A-QA-07, the bug list | 52 of 52 accounted for, severities S1 to S4 | `a-qa-03-bug-list.md` | `qa/known-bugs.md` |
 
 Not yet run: X-04's forms probe (with Simulation and Encounter, through the EP), A-AI-10 (the computer's perfect-block rate against charged attacks), the planet-sizes batch.

@@ -1,3 +1,57 @@
+Every director check (45) and parity, two lanes, below normal, 2026-11-22, at holdAnswer 0.65 / 0.5 / 0.95. Tree: main 01367c97 + x06-medium.diff (ccea61aa) + x06-hold-answer.diff (78d52931) + x06-hold-answer-schema.diff (16d8e330); main's sim, data, schemas and qa/godot are unchanged to 7b69eafc.
+07:07:35 a_press_check exit 0: A PRESS: 0 check(s) failed
+07:07:49 arc_check exit 0: ARC: 0 check(s) failed
+07:08:21 arrive_check exit 0: ARRIVE: 0 check(s) failed
+07:14:14 bark_reads_check exit 0: bark_reads_check: passed
+07:14:21 beam_ai_check exit 0: BEAM AI: 0 check(s) failed
+07:14:28 beam_front_check exit 0: FRONT: 0 check(s) failed
+07:14:34 beam_move_check exit 0: BEAM MOVE: 0 check(s) failed
+07:14:38 carry_round_check exit 0: CARRY ROUND: 0 check(s) failed
+07:14:45 chase_tap_check exit 0: CHASE: 0 check(s) failed
+07:14:59 city_push_check exit 0: CITY PUSH: 0 check(s) failed
+07:15:11 driver_check exit 0: DRIVER: 0 check(s) failed
+07:15:22 ending_check exit 0: ENDING: 0 check(s) failed
+07:15:27 ending_team_check exit 0: ENDING TEAM: 0 check(s) failed
+07:15:32 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+07:15:39 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+07:16:11 floorlift_check exit 0: FLOORLIFT: 0 check(s) failed
+07:16:28 follow_check exit 0: FOLLOW: 0 check(s) failed
+07:16:34 full_send_check exit 0: FULL SEND: 0 check(s) failed
+07:18:39 hold_answer_check exit 0: HOLD ANSWER: 0 check(s) failed
+07:18:47 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+07:25:23 launch_cost_check exit 0: LAUNCH COST: 0 check(s) failed
+07:25:35 launch_cuts_check exit 0: LAUNCH CUTS: 0 check(s) failed
+07:25:35 lane A done
+07:40:38 loader_check exit 0: loader check passed
+07:40:46 location_check exit 0: LOCATION: 0 check(s) failed
+07:41:47 match_end_check exit 0: MATCH END: 0 check(s) failed
+07:41:52 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+07:41:57 outside_check exit 0: OUTSIDE: 0 check(s) failed
+07:42:02 pace_check exit 0: PACE: 0 check(s) failed
+07:42:08 phrase_check exit 0: PHRASE: 0 check(s) failed
+07:42:12 plane_check exit 0: PLANE: 0 check(s) failed
+07:42:17 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+07:42:22 press_decides_check exit 0: PRESS: 0 check(s) failed
+07:42:27 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+07:42:33 reads_check exit 0: reads_check: 16 of 16 passed
+07:42:37 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+07:42:42 relief_check exit 0: RELIEF: 0 check(s) failed
+07:43:31 sigvariants_check exit 0: sigvariants check passed
+07:43:39 stance_check exit 0: STANCE: 0 check(s) failed
+07:43:50 stick_check exit 0: STICK: 0 check(s) failed
+07:43:55 stick_lunge_check exit 0: STICK LUNGE: 0 check(s) failed
+07:44:00 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+07:44:05 sure_reach_check exit 0: sure_reach_check: passed
+07:44:45 swing_check exit 0: SWING: 0 check(s) failed
+07:46:00 swing_legal_check exit 0: SWING LEGAL: 0 check(s) failed
+07:46:20 walk_check exit 0: WALK: 0 check(s) failed
+07:51:53 parity exit 1: golden check FAILED
+07:51:53 lane B done
+FAIL  matches: default seed 1: first full-state difference by tick 5760 (checkpoint 48): 713e451c652d4b18:452d2449bfd36f21:6cd7f812d721ddfb vs golden aa77d619f2
+FAIL  human-input replays: replay seed 11: first full-state difference by tick 120 (checkpoint 1): 83166b481cb1d352:ca8557d637f2b5ae:60a14dd9061e616a vs golden 
+FAIL  planet worlds (golden): the planet match {"planet":7,"touch":3} seed 1: first full-state difference by tick 480 (checkpoint 4): aba6fd57dc0b7f07:1cea257fb
+
+Earlier runs, for the record:
 Every director check (45) and parity, two lanes, below normal, 2026-11-22. Tree: main 01367c97 + x06-medium.diff (ccea61aa) + x06-hold-answer.diff (187686f1) + x06-hold-answer-schema.diff (16d8e330); main's sim, data, schemas and qa/godot are unchanged to b04de5d5.
 04:29:18 a_press_check exit 0: A PRESS: 0 check(s) failed
 04:29:33 arc_check exit 0: ARC: 0 check(s) failed
