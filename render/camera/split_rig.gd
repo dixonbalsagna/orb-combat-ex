@@ -845,6 +845,8 @@ func _update_trigger(S: SimState) -> void:
 		var dwell: float = CamParams.SPLIT_DWELL + (CamParams.WIDE_HOLD if _sep_rate > 500.0 and r_now > floor_r else 0.0)
 		if r_now <= floor_r or CamParams.BODY_H * _mz / vh <= floor_r * 1.02:
 			dwell = 0.0   # (the one view drawn at its floor, the governor's zoom-out for speed included: holding can't zoom out any more)
+		if r_now < rs and _drawn_off(S):
+			dwell = 0.0   # (a fighter off the one view drawn: its zoom lags the aimed one, so the aimed picture can hold him while the screen doesn't)
 		var held: bool = nocut_hold and not out_of_frame and not knocked_apart and _no_cut(S)
 		if held and _below_t >= dwell and age_ok and guard_ok:
 			nocut_holds += 1
@@ -891,6 +893,21 @@ func _outside_one_view(S: SimState) -> bool:
 		var px: float = absf(SimWrap.sdx(_mx, f.x)) * _mz
 		var py: float = vh * CamParams.PLANE_Y - (f.y + CamParams.CHEST - _my) * _mz
 		if px > CamParams.FRAME_MARGIN * vw or py < 0.04 * vh or py > 0.96 * vh:
+			return true
+	return false
+
+
+## Whether a fighter is off the one view drawn last tick (the screen itself, not its edge margin): its zoom comes out at the comfort rate and lags the
+## aimed one, so a pair flying apart can leave a fighter off the screen while the aimed picture still holds him.
+func _drawn_off(S: SimState) -> bool:
+	if _cur == null or _cur.sep >= 0.5:
+		return false
+	for i in range(2):
+		if i == _brink_win:
+			continue
+		var f = S.fighters[i]
+		var dp: Vector2 = _cur.screen_pos(0, f.x, f.y + CamParams.CHEST, float(f.z))
+		if dp.x < 0.0 or dp.x > vw or dp.y < 0.0 or dp.y > vh:
 			return true
 	return false
 
