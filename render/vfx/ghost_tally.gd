@@ -21,6 +21,7 @@ const BODY_MAX: int = BUDGET    # the old name, kept for the tests
 var enforce: bool = true        # VFX's own whole-figure ghosts yield to the budget (the hub sets it; off, they draw as they always did and the tally only counts)
 var record: bool = false        # tools: keep the per-ghost detail of the worst tick (owner, source, age, opacity, offset)
 var after: Array = []           # [slot, ticks left, x, y, born tick]: Rendering's after-images alive
+var fx_src = null               # the reference fx view (SimFxView, the host's `fxv`; VfxHub.fx_view): its `parts` is the list ParticleView draws. Set, the after-images are READ from it, exact by construction; unset (a tool with no host), they are counted down here from the sim's `after` events
 var limb_now: Dictionary = {}   # limb id -> limb-ghosts it holds now
 var limb_total: int = 0
 var echoes_now: Array = [0, 0]  # per slot: tech echoes alive (limb-ghosts that are also whole wire figures)
@@ -99,7 +100,18 @@ static func away_of(S: SimState, slot: int, x: float, y: float) -> float:
 ## Once per consume(), after the blows of this tick's events are made (and the press's counter has run again).
 func step(S: SimState, events: Array, press: VfxPress, zip: VfxZip, frozen: bool, red: bool) -> void:
 	var life: int = after_ticks()
-	if not frozen:
+	if fx_src != null:
+		# Exact by construction (GW1b, Rendering's find): ParticleView draws the parts of type "after" whose age is under min(life, AFTER_LIFE), and the fx view ages them by dt in play and by dt * 0.1 in a hitstop, so a countdown
+		# held still here counted one more than was drawn on a freeze's last frames. Read the same list, in its order (oldest first, as the countdown's was).
+		after.clear()
+		for p in fx_src.parts:
+			if String(p.type) != "after":
+				continue
+			var shown_life: float = minf(float(p.life), RenderLook.AFTER_LIFE)
+			if float(p.age) >= shown_life:
+				continue
+			after.append([slot_of(S, p), maxi(1, int(ceil((shown_life - float(p.age)) / SimConst.DT - 0.001))), float(p.x), float(p.y), S.tick])
+	elif not frozen:
 		var i: int = 0
 		while i < after.size():
 			after[i][1] = int(after[i][1]) - 1

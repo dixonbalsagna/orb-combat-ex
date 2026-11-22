@@ -102,6 +102,7 @@ var other_fights_enabled: bool = VfxLook.OTHER_FIGHTS_DEFAULT or VfxStageFeed.pa
 		if v and calm_lock:
 			reduced_flashing = true
 var stage_feed := VfxStageFeed.new()
+var fx_view = null                # the host's reference fx view (SimFxView, `fxv`): the ghost tally reads Rendering's after-images from its `parts`, the list ParticleView draws (ghost_tally.gd); null in a tool with no host
 var host_pushes: bool = false     # the host calls consume_others each tick with the other fights' events (Rendering's host.other_events()): the only way the other fights' events reach their hubs
 var calm_lock: bool = true       # Reduce flashing is locked on while the other fights' effects are (RL-249 (6)). Only Tools' measurement run lifts it, to read the normal-mode register for Legal's clips; never a player's setting
 var flash_ch: int = 0            # the register's channel for this hub: 0 the screen's own fight, 1 and up an other fight (stage_feed.gd)
@@ -458,6 +459,7 @@ func _consume(S: SimState, events: Array) -> void:
 		else:
 			struggle.reset()
 		press.regrant()
+		ghosts.fx_src = fx_view
 		ghosts.step(S, events, press, zip, frozen, reduced_motion)
 	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled or stages_enabled:
 		debris.quality = quality

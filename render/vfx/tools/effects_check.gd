@@ -233,6 +233,7 @@ func _run() -> void:
 	_beam_front()
 	_other_fights()
 	_shared_register()
+	_ghost_from_parts()
 	_clash_wave()
 	_shot_from_outside()
 	_crack_heights()
@@ -7570,6 +7571,55 @@ func _shared_register() -> void:
 	_check(own_rows_on == own_rows_off and int(on["sum"]["own_total_refused"]) == 0 and on["hash"] == off["hash"], "with the other fight drawn, the own fight's asks are the same rows as without it (%d against %d), none refused by the sum, and the sim's hash is the same" % [own_rows_on, own_rows_off])
 	_check(bool(on["gate"]) and float(on["sum"]["worst_weight"]) <= VfxFlashRegistry.TOTAL_GATE + 1e-9 and other_rows > 0, "1,500 ticks of two computer fights: the sum over both stays under %.1f (worst %.2f), with %d rows from the other fight in the one register (%s)" % [VfxFlashRegistry.TOTAL_GATE, float(on["sum"]["worst_weight"]), other_rows, str(on["sum"]["by_channel"])])
 	_hard_cuts_and_forms()
+
+
+## The ghost tally reads Rendering's after-images from the fx view's own particle list when the host gives it one (GW1b, Rendering's find): in a hitstop the view ages its parts by dt * 0.1 and the old countdown held still, so on a freeze's
+## last frames it counted one that was no longer drawn.
+class FakeFxView:
+	var parts: Array = []
+
+
+func _ghost_from_parts() -> void:
+	print("the ghost tally reads the drawn list")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var life: float = RenderLook.AFTER_LIFE
+	var fx := FakeFxView.new()
+	var col: String = String(S.fighters[0].aura)
+	var x0: float = S.fighters[0].x + 60.0
+	var y0: float = S.fighters[0].y
+	# three after-images of his, the oldest one's age just past what is drawn (the freeze's last frame in Rendering's record: 0.0933 of 0.0917)
+	fx.parts = [{"type": "after", "col": col, "x": x0, "y": y0, "age": life + 0.0016, "life": 0.5}, {"type": "after", "col": col, "x": x0 + 20.0, "y": y0, "age": 0.5 * life, "life": 0.5}, {"type": "after", "col": col, "x": x0 + 40.0, "y": y0, "age": 0.2 * life, "life": 0.5}, {"type": "spark", "col": col, "x": x0, "y": y0, "age": 0.0, "life": 0.3}]
+	var h := VfxHub.new()
+	h.press_enabled = true      # the tally runs with the press styles (the played build's), as in the real matches
+	h.reset(S, 5)
+	h.fx_view = fx
+	_tick(S, h, [])
+	_check(h.ghosts.after_alive[0] == 2 and h.ghosts.after.size() == 2, "read from the drawn list: the one past its shown life and the spark are not counted (%d alive)" % int(h.ghosts.after_alive[0]))
+	# a freeze: the host's view ages by dt * 0.1 and the tally follows it (no countdown of its own)
+	var tk := SimState.FxEvent.new()
+	tk.type = "tick"
+	tk.dt = SimConst.DT
+	tk.frozen = true
+	for k in range(6):
+		for pt in fx.parts:
+			pt["age"] = float(pt["age"]) + SimConst.DT * 0.1
+		S.T += SimConst.DT
+		S.tick += 1
+		h.consume(S, [tk])
+	var alive_frozen: int = int(h.ghosts.after_alive[0])
+	_check(alive_frozen == 2, "through a six-tick freeze the tally keeps reading the list: 2 alive, none counted down (%d)" % alive_frozen)
+	# the drawn count is the tally's: ParticleView's rule on the same list
+	var drawn: int = 0
+	for pt in fx.parts:
+		if String(pt["type"]) == "after" and float(pt["age"]) < minf(float(pt["life"]), life):
+			drawn += 1
+	_check(drawn == int(h.ghosts.after_alive[0]), "the number alive in the tally is the number the view draws (%d, %d)" % [int(h.ghosts.after_alive[0]), drawn])
+	# no view given (a tool with no host): the old countdown, as it was
+	var h2 := VfxHub.new()
+	h2.reset(S, 5)
+	_check(h2.fx_view == null and h2.ghosts.fx_src == null, "with no host the hub has no view and the tally counts down as before")
+	SimCore.dispose(S)
 
 
 ## What Rendering and Camera ask the register in a word (docs/vfx/shared-register.md): `ask_form` (full, calm, later) for the other fight's drawn effects, and `ask_cut` for a hard cut that changes most of the screen (CD-04).
