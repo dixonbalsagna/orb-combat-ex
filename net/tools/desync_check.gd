@@ -4,7 +4,7 @@ extends SceneTree
 ##   - clean runs, every profile: no desync is reported, every checkpoint both peers confirmed equals the straight run's
 ##     digest at that tick, and the peers agreed on all but the last few checkpoints;
 ##   - injected divergence: one peer's state is changed once, at a tick that is not a checkpoint, by each of a set of
-##     injections (one RNG bit, one ulp of a fighter's x, a building's hp, a building's marks (its memory), a terrain column, the mood's casualty count,
+##     injections (one RNG bit, one ulp of a fighter's x, a building's hp, a building's marks (its memory), a building's floor damage, a terrain column, the mood's casualty count,
 ##     the director's cool-down). Both peers report a desync at the first checkpoint after it, with the last agreed
 ##     checkpoint the one before, the two digests crossed, and a report (NetDesync.report) whose field walk finds the
 ##     difference against the other peer and against the divergent peer's own replay, and none on the clean peer's
@@ -40,6 +40,7 @@ var INJECT: Dictionary = {
 	"fighter_x": func(S: SimState) -> void: S.fighters[1].x = S.fighters[1].x + absf(S.fighters[1].x) * 2.220446049250313e-16 + 5e-324,
 	"building_hp": func(S: SimState) -> void: _firstAlive(S).hp -= 1.0,
 	"building_marks": func(S: SimState) -> void: _firstAlive(S).marks += 1,   # building memory: SimHash had it, the digest now does too
+	"building_fdmg": func(S: SimState) -> void: _floorHit(_firstAlive(S)),   # floor damage: SimHash had it, the digest now does too
 	"terrain": func(S: SimState) -> void: S.deform[S.deform.size() / 3] += 0.001,
 	"mood": func(S: SimState) -> void: S.mood.casGiven += 1,
 	"director": func(S: SimState) -> void: S.dirS.cool += 1e-6,
@@ -66,6 +67,19 @@ var AI_INJECT: Dictionary = {
 var failures: int = 0
 var outDir: String = "user://desync"
 var aiFlags: Dictionary = {"p1": false, "p2": false}
+
+
+## One more point of damage on a building's lowest floor, written as the world writes floors: a new array (a snapshot shares the old one),
+## one value a floor.
+static func _floorHit(b) -> void:
+	var fd := PackedFloat32Array()
+	if b.fdmg.size() == int(b.floors):
+		fd = b.fdmg.duplicate()
+	else:
+		fd.resize(maxi(1, int(b.floors)))
+		fd.fill(0.0)
+	fd[0] += 1.0
+	b.fdmg = fd
 
 
 static func _firstAlive(S: SimState):
@@ -209,6 +223,17 @@ func _negative(seeds: Array, setup: Dictionary, ticks: int, every: int, delay: i
 			else:
 				missed += 1
 	NetDesync.marksBlind = false
+	NetDesync.fdmgBlind = true   # the digest without the buildings' floor damage, as it was: a floor-only divergence must pass it, and the check must say so
+	for seed in seeds:
+		var refF := _straight(seed, setup, ticks, every, delay)
+		for pname in profiles:
+			var rf := _run(seed, setup, ticks, every, delay, pname, refF, "building_fdmg", ticks / 3 + 7, "")
+			print("  %s floor-blind digest %-6s  %s" % ["caught" if rf.err != "" else "MISSED", pname, rf.err])
+			if rf.err != "":
+				caught += 1
+			else:
+				missed += 1
+	NetDesync.fdmgBlind = false
 	print("%s  negative control: %d break(s) caught, %d missed" % ["PASS" if missed == 0 and caught > 0 else "FAIL", caught, missed])
 	quit(0 if missed == 0 and caught > 0 else 1)
 

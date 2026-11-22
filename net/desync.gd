@@ -28,6 +28,7 @@ const WALK_SKIP: Array = ["out", "worldId"]
 
 static var aiBlind: bool = false   # tests only: the digest leaves out the AI's timers (desync_check's negative control)
 static var wordBlind: bool = false # tests only: the digest leaves out the intent's second word (word_check's negative control)
+static var fdmgBlind: bool = false    # tests only: the digest leaves out the buildings' floor damage, as before it was in it (desync_check's control)
 static var marksBlind: bool = false   # tests only: the digest leaves out the buildings' marks, as before they were in it (desync_check's control)
 static var swingBlind: bool = false   # tests only: the digest leaves out the line, the swing and the store (swing_check's negative control)
 
@@ -82,12 +83,14 @@ static func _digest(S: SimState) -> String:
 			v.append(S.bHp[i]); v.append(S.bFmask[i]); v.append(S.bPopAlive[i]); v.append(S.bFled[i]); v.append(S.bWear[i]); v.append(float(S.bAlive[i]))
 			if S.bMarks[i] != 0 and not marksBlind:   # building memory (World's marks), as SimHash reads it: only where it isn't 0, so a match without marks digests as before
 				v.append(float(i)); v.append(float(S.bMarks[i]))
+			_fdmg(v, i, S.bFdmg[i])
 	else:
 		for i in range(S.buildings.size()):
 			var b = S.buildings[i]
 			v.append(b.hp); v.append(b.fmask); v.append(b.popAlive); v.append(b.fled); v.append(b.wear); v.append(1.0 if b.alive else 0.0)
 			if b.marks != 0 and not marksBlind:
 				v.append(float(i)); v.append(float(b.marks))
+			_fdmg(v, i, b.fdmg)
 	v.append(S.trees.size())
 	if S.bound():
 		for i in range(S.trees.size()):
@@ -122,6 +125,16 @@ static func _digest(S: SimState) -> String:
 		if bytes.size() > 0:
 			md.update(bytes)
 	return md.finish().hex_encode()
+
+
+## A building's floor damage, as SimHash reads it (one value a floor, allocated on the first local hit): its index, the size and the values, only
+## where it isn't empty, so a match with none digests as before.
+static func _fdmg(v: PackedFloat64Array, i: int, fd: PackedFloat32Array) -> void:
+	if fd.is_empty() or fdmgBlind:
+		return
+	v.append(float(i)); v.append(float(fd.size()))
+	for x in fd:
+		v.append(x)
 
 
 static func _fields(v: PackedFloat64Array, md: HashingContext, o: Object, keys: Array) -> void:
