@@ -140,6 +140,7 @@ func _repeats(marks: int) -> int:
 
 
 func _run(model: bool) -> void:
+	WorldPin.launchTravelOld()   # GW1b: the staged send at a tower 3,000 units away was written for the launch travel 2.0 (now 1.5): memory only
 	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
 	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	var c: Dictionary = WorldBrunt.cfg()

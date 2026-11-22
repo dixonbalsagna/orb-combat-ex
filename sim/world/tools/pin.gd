@@ -42,6 +42,12 @@ static func shipped(power: bool = false) -> void:
 	DirLaunch.forceBiome = 0   # the planner does not read the ground (launch_biome.json biome.enabled)
 
 
+## Tests only (GW1b): the launch's travel as it was before GW1b's energy addendum (data/fight/power.json launchTravel 2.0, now 1.5). A check that stages a send at a tower 3,000 units away was written for it: at 1.5 the aim finds no plan and the check reads no hit at all. Memory only.
+static func launchTravelOld() -> void:
+	SimPower._ensure()
+	SimPower.launchTravel = 2.0
+
+
 ## Tests only (GW1b): a setup that names no planet plays the hand-made arena, as it did before the default world moved to the round planet (data/biomes/world.json mode). For a check that tests the arena or a default world.
 static func arena() -> void:
 	WorldDefault.setForTest("arena", false)

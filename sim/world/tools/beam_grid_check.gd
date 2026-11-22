@@ -49,6 +49,7 @@ func _duel(planet: int, touch: int, x: float, gap: float, off: bool, plays: bool
 	var a := SimIntent.new()
 	a.sig = true
 	a.stanceMask = 4
+	a.powerPress = true   # RT pressed on this tick: since stray-beams (A-COMBAT-11) RT + B is the signature only inside RT's window after its press, so the staged RT + B names the press (as beam_front_check does)
 	_step(a)
 	var guard: int = 0
 	while fireTick < 0 and guard < 400:

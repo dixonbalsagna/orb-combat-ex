@@ -48,6 +48,7 @@ func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
 
 
 func _init() -> void:
+	WorldPin.launchTravelOld()   # GW1b: the staged send at a tower 3,000 units away was written for the launch travel 2.0 (now 1.5): memory only
 	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now: no planet in a set-up plays planet 7); WorldPin sets it in memory
 	var c: Dictionary = WorldBrunt.cfg()
 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
