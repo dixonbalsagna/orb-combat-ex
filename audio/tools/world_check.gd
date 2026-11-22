@@ -83,6 +83,7 @@ func place(x: float, up: float = 5.0, vx: float = 0.0) -> void:
 
 
 func _run() -> void:
+	WorldPin.arena()   # GW1b: the staged spots below are the hand-made arena's biomes; the default world is the round planet now (data/biomes/world.json mode), so this check pins the arena in memory, as World's checks do
 	S = SimCore.createSim()
 	SimCore.newMatch(S, 4)
 	for x in range(0, int(SimConst.NC * SimConst.COL), int(SimConst.COL) * 8):
