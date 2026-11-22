@@ -464,6 +464,10 @@
       "schema": "biomes-lanes.schema.json"
     },
     {
+      "match": "data/biomes/world.json",
+      "schema": "biomes-world.schema.json"
+    },
+    {
       "match": "data/biomes/contact.json",
       "schema": "biomes-contact.schema.json"
     },

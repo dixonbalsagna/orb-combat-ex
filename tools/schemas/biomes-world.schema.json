@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-world",
+  "title": "biomes.world/1",
+  "description": "data/biomes/world.json: the world a match plays on when its setup names none (WorldDefault; docs/world/world-default.md). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore.",
+  "type": "object",
+  "required": ["schema", "_about", "mode", "fixed", "random"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "biomes.world/1" },
+    "_about": { "type": "string" },
+    "mode": { "enum": ["arena", "planet"], "description": "arena: no planet key plays the hand-made arena (as before GW1b); planet: it plays the round planet." },
+    "fixed": {
+      "type": "object",
+      "required": ["planet", "touch", "planetGen"],
+      "additionalProperties": false,
+      "description": "The planet of a newcomer's first match and of the tests.",
+      "properties": {
+        "planet": { "type": "integer", "minimum": 0 },
+        "touch": { "type": "integer", "minimum": 0 },
+        "planetGen": { "type": "integer", "minimum": 2, "maximum": 3 }
+      }
+    },
+    "random": {
+      "type": "object",
+      "required": ["enabled", "pool", "touches"],
+      "additionalProperties": false,
+      "description": "A quick match's planet, drawn from its own match seed.",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "pool": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 0 } },
+        "touches": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 0 } }
+      }
+    }
+  }
+}

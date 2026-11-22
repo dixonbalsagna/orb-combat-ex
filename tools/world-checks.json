@@ -14,6 +14,7 @@
     "street_axis_check",
     "water_warm_check", "water_read_check", "landmark_spare_check", "lot_reach_check", "relax_check", "node_warm_check",
     "wall_hold_check",
+    "world_default_check",
     "struggle_meet_check",
     "struggle_dir_check",
     "bystanders_check",
