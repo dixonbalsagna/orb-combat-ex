@@ -17,7 +17,7 @@ On the 44-line stack with gw1b-split-sweep: swing_places 33, split_vision 13, ch
 
 ## Owed
 
-cross_ko's handover: carry the outgoing pane's anchor ease through a handover to the next shot (the hold, extended), then drop the ceiling.
+None now: cross_ko's handover is fixed in `../gw1b-handover-ease/`, which takes the ceiling out again (the EP's word, 2026-11-21).
 
 ## gw1b-split-sweep's wide-hold fix: before and after, on one-view frames
 

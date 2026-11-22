@@ -1,0 +1,76 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index e8cebf4..c464d9b 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -845,6 +845,8 @@ func _update_trigger(S: SimState) -> void:
+ 		var dwell: float = CamParams.SPLIT_DWELL + (CamParams.WIDE_HOLD if _sep_rate > 500.0 and r_now > floor_r else 0.0)
+ 		if r_now <= floor_r or CamParams.BODY_H * _mz / vh <= floor_r * 1.02:
+ 			dwell = 0.0   # (the one view drawn at its floor, the governor's zoom-out for speed included: holding can't zoom out any more)
++		if r_now < rs and _drawn_off(S):
++			dwell = 0.0   # (a fighter off the one view drawn: its zoom lags the aimed one, so the aimed picture can hold him while the screen doesn't)
+ 		var held: bool = nocut_hold and not out_of_frame and not knocked_apart and _no_cut(S)
+ 		if held and _below_t >= dwell and age_ok and guard_ok:
+ 			nocut_holds += 1
+@@ -895,6 +897,21 @@ func _outside_one_view(S: SimState) -> bool:
+ 	return false
+ 
+ 
++## Whether a fighter is off the one view drawn last tick (the screen itself, not its edge margin): its zoom comes out at the comfort rate and lags the
++## aimed one, so a pair flying apart can leave a fighter off the screen while the aimed picture still holds him.
++func _drawn_off(S: SimState) -> bool:
++	if _cur == null or _cur.sep >= 0.5:
++		return false
++	for i in range(2):
++		if i == _brink_win:
++			continue
++		var f = S.fighters[i]
++		var dp: Vector2 = _cur.screen_pos(0, f.x, f.y + CamParams.CHEST, float(f.z))
++		if dp.x < 0.0 or dp.x > vw or dp.y < 0.0 or dp.y > vh:
++			return true
++	return false
++
++
+ func _human_slot(S: SimState) -> int:
+ 	var h: int = -1
+ 	for i in range(2):
+diff --git a/render/camera/tests/split_sweep.gd b/render/camera/tests/split_sweep.gd
+index b3c1322..a253b54 100644
+--- a/render/camera/tests/split_sweep.gd
++++ b/render/camera/tests/split_sweep.gd
+@@ -3242,7 +3242,9 @@ func _intro_resize_all() -> void:
+ 
+ func _intro_resize(sc: String, order: int, gap: int) -> void:
+ 	_begin("intro resize %s first %d gap %d" % [sc, order, gap])
++	WorldDefault.setForTest(String(WorldDefault.data().get("mode", "planet")), false)   # a plain match with an intro: it plays the data's default world (the planet since GW1b)
+ 	SimCore.newMatch(_S, 3, {"p1": true, "p2": true}, {"intro": {"play": true, "scenario": sc, "order": order, "gap": gap}})
++	WorldPin.arena()   # (the staged rows after it play the arena again)
+ 	_rig.reset(_S, vw, vh)
+ 	_watch_first()
+ 	_S.dt = SplitRig.DT
+@@ -3415,9 +3417,14 @@ func _crossing_start(stare: int) -> void:
+ 
+ ## The default opening (the setup's default is "skip": both fighters already on their craters, 900 units apart): the first
+ ## frames frame them both well.
++const OPENING_PLANET_CEIL: float = 0.046   # the default opening's smallest size on the planet, an owned ceiling (above)
++
++
+ func _opening_default() -> void:
+ 	_begin("opening default")
++	WorldDefault.setForTest(String(WorldDefault.data().get("mode", "planet")), false)   # a plain match: it plays the data's default world (the planet since GW1b)
+ 	SimCore.newMatch(_S, 3, {"p1": true, "p2": true})
++	WorldPin.arena()   # (the staged rows after it play the arena again)
+ 	_rig.reset(_S, vw, vh)
+ 	_watch_first()
+ 	_S.dt = SplitRig.DT
+@@ -3443,7 +3450,10 @@ func _opening_default() -> void:
+ 	_check(not split_seen, "opening default: the layout was not one view")
+ 	_check(worst_margin >= 0.08, "opening default: a fighter within %.3f of the screen edge" % worst_margin)
+ 	# 0.09 until B0 (the sim's opening now has one fighter 300 units up at 2.5 s, 250 above the other); the camera floor is 0.032.
+-	_check(min_size >= 0.075, "opening default: a fighter only %.3f of the screen height" % min_size)
++	# An owned ceiling (GW1b, Camera, decide by 2026-11-28; docs/camera/pending/gw1b-split-sweep/README.md): on the planet the AI's first dash apart comes at
++	# about 2.8 s, and the one view widens for it to 0.047 before the split opens. Before it the opening holds 0.087 to 0.118. Holding 0.075 through
++	# that dash needs the split to open above Orb's split line (R_SPLIT 0.055), so it's Orb's number, not the camera's. It may only rise.
++	_check(min_size >= minf(0.075, OPENING_PLANET_CEIL), "opening default: a fighter only %.3f of the screen height" % min_size)
+ 	stats["opening default"] = "one view, edge margin %.3f of the width, smallest %.3f of the height" % [worst_margin, min_size]
+ 	SimCore.dispose(_S)
+ 	_S = null
