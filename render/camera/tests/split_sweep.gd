@@ -115,6 +115,7 @@ var trace_t1: float = 0.0
 
 
 func _initialize() -> void:
+	WorldPin.arena()   # GW1b: the staged rows play the hand-made arena they were built on (data/biomes/world.json mode is planet now); the real matches play the planet (_real_match)
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--seeds="):
 			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
@@ -4566,7 +4567,9 @@ func _real_match(seed: int, human: int = -1, pitch: float = 0.0, ticks: int = -1
 		return   # --only= names a scenario row; the real matches (minutes each) run for --only=real... and for a full run
 	var limit: int = ticks if ticks > 0 else match_ticks
 	_begin("real match %d%s%s%s%s" % [seed, (" human %d" % human) if human >= 0 else "", (" pitch %d" % int(pitch)) if pitch > 0.0 else "", " full" if ticks > 0 else "", (" (rig sees slot %d as the human)" % rig_human if rig_human < 2 else " (rig sees two humans)") if rig_human >= 0 else ""])
+	WorldDefault.setForTest(String(WorldDefault.data().get("mode", "planet")), false)   # a real match plays the data's default world (the planet since GW1b): Orb's game
 	SimCore.newMatch(_S, seed, {"p1": human != 0, "p2": human != 1}, setup)
+	WorldPin.arena()   # (and the staged rows after it play the arena again)
 	_rig.pitch_deg = pitch
 	_rig.reset(_S, vw, vh)
 	_watch_first()

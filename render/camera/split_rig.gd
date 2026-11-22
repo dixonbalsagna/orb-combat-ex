@@ -843,8 +843,8 @@ func _update_trigger(S: SimState) -> void:
 		# It runs only between the split line and the floor: below the floor the shared view cannot zoom out any more.
 		var floor_r: float = maxf(CamParams.R_FLOOR, CamParams.MIN_PX / vh)
 		var dwell: float = CamParams.SPLIT_DWELL + (CamParams.WIDE_HOLD if _sep_rate > 500.0 and r_now > floor_r else 0.0)
-		if r_now <= floor_r:
-			dwell = 0.0
+		if r_now <= floor_r or CamParams.BODY_H * _mz / vh <= floor_r * 1.02:
+			dwell = 0.0   # (the one view drawn at its floor, the governor's zoom-out for speed included: holding can't zoom out any more)
 		var held: bool = nocut_hold and not out_of_frame and not knocked_apart and _no_cut(S)
 		if held and _below_t >= dwell and age_ok and guard_ok:
 			nocut_holds += 1
