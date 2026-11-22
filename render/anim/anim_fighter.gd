@@ -155,6 +155,9 @@ var _gl_ld_t0: float = -10.0           # the landing's start, weight, surface ro
 var _gl_ld_p: float = 0.0
 var _gl_ld_row: String = "soil"
 var _gl_ld_dir: float = 0.0
+var _gl_ld_ticks: float = -1.0         # the landing's own length in ticks, or a step-up's (-1: the landing row's)
+var _gl_prev_y: float = 0.0             # his height and place as the last solve read them (the step-up reads a floor's lift from them; nothing is written)
+var _gl_prev_x: float = 0.0
 var _gl_surface_override: String = ""
 var _lo_act: float = 0.0               # flight locomotion: how far it is on (it stands aside while he is busy), eased
 var _lo_have: bool = false
@@ -967,8 +970,23 @@ func _ground_layer(S: SimState, f, dt: float) -> void:
 			_gl_ld_p = clampf(-_gl_prev_vy / float(LD.get("ref_vy", 1400.0)), 0.12, 1.0)
 			_gl_ld_row = surf_key
 			_gl_ld_dir = signf(vf) if absf(vf) > 40.0 else 0.0
+			_gl_ld_ticks = -1.0
+		elif _gl_grounded and grounded and bool(G.get("step_up", {}).get("enabled", false)):
+			# the step-up (Game Design, docs/design/buildings.md 2026-11-20; World's floor-rise): the floor lifted him by more than `min_bh` body heights since the last solve while he stayed on it (a bank under a rising lake floor), so the
+			# sim moved him up in one tick. The view plays the landing crouch's opening frames, `ticks` of them; the body is never moved down into the bank (nothing is ever drawn inside it). A hop, a fall or a jump of place is not a lift.
+			var SU: Dictionary = G.step_up
+			var lift: float = f.y - _gl_prev_y
+			if lift > float(SU.get("min_bh", 0.5)) * float(SU.get("bh", 75.0)) and absf(SimWrap.sdx(_gl_prev_x, f.x)) <= float(SU.get("max_move", 200.0)) and vy < float(TO.get("min_vy", 150.0)):
+				_gl_ld_t0 = T
+				_gl_ld_p = clampf(lift / maxf(float(SU.get("bh", 75.0)) * float(SU.get("ref_bh", 2.0)), 1.0), float(SU.get("p_min", 0.5)), 1.0)
+				_gl_ld_row = surf_key
+				_gl_ld_dir = 0.0
+				_gl_ld_ticks = float(SU.get("ticks", 12))
+				debug["step_ups"] = int(debug.get("step_ups", 0)) + 1
 	_gl_grounded = grounded
 	_gl_prev_vy = vy
+	_gl_prev_y = f.y
+	_gl_prev_x = f.x
 	_gl_have = true
 	var calm: float = 0.5 if RenderAnim.reduced_motion else 1.0
 	var a: float = _gl_act * calm
@@ -1015,9 +1033,10 @@ func _ground_layer(S: SimState, f, dt: float) -> void:
 	# the landing: the hips sink by how fast he arrived, the knees flex, he settles; by surface
 	var LD2: Dictionary = G.land
 	var LR: Dictionary = G.get("surfaces", {}).get(_gl_ld_row, {})
-	var lt: float = (T - _gl_ld_t0) / (maxf(float(LD2.get("ticks", 18)) * float(LR.get("ticks", 1.0)), 6.0) * DT)
+	var ldn: float = maxf(_gl_ld_ticks if _gl_ld_ticks > 0.0 else float(LD2.get("ticks", 18)) * float(LR.get("ticks", 1.0)), 6.0)
+	var lt: float = (T - _gl_ld_t0) / (ldn * DT)
 	if _gl_ld_t0 > -5.0 and lt < 1.0:
-		var lr: float = minf(6.0 / maxf(float(LD2.get("ticks", 18)) * float(LR.get("ticks", 1.0)), 6.0), 0.5)   # in over 6 ticks at the least
+		var lr: float = minf(6.0 / ldn, 0.5)   # in over 6 ticks at the least
 		var env: float = smoothstep(0.0, lr, lt) * (1.0 - smoothstep(lr, 1.0, lt))
 		var sk2: Array = LD2.get("sink", [3.0, 9.5])
 		var fl2: Array = LD2.get("flex", [0.2, 0.62])

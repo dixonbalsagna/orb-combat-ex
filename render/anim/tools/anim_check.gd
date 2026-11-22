@@ -4303,6 +4303,131 @@ func _gl_run(who: String, course: Array, ticks: int, off: bool, surface: String)
 	return res
 
 
+## The step-up (docs/animation/step-up.md; Game Design, docs/design/buildings.md 2026-11-20): when the floor lifts a grounded fighter by more than half a body height between two solves (World's floor-rise: the sim moves him up in one tick,
+## uncapped), the body plays the landing crouch's opening frames, read from the sim's height and never written to it. The bank is raised under him by hand here (the terrain's deform, and his height set to the new floor, as the sim's
+## floor-rise does in one tick: the test's own writes), the body solved on the real rig.
+## Rows, both fighters: a lift of 0.9 body heights crouches the pelvis by the landing's sink and lets go inside 14 ticks, without a pop; a lift of 0.3 does nothing; a jump of place (400 sideways) does nothing; a rise from the air
+## does nothing; a lift with the row off does nothing; nothing is NaN or past a joint limit; the body is never moved down (the root offset's height stays 0).
+## A flat piece of dry land for the step-up rows: the first place whose ground, 160 and 320 units either side, is within 4 units of its own and well over the sea (a bank raised on it is a floor of its own, not under water).
+func _step_site(S: SimState) -> float:
+	for c in range(SimConst.NC):
+		var x: float = float(c) * SimConst.COL
+		var g: float = WorldTerrain.groundY(S, x)
+		if g < 30.0:
+			continue
+		var flat := true
+		for d in [-320.0, -160.0, 160.0, 320.0, 480.0]:
+			if absf(WorldTerrain.groundY(S, x + float(d)) - g) > 4.0:
+				flat = false
+				break
+		if flat:
+			return x
+	return -1.0
+
+
+func _step_run(who: String, lift: float, dx: float, in_air: bool, row_on: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	var site: float = _step_site(S)
+	if site < 0.0:
+		return {"nan": 0, "viol": 0, "pel": [], "root_y": 0.0, "step_ups": 0, "nosite": true}
+	f0.x = site
+	f1.x = site + 900.0
+	var g0: float = WorldWater.floorAt(S, f0.x, f0.z)
+	f0.y = g0 + (40.0 if in_air else 0.0)
+	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
+	f0.state = "free"
+	f1.state = "free"
+	f0.face = 1.0
+	f0.vx = 0.0
+	f0.vy = 0.0
+	var su: Dictionary = AnimData.ground_motion.get("step_up", {})
+	var was_on: bool = bool(su.get("enabled", false))
+	su["enabled"] = row_on
+	var res := {"nan": 0, "viol": 0, "pel": [], "root_y": 0.0, "step_ups": 0}
+	for k in range(60):
+		S.tick = 9700 + k
+		S.T = 970.0 + float(k) / 60.0
+		if k == 30:
+			# the floor rises under (or ahead of) him by `lift` in a bank 41 columns wide, and the sim, as World's floor-rise does, puts him on the new floor in the same tick
+			var cc: int = int(SimWrap.wrap(f0.x + dx) / SimConst.COL)
+			for c in range(cc - 20, cc + 21):
+				S.deform[(c + SimConst.NC) % SimConst.NC] += lift
+			f0.x += dx
+			f0.y = WorldWater.floorAt(S, f0.x, f0.z)
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		RenderAnim.debug_checks = false
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		(res.pel as Array).append(a0.socket("pelvis").y)
+		res.root_y = minf(float(res.root_y), a0.root_off.y)
+		res.step_ups = int(a0.debug.get("step_ups", 0))
+	su["enabled"] = was_on
+	return res
+
+
+func _test_step_up() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var on: Dictionary = _step_run(who, 0.9 * 75.0, 0.0, false, true)
+		if on.has("nosite"):
+			bad.append("no flat dry land to stage the step-up on")
+			break
+		# the pelvis against the same staging with no lift at all (it breathes a little by itself): positive is the crouch
+		var calm: Dictionary = _step_run(who, 0.0, 0.0, false, true)
+		var crouch: float = 0.0
+		var last: int = 29
+		var step: float = 0.0
+		for k in range(30, 60):
+			var dev: float = float((calm.pel as Array)[k]) - float((on.pel as Array)[k])
+			crouch = maxf(crouch, dev)
+			if absf(dev) > 0.3:
+				last = k
+			step = maxf(step, absf(float((on.pel as Array)[k]) - float((on.pel as Array)[k - 1]) - (float((calm.pel as Array)[k]) - float((calm.pel as Array)[k - 1]))))
+		seen.append("%s crouch %.1f over %d ticks, step %.2f" % [who.substr(0, 1), crouch, last - 29, step])
+		if int(on.nan) > 0 or int(on.viol) > 0:
+			bad.append("%s: NaN %d, joint past a limit %d" % [who, int(on.nan), int(on.viol)])
+		if crouch < 2.0 or crouch > 9.0:
+			bad.append("%s: a lift of 0.9 body heights crouches the pelvis %.2f units (2 to 9 wanted)" % [who, crouch])
+		if last - 29 > 14:
+			bad.append("%s: the crouch lasts %d ticks (14 at most)" % [who, last - 29])
+		if step > 3.2:
+			bad.append("%s: the pelvis moves %.2f units in a solve over its own (3.2 at most: the idle body solves on twos)" % [who, step])
+		if float(on.root_y) < -0.001:
+			bad.append("%s: the body was moved down by %.2f (never into the bank)" % [who, float(on.root_y)])
+		if int(on.step_ups) != 1:
+			bad.append("%s: %d step-ups for one lift" % [who, int(on.step_ups)])
+		# each of these against the same staging with no lift
+		for c in [["a lift of 0.3 body heights", 0.3 * 75.0, 0.0, false, true], ["a jump of place (400 sideways)", 0.9 * 75.0, 400.0, false, true], ["a rise from the air", 0.9 * 75.0, 0.0, true, true], ["the row off", 0.9 * 75.0, 0.0, false, false]]:
+			var off: Dictionary = _step_run(who, float(c[1]), float(c[2]), bool(c[3]), bool(c[4]))
+			var ref: Dictionary = _step_run(who, 0.0, float(c[2]), bool(c[3]), true)
+			var dm: float = 0.0
+			for k in range(30, 60):
+				dm = maxf(dm, absf(float((off.pel as Array)[k]) - float((ref.pel as Array)[k])))
+			if dm > 0.05 or int(off.step_ups) != 0:
+				bad.append("%s: %s moved the pelvis %.2f (%d step-ups)" % [who, String(c[0]), dm, int(off.step_ups)])
+	_expect(bad.is_empty(), "step-up: %s" % str(bad))
+	print("step-up: %d problems; %s" % [bad.size(), "; ".join(seen)])
+
+
 func _test_ground_motion() -> void:
 	AnimData.load_every_wave()
 	var bad: Array = []
@@ -7892,6 +8017,7 @@ func _run() -> void:
 	_test_heavy_arm()
 	await _test_ragdoll()
 	_test_slope()
+	_test_step_up()
 	_test_hits()
 	_test_weight_aim()
 	_test_defender()

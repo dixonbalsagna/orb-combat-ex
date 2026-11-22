@@ -5,6 +5,7 @@
   "gait": {"min_speed": 40.0, "full_speed": 130.0, "run_speed": 520.0, "max_speed": 900.0, "stride": 64.0, "thigh": [0.12, 0.46], "knee": [0.4, 1.0], "bob": [0.5, 1.7], "twist": [0.02, 0.07], "lean_deg": 2.5},
   "takeoff": {"min_vy": 150.0, "ticks": 12, "kick": 0.32, "stretch": 0.18, "lift": 1.6},
   "land": {"min_vy": 140.0, "ref_vy": 1400.0, "ticks": 18, "sink": [2.4, 6.2], "flex": [0.2, 0.62], "knee": 1.15},
+  "step_up": {"enabled": true, "min_bh": 0.5, "bh": 75.0, "max_move": 200.0, "ref_bh": 2.0, "p_min": 0.5, "ticks": 12, "_about": "The step-up (docs/animation/step-up.md; Game Design, docs/design/buildings.md 2026-11-20): a grounded fighter whose floor lifted him by more than min_bh body heights (bh units each) between two solves, moving at most max_move units sideways, plays the landing crouch's opening frames over `ticks` (in over 6, out over 6; the landing's sink and flex, at a strength of the lift over ref_bh body heights, never under p_min). Render only: the lift is read from the sim's height, nothing is written."},
   "surfaces": {
     "soil": {"sink": 1.0, "ticks": 1.0, "slide": 0.0, "stumble": 0.0, "lift": 1.0, "amp": 1.0},
     "paving": {"sink": 0.8, "ticks": 0.8, "slide": 0.0, "stumble": 0.0, "lift": 1.0, "amp": 1.05},
