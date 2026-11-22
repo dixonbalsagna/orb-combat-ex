@@ -120,7 +120,8 @@ func finish() -> Dictionary:
 ## setup and of the AI flags (the state the match was started in), the ticks so far, empty lists, and the build that made
 ## it when this build has a stamp (A-NET-05). Nothing about the match's play is in it yet.
 static func header(seed: int, setup: Dictionary, ai: Dictionary, ticks: int = 0) -> Dictionary:
-	var rp := {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(setup), "seed": seed, "setup": setup.duplicate(true),
+	var su: Dictionary = WorldDefault.apply(setup, seed, true)   # the world the match plays (A-WORLD-01, as SimCore.beginMatch applies it): a replay names its planet
+	var rp := {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(su), "seed": seed, "setup": su.duplicate(true),
 		"ai": ai.duplicate(), "ticks": ticks, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
 	if buildId() != "":
 		rp["build"] = buildId()   # a tree with no stamp writes nothing, so its replays are as they were
@@ -237,6 +238,7 @@ static func play(rp: Dictionary, home = null) -> Dictionary:
 ## setup is the match's: the fighters its slots name are folded in, one hash each, and nobody else; its planet's data,
 ## when it names a planet.
 static func dataHash(setup: Dictionary = {}) -> String:
+	setup = WorldDefault.apply(setup, 0, true)   # a setup that names no planet is hashed as the world it plays (the fixed planet: it never draws), so the header and the LAN handshake fold its data; in arena mode, as given
 	var h := SimHash.Hasher.new()
 	h.text(DirData.dataHash())
 	h.text(SimMood.dataHash())

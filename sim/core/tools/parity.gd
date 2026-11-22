@@ -113,6 +113,7 @@ func _init() -> void:
 	check("the intro phase (golden)", "" if SimGolden.introHash() == g.get("intro", "") else "differs")
 	check("composed intros (golden)", "" if SimGolden.introComposedHash() == g.get("introComposed", "") else "differs")
 	check("replay module", _replayModule())
+	check("a replay of the default world names its planet", _replayWorld())
 	var tm: int = Time.get_ticks_usec()
 	check("matches", _matches(g))
 	check("human-input replays", _replays(g))
@@ -3580,6 +3581,33 @@ func _replayBuild(rp: Dictionary, ai: Dictionary) -> String:
 	bd.data = "0"
 	if SimReplay.refusal(bd, home) != "data":
 		return "build: refusal does not name other data"
+	return ""
+
+
+## A-WORLD-01 (World's default world, data/biomes/world.json): with the mode on planet, a match whose setup names no planet
+## plays the fixed planet; its replay's header names that planet, its data hash is the planet's (not the arena's), and the
+## replay plays back after the mode is put back to the arena. As shipped (the arena) the header and hash are as given.
+func _replayWorld() -> String:
+	var su := {"intro": false}
+	WorldDefault.apply(su, 1, true)   # its data loaded before the mode is set below
+	var m0 = WorldDefault.K_MODE
+	if m0 == "arena" and (SimReplay.header(1, su, {}).setup != su or SimReplay.dataHash(su) != SimReplay.dataHash({"intro": false, "world": "arena"})):
+		return "the arena mode: a header or hash moved"
+	var h0: String = SimReplay.dataHash({"intro": false, "world": "arena"})
+	WorldDefault.K_MODE = "planet"
+	var hp: String = SimReplay.dataHash(su)
+	var S := SimCore.createSim()
+	var rec := SimReplay.recorder(S, 1, {"p1": true, "p2": true}, su)
+	for t in range(30):
+		rec.step([null, null])
+	var rp: Dictionary = rec.finish()
+	SimCore.dispose(S)
+	WorldDefault.K_MODE = m0
+	if not rp.setup.has("planet") or String(rp.data) != hp or hp == h0:
+		return "the planet mode: the header's setup %s, its hash %s, the planet's %s, the arena's %s (want the planet named, its hash)" % [str(rp.setup), str(rp.data).substr(0, 12), hp.substr(0, 12), h0.substr(0, 12)]
+	var r: Dictionary = SimReplay.play(rp)
+	if not r.ok:
+		return "the default world's replay, played with the mode back on %s: %s at tick %d" % [str(m0), r.reason, int(r.firstBadTick)]
 	return ""
 
 
