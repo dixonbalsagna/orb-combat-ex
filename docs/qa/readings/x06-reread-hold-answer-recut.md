@@ -24,3 +24,26 @@
 **Reading.** The 0.5 at Medium opens the charge pad again (2.5% to 50.0%, ceiling met with room) and the 0.65 at Easy brings the charge pad under 80% (95% to 57.5%), but **the Medium kit did not recover: 10.0%, against 32.5% with the candidate alone (17a8dd6c) and 12.5% at 0.8.** The kit at Medium is not moved by the hold-answer chance in this range; something else in the hold answer or the re-cut sits on it. Medium full charges (two chunks, 1,964): 155 met nothing, 532 perfect-blocked, 75 guarded, 1,202 hit (at the earlier 0.8 read: 183 and 177 of 813). The charge pad still wins half the matches by hitting 61% of its full charges, while the kit, which charges as one of five things, loses 36 of 40.
 
 **Not a verdict.** 40 a cell; QA tuned nothing. Records: `docs/qa/runs/7b69eafc/x06-reread-table.md` and `x06-reread-lines.txt`.
+
+## Isolation of the Medium kit (2026-11-22, EP's order; same tree 7b69eafc, Medium, kit pad, 40 matches, seeds 1 to 40)
+
+| Tree | Kit won | Rate (Wilson 95%) | Data hash |
+| :--- | ---: | :--- | :--- |
+| (a) `x06-medium.diff` alone (re-cut ccea61aa; no hold answer) | 13 of 40 | **32.5%** (20.1 to 48.0) | d0fb306483a0ac6b |
+| (b) all three diffs, Medium `holdAnswer` 0 (scratch data edit) | 11 of 40 | **27.5%** (16.1 to 42.8) | 8a8ce675137c5697 |
+| All three diffs, Medium `holdAnswer` 0.5 (the read above) | 4 of 40 | 10.0% (4.0 to 23.1) | 16957372f8bae4c6 |
+
+The re-cut alone reproduces the 32.5% of 17a8dd6c. With the hold answer present at 0.5 the kit falls to 10.0%; with the answer's chance at 0 it is 27.5%. So **the hold answer itself takes the kit down, not the candidate and not the 0.5 versus 0.8 choice** (0.8 gave 12.5%). The difference between 27.5% and 10.0% is 17.5 points (Newcombe 0.1 to 33.9): borderline at 40 a cell.
+
+**The `noHuman` suspect: cleared.** `orbs_player.gd --pace` samples every tenth tick whether `DirPace` sees slot 0 as a person (no `ai`, an `input`), whether `paceMatch` is on, whether slot 0's recent gap reads (two or more attack presses in 3 seconds), and the gap `DirPace.gap` gives a computer drawn at 8 against him. Over 97,609 samples (a) and 97,124 (b): slot 0 a person in 100%, `paceMatch` on in 100%, the gap read in 98.4%, and the computer's mean gap 15.1 ticks (not 8, and not `noHuman`). The pad is a person to pace matching; Medium plays at the pad's pace, as Easy does. Records: `docs/qa/runs/7b69eafc/x06-isolation-lines.txt`.
+
+## Medium hold-answer chance 0.25 (2026-11-22, EP's order; scratch data edit on 7b69eafc, all three diffs, kit and charge pads, 40 each)
+
+| Medium `holdAnswer` | Kit | B charge only | Full charges the charge pad threw |
+| :--- | :--- | :--- | :--- |
+| 0 | 11 of 40, 27.5% (16.1 to 42.8) | not read | |
+| **0.25** | **7 of 40, 17.5%** (8.7 to 32.0) | **39 of 40, 97.5%** (87.1 to 99.6) | 2,239: 74 met nothing, 606 perfect-blocked, 64 guarded, 1,495 hit |
+| 0.5 | 4 of 40, 10.0% (4.0 to 23.1) | 20 of 40, 50.0% (35.2 to 64.8) | 1,964: 155 met nothing, 532 perfect-blocked, 75 guarded, 1,202 hit |
+| 0.8 (b04de5d5) | 5 of 40, 12.5% (5.5 to 26.1) | 1 of 40, 2.5% (0.4 to 12.9) | 813 |
+
+**The EP's test (kit at least 25% and the charge pad at most 55%): not met at 0.25.** The kit is 17.5% (under 25) and the charge pad 97.5% (the exploit is open again). The two trade against each other along this knob: the chance that holds the charge pad to 55% or under (0.5) leaves the kit at 10%, and the chance that lifts the kit (0 to 0.25) leaves the charge pad at 97% or so. No value of this one knob in 0, 0.25, 0.5, 0.8 passes both at 40 a cell. Records: `docs/qa/runs/7b69eafc/x06-isolation-lines.txt`.

@@ -17,6 +17,9 @@ var dbg: bool = false
 var pbres := {}   # kind -> {n, pb, guard, hit, none}; pbActor: perfect-block staggers by the actor staggered
 
 
+var pace: Dictionary = {"ticks": 0, "human": 0, "read": 0, "gapSum": 0, "gapN": 0, "asHuman": 0, "on": 0}   # --pace probe: does DirPace see slot 0 as a person, and what gap does it give a Medium computer against it (X-06 isolation)
+var pace_probe: bool = false
+
 func _init() -> void:
 	var pos: Array = []
 	var arm: String = "default"
@@ -45,6 +48,8 @@ func _init() -> void:
 			mode = a.substr(7)
 		elif a == "--debug":
 			dbg = true
+		elif a == "--pace":
+			pace_probe = true
 		else:
 			pos.append(a)
 	var n: int = int(pos[0]) if pos.size() > 0 else 10
@@ -125,7 +130,7 @@ func _init() -> void:
 	lens.sort()
 	var med: float = lens[lens.size() / 2] if lens.size() > 0 else 0.0
 	var out := {"arm": arm, "n": n, "done": done, "budgetStopped": stopped, "winsBySlot": wins, "draws": draws, "timeouts": timeouts, "beamsBySlot": beams, "beamSources": src, "checklist": chk_seen, "otherBeams": other_log, "flicksBySlot": flicks, "hitsBySlot": hits, "namesSlots": names, "solo": solo, "mode": mode, "perfectBlock": pbres, "beamEvery": every, "beamHold": hold,
-		"medianSec": snappedf(med, 0.1), "dataHash": str(SimReplay.dataHash({})), "matches": by_match}
+		"medianSec": snappedf(med, 0.1), "pace": pace, "dataHash": str(SimReplay.dataHash({})), "matches": by_match}
 	print("ORBS " + JSON.stringify(out))
 	quit()
 
@@ -289,6 +294,8 @@ func _step(S: SimState, t: int, st: Array, beams: Array, flicks: Array, hits: Ar
 		else:
 			hub.resume()
 	chk.feed(S, t, its)
+	if pace_probe and solo and t % 10 == 0:
+		_pace_sample(S)
 	for e in S.out.fx:
 		if e.type == "cue":
 			var who: int = int(e.actor)
@@ -326,6 +333,22 @@ func _step(S: SimState, t: int, st: Array, beams: Array, flicks: Array, hits: Ar
 	hub.on_events(S.out.fx)
 	S.out.fx.clear()
 	S.out.feed.clear()
+
+
+## --pace: every tenth tick, is slot 0 a person to DirPace (no ai, an input) and what tap gap does DirPace give a computer drawn at 8 against him; the ai slot (1) against a computer reads noHuman.
+func _pace_sample(S: SimState) -> void:
+	var f0 = S.fighters[0]
+	var bl: Dictionary = DirAI.lv().get("brawl", {})
+	pace.ticks += 1
+	if DirPace.on():
+		pace.on += 1
+	if f0.ai == null and f0.input != null:
+		pace.human += 1
+	var r: int = DirPace.recentGap(S, f0, float(bl.get("paceMatch", {}).get("windowSec", 3.0)))
+	if r >= 0:
+		pace.read += 1
+	pace.gapSum += DirPace.gap(S, f0, 8, bl)
+	pace.gapN += 1
 
 
 ## The perfect-block pairing (A-AI-10): each blow of slot 0 (a `blow` cue: text release is a charged heavy, share in e.x; light, medium or heavy is a plain blow) waits for what the computer did to it within its landing and 12 ticks: a perfect block (the cue stagger:perfect_block whose actor is slot 0: his blow was turned), a guard (damage of kind guard on the computer), a hit (any other damage by slot 0 on the computer) or nothing.
