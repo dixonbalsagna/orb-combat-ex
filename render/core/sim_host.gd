@@ -564,6 +564,7 @@ func take_players() -> void:
 	for s in hub.take_joins():
 		if S.fighters[s].ai != null:
 			toggle_ai(s)
+		hub._claim_release(s)   # the press that joined isn't a move: let it go, so the new player's first intent is empty (under the 9 November bands, A there was a taunt)
 	for s in hub.take_leaves():
 		if S.fighters[s].ai == null:
 			toggle_ai(s)
