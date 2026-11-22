@@ -1,7 +1,7 @@
 {
   "schema": "biomes.world/1",
   "_about": "The world a match plays on when its setup names none (A-WORLD-01, A-WORLD-14; docs/world/world-default.md; read by sim/world/default.gd, used by SimCore.beginMatch and the host's planet_part). mode: arena (a setup with no planet key plays the old hand-made arena: shipped until the golden window GW1b) or planet (it plays the round planet). fixed: the planet a newcomer's first match and the tests play (the planet Orb's build plays: planet 7, touch 3, generation 3). random: with enabled, a quick match plays a planet drawn from its own match seed out of pool (planet seeds that generate and play: world_default_check), landing at one of touches; its seed is in the setup, the replay and the report. An explicit planet key in a setup always wins; the key world: arena asks for the hand-made arena.",
-  "mode": "arena",
+  "mode": "planet",
   "fixed": { "planet": 7, "touch": 3, "planetGen": 3 },
   "random": { "enabled": false, "pool": [7, 12, 3, 13, 17], "touches": [1, 2, 3] }
 }
