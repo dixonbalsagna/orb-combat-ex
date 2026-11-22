@@ -4308,13 +4308,14 @@ func _fightData(g: Dictionary) -> String:
 ## with menace set, attacks PROTAGONIST through the director, and what PROTAGONIST took must differ (it played seeds until they needed
 ## replacing three times). composure.below is left out: it only matters while composure's cap is not 0. So, since Orb's decision 6
 ## (2026-11-13), are regen_penalty's and regen_bonus's caps: they only matter while their perPoint is not 0, and both are 0 in data.
+## And since Game Design's addendum (2026-11-14), anguish source 0's within, menace source 2's minBh and source 3's sizes: each
+## only matters while its source's amount is not 0, and every collateral feed's amount is 0 in data. Their amount rows stay.
 const WIRED: Array = [
 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 0, "perPoint"], 0.2, "kaiTick"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 1, "cap"], 0.3, "kaiHit"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 2, "cap"], 2.0, "kaiHit"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "decay", "rate"], 3.0, "kaiTick"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "amount"], 5.0, "aFell"],
-	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "within"], 10.0, "aWithin"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 1, "amount"], 5.0, "aFell"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 2, "amount"], 5.0, "aFell"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 3, "amount"], 5.0, "aFell"],
@@ -4326,9 +4327,7 @@ const WIRED: Array = [
 	["RIVAL/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "mFell"],
 	["RIVAL/meters.json", ["meters", "menace", "sources", 1, "amount"], 5.0, "mFell"],
 	["RIVAL/meters.json", ["meters", "menace", "sources", 2, "amount"], 5.0, "mCrater"],
-	["RIVAL/meters.json", ["meters", "menace", "sources", 2, "minBh"], 5.0, "mCrater"],
 	["RIVAL/meters.json", ["meters", "menace", "sources", 3, "amount"], 5.0, "mEmptied"],
-	["RIVAL/meters.json", ["meters", "menace", "sources", 3, "sizes"], [4.0, 5.0, 6.0], "mEmptied"],
 	["RIVAL/meters.json", ["meters", "menace", "sources", 4, "amount"], 5.0, "mTrauma"],
 	["RIVAL/meters.json", ["meters", "menace", "sources", 5, "amount"], 5.0, "mTrauma"],
 	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["fillPerSec"], 2.0, "ladderTick"],

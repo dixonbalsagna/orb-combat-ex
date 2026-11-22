@@ -33,10 +33,11 @@ func _numbers() -> void:
 		ok(near(SimPower.energy(f), row[3], 0.5), "energy: %.2f against %.1f" % [SimPower.energy(f), row[3]])
 		ok(near(SimPower.speed(f, 1.0), row[4], 25.0), "full send: %.0f against %.0f" % [SimPower.speed(f, 1.0), row[4]])
 		var far: float = SimPower.flatSpeed(S, f, 430.0 * f.spd * SimForms.speedMul(S, f) * 2.4, 1.0)
-		ok(near(far, row[5] * f.spd, 25.0), "flat out: %.0f against %.0f" % [far, row[5] * f.spd])
+		var wantFar: float = row[5] / 5000.0 * SimPower.flatOut * f.spd   # the table is written for a base of 5,000; the data's base scales it (3,500 since GW1b)
+		ok(near(far, wantFar, 25.0), "flat out: %.0f against %.0f" % [far, wantFar])
 	f.tier = 1.0
 	f.power = 0.0
-	ok(near(WorldSlide.launchTravel(1.0, 0.0), 2.0, 1.0e-6) and WorldSlide.launchTravel(0.0, 1.0) == 1.0, "along the line, twice; straight up, once")
+	ok(near(WorldSlide.launchTravel(1.0, 0.0), SimPower.launchTravel, 1.0e-6) and WorldSlide.launchTravel(0.0, 1.0) == 1.0, "along the line, the data's x%.2f; straight up, once" % SimPower.launchTravel)
 	for row in [["fullB", 2000.0], ["launcher", 1414.0], ["tap", 707.0], ["firstFlash", 1414.0], ["unlisted", 1000.0], ["templates.heavy_clash", 1414.0], ["templates.guard_break", 1414.0], ["templates.dodge", 1000.0], ["templates.charge_interrupt.heavy", 1414.0], ["knock", 707.0], ["beam.signature", 2000.0], ["beam.guarded", 1000.0], ["finisher.fixed", 1414.0], ["breakLaunch", 2000.0]]:
 		ok(near(SimPower.speed(f, SimPower.share(row[0])), row[1], 2.0), "%s at base: %.0f" % [row[0], SimPower.speed(f, SimPower.share(row[0]))])
 	ok(SimPower.templateShare("charge_interrupt", "light", 900.0) == 0.25 and SimPower.templateShare("charge_interrupt", "heavy", 1500.0) == 0.5, "a template's light and heavy rows")
@@ -90,7 +91,7 @@ func _flight() -> void:
 				close = maxf(close, sqrt(f.vx * f.vx + f.vy * f.vy))
 			got.append([far, close, SimPower.level(f), f.spd])
 			SimCore.dispose(S)
-		var want: float = 5000.0 * SimDetMath.pow(2.305, got[0][2]) * got[0][3]
+		var want: float = SimPower.flatOut * SimDetMath.pow(2.305, got[0][2]) * got[0][3]
 		print("flight tier %d: flat out %.0f (off %.0f), close %.0f (off %.0f)" % [tier, got[0][0], got[1][0], got[0][1], got[1][1]])
 		ok(near(got[0][0], want, want * 0.02), "tier %d: flat out %.0f against %.0f" % [tier, got[0][0], want])
 		ok(got[0][1] == got[1][1], "tier %d: the close dash doesn't change (%.1f, %.1f)" % [tier, got[0][1], got[1][1]])
@@ -219,14 +220,14 @@ func _dash() -> void:
 	var S0 := _dashAt(off, 300.0, 1.0, 0.0)
 	var closeOff: float = SimFighter.flightSpeed(S0, S0.fighters[0], true)
 	SimCore.dispose(S0)
-	ok(near(tops[0], 5000.0, 25.0) and tops[0] == tops[1] and tops[1] == tops[2] and tops[2] == tops[3], "the dash at 300, 1,500, 6,000 and 14,000 apart: %.0f, %.0f, %.0f, %.0f, his level's flat out" % tops)
+	ok(near(tops[0], SimPower.flatOut, 25.0) and tops[0] == tops[1] and tops[1] == tops[2] and tops[2] == tops[3], "the dash at 300, 1,500, 6,000 and 14,000 apart: %.0f, %.0f, %.0f, %.0f, his level's flat out" % tops)
 	ok(closeOff < 1500.0, "off: the close dash as it was at 300 apart (%.0f)" % closeOff)
 	var SM := _dashAt(on, 300.0, 4.0, 100.0)
 	var fm = SM.fighters[0]
 	var topMax: float = SimFighter.flightSpeed(SM, fm, true)
-	var wantMax: float = 5000.0 * SimDetMath.pow(2.305, SimPower.level(fm)) * fm.spd
+	var wantMax: float = SimPower.flatOut * SimDetMath.pow(2.305, SimPower.level(fm)) * fm.spd
 	SimCore.dispose(SM)
-	ok(near(topMax, wantMax, wantMax * 0.01) and topMax > 11000.0, "at the top, at 300 apart: %.0f (his level's flat out %.0f)" % [topMax, wantMax])
+	ok(near(topMax, wantMax, wantMax * 0.01) and topMax > 2.0 * SimPower.flatOut, "at the top, at 300 apart: %.0f (his level's flat out %.0f)" % [topMax, wantMax])
 	# the response is the kick's (instant and climb, kick.json; the builds play with it on): the first tick, up close
 	var onK: Dictionary = on.duplicate()
 	onK["kick"] = true
@@ -243,7 +244,8 @@ func _dash() -> void:
 	# play, with the arrival off and on (on, it eases him over the last 1.5 bh to the mark); printed with the kick off
 	for arr in [false, true]:
 		var arr0: bool = _arrive(arr)
-		for row in [[1000.0, 1.0, 0.0, 0.4], [3000.0, 1.0, 0.0, 0.8], [6000.0, 1.0, 0.0, 1.4], [6000.0, 4.0, 100.0, 0.75]]:
+		var cs: Dictionary = SimPower._d.get("dash", {}).get("closeSec", {})   # QA's targets: power.json dash.closeSec (Game Design's ruling (c), moved for 3,500 by flight-3500.md)
+		for row in [[1000.0, 1.0, 0.0, float(cs.get("1000", 0.45))], [3000.0, 1.0, 0.0, float(cs.get("3000", 1.0))], [6000.0, 1.0, 0.0, float(cs.get("6000", 1.9))], [6000.0, 4.0, 100.0, 0.9]]:   # at the top from 6,000: 0.9 s (flight-3500.md)
 			var got: Array = []
 			for su in [onK, offK, on, off]:
 				var SC := _dashAt(su, row[0], row[1], row[2])
@@ -327,7 +329,7 @@ func _slip() -> void:
 		print("slip: a tap of %d at 3,000 apart, his speed from the last held tick: %s (off, %d ticks after: %.0f)" % [k, ", ".join(vs), ez,r0[k + ez - 1][1]])
 		ok(r[k][1] > sp and firstCut < 0.5, "a tap of %d: the first tick after it is still above the slip (%.0f), and takes %.0f%% of the way: no snap" % [k, r[k][1], firstCut * 100.0])
 		ok(mono and r[k + ez - 2][1] > sp and r[k + ez - 1][1] <= sp + 1.0e-6, "a tap of %d: his speed falls to the slip's %.0f on the %dth tick after it, not before" % [k, sp, ez])
-		ok(r0[k + ez - 1][1] > 2.0 * sp, "off: a tap of %d is still at %.0f %d ticks after it" % [k, r0[k + ez - 1][1], ez])
+		ok(r0[k + ez - 1][1] - sp > (r[k - 1][1] - sp) / 3.0, "off: a tap of %d is still at %.0f %d ticks after it, a third of the way back to his last held %.0f or more" % [k, r0[k + ez - 1][1], ez, r[k - 1][1]])   # (it was twice the slip's speed, written for flat out 5,000)
 		ok(r[39][0] < r0[39][0], "a tap of %d carries him less with it on: %.2f bh against %.2f" % [k, r[39][0] / SimDepth.BH, r0[39][0] / SimDepth.BH])
 	ok(_slipRun(on if SimPower.slipOn_ else off, 3000.0, _held(2), 40) == _slipRun(none, 3000.0, _held(2), 40), "a match with no word takes the data's slip switch (%s)" % str(SimPower.slipOn_))
 	# held underTicks or longer: exactly as with it off

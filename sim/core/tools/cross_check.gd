@@ -520,7 +520,37 @@ func _outsideWorld() -> void:
 ## meter: menace (A is fight 0's first body with menace), anguish (the first with anguish), witness (the same, with forms
 ## on and his Witness at 50). Returns [what it did (hit points the building lost, or how far the ground went down), A's
 ## meter's change, casualties in the fight it met, menace gained by fight 1's bodies (across; 0 inside)].
+## Every collateral feed to the meters is 0 in data since Game Design's addendum to Orb's decision 6 (2026-11-14). These
+## rows read the shooter's meter from a building he brings down, so for their own runs he has the feeds main had before it
+## (menace: destroyed 0.8, emptied 1 by size 1, 2, 3; anguish: destroyed 0.6, emptied 0.5, failed to protect 1),
+## put back after.
+var _keptFeeds: Array = []
 func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:
+	var r: Array = _worldHit0(seed, across, what, meter)
+	if not _keptFeeds.is_empty():
+		var md = _keptFeeds[0]
+		md.menaceDestroyed = _keptFeeds[1]
+		md.menaceEmptied = _keptFeeds[2]
+		md.anguishDestroyedSelf = _keptFeeds[3]
+		md.anguishEmptied = _keptFeeds[4]
+		md.anguishFailed = _keptFeeds[5]
+		_keptFeeds = []
+	return r
+
+
+func _feeds(A) -> void:
+	var md = A.md
+	_keptFeeds = [md, md.menaceDestroyed, md.menaceEmptied.duplicate(), md.anguishDestroyedSelf, md.anguishEmptied, md.anguishFailed]
+	if A.hasMenace:
+		md.menaceDestroyed = 0.8
+		md.menaceEmptied = [1.0, 2.0, 3.0]
+	if A.hasAnguish:
+		md.anguishDestroyedSelf = 0.6
+		md.anguishEmptied = 0.5
+		md.anguishFailed = 1.0
+
+
+func _worldHit0(seed: int, across: bool, what: String, meter: String) -> Array:
 	var S := _new(seed, true, false, {"forms": true} if meter == "witness" else {})
 	var A = null
 	for f in S.fighters:
@@ -530,6 +560,7 @@ func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:
 	if A == null:
 		SimCore.dispose(S)
 		return [0.0, 0.0, 0.0, 0.0]
+	_feeds(A)
 	if meter == "witness":
 		ok(SimForms.has(S, A), "... and forms for him")
 		if not SimForms.has(S, A):
