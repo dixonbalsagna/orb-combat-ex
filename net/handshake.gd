@@ -18,7 +18,7 @@ extends RefCounted
 ## the delay sizes the session's first inputs (NetSession._init fills `delay` ticks), so a peer that asks for millions would
 ## freeze this one (the audit's F-10). No chooser proposes more than NetDelay's maxDelay.
 
-const PROTO: int = 5   # 2: game packets may carry the AI's takeovers (rollback.md section 13). 3: the digest reads the AI's timers, the match key holds the data hash. 4: game packets may carry the second word (section 14), and the digest reads it. 5: the digest reads a field world's line, swing and store (section 15)
+const PROTO: int = 6   # 2: game packets may carry the AI's takeovers (rollback.md section 13). 3: the digest reads the AI's timers, the match key holds the data hash. 4: game packets may carry the second word (section 14), and the digest reads it. 5: the digest reads a field world's line, swing and store (section 15). 6 (GW1b): the digest reads the buildings' marks and floor damage, every fighter field SimHash reads and the director's per-fighter integers, so a GW1a build and a GW1b build, whose digests differ, refuse each other at the hello instead of reporting false desyncs
 
 static var keyPlain: bool = false   # tests only: the match key leaves out the data hash (transport_check's negative control)
 static var capDelay: bool = true    # tests only: off for lan_check's negative control (a huge proposal is taken)

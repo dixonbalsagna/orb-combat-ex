@@ -15,7 +15,7 @@ This covers the brief `docs/ep/alpha/audit-2026-11-13/05-directives/A1/netcode-o
 Decision 2 is a random planet each quick match, with a fixed one for a newcomer's first match and for tests.
 - **Through A1:** LAN keeps planet 7 (`NetLan.SETUP`). It's a test match between Orb's two PCs, and decision 2 keeps a fixed planet for tests. Nothing is built.
 - **In A3, with LAN inside the game (A-NET-02):** the host draws the planet's seed and sends it in the hello. The joiner adopts it, so both PCs build the same planet, and the seed is shown and saved in the report as it is in the solo quick match.
-- **What it takes:** one field in the hello and the joiner adopting it (PROTO 5 to 6); the match key built from the agreed setup; `lan_check` rows for both PCs on the host's seed, with a control where the joiner keeps its own. The saved file already carries the setup in its replay, so the report and its replay follow with no change.
+- **What it takes:** one field in the hello and the joiner adopting it (PROTO 6 to 7, after GW1b's digest bump to 6); the match key built from the agreed setup; `lan_check` rows for both PCs on the host's seed, with a control where the joiner keeps its own. The saved file already carries the setup in its replay, so the report and its replay follow with no change.
 - **Cost:** about 0.1M tokens, no sim change and no change to the state fingerprint. A planet generated at match start also adds its build time to the join, which World's planet work measures.
 
 ## 4. Orb's first real LAN save through the report tool (A-SAVES-01), steps for QA

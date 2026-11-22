@@ -9,9 +9,9 @@ World's five sizes (`docs/world/pending/planet-sizes/`, setup key `planetSize`, 
 - The setup itself never goes over the wire. NetLan's setups are constants in the game on both PCs, so LAN plays whatever size those constants name. Today they name none, which is medium (World: "a size the data does not have plays medium").
 - A saved match's replay carries the setup, so a report replays at its own size with no change.
 
-**What's missing,** for A3, when the host chooses (LAN inside the game, A-NET-02): the hello carries the agreed setup (size and planet seed), and the joiner adopts it. That's the same PROTO 6 change already priced for the planet seed (`docs/net/a1-wave2.md` §3). The size is one more field: about 0.1M tokens for both together, with `lan_check` rows for a joiner on another size (refused today, adopted after) and a control.
+**What's missing,** for A3, when the host chooses (LAN inside the game, A-NET-02): the hello carries the agreed setup (size and planet seed), and the joiner adopts it. That's the same PROTO 7 change already priced for the planet seed (`docs/net/a1-wave2.md` §3). The size is one more field: about 0.1M tokens for both together, with `lan_check` rows for a joiner on another size (refused today, adopted after) and a control.
 
-**A smaller gap:** `dataHash` covers the combat and roster data, not `data/biomes/sizes.json`. Two PCs with the same size key but different size data would build different planets. The first checkpoint (60 ticks) would catch that as a desync, not the handshake as a refusal. Both PCs run one LAN folder, so it can't happen on LAN today. The clean fix is for the hello to compare the build id (A-NET-05's `SimReplay.buildId()`), which covers all data and code; I can park that with the PROTO 6 work.
+**A smaller gap:** `dataHash` covers the combat and roster data, not `data/biomes/sizes.json`. Two PCs with the same size key but different size data would build different planets. The first checkpoint (60 ticks) would catch that as a desync, not the handshake as a refusal. Both PCs run one LAN folder, so it can't happen on LAN today. The clean fix is for the hello to compare the build id (A-NET-05's `SimReplay.buildId()`), which covers all data and code; I can park that with the PROTO 7 work.
 
 ## 2. The snapshot at huge: join and rollback
 

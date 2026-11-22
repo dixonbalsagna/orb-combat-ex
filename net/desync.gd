@@ -28,6 +28,8 @@ const WALK_SKIP: Array = ["out", "worldId"]
 
 static var aiBlind: bool = false   # tests only: the digest leaves out the AI's timers (desync_check's negative control)
 static var wordBlind: bool = false # tests only: the digest leaves out the intent's second word (word_check's negative control)
+static var restBlind: bool = false    # tests only: the digest leaves out the fighter fields SimHash reads beyond FIGHTER (_fighterRest), as before (desync_check's coverage control)
+static var dirIBlind: bool = false    # tests only: the digest leaves out the fighters' director integers, as before they were in it (the controls)
 static var fdmgBlind: bool = false    # tests only: the digest leaves out the buildings' floor damage, as before it was in it (desync_check's control)
 static var marksBlind: bool = false   # tests only: the digest leaves out the buildings' marks, as before they were in it (desync_check's control)
 static var swingBlind: bool = false   # tests only: the digest leaves out the line, the swing and the store (swing_check's negative control)
@@ -77,6 +79,8 @@ static func _digest(S: SimState) -> String:
 				v.append(ai.t); v.append(ai.atk); v.append(ai.sT); v.append(ai.sOff); v.append(ai.st)
 		if word2:
 			v.append(SimIntent.pack2(f.input))   # the word nothing may read yet is still in the state: a lost one shows here, not when the director first reads it
+		if not restBlind:
+			_fighterRest(v, md, S, f)
 	v.append(S.buildings.size())
 	if S.bound():   # the per-tick fields from the state's arrays, as SimHash reads them: a snapshot's records read the live state's (docs/architecture/packed-structures.md)
 		for i in range(S.buildings.size()):
@@ -118,13 +122,73 @@ static func _digest(S: SimState) -> String:
 		_fields(v, md, S.frame, SimState.Frame.HASHED)
 		_fields(v, md, S.swing, SimSwing.HASHED)
 		v.append(S.storeN); v.append(S.storeHash >> 32); v.append(S.storeHash & 0xFFFFFFFF)
+	if not dirIBlind:   # each fighter's director integers (act.dirI: stamps and counters), as SimHash reads them, after their sizes: on the planet a divergence can live only here for hundreds of ticks
+		for f in S.fighters:
+			v.append(float(f.act.dirI.size()))
 	md.update(v.to_byte_array())
+	if not dirIBlind:
+		for f in S.fighters:
+			if f.act.dirI.size() > 0:
+				md.update(f.act.dirI.to_byte_array())
 	for k in TERRAIN:
 		var a = S.get(k)
 		var bytes: PackedByteArray = a if a is PackedByteArray else a.to_byte_array()
 		if bytes.size() > 0:
 			md.update(bytes)
 	return md.finish().hex_encode()
+
+
+## Each fighter's fields SimHash reads beyond FIGHTER, the AI's timers and the second word (sim/core/hash.gd's fighter block), in its order. Where
+## SimHash appends a value only while it is set, the digest takes it always: its numbers needn't match any older digest's (PROTO 6). The kick,
+## the slip and the director's integers are read further on, as before. desync_check's coverage row changes each of these on a planet state and
+## the digest must move.
+const FIGHTER_REST: Array = ["launchPower", "wetT", "ctrlT", "skateV", "skateDir", "skateTv", "boon", "brink", "stunTicks", "wallZ", "rally", "rallied", "rallies",
+	"rallyCool", "breathWear", "id", "sigReadyT", "limbBreaks", "brinkSetups", "brinkOpen", "brinkEx", "flightHits"]
+const ACT_HASHED: Array = ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"]   # as SimHash's fighter block lists them
+const RUSH_HASHED: Array = ["off", "end", "arc", "x0", "y0", "dur", "loop", "lr", "lm", "lu", "ls", "px", "py", "pz"]
+const STYLE_HASHED: Array = ["bi", "filled", "label", "leaveT", "shiftAt", "runKind", "runLen", "runMax", "sigLanded"]
+
+static func _fighterRest(v: PackedFloat64Array, md: HashingContext, S: SimState, f) -> void:
+	_fields(v, md, f, FIGHTER_REST)
+	var r = f.rush
+	if r == null:
+		v.append(-1.0)
+	else:
+		v.append(float(_idx(S.fighters, r.tgt)) if r.tgt != null else -2.0)
+		_fields(v, md, r, RUSH_HASHED)
+	v.append(float(_idx(S.fighters, f.launchBy)))
+	if f.lastSeen != null:
+		_fields(v, md, f.lastSeen, ["x", "y"])
+	else:
+		v.append(-1.0)
+	_fields(v, md, f.input, SimHash.INTENT)   # the intent's first word, as SimHash reads it (its second is read above, with the stick on)
+	for ri in range(4):
+		v.append(float(f.wear[ri])); v.append(float(f.stage[ri]))
+	if f.interior != null:
+		_fields(v, md, f.interior, ["b", "dir", "E", "k", "bn", "t", "i"])
+	_fields(v, md, f.act, ACT_HASHED)
+	if S.brakeOn and f.brk != null:
+		_fields(v, md, f.brk, SimBrake.HASHED)
+	if S.formsOn and f.form != null:
+		_fields(v, md, f.form, SimForms.HASHED)
+	if S.flightOn and f.flt != null:
+		_fields(v, md, f.flt, SimFlight.HASHED)
+	if S.ricOn:
+		_fields(v, md, f, SimRicochet.HASHED)
+	v.append(float(f.act.queue.size()))
+	for rq in f.act.queue:
+		for x in rq:
+			v.append(float(x))
+	v.append(float(f.splashed.size()))
+	for x in f.splashed:
+		v.append(float(x))
+	var st = f.style
+	if st != null:
+		for arr in [st.cur, st.buckets, st.win, st.total, st.enterT, st.leftAt]:
+			v.append(float(arr.size()))
+			for x in arr:
+				v.append(float(x))
+		_fields(v, md, st, STYLE_HASHED)
 
 
 ## A building's floor damage, as SimHash reads it (one value a floor, allocated on the first local hit): its index, the size and the values, only

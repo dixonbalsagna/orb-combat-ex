@@ -5,7 +5,7 @@ extends SceneTree
 ##     digest at that tick, and the peers agreed on all but the last few checkpoints;
 ##   - injected divergence: one peer's state is changed once, at a tick that is not a checkpoint, by each of a set of
 ##     injections (one RNG bit, one ulp of a fighter's x, a building's hp, a building's marks (its memory), a building's floor damage, a terrain column, the mood's casualty count,
-##     the director's cool-down). Both peers report a desync at the first checkpoint after it, with the last agreed
+##     the director's cool-down, or on the planet its stop timer, which the cool-down's reset doesn't touch). Both peers report a desync at the first checkpoint after it, with the last agreed
 ##     checkpoint the one before, the two digests crossed, and a report (NetDesync.report) whose field walk finds the
 ##     difference against the other peer and against the divergent peer's own replay, and none on the clean peer's
 ##     replay. The reports are written to --out. An injection the sim itself erases before the checkpoint (a fighter's
@@ -45,6 +45,107 @@ var INJECT: Dictionary = {
 	"mood": func(S: SimState) -> void: S.mood.casGiven += 1,
 	"director": func(S: SimState) -> void: S.dirS.cool += 1e-6,
 }
+
+## The stand-in's N-2: every fighter field SimHash reads (its fighter block) moves the digest. A match on this setup with the bots to tick 300, so
+## the rush, the style and the act's state are live; then each field of fighter 1 is changed once, the digest compared with the untouched one,
+## and put back. Returns {n, moved, still: the fields that didn't move it}.
+func _coverage(seed: int, setup: Dictionary) -> Dictionary:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed, aiFlags, setup)
+	var bots: Array = [NetBot.new(seed, 0), NetBot.new(seed, 1)]
+	for t in range(300):
+		var ins: Array = []
+		for k in range(S.fighters.size()):
+			ins.append(NetSession.intentOf(bots[k].next(), bots[k].word) if k < 2 else SimIntent.unpack(NetSession.NEUTRAL))
+		SimCore.step(S, ins)
+		S.out.feed.clear(); S.out.fx.clear()
+	var f = S.fighters[1]
+	var base: String = NetDesync.digest(S)
+	var out := {"n": 0, "moved": 0, "still": []}
+	var tryField := func(name: String, o: Object, k: String) -> void:
+		if o == null:
+			return
+		var was = o.get(k)
+		var now = _bumped(was)
+		if now == null:
+			return
+		o.set(k, now)
+		out.n = int(out.n) + 1
+		if NetDesync.digest(S) != base:
+			out.moved = int(out.moved) + 1
+		else:
+			out.still.append(name)
+		o.set(k, was)
+	for k in NetDesync.FIGHTER_REST:
+		tryField.call(k, f, k)
+	if f.rush != null:
+		for k in NetDesync.RUSH_HASHED:
+			tryField.call("rush." + k, f.rush, k)
+	tryField.call("lastSeen.x", f.lastSeen, "x")
+	for k in ["mx", "light", "guard"]:
+		tryField.call("input." + k, f.input, k)
+	for k in NetDesync.ACT_HASHED:
+		tryField.call("act." + k, f.act, k)
+	if S.brakeOn and f.brk != null:
+		for k in SimBrake.HASHED:
+			tryField.call("brk." + k, f.brk, k)
+	if S.formsOn and f.form != null:
+		for k in SimForms.HASHED:
+			tryField.call("form." + k, f.form, k)
+	if S.flightOn and f.flt != null:
+		for k in SimFlight.HASHED:
+			tryField.call("flt." + k, f.flt, k)
+	if S.ricOn:
+		for k in SimRicochet.HASHED:
+			tryField.call("ric." + k, f, k)
+	if f.style != null:
+		for k in NetDesync.STYLE_HASHED:
+			tryField.call("style." + k, f.style, k)
+	for pair in [["wear[0]", f.wear], ["stage[0]", f.stage]]:   # an element of an array: changed and put back the same way
+		var arr: Array = pair[1]
+		var was0 = arr[0]
+		arr[0] = int(was0) + 1
+		out.n = int(out.n) + 1
+		if NetDesync.digest(S) != base:
+			out.moved = int(out.moved) + 1
+		else:
+			out.still.append(pair[0])
+		arr[0] = was0
+	f.splashed.append(1.0)
+	out.n = int(out.n) + 1
+	if NetDesync.digest(S) != base:
+		out.moved = int(out.moved) + 1
+	else:
+		out.still.append("splashed")
+	f.splashed.remove_at(f.splashed.size() - 1)
+	SimCore.dispose(S)
+	return out
+
+
+## A field's value changed once, by its type; null for an object or a container (not changed here).
+static func _bumped(x):
+	match typeof(x):
+		TYPE_FLOAT:
+			return x + 0.5
+		TYPE_INT:
+			return x + 1
+		TYPE_BOOL:
+			return not x
+		TYPE_STRING:
+			return x + "x"
+		TYPE_STRING_NAME:
+			return StringName(String(x) + "x")
+	return null
+
+
+## Whether a match on this setup is on the planet (a field world, with a frame): the default since the planet flip, and the planet setups.
+static func _fieldWorld(seed: int, su: Dictionary) -> bool:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed, {"p1": true, "p2": true}, su)
+	var on: bool = S.frame != null
+	SimCore.dispose(S)
+	return on
+
 
 ## Whether a match on this setup plays the energy model: the data's switch, or the setup's "power".
 static func _powerOn(seed: int, su: Dictionary) -> bool:
@@ -134,6 +235,8 @@ func _init() -> void:
 	if INJECT.has("fighter_x") and not setup.has("fights") and _powerOn(seeds[0], setup):   # a match with the energy model (the LAN setups, and every setup once the data has it on: GW1a): x heals, so his health
 		INJECT.erase("fighter_x")
 		INJECT["fighter_hp"] = func(S: SimState) -> void: S.fighters[1].hp -= 1.0
+	if INJECT.has("director") and _fieldWorld(seeds[0], setup):   # on the planet the cool-down resets before the next checkpoint (healed by 240, seed 1); the stop timer keeps a change of the same size
+		INJECT["director"] = func(S: SimState) -> void: S.dirS.stop += 1e-6
 	if setup.has("fights"):
 		aiFlags = NetLan.AI2
 		if setup.get("outside", false) and not NetLan.outsideKeyed():
@@ -147,6 +250,11 @@ func _init() -> void:
 	if negative:
 		_negative(seeds, setup, ticks, every, delay, profiles)
 		return
+	if not setup.has("fights"):   # the stand-in's N-2: every fighter field SimHash reads moves the digest (one fight's fighters; the two-fight setups read the same function)
+		var cov := _coverage(seeds[0], setup)
+		print("  %s coverage: %d of %d fighter fields SimHash reads move the digest%s" % ["ok  " if cov.still.is_empty() else "FAIL", cov.moved, cov.n, "" if cov.still.is_empty() else " (not: %s)" % str(cov.still)])
+		if not cov.still.is_empty() or int(cov.n) < 40:
+			failures += 1
 	var objects0: int = int(Performance.get_monitor(Performance.OBJECT_COUNT))
 	var runs: int = 0
 	var checks: int = 0
@@ -212,6 +320,15 @@ func _negative(seeds: Array, setup: Dictionary, ticks: int, every: int, delay: i
 				caught += 1
 			else:
 				missed += 1
+	if not setup.has("fights"):
+		NetDesync.restBlind = true   # the digest without the fighter fields beyond FIGHTER, as it was: the coverage row must find fields that don't move it
+		var covB := _coverage(seeds[0], setup)
+		NetDesync.restBlind = false
+		print("  %s rest-blind digest: %d of %d fighter fields don't move it" % ["caught" if not covB.still.is_empty() else "MISSED", covB.still.size(), covB.n])
+		if not covB.still.is_empty():
+			caught += 1
+		else:
+			missed += 1
 	NetDesync.marksBlind = true   # the digest without the buildings' marks, as it was: a marks-only divergence must pass it, and the check must say so
 	for seed in seeds:
 		var refM := _straight(seed, setup, ticks, every, delay)
