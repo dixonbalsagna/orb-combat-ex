@@ -25,11 +25,11 @@ func tower(S: SimState, lo: int = 9, hi: int = 15):
 
 
 ## Drive one launched flight at a building; returns its events.
-func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
+func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0, gap: float = 3000.0) -> Array:
 	A.tier = tier
 	D.hp = 1.0e9
 	A.hp = 1.0e9
-	D.x = SimWrap.wrap(b.x - 3000.0)
+	D.x = SimWrap.wrap(b.x - gap)
 	D.y = WorldTerrain.groundY(S, D.x) + 100.0
 	var plan = WorldBrunt.aim(S, A, D, b, force, 1.0 + A.ld.launch * (tier - 1.0), false)
 	if plan == null:
@@ -111,5 +111,15 @@ func _init() -> void:
 			break
 	ok(stunned, "lodgeHold body: the body is stunned for the hold")
 	c.lodgeHold = "world"
+	# landing review W-2: the wall at the SHIPPED launch travel (1.5). The staging above keeps travel 2.0 (3,000 units from the tower); a force-2,000 send at 1.5 reaches about 2,250, so these rows stand the body there and prove the wall rules at the travel the game plays
+	WorldPin.launchTravelShipped()
+	for tier in [1.0]:   # tier 1 only, as the rows above: the aim finds no plan to a tower for a tier-2 or tier-3 body at either travel or any gap (the staged send is a tier-1 wall)
+		var S5 := fresh(1)
+		var D5 = S5.fighters[0]
+		var ev5: Array = fly(S5, S5.fighters[1], D5, tower(S5), tier, 2000.0, 2250.0)
+		var h5: Array = ev5.filter(func(e): return e.type == "building_hit")
+		ok(h5.size() == 1 and h5[0].outcome == "wall" and h5[0].keep == 0.0, "at the shipped launch travel %.1f, a tier-%d body staged 2,250 units from a tower is a wall: building_hit outcome wall, keep 0 (%s)" % [SimPower.launchTravel, int(tier), str(h5.map(func(e): return e.outcome))])
+		ok(D5.state != "launched" and D5.stunTicks >= int(c.wallStaggerTicks), "and he is staggered at least %d ticks after the rebound (%d left when he is down)" % [int(c.wallStaggerTicks), D5.stunTicks])
+	WorldPin.launchTravelOld()
 	print("WALL: %d check(s) failed" % fails)
 	quit()

@@ -43,9 +43,21 @@ static func shipped(power: bool = false) -> void:
 
 
 ## Tests only (GW1b): the launch's travel as it was before GW1b's energy addendum (data/fight/power.json launchTravel 2.0, now 1.5). A check that stages a send at a tower 3,000 units away was written for it: at 1.5 the aim finds no plan and the check reads no hit at all. Memory only.
+static var _travel0 = null   # the data's launch travel, kept at the first call
+
+
 static func launchTravelOld() -> void:
 	SimPower._ensure()
+	if _travel0 == null:
+		_travel0 = SimPower.launchTravel
 	SimPower.launchTravel = 2.0
+
+
+## Tests only (GW1b): the launch travel back at the data's shipped value (1.5) after launchTravelOld: the wall rows that run at it (landing review W-2). Memory only.
+static func launchTravelShipped() -> void:
+	SimPower._ensure()
+	if _travel0 != null:
+		SimPower.launchTravel = float(_travel0)
 
 
 ## Tests only (GW1b): a setup that names no planet plays the hand-made arena, as it did before the default world moved to the round planet (data/biomes/world.json mode). For a check that tests the arena or a default world.

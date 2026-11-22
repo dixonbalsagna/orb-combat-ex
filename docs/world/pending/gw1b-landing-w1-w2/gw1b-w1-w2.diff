@@ -1,0 +1,113 @@
+diff --git a/sim/world/tools/ground_check.gd b/sim/world/tools/ground_check.gd
+index fc690d2..7c441d4 100644
+--- a/sim/world/tools/ground_check.gd
++++ b/sim/world/tools/ground_check.gd
+@@ -7,3 +7,3 @@ var fails: int = 0
+ # gen 1 gameplay hashes at the given ticks, recorded before window 2 (base_hash.gd)
+-const BASE: Dictionary = {   # re-pinned 2026-11-21 for GW1b (planet 7 only: the GW1b stack's play data moves its gen 1 hash; the other five stand); before that 2026-11-20 for GW1a (the GW1a tree's fight, director and input data move the old play's hash: the director's ai, interrupts, launch, stick and swing with the fight data brake, hitstop and kick; bisected, docs/world/runs/checks-gw1a/gw1b-arena-flip/); before that 2026-11-08 for CD-05 (Simulation: casSeen left the fighter's hash; World: mass0 and massLost joined it): one-time moves, taken from the stack, not a tree with edits
++const BASE: Dictionary = {   # re-pinned 2026-11-21 for GW1b (planet 7 only: the GW1b stack's play data moves its gen 1 hash; the other five stand); before that 2026-11-20 for GW1a; the planet 7 value was bisected (landing review W-1) to Encounter's launch-cone (commit 653f0046, sim/director/launch.gd and swing.gd: the AI-vs-AI match this row plays launches differently); the step before it, wall-cone, leaves 5b60d7a246a76524 as it was (the GW1a tree's fight, director and input data move the old play's hash: the director's ai, interrupts, launch, stick and swing with the fight data brake, hitstop and kick; bisected, docs/world/runs/checks-gw1a/gw1b-arena-flip/); before that 2026-11-08 for CD-05 (Simulation: casSeen left the fighter's hash; World: mass0 and massLost joined it): one-time moves, taken from the stack, not a tree with edits
+ 	"planet7/2400": "36fae547f71e0607",
+diff --git a/sim/world/tools/pin.gd b/sim/world/tools/pin.gd
+index 4f099b2..a75e1e1 100644
+--- a/sim/world/tools/pin.gd
++++ b/sim/world/tools/pin.gd
+@@ -45,4 +45,9 @@ static func shipped(power: bool = false) -> void:
+ ## Tests only (GW1b): the launch's travel as it was before GW1b's energy addendum (data/fight/power.json launchTravel 2.0, now 1.5). A check that stages a send at a tower 3,000 units away was written for it: at 1.5 the aim finds no plan and the check reads no hit at all. Memory only.
++static var _travel0 = null   # the data's launch travel, kept at the first call
++
++
+ static func launchTravelOld() -> void:
+ 	SimPower._ensure()
++	if _travel0 == null:
++		_travel0 = SimPower.launchTravel
+ 	SimPower.launchTravel = 2.0
+@@ -50,2 +55,9 @@ static func launchTravelOld() -> void:
+ 
++## Tests only (GW1b): the launch travel back at the data's shipped value (1.5) after launchTravelOld: the wall rows that run at it (landing review W-2). Memory only.
++static func launchTravelShipped() -> void:
++	SimPower._ensure()
++	if _travel0 != null:
++		SimPower.launchTravel = float(_travel0)
++
++
+ ## Tests only (GW1b): a setup that names no planet plays the hand-made arena, as it did before the default world moved to the round planet (data/biomes/world.json mode). For a check that tests the arena or a default world.
+diff --git a/sim/world/tools/wall_check.gd b/sim/world/tools/wall_check.gd
+index 005a0ac..6bf9b7a 100644
+--- a/sim/world/tools/wall_check.gd
++++ b/sim/world/tools/wall_check.gd
+@@ -27,3 +27,3 @@ func tower(S: SimState, lo: int = 9, hi: int = 15):
+ ## Drive one launched flight at a building; returns its events.
+-func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
++func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0, gap: float = 3000.0) -> Array:
+ 	A.tier = tier
+@@ -31,3 +31,3 @@ func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
+ 	A.hp = 1.0e9
+-	D.x = SimWrap.wrap(b.x - 3000.0)
++	D.x = SimWrap.wrap(b.x - gap)
+ 	D.y = WorldTerrain.groundY(S, D.x) + 100.0
+@@ -113,2 +113,12 @@ func _init() -> void:
+ 	c.lodgeHold = "world"
++	# landing review W-2: the wall at the SHIPPED launch travel (1.5). The staging above keeps travel 2.0 (3,000 units from the tower); a force-2,000 send at 1.5 reaches about 2,250, so these rows stand the body there and prove the wall rules at the travel the game plays
++	WorldPin.launchTravelShipped()
++	for tier in [1.0]:   # tier 1 only, as the rows above: the aim finds no plan to a tower for a tier-2 or tier-3 body at either travel or any gap (the staged send is a tier-1 wall)
++		var S5 := fresh(1)
++		var D5 = S5.fighters[0]
++		var ev5: Array = fly(S5, S5.fighters[1], D5, tower(S5), tier, 2000.0, 2250.0)
++		var h5: Array = ev5.filter(func(e): return e.type == "building_hit")
++		ok(h5.size() == 1 and h5[0].outcome == "wall" and h5[0].keep == 0.0, "at the shipped launch travel %.1f, a tier-%d body staged 2,250 units from a tower is a wall: building_hit outcome wall, keep 0 (%s)" % [SimPower.launchTravel, int(tier), str(h5.map(func(e): return e.outcome))])
++		ok(D5.state != "launched" and D5.stunTicks >= int(c.wallStaggerTicks), "and he is staggered at least %d ticks after the rebound (%d left when he is down)" % [int(c.wallStaggerTicks), D5.stunTicks])
++	WorldPin.launchTravelOld()
+ 	print("WALL: %d check(s) failed" % fails)
+diff --git a/sim/world/tools/wall_hold_check.gd b/sim/world/tools/wall_hold_check.gd
+index bb1e051..2e8eccd 100644
+--- a/sim/world/tools/wall_hold_check.gd
++++ b/sim/world/tools/wall_hold_check.gd
+@@ -32,3 +32,3 @@ func _tower(S: SimState):
+ ## One slam at a tower, then 150 ticks: [freeze seconds at the hit, peak distance off the face while he is stunned, ticks until his depth is within 20 of the line, hash], or [] when it was not a wall.
+-func _slam(seed: int, tier: float) -> Array:
++func _slam(seed: int, tier: float, gap: float = 3000.0) -> Array:
+ 	var S := SimCore.createSim()
+@@ -44,3 +44,3 @@ func _slam(seed: int, tier: float) -> Array:
+ 	A.hp = 1.0e9
+-	D.x = SimWrap.wrap(tw.x - 3000.0)
++	D.x = SimWrap.wrap(tw.x - gap)
+ 	D.y = WorldTerrain.groundY(S, D.x) + 100.0
+@@ -144,3 +144,3 @@ func _run(model: bool) -> void:
+ 	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+-	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
++	print("--- the energy model and the dash %s" % ("ON (the energy model and the dash on, the staging at launch travel 2.0)" if model else "OFF (main before GW1a)"))
+ 	var c: Dictionary = WorldBrunt.cfg()
+@@ -204,2 +204,29 @@ func _run(model: bool) -> void:
+ 
++## Landing review W-2: the wall slam at the SHIPPED launch travel (1.5): the energy model and the dash on, the wall-hold data as it stands (off), the body staged 2,250 units from the tower (a force-2,000 send at 1.5 reaches about that), every seed and tier: the whole fight freezes at the hit and he is pushed off the face by no more than the ceiling the model-on pass has (150 on average), and the same slam twice gives one hash.
++func _shipped() -> void:
++	WorldPin.launchTravelShipped()
++	WorldPin.shipped(true)
++	print("--- at the shipped launch travel %.1f (the energy model and the dash on, staged 2,250 from the tower)" % SimPower.launchTravel)
++	_setv(false)
++	var n: int = 0
++	var freeze: float = 0.0
++	var peak: float = 0.0
++	var twice: bool = true
++	for sd in range(1, 9):
++		for tier in [1.0, 2.0, 3.0]:
++			var a: Array = _slam(sd, tier, 2250.0)
++			var a2: Array = _slam(sd, tier, 2250.0)
++			if a.is_empty() or a2.is_empty():
++				continue
++			twice = twice and str(a[3]) == str(a2[3])
++			n += 1
++			freeze += a[0]
++			peak += a[1]
++	ok(n >= 6, "%d wall slams staged on towers at the shipped travel (seeds 1 to 8, tiers 1 to 3, 2,250 units out: the towers the aim finds a plan to; at least 12 of 24 at travel 2.0 and 3,000 units)" % n)
++	if n > 0:
++		ok(freeze / float(n) >= 0.45 and peak / float(n) <= 150.0, "at the shipped travel, with the energy model on and the wall-hold data as it stands: the fight freezes at the hit (%.2f s) and he is pushed %.0f units off the face (at most 150 on average)" % [freeze / float(n), peak / float(n)])
++	ok(twice, "at the shipped travel the same slam twice gives one hash")
++	WorldPin.launchTravelOld()
++
++
+ func _init() -> void:
+@@ -207,2 +234,3 @@ func _init() -> void:
+ 	_run(true)
++	_shipped()
+ 	print("WALLHOLD: %d check(s) failed" % fails)

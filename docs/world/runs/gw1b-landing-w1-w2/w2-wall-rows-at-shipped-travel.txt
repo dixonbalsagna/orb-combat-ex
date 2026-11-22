@@ -1,0 +1,11 @@
+# W-2: wall_check and wall_hold_check with rows at the shipped launch travel 1.5 (gw1b-w1-w2.diff), on main b624340a
+GROUND: 0 check(s) failed
+  ok    at the shipped launch travel 1.5, a tier-1 body staged 2,250 units from a tower is a wall: building_hit outcome wall, keep 0 (["wall"])
+WALL: 0 check(s) failed
+--- the energy model and the dash OFF (main before GW1a)
+--- the energy model and the dash ON (the energy model and the dash on, the staging at launch travel 2.0)
+--- at the shipped launch travel 1.5 (the energy model and the dash on, staged 2,250 from the tower)
+  ok   9 wall slams staged on towers at the shipped travel (seeds 1 to 8, tiers 1 to 3, 2,250 units out: the towers the aim finds a plan to; at least 12 of 24 at travel 2.0 and 3,000 units)
+  ok   at the shipped travel, with the energy model on and the wall-hold data as it stands: the fight freezes at the hit (0.51 s) and he is pushed 92 units off the face (at most 150 on average)
+  ok   at the shipped travel the same slam twice gives one hash
+WALLHOLD: 0 check(s) failed

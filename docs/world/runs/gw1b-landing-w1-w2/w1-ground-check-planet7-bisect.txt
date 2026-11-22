@@ -1,0 +1,10 @@
+# W-1: bisect of ground_check's planet7/2400 hash (the gen 1 planet 7 touch 3 AI match, 180 ticks, the pinned old path), over the 56 commits of the GW1b landing (b0e20f9a..b624340a, the series df0e5942 to 991af282), by applying the git diff between candidate commits to one scratch tree and printing the hash
+7b5da0a5 (before the GW1b series): 5b60d7a246a76524 (the value in BASE)
+6e5d9b27 (World: bystanders-gw1b): 5b60d7a246a76524
+06e5e8c3 (Encounter: wall-cone grant-tools-schema): 5b60d7a246a76524
+407c073f (Tools: wall-cone-cases): 5b60d7a246a76524
+653f0046 (Encounter: launch-cone, sim/director/launch.gd and swing.gd): 36fae547f71e0607  <-- the move
+89eca66d (stray-beams): 36fae547f71e0607
+203c1941 (netcode desync-fdmg): 36fae547f71e0607
+aebda66a (the last before the re-pin): 36fae547f71e0607
+The other five hashes (planets 3, 25, 11, the hand-made world, the turn) are the same at every step.

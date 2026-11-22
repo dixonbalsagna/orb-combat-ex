@@ -30,7 +30,7 @@ func _tower(S: SimState):
 
 
 ## One slam at a tower, then 150 ticks: [freeze seconds at the hit, peak distance off the face while he is stunned, ticks until his depth is within 20 of the line, hash], or [] when it was not a wall.
-func _slam(seed: int, tier: float) -> Array:
+func _slam(seed: int, tier: float, gap: float = 3000.0) -> Array:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed, {}, {"intro": false})
 	S.out.fx.clear()
@@ -42,7 +42,7 @@ func _slam(seed: int, tier: float) -> Array:
 	A.tier = tier
 	D.hp = 1.0e9
 	A.hp = 1.0e9
-	D.x = SimWrap.wrap(tw.x - 3000.0)
+	D.x = SimWrap.wrap(tw.x - gap)
 	D.y = WorldTerrain.groundY(S, D.x) + 100.0
 	var plan = WorldBrunt.aim(S, A, D, tw, 2000.0, 1.0 + A.ld.launch * (tier - 1.0), false)
 	if plan == null:
@@ -142,7 +142,7 @@ func _repeats(marks: int) -> int:
 func _run(model: bool) -> void:
 	WorldPin.launchTravelOld()   # GW1b: the staged send at a tower 3,000 units away was written for the launch travel 2.0 (now 1.5): memory only
 	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
-	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
+	print("--- the energy model and the dash %s" % ("ON (the energy model and the dash on, the staging at launch travel 2.0)" if model else "OFF (main before GW1a)"))
 	var c: Dictionary = WorldBrunt.cfg()
 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
 	ok(c.lodgeHold == "world" and absf(float(c.wallRebound) - 0.25) < 1.0e-9 and float(c.wallStop) == 1.0 and int(c.wallDepthHold) == 0 and int(c.repeatMarks) == 0, "the data's defaults are today's behaviour (lodgeHold %s, wallRebound %s, wallStop %s, wallDepthHold %s, repeatMarks %s)" % [c.lodgeHold, str(c.wallRebound), str(c.wallStop), str(c.wallDepthHold), str(c.repeatMarks)])
@@ -202,8 +202,36 @@ func _run(model: bool) -> void:
 		ok(b2 > b0 and d2 >= d0, "with the energy model on a mark is one model tier of the building's mass and a held hit does heldMul 2 (Game Design, buildings.md section 9; memory_model_check): three sends at the model's energy break the covered floors of %d of 24 towers with the memory against %d without (%d and %d fall)" % [b2, b0, d2, d0])
 
 
+## Landing review W-2: the wall slam at the SHIPPED launch travel (1.5): the energy model and the dash on, the wall-hold data as it stands (off), the body staged 2,250 units from the tower (a force-2,000 send at 1.5 reaches about that), every seed and tier: the whole fight freezes at the hit and he is pushed off the face by no more than the ceiling the model-on pass has (150 on average), and the same slam twice gives one hash.
+func _shipped() -> void:
+	WorldPin.launchTravelShipped()
+	WorldPin.shipped(true)
+	print("--- at the shipped launch travel %.1f (the energy model and the dash on, staged 2,250 from the tower)" % SimPower.launchTravel)
+	_setv(false)
+	var n: int = 0
+	var freeze: float = 0.0
+	var peak: float = 0.0
+	var twice: bool = true
+	for sd in range(1, 9):
+		for tier in [1.0, 2.0, 3.0]:
+			var a: Array = _slam(sd, tier, 2250.0)
+			var a2: Array = _slam(sd, tier, 2250.0)
+			if a.is_empty() or a2.is_empty():
+				continue
+			twice = twice and str(a[3]) == str(a2[3])
+			n += 1
+			freeze += a[0]
+			peak += a[1]
+	ok(n >= 6, "%d wall slams staged on towers at the shipped travel (seeds 1 to 8, tiers 1 to 3, 2,250 units out: the towers the aim finds a plan to; at least 12 of 24 at travel 2.0 and 3,000 units)" % n)
+	if n > 0:
+		ok(freeze / float(n) >= 0.45 and peak / float(n) <= 150.0, "at the shipped travel, with the energy model on and the wall-hold data as it stands: the fight freezes at the hit (%.2f s) and he is pushed %.0f units off the face (at most 150 on average)" % [freeze / float(n), peak / float(n)])
+	ok(twice, "at the shipped travel the same slam twice gives one hash")
+	WorldPin.launchTravelOld()
+
+
 func _init() -> void:
 	_run(false)
 	_run(true)
+	_shipped()
 	print("WALLHOLD: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

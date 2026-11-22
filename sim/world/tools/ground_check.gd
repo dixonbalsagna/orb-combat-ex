@@ -5,7 +5,7 @@ extends SceneTree
 var fails: int = 0
 
 # gen 1 gameplay hashes at the given ticks, recorded before window 2 (base_hash.gd)
-const BASE: Dictionary = {   # re-pinned 2026-11-21 for GW1b (planet 7 only: the GW1b stack's play data moves its gen 1 hash; the other five stand); before that 2026-11-20 for GW1a (the GW1a tree's fight, director and input data move the old play's hash: the director's ai, interrupts, launch, stick and swing with the fight data brake, hitstop and kick; bisected, docs/world/runs/checks-gw1a/gw1b-arena-flip/); before that 2026-11-08 for CD-05 (Simulation: casSeen left the fighter's hash; World: mass0 and massLost joined it): one-time moves, taken from the stack, not a tree with edits
+const BASE: Dictionary = {   # re-pinned 2026-11-21 for GW1b (planet 7 only: the GW1b stack's play data moves its gen 1 hash; the other five stand); before that 2026-11-20 for GW1a; the planet 7 value was bisected (landing review W-1) to Encounter's launch-cone (commit 653f0046, sim/director/launch.gd and swing.gd: the AI-vs-AI match this row plays launches differently); the step before it, wall-cone, leaves 5b60d7a246a76524 as it was (the GW1a tree's fight, director and input data move the old play's hash: the director's ai, interrupts, launch, stick and swing with the fight data brake, hitstop and kick; bisected, docs/world/runs/checks-gw1a/gw1b-arena-flip/); before that 2026-11-08 for CD-05 (Simulation: casSeen left the fighter's hash; World: mass0 and massLost joined it): one-time moves, taken from the stack, not a tree with edits
 	"planet7/2400": "36fae547f71e0607",
 	"planet3/1200": "245997b3570dec98",
 	"planet25/4800": "14e4b7874dbc4a57",
