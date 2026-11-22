@@ -734,6 +734,65 @@
         "^_": true
       },
       "description": "A roster id to his own multipliers."
+    },
+    "step_up": {
+      "type": "object",
+      "description": "The step-up (docs/animation/step-up.md): the landing crouch's opening frames when the floor lifts a grounded fighter by more than min_bh body heights between two solves.",
+      "required": [
+        "enabled",
+        "min_bh",
+        "bh",
+        "max_move",
+        "ref_bh",
+        "p_min",
+        "ticks"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "On or off."
+        },
+        "min_bh": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "The least lift, in body heights, that plays it."
+        },
+        "bh": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000,
+          "description": "A body height in units (the sim's, 75)."
+        },
+        "max_move": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000,
+          "description": "The most he may have moved sideways between the two solves, in units: more is a jump of place, not a lift."
+        },
+        "ref_bh": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 20,
+          "description": "The lift, in body heights, that gives the full strength."
+        },
+        "p_min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The least strength."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 12,
+          "maximum": 60,
+          "description": "Ticks it lasts (in over 6, out over 6 at 12)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     }
   },
   "additionalProperties": false,
