@@ -89,6 +89,7 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 	seed = p_seed & 0xFFFFFFFF
 	var su: Dictionary = hub.setup()   # both slots are v2; a Simple layout sets its assists
 	su.merge(setup, true)
+	su = WorldDefault.apply(su, seed, true)   # the world a match plays when its set-up names none (data/biomes/world.json; the sim applies the same default inside beginMatch): applied here first so the load gate below sees the planet it will play, and never lets a start through that makes it cold
 	load_job = null
 	_load_call = []
 	var key: String = planet_key(su)
