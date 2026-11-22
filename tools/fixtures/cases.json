@@ -314605,6 +314605,102 @@
         "rule": "enum",
         "pointer": "/flatMode"
       }
+    },
+    {
+      "id": "biomes-world-unknown-key",
+      "schema": "biomes-world.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/extra": 1
+          },
+          "file": "data/biomes/world.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "biomes-world-mode-unknown",
+      "schema": "biomes-world.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/mode": "sphere"
+          },
+          "file": "data/biomes/world.json"
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/mode"
+      }
+    },
+    {
+      "id": "biomes-world-plangen-too-high",
+      "schema": "biomes-world.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/fixed/planetGen": 4
+          },
+          "file": "data/biomes/world.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/fixed/planetGen"
+      }
+    },
+    {
+      "id": "biomes-world-fixed-missing-touch",
+      "schema": "biomes-world.schema.json",
+      "mutate": [
+        {
+          "del": [
+            "/fixed/touch"
+          ],
+          "file": "data/biomes/world.json"
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/fixed"
+      }
+    },
+    {
+      "id": "biomes-world-random-pool-empty",
+      "schema": "biomes-world.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/random/pool": []
+          },
+          "file": "data/biomes/world.json"
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/random/pool"
+      }
+    },
+    {
+      "id": "biomes-world-random-enabled-not-boolean",
+      "schema": "biomes-world.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/random/enabled": "true"
+          },
+          "file": "data/biomes/world.json"
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/random/enabled"
+      }
     }
   ],
   "text": [
