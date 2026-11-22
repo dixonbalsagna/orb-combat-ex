@@ -387,6 +387,12 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/match_recorder_check.gd'
       - name: Match end check (a match ends each of the three ways on the data's own switches, by a finishing move, by wear on an idle player and by the last event after the cap; A-MODES-07)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/director/tools/match_end_check.gd'
+      - name: "Stray beams check (dropOnPress: a press after a refused release drops the waiting beam; RT then B is the signature only in RT's window; negative controls inside; A-COMBAT-05, A-COMBAT-11)"
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/stray_beam_check.gd'
+      - name: "Aim throw check (a stick throw whose release fired no beam does not aim the next beam; the old read is the negative control; A1 stray beams)"
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/aim_throw_check.gd'
+      - name: "Launch cone check (computer against computer on planet 7: no launch aimed at a building more than 20 degrees off the blow's line; Game Design's QA row, B-17)"
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/launch_cone_check.gd'
       # Controls' input tests (docs/controls/check-scripts-answers.md): all of sim/input/test except b_no_beam_layouts_test (245 s: the landing gate and a nightly), 44 scripts, 3 at a time; each through tools/gate.mjs so a
       # SCRIPT ERROR under exit 0 fails it. xargs exits non-zero when any one fails. tools/check-scripts.json's ciGlobs makes the table count them.
       - name: Controls input tests (44 of 45, 3 at a time; the 245 s layout scan stays in the landing gate)
