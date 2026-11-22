@@ -9,9 +9,12 @@
 //   constants  PI TAU
 //   random     randf randi randf_range randi_range randfn rand_range randomize shuffle (a bare call or Array.shuffle / pick_random)  -- the sim has SimRng
 //   clock      Time.<anything>, OS.get_ticks_msec, OS.get_ticks_usec, OS.get_unix_time, OS.get_system_time_*, OS.delay_*, Engine.get_frames_drawn, Engine.get_physics_frames
+//   text       sim-text-float: a printf float in a string ("%.1f", "%+.2f", "%5.2f", "%.0f"): the Windows printf rounds an exact half away from zero and the Linux and web ones to even ("%.1f" % -22.25 reads
+//              -22.3 on Windows, -22.2 elsewhere), so the same match prints different text; use SimMathx.fixed(v, n) (Simulation, 2026-11-22). This rule reads the string, so it looks at the raw line (comments cut off).
 // "Bare" means not after a dot or a name: SimDetMath.sin(x), SimMathx.PI and rng.randf() are our own and pass. A function definition ("func sin(") is not a use.
 // Comments and the inside of strings are ignored. Allowed:
 //   - a whole file: tools/determinism-allow.json { "files": [ { "path": "sim/core/detmath.gd", "why": "..." } ] } (the wrappers themselves, where the engine's function may be the thing wrapped)
+//     an entry may carry "rule": "sim-text-float" (any rule id): then only that rule is allowed in that file, for a list an owner is to clear; its why says who and what
 //   - a single line: a "# det-ok: <reason>" comment on the line or on the line directly above (a reason is required)
 // Used by tools/validate.js (--lint) and CI.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -34,9 +37,10 @@ const RULES = [
   { id: 'engine-clock', re: /(?<![.\w$])Time\s*\./, what: "the engine's Time clock", use: 'the tick count' },
   { id: 'engine-clock', re: /(?<![.\w$])OS\s*\.\s*(get_ticks_msec|get_ticks_usec|get_unix_time|get_system_time_secs|get_system_time_msecs|get_datetime|get_time|delay_msec|delay_usec)\s*\(/, what: "an OS clock", use: 'the tick count' },
   { id: 'engine-clock', re: /(?<![.\w$])Engine\s*\.\s*(get_frames_drawn|get_physics_frames|get_process_frames)\s*\(/, what: "the engine's frame counter", use: 'the tick count' },
+  { id: 'sim-text-float', raw: true, re: /%[-+ 0#]*\d*\.\d+f/, what: "a printf float in text (Windows rounds an exact half away from zero, Linux and the web to even)", use: 'SimMathx.fixed(v, n)' },
 ];
 
-/** The code of a line: comments and the inside of strings blanked (so a word in a note or a message is not a use). Returns { code, comment }. */
+/** The code of a line: comments and the inside of strings blanked (so a word in a note or a message is not a use). Returns { code, comment, cut } (cut: where the comment starts, the line's length when it has none). */
 export function splitLine(line) {
   let code = '', i = 0, q = null;
   while (i < line.length) {
@@ -47,10 +51,10 @@ export function splitLine(line) {
       i++; continue;
     }
     if (ch === '"' || ch === "'") { q = ch; code += ch; i++; continue; }
-    if (ch === '#') return { code, comment: line.slice(i + 1) };
+    if (ch === '#') return { code, comment: line.slice(i + 1), cut: i };
     code += ch; i++;
   }
-  return { code, comment: '' };
+  return { code, comment: '', cut: line.length };
 }
 
 const DEF_HEAD = /^\s*(static\s+)?func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], .]+)?\s*:/;
@@ -68,7 +72,7 @@ export function scan(text) {
     const here = parts[n].comment, above = n > 0 && !parts[n - 1].code.trim() ? parts[n - 1].comment : '';
     const waived = (WAIVER.test(here) || WAIVER.test(above));
     for (const r of RULES) {
-      const m = r.re.exec(code.replace(/^\s*func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], ]+)?\s*:/, ' '));
+      const m = r.re.exec(r.raw ? lines[n].slice(0, parts[n].cut) : code.replace(/^\s*func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], ]+)?\s*:/, ' '));
       if (m && !waived) out.push({ line: n + 1, rule: r.id, what: r.what, use: r.use, text: lines[n].trim().slice(0, 140), found: m[0].trim() });
     }
     // a waiver without a reason is itself a finding
@@ -90,13 +94,14 @@ function walk(dir, all, out = []) {
 
 /** All findings under a repo root: [{ file, line, ... }]. */
 export function lintTree(root, { allow = [], all = false } = {}) {
-  const skip = new Set(allow.map((a) => a.path));
+  const skip = new Set(allow.filter((a) => !a.rule).map((a) => a.path));
+  const skipRule = (rel, rule) => allow.some((a) => a.rule && a.path === rel && a.rule === rule);
   const findings = [];
   for (const d of DIRS) {
     for (const f of walk(join(root, d), all).sort()) {
       const rel = relative(root, f).split(sep).join('/');
       if (skip.has(rel)) continue;
-      for (const x of scan(readFileSync(f, 'utf8'))) findings.push({ file: rel, ...x });
+      for (const x of scan(readFileSync(f, 'utf8'))) { if (!skipRule(rel, x.rule)) findings.push({ file: rel, ...x }); }
     }
   }
   return findings;
@@ -107,6 +112,8 @@ export function loadAllow(file) {
   const j = JSON.parse(readFileSync(file, 'utf8'));
   const files = Array.isArray(j.files) ? j.files : [];
   for (const a of files) if (!a.path || !a.why) throw new Error(`${file}: every allowed file needs a path and a why`);
+  const rules = new Set(RULES.map((r) => r.id));
+  for (const a of files) if (a.rule !== undefined && !rules.has(a.rule)) throw new Error(`${file}: ${a.path} names a rule that does not exist: ${a.rule}`);
   return files;
 }
 

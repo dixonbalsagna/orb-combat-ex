@@ -1,0 +1,142 @@
+diff --git a/tools/determinism-allow.json b/tools/determinism-allow.json
+index de4cb44..7d4c699 100644
+--- a/tools/determinism-allow.json
++++ b/tools/determinism-allow.json
+@@ -1,4 +1,8 @@
+ {
+-  "_why": "Whole files the determinism lint (tools/lint-determinism.mjs) does not scan. Empty today on purpose: the deterministic wrappers (sim/core/detmath.gd SimDetMath, mathx.gd SimMathx, rng.gd SimRng) are CLEAN, so they are scanned like everything else and a regression inside one would fail. A call THROUGH a wrapper (SimDetMath.sin(x), SimRng.keyed(...), rng.randf()) is never a finding: only a bare engine call is. Add { \"path\": \"sim/...gd\", \"why\": \"...\" } only for a file whose job is to wrap an engine function, with the reason; for a single line use a comment `# det-ok: <reason>` on the line or the line above.",
+-  "files": []
++  "_why": "Whole files the determinism lint (tools/lint-determinism.mjs) does not scan. An entry may carry a \"rule\" (then it allows that one rule in that one file). Since 2026-11-22 three entries carry \"rule\": \"sim-text-float\" for printf text of the director and the world that Simulation and World are to convert or confirm; apart from them the list is empty on purpose: the deterministic wrappers (sim/core/detmath.gd SimDetMath, mathx.gd SimMathx, rng.gd SimRng) are CLEAN, so they are scanned like everything else and a regression inside one would fail. A call THROUGH a wrapper (SimDetMath.sin(x), SimRng.keyed(...), rng.randf()) is never a finding: only a bare engine call is. Add { \"path\": \"sim/...gd\", \"why\": \"...\" } only for a file whose job is to wrap an engine function, with the reason; for a single line use a comment `# det-ok: <reason>` on the line or the line above.",
++  "files": [
++    { "path": "sim/director/swing_read.gd", "rule": "sim-text-float", "why": "swing_read.text: one line for the debug feed (lines 78 and 79, `%+.1f` and `%+.2f`); not known to reach a hashed field. Simulation (the director): convert to SimMathx.fixed or confirm it never reaches a hash, then delete this entry" },
++    { "path": "sim/world/campaign.gd", "rule": "sim-text-float", "why": "the campaign's notes (lines 405, 409 and 414, `%.2f` and `%+.0f`): text about the world build; not known to reach a hashed field. World: convert to SimMathx.fixed or confirm, then delete this entry" },
++    { "path": "sim/world/settlements.gd", "rule": "sim-text-float", "why": "data-validation messages (lines 139, 228 and 230, `%.0f` and `%.3f`): text of an error, not match state. World: convert to SimMathx.fixed or confirm, then delete this entry" }
++  ]
+ }
+diff --git a/tools/lint-determinism-selftest.mjs b/tools/lint-determinism-selftest.mjs
+index 430204f..cfb5466 100644
+--- a/tools/lint-determinism-selftest.mjs
++++ b/tools/lint-determinism-selftest.mjs
+@@ -3,7 +3,7 @@
+ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+-import { lintTree, scan } from './lint-determinism.mjs';
++import { lintTree, loadAllow, scan } from './lint-determinism.mjs';
+ 
+ let ran = 0, failed = 0;
+ const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
+@@ -30,6 +30,12 @@ for (const src of [
+   'var timer = 0', 'var t = tick * DT', 'var a = d.length()', 'var ti = Mathx.PI', 'var x = self.sin_table[3]',
+ ]) check(`not found: ${src}`, found(src).length === 0, found(src).join(','));
+ 
++// the printf rule (Simulation, 2026-11-22: Windows printf rounds an exact half away from zero, Linux and the web to even)
++for (const src of ['var s = "%.1f" % x', 'return "%+.2f %s" % [v, s]', 'var s = "%5.2f" % v', 'var p = "%.0f%%" % pct', "var s = '%.3f' % v", '_err("shares sum to %.3f, not 1" % share)']) check(`found: ${src}`, hits(src, 'sim-text-float') === 1, found(src).join(','));
++for (const src of ['var s = SimMathx.fixed(v, 1)', 'var s = "%d" % n', 'var s = "%s and %s" % [a, b]', 'var s = "%05d" % n', 'var s = "%+d" % n', 'var c = x % 3', 'var c = x %3', 'var p = "50%"', '# "%.1f" % x', 'var a = 1   # was "%.2f" % x', 'static func f(v):']) check(`not found: ${src}`, hits(src, 'sim-text-float') === 0, found(src).join(','));
++check('a det-ok waiver passes the printf rule too', hits('var s = "%.1f" % x   # det-ok: debug text, never hashed', 'sim-text-float') === 0);
++check('the finding says what to use', scan('var s = "%.1f" % x')[0].use === 'SimMathx.fixed(v, n)');
++
+ // a string with an escaped quote does not leak its tail
+ check('an escaped quote does not end a string early', found('var m = "say \\"sin(x)\\" now"').length === 0);
+ 
+@@ -59,5 +65,23 @@ try {
+   check('an allowed file is skipped', lintTree(root, { allow: [{ path: 'sim/core/a.gd', why: 'x' }] }).length === 2);
+ } finally { rmSync(root, { recursive: true, force: true }); }
+ 
++// the allow list: an entry may name one rule (a list for an owner to clear), and a rule that does not exist is refused
++const root2 = mkdtempSync(join(tmpdir(), 'detlint2-'));
++try {
++  const p = join(root2, 'sim/core/h.gd'); mkdirSync(join(p, '..'), { recursive: true }); writeFileSync(p, 'var s = "%.2f" % v\nvar a = sin(x)\n');
++  const rules = (allow) => lintTree(root2, { allow }).map((f) => f.rule).sort().join(',');
++  check('both findings without an allow entry', rules([]) === 'engine-trig,sim-text-float', rules([]));
++  check('a rule-scoped entry allows that rule in that file and nothing else', rules([{ path: 'sim/core/h.gd', rule: 'sim-text-float', why: 'x' }]) === 'engine-trig', rules([{ path: 'sim/core/h.gd', rule: 'sim-text-float', why: 'x' }]));
++  check('an entry for another rule allows neither', rules([{ path: 'sim/core/h.gd', rule: 'engine-pi', why: 'x' }]) === 'engine-trig,sim-text-float');
++  check('an entry for another file allows nothing here', rules([{ path: 'sim/core/z.gd', rule: 'sim-text-float', why: 'x' }]) === 'engine-trig,sim-text-float');
++  check('an entry with no rule still allows the whole file', rules([{ path: 'sim/core/h.gd', why: 'x' }]) === '');
++  const af = join(root2, 'allow.json');
++  writeFileSync(af, JSON.stringify({ files: [{ path: 'sim/core/h.gd', rule: 'sim-text-floot', why: 'x' }] }));
++  let refused = false; try { loadAllow(af); } catch (e) { refused = /does not exist: sim-text-floot/.test(e.message); }
++  check('an allow entry naming a rule that does not exist is refused', refused);
++  writeFileSync(af, JSON.stringify({ files: [{ path: 'sim/core/h.gd', rule: 'sim-text-float', why: 'x' }] }));
++  check('an allow entry naming a real rule is read', loadAllow(af).length === 1);
++} finally { rmSync(root2, { recursive: true, force: true }); }
++
+ if (failed) { console.error(`determinism lint self-test FAILED: ${failed} of ${ran} checks`); process.exit(1); }
+ console.log(`determinism lint self-test ok: ${ran} checks`);
+diff --git a/tools/lint-determinism.mjs b/tools/lint-determinism.mjs
+index 108a6c1..f5add93 100644
+--- a/tools/lint-determinism.mjs
++++ b/tools/lint-determinism.mjs
+@@ -9,9 +9,12 @@
+ //   constants  PI TAU
+ //   random     randf randi randf_range randi_range randfn rand_range randomize shuffle (a bare call or Array.shuffle / pick_random)  -- the sim has SimRng
+ //   clock      Time.<anything>, OS.get_ticks_msec, OS.get_ticks_usec, OS.get_unix_time, OS.get_system_time_*, OS.delay_*, Engine.get_frames_drawn, Engine.get_physics_frames
++//   text       sim-text-float: a printf float in a string ("%.1f", "%+.2f", "%5.2f", "%.0f"): the Windows printf rounds an exact half away from zero and the Linux and web ones to even ("%.1f" % -22.25 reads
++//              -22.3 on Windows, -22.2 elsewhere), so the same match prints different text; use SimMathx.fixed(v, n) (Simulation, 2026-11-22). This rule reads the string, so it looks at the raw line (comments cut off).
+ // "Bare" means not after a dot or a name: SimDetMath.sin(x), SimMathx.PI and rng.randf() are our own and pass. A function definition ("func sin(") is not a use.
+ // Comments and the inside of strings are ignored. Allowed:
+ //   - a whole file: tools/determinism-allow.json { "files": [ { "path": "sim/core/detmath.gd", "why": "..." } ] } (the wrappers themselves, where the engine's function may be the thing wrapped)
++//     an entry may carry "rule": "sim-text-float" (any rule id): then only that rule is allowed in that file, for a list an owner is to clear; its why says who and what
+ //   - a single line: a "# det-ok: <reason>" comment on the line or on the line directly above (a reason is required)
+ // Used by tools/validate.js (--lint) and CI.
+ import { existsSync, readdirSync, readFileSync } from 'node:fs';
+@@ -34,9 +37,10 @@ const RULES = [
+   { id: 'engine-clock', re: /(?<![.\w$])Time\s*\./, what: "the engine's Time clock", use: 'the tick count' },
+   { id: 'engine-clock', re: /(?<![.\w$])OS\s*\.\s*(get_ticks_msec|get_ticks_usec|get_unix_time|get_system_time_secs|get_system_time_msecs|get_datetime|get_time|delay_msec|delay_usec)\s*\(/, what: "an OS clock", use: 'the tick count' },
+   { id: 'engine-clock', re: /(?<![.\w$])Engine\s*\.\s*(get_frames_drawn|get_physics_frames|get_process_frames)\s*\(/, what: "the engine's frame counter", use: 'the tick count' },
++  { id: 'sim-text-float', raw: true, re: /%[-+ 0#]*\d*\.\d+f/, what: "a printf float in text (Windows rounds an exact half away from zero, Linux and the web to even)", use: 'SimMathx.fixed(v, n)' },
+ ];
+ 
+-/** The code of a line: comments and the inside of strings blanked (so a word in a note or a message is not a use). Returns { code, comment }. */
++/** The code of a line: comments and the inside of strings blanked (so a word in a note or a message is not a use). Returns { code, comment, cut } (cut: where the comment starts, the line's length when it has none). */
+ export function splitLine(line) {
+   let code = '', i = 0, q = null;
+   while (i < line.length) {
+@@ -47,10 +51,10 @@ export function splitLine(line) {
+       i++; continue;
+     }
+     if (ch === '"' || ch === "'") { q = ch; code += ch; i++; continue; }
+-    if (ch === '#') return { code, comment: line.slice(i + 1) };
++    if (ch === '#') return { code, comment: line.slice(i + 1), cut: i };
+     code += ch; i++;
+   }
+-  return { code, comment: '' };
++  return { code, comment: '', cut: line.length };
+ }
+ 
+ const DEF_HEAD = /^\s*(static\s+)?func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], .]+)?\s*:/;
+@@ -68,7 +72,7 @@ export function scan(text) {
+     const here = parts[n].comment, above = n > 0 && !parts[n - 1].code.trim() ? parts[n - 1].comment : '';
+     const waived = (WAIVER.test(here) || WAIVER.test(above));
+     for (const r of RULES) {
+-      const m = r.re.exec(code.replace(/^\s*func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], ]+)?\s*:/, ' '));
++      const m = r.re.exec(r.raw ? lines[n].slice(0, parts[n].cut) : code.replace(/^\s*func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], ]+)?\s*:/, ' '));
+       if (m && !waived) out.push({ line: n + 1, rule: r.id, what: r.what, use: r.use, text: lines[n].trim().slice(0, 140), found: m[0].trim() });
+     }
+     // a waiver without a reason is itself a finding
+@@ -90,13 +94,14 @@ function walk(dir, all, out = []) {
+ 
+ /** All findings under a repo root: [{ file, line, ... }]. */
+ export function lintTree(root, { allow = [], all = false } = {}) {
+-  const skip = new Set(allow.map((a) => a.path));
++  const skip = new Set(allow.filter((a) => !a.rule).map((a) => a.path));
++  const skipRule = (rel, rule) => allow.some((a) => a.rule && a.path === rel && a.rule === rule);
+   const findings = [];
+   for (const d of DIRS) {
+     for (const f of walk(join(root, d), all).sort()) {
+       const rel = relative(root, f).split(sep).join('/');
+       if (skip.has(rel)) continue;
+-      for (const x of scan(readFileSync(f, 'utf8'))) findings.push({ file: rel, ...x });
++      for (const x of scan(readFileSync(f, 'utf8'))) { if (!skipRule(rel, x.rule)) findings.push({ file: rel, ...x }); }
+     }
+   }
+   return findings;
+@@ -107,6 +112,8 @@ export function loadAllow(file) {
+   const j = JSON.parse(readFileSync(file, 'utf8'));
+   const files = Array.isArray(j.files) ? j.files : [];
+   for (const a of files) if (!a.path || !a.why) throw new Error(`${file}: every allowed file needs a path and a why`);
++  const rules = new Set(RULES.map((r) => r.id));
++  for (const a of files) if (a.rule !== undefined && !rules.has(a.rule)) throw new Error(`${file}: ${a.path} names a rule that does not exist: ${a.rule}`);
+   return files;
+ }
+ 

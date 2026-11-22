@@ -3,7 +3,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { lintTree, scan } from './lint-determinism.mjs';
+import { lintTree, loadAllow, scan } from './lint-determinism.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -29,6 +29,12 @@ for (const src of [
   '# sin(x) PI randf() Time.now', 'var a = 1   # was sin(x) once', 'static func sin(x: float) -> float:', 'func cos(x) -> float:', 'func tan(x):', 'static func atan2(y: float, x: float) -> float:',
   'var timer = 0', 'var t = tick * DT', 'var a = d.length()', 'var ti = Mathx.PI', 'var x = self.sin_table[3]',
 ]) check(`not found: ${src}`, found(src).length === 0, found(src).join(','));
+
+// the printf rule (Simulation, 2026-11-22: Windows printf rounds an exact half away from zero, Linux and the web to even)
+for (const src of ['var s = "%.1f" % x', 'return "%+.2f %s" % [v, s]', 'var s = "%5.2f" % v', 'var p = "%.0f%%" % pct', "var s = '%.3f' % v", '_err("shares sum to %.3f, not 1" % share)']) check(`found: ${src}`, hits(src, 'sim-text-float') === 1, found(src).join(','));
+for (const src of ['var s = SimMathx.fixed(v, 1)', 'var s = "%d" % n', 'var s = "%s and %s" % [a, b]', 'var s = "%05d" % n', 'var s = "%+d" % n', 'var c = x % 3', 'var c = x %3', 'var p = "50%"', '# "%.1f" % x', 'var a = 1   # was "%.2f" % x', 'static func f(v):']) check(`not found: ${src}`, hits(src, 'sim-text-float') === 0, found(src).join(','));
+check('a det-ok waiver passes the printf rule too', hits('var s = "%.1f" % x   # det-ok: debug text, never hashed', 'sim-text-float') === 0);
+check('the finding says what to use', scan('var s = "%.1f" % x')[0].use === 'SimMathx.fixed(v, n)');
 
 // a string with an escaped quote does not leak its tail
 check('an escaped quote does not end a string early', found('var m = "say \\"sin(x)\\" now"').length === 0);
@@ -58,6 +64,24 @@ try {
   check('--all scans tools/ and test/ too', lintTree(root, { all: true }).length === 5);
   check('an allowed file is skipped', lintTree(root, { allow: [{ path: 'sim/core/a.gd', why: 'x' }] }).length === 2);
 } finally { rmSync(root, { recursive: true, force: true }); }
+
+// the allow list: an entry may name one rule (a list for an owner to clear), and a rule that does not exist is refused
+const root2 = mkdtempSync(join(tmpdir(), 'detlint2-'));
+try {
+  const p = join(root2, 'sim/core/h.gd'); mkdirSync(join(p, '..'), { recursive: true }); writeFileSync(p, 'var s = "%.2f" % v\nvar a = sin(x)\n');
+  const rules = (allow) => lintTree(root2, { allow }).map((f) => f.rule).sort().join(',');
+  check('both findings without an allow entry', rules([]) === 'engine-trig,sim-text-float', rules([]));
+  check('a rule-scoped entry allows that rule in that file and nothing else', rules([{ path: 'sim/core/h.gd', rule: 'sim-text-float', why: 'x' }]) === 'engine-trig', rules([{ path: 'sim/core/h.gd', rule: 'sim-text-float', why: 'x' }]));
+  check('an entry for another rule allows neither', rules([{ path: 'sim/core/h.gd', rule: 'engine-pi', why: 'x' }]) === 'engine-trig,sim-text-float');
+  check('an entry for another file allows nothing here', rules([{ path: 'sim/core/z.gd', rule: 'sim-text-float', why: 'x' }]) === 'engine-trig,sim-text-float');
+  check('an entry with no rule still allows the whole file', rules([{ path: 'sim/core/h.gd', why: 'x' }]) === '');
+  const af = join(root2, 'allow.json');
+  writeFileSync(af, JSON.stringify({ files: [{ path: 'sim/core/h.gd', rule: 'sim-text-floot', why: 'x' }] }));
+  let refused = false; try { loadAllow(af); } catch (e) { refused = /does not exist: sim-text-floot/.test(e.message); }
+  check('an allow entry naming a rule that does not exist is refused', refused);
+  writeFileSync(af, JSON.stringify({ files: [{ path: 'sim/core/h.gd', rule: 'sim-text-float', why: 'x' }] }));
+  check('an allow entry naming a real rule is read', loadAllow(af).length === 1);
+} finally { rmSync(root2, { recursive: true, force: true }); }
 
 if (failed) { console.error(`determinism lint self-test FAILED: ${failed} of ${ran} checks`); process.exit(1); }
 console.log(`determinism lint self-test ok: ${ran} checks`);
