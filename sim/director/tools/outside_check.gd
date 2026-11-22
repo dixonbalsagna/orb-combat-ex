@@ -251,6 +251,7 @@ func _beamStop() -> void:
 		if k == 0:
 			h.sig = true
 			h.stanceMask = 4   # the charging stance: B is the signature (beam_front_check's _fire)
+			h.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
 		_step(S, h)
 		warned = warned or DirOutside._g(D, DirOutside.O_WARN) != 0
 		fired = fired or not S.beams.is_empty()

@@ -153,6 +153,7 @@ func _fireBack() -> void:
 		var sg := SimIntent.new()
 		sg.sig = true
 		sg.stanceMask = 4
+		sg.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
 		_step(S, sg)
 		for _k in range(240):
 			if DirBeamPlay.windowOpen(S, D):

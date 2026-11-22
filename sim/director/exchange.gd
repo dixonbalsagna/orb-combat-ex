@@ -734,6 +734,7 @@ static func _update(S: SimState, dt: float) -> void:
 	_transforms(S)
 	DirRefuse.presses(S)   # every press answered: the power press and the transform, after the director's own
 	DirPace.note(S)   # paceMatch: the player's own pace, for easy's strings
+	DirBrawl.noteRt(S)   # bNoBeamKeepRt: RT's window for RT + B, after this tick's presses
 	if S.dirS.cool > 0.0:
 		S.dirS.cool -= dt
 	DirBands.tick(S)   # the approach before an exchange: it counts down, and the exchange starts at its end

@@ -294,6 +294,8 @@
         "enabled": true,
         "freeTicks": 18,
         "maxWaitTicks": 90,
+        "dropOnPress": true,
+        "_dropOnPress": "a player's release that waits on its target (the lit hand holds) is dropped once he presses for anything else after letting go: a face button, a guard, a dodge, RT, a new stick strike, the context, the transform or Escape. So it never fires later into what he began (QA's tick 5220 of Orb's 1646 play; A-COMBAT-05). Cue stick_refused beam replaced. The computer's isn't dropped. False: it waits up to maxWaitTicks whatever he does, as before",
         "stageTicks": [12, 28, 46, 66, 90, 120],
         "price": [12, 20, 32, 38, 44, 50],
         "dmgMul": [1.0, 1.6, 2.4, 2.8, 3.2, 3.6],

@@ -79,6 +79,7 @@ func _fire(S: SimState) -> void:
 	var a := SimIntent.new()
 	a.sig = true
 	a.stanceMask = 4   # the charging stance: B is the signature, and RB's is the Driver's
+	a.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
 	_step(S, a)
 	var guard: int = 0
 	while _fireAt < 0 and guard < 400:
@@ -228,12 +229,14 @@ func _litHand() -> void:
 		var a := SimIntent.new()
 		a.sig = true
 		a.stanceMask = 4
+		a.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
 		_step(S, a)
 		S.fighters[1].sigReadyT = 0.0
 		for _k in range(int(row[0]) - 1):
 			_step(S)
 		var y := SimIntent.new()
 		y.stanceMask = int(row[1])
+		y.powerPress = int(row[1]) == 4   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
 		if String(row[2]) == "sig":
 			y.sig = true
 		else:
@@ -332,6 +335,7 @@ func _cantPay() -> void:
 	var a := SimIntent.new()
 	a.sig = true
 	a.stanceMask = 4
+	a.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
 	_step(S, a)
 	for _k in range(10):
 		_step(S)
@@ -339,6 +343,7 @@ func _cantPay() -> void:
 	var y := SimIntent.new()
 	y.sig = true
 	y.stanceMask = 4
+	y.powerPress = true   # RT pressed on this tick: with bNoBeamKeepRt, RT + B is the signature inside RT's window after its press (stray-beams)
 	SimCore.step(S, [SimIntent.new(), y])
 	var said: bool = false
 	for e in S.out.fx:

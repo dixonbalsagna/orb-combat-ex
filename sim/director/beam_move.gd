@@ -264,6 +264,11 @@ static func tryFire(S: SimState, f) -> bool:
 	var st: int = _g(f, M_PEND)
 	if st <= 0:
 		return true
+	if dropsOnPress(S, f):
+		SimFx.cue(S, f, "stick_refused", "beam", "replaced")   # he has pressed for something else since letting go: that press is his, and the beam is dropped
+		f.beamCharge = null
+		lost(f)
+		return true
 	var D = DirBrawl.rivalOf(S, f)
 	if DirBrawl._now(S) - (_g(f, M_PAT) - 1) > int(cfg().maxWaitTicks):
 		SimFx.cue(S, f, "stick_refused", "beam", "late")   # his target was never free long enough
@@ -299,6 +304,19 @@ static func tryFire(S: SimState, f) -> bool:
 	SimFx.cue(S, f, "beam_stage", str(st), "")
 	DirBeamPlay.fromStick(S, f, held)   # the hold was its charge: it fires after releaseTell
 	return true
+
+
+## ownMove.dropOnPress (QA's tick 5220 of Orb's 1646 play; A-COMBAT-05): a player's waiting release is dropped once he presses for
+## anything else after letting go (a face button, a guard, a dodge, RT, a new stick strike, the context, the transform, Escape),
+## so it never fires later into what he began. A press on the release's own tick is part of the release. The computer's isn't
+## dropped: its beam pacing is its own.
+static func dropsOnPress(S: SimState, f) -> bool:
+	if f.ai != null or f.input == null or not bool(cfg().get("dropOnPress", false)):
+		return false
+	if DirBrawl._now(S) <= _g(f, M_PAT) - 1:
+		return false
+	var i = f.input
+	return i.light or i.heavy or i.sig or i.special > 0 or i.guardPress or i.dodge or i.powerPress or i.rsStart or i.context or i.transform or i.escape
 
 
 ## The hold is over without a beam: lost, cancelled or refused.

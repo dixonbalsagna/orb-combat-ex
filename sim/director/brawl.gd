@@ -3174,9 +3174,55 @@ static func _aiPart(S: SimState, ex, f, o, bl: Dictionary) -> bool:
 
 ## True when a `sig` press of f's is B, the heavy (brawl-second-pass.md sections 2 and 5): no stance is held. With a
 ## stance held it is that stance's signature, as before.
+## bNoBeamKeepRt's window (Controls' switches.bNoBeam and bNoBeamKeepRt; QA's tick 6617 of Orb's 1646 play; A-COMBAT-11): RT + B is
+## still the signature only within tapHold.holdStart live ticks of RT's press (and not once RT's hold is the channel), not for as
+## long as he isn't charging. One slot after DirBands' slip hold on f.act.dirI: the live ticks left of RT's window, written only for
+## a player with both switches on. (Live ticks: a hit-stop doesn't eat the window.)
+const RT_LEFT: int = 0
+const RT_N: int = 1
+static var blindRt: bool = false   # tests only: the window left unread (the old rule: RT held and not charging)
+
+
+static func _rtB() -> int:
+	return DirBands._hb() + DirBands.AH_N
+
+
+static func _rtG(f) -> int:
+	var i: int = _rtB() + RT_LEFT
+	return f.act.dirI[i] if i < f.act.dirI.size() else 0
+
+
+static func _rtS(f, v: int) -> void:
+	DirPlane._size(f)
+	if f.act.dirI.size() < _rtB() + RT_N:
+		f.act.dirI.resize(_rtB() + RT_N)
+	f.act.dirI[_rtB() + RT_LEFT] = v
+
+
+## Each live tick, after the presses (DirExchange._update): a player's RT press opens the window for holdStart live ticks; each
+## live tick after closes it by one. A B on RT's own tick reads the press itself (rtKeeps).
+static func noteRt(S: SimState) -> void:
+	if not (SimInputData.b_no_beam() and SimInputData.b_no_beam_keep_rt()):
+		return
+	for f in S.fighters:
+		if f.ai != null or f.input == null:
+			continue
+		if f.input.powerPress:
+			_rtS(f, int(SimInputData.t(["tapHold", "holdStart"], 12)))
+		elif _rtG(f) > 0:
+			_rtS(f, _rtG(f) - 1)
+
+
+## RT + B is still the signature: RT held, pressed on this tick or inside its window, and RT's hold not yet the channel.
+static func rtKeeps(f) -> bool:
+	if (f.input.stanceMask & 4) == 0 or f.state == "charging":
+		return false
+	return blindRt or f.input.powerPress or _rtG(f) > 0
+
+
 static func isB(f, kind: String) -> bool:
-	if kind == "sig" and on() and f.ai == null and not DirStick.firing and SimInputData.b_no_beam() and not (SimInputData.b_no_beam_keep_rt() and (f.input.stanceMask & 4) != 0 and f.state != "charging"):
-		return true   # (bNoBeamKeepRt, the interim: B within tapHold.holdStart ticks of RT's press, before RT's hold is the channel (the fighter is not yet charging), is still the signature until RT + right stick lands; a B during the channel is the heavy) Orb's rule (2026-11-01; switches.bNoBeam): a player's B never starts a beam, with RT held, with LT held when the flight strike does not take it, or in an energy mode; the stick's own beam (DirStick.firing) is not a press of B
+	if kind == "sig" and on() and f.ai == null and not DirStick.firing and SimInputData.b_no_beam() and not (SimInputData.b_no_beam_keep_rt() and rtKeeps(f)):
+		return true   # (bNoBeamKeepRt, the interim: B within tapHold.holdStart live ticks of RT's press (rtKeeps), before RT's hold is the channel, is still the signature until RT + right stick lands; a B during the channel is the heavy) Orb's rule (2026-11-01; switches.bNoBeam): a player's B never starts a beam, with RT held, with LT held when the flight strike does not take it, or in an energy mode; the stick's own beam (DirStick.firing) is not a press of B
 	return kind == "sig" and on() and (f.input.stanceMask & 15) == 0 and f.act.mode != 1   # with the energy family held, B is the beam
 
 
