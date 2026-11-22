@@ -1,6 +1,7 @@
 extends SceneTree
 ## The floor of a lake or the sea against the fight's own moves (Game Design rulings 2026-10-30 rows 3, 9 and 11; docs/world/lake-floor.md). With the floor on, a body below his floor rises at most
-## wade.below / riseTicks a tick (7.5), and no director line lifts him faster. A lift here is a tick that starts with him below his floor and ends with him no higher than his floor, out of a drop's surfacing and not launched. A move's own
+## wade.below / riseTicks a tick (7.5) plus the floor's climb from where his tick began to where his own step put him or where he ends, the larger
+## (World's floor-rise rule, GW1b), and no director line lifts him faster. A lift here is a tick that starts with him below his floor and ends with him no higher than his floor, out of a drop's surfacing and not launched. A move's own
 ## height is not the floor's and is counted apart (own): a rush at the rival, a bowed rush, or one aimed above his floor, his own flight and a brawl's drift by their velocity, and a launch's last tick, the same on dry land. Each part a PASS or FAIL line:
 ##   table    a drop and a straight-down launch on the bed at five depths, the case that popped him 16 to 388 a tick; with riseTicks 1 (no limit) the same drop must still pop, so the check can see it
 ##   moves    each director line that places a body, called with him on the bed of water 60 to 70 deep, and followed; with riseTicks 1 at least one must be over the rate
@@ -78,7 +79,7 @@ func _pickRing() -> bool:
 ## The largest lift in n ticks of the full step: {"under": ticks he began below his floor, "max": his largest rise in those, "lift": the largest lift, "at": what it was}. A rise that ends on the actual ground is the ground's, as on dry
 ## land (he has walked or drifted in depth into a slope), and no lift.
 func _track(S: SimState, n: int, into: Dictionary = {}) -> Dictionary:
-	var r: Dictionary = into if not into.is_empty() else {"under": 0, "max": 0.0, "lift": 0.0, "at": "", "over": 0, "own": 0.0, "ownAt": ""}
+	var r: Dictionary = into if not into.is_empty() else {"under": 0, "max": 0.0, "lift": 0.0, "at": "", "over": 0, "own": 0.0, "ownAt": "", "climb": 0.0, "climbAt": ""}
 	for t in range(n):
 		if S.game.ko != null:
 			break
@@ -86,7 +87,7 @@ func _track(S: SimState, n: int, into: Dictionary = {}) -> Dictionary:
 		for f in S.fighters:
 			var q = f.rush
 			var own: bool = q != null and (q.tgt != null or q.arc != 0.0 or q.py > WorldWater.floorAt(S, q.px, f.z) + EPS)
-			pre.append([f.x, f.y, f.z, f.state, DirWater.under(f), WorldWater.floorAt(S, f.x, f.z), q != null, own, f.vy])
+			pre.append([f.x, f.y, f.z, f.state, DirWater.under(f), WorldWater.floorAt(S, f.x, f.z), q != null, own, f.vy, f.vx])
 		SimCore.step(S)
 		for i in range(S.fighters.size()):
 			var f = S.fighters[i]
@@ -100,15 +101,19 @@ func _track(S: SimState, n: int, into: Dictionary = {}) -> Dictionary:
 			r.max = maxf(r.max, rise)
 			if f.y <= WorldTerrain.groundY(S, f.x, f.z) + EPS:
 				continue
-			var at: String = "%s %s at %.0f (moved %.0f), from %.1f to %.1f (floor %.1f, ground %.1f) %s rush, %s" % [f.name, String(f.state), f.x, SimWrap.sdx(float(p[0]), f.x), float(p[1]), f.y, WorldWater.floorAt(S, f.x, f.z), WorldTerrain.groundY(S, f.x, f.z), "on a" if bool(p[6]) else "no", _last(S)]
+			var at: String = "%s %s at %.0f (moved %.0f), from %.1f to %.1f (floor %.1f where his tick began, %.1f where it ended, ground %.1f) %s rush, %s" % [f.name, String(f.state), f.x, SimWrap.sdx(float(p[0]), f.x), float(p[1]), f.y, float(p[5]), WorldWater.floorAt(S, f.x, f.z), WorldTerrain.groundY(S, f.x, f.z), "on a" if bool(p[6]) else "no", _last(S)]
 			if bool(p[7]) or f.state == "down" or ((f.state == "free" or f.state == "locked") and rise <= maxf(maxf(f.vy, float(p[8])), _flown(S, f, p)) * SimConst.DT + 1.0e-3):   # a launch's last tick, ending down off the ground; his own flight or the pair's drift (he keeps the stick, row 9)
 				if rise > float(r.own):
 					r.own = rise
 					r.ownAt = at
 				continue
 			var fl1: float = WorldWater.floorAt(S, f.x, f.z)
-			if f.y >= fl1 - EPS:
-				rise -= maxf(0.0, fl1 - float(p[5]))   # he ends on his floor: what the floor rose by under his step is walking along it, not a lift
+			var flStep: float = WorldWater.floorAt(S, SimWrap.wrap(float(p[0]) + float(p[9]) * SimConst.DT), f.z)   # where his own step put him: the core clamps him there, before the director's lines
+			var climb: float = maxf(0.0, maxf(fl1, flStep) - float(p[5]))
+			if climb > float(r.get("climb", 0.0)):
+				r.climb = climb
+				r.climbAt = at
+			rise -= climb   # the floor's climb under his step is walking along it, not a lift, whether he ends on his floor or still under it (World's floor-rise rule: riseMax plus that climb)
 			if rise > float(r.lift) and f.y <= fl1 + EPS:
 				r.lift = rise
 				r.at = at
@@ -239,7 +244,7 @@ func _runMoves(riseTicks: int, show: bool) -> Dictionary:
 
 ## AI matches with both bodies put back on the bed every REPOSE ticks.
 func _fight(matches: int, riseTicks: int) -> Dictionary:
-	var r: Dictionary = {"under": 0, "max": 0.0, "lift": 0.0, "at": "", "over": 0, "own": 0.0, "ownAt": "", "ticks": 0, "brawl": 0}
+	var r: Dictionary = {"under": 0, "max": 0.0, "lift": 0.0, "at": "", "over": 0, "own": 0.0, "ownAt": "", "ticks": 0, "brawl": 0, "climb": 0.0, "climbAt": ""}
 	for m in range(matches):
 		var S: SimState = _match(true, true, m + 1)
 		_floor(true, riseTicks)
@@ -371,6 +376,7 @@ func _init() -> void:
 	var fg: Dictionary = _fight(matches, 10)
 	var fc: Dictionary = _fight(maxi(1, matches / 2), 1)
 	ok(int(fg.over) == 0 and int(fg.under) > 0, "fight: %d AI ticks on the bed, %d of them under his floor, %d reposes in a brawl: largest lift %.2f a tick, %d over the limit %.1f%s; a move's own height up to %.2f (%s)" % [int(fg.ticks), int(fg.under), int(fg.brawl), float(fg.lift), int(fg.over), rate, " (%s)" % String(fg.at) if int(fg.over) > 0 else "", float(fg.own), String(fg.ownAt)])
+	print("      fight: the steepest climb of his floor walked in a tick %.2f (%s)" % [float(fg.climb), String(fg.climbAt)])
 	ok(int(fc.over) > 0, "fight: the control sees it: with riseTicks 1 the largest lift is %.2f a tick (%s)" % [float(fc.lift), String(fc.at)])
 	for t in [[20.4, "shallow"], [64.1, "shoulder"], [100.0, "sheet"]]:
 		var r: Array = _throw(float(t[0]))
