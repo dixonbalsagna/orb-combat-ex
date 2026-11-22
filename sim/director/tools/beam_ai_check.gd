@@ -8,8 +8,6 @@ extends SceneTree
 
 var failed: int = 0
 const CAP: int = 9000
-## Ticks the rival is locked while the computer charges, with the dash on, today on the 9 November data: a GW1a ceiling, see _on.
-const LOCKED_IN_CHARGE_TODAY: int = 29
 
 
 func _init() -> void:
@@ -83,11 +81,7 @@ func _on() -> void:
 	var price: float = float(DirBeamMove.cfg().price[maxi(0, stageAt - 1)]) if stageAt > 0 else -1.0
 	print("      on: charged at %d, its exchange at %d (stage %d, paid %.1f against %.1f), fired %s, wait %.1f" % [chargeAt, startAt, stageAt, paid, price, str(fired), A.sigReadyT])
 	_expect(chargeAt > 0 and startAt > chargeAt, "the computer's beam starts as a hold, and its exchange comes at the release (%d ticks later)" % (startAt - chargeAt))
-	# A GW1a ceiling (the GW1a review, major 2): with the dash on, the computer closes fast and starts its hold while its rival is locked
-	# in an exchange (DirBeamMove.aiStart doesn't ask that it is free). A real fault on Orb's path, held at today's number on the 9 November
-	# data: it may only come down. The fix is owed for GW1b (Encounter's gw1b-riders: no hold unless free or charging), and puts the row
-	# back to 0.
-	_expect(exInCharge == 0 and lockedInCharge <= LOCKED_IN_CHARGE_TODAY, "nobody is locked while it charges (%d ticks in an exchange, %d its rival locked; a GW1a ceiling at today's %d; owed: gw1b-riders)" % [exInCharge, lockedInCharge, LOCKED_IN_CHARGE_TODAY])
+	_expect(exInCharge == 0 and lockedInCharge == 0, "nobody is locked while it charges (%d ticks in an exchange, %d its rival locked)" % [exInCharge, lockedInCharge])
 	_expect(stageAt >= 1 and absf(paid - price) < 0.2 and fired, "it lets go at a stage, pays that stage (%.1f), and fires" % paid)
 	_expect(A.sigReadyT > S.T, "its pacing keeps its signature wait (ready at %.1f)" % A.sigReadyT)
 	SimCore.dispose(S)

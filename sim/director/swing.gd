@@ -459,7 +459,7 @@ static func _timing(S: SimState, cause: String, A, D) -> Dictionary:
 static func _tension(S: SimState, A, D) -> float:
 	if not bool(cfg().get("tension", {}).get("enabled", false)) or A == null or D == null:
 		return 0.0
-	return clampf((maxf(float(A.anguish), float(D.anguish)) + maxf(float(A.menace), float(D.menace))) / 200.0 + float(S.mood.v) / 3600.0, 0.0, 1.0)
+	return clampf(float(S.mood.v) / 3600.0, 0.0, 1.0)   # (decision 6, A1: the old meters steer nothing; the tension was the higher of each meter, over 200, with the mood)
 
 
 ## Where to (RL-215's second column). Fit, the place, personality in standing buildings, the hero's anguish, variety, lean,

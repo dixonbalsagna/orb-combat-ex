@@ -160,7 +160,7 @@
     "arriveTerrain": 4.0,
     "buildingRef": 30.0,
     "care": 4.0,
-    "anguish": 2.0,
+    "anguish": 0.0,
     "sameSize": 1.0,
     "sameSide": 0.5,
     "samePlace": 3.0,

@@ -55,8 +55,13 @@ func _lint() -> void:
 	for w in ["care", "anguish", "menace", "mood"]:
 		_ok(not nu.contains(w), "the nudge's scorer doesn't name %s" % w)
 	var tm: String = _func(src, "static func _tension(")
-	for w in ["anguish", "menace", "mood"]:
-		_ok(tm.contains(w), "timing's scalar %s is the one listed by name" % w)
+	_ok(tm.contains("mood"), "timing's scalar mood is the one listed by name")
+	var code: String = ""   # (its code lines: the next function's comment comes with the text)
+	for l in tm.split("\n"):
+		if not l.strip_edges().begins_with("##"):
+			code += l + "\n"
+	for w in ["anguish", "menace"]:
+		_ok(not code.contains(w), "timing reads no %s (decision 6: in A1 the old meters steer nothing; Legal's list is what it may read, at most)" % w)
 
 
 func _func(src: String, head: String) -> String:
@@ -92,6 +97,18 @@ func _blind(planet: int) -> void:
 	var a2: Array = _dirOnly(S, villain, o2, 1)
 	villain.menace = m0
 	_expect(a1 == a2, "planet %d: direction moved with his menace" % planet)
+	var hero = fs[1] if villain == fs[0] else fs[0]
+	var o3 = SimRoster.opp(S, hero)
+	var g0 = hero.anguish
+	var c0 = hero.care
+	hero.care = 1.0   # (the term reads the anguish only for a fighter who cares; main's Protagonist has care 0, so he gets some for the row)
+	hero.anguish = 0.0
+	var h1: Array = _dirOnly(S, hero, o3, 1)
+	hero.anguish = 100.0
+	var h2: Array = _dirOnly(S, hero, o3, 1)
+	hero.anguish = g0
+	hero.care = c0
+	_expect(h1 == h2, "planet %d: direction moved with his anguish (decision 6: in A1 the old meters steer nothing)" % planet)
 	var m1 = S.mood.v
 	S.mood.v = 0
 	var b1: Array = _dirOnly(S, villain, o2, 1)

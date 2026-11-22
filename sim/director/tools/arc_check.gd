@@ -36,10 +36,6 @@ func _expect(ok: bool, what: String) -> void:
 		failed += 1
 
 
-## The meteor's bowl under the energy model today (the 9 November data and main's with energy-on): a GW1a ceiling, see _s0.
-const METEOR_BOWL_TODAY: float = 4570.0
-
-
 func _fresh(seed: int = 11) -> SimState:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed, {"p1": false, "p2": false}, {"planet": 7, "touch": 2, "planetGen": 3, "intro": false})
@@ -509,11 +505,7 @@ func _s0(S: SimState) -> void:
 		return
 	var c = S.craters[S.craters.size() - 1]
 	print("      the bowl: radius %.0f, depth %.0f" % [float(c.r), float(c.depth)])
-	# A GW1a ceiling (the GW1a review, major 2): with the energy model on, World's impactEnergy drops the tier for the meteor's authored
-	# landing speed, so the bowl is 4,571 against World's 6,046 (the row is more than 5,000). A real fault on Orb's path, held at today's
-	# number: it may only grow. The fix is owed for GW1b (Encounter's gw1b-riders: the meteor's bowl dug with the tiered formula), and
-	# puts the row back.
-	_expect(float(c.r) >= METEOR_BOWL_TODAY, "the meteor's own bowl (%.0f; a GW1a ceiling at today's %.0f, World's 6,046; owed: gw1b-riders)" % [float(c.r), METEOR_BOWL_TODAY])
+	_expect(float(c.r) > 5000.0, "the meteor's own bowl (%.0f)" % float(c.r))
 	var standing: int = 0
 	var fell: int = 0
 	for b in S.buildings:

@@ -149,6 +149,8 @@ static func aiOn() -> bool:
 static func aiStart(S: SimState, f, i) -> bool:
 	if not aiOn() or f.ai == null or DirStick._g(f, DirStick.ST_ON) != 0:
 		return false
+	if (f.state != "free" and f.state != "charging") or f.stunTicks > 0:
+		return false   # not while it can't act: locked in a brawl its hold never climbs a stage, and the beam is lost (its old press goes instead)
 	var lvName: String = DirAI.level if DirAI.level != "" else String(DirAI.skill().get("level", "medium"))
 	var n: int = stageCount(f)
 	var share: float = float(cfg().get("aiStage", {}).get(lvName, 1.0))
