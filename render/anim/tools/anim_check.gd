@@ -3686,6 +3686,57 @@ func _test_water_stance_run() -> void:
 	print("water stance: depths %s, no fighter read as airborne on the floor" % str(seen))
 
 
+## The stance on water on the globe ground (docs/animation/water-tile-check.md). `_test_water_stance` picks its water out of S.water, which is all zero on a planet slice, so it runs on the strip ground; this is its globe-ground twin: the
+## match is the planet slice the globe ground starts (`RenderTileGround.on`), the pair is put at a deep sea place, a place where the sim waits at a lake's level, and a place below sea level the sim calls dry (a wade), with the water floor
+## on, and the body must read as standing (no airborne weight, both grounded, within 8 units of the floor) at each. Where the feet are against the DRAWN water is `tools/water_tile_check.gd`'s (it needs the tile field).
+func _test_water_stance_globe() -> void:
+	var was_tiles: bool = RenderTileGround.on
+	var was_floor: bool = WorldFill.floorOn()
+	RenderTileGround.on = true
+	RenderAnim._fighters.clear()
+	main.start_match(7, {"p1": false, "p2": false})
+	for i in range(6):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var bad: Array = []
+	var seen: Array = []
+	if S.frame == null:
+		bad.append("the match is not a planet slice (S.frame is null)")
+	var want := {"deep sea": [], "lake": [], "wade": []}
+	for c in range(SimConst.NC):
+		var x: float = (float(c) + 0.5) * SimConst.COL
+		var g: float = WorldTerrain.groundY(S, x)
+		var sea: bool = WorldTerrain.seaAt(S, x)
+		WorldFill.setFloor(true)
+		var fl: float = WorldWater.floorAt(S, x)
+		var wide := true
+		for d in [-96.0, 96.0, 192.0]:   # the pair stands 60 apart: the neighbours must be the same kind
+			if WorldTerrain.seaAt(S, x + float(d)) != sea:
+				wide = false
+		if not wide:
+			continue
+		if sea and g < -100.0 and absf(fl) < 0.01 and (want["deep sea"] as Array).is_empty():
+			(want["deep sea"] as Array).append(c)
+		elif sea and absf(fl) > 0.01 and (want["lake"] as Array).is_empty():
+			(want["lake"] as Array).append(c)
+		elif not sea and g < WorldWater.SHORE_WET and (want["wade"] as Array).is_empty():
+			(want["wade"] as Array).append(c)
+	for kind in want:
+		var cols: Array = want[kind]
+		if cols.is_empty():
+			bad.append("no %s place on this planet's ring to stand a pair on" % kind)
+			continue
+		RenderAnim._fighters.clear()
+		var r: Dictionary = _water_stance_probe(S, int(cols[0]), true)
+		seen.append("%s col %d: airborne %.2f, grounded %d, %.1f off the floor" % [kind, int(cols[0]), r.air, r.grounded, r.h])
+		if r.air > 0.0 or r.grounded != 2 or r.h > 8.0:
+			bad.append("%s (column %d): airborne weight %.2f, grounded %d of 2, %.0f off the floor" % [kind, int(cols[0]), r.air, r.grounded, r.h])
+	WorldFill.setFloor(was_floor)
+	RenderTileGround.on = was_tiles
+	_expect(bad.is_empty(), "standing on the water, globe ground: the pair holds the ground stance at a deep sea, a lake and a wade with the floor on: %s" % str(bad))
+	print("water stance, globe ground: %s" % " | ".join(seen))
+
+
 func _test_tick_fast() -> void:
 	var fast: Array = _tick_hash(true, 1200)
 	var before: Array = _tick_hash(false, 1200)
@@ -8105,6 +8156,7 @@ func _run() -> void:
 	_test_beam_aim()
 	_test_held()
 	_test_water_stance()   # last: it runs a match with the floor switched on, and what that leaves in the sim's statics is not undone
+	_test_water_stance_globe()   # after it, for the same reason: it too leaves the floor as it found it
 	RenderAnim.enabled = true
 	RenderAnim.style_override = ""
 	RenderAnim.debug_checks = false
