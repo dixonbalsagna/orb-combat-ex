@@ -1896,3 +1896,5 @@ Orb's correction (2026-11-14, verbatim): "its late and I counted wrong, it was f
 **EP note (2026-11-20), on the entry of 2026-11-14 "The stand-in's five questions":** what Orb accepted "on all of them" is recorded in the stand-in's questions page, docs/ep/reviews/stand-in-questions-2026-11-14.md. On planet sizes, that was tiny to huge as five sizes. Whether tiny and huge must be drawn and measured within A1 is still Orb's open answer on the sprint report. Until Orb answers, A1 offers small, medium and big in the menu (the GW1c readiness review, C-05).
 
 **Orb (2026-11-21, about 11:00 PST):** "bring everything to a safe pause, I'll let my stand-in know to pause as well, give me a brief about where we are on the project and what's getting worked on this week."
+
+**Orb (2026-11-22, about 04:25 PST):** "continue work over night. perform a check-in every two hours. utilize my stand-in as an advisory role, utilize them as a specialist role when necessary"
