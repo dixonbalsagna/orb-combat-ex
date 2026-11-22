@@ -1,6 +1,6 @@
-# Parked, half-done: the GW1b landing review's Camera items (gw1b-landing-c1)
+# Parked: the GW1b landing review's Camera items (gw1b-landing-c1)
 
-Camera, 2026-11-21. The stand-in's GW1b landing review (`docs/ep/reviews/GW1b-landing.md`), C-1 to C-4. **Stopped at Orb's safe pause:** see "Where it stopped". Nothing here is committed.
+Camera, 2026-11-21. The stand-in's GW1b landing review (`docs/ep/reviews/GW1b-landing.md`), C-1 to C-4. Committed b04de5d5, finished 2026-11-22 (below).
 
 **Apply after gw1b-handover-ease** (cut on the 55-line stack, the EP's s426, which carries the three GW1b camera parks): `git -c core.autocrlf=false apply gw1b-landing-c1.patch` (sha1 74379857). Two files, mine.
 
@@ -35,11 +35,8 @@ Planet copies would need the planet's own streets and places. The real matches a
 
 The rule under test, the camera's step, jolt, framing and no flap through a four-catch chain, is unchanged. Only the staging's tap spacing follows GW1b's slower flight, so the chain it stages still has its catches (35 gave two of four).
 
-## Where it stopped (Orb's safe pause, 2026-11-21)
+## Finished (2026-11-22)
 
-- **C-1:** built and run. Every camera check on the 55-line stack with this park passes: chase_rush 130, cross_ko 21, flight_shots 632, launch_shots 1,029, own_pane 12, peak_retry 1, peak_shot 24, split_share 26, split_vision 13, swing_fight 10, swing_places 33, swing_read 14,420, swing_real 48, swing_shot 164.
-- **Not finished:**
-  - The full split_sweep on the stack with the final `_drawn_off`. It was stopped at the pause; `--only=intro` passes, which includes the default opening with its ceiling.
-  - split_sweep on main with the rig changes (`wide_floor` + `drawn_off`).
-- **C-2 (the side-by-side against the reference build d3f1ca0e, both flash modes):** not started. The export script is written (scratch `lg_prep.sh`: the reference, the stack before and after Camera's GW1b rig changes, scene ai seed 3), but no export or capture was run.
-- **Next:** the full split_sweep on the stack and on main, then C-2's three exports and captures, one at a time through Tools' launcher.
+- **Every camera check passes** on the 55-line stack with this park: chase_rush 130, cross_ko 21, flight_shots 632, launch_shots 1,029, own_pane 12, peak_retry 1, peak_shot 24, split_share 26, split_vision 13, swing_fight 10, swing_places 33, swing_read 14,420, swing_real 48, swing_shot 164.
+- **The full split_sweep passes** on the stack with this park, and on main with the rig changes.
+- **C-2 is done.** All captures PASS in both modes, and no reading is worse. The records are in `docs/camera/runs/b04de5d5/gw1b-landing-c2/readings.md`.

@@ -1,4 +1,4 @@
-# Parked: a Medium candidate for X-06 and A-AI-10, and the computer's answer to a held charge (off main until QA measures them; paused before the director checks, see Director checks)
+# Parked: a Medium candidate for X-06 and A-AI-10, and the computer's answer to a held charge (off main until QA measures them)
 
 Encounter, 2026-11-21, sprint A1. QA found Medium a cliff for a single pad on Orb's scheme (6 of 100) and wide open to charged heavies (60 of 60). Easy is 100 of 100 for the beam pad. This is one Medium candidate in `data/director/ai.json`. **QA measures it with the strike, beam and charge pads.**
 
@@ -92,9 +92,9 @@ All runs used `sim/core/tools/golden.gd` (record `golden.txt`):
 
 ## Director checks
 
-**Stopped here at Orb's safe pause (2026-11-21, 10:59).** The 45-check run on main with the three diffs had just started: `a_press_check`, `arc_check` and `arrive_check` passed, and the run was stopped by PID in `bark_reads_check` and `loader_check`. **Not run yet:** the other 42 checks, parity, and my 20-match sanity read of the charge pad at Medium. Before QA reads, run every `sim/director/tools/*_check.gd` and parity on main with the three diffs. Expected: 45 of 45, with parity failing only its golden rows, as on the first build (record `director_checks.txt`, which is that build's).
+**45 of 45 on main with the three diffs** (resumed 2026-11-22 after Orb's pause): every `sim/director/tools/*_check.gd`, including `hold_answer_check`, `chase_tap_check`, `floorlift_check`, `match_end_check` and `loader_check`. Parity fails only its three golden rows (matches, human-input replays, planet worlds): the expected move, re-recorded in the landing window. Main's sim, data, schemas and `qa/godot` are unchanged from 01367c97 to b04de5d5, and the committed diffs are byte for byte the tree the checks ran on (record `director_checks.txt`).
 
-**Done before the pause:** the re-cut built, its check 12 of 12, validate 0 errors, the determinism lint, and both goldens (above). The parked diffs are byte for byte the tree they ran on.
+**Sanity read, the charge pad at Medium, 20 matches, seeds 1 to 20: 0 of 20** (before this re-cut: 35 of 40). Of its 394 full charges, 90 met nothing and 86 were perfect-blocked. This is under the 55% ceiling, and also under the 20% floor Game Design set for one-note pads (none hopeless). QA's five-pad, three-level read is the measure; Game Design may want Medium's chance below 0.8.
 
 ## Apply
 
@@ -118,7 +118,7 @@ With all three on main 01367c97 (its sim, data and schemas are 68d52f75's): vali
 ## NEEDS FROM EP
 
 - **Tools:** the grant for `x06-hold-answer-schema.diff`.
-- **QA:** one read, five pads at three levels, on main with the three diffs, after the director checks above are run.
+- **QA:** one read, five pads at three levels, on main with the three diffs.
 - **Animation and VFX:** a pose for the computer's dodge of a release (the `hold_dodge` cue). Today it shows only an afterimage.
 - **Game Design, to confirm:** the dodge stays inside the brawl, at the dodge-cancel's price (my choice, above). The hold-break throw applies to any catch of a held B, the player's too.
 - **CI:** add `hold_answer_check` to the director checks.

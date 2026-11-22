@@ -9,3 +9,4 @@ Medium 0.8 (test value), charge pad, seeds 1-20: "dataHash":"8d62092dd6b10af2" "
 Medium 1.0 (test value), charge pad, seeds 1-20: "dataHash":"9a38bb0aeb991790" "medianSec":475.0 "charged":{"guard":0,"hit":386,"n":564,"none":31,"pb":147} "winsBySlot":[2,18]  script errors 0
 Easy 0.25, charge pad, seeds 1-20: "dataHash":"28456adb5a158d1f" "medianSec":296.2 "charged":{"guard":33,"hit":667,"n":730,"none":2,"pb":28} "winsBySlot":[20,0]  script errors 0
 Easy 0.5 (test value), charge pad, seeds 1-20: "dataHash":"9c0be3ff7f4d4aa9" "medianSec":375.6 "charged":{"guard":37,"hit":693,"n":790,"none":21,"pb":39} "winsBySlot":[20,0]  script errors 0
+Re-cut (187686f1), Medium 0.8, charge pad, seeds 1-20: "dataHash":"c88d5a15e514ceab" "medianSec":356.1 "charged":{"guard":17,"hit":201,"n":394,"none":90,"pb":86} "winsBySlot":[0,20]  script errors 0
