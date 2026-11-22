@@ -293,6 +293,7 @@ static func tryFire(S: SimState, f) -> bool:
 	DirExchange.ownBeam = false
 	if r != DirExchange.STARTED:
 		return false
+	DirBeamAim.bind(S, f, DirBrawl.exOf(S))   # the throw is this beam's
 	f.ki = maxf(0.0, f.ki - float(cfg().price[st - 1]))   # its stage's price, paid as it goes
 	if f.ai != null:
 		f.sigReadyT = S.T + DirBeam.sigCooldown(f)   # the computer's pacing reads its signature wait: its own choice, not the move's

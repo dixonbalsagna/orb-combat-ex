@@ -132,6 +132,7 @@ static func fromStick(S: SimState, f, held: int) -> void:
 	if ex == null or ex.kind != "sig" or ex.A != f:
 		f.beamCharge = null   # no beam came of it
 		return
+	DirBeamAim.bind(S, f, ex)   # the stick's throw is this beam's (a release that started no beam leaves nothing for the next)
 	var fb = _beat(ex, "beamFire")
 	if fb != null:
 		var tell: int = maxi(int(frontCfg().releaseTell), int(round((float(fb.t) - ex.t) * DirData.TICKS_PER_SEC)) - held)

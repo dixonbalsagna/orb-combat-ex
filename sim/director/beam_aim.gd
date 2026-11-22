@@ -10,10 +10,12 @@ extends RefCounted
 ## State: integers on f.act.dirI after DirChaseTap's.
 
 const B_AIM: int = 0     # the sector he's aiming now, plus 1; 0 none
-const B_THROW: int = 1   # the sector thrown, plus 1; 0 none
+const B_THROW: int = 1   # the sector thrown, plus 1 (bits 0 to 5); bits 6 up: the exchange it was bound to (its index, plus 1), 0 unbound
+const THROW_MASK: int = 63
 const B_N: int = 2
 
 static var _force: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+static var blindBind: bool = false   # tests only: a throw read as before, bound or not
 
 
 static func setForce(v: int) -> void:
@@ -71,15 +73,30 @@ static func aimDeg(f) -> float:
 	return NAN if a == 0 else float(a - 1) * 11.25
 
 
-## At the beam's fire (DirBeamPlay.fire): the direction it was thrown, or [] for a shot at him (none thrown, or within assistDeg of him). The
-## throw is used once.
+## The release's beam has started its exchange (DirBeamMove.tryFire, DirBeamPlay.fromStick): the throw is this beam's. A throw that is never
+## bound (the release was refused, dropped or fired no beam) is nobody's: the next beam doesn't take it (the stand-in's read, A1).
+static func bind(S: SimState, f, ex) -> void:
+	if not on() or ex == null:
+		return
+	var a: int = _g(f, B_THROW) & THROW_MASK
+	if a != 0:
+		_s(f, B_THROW, a | ((ex.n + 1) << 6))
+
+
+## At the beam's fire (DirBeamPlay.fire): the direction it was thrown, or [] for a shot at him (none thrown, a throw that isn't this beam's,
+## or within assistDeg of him). The throw is used once.
 static func wide(S: SimState, A, ox: float, oy: float, tx: float, ty: float) -> Array:
 	if not on():
 		return []
-	var a: int = _g(A, B_THROW)
+	var raw: int = _g(A, B_THROW)
 	_s(A, B_THROW, 0)
+	var a: int = raw & THROW_MASK
 	if a == 0:
 		return []
+	if not blindBind:
+		var ex = DirBrawl.exOf(S)
+		if (raw >> 6) == 0 or ex == null or (raw >> 6) - 1 != ex.n:
+			return []   # a throw its own release never fired (refused, dropped): not this beam's, so a shot at him
 	var deg: float = float(a - 1) * 11.25
 	var r: float = deg * SimMathx.PI / 180.0
 	var ux: float = SimDetMath.cos(r)
