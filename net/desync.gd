@@ -28,6 +28,7 @@ const WALK_SKIP: Array = ["out", "worldId"]
 
 static var aiBlind: bool = false   # tests only: the digest leaves out the AI's timers (desync_check's negative control)
 static var wordBlind: bool = false # tests only: the digest leaves out the intent's second word (word_check's negative control)
+static var marksBlind: bool = false   # tests only: the digest leaves out the buildings' marks, as before they were in it (desync_check's control)
 static var swingBlind: bool = false   # tests only: the digest leaves out the line, the swing and the store (swing_check's negative control)
 
 
@@ -79,9 +80,14 @@ static func _digest(S: SimState) -> String:
 	if S.bound():   # the per-tick fields from the state's arrays, as SimHash reads them: a snapshot's records read the live state's (docs/architecture/packed-structures.md)
 		for i in range(S.buildings.size()):
 			v.append(S.bHp[i]); v.append(S.bFmask[i]); v.append(S.bPopAlive[i]); v.append(S.bFled[i]); v.append(S.bWear[i]); v.append(float(S.bAlive[i]))
+			if S.bMarks[i] != 0 and not marksBlind:   # building memory (World's marks), as SimHash reads it: only where it isn't 0, so a match without marks digests as before
+				v.append(float(i)); v.append(float(S.bMarks[i]))
 	else:
-		for b in S.buildings:
+		for i in range(S.buildings.size()):
+			var b = S.buildings[i]
 			v.append(b.hp); v.append(b.fmask); v.append(b.popAlive); v.append(b.fled); v.append(b.wear); v.append(1.0 if b.alive else 0.0)
+			if b.marks != 0 and not marksBlind:
+				v.append(float(i)); v.append(float(b.marks))
 	v.append(S.trees.size())
 	if S.bound():
 		for i in range(S.trees.size()):
