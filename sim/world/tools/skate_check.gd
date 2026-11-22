@@ -80,6 +80,7 @@ func with_switch(on: bool, fine: int) -> Dictionary:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	WorldContact.skateOn()
 	ok(not WorldContact.K_SKATE, "the switch (data/biomes/skate.json enabled) is off in the data")
 	var res: Dictionary = {}

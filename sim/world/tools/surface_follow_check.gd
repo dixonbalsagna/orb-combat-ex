@@ -22,6 +22,7 @@ func _codes(S: SimState) -> PackedInt32Array:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	for planet in [7, 12]:
 		WorldClimate.useGen(3)
 		var S := SimCore.createSim()

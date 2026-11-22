@@ -30,6 +30,7 @@ func play(setup: Dictionary, seed: int, ticks: int) -> Dictionary:
 
 func _init() -> void:
 	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped before the data went on; docs/world/pins-and-the-model.md
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now: no planet in a set-up plays planet 7); WorldPin sets it in memory
 	var ticks: int = 3600
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--ticks="):

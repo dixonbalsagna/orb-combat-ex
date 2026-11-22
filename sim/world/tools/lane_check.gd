@@ -2,6 +2,7 @@ extends SceneTree
 # L1 + D1 layout checks on the generated world
 const BH: float = 75.0
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, 1)
 	var rows := {}

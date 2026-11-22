@@ -98,6 +98,7 @@ func _smashProps(v) -> Array:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	ok(WorldGround.dataErrors().is_empty(), "ground.json loads clean (%s)" % str(WorldGround.dataErrors()))
 	ok(not WorldGround.K_PROVISIONAL, "provisionalProps is off in the data")
 	var st: Array = stage()

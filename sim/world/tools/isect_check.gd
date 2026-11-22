@@ -6,6 +6,7 @@ func ok(c: bool, w: String) -> void:
 	if not c:
 		fails += 1
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, 1, {}, {"intro": false})
 	var lim: Array = WorldLanes.limits()

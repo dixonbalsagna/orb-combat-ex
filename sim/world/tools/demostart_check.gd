@@ -10,6 +10,7 @@ func ok(c: bool, w: String) -> void:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	var S0 := SimCore.createSim()
 	SimCore.newMatch(S0, 3, {}, {"intro": false})
 	ok(S0.fighters[0].x == SimConst.START_X and S0.fighters[1].x == SimConst.START_X + SimConst.START_GAP, "the default start is START_X (%.0f) and the gap as before" % S0.fighters[0].x)

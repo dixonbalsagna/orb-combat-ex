@@ -20,6 +20,7 @@ func fresh(seed: int = 1) -> SimState:
 
 func _run(model: bool) -> void:
 	WorldPin.shipped(model)   # GW1a: run twice, with the energy model and the dash off (the path main shipped before the data went on) and on (Orb's real path); docs/world/pins-and-the-model.md
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now: no planet in a set-up plays planet 7); WorldPin sets it in memory
 	print("--- the energy model and the dash %s" % ("ON (Orb's real path)" if model else "OFF (main before GW1a)"))
 	var S := fresh(1)
 	var c: Dictionary = WorldBrunt.cfg()

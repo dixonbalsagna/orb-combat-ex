@@ -10,6 +10,7 @@ func ok(c: bool, w: String) -> void:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena lanes (data/biomes/world.json mode is planet now: no crossing at x 46,599); WorldPin sets it in memory
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, 1, {}, {"intro": false})
 	var BH: float = 75.0

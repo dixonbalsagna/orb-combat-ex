@@ -91,6 +91,7 @@ func h(S: SimState) -> String:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	ok(WorldAfter.dataErrors().is_empty(), "after.json is clean (%s)" % str(WorldAfter.dataErrors()))
 	ok(not WorldAfter.on(), "the switch (data/biomes/after.json enabled) is off in the data")
 	WorldAfter.K_ON = false

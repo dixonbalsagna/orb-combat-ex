@@ -39,6 +39,7 @@ func control(S: SimState, vx: float, vy: float) -> Dictionary:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	var g: Array = WorldGround.data().grounds
 	var res: Dictionary = {}
 	for k in range(15):

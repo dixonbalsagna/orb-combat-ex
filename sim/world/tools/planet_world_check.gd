@@ -29,12 +29,13 @@ func run(S: SimState, ticks: int) -> int:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	var args := OS.get_cmdline_user_args()
 	var ticks: int = int(args[0]) if args.size() > 0 else 1800
 	# ---- the hand-made world is as it was
 	var S0 := SimCore.createSim()
 	SimCore.newMatch(S0, 1, {}, {"intro": false})
-	ok(S0.buildings.size() == 118 and WorldBiomes.planetCols.size() == 0 and WorldBiomes.biomeAt(50000.0) == "city", "a setup without a planet is today's world (118 buildings, the city at x 50,000)")
+	ok(S0.buildings.size() == 118 and WorldBiomes.planetCols.size() == 0 and WorldBiomes.biomeAt(50000.0) == "city", "the hand-made arena is today's world (118 buildings, the city at x 50,000): a set-up that names it, as the default is the planet now")
 	# ---- the planet world
 	var S := planetMatch(1, 7, 3)
 	var sl: WorldPlanet.Slice = WorldPlanet.sliceFor(7, 3)

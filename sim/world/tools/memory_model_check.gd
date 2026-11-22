@@ -46,6 +46,7 @@ func _hit(S: SimState, b, E: float, marks: int) -> Dictionary:
 
 func _init() -> void:
 	neg = OS.get_cmdline_user_args().has("--negative-control")
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now: no planet in a set-up plays planet 7); WorldPin sets it in memory
 	var S := _match()
 	ok(S.powerOn, "the match has the energy model on")
 	var c: Dictionary = WorldBrunt.cfg()

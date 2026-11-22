@@ -48,6 +48,7 @@ func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now: no planet in a set-up plays planet 7); WorldPin sets it in memory
 	var c: Dictionary = WorldBrunt.cfg()
 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
 	ok(c.lodgeHold == "world" and int(c.towerPunches[0]) == 0, "the homework switches stand at today's behaviour (lodgeHold %s, towerPunches[0] %d)" % [c.lodgeHold, int(c.towerPunches[0])])

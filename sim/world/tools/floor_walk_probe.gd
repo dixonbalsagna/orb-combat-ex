@@ -148,6 +148,7 @@ func rise(riseTicks: int) -> Dictionary:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	var pick: Array = find()
 	ok(not pick.is_empty(), "a ring with a lake at least 100 deep and 14 columns wide: %s" % str(pick))
 	if pick.is_empty():

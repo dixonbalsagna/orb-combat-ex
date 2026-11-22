@@ -62,6 +62,7 @@ func run(S: SimState, ticks: int) -> void:
 
 
 func _init() -> void:
+	WorldPin.arena()   # GW1b: this check tests the hand-made arena or the old default world (data/biomes/world.json mode is planet now); WorldPin sets it in memory
 	ok(WorldFire.dataErrors().is_empty(), "fire.json is clean (%s)" % str(WorldFire.dataErrors()))
 	ok(not WorldFire.on(), "fire.json ships with the fires off")
 	var S0 := fresh()

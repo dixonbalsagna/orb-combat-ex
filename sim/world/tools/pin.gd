@@ -40,3 +40,8 @@ static func shipped(power: bool = false) -> void:
 	SimPower.on_ = bool(_on0) if power else false
 	SimPower.dashOn_ = bool(_dash0) if power else false
 	DirLaunch.forceBiome = 0   # the planner does not read the ground (launch_biome.json biome.enabled)
+
+
+## Tests only (GW1b): a setup that names no planet plays the hand-made arena, as it did before the default world moved to the round planet (data/biomes/world.json mode). For a check that tests the arena or a default world.
+static func arena() -> void:
+	WorldDefault.setForTest("arena", false)
