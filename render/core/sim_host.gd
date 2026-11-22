@@ -128,6 +128,7 @@ func _started(su: Dictionary, remember: bool) -> void:
 		_intro_file(su)
 	cam.reset()
 	fxv.reset(seed)
+	vfx.fx_view = fxv      # VFX's ghost tally reads the after-images from the view's own particle list (render/vfx/ghost_tally.gd)
 	impact.reset(seed)
 	audio_cues.reset(seed)
 	vfx.reset(S, seed)
