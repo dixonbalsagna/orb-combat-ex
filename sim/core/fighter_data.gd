@@ -19,7 +19,7 @@ const RALLY_RULES: Array = ["second_wind", "spite", "reboot", "encore", "none"]
 const PROFILES: Array = ["plain"]
 const METERS: Array = ["anguish", "menace"]
 ## D1b: the (meter, effect) and (meter, source) pairs the code implements; anything else in meters.json is rejected.
-const METER_EFFECTS: Dictionary = {"menace": ["regen_bonus", "damage_mul", "beam_power"], "anguish": ["regen_penalty", "composure", "comeback"]}
+const METER_EFFECTS: Dictionary = {"menace": ["regen_bonus", "damage_mul", "beam_power", "comeback"], "anguish": ["regen_penalty", "composure", "comeback"]}   # the comeback is a rule for every fighter (Orb's decision 6): it may stand on either meter
 const METER_SOURCES: Dictionary = {"menace": ["destroyed/self", "destroyed_power/self", "crater/self", "emptied/self", "region_broken/opponent", "brink/opponent"], "anguish": ["destroyed/opponent", "destroyed/self", "emptied/any", "failed_to_protect/self"]}   # nobody dies (CD-05): the meters read destruction, never a person (docs/design/bystanders.md sections 3 and 4)
 const PENALTIES: Array = ["coreKiRegen", "legsSpeed", "legsLockBreak", "staggerTicks", "dazeTicks", "armsGuardMul", "armsBrokenMul", "headParryNarrow", "headDefence", "legsSlip", "armsBrokenLightMul", "armsBrokenMediumMul", "legsBrokenGuardScale"]
 const BLOWS: Array = ["heavy", "beam", "guard_break", "chain"]

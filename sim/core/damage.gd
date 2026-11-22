@@ -48,9 +48,10 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 		o = {}
 	var m: float = A.dmgMul * SimForms.damageMul(S, A)   # the tier's step (with forms: his own steps, by the coil's factor on his form)
 	if A.hasMenace:
-		m *= 1.0 + A.md.menaceDmgCap * (A.menace / 100.0)
-	elif A.hasAnguish:
-		# Comeback (a fighter with the anguish meter, GD-B09): stronger the closer he is to the brink (S2: wounds replace hp / maxhp).
+		m *= 1.0 + A.md.menaceDmgCap * (A.menace / 100.0)   # 0 in data since Orb's decision 6 (2026-11-13): the old meters change nothing (the code goes after Alpha)
+	# Comeback (GD-B09; Orb's decision 6, 2026-11-13: a rule for every fighter, not his meter's): stronger the closer he is
+	# to the brink (S2: wounds replace hp / maxhp). A fighter whose data names none has 0, and nothing changes for him.
+	if A.md.comeback != 0.0:
 		m *= 1.0 + A.md.comeback * SimDetMath.pow(1.0 - SimWounds.vitality(A), 2.0)
 	# Composure (balance-targets.md section 9, S0 fallback): the hero hits harder while collateral has not rattled him.
 	if A.hasAnguish and A.anguish < A.md.composureBelow:

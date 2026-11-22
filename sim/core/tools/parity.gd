@@ -90,6 +90,7 @@ func _init() -> void:
 	check("the catastrophe's blast cloud and ash", _cata())
 	check("the launch's curve", _flight())
 	check("hit-stop by weight", _hitstop())
+	check("the old meters change nothing; the comeback for both (decision 6)", _metersZero())
 	check("the ricochet's glance", _ricochet())
 	check("the replay header covers a planet's data", _planetHeader())
 	check("the intent's second word in the hash and the replay", _rightWord())
@@ -4305,10 +4306,10 @@ func _fightData(g: Dictionary) -> String:
 ## differ from its result with the real data. No probe plays a match, so a changed opening cannot break a row (the old
 ## check played seeds and needed new ones after B2 and after the terrain fixes). The end-to-end row is forced as well: RIVAL,
 ## with menace set, attacks PROTAGONIST through the director, and what PROTAGONIST took must differ (it played seeds until they needed
-## replacing three times). composure.below is left out: it only matters while composure's cap is not 0.
+## replacing three times). composure.below is left out: it only matters while composure's cap is not 0. So, since Orb's decision 6
+## (2026-11-13), are regen_penalty's and regen_bonus's caps: they only matter while their perPoint is not 0, and both are 0 in data.
 const WIRED: Array = [
 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 0, "perPoint"], 0.2, "kaiTick"],
-	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 0, "cap"], 0.05, "kaiTick"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 1, "cap"], 0.3, "kaiHit"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 2, "cap"], 2.0, "kaiHit"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "decay", "rate"], 3.0, "kaiTick"],
@@ -4318,7 +4319,6 @@ const WIRED: Array = [
 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 2, "amount"], 5.0, "aFell"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 3, "amount"], 5.0, "aFell"],
 	["RIVAL/meters.json", ["meters", "menace", "effects", 0, "perPoint"], 0.3, "vorrTick"],
-	["RIVAL/meters.json", ["meters", "menace", "effects", 0, "cap"], 0.01, "vorrTick"],
 	["RIVAL/meters.json", ["meters", "menace", "effects", 1, "cap"], 1.0, "vorrHit"],
 	["RIVAL/meters.json", ["meters", "menace", "effects", 2, "perPoint"], 50.0, "beam"],
 	["RIVAL/meters.json", ["meters", "menace", "decay", "rate"], 3.0, "vorrTick"],
@@ -5560,6 +5560,53 @@ func _hitstopAny() -> String:
 		return "with hit-stop by weight on too, over the deep line: a mash's first blow holds %d (want 1, the floor) and a launch %d (want 12, never cut)" % [mash, launch]
 	if SimReplay.dataHash({"hitstop": false, "hitstopBudget": true}) == SimReplay.dataHash({"hitstop": false, "hitstopBudget": false}):
 		return "budget on any table: a replay does not carry the hit-stop's data"
+	return ""
+
+
+## Orb's decision 6 (2026-11-13; A-ENERGY-05): the old hero and villain meters change nothing in a fight, and the comeback is
+## a rule for every fighter. Each fighter's meter at its two ends (0 and 100) against the meter at rest (its start): the
+## damage his blow deals, his energy (ki) regain over a live tick, his beam's power in a contest (DirBeam._power) and where
+## the computer leads the fight (DirLocation._roamRead) are the same. And for both fighters, the same blow struck at half
+## way to the brink deals the comeback's x(1 + cap x 0.25) more than struck fresh, with the cap stated in each one's data.
+func _metersZero() -> String:
+	for slot in [0, 1]:
+		var res: Array = []
+		for v in [-1.0, 0.0, 100.0]:   # -1: at rest (the meter's start)
+			var S := SimCore.createSim()
+			SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"intro": false})
+			var A = S.fighters[slot]
+			if v >= 0.0:
+				if A.hasMenace:
+					A.menace = v
+				if A.hasAnguish:
+					A.anguish = v
+			A.ki = 10.0
+			var bp: float = DirBeam._power(A)
+			var roam: float = DirLocation._roamRead(S, A)
+			SimCore.step(S, [null, null])
+			var regain: float = A.ki - 10.0
+			var dealt: float = SimDamage.hit(S, null, A, S.fighters[1 - slot], 40.0, {})
+			res.append([dealt, regain, bp, roam])
+			SimCore.dispose(S)
+		if res[1] != res[0] or res[2] != res[0]:
+			return "fighter %d: his meter at its ends changes the fight: at rest %s, at 0 %s, at 100 %s (damage, ki regain, beam power, roam)" % [slot, str(res[0]), str(res[1]), str(res[2])]
+	for slot in [0, 1]:
+		var got: Array = []
+		var cap: float = 0.0
+		for half in [false, true]:
+			var S2 := SimCore.createSim()
+			SimCore.newMatch(S2, 5, {"p1": false, "p2": false}, {"intro": false})
+			var A2 = S2.fighters[slot]
+			cap = A2.md.comeback
+			if half:
+				for r in range(4):
+					if A2.wd.brinkRegion[r]:
+						A2.wear[r] = int(A2.wd.stageAt[2] / 2)   # half way to the brink: vitality 0.5
+			got.append(SimDamage.hit(S2, null, A2, S2.fighters[1 - slot], 40.0, {}))
+			SimCore.dispose(S2)
+		var want: float = 1.0 + cap * 0.25
+		if cap <= 0.0 or absf(got[1] / got[0] - want) > 1.0e-9:
+			return "fighter %d: the comeback (cap %s in his data) gave %s fresh and %s half way to the brink (want x%s)" % [slot, str(cap), str(got[0]), str(got[1]), str(want)]
 	return ""
 
 
