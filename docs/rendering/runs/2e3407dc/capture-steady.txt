@@ -1,0 +1,14 @@
+# capture-steady (Rendering, 2026-11-23; scratch steady_clock.py sha1 6664311a): a capture's render work by a work clock, the crowd by the sim's clock
+# rsc = the GW1c tree (main 74c03fdb + World's stage 2 + planet-sizes + drawn-at + relief-snow, cap off) + the change; hsc = main 2e3407dc (built before main moved to 4d214270) + the change. One size (960x540), every frame kept and compared.
+== psa_base (exit 1): collapse-reduced: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 2, 0 dips, 172s, worst of 2 readings (960x540 at sc
+== psb_base (exit 1): collapse-reduced: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 2, 0 dips, 172s, worst of 2 readings (960x540 at sc
+== psc_base (exit 1): collapse-reduced: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 2, 0 dips, 172s, worst of 2 readings (960x540 at sc
+s reduced: frames that differ in any pixel between the 3 runs: 0 of 1100
+== pmra_base (exit 0): collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1, 0 dips, 196s, worst of 2 readings (960x540 at scale 
+== pmrb_base (exit 0): collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1, 0 dips, 196s, worst of 2 readings (960x540 at scale 
+== pmrc_base (exit 0): collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1, 0 dips, 196s, worst of 2 readings (960x540 at scale 
+mr reduced: frames that differ in any pixel between the 3 runs: 0 of 1500
+== pmna_base (exit 0): collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1, 0 dips, 200s, worst of 2 readings (960x540 at scale 1
+== pmnb_base (exit 0): collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1, 0 dips, 201s, worst of 2 readings (960x540 at scale 1
+== pmnc_base (exit 0): collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1, 0 dips, 199s, worst of 2 readings (960x540 at scale 1
+mn normal: frames that differ in any pixel between the 3 runs: 0 of 1500

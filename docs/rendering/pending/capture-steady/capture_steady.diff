@@ -1,0 +1,216 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -555,6 +555,10 @@
+ const TILE_FILL_TARGET_US: int = 16667     # ... and the frame it measures its room against,
+ const TILE_FILL_ROOM: float = 0.5          # ... this share of that room going to tiles,
+ const TILE_FILL_MAX_US: int = 6000         # ... up to this
++const TILE_FILL_STEADY_US: int = 5000      # a capture's slice (RenderTileField.steady_fill): play's at a frame of about 8 ms, on the work clock
++const TILE_STEADY_NODE_US: int = 40        # the work clock's cost of a tile node (about what one takes on the web build)
++const TILE_STEADY_FOOT_US: int = 15        # ... of a thing's foot
++const VISIT_STEADY_US: int = 150           # ... of a building's visit
+ const TILE_URGENT_NEAR: float = 3000.0     # a wanted tile this near the camera's ground: the fill runs at
+ const TILE_URGENT_X: int = 6               # ... this many times its slice
+ const TILE_BOOT_US: int = 12000            # ... and one of the load's
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -607,6 +607,9 @@
+ ## pane's planet only; a second pane's draws what that one made). heat is the render-side glow of fresh grooves
+ ## (ImpactFx).
+ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32Array(), heat_changed: bool = false) -> void:
++	if RenderTileField.steady_fill:   # a capture: the figures run by the sim's clock, so a reel is the same every run (the shader's TIME is the wall's)
++		for cm in _crowd_mats:
++			cm.set_shader_parameter("crowd_time", S.T)
+ 	if _terrain_mat != null and _crater_now != S.T:
+ 		# A new crater's age, for its opening (and the calm form's colours): on both materials that draw the ground.
+ 		_crater_now = S.T
+@@ -1062,19 +1065,21 @@
+ 			_visit(S, bi, dirty, dchg, false)
+ 		else:
+ 			rest.append(bi)
+-	var t0: int = Time.get_ticks_usec()
++	var t0: int = RenderTileField.clock_us()   # a capture's visits by the work clock (RenderTileField.steady_fill)
+ 	if not _later.is_empty():
+ 		for bi in _later.keys():   # oldest first; a visit takes it out
+-			if Time.get_ticks_usec() - t0 > RenderLook.VISIT_SPARE_US:
++			if RenderTileField.clock_us() - t0 > RenderLook.VISIT_SPARE_US:
+ 				break
+ 			if _visit_at[bi] != _frame:
+ 				_visit(S, int(bi), dirty, dchg, false)
++				RenderTileField.spend(RenderLook.VISIT_STEADY_US)
+ 	for k in range(rest.size()):
+-		if Time.get_ticks_usec() - t0 > RenderLook.VISIT_SPARE_US:
++		if RenderTileField.clock_us() - t0 > RenderLook.VISIT_SPARE_US:
+ 			for q in range(k, rest.size()):
+ 				_defer(S, rest[q], dirty, dchg)
+ 			return
+ 		_visit(S, rest[k], dirty, dchg, false)
++		RenderTileField.spend(RenderLook.VISIT_STEADY_US)
+ 
+ 
+ ## A visit put off: the building waits in _later (a pane that can show it visits it at once: its frame stamp is not this
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -54,6 +54,7 @@
+ var _stamp := PackedInt32Array()     # layer -> the frame it was last wanted
+ var _hs: Array = []                  # layer -> its heights (PackedFloat32Array)
+ var _wanted: Dictionary = {}         # tile key -> distance, this frame's
++static var _vclock: int = 0             # a capture's clock (steady_fill): it runs by the work done, so a reel's fill is the same every run
+ static var steady_fill: bool = false   # a capture's frames are slow by nature: its fill doesn't lean on the frame time, so a reel shows what play shows
+ var frame_room: bool = true          # the frame is under its target: the fill may take its urgent budget
+ var _off_stale_at: int = -1000000
+@@ -254,8 +255,8 @@
+ 					var k: int = key_at(d, L)
+ 					if not _layer.has(k) and not _near_list.has(k):
+ 						_near_list.append(k)
+-	var t0: int = Time.get_ticks_usec()
+-	while Time.get_ticks_usec() - t0 < budget_us:
++	var t0: int = clock_us()
++	while clock_us() - t0 < budget_us:
+ 		if _job_key < 0:
+ 			if _near_list.is_empty():
+ 				return true
+@@ -298,7 +299,7 @@
+ 
+ ## The load's step: level 0's tiles, a slice a call. True when they are all there.
+ func boot(budget_us: int) -> bool:
+-	var t0: int = Time.get_ticks_usec()
++	var t0: int = clock_us()
+ 	var n: int = LEVEL0
+ 	while _boot_f < 6:
+ 		var k: int = key_of(_boot_f, 0, _boot_i % n, _boot_i / n)
+@@ -311,7 +312,7 @@
+ 		if _boot_i >= n * n:
+ 			_boot_i = 0
+ 			_boot_f += 1
+-		if Time.get_ticks_usec() - t0 > budget_us:
++		if clock_us() - t0 > budget_us:
+ 			return _boot_f >= 6
+ 	return true
+ 
+@@ -322,6 +323,16 @@
+ 
+ func layer_of(k: int) -> int:
+ 	return int(_layer.get(k, -1))
++
++
++## The clock the fill's budgets read: the wall's in play; in a capture (steady_fill) the work clock, which only spend() moves.
++static func clock_us() -> int:
++	return _vclock if steady_fill else Time.get_ticks_usec()
++
++
++## Work done, at its fixed cost in microseconds, on the capture's clock (nothing in play).
++static func spend(us: int) -> void:
++	_vclock += us
+ 
+ 
+ ## A pane is choosing its tiles again: what it wants from here on is what it's using.
+@@ -389,7 +400,7 @@
+ ## round the camera is still coarse (arriving at a new place is when it shows), and while asked-for tiles are coming.
+ func fill(budget_us: int) -> void:
+ 	_frame += 1
+-	var t0: int = Time.get_ticks_usec()
++	var t0: int = clock_us()
+ 	for k in _wanted:
+ 		if float(_wanted[k]) < RenderLook.TILE_URGENT_NEAR:
+ 			_urgent_until = _frame + 30
+@@ -399,7 +410,7 @@
+ 			budget_us = maxi(budget_us, RenderLook.TILE_FILL_US * RenderLook.TILE_URGENT_X)
+ 	elif _frame < _ask_until and not _ask_list.is_empty():
+ 		budget_us = maxi(budget_us, RenderLook.TILE_ASK_US)
+-	while Time.get_ticks_usec() - t0 < budget_us:
++	while clock_us() - t0 < budget_us:
+ 		if _job_key < 0:
+ 			var best: int = -1
+ 			var bd: float = INF
+@@ -428,7 +439,7 @@
+ 			break
+ 	_foot_slice(t0, budget_us)
+ 	_crater_slice()
+-	fill_us = Time.get_ticks_usec() - t0
++	fill_us = clock_us() - t0
+ 	_wanted.clear()
+ 
+ 
+@@ -491,7 +502,8 @@
+ 		_job_c[o + 1] = clampi(int(wet / WET_STEP + 0.5), 0, 255)
+ 		_job_c[o + 3] = 255
+ 		_job_at += 1
+-		if _job_at % 4 == 0 and Time.get_ticks_usec() - t0 > budget_us:
++		spend(RenderLook.TILE_STEADY_NODE_US)
++		if _job_at % 4 == 0 and clock_us() - t0 > budget_us:
+ 			return false
+ 	_store()
+ 	return true
+@@ -749,7 +761,7 @@
+ 
+ 
+ func _foot_slice(t0: int, budget_us: int) -> void:
+-	while not _foots.is_empty() and Time.get_ticks_usec() - t0 < budget_us:
++	while not _foots.is_empty() and clock_us() - t0 < budget_us:
+ 		var e: Array = _foots[0]
+ 		var mm: MultiMesh = e[0]
+ 		var k: int = e[1]
+@@ -764,7 +776,8 @@
+ 				_standing.append([mm, k, t.origin.x, t.origin.z])
+ 			mm.set_instance_transform(k, t)
+ 			k += 1
+-			if k % 8 == 0 and Time.get_ticks_usec() - t0 > budget_us:
++			spend(RenderLook.TILE_STEADY_FOOT_US)
++			if k % 8 == 0 and clock_us() - t0 > budget_us:
+ 				break
+ 		e[1] = k
+ 		if k >= mm.instance_count:
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -246,6 +246,8 @@
+ 		_fill_dt = lerpf(_fill_dt, float(now - _fill_at), 0.1)
+ 	_fill_at = now
+ 	field.frame_room = RenderTileField.steady_fill or _fill_dt < float(RenderLook.TILE_FILL_TARGET_US)
++	if RenderTileField.steady_fill:   # a capture: its slow frames are its own, not the machine's room; its slice is play's at an ordinary frame, on the work clock
++		return RenderLook.TILE_FILL_STEADY_US
+ 	return clampi(RenderLook.TILE_FILL_US + int(RenderLook.TILE_FILL_ROOM * (float(RenderLook.TILE_FILL_TARGET_US) - _fill_dt)), RenderLook.TILE_FILL_US, RenderLook.TILE_FILL_MAX_US)
+ 
+ 
+--- a/render/shaders/crowd.gdshader
++++ b/render/shaders/crowd.gdshader
+@@ -17,6 +17,7 @@
+ uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+ uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
+ uniform float boost = 1.0;
++uniform float crowd_time = -1.0;   // the figures' clock: a capture's is the sim's (PlanetView.update, RenderTileField.steady_fill); -1: the shader's own TIME (play)
+ uniform int id_base = 0;   // the first crowd index of this chunk (render/core/crowd_chunks.gd): INSTANCE_ID + id_base is the figure's own
+ uniform vec2 crowd_near = vec2(0.0, 0.0);   // RenderLook.NEAR_CLIP in a match with depth on: a figure nearer the lens than y shrinks, and is nothing nearer than x. (0, 0): off
+ uniform float outline = 0.7;
+@@ -44,6 +45,7 @@
+ }
+ 
+ void vertex() {
++	float tm = crowd_time >= 0.0 ? crowd_time : TIME;
+ 	v_kind = UV.x;
+ 	v_custom = INSTANCE_CUSTOM;
+ 	v_fade = COLOR.a;
+@@ -53,7 +55,7 @@
+ 	float ph = fract(float(INSTANCE_ID + id_base) * 0.618034);
+ 	if (run > 0.0) {
+ 		// Parts by place (crowd_mesh.gd): the legs below the hip (7.2), the arms beyond the torso's sides (2.4).
+-		float s = sin(TIME * run_hz * 6.2831853 + ph * 40.0);
++		float s = sin(tm * run_hz * 6.2831853 + ph * 40.0);
+ 		float side = v.x < 0.0 ? 1.0 : -1.0;
+ 		float a = 0.0;
+ 		vec2 pivot = vec2(0.0);
+@@ -78,13 +80,13 @@
+ 			nrm = swing(nrm, vec2(0.0), side * startle_arms * st);
+ 		}
+ 		v.y *= 1.0 - startle_crouch * st;
+-		v.x += sin(TIME * 37.0 + ph * 50.0) * startle_tremble * st;
++		v.x += sin(tm * 37.0 + ph * 50.0) * startle_tremble * st;
+ 	}
+ 	if (UV.x < 0.25) {
+ 		v += nrm * outline / boost;
+ 	}
+ 	// A small idle hop on about half of them, out of step.
+-	v.y += max(0.0, sin(TIME * 4.0 + ph * 40.0)) * 0.9 * step(0.5, ph) * (1.0 - run) * (1.0 - st);
++	v.y += max(0.0, sin(tm * 4.0 + ph * 40.0)) * 0.9 * step(0.5, ph) * (1.0 - run) * (1.0 - st);
+ 	// Camera's near-clip rule for the crowd: so near the lens a figure is in it, not in the picture.
+ 	float nearc = 1.0;
+ 	if (crowd_near.y > 0.0) {

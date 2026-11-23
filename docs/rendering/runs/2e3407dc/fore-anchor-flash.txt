@@ -1,0 +1,17 @@
+# the anchored foreground line (Rendering, 2026-11-22; scratch fore_anchor.py, sha1 0628a55d): collapse, both modes, worst of 4 readings (960x540 and 1024x768); tiles on
+# rfa = the GW1c tree (main 74c03fdb + World's stage 2 + planet-sizes + drawn-at + relief-snow), cap off, + the fix; rfda = the same with the cap's data row; hma = main 2e3407dc + the fix
+## rfa small (exit 0)
+collapse-normal: FAIL, primary 5 general 0 red, area-15% 6.5, 2 s memory 2, 0 dips, 599s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 7 general 0 red, area-15% 8.5, 2 s memory 5.5, 0 dips, 597s, worst of 4 readings (960x540 at scale 2)
+## rfa tiny (exit 0)
+collapse-normal: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 2, 0 dips, 498s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2.5 general 0 red, area-15% 3, 2 s memory 2.5, 0 dips, 509s, worst of 4 readings (1024x768 at scale 1)
+## rfda small (exit 0)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2.5, 0 dips, 569s, worst of 4 readings (1024x768 at scale 1)
+collapse-reduced: FAIL, primary 4 general 0 red, area-15% 4, 2 s memory 3, 0 dips, 586s, worst of 4 readings (1024x768 at scale 1)
+## rfda tiny (exit 0)
+collapse-normal: FAIL, primary 5.5 general 0 red, area-15% 8, 2 s memory 5, 0 dips, 530s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 8 general 0 red, area-15% 11.5, 2 s memory 6.5, 0 dips, 514s, worst of 4 readings (1024x768 at scale 2)
+## hma medium (exit 0)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 525s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2, 0 dips, 536s, worst of 4 readings (960x540 at scale 1)

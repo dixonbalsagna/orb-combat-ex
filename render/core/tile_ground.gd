@@ -246,6 +246,8 @@ func _fill_slice() -> int:
 		_fill_dt = lerpf(_fill_dt, float(now - _fill_at), 0.1)
 	_fill_at = now
 	field.frame_room = RenderTileField.steady_fill or _fill_dt < float(RenderLook.TILE_FILL_TARGET_US)
+	if RenderTileField.steady_fill:   # a capture: its slow frames are its own, not the machine's room; its slice is play's at an ordinary frame, on the work clock
+		return RenderLook.TILE_FILL_STEADY_US
 	return clampi(RenderLook.TILE_FILL_US + int(RenderLook.TILE_FILL_ROOM * (float(RenderLook.TILE_FILL_TARGET_US) - _fill_dt)), RenderLook.TILE_FILL_US, RenderLook.TILE_FILL_MAX_US)
 
 

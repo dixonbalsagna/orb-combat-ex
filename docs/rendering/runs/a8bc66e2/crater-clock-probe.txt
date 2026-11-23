@@ -1,0 +1,316 @@
+# crater-clock probe (scratch tg/cc_probe.gd) on Orb's 11-07 12:29 play's start: tree = a8bc66e2 + the kept build's sim, data and net (homework/Files/builds/orb-first-play-a8bc66e2-e80b8e3d/tree); main manual, --tiles, 420 frames, 2000x1125.
+# The ground drawn under each standing fighter (tile height + strip offset + the store's bowls from the tile material, opening included) against his feet.
+
+## fk0: the tree as built (main)
+f   1 t    1 S.T 0.00 cb_n 0 cb_now 0.00:  F0 in the air  F1 in the air
+f  37 t   37 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  38 t   38 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  39 t   39 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  40 t   40 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  41 t   41 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  42 t   42 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  43 t   43 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  44 t   44 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  45 t   45 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  46 t   46 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  47 t   47 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  48 t   48 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  49 t   49 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  50 t   50 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  51 t   51 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  52 t   52 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  53 t   53 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  54 t   54 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  55 t   55 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  56 t   56 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  57 t   57 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  58 t   58 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  59 t   59 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  60 t   60 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  61 t   61 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  62 t   62 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  63 t   63 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  64 t   64 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  65 t   65 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  66 t   66 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  67 t   67 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  68 t   68 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  69 t   69 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  70 t   70 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  71 t   71 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  72 t   72 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  73 t   73 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  74 t   74 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  75 t   75 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  76 t   76 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  77 t   77 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  78 t   78 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  79 t   79 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  80 t   80 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  81 t   81 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  82 t   82 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  83 t   83 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  84 t   84 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  85 t   85 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  86 t   86 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  87 t   87 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  88 t   88 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  89 t   89 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  90 t   90 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  91 t   91 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  92 t   92 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  93 t   93 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  94 t   94 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  95 t   95 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  96 t   96 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  97 t   97 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  98 t   98 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  99 t   99 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f 100 t  100 S.T 0.00 cb_n 1 cb_now 0.00:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f 101 t  101 S.T 0.00 cb_n 1 cb_now 0.00:  F0 foot   1260 drawn-over-foot   -0.9  F1 foot   1261 drawn-over-foot  +42.2
+f 102 t  102 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 103 t  103 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 104 t  104 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 105 t  105 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 106 t  106 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 107 t  107 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 108 t  108 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 109 t  109 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 110 t  110 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 111 t  111 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 112 t  112 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 113 t  113 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 114 t  114 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 115 t  115 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 116 t  116 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 117 t  117 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 118 t  118 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 119 t  119 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 120 t  120 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 121 t  121 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 122 t  122 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 123 t  123 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 124 t  124 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 125 t  125 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 126 t  126 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 127 t  127 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 128 t  128 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 129 t  129 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 130 t  130 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 131 t  131 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 132 t  132 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 133 t  133 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 134 t  134 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 135 t  135 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 136 t  136 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 137 t  137 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 138 t  138 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 139 t  139 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 140 t  140 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 141 t  141 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 142 t  142 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 143 t  143 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 144 t  144 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 145 t  145 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 146 t  146 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 147 t  147 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 148 t  148 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 149 t  149 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 150 t  150 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 151 t  151 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 152 t  152 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 153 t  153 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 154 t  154 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 155 t  155 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 156 t  156 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 157 t  157 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 158 t  158 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 159 t  159 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 160 t  160 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 161 t  161 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 162 t  162 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 163 t  163 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 164 t  164 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 165 t  165 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 166 t  166 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 167 t  167 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 168 t  168 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 169 t  169 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 170 t  170 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 171 t  171 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 172 t  172 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 173 t  173 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 174 t  174 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 175 t  175 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 176 t  176 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 177 t  177 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 178 t  178 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 179 t  179 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 180 t  180 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 181 t  181 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 182 t  182 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 183 t  183 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 184 t  184 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 185 t  185 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 186 t  186 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 187 t  187 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 188 t  188 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 189 t  189 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 190 t  190 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 191 t  191 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 192 t  192 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 193 t  193 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 194 t  194 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 195 t  195 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 196 t  196 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 197 t  197 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 198 t  198 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 199 t  199 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 200 t  200 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 201 t  201 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 202 t  202 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 203 t  203 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 204 t  204 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 205 t  205 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 206 t  206 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 207 t  207 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 208 t  208 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 209 t  209 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 210 t  210 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 211 t  211 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 212 t  212 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 213 t  213 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 214 t  214 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 215 t  215 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 216 t  216 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 217 t  217 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 218 t  218 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 219 t  219 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 220 t  220 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 221 t  221 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 222 t  222 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 223 t  223 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 224 t  224 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 225 t  225 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 226 t  226 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 227 t  227 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 228 t  228 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 229 t  229 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 230 t  230 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 231 t  231 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 232 t  232 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 233 t  233 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 234 t  234 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 235 t  235 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 236 t  236 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 237 t  237 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 238 t  238 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 239 t  239 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 240 t  240 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 241 t  241 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 242 t  242 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 243 t  243 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 244 t  244 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 245 t  245 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 246 t  246 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 247 t  247 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 248 t  248 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 249 t  249 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 250 t  250 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 251 t  251 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 252 t  252 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 253 t  253 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 254 t  254 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 255 t  255 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 256 t  256 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 257 t  257 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 258 t  258 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 259 t  259 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 260 t  260 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 261 t  261 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 262 t  262 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 263 t  263 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 264 t  264 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 265 t  265 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 266 t  266 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 267 t  267 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 268 t  268 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 269 t  269 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 270 t  270 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 271 t  271 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 272 t  272 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 273 t  273 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 274 t  274 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 275 t  275 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 276 t  276 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 277 t  277 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 278 t  278 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 279 t  279 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 280 t  280 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 281 t  281 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 282 t  282 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 283 t  283 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 284 t  284 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 285 t  285 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 286 t  286 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 287 t  287 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 288 t  288 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 289 t  289 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 290 t  290 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 291 t  291 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 292 t  292 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 293 t  293 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 294 t  294 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 295 t  295 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 296 t  296 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 297 t  297 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 298 t  298 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 299 t  299 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 300 t  300 S.T 0.00 cb_n 2 cb_now 0.00:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot  +42.2
+f 301 t  301 S.T 0.02 cb_n 2 cb_now 0.02:  F0 foot   1218 drawn-over-foot  +39.6  F1 foot   1262 drawn-over-foot  +39.0
+f 302 t  302 S.T 0.03 cb_n 2 cb_now 0.03:  F0 foot   1218 drawn-over-foot  +38.0  F1 foot   1263 drawn-over-foot  +37.6
+f 303 t  303 S.T 0.05 cb_n 2 cb_now 0.05:  F0 foot   1218 drawn-over-foot  +35.6  F1 foot   1265 drawn-over-foot  +28.9
+f 304 t  304 S.T 0.07 cb_n 2 cb_now 0.07:  F0 foot   1218 drawn-over-foot  +32.5  F1 foot   1268 drawn-over-foot  +26.4
+f 305 t  305 S.T 0.08 cb_n 2 cb_now 0.08:  F0 foot   1218 drawn-over-foot  +28.9  F1 foot   1271 drawn-over-foot  +14.8
+f 306 t  306 S.T 0.10 cb_n 2 cb_now 0.10:  F0 foot   1218 drawn-over-foot  +24.9  F1 foot   1276 drawn-over-foot  +13.0
+f 307 t  307 S.T 0.12 cb_n 2 cb_now 0.12:  F0 foot   1218 drawn-over-foot  +20.7  F1 foot   1281 drawn-over-foot   -1.9
+f 308 t  308 S.T 0.13 cb_n 2 cb_now 0.13:  F0 foot   1218 drawn-over-foot  +16.4  F1 foot   1289 drawn-over-foot   -1.2
+f 309 t  309 S.T 0.15 cb_n 2 cb_now 0.15:  F0 foot   1218 drawn-over-foot  +12.2  F1 foot   1297 drawn-over-foot  -12.9
+f 321 t  321 S.T 0.35 cb_n 2 cb_now 0.35:  F0 foot   1218 drawn-over-foot   -3.0  F1 foot   1312 drawn-over-foot   -0.2
+f 361 t  361 S.T 1.02 cb_n 2 cb_now 1.02:  F0 foot   1218 drawn-over-foot   -3.0  F1 in the air
+f 401 t  401 S.T 1.62 cb_n 2 cb_now 1.62:  F0 in the air  F1 foot   1223 drawn-over-foot   +0.6
+standing frames F0 294 F1 333; drawn ground over 10 units above the feet on F0 208 F1 270; worst F0 40.1 F1 42.2
+
+## fk2: + crater_clock.py
+f   1 t    1 S.T 0.00 cb_n 0 cb_now 0.02:  F0 in the air  F1 in the air
+f  37 t   37 S.T 0.00 cb_n 1 cb_now 0.62:  F0 in the air  F1 foot   1261 drawn-over-foot  +42.2
+f  38 t   38 S.T 0.00 cb_n 1 cb_now 0.63:  F0 in the air  F1 foot   1261 drawn-over-foot  +41.6
+f  39 t   39 S.T 0.00 cb_n 1 cb_now 0.65:  F0 in the air  F1 foot   1261 drawn-over-foot  +40.1
+f  40 t   40 S.T 0.00 cb_n 1 cb_now 0.67:  F0 in the air  F1 foot   1261 drawn-over-foot  +37.7
+f  41 t   41 S.T 0.00 cb_n 1 cb_now 0.68:  F0 in the air  F1 foot   1261 drawn-over-foot  +34.6
+f  42 t   42 S.T 0.00 cb_n 1 cb_now 0.70:  F0 in the air  F1 foot   1261 drawn-over-foot  +31.0
+f  43 t   43 S.T 0.00 cb_n 1 cb_now 0.72:  F0 in the air  F1 foot   1261 drawn-over-foot  +27.0
+f  44 t   44 S.T 0.00 cb_n 1 cb_now 0.73:  F0 in the air  F1 foot   1261 drawn-over-foot  +22.8
+f  45 t   45 S.T 0.00 cb_n 1 cb_now 0.75:  F0 in the air  F1 foot   1261 drawn-over-foot  +18.5
+f  46 t   46 S.T 0.00 cb_n 1 cb_now 0.77:  F0 in the air  F1 foot   1261 drawn-over-foot  +14.2
+f  47 t   47 S.T 0.00 cb_n 1 cb_now 0.78:  F0 in the air  F1 foot   1261 drawn-over-foot  +10.2
+f  81 t   81 S.T 0.00 cb_n 1 cb_now 1.35:  F0 in the air  F1 foot   1261 drawn-over-foot   -0.9
+f 102 t  102 S.T 0.00 cb_n 2 cb_now 1.70:  F0 foot   1218 drawn-over-foot  +40.1  F1 foot   1261 drawn-over-foot   -0.9
+f 103 t  103 S.T 0.00 cb_n 2 cb_now 1.72:  F0 foot   1218 drawn-over-foot  +39.6  F1 foot   1261 drawn-over-foot   -0.9
+f 104 t  104 S.T 0.00 cb_n 2 cb_now 1.73:  F0 foot   1218 drawn-over-foot  +38.0  F1 foot   1261 drawn-over-foot   -0.9
+f 105 t  105 S.T 0.00 cb_n 2 cb_now 1.75:  F0 foot   1218 drawn-over-foot  +35.6  F1 foot   1261 drawn-over-foot   -0.9
+f 106 t  106 S.T 0.00 cb_n 2 cb_now 1.77:  F0 foot   1218 drawn-over-foot  +32.5  F1 foot   1261 drawn-over-foot   -0.9
+f 107 t  107 S.T 0.00 cb_n 2 cb_now 1.78:  F0 foot   1218 drawn-over-foot  +28.9  F1 foot   1261 drawn-over-foot   -0.9
+f 108 t  108 S.T 0.00 cb_n 2 cb_now 1.80:  F0 foot   1218 drawn-over-foot  +24.9  F1 foot   1261 drawn-over-foot   -0.9
+f 109 t  109 S.T 0.00 cb_n 2 cb_now 1.82:  F0 foot   1218 drawn-over-foot  +20.7  F1 foot   1261 drawn-over-foot   -0.9
+f 110 t  110 S.T 0.00 cb_n 2 cb_now 1.83:  F0 foot   1218 drawn-over-foot  +16.4  F1 foot   1261 drawn-over-foot   -0.9
+f 111 t  111 S.T 0.00 cb_n 2 cb_now 1.85:  F0 foot   1218 drawn-over-foot  +12.2  F1 foot   1261 drawn-over-foot   -0.9
+f 121 t  121 S.T 0.00 cb_n 2 cb_now 2.02:  F0 foot   1218 drawn-over-foot   -3.0  F1 foot   1261 drawn-over-foot   -0.9
+f 161 t  161 S.T 0.00 cb_n 2 cb_now 2.68:  F0 foot   1218 drawn-over-foot   -3.0  F1 foot   1261 drawn-over-foot   -0.9
+f 201 t  201 S.T 0.00 cb_n 2 cb_now 3.35:  F0 foot   1218 drawn-over-foot   -3.0  F1 foot   1261 drawn-over-foot   -0.9
+f 241 t  241 S.T 0.00 cb_n 2 cb_now 4.02:  F0 foot   1218 drawn-over-foot   -3.0  F1 foot   1261 drawn-over-foot   -0.9
+f 281 t  281 S.T 0.00 cb_n 2 cb_now 4.68:  F0 foot   1218 drawn-over-foot   -3.0  F1 foot   1261 drawn-over-foot   -0.9
+f 321 t  321 S.T 0.35 cb_n 2 cb_now 5.35:  F0 foot   1218 drawn-over-foot   -3.0  F1 foot   1312 drawn-over-foot   -0.2
+f 361 t  361 S.T 1.02 cb_n 2 cb_now 6.02:  F0 foot   1218 drawn-over-foot   -3.0  F1 in the air
+f 401 t  401 S.T 1.62 cb_n 2 cb_now 6.68:  F0 in the air  F1 foot   1223 drawn-over-foot   +0.6
+standing frames F0 294 F1 333; drawn ground over 10 units above the feet on F0 10 F1 11; worst F0 40.1 F1 42.2

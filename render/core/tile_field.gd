@@ -54,6 +54,7 @@ var _keys := PackedInt32Array()      # layer -> tile key, -1 while free
 var _stamp := PackedInt32Array()     # layer -> the frame it was last wanted
 var _hs: Array = []                  # layer -> its heights (PackedFloat32Array)
 var _wanted: Dictionary = {}         # tile key -> distance, this frame's
+static var _vclock: int = 0             # a capture's clock (steady_fill): it runs by the work done, so a reel's fill is the same every run
 static var steady_fill: bool = false   # a capture's frames are slow by nature: its fill doesn't lean on the frame time, so a reel shows what play shows
 var frame_room: bool = true          # the frame is under its target: the fill may take its urgent budget
 var _off_stale_at: int = -1000000
@@ -254,8 +255,8 @@ func boot_near(budget_us: int) -> bool:
 					var k: int = key_at(d, L)
 					if not _layer.has(k) and not _near_list.has(k):
 						_near_list.append(k)
-	var t0: int = Time.get_ticks_usec()
-	while Time.get_ticks_usec() - t0 < budget_us:
+	var t0: int = clock_us()
+	while clock_us() - t0 < budget_us:
 		if _job_key < 0:
 			if _near_list.is_empty():
 				return true
@@ -298,7 +299,7 @@ static func key_at(d: Vector3, L: int) -> int:
 
 ## The load's step: level 0's tiles, a slice a call. True when they are all there.
 func boot(budget_us: int) -> bool:
-	var t0: int = Time.get_ticks_usec()
+	var t0: int = clock_us()
 	var n: int = LEVEL0
 	while _boot_f < 6:
 		var k: int = key_of(_boot_f, 0, _boot_i % n, _boot_i / n)
@@ -311,7 +312,7 @@ func boot(budget_us: int) -> bool:
 		if _boot_i >= n * n:
 			_boot_i = 0
 			_boot_f += 1
-		if Time.get_ticks_usec() - t0 > budget_us:
+		if clock_us() - t0 > budget_us:
 			return _boot_f >= 6
 	return true
 
@@ -322,6 +323,16 @@ func has(k: int) -> bool:
 
 func layer_of(k: int) -> int:
 	return int(_layer.get(k, -1))
+
+
+## The clock the fill's budgets read: the wall's in play; in a capture (steady_fill) the work clock, which only spend() moves.
+static func clock_us() -> int:
+	return _vclock if steady_fill else Time.get_ticks_usec()
+
+
+## Work done, at its fixed cost in microseconds, on the capture's clock (nothing in play).
+static func spend(us: int) -> void:
+	_vclock += us
 
 
 ## A pane is choosing its tiles again: what it wants from here on is what it's using.
@@ -389,7 +400,7 @@ func asked_left() -> int:
 ## round the camera is still coarse (arriving at a new place is when it shows), and while asked-for tiles are coming.
 func fill(budget_us: int) -> void:
 	_frame += 1
-	var t0: int = Time.get_ticks_usec()
+	var t0: int = clock_us()
 	for k in _wanted:
 		if float(_wanted[k]) < RenderLook.TILE_URGENT_NEAR:
 			_urgent_until = _frame + 30
@@ -399,7 +410,7 @@ func fill(budget_us: int) -> void:
 			budget_us = maxi(budget_us, RenderLook.TILE_FILL_US * RenderLook.TILE_URGENT_X)
 	elif _frame < _ask_until and not _ask_list.is_empty():
 		budget_us = maxi(budget_us, RenderLook.TILE_ASK_US)
-	while Time.get_ticks_usec() - t0 < budget_us:
+	while clock_us() - t0 < budget_us:
 		if _job_key < 0:
 			var best: int = -1
 			var bd: float = INF
@@ -428,7 +439,7 @@ func fill(budget_us: int) -> void:
 			break
 	_foot_slice(t0, budget_us)
 	_crater_slice()
-	fill_us = Time.get_ticks_usec() - t0
+	fill_us = clock_us() - t0
 	_wanted.clear()
 
 
@@ -491,7 +502,8 @@ func _fill_job(t0: int, budget_us: int) -> bool:
 		_job_c[o + 1] = clampi(int(wet / WET_STEP + 0.5), 0, 255)
 		_job_c[o + 3] = 255
 		_job_at += 1
-		if _job_at % 4 == 0 and Time.get_ticks_usec() - t0 > budget_us:
+		spend(RenderLook.TILE_STEADY_NODE_US)
+		if _job_at % 4 == 0 and clock_us() - t0 > budget_us:
 			return false
 	_store()
 	return true
@@ -749,7 +761,7 @@ func _crater_slice() -> void:
 
 
 func _foot_slice(t0: int, budget_us: int) -> void:
-	while not _foots.is_empty() and Time.get_ticks_usec() - t0 < budget_us:
+	while not _foots.is_empty() and clock_us() - t0 < budget_us:
 		var e: Array = _foots[0]
 		var mm: MultiMesh = e[0]
 		var k: int = e[1]
@@ -764,7 +776,8 @@ func _foot_slice(t0: int, budget_us: int) -> void:
 				_standing.append([mm, k, t.origin.x, t.origin.z])
 			mm.set_instance_transform(k, t)
 			k += 1
-			if k % 8 == 0 and Time.get_ticks_usec() - t0 > budget_us:
+			spend(RenderLook.TILE_STEADY_FOOT_US)
+			if k % 8 == 0 and clock_us() - t0 > budget_us:
 				break
 		e[1] = k
 		if k >= mm.instance_count:

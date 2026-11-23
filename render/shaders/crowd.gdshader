@@ -17,6 +17,7 @@ render_mode unshaded, cull_back;
 uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
 uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
 uniform float boost = 1.0;
+uniform float crowd_time = -1.0;   // the figures' clock: a capture's is the sim's (PlanetView.update, RenderTileField.steady_fill); -1: the shader's own TIME (play)
 uniform int id_base = 0;   // the first crowd index of this chunk (render/core/crowd_chunks.gd): INSTANCE_ID + id_base is the figure's own
 uniform vec2 crowd_near = vec2(0.0, 0.0);   // RenderLook.NEAR_CLIP in a match with depth on: a figure nearer the lens than y shrinks, and is nothing nearer than x. (0, 0): off
 uniform float outline = 0.7;
@@ -44,6 +45,7 @@ vec3 swing(vec3 p, vec2 pivot, float a) {
 }
 
 void vertex() {
+	float tm = crowd_time >= 0.0 ? crowd_time : TIME;
 	v_kind = UV.x;
 	v_custom = INSTANCE_CUSTOM;
 	v_fade = COLOR.a;
@@ -53,7 +55,7 @@ void vertex() {
 	float ph = fract(float(INSTANCE_ID + id_base) * 0.618034);
 	if (run > 0.0) {
 		// Parts by place (crowd_mesh.gd): the legs below the hip (7.2), the arms beyond the torso's sides (2.4).
-		float s = sin(TIME * run_hz * 6.2831853 + ph * 40.0);
+		float s = sin(tm * run_hz * 6.2831853 + ph * 40.0);
 		float side = v.x < 0.0 ? 1.0 : -1.0;
 		float a = 0.0;
 		vec2 pivot = vec2(0.0);
@@ -78,13 +80,13 @@ void vertex() {
 			nrm = swing(nrm, vec2(0.0), side * startle_arms * st);
 		}
 		v.y *= 1.0 - startle_crouch * st;
-		v.x += sin(TIME * 37.0 + ph * 50.0) * startle_tremble * st;
+		v.x += sin(tm * 37.0 + ph * 50.0) * startle_tremble * st;
 	}
 	if (UV.x < 0.25) {
 		v += nrm * outline / boost;
 	}
 	// A small idle hop on about half of them, out of step.
-	v.y += max(0.0, sin(TIME * 4.0 + ph * 40.0)) * 0.9 * step(0.5, ph) * (1.0 - run) * (1.0 - st);
+	v.y += max(0.0, sin(tm * 4.0 + ph * 40.0)) * 0.9 * step(0.5, ph) * (1.0 - run) * (1.0 - st);
 	// Camera's near-clip rule for the crowd: so near the lens a figure is in it, not in the picture.
 	float nearc = 1.0;
 	if (crowd_near.y > 0.0) {

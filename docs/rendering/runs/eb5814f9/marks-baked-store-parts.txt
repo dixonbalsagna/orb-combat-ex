@@ -1,0 +1,4 @@
+# marks-baked onto World's store-parts, on main eb5814f9 (Ignore Camera's default-view side-by-side stills folder) + World's globe-step2 (+ its Simulation grant) + store-parts
+applied: globe-step2.diff
+applied: grant-simulation-field.patch
+DOES NOT APPLY: store-parts.diff: error: patch failed: sim/world/store.gd:220

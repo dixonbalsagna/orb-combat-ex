@@ -607,6 +607,9 @@ func _water_show(S: SimState) -> void:
 ## pane's planet only; a second pane's draws what that one made). heat is the render-side glow of fresh grooves
 ## (ImpactFx).
 func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32Array(), heat_changed: bool = false) -> void:
+	if RenderTileField.steady_fill:   # a capture: the figures run by the sim's clock, so a reel is the same every run (the shader's TIME is the wall's)
+		for cm in _crowd_mats:
+			cm.set_shader_parameter("crowd_time", S.T)
 	if _terrain_mat != null and _crater_now != S.T:
 		# A new crater's age, for its opening (and the calm form's colours): on both materials that draw the ground.
 		_crater_now = S.T
@@ -1062,19 +1065,21 @@ func _visit_budgeted(S: SimState, list: PackedInt32Array, dirty: PackedByteArray
 			_visit(S, bi, dirty, dchg, false)
 		else:
 			rest.append(bi)
-	var t0: int = Time.get_ticks_usec()
+	var t0: int = RenderTileField.clock_us()   # a capture's visits by the work clock (RenderTileField.steady_fill)
 	if not _later.is_empty():
 		for bi in _later.keys():   # oldest first; a visit takes it out
-			if Time.get_ticks_usec() - t0 > RenderLook.VISIT_SPARE_US:
+			if RenderTileField.clock_us() - t0 > RenderLook.VISIT_SPARE_US:
 				break
 			if _visit_at[bi] != _frame:
 				_visit(S, int(bi), dirty, dchg, false)
+				RenderTileField.spend(RenderLook.VISIT_STEADY_US)
 	for k in range(rest.size()):
-		if Time.get_ticks_usec() - t0 > RenderLook.VISIT_SPARE_US:
+		if RenderTileField.clock_us() - t0 > RenderLook.VISIT_SPARE_US:
 			for q in range(k, rest.size()):
 				_defer(S, rest[q], dirty, dchg)
 			return
 		_visit(S, rest[k], dirty, dchg, false)
+		RenderTileField.spend(RenderLook.VISIT_STEADY_US)
 
 
 ## A visit put off: the building waits in _later (a pane that can show it visits it at once: its frame stamp is not this

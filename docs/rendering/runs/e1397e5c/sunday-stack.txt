@@ -1,0 +1,39 @@
+# The Sunday stack on main e1397e5c (Tools: the contact footer on every public mode with a must-contain scre): crater-clock, then fore-profile, then crater-store
+crater_clock.diff fe775383, 50 lines
+fore_profile.diff 46af8d55, 54 lines
+crater_store.diff e4cf8fbe, 132 lines
+the three diffs apply on HEAD in that order
+import 0 errors 0
+golden.json byte-identical to main's
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+k0 Web export exit 0
+k3 Web export exit 0
+off stills (no tile ground, no words, AI, seed 12345, ticks 1 to 1201 every 100): 13, 0 differ
+## the render gates' summary
+open exit 0
+depth exit 0
+shape exit 0
+patch exit 0
+pane exit 0
+stage exit 0
+lane exit 0
+ground exit 0
+after exit 0
+sky exit 0
+flashreg exit 0
+hudwords exit 0
+seam exit 0
+detintro exit 0
+det exit 0
+flight exit 0
+city exit 0
+cue exit 0
+flash exit 0
+splitsweep exit 0
+gatesdone
+the three diffs applied by git apply on a fresh archive of e1397e5c give the tested tree's files, identical but for line endings (git apply wrote CRLF in scratch)

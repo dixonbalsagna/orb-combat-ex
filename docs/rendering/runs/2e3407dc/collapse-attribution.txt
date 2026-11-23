@@ -1,0 +1,49 @@
+# Collapse flash attribution (Rendering, 2026-11-23): why the collapse clip fails at small and tiny, and passes on main's medium
+
+Builds: the GW1c tree (main 74c03fdb + World's stage 2 + planet-sizes + drawn-at + relief-snow; cap off unless said) and main 2e3407dc for medium.
+Readings: Tools' run-pixels, tiles on (the default since 2026-11-13), worst of 4 readings unless said "960 only". Flash readings are for the EP only.
+
+## Medium on main 2e3407dc (Orb's current default)
+- collapse-normal PASS 2, collapse-reduced PASS 2 (worst of 4). The old rushcity stretch (ticks 1450 to 1475) reads 2. The 4 quoted earlier was on
+  older commits (calm-tones, e56d372c/ed1591cb). Not the cause below; no fix needed.
+
+## Small (cap off): collapse-reduced FAIL 7 (normal FAIL 5); cap on: reduced FAIL 4
+- The worst second (ticks 1016 to 1069) is near ground in front of the line flipping between two looks in big patches every 1 to 3 ticks.
+- The same build is bimodal run to run: 3 of 3, then 2 of 3, failing runs read exactly the same 7 events; the others read 2 to 2.5. Single runs of a
+  switch therefore prove nothing; several "fixes" seen once were clean runs (the anchored foreground line, nocover, the rim rule, the held re-check).
+- A failing run against a passing run of the same build, same tick: the failing run draws the near ground from coarse data (big smooth facets),
+  the passing run from fine data (many small facets). Debug views of the tone, the spared marks, the bowls and the rows held still; the street-paint
+  switch (paint only on slopes under 0.45) flipped on exactly the flicker ticks over the big coarse facets.
+- Headless at tick 1016 (the same state as the failing runs): the tile pool is 142 of 800 layers, yet 60 of 67 near tiles draw level-2 data (128-unit
+  nodes) for their level 3 and 4 meshes. A forced fill of 80 tiles takes that from 60 to 29; on medium, 57 fills take it from 26 (level-3 data) to 0.
+  A tile costs about the same at both sizes (about 25 ms); the queue is the difference: the fill takes the coarsest wanted level first, and small
+  wants many more tiles before the near ones.
+- Cause: on small (and tiny) the near ground is drawn from 128-unit data for long stretches, because its finer tiles wait behind every coarser one in
+  the fill queue; its big flat facets near the lens cross the look's hard steps (street paint by slope, tone, rock) in big patches as the camera moves.
+  Whether a clip's stretch comes before or after the fill catches up depends on timing, hence the bimodal runs. Owner: Rendering (the tile fill,
+  render/core/tile_field.gd, under planet-sizes).
+
+## Tiny: cap off normal FAIL 3.5, reduced PASS 2.5; cap on normal FAIL 6, reduced FAIL 8
+- Headless at tick 760: 53 near tiles drawing coarser data than their level (mostly level 2). The same mechanism; not confirmed by repeated runs.
+
+## Ruled out along the way (each by repeated or headless evidence)
+- Tile level changes (the tile set is constant through the flicker), the crater bowls' selection (all 11 drawn every tick), the cover (FAIL 7 with
+  nocover on a full run), the foreground tone (FAIL 7 with nofore), the morph (FAIL 7), the anchored foreground line (full clip FAIL 7; its stretch
+  pass was a skip run that starts with the fill caught up).
+
+## Side finding (a separate bug, not this flicker)
+- Two craters dug at tick 0 (x 40,510 and 41,410) are drawn twice, in the strip's rows and as the store's bowls: the ground's first build runs before
+  the tile field is attached, so GroundField._store_holds finds no tile field and never holds them. A re-check as the store grows fixes it headless
+  (scratch held_recheck.py); not parked.
+
+## Update (2026-11-23, later): the coarse-data reading was wrong; the cause is still open
+- near-fill (the near ground first in the fill, a capture's slice fixed at 5,000 us): small, cap off, reduced, 3 runs: FAIL 7, 7, 7 (the control the
+  same session: PASS 2.5, FAIL 6, FAIL 7). Not a fix.
+- An on-screen label of the tile fill in the web build (scratch dbg_label.py), 3 runs: the pool 80 to 118 of 800, the slice 4,500 us, two panes (the
+  split view) in every run. Near tiles on coarser data than their level at tick 1015: the passing run 33 of 49, the failing runs 26 of 43 and 54 of 69.
+  So coarse data doesn't separate a failing run from a passing one. The tile layout does differ (the first pane at tick 540: 26 tiles, 13 on coarse
+  data, with zigzag shapes on the near ground, against 14 and 0), set by when data arrives against the camera's moves; the runs part from about tick 140.
+- No mesh finer than its data at any level (a split waits for its children's data), 3 runs: FAIL 3, 7, 3.5, with 0 coarse tiles in the label. Not a fix.
+- What stands: the flicker is the near ground in front of the line (big facets near the lens, over the collapse's crater rims) flipping in big patches;
+  whether a run has it is decided by timing early in the clip, about 2 runs in 3 at small. Single runs of a switch prove nothing until a capture's
+  tile fill is reproducible (its slice is wall-clock time).
