@@ -1,0 +1,14 @@
+# collapse on the steady fill (Rendering, 2026-11-23; capture_steady.diff 711943c2): both modes, worst of 4 readings (960x540 and 1024x768), tiles on, one run each
+# rsc = the GW1c tree (main 74c03fdb + World's stage 2 + planet-sizes + drawn-at + relief-snow), cap off, + capture-steady; rscd = the same with the cap's data row
+## rsc small (exit 1)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 3, 2 s memory 2, 0 dips, 569s, worst of 4 readings (1024x768 at scale 2)
+collapse-reduced: FAIL, primary 3 general 0 red, area-15% 4, 2 s memory 2, 0 dips, 550s, worst of 4 readings (1024x768 at scale 1)
+## rsc tiny (exit 1)
+collapse-normal: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 2, 0 dips, 440s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 2, 0 dips, 465s, worst of 4 readings (960x540 at scale 1)
+## rscd small (exit 1)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 3, 0 dips, 521s, worst of 4 readings (1024x768 at scale 1)
+collapse-reduced: FAIL, primary 4 general 0 red, area-15% 4, 2 s memory 4, 0 dips, 547s, worst of 4 readings (1024x768 at scale 1)
+## rscd tiny (exit 1)
+collapse-normal: FAIL, primary 5.5 general 0 red, area-15% 9, 2 s memory 5, 0 dips, 536s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 7 general 0 red, area-15% 9, 2 s memory 5, 0 dips, 508s, worst of 4 readings (1024x768 at scale 1)

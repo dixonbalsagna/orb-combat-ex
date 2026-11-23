@@ -1,0 +1,57 @@
+# Collapse attribution on the steady fill (Rendering, 2026-11-23). Step 2 of the EP's brief; step 1 is capture-steady (docs/rendering/pending/capture-steady).
+# Every reel here is the same every run (the work clock), so one run per switch. Collapse reduced, tiles on, one reading size (noted), the clip's
+# own primary verdict (gate 2.5). Trees: the GW1c tree (main 74c03fdb + World's stage 2 + planet-sizes + drawn-at + relief-snow) + capture-steady +
+# scratch debug switches (page word dbg=<bits>); "cap on" adds World's relief-cap data row. Each debug build's base reel was compared with the plain
+# steady build's: 0 pixels differ by more than 8 at the sampled ticks (small cap off, tiny cap on).
+#
+# Starting verdicts, worst of 4 readings: steady-collapse.txt. Medium on main: PASS 2 both modes (its earlier 4 was the wall clock's luck).
+
+## A. Small, cap off, reduced (960x540: base 3, worst second ticks 355-394)
+base                                   3    events 355- 358+ 367- 368+ 391- 394+
+no cover (trees)                       2    355/358 gone
+no fore tone                           1    355-368 gone
+no bowls (store-held craters)          1    355-368 gone
+no strip rows / no rubble / no morph   3    unchanged
+dents not spared from the fore tone    2
+no fore clamp                          2    355/358 gone
+colours by the unclamped height        3    unchanged
+fore line anchored on the world        3    unchanged
+marks' own slope (fix 1)               3    unchanged
+fore line with the bowls' rims (fix 2) 2    355/358 gone (PASS)
+fixes 1 + 2                            2    PASS; left: 367/368 (trees under the merging split's camera) and 391/394 (the merge's cut)
+
+## B. Small, cap on, reduced (1024x768: base 4, worst second ticks 348-396; 960x540 reads 1)
+base                                   4
+no fore tone                           2
+no cover                               3
+no bowls                               3
+dents not spared / unclamped height    4
+marks' own slope / rims / both         4    the zigzags on the near ground go; left: trees under the merging split's camera, a
+                                            crater's edge on the fore-toned ground in the left pane, the merge's cut
+
+## C. Tiny, cap on, reduced (960x540: base 6, worst second ticks 777-812)
+base                                   6    a honeycomb on the ground in front of the plane, every frame different
+no bowls / no bowls' depth and slope   2.5  worst second moves to the opening (ticks 70-122)
+dents not spared from the fore tone    3.5
+no bowl colours / no fore tone / no morph / no cover / unclamped height   6
+slope in the strip's fixed frame       4.5
+no fore clamp                          8.5
+fore line anchored on the world        5
+marks' own slope (fix 1)               4.5  the honeycomb goes; worst second is the opening (ticks 70-122)
+fore line with the bowls' rims alone   8
+fixes 1 + 2                            4.5  as fix 1
+
+## D. Tiny, cap off, reduced (960x540: base 3.5, worst second ticks 69-104)
+no fore tone / no cover                3.5  unchanged: the camera close on a village, the houses' windows under its move, then the houses collapsing over
+                                            most of the frame (91-98)
+
+## What the probes found (headless, the collapse film at tiny, cap on)
+- Ticks 785-797: the tiles drawn and the bowls held still (69-70 tiles, +0 -0; 7 bowls, none in or out); the honeycomb changed every frame.
+- The sim's own dent near the camera stays under dent_min (|offset| 37 < 48); the bowls there (r 1391, depth to 306, rim to 122) and their aprons
+  (out to one radius past the lip) sum to a raised ground of 150 or more over the whole view: so it's spared from the fore tone.
+- The slope view showed the honeycomb in the marks' slope (v_dg). Its source: the tile vertex takes its slope from ground4, which is the strip
+  terrain's ground after the strip's own foreground cap (fore_fall: in front of the line, the cap's slope minus the column's base slope where the
+  line's height reaches a camera-relative cap) and the far map's land slope. Noisy column to column, and moved by the camera every frame.
+- The fore line (RenderTileGround._profile) takes the store's dents only (minf(heightDelta, 0)); drawn_at's note says the dents and bowls only
+  lower the ground. A bowl's rim and apron raise it: on the line they stand over the fore line, and the clamp cuts them at the plane in a step:
+  the near ground's zigzag teeth, which flip as the plane moves over the mesh.
