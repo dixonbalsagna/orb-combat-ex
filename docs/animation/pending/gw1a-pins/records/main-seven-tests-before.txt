@@ -1,4 +1,0 @@
-the seven tests alone on main, before the patch (all pass; the pins change nothing on main):
-
-water stance: depths [20.0, 60.0, 120.0, 598.0], no fighter read as airborne on the floor
-MULTI: checks 9318 fails 0
