@@ -1,0 +1,69 @@
+diff --git a/docs/tools/changelog.md b/docs/tools/changelog.md
+index a5ae8321..a501494b 100644
+--- a/docs/tools/changelog.md
++++ b/docs/tools/changelog.md
+@@ -2,3 +2,53 @@
+ 
+ One entry for every build handed to a person (a kept build, a desktop build, a test build), newest on top. `node tools/version.mjs --next` adds the entry and raises the build counter in `tools/version.json` together, in the commit that is built. Each entry has two parts: **For players** in plain words, which Orb reads before it is used anywhere (no team nicknames, what a player presses and sees), and **For the team**, the commit subjects since the last entry. Build 0 means no build has been numbered yet.
+ 
++## 0.1.1 (2026-11-23, 66d4e460)
++
++For players
++This is the first numbered build. What is new to hold in your hands:
++- The game starts on a list of modes. Pick one with the pad, pick your fighter with the d-pad, and start.
++- Press Start in a match and a pause menu opens. Its Quit row asks "Close the game?" with Stay lit, so a slip of the thumb does not close anything; choose "Close the game" and it closes.
++- The computer fighters on Easy and Medium now answer a move you hold: a charge you keep holding is answered by a grab or a step out of the way, so holding a button down no longer wins by itself.
++Not in this entry on purpose: the planet sizes (small, medium and big) are still being finished.
++
++For the team
++- Game Design: gauntlet plan records X-06's bands and final read, and rules that the idle training dummy skips the hold answer
++- Legal: gate G11's proof now on the round planet (1,799 people, none died); RL-230 holds with the 8-slot listener
++- Netcode: the ENet listener keeps spare slots so a dropped call can't block the live one (the late-host race); the check makes the key before listen, with a stall row and its one-slot control in CI
++- Rendering: steady-fill collapse attribution (medium passes; small and tiny fail on two Rendering bugs, the marks' slope and bowl rims in the foreground line)
++- Netcode: ENet check prints both peers' errors and a caller's retry state (diagnostics only, for the late-host timeout)
++- Encounter: X-06 side effects read (no hold-answer bug; Medium pace matching explains the scene shifts; match length unchanged within noise)
++- Tools: hold_answer_check wired into CI; four flash scenes re-staged longer for X-06 (no guard loosened), scenes-2 split in two
++- UI: the pseudo-localised terms for the replay-refusal words (completes the previous commit)
++- UI: the 'saved by a different version' words get a reader (UiFeedback.replay_refusal; build and date, build only, unstamped), with hud_check rows; old mode-smoke records moved under their real commit; pad-quit smoke parked
++- World: the bystanders check also runs on the planet as it ships (3,835 buildings; nobody dies, same as on the first ring); crater park split (the shot rule behind its own switch); Production Ops tracker fixes
++- Stand-in: A1 exit status refreshed (13 of 44 met) and the path to the first Alpha build
++- EP: Orb's word of 2026-11-23 recorded (sprint to the first alpha build)
++- Rendering: captures draw the same reel every run (tile fill, feet and visits on a work clock under steady_fill; the crowd on the sim's clock); play unchanged
++- Encounter: x06-bands park cleared (landed in 8006fe3d); Production Ops: A1 at 44 of 77, GitHub lock noted
++- Encounter: X-06, the computer answers a held charge by repetition (Medium [0, 0.4, 0.9] in 300 ticks, Easy [0, 0.3, 0.65] in 420; grab in reach, else slip the release); Medium paces as Easy; with Simulation's golden re-record. Easy's charge and Medium's kit floor wait for human play
++- Simulation: X-06 golden target (all 9 matches move; parity exit 0, render 15)
++- QA: X-06 three cells (Medium charge 45% passes; Easy charge 90%; Medium kit 10%)
++- Rendering: relief-snow parked (snow and rock lines follow World's tallest capped peak; lands with the cap's data row)
++- Encounter: X-06 slip re-cut (Easy window 420; the computer's dodge of a release is the slip, no cooldown, R34's third-slip rule); hold_answer_check 21/21, director checks 48/48
++- World: relief cap re-cut per Art (knee 0.7; altitude lines scale by the planet's tallest capped peak); Art's corrected ruling
++- Rendering: planet-sizes shader reads level 0 from the planet (tile_l0; small and tiny were drawing wrong ground); GW1c stills re-taken
++- QA: X-06 last cell (Easy charge pad 100% with repetition; Medium 50%)
++- Encounter: X-06 Easy reads repetition too ({300, [0, 0.3, 0.75]}); hold_answer_check 18/18
++- World and Rendering: GW1c stage 2 re-cut on 74c03fdb (lint grant re-cut; relief-cap key built with SimMathx.fixed); planet-sizes tiles and drawn_at re-cut, render 20/20
++- Encounter: six director checks fixed for the planet default (arena pins with planet copies; idle staging; bark reads trimmed to about 9 minutes); beam stand-off planet fault parked for its golden window
++- QA: GW1b bisect of the Medium kit (main alone was always 5%; the candidate's lift fell with the first GW1b group, not proved at 40 a cell)
++- QA: X-06 landing read (charge closed at Medium; Easy charge now under Medium's; GW1b moved the kit baseline; the beam suspect cleared)
++- Tools: CI budgets measured on the first green GW1b run; the network checks rebalanced into six jobs; bark reads given room
++- Tools: ci.yml deploy needs fixed (a splitter regex had mangled net-4 into net-b-4); check-workflows now refuses unknown, repeated or cyclic needs
++- Tools: CI jobs split for the planet default (VFX hash on its own, network in four, parity, render and net cut into parts, world checks in three shards); determinism lint flags printf decimals in sim text
++- Simulation: numbers in sim text read the same on every platform (SimMathx.fixed; Windows rounded exact halves differently), with a parity row; web parity runs each match with its recorded setup; matches 5 and 6 re-recorded
++- QA: X-06 isolation (the hold answer, not the candidate, lowers the Medium kit; pace probe clears noHuman) and the 0.25 cell
++- World: W-1/W-2 re-cut (the tier 2-3 note corrected: those bodies smash the face and slide, no wall slam); GW1c stage 2 re-cut record on b624340a (95 checks, 0 red)
++- QA: X-06 re-read with the hold answer re-cut (ceilings and order pass; the Medium kit at 10% fails the scripted floor)
++- World: GW1b follow-ups W-1 (the planet-7 ground hash moved with launch-cone, bisected) and W-2 (wall rows at the shipped launch travel 1.5); landed park folders cleared
++- GW1b: Godot uid files for the four new check scripts
++- World: GW1b gw1b-checks-reread (gw1b-checks-reread.diff)
++- VFX: GW1b gw1b-pins (apply.patch)
++- Netcode: GW1b gw1b-planet (gw1b-planet.patch)
++- Audio: GW1b gw1b-recut (world-check-arena.patch)
+diff --git a/tools/version.json b/tools/version.json
+index 5dc4d35b..544d2cc8 100644
+--- a/tools/version.json
++++ b/tools/version.json
+@@ -1,5 +1,5 @@
+ {
+   "major": 0,
+   "minor": 1,
+-  "build": 0
++  "build": 1
+ }

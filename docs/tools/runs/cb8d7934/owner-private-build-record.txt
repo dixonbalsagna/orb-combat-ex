@@ -1,0 +1,24 @@
+Owner-private desktop build (tools/desktop-local-build.mjs)
+commit cb8d79345b6a7f6f009db9c0e8a5ae862c9fb33a (2026-11-21); on main
+made 2026-11-21T08:04:50.647Z
+
+ok   the commit unpacked into a scratch copy (the working tree is not read): <scratch>\tree
+ok   lock Reduce flashing on (scratch copy only): lock_reduce_flashing set true in <scratch>\tree/ui/data/features.json
+ok   version number into the export preset: version fields set in <scratch>\tree/export_presets.cfg: application/file_version="0.1.0.0", application/product_version="0.1.0.0", application/version="0.1.0"
+ok   routes check (lock, bypass words, no net/, feedback target): desktop routes check ok: the route scan is clean; the lock is true and the capture hook false in features.json; the six bypass words are the reviewed ones and r
+ok   build_info.json written: wrote <scratch>\tree\build_info.json: commit cb8d793, date 2026-11-21, version 0.1.0
+ok   import: exit 0
+ok   export "Windows Desktop" (release, Compatibility, x86_64, pck embedded): 121117536 bytes
+ok   the project's bench and the exported program's bench print the same gameplay hash: gameplay hash at tick 2400: cc3a8b1d073bf222 | gameplay hash at tick 2400: cc3a8b1d073bf222
+ok   README.txt, NOTICES.txt and build_info.json (owner notice, ORB-PRIVATE line): desktop package: README.txt, NOTICES.txt and build_info.json (cb8d793, 2026-11-21) written to <user>\AppData\Loc
+ok   zipped: 44446362 bytes
+ok   unzipped somewhere new, the way a player does
+ok   the folder verifies (files, magic bytes, embedded pck, notices, lock, ORB-PRIVATE line): desktop package ok (windows): the files, the executable's magic bytes, the embedded pck, build_info.json, README.txt and NOTICES.txt hold. This was read, not run: a Windows build cannot be started on 
+
+file orb-combat-ex-ORB-PRIVATE-windows-x86_64-cb8d7934.zip
+size 44446362 bytes
+sha256 9a56ff82724ae71438444617ef9226bf7499b4a951904db38f497401891820e5
+version 0.1.0
+bench gameplay hash at tick 2400: cc3a8b1d073bf222
+
+For Orb and Orb 2 only. Move it by a drive, the home network or a private message. Never a public link.

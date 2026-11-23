@@ -98,6 +98,8 @@ jobs:
         run: node tools/feel/gauntlet-selftest.mjs --no-e2e
       - name: Local owner-private build, pure parts (the package names, the bench hash reading, no working tree read, no upload; the build itself needs Orb's PC)
         run: node tools/desktop-local-build-selftest.mjs
+      - name: Record paths, tar.gz writer and run-record self-tests, and no user folder path in the build records under docs/tools (job 7 of the path to Alpha 1)
+        run: node tools/record-paths-selftest.mjs && node tools/desktop-run-record-selftest.mjs && node tools/record-paths.mjs check docs/tools
       - name: Mode smoke runner self-test (a result is read as pass or fail; the game's data folder is moved off the real one; A-MODES-08)
         run: node tools/smoke/mode-smoke-selftest.mjs
       - name: Fighter-specific code ratchet self-test
@@ -124,6 +126,8 @@ jobs:
         run: node tools/version-selftest.mjs
       - name: Version and changelog agree
         run: node tools/version.mjs --check
+      - name: First run self-test (the frame-rate and load lines, the size table, the steps, the report; no bypass word, no key before the warning; job 8 of the path to Alpha 1)
+        run: node tools/first-run/first-run-selftest.mjs
       # The copy of the kept builds and play files to a second place (docs/tools/backup.md; A-TOOLS-09): node and temporary folders only
       - name: Backup tool self-test (the copy, a second run, verify, the restore and its refusal)
         run: node tools/backup-kept-selftest.mjs

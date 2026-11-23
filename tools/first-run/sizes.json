@@ -1,0 +1,9 @@
+{
+  "_about": "The planet sizes the first run can be asked for (--size small|medium|big|default|all; tools/first-run/first-run.mjs). `args`: the arguments added after `--` on the program's command line (a list), or null when this build cannot be asked for that size. Small, medium and big are null until GW1c lands the sizes (path to Alpha 1, jobs 3 to 6); whoever lands them sets the arguments here (World or UI: if a size is chosen by a menu row and not by an argument, the steps of steps.json gain the keys for it instead and this row gets an empty list). A size whose args are null is reported as 'not offered by this build' and nothing is run for it.",
+  "sizes": {
+    "default": { "args": [], "what": "the planet this build starts with" },
+    "small": { "args": null, "waiting": "GW1c has not landed the planet sizes" },
+    "medium": { "args": null, "waiting": "GW1c has not landed the planet sizes" },
+    "big": { "args": null, "waiting": "GW1c has not landed the planet sizes" }
+  }
+}

@@ -1,0 +1,614 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index f8888759..15194575 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -98,6 +98,8 @@ jobs:
+         run: node tools/feel/gauntlet-selftest.mjs --no-e2e
+       - name: Local owner-private build, pure parts (the package names, the bench hash reading, no working tree read, no upload; the build itself needs Orb's PC)
+         run: node tools/desktop-local-build-selftest.mjs
++      - name: Record paths, tar.gz writer and run-record self-tests, and no user folder path in the build records under docs/tools (job 7 of the path to Alpha 1)
++        run: node tools/record-paths-selftest.mjs && node tools/desktop-run-record-selftest.mjs && node tools/record-paths.mjs check docs/tools
+       - name: Mode smoke runner self-test (a result is read as pass or fail; the game's data folder is moved off the real one; A-MODES-08)
+         run: node tools/smoke/mode-smoke-selftest.mjs
+       - name: Fighter-specific code ratchet self-test
+diff --git a/docs/tools/desktop-builds.md b/docs/tools/desktop-builds.md
+index 051f0644..a9530443 100644
+--- a/docs/tools/desktop-builds.md
++++ b/docs/tools/desktop-builds.md
+@@ -95,7 +95,7 @@ The Windows exe has Godot's default icon and no file-version fields (`modify_res
+ 
+ ## The owner-private build on Orb's own PC: one command (A-TOOLS-01, 2026-11-14)
+ 
+-Legal's RL-262 says the file for Orb and Orb 2 is made on Orb's own PC with the same packaging tool, never kept by a CI run. `node tools/desktop-local-build.mjs [--commit <rev>] [--out <folder>] [--godot <exe>]` does the whole sequence for Windows, about 3 minutes, headless and at below-normal priority:
++Legal's RL-262 says the file for Orb and Orb 2 is made on Orb's own PC with the same packaging tool, never kept by a CI run. `node tools/desktop-local-build.mjs [--commit <rev>] [--out <folder>] [--godot <exe>]` does the whole sequence for Windows (and, since 2026-11-23, Linux: see the last section), about 3 minutes, headless and at below-normal priority:
+ 
+ 1. `git archive` of the commit into a scratch folder: **the committed files only, never your working tree**, which it does not read or change (so `write-build-info.mjs` runs on the scratch copy, never in the shared folder);
+ 2. lock Reduce flashing on, put the version number into the export preset, the routes check (lock, bypass words, no net/, feedback target not a public issue), write build_info.json;
+@@ -106,3 +106,11 @@ Legal's RL-262 says the file for Orb and Orb 2 is made on Orb's own PC with the
+ It stops at the first failing step and names it. It writes the zip, `<zip>.sha256.txt` and `build-record.txt` to `homework/Files/desktop/<commit8>-ORB-PRIVATE/` (git-ignored; `--out` changes it). The file moves to Orb 2 by a drive, the home network or a private message, never a public link. `--with-working-tools` is a TEST-ONLY switch (it copies the working copy of the packaging tool into the scratch folder, says so in the record and the last line, and the package is then not a build of the commit alone).
+ 
+ **Tried on 2026-11-14** on commit 5963d224 (main), this PC, with the working-tree packaging tool because the ORB-PRIVATE change was not committed yet: every step ok, bench hash `7b8c8aff21d1a5cb` from both programs (the same as the CI run's, 43589936940), zip 44,397,278 bytes. Not tried: a run without `--with-working-tools` (it refuses until the ORB-PRIVATE change is in the commit being built, and says so); a run of the resulting program with a window (no session opens a Godot window; the program was started headless for the bench only); Linux (the tool is Windows only today); Orb 2's PC.
++
++## Linux in the same command, saved runs and clean records (path to Alpha 1, job 7, 2026-11-23)
++
++- **`node tools/desktop-local-build.mjs --platform windows|linux|both`** (default `both`; the paragraph above is the Windows half). The Linux package is `orb-combat-ex-ORB-PRIVATE-linux-x86_64-<commit8>.tar.gz`: the "Linux" preset exported, README.txt, NOTICES.txt and build_info.json from the same packaging tool (`text --platform linux`, the owner notice and the ORB-PRIVATE line), packed by `tools/lib/targz.mjs` (the program 0755, the rest 0644: Windows' own tar cannot give a file an executable bit, so the archive is written by our own writer, the same bytes for the same inputs), unpacked somewhere new with the system tar, and checked by `desktop-package.mjs verify --platform linux` (files, ELF magic, pck footer, notices, lock, the private line). The record also says the program has its executable bit inside the archive.
++- **What it does not do on a Windows PC: play the Linux program.** It is an ELF. The record says "NOT played on this PC" and gives the project's own bench hash for comparison; the `desktop-builds.yml` run plays the Linux binary on a Linux runner and compares its hash with the project's. On a Linux machine the same command plays it. No WSL is installed here, so no Linux program has been started from this tool.
++- **`build-record.txt` is written clean:** the scratch folder is `<scratch>`, a user's folder `<user>`, the repository `<repo>` (`tools/record-paths.mjs`; CI's data job checks that no user folder path is in anything under `docs/tools`). The records of the first two Windows builds (cb8d7934 and b624340a) were cleaned with it and filed as `docs/tools/runs/<commit8>/owner-private-build-record.txt`.
++- **`node tools/desktop-run-record.mjs <run id>`** saves a `desktop-builds.yml` run as a page: the jobs with results and times, the failed steps with the last lines of their log, the gameplay hash each job printed and whether they agree, the packages' sizes and SHA-256 sums as they stood on the runner, and the artifact count (0 for an owner-private run). Default file: `docs/tools/runs/<commit8>/desktop-run-<id>.md`.
++- **The build number** is `tools/version.json` plus the top entry of `docs/tools/changelog.md`, added together by `node tools/version.mjs --next` in the commit that is built (the build counter is 0 until then, so a build says 0.1.0). `node tools/version.mjs --check --ready` fails until the entry has its line for players.
+diff --git a/tools/desktop-local-build-selftest.mjs b/tools/desktop-local-build-selftest.mjs
+index a64e1789..539f0e86 100644
+--- a/tools/desktop-local-build-selftest.mjs
++++ b/tools/desktop-local-build-selftest.mjs
+@@ -3,16 +3,21 @@
+ import { readFileSync } from 'node:fs';
+ import { dirname, join } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+-import { names, hashLine } from './desktop-local-build.mjs';
++import { names, hashLine, platformsOf, canPlay } from './desktop-local-build.mjs';
+ let bad = 0, n = 0;
+ const check = (name, ok, extra) => { n++; if (!ok) { bad++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
+ const x = names('148f4e16');
++const lx = names('148f4e16', 'linux');
+ check('the file name says it is a private build for the two, and names the commit (Legal RL-262 section 1, point 4)', /ORB-PRIVATE/.test(x.zip) && x.zip.endsWith('-148f4e16.zip') && x.folder === 'orb-combat-ex-ORB-PRIVATE-windows-x86_64');
+ check('the default folder is under homework/ (git-ignored), named for the commit and ORB-PRIVATE', x.defaultOut.split(String.fromCharCode(92)).join('/').endsWith('/homework/Files/desktop/148f4e16-ORB-PRIVATE'));
++check('the Linux package is a .tar.gz named for the platform, the commit and the private line; the Windows one stays a .zip', lx.archive === 'orb-combat-ex-ORB-PRIVATE-linux-x86_64-148f4e16.tar.gz' && lx.folder === 'orb-combat-ex-ORB-PRIVATE-linux-x86_64' && x.archive.endsWith('.zip') && x.zip === x.archive);
++check('--platform names windows, linux or both and nothing else', platformsOf('both').join() === 'windows,linux' && platformsOf('linux').join() === 'linux' && platformsOf('windows').join() === 'windows' && platformsOf('mac') === null && platformsOf('') === null);
++check('a program is played only on its own kind of machine (a Linux ELF is not started on Windows)', canPlay('windows', 'win32') && canPlay('linux', 'linux') && !canPlay('linux', 'win32') && !canPlay('windows', 'linux') && !canPlay('windows', 'darwin'));
+ check('the bench hash line is read from the output, and a missing one is null', hashLine('boot\ngameplay hash at tick 2400: 7b8c8aff21d1a5cb\nbye') === 'gameplay hash at tick 2400: 7b8c8aff21d1a5cb' && hashLine('nothing') === null);
+ check('two different hashes are not equal lines', hashLine('gameplay hash at tick 2400: aa') !== hashLine('gameplay hash at tick 2400: bb'));
+ const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'desktop-local-build.mjs'), 'utf8');
+ check('the build reads the commit by git archive, never the working tree, and never runs write-build-info.mjs in the shared folder', /git', \['-C', REPO, 'archive'/.test(src) && /join\(tree, 'tools', 'write-build-info.mjs'\)/.test(src) && !/join\(REPO, 'tools', 'write-build-info/.test(src));
+ check('the owner notice and the private line are the only notice arguments, and no upload or publish is in it', /OWNER_NOTICE = 'site-interim-owner.json'/.test(src) && !/upload|gh release|butler/i.test(src.replace(/never a public (link|upload)|not made or kept by a CI run/gi, '')));
++check("the record is cleaned of this PC's folder paths as it is written, and the Linux archive is written by the tar writer (the mode of each file is named)", /cleanPaths\(rec\.join/.test(src) && /targz\(folderEntries\(pkg, n\.folder, \[program\]\), mtime\)/.test(src));
+ console.log(`desktop-local-build selftest: ${n} checks, ${bad} failed`);
+ process.exit(bad ? 1 : 0);
+diff --git a/tools/desktop-local-build.mjs b/tools/desktop-local-build.mjs
+index 8b4e4a58..e13753a8 100644
+--- a/tools/desktop-local-build.mjs
++++ b/tools/desktop-local-build.mjs
+@@ -1,6 +1,9 @@
+ // The owner-private desktop build, made on Orb's own PC with one command (A-TOOLS-01; Legal RL-262 section 1: "on Orb's own PC with the same packaging script the outside package uses, with the same route scan, the
+-// same notices and the same warning"; the file is never made or kept by a CI run). Windows only today: the exported program is started here and plays the bench.
+-//   node tools/desktop-local-build.mjs [--commit <rev>] [--out <folder>] [--godot <exe>] [--frames 2400] [--keep-scratch] [--with-working-tools]
++// same notices and the same warning"; the file is never made or kept by a CI run). Windows and Linux (the Linux half added 2026-11-23, path to Alpha 1 job 7).
++//   node tools/desktop-local-build.mjs [--platform windows|linux|both] [--commit <rev>] [--out <folder>] [--godot <exe>] [--frames 2400] [--keep-scratch] [--with-working-tools]
++//   --platform: default both. The Linux package is a .tar.gz written by tools/lib/targz.mjs (the program 0755, the rest 0644: Windows' own tar cannot give a file an executable bit). The Linux program is an ELF and is
++//   PLAYED only on a Linux machine; on this PC it is exported, packed, unpacked and read (magic bytes, pck, notices, lock, the executable bit in the archive), and its record says it was not played here
++//   (the desktop-builds.yml run plays it on a Linux runner and compares the hash with the project's).
+ //   --with-working-tools: TEST ONLY, for trying a change to tools/desktop-package.mjs before it is committed: that one file is copied from the working tree into the scratch copy. The build record and the last
+ //   line say so, and the package is then not a build of the commit alone (do not hand it on).
+ // What it does, the way .github/workflows/desktop-builds.yml does for the owner-private audience, on a SCRATCH copy of the commit (`git archive <rev>`: the committed files, never your working tree, which it
+@@ -8,7 +11,8 @@
+ //   1 lock Reduce flashing on, 2 put the version number into the export preset, 3 the routes check (lock, bypass words, no net/, feedback target not a public issue), 4 write build_info.json,
+ //   5 import, 6 export "Windows Desktop" (release), 7 the project's bench and the exported program's bench: both must print the SAME gameplay hash, 8 pack: the program, README.txt (with Orb's owner-approved
+ //   notice and the ORB-PRIVATE line), NOTICES.txt and build_info.json, zipped, 9 unzip somewhere new and verify the folder the way a player's PC finds it.
+-// It refuses (exit 1) at the first step that fails and says which. It writes: <out>/orb-combat-ex-ORB-PRIVATE-windows-x86_64-<commit8>.zip, its SHA-256 and a build-record.txt. Default <out>:
++// It refuses (exit 1) at the first step that fails and says which. It writes: <out>/orb-combat-ex-ORB-PRIVATE-windows-x86_64-<commit8>.zip and/or ...-linux-x86_64-<commit8>.tar.gz, their SHA-256 and a build-record.txt
++// (with this PC's folder paths taken out: tools/record-paths.mjs, so the record can go into the repository). Default <out>:
+ // homework/Files/desktop/<commit8>-ORB-PRIVATE (git-ignored). The file is for Orb and Orb 2 only: it moves by a drive, the home network or a private message, never a public link.
+ // Godot runs at below-normal priority and headless (no window). Node built-ins, git, tar and PowerShell only.
+ import { spawn, spawnSync } from 'node:child_process';
+@@ -18,17 +22,27 @@ import { tmpdir, constants as osConstants } from 'node:os';
+ import { setPriority } from 'node:os';
+ import { dirname, join, resolve } from 'node:path';
+ import { fileURLToPath } from 'node:url';
++import { cleanPaths } from './record-paths.mjs';
++import { folderEntries, readTarGz, targz } from './lib/targz.mjs';
+ 
+ const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+ const OWNER_NOTICE = 'site-interim-owner.json';
+-const PRESET = 'Windows Desktop';
++const PRESETS = { windows: 'Windows Desktop', linux: 'Linux' };
++const PROGRAMS = { windows: 'orb-combat-ex.exe', linux: 'orb-combat-ex.x86_64' };
+ 
+-/** The names of the package, from the commit. Pure. */
+-export function names(commit8) {
+-  const folder = 'orb-combat-ex-ORB-PRIVATE-windows-x86_64';
+-  return { folder, zip: `${folder}-${commit8}.zip`, defaultOut: join(REPO, 'homework', 'Files', 'desktop', `${commit8}-ORB-PRIVATE`) };
++/** The names of the package, from the commit. Pure. `zip` is the archive's name whatever its kind (.zip for Windows, .tar.gz for Linux). */
++export function names(commit8, platform = 'windows') {
++  const folder = `orb-combat-ex-ORB-PRIVATE-${platform}-x86_64`;
++  const zip = `${folder}-${commit8}.${platform === 'linux' ? 'tar.gz' : 'zip'}`;
++  return { folder, zip, archive: zip, defaultOut: join(REPO, 'homework', 'Files', 'desktop', `${commit8}-ORB-PRIVATE`) };
+ }
+ 
++/** The platforms a --platform value names; null when it names none. Pure. */
++export function platformsOf(v) { return v === 'both' ? ['windows', 'linux'] : v === 'windows' || v === 'linux' ? [v] : null; }
++
++/** The Windows hosts can start a Windows program and a Linux host a Linux one; a Mac neither. Pure. */
++export function canPlay(platform, host) { return (platform === 'windows' && host === 'win32') || (platform === 'linux' && host === 'linux'); }
++
+ /** The gameplay hash line of a bench's output, or null. Pure. */
+ export function hashLine(text) { const m = /^gameplay hash at tick \d+: [0-9a-f]+/m.exec(String(text)); return m ? m[0] : null; }
+ 
+@@ -59,23 +73,27 @@ const ps = (script) => spawnSync('powershell', ['-NoProfile', '-NonInteractive',
+ async function main() {
+   const a = process.argv.slice(2);
+   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
+-  if (process.platform !== 'win32') { console.error('desktop-local-build: Windows only for now (the exported program is started on this PC)'); process.exit(2); }
++  const platforms = platformsOf(opt('--platform', 'both'));
++  if (!platforms) { console.error('desktop-local-build: --platform is windows, linux or both'); process.exit(2); }
++  if (process.platform === 'darwin') { console.error('desktop-local-build: Windows and Linux hosts only for now'); process.exit(2); }
+   const rev = opt('--commit', 'HEAD');
+   const frames = String(opt('--frames', '2400'));
+   const git = (...g) => spawnSync('git', ['-C', REPO, ...g], { encoding: 'utf8' });
+   const r = git('rev-parse', '--verify', `${rev}^{commit}`);
+   if (r.status !== 0) { console.error(`desktop-local-build: "${rev}" is not a commit of this repository`); process.exit(2); }
+   const sha = r.stdout.trim(), c8 = sha.slice(0, 8), date = git('log', '-1', '--format=%cs', sha).stdout.trim();
++  const mtime = Number(git('log', '-1', '--format=%ct', sha).stdout.trim()) || 0;
+   const onMain = git('merge-base', '--is-ancestor', sha, 'main').status === 0;
+-  const n = names(c8);
+-  const out = resolve(opt('--out', n.defaultOut));
++  const out = resolve(opt('--out', names(c8).defaultOut));
+   const godot = godotExe(opt('--godot'));
+   const scratch = mkdtempSync(join(tmpdir(), 'orb-private-build-'));
+   const tree = join(scratch, 'tree');
+-  const rec = [`Owner-private desktop build (tools/desktop-local-build.mjs)`, `commit ${sha} (${date}); ${onMain ? 'on main' : 'NOT on main (a local owner-private build may be of any commit)'}`, `made ${new Date().toISOString()}`, ''];
++  const rec = [`Owner-private desktop build (tools/desktop-local-build.mjs), ${platforms.join(' and ')}`, `commit ${sha} (${date}); ${onMain ? 'on main' : 'NOT on main (a local owner-private build may be of any commit)'}`, `made ${new Date().toISOString()}`, `made on ${process.platform === 'win32' ? 'Windows' : 'Linux'}`, ''];
+   const step = (name, ok, detail = '') => { const line = `${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ': ' + detail : ''}`; console.log(line); rec.push(line); if (!ok) { fail(name); } };
+   const fail = (name) => { writeRecord(); console.error(`desktop-local-build FAILED at: ${name} (scratch copy kept for a look: ${scratch})`); process.exit(1); };
+-  const writeRecord = () => { try { mkdirSync(out, { recursive: true }); writeFileSync(join(out, 'build-record.txt'), rec.join('\n') + '\n'); } catch { /* the folder is not writable */ } };
++  // the record is cleaned of this PC's folder paths as it is written (tools/record-paths.mjs): the scratch folder is <scratch>, a user's folder <user>
++  const writeRecord = () => { try { mkdirSync(out, { recursive: true }); writeFileSync(join(out, 'build-record.txt'), cleanPaths(rec.join('\n')) + '\n'); } catch { /* the folder is not writable */ } };
++  const results = [];
+   try {
+     mkdirSync(tree, { recursive: true });
+     const tarFile = join(scratch, 'commit.tar');
+@@ -98,40 +116,69 @@ async function main() {
+     if (!toolText.includes('PRIVATE_LINE')) step('this commit\'s packaging tool knows the ORB-PRIVATE line', false, 'it is older than the owner-private change: build a newer commit');
+     const node = (args, cwd = tree) => run(process.execPath, args, { cwd });
+     let x = await node([pkgTool, 'lock', '--root', tree]); step('lock Reduce flashing on (scratch copy only)', x.code === 0, x.out.trim().split(/\r?\n/).pop());
+-    x = await node([pkgTool, 'version', '--root', tree]); step('version number into the export preset', x.code === 0, x.out.trim().split(/\r?\n/).pop());
++    x = await node([pkgTool, 'version', '--root', tree]); step('version number into the export presets', x.code === 0, x.out.trim().split(/\r?\n/).pop());
+     x = await node([pkgTool, 'routes', '--root', tree]); step('routes check (lock, bypass words, no net/, feedback target)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 160));
+     x = await node([join(tree, 'tools', 'write-build-info.mjs'), '--commit', sha, '--date', date]); step('build_info.json written', x.code === 0, x.out.trim());
+     const info = JSON.parse(readFileSync(join(tree, 'build_info.json'), 'utf8'));
+ 
+     x = await run(godot, ['--headless', '--path', tree, '--import'], { below: true, limitMs: 10 * 60 * 1000 }); step('import', x.code === 0, `exit ${x.code}`);
+-    const exp = join(scratch, 'export'); mkdirSync(exp, { recursive: true });
+-    const exe = join(exp, 'orb-combat-ex.exe');
+-    x = await run(godot, ['--headless', '--path', tree, '--export-release', PRESET, exe], { below: true }); step(`export "${PRESET}" (release, Compatibility, x86_64, pck embedded)`, x.code === 0 && existsSync(exe), existsSync(exe) ? `${statSync(exe).size} bytes` : `exit ${x.code}: ${x.out.trim().split(/\r?\n/).pop()}`);
++    // the project's own bench: the hash every exported program must print (the same game data, the same seed)
+     const b1 = await run(godot, ['--headless', '--path', tree, '--fixed-fps', '60', '--', '--seed=4', `--frames=${frames}`, '--bench'], { below: true });
+-    const b2 = await run(exe, ['--headless', '--fixed-fps', '60', '--', '--seed=4', `--frames=${frames}`, '--bench'], { cwd: exp, below: true });
+-    const h1 = hashLine(b1.out), h2 = hashLine(b2.out);
+-    step('the project\'s bench and the exported program\'s bench print the same gameplay hash', !!h1 && h1 === h2, `${h1 || 'none'} | ${h2 || 'none'}`);
++    const h1 = hashLine(b1.out);
++    step('the project\'s own bench prints a gameplay hash', !!h1, h1 || 'none');
+ 
+-    const pkg = join(scratch, 'pkg', n.folder); mkdirSync(pkg, { recursive: true });
+-    const notice = ['--notice', OWNER_NOTICE, '--private'];
+-    x = await node([pkgTool, 'text', '--platform', 'windows', '--out', pkg, '--build-info', join(tree, 'build_info.json'), ...notice]); step('README.txt, NOTICES.txt and build_info.json (owner notice, ORB-PRIVATE line)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 120));
+-    cpSync(exe, join(pkg, 'orb-combat-ex.exe'));
+-    mkdirSync(out, { recursive: true });
+-    const zip = join(out, n.zip);
+-    rmSync(zip, { force: true });
+-    const z = ps(`Compress-Archive -Path '${pkg}' -DestinationPath '${zip}' -CompressionLevel Optimal`);
+-    step('zipped', z.status === 0 && existsSync(zip), existsSync(zip) ? `${statSync(zip).size} bytes` : String(z.stderr).slice(0, 160));
+-    const chk = join(scratch, 'check'); mkdirSync(chk, { recursive: true });
+-    const u = ps(`Expand-Archive -Path '${zip}' -DestinationPath '${chk}' -Force`);
+-    step('unzipped somewhere new, the way a player does', u.status === 0, '');
+-    x = await node([pkgTool, 'verify', '--platform', 'windows', '--dir', join(chk, n.folder), '--commit', sha, '--locked', ...notice]); step('the folder verifies (files, magic bytes, embedded pck, notices, lock, ORB-PRIVATE line)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 200));
++    for (const platform of platforms) {
++      const n = names(c8, platform), program = PROGRAMS[platform];
++      const exp = join(scratch, 'export-' + platform); mkdirSync(exp, { recursive: true });
++      const bin = join(exp, program);
++      x = await run(godot, ['--headless', '--path', tree, '--export-release', PRESETS[platform], bin], { below: true });
++      step(`export "${PRESETS[platform]}" (release, Compatibility, x86_64, pck embedded)`, x.code === 0 && existsSync(bin), existsSync(bin) ? `${statSync(bin).size} bytes` : `exit ${x.code}: ${x.out.trim().split(/\r?\n/).pop()}`);
++      let benchLine = '';
++      if (canPlay(platform, process.platform)) {
++        const b2 = await run(bin, ['--headless', '--fixed-fps', '60', '--', '--seed=4', `--frames=${frames}`, '--bench'], { cwd: exp, below: true });
++        const h2 = hashLine(b2.out);
++        step(`the ${platform} program's bench prints the same gameplay hash as the project's`, !!h1 && h1 === h2, `${h1 || 'none'} | ${h2 || 'none'}`);
++        benchLine = `bench ${h2} (the program was played here)`;
++      } else {
++        benchLine = `bench: the ${platform} program was NOT played on this PC (it is not a ${process.platform === 'win32' ? 'Windows' : 'Linux'} program); the project's own bench here printed ${h1}, and the desktop-builds.yml run plays the Linux program on a Linux runner and compares its hash`;
++        console.log(`note ${benchLine}`);
++        rec.push(`note ${benchLine}`);
++      }
+ 
+-    const sum = sha256(zip);
+-    writeFileSync(join(out, `${n.zip}.sha256.txt`), `${sum}  ${n.zip}\n`);
+-    rec.push('', `file ${n.zip}`, `size ${statSync(zip).size} bytes`, `sha256 ${sum}`, `version ${info.version || 'none'}`, `bench ${h1}`, '', 'For Orb and Orb 2 only. Move it by a drive, the home network or a private message. Never a public link.');
++      const pkg = join(scratch, 'pkg-' + platform, n.folder); mkdirSync(pkg, { recursive: true });
++      const notice = ['--notice', OWNER_NOTICE, '--private'];
++      x = await node([pkgTool, 'text', '--platform', platform, '--out', pkg, '--build-info', join(tree, 'build_info.json'), ...notice]); step(`${platform}: README.txt, NOTICES.txt and build_info.json (owner notice, ORB-PRIVATE line)`, x.code === 0, x.out.trim().split(/\r?\n/).pop());
++      cpSync(bin, join(pkg, program));
++      mkdirSync(out, { recursive: true });
++      const archive = join(out, n.archive);
++      rmSync(archive, { force: true });
++      const chk = join(scratch, 'check-' + platform); mkdirSync(chk, { recursive: true });
++      if (platform === 'windows') {
++        const z = ps(`Compress-Archive -Path '${pkg}' -DestinationPath '${archive}' -CompressionLevel Optimal`);
++        step('windows: zipped', z.status === 0 && existsSync(archive), existsSync(archive) ? `${statSync(archive).size} bytes` : String(z.stderr).slice(0, 160));
++        const u = ps(`Expand-Archive -Path '${archive}' -DestinationPath '${chk}' -Force`);
++        step('windows: unzipped somewhere new, the way a player does', u.status === 0, '');
++      } else {
++        writeFileSync(archive, targz(folderEntries(pkg, n.folder, [program]), mtime));
++        step('linux: archived as .tar.gz (the program 0755, the rest 0644)', existsSync(archive), `${statSync(archive).size} bytes`);
++        const modes = readTarGz(readFileSync(archive));
++        const prog = modes.find((e) => e.name === `${n.folder}/${program}`);
++        step('linux: the program has its executable bit inside the archive', !!prog && (prog.mode & 0o111) === 0o111, prog ? prog.mode.toString(8) : 'the program is not in the archive');
++        const tx = existsSync(winTar) && process.platform === 'win32' ? spawnSync(winTar, ['-xzf', archive, '-C', chk], { encoding: 'utf8' }) : spawnSync('tar', ['-xzf', archive, '-C', chk], { encoding: 'utf8' });
++        step('linux: unpacked somewhere new with the system tar, the way a player does', tx.status === 0, tx.status === 0 ? '' : String(tx.stderr).slice(0, 160));
++      }
++      x = await node([pkgTool, 'verify', '--platform', platform, '--dir', join(chk, n.folder), '--commit', sha, '--locked', ...notice]); step(`${platform}: the folder verifies (files, magic bytes, embedded pck, notices, lock, ORB-PRIVATE line)`, x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 200));
++
++      const sum = sha256(archive);
++      writeFileSync(join(out, `${n.archive}.sha256.txt`), `${sum}  ${n.archive}\n`);
++      rec.push('', `file ${n.archive}`, `size ${statSync(archive).size} bytes`, `sha256 ${sum}`, `version ${info.version || 'none'}`, benchLine, '');
++      results.push({ platform, archive, sum, size: statSync(archive).size });
++    }
++    rec.push('For Orb and Orb 2 only. Move it by a drive, the home network or a private message. Never a public link.');
+     writeRecord();
+     if (testOnly) console.log("\nTEST ONLY: this package used the working tree's packaging tool and is not a build of the commit alone: do not hand it on.");
+-    console.log(`\nDONE: ${zip}\n  sha256 ${sum}\n  ${statSync(zip).size} bytes; commit ${c8}; version ${info.version || 'none'}\n  for Orb and Orb 2 only: a drive, the home network or a private message, never a public link`);
++    for (const q of results) console.log(`\nDONE (${q.platform}): ${q.archive}\n  sha256 ${q.sum}\n  ${q.size} bytes; commit ${c8}; version ${info.version || 'none'}`);
++    console.log('\n  for Orb and Orb 2 only: a drive, the home network or a private message, never a public link');
+   } finally {
+     if (!a.includes('--keep-scratch') && !process.exitCode) { try { rmSync(scratch, { recursive: true, force: true }); } catch { /* left for the OS */ } }
+   }
+diff --git a/tools/desktop-run-record-selftest.mjs b/tools/desktop-run-record-selftest.mjs
+new file mode 100644
+index 00000000..dccb6601
+--- /dev/null
++++ b/tools/desktop-run-record-selftest.mjs
+@@ -0,0 +1,31 @@
++// Self-test of the pure parts of tools/desktop-run-record.mjs (Tools, 2026-11-23). node tools/desktop-run-record-selftest.mjs
++import { logLines, hashesOf, packagesOf, recordText } from './desktop-run-record.mjs';
++let bad = 0, n = 0;
++const check = (name, ok, extra) => { n++; if (!ok) { bad++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
++const T = '2026-11-23T21:03:00.1234567Z';
++const B = String.fromCharCode(92);
++const log = [
++  `Desktop builds\tBench\t${T} gameplay hash at tick 2400: 9d323c7f64c75955`,
++  `Desktop builds\tBench\t${T} echo "gameplay hash at tick N: x"`,
++  `Windows build\tbench\t${T} gameplay hash at tick 2400: 9d323c7f64c75955`,
++  `Windows build\tbench\t${T} gameplay hash at tick 2400: 9d323c7f64c75955`,
++  `Desktop builds\tPack\t${T} ${'a'.repeat(64)}  ./orb-combat-ex-linux-x86_64.tar.gz`,
++  `Desktop builds\tPack\t${T} -rw-r--r-- 1 runner runner 34758997 Nov 23 21:03 orb-combat-ex-linux-x86_64.tar.gz`,
++  `Desktop builds\tPack\t${T} ${'b'.repeat(64)}  ./orb-combat-ex-windows-x86_64.zip`,
++  `Windows build\tstart\t${T} the program did not stay up in C:${B}Users${B}someone${B}AppData${B}Local${B}Temp${B}x`,
++].join('\n');
++const lines = logLines(log);
++check('log lines are read with job, step and text', lines.length === 8 && lines[0].job === 'Desktop builds' && lines[0].step === 'Bench' && lines[0].text.startsWith('gameplay hash'));
++check('hash lines are found once per job, the echo of a command is not one', hashesOf(lines).length === 2 && hashesOf(lines).every((h) => /9d323c7f64c75955$/.test(h.line)));
++const pk = packagesOf(lines);
++check('packages: name, SHA-256 and size where the listing has it', pk.length === 2 && pk[0].size === 34758997 && pk[0].sha256 === 'a'.repeat(64) && pk[1].size === null);
++const run = { databaseId: 1, url: 'https://example/1', workflowName: 'Desktop builds', event: 'workflow_dispatch', headSha: 'c'.repeat(40), headBranch: 'main', createdAt: '2026-11-23T21:01:11Z', updatedAt: '2026-11-23T21:07:00Z', conclusion: 'failure', status: 'completed', jobs: [
++  { name: 'Desktop builds', conclusion: 'success', startedAt: '2026-11-23T21:01:20Z', completedAt: '2026-11-23T21:04:20Z', steps: [] },
++  { name: 'Windows build', conclusion: 'failure', startedAt: '2026-11-23T21:04:30Z', completedAt: '2026-11-23T21:06:30Z', steps: [{ name: 'start', conclusion: 'failure' }] }] };
++const t = recordText({ run, lines, artifacts: 0, note: 'A try.' });
++check('the page has the run, the jobs with times, the failed step with its log, the hashes, the packages and the artifact count', /run \[1\]/.test(t) && /\| Desktop builds \| success \| 3 min 00 s \|/.test(t) && /What failed/.test(t) && /the program did not stay up/.test(t) && /All 2 agree/.test(t) && /34,758,997 bytes/.test(t) && /Artifacts: 0/.test(t) && /A try\./.test(t), t);
++check('folder paths are taken out of the page', !/someone/.test(t) && /<scratch>/.test(t));
++const t2 = recordText({ run, lines: logLines(log.replace(/9d323c7f64c75955\n/, '1111111111111111\n')), artifacts: null });
++check('hashes that differ are said not to agree, and an unread artifact count is not called 0', /do not agree/.test(t2) && /not read/.test(t2));
++console.log(`desktop-run-record selftest: ${n} checks, ${bad} failed`);
++process.exit(bad ? 1 : 0);
+diff --git a/tools/desktop-run-record.mjs b/tools/desktop-run-record.mjs
+new file mode 100644
+index 00000000..4d84ef88
+--- /dev/null
++++ b/tools/desktop-run-record.mjs
+@@ -0,0 +1,108 @@
++// Saves a desktop-builds.yml run as a record the repository can keep (Tools, 2026-11-23; path to Alpha 1, job 7: "the CI build run repeated and saved").
++//   node tools/desktop-run-record.mjs <run id> [--out <file>] [--repo <owner/name>] [--note <one line>]
++// It reads the run through the gh command (jobs and steps with their results and times, the bench hash lines, the packages' sizes and SHA-256 sums from the pack step, the artifact count) and writes one Markdown
++// page: the run, a table of jobs, the failed steps (if any) with the last lines of their log, the hashes each job printed and whether they agree, the packages as they stood on the runner, and the artifact count
++// (an owner-private run keeps none). The text is cleaned of folder paths (tools/record-paths.mjs). Default --out: docs/tools/runs/<commit8>/desktop-run-<run id>.md. Node built-ins and gh.
++import { spawnSync } from 'node:child_process';
++import { mkdirSync, writeFileSync } from 'node:fs';
++import { dirname, join, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { cleanPaths } from './record-paths.mjs';
++
++const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
++
++const mins = (a, b) => { const ms = Date.parse(b) - Date.parse(a); return Number.isFinite(ms) && ms >= 0 ? ms : null; };
++const fmt = (ms) => ms === null ? '' : ms < 60000 ? `${Math.round(ms / 1000)} s` : `${Math.floor(ms / 60000)} min ${String(Math.round((ms % 60000) / 1000)).padStart(2, '0')} s`;
++
++/** The log lines of `gh run view --log` as { job, step, text }. Pure. */
++export function logLines(logText) {
++  const out = [];
++  for (const l of String(logText).split(/\r?\n/)) {
++    const m = /^([^\t]+)\t([^\t]*)\t(?:\d{4}-\d{2}-\d{2}T[\d:.]+Z )?(.*)$/.exec(l);
++    if (m) out.push({ job: m[1], step: m[2], text: m[3] });
++  }
++  return out;
++}
++
++/** Hash lines per job: [{ job, line }]. Pure. */
++export function hashesOf(lines) {
++  const seen = new Set(), out = [];
++  for (const l of lines) {
++    const m = /gameplay hash at tick \d+: [0-9a-f]+/.exec(l.text);
++    if (m && !seen.has(l.job + m[0])) { seen.add(l.job + m[0]); out.push({ job: l.job, line: m[0] }); }
++  }
++  return out;
++}
++
++/** The packages the pack step listed: [{ name, size, sha256 }]. Pure. */
++export function packagesOf(lines) {
++  const sums = new Map(), sizes = new Map();
++  for (const l of lines) {
++    let m = /^([0-9a-f]{64})\s+\.\/(orb-combat-ex-[\w.-]+\.(?:zip|tar\.gz))\s*$/.exec(l.text.trim());
++    if (m) sums.set(m[2], m[1]);
++    m = /^[-rwx]{10}\s+\d+\s+\S+\s+\S+\s+(\d+)\s+\w{3}\s+\d+\s+[\d:]+\s+(orb-combat-ex-[\w.-]+\.(?:zip|tar\.gz))\s*$/.exec(l.text.trim());
++    if (m) sizes.set(m[2], Number(m[1]));
++  }
++  return [...sums].map(([name, sha256]) => ({ name, sha256, size: sizes.get(name) ?? null }));
++}
++
++/** The page. `run` = gh's run json, `lines` = logLines(...), `artifacts` = a count, `note` = a line of the author's. Pure. */
++export function recordText({ run, lines, artifacts, note = '' }) {
++  const jobs = run.jobs || [];
++  const sha = String(run.headSha || '');
++  const wall = mins(run.createdAt, run.updatedAt);
++  const L = [];
++  L.push(`# Desktop builds run ${run.databaseId} (Tools, ${String(run.createdAt || '').slice(0, 10)})`, '');
++  L.push(`GitHub run [${run.databaseId}](${run.url || ''}), workflow "${run.workflowName || run.name || 'Desktop builds'}", event ${run.event || '?'}, commit \`${sha}\`, branch ${run.headBranch || '?'}; started ${run.createdAt || '?'}; **${run.conclusion || run.status || '?'}**${wall !== null ? ', about ' + fmt(wall) : ''}.${note ? ' ' + note : ''}`, '');
++  L.push('## Jobs', '', '| Job | Result | Time |', '| :--- | :--- | ---: |');
++  for (const j of jobs) L.push(`| ${j.name} | ${j.conclusion || j.status} | ${fmt(mins(j.startedAt, j.completedAt))} |`);
++  const bad = jobs.flatMap((j) => (j.steps || []).filter((s) => s.conclusion === 'failure').map((s) => ({ job: j.name, step: s.name })));
++  if (bad.length) {
++    L.push('', '## What failed', '');
++    for (const b of bad) {
++      L.push(`- **${b.job}**, step "${b.step}":`);
++      const tail = lines.filter((l) => l.job === b.job && l.step === b.step).map((l) => l.text).filter((t) => t.trim()).slice(-8);
++      for (const t of tail) L.push(`  - \`${t.trim().slice(0, 200).replace(/`/g, "'")}\``);
++    }
++  }
++  const hashes = hashesOf(lines);
++  L.push('', '## The gameplay hash each job printed', '');
++  if (!hashes.length) L.push('None printed.');
++  else {
++    for (const h of hashes) L.push(`- ${h.job}: \`${h.line}\``);
++    const values = new Set(hashes.map((h) => h.line.replace(/^.*?: /, '')));
++    L.push('', values.size === 1 ? `All ${hashes.length} agree.` : `**They do not agree** (${values.size} different values).`);
++  }
++  const pk = packagesOf(lines);
++  if (pk.length) {
++    L.push('', '## The packages as they stood on the runner', '', '| Package | Size | SHA-256 |', '| :--- | ---: | :--- |');
++    for (const p of pk) L.push(`| \`${p.name}\` | ${p.size === null ? '' : p.size.toLocaleString('en-US') + ' bytes'} | \`${p.sha256}\` |`);
++  }
++  L.push('', `**Artifacts: ${artifacts === null ? 'not read' : artifacts}**${artifacts === 0 ? ' (an owner-private run keeps nothing: the sums above are of files that were discarded with the runner)' : ''}.`, '');
++  return cleanPaths(L.join('\n'));
++}
++
++function gh(args) {
++  const r = spawnSync('gh', args, { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
++  if (r.status !== 0) throw new Error(`gh ${args.slice(0, 3).join(' ')} failed: ${String(r.stderr).trim().split('\n')[0]}`);
++  return r.stdout;
++}
++
++if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
++  const a = process.argv.slice(2);
++  const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
++  const id = a.find((x) => /^\d+$/.test(x));
++  if (!id) { console.error('usage: node tools/desktop-run-record.mjs <run id> [--out <file>] [--repo <owner/name>] [--note <line>]'); process.exit(2); }
++  try {
++    const repoArgs = opt('--repo') ? ['--repo', opt('--repo')] : [];
++    const run = JSON.parse(gh(['run', 'view', id, ...repoArgs, '--json', 'databaseId,url,workflowName,event,headSha,headBranch,createdAt,updatedAt,conclusion,status,jobs']));
++    const lines = logLines(gh(['run', 'view', id, ...repoArgs, '--log']));
++    let artifacts = null;
++    try { artifacts = JSON.parse(gh(['api', `repos/${opt('--repo') || '{owner}/{repo}'}/actions/runs/${id}/artifacts`])).total_count; } catch { /* not read */ }
++    const text = recordText({ run, lines, artifacts, note: opt('--note', '') });
++    const out = resolve(opt('--out', join(ROOT, 'docs', 'tools', 'runs', String(run.headSha).slice(0, 8), `desktop-run-${id}.md`)));
++    mkdirSync(dirname(out), { recursive: true });
++    writeFileSync(out, text + '\n');
++    console.log(`desktop-run-record: ${out} (${run.jobs.length} jobs, ${run.conclusion || run.status})`);
++  } catch (e) { console.error(`desktop-run-record: ${e.message}`); process.exit(1); }
++}
+diff --git a/tools/lib/targz.mjs b/tools/lib/targz.mjs
+new file mode 100644
+index 00000000..ed36fe04
+--- /dev/null
++++ b/tools/lib/targz.mjs
+@@ -0,0 +1,80 @@
++// A tar.gz writer and reader for the Linux package (Tools, 2026-11-23; path to Alpha 1, job 7). Node built-ins only.
++// Why it exists: the Linux package is a .tar.gz on purpose (a zip drops the executable bit, a tar keeps it), and on a Windows PC the only tar is bsdtar, which gives every file the mode Windows has (no executable
++// bit). So the archive is written here, with the mode of each file named: 0755 for the program, 0644 for the rest. Names are the plain POSIX ustar form (a name of 100 characters or less), the time is a fixed one
++// (the commit's date), the owner is 0: the same inputs give the same bytes, so a rebuild of a commit is the same file.
++import { gzipSync, gunzipSync } from 'node:zlib';
++import { readdirSync, readFileSync, statSync } from 'node:fs';
++import { join } from 'node:path';
++
++const BLOCK = 512;
++const oct = (n, width) => n.toString(8).padStart(width - 1, '0') + '\0';
++
++/** One 512-byte ustar header. Pure. */
++export function header({ name, size, mode, mtime, dir = false }) {
++  if (Buffer.byteLength(name) > 100) throw new Error(`targz: "${name}" is longer than 100 bytes (the plain ustar form)`);
++  const h = Buffer.alloc(BLOCK, 0);
++  h.write(name, 0, 'utf8');
++  h.write(oct(mode, 8), 100, 'ascii');
++  h.write(oct(0, 8), 108, 'ascii');
++  h.write(oct(0, 8), 116, 'ascii');
++  h.write(oct(dir ? 0 : size, 12), 124, 'ascii');
++  h.write(oct(mtime, 12), 136, 'ascii');
++  h.write('        ', 148, 'ascii');   // the checksum counts itself as eight spaces
++  h.write(dir ? '5' : '0', 156, 'ascii');
++  h.write('ustar\0', 257, 'ascii');
++  h.write('00', 263, 'ascii');
++  let sum = 0;
++  for (const b of h) sum += b;
++  h.write(sum.toString(8).padStart(6, '0') + '\0 ', 148, 'ascii');
++  return h;
++}
++
++/** The tar of `entries` ([{ name, data (Buffer; absent for a folder), mode, dir }]), mtime in seconds. Pure. */
++export function tarBuffer(entries, mtime = 0) {
++  const parts = [];
++  for (const e of entries) {
++    const data = e.dir ? Buffer.alloc(0) : e.data;
++    parts.push(header({ name: e.dir ? e.name.replace(/\/?$/, '/') : e.name, size: data.length, mode: e.mode, mtime, dir: !!e.dir }));
++    if (data.length) { parts.push(data); const pad = (BLOCK - (data.length % BLOCK)) % BLOCK; if (pad) parts.push(Buffer.alloc(pad, 0)); }
++  }
++  parts.push(Buffer.alloc(BLOCK * 2, 0));
++  return Buffer.concat(parts);
++}
++
++export const targz = (entries, mtime = 0) => gzipSync(tarBuffer(entries, mtime), { level: 9 });
++
++/** What a tar holds: [{ name, size, mode, dir }]. Pure; checks every header's checksum. */
++export function readTar(buf) {
++  const out = [];
++  let at = 0;
++  while (at + BLOCK <= buf.length) {
++    const h = buf.subarray(at, at + BLOCK);
++    if (h.every((b) => b === 0)) break;
++    const name = h.toString('utf8', 0, 100).replace(/\0.*$/s, '');
++    const field = (from, len) => parseInt(h.toString('ascii', from, from + len).replace(/\0.*$/s, '').trim() || '0', 8);
++    const stored = field(148, 8);
++    let sum = 0;
++    for (let i = 0; i < BLOCK; i++) sum += i >= 148 && i < 156 ? 32 : h[i];
++    if (sum !== stored) throw new Error(`targz: bad checksum for "${name}"`);
++    const size = field(124, 12), dir = h.toString('ascii', 156, 157) === '5';
++    out.push({ name, size, mode: field(100, 8), dir });
++    at += BLOCK + Math.ceil(size / BLOCK) * BLOCK;
++  }
++  return out;
++}
++
++export const readTarGz = (buf) => readTar(gunzipSync(buf));
++
++/** The entries of a folder tree, under `top` (the folder's name inside the archive), sorted by name. `executables`: file names (relative, with /) that get 0755. */
++export function folderEntries(dir, top, executables = []) {
++  const out = [{ name: top, dir: true, mode: 0o755 }];
++  const walk = (rel) => {
++    for (const f of readdirSync(join(dir, rel)).sort()) {
++      const r = rel ? `${rel}/${f}` : f, p = join(dir, r);
++      if (statSync(p).isDirectory()) { out.push({ name: `${top}/${r}`, dir: true, mode: 0o755 }); walk(r); }
++      else out.push({ name: `${top}/${r}`, data: readFileSync(p), mode: executables.includes(r) ? 0o755 : 0o644 });
++    }
++  };
++  walk('');
++  return out;
++}
+diff --git a/tools/record-paths-selftest.mjs b/tools/record-paths-selftest.mjs
+new file mode 100644
+index 00000000..8df7307b
+--- /dev/null
++++ b/tools/record-paths-selftest.mjs
+@@ -0,0 +1,45 @@
++// Self-test of tools/record-paths.mjs and tools/lib/targz.mjs (Tools, 2026-11-23). node tools/record-paths-selftest.mjs
++import { cleanPaths, leftover } from './record-paths.mjs';
++import { targz, readTarGz, readTar, tarBuffer, header } from './lib/targz.mjs';
++import { gunzipSync } from 'node:zlib';
++let bad = 0, n = 0;
++const check = (name, ok, extra) => { n++; if (!ok) { bad++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
++const B = String.fromCharCode(92);
++const win = (...p) => p.join(B);
++
++// the two existing build records' kinds of line
++const scratch = win('C:', 'Users', 'someone', 'AppData', 'Local', 'Temp', 'orb-private-build-IQEWNu', 'tree');
++let t = cleanPaths(`ok   unpacked: ${scratch}\nok   lock: set true in ${scratch}/ui/data/features.json\nwrote ${scratch}${B}build_info.json: commit b624340`);
++check('a scratch folder under the temp folder becomes <scratch>, the rest of the path stays', t.includes(`<scratch>${B}tree`) && t.includes(`<scratch>${B}tree/ui/data/features.json`) && !/someone/.test(t), t);
++const repo = win('C:', 'Users', 'someone', 'Documents', 'Claude Proj', 'Breakers-Like');
++t = cleanPaths(`log in ${repo}${B}docs${B}tools and ${repo.split(B).join('/')}/tools`);
++check('the repository folder becomes <repo> (with a space in the folder name)', t === `log in <repo>${B}docs${B}tools and <repo>/tools`, t);
++t = cleanPaths(win('C:', 'Users', 'someone', 'AppData', 'Roaming', 'Godot') + ' and /c/Users/someone/x and /Users/someone/y and /home/someone/z');
++check('any other profile folder becomes <user>, in Windows, MSYS and POSIX forms', (t.match(/<user>/g) || []).length === 4 && !/someone/.test(t), t);
++check('Windows profile paths read C:\\Users\\<user> style: the name is gone and the rest of the path is kept', cleanPaths(win('C:', 'Users', 'someone', 'AppData', 'Roaming', 'Godot')) === '<user>' + B + 'AppData' + B + 'Roaming' + B + 'Godot');
++check('text with no path is untouched', cleanPaths('commit b624340a, 44464417 bytes, sha256 55e8115c') === 'commit b624340a, 44464417 bytes, sha256 55e8115c');
++check('cleaning twice is the same as once', cleanPaths(cleanPaths(scratch + ' ' + repo)) === cleanPaths(scratch + ' ' + repo));
++check('the checker finds a path and says the line', leftover('a\n' + scratch + '\nb').length === 1 && leftover('a\n' + scratch + '\nb')[0].line === 2);
++check('the checker finds none in cleaned text', leftover(cleanPaths(scratch + '\n' + repo + '\n/home/x/y')).length === 0);
++check('"splitShare" and other words with letters of a name are not paths', leftover('splitShare ON data/camera/swing.json').length === 0);
++
++// the tar.gz writer
++const data = Buffer.from('hello world\n'.repeat(100));
++const entries = [{ name: 'pkg', dir: true, mode: 0o755 }, { name: 'pkg/game.x86_64', data, mode: 0o755 }, { name: 'pkg/README.txt', data: Buffer.from('read me\n'), mode: 0o644 }];
++const gz = targz(entries, 1700000000);
++const got = readTarGz(gz);
++check('the archive lists the folder and both files, in order', got.map((e) => e.name).join() === 'pkg/,pkg/game.x86_64,pkg/README.txt', got.map((e) => e.name).join());
++check('the program keeps its executable bit (0755) and the text file does not (0644)', got[1].mode === 0o755 && got[2].mode === 0o644 && got[0].dir === true, JSON.stringify(got.map((e) => e.mode.toString(8))));
++check('sizes are exact', got[1].size === data.length && got[2].size === 8);
++check('the same inputs give the same bytes', targz(entries, 1700000000).equals(gz));
++const raw = gunzipSync(gz);
++check('the tar is a whole number of 512-byte blocks and ends with two empty ones', raw.length % 512 === 0 && raw.subarray(raw.length - 1024).every((b) => b === 0));
++check('the file content is in the archive, padded to a block', raw.indexOf(data) === 512 * 2 && raw.subarray(512 * 2, 512 * 2 + data.length).equals(data));
++let threw = false; try { const x = Buffer.from(raw); x[10] ^= 1; readTar(x); } catch { threw = true; }
++check('a changed header fails its checksum', threw);
++threw = false; try { header({ name: 'x'.repeat(101), size: 1, mode: 0o644, mtime: 0 }); } catch { threw = true; }
++check('a name over 100 bytes is refused (the plain form only)', threw);
++check('the format is ustar with a magic the system tar reads', raw.toString('ascii', 257, 262) === 'ustar');
++check('an empty archive is two empty blocks', tarBuffer([]).length === 1024);
++console.log(`record-paths selftest: ${n} checks, ${bad} failed`);
++process.exit(bad ? 1 : 0);
+diff --git a/tools/record-paths.mjs b/tools/record-paths.mjs
+new file mode 100644
+index 00000000..cd6363e9
+--- /dev/null
++++ b/tools/record-paths.mjs
+@@ -0,0 +1,69 @@
++// Takes this PC's folder paths out of a build record before it goes into the repository (Tools, 2026-11-23; path to Alpha 1, job 7). The records of tools/desktop-local-build.mjs and of the other local builds name
++// the scratch folder and the user's profile folder; the repository is public, so a record is cleaned before it is filed.
++//   node tools/record-paths.mjs clean <in> [<out>]      writes the cleaned text (to <out>, or to the same file with --in-place)
++//   node tools/record-paths.mjs check <file or folder>...   exit 1 when a file still holds a user's folder path (a Windows "C:\Users\<name>", "/c/Users/<name>", "/Users/<name>" or "/home/<name>")
++// What each kind becomes: the repository folder -> <repo>; a scratch folder under the temp folder -> <scratch>; a user's profile folder -> <user> (so "C:\Users\<user>\AppData\Local\...", never the name).
++// Node built-ins only.
++import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
++import { join, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const SEP = '[\\\\/]';
++// the segment after Users: anything but a separator, a quote, a space-then-more-path is NOT assumed (a folder name may hold a space: "Claude Proj"), so the user name is the one segment
++const USER = `[^\\\\/\\s"'<>|:*?]+`;
++const WIN_HOME = new RegExp(`[A-Za-z]:${SEP}Users${SEP}(?!<user>)${USER}`, 'g');
++const POSIX_HOME = new RegExp(`(?:/[a-z])?/(?:Users|home)/(?!<user>)${USER}`, 'g');
++const WIN_REPO = new RegExp(`<user-home>${SEP}Documents${SEP}Claude Proj${SEP}Breakers-Like`, 'g');
++const SCRATCH = new RegExp(`<user-home>${SEP}AppData${SEP}Local${SEP}Temp${SEP}(?:claude${SEP}[^\\s"']*?${SEP}scratchpad|[^\\\\/\\s"']+)`, 'g');
++
++/** The text with this PC's paths taken out. Pure. */
++export function cleanPaths(text) {
++  let t = String(text);
++  t = t.replace(WIN_HOME, '<user-home>').replace(POSIX_HOME, '<user-home>');
++  t = t.replace(WIN_REPO, '<repo>').replace(SCRATCH, '<scratch>');
++  return t.replace(/<user-home>/g, '<user>');
++}
++
++/** The user folder paths still in the text: [{ line, text }]. Pure. */
++export function leftover(text) {
++  const out = [];
++  String(text).split(/\r?\n/).forEach((l, i) => {
++    WIN_HOME.lastIndex = 0; POSIX_HOME.lastIndex = 0;
++    if (WIN_HOME.test(l) || POSIX_HOME.test(l)) out.push({ line: i + 1, text: l.trim().slice(0, 140) });
++  });
++  return out;
++}
++
++const textFile = (f) => /\.(txt|md|json|log|csv)$/i.test(f);
++function* files(p) {
++  const s = statSync(p);
++  if (!s.isDirectory()) { yield p; return; }
++  for (const f of readdirSync(p).sort()) { if (f === '.git' || f === 'node_modules') continue; yield* files(join(p, f)); }
++}
++
++if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
++  const [cmd, ...rest] = process.argv.slice(2);
++  try {
++    if (cmd === 'clean' && rest.length >= 1) {
++      const inPlace = rest.includes('--in-place');
++      const [a, b] = rest.filter((x) => x !== '--in-place');
++      const out = inPlace ? a : b;
++      if (!out) { console.error('record-paths clean: name an output file, or --in-place'); process.exit(2); }
++      const before = readFileSync(a, 'utf8');
++      const after = cleanPaths(before);
++      writeFileSync(out, after);
++      console.log(`record-paths: ${out}: ${before === after ? 'nothing to clean' : 'cleaned'}; ${leftover(after).length} path(s) left`);
++      process.exit(leftover(after).length ? 1 : 0);
++    } else if (cmd === 'check' && rest.length) {
++      let bad = 0, n = 0;
++      for (const p of rest) for (const f of files(p)) {
++        if (!textFile(f)) continue;
++        n++;
++        const l = leftover(readFileSync(f, 'utf8'));
++        for (const x of l) { bad++; console.log(`${f}:${x.line}: ${x.text}`); }
++      }
++      console.log(`record-paths: ${n} file(s) read, ${bad} line(s) with a user folder path`);
++      process.exit(bad ? 1 : 0);
++    } else { console.error('usage: node tools/record-paths.mjs clean <in> [<out>|--in-place]  |  check <file or folder>...'); process.exit(2); }
++  } catch (e) { console.error(`record-paths: ${e.message}`); process.exit(2); }
++}
