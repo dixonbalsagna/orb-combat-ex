@@ -33,7 +33,7 @@ Numbers: **frames a second** (the program's own `--print-fps` line, one a second
 
 ## The steps are data
 
-`tools/first-run/steps.json`: a step is `human` (a sentence for the person at the PC), `keys` (ENTER ESC SPACE UP DOWN LEFT RIGHT P F1 TAB), `settleMs`, `shot`, `crop`, `holdS`. The draft follows the mode smoke's own walk (`tools/smoke/mode_smoke.gd`). A step that goes wrong is a line of the report and the run goes on, so the numbers are always saved. **UI confirms the keys on the first click.**
+`tools/first-run/steps.json`: a step is `human` (a sentence for the person at the PC), `keys` (ENTER ESC SPACE UP DOWN LEFT RIGHT P F1 TAB), `settleMs`, `shot`, `crop`, `holdS`. The draft follows the mode smoke's own walk (`tools/smoke/mode_smoke.gd`). Keys are held 90 ms and left 260 ms apart on Windows (window.ps1: about 5 frames down, 21 frames between presses at 60 a second) and pressed 250 ms apart on Linux (xdotool --delay 250). A step that goes wrong is a line of the report and the run goes on, so the numbers are always saved. **UI confirms the keys on the first click.**
 
 ## What is proven and what is not (2026-11-23)
 
