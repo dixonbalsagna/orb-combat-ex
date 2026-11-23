@@ -92,6 +92,10 @@ var lan_report_fn: Callable = Callable()   # (tags: String, note: String[, reaso
 var report_lan: bool = false           # the host's report hook is a LAN host's (the saved folder beside the game); a desktop build leaves it off and the HUD names the folder the recorder writes (user://reports)
 var _save_status: String = ""
 var _save_until: float = 0.0
+var _unplug: Array = []                # the players (0, 1) whose controller dropped mid-match: the pause card's notice, until a controller is back or the card closes
+var _unplug_two: bool = false          # two people were playing when the first controller dropped (the notice names the player; the hud's own count changes once the host hands the slot over)
+var _unplug_wait: bool = false         # the last dropped controller is back and the card waits for its first button press
+var _unplug_opened: bool = false      # the drop opened the pause card (a controller coming back closes it again; a card the player opened stays until they close it)
 var _report_t: float = -100.0          # the HUD clock at the last report (one a second: a held chord or a second press must not save twice)
 var _pad_down: Dictionary = {}         # pad device -> {back, rb}: the View + RB chord
 var _fb_saved: String = ""             # the feedback panel's second state after SAVE REPORT: what happened
@@ -2276,6 +2280,77 @@ func toggle_pause_menu() -> void:
 		show_pause_menu()
 
 
+## A controller that a person was playing on dropped out mid-match (docs/ui/unplug-pause.md): the host calls this with the players (0 and 1) it carried, BEFORE the input hub lets the slot go.
+## The pause card opens (the host freezes the match loop, as for any pause: nothing is written to the sim) and says so in a line the card keeps. Nothing happens in the start menu, behind
+## the warning, or after the match is over. A second drop adds its player to the line.
+func pad_dropped(slots: Array) -> void:
+	if slots.is_empty() or is_start_menu_open() or _notice_open or _turn_open or hub.match_over or _pm_over or hub.models.size() < 2:
+		return
+	if _unplug.is_empty() and not _unplug_wait:
+		_unplug_two = _humans() >= 2
+	_unplug_wait = false   # a controller went again before the first one pressed: back to the drop's line
+	for s in slots:
+		if not _unplug.has(int(s)):
+			_unplug.append(int(s))
+	_unplug.sort()
+	if not _pm_open:
+		show_pause_menu()
+		_unplug_opened = _pm_open
+	_l_pmenu.invalidate()
+
+
+## A controller was plugged in (the host calls this for every one): with a drop on screen the notice loses one player. When the last is back, a card the drop opened STAYS UP and says "press any button
+## on it to carry on" (the match does not go on against a computer-held slot): the host sends that first press to the input hub, which gives the controller its slot, and then calls pad_claimed().
+## A card the player opened themselves (or one with Settings, a question or another panel on it) is left alone; its notice goes.
+func pad_returned() -> void:
+	if _unplug.is_empty():
+		return
+	_unplug.remove_at(0)
+	if _unplug.is_empty():
+		if _unplug_plain_card():
+			_unplug_wait = true
+		else:
+			_unplug_opened = false
+			_unplug_two = false
+	_l_pmenu.invalidate()
+
+
+## Whether the card on screen is the one a drop opened and nothing sits on it (no panel, no question).
+func _unplug_plain_card() -> bool:
+	return _unplug_opened and _pm_open and not (_rm_open or _set_open or _fb_open or _howto_open) and not (_pm_confirm or _pm_quit or _pm_over)
+
+
+## A drop is over and the card waits for the returning controller's first press (the host asks, in its pad handler, before it hands that press to the hub).
+func unplug_waiting() -> bool:
+	return _unplug_wait
+
+
+## The returning controller pressed a button and the host gave it to the input hub (so it holds a slot again): the card the drop opened closes as a Resume, so the match goes on.
+func pad_claimed() -> void:
+	if not _unplug_wait:
+		return
+	var close: bool = _unplug_plain_card()
+	_unplug_wait = false
+	_unplug_opened = false
+	_unplug_two = false
+	if close:
+		_pm_close("resume")
+	_l_pmenu.invalidate()
+
+
+## The pause card's line about a dropped controller, or "" when none has dropped. Plain words: one controller names no player when one person plays. After the last one is back it says what to press.
+func unplug_notice() -> String:
+	if _unplug_wait:
+		return UiData.t("prompt.pad_back")
+	if _unplug.is_empty():
+		return ""
+	if _unplug.size() >= 2:
+		return UiData.t("prompt.pad_dropped_both")
+	if not _unplug_two:
+		return UiData.t("prompt.pad_dropped")
+	return UiData.t("prompt.pad_dropped_p1") if int(_unplug[0]) == 0 else UiData.t("prompt.pad_dropped_p2")
+
+
 ## The result line for the Rail's match-over title ("Grist wins", or "No contest: nobody played"), or "" when there is none.
 func _over_win_line() -> String:
 	if UiData.feature("versus_flow") and hub.no_contest:
@@ -2321,6 +2396,10 @@ func _pm_close(reason: String) -> void:
 	_pm_confirm = false
 	_pm_quit = false
 	_pm_down = ""
+	_unplug.clear()
+	_unplug_two = false
+	_unplug_wait = false
+	_unplug_opened = false
 	_l_pmenu.update_sig(null)
 	pause_menu_closed.emit(reason)
 
@@ -2338,7 +2417,7 @@ func pause_menu_plan() -> Dictionary:
 		_pm_prev = _pm_seen
 		_pm_seen = _pm_focus
 		_pm_bar_t0 = _ut
-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "quit_ask": _pm_quit, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "where": report_where(),
+	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "quit_ask": _pm_quit, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "notice": unplug_notice(), "where": report_where(),
 		"device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _pm_t0, "prev": _pm_prev, "bar_since": _ut - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else "", "version": _version_line(_pm_over)})
 
 

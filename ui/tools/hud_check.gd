@@ -88,6 +88,7 @@ func _run() -> void:
 	await _report_this_rules()
 	await _report_where_rules()
 	await _replay_refusal_rules()
+	await _unplug_rules()
 	await _menus_rail_rules()
 	await _pause_clock_rules()
 	await _menus_a1_rules()
@@ -11632,3 +11633,146 @@ func _replay_refusal_rules() -> void:
 	rp["build"] = "00000000 2020-01-02"
 	var why: String = SimReplay.refusal(rp, "ffffffff 2026-11-21")
 	_ok(why == "build" and UiFeedback.replay_refusal(why, str(rp["build"])).contains("build 00000000, 2 January 2020"), "replay refused: the sim's refusal of another build's header (%s) gives the line with that build" % why)
+
+
+# --- A controller drops out mid-match (job 14, decision 20: the pause and its notice) --------------------------------------------------------
+
+func _unplug_hud(two: bool) -> UiHud:
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 800)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = not two
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	return hud
+
+
+func _unplug_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_unplug.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var solo_words := "Controller disconnected, reconnect to carry on"
+	var back_words := "Controller connected, press any button on it to carry on"
+	for rail in [false, true]:
+		UiData.set_feature("menus_rail", rail)
+		UiData.set_feature("menu_modes", rail)
+		var tag: String = "rail on" if rail else "rail off"
+		# One person: the drop pauses, says so, and the pad coming back resumes.
+		var hud: UiHud = await _unplug_hud(false)
+		var seen := [0, 0, ""]
+		hud.pause_menu_opened.connect(func(): seen[0] = int(seen[0]) + 1)
+		hud.pause_menu_closed.connect(func(r: String):
+			seen[1] = int(seen[1]) + 1
+			seen[2] = r)
+		# A controller plugged in with nothing dropped (some platforms report the pads already there at boot as connects): nothing at all, in the start menu or in a match.
+		hud.pad_returned()
+		hud.pad_returned()
+		hud.pad_claimed()
+		_ok(not hud.is_pause_menu_open() and not hud.unplug_waiting() and hud.unplug_notice() == "" and int(seen[0]) == 0 and int(seen[1]) == 0, "unplug (%s): a controller plugged in with nothing dropped (a pad present at boot) changes nothing: no card, no line, no wait, no signal" % tag)
+		hud.pad_dropped([0])
+		_ok(hud.is_pause_menu_open() and int(seen[0]) == 1, "unplug (%s): a dropped controller opens the pause card once (the host freezes the match loop on that signal)" % tag)
+		_ok(hud.unplug_notice() == solo_words and _foot_text(hud).contains(solo_words), "unplug (%s): one person is told in the words 'Controller disconnected, reconnect to carry on' on the card (%s)" % [tag, _foot_text(hud)])
+		_ok(hud.pause_menu_plan()["items"].size() > 0 and hud.pause_menu_focus() == 0, "unplug (%s): Resume is lit, so the player can carry on without the controller" % tag)
+		hud.pad_dropped([0])
+		_ok(int(seen[0]) == 1 and hud.unplug_notice() == solo_words, "unplug (%s): the same drop twice changes nothing" % tag)
+		hud.pad_returned()
+		_ok(hud.is_pause_menu_open() and hud.unplug_waiting() and hud.unplug_notice() == back_words and _foot_text(hud).contains(back_words) and int(seen[1]) == 0, "unplug (%s): the controller back: the card STAYS and says to press any button on it (%s)" % [tag, _foot_text(hud)])
+		hud.pad_dropped([0])
+		_ok(not hud.unplug_waiting() and hud.unplug_notice() == solo_words, "unplug (%s): it goes again before anyone pressed: back to the drop's line" % tag)
+		hud.pad_returned()
+		hud.pad_claimed()
+		_ok(not hud.is_pause_menu_open() and int(seen[1]) == 1 and str(seen[2]) == "resume" and hud.unplug_notice() == "" and not hud.unplug_waiting(), "unplug (%s): the returning controller's first press (the host gave it its slot) closes the card as a Resume and clears the line" % tag)
+		hud.pad_returned()
+		hud.pad_claimed()
+		_ok(int(seen[1]) == 1 and not hud.unplug_waiting(), "unplug (%s): a controller plugged in with no drop on screen, and a press with nothing waiting, do nothing" % tag)
+		# The player carries on by hand while the card waits for the pad.
+		hud.pad_dropped([0])
+		hud.pad_returned()
+		hud.toggle_pause_menu()
+		_ok(not hud.is_pause_menu_open() and not hud.unplug_waiting() and hud.unplug_notice() == "", "unplug (%s): Resume by hand while the card waits for the controller clears the wait" % tag)		# The player closes the card themselves: the notice does not wait for the next pause.
+		hud.pad_dropped([0])
+		hud.toggle_pause_menu()
+		hud.show_pause_menu()
+		_ok(hud.unplug_notice() == "" and not _foot_text(hud).contains("reconnect"), "unplug (%s): Resume by hand clears the notice (a later pause does not show it)" % tag)
+		hud._pm_close("test")
+		# A pause the player opened first: the drop adds the line, the controller coming back takes it off and leaves the card.
+		hud.show_pause_menu()
+		var opened_before: int = int(seen[0])
+		hud.pad_returned()
+		_ok(hud.is_pause_menu_open() and hud.unplug_notice() == "" and not hud.unplug_waiting() and int(seen[0]) == opened_before, "unplug (%s): a controller plugged in while the player's own pause card is open, with nothing dropped, changes nothing" % tag)
+		hud.pad_dropped([0])
+		_ok(int(seen[0]) == opened_before and hud.unplug_notice() == solo_words, "unplug (%s): a card already open is not opened twice, and takes the line" % tag)
+		hud.pad_returned()
+		_ok(hud.is_pause_menu_open() and hud.unplug_notice() == "" and not hud.unplug_waiting(), "unplug (%s): a card the player opened stays open when the controller returns, with no line and no wait" % tag)
+		hud.pad_claimed()
+		_ok(hud.is_pause_menu_open(), "unplug (%s): a press does not close a card the player opened" % tag)
+		hud._pm_close("test")
+		# Nothing to say: no one on it, the match over, the start menu.
+		hud.pad_dropped([])
+		_ok(not hud.is_pause_menu_open(), "unplug (%s): a controller nobody was playing on (an empty list) pauses nothing" % tag)
+		hud.hub.match_over = true
+		hud.pad_dropped([0])
+		_ok(not hud.is_pause_menu_open(), "unplug (%s): after the match is over a drop does not open the card" % tag)
+		hud.hub.match_over = false
+		hud.show_start_menu(false)
+		hud.pad_returned()
+		_ok(hud.is_start_menu_open() and not hud.is_pause_menu_open() and not hud.unplug_waiting() and hud.unplug_notice() == "", "unplug (%s): a controller plugged in on the start menu (boot) changes nothing" % tag)
+		hud.pad_dropped([0])
+		_ok(hud.is_start_menu_open() and not hud.is_pause_menu_open() and hud.unplug_notice() == "", "unplug (%s): in the start menu a drop does nothing" % tag)
+		hud.queue_free()
+		await process_frame
+		# Two people: only the dropped player is named, and the name survives the host handing the slot to the computer.
+		var h2: UiHud = await _unplug_hud(true)
+		h2.pad_dropped([1])
+		var p2_words: String = "Player 2's controller disconnected, reconnect to carry on"
+		_ok(h2.is_pause_menu_open() and h2.unplug_notice() == p2_words and _foot_text(h2).contains(p2_words), "unplug (%s): two people, player two's controller: the line names player two (%s)" % [tag, _foot_text(h2)])
+		h2.hub.model(1).ai = true   # the host hands the slot to the computer
+		for i in range(5):
+			h2.advance(1.0 / 60.0)
+		_ok(h2.unplug_notice() == p2_words, "unplug (%s): the line still names player two after the slot goes to the computer" % tag)
+		h2.pad_returned()
+		_ok(h2.is_pause_menu_open() and h2.unplug_notice() == back_words, "unplug (%s): player two's controller back: the card waits for its press" % tag)
+		h2.pad_claimed()
+		_ok(not h2.is_pause_menu_open(), "unplug (%s): player two's controller pressed: the match carries on" % tag)
+		h2.hub.model(1).ai = false
+		h2.pad_dropped([0])
+		_ok(h2.unplug_notice() == "Player 1's controller disconnected, reconnect to carry on", "unplug (%s): player one's controller: the line names player one" % tag)
+		h2.pad_dropped([1])
+		_ok(h2.unplug_notice() == "Both controllers disconnected, reconnect to carry on", "unplug (%s): both controllers: the line says both" % tag)
+		h2.pad_returned()
+		_ok(h2.is_pause_menu_open() and h2.unplug_notice() == p2_words, "unplug (%s): one of two back: the card stays and names who is still out" % tag)
+		h2.pad_returned()
+		_ok(h2.is_pause_menu_open() and h2.unplug_notice() == back_words, "unplug (%s): the last one back: the card waits for a press" % tag)
+		h2.pad_claimed()
+		_ok(not h2.is_pause_menu_open(), "unplug (%s): the press closes the card" % tag)
+		h2.queue_free()
+		await process_frame
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)
+	# Fit: the longest line (both controllers) on the pause card at five sizes, Rail on and off, with and without the join line and a save line.
+	var bad := PackedStringArray()
+	var both: String = "Both controllers disconnected, reconnect to carry on"
+	var back_line: String = "Controller connected, press any button on it to carry on"
+	for on in [false, true]:
+		UiData.set_feature("menus_rail", on)
+		UiData.set_feature("menu_modes", on)
+		for sz in [Vector2(1280, 720), Vector2(1280, 800), Vector2(1920, 1080), Vector2(1366, 768), Vector2(844, 390)]:
+			var lay := UiLayout.new()
+			lay.compute(sz, false)
+			for line in [both, back_line]:
+				for extra in [{}, {"join": true}, {"join": true, "status": "Report saved: report-2026-11-20-1432-save.json"}]:
+					var st := {"focus": 0, "notice": line, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "win": ""}
+					st.merge(extra)
+					var pp: Dictionary = UiPause.plan(sz, lay.s, 1.0, false, st)
+					var said: bool = " ".join(PackedStringArray(pp["join_lines"])).contains(line)
+					if not bool(pp["fits"]) or not said:
+						bad.append("%s rail %s %s (fits %s, said %s)" % [str(sz), str(on), str(extra.keys()), pp["fits"], said])
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)
+	_ok(bad.is_empty(), "unplug: the longest line fits on the pause card and is said, five sizes, Rail on and off, with the join and save lines (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"

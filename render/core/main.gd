@@ -1498,6 +1498,18 @@ var _pad_stick_right: Dictionary = {}   # device -> the right stick (the strike 
 
 func _pad_event(e: InputEvent) -> void:
 	if ui_hud.is_overlay_open():
+		# A dropped controller is back and UI's pause card waits for its first press (ui_hud.pad_returned, job 14): that press goes to the hub, which gives the controller its slot, and then the card closes
+		# (pad_claimed), so nobody plays a moment against the computer. A pad that already holds a slot is the HUD's, as for any pause.
+		if e is InputEventJoypadButton and e.pressed and ui_hud.unplug_waiting() and not _pad_holds_slot(e.device):
+			var wb: String = SimInputNames.PAD_BUTTONS.get(e.button_index, "")
+			if wb != "":
+				host.hub.pad_button(e.device, wb, true)
+				host.take_players()   # a returning player two joins now, while paused (a leave left over from the drop is taken at the same time, in the right order)
+				for s in range(2):
+					if host.hub.claimed[s] and host.hub.slot_pad[s] == e.device:
+						host.hub._claim_release(s)   # player one's pad gets its slot back with no join, so the press stays a pending edge (a tap of A is a taunt): let it go, as take_players does for a join
+				ui_hud.pad_claimed()
+				get_viewport().set_input_as_handled()
 		return
 	if e is InputEventJoypadButton:
 		var btn: String = SimInputNames.PAD_BUTTONS.get(e.button_index, "")
@@ -1545,12 +1557,38 @@ func _pad_event(e: InputEvent) -> void:
 				host.hub.pad_trigger(e.device, "rt", e.axis_value)
 
 
-## A pad plugged in or out: one that goes takes its held stick and buttons with it, so the fighter does not fly on.
+## The hub's word on who is human, as the host gives it every tick (sim_host.gd): paused, no tick runs, so a slot the drop just handed to the computer is still "human" to the hub until this is called, and a returning pad
+## would be given that slot without a join being queued (the next tick would free it again).
+func _sync_humans() -> void:
+	host.hub.set_humans(host.S.fighters[0].ai == null, host.S.fighters[1].ai == null)
+
+
+## Whether a person is playing on this pad (a slot holds it).
+func _pad_holds_slot(device: int) -> bool:
+	for s in range(2):
+		if host.hub.claimed[s] and host.hub.slot_pad[s] == device:
+			return true
+	return false
+
+
+## A pad plugged in or out: one that goes takes its held stick and buttons with it, so the fighter does not fly on. A pad a person was playing on also pauses the match with UI's notice (ui_hud.pad_dropped,
+## job 14): the HUD is told BEFORE the hub lets the slot go (it needs to know whose pad it was), and a pad plugged in tells it a controller is back. The pause is the host's own (paused), never the sim's.
 func _on_joy_connection(device: int, connected: bool) -> void:
 	if not connected:
 		_pad_stick.erase(device)
 		_pad_stick_right.erase(device)
+		var dropped: Array = []
+		for s in range(2):
+			if host.hub.claimed[s] and host.hub.slot_pad[s] == device:
+				dropped.append(s)
+		if not dropped.is_empty() and not legacy_hud:
+			ui_hud.pad_dropped(dropped)
 		host.hub.pad_disconnected(device)
+		if not dropped.is_empty():
+			host.take_players()   # player two's slot goes to the computer now, as the pause menu's "Hand player two back" does; paused, the next tick would be too late to take it before a returning pad joins
+			_sync_humans()
+	elif not legacy_hud:
+		ui_hud.pad_returned()
 
 
 ## A key, a button, a click or a touch from a player (press), or a stick or a trigger pushed (press false). The first

@@ -57,9 +57,10 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var over: bool = bool(st.get("over", false))
 	var list: Array = ids(confirm and not quit_ask, bool(st.get("two", false)), over, quit_ask)
 	var status: String = str(st.get("status", "")) if not confirm else ""   # a short line under the buttons (Save this match says what happened); it takes the join line's place for its moment
+	var notice: String = str(st.get("notice", "")) if not confirm else ""   # a dropped controller's notice (the pause it caused); it comes first and takes the join line's place
 	var where_text: String = str(st.get("where", "")) if not confirm else ""   # where saved reports go (a LAN build)
-	var p2_join: bool = bool(st.get("join", false)) and not confirm and status == ""
-	var join: bool = (p2_join or status != "" or where_text != "") and not confirm
+	var p2_join: bool = bool(st.get("join", false)) and not confirm and status == "" and notice == ""
+	var join: bool = (p2_join or status != "" or notice != "" or where_text != "") and not confirm
 	var tm: float = maxf(48.0 * dp, 44.0)
 	var margin: float = maxf(vp.x * 0.03, 12.0)
 	var my: float = maxf(vp.y * 0.04, 10.0)
@@ -82,6 +83,8 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 		widest = maxf(widest, w)
 	var bw0: float = maxf(maxf(300.0 * cs, tm * 4.0), widest + tm * 0.9)
 	var foot_texts: Array = []
+	if notice != "":
+		foot_texts.append(notice)
 	if status != "":
 		foot_texts.append(status)
 	elif p2_join:
@@ -90,7 +93,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 		foot_texts.append(where_text)
 	for ft3 in foot_texts:
 		for w3 in str(ft3).split(" "):
-			bw0 = maxf(bw0, UiText.width(w3, fs_small) + tm * 0.9)   # a saved file's name is one long word: the card is as wide as it needs (the screen still caps it)
+			bw0 =maxf(bw0, UiText.width(w3, fs_small) + tm * 0.9)   # a saved file's name is one long word: the card is as wide as it needs (the screen still caps it)
 	var lh_small: float = UiText.height(fs_small) * 1.15
 	var facts_lines := PackedStringArray()
 	for ft in facts:
@@ -223,8 +226,9 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var style: String = str(st.get("style", "neutral"))
 	var reduced: bool = bool(st.get("reduced", false))
 	var status: String = str(st.get("status", "")) if not confirm else ""
+	var notice: String = str(st.get("notice", "")) if not confirm else ""   # a dropped controller's notice: the chip above the card, in the join line's place
 	var where_text: String = str(st.get("where", "")) if not confirm else ""
-	var p2_join: bool = bool(st.get("join", false)) and not confirm and status == ""
+	var p2_join: bool = bool(st.get("join", false)) and not confirm and status == "" and notice == ""
 	var x0: float = float(m["x0"])
 	var rw: float = float(m["rw"])
 	var rail := Rect2(0.0, 0.0, rw, vp.y)
@@ -325,7 +329,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var card_top: float = maxf(vp.y * 0.34, 150.0 * cs)   # the middle of the right edge: clear of the player plates at the top corners and the legend at the foot
 	var card := Rect2(vp.x - margin - cw, card_top, cw, card_h) if has_card else Rect2(vp.x - margin, card_top, 0.0, 0.0)
 	# The join line as a chip above the card.
-	var chip_text: String = UiData.t("prompt.pause_p2_join") if p2_join else ""
+	var chip_text: String = notice if notice != "" else (UiData.t("prompt.pause_p2_join") if p2_join else "")
 	var chip_w: float = (UiText.width(chip_text, fs_small) + 32.0 * cs) if chip_text != "" else 0.0
 	var chip_h: float = maxf(UiText.height(fs_small) * 1.5, 34.0) if chip_text != "" else 0.0
 	var chip := Rect2(vp.x - margin - chip_w, card_top - chip_h - gap * 2.0, chip_w, chip_h) if chip_text != "" else Rect2()
@@ -353,7 +357,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 		facts_lines.append(str((d as Dictionary)["t"]))
 	return {"rail": true, "card": rail, "title": title, "title_lines": title_lines, "title_pos": title_pos, "kicker": kicker, "kicker_pos": Vector2(x0, top + UiText.ascent(fs_kicker)), "lh_title": lh_title,
 		"items": items, "row_ys": row_ys, "cols": 1, "tm": tm, "fs_body": fs_r, "fs_title": fs_title, "fs_small": fs_small, "fs_kicker": fs_kicker, "fits": fits, "bw": row_w, "focus": focus, "confirm": confirm, "quit_ask": quit_ask, "two": two,
-		"join": p2_join or status != "" or where_text != "", "touch": false, "cs": cs, "pad": cpad, "gap": gap, "lh_small": lh_small, "x0": x0, "detail": detail, "detail_card": card, "has_card": has_card,
+		"join": p2_join or status != "" or notice != "" or where_text != "", "touch": false, "cs": cs, "pad": cpad, "gap": gap, "lh_small": lh_small, "x0": x0, "detail": detail, "detail_card": card, "has_card": has_card,
 		"card_kicker": UiData.t("prompt.rail_this_match") if has_card else "", "chip": chip, "chip_text": chip_text, "join_lines": join_lines, "join_pos": Vector2.ZERO, "facts_lines": facts_lines, "facts_pos": Vector2.ZERO,
 		"version": version, "version_pos": ver["pos"], "hints": entries, "hint_lines": hint_lines, "hint_gh": hint_gh, "hint_fs": hint_fs, "hint_top": hint_top, "hint_lh": hint_lh, "device": device, "style": style, "vp_y": vp.y,
 		"slide": UiRail.slide(float(st.get("since", 99.0)), reduced), "bar_t": 1.0 if (reduced or prev < 0) else clampf(bar_since / UiRail.BAR_SECS, 0.0, 1.0), "bar_y": UiRail.bar_y(row_ys, focus, prev, bar_since, reduced)}

@@ -260,6 +260,10 @@ func _ready() -> void:
 			hud.pause_menu_choose("new")
 		if args.has("pquit"):
 			hud.pause_menu_choose("quit")
+	if args.has("unplug"):
+		hud.pad_dropped([int(args["unplug"])] if str(args["unplug"]).is_valid_int() else [0])   # --unplug (or --unplug=1; with --p2 it names the player): the card a dropped controller opens, as the game opens it
+		if args.has("unplugback"):
+			hud.pad_returned()   # --unplugback: the controller is back and the card waits for its first press
 	if args.has("report"):
 		hud.report_now(0)   # --report (with --lan): F9 pressed: the legend row says what was saved
 	if args.has("over"):
