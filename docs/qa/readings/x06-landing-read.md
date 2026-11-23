@@ -77,3 +77,13 @@ Easy `holdAnswer` `{windowTicks 300, byCount [0, 0.3, 0.75]}`, Medium `{300, [0,
 | Medium | 20 of 40 | 50.0% (35.2 to 64.8) | at most 55% | 1,905: 140 / 542 / 59 / 1,164 |
 
 **Reading.** The Easy target is **not met: 100%, above the 75% top and the 80% ceiling.** The order holds (Easy 100% against Medium 50%), but only because Easy is wide open: of 1,456 full charges, 38 met nothing and 77 were perfect-blocked, 1,279 hit. For comparison, the earlier flat 0.65 at Easy gave 22.5% on bce578a7 (9 of 40); repetition (0, 0.3, 0.75) swings it from 22.5% to 100%, so a charge pad's first hold at Easy goes unanswered and its repeats are answered too rarely at 0.75 to matter. Data hashes: Easy 13317a7c98c9a96b, Medium 8b004278ef77855d. Records: `docs/qa/runs/c1d89924/x06-last-cell-lines.txt`.
+
+## The three cells (main c2154c69 + the three diffs, `x06-hold-answer` b19a27cf: Easy window 420 `[0, 0.3, 0.65]`, Medium `{300, [0, 0.4, 0.9]}`, the computer's dodge of a release the slip at every level; schema 1e83ef34; 2026-11-22; 40 each, jobs 2 below normal)
+
+| Cell | Won | Rate (Wilson 95%) | Target | Reading | Full charges (met nothing / perfect-blocked / guarded / hit) |
+| :--- | ---: | :--- | :--- | :--- | :--- |
+| Easy, charge pad | 36 of 40 | **90.0%** (76.9 to 96.0) | 60 to 75% | **not met**: above the top, the interval's low edge (76.9) is above 75 | 1,468: 55 / 69 / 88 / 1,256 |
+| Medium, charge pad | 18 of 40 | **45.0%** (30.7 to 60.2) | at most 55% | **PASS** by the point (interval reaches 60.2) | 1,888: 146 / 537 / 58 / 1,147 |
+| Medium, kit | 4 of 40 | **10.0%** (4.0 to 23.1) | at least 25% | not met (unchanged since bce578a7: 10.0%; the kit floor is marked "not met on scripts") | 263: 7 / 78 / 34 / 144 |
+
+**Reading.** The Easy charge pad moved from 100% (c1d89924, Easy 300 `[0, 0.3, 0.75]`) to 90.0% with the 420-tick window and 0.65, and the dodge of a release now being a slip: the answer fires slightly more often (55 met nothing, 88 guarded, 69 perfect-blocked of 1,468 full charges) but the pad still hits 1,256 of them. Easy stays 15 points above the top of the target. Medium charge is 45.0% (was 50.0%), kit 10.0% (same). The order holds: Easy 90.0% against Medium 45.0%. Data hashes: Easy dfb300986d247dae, Medium 10e921cc396e83b4 (the same for the Medium charge and kit cells, as it should be). Records: `docs/qa/runs/c2154c69/x06-three-cells-lines.txt`.
