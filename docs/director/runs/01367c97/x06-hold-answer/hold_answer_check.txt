@@ -1,3 +1,69 @@
+hold_answer_check, 2026-11-22, the Easy ruling: main ff16497d + x06-medium.diff + x06-hold-answer.diff (Easy {300, [0, 0.3, 0.75]}) + schema; the same check and diff on 74c03fdb:
+      drawn, in reach: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_up (damage 72.5, noRegrab left -92)
+ok    drawn, in reach: it grabs after its reaction time, never sooner (+14 against 14)
+ok    ... the clinch starts one ahead (a grab beats the armour) and the charge never lands
+      the hold-break's throw: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_down (damage 72.5, noRegrab left -77)
+      the same, holdBreak absent: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_down (damage 48.4, noRegrab left 120)
+ok    the hold-break's throw is worth 1.50 times the throw (72.5 against 48.4; holdBreak.worthMul 1.50)
+ok    ... and leaves no noRegrab (-77 ticks left; without the rule, 120)
+      drawn, 1.2 bh out: hold from live tick 6 (gap 1.18 bh at +14); closes in from +14; catch at +28, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown throw_across (damage 72.5, noRegrab left -89)
+ok    drawn, out of reach but close enough: it closes in (+14) and grabs before the first flash (+28, the flash at +32)
+      drawn, 2.3 bh out: hold from live tick 6 (gap 2.28 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +50 (charge 1.00); dodge at +50 (ki 15); miss dodged, punished true, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    drawn, too far to close in time: it doesn't close in or grab; it dodges the release (+50 against +50) at the dodge-cancel's ki (15)
+ok    ... the charge meets nothing (the miss cue says dodged) and the computer punishes him while he is open
+      drawn, a lockout: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +48 (charge 1.00); dodge at +49 (ki 15); miss dodged, punished true, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    drawn, no catch to be had (a lockout): the same dodge, miss and punish
+ok    in every drawn hold it never guards and never gives ground
+      Medium's data, a lone hold: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +56 (charge 1.00); dodge at +-1 (ki 0); miss none, punished false, landed true; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    repetition at Medium: a lone hold isn't answered (its count 1, byCount's first entry), and the charge reaches its release at full
+      Easy's data, a lone hold: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +56 (charge 1.00); dodge at +-1 (ki 0); miss none, punished false, landed true; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    ... a lone hold isn't answered at Easy either (its count 1, byCount's first entry)
+      Medium's data, a third hold in the window: hold from live tick 401 (gap 0.70 bh at +14); closes in from +14; catch at +27, clinch false (lead 0); release at +60 (charge 1.00); dodge at +60 (ki 15); miss dodged, punished true, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    ... a third hold in the window (two before it, 100 and 220 ticks earlier) is answered: its count 3, chance 0.9, its keyed draw 0.177
+ok    ... holds older than the window don't count: two 320 and 380 ticks earlier leave a count of 1, unanswered
+ok    ... the record counts real holds: three visible holds, each 60 ticks or more after the last, count [1, 2, 3] (their starts [6, 56, 105])
+      a tap: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    a tap isn't a visible hold: B let go at 3 ticks is never noted, grabbed or dodged (the answer at 1.0)
+ok    one draw a hold, keyed by its start: of 2,000 holds, easy by count [0.000 (data 0.00), 0.300 (data 0.30), 0.754 (data 0.75)], medium by count [0.000 (data 0.00), 0.400 (data 0.40), 0.912 (data 0.90)], hard 0.948 (data 0.95)
+      the charge-only pad at Medium (holdAnswer {"byCount":[0.0,0.4,0.9],"windowTicks":300.0}), seeds 1 to 6: 1: the computer in 20918 ticks; 2: the pad in 18710 ticks; 3: the computer in 31140 ticks; 4: the pad in 25796 ticks; 5: the computer in 30091 ticks; 6: the computer in 27816 ticks
+ok    the exploit is closed: the charge-only pad doesn't win every Medium match (the pad 2, the computer 4, of 6)
+      negative control: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +56 (charge 1.00); dodge at +-1 (ki 0); miss none, punished false, landed true; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    negative control: holdAnswer 0 and the old answers at 0: nothing answers the hold, and the charge reaches its release at full
+HOLD ANSWER: 0 check(s) failed
+
+Earlier cuts, for the record:
+hold_answer_check, 2026-11-22, the repetition cut: main e14136a3 (GW1b landed) + x06-medium.diff (ccea61aa) + x06-hold-answer.diff (9a8b3f47: Medium {300, [0, 0.4, 0.9]}, visible holds only) + schema (9658f575):
+      drawn, in reach: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_up (damage 72.5, noRegrab left -92)
+ok    drawn, in reach: it grabs after its reaction time, never sooner (+14 against 14)
+ok    ... the clinch starts one ahead (a grab beats the armour) and the charge never lands
+      the hold-break's throw: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_down (damage 72.5, noRegrab left -77)
+      the same, holdBreak absent: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_down (damage 48.4, noRegrab left 120)
+ok    the hold-break's throw is worth 1.50 times the throw (72.5 against 48.4; holdBreak.worthMul 1.50)
+ok    ... and leaves no noRegrab (-77 ticks left; without the rule, 120)
+      drawn, 1.2 bh out: hold from live tick 6 (gap 1.18 bh at +14); closes in from +14; catch at +28, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown throw_across (damage 72.5, noRegrab left -89)
+ok    drawn, out of reach but close enough: it closes in (+14) and grabs before the first flash (+28, the flash at +32)
+      drawn, 2.3 bh out: hold from live tick 6 (gap 2.28 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +50 (charge 1.00); dodge at +50 (ki 15); miss dodged, punished true, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    drawn, too far to close in time: it doesn't close in or grab; it dodges the release (+50 against +50) at the dodge-cancel's ki (15)
+ok    ... the charge meets nothing (the miss cue says dodged) and the computer punishes him while he is open
+      drawn, a lockout: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +48 (charge 1.00); dodge at +49 (ki 15); miss dodged, punished true, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    drawn, no catch to be had (a lockout): the same dodge, miss and punish
+ok    in every drawn hold it never guards and never gives ground
+      Medium's data, a lone hold: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +56 (charge 1.00); dodge at +-1 (ki 0); miss none, punished false, landed true; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    repetition at Medium: a lone hold isn't answered (its count 1, byCount's first entry), and the charge reaches its release at full
+      Medium's data, a third hold in the window: hold from live tick 401 (gap 0.70 bh at +14); closes in from +14; catch at +27, clinch false (lead 0); release at +60 (charge 1.00); dodge at +60 (ki 15); miss dodged, punished true, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    ... a third hold in the window (two before it, 100 and 220 ticks earlier) is answered: its count 3, chance 0.9, its keyed draw 0.177
+ok    ... holds older than the window don't count: two 320 and 380 ticks earlier leave a count of 1, unanswered
+ok    ... the record counts real holds: three visible holds, each 60 ticks or more after the last, count [1, 2, 3] (their starts [6, 56, 105])
+      a tap: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    a tap isn't a visible hold: B let go at 3 ticks is never noted, grabbed or dodged (the answer at 1.0)
+ok    one draw a hold, keyed by its start: of 2,000 holds, easy 0.642 (data 0.65), medium by count [0.000 (data 0.00), 0.400 (data 0.40), 0.912 (data 0.90)], hard 0.948 (data 0.95)
+      the charge-only pad at Medium (holdAnswer {"byCount":[0.0,0.4,0.9],"windowTicks":300.0}), seeds 1 to 6: 1: the computer in 20918 ticks; 2: the pad in 18710 ticks; 3: the computer in 31140 ticks; 4: the pad in 25796 ticks; 5: the computer in 30091 ticks; 6: the computer in 27816 ticks
+ok    the exploit is closed: the charge-only pad doesn't win every Medium match (the pad 2, the computer 4, of 6)
+      negative control: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +-1, clinch false (lead 0); release at +56 (charge 1.00); dodge at +-1 (ki 0); miss none, punished false, landed true; guarded false, gave ground false; thrown no (damage 0.0, noRegrab left 0)
+ok    negative control: holdAnswer 0 and the old answers at 0: nothing answers the hold, and the charge reaches its release at full
+HOLD ANSWER: 0 check(s) failed
+
+Earlier cuts, for the record:
 hold_answer_check, 2026-11-22: main 01367c97 + x06-medium.diff (ccea61aa) + x06-hold-answer.diff (78d52931: holdAnswer 0.65 / 0.5 / 0.95, the exploit row) + schema (16d8e330):
       drawn, in reach: hold from live tick 6 (gap 0.00 bh at +14); closes in from +-1; catch at +14, clinch true (lead 1); release at +-1 (charge -1.00); dodge at +-1 (ki 0); miss none, punished false, landed false; guarded false, gave ground false; thrown thrown_up (damage 72.5, noRegrab left -92)
 ok    drawn, in reach: it grabs after its reaction time, never sooner (+14 against 14)

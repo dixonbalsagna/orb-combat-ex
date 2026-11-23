@@ -41,7 +41,20 @@ Game Design's first ruling lowered a full charge's worth (`brawl.heavy.charge.wo
   - every pad does better at Easy than at Medium, and better at Medium than at Hard;
   - the whole kit at Medium wins at least 25%.
 - Hard is reported only.
-- **The chances move:** `holdAnswer` Easy 0.5 to 0.65, Medium 0.8 to 0.5; Hard stays 0.95. That's this re-cut's only data change.
+- **The chances moved:** `holdAnswer` Easy 0.5 to 0.65, Medium 0.8 to 0.5; Hard stayed 0.95.
+
+**QA's re-read at those chances** (`docs/qa/readings/x06-reread-hold-answer-recut.md`, main 7b69eafc, 40 a cell):
+- Lines 1, 2 and 4 passed: the charge pad 57.5% at Easy and 50.0% at Medium, and every pad did better at Easy.
+- Lines 3 and 5 failed at Medium: the kit won 4 of 40 (10.0%), under the masher and the charge pad, and under 25%.
+- QA's isolation: the kit is 32.5% with the candidate alone, 27.5% with the hold answer at 0, and 10.0% at 0.5. **The hold answer itself takes the kit down.** No flat chance fixed both: at 0.25 the kit read 17.5% and the charge pad 97.5%.
+
+**Game Design's ruling that ends the X-06 loop (2026-11-22): the answer reads repetition.**
+- At Medium the chance depends on how many visible holds that fighter has started in the last 300 ticks, this one included: the first 0, the second 0.4, the third or more 0.9.
+- Data: `levels.medium.brawl.holdAnswer` `{windowTicks 300, byCount [0, 0.4, 0.9]}`. Hard stays 0.95.
+- **Game Design's Easy ruling (2026-11-22):** Easy reads repetition too, gentler: `{windowTicks 300, byCount [0, 0.3, 0.75]}` (it was a flat 0.65). A lone hold goes unanswered at every level. **QA reads the Easy charge pad:** the target is 60 to 75%. The lever is the third value: 0.8 if the pad is over 80%, 0.7 if it's under 50%.
+- A lone hold, like the kit's one every 300 to 390 ticks, isn't answered at Medium. The charge pad's repeats, about every 100 ticks, are answered at 0.9.
+- **QA reads once:** the kit at Medium at least 25%, the charge pad at Medium at most 55%, and the order.
+- **If it fails, the fallback is to land at a flat 0.5 with the floor marked.**
 
 **The human bands: not met, waiting for Orb's play.** These are QA's final read at the previous chances (Easy 0.5, Medium 0.8, Hard 0.95; `docs/qa/readings/x06-final-read.md`, 40 matches a cell, main b04de5d5 with the three diffs):
 
@@ -53,23 +66,24 @@ Game Design's first ruling lowered a full charge's worth (`brawl.heavy.charge.wo
 | Beams only | 21 of 40 (52.5%) | 0 of 40 | 0 of 40 |
 | B charge only (ceiling: Easy 80, Medium 55) | 38 of 40 (95.0%) | 1 of 40 (2.5%) | 0 of 40 |
 
-QA reads Easy and Medium again at the new chances against the scripted exit.
 
 ## The hold answer (Game Design's combined ruling, 2026-11-21; chances re-cut 2026-11-22)
 
 The worth-cut record showed that all 1,256 full charges reached their release. The computer never interrupted or evaded during a 44-tick hold. Game Design's ruling (`docs/design/gauntlet-plan.md`) is that **the computer answers a visible hold during the hold.** It never relies on the perfect block alone, never guards and never steps out.
 
 **What `x06-hold-answer.diff` builds** (`DirBrawl._aiVsHold` and `_aiHoldDodge`, called from the brawl's `aiInput`):
-1. **The trigger is a visible hold:** the rival holds B on a fist's heavy, winding or charging. There's one draw a hold, keyed by the hold's start tick, at the level's new `brawl.holdAnswer`: **Easy 0.65, Medium 0.5, Hard 0.95** (Game Design's section 10; it was 0.5, 0.8, 0.95). It acts only once its reaction time (`reactTicks`, 14) has passed since the press.
+1. **The trigger is a visible hold:** the rival holds B on a fist's heavy, winding or charging, and his B is still down when the computer's reaction time comes. A tap, or a press let go sooner, isn't one. There's one draw a hold, keyed by the hold's start tick, at the level's new `brawl.holdAnswer`: **Easy 0.65, Hard 0.95, and at Medium `{windowTicks 300, byCount [0, 0.4, 0.9]}`** (Game Design, 2026-11-22). The repetition is counted from a record on the holder: the start ticks of his last three visible holds, in three slots after the brawl's RT-window slot at the end of `f.act.dirI`. It's written only while the computer's level has a `holdAnswer`; a read never sizes it. It acts only once its reaction time (`reactTicks`, 14) has passed since the press.
 2. **Drawn, in a light's reach (the catch's own), it grabs.** It presses A as soon as its line is free. The catch's tell beats the armour, and its landing stops the wind-up; the clinch starts one ahead.
 3. **The grab is a hold-break** (`interrupts.json` `grapple.throw.holdBreak`, `DirGrapple`). Its clinch's throw is worth `worthMul` 1.5 times a throw (6 to 9), with its usual opening, and `noRegrab` doesn't start. This applies only when the catch stopped a held B; any other throw is unchanged. The mark lives on the caught fighter's `noRegrab` slot as -1, which never refuses a catch, so no new state slot is needed.
 4. **Drawn, out of reach,** it closes in on its stick (the brawl's giving-ground step, straight at him) when that brings it into reach before the charge's first flash (`heavy.charge.fromTicks`, 32, from the press). Then it grabs.
 5. **Otherwise it dodges, timed to the release.** That covers being too far to close in time, or no catch to be had (a lockout, or the grapple off). The dodge costs the dodge-cancel's price (`dodgeCancel`: 15 ki and its cooldown). The released blow meets nothing (the miss cue says `dodged`), he is open for its 20-tick `recoverWhiff`, and the existing open-rival rule punishes him.
 6. **No new state.** It never guards or gives ground against a hold it answers. With the chances at 0 and `holdBreak` absent, the golden is identical (below).
 
+**A fault I found and fixed in this cut:** the previous build treated "his B is up" as a release whenever it looked. So a B tap (let go at 3 ticks, landing at 28) could be dodged at the answer's chance, though it was never a visible hold. Now only a hold noted with its button down at the reaction time is answered or dodged. A row checks it. It touched every pad that taps B, and QA's earlier reads include it.
+
 **My implementation choice, for Game Design and Animation:** a real dodge in a brawl (the dodge-cancel) ends the brawl and clears his line, which leaves nothing to punish. So this dodge is a new one inside the brawl. It costs the dodge-cancel's price, and the brawl goes on. It shows only an afterimage and a `hold_dodge` cue (text `release`, target the charger). **Animation and VFX have no pose for it yet.**
 
-**The check:** `sim/director/tools/hold_answer_check.gd`, **13 of 13** (about 2 minutes). A player holds B at the computer, at Medium:
+**The check:** `sim/director/tools/hold_answer_check.gd`, **18 of 18** (about 3 minutes). A player holds B at the computer, at Medium:
 
 | Row | Result |
 | :--- | :--- |
@@ -82,11 +96,17 @@ The worth-cut record showed that all 1,256 full charges reached their release. T
 | ... the charge meets nothing and the computer punishes him while he is open | ok (the miss cue says `dodged`) |
 | Drawn, no catch to be had (a lockout): the same dodge, miss and punish | ok |
 | In every drawn hold it never guards and never gives ground | ok |
-| One draw a hold, keyed by its start: each level's share of 2,000 holds within 3 points | ok (0.642, 0.496, 0.948) |
-| **The exploit is closed:** a charge-only pad doesn't win every Medium match. It's QA's charge pad played by the check, on QA's planet settings, seeds 1 to 6. | ok (the pad 1, the computer 5) |
+| One draw a hold, keyed by its start: each level's share of 2,000 holds within 3 points (each count's at Easy and Medium) | ok (Easy 0, 0.300, 0.754; Medium 0, 0.400, 0.912; Hard 0.948) |
+| **Repetition at Medium:** a lone hold isn't answered (count 1, chance 0) and the charge reaches its release at full | ok |
+| ... a lone hold isn't answered at Easy either (count 1, byCount's first entry) | ok |
+| ... a third hold in the window (two before it, 100 and 220 ticks earlier) is answered: count 3, chance 0.9, keyed and deterministic | ok (its draw 0.177) |
+| ... holds older than the window don't count (two at 320 and 380 ticks earlier: count 1, unanswered) | ok |
+| ... the record counts real holds: three visible holds count 1, 2, 3 | ok |
+| A tap isn't a visible hold: B let go at 3 ticks is never noted, grabbed or dodged, with the answer at 1.0 | ok |
+| **The exploit is closed:** a charge-only pad doesn't win every Medium match. It's QA's charge pad played by the check, on QA's planet settings, seeds 1 to 6. | ok (the pad 2, the computer 4) |
 | Negative control: `holdAnswer` 0 and the old answers at 0; nothing answers, and the charge reaches its release at full | ok |
 
-**The exploit row can fail.** With Medium's `holdAnswer` at 0 (the exploit open), the same six matches go 6 of 6 to the pad, and the row fails (record `hold_answer_check.txt`).
+**The exploit row can fail.** With Medium's `holdAnswer` at 0 (the exploit open), the same six matches go 6 of 6 to the pad, and the row fails (the previous cut's record, `hold_answer_check.txt`).
 
 **Computer-against-computer pace** (part 4 of the ruling): Easy's `noHuman` stays 27, and Medium's is 8 (the candidate's re-cut, below). **Hard has no pace matching,** so its computer fights already keep its tapGap of 6. A `noHuman` of 6 would only be read if Hard got pace matching. Nothing changed there.
 
@@ -115,13 +135,15 @@ All runs used `sim/core/tools/golden.gd` (record `golden.txt`):
 - **All off (`holdAnswer` 0 at every level, `holdBreak` absent):** identical to the re-cut candidate alone, with all 21 sections, 9 of 9 matches and 2 of 2 replays.
 - **As parked at the previous chances** (0.5, 0.8, 0.95): all 9 matches, one of the two replays and the planet section move against the candidate alone. The answer fires in computer fights. At today's chances it moves too; the landing window re-records it either way.
 - **The re-cut candidate against main's golden:** 8 of 9 matches, both replays and the planet section move (`perfectVsHeavy` 0.3 in computer fights, and the player's pace notes in the replays). The intro sections don't.
-- It all lands in its own window after GW1b, with a re-record.
+- **Not re-run for the repetition cut.** With `holdAnswer` absent the answer returns on its first line and writes nothing, the hold record included. It lands in its own window with a re-record.
 
 ## Director checks
 
-**45 of 45 on main with the three diffs at today's chances** (2026-11-22): every `sim/director/tools/*_check.gd`, including `hold_answer_check` with its exploit row. Parity fails only its three golden rows (matches, human-input replays, planet worlds): the expected move, re-recorded in the landing window. Main's sim, data, schemas and `qa/godot` are unchanged from 01367c97 to 7b69eafc, and the parked diffs are byte for byte the tree the checks ran on (record `director_checks.txt`).
+**On main 74c03fdb (the six-check follow-up landed) with the three diffs, at the Easy ruling's data: 47 of 48 pass**, `hold_answer_check` (18 of 18) and the six among them. `loader_check` ran out of the lane's 3,000 s on a busy machine. It passed with these diffs on bce578a7 in 4,869 s, the Easy change is data only, and a rerun with a longer limit is going. Parity fails only its golden rows (matches, human-input replays): the expected move, re-recorded in the landing window. Record `director_checks.txt`.
 
-**Earlier, at the previous chances** (Medium 0.8): 45 of 45, and my sanity read of the charge pad at Medium went 0 of 20 (under the 20% floor). QA's final read confirmed it with 1 of 40, and the chances moved.
+**On bce578a7, before the follow-up landed:** 42 of 48; the other six failed the same rows on clean main, and the follow-up (`docs/director/pending/gw1b-director-checks/`, landed 74c03fdb) fixed them.
+
+**Earlier cuts:** 45 of 45 at 0.65 / 0.5 / 0.95 on 7b69eafc, and 45 of 45 at Medium 0.8. At Medium 0.8 my sanity read of the charge pad went 0 of 20, and QA's final read gave 1 of 40.
 
 ## Apply
 
@@ -129,23 +151,23 @@ On main, in this order (all with `git -c core.autocrlf=false -c core.eol=lf appl
 1. `x06-medium.diff` (re-cut): two keys on Medium's line, `noHuman` 8, and the `chase_tap_check` off row.
 2. `x06-hold-answer.diff`:
    - `sim/director/brawl.gd` and `sim/director/grapple.gd`;
-   - `data/director/ai.json` (`holdAnswer` on each level, a `_holdAnswer` note);
+   - `data/director/ai.json` (`holdAnswer` on each level, Medium's by repetition, a `_holdAnswer` note);
    - `data/director/interrupts.json` (`grapple.throw.holdBreak`, the grapple note);
-   - the new check.
-3. `x06-hold-answer-schema.diff`: Tools' two schema files, `holdAnswer` in `director-ai.schema.json` and `throw.holdBreak` in `director-interrupts.schema.json`. Without it, validate fails.
+   - the new check and its `.uid`.
+3. `x06-hold-answer-schema.diff`: Tools' two schema files, `holdAnswer` (a number or `{windowTicks, byCount}`) in `director-ai.schema.json` and `throw.holdBreak` in `director-interrupts.schema.json`. Without it, validate fails.
 
-With all three on main 01367c97 (its sim, data and schemas are 7b69eafc's): validate 322 files, 0 errors; determinism lint ok. The tree is byte for byte the one the checks ran on.
+With all three on main 74c03fdb: validate 323 files, 0 errors; determinism lint ok. The checks ran on that tree.
 
 | Patch | Owner | sha1 |
 | :--- | :--- | :--- |
 | `x06-medium.diff` (`data/director/ai.json`, `levels.medium.brawl`: `paceMatch` with `noHuman` 8, `perfectVsHeavy` 0.3; `sim/director/tools/chase_tap_check.gd`). Re-cut from 6fe839ae. | Encounter | ccea61aa4a4ad224712ce88f6f8778e497e1dee9 |
-| `x06-hold-answer.diff` (the answer, the hold-break, their data and the check; chances re-cut from 187686f1) | Encounter (Game Design's rulings) | 78d529310b111dc6283ea1287bd6e8d84244853f |
-| `x06-hold-answer-schema.diff` (`tools/schemas/director-ai.schema.json`, `tools/schemas/director-interrupts.schema.json`) | **Tools** (the EP routes the grant) | 16d8e330d9979e077f1099ac6523eaf63eba839a |
+| `x06-hold-answer.diff` (the answer, the hold-break, repetition at Medium, visible holds only, their data and the check; re-cut from 78d52931 for GW1b's main; Easy by repetition from 9a8b3f47) | Encounter (Game Design's rulings) | 6368caa92c8b93a640e1b1637c73bbe5d257adc1 |
+| `x06-hold-answer-schema.diff` (`tools/schemas/director-ai.schema.json`, `tools/schemas/director-interrupts.schema.json`) | **Tools** (the EP routes the grant) | 9658f57599cd75f6fc01edf07b78fae0c649fddc |
 
 ## NEEDS FROM EP
 
-- **Tools:** the grant for `x06-hold-answer-schema.diff`.
-- **QA:** Easy and Medium, five pads each, on main with the three diffs, read against the scripted exit above. Hard is reported only.
+- **Tools:** the grant for `x06-hold-answer-schema.diff`, now with the repetition object in `holdAnswer`.
+- **QA:** one read on main with the three diffs: the kit at Medium at least 25%, the charge pad at Medium at most 55%, and the order. If it fails, the fallback is a flat 0.5 at Medium with the floor marked.
 - **Animation and VFX:** a pose for the computer's dodge of a release (the `hold_dodge` cue). Today it shows only an afterimage.
 - **Game Design, to confirm:** the dodge stays inside the brawl, at the dodge-cancel's price (my choice, above). The hold-break throw applies to any catch of a held B, the player's too.
 - **CI:** add `hold_answer_check` to the director checks.
