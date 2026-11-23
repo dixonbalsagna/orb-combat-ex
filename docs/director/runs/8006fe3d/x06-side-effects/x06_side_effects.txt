@@ -1,0 +1,30 @@
+X-06 side effects (Tools' flash-scenes-x06 readings), Encounter, 2026-11-23. Trees: main 8006fe3d (after X-06) and 32bba08a (before), scratch prints only in the answer for the mashdummy run.
+
+(1) mashdummy, RIVAL against REFERENCE (a full Medium computer slot in this scene: flash_worst.gd AI_SLOTS mashdummy [false, true]), 1,800 ticks, normal mode:
+  as landed: holds that reached the reaction time 8, noted by the answer 0, its acts 0: the scene's B presses are 8 to 12 ticks, under the 14-tick reaction time, so none is a visible hold
+  as landed: {'damage': 117}
+  Medium holdAnswer 0: {'damage': 117}
+  Medium paceMatch off and perfectVsHeavy 0.15 (the candidate reverted), the answer kept: {'damage': 145, 'launch': 1, 'launch_plan': 1}
+  Medium paceMatch off only: {'damage': 145, 'launch': 1, 'launch_plan': 1}
+  Medium perfectVsHeavy 0.15 only: {'damage': 110}
+
+(2) Computer against computer at Medium, QA's planet settings (planet 7, touch 3, gen 3, 4,800 columns, energy on, travel 1.5), seeds 1 to 8, to a KO:
+  before X-06 (32bba08a):
+    seed 1: ko at 43192 ticks (720 s), damage 35556 (49.4 a second)
+    seed 2: ko at 45735 ticks (762 s), damage 31063 (40.8 a second)
+    seed 3: ko at 43798 ticks (730 s), damage 29555 (40.5 a second)
+    seed 4: ko at 42929 ticks (715 s), damage 29993 (41.9 a second)
+    seed 5: ko at 31865 ticks (531 s), damage 27066 (51.0 a second)
+    seed 6: ko at 33952 ticks (566 s), damage 28511 (50.4 a second)
+    seed 7: ko at 35546 ticks (592 s), damage 30969 (52.3 a second)
+    seed 8: ko at 45119 ticks (752 s), damage 30580 (40.7 a second)
+  after X-06 (8006fe3d):
+    seed 1: ko at 33605 ticks (560 s), damage 24815 (44.3 a second)
+    seed 2: ko at 41262 ticks (688 s), damage 28489 (41.4 a second)
+    seed 3: ko at 31484 ticks (525 s), damage 25234 (48.1 a second)
+    seed 4: ko at 36937 ticks (616 s), damage 28531 (46.3 a second)
+    seed 5: ko at 38736 ticks (646 s), damage 32176 (49.8 a second)
+    seed 6: ko at 38939 ticks (649 s), damage 28559 (44.0 a second)
+    seed 7: ko at 37926 ticks (632 s), damage 31362 (49.6 a second)
+    seed 8: ko at 45880 ticks (765 s), damage 30573 (40.0 a second)
+  mean 671 s (median 718) before, 635 s (median 639) after; damage a second 45.9 before, 45.4 after
