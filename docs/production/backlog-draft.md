@@ -1,6 +1,6 @@
 # Backlog (draft): one table keyed by register id
 
-_Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Production Operations drafts). Built for 2026-11-20 by tools/build-tracker.mjs from the audit's register (270 rows), the tracker's status and the corrective plan of 2026-11-07. Rows marked † are held to the EP's tables (see milestones.md). Status words as in the tracker; "not placed" is a row outside the milestones (the nice-to-have pool, or after Alpha)._
+_Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Production Operations drafts). Built for 2026-11-23 by tools/build-tracker.mjs from the audit's register (270 rows), the tracker's status and the corrective plan of 2026-11-07. Rows marked † are held to the EP's tables (see milestones.md). Status words as in the tracker; "not placed" is a row outside the milestones (the nice-to-have pool, or after Alpha)._
 
 **What is still missing from this draft.** The sources the EP passes: the EP's owed-by-owner list, QA's bug list (the register notes it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09: row A-QA-03) and the list of parked folders (494 uncommitted paths under pending/). Anything in those that has no register row goes in the last table, with a source and an owner; nothing is dropped.
 
@@ -11,7 +11,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-AI-03 | A1 | qa-balance | S | major | not started |  | Medium and Hard have no win-rate record for Orb's scheme on any build since 2026-11-01; the only figures on a… |
 | A-AI-04 | A1 | qa-balance | S | major | not started |  | No win rate has been measured on the played build's own packed data: every record was made on a scratch tree… |
 | A-AI-05 | A1 | encounter-systems | S | major | landed |  | Main's computer-opponent data is not the played build's: Easy's pace matching, the beam pacing against a… |
-| A-AI-10 | A1 | encounter-systems | S | minor | briefed |  | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on… |
+| A-AI-10 | A1 | encounter-systems | S | minor | landed |  | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on… |
 | A-AI-11 | A1 | qa-balance | S | minor | not started |  | Forty matches a cell cannot tell neighbouring bands apart (about 15 points either way), and the drop the EP… |
 | A-AI-13 | A1 | encounter-systems | S | minor | briefed |  | The parked one-versus-many work was last rebuilt on 2026-10-16 and applies by exact-text patches; whether it… |
 | A-ANIM-06 | A1 | ep | S | minor | not started |  | The animation runtime, its tools and its data (render/anim, data/anim) are on no director's owns line;… |
@@ -21,17 +21,17 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-CODE-02 | A1 | simulation-engine | M | major | landed |  | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no… |
 | A-CODE-03 | A1 | tools-pipeline | M | major | landed |  | Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to… |
 | A-CODE-04 | A1 | tools-pipeline | L | major | landed |  | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests,… |
-| A-COMBAT-05 | A1 | encounter-systems | S | major | reported |  | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is… |
+| A-COMBAT-05 | A1 | encounter-systems | S | major | landed |  | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is… |
 | A-COMBAT-08 | A1 | qa-balance | M | major | not started |  | No tool measures X-03 (move coverage), X-04 (forms reached), X-13 (the pillars in one match) or X-16 (beam… |
-| A-COMBAT-11 | A1 | encounter-systems | S | minor | reported |  | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule… |
+| A-COMBAT-11 | A1 | encounter-systems | S | minor | landed |  | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule… |
 | A-COMBAT-14 | A1 | combat-choreography | S | minor | landed |  | The mixed string's switch reads 'on' in the played build but no game code reads its data file; the feature… |
 | A-COMBAT-15 | A1 | game-design | S | minor | landed |  | Six of Orb's 'workshop this' combat items have no decision: beam stages, the timed swat, the catch, what RT… |
 | A-CONTROLS-02 | A1 | controls-feel | M | major | landed |  | The pad as the owner plays it is not the default in data: eleven input switches are off on main and on in… |
-| A-CONTROLS-04 | A1 | game-design | S | major | reported |  | The flight speed the owner preferred (3500) exists only as a slider on the private browser page; the data's… |
+| A-CONTROLS-04 | A1 | game-design | S | major | landed |  | The flight speed the owner preferred (3500) exists only as a slider on the private browser page; the data's… |
 | A-CONTROLS-06 | A1 | controls-feel | M | major | reported |  | No moveset coverage probe exists: the nearest tool presses each input alone for 90 ticks and its saved result… |
 | A-ENERGY-02 | A1 | game-design | S | major | landed |  | No single written page states the model: it is spread over six design pages, the oldest still a proposal that… |
 | A-ENERGY-04 | A1 | simulation-engine | S | major | landed |  | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only… |
-| A-ENERGY-05 | A1 | simulation-engine | M | major | reported |  | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in… |
+| A-ENERGY-05 | A1 | simulation-engine | M | major | landed |  | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in… |
 | A-ENERGY-06 | A1 | tools-pipeline | S | major | landed |  | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two… |
 | A-LEGAL-02 | A1 | tools-pipeline | M | blocker | briefed |  | No desktop package for an outside tester can be made today: the build workflow needs a recorded approval file… |
 | A-LEGAL-09 | A1 | legal-ip | S | major | landed | CD-06 | Whether a restricted, key-only itch.io page may go up before the title search is not confirmed anywhere:… |
@@ -82,8 +82,8 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-UI-02 | A1 | tools-pipeline | M | blocker | landed |  | On main, and so in any plain desktop build, the one-press report and 'Save this match' save nothing: the hook… |
 | A-UI-04 | A1 | ui-ux | M | major | landed |  | Making the Rail the default is unfinished: its switch is off on main, three older HUD checks fail with it on,… |
 | A-UI-06 | A1 | ui-ux | S | major | landed |  | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from… |
-| A-UI-09 | A1 | ui-ux | S | major | reported |  | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every… |
-| A-WORLD-01 | A1 | world-environment | M | blocker | reported |  | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made… |
+| A-UI-09 | A1 | ui-ux | S | major | landed |  | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every… |
+| A-WORLD-01 | A1 | world-environment | M | blocker | landed |  | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made… |
 | A-WORLD-14 | A1 | orb | S | minor | landed |  | No default world is decided: Orb's solo copy opens on planet 7 through a shortcut's page word, LAN fixes… |
 | A-ACCESS-01 | A2 | accessibility-localization | S | major | not started |  | There is no accessibility pass or record newer than 2026-10-31 and no runs folder for the area, so the… |
 | A-ACCESS-02 | A2 | ui-ux | S | minor | not started | CD-14 | The Hit pause slider is still shown on the Accessibility page and still has no reader outside the user… |
@@ -323,4 +323,4 @@ From the corrective plan: none. Every item without a closing entry, or with an o
 
 **From QA's bug list** (qa/known-bugs.md; the register's row A-QA-03 says it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09, so it is not the whole bug list). Entries: KB-001 to KB-006 (the pinned prototype, open as coded, no release blocked) and GB-001 to GB-009. Not closed: GB-003 camera jolt on a knock-away (with Camera), GB-004 a design call, GB-005 mountain tumbles (with World), GB-007 rocks round a fast fighter (not reproduced), GB-009 the blaster's balance. Fixed but not re-verified in play: GB-002, GB-006. None has a register row; they are listed apart until QA's rows A-QA-03 and A-QA-07 re-read the list against the played build.
 
-**From the parked folders** (docs/*/pending, file counts read 2026-11-20): accessibility 0, animation 29, architecture 23, art 6, audio 86, camera 78, combat 151, controls 59, director 185, narrative 20, net 6, perf 0, rendering 172, tools 152, ui 32, vfx 59, world 81 (1139 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.
+**From the parked folders** (docs/*/pending, file counts read 2026-11-23): accessibility 0, animation 30, architecture 30, art 6, audio 66, camera 86, combat 151, controls 55, director 183, narrative 20, net 6, perf 0, rendering 162, tools 164, ui 36, vfx 60, world 69 (1124 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.

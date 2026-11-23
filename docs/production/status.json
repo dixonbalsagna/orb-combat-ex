@@ -1,6 +1,6 @@
 {
   "_about": "The one file the tracker's status comes from. The Executive Producer's status messages change this file (Production Operations edits it), then `node docs/production/tools/build-tracker.mjs` rebuilds milestones.md and milestone-rows.md. Allowed row statuses: not started, briefed, reported, landed. A landed row needs a commit id in ref; a reported row needs a report or record in ref.",
-  "asOf": "2026-11-20",
+  "asOf": "2026-11-23",
   "audit": "docs/ep/alpha/audit-2026-11-13",
   "current": "A1",
   "defaultStatus": {
@@ -87,14 +87,14 @@
       "note": "The six workshop items placed (Game Design). The EP confirms the row closes."
     },
     "A-ENERGY-05": {
-      "status": "reported",
-      "ref": "69406d59 (meters set to zero, committed locally)",
-      "note": "Reported, lands in GW1b (EP status 3, Sat 14 Nov 03:50); Game Design's comeback numbers landed in 970d15a6."
+      "status": "landed",
+      "ref": "ab813cef",
+      "note": "Meters zero; also cf17c9f6 and the gw1b-energy set 701cf676, a28b3c0c, b099e7fb. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md)."
     },
     "A-CONTROLS-04": {
-      "status": "reported",
-      "ref": "970d15a6",
-      "note": "Game Design's paper on flight 3500 landed; the data default changes in GW1b."
+      "status": "landed",
+      "ref": "701cf676",
+      "note": "Flight 3,500 and launch travel 1.5 in data/fight/power.json (Simulation's grant-data-gw1b.patch). GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md)."
     },
     "A-LEGAL-09": {
       "status": "landed",
@@ -235,9 +235,9 @@
       "note": "Menu fixes (d-pad). GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-UI-09": {
-      "status": "reported",
-      "ref": "aae0a38e (UI's stack); screen-sweep doc in e5618ab3",
-      "note": "Stays reported until UI confirms the stills of every menu exist (EP, 2026-11-20)."
+      "status": "landed",
+      "ref": "09e2de07",
+      "note": "UI's screen sweep, docs/ui/runs/09e2de07/screen-sweep/: all 24 menu states measured on the landed menus, smallest text 14 px, nothing cut off at 1280x800, 5 menu stills kept; stills with fighters held back by the rule. 09e2de07 is the run folder; the landing commit id follows in the EP's next push (EP, 2026-11-21)."
     },
     "A-CODE-03": {
       "status": "landed",
@@ -255,14 +255,14 @@
       "note": "Mode smoke suite; earlier park e702e058. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-COMBAT-05": {
-      "status": "reported",
-      "ref": "QA acceptance 752c381f (stray-beams, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "89eca66d",
+      "note": "Stray beams; also f12dbace, 7b119859, 2dd33c0d. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md)."
     },
     "A-COMBAT-11": {
-      "status": "reported",
-      "ref": "QA acceptance 752c381f (stray-beams, parked, gated)",
-      "note": "parked and gated, waiting for its window (EP status 1, 2026-11-14)"
+      "status": "landed",
+      "ref": "89eca66d",
+      "note": "The second stray-beam fix, in the same park. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md)."
     },
     "A-TOOLS-08": {
       "status": "landed",
@@ -276,8 +276,8 @@
     },
     "A-TOOLS-13": {
       "status": "landed",
-      "ref": "047d4037",
-      "note": "Written, not run: a Windows build job exists in CI but has not been run (EP status, Fri 20 Nov 23:55 PST). Landed 047d4037 and f391fec4."
+      "ref": "dce749fc",
+      "note": "The Windows job (windows-local) landed in dce749fc, fixes 5bf9ff46 and 575bf093; third dispatch green (run 44898139674): the Windows build's bench hash equals Linux's (cc3a8b1d073bf222). Record: docs/tools/runs/d168a518/windows-local-dispatch-1.md. Earlier: 047d4037, f391fec4 (EP, 2026-11-21)."
     },
     "A-TOOLS-15": {
       "status": "landed",
@@ -300,9 +300,9 @@
       "note": "Energy on; pins e4666d82, f733d704, 88b51569. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
     },
     "A-WORLD-01": {
-      "status": "reported",
-      "ref": "3b6e89b5 (World, committed locally)",
-      "note": "On main as a park in 148f4e16; lands first in GW1b (EP status 3, Sat 14 Nov 03:50)."
+      "status": "landed",
+      "ref": "3aaac98c",
+      "note": "The flip: the round planet is the world every match starts on. Also df0e5942, 2917d4e4, aef24cf1, 139a4613, 37ac9a46, 991af282, d43cc312. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md)."
     },
     "A-TOOLS-01": {
       "status": "reported",
@@ -348,6 +348,11 @@
       "status": "landed",
       "ref": "e77ad69a",
       "note": "Combat GW1a rows. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md)."
+    },
+    "A-AI-10": {
+      "status": "landed",
+      "ref": "8006fe3d",
+      "note": "Landed on main locally, NOT PUSHED (EP, 2026-11-23): the computer now answers a held charge by repetition and Medium charge-only falls from 100% to 45%. Closes A-AI-10 as the work on the computer answering charges. The difficulty bands stay not met on scripts, waiting for human play, for Easy charge and Medium kit."
     }
   },
   "added": [
@@ -369,7 +374,7 @@
       "status": "not started",
       "ref": "planned in docs/ep/sprints/A1-sprint.md",
       "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
-      "note": "Lands as window GW1c, after GW1b."
+      "note": "Lands as window GW1c, after GW1b. The floor-rise set (df6149d1, 2f549496, c11cc478, 878abcee) is in GW1b but is not this item's words (terrain step 2 re-cut); not closed, EP 2026-11-22."
     },
     {
       "id": "ADD-A1-03",
@@ -377,9 +382,9 @@
       "owner": "world-environment",
       "what": "Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw.",
       "status": "reported",
-      "ref": "5263c1a6 (World destruction plan); Game Design buildings paper f3a8d64d",
+      "ref": "5263c1a6 (plan); GW1b riders 088264b3 (wall cone) and 78081692 (bounce count)",
       "source": "Orb, 2026-11-13 night (ideas-log ID-22)",
-      "note": "Plan reported; the build is not started."
+      "note": "Part landed (2026-11-22): the wall cone and bounce count riders are in GW1b; the wall hold they support is still held for Orb's play."
     },
     {
       "id": "ADD-A1-04",
@@ -396,9 +401,10 @@
       "milestone": "A1",
       "owner": "encounter-systems",
       "what": "Launch rebound bug (Encounter Systems, with World): a fighter that bounces off something in the background must not ricochet on an unrealistic path. Done test: no launch rebound leaves a structure or terrain at an angle or speed the contact cannot explain, read over seeded launches, plus Orb's eye at A1.",
-      "status": "not started",
-      "ref": "EP, 2026-11-14 (Orb's clarification in vision.md)",
-      "source": "Orb, 2026-11-14 (ideas-log ID-24)"
+      "status": "reported",
+      "ref": "088264b3 (wall cone), 78081692 (bounce count)",
+      "source": "Orb, 2026-11-14 (ideas-log ID-24)",
+      "note": "Part landed (2026-11-22): the riders are in GW1b; the wall hold is still held for Orb's play, so the done test (seeded launches plus Orb's eye) is not met."
     }
   ],
   "switchRows": [
@@ -449,6 +455,12 @@
       "count": 0,
       "of": 5,
       "note": "EP status (Fri 23:55 PST): GW1a landed (b20020b4..b0e20f9a: 25 per-owner commits, uid, Tools' retire, World's ground re-pin); gate clean on the s423 full run and s424 targeted re-runs; golden equals the target. The basis changed again: 5 data rows remain after Tools' retirement of the settled rows (was 69 of 87 before GW1a)"
+    },
+    {
+      "date": "2026-11-22",
+      "count": 0,
+      "of": 5,
+      "note": "EP status (Sun 08:45 PST): GW1b landed; switch-diff against the 9 November build still 0 of 5"
     }
   ],
   "switchRowsEveryDays": 2,
@@ -563,9 +575,12 @@
     }
   },
   "notes": [
+    "GitHub access is locked, so nothing has reached CI since c1d89924 (EP, 2026-11-23); work since then is on main locally and not pushed. This includes X-06 (8006fe3d).",
+    "GW1b landed on main (EP, Sun 22 Nov 08:45 PST): 7b69eafc..b624340a, 55 park commits, the planet flip as its own commit and uid files; gated on the s427 stack (render 19/19, golden equals Simulation's GW1b re-record, World list 90/90, CI checks clean). The round planet is now the default world; launch travel 1.5 and flat-out 3,500 are main's own values. Switch-diff against the 9 November build is still 0 of 5. X-06 is in its final scripted read (off main).",
     "GW1a landed on main: b20020b4..b0e20f9a (25 per-owner commits plus uid, Tools' retire and World's ground re-pin). Gate clean on the s423 full run and s424 targeted re-runs. Golden equals the target. Switch-diff against the 9 November build: 0 of 5 data rows. The 22 rows it closes are marked landed with their commits (mapping confirmed 2026-11-20).",
     "Rows now in main from the 9 November build: S-01 travel 2.0, S-02 Art biomes, S-03 menu_modes ON, M-04 memory under the model (inert), S-05 and S-42 saves never pruned. Next: Orb's first desktop build from this main, then GW1b (20 steps, planet flip last).",
     "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde): trials T1 to T6 reported; Encounter's S3 row stays briefed until the trial clip.",
-    "Batch B1 (A-NET-05, the build id in a replay) landed before GW1."
+    "Batch B1 (A-NET-05, the build id in a replay) landed before GW1.",
+    "Also landed on the night of 20 to 21 November (EP): S-04 (0da7b774, UI), S-06 (Tools, page words), lan-report-where (cef2fa06, Netcode), and a CI split. No register row named for them."
   ]
 }

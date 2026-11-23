@@ -60,6 +60,7 @@ Rewritten 2026-11-13 by Production Operations (row A-PROCESS-04), from the audit
 | H-04 | **The corrective plan of 2026-11-07 went stale in a day:** 13 of its 27 rows have no closing entry | One backlog keyed by register id (A-PROCESS-02, draft in backlog-draft.md) and a tracker whose every status traces to a commit or a report |
 | H-05 | **The weekly limit was hit hard with no record behind it:** the week that ended 2026-11-13 went from about 64% on Sunday night to about 82% on Monday night, and no clean weekly figures exist for the three weeks before | A weekly token record from the week of 13 November (token-record.md); A1 has a stop line; the date is re-estimated from two real weeks |
 | H-06 | **The planning papers were never maintained:** the risk register stood at its starting set of 2026-09-28; no tracker existed; the P0 to P5 roadmap in CLAUDE.md no longer describes the project | This register and the tracker (milestones.md); replacing the roadmap section is the EP's row A-PROCESS-06 |
+| H-07 | **GitHub was locked (2026-11-23):** nothing has reached CI since c1d89924, so landings after it are on main locally and unpushed | The EP's guard of reading CI after every push cannot run; the next push carries every unchecked commit at once. Orb is in touch with support. When access returns: push, read CI first, and record the first result here |
 
 ## 5. The old rows (the starting set of 2026-09-28) and what became of each
 

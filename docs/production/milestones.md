@@ -1,16 +1,20 @@
 # Milestone tracker
 
-_Live page. Last built from status.json for **2026-11-20**. It is rebuilt every two days when the Executive Producer sends status (tools/build-tracker.mjs; nothing on this page is typed by hand except the words in status.json). Production Operations keeps it; the Executive Producer is the only source of status._
+_Live page. Last built from status.json for **2026-11-23**. It is rebuilt every two days when the Executive Producer sends status (tools/build-tracker.mjs; nothing on this page is typed by hand except the words in status.json). Production Operations keeps it; the Executive Producer is the only source of status._
 
 **Nothing on this page decides anything.** The path to Alpha (docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md) is the audit's recommendation. Orb accepted the first group of the path's decisions on 2026-11-13 (table below); every other milestone, size and week range stays a recommendation until Orb approves it.
 
 ## Where the project is
 
-**Milestone A1, "Main is the game Orb plays".** 77 rows: 23 not started, 6 briefed, 11 reported, 37 landed.
+**Milestone A1, "Main is the game Orb plays".** 77 rows: 23 not started, 5 briefed, 5 reported, 44 landed.
 
 **Budget.** A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so the old 66% pause is replaced by the EP's reset rule: a reset is pressed at about 85% on the all-models meter or 90% on the Fable meter (Orb only reported that a reset clears both pools). The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.
 
 **Waves.** From tonight: Tools, Simulation, UI, Encounter, World and Rendering build in scratch copies; Game Design, Production Ops and Legal write papers; the stand-in designs and reviews; the EP does the working tree. From Saturday 14 Nov: Camera and VFX (the safety readings, captures one at a time), Controls, Audio, Combat (spike S4), QA (first readings), Performance (desktop frame and load readings, quiet windows only) and Netcode.
+
+**Note.** GitHub access is locked, so nothing has reached CI since c1d89924 (EP, 2026-11-23); work since then is on main locally and not pushed. This includes X-06 (8006fe3d).
+
+**Note.** GW1b landed on main (EP, Sun 22 Nov 08:45 PST): 7b69eafc..b624340a, 55 park commits, the planet flip as its own commit and uid files; gated on the s427 stack (render 19/19, golden equals Simulation's GW1b re-record, World list 90/90, CI checks clean). The round planet is now the default world; launch travel 1.5 and flat-out 3,500 are main's own values. Switch-diff against the 9 November build is still 0 of 5. X-06 is in its final scripted read (off main).
 
 **Note.** GW1a landed on main: b20020b4..b0e20f9a (25 per-owner commits plus uid, Tools' retire and World's ground re-pin). Gate clean on the s423 full run and s424 targeted re-runs. Golden equals the target. Switch-diff against the 9 November build: 0 of 5 data rows. The 22 rows it closes are marked landed with their commits (mapping confirmed 2026-11-20).
 
@@ -20,16 +24,18 @@ _Live page. Last built from status.json for **2026-11-20**. It is rebuilt every 
 
 **Note.** Batch B1 (A-NET-05, the build id in a replay) landed before GW1.
 
+**Note.** Also landed on the night of 20 to 21 November (EP): S-04 (0da7b774, UI), S-06 (Tools, page words), lan-report-where (cef2fa06, Netcode), and a CI split. No register row named for them.
+
 | Milestone | What it proves | Rows | Not started | Briefed | Reported | Landed | Tokens (path) | Weeks (path) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A1 (now) | Main is the game Orb plays | 77 | 23 | 6 | 11 | 37 | 55M | 2 to 4 |
+| A1 (now) | Main is the game Orb plays | 77 | 23 | 5 | 5 | 44 | 55M | 2 to 4 |
 | A2 | Safe to hand out; two real Steam Decks have run it | 41 | 37 | 2 | 2 | 0 | 34M | 2 to 4 |
 | A3 | The fight's new rules, and LAN inside the game | 27 | 25 | 0 | 2 | 0 | 53M | 3 to 5 |
 | A4 | Horde, teams, your own planet, the whole fighter | 19 | 19 | 0 | 0 | 0 | 57M | 2 to 3 |
 | A5 | A newcomer on a Deck, alone; the last numbers settle | 16 | 16 | 0 | 0 | 0 | 16M | 1.5 to 3 |
 | A6 | The Alpha candidate, frozen | 0 | 0 | 0 | 0 | 0 | 13M | 2.5 to 5 |
 
-**Switch rows still differing between main and the 9 November build: 0 of 5** (2026-11-20; EP status (Fri 23:55 PST): GW1a landed (b20020b4..b0e20f9a: 25 per-owner commits, uid, Tools' retire, World's ground re-pin); gate clean on the s423 full run and s424 targeted re-runs; golden equals the target. The basis changed again: 5 data rows remain after Tools' retirement of the settled rows (was 69 of 87 before GW1a)). The Executive Producer reports this count every 2 days; the next is due 2026-11-22. It must reach 0 for A-CODE-01 to close.
+**Switch rows still differing between main and the 9 November build: 0 of 5** (2026-11-22; EP status (Sun 08:45 PST): GW1b landed; switch-diff against the 9 November build still 0 of 5). The Executive Producer reports this count every 2 days; the next is due 2026-11-24. It must reach 0 for A-CODE-01 to close.
 
 | Date | Still differing | Of | Note |
 | --- | --- | --- | --- |
@@ -41,6 +47,7 @@ _Live page. Last built from status.json for **2026-11-20**. It is rebuilt every 
 | 2026-11-14 | 69 | 87 | EP status 5 (Sat 05:50 PST): unchanged. GW1a blockers: Sim's gates park and VFX's hash_check grant approval |
 | 2026-11-14 | 69 | 87 | EP status 6 (Sat 07:50 PST): unchanged, moves at GW1a. GW1a is being assembled: a manifest of 33 steps applies clean. Open gaps: Simulation's data-fight-gw1a (five fight rows, bisecting a residual golden difference, interrupts.json), Tools' switch-row retirement and ui-modes cases |
 | 2026-11-20 | 0 | 5 | EP status (Fri 23:55 PST): GW1a landed (b20020b4..b0e20f9a: 25 per-owner commits, uid, Tools' retire, World's ground re-pin); gate clean on the s423 full run and s424 targeted re-runs; golden equals the target. The basis changed again: 5 data rows remain after Tools' retirement of the settled rows (was 69 of 87 before GW1a) |
+| 2026-11-22 | 0 | 5 | EP status (Sun 08:45 PST): GW1b landed; switch-diff against the 9 November build still 0 of 5 |
 
 ## What could move the date
 
@@ -107,7 +114,7 @@ The builds, play files, reports and clips Orb keeps are about 2.9 GB in one git-
 
 **What Orb can play.** The first desktop build of their own game: a Windows program that opens on the left-panel menus, on the round planet, with the pad as Orb plays it and flight at 3500. The start menu lists the modes that exist today, lets each player pick a fighter, and has a Quit row.
 
-**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 23 not started, 6 briefed, 11 reported, 37 landed.
+**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 23 not started, 5 briefed, 5 reported, 44 landed.
 
 **Golden window.** GW1 "Main is the game" (12 rows: A-AI-05, A-AI-10, A-CODE-01, A-COMBAT-05, A-COMBAT-11, A-COMBAT-14, A-CONTROLS-02, A-CONTROLS-04, A-ENERGY-04, A-ENERGY-05, A-MODES-07, A-WORLD-01). GW1a: the golden record is made first on the kept 9 November build's own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer's perfect-block fix, flight 3500), then one re-record. GW1c, after GW1b: the planet scope Orb added (five sizes, terrain step 2, destruction, clipping), its own window. A-NET-05 (the build id in a replay) lands before the window.
 
@@ -140,19 +147,19 @@ _None open that this milestone needs._
 | camera | 1 | 0 | 0 | 0 | 1 |
 | combat-choreography | 1 | 0 | 0 | 0 | 1 |
 | controls-feel | 2 | 0 | 0 | 1 | 1 |
-| encounter-systems | 6 | 0 | 2 | 2 | 2 |
+| encounter-systems | 6 | 0 | 1 | 0 | 5 |
 | ep | 16 | 11 | 1 | 3 | 1 |
-| game-design | 3 | 0 | 0 | 1 | 2 |
+| game-design | 3 | 0 | 0 | 0 | 3 |
 | legal-ip | 1 | 0 | 0 | 0 | 1 |
 | orb | 2 | 0 | 0 | 0 | 2 |
 | performance-platform | 3 | 3 | 0 | 0 | 0 |
 | production-ops | 3 | 0 | 0 | 0 | 3 |
 | qa-balance | 9 | 9 | 0 | 0 | 0 |
 | rendering-techart | 3 | 0 | 1 | 0 | 2 |
-| simulation-engine | 4 | 0 | 0 | 1 | 3 |
+| simulation-engine | 4 | 0 | 0 | 0 | 4 |
 | tools-pipeline | 13 | 0 | 2 | 1 | 10 |
-| ui-ux | 8 | 0 | 0 | 1 | 7 |
-| world-environment | 1 | 0 | 0 | 1 | 0 |
+| ui-ux | 8 | 0 | 0 | 0 | 8 |
+| world-environment | 1 | 0 | 0 | 0 | 1 |
 
 **audio-music** (1)
 
@@ -184,10 +191,10 @@ _None open that this milestone needs._
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | A-AI-05 | Main's computer-opponent data is not the played build's: Easy's pace matching, the beam pacing against a human, and the… | S | GW1 | landed | c3507bfc — Director rows. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
-| A-AI-10 | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on main: its… | S | GW1 | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
+| A-AI-10 | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on main: its… | S | GW1 | landed | 8006fe3d — Landed on main locally, NOT PUSHED (EP, 2026-11-23): the computer now answers a held charge by repetition and Medium charge-only falls from 100% to 45%. Closes A-AI-10 as the work on the computer answering charges. The difficulty bands stay not met on scripts, waiting for human play, for Easy charge and Medium kit. |
 | A-AI-13 (nice) | The parked one-versus-many work was last rebuilt on 2026-10-16 and applies by exact-text patches; whether it still… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
-| A-COMBAT-05 | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is doing; open… | S | GW1 | reported | QA acceptance 752c381f (stray-beams, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
-| A-COMBAT-11 | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule reads state… | S | GW1 | reported | QA acceptance 752c381f (stray-beams, parked, gated) — parked and gated, waiting for its window (EP status 1, 2026-11-14) |
+| A-COMBAT-05 | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is doing; open… | S | GW1 | landed | 89eca66d — Stray beams; also f12dbace, 7b119859, 2dd33c0d. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
+| A-COMBAT-11 | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule reads state… | S | GW1 | landed | 89eca66d — The second stray-beam fix, in the same park. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
 | A-MODES-07 | On main the rules that end a match as the last played build did (knockout only by a finishing move, wear for an idle… | S | GW1 | landed | c3507bfc — Match-end check and ending rows. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 
 **ep** (16)
@@ -216,7 +223,7 @@ _None open that this milestone needs._
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | A-COMBAT-15 | Six of Orb's 'workshop this' combat items have no decision: beam stages, the timed swat, the catch, what RT held does,… | S |  | landed | 970d15a6 — The six workshop items placed (Game Design). The EP confirms the row closes. |
-| A-CONTROLS-04 | The flight speed the owner preferred (3500) exists only as a slider on the private browser page; the data's default is… | S | GW1 | reported | 970d15a6 — Game Design's paper on flight 3500 landed; the data default changes in GW1b. |
+| A-CONTROLS-04 | The flight speed the owner preferred (3500) exists only as a slider on the private browser page; the data's default is… | S | GW1 | landed | 701cf676 — Flight 3,500 and launch travel 1.5 in data/fight/power.json (Simulation's grant-data-gw1b.patch). GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
 | A-ENERGY-02 | No single written page states the model: it is spread over six design pages, the oldest still a proposal that disagrees… | S |  | landed | 970d15a6 — The model page (Game Design). The EP confirms the row closes. |
 
 **legal-ip** (1)
@@ -276,7 +283,7 @@ _None open that this milestone needs._
 | --- | --- | --- | --- | --- | --- |
 | A-CODE-02 | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no golden… | M |  | landed | 490e610d — Target golden, gates shipped, the GW1a frame. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 | A-ENERGY-04 | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only through a… | S | GW1 | landed | 490e610d — Energy on; pins e4666d82, f733d704, 88b51569. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
-| A-ENERGY-05 | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in every match:… | M | GW1 | reported | 69406d59 (meters set to zero, committed locally) — Reported, lands in GW1b (EP status 3, Sat 14 Nov 03:50); Game Design's comeback numbers landed in 970d15a6. |
+| A-ENERGY-05 | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in every match:… | M | GW1 | landed | ab813cef — Meters zero; also cf17c9f6 and the gw1b-energy set 701cf676, a28b3c0c, b099e7fb. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
 | A-NET-05 | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with… | S |  | landed | f068b697 — Landed with B1 (f068b697..f70afd08); the EP's "parked" was stale (EP, 2026-11-20). |
 
 **tools-pipeline** (13)
@@ -293,7 +300,7 @@ _None open that this milestone needs._
 | A-TOOLS-08 | The Godot check job's time swings from about 35 to 62 minutes on unchanged game code against a 75-minute limit, and the… | S |  | landed | 047d4037 — Also f391fec4 (EP status 1). |
 | A-TOOLS-09 | The owner's builds, play files, reports and clips sit in one git-ignored folder of about 2.9 GB on one disk, with no… | S |  | landed | f391fec4 — Landed f391fec4 (plan). Orb's answer on where the second copy lives is still open; last copy made: none yet. |
 | A-TOOLS-10 | The playbook's build-verification rule cites a script that is not in the repository and a tool name that matches no… | S |  | landed | 047d4037 — Also f391fec4 (EP status 1). |
-| A-TOOLS-13 | No CI job ever starts a Windows build: every job runs on Linux, and the desktop workflow reads the Windows program's… | S |  | landed | 047d4037 — Written, not run: a Windows build job exists in CI but has not been run (EP status, Fri 20 Nov 23:55 PST). Landed 047d4037 and f391fec4. |
+| A-TOOLS-13 | No CI job ever starts a Windows build: every job runs on Linux, and the desktop workflow reads the Windows program's… | S |  | landed | dce749fc — The Windows job (windows-local) landed in dce749fc, fixes 5bf9ff46 and 575bf093; third dispatch green (run 44898139674): the Windows build's bench hash equals Linux's (cc3a8b1d073bf222). Record: docs/tools/runs/d168a518/windows-local-dispatch-1.md. Earlier: 047d4037, f391fec4 (EP, 2026-11-21). |
 | A-TOOLS-15 | Corrective item CD-21 (stop silent passes: 'grandfathered', 'report only' and 'CHECK' lines that print as exceptions in… | S |  | landed | f391fec4 — A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer. |
 | A-UI-02 | On main, and so in any plain desktop build, the one-press report and 'Save this match' save nothing: the hook that… | M |  | landed | 9254c968 — Report hook; the re-cut 5963d224 is a park commit. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 
@@ -308,13 +315,13 @@ _None open that this milestone needs._
 | A-UI-01 | With the Rail menus on (as in the build Orb played), the pause menu's slide-in is timed on a HUD clock that the game… | S |  | landed | e5618ab3 — Pause clock. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 | A-UI-04 | Making the Rail the default is unfinished: its switch is off on main, three older HUD checks fail with it on, Tools'… | M |  | landed | e5618ab3 — Rail by default. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 | A-UI-06 | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from the bottom… | S |  | landed | e5618ab3 — Menu fixes (d-pad). GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
-| A-UI-09 | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every screen at… | S |  | reported | aae0a38e (UI's stack); screen-sweep doc in e5618ab3 — Stays reported until UI confirms the stills of every menu exist (EP, 2026-11-20). |
+| A-UI-09 | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every screen at… | S |  | landed | 09e2de07 — UI's screen sweep, docs/ui/runs/09e2de07/screen-sweep/: all 24 menu states measured on the landed menus, smallest text 14 px, nothing cut off at 1280x800, 5 menu stills kept; stills with fighters held back by the rule. 09e2de07 is the run folder; the landing commit id follows in the EP's next push (EP, 2026-11-21). |
 
 **world-environment** (1)
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-WORLD-01 | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the… | M | GW1 | reported | 3b6e89b5 (World, committed locally) — On main as a park in 148f4e16; lands first in GW1b (EP status 3, Sat 14 Nov 03:50). |
+| A-WORLD-01 | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the… | M | GW1 | landed | 3aaac98c — The flip: the round planet is the world every match starts on. Also df0e5942, 2917d4e4, aef24cf1, 139a4613, 37ac9a46, 991af282, d43cc312. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
 
 **Added since the path, outside the register** (5 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They land as window GW1c, after GW1b.
 
@@ -322,9 +329,9 @@ _None open that this milestone needs._
 | --- | --- | --- | --- | --- | --- |
 | ADD-A1-01 | world-environment | Five selectable planet sizes (World, with Simulation and Performance): from World's six, five are picked; each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window. | reported | 3b6e89b5 (World, five sizes) and 7321f49b (Sim, replay sizes); GD ruling a046f3d9; Netcode pricing cf909e93 | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-02 | world-environment | Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
-| ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | reported | 5263c1a6 (World destruction plan); Game Design buildings paper f3a8d64d | Orb, 2026-11-13 night (ideas-log ID-22) |
+| ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | reported | 5263c1a6 (plan); GW1b riders 088264b3 (wall cone) and 78081692 (bounce count) | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-04 | rendering-techart | Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building. | reported | ff02e386 (clipping); e7d544ea (foot slice, GW1a); the clipping re-cut, feet 1.0% | Orb, 2026-11-13 night (ideas-log ID-22) |
-| ADD-A1-05 | encounter-systems | Launch rebound bug (Encounter Systems, with World): a fighter that bounces off something in the background must not ricochet on an unrealistic path. Done test: no launch rebound leaves a structure or terrain at an angle or speed the contact cannot explain, read over seeded launches, plus Orb's eye at A1. | not started | EP, 2026-11-14 (Orb's clarification in vision.md) | Orb, 2026-11-14 (ideas-log ID-24) |
+| ADD-A1-05 | encounter-systems | Launch rebound bug (Encounter Systems, with World): a fighter that bounces off something in the background must not ricochet on an unrealistic path. Done test: no launch rebound leaves a structure or terrain at an angle or speed the contact cannot explain, read over seeded launches, plus Orb's eye at A1. | reported | 088264b3 (wall cone), 78081692 (bounce count) | Orb, 2026-11-14 (ideas-log ID-24) |
 
 ## A2. Safe to hand out; two real Steam Decks have run it
 
