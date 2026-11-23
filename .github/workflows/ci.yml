@@ -128,6 +128,8 @@ jobs:
         run: node tools/version.mjs --check
       - name: First run self-test (the frame-rate and load lines, the size table, the steps, the report; no bypass word, no key before the warning; job 8 of the path to Alpha 1)
         run: node tools/first-run/first-run-selftest.mjs
+      - name: Forced-crash check self-test (the probe, the log reading; the check itself runs in the desktop builds workflow and by hand)
+        run: node tools/crash/crash-check-selftest.mjs
       # The copy of the kept builds and play files to a second place (docs/tools/backup.md; A-TOOLS-09): node and temporary folders only
       - name: Backup tool self-test (the copy, a second run, verify, the restore and its refusal)
         run: node tools/backup-kept-selftest.mjs

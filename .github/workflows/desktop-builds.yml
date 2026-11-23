@@ -160,6 +160,12 @@ jobs:
           echo "exported: ${b:-none}"
           if [ -z "$a" ] || [ "$a" != "$b" ]; then echo "the exported Linux build does not play the same match"; exit 1; fi
           echo "linux_hash=${b}" >> "$GITHUB_OUTPUT"
+      # X-28 (path to Alpha 1, job 14): a scratch export of this commit with a crash probe is started on the runner and made to crash and to hang; the log it leaves must say why. Uploads nothing.
+      - name: Forced-crash check of the Linux program (a log is left, says why, and is kept by the next start)
+        run: |
+          node tools/crash/crash-check.mjs --godot "$GODOT" --out "${RUNNER_TEMP}/crash-linux.md" || rc=$?
+          cat "${RUNNER_TEMP}/crash-linux.md" >> "$GITHUB_STEP_SUMMARY" || true
+          exit "${rc:-0}"
       # One folder per platform: the game, README.txt, NOTICES.txt, build_info.json. Windows and macOS as .zip, Linux as .tar.gz (the tar keeps the executable bit; an artifact zip does not).
       - name: Pack the three folders
         run: |
