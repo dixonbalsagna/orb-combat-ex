@@ -89,3 +89,10 @@ Conditions:
 1. The privacy line is true only while the desktop build makes no network connection. Tools confirms the packaged build has online play off and unreachable (no host, join or spectate path); if that changes, the line is a new ruling.
 2. The word-for-word check covers the new privacy section and the Windows sentence; the check's "no assurance words" list gets the five words above.
 3. If a build carries Steam features later, the privacy text names them (steam-readiness.md E2).
+
+## The restricted itch.io page: the account line and the page settings (RL-271, RL-272; 2026-11-23)
+
+**The account line, fixed wording, placed on the page above the download buttons and repeated in the tester note's privacy section:**
+> To download, you claim your key with a free itch.io account. itch.io is a separate service run by another company, with its own rules and privacy policy. It will see that you downloaded the game, and Orb will see your itch.io account name. Use an account name with no personal details if you prefer. The game itself collects and sends nothing about you.
+
+**Page settings that must be off (kept private, so no tester's words or names appear there):** comments, ratings and the community tab; devlog posts; any public download counter or "who downloaded" display; any link to a report channel. The words "private test" appear only by what the page is, with no invite link.
