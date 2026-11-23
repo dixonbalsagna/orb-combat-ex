@@ -6,8 +6,8 @@
 // capture of the display (RL-270 condition 3); the report is text and numbers only. A performance reading, never a flash reading, never counted toward G4, G21 or a flash number (condition 4).
 // Refuses to run unless GITHUB_ACTIONS is "true" and a virtual display is named (condition 2: it will not press a key on a person's screen). Node built-ins; xdotool on the runner.
 import { spawn, spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { cpus, totalmem, release } from 'node:os';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { cpus, homedir, totalmem, release } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fpsStats, parseFps, parseLoad, reportText, stepProblems } from './first-run.mjs';
@@ -38,6 +38,17 @@ export function timeline(rows, n = 10) {
 export function ownLines(log, max = 40) {
   return String(log).split(/\r?\n/).filter((l) => l.trim() && !/Project FPS:/.test(l)).slice(0, max).map((l) => cleanPaths(l).slice(0, 200));
 }
+
+/** The game's data folder after the run: [{ path, size }] of every file under app_userdata (names and sizes only, never contents), at most `max`. A match's field cache and a saved report only appear once a match was built. */
+export function dataFiles(root, max = 60) {
+  const out = [];
+  const walk = (d) => { for (const n of readdirSync(d).sort()) { const f = join(d, n); const st = statSync(f); if (st.isDirectory()) walk(f); else if (out.length < max) out.push({ path: f.slice(root.length + 1).split(String.fromCharCode(92)).join('/'), size: st.size }); } };
+  if (existsSync(root)) walk(root);
+  return out;
+}
+
+/** Whether the data folder says a match was built: a field-cache file or a report file exists. Pure. */
+export const matchInData = (files) => files.some((f) => f.path.split('/').some((part) => part === 'field-cache' || part === 'reports') && f.path.split('/').length > 1);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const press = (keys, delay = 250) => { const r = spawnSync('xdotool', ['key', '--delay', String(delay), ...xdotoolKeys(keys)], { encoding: 'utf8' }); return r.status === 0 ? '' : String(r.stderr || r.error).trim().slice(0, 120); };
@@ -91,8 +102,10 @@ async function main() {
     add({ id: s.id, what: s.what, ok: !err, detail: `at ${at()}${err ? ': ' + err : s.human ? ': Return pressed by the workflow on the virtual display' : keys.length ? `: ${keys.length} key(s)` : ''}` });
   }
   // the match was built: the program prints its pair-bake line when a match's pieces are made (the first run's keys may have met a game that never left the warning)
-  const built = parseLoad(log).pairBakeMs !== null;
-  add({ id: 'match-built', what: 'a match was built after the keys (the program printed its pair-bake line)', ok: built, detail: built ? `at ${at()}` : 'no pair-bake line: the keys did not get the game past its first screens' });
+  const dataRoot = join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'godot', 'app_userdata');
+  const files = dataFiles(dataRoot);
+  const built = parseLoad(log).pairBakeMs !== null || matchInData(files);
+  add({ id: 'match-built', what: 'a match was built after the keys (the program printed its pair-bake line, or its data folder holds a field cache or a report)', ok: built, detail: built ? `at ${at()}` : 'no pair-bake line and no field cache or report in the data folder: the keys did not get the game past its first screens' });
   const t1 = Date.now();
   for (let i = 0; i < 40 && !exited; i++) await sleep(250);
   run.closed = exited;
@@ -106,7 +119,7 @@ async function main() {
   try { const bi = JSON.parse(readFileSync(join(dirname(exe), 'build_info.json'), 'utf8')); Object.assign(build, bi); } catch { /* none beside the program */ }
   const text = reportText({ date: new Date().toISOString().slice(0, 10), build, machine: { cpu: (cpus()[0] || {}).model || 'unknown cpu', gpu: 'virtual display, software GL (Mesa)', ramGb: Math.round(totalmem() / 2 ** 30), os: `Linux ${release()}` }, window: '1280x720 (Xvfb)', runs: [run] });
   const rows = parseFps(log);
-  const shape = ['', 'Frames a second by ten-second stretch (from the start): ' + timeline(rows).map((b) => `${b.from}-${b.to} s: ${b.mean}`).join(', '), '', "The program's own other lines (folder paths taken out):", '```', ...ownLines(log), '```'].join('\n');
+  const shape = ['', 'Frames a second by ten-second stretch (from the start): ' + timeline(rows).map((b) => `${b.from}-${b.to} s: ${b.mean}`).join(', '), '', "The program's own other lines (folder paths taken out):", '```', ...ownLines(log), '```', '', "The game's data folder after the run (names and sizes, never contents):", '```', ...files.map((f) => `${f.size} ${f.path}`), '```'].join('\n');
   const note = shape + '\n_A GitHub runner, a virtual display, no one watching, software GL: a performance reading only, never a flash reading (Legal RL-270). No still, video or capture was taken._\n';
   if (opt('--out')) writeFileSync(resolve(opt('--out')), cleanPaths(text + note) + '\n');
   console.log(cleanPaths(text + note));

@@ -72,7 +72,7 @@ jobs:
       - name: A virtual display, the software GL it needs, and the key presser
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq xvfb xdotool libgl1-mesa-dri libglx-mesa0 libxcursor1 libxi6 libxrandr2 libxinerama1 libxkbcommon0
+          sudo apt-get install -y -qq xvfb xdotool openbox libgl1-mesa-dri libglx-mesa0 libxcursor1 libxi6 libxrandr2 libxinerama1 libxkbcommon0
       - name: Play the first run's keys and read the numbers (no still, no capture)
         env:
           DISPLAY: ':99'
@@ -81,8 +81,13 @@ jobs:
           Xvfb :99 -screen 0 1280x720x24 > "${RUNNER_TEMP}/xvfb.txt" 2>&1 &
           xvfb_pid=$!
           sleep 3
+          # a window manager (openbox, nothing else on the display): without one nothing gives the game's window the keyboard focus (the second and third runs sent every key and built no match). Legal RL-270 is unchanged: still a virtual display, nobody watching, no capture.
+          openbox > "${RUNNER_TEMP}/openbox.txt" 2>&1 &
+          wm_pid=$!
+          sleep 2
           rc=0
           node tools/first-run/linux-numbers.mjs --exe "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64" --out "${RUNNER_TEMP}/first-run-linux.md" || rc=$?
+          kill "${wm_pid}" 2>/dev/null || true
           kill "${xvfb_pid}" 2>/dev/null || true
           { echo '### Linux first run, numbers only'; echo; cat "${RUNNER_TEMP}/first-run-linux.md"; } >> "$GITHUB_STEP_SUMMARY" || true
           exit "${rc}"
