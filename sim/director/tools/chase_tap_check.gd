@@ -570,6 +570,12 @@ func _run() -> String:
 
 
 func _off() -> void:
+	# Measured with the level's paceMatch off: with it on, the player's own pace is noted on him (DirPace), which sizes his slots on
+	# any press, so this row could not tell it from the chase tap's.
+	var mp: Dictionary = DirAI.lv().get("brawl", {}).get("paceMatch", {})
+	var pm: bool = bool(mp.get("enabled", false))
+	if pm:
+		mp["enabled"] = false
 	var S := _fresh(100.0)
 	_send(S)
 	_gone(S, 30)
@@ -579,3 +585,5 @@ func _off() -> void:
 	_expect(not DirChase.chasing(A), "off: a tap is what it was")
 	_expect(A.act.dirI.size() <= n or A.act.dirI.size() < DirChaseTap._b() + DirChaseTap.T_N, "off: no slot is sized (%d)" % A.act.dirI.size())
 	SimCore.dispose(S)
+	if pm:
+		mp["enabled"] = true

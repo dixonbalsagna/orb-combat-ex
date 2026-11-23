@@ -4803,6 +4803,15 @@
               "type": "number",
               "minimum": 0,
               "description": "A throw lands worth this many brawl lights (a heavy), before what it hands the brawl."
+            },
+            "holdBreak": {
+              "type": "object",
+              "description": "A throw out of a clinch whose catch stopped a held B (Game Design, 2026-11-21): worthMul times worth, and noRegrab does not start. Absent: as any throw.",
+              "properties": {
+                "worthMul": {"type": "number", "minimum": 0, "description": "The hold-break throw's worth, as a share of worth."}
+              },
+              "required": ["worthMul"],
+              "additionalProperties": false
             }
           },
           "required": [

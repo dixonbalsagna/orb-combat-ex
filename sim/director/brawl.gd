@@ -1307,6 +1307,10 @@ static func contact(S: SimState, ex, b) -> void:
 		if bool(a.get("double", false)) and ex.branch == "" and _setPiece(ex):
 			over(S, ex, "break")   # the double hit's other blow broke a region and this one is lost: the break plays
 		return   # he was staggered, or one of them was sent off, before it landed: the blow is lost
+	if bool(a.get("dodged", false)):
+		_miss(S, ex, f, o, kind, wind, energy, false, "dodged")   # dodged as it was let go (_aiHoldDodge): it meets nothing
+		DirStick.missed(S, f, a)
+		return
 	var special: bool = bool(a.get("double", false)) or bool(a.get("sure", false)) or bool(a.get("zip", false))
 	# The reach, read as it lands. A blow by rule (the double hit's, a sure one, a zip's) keeps the strike's own limit.
 	var ct: Dictionary = DirData.contact()
@@ -2511,6 +2515,105 @@ static func _windOn(f) -> bool:
 	return _g(f, LINE) != 0 and _wound(_g(f, KIND)) and _g(f, HOLD_AT) > 0
 
 
+## The AI's answer to a visible hold (Game Design's rulings, docs/design/gauntlet-plan.md, 2026-11-21: "the computer answers a
+## visible hold during the hold"; it never relies on the perfect block alone, never guards and never steps out). The rival holds B on a
+## fist's heavy, winding or charging, whose button was still down when the computer's reaction time came (a visible hold; a tap or a
+## press let go sooner isn't one). One draw for each hold, keyed by the hold's start, at its level's brawl.holdAnswer, read once its
+## reaction time has passed since the press: a number, or {windowTicks, byCount}, which reads repetition (Game Design, 2026-11-22): the
+## chance is byCount's entry for how many visible holds he has started in the last windowTicks, this one included (the last entry for
+## more). Drawn, while he holds:
+##  - in a light's reach (the catch's own), it grabs: A, as soon as its line is free and nothing refuses a catch. The catch's tell beats
+##    the armour, and its landing stops the wind-up: a hold-break (DirGrapple._tieUp), whose throw is worth more and leaves no noRegrab;
+##  - out of that reach, it closes in on its stick (the giving-ground step, straight at him) when that brings it into reach before the
+##    charge's first flash (heavy.charge.fromTicks from the press), and grabs there;
+##  - otherwise (too far to close in time, or no catch to be had) it waits for the release, hands down.
+## Drawn, as he lets go with no catch of its own on its way: it slips, timed to the release (_aiHoldDodge: the slip, not the dodge-cancel).
+## The blow meets nothing, he is open for its recoverWhiff, and the open-rival rule punishes him. Without the level's key, or at 0, nothing is drawn and nothing is
+## written. True when the answer has its input this tick.
+static func _aiVsHold(S: SimState, ex, f, o, i: SimIntent, bl: Dictionary, slot: int) -> bool:
+	var ha = bl.get("holdAnswer", 0.0)
+	if not (ha is Dictionary) and float(ha) <= 0.0:
+		return false
+	if not _windOn(o) or _g(o, KIND) != BIG or _g(o, FLAV) != 0:
+		return false
+	var let: bool = _g(o, CHG) == 3 or not _down(o, BIG)   # let go: his blow is on its way, or goes as this tick plays
+	if DirGrapple.holds(f) or DirGrapple.holds(o):
+		return false   # a tell or a clinch is the grapple's
+	var oh: int = _g(o, HOLD_AT)
+	if _now(S) - oh < int(DirAI.skill().get("reactTicks", 14)):
+		return false
+	if _hvG(o, 0) != oh + 1 and let:
+		return false   # let go before the computer's reaction time came: a tap or a short press, not a visible hold
+	var share: float = _holdShare(o, oh, ha)   # notes this hold on him
+	if share <= 0.0 or SimRng.keyed(int(S.game.seed), "brawl.holdAnswer", oh * 2 + slot) >= share:
+		return false
+	if _g(f, AI_GSAW) != oh:
+		_s(f, AI_GSAW, oh)   # weighed for this wind-up: it never gives ground against it
+	_s(f, AI_GUARD, 0)
+	_s(f, AI_LEFT, 0)
+	_s(f, HELD_P, 0)
+	i.guard = false
+	if let:
+		_aiHoldDodge(S, ex, f, o)
+		return true
+	if not DirGrapple.canCatch(S, f, o):
+		return true   # no catch to be had: it waits for the release
+	var far: float = DirBands.dist(f, o) - float(DirData.contact().offset)
+	var reach: float = float(cfg().give.get("lightReachBh", 0.6)) * DirInterrupt.BH
+	if far <= reach:
+		if _free(S, f):
+			i.context = true   # the catch
+		return true
+	var step: float = float(cfg().give.bhPerSec) * DirInterrupt.BH * SimConst.DT
+	var need: int = int(ceil((far - reach) / step)) if step > 0.0 else (1 << 20)
+	if _now(S) - oh + need <= int(cfg().heavy.charge.fromTicks) and _giver(S, ex) == f:
+		_s(f, AI_GIVE, 2)   # it closes in, straight at him
+	return true
+
+
+## Its slip, timed to the release of a hold it answered (_aiVsHold; Game Design, gauntlet-plan.md, 2026-11-22: the computer plays by the
+## player's rules, so it's the slip, not the dodge-cancel): LT tapped with a flick straight away from him, at no energy and with no cooldown.
+## It waits until the blow's contact is inside the slip's protection (SimAct.dodgeWindow, its dodge state), then slips: the blow meets
+## nothing (contact reads `dodged`: the miss, his recoverWhiff open), and the brawl goes on, so the open-rival rule punishes him. The slip's
+## own rule (right-hand-attacks-rulings.md, R34): the third slip of one direction inside ai.json holdSlip.thirdInTicks keeps its movement
+## and loses its slip frames, so that blow lands. Once for each blow; nothing for a blow by rule (a double hit's, a sure one).
+static func _aiHoldDodge(S: SimState, ex, f, o) -> void:
+	if f.stunTicks > 0:
+		return
+	var role: String = "A" if o == ex.A else "D"
+	for b in ex.beats:
+		if b.done or b.op != "strike" or b.args == null or not b.args.get("brawl", false) or String(b.args.a) != role:
+			continue
+		if bool(b.args.get("dodged", false)) or bool(b.args.get("slipped", false)) or bool(b.args.get("sure", false)) or bool(b.args.get("double", false)):
+			return
+		if _g(o, CONTACT) - _now(S) >= SimAct.dodgeWindow:
+			return   # not yet: the slip's protection must cover the contact
+		f.act.dodgeTick = S.tick   # the slip: LT's dodge state
+		var frames: bool = _slipFrames(S, f, 1)   # (1: straight away from him)
+		b.args["slipped"] = true
+		if frames:
+			b.args["dodged"] = true
+		SimFx.afterimage(S, f)
+		var e = _ev(S, f, "hold_dodge", "slip" if frames else "slip_no_frames")
+		e.target = float(S.fighters.find(o))
+		SimEvents.feed(S, f.name + " SLIPS THE RELEASE", (o.name + "'s charge meets nothing") if frames else "the third slip of one way inside 3 s: no slip frames, the charge lands")
+		return
+
+
+## The slip's rule (R34) for the computer's slips of a release: notes this slip, of direction dir (0 neutral, 1 to 4), and says whether it
+## has its slip frames: not when two slips of the same direction came inside holdSlip.thirdInTicks before it.
+static func _slipFrames(S: SimState, f, dir: int) -> bool:
+	var win: int = int(DirAI.skill().get("holdSlip", {}).get("thirdInTicks", 180))
+	var n: int = 0
+	for k in range(SL_N):
+		var v: int = _hvG(f, HV_N + k)
+		if v > 0 and v % 8 == dir and S.tick - (v / 8 - 1) < win:
+			n += 1
+	_hvS(f, HV_N + 1, _hvG(f, HV_N))
+	_hvS(f, HV_N, (S.tick + 1) * 8 + dir)
+	return n < SL_N
+
+
 ## The fighter who may give ground on this tick (brawl-second-pass.md section 1), or null. The rival winds or charges
 ## a wound blow, and he has no blow of his own on its way or kept, no attack button down, and is neither staggered
 ## nor open after a miss. His guard may be up. When both wind, nobody may; a launcher's target is staggered.
@@ -2710,8 +2813,8 @@ static func _reachOf(a, kind: int) -> float:
 ## f's blow met nothing (brawl-second-pass.md section 1). A wound blow leaves him open for its recoverWhiff: no blow,
 ## no guard, no giving ground. The cue says why: gave_ground, the rival backed out of its reach against this wind-up;
 ## reach, they were apart some other way, or (placed) the two still stood beyond the strike's reach after its
-## placement. n: the ticks he is open.
-static func _miss(S: SimState, ex, f, o, kind: int, wind: bool, energy: String, placed: bool = false) -> void:
+## placement; or `why` when the caller names it (dodged: _aiHoldDodge). n: the ticks he is open.
+static func _miss(S: SimState, ex, f, o, kind: int, wind: bool, energy: String, placed: bool = false, why: String = "") -> void:
 	var open: int = int(_wcfg(kind).recoverWhiff) if _wound(kind) else 0
 	if open > 0:
 		_s(f, FREE_AT, S.tick + open)
@@ -2720,7 +2823,7 @@ static func _miss(S: SimState, ex, f, o, kind: int, wind: bool, energy: String, 
 			DirRally.whiffed(S, f, open)   # 23d 1: a heavy's whiff, punished in it, dazes him
 	if wind:
 		_wEnd(S, f, kind, 4)
-	var e = _ev(S, f, "miss", "gave_ground" if (_g(o, GAVE) == 1 and not placed) else "reach", _cellOf(2 if kind == BIG else (1 if kind == MEDIUM else 0)))
+	var e = _ev(S, f, "miss", why if why != "" else ("gave_ground" if (_g(o, GAVE) == 1 and not placed) else "reach"), _cellOf(2 if kind == BIG else (1 if kind == MEDIUM else 0)))
 	e.target = float(S.fighters.find(o))
 	e.n = open
 	if energy != "":
@@ -3197,6 +3300,55 @@ static func _rtS(f, v: int) -> void:
 	if f.act.dirI.size() < _rtB() + RT_N:
 		f.act.dirI.resize(_rtB() + RT_N)
 	f.act.dirI[_rtB() + RT_LEFT] = v
+
+
+## The visible holds he started (_aiVsHold; Game Design's repetition ruling, gauntlet-plan.md, 2026-11-22): the start (his HOLD_AT, a
+## live tick) of his last HV_N, newest first, plus 1; 0 empty. Then, on the computer, its last SL_N slips of a release (_slipFrames:
+## (tick + 1) x 8 + the direction). One slot each after the RT window's on f.act.dirI, written only while the computer's level has a
+## holdAnswer (a read never sizes them).
+const HV_N: int = 3
+const SL_N: int = 2
+
+
+static func _hvB() -> int:
+	return _rtB() + RT_N
+
+
+static func _hvG(f, k: int) -> int:
+	var i: int = _hvB() + k
+	return f.act.dirI[i] if i < f.act.dirI.size() else 0
+
+
+static func _hvS(f, k: int, v: int) -> void:
+	DirPlane._size(f)
+	if f.act.dirI.size() < _hvB() + HV_N + SL_N:
+		f.act.dirI.resize(_hvB() + HV_N + SL_N)
+	f.act.dirI[_hvB() + k] = v
+
+
+## The visible holds o has started in the last `window` live ticks, this one (oh) included. Reads _hvG; holdShare notes oh first.
+static func holdsInWindow(o, oh: int, window: int) -> int:
+	var n: int = 1 if _hvG(o, 0) == oh + 1 else 0
+	for k in range(1 if n == 1 else 0, HV_N):
+		var t: int = _hvG(o, k) - 1
+		if t >= 0 and t != oh and oh - t < window:
+			n += 1
+	return n
+
+
+## The chance of the answer to o's hold oh: holdAnswer as a number, or byCount's entry for holdsInWindow (the last entry for more).
+## Notes oh on him first (once).
+static func _holdShare(o, oh: int, ha) -> float:
+	if _hvG(o, 0) != oh + 1:
+		_hvS(o, 2, _hvG(o, 1))
+		_hvS(o, 1, _hvG(o, 0))
+		_hvS(o, 0, oh + 1)
+	if ha is Dictionary:
+		var by: Array = ha.get("byCount", [])
+		if by.is_empty():
+			return 0.0
+		return float(by[mini(holdsInWindow(o, oh, int(ha.get("windowTicks", 300))), by.size()) - 1])
+	return float(ha)
 
 
 ## Each live tick, after the presses (DirExchange._update): a player's RT press opens the window for holdStart live ticks; each
@@ -3986,6 +4138,9 @@ static func tick(S: SimState, ex) -> void:
 ##  - A medium into a rival's heavy while a medium still ends it, at mediumIntoHeavy: one draw for each wind-up.
 ##  - The burst, a held X, at its share.
 ##  - Its signature as outside, pressed with the charging stance held, since B alone is the heavy.
+##  - A visible hold (the rival's B held on a fist's heavy): at its level's holdAnswer, one draw a hold, after its
+##    reaction time it grabs in reach, closes in and grabs when it can before the first flash, else slips the release
+##    and punishes; it never guards or gives ground against it (_aiVsHold).
 ##  - As a trade starts it weighs digging in, at its level's digIn: dug in, it matches his pace for that trade, blow
 ##    for blow, until the trade breaks or the double hit lands. Two AIs never both dig in to one trade (digInBoth).
 ## It answers a paced string by its answerBy-th landed blow with a guard, and attacks into a gap (section 9c). Against a
@@ -4009,6 +4164,8 @@ static func aiInput(S: SimState, f) -> void:
 		return   # a zipper in reach: his one blow is on its way
 	if _g(ex.A, DBL_AT) > 0:
 		return   # the double hit is on its way: nothing it presses counts
+	if _aiVsHold(S, ex, f, o, i, bl, slot):
+		return   # the answer to a visible hold has its input
 	if DirGrapple.aiInput(S, ex, f, o, i):
 		return   # a catch's tell or a clinch is the grapple's, or it catches now
 	DirWalk.aiLean(S, f, o, i)   # the wall push, by its personality (walk.ai): its stick toward him when a building stands beyond him

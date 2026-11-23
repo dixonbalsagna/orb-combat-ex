@@ -108,6 +108,12 @@ static func telling(f) -> bool:
 	return _g(f, MODE) == 1
 
 
+## True when a catch of f's on o would be taken now (DirBrawl._aiVsHold): the grapple on, no lockout on f, o not just
+## thrown and still in the brawl. f's line being free is the caller's to read.
+static func canCatch(S: SimState, f, o) -> bool:
+	return on() and S.tick >= _g(f, LOCK) and S.tick >= _g(o, NOGRAB) and o.state == "locked"
+
+
 ## For UI, Animation and QA: f's grapple now. Empty when none. mode: "tell" or "clinch"; role: "catcher" or "caught";
 ## grip: his, his way; pulse: the last judged; t0: the tie-up's S.tick (the tell's press while in the tell).
 static func now(S: SimState, f) -> Dictionary:
@@ -262,6 +268,8 @@ static func _land(S: SimState, ex, f, o) -> void:
 		_cue(S, f, o, "grapple_catch", "miss")
 		return
 	if o.stunTicks > 0 or DirBrawl._now(S) < DirBrawl._g(o, DirBrawl.OPEN_UNTIL):
+		if _g(o, NOGRAB) == -1:
+			_s(o, NOGRAB, 0)   # no clinch, no hold-break: a mark left by one that ended unthrown is spent
 		_cue(S, f, o, "grapple_catch", "throw")
 		_throw(S, ex, f, o, DirBrawl._quarter(f, o) if f.ai == null else 3, "throw")
 		return
@@ -273,6 +281,13 @@ static func _tieUp(S: SimState, ex, f, o) -> void:
 	var c: Dictionary = cfg().clinch
 	var lead: int = 0
 	var winding: bool = DirBrawl._windOn(o) and DirBrawl._g(o, DirBrawl.LINE) != 0
+	# A hold-break (Game Design, 2026-11-21): the catch stops a held B, a fist's heavy winding or charging with its button down. Marked
+	# on him as noRegrab's -1 (never a refusal) until the clinch's throw reads it: worth throw.holdBreak.worthMul, and no noRegrab.
+	var hb: bool = winding and DirBrawl._g(o, DirBrawl.KIND) == DirBrawl.BIG and DirBrawl._g(o, DirBrawl.FLAV) == 0 and DirBrawl._down(o, DirBrawl.BIG) and not cfg().throw.get("holdBreak", {}).is_empty()
+	if hb:
+		_s(o, NOGRAB, -1)
+	elif _g(o, NOGRAB) == -1:
+		_s(o, NOGRAB, 0)
 	if o.input.guard or winding or DirBrawl._g(o, DirBrawl.CHG) == 1 or DirBrawl._g(o, DirBrawl.CHG) == 2:
 		lead = int(c.leadGuard)
 	if winding:
@@ -463,9 +478,10 @@ static func _judge(S: SimState, ex, k: int) -> void:
 static func _throw(S: SimState, ex, f, o, q: int, how: String) -> void:
 	var c: Dictionary = cfg()
 	var tc: Dictionary = c.throw
+	var hb: bool = _g(o, NOGRAB) == -1   # the clinch broke his hold (_tieUp)
 	_end(S, f, o)
-	_s(o, NOGRAB, S.tick + int(c.noRegrab))
-	if not _throwHit(S, ex, f, o):
+	_s(o, NOGRAB, 0 if hb else S.tick + int(c.noRegrab))   # a hold-break leaves no noRegrab
+	if not _throwHit(S, ex, f, o, float(tc.get("holdBreak", {}).get("worthMul", 1.0)) if hb else 1.0):
 		return   # the throw's blow ended the exchange (a KO, a broken region's set piece)
 	var bh: float = DirInterrupt.BH
 	if q == 3 or q == 1:
@@ -528,10 +544,10 @@ static func _aiThrowQ(S: SimState, f, o, k: int) -> int:
 	return 2
 
 
-## The throw's blow (Game Design, 2026-10-18 1c): worth throw.worth brawl lights, as a heavy, before what the throw
+## The throw's blow (Game Design, 2026-10-18 1c): worth throw.worth brawl lights (times mul: a hold-break's throw.holdBreak.worthMul), as a heavy, before what the throw
 ## hands the brawl (the bury, the opening in the air, the send across with its landing). False when it ended the exchange.
-static func _throwHit(S: SimState, ex, f, o) -> bool:
-	var w: float = float(cfg().throw.get("worth", 0.0))
+static func _throwHit(S: SimState, ex, f, o, mul: float = 1.0) -> bool:
+	var w: float = float(cfg().throw.get("worth", 0.0)) * mul
 	if w <= 0.0:
 		return true
 	var c: Dictionary = DirBrawl.cfg()
