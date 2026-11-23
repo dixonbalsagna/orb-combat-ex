@@ -138,7 +138,26 @@
  ## The drawn ground at a planet direction: the same triangles as the mesh (the mesh's own diagonal), on the finest tile there.
 --- a/render/core/tile_ground.gd
 +++ b/render/core/tile_ground.gd
-@@ -619,7 +619,7 @@
+@@ -51,6 +51,7 @@
+ var _sdp := Vector3.ZERO
+ var _turn_sent: float = 1.0e9
+ var _reff: float = -1.0
++var _l0: int = -1             # the level 0 the materials hold (tile_l0)
+ var _drawn: int = 0
+ var _buf := PackedFloat32Array()
+ var _prof_wait: int = 0
+@@ -183,6 +184,10 @@
+ 	mat.set_shader_parameter("hd0", _hd0)
+ 	mat.set_shader_parameter("sd0", _sd0)
+ 	mat.set_shader_parameter("strip_x", SimWrap.wrap(cam_x))
++	if _l0 != RenderTileField.LEVEL0:   # the vertex stage's level 0 (tile_read.gdshaderinc tile_l0): the planet's size, set when it changes
++		_l0 = RenderTileField.LEVEL0
++		mat.set_shader_parameter("tile_l0", float(_l0))
++		water_mat.set_shader_parameter("tile_l0", float(_l0))
+ 	for wk in ["pv", "pv0", "hd", "sd", "hd0", "sd0", "pvp", "hdp", "sdp", "strip_x"]:
+ 		water_mat.set_shader_parameter(wk, mat.get_shader_parameter(wk))
+ 	for k in ["wl_mul", "wl_add", "fore_cam"]:
+@@ -619,7 +624,7 @@
  
  func _walk(f: int, L: int, i: int, j: int, cam_d: float) -> void:
  	var n: int = RenderTileField.level_n(L)
@@ -147,3 +166,22 @@
  	var c: Vector3 = _center(f, n, i, j)
  	var a: float = atan2(c.cross(_pv).length(), c.dot(_pv))
  	var d: float = a * field.R
+--- a/render/shaders/tile_read.gdshaderinc
++++ b/render/shaders/tile_read.gdshaderinc
+@@ -14,6 +14,7 @@
+ uniform float strip_x = 0.0;
+ uniform sampler2D plane_tex : filter_nearest, repeat_disable;
+ uniform float plane_span = 3000.0;
++uniform float tile_l0 = 3.0;      // level 0's tiles to a face edge (RenderTileField.LEVEL0: by the planet's size, 3 at medium)
+ uniform int cb_n = 0;              // the bowls near the camera, from World's store (RenderTileGround._bowls)
+ uniform vec4 cb_a[16];             // its planet direction, its radius
+ uniform vec4 cb_b[16];             // its depth, its rim, when it was made
+@@ -66,7 +67,7 @@
+ 	dir = tile_dir(n, u, wv, st);
+ 	layer = int(c.r + 0.01);
+ 	float dl = floor(c.a / 16.0);
+-	dsize = 2.0 / (3.0 * pow(2.0, dl));
++	dsize = 2.0 / (tile_l0 * pow(2.0, dl));
+ 	vec2 d0xy = floor((place.xy + vec2(1.0)) / dsize + 0.001) * dsize - vec2(1.0);
+ 	vec2 dg = (st - d0xy) / dsize * 25.0 + vec2(1.0);   // on the layer: the ring outside the tile is its first row
+ 	ivec2 i0 = ivec2(floor(dg));

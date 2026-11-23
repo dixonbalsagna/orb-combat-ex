@@ -11,7 +11,10 @@ Rendering, on the EP's order: "the sizes with the level-0 tile scaling". It foll
 
 | File | What |
 |---|---|
-| `sizes_tiles.diff` (c1a2d894, 149 lines) | `render/core/tile_field.gd`, `tile_ground.gd`. **Re-cut for GW1c (2026-11-22) on main 74c03fdb + World's stage 2** (`docs/world/planet-stack-recut.md`). The same edit; main has no feet-ground, so four `38400` literals instead of five. Gated there (`docs/rendering/runs/74c03fdb/gw1c-recut.txt`): golden byte-identical to stage 2 alone, the five ground checks pass, the render gates pass 20 of 20. The older cut (4477705c) was gated at medium on World's GW1c stack + my feet parks: `sizes-tiles-recut.txt`. |
+| `sizes_tiles.diff` (d22786b9, 187 lines) | `render/core/tile_field.gd`, `tile_ground.gd`, `render/shaders/tile_read.gdshaderinc`. **For GW1c (2026-11-22), on main 74c03fdb + World's stage 2** (`docs/world/planet-stack-recut.md`). It now includes the vertex shader's level 0 (finding 8). Gated there (`docs/rendering/runs/74c03fdb/gw1c-recut.txt`, re-cut 2):
+  - golden byte-identical to stage 2 alone;
+  - the five ground checks pass, `drawn_check` passes, and the render gates pass 20 of 20.
+  The older cut (4477705c) was gated at medium on World's GW1c stack + my feet parks: `sizes-tiles-recut.txt`. |
 | `grant-world-field-size-key.patch` (c48936a3) | World's `sim/world/field.gd`: the field memo keyed by the size too. World approved it (2026-11-20); its "seed -> Field" comment is fixed here as they asked (code unchanged from 6883b121). |
 | `feet_check_size.gd` (2aed6e9a) | A scratch copy of `feet-ground`'s feet check with `--size` (World's `planetSize`) and `--split`. With `--split` it reads each fighter through the nearest pane the split renders, and skips a fighter outside every pane's view. When this lands, these flags should go into the real check. |
 
@@ -67,3 +70,14 @@ Rendering, on the EP's order: "the sizes with the level-0 tile scaling". It foll
    - The shape is small's steep relief drawn with coarse triangles: the same relief as frame 1, World's relief cap.
    - Not yet known: why the near ground at the split pane's camera is still coarse at frame 451. The guess, unproven: small's fill is slower, because off the lattice every node reads `WorldField.sample`. That needs the web build: headless doesn't draw the split's second pane.
    - A fix on my side if wanted: apply the rows' band (dent and scorch) only on tiles fine enough to hold a groove (level 3 and finer), so a coarse tile isn't painted.
+8. **The vertex shader kept medium's level 0** (found on GW1c's stills, 2026-11-22). `tile_read.gdshaderinc` worked out a data tile's size as `2 / (3 * 2^level)`: medium's three level-0 tiles to a face edge, written into the shader. The GDScript side followed the planet (`LEVEL0`: tiny 1, small 2, big 6), the shader didn't.
+   - **The effect:** on every size but medium, the GPU read each vertex's height from the wrong texel, and the CPU twins (`height_at`, `drawn_at`) stayed right, so the headless probes looked clear.
+     - Small drew a flat grey sawtooth surface over the lower frame: wrong ground under the foreground tone.
+     - Tiny drew false spires.
+     - Big was wrong too, hidden by its gentle forest.
+   - **The fix:** a uniform `tile_l0` (default 3, so medium is unchanged), set by the tile ground from `RenderTileField.LEVEL0` on its ground and water materials whenever it changes.
+   - **rows-interp doesn't touch this** (it moves the strip rows' offsets, not where a vertex reads its height). It's still needed for the feet at small and big (finding 5).
+   - **Stills on the fixed build** (`docs/rendering/img/sizes/gw1c/`, ignored; fighters):
+     - `gw1c2-sizes-sheet.png` (tiny, small, medium, big) and `gw1c2-<size>-sheet.png` (relief cap off and on);
+     - every size reads, with both fighters visible;
+     - record: `docs/rendering/runs/74c03fdb/gw1c-relief-stills.txt`. The earlier `gw1c-*` stills are the broken shader's.

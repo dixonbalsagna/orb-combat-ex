@@ -1,6 +1,19 @@
 # GW1c relief-cap stills: cA = main 74c03fdb + World's stage 2 + sizes_tiles + drawn_at (the cap's code, its data row off); cB = cA + relief-cap-data.diff (on). beamduel, seed 12345, the default (reduced) look, ticks 1 to 601 every 150; the web build attaches the split.
-tiny, cap off: 0 stills
-small, cap off: 0 stills
-tiny, cap on: 0 stills
-small, cap on: 0 stills
-medium, ai seed 1, tick 157: 0 still
+small, cap off: 5 stills; 
+tiny, cap off: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breaker
+tiny, cap on: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breaker
+small, cap on: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breaker
+medium, ai seed 1, ticks 150 and 157: 0 stills; [capture] FAILED: the page did not reach tick 150 (it reads 1)
+## small with fore-clamp v4 (fore_fix.diff 353a4cb2, parked) on top: the same scene and ticks
+small, cap off, + fore-clamp v4: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Local/Temp/claude/C--U
+small, cap on, + fore-clamp v4: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Local/Temp/claude/C--U
+## what they show (read by eye)
+- tiny: cap off, spiky spires on a hard-curving horizon, the fighters small but visible; cap on, the spawn is a town (houses on green ground), the fighters visible, the spires lower.
+- small: cap off and cap on alike, with or without fore-clamp v4, a large flat grey surface with a sawtooth top edge fills the lower 60% of the frame at every tick from 1 to 601; houses show behind it with the cap on; no fighter is visible. Not the relief alone, not the clamp's teeth: not yet read.
+- medium, ai seed 1, tick 157 (Camera's question): the split, both fighters plainly visible in the city; nothing buried.
+## re-cut 2's stills (tile_l0): the same scene and ticks, cap off (cA2) and on (cB2)
+tiny, cap off: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Lo
+small, cap off: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Lo
+tiny, cap on: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Lo
+small, cap on: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Lo
+## re-cut 2 read by eye: every size reads, both fighters visible. tiny: cap off, a rock face beside the line; cap on, a town on green ground. small: cap off, an open rocky hillside with trees on the ridge; cap on, a town. medium: the town under the hillside, as before. big: a snowy forest. (The earlier gw1c-* stills, and small's grey surface, were the vertex shader's medium level 0.)
