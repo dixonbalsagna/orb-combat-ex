@@ -51,7 +51,7 @@ Game Design's first ruling lowered a full charge's worth (`brawl.heavy.charge.wo
 **Game Design's ruling that ends the X-06 loop (2026-11-22): the answer reads repetition.**
 - At Medium the chance depends on how many visible holds that fighter has started in the last 300 ticks, this one included: the first 0, the second 0.4, the third or more 0.9.
 - Data: `levels.medium.brawl.holdAnswer` `{windowTicks 300, byCount [0, 0.4, 0.9]}`. Hard stays 0.95.
-- **Game Design's Easy ruling (2026-11-22):** Easy reads repetition too, gentler: `{windowTicks 300, byCount [0, 0.3, 0.75]}` (it was a flat 0.65). A lone hold goes unanswered at every level. **QA reads the Easy charge pad:** the target is 60 to 75%. The lever is the third value: 0.8 if the pad is over 80%, 0.7 if it's under 50%.
+- **Game Design's Easy ruling (2026-11-22), re-ruled after Encounter's probe:** Easy reads repetition too, gentler, with a longer memory: `{windowTicks 420, byCount [0, 0.3, 0.65]}`. It was `{300, [0, 0.3, 0.75]}` before that, and a flat 0.65 before that. The pad's real holds come about 187 live ticks apart, so a 300-tick window mostly counted 2. A lone hold goes unanswered at every level. **QA reads the Easy charge pad:** the target is 60 to 75%. The lever is the third value: 0.8 if the pad is over 80%, 0.7 if it's under 50%.
 - A lone hold, like the kit's one every 300 to 390 ticks, isn't answered at Medium. The charge pad's repeats, about every 100 ticks, are answered at 0.9.
 - **QA reads once:** the kit at Medium at least 25%, the charge pad at Medium at most 55%, and the order.
 - **If it fails, the fallback is to land at a flat 0.5 with the floor marked.**
@@ -76,14 +76,18 @@ The worth-cut record showed that all 1,256 full charges reached their release. T
 2. **Drawn, in a light's reach (the catch's own), it grabs.** It presses A as soon as its line is free. The catch's tell beats the armour, and its landing stops the wind-up; the clinch starts one ahead.
 3. **The grab is a hold-break** (`interrupts.json` `grapple.throw.holdBreak`, `DirGrapple`). Its clinch's throw is worth `worthMul` 1.5 times a throw (6 to 9), with its usual opening, and `noRegrab` doesn't start. This applies only when the catch stopped a held B; any other throw is unchanged. The mark lives on the caught fighter's `noRegrab` slot as -1, which never refuses a catch, so no new state slot is needed.
 4. **Drawn, out of reach,** it closes in on its stick (the brawl's giving-ground step, straight at him) when that brings it into reach before the charge's first flash (`heavy.charge.fromTicks`, 32, from the press). Then it grabs.
-5. **Otherwise it dodges, timed to the release.** That covers being too far to close in time, or no catch to be had (a lockout, or the grapple off). The dodge costs the dodge-cancel's price (`dodgeCancel`: 15 ki and its cooldown). The released blow meets nothing (the miss cue says `dodged`), he is open for its 20-tick `recoverWhiff`, and the existing open-rival rule punishes him.
+5. **Otherwise it slips, timed to the release** (Game Design, 2026-11-22: the computer plays by the player's rules, so it's the slip, not the dodge-cancel). That covers being too far to close in time, or no catch to be had (a lockout, or the grapple off).
+   - The slip is LT tapped with a flick straight away from him. It sets the computer's dodge state, at no energy and with no cooldown. It waits until the blow's contact falls inside the slip's protection (`SimAct.dodgeWindow`, Controls' 12 ticks).
+   - The released blow meets nothing (the miss cue says `dodged`), he is open for its 20-tick `recoverWhiff`, and the existing open-rival rule punishes him.
+   - **The slip's own rule** (right-hand-attacks-rulings.md, R34): the third slip of one direction inside 3 s keeps its movement and loses its slip frames, so that charge lands. The 3 s is `ai.json` `holdSlip.thirdInTicks` (180). The computer's last two slips are kept after the hold record.
+   - The rule isn't built for a player's slips; R34's slip frames aren't in the sim yet.
 6. **No new state.** It never guards or gives ground against a hold it answers. With the chances at 0 and `holdBreak` absent, the golden is identical (below).
 
 **A fault I found and fixed in this cut:** the previous build treated "his B is up" as a release whenever it looked. So a B tap (let go at 3 ticks, landing at 28) could be dodged at the answer's chance, though it was never a visible hold. Now only a hold noted with its button down at the reaction time is answered or dodged. A row checks it. It touched every pad that taps B, and QA's earlier reads include it.
 
-**My implementation choice, for Game Design and Animation:** a real dodge in a brawl (the dodge-cancel) ends the brawl and clears his line, which leaves nothing to punish. So this dodge is a new one inside the brawl. It costs the dodge-cancel's price, and the brawl goes on. It shows only an afterimage and a `hold_dodge` cue (text `release`, target the charger). **Animation and VFX have no pose for it yet.**
+**What the player sees:** the computer's dodge state (Animation's Dodge), an afterimage, and a `hold_dodge` cue (text `slip`, or `slip_no_frames` for a third slip; target the charger). **Animation and VFX: no pose for a slip inside a brawl yet,** beyond the dodge state.
 
-**The check:** `sim/director/tools/hold_answer_check.gd`, **18 of 18** (about 3 minutes). A player holds B at the computer, at Medium:
+**The check:** `sim/director/tools/hold_answer_check.gd`, **21 of 21** (about 2 minutes). A player holds B at the computer, at Medium:
 
 | Row | Result |
 | :--- | :--- |
@@ -92,13 +96,16 @@ The worth-cut record showed that all 1,256 full charges reached their release. T
 | The hold-break's throw is worth 1.5 times the throw: the same staging with `holdBreak` absent | ok (72.5 against 48.4 damage) |
 | ... and leaves no `noRegrab` (without the rule, 120 ticks) | ok |
 | Drawn, 1.2 bh out: it closes in and grabs before the first flash | ok (closes from +14, grabs at +28; the flash at +32) |
-| Drawn, 2.3 bh out (too far to close in time): no close-in, no grab; it dodges the release at 15 ki | ok (the dodge on the release tick, +50) |
+| Drawn, 2.3 bh out (too far to close in time): no close-in, no grab; it slips the release at no energy | ok (the slip at +51, the release at +50) |
 | ... the charge meets nothing and the computer punishes him while he is open | ok (the miss cue says `dodged`) |
-| Drawn, no catch to be had (a lockout): the same dodge, miss and punish | ok |
+| Drawn, no catch to be had (a lockout): the same slip, miss and punish | ok |
+| ... with the dodge's cooldown running and no ki it still slips, and the charge meets nothing (the slip is never refused by the dodge-cancel's cooldown) | ok |
+| ... the third slip of one direction inside 3 s keeps its movement and loses its frames: the charge isn't made to miss (R34) | ok |
 | In every drawn hold it never guards and never gives ground | ok |
-| One draw a hold, keyed by its start: each level's share of 2,000 holds within 3 points (each count's at Easy and Medium) | ok (Easy 0, 0.300, 0.754; Medium 0, 0.400, 0.912; Hard 0.948) |
+| One draw a hold, keyed by its start: each level's share of 2,000 holds within 3 points (each count's at Easy and Medium) | ok (Easy 0, 0.300, 0.642; Medium 0, 0.400, 0.912; Hard 0.948) |
 | **Repetition at Medium:** a lone hold isn't answered (count 1, chance 0) and the charge reaches its release at full | ok |
 | ... a lone hold isn't answered at Easy either (count 1, byCount's first entry) | ok |
+| Easy's window (420): two earlier holds 200 and 360 ticks back count 3 at Easy, and 2 at Medium (300) | ok |
 | ... a third hold in the window (two before it, 100 and 220 ticks earlier) is answered: count 3, chance 0.9, keyed and deterministic | ok (its draw 0.177) |
 | ... holds older than the window don't count (two at 320 and 380 ticks earlier: count 1, unanswered) | ok |
 | ... the record counts real holds: three visible holds count 1, 2, 3 | ok |
@@ -139,7 +146,9 @@ All runs used `sim/core/tools/golden.gd` (record `golden.txt`):
 
 ## Director checks
 
-**On main 74c03fdb (the six-check follow-up landed) with the three diffs, at the Easy ruling's data: 47 of 48 pass**, `hold_answer_check` (18 of 18) and the six among them. `loader_check` ran out of the lane's 3,000 s on a busy machine. It passed with these diffs on bce578a7 in 4,869 s, the Easy change is data only, and a rerun with a longer limit is going. Parity fails only its golden rows (matches, human-input replays): the expected move, re-recorded in the landing window. Record `director_checks.txt`.
+**On main 74c03fdb (its sim, data and schemas are 52aa1708's) with the three diffs, at the slip re-cut: 48 of 48 pass**, `hold_answer_check` (21 of 21), `loader_check`, `floorlift_check` and `match_end_check` among them. Parity fails only its golden rows (matches, human-input replays): the expected move, re-recorded in the landing window. Record `director_checks.txt`.
+
+**At the Easy ruling's earlier data (300, the dodge-cancel):** 48 of 48 on 74c03fdb as well.
 
 **On bce578a7, before the follow-up landed:** 42 of 48; the other six failed the same rows on clean main, and the follow-up (`docs/director/pending/gw1b-director-checks/`, landed 74c03fdb) fixed them.
 
@@ -161,14 +170,14 @@ With all three on main 74c03fdb: validate 323 files, 0 errors; determinism lint 
 | Patch | Owner | sha1 |
 | :--- | :--- | :--- |
 | `x06-medium.diff` (`data/director/ai.json`, `levels.medium.brawl`: `paceMatch` with `noHuman` 8, `perfectVsHeavy` 0.3; `sim/director/tools/chase_tap_check.gd`). Re-cut from 6fe839ae. | Encounter | ccea61aa4a4ad224712ce88f6f8778e497e1dee9 |
-| `x06-hold-answer.diff` (the answer, the hold-break, repetition at Medium, visible holds only, their data and the check; re-cut from 78d52931 for GW1b's main; Easy by repetition from 9a8b3f47) | Encounter (Game Design's rulings) | 6368caa92c8b93a640e1b1637c73bbe5d257adc1 |
-| `x06-hold-answer-schema.diff` (`tools/schemas/director-ai.schema.json`, `tools/schemas/director-interrupts.schema.json`) | **Tools** (the EP routes the grant) | 9658f57599cd75f6fc01edf07b78fae0c649fddc |
+| `x06-hold-answer.diff` (the answer, the hold-break, repetition at Medium, visible holds only, their data and the check; re-cut from 78d52931 for GW1b's main; Easy by repetition from 9a8b3f47; the slip and Easy's 420 window from 6368caa9) | Encounter (Game Design's rulings) | b19a27cf4895f9d4e8a68de46e2bb52a9141ec0e |
+| `x06-hold-answer-schema.diff` (`tools/schemas/director-ai.schema.json`: `holdAnswer` and the top-level `holdSlip`; `tools/schemas/director-interrupts.schema.json`) | **Tools** (the EP routes the grant) | 1e83ef347849dc1edc7b7712e0896dbe02b0d17b |
 
 ## NEEDS FROM EP
 
-- **Tools:** the grant for `x06-hold-answer-schema.diff`, now with the repetition object in `holdAnswer`.
-- **QA:** one read on main with the three diffs: the kit at Medium at least 25%, the charge pad at Medium at most 55%, and the order. If it fails, the fallback is a flat 0.5 at Medium with the floor marked.
-- **Animation and VFX:** a pose for the computer's dodge of a release (the `hold_dodge` cue). Today it shows only an afterimage.
-- **Game Design, to confirm:** the dodge stays inside the brawl, at the dodge-cancel's price (my choice, above). The hold-break throw applies to any catch of a held B, the player's too.
+- **Tools:** the grant for `x06-hold-answer-schema.diff`, now with the repetition object in `holdAnswer` and the top-level `holdSlip`.
+- **QA:** three cells on main with the three diffs: the Easy charge pad (target 60 to 75%), the Medium charge pad (at most 55%) and the Medium kit.
+- **Animation and VFX:** a pose for the computer's slip of a release inside a brawl (the `hold_dodge` cue). Today it shows the dodge state and an afterimage.
+- **Game Design, to confirm:** the hold-break throw applies to any catch of a held B, the player's too. R34's third-slip rule is built for the computer's slip of a release only; a player's slips have no slip frames in the sim yet.
 - **CI:** add `hold_answer_check` to the director checks.
 - **World, for the record:** the first cut's slower computer fight in `floorlift_check` reached a free fighter lifted 85.99 units in one tick (limit 7.5). Main's fight never gets there, but the floor case is real (`recut_split.txt`).
