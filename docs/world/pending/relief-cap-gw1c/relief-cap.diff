@@ -1,16 +1,16 @@
 diff --git a/sim/world/climate.gd b/sim/world/climate.gd
-index e057bee..d6c6bf9 100644
+index e057bee..75266ce 100644
 --- a/sim/world/climate.gd
 +++ b/sim/world/climate.gd
 @@ -430,3 +430,3 @@ static func _climTM(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: f
  	var cl: float = sqrt(maxf(0.0, 1.0 - yj * yj))
 -	var T: float = _kEq * SimDetMath.pow(cl, _kPow) - _kLapse * maxf(h, 0.0) / _kHScale
-+	var T: float = _kEq * SimDetMath.pow(cl, _kPow) - _kLapse * maxf(h, 0.0) / (_kHScale * WorldPlanetSize.linesScale())   # the lapse of a capped size follows its lines (WorldPlanetSize.linesScale: 1.0 where there is no cap)
++	var T: float = _kEq * SimDetMath.pow(cl, _kPow) - _kLapse * maxf(h, 0.0) / (_kHScale * WorldPlanetSize.linesScaleFor(P))   # the lapse of a capped size follows its lines (WorldPlanetSize.linesScale: 1.0 where there is no cap)
  	T += (WorldPlanet._fbm(P.R, px, py, pz, _kNScale, _kNOct, P.seed + _kTSeed) - 0.5) * 2.0 * _kNAmp
 @@ -449,3 +449,4 @@ static func plain(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: flo
  	var bv: bool = onB and WorldPlateB.volcAt(P, px, py, pz) > WorldPlateB.K.volcanic
 -	var above: float = P.c.mountainAbove
-+	var ls: float = WorldPlanetSize.linesScale()   # the altitude lines of a capped size are those of medium scaled by its cap over 6,739 (1.0: as they are)
++	var ls: float = WorldPlanetSize.linesScaleFor(P)   # the altitude lines of a capped size are those of medium scaled by its cap over 6,739 (1.0: as they are)
 +	var above: float = P.c.mountainAbove * ls
  	if h > above and not bv:
 @@ -461,5 +462,5 @@ static func plain(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: flo
@@ -31,7 +31,7 @@ index dfe4a8c..08a74b2 100644
 +	_vh = WorldPlanetSize.reliefClamp(hh)   # the detail above is added after the relief cap: never over it
  	_vb = bb
 diff --git a/sim/world/planet.gd b/sim/world/planet.gd
-index d2af1b6..65d63e3 100644
+index d2af1b6..1ce52ec 100644
 --- a/sim/world/planet.gd
 +++ b/sim/world/planet.gd
 @@ -55,4 +55,4 @@ static func dataHash(gen: int = 0) -> String:
@@ -41,25 +41,30 @@ index d2af1b6..65d63e3 100644
 +		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash() + ("/r" + WorldRivers.dataHash() if WorldRivers.enabled() else "") + ("/f" + WorldField.dataHash() if (gen if gen > 0 else WorldClimate.genNow()) >= 3 else "") + WorldPlanetSize.reliefKey()   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json; a gen 3 planet's follow field.json as well
 +	return _cHash + WorldPlanetSize.reliefKey()
  
-@@ -528,3 +528,3 @@ static func _plainBiome(P: Planet, px: float, py: float, pz: float, h: float) ->
+@@ -303,2 +303,4 @@ class Planet extends RefCounted:
+ 	var L: float = 0.0
++	var peak: float = 0.0                    # the tallest capped peak (WorldPlanetSize.tallestCapped), kept once computed
++	var peakVer: int = -1                    # the cap version it was computed for
+ 	var c: Dictionary = {}
+@@ -528,3 +530,3 @@ static func _plainBiome(P: Planet, px: float, py: float, pz: float, h: float) ->
  		return BIO_OCEAN
 -	if h > c.mountainAbove:
-+	if h > c.mountainAbove * WorldPlanetSize.linesScale():
++	if h > c.mountainAbove * WorldPlanetSize.linesScaleFor(P):
  		return BIO_MOUNTAINS
-@@ -547,3 +547,3 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
+@@ -547,3 +549,3 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
  	P.outF = -1
 -	var base: float = ground(P, px, py, pz)
 +	var base: float = WorldPlanetSize.reliefCap(ground(P, px, py, pz))   # the relief cap of a small size (sizes.json maxReliefShare): the height the biome reads and the ground stands at; its altitude lines are scaled with it (WorldPlanetSize.linesScale)
  	var polarY: float = c.polarY
-@@ -592,5 +592,6 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
+@@ -592,5 +594,6 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
  			h = c.shelfH   # the continent never dips below the shelf it stands on
 +		h = WorldPlanetSize.reliefCap(h)
  		P.outH = h
  		P.outB = BIO_ICE_SHEET
 -		if h > c.rockHeight and _fbm(P.R, px, py, pz, c.rockScale, int(c.rockOct), s + int(c.sRock)) > c.rockNoise:
-+		if h > c.rockHeight * WorldPlanetSize.linesScale() and _fbm(P.R, px, py, pz, c.rockScale, int(c.rockOct), s + int(c.sRock)) > c.rockNoise:
++		if h > c.rockHeight * WorldPlanetSize.linesScaleFor(P) and _fbm(P.R, px, py, pz, c.rockScale, int(c.rockOct), s + int(c.sRock)) > c.rockNoise:
  			P.outB = BIO_MOUNTAINS
-@@ -1135,4 +1136,5 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
+@@ -1135,4 +1138,5 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
  				P.outF = -1
 -				P.outH = g
 -				P.outB = WorldClimate.plain(P, qx, qy, qz, g)
@@ -67,13 +72,13 @@ index d2af1b6..65d63e3 100644
 +				P.outH = gc
 +				P.outB = WorldClimate.plain(P, qx, qy, qz, gc)
  				done = true
-@@ -1146,3 +1148,3 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
+@@ -1146,3 +1150,3 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
  			h += (_fbm(R, qx, qy, qz, detailScale, detailOct, dseed) - 0.5) * detailAmp * detailSheet
 -		S.heights[i] = h
 +		S.heights[i] = WorldPlanetSize.reliefClamp(h)   # the detail above is added after the cap: never over it
  		S.biomes[i] = b
 diff --git a/sim/world/size.gd b/sim/world/size.gd
-index 9bd4285..c330af2 100644
+index 9bd4285..4d32cb7 100644
 --- a/sim/world/size.gd
 +++ b/sim/world/size.gd
 @@ -53,2 +53,10 @@ static func _load() -> void:
@@ -84,10 +89,10 @@ index 9bd4285..c330af2 100644
 +			_errors.append("sizes.json: reliefTop is at least 1,000 (the tallest relief on medium, 6,739)")
 +		if r.has("reliefKnee") and (float(r.reliefKnee) <= 0.0 or float(r.reliefKnee) >= 1.0):
 +			_errors.append("sizes.json: %s: reliefKnee is above 0 and under 1" % k)
-+		if r.has("maxReliefShare") and float(r.get("reliefKnee", 0.6)) * float(r.maxReliefShare) * float(r.cols) * SimConst.COL / (2.0 * SimMathx.PI) >= float(j.get("reliefRef", 11000.0)):
++		if r.has("maxReliefShare") and float(r.get("reliefKnee", 0.7)) * float(r.maxReliefShare) * float(r.cols) * SimConst.COL / (2.0 * SimMathx.PI) >= float(j.get("reliefRef", 11000.0)):
 +			_errors.append("sizes.json: %s: the knee (reliefKnee x the cap) must be under reliefRef" % k)
  		if int(r.bakeStride) < 1 or (cols / 16) % int(r.bakeStride) != 0:
-@@ -118,2 +126,93 @@ static func bakeStrideFor(cols: int) -> int:
+@@ -118,2 +126,124 @@ static func bakeStrideFor(cols: int) -> int:
  
 +## The relief cap (GW1c; sizes.json maxReliefShare, reliefKnee, reliefRef; docs/world/pending/relief-cap-gw1c). The relief is the same absolute height at every size, so on a small ball it is a share of the radius no planet can carry
 +## (tiny's tallest is 1.03 of its radius). A size with maxReliefShare holds the land's height to that share of its radius: heights up to the knee (reliefKnee x the cap) are their own, heights from the knee to reliefRef (the tallest the
@@ -97,9 +102,11 @@ index 9bd4285..c330af2 100644
 +static var _rcCap: float = 0.0
 +static var _rcKnee: float = 0.0
 +static var _rcScale: float = 1.0
-+static var _rcLines: float = 1.0     # the altitude lines' scale: the cap over reliefTop (1: no cap, the lines as they are)
++static var _rcTop: float = 6739.0    # reliefTop: the tallest relief on medium, where nothing is capped
++static var _rcVer: int = 0           # bumped each time the cap's numbers are read again: a planet's tallest capped peak is kept against it
 +static var reliefOff: bool = false   # tests only: no cap at any size (the negative control)
 +static var linesOff: bool = false    # tests only: the cap on, the altitude lines not scaled (the old lines: the negative control of the biome row)
++static var linesByCap: bool = false  # tests only: the lines scaled by the cap over reliefTop, Art's first ruling (the squeeze only approaches the cap, so every line sat above the tops: the negative control)
 +
 +
 +static func _rcLoad() -> void:
@@ -107,7 +114,8 @@ index 9bd4285..c330af2 100644
 +		_load()
 +	_rcNC = SimConst.PLANET_NC
 +	_rcCap = 0.0
-+	_rcLines = 1.0
++	_rcVer += 1
++	_rcTop = float(_d.get("reliefTop", 6739.0)) if not _d.is_empty() else 6739.0
 +	if reliefOff or SimConst.PLANET_NC == SimConst.PLANET_NC_MEDIUM or _d.is_empty():
 +		return
 +	for k in _names:
@@ -116,15 +124,18 @@ index 9bd4285..c330af2 100644
 +			if sh <= 0.0:
 +				return
 +			_rcCap = sh * float(SimConst.PLANET_NC) * SimConst.COL / (2.0 * SimMathx.PI)
-+			_rcKnee = float(_d.sizes[k].get("reliefKnee", 0.6)) * _rcCap
++			_rcKnee = float(_d.sizes[k].get("reliefKnee", 0.7)) * _rcCap
 +			_rcScale = (_rcCap - _rcKnee) / (float(_d.get("reliefRef", 11000.0)) - _rcKnee)
-+			_rcLines = _rcCap / float(_d.get("reliefTop", 6739.0))
 +			return
 +
 +
-+## Tests only: the lines unscaled with the cap on (the old lines).
++## Tests only: the lines unscaled with the cap on (the old lines), or scaled by the cap (Art's first ruling).
 +static func setLinesOff(off: bool) -> void:
 +	linesOff = off
++
++
++static func setLinesByCap(on: bool) -> void:
++	linesByCap = on
 +
 +
 +## Tests only: switch the cap off or on and make the next read look at the size again.
@@ -154,13 +165,38 @@ index 9bd4285..c330af2 100644
 +	return h if _rcCap <= 0.0 else minf(h, _rcCap)
 +
 +
-+## The scale of the altitude lines on a capped size (Art's ruling, docs/art/relief-cap-ruling.md): the mountain line, the highland line, the volcanic floor, the rock line of the ice dome and the temperature's lapse with height are each placed by the CAPPED
-+## height, and each line of medium (where nothing is capped) is scaled by the cap in units over reliefTop (6,739, the tallest relief on medium), so one share of the capped height at every size: the tallest ground reaches the same snow line and the same
-+## fraction of a slope is pale rock. 1.0 where there is no cap (medium, big, huge, and every size while the keys are off): the lines as they are, bit for bit. The beach and the wetland lines are near the sea, under the knee, and stay.
-+static func linesScale() -> float:
++## A planet's tallest capped peak, in units (0 where there is no cap): the planet's tallest ground (the highest cell of its climate grid, the gen 2 planet's own relief; a gen 1 planet has no grid and takes reliefTop) put through the cap. The squeeze only
++## approaches the cap, so the real tops are under it (planet 7: about 1,591 on tiny and 3,225 on small, against caps of 1,956 and 3,911). Computed once per planet and kept on it (and read again when the cap's numbers are); a pure function of the
++## planet. Rendering's snow line is 0.997 of it (Art, 2026-11-22).
++static func tallestCapped(P) -> float:
 +	if _rcNC != SimConst.PLANET_NC:
 +		_rcLoad()
-+	return 1.0 if linesOff else _rcLines
++	if _rcCap <= 0.0:
++		return 0.0
++	if P.peakVer != _rcVer:
++		var top: float = _rcTop
++		if P.gen >= 2:
++			var G = WorldClimate.gridOf(P)
++			top = -1.0e30
++			for v in G.ht:
++				top = maxf(top, float(v))
++		P.peak = reliefCap(top)
++		P.peakVer = _rcVer
++	return P.peak
++
++
++## The scale of the altitude lines on a capped size (Art's ruling, docs/art/relief-cap-ruling.md, with its follow-up of 2026-11-22): the mountain line, the highland line, the volcanic floor, the rock line of the ice dome and the temperature's lapse
++## with height are each placed by the CAPPED height, and each line of medium (where nothing is capped) is scaled by the planet's own tallest capped peak over reliefTop (6,739, the tallest relief on medium), so one share of the tallest ground at every
++## size: the highest capped peak reaches the same snow line and the same fraction of a slope is pale rock. 1.0 where there is no cap (medium, big, huge, and every size while the keys are off): the lines as they are, bit for bit. The beach and the
++## wetland lines are near the sea, under the knee, and stay.
++static func linesScaleFor(P) -> float:
++	if _rcNC != SimConst.PLANET_NC:
++		_rcLoad()
++	if _rcCap <= 0.0 or linesOff:
++		return 1.0
++	if linesByCap:
++		return _rcCap / _rcTop
++	return tallestCapped(P) / _rcTop
 +
 +
 +## The relief cap's part of a planet's data key (WorldPlanet.dataHash, so the saved planets, the replay's key and the laid-places memo carry it): "" where this size has no cap (medium, big, huge, and every size while the keys are off: the key is then
@@ -183,10 +219,10 @@ index 9bd4285..c330af2 100644
  ## A building's height held to this size's share of the planet's radius (sizes.json maxBuildingShare), else as it is: medium and every size without the key return h itself, bit for bit.
 diff --git a/sim/world/tools/relief_cap_check.gd b/sim/world/tools/relief_cap_check.gd
 new file mode 100644
-index 0000000..104e9c0
+index 0000000..8a9b566
 --- /dev/null
 +++ b/sim/world/tools/relief_cap_check.gd
-@@ -0,0 +1,232 @@
+@@ -0,0 +1,245 @@
 +extends SceneTree
 +# The relief cap of the small planet sizes (World, GW1c; sim/world/size.gd reliefCap, reliefClamp, reliefKey, sim/world/planet.gd surfAt and the gen 2 fast path, sim/world/field.gd _read; data/biomes/sizes.json maxReliefShare,
 +# reliefKnee, reliefRef; docs/world/pending/relief-cap-gw1c). The relief is the same height at every size, so on tiny the tallest point was 1.03 of the planet's radius and small's 0.52. The keys ship OFF; this check
@@ -218,7 +254,7 @@ index 0000000..104e9c0
 +	return out
 +
 +
-+func _setKeys(on: bool, knee: float = 0.6) -> void:
++func _setKeys(on: bool, knee: float = 0.7) -> void:
 +	var sz: Dictionary = WorldPlanetSize.data().sizes
 +	for nm in ["tiny", "small"]:
 +		if on:
@@ -294,11 +330,13 @@ index 0000000..104e9c0
 +		if nm == "tiny" or nm == "small":
 +			ok(hi <= 0.3 * R + 0.01 and fhi <= 0.3 * R + 0.01, "%s: no point of 20,000 is over 0.3 of the radius, in the surface (tallest %.0f) or in the field with its detail (%.0f); the cap %.0f, R %.0f" % [nm, hi, fhi, 0.3 * R, R])
 +			ok(hiOff > 0.3 * R + 100.0, "%s: and the cap acts: without it the tallest is %.0f (%.2f R)" % [nm, hiOff, hiOff / R])
-+			# Art's ruling: the altitude lines are those of medium scaled by cap / 6,739, placed by the capped height (docs/art/relief-cap-ruling.md)
-+			var ls: float = WorldPlanetSize.linesScale()
++			# Art's ruling (docs/art/relief-cap-ruling.md, follow-up of 2026-11-22): the altitude lines are those of medium scaled by the planet's TALLEST CAPPED PEAK over 6,739 (the squeeze only approaches the cap, so a scale by the cap sat above every top)
++			var peak: float = WorldPlanetSize.tallestCapped(P)
++			var ls: float = WorldPlanetSize.linesScaleFor(P)
++			ok(peak > 0.0 and peak <= cap and absf(ls * 6739.0 - peak) < 1.0e-6 and hi <= peak * 1.05 and hi >= peak * 0.95, "%s: the lines scale by the planet's tallest capped peak (%.0f, under the cap %.0f; the 20,000 sampled points reach %.0f) over 6,739: %.4f" % [nm, peak, cap, hi, ls])
 +			var mtn: float = float(P.c.mountainAbove)
 +			var hl: float = float(WorldClimate.data().highland.h)
-+			ok(cap > 0.0 and absf(mtn * ls / cap - mtn / 6739.0) < 1.0e-9 and absf(hl * ls / cap - hl / 6739.0) < 1.0e-9, "%s: the mountain line (%.0f) and the highland line (%.0f) are the same share of the cap as on medium, of the tallest relief 6,739 (%.3f and %.3f of the cap; the lines scaled by %.3f)" % [nm, mtn * ls, hl * ls, mtn * ls / maxf(cap, 1.0), hl * ls / maxf(cap, 1.0), ls])
++			ok(hl * ls < mtn * ls and mtn * ls < peak and absf(mtn * ls / peak - mtn / 6739.0) < 1.0e-9 and absf(hl * ls / peak - hl / 6739.0) < 1.0e-9, "%s: the mountain line (%.0f) and the highland line (%.0f) are the same share of the peak as on medium of its tallest relief (%.3f and %.3f), and under it" % [nm, mtn * ls, hl * ls, mtn * ls / peak, hl * ls / peak])
 +			var mtop: int = 0
 +			var tops: Array = []
 +			for i in range(pts.size()):
@@ -309,22 +347,20 @@ index 0000000..104e9c0
 +				if int(bio[ti]) == WorldPlanet.BIO_MOUNTAINS:
 +					mtop += 1
 +			ok(mtop >= 90, "%s: the tallest ground reaches the mountain line: %d of the 100 tallest points are mountain biome" % [nm, mtop])
-+			# the temperature falls with the capped height at the scaled rate: a fall over the whole cap is the fall over medium's tallest relief
-+			var dT: float = 0.0
-+			var dTm: float = 0.0
++			# the temperature falls with the capped height at the scaled rate: a fall over the planet's tallest capped peak is the fall over medium's tallest relief, so the highest peak reaches the snow line where medium's does (Rendering's snow line is 0.997 of it)
 +			var q0: Array = pts[0]
 +			WorldClimate.climateAt(P, q0[0], q0[1], q0[2], 0.0)
 +			var T0: float = float(WorldClimate._cT)
-+			WorldClimate.climateAt(P, q0[0], q0[1], q0[2], cap)
-+			dT = T0 - float(WorldClimate._cT)
++			WorldClimate.climateAt(P, q0[0], q0[1], q0[2], peak)
++			var dT: float = T0 - float(WorldClimate._cT)
 +			SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
 +			var Pmed := WorldPlanet.make(7)
 +			WorldClimate.climateAt(Pmed, q0[0], q0[1], q0[2], 0.0)
 +			var Tm0: float = float(WorldClimate._cT)
 +			WorldClimate.climateAt(Pmed, q0[0], q0[1], q0[2], 6739.0)
-+			dTm = Tm0 - float(WorldClimate._cT)
++			var dTm: float = Tm0 - float(WorldClimate._cT)
 +			SimConst.setPlanet(int(sizes[nm]))
-+			ok(absf(dT - dTm) < 1.0e-9 and dT > 0.0, "%s: the temperature falls by %.4f over the cap, as it does over medium's tallest relief (%.4f): the snow and the tree line follow the capped height" % [nm, dT, dTm])
++			ok(absf(dT - dTm) < 1.0e-9 and dT > 0.0, "%s: the tallest capped peak is as cold as medium's tallest relief (a fall of %.4f against %.4f): the snow and the tree line reach the top" % [nm, dT, dTm])
 +			var order: Array = capped.duplicate()
 +			order.sort()
 +			var top: Array = order.slice(order.size() - 100)
@@ -351,9 +387,9 @@ index 0000000..104e9c0
 +			WorldLand.setB(b0)
 +		else:
 +			ok(same and cap == 0.0, "%s: no cap, and the heights are bit for bit what they are without the code (all 20,000 equal)" % nm)
-+	# the controls of the biome rows: the old lines (the cap on, the lines of medium unscaled) put no mountain biome on the tallest ground of a small planet, and the old reading (the lines of medium on the uncapped height) puts the mountain line at a different share of the cap on tiny and small
++	# the controls of the biome rows: the old lines (the cap on, the lines of medium unscaled) put no mountain biome on the tallest ground of a small planet, and Art's first scale (by the cap over 6,739) leaves the highest peak warmer than medium's tallest relief (no snow at the top)
 +	var oldTop: Array = []
-+	var oldShare: Array = []
++	var byCap: Array = []
 +	var sub: Array = pts.slice(0, 4000)
 +	for nm in ["tiny", "small"]:
 +		SimConst.setPlanet(int(sizes[nm]))
@@ -371,9 +407,22 @@ index 0000000..104e9c0
 +				cm += 1
 +		oldTop.append(cm)
 +		WorldPlanetSize.setLinesOff(false)
-+		oldShare.append(WorldPlanetSize.reliefCap(float(Po.c.mountainAbove)) / maxf(WorldPlanetSize.reliefCapUnits(), 1.0))
++		WorldPlanetSize.setLinesByCap(true)
++		var pk: float = WorldPlanetSize.tallestCapped(Po)
++		var qc: Array = pts[0]
++		WorldClimate.climateAt(Po, qc[0], qc[1], qc[2], 0.0)
++		var Tc0: float = float(WorldClimate._cT)
++		WorldClimate.climateAt(Po, qc[0], qc[1], qc[2], pk)
++		byCap.append(Tc0 - float(WorldClimate._cT))
++		WorldPlanetSize.setLinesByCap(false)
++	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
++	var Pm2 := WorldPlanet.make(7)
++	WorldClimate.climateAt(Pm2, pts[0][0], pts[0][1], pts[0][2], 0.0)
++	var Tz: float = float(WorldClimate._cT)
++	WorldClimate.climateAt(Pm2, pts[0][0], pts[0][1], pts[0][2], 6739.0)
++	var dTmed: float = Tz - float(WorldClimate._cT)
 +	ok(negative or int(oldTop[0]) < 10, "control (old lines): with the lines of medium unscaled, %d of the 100 tallest points of tiny are mountain biome (its tallest ground is under the unscaled line), so the mountain row can fail" % [oldTop[0]])
-+	ok(negative or absf(float(oldShare[0]) - float(oldShare[1])) > 0.01, "control (old reading): the lines of medium on the uncapped height sit at %.3f of the cap on tiny and %.3f on small, not one share (ruled: %.3f on both), so the share row can fail" % [oldShare[0], oldShare[1], float(WorldPlanet.make(7).c.mountainAbove) / 6739.0])
++	ok(negative or (float(byCap[0]) < dTmed - 0.05 and float(byCap[1]) < dTmed - 0.05), "control (the first scale, by the cap): the highest peak is only %.3f colder than the sea level on tiny and %.3f on small, against %.3f for medium's tallest relief: no snow at the top, so the temperature row can fail" % [byCap[0], byCap[1], dTmed])
 +	# the squeeze itself, at tiny and small: monotone, its own under the knee, never over the cap
 +	for nm in ["tiny", "small"]:
 +		SimConst.setPlanet(int(sizes[nm]))
@@ -401,7 +450,7 @@ index 0000000..104e9c0
 +	var hOff: String = WorldPlanet.dataHash(3)
 +	WorldPlanetSize.setReliefOff(negative)
 +	var hOn: String = WorldPlanet.dataHash(3)
-+	_setKeys(true, 0.7)
++	_setKeys(true, 0.6)
 +	WorldPlanetSize.setReliefOff(negative)
 +	var hKnee: String = WorldPlanet.dataHash(3)
 +	_setKeys(true)
@@ -410,7 +459,7 @@ index 0000000..104e9c0
 +	var mOff: String = WorldPlanet.dataHash(3)
 +	WorldPlanetSize.setReliefOff(negative)
 +	var mOn: String = WorldPlanet.dataHash(3)
-+	ok(hOn != hOff and hKnee != hOn and hKnee != hOff, "tiny: the planet data key follows the cap (off, knee 0.6 and knee 0.7 are three keys), so a saved planet is a miss when the numbers change")
++	ok(hOn != hOff and hKnee != hOn and hKnee != hOff, "tiny: the planet data key follows the cap (off, knee 0.7 and knee 0.6 are three keys), so a saved planet is a miss when the numbers change")
 +	ok(mOn == mOff, "medium: the key is exactly what it was with the cap keys on in the data")
 +	_setKeys(shipped)
 +	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)

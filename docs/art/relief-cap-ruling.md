@@ -17,3 +17,9 @@ How to set it: take each line's height on medium, where nothing is capped, as a 
 ## What not to do
 
 World's first build reads biomes from the uncapped height. That keeps mountain and highland land where it was, but on ground the squeeze has flattened, so it shows mountain biome (rock, snow, strata) on near-flat hills, and the lines land at different shares of the cap on each size (about 0.67 on tiny and 0.63 on small). That is not what this ruling means: one share of the capped height, the same on every size. If the biome map must stay on the uncapped height for a different reason, the land type may stay, but the altitude lines (snow, pale rock, tree line) must still be placed by the capped height.
+
+## Follow-up after the posed stills (2026-11-22)
+
+- **Knee: 0.7.** In `gw1c2-pose-small-a-range-knee06-vs-07.png` neither crest is table-flat, but at 0.7 the crest rises into a fuller dome and reads more like a hill range against the sky; at 0.6 it is a little lower and smoother. Take 0.7.
+- **Snow line: relative to the size's tallest capped peak, not the cap.** The squeeze only approaches the cap, so the real tops are 1,591 (tiny) and 3,225 (small), below the cap-scaled line (6,720 times cap over 6,739 gives about 1,950 and 3,890): scaling by the cap would give no snow at all on those sizes, which is not what the line rule in this file meant. Put the snow line at 0.997 of each size's tallest capped peak (medium's own share: 6,720 of 6,739), about 1,586 on tiny and 3,215 on small. That keeps snow as rare as on medium and lets the highest capped peak whiten.
+- **Other altitude lines (pale rock, tree line, highland):** scale by the same factor (the size's tallest capped peak over 6,739), for the same reason.

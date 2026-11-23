@@ -1,0 +1,7 @@
+# GW1c stage 2 on main 52aa1708 with the corrected relief cap (knee 0.7, lines by the tallest capped peak), keys off: the checks of the stage that cover it
+RELIEFCAP: 0 check(s) failed
+SIZES: 0 check(s) failed
+GLOBE: 0 check(s) failed
+MEMORYMODEL: 0 check(s) failed
+CLIMATE: 0 check(s) failed
+PLANET: 0 check(s) failed

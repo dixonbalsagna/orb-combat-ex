@@ -1,30 +1,74 @@
   ok    sizes.json is clean as shipped ([])
       the cap keys in the shipped data: on (this check turns them on in memory)
-  ok    tiny: no point of 20,000 is over 0.3 of the radius, in the surface (tallest 1619) or in the field with its detail (1590); the cap 1956, R 6519
+  ok    tiny: no point of 20,000 is over 0.3 of the radius, in the surface (tallest 1698) or in the field with its detail (1670); the cap 1956, R 6519
   ok    tiny: and the cap acts: without it the tallest is 6769 (1.04 R)
-  ok    tiny: the mountain line (929) and the highland line (667) are the same share of the cap as on medium, of the tallest relief 6,739 (0.475 and 0.341 of the cap; the lines scaled by 0.290)
+  ok    tiny: the lines scale by the planet's tallest capped peak (1701, under the cap 1956; the 20,000 sampled points reach 1698) over 6,739: 0.2524
+  ok    tiny: the mountain line (808) and the highland line (581) are the same share of the peak as on medium of its tallest relief (0.475 and 0.341), and under it
   ok    tiny: the tallest ground reaches the mountain line: 100 of the 100 tallest points are mountain biome
-  ok    tiny: the temperature falls by 1.1232 over the cap, as it does over medium's tallest relief (1.1232): the snow and the tree line follow the capped height
-  ok    tiny: the 100 tallest points keep their taper (84 distinct heights to half a unit, 258 from the lowest to the highest of them)
-  ok    tiny: no column of a gen 2 ring match with B plates is over the cap or held flat at it (tallest 1357, 0 at the cap; without the cap 5795, so the row sees the difference)
-  ok    tiny: no column of a gen 2 ring match on the fast path (no B plates) is over the cap or held flat at it (tallest 1269, 0 at the cap; without the cap 3457, so the row sees the difference)
-  ok    tiny: no column of a gen 3 ring match is over the cap or held flat at it (tallest 1356, 0 at the cap; without the cap 5786, so the row sees the difference)
-  ok    small: no point of 20,000 is over 0.3 of the radius, in the surface (tallest 3204) or in the field with its detail (3203); the cap 3911, R 13038
+  ok    tiny: the tallest capped peak is as cold as medium's tallest relief (a fall of 1.1232 against 1.1232): the snow and the tree line reach the top
+  ok    tiny: the 100 tallest points keep their taper (82 distinct heights to half a unit, 198 from the lowest to the highest of them)
+  ok    tiny: no column of a gen 2 ring match with B plates is over the cap or held flat at it (tallest 1503, 0 at the cap; without the cap 5795, so the row sees the difference)
+  ok    tiny: no column of a gen 2 ring match on the fast path (no B plates) is over the cap or held flat at it (tallest 1504, 0 at the cap; without the cap 3457, so the row sees the difference)
+  ok    tiny: no column of a gen 3 ring match is over the cap or held flat at it (tallest 1502, 0 at the cap; without the cap 5786, so the row sees the difference)
+  ok    small: no point of 20,000 is over 0.3 of the radius, in the surface (tallest 3356) or in the field with its detail (3362); the cap 3911, R 13038
   ok    small: and the cap acts: without it the tallest is 7087 (0.54 R)
-  ok    small: the mountain line (1857) and the highland line (1335) are the same share of the cap as on medium, of the tallest relief 6,739 (0.475 and 0.341 of the cap; the lines scaled by 0.580)
+  ok    small: the lines scale by the planet's tallest capped peak (3357, under the cap 3911; the 20,000 sampled points reach 3356) over 6,739: 0.4981
+  ok    small: the mountain line (1594) and the highland line (1146) are the same share of the peak as on medium of its tallest relief (0.475 and 0.341), and under it
   ok    small: the tallest ground reaches the mountain line: 100 of the 100 tallest points are mountain biome
-  ok    small: the temperature falls by 1.1232 over the cap, as it does over medium's tallest relief (1.1232): the snow and the tree line follow the capped height
-  ok    small: the 100 tallest points keep their taper (95 distinct heights to half a unit, 570 from the lowest to the highest of them)
-  ok    small: no column of a gen 2 ring match with B plates is over the cap or held flat at it (tallest 2850, 0 at the cap; without the cap 6661, so the row sees the difference)
-  ok    small: no column of a gen 2 ring match on the fast path (no B plates) is over the cap or held flat at it (tallest 2896, 0 at the cap; without the cap 5228, so the row sees the difference)
-  ok    small: no column of a gen 3 ring match is over the cap or held flat at it (tallest 2824, 0 at the cap; without the cap 6643, so the row sees the difference)
+  ok    small: the tallest capped peak is as cold as medium's tallest relief (a fall of 1.1232 against 1.1232): the snow and the tree line reach the top
+  ok    small: the 100 tallest points keep their taper (93 distinct heights to half a unit, 447 from the lowest to the highest of them)
+  ok    small: no column of a gen 2 ring match with B plates is over the cap or held flat at it (tallest 3187, 0 at the cap; without the cap 6661, so the row sees the difference)
+  ok    small: no column of a gen 2 ring match on the fast path (no B plates) is over the cap or held flat at it (tallest 3121, 0 at the cap; without the cap 5228, so the row sees the difference)
+  ok    small: no column of a gen 3 ring match is over the cap or held flat at it (tallest 3184, 0 at the cap; without the cap 6643, so the row sees the difference)
   ok    medium: no cap, and the heights are bit for bit what they are without the code (all 20,000 equal)
   ok    big: no cap, and the heights are bit for bit what they are without the code (all 20,000 equal)
   ok    huge: no cap, and the heights are bit for bit what they are without the code (all 20,000 equal)
   ok    control (old lines): with the lines of medium unscaled, 0 of the 100 tallest points of tiny are mountain biome (its tallest ground is under the unscaled line), so the mountain row can fail
-  ok    control (old reading): the lines of medium on the uncapped height sit at 0.682 of the cap on tiny and 0.639 on small, not one share (ruled: 0.475 on both), so the share row can fail
+  ok    control (the first scale, by the cap): the highest peak is only 0.977 colder than the sea level on tiny and 0.964 on small, against 1.123 for medium's tallest relief: no snow at the top, so the temperature row can fail
   ok    tiny: the squeeze is monotone, its own under the knee, never over the cap (1956)
   ok    small: the squeeze is monotone, its own under the knee, never over the cap (3911)
-  ok    tiny: the planet data key follows the cap (off, knee 0.6 and knee 0.7 are three keys), so a saved planet is a miss when the numbers change
+  ok    tiny: the planet data key follows the cap (off, knee 0.7 and knee 0.6 are three keys), so a saved planet is a miss when the numbers change
   ok    medium: the key is exactly what it was with the cap keys on in the data
 RELIEFCAP: 0 check(s) failed
+  ok    sizes.json loads clean ([])
+  ok    five sizes are offered, smallest first (["tiny", "small", "medium", "big", "huge"])
+  ok    the sixth, colossal, is data that is off
+  ok    medium is 4,800; no size, or no planet to size, is medium
+  ok    tiny: the match is bound to 1280 columns round, an arena of the same, a radius of 6519
+  ok    tiny: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 1.6 s, shared machine: void as a measurement)
+  ok    small: the match is bound to 2560 columns round, an arena of the same, a radius of 13038
+  ok    small: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 2.0 s, shared machine: void as a measurement)
+  ok    medium: the match is bound to 4800 columns round, an arena of the same, a radius of 24446
+  ok    medium: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 2.4 s, shared machine: void as a measurement)
+  ok    big: the match is bound to 9600 columns round, an arena of the same, a radius of 48892
+  ok    big: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 7.0 s, shared machine: void as a measurement)
+  ok    huge: the match is bound to 19200 columns round, an arena of the same, a radius of 97785
+  ok    huge: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 11.8 s, shared machine: void as a measurement)
+  ok    tiny: the same setup plays the same match (hash at tick 600)
+  ok    big: the same setup plays the same match (hash at tick 600)
+  ok    medium named plays byte for byte the match medium unnamed plays (hash at tick 120)
+  ok    a size the data does not have plays medium
+  ok    tiny: the tallest of 485 buildings is 1956, within 1956 (0.3 of the radius 6519)
+  ok    small: the tallest of 1240 buildings is 3911, within 3911 (0.3 of the radius 13038)
+  ok    medium: no cap, the tallest building is 4875 (the data's landmarks stand as they were)
+  ok    big: no cap, the tallest building is 4875 (the data's landmarks stand as they were)
+  ok    tiny, plans on after a medium match: the tallest of 485 buildings is 1956, within 1956
+  ok    tiny, plans on: the same setup plays the same match twice
+  ok    small, plans on after a medium match: the tallest of 1240 buildings is 3911, within 3911
+  ok    small, plans on: the same setup plays the same match twice
+  ok    the kept places' key carries the size when it is not medium (medium's is as it was), so a tiny planet never reads a medium planet's towers
+  ok    75 spawns (5 sizes x the pool's planets x touches): all within a base launch's reach (6600) of a place; the farthest is 6476
+  ok    a big planet that is not made is not ready, and asking leaves the host's static (4,800) as it was
+  ok    beginning its load leaves the static as it was
+  ok    the load, run to its end at the planet's own size, makes it ready (and the static is still 4,800)
+  ok    a strict match on it starts (planetNC 9600, a frame, none refused)
+  ok    a crater dug here and one half way round the huge planet are two records
+  ok    each place's box lists its own record only (no aliasing across the planet)
+  ok    each centre reads its own bowl's depth
+  ok    two boxes of the huge planet that a 64 offset would give one key have two (the store's key)
+  ok    and in the water records' grid
+  ok    two boxes past huge's radius that its old offset of 98 gave one key have two (both grids)
+  ok    (the pair is real: with the old offset of 98 those two boxes had one key, in both grids)
+  ok    no two boxes share a key in three slabs of 224 x 224 boxes (112 boxes either way from the centre): 0 shared in the store, 0 in the water records
+  ok    a field made at tiny (80 nodes an edge) is not returned for medium (300): two fields, each its own planet's
+  ok    and asking again at tiny gives the tiny field back (the memo holds both)
