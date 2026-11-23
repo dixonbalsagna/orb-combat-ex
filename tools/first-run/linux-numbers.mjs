@@ -70,14 +70,29 @@ async function main() {
   add({ id: 'first-picture', what: 'the program draws (its first frame-rate line)', ok: first !== null, detail: first !== null ? `after ${first.toFixed(1)} s` : 'no frame-rate line in 300 s' });
   for (let i = 0; i < 40 && !exited && parseFps(log).length < 4; i++) await sleep(500);   // the warning is up and drawing for a few seconds before the first key
   await sleep(4000 * slow);
+  // no window manager under Xvfb: nobody gives the game's window the keyboard focus, and the game may ignore keys it did not get focus for (the second run: every key sent, no match ever built). So the window is
+  // found by its name and focused with xdotool (XSetInputFocus: no window manager needed), before the keys and again before each step's.
+  const focus = () => {
+    const f = spawnSync('xdotool', ['search', '--onlyvisible', '--name', 'Orb Combat'], { encoding: 'utf8' });
+    const id = String(f.stdout || '').trim().split(/\s+/).filter(Boolean)[0];
+    if (!id) { const any = spawnSync('xdotool', ['search', '--onlyvisible', '--name', ''], { encoding: 'utf8' }); return { ok: false, detail: `no window named Orb Combat (${String(any.stdout || '').trim().split(/\s+/).filter(Boolean).length} visible windows)` }; }
+    const w = spawnSync('xdotool', ['windowfocus', id], { encoding: 'utf8' });
+    return { ok: w.status === 0, detail: w.status === 0 ? `window ${id} focused` : String(w.stderr).trim().slice(0, 100) };
+  };
+  const f0 = focus();
+  add({ id: 'window-focus', what: 'the game\'s window is found and given the keyboard focus', ok: f0.ok, detail: `at ${at()}: ${f0.detail}` });
   for (const s of steps.steps) {
     if (exited) { add({ id: s.id, what: s.what, ok: false, detail: 'the program had already ended' }); continue; }
     // the warning's step: on this unwatched virtual display the workflow presses Return (RL-270); on a person's PC a person does
     const keys = s.human ? ['ENTER'] : (s.keys || []);
+    if (keys.length) focus();
     const err = keys.length ? press(keys, 250 * slow) : '';
     await sleep(Number(s.settleMs ?? 1500) * slow);
     add({ id: s.id, what: s.what, ok: !err, detail: `at ${at()}${err ? ': ' + err : s.human ? ': Return pressed by the workflow on the virtual display' : keys.length ? `: ${keys.length} key(s)` : ''}` });
   }
+  // the match was built: the program prints its pair-bake line when a match's pieces are made (the first run's keys may have met a game that never left the warning)
+  const built = parseLoad(log).pairBakeMs !== null;
+  add({ id: 'match-built', what: 'a match was built after the keys (the program printed its pair-bake line)', ok: built, detail: built ? `at ${at()}` : 'no pair-bake line: the keys did not get the game past its first screens' });
   const t1 = Date.now();
   for (let i = 0; i < 40 && !exited; i++) await sleep(250);
   run.closed = exited;
