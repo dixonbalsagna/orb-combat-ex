@@ -403,7 +403,8 @@ static func _human(f) -> bool:
 
 
 ## The AI's perfect block: once for each strike with a window, one draw against R5's rate for the state it holds
-## (plus heavyAdd against a heavy or an ender), times its level's share (moveset-rules.md section 11(g)).
+## (plus heavyAdd against a heavy or an ender), times its level's share (moveset-rules.md section 11(g)). The idle training dummy never
+## perfect-blocks a B heavy (DirBrawl.idleDummy: perfectVsHeavy).
 static func _aiBlocks(S: SimState, ex) -> void:
 	if ex.kind == "sig":
 		return
@@ -429,6 +430,8 @@ static func _aiBlocks(S: SimState, ex) -> void:
 			chance = float(lv.brawl.perfectVsHeavy)
 		if DirBrawl.isBrawl(ex) and lv.get("brawl", {}).has("perfectVsMash") and bool(DirBrawl.la().get("answer", {}).get("enabled", false)) and DirBrawl.mashing(S, ex.A if f == ex.D else ex.D):
 			chance = maxf(chance, float(lv.brawl.perfectVsMash))   # 10-26 item 21: a mash is readable, so its level answers it
+		if DirBrawl.isBrawl(ex) and int(b.args.get("bk", -1)) == DirBrawl.BIG and DirBrawl.idleDummy(f, ex.A if f == ex.D else ex.D, "perfectVsHeavy"):
+			chance = 0.0   # the idle training dummy (ai.json idleDummy, Game Design, 2026-11-23): a held charge always connects in practice; the draw stays, so the stream doesn't shift
 		if p > 0.0 and S.rng.next() < chance:
 			guardPress(S, f)
 

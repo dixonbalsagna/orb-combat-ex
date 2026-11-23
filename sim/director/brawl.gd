@@ -2529,11 +2529,13 @@ static func _windOn(f) -> bool:
 ##  - otherwise (too far to close in time, or no catch to be had) it waits for the release, hands down.
 ## Drawn, as he lets go with no catch of its own on its way: it slips, timed to the release (_aiHoldDodge: the slip, not the dodge-cancel).
 ## The blow meets nothing, he is open for its recoverWhiff, and the open-rival rule punishes him. Without the level's key, or at 0, nothing is drawn and nothing is
-## written. True when the answer has its input this tick.
+## written; nor for the idle training dummy (idleDummy). True when the answer has its input this tick.
 static func _aiVsHold(S: SimState, ex, f, o, i: SimIntent, bl: Dictionary, slot: int) -> bool:
 	var ha = bl.get("holdAnswer", 0.0)
 	if not (ha is Dictionary) and float(ha) <= 0.0:
 		return false
+	if idleDummy(f, o, "holdAnswer"):
+		return false   # the idle training dummy is there to be hit: it never draws, notes or answers a hold
 	if not _windOn(o) or _g(o, KIND) != BIG or _g(o, FLAV) != 0:
 		return false
 	var let: bool = _g(o, CHG) == 3 or not _down(o, BIG)   # let go: his blow is on its way, or goes as this tick plays
@@ -2569,6 +2571,19 @@ static func _aiVsHold(S: SimState, ex, f, o, i: SimIntent, bl: Dictionary, slot:
 	if _now(S) - oh + need <= int(cfg().heavy.charge.fromTicks) and _giver(S, ex) == f:
 		_s(f, AI_GIVE, 2)   # it closes in, straight at him
 	return true
+
+
+## The idle training dummy (Game Design, gauntlet-plan.md, 2026-11-23): a computer body whose role is in ai.json idleDummy.roles (the
+## reference fighter), against a player, skips the answers idleDummy.skips names: holdAnswer (it never draws, notes, grabs or slips against
+## a visible hold: _aiVsHold) and perfectVsHeavy (it never perfect-blocks a B heavy, so a held charge always connects: DirInterrupt._aiBlocks).
+## An idle dummy is there to be hit, to practise holds, launches and charges, and for Tools' dummy scenes. Against another computer (Tools'
+## AI pairings) it is the yardstick and plays as the fighters do. Only the dummy set to "standard AI" (modes.md's training toggles) answers
+## a player, at its level's numbers: Training's setup will name that dummy when the mode is built.
+static func idleDummy(f, o, what: String) -> bool:
+	if o == null or o.ai != null:
+		return false
+	var d = DirAI.skill().get("idleDummy", {})
+	return d is Dictionary and (d.get("roles", []) as Array).has(f.role) and (d.get("skips", []) as Array).has(what)
 
 
 ## Its slip, timed to the release of a hold it answered (_aiVsHold; Game Design, gauntlet-plan.md, 2026-11-22: the computer plays by the

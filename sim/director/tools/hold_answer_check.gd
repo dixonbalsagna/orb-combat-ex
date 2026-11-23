@@ -20,6 +20,15 @@ extends SceneTree
 ##     settings (it won 40 of 40 before the answer; X-06's A1 exit, gauntlet-plan.md section 10)
 ##   - negative control: holdAnswer 0, with the old answers (the catch share and giving ground) at 0: nothing answers, the charge reaches
 ##     its release at full
+##   - the idle training dummy (Game Design, 2026-11-23; ai.json idleDummy): on the data as it ships, the reference fighter never
+##     answers a hold: with the answer at 1.0 it doesn't note, grab, close in or slip, and the charge reaches its release at full; nor a
+##     third hold in Medium's window; nor does it slip a release it can't reach; against another computer (Tools' AI pairings) the
+##     reference fighter plays as the fighters do: the skip is the dummy against a player only
+##   - nor does the idle dummy perfect-block a full charge (idleDummy.skips perfectVsHeavy): of 100 stagings at Medium, none of the charges
+##     released at full, and every one lands unguarded; while a computer still does at its level's number (perfectVsHeavy, over its charges
+##     released at full): the reference fighter as standard AI and RIVAL at Medium, RIVAL at Easy
+## The computer in every other staging is the reference fighter as the dummy set to "standard AI": the staging empties
+## idleDummy.roles for its run (opts.dummy keeps the data's).
 ##   godot --headless --path . --script res://sim/director/tools/hold_answer_check.gd
 ## Ends on the verdict line.
 
@@ -40,9 +49,14 @@ func ok(c: bool, what: String) -> void:
 ## ring (the player's earlier visible holds, so many live ticks before this one), cool (the computer's dodge cooldown running and no ki),
 ## slips (the computer's earlier slips of a release, so many ticks before the press, straight away), repeat ([holds, gap, length]: in place of one hold,
 ## so many holds of `length` ticks, each pressed once he is free (no stun, his line idle) at least `gap` ticks after the last), ticks
-## (the staging's length, 260).
+## (the staging's length, 260), dummy (the data's idleDummy as it ships: the idle dummy; else the roles are emptied for the run), seed (the
+## match's, 11), cpu (the computer's fighter, REFERENCE).
 func _run(hold: int, opts: Dictionary) -> Dictionary:
 	SimInputData.load_and_apply()   # the pad's switches as main ships them (bNoBeam: B is the heavy)
+	var sk = DirAI.skill().get("idleDummy", null)
+	var keepRoles = sk.get("roles", null) if sk is Dictionary else null
+	if sk is Dictionary and not bool(opts.get("dummy", false)):
+		sk["roles"] = []   # the dummy set to standard AI
 	var bl: Dictionary = DirAI.lv().get("brawl", {})
 	var gr: Dictionary = bl.get("grapple", {})
 	var tc: Dictionary = DirInterrupt.data().grapple.throw
@@ -59,7 +73,7 @@ func _run(hold: int, opts: Dictionary) -> Dictionary:
 	if bool(opts.get("noRule", false)):
 		tc.erase("holdBreak")
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, 11, {"p1": false, "p2": true}, {"intro": false, "v2": [true, true], "slots": ["PROTAGONIST", "REFERENCE"]})
+	SimCore.newMatch(S, int(opts.get("seed", 11)), {"p1": false, "p2": true}, {"intro": false, "v2": [true, true], "slots": ["PROTAGONIST", String(opts.get("cpu", "REFERENCE"))]})
 	var P = S.fighters[0]
 	var C = S.fighters[1]
 	var brain = C.ai
@@ -85,7 +99,7 @@ func _run(hold: int, opts: Dictionary) -> Dictionary:
 	var pressN: int = 0
 	var react: int = int(DirAI.skill().get("reactTicks", 14))
 	var r := {"oh": 0, "catchLive": -1, "clinch": false, "lead": 0, "release": -1, "relCharge": -1.0, "landed": false, "miss": "", "punish": false,
-		"closed": -1, "gapReact": -1.0, "guarded": false, "gave": false, "dodge": -1, "kiPaid": 0.0, "thrown": "", "throwDmg": 0.0, "noGrabAfter": 0, "react": react, "counts": {}, "count": 0, "noted": false, "draw": -1.0, "slipText": ""}
+		"closed": -1, "gapReact": -1.0, "guarded": false, "gave": false, "dodge": -1, "kiPaid": 0.0, "thrown": "", "throwDmg": 0.0, "noGrabAfter": 0, "react": react, "counts": {}, "count": 0, "noted": false, "draw": -1.0, "slipText": "", "perfect": 0}
 	for t in range(int(opts.get("ticks", 260))):
 		if bool(opts.get("cool", false)) and t == 1:
 			C.act.dodgeCool = 100000
@@ -157,6 +171,8 @@ func _run(hold: int, opts: Dictionary) -> Dictionary:
 				r.relCharge = float(e.x)
 			elif k == "miss" and int(e.actor) == 0 and r.miss == "":
 				r.miss = String(e.text)
+			elif k == "perfect_block" and int(e.actor) == 1:
+				r.perfect = int(r.perfect) + 1
 			elif k == "hold_dodge" and int(e.actor) == 1 and r.dodge < 0:
 				r.dodge = since
 				r.kiPaid = kiWas - C.ki
@@ -177,6 +193,8 @@ func _run(hold: int, opts: Dictionary) -> Dictionary:
 			gr[k] = keep[k]
 	if keep.holdBreak != null:
 		tc["holdBreak"] = keep.holdBreak
+	if keepRoles != null:
+		sk["roles"] = keepRoles
 	return r
 
 
@@ -227,6 +245,26 @@ func _padMatch(seed: int) -> Array:
 	var n: int = S.tick
 	SimCore.dispose(S)
 	return [result, n]
+
+
+## n stagings of a charge held 60 ticks, one a seed (1 to n), counted over the charges released at full (a computer's own strike can cut
+## one short): [those the computer perfect-blocked, those released at full, those that landed unguarded].
+func _pbRate(n: int, opts: Dictionary) -> Array:
+	var blocks: int = 0
+	var full: int = 0
+	var landed: int = 0
+	for sd in range(1, n + 1):
+		var o2: Dictionary = opts.duplicate()
+		o2["seed"] = sd
+		var r: Dictionary = _run(60, o2)
+		if float(r.relCharge) < 1.0:
+			continue
+		full += 1
+		if int(r.perfect) > 0:
+			blocks += 1
+		if bool(r.landed):
+			landed += 1
+	return [blocks, full, landed]
 
 
 func _line(what: String, r: Dictionary) -> void:
@@ -322,6 +360,39 @@ func _init() -> void:
 	var z: Dictionary = _run(60, {"answer": 0.0, "quiet": true})
 	_line("negative control", z)
 	ok(int(z.catchLive) < 0 and int(z.dodge) < 0 and int(z.closed) < 0 and float(z.relCharge) >= 1.0, "negative control: holdAnswer 0 and the old answers at 0: nothing answers the hold, and the charge reaches its release at full")
+	var skr = DirAI.skill().get("idleDummy", {})
+	var roles: Array = skr.get("roles", []) if skr is Dictionary else []
+	var dm: Dictionary = _run(60, {"answer": 1.0, "quiet": true, "dummy": true})
+	_line("the idle dummy, the answer at 1.0", dm)
+	ok(roles.has("reference") and int(dm.oh) > 0 and not bool(dm.noted) and int(dm.catchLive) < 0 and int(dm.dodge) < 0 and int(dm.closed) < 0 and float(dm.relCharge) >= 1.0, "the idle training dummy never answers a hold (ai.json idleDummy.roles %s): with the answer at 1.0 it doesn't note, grab, close in or slip, and the charge reaches its release at full (%.2f)" % [str(roles), float(dm.relCharge)])
+	var dm3: Dictionary = _run(60, {"data": true, "quiet": true, "warm": 400, "ring": [100, 220], "dummy": true})
+	_line("the idle dummy, Medium's data, a third hold in the window", dm3)
+	ok(not bool(dm3.noted) and int(dm3.count) == 0 and int(dm3.catchLive) < 0 and int(dm3.dodge) < 0 and int(dm3.closed) < 0 and float(dm3.relCharge) >= 1.0, "... nor a third hold in Medium's window (the standard AI answers it at 0.9, the row above): never counted, the charge at full (%.2f)" % float(dm3.relCharge))
+	var dmS: Dictionary = _run(50, {"answer": 1.0, "quiet": true, "gap": 2.3, "dummy": true})
+	_line("the idle dummy, 2.3 bh out, the answer at 1.0", dmS)
+	ok(int(dmS.release) >= 0 and int(dmS.dodge) < 0 and dmS.miss != "dodged", "... nor does it slip a release it can't reach (2.3 bh out): the charge isn't made to miss (the miss cue says %s)" % (dmS.miss if dmS.miss != "" else "nothing"))
+	var Sv := SimCore.createSim()
+	SimCore.newMatch(Sv, 11, {"p1": true, "p2": true}, {"intro": false, "v2": [true, true], "slots": ["PROTAGONIST", "REFERENCE"]})
+	var vsCpu: bool = DirBrawl.idleDummy(Sv.fighters[1], Sv.fighters[0], "holdAnswer") or DirBrawl.idleDummy(Sv.fighters[1], Sv.fighters[0], "perfectVsHeavy")
+	var brainP = Sv.fighters[0].ai
+	Sv.fighters[0].ai = null
+	var vsPlayer: bool = DirBrawl.idleDummy(Sv.fighters[1], Sv.fighters[0], "holdAnswer") and DirBrawl.idleDummy(Sv.fighters[1], Sv.fighters[0], "perfectVsHeavy")
+	Sv.fighters[0].ai = brainP
+	SimCore.dispose(Sv)
+	ok(brainP != null and not vsCpu and vsPlayer, "... the skip is the dummy against a player only: against another computer (Tools' AI pairings) the reference fighter answers as the fighters do (skips against a computer %s, against a player %s)" % [str(vsCpu), str(vsPlayer)])
+	var pbN: int = 100
+	var pbD: Array = _pbRate(pbN, {"answer": 0.0, "quiet": true, "dummy": true})
+	var pbS: Array = _pbRate(pbN, {"answer": 0.0, "quiet": true})
+	var pbR: Array = _pbRate(pbN, {"answer": 0.0, "quiet": true, "cpu": "RIVAL"})
+	DirAI.level = "easy"
+	var pbE: Array = _pbRate(pbN, {"answer": 0.0, "quiet": true, "cpu": "RIVAL"})
+	var pvhE: float = float(DirAI.lv().get("brawl", {}).get("perfectVsHeavy", 0.0))
+	DirAI.level = "medium"
+	var pvh: float = float(DirAI.lv().get("brawl", {}).get("perfectVsHeavy", 0.0))
+	print("      %d stagings of B held 60 ticks (holdAnswer 0, the old answers 0; seeds 1 to %d), perfect blocks of the charges released at full: the idle dummy %d of %d (%d landed unguarded); the reference fighter as standard AI %d of %d (%d landed); RIVAL %d of %d (%d landed) at Medium (perfectVsHeavy %.2f); RIVAL %d of %d (%d landed) at Easy (%.2f)" % [pbN, pbN, pbD[0], pbD[1], pbD[2], pbS[0], pbS[1], pbS[2], pbR[0], pbR[1], pbR[2], pvh, pbE[0], pbE[1], pbE[2], pvhE])
+	ok(roles.has("reference") and int(pbD[1]) >= pbN / 2 and int(pbD[0]) == 0 and int(pbD[2]) == int(pbD[1]), "the idle training dummy never perfect-blocks a full charge (idleDummy.skips perfectVsHeavy): 0 of %d at Medium, and every one landed unguarded (%d)" % [int(pbD[1]), int(pbD[2])])
+	ok(pvh > 0.0 and int(pbS[1]) >= pbN / 2 and int(pbR[1]) >= pbN / 2 and absf(float(pbS[0]) / float(pbS[1]) - pvh) <= 0.1 and absf(float(pbR[0]) / float(pbR[1]) - pvh) <= 0.1, "... while a computer still perfect-blocks it at its level's number (Medium perfectVsHeavy %.2f): the reference fighter as standard AI %d of %d, RIVAL %d of %d" % [pvh, int(pbS[0]), int(pbS[1]), int(pbR[0]), int(pbR[1])])
+	ok(pvhE > 0.0 and int(pbE[1]) >= pbN / 2 and absf(float(pbE[0]) / float(pbE[1]) - pvhE) <= 0.06, "... and at Easy's (%.2f): RIVAL %d of %d" % [pvhE, int(pbE[0]), int(pbE[1])])
 	DirAI.level = ""
 	print("HOLD ANSWER: %d check(s) failed" % fails)
 	quit(1 if fails > 0 else 0)

@@ -2154,6 +2154,17 @@
       "patternProperties": {"^_": true},
       "additionalProperties": false
     },
+    "idleDummy": {
+      "type": "object",
+      "description": "The idle training dummy (brawl.gd idleDummy): a computer body whose fighter role is listed, against a player, skips the answers listed (holdAnswer, perfectVsHeavy). The roles are the ones FighterData accepts (sim/core/fighter_data.gd).",
+      "properties": {
+        "roles": {"type": "array", "items": {"type": "string", "enum": ["hero", "villain", "rival", "reference"]}, "uniqueItems": true},
+        "skips": {"type": "array", "items": {"type": "string", "enum": ["holdAnswer", "perfectVsHeavy"]}, "uniqueItems": true}
+      },
+      "required": ["roles", "skips"],
+      "patternProperties": {"^_": true},
+      "additionalProperties": false
+    },
     "reactTicks": {
       "type": "integer",
       "minimum": 0,
