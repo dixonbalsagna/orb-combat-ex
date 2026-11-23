@@ -1,0 +1,92 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -588,6 +588,11 @@
+ const SCAR_FRINGE: float = 0.72
+ const SCAR_SLICE: int = 600
+ const SCAR_MIN: float = 0.27
++## A building's foot on the tile ground. TILE_FOOT_CAP: the deepest its body goes under its base (World: docs/world/lot-gap.md). TILE_FOOT_READS: footings read a frame; TILE_FOOT_SCAN: buildings looked at a frame; TILE_FOOT_NEAR: after the first pass, only those this near the camera on the planet (the cosine of the angle).
++const TILE_FOOT_CAP: float = 320.0
++const TILE_FOOT_READS: int = 6
++const TILE_FOOT_SCAN: int = 64
++const TILE_FOOT_NEAR: float = 0.985
+ const TILE_NEAR_DEFAULT: int = 3           # a tower near the line: 3 the rule and sink (Orb's Q and W), until Orb picks
+ 
+ ## The split's culling (planet_view.gd cull_to): a pane leaves out of its draw the ground's and water's chunks that lie
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -159,6 +159,8 @@
+ var _copies: Array = []
+ var tile_field: RenderTileField = null   # the tile ground's (main's --tiles); a second pane reads its source's
+ var _tile_for: SimState = null
++var _tf_i: int = 0
++var _tf_first: bool = true
+ var _bld_seen: Array = []          # per building: [curH, alive, fmask, hp, stage], the height and stage as it last stood
+ var _drawn: Array = []             # per building: [height, stage 0 to 3, standing] as drawn (a falling one keeps its last look)
+ var _grow := PackedInt32Array()    # this refresh's buildings with more people than figures at home
+@@ -199,6 +201,8 @@
+ 		_tile_for = S
+ 		tile_field = RenderTileField.new()
+ 		tile_field.begin(S)
++		_tf_i = 0
++		_tf_first = true
+ 		ground.tile_field = tile_field
+ 		tile_field.ground = ground
+ 		for tm in trees.meshes:
+@@ -1246,11 +1250,47 @@
+ 	return Vector2(RenderLook.Z_BUILDING_FRONT - d * 0.5, d)
+ 
+ 
++## The tile ground's footings: every building once, then those near the camera again as finer tiles come, a few a frame. A footing that moved sets its building again.
++func _tile_foot_slice(S: SimState, cam: Vector3) -> void:
++	var n: int = S.buildings.size()
++	if n == 0:
++		return
++	var left: int = RenderLook.TILE_FOOT_READS
++	var seen: int = RenderLook.TILE_FOOT_SCAN
++	while left > 0 and seen > 0:
++		seen -= 1
++		if _tf_i >= n:
++			_tf_i = 0
++			_tf_first = false
++		var bi: int = _tf_i
++		_tf_i += 1
++		var b = S.buildings[bi]
++		if not b.alive or _falls.has(bi) or _drops.has(bi):
++			continue
++		if not _tf_first and tile_field.dir_at(b.g.x, b.g.z, S.frame0).dot(cam) < RenderLook.TILE_FOOT_NEAR:
++			continue
++		left -= 1
++		var f: Vector2 = _footing(S, b)
++		if absf(f.x - _foot[bi].x) > 1.0:
++			_foot[bi] = f
++			_bld_seen[bi][4] = _set_building(S, bi, b, WorldStructures.curH(b))
++		else:
++			_foot[bi] = f
++
++
+ ## The lowest and highest ground under a building's footprint (its corners, edges and centre, as drawn).
+ func _footing(S: SimState, b) -> Vector2:
+ 	var zd: Vector2 = _depth(b)
+ 	var lo: float = INF
+ 	var hi: float = -INF
++	if tile_field != null:
++		# The tile ground: at its plan's place, as the view draws it, and a plinth no deeper than TILE_FOOT_CAP under its base.
++		for x in [b.g.x - b.w * 0.5, b.g.x, b.g.x + b.w * 0.5]:
++			for z in [b.g.z + zd.y * 0.5, b.g.z, b.g.z - zd.y * 0.5]:
++				var g: float = tile_field.height_at(tile_field.dir_at(x, z, S.frame0))
++				lo = minf(lo, g)
++				hi = maxf(hi, g)
++		return Vector2(maxf(lo, WorldStructures.baseY(S, b) - RenderLook.TILE_FOOT_CAP), hi)
+ 	for x in [b.x - b.w * 0.5, b.x, b.x + b.w * 0.5]:
+ 		for z in [zd.x + zd.y * 0.5, zd.x, zd.x - zd.y * 0.5]:
+ 			var g: float = ground.ground_at(S, x, z)
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -166,6 +166,7 @@
+ 		water_mat.set_shader_parameter(k, pane.planet._terrain_mat.get_shader_parameter(k))
+ 	water_mat.set_shader_parameter("crater_now", S.T)
+ 	_water_marks(S, tk)
++	pane.planet._tile_foot_slice(S, _pv)
+ 	if crater_look:
+ 		_scar_slice(S)
+ 	_bowls(S)

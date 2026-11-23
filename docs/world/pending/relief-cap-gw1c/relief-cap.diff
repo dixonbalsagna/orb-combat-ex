@@ -170,7 +170,7 @@ index 9bd4285..c330af2 100644
 +		_rcLoad()
 +	if _rcCap <= 0.0:
 +		return ""
-+	return "/rc%.3f/%.3f/%.1f/%.1f" % [_rcCap, _rcKnee, float(_d.get("reliefRef", 11000.0)), float(_d.get("reliefTop", 6739.0))]
++	return "/rc" + SimMathx.fixed(_rcCap, 3) + "/" + SimMathx.fixed(_rcKnee, 3) + "/" + SimMathx.fixed(float(_d.get("reliefRef", 11000.0)), 1) + "/" + SimMathx.fixed(float(_d.get("reliefTop", 6739.0)), 1)   # SimMathx.fixed, not a printf float: the lint's sim-text-float rule (Windows and Linux round an exact half differently)
 +
 +
 +## The cap in units at the size bound now (0: none).

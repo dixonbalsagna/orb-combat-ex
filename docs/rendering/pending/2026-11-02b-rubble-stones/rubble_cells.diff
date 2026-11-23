@@ -1,0 +1,26 @@
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -34,6 +34,7 @@
+ uniform vec4 cracked : source_color;
+ uniform vec4 rubble : source_color;
+ uniform float rubble_tint_h = 20.0;
++uniform vec2 rubble_cell = vec2(16.0, 0.12);   // the tile ground's rubble: a stone's size in units, and its spread of value
+ uniform float snow_from = 560.0;
+ uniform float snow_full = 900.0;
+ uniform float z_front = 140.0;   // RenderLook.Z_TERRAIN_FRONT: the top brightens from the back of the band to here
+@@ -280,9 +281,15 @@
+ 		c = mix(c, cracked.rgb, clamp(v_crack, 0.0, 1.0) * (0.3 + 0.7 * line));
+ 	}
+ 	if (v_rubble > 0.01) {
++#ifdef TILE_GROUND
++		// Stones keyed to the planet, small and close in value: the strip's 45-unit squares read as a checker on a hill face toward the camera.
++		float n = floor(fract(sin(dot(floor(v_q * (128.0 / rubble_cell.x)), vec3(41.3, 289.1, 113.7))) * 43758.5453) * 3.0) * 0.5;   // three hard steps
++		c = mix(c, rubble.rgb * (1.0 + rubble_cell.y * (n - 0.5)), clamp(v_rubble / rubble_tint_h, 0.0, 1.0) * 0.9);
++#else
+ 		vec2 q = v_px / 45.0;
+ 		float n = fract(sin(dot(floor(q), vec2(41.3, 289.1))) * 43758.5453);
+ 		c = mix(c, rubble.rgb * (0.8 + 0.4 * n), clamp(v_rubble / rubble_tint_h, 0.0, 1.0) * 0.9);
++#endif
+ 	}
+ 	// A groove chars as it cools: under a fresh glow the ground keeps its own colour, so a beam's burn does not turn a
+ 	// broad strip of ground dark in one tick.

@@ -1,0 +1,113 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -554,6 +554,13 @@
+ const TILE_LIFT_TO: float = 150.0
+ const TILE_LIFT_Z0: float = 300.0
+ const TILE_LIFT_Z1: float = 600.0
++const TILE_ASK_REACH: float = 4500.0       # ground asked for ahead (RenderTileField.ask_around): the line this far either side,
++const TILE_ASK_DEPTH: float = 1500.0       # ... and this deep either side of it
++const TILE_ASK_FRAMES: int = 120           # ... at a bigger slice for this long after the ask
++const TILE_ASK_US: int = 4500
++const TILE_AHEAD_SPEED: float = 2500.0     # a fighter faster than this along the line has the ground ahead of it asked for,
++const TILE_AHEAD_S: float = 2.0            # ... this far ahead,
++const TILE_AHEAD_TICKS: int = 30           # ... this often
+ const TILE_CRATER_CHECKS: int = 48         # shapes a frame looked at after a crater opens
+ const TILE_POSE_MARGIN: float = 500.0      # a building this near the sim's pose reach in a swing counts as past it
+ const TILE_NEAR_DEFAULT: int = 3           # a tower near the line: 3 the rule and sink (Orb's Q and W), until Orb picks
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -64,6 +64,9 @@
+ var _job_band: bool = false
+ var _has_pads: bool = false
+ var _urgent_until: int = 0
++var _ask_list: Array = []            # tiles asked for ahead of the camera, level 1 first
++var _asked: Dictionary = {}
++var _ask_until: int = 0
+ var ground: GroundField = null
+ var _standing: Array = []            # [multimesh, instance, x, z] of what a crater can take
+ var _crater_seen: int = 0
+@@ -308,8 +311,30 @@
+ 		_wanted[k] = dist
+ 
+ 
+-## The frame's slice: the nearest wanted tile, then the next, while the budget lasts. More of it while the ground round the
+-## camera is still coarse: arriving at a new place is when it shows.
++## Ask for the ground under a place the camera will reach: strip x on the line (fr: the frame to read it through), the line
++## either side and three depths, level 1 first so something finer than the bake is there soonest. The meteor's send names its
++## landing here; RenderTileGround looks ahead of anything flying fast. A tile already there, or already asked for, is left.
++func ask_around(x: float, fr = null) -> void:
++	for L in [1, 2]:
++		var step: float = 38400.0 / float(level_n(L))
++		var dx: float = -RenderLook.TILE_ASK_REACH
++		while dx <= RenderLook.TILE_ASK_REACH:
++			for dz in [0.0, -RenderLook.TILE_ASK_DEPTH, RenderLook.TILE_ASK_DEPTH]:
++				var k: int = key_at(dir_at(x + dx, dz, fr), L)
++				if not _layer.has(k) and not _asked.has(k):
++					_asked[k] = true
++					_ask_list.append(k)
++			dx += step
++	_ask_until = _frame + RenderLook.TILE_ASK_FRAMES
++
++
++## How many asked-for tiles are still to come.
++func asked_left() -> int:
++	return _ask_list.size()
++
++
++## The frame's slice: the nearest wanted tile, then what's been asked for ahead, while the budget lasts. More of it while the ground
++## round the camera is still coarse (arriving at a new place is when it shows), and while asked-for tiles are coming.
+ func fill(budget_us: int) -> void:
+ 	_frame += 1
+ 	var t0: int = Time.get_ticks_usec()
+@@ -319,6 +344,8 @@
+ 			break
+ 	if _frame < _urgent_until:
+ 		budget_us *= RenderLook.TILE_URGENT_X
++	elif _frame < _ask_until and not _ask_list.is_empty():
++		budget_us = maxi(budget_us, RenderLook.TILE_ASK_US)
+ 	while Time.get_ticks_usec() - t0 < budget_us:
+ 		if _job_key < 0:
+ 			var best: int = -1
+@@ -327,6 +354,12 @@
+ 				if float(_wanted[k]) < bd:
+ 					bd = float(_wanted[k])
+ 					best = k
++			if best < 0:
++				while best < 0 and not _ask_list.is_empty():
++					var ak: int = _ask_list.pop_front()
++					_asked.erase(ak)
++					if not _layer.has(ak):
++						best = ak
+ 			if best < 0:
+ 				break
+ 			_wanted.erase(best)
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -59,6 +59,7 @@
+ var _hd0 := Vector3.ZERO
+ var _sd0 := Vector3.ZERO
+ var _reach: float = 1.0e9
++var _ahead_tick: int = -1
+ var _tan: float = 0.5
+ 
+ 
+@@ -158,8 +159,19 @@
+ 		pane._sky_mat.set_shader_parameter("horizon", hz)
+ 	pane.mats.set_sky("horizon", hz)
+ 	if pane.planet.source == null:
++		_look_ahead(S, tk)
+ 		field.keep_off(cam_x, RenderLook.TILE_OFF_COLS)
+ 		field.fill(RenderLook.TILE_FILL_US)
++
++
++## Anything flying fast will be over ground nothing has asked for yet: ask for it, a couple of seconds ahead of it.
++func _look_ahead(S: SimState, tk: int) -> void:
++	if tk == _ahead_tick or tk % RenderLook.TILE_AHEAD_TICKS != 0:
++		return
++	_ahead_tick = tk
++	for f in S.fighters:
++		if absf(float(f.vx)) > RenderLook.TILE_AHEAD_SPEED:
++			field.ask_around(float(f.x) + float(f.vx) * RenderLook.TILE_AHEAD_S, S.frame)
+ 
+ 
+ ## The planet is being built again, so its copies are going: this drive ends with them.

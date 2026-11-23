@@ -1,0 +1,189 @@
+--- a/render/core/ground_field.gd
++++ b/render/core/ground_field.gd
+@@ -421,7 +421,8 @@
+ 	var i: int = int(fi)
+ 	if tile_field != null:
+ 		# The tile ground: what's drawn there, and today's marks on top.
+-		return tile_field.height_at(tile_field.dir_at(x, z, S.frame)) + offset_at(S, i, fi * SimConst.COL, z)
++		var td: Vector3 = tile_field.dir_at(x, z, S.frame)
++		return tile_field.height_at(td) + offset_at(S, i, fi * SimConst.COL, z) + WorldStore.heightDelta(S, td.x, td.y, td.z)
+ 	var j: int = (i + 1) % SimConst.NC
+ 	var a: float = S.base[i] + offset_at(S, i, fi * SimConst.COL, z)
+ 	var b: float = S.base[j] + offset_at(S, j, (fi + 1.0) * SimConst.COL, z)
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -575,6 +575,10 @@
+ ## The band between the camera and the fight: a building comes down to its kept base as its front face goes from .x to .y of depth, its base shrinks to nothing by .z and past .z the building and any small thing are gone.
+ ## The first ring's blocks stop at its street's back edge, -2.5 fighter heights (-187), so at rest they all stand.
+ const TILE_BAND := Vector3(-150.0, -30.0, 150.0)
++## The bowls the tile ground draws from World's store: how many, nearest the camera (the vertex stage's array), how often the choice is made again, and the seconds a new one takes to open.
++const TILE_BOWLS: int = 16
++const TILE_BOWL_FRAMES: int = 15
++const TILE_BOWL_OPEN: float = 0.25
+ const TILE_NEAR_DEFAULT: int = 3           # a tower near the line: 3 the rule and sink (Orb's Q and W), until Orb picks
+ 
+ ## The split's culling (planet_view.gd cull_to): a pane leaves out of its draw the ground's and water's chunks that lie
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -688,7 +688,8 @@
+ 		_crater_k += 1
+ 		var xw: float = SimWrap.wrap(float(e[2]))
+ 		var i: int = int(xw / SimConst.COL) % SimConst.NC
+-		if ground.offset_at(_S, i, xw, float(e[3])) < -6.0 * RenderLook.WS:
++		var cd: Vector3 = dir_at(float(e[2]), float(e[3]), _S.frame0 if field_world else null)
++		if ground.offset_at(_S, i, xw, float(e[3])) + WorldStore.heightDelta(_S, cd.x, cd.y, cd.z) < -6.0 * RenderLook.WS:
+ 			var mm: MultiMesh = e[0]
+ 			var t: Transform3D = mm.get_instance_transform(int(e[1]))
+ 			t.basis = t.basis.scaled(Vector3.ZERO)
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -16,6 +16,11 @@
+ static var quick: bool = false          # ... as small swings
+ static var near_mode: int = RenderLook.TILE_NEAR_DEFAULT
+ static var share: float = 1.0           # 1: the true globe. --tileshare=95: 95 percent at the closest zoom, to compare
++var _cb: Array = []                    # the store's craters so far: [x, y, z, r, depth, rim, t], planet direction first
++var _cb_seen: int = 0                  # the store's records read
++var _cb_due: int = 0
++var _cb_a := PackedVector4Array()
++var _cb_b := PackedVector4Array()
+ static var fore_tone: bool = true      # one tone in front of the plane: the facets there are a swing's flash. --nofore to compare
+ static var gen: int = 3                 # the world it draws: 3 a field world, on the sim's frame; --tilegen=2 the gen 2 ring, to compare
+ 
+@@ -154,6 +159,8 @@
+ 		water_mat.set_shader_parameter(k, pane.planet._terrain_mat.get_shader_parameter(k))
+ 	water_mat.set_shader_parameter("crater_now", S.T)
+ 	_water_marks(S, tk)
++	_bowls(S)
++	mat.set_shader_parameter("cb_now", S.T)
+ 	_copy_t += 1
+ 	if _copy_t % 30 == 1:
+ 		_copy_ground(pane.planet._terrain_mat)
+@@ -177,6 +184,41 @@
+ 		_look_ahead(S, tk)
+ 		field.keep_off(cam_x, RenderLook.TILE_OFF_COLS)
+ 		field.fill(RenderLook.TILE_FILL_US)
++
++
++## The bowls the vertex stage draws: World's store is append-only, so a frame reads only what's new, and the nearest few to the camera are chosen again now and then. A rollback that shortens the store starts the list again.
++func _bowls(S: SimState) -> void:
++	var fresh: bool = false
++	if S.storeN < _cb_seen:
++		_cb.clear()
++		_cb_seen = 0
++	while _cb_seen < S.storeN:
++		var o: int = _cb_seen * WorldStore.STRIDE
++		if int(S.store[o]) == WorldStore.KIND_CRATER:
++			_cb.append([S.store[o + 1], S.store[o + 2], S.store[o + 3], S.store[o + 4], S.store[o + 5], S.store[o + 6], S.store[o + 8]])
++			fresh = true
++		_cb_seen += 1
++	_cb_due -= 1
++	if not fresh and _cb_due > 0:
++		return
++	_cb_due = RenderLook.TILE_BOWL_FRAMES
++	var near: Array = []
++	for k in range(_cb.size()):
++		var e: Array = _cb[k]
++		near.append([_pv.distance_squared_to(Vector3(e[0], e[1], e[2])), k])
++	near.sort()
++	var n: int = mini(near.size(), RenderLook.TILE_BOWLS)
++	_cb_a.resize(RenderLook.TILE_BOWLS)
++	_cb_b.resize(RenderLook.TILE_BOWLS)
++	for k in range(n):
++		var e: Array = _cb[int(near[k][1])]
++		_cb_a[k] = Vector4(e[0], e[1], e[2], e[3])
++		_cb_b[k] = Vector4(e[4], e[5], e[6], 0.0)
++	mat.set_shader_parameter("cb_n", n)
++	mat.set_shader_parameter("cb_a", _cb_a)
++	mat.set_shader_parameter("cb_b", _cb_b)
++	mat.set_shader_parameter("cb_rim", Vector2(WorldCrater.RIM_IN, WorldCrater.RIM_OUT))
++	mat.set_shader_parameter("cb_open", RenderLook.TILE_BOWL_OPEN)
+ 
+ 
+ ## Water's A1 (docs/world/low-impact-water.md), view only: a hollow ring where a body crosses or skims the surface, and a short V wake behind one
+--- a/render/shaders/tile_read.gdshaderinc
++++ b/render/shaders/tile_read.gdshaderinc
+@@ -14,6 +14,12 @@
+ uniform float strip_x = 0.0;
+ uniform sampler2D plane_tex : filter_nearest, repeat_disable;
+ uniform float plane_span = 3000.0;
++uniform int cb_n = 0;              // the bowls near the camera, from World's store (RenderTileGround._bowls)
++uniform vec4 cb_a[16];             // its planet direction, its radius
++uniform vec4 cb_b[16];             // its depth, its rim, when it was made
++uniform vec2 cb_rim = vec2(0.2, 0.5);   // WorldCrater.RIM_IN, RIM_OUT
++uniform float cb_now = 0.0;
++uniform float cb_open = 0.25;      // the seconds a new bowl takes to open
+ uniform float fore_tone = 1.0;   // one tone in front of the plane (RenderTileGround.fore_tone)
+ 
+ vec2 tile_chart(vec3 d, vec3 h, vec3 s, vec3 p) {
+@@ -69,6 +75,32 @@
+ 	wet = texelFetch(ids, ivec3(ic.x, ic.y, layer), 0).g * 255.0 * 4.0;
+ }
+ 
++// The ground's change from the bowls at a planet direction: WorldCrater.profile, the sim's own shape.
++float tile_bowls(vec3 d) {
++	float s = 0.0;
++	for (int k = 0; k < cb_n; k++) {
++		float u = length(d - cb_a[k].xyz) * globe_r / cb_a[k].w;
++		if (u < 1.0 + cb_rim.y) {
++			float h = 0.0;
++			if (u < 1.0) {
++				float t = 1.0 - u * u;
++				h = -cb_b[k].x * t * t;
++				float lo = 1.0 - cb_rim.x;
++				if (u > lo) {
++					float a = (u - lo) / cb_rim.x;
++					h += cb_b[k].y * a * a * (3.0 - 2.0 * a);
++				}
++			} else {
++				float b = (u - 1.0) / cb_rim.y;
++				h = cb_b[k].y * (1.0 - b * b * (3.0 - 2.0 * b));
++			}
++			float o = clamp((cb_now - cb_b[k].z) / cb_open, 0.0, 1.0);
++			s += h * o * o * (3.0 - 2.0 * o);
++		}
++	}
++	return s;
++}
++
+ // The foreground rule: in front of the plane nothing stands above the sight line to the line's own ground behind it.
+ float tile_fore(float y, vec2 p) {
+ 	if (p.y <= 0.0) {
+--- a/render/shaders/tile_vertex.gdshaderinc
++++ b/render/shaders/tile_vertex.gdshaderinc
+@@ -39,6 +39,16 @@
+ 	float ht = 0.5 * (tile_h(ic + ivec2(0, 1), layer) - tile_h(ic - ivec2(0, 1), layer));
+ 	float det = cs.x * ct.y - cs.y * ct.x;
+ 	v_grad = abs(det) > 1.0e-3 ? vec2(hs * ct.y - ht * cs.y, ht * cs.x - hs * ct.x) / det : vec2(0.0);
++	// The bowls near the camera, and their slope by the same chart.
++	float bw0 = 0.0;
++	vec2 bg = vec2(0.0);
++	if (cb_n > 0) {
++		bw0 = tile_bowls(dir);
++		float bs = tile_bowls(tile_dir(n, u, wv, st + vec2(cell, 0.0))) - bw0;
++		float bt = tile_bowls(tile_dir(n, u, wv, st + vec2(0.0, cell))) - bw0;
++		bg = abs(det) > 1.0e-3 ? vec2(bs * ct.y - bt * cs.y, bt * cs.x - bs * ct.x) / det : vec2(0.0);
++		v_grad += bg;
++	}
+ 	float sl = far_weight(dist);
+ 	int pid = int(texelFetch(ids, ivec3(ic.x, ic.y, layer), 0).r * 255.0 + 0.5);
+ 	v_col = biome_tone(pid, 1);
+@@ -80,6 +90,8 @@
+ 		v_rubble = rubble_at(ci, z0);
+ 		v_new = crater_new(ci, xw, z0, calm_ease > 0.0 ? crater_calm_s : crater_open_s);
+ 	}
++	h += bw0;
++	v_dent += bw0;
+ 	v_street = street_n > 0 ? street_weight(xw) : 0.0;
+ 	vec2 p = tile_chart(dir, hd, sd, pv);
+ 	v_pv = vec2(strip_x + p.x, p.y);
+--- a/render/shaders/water.gdshaderinc
++++ b/render/shaders/water.gdshaderinc
+@@ -151,7 +151,7 @@
+ 	if (ww_n > 0) {
+ 		surf += max(water_drama(xw, z0).x, -0.6 * max(surf - h, 0.0));   // a ring (never below the floor)
+ 	}
+-	float ground = tile_fore(h, p);
++	float ground = tile_fore(cb_n > 0 ? h + tile_bowls(dir) : h, p);   // a bowl below the water's top floods
+ 	surf = tile_fore(surf, p);
+ 	v_under = 0.0;
+ 	v_depth = surf - ground;

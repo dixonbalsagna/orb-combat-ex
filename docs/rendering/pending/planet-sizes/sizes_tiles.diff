@@ -9,7 +9,7 @@
  const BASE_LEVEL: int = 2         # the ground a mesh level can always read: finer data may still be on its way
  const LEVELS: int = 5             # 512, 256, 128, 64, 32 units: the last two are World's sub-nodes, for the ground near the camera
  const POOL: int = 800             # layers: the 54 of level 0 stay, the rest are reused, least recently wanted first; never one a pane is using. Two panes want about 190 each, more in a wide shot
-@@ -103,6 +103,7 @@
+@@ -96,6 +96,7 @@
  
  ## Ready for the match in S: its planet, its ring (a Whole ring, the one great circle a strip can lie on), its places.
  func begin(S: SimState) -> void:
@@ -17,7 +17,7 @@
  	_S = S
  	field_world = S.frame != null
  	if field_world:
-@@ -207,7 +208,18 @@
+@@ -200,7 +201,18 @@
  
  ## The tile's key, and the direction of its node a, b (0 to CELLS on the tile, a step outside either way).
  static func key_of(f: int, L: int, i: int, j: int) -> int:
@@ -37,7 +37,7 @@
  
  
  static func level_n(L: int) -> int:
-@@ -375,7 +387,7 @@
+@@ -368,7 +380,7 @@
  ## landing here; RenderTileGround looks ahead of anything flying fast. A tile already there, or already asked for, is left.
  func ask_around(x: float, fr = null) -> void:
  	for L in [1, 2]:
@@ -46,7 +46,7 @@
  		var dx: float = -RenderLook.TILE_ASK_REACH
  		while dx <= RenderLook.TILE_ASK_REACH:
  			for dz in [0.0, -RenderLook.TILE_ASK_DEPTH, RenderLook.TILE_ASK_DEPTH]:
-@@ -466,8 +478,8 @@
+@@ -443,8 +455,8 @@
  		_job_recs = _records_reach(k)
  		_job_wet = true   # level 0 too: in fast flight it lies under the fight for much of a crossing, and a lake without its water reads as a brown table
  		var n: int = level_n((k >> 3) & 7)
@@ -57,7 +57,7 @@
  
  
  ## Does any place's or water's record reach this tile? Most don't, and then its nodes read none.
-@@ -475,8 +487,8 @@
+@@ -452,8 +464,8 @@
  	if _S.fieldRecs.is_empty():
  		return false
  	var n: int = level_n((k >> 3) & 7)
@@ -68,7 +68,7 @@
  	for rec in _S.fieldRecs:
  		var rq: Vector3
  		var rr: float
-@@ -495,8 +507,8 @@
+@@ -472,8 +484,8 @@
  func _fill_job(t0: int, budget_us: int) -> bool:
  	var f: int = _job_key & 7
  	var L: int = (_job_key >> 3) & 7
@@ -79,7 +79,7 @@
  	var n: int = level_n(L)
  	var total: int = TEX * TEX
  	while _job_at < total:
-@@ -528,21 +540,32 @@
+@@ -505,21 +517,32 @@
  	var h: float
  	var dp: Array
  	var idx: int
@@ -122,7 +122,7 @@
  	reads += 1
  	var wet: float = 0.0
  	if _job_recs:
-@@ -647,11 +670,11 @@
+@@ -617,11 +640,11 @@
  ## Does the tile just stored lie on the fighters' line? Only then can the lift's table change.
  func _job_on_line() -> bool:
  	var n: int = level_n((_job_key >> 3) & 7)
@@ -136,18 +136,9 @@
  
  
  ## The drawn ground at a planet direction: the same triangles as the mesh (the mesh's own diagonal), on the finest tile there.
-@@ -752,7 +775,7 @@
- 		var b0: Vector3 = (pts[pts.size() - 1] as Vector3).normalized()
- 		var run: float = acos(clampf(a0.dot(b0), -1.0, 1.0)) * R
- 		for L in range(1, LEVELS):
--			var step: float = 0.5 * 38400.0 / float(level_n(L))
-+			var step: float = 0.5 * edge() / float(level_n(L))
- 			var na: int = int(ceil(run / step))
- 			var nr: int = int(ceil(reach / step))
- 			for ia in range(na + 1):
 --- a/render/core/tile_ground.gd
 +++ b/render/core/tile_ground.gd
-@@ -644,7 +644,7 @@
+@@ -619,7 +619,7 @@
  
  func _walk(f: int, L: int, i: int, j: int, cam_d: float) -> void:
  	var n: int = RenderTileField.level_n(L)

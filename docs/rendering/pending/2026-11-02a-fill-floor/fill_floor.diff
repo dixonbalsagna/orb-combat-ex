@@ -1,0 +1,17 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -543,12 +543,12 @@
+ const TILE_CHUNK_STEP: float = 256.0
+ const TILE_WALK_STEP: float = 32.0         # the camera's move that picks the tiles again
+ const CROWD_RUN_GROUND_FRAMES: int = 4     # on the tile ground a running figure reads the ground under it this often, by turns
+-const TILE_FILL_US: int = 1500             # a frame's slice of new tiles: the least it gets
++const TILE_FILL_US: int = 750              # a frame's slice of new tiles: the least it gets
+ const TILE_FILL_TARGET_US: int = 16667     # ... and the frame it measures its room against,
+ const TILE_FILL_ROOM: float = 0.5          # ... this share of that room going to tiles,
+ const TILE_FILL_MAX_US: int = 6000         # ... up to this
+ const TILE_URGENT_NEAR: float = 3000.0     # a wanted tile this near the camera's ground: the fill runs at
+-const TILE_URGENT_X: int = 3               # ... this many times its slice
++const TILE_URGENT_X: int = 6               # ... this many times its slice
+ const TILE_BOOT_US: int = 12000            # ... and one of the load's
+ const TILE_OFF_COLS: int = 24              # the body offset's columns read a frame
+ const TILE_OFF_STALE_FRAMES: int = 8       # ... while the line turns, its table is read again from the feet out at most this often

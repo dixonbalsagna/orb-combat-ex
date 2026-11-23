@@ -1,0 +1,12 @@
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -1305,7 +1305,8 @@
+ func _set_building(S: SimState, bi: int, b, h: float) -> int:
+ 	var stage: int = mini(WorldStructures.stage(b), 3) if b.alive else int(_bld_seen[bi][4])
+ 	var zd: Vector2 = _depth(b)
+-	var zc: float = zd.x
++	# The tile ground turns a building with the planet from its plan's place (globe_m), x and depth both; b.z is the sim's pose, which has already swung.
++	var zc: float = float(b.g.z) if RenderTileGround.on else zd.x
+ 	var d: float = zd.y
+ 	var foot: Vector2 = _foot[bi]
+ 	var standing: bool = b.alive

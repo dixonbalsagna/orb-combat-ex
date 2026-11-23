@@ -1,0 +1,647 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -554,6 +554,13 @@
+ const TILE_LIFT_TO: float = 150.0
+ const TILE_LIFT_Z0: float = 300.0
+ const TILE_LIFT_Z1: float = 600.0
++const TILE_RING_NEAR: float = 40.0         # water's A1: a body this near the surface, moving
++const TILE_RING_MOVE: float = 2.0          # ... this much a tick across it, leaves a ring,
++const TILE_RING_TICKS: int = 30            # ... no faster than this,
++const TILE_RING_S: float = 0.9             # ... running this long,
++const TILE_RING_LIFT: float = 6.0          # ... this high
++const TILE_WAKE_UP: float = 600.0          # a short V wake below this over the water,
++const TILE_WAKE_SPEED: float = 600.0       # ... faster than this
+ const TILE_ASK_REACH: float = 4500.0       # ground asked for ahead (RenderTileField.ask_around): the line this far either side,
+ const TILE_ASK_DEPTH: float = 1500.0       # ... and this deep either side of it
+ const TILE_ASK_FRAMES: int = 120           # ... at a bigger slice for this long after the ask
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -56,7 +56,10 @@
+ var _frame: int = 0
+ var _job_key: int = -1
+ var _job_h := PackedFloat32Array()
+-var _job_t := PackedFloat32Array()
++var _job_t := PackedFloat32Array()   # its nodes' lake or river depth
++var _job_any_wet: bool = false
++var _wet_tile := PackedByteArray()   # layer -> 1 if the water sheet draws it
++var _wets: Array = []                # layer -> its nodes' lake or river depth, empty for a dry tile
+ var _job_c := PackedByteArray()
+ var _job_at: int = 0
+ var _job_recs: bool = false
+@@ -131,6 +134,8 @@
+ 	_stamp.resize(POOL)
+ 	_stamp.fill(0)
+ 	_hs.resize(POOL)
++	_wets.resize(POOL)
++	_wet_tile.resize(POOL)
+ 	_off.resize(OFF_N * 2)
+ 	_off_col.resize(OFF_N)
+ 	_off_col.fill(-1)
+@@ -379,6 +384,7 @@
+ 	_job_at = 0
+ 	_job_h.resize(TEX * TEX)
+ 	_job_t.resize(TEX * TEX)
++	_job_any_wet = false
+ 	_job_c.resize(TEX * TEX * 4)
+ 	if field_world:
+ 		_job_recs = _records_reach(k)
+@@ -422,9 +428,11 @@
+ 		var b: int = _job_at / TEX
+ 		var r: Array = node(node_dir(f, n, i, j, a - 1, b - 1)) if not field_world else _field_node(f, n, i, j, a - 1, b - 1)
+ 		_job_h[_job_at] = r[0]
+-		# What's drawn is the water's top where a lake or a river holds it; what things stand on stays the ground.
++		# A lake's or a river's depth, and whether this tile has any water: the sheet draws only the tiles that do.
+ 		var wet: float = float(r[2]) if r.size() > 2 else 0.0
+-		_job_t[_job_at] = float(r[0]) + wet
++		_job_t[_job_at] = wet
++		if wet > 0.0 or float(r[0]) < 0.0:
++			_job_any_wet = true
+ 		var o: int = _job_at * 4
+ 		_job_c[o] = r[1]
+ 		_job_c[o + 1] = clampi(int(wet / WET_STEP + 0.5), 0, 255)
+@@ -497,11 +505,51 @@
+ 	_layer[_job_key] = slot
+ 	version += 1
+ 	_hs[slot] = _job_h.duplicate()
+-	hts.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RF, _job_t.to_byte_array()), slot)
++	hts.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RF, _job_h.to_byte_array()), slot)
++	_wets[slot] = _job_t.duplicate() if _job_any_wet else PackedFloat32Array()
++	_wet_tile[slot] = 1 if _job_any_wet else 0
+ 	ids.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RGBA8, _job_c), slot)
+ 	if ((_job_key >> 3) & 3) > 0 and _job_on_line():
+ 		stale_off()
+ 	_job_key = -1
++
++
++## Does the tile have water for the sheet to draw?
++func tile_wet(lay: int) -> bool:
++	return _wet_tile[lay] != 0
++
++
++## The water's top at a planet direction, or below every height if there's none: the sea, or a lake's or a river's level at the nearest node.
++func water_top(d: Vector3) -> float:
++	var h: float = height_at(d)
++	if h < 0.0:
++		return 0.0
++	var ad := Vector3(absf(d.x), absf(d.y), absf(d.z))
++	var f: int
++	if ad.x >= ad.y and ad.x >= ad.z:
++		f = 0 if d.x > 0.0 else 1
++	elif ad.y >= ad.z:
++		f = 2 if d.y > 0.0 else 3
++	else:
++		f = 4 if d.z > 0.0 else 5
++	var fc: Array = FACES[f]
++	var w: float = (fc[0] as Vector3).dot(d)
++	var s: float = atan((fc[1] as Vector3).dot(d) / w) / (PI / 4.0)
++	var t: float = atan((fc[2] as Vector3).dot(d) / w) / (PI / 4.0)
++	for L in [2, 1]:
++		var n: int = level_n(L)
++		var ps: float = (s + 1.0) * 0.5 * float(n)
++		var pt: float = (t + 1.0) * 0.5 * float(n)
++		var i: int = clampi(int(ps), 0, n - 1)
++		var j: int = clampi(int(pt), 0, n - 1)
++		var lay: int = int(_layer.get(key_of(f, L, i, j), -1))
++		if lay >= 0:
++			var ws: PackedFloat32Array = _wets[lay]
++			if ws.is_empty():
++				return -1.0e9
++			var q: int = clampi(int((pt - float(j)) * float(CELLS) + 1.5), 0, TEX - 1) * TEX + clampi(int((ps - float(i)) * float(CELLS) + 1.5), 0, TEX - 1)
++			return h + ws[q] if ws[q] > 0.0 else -1.0e9
++	return -1.0e9
+ 
+ 
+ ## Does the tile just stored lie on the fighters' line? Only then can the lift's table change.
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -60,6 +60,15 @@
+ var _sd0 := Vector3.ZERO
+ var _reach: float = 1.0e9
+ var _ahead_tick: int = -1
++var water_mat: ShaderMaterial
++var mm_w: MultiMesh
++var _node_w: MultiMeshInstance3D
++var _buf_w := PackedFloat32Array()
++var _drawn_w: int = 0
++var _rings: Array = []
++var _mark_tick: int = -1
++var _mark_y: Dictionary = {}
++var _mark_t: Dictionary = {}
+ var _tan: float = 0.5
+ 
+ 
+@@ -138,11 +147,17 @@
+ 	mat.set_shader_parameter("hd0", _hd0)
+ 	mat.set_shader_parameter("sd0", _sd0)
+ 	mat.set_shader_parameter("strip_x", SimWrap.wrap(cam_x))
++	for wk in ["pv", "pv0", "hd", "sd", "hd0", "sd0", "pvp", "hdp", "sdp", "strip_x"]:
++		water_mat.set_shader_parameter(wk, mat.get_shader_parameter(wk))
+ 	for k in ["wl_mul", "wl_add", "fore_cam"]:
+ 		mat.set_shader_parameter(k, pane.planet._terrain_mat.get_shader_parameter(k))
++		water_mat.set_shader_parameter(k, pane.planet._terrain_mat.get_shader_parameter(k))
++	water_mat.set_shader_parameter("crater_now", S.T)
++	_water_marks(S, tk)
+ 	_copy_t += 1
+ 	if _copy_t % 30 == 1:
+ 		_copy_ground(pane.planet._terrain_mat)
++		_copy_to(water_mat, pane.planet._water_mat)
+ 	# The tiles again once the view has moved enough to change them.
+ 	if absf(cam_x - _walk_x) > RenderLook.TILE_WALK_STEP or _hd.dot(_walk_hd) < 0.99999 or absf(cam_d - _walk_z) > 0.02 * cam_d or absf(cam_h - _walk_y) > 0.05 * cam_h or field.version != _walk_v:
+ 		_walk_hd = _hd
+@@ -164,6 +179,48 @@
+ 		field.fill(RenderLook.TILE_FILL_US)
+ 
+ 
++## Water's A1 (docs/world/low-impact-water.md), view only: a hollow ring where a body crosses or skims the surface, and a short V wake behind one
++## flying low and fast. Read from the fighters' places, so nothing here is hashed. Rings no faster than 2 Hz a body.
++func _water_marks(S: SimState, tk: int) -> void:
++	if tk != _mark_tick:
++		_mark_tick = tk
++		var wa := PackedVector4Array()
++		wa.resize(2)
++		var wn: int = 0
++		for i in range(S.fighters.size()):
++			var f = S.fighters[i]
++			var fx: float = float(f.x)
++			var top: float = field.water_top(field.dir_at(fx, 0.0, S.frame))
++			if top < -1.0e8:
++				continue
++			var over: float = float(f.y) - top
++			var last: float = float(_mark_y.get(i, over))
++			_mark_y[i] = over
++			if ((last > 0.0) != (over > 0.0) or absf(over) < RenderLook.TILE_RING_NEAR) and absf(last - over) > RenderLook.TILE_RING_MOVE and tk - int(_mark_t.get(i, -1000)) >= RenderLook.TILE_RING_TICKS:
++				_mark_t[i] = tk
++				_rings.append(Vector4(fx, 0.0, float(S.T), clampf(120.0 + absf(last - over) * 12.0, 120.0, 420.0)))
++				if _rings.size() > 6:
++					_rings.pop_front()
++			if wn < 2 and over > 0.0 and over < RenderLook.TILE_WAKE_UP and absf(float(f.vx)) > RenderLook.TILE_WAKE_SPEED:
++				wa[wn] = Vector4(fx, 0.0, signf(float(f.vx)), minf(absf(float(f.vx)) * 0.25, 1500.0) * (1.0 - over / RenderLook.TILE_WAKE_UP))
++				wn += 1
++		var ra := PackedVector4Array()
++		var rb := PackedVector4Array()
++		ra.resize(6)
++		rb.resize(6)
++		var rn: int = 0
++		for r in _rings:
++			if float(S.T) - float(r.z) < RenderLook.TILE_RING_S:
++				ra[rn] = r
++				rb[rn] = Vector4(RenderLook.TILE_RING_LIFT, RenderLook.TILE_RING_S, 0.0, 0.0)
++				rn += 1
++		water_mat.set_shader_parameter("ww_n", rn)
++		water_mat.set_shader_parameter("ww_a", ra)
++		water_mat.set_shader_parameter("ww_b", rb)
++		water_mat.set_shader_parameter("wk_n", wn)
++		water_mat.set_shader_parameter("wk_a", wa)
++
++
+ ## Anything flying fast will be over ground nothing has asked for yet: ask for it, a couple of seconds ahead of it.
+ func _look_ahead(S: SimState, tk: int) -> void:
+ 	if tk == _ahead_tick or tk % RenderLook.TILE_AHEAD_TICKS != 0:
+@@ -179,6 +236,9 @@
+ 	if _node != null:
+ 		_node.queue_free()
+ 		_node = null
++	if _node_w != null:
++		_node_w.queue_free()
++		_node_w = null
+ 	_chunks.clear()
+ 
+ 
+@@ -219,6 +279,13 @@
+ 	_prof_img = Image.create_from_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
+ 	_prof_tex = ImageTexture.create_from_image(_prof_img)
+ 	mat.set_shader_parameter("plane_tex", _prof_tex)
++	water_mat = ShaderMaterial.new()
++	water_mat.shader = load("res://render/shaders/water_tile.gdshader")
++	_copy_to(water_mat, pane.planet._water_mat)
++	water_mat.set_shader_parameter("hts", field.hts)
++	water_mat.set_shader_parameter("ids", field.ids)
++	water_mat.set_shader_parameter("plane_tex", _prof_tex)
++	pane.mats.track(water_mat)
+ 	mat.set_shader_parameter("fore_tone", 1.0 if fore_tone else 0.0)
+ 	pane.mats.track(mat)
+ 	# The tile mesh: 26 by 26 and a ring outside it: the skirt.
+@@ -255,16 +322,33 @@
+ 	_node.custom_aabb = AABB(Vector3(-4.0e6, -4.0e6, -4.0e6), Vector3(8.0e6, 8.0e6, 8.0e6))
+ 	pane.planet.add_child(_node)
+ 	_buf.resize(MAX_TILES * 16)
++	# The water: the tiles with water in them, a second time, with the water's own shader.
++	mm_w = MultiMesh.new()
++	mm_w.transform_format = MultiMesh.TRANSFORM_3D
++	mm_w.use_custom_data = true
++	mm_w.mesh = am
++	mm_w.instance_count = MAX_TILES
++	mm_w.visible_instance_count = 0
++	_node_w = MultiMeshInstance3D.new()
++	_node_w.multimesh = mm_w
++	_node_w.material_override = water_mat
++	_node_w.custom_aabb = _node.custom_aabb
++	pane.planet.add_child(_node_w)
++	_buf_w.resize(MAX_TILES * 16)
+ 
+ 
+ func _copy_ground(src: ShaderMaterial) -> void:
++	_copy_to(mat, src)
++
++
++func _copy_to(to: ShaderMaterial, src: ShaderMaterial) -> void:
+ 	for u in src.shader.get_shader_uniform_list():
+ 		var nm: String = u.name
+-		if nm in ["fore_tone", "hts", "ids", "plane_tex", "pv", "pv0", "pvp", "hdp", "sdp", "hd", "sd", "hd0", "sd0", "strip_x", "plane_span", "globe_sx", "globe_off", "globe_lift_on", "globe_m"]:
++		if nm in ["ww_n", "ww_a", "ww_b", "wf_n", "wf_a", "wf_b", "wf_c", "fore_tone", "hts", "ids", "plane_tex", "pv", "pv0", "pvp", "hdp", "sdp", "hd", "sd", "hd0", "sd0", "strip_x", "plane_span", "globe_sx", "globe_off", "globe_lift_on", "globe_m"]:
+ 			continue
+ 		var v: Variant = src.get_shader_parameter(nm)
+ 		if v != null:
+-			mat.set_shader_parameter(nm, v)
++			to.set_shader_parameter(nm, v)
+ 
+ 
+ ## The left-out chunks of the crowd and the cover: the turn needs their boxes gone, not the culling, so they go by reach.
+@@ -337,6 +421,7 @@
+ 	_reach = cam_d + reff * (acos(reff / (reff + cam_h)) + acos(reff / (reff + RenderLook.TILE_TALLEST)))
+ 	_tan = tan(deg_to_rad(pane.cam_rig.fov * 0.5)) * vp.x / maxf(vp.y, 1.0)
+ 	_drawn = 0
++	_drawn_w = 0
+ 	var n0: int = RenderTileField.LEVEL0
+ 	for f in range(6):
+ 		for j in range(n0):
+@@ -345,6 +430,9 @@
+ 	mm.visible_instance_count = 0
+ 	mm.buffer = _buf
+ 	mm.visible_instance_count = _drawn
++	mm_w.visible_instance_count = 0
++	mm_w.buffer = _buf_w
++	mm_w.visible_instance_count = _drawn_w
+ 
+ 
+ static func _center(f: int, n: int, i: int, j: int) -> Vector3:
+@@ -418,6 +506,11 @@
+ 	_buf[o + 13] = (1.4 * RenderLook.TILE_K * w if L > 0 else 3.0e5) / 1000.0
+ 	_buf[o + 14] = (1.95 * RenderLook.TILE_K * w if L > 0 else 3.1e5) / 1000.0
+ 	_buf[o + 15] = w / 1000.0
++	if field.tile_wet(lay):
++		var ow: int = _drawn_w * 16
++		for q in range(16):
++			_buf_w[ow + q] = _buf[o + q]
++		_drawn_w += 1
+ 	_drawn += 1
+ 
+ 
+--- a/render/core/warmup.gd
++++ b/render/core/warmup.gd
+@@ -62,7 +62,7 @@
+ 	var quad := QuadMesh.new()
+ 	quad.size = Vector2(1.0, 1.0)
+ 	var x: float = -4.0
+-	for e in SHADERS + ([["res://render/shaders/terrain_tile.gdshader", "multimesh"]] if RenderTileGround.on else []):
++	for e in SHADERS + ([["res://render/shaders/terrain_tile.gdshader", "multimesh"], ["res://render/shaders/water_tile.gdshader", "multimesh"]] if RenderTileGround.on else []):
+ 		if not ResourceLoader.exists(str(e[0])):
+ 			continue
+ 		var sh: Shader = load(str(e[0]))
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -269,11 +269,6 @@
+ 	if (fore_tone > 0.5 && v_pv.y > 0.0 && abs(v_dent) < dent_min && v_rubble <= 0.01 && v_crack <= 0.01) {
+ 		c = mix(biome_tone(v_ba, 2), biome_tone(v_bb, 2), zf);   // the biome's shade colour (Art: docs/art/tile-ground-look.md)
+ 	}
+-	// Water, as colour by depth for now: the sea past World's shore (WorldWater.SHORE_WET), a lake's or a river's depth from its record.
+-	float wet_d = v_wet > 2.0 ? v_wet : (v_h0 < -18.75 ? -v_h0 : -1.0);
+-	if (wet_d >= 0.0) {
+-		c = (wet_d < 37.5 ? vec3(0.27, 0.56, 0.72) : (wet_d < 240.0 ? vec3(0.17, 0.42, 0.65) : vec3(0.12, 0.33, 0.56))) * tk;
+-	}
+ #endif
+ 	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed
+ #ifdef TILE_GROUND
+--- /dev/null
++++ b/render/shaders/tile_read.gdshaderinc
+@@ -0,0 +1,82 @@
++// What the tile ground's two vertex stages share (terrain_tile.gdshader, water_tile.gdshader): the frame, the field's arrays, and a tile
++// vertex's node. The heights are the field's nodes, read as the mesh's own two triangles.
++uniform sampler2DArray hts : filter_nearest, repeat_disable;
++uniform sampler2DArray ids : filter_nearest, repeat_disable;
++uniform vec3 pv = vec3(1.0, 0.0, 0.0);
++uniform vec3 hd = vec3(0.0, 1.0, 0.0);
++uniform vec3 sd = vec3(0.0, 0.0, 1.0);
++uniform vec3 pv0 = vec3(1.0, 0.0, 0.0);
++uniform vec3 hd0 = vec3(0.0, 1.0, 0.0);
++uniform vec3 sd0 = vec3(0.0, 0.0, 1.0);
++uniform vec3 pvp = vec3(1.0, 0.0, 0.0);   // the plan's frame at the camera: the land's light stays with the land through a swing
++uniform vec3 hdp = vec3(0.0, 1.0, 0.0);
++uniform vec3 sdp = vec3(0.0, 0.0, 1.0);
++uniform float strip_x = 0.0;
++uniform sampler2D plane_tex : filter_nearest, repeat_disable;
++uniform float plane_span = 3000.0;
++uniform float fore_tone = 1.0;   // one tone in front of the plane (RenderTileGround.fore_tone)
++
++vec2 tile_chart(vec3 d, vec3 h, vec3 s, vec3 p) {
++	float x = dot(d, h);
++	float z = dot(d, s);
++	float q = sqrt(x * x + z * z);
++	float k = q > 1.0e-5 ? atan(q, dot(d, p)) / q : 1.0;
++	return vec2(x, z) * k * globe_r;
++}
++
++float tile_h(ivec2 a, int layer) {
++	return texelFetch(hts, ivec3(clamp(a.x, 0, 27), clamp(a.y, 0, 27), layer), 0).r;
++}
++
++vec3 tile_dir(vec3 n, vec3 u, vec3 w, vec2 st) {
++	return normalize(n + u * tan(st.x * 0.7853982) + w * tan(st.y * 0.7853982));
++}
++
++// A tile vertex: its direction on the planet, whether it's the skirt, the ground's height, a lake's or a river's depth at its node, and where
++// it reads from. m: the instance's matrix (the face's axes, its place on the face); c: its custom data (layer and data level, morph, width).
++void tile_node(mat4 m, vec4 c, vec2 uv, out vec3 dir, out float skirt, out float h, out float wet, out ivec2 ic, out int layer, out float dist, out vec2 st, out float dsize) {
++	vec3 n = m[0].xyz;
++	vec3 u = m[1].xyz;
++	vec3 wv = m[2].xyz;
++	vec3 place = m[3].xyz;
++	vec2 uvc = clamp(uv, vec2(0.0), vec2(1.0));
++	skirt = (uv.x != uvc.x || uv.y != uvc.y) ? 1.0 : 0.0;
++	vec2 g = uvc * 25.0;
++	vec2 st0 = place.xy + uvc * place.z;
++	vec3 d0 = tile_dir(n, u, wv, st0);
++	dist = atan(length(cross(d0, pv)), dot(d0, pv)) * globe_r;
++	float mk = smoothstep(c.g * 1000.0, c.b * 1000.0, dist);
++	// To the parent's lattice: every other node of this level's own grid across the face (25 is odd, so a tile's parity is its place's).
++	vec2 cellxy = floor((place.xy + 1.0) / place.z + 0.5);
++	vec2 odd = mod(cellxy, 2.0);
++	vec2 gm = g - mod(g + odd, 2.0) * mk;
++	st = place.xy + gm / 25.0 * place.z;
++	dir = tile_dir(n, u, wv, st);
++	float lf = c.r + 0.01;
++	layer = int(lf);
++	float dl = floor((lf - float(layer)) * 4.0);
++	dsize = 2.0 / (3.0 * pow(2.0, dl));
++	vec2 d0xy = floor((place.xy + vec2(1.0)) / dsize + 0.001) * dsize - vec2(1.0);
++	vec2 dg = (st - d0xy) / dsize * 25.0 + vec2(1.0);   // on the layer: the ring outside the tile is its first row
++	ivec2 i0 = ivec2(floor(dg));
++	vec2 f = dg - vec2(i0);
++	float h00 = tile_h(i0, layer);
++	float h10 = tile_h(i0 + ivec2(1, 0), layer);
++	float h01 = tile_h(i0 + ivec2(0, 1), layer);
++	float h11 = tile_h(i0 + ivec2(1, 1), layer);
++	h = f.x + f.y <= 1.0 ? h00 + f.x * (h10 - h00) + f.y * (h01 - h00) : h11 + (1.0 - f.x) * (h01 - h11) + (1.0 - f.y) * (h10 - h11);
++	ic = ivec2(floor(dg + 0.5));
++	wet = texelFetch(ids, ivec3(ic.x, ic.y, layer), 0).g * 255.0 * 4.0;
++}
++
++// The foreground rule: in front of the plane nothing stands above the sight line to the line's own ground behind it.
++float tile_fore(float y, vec2 p) {
++	if (p.y <= 0.0) {
++		return y;
++	}
++	float t = min(p.y / fore_cam.z, 0.95);
++	float pu = clamp((p.x / (1.0 - t) + plane_span) / (2.0 * plane_span), 0.0, 1.0) * 63.0;
++	int ua = int(pu);
++	float pl = mix(texelFetch(plane_tex, ivec2(ua, 0), 0).r, texelFetch(plane_tex, ivec2(min(ua + 1, 63), 0), 0).r, pu - float(ua));
++	return min(y, mix(pl, fore_cam.y, t) - fore_drop * p.y);
++}
+--- a/render/shaders/tile_vertex.gdshaderinc
++++ b/render/shaders/tile_vertex.gdshaderinc
+@@ -1,22 +1,8 @@
+ // The tile ground's vertex stage (RenderTileGround; terrain_tile.gdshader). A tile is an instance: its face's axes and its place on
+-// the face (s, t, size), its layer and the data's level, its morph. The heights are the field's nodes, read as the mesh's own two
+-// triangles, so a mesh finer than the data keeps the ground the sim will stand on. What lies on the ground today (craters, scorch,
+-// streets, a groove's heat) still comes from the strip's own rows, read at this vertex's place in the strip's frame.
+-uniform sampler2DArray hts : filter_nearest, repeat_disable;
+-uniform sampler2DArray ids : filter_nearest, repeat_disable;
+-uniform vec3 pv = vec3(1.0, 0.0, 0.0);
+-uniform vec3 hd = vec3(0.0, 1.0, 0.0);
+-uniform vec3 sd = vec3(0.0, 0.0, 1.0);
+-uniform vec3 pv0 = vec3(1.0, 0.0, 0.0);
+-uniform vec3 hd0 = vec3(0.0, 1.0, 0.0);
+-uniform vec3 sd0 = vec3(0.0, 0.0, 1.0);
+-uniform vec3 pvp = vec3(1.0, 0.0, 0.0);   // the plan's frame at the camera: the land's light stays with the land through a swing
+-uniform vec3 hdp = vec3(0.0, 1.0, 0.0);
+-uniform vec3 sdp = vec3(0.0, 0.0, 1.0);
+-uniform float strip_x = 0.0;
+-uniform sampler2D plane_tex : filter_nearest, repeat_disable;
+-uniform float plane_span = 3000.0;
+-uniform float fore_tone = 1.0;   // one tone in front of the plane (RenderTileGround.fore_tone)
++// the face (s, t, size), its layer and the data's level, its morph (tile_read.gdshaderinc). A mesh finer than the data keeps the ground the
++// sim will stand on. What lies on the ground today (craters, scorch, streets, a groove's heat) still comes from the strip's own rows, read at
++// this vertex's place in the strip's frame.
++#include "res://render/shaders/tile_read.gdshaderinc"
+ varying vec2 v_uv;
+ varying float v_layer;
+ varying float v_rad;
+@@ -30,55 +16,21 @@
+ 	return abs(fract(x * 0.37) * 2.0 - 1.0) * 2.0 - 1.0;
+ }
+ 
+-vec2 tile_chart(vec3 d, vec3 h, vec3 s, vec3 p) {
+-	float x = dot(d, h);
+-	float z = dot(d, s);
+-	float q = sqrt(x * x + z * z);
+-	float k = q > 1.0e-5 ? atan(q, dot(d, p)) / q : 1.0;
+-	return vec2(x, z) * k * globe_r;
+-}
+-
+-float tile_h(ivec2 a, int layer) {
+-	return texelFetch(hts, ivec3(clamp(a.x, 0, 27), clamp(a.y, 0, 27), layer), 0).r;
+-}
+-
+-vec3 tile_dir(vec3 n, vec3 u, vec3 w, vec2 st) {
+-	return normalize(n + u * tan(st.x * 0.7853982) + w * tan(st.y * 0.7853982));
+-}
+-
+ void vertex() {
++	vec3 dir;
++	float skirt;
++	float h;
++	float wet_n;
++	ivec2 ic;
++	int layer;
++	float dist;
++	vec2 st;
++	float dsize;
++	tile_node(MODEL_MATRIX, INSTANCE_CUSTOM, UV, dir, skirt, h, wet_n, ic, layer, dist, st, dsize);
+ 	vec3 n = MODEL_MATRIX[0].xyz;
+ 	vec3 u = MODEL_MATRIX[1].xyz;
+ 	vec3 wv = MODEL_MATRIX[2].xyz;
+-	vec3 place = MODEL_MATRIX[3].xyz;
+-	vec2 uvc = clamp(UV, vec2(0.0), vec2(1.0));
+-	float skirt = (UV.x != uvc.x || UV.y != uvc.y) ? 1.0 : 0.0;
+-	vec2 g = uvc * 25.0;
+-	vec2 st0 = place.xy + uvc * place.z;
+-	vec3 d0 = tile_dir(n, u, wv, st0);
+-	float dist = atan(length(cross(d0, pv)), dot(d0, pv)) * globe_r;
+-	float mk = smoothstep(INSTANCE_CUSTOM.g * 1000.0, INSTANCE_CUSTOM.b * 1000.0, dist);
+-	// To the parent's lattice: every other node of this level's own grid across the face (25 is odd, so a tile's parity is its place's).
+-	vec2 cellxy = floor((place.xy + 1.0) / place.z + 0.5);
+-	vec2 odd = mod(cellxy, 2.0);
+-	vec2 gm = g - mod(g + odd, 2.0) * mk;
+-	vec2 st = place.xy + gm / 25.0 * place.z;
+-	vec3 dir = tile_dir(n, u, wv, st);
+-	float lf = INSTANCE_CUSTOM.r + 0.01;
+-	int layer = int(lf);
+-	float dl = floor((lf - float(layer)) * 4.0);
+-	float dsize = 2.0 / (3.0 * pow(2.0, dl));
+-	vec2 d0xy = floor((place.xy + vec2(1.0)) / dsize + 0.001) * dsize - vec2(1.0);
+-	vec2 dg = (st - d0xy) / dsize * 25.0 + vec2(1.0);   // on the layer: the ring outside the tile is its first row
+-	ivec2 i0 = ivec2(floor(dg));
+-	vec2 f = dg - vec2(i0);
+-	float h00 = tile_h(i0, layer);
+-	float h10 = tile_h(i0 + ivec2(1, 0), layer);
+-	float h01 = tile_h(i0 + ivec2(0, 1), layer);
+-	float h11 = tile_h(i0 + ivec2(1, 1), layer);
+-	float h = f.x + f.y <= 1.0 ? h00 + f.x * (h10 - h00) + f.y * (h01 - h00) : h11 + (1.0 - f.x) * (h01 - h11) + (1.0 - f.y) * (h10 - h11);
+ 	// The slope, by the strip frame's own axes, so its light stays with the land: a solid thing under a fixed sun.
+-	ivec2 ic = ivec2(floor(dg + 0.5));
+ 	float cell = dsize / 25.0;
+ 	vec2 c0 = tile_chart(dir, hdp, sdp, pvp);
+ 	vec2 cs = tile_chart(tile_dir(n, u, wv, st + vec2(cell, 0.0)), hdp, sdp, pvp) - c0;
+@@ -99,7 +51,7 @@
+ 	v_layer = float(layer);
+ 	v_rad = dist;
+ 	v_h0 = h;
+-	v_wet = texelFetch(ids, ivec3(ic.x, ic.y, layer), 0).g * 255.0 * 4.0;
++	v_wet = wet_n;
+ 	v_q = dir * globe_r / 128.0;
+ 	// The strip's frame: this point's place along the line, and its depth, as the strip's rows have them.
+ 	float z0 = asin(clamp(dot(dir, sd0), -1.0, 1.0)) * globe_r;
+@@ -132,15 +84,7 @@
+ 	vec2 p = tile_chart(dir, hd, sd, pv);
+ 	v_pv = vec2(strip_x + p.x, p.y);
+ 	v_back = clamp((z_front - p.y) / (z_front - z_band_back), 0.0, 1.0);
+-	float y = max(h, 0.0);
+-	if (p.y > 0.0) {
+-		// The foreground rule: in front of the plane nothing stands above the sight line to the line's own ground behind it.
+-		float t = min(p.y / fore_cam.z, 0.95);
+-		float pu = clamp((p.x / (1.0 - t) + plane_span) / (2.0 * plane_span), 0.0, 1.0) * 63.0;
+-		int ua = int(pu);
+-		float pl = mix(texelFetch(plane_tex, ivec2(ua, 0), 0).r, texelFetch(plane_tex, ivec2(min(ua + 1, 63), 0), 0).r, pu - float(ua));
+-		y = min(y, mix(pl, fore_cam.y, t) - fore_drop * p.y);
+-	}
++	float y = tile_fore(h, p);   // the real bed under the sea and a lake: the water sheet lies over it (water_tile.gdshader)
+ 	v_h = y;
+ 	y -= skirt * INSTANCE_CUSTOM.a * 1000.0 * 0.05;
+ 	float rr = globe_r + y;
+--- a/render/shaders/water.gdshaderinc
++++ b/render/shaders/water.gdshaderinc
+@@ -30,6 +30,12 @@
+ #include "res://render/shaders/bend.gdshaderinc"
+ #include "res://render/shaders/ground.gdshaderinc"
+ #include "res://render/shaders/skycol.gdshaderinc"
++#ifdef TILE_GROUND
++#include "res://render/shaders/tile_read.gdshaderinc"
++varying vec2 v_pv;
++uniform int wk_n = 0;      // the short V wakes (RenderTileGround._water_marks), at most 2
++uniform vec4 wk_a[2];      // x, y (the surface), the way it's going (1 or -1), its length
++#endif
+ 
+ uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+ uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
+@@ -46,9 +52,14 @@
+ uniform vec4 wf_a[4];      // x (the front's source), y (the surface it heads for), its speed (units a second), t0 (its start)
+ uniform vec4 wf_b[4];      // its run behind x (from .x to .y units from x) and ahead (.z to .w)
+ uniform vec4 wf_c[4];      // the crest's height, the slosh's
+-uniform int ww_n = 0;      // the live rings, at most 2
++uniform int ww_n = 0;      // the live rings, at most 2 (6 on the tile ground: water's A1)
++#ifdef TILE_GROUND
++uniform vec4 ww_a[6];
++uniform vec4 ww_b[6];
++#else
+ uniform vec4 ww_a[2];      // x, y (the surface), t0, the radius it runs out to
+ uniform vec4 ww_b[2];      // its lift, the time it runs
++#endif
+ uniform vec4 fill_t = vec4(0.22, 0.55, 0.3, 1.6);   // RenderLook.WATER_FILL_T, WATER_PILE: the crest's length behind the front (s), the slosh's period and settle time (s), the pile at a wall
+ uniform vec2 foam_band = vec2(14.0, 50.0);   // RenderLook.WATER_FOAM_BAND: the foam line's width on a front, a pile or a ring (units); the ring's width
+ uniform float lake_on = 0.0;                 // 1 on a gen 2 ring (GroundField.gen2_ring, PlanetView.update)
+@@ -112,6 +123,45 @@
+ 	return o;
+ }
+ 
++#ifdef TILE_GROUND
++void vertex() {
++	vec3 dir;
++	float skirt;
++	float h;
++	float wet_n;
++	ivec2 ic;
++	int layer;
++	float dist;
++	vec2 st;
++	float dsize;
++	tile_node(MODEL_MATRIX, INSTANCE_CUSTOM, UV, dir, skirt, h, wet_n, ic, layer, dist, st, dsize);
++	// The water's top: a lake's or a river's level at its node, else the sea's. Over dry land it lies under the ground, so the shoreline is
++	// where the land rises through it.
++	float surf = wet_n > 0.5 ? h + wet_n : 0.0;
++	float z0 = asin(clamp(dot(dir, sd0), -1.0, 1.0)) * globe_r;
++	float xw = strip_x + atan(dot(dir, hd0), dot(dir, pv0)) * globe_r;
++	xw -= world_w * floor(xw / world_w);
++	v_px = vec2(xw, z0);
++	vec2 p = tile_chart(dir, hd, sd, pv);
++	v_pv = vec2(strip_x + p.x, p.y);
++	v_wet = 1.0;
++	v_ok = 1.0;
++	v_lake = surf - h;
++	v_near = 1.0;
++	if (ww_n > 0) {
++		surf += max(water_drama(xw, z0).x, -0.6 * max(surf - h, 0.0));   // a ring (never below the floor)
++	}
++	float ground = tile_fore(h, p);
++	surf = tile_fore(surf, p);
++	v_under = 0.0;
++	v_depth = surf - ground;
++	float rr = globe_r + surf - skirt * INSTANCE_CUSTOM.a * 1000.0 * 0.05;
++	vec4 bw = vec4(rr * dot(dir, hd), rr * dot(dir, pv) - globe_r, rr * dot(dir, sd), 1.0);
++	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
++	v_wz = bw.z;
++	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
++}
++#else
+ void vertex() {
+ 	int i = int(UV.x + 0.5) % nc;
+ 	float xw = UV.x * col_w;
+@@ -187,6 +237,7 @@
+ 	v_wz = bw.z;
+ 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
+ }
++#endif
+ 
+ void fragment() {
+ 	if (v_wet < 0.5 || v_depth <= 0.0 || v_ok < 0.5) {
+@@ -215,12 +266,32 @@
+ 			c = foam.rgb;   // the crest's and the ring's foam
+ 			a = foam.a;
+ 		}
++#ifdef TILE_GROUND
++		// A short V wake behind a body flying low and fast: two hard foam lines, narrowing away.
++		for (int j = 0; j < wk_n; j++) {
++			float back = v_px.x - wk_a[j].x;
++			back -= world_w * round(back / world_w);
++			back *= -wk_a[j].z;
++			if (back > 0.0 && back < wk_a[j].w && abs(abs(v_px.y - wk_a[j].y) - back * 0.35) < 10.0 * (1.0 - back / wk_a[j].w)) {
++				c = foam.rgb;
++				a = foam.a;
++			}
++		}
++#endif
+ 	}
+ 	c = c * wl_mul + wl_add;   // the world's light; the lane cue is never dimmed
++#ifdef TILE_GROUND
++	vec4 cue = lane_cue_at(v_pv, fwidth(v_pv.y));
++#else
+ 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));   // the lane cue lies on the surface
++#endif
+ 	c = mix(c, cue.rgb, cue.a);
+ 	a = max(a, cue.a);
++#ifdef TILE_GROUND
++	c = pair_mark_on(c, v_pv, fwidth(v_pv.y));
++#else
+ 	c = pair_mark_on(c, v_px, fwidth(v_px.y));   // ... and so does the pair's mark
++#endif
+ 	// The sea takes the sky: by depth toward the horizon band at haze_sea of its value, and at the far edge it ends there
+ 	// (not in the sky's own colour), one clear step below the sky at the horizon. It turns opaque as it hazes.
+ 	vec2 hz = haze_parts(v_view, -v_wz, fog_far);
+--- /dev/null
++++ b/render/shaders/water_tile.gdshader
+@@ -0,0 +1,6 @@
++// The water on the tile ground (RenderTileGround): the wet tiles a second time, the fragment of water.gdshaderinc with a vertex stage of its own.
++shader_type spatial;
++render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++
++#define TILE_GROUND
++#include "res://render/shaders/water.gdshaderinc"

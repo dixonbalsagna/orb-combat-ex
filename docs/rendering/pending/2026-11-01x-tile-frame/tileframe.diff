@@ -1,0 +1,137 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -550,6 +550,9 @@
+ const TILE_URGENT_X: int = 3               # ... this many times its slice
+ const TILE_BOOT_US: int = 12000            # ... and one of the load's
+ const TILE_OFF_COLS: int = 24              # the body offset's columns read a frame
++const TILE_OFF_STALE_FRAMES: int = 8       # ... while the line turns, its table is read again from the feet out at most this often
++const TILE_PROFILE_FRAMES: int = 4         # the sight line is read again at most this often while only the view turns,
++const TILE_PROFILE_MOVE: float = 128.0     # ... at once if the camera has moved this far along the line
+ const TILE_LINE_NEAR: float = 96.0         # the strip's own height holds within this of the line, easing out by
+ const TILE_LINE_FAR: float = 480.0
+ const TILE_PLACE_MARGIN: float = 200.0     # a place's band: this past its buildings along the line
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -161,6 +161,7 @@
+ var _tile_for: SimState = null
+ var _tf_i: int = 0
+ var _tf_first: bool = true
++var _tf_ver: int = -1
+ var _bld_seen: Array = []          # per building: [curH, alive, fmask, hp, stage], the height and stage as it last stood
+ var _drawn: Array = []             # per building: [height, stage 0 to 3, standing] as drawn (a falling one keeps its last look)
+ var _grow := PackedInt32Array()    # this refresh's buildings with more people than figures at home
+@@ -1255,13 +1256,16 @@
+ 	var n: int = S.buildings.size()
+ 	if n == 0:
+ 		return
+-	var left: int = RenderLook.TILE_FOOT_READS
++	if not _tf_first and _tf_i == 0 and tile_field.version == _tf_ver:
++		return   # no tile has changed since the last pass
++	var left: int = RenderLook.TILE_FOOT_READS if tile_field.frame_room else 2
+ 	var seen: int = RenderLook.TILE_FOOT_SCAN
+ 	while left > 0 and seen > 0:
+ 		seen -= 1
+ 		if _tf_i >= n:
+ 			_tf_i = 0
+ 			_tf_first = false
++			_tf_ver = tile_field.version
+ 		var bi: int = _tf_i
+ 		_tf_i += 1
+ 		var b = S.buildings[bi]
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -54,6 +54,9 @@
+ var _stamp := PackedInt32Array()     # layer -> the frame it was last wanted
+ var _hs: Array = []                  # layer -> its heights (PackedFloat32Array)
+ var _wanted: Dictionary = {}         # tile key -> distance, this frame's
++static var steady_fill: bool = false   # a capture's frames are slow by nature: its fill doesn't lean on the frame time, so a reel shows what play shows
++var frame_room: bool = true          # the frame is under its target: the fill may take its urgent budget
++var _off_stale_at: int = -1000000
+ var _live: Dictionary = {}           # pane -> the tile keys its current selection uses: these aren't evicted
+ var _live_now: Dictionary = {}
+ var _frame: int = 0
+@@ -382,7 +385,8 @@
+ 			_urgent_until = _frame + 30
+ 			break
+ 	if _frame < _urgent_until:
+-		budget_us = maxi(budget_us, RenderLook.TILE_FILL_US * RenderLook.TILE_URGENT_X)
++		if frame_room:
++			budget_us = maxi(budget_us, RenderLook.TILE_FILL_US * RenderLook.TILE_URGENT_X)
+ 	elif _frame < _ask_until and not _ask_list.is_empty():
+ 		budget_us = maxi(budget_us, RenderLook.TILE_ASK_US)
+ 	while Time.get_ticks_usec() - t0 < budget_us:
+@@ -653,8 +657,9 @@
+ 		# Another line, other ground under the same columns. The line's axis: x0 following the pair doesn't change it.
+ 		var fr = _S.frame
+ 		var ax := Vector3(fr.py * fr.tz - fr.pz * fr.ty, fr.pz * fr.tx - fr.px * fr.tz, fr.px * fr.ty - fr.py * fr.tx)
+-		if ax.dot(_off_axis) < 0.9999999:
++		if ax.dot(_off_axis) < 0.9999999 and _frame - _off_stale_at >= RenderLook.TILE_OFF_STALE_FRAMES:
+ 			_off_axis = ax
++			_off_stale_at = _frame
+ 			stale_off()
+ 	var c0: int = int(floor(x / SimConst.COL)) - OFF_N / 2
+ 	var done: int = 0
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -51,6 +51,8 @@
+ var _reff: float = -1.0
+ var _drawn: int = 0
+ var _buf := PackedFloat32Array()
++var _prof_wait: int = 0
++var _prof_x: float = 0.0
+ var _fill_at: int = 0
+ var _fill_dt: float = float(RenderLook.TILE_FILL_TARGET_US)
+ var _walk_x: float = 1.0e18
+@@ -185,7 +187,11 @@
+ 		_walk_z = cam_d
+ 		_walk_y = cam_h
+ 		_select(cam_d, cam_h, reff, vp)
+-		_profile(S, cam_x, width)
++		_prof_wait -= 1
++		if _prof_wait <= 0 or absf(cam_x - _prof_x) > RenderLook.TILE_PROFILE_MOVE or not (S.swing != null and S.swing.active):
++			_prof_wait = RenderLook.TILE_PROFILE_FRAMES
++			_prof_x = cam_x
++			_profile(S, cam_x, width)
+ 	_cull_chunks(cam_x, cam_h, reff)
+ 	# The sky's horizon is the globe's, from the camera's height over the ground below it.
+ 	var hz: float = -tan(acos(reff / (reff + cam_h)))
+@@ -194,7 +200,7 @@
+ 	pane.mats.set_sky("horizon", hz)
+ 	if pane.planet.source == null:
+ 		_look_ahead(S, tk)
+-		field.keep_off(cam_x, RenderLook.TILE_OFF_COLS)
++		field.keep_off(cam_x, RenderLook.TILE_OFF_COLS / 2 if S.swing != null and S.swing.active else RenderLook.TILE_OFF_COLS)
+ 		field.fill(_fill_slice())
+ 
+ 
+@@ -204,6 +210,7 @@
+ 	if _fill_at > 0:
+ 		_fill_dt = lerpf(_fill_dt, float(now - _fill_at), 0.1)
+ 	_fill_at = now
++	field.frame_room = RenderTileField.steady_fill or _fill_dt < float(RenderLook.TILE_FILL_TARGET_US)
+ 	return clampi(RenderLook.TILE_FILL_US + int(RenderLook.TILE_FILL_ROOM * (float(RenderLook.TILE_FILL_TARGET_US) - _fill_dt)), RenderLook.TILE_FILL_US, RenderLook.TILE_FILL_MAX_US)
+ 
+ 
+@@ -637,8 +644,10 @@
+ 	for k in range(64):
+ 		var along: float = lerpf(-half, half, float(k) / 63.0)
+ 		var a: float = along / field.R
+-		var h: float = field.height_at(_pv * cos(a) + _hd * sin(a))
+-		_prof[k] = 0.0 if h < 0.0 else minf(h, WorldTerrain.groundY(S, SimWrap.wrap(cam_x + along)))   # a dent on the line is the sim's, not the tile's
++		var pd: Vector3 = _pv * cos(a) + _hd * sin(a)
++		var h: float = field.height_at(pd)
++		# A dent on the line is the sim's, not the tile's: on a field world it's in the store, and a read of the sim's ground here would cost a cold column every time a swing moves the frame.
++		_prof[k] = 0.0 if h < 0.0 else (h + minf(WorldStore.heightDelta(S, pd.x, pd.y, pd.z), 0.0) if field.field_world else minf(h, WorldTerrain.groundY(S, SimWrap.wrap(cam_x + along))))
+ 	_prof_img.set_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
+ 	_prof_tex.update(_prof_img)
+ 	mat.set_shader_parameter("plane_span", half)
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -89,6 +89,7 @@
+ 
+ ## Set a worst case up, as tools/flash/flash_worst.gd does, and hold the sim (nothing ticks until step()).
+ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int = 0, slots: Array = []) -> void:
++	RenderTileField.steady_fill = true
+ 	VARIANT = variant
+ 	var err: String = ""
+ 	if not SCENARIOS.has(sc):

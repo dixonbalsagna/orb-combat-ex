@@ -1,0 +1,24 @@
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -372,7 +372,7 @@
+ 	return _ask_list.size()
+ 
+ 
+-## The frame's slice: the nearest wanted tile, then what's been asked for ahead, while the budget lasts. More of it while the ground
++## The frame's slice: the coarsest wanted level, nearest first, then what's been asked for ahead, while the budget lasts. More of it while the ground
+ ## round the camera is still coarse (arriving at a new place is when it shows), and while asked-for tiles are coming.
+ func fill(budget_us: int) -> void:
+ 	_frame += 1
+@@ -389,8 +389,11 @@
+ 		if _job_key < 0:
+ 			var best: int = -1
+ 			var bd: float = INF
++			var bl: int = LEVELS
+ 			for k in _wanted:
+-				if float(_wanted[k]) < bd:
++				var kl: int = (int(k) >> 3) & 7
++				if kl < bl or (kl == bl and float(_wanted[k]) < bd):
++					bl = kl
+ 					bd = float(_wanted[k])
+ 					best = k
+ 			if best < 0:

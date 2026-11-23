@@ -1,0 +1,107 @@
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -16,7 +16,7 @@
+ const LEVEL0: int = 3             # tiles a face edge at level 0
+ const BASE_LEVEL: int = 2         # the ground a mesh level can always read: finer data may still be on its way
+ const LEVELS: int = 5             # 512, 256, 128, 64, 32 units: the last two are World's sub-nodes, for the ground near the camera
+-const POOL: int = 430             # layers: the 54 of level 0 stay, the rest are reused, least recently wanted first
++const POOL: int = 800             # layers: the 54 of level 0 stay, the rest are reused, least recently wanted first; never one a pane is using. Two panes want about 190 each, more in a wide shot
+ const FACES: Array = [
+ 	[Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1)],
+ 	[Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)],
+@@ -54,6 +54,8 @@
+ var _stamp := PackedInt32Array()     # layer -> the frame it was last wanted
+ var _hs: Array = []                  # layer -> its heights (PackedFloat32Array)
+ var _wanted: Dictionary = {}         # tile key -> distance, this frame's
++var _live: Dictionary = {}           # pane -> the tile keys its current selection uses: these aren't evicted
++var _live_now: Dictionary = {}
+ var _frame: int = 0
+ var _job_key: int = -1
+ var _job_h := PackedFloat32Array()
+@@ -309,8 +311,39 @@
+ 	return int(_layer.get(k, -1))
+ 
+ 
++## A pane is choosing its tiles again: what it wants from here on is what it's using.
++func begin_wants(pane_id: int) -> void:
++	_live_now = {}
++	_live[pane_id] = _live_now
++
++
++## A pane no longer draws: its tiles can go.
++func forget_wants(pane_id: int) -> void:
++	_live.erase(pane_id)
++
++
++## The layer a new tile can take: a free one, else the least recently wanted that no pane is using. -1 when there is none.
++func _free_slot() -> int:
++	var slot: int = -1
++	var oldest: int = 2147483647
++	for q in range(POOL):
++		if _keys[q] < 0:
++			return q
++		if ((_keys[q] >> 3) & 7) > 0 and _stamp[q] < oldest:
++			var used: bool = false
++			for keys in _live.values():
++				if keys.has(_keys[q]):
++					used = true
++					break
++			if not used:
++				oldest = _stamp[q]
++				slot = q
++	return slot
++
++
+ ## A pane wants this tile drawn at this distance from its pivot. The tile's kept fresh; a missing one joins the queue.
+ func want(k: int, dist: float) -> void:
++	_live_now[k] = true
+ 	if _layer.has(k):
+ 		_stamp[int(_layer[k])] = _frame
+ 	elif not _wanted.has(k) or dist < float(_wanted[k]):
+@@ -371,6 +404,8 @@
+ 			_wanted.erase(best)
+ 			if _layer.has(best):
+ 				continue
++			if _free_slot() < 0:
++				break   # every layer is in use: keep what's drawn, and what's missing is asked for again when the view moves
+ 			_start(best)
+ 		if not _fill_job(t0, budget_us):
+ 			break
+@@ -504,15 +539,10 @@
+ 
+ 
+ func _store() -> void:
+-	var slot: int = -1
+-	var oldest: int = 2147483647
+-	for q in range(POOL):
+-		if _keys[q] < 0:
+-			slot = q
+-			break
+-		if ((_keys[q] >> 3) & 7) > 0 and _stamp[q] < oldest:
+-			oldest = _stamp[q]
+-			slot = q
++	var slot: int = _free_slot()
++	if slot < 0:
++		_job_key = -1   # the view moved on while it was filling, and took the last layer
++		return
+ 	if _keys[slot] >= 0:
+ 		_layer.erase(_keys[slot])
+ 	_keys[slot] = _job_key
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -315,6 +315,7 @@
+ 
+ ## The planet is being built again, so its copies are going: this drive ends with them.
+ func drop() -> void:
++	field.forget_wants(get_instance_id())
+ 	if _node != null:
+ 		_node.queue_free()
+ 		_node = null
+@@ -516,6 +517,7 @@
+ 
+ 
+ func _select(cam_d: float, cam_h: float, reff: float, vp: Vector2) -> void:
++	field.begin_wants(get_instance_id())
+ 	_reach = cam_d + reff * (acos(reff / (reff + cam_h)) + acos(reff / (reff + RenderLook.TILE_TALLEST)))
+ 	_tan = tan(deg_to_rad(pane.cam_rig.fov * 0.5)) * vp.x / maxf(vp.y, 1.0)
+ 	_drawn = 0

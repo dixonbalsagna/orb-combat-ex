@@ -1,0 +1,182 @@
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -159,6 +159,8 @@
+ var _cv_ver := PackedInt32Array()    # ... and the version its figures were last placed at
+ var _ft_field: RenderTileField = null   # the field those are of
+ var _ft_dirs: Array = []             # ... and each footing's nine points on the planet (PackedVector3Array)
++var _ft_keys: Array = []             # ... the tile keys its reads rest on (PackedInt32Array: RenderTileField.kept_since)
++var _cv_keys: Array = []             # ... and the keys its figures' reads rest on
+ var _falls: Dictionary = {}          # building -> [sim time its sink starts, standing height]: implodes in progress
+ var _spread: Dictionary = {}         # building -> [x from its shell's middle, y over its base, the tick it started, the stage before, sharing]: a stage spreading over it from where it was hit (shared by panes)
+ var _marks: Dictionary = {}          # building -> its held hits' marks as written: [[first floor, floors, share, side, the share before, the tick it grows from, sharing], ...] (shared by panes)
+@@ -1516,12 +1518,16 @@
+ 		_ft_dirs.fill(PackedVector3Array())
+ 
+ 
+-## Whether building bi's figures stand where they were placed, as the tile ground has it: no tile stored since.
++## Whether building bi's figures stand where they were placed, as the tile ground has it: none of the tiles their reads
++## rest on stored or let go since.
+ func _crowd_still(bi: int) -> bool:
+ 	if tile_field == null or bi >= _cv_ver.size():
+ 		return false
+ 	_tiles_seen()
+-	return _cv_ver[bi] == tile_field.version
++	if _cv_ver[bi] < 0 or not tile_field.kept_since(_cv_keys[bi], _cv_ver[bi]):
++		return false
++	_cv_ver[bi] = tile_field.version
++	return true
+ 
+ 
+ ## The lowest and highest ground under a building's footprint (its corners, edges and centre, as drawn).
+@@ -1531,12 +1537,14 @@
+ 	var hi: float = -INF
+ 	if tile_field != null:
+ 		# The tile ground: at its plan's place, as the view draws it, and a plinth no deeper than TILE_FOOT_CAP under its base.
+-		# The tiles' heights change only when a tile is stored (version), so building bi's reads are kept until one is.
++		# The tiles' heights change only when a tile is stored or let go, so building bi's reads are kept until one of the
++		# tiles they rest on is (RenderTileField.kept_since).
+ 		_tiles_seen()
+ 		var kept: bool = bi >= 0 and bi < _ft_ver.size()
+-		if kept and _ft_ver[bi] == tile_field.version:
++		if kept and _ft_ver[bi] >= 0 and tile_field.kept_since(_ft_keys[bi], _ft_ver[bi]):
+ 			lo = _ft_lo[bi]
+ 			hi = _ft_hi[bi]
++			_ft_ver[bi] = tile_field.version
+ 		else:
+ 			# Its nine points on the planet are its own (its plan's place: a swing does not move them), kept once made.
+ 			var pts: PackedVector3Array = _ft_dirs[bi] if kept and (_ft_dirs[bi] as PackedVector3Array).size() == 9 else PackedVector3Array()
+@@ -1546,14 +1554,16 @@
+ 						pts.append(tile_field.dir_at(x, z, S.frame0))
+ 				if kept:
+ 					_ft_dirs[bi] = pts
++			var keys := PackedInt32Array()
+ 			for d in pts:
+-				var g: float = tile_field.height_at(d)
++				var g: float = tile_field.height_keys(d, keys)
+ 				lo = minf(lo, g)
+ 				hi = maxf(hi, g)
+ 			if kept:
+ 				_ft_lo[bi] = lo
+ 				_ft_hi[bi] = hi
+ 				_ft_ver[bi] = tile_field.version
++				_ft_keys[bi] = keys
+ 		return Vector2(maxf(lo, WorldStructures.baseY(S, b) - RenderLook.TILE_FOOT_CAP), hi)
+ 	for x in [b.x - b.w * 0.5, b.x, b.x + b.w * 0.5]:
+ 		for z in [zd.x + zd.y * 0.5, zd.x, zd.x - zd.y * 0.5]:
+@@ -1678,6 +1688,7 @@
+ 		for ci in flight.vanish(S, bi, b.x, slots, _crowd_x, _crowd_z, ground):
+ 			gone_now[ci] = true
+ 	_shown[bi] = alive
++	var kk := PackedInt32Array()
+ 	if tile_field != null and bi < _cv_ver.size():
+ 		_tiles_seen()
+ 		_cv_ver[bi] = tile_field.version
+@@ -1685,9 +1696,11 @@
+ 		var ci: int = first + j
+ 		var x: float = _crowd_x[ci]
+ 		if j < alive:
+-			_crowd.set_instance_transform(ci, Transform3D(Basis.from_scale(Vector3.ONE * RenderLook.CROWD_SCALE), Vector3(x, tile_field.height_at(tile_field.dir_at(x, _crowd_z[ci], S.frame0)) if tile_field != null else ground.ground_at(S, x, _crowd_z[ci]), _crowd_z[ci])))
++			_crowd.set_instance_transform(ci, Transform3D(Basis.from_scale(Vector3.ONE * RenderLook.CROWD_SCALE), Vector3(x, tile_field.height_keys(tile_field.dir_at(x, _crowd_z[ci], S.frame0), kk) if tile_field != null else ground.ground_at(S, x, _crowd_z[ci]), _crowd_z[ci])))
+ 		elif gone_now.has(ci) or not flight.running(ci):
+ 			_crowd.set_instance_transform(ci, _hidden(x))
++	if tile_field != null and bi < _cv_keys.size():
++		_cv_keys[bi] = kk
+ 
+ 
+ ## A building's windows, damage stage and shape for building.gdshader (five texels of win_tex an instance, so one
+@@ -2910,6 +2923,9 @@
+ 	_ft_hi.resize(nb)
+ 	_ft_dirs.resize(nb)
+ 	_ft_dirs.fill(PackedVector3Array())
++	for a in [_ft_keys, _cv_keys]:
++		a.resize(nb)
++		a.fill(PackedInt32Array())
+ 	_top.resize(nb)
+ 	_top.fill(-INF)
+ 	_falls.clear()
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -43,6 +43,7 @@
+ var _s0 := Vector3.ZERO
+ var _S: SimState
+ var version: int = 0                 # counts the tiles stored: the walk looks again when it moves
++var key_ver: Dictionary = {}         # tile key -> the version that last stored it or let it go (height_keys, kept_since)
+ var _u := Vector3.ZERO
+ var _v := Vector3.ZERO
+ var _c := Vector3.ZERO
+@@ -560,12 +561,16 @@
+ 	if slot < 0:
+ 		_job_key = -1   # the view moved on while it was filling, and took the last layer
+ 		return
+-	if _keys[slot] >= 0:
+-		_layer.erase(_keys[slot])
++	var gone: int = _keys[slot]
++	if gone >= 0:
++		_layer.erase(gone)
+ 	_keys[slot] = _job_key
+ 	_stamp[slot] = _frame
+ 	_layer[_job_key] = slot
+ 	version += 1
++	key_ver[_job_key] = version
++	if gone >= 0:
++		key_ver[gone] = version   # let go: a read that found it finds a coarser tile now
+ 	_hs[slot] = _job_h.duplicate()
+ 	hts.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RF, _job_h.to_byte_array()), slot)
+ 	_wets[slot] = _job_t.duplicate() if _job_any_wet else PackedFloat32Array()
+@@ -658,6 +663,56 @@
+ 				return hs[q] + fa * (hs[q + 1] - hs[q]) + fb * (hs[q + TEX] - hs[q])
+ 			return hs[q + TEX + 1] + (1.0 - fa) * (hs[q + TEX] - hs[q + TEX + 1]) + (1.0 - fb) * (hs[q + 1] - hs[q + TEX + 1])
+ 	return 0.0
++
++
++## height_at's read, and the keys it rests on added to keys (each once): the levels it looked at, finest first, down to
++## the one it found (all five when it found none). The read stands while none of them is stored or let go (kept_since).
++func height_keys(d: Vector3, keys: PackedInt32Array) -> float:
++	var ad := Vector3(absf(d.x), absf(d.y), absf(d.z))
++	var f: int
++	if ad.x >= ad.y and ad.x >= ad.z:
++		f = 0 if d.x > 0.0 else 1
++	elif ad.y >= ad.z:
++		f = 2 if d.y > 0.0 else 3
++	else:
++		f = 4 if d.z > 0.0 else 5
++	var fc: Array = FACES[f]
++	var w: float = (fc[0] as Vector3).dot(d)
++	var s: float = atan((fc[1] as Vector3).dot(d) / w) / (PI / 4.0)
++	var t: float = atan((fc[2] as Vector3).dot(d) / w) / (PI / 4.0)
++	for L in [4, 3, 2, 1, 0]:
++		var n: int = level_n(L)
++		var ps: float = (s + 1.0) * 0.5 * float(n)
++		var pt: float = (t + 1.0) * 0.5 * float(n)
++		var i: int = clampi(int(ps), 0, n - 1)
++		var j: int = clampi(int(pt), 0, n - 1)
++		var k: int = key_of(f, L, i, j)
++		if not keys.has(k):
++			keys.append(k)
++		var lay: int = int(_layer.get(k, -1))
++		if lay >= 0:
++			var ga: float = (ps - float(i)) * float(CELLS) + 1.0
++			var gb: float = (pt - float(j)) * float(CELLS) + 1.0
++			var a0: int = clampi(int(ga), 0, TEX - 2)
++			var b0: int = clampi(int(gb), 0, TEX - 2)
++			var fa: float = ga - float(a0)
++			var fb: float = gb - float(b0)
++			var hs: PackedFloat32Array = _hs[lay]
++			var q: int = b0 * TEX + a0
++			if fa + fb <= 1.0:
++				return hs[q] + fa * (hs[q + 1] - hs[q]) + fb * (hs[q + TEX] - hs[q])
++			return hs[q + TEX + 1] + (1.0 - fa) * (hs[q + TEX] - hs[q + TEX + 1]) + (1.0 - fb) * (hs[q + 1] - hs[q + TEX + 1])
++	return 0.0
++
++
++## Whether reads resting on keys (height_keys), made at version v, still stand: none of those tiles stored or let go since.
++func kept_since(keys: PackedInt32Array, v: int) -> bool:
++	if v == version:
++		return true
++	for k in keys:
++		if int(key_ver.get(k, -1)) > v:
++			return false
++	return true
+ 
+ 
+ ## The body offset's table, for the columns round x: drawn ground less the sim's base. A function of place alone, so what

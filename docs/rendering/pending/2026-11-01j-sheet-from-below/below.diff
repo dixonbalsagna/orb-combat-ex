@@ -1,0 +1,10 @@
+--- a/render/shaders/water.gdshaderinc
++++ b/render/shaders/water.gdshaderinc
+@@ -152,6 +152,7 @@
+ 		surf += max(water_drama(xw, z0).x, -0.6 * max(surf - h, 0.0));   // a ring (never below the floor)
+ 	}
+ 	float ground = tile_fore(cb_n > 0 ? h + tile_bowls(dir) : h, p);   // a bowl below the water's top floods
++	v_ok = surf < fore_cam.y ? 1.0 : 0.0;   // a lens under the water's top doesn't draw the sheet: from below it's a flat wall across the frame
+ 	surf = tile_fore(surf, p);
+ 	v_under = 0.0;
+ 	v_depth = surf - ground;

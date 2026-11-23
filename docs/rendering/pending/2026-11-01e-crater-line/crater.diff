@@ -1,0 +1,28 @@
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -166,7 +166,7 @@
+ 		_walk_z = cam_d
+ 		_walk_y = cam_h
+ 		_select(cam_d, cam_h, reff, vp)
+-		_profile(width)
++		_profile(S, cam_x, width)
+ 	_cull_chunks(cam_x, cam_h, reff)
+ 	# The sky's horizon is the globe's, from the camera's height over the ground below it.
+ 	var hz: float = -tan(acos(reff / (reff + cam_h)))
+@@ -516,11 +516,13 @@
+ 
+ 
+ ## The line's own ground in view, 64 points: the foreground rule's sight lines end on it.
+-func _profile(width: float) -> void:
++func _profile(S: SimState, cam_x: float, width: float) -> void:
+ 	var half: float = width * 1.4
+ 	for k in range(64):
+-		var a: float = lerpf(-half, half, float(k) / 63.0) / field.R
+-		_prof[k] = maxf(field.height_at(_pv * cos(a) + _hd * sin(a)), 0.0)
++		var along: float = lerpf(-half, half, float(k) / 63.0)
++		var a: float = along / field.R
++		var h: float = field.height_at(_pv * cos(a) + _hd * sin(a))
++		_prof[k] = 0.0 if h < 0.0 else minf(h, WorldTerrain.groundY(S, SimWrap.wrap(cam_x + along)))   # a dent on the line is the sim's, not the tile's
+ 	_prof_img.set_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
+ 	_prof_tex.update(_prof_img)
+ 	mat.set_shader_parameter("plane_span", half)

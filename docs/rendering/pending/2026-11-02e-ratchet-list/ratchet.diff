@@ -1,0 +1,65 @@
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -1325,6 +1325,14 @@
+ 	return int(floor(SimWrap.wrap(x) / SimConst.COL))
+ 
+ 
++## In a swing: whether x is past the sim's pose reach of every body (it poses only the buildings near one).
++static func _past_reach(S: SimState, x: float, reach: float) -> bool:
++	for f in S.fighters:   # in the swing's tick that is every body (SimStage.swingTick)
++		if absf(SimWrap.sdx(f.x, x)) <= reach:
++			return false
++	return true
++
++
+ ## Whether the ground changed anywhere under a building's footprint (the columns WorldStructures.baseY reads).
+ static func _foot_dirty(dirty: PackedByteArray, b) -> bool:
+ 	var nc: int = SimConst.NC
+@@ -2173,7 +2181,7 @@
+ 	for bi in WorldStructures.near(S, SimWrap.wrap(cam_x + (xa + xb) * 0.5), absf(xb - xa) * 0.5 + m):
+ 		if _top[bi] == -INF:
+ 			continue
+-		if swinging and absf(SimWrap.sdx(S.fighters[0].x, S.buildings[bi].x)) > reach and absf(SimWrap.sdx(S.fighters[1].x, S.buildings[bi].x)) > reach:
++		if swinging and _past_reach(S, S.buildings[bi].x, reach):
+ 			continue
+ 		var zd: Vector2 = _depth(S.buildings[bi])
+ 		if zd.x + zd.y * 0.5 > z_min + 1.0:
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -246,7 +246,7 @@
+ 	if _near_list.is_empty() and not _near_made:
+ 		_near_made = true
+ 		var f0: Variant = _S.frame
+-		var cx: float = float(_S.fighters[0].x)
++		var cx: float = middle_x(_S)
+ 		for dx in [0.0, -1600.0, 1600.0, -3200.0, 3200.0]:
+ 			for dz in [0.0, -1600.0, 1600.0]:
+ 				var d: Vector3 = dir_at(cx + dx, dz, f0)
+@@ -266,6 +266,16 @@
+ 		if not _fill_job(t0, budget_us):
+ 			return false
+ 	return false
++
++
++## Where the fighters are along the line: their middle, by the shortest arc from the first (the near tiles are made
++## around it, and the test turn's pivot is there).
++static func middle_x(S: SimState) -> float:
++	var x0: float = float(S.fighters.front().x)
++	var sum: float = 0.0
++	for f in S.fighters:
++		sum += SimWrap.sdx(x0, float(f.x))
++	return SimWrap.wrap(x0 + sum / float(S.fighters.size()))
+ 
+ 
+ ## The tile of level L a direction falls in.
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -128,7 +128,7 @@
+ 	# The turn about the pivot, in the camera's frame (along the line, up, toward the camera). At the camera it is
+ 	# x' = x c - z s, z' = x s + z c.
+ 	if turned == 0.0 or absf(SimWrap.sdx(cam_x, _pivot_x)) > 3000.0:
+-		_pivot_x = SimWrap.wrap(S.fighters[0].x)
++		_pivot_x = RenderTileField.middle_x(S)
+ 	var ap: float = SimWrap.sdx(cam_x, _pivot_x) / field.R
+ 	var m := Basis.IDENTITY if turned == 0.0 else Basis(Vector3(sin(ap), cos(ap), 0.0).normalized(), -deg_to_rad(turned))
+ 	# On (along the line, up, toward the camera): from the plan's frame to the view's.

@@ -1,0 +1,51 @@
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -619,10 +619,10 @@
+ 	_buf[o + 9] = u.z
+ 	_buf[o + 10] = v.z
+ 	_buf[o + 11] = size
+-	_buf[o + 12] = float(lay) + float(dl) * 0.125
++	_buf[o + 12] = float(lay)
+ 	_buf[o + 13] = (1.4 * RenderLook.TILE_K * w if L > 0 else 3.0e5) / 1000.0
+ 	_buf[o + 14] = (1.95 * RenderLook.TILE_K * w if L > 0 else 3.1e5) / 1000.0
+-	_buf[o + 15] = w / 1000.0
++	_buf[o + 15] = float(dl) * 16.0 + w / 1000.0   # the data level over the width: instance data can be half floats, so a fraction on a large layer number would be lost
+ 	if field.tile_wet(lay):
+ 		var ow: int = _drawn_w * 16
+ 		for q in range(16):
+--- a/render/shaders/tile_read.gdshaderinc
++++ b/render/shaders/tile_read.gdshaderinc
+@@ -64,9 +64,8 @@
+ 	vec2 gm = g - mod(g + odd, 2.0) * mk;
+ 	st = place.xy + gm / 25.0 * place.z;
+ 	dir = tile_dir(n, u, wv, st);
+-	float lf = c.r + 0.01;
+-	layer = int(lf);
+-	float dl = floor((lf - float(layer)) * 8.0);
++	layer = int(c.r + 0.01);
++	float dl = floor(c.a / 16.0);
+ 	dsize = 2.0 / (3.0 * pow(2.0, dl));
+ 	vec2 d0xy = floor((place.xy + vec2(1.0)) / dsize + 0.001) * dsize - vec2(1.0);
+ 	vec2 dg = (st - d0xy) / dsize * 25.0 + vec2(1.0);   // on the layer: the ring outside the tile is its first row
+--- a/render/shaders/tile_vertex.gdshaderinc
++++ b/render/shaders/tile_vertex.gdshaderinc
+@@ -101,7 +101,7 @@
+ 	v_back = clamp((z_front - p.y) / (z_front - z_band_back), 0.0, 1.0);
+ 	float y = tile_fore(h, p);   // the real bed under the sea and a lake: the water sheet lies over it (water_tile.gdshader)
+ 	v_h = y;
+-	y -= skirt * INSTANCE_CUSTOM.a * 1000.0 * 0.05;
++	y -= skirt * mod(INSTANCE_CUSTOM.a, 16.0) * 1000.0 * 0.05;
+ 	float rr = globe_r + y;
+ 	vec4 bw = vec4(rr * dot(dir, hd), rr * dot(dir, pv) - globe_r, rr * dot(dir, sd), 1.0);
+ 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
+--- a/render/shaders/water.gdshaderinc
++++ b/render/shaders/water.gdshaderinc
+@@ -156,7 +156,7 @@
+ 	surf = tile_fore(surf, p);
+ 	v_under = 0.0;
+ 	v_depth = surf - ground;
+-	float rr = globe_r + surf - skirt * INSTANCE_CUSTOM.a * 1000.0 * 0.05;
++	float rr = globe_r + surf - skirt * mod(INSTANCE_CUSTOM.a, 16.0) * 1000.0 * 0.05;
+ 	vec4 bw = vec4(rr * dot(dir, hd), rr * dot(dir, pv) - globe_r, rr * dot(dir, sd), 1.0);
+ 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
+ 	v_wz = bw.z;

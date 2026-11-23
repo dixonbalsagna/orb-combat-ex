@@ -1,0 +1,40 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -162,6 +162,7 @@
+ ## wall may differ in relative luminance. The frame analyser counts a pixel that changes by a tenth; under that, a
+ ## facade's own pattern cannot flip a pixel however the camera shakes, pans or cuts across it.
+ const PATTERN_BUDGET: float = 0.085
++const BURNT_BUDGET: float = 0.14
+ ## City variety (Orb, homework 4: up close the towers were "a bunch of dark grid lines"; Art's palettes and facade types,
+ ## docs/art/city-facades.md and data/art/city-looks.json; building.gdshader 7c), on the downtown and mid-rise towers.
+ ## Two switches (2026-10-16). CITY_TINTS: A, the glass takes the sky, and B, Art's tints. CITY_FACADES: C, Art's facade
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -2597,6 +2597,7 @@
+ 	m.set_shader_parameter("pan_whip_mix", RenderLook.PAN_WHIP_MIX)
+ 	m.set_shader_parameter("dmg_holes", RenderLook.DMG_HOLES)
+ 	m.set_shader_parameter("pattern_budget", RenderLook.PATTERN_BUDGET)
++	m.set_shader_parameter("burnt_budget", RenderLook.BURNT_BUDGET)
+ 	m.set_shader_parameter("open_col", RenderLook.OPEN_COL)
+ 	m.set_shader_parameter("open_beam", RenderLook.OPEN_BEAM)
+ 	m.set_shader_parameter("open_frame_col", RenderLook.col(RenderLook.OPEN_FRAME_COL))
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -127,6 +127,7 @@
+ uniform vec4 look_glass[10] : source_color;   // dark glass; a: the share of panes lit warm
+ uniform vec4 look_hi[10] : source_color;     // bright glass
+ uniform vec4 look_trim[10] : source_color;   // doors, shutters, panels
++uniform float burnt_budget = 0.14;   // RenderLook.BURNT_BUDGET: on the tile ground, how far from the inside a burnt-out wall on such a look stays
+ uniform float pattern_budget = 0.085;   // RenderLook.PATTERN_BUDGET: on a look with flag 16, the most a pane and its wall differ in relative luminance
+ uniform vec2 glass_sky = vec2(0.4, 0.5);   // RenderLook.GLASS_SKY: how far a tower's glass takes the sky's hue, and the least height over the horizon it takes it from (7c)
+ uniform vec4 city_glass[20] : source_color;   // RenderShapes.city_uniforms (7c): each of Art's tints' dark glass; a: its lobby storey's wall against the wall
+@@ -620,7 +621,8 @@
+ 		}
+ 		if (soft && (st > 0.5 || mk_pane || (kf >= 0.0 && kf < v_winb.y && bit_on(kf, v_win.xyz)))) {
+ 			// A row whose panes are out, on a look with the contrast budget: its wall is as dark as they are.
+-			wallc = toward(inside.rgb, wallc, pattern_budget);
++			// On the tile ground no darker than charcoal: at the inside's own near-black a burnt-out tower reads as a black block with nothing to it.
++			wallc = toward(inside.rgb, wallc, globe_r > 0.0 ? burnt_budget : pattern_budget);
+ 			col = flat_shade(wallc, NORMAL, 0.35);
+ 		}
+ 		if (st > 2.5) {

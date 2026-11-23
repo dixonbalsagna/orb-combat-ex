@@ -1,0 +1,46 @@
+--- a/render/shaders/bend.gdshaderinc
++++ b/render/shaders/bend.gdshaderinc
+@@ -22,6 +22,8 @@
+ uniform float globe_small = 0.0;          // 1: a small world thing: gone at the near line, no rule for it
+ uniform int globe_near_mode = 3;          // a tower near the line: 0 the rule, 1 sink, 2 hard clip, 3 rule and sink, 4 sink and clip
+ uniform float globe_line = -80.0;
++uniform float globe_lead = 0.5;           // a near tower's roof: how far its near side leads, in its widest sides over its height (a rise of a quarter of its width across it)
++uniform float globe_base = 90.0;          // ... and what's left of it, in units
+ uniform sampler2D globe_off : filter_nearest, repeat_enable;   // per column: drawn ground less the sim's, and the sim's
+ 
+ // How far a thing has come toward the near line, 0 to 1. plan: its depth in the plan; now: its depth in the view; width: the ramp.
+@@ -63,8 +65,8 @@
+ 	return globe_r * (1.0 - cos(w.x / globe_r) * cos(w.z / globe_r));
+ }
+ 
+-// A tower near the line: where its height goes as it comes round. a: its anchor, v: this vertex, foot: its foot's height.
+-float globe_tower(vec3 a, vec3 v, float foot) {
++// A tower near the line: where its height goes as it comes round. a: its anchor, v: this vertex, foot and top: its own, wide: its widest side.
++float globe_tower(vec3 a, vec3 v, float foot, float top, float wide) {
+ 	float sa = globe_near(a.z, globe_view_z(a), 300.0);
+ 	float sv = globe_near(v.z, globe_view_z(v), 500.0);
+ 	float tall = v.y - foot;
+@@ -72,7 +74,11 @@
+ 		return sa >= 1.0 ? foot - 200.0 : foot + tall * (1.0 - sa);
+ 	}
+ 	if (globe_near_mode == 3) {
+-		return sa >= 1.0 && sv >= 0.6 ? foot - 200.0 : foot + tall * (1.0 - mix(sa, sv, 0.5));
++		// Orb's pick: the whole building goes down, its near side leading. How far the near side leads is bounded by the building's width,
++		// so a tall tower's roof doesn't turn into a wedge or a spike; and its base stays, a floor or two high.
++		float total = max(top - foot, 1.0);
++		float lead = 0.5 * clamp(sv - sa, -globe_lead * wide / total, globe_lead * wide / total);
++		return foot + tall * (1.0 - min(sa + lead, 1.0 - min(globe_base, total) / total));
+ 	}
+ 	if (globe_near_mode == 4) {
+ 		return foot + tall * (1.0 - 0.67 * globe_near(a.z, globe_view_z(a), 400.0));
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -232,7 +232,7 @@
+ 	w.y = min(w.y, stubbed);
+ 	if (globe_r > 0.0) {
+ 		v_gz = globe_near(w.z, globe_view_z(w.xyz), 1.0);
+-		w.y = globe_tower(MODEL_MATRIX[3].xyz, w.xyz, top - length(MODEL_MATRIX[1].xyz));
++		w.y = globe_tower(MODEL_MATRIX[3].xyz, w.xyz, top - length(MODEL_MATRIX[1].xyz), top, max(length(MODEL_MATRIX[0].xyz), length(MODEL_MATRIX[2].xyz)));
+ 	}
+ 	v_wy = w.y;
+ 	vi_win = texelFetch(win_tex, ivec2(id, 0), 0);

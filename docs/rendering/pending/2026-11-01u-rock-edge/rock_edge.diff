@@ -1,0 +1,17 @@
+--- a/render/shaders/tile_vertex.gdshaderinc
++++ b/render/shaders/tile_vertex.gdshaderinc
+@@ -36,8 +36,12 @@
+ 	vec2 c0 = tile_chart(dir, hdp, sdp, pvp);
+ 	vec2 cs = tile_chart(tile_dir(n, u, wv, st + vec2(cell, 0.0)), hdp, sdp, pvp) - c0;
+ 	vec2 ct = tile_chart(tile_dir(n, u, wv, st + vec2(0.0, cell)), hdp, sdp, pvp) - c0;
+-	float hs = 0.5 * (tile_h(ic + ivec2(1, 0), layer) - tile_h(ic - ivec2(1, 0), layer));
+-	float ht = 0.5 * (tile_h(ic + ivec2(0, 1), layer) - tile_h(ic - ivec2(0, 1), layer));
++	// Over a canonical cell on the sub-node tiles: their nodes lie on its flat triangles, and a one-node slope would jump at each triangle's edge.
++	int span = max(int(1.0 / (6.0 * dsize) + 0.5), 1);
++	ivec2 sa = min(ivec2(span), ivec2(27) - ic);
++	ivec2 sb = min(ivec2(span), ic);
++	float hs = (tile_h(ic + ivec2(sa.x, 0), layer) - tile_h(ic - ivec2(sb.x, 0), layer)) / float(max(sa.x + sb.x, 1));
++	float ht = (tile_h(ic + ivec2(0, sa.y), layer) - tile_h(ic - ivec2(0, sb.y), layer)) / float(max(sa.y + sb.y, 1));
+ 	float det = cs.x * ct.y - cs.y * ct.x;
+ 	v_grad = abs(det) > 1.0e-3 ? vec2(hs * ct.y - ht * cs.y, ht * cs.x - hs * ct.x) / det : vec2(0.0);
+ 	// The bowls near the camera, and their slope by the same chart.

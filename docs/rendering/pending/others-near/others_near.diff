@@ -1,0 +1,91 @@
+--- a/render/core/beam_view.gd
++++ b/render/core/beam_view.gd
+@@ -60,12 +60,13 @@
+ 	# beam's tail at the same place in the world); a tool's posed state has only this view's own.
+ 	var ppu: float = host.vfx.px_per_unit if host != null else z
+ 	_front.begin()
+-	# 2v2 (SimHost.draw_others): the other fights' beams too, each on its own fight's clock, and calm: they don't ask the
++	# 2v2 (SimHost.draw_others with the effects word, VfxHub.other_fights_enabled: a beam is light, Legal RL-249 (2)):
++	# the other fights' beams too, each on its own fight's clock, and calm: they don't ask the
+ 	# flash register, which is the fight in S's.
+ 	var all: Array = []
+ 	for b in S.beams:
+ 		all.append([b, S.T, true])
+-	if SimHost.draw_others and S.stage != null:
++	if SimHost.draw_others and S.stage != null and host != null and host.vfx.get("other_fights_enabled") == true:
+ 		for fk in range(S.stage.fights.size()):
+ 			if fk != S.stage.cur:
+ 				for b in S.stage.fights[fk].beams:
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -808,6 +808,7 @@
+ 	_sync_players()
+ 	ui_hud.refusals(host.hub.take_refusals())   # the presses the game let go of this frame (Controls' refusals), for UI's word at the edge (docs/ui/hud-spec.md section 85)
+ 	render_view(host.alpha())
++	host.near_done()   # 2v2: the other fights the panes drew, whose hubs take their events next frame
+ 	ui_hud.advance(0.0 if host.paused else delta)
+ 	# Audio's warm-up takes its quiet budget while nothing is being played: the sim held, or a notice, a card, the start
+ 	# menu or the loading screen up (an AI match plays behind the first-start card, so the pause alone does not say it).
+--- a/render/core/pane_world.gd
++++ b/render/core/pane_world.gd
+@@ -1082,6 +1082,8 @@
+ 		var z: float = host.other_z(j, a)
+ 		var on: bool = absf(vx) <= cam_rig.half_width(vp.x, z - focus_z) * RenderLook.OTHER_VIEW_MARGIN + RenderLook.OTHER_VIEW_PAD
+ 		v.visible = on
++		if on:
++			host.saw_other(host.other_k(j))   # within view distance: its fight's hub takes its events next frame
+ 		if not on:
+ 			sh.visible = false
+ 			continue
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -39,7 +39,9 @@
+ var jitter := Vector2.ZERO      # screen shake offset in pixels for the current tick
+ var film_in: Array = [null, null]   # the capture hook's film scenes only (render/tools/flash_capture.gd): each slot's intent for the next tick, or null; null in play
+ var tick_usec: int = 0          # cost of the last SimCore.step
+-static var draw_others: bool = false   # 2v2: the other fights' bodies are captured and drawn (--others, ?others=1 on a local page)
++static var draw_others: bool = false   # 2v2: the other fights' bodies are captured and drawn (--others, ?others=1 on a local page); their light needs the effects word too (VfxHub.other_fights_enabled; Legal RL-249)
++var other_near: Dictionary = {}        # 2v2: the fights (by index in S.stage.fights) a pane drew a body of last frame: only their hubs take their events
++var _near_acc: Dictionary = {}         # ... this frame's, as the panes draw (saw_other); near_done hands it over
+ const OTHER_JUMP: float = 2000.0   # a body that moved further than this in a tick changed places (a trade): drawn where it is, not crossing
+ var _others: Array = []          # the other fights' bodies at the last tick, fight by fight past the one in S
+ var _others_k: Array = []        # ... and the fight each is in (its index in S.stage.fights)
+@@ -480,7 +482,7 @@
+ 	if draw_others and S.stage != null and vfx.has_method("consume_others"):
+ 		# 2v2: VFX draws the other fights' effects from their own events, pushed from here (its hub.consume_others)
+ 		vfx.set("host_pushes", true)
+-		vfx.call("consume_others", S, other_events())
++		vfx.call("consume_others", S, other_events_near())   # a fight no pane drew last frame (round the planet, over the horizon) runs no effects: none counts or pops in mid-way (docs/rendering/2v2-drawn-plan.md)
+ 	# Rendering's flashes ask the shared register here, after VFX's of this tick: the ones that start from an event
+ 	# (main), then a new beam and a clash, then a new hit's white body, the commonest and least needed, last.
+ 	if not vfx.enabled:
+@@ -667,6 +669,29 @@
+ 	return out
+ 
+ 
++## other_events, with an empty list for a fight no pane drew a body of last frame (other_near): what the other fights'
++## hubs take. The pairing by order stays (VfxStageFeed).
++func other_events_near() -> Array:
++	var out: Array = []
++	if S.stage == null:
++		return out
++	for k in range(S.stage.fights.size()):
++		if k != S.stage.cur:
++			out.append(S.stage.fights[k].out.fx if other_near.has(k) else [])
++	return out
++
++
++## 2v2: a pane drew a body of fight k this frame (PaneWorld._draw_others).
++func saw_other(k: int) -> void:
++	_near_acc[k] = true
++
++
++## The frame's drawing is done: the fights the panes drew are the near ones until the next (main.frame).
++func near_done() -> void:
++	other_near = _near_acc
++	_near_acc = {}
++
++
+ func _capture() -> PackedFloat64Array:
+ 	var v := PackedFloat64Array()
+ 	for f in S.fighters:

@@ -1,0 +1,169 @@
+--- a/render/shaders/crowd.gdshader
++++ b/render/shaders/crowd.gdshader
+@@ -7,11 +7,13 @@
+ // is turned so its local +x is where it runs (the figure is the same from behind); its legs and arms scissor about the
+ // hip and shoulder in its own plane, as a runner seen side-on, it bobs and leans into the run, and it fades out by
+ // dither, with no sorting. Idle figures (white) keep the idle hop. r is 1 - startled: a survivor near a blow throws
+-// its arms over its head, crouches a little and trembles, with no hop.
++// its arms over its head, crouches a little and trembles, with no hop. A figure sags with the planet's bend as the ground
++// under it does (bend.gdshaderinc), so its feet stay on the ground wherever it stands on the screen.
+ shader_type spatial;
+ render_mode unshaded, cull_back;
+ 
+ #include "res://render/shaders/color.gdshaderinc"
++#include "res://render/shaders/bend.gdshaderinc"
+ 
+ uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+ uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
+@@ -91,6 +93,7 @@
+ 	}
+ 	VERTEX = v * boost * nearc;
+ 	NORMAL = nrm;
++	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX));
+ }
+ 
+ void fragment() {
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -155,6 +155,7 @@
+ var _blasts: Array = []              # this frame's craters, [x, y]: a blast's wave starts at its height (consume; refresh empties it)
+ var _last_tick: int = -1             # the sim's tick at the last refresh (a seek back settles every spread)
+ var _spread_sent: float = -1.0       # the tick last sent to this pane's building shaders
++var _crowd_bend: Vector3 = Vector3(-1.0, -1.0, -1.0)   # the bend last sent to this pane's crowd materials
+ var _fold: Array = []                # [cx, sim time]: a district of implodes folded into one event this tick
+ var _copies: Array = []
+ var _bld_seen: Array = []          # per building: [curH, alive, fmask, hp, stage], the height and stage as it last stood
+@@ -306,6 +307,7 @@
+ 		m.set_shader_parameter("windows", 1.0 if windows else 0.0)
+ 		m.set_shader_parameter("spread_now", 0.0)
+ 	_spread_sent = -1.0
++	_crowd_bend = Vector3(-1.0, -1.0, -1.0)
+ 	_water_nodes.clear()
+ 	_water_drawn = -1
+ 	_set_lanes(S)
+@@ -792,6 +794,18 @@
+ 		m.set_shader_parameter("crowd_near", RenderLook.NEAR_CLIP if on else Vector2.ZERO)
+ 
+ 
++## This pane's bend for the crowd (RenderMats.bend_params: bend, camera distance, focus depth): its chunks' materials
++## aren't the tracked ones, as they take nothing else the tracked ones are sent.
++func set_crowd_bend(b: Vector3) -> void:
++	if b == _crowd_bend:
++		return
++	_crowd_bend = b
++	for m in _crowd_mats:
++		m.set_shader_parameter("bend", b.x)
++		m.set_shader_parameter("cam_dist", b.y)
++		m.set_shader_parameter("bend_focus", b.z)
++
++
+ func set_crowd_view(boost: float, outline: float) -> void:
+ 	for m in [_crowd_mat] + _crowd_mats:
+ 		m.set_shader_parameter("boost", boost)
+--- a/render/core/pane_world.gd
++++ b/render/core/pane_world.gd
+@@ -1045,6 +1045,7 @@
+ 	var d: float = lerpf(RenderLook.CURVE_NEAR, RenderLook.CURVE_WIDE, wide) + RenderLook.CURVE_HIGH * high
+ 	# Every layer from full depth weight back sags d * vh pixels at its screen edge (bend.gdshaderinc).
+ 	mats.set_bend(4.0 * d * vp.y * c.z / (vp.x * vp.x), cam_rig.dist, focus_z)
++	planet.set_crowd_bend(mats.bend_params())
+ 	# The horizon is the far edge of the ground: its elevation from the camera anchors the sky and the fog.
+ 	var hz: float = (0.0 - cam_rig.position.y) / (cam_rig.position.z + RenderLook.FOG_FAR)
+ 	for k in [["space", high], ["horizon", hz]]:
+--- a/render/tools/pane_check.gd
++++ b/render/tools/pane_check.gd
+@@ -104,6 +104,10 @@
+ 		var want: Vector2 = fr.screen_pos(i, f.x, f.y + CamParams.CHEST)
+ 		_expect(got.distance_to(want) <= 0.5, "pane %d puts fighter %d's chest at %s, the rig says %s" % [i, i, got, want])
+ 		_expect(pw.planet._terrain_mat.get_shader_parameter("fore_cam") == pw.cam_rig.position, "pane %d's fore rule does not carry its camera" % i)
++		var crowd_bent: bool = not pw.planet._crowd_mats.is_empty() and pw.mats.bend_params().x > 0.0
++		for m in pw.planet._crowd_mats:
++			crowd_bent = crowd_bent and m.get_shader_parameter("bend") == pw.mats.bend_params().x and m.get_shader_parameter("cam_dist") == pw.mats.bend_params().y
++		_expect(crowd_bent, "pane %d's crowd does not take its bend" % i)
+ 	_expect(absf(p0.view_cam_x - p1.view_cam_x) > 1000.0, "the panes' cameras did not part (%.0f and %.0f)" % [p0.view_cam_x, p1.view_cam_x])
+ 	# 2b: Camera's frame carries the pitch and each pane's cut-away request, and both reach the panes. With a pitch the
+ 	# rig's mapping is the 3D camera's: a fighter's chest, at depth too, lands where the frame says.
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -599,7 +599,7 @@
+ 
+ `main.panes` lists them (pane `i` is fighter slot `i`'s in a split), and `main.split_frame` is this frame's. Setting `main.compositor = null` goes back to one view from the reference camera. The first pane stays in its SubViewport, so the compositor shows it unmasked.
+ 
+-`tools/pane_check.gd` plugs in a stand-in compositor with the fighters posed far apart. It checks (37 checks, passed):
++`tools/pane_check.gd` plugs in a stand-in compositor with the fighters posed far apart. It checks (60 checks, passed):
+ - the sharing: same ground, meshes and props; its own materials and material state;
+ - each pane's camera puts a fighter's chest exactly where the rig's frame says (within 0.5 px), and its fore rule carries its own camera;
+ - a flash fired on the first pane shows in the second, with one Audio cue;
+@@ -705,7 +705,7 @@
+ | City check | `godot --headless --path . --script res://render/tools/city_check.gd` | passed: 6 checks (Art's tints fit the shader's arrays; for each facade type, the lobby storey and the crown, no two neighbouring tones as drawn differ by more than the budget: the widest step 0.030, Legal's w05) |
+ | Flight check | `godot --headless --path . --script res://render/tools/flight_check.gd` | passed (seeds 4, 12345, 7; World's evacuate events; a building hit by `debris`, `building_hit` or `floor_hit`; worst building off by 1.07 of 2) |
+ | Flash check | `godot --headless --path . --script res://render/tools/flash_check.gd` | 185 checks on data version 3: all of the code's pass (the hash is the same on and off at 12345 and 4); 10 keep-out cases fail on the data (see Head flashes) |
+-| Pane check | `godot --headless --path . --script res://render/tools/pane_check.gd` | passed (37 checks; hash with and without a compositor; the cut-away request, the pitch, the inset, attaching again) |
++| Pane check | `godot --headless --path . --script res://render/tools/pane_check.gd` | passed (60 checks; hash with and without a compositor; the cut-away request, the pitch, the inset, attaching again; each pane's crowd takes its bend) |
+ | Cue check | `godot --headless --path . --script res://render/tools/cue_check.gd -- --profile=spaced` | passed (46 checks over two full matches; hash with and without the poses) |
+ | Outline check | `godot --path . --script res://render/tools/outline_check.gd` (needs a window; under `--headless` it exits with code 2, not run) | passed: 0 crack pixels over 24 poses; the unbaked control 9,024 (`docs/rendering/outline-normals-plan.md`) |
+ | Sky check | `godot --headless --path . --script res://render/tools/sky_check.gd` (with a window it also compares pictures of the reaction switched on) | passed headless: 35 checks (the reaction is off by default; `--skyreact`; the pattern's place across the seam; the world light: the data's own per key scaled by `WORLD_LIGHT`, the mood on top, handed to every layer's material; the reference at 0.7 after Art's night-to-dawn fix). The 10 picture checks were last run on 8fd6aba |
+--- /dev/null
++++ b/docs/rendering/tools/crowd-hook.mjs
+@@ -0,0 +1,61 @@
++#!/usr/bin/env node
++// Civilians at a chosen place on the screen for the look gate: a scratch hook on Performance's pb scene. It edits a scratch
++// copy of the game (git archive into a folder of your own), never the repo. Apply after
++// docs/perf/tools/scratch-hooks/hook-perf.mjs, hook-slice.mjs and hook-pbiome.mjs.
++//
++//   node docs/rendering/tools/crowd-hook.mjs <scratch tree>
++//
++// Page words it adds (the pb scene's, in the scratch copy only):
++//   crowdfar=<dx>    the pair stands dx units along the planet from the populated building whose figures stand nearest crowdz
++//   crowdz=<z>       that depth (default -600)
++//   crowdsep=<s>     how far apart the pair stands (default 120): a wider pair zooms the camera out
++//   crowdhand=1      the match is on the hand-made world, not a planet
++// Node 24 built-ins only. No Godot, no browser. Owner: Rendering and Technical Art.
++import { readFileSync, writeFileSync, existsSync } from 'node:fs';
++import { join } from 'node:path';
++
++const root = process.argv[2];
++if (!root || !existsSync(join(root, 'project.godot'))) { console.error('usage: node docs/rendering/tools/crowd-hook.mjs <scratch tree holding project.godot>'); process.exit(2); }
++const f = join(root, 'render/tools/flash_capture.gd');
++let s = readFileSync(f, 'utf8');
++if (s.includes('func _crowd_place(')) process.exit(0);
++const edits = [
++  ['\t\t\t\t_pb_place(S)\n', '\t\t\t\t_pb_place(S)\n\t\t\t\t_crowd_place(S)\n'],
++  ['\tmain.start_match(seed if seed != 0 else SEED, ai_set, su_p)', '\tif _page_kv("crowdhand") != "":\n\t\tsu_p = {}\n\tmain.start_match(seed if seed != 0 else SEED, ai_set, su_p)'],
++];
++for (const [a, b] of edits) {
++  if (s.split(a).length !== 2) { console.error(`crowd-hook: the anchor is missing or not once (apply the pb hooks first): ${a.slice(0, 60)}`); process.exit(1); }
++  s = s.replace(a, () => b);
++}
++s += `
++
++## SCRATCH (docs/rendering/tools/crowd-hook.mjs): the pair at crowdfar from a populated building, its figures near crowdz deep.
++func _crowd_place(S: SimState) -> void:
++	if _page_kv("crowdfar") == "":
++		return
++	var P = main.planet
++	var want: float = float(_page_kv("crowdz")) if _page_kv("crowdz") != "" else -600.0
++	var best: int = -1
++	var best_d: float = INF
++	for bi in range(S.buildings.size()):
++		var first: int = P._crowd_first[bi]
++		if P._crowd_first[bi + 1] - first < 4:
++			continue
++		var d: float = absf(float(P._crowd_z[first]) - want)
++		if d < best_d:
++			best_d = d
++			best = bi
++	if best < 0:
++		return
++	var sep: float = float(_page_kv("crowdsep")) if _page_kv("crowdsep") != "" else 120.0
++	for i in range(2):
++		var fx = S.fighters[i]
++		fx.x = SimWrap.wrap(float(S.buildings[best].x) - float(_page_kv("crowdfar")) + sep * (float(i) - 0.5))
++		fx.y = WorldTerrain.groundY(S, fx.x)
++		fx.vx = 0.0
++		fx.vy = 0.0
++		fx.face = 1.0 if i == 0 else -1.0
++	JavaScriptBridge.eval("window.__crowdinfo = %s;" % JSON.stringify({"building": best, "x": S.buildings[best].x, "z": P._crowd_z[P._crowd_first[best]]}), true)
++`;
++writeFileSync(f, s);
++console.log('crowd hook applied');

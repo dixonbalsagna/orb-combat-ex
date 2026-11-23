@@ -1,0 +1,2189 @@
+--- a/project.godot
++++ b/project.godot
+@@ -13,3 +13,10 @@
+ 
+ renderer/rendering_method="gl_compatibility"
+ renderer/rendering_method.mobile="gl_compatibility"
++
++[shader_globals]
++
++globe_r={
++"type": "float",
++"value": 0.0
++}
+--- a/render/core/ground_field.gd
++++ b/render/core/ground_field.gd
+@@ -84,6 +84,8 @@
+ var _deform_seen := PackedFloat32Array()
+ var _scorch_seen := PackedFloat32Array()
+ var _water_seen := PackedFloat32Array()
++var tile_field: RenderTileField = null   # main's --tiles: the ground in depth is the tiles'
++var crater_gen: int = 0                  # counts the craters' uploads: the tile field looks at what stands in them
+ var water_version: int = 0           # counts the changes to the water (rebuilt, or S.water moved): the planet view's water chunks follow it
+ var _ncr: int = 0
+ var _first = null
+@@ -414,6 +416,9 @@
+ 	var c: float = SimWrap.wrap(x) / SimConst.COL
+ 	var fi: float = floor(c)
+ 	var i: int = int(fi)
++	if tile_field != null:
++		# The tile ground: what's drawn there, and today's marks on top.
++		return tile_field.height_at(tile_field.dir_at(x, z, S.frame)) + offset_at(S, i, fi * SimConst.COL, z)
+ 	var j: int = (i + 1) % SimConst.NC
+ 	var a: float = S.base[i] + offset_at(S, i, fi * SimConst.COL, z)
+ 	var b: float = S.base[j] + offset_at(S, j, (fi + 1.0) * SimConst.COL, z)
+@@ -515,6 +520,8 @@
+ 
+ 
+ func _upload(S: SimState, craters_changed: bool) -> void:
++	if craters_changed:
++		crater_gen += 1
+ 	var bytes: PackedByteArray = S.base.to_byte_array() + S.deform.to_byte_array() + g.to_byte_array() + S.scorch.to_byte_array() + S.water.to_byte_array() + _heat.to_byte_array() + lists.to_byte_array() + _far.to_byte_array() + S.crack.to_byte_array() + trench.to_byte_array() + S.rubble.to_byte_array() + rub_lo.to_byte_array() + rub_hi.to_byte_array() + shore.to_byte_array() + _zone.to_byte_array()
+ 	img.set_data(tw, ROWS * rpl, false, Image.FORMAT_RF, bytes)
+ 	tex.update(img)
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -533,6 +533,31 @@
+ ## DRIFT_DEG_PER_MIN degrees a minute of match time, up to DRIFT_MAX_DEG, from 0 at a match's start and again at World's
+ ## turn (under its hard cut). Render only; off unless SLOW_DRIFT_ON or main's --drift (?drift=1 on a page).
+ const SLOW_DRIFT_ON: bool = false
++## The tile ground (RenderTileGround, RenderTileField; docs/world/ring-any-angle/rendering.md): off unless main's --tiles.
++const TILE_PLANET: int = 7                 # with no planet in the setup, this one
++const TILE_K: float = 1.6                  # a tile splits within this many of its widths
++const TILE_TALLEST: float = 7200.0         # the tallest ground, for how far past the horizon a tile can show
++const TILE_CHUNK_TALL: float = 1500.0      # ... and the crowd's and cover's chunks
++const TILE_CHUNK_STEP: float = 256.0
++const TILE_WALK_STEP: float = 32.0         # the camera's move that picks the tiles again
++const TILE_FILL_US: int = 1500             # a frame's slice of new tiles
++const TILE_URGENT_NEAR: float = 3000.0     # a wanted tile this near the camera's ground: the fill runs at
++const TILE_URGENT_X: int = 3               # ... this many times its slice
++const TILE_BOOT_US: int = 12000            # ... and one of the load's
++const TILE_OFF_COLS: int = 24              # the body offset's columns read a frame
++const TILE_LINE_NEAR: float = 96.0         # the strip's own height holds within this of the line, easing out by
++const TILE_LINE_FAR: float = 480.0
++const TILE_PLACE_MARGIN: float = 200.0     # a place's band: this past its buildings along the line
++const TILE_PLACE_EASE: float = 1500.0      # ... easing out over this
++const TILE_PLACE_DEPTH: float = 3400.0     # ... and this deep
++const TILE_LIFT_FROM: float = 75.0         # the lift fades with height over the sim's ground (bend.gdshaderinc globe_place keeps the same numbers)
++const TILE_LIFT_TO: float = 150.0
++const TILE_LIFT_Z0: float = 300.0
++const TILE_LIFT_Z1: float = 600.0
++const TILE_CRATER_CHECKS: int = 48         # shapes a frame looked at after a crater opens
++const TILE_POSE_MARGIN: float = 500.0      # a building this near the sim's pose reach in a swing counts as past it
++const TILE_NEAR_DEFAULT: int = 3           # a tower near the line: 3 the rule and sink (Orb's Q and W), until Orb picks
++
+ ## The split's culling (planet_view.gd cull_to): a pane leaves out of its draw the ground's and water's chunks that lie
+ ## wholly on the hidden side of its visible half-plane (Camera's SplitFrame.visible_half_plane). Nothing that can show
+ ## is lost, so it is on; main's --nocull (?nocull=1) turns it off.
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -238,6 +238,13 @@
+ 		boot = RenderBoot.new()
+ 		add_child(boot)
+ 		boot.begin([pane], RenderLook.BOOT_WORDS)
++	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
++	RenderTileGround.rate = float(args.get("tilerate", 0.0))
++	RenderTileGround.quick = args.has("tilequick")
++	RenderTileGround.near_mode = int(args.get("nearmode", RenderLook.TILE_NEAR_DEFAULT))
++	RenderTileGround.share = float(args.get("tileshare", 100.0)) / 100.0
++	RenderTileGround.gen = int(args.get("tilegen", 3))
++	RenderTileGround.fore_tone = not args.has("nofore")
+ 	host.stepped_start = not manual and not args.has("syncstart") and not args.has("flashcap")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
+ 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
+ 	if args.has("human"):
+@@ -305,7 +312,8 @@
+ func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
+ 	_build_queue.clear()   # a match started while the boot builds the panes (the notice's Start): those steps were the old match's
+ 	var own: bool = not (setup is Dictionary)
+-	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
++	var su: Dictionary = _match_setup(seed) if own else setup
++	host.new_match(seed, ai, RenderTileGround.setup_of(su) if RenderTileGround.on else su, own)
+ 	if host.loading():
+ 		ui_hud.show_loading(host.load_phase(), host.load_progress())   # frame() steps the load; the match is built when it is made (_match_built)
+ 		return
+@@ -1555,8 +1563,8 @@
+ ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
+ ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
+ ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
+-const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const LOCAL_ONLY_ARGS: Array = ["tiles", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const URL_ARGS: Array = ["tiles", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+--- a/render/core/mats.gd
++++ b/render/core/mats.gd
+@@ -12,6 +12,9 @@
+ const GLOW: Shader = preload("res://render/shaders/glow.gdshader")
+ 
+ var _cache: Dictionary = {}
++var _globe_r: float = 0.0
++var _globe_sx: float = 0.0
++var _globe_n: int = 0
+ var _tracked: Array = []      # other materials whose shader includes bend.gdshaderinc
+ var _bend: float = 0.0
+ var _dist: float = 3000.0
+@@ -149,9 +152,28 @@
+ ## How far the planet's bend lowers a point at camera-relative x and depth z this frame: the CPU twin of bent_world()
+ ## in render/shaders/bend.gdshaderinc, for what is placed rather than bent in a shader (a fighter at depth).
+ func sag(x: float, z: float) -> float:
++	if _globe_r > 0.0:
++		return 0.0   # the tile ground: the placement does it, in the shaders (ortho.gdshaderinc for what keeps its shape)
+ 	var back: float = maxf(_focus - z, 0.0)
+ 	var k: float = clampf((back - 60.0) / 1200.0, 0.0, 1.0) * _dist / (_dist + back)
+ 	return _bend * x * x * k
++
++
++## The tile ground's placement for this pane (bend.gdshaderinc globe_place): the camera's strip x, the lift's table.
++func set_globe(r: float, sx: float, off: Texture2D) -> void:
++	_globe_r = r
++	_globe_n += 1
++	if sx == _globe_sx and _globe_n % 30 != 1:
++		return
++	_globe_sx = sx
++	for m in _cache.values():
++		m.set_shader_parameter("globe_sx", sx)
++		m.set_shader_parameter("globe_off", off)
++		m.set_shader_parameter("globe_lift_on", 1.0)
++	for m in _tracked:
++		m.set_shader_parameter("globe_sx", sx)
++		m.set_shader_parameter("globe_off", off)
++		m.set_shader_parameter("globe_lift_on", 1.0)
+ 
+ 
+ ## The bend's three numbers (bend, the camera's distance, the focus depth), for a bound on what it may bring into view
+--- a/render/core/pane_world.gd
++++ b/render/core/pane_world.gd
+@@ -71,6 +71,7 @@
+ static var sky_react_on: bool = false      # the clouds part for a fighter at tier 3 or more: off unless asked for (main's --skyreact; QA's GB-002)
+ static var flash_calm: bool = false        # reduced flashing or reduced motion: the grooves' glow and char are drawn calm (main sets it)
+ static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
++var _tiles: RenderTileGround = null   # the tile ground (main's --tiles)
+ var pan_haze: float = 0.0                  # 0 to 1, this frame
+ var pan_whip: float = 0.0                  # 0 to 1, this frame: the whip haze (RenderLook.PAN_WHIP), in every match
+ var fore_low := Vector2(NAN, NAN)          # the fighter plane's lowest ground and top in this pane's view, eased (RenderLook.FORE_FAR)
+@@ -209,7 +210,15 @@
+ 		else:
+ 			src.see_more(S, sp)
+ 	planet.update(S, cam_x, host.impact.heat, host.impact.heat_changed)
+-	planet.cull_to(cam_rig, vis_plane)   # the split's culling: chunks wholly on this pane's hidden side are not drawn
++	if _tiles != null and _tiles.field != planet.tile_field:
++		_tiles.drop()
++		_tiles = null
++	if RenderTileGround.on and planet.tile_field != null:
++		if _tiles == null:
++			_tiles = RenderTileGround.new(self, planet.tile_field)
++		_tiles.apply(host, cam_x, vp)
++	else:
++		planet.cull_to(cam_rig, vis_plane)   # the split's culling: chunks wholly on this pane's hidden side are not drawn
+ 	for i in range(fighter_views.size()):
+ 		var v: FighterView = fighter_views[i]
+ 		var pose: Vector3 = host.fighter_pose(i, a)
+@@ -217,6 +226,8 @@
+ 		var vx: float = SimWrap.sdx(cam_x, wx)
+ 		v.depth = host.fighter_z(i, a)
+ 		v.sag = mats.sag(vx, v.depth)
++		if _tiles != null:
++			v.sag -= _tiles.field.lift(wx, pose.y, v.depth)   # the body offset: he stands on what's drawn
+ 		v.markers = markers and not host.intro_running()   # no head badge before the clock: UI's HUD is hidden too
+ 		# The intro: a fighter is out of sight until his fall starts (the sim holds him high above his spot until
+ 		# then), and so is his shadow on the ground he will land on.
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -157,6 +157,8 @@
+ var _spread_sent: float = -1.0       # the tick last sent to this pane's building shaders
+ var _fold: Array = []                # [cx, sim time]: a district of implodes folded into one event this tick
+ var _copies: Array = []
++var tile_field: RenderTileField = null   # the tile ground's (main's --tiles); a second pane reads its source's
++var _tile_for: SimState = null
+ var _bld_seen: Array = []          # per building: [curH, alive, fmask, hp, stage], the height and stage as it last stood
+ var _drawn: Array = []             # per building: [height, stage 0 to 3, standing] as drawn (a falling one keeps its last look)
+ var _grow := PackedInt32Array()    # this refresh's buildings with more people than figures at home
+@@ -182,10 +184,42 @@
+ ## screen): each a Callable that returns true when it is done (one that returns false goes again: the ground's meshes,
+ ## a chunk a call). Run one after another they are build().
+ func build_steps(S: SimState) -> Array:
+-	return [_bs_begin.bind(S), _bs_materials, _bs_meshes, _bs_share.bind(S), _bs_setup.bind(S), _bs_copies, _bs_refresh.bind(S)]
++	var steps: Array = [_bs_begin.bind(S), _bs_materials, _bs_meshes, _bs_share.bind(S), _bs_setup.bind(S), _bs_copies, _bs_refresh.bind(S)]
++	if RenderTileGround.on and S.planetRing is Dictionary and not S.planetRing.is_empty():
++		steps.append(_bs_tiles.bind(S))
++	return steps
++
++
++## The tile ground's load (main's --tiles): the first pane's field, level 0 and the things' feet; a second pane reads it.
++func _bs_tiles(S: SimState) -> bool:
++	if source != null:
++		tile_field = source.tile_field
++		return true
++	if tile_field == null or _tile_for != S:
++		_tile_for = S
++		tile_field = RenderTileField.new()
++		tile_field.begin(S)
++		ground.tile_field = tile_field
++		tile_field.ground = ground
++		for tm in trees.meshes:
++			tile_field.add_feet(tm[1])
++		for pm in props.meshes:
++			tile_field.add_feet(pm[1])
++		for cv in cover.meshes:
++			tile_field.add_feet(cv[2])
++	if not tile_field.boot(RenderLook.TILE_BOOT_US):
++		return false
++	if not tile_field.boot_near(RenderLook.TILE_BOOT_US):
++		return false
++	tile_field.fill(RenderLook.TILE_BOOT_US)
++	return tile_field.feet_left() == 0
+ 
+ 
+ func _bs_begin(S: SimState) -> bool:
++	tile_field = null   # the tile ground's: a build starts it again, once its copies are made
++	_tile_for = null
++	if ground != null:
++		ground.tile_field = null
+ 	for c in _copies:
+ 		remove_child(c)
+ 		c.free()
+@@ -241,6 +275,8 @@
+ 
+ ## The ground's meshes, a chunk a call (_ground_mesh_job); true when none is left.
+ func _bs_meshes() -> bool:
++	if RenderTileGround.on:
++		_mesh_jobs.clear()   # the tile ground draws in their place
+ 	if not _mesh_jobs.is_empty():
+ 		_ground_mesh_job(_mesh_jobs.pop_front())
+ 	return _mesh_jobs.is_empty()
+@@ -342,11 +378,13 @@
+ 				_mm_child(n, pm[0], pm[1], _cover_mat)
+ 			for c in range(_crowd.chunks.size()):
+ 				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
+-			_mm_child(n, "FarTowns", null, _town_mat)
++			if not RenderTileGround.on:
++				_mm_child(n, "FarTowns", null, _town_mat)
+ 			for cv in cover.meshes:
+ 				_mm_child(n, "Cover_%s_%d" % [cv[0], cv[1]], cv[2], _cover_mat)
+-			_town_nodes.append(n.get_node("FarTowns"))
+-			_town_nodes[-1].visible = false
++			if not RenderTileGround.on:
++				_town_nodes.append(n.get_node("FarTowns"))
++				_town_nodes[-1].visible = false
+ 		_copies.append(n)
+ 		_cull_items(n)
+ 	return true
+@@ -1299,7 +1337,7 @@
+ 			continue
+ 		var top: float = base + float(sp[1]) - sink
+ 		var bottom: float = (minf(foot.x, base) if float(sp[0]) <= 0.0 else base + float(sp[0])) - sink
+-		var t := Transform3D(Basis.from_scale(Vector3(float(p[RenderShapes.W]), top - bottom, float(p[RenderShapes.D]))), Vector3(b.x + float(p[RenderShapes.X]), (top + bottom) * 0.5, zc + float(p[RenderShapes.Z])))
++		var t := Transform3D(Basis.from_scale(Vector3(float(p[RenderShapes.W]), top - bottom, float(p[RenderShapes.D]))), Vector3((b.g.x if RenderTileGround.on else b.x) + float(p[RenderShapes.X]), (top + bottom) * 0.5, zc + float(p[RenderShapes.Z])))
+ 		var col := Color(p[RenderShapes.COL] as Color, 0.0 if (int(p[RenderShapes.FLAGS]) & RenderShapes.ROOF) != 0 else 1.0)   # alpha 0: a roof (building.gdshader)
+ 		mm.set_instance_transform(k, t)
+ 		mm.set_instance_color(k, col)
+@@ -1527,7 +1565,7 @@
+ 	_town_mat = ShaderMaterial.new()
+ 	_town_mat.shader = FAR_TOWN_SHADER
+ 	_cover_mat = ShaderMaterial.new()
+-	_cover_mat.shader = COVER_SHADER
++	_cover_mat.shader = COVER_SHADER if not RenderTileGround.on else load("res://render/shaders/cover_tile.gdshader")
+ 	_cover_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())
+ 	_cover_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
+ 	_cover_mat.set_shader_parameter("fixed_row", RenderBiomeLook.FIXED_ROW)
+@@ -1535,7 +1573,7 @@
+ 	_cover_mat.set_shader_parameter("tone_dark", RenderCoverMeshes.TONE_DARK)
+ 	_cover_mat.set_shader_parameter("prop_sink", RenderProps.FOOT_SINK)
+ 	_tree_mat = ShaderMaterial.new()   # the fellable trees: the cover's shader (tree_view.gd)
+-	_tree_mat.shader = COVER_SHADER
++	_tree_mat.shader = COVER_SHADER if not RenderTileGround.on else load("res://render/shaders/cover_tile.gdshader")
+ 	_tree_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())
+ 	_tree_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
+ 	_tree_mat.set_shader_parameter("tone_light", RenderCoverMeshes.TONE_LIGHT)
+@@ -1988,8 +2026,13 @@
+ ## clearance those calls will ask for.
+ func occluder_candidates(S: SimState, cam_x: float, xa: float, xb: float, z_min: float, m: float) -> Array:
+ 	var out: Array = []
++	# In a swing a building past the sim's pose reach of both fighters has a stale pose: no see-through from it until rest (the EP's ruling).
++	var swinging: bool = S.frame != null and S.swing != null and S.swing.active
++	var reach: float = float(SimSwing.data().poseReach) - RenderLook.TILE_POSE_MARGIN if swinging else 0.0
+ 	for bi in WorldStructures.near(S, SimWrap.wrap(cam_x + (xa + xb) * 0.5), absf(xb - xa) * 0.5 + m):
+ 		if _top[bi] == -INF:
++			continue
++		if swinging and absf(SimWrap.sdx(S.fighters[0].x, S.buildings[bi].x)) > reach and absf(SimWrap.sdx(S.fighters[1].x, S.buildings[bi].x)) > reach:
+ 			continue
+ 		var zd: Vector2 = _depth(S.buildings[bi])
+ 		if zd.x + zd.y * 0.5 > z_min + 1.0:
+--- /dev/null
++++ b/render/core/tile_field.gd
+@@ -0,0 +1,626 @@
++class_name RenderTileField
++extends RefCounted
++## The planet's ground as tiles keyed to the planet (docs/world/ring-any-angle/rendering.md, research.md T6 stage 4), for
++## RenderTileGround to draw. A cube sphere on World's lattice (WorldField): 75 cells a face at 512 units (the bake), so 3
++## tiles of 25 cells a face edge at level 0, 6 at level 1 (256), 12 at level 2 (128). On a field world (gen 3) a node is
++## World's own, with the places' records on it, so what's drawn is what the sim reads through its frame. On gen 2, kept to
++## compare, a node is the planet's read (WorldPlanet.surfAt) with the strip's own height near the line and inside a place's
++## band. Nothing here writes the sim: a node read is pure and fills only what sits outside the state.
++##
++## Level 0 is filled at the match's load (build_steps), free on a field world since the load baked it; finer tiles come on
++## demand, a slice a frame, nearest first. One field serves every pane. Each layer of the two arrays holds a tile's 26 nodes a side and a ring outside them, so a
++## vertex morphing to its parent's lattice and a slope at the tile's edge both find their node.
++
++const CELLS: int = 25
++const TEX: int = CELLS + 3        # nodes a side in a layer: the tile's, and one more each way
++const LEVEL0: int = 3             # tiles a face edge at level 0
++const LEVELS: int = 3             # 512, 256, 128 units; a mesh finer than this reads the 128 triangles
++const POOL: int = 430             # layers: the 54 of level 0 stay, the rest are reused, least recently wanted first
++const FACES: Array = [
++	[Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1)],
++	[Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)],
++	[Vector3(0, 1, 0), Vector3(0, 0, 1), Vector3(1, 0, 0)],
++	[Vector3(0, -1, 0), Vector3(1, 0, 0), Vector3(0, 0, 1)],
++	[Vector3(0, 0, 1), Vector3(1, 0, 0), Vector3(0, 1, 0)],
++	[Vector3(0, 0, -1), Vector3(0, 1, 0), Vector3(1, 0, 0)],
++]
++
++var R: float = 1.0
++var hts: Texture2DArray
++var ids: Texture2DArray
++var off_tex: ImageTexture         # per column (mod OFF_N): drawn ground less the sim's, and the sim's: RenderTileGround.lift
++const WET_STEP: float = 4.0          # a lake's or a river's depth in the ids' second channel, in these units
++const OFF_N: int = 1024
++const OFF_REACH: int = 384          # columns kept, either side together: the width of the widest view of a pair
++
++var P: WorldPlanet.Planet
++var field_world: bool = false       # on World's field, through Simulation's frame (gen 3)
++var _F = null
++var _pal_field: Dictionary = {}
++var _p0 := Vector3.ZERO
++var _t0 := Vector3.ZERO
++var _s0 := Vector3.ZERO
++var _S: SimState
++var version: int = 0                 # counts the tiles stored: the walk looks again when it moves
++var _u := Vector3.ZERO
++var _v := Vector3.ZERO
++var _c := Vector3.ZERO
++var _touch_x: float = 0.0
++var _place := PackedFloat32Array()   # per column: how far inside a place's band (1 inside, 0 away from any building)
++var _pal: Dictionary = {}
++var _layer: Dictionary = {}          # tile key -> layer
++var _keys := PackedInt32Array()      # layer -> tile key, -1 while free
++var _stamp := PackedInt32Array()     # layer -> the frame it was last wanted
++var _hs: Array = []                  # layer -> its heights (PackedFloat32Array)
++var _wanted: Dictionary = {}         # tile key -> distance, this frame's
++var _frame: int = 0
++var _job_key: int = -1
++var _job_h := PackedFloat32Array()
++var _job_t := PackedFloat32Array()
++var _job_c := PackedByteArray()
++var _job_at: int = 0
++var _job_recs: bool = false
++var _job_wet: bool = false
++var _job_band: bool = false
++var _has_pads: bool = false
++var _urgent_until: int = 0
++var ground: GroundField = null
++var _standing: Array = []            # [multimesh, instance, x, z] of what a crater can take
++var _crater_seen: int = 0
++var _crater_k: int = 0
++var _near_list: Array = []
++var _near_made: bool = false
++var _boot_f: int = 0
++var _boot_i: int = 0
++var _foots: Array = []               # [multimesh, next instance] still to be set on the ground
++var _off := PackedFloat32Array()
++var _off_col := PackedInt32Array()
++var _off_img: Image
++var _off_dirty: bool = false
++var _off_axis := Vector3.ZERO
++var reads: int = 0
++var fill_us: int = 0
++
++
++## Ready for the match in S: its planet, its ring (a Whole ring, the one great circle a strip can lie on), its places.
++func begin(S: SimState) -> void:
++	_S = S
++	field_world = S.frame != null
++	if field_world:
++		P = SimField._planet(int(S.frame.seed), int(S.frame.gen))
++		_F = WorldField.of(P)
++		R = float(SimField.R)
++		_place_mask(S)
++		for rec in S.fieldRecs:
++			if str(rec.k) == "pad" or str(rec.k) == "lot":
++				_has_pads = true   # World's lots: a place's ground is in the records, and the band's heights aren't needed
++				break
++		var f0: Array = frame_at(float(S.frame0.x0), S.frame0)
++		_p0 = f0[0]
++		_t0 = f0[1]
++		_s0 = f0[2]
++	else:
++		P = WorldPlanet.make(int(S.planetRing.seed))
++		R = float(P.R)
++		var ring: Dictionary = WorldRingPick.ringFrom(S.planetRing.c, int(S.planetRing.cols), S.planetRing.t)
++		_u = Vector3(ring.u[0], ring.u[1], ring.u[2])
++		_v = Vector3(ring.v[0], ring.v[1], ring.v[2])
++		_c = Vector3(ring.c[0], ring.c[1], ring.c[2])
++		_touch_x = float(WorldPlanet.touchCol()) * SimConst.COL
++		_place_mask(S)
++	var ih: Array[Image] = []
++	var ic: Array[Image] = []
++	var eh := PackedFloat32Array()
++	eh.resize(TEX * TEX)
++	var ec := PackedByteArray()
++	ec.resize(TEX * TEX * 4)
++	var ih0 := Image.create_from_data(TEX, TEX, false, Image.FORMAT_RF, eh.to_byte_array())
++	var ic0 := Image.create_from_data(TEX, TEX, false, Image.FORMAT_RGBA8, ec)
++	for k in range(POOL):
++		ih.append(ih0)
++		ic.append(ic0)
++	hts = Texture2DArray.new()
++	hts.create_from_images(ih)
++	ids = Texture2DArray.new()
++	ids.create_from_images(ic)
++	_keys.resize(POOL)
++	_keys.fill(-1)
++	_stamp.resize(POOL)
++	_stamp.fill(0)
++	_hs.resize(POOL)
++	_off.resize(OFF_N * 2)
++	_off_col.resize(OFF_N)
++	_off_col.fill(-1)
++	_off_img = Image.create_from_data(OFF_N, 1, false, Image.FORMAT_RGF, _off.to_byte_array())
++	off_tex = ImageTexture.create_from_image(_off_img)
++	_foots.clear()
++
++
++## Per column, how far inside a place's band: the buildings stand on the strip's ground, so its heights hold there.
++func _place_mask(S: SimState) -> void:
++	var nc: int = SimConst.NC
++	var dist := PackedFloat32Array()
++	dist.resize(nc)
++	dist.fill(1.0e9)
++	for b in S.buildings:
++		var half: float = float(b.w) * 0.5 + RenderLook.TILE_PLACE_MARGIN
++		var bx: float = float(b.g.x)
++		var c0: int = int(floor((bx - half) / SimConst.COL))
++		var c1: int = int(floor((bx + half) / SimConst.COL))
++		for c in range(c0, c1 + 1):
++			dist[posmod(c, nc)] = 0.0
++	for pass_i in range(2):
++		for c in range(nc):
++			dist[c] = minf(dist[c], dist[posmod(c - 1, nc)] + SimConst.COL)
++		for c in range(nc - 1, -1, -1):
++			dist[c] = minf(dist[c], dist[(c + 1) % nc] + SimConst.COL)
++	_place.resize(nc)
++	for c in range(nc):
++		_place[c] = 1.0 - smoothstep(0.0, RenderLook.TILE_PLACE_EASE, dist[c])
++
++
++## The frame at strip x on the line: the point, the heading there, and toward the camera. fr: the sim's frame on a field
++## world (S.frame, or S.frame0, the plan the world's things were laid in); the ring's, on gen 2.
++func frame_at(x: float, fr = null) -> Array:
++	if fr != null:
++		var a0: float = SimWrap.sdx(fr.x0, x) / R
++		var c0: float = cos(a0)
++		var s0: float = sin(a0)
++		var p := Vector3(fr.px, fr.py, fr.pz)
++		var t := Vector3(fr.tx, fr.ty, fr.tz)
++		var p1: Vector3 = (p * c0 + t * s0).normalized()
++		var t1: Vector3 = (t * c0 - p * s0).normalized()
++		return [p1, t1, t1.cross(p1).normalized()]
++	var a: float = (x - _touch_x) / R
++	var co: float = cos(a)
++	var si: float = sin(a)
++	return [(_u * co + _v * si).normalized(), (_v * co - _u * si).normalized(), -_c]
++
++
++## The planet's direction at strip x and depth z, as the shared placement (bend.gdshaderinc) has it.
++func dir_at(x: float, z: float, fr = null) -> Vector3:
++	var f: Array = frame_at(x, fr)
++	var zr: float = z / R
++	return ((f[0] as Vector3) * cos(zr) + (f[2] as Vector3) * sin(zr)).normalized()
++
++
++## The tile's key, and the direction of its node a, b (0 to CELLS on the tile, a step outside either way).
++static func key_of(f: int, L: int, i: int, j: int) -> int:
++	return f | (L << 3) | (i << 5) | (j << 12)
++
++
++static func level_n(L: int) -> int:
++	return LEVEL0 << L
++
++
++static func node_dir(f: int, n: int, i: int, j: int, a: int, b: int) -> Vector3:
++	var size: float = 2.0 / float(n)
++	var s: float = -1.0 + (float(i) + float(a) / float(CELLS)) * size
++	var t: float = -1.0 + (float(j) + float(b) / float(CELLS)) * size
++	var fc: Array = FACES[f]
++	return ((fc[0] as Vector3) + (fc[1] as Vector3) * tan(s * PI / 4.0) + (fc[2] as Vector3) * tan(t * PI / 4.0)).normalized()
++
++
++## The node's height and palette id: the planet's, the strip's own near the line and inside a place's band.
++func node(d: Vector3) -> Array:
++	reads += 1
++	WorldPlanet.surfAt(P, d.x, d.y, d.z)
++	var h: float = float(P.outH)
++	var bi: int = int(P.outB)
++	var fi: int = int(P.outF)
++	var nm: String = WorldClimate.fineName(fi) if fi >= 0 else str(WorldPlanetWorld.BIOME_NAME[clampi(bi, 0, WorldPlanetWorld.BIOME_NAME.size() - 1)])
++	var z: float = -d.dot(_c)
++	z = asin(clampf(z, -1.0, 1.0)) * R
++	var az: float = absf(z)
++	if az < RenderLook.TILE_PLACE_DEPTH + RenderLook.TILE_PLACE_EASE:
++		var x: float = fposmod(atan2(d.dot(_v), d.dot(_u)) * R + _touch_x, SimConst.W)
++		var col: float = x / SimConst.COL
++		var i0: int = int(col) % SimConst.NC
++		var i1: int = (i0 + 1) % SimConst.NC
++		var w: float = maxf(1.0 - smoothstep(RenderLook.TILE_LINE_NEAR, RenderLook.TILE_LINE_FAR, az), _place[i0] * (1.0 - smoothstep(RenderLook.TILE_PLACE_DEPTH, RenderLook.TILE_PLACE_DEPTH + RenderLook.TILE_PLACE_EASE, az)))
++		if w > 0.0:
++			h = lerpf(h, lerpf(float(_S.base[i0]), float(_S.base[i1]), col - floor(col)), w)
++			if w > 0.5:
++				nm = WorldBiomes.fineNameAt((float(i0) + 0.5) * SimConst.COL)
++	if not _pal.has(nm):
++		_pal[nm] = RenderBiomeLook.id_of(nm)
++	return [h, int(_pal[nm])]
++
++
++## The load's last step: the finer ground round the fight's start, so the first look is at 128. True when it's there.
++func boot_near(budget_us: int) -> bool:
++	if _near_list.is_empty() and not _near_made:
++		_near_made = true
++		var f0: Variant = _S.frame
++		var cx: float = float(_S.fighters[0].x)
++		for dx in [0.0, -1600.0, 1600.0, -3200.0, 3200.0]:
++			for dz in [0.0, -1600.0, 1600.0]:
++				var d: Vector3 = dir_at(cx + dx, dz, f0)
++				for L in [2, 1]:
++					var k: int = key_at(d, L)
++					if not _layer.has(k) and not _near_list.has(k):
++						_near_list.append(k)
++	var t0: int = Time.get_ticks_usec()
++	while Time.get_ticks_usec() - t0 < budget_us:
++		if _job_key < 0:
++			if _near_list.is_empty():
++				return true
++			var k: int = _near_list.pop_front()
++			if _layer.has(k):
++				continue
++			_start(k)
++		if not _fill_job(t0, budget_us):
++			return false
++	return false
++
++
++## The tile of level L a direction falls in.
++static func key_at(d: Vector3, L: int) -> int:
++	var ad := Vector3(absf(d.x), absf(d.y), absf(d.z))
++	var f: int
++	if ad.x >= ad.y and ad.x >= ad.z:
++		f = 0 if d.x > 0.0 else 1
++	elif ad.y >= ad.z:
++		f = 2 if d.y > 0.0 else 3
++	else:
++		f = 4 if d.z > 0.0 else 5
++	var fc: Array = FACES[f]
++	var w: float = (fc[0] as Vector3).dot(d)
++	var n: int = level_n(L)
++	var i: int = clampi(int((atan((fc[1] as Vector3).dot(d) / w) / (PI / 4.0) + 1.0) * 0.5 * float(n)), 0, n - 1)
++	var j: int = clampi(int((atan((fc[2] as Vector3).dot(d) / w) / (PI / 4.0) + 1.0) * 0.5 * float(n)), 0, n - 1)
++	return key_of(f, L, i, j)
++
++
++## The load's step: level 0's tiles, a slice a call. True when they are all there.
++func boot(budget_us: int) -> bool:
++	var t0: int = Time.get_ticks_usec()
++	var n: int = LEVEL0
++	while _boot_f < 6:
++		var k: int = key_of(_boot_f, 0, _boot_i % n, _boot_i / n)
++		if not _layer.has(k):
++			if _job_key != k:
++				_start(k)
++			if not _fill_job(t0, budget_us):
++				return false
++		_boot_i += 1
++		if _boot_i >= n * n:
++			_boot_i = 0
++			_boot_f += 1
++		if Time.get_ticks_usec() - t0 > budget_us:
++			return _boot_f >= 6
++	return true
++
++
++func has(k: int) -> bool:
++	return _layer.has(k)
++
++
++func layer_of(k: int) -> int:
++	return int(_layer.get(k, -1))
++
++
++## A pane wants this tile drawn at this distance from its pivot. The tile's kept fresh; a missing one joins the queue.
++func want(k: int, dist: float) -> void:
++	if _layer.has(k):
++		_stamp[int(_layer[k])] = _frame
++	elif not _wanted.has(k) or dist < float(_wanted[k]):
++		_wanted[k] = dist
++
++
++## The frame's slice: the nearest wanted tile, then the next, while the budget lasts. More of it while the ground round the
++## camera is still coarse: arriving at a new place is when it shows.
++func fill(budget_us: int) -> void:
++	_frame += 1
++	var t0: int = Time.get_ticks_usec()
++	for k in _wanted:
++		if float(_wanted[k]) < RenderLook.TILE_URGENT_NEAR:
++			_urgent_until = _frame + 30
++			break
++	if _frame < _urgent_until:
++		budget_us *= RenderLook.TILE_URGENT_X
++	while Time.get_ticks_usec() - t0 < budget_us:
++		if _job_key < 0:
++			var best: int = -1
++			var bd: float = INF
++			for k in _wanted:
++				if float(_wanted[k]) < bd:
++					bd = float(_wanted[k])
++					best = k
++			if best < 0:
++				break
++			_wanted.erase(best)
++			if _layer.has(best):
++				continue
++			_start(best)
++		if not _fill_job(t0, budget_us):
++			break
++	_foot_slice(t0, budget_us)
++	_crater_slice()
++	fill_us = Time.get_ticks_usec() - t0
++	_wanted.clear()
++
++
++func _start(k: int) -> void:
++	_job_key = k
++	_job_at = 0
++	_job_h.resize(TEX * TEX)
++	_job_t.resize(TEX * TEX)
++	_job_c.resize(TEX * TEX * 4)
++	if field_world:
++		_job_recs = _records_reach(k)
++		_job_wet = ((k >> 3) & 3) > 0   # level 0's water isn't read: it's drawn only past 20,000 units, or for a moment on the way to a new place
++		var n: int = level_n((k >> 3) & 3)
++		var c: Vector3 = node_dir(k & 7, n, (k >> 5) & 127, (k >> 12) & 127, CELLS / 2, CELLS / 2)
++		_job_band = absf(c.dot(_s0)) * R < RenderLook.TILE_PLACE_DEPTH + RenderLook.TILE_PLACE_EASE + 38400.0 / float(n)
++
++
++## Does any place's or water's record reach this tile? Most don't, and then its nodes read none.
++func _records_reach(k: int) -> bool:
++	if _S.fieldRecs.is_empty():
++		return false
++	var n: int = level_n((k >> 3) & 3)
++	var c: Vector3 = node_dir(k & 7, n, (k >> 5) & 127, (k >> 12) & 127, CELLS / 2, CELLS / 2)
++	var reach: float = 38400.0 / float(n)
++	for rec in _S.fieldRecs:
++		var rq: Vector3
++		var rr: float
++		if str(rec.k) == "platform":
++			rq = Vector3(rec.px, rec.py, rec.pz)
++			rr = float(rec.r) + float(rec.blend)
++		else:
++			var cc: Array = rec.c
++			rq = Vector3(cc[0], cc[1], cc[2])
++			rr = float(rec.r) + float(rec.get("blend", 0.0))
++		if (rq - c).length() * R < rr + reach:
++			return true
++	return false
++
++
++func _fill_job(t0: int, budget_us: int) -> bool:
++	var f: int = _job_key & 7
++	var L: int = (_job_key >> 3) & 3
++	var i: int = (_job_key >> 5) & 127
++	var j: int = (_job_key >> 12) & 127
++	var n: int = level_n(L)
++	var total: int = TEX * TEX
++	while _job_at < total:
++		var a: int = _job_at % TEX
++		var b: int = _job_at / TEX
++		var r: Array = node(node_dir(f, n, i, j, a - 1, b - 1)) if not field_world else _field_node(f, n, i, j, a - 1, b - 1)
++		_job_h[_job_at] = r[0]
++		# What's drawn is the water's top where a lake or a river holds it; what things stand on stays the ground.
++		var wet: float = float(r[2]) if r.size() > 2 else 0.0
++		_job_t[_job_at] = float(r[0]) + wet
++		var o: int = _job_at * 4
++		_job_c[o] = r[1]
++		_job_c[o + 1] = clampi(int(wet / WET_STEP + 0.5), 0, 255)
++		_job_c[o + 3] = 255
++		_job_at += 1
++		if _job_at % 4 == 0 and Time.get_ticks_usec() - t0 > budget_us:
++			return false
++	_store()
++	return true
++
++
++## World's node at this tile's a, b, and the places' records on it. A node past the face's rim takes the rim's: only a slope at
++## the rim reads it, since a rim is on every coarser lattice and no vertex morphs past it.
++func _field_node(f: int, n: int, i: int, j: int, a: int, b: int) -> Array:
++	var stride: int = 300 / (n * CELLS)
++	var ni: int = clampi((i * CELLS + a) * stride, 0, 300)
++	var nj: int = clampi((j * CELLS + b) * stride, 0, 300)
++	var idx: int = WorldField.ensure(_F, f, ni, nj)
++	reads += 1
++	var h: float = _F.h[idx]
++	var wet: float = 0.0
++	var dp: Array = WorldField.dirOf(f, ni, nj, 300)
++	if _job_recs:
++		h = WorldField.applyRecords(_S, dp[0], dp[1], dp[2], h)
++	var place_w: float = 0.0
++	var pc: int = 0
++	var px: float = 0.0
++	if _job_band:
++		# A place stands on the line's height; the field beside the line can be far below it. Its footprint isn't World's yet,
++		# so inside its band the ground is the plan's strip, as on gen 2.
++		var dv := Vector3(dp[0], dp[1], dp[2])
++		var pz: float = absf(asin(clampf(dv.dot(_s0), -1.0, 1.0))) * R
++		if pz < RenderLook.TILE_PLACE_DEPTH + RenderLook.TILE_PLACE_EASE:
++			px = fposmod(float(_S.frame0.x0) + atan2(dv.dot(_t0), dv.dot(_p0)) * R, SimConst.W)
++			pc = int(px / SimConst.COL) % SimConst.NC
++			place_w = _place[pc] * (1.0 - smoothstep(RenderLook.TILE_PLACE_DEPTH, RenderLook.TILE_PLACE_DEPTH + RenderLook.TILE_PLACE_EASE, pz))
++			if place_w > 0.0 and not _has_pads:
++				var col: float = px / SimConst.COL
++				h = lerpf(h, lerpf(float(_S.base[pc]), float(_S.base[(pc + 1) % SimConst.NC]), col - floor(col)), place_w)
++	if _job_recs and _job_wet and place_w < 0.5:
++		wet = WorldField.recordWater(_S, dp[0], dp[1], dp[2], h)
++	if place_w > 0.5:
++		var pn: String = WorldBiomes.biomeAt(px)
++		if pn != "city" and pn != "village":
++			pn = "city"
++		if not _pal.has(pn):
++			_pal[pn] = RenderBiomeLook.id_of(pn)
++		return [h, _pal[pn], wet]
++	var key: int = int(_F.f[idx]) * 16 + int(_F.b[idx])
++	if not _pal_field.has(key):
++		var fi: int = int(_F.f[idx])
++		_pal_field[key] = RenderBiomeLook.id_of(WorldClimate.fineName(fi) if fi > 0 else str(WorldPlanetWorld.BIOME_NAME[clampi(int(_F.b[idx]), 0, WorldPlanetWorld.BIOME_NAME.size() - 1)]))
++	return [h, _pal_field[key], wet]
++
++
++func _store() -> void:
++	var slot: int = -1
++	var oldest: int = 2147483647
++	for q in range(POOL):
++		if _keys[q] < 0:
++			slot = q
++			break
++		if ((_keys[q] >> 3) & 3) > 0 and _stamp[q] < oldest:
++			oldest = _stamp[q]
++			slot = q
++	if _keys[slot] >= 0:
++		_layer.erase(_keys[slot])
++	_keys[slot] = _job_key
++	_stamp[slot] = _frame
++	_layer[_job_key] = slot
++	version += 1
++	_hs[slot] = _job_h.duplicate()
++	hts.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RF, _job_t.to_byte_array()), slot)
++	ids.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RGBA8, _job_c), slot)
++	if ((_job_key >> 3) & 3) > 0 and _job_on_line():
++		stale_off()
++	_job_key = -1
++
++
++## Does the tile just stored lie on the fighters' line? Only then can the lift's table change.
++func _job_on_line() -> bool:
++	var n: int = level_n((_job_key >> 3) & 3)
++	var c: Vector3 = node_dir(_job_key & 7, n, (_job_key >> 5) & 127, (_job_key >> 12) & 127, CELLS / 2, CELLS / 2)
++	if not field_world:
++		return true
++	var d: float = absf(c.dot(_off_axis)) * R
++	return d < 38400.0 / float(n)
++
++
++## The drawn ground at a planet direction: the same triangles as the mesh (the mesh's own diagonal), on the finest tile there.
++func height_at(d: Vector3) -> float:
++	var ad := Vector3(absf(d.x), absf(d.y), absf(d.z))
++	var f: int
++	if ad.x >= ad.y and ad.x >= ad.z:
++		f = 0 if d.x > 0.0 else 1
++	elif ad.y >= ad.z:
++		f = 2 if d.y > 0.0 else 3
++	else:
++		f = 4 if d.z > 0.0 else 5
++	var fc: Array = FACES[f]
++	var w: float = (fc[0] as Vector3).dot(d)
++	var s: float = atan((fc[1] as Vector3).dot(d) / w) / (PI / 4.0)
++	var t: float = atan((fc[2] as Vector3).dot(d) / w) / (PI / 4.0)
++	for L in [2, 1, 0]:
++		var n: int = level_n(L)
++		var ps: float = (s + 1.0) * 0.5 * float(n)
++		var pt: float = (t + 1.0) * 0.5 * float(n)
++		var i: int = clampi(int(ps), 0, n - 1)
++		var j: int = clampi(int(pt), 0, n - 1)
++		var lay: int = int(_layer.get(key_of(f, L, i, j), -1))
++		if lay >= 0:
++			var ga: float = (ps - float(i)) * float(CELLS) + 1.0
++			var gb: float = (pt - float(j)) * float(CELLS) + 1.0
++			var a0: int = clampi(int(ga), 0, TEX - 2)
++			var b0: int = clampi(int(gb), 0, TEX - 2)
++			var fa: float = ga - float(a0)
++			var fb: float = gb - float(b0)
++			var hs: PackedFloat32Array = _hs[lay]
++			var q: int = b0 * TEX + a0
++			if fa + fb <= 1.0:
++				return hs[q] + fa * (hs[q + 1] - hs[q]) + fb * (hs[q + TEX] - hs[q])
++			return hs[q + TEX + 1] + (1.0 - fa) * (hs[q + TEX] - hs[q + TEX + 1]) + (1.0 - fb) * (hs[q + 1] - hs[q + TEX + 1])
++	return 0.0
++
++
++## The body offset's table, for the columns round x: drawn ground less the sim's base. A function of place alone, so what
++## stands there takes the same lift whoever stands there. A few columns a frame; it uploads only if one moved.
++func keep_off(x: float, budget: int) -> void:
++	if field_world:
++		# Another line, other ground under the same columns. The line's axis: x0 following the pair doesn't change it.
++		var fr = _S.frame
++		var ax := Vector3(fr.py * fr.tz - fr.pz * fr.ty, fr.pz * fr.tx - fr.px * fr.tz, fr.px * fr.ty - fr.py * fr.tx)
++		if ax.dot(_off_axis) < 0.9999999:
++			_off_axis = ax
++			stale_off()
++	var c0: int = int(floor(x / SimConst.COL)) - OFF_N / 2
++	var done: int = 0
++	for q in range(OFF_REACH):
++		# Outward from the middle: the columns at the feet first.
++		var k: int = OFF_N / 2 + (q + 1) / 2 * (1 if q % 2 == 0 else -1)
++		var col: int = posmod(c0 + k, SimConst.NC)
++		var idx: int = col % OFF_N
++		if _off_col[idx] == col:
++			continue
++		_off_col[idx] = col
++		var cx: float = (float(col) + 0.5) * SimConst.COL
++		var d: Vector3 = dir_at(cx, 0.0, _S.frame)
++		var b: float = float(_S.base[col]) if not field_world else _sim_ground(d)
++		# Dry ground below sea level is drawn at the sea's level; past the shore he's on the water either way.
++		_off[idx * 2] = maxf(height_at(d), 0.0) - (b if b >= WorldWater.SHORE_WET else maxf(b, 0.0))
++		_off[idx * 2 + 1] = b
++		_off_dirty = true
++		done += 1
++		if done >= budget:
++			break
++	if _off_dirty:
++		_off_dirty = false
++		_off_img.set_data(OFF_N, 1, false, Image.FORMAT_RGF, _off.to_byte_array())
++		off_tex.update(_off_img)
++
++
++func _sim_ground(d: Vector3) -> float:
++	return WorldField.applyRecords(_S, d.x, d.y, d.z, SimField.heightOf(int(_S.frame.seed), int(_S.frame.gen), 1, d.x, d.y, d.z))
++
++
++## A finer tile came: the table's columns are read again as the frames go on.
++func stale_off() -> void:
++	_off_col.fill(-1)
++
++
++## The lift the shared placement gives what stands at strip x, height y, depth z (bend.gdshaderinc globe_lift's twin).
++func lift(x: float, y: float, z: float) -> float:
++	var idx: int = posmod(int(floor(x / SimConst.COL)), SimConst.NC) % OFF_N
++	var over: float = y - _off[idx * 2 + 1]
++	return _off[idx * 2] * (1.0 - smoothstep(RenderLook.TILE_LIFT_FROM, RenderLook.TILE_LIFT_TO, over)) * (1.0 - smoothstep(RenderLook.TILE_LIFT_Z0, RenderLook.TILE_LIFT_Z1, absf(z)))
++
++
++## The cover's, the trees' and the props' feet: on the planet's ground, a slice a frame. Nothing stands in the sea.
++func add_feet(mm: MultiMesh) -> void:
++	if mm != null and mm.instance_count > 0:
++		_foots.append([mm, 0])
++
++
++func feet_left() -> int:
++	return _foots.size()
++
++
++## A crater takes what stands in it (Art: the cover inside a crater is removed), a few shapes a frame.
++func _crater_slice() -> void:
++	if ground == null:
++		return
++	if ground.crater_gen != _crater_seen:
++		_crater_seen = ground.crater_gen
++		_crater_k = 0
++	var n: int = mini(_crater_k + RenderLook.TILE_CRATER_CHECKS, _standing.size())
++	while _crater_k < n:
++		var e: Array = _standing[_crater_k]
++		_crater_k += 1
++		var xw: float = SimWrap.wrap(float(e[2]))
++		var i: int = int(xw / SimConst.COL) % SimConst.NC
++		if ground.offset_at(_S, i, xw, float(e[3])) < -6.0 * RenderLook.WS:
++			var mm: MultiMesh = e[0]
++			var t: Transform3D = mm.get_instance_transform(int(e[1]))
++			t.basis = t.basis.scaled(Vector3.ZERO)
++			mm.set_instance_transform(int(e[1]), t)
++			_standing[_crater_k - 1] = _standing[_standing.size() - 1]
++			_standing.pop_back()
++			n = mini(n, _standing.size())
++			_crater_k -= 1
++
++
++func _foot_slice(t0: int, budget_us: int) -> void:
++	while not _foots.is_empty() and Time.get_ticks_usec() - t0 < budget_us:
++		var e: Array = _foots[0]
++		var mm: MultiMesh = e[0]
++		var k: int = e[1]
++		while k < mm.instance_count:
++			var t: Transform3D = mm.get_instance_transform(k)
++			var d: Vector3 = dir_at(t.origin.x, t.origin.z, _S.frame0 if field_world else null)
++			var fh: float = height_at(d)
++			t.origin.y = fh
++			if fh < WorldWater.SHORE_WET or (field_world and WorldField.recordWater(_S, d.x, d.y, d.z, fh) > 0.0):
++				t.basis = t.basis.scaled(Vector3.ZERO)
++			else:
++				_standing.append([mm, k, t.origin.x, t.origin.z])
++			mm.set_instance_transform(k, t)
++			k += 1
++			if k % 8 == 0 and Time.get_ticks_usec() - t0 > budget_us:
++				break
++		e[1] = k
++		if k >= mm.instance_count:
++			_foots.pop_front()
+--- /dev/null
++++ b/render/core/tile_ground.gd
+@@ -0,0 +1,420 @@
++class_name RenderTileGround
++extends RefCounted
++## The tile ground, one per pane, behind a switch (main's --tiles, ?tiles=1 on a local page; off, nothing here runs and
++## nothing the game draws changes): the ground as planet-keyed tiles (RenderTileField) on a true globe at every zoom, in
++## place of the strip's terrain, water and far towns. Everything else in the world takes the same placement
++## (bend.gdshaderinc globe_place). docs/world/ring-any-angle/rendering.md, research.md T6 stage 4.
++##
++## A level sets what's drawn, never what the sim computes (ADR 0012). This is Standard: 128 units of data round the pivot,
++## on the triangles the sim will read, with finer mesh over those same triangles so a crater has vertices to dig.
++##
++## The view's frame is the strip's own at the camera, so the world rolls under the camera as a planet does. With no swing
++## yet (T6 stage 6), --tilerate=<deg/s> turns the planet about the point the fight stands at, for the view alone: a test.
++
++static var on: bool = false
++static var rate: float = 0.0            # the view-only test turn, degrees a second; 0: none
++static var quick: bool = false          # ... as small swings
++static var near_mode: int = RenderLook.TILE_NEAR_DEFAULT
++static var share: float = 1.0           # 1: the true globe. --tileshare=95: 95 percent at the closest zoom, to compare
++static var fore_tone: bool = true      # one tone in front of the plane: the facets there are a swing's flash. --nofore to compare
++static var gen: int = 3                 # the world it draws: 3 a field world, on the sim's frame; --tilegen=2 the gen 2 ring, to compare
++
++const TILE_MAX_LEVEL: int = 4           # mesh levels: 12,800 down to 800 across
++const EASE: int = 20
++const HOLD: int = 40
++const MAX_TILES: int = 512
++
++var pane: PaneWorld
++var field: RenderTileField
++var mat: ShaderMaterial
++var mm: MultiMesh
++var _node: MultiMeshInstance3D
++var _started: bool = false
++var _pivot_x: float = 0.0
++var _pv0 := Vector3.ZERO
++var _pvp := Vector3.ZERO
++var _hdp := Vector3.ZERO
++var _sdp := Vector3.ZERO
++var _turn_sent: float = 1.0e9
++var _reff: float = -1.0
++var _drawn: int = 0
++var _buf := PackedFloat32Array()
++var _walk_x: float = 1.0e18
++var _walk_hd := Vector3.ZERO
++var _walk_v: int = -1
++var _m_sent := Basis.IDENTITY
++var _walk_z: float = -1.0
++var _walk_y: float = -1.0
++var _world_mats: Array = []
++var _chunks: Array = []
++var _chunk_x: float = 1.0e18
++var _prof := PackedFloat32Array()
++var _prof_img: Image
++var _prof_tex: ImageTexture
++var _q := PackedFloat32Array()
++var _copy_t: int = 0
++var _hd := Vector3.ZERO
++var _sd := Vector3.ZERO
++var _pv := Vector3.ZERO
++var _hd0 := Vector3.ZERO
++var _sd0 := Vector3.ZERO
++var _reach: float = 1.0e9
++var _tan: float = 0.5
++
++
++func _init(p: PaneWorld, f: RenderTileField) -> void:
++	pane = p
++	field = f
++
++
++## The match's setup with the switch on: a Whole ring of a planet (the one great circle a strip can lie on).
++static func setup_of(su: Dictionary) -> Dictionary:
++	var out: Dictionary = su.duplicate()
++	if not out.has("planet"):
++		out["planet"] = RenderLook.TILE_PLANET
++		out["touch"] = 3
++	out["planetGen"] = gen
++	out.erase("arena")
++	return out
++
++
++## Reads this frame's camera and places the world. After the planet's update, in place of the split's culling (which
++## would put the strip's ground back).
++func apply(host: SimHost, cam_x: float, vp: Vector2) -> void:
++	var S: SimState = host.S
++	if S == null or not (S.planetRing is Dictionary) or S.planetRing.is_empty():
++		return
++	if not _started:
++		_begin()
++		_started = true
++	var tk: int = host.ticks
++	var turned: float = _turn_at(tk)
++	var wcx: float = SimWrap.wrap(cam_x)
++	var fr: Array = field.frame_at(wcx, S.frame)
++	_pv0 = fr[0]
++	_hd0 = fr[1]
++	_sd0 = fr[2]
++	# Where the world's things were laid: the plan's frame at the same x. The sim's swing is the difference.
++	var fp: Array = field.frame_at(wcx, S.frame0) if S.frame != null else fr
++	_pvp = fp[0]
++	_hdp = fp[1]
++	_sdp = fp[2]
++	# The turn about the pivot, in the camera's frame (along the line, up, toward the camera). At the camera it is
++	# x' = x c - z s, z' = x s + z c.
++	if turned == 0.0 or absf(SimWrap.sdx(cam_x, _pivot_x)) > 3000.0:
++		_pivot_x = SimWrap.wrap(S.fighters[0].x)
++	var ap: float = SimWrap.sdx(cam_x, _pivot_x) / field.R
++	var m := Basis.IDENTITY if turned == 0.0 else Basis(Vector3(sin(ap), cos(ap), 0.0).normalized(), -deg_to_rad(turned))
++	# On (along the line, up, toward the camera): from the plan's frame to the view's.
++	var plan := Basis(Vector3(_hdp.dot(_hd0), _hdp.dot(_pv0), _hdp.dot(_sd0)), Vector3(_pvp.dot(_hd0), _pvp.dot(_pv0), _pvp.dot(_sd0)), Vector3(_sdp.dot(_hd0), _sdp.dot(_pv0), _sdp.dot(_sd0)))
++	var world_m: Basis = m * plan
++	_hd = (_hd0 * m.x.x + _pv0 * m.y.x + _sd0 * m.z.x).normalized()
++	_pv = (_hd0 * m.x.y + _pv0 * m.y.y + _sd0 * m.z.y).normalized()
++	_sd = (_hd0 * m.x.z + _pv0 * m.y.z + _sd0 * m.z.z).normalized()
++	var width: float = 2.0 * pane.cam_rig.half_width(vp.x)
++	var reff: float = field.R / _share_at(width)
++	if absf(reff - _reff) > 1.0e-3 * reff:
++		_reff = reff
++		RenderingServer.global_shader_parameter_set("globe_r", reff)
++	pane.mats.set_globe(reff, cam_x, field.off_tex)
++	if world_m != _m_sent:
++		_m_sent = world_m
++		for wm in _world_mats:
++			wm.set_shader_parameter("globe_m", world_m)
++	if turned != _turn_sent:
++		_turn_sent = turned
++		if pane._sky_mat != null:
++			pane._sky_mat.set_shader_parameter("sky_turn", deg_to_rad(turned))
++	var cam_d: float = pane.cam_rig.position.z
++	var cam_h: float = maxf(pane.cam_rig.position.y, 1.0)
++	mat.set_shader_parameter("pv", _pv)
++	mat.set_shader_parameter("pv0", _pv0)
++	mat.set_shader_parameter("pvp", _pvp)
++	mat.set_shader_parameter("hdp", _hdp)
++	mat.set_shader_parameter("sdp", _sdp)
++	mat.set_shader_parameter("hd", _hd)
++	mat.set_shader_parameter("sd", _sd)
++	mat.set_shader_parameter("hd0", _hd0)
++	mat.set_shader_parameter("sd0", _sd0)
++	mat.set_shader_parameter("strip_x", SimWrap.wrap(cam_x))
++	for k in ["wl_mul", "wl_add", "fore_cam"]:
++		mat.set_shader_parameter(k, pane.planet._terrain_mat.get_shader_parameter(k))
++	_copy_t += 1
++	if _copy_t % 30 == 1:
++		_copy_ground(pane.planet._terrain_mat)
++	# The tiles again once the view has moved enough to change them.
++	if absf(cam_x - _walk_x) > RenderLook.TILE_WALK_STEP or _hd.dot(_walk_hd) < 0.99999 or absf(cam_d - _walk_z) > 0.02 * cam_d or absf(cam_h - _walk_y) > 0.05 * cam_h or field.version != _walk_v:
++		_walk_hd = _hd
++		_walk_v = field.version
++		_walk_x = cam_x
++		_walk_z = cam_d
++		_walk_y = cam_h
++		_select(cam_d, cam_h, reff, vp)
++		_profile(width)
++	_cull_chunks(cam_x, cam_h, reff)
++	# The sky's horizon is the globe's, from the camera's height over the ground below it.
++	var hz: float = -tan(acos(reff / (reff + cam_h)))
++	if pane._sky_mat != null:
++		pane._sky_mat.set_shader_parameter("horizon", hz)
++	pane.mats.set_sky("horizon", hz)
++	if pane.planet.source == null:
++		field.keep_off(cam_x, RenderLook.TILE_OFF_COLS)
++		field.fill(RenderLook.TILE_FILL_US)
++
++
++## The planet is being built again, so its copies are going: this drive ends with them.
++func drop() -> void:
++	if _node != null:
++		_node.queue_free()
++		_node = null
++	_chunks.clear()
++
++
++func _begin() -> void:
++	var planet: PlanetView = pane.planet
++	var big := AABB(Vector3(-4.0e6, -4.0e6, -4.0e6), Vector3(8.0e6, 8.0e6, 8.0e6))
++	for c in planet._copies:
++		var k: int = int(c.get_meta("k"))
++		for g in c.get_children():
++			if not (g is GeometryInstance3D):
++				continue
++			var nm: String = g.name
++			if k != 0 or nm.begins_with("Terrain") or nm.begins_with("Water") or nm.begins_with("FarTowns"):
++				(g as GeometryInstance3D).layers = 0
++				continue
++			var own: AABB = (g as MultiMeshInstance3D).multimesh.custom_aabb if g is MultiMeshInstance3D and (g as MultiMeshInstance3D).multimesh != null else AABB()
++			(g as GeometryInstance3D).custom_aabb = big
++			if own.size.x > 0.0 and own.size.x < SimConst.W * 0.5:
++				_chunks.append([g, own.position.x + own.size.x * 0.5, own.size.x * 0.5])
++	_world_mats = [planet._bld_mat, planet._front_mat, planet._tree_mat, planet._cover_mat]
++	for m in planet._crowd_mats:
++		_world_mats.append(m)
++	_world_mats = _world_mats.filter(func(m): return m != null)
++	for m in _world_mats:
++		m.set_shader_parameter("globe_world", 1.0)
++		m.set_shader_parameter("globe_near_mode", near_mode)
++		m.set_shader_parameter("globe_small", 0.0 if m == planet._bld_mat or m == planet._front_mat else 1.0)
++	_make_tiles()
++
++
++func _make_tiles() -> void:
++	mat = ShaderMaterial.new()
++	mat.shader = load("res://render/shaders/terrain_tile.gdshader")
++	_copy_ground(pane.planet._terrain_mat)
++	mat.set_shader_parameter("hts", field.hts)
++	mat.set_shader_parameter("ids", field.ids)
++	_prof.resize(64)
++	_prof_img = Image.create_from_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
++	_prof_tex = ImageTexture.create_from_image(_prof_img)
++	mat.set_shader_parameter("plane_tex", _prof_tex)
++	mat.set_shader_parameter("fore_tone", 1.0 if fore_tone else 0.0)
++	pane.mats.track(mat)
++	# The tile mesh: 26 by 26 and a ring outside it: the skirt.
++	var n: int = RenderTileField.CELLS + 1
++	var n2: int = n + 2
++	var vs := PackedVector3Array()
++	var uv := PackedVector2Array()
++	var idx := PackedInt32Array()
++	var cells: float = float(RenderTileField.CELLS)
++	for b in range(n2):
++		for a in range(n2):
++			vs.append(Vector3(float(a), 0.0, float(b)))
++			uv.append(Vector2(float(a - 1) / cells, float(b - 1) / cells))
++	for b in range(n2 - 1):
++		for a in range(n2 - 1):
++			var q: int = b * n2 + a
++			idx.append_array([q, q + 1, q + n2, q + n2, q + 1, q + n2 + 1])
++	var arr: Array = []
++	arr.resize(Mesh.ARRAY_MAX)
++	arr[Mesh.ARRAY_VERTEX] = vs
++	arr[Mesh.ARRAY_TEX_UV] = uv
++	arr[Mesh.ARRAY_INDEX] = idx
++	var am := ArrayMesh.new()
++	am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
++	mm = MultiMesh.new()
++	mm.transform_format = MultiMesh.TRANSFORM_3D
++	mm.use_custom_data = true
++	mm.mesh = am
++	mm.instance_count = MAX_TILES
++	mm.visible_instance_count = 0
++	_node = MultiMeshInstance3D.new()
++	_node.multimesh = mm
++	_node.material_override = mat
++	_node.custom_aabb = AABB(Vector3(-4.0e6, -4.0e6, -4.0e6), Vector3(8.0e6, 8.0e6, 8.0e6))
++	pane.planet.add_child(_node)
++	_buf.resize(MAX_TILES * 16)
++
++
++func _copy_ground(src: ShaderMaterial) -> void:
++	for u in src.shader.get_shader_uniform_list():
++		var nm: String = u.name
++		if nm in ["fore_tone", "hts", "ids", "plane_tex", "pv", "pv0", "pvp", "hdp", "sdp", "hd", "sd", "hd0", "sd0", "strip_x", "plane_span", "globe_sx", "globe_off", "globe_lift_on", "globe_m"]:
++			continue
++		var v: Variant = src.get_shader_parameter(nm)
++		if v != null:
++			mat.set_shader_parameter(nm, v)
++
++
++## The left-out chunks of the crowd and the cover: the turn needs their boxes gone, not the culling, so they go by reach.
++func _cull_chunks(cam_x: float, cam_h: float, reff: float) -> void:
++	if absf(cam_x - _chunk_x) < RenderLook.TILE_CHUNK_STEP:
++		return
++	_chunk_x = cam_x
++	var reach: float = reff * (acos(reff / (reff + cam_h)) + acos(reff / (reff + RenderLook.TILE_CHUNK_TALL))) + pane.cam_rig.position.z
++	for e in _chunks:
++		if not is_instance_valid(e[0]):
++			continue   # a chunk the view made again (the cover's, for a new world)
++		(e[0] as GeometryInstance3D).layers = 1 if absf(SimWrap.sdx(_pivot_x if _turn_sent != 0.0 else cam_x, float(e[1]))) - float(e[2]) < reach else 0
++
++
++func _share_at(w: float) -> float:
++	if share >= 1.0:
++		return 1.0
++	return lerpf(share, 1.0, clampf((log(w) - log(950.0)) / (log(2700.0) - log(950.0)), 0.0, 1.0))
++
++
++func _turn_at(t: int) -> float:
++	if rate <= 0.0:
++		return 0.0
++	if quick:
++		return _quick_at(t)
++	var per: float = rate / 60.0
++	var te: int = int(ceil(360.0 / per)) + EASE
++	var c: int = t % (te + HOLD)
++	if c >= te:
++		return 0.0
++	var peak: float = 360.0 / float(te - EASE)
++	if c < EASE:
++		return fposmod(0.5 * peak * float(c * c) / float(EASE), 360.0)
++	if c < te - EASE:
++		return fposmod(peak * (float(c) - 0.5 * float(EASE)), 360.0)
++	var r: int = te - c
++	return fposmod(360.0 - 0.5 * peak * float(r * r) / float(EASE), 360.0)
++
++
++func _quick_at(t: int) -> float:
++	if _q.is_empty():
++		var per: float = rate / 60.0
++		var cur: float = 0.0
++		var sgn: float = 1.0
++		var sizes: Array = [15.0, 5.0, 10.0]
++		var k: int = 0
++		while _q.size() < 1600:
++			var deg: float = float(sizes[k % 3])
++			var n: int = int(ceil(deg / per + 5.0))
++			var peak: float = deg / (float(n) - 5.0)
++			for c in range(n):
++				var a: float
++				if c < 5:
++					a = 0.5 * peak * float(c * c) / 5.0
++				elif c < n - 5:
++					a = peak * (float(c) - 2.5)
++				else:
++					var r2: int = n - c
++					a = deg - 0.5 * peak * float(r2 * r2) / 5.0
++				_q.append(cur + sgn * a)
++			cur += sgn * deg
++			for c in range(24):
++				_q.append(cur)
++			sgn = -sgn
++			k += 1
++	return fposmod(_q[t % _q.size()], 360.0)
++
++
++func _select(cam_d: float, cam_h: float, reff: float, vp: Vector2) -> void:
++	_reach = cam_d + reff * (acos(reff / (reff + cam_h)) + acos(reff / (reff + RenderLook.TILE_TALLEST)))
++	_tan = tan(deg_to_rad(pane.cam_rig.fov * 0.5)) * vp.x / maxf(vp.y, 1.0)
++	_drawn = 0
++	var n0: int = RenderTileField.LEVEL0
++	for f in range(6):
++		for j in range(n0):
++			for i in range(n0):
++				_walk(f, 0, i, j, cam_d)
++	mm.visible_instance_count = 0
++	mm.buffer = _buf
++	mm.visible_instance_count = _drawn
++
++
++static func _center(f: int, n: int, i: int, j: int) -> Vector3:
++	var size: float = 2.0 / float(n)
++	var s: float = -1.0 + (float(i) + 0.5) * size
++	var t: float = -1.0 + (float(j) + 0.5) * size
++	var fc: Array = RenderTileField.FACES[f]
++	return ((fc[0] as Vector3) + (fc[1] as Vector3) * tan(s * PI / 4.0) + (fc[2] as Vector3) * tan(t * PI / 4.0)).normalized()
++
++
++func _walk(f: int, L: int, i: int, j: int, cam_d: float) -> void:
++	var n: int = RenderTileField.level_n(L)
++	var w: float = 12800.0 / float(1 << L)
++	var c: Vector3 = _center(f, n, i, j)
++	var a: float = atan2(c.cross(_pv).length(), c.dot(_pv))
++	var d: float = a * field.R
++	var k: float = a / maxf(sin(a), 1.0e-5) * field.R
++	var x: float = c.dot(_hd) * k
++	var z: float = c.dot(_sd) * k
++	var reach: float = w * 0.8
++	var depth: float = cam_d - z
++	if depth < -reach or absf(x) - reach > (maxf(depth, 0.0) + reach) * _tan:
++		return
++	if d - reach > _reach:
++		return
++	var split: bool = L < TILE_MAX_LEVEL and maxf(d - w * 0.75, 0.0) < RenderLook.TILE_K * w
++	if split and L + 1 < RenderTileField.LEVELS:
++		# A finer level comes when all four of its data are there; meanwhile the parent draws and they're on their way.
++		for q in range(4):
++			var ck: int = RenderTileField.key_of(f, L + 1, i * 2 + (q & 1), j * 2 + (q >> 1))
++			field.want(ck, d)
++			if not field.has(ck):
++				split = false
++	if split:
++		for q in range(4):
++			_walk(f, L + 1, i * 2 + (q & 1), j * 2 + (q >> 1), cam_d)
++		return
++	_emit(f, L, i, j, w)
++
++
++## One tile in the instance buffer: its face, its place on it, its layer and the data level, its morph.
++func _emit(f: int, L: int, i: int, j: int, w: float) -> void:
++	if _drawn >= MAX_TILES:
++		return
++	var dl: int = mini(L, RenderTileField.LEVELS - 1)
++	var di: int = i >> (L - dl)
++	var dj: int = j >> (L - dl)
++	var lay: int = field.layer_of(RenderTileField.key_of(f, dl, di, dj))
++	if lay < 0:
++		return
++	field.want(RenderTileField.key_of(f, dl, di, dj), 0.0)
++	var fc: Array = RenderTileField.FACES[f]
++	var nn: Vector3 = fc[0]
++	var u: Vector3 = fc[1]
++	var v: Vector3 = fc[2]
++	var size: float = 2.0 / float(RenderTileField.level_n(L))
++	var o: int = _drawn * 16
++	_buf[o] = nn.x
++	_buf[o + 1] = u.x
++	_buf[o + 2] = v.x
++	_buf[o + 3] = -1.0 + float(i) * size
++	_buf[o + 4] = nn.y
++	_buf[o + 5] = u.y
++	_buf[o + 6] = v.y
++	_buf[o + 7] = -1.0 + float(j) * size
++	_buf[o + 8] = nn.z
++	_buf[o + 9] = u.z
++	_buf[o + 10] = v.z
++	_buf[o + 11] = size
++	_buf[o + 12] = float(lay) + float(dl) * 0.25
++	_buf[o + 13] = (1.4 * RenderLook.TILE_K * w if L > 0 else 3.0e5) / 1000.0
++	_buf[o + 14] = (1.95 * RenderLook.TILE_K * w if L > 0 else 3.1e5) / 1000.0
++	_buf[o + 15] = w / 1000.0
++	_drawn += 1
++
++
++## The line's own ground in view, 64 points: the foreground rule's sight lines end on it.
++func _profile(width: float) -> void:
++	var half: float = width * 1.4
++	for k in range(64):
++		var a: float = lerpf(-half, half, float(k) / 63.0) / field.R
++		_prof[k] = maxf(field.height_at(_pv * cos(a) + _hd * sin(a)), 0.0)
++	_prof_img.set_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
++	_prof_tex.update(_prof_img)
++	mat.set_shader_parameter("plane_span", half)
+--- a/render/core/warmup.gd
++++ b/render/core/warmup.gd
+@@ -62,7 +62,7 @@
+ 	var quad := QuadMesh.new()
+ 	quad.size = Vector2(1.0, 1.0)
+ 	var x: float = -4.0
+-	for e in SHADERS:
++	for e in SHADERS + ([["res://render/shaders/terrain_tile.gdshader", "multimesh"]] if RenderTileGround.on else []):
+ 		if not ResourceLoader.exists(str(e[0])):
+ 			continue
+ 		var sh: Shader = load(str(e[0]))
+--- a/render/shaders/bend.gdshaderinc
++++ b/render/shaders/bend.gdshaderinc
+@@ -3,12 +3,91 @@
+ // the world behind curves away. The weight also divides out perspective (cam_dist / (cam_dist + depth)), so every
+ // layer from 1,260 units back to the horizon sags the same number of pixels at the screen edge: one clean curve.
+ // bend and cam_dist are set every frame from the zoom and the camera height, per pane (pane_world.gd).
++#ifndef BEND_GDSHADERINC
++#define BEND_GDSHADERINC
+ uniform float bend = 0.0;
+ uniform float cam_dist = 3000.0;
+ uniform float bend_focus = 0.0;      // the depth of the camera's focus plane (Camera's dolly): the plane that stays flat. 0: the fighter plane
+ 
++// The tile ground's placement (RenderTileGround; off while globe_r is 0, and then nothing below runs): the true globe, one
++// function for everything drawn, with the view's frame at the camera's strip x. A point's strip place, x from the camera along the
++// line and z in depth, is a direction on the planet; its height is along that direction, so a wall leans as on a planet. A world
++// thing turns with the planet (globe_m, about the swing's pivot); what stands on the fighters' plane does not, and takes the lift
++// that keeps it on the drawn ground.
++global uniform float globe_r;
++uniform float globe_sx = 0.0;             // the camera's strip x
++uniform float globe_lift_on = 0.0;        // 1 once globe_off is bound (RenderMats.set_globe)
++uniform mat3 globe_m = mat3(1.0);         // the planet's turn, on (along the line, up, toward the camera) at the camera
++uniform float globe_world = 0.0;          // 1: planet-keyed, it turns; 0: on the plane
++uniform float globe_small = 0.0;          // 1: a small world thing: gone at the near line, no rule for it
++uniform int globe_near_mode = 3;          // a tower near the line: 0 the rule, 1 sink, 2 hard clip, 3 rule and sink, 4 sink and clip
++uniform float globe_line = -80.0;
++uniform sampler2D globe_off : filter_nearest, repeat_enable;   // per column: drawn ground less the sim's, and the sim's
++
++// How far a thing has come toward the near line, 0 to 1. plan: its depth in the plan; now: its depth in the view; width: the ramp.
++// At rest now is plan, so this is 0 and the rule does nothing: only a swing that brings a thing nearer than its own plan moves it.
++float globe_near(float plan, float now, float width) {
++	float l = max(clamp(plan + width, globe_line, 150.0), plan + 1.0);
++	return smoothstep(max(plan, l - width), l, now);
++}
++
++vec3 globe_dir(vec3 w) {
++	float xr = w.x / globe_r;
++	float zr = w.z / globe_r;
++	float cz = cos(zr);
++	vec3 d = vec3(cz * sin(xr), cz * cos(xr), sin(zr));
++	return globe_world > 0.5 ? globe_m * d : d;
++}
++
++float globe_view_z(vec3 w) {
++	return globe_dir(w).z * globe_r;
++}
++
++vec4 globe_place(vec3 w) {
++	float y = w.y;
++	if (globe_lift_on > 0.5 && globe_world < 0.5 && abs(w.z) < 600.0) {
++		float col = floor((globe_sx + w.x) / 32.0);
++		vec2 o = texelFetch(globe_off, ivec2(int(col - 1024.0 * floor(col / 1024.0)), 0), 0).rg;
++		y += o.r * (1.0 - smoothstep(75.0, 150.0, y - o.g)) * (1.0 - smoothstep(300.0, 600.0, abs(w.z)));
++	}
++	vec3 d = globe_dir(w);
++	if (d.y < 0.05 || (globe_small > 0.5 && globe_near(w.z, d.z * globe_r, 1.0) > 0.5)) {
++		y -= 1.0e6;   // past the horizon of any height in the game; or a small thing come round to the near line
++	}
++	float rr = globe_r + y;
++	return vec4(rr * d.x, rr * d.y - globe_r, rr * d.z, 1.0);
++}
++
++// How far the globe lowers a point: for what keeps its own shape (a fighter's part, a beam's ring, ortho.gdshaderinc).
++float globe_sag(vec3 w) {
++	return globe_r * (1.0 - cos(w.x / globe_r) * cos(w.z / globe_r));
++}
++
++// A tower near the line: where its height goes as it comes round. a: its anchor, v: this vertex, foot: its foot's height.
++float globe_tower(vec3 a, vec3 v, float foot) {
++	float sa = globe_near(a.z, globe_view_z(a), 300.0);
++	float sv = globe_near(v.z, globe_view_z(v), 500.0);
++	float tall = v.y - foot;
++	if (globe_near_mode == 1) {
++		return sa >= 1.0 ? foot - 200.0 : foot + tall * (1.0 - sa);
++	}
++	if (globe_near_mode == 3) {
++		return sa >= 1.0 && sv >= 0.6 ? foot - 200.0 : foot + tall * (1.0 - mix(sa, sv, 0.5));
++	}
++	if (globe_near_mode == 4) {
++		return foot + tall * (1.0 - 0.67 * globe_near(a.z, globe_view_z(a), 400.0));
++	}
++	if (globe_near_mode == 0) {
++		return sv >= 1.0 ? foot - 60.0 : foot + tall * (1.0 - sv);
++	}
++	return v.y;
++}
++
+ vec4 bent_world(mat4 model, vec3 v) {
+ 	vec4 w = model * vec4(v, 1.0);
++	if (globe_r > 0.0) {
++		return globe_place(w.xyz);
++	}
+ 	float back = max(bend_focus - w.z, 0.0);
+ 	float k = clamp((back - 60.0) / 1200.0, 0.0, 1.0) * cam_dist / (cam_dist + back);
+ 	w.y -= bend * w.x * w.x * k;
+@@ -18,3 +97,4 @@
+ vec4 bent_clip(mat4 model, mat4 view, mat4 proj, vec3 v) {
+ 	return proj * (view * bent_world(model, v));
+ }
++#endif
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -189,6 +189,8 @@
+ 	return (c.xy / c.w * 0.5 + 0.5) * size;
+ }
+ 
++varying float v_gz;   // the tile ground: past the near line, for a hard clip there (globe_near)
++
+ void vertex() {
+ 	vi_inst = float(INSTANCE_ID);
+ 	vec4 so = texelFetch(stub_tex, ivec2(min(INSTANCE_ID, textureSize(stub_tex, 0).x - 1), 0), 0);
+@@ -228,6 +230,10 @@
+ 	vi_back = n0.z < -0.5 ? 1.0 : 0.0;
+ 	float stubbed = COLOR.a < 0.5 ? stub - 1.0 : stub;
+ 	w.y = min(w.y, stubbed);
++	if (globe_r > 0.0) {
++		v_gz = globe_near(w.z, globe_view_z(w.xyz), 1.0);
++		w.y = globe_tower(MODEL_MATRIX[3].xyz, w.xyz, top - length(MODEL_MATRIX[1].xyz));
++	}
+ 	v_wy = w.y;
+ 	vi_win = texelFetch(win_tex, ivec2(id, 0), 0);
+ 	vec4 wb = texelFetch(win_tex, ivec2(id, 1), 0);
+@@ -245,7 +251,7 @@
+ 	vec4 bw = bent_world(mat4(1.0), w.xyz);
+ 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
+ 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
+-	if (c.w <= 0.0 && wb.z < 1.5 && ref_cull < 0.5 && so.g == 0.0) {
++	if (globe_r <= 0.0 && c.w <= 0.0 && wb.z < 1.5 && ref_cull < 0.5 && so.g == 0.0) {
+ 		// Nothing to cut: cull this face if it looks away from the camera, as cull_back would. Every corner of a face
+ 		// must decide the same, or a face thrown away at some corners only is drawn stretched to the screen's corner
+ 		// (a dark stripe from a roof). So the test uses the face's plane and nothing of the corner itself: the true
+@@ -367,6 +373,9 @@
+ }
+ 
+ void fragment() {
++	if (globe_r > 0.0 && (globe_near_mode == 2 || globe_near_mode == 4) && v_gz > 0.5) {
++		discard;
++	}
+ 	// The per-instance and per-face values, rebuilt from plain varyings (no flat varyings: they cost the old GPUs a
+ 	// rewrite of every draw's index buffer). The masks are read again; the small integers are rounded.
+ 	int inst = int(vi_inst + 0.5);
+--- a/render/shaders/cover.gdshader
++++ b/render/shaders/cover.gdshader
+@@ -10,62 +10,4 @@
+ shader_type spatial;
+ render_mode unshaded, cull_disabled;
+ 
+-#include "res://render/shaders/color.gdshaderinc"
+-#include "res://render/shaders/bend.gdshaderinc"
+-#include "res://render/shaders/ground.gdshaderinc"
+-#include "res://render/shaders/skycol.gdshaderinc"
+-
+-uniform vec3 wl_mul = vec3(1.0);   // the world's light, as the trees take it
+-uniform vec3 wl_add = vec3(0.0);
+-uniform float fog_far = 12000.0;
+-uniform float cover_cam_x = 0.0;   // this pane's camera x: a copy stands at k x the arena's length less it (planet_view.gd)
+-uniform int cover_row = 12;        // RenderBiomeLook.COVER_ROW
+-uniform int fixed_row = 31;        // RenderBiomeLook.FIXED_ROW: the fixed tones (a vertex's COLOR.b 1: Art's shell), the same in every biome
+-uniform vec4 tone_light : source_color = vec4(1.0, 0.965, 0.878, 1.0);   // RenderCoverMeshes.TONE_LIGHT and TONE_DARK (Art's lite() and dark())
+-uniform vec4 tone_dark : source_color = vec4(0.047, 0.039, 0.078, 1.0);
+-uniform vec4 char_col : source_color = vec4(0.173, 0.149, 0.133, 1.0);   // RenderCoverMeshes.CHAR_COLOUR: a burning crown
+-uniform float prop_sink = 0.0;     // RenderProps.FOOT_SINK: how far a prop's foot may sink on a slope, a share of its height
+-
+-varying vec3 v_col;
+-varying vec3 v_view;
+-varying float v_wz;
+-varying float v_up;     // the shape's height share here (Art's frame: 0 at the foot, 1 at the top)
+-varying float v_burn;   // a burning tree's burn step; 0 for the cover
+-
+-void vertex() {
+-	v_up = VERTEX.y;
+-	v_burn = INSTANCE_CUSTOM.b;
+-	// The foot's place on the band (any copy reads the same: the band repeats with the arena's length).
+-	float x = MODEL_MATRIX[3].x + cover_cam_x;
+-	float z = MODEL_MATRIX[3].z;
+-	float xm = x - world_w * floor(x / world_w);
+-	int i = int(xm / col_w) % nc;
+-	vec4 g = ground4(i, xm, z, false, 0.0);
+-	float foot = INSTANCE_CUSTOM.g > 0.5 ? max(g.x, 0.0) : g.x;
+-	if (INSTANCE_CUSTOM.a > 1.5 && INSTANCE_CUSTOM.g < 0.5) {
+-		// a match's prop on a slope: its foot (a less 1 each side, in units) goes down to the lowest ground under it, by at most prop_sink of its height
+-		float hw = INSTANCE_CUSTOM.a - 1.0;
+-		float xl = xm - hw;
+-		xl -= world_w * floor(xl / world_w);
+-		float xr = xm + hw;
+-		xr -= world_w * floor(xr / world_w);
+-		float lo = min(ground4(int(xl / col_w) % nc, xl, z, false, 0.0).x, ground4(int(xr / col_w) % nc, xr, z, false, 0.0).x);
+-		foot = max(min(foot, lo), foot - prop_sink * length(MODEL_MATRIX[1].xyz));
+-	}
+-	VERTEX.y += foot / length(MODEL_MATRIX[1].xyz);
+-	VERTEX = g.w < -dent_min && INSTANCE_CUSTOM.a < 0.5 ? vec3(0.0) : VERTEX;   // inside a crater: gone (all its corners meet); a match's prop (INSTANCE_CUSTOM.a 1, prop_view.gd) stands, as it does in the sim
+-	int b = int(INSTANCE_CUSTOM.r * 32.0);
+-	int slot = int(COLOR.r * 16.0);
+-	float tone = (COLOR.g - 0.5) * 2.0;
+-	vec3 c = texelFetch(biome_pal, ivec2(b, (COLOR.b > 0.5 ? fixed_row : cover_row) + slot), 0).rgb;
+-	v_col = tone >= 0.0 ? mix(c, tone_light.rgb, tone) : mix(c, tone_dark.rgb, -tone);
+-	vec4 bw = bent_world(MODEL_MATRIX, VERTEX);
+-	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
+-	v_wz = bw.z;
+-	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
+-}
+-
+-void fragment() {
+-	vec3 c = (v_burn > 0.0 && v_up > 1.0 - v_burn) ? char_col.rgb : v_col;   // a hard line: no gradient
+-	ALBEDO = haze_ground(c * wl_mul + wl_add, v_view, -v_wz, fog_far);
+-}
++#include "res://render/shaders/cover.gdshaderinc"
+--- /dev/null
++++ b/render/shaders/cover.gdshaderinc
+@@ -0,0 +1,66 @@
++
++#include "res://render/shaders/color.gdshaderinc"
++#include "res://render/shaders/bend.gdshaderinc"
++#ifdef TILE_GROUND
++uniform sampler2D biome_pal : source_color, filter_nearest, repeat_disable;
++#else
++#include "res://render/shaders/ground.gdshaderinc"
++#endif
++#include "res://render/shaders/skycol.gdshaderinc"
++
++uniform vec3 wl_mul = vec3(1.0);   // the world's light, as the trees take it
++uniform vec3 wl_add = vec3(0.0);
++uniform float fog_far = 12000.0;
++uniform float cover_cam_x = 0.0;   // this pane's camera x: a copy stands at k x the arena's length less it (planet_view.gd)
++uniform int cover_row = 12;        // RenderBiomeLook.COVER_ROW
++uniform int fixed_row = 31;        // RenderBiomeLook.FIXED_ROW: the fixed tones (a vertex's COLOR.b 1: Art's shell), the same in every biome
++uniform vec4 tone_light : source_color = vec4(1.0, 0.965, 0.878, 1.0);   // RenderCoverMeshes.TONE_LIGHT and TONE_DARK (Art's lite() and dark())
++uniform vec4 tone_dark : source_color = vec4(0.047, 0.039, 0.078, 1.0);
++uniform vec4 char_col : source_color = vec4(0.173, 0.149, 0.133, 1.0);   // RenderCoverMeshes.CHAR_COLOUR: a burning crown
++uniform float prop_sink = 0.0;     // RenderProps.FOOT_SINK: how far a prop's foot may sink on a slope, a share of its height
++
++varying vec3 v_col;
++varying vec3 v_view;
++varying float v_wz;
++varying float v_up;     // the shape's height share here (Art's frame: 0 at the foot, 1 at the top)
++varying float v_burn;   // a burning tree's burn step; 0 for the cover
++
++void vertex() {
++	v_up = VERTEX.y;
++	v_burn = INSTANCE_CUSTOM.b;
++#ifndef TILE_GROUND   // on the tile ground the foot is in the instance's place, and a crater takes a shape by the CPU (RenderTileField)
++	// The foot's place on the band (any copy reads the same: the band repeats with the arena's length).
++	float x = MODEL_MATRIX[3].x + cover_cam_x;
++	float z = MODEL_MATRIX[3].z;
++	float xm = x - world_w * floor(x / world_w);
++	int i = int(xm / col_w) % nc;
++	vec4 g = ground4(i, xm, z, false, 0.0);
++	float foot = INSTANCE_CUSTOM.g > 0.5 ? max(g.x, 0.0) : g.x;
++	if (INSTANCE_CUSTOM.a > 1.5 && INSTANCE_CUSTOM.g < 0.5) {
++		// a match's prop on a slope: its foot (a less 1 each side, in units) goes down to the lowest ground under it, by at most prop_sink of its height
++		float hw = INSTANCE_CUSTOM.a - 1.0;
++		float xl = xm - hw;
++		xl -= world_w * floor(xl / world_w);
++		float xr = xm + hw;
++		xr -= world_w * floor(xr / world_w);
++		float lo = min(ground4(int(xl / col_w) % nc, xl, z, false, 0.0).x, ground4(int(xr / col_w) % nc, xr, z, false, 0.0).x);
++		foot = max(min(foot, lo), foot - prop_sink * length(MODEL_MATRIX[1].xyz));
++	}
++	VERTEX.y += foot / length(MODEL_MATRIX[1].xyz);
++	VERTEX = g.w < -dent_min && INSTANCE_CUSTOM.a < 0.5 ? vec3(0.0) : VERTEX;   // inside a crater: gone (all its corners meet); a match's prop (INSTANCE_CUSTOM.a 1, prop_view.gd) stands, as it does in the sim
++#endif
++	int b = int(INSTANCE_CUSTOM.r * 32.0);
++	int slot = int(COLOR.r * 16.0);
++	float tone = (COLOR.g - 0.5) * 2.0;
++	vec3 c = texelFetch(biome_pal, ivec2(b, (COLOR.b > 0.5 ? fixed_row : cover_row) + slot), 0).rgb;
++	v_col = tone >= 0.0 ? mix(c, tone_light.rgb, tone) : mix(c, tone_dark.rgb, -tone);
++	vec4 bw = bent_world(MODEL_MATRIX, VERTEX);
++	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
++	v_wz = bw.z;
++	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
++}
++
++void fragment() {
++	vec3 c = (v_burn > 0.0 && v_up > 1.0 - v_burn) ? char_col.rgb : v_col;   // a hard line: no gradient
++	ALBEDO = haze_ground(c * wl_mul + wl_add, v_view, -v_wz, fog_far);
++}
+--- /dev/null
++++ b/render/shaders/cover_tile.gdshader
+@@ -0,0 +1,6 @@
++// The biomes' cover and the trees on the tile ground (RenderTileGround): cover.gdshaderinc without the ground.
++shader_type spatial;
++render_mode unshaded, cull_disabled;
++
++#define TILE_GROUND
++#include "res://render/shaders/cover.gdshaderinc"
+--- a/render/shaders/crowd.gdshader
++++ b/render/shaders/crowd.gdshader
+@@ -12,6 +12,7 @@
+ render_mode unshaded, cull_back;
+ 
+ #include "res://render/shaders/color.gdshaderinc"
++#include "res://render/shaders/bend.gdshaderinc"
+ 
+ uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+ uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
+@@ -91,6 +92,7 @@
+ 	}
+ 	VERTEX = v * boost * nearc;
+ 	NORMAL = nrm;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ void fragment() {
+--- a/render/shaders/ortho.gdshaderinc
++++ b/render/shaders/ortho.gdshaderinc
+@@ -4,6 +4,7 @@
+ // anchor's own scale, so a fighter never warps or leans toward the screen edges: it looks the same at the centre and
+ // the edges, at any zoom. Depth stays the vertex's true perspective depth, so the ground still hides feet in a
+ // hollow and the parts still sort among themselves. ortho 0 (the default) is the plain perspective path.
++#include "res://render/shaders/bend.gdshaderinc"
+ uniform vec3 anchor = vec3(0.0);
+ uniform float ortho = 0.0;
+ 
+@@ -12,6 +13,14 @@
+ 	vec4 cp = proj * (view * w);
+ 	vec4 ca = proj * (view * vec4(anchor, 1.0));
+ 	vec3 d = (view * vec4(w.xyz - anchor, 0.0)).xyz;
++	if (globe_r > 0.0) {
++		// The tile ground: the pivot lands where the globe puts it; what keeps its shape only follows the curve from there.
++		vec3 dw = w.xyz - anchor;
++		dw.y -= globe_sag(w.xyz) - globe_sag(anchor);
++		d = (view * vec4(dw, 0.0)).xyz;
++		ca = proj * (view * globe_place(anchor));
++		cp = proj * (view * globe_place(w.xyz));
++	}
+ 	vec4 c = ca + vec4(proj[0][0] * d.x, proj[1][1] * d.y, 0.0, 0.0);
+ 	c.z = cp.z / cp.w * ca.w;
+ 	return c;
+--- a/render/shaders/particle.gdshader
++++ b/render/shaders/particle.gdshader
+@@ -6,12 +6,15 @@
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
+ 
++#include "res://render/shaders/bend.gdshaderinc"
++
+ #include "res://render/shaders/color.gdshaderinc"
+ 
+ varying vec4 v_custom;
+ 
+ void vertex() {
+ 	v_custom = INSTANCE_CUSTOM;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ void fragment() {
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -76,6 +76,9 @@
+ varying vec2 v_grad;          // the ground's slope (d height / dx, / dz), smooth across the mesh: a facet's tone follows it
+ varying float v_new;          // how much of its own colour the ground keeps under a crater dug moments ago (ground.gdshaderinc crater_new; over CRATER_OPEN_S, over CRATER_CALM_S with reduced flashing)
+ 
++#ifdef TILE_GROUND
++#include "res://render/shaders/tile_vertex.gdshaderinc"
++#else
+ void vertex() {
+ 	int i = int(UV.x + 0.5) % nc;
+ 	float xw = UV.x * col_w;
+@@ -148,6 +151,7 @@
+ 	v_wz = bw.z;
+ 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
+ }
++#endif
+ 
+ void fragment() {
+ 	// The ground's facet (Art's biome look, biome rendering window 1). Its light: the ground's normal against the sun
+@@ -162,6 +166,17 @@
+ 	// its own both sides outside one) and its place across the zone, stepped in five hard bands. Read here, not passed
+ 	// from the vertices: a flat varying costs the old GPUs a rewrite of every draw's index buffer (ANGLE's D3D11), and a
+ 	// vertex outside a zone carries none of it.
++#ifdef TILE_GROUND
++	// The node's own biome. A border wanders up to a third of a node, keyed to the planet (Art's look check), with one flat band between
++	// the two biomes where the next node over is the other one. Hard edges only: no blend, no dither.
++	vec2 u_w = v_uv + vec2(tile_tri(v_q.y + 0.7 * v_q.z), tile_tri(v_q.x + 0.6 * v_q.z)) * 0.33;
++	int v_la = int(v_layer + 0.5);
++	ivec2 u_a = clamp(ivec2(floor(u_w + 0.5)), ivec2(0), ivec2(27));
++	ivec2 u_b = clamp(ivec2(floor(u_w + 0.95)), ivec2(0), ivec2(27));
++	int v_ba = int(texelFetch(ids, ivec3(u_a, v_la), 0).r * 255.0 + 0.5);
++	int v_bb = int(texelFetch(ids, ivec3(u_b, v_la), 0).r * 255.0 + 0.5);
++	float zf = v_ba == v_bb ? 0.0 : 0.5;
++#else
+ 	float cx = v_px.x / col_w;
+ 	int ci = int(cx - float(nc) * floor(cx / float(nc))) % nc;
+ 	int v_ba = int(gf(ci, 21) + 0.5);
+@@ -171,6 +186,7 @@
+ 	du -= float(nc) * floor(du / float(nc) + 0.5);
+ 	float zt = (jb < -1.0e8 || v_ba == v_bb) ? 0.0 : clamp(0.5 + du * col_w / biome_zone, 0.0, 1.0);
+ 	float zf = zt <= 0.0 ? 0.0 : (zt >= 1.0 ? 1.0 : (floor(zt * 5.0) + 0.5) / 5.0);
++#endif
+ 	vec3 rk = biome_tone(zf < 0.5 ? v_ba : v_bb, 11);   // r: the rock has strata; g: a rocky biome's height (/ 10,000) from which rock starts at gentler slopes
+ 	// Rock by the ground's steepness, in Art's five hard bands from rock_slope.x to .y (so the green and the rock meet along
+ 	// the slope's contour, stepped); in a rocky biome the rock starts at gentler slopes the higher it is, so the foot stays
+@@ -194,7 +210,11 @@
+ 	// the ridge's own step. Without the ladder, its own colour shaded as before.
+ 	int lk = -1;
+ 	if (ladder_on && v_s >= ladder_from) {
++#ifdef TILE_GROUND
++		float zb = v_rad;
++#else
+ 		float zb = -v_px.y;
++#endif
+ 		lk = zb < ladder_z.x ? 0 : (zb < ladder_z.y ? 1 : 2);
+ 		c = (lk == 0 ? v_lad_n : (lk == 1 ? mix(v_lad_n, v_lad_f, 0.5) : v_lad_f)) * (tone == 0 ? ladder_tone.x : (tone == 2 ? ladder_tone.z : ladder_tone.y));
+ 	} else if (!ladder_on) {
+@@ -244,10 +264,29 @@
+ 		float rim = fwidth(sc) * scar_band.x;
+ 		c = mix(biome_tone(v_ba, sc > scar_band.y + rim ? 9 : 10), biome_tone(v_bb, sc > scar_band.y + rim ? 9 : 10), zf);
+ 	}
++#ifdef TILE_GROUND
++	// One tone in front of the plane: its big facets, close to the lens, are a swing's flash (docs/camera/swing-view.md). Marks keep their colours.
++	if (fore_tone > 0.5 && v_pv.y > 0.0 && abs(v_dent) < dent_min && v_rubble <= 0.01 && v_crack <= 0.01) {
++		c = mix(biome_tone(v_ba, 2), biome_tone(v_bb, 2), zf);   // the biome's shade colour (Art: docs/art/tile-ground-look.md)
++	}
++	// Water, as colour by depth for now: the sea past World's shore (WorldWater.SHORE_WET), a lake's or a river's depth from its record.
++	float wet_d = v_wet > 2.0 ? v_wet : (v_h0 < -18.75 ? -v_h0 : -1.0);
++	if (wet_d >= 0.0) {
++		c = (wet_d < 37.5 ? vec3(0.27, 0.56, 0.72) : (wet_d < 240.0 ? vec3(0.17, 0.42, 0.65) : vec3(0.12, 0.33, 0.56))) * tk;
++	}
++#endif
+ 	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed
++#ifdef TILE_GROUND
++	vec4 cue = lane_cue_at(v_pv, fwidth(v_pv.y));
++#else
+ 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
++#endif
+ 	c = mix(c, cue.rgb, cue.a);
++#ifdef TILE_GROUND
++	c = pair_mark_on(c, v_pv, fwidth(v_pv.y));
++#else
+ 	c = pair_mark_on(c, v_px, fwidth(v_px.y));
++#endif
+ 	float hh = clamp(v_heat, 0.0, 1.6);
+ 	vec3 glow = mix(heat_lo.rgb, heat_hi.rgb, clamp(hh - 0.6, 0.0, 1.0));
+ 	// The glow's tint comes in gently at low heat (a weak beam's groove is a faint red, not a dark one, at first).
+--- /dev/null
++++ b/render/shaders/terrain_tile.gdshader
+@@ -0,0 +1,6 @@
++// The tile ground (RenderTileGround): the ground's body (terrain.gdshaderinc) with its own vertex stage (tile_vertex.gdshaderinc).
++shader_type spatial;
++render_mode unshaded, cull_disabled;
++
++#define TILE_GROUND
++#include "res://render/shaders/terrain.gdshaderinc"
+--- /dev/null
++++ b/render/shaders/tile_vertex.gdshaderinc
+@@ -0,0 +1,152 @@
++// The tile ground's vertex stage (RenderTileGround; terrain_tile.gdshader). A tile is an instance: its face's axes and its place on
++// the face (s, t, size), its layer and the data's level, its morph. The heights are the field's nodes, read as the mesh's own two
++// triangles, so a mesh finer than the data keeps the ground the sim will stand on. What lies on the ground today (craters, scorch,
++// streets, a groove's heat) still comes from the strip's own rows, read at this vertex's place in the strip's frame.
++uniform sampler2DArray hts : filter_nearest, repeat_disable;
++uniform sampler2DArray ids : filter_nearest, repeat_disable;
++uniform vec3 pv = vec3(1.0, 0.0, 0.0);
++uniform vec3 hd = vec3(0.0, 1.0, 0.0);
++uniform vec3 sd = vec3(0.0, 0.0, 1.0);
++uniform vec3 pv0 = vec3(1.0, 0.0, 0.0);
++uniform vec3 hd0 = vec3(0.0, 1.0, 0.0);
++uniform vec3 sd0 = vec3(0.0, 0.0, 1.0);
++uniform vec3 pvp = vec3(1.0, 0.0, 0.0);   // the plan's frame at the camera: the land's light stays with the land through a swing
++uniform vec3 hdp = vec3(0.0, 1.0, 0.0);
++uniform vec3 sdp = vec3(0.0, 0.0, 1.0);
++uniform float strip_x = 0.0;
++uniform sampler2D plane_tex : filter_nearest, repeat_disable;
++uniform float plane_span = 3000.0;
++uniform float fore_tone = 1.0;   // one tone in front of the plane (RenderTileGround.fore_tone)
++varying vec2 v_uv;
++varying float v_layer;
++varying float v_rad;
++varying float v_h0;
++varying vec2 v_pv;
++varying float v_wet;     // a lake's or a river's depth here (RenderTileField.WET_STEP)
++varying vec3 v_q;        // the planet's direction, in nodes: what a border's wander is keyed to, so it stays with the land
++
++// A straight-sided wave, -1 to 1: a border wanders in straight runs, as the flat look draws an edge.
++float tile_tri(float x) {
++	return abs(fract(x * 0.37) * 2.0 - 1.0) * 2.0 - 1.0;
++}
++
++vec2 tile_chart(vec3 d, vec3 h, vec3 s, vec3 p) {
++	float x = dot(d, h);
++	float z = dot(d, s);
++	float q = sqrt(x * x + z * z);
++	float k = q > 1.0e-5 ? atan(q, dot(d, p)) / q : 1.0;
++	return vec2(x, z) * k * globe_r;
++}
++
++float tile_h(ivec2 a, int layer) {
++	return texelFetch(hts, ivec3(clamp(a.x, 0, 27), clamp(a.y, 0, 27), layer), 0).r;
++}
++
++vec3 tile_dir(vec3 n, vec3 u, vec3 w, vec2 st) {
++	return normalize(n + u * tan(st.x * 0.7853982) + w * tan(st.y * 0.7853982));
++}
++
++void vertex() {
++	vec3 n = MODEL_MATRIX[0].xyz;
++	vec3 u = MODEL_MATRIX[1].xyz;
++	vec3 wv = MODEL_MATRIX[2].xyz;
++	vec3 place = MODEL_MATRIX[3].xyz;
++	vec2 uvc = clamp(UV, vec2(0.0), vec2(1.0));
++	float skirt = (UV.x != uvc.x || UV.y != uvc.y) ? 1.0 : 0.0;
++	vec2 g = uvc * 25.0;
++	vec2 st0 = place.xy + uvc * place.z;
++	vec3 d0 = tile_dir(n, u, wv, st0);
++	float dist = atan(length(cross(d0, pv)), dot(d0, pv)) * globe_r;
++	float mk = smoothstep(INSTANCE_CUSTOM.g * 1000.0, INSTANCE_CUSTOM.b * 1000.0, dist);
++	// To the parent's lattice: every other node of this level's own grid across the face (25 is odd, so a tile's parity is its place's).
++	vec2 cellxy = floor((place.xy + 1.0) / place.z + 0.5);
++	vec2 odd = mod(cellxy, 2.0);
++	vec2 gm = g - mod(g + odd, 2.0) * mk;
++	vec2 st = place.xy + gm / 25.0 * place.z;
++	vec3 dir = tile_dir(n, u, wv, st);
++	float lf = INSTANCE_CUSTOM.r + 0.01;
++	int layer = int(lf);
++	float dl = floor((lf - float(layer)) * 4.0);
++	float dsize = 2.0 / (3.0 * pow(2.0, dl));
++	vec2 d0xy = floor((place.xy + vec2(1.0)) / dsize + 0.001) * dsize - vec2(1.0);
++	vec2 dg = (st - d0xy) / dsize * 25.0 + vec2(1.0);   // on the layer: the ring outside the tile is its first row
++	ivec2 i0 = ivec2(floor(dg));
++	vec2 f = dg - vec2(i0);
++	float h00 = tile_h(i0, layer);
++	float h10 = tile_h(i0 + ivec2(1, 0), layer);
++	float h01 = tile_h(i0 + ivec2(0, 1), layer);
++	float h11 = tile_h(i0 + ivec2(1, 1), layer);
++	float h = f.x + f.y <= 1.0 ? h00 + f.x * (h10 - h00) + f.y * (h01 - h00) : h11 + (1.0 - f.x) * (h01 - h11) + (1.0 - f.y) * (h10 - h11);
++	// The slope, by the strip frame's own axes, so its light stays with the land: a solid thing under a fixed sun.
++	ivec2 ic = ivec2(floor(dg + 0.5));
++	float cell = dsize / 25.0;
++	vec2 c0 = tile_chart(dir, hdp, sdp, pvp);
++	vec2 cs = tile_chart(tile_dir(n, u, wv, st + vec2(cell, 0.0)), hdp, sdp, pvp) - c0;
++	vec2 ct = tile_chart(tile_dir(n, u, wv, st + vec2(0.0, cell)), hdp, sdp, pvp) - c0;
++	float hs = 0.5 * (tile_h(ic + ivec2(1, 0), layer) - tile_h(ic - ivec2(1, 0), layer));
++	float ht = 0.5 * (tile_h(ic + ivec2(0, 1), layer) - tile_h(ic - ivec2(0, 1), layer));
++	float det = cs.x * ct.y - cs.y * ct.x;
++	v_grad = abs(det) > 1.0e-3 ? vec2(hs * ct.y - ht * cs.y, ht * cs.x - hs * ct.x) / det : vec2(0.0);
++	float sl = far_weight(dist);
++	int pid = int(texelFetch(ids, ivec3(ic.x, ic.y, layer), 0).r * 255.0 + 0.5);
++	v_col = biome_tone(pid, 1);
++	v_lad_n = biome_tone(pid, ladder_row);
++	v_lad_f = biome_tone(pid, ladder_row + 2);
++	v_desert = 0.0;
++	v_base = h;
++	v_s = sl;
++	v_uv = vec2(ic);
++	v_layer = float(layer);
++	v_rad = dist;
++	v_h0 = h;
++	v_wet = texelFetch(ids, ivec3(ic.x, ic.y, layer), 0).g * 255.0 * 4.0;
++	v_q = dir * globe_r / 128.0;
++	// The strip's frame: this point's place along the line, and its depth, as the strip's rows have them.
++	float z0 = asin(clamp(dot(dir, sd0), -1.0, 1.0)) * globe_r;
++	float xr = atan(dot(dir, hd0), dot(dir, pv0)) * globe_r;
++	float xw = strip_x + xr;
++	xw -= world_w * floor(xw / world_w);
++	int ci = int(xw / col_w) % nc;
++	v_px = vec2(xw, z0);
++	v_dent = 0.0;
++	v_scorch = 0.0;
++	v_heat = 0.0;
++	v_crack = 0.0;
++	v_rubble = 0.0;
++	v_new = 0.0;
++	float z_abs = abs(z0);
++	if (z_abs <= -z_band_back + 0.5) {
++		vec4 gr = ground4(ci, xw, z0, false, 0.0);
++		h += gr.w;
++		v_dent = gr.w;
++		v_grad += vec2(gr.y - base_slope(ci), gr.z);
++		float gw = groove_half_at(ci);
++		float gt = clamp(1.0 - z0 * z0 / (gw * gw), 0.0, 1.0);
++		v_scorch = gh(ci, 0) * gt;
++		v_heat = gh(ci, 1) * gt;
++		v_crack = gf(ci, 15) * gt;
++		v_rubble = rubble_at(ci, z0);
++		v_new = crater_new(ci, xw, z0, calm_ease > 0.0 ? crater_calm_s : crater_open_s);
++	}
++	v_street = street_n > 0 ? street_weight(xw) : 0.0;
++	vec2 p = tile_chart(dir, hd, sd, pv);
++	v_pv = vec2(strip_x + p.x, p.y);
++	v_back = clamp((z_front - p.y) / (z_front - z_band_back), 0.0, 1.0);
++	float y = max(h, 0.0);
++	if (p.y > 0.0) {
++		// The foreground rule: in front of the plane nothing stands above the sight line to the line's own ground behind it.
++		float t = min(p.y / fore_cam.z, 0.95);
++		float pu = clamp((p.x / (1.0 - t) + plane_span) / (2.0 * plane_span), 0.0, 1.0) * 63.0;
++		int ua = int(pu);
++		float pl = mix(texelFetch(plane_tex, ivec2(ua, 0), 0).r, texelFetch(plane_tex, ivec2(min(ua + 1, 63), 0), 0).r, pu - float(ua));
++		y = min(y, mix(pl, fore_cam.y, t) - fore_drop * p.y);
++	}
++	v_h = y;
++	y -= skirt * INSTANCE_CUSTOM.a * 1000.0 * 0.05;
++	float rr = globe_r + y;
++	vec4 bw = vec4(rr * dot(dir, hd), rr * dot(dir, pv) - globe_r, rr * dot(dir, sd), 1.0);
++	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
++	v_wz = bw.z;
++	NORMAL = normalize(vec3(-v_grad.x, 1.0, -v_grad.y));
++	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
++}
+--- a/render/tools/cover_water_check.gd
++++ b/render/tools/cover_water_check.gd
+@@ -63,7 +63,7 @@
+ 	ok(kept > 0 and in_control == kept, "rivers and lakes: %d land shapes kept out across %d gen 2 worlds; the control sees them all (%d)" % [kept, GEN2.size(), in_control])
+ 	ok(krummholz > 0 and mirrored == 0 and others_mirrored > 0, "no flip: of %d krummholz across the gen 2 worlds %d are mirrored; %d shapes of other kinds are" % [krummholz, mirrored, others_mirrored])
+ 	for pl in GEN1:
+-		var r: Dictionary = _both(1, {"planet": pl, "touch": 3, "intro": false})
++		var r: Dictionary = _both(1, {"planet": pl, "touch": 3, "planetGen": 1, "intro": false})
+ 		ok(int(r.lakes) == 0 and int(r.in_water) == 0 and bool(r.same), "gen 1 planet %d: no lakes, nothing kept out, the same %d shapes with the rule on and off" % [pl, int(r.control_count)])
+ 	for sd in HAND:
+ 		var r: Dictionary = _both(sd, {"intro": false})
+--- a/render/tools/lake_water_check.gd
++++ b/render/tools/lake_water_check.gd
+@@ -51,7 +51,7 @@
+ 			var c: int = _fine_centre("tundra")
+ 			ok(c >= 0 and S.water[c] >= WorldWater.MIN_DEPTH and S.base[c] >= WorldWater.RESERVOIR_BASE, "the reported picture: planet %d's tundra column %d is wet off the sea, %.1f deep" % [pl, c, S.water[c] if c >= 0 else 0.0])
+ 	for pl in GEN1:
+-		var S: SimState = _start(1, {"planet": pl, "touch": 3, "intro": false})
++		var S: SimState = _start(1, {"planet": pl, "touch": 3, "planetGen": 1, "intro": false})
+ 		ok(_lake_on() == 0.0 and S.planetRing.get("lakes", []).is_empty() and GroundField.under_level(S, S.fighters[0].x, -1.0e6) == GroundField.NO_SHORE, "gen 1 planet %d: no lakes, lake_on 0, and no one is under" % pl)
+ 	for sd in HAND:
+ 		var Sh: SimState = _start(sd, {"intro": false})
+--- /dev/null
++++ b/render/tools/tile_check.gd
+@@ -0,0 +1,34 @@
++extends SceneTree
++## The tile ground's field holds the ground it says it does: on a gen 3 match, the tiles along the line read the sim's ground to within a
++## few units, level 0 is there after the load, and a tile's heights aren't empty. Headless: it needs no picture. Run with --path . --script.
++const TOLERANCE: float = 30.0   # the 128 triangles against the sim's own read, which refines creased cells at 32 u: the lift covers this much
++
++
++func _init() -> void:
++	WorldClimate.useGen(3)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"planet": 7, "touch": 3, "planetGen": 3, "intro": false})
++	var fd := RenderTileField.new()
++	fd.begin(S)
++	while not fd.boot(100000):
++		pass
++	while not fd.boot_near(100000):
++		pass
++	var fails: int = 0
++	var worst: float = 0.0
++	var cx: float = float(S.fighters[0].x)
++	for k in range(-20, 21):
++		var x: float = cx + float(k) * 64.0
++		var d: Vector3 = fd.dir_at(x, 0.0, S.frame)
++		var gap: float = absf(fd.height_at(d) - fd._sim_ground(d))
++		worst = maxf(worst, gap)
++		if gap > TOLERANCE:
++			fails += 1
++	print("%s the tiles read the sim's ground along the line, worst %.1f units over %d columns" % ["ok  " if fails == 0 else "FAIL", worst, 41])
++	var f0: int = 0
++	for q in range(fd.POOL):
++		if fd._keys[q] >= 0 and (fd._hs[q] as PackedFloat32Array).size() != fd.TEX * fd.TEX:
++			f0 += 1
++	print("%s every stored tile holds its nodes" % ("ok  " if f0 == 0 else "FAIL"))
++	print("tile check %s" % ("passed" if fails == 0 and f0 == 0 else "FAILED"))
++	quit(0 if fails == 0 and f0 == 0 else 1)
+--- a/render/vfx/crack_view.gd
++++ b/render/vfx/crack_view.gd
+@@ -42,6 +42,8 @@
+ 
+ ## cam_x: this pane's wrapped camera x; half_w: half the visible width at the fighter plane (world units); zoom: pixels per unit there.
+ func update(hub: VfxHub, S: SimState, cam_x: float, half_w: float, zoom: float) -> void:
++	if RenderTileGround.on and S.frame != null and S.swing != null and S.swing.active and not hub.crack_sets.is_empty():
++		hub.crack_sets.clear()   # the tile ground: a set lies on the strip, not the planet, so it goes as the line moves off it (no fade: the EP's ruling)
+ 	visible_count = 0
+ 	built_now = 0
+ 	mat.set_shader_parameter("now", hub.fx_now(S))
+--- a/render/vfx/shaders/beam_scar.gdshader
++++ b/render/vfx/shaders/beam_scar.gdshader
+@@ -5,6 +5,8 @@
+ // z = a seed, w = the strip's length. COLOR: rgb the lane colour, a = the rim's share of the strip's half width (a pixel-wide rim at this pane's zoom).
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++
++#include "res://render/shaders/bend.gdshaderinc"
+ 
+ uniform float heal_s = 3.6;       // seconds a point takes to heal
+ uniform float cell = 110.0;       // the pieces it drops out in, in world units
+@@ -31,6 +33,7 @@
+ 
+ void vertex() {
+ 	v_c = INSTANCE_CUSTOM;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ void fragment() {
+--- a/render/vfx/shaders/cloud.gdshader
++++ b/render/vfx/shaders/cloud.gdshader
+@@ -3,6 +3,8 @@
+ // The instance transforms are all identity and never change; INSTANCE_CUSTOM is (group, u, seed, jitter). Fire colours fade to smoke by heat; the fireball's light is cloud_core.gdshader's.
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++
++#include "res://render/shaders/bend.gdshaderinc"
+ 
+ #include "res://render/vfx/shaders/cloud_curves.gdshaderinc"
+ 
+@@ -24,6 +26,7 @@
+ 	float a = body_a * per * (0.55 + 0.45 * INSTANCE_CUSTOM.w);
+ 	v_col = vec4(ramp(heat) * shade, a);
+ 	v_sd = INSTANCE_CUSTOM.z;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ void fragment() {
+--- a/render/vfx/shaders/cloud_core.gdshader
++++ b/render/vfx/shaders/cloud_core.gdshader
+@@ -3,6 +3,8 @@
+ // refused it. The core is a cluster of noise-broken blobs, never a hemisphere and never a ring (c06); its radius caps at 0.35 of the cap's major radius. Additive, behind the fighters' plane.
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_add, depth_draw_never;
++
++#include "res://render/shaders/bend.gdshaderinc"
+ 
+ #include "res://render/vfx/shaders/cloud_curves.gdshaderinc"
+ 
+@@ -44,6 +46,7 @@
+ 	float a = light * core_alpha * (g < 3.5 ? 1.0 : 0.6);
+ 	v_col = vec4(ramp(0.7 + 0.3 * heat) * 1.0, a);
+ 	v_sd = sd;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ void fragment() {
+--- a/render/vfx/shaders/dust.gdshader
++++ b/render/vfx/shaders/dust.gdshader
+@@ -4,10 +4,13 @@
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
+ 
++#include "res://render/shaders/bend.gdshaderinc"
++
+ varying vec4 v_custom;
+ 
+ void vertex() {
+ 	v_custom = INSTANCE_CUSTOM;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ float h21(vec2 p) {
+--- a/render/vfx/shaders/hole.gdshader
++++ b/render/vfx/shaders/hole.gdshader
+@@ -3,6 +3,8 @@
+ // building goes. Cel: two steps, a hard edge.
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++
++#include "res://render/shaders/bend.gdshaderinc"
+ 
+ uniform vec4 dark_col : source_color = vec4(0.08, 0.09, 0.11, 1.0);
+ uniform vec4 rim_col : source_color = vec4(0.60, 0.64, 0.70, 1.0);
+@@ -11,6 +13,7 @@
+ 
+ void vertex() {
+ 	v_custom = INSTANCE_CUSTOM;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ void fragment() {
+--- a/render/vfx/shaders/shard.gdshader
++++ b/render/vfx/shaders/shard.gdshader
+@@ -5,6 +5,8 @@
+ // is a uniform, so every bit needs only one draw call.
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++
++#include "res://render/shaders/bend.gdshaderinc"
+ 
+ uniform vec4 rim_glass : source_color = vec4(0.88, 0.96, 0.98, 1.0);
+ uniform vec4 rim_steel : source_color = vec4(0.67, 0.71, 0.76, 1.0);
+@@ -20,6 +22,7 @@
+ 
+ void vertex() {
+ 	v_custom = INSTANCE_CUSTOM;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ float edge(float d, float aa) {
+--- a/render/vfx/shaders/trail.gdshader
++++ b/render/vfx/shaders/trail.gdshader
+@@ -5,10 +5,13 @@
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
+ 
++#include "res://render/shaders/bend.gdshaderinc"
++
+ varying vec4 v_custom;
+ 
+ void vertex() {
+ 	v_custom = INSTANCE_CUSTOM;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ void fragment() {
+--- a/render/vfx/shaders/transform.gdshader
++++ b/render/vfx/shaders/transform.gdshader
+@@ -12,6 +12,8 @@
+ shader_type spatial;
+ render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
+ 
++#include "res://render/shaders/bend.gdshaderinc"
++
+ varying vec4 v_custom;
+ 
+ float smin(float a, float b, float k) {
+@@ -21,6 +23,7 @@
+ 
+ void vertex() {
+ 	v_custom = INSTANCE_CUSTOM;
++	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+ }
+ 
+ void fragment() {

@@ -1,0 +1,46 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -588,6 +588,8 @@
+ const SCAR_FRINGE: float = 0.72
+ const SCAR_SLICE: int = 600
+ const SCAR_MIN: float = 0.27
++## Ice's ground on the tile ground: its brightest channel, after the world's light (0 to 1).
++const TILE_ICE_CAP: float = 0.68
+ ## A building's foot on the tile ground. TILE_FOOT_CAP: the deepest its body goes under its base (World: docs/world/lot-gap.md). TILE_FOOT_READS: footings read a frame; TILE_FOOT_SCAN: buildings looked at a frame; TILE_FOOT_NEAR: after the first pass, only those this near the camera on the planet (the cosine of the angle).
+ const TILE_FOOT_CAP: float = 320.0
+ const TILE_FOOT_READS: int = 6
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -373,6 +373,7 @@
+ 	mat.set_shader_parameter("crater_look", 1.0 if crater_look else 0.0)
+ 	mat.set_shader_parameter("scar_look", RenderLook.SCAR_LOOK)
+ 	mat.set_shader_parameter("scar_fringe", RenderLook.SCAR_FRINGE)
++	mat.set_shader_parameter("ice_cap", RenderLook.TILE_ICE_CAP)
+ 	_scar_w.resize(SimConst.NC)
+ 	_scar_w.fill(0.0)
+ 	_scar_on.resize(SimConst.NC)
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -28,6 +28,9 @@
+ uniform vec4 heat_lo : source_color;
+ uniform vec4 heat_hi : source_color;
+ uniform vec4 snow : source_color;
++#ifdef TILE_GROUND
++uniform float ice_cap = 0.68;   // RenderLook.TILE_ICE_CAP: the brightest channel ice's ground reaches, after the world's light
++#endif
+ uniform vec4 cracked : source_color;
+ uniform vec4 rubble : source_color;
+ uniform float rubble_tint_h = 20.0;
+@@ -330,6 +333,12 @@
+ #endif
+ 	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed
+ #ifdef TILE_GROUND
++	// Ice above the water (World's fine ids 5 and 6): a low sun would clip Art's warm white to the brightest thing in the frame, above a beam. Its hue stays.
++	if (v_h > sea_base && (v_ba == 5 || v_ba == 6 || v_bb == 5 || v_bb == 6)) {
++		c *= min(1.0, ice_cap / max(max(c.r, c.g), max(c.b, 0.001)));
++	}
++#endif
++#ifdef TILE_GROUND
+ 	vec4 cue = lane_cue_at(v_pv, fwidth(v_pv.y));
+ #else
+ 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));

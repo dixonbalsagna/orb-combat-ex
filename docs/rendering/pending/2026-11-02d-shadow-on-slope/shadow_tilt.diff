@@ -1,0 +1,42 @@
+--- a/render/core/pane_world.gd
++++ b/render/core/pane_world.gd
+@@ -1026,16 +1026,34 @@
+ ## the higher he flies. It is what shows where he is over the ground when a launch carries him into the rows.
+ func _place_shadow(S: SimState, i: int, wx: float, vx: float, y: float, z: float, shown: bool = true) -> void:
+ 	var sh: MeshInstance3D = shadows[i]
+-	var g: float = maxf(planet.ground.ground_at(S, wx, z), WorldWater.surfaceAt(S, wx))
++	var land: float = planet.ground.ground_at(S, wx, z)
++	var g: float = maxf(land, WorldWater.surfaceAt(S, wx))
++	var on_land: bool = g == land
+ 	if S.depthOn:
+ 		# Over a roof his shadow lies on the roof (World's standingAt), not on the ground under the building.
+ 		var st: Dictionary = WorldStructures.standingAt(S, wx, y, z, 0.3 * FighterView.HEIGHT)
+-		if str(st.get("kind", "")) == "roof":
+-			g = maxf(g, float(st["y"]))
++		if str(st.get("kind", "")) == "roof" and float(st["y"]) > g:
++			g = float(st["y"])
++			on_land = false
+ 	var up: float = clampf((y - g) / RenderLook.SHADOW_FADE_H, 0.0, 1.0)
+ 	sh.visible = shown and y >= g - 1.0
+-	sh.position = Vector3(vx, g + RenderLook.SHADOW_LIFT, z)
+-	sh.scale = Vector3(RenderLook.SHADOW_W * (1.0 + 0.5 * up), 1.0, RenderLook.SHADOW_D * (1.0 + 0.5 * up))
++	var w: float = RenderLook.SHADOW_W * (1.0 + 0.5 * up)
++	var d: float = RenderLook.SHADOW_D * (1.0 + 0.5 * up)
++	# On the tile ground's land it lies along the ground's slope under it, read at its four edges, and clear of any hollow
++	# under its edges: flat, a cross-slope would bury part of it and leave a cut hairline. Over water or a roof it lies flat.
++	var sx: float = 0.0
++	var sz: float = 0.0
++	var lift: float = 0.0
++	if on_land and shown and RenderTileGround.on:
++		var gx0: float = planet.ground.ground_at(S, SimWrap.wrap(wx - 0.5 * w), z)
++		var gx1: float = planet.ground.ground_at(S, SimWrap.wrap(wx + 0.5 * w), z)
++		var gz0: float = planet.ground.ground_at(S, wx, z - 0.5 * d)
++		var gz1: float = planet.ground.ground_at(S, wx, z + 0.5 * d)
++		sx = (gx1 - gx0) / w
++		sz = (gz1 - gz0) / d
++		lift = maxf(0.0, maxf(0.5 * (gx0 + gx1), 0.5 * (gz0 + gz1)) - g)   # a hollow under him: the plane through his centre runs under its edges by this much
++	sh.basis = Basis(Vector3(w, sx * w, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(0.0, sz * d, d))
++	sh.position = Vector3(vx, g + RenderLook.SHADOW_LIFT + lift, z)
+ 	(sh.material_override as ShaderMaterial).set_shader_parameter("strength", RenderLook.SHADOW_ALPHA * lerpf(1.0, 0.25, up))
+ 
+ 

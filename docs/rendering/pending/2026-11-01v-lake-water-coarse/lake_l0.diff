@@ -1,0 +1,11 @@
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -427,7 +427,7 @@
+ 	_job_c.resize(TEX * TEX * 4)
+ 	if field_world:
+ 		_job_recs = _records_reach(k)
+-		_job_wet = ((k >> 3) & 7) > 0   # level 0's water isn't read: it's drawn only past 20,000 units, or for a moment on the way to a new place
++		_job_wet = true   # level 0 too: in fast flight it lies under the fight for much of a crossing, and a lake without its water reads as a brown table
+ 		var n: int = level_n((k >> 3) & 7)
+ 		var c: Vector3 = node_dir(k & 7, n, (k >> 6) & 127, (k >> 13) & 127, CELLS / 2, CELLS / 2)
+ 		_job_band = absf(c.dot(_s0)) * R < RenderLook.TILE_PLACE_DEPTH + RenderLook.TILE_PLACE_EASE + 38400.0 / float(n)

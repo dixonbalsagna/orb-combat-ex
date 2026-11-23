@@ -1,0 +1,66 @@
+--- a/render/core/ground_field.gd
++++ b/render/core/ground_field.gd
+@@ -275,15 +275,18 @@
+ 
+ 
+ ## The level of the water over a body at x, height y on a gen 2 ring, where the sheet would hide him (from the first depth
+-## step, RenderLook.LAKE_BANDS.x); NO_SHORE where it wouldn't. AnimBody.set_under draws him over the water then. Reads the
+-## sim's columns and writes nothing.
++## step, RenderLook.LAKE_BANDS.x); NO_SHORE where it wouldn't. AnimBody.set_under draws him over the water then. The open sea
++## isn't in S.water: its level is WorldWater.SEA_LEVEL over a base under RESERVOIR_BASE. Reads the sim's columns and writes nothing.
+ static func under_level(S: SimState, x: float, y: float) -> float:
+ 	if not gen2_ring(S):
+ 		return NO_SHORE
+ 	var c: int = int(SimWrap.wrap(x) / SimConst.COL) % SimConst.NC
+-	if S.water[c] < RenderLook.LAKE_BANDS.x:
++	var gr: float = S.base[c] + S.deform[c]
++	var lv: float = gr + S.water[c]
++	if S.base[c] < WorldWater.RESERVOIR_BASE:
++		lv = WorldWater.SEA_LEVEL
++	if lv - gr < RenderLook.LAKE_BANDS.x:
+ 		return NO_SHORE
+-	var lv: float = S.base[c] + S.deform[c] + S.water[c]
+ 	return lv if y < lv else NO_SHORE
+ 
+ 
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -489,6 +489,8 @@
+ const SHORE_FLOOD: float = 24.0          # dry land at most this far below the water beside it is drawn under that water (World's shore step is at most 0.25 bh)
+ const WATER := Color(30.0 / 255.0, 110.0 / 255.0, 175.0 / 255.0)
+ const WATER_SURFACE := Color(0.42, 0.68, 0.9, 0.55)
++## A fighter under the water (AnimBody.set_under) reads clearly at any depth: this share of the sheet's colour on his body, none on his outline.
++const UNDER_BODY: float = 0.22
+ ## The water's depth on a gen 2 ring, lake and sea alike, so deep water never reads as shallow (docs/design/rulings-2026-10-30.md rows 6 and 7): hard steps at
+ ## these depths, each LAKE_TONE further toward WATER. Under .x the plain sheet, the bed clear, as deep as a fighter
+ ## stands on it; to .y half hidden; from .y (wade.below, where he stands on the sheet) the bed is gone. .z: deep water.
+--- a/render/core/mats.gd
++++ b/render/core/mats.gd
+@@ -113,8 +113,8 @@
+ 	h.shader = preload("res://render/shaders/fighter_hull_under.gdshader")
+ 	h.render_priority = 1
+ 	m.next_pass = h
+-	for x in [m, h]:
+-		x.set_shader_parameter("under_sheet", RenderLook.WATER_SURFACE)
++	m.set_shader_parameter("under_sheet", Color(RenderLook.WATER_SURFACE, RenderLook.UNDER_BODY))
++	h.set_shader_parameter("under_sheet", Color(RenderLook.WATER_SURFACE, 0.0))
+ 	return m
+ 
+ 
+--- a/render/tools/lake_water_check.gd
++++ b/render/tools/lake_water_check.gd
+@@ -89,6 +89,14 @@
+ 	var lv: float = S.base[deep] + S.deform[deep] + S.water[deep]
+ 	ok(GroundField.under_level(S, x, lv - 10.0) == lv and GroundField.under_level(S, x, lv + 10.0) == GroundField.NO_SHORE, "under_level: column %d, %.1f deep: the level below it, none above it" % [deep, S.water[deep]])
+ 	ok(thin < 0 or GroundField.under_level(S, (float(thin) + 0.5) * SimConst.COL, -1.0e6) == GroundField.NO_SHORE, "under_level: none in water under the first step")
++	var sea: int = -1
++	for i in range(SimConst.NC):
++		if S.base[i] < WorldWater.RESERVOIR_BASE and WorldWater.SEA_LEVEL - S.base[i] - S.deform[i] >= RenderLook.LAKE_BANDS.x:
++			sea = i
++			break
++	if sea >= 0:
++		var sx: float = (float(sea) + 0.5) * SimConst.COL
++		ok(GroundField.under_level(S, sx, WorldWater.SEA_LEVEL - 10.0) == WorldWater.SEA_LEVEL and GroundField.under_level(S, sx, WorldWater.SEA_LEVEL + 10.0) == GroundField.NO_SHORE, "under_level: open sea at column %d: the sea's level below it, none above it" % sea)
+ 	var b := AnimBody.new()
+ 	root.add_child(b)
+ 	var c := Color(0.5, 0.5, 0.5)

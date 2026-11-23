@@ -1,0 +1,54 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -542,7 +542,10 @@
+ const TILE_CHUNK_TALL: float = 1500.0      # ... and the crowd's and cover's chunks
+ const TILE_CHUNK_STEP: float = 256.0
+ const TILE_WALK_STEP: float = 32.0         # the camera's move that picks the tiles again
+-const TILE_FILL_US: int = 1500             # a frame's slice of new tiles
++const TILE_FILL_US: int = 1500             # a frame's slice of new tiles: the least it gets
++const TILE_FILL_TARGET_US: int = 16667     # ... and the frame it measures its room against,
++const TILE_FILL_ROOM: float = 0.5          # ... this share of that room going to tiles,
++const TILE_FILL_MAX_US: int = 6000         # ... up to this
+ const TILE_URGENT_NEAR: float = 3000.0     # a wanted tile this near the camera's ground: the fill runs at
+ const TILE_URGENT_X: int = 3               # ... this many times its slice
+ const TILE_BOOT_US: int = 12000            # ... and one of the load's
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -382,7 +382,7 @@
+ 			_urgent_until = _frame + 30
+ 			break
+ 	if _frame < _urgent_until:
+-		budget_us *= RenderLook.TILE_URGENT_X
++		budget_us = maxi(budget_us, RenderLook.TILE_FILL_US * RenderLook.TILE_URGENT_X)
+ 	elif _frame < _ask_until and not _ask_list.is_empty():
+ 		budget_us = maxi(budget_us, RenderLook.TILE_ASK_US)
+ 	while Time.get_ticks_usec() - t0 < budget_us:
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -51,6 +51,8 @@
+ var _reff: float = -1.0
+ var _drawn: int = 0
+ var _buf := PackedFloat32Array()
++var _fill_at: int = 0
++var _fill_dt: float = float(RenderLook.TILE_FILL_TARGET_US)
+ var _walk_x: float = 1.0e18
+ var _walk_hd := Vector3.ZERO
+ var _walk_v: int = -1
+@@ -193,7 +195,16 @@
+ 	if pane.planet.source == null:
+ 		_look_ahead(S, tk)
+ 		field.keep_off(cam_x, RenderLook.TILE_OFF_COLS)
+-		field.fill(RenderLook.TILE_FILL_US)
++		field.fill(_fill_slice())
++
++
++## The fill's slice: its least, and a share of the room this machine has under the frame's target, by the frame time smoothed over a few frames.
++func _fill_slice() -> int:
++	var now: int = Time.get_ticks_usec()
++	if _fill_at > 0:
++		_fill_dt = lerpf(_fill_dt, float(now - _fill_at), 0.1)
++	_fill_at = now
++	return clampi(RenderLook.TILE_FILL_US + int(RenderLook.TILE_FILL_ROOM * (float(RenderLook.TILE_FILL_TARGET_US) - _fill_dt)), RenderLook.TILE_FILL_US, RenderLook.TILE_FILL_MAX_US)
+ 
+ 
+ ## The bowls the vertex stage draws: World's store is append-only, so a frame reads only what's new, and the nearest few to the camera are chosen again now and then. A rollback that shortens the store starts the list again.

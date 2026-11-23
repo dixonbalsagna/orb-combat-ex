@@ -1,0 +1,125 @@
+--- a/render/shaders/crowd.gdshader
++++ b/render/shaders/crowd.gdshader
+@@ -33,6 +33,7 @@
+ uniform float startle_arms = 2.4;   // RenderLook.STARTLE_ARMS, STARTLE_CROUCH, STARTLE_TREMBLE
+ uniform float startle_crouch = 0.1;
+ uniform float startle_tremble = 0.3;
++uniform float crowd_now = 0.0;   // the crowd's clock, in seconds: the sim's tick (PlanetView._send_crowd_clock), so a tick draws the same figures every time
+ 
+ varying vec4 v_custom;
+ varying float v_kind;
+@@ -54,7 +55,7 @@
+ 	float ph = fract(float(INSTANCE_ID + id_base) * 0.618034);
+ 	if (run > 0.0) {
+ 		// Parts by place (crowd_mesh.gd): the legs below the hip (7.2), the arms beyond the torso's sides (2.4).
+-		float s = sin(TIME * run_hz * 6.2831853 + ph * 40.0);
++		float s = sin(crowd_now * run_hz * 6.2831853 + ph * 40.0);
+ 		float side = v.x < 0.0 ? 1.0 : -1.0;
+ 		float a = 0.0;
+ 		vec2 pivot = vec2(0.0);
+@@ -79,13 +80,13 @@
+ 			nrm = swing(nrm, vec2(0.0), side * startle_arms * st);
+ 		}
+ 		v.y *= 1.0 - startle_crouch * st;
+-		v.x += sin(TIME * 37.0 + ph * 50.0) * startle_tremble * st;
++		v.x += sin(crowd_now * 37.0 + ph * 50.0) * startle_tremble * st;
+ 	}
+ 	if (UV.x < 0.25) {
+ 		v += nrm * outline / boost;
+ 	}
+ 	// A small idle hop on about half of them, out of step.
+-	v.y += max(0.0, sin(TIME * 4.0 + ph * 40.0)) * 0.9 * step(0.5, ph) * (1.0 - run) * (1.0 - st);
++	v.y += max(0.0, sin(crowd_now * 4.0 + ph * 40.0)) * 0.9 * step(0.5, ph) * (1.0 - run) * (1.0 - st);
+ 	// Camera's near-clip rule for the crowd: so near the lens a figure is in it, not in the picture.
+ 	float nearc = 1.0;
+ 	if (crowd_near.y > 0.0) {
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -155,6 +155,7 @@
+ var _blasts: Array = []              # this frame's craters, [x, y]: a blast's wave starts at its height (consume; refresh empties it)
+ var _last_tick: int = -1             # the sim's tick at the last refresh (a seek back settles every spread)
+ var _spread_sent: float = -1.0       # the tick last sent to this pane's building shaders
++var _crowd_clock_sent: int = -1      # the tick last sent to this pane's crowd materials
+ var _crowd_bend: Vector3 = Vector3(-1.0, -1.0, -1.0)   # the bend last sent to this pane's crowd materials
+ var _fold: Array = []                # [cx, sim time]: a district of implodes folded into one event this tick
+ var _copies: Array = []
+@@ -308,6 +309,7 @@
+ 		m.set_shader_parameter("spread_now", 0.0)
+ 	_spread_sent = -1.0
+ 	_crowd_bend = Vector3(-1.0, -1.0, -1.0)
++	_crowd_clock_sent = -1
+ 	_water_nodes.clear()
+ 	_water_drawn = -1
+ 	_set_lanes(S)
+@@ -544,6 +546,7 @@
+ 		wf.apply(_water_mat)   # only when a fill or ring comes or goes
+ 	if source != null:
+ 		_send_spread(S, source)
++		_send_crowd_clock(S)
+ 		return
+ 	ground.update(S, heat, heat_changed)
+ 	flight.arrive(S, _crowd)
+@@ -551,6 +554,18 @@
+ 	flight.step(S, _crowd)
+ 	_startle(S)
+ 	_send_spread(S, self)
++	_send_crowd_clock(S)
++
++
++## The crowd's clock for this pane's chunks: the sim's tick in seconds (it runs through a hit-stop and an intro, as the
++## wall clock did, and holds in a pause), so two captures of a tick draw the same figures.
++func _send_crowd_clock(S: SimState) -> void:
++	if S.tick == _crowd_clock_sent:
++		return
++	_crowd_clock_sent = S.tick
++	var now: float = float(S.tick) * SimConst.DT
++	for m in _crowd_mats:
++		m.set_shader_parameter("crowd_now", now)
+ 
+ 
+ ## The spread's clock for this pane's building shaders: the sim's tick (it runs through a hit-stop, so a wall slam's
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -20,8 +20,6 @@
+ ## What it cannot do (say so wherever its clips are read):
+ ## - It is not the game's own pacing. A tick is a frame here whatever the machine does; real play interpolates
+ ##   between ticks at the display's rate. The frame is drawn at the end of its tick (interpolation 0.9999).
+-## - The crowd's run and startle cycles run on the shader's clock (TIME in crowd.gdshader), not on ticks, so between
+-##   two captured frames they move by however long the capture took. Nothing else in render/ or render/vfx does.
+ ## - The picture is the page's canvas at whatever size the driver gave the window, at a device scale of 1. The hook
+ ##   sets no size, and UI's scale follows the window.
+ ## - The scenes are Tools' staging, not play: the writes into the sim above are made here too, so a capture match is
+--- a/render/tools/pane_check.gd
++++ b/render/tools/pane_check.gd
+@@ -108,6 +108,11 @@
+ 		for m in pw.planet._crowd_mats:
+ 			crowd_bent = crowd_bent and m.get_shader_parameter("bend") == pw.mats.bend_params().x and m.get_shader_parameter("cam_dist") == pw.mats.bend_params().y
+ 		_expect(crowd_bent, "pane %d's crowd does not take its bend" % i)
++		var crowd_clock: bool = not pw.planet._crowd_mats.is_empty() and not (load("res://render/shaders/crowd.gdshader") as Shader).code.contains("TIME")
++		for m in pw.planet._crowd_mats:
++			var now: Variant = m.get_shader_parameter("crowd_now")
++			crowd_clock = crowd_clock and now is float and is_equal_approx(now, float(S.tick) * SimConst.DT)
++		_expect(crowd_clock, "pane %d's crowd does not read the sim's tick" % i)
+ 	_expect(absf(p0.view_cam_x - p1.view_cam_x) > 1000.0, "the panes' cameras did not part (%.0f and %.0f)" % [p0.view_cam_x, p1.view_cam_x])
+ 	# 2b: Camera's frame carries the pitch and each pane's cut-away request, and both reach the panes. With a pitch the
+ 	# rig's mapping is the 3D camera's: a fighter's chest, at depth too, lands where the frame says.
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -599,7 +599,7 @@
+ 
+ `main.panes` lists them (pane `i` is fighter slot `i`'s in a split), and `main.split_frame` is this frame's. Setting `main.compositor = null` goes back to one view from the reference camera. The first pane stays in its SubViewport, so the compositor shows it unmasked.
+ 
+-`tools/pane_check.gd` plugs in a stand-in compositor with the fighters posed far apart. It checks (60 checks, passed):
++`tools/pane_check.gd` plugs in a stand-in compositor with the fighters posed far apart. It checks (62 checks, passed):
+ - the sharing: same ground, meshes and props; its own materials and material state;
+ - each pane's camera puts a fighter's chest exactly where the rig's frame says (within 0.5 px), and its fore rule carries its own camera;
+ - a flash fired on the first pane shows in the second, with one Audio cue;
+@@ -705,7 +705,7 @@
+ | City check | `godot --headless --path . --script res://render/tools/city_check.gd` | passed: 6 checks (Art's tints fit the shader's arrays; for each facade type, the lobby storey and the crown, no two neighbouring tones as drawn differ by more than the budget: the widest step 0.030, Legal's w05) |
+ | Flight check | `godot --headless --path . --script res://render/tools/flight_check.gd` | passed (seeds 4, 12345, 7; World's evacuate events; a building hit by `debris`, `building_hit` or `floor_hit`; worst building off by 1.07 of 2) |
+ | Flash check | `godot --headless --path . --script res://render/tools/flash_check.gd` | 185 checks on data version 3: all of the code's pass (the hash is the same on and off at 12345 and 4); 10 keep-out cases fail on the data (see Head flashes) |
+-| Pane check | `godot --headless --path . --script res://render/tools/pane_check.gd` | passed (60 checks; hash with and without a compositor; the cut-away request, the pitch, the inset, attaching again; each pane's crowd takes its bend) |
++| Pane check | `godot --headless --path . --script res://render/tools/pane_check.gd` | passed (62 checks; hash with and without a compositor; the cut-away request, the pitch, the inset, attaching again; each pane's crowd takes its bend and reads the sim's tick) |
+ | Cue check | `godot --headless --path . --script res://render/tools/cue_check.gd -- --profile=spaced` | passed (46 checks over two full matches; hash with and without the poses) |
+ | Outline check | `godot --path . --script res://render/tools/outline_check.gd` (needs a window; under `--headless` it exits with code 2, not run) | passed: 0 crack pixels over 24 poses; the unbaked control 9,024 (`docs/rendering/outline-normals-plan.md`) |
+ | Sky check | `godot --headless --path . --script res://render/tools/sky_check.gd` (with a window it also compares pictures of the reaction switched on) | passed headless: 35 checks (the reaction is off by default; `--skyreact`; the pattern's place across the seam; the world light: the data's own per key scaled by `WORLD_LIGHT`, the mood on top, handed to every layer's material; the reference at 0.7 after Art's night-to-dawn fix). The 10 picture checks were last run on 8fd6aba |

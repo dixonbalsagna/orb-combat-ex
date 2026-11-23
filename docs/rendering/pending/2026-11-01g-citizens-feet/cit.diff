@@ -1,0 +1,21 @@
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -207,6 +207,9 @@
+ 			tile_field.add_feet(pm[1])
+ 		for cv in cover.meshes:
+ 			tile_field.add_feet(cv[2])
++		if _crowd != null:
++			for cm in _crowd.chunks:
++				tile_field.add_feet(cm)
+ 	if not tile_field.boot(RenderLook.TILE_BOOT_US):
+ 		return false
+ 	if not tile_field.boot_near(RenderLook.TILE_BOOT_US):
+@@ -1374,7 +1377,7 @@
+ 		var ci: int = first + j
+ 		var x: float = _crowd_x[ci]
+ 		if j < alive:
+-			_crowd.set_instance_transform(ci, Transform3D(Basis.from_scale(Vector3.ONE * RenderLook.CROWD_SCALE), Vector3(x, ground.ground_at(S, x, _crowd_z[ci]), _crowd_z[ci])))
++			_crowd.set_instance_transform(ci, Transform3D(Basis.from_scale(Vector3.ONE * RenderLook.CROWD_SCALE), Vector3(x, tile_field.height_at(tile_field.dir_at(x, _crowd_z[ci], S.frame0)) if tile_field != null else ground.ground_at(S, x, _crowd_z[ci]), _crowd_z[ci])))
+ 		elif gone_now.has(ci) or not flight.running(ci):
+ 			_crowd.set_instance_transform(ci, _hidden(x))
+ 

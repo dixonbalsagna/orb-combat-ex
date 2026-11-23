@@ -1,0 +1,31 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -572,7 +572,7 @@
+ const TILE_AHEAD_TICKS: int = 30           # ... this often
+ const TILE_CRATER_CHECKS: int = 48         # shapes a frame looked at after a crater opens
+ const TILE_POSE_MARGIN: float = 500.0      # a building this near the sim's pose reach in a swing counts as past it
+-## The band between the camera and the fight: a building comes down to its kept base as its front face goes from .x to .y of depth, its base shrinks to nothing by .z and past .z the building and any small thing are gone.
++## The band between the camera and the fight: a building comes down to its kept base as its front face goes from .x to .y of depth, its base shrinks to nothing by .y and past .y it's gone; past .z a small thing is gone.
+ ## The first ring's blocks stop at its street's back edge, -2.5 fighter heights (-187), so at rest they all stand.
+ const TILE_BAND := Vector3(-150.0, -30.0, 150.0)
+ ## The bowls the tile ground draws from World's store: how many, nearest the camera (the vertex stage's array), how often the choice is made again, and the seconds a new one takes to open.
+--- a/render/shaders/bend.gdshaderinc
++++ b/render/shaders/bend.gdshaderinc
+@@ -80,14 +80,14 @@
+ 	if (globe_near_mode == 3) {
+ 		// Orb's pick: the whole building goes down, its near side leading. How far the near side leads is bounded by the building's width,
+ 		// so a tall tower's roof doesn't turn into a wedge or a spike; and its base stays, a floor or two high.
+-		// Its base stays only near the fight: past .z its front face is close to the lens, where a base would be a slab across the frame, so it's gone.
++		// Its base stays only behind the fight: past .y its front face stands between the lens and the fight, where a base would be a slab across the frame, so it's gone.
+ 		float reach = globe_view_z(a) + half_d;
+-		if (reach > globe_band.z) {
++		if (reach > globe_band.y) {
+ 			return v.y - 1.0e6;
+ 		}
+ 		float total = max(top - foot, 1.0);
+ 		float lead = 0.5 * clamp(sv - sa, -globe_lead * wide / total, globe_lead * wide / total);
+-		float kept = min(globe_base, total) * (1.0 - smoothstep(globe_band.y, globe_band.z, reach));
++		float kept = min(globe_base, total) * (1.0 - smoothstep(globe_band.x, globe_band.y, reach));
+ 		return foot + tall * (1.0 - min(sa + lead, 1.0 - kept / total));
+ 	}
+ 	if (globe_near_mode == 4) {

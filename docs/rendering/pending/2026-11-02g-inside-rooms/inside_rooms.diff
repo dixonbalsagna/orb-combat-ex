@@ -1,0 +1,207 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -316,6 +316,10 @@
+ const WINDOW_LIT_SHARE: float = 0.3
+ const WINDOW_LIT: String = "#f3cf86"
+ const WINDOW_GLASS: String = "#2c3550"
++const BUILDING_INSIDE_TILE := "#24252c"  # ... on the tile ground: a dark charcoal, so a cut or a blown-out window is not a black block
++const ROOM_LIT := "#6b6157"         # ... and a room's wall seen through it, lit
++const ROOM_SHADE := "#4a4540"       # ... under its ceiling
++const ROOM_BANDS := Vector2(0.14, 0.2)   # ... the share of a floor that is its slab, and its ceiling's shadow
+ const BUILDING_INSIDE := "#12131a"       # the inside of a tower seen through its cut floors (a tunnel)
+ ## A building's look by World's damage stage (WorldStructures.stage; building.gdshader): 1 its windows are out, 2 it
+ ## is cracked and a top corner is sheared off, 3 it is a shell (the bare frame, no lid, a broken top).
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -2590,6 +2590,10 @@
+ 	var m := ShaderMaterial.new()
+ 	m.shader = BUILDING_SHADER
+ 	m.set_shader_parameter("inside", RenderLook.col(RenderLook.BUILDING_INSIDE))
++	m.set_shader_parameter("inside_tile", RenderLook.col(RenderLook.BUILDING_INSIDE_TILE))
++	m.set_shader_parameter("room_lit", RenderLook.col(RenderLook.ROOM_LIT))
++	m.set_shader_parameter("room_shade", RenderLook.col(RenderLook.ROOM_SHADE))
++	m.set_shader_parameter("room_bands", RenderLook.ROOM_BANDS)
+ 	m.set_shader_parameter("win_pitch", RenderLook.WINDOW_PITCH)
+ 	m.set_shader_parameter("win_lit_share", RenderLook.WINDOW_LIT_SHARE)
+ 	m.set_shader_parameter("win_lit", RenderLook.col(RenderLook.WINDOW_LIT))
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -106,6 +106,10 @@
+ uniform vec2 hole_edge = vec2(0.8, 0.25);   // a hole's dithered edge: solid inside this share of its radius, thinning out over the next (the foreground row's patch has a softer one: RenderLook.PATCH_EDGE)
+ uniform vec2 hole_near[2];     // cut what is nearer the camera than this (view distance): at the chest, at the other end
+ uniform vec4 inside : source_color = vec4(0.07, 0.07, 0.09, 1.0);   // RenderLook.BUILDING_INSIDE
++uniform vec4 inside_tile : source_color = vec4(0.14, 0.145, 0.17, 1.0);   // RenderLook.BUILDING_INSIDE_TILE: the same on the tile ground
++uniform vec4 room_lit : source_color = vec4(0.42, 0.38, 0.34, 1.0);   // RenderLook.ROOM_LIT: on the tile ground, a room's wall seen through a cut or a blown-out window
++uniform vec4 room_shade : source_color = vec4(0.29, 0.27, 0.25, 1.0);   // RenderLook.ROOM_SHADE: ... under its ceiling
++uniform vec2 room_bands = vec2(0.14, 0.2);   // RenderLook.ROOM_BANDS: the share of a floor's height that is its slab, and its ceiling's shadow
+ uniform vec2 dmg_bite = vec2(0.36, 0.3);       // RenderLook.DMG_BITE and the rest: see look.gd
+ uniform vec3 dmg_crack = vec3(1.8, 16.0, 26.0);
+ uniform float dmg_soot = 0.84;
+@@ -285,6 +289,25 @@
+ }
+ 
+ // Whether floor k's bit is set in a mask packed as 24, 24 and 14 bits.
++// A building's inside, as a cut, a blown-out window or a broken core shows it: on the tile ground a dark charcoal, where
++// the old near-black read as black blocks with nothing in them.
++vec3 inside_c() {
++	return globe_r > 0.0 ? inside_tile.rgb : inside.rgb;
++}
++
++
++// What a cut or a blown-out window shows at height y of a building whose floors start at base and are fh high: on the tile
++// ground a stack of rooms (the slab at each floor's foot, the room's wall lit, the shadow under its ceiling, in hard
++// steps); elsewhere, or with no floors, the inside.
++vec3 room_at(float y, float base, float fh) {
++	if (globe_r <= 0.0 || fh <= 0.0) {
++		return inside_c();
++	}
++	float f = fract((y - base) / fh);
++	return f < room_bands.x ? inside_c() : (f > 1.0 - room_bands.y ? room_shade.rgb : room_lit.rgb);
++}
++
++
+ bool bit_on(float k, vec3 m) {
+ 	float part = k < 24.0 ? m.x : (k < 48.0 ? m.y : m.z);
+ 	float bit = k < 24.0 ? k : (k < 48.0 ? k - 24.0 : k - 48.0);
+@@ -362,17 +385,17 @@
+ 	bool door = abs(fract((along * 0.5 + 0.5) * 3.0) - 0.5) < 0.3;   // three lift doors a face
+ 	vec3 c = stone * open_core_tone;
+ 	if (door && up < door_h) {
+-		c = mix(inside.rgb, stone, 0.3);
++		c = mix(inside_c(), stone, 0.3);
+ 	} else if (door && lit && up > door_h + 6.0 && up < door_h + 13.0) {
+ 		c = toward(stone, open_lamp.rgb, 2.0 * pattern_budget);
+ 	}
+ 	if (state > 0.5) {
+ 		// Cracked: a line up it in straight jags.
+ 		float jag = (win_hash(vec3(bid, floor(up / 14.0), 29.0)) - 0.5) * 0.22;
+-		c = mix(c, inside.rgb, 0.8 * (1.0 - smoothstep(0.025, 0.05, abs(along - 0.24 - jag))));
++		c = mix(c, inside_c(), 0.8 * (1.0 - smoothstep(0.025, 0.05, abs(along - 0.24 - jag))));
+ 	}
+ 	if (state > 1.5 && up > 0.2 * room && up < 0.74 * room && abs(along + 0.12) < 0.3 + 0.22 * win_hash(vec3(bid, floor(up / 16.0), 31.0))) {
+-		c = inside.rgb;   // broken: a bite out of its middle, the dark inside showing
++		c = inside_c();   // broken: a bite out of its middle, the dark inside showing
+ 	}
+ 	return flat_shade(c, (to_view * vec4(nrm, 0.0)).xyz, 0.35);
+ }
+@@ -514,7 +537,7 @@
+ 		}
+ 	}
+ 	vec3 wallc = (st > 1.5 && !roof) ? COLOR.rgb * dmg_soot : COLOR.rgb;
+-	vec3 col = FRONT_FACING ? flat_shade(wallc, NORMAL, 0.35) : inside.rgb;
++	vec3 col = FRONT_FACING ? flat_shade(wallc, NORMAL, 0.35) : room_at(v_wy, v_winb.x, v_win.w);
+ 	if (FRONT_FACING && wall && v_win.w > 0.0) {
+ 		int lk = clamp(int(v_look.x + 0.5), 0, 9);
+ 		vec4 la = look_a[lk];
+@@ -622,7 +645,7 @@
+ 		if (soft && (st > 0.5 || mk_pane || (kf >= 0.0 && kf < v_winb.y && bit_on(kf, v_win.xyz)))) {
+ 			// A row whose panes are out, on a look with the contrast budget: its wall is as dark as they are.
+ 			// On the tile ground no darker than charcoal: at the inside's own near-black a burnt-out tower reads as a black block with nothing to it.
+-			wallc = toward(inside.rgb, wallc, globe_r > 0.0 ? burnt_budget : pattern_budget);
++			wallc = toward(inside_c(), wallc, globe_r > 0.0 ? burnt_budget : pattern_budget);
+ 			col = flat_shade(wallc, NORMAL, 0.35);
+ 		}
+ 		if (st > 2.5) {
+@@ -630,8 +653,8 @@
+ 			// average: mostly the dark inside.
+ 			vec3 bare = flat_shade(mix(wallc, dmg_frame.rgb, 0.6), NORMAL, 0.35);
+ 			bool post = r.x < 0.11 || r.x > 0.89 || r.y < 0.16;
+-			vec3 cell = post ? bare : (win_hash(vec3(v_winb.z, floor(cx), kf + 31.0)) < dmg_panels ? col : inside.rgb);
+-			col = mix(mix(inside.rgb, bare, 0.4), cell, fine);
++			vec3 cell = post ? bare : (win_hash(vec3(v_winb.z, floor(cx), kf + 31.0)) < dmg_panels ? col : room_at(v_wy, v_winb.x, v_win.w));
++			col = mix(mix(inside_c(), bare, 0.4), cell, fine);
+ 		} else if (windows > 0.5 && kf >= 0.0 && kf < v_winb.y) {
+ 			bool gone = st > 0.5 || mk_pane || bit_on(kf, v_win.xyz);
+ 			float row = floor(fr);
+@@ -717,7 +740,7 @@
+ 			float cover = top_only ? 0.0 : (balc ? la.z : la.z - la.y) * (lb.y - lb.x) * la.w;
+ 			float lit_sh = min(look_glass[lk].a * wl_lit, 1.0);   // the panes lit warm: more with the dark
+ 			vec3 avg = flat_shade(mix(mix(glass, bright, 0.1), win_lit.rgb, lit_sh), NORMAL, 0.35);
+-			vec3 far = mix(wall_far, gone ? inside.rgb : avg, max(cover, 0.0));
++			vec3 far = mix(wall_far, gone ? inside_c() : avg, max(cover, 0.0));
+ 			// A pane's own colour (lit, bright or dark) shows from near only: from the middle distance every pane is the
+ 			// glass's average, so a far tower is bands, not a sparkle that shimmers as the camera moves.
+ 			float vary = 1.0 - smoothstep(0.06, 0.2, max(fwidth(cx), fwidth(fr)));
+@@ -734,7 +757,7 @@
+ 					near = flat_shade(look_trim[lk].rgb, NORMAL, 0.35);
+ 				}
+ 			} else if (has && across && tall) {
+-				vec3 wc = inside.rgb;
++				vec3 wc = inside_c();
+ 				if (!gone) {
+ 					float hsh = win_hash(vec3(v_winb.z, floor(cx), row));
+ 					bool on = hsh < lit_sh;
+@@ -745,14 +768,14 @@
+ 			} else if (has && shutters && tall && r.x > la.y - 0.11 && r.x < la.z + 0.11) {
+ 				near = flat_shade(look_trim[lk].rgb, NORMAL, 0.35);   // shutters beside the pane
+ 			} else if (gone && has && across && ry >= lb.y) {
+-				near = mix(col, inside.rgb, 0.45 * (1.0 - (ry - lb.y) / max(1.0 - lb.y, 0.001)));   // soot above an empty pane
++				near = mix(col, inside_c(), 0.45 * (1.0 - (ry - lb.y) / max(1.0 - lb.y, 0.001)));   // soot above an empty pane
+ 			}
+ 			if (st > 1.5) {
+ 				// A part gone: here and there a bay of the facade is broken open, wall and all, so the stage reads at street
+ 				// level under a tower whose sheared top is far out of sight.
+-				far = mix(far, inside.rgb, 0.85 * dmg_holes);
++				far = mix(far, inside_c(), 0.85 * dmg_holes);
+ 				if (win_hash(vec3(v_winb.z, floor(cx) + 0.5, row + 91.0)) < dmg_holes) {
+-					near = mix(near, inside.rgb, 0.85);
++					near = mix(near, inside_c(), 0.85);
+ 				}
+ 			}
+ 			col = mix(far, near, fine);
+@@ -770,8 +793,8 @@
+ 			float cu = 0.0;
+ 			float cw = 1.0;
+ 			bool frame_on = in_fl < plate_h || in_fl > v_win.w - plate_h || on_column(v_face.x, v_face.y, edge_u, ci, cu, cw);
+-			col = mix(col, frame_on ? stone : inside.rgb, mix(mk_far, mk_cell, fine));
+-			col = mix(col, abs(lum(stone) - lum(wallc)) > abs(lum(inside.rgb) - lum(wallc)) ? stone : inside.rgb, 0.8 * mk_line);
++			col = mix(col, frame_on ? stone : inside_c(), mix(mk_far, mk_cell, fine));
++			col = mix(col, abs(lum(stone) - lum(wallc)) > abs(lum(inside_c()) - lum(wallc)) ? stone : inside_c(), 0.8 * mk_line);
+ 		}
+ 		if (st > 1.5 && st < 2.5) {
+ 			// Two cracks: one from the top down, one from the ground up. Each wanders in straight jags and never thins
+@@ -784,7 +807,7 @@
+ 				float d = abs(v_face.x - (win_hash(vec3(v_winb.z, fi, 11.0)) - 0.5) * 0.7 * v_face.y - sway * dmg_crack.z);
+ 				float span = i == 0 ? step(0.3 * hgt, y) : step(y, 0.62 * hgt);
+ 				float wdt = max(dmg_crack.x, 1.3 * fwidth(v_face.x));
+-				col = mix(col, inside.rgb, 0.8 * span * (1.0 - smoothstep(0.5 * wdt, wdt, d)));
++				col = mix(col, inside_c(), 0.8 * span * (1.0 - smoothstep(0.5 * wdt, wdt, d)));
+ 			}
+ 		}
+ 	}
+@@ -813,7 +836,7 @@
+ 			} else {
+ 				// The far wall's dark inside, and in front of it the core where the ray passes through it on a
+ 				// cleared floor.
+-				col = inside.rgb;
++				col = inside_c();
+ 				core_t = core_in(v_shell, eye, v_view, bid, core_x);
+ 				if (core_t > 0.0 && core_t < 1.0) {
+ 					float ck = floor((eye.y + v_view.y * core_t - v_base.x) / v_cut.w);
+@@ -849,7 +872,7 @@
+ 				vec2 bay = abs(fract(at / open_grid + 0.5) - 0.5);
+ 				float near_c = 1.0 - smoothstep(0.3, 0.75, edge_c / open_grid);
+ 				vec3 lit = mix(open_ceil.rgb, toward(open_ceil.rgb, open_lamp.rgb, pattern_budget), mix(0.31, step(max(bay.x, bay.y), 0.28), near_c));   // too far to draw the lamps, their share of a bay
+-				col = st > 2.5 ? mix(inside.rgb, open_ceil.rgb, 0.12) : (st > 0.5 ? mix(open_ceil.rgb, inside.rgb, 0.55) : lit);
++				col = st > 2.5 ? mix(inside_c(), open_ceil.rgb, 0.12) : (st > 0.5 ? mix(open_ceil.rgb, inside_c(), 0.55) : lit);
+ 				ceiling = true;
+ 			}
+ 		}
+@@ -881,7 +904,7 @@
+ 				if (st > 1.5 && front && col_i == mid && v_wy < ceil_y) {
+ 					// A part gone: a crack up that column, in straight jags.
+ 					float jag = (win_hash(vec3(bid, floor((v_wy - v_winb.x) / 14.0), 23.0)) - 0.5) * 0.45 * col_w;
+-					col = mix(col, inside.rgb, 0.8 * (1.0 - smoothstep(0.5, 1.0, abs(col_u - jag) / max(1.6, 1.3 * edge_x))));
++					col = mix(col, inside_c(), 0.8 * (1.0 - smoothstep(0.5, 1.0, abs(col_u - jag) / max(1.6, 1.3 * edge_x))));
+ 				}
+ 			} else if (FRONT_FACING && core_hit && fract(dg + 0.5) >= open_core_ghost * max(in_p, 1.0 - smoothstep(open_near.x, open_near.y, (globe_r > 0.0 ? v_gz.y : -VERTEX.z) * core_t))) {
+ 				// The core, seen through the opening.
+@@ -900,7 +923,7 @@
+ 	if (ph > 0.001) {
+ 		// A fast pan: the plain wall in place of its panes, soot and cracks, then toward what is behind it: the sky's
+ 		// colour in this direction above the horizon line, the ground's below it.
+-		vec3 plain = FRONT_FACING ? flat_shade(COLOR.rgb, NORMAL, 0.35) : inside.rgb;
++		vec3 plain = FRONT_FACING ? flat_shade(COLOR.rgb, NORMAL, 0.35) : room_at(v_wy, v_winb.x, v_win.w);
+ 		float q = elevation(v_view);
+ 		vec3 behind = mix(pan_ground.rgb, sky_color(q), smoothstep(-0.03, 0.03, (q - horizon) / sky_tan));
+ 		col = mix(mix(col, plain, ph), behind, max(pan_haze * pan_mix, pan_whip * pan_whip_mix));

@@ -70,3 +70,21 @@ The bands alone may carry most of collapse's gain. A run with `CALM_FACE` at 0 w
 ## Proof
 
 On ct (main e56d372c + Camera + A-CODE-03 + `look-recut/` + this), `docs/rendering/runs/e56d372c/calm-tones-gates.txt`: it imports clean, `golden.json` is byte-identical, the five ground checks pass, and the render gates pass 20 of 20.
+
+## rushcity on the new world (2026-11-21, the EP and Camera): arm A for GW1b
+
+Main after GW1a fails Tools' `rushcity` scene (seed 12345) in both modes. The cause is the sprint's camera, already at Camera's scroll budget, sweeping and dollying over planet 7's new ground: bright sand and lit facets against large dark shaded facets. Orb's 9 November build ran that scene in a flat city block. Records: `docs/rendering/runs/ed1591cb/b20-gw1b-energy.txt`.
+
+| combined rule, primary (lower) | rushcity 12345 normal | rushcity 12345 reduced (the default look) | ai 12345, both modes |
+|---|---|---|---|
+| main ed1591cb | FAIL 3.5 (4.5) | FAIL 4.5 (4.5) | over the gate, 3 (3) |
+| + GW1b steps 1 to 6 (flight 3,500) | over the gate, 3 (3) | over the gate, 3 (3) | PASS 1 |
+| **+ arm A** (`calm_tones_a.diff`, unchanged, applies on that tree) | 3, unchanged: arm A is reduced mode only | **PASS 2** (3) | PASS 1 (reduced) |
+
+- Other scenes on main: `rushcity` seed 7 passes (2); `ai` seed 12345 reads 3, over our gate. Both are fixed by GW1b's speed alone.
+- **The look** (`docs/rendering/img/lookgate/b20/b20-rushcity-calmA-reduced-*`, not committed): the large dark facets on the sand go halfway toward the middle tone. The houses, the sand's colour and the fighters are unchanged. It's a modest change to the default look, so it goes to Orb as a look question, never framed around flashing.
+- **Normal mode** (Reduce flashing off) stays at 3 with arm A. It needs Camera's sprint-arming piece (the onset peaks), or arm A in both modes, which would be Orb's look call.
+- **Gates on the GW1b tree** (`docs/rendering/runs/ed1591cb/calm-a-gw1b-gates.txt`):
+  - no import errors, and `golden.json` byte-identical to the GW1b tree's own;
+  - the five ground checks pass;
+  - the render gates pass 18 of 20. The two fails are the GW1b tree's own: `after_check`'s tally row (VFX's fix: read `host.fxv.parts`) and Camera's `split_sweep` (real match 10, 242 of 12,077 merged ticks; the same on the tree without arm A).

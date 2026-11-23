@@ -1,0 +1,6 @@
+# GW1c relief-cap stills: cA = main 74c03fdb + World's stage 2 + sizes_tiles + drawn_at (the cap's code, its data row off); cB = cA + relief-cap-data.diff (on). beamduel, seed 12345, the default (reduced) look, ticks 1 to 601 every 150; the web build attaches the split.
+tiny, cap off: 0 stills
+small, cap off: 0 stills
+tiny, cap on: 0 stills
+small, cap on: 0 stills
+medium, ai seed 1, tick 157: 0 still

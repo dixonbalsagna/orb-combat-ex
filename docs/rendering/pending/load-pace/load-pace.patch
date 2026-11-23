@@ -1,0 +1,39 @@
+diff --git a/render/core/look.gd b/render/core/look.gd
+index ff70636..b51aead 100644
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -51,6 +51,7 @@ const FORE_LOW_S: float = 0.25
+ const TOUCH_3D_SCALE: float = 0.6
+ const BOOT_FRAME_MS: float = 250.0
+ const BOOT_PER_MAX: int = 4
++const LOAD_STEP_MS: float = 14.0   # a planet's load: slices run until this has gone in a frame, so the load uses the frame and doesn't pay a frame's overhead a slice (Performance, page-load-2026-10-31: 573 frames at 7 ms each). Where a slice stops changes no value
+ const BOOT_STEP_MS: float = 30.0   # the first match's build: steps run until this has gone in a frame (main.gd _step_build)
+ const BOOT_WORDS: String = "Preparing the graphics"
+ const BOOT_INK := "#8a93a6"
+diff --git a/render/core/sim_host.gd b/render/core/sim_host.gd
+index d1e8fd7..cc49352 100644
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -183,7 +183,7 @@ func load_progress() -> float:
+ 	return load_job.progress() if load_job != null else (match_job.progress() if match_job != null else 1.0)
+ 
+ 
+-## One frame's slice of the load (SimRun.planetUnitsPerRead units, about 5 ms). When the planet is made the match starts, as new_match would have: the call it was waiting for runs now.
++## One frame's slices of the load (SimRun.planetUnitsPerRead units, about 5 ms natively, until RenderLook.LOAD_STEP_MS has gone). When the planet is made the match starts, as new_match would have: the call it was waiting for runs now.
+ ## Returns true when it has started.
+ func load_step() -> bool:
+ 	if load_job == null and match_job != null:   # the match's own start, a piece a frame
+@@ -193,8 +193,12 @@ func load_step() -> bool:
+ 		_started(_start_args[0], _start_args[1])
+ 		_start_args = []
+ 		return true
+-	if load_job == null or not load_job.step(SimRun.planetUnitsPerRead):
++	if load_job == null:
+ 		return false
++	var t0: int = Time.get_ticks_usec()
++	while not load_job.step(SimRun.planetUnitsPerRead):
++		if Time.get_ticks_usec() - t0 >= int(RenderLook.LOAD_STEP_MS * 1000.0):
++			return false
+ 	var call: Array = _load_call
+ 	load_job = null
+ 	_load_call = []

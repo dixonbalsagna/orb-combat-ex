@@ -1,0 +1,189 @@
+--- a/render/core/tile_field.gd
++++ b/render/core/tile_field.gd
+@@ -14,7 +14,8 @@
+ const CELLS: int = 25
+ const TEX: int = CELLS + 3        # nodes a side in a layer: the tile's, and one more each way
+ const LEVEL0: int = 3             # tiles a face edge at level 0
+-const LEVELS: int = 3             # 512, 256, 128 units; a mesh finer than this reads the 128 triangles
++const BASE_LEVEL: int = 2         # the ground a mesh level can always read: finer data may still be on its way
++const LEVELS: int = 5             # 512, 256, 128, 64, 32 units: the last two are World's sub-nodes, for the ground near the camera
+ const POOL: int = 430             # layers: the 54 of level 0 stay, the rest are reused, least recently wanted first
+ const FACES: Array = [
+ 	[Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1)],
+@@ -194,7 +195,7 @@
+ 
+ ## The tile's key, and the direction of its node a, b (0 to CELLS on the tile, a step outside either way).
+ static func key_of(f: int, L: int, i: int, j: int) -> int:
+-	return f | (L << 3) | (i << 5) | (j << 12)
++	return f | (L << 3) | (i << 6) | (j << 13)
+ 
+ 
+ static func level_n(L: int) -> int:
+@@ -388,9 +389,9 @@
+ 	_job_c.resize(TEX * TEX * 4)
+ 	if field_world:
+ 		_job_recs = _records_reach(k)
+-		_job_wet = ((k >> 3) & 3) > 0   # level 0's water isn't read: it's drawn only past 20,000 units, or for a moment on the way to a new place
+-		var n: int = level_n((k >> 3) & 3)
+-		var c: Vector3 = node_dir(k & 7, n, (k >> 5) & 127, (k >> 12) & 127, CELLS / 2, CELLS / 2)
++		_job_wet = ((k >> 3) & 7) > 0   # level 0's water isn't read: it's drawn only past 20,000 units, or for a moment on the way to a new place
++		var n: int = level_n((k >> 3) & 7)
++		var c: Vector3 = node_dir(k & 7, n, (k >> 6) & 127, (k >> 13) & 127, CELLS / 2, CELLS / 2)
+ 		_job_band = absf(c.dot(_s0)) * R < RenderLook.TILE_PLACE_DEPTH + RenderLook.TILE_PLACE_EASE + 38400.0 / float(n)
+ 
+ 
+@@ -398,8 +399,8 @@
+ func _records_reach(k: int) -> bool:
+ 	if _S.fieldRecs.is_empty():
+ 		return false
+-	var n: int = level_n((k >> 3) & 3)
+-	var c: Vector3 = node_dir(k & 7, n, (k >> 5) & 127, (k >> 12) & 127, CELLS / 2, CELLS / 2)
++	var n: int = level_n((k >> 3) & 7)
++	var c: Vector3 = node_dir(k & 7, n, (k >> 6) & 127, (k >> 13) & 127, CELLS / 2, CELLS / 2)
+ 	var reach: float = 38400.0 / float(n)
+ 	for rec in _S.fieldRecs:
+ 		var rq: Vector3
+@@ -418,9 +419,9 @@
+ 
+ func _fill_job(t0: int, budget_us: int) -> bool:
+ 	var f: int = _job_key & 7
+-	var L: int = (_job_key >> 3) & 3
+-	var i: int = (_job_key >> 5) & 127
+-	var j: int = (_job_key >> 12) & 127
++	var L: int = (_job_key >> 3) & 7
++	var i: int = (_job_key >> 6) & 127
++	var j: int = (_job_key >> 13) & 127
+ 	var n: int = level_n(L)
+ 	var total: int = TEX * TEX
+ 	while _job_at < total:
+@@ -447,14 +448,28 @@
+ ## World's node at this tile's a, b, and the places' records on it. A node past the face's rim takes the rim's: only a slope at
+ ## the rim reads it, since a rim is on every coarser lattice and no vertex morphs past it.
+ func _field_node(f: int, n: int, i: int, j: int, a: int, b: int) -> Array:
+-	var stride: int = 300 / (n * CELLS)
+-	var ni: int = clampi((i * CELLS + a) * stride, 0, 300)
+-	var nj: int = clampi((j * CELLS + b) * stride, 0, 300)
+-	var idx: int = WorldField.ensure(_F, f, ni, nj)
++	var ni: int
++	var nj: int
++	var h: float
++	var dp: Array
++	var idx: int
++	if n * CELLS > 300:
++		# Finer than the canonical nodes: World's sub-nodes, the sim's own ground there. The biome is its nearest canonical node's.
++		var sub: int = 1200 / (n * CELLS)
++		var qi: int = clampi((i * CELLS + a) * sub, 0, 1200)
++		var qj: int = clampi((j * CELLS + b) * sub, 0, 1200)
++		dp = WorldField.dirOf(f, qi, qj, 1200)
++		h = SimField.heightOf(int(_S.frame.seed), int(_S.frame.gen), 1, dp[0], dp[1], dp[2])
++		idx = WorldField.ensure(_F, f, mini((qi + 2) / 4, 300), mini((qj + 2) / 4, 300))
++	else:
++		var stride: int = 300 / (n * CELLS)
++		ni = clampi((i * CELLS + a) * stride, 0, 300)
++		nj = clampi((j * CELLS + b) * stride, 0, 300)
++		idx = WorldField.ensure(_F, f, ni, nj)
++		h = _F.h[idx]
++		dp = WorldField.dirOf(f, ni, nj, 300)
+ 	reads += 1
+-	var h: float = _F.h[idx]
+ 	var wet: float = 0.0
+-	var dp: Array = WorldField.dirOf(f, ni, nj, 300)
+ 	if _job_recs:
+ 		h = WorldField.applyRecords(_S, dp[0], dp[1], dp[2], h)
+ 	var place_w: float = 0.0
+@@ -495,7 +510,7 @@
+ 		if _keys[q] < 0:
+ 			slot = q
+ 			break
+-		if ((_keys[q] >> 3) & 3) > 0 and _stamp[q] < oldest:
++		if ((_keys[q] >> 3) & 7) > 0 and _stamp[q] < oldest:
+ 			oldest = _stamp[q]
+ 			slot = q
+ 	if _keys[slot] >= 0:
+@@ -509,7 +524,7 @@
+ 	_wets[slot] = _job_t.duplicate() if _job_any_wet else PackedFloat32Array()
+ 	_wet_tile[slot] = 1 if _job_any_wet else 0
+ 	ids.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RGBA8, _job_c), slot)
+-	if ((_job_key >> 3) & 3) > 0 and _job_on_line():
++	if ((_job_key >> 3) & 7) > 0 and _job_on_line():
+ 		stale_off()
+ 	_job_key = -1
+ 
+@@ -536,7 +551,7 @@
+ 	var w: float = (fc[0] as Vector3).dot(d)
+ 	var s: float = atan((fc[1] as Vector3).dot(d) / w) / (PI / 4.0)
+ 	var t: float = atan((fc[2] as Vector3).dot(d) / w) / (PI / 4.0)
+-	for L in [2, 1]:
++	for L in [4, 3, 2, 1]:
+ 		var n: int = level_n(L)
+ 		var ps: float = (s + 1.0) * 0.5 * float(n)
+ 		var pt: float = (t + 1.0) * 0.5 * float(n)
+@@ -554,8 +569,8 @@
+ 
+ ## Does the tile just stored lie on the fighters' line? Only then can the lift's table change.
+ func _job_on_line() -> bool:
+-	var n: int = level_n((_job_key >> 3) & 3)
+-	var c: Vector3 = node_dir(_job_key & 7, n, (_job_key >> 5) & 127, (_job_key >> 12) & 127, CELLS / 2, CELLS / 2)
++	var n: int = level_n((_job_key >> 3) & 7)
++	var c: Vector3 = node_dir(_job_key & 7, n, (_job_key >> 6) & 127, (_job_key >> 13) & 127, CELLS / 2, CELLS / 2)
+ 	if not field_world:
+ 		return true
+ 	var d: float = absf(c.dot(_off_axis)) * R
+@@ -576,7 +591,7 @@
+ 	var w: float = (fc[0] as Vector3).dot(d)
+ 	var s: float = atan((fc[1] as Vector3).dot(d) / w) / (PI / 4.0)
+ 	var t: float = atan((fc[2] as Vector3).dot(d) / w) / (PI / 4.0)
+-	for L in [2, 1, 0]:
++	for L in [4, 3, 2, 1, 0]:
+ 		var n: int = level_n(L)
+ 		var ps: float = (s + 1.0) * 0.5 * float(n)
+ 		var pt: float = (t + 1.0) * 0.5 * float(n)
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -461,11 +461,12 @@
+ 		return
+ 	var split: bool = L < TILE_MAX_LEVEL and maxf(d - w * 0.75, 0.0) < RenderLook.TILE_K * w
+ 	if split and L + 1 < RenderTileField.LEVELS:
+-		# A finer level comes when all four of its data are there; meanwhile the parent draws and they're on their way.
++		# A finer level comes when all four of its data are there; meanwhile the parent draws and they're on their way. Below 128 the mesh
++		# goes on anyway, for what lies on the ground, and reads the finest data it has (_emit).
+ 		for q in range(4):
+ 			var ck: int = RenderTileField.key_of(f, L + 1, i * 2 + (q & 1), j * 2 + (q >> 1))
+ 			field.want(ck, d)
+-			if not field.has(ck):
++			if not field.has(ck) and L < RenderTileField.BASE_LEVEL:
+ 				split = false
+ 	if split:
+ 		for q in range(4):
+@@ -482,6 +483,11 @@
+ 	var di: int = i >> (L - dl)
+ 	var dj: int = j >> (L - dl)
+ 	var lay: int = field.layer_of(RenderTileField.key_of(f, dl, di, dj))
++	while lay < 0 and dl > RenderTileField.BASE_LEVEL:
++		dl -= 1
++		di = i >> (L - dl)
++		dj = j >> (L - dl)
++		lay = field.layer_of(RenderTileField.key_of(f, dl, di, dj))
+ 	if lay < 0:
+ 		return
+ 	field.want(RenderTileField.key_of(f, dl, di, dj), 0.0)
+@@ -503,7 +509,7 @@
+ 	_buf[o + 9] = u.z
+ 	_buf[o + 10] = v.z
+ 	_buf[o + 11] = size
+-	_buf[o + 12] = float(lay) + float(dl) * 0.25
++	_buf[o + 12] = float(lay) + float(dl) * 0.125
+ 	_buf[o + 13] = (1.4 * RenderLook.TILE_K * w if L > 0 else 3.0e5) / 1000.0
+ 	_buf[o + 14] = (1.95 * RenderLook.TILE_K * w if L > 0 else 3.1e5) / 1000.0
+ 	_buf[o + 15] = w / 1000.0
+--- a/render/shaders/tile_read.gdshaderinc
++++ b/render/shaders/tile_read.gdshaderinc
+@@ -54,7 +54,7 @@
+ 	dir = tile_dir(n, u, wv, st);
+ 	float lf = c.r + 0.01;
+ 	layer = int(lf);
+-	float dl = floor((lf - float(layer)) * 4.0);
++	float dl = floor((lf - float(layer)) * 8.0);
+ 	dsize = 2.0 / (3.0 * pow(2.0, dl));
+ 	vec2 d0xy = floor((place.xy + vec2(1.0)) / dsize + 0.001) * dsize - vec2(1.0);
+ 	vec2 dg = (st - d0xy) / dsize * 25.0 + vec2(1.0);   // on the layer: the ring outside the tile is its first row

@@ -2,7 +2,7 @@
 
 Rendering, 2026-11-20, at the EP's word. Camera found the camera's eye "under the ground" on medium for 200 to 1,000 ticks a clip, while the stills look right (`docs/camera/runs/d55c612f/opening-clear/sampler-findings.txt`). Its sampler read `height_at`, the tile field's bake, but the mesh draws that bake under the foreground rule (`tile_fore`), which lowers the ground in front of the fighter plane to the sight line from the lens. So the eye is never under the drawn ground there. The one thing the rule never lowers is the fight line's own ground.
 
-`drawn_at.diff` (sha1 984e12f9) applies on HEAD 6bb03b08 and is cut against main's `tile_fore`. **If `fore-clamp/` (v4) lands first, this is re-cut to match it.** Run record: `docs/rendering/runs/6bb03b08/drawn-at.txt`.
+`drawn_at.diff` (sha1 984e12f9) applies on HEAD 74c03fdb and is cut against main's `tile_fore`. **For GW1c (2026-11-22):** cut again on main 74c03fdb + World's stage 2, the bytes are the same. There, with the planet sizes, `drawn_check` passes, its negative control fails, the five ground checks pass and the render gates pass 20 of 20 (`docs/rendering/runs/74c03fdb/gw1c-recut.txt`). **If `fore-clamp/` (v4) lands first, this is re-cut to match it.** Run record: `docs/rendering/runs/6bb03b08/drawn-at.txt`.
 
 ## The change
 

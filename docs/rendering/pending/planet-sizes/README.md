@@ -11,7 +11,7 @@ Rendering, on the EP's order: "the sizes with the level-0 tile scaling". It foll
 
 | File | What |
 |---|---|
-| `sizes_tiles.diff` (4477705c, 158 lines) | `render/core/tile_field.gd`, `tile_ground.gd`. Gated at medium: `sizes-tiles-recut.txt`. |
+| `sizes_tiles.diff` (c1a2d894, 149 lines) | `render/core/tile_field.gd`, `tile_ground.gd`. **Re-cut for GW1c (2026-11-22) on main 74c03fdb + World's stage 2** (`docs/world/planet-stack-recut.md`). The same edit; main has no feet-ground, so four `38400` literals instead of five. Gated there (`docs/rendering/runs/74c03fdb/gw1c-recut.txt`): golden byte-identical to stage 2 alone, the five ground checks pass, the render gates pass 20 of 20. The older cut (4477705c) was gated at medium on World's GW1c stack + my feet parks: `sizes-tiles-recut.txt`. |
 | `grant-world-field-size-key.patch` (c48936a3) | World's `sim/world/field.gd`: the field memo keyed by the size too. World approved it (2026-11-20); its "seed -> Field" comment is fixed here as they asked (code unchanged from 6883b121). |
 | `feet_check_size.gd` (2aed6e9a) | A scratch copy of `feet-ground`'s feet check with `--size` (World's `planetSize`) and `--split`. With `--split` it reads each fighter through the nearest pane the split renders, and skips a fighter outside every pane's view. When this lands, these flags should go into the real check. |
 

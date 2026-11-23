@@ -1,0 +1,86 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -572,6 +572,9 @@
+ const TILE_AHEAD_TICKS: int = 30           # ... this often
+ const TILE_CRATER_CHECKS: int = 48         # shapes a frame looked at after a crater opens
+ const TILE_POSE_MARGIN: float = 500.0      # a building this near the sim's pose reach in a swing counts as past it
++## The band between the camera and the fight: a building comes down to its kept base as its front face goes from .x to .y of depth, its base shrinks to nothing by .z and past .z the building and any small thing are gone.
++## The first ring's blocks stop at its street's back edge, -2.5 fighter heights (-187), so at rest they all stand.
++const TILE_BAND := Vector3(-150.0, -30.0, 150.0)
+ const TILE_NEAR_DEFAULT: int = 3           # a tower near the line: 3 the rule and sink (Orb's Q and W), until Orb picks
+ 
+ ## The split's culling (planet_view.gd cull_to): a pane leaves out of its draw the ground's and water's chunks that lie
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -265,6 +265,7 @@
+ 	for m in _world_mats:
+ 		m.set_shader_parameter("globe_world", 1.0)
+ 		m.set_shader_parameter("globe_near_mode", near_mode)
++		m.set_shader_parameter("globe_band", RenderLook.TILE_BAND)
+ 		m.set_shader_parameter("globe_small", 0.0 if m == planet._bld_mat or m == planet._front_mat else 1.0)
+ 	_make_tiles()
+ 
+--- a/render/shaders/bend.gdshaderinc
++++ b/render/shaders/bend.gdshaderinc
+@@ -22,6 +22,7 @@
+ uniform float globe_small = 0.0;          // 1: a small world thing: gone at the near line, no rule for it
+ uniform int globe_near_mode = 3;          // a tower near the line: 0 the rule, 1 sink, 2 hard clip, 3 rule and sink, 4 sink and clip
+ uniform float globe_line = -80.0;
++uniform vec3 globe_band = vec3(-150.0, -30.0, 150.0);   // RenderLook.TILE_BAND: a building comes down as its front face goes from .x to .y of depth; past .z a small thing is gone
+ uniform float globe_lead = 0.5;           // a near tower's roof: how far its near side leads, in its widest sides over its height (a rise of a quarter of its width across it)
+ uniform float globe_base = 90.0;          // ... and what's left of it, in units
+ uniform sampler2D globe_off : filter_nearest, repeat_enable;   // per column: drawn ground less the sim's, and the sim's
+@@ -53,7 +54,7 @@
+ 		y += o.r * (1.0 - smoothstep(75.0, 150.0, y - o.g)) * (1.0 - smoothstep(300.0, 600.0, abs(w.z)));
+ 	}
+ 	vec3 d = globe_dir(w);
+-	if (d.y < 0.05 || (globe_small > 0.5 && globe_near(w.z, d.z * globe_r, 1.0) > 0.5)) {
++	if (d.y < 0.05 || (globe_small > 0.5 && (globe_near(w.z, d.z * globe_r, 1.0) > 0.5 || d.z * globe_r > globe_band.z))) {
+ 		y -= 1.0e6;   // past the horizon of any height in the game; or a small thing come round to the near line
+ 	}
+ 	float rr = globe_r + y;
+@@ -66,9 +67,12 @@
+ }
+ 
+ // A tower near the line: where its height goes as it comes round. a: its anchor, v: this vertex, foot and top: its own, wide: its widest side.
+-float globe_tower(vec3 a, vec3 v, float foot, float top, float wide) {
+-	float sa = globe_near(a.z, globe_view_z(a), 300.0);
+-	float sv = globe_near(v.z, globe_view_z(v), 500.0);
++float globe_tower(vec3 a, vec3 v, float foot, float top, float wide, float half_d) {
++	// The band between the camera and the fight, at rest too: a building whose front face reaches it comes down, wherever its plan has it. A place laid
++	// anywhere on the planet has a plan that says nothing about where the fight is now. By its anchor and its depth, so it doesn't lean at rest.
++	float rest = smoothstep(globe_band.x, globe_band.y, globe_view_z(a) + half_d);
++	float sa = max(globe_near(a.z, globe_view_z(a), 300.0), rest);
++	float sv = max(globe_near(v.z, globe_view_z(v), 500.0), rest);
+ 	float tall = v.y - foot;
+ 	if (globe_near_mode == 1) {
+ 		return sa >= 1.0 ? foot - 200.0 : foot + tall * (1.0 - sa);
+@@ -76,9 +80,15 @@
+ 	if (globe_near_mode == 3) {
+ 		// Orb's pick: the whole building goes down, its near side leading. How far the near side leads is bounded by the building's width,
+ 		// so a tall tower's roof doesn't turn into a wedge or a spike; and its base stays, a floor or two high.
++		// Its base stays only near the fight: past .z its front face is close to the lens, where a base would be a slab across the frame, so it's gone.
++		float reach = globe_view_z(a) + half_d;
++		if (reach > globe_band.z) {
++			return v.y - 1.0e6;
++		}
+ 		float total = max(top - foot, 1.0);
+ 		float lead = 0.5 * clamp(sv - sa, -globe_lead * wide / total, globe_lead * wide / total);
+-		return foot + tall * (1.0 - min(sa + lead, 1.0 - min(globe_base, total) / total));
++		float kept = min(globe_base, total) * (1.0 - smoothstep(globe_band.y, globe_band.z, reach));
++		return foot + tall * (1.0 - min(sa + lead, 1.0 - kept / total));
+ 	}
+ 	if (globe_near_mode == 4) {
+ 		return foot + tall * (1.0 - 0.67 * globe_near(a.z, globe_view_z(a), 400.0));
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -232,7 +232,8 @@
+ 	w.y = min(w.y, stubbed);
+ 	if (globe_r > 0.0) {
+ 		v_gz = globe_near(w.z, globe_view_z(w.xyz), 1.0);
+-		w.y = globe_tower(MODEL_MATRIX[3].xyz, w.xyz, top - length(MODEL_MATRIX[1].xyz), top, max(length(MODEL_MATRIX[0].xyz), length(MODEL_MATRIX[2].xyz)));
++		// The building's own base, so a part stacked on another (a roof, a crown) comes down with it and doesn't hang in the air.
++		w.y = globe_tower(MODEL_MATRIX[3].xyz, w.xyz, min(top - length(MODEL_MATRIX[1].xyz), texelFetch(win_tex, ivec2(id, 1), 0).x), top, max(length(MODEL_MATRIX[0].xyz), length(MODEL_MATRIX[2].xyz)), 0.5 * length(MODEL_MATRIX[2].xyz));
+ 	}
+ 	v_wy = w.y;
+ 	vi_win = texelFetch(win_tex, ivec2(id, 0), 0);

@@ -1,0 +1,242 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -579,6 +579,15 @@
+ const TILE_BOWLS: int = 16
+ const TILE_BOWL_FRAMES: int = 15
+ const TILE_BOWL_OPEN: float = 0.25
++## Art's crater (docs/art/crater-look.md). CRATER_RINGS: depth of the lip, the outer wall's end, the inner wall's end; below .w of slope it's floor.
++## CRATER_STEPS: the inner ring's step on the outer's tone, the floor's on the subsoil's shade, a floor stripe's half-step, a stripe's width in nodes.
++const CRATER_RINGS := Vector4(6.0, 40.0, 120.0, 0.12)
++const CRATER_STEPS := Vector4(0.74, 0.68, 0.08, 1.6)
++## Art's scar (docs/art/crater-look.md). SCAR_LOOK: the width's share of the sim's groove, the outline's variation, its rate along the line, the singe fringe past the core as a share of the width. SCAR_FRINGE: the ground under the singe, by multiply. SCAR_SLICE: columns read a frame for the taper table. SCAR_MIN: the scorch that counts as scar.
++const SCAR_LOOK := Vector4(0.27, 0.1, 1.0, 0.33)
++const SCAR_FRINGE: float = 0.72
++const SCAR_SLICE: int = 600
++const SCAR_MIN: float = 0.27
+ const TILE_NEAR_DEFAULT: int = 3           # a tower near the line: 3 the rule and sink (Orb's Q and W), until Orb picks
+ 
+ ## The split's culling (planet_view.gd cull_to): a pane leaves out of its draw the ground's and water's chunks that lie
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -245,6 +245,7 @@
+ 	RenderTileGround.share = float(args.get("tileshare", 100.0)) / 100.0
+ 	RenderTileGround.gen = int(args.get("tilegen", 3))
+ 	RenderTileGround.fore_tone = not args.has("nofore")
++	RenderTileGround.crater_look = args.has("craterlook")
+ 	host.stepped_start = not manual and not args.has("syncstart") and not args.has("flashcap")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
+ 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
+ 	if args.has("human"):
+@@ -1563,8 +1564,8 @@
+ ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
+ ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
+ ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
+-const LOCAL_ONLY_ARGS: Array = ["tiles", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+-const URL_ARGS: Array = ["tiles", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const LOCAL_ONLY_ARGS: Array = ["craterlook", "tiles", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const URL_ARGS: Array = ["craterlook", "tiles", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -21,6 +21,13 @@
+ var _cb_due: int = 0
+ var _cb_a := PackedVector4Array()
+ var _cb_b := PackedVector4Array()
++var _scar_w := PackedFloat32Array()    # per column: how much of a scar's width is left (scar_tex)
++var _scar_on := PackedByteArray()      # the scan in hand: which columns are scar
++var _scar_was := PackedByteArray()     # the last whole scan: the table is made again only when it changes
++var _scar_i: int = 0
++var _scar_img: Image
++var _scar_tex: ImageTexture
++static var crater_look: bool = false   # Art's crater (docs/art/crater-look.md). --craterlook
+ static var fore_tone: bool = true      # one tone in front of the plane: the facets there are a swing's flash. --nofore to compare
+ static var gen: int = 3                 # the world it draws: 3 a field world, on the sim's frame; --tilegen=2 the gen 2 ring, to compare
+ 
+@@ -159,6 +166,8 @@
+ 		water_mat.set_shader_parameter(k, pane.planet._terrain_mat.get_shader_parameter(k))
+ 	water_mat.set_shader_parameter("crater_now", S.T)
+ 	_water_marks(S, tk)
++	if crater_look:
++		_scar_slice(S)
+ 	_bowls(S)
+ 	mat.set_shader_parameter("cb_now", S.T)
+ 	_copy_t += 1
+@@ -219,6 +228,36 @@
+ 	mat.set_shader_parameter("cb_b", _cb_b)
+ 	mat.set_shader_parameter("cb_rim", Vector2(WorldCrater.RIM_IN, WorldCrater.RIM_OUT))
+ 	mat.set_shader_parameter("cb_open", RenderLook.TILE_BOWL_OPEN)
++
++
++## Art's scar tapers to a point over the last quarter of its run at both ends. How far a column is from its run's ends isn't in the sim, so the view works it out from the sim's scorch, a slice a frame, and only reads.
++func _scar_slice(S: SimState) -> void:
++	var n: int = SimConst.NC
++	var stop: int = mini(_scar_i + RenderLook.SCAR_SLICE, n)
++	while _scar_i < stop:
++		_scar_on[_scar_i] = 1 if S.scorch[_scar_i] >= RenderLook.SCAR_MIN else 0
++		_scar_i += 1
++	if _scar_i < n:
++		return
++	_scar_i = 0
++	if _scar_on == _scar_was:
++		return
++	_scar_was = _scar_on.duplicate()
++	_scar_w.fill(0.0)
++	var i: int = 0
++	while i < n:
++		if _scar_on[i] == 0:
++			i += 1
++			continue
++		var j: int = i
++		while j < n and _scar_on[j] != 0:
++			j += 1
++		var q: float = maxf(float(j - i) * 0.25, 1.0)
++		for k in range(i, j):
++			_scar_w[k] = minf(1.0, minf(float(k - i) + 0.5, float(j - k) - 0.5) / q)
++		i = j
++	_scar_img.set_data(n, 1, false, Image.FORMAT_RF, _scar_w.to_byte_array())
++	_scar_tex.update(_scar_img)
+ 
+ 
+ ## Water's A1 (docs/world/low-impact-water.md), view only: a hollow ring where a body crosses or skims the surface, and a short V wake behind one
+@@ -330,6 +369,20 @@
+ 	water_mat.set_shader_parameter("plane_tex", _prof_tex)
+ 	pane.mats.track(water_mat)
+ 	mat.set_shader_parameter("fore_tone", 1.0 if fore_tone else 0.0)
++	mat.set_shader_parameter("crater_look", 1.0 if crater_look else 0.0)
++	mat.set_shader_parameter("scar_look", RenderLook.SCAR_LOOK)
++	mat.set_shader_parameter("scar_fringe", RenderLook.SCAR_FRINGE)
++	_scar_w.resize(SimConst.NC)
++	_scar_w.fill(0.0)
++	_scar_on.resize(SimConst.NC)
++	_scar_on.fill(0)
++	_scar_was.resize(SimConst.NC)
++	_scar_was.fill(0)
++	_scar_img = Image.create_from_data(SimConst.NC, 1, false, Image.FORMAT_RF, _scar_w.to_byte_array())
++	_scar_tex = ImageTexture.create_from_image(_scar_img)
++	mat.set_shader_parameter("scar_tex", _scar_tex)
++	mat.set_shader_parameter("crater_rings", RenderLook.CRATER_RINGS)
++	mat.set_shader_parameter("crater_steps", RenderLook.CRATER_STEPS)
+ 	pane.mats.track(mat)
+ 	# The tile mesh: 26 by 26 and a ring outside it: the skirt.
+ 	var n: int = RenderTileField.CELLS + 1
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -230,7 +230,31 @@
+ 		c = mix(c, st.rgb * tk, st.a * v_street);
+ 	}
+ 	if (v_dent < -dent_min) {
++#ifdef TILE_GROUND
++		vec3 earth;
++		if (crater_look > 0.5) {
++			// Art's crater: hard edges and flat colour. A wall's tone is which way it faces, in eight flat sides, against the biome's light.
++			float cd = -v_dent;
++			float cs = length(v_dg);
++			float cf = floor(atan(v_dg.y, v_dg.x) / 0.7853982 + 0.5) * 0.7853982;
++			float cl = dot(-vec2(cos(cf), sin(cf)), normalize(sun_dir.xz));
++			int ct = cl > 0.35 ? 0 : (cl < -0.35 ? 2 : 1);
++			earth = mix(biome_tone(v_ba, 6 + ct), biome_tone(v_bb, 6 + ct), zf);
++			if (cs < crater_rings.w || cd >= crater_rings.z) {
++				// The floor: warm, in flat stripes at slightly different slants.
++				float cz = dot(v_q.xz, vec2(0.83, 0.55)) + 0.35 * tile_tri(v_q.x * 0.31 - v_q.z * 0.17);
++				earth = mix(biome_tone(v_ba, 8), biome_tone(v_bb, 8), zf) * crater_steps.y * (1.0 + crater_steps.z * (mod(floor(cz / crater_steps.w), 3.0) - 1.0));
++			} else if (cd >= crater_rings.y) {
++				earth *= crater_steps.x;
++			} else if (cd < crater_rings.x + dent_min && cl > 0.0) {
++				earth = mix(biome_tone(v_ba, 6), biome_tone(v_bb, 6), zf);   // the lip: only on an edge facing the light
++			}
++		} else {
++			earth = mix(biome_tone(v_ba, 6 + tone), biome_tone(v_bb, 6 + tone), zf);   // a crater's inside: the subsoil (Art), not the surface
++		}
++#else
+ 		vec3 earth = mix(biome_tone(v_ba, 6 + tone), biome_tone(v_bb, 6 + tone), zf);   // a crater's inside: the subsoil (Art), not the surface
++#endif
+ 		c = v_new > 0.0 ? mix(earth, c, v_new) : earth;
+ 	} else if (v_dent > 0.5 * dent_min) {
+ 		c = mix(c, ejecta.rgb * tk, (v_dent > 2.5 * dent_min ? 0.5 : 0.25) * (1.0 - v_new));   // rubble on the rim, in two hard steps
+@@ -260,10 +284,44 @@
+ 	float sc = clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new);
+ 	// The band is where the burn passes scar_band.y; its edge a rim of scar_band.x pixels just inside the band's border, so a
+ 	// faded scar narrows and goes, and never turns into a wide pale band.
++#ifdef TILE_GROUND
++	if (crater_look > 0.5) {
++		if (v_scorch > 0.0) {
++		// Art's scar: read by the pixel from the column, so it's as narrow as the look wants and not as wide as the mesh's corners say.
++		float scx = v_px.x / col_w;
++		int sci = int(scx - float(nc) * floor(scx / float(nc))) % nc;
++		float sleft = mix(texelFetch(scar_tex, ivec2(sci, 0), 0).r, texelFetch(scar_tex, ivec2((sci + 1) % nc, 0), 0).r, fract(scx));
++		if (sleft > 0.0 && clamp(gh(sci, 0) * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new) > scar_band.y) {
++			float sside = v_px.y > 0.0 ? 13.0 : 0.0;   // each side its own outline
++			// The burn's own width, without a slide's trench, which jumps from column to column.
++			float sg0 = groove_w0 + groove_wp * clamp((gh(sci, 0) - groove_i0) / groove_ip, groove_pmin, groove_pmax);
++			float sg1 = groove_w0 + groove_wp * clamp((gh((sci + 1) % nc, 0) - groove_i0) / groove_ip, groove_pmin, groove_pmax);
++			// Stronger beams burn wider: the look's width is the strongest beam's, a weak one's a little over half of it.
++			float spn = clamp((clamp((gh(sci, 0) - groove_i0) / groove_ip, groove_pmin, groove_pmax) - groove_pmin) / max(groove_pmax - groove_pmin, 0.001), 0.0, 1.0);
++			float swid = mix(sg0, sg1, fract(scx)) * scar_look.x * (0.55 + 0.45 * spn) * sleft * (1.0 + scar_look.y * tile_tri((scx + sside) * scar_look.z));
++			float sz = abs(v_px.y) / max(swid, 1.0);
++			if (sz < 1.0) {
++				if (sz > 1.0 - fwidth(sz) * scar_band.x) {
++					c = mix(biome_tone(v_ba, 10), biome_tone(v_bb, 10), zf);
++				} else {
++					float sst = dot(v_q.xz, vec2(0.83, 0.55)) + 0.35 * tile_tri(v_q.x * 0.31 - v_q.z * 0.17);
++					c = mix(biome_tone(v_ba, 9), biome_tone(v_bb, 9), zf) * (1.0 + crater_steps.z * (mod(floor(sst / crater_steps.w), 3.0) - 1.0));
++				}
++			} else if (sz < 1.0 + scar_look.w) {
++				c *= scar_fringe;
++			}
++		}
++		}
++	} else if (sc > scar_band.y) {
++		float rim = fwidth(sc) * scar_band.x;
++		c = mix(biome_tone(v_ba, sc > scar_band.y + rim ? 9 : 10), biome_tone(v_bb, sc > scar_band.y + rim ? 9 : 10), zf);
++	}
++#else
+ 	if (sc > scar_band.y) {
+ 		float rim = fwidth(sc) * scar_band.x;
+ 		c = mix(biome_tone(v_ba, sc > scar_band.y + rim ? 9 : 10), biome_tone(v_bb, sc > scar_band.y + rim ? 9 : 10), zf);
+ 	}
++#endif
+ #ifdef TILE_GROUND
+ 	// One tone in front of the plane: its big facets, close to the lens, are a swing's flash (docs/camera/swing-view.md). Marks keep their colours.
+ 	if (fore_tone > 0.5 && v_pv.y > 0.0 && abs(v_dent) < dent_min && v_rubble <= 0.01 && v_crack <= 0.01) {
+--- a/render/shaders/tile_read.gdshaderinc
++++ b/render/shaders/tile_read.gdshaderinc
+@@ -20,6 +20,12 @@
+ uniform vec2 cb_rim = vec2(0.2, 0.5);   // WorldCrater.RIM_IN, RIM_OUT
+ uniform float cb_now = 0.0;
+ uniform float cb_open = 0.25;      // the seconds a new bowl takes to open
++uniform float crater_look = 0.0;   // Art's crater (RenderTileGround.crater_look): the rest of its numbers are RenderLook.CRATER_*
++uniform vec4 crater_rings = vec4(6.0, 40.0, 120.0, 0.12);   // depth of the lip, the outer wall's end, the inner wall's end; below .w of slope it's floor
++uniform vec4 crater_steps = vec4(0.74, 0.68, 0.08, 1.6);   // the inner ring's step, the floor's, a floor stripe's half-step, its width in nodes
++uniform sampler2D scar_tex : filter_nearest, repeat_enable;   // per column: how much of a scar's width is left, 0 at its ends (RenderTileGround._scar_slice)
++uniform vec4 scar_look = vec4(0.27, 0.1, 1.0, 0.33);   // RenderLook.SCAR_LOOK: the width as a share of the burn alone, the outline's variation, its rate along the line, the fringe past the core
++uniform float scar_fringe = 0.72;   // RenderLook.SCAR_FRINGE: the ground under the singe, by multiply
+ uniform float fore_tone = 1.0;   // one tone in front of the plane (RenderTileGround.fore_tone)
+ 
+ vec2 tile_chart(vec3 d, vec3 h, vec3 s, vec3 p) {
+--- a/render/shaders/tile_vertex.gdshaderinc
++++ b/render/shaders/tile_vertex.gdshaderinc
+@@ -9,6 +9,7 @@
+ varying float v_h0;
+ varying vec2 v_pv;
+ varying float v_wet;     // a lake's or a river's depth here (RenderTileField.WET_STEP)
++varying vec2 v_dg;       // a crater's own slope here, without the land's: which way its wall faces
+ varying vec3 v_q;        // the planet's direction, in nodes: what a border's wander is keyed to, so it stays with the land
+ 
+ // A straight-sided wave, -1 to 1: a border wanders in straight runs, as the flat look draws an edge.
+@@ -71,6 +72,7 @@
+ 	int ci = int(xw / col_w) % nc;
+ 	v_px = vec2(xw, z0);
+ 	v_dent = 0.0;
++	v_dg = bg;
+ 	v_scorch = 0.0;
+ 	v_heat = 0.0;
+ 	v_crack = 0.0;
+@@ -82,6 +84,7 @@
+ 		h += gr.w;
+ 		v_dent = gr.w;
+ 		v_grad += vec2(gr.y - base_slope(ci), gr.z);
++		v_dg += vec2(gr.y - base_slope(ci), gr.z);
+ 		float gw = groove_half_at(ci);
+ 		float gt = clamp(1.0 - z0 * z0 / (gw * gw), 0.0, 1.0);
+ 		v_scorch = gh(ci, 0) * gt;

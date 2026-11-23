@@ -1,0 +1,14 @@
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -225,7 +225,11 @@
+ 	}
+ 	if (lk < 0 && v_base < sea_base && v_h < sea_base) {
+ 		c = mix(sea_floor.rgb * tk, c, v_s);
++#ifdef TILE_GROUND
++	} else if (v_street > 0.001 && length(v_grad) < rock_slope.x) {   // no paint on a slope it would streak down
++#else
+ 	} else if (v_street > 0.001) {
++#endif
+ 		vec4 st = street_paint(v_px, fwidth(v_px.x));
+ 		if (st.a <= 0.0) {
+ 			st = block_paint(v_px, fwidth(v_px.x));   // between the streets: an avenue, or the district's paved lot
