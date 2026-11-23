@@ -144783,6 +144783,115 @@
       "expect": null
     },
     {
+      "id": "ui-report-clean-unknown-key",
+      "schema": "ui-report-clean.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/extra": 1
+          },
+          "file": "ui/data/report_clean.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "ui-report-clean-schema-version-wrong",
+      "schema": "ui-report-clean.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/schema": 2
+          },
+          "file": "ui/data/report_clean.json"
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "ui-report-clean-tail-too-small",
+      "schema": "ui-report-clean.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/tail_bytes": 10
+          },
+          "file": "ui/data/report_clean.json"
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/tail_bytes"
+      }
+    },
+    {
+      "id": "ui-report-clean-patterns-empty",
+      "schema": "ui-report-clean.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/patterns": []
+          },
+          "file": "ui/data/report_clean.json"
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/patterns"
+      }
+    },
+    {
+      "id": "ui-report-clean-mark-unknown",
+      "schema": "ui-report-clean.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/patterns/0/mark": "gone"
+          },
+          "file": "ui/data/report_clean.json"
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/patterns/0/mark"
+      }
+    },
+    {
+      "id": "ui-report-clean-log-name-has-a-path",
+      "schema": "ui-report-clean.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/this_run": "../godot.log"
+          },
+          "file": "ui/data/report_clean.json"
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/this_run"
+      }
+    },
+    {
+      "id": "ui-report-clean-tail-ok-at-the-minimum",
+      "schema": "ui-report-clean.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/tail_bytes": 1024
+          },
+          "file": "ui/data/report_clean.json"
+        }
+      ],
+      "expect": null
+    },
+    {
       "id": "ui-modes-unknown-key",
       "schema": "ui-modes.schema.json",
       "mutate": [
