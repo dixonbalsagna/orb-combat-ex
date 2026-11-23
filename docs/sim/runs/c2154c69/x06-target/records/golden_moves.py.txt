@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+# golden_moves.py <old> <new>: which golden entries move, one line each: every top-level key, and for each match, replay
+# and the planet match its recipe, whether it moved, its first differing checkpoint (tick), ticks, light and final.
+import json, sys
+
+a = json.load(open(sys.argv[1], encoding="utf-8"))
+b = json.load(open(sys.argv[2], encoding="utf-8"))
+every = int(b.get("checkEvery", a.get("checkEvery", 0)))
+
+
+def run_line(label, x, y):
+    if x == y:
+        return "%s: unchanged" % label
+    cx, cy = x.get("checkpoints", []), y.get("checkpoints", [])
+    first = next((i for i in range(min(len(cx), len(cy))) if cx[i] != cy[i]), None)
+    parts = []
+    if first is not None:
+        lanes = [n for n, (p, q) in zip(("state", "view", "camera"), zip(cx[first].split(":"), cy[first].split(":"))) if p != q]
+        parts.append("first checkpoint %d (tick %d) differs in %s" % (first, first * every, "+".join(lanes)))
+    elif len(cx) != len(cy):
+        parts.append("checkpoint count %d -> %d" % (len(cx), len(cy)))
+    if x.get("ticks") != y.get("ticks"):
+        parts.append("ticks %s -> %s" % (x.get("ticks"), y.get("ticks")))
+    if x.get("light") != y.get("light"):
+        parts.append("light moves")
+    if x.get("final") != y.get("final"):
+        parts.append("final moves")
+    if x.get("firsts") != y.get("firsts"):
+        parts.append("firsts %s -> %s" % (x.get("firsts"), y.get("firsts")))
+    return "%s: MOVES (%s)" % (label, "; ".join(parts))
+
+
+lines = []
+for k in a:
+    if k in ("matches", "replays", "planet"):
+        continue
+    if a[k] != b.get(k):
+        lines.append("%s: MOVES" % k)
+for i, (x, y) in enumerate(zip(a["matches"], b["matches"])):
+    rec = "%s seed %s%s" % (y.get("arm"), y.get("seed"), (" " + json.dumps(y["setup"])) if y.get("setup") else " (the planet)")
+    lines.append(run_line("matches[%d] %s" % (i, rec), x, y))
+for i, (x, y) in enumerate(zip(a["replays"], b["replays"])):
+    lines.append(run_line("replays[%d] seed %s" % (i, y["replay"].get("seed")), x["run"], y["run"]) + ("" if x["replay"] == y["replay"] else " (the replay's inputs moved)"))
+pa, pb = a["planet"], b["planet"]
+lines.append("planet slices: %s" % ("unchanged" if pa["slices"] == pb["slices"] else "MOVE"))
+lines.append("planet tick-0 states: %s" % ("unchanged" if pa["tick0"] == pb["tick0"] else "MOVE"))
+lines.append(run_line("planet match seed %s" % pb["match"].get("seed"), pa["match"], pb["match"]))
+print("\n".join(lines))

@@ -1,0 +1,39 @@
+#!/bin/sh
+# x6_go.sh <scratchpad>: X-06's golden re-record. A clean export of main c2154c69 + docs/director/pending/x06-bands/ in its
+# README's order (x06-medium, x06-hold-answer, x06-hold-answer-schema); import; the golden from a cold field cache, again
+# warm (one file?); the golden diff against c2154c69's; parity through gate.mjs; Rendering's 15.
+# ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/x6o"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
+X="$R/docs/director/pending/x06-bands"
+C="$NS/x6app/Godot/app_userdata/Orb Combat EX/field-cache"
+rm -rf "${NS:?}/x6o"; mkdir -p "$O" "$NS/x6app"; export APPDATA="$(cygpath -w "$NS/x6app")"
+[ -e "$NS/x6" ] && { echo "x6 exists"; exit 1; }
+mkdir -p "$NS/x6"
+git -C "$R" -c core.autocrlf=false archive c2154c69 | tar -x -C "$NS/x6"
+cd "$NS/x6" || exit 1
+case "$(pwd -P)" in */scratchpad/x6) ;; *) echo refusing; exit 1 ;; esac
+git init -q; git config core.autocrlf false; git add -A > /dev/null 2>&1; git -c user.email=s@x -c user.name=s commit -qm "c2154c69"
+sha1sum "$X/x06-medium.diff" "$X/x06-hold-answer.diff" "$X/x06-hold-answer-schema.diff" | cut -c1-40
+for p in x06-medium.diff x06-hold-answer.diff x06-hold-answer-schema.diff; do
+  git -c core.autocrlf=false -c core.eol=lf apply "$X/$p" && echo "applied $p" || { echo "FAILED to apply $p"; exit 1; }
+done
+git add -A > /dev/null 2>&1; git -c user.email=s@x -c user.name=s commit -qm "x06-bands" && git log -1 --format='x6 HEAD %h'
+cp sim/core/test/golden.json "$O/golden_main.json"
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+rm -rf "${C:?}"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_cold.txt" 2>&1; echo "golden cold: exit $? in $(( $(date +%s) - s )) s; $(grep -c 'SCRIPT ERROR' "$O/golden_cold.txt") script errors"
+cp sim/core/test/golden.json "$O/golden_cold.json"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_warm.txt" 2>&1; echo "golden warm: exit $? in $(( $(date +%s) - s )) s; $(grep -c 'SCRIPT ERROR' "$O/golden_warm.txt") script errors"
+cmp -s sim/core/test/golden.json "$O/golden_cold.json" && echo "  cold then warm: ONE file" || echo "  cold then warm: the files DIFFER"
+python -I "$NS/kick/golden_diff.py" "$O/golden_main.json" "$O/golden_cold.json"
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity.txt" 2>&1; echo "parity: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL" "$O/parity.txt" | head -10 | cut -c1-240
+echo "rows ok $(grep -c '^ok' "$O/parity.txt"), FAIL $(grep -c '^FAIL' "$O/parity.txt")"
+echo "== Rendering's 15"
+sh "$NS/n/rgates.sh" "$NS/x6" "$O/rg"
+echo x6 done

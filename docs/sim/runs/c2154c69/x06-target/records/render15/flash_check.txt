@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+pair bake: 240 ms, 809 poses
+seed 12345: gameplay hash on 5488a7659a66e6f6, off 5488a7659a66e6f6
+seed 4: gameplay hash on e9c4beeaa94ea4e4, off e9c4beeaa94ea4e4
+flashes started in play (from events): { "hurt": 42 }
+Flash check  224 checks over 16 flashes
+
+flash check passed
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+WARNING: 8187 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 13 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

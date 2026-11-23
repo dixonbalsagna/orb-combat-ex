@@ -1,0 +1,14 @@
+matches[0] default seed 1 {"world": "arena"}: MOVES (first checkpoint 8 (tick 960) differs in state; light moves; final moves)
+matches[1] swap seed 1 (the planet): MOVES (first checkpoint 15 (tick 1800) differs in state; light moves; final moves)
+matches[2] mirror-villain seed 1 (the planet): MOVES (first checkpoint 8 (tick 960) differs in state; light moves; final moves)
+matches[3] mirror-hero seed 1 (the planet): MOVES (first checkpoint 7 (tick 840) differs in state+view+camera; light moves; final moves)
+matches[4] default-flip seed 2 (the planet): MOVES (first checkpoint 7 (tick 840) differs in state+view+camera; light moves; final moves)
+matches[5] swap-flip seed 2 (the planet): MOVES (first checkpoint 3 (tick 360) differs in state+view+camera; light moves; final moves)
+matches[6] mirror-villain-flip seed 2 (the planet): MOVES (first checkpoint 3 (tick 360) differs in state+view+camera; light moves; final moves)
+matches[7] mirror-hero-flip seed 2 (the planet): MOVES (first checkpoint 49 (tick 5880) differs in state+view+camera; light moves; final moves)
+matches[8] default seed 11 {"world": "arena"}: MOVES (first checkpoint 12 (tick 1440) differs in state+view+camera; light moves; final moves)
+replays[0] seed 11: MOVES (first checkpoint 1 (tick 120) differs in state+view+camera; light moves; final moves)
+replays[1] seed 12: MOVES (first checkpoint 1 (tick 120) differs in state; final moves)
+planet slices: unchanged
+planet tick-0 states: unchanged
+planet match seed 29: unchanged

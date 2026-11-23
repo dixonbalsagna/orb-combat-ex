@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+pair bake: 241 ms, 809 poses
+seam crater: largest left/right difference in the bowl across the seam 0.000000 units
+Ground check  138 checks over seeds [4, 12345, 7]
+craters 21 (furrows 11), most wet columns 5, most burnt columns 1191
+slice: fighter-plane row = S.deform bit for bit; bowl formula at z = 0 within 0.000004 (limit 0.01)
+full rebuilds during play: 5 (a new match each)
+
+ground check passed
+WARNING: 277 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 9 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)
