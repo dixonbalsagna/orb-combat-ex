@@ -1,0 +1,92 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 45ff62e4..19eceff2 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -217,7 +217,9 @@ jobs:
+       matrix:
+         include:
+           - { set: scenes-1, args: '--only=mash,mashcity,clash,signature,signaturecity,rushcity,transform,collapse,plumedesert,plumeice,plumevolc' }
+-          - { set: scenes-2, args: '--only=mashdummy,ring,launchai,clashcity,signaturedummy,blastdummy' }
++          # scenes-2 became two sets on 2026-11-23: four scenes were made longer after X-06 (mashdummy, ring, launchai 1,800 to 3,600 ticks, signaturedummy 3,600 to 5,400), which would have taken the one set from 10.6 to about 16 minutes
++          - { set: scenes-2, args: '--only=mashdummy,ring' }
++          - { set: scenes-3, args: '--only=launchai,clashcity,signaturedummy,blastdummy' }
+           # the `ai` scenario is one run per pairing and seed of tools/flash/sources.json (PROTAGONIST and RIVAL, PROTAGONIST and REFERENCE, RIVAL and REFERENCE); each set plays one pairing with its own seeds
+           - { set: ai-1, args: '--only=ai --slots=PROTAGONIST,RIVAL --seeds=4,39,104,106,7,9,43' }
+           - { set: ai-2, args: '--only=ai --slots=PROTAGONIST,REFERENCE --seeds=98,100,74,4,49,8,13' }
+diff --git a/docs/tools/dummy-ring-scenes.md b/docs/tools/dummy-ring-scenes.md
+index d8ed8ec3..2e44fb04 100644
+--- a/docs/tools/dummy-ring-scenes.md
++++ b/docs/tools/dummy-ring-scenes.md
+@@ -113,3 +113,19 @@ Schema keys: joints.json `slew.free_arm_deg` and `wing.runtime`; press_styles `h
+ ## 2026-11-21: what GW1a changed in two scenes
+ 
+ CI run 44885894433 (the first run of the split) failed its recount on `mashdummy` (no `launch`) and `signaturedummy` (no `building_fall`), four runs each; the split itself merged all five sets. The same two scenes read on b20020b4 (the last green run): `signaturedummy` five buildings down in 1,800 ticks, `mashdummy` a launch. On HEAD with energy on, the same 1,800 ticks stage 43 building hits and no fall, and the heavy at the end of the mash cycle is a knock back. So `mashdummy` taps its heavy every 45 ticks (one launch in each pairing) and `signaturedummy` plays 3,600 ticks (five buildings down with PROTAGONIST, six with RIVAL; a fall comes between 2,400 and 3,600 ticks with PROTAGONIST). The guards themselves (`launch` 1, `building_fall` 1) are unchanged.
++
++## 2026-11-23: what X-06 changed in four scenes
++
++CI run 45201190857 (0d21624b, after X-06, 8006fe3d) failed the flash recount on four scenes. Read headless on the scratch export of ead18383 against c83efe87 (the last green run), same staging, one pairing each:
++
++| Scene (ticks) | c83efe87 | ead18383 | Re-staged as |
++| :--- | :--- | :--- | :--- |
++| `mashdummy`, PROTAGONIST v REFERENCE (1,800) | damage 121, launch 1 | damage 86, launch 6, building falls 4 | 3,600 ticks (the guards need launch 1) |
++| `mashdummy`, RIVAL v REFERENCE (1,800) | damage 145, launch 1 (the heavy planned a launch once, 3 knockbacks) | damage 117, **launch 0, no launch planned at all**; at 3,600 ticks one launch, a beam's (heavy launches still 0); at 5,400 two | 3,600 ticks (launch 1, from a beam) |
++| `ring`, 3 bodies (1,800) | damage 109 | damage **41** of the 60 needed; 102 at 3,600 | 3,600 ticks |
++| `launchai` (1,800) | damage 99 | damage **52** of 60; 118 at 3,600 | 3,600 ticks |
++| `signaturedummy`, PROTAGONIST v REFERENCE (3,600) | damage 372, building falls 8 | damage 326, building falls **0**; at 5,400 ticks 6 falls | 5,400 ticks |
++
++No guard was changed (`damage` 60, `launch` 1, `building_fall` 1 stay). The lengths are `ticks` in `tools/flash/sources.json`; a pixel clip is as long as its scenario, so these four scenes' clips are longer to capture and read, and the flash sets are cut as scenes-2 (mashdummy, ring) and scenes-3 (launchai, clashcity, signaturedummy, blastdummy).
++
++What changed is the play, not the staging: with X-06 the Medium computer takes less damage and fights back differently (about half the damage in the ring and launchai in the same ticks; the PROTAGONIST dummy scene launches six times instead of once, the RIVAL one launches by a heavy no more). For Game Design's eye: **RIVAL's heavy mash at the idle dummy plans no launch in 5,400 ticks** (it planned one in 1,800 before), so the launcher chain of that clip is gone; the guard is met by a beam's launch.
+diff --git a/tools/flash/release-pass.json b/tools/flash/release-pass.json
+index 2a857e57..8547c9dc 100644
+--- a/tools/flash/release-pass.json
++++ b/tools/flash/release-pass.json
+@@ -9,7 +9,7 @@
+     {
+       "on": "2026-11-21",
+       "by": "Tools, at the EP's word",
+-      "why": "Two scenes of the required set changed their staging after the last recorded run, and their pixel readings must be redone in the next full pass (none has been taken). (1) mashdummy, both pairings, normal and reduced (4 clips): since d168a518 the heavy at the end of its 600-tick cycle is tapped every 45 ticks from tick 480 (three heavies where there was one: with energy on a single heavy was planned as a knock back, so the scene never launched), in tools/flash/flash_worst.gd and render/tools/flash_capture.gd. The headless register recount of the new staging passes (worst weight 2.12 of 2.5 normal, 1 of 1 reduced), but the three-heavy clip has not been captured or read. (2) signaturedummy, both pairings, normal and reduced (4 clips): sources.json now gives it 3,600 ticks (was 1,800) so a building falls in it, and a clip is as long as its scenario, so each of its clips is twice as long to capture and read as before. This record is superseded and holds for no commit; the note is for whoever records the next pass."
++      "why": "Two scenes of the required set changed their staging after the last recorded run, and their pixel readings must be redone in the next full pass (none has been taken). (1) mashdummy, both pairings, normal and reduced (4 clips): since d168a518 the heavy at the end of its 600-tick cycle is tapped every 45 ticks from tick 480 (three heavies where there was one: with energy on a single heavy was planned as a knock back, so the scene never launched), in tools/flash/flash_worst.gd and render/tools/flash_capture.gd. The headless register recount of the new staging passes (worst weight 2.12 of 2.5 normal, 1 of 1 reduced), but the three-heavy clip has not been captured or read. (2) signaturedummy, both pairings, normal and reduced (4 clips): sources.json now gives it 3,600 ticks (was 1,800) so a building falls in it, and a clip is as long as its scenario, so each of its clips is twice as long to capture and read as before. Since 2026-11-23 (X-06 made the Medium computer take less damage, docs/tools/dummy-ring-scenes.md) four scenes are longer again, and so are their clips: mashdummy, ring and launchai 3,600 ticks (were 1,800), signaturedummy 5,400 (was 3,600). This record is superseded and holds for no commit; the note is for whoever records the next pass."
+     }
+   ],
+   "commit": "d3f1ca0e22f39110d69feceb4913ff799d11db5d",
+diff --git a/tools/flash/sources.json b/tools/flash/sources.json
+index bc8414a1..dc931beb 100644
+--- a/tools/flash/sources.json
++++ b/tools/flash/sources.json
+@@ -138,7 +138,7 @@
+         "damage": 60,
+         "launch": 1
+       },
+-      "ticks": 1800,
++      "ticks": 3600,
+       "seeds": [
+         12345
+       ]
+@@ -163,7 +163,7 @@
+       "minEvents": {
+         "damage": 60
+       },
+-      "ticks": 1800,
++      "ticks": 3600,
+       "seeds": [
+         12345
+       ]
+@@ -175,7 +175,7 @@
+         "damage": 60,
+         "launch": 1
+       },
+-      "ticks": 1800,
++      "ticks": 3600,
+       "seeds": [
+         12345
+       ]
+@@ -208,7 +208,7 @@
+         "damage": 30,
+         "building_fall": 1
+       },
+-      "ticks": 3600,
++      "ticks": 5400,
+       "seeds": [
+         12345
+       ]

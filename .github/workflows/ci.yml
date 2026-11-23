@@ -217,7 +217,9 @@ jobs:
       matrix:
         include:
           - { set: scenes-1, args: '--only=mash,mashcity,clash,signature,signaturecity,rushcity,transform,collapse,plumedesert,plumeice,plumevolc' }
-          - { set: scenes-2, args: '--only=mashdummy,ring,launchai,clashcity,signaturedummy,blastdummy' }
+          # scenes-2 became two sets on 2026-11-23: four scenes were made longer after X-06 (mashdummy, ring, launchai 1,800 to 3,600 ticks, signaturedummy 3,600 to 5,400), which would have taken the one set from 10.6 to about 16 minutes
+          - { set: scenes-2, args: '--only=mashdummy,ring' }
+          - { set: scenes-3, args: '--only=launchai,clashcity,signaturedummy,blastdummy' }
           # the `ai` scenario is one run per pairing and seed of tools/flash/sources.json (PROTAGONIST and RIVAL, PROTAGONIST and REFERENCE, RIVAL and REFERENCE); each set plays one pairing with its own seeds
           - { set: ai-1, args: '--only=ai --slots=PROTAGONIST,RIVAL --seeds=4,39,104,106,7,9,43' }
           - { set: ai-2, args: '--only=ai --slots=PROTAGONIST,REFERENCE --seeds=98,100,74,4,49,8,13' }
@@ -420,6 +422,8 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/aim_throw_check.gd'
       - name: "Launch cone check (computer against computer on planet 7: no launch aimed at a building more than 20 degrees off the blow's line; Game Design's QA row, B-17)"
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/launch_cone_check.gd'
+      - name: "Hold answer check (X-06: the computer answers a visible hold by repetition, a grab or a slip; the exploit of a charge-only pad is closed; negative control inside; Game Design gauntlet-plan section 10)"
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/hold_answer_check.gd'
       # Controls' input tests (docs/controls/check-scripts-answers.md): all of sim/input/test except b_no_beam_layouts_test (245 s: the landing gate and a nightly), 44 scripts, 3 at a time; each through tools/gate.mjs so a
       # SCRIPT ERROR under exit 0 fails it. xargs exits non-zero when any one fails. tools/check-scripts.json's ciGlobs makes the table count them.
       - name: Controls input tests (44 of 45, 3 at a time; the 245 s layout scan stays in the landing gate)

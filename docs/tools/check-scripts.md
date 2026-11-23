@@ -1,6 +1,6 @@
-# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-21)
+# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-23)
 
-276 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **199 run in CI**, 20 more run in the landing gate only, 2 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
+277 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **200 run in CI**, 20 more run in the landing gate only, 2 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
 
 | Folder | Scripts | CI | Gate only | Not run | Unreviewed |
 | :--- | ---: | ---: | ---: | ---: | ---: |
@@ -11,7 +11,7 @@
 | render/tools | 25 | 5 | 15 | 0 | 5 |
 | render/vfx/tools | 2 | 2 | 0 | 0 | 0 |
 | sim/core/tools | 16 | 12 | 0 | 0 | 4 |
-| sim/director/tools | 47 | 9 | 1 | 0 | 37 |
+| sim/director/tools | 48 | 10 | 1 | 0 | 37 |
 | sim/input/test | 46 | 45 | 1 | 0 | 0 |
 | sim/world/tools | 89 | 89 | 0 | 0 | 0 |
 | tools/l10n | 1 | 0 | 0 | 0 | 1 |
@@ -126,6 +126,7 @@
 | sim/director/tools/floorlift_check.gd | CI + gate |  |
 | sim/director/tools/follow_check.gd | UNREVIEWED |  |
 | sim/director/tools/full_send_check.gd | UNREVIEWED |  |
+| sim/director/tools/hold_answer_check.gd | CI |  |
 | sim/director/tools/knock_wall_check.gd | UNREVIEWED |  |
 | sim/director/tools/launch_cone_check.gd | CI |  |
 | sim/director/tools/launch_cost_check.gd | UNREVIEWED |  |

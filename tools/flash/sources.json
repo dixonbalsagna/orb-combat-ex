@@ -138,7 +138,7 @@
         "damage": 60,
         "launch": 1
       },
-      "ticks": 1800,
+      "ticks": 3600,
       "seeds": [
         12345
       ]
@@ -163,7 +163,7 @@
       "minEvents": {
         "damage": 60
       },
-      "ticks": 1800,
+      "ticks": 3600,
       "seeds": [
         12345
       ]
@@ -175,7 +175,7 @@
         "damage": 60,
         "launch": 1
       },
-      "ticks": 1800,
+      "ticks": 3600,
       "seeds": [
         12345
       ]
@@ -208,7 +208,7 @@
         "damage": 30,
         "building_fall": 1
       },
-      "ticks": 3600,
+      "ticks": 5400,
       "seeds": [
         12345
       ]

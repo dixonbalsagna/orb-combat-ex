@@ -1,0 +1,43 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 8205d5b9..45ff62e4 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -420,6 +420,8 @@ jobs:
+         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/aim_throw_check.gd'
+       - name: "Launch cone check (computer against computer on planet 7: no launch aimed at a building more than 20 degrees off the blow's line; Game Design's QA row, B-17)"
+         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/launch_cone_check.gd'
++      - name: "Hold answer check (X-06: the computer answers a visible hold by repetition, a grab or a slip; the exploit of a charge-only pad is closed; negative control inside; Game Design gauntlet-plan section 10)"
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/hold_answer_check.gd'
+       # Controls' input tests (docs/controls/check-scripts-answers.md): all of sim/input/test except b_no_beam_layouts_test (245 s: the landing gate and a nightly), 44 scripts, 3 at a time; each through tools/gate.mjs so a
+       # SCRIPT ERROR under exit 0 fails it. xargs exits non-zero when any one fails. tools/check-scripts.json's ciGlobs makes the table count them.
+       - name: Controls input tests (44 of 45, 3 at a time; the 245 s layout scan stays in the landing gate)
+diff --git a/docs/tools/check-scripts.md b/docs/tools/check-scripts.md
+index 35234fe6..af207df8 100644
+--- a/docs/tools/check-scripts.md
++++ b/docs/tools/check-scripts.md
+@@ -1,6 +1,6 @@
+-# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-21)
++# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-23)
+ 
+-276 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **199 run in CI**, 20 more run in the landing gate only, 2 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
++277 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **200 run in CI**, 20 more run in the landing gate only, 2 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
+ 
+ | Folder | Scripts | CI | Gate only | Not run | Unreviewed |
+ | :--- | ---: | ---: | ---: | ---: | ---: |
+@@ -11,7 +11,7 @@
+ | render/tools | 25 | 5 | 15 | 0 | 5 |
+ | render/vfx/tools | 2 | 2 | 0 | 0 | 0 |
+ | sim/core/tools | 16 | 12 | 0 | 0 | 4 |
+-| sim/director/tools | 47 | 9 | 1 | 0 | 37 |
++| sim/director/tools | 48 | 10 | 1 | 0 | 37 |
+ | sim/input/test | 46 | 45 | 1 | 0 | 0 |
+ | sim/world/tools | 89 | 89 | 0 | 0 | 0 |
+ | tools/l10n | 1 | 0 | 0 | 0 | 1 |
+@@ -126,6 +126,7 @@
+ | sim/director/tools/floorlift_check.gd | CI + gate |  |
+ | sim/director/tools/follow_check.gd | UNREVIEWED |  |
+ | sim/director/tools/full_send_check.gd | UNREVIEWED |  |
++| sim/director/tools/hold_answer_check.gd | CI |  |
+ | sim/director/tools/knock_wall_check.gd | UNREVIEWED |  |
+ | sim/director/tools/launch_cone_check.gd | CI |  |
+ | sim/director/tools/launch_cost_check.gd | UNREVIEWED |  |

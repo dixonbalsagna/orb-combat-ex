@@ -113,3 +113,19 @@ Schema keys: joints.json `slew.free_arm_deg` and `wing.runtime`; press_styles `h
 ## 2026-11-21: what GW1a changed in two scenes
 
 CI run 44885894433 (the first run of the split) failed its recount on `mashdummy` (no `launch`) and `signaturedummy` (no `building_fall`), four runs each; the split itself merged all five sets. The same two scenes read on b20020b4 (the last green run): `signaturedummy` five buildings down in 1,800 ticks, `mashdummy` a launch. On HEAD with energy on, the same 1,800 ticks stage 43 building hits and no fall, and the heavy at the end of the mash cycle is a knock back. So `mashdummy` taps its heavy every 45 ticks (one launch in each pairing) and `signaturedummy` plays 3,600 ticks (five buildings down with PROTAGONIST, six with RIVAL; a fall comes between 2,400 and 3,600 ticks with PROTAGONIST). The guards themselves (`launch` 1, `building_fall` 1) are unchanged.
+
+## 2026-11-23: what X-06 changed in four scenes
+
+CI run 45201190857 (0d21624b, after X-06, 8006fe3d) failed the flash recount on four scenes. Read headless on the scratch export of ead18383 against c83efe87 (the last green run), same staging, one pairing each:
+
+| Scene (ticks) | c83efe87 | ead18383 | Re-staged as |
+| :--- | :--- | :--- | :--- |
+| `mashdummy`, PROTAGONIST v REFERENCE (1,800) | damage 121, launch 1 | damage 86, launch 6, building falls 4 | 3,600 ticks (the guards need launch 1) |
+| `mashdummy`, RIVAL v REFERENCE (1,800) | damage 145, launch 1 (the heavy planned a launch once, 3 knockbacks) | damage 117, **launch 0, no launch planned at all**; at 3,600 ticks one launch, a beam's (heavy launches still 0); at 5,400 two | 3,600 ticks (launch 1, from a beam) |
+| `ring`, 3 bodies (1,800) | damage 109 | damage **41** of the 60 needed; 102 at 3,600 | 3,600 ticks |
+| `launchai` (1,800) | damage 99 | damage **52** of 60; 118 at 3,600 | 3,600 ticks |
+| `signaturedummy`, PROTAGONIST v REFERENCE (3,600) | damage 372, building falls 8 | damage 326, building falls **0**; at 5,400 ticks 6 falls | 5,400 ticks |
+
+No guard was changed (`damage` 60, `launch` 1, `building_fall` 1 stay). The lengths are `ticks` in `tools/flash/sources.json`; a pixel clip is as long as its scenario, so these four scenes' clips are longer to capture and read, and the flash sets are cut as scenes-2 (mashdummy, ring) and scenes-3 (launchai, clashcity, signaturedummy, blastdummy).
+
+What changed is the play, not the staging: with X-06 the Medium computer takes less damage and fights back differently (about half the damage in the ring and launchai in the same ticks; the PROTAGONIST dummy scene launches six times instead of once, the RIVAL one launches by a heavy no more). For Game Design's eye: **RIVAL's heavy mash at the idle dummy plans no launch in 5,400 ticks** (it planned one in 1,800 before), so the launcher chain of that clip is gone; the guard is met by a beam's launch.
