@@ -9,7 +9,7 @@
 #     summary is cleaned of folder paths;
 #   4 its output is a performance reading only and never counts toward G4, G21 or any flash number (RL-224 (6)): the report says so; software GL is not a graphics card;
 #   5 dispatch-only, never on push, and it never produces a package file for download (RL-262).
-# Keys are pressed 250 ms apart (xdotool --delay 250: about 15 frames at 60 a second).
+# Keys are pressed 750 ms apart and every wait is three times steps.json's (--slow 3: software GL draws about 14 frames a second, a fifth of what the steps were written for).
 # The job exports the "Linux" preset of a commit on main, starts the program on the virtual display with the Compatibility renderer on software GL, presses Return on the flashing-effects warning, plays steps.json's keys
 # (the list of modes, a fighter, Start, play, pause, Quit, "Close the game"), reads the frame-rate and load lines the program itself prints, and checks the program closes by itself. Software GL is NOT a graphics card: the frame rates
 # say what a runner without one does, not what a player's PC does.
@@ -34,7 +34,7 @@ jobs:
   first-run:
     name: Linux build on a virtual display, frame rate and loading (numbers only)
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

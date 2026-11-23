@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { xdotoolKeys, refusal } from './linux-numbers.mjs';
+import { xdotoolKeys, refusal, timeline, ownLines } from './linux-numbers.mjs';
 import { parseFps, fpsStats, parseLoad, sizesFor, stepProblems, reportText } from './first-run.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 let bad = 0, n = 0;
@@ -48,5 +48,8 @@ const ln = readFileSync(join(HERE, 'linux-numbers.mjs'), 'utf8');
 check('every key steps.json uses has an xdotool name', xdotoolKeys(steps.steps.flatMap((s) => s.keys || [])).every(Boolean) && xdotoolKeys(['ENTER', 'P', 'UP']).join() === 'Return,p,Up');
 check('the Linux numbers script presses keys only on a CI runner with a virtual display the workflow started (RL-270: never on a person screen)', refusal({}) !== '' && refusal({ GITHUB_ACTIONS: 'true', DISPLAY: ':99' }) !== '' && refusal({ GITHUB_ACTIONS: 'true', DISPLAY: ':99', FIRST_RUN_VIRTUAL_DISPLAY: '1' }) === '' && refusal({ GITHUB_ACTIONS: 'true', FIRST_RUN_VIRTUAL_DISPLAY: '1' }) !== '' && refusal({ DISPLAY: ':0', FIRST_RUN_VIRTUAL_DISPLAY: '1' }) !== '');
 check('it takes no still, video or capture, and adds no bypass word or flag to the program (RL-270 conditions 1 and 3)', !/import -window|xwd|scrot|ffmpeg|screenshot|--shot|--frames|--bench|nonotice|flashcap|study|get_image/i.test(ln.replace(/\/\/.*$/gm, '')));
+check('the frame-rate timeline buckets by ten seconds', timeline(Array.from({ length: 25 }, (_, i) => ({ fps: i < 10 ? 2 : 20 })), 10).map((b) => b.mean).join() === '2,20,20' && timeline([], 10).length === 0);
+const NLN = String.fromCharCode(10);
+check("the program's own lines leave out the frame-rate line, cap the count and take folder paths out", ownLines(['Project FPS: 9 (1 mspf)', 'a line', 'at C:/Users/someone/x', ''].join(NLN)).length === 2 && !ownLines('at C:/Users/someone/x').join('').includes('someone') && ownLines(Array(100).fill('x').join(NLN), 40).length === 40);
 console.log(`first-run selftest: ${n} checks, ${bad} failed`);
 process.exit(bad ? 1 : 0);
