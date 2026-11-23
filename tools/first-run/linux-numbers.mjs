@@ -104,6 +104,8 @@ async function main() {
   // the match was built: the program prints its pair-bake line when a match's pieces are made (the first run's keys may have met a game that never left the warning)
   const dataRoot = join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'godot', 'app_userdata');
   const files = dataFiles(dataRoot);
+  const logFile = files.find((f) => /logs[/]godot[.]log$/.test(f.path));
+  const gameLog = logFile ? readFileSync(join(dataRoot, logFile.path), 'utf8').split(/\r?\n/).filter((l) => l.trim()).slice(-80).map((l) => cleanPaths(l).slice(0, 220)) : ['(no godot.log in the data folder)'];
   const built = parseLoad(log).pairBakeMs !== null || matchInData(files);
   add({ id: 'match-built', what: 'a match was built after the keys (the program printed its pair-bake line, or its data folder holds a field cache or a report)', ok: built, detail: built ? `at ${at()}` : 'no pair-bake line and no field cache or report in the data folder: the keys did not get the game past its first screens' });
   const t1 = Date.now();
@@ -119,7 +121,7 @@ async function main() {
   try { const bi = JSON.parse(readFileSync(join(dirname(exe), 'build_info.json'), 'utf8')); Object.assign(build, bi); } catch { /* none beside the program */ }
   const text = reportText({ date: new Date().toISOString().slice(0, 10), build, machine: { cpu: (cpus()[0] || {}).model || 'unknown cpu', gpu: 'virtual display, software GL (Mesa)', ramGb: Math.round(totalmem() / 2 ** 30), os: `Linux ${release()}` }, window: '1280x720 (Xvfb)', runs: [run] });
   const rows = parseFps(log);
-  const shape = ['', 'Frames a second by ten-second stretch (from the start): ' + timeline(rows).map((b) => `${b.from}-${b.to} s: ${b.mean}`).join(', '), '', "The program's own other lines (folder paths taken out):", '```', ...ownLines(log), '```', '', "The game's data folder after the run (names and sizes, never contents):", '```', ...files.map((f) => `${f.size} ${f.path}`), '```'].join('\n');
+  const shape = ['', 'Frames a second by ten-second stretch (from the start): ' + timeline(rows).map((b) => `${b.from}-${b.to} s: ${b.mean}`).join(', '), '', "The program's own other lines (folder paths taken out):", '```', ...ownLines(log), '```', '', "The game's data folder after the run (names and sizes, never contents):", '```', ...files.map((f) => `${f.size} ${f.path}`), '```', '', "The game's own log, its last 80 lines (folder paths taken out; text only):", '```', ...gameLog, '```'].join('\n');
   const note = shape + '\n_A GitHub runner, a virtual display, no one watching, software GL: a performance reading only, never a flash reading (Legal RL-270). No still, video or capture was taken._\n';
   if (opt('--out')) writeFileSync(resolve(opt('--out')), cleanPaths(text + note) + '\n');
   console.log(cleanPaths(text + note));
