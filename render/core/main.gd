@@ -1562,7 +1562,10 @@ func _pad_event(e: InputEvent) -> void:
 ## The hub's word on who is human, as the host gives it every tick (sim_host.gd): paused, no tick runs, so a slot the drop just handed to the computer is still "human" to the hub until this is called, and a returning pad
 ## would be given that slot without a join being queued (the next tick would free it again).
 func _sync_humans() -> void:
-	host.hub.set_humans(host.S.fighters[0].ai == null, host.S.fighters[1].ai == null)
+	var human: Array = []
+	for f in host.S.fighters:   # the roster, not two named bodies (the two-fighter ratchet); the hub takes the first two slots, as sim_host.gd gives them
+		human.append(f.ai == null)
+	host.hub.set_humans(bool(human[0]), bool(human[1]))
 
 
 ## Whether a person is playing on this pad (a slot holds it).
