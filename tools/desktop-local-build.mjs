@@ -117,7 +117,7 @@ async function main() {
     const node = (args, cwd = tree) => run(process.execPath, args, { cwd });
     let x = await node([pkgTool, 'lock', '--root', tree]); step('lock Reduce flashing on (scratch copy only)', x.code === 0, x.out.trim().split(/\r?\n/).pop());
     x = await node([pkgTool, 'version', '--root', tree]); step('version number into the export presets', x.code === 0, x.out.trim().split(/\r?\n/).pop());
-    x = await node([pkgTool, 'routes', '--root', tree]); step('routes check (lock, bypass words, no net/, feedback target)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 160));
+    x = await node([pkgTool, 'routes', '--root', tree, '--no-testers']); step('routes check (lock, bypass words, no net/, feedback target)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 160));
     x = await node([join(tree, 'tools', 'write-build-info.mjs'), '--commit', sha, '--date', date]); step('build_info.json written', x.code === 0, x.out.trim());
     const info = JSON.parse(readFileSync(join(tree, 'build_info.json'), 'utf8'));
 
@@ -167,7 +167,7 @@ async function main() {
         const tx = existsSync(winTar) && process.platform === 'win32' ? spawnSync(winTar, ['-xzf', archive, '-C', chk], { encoding: 'utf8' }) : spawnSync('tar', ['-xzf', archive, '-C', chk], { encoding: 'utf8' });
         step('linux: unpacked somewhere new with the system tar, the way a player does', tx.status === 0, tx.status === 0 ? '' : String(tx.stderr).slice(0, 160));
       }
-      x = await node([pkgTool, 'verify', '--platform', platform, '--dir', join(chk, n.folder), '--commit', sha, '--locked', ...notice]); step(`${platform}: the folder verifies (files, magic bytes, embedded pck, notices, lock, ORB-PRIVATE line)`, x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 200));
+      x = await node([pkgTool, 'verify', '--platform', platform, '--dir', join(chk, n.folder), '--commit', sha, '--locked', '--no-testers', ...notice]); step(`${platform}: the folder verifies (files, magic bytes, embedded pck, notices, lock, ORB-PRIVATE line)`, x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 200));
 
       const sum = sha256(archive);
       writeFileSync(join(out, `${n.archive}.sha256.txt`), `${sum}  ${n.archive}\n`);

@@ -114,13 +114,19 @@ jobs:
       # The interim's terms hold for a download too: one word in this checkout's ui/data/features.json, before the import and every export below.
       - name: Lock Reduce flashing on
         run: node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"
+      # The testers' menu (path to Alpha 1 job 14; docs/ui/menus-a1.md section 4): an outside-testers package hides the modes testers cannot use (ui/data/modes.json rows with testers false: the campaign, the network row); Orb's own owner-private build shows every row.
+      - name: Testers' package, hide the modes testers cannot use (this checkout only; outside-testers)
+        if: inputs.audience == 'outside-testers'
+        run: node tools/desktop-package.mjs testers --root "${GITHUB_WORKSPACE}"
       # The version number (tools/version.json; A-TOOLS-07) into the Windows exe's version fields and the macOS app's version, on this checkout only; the game's own copy of it is build_info.json, written below
       - name: Version number into the export presets (this checkout only)
         run: node tools/desktop-package.mjs version --root "${GITHUB_WORKSPACE}"
       # Refuses unless the lock is true and the capture hook false, the route scan (Legal RL-195/196) is clean, the six bypass words are the reviewed ones and nothing a flag can set reaches the lock,
       # the option, the register or the debug key, no network class is packed, and net/ is excluded from the three desktop presets (online play is out: the README's privacy line depends on it).
       - name: Refuse unless the lock holds and no flag reaches normal mode (RL-203, RL-204)
-        run: node tools/desktop-package.mjs routes --root "${GITHUB_WORKSPACE}"
+        run: |
+          if [ "${AUDIENCE}" = "outside-testers" ]; then t=--testers; else t=--no-testers; fi
+          node tools/desktop-package.mjs routes --root "${GITHUB_WORKSPACE}" "${t}"
       # Godot refuses a universal (Intel and Apple silicon) macOS export unless ETC2/ASTC import is on. The game imports no textures, so it changes nothing else; it is set on this checkout only
       # (project.godot in the repository stays as it is: a change to it is a full flash set, RL-128).
       - name: Enable ETC2/ASTC import for the universal macOS export
@@ -201,11 +207,12 @@ jobs:
           tar -xzf "${dist}/orb-combat-ex-linux-x86_64.tar.gz" -C "${chk}/linux"
           unzip -q "${dist}/orb-combat-ex-macos-universal.zip" -d "${chk}/macos"
           flag="--locked"
+          if [ "${AUDIENCE}" = "outside-testers" ]; then tflag=--testers; else tflag=--no-testers; fi
           notice=(); if [ "${AUDIENCE}" = "owner-private" ]; then notice=(--notice site-interim-owner.json --private); fi
           sha="${{ steps.commit.outputs.sha }}"
-          node tools/desktop-package.mjs verify --platform windows --dir "${chk}/windows/orb-combat-ex-windows-x86_64" --commit "${sha}" "${flag}" "${notice[@]}"
-          node tools/desktop-package.mjs verify --platform linux --dir "${chk}/linux/orb-combat-ex-linux-x86_64" --commit "${sha}" "${flag}" "${notice[@]}"
-          node tools/desktop-package.mjs verify --platform macos --dir "${chk}/macos/orb-combat-ex-macos-universal" --commit "${sha}" "${flag}" "${notice[@]}"
+          node tools/desktop-package.mjs verify --platform windows --dir "${chk}/windows/orb-combat-ex-windows-x86_64" --commit "${sha}" "${flag}" "${tflag}" "${notice[@]}"
+          node tools/desktop-package.mjs verify --platform linux --dir "${chk}/linux/orb-combat-ex-linux-x86_64" --commit "${sha}" "${flag}" "${tflag}" "${notice[@]}"
+          node tools/desktop-package.mjs verify --platform macos --dir "${chk}/macos/orb-combat-ex-macos-universal" --commit "${sha}" "${flag}" "${tflag}" "${notice[@]}"
       - name: What this run kept
         run: |
           {

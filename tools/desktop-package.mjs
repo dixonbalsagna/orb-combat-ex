@@ -6,6 +6,9 @@
 //   node tools/desktop-package.mjs lock   --root <exported tree>
 //        sets lock_reduce_flashing true in <root>/ui/data/features.json, the same one-word edit the site's export makes (tools/site-pin.mjs, Legal RL-156): the interim's terms hold for a
 //        download too. It edits a checkout in place, so it runs only on a CI checkout (GITHUB_ACTIONS=true) or on a root that is not this repository.
+//   node tools/desktop-package.mjs testers --root <exported tree>
+//        (path to Alpha 1 job 14) sets testers_package true in <root>/ui/data/features.json: the menu then hides the modes whose testers flag is false in ui/data/modes.json (the campaign, the network row). The
+//        outside-testers package only; Orb's own build shows every row. `routes` and `verify` take --testers or --no-testers and check the tree and the packed data agree with the audience.
 //   node tools/desktop-package.mjs astc   --root <exported tree>
 //        sets textures/vram_compression/import_etc2_astc=true in <root>/project.godot, which Godot requires for a universal macOS export (the Apple silicon half); same guard as `lock`.
 //   node tools/desktop-package.mjs verify --platform windows|linux|macos --dir <unpacked package> [--commit <sha>] [--locked | --unlocked]
@@ -240,6 +243,18 @@ export function routeProblems(root, o = {}) {
     if (!p) out.push(`export_presets.cfg has no "${name}" preset`);
     else if (!p.exclude.includes('net/*')) out.push(`export_presets.cfg: the "${name}" preset does not exclude net/* (online play stays out of the package: RL-204 condition 1)`);
   }
+  // 5b. the testers' package (path to Alpha 1 job 14): with o.testers true the flag must be on in this tree and the menu must hide every row testers cannot use; with false the flag must be off (Orb's own build shows every row)
+  if (o.testers !== undefined) {
+    let tfeat = null, modes = null;
+    try { tfeat = JSON.parse(read('ui/data/features.json')).features; } catch { /* reported above */ }
+    try { modes = JSON.parse(read('ui/data/modes.json')); } catch { out.push('ui/data/modes.json could not be read'); }
+    if (tfeat) {
+      if (typeof tfeat.testers_package !== 'boolean') out.push('ui/data/features.json has no true or false testers_package');
+      else if (o.testers && tfeat.testers_package !== true) out.push("ui/data/features.json testers_package is not true: this is the testers' package, and the rows testers cannot use would be shown (run `node tools/desktop-package.mjs testers` first)");
+      else if (!o.testers && tfeat.testers_package !== false) out.push("ui/data/features.json testers_package is true in a build that is not the testers' package: Orb's own build shows every row");
+    }
+    if (modes) for (const p of testersMenu(modes, o.testers === true).problems) out.push(p);
+  }
   // 6. Legal's RL-262 (both audiences): the feedback panel's Send step must not point at a public issue: ui/data/send.json `_target` is none, mailto or form, never github (a PUBLIC issue)
   const send = read('ui/data/send.json');
   if (send === null) out.push('ui/data/send.json is missing (the feedback target is read from it: RL-262)');
@@ -249,6 +264,29 @@ export function routeProblems(root, o = {}) {
     if (tgt !== null && !['none', 'mailto', 'form'].includes(String(tgt))) out.push(`ui/data/send.json: _target is "${tgt}": a desktop build's feedback goes nowhere public (none, mailto or form; RL-262)`);
   }
   return out;
+}
+
+/** The testers' package (Tools, 2026-11-23; path to Alpha 1 job 14): sets testers_package true in <root>/ui/data/features.json, which hides the mode rows whose `testers` is false in ui/data/modes.json
+ *  (ui/core/ui_modes.gd; docs/ui/menus-a1.md section 4: "Tools' package build sets it"). Returns true when it changed the file. Needs the same scratch tree the lock does. */
+export function setTestersPackage(root) {
+  const ff = join(root, 'ui', 'data', 'features.json');
+  const txt = readFileSync(ff, 'utf8');
+  if (!/"testers_package"\s*:/.test(txt)) throw new Error(`${ff} has no testers_package: this commit is older than UI's menus`);
+  if (/"testers_package"\s*:\s*true/.test(txt)) return false;
+  writeFileSync(ff, txt.replace(/"testers_package"\s*:\s*false/, '"testers_package": true'));
+  return true;
+}
+
+/** What the testers' menu shows, from modes.json and the flag: { shown: [ids], hidden: [ids], problems }. `testers` is the flag as the tree holds it. Pure. */
+export function testersMenu(modes, testers) {
+  const rows = Array.isArray(modes && modes.modes) ? modes.modes : [];
+  const hidden = rows.filter((m) => m && m.testers === false).map((m) => m.id);
+  const shown = rows.filter((m) => !(testers && m && m.testers === false)).map((m) => m.id);
+  const problems = [];
+  if (!rows.length) problems.push('ui/data/modes.json has no rows');
+  for (const m of rows) if (typeof m.testers !== 'boolean') problems.push(`ui/data/modes.json: the row "${m.id}" has no true or false testers flag: the testers' menu cannot tell whether to show it`);
+  if (testers) for (const id of hidden) if (shown.includes(id)) problems.push(`the testers' menu would show "${id}", which testers cannot use`);
+  return { shown, hidden, problems };
 }
 
 /** The scripts a desktop preset packs: every .gd under the root except the preset's own exclude globs and net/ (checked apart). */
@@ -389,6 +427,15 @@ export function verifyDir(platform, dir, o = {}) {
     else if (o.locked && !on) out.push('Reduce flashing is NOT locked on in this package (features.json says lock_reduce_flashing false), but the notice in README.txt says it cannot be turned off');
     else if (!o.locked && !off) out.push('Reduce flashing is locked in this package, expected unlocked');
   }
+  // the testers' package, read from the package's own data (path to Alpha 1 job 14): testers_package true, and modes.json's rows with testers false are the ones that flag hides
+  if (lockHolder && o.testers !== undefined) {
+    const b = readFileSync(lockHolder).toString('latin1');
+    const on = /"testers_package"\s*:\s*true/.test(b), off = /"testers_package"\s*:\s*false/.test(b);
+    if (!on && !off) out.push('the package holds no ui/data/features.json testers_package: cannot tell whether the testers\' menu hides the modes they cannot use');
+    else if (o.testers && !on) out.push("this is the testers' package, but its features.json says testers_package false: the modes testers cannot use (the campaign, the network row) would be listed");
+    else if (!o.testers && !off) out.push("testers_package is true in this package, which is not the testers' package: Orb's own build shows every row");
+    if (o.testers && !/"testers"\s*:\s*false/.test(b)) out.push('the package holds no mode row with testers false: the flag would hide nothing (ui/data/modes.json is not in the package, or every row is open)');
+  }
   return out;
 }
 
@@ -396,7 +443,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const args = process.argv.slice(2);
   const cmd = args[0];
   const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
-  const usage = () => { console.error('usage: node tools/desktop-package.mjs text --platform <windows|linux|macos> --out <dir> [--build-info <file>]  |  lock --root <tree>  |  astc --root <tree>  |  routes --root <tree>  |  verify --platform <p> --dir <dir> [--commit <sha>] [--locked|--unlocked]'); process.exit(2); };
+  const usage = () => { console.error('usage: node tools/desktop-package.mjs text --platform <windows|linux|macos> --out <dir> [--build-info <file>]  |  lock --root <tree>  |  testers --root <tree>  |  astc --root <tree>  |  routes --root <tree>  |  verify --platform <p> --dir <dir> [--commit <sha>] [--locked|--unlocked]'); process.exit(2); };
   const platform = opt('--platform');
   try {
     if (cmd === 'text') {
@@ -414,7 +461,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     } else if (cmd === 'routes') {
       const root = opt('--root') ? resolve(opt('--root')) : null;
       if (!root) usage();
-      const problems = routeProblems(root);
+      const problems = routeProblems(root, { testers: args.includes('--testers') ? true : args.includes('--no-testers') ? false : undefined });
       if (problems.length) { for (const p of problems) console.error(`desktop routes check FAILED: ${p}`); process.exit(1); }
       console.log('desktop routes check ok: the route scan is clean; the lock is true and the capture hook false in features.json; the six bypass words are the reviewed ones and reach no write of the lock; no command-line or page argument reaches the option, the register or a debug key; no network class is packed and net/ is excluded from the three desktop presets.');
     } else if (cmd === 'astc') {
@@ -430,6 +477,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       if (refused) throw new Error(refused.replace('ui/data/features.json', 'export_presets.cfg'));
       const set = setVersionFields(root, JSON.parse(readFileSync(join(root, 'tools', 'version.json'), 'utf8')));
       console.log(set.length ? `version fields set in ${root}/export_presets.cfg: ${set.join(', ')}` : 'the version fields already held the version');
+    } else if (cmd === 'testers') {
+      const root = opt('--root') ? resolve(opt('--root')) : null;
+      if (!root) usage();
+      const refused = lockGuard(root);
+      if (refused) throw new Error(refused.replace('ui/data/features.json', 'ui/data/features.json (testers_package)'));
+      console.log(setTestersPackage(root) ? `testers_package set true in ${root}/ui/data/features.json` : 'testers_package was already true');
     } else if (cmd === 'lock') {
       const root = opt('--root') ? resolve(opt('--root')) : null;
       if (!root) usage();
@@ -438,7 +491,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.log(lockReduceFlashing(root) ? `lock_reduce_flashing set true in ${root}/ui/data/features.json` : 'lock_reduce_flashing was already true');
     } else if (cmd === 'verify') {
       if (!PLATFORMS.includes(platform) || !opt('--dir')) usage();
-      const problems = verifyDir(platform, resolve(opt('--dir')), { commit: opt('--commit'), notice: opt('--notice') || null, private: args.includes('--private'), locked: args.includes('--locked') ? true : args.includes('--unlocked') ? false : undefined });
+      const problems = verifyDir(platform, resolve(opt('--dir')), { commit: opt('--commit'), notice: opt('--notice') || null, private: args.includes('--private'), testers: args.includes('--testers') ? true : args.includes('--no-testers') ? false : undefined, locked: args.includes('--locked') ? true : args.includes('--unlocked') ? false : undefined });
       if (problems.length) { for (const p of problems) console.error(`desktop package FAILED (${platform}): ${p}`); process.exit(1); }
       console.log(`desktop package ok (${platform}): the files, the executable's magic bytes, the embedded pck, build_info.json, README.txt and NOTICES.txt hold.${platform === 'linux' ? '' : ` This was read, not run: a ${platform === 'windows' ? 'Windows' : 'macOS'} build cannot be started on this machine.`}`);
     } else usage();

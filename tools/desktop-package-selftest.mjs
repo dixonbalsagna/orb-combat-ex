@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, chmodSync 
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
+import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setTestersPackage, testersMenu, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -228,6 +228,26 @@ try {
     const R = (o = {}) => routeProblems(repo, { presets: presetsOk, ...o, files: { 'ui/data/features.json': lockedFeatures, ...(o.files || {}) } });
     const base = R();
     check('routes: the real tree, locked, with net/ excluded and a macOS preset, has no problem', base.length === 0, JSON.stringify(base));
+    // the testers' package (path to Alpha 1 job 14): the flag on and the menu hiding the rows testers cannot use; off in Orb's own build
+    const testersOn = features.replace(/"testers_package"\s*:\s*false/, '"testers_package": true');
+    check('testers: the testers\' package with the flag on has no problem; the flag off in it is named', R({ testers: true, files: { 'ui/data/features.json': lockedFeatures.replace(/"testers_package"\s*:\s*false/, '"testers_package": true') } }).length === 0 && R({ testers: true }).some((p) => /testers_package is not true/.test(p)));
+    check('testers: Orb\'s own build (no testers flag) with the flag on is named, with it off has no problem', R({ testers: false, files: { 'ui/data/features.json': lockedFeatures.replace(/"testers_package"\s*:\s*false/, '"testers_package": true') } }).some((p) => /not the testers' package/.test(p)) && R({ testers: false }).length === 0);
+    void testersOn;
+    const menu = testersMenu({ modes: [{ id: 'solo', testers: true }, { id: 'lan', testers: false }, { id: 'campaign', testers: false }] }, true);
+    check('testers: the menu hides the rows whose testers flag is false and keeps the rest; with the flag off it hides none', menu.shown.join() === 'solo' && menu.hidden.join() === 'lan,campaign' && !menu.problems.length && testersMenu({ modes: [{ id: 'solo', testers: true }, { id: 'lan', testers: false }] }, false).shown.length === 2);
+    check('testers: a row with no testers flag is named, and so are no rows', testersMenu({ modes: [{ id: 'x' }] }, true).problems.length === 1 && testersMenu({}, true).problems.length === 1);
+    {
+      const d = mkdtempSync(join(tmpdir(), 'testers-'));
+      try {
+        mkdirSync(join(d, 'ui', 'data'), { recursive: true });
+        const ff = join(d, 'ui', 'data', 'features.json');
+        writeFileSync(ff, '{\n  "testers_package": false,\n  "other": false\n}\n');
+        check('testers: the setter sets testers_package true and nothing else, and a second run changes nothing', setTestersPackage(d) === true && readFileSync(ff, 'utf8') === '{\n  "testers_package": true,\n  "other": false\n}\n' && setTestersPackage(d) === false);
+        writeFileSync(ff, '{ "x": 1 }');
+        let threw = false; try { setTestersPackage(d); } catch { threw = true; }
+        check('testers: a tree with no testers_package flag is refused, not guessed at', threw);
+      } finally { rmSync(d, { recursive: true, force: true }); }
+    }
     check('routes: the six words are the reviewed ones', SIX_WORDS.join(',') === 'bench,frames,shot,nonotice,flashcap,study');
     const hud = readFileSync(join(repo, 'ui', 'hud', 'ui_hud.gd'), 'utf8'), main = readFileSync(join(repo, 'render', 'core', 'main.gd'), 'utf8');
     const sendReal = readFileSync(join(repo, 'ui', 'data', 'send.json'), 'utf8');
