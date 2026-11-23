@@ -1,0 +1,22 @@
+{
+  "_about": "The limits and patterns of tools/report-scan.mjs (Tools, 2026-11-23; path to Alpha 1 job 14: 'a size limit on the report and a scan of it for names and folder paths'; X-21: the report file must fit Discord's free upload limit). The report is the folder the game makes (match files in user://reports and, when UI's grant lands, the newest logs). UI ports `redact` to the game with these same patterns, so a copied log is cleaned before it is written; this tool is what proves the folder is clean after the fact (a test, CI on a made report, and a person's own check).",
+  "discordFreeUploadBytes": 20971520,
+  "discordNote": "Discord's free (non-Nitro) upload limit is 20 MB per file since 13 August 2026 (it was 10 MB; Neowin, https://www.neowin.net/news/discord-raises-file-size-upload-limit-for-its-non-subscribers/, quoting Discord's announcement; Discord's own help page was not read by Tools: re-check it before the guide is final). The limits below stay well under it so a report still goes if the limit is read as 10 MB.",
+  "perFileBytes": 4194304,
+  "totalBytes": 9437184,
+  "perFileNote": "4 MB a file and 9 MB for the whole folder (under the old 10 MB limit as well as the new 20 MB one). A half-hour match's replay is the largest file the game writes; a log is cut to its last 200 KB by the copy.",
+  "textExtensions": [".json", ".txt", ".log", ".md", ".csv"],
+  "patterns": {
+    "windowsUserFolder": { "rx": "[A-Za-z]:[\\\\/]+Users[\\\\/]+[^\\\\/\\s\"'<>|:*?]+", "why": "a Windows user's folder: the account name" },
+    "posixHome": { "rx": "(?:/[a-z])?/(?:Users|home)/[^/\\s\"'<>|:*?]+", "why": "a user's home folder: the account name" },
+    "driveRoot": { "rx": "\\b[A-Za-z]:[\\\\/][^\\s\"']{2,}", "why": "a path on a drive of this PC" },
+    "uncShare": { "rx": "\\\\\\\\[A-Za-z0-9_.-]+\\\\[A-Za-z0-9_.$-]+", "why": "a network share: a PC name" },
+    "email": { "rx": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "why": "an email address" },
+    "ipv4": { "rx": "\\b(?!127\\.0\\.0\\.1\\b)(?!0\\.0\\.0\\.0\\b)(?:\\d{1,3}\\.){3}\\d{1,3}\\b", "why": "an IPv4 address (not 127.0.0.1)" },
+    "mac": { "rx": "\\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\\b", "why": "a network card's address" }
+  },
+  "allowLines": {
+    "_about": "Lines that look like a hit and are not: the engine's own banner and version lines. Matched against the whole line.",
+    "rx": ["^Godot Engine v[\\d.]+", "^Vulkan |^OpenGL ES|^Mesa |^Requested V-Sync"]
+  }
+}

@@ -6,6 +6,7 @@
 //   1 the program died (a non-zero exit, not a clean quit)               2 a log file exists in the game's data folder (user://logs)
 //   3 that log says why (the engine's own error line with the reason)    4 the NEXT start keeps the dead run's log (the log is rotated to a dated file, not overwritten)
 //   5 a hang is stopped by the harness at its time limit and its log shows the run started (what a hang leaves; nothing says WHY: a hang has no reason line, and that is reported, not hidden)
+//   7 the logs pass the report scan (tools/report-scan.mjs: no folder path, no account or PC name, under the size limit)
 //   6 the report folder picks the log up (--expect-report; WAITING until UI's report folder copies the logs: the rows say so and do not fail the run without the flag)
 // The record is written clean of folder paths. Nothing is uploaded. Godot runs headless at below-normal priority.
 import { spawn, spawnSync } from 'node:child_process';
@@ -15,6 +16,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { cleanPaths } from '../record-paths.mjs';
 import { isolatedEnv } from '../smoke/mode-smoke.mjs';
+import { scanPaths, machineNames } from '../report-scan.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const REASON = 'forced crash test (scratch)';
@@ -119,6 +121,8 @@ async function main() {
     const reports = join(home);
     const picked = (function find(d) { if (!existsSync(d)) return false; for (const n of readdirSync(d)) { const f = join(d, n); if (statSync(f).isDirectory()) { if (/reports$/.test(f) && readdirSync(f).some((m) => /\.log$/i.test(m) || /log/i.test(m))) return true; if (find(f)) return true; } } return false; })(reports);
     row('6 the report folder picks the log up', a.includes('--expect-report') ? picked : (picked ? true : null), picked ? 'a log is in user://reports' : 'nothing in user://reports (UI\'s report folder does not copy logs yet: waiting for a grant)');
+    const sc = scanPaths([home], { names: machineNames() });
+    row('7 the logs pass the report scan (no folder path, no account or PC name, under the size limit)', sc.findings.length === 0, `${sc.files.length} file(s) scanned, ${sc.findings.length} finding(s)${sc.findings.length ? ': ' + [...new Set(sc.findings.map((f) => f.rule))].join(', ') : ''}`);
     void crashLog;
   } catch (e) { row('the test could not run', false, e.message); }
   finally { if (!a.includes('--keep')) { try { rmSync(scratch, { recursive: true, force: true }); } catch { /* left */ } } }

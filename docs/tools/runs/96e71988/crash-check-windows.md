@@ -1,4 +1,4 @@
-# Forced-crash check, windows, commit ec80e318 (2026-11-23)
+# Forced-crash check, windows, commit 96e71988 (2026-11-23)
 
 - ok: the "Windows Desktop" release export with the probe (121147880 bytes)
 - ok: 1 the program died (not a clean quit) (exit 3221225501)
@@ -7,5 +7,6 @@
 - ok: 4 the next start keeps the dead run's log (rotated to a dated file, not overwritten) (1 then 2 file(s); next start exit 0)
 - ok: 5 a hang is stopped by the harness; its log shows the run started (stopped at the limit; a hang leaves no reason line)
 - WAITING: 6 the report folder picks the log up (nothing in user://reports (UI's report folder does not copy logs yet: waiting for a grant))
+- ok: 7 the logs pass the report scan (no folder path, no account or PC name, under the size limit) (7 file(s) scanned, 0 finding(s))
 
 0 failed.
