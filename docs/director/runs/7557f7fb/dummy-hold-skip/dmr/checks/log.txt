@@ -1,0 +1,5 @@
+13:55:46 hold_answer_check exit 1: HOLD ANSWER: 1 check(s) failed
+13:56:15 chase_tap_check exit 0: CHASE: 0 check(s) failed
+14:00:53 golden exit 0
+14:00:53 lane checks done
+14:20 hold_answer_check rerun after re-wording the two perfect-block rows to count over the charges released at full (the first run's failing row asked every one of 100 stagings to release at full; the Medium computer's own strikes cut 23 short): exit 0: HOLD ANSWER: 0 check(s) failed (28 ok)

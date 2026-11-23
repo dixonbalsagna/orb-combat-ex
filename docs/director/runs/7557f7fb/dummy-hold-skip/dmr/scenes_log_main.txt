@@ -1,0 +1,22 @@
+13:02:57 f1 mashdummy PROTAGONIST,REFERENCE 3600 exit 0
+mashdummy  normal   seed 12345  3600 ticks: 182 asks, 169 granted, worst 6 in 60 ticks (the register's own figure), events damage 212, beam_outcome 1, transform 0, building_fall 17, tier_up 0, shot_hit 8, shot_clash 1
+mashdummy  reduced  seed 12345  3600 ticks: 252 asks,   8 granted, worst 3 in 60 ticks (the register's own figure), events damage 212, beam_outcome 1, transform 0, building_fall 17, tier_up 0, shot_hit 8, shot_clash 1
+13:04:36 f2 mashdummy RIVAL,REFERENCE 3600 exit 0
+mashdummy  normal   seed 12345  3600 ticks: 218 asks, 188 granted, worst 6 in 60 ticks (the register's own figure), events damage 248, beam_outcome 1, transform 0, building_fall 2, tier_up 0, shot_hit 6, shot_clash 0
+mashdummy  reduced  seed 12345  3600 ticks: 291 asks,  10 granted, worst 1 in 60 ticks (the register's own figure), events damage 248, beam_outcome 1, transform 0, building_fall 2, tier_up 0, shot_hit 6, shot_clash 0
+13:06:47 f3 signaturedummy PROTAGONIST,REFERENCE 5400 exit 0
+signaturedummy normal   seed 12345  5400 ticks: 355 asks, 268 granted, worst 6 in 60 ticks (the register's own figure), events damage 474, beam_outcome 5, transform 0, building_fall 6, tier_up 0, shot_hit 0, shot_clash 0
+signaturedummy reduced  seed 12345  5400 ticks: 564 asks,  14 granted, worst 1 in 60 ticks (the register's own figure), events damage 474, beam_outcome 5, transform 0, building_fall 6, tier_up 0, shot_hit 0, shot_clash 0
+13:09:03 f4 signaturedummy RIVAL,REFERENCE 5400 exit 0
+signaturedummy normal   seed 12345  5400 ticks: 333 asks, 241 granted, worst 6 in 60 ticks (the register's own figure), events damage 407, beam_outcome 6, transform 0, building_fall 11, tier_up 0, shot_hit 0, shot_clash 0
+signaturedummy reduced  seed 12345  5400 ticks: 490 asks,  12 granted, worst 1 in 60 ticks (the register's own figure), events damage 407, beam_outcome 6, transform 0, building_fall 11, tier_up 0, shot_hit 0, shot_clash 0
+13:11:15 f5 ring PROTAGONIST,RIVAL,RIVAL 3600 exit 0
+ring       normal   seed 12345  3600 ticks: 137 asks, 132 granted, worst 6 in 60 ticks (the register's own figure), events damage 102, beam_outcome 5, transform 0, building_fall 26, tier_up 0, shot_hit 1, shot_clash 0
+ring       reduced  seed 12345  3600 ticks: 133 asks,   7 granted, worst 1 in 60 ticks (the register's own figure), events damage 102, beam_outcome 5, transform 0, building_fall 26, tier_up 0, shot_hit 1, shot_clash 0
+13:13:29 f6 ring PROTAGONIST,RIVAL,RIVAL,RIVAL,RIVAL 3600 exit 0
+ring       normal   seed 12345  3600 ticks: 166 asks, 153 granted, worst 6 in 60 ticks (the register's own figure), events damage 145, beam_outcome 4, transform 0, building_fall 18, tier_up 0, shot_hit 6, shot_clash 0
+ring       reduced  seed 12345  3600 ticks: 167 asks,   7 granted, worst 3 in 60 ticks (the register's own figure), events damage 145, beam_outcome 4, transform 0, building_fall 18, tier_up 0, shot_hit 6, shot_clash 0
+13:15:06 f7 launchai - 3600 exit 0
+launchai   normal   seed 12345  3600 ticks: 146 asks, 144 granted, worst 6 in 60 ticks (the register's own figure), events damage 118, beam_outcome 1, transform 0, building_fall 10, tier_up 0, shot_hit 3, shot_clash 0
+launchai   reduced  seed 12345  3600 ticks: 155 asks,  10 granted, worst 3 in 60 ticks (the register's own figure), events damage 118, beam_outcome 1, transform 0, building_fall 10, tier_up 0, shot_hit 3, shot_clash 0
+13:15:06 lane flash done

@@ -1,0 +1,30 @@
+ok    drawn, in reach: it grabs after its reaction time, never sooner (+14 against 14)
+ok    ... the clinch starts one ahead (a grab beats the armour) and the charge never lands
+ok    the hold-break's throw is worth 1.50 times the throw (72.5 against 48.4; holdBreak.worthMul 1.50)
+ok    ... and leaves no noRegrab (-77 ticks left; without the rule, 120)
+ok    drawn, out of reach but close enough: it closes in (+14) and grabs before the first flash (+28, the flash at +32)
+ok    drawn, too far to close in time: it doesn't close in or grab; it slips the release (+51, the release at +50) at no energy (0.0)
+ok    ... the charge meets nothing (the miss cue says dodged) and the computer punishes him while he is open
+ok    drawn, no catch to be had (a lockout): the same slip, miss and punish
+ok    ... with the dodge's cooldown running and no ki it still slips, and the charge meets nothing: the slip, never refused by the dodge-cancel's cooldown
+ok    ... the third slip of one direction inside 3 s keeps its movement and loses its frames: the charge isn't made to miss (the slip's rule, R34)
+ok    in every drawn hold it never guards and never gives ground
+ok    repetition at Medium: a lone hold isn't answered (its count 1, byCount's first entry), and the charge reaches its release at full
+ok    ... a lone hold isn't answered at Easy either (its count 1, byCount's first entry)
+ok    ... a third hold in the window (two before it, 100 and 220 ticks earlier) is answered: its count 3, chance 0.9, its keyed draw 0.177
+ok    Easy's window (420): two earlier holds 200 and 360 ticks back count 3 at Easy, and 2 at Medium (300)
+ok    ... holds older than the window don't count: two 320 and 380 ticks earlier leave a count of 1, unanswered
+ok    ... the record counts real holds: three visible holds, each 60 ticks or more after the last, count [1, 2, 3] (their starts [6, 56, 105])
+ok    a tap isn't a visible hold: B let go at 3 ticks is never noted, grabbed or dodged (the answer at 1.0)
+ok    one draw a hold, keyed by its start: of 2,000 holds, easy by count [0.000 (data 0.00), 0.300 (data 0.30), 0.642 (data 0.65)], medium by count [0.000 (data 0.00), 0.400 (data 0.40), 0.912 (data 0.90)], hard 0.948 (data 0.95)
+ok    the exploit is closed: the charge-only pad doesn't win every Medium match (the pad 2, the computer 4, of 6)
+ok    negative control: holdAnswer 0 and the old answers at 0: nothing answers the hold, and the charge reaches its release at full
+ok    the idle training dummy never answers a hold (ai.json idleDummy.roles ["reference"]): with the answer at 1.0 it doesn't note, grab, close in or slip, and the charge reaches its release at full (1.00)
+ok    ... nor a third hold in Medium's window (the standard AI answers it at 0.9, the row above): never counted, the charge at full (1.00)
+ok    ... nor does it slip a release it can't reach (2.3 bh out): the charge isn't made to miss (the miss cue says nothing)
+ok    ... the skip is the dummy against a player only: against another computer (Tools' AI pairings) the reference fighter answers as the fighters do (skips against a computer false, against a player true)
+ok    the idle training dummy never perfect-blocks a full charge (idleDummy.skips perfectVsHeavy): 0 of 77 at Medium, and every one landed unguarded (77)
+ok    ... while a computer still perfect-blocks it at its level's number (Medium perfectVsHeavy 0.30): the reference fighter as standard AI 23 of 77, RIVAL 23 of 77
+ok    ... and at Easy's (0.05): RIVAL 6 of 99
+HOLD ANSWER: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

@@ -1,0 +1,42 @@
+json1 mashdummy      PROTAGONIST+REFERENCE                normal 
+   main : damage 212, launch 8, launch_plan 7, building_fall 17, beam_outcome 1, shot_hit 8 (3600 ticks)  meets
+   skip : damage 212, launch 8, launch_plan 7, building_fall 17, beam_outcome 1, shot_hit 8 (3600 ticks)  meets  identical events
+json1 mashdummy      PROTAGONIST+REFERENCE                reduced
+   main : damage 212, launch 8, launch_plan 7, building_fall 17, beam_outcome 1, shot_hit 8 (3600 ticks)  meets
+   skip : damage 212, launch 8, launch_plan 7, building_fall 17, beam_outcome 1, shot_hit 8 (3600 ticks)  meets  identical events
+json2 mashdummy      RIVAL+REFERENCE                      normal 
+   main : damage 248, launch 1, launch_plan 0, building_fall 2, beam_outcome 1, shot_hit 6 (3600 ticks)  meets
+   skip : damage 208, launch 1, launch_plan 0, building_fall 2, beam_outcome 1, shot_hit 4 (3600 ticks)  meets  EVENTS DIFFER
+json2 mashdummy      RIVAL+REFERENCE                      reduced
+   main : damage 248, launch 1, launch_plan 0, building_fall 2, beam_outcome 1, shot_hit 6 (3600 ticks)  meets
+   skip : damage 208, launch 1, launch_plan 0, building_fall 2, beam_outcome 1, shot_hit 4 (3600 ticks)  meets  EVENTS DIFFER
+json3 signaturedummy PROTAGONIST+REFERENCE                normal 
+   main : damage 474, launch 4, launch_plan 8, building_fall 6, beam_outcome 5, shot_hit 0 (5400 ticks)  meets
+   skip : damage 474, launch 4, launch_plan 8, building_fall 6, beam_outcome 5, shot_hit 0 (5400 ticks)  meets  identical events
+json3 signaturedummy PROTAGONIST+REFERENCE                reduced
+   main : damage 474, launch 4, launch_plan 8, building_fall 6, beam_outcome 5, shot_hit 0 (5400 ticks)  meets
+   skip : damage 474, launch 4, launch_plan 8, building_fall 6, beam_outcome 5, shot_hit 0 (5400 ticks)  meets  identical events
+json4 signaturedummy RIVAL+REFERENCE                      normal 
+   main : damage 407, launch 6, launch_plan 17, building_fall 11, beam_outcome 6, shot_hit 0 (5400 ticks)  meets
+   skip : damage 407, launch 6, launch_plan 17, building_fall 11, beam_outcome 6, shot_hit 0 (5400 ticks)  meets  identical events
+json4 signaturedummy RIVAL+REFERENCE                      reduced
+   main : damage 407, launch 6, launch_plan 17, building_fall 11, beam_outcome 6, shot_hit 0 (5400 ticks)  meets
+   skip : damage 407, launch 6, launch_plan 17, building_fall 11, beam_outcome 6, shot_hit 0 (5400 ticks)  meets  identical events
+json5 ring           PROTAGONIST+RIVAL                    normal 
+   main : damage 102, launch 5, launch_plan 8, building_fall 26, beam_outcome 5, shot_hit 1 (3600 ticks)  meets
+   skip : damage 102, launch 5, launch_plan 8, building_fall 26, beam_outcome 5, shot_hit 1 (3600 ticks)  meets  identical events
+json5 ring           PROTAGONIST+RIVAL                    reduced
+   main : damage 102, launch 5, launch_plan 8, building_fall 26, beam_outcome 5, shot_hit 1 (3600 ticks)  meets
+   skip : damage 102, launch 5, launch_plan 8, building_fall 26, beam_outcome 5, shot_hit 1 (3600 ticks)  meets  identical events
+json6 ring           PROTAGONIST+RIVAL                    normal 
+   main : damage 145, launch 3, launch_plan 6, building_fall 18, beam_outcome 4, shot_hit 6 (3600 ticks)  meets
+   skip : damage 145, launch 3, launch_plan 6, building_fall 18, beam_outcome 4, shot_hit 6 (3600 ticks)  meets  identical events
+json6 ring           PROTAGONIST+RIVAL                    reduced
+   main : damage 145, launch 3, launch_plan 6, building_fall 18, beam_outcome 4, shot_hit 6 (3600 ticks)  meets
+   skip : damage 145, launch 3, launch_plan 6, building_fall 18, beam_outcome 4, shot_hit 6 (3600 ticks)  meets  identical events
+json7 launchai       PROTAGONIST+RIVAL                    normal 
+   main : damage 118, launch 8, launch_plan 20, building_fall 10, beam_outcome 1, shot_hit 3 (3600 ticks)  meets
+   skip : damage 118, launch 8, launch_plan 20, building_fall 10, beam_outcome 1, shot_hit 3 (3600 ticks)  meets  identical events
+json7 launchai       PROTAGONIST+RIVAL                    reduced
+   main : damage 118, launch 8, launch_plan 20, building_fall 10, beam_outcome 1, shot_hit 3 (3600 ticks)  meets
+   skip : damage 118, launch 8, launch_plan 20, building_fall 10, beam_outcome 1, shot_hit 3 (3600 ticks)  meets  identical events
