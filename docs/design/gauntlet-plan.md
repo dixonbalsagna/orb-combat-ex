@@ -162,3 +162,113 @@ Easy's evasive stance plays the planned dodge set piece for 2 to 3 s a minute. *
 **Two confirmations on Simulation's build (2026-11-09):**
 1. **Yes:** blows named launch (the close, a medium sold to a dazed fighter, a level-3 stick charge) and named heavies are never cut, and chain links and opener atoms inside a heavy exchange are cut as lights. That's what was meant: the cut falls on the volume of small hits, never on the big beats.
 2. **Hit-stop by weight follows the same two numbers** (0.12 and ×0.7), since the target is the match's, not the table's. **But its own never-cut list takes the same weights as `budgetAny`:** heavy, launch and launch_full as well as decisive and KO. So its over-budget table is **2, 2, 4, 8, 12, 14** (light_mash, light, medium, heavy, launch, launch_full), not 2, 2, 4, 6, 8, 10. One weight keeps one feel whichever table is live.
+
+## 9. Which pad the level bands are for (2026-11-21, Encounter's `pending/x06-bands/`, QA's `readings/x06-orbs-scheme-win-rates.md`)
+
+**(a), with a floor.**
+- **The bands (Easy 60 to 80, Medium 35 to 55, Hard 10 to 30) are for a player using the whole kit of Orb's scheme:** stick strikes with holds, the guard, beams and the face buttons. That full-kit pad is the yardstick, so **Encounter's candidate is accepted:** Medium matches pace as Easy does, and answers full charges as Hard does. It brings the charge pad to 47%.
+- **One-note pads (strike-only, the X masher, beams only, B charge only) get their own rows:**
+  - **at Medium none is below 20%,** so a newcomer who presses one thing isn't hopeless;
+  - **none is above the full-kit band's top (55%),** so no single button is the best way to play. **The B-charge-only pad's 60 of 60 at Medium is an exploit,** and the candidate's answer to full charges has to bring it under 55%.
+  - Stick-only stays within 10 points of the masher (`stick-lands.md`).
+- **If strike-only is still under 20% at Medium with the candidate on, its lever is outside the levels and in the stick's own data** (Encounter, with Combat), not in damage or hit-stun across the board (Simulation). `flickRun` 1.5 is already on, so in order:
+  1. the steal (`stick.json` `steal`);
+  2. the quick flick at range from a light's 8.6 toward 1.5 lights (my stick-at-range lever).
+- **QA re-reads all five pads at 40 a cell** with the candidate on.
+
+**The charge exploit (2026-11-21, Encounter's read):** a pad that only holds B to full and releases wins 40 of 40 at Medium and 60 of 60 at Easy, and no Medium knob closes it. The charges that land decide it.
+
+**The lever is the full charge's damage, down: `brawl.heavy.charge.worth` [8, 10] → [6, 7].** A charge starts at the plain heavy's 6 and is full at 7.
+- **Why that lever:** the send and its share (`power.json` `fullB` 1.0) are the energy model's physics and the spectacle, and `power-scale.md`'s whole table is built on them. Wear is outside the model, and it's the balance lever (`power-scale.md`: "Hit damage stays where it is").
+- At 10, a full charge did about four mediums' wear in the same 0.8 s, armoured against lights, and sent as well. At 7, holding buys the armour and the send, not extra wear. That's what a hold is for.
+- **QA reads it against the five pads:** the B-charge-only pad at most 55% at Medium (the one-note ceiling), and the full-kit pad still inside 35 to 55%.
+- **If the charge pad is still over 55%,** the next lever is the decisive weight of a full B landed on a fighter who wasn't opened (`setup.weight` 1 → 0.5). It's never the hold's length or the send.
+
+**Strike-only at Medium, after the stick levers did nothing (2026-11-21):**
+- **It waits until the charge fix and the Medium candidate are read,** one lever at a time. The charge's lower worth weakens the computer's own charged heavies as well, so the trade a strike pad faces moves anyway.
+- **If it's still under 20% then, the lever is the up-close flick's recovery, `quickRecover` 7 → 5, not its worth or stun.** That's pace, not power: the stick stays bare and lighter than B, and a quicker return lets it trade with lights up close. Stun doesn't help a pad that only flicks, because of one stun a string.
+
+**Why the charge lands (2026-11-21, Encounter's record `docs/director/runs/01367c97/x06-charge-worth/`):** of 1,256 full charges released at Medium, 834 hit, 382 were perfect-blocked, 33 guarded, and **7 met nothing**. All 1,256 reached their release: **the computer never interrupts or evades during a visible 44-tick hold.** It stands there and waits to block at contact. With the worth cut, the charge-only pad still wins 20 of 20, and **the full-kit pad falls to 20%**.
+
+**Ruling: the real lever is the computer's answer to a held charge, not the payoff.**
+1. **Revert the worth cut** (`charge.worth` back to [8, 10]). It didn't close the exploit, and it pushed the full kit out of its band.
+2. **The computer answers a visible hold during the hold** (Encounter's `ai.json`, by level, after its level's reaction time):
+   - **in reach, it grabs,** because a grab beats the armour;
+   - **otherwise it steps out of reach,** so the charge whiffs into its 20-tick recovery, **and punishes it.**
+   - **Chances by level:** easy 0.25, **medium 0.5**, hard 0.8.
+   - **It never relies on the perfect block alone.** A held charge is a visible tell, Orb's "power up at your peril", and a readable tell has to be answerable.
+3. **QA reads the five pads again:**
+   - the B-charge-only pad at most 55% at Medium and at most 80% at Easy;
+   - the full kit inside 35 to 55% at Medium.
+4. **The `setup.weight` code change waits,** and it's only needed if the answer during the hold isn't enough.
+
+**The hold answer, one combined ruling for the last read (2026-11-21, Encounter's `pending/x06-bands/`):**
+1. **Medium's chance: 0.8** (measured: the charge-only pad at 30%, inside the one-note band of 20 to 55%). **Hard's goes to 0.95,** so Hard stays above Medium.
+2. **Easy's lever: both, for a grab that breaks a held charge only.**
+   - **`noRegrab` doesn't start for a hold-break.** It exists against grab loops, and a fighter who chooses to hold again isn't one.
+   - **The hold-break's throw is worth 1.5 times the throw** (6 → 9), with its opening as now. Breaking a charge is a punish, and it's worth what the charge would have been.
+   - Easy's chance stays **0.5.**
+   - **Target:** the charge-only pad at most 80% at Easy.
+3. **The "otherwise" branch** (out of grab reach): **close in and grab** if the computer can reach grab range before the charge's first flash (a snap or lunge, which is Orb's well: "he must snap in to interrupt you"). **Else a dodge timed to the release:** the charge misses and he's open for the miss's ticks, so the computer punishes. **Never guard and never step out:** a guarded full charge staggers the guard, and a released charge closes 3 to 6 bh (`press-decides.md` §2).
+4. **Computer against computer keeps each level's shipped pace:** Medium's `noHuman` **8** (Encounter's value, confirmed), Hard's 6, and Easy's 27 as ruled. So the AI-against-AI bands aren't moved by a rule meant for human pace.
+
+**QA reads once:** the five pads at Easy, Medium and Hard.
+- **Bands:** charge-only at most 80% at Easy and at most 55% at Medium; the full kit inside 60 to 80, 35 to 55 and 10 to 30; every one-note pad at least 20% at Medium.
+
+## 10. X-06's final read, and what scripted pads can measure (2026-11-22, QA's `readings/x06-final-read.md`)
+
+**The read** (40 a cell, the candidate plus the hold answer at 0.5, 0.8 and 0.95):
+
+| | Kit | Strike | Masher | Beams | Charge |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| Easy | 80% | 45 | 40 | 52.5 | **95** |
+| Medium | **12.5** | 0 | 15 | 0 | 2.5 |
+| Hard | 0 | 0 | 0 | 0 | 0 |
+
+**The rulings:**
+1. **Medium's hold-answer chance goes back to 0.5,** with QA's re-read there. At 0.8 the answer closed the exploit, but it also punished the kit, which charges too (32.5% with the candidate alone, 12.5% with the 0.8 answer). The grab-in-reach and dodge-on-release branches now do the work a high chance was doing.
+2. **Easy's charge pad at 95%: Easy's chance goes from 0.5 to 0.65.** The kit at Easy sits at its band's top (80%), so it has room to come down a little, and no single button should be the best way to beat even Easy. **Target:** the charge pad at most 80%, and the kit inside 60 to 80%.
+3. **Hard's 0% cliff is later,** after a human read. It isn't A1 work, unless Medium's re-read shows the same cliff.
+
+**Are scripted pads a fair yardstick? For some things, not for the bands themselves.** A script is blind: it doesn't read the computer, adapt or punish, so its win rate measures the script as much as the game. **Scripted pads are the right tool for:**
+- **exploits and ceilings:** no one-note pad above 80% at Easy or 55% at Medium. A script that presses one thing is exactly that test;
+- **floors and cliffs:** a level where every script wins 0% has a cliff worth looking at;
+- **order:** at every level the kit beats each one-note pad, and every pad does better at Easy than at Medium, and at Medium than at Hard.
+
+**The band numbers themselves** (Easy 60 to 80, Medium 35 to 55, Hard 10 to 30) **are for people.** They're set on a human read: Orb's and Orb 2's play files, then the outside testers' (A2).
+
+**So X-06's A1 exit, by scripted pads, is:**
+- the ceilings above;
+- the order above;
+- **the kit at Medium at least 25%,** a scripted floor under the human band.
+
+Hard's scripted read is reported only.
+
+**Telling spam from a mix (2026-11-22, QA's `readings/x06-reread-hold-answer-recut.md`):** with one flat chance at Medium, no value passes both rows. The kit reads 27.5, 17.5, 10.0 and 12.5% at 0, 0.25, 0.5 and 0.8, and the charge pad 97.5, 50 and 2.5% at 0.25, 0.5 and 0.8. **(a): the computer's answer reads repetition.**
+- **Medium's chance by how many holds that fighter has started in the last 300 ticks** (5 s), this one included: **the first 0, the second 0.4, the third or more 0.9.**
+- **Why:** a hold that comes once in a while is a choice, and the answers at contact (the perfect block, the guard) are enough for it. A fighter who holds again and again is predictable, and the computer reads the pattern and steps in. It's an adaptive answer to repetition, Orb's "adaptive to what the player is trying to do", it applies to people as much as to scripts, and it rewards a varied attack.
+- **By the numbers:** the scripted kit's holds are 300 to 390 ticks apart, so each one is the first in its window, answered at 0 (27.5%, over the 25% floor). The charge pad holds every couple of seconds, answered at 0.9 (about 2.5%, under the 55% ceiling).
+- **Easy stays at a flat 0.65,** which passes. **Hard stays at 0.95,** for the human read.
+- **Data:** `ai.json` `levels.medium.brawl.holdAnswer: { "windowTicks": 300, "byCount": [0, 0.4, 0.9] }`.
+- **QA reads once:** the kit at Medium at least 25%, the charge pad at most 55%, and the order. **If it fails, the fallback is (b):** land at 0.5 with the exploit closed and the kit's floor marked "the scripted kit charges blindly; waiting for human play".
+
+**Easy's shape (2026-11-22, QA's `readings/x06-landing-read.md`):** with Medium reading repetition and Easy flat at 0.65, the charge pad wins 22.5% at Easy and 50% at Medium. That's harder at Easy, which breaks the order: Easy answered every hold, while Medium leaves a lone hold alone.
+- **Easy reads repetition too, more gently: `levels.easy.brawl.holdAnswer: { "windowTicks": 300, "byCount": [0, 0.3, 0.75] }`.** A lone hold goes unanswered at every level, and Easy steps in less often than Medium on a pattern.
+- **Target:** the charge pad between Medium's 50% and Easy's ceiling of 80%, about 60 to 75%.
+- **Lever:** if it reads over 80%, the third value goes to 0.8. Under 50%, to 0.7. The first two values stay.
+- **The kit's floor at Medium waits for QA's bisect of the baseline** that GW1b moved (main alone 5%). This rule doesn't change it.
+
+**Easy's numbers, on Encounter's probe (2026-11-22):** the charge pad's real holds come about 187 live ticks apart, so a 300-tick window mostly counts 2 (63%), and Easy answers 39% of holds, against Medium's 45%. The pad reads 100% at Easy and 50% at Medium. **Easy needs more answers than Medium to land below 80%,** because Easy's other knobs leave the pad stronger. The order line is about win rates, not answer rates.
+- **Easy: `holdAnswer: { "windowTicks": 420, "byCount": [0, 0.3, 0.65] }`.** Its chances per hold stay gentler than Medium's (0.3 and 0.65 against 0.4 and 0.9), and **a longer memory catches the pattern:** at 187 ticks apart, a 420-tick window usually holds the two earlier holds, so it answers about half of them. Between the two reads (39% answered → 100%, flat 0.65 → 22.5%), that puts the pad at **about 60 to 70%,** inside the target and above Medium's 50%.
+- **Lever:** if the cell reads over 75%, the third value goes to 0.7. Under 55%, to 0.6.
+- **No shorter cooldown for the computer's dodge.** The computer plays by the player's rules (`modes.md`). **Its dodge on a charge's release uses the slip** (LT tap and a flick: no energy, and no 180-tick cooldown, with the slip's own third-in-3-s rule), **not the dodge-cancel.** The slip's protection makes the charge miss, as a dodge does.
+- **One QA cell (Easy, the charge pad, 40), then X-06 lands.**
+
+**X-06 lands as built (2026-11-22, QA's `readings/x06-landing-read.md`):**
+- **Medium:** the charge pad reads 45%. **The exploit is closed: a pass.**
+- **Easy's charge pad (90%, against the 80% ceiling) and the kit's floor at Medium (10%, against 25%): not met on scripts. Tune on human play.**
+  - Easy's figure has swung with main across cuts (57.5, 22.5, 100, 90%), so 40-a-cell scripts can't place it.
+  - The kit's floor waits on QA's bisect of the baseline that GW1b moved.
+  - Both are read again from Orb's and Orb 2's play files, then the outside testers' (A2), against the human bands in §10.
+
+**The training dummy and the hold answer (2026-11-23):** **the idle training dummy skips `holdAnswer`.** An idle dummy is there to be hit: to practise holds, launches and charges, and for Tools' scenes. It shouldn't grab or dodge a charge. Only the dummy set to "standard AI" (`modes.md`'s training toggles) answers holds, at its level's numbers.
