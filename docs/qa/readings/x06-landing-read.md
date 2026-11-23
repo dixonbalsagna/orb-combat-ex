@@ -66,3 +66,14 @@ Each tree is a prefix of `git log 7b69eafc..b624340a` (oldest first), exported c
 - **The kit's stick beam is not the cause:** beams a match are within 17.7 to 20.5 on every tree (the same pad, all by stick).
 - **b4 and bce578a7 play the same:** identical hit totals (24,579 and 34,087 with no diffs) and the same kit rates; nothing after the flip moves the kit.
 - **What 40 a cell cannot say:** whether the first group alone or all four together carry the fall. To split the first group, and to settle b0 against b1, 120 a cell on those two (about 20 minutes each) and then a finer cut inside the 28 commits. Records: `docs/qa/runs/bce578a7/x06-bisect-lines.txt`.
+
+## The last cell: the charge pad with Easy by repetition (main c1d89924 + the three diffs, `x06-hold-answer` 6368caa9, 2026-11-22; 40 each, jobs 2 below normal)
+
+Easy `holdAnswer` `{windowTicks 300, byCount [0, 0.3, 0.75]}`, Medium `{300, [0, 0.4, 0.9]}`, Hard 0.95. Same pad and planet settings as every X-06 read.
+
+| Charge pad | Won | Rate (Wilson 95%) | Target | Full charges (met nothing / perfect-blocked / guarded / hit) |
+| :--- | ---: | :--- | :--- | :--- |
+| Easy | **40 of 40** | **100.0%** (91.2 to 100.0) | 60 to 75% | 1,456: 38 / 77 / 62 / 1,279 |
+| Medium | 20 of 40 | 50.0% (35.2 to 64.8) | at most 55% | 1,905: 140 / 542 / 59 / 1,164 |
+
+**Reading.** The Easy target is **not met: 100%, above the 75% top and the 80% ceiling.** The order holds (Easy 100% against Medium 50%), but only because Easy is wide open: of 1,456 full charges, 38 met nothing and 77 were perfect-blocked, 1,279 hit. For comparison, the earlier flat 0.65 at Easy gave 22.5% on bce578a7 (9 of 40); repetition (0, 0.3, 0.75) swings it from 22.5% to 100%, so a charge pad's first hold at Easy goes unanswered and its repeats are answered too rarely at 0.75 to matter. Data hashes: Easy 13317a7c98c9a96b, Medium 8b004278ef77855d. Records: `docs/qa/runs/c1d89924/x06-last-cell-lines.txt`.
