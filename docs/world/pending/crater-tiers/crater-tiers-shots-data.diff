@@ -1,0 +1,8 @@
+diff --git a/data/biomes/blast.json b/data/biomes/blast.json
+index 16608ec..49e197a 100644
+--- a/data/biomes/blast.json
++++ b/data/biomes/blast.json
+@@ -3,2 +3,3 @@
+   "_about": "What an energy shot does to the world where it ends (sim/world/blast.gd; docs/world/ground-contact.md section 23). Per shot kind (data/fight/shots.json): craterE the crater's energy at tier 1 (1 is a scuff: a slam at 900 speed; the bowl radius is 160 units times its square root), radius and damage the structure blast at tier 1 (units, hit points), the effect counts and the shake. tierEnergy and tierDamage multiply by the shooter's tier 1 to 4. The structure reach by tier (fighter ladder reach.structure) and the casualty window apply as for any blast.",
++  "shotModel": true,
+   "kinds": {

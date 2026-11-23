@@ -1,0 +1,16 @@
+# bystanders_check read twice (gate G11): the world players get (no pin), then the older world (WorldPin.shipped(true)). World scratch n4 = main 52aa1708 + the GW1c stage 2 stack (the check file is main's)
+--- bystanders on the world players get (the data as shipped, no pin)
+      the match: generation 3, 3835 buildings, 1799 people alive
+BYSTANDERS (the world players get (the data as shipped, no pin)): 144.0 people ran in the scatter runs, none died
+--- bystanders on the older world (WorldPin.shipped(true))
+      the match: generation 3, 255 buildings, 1799 people alive
+BYSTANDERS (the older world (WorldPin.shipped(true))): 144.0 people ran in the scatter runs, none died
+BYSTANDERS: 0 check(s) failed
+# the same on a clean export of main 65768887 + bystanders-planet.diff only (World scratch m5)
+--- bystanders on the world players get (the data as shipped, no pin)
+      the match: generation 3, 3835 buildings, 1799 people alive
+BYSTANDERS (the world players get (the data as shipped, no pin)): 144.0 people ran in the scatter runs, none died
+--- bystanders on the older world (WorldPin.shipped(true))
+      the match: generation 3, 255 buildings, 1799 people alive
+BYSTANDERS (the older world (WorldPin.shipped(true))): 144.0 people ran in the scatter runs, none died
+BYSTANDERS: 0 check(s) failed

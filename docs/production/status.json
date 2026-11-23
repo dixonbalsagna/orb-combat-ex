@@ -172,7 +172,7 @@
     "A-NET-05": {
       "status": "landed",
       "ref": "f068b697",
-      "note": "Landed with B1 (f068b697..f70afd08); the EP's \"parked\" was stale (EP, 2026-11-20)."
+      "note": "Landed with B1 (f068b697..f70afd08); the EP's \"parked\" was stale (EP, 2026-11-20). The stand-in notes no saved record of the refusal (a replay from another build is refused with a plain message) yet; kept landed pending the EP's word."
     },
     "A-CONTROLS-02": {
       "status": "landed",
@@ -236,8 +236,8 @@
     },
     "A-UI-09": {
       "status": "landed",
-      "ref": "09e2de07",
-      "note": "UI's screen sweep, docs/ui/runs/09e2de07/screen-sweep/: all 24 menu states measured on the landed menus, smallest text 14 px, nothing cut off at 1280x800, 5 menu stills kept; stills with fighters held back by the rule. 09e2de07 is the run folder; the landing commit id follows in the EP's next push (EP, 2026-11-21)."
+      "ref": "ed1591cb",
+      "note": "UI's screen sweep, docs/ui/runs/09e2de07/screen-sweep/: all 24 menu states measured on the landed menus, smallest text 14 px, nothing cut off at 1280x800, 5 menu stills kept; stills with fighters held back by the rule. 09e2de07 is the run folder; the landing commit id follows in the EP's next push (EP, 2026-11-21). The landing commit is ed1591cb (exit-status page, 2026-11-23)."
     },
     "A-CODE-03": {
       "status": "landed",
@@ -287,7 +287,7 @@
     "A-CODE-04": {
       "status": "landed",
       "ref": "f391fec4",
-      "note": "A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer."
+      "note": "Landed f391fec4, but 55 check scripts are unreviewed (stand-in's exit-status page, 2026-11-23); kept landed pending the EP's word."
     },
     "A-ENERGY-06": {
       "status": "landed",
@@ -352,7 +352,52 @@
     "A-AI-10": {
       "status": "landed",
       "ref": "8006fe3d",
-      "note": "Landed on main locally, NOT PUSHED (EP, 2026-11-23): the computer now answers a held charge by repetition and Medium charge-only falls from 100% to 45%. Closes A-AI-10 as the work on the computer answering charges. The difficulty bands stay not met on scripts, waiting for human play, for Easy charge and Medium kit."
+      "note": "Landed 8006fe3d (X-06): the computer now answers a held charge by repetition and Medium charge-only falls from 100% to 45%. Pushed (0d21624b and later). The difficulty bands stay not met on scripts, waiting for human play, for Easy charge and Medium kit."
+    },
+    "A-QA-03": {
+      "status": "landed",
+      "ref": "471d1d4d",
+      "note": "The bug list holds Orb's 52 reported problems (docs/qa/readings/a-qa-03-bug-list.md); meets its own words. (EP and the stand-in's exit-status page, 2026-11-23)"
+    },
+    "A-QA-07": {
+      "status": "landed",
+      "ref": "471d1d4d",
+      "note": "Status and severity fields on the bug list (same reading); meets its own words. (EP and the stand-in's exit-status page, 2026-11-23)"
+    },
+    "A-QA-09": {
+      "status": "landed",
+      "ref": "471d1d4d",
+      "note": "The scripted player on Orb's scheme (qa/godot/orbs_player.gd); meets its own words. (EP and the stand-in's exit-status page, 2026-11-23)"
+    },
+    "A-QA-04": {
+      "status": "reported",
+      "ref": "471d1d4d",
+      "note": "Balance between the two fighters read on the played build (docs/qa/readings/a-qa-04-balance.md). (EP and the stand-in's exit-status page, 2026-11-23)"
+    },
+    "A-SAVES-01": {
+      "status": "reported",
+      "ref": "471d1d4d",
+      "note": "Replay-verify reading (docs/qa/readings/a-saves-01-replay-verify.md). (EP and the stand-in's exit-status page, 2026-11-23)"
+    },
+    "A-COMBAT-08": {
+      "status": "reported",
+      "ref": "471d1d4d",
+      "note": "Measuring tools: X-13 match checklist, X-16 sidestep, X-17 beam sources have first readings (docs/qa/readings/); not all readings meet their lines. (EP and the stand-in's exit-status page, 2026-11-23)"
+    },
+    "A-AI-03": {
+      "status": "reported",
+      "ref": "471d1d4d",
+      "note": "Medium and Hard win rates on Orb's scheme (docs/qa/readings/x06-*.md); the bands for Easy charge and Medium kit stay not met on scripts, waiting for human play. (EP and the stand-in's exit-status page, 2026-11-23)"
+    },
+    "A-AI-04": {
+      "status": "reported",
+      "ref": "471d1d4d",
+      "note": "Win rates on the played build's own data (a-code-02-shipped-batch.md and the X-06 readings). (EP and the stand-in's exit-status page, 2026-11-23)"
+    },
+    "A-AI-11": {
+      "status": "reported",
+      "ref": "471d1d4d",
+      "note": "Cell size for telling neighbouring bands apart (X-06 final read, 15 cells). (EP and the stand-in's exit-status page, 2026-11-23)"
     }
   },
   "added": [
@@ -575,7 +620,8 @@
     }
   },
   "notes": [
-    "GitHub access is locked, so nothing has reached CI since c1d89924 (EP, 2026-11-23); work since then is on main locally and not pushed. This includes X-06 (8006fe3d).",
+    "GitHub access is back: everything is pushed (0d21624b and later).",
+    "The stand-in's reading of A1's finish line (docs/ep/reviews/A1-exit-status.md, 2026-11-23, main 0d21624b): the finish line breaks into 44 parts: 13 met (5 on 20 Nov), 18 in main but not proven (11), 7 waiting to go in (21), 6 not started (7). Six of the seven waiting are the planet work (GW1c). Most of the 18 close with records taken once on the commit where the planet work lands. The tracker's row counts above are the register's 77 rows, a different count.",
     "GW1b landed on main (EP, Sun 22 Nov 08:45 PST): 7b69eafc..b624340a, 55 park commits, the planet flip as its own commit and uid files; gated on the s427 stack (render 19/19, golden equals Simulation's GW1b re-record, World list 90/90, CI checks clean). The round planet is now the default world; launch travel 1.5 and flat-out 3,500 are main's own values. Switch-diff against the 9 November build is still 0 of 5. X-06 is in its final scripted read (off main).",
     "GW1a landed on main: b20020b4..b0e20f9a (25 per-owner commits plus uid, Tools' retire and World's ground re-pin). Gate clean on the s423 full run and s424 targeted re-runs. Golden equals the target. Switch-diff against the 9 November build: 0 of 5 data rows. The 22 rows it closes are marked landed with their commits (mapping confirmed 2026-11-20).",
     "Rows now in main from the 9 November build: S-01 travel 2.0, S-02 Art biomes, S-03 menu_modes ON, M-04 memory under the model (inert), S-05 and S-42 saves never pruned. Next: Orb's first desktop build from this main, then GW1b (20 steps, planet flip last).",

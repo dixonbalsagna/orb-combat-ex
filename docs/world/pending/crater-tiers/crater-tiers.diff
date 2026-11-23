@@ -1,8 +1,54 @@
+diff --git a/data/biomes/craters.json b/data/biomes/craters.json
+index c7139fb..d49567d 100644
+--- a/data/biomes/craters.json
++++ b/data/biomes/craters.json
+@@ -10,2 +10,7 @@
+   },
++  "tier": {
++    "_about": "An impact's energy by the shooter's tier when the energy model is off (A-WORLD-06; docs/world/crater-tiers.md; Game Design, docs/design/buildings.md section 6.2): the multipliers of tiers 1 to 4, linear between. 1, 2.1, 4.3 and 9 make the crater's radius 1, 1.45, 2.07 and 3 times (X-14: three times at the top tier). With the model on the model decides and this is not read. on false is today's 25 percent a tier (1.32 times at tier 4). Shots (blast.json tierEnergy) take the same numbers.",
++    "on": false,
++    "energy": [1.0, 2.1, 4.3, 9.0]
++  },
+   "globe": {
+diff --git a/sim/world/blast.gd b/sim/world/blast.gd
+index fff26fe..2e6bb7c 100644
+--- a/sim/world/blast.gd
++++ b/sim/world/blast.gd
+@@ -66,2 +66,24 @@ static func shotHit(S: SimState, slot: int, kind: String, x: float, y: float, z:
+ 
++## The shot rule under the energy model (crater-tiers, C-02 of the GW1c readiness review): with it on, a shot's crater is the kind's base times 12.25 to the shooter's level; with it off (shipped: no key in blast.json) it is
++## the kind's base times tierEnergy[tier] whatever the model, exactly as the 9 November build and main have it. blast.json "shotModel" is the row that turns it on (a crater-size change on Orb's path: a hash window, and a side-by-side of
++## a top-tier shot's crater against the 9 November build first).
++static var shotModelOverride: int = -1   # tests only: -1 the data's shotModel, 0 off, 1 on
++
++
++static func shotModelOn() -> bool:
++	if shotModelOverride >= 0:
++		return shotModelOverride == 1
++	return bool(data().get("shotModel", false))
++
++
++## A shot's crater energy: the kind's own base (craterETap to craterE by charge), times, with the energy model off, the shooter's tier from tierEnergy (data/biomes/blast.json), and, with it on, the model's
++## 12.25 to the level (SimPower.energyTop ^ level): a fresh base fighter's shot is the base, a top-tier fighter's at full power digs 3.5 times the radius, as a beam's groove does (Game Design, docs/design/buildings.md
++## section 9; A-WORLD-06). Pure: f needs tier and power.
++static func craterEnergy(S: SimState, f, k: Dictionary, charge: float) -> float:
++	var e: float = lerpf(float(k.get("craterETap", k.craterE)), float(k.craterE), charge)
++	if S.powerOn and shotModelOn():
++		return e * SimDetMath.pow(SimPower.energyTop, SimPower.level(f))
++	return e * float(data().tierEnergy[clampi(int(f.tier), 1, 4) - 1])
++
++
+ static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1, shooter = null) -> Dictionary:
+@@ -80,3 +102,3 @@ static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: floa
+ 	var sp: float = maxf(SimDetMath.hypot(vx, vy), 0.000001)
+-	var E: float = lerpf(float(k.get("craterETap", k.craterE)), float(k.craterE), charge) * float(D.tierEnergy[ti])
++	var E: float = craterEnergy(S, f, k, charge)
+ 	var air: float = maxf(0.0, y - g)   # a burst above the ground (a mine in the air, a shot that ran out of life): the bowl fades with the height
+diff --git a/sim/world/crater.gd b/sim/world/crater.gd
+index e81e5df..2faf80a 100644
 --- a/sim/world/crater.gd
 +++ b/sim/world/crater.gd
-@@ -83,10 +83,15 @@
- 
- 
+@@ -85,6 +85,11 @@ static func beamPower(A) -> float:
  ## sp is the unboosted speed: the launch's horizontal traversal factor is divided out before the energy is taken.
 -## The energy of a body hitting the ground at speed sp: v squared, times (1 + IMPACT_TIER_E per tier above 1). With S given and its power model on (S.powerOn: docs/design/power-scale.md) the tier term is gone, since the level is already in the speed: one path, nothing counted twice.
 +## The energy of a body hitting the ground at speed sp: v squared, times (1 + IMPACT_TIER_E per tier above 1), or, with craters.json tier on, times the tier table's multiplier (1, 2.1, 4.3, 9: a radius of 1, 1.45, 2.07 and 3 times; A-WORLD-06).
@@ -16,22 +62,16 @@
 +		return v * v * (1.0 + IMPACT_TIER_E * (tier - 1.0))
 +	return v * v * 1.0
  
- 
- static func powerupEnergy(tier: float) -> float:
+diff --git a/sim/world/craters.gd b/sim/world/craters.gd
+index 75b3171..d62ae03 100644
 --- a/sim/world/craters.gd
 +++ b/sim/world/craters.gd
-@@ -44,6 +44,8 @@
- static var G_FURROW: bool = false
- static var G_FLATTEN: bool = false      # a crater's bowl is cut on a level floor: the hills under it do not stay inside it (docs/world/crater-flatten.md)
+@@ -46,2 +46,4 @@ static var G_FLATTEN: bool = false      # a crater's bowl is cut on a level floo
  static var G_FLATTEN_FADE: float = 1.45 # ... fully flat inside the lip, easing back to the ground by this many radii
 +static var T_ON: bool = false           # an impact's energy takes its tier from a table (T_E) instead of 25 percent a tier, with the energy model off (A-WORLD-06; docs/world/crater-tiers.md)
 +static var T_E: PackedFloat64Array = PackedFloat64Array([1.0, 1.25, 1.5, 1.75])   # ... the energy multipliers of tiers 1 to 4 (radius goes with the square root)
  static var G_SETTLE_G: bool = false   # grooves (trenches, scars) settle to the angle of repose too: off until step 3 (trench widths by force), see globe-step2.md
- 
- 
-@@ -89,6 +91,37 @@
- 	return G_FLATTEN
- 
+@@ -91,2 +93,33 @@ static func globeFlatten() -> bool:
  
 +## An impact's energy multiplier at a tier, from the table (tiers 1 to 4, linear between): the table's own number at a whole tier. Read only with tierOn().
 +static func tierEnergy(tier: float) -> float:
@@ -65,20 +105,12 @@
 +
 +
  static func globeFlattenFade() -> float:
- 	if not _loaded:
- 		_load()
-@@ -177,6 +210,8 @@
- 	G_FLATTEN = false
- 	G_FLATTEN_FADE = 1.45
+@@ -179,2 +212,4 @@ static func _load() -> void:
  	G_SETTLE_G = false
 +	T_ON = false
 +	T_E = PackedFloat64Array([1.0, 1.25, 1.5, 1.75])
  	for k in range(WorldGround.LOOKS.size()):
- 		_shapes.append(NONE)
- 	var f := FileAccess.open(PATH, FileAccess.READ)
-@@ -217,6 +252,18 @@
- 		var mt = j.meteor
- 		if not (mt is Dictionary) or float(mt.get("eMult", 0.0)) < 1.0 or float(mt.get("rMax", 0.0)) < 600.0:
+@@ -219,2 +254,14 @@ static func _load() -> void:
  			_errors.append("craters.json: meteor needs eMult (at least 1) and rMax (at least 600)")
 +	if j.has("tier"):
 +		var tr = j.tier
@@ -93,105 +125,36 @@
 +		if not te_ok:
 +			_errors.append("craters.json: tier is {on, energy: four multipliers from 1.0, none falling}")
  	if j.has("globe"):
- 		var gl = j.globe
- 		if not (gl is Dictionary) or float(gl.get("floor", -1.0)) >= 0.0 or float(gl.get("ceil", 1.0)) <= 0.0 or float(gl.get("repose", 1.25)) < 0.5 or int(gl.get("repeats", 0)) < 0 or int(gl.get("repeats", 0)) > 8 or float(gl.get("flattenFade", 1.45)) <= 1.0 or float(gl.get("flattenFade", 1.45)) > 2.0:
-@@ -225,6 +272,9 @@
- 		for k in range(_shapes.size()):
- 			_shapes[k] = NONE
+@@ -227,2 +274,5 @@ static func _load() -> void:
  		return
 +	if j.has("tier"):
 +		T_ON = bool(j.tier.on)
 +		T_E = PackedFloat64Array([float(j.tier.energy[0]), float(j.tier.energy[1]), float(j.tier.energy[2]), float(j.tier.energy[3])])
  	if j.has("globe"):
- 		G_FLOOR = float(j.globe.get("floor", -2080.0))
- 		G_CEIL = float(j.globe.get("ceil", 960.0))
---- a/sim/world/blast.gd
-+++ b/sim/world/blast.gd
-@@ -64,6 +64,16 @@
- 	return r
- 
- 
-+## A shot's crater energy: the kind's own base (craterETap to craterE by charge), times, with the energy model off, the shooter's tier from tierEnergy (data/biomes/blast.json), and, with it on, the model's
-+## 12.25 to the level (SimPower.energyTop ^ level): a fresh base fighter's shot is the base, a top-tier fighter's at full power digs 3.5 times the radius, as a beam's groove does (Game Design, docs/design/buildings.md
-+## section 9; A-WORLD-06). Pure: f needs tier and power.
-+static func craterEnergy(S: SimState, f, k: Dictionary, charge: float) -> float:
-+	var e: float = lerpf(float(k.get("craterETap", k.craterE)), float(k.craterE), charge)
-+	if S.powerOn:
-+		return e * SimDetMath.pow(SimPower.energyTop, SimPower.level(f))
-+	return e * float(data().tierEnergy[clampi(int(f.tier), 1, 4) - 1])
-+
-+
- static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1, shooter = null) -> Dictionary:
- 	var res := {"crater": null, "levelled": 0}
- 	var D: Dictionary = data()
-@@ -78,7 +88,7 @@
- 		return res
- 	var g: float = WorldTerrain.groundY(S, x, z)
- 	var sp: float = maxf(SimDetMath.hypot(vx, vy), 0.000001)
--	var E: float = lerpf(float(k.get("craterETap", k.craterE)), float(k.craterE), charge) * float(D.tierEnergy[ti])
-+	var E: float = craterEnergy(S, f, k, charge)
- 	var air: float = maxf(0.0, y - g)   # a burst above the ground (a mine in the air, a shot that ran out of life): the bowl fades with the height
- 	if air > 0.0:
- 		E *= maxf(0.0, 1.0 - air / (float(k.get("airReach", 6.0)) * 75.0))
---- a/tools/schemas/biomes-craters.schema.json
-+++ b/tools/schemas/biomes-craters.schema.json
-@@ -45,6 +45,17 @@
-         "rMax": { "type": "number", "minimum": 600, "maximum": 8320 }
-       }
-     },
-+    "tier": {
-+      "type": "object",
-+      "description": "An impact's energy by tier with the energy model off (WorldCraters.tier*; docs/world/crater-tiers.md). Optional: missing, it is off (25 percent a tier). on: the table is read; energy: the multipliers of tiers 1 to 4, from 1.0, none falling (Game Design: 1, 2.1, 4.3, 9 for a radius of 1, 1.45, 2.07, 3).",
-+      "required": ["on", "energy"],
-+      "additionalProperties": false,
-+      "patternProperties": { "^_": { "type": "string" } },
-+      "properties": {
-+        "on": { "type": "boolean" },
-+        "energy": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "number", "minimum": 1, "maximum": 100 } }
-+      }
-+    },
-     "globe": {
-       "type": "object",
-       "description": "The planet store's rules for a mark (WorldCraters.globe*; docs/world/globe-step2.md). Optional: missing, the defaults are these numbers with repeats 0. Read whether or not the module is on.",
+diff --git a/sim/world/tools/meteor_crater_check.gd b/sim/world/tools/meteor_crater_check.gd
+index 0b466e9..17d7a4c 100644
+--- a/sim/world/tools/meteor_crater_check.gd
++++ b/sim/world/tools/meteor_crater_check.gd
+@@ -35,2 +35,3 @@ func _run(model: bool) -> void:
+ 			touch = int(a.substr(8))
++	WorldCraters.setTier(false, WorldCraters.tierTable())   # the 25 percent a tier these numbers were taken at (A-WORLD-06's tier table has its own check, tier_ratio_check)
+ 	var E: float = WorldCrater.impactEnergy(8570.0, 4.0)
+diff --git a/sim/world/tools/power_world_check.gd b/sim/world/tools/power_world_check.gd
+index d9f9328..785dc3e 100644
 --- a/sim/world/tools/power_world_check.gd
 +++ b/sim/world/tools/power_world_check.gd
-@@ -52,7 +52,8 @@
- 	ok(not off.powerOn and on.powerOn, "the setup's power switch is the match's (off %s, on %s)" % [str(off.powerOn), str(on.powerOn)])
- 	# craters: the energy of the send, no tier term, no ordinary cap
+@@ -55,3 +55,4 @@ func _init() -> void:
  	var e_old: float = WorldCrater.impactEnergy(900.0, 4.0)
 -	ok(is_equal_approx(e_old, 1.75) and is_equal_approx(WorldCrater.impactEnergy(900.0, 4.0, off), 1.75), "off: tier 4 at 900 a second is E 1.75, as before (%.2f)" % e_old)
 +	var e_tier4: float = WorldCraters.tierEnergy(4.0) if WorldCraters.tierOn() else 1.75   # the tier term: 25 percent a tier, or A-WORLD-06's table (craters.json tier) when it is on
 +	ok(is_equal_approx(e_old, e_tier4) and is_equal_approx(WorldCrater.impactEnergy(900.0, 4.0, off), e_tier4), "off: tier 4 at 900 a second is E %.2f, as before (%.2f)" % [e_tier4, e_old])
  	ok(is_equal_approx(WorldCrater.impactEnergy(900.0, 4.0, on), 1.0) and is_equal_approx(WorldCrater.impactEnergy(2700.0, 1.0, on), 9.0), "on: no tier term (900 is E 1, 2,700 is E 9)")
- 	var r_off = WorldCrater.dig(off, off.fighters[0].x, 100.0, off.fighters[0], "impact", 0.0, 1.0, false)
- 	var r_on = WorldCrater.dig(on, on.fighters[0].x, 100.0, on.fighters[0], "impact", 0.0, 1.0, false)
---- a/sim/world/tools/meteor_crater_check.gd
-+++ b/sim/world/tools/meteor_crater_check.gd
-@@ -31,6 +31,7 @@
- 			planet = int(a.substr(9))
- 		elif a.begins_with("--touch="):
- 			touch = int(a.substr(8))
-+	WorldCraters.setTier(false, WorldCraters.tierTable())   # the 25 percent a tier these numbers were taken at (A-WORLD-06's tier table has its own check, tier_ratio_check)
- 	var E: float = WorldCrater.impactEnergy(8570.0, 4.0)
- 	var want_r: float = minf(WorldCraters.meteorRMax(), WorldCrater.R_BASE * sqrt(E * WorldCraters.meteorEMult()))
- 	ok(is_equal_approx(WorldCraters.meteorEMult(), 9.0) and is_equal_approx(WorldCraters.meteorRMax(), 6100.0), "the data's first values: eMult 9, rMax 6,100")
---- a/data/biomes/craters.json
-+++ b/data/biomes/craters.json
-@@ -8,6 +8,11 @@
-     "eMult": 9.0,
-     "rMax": 6100.0
-   },
-+  "tier": {
-+    "_about": "An impact's energy by the shooter's tier when the energy model is off (A-WORLD-06; docs/world/crater-tiers.md; Game Design, docs/design/buildings.md section 6.2): the multipliers of tiers 1 to 4, linear between. 1, 2.1, 4.3 and 9 make the crater's radius 1, 1.45, 2.07 and 3 times (X-14: three times at the top tier). With the model on the model decides and this is not read. on false is today's 25 percent a tier (1.32 times at tier 4). Shots (blast.json tierEnergy) take the same numbers.",
-+    "on": false,
-+    "energy": [1.0, 2.1, 4.3, 9.0]
-+  },
-   "globe": {
-     "_about": "The planet store's rules for a mark (docs/world/globe-step2.md; terrain-globe-plan.md 4.3), read whether or not the module is on. floor and ceil hold the store's ground between them (the strip's -260 and +120 x 8). repose: the wall slope past which a new crater settles wider and shallower (volume kept). repeats: how many times a blow on one spot grows its crater into the old one (0 is off: each blow digs its own, held by the shaft cap; the radius factor is brunt.json repeatCraterGrow). settle: the settling on or off. settleGrooves: a trench or scar is also widened to the angle of repose (off: Camera's chase_rush_check moves with it; step 3 sets trench widths by force). flatten: a crater is cut on a level floor, the height of the ground at its centre, so the hills under the bowl do not stay inside it (fully level inside the lip, easing back to the ground by flattenFade radii; docs/world/crater-flatten.md; off until Rendering has seen it). furrow: a glancing impact also cuts a short trench behind it along its heading (off until step 3's trenches are looked at).",
-     "floor": -2080.0,
+diff --git a/sim/world/tools/tier_ratio_check.gd b/sim/world/tools/tier_ratio_check.gd
+new file mode 100644
+index 0000000..0671a97
 --- /dev/null
 +++ b/sim/world/tools/tier_ratio_check.gd
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,141 @@
 +extends SceneTree
 +# A-WORLD-06: the crater's width at the top tier is about three times the base (X-14; Game Design's numbers, docs/design/buildings.md section 6.2; docs/world/crater-tiers.md).
 +#   godot --headless --path . --script res://sim/world/tools/tier_ratio_check.gd
@@ -277,7 +240,8 @@
 +			worst = "%.2f at power %d" % [q, int(pw)]
 +	ok(good, "model on: tier for tier at equal power it is between 2.5 and 3.5 times (tier 4 over tier 1 at power 0 reads %.2f)" % (_r(SimPower.fullSpeed({"tier": 4.0, "power": 0.0}), 4.0, Son) / _r(SimPower.fullSpeed({"tier": 1.0, "power": 0.0}), 1.0, Son)) + worst)
 +	ok(is_equal_approx(WorldCrater.impactEnergy(900.0, 4.0, Son), 1.0), "model on: no tier term, table or not (E 1 at 900 a second)")
-+	# --- shots: the model off reads blast.json tierEnergy, the model on the kind's base times 12.25 to the level
++	# --- shots: the model off reads blast.json tierEnergy, the model on the kind's base times 12.25 to the level (WorldBlast.shotModelOverride 1: the rule is behind blast.json's shotModel, shipped off)
++	WorldBlast.shotModelOverride = 1
 +	var Dk: Dictionary = WorldBlast.data()
 +	var on_ok: bool = true
 +	var off_ok: bool = true
@@ -309,6 +273,52 @@
 +	var kk0: Dictionary = Dk.kinds[Dk.kinds.keys()[0]]
 +	var qt: float = WorldCrater.radiusOf(WorldBlast.craterEnergy(Son, alt, kk0, 1.0), true) / WorldCrater.radiusOf(WorldBlast.craterEnergy(Son, fresh, kk0, 1.0), true)
 +	ok(qt >= 2.5 and qt <= 3.5, "model on: tier for tier at equal power a shot is between 2.5 and 3.5 times (tier 4 over tier 1 reads %.2f)" % qt)
++	# the rule shipped off: with the energy model on a shot's crater is the kind's base times blast.json tierEnergy[tier], exactly as before this park, for each kind at each tier; and the rule on is not that (the row can fail)
++	var same_old: bool = true
++	var differs_on: bool = false
++	for kn2 in Dk.kinds:
++		var k2: Dictionary = Dk.kinds[kn2]
++		for ti in range(4):
++			var fz := {"tier": float(ti + 1), "power": 1.0}
++			var base2: float = lerpf(float(k2.get("craterETap", k2.craterE)), float(k2.craterE), 1.0)
++			var old: float = base2 * float(te[ti])
++			WorldBlast.shotModelOverride = 0
++			if not is_equal_approx(WorldBlast.craterEnergy(Son, fz, k2, 1.0), old):
++				same_old = false
++			WorldBlast.shotModelOverride = 1
++			if not is_equal_approx(WorldBlast.craterEnergy(Son, fz, k2, 1.0), old):
++				differs_on = true
++	ok(same_old, "the shot rule off (shipped): with the energy model on a shot's crater is the kind's base times blast.json tierEnergy[tier], as the 9 November build, for every kind at every tier")
++	ok(differs_on, "control: with the shot rule on a top-tier shot is not that, so the row above can fail")
++	WorldBlast.shotModelOverride = -1
++	var shipped_key: bool = Dk.has("shotModel")
++	print("      blast.json shotModel in the shipped data: %s (absent or false: the shot rule is off)" % ("present, " + str(Dk.shotModel) if shipped_key else "absent"))
 +	WorldCraters.setTier(was_on, was_tab)
 +	print("TIERRATIO: %d check(s) failed" % fails)
 +	quit()
+diff --git a/tools/schemas/biomes-blast.schema.json b/tools/schemas/biomes-blast.schema.json
+index f8abbdd..680afa4 100644
+--- a/tools/schemas/biomes-blast.schema.json
++++ b/tools/schemas/biomes-blast.schema.json
+@@ -115,2 +115,3 @@
+     },
++    "shotModel": { "type": "boolean", "description": "With the energy model on, a shot's crater is the kind's base times 12.25 to the shooter's level (crater-tiers). Absent or false: the base times tierEnergy[tier] whatever the model, as the 9 November build." },
+     "tierEnergy": {
+diff --git a/tools/schemas/biomes-craters.schema.json b/tools/schemas/biomes-craters.schema.json
+index 32f8108..ed587cd 100644
+--- a/tools/schemas/biomes-craters.schema.json
++++ b/tools/schemas/biomes-craters.schema.json
+@@ -47,2 +47,13 @@
+     },
++    "tier": {
++      "type": "object",
++      "description": "An impact's energy by tier with the energy model off (WorldCraters.tier*; docs/world/crater-tiers.md). Optional: missing, it is off (25 percent a tier). on: the table is read; energy: the multipliers of tiers 1 to 4, from 1.0, none falling (Game Design: 1, 2.1, 4.3, 9 for a radius of 1, 1.45, 2.07, 3).",
++      "required": ["on", "energy"],
++      "additionalProperties": false,
++      "patternProperties": { "^_": { "type": "string" } },
++      "properties": {
++        "on": { "type": "boolean" },
++        "energy": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "number", "minimum": 1, "maximum": 100 } }
++      }
++    },
+     "globe": {

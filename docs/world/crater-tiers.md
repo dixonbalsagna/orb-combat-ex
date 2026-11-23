@@ -23,6 +23,8 @@ Orb's X-14 asks for about three times the crater width at the top tier. Game Des
 
 `tier.on` ships **false**: today's behaviour bit for bit (the golden is unchanged). The data row (`crater-tiers-data.diff`: `tier.on` true and `blast.json tierEnergy`) is a crater-size change, so it flips in a window with the other crater rows (GW1b or GW2: Simulation's call). Two checks assume today's tier term and are either-state now: `power_world_check` (the tier-4 row reads the table when it is on) and `meteor_crater_check` (pinned to 25 percent a tier, which its numbers were taken at).
 
-## Shots under the model (ruled by Game Design, 2026-11-14)
+## Shots under the model (ruled by Game Design, 2026-11-14; behind a switch, shipped off, 2026-11-23)
+
+**The rule is `blast.json shotModel` (absent or false shipped).** Off, a shot's crater under the energy model is the kind's base times `tierEnergy[tier]`, exactly as the 9 November build and main have it (the golden does not move). The data row that turns it on (`crater-tiers-shots-data.diff`) moves the energy-on golden and is Orb-visible: it waits for a hash window and a side-by-side of a top-tier shot's crater.
 
 With the model on a shot's crater energy is its kind's base times 12.25 to the level, not the tier table (re-cut to match: `WorldBlast.craterEnergy`). **This moves shot craters in the energy-on golden** (it used to read `tierEnergy` with the model on, today 1 to 2.2 times): Simulation's energy-on target records it. With the model off nothing moves.

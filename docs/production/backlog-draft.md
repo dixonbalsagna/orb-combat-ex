@@ -8,11 +8,11 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 
 | Id | Where | Owner | Size | Severity | Status | Corrective item | What it is |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-AI-03 | A1 | qa-balance | S | major | not started |  | Medium and Hard have no win-rate record for Orb's scheme on any build since 2026-11-01; the only figures on a… |
-| A-AI-04 | A1 | qa-balance | S | major | not started |  | No win rate has been measured on the played build's own packed data: every record was made on a scratch tree… |
+| A-AI-03 | A1 | qa-balance | S | major | reported |  | Medium and Hard have no win-rate record for Orb's scheme on any build since 2026-11-01; the only figures on a… |
+| A-AI-04 | A1 | qa-balance | S | major | reported |  | No win rate has been measured on the played build's own packed data: every record was made on a scratch tree… |
 | A-AI-05 | A1 | encounter-systems | S | major | landed |  | Main's computer-opponent data is not the played build's: Easy's pace matching, the beam pacing against a… |
 | A-AI-10 | A1 | encounter-systems | S | minor | landed |  | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on… |
-| A-AI-11 | A1 | qa-balance | S | minor | not started |  | Forty matches a cell cannot tell neighbouring bands apart (about 15 points either way), and the drop the EP… |
+| A-AI-11 | A1 | qa-balance | S | minor | reported |  | Forty matches a cell cannot tell neighbouring bands apart (about 15 points either way), and the drop the EP… |
 | A-AI-13 | A1 | encounter-systems | S | minor | briefed |  | The parked one-versus-many work was last rebuilt on 2026-10-16 and applies by exact-text patches; whether it… |
 | A-ANIM-06 | A1 | ep | S | minor | not started |  | The animation runtime, its tools and its data (render/anim, data/anim) are on no director's owns line;… |
 | A-AUDIO-01 | A1 | audio-music | S | major | landed |  | On main five sound sets are off, so a build made plainly from main has no beam, knock-out, launch, struggle… |
@@ -22,7 +22,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-CODE-03 | A1 | tools-pipeline | M | major | landed |  | Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to… |
 | A-CODE-04 | A1 | tools-pipeline | L | major | landed |  | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests,… |
 | A-COMBAT-05 | A1 | encounter-systems | S | major | landed |  | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is… |
-| A-COMBAT-08 | A1 | qa-balance | M | major | not started |  | No tool measures X-03 (move coverage), X-04 (forms reached), X-13 (the pillars in one match) or X-16 (beam… |
+| A-COMBAT-08 | A1 | qa-balance | M | major | reported |  | No tool measures X-03 (move coverage), X-04 (forms reached), X-13 (the pillars in one match) or X-16 (beam… |
 | A-COMBAT-11 | A1 | encounter-systems | S | minor | landed |  | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule… |
 | A-COMBAT-14 | A1 | combat-choreography | S | minor | landed |  | The mixed string's switch reads 'on' in the played build but no game code reads its data file; the feature… |
 | A-COMBAT-15 | A1 | game-design | S | minor | landed |  | Six of Orb's 'workshop this' combat items have no decision: beam stages, the timed swat, the catch, what RT… |
@@ -62,15 +62,15 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-PROCESS-14 | A1 | ep | S | minor | not started |  | The commands the sprint loop replaces are still live: /crunch is tracked with its 2026-11-01 priorities,… |
 | A-PROCESS-15 | A1 | ep | S | minor | not started | CD-20 | The standup command does not read CI first, although the corrective plan's CD-20 asks for that step in both… |
 | A-PROCESS-16 | A1 | ep | S | minor | reported |  | 'Done' exists only as one general rule; no page lists each Alpha feature with its own done test, and the exit… |
-| A-QA-03 | A1 | qa-balance | S | major | not started | CD-23 | The bug list holds 1 of the 52 problems Orb reported in play from 2026-11-01 to 2026-11-09, and its newest… |
-| A-QA-04 | A1 | qa-balance | M | major | not started |  | Balance between the two fighters is not measured on the build Orb plays: the last full reading (48.9%, in… |
-| A-QA-07 | A1 | qa-balance | S | minor | not started |  | The bug list has no severity field (it has a release horizon and a closing step), and its title still names… |
-| A-QA-09 | A1 | qa-balance | S | minor | not started |  | The scripted player that matches Orb's scheme lives in Tools' gauntlet, plays 40 matches in slot 0 only, and… |
+| A-QA-03 | A1 | qa-balance | S | major | landed | CD-23 | The bug list holds 1 of the 52 problems Orb reported in play from 2026-11-01 to 2026-11-09, and its newest… |
+| A-QA-04 | A1 | qa-balance | M | major | reported |  | Balance between the two fighters is not measured on the build Orb plays: the last full reading (48.9%, in… |
+| A-QA-07 | A1 | qa-balance | S | minor | landed |  | The bug list has no severity field (it has a release horizon and a closing step), and its title still names… |
+| A-QA-09 | A1 | qa-balance | S | minor | landed |  | The scripted player that matches Orb's scheme lives in Tools' gauntlet, plays 40 matches in slot 0 only, and… |
 | A-RENDER-01 | A1 | rendering-techart | M | major | landed |  | The look Orb plays (globe ground, crater look, meteor trail, the swing camera that rides with it) is switched… |
 | A-RENDER-04 | A1 | rendering-techart | M | major | landed |  | (see the full table) |
 | A-RENDER-07 | A1 | ep | S | major | not started | CD-22 | No record ties a visible landing to its side-by-side: landings arrive as batches, the gate records of the… |
 | A-RENDER-11 | A1 | ep | S | minor | not started |  | The look gate's reference build is still d3f1ca0e of 2026-10-15, which predates the globe ground and… |
-| A-SAVES-01 | A1 | qa-balance | S | major | not started |  | No record on file shows a replay saved by the baseline build verifying to its last tick on that build, and… |
+| A-SAVES-01 | A1 | qa-balance | S | major | reported |  | No record on file shows a replay saved by the baseline build verifying to its last tick on that build, and… |
 | A-TOOLS-01 | A1 | tools-pipeline | L | blocker | reported | CD-12 | No one command or CI run makes the Windows and Linux desktop builds of the game as Orb plays it, the solo… |
 | A-TOOLS-07 | A1 | tools-pipeline | S | major | briefed |  | A build carries a commit and a date but no version number, the Windows program's version fields are empty, no… |
 | A-TOOLS-08 | A1 | tools-pipeline | S | major | landed |  | The Godot check job's time swings from about 35 to 62 minutes on unchanged game code against a 75-minute… |
@@ -323,4 +323,4 @@ From the corrective plan: none. Every item without a closing entry, or with an o
 
 **From QA's bug list** (qa/known-bugs.md; the register's row A-QA-03 says it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09, so it is not the whole bug list). Entries: KB-001 to KB-006 (the pinned prototype, open as coded, no release blocked) and GB-001 to GB-009. Not closed: GB-003 camera jolt on a knock-away (with Camera), GB-004 a design call, GB-005 mountain tumbles (with World), GB-007 rocks round a fast fighter (not reproduced), GB-009 the blaster's balance. Fixed but not re-verified in play: GB-002, GB-006. None has a register row; they are listed apart until QA's rows A-QA-03 and A-QA-07 re-read the list against the played build.
 
-**From the parked folders** (docs/*/pending, file counts read 2026-11-23): accessibility 0, animation 30, architecture 30, art 6, audio 66, camera 86, combat 151, controls 55, director 183, narrative 20, net 6, perf 0, rendering 162, tools 164, ui 36, vfx 60, world 69 (1124 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.
+**From the parked folders** (docs/*/pending, file counts read 2026-11-23): accessibility 0, animation 30, architecture 30, art 6, audio 66, camera 86, combat 151, controls 55, director 180, narrative 20, net 6, perf 0, rendering 162, tools 164, ui 36, vfx 60, world 69 (1121 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.

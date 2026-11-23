@@ -1,0 +1,13 @@
+# tier_ratio_check and the impact checks with the split crater-tiers (the shot rule behind blast.json shotModel): the data rows A and B applied, on main 52aa1708 + the stage 2 stack (World scratch n4); and the same with no rows (rl in the next run)
+  ok   the shot rule off (shipped): with the energy model on a shot's crater is the kind's base times blast.json tierEnergy[tier], as the 9 November build, for every kind at every tier
+  ok   control: with the shot rule on a top-tier shot is not that, so the row above can fail
+      blast.json shotModel in the shipped data: present, true (absent or false: the shot rule is off)
+TIERRATIO: 0 check(s) failed
+POWERWORLD: 0 check(s) failed
+METEORCRATER: 0 check(s) failed
+BLAST: 0 check(s) failed
+BYSTANDERS: 0 check(s) failed
+(shipped data, no rows)   ok   the shot rule off (shipped): with the energy model on a shot's crater is the kind's base times blast.json tierEnergy[tier], as the 9 November build, for every kind at every tier
+(shipped data, no rows)   ok   control: with the shot rule on a top-tier shot is not that, so the row above can fail
+(shipped data, no rows)       blast.json shotModel in the shipped data: absent (absent or false: the shot rule is off)
+(shipped data, no rows) TIERRATIO: 0 check(s) failed

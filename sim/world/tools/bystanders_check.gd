@@ -142,9 +142,25 @@ func writes_by_function(src: String) -> Dictionary:
 	return out
 
 
+## The proof is read twice (the EP's path to the first Alpha build, gate G11): first on the world players now get (the data as it ships: the round planet, generation 3, the places on the whole planet, water and the floor, the energy model and the
+## dash on, and no pin), then on the older world the check was written for (WorldPin.shipped(true), which keeps the energy model and the dash on and pins the rest to the path main shipped before GW1a). WorldPin changes this process's
+## memory and cannot be undone, so the planet pass runs first.
 func _init() -> void:
-	WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped; docs/world/pins-and-the-model.md
+	_pass("the world players get (the data as shipped, no pin)", false)
+	_pass("the older world (WorldPin.shipped(true))", true)
+	print("BYSTANDERS: %d check(s) failed" % _fails)
+	quit(1 if _fails > 0 else 0)
+
+
+func _pass(label: String, pinned: bool) -> void:
+	print("--- bystanders on " + label)
+	if pinned:
+		WorldPin.shipped(true)   # GW1a: the energy model and the dash stay on, as in Orb's build (this check passes with them on); the rest of the pin keeps the path main shipped; docs/world/pins-and-the-model.md
 	SimInputData.load_and_apply()
+	var S0 := fresh(1)
+	print("      the match: generation %d, %d buildings, %d people alive" % [S0.planetGen, S0.buildings.size(), int(total_pop(S0))])
+	if not pinned:
+		ok(S0.planetGen == 3 and S0.buildings.size() > 3000 and S0.powerOn, "the unpinned pass is the world players get: the round planet at generation 3 with the places on the whole planet (%d buildings) and the energy model on" % S0.buildings.size())
 	var ran_total: float = 0.0
 	# ---- 1. scatter: nothing rises, nobody is removed
 	for seed_ in [1, 2, 3]:
@@ -357,6 +373,4 @@ static func scatter(S, bi, want):\n\tcause.menace = jmin(100.0, cause.menace + 1
 	for f in Sfw.fighters:
 		forms_in = forms_in or SimForms.has(Sfw, f)
 	ok(not forms_in or raised(Sfw, wb2).size() >= 1, "control: a gain in Witness put back by hand is flagged")
-	print("BYSTANDERS: %.1f people ran in the scatter runs, none died" % ran_total)
-	print("BYSTANDERS: %d check(s) failed" % _fails)
-	quit(1 if _fails > 0 else 0)
+	print("BYSTANDERS (%s): %.1f people ran in the scatter runs, none died" % [label, ran_total])

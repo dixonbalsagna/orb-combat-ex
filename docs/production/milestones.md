@@ -6,13 +6,15 @@ _Live page. Last built from status.json for **2026-11-23**. It is rebuilt every 
 
 ## Where the project is
 
-**Milestone A1, "Main is the game Orb plays".** 77 rows: 23 not started, 5 briefed, 5 reported, 44 landed.
+**Milestone A1, "Main is the game Orb plays".** 77 rows: 14 not started, 5 briefed, 11 reported, 47 landed.
 
 **Budget.** A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so the old 66% pause is replaced by the EP's reset rule: a reset is pressed at about 85% on the all-models meter or 90% on the Fable meter (Orb only reported that a reset clears both pools). The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.
 
 **Waves.** From tonight: Tools, Simulation, UI, Encounter, World and Rendering build in scratch copies; Game Design, Production Ops and Legal write papers; the stand-in designs and reviews; the EP does the working tree. From Saturday 14 Nov: Camera and VFX (the safety readings, captures one at a time), Controls, Audio, Combat (spike S4), QA (first readings), Performance (desktop frame and load readings, quiet windows only) and Netcode.
 
-**Note.** GitHub access is locked, so nothing has reached CI since c1d89924 (EP, 2026-11-23); work since then is on main locally and not pushed. This includes X-06 (8006fe3d).
+**Note.** GitHub access is back: everything is pushed (0d21624b and later).
+
+**Note.** The stand-in's reading of A1's finish line (docs/ep/reviews/A1-exit-status.md, 2026-11-23, main 0d21624b): the finish line breaks into 44 parts: 13 met (5 on 20 Nov), 18 in main but not proven (11), 7 waiting to go in (21), 6 not started (7). Six of the seven waiting are the planet work (GW1c). Most of the 18 close with records taken once on the commit where the planet work lands. The tracker's row counts above are the register's 77 rows, a different count.
 
 **Note.** GW1b landed on main (EP, Sun 22 Nov 08:45 PST): 7b69eafc..b624340a, 55 park commits, the planet flip as its own commit and uid files; gated on the s427 stack (render 19/19, golden equals Simulation's GW1b re-record, World list 90/90, CI checks clean). The round planet is now the default world; launch travel 1.5 and flat-out 3,500 are main's own values. Switch-diff against the 9 November build is still 0 of 5. X-06 is in its final scripted read (off main).
 
@@ -28,7 +30,7 @@ _Live page. Last built from status.json for **2026-11-23**. It is rebuilt every 
 
 | Milestone | What it proves | Rows | Not started | Briefed | Reported | Landed | Tokens (path) | Weeks (path) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A1 (now) | Main is the game Orb plays | 77 | 23 | 5 | 5 | 44 | 55M | 2 to 4 |
+| A1 (now) | Main is the game Orb plays | 77 | 14 | 5 | 11 | 47 | 55M | 2 to 4 |
 | A2 | Safe to hand out; two real Steam Decks have run it | 41 | 37 | 2 | 2 | 0 | 34M | 2 to 4 |
 | A3 | The fight's new rules, and LAN inside the game | 27 | 25 | 0 | 2 | 0 | 53M | 3 to 5 |
 | A4 | Horde, teams, your own planet, the whole fighter | 19 | 19 | 0 | 0 | 0 | 57M | 2 to 3 |
@@ -114,7 +116,7 @@ The builds, play files, reports and clips Orb keeps are about 2.9 GB in one git-
 
 **What Orb can play.** The first desktop build of their own game: a Windows program that opens on the left-panel menus, on the round planet, with the pad as Orb plays it and flight at 3500. The start menu lists the modes that exist today, lets each player pick a fighter, and has a Quit row.
 
-**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 23 not started, 5 briefed, 5 reported, 44 landed.
+**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 14 not started, 5 briefed, 11 reported, 47 landed.
 
 **Golden window.** GW1 "Main is the game" (12 rows: A-AI-05, A-AI-10, A-CODE-01, A-COMBAT-05, A-COMBAT-11, A-COMBAT-14, A-CONTROLS-02, A-CONTROLS-04, A-ENERGY-04, A-ENERGY-05, A-MODES-07, A-WORLD-01). GW1a: the golden record is made first on the kept 9 November build's own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer's perfect-block fix, flight 3500), then one re-record. GW1c, after GW1b: the planet scope Orb added (five sizes, terrain step 2, destruction, clipping), its own window. A-NET-05 (the build id in a replay) lands before the window.
 
@@ -154,7 +156,7 @@ _None open that this milestone needs._
 | orb | 2 | 0 | 0 | 0 | 2 |
 | performance-platform | 3 | 3 | 0 | 0 | 0 |
 | production-ops | 3 | 0 | 0 | 0 | 3 |
-| qa-balance | 9 | 9 | 0 | 0 | 0 |
+| qa-balance | 9 | 0 | 0 | 6 | 3 |
 | rendering-techart | 3 | 0 | 1 | 0 | 2 |
 | simulation-engine | 4 | 0 | 0 | 0 | 4 |
 | tools-pipeline | 13 | 0 | 2 | 1 | 10 |
@@ -191,7 +193,7 @@ _None open that this milestone needs._
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | A-AI-05 | Main's computer-opponent data is not the played build's: Easy's pace matching, the beam pacing against a human, and the… | S | GW1 | landed | c3507bfc — Director rows. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
-| A-AI-10 | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on main: its… | S | GW1 | landed | 8006fe3d — Landed on main locally, NOT PUSHED (EP, 2026-11-23): the computer now answers a held charge by repetition and Medium charge-only falls from 100% to 45%. Closes A-AI-10 as the work on the computer answering charges. The difficulty bands stay not met on scripts, waiting for human play, for Easy charge and Medium kit. |
+| A-AI-10 | The fix for Orb's remark that the computer perfect-blocks charged attacks too easily is parked and not on main: its… | S | GW1 | landed | 8006fe3d — Landed 8006fe3d (X-06): the computer now answers a held charge by repetition and Medium charge-only falls from 100% to 45%. Pushed (0d21624b and later). The difficulty bands stay not met on scripts, waiting for human play, for Easy charge and Medium kit. |
 | A-AI-13 (nice) | The parked one-versus-many work was last rebuilt on 2026-10-16 and applies by exact-text patches; whether it still… | S |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
 | A-COMBAT-05 | A released stick beam that cannot start waits up to 90 ticks and then fires into whatever the player is doing; open… | S | GW1 | landed | 89eca66d — Stray beams; also f12dbace, 7b119859, 2dd33c0d. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
 | A-COMBAT-11 | RT + B stays a signature for as long as the fighter is not channelling, not for 12 ticks, because the rule reads state… | S | GW1 | landed | 89eca66d — The second stray-beam fix, in the same park. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
@@ -259,15 +261,15 @@ _None open that this milestone needs._
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| A-AI-03 | Medium and Hard have no win-rate record for Orb's scheme on any build since 2026-11-01; the only figures on a design… | S |  | not started | wave 2, from Saturday 14 Nov |
-| A-AI-04 | No win rate has been measured on the played build's own packed data: every record was made on a scratch tree with… | S |  | not started | wave 2, from Saturday 14 Nov |
-| A-AI-11 | Forty matches a cell cannot tell neighbouring bands apart (about 15 points either way), and the drop the EP flagged,… | S |  | not started | wave 2, from Saturday 14 Nov |
-| A-COMBAT-08 | No tool measures X-03 (move coverage), X-04 (forms reached), X-13 (the pillars in one match) or X-16 (beam escape), and… | M |  | not started | wave 2, from Saturday 14 Nov |
-| A-QA-03 | The bug list holds 1 of the 52 problems Orb reported in play from 2026-11-01 to 2026-11-09, and its newest entry is… | S |  | not started | wave 2, from Saturday 14 Nov |
-| A-QA-04 | Balance between the two fighters is not measured on the build Orb plays: the last full reading (48.9%, in band) is from… | M |  | not started | wave 2, from Saturday 14 Nov |
-| A-QA-07 | The bug list has no severity field (it has a release horizon and a closing step), and its title still names the… | S |  | not started | wave 2, from Saturday 14 Nov |
-| A-QA-09 | The scripted player that matches Orb's scheme lives in Tools' gauntlet, plays 40 matches in slot 0 only, and fired no… | S |  | not started | wave 2, from Saturday 14 Nov |
-| A-SAVES-01 | No record on file shows a replay saved by the baseline build verifying to its last tick on that build, and the first… | S |  | not started | wave 2, from Saturday 14 Nov |
+| A-AI-03 | Medium and Hard have no win-rate record for Orb's scheme on any build since 2026-11-01; the only figures on a design… | S |  | reported | 471d1d4d — Medium and Hard win rates on Orb's scheme (docs/qa/readings/x06-*.md); the bands for Easy charge and Medium kit stay not met on scripts, waiting for human play. (EP and the stand-in's exit-status page, 2026-11-23) |
+| A-AI-04 | No win rate has been measured on the played build's own packed data: every record was made on a scratch tree with… | S |  | reported | 471d1d4d — Win rates on the played build's own data (a-code-02-shipped-batch.md and the X-06 readings). (EP and the stand-in's exit-status page, 2026-11-23) |
+| A-AI-11 | Forty matches a cell cannot tell neighbouring bands apart (about 15 points either way), and the drop the EP flagged,… | S |  | reported | 471d1d4d — Cell size for telling neighbouring bands apart (X-06 final read, 15 cells). (EP and the stand-in's exit-status page, 2026-11-23) |
+| A-COMBAT-08 | No tool measures X-03 (move coverage), X-04 (forms reached), X-13 (the pillars in one match) or X-16 (beam escape), and… | M |  | reported | 471d1d4d — Measuring tools: X-13 match checklist, X-16 sidestep, X-17 beam sources have first readings (docs/qa/readings/); not all readings meet their lines. (EP and the stand-in's exit-status page, 2026-11-23) |
+| A-QA-03 | The bug list holds 1 of the 52 problems Orb reported in play from 2026-11-01 to 2026-11-09, and its newest entry is… | S |  | landed | 471d1d4d — The bug list holds Orb's 52 reported problems (docs/qa/readings/a-qa-03-bug-list.md); meets its own words. (EP and the stand-in's exit-status page, 2026-11-23) |
+| A-QA-04 | Balance between the two fighters is not measured on the build Orb plays: the last full reading (48.9%, in band) is from… | M |  | reported | 471d1d4d — Balance between the two fighters read on the played build (docs/qa/readings/a-qa-04-balance.md). (EP and the stand-in's exit-status page, 2026-11-23) |
+| A-QA-07 | The bug list has no severity field (it has a release horizon and a closing step), and its title still names the… | S |  | landed | 471d1d4d — Status and severity fields on the bug list (same reading); meets its own words. (EP and the stand-in's exit-status page, 2026-11-23) |
+| A-QA-09 | The scripted player that matches Orb's scheme lives in Tools' gauntlet, plays 40 matches in slot 0 only, and fired no… | S |  | landed | 471d1d4d — The scripted player on Orb's scheme (qa/godot/orbs_player.gd); meets its own words. (EP and the stand-in's exit-status page, 2026-11-23) |
+| A-SAVES-01 | No record on file shows a replay saved by the baseline build verifying to its last tick on that build, and the first… | S |  | reported | 471d1d4d — Replay-verify reading (docs/qa/readings/a-saves-01-replay-verify.md). (EP and the stand-in's exit-status page, 2026-11-23) |
 
 **rendering-techart** (3)
 
@@ -284,14 +286,14 @@ _None open that this milestone needs._
 | A-CODE-02 | The golden record and five gates are valid only with the switches off, so the configuration Orb plays has no golden… | M |  | landed | 490e610d — Target golden, gates shipped, the GW1a frame. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 | A-ENERGY-04 | The "one energy model" is off in the data on main and in both played builds, and is on in Orb's build only through a… | S | GW1 | landed | 490e610d — Energy on; pins e4666d82, f733d704, 88b51569. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 | A-ENERGY-05 | The backburnered hero and villain meters, hiding and ambush, and signature variants by biome still act in every match:… | M | GW1 | landed | ab813cef — Meters zero; also cf17c9f6 and the gw1b-energy set 701cf676, a28b3c0c, b099e7fb. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
-| A-NET-05 | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with… | S |  | landed | f068b697 — Landed with B1 (f068b697..f70afd08); the EP's "parked" was stale (EP, 2026-11-20). |
+| A-NET-05 | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a build with… | S |  | landed | f068b697 — Landed with B1 (f068b697..f70afd08); the EP's "parked" was stale (EP, 2026-11-20). The stand-in notes no saved record of the refusal (a replay from another build is refused with a plain message) yet; kept landed pending the EP's word. |
 
 **tools-pipeline** (13)
 
 | Row | What it is | Size | Window | Status | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | A-CODE-03 | Orb's solo build carries code that is not on main: the preview patches a scratch copy of the main scene to add the… | M |  | landed | 9254c968 — Planet entry and probe. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
-| A-CODE-04 | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests, 5 of 65… | L |  | landed | f391fec4 — A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer. |
+| A-CODE-04 | CI runs 116 of the 262 check and test scripts: none of the input, audio or UI checks, one of 26 camera tests, 5 of 65… | L |  | landed | f391fec4 — Landed f391fec4, but 55 check scripts are unreviewed (stand-in's exit-status page, 2026-11-23); kept landed pending the EP's word. |
 | A-ENERGY-06 | The tool X-15 names does not measure X-15: the two-fighter ratchet counts four spellings of "exactly two fighters" and… | S |  | landed | f391fec4 — A-TOOLS-09: the backup plan is landed; where the second copy lives is still Orb's answer. |
 | A-LEGAL-02 | No desktop package for an outside tester can be made today: the build workflow needs a recorded approval file that does… | M |  | briefed | wave 1 brief (docs/ep/sprints/A1-sprint.md) |
 | A-MODES-08 | No mode smoke suite exists: the one smoke check drives the browser build by clicking fixed screen points and failed… | M |  | landed | e5618ab3 — Mode smoke suite; earlier park e702e058. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
@@ -315,7 +317,7 @@ _None open that this milestone needs._
 | A-UI-01 | With the Rail menus on (as in the build Orb played), the pause menu's slide-in is timed on a HUD clock that the game… | S |  | landed | e5618ab3 — Pause clock. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 | A-UI-04 | Making the Rail the default is unfinished: its switch is off on main, three older HUD checks fail with it on, Tools'… | M |  | landed | e5618ab3 — Rail by default. GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
 | A-UI-06 | The start menu's d-pad behaves unevenly, as Orb reported: Up from the top row jumps to Start while Down from the bottom… | S |  | landed | e5618ab3 — Menu fixes (d-pad). GW1a landed (b20020b4..b0e20f9a); mapping confirmed by the EP, 2026-11-20 (gw1a-row-mapping-draft.md). |
-| A-UI-09 | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every screen at… | S |  | landed | 09e2de07 — UI's screen sweep, docs/ui/runs/09e2de07/screen-sweep/: all 24 menu states measured on the landed menus, smallest text 14 px, nothing cut off at 1280x800, 5 menu stills kept; stills with fighters held back by the rule. 09e2de07 is the run folder; the landing commit id follows in the EP's next push (EP, 2026-11-21). |
+| A-UI-09 | X-22 cannot be measured today: there is no still of any screen at 1280 by 800 and no tool that sweeps every screen at… | S |  | landed | ed1591cb — UI's screen sweep, docs/ui/runs/09e2de07/screen-sweep/: all 24 menu states measured on the landed menus, smallest text 14 px, nothing cut off at 1280x800, 5 menu stills kept; stills with fighters held back by the rule. 09e2de07 is the run folder; the landing commit id follows in the EP's next push (EP, 2026-11-21). The landing commit is ed1591cb (exit-status page, 2026-11-23). |
 
 **world-environment** (1)
 
