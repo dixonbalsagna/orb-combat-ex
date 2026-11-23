@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { xdotoolKeys, refusal } from './linux-numbers.mjs';
 import { parseFps, fpsStats, parseLoad, sizesFor, stepProblems, reportText } from './first-run.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 let bad = 0, n = 0;
@@ -43,5 +44,9 @@ const r = reportText({ date: '2026-11-23', build: { version: '0.1.1', commit: 'a
   { size: 'medium', waiting: 'GW1c has not landed the planet sizes', steps: [] }] });
 check('the report says what failed, what was waiting, and gives the numbers', /1 step\(s\) did not go as planned/.test(r) && /Not offered by this build/.test(r) && /4\.2 s/.test(r) && /FAILED: no still/.test(r) && /pair bake 244 ms/.test(r) && /closed: yes, by itself/.test(r), r);
 check('a headless report says its frame rates are not a window\'s', /NOT a window's/.test(reportText({ date: 'd', build: {}, machine: { cpu: 'c', gpu: '', ramGb: 1, os: 'o' }, window: null, runs: [{ size: 'default', steps: [{ id: 'x', ok: null }], fps: st, load: ld, loading: {}, closed: true, wallS: 1, headless: true }] })));
+const ln = readFileSync(join(HERE, 'linux-numbers.mjs'), 'utf8');
+check('every key steps.json uses has an xdotool name', xdotoolKeys(steps.steps.flatMap((s) => s.keys || [])).every(Boolean) && xdotoolKeys(['ENTER', 'P', 'UP']).join() === 'Return,p,Up');
+check('the Linux numbers script presses keys only on a CI runner with a virtual display the workflow started (RL-270: never on a person screen)', refusal({}) !== '' && refusal({ GITHUB_ACTIONS: 'true', DISPLAY: ':99' }) !== '' && refusal({ GITHUB_ACTIONS: 'true', DISPLAY: ':99', FIRST_RUN_VIRTUAL_DISPLAY: '1' }) === '' && refusal({ GITHUB_ACTIONS: 'true', FIRST_RUN_VIRTUAL_DISPLAY: '1' }) !== '' && refusal({ DISPLAY: ':0', FIRST_RUN_VIRTUAL_DISPLAY: '1' }) !== '');
+check('it takes no still, video or capture, and adds no bypass word or flag to the program (RL-270 conditions 1 and 3)', !/import -window|xwd|scrot|ffmpeg|screenshot|--shot|--frames|--bench|nonotice|flashcap|study|get_image/i.test(ln.replace(/\/\/.*$/gm, '')));
 console.log(`first-run selftest: ${n} checks, ${bad} failed`);
 process.exit(bad ? 1 : 0);
