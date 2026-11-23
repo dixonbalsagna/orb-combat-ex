@@ -1,6 +1,6 @@
 {
   "input": "pad",
-  "mode": "two",
+  "mode": "solo",
   "natural_result": false,
   "pass": true,
   "platform": "windows",
@@ -21,13 +21,13 @@
       "ok": true
     },
     {
-      "detail": "lit: versus",
-      "name": "the mode row 'versus' is reached with the D-pad",
+      "detail": "lit: solo",
+      "name": "the mode row 'solo' is reached with the D-pad",
       "ok": true
     },
     {
-      "detail": "players 2, page setup",
-      "name": "A opens the setup for two people",
+      "detail": "players 1, page setup",
+      "name": "A opens the setup for one person against the computer",
       "ok": true
     },
     {
@@ -51,7 +51,7 @@
       "ok": true
     },
     {
-      "detail": "p1 human true, p2 human true",
+      "detail": "p1 human true, p2 human false",
       "name": "the match is of the mode: the bodies' AI flags",
       "ok": true
     },
@@ -71,7 +71,7 @@
       "ok": true
     },
     {
-      "detail": "tick 812, seed 7425763 to 760211",
+      "detail": "tick 812, seed 6575967 to 2717813",
       "name": "a rematch ('again', chosen with the pad) starts a new match that runs",
       "ok": true
     },
@@ -82,11 +82,21 @@
     },
     {
       "detail": "rows: resume,howto,settings,feedback,about,p2_leave,menu,new,quit",
-      "name": "P opens the pause menu, Quit among its rows (the pad's Start needs a connected pad)",
+      "name": "Start on the pad opens the pause menu, Quit among its rows",
+      "ok": true
+    },
+    {
+      "detail": "rows quit_yes,quit_no, lit quit_no",
+      "name": "Quit on the pause menu asks 'Close the game?' with Stay lit",
       "ok": true
     },
     {
       "detail": "",
+      "name": "B on the question stays: the pause menu is back and the game is still running",
+      "ok": true
+    },
+    {
+      "detail": "reached true, pause open false, start menu open true, lit menu",
       "name": "'menu' goes back to the list of modes",
       "ok": true
     },
@@ -99,10 +109,25 @@
       "detail": "",
       "name": "B on the question stays: the list of modes is back and the game is still running",
       "ok": true
+    },
+    {
+      "detail": "",
+      "name": "B on the list of modes goes back to the match",
+      "ok": true
+    },
+    {
+      "detail": "pause open true, reached quit true, rows quit_yes,quit_no, lit quit_yes",
+      "name": "Start, Quit and the question's 'Close the game' row are reached with the pad",
+      "ok": true
+    },
+    {
+      "detail": "quit_requested fired; the program must now end by itself",
+      "name": "the game is told to close when 'Close the game' is answered with the pad",
+      "ok": true
     }
   ],
   "window": "1280x800",
-  "commit": "unknown",
+  "commit": "65768887",
   "checked": "pass",
   "problems": [],
   "notBuilt": []

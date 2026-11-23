@@ -87,6 +87,7 @@ func _run() -> void:
 	await _retired_words_rules()
 	await _report_this_rules()
 	await _report_where_rules()
+	await _replay_refusal_rules()
 	await _menus_rail_rules()
 	await _pause_clock_rules()
 	await _menus_a1_rules()
@@ -11616,3 +11617,18 @@ func _report_where_rules() -> void:
 	if FileAccess.file_exists(UiPrefs.path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
 	UiPrefs.path = "user://ui_prefs.json"
+
+
+# --- The refused saved match's words (A-NET-05, X-27; the sentence had no reader) ----------------------------------------------------------
+
+func _replay_refusal_rules() -> void:
+	var known: String = UiFeedback.replay_refusal("build", "1a93a305f2c4 2026-11-21")
+	_ok(known == "This replay was saved by a different version of the game (build 1a93a305, 21 November 2026), so it can't be played in this one.", "replay refused: another build's file says the build and the date in words (%s)" % known)
+	_ok(UiFeedback.replay_refusal("build", "1a93a305") == "This replay was saved by a different version of the game (build 1a93a305), so it can't be played in this one." and UiFeedback.replay_refusal("build", "1a93a305 sometime") == "This replay was saved by a different version of the game (build 1a93a305), so it can't be played in this one.", "replay refused: a build with no date, or a second word that is not a date, says the build alone")
+	_ok(UiFeedback.replay_refusal("build", "") == "This replay was saved by a different version of the game, so it can't be played in this one." and UiFeedback.replay_refusal("build", "  ") == UiFeedback.replay_refusal("build", ""), "replay refused: a file from a build with no stamp says no number (never 'unknown' or an empty bracket)")
+	_ok(UiFeedback.replay_refusal("", "1a93a305 2026-11-21") == "" and UiFeedback.replay_refusal("format", "x y") == "" and UiFeedback.replay_refusal("data", "x y") == "", "replay refused: a replay that plays, and the format and data refusals (the host's words), give no line")
+	# against the sim's own answers: a header stamped by another build is refused with the reason this line reads
+	var rp: Dictionary = SimReplay.header(5, {}, {}, 0)
+	rp["build"] = "00000000 2020-01-02"
+	var why: String = SimReplay.refusal(rp, "ffffffff 2026-11-21")
+	_ok(why == "build" and UiFeedback.replay_refusal(why, str(rp["build"])).contains("build 00000000, 2 January 2020"), "replay refused: the sim's refusal of another build's header (%s) gives the line with that build" % why)

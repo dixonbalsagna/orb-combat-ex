@@ -1,6 +1,6 @@
 {
   "input": "pad",
-  "mode": "solo",
+  "mode": "two",
   "natural_result": false,
   "pass": true,
   "platform": "windows",
@@ -21,13 +21,13 @@
       "ok": true
     },
     {
-      "detail": "lit: solo",
-      "name": "the mode row 'solo' is reached with the D-pad",
+      "detail": "lit: versus",
+      "name": "the mode row 'versus' is reached with the D-pad",
       "ok": true
     },
     {
-      "detail": "players 1, page setup",
-      "name": "A opens the setup for one person against the computer",
+      "detail": "players 2, page setup",
+      "name": "A opens the setup for two people",
       "ok": true
     },
     {
@@ -51,7 +51,7 @@
       "ok": true
     },
     {
-      "detail": "p1 human true, p2 human false",
+      "detail": "p1 human true, p2 human true",
       "name": "the match is of the mode: the bodies' AI flags",
       "ok": true
     },
@@ -71,7 +71,7 @@
       "ok": true
     },
     {
-      "detail": "tick 812, seed 6689565 to 3852769",
+      "detail": "tick 812, seed 7425763 to 760211",
       "name": "a rematch ('again', chosen with the pad) starts a new match that runs",
       "ok": true
     },
@@ -81,7 +81,7 @@
       "ok": true
     },
     {
-      "detail": "rows: resume,howto,settings,feedback,about,menu,new,quit",
+      "detail": "rows: resume,howto,settings,feedback,about,p2_leave,menu,new,quit",
       "name": "P opens the pause menu, Quit among its rows (the pad's Start needs a connected pad)",
       "ok": true
     },
@@ -102,8 +102,9 @@
     }
   ],
   "window": "1280x800",
-  "commit": "unknown",
+  "commit": "b0e20f9a",
   "checked": "pass",
   "problems": [],
-  "notBuilt": []
+  "notBuilt": [],
+  "tree": "b0e20f9a with the s04-report-where patch applied (landed as 0da7b774); a scratch copy, so the runner could not read the commit and wrote unknown; set here by UI, 2026-11-23"
 }

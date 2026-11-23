@@ -88,6 +88,22 @@ static func platform_line(info: Dictionary) -> String:
 static var info_override: Dictionary = {}
 
 
+## The sentence a player reads when a saved match is refused (A-NET-05, X-27): `reason` is what SimReplay.refusal / SimReplay.play answered, `saved_build` is the replay's own build id (rp["build"]: "<commit> <date>", or the page's id, or ""
+## for a file from a build with no stamp). Only a refusal for another build has UI's words ("This replay was saved by a different version of the game (build 1a93a305, 21 November 2026), so it can't be played in this one."); the
+## other reasons (the file's format, its data) are the host's, and for them, and for a replay that plays, this is "". The host that opens a saved match calls it where it reports the refusal.
+static func replay_refusal(reason: String, saved_build: String) -> String:
+	if reason != "build":
+		return ""
+	var parts: PackedStringArray = saved_build.strip_edges().split(" ", false)
+	if parts.is_empty():
+		return UiData.t("prompt.replay_wrong_build_unknown")
+	var build: String = parts[0].substr(0, 8)
+	var date: String = long_date(parts[1]) if parts.size() > 1 else ""
+	if date == "" or date == parts[1]:   # a second word that is not a date is not shown as one
+		return UiData.fmt("prompt.replay_wrong_build_nodate", {"build": build})
+	return UiData.fmt("prompt.replay_wrong_build", {"build": build, "date": date})
+
+
 ## "2026-11-14" as "14 November 2026"; the text itself when it is not a date.
 static func long_date(iso: String) -> String:
 	var months: PackedStringArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
