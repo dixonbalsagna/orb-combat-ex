@@ -4,7 +4,7 @@
     { "id": "notice", "what": "a person reads the flashing-effects warning and presses Enter in the game", "human": "The game is showing its warning about flashing effects. Read it, then press Enter IN THE GAME WINDOW. The test carries on by itself when it sees the picture change.", "humanLimitS": 300, "settleMs": 4000, "shot": "00-after-warning" },
     { "id": "mode-list", "what": "the list of modes, with the version line", "settleMs": 2500, "shot": "01-mode-list", "alsoCrop": { "shot": "02-version-line", "crop": [0, 0.88, 1, 0.12] } },
     { "id": "fighter-pick", "what": "Solo chosen, the setup with the fighter pick", "keys": ["ENTER"], "settleMs": 2500, "shot": "03-fighter-pick" },
-    { "id": "match-start", "what": "Start pressed; the match loads and begins", "keys": ["ENTER"], "settleMs": 20000, "shot": "04-match" },
+    { "id": "match-start", "what": "Start pressed (Up twice from the first row of the setup wraps to Start); the match loads and begins", "keys": ["UP", "UP", "ENTER"], "settleMs": 20000, "shot": "04-match" },
     { "id": "match-play", "what": "the match, after half a minute of play (the frame rate is read over this time)", "settleMs": 30000, "shot": "05-match-later" },
     { "id": "pause", "what": "the pause menu", "keys": ["P"], "settleMs": 1800, "shot": "06-pause" },
     { "id": "quit-question", "what": "Quit, and the question 'Close the game?' with Stay lit", "keys": ["DOWN", "DOWN", "DOWN", "DOWN", "DOWN", "DOWN", "DOWN", "DOWN", "DOWN", "DOWN", "DOWN", "DOWN", "ENTER"], "settleMs": 1500, "shot": "07-quit-question" },
