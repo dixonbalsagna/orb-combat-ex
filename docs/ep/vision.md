@@ -1900,3 +1900,10 @@ Orb's correction (2026-11-14, verbatim): "its late and I counted wrong, it was f
 **Orb (2026-11-22, about 04:25 PST):** "continue work over night. perform a check-in every two hours. utilize my stand-in as an advisory role, utilize them as a specialist role when necessary"
 
 **Orb (2026-11-23, about 07:15 PST):** "continue work, check-ins every two hours, use my stand-in effectively to sprint to our first alpha build"
+
+**To the stand-in, Orb (2026-11-23, 13:17 PST, typed in the stand-in's session, relayed verbatim):** "lets go with your recommendations. I read all of them and I'm okay with your suggestions." (The stand-in's narrow reading, which the EP follows. It covers three things:
+- GW1c lands the proven sizes, with small's code and data in and only its menu entry held until it passes. That is a hold, not a cut, and A1's planet part stays not met until small is in.
+- A1 counts as done with small, medium and big; tiny and huge are polished after.
+- The game pauses and says so when a controller drops out mid-match.
+
+Still open: the sound question (the ten-minute listen), the deletion promise, Orb's own actions, and anything public, any tester approval, spend or Legal flag.)
