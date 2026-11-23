@@ -96,12 +96,14 @@ func _run(o: Dictionary) -> int:
 	var adv: Array = []
 	var frameUs := PackedInt32Array()
 	var dialAt: float = 0.0
+	var calls: int = 0   # --redial: the calls made again (for a timeout's message)
 	var pausedAt: float = -1.0
 	while true:
 		var now: float = float(Time.get_ticks_usec() - t0) / 1000.0
 		if o.redial and host.session == null and not tr.connected() and now - dialAt >= NetLan.REDIAL_MS:   # as NetLan does
 			dialAt = now
 			tr.redial("127.0.0.1", o.port)
+			calls += 1
 		var f0: int = Time.get_ticks_usec()
 		if o.pauseAt >= 0 and host.session != null and host.session.frame >= o.pauseAt and pausedAt < 0.0:
 			pausedAt = now
@@ -132,7 +134,7 @@ func _run(o: Dictionary) -> int:
 			res.err = "the other peer disconnected at tick %d" % (host.session.frame if host.session != null else -1)
 			break
 		if now > limit:
-			res.err = "timed out after %.0f s at tick %s" % [now / 1000.0, str(host.session.frame) if host.session != null else "(handshake)"]
+			res.err = "timed out after %.0f s at tick %s%s" % [now / 1000.0, str(host.session.frame) if host.session != null else "(handshake)", " (%d calls again, the last at %.0f s; connected %s)" % [calls, dialAt / 1000.0, str(tr.connected())] if o.redial else ""]
 			break
 		n += 1
 		var after: float = float(Time.get_ticks_usec() - t0) / 1000.0

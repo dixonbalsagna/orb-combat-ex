@@ -143,9 +143,12 @@ func _play(o: Dictionary, pname: String, port: int, dir: String) -> Array:
 
 ## "" when both peers match each other and the straight run, else the first difference.
 func _compare(outs: Array, ref: Dictionary, o: Dictionary) -> String:
+	var errs: Array = []   # both peers' errors: a host that waited out its limit hides why the joiner never reached it
 	for k in range(2):
 		if str(outs[k].err) != "":
-			return "%s: %s" % [outs[k].role, outs[k].err]
+			errs.append("%s: %s" % [outs[k].role, outs[k].err])
+	if not errs.is_empty():
+		return "; ".join(errs)
 	var a: Dictionary = outs[0]
 	var b: Dictionary = outs[1]
 	if int(a.delay) != int(b.delay) or int(a.mine) != int(b.theirs) or int(b.mine) != int(a.theirs) or int(a.delay) != maxi(int(a.mine), int(b.mine)):
