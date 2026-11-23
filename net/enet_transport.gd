@@ -3,6 +3,11 @@ extends NetTransport
 ## The native transport: Godot's built-in ENet (ENetConnection), one peer, one channel, every packet unsequenced
 ## (unreliable, unordered: what NetTransport promises and no more). listen() waits for the other peer; dial() connects to
 ## it. receive() also services the connection, so the host calls it once a frame.
+## The listener has SLOTS peer slots but keeps one peer, the first to connect, and turns any later one away. A caller
+## that hears nothing calls again from a new port every few seconds (NetLan.REDIAL_MS), and every call it dropped that
+## reached the listener holds a slot, half open, until ENet gives up on it, about 30 s later: the caller's PC never says it
+## left. With one slot, a host whose first frame after listen() ran long gave that slot to a dropped call and turned the
+## live one away (CI's late-host failures on 9d6911e7, 2026-11-23).
 ## For tests, impair() puts a NetLoopback.Link in front of the socket on the sending side: each outgoing packet waits
 ## its one-way delay (with jitter) on the host's clock, or is dropped, before ENet sends it.
 
@@ -13,6 +18,9 @@ var lag: NetLoopback.Link = null   # the injected impairment, or null
 var failed: String = ""
 var disconnected: bool = false
 var allowPrefix: String = ""   # a listener's: only a peer whose address starts with this may connect ("" is anyone). Legal RL-230's home network filter, on top of the firewall rule's
+
+const SLOTS: int = 8   # a listener's peer slots: room for the dropped calls of a host whose first frames ran about 18 s late (one call every 3 s), plus the live one
+static var listenSlots: int = SLOTS   # tests only: enet_check's --one-slot control sets 1, the old listener
 
 
 ## Start calling again from scratch: a call that went out before the other PC was listening gets no answer, and ENet gives up on it. The caller's only, before anything has been heard.
@@ -35,7 +43,7 @@ static func listen(addr: String, port: int) -> NetEnetTransport:
 	var t := NetEnetTransport.new()
 	t.conn = ENetConnection.new()
 	t.listening = true
-	var e: int = t.conn.create_host_bound(addr, port, 1, 1)
+	var e: int = t.conn.create_host_bound(addr, port, listenSlots, 1)
 	if e != OK:
 		t.failed = "listen on %s:%d failed (error %d)" % [addr, port, e]
 	return t
@@ -107,11 +115,11 @@ func receive(now: float) -> Array:
 			failed = "ENet service error"
 			break
 		if kind == ENetConnection.EVENT_CONNECT:
-			if listening and peer == null:
-				if allowed(ev[1].get_remote_address(), allowPrefix):
+			if listening:
+				if peer == null and allowed(ev[1].get_remote_address(), allowPrefix):
 					peer = ev[1]
 				else:
-					ev[1].peer_disconnect_now()
+					ev[1].peer_disconnect_now()   # off the home network, or a second peer (one slot turned that away before it connected)
 		elif kind == ENetConnection.EVENT_DISCONNECT:
 			if ev[1] == peer:
 				disconnected = true

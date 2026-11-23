@@ -1,0 +1,29 @@
+extends SceneTree
+## Times what enet_peer.gd's host does between NetEnetTransport.listen and its first service (lines 63-68 and the
+## first frame's setup), with no socket: a link transport stands in. Also times the match build for scale.
+
+func _init() -> void:
+	var setup: Dictionary = NetStraight.SETUPS["default"]
+	var ai := {"p1": false, "p2": false}
+	for round in range(2):
+		var t0: int = Time.get_ticks_usec()
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 1, ai, setup)
+		var t1: int = Time.get_ticks_usec()
+		var ab := NetLoopback.Link.new(0.0, 0.0, 0.0, 11)
+		var ba := NetLoopback.Link.new(0.0, 0.0, 0.0, 13)
+		var tr := NetLinkTransport.new(ab, ba, true)
+		var prof: Dictionary = NetLoopback.PROFILES["lan"]
+		var k0: int = Time.get_ticks_usec()
+		var key: String = NetHandshake.keyOf(1, ai, setup)
+		var k1: int = Time.get_ticks_usec()
+		var dev: Dictionary = NetDelay.device(1.0)
+		var bot := NetBot.new(1, 0)
+		var host := NetHost.new(tr, S, 0, key, dev, bot)
+		var t2: int = Time.get_ticks_usec()
+		host.frame(0.0, 600)
+		var t3: int = Time.get_ticks_usec()
+		print("round %d: build %.0f ms; listen->host ready %.1f ms (keyOf %.1f ms); first frame %.1f ms; prof ping %s" % [round, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (k1 - k0) / 1000.0, (t3 - t2) / 1000.0, str(prof.ping)])
+		host.close()
+		SimCore.dispose(S)
+	quit(0)

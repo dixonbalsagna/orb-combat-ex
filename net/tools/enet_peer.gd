@@ -8,17 +8,19 @@ extends SceneTree
 ## confirmed --ticks ticks (the match's end: no bot match reaches a KO) and the other peer holds all its inputs.
 ##   godot --headless --path . --script res://net/tools/enet_peer.gd -- --role=host|join --port=47100 --out=PATH
 ##     [--seed=1] [--ticks=3600] [--setup=default] [--profile=lan] [--slowdown=1] [--hash-every=60]
-##     [--perturb=T] [--hitch=T:F] [--timeout=S]
+##     [--perturb=T] [--hitch=T:F] [--timeout=S] [--start-after=MS] [--redial=1] [--listen-stall=MS] [--slots=N]
 ## --profile injects a NetLoopback profile's latency, jitter and loss on this peer's outgoing packets (its share of the
 ## round trip). --perturb=T flips one RNG bit after every run of tick T (a divergent peer: the negative control).
 ## --hitch=T:F freezes the process for F frames when its session reaches tick T (time sync must recover).
+## --listen-stall=MS (the host's): its port is open but nothing answers for MS, as when the host's first frame after listen()
+## runs long; the caller's calls queue up meanwhile. --slots=N sets the listener's peer slots (enet_check's one-slot control).
 
 const FRAME_MS: float = 1000.0 / 60.0
 
 
 func _init() -> void:
 	var o := {"role": "", "port": 47100, "out": "", "seed": 1, "ticks": 3600, "setup": "default", "profile": "lan", "slowdown": 1.0,
-		"hashEvery": 60, "perturb": -1, "hitchAt": -1, "hitchFrames": 0, "timeout": 0.0, "startAfter": 0, "redial": false, "pauseAt": -1, "pauseMs": 0.0}
+		"hashEvery": 60, "perturb": -1, "hitchAt": -1, "hitchFrames": 0, "timeout": 0.0, "startAfter": 0, "redial": false, "pauseAt": -1, "pauseMs": 0.0, "listenStall": 0, "slots": 0}
 	for a in OS.get_cmdline_user_args():
 		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)
 		if kv.size() < 2:
@@ -41,6 +43,8 @@ func _init() -> void:
 			"timeout": o.timeout = float(kv[1])
 			"start-after": o.startAfter = int(kv[1])
 			"redial": o.redial = true
+			"listen-stall": o.listenStall = int(kv[1])
+			"slots": o.slots = int(kv[1])
 			"pause":
 				var q: PackedStringArray = kv[1].split(":")
 				o.pauseAt = int(q[0])
@@ -57,17 +61,22 @@ func _run(o: Dictionary) -> int:
 	var ai := {"p1": false, "p2": false}
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, o.seed, ai, setup)
+	var key: String = NetHandshake.keyOf(o.seed, ai, setup)   # before listen(), as NetLan._open does: the first call reads and hashes the data (1.6 s on the main PC), and an open port that isn't serviced leaves calls unanswered
+	if o.slots > 0:
+		NetEnetTransport.listenSlots = o.slots
 	if o.startAfter > 0:
 		OS.delay_msec(o.startAfter)   # --late-host: the other peer has been calling all this while
 	var tr: NetEnetTransport = NetEnetTransport.listen("127.0.0.1", o.port) if slot == 0 else NetEnetTransport.dial("127.0.0.1", o.port)
+	if slot == 0 and o.listenStall > 0:
+		OS.delay_msec(o.listenStall)   # --listen-stall: the port is open and nothing services it yet
 	var prof: Dictionary = NetLoopback.PROFILES[o.profile]
 	var skew: float = float(prof.get("skew", 0.5))
 	var oneWay: float = float(prof.ping) * (skew if slot == 0 else 1.0 - skew)
 	if float(prof.ping) > 0.0 or float(prof.loss) > 0.0:
 		tr.impair(oneWay, float(prof.jitter), float(prof.loss), (o.seed * 7919 + slot * 104729 + 11) & 0xFFFFFFFF)
-	var host := NetHost.new(tr, S, slot, NetHandshake.keyOf(o.seed, ai, setup), NetDelay.device(o.slowdown), NetBot.new(o.seed, slot))
+	var host := NetHost.new(tr, S, slot, key, NetDelay.device(o.slowdown), NetBot.new(o.seed, slot))
 	var res := {"role": o.role, "slot": slot, "profile": o.profile, "seed": o.seed, "ticks": o.ticks, "slowdown": o.slowdown,
-		"err": "", "digests": [], "hashes": {}, "final": "", "desync": -1}
+		"err": "", "digests": [], "hashes": {}, "final": "", "desync": -1, "calls": 0}
 	var digests: Array = []
 	digests.resize(o.ticks)
 	host.configure = func(sess: NetSession) -> void:
@@ -160,6 +169,7 @@ func _run(o: Dictionary) -> int:
 			"frameP50Ms": float(fu[fu.size() / 2]) / 1000.0 if not fu.is_empty() else 0.0,
 			"frameP99Ms": float(fu[int(fu.size() * 0.99)]) / 1000.0 if not fu.is_empty() else 0.0, "adv": adv})
 	res.digests = digests
+	res.calls = calls
 	host.close()
 	SimCore.dispose(S)
 	var fo := FileAccess.open(o.out, FileAccess.WRITE)

@@ -1,0 +1,9 @@
+# Parse checks, 2026-11-23: godot --headless --path <scratch tree of fe92da75 + enet-slots.patch> --check-only --script <file>
+res://zz_bad.gd (a deliberately broken script, the check's control): exit 1, SCRIPT ERROR: Parse Error: Expected expression for variable initial value
+res://net/enet_transport.gd: exit 0
+res://net/tools/enet_peer.gd: exit 0
+res://net/tools/enet_check.gd: exit 0
+res://net/lan.gd: exit 0
+res://net/host.gd: exit 0
+# Patch: docs/net/pending/enet-slots/enet-slots.patch, sha1 8d15e6bbf048; git apply --check on HEAD fe92da75: clean.
+# enet_check was not run (CI only: it opens a port).

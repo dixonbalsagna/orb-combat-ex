@@ -12,9 +12,13 @@ extends SceneTree
 ## At most three Godot processes run at once: this one and the two peers.
 ##   godot --headless --path . --script res://net/tools/enet_check.gd -- [--seed=1] [--ticks=3600]
 ##     [--profiles=lan,p120,p200] [--slowdowns=1,1] [--hash-every=60] [--hitch=T:F] [--setup=default] [--port=47100] [--max-lead=12] [--max-lead-mean=3]
-##     [--late-host=MS] [--pause=T:MS] [--negative-control]
+##     [--late-host=MS] [--pause=T:MS] [--negative-control] [--listen-stall=MS] [--one-slot] [--timeout=S]
 ## --pause has the joiner's game paused for MS from its tick T (NetHost.idle each frame: the link serviced, no tick): 40000 is past ENet's own timeout on an unserviced link.
 ## --late-host starts the host listening MS after the joiner starts calling, and the joiner calls again every few seconds (NetLan's rule): 40000 is past ENet's own limit on one call.
+## --listen-stall has the host's port open but unserviced for MS while the joiner calls again every few seconds, so calls the
+## joiner has dropped wait in the queue ahead of the live one (8000 is past the 4.5 s that guarantees it). The row also needs
+## the joiner to have called again at least twice before the host answered. --one-slot is its control: the old one-slot
+## listener, with --timeout=S on both peers; it passes only if the peers never meet (a dropped call holds the slot).
 ## --slowdowns gives each peer's device (NetDelay.device) for its proposal. --hitch freezes the joiner for F frames at
 ## tick T, so time sync has to bring the peers back together.
 ## --negative-control runs the same match with the joiner perturbed (one RNG bit flipped at the middle tick) and passes
@@ -25,7 +29,8 @@ var failures: int = 0
 
 func _init() -> void:
 	var o := {"seed": 1, "ticks": 3600, "profiles": ["lan", "p120", "p200"], "slowdowns": ["1", "1"], "hashEvery": 60, "hitch": "",
-		"setup": "default", "port": 47100, "negative": false, "maxLead": 12.0, "maxLeadMean": 3.0, "lateHost": 0, "pause": ""}
+		"setup": "default", "port": 47100, "negative": false, "maxLead": 12.0, "maxLeadMean": 3.0, "lateHost": 0, "pause": "",
+		"listenStall": 0, "oneSlot": false, "timeout": 0.0}
 	for a in OS.get_cmdline_user_args():
 		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)
 		match kv[0]:
@@ -42,6 +47,9 @@ func _init() -> void:
 			"negative-control": o.negative = true
 			"late-host": o.lateHost = int(kv[1])
 			"pause": o.pause = kv[1]
+			"listen-stall": o.listenStall = int(kv[1])
+			"one-slot": o.oneSlot = true
+			"timeout": o.timeout = float(kv[1])
 	print("Orb Combat EX ENet two-process check   Godot %s   seed %d   %d ticks   setup %s   devices x%s   %s%s" % [Engine.get_version_info().string,
 		o.seed, o.ticks, o.setup, " and x".join(o.slowdowns), "negative control" if o.negative else "hash every %d" % o.hashEvery,
 		("   hitch " + o.hitch) if o.hitch != "" else ""])
@@ -57,11 +65,22 @@ func _init() -> void:
 		if outs.is_empty():
 			failures += 1
 			continue
+		if o.oneSlot:
+			var met: bool = outs[0].has("delay") or outs[1].has("delay")   # a peer that reached its session wrote its delay
+			print("  %s  one slot on %s, dropped calls queued while the host's port went unserviced: %s" % ["MISSED" if met else "caught", pname,
+				"the peers met anyway" if met else "; ".join(["host: " + str(outs[0].err), "join: " + str(outs[1].err)])])
+			if not met:
+				caught += 1
+			continue
 		var d: int = int(outs[0].get("delay", -1))
 		if not refs.has(d):
 			refs[d] = NetStraight.run(o.seed, NetStraight.SETUPS[o.setup], o.ticks, d, o.hashEvery)
 		var err: String = _compare(outs, refs[d], o)
+		if err == "" and o.listenStall > 0 and int(outs[1].get("calls", 0)) < 2:
+			err = "the joiner called again %d time(s) before the host answered, so no dropped call was staged (at least 2)" % int(outs[1].get("calls", 0))
 		_print(pname, outs, err)
+		if o.listenStall > 0:
+			print("         the joiner called again %d time(s) before the host answered" % int(outs[1].get("calls", 0)))
 		if o.negative:
 			var want: int = o.ticks / 2 + 1   # the first state after the perturbed tick
 			var ok: bool = err != "" and int(outs[0].desync) > 0 and int(outs[1].desync) > 0 and err.contains("tick %d " % want)
@@ -70,6 +89,10 @@ func _init() -> void:
 				caught += 1
 		elif err != "":
 			failures += 1
+	if o.oneSlot:
+		print("%s  one-slot control: %d of %d matches never started" % ["PASS" if caught == runs else "FAIL", caught, runs])
+		quit(0 if caught == runs else 1)
+		return
 	if o.negative:
 		print("%s  negative control: %d of %d perturbed matches caught" % ["PASS" if caught == runs else "FAIL", caught, runs])
 		quit(0 if caught == runs else 1)
@@ -94,6 +117,15 @@ func _play(o: Dictionary, pname: String, port: int, dir: String) -> Array:
 			"--profile=" + pname, "--slowdown=" + str(o.slowdowns[0 if role == "host" else 1]), "--hash-every=%d" % o.hashEvery]
 		if o.lateHost > 0:
 			args.append("--start-after=%d" % o.lateHost if role == "host" else "--redial=1")
+		if o.listenStall > 0:
+			if role == "host":
+				args.append("--listen-stall=%d" % o.listenStall)
+			elif o.lateHost <= 0:
+				args.append("--redial=1")
+		if o.oneSlot and role == "host":
+			args.append("--slots=1")
+		if o.timeout > 0.0:
+			args.append("--timeout=%s" % str(o.timeout))
 		if role == "join" and o.pause != "":
 			args.append("--pause=" + o.pause)
 		if role == "join":

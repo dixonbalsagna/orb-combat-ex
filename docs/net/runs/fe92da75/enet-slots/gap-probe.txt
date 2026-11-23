@@ -1,0 +1,5 @@
+# Gap probe, 2026-11-23, scratch tree of fe92da75 (git archive HEAD, headless import), main PC, below-normal priority, one Godot process
+# godot --headless --path <scratch tree> --script res://zz_gap_probe.gd   (the script is gap_probe.gd.txt here)
+# It times what enet_peer.gd's host did between listen() and its first service, with a link transport (no socket). Round 0 is the process's first match, as in enet_peer.
+round 0: build 2787 ms; listen->host ready 1622.2 ms (keyOf 1622.2 ms); first frame 0.5 ms; prof ping 0.0
+round 1: build 459 ms; listen->host ready 20.4 ms (keyOf 5.1 ms); first frame 0.0 ms; prof ping 0.0
