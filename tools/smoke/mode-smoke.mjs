@@ -28,6 +28,8 @@ export function readResult(doc, mode) {
   // a smoke that stopped early (the last step is not the way back to the menu / the quit row) did not get through
   const names = steps.map((s) => String(s.name));
   if (steps.length && !names.some((n) => /quit/.test(n))) problems.push('the run stopped before its last step (the start menu\'s quit row was never looked for)');
+  // the last step: "Close the game" was answered with the pad and the game was told to close (the process ending by itself is checked by the runner: a run stopped at the time limit did not close)
+  if (steps.length && !steps.some((s) => /the game is told to close/.test(String(s.name)) && s.ok)) problems.push('the run never got to "Close the game" with the pad: the game was not seen to be told to close');
   return { ok: !problems.length && !failed.length && doc.pass === true, failed, notBuilt, problems };
 }
 
@@ -52,11 +54,11 @@ function runOne({ godot, path, mode, cap, limitS, scratch }) {
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; try { child.kill(); } catch { /* gone */ } }, limitS * 1000);
     child.on('error', (e) => { clearTimeout(timer); done({ mode, doc: null, log: String(e), timedOut }); });
-    child.on('close', () => {
+    child.on('close', (code) => {
       clearTimeout(timer);
       let doc = null;
       try { doc = JSON.parse(readFileSync(out, 'utf8')); } catch { /* no result */ }
-      done({ mode, doc, log, timedOut });
+      done({ mode, doc, log, timedOut, code });
     });
   });
 }
@@ -69,8 +71,8 @@ async function main() {
   const modeArg = opt(argv, '--mode', 'both');
   const modes = modeArg === 'both' ? ['solo', 'two'] : [modeArg];
   if (modes.some((m) => m !== 'solo' && m !== 'two')) { console.error('mode-smoke: --mode is solo, two or both'); process.exit(2); }
-  let commit = 'unknown';
-  try { commit = execFileSync('git', ['-C', path, 'rev-parse', '--short=8', 'HEAD'], { encoding: 'utf8' }).trim(); } catch { /* an export has no git */ }
+  let commit = opt(argv, '--commit', 'unknown');   // --commit: the commit a tree with no git is (a scratch copy of a commit); otherwise read from git
+  if (commit === 'unknown') try { commit = execFileSync('git', ['-C', path, 'rev-parse', '--short=8', 'HEAD'], { encoding: 'utf8' }).trim(); } catch { /* an export has no git */ }
   const outDir = resolve(opt(argv, '--out', join(ROOT, 'docs', 'tools', 'runs', commit)));
   const platform = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'macos' : 'linux';
   const scratch = mkdtempSync(join(tmpdir(), 'mode-smoke-'));
@@ -80,6 +82,9 @@ async function main() {
     for (const mode of modes) {
       const r = await runOne({ godot, path, mode, cap: opt(argv, '--cap', null), limitS: Number(opt(argv, '--limit', 240)), scratch });
       const read = readResult(r.doc, mode);
+      // the game closing is the run's last act: the process must have ended by itself, not at the time limit
+      if (r.doc && r.timedOut) read.problems.push('the program did not end by itself (stopped at the time limit)');
+      if (r.doc && r.timedOut) read.ok = false;
       const tail = r.log.split(/\r?\n/).filter((l) => /^(ok|FAIL|mode_smoke)/.test(l)).join('\n');
       console.log(tail || r.log.split(/\r?\n/).slice(-12).join('\n'));
       if (!r.doc) { code = Math.max(code, 2); console.error(`mode-smoke: ${mode}: no result file${r.timedOut ? ' (stopped at the time limit)' : ''}`); continue; }

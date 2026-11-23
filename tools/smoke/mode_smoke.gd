@@ -4,8 +4,9 @@ extends SceneTree
 ##   godot --headless --fixed-fps 60 --resolution 1280x800 --path . --script res://tools/smoke/mode_smoke.gd -- --mode=solo|two [--out=<file>] [--cap=<ticks to a result>]
 ## The steps, each one a line of the result: the first run's How to play card closed; the start menu opens on the LIST OF MODES (the rows come from ui/data/modes.json) and has a Quit row (a missing Quit row FAILS); a mode that is
 ## not built cannot be started; the mode is chosen with A and the setup opens with its number of people; a fighter is picked with the D-pad and the two never match; intros are set off; Start is pressed and a match runs with the
-## picked fighters; scripted humans play it; the match-over card opens with Quit among its rows; "again" (a rematch) is chosen with the pad and a second match runs; Start on the pad opens the pause menu, which has a Quit row;
-## its "menu" row goes back to the list of modes; Quit asks "Close the game?" with Stay lit, and B stays. A step that fails is a FAIL line and the run goes on as far as it can. The result is printed and, with --out, written as
+## picked fighters; scripted humans play it; the match-over card opens with Quit among its rows; "again" (a rematch) is chosen with the pad and a second match runs; a button press picks the pad up (a headless run has none connected) and Start on the pad opens the pause menu, which has a Quit row; Quit asks "Close the game?" with Stay lit, and B stays;
+## its "menu" row goes back to the list of modes, whose Quit asks the same and B stays; B goes back to the match; then Start, Quit and "Close the game" with the pad: the game is told to close and the program must END BY ITSELF (the result is
+## written first; three seconds on and still running is a FAIL, and the runner fails a run it had to stop at the time limit). A step that fails is a FAIL line and the run goes on as far as it can. The result is printed and, with --out, written as
 ## JSON ({mode, platform, input "pad", window, natural_result, steps:[{name, ok, detail}], pass}). Exit 0 when every step passed.
 ## The match is still ended by the smoke (SimDamage.ko) when the scripted humans have not finished it by the cap: hit points no longer end a match on main (wounds and finishers do), so a result card is what is under test here,
 ## not the finisher; the result says so (natural_result false).
@@ -106,14 +107,21 @@ func _pause_ids() -> Array:
 	return ids
 
 
+func _pause_lit() -> String:
+	var ids: Array = _pause_ids()
+	return str(ids[clampi(hud.pause_menu_focus(), 0, ids.size() - 1)]) if not ids.is_empty() else ""
+
+
+## The pause card's focus does not wrap (Down at the last row stays there), so the lit row is walked to `id` with Down and, if the row is above, with Up.
 func _pause_to(id: String) -> bool:
 	if not _pause_ids().has(id):
 		return false
-	for _i in range(_pause_ids().size() + 2):
-		if str(_pause_ids()[clampi(hud.pause_menu_focus(), 0, _pause_ids().size() - 1)]) == id:
-			return true
-		await _pad(JOY_BUTTON_DPAD_DOWN)
-	return str(_pause_ids()[clampi(hud.pause_menu_focus(), 0, _pause_ids().size() - 1)]) == id
+	for dir in [JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_DPAD_UP]:
+		for _i in range(_pause_ids().size() + 1):
+			if _pause_lit() == id:
+				return true
+			await _pad(dir)
+	return _pause_lit() == id
 
 
 ## Drives the human slots with scripted intents for one frame: each walks at the other body until it is near, then presses light and now and then heavy.
@@ -134,7 +142,8 @@ func _release(humans: Array) -> void:
 		main.host.film_in[int(k)] = null
 
 
-func _finish() -> void:
+## Writes the result file now (the run may end before _finish: the game closing is the last step) and says whether every step so far passed.
+func _write_result() -> bool:
 	var all_ok: bool = true
 	for s in steps:
 		if not bool(s.ok):
@@ -146,7 +155,19 @@ func _finish() -> void:
 			f.store_string(JSON.stringify(doc, "  "))
 			f.close()
 	print("mode_smoke: %s on %s: %d steps, %d failed" % [mode, OS.get_name(), steps.size(), steps.filter(func(s): return not bool(s.ok)).size()])
-	quit(0 if all_ok else 1)
+	return all_ok
+
+
+func _finish() -> void:
+	quit(0 if _write_result() else 1)
+
+
+## The game was told to close ("Close the game" answered yes): main.gd connected quit_requested to get_tree().quit() before this, so the process is ending. The result is written NOW (the process may not live to _finish); if the game
+## does not end within the frames the run waits afterwards, a failing step is added and the run finishes as a failure.
+func _on_quit_requested() -> void:
+	_step("the game is told to close when 'Close the game' is answered with the pad", true, "quit_requested fired; the program must now end by itself")
+	if not _write_result():
+		quit(1)
 
 
 func _run() -> void:
@@ -274,16 +295,29 @@ func _run() -> void:
 		await process_frame
 	_release(humans)
 	_step("the second match plays on for 120 ticks", main.host.S != null and main.host.S.game.ko == null)
-	# the pause menu: P (a headless run has no pad the host has claimed, so the pad's Start cannot open it here; every row of the card is then pressed with the pad)
-	await _key(KEY_P)
+	# the pause menu, with the pad. A pad's Start pauses only for a pad the host has claimed (one that drives a slot) and a headless run has none connected, so the smoke picks the pad up the way a player does: a button press on device 0, then Start
+	await _pad(JOY_BUTTON_X)
+	await _pad(JOY_BUTTON_START)
 	await _frames(3)
-	_step("P opens the pause menu, Quit among its rows (the pad's Start needs a connected pad)", hud.is_pause_menu_open() and _pause_ids().has("quit"), "rows: " + ",".join(PackedStringArray(_pause_ids())))
+	_step("Start on the pad opens the pause menu, Quit among its rows", hud.is_pause_menu_open() and _pause_ids().has("quit"), "rows: " + ",".join(PackedStringArray(_pause_ids())))
+	if not hud.is_pause_menu_open():
+		_finish()
+		return
+	# Quit on the pause menu asks first, with Stay lit, and B stays
+	var at_quit: bool = await _pause_to("quit")
+	if at_quit:
+		await _pad(JOY_BUTTON_A)
+	_step("Quit on the pause menu asks 'Close the game?' with Stay lit", at_quit and _pause_ids() == ["quit_yes", "quit_no"] and _pause_lit() == "quit_no", "rows %s, lit %s" % [",".join(PackedStringArray(_pause_ids())), _pause_lit()])
+	await _pad(JOY_BUTTON_B)
+	_step("B on the question stays: the pause menu is back and the game is still running", hud.is_pause_menu_open() and _pause_ids().has("quit") and is_instance_valid(main))
+	var at_menu: bool = false
 	if hud.is_pause_menu_open():
-		if await _pause_to("menu"):
+		at_menu = await _pause_to("menu")
+		if at_menu:
 			await _pad(JOY_BUTTON_A)
 		await _frames(5)
-	_step("'menu' goes back to the list of modes", hud.is_start_menu_open() and str(hud.menu_plan().get("page", "")) == "modes")
-	# Quit asks first, and B stays
+	_step("'menu' goes back to the list of modes", hud.is_start_menu_open() and str(hud.menu_plan().get("page", "")) == "modes", "reached %s, pause open %s, start menu open %s, lit %s" % [str(at_menu), str(hud.is_pause_menu_open()), str(hud.is_start_menu_open()), _pause_lit()])
+	# the start menu's Quit asks first, and B stays
 	if hud.is_start_menu_open() and await _menu_to("quit"):
 		await _pad(JOY_BUTTON_A)
 		var qp: Dictionary = hud.menu_plan()
@@ -292,4 +326,23 @@ func _run() -> void:
 		_step("B on the question stays: the list of modes is back and the game is still running", str(hud.menu_plan().get("page", "")) == "modes" and is_instance_valid(main))
 	else:
 		_step("Quit asks 'Close the game?' with Stay lit", false, "no quit row to press")
+	# back to the match (B on the list of modes is "Back to the match"), then the real thing: Start, Quit, "Close the game", and the program closes
+	await _pad(JOY_BUTTON_B)
+	await _frames(5)
+	_step("B on the list of modes goes back to the match", not hud.is_start_menu_open() and main.host.S != null and main.host.S.game.ko == null)
+	await _pad(JOY_BUTTON_START)
+	await _frames(3)
+	var to_quit: bool = hud.is_pause_menu_open() and await _pause_to("quit")
+	if to_quit:
+		await _pad(JOY_BUTTON_A)
+	var to_yes: bool = to_quit and await _pause_to("quit_yes")
+	_step("Start, Quit and the question's 'Close the game' row are reached with the pad", to_yes, "pause open %s, reached quit %s, rows %s, lit %s" % [str(hud.is_pause_menu_open()), str(to_quit), ",".join(PackedStringArray(_pause_ids())), _pause_lit()])
+	if not to_yes:
+		_finish()
+		return
+	hud.quit_requested.connect(_on_quit_requested)
+	await _pad(JOY_BUTTON_A)
+	# the game closes by itself: when it does, this line is never reached. Three seconds of frames later it did not.
+	await _frames(180)
+	_step("the program closes within three seconds of 'Close the game'", false, "still running after 180 frames")
 	_finish()

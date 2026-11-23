@@ -2,7 +2,7 @@
 import { readResult, isolatedEnv } from './mode-smoke.mjs';
 let bad = 0, n = 0;
 const check = (name, ok) => { n++; if (!ok) { bad++; console.log('FAIL ' + name); } };
-const good = { mode: 'solo', pass: true, input: 'pad', steps: [{ name: 'a', ok: true, detail: '' }, { name: "the list of modes has a 'quit' row", ok: true, detail: '' }] };
+const good = { mode: 'solo', pass: true, input: 'pad', steps: [{ name: 'a', ok: true, detail: '' }, { name: "the list of modes has a 'quit' row", ok: true, detail: '' }, { name: "the game is told to close when 'Close the game' is answered with the pad", ok: true, detail: '' }] };
 let r = readResult(good, 'solo');
 check('a clean result passes', r.ok && !r.failed.length && !r.notBuilt.length);
 r = readResult({ ...good, steps: [{ name: 'a', ok: true, detail: '' }, { name: "the list of modes has a 'quit' row (not built)", ok: true, detail: 'not built' }] }, 'solo');
@@ -15,6 +15,7 @@ check('the wrong mode fails', !readResult(good, 'two').ok);
 check('a result with no steps fails', !readResult({ mode: 'solo', pass: true, steps: [] }, 'solo').ok);
 check('a run that stopped before the quit row fails', !readResult({ mode: 'solo', pass: true, input: 'pad', steps: [{ name: 'a', ok: true }] }, 'solo').ok);
 check('no document fails', !readResult(null, 'solo').ok);
+check('a run that never got to Close the game fails', !readResult({ ...good, steps: good.steps.slice(0, 2) }, 'solo').ok && !readResult({ ...good, steps: [...good.steps.slice(0, 2), { ...good.steps[2], ok: false }], pass: false }, 'solo').ok);
 const env = isolatedEnv({ APPDATA: 'real', HOME: 'real', X: '1' }, '/tmp/x');
 check('the data folders are moved off the real ones', !Object.values({ a: env.APPDATA, b: env.HOME, c: env.XDG_DATA_HOME, d: env.LOCALAPPDATA }).some((v) => v === 'real') && env.X === '1');
 console.log(`mode-smoke-selftest: ${n} checks, ${bad} failed`);
