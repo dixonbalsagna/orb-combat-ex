@@ -89,6 +89,7 @@ func _run() -> void:
 	await _report_where_rules()
 	await _replay_refusal_rules()
 	await _unplug_rules()
+	_report_logs_rules()
 	await _menus_rail_rules()
 	await _pause_clock_rules()
 	await _menus_a1_rules()
@@ -11776,3 +11777,159 @@ func _unplug_rules() -> void:
 	if FileAccess.file_exists(UiPrefs.path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
 	UiPrefs.path = "user://ui_prefs.json"
+
+
+# --- The game's logs in the report folder (X-28; ui/core/ui_report_logs.gd) -----------------------------------------------------------------
+
+func _x28_write(path: String, text: String) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(text)
+	f.close()
+
+
+func _x28_rm_dir(dir: String) -> void:
+	for n in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(n)))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
+
+
+func _report_logs_rules() -> void:
+	var cfg: Dictionary = UiReportLogs.config()
+	var bs: String = char(92)
+	# The data mirrors Tools' scan file (tools/ is not in an export, so the game reads its own copy).
+	if FileAccess.file_exists("res://tools/report-scan.json"):
+		var scan = JSON.parse_string(FileAccess.get_file_as_string("res://tools/report-scan.json"))
+		var same := true
+		var seen_ids: Array = []
+		for p in cfg["patterns"]:
+			seen_ids.append(str(p["id"]))
+			if not scan["patterns"].has(str(p["id"])) or str(scan["patterns"][str(p["id"])]["rx"]) != str(p["rx"]):
+				same = false
+		var ids: Array = scan["patterns"].keys()
+		ids.sort()
+		seen_ids.sort()
+		_ok(same and ids == seen_ids and cfg["allow_lines"] == scan["allowLines"]["rx"], "report logs: the game's patterns and allowed lines are the same as tools/report-scan.json's (ids %s)" % str(seen_ids))
+		_ok(int(cfg["tail_bytes"]) <= int(scan["perFileBytes"]) and int(cfg["tail_bytes"]) == 204800, "report logs: a copy is cut to its last 200 KB, under the scan's size limit for a file")
+	_ok(UiReportLogs.REPORTS == MatchRecorder.DIR, "report logs: the logs go into the match recorder's own folder (%s)" % UiReportLogs.REPORTS)
+	# Cleaning, by name: made-up account and PC names (never a real one).
+	var nm := {"user": "zorbo", "pc": "plinth"}
+	var win: String = UiReportLogs.clean("log at C:" + bs + "Users" + bs + "zorbo" + bs + "AppData" + bs + "Roaming" + bs + "Godot" + bs + "app_userdata" + bs + "Orb Combat EX" + bs + "logs" + bs + "godot.log ok", nm)
+	_ok(win == "log at <user>" + bs + "AppData" + bs + "Roaming" + bs + "Godot" + bs + "app_userdata" + bs + "Orb Combat EX" + bs + "logs" + bs + "godot.log ok", "report logs: a Windows user folder becomes <user> and the rest of the path stays (%s)" % win)
+	_ok(UiReportLogs.clean("at " + "/home" + "/zorbo/.local/share/godot and " + "/c/Users" + "/zorbo/x and " + "/Users" + "/zorbo/Library", nm) == "at <user>/.local/share/godot and <user>/x and <user>/Library", "report logs: a Linux, Git-bash and macOS home become <user>")
+	_ok(UiReportLogs.clean("saved D:" + bs + "Games" + bs + "orb" + bs + "save.dat now", nm) == "saved <path> now", "report logs: a drive path becomes <path>")
+	_ok(UiReportLogs.clean("share " + bs + bs + "plinth" + bs + "files", nm) == "share <removed>", "report logs: a network share becomes <removed>")
+	_ok(UiReportLogs.clean("mail a.b@example.test, ip 192.168.1.5 and 127.0.0.1 and 0.0.0.0, card aa:bb:cc:dd:ee:ff", nm) == "mail <removed>, ip <removed> and 127.0.0.1 and 0.0.0.0, card <removed>", "report logs: an email, an IPv4 address (not 127.0.0.1 or 0.0.0.0) and a card's address become <removed>")
+	_ok(UiReportLogs.clean("host plinth ok, PLINTH, Plinthos, zorbo said hi, Zorbo.", nm) == "host <removed> ok, <removed>, Plinthos, <user> said hi, <user>.", "report logs: the PC name and the account name go as whole words in any case, and a longer word that holds one stays")
+	_ok(UiReportLogs.clean("ab said hi", {"user": "ab", "pc": ""}) == "ab said hi", "report logs: a name of fewer than 3 letters is left (as the scan leaves it)")
+	var banner := "Vulkan 1.3.260 - Forward+ - Using Device #0: plinth Graphics"
+	_ok(UiReportLogs.clean(banner, nm) == banner and UiReportLogs.clean("Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org", nm).begins_with("Godot Engine v4.7.2.stable"), "report logs: the engine's own banner lines are left as they are, as the scan allows them")
+	_ok(UiReportLogs.clean("line one\nline two C:" + bs + "Users" + bs + "zorbo\nline three", nm) == "line one\nline two <user>\nline three", "report logs: lines stay lines")
+	# The cut: the last bytes, whole lines only.
+	var dir := "user://test_x28_logs"
+	var rep := "user://test_x28_reports"
+	var mk := "user://test_x28_marker"
+	for d in [dir, rep, mk]:
+		DirAccess.make_dir_recursive_absolute(d)
+	var lines := PackedStringArray()
+	for i in range(1000):
+		lines.append("line %04d xxxxxxxxxxxxxxxxxxxx" % i)
+	_x28_write(dir.path_join("big.log"), "\n".join(lines) + "\n")
+	var t100: String = UiReportLogs.tail(dir.path_join("big.log"), 100)
+	_ok(t100.length() <= 100 and t100.begins_with("line ") and t100.ends_with("line 0999 xxxxxxxxxxxxxxxxxxxx\n"), "report logs: a cut keeps the last whole lines (%d bytes, starts '%s')" % [t100.length(), t100.left(10)])
+	_ok(UiReportLogs.tail(dir.path_join("big.log"), 10000000).begins_with("line 0000") and UiReportLogs.tail(dir.path_join("none.log"), 100) == "", "report logs: a file under the limit is whole; one that is not there gives nothing")
+	# The copies: this run's log and the newest dated one.
+	_x28_write(dir.path_join("godot.log"), "Godot Engine v4.7.2.stable\nthis run C:" + bs + "Users" + bs + "zorbo" + bs + "x\nplinth here\n")
+	_x28_write(dir.path_join("godot2026-11-20T10.00.00.log"), "an old run\n")
+	_x28_write(dir.path_join("godot2026-11-22T09.30.00.log"), "the dead run said why: crash by zorbo\n")
+	_ok(UiReportLogs.newest_dated(dir) == "godot2026-11-22T09.30.00.log", "report logs: the newest dated log is the one with the latest date")
+	var got: Array = UiReportLogs.copy_into(rep, dir, nm)
+	var this_txt: String = FileAccess.get_file_as_string(rep.path_join("log-this-run.log"))
+	var last_txt: String = FileAccess.get_file_as_string(rep.path_join("log-last-run.log"))
+	_ok(got == ["log-this-run.log", "log-last-run.log"] and this_txt.contains("this run <user>") and this_txt.contains("<removed> here") and last_txt.contains("the dead run said why: crash by <user>"), "report logs: both copies are written, from the right files and cleaned (%s)" % str(got))
+	_ok(not this_txt.contains("zorbo") and not this_txt.contains("plinth") and not last_txt.contains("zorbo") and this_txt.begins_with(str(cfg["header"])), "report logs: neither copy holds a name, and each starts with the line that says what was done to it")
+	_ok(UiReportLogs.copy_into("user://test_x28_empty", "user://test_x28_nologs", nm).is_empty(), "report logs: with no log folder nothing is written and nothing breaks")
+	# A headless run does nothing (every tool's headless start on this PC would otherwise touch the player's own data folder): no marker, no copy, nothing deleted, no report copy.
+	var headless: bool = DisplayServer.get_name() == "headless"
+	if Engine.has_meta(UiReportLogs.OPT_IN):
+		Engine.remove_meta(UiReportLogs.OPT_IN)
+	var me: int = OS.get_process_id()
+	var dead_pid: int = 2000000000
+	_x28_write(UiReportLogs.marker_path(me, mk), "%d" % me)   # this run's own marker, and one of a dead run
+	_x28_write(UiReportLogs.marker_path(dead_pid, mk), "%d" % dead_pid)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(rep.path_join("log-last-run.log")))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(rep.path_join("log-this-run.log")))
+	var h_active: bool = UiReportLogs.active()
+	var h_start: bool = UiReportLogs.start(rep, mk, dir)
+	UiReportLogs.stop(mk)
+	var h_saved: Array = UiReportLogs.report_saved(rep)
+	var h_kept: bool = FileAccess.file_exists(UiReportLogs.marker_path(me, mk)) and FileAccess.file_exists(UiReportLogs.marker_path(dead_pid, mk))
+	var h_wrote: bool = FileAccess.file_exists(rep.path_join("log-last-run.log")) or FileAccess.file_exists(rep.path_join("log-this-run.log"))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiReportLogs.marker_path(me, mk)))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiReportLogs.marker_path(dead_pid, mk)))
+	if headless:
+		_ok(not h_active and not h_start and h_saved.is_empty() and h_kept and not h_wrote, "report logs: a HEADLESS run does nothing: not active, a start that finds a marker neither says so nor copies, a stop leaves the markers (its own too: a tool that frees the game's scene must not delete a played game's), a saved report copies nothing (%s %s %s %s %s)" % [str(h_active), str(h_start), str(h_saved), str(h_kept), str(h_wrote)])
+		Engine.set_meta(UiReportLogs.OPT_IN, true)
+		_ok(UiReportLogs.active(), "report logs: the scratch opt-in (the Engine meta only a probe sets) turns it on in a headless run")
+		Engine.remove_meta(UiReportLogs.OPT_IN)
+	# Only a scratch probe may set the opt-in: no production script (ui/ and render/, outside tools, tests and demos) sets it, and none but this class reads it.
+	var setters := PackedStringArray()
+	var readers := PackedStringArray()
+	var todo: Array = ["res://ui", "res://render"]
+	while not todo.is_empty():
+		var d: String = todo.pop_back()
+		for sub in DirAccess.get_directories_at(d):
+			if not ["tools", "tests", "test", "demo"].has(sub) and not sub.begins_with("."):
+				todo.append(d.path_join(sub))
+		for fn in DirAccess.get_files_at(d):
+			if fn.ends_with(".gd"):
+				var src: String = FileAccess.get_file_as_string(d.path_join(fn))
+				if src.contains("set_meta(\"" + UiReportLogs.OPT_IN) or src.contains("set_meta(UiReportLogs.OPT_IN"):
+					setters.append(d.path_join(fn))
+				if src.contains(UiReportLogs.OPT_IN) or src.contains("OPT_IN"):
+					readers.append(d.path_join(fn))
+	_ok(setters.is_empty() and readers == PackedStringArray(["res://ui/core/ui_report_logs.gd"]), "report logs: no shipped script sets the headless opt-in, and only UiReportLogs reads it (setters %s, readers %s)" % [str(setters), str(readers)])
+	# The marker: a start after a run that did not close.
+	Engine.set_meta(UiReportLogs.OPT_IN, true)   # (a headless run needs the opt-in to test the real flow)
+	var first: bool = UiReportLogs.start(rep, mk, dir)
+	var marked: bool = FileAccess.file_exists(UiReportLogs.marker_path(me, mk))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(rep.path_join("log-last-run.log")))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(rep.path_join("log-this-run.log")))
+	var second: bool = UiReportLogs.start(rep, mk, dir)
+	var after_died: bool = FileAccess.file_exists(rep.path_join("log-last-run.log"))
+	UiReportLogs.stop(mk)
+	var gone: bool = not FileAccess.file_exists(UiReportLogs.marker_path(me, mk))
+	var third: bool = UiReportLogs.start(rep, mk, dir)
+	UiReportLogs.stop(mk)
+	_ok(not first and marked and second and after_died and gone and not third, "report logs: a first start is clean and leaves its marker; a start that finds the marker says the last run did not close and writes the logs; a clean stop takes the marker (%s %s %s %s %s %s)" % [str(first), str(marked), str(second), str(after_died), str(gone), str(third)])
+	# Two copies of the game on one PC: a marker of a process that is still running is another game and is left alone; once that process is gone, its marker is a dead run.
+	_ok(UiReportLogs.pid_alive(me) and not UiReportLogs.pid_alive(dead_pid) and not UiReportLogs.pid_alive(0), "report logs: this process is alive, a process id nobody has is not, and 0 is not")
+	var child: int = OS.create_process("cmd", ["/c", "ping -n 4 127.0.0.1 > nul"]) if OS.get_name() == "Windows" else OS.create_process("sleep", ["3"])
+	if child > 0:
+		_x28_write(UiReportLogs.marker_path(child, mk), "%d" % child)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(rep.path_join("log-last-run.log")))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(rep.path_join("log-this-run.log")))
+		var live_alive: bool = UiReportLogs.pid_alive(child)
+		var live_start: bool = UiReportLogs.start(rep, mk, dir)
+		var live_left: bool = FileAccess.file_exists(UiReportLogs.marker_path(child, mk))
+		var live_copied: bool = FileAccess.file_exists(rep.path_join("log-last-run.log"))
+		UiReportLogs.stop(mk)
+		var mine_gone: bool = not FileAccess.file_exists(UiReportLogs.marker_path(me, mk))
+		var live_still: bool = FileAccess.file_exists(UiReportLogs.marker_path(child, mk))
+		_ok(live_alive and not live_start and live_left and not live_copied and mine_gone and live_still, "report logs: a marker of a process that is still running is left alone (not a dead run, nothing copied, not deleted by this game's start or stop; %s %s %s %s %s %s)" % [str(live_alive), str(live_start), str(live_left), str(live_copied), str(mine_gone), str(live_still)])
+		var t0: int = Time.get_ticks_msec()
+		while OS.is_process_running(child) and Time.get_ticks_msec() - t0 < 20000:
+			OS.delay_msec(100)
+		var gone_alive: bool = UiReportLogs.pid_alive(child)
+		var dead_start: bool = UiReportLogs.start(rep, mk, dir)
+		var dead_deleted: bool = not FileAccess.file_exists(UiReportLogs.marker_path(child, mk))
+		var dead_copied: bool = FileAccess.file_exists(rep.path_join("log-last-run.log"))
+		UiReportLogs.stop(mk)
+		_ok(not gone_alive and dead_start and dead_deleted and dead_copied, "report logs: once that process has ended its marker is a dead run: said, deleted, the logs copied (%s %s %s %s)" % [str(gone_alive), str(dead_start), str(dead_deleted), str(dead_copied)])
+	else:
+		_ok(false, "report logs: a short-lived child process could not be started for the live-marker rows")
+	var saved_rows: Array = UiReportLogs.report_saved(rep)
+	_ok(saved_rows.is_empty() or saved_rows.has("log-this-run.log") or saved_rows.has("log-last-run.log"), "report logs: with the opt-in a saved report copies the logs (report_saved: %s)" % str(saved_rows))
+	Engine.remove_meta(UiReportLogs.OPT_IN)
+	for d in [dir, rep, mk, "user://test_x28_empty"]:
+		if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(d)):
+			_x28_rm_dir(d)

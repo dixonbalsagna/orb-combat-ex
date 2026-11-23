@@ -24,6 +24,8 @@ export const REASON = 'forced crash test (scratch)';
 export const PROBE = `extends Node
 ## Scratch only (tools/crash/crash-check.mjs): never in the game. A crash or a hang on request, one second in.
 func _ready() -> void:
+\t# the opt-in the game's report logs need in a HEADLESS run (ui/core/ui_report_logs.gd: a headless start does nothing otherwise); only this scratch autoload sets it, never the game
+\tEngine.set_meta("report_logs_headless", true)
 \tvar a: PackedStringArray = OS.get_cmdline_user_args()
 \tif a.has("crashtest") or a.has("--crashtest"):
 \t\tawait get_tree().create_timer(1.0).timeout

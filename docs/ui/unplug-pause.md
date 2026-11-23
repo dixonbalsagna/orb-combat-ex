@@ -44,4 +44,4 @@ Where the controller goes back to: the input hub already hands player 2's slot t
 
 `ui/tools/hud_check.gd` `_unplug_rules`: one person; the same drop twice; the controller back and the wait for its press; going again before the press; Resume by hand (also while waiting); a card the player opened; an empty list; the match over; the start menu; two people (names, the slot handed to the computer, one of two back, both back); and the longest line's fit at five sizes, Rail on and off, with the join and save lines.
 
-Pictures: the demo scene takes `--unplug` (or `--unplug=1`, with `--p2`), and `--unplugback` with it for the line that waits for a press.
+Pictures: the demo scene takes `--unplug` (the one person, the plain solo line; a bare flag), `--unplug=2 --p2` (player two) and `--unplug=both --p2`, and `--unplugback` with any of them for the line that waits for a press.

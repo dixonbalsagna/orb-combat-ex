@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/ui-report-clean",
+  "title": "ui report logs (schema 1)",
+  "description": "ui/data/report_clean.json: what the report folder does with the game's logs (docs/ui/report-logs.md, X-28): the two copies it writes, how many bytes of each it keeps, the run marker, and the patterns that clean a copy before it is written. patterns and allow_lines mirror tools/report-scan.json (hud_check fails if they differ). Version field: schema. Policy: closed; keys starting with '_' are comments.",
+  "type": "object",
+  "required": [
+    "schema",
+    "tail_bytes",
+    "this_run",
+    "last_run",
+    "marker",
+    "header",
+    "names",
+    "patterns",
+    "allow_lines"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "tail_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 4194304
+    },
+    "this_run": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+[.]log$"
+    },
+    "last_run": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+[.]log$"
+    },
+    "marker": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "header": {
+      "type": "string",
+      "minLength": 1
+    },
+    "names": {
+      "type": "object",
+      "required": [
+        "user",
+        "pc"
+      ],
+      "properties": {
+        "user": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pc": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "rx",
+          "mark"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rx": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mark": {
+            "enum": [
+              "<user>",
+              "<path>",
+              "<removed>"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "allow_lines": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "patternProperties": {
+    "^_": true
+  },
+  "additionalProperties": false
+}

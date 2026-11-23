@@ -261,7 +261,8 @@ func _ready() -> void:
 		if args.has("pquit"):
 			hud.pause_menu_choose("quit")
 	if args.has("unplug"):
-		hud.pad_dropped([int(args["unplug"])] if str(args["unplug"]).is_valid_int() else [0])   # --unplug (or --unplug=1; with --p2 it names the player): the card a dropped controller opens, as the game opens it
+		var un: String = str(args["unplug"])   # --unplug (a bare flag reads "1") = the one person's controller, the plain line; --unplug=2 = player two's (with --p2, so the line names them); --unplug=both = both (with --p2)
+		hud.pad_dropped([0, 1] if un == "both" else ([1] if un == "2" else [0]))
 		if args.has("unplugback"):
 			hud.pad_returned()   # --unplugback: the controller is back and the card waits for its first press
 	if args.has("report"):

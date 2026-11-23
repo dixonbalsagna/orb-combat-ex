@@ -190,6 +190,7 @@ func _ready() -> void:
 	ui_hud.lane_colors_changed.connect(_on_lane_colors)
 	if not OS.has_feature("web"):
 		ui_hud.lan_report_fn = _record_report   # A-UI-02: a solo or couch match is kept as a file in user://reports/ (MatchRecorder); the web page has its own download
+		UiReportLogs.start(MatchRecorder.DIR)   # X-28: the report folder also gets the game's logs; a start after a run that did not close properly puts the dead run's log there at once (ui/core/ui_report_logs.gd)
 	# The pause menu's "hand player two back to the AI" entry.
 	ui_hud.player_two_leave_requested.connect(_on_player_two_leave)
 	ui_hud.form_prompt_shown.connect(_on_form_prompt)
@@ -316,6 +317,7 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	UiReportLogs.stop()   # a clean close: the run marker goes (a start that finds it knows the last run did not close properly)
 	if host == null:
 		return   # the game never started here (the study route left at once)
 	SimCore.dispose(host.S)
@@ -1874,4 +1876,7 @@ static func _dist(v) -> String:
 ## The HUD's report and "Save this match" on a plain desktop build (A-UI-02, 2026-11-14): the match so far as a file in user://reports/ (SimHost.record_file, MatchRecorder). Nothing leaves the PC. The file's name, "" when
 ## there is nothing to save or the file could not be written (the HUD then says so).
 func _record_report(tags: String, note: String, reason: String = "report") -> String:
-	return host.record_file(reason, tags, note)   # reason "save" is the HUD's "Save this match" (a file the player chose to keep: the recorder never prunes it); F9 and the feedback panel stay "report"
+	var saved: String = host.record_file(reason, tags, note)   # reason "save" is the HUD's "Save this match" (a file the player chose to keep: the recorder never prunes it); F9 and the feedback panel stay "report"
+	if saved != "":
+		UiReportLogs.report_saved(MatchRecorder.DIR)   # X-28: the game's log goes beside the match file, cut to its last 200 KB and cleaned of folder paths and names
+	return saved

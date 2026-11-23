@@ -172,6 +172,10 @@
       "schema": "ui-modes.schema.json"
     },
     {
+      "match": "ui/data/report_clean.json",
+      "schema": "ui-report-clean.schema.json"
+    },
+    {
       "match": "ui/data/faces.json",
       "schema": "ui-faces.schema.json"
     },
