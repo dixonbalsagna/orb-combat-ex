@@ -1,0 +1,56 @@
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -55,6 +55,7 @@
+ var _terrain_mat: ShaderMaterial
+ var _water_mat: ShaderMaterial
+ var _lake_sent: float = 0.0   # the water material's lake_on
++var lines_s: float = 1.0      # the altitude lines' scale this match (_set_lines): 1.0 where nothing is capped
+ static var cull_on: bool = RenderLook.SPLIT_CULL_ON   # the split's culling (cull_to); main's --nocull turns it off
+ var _cull: Array = []                  # per copy: [copy, its chunks' union box, [[chunk node, box, left out]...]] (cull_to)
+ ## The view update's short cuts (the coast's profile, 2026-10-27): the building sweep passes over a building as it was
+@@ -382,6 +383,18 @@
+ 	return true
+ 
+ 
++## The altitude lines of a capped size (Art's ruling, docs/art/relief-cap-ruling.md, and its follow-up of 2026-11-22): each line on tiny and small is
++## medium's scaled by the planet's tallest capped peak over the tallest relief on medium, World's WorldPlanetSize.linesScaleFor (1.0 where nothing is
++## capped: medium, big, huge, and every size while the cap's data row is off, so the lines are as they were, bit for bit). Rendering draws two: the
++## snow (SNOW_FROM, 6,720, is medium's 0.997 of 6,739, so the snow starts at 0.997 of the planet's own tallest capped peak) and the rocky biomes'
++## rock line (biome_look ROCK_ABOVE, the shader's lines_s). Per match: the materials are made once, and the tile ground copies them from this one.
++func _set_lines(S: SimState) -> void:
++	lines_s = WorldPlanetSize.linesScaleFor(SimField._planet(int(S.frame.seed), int(S.frame.gen))) if S.frame != null else 1.0
++	_terrain_mat.set_shader_parameter("snow_from", RenderLook.SNOW_FROM * lines_s)
++	_terrain_mat.set_shader_parameter("snow_full", RenderLook.SNOW_FULL * lines_s)
++	_terrain_mat.set_shader_parameter("lines_s", lines_s)
++
++
+ func _bs_setup(S: SimState) -> bool:
+ 	if _front_mat == null:
+ 		_front_mat = _building_mat()
+@@ -391,6 +404,7 @@
+ 	_stub_live.clear()
+ 	_gone.clear()
+ 	_apply_wl()
++	_set_lines(S)
+ 	_stub_t = -1.0
+ 	_stub_tex = _stub_texture(_bld_mat, _n_inst)
+ 	_stub_tex0 = _stub_texture(_front_mat, _n_inst0)
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@ -46,6 +46,7 @@
+ uniform vec3 sun_dir = vec3(-0.5, 0.8, 0.33);
+ uniform vec2 rock_slope = vec2(0.45, 1.25);
+ uniform float rock_high = 0.3;
++uniform float lines_s = 1.0;   // the altitude lines' scale on a capped size (PlanetView._set_lines, Art's relief-cap ruling): the rock line below; 1.0 where nothing is capped
+ uniform vec2 depth_step = vec2(1.1, 0.94);
+ uniform float strata_h = 60.0;
+ uniform vec2 scar_band = vec2(1.5, 0.3);   // the scar's edge rim in pixels, and the burn where its band starts
+@@ -195,7 +196,7 @@
+ 	// Rock by the ground's steepness, in Art's five hard bands from rock_slope.x to .y (so the green and the rock meet along
+ 	// the slope's contour, stepped); in a rocky biome the rock starts at gentler slopes the higher it is, so the foot stays
+ 	// green only where it is gentle.
+-	float above = rk.g * 10000.0;
++	float above = rk.g * 10000.0 * lines_s;   // scaled with the size's altitude lines (1.0: as it is)
+ 	float g0 = rock_slope.x * (above > 0.0 ? mix(1.0, rock_high, clamp((v_h - above) / above, 0.0, 1.0)) : 1.0);
+ 	float rr = clamp((length(v_grad) - g0) / max(rock_slope.y - g0, 0.01), 0.0, 1.0);
+ 	float rs = rr <= 0.0 ? 0.0 : (rr >= 1.0 ? 1.0 : (floor(rr * 5.0) + 0.5) / 5.0);

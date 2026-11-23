@@ -1,0 +1,18 @@
+# relief-snow, flash (EP only): collapse in both modes, cap on (knee 0.7), /index.html?flashcap=1&tiles=1&size=<size>; before = rfo (no relief-snow), after = rf (relief-snow f269e018)
+## small before (rfo, no relief-snow)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2.5, 0 dips, 539s, worst of 4 readings (1024x768 at scale 1)
+collapse-reduced: FAIL, primary 4 general 0 red, area-15% 4, 2 s memory 3, 0 dips, 537s, worst of 4 readings (1024x768 at scale 1)
+## small after (rf, relief-snow)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2.5, 0 dips, 556s, worst of 4 readings (1024x768 at scale 1)
+collapse-reduced: FAIL, primary 4 general 0 red, area-15% 4, 2 s memory 3, 0 dips, 535s, worst of 4 readings (1024x768 at scale 1)
+## tiny before (rfo, no relief-snow)
+collapse-normal: FAIL, primary 6 general 0 red, area-15% 8, 2 s memory 5, 0 dips, 478s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 8 general 0 red, area-15% 10, 2 s memory 7, 0 dips, 457s, worst of 4 readings (1024x768 at scale 1)
+## tiny after (rf, relief-snow)
+collapse-normal: FAIL, primary 6 general 0 red, area-15% 9, 2 s memory 5, 0 dips, 525s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 8 general 0 red, area-15% 11.5, 2 s memory 6.5, 0 dips, 505s, worst of 4 readings (1024x768 at scale 2)
+## control: small, the cap OFF (rfc = rs, the relief-snow tree without the data row), collapse-reduced
+collapse-reduced: FAIL, primary 7 general 0 red, area-15% 9.5, 2 s memory 5.5, 0 dips, 599s, worst of 4 readings (960x540 at scale 2)
+## control: tiny, the cap OFF (rfc), collapse in both modes
+collapse-normal: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 2, 0 dips, 479s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 2, 0 dips, 489s, worst of 4 readings (960x540 at scale 1)

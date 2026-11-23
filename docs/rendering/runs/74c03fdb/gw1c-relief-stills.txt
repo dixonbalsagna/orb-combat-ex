@@ -1,8 +1,8 @@
 # GW1c relief-cap stills: cA = main 74c03fdb + World's stage 2 + sizes_tiles + drawn_at (the cap's code, its data row off); cB = cA + relief-cap-data.diff (on). beamduel, seed 12345, the default (reduced) look, ticks 1 to 601 every 150; the web build attaches the split.
 small, cap off: 5 stills; 
-tiny, cap off: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breaker
-tiny, cap on: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breaker
-small, cap on: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breaker
+tiny, cap off: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-<user>-Documents-Claude-Proj-Breaker
+tiny, cap on: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-<user>-Documents-Claude-Proj-Breaker
+small, cap on: 0 stills; [capture] wrote frames 1 to 601 to /c/Users/<user>/AppData/Local/Temp/claude/C--Users-<user>-Documents-Claude-Proj-Breaker
 medium, ai seed 1, ticks 150 and 157: 0 stills; [capture] FAILED: the page did not reach tick 150 (it reads 1)
 ## small with fore-clamp v4 (fore_fix.diff 353a4cb2, parked) on top: the same scene and ticks
 small, cap off, + fore-clamp v4: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Local/Temp/claude/C--U
@@ -17,3 +17,47 @@ small, cap off: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/App
 tiny, cap on: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Lo
 small, cap on: 5 stills; [capture] wrote frames 1 to 601 to C:/Users/<user>/AppData/Lo
 ## re-cut 2 read by eye: every size reads, both fighters visible. tiny: cap off, a rock face beside the line; cap on, a town on green ground. small: cap off, an open rocky hillside with trees on the ridge; cap on, a town. medium: the town under the hillside, as before. big: a snowy forest. (The earlier gw1c-* stills, and small's grey surface, were the vertex shader's medium level 0.)
+## posed stills for Art (cap on): P6 knee 0.6, P7 knee 0.7; the default look, 1280x720, fighters held at px (and px + 220), alt above the ground
+tiny a-range-knee06 (px 39424): gw1c2-pose-tiny-a-range-knee06.png
+tiny a-range-knee07 (px 39424): gw1c2-pose-tiny-a-range-knee07.png
+small a-range-knee06 (px 49408): gw1c2-pose-small-a-range-knee06.png
+small a-range-knee07 (px 49408): gw1c2-pose-small-a-range-knee07.png
+tiny b-peak-knee06 (px 21760): gw1c2-pose-tiny-b-peak-knee06.png
+small b-peak-knee06 (px 34600): gw1c2-pose-small-b-peak-knee06.png
+## posed stills for Art (cap on): P6 knee 0.6, P7 knee 0.7; the default look, 1280x720, fighters held at px (and px + 220), alt above the ground
+tiny a-range-knee06 (px 39424): gw1c2-pose-tiny-a-range-knee06.png
+tiny a-range-knee07 (px 39424): gw1c2-pose-tiny-a-range-knee07.png
+small a-range-knee06 (px 49408): gw1c2-pose-small-a-range-knee06.png
+small a-range-knee07 (px 49408): gw1c2-pose-small-a-range-knee07.png
+tiny b-peak-knee06 (px 21760): gw1c2-pose-tiny-b-peak-knee06.png
+small b-peak-knee06 (px 34600): gw1c2-pose-small-b-peak-knee06.png
+## posed stills, second poses (the first poses' ranges, 9,000 back, fell behind the small planets' horizon, and no peak was in frame: those files are overwritten)
+tiny a-range-knee06 (px 30208, alt 600): gw1c2-pose-tiny-a-range-knee06.png
+tiny a-range-knee07 (px 30208, alt 600): gw1c2-pose-tiny-a-range-knee07.png
+small a-range-knee06 (px 41472, alt 700): gw1c2-pose-small-a-range-knee06.png
+small a-range-knee07 (px 41472, alt 700): gw1c2-pose-small-a-range-knee07.png
+tiny b-peak-knee06 (px 20436, alt 50): gw1c2-pose-tiny-b-peak-knee06.png
+small b-peak-knee06 (px 35540, alt 50): gw1c2-pose-small-b-peak-knee06.png
+## the posed stills read by eye, and why no snow shows
+- small, a range (x 41472, alt 700): a town with grey rocky hills behind; the hills' crest stands against the sky; at knee 0.7 the crest rises a little against 0.6. The best of the set.
+- tiny, a range (x 30208, alt 600): a city's towers fill the view; no range shows.
+- the peaks (tiny x 20436, small x 35540, just before the line's highest ground): grey summit rock against the sky (small) and a town on a rise (tiny); no snow, no tree line in frame.
+- The biome at the highest points (cap on): tiny's highest node 1,591, small's 3,225, both "mountains"; the summits on the line 1,043 (tiny) and 2,888 (small).
+- The render's snow band (terrain.gdshaderinc, RenderLook.SNOW_FROM = 560 x MS = 6,720 units, SNOW_FULL 10,800) is an absolute height set for medium (its tallest relief is 6,739). With the cap, no peak on tiny or small comes near it, so no snow can show. World scales its own altitude lines by WorldPlanetSize.linesScale() (0.29 tiny, 0.58 small); the snow band doesn't.
+## the peaks re-posed (b), 2026-11-22: World's relief-cap re-cut (knee 0.7), cap on; before = no relief-snow (snow from 6,720, the rock line unscaled), after = relief-snow (snow from 0.997 of World's tallest capped peak, the rock line by the same scale)
+tiny b-summit rpo (px 21626, alt 50): gw1c3-pose-tiny-b-summit-rpo.png
+tiny b-summit rp (px 21626, alt 50): gw1c3-pose-tiny-b-summit-rp.png
+sheet: gw1c3-pose-tiny-b-summit-before-after.png
+small b-snow rpo (px 37829, alt 50): gw1c3-pose-small-b-snow-rpo.png
+small b-snow rp (px 37829, alt 50): gw1c3-pose-small-b-snow-rp.png
+sheet: gw1c3-pose-small-b-snow-before-after.png
+small b-snow-high rpo (px 37829, alt 900): gw1c3-pose-small-b-snow-high-rpo.png
+small b-snow-high rp (px 37829, alt 900): gw1c3-pose-small-b-snow-high-rp.png
+sheet: gw1c3-pose-small-b-snow-high-before-after.png
+small b-range rpo (px 45202, alt 50): gw1c3-pose-small-b-range-rpo.png
+small b-range rp (px 45202, alt 50): gw1c3-pose-small-b-range-rp.png
+sheet: gw1c3-pose-small-b-range-before-after.png
+## the re-posed peaks read by eye (gw1c3-*-before-after.png; the fighters are AI-driven and only held in place, so their poses differ between before and after)
+- tiny, the summit (1,674, 1,484 behind the line): the mountain face fills the frame. With relief-snow it reads more evenly pale (the rock line scaled by 0.252: on gentle slopes, rock from 227 instead of 900). No snow: the snow line (1,696.5) is over the highest drawn ground (1,674).
+- small, the snow summit (3,383, 2,031 in FRONT of the line): it stands between the line and the camera, so the default look's foreground tone paints that near ground flat grey, before and after. The snow on it does not show in the fight view. At alt 900 the ground leaves the frame.
+- small, a range (2,771, 2,750 behind): alike before and after; slightly more pale rock on the slopes in the after. No snow: it is under the snow line (3,347).

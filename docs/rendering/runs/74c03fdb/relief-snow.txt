@@ -1,0 +1,84 @@
+# relief-snow (Rendering, 2026-11-22): the snow and the rock line by the size's relief (Art's ruling), on World's relief-cap re-cut (knee 0.7)
+base: main 74c03fdb (code as at c2154c69) + World's stage 2 (docs/world/planet-stack-recut.md) with docs/world/pending/relief-cap-gw1c/relief-cap.diff of 19:41 (sha 3b2b17d7)
+planet-sizes sizes_tiles.diff (1feb0c27): applies
+drawn-at drawn_at.diff (9d9fa616): applies
+relief_snow.diff (f269e018, 56 lines): applies
+rsd: + relief-cap-data.diff (7e0e50a7): applies
+rs import: errors 0
+rsd import: errors 0
+## lines_probe on rs (tiles on)
+exit 0
+tiles true; RenderLook.SNOW_FROM 6720.0, SNOW_FULL 10800.0
+match 1, tiny: PLANET_NC 1280, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+match 2, small: PLANET_NC 2560, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+match 3, medium: PLANET_NC 4800, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+match 4, small: PLANET_NC 2560, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+match 5, big: PLANET_NC 9600, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+ERROR: 138 RID allocations of type 'N13RendererDummy11MeshStorage14DummyMultiMeshE' were leaked at exit.
+ERROR: 35 RID allocations of type 'N13RendererDummy9DummyMeshE' were leaked at exit.
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+ERROR: 13 resources still in use at exit (run with --verbose for details).
+## lines_probe on rsd (tiles on)
+exit 0
+tiles true; RenderLook.SNOW_FROM 6720.0, SNOW_FULL 10800.0
+match 1, tiny: PLANET_NC 1280, cap 1956, tallest capped 1701.3, linesScaleFor 0.252448 (snow from 0.997 x peak = 1696.5); the view's lines_s 0.25244843633509
+  frame 1: ground snow_from 1696.45349217181, snow_full 2726.44311241898, lines_s 0.25244843633509 | tiles snow_from 1696.45349217181, snow_full 2726.44311241898, lines_s 0.25244843633509
+  frame 41: ground snow_from 1696.45349217181, snow_full 2726.44311241898, lines_s 0.25244843633509 | tiles snow_from 1696.45349217181, snow_full 2726.44311241898, lines_s 0.25244843633509
+match 2, small: PLANET_NC 2560, cap 3911, tallest capped 3356.7, linesScaleFor 0.498101 (snow from 0.997 x peak = 3347.2); the view's lines_s 0.49810116437344
+  frame 1: ground snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344 | tiles snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344
+  frame 41: ground snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344 | tiles snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344
+match 3, medium: PLANET_NC 4800, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+match 4, small: PLANET_NC 2560, cap 3911, tallest capped 3356.7, linesScaleFor 0.498101 (snow from 0.997 x peak = 3347.2); the view's lines_s 0.49810116437344
+  frame 1: ground snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344 | tiles snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344
+  frame 41: ground snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344 | tiles snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344
+match 5, big: PLANET_NC 9600, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles snow_from 6720.0, snow_full 10800.0, lines_s 1.0
+ERROR: 138 RID allocations of type 'N13RendererDummy11MeshStorage14DummyMultiMeshE' were leaked at exit.
+ERROR: 35 RID allocations of type 'N13RendererDummy9DummyMeshE' were leaked at exit.
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+ERROR: 13 resources still in use at exit (run with --verbose for details).
+## lines_probe on rsd, tiles off (the strip ground)
+exit 0
+tiles false; RenderLook.SNOW_FROM 6720.0, SNOW_FULL 10800.0
+match 1, tiny: PLANET_NC 1280, cap 1956, tallest capped 1701.3, linesScaleFor 0.252448 (snow from 0.997 x peak = 1696.5); the view's lines_s 0.25244843633509
+  frame 1: ground snow_from 1696.45349217181, snow_full 2726.44311241898, lines_s 0.25244843633509 | tiles none
+  frame 41: ground snow_from 1696.45349217181, snow_full 2726.44311241898, lines_s 0.25244843633509 | tiles none
+match 2, small: PLANET_NC 2560, cap 3911, tallest capped 3356.7, linesScaleFor 0.498101 (snow from 0.997 x peak = 3347.2); the view's lines_s 0.49810116437344
+  frame 1: ground snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344 | tiles none
+  frame 41: ground snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344 | tiles none
+match 3, medium: PLANET_NC 4800, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles none
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles none
+match 4, small: PLANET_NC 2560, cap 3911, tallest capped 3356.7, linesScaleFor 0.498101 (snow from 0.997 x peak = 3347.2); the view's lines_s 0.49810116437344
+  frame 1: ground snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344 | tiles none
+  frame 41: ground snow_from 3347.23982458949, snow_full 5379.49257523311, lines_s 0.49810116437344 | tiles none
+match 5, big: PLANET_NC 9600, cap 0, tallest capped 0.0, linesScaleFor 1.000000 (snow from 0.997 x peak = 0.0); the view's lines_s 1.0
+  frame 1: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles none
+  frame 41: ground snow_from 6720.0, snow_full 10800.0, lines_s 1.0 | tiles none
+ERROR: 9 resources still in use at exit (run with --verbose for details).
+## gates on rs (the cap's row off, as the park would land)
+c0/sim/core/test/golden.json rs/sim/core/test/golden.json differ: char 2499, line 128
+golden.json DIFFERS
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+drawn_check exit 0
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+## golden, corrected: the "DIFFERS" above compared against c0's golden.json, which was main's file (c0 was rebuilt fresh and golden was never run on it). Run on c0 (stage 2 alone): import errors 0, golden exit 0;
+golden.json: rs byte-identical to stage 2 alone (c0 regenerated)
