@@ -272,3 +272,4 @@ Hard's scripted read is reported only.
   - Both are read again from Orb's and Orb 2's play files, then the outside testers' (A2), against the human bands in §10.
 
 **The training dummy and the hold answer (2026-11-23):** **the idle training dummy skips `holdAnswer`.** An idle dummy is there to be hit: to practise holds, launches and charges, and for Tools' scenes. It shouldn't grab or dodge a charge. Only the dummy set to "standard AI" (`modes.md`'s training toggles) answers holds, at its level's numbers.
+**And its perfect block (2026-11-23):** **the idle dummy skips `perfectVsHeavy` too.** An idle dummy does nothing, so a held charge always connects in practice. Learning that a full charge can be blocked belongs to the dummy set to "standard AI" or to a guard toggle (`modes.md`), where the player chose it.
