@@ -1,0 +1,16 @@
+# gw1c-door-holds: the collapse clip, worst of 4 readings (960x540 and 1024x768, scale 1 and 2), one run each (the reel repeats: the work clock)
+# h0 = main 257994f8 (GW1b landed; camera unchanged to 8e7d81d9) + the GW1c stack (docs/rendering/runs/31531cb2/tile-marks-gates.txt's 19 patches as in docs/ today; the cap's data row OFF; relief-snow and tile-marks OUT) + a scratch size word (page size=, WorldPlanetSize.heldOverride = true); h1 = h0 + gw1c-door-holds.patch.
+# command (one clip at a time, Tools' launcher): MSYS_NO_PATHCONV=1 node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1&size=<small|big|medium>" --out <out> --jobs 1 --keep --clip-timeout 2400 --clip <collapse-reduced|collapse-normal>
+# readings: primary / area-15% / 2 s memory, worst of 4 (and where)
+h0small   collapse-reduced  FAIL      3 / 4 / 2  dips 0  worst 1024x768 s1 at 355  (all: 960x540s1 3/3/2, 960x540s2 2/2/2, 1024x768s1 3/4/2, 1024x768s2 3/4/2)
+h1small   collapse-reduced  PASS      2.5 / 3 / 2  dips 0  worst 1024x768 s1 at 859  (all: 960x540s1 2/2/2, 960x540s2 2/2/2, 1024x768s1 2.5/3/1, 1024x768s2 2.5/3/1)
+h0big     collapse-reduced  OVER GATE 3 / 3 / 2  dips 0  worst 1024x768 s1 at 992  (all: 960x540s1 1.5/1.5/1.5, 960x540s2 1.5/1.5/1.5, 1024x768s1 3/3/2, 1024x768s2 3/3/2)
+h1big     collapse-reduced  PASS      2.5 / 2.5 / 1.5  dips 0  worst 1024x768 s1 at 979  (all: 960x540s1 1.5/1.5/1.5, 960x540s2 1.5/1.5/1.5, 1024x768s1 2.5/2.5/1.5, 1024x768s2 2.5/2.5/1.5)
+h0smalln  collapse-normal   PASS      2 / 3 / 2  dips 0  worst 1024x768 s2 at 376  (all: 960x540s1 2/2/2, 960x540s2 2/2/2, 1024x768s1 2/2/2, 1024x768s2 2/3/2)
+h1smalln  collapse-normal   PASS      2 / 3 / 2  dips 0  worst 1024x768 s2 at 375  (all: 960x540s1 2/2/2, 960x540s2 2/2/2, 1024x768s1 2/2/2, 1024x768s2 2/3/2)
+h0bign    collapse-normal   PASS      2 / 2 / 1.5  dips 0  worst 960x540 s2 at 1090  (all: 960x540s1 1.5/2/1.5, 960x540s2 2/2/1.5, 1024x768s1 2/2/1.5, 1024x768s2 2/2/1.5)
+h1bign    collapse-normal   PASS      2 / 2 / 1.5  dips 0  worst 960x540 s2 at 1090  (all: 960x540s1 1.5/2/1.5, 960x540s2 2/2/1.5, 1024x768s1 1.5/2/1.5, 1024x768s2 1.5/2/1.5)
+h0med     collapse-reduced  PASS      2 / 2 / 1.5  dips 0  worst 960x540 s2 at 144  (all: 960x540s1 1/1/1, 960x540s2 2/2/1, 1024x768s1 1/1/1.5, 1024x768s2 1/1/1.5)
+h0med     collapse-normal   PASS      1 / 1 / 1  dips 0  worst 960x540 s1 at 163  (all: 960x540s1 1/1/1, 960x540s2 1/1/1, 1024x768s1 1/1/1, 1024x768s2 1/1/1)
+h1med     collapse-reduced  PASS      2 / 2 / 1.5  dips 0  worst 960x540 s2 at 144  (all: 960x540s1 1/1/1, 960x540s2 2/2/1.5, 1024x768s1 2/2/1, 1024x768s2 2/2/1.5)
+h1med     collapse-normal   PASS      1 / 1 / 1  dips 0  worst 960x540 s1 at 163  (all: 960x540s1 1/1/1, 960x540s2 1/1/1, 1024x768s1 1/1/1, 1024x768s2 1/1/1)

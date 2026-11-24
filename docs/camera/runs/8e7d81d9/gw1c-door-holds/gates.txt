@@ -1,0 +1,45 @@
+# gates on h0 (the landing tree) and h1 (+ the park); one Godot at a time, below normal
+## camera checks (render/camera/tests/*_check.gd) and split_sweep, h1 (h0 reads the same, line for line)
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+flight_shots_check     flight_shots_check: 662 checks passed 
+launch_shots_check     launch_shots_check: 937 checks passed 
+own_pane_check         FAIL own_pane_check: launchai normal, fighter 0 out of his pane for 16 ticks (ticks 3003 to 3018, merged, sep 0.00, free) FAIL own_pane_check: launchai reduced, fighter 0 out of his pane for 16 ticks (ticks 3003 to 3018, merged, sep 0.00, free) own_pane_check: 2 of 12 checks FAILED 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed 
+## Rendering's render gates (the 20 of 31531cb2's gate list; split_sweep above) and the golden, h1 (h0: the same, line for line; golden the same hash)
+open      open check passed  | script errors 0
+depth     depth check passed  | script errors 0
+shape     shape check passed  | script errors 0
+patch     patch check passed  | script errors 0
+pane      pane check passed  | script errors 0
+stage     stage check passed  | script errors 0
+lane      lane check passed  | script errors 0
+ground    ground check passed  | script errors 0
+after     after check passed  | script errors 0
+sky       sky check passed  | script errors 0
+flashreg  flash register check passed  | script errors 0
+hudwords  hud words check passed  | script errors 0
+seam      seam sweep passed  | script errors 0
+detintro  determinism passed  | script errors 0
+det       determinism passed  | script errors 0
+flight    flight check passed  | script errors 0
+city       | script errors 0
+cue       cue check passed  | script errors 0
+flash     flash check passed  | script errors 0
+golden ce8f0da46866
+## clip digests, h0 against h1 (render/camera/tests/clip_digest.gd with a scratch --size and --vp): the collapse clip, first tick that differs (ticks that differ)
+small 1024x768: reduced from 77 (337 ticks)  normal from 374 (54 ticks)  
+small 960x540: reduced from 222 (137 ticks)  normal from 374 (66 ticks)  
+big 1024x768: reduced from 1016 (120 ticks)  normal from 1033 (103 ticks)  
+big 960x540: identical
+medium 1024x768: reduced from 77 (150 ticks)  normal from 252 (71 ticks)  
+medium 960x540: reduced from 223 (86 ticks)  normal from 252 (15 ticks)  

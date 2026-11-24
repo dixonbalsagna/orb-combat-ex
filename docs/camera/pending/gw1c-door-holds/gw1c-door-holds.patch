@@ -1,0 +1,160 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index b3c783b..94b1c73 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -169,6 +169,7 @@ const SLAM_STIFF_RAMP: float = 0.06    # the slam's stiff filters come in over t
+ const SLAM_TAU: float = 0.03           # stiff pane filters during the slam
+ const SLAM_FLASH: float = 0.08
+ const SLAM_CANCEL: float = 0.25
++const SLAM_HEIR_E: float = 0.9      # the door had shut this far (the rusher's pane held all but a twentieth of the screen) when the contact came: the one view goes on from his pane's picture (SplitRig._slam_handover)
+ 
+ # --- orientation and the swap (section 5) ---
+ const HYST_M: float = 0.02             # antipode margin, fraction of W
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index c464d9b..324d554 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -688,6 +688,25 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 		_mark_cut("relocate")   # a relocation is a cut for the foreground's state too
+ 	_cur = _make_frame(S)
+ 	_cur.cut = cut or _cut_now
++	if _handed >= 1:
++		# The display draws frames between ticks: from the last tick (pane 1 had the screen) to this one (the one view, pane 0's) it
++		# blended pane 0's own camera into pane 1's picture and the door from 0.97 shut to open (a half-and-half frame). It now
++		# blends from the picture that was on the screen: pane 1's camera in slot 0, one view.
++		var pv: SplitFrame = _prev.duplicate()
++		var k: int = _handed
++		pv.cam_x[0] = pv.cam_x[k]
++		pv.cam_y[0] = pv.cam_y[k]
++		pv.cam_z[0] = pv.cam_z[k]
++		pv.focus_z[0] = pv.focus_z[k]
++		pv.anchor[0] = pv.anchor[k]
++		pv.scroll[0] = pv.scroll[k]
++		pv.sep = 0.0
++		pv.e = 0.0
++		pv.e_slot = -1
++		pv.mode = "merged"
++		pv.active = [true, false]
++		_prev = pv
++		_handed = -1
+ 	_cut_now = false
+ 	for i in range(2):
+ 		_prev_state[i] = S.fighters[i].state
+@@ -963,6 +982,7 @@ func _slam_step(S: SimState) -> bool:
+ 			if rem <= CamParams.SLAM_WINDOW and rem >= -DT:
+ 				_slam_slot = k
+ 				_slam_sep0 = sep
++				_slam_p = 0.0
+ 				_slam_last_rem = rem
+ 				return true
+ 	return false
+@@ -984,12 +1004,20 @@ func _slam_run(S: SimState) -> void:
+ 		return
+ 	else:
+ 		rem = 0.0   # the rush ended on contact this tick
+-	if rem > slam_time:
++	if rem > slam_time and not (slam_door_holds and _slam_p > 0.0):
+ 		var pr: float = clampf(1.0 - (rem - slam_time) / maxf(window - slam_time, 0.001), 0.0, 1.0)
+ 		sep = move_toward(sep, 1.0 - CamParams.SLAM_LEAN * pr, DT / 0.3)
+ 		_slam_sep0 = sep
+ 		return
+ 	var p: float = clampf(1.0 - rem / slam_time, 0.0, 1.0)
++	# A lock or a new blow can move the rush's end later once the door has begun (big's collapse clip: 0.03 s left became 0.2 s, and the
++	# door opened whole in one tick, a jump of 0.2 of the width, then shut again over 12 frames: two sweeps and a snap for one slam).
++	# The door holds where it is instead, and shuts on the contact.
++	if slam_door_holds:
++		if p < _slam_p:
++			slam_door_held += 1
++		p = maxf(p, _slam_p)
++	_slam_p = p
+ 	e_slot = _slam_slot
+ 	sliver = 0.0
+ 	# A crisp whip (Research's cuts-and-eases.md): the rusher's pane takes the screen over 12 frames, a hard ease at both ends, and
+@@ -998,6 +1026,7 @@ func _slam_run(S: SimState) -> void:
+ 	e_target = 1.0
+ 	sep = lerpf(_slam_sep0, 0.0, _smootherstep(p))
+ 	if p >= 1.0 or rem <= 0.0:
++		_slam_heir = _slam_slot if (slam_door_holds and e >= CamParams.SLAM_HEIR_E) else -1   # (a contact before the door had shut leaves both panes on the screen: no handover)
+ 		_slam_slot = -1
+ 		sep = 0.0
+ 		e = 0.0
+@@ -3478,6 +3507,17 @@ var launch_hold: bool = false
+ var _lh: Array = [0, 0]                                # 0 none, 1 holding the frame, 2 panning to him
+ var _lh_gone: Array = [0, 0]
+ var slam_off: bool = false                             # no divider slam UNDER REDUCED FLASHING (or reduced motion): a rush's contact merges the panes the ordinary way (docs/camera/buildings-in-frame.md sections 14 and 15); off by default
++var slam_door_holds: bool = true                       # the slam's door never opens again once it has begun: a rush whose end moves later (a lock re-times it) holds the door
++                                                       # where it is until the contact (docs/camera/pending/gw1c-door-holds). Off: the door's place is the rush's time left, every tick
++var _slam_p: float = 0.0                               # how far the door has shut, 0..1 (it only grows while slam_door_holds)
++var _handed: int = -1                                  # this tick's handover (the pane whose picture the one view took), for the frame below
++var _slam_heir: int = -1                               # the pane that had the screen as the door shut: the one view (pane 0) goes on from its drawn camera
++var slam_budget: bool = true                           # under Reduce flashing (or reduced motion) the travel budget (TRAVEL_MAX_REDUCED) holds while a slam (its lean and its door)
++                                                       # moves the picture, and until the picture has caught up: the collapse clip at small read 3 / 4 on
++                                                       # the rusher's pane scrolling at 0.05 of the width a tick into the door (docs/camera/pending/gw1c-door-holds). Off: as before
++var _sb_on: bool = false                               # the slam's budget is holding this tick
++var slam_budget_ticks: int = 0                         # ticks it held (for the tests)
++var slam_door_held: int = 0                            # ticks a door was held against a re-timed rush (for the tests)
+ var merge_zoom_limit: bool = false                      # the zoom comes in slowly while the panes merge (docs/camera/buildings-in-frame.md section 13); off by default
+ var _pair_near: bool = false                           # the pair is within MZ_NEAR of each other (for the merge zoom limit)
+ var _lh_dist: Array = [0.0, 0.0]                       # the width a fast body has covered since he became fast (the rule engages at LH_ENGAGE_W)
+@@ -4115,9 +4155,30 @@ func _update_cameras(S: SimState) -> void:
+ 	_outputs(S)
+ 
+ 
++## The door has shut over pane 0 (the rusher was fighter 1): pane 1 had the screen, and the one view is pane 0's. Its drawn camera
++## and its filters' memory become pane 1's, so the one view goes on from the picture that was on the screen. It came in at its own
++## zoom (big's collapse clip: 0.51 against the 0.60 on the screen, a step of a sixth of the picture in one tick).
++func _slam_handover() -> void:
++	var k: int = _slam_heir
++	_slam_heir = -1
++	if k != 1:
++		return
++	_handed = k
++	_oz[0] = _oz[k]
++	_lens_d[0] = _lens_d[k]
++	_lens_ok[0] = _lens_ok[k]
++	_od[0] = _od[k]
++	_od_before[0] = _od_before[k]
++	_tgt_prev[0] = _tgt_prev[k]
++	_od_shown[0] = _od_shown[k]
++	for arr in [_mp, _mv, _ma, _mav, _mavs, _soft_on, _ozs, _ozv]:   # the mass stage's and the zoom ease's memory
++		arr[0] = arr[k]
++
++
+ func _outputs(S: SimState) -> void:
+ 	_sim_f = S.fighters.slice(0, 2)
+ 	var w: float = 1.0 - _smootherstep(sep)
++	_slam_handover()
+ 	# a shot handing the screen to another pane this tick (the slot a shot takes changed): the only step an anchor's ease takes in; a layout's
+ 	# change of sides or divider has its own rules and lands at once
+ 	var handover: bool = e_slot != _ho_eslot or solo_slot != _ho_solo
+@@ -4304,8 +4365,29 @@ func _pane_shown(i: int) -> bool:
+ ## for him; at most once in TRAVEL_COOL. A cut costs a flash, a subject off the screen none (measured: a cut added a pair of
+ ## 25,000 to 50,000-pixel changes to a clip that passed). A cut, a pane that is hidden, a first frame, a cut-in's camera, a
+ ## composed intro, the fold and a zip are not limited.
++## Whether the slam's budget holds this tick: a slam (its lean and its door) is moving the picture, or a shown pane's drawn camera is
++## still catching up with its target after one (so it lets go only when nothing would jump). Not an ordinary split's opening or
++## closing: an escape must be followed (split_sweep's escape rows).
++func _slam_budget_on() -> bool:
++	if not slam_budget or travel_budget or not (flash_reduced or reduced_motion) or not _od_valid:
++		return false
++	if _slam_slot >= 0:
++		return true
++	if not _sb_on:
++		return false
++	var pm: float = _punch_mult()
++	for i in range(2):
++		var o: Vector3 = _outs[i]
++		if _pane_shown(i) and bool(_od_shown[i]) and _travel(_od[i], Vector3(o.x, o.y, o.z * pm)) > CamParams.TRAVEL_CATCH:
++			return true
++	return false
++
++
+ func _travel_budget(S: SimState) -> void:
+-	if not travel_budget:
++	_sb_on = _slam_budget_on()
++	if _sb_on:
++		slam_budget_ticks += 1
++	if not travel_budget and not _sb_on:
+ 		for i in range(2):
+ 			_od[i] = _outs[i]
+ 			_od_shown[i] = _pane_shown(i)
