@@ -1,0 +1,49 @@
+# gw1c-keep-human-vertical on the GW1c stack: hv = main 257994f8 (camera files as on db200187) + the GW1c stack + gw1c-keep-human-vertical.patch; h0 = the same without the patch. One Godot at a time, below normal.
+## own_pane_check, hv (h0: launchai fighter 0 out of his pane 16 ticks, 3003 to 3018, both modes; every other row the same)
+  clash normal, fighter 0: out of his pane at most 0 ticks (limit 15) 
+  clash normal, fighter 1: out of his pane at most 0 ticks (limit 52, a known loss) 
+  clash reduced, fighter 0: out of his pane at most 8 ticks (limit 15) ticks 1 to 8, merged, sep 0.00, locked
+  clash reduced, fighter 1: out of his pane at most 8 ticks (limit 52, a known loss) ticks 1 to 8, merged, sep 0.00, locked
+  signature normal, fighter 0: out of his pane at most 1 ticks (limit 15) ticks 1 to 1, merged, sep 0.00, free
+  signature normal, fighter 1: out of his pane at most 3 ticks (limit 48, a known loss) ticks 1 to 3, merged, sep 0.00, free
+  signature reduced, fighter 0: out of his pane at most 1 ticks (limit 15) ticks 1 to 1, merged, sep 0.00, free
+  signature reduced, fighter 1: out of his pane at most 3 ticks (limit 48, a known loss) ticks 1 to 3, merged, sep 0.00, free
+  launchai normal, fighter 0: out of his pane at most 2 ticks (limit 15) ticks 3003 to 3004, merged, sep 0.00, free
+  launchai normal, fighter 1: out of his pane at most 3 ticks (limit 35, a known loss) ticks 1 to 3, merged, sep 0.00, free
+  launchai reduced, fighter 0: out of his pane at most 2 ticks (limit 15) ticks 3003 to 3004, merged, sep 0.00, free
+  launchai reduced, fighter 1: out of his pane at most 0 ticks (limit 35, a known loss) 
+own_pane_check: 12 checks passed
+## every camera check and split_sweep, hv
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+flight_shots_check     flight_shots_check: 662 checks passed 
+launch_shots_check     launch_shots_check: 937 checks passed 
+own_pane_check         own_pane_check: 12 checks passed 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed 
+## golden
+golden ce8f0da46866 (h0: ce8f0da46866)
+## the medium collapse clip, worst of 4 (primary / area-15% / 2 s memory)
+hv START hvmed collapse-reduced 19:27:13
+hv END hvmed collapse-reduced rc=0 19:36:24
+hv collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 551s, worst of 4 readings (960x540 at scale 2)
+hv START hvmed collapse-normal 19:36:25
+hv END hvmed collapse-normal rc=0 19:45:50
+hv collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 565s, worst of 4 readings (960x540 at scale 1)
+h0 START h0med collapse-reduced 18:49:27
+h0 END h0med collapse-reduced rc=0 18:59:56
+h0 collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 629s, worst of 4 readings (960x540 at scale 2)
+h0 START h0med collapse-normal 18:59:56
+h0 END h0med collapse-normal rc=0 19:10:04
+h0 collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 608s, worst of 4 readings (960x540 at scale 1)
+## the launchai moment (capture: --skip 2950 --ticks 100 --sizes 1280x720; frame N is tick 2950 + N)
+h0 launchai-normal: PASS, primary 0.5 general 0 red, area-15% 0.5, 2 s memory n/a, 0 dips, 89s, worst of 2 readings (1280x720 at scale 1)
+hv launchai-normal: PASS, primary 0.5 general 0 red, area-15% 0.5, 2 s memory n/a, 0 dips, 88s, worst of 2 readings (1280x720 at scale 1)
