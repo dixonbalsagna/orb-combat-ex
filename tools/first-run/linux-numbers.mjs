@@ -14,7 +14,7 @@ import { fpsStats, parseFps, parseLoad, reportText, stepProblems } from './first
 import { cleanPaths } from '../record-paths.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const XKEY = { ENTER: 'Return', ESC: 'Escape', SPACE: 'space', UP: 'Up', DOWN: 'Down', LEFT: 'Left', RIGHT: 'Right', P: 'p', F1: 'F1', TAB: 'Tab' };
+const XKEY = { ALT_F4: 'alt+F4', ENTER: 'Return', ESC: 'Escape', SPACE: 'space', UP: 'Up', DOWN: 'Down', LEFT: 'Left', RIGHT: 'Right', P: 'p', F1: 'F1', TAB: 'Tab' };
 
 /** The xdotool key names for steps.json's key names. Pure. */
 export const xdotoolKeys = (keys) => keys.map((k) => { if (!XKEY[k]) throw new Error(`no xdotool name for key ${k}`); return XKEY[k]; });
@@ -42,7 +42,7 @@ export function ownLines(log, max = 40) {
 /** The game's data folder after the run: [{ path, size }] of every file under app_userdata (names and sizes only, never contents), at most `max`. A match's field cache and a saved report only appear once a match was built. */
 export function dataFiles(root, max = 60) {
   const out = [];
-  const walk = (d) => { for (const n of readdirSync(d).sort()) { const f = join(d, n); const st = statSync(f); if (st.isDirectory()) walk(f); else if (out.length < max) out.push({ path: f.slice(root.length + 1).split(String.fromCharCode(92)).join('/'), size: st.size }); } };
+  const walk = (d) => { for (const n of readdirSync(d).sort()) { const f = join(d, n); const st = statSync(f); if (st.isDirectory()) { if (n !== 'shader_cache') walk(f); } else if (out.length < max) out.push({ path: f.slice(root.length + 1).split(String.fromCharCode(92)).join('/'), size: st.size }); } };
   if (existsSync(root)) walk(root);
   return out;
 }
@@ -105,13 +105,21 @@ async function main() {
   const dataRoot = join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'godot', 'app_userdata');
   const files = dataFiles(dataRoot);
   const logFile = files.find((f) => /logs[/]godot[.]log$/.test(f.path));
-  const gameLog = logFile ? readFileSync(join(dataRoot, logFile.path), 'utf8').split(/\r?\n/).filter((l) => l.trim()).slice(-80).map((l) => cleanPaths(l).slice(0, 220)) : ['(no godot.log in the data folder)'];
+  const gameLog = logFile ? readFileSync(join(dataRoot, logFile.path), 'utf8').split(/\r?\n/).filter((l) => l.trim() && !/Project FPS:/.test(l)).slice(-80).map((l) => cleanPaths(l).slice(0, 220)) : ['(no godot.log in the data folder)'];
   const built = parseLoad(log).pairBakeMs !== null || matchInData(files);
   add({ id: 'match-built', what: 'a match was built after the keys (the program printed its pair-bake line, or its data folder holds a field cache or a report)', ok: built, detail: built ? `at ${at()}` : 'no pair-bake line and no field cache or report in the data folder: the keys did not get the game past its first screens' });
   const t1 = Date.now();
   for (let i = 0; i < 40 && !exited; i++) await sleep(250);
   run.closed = exited;
   add({ id: 'program-closes', what: 'the program closes by itself within 7 s of "Close the game"', ok: exited, detail: exited ? `${((exitedAt - t1) / 1000).toFixed(1)} s after the last key` : 'still running; stopped by the script' });
+  // the keys did not close it: ask the window manager to close the window (Alt+F4, what the close button does), to tell "the keys did not get through" from "the game cannot close"
+  if (!exited) {
+    const wf = spawnSync('xdotool', ['getwindowfocus', 'getwindowname'], { encoding: 'utf8' });
+    focus();
+    press(['ALT_F4'], 250);
+    for (let i = 0; i < 80 && !exited; i++) await sleep(250);
+    add({ id: 'window-close-fallback', what: 'the window is closed the way its close button does (Alt+F4), after the keys failed', ok: exited, detail: `focused window before: "${String(wf.stdout || '').trim().slice(0, 60)}"; ` + (exited ? 'the game closed: it can close, so the pause, Quit and Close the game keys did not reach it' : 'the game did not close either') });
+  }
   clearTimeout(killer);
   if (!exited) child.kill('SIGKILL');
   run.wallS = (Date.now() - t0) / 1000;
@@ -121,7 +129,7 @@ async function main() {
   try { const bi = JSON.parse(readFileSync(join(dirname(exe), 'build_info.json'), 'utf8')); Object.assign(build, bi); } catch { /* none beside the program */ }
   const text = reportText({ date: new Date().toISOString().slice(0, 10), build, machine: { cpu: (cpus()[0] || {}).model || 'unknown cpu', gpu: 'virtual display, software GL (Mesa)', ramGb: Math.round(totalmem() / 2 ** 30), os: `Linux ${release()}` }, window: '1280x720 (Xvfb)', runs: [run] });
   const rows = parseFps(log);
-  const shape = ['', 'Frames a second by ten-second stretch (from the start): ' + timeline(rows).map((b) => `${b.from}-${b.to} s: ${b.mean}`).join(', '), '', "The program's own other lines (folder paths taken out):", '```', ...ownLines(log), '```', '', "The game's data folder after the run (names and sizes, never contents):", '```', ...files.map((f) => `${f.size} ${f.path}`), '```', '', "The game's own log, its last 80 lines (folder paths taken out; text only):", '```', ...gameLog, '```'].join('\n');
+  const shape = ['', 'Frames a second by ten-second stretch (from the start): ' + timeline(rows).map((b) => `${b.from}-${b.to} s: ${b.mean}`).join(', '), '', "The program's own other lines (folder paths taken out):", '```', ...ownLines(log), '```', '', "The game's data folder after the run (names and sizes, never contents):", '```', ...files.map((f) => `${f.size} ${f.path}`), '```', '', "The game's own log, its last 80 lines without the frame-rate lines (folder paths taken out; text only):", '```', ...gameLog, '```'].join('\n');
   const note = shape + '\n_A GitHub runner, a virtual display, no one watching, software GL: a performance reading only, never a flash reading (Legal RL-270). No still, video or capture was taken._\n';
   if (opt('--out')) writeFileSync(resolve(opt('--out')), cleanPaths(text + note) + '\n');
   console.log(cleanPaths(text + note));
