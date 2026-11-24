@@ -1,0 +1,21 @@
+extends SceneTree
+const FIELD: Dictionary = {"intro": false, "planet": 7, "touch": 1, "planetGen": 3}
+const E_BASE: float = (356.0 / 160.0) * (356.0 / 160.0)
+func _mk() -> SimState:
+	WorldClimate.useGen(3)
+	WorldPlanet.forget()
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, FIELD)
+	for t in range(5):
+		SimCore.step(S)
+	return S
+func _init() -> void:
+	for e1 in [1.0, 4.0]:
+		for e2 in [1.0, 2.0, 4.0, 9.0, 16.0]:
+			var S := _mk()
+			var x: float = S.fighters[0].x + 900.0
+			var r1 = WorldCrater.dig(S, x, E_BASE * e1, S.fighters[0], "impact")
+			var h0: float = WorldTerrain.groundY(S, x)
+			var r2 = WorldCrater.dig(S, x, E_BASE * e2, S.fighters[0], "impact")
+			print("ESC first x%d then x%d on the same spot: %s, centre %d lower" % [int(e1), int(e2), "dug" if r2 != null else "REFUSED", int(h0 - WorldTerrain.groundY(S, x))])
+	quit(0)

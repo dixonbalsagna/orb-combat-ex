@@ -1,0 +1,3 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS  6 replays from 2 recording processes, each played in a fresh process: Hard da30fec0047484e1, Easy 31ffcd7d53922778, Medium 59a6490fa9e90cfe (600 ticks, 87.9 s)

@@ -1,0 +1,89 @@
+::group::size_check
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+data
+  ok    sizes.json loads clean ([])
+  ok    as shipped, only medium is offered; tiny, small, big, huge and colossal are held (["medium"])
+  ok    the data has the five sizes smallest first, and the sixth, colossal, which is data that is off
+  ok    medium is 4,800; no size, or no planet to size, is medium
+held sizes are unreachable
+  FAIL  as shipped, a setup naming tiny, small, big, huge or colossal plays medium (4,800 columns), and each of the 10 asks was refused with an error (counted: 0)
+  FAIL  a match that names small, as shipped, is the medium match byte for byte (planetNC 2560, hash at tick 120)
+  ok    medium, a setup that names no size and a setup with no planet are not held, and big is
+a replay that names a held size
+  ok    control: with the way in open the replay of 120 ticks at small plays back faithfully (so a failure below is the hold's)
+  FAIL  as shipped, the same replay is NOT a quiet success: the error is raised (held asks +0) and SimReplay.play fails it (reason , first bad tick -1)
+  note: SimReplay.refusal(header only) for that replay (made at small with the way in open, checked as shipped): ''
+  note: the same, 30 ticks with no checkpoint and no final hash: SimReplay.play ok true, reason '' (with ok true only the error says so; refusing a held size at the header is WorldPlanetSize.isHeld(setup), a later item for UI and Simulation)
+  note: a replay made while small is held records the match that ran (medium): SimReplay.play ok true (faithful to what ran; the error is raised)
+nothing draws a size
+  ok    the quick match's draw (WorldDefault.part and apply, 2,000 seeds, 5 different planets) never names a size: a match with no size is medium
+  ok    control: the scan's rule calls a game file outside and a tool, a test or size.gd itself not
+  ok    nothing outside a tools or tests folder sets WorldPlanetSize.heldOverride ([])
+un-hiding a size moves nothing else
+  ok    flipping tiny, small, big and huge to offered in memory (the one data edit each) makes small play as small (2,560 columns) and big as big (9,600) without the way in, and the menu's list five
+  ok    the flip moves no hash: a medium match's state hash at tick 120, the size table as a data hash reads it (hashData), and the replay data hash of a setup naming medium and of a setup naming no size are unchanged
+  ok    control: the raw table does differ after the flip (so hashData, which leaves offered out, is what keeps the hash still)
+every size the data has but colossal plays
+  ok    tiny: the match is bound to 1280 columns round, an arena of the same, a radius of 6519
+  ok    tiny: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 2.3 s, shared machine: void as a measurement)
+  ok    small: the match is bound to 2560 columns round, an arena of the same, a radius of 13038
+  ok    small: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 0.7 s, shared machine: void as a measurement)
+  ok    medium: the match is bound to 4800 columns round, an arena of the same, a radius of 24446
+  ok    medium: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 1.9 s, shared machine: void as a measurement)
+  ok    big: the match is bound to 9600 columns round, an arena of the same, a radius of 48892
+  ok    big: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 9.4 s, shared machine: void as a measurement)
+  ok    huge: the match is bound to 19200 columns round, an arena of the same, a radius of 97785
+  ok    huge: a field world, fighters on finite ground, 600 ticks played (start and 600 ticks 15.0 s, shared machine: void as a measurement)
+the same setup twice
+  ok    tiny: the same setup plays the same match (hash at tick 600)
+  ok    big: the same setup plays the same match (hash at tick 600)
+medium
+  ok    medium named plays byte for byte the match medium unnamed plays (hash at tick 120)
+ERROR: SimCore.newMatch: setup.planetSize enormous is not a size in sizes.json (["tiny", "small", "medium", "big", "huge", "colossal"]); medium plays
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] nameOf (res://sim/world/size.gd:97)
+       [1] colsOf (res://sim/world/size.gd:133)
+       [2] _mHead (res://sim/core/sim.gd:162)
+       [3] step (res://sim/core/sim.gd:118)
+       [4] newMatch (res://sim/core/sim.gd:62)
+       [5] _match (res://sim/world/tools/size_check.gd:26)
+       [6] _init (res://sim/world/tools/size_check.gd:178)
+  ok    a size the data does not have plays medium
+buildings stay under a small planet's play height (Game Design, planet-sizes.md)
+  ok    tiny: the tallest of 539 buildings is 1956, within 1956 (0.3 of the radius 6519)
+  ok    small: the tallest of 1205 buildings is 3911, within 3911 (0.3 of the radius 13038)
+  ok    medium: no cap, the tallest building is 4875 (the data's landmarks stand as they were)
+  ok    big: no cap, the tallest building is 4875 (the data's landmarks stand as they were)
+... and on the plan path (plans everywhere on: the places are laid by plan and memoised; a medium match first, then the small ones)
+  ok    tiny, plans on after a medium match: the tallest of 539 buildings is 1956, within 1956
+  ok    tiny, plans on: the same setup plays the same match twice
+  ok    small, plans on after a medium match: the tallest of 1205 buildings is 3911, within 3911
+  ok    small, plans on: the same setup plays the same match twice
+  ok    the kept places' key carries the size when it is not medium (medium's is as it was), so a tiny planet never reads a medium planet's towers
+the spawn pair is within a launch of a town or city, at every size
+  ok    15 spawns (5 sizes x the pool's planets x touches): all within a base launch's reach (6600) of a place; the farthest is 3981
+the host's loader (strict) makes a planet at its size
+  ok    a big planet that is not made is not ready, and asking leaves the host's static (4,800) as it was
+  ok    beginning its load leaves the static as it was
+  ok    the load, run to its end at the planet's own size, makes it ready (and the static is still 4,800)
+  ok    a strict match on it starts (planetNC 9600, a frame, none refused)
+a big planet's store
+  ok    a crater dug here and one half way round the huge planet are two records
+  ok    each place's box lists its own record only (no aliasing across the planet)
+  ok    each centre reads its own bowl's depth
+  ok    two boxes of the huge planet that a 64 offset would give one key have two (the store's key)
+  ok    and in the water records' grid
+  ok    two boxes past huge's radius that its old offset of 98 gave one key have two (both grids)
+  ok    (the pair is real: with the old offset of 98 those two boxes had one key, in both grids)
+  ok    no two boxes share a key in three slabs of 224 x 224 boxes (112 boxes either way from the centre): 0 shared in the store, 0 in the water records
+the field memo is keyed by the size
+  ok    a field made at tiny (80 nodes an edge) is not returned for medium (300): two fields, each its own planet's
+  ok    and asking again at tiny gives the tiny field back (the memo holds both)
+SIZES: 3 check(s) failed
+WARNING: 43 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+gate: godot --script res://sim/world/tools/size_check.gd: no SCRIPT ERROR lines
+gate: godot --script res://sim/world/tools/size_check.gd: verdict: SIZES: 3 check(s) failed
+::endgroup::

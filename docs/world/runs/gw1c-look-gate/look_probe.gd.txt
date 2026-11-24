@@ -1,0 +1,55 @@
+extends SceneTree
+# Scratch probe (World, 2026-11-23): the ground's profile after scripted blows, run on main and on the GW1c stack. Prints only numbers: the ground's height every 48 units.
+const FIELD: Dictionary = {"intro": false, "planet": 7, "touch": 1, "planetGen": 3}
+const E_BASE: float = (356.0 / 160.0) * (356.0 / 160.0)
+
+
+func _mk() -> SimState:
+	WorldClimate.useGen(3)
+	WorldPlanet.forget()
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, FIELD)
+	for t in range(5):
+		SimCore.step(S)
+	return S
+
+
+func _prof(S: SimState, x0: float, label: String) -> void:
+	var row: PackedStringArray = []
+	var base: float = WorldTerrain.groundY(S, x0 + 2000.0)   # the ground far off, to read depth against
+	for i in range(-16, 17):
+		row.append("%d" % int(round(WorldTerrain.groundY(S, x0 + i * 48.0) - base)))
+	print("%-22s %s" % [label, " ".join(row)])
+
+
+func _init() -> void:
+	var S := _mk()
+	var x: float = S.fighters[0].x + 900.0
+	print("A. one spot hit again and again (a tier-3 blow each time): height over the far ground, x = spot - 768 .. + 768 step 48")
+	_prof(S, x, "before")
+	for k in range(1, 9):
+		var e: float = E_BASE * 4.0
+		var r = WorldCrater.dig(S, x, e, S.fighters[0], "impact")
+		_prof(S, x, "blow %d%s" % [k, "" if r != null else " (refused)"])
+	print("records: %d" % int(S.storeN) if "storeN" in S else "records: -")
+	var T := _mk()
+	var y: float = T.fighters[0].x + 900.0
+	print("B. a slide trench (330 long, 130 deep), then a crater beside it, then one on its edge")
+	_prof(T, y, "before")
+	WorldCrater.carveSegment(T, y - 480.0, y - 150.0, 130.0, false, 0.0, T.fighters[0].z)
+	_prof(T, y, "trench")
+	WorldCrater.dig(T, y - 90.0, E_BASE * 4.0, T.fighters[0], "impact")
+	_prof(T, y, "crater beside it")
+	WorldCrater.dig(T, y - 330.0, E_BASE * 4.0, T.fighters[0], "impact")
+	_prof(T, y, "crater on the edge")
+	var U := _mk()
+	var z: float = U.fighters[0].x + 900.0
+	print("C. a crater, then a second one overlapping it (its centre 150 off), then a third (200 off the other way)")
+	_prof(U, z, "before")
+	WorldCrater.dig(U, z, E_BASE * 4.0, U.fighters[0], "impact")
+	_prof(U, z, "first")
+	WorldCrater.dig(U, z + 150.0, E_BASE * 4.0, U.fighters[0], "impact")
+	_prof(U, z, "second beside it")
+	WorldCrater.dig(U, z - 200.0, E_BASE * 4.0, U.fighters[0], "impact")
+	_prof(U, z, "third on the other side")
+	quit(0)

@@ -222,7 +222,7 @@ new file mode 100644
 index 0000000..8a9b566
 --- /dev/null
 +++ b/sim/world/tools/relief_cap_check.gd
-@@ -0,0 +1,245 @@
+@@ -0,0 +1,246 @@
 +extends SceneTree
 +# The relief cap of the small planet sizes (World, GW1c; sim/world/size.gd reliefCap, reliefClamp, reliefKey, sim/world/planet.gd surfAt and the gen 2 fast path, sim/world/field.gd _read; data/biomes/sizes.json maxReliefShare,
 +# reliefKnee, reliefRef; docs/world/pending/relief-cap-gw1c). The relief is the same height at every size, so on tiny the tallest point was 1.03 of the planet's radius and small's 0.52. The keys ship OFF; this check
@@ -288,6 +288,7 @@ index 0000000..8a9b566
 +
 +func _init() -> void:
 +	negative = OS.get_cmdline_user_args().has("--negative-control")
++	WorldPlanetSize.heldOverride = true   # the check names tiny and small, which are held as shipped (the way in is the tests')
 +	ok(WorldPlanetSize.dataErrors().is_empty(), "sizes.json is clean as shipped (%s)" % str(WorldPlanetSize.dataErrors()))
 +	var shipped: bool = WorldPlanetSize.data().sizes.tiny.has("maxReliefShare")
 +	print("      the cap keys in the shipped data: %s (this check turns them on in memory)" % ("on" if shipped else "off"))

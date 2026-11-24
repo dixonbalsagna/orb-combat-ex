@@ -1,0 +1,31 @@
+#!/bin/sh
+# rs_stack.sh <scratchpad> <dir>: a clean export of main's HEAD with World's GW1c stage-2 list in its order
+# (docs/world/planet-stack-recut.md, "The hold" re-cuts), each piece checked then applied strictly; the base gets
+# gw1b-w1-w2 first when it still applies (not landed). Commits "stage2" in the scratch repo.
+set -u
+NS="${1:?scratchpad}"; T="${2:?tree}"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"; P="$R/docs"
+sh "$NS/mkbase3.sh" "$NS/$T" || exit 1
+cd "$NS/$T" || exit 1
+case "$(pwd -P)" in */scratchpad/*) ;; *) echo refusing; exit 1 ;; esac
+ap() { if git -c core.autocrlf=false -c core.eol=lf apply --check "$1" 2> /dev/null; then git -c core.autocrlf=false -c core.eol=lf apply "$1" && echo "  applied  ${1#$P/}"; else echo "  FAILED   ${1#$P/}: $(git -c core.autocrlf=false -c core.eol=lf apply --check "$1" 2>&1 | head -1)"; fi; }
+if git -c core.autocrlf=false -c core.eol=lf apply --check "$P/world/pending/gw1b-landing-w1-w2/gw1b-w1-w2.diff" 2> /dev/null; then ap "$P/world/pending/gw1b-landing-w1-w2/gw1b-w1-w2.diff"; else echo "  (gw1b-w1-w2 does not apply: landed)"; fi
+ap "$P/world/pending/globe-step2/grant-tools-lint.patch"
+ap "$P/world/pending/globe-step2/globe-step2.diff"
+ap "$P/world/pending/globe-step2/grant-simulation-field.patch"
+ap "$P/world/pending/planet-sizes/grant-simulation-sizes.patch"
+ap "$P/world/pending/planet-sizes/planet-sizes.diff"
+ap "$P/rendering/pending/planet-sizes/grant-world-field-size-key.patch"
+ap "$P/vfx/pending/planet-sizes-meteor/apply.patch"
+git add -A > /dev/null 2>&1; git -c user.email=s@x -c user.name=s commit -qm "through planet-sizes" && git log -1 --format='  commit %h through planet-sizes'
+ap "$P/world/pending/gw1c-world/gw1c-world.diff"
+ap "$P/world/pending/gw1c-world/gw1c-world-fix.diff"
+ap "$P/world/pending/store-parts/store-parts.diff"
+ap "$P/world/pending/box-key-20bit/box-key-20bit.diff"
+ap "$P/world/pending/crater-tiers/crater-tiers.diff"
+ap "$P/world/pending/crater-tiers/grant-tools-crater-tiers.patch"
+ap "$P/world/pending/relief-cap-gw1c/relief-cap.diff"
+ap "$P/world/pending/relief-cap-gw1c/grant-tools-relief-cap.patch"
+ap "$P/world/pending/globe-step2/globe-check-pin.diff"
+ap "$P/world/pending/globe-step2/swap-blocks-gw1c.diff"
+git add -A > /dev/null 2>&1; git -c user.email=s@x -c user.name=s commit -qm "stage2" && git log -1 --format='  commit %h stage2'

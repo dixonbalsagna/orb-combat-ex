@@ -1,0 +1,300 @@
+::group::burial_check
+
+  ok    the floor off: a burial can start everywhere (the sea's too)
+  ok    54 gen 2 rings read, 3607 wetland columns
+  (203 wetland columns hold the ring's own water at all; the deepest is 237.9 (planet 13 touch 2 column 1132); 123 are 37.5 deep or more)
+  MARSH SWALLOW is offered over mud, not over sea (launch.gd): of the 123 columns the rule stops, 59 are 75 deep or more (sea with the floor on: never offered there), 64 are 37.5 to 75 deep and 64 of those look like mud (planet 42 touch 0 column 1919, 47.5 deep)
+  ok    every wetland column the rule stops holds the ring's own water 37.5 deep or more (123)
+  ok    a lake column to test on
+  ok    a lake column: a burial can start to 37 deep and not from 38 ([true, true, true, false, false, false])
+  ok    the floor on: a burial can start in none of the hand-made world's 587 open-sea columns
+  ok    and on its shores exactly where the water is under 37.5 deep: 216 columns where it can, 921 where it can't, 0 wrong
+  ok    shore columns about 20, 50 and 90 deep and an open-sea column to slam into ([130672.0, 48688.0, 49200.0, 115600.0])
+   20 deep: floor off embed 60, lowest -403.1, ends -403.1; floor on embed 60, lowest -403.1, ends 0.0 (floor 0.0), free
+  ok    20 deep: the control, floor off: a special launch straight down embeds him (60)
+  ok    20 deep: with the floor on a burial starts
+   50 deep: floor off embed 60, lowest 255.9, ends 255.9; floor on embed 0, lowest 253.9, ends 689.0 (floor 689.0), free
+  ok    50 deep: the control, floor off: a special launch straight down embeds him (60)
+  ok    50 deep: with the floor on a burial does not start (no embed, no follow-up)
+   90 deep: floor off embed 60, lowest 215.8, ends 215.8; floor on embed 0, lowest 211.9, ends 689.0 (floor 689.0), free
+  ok    90 deep: the control, floor off: a special launch straight down embeds him (60)
+  ok    90 deep: with the floor on a burial does not start (no embed, no follow-up)
+   open sea: floor off embed 60, lowest -982.2, ends -982.2; floor on embed 0, lowest -1003.7, ends 0.0 (floor 0.0), free
+  ok    open sea: the control, floor off: a special launch straight down embeds him (60)
+  ok    open sea: with the floor on a burial does not start (no embed, no follow-up)
+  ok    slammed into the open sea he comes up to the sheet, standing (ends 0.000 on the floor 0.000, free)
+BURIAL: 0 check(s) failed
+WARNING: 70 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+::endgroup::
+::group::craters_check
+
+--- the energy model and the dash OFF (main before GW1a)
+  ok    craters.json is clean ([])
+  ok    ground.json is clean ([])
+  ok    the switches in the data: enabled off, touchBuilt off, embedThresholdScales on
+  ok    ground.json provisionalProps is off in the data
+  ok    every one of Combat's 14 classes has a row (water, which has none, digs today's bowl)
+  ok    the rows are Combat's numbers (biomes.md section 4.3: sand 1.3 wide, mud x1.8, snow 20% in 20 s, ice breaks through, shingle fills near the sea)
+  ok    off: a slam in a wetland reads no shape (today's bowl)
+  ok    on, touchBuilt off: the hand-made world plays as with the switch off (900 ticks; the vector is the same plus after.gd's two zeros, no shaped crater)
+  ok    on, touchBuilt off: a gen 1 planet plays as with the switch off (900 ticks; the vector is the same plus after.gd's two zeros, no shaped crater)
+      SKIPPED (not run with the model off or on): craters by material is off in the data (craters.json enabled false): a path the game does not take. The row counts shaped craters of one AI match of 2400 ticks, which depends on the match course: it no longer slams on snow in that time on the GW1a stack, with the energy model off or on (7 craters in 9,600 ticks with it on, none shaped), while the direct slams on each class above, which run in both passes, pass
+  ok    off again: the gen 2 match is the one it was, with no shaped crater
+  ok    mud: a slam in wetland digs 0.80 x the radius, 1.20 x the depth and 0.20 x the rim of today's bowl (the row: 0.8, 1.2, 0.2)
+  ok    snow: a slam in taiga digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 0.9, 1.4, 0.5)
+  ok    frost: a slam in tundra digs 1.00 x the radius, 0.80 x the depth and 1.60 x the rim of today's bowl (the row: 1.0, 0.8, 1.6)
+  ok    litter: a slam in jungle digs 1.00 x the radius, 1.00 x the depth and 1.00 x the rim of today's bowl (the row: 1.0, 1.0, 1.0)
+  ok    crust: a slam in volcanic digs 0.90 x the radius, 0.90 x the depth and 0.80 x the rim of today's bowl (the row: 0.9, 0.9, 0.8)
+  ok    turf: a slam in savanna digs 1.00 x the radius, 1.00 x the depth and 1.10 x the rim of today's bowl (the row: 1.0, 1.0, 1.1)
+  ok    steep: 1 is today's profile; a steep wall (ice 1.5) is deeper at 0.8 R than today's, a slack one (sand 0.6) shallower (-2.38, -1.30, -0.55), the centre at full depth
+  ok    a beam's strip digs its own row: burnt grass reads ash, the savanna beside it turf
+  ok    touchBuilt off: plains (soil) dig today's bowl
+  ok    touchBuilt on: plains dig the soil row
+  ok    crater_shape: the crater event's surface is the material (mud) and eventFor gives the bowl as dug with its row (embedMul 1.8, mud_splash)
+  ok    the material is not one of the crater event's hashed fields (no hash.gd line)
+  ok    fill water: the mud bowl (59.7 deep) holds water to the wetland's table (6.0 below the ground), and reads flooded
+  ok    fill waterNearSea: a shingle bowl 13 columns from the sea fills to the sea (30.1 deep), one 420 columns away stays dry
+  ok    refill: the mud bowl's centre fills back from 57.3 to 22.9 deep (40%) over 240 ticks by an aftermath job (40.1 at 120), and the job ends
+  ok    refill: the water in a closing mud bowl keeps its level (24.00, then 24.00)
+  ok    the same slam twice, 100 ticks on, is the same state (the job is hashed with after.gd's)
+  ok    breakThrough: a slam on a floe 12 above the sea breaks it: a 10-column slot cut below the sea and filled (40 deep at the centre), and contact does not embed him
+  ok    breakThrough: on a floe 100 above the sea the bowl (29.9 deep) stays in the ice
+  ok    the cut is the FLOE SPLIT aftermath's (after.gd split calls breakThrough): 2 columns, 40 below the sea, filled
+  ok    embed: the threshold is the row's depth (mud 1.2, ice 0.6, today's bowl 1) and he sits embedMul deep (mud 1.8)
+  ok    embedThresholdScales off: the threshold is today's
+  ok    props off: no berg and no lone tree ({ "ice_spire": 35, "tall_grass": 511, "termite_mound": 26, "driftwood": 72, "shell": 153 })
+  ok    props on: 14 bergs on the sea ice and 22 lone trees on savanna and beach, each of its own biome and size
+  ok    props on: the other rows lay exactly what they laid with it off (797)
+--- the energy model and the dash ON (Orb's real path)
+  ok    craters.json is clean ([])
+  ok    ground.json is clean ([])
+  ok    the switches in the data: enabled off, touchBuilt off, embedThresholdScales on
+  ok    ground.json provisionalProps is off in the data
+  ok    every one of Combat's 14 classes has a row (water, which has none, digs today's bowl)
+  ok    the rows are Combat's numbers (biomes.md section 4.3: sand 1.3 wide, mud x1.8, snow 20% in 20 s, ice breaks through, shingle fills near the sea)
+  ok    off: a slam in a wetland reads no shape (today's bowl)
+  ok    on, touchBuilt off: the hand-made world plays as with the switch off (900 ticks; the vector is the same plus after.gd's two zeros, no shaped crater)
+  ok    on, touchBuilt off: a gen 1 planet plays as with the switch off (900 ticks; the vector is the same plus after.gd's two zeros, no shaped crater)
+      SKIPPED (not run with the model off or on): craters by material is off in the data (craters.json enabled false): a path the game does not take. The row counts shaped craters of one AI match of 2400 ticks, which depends on the match course: it no longer slams on snow in that time on the GW1a stack, with the energy model off or on (7 craters in 9,600 ticks with it on, none shaped), while the direct slams on each class above, which run in both passes, pass
+  ok    off again: the gen 2 match is the one it was, with no shaped crater
+  ok    mud: a slam in wetland digs 0.80 x the radius, 1.20 x the depth and 0.20 x the rim of today's bowl (the row: 0.8, 1.2, 0.2)
+  ok    snow: a slam in taiga digs 0.90 x the radius, 1.40 x the depth and 0.50 x the rim of today's bowl (the row: 0.9, 1.4, 0.5)
+  ok    frost: a slam in tundra digs 1.00 x the radius, 0.80 x the depth and 1.60 x the rim of today's bowl (the row: 1.0, 0.8, 1.6)
+  ok    litter: a slam in jungle digs 1.00 x the radius, 1.00 x the depth and 1.00 x the rim of today's bowl (the row: 1.0, 1.0, 1.0)
+  ok    crust: a slam in volcanic digs 0.90 x the radius, 0.90 x the depth and 0.80 x the rim of today's bowl (the row: 0.9, 0.9, 0.8)
+  ok    turf: a slam in savanna digs 1.00 x the radius, 1.00 x the depth and 1.10 x the rim of today's bowl (the row: 1.0, 1.0, 1.1)
+  ok    steep: 1 is today's profile; a steep wall (ice 1.5) is deeper at 0.8 R than today's, a slack one (sand 0.6) shallower (-2.38, -1.30, -0.55), the centre at full depth
+  ok    a beam's strip digs its own row: burnt grass reads ash, the savanna beside it turf
+  ok    touchBuilt off: plains (soil) dig today's bowl
+  ok    touchBuilt on: plains dig the soil row
+  ok    crater_shape: the crater event's surface is the material (mud) and eventFor gives the bowl as dug with its row (embedMul 1.8, mud_splash)
+  ok    the material is not one of the crater event's hashed fields (no hash.gd line)
+  ok    fill water: the mud bowl (59.7 deep) holds water to the wetland's table (6.0 below the ground), and reads flooded
+  ok    fill waterNearSea: a shingle bowl 13 columns from the sea fills to the sea (30.1 deep), one 420 columns away stays dry
+  ok    refill: the mud bowl's centre fills back from 57.3 to 22.9 deep (40%) over 240 ticks by an aftermath job (40.1 at 120), and the job ends
+  ok    refill: the water in a closing mud bowl keeps its level (24.00, then 24.00)
+  ok    the same slam twice, 100 ticks on, is the same state (the job is hashed with after.gd's)
+  ok    breakThrough: a slam on a floe 12 above the sea breaks it: a 10-column slot cut below the sea and filled (40 deep at the centre), and contact does not embed him
+  ok    breakThrough: on a floe 100 above the sea the bowl (29.9 deep) stays in the ice
+  ok    the cut is the FLOE SPLIT aftermath's (after.gd split calls breakThrough): 2 columns, 40 below the sea, filled
+  ok    embed: the threshold is the row's depth (mud 1.2, ice 0.6, today's bowl 1) and he sits embedMul deep (mud 1.8)
+  ok    embedThresholdScales off: the threshold is today's
+  ok    props off: no berg and no lone tree ({ "ice_spire": 35, "tall_grass": 511, "termite_mound": 26, "driftwood": 72, "shell": 153 })
+  ok    props on: 14 bergs on the sea ice and 22 lone trees on savanna and beach, each of its own biome and size
+  ok    props on: the other rows lay exactly what they laid with it off (797)
+CRATERS CHECK: 0 failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+::endgroup::
+::group::globe_check
+
+slots and hash
+  ok    a gen 3 match has a frame (the planet store is the ground)
+  ok    a base blow digs a crater record
+  ok    its slots: supersedes nothing, dry, no repeats, material 0
+  ok    the same blow makes the same store hash
+  ok    a record's water level is folded into the hash
+  ok    a record's repeat count is folded into the hash
+  ok    the record it supersedes is folded into the hash
+  ok    a record is 16 numbers
+no shafts: 20 hits on one spot
+  ok    repeats 0: 20 hits leave the centre 78.3 deep, within 0.26 of the largest radius 356.0 (92.6); 1 dug a record, 19 were refused
+  ok    repeats 0: ... and it is a real crater (78.3 deep)
+  ok    repeats 0: a spot too dented to take another crater takes none (19 refused, no record, nothing superseded)
+  ok    repeats 2: 20 hits leave the centre 122.4 deep, within 0.26 of the largest radius 556.3 (144.6); 3 dug a record, 17 were refused
+  ok    repeats 2: ... and it is a real crater (122.4 deep)
+repeats
+  ok    the first base blow's radius is 356 ([356.0, 445.0, 556.25])
+  ok    the second and third grow it 1.25 times each ([356.0, 445.0, 556.25]), a max never a sum
+  ok    10 base hits on one spot: the largest crater is 556.3, under 560
+  ok    the two grown craters are superseded (2), the store is append-only (3 records)
+  ok    a superseded record adds nothing to the ground (skip it and nothing changes)
+  ok    the grown record counts its repeats (2)
+  ok    an ordinary blow on a 960-radius special crater supersedes nothing (it could dig only 600)
+  ok    repeats 0: nothing is superseded (the old behaviour, a crater a blow)
+  ok    repeats 0: no crater grows (largest 356.0)
+the furrow
+  ok    furrow off: a glancing blow makes its crater and nothing else (1 record)
+  ok    furrow on: a glancing blow makes its crater and a trench (2 records)
+  ok    ... which starts at the crater's centre (0.000 off)
+  ok    ... and is a third of the bowl's depth at most (19.7 of 56.4)
+  ok    furrow on, a straight-down blow: no trench (1 record)
+a block swap keeps what it supersedes
+  ok    the match starts with an empty store
+  ok    after the swap every superseded index points at the same record ({ 3: 0, 4: 3, 5: 2, 1: 0, 2: 1 })
+  ok    and it is the store, and the hash, that pushing the blocks in the swapped order makes
+  ok    control: an index left unmoved names another record
+settling
+  ok    a steep wall is found (2.05 over 1.25)
+  ok    the bowl widens (235.8 from 200) and shallows (31.6 from 44)
+  ok    its volume is kept (R^2 d: 1760000.0 to 1760000.0)
+  ok    at the radius cap the bowl does not widen, and it only gets shallower (44.0)
+  ok    a bowl on level ground is left as it is
+  ok    shipped, a groove is left as asked (globe.settleGrooves off)
+  ok    a trench 100 deep and 32 wide is settled to 51.0 deep and 62.8 wide (wall 1.25, cross-section kept)
+  ok    a shallow trench is left as it is
+  ok    a trench record is stored settled (51.0 deep, 62.8 half width)
+  ok    with settle off a groove is stored as asked
+  ok    settle can be switched off in craters.json globe
+floor, ceiling and the kinds
+  ok    a bowl 5,000 deep reads the floor (-2,080)
+  ok    a heap is a cone, held to a slope of 1 in 1 (179.1 high on 300 radius)
+  ok    a merged mark reads as a crater (-40.0)
+  ok    a scar is a groove cut to its depth (-29.8 of 30)
+  ok    ... with a lip on the bank (11.95)
+  ok    a groove crossed again is no deeper than its target
+  ok    heightDelta is combine(parts) at all 697 points, and heightDeltaX(skip) is combine(partsX(skip))
+  ok    the marks' sum, the groove and the lip are each read (249, 183, 165 points)
+  ok    the bowls part is the craters' profile alone: with the heap added it is the sum without it, and the heap is in the sum and not in the bowls (144 points)
+  ok    a merged mark is in the sum and not in the bowls (-40.0, 0.0)
+  ok    an empty store has no parts
+a groove through a rim
+  ok    across a trench through the rim of a 600-radius crater (rim 52.8), the ground never steps more than 9.0 in 8 units
+  ok    (the rim is high enough to have made the cliff: 52.8)
+water where it could come from (B1)
+  ok    a low coast is found on planet 7 (x 9300, ground 50.4)
+  ok    with the switch off a coastal crater holds no water
+  ok    with it on, a crater beside the sea holds water at the sea's level (0.0)
+  ok    ... and the pool is 81.6 deep at its centre (ground -81.6 under a level of 0)
+  ok    the world's water read (recordWater) sees it
+  ok    ... and the strip's native water at the crater's column holds it (79.9; the sea or a lake is not there)
+  ok    ... and with the switch off the same hole at the coast reads as the sea, as it did (79.9)
+  ok    an inland point is found (x 32250)
+  ok    an inland crater with no source holds no water
+  ok    ... and the flood reads nothing there
+  ok    ... and the strip's native water there is none: no sea in an inland hole however deep (132.0 deep, floor -46.8)
+  ok    (with the switch off the same hole reads as the sea, 46.8 deep: the sourceless water this removes)
+  ok    a hole under minDug looks for no source
+  ok    a trench cut on from the coast carries the sea's level along its length ([0.0, 0.0, 0.0])
+  ok    ... and the trench holds water where its floor is under the level (floor -250.0)
+  ok    a bowl dug in a flooded crater is handled
+  ok    ... and takes the level of the water it overlaps (0.0)
+  ok    the coastal records hold water (1)
+two peers
+  ok    after the rollback and the replay the stores are the same (5 records, hash -8071559848693062112)
+  ok    the ground reads the same in all 4800 columns on both peers (0 differ)
+  ok    ... and a third state that never rolled back (0 differ)
+GLOBE: 0 check(s) failed
+WARNING: 109 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+::endgroup::
+::group::bury_check
+
+a refused dig
+  ok    a blow on fresh ground digs a crater (depth 159, r 726) and leaves no refusal
+  ok    the same blow on the same spot is refused (no crater, no record: 1 craters, 1 store records, as before)
+  ok    ... and sends one crater_refused and nothing else (1 events)
+  ok    ... its fields: x the spot, r the blow's radius (726), energy 20.6, depth the dent there (217), cause impact
+  ok    the bowl it buries against is the dent that is there, never deeper than the blow would dig on fresh ground (depth 159 of the dent 217), its floor the ground as it stands
+  ok    a blow too weak to dig on fresh ground is not a refusal: no crater_refused, no bowl to bury against
+a slam onto ground that is already dented
+  ok    control: a slam at speed 4000 on fresh ground digs a crater and buries him (embedT 60)
+  ok    the same slam on an old crater of its own size is refused: crater_refused, no crater, still the one crater
+  ok    ... and he is still buried (an embed event, embedT 60)
+  ok    ... against the bowl that is there, no deeper than a fresh blow's (embed depth 159, fresh 159)
+  ok    ... and the impact still plays its ring and debris (2 rings, 16 debris)
+  ok    the same slam on an old crater bigger than it is refused and buries him too
+  ok    a hard slam on a smaller old crater digs what the cap leaves it (78 deep, a fresh one digs 159) and buries him: the bowl he sits in is the whole dent
+  ok    control: a slam at speed 2600 digs a crater on fresh ground and is too soft to bury him (depth 106)
+  ok    the same soft slam on a deep old crater (a crater only 6 deep) does not bury him either: the old dent's depth does not make a soft blow hard
+  ok    the same run twice is the same state (hash 4543d1d15219)
+BURY: 0 check(s) failed
+WARNING: 31 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+::endgroup::
+::group::tier_ratio_check
+
+  ok   craters.json loads clean ([])
+  ok   the data's table is Game Design's: 1, 2.1, 4.3, 9 ([1.0, 2.1, 4.3, 9.0])
+  ok   shots: blast.json tierEnergy is today's (1, 1.3, 1.7, 2.2) or the table (1, 2.1, 4.3, 9): [1.0, 1.3, 1.7, 2.2]
+  ok   with the tier table off, shots are today's with the model off ([1.0, 1.3, 1.7, 2.2])
+  ok   model off, table: tier 4 digs 3.000 times tier 1 (3.0 within 5 percent)
+  ok   ... tiers 2 and 3 dig 1.449 and 2.074 times (1.45, 2.07)
+  ok   ... energy 1 at tier 1 and 9 at tier 4 at 900 a second
+  ok   a tier between two is the line between them (2.5 reads 3.20), and the ends hold
+  ok   table off: tier 4 is E 1.75 and 1.323 times the width, as today (this is what the control below reads)
+  ok   table off, the 3-times row would fail (1.323)
+  ok   model on: a fresh base fighter's full send digs 356 and a top-tier one's 1245 (the plan's 356 and 1,244)
+  ok   model on: base to top at full power is 3.50 times (at least 3)
+  ok   model on: tier for tier at equal power it is between 2.5 and 3.5 times (tier 4 over tier 1 at power 0 reads 2.72)
+  ok   model on: no tier term, table or not (E 1 at 900 a second)
+  ok   model on: a shot's crater is the kind's base at level 0 and 3.50 times the radius from a fresh base fighter to a full top tier, for each of 6 kinds
+  ok   model off: a tier-4 shot digs 1.483 times a tier-1 shot's radius, the square root of blast.json tierEnergy's last over its first (1.483)
+  ok   model on: tier for tier at equal power a shot is between 2.5 and 3.5 times (tier 4 over tier 1 reads 2.72)
+  ok   the shot rule off (shipped): with the energy model on a shot's crater is the kind's base times blast.json tierEnergy[tier], as the 9 November build, for every kind at every tier
+  ok   control: with the shot rule on a top-tier shot is not that, so the row above can fail
+      blast.json shotModel in the shipped data: absent (absent or false: the shot rule is off)
+TIERRATIO: 0 check(s) failed
+::endgroup::
+::group::relief_cap_check
+
+  ok    sizes.json is clean as shipped ([])
+      the cap keys in the shipped data: off (this check turns them on in memory)
+  ok    tiny: no point of 20,000 is over 0.3 of the radius, in the surface (tallest 1698) or in the field with its detail (1670); the cap 1956, R 6519
+  ok    tiny: and the cap acts: without it the tallest is 6769 (1.04 R)
+  ok    tiny: the lines scale by the planet's tallest capped peak (1701, under the cap 1956; the 20,000 sampled points reach 1698) over 6,739: 0.2524
+  ok    tiny: the mountain line (808) and the highland line (581) are the same share of the peak as on medium of its tallest relief (0.475 and 0.341), and under it
+  ok    tiny: the tallest ground reaches the mountain line: 100 of the 100 tallest points are mountain biome
+  ok    tiny: the tallest capped peak is as cold as medium's tallest relief (a fall of 1.1232 against 1.1232): the snow and the tree line reach the top
+  ok    tiny: the 100 tallest points keep their taper (82 distinct heights to half a unit, 198 from the lowest to the highest of them)
+  ok    tiny: no column of a gen 2 ring match with B plates is over the cap or held flat at it (tallest 1503, 0 at the cap; without the cap 5795, so the row sees the difference)
+  ok    tiny: no column of a gen 2 ring match on the fast path (no B plates) is over the cap or held flat at it (tallest 1504, 0 at the cap; without the cap 3457, so the row sees the difference)
+  ok    tiny: no column of a gen 3 ring match is over the cap or held flat at it (tallest 1502, 0 at the cap; without the cap 5786, so the row sees the difference)
+  ok    small: no point of 20,000 is over 0.3 of the radius, in the surface (tallest 3356) or in the field with its detail (3362); the cap 3911, R 13038
+  ok    small: and the cap acts: without it the tallest is 7087 (0.54 R)
+  ok    small: the lines scale by the planet's tallest capped peak (3357, under the cap 3911; the 20,000 sampled points reach 3356) over 6,739: 0.4981
+  ok    small: the mountain line (1594) and the highland line (1146) are the same share of the peak as on medium of its tallest relief (0.475 and 0.341), and under it
+  ok    small: the tallest ground reaches the mountain line: 100 of the 100 tallest points are mountain biome
+  ok    small: the tallest capped peak is as cold as medium's tallest relief (a fall of 1.1232 against 1.1232): the snow and the tree line reach the top
+  ok    small: the 100 tallest points keep their taper (93 distinct heights to half a unit, 447 from the lowest to the highest of them)
+  ok    small: no column of a gen 2 ring match with B plates is over the cap or held flat at it (tallest 3187, 0 at the cap; without the cap 6661, so the row sees the difference)
+  ok    small: no column of a gen 2 ring match on the fast path (no B plates) is over the cap or held flat at it (tallest 3121, 0 at the cap; without the cap 5228, so the row sees the difference)
+  ok    small: no column of a gen 3 ring match is over the cap or held flat at it (tallest 3184, 0 at the cap; without the cap 6643, so the row sees the difference)
+  ok    medium: no cap, and the heights are bit for bit what they are without the code (all 20,000 equal)
+  ok    big: no cap, and the heights are bit for bit what they are without the code (all 20,000 equal)
+  ok    huge: no cap, and the heights are bit for bit what they are without the code (all 20,000 equal)
+  ok    control (old lines): with the lines of medium unscaled, 0 of the 100 tallest points of tiny are mountain biome (its tallest ground is under the unscaled line), so the mountain row can fail
+  ok    control (the first scale, by the cap): the highest peak is only 0.977 colder than the sea level on tiny and 0.964 on small, against 1.123 for medium's tallest relief: no snow at the top, so the temperature row can fail
+  ok    tiny: the squeeze is monotone, its own under the knee, never over the cap (1956)
+  ok    small: the squeeze is monotone, its own under the knee, never over the cap (3911)
+  ok    tiny: the planet data key follows the cap (off, knee 0.7 and knee 0.6 are three keys), so a saved planet is a miss when the numbers change
+  ok    medium: the key is exactly what it was with the cap keys on in the data
+RELIEFCAP: 0 check(s) failed
+WARNING: 71 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+::endgroup::
+::group::crater_flatten_check
+
+  ok    hilly places are found on the line (12)
+humps in a bowl of radius 1991 at x 17000 (4 lines): switch off 5, on 0; the floor's deviation from the centre's ground less the profile: off 154.0, on 1.31
+  ok    with the switch off the bowl has humps (5): the bug, and the check can see it
+  ok    with the switch on no hump stands inside 0.9 of the radius (0)
+  ok    the floor is the centre's ground less the bowl's profile, within 3 units (1.31; the line's chord against the arc)
+  ok    the switch is a read, not a record: the store's hash is the same on and off
+  ok    a peer that read the ground before the dig and one that did not read the same 801 columns
+  ok    beyond the fade (1.45 radii and a margin for the line's arc) the ground is what it is with the switch off (0 columns differ)
+CRATERFLATTEN: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+::endgroup::

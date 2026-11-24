@@ -1,0 +1,35 @@
+#!/bin/sh
+# b1_go.sh <scratchpad>: the bisect of the GW1c stack's golden move, step 1. Base = rs1's base (main d0e48be5) + globe-step2.diff,
+# grant-simulation-field.patch, swap-blocks-gw1c.diff only. Then: the store at tick 0 (probe, on the base and on b1), b1's
+# golden against main's and against the full stack's (rso/golden_stack.json). ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/b1o"
+P="C:/Users/<user>/Documents/Claude Proj/Breakers-Like/docs"
+rm -rf "${NS:?}/b1o"; mkdir -p "$O" "$NS/b1app"; export APPDATA="$(cygpath -w "$NS/b1app")"
+[ -e "$NS/b1" ] && { echo "b1 exists"; exit 1; }
+mkdir -p "$NS/b1"
+git -C "$NS/rs1" archive 5ab0d8a | tar -x -C "$NS/b1"
+cd "$NS/b1" || exit 1
+case "$(pwd -P)" in */scratchpad/b1) ;; *) echo refusing; exit 1 ;; esac
+git init -q; git config core.autocrlf false; git add -A > /dev/null 2>&1; git -c user.email=s@x -c user.name=s commit -qm base
+cp "$NS/kick/store0_probe.gd" ./store0_probe.gd
+timeout 900 "$G" --headless --path . --import > "$O/import_base.txt" 2>&1; echo "import (base) $?"
+echo "== the store at tick 0, main (d0e48be5)"
+timeout 600 "$G" --headless --path . --script res://store0_probe.gd 2>&1 | grep "^store\|^default\|^planet\|^arena\|SCRIPT ERROR" | cut -c1-220
+for p in world/pending/globe-step2/globe-step2.diff world/pending/globe-step2/grant-simulation-field.patch world/pending/globe-step2/swap-blocks-gw1c.diff; do
+  git -c core.autocrlf=false -c core.eol=lf apply "$P/$p" && echo "applied $p" || { echo "FAILED $p: $(git -c core.autocrlf=false -c core.eol=lf apply --check "$P/$p" 2>&1 | head -1)"; exit 1; }
+done
+git add -A > /dev/null 2>&1; git -c user.email=s@x -c user.name=s commit -qm "three pieces"
+timeout 900 "$G" --headless --path . --import > "$O/import_b1.txt" 2>&1; echo "import (b1) $?; parse errors $(grep -c 'Parse Error' "$O/import_b1.txt")"
+echo "== the store at tick 0, b1 (main + globe-step2 + field grant + swap-blocks)"
+timeout 600 "$G" --headless --path . --script res://store0_probe.gd 2>&1 | grep "^store\|^default\|^planet\|^arena\|SCRIPT ERROR" | cut -c1-220
+rm -f store0_probe.gd
+cp sim/core/test/golden.json "$O/golden_main.json"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_b1.txt" 2>&1; echo "golden (b1): exit $? in $(( $(date +%s) - s )) s"
+cp sim/core/test/golden.json "$O/golden_b1.json"
+cmp -s "$O/golden_b1.json" "$NS/rso/golden_stack.json" && echo "  b1's golden IS the full stack's: the three pieces explain every move" || echo "  b1's golden is NOT the full stack's"
+echo "== b1 against main"; python -I "$NS/kick/golden_moves.py" "$O/golden_main.json" "$O/golden_b1.json" | cut -c1-200
+echo "== the full stack against b1"; python -I "$NS/kick/golden_moves.py" "$O/golden_b1.json" "$NS/rso/golden_stack.json" | cut -c1-200
+echo b1 done

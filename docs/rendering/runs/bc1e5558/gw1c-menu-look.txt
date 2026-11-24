@@ -1,0 +1,19 @@
+# UI's world-menu look gate (Rendering, 2026-11-23): BEFORE main bc1e5558's HUD demo (md), AFTER the final GW1c tree's (f0d), web exports, 1280x720
+still before-setup-solo (?menu&mpick=solo on md_site): exit 0, 92944 bytes
+still before-setup-versus (?menu=2&mpick=versus on md_site): exit 0, 95720 bytes
+still before-pause (?pause on md_site): exit 0, 85908 bytes
+still before-over (?ko&over on md_site): exit 0, 76510 bytes
+still after-pause (?pause on f0d_site): exit 0, 89016 bytes
+still after-over (?ko&over on f0d_site): exit 0, 84090 bytes
+side-by-side sbs-setup-solo.png
+side-by-side sbs-setup-versus.png
+side-by-side sbs-pause.png
+side-by-side sbs-over.png
+# Read (Rendering): the setup page's heading and rows move up 22 px together (kicker 59 -> 37, title 95 -> 73, first row and the right-hand cards
+# the same), so the setup heading now stands where the mode page's does (37, 73): no jump between the two pages, nothing cut off or crowded at
+# 1280x720, the last row (Move guide) with room below it.
+# The Planet line: the HUD demo gives no host report context with a world, so the AFTER cards above show none. With a scratch demo word world=7
+# (hud.feedback_fn returning {"world": {"planet": 7, "gen": 3, "cols": 4800}}, as UI's hud_check has it; set before the KO, since the KO opens the
+# match-over card by itself) both cards carry "Planet 7" in the quiet colour, a line under Craters inside the card: after-pause-planet.png,
+# after-over-planet.png, sbs-pause-planet.png, sbs-over-planet.png, crop-planet-cards.png (git-ignored). In the game the host's context is there
+# from the start, so the order matters only in the demo.

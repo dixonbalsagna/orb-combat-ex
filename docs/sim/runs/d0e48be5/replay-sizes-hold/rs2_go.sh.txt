@@ -1,0 +1,22 @@
+#!/bin/sh
+# rs2_go.sh <scratchpad>: whose is the golden's move on rs1? The golden made on World's stage-2 stack alone (my re-cut taken
+# out) and with it, compared byte for byte; each against main's. ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/rso"
+export APPDATA="$(cygpath -w "$NS/rsapp")"
+cd "$NS/rs1" || exit 1
+case "$(pwd -P)" in */scratchpad/rs1) ;; *) echo refusing; exit 1 ;; esac
+git checkout -q -- sim/core/replay.gd sim/core/tools/parity.gd
+echo "stack only: $(git status --short | grep -v '\.uid$' | wc -l) changed file(s) against stage2"
+timeout 2400 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_stack.txt" 2>&1; echo "golden, stack only: exit $?"
+cp sim/core/test/golden.json "$O/golden_stack.json"
+git -c core.autocrlf=false apply "$O/replay-sizes.patch" && echo "the re-cut back in"
+timeout 2400 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_mine.txt" 2>&1; echo "golden, stack + re-cut: exit $?"
+cp sim/core/test/golden.json "$O/golden_mine.json"
+cmp -s "$O/golden_stack.json" "$O/golden_mine.json" && echo "  the re-cut moves NOTHING: the stack's golden and the stack + re-cut's are one file" || echo "  the re-cut MOVES the golden"
+cmp -s "$O/golden_stack.json" "$O/golden_main.json" && echo "  the stack leaves main's golden" || echo "  World's stage-2 stack moves main's golden (below)"
+python -I "$NS/kick/golden_moves.py" "$O/golden_main.json" "$O/golden_stack.json" > "$O/golden_moves_stack.txt"; grep -c MOVE "$O/golden_moves_stack.txt"
+cp "$O/golden_main.json" sim/core/test/golden.json
+echo rs2 done

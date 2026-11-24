@@ -1,0 +1,10 @@
+ESC first x1 then x1 on the same spot: REFUSED, centre 0 lower
+ESC first x1 then x2 on the same spot: dug, centre 45 lower
+ESC first x1 then x4 on the same spot: dug, centre 106 lower
+ESC first x1 then x9 on the same spot: dug, centre 199 lower
+ESC first x1 then x16 on the same spot: dug, centre 291 lower
+ESC first x4 then x1 on the same spot: REFUSED, centre 0 lower
+ESC first x4 then x2 on the same spot: REFUSED, centre 0 lower
+ESC first x4 then x4 on the same spot: REFUSED, centre 0 lower
+ESC first x4 then x9 on the same spot: dug, centre 114 lower
+ESC first x4 then x16 on the same spot: dug, centre 213 lower

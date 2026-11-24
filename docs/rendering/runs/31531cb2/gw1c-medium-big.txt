@@ -1,0 +1,10 @@
+# The GW1c stack as it would land (Rendering, 2026-11-23): main 31531cb2 + World's stage 2 (latest list) + planet-sizes + drawn-at, the cap's data row off;
+# no tile-marks. The collapse clip, worst of 4 readings (960x540 and 1024x768, scale 1 and 2), both modes, tiles on, one run each (the reel repeats).
+## g0 medium
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 678s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 660s, worst of 4 readings (960x540 at scale 2)
+## g0 big
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 742s, worst of 4 readings (960x540 at scale 2)
+collapse-reduced: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 2, 0 dips, 719s, worst of 4 readings (1024x768 at scale 1)
+# render gates on g0 (the stack as it would land, no tile-marks): exit 0 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 

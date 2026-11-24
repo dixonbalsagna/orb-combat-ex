@@ -47,3 +47,5 @@ Game Design ruled the sizes (`docs/design/planet-sizes.md`): the spawn pair with
 **Note.** The same fault would show in any size-keyed value kept by seed alone; the others (planet memo, slice memo, store and water grid keys, the field disk cache) carry the size already (checked).
 
 **Re-cut on main b0e20f9a, 2026-11-21** (`docs/world/planet-stack-recut.md`, records `docs/world/runs/planet-stack-recut/`): `gw1c-world-fix.diff` re-cut (the geometry key line merged with the landed cache-determinism form).
+
+**2026-11-23 (the hold, `../planet-sizes/README.md`):** `gw1c-world.diff` was re-cut for `offered: false` on tiny, small, big and huge (its `-` and `+` rows of `sizes.json`, the `_about` line and the schema's `offered` description, which it carries as context). Same order, strict on the stack with the new `planet-sizes.diff`.

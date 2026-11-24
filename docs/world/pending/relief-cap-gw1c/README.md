@@ -59,3 +59,5 @@ Art should see in the stills that the lines sit lower in absolute height on a sm
 - With the keys on, **tiny and small change**: the heights, so the ring, lakes, places and the hash. Medium (Orb's build) does not.
 - The river drainage reads the uncapped climate grid (monotone, so the drainage is the same); river levels read the field's capped ground. A river that rises into squeezed hills sits lower than its uncapped bed would: not checked on the pool; watch it in the stills.
 - Rendering's tile bake reads `surfAt` and adds no detail, so its heights are under the cap by construction; the field's are clamped to it. The two differ by the detail (a few units) as they did before.
+
+**2026-11-23 (the hold, `../planet-sizes/README.md`):** tiny and small are held as shipped, so `relief_cap_check` sets `WorldPlanetSize.heldOverride = true` (one line in `relief-cap.diff`), and `relief-cap-data.diff`'s two rows carry `"offered": false`. Same order, strict.

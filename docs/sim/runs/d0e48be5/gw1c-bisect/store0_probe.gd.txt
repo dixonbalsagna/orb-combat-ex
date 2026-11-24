@@ -1,0 +1,23 @@
+extends SceneTree
+# store0_probe.gd: World's planet store at tick 0 (just after newMatch, the golden's checkpoint 0) for the golden's planet
+# setups: the default match (no world named: planet 7, touch 3, gen 3), seeds 1 and 2, and the planet match (seed 29).
+# storeN, the running hash, and each record's kind, so we know whether a change to the store's fold can move tick 0.
+
+func _one(label: String, seed: int, setup: Dictionary) -> void:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed, {}, setup)
+	var kinds: Array = []
+	var stride: int = int(WorldStore.STRIDE)
+	for i in range(int(S.storeN)):
+		kinds.append(int(S.store[i * stride]))
+	print("%s: storeN %d, storeHash %x, kinds %s, craters %d, phase %s, T %.3f" % [label, int(S.storeN), int(S.storeHash), str(kinds), S.craters.size(), str(S.get("phase")), S.T])
+	SimCore.dispose(S)
+
+
+func _init() -> void:
+	print("store STRIDE %d" % int(WorldStore.STRIDE))
+	_one("default seed 1", 1, {})
+	_one("default seed 2", 2, {})
+	_one("planet match seed 29", 29, {"planet": 7, "touch": 3, "planetGen": 3})
+	_one("arena seed 1", 1, {"world": "arena"})
+	quit(0)

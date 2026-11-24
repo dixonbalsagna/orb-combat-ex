@@ -1,0 +1,38 @@
+extends SceneTree
+const FIELD: Dictionary = {"intro": false, "planet": 7, "touch": 1, "planetGen": 3}
+const E_BASE: float = (356.0 / 160.0) * (356.0 / 160.0)
+func _mk() -> SimState:
+	WorldClimate.useGen(3)
+	WorldPlanet.forget()
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, FIELD)
+	for t in range(5):
+		SimCore.step(S)
+	return S
+func _run(label: String) -> void:
+	var S := _mk()
+	var x: float = S.fighters[0].x + 900.0
+	var base: float = WorldTerrain.groundY(S, x + 2000.0)
+	var dug: int = 0
+	for k in range(8):
+		if WorldCrater.dig(S, x, E_BASE * 4.0, S.fighters[0], "impact") != null:
+			dug += 1
+	print("%s: 8 same-spot blows dug %d, centre %d below the far ground" % [label, dug, int(round(base - WorldTerrain.groundY(S, x)))])
+	var T := _mk()
+	var y: float = T.fighters[0].x + 900.0
+	WorldCrater.dig(T, y, E_BASE * 4.0, T.fighters[0], "impact")
+	var out: String = ""
+	for off in [120.0, 200.0, 300.0]:
+		var U := _mk()
+		WorldCrater.dig(U, y, E_BASE * 4.0, U.fighters[0], "impact")
+		var h0: float = WorldTerrain.groundY(U, y + off)
+		WorldCrater.dig(U, y + off, E_BASE * 4.0, U.fighters[0], "impact")
+		out += " off%d:%d" % [int(off), int(h0 - WorldTerrain.groundY(U, y + off))]
+	print("%s: tier-4 second blow, depth added at the new centre:%s" % [label, out])
+func _init() -> void:
+	_run("shipped (settle on, cap on)")
+	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, false)
+	_run("settle off, cap on")
+	WorldGlobe.blind = true
+	_run("settle off, cap blind (negative control)")
+	quit(0)

@@ -1,0 +1,72 @@
+# tile-marks: the collapse clip, worst of 4 readings (960x540 and 1024x768, scale 1 and 2), both modes, tiles on, one run each (the reel repeats)
+# g0 = the GW1c stack on main 31531cb2 (cap's data row off), g1 = g0 + the park, g1c = g1 + the cap's data row; m0 = main 31531cb2, m1 = m0 + the park
+## g0 small (exit 1)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 3, 2 s memory 2, 0 dips, 570s, worst of 4 readings (1024x768 at scale 2)
+collapse-reduced: FAIL, primary 3 general 0 red, area-15% 4, 2 s memory 2, 0 dips, 559s, worst of 4 readings (1024x768 at scale 1)
+## g1 small (exit 1, try 1)
+collapse-normal: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 3, 0 dips, 568s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 3 general 0 red, area-15% 4, 2 s memory 2, 0 dips, 555s, worst of 4 readings (1024x768 at scale 2)
+## g1 tiny (exit 1, try 1)
+collapse-normal: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 1, 0 dips, 449s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 2, 0 dips, 463s, worst of 4 readings (960x540 at scale 1)
+## g1c small (exit 1, try 1)
+collapse-normal: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 2.5, 0 dips, 536s, worst of 4 readings (1024x768 at scale 1)
+collapse-reduced: FAIL, primary 4 general 0 red, area-15% 5, 2 s memory 3, 0 dips, 539s, worst of 4 readings (1024x768 at scale 1)
+## g1c tiny (exit 1, try 1)
+collapse-normal: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 1, 0 dips, 504s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 4.5 general 0 red, area-15% 4.5, 2 s memory 1, 0 dips, 531s, worst of 4 readings (960x540 at scale 2)
+## m0 medium (exit 0, try 1)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 617s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2, 0 dips, 571s, worst of 4 readings (960x540 at scale 1)
+## m1 medium (exit 0, try 1)
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2, 0 dips, 550s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2, 0 dips, 584s, worst of 4 readings (960x540 at scale 1)
+
+## How to reproduce (small's collapse clip, for Camera's merge job)
+
+# 1. The tree: the GW1c stack as it would land (the cap's data row off), on main 31531cb2
+#    git archive HEAD -- . ':!art' ':!research' | tar -x -C <tree>
+#    then in <tree>, in this order: git -c core.autocrlf=false apply docs/<patch> for each of
+#      world/pending/globe-step2/grant-tools-lint.patch, world/pending/globe-step2/globe-step2.diff,
+#      world/pending/globe-step2/grant-simulation-field.patch, world/pending/planet-sizes/grant-simulation-sizes.patch,
+#      world/pending/planet-sizes/planet-sizes.diff, rendering/pending/planet-sizes/grant-world-field-size-key.patch,
+#      vfx/pending/planet-sizes-meteor/apply.patch, world/pending/gw1c-world/gw1c-world.diff, world/pending/gw1c-world/gw1c-world-fix.diff,
+#      world/pending/store-parts/store-parts.diff, world/pending/box-key-20bit/box-key-20bit.diff, world/pending/crater-tiers/crater-tiers.diff,
+#      world/pending/crater-tiers/grant-tools-crater-tiers.patch, world/pending/relief-cap-gw1c/relief-cap.diff,
+#      world/pending/relief-cap-gw1c/grant-tools-relief-cap.patch, world/pending/globe-step2/globe-check-pin.diff,
+#      world/pending/globe-step2/swap-blocks-gw1c.diff
+#    then: sed -i 's/\r$//' render/core/tile_field.gd render/core/tile_ground.gd render/shaders/tile_read.gdshaderinc
+#    and apply rendering/pending/planet-sizes/sizes_tiles.diff, rendering/pending/drawn-at/drawn_at.diff
+#    (Not applied: world/pending/relief-cap-gw1c/relief-cap-data.diff, the cap's data row. Apply it for "cap on".)
+#    These readings used planet-sizes.diff as it was before World's re-cut of 2026-11-23 13:25, which holds tiny, small and huge
+#    (offered false: they play medium unless WorldPlanetSize.heldOverride is set). On the re-cut, add the override in step 2.
+#
+# 2. The size word (scratch, in no park): render/tools/flash_capture.gd, in _film_setup, just above the line
+#      if _page_kv("power") != "" and _page_kv("power") != "0" and _page_kv("power") != "off":
+#    insert the lines
+#      if _page_kv("size") != "":   # SCRATCH: World's planetSize from the page word size=
+#      	su["planetSize"] = _page_kv("size")
+#      	WorldPlanetSize.heldOverride = true   # only on World's re-cut planet-sizes: without it a held size (small) plays medium
+#    (heldOverride is for tools and tests only: World's size_check fails a game file that sets it, so this stays scratch.)
+#    The page word size=small (or tiny, medium, big) then starts the hook's match on that planet size.
+#
+# 3. Build: godot --headless --path <tree> --import ; godot --headless --path <tree> --export-release Web <site>/index.html
+#
+# 4. The verdict, worst of 4 readings (960x540 and 1024x768, each read at scale 1 and 2), both modes, one run each (the reel repeats: main's
+#    capture-steady). Below-normal priority, one capture at a time:
+#      MERIDIAN_SESSION=<your session> MSYS_NO_PATHCONV=1 node tools/flash/run-pixels.mjs --dir <site> --path "/index.html?flashcap=1&tiles=1&size=small" --out <out> --clip collapse-normal,collapse-reduced --jobs 1 --keep-ranges
+#    --sizes defaults to 960x540,1024x768 (one size: --sizes 960x540 or --sizes 1024x768); every frame: --keep instead of --keep-ranges;
+#    a stretch: --skip N --ticks N. Folders: <out>/collapse-normal, collapse-normal@1024x768, collapse-reduced, collapse-reduced@1024x768.
+#
+# 5. The capture-web lines run-pixels issues (one per mode and size; the reduced clip adds --reduced):
+#      node tools/flash/capture-web.mjs --dir <site> --path "/index.html?flashcap=1&tiles=1&size=small" --scenario collapse --seed 12345 --ticks 1500 --width 960 --height 540 --out <out>/collapse-normal --timeout 3600 --cpu-cap 40
+#      node tools/flash/capture-web.mjs --dir <site> --path "/index.html?flashcap=1&tiles=1&size=small" --scenario collapse --seed 12345 --ticks 1500 --width 1024 --height 768 --out <out>/collapse-normal@1024x768 --timeout 3600 --cpu-cap 40
+#      node tools/flash/capture-web.mjs --dir <site> --path "/index.html?flashcap=1&tiles=1&size=small" --scenario collapse --seed 12345 --ticks 1500 --reduced --width 960 --height 540 --out <out>/collapse-reduced --timeout 3600 --cpu-cap 40
+#      node tools/flash/capture-web.mjs --dir <site> --path "/index.html?flashcap=1&tiles=1&size=small" --scenario collapse --seed 12345 --ticks 1500 --reduced --width 1024 --height 768 --out <out>/collapse-reduced@1024x768 --timeout 3600 --cpu-cap 40
+#    (run-pixels then reads each at scale 1 and 2 and prints the worst.)
+#
+# 6. What to expect on the stack (g0 small above): normal PASS 2; reduced FAIL 3 (area-15% 4), worst at 1024x768 scale 1, worst second ticks
+#    348-396 (events at 1024x768: 355-, 361+, 374-, 388+, 391-, 395+): the merging split's sweep over a bowl's ground by the shore and the trees
+#    beside it, then the merge's cut at 391.
+# A trap: a script that launches captures must not set a shell variable named TMP or TEMP (on Windows they are the exported temp folder: every
+# capture then fails before the browser is up).

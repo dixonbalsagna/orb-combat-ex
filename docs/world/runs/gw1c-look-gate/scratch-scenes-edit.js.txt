@@ -1,0 +1,34 @@
+const fs=require('fs');const root=process.argv[2];
+const f=root+'/render/tools/flash_capture.gd';let t=fs.readFileSync(f,'utf8');const crlf=t.includes('\r\n');t=t.replace(/\r\n/g,'\n');
+function r(a,b){if(t.split(a).length!==2)throw new Error('anchor '+a.slice(0,70));t=t.replace(a,()=>b);}
+r('"plumedesert", "plumeice"','"craterspot", "cratertrench", "plumedesert", "plumeice"');
+r('"plumedesert": [false, false],','"craterspot": [false, false], "cratertrench": [false, false], "plumedesert": [false, false],');
+r('\t\t"plumedesert":    # a desert crater\'s plume','\t\t"craterspot":\n\t\t\t_craters(t, S, false)\n\t\t"cratertrench":\n\t\t\t_craters(t, S, true)\n\t\t"plumedesert":    # a desert crater\'s plume');
+r('func _plume(t: int, S: SimState, biome: String) -> void:',`## Scratch scene (World, look gate of GW1c, 2026-11-23; not in any tree): the second fighter is thrown down onto the same spot every 100 ticks (six slams: a spot hit several times); with trench, a slide trench
+## 330 units long and 130 deep is cut at tick 20 just left of the spot and the target is thrown down beside its end and then on it, then the spot itself.
+func _craters(t: int, S: SimState, trench: bool) -> void:
+	var x0: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	if t == 0:
+		for i in range(2):
+			var f = S.fighters[i]
+			f.x = SimWrap.wrap(x0 + (-110.0 if i == 0 else 110.0))
+			f.y = WorldTerrain.groundY(S, f.x) + 10.0
+			f.vx = 0.0
+			f.vy = 0.0
+			f.tier = 3.0
+	var at: float = x0
+	if trench:
+		if t == 20:
+			WorldCrater.carveSegment(S, x0 - 480.0, x0 - 150.0, 130.0, false, 0.0, S.fighters[0].z)
+		at = x0 - 90.0 if (t / 100) % 3 == 0 else (x0 - 330.0 if (t / 100) % 3 == 1 else x0 + 20.0)
+	if t % 100 == 30:
+		var tg = S.fighters[1]
+		tg.x = SimWrap.wrap(at)
+		tg.y = WorldTerrain.groundY(S, tg.x) + 300.0
+		tg.vx = 0.0
+		tg.vy = 0.0
+		DirLaunch.doLaunch(S, S.fighters[0], tg, {"ux": 0.0, "uy": -1.0, "name": "SLAM DOWN"}, 2600.0, false)
+
+
+func _plume(t: int, S: SimState, biome: String) -> void:`);
+fs.writeFileSync(f,crlf?t.replace(/\n/g,'\r\n'):t);console.log('ok',root);

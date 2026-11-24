@@ -1,0 +1,19 @@
+a refused dig
+  ok    a blow on fresh ground digs a crater (depth 159, r 726) and leaves no refusal
+  ok    the same blow on the same spot is refused (no crater, no record: 1 craters, 1 store records, as before)
+  ok    ... and sends one crater_refused and nothing else (1 events)
+  ok    ... its fields: x the spot, r the blow's radius (726), energy 20.6, depth the dent there (217), cause impact
+  ok    the bowl it buries against is the dent that is there, never deeper than the blow would dig on fresh ground (depth 159 of the dent 217), its floor the ground as it stands
+  ok    a blow too weak to dig on fresh ground is not a refusal: no crater_refused, no bowl to bury against
+a slam onto ground that is already dented
+  ok    control: a slam at speed 4000 on fresh ground digs a crater and buries him (embedT 60)
+  ok    the same slam on an old crater of its own size is refused: crater_refused, no crater, still the one crater
+  FAIL  ... and he is still buried (an embed event, embedT 0)
+  FAIL  ... against the bowl that is there, no deeper than a fresh blow's (embed depth -1, fresh 159)
+  ok    ... and the impact still plays its ring and debris (2 rings, 16 debris)
+  FAIL  the same slam on an old crater bigger than it is refused and buries him too
+  FAIL  a hard slam on a smaller old crater digs what the cap leaves it (78 deep, a fresh one digs 159) and buries him: the bowl he sits in is the whole dent
+  ok    control: a slam at speed 2600 digs a crater on fresh ground and is too soft to bury him (depth 106)
+  ok    the same soft slam on a deep old crater (a crater only 6 deep) does not bury him either: the old dent's depth does not make a soft blow hard
+  ok    the same run twice is the same state (hash 7db45de626fe)
+BURY: 4 check(s) failed (negative control)

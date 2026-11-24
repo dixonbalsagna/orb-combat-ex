@@ -1,0 +1,38 @@
+# The final GW1c tree (Rendering's copy, 2026-11-23): main bc1e5558 + the 22 pieces of docs/ep/reviews/GW1c-stack.txt, strict, in order; the cap's data row
+# off; only medium offered; no tile-marks. Built the EP's way (a scratch git repo, core.autocrlf=false, core.eol=lf).
+piece: ok docs/world/pending/globe-step2/grant-tools-lint.patch (sha1 f79d5cf8cc7b, list f79d5cf8cc7b)
+piece: ok docs/world/pending/globe-step2/globe-step2.diff (sha1 7f3c7aabde4a, list 7f3c7aabde4a)
+piece: ok docs/world/pending/globe-step2/grant-simulation-field.patch (sha1 2cb76b47cb20, list 2cb76b47cb20)
+piece: ok docs/world/pending/planet-sizes/grant-simulation-sizes.patch (sha1 182ca239eb57, list 182ca239eb57)
+piece: ok docs/world/pending/planet-sizes/planet-sizes.diff (sha1 57d6e4be75a5, list 57d6e4be75a5)
+piece: ok docs/architecture/pending/replay-sizes/replay-sizes.patch (sha1 13143eb17184, list 13143eb17184)
+piece: ok docs/rendering/pending/planet-sizes/grant-world-field-size-key.patch (sha1 c48936a36ccd, list c48936a36ccd)
+piece: ok docs/vfx/pending/planet-sizes-meteor/apply.patch (sha1 9c9f808723d2, list 9c9f808723d2)
+piece: ok docs/world/pending/gw1c-world/gw1c-world.diff (sha1 b7c42e20eb17, list b7c42e20eb17)
+piece: ok docs/world/pending/gw1c-world/gw1c-world-fix.diff (sha1 621c7f345cb4, list 621c7f345cb4)
+piece: ok docs/world/pending/store-parts/store-parts.diff (sha1 5fcbe87355b2, list 5fcbe87355b2)
+piece: ok docs/world/pending/box-key-20bit/box-key-20bit.diff (sha1 8bead9f958b7, list 8bead9f958b7)
+piece: ok docs/world/pending/crater-tiers/crater-tiers.diff (sha1 7ddc7e1e883f, list 7ddc7e1e883f)
+piece: ok docs/world/pending/crater-tiers/grant-tools-crater-tiers.patch (sha1 38170d770c80, list 38170d770c80)
+piece: ok docs/world/pending/relief-cap-gw1c/relief-cap.diff (sha1 774bb7524a6b, list 774bb7524a6b)
+piece: ok docs/world/pending/relief-cap-gw1c/grant-tools-relief-cap.patch (sha1 3e065214a63d, list 3e065214a63d)
+piece: ok docs/world/pending/globe-step2/globe-check-pin.diff (sha1 c37fdf9fd6f4, list c37fdf9fd6f4)
+piece: ok docs/world/pending/globe-step2/swap-blocks-gw1c.diff (sha1 07c6f92a24b3, list 07c6f92a24b3)
+piece: ok docs/rendering/pending/planet-sizes/sizes_tiles.diff (sha1 d22786b98118, list d22786b98118)
+piece: ok docs/rendering/pending/drawn-at/drawn_at.diff (sha1 984e12f9ccc9, list 984e12f9ccc9)
+piece: ok docs/ui/pending/a1-world-menu/world-menu.patch (sha1 5e2ebc8ecfdf, list 5e2ebc8ecfdf)
+piece: ok docs/rendering/pending/world-menu-merge/world_menu_merged.diff (sha1 78abe08eb55f, list 78abe08eb55f)
+sizes offered: 1
+import errors 0
+game export 0, errors 0
+9:run/main_scene="res://ui/demo/hud_demo.tscn"
+HUD demo export (main scene ui/demo/hud_demo.tscn, scratch) 0, errors 0
+## medium (no size word: the tree's default and only offered size), the collapse clip, worst of 4 readings (960x540 and 1024x768, scale 1 and 2), both modes
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 622s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 608s, worst of 4 readings (960x540 at scale 2)
+## the match setup page, the HUD demo's web export of the same tree, 1280x720 (stills git-ignored: docs/rendering/img/sizes/gw1c-final/)
+still ?menu: exit 0, 47183 bytes
+still ?menu=2: exit 0, 47183 bytes
+# The two stills above (?menu, ?menu=2) are the mode page ("Choose a mode"): the size row would be on the setup page. The setup page itself:
+still ?menu&mpick=solo (Against the computer): Set up the match, rows Player 1, Player 1 fighter, Computer (Easy, Medium, Hard), Computer's fighter, Intros, Reduce flashing, Screen shake, Captions, Move guide; no planet size row, and the "This match" card has no planet line
+still ?menu=2&mpick=versus (Two players, one PC): the same with Player 2 and Player 2 fighter; no planet size row, no planet line; nothing cut off at 1280x720

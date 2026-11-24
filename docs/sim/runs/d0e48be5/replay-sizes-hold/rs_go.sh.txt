@@ -1,0 +1,39 @@
+#!/bin/sh
+# rs_go.sh <scratchpad>: replay-sizes re-cut for World's hold, on rs1 (main + World's GW1c stage-2 list, commit "stage2").
+#  edit + cut; apply checks (on stage2, and straight after planet-sizes); import; the golden (must not move); the row alone
+#  with hashData and, as the negative control, with data(); parity through gate.mjs; World's size_check; replay_xproc_check;
+#  Rendering's 15. ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/rso"
+rm -rf "${NS:?}/rso"; mkdir -p "$O" "$NS/rsapp"; export APPDATA="$(cygpath -w "$NS/rsapp")"
+cd "$NS/rs1" || exit 1
+case "$(pwd -P)" in */scratchpad/rs1) ;; *) echo refusing; exit 1 ;; esac
+python -I "$NS/kick/replay_sizes_hold.py" "$NS/rs1" || exit 1
+git -c core.autocrlf=false diff -- sim/core/replay.gd sim/core/tools/parity.gd > "$O/replay-sizes.patch"
+sha1sum "$O/replay-sizes.patch" | cut -c1-40
+for base in HEAD HEAD~1; do
+  GIT_INDEX_FILE="$NS/rso/idx" git read-tree "$base" && GIT_INDEX_FILE="$NS/rso/idx" git -c core.autocrlf=false apply --cached --check "$O/replay-sizes.patch" && echo "applies on $(git log -1 --format='%h %s' "$base")" || echo "DOES NOT apply on $base"
+done
+rm -f "$NS/rso/idx"
+cp sim/core/test/golden.json "$O/golden_main.json"
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden.txt" 2>&1; echo "golden: exit $? in $(( $(date +%s) - s )) s"
+cmp -s sim/core/test/golden.json "$O/golden_main.json" && echo "  the golden does NOT move (byte for byte main's)" || { echo "  the golden MOVED"; python -I "$NS/kick/golden_moves.py" "$O/golden_main.json" sim/core/test/golden.json; }
+cp "$O/golden_main.json" sim/core/test/golden.json
+cp "$NS/kick/rs_neg.gd" ./rs_neg.gd
+timeout 600 "$G" --headless --path . --script res://rs_neg.gd > "$O/row_hashData.txt" 2>&1; echo "the row alone, hashData: $(grep '^ROW\|^held' "$O/row_hashData.txt" | tr '\n' ' ')"
+sed -i 's/FighterData._canon(h, WorldPlanetSize.hashData())/FighterData._canon(h, WorldPlanetSize.data())/' sim/core/replay.gd
+timeout 600 "$G" --headless --path . --script res://rs_neg.gd > "$O/row_data_negative.txt" 2>&1; echo "the row alone, data() (negative control): $(grep '^ROW' "$O/row_data_negative.txt")"
+git -c core.autocrlf=false apply "$O/replay-sizes.patch" -R --check 2> /dev/null; git checkout -q -- sim/core/replay.gd && git -c core.autocrlf=false apply --include=sim/core/replay.gd "$O/replay-sizes.patch" && echo "  replay.gd back to the re-cut ($(grep -c 'WorldPlanetSize.hashData()' sim/core/replay.gd) hashData line)"
+rm -f rs_neg.gd
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity.txt" 2>&1; echo "parity: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL" "$O/parity.txt" | head -10 | cut -c1-240
+grep -n "sized planet" "$O/parity.txt" | cut -c1-200
+echo "rows ok $(grep -c '^ok' "$O/parity.txt"), FAIL $(grep -c '^FAIL' "$O/parity.txt")"
+for c in res://sim/world/tools/size_check.gd res://sim/core/tools/replay_xproc_check.gd; do n=$(basename "$c" .gd); s=$(date +%s); timeout 1800 "$G" --headless --path . --script "$c" > "$O/$n.txt" 2>&1; echo "$n: exit $? in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR' "$O/$n.txt"); $(grep -v '^$\|WARNING\|at: \|ERROR: ' "$O/$n.txt" | tail -1 | cut -c1-150)"; grep -n "FAIL" "$O/$n.txt" | head -5 | cut -c1-200; done
+echo "== Rendering's 15"
+sh "$NS/n/rgates.sh" "$NS/rs1" "$O/rg"
+echo rs done

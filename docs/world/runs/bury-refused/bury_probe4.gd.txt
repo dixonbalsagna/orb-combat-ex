@@ -1,0 +1,41 @@
+extends SceneTree
+const FIELD: Dictionary = {"intro": false, "planet": 7, "touch": 1, "planetGen": 3}
+func _mk() -> SimState:
+	WorldClimate.useGen(3)
+	WorldPlanet.forget()
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, FIELD)
+	for t in range(5):
+		SimCore.step(S)
+	return S
+func _slam(S: SimState, x: float, label: String, spd: float = 2600.0, tier: float = 3.0) -> void:
+	var a = S.fighters[0]
+	var tg = S.fighters[1]
+	a.x = SimWrap.wrap(x - 110.0); a.y = WorldTerrain.groundY(S, a.x) + 10.0; a.vx = 0.0; a.vy = 0.0; a.tier = tier
+	tg.x = SimWrap.wrap(x); tg.y = WorldTerrain.groundY(S, tg.x) + 300.0; tg.vx = 0.0; tg.vy = 0.0; tg.tier = tier
+	var n0: int = S.out.fx.size()
+	DirLaunch.doLaunch(S, a, tg, {"ux": 0.0, "uy": -1.0, "name": "SLAM DOWN"}, spd, false)
+	var embedT: float = 0.0
+	for t in range(90):
+		SimCore.step(S)
+		embedT = maxf(embedT, float(tg.embedT))
+	var cnt: Dictionary = {}
+	for i in range(n0, S.out.fx.size()):
+		var e = S.out.fx[i]
+		if ["crater", "crater_refused", "embed"].has(e.type):
+			cnt[e.type] = int(cnt.get(e.type, 0)) + 1
+			print("    ", e.type, " tick ", e.tick, " depth ", int(e.depth), " r ", int(e.r), " energy ", snappedf(e.energy, 0.1))
+	print("%s: events %s, max embedT %.1f, craters %d" % [label, JSON.stringify(cnt), embedT, S.craters.size()])
+func _init() -> void:
+	var S := _mk()
+	var x: float = S.fighters[0].x + 900.0
+	_slam(S, x, "fresh spot (control: this slam buries)", 4000.0, 3.0)
+	for fix in [true, false]:
+		WorldContact.buryRefused = fix
+		var T := _mk()
+		WorldCrater.dig(T, x, 20.6, T.fighters[0], "impact")
+		_slam(T, x, "old crater of the same size, fix %s" % str(fix), 4000.0, 3.0)
+		var U := _mk()
+		WorldCrater.dig(U, x, 45.2, U.fighters[0], "impact")
+		_slam(U, x, "old crater bigger than the blow, fix %s" % str(fix), 4000.0, 3.0)
+	quit(0)

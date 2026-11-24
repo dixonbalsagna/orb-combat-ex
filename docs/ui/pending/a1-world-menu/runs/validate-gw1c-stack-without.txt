@@ -1,0 +1,9 @@
+# the same stack WITHOUT the grant
+error  ui/data/feedback.json:20 /report/world  [additionalProperties] unknown property "world"
+325 files checked, 1 error, 2 warnings
+FAIL  data: the unmutated data has no errors (run `node tools/validate.js`)
+      ui/data/feedback.json /report/world [additionalProperties]
+FAIL  coverage: biomes-sizes.schema.json: at least three invalid cases
+      has 0
+self-test: 10168 of 10170 checks passed, 2 FAILED
+  parser 330 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 197; data cases 8401

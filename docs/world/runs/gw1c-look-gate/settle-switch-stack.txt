@@ -1,0 +1,6 @@
+shipped (settle on, cap on): 8 same-spot blows dug 1, centre 251 below the far ground
+shipped (settle on, cap on): tier-4 second blow, depth added at the new centre: off120:0 off200:0 off300:40
+settle off, cap on: 8 same-spot blows dug 1, centre 251 below the far ground
+settle off, cap on: tier-4 second blow, depth added at the new centre: off120:0 off200:0 off300:40
+settle off, cap blind (negative control): 8 same-spot blows dug 8, centre 1347 below the far ground
+settle off, cap blind (negative control): tier-4 second blow, depth added at the new centre: off120:156 off200:156 off300:156

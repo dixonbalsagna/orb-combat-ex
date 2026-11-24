@@ -1,0 +1,46 @@
+# tile-marks gates (Rendering, 2026-11-23): the GW1c stack on main 31531cb2 (World's stage 2, latest list; planet-sizes; drawn-at; the cap's data row off)
+# + tile_marks.py (scratch, sha1 5461d1ca). One Godot at a time, below normal.
+stack: ok   world/pending/globe-step2/grant-tools-lint.patch
+stack: ok   world/pending/globe-step2/globe-step2.diff
+stack: ok   world/pending/globe-step2/grant-simulation-field.patch
+stack: ok   world/pending/planet-sizes/grant-simulation-sizes.patch
+stack: ok   world/pending/planet-sizes/planet-sizes.diff
+stack: ok   rendering/pending/planet-sizes/grant-world-field-size-key.patch
+stack: ok   vfx/pending/planet-sizes-meteor/apply.patch
+stack: ok   world/pending/gw1c-world/gw1c-world.diff
+stack: ok   world/pending/gw1c-world/gw1c-world-fix.diff
+stack: ok   world/pending/store-parts/store-parts.diff
+stack: ok   world/pending/box-key-20bit/box-key-20bit.diff
+stack: ok   world/pending/crater-tiers/crater-tiers.diff
+stack: ok   world/pending/crater-tiers/grant-tools-crater-tiers.patch
+stack: ok   world/pending/relief-cap-gw1c/relief-cap.diff
+stack: ok   world/pending/relief-cap-gw1c/grant-tools-relief-cap.patch
+stack: ok   world/pending/globe-step2/globe-check-pin.diff
+stack: ok   world/pending/globe-step2/swap-blocks-gw1c.diff
+stack: ok   rendering/pending/planet-sizes/sizes_tiles.diff
+stack: ok   rendering/pending/drawn-at/drawn_at.diff
+scratch: the size word (captures only, not in the park)
+g0 import errors 0
+drawn_at note corrected tile marks applied (g1)
+tile marks applied (m1)
+tile_marks.gw1c.diff 866be583 (44 lines); tile_marks.diff ee1f773e (34 lines)
+tile_marks.gw1c.diff: applies on the stack
+tile_marks.diff: applies on main 31531cb2 (tile_vertex, tile_ground CRLF-normalised as the other render parks)
+g1 import errors 0
+golden.json: g1 byte-identical to g0 (the stack without the park)
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+g0c: + relief-cap-data.diff
+g1c: + relief-cap-data.diff
+m0 import errors 0
+g0 export 0, errors 0
+g1 export 0, errors 0
+g0c export 0, errors 0
+g1c export 0, errors 0
+m0 export 0, errors 0
+m1 export 0, errors 0

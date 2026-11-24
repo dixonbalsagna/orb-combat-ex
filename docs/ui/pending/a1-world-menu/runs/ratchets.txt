@@ -1,0 +1,7 @@
+# the two ratchets on HEAD (before) and on HEAD + World's stage 2 + this park + Rendering's world_menu_merged.diff (after)
+before: two-fighter
+two-fighter ratchet ok: 365 against a baseline of 365
+fighter-specific code: 0 places (energy 0, stamina 0, body 0, forms 0); the baseline is 0
+after:
+two-fighter ratchet ok: 365 against a baseline of 365
+fighter-specific code: 0 places (energy 0, stamina 0, body 0, forms 0); the baseline is 0

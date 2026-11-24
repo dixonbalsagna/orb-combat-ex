@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/sim/world/size.gd
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,163 @@
 +class_name WorldPlanetSize
 +extends RefCounted
 +## The planet's size (A1; docs/world/planet-sizes.md; data/biomes/sizes.json). A match's setup names a size (planetSize); the sim binds it with SimConst.setPlanet at the top of the match. Pure reads of the data.
@@ -13,6 +13,8 @@
 +static var _loaded: bool = false
 +static var _errors: Array = []
 +static var _names: Array = []
++static var heldOverride: bool = false   # tests and probes only: a size the data does not offer plays as named. The game never sets it (size_check proves nothing outside tools and tests does).
++static var heldHits: int = 0   # how many times a setup named a size that is not offered (a count for the checks: not state, not hashed)
 +
 +
 +static func data() -> Dictionary:
@@ -64,7 +66,7 @@
 +		_names.append(String(k))
 +
 +
-+## The size names, in the data's order (only the offered ones when `offered` is true).
++## The size names, in the data's order (only the offered ones when `offered` is true: the menu's list, and the sizes a setup can play).
 +static func names(offered: bool = false) -> Array:
 +	if not _loaded:
 +		_load()
@@ -75,7 +77,8 @@
 +	return out
 +
 +
-+## The name of the size of a setup: its planetSize when the setup names a planet (the hand-made world is always medium) and the data has it, else the default.
++## The name of the size of a setup: its planetSize when the setup names a planet (the hand-made world is always medium), the data has it and the data OFFERS it, else the default. A size the data has but does not offer (held) plays
++## medium with an error, whoever names it (a replay, a setup constant, a probe): hidden means unreachable. heldOverride is the tests' and the probes' way in.
 +static func nameOf(setup: Dictionary) -> String:
 +	if not _loaded:
 +		_load()
@@ -86,7 +89,33 @@
 +		if not FighterData.quiet:
 +			push_error("SimCore.newMatch: setup.planetSize %s is not a size in sizes.json (%s); medium plays" % [n, str(_names)])
 +		return String(_d.default)
++	if not bool(_d.sizes[n].offered) and not heldOverride:
++		heldHits += 1
++		if not FighterData.quiet:
++			push_error("SimCore.newMatch: setup.planetSize %s is held (sizes.json offered is false); medium plays" % n)
++		return String(_d.default)
 +	return n
++
++
++## Whether a setup names a size the data has and does not offer (held): what nameOf would refuse, read from the data alone (no error, no override). For a replay's or a handshake's refusal line.
++static func isHeld(setup: Dictionary) -> bool:
++	if not _loaded:
++		_load()
++	if _d.is_empty() or not setup.has("planet") or not setup.has("planetSize"):
++		return false
++	var n: String = String(setup.planetSize)
++	return _d.sizes.has(n) and not bool(_d.sizes[n].offered)
++
++
++## The size table as a data hash reads it: sizes.json without `offered`. Which sizes a player can reach is not what a size is, so un-hiding one moves no hash (a replay's header and the handshake take this, not data()).
++static func hashData() -> Dictionary:
++	if not _loaded:
++		_load()
++	var out: Dictionary = _d.duplicate(true)
++	if out.has("sizes"):
++		for k in out.sizes:
++			(out.sizes[k] as Dictionary).erase("offered")
++	return out
 +
 +
 +static func colsOf(setup: Dictionary) -> int:
@@ -144,14 +173,14 @@
 @@ -0,0 +1,13 @@
 +{
 +  "schema": "biomes.sizes/1",
-+  "_about": "The planet sizes a match can pick (A1, Orb 2026-11-13: five sizes; docs/world/planet-sizes.md; read by sim/world/size.gd). A size is the planet's columns round (cols; a column is 32 units, so a size is a distance, and every speed and every body stays as it is), the longest great-circle ring a fight is played on (arenaCols: past it the swing and the arena shift carry the fight round the world), and the bake's spacing in 128-unit nodes (bakeStride, 4 is 512 units). medium is today's planet exactly. A setup picks one by name (planetSize); the hand-made world and a setup with no planet are always medium. offered: the five in the menu; the sixth is data that is off.",
++  "_about": "The planet sizes a match can pick (A1, Orb 2026-11-13: five sizes; docs/world/planet-sizes.md; read by sim/world/size.gd). A size is the planet's columns round (cols; a column is 32 units, so a size is a distance, and every speed and every body stays as it is), the longest great-circle ring a fight is played on (arenaCols: past it the swing and the arena shift carry the fight round the world), and the bake's spacing in 128-unit nodes (bakeStride, 4 is 512 units). medium is today's planet exactly. A setup picks one by name (planetSize); the hand-made world and a setup with no planet are always medium. offered: a size a player can reach, in the menu and by a setup's planetSize; a size that is not offered plays medium, with an error, whoever names it (a replay, a probe), so held means unreachable. Only medium is offered; tiny, small, big and huge are held until their look is proven, colossal is unproven data.",
 +  "default": "medium",
 +  "sizes": {
-+    "tiny":     { "cols": 1280,  "arenaCols": 1280, "bakeStride": 4,  "offered": true, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
-+    "small":    { "cols": 2560,  "arenaCols": 2560, "bakeStride": 4,  "offered": true, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
++    "tiny":     { "cols": 1280,  "arenaCols": 1280, "bakeStride": 4,  "offered": false, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
++    "small":    { "cols": 2560,  "arenaCols": 2560, "bakeStride": 4,  "offered": false, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
 +    "medium":   { "cols": 4800,  "arenaCols": 4800, "bakeStride": 4,  "offered": true },
-+    "big":      { "cols": 9600,  "arenaCols": 9600, "bakeStride": 4,  "offered": true, "places": { "cities": 24, "towns": 88 } },
-+    "huge":     { "cols": 19200, "arenaCols": 19200, "bakeStride": 8,  "offered": true, "places": { "cities": 48, "towns": 176 } },
++    "big":      { "cols": 9600,  "arenaCols": 9600, "bakeStride": 4,  "offered": false, "places": { "cities": 24, "towns": 88 } },
++    "huge":     { "cols": 19200, "arenaCols": 19200, "bakeStride": 8,  "offered": false, "places": { "cities": 48, "towns": 176 } },
 +    "colossal": { "cols": 38400, "arenaCols": 38400, "bakeStride": 16, "offered": false, "places": { "cities": 96, "towns": 352 } }
 +  }
 +}
@@ -181,7 +210,7 @@
 +          "cols": { "type": "integer", "minimum": 1280, "description": "The planet's columns round (a column is 32 units)." },
 +          "arenaCols": { "type": "integer", "minimum": 600, "description": "The longest ring a fight is played on (on a field world: the planet's own round)." },
 +          "bakeStride": { "type": "integer", "minimum": 1, "description": "The bake's spacing in 128-unit nodes." },
-+          "offered": { "type": "boolean", "description": "In the menu's list of sizes." },
++          "offered": { "type": "boolean", "description": "A size a player can reach: in the menu's list, and what a setup's planetSize can name. A size that is not offered plays medium, with an error (held)." },
 +          "places": {
 +            "type": "object",
 +            "description": "planet.json numbers this size changes: the place counts and the ring's minimums.",
@@ -202,11 +231,11 @@
 +}
 --- /dev/null
 +++ b/sim/world/tools/size_check.gd
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,216 @@
 +extends SceneTree
 +# The planet sizes (World, A1; sim/world/size.gd, data/biomes/sizes.json; docs/world/planet-sizes.md). From the repo root:
 +#   godot --headless --path . --script res://sim/world/tools/size_check.gd -- [--negative-control]
-+# Proves, for each size the data offers (tiny, small, medium, big, huge) on planet 7: the match is bound to the size (the planet's columns, the arena, the radius), plays on a field world (a frame, fighters on finite
++# Proves, for each of the five sizes (tiny, small, medium, big, huge; the held ones through WorldPlanetSize.heldOverride) on planet 7: the match is bound to the size (the planet's columns, the arena, the radius), plays on a field world (a frame, fighters on finite
 +# ground, the arena wrapping at the planet's round), and plays 600 ticks; the same setup twice has the same match hash; medium named is byte for byte medium unnamed; a size nobody offers is refused to medium; a
 +# crater dug at one place on the biggest planet is not read at the place half way round (the store's grid does not alias across a big planet); and the data's own rules hold (a size's columns, its ring, its bake).
 +# Prints each size's start time and tick cost: those are void as measurements on a shared machine (Performance reads them in a quiet window). --negative-control makes the grid's key offset the medium's 64 on a big
@@ -234,17 +263,128 @@
 +	return S
 +
 +
++## A path that is not a game file: a tool or a test may set WorldPlanetSize.heldOverride, nothing else may.
++func _outside(p: String) -> bool:
++	return not p.contains("/tools/") and not p.contains("/tests/") and not p.ends_with("sim/world/size.gd")
++
++
++func _scan(dir: String, hits: Array) -> void:
++	var d := DirAccess.open(dir)
++	if d == null:
++		return
++	d.list_dir_begin()
++	var n: String = d.get_next()
++	while n != "":
++		if d.current_is_dir():
++			if not n.begins_with(".") and not (dir == "res://" and ["docs", "homework", "prototype", "research", "art", "audit", "localization", "data"].has(n)):
++				_scan(dir.path_join(n), hits)
++		elif n.ends_with(".gd"):
++			var p: String = dir.path_join(n)
++			if _outside(p) and FileAccess.get_file_as_string(p).contains("heldOverride"):
++				hits.append(p)
++		n = d.get_next()
++
++
++## The held sizes (tiny, small, huge and colossal as the data ships: offered false) are not reachable, and un-hiding one moves nothing else. Runs first, before any row sets heldOverride.
++func _held_rows() -> void:
++	print("held sizes are unreachable")
++	var quiet0: bool = FighterData.quiet
++	FighterData.quiet = true   # nameOf's error is the point of these rows: it is counted (heldHits), not printed
++	var held: Array = ["tiny", "small", "big", "huge", "colossal"]
++	var hits0: int = WorldPlanetSize.heldHits
++	var allMedium: bool = true
++	for nm in held:
++		if WorldPlanetSize.nameOf(_setup(nm)) != "medium" or WorldPlanetSize.colsOf(_setup(nm)) != 4800 or not WorldPlanetSize.isHeld(_setup(nm)):
++			allMedium = false
++	ok(allMedium and WorldPlanetSize.heldHits == hits0 + 10, "as shipped, a setup naming tiny, small, big, huge or colossal plays medium (4,800 columns), and each of the %d asks was refused with an error (counted: %d)" % [10, WorldPlanetSize.heldHits - hits0])
++	var Sh1 := _match(_setup("small"), 120)
++	var Sm1 := _match(_setup("medium"), 120)
++	ok(Sh1.planetNC == 4800 and SimHash.stateHash(Sh1).gameplay == SimHash.stateHash(Sm1).gameplay, "a match that names small, as shipped, is the medium match byte for byte (planetNC %d, hash at tick 120)" % Sh1.planetNC)
++	SimCore.dispose(Sh1)
++	SimCore.dispose(Sm1)
++	ok(not WorldPlanetSize.isHeld(_setup("medium")) and WorldPlanetSize.isHeld(_setup("big")) and not WorldPlanetSize.isHeld({"planet": 7}) and not WorldPlanetSize.isHeld({"planetSize": "small"}), "medium, a setup that names no size and a setup with no planet are not held, and big is")
++	print("a replay that names a held size")
++	WorldPlanetSize.heldOverride = true   # the way in, for the recording only
++	var su: Dictionary = _setup("small")
++	var Sr := _match(su, 60)
++	var h60: String = str(SimHash.stateHash(Sr).gameplay)
++	for t in range(60):
++		SimCore.step(Sr)
++	var h120: String = str(SimHash.stateHash(Sr).gameplay)
++	SimCore.dispose(Sr)
++	var rp: Dictionary = SimReplay.header(5, su, {"p1": false, "p2": false}, 120)
++	rp.checkpoints = [[60, h60]]
++	rp.final = h120
++	var opened: Dictionary = SimReplay.play(rp)
++	ok(bool(opened.ok), "control: with the way in open the replay of 120 ticks at small plays back faithfully (so a failure below is the hold's)")
++	WorldPlanetSize.heldOverride = false
++	var hits1: int = WorldPlanetSize.heldHits
++	var res: Dictionary = SimReplay.play(rp)
++	ok(WorldPlanetSize.heldHits > hits1 and not bool(res.ok) and ["checkpoint", "final", "data"].has(String(res.reason)), "as shipped, the same replay is NOT a quiet success: the error is raised (held asks +%d) and SimReplay.play fails it (reason %s, first bad tick %d)" % [WorldPlanetSize.heldHits - hits1, str(res.reason), int(res.firstBadTick)])
++	print("  note: SimReplay.refusal(header only) for that replay (made at small with the way in open, checked as shipped): '%s'" % SimReplay.refusal(rp))
++	WorldPlanetSize.heldOverride = true
++	var rp3: Dictionary = SimReplay.header(5, su, {"p1": false, "p2": false}, 30)   # an unfinished one: under a second, no checkpoint, no final hash, made at small
++	WorldPlanetSize.heldOverride = false
++	var res3: Dictionary = SimReplay.play(rp3)
++	print("  note: the same, 30 ticks with no checkpoint and no final hash: SimReplay.play ok %s, reason '%s' (with ok true only the error says so; refusing a held size at the header is WorldPlanetSize.isHeld(setup), a later item for UI and Simulation)" % [str(res3.ok), str(res3.reason)])
++	var rp2: Dictionary = SimReplay.header(5, su, {"p1": false, "p2": false}, 30)   # made while small is held: the match that ran was medium
++	var res2: Dictionary = SimReplay.play(rp2)
++	print("  note: a replay made while small is held records the match that ran (medium): SimReplay.play ok %s (faithful to what ran; the error is raised)" % str(res2.ok))
++	print("nothing draws a size")
++	var mode0: String = WorldDefault.mode()
++	var rnd0: bool = WorldDefault.K_RANDOM
++	WorldDefault.setForTest("planet", true)   # the quick match's draw, on
++	var named: int = 0
++	var planets: Dictionary = {}
++	for sd in range(2000):
++		var pp: Dictionary = WorldDefault.part(sd, false)
++		var ap: Dictionary = WorldDefault.apply({}, sd, false)
++		planets[int(pp.get("planet", -1))] = true
++		if pp.has("planetSize") or ap.has("planetSize"):
++			named += 1
++	WorldDefault.setForTest(mode0, rnd0)
++	ok(named == 0 and planets.size() > 3, "the quick match's draw (WorldDefault.part and apply, 2,000 seeds, %d different planets) never names a size: a match with no size is medium" % planets.size())
++	ok(_outside("res://render/core/main.gd") and _outside("res://ui/hud/ui_hud.gd") and not _outside("res://sim/world/tools/size_check.gd") and not _outside("res://render/camera/tests/split_sweep.gd") and not _outside("res://sim/world/size.gd"), "control: the scan's rule calls a game file outside and a tool, a test or size.gd itself not")
++	var hits: Array = []
++	for top in ["sim", "render", "ui", "net", "audio", "qa", "tools"]:
++		_scan("res://" + top, hits)
++	ok(hits.is_empty(), "nothing outside a tools or tests folder sets WorldPlanetSize.heldOverride (%s)" % str(hits))
++	print("un-hiding a size moves nothing else")
++	var Mh0 := _match(_setup("medium"), 120)
++	var hm0: String = str(SimHash.stateHash(Mh0).gameplay)
++	SimCore.dispose(Mh0)
++	var tbl0: String = JSON.stringify(WorldPlanetSize.hashData())
++	var raw0: String = JSON.stringify(WorldPlanetSize.data())
++	var dh0: String = SimReplay.dataHash(_setup("medium"))
++	var dhm0: String = SimReplay.dataHash({"intro": false, "planet": 7, "touch": 1, "planetGen": 3})
++	for nm in ["tiny", "small", "big", "huge"]:
++		WorldPlanetSize.data().sizes[nm].offered = true
++	var flipped: bool = WorldPlanetSize.names(true).size() == 5 and WorldPlanetSize.nameOf(_setup("small")) == "small" and WorldPlanetSize.colsOf(_setup("small")) == 2560 and WorldPlanetSize.nameOf(_setup("big")) == "big" and WorldPlanetSize.colsOf(_setup("big")) == 9600 and not WorldPlanetSize.isHeld(_setup("small")) and not WorldPlanetSize.isHeld(_setup("big"))
++	var Mh1 := _match(_setup("medium"), 120)
++	var hm1: String = str(SimHash.stateHash(Mh1).gameplay)
++	SimCore.dispose(Mh1)
++	ok(flipped, "flipping tiny, small, big and huge to offered in memory (the one data edit each) makes small play as small (2,560 columns) and big as big (9,600) without the way in, and the menu's list five")
++	ok(hm1 == hm0 and JSON.stringify(WorldPlanetSize.hashData()) == tbl0 and SimReplay.dataHash(_setup("medium")) == dh0 and SimReplay.dataHash({"intro": false, "planet": 7, "touch": 1, "planetGen": 3}) == dhm0, "the flip moves no hash: a medium match's state hash at tick 120, the size table as a data hash reads it (hashData), and the replay data hash of a setup naming medium and of a setup naming no size are unchanged")
++	ok(JSON.stringify(WorldPlanetSize.data()) != raw0, "control: the raw table does differ after the flip (so hashData, which leaves offered out, is what keeps the hash still)")
++	for nm in ["tiny", "small", "big", "huge"]:
++		WorldPlanetSize.data().sizes[nm].offered = false
++	FighterData.quiet = quiet0
++
++
 +func _init() -> void:
 +	negative = OS.get_cmdline_user_args().has("--negative-control")
 +	print("data")
 +	ok(WorldPlanetSize.dataErrors().is_empty(), "sizes.json loads clean (%s)" % str(WorldPlanetSize.dataErrors()))
 +	var offered: Array = WorldPlanetSize.names(true)
-+	ok(offered.size() == 5 and offered == ["tiny", "small", "medium", "big", "huge"], "five sizes are offered, smallest first (%s)" % str(offered))
-+	ok(WorldPlanetSize.names().size() == 6 and not offered.has("colossal"), "the sixth, colossal, is data that is off")
++	var all5: Array = ["tiny", "small", "medium", "big", "huge"]
++	ok(offered == ["medium"], "as shipped, only medium is offered; tiny, small, big, huge and colossal are held (%s)" % str(offered))
++	ok(WorldPlanetSize.names().size() == 6 and WorldPlanetSize.names().slice(0, 5) == all5 and WorldPlanetSize.names()[5] == "colossal", "the data has the five sizes smallest first, and the sixth, colossal, which is data that is off")
 +	ok(WorldPlanetSize.colsOf({"planet": 7, "planetSize": "medium"}) == 4800 and WorldPlanetSize.colsOf({"planet": 7}) == 4800 and WorldPlanetSize.colsOf({"planetSize": "huge"}) == 4800, "medium is 4,800; no size, or no planet to size, is medium")
-+	print("every offered size plays")
++	_held_rows()
++	WorldPlanetSize.heldOverride = true   # from here the check plays every size the data has but colossal (the held ones too: the way in is the tests')
++	print("every size the data has but colossal plays")
 +	var hashes: Dictionary = {}
-+	for nm in offered:
++	for nm in all5:
 +		var cols: int = WorldPlanetSize.colsOf({"planet": 7, "planetSize": nm})
 +		var t0: int = Time.get_ticks_usec()
 +		var S := _match(_setup(nm), 600)
@@ -314,7 +454,7 @@
 +uid://iinku45dpx5k
 --- /dev/null
 +++ b/sim/world/tools/size_probe.gd
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,32 @@
 +extends SceneTree
 +## Probe (scratch): a match on each named planet size, timed. godot --headless --path . --script res://sim/world/tools/size_probe.gd -- small big [planet=7] [touch=1] [ticks=300]
 +func _init() -> void:
@@ -331,6 +471,7 @@
 +			ticks = int(a.substr(6))
 +		else:
 +			names.append(a)
++	WorldPlanetSize.heldOverride = true   # a probe plays any size the data has, offered or not (tiny, small and huge are held)
 +	for nm in names:
 +		WorldClimate.useGen(3)
 +		var t0: int = Time.get_ticks_usec()

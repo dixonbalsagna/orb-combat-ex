@@ -1,0 +1,33 @@
+# tile-marks fix 1 alone (the marks' own slope; tile_marks1.py sha1 d13cd63d): g2 = g0 + it, g2c = g0c + it (cap on), m2 = main 31531cb2 + it.
+# Worst of 4 readings, both modes. Before: gw1c-medium-big.txt and tile-marks-collapse.txt (g0 small; m0 medium), steady-collapse.txt.
+## g2 small
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2, 0 dips, 649s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 3 general 0 red, area-15% 4, 2 s memory 2, 0 dips, 639s, worst of 4 readings (1024x768 at scale 1)
+## g2 medium
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 620s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 611s, worst of 4 readings (1024x768 at scale 1)
+## g2 big
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 711s, worst of 4 readings (1024x768 at scale 1)
+collapse-reduced: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 2, 0 dips, 703s, worst of 4 readings (1024x768 at scale 1)
+## g2c tiny
+collapse-normal: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 1.5, 0 dips, 490s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 4.5 general 0 red, area-15% 4.5, 2 s memory 1, 0 dips, 497s, worst of 4 readings (960x540 at scale 2)
+## m2 -
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 527s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 2, 0 dips, 532s, worst of 4 readings (960x540 at scale 1)
+## g2 tiny
+collapse-normal: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 1, 0 dips, 498s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 2, 0 dips, 512s, worst of 4 readings (960x540 at scale 1)
+## g2c small
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 3, 0 dips, 598s, worst of 4 readings (1024x768 at scale 1)
+collapse-reduced: FAIL, primary 4 general 0 red, area-15% 4, 2 s memory 4, 0 dips, 593s, worst of 4 readings (1024x768 at scale 1)
+# befores on the same base (no tile-marks): g0 tiny (cap off), g0c tiny and g0c small (cap on)
+## g0 tiny
+collapse-normal: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 2, 0 dips, 511s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 2, 0 dips, 523s, worst of 4 readings (960x540 at scale 1)
+## g0c tiny
+collapse-normal: FAIL, primary 5 general 0 red, area-15% 9, 2 s memory 3.5, 0 dips, 495s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 7 general 0 red, area-15% 9, 2 s memory 5, 0 dips, 512s, worst of 4 readings (1024x768 at scale 1)
+## g0c small
+collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 3, 0 dips, 612s, worst of 4 readings (1024x768 at scale 1)
+collapse-reduced: FAIL, primary 4 general 0 red, area-15% 4, 2 s memory 4, 0 dips, 614s, worst of 4 readings (1024x768 at scale 1)

@@ -1,0 +1,27 @@
+extends SceneTree
+const FIELD: Dictionary = {"intro": false, "planet": 7, "touch": 1, "planetGen": 3}
+const E_BASE: float = (356.0 / 160.0) * (356.0 / 160.0)
+
+
+func _mk() -> SimState:
+	WorldClimate.useGen(3)
+	WorldPlanet.forget()
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, FIELD)
+	for t in range(5):
+		SimCore.step(S)
+	return S
+
+
+func _init() -> void:
+	print("D. a first blow, then a second of the same size dug `off` units away: the centre's height before and after the second, and whether it dug (min depth of the bowl drawn at the new centre)")
+	for mul in [1.0, 4.0]:
+		for off in [60.0, 120.0, 200.0, 300.0, 400.0, 500.0, 650.0, 800.0, 1000.0]:
+			var S := _mk()
+			var x: float = S.fighters[0].x + 900.0
+			var r1 = WorldCrater.dig(S, x, E_BASE * mul, S.fighters[0], "impact")
+			var h0: float = WorldTerrain.groundY(S, x + off)
+			var r2 = WorldCrater.dig(S, x + off, E_BASE * mul, S.fighters[0], "impact")
+			var h1: float = WorldTerrain.groundY(S, x + off)
+			print("energy x%d  off %4d  first %s  second %s  centre %d -> %d (%d lower)" % [int(mul), int(off), "dug" if r1 != null else "refused", "dug" if r2 != null else "REFUSED", int(h0), int(h1), int(h0 - h1)])
+	quit(0)

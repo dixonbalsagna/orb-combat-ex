@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+# replay_sizes_hold.py <tree>: replay-sizes re-cut for World's planet-size hold (2026-11-23), on World's GW1c stack.
+#  - sim/core/replay.gd: as parked, with the size table hashed as WorldPlanetSize.hashData() (the table without `offered`), so
+#    un-hiding a size moves no replay's header;
+#  - sim/core/tools/parity.gd: the row, re-cut on today's main, run with WorldPlanetSize.heldOverride on (it names tiny, a held
+#    size), put back after; and one more assertion: flipping a size's `offered` moves no sized replay's header.
+import sys, os
+
+T = sys.argv[1]
+assert os.path.isdir(os.path.join(T, ".git")) and "scratchpad" in os.path.abspath(T).replace("\\", "/"), "refusing"
+
+
+def edit(rel, pairs):
+    p = os.path.join(T, rel)
+    s = open(p, encoding="utf-8", newline="").read()
+    for a, b in pairs:
+        n = s.count(a)
+        assert n == 1, "%s: anchor found %d times: %r" % (rel, n, a[:90])
+        s = s.replace(a, b, 1)
+    open(p, "w", encoding="utf-8", newline="").write(s)
+    print("edited", rel)
+
+
+edit("sim/core/replay.gd", [
+    ("\tif setup.has(\"planet\"):   # a planet's world: World's planet data, by the generation this setup plays (WorldClimate.genFor: never the one in force, for a header is made before a match)\n",
+     "\tif setup.has(\"planet\"):   # a planet's world: World's planet data, by the generation this setup plays (WorldClimate.genFor: never the one in force, for a header is made before a match)\n"
+     "\t\tvar nc0: int = SimConst.PLANET_NC\n"
+     "\t\tSimConst.setPlanet(WorldPlanetSize.colsOf(setup))   # the planet's size the setup plays (World's sizes.json): a header is made, and checked, at the match's own size whatever the host's static holds (it is put back below)\n"
+     "\t\tif setup.has(\"planetSize\"):   # ... and the size table, for a setup that names a size (an unnamed one, medium, hashes as before)\n"
+     "\t\t\th.text(\"planetSize\")\n"
+     "\t\t\tFighterData._canon(h, WorldPlanetSize.hashData())   # the table without `offered`: un-hiding a held size moves no replay's header (World's hold, 2026-11-23)\n"),
+    ("\t\t\tFighterData._canon(h, WorldRingPick.cfg().turn)\n",
+     "\t\t\tFighterData._canon(h, WorldRingPick.cfg().turn)\n"
+     "\t\tSimConst.setPlanet(nc0)\n"),
+])
+
+edit("sim/core/tools/parity.gd", [
+    ('\tcheck("replay module", _replayModule())\n',
+     '\tcheck("replay module", _replayModule())\n'
+     '\tcheck("a replay of a sized planet plays in a host bound to another size", _replaySizes())\n'),
+    ("## SimReplay (S4): record a scripted two-human run, play it back and play its JSON round trip; a changed input and a\n",
+     "## World's planet sizes (A1): a replay of a match on a tiny planet, played by a host whose static size was last bound to\n"
+     "## medium (another match), plays to its last tick; its header is the same taken at either static; a changed size table\n"
+     "## refuses it as data, and a flip of a size's `offered` doesn't (the header reads WorldPlanetSize.hashData); and the host's\n"
+     "## static is as it was after each. Tiny is held (World's hold, 2026-11-23): the row runs with the test-only\n"
+     "## WorldPlanetSize.heldOverride on, and puts it back.\n"
+     "func _replaySizes() -> String:\n"
+     "\tvar ho: bool = WorldPlanetSize.heldOverride\n"
+     "\tWorldPlanetSize.heldOverride = true\n"
+     "\tvar r: String = _replaySizesRun()\n"
+     "\tWorldPlanetSize.heldOverride = ho\n"
+     "\treturn r\n"
+     "\n"
+     "\n"
+     "func _replaySizesRun() -> String:\n"
+     "\tvar su := {\"planet\": 7, \"touch\": 1, \"planetGen\": 3, \"intro\": false, \"planetSize\": \"tiny\"}\n"
+     "\tvar S := SimCore.createSim()\n"
+     "\tvar rec := SimReplay.recorder(S, 7, {\"p1\": true, \"p2\": true}, su)\n"
+     "\tfor t in range(60):\n"
+     "\t\trec.step([null, null])\n"
+     "\tvar rp: Dictionary = rec.finish()\n"
+     "\tSimCore.dispose(S)\n"
+     "\tvar M := SimCore.createSim()\n"
+     "\tSimCore.newMatch(M, 3, {\"p1\": true, \"p2\": true}, {\"planet\": 7, \"touch\": 1, \"planetGen\": 3, \"intro\": false})\n"
+     "\tSimCore.dispose(M)\n"
+     "\tvar nc0: int = SimConst.PLANET_NC\n"
+     "\tif SimReplay.dataHash(rp.setup) != String(rp.data):\n"
+     "\t\treturn \"a tiny planet's header taken again with the static at %d differs\" % nc0\n"
+     "\tif SimConst.PLANET_NC != nc0:\n"
+     "\t\treturn \"the header moved the host's static size (%d to %d)\" % [nc0, SimConst.PLANET_NC]\n"
+     "\tvar r: Dictionary = SimReplay.play(rp)\n"
+     "\tif not r.ok:\n"
+     "\t\treturn \"a tiny planet's replay played by a host at %d: %s at tick %d\" % [nc0, r.reason, int(r.firstBadTick)]\n"
+     "\tvar d: Dictionary = WorldPlanetSize.data()\n"
+     "\tvar was = d.get(\"default\")\n"
+     "\td[\"probe\"] = 1\n"
+     "\tvar moved: bool = SimReplay.dataHash(rp.setup) != String(rp.data)\n"
+     "\td.erase(\"probe\")\n"
+     "\tif not moved or d.get(\"default\") != was:\n"
+     "\t\treturn \"a changed size table does not move a sized replay's header\"\n"
+     "\tvar off0: bool = bool(d.sizes.tiny.offered)\n"
+     "\td.sizes.tiny.offered = not off0\n"
+     "\tvar flipped: bool = SimReplay.dataHash(rp.setup) != String(rp.data)\n"
+     "\td.sizes.tiny.offered = off0\n"
+     "\tif flipped:\n"
+     "\t\treturn \"un-hiding a size moves a sized replay's header (it must read WorldPlanetSize.hashData, the table without offered)\"\n"
+     "\treturn \"\"\n"
+     "\n"
+     "\n"
+     "## SimReplay (S4): record a scripted two-human run, play it back and play its JSON round trip; a changed input and a\n"),
+])
+print("ok")

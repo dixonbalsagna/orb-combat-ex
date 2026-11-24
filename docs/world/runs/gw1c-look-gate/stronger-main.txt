@@ -1,0 +1,5 @@
+E. a first blow of x1 energy, then a stronger blow `off` units away: depth the second adds at its own centre
+ESTR x1 first, then x2:  off0:110  off60:110  off120:110  off200:110  off300:110  off500:110
+ESTR x1 first, then x4:  off0:156  off60:156  off120:156  off200:156  off300:156  off500:156
+ESTR x1 first, then x9:  off0:234  off60:234  off120:234  off200:234  off300:234  off500:234
+ESTR for scale, the same blow on fresh ground:  x2:110  x4:156  x9:234

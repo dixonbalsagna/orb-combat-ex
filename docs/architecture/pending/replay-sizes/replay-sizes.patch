@@ -1,20 +1,20 @@
 diff --git a/sim/core/replay.gd b/sim/core/replay.gd
-index edac70c..8f57c73 100644
+index 182eddd..bade7a9 100644
 --- a/sim/core/replay.gd
 +++ b/sim/core/replay.gd
-@@ -210,6 +210,11 @@ static func dataHash(setup: Dictionary = {}) -> String:
+@@ -275,6 +275,11 @@ static func dataHash(setup: Dictionary = {}) -> String:
  		h.text(WorldCampaign.dataHash())
  	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
  	if setup.has("planet"):   # a planet's world: World's planet data, by the generation this setup plays (WorldClimate.genFor: never the one in force, for a header is made before a match)
 +		var nc0: int = SimConst.PLANET_NC
-+		SimConst.setPlanet(WorldPlanetSize.colsOf(setup))   # the planet's size the setup names (World's sizes.json): a header is made, and checked, at the match's own size whatever the host's static holds (it is put back below)
++		SimConst.setPlanet(WorldPlanetSize.colsOf(setup))   # the planet's size the setup plays (World's sizes.json): a header is made, and checked, at the match's own size whatever the host's static holds (it is put back below)
 +		if setup.has("planetSize"):   # ... and the size table, for a setup that names a size (an unnamed one, medium, hashes as before)
 +			h.text("planetSize")
-+			FighterData._canon(h, WorldPlanetSize.data())
++			FighterData._canon(h, WorldPlanetSize.hashData())   # the table without `offered`: un-hiding a held size moves no replay's header (World's hold, 2026-11-23)
  		var gen: int = WorldClimate.genFor(setup)
  		if gen >= 3:   # a field world: the swing's data, the bake's hash and 64 seeded canonical nodes, so a build that computes them differently is refused at the handshake
  			h.text(SimField.dataHash())
-@@ -223,6 +228,7 @@ static func dataHash(setup: Dictionary = {}) -> String:
+@@ -288,6 +293,7 @@ static func dataHash(setup: Dictionary = {}) -> String:
  		if WorldEpoch.enabled(setup):   # when and how the ring turns, on either generation: only rings.json's turn block, for the rest picks a run's ring before the setup exists
  			h.text("rings.turn")
  			FighterData._canon(h, WorldRingPick.cfg().turn)
@@ -23,25 +23,35 @@ index edac70c..8f57c73 100644
  		h.text("rightStick")
  	if setup.has("pushMode"):   # each player's push in a beam struggle (DirBeam.pushModes): both ends of a link must agree
 diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
-index b94bfe4..4cf1c84 100644
+index a1acc9e..604665e 100644
 --- a/sim/core/tools/parity.gd
 +++ b/sim/core/tools/parity.gd
-@@ -111,6 +111,7 @@ func _init() -> void:
+@@ -115,6 +115,7 @@ func _init() -> void:
  	check("the intro phase (golden)", "" if SimGolden.introHash() == g.get("intro", "") else "differs")
  	check("composed intros (golden)", "" if SimGolden.introComposedHash() == g.get("introComposed", "") else "differs")
  	check("replay module", _replayModule())
 +	check("a replay of a sized planet plays in a host bound to another size", _replaySizes())
+ 	check("a replay of the default world names its planet", _replayWorld())
  	var tm: int = Time.get_ticks_usec()
  	check("matches", _matches(g))
- 	check("human-input replays", _replays(g))
-@@ -3530,6 +3531,38 @@ func _actRule() -> String:
+@@ -3625,6 +3626,54 @@ func _replayWorld() -> String:
  	return ""
  
  
 +## World's planet sizes (A1): a replay of a match on a tiny planet, played by a host whose static size was last bound to
 +## medium (another match), plays to its last tick; its header is the same taken at either static; a changed size table
-+## refuses it as data; and the host's static is as it was after each.
++## refuses it as data, and a flip of a size's `offered` doesn't (the header reads WorldPlanetSize.hashData); and the host's
++## static is as it was after each. Tiny is held (World's hold, 2026-11-23): the row runs with the test-only
++## WorldPlanetSize.heldOverride on, and puts it back.
 +func _replaySizes() -> String:
++	var ho: bool = WorldPlanetSize.heldOverride
++	WorldPlanetSize.heldOverride = true
++	var r: String = _replaySizesRun()
++	WorldPlanetSize.heldOverride = ho
++	return r
++
++
++func _replaySizesRun() -> String:
 +	var su := {"planet": 7, "touch": 1, "planetGen": 3, "intro": false, "planetSize": "tiny"}
 +	var S := SimCore.createSim()
 +	var rec := SimReplay.recorder(S, 7, {"p1": true, "p2": true}, su)
@@ -67,6 +77,12 @@ index b94bfe4..4cf1c84 100644
 +	d.erase("probe")
 +	if not moved or d.get("default") != was:
 +		return "a changed size table does not move a sized replay's header"
++	var off0: bool = bool(d.sizes.tiny.offered)
++	d.sizes.tiny.offered = not off0
++	var flipped: bool = SimReplay.dataHash(rp.setup) != String(rp.data)
++	d.sizes.tiny.offered = off0
++	if flipped:
++		return "un-hiding a size moves a sized replay's header (it must read WorldPlanetSize.hashData, the table without offered)"
 +	return ""
 +
 +

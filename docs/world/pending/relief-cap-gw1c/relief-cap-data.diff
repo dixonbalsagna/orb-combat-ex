@@ -7,8 +7,8 @@ index ad73f5d..034d015 100644
 +  "reliefRef": 11000,
 +  "reliefTop": 6739,
    "sizes": {
--    "tiny":     { "cols": 1280, "spawnReach": 6600,  "arenaCols": 1280, "bakeStride": 4,  "offered": true, "maxBuildingShare": 0.3, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
--    "small":    { "cols": 2560, "spawnReach": 6600,  "arenaCols": 2560, "bakeStride": 4,  "offered": true, "maxBuildingShare": 0.3, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
-+    "tiny":     { "cols": 1280, "spawnReach": 6600,  "arenaCols": 1280, "bakeStride": 4,  "offered": true, "maxBuildingShare": 0.3, "maxReliefShare": 0.3, "reliefKnee": 0.7, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
-+    "small":    { "cols": 2560, "spawnReach": 6600,  "arenaCols": 2560, "bakeStride": 4,  "offered": true, "maxBuildingShare": 0.3, "maxReliefShare": 0.3, "reliefKnee": 0.7, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
+-    "tiny":     { "cols": 1280, "spawnReach": 6600,  "arenaCols": 1280, "bakeStride": 4,  "offered": false, "maxBuildingShare": 0.3, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
+-    "small":    { "cols": 2560, "spawnReach": 6600,  "arenaCols": 2560, "bakeStride": 4,  "offered": false, "maxBuildingShare": 0.3, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
++    "tiny":     { "cols": 1280, "spawnReach": 6600,  "arenaCols": 1280, "bakeStride": 4,  "offered": false, "maxBuildingShare": 0.3, "maxReliefShare": 0.3, "reliefKnee": 0.7, "places": { "cities": 2, "towns": 4, "minCities": 1, "minTowns": 1, "relaxCities": 1, "relaxTowns": 0 } },
++    "small":    { "cols": 2560, "spawnReach": 6600,  "arenaCols": 2560, "bakeStride": 4,  "offered": false, "maxBuildingShare": 0.3, "maxReliefShare": 0.3, "reliefKnee": 0.7, "places": { "cities": 4, "towns": 12, "minCities": 1, "minTowns": 2, "relaxCities": 1, "relaxTowns": 1 } },
      "medium":   { "cols": 4800,  "arenaCols": 4800, "bakeStride": 4,  "offered": true },

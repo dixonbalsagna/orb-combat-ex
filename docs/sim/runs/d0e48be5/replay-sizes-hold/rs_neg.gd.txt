@@ -1,0 +1,36 @@
+extends SceneTree
+# rs_neg.gd: parity's sized-replay row on its own (the negative control: with replay.gd hashing WorldPlanetSize.data(),
+# un-hiding a size must move the header and the row must fail; with hashData() it passes). Prints ROW: <result>.
+
+func _row() -> String:
+	var su := {"planet": 7, "touch": 1, "planetGen": 3, "intro": false, "planetSize": "tiny"}
+	var S := SimCore.createSim()
+	var rec := SimReplay.recorder(S, 7, {"p1": true, "p2": true}, su)
+	for t in range(60):
+		rec.step([null, null])
+	var rp: Dictionary = rec.finish()
+	SimCore.dispose(S)
+	if SimReplay.dataHash(rp.setup) != String(rp.data):
+		return "header differs"
+	var r: Dictionary = SimReplay.play(rp)
+	if not r.ok:
+		return "play: %s at %d" % [r.reason, int(r.firstBadTick)]
+	var d: Dictionary = WorldPlanetSize.data()
+	var off0: bool = bool(d.sizes.tiny.offered)
+	d.sizes.tiny.offered = not off0
+	var flipped: bool = SimReplay.dataHash(rp.setup) != String(rp.data)
+	d.sizes.tiny.offered = off0
+	if flipped:
+		return "un-hiding a size moves a sized replay's header"
+	return ""
+
+
+func _init() -> void:
+	WorldPlanetSize.heldOverride = true
+	var r: String = _row()
+	WorldPlanetSize.heldOverride = false
+	print("ROW: %s" % ("ok" if r == "" else r))
+	# and without the override the held size is refused at the header (World's rule), not played quietly
+	var su := {"planet": 7, "touch": 1, "planetGen": 3, "intro": false, "planetSize": "tiny"}
+	print("held without the override: colsOf %d (medium is %d)" % [WorldPlanetSize.colsOf(su), SimConst.PLANET_NC_MEDIUM])
+	quit(0)
