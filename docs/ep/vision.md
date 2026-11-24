@@ -1907,3 +1907,5 @@ Orb's correction (2026-11-14, verbatim): "its late and I counted wrong, it was f
 - The game pauses and says so when a controller drops out mid-match.
 
 Still open: the sound question (the ten-minute listen), the deletion promise, Orb's own actions, and anything public, any tester approval, spend or Legal flag.)
+
+**Orb (2026-11-23, about 20:20 PST):** "bring everything to a pause safely, I want to start back up tomorrow"
