@@ -2,7 +2,7 @@
 // with nobody watching:
 //   node tools/first-run/linux-numbers.mjs --exe <orb-combat-ex.x86_64> [--seed 4] [--limit 400] [--out <report.md>]
 // It starts the LOCKED Linux program (warning and all, no bypass word, no switch of any kind added to the build), presses the warning's Return with xdotool (the first step of steps.json, which on a person's PC a
-// person presses), then the rest of steps.json's keys, reads the program's own --print-fps lines and bake lines, and checks the program closes by itself within 7 s of "Close the game". It takes NO still, NO video, NO
+// person presses), then the rest of steps.json's keys, reads the program's own --print-fps lines and bake lines, and closes the program by the window manager (Alt+F4) if the keys have not (the EP's ruling of run 45305205835: the keys route is reported, never a failure; the mode smoke proves the pause menu's Quit). It takes NO still, NO video, NO
 // capture of the display (RL-270 condition 3); the report is text and numbers only. A performance reading, never a flash reading, never counted toward G4, G21 or a flash number (condition 4).
 // Refuses to run unless GITHUB_ACTIONS is "true" and a virtual display is named (condition 2: it will not press a key on a person's screen). Node built-ins; xdotool on the runner.
 import { spawn, spawnSync } from 'node:child_process';
@@ -110,15 +110,20 @@ async function main() {
   add({ id: 'match-built', what: 'a match was built after the keys (the program printed its pair-bake line, or its data folder holds a field cache or a report)', ok: built, detail: built ? `at ${at()}` : 'no pair-bake line and no field cache or report in the data folder: the keys did not get the game past its first screens' });
   const t1 = Date.now();
   for (let i = 0; i < 40 && !exited; i++) await sleep(250);
-  run.closed = exited;
-  add({ id: 'program-closes', what: 'the program closes by itself within 7 s of "Close the game"', ok: exited, detail: exited ? `${((exitedAt - t1) / 1000).toFixed(1)} s after the last key` : 'still running; stopped by the script' });
-  // the keys did not close it: ask the window manager to close the window (Alt+F4, what the close button does), to tell "the keys did not get through" from "the game cannot close"
+  // the EP's ruling (run 45305205835: Alt+F4 closed the game when the keys had not): the numbers half closes the program by the window manager. The keys route is REPORTED and does not fail the run: the pause menu's
+  // Quit and "Close the game" are proven by the mode smoke on both platforms, so this run need not prove them again.
+  const keysClosed = exited;
+  add({ id: 'quit-keys', what: 'the pause, Quit and "Close the game" keys close the program within 10 s (reported only, never a failure of this run)', ok: true, detail: keysClosed ? `closed ${((exitedAt - t1) / 1000).toFixed(1)} s after the last key` : 'did NOT close by the keys (not counted: the mode smoke proves the pause menu\'s Quit)' });
   if (!exited) {
     const wf = spawnSync('xdotool', ['getwindowfocus', 'getwindowname'], { encoding: 'utf8' });
     focus();
     press(['ALT_F4'], 250);
     for (let i = 0; i < 80 && !exited; i++) await sleep(250);
-    add({ id: 'window-close-fallback', what: 'the window is closed the way its close button does (Alt+F4), after the keys failed', ok: exited, detail: `focused window before: "${String(wf.stdout || '').trim().slice(0, 60)}"; ` + (exited ? 'the game closed: it can close, so the pause, Quit and Close the game keys did not reach it' : 'the game did not close either') });
+    run.closed = exited;
+    add({ id: 'program-closes', what: 'the program closes by the window manager (Alt+F4, what the close button does) when the keys have not closed it', ok: exited, detail: `focused window before: "${String(wf.stdout || '').trim().slice(0, 60)}"; ` + (exited ? 'the game closed' : 'the game did not close') });
+  } else {
+    run.closed = true;
+    add({ id: 'program-closes', what: 'the program closes (here by the keys)', ok: true, detail: 'closed by the keys' });
   }
   clearTimeout(killer);
   if (!exited) child.kill('SIGKILL');
