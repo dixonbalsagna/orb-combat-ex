@@ -1,0 +1,44 @@
+#!/bin/sh
+# g1c2_go.sh <scratchpad>: GW1c's second re-record. My own copy of the EP's s437 tree: main bc1e5558 + the 28 lines of
+# docs/ep/reviews/GW1c-stack.txt, each sha1 checked against the list, strict apply in order. Then import; the golden from a
+# cold cache and again warm (one file?); its moves against main's and against the first target (gw1c-target, 55bca55b);
+# parity through gate.mjs; Rendering's 15. ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/g1co2"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
+T1="$R/docs/sim/runs/bc1e5558/gw1c-target/golden-target.json"
+C="$NS/g1c2app/Godot/app_userdata/Orb Combat EX/field-cache"
+rm -rf "${NS:?}/g1co2"; mkdir -p "$O" "$NS/g1c2app"; export APPDATA="$(cygpath -w "$NS/g1c2app")"
+[ -e "$NS/g1c2" ] && { echo "g1c2 exists"; exit 1; }
+mkdir -p "$NS/g1c2"
+git -C "$R" -c core.autocrlf=false archive bc1e5558 | tar -x -C "$NS/g1c2"
+cd "$NS/g1c2" || exit 1
+case "$(pwd -P)" in */scratchpad/g1c2) ;; *) echo refusing; exit 1 ;; esac
+git init -q; git config core.autocrlf false; git add -A > /dev/null 2>&1; git -c user.email=s@x -c user.name=s commit -qm "bc1e5558"
+grep -v '^#' "$R/docs/ep/reviews/GW1c-stack.txt" | while read -r want p; do
+  [ -z "$p" ] && continue
+  got=$(sha1sum "$R/$p" | cut -c1-12)
+  [ "$got" = "$want" ] || { echo "SHA1 MISMATCH $p: list $want, file $got"; exit 1; }
+  git -c core.autocrlf=false -c core.eol=lf apply "$R/$p" || { echo "FAILED $p"; exit 1; }
+done || exit 1
+echo "lines in the list: $(grep -v '^#' "$R/docs/ep/reviews/GW1c-stack.txt" | grep -c .); all applied, $(git status --short | wc -l) changed paths"
+git add -A > /dev/null 2>&1; git -c user.email=s@x -c user.name=s commit -qm "GW1c 28 lines" && git log -1 --format='g1c2 HEAD %h'
+python -I -c "import json; d=json.load(open('data/biomes/sizes.json')); print('offered:', [k for k,v in d['sizes'].items() if v.get('offered')])"
+cp sim/core/test/golden.json "$O/golden_main.json"
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+rm -rf "${C:?}"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_cold.txt" 2>&1; echo "golden cold: exit $? in $(( $(date +%s) - s )) s; $(grep -c 'SCRIPT ERROR' "$O/golden_cold.txt") script errors"
+cp sim/core/test/golden.json "$O/golden_cold.json"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_warm.txt" 2>&1; echo "golden warm: exit $? in $(( $(date +%s) - s )) s"
+cmp -s sim/core/test/golden.json "$O/golden_cold.json" && echo "  cold then warm: ONE file" || echo "  cold then warm: the files DIFFER"
+echo "== against main bc1e5558's golden"; python -I "$NS/kick/golden_moves.py" "$O/golden_main.json" "$O/golden_cold.json" > "$O/golden_moves_main.txt"; cut -c1-200 "$O/golden_moves_main.txt"
+echo "== against the first target (gw1c-target)"; python -I "$NS/kick/golden_moves.py" "$T1" "$O/golden_cold.json" | tee "$O/golden_moves.txt" | cut -c1-200
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity.txt" 2>&1; echo "parity: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL" "$O/parity.txt" | head -10 | cut -c1-240
+echo "rows ok $(grep -c '^ok' "$O/parity.txt"), FAIL $(grep -c '^FAIL' "$O/parity.txt")"
+echo "== Rendering's 15"
+sh "$NS/n/rgates.sh" "$NS/g1c2" "$O/rg"
+echo g1c2 done

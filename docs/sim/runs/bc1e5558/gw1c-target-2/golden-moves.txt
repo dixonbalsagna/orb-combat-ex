@@ -1,0 +1,14 @@
+matches[0] default seed 1 {"world": "arena"}: unchanged
+matches[1] swap seed 1 (the planet): unchanged
+matches[2] mirror-villain seed 1 (the planet): MOVES (light moves)
+matches[3] mirror-hero seed 1 (the planet): unchanged
+matches[4] default-flip seed 2 (the planet): unchanged
+matches[5] swap-flip seed 2 (the planet): MOVES (light moves)
+matches[6] mirror-villain-flip seed 2 (the planet): unchanged
+matches[7] mirror-hero-flip seed 2 (the planet): unchanged
+matches[8] default seed 11 {"world": "arena"}: MOVES (light moves)
+replays[0] seed 11: unchanged
+replays[1] seed 12: unchanged
+planet slices: unchanged
+planet tick-0 states: unchanged
+planet match seed 29: unchanged

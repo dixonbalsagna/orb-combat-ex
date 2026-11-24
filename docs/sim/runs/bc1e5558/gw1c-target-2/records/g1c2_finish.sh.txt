@@ -1,0 +1,20 @@
+#!/bin/sh
+# g1c2_finish.sh <scratchpad>: the safe pause (EP, 2026-11-23 evening). g1c2_go.sh was stopped before parity; its cold golden
+# (Godot PID 82534) runs to its end. Then: keep it, the warm golden, one file?, its moves. No parity, no Rendering's 15 tonight.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/g1co2"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
+T1="$R/docs/sim/runs/bc1e5558/gw1c-target/golden-target.json"
+export APPDATA="$(cygpath -w "$NS/g1c2app")"
+while ps -p 82534 > /dev/null 2>&1; do sleep 2; done
+cd "$NS/g1c2" || exit 1
+echo "golden cold ended; log: $(tr '\n' ' ' < "$O/golden_cold.txt" | cut -c1-200); script errors $(grep -c 'SCRIPT ERROR' "$O/golden_cold.txt")"
+cp sim/core/test/golden.json "$O/golden_cold.json"
+s=$(date +%s); timeout 900 "$G" --headless --path . --script res://sim/core/tools/golden.gd > "$O/golden_warm.txt" 2>&1; echo "golden warm: exit $? in $(( $(date +%s) - s )) s"
+cmp -s sim/core/test/golden.json "$O/golden_cold.json" && echo "  cold then warm: ONE file" || echo "  cold then warm: the files DIFFER"
+sha256sum "$O/golden_cold.json" | cut -c1-64
+echo "== against main bc1e5558's golden"; python -I "$NS/kick/golden_moves.py" "$O/golden_main.json" "$O/golden_cold.json" > "$O/golden_moves_main.txt"; cut -c1-200 "$O/golden_moves_main.txt"
+echo "== against the first target (gw1c-target)"; python -I "$NS/kick/golden_moves.py" "$T1" "$O/golden_cold.json" | tee "$O/golden_moves.txt" | cut -c1-240
+echo finish done
