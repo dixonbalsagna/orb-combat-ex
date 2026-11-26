@@ -1,0 +1,33 @@
+# reset-frame, 2026-11-26. n0 = main a0e5a537 + the new check only (negative control); n1 = main + reset-frame.patch (84196e60). Godot 4.7.2 --headless, below normal.
+
+n0 (main, no fix): FAIL the first match's first frame is on its own frame FAIL Play again: the new match's first frame is placed on its own frame (it was the last match's) FAIL Play again: the first frame does not use the last match's frame reset_frame_check: 3 of 8 checks FAILED 
+n1 (main + fix): reset_frame_check: 8 checks passed 
+
+## n1: every camera check, split_sweep (standard, later, sooner), own_pane at later and sooner, pane/seam/determinism, the golden
+import: 0 errors
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+flight_shots_check     flight_shots_check: 662 checks passed 
+launch_shots_check     launch_shots_check: 937 checks passed 
+own_pane_check         own_pane_check: 12 checks passed 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+reset_frame_check      reset_frame_check: 8 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed 
+split_sweep later      split sweep passed 
+own_pane later         own_pane_check: 12 checks passed 
+split_sweep sooner     split sweep passed 
+own_pane sooner        own_pane_check: 12 checks passed 
+pane      pane check passed  | script errors 0
+seam      seam sweep passed  | script errors 0
+det       determinism passed  | script errors 0
+golden 989878d6d335
+export: 9 files, 0 errors
+main's golden.json sha1: 989878d6d335
