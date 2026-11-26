@@ -1,0 +1,18 @@
+# The nightly's collapse-reduced 4 under software rendering, attributed (Rendering, 2026-11-26). A web export of d9bc2f07 in Rendering's scratch; the
+# window the runner's way (Tools' command in docs/tools/runs/d9bc2f07/flash-nightly-baseline.md): ticks 1-300, 960x540, planet=7&meteor=loud&tiles=1,
+# every frame kept; one capture at a time through Tools' launcher, below normal.
+#   --software (ANGLE SwiftShader, as the runner): collapse-reduced FAIL, primary 4, area-15% 4, two-second memory 3 (1291 s) -- the nightly's reading, reproduced
+#   the card (NVIDIA through ANGLE D3D11):           collapse-reduced PASS, primary 1, area-15% 1, two-second memory 0.5 (73 s)
+# The events (tick, sign, of the threshold):
+#   software: 68- 91+ 95+3.7 111+ 121- 138- 140+ 144- 146+ 148- 151+ 163- 171+4.0 207+4.0 231- 239+ 246+ 264+ 291-; worst second 121-171: a down-up pair every 2-4 ticks from 138 to 151
+#   card:     63+4 165- 171+4 246+ 264+ 278+ 292-; worst second 165-171
+# Why: under SwiftShader no building is drawn, at any tick (pictures, git-ignored: docs/rendering/img/sizes/flash-sw/). Terrain, trees, rocks, crowds and
+# fighters draw; towers and houses do not, so the panes show bare ground against the sky where the card shows the city. The extra events are that bare
+# ground and sky trading places as the camera swings, with nothing dark standing in front of them. The whole picture also averages about 5 levels darker.
+# Not a compile failure: the page's console under SwiftShader has no shader error (Godot 4.7.2, Compatibility, WebGL 2.0; SwiftShader's limits are
+# 4096 uniform vectors, 31 varyings, 32 vertex textures). building.gdshader compiles and draws nothing there: a run-time path in its vertex stage
+# (its float-texture reads by instance, the globe placement or the face culling it does itself) evaluates differently on SwiftShader. Not yet pinned.
+# So: the runner's figures are of a picture without buildings, which no player with a graphics card sees. The card's reading of the same window is 1.
+#   Every software reading of a clip with buildings (collapse, rushcity, the city scenes) is of that picture, not of the game.
+#   Real players: Chrome no longer falls back to SwiftShader for WebGL without a flag (the capture passes --enable-unsafe-swiftshader), so a player whose
+#   card is blocklisted gets no WebGL rather than this; other browsers' software paths are untested.
