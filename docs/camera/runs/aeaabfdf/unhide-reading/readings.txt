@@ -1,0 +1,18 @@
+# The small-and-big reading (EP only), 2026-11-26. Camera.
+# m2 = main aeaabfdf (GW1c and split-line landed) + reset-frame (84196e60) + gw1c-door-holds (fba137e3) + cd04 (ca7451b1) + Rendering's sky-handover (b867f87a), ground-link (ground_link.diff 2e01b13c), tick0-craters (held_recheck.diff ea8dcb51), all strict in that order.
+# Scratch only: the capture page's size word with WorldPlanetSize.heldOverride; --planet=<size> on own_pane_check and split_sweep (WorldPlanetSize.scratchForce + heldOverride). s0 = main aeaabfdf + the --planet switch only.
+# Captures: Tools' run-pixels (guarded launcher, below normal, one at a time), size=small|big, worst of 4 (960x540 and 1024x768 at scale 1 and 2).
+
+small collapse-reduced: PASS, primary 2 general 0 red, area-15% 3, 2 s memory 1, 0 dips, 637s, worst of 4 readings (1024x768 at scale 2)
+big collapse-reduced: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 2.5, 0 dips, 721s, worst of 4 readings (1024x768 at scale 1)
+small collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1, 0 dips, 644s, worst of 4 readings (960x540 at scale 1)
+big collapse-normal: PASS, primary 1.5 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 695s, worst of 4 readings (1024x768 at scale 1)
+
+## own_pane_check and split_sweep on m2 (--planet=)
+medium   own_pane_check  own_pane_check: 12 checks passed 
+medium   split_sweep     split sweep passed 
+small    own_pane_check  own_pane_check: 12 checks passed 
+small    split_sweep     FAIL  crossing start staredown 72: a fighter within 0.094 of the screen edge FAIL  crossing start staredown 72: the camera was outside the avenue on 6 of 20 closing ticks FAIL  crossing start: a fighter within 0.095 of the screen edge FAIL  crossing start: the camera was outside the avenue on 6 of 20 closing ticks split sweep FAILED (4) 
+big      own_pane_check  own_pane_check: 12 checks passed 
+big      split_sweep     split sweep passed 
+small    crossing (main only) FAIL  crossing start: a fighter within 0.095 of the screen edge FAIL  crossing start: the camera was outside the avenue on 6 of 20 closing ticks crossing start                     one view, edge margin 0.095 of the width, smallest 0.094 of the height, 0 dips, 0 cuts in the look, 6 of 20 closing ticks off the avenue crossing start staredown 72        one view, edge margin 0.094 of the width, smallest 0.094 of the height, 0 dips, 0 cuts in the look, 6 of 20 closing ticks off the avenue dolly crossing                     midpoint 0.000 of the width from the centre, camera outside the avenue on 0 
