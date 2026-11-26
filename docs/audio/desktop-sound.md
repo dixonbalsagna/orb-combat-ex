@@ -1,6 +1,6 @@
 # Sound on the desktop builds (Audio and Music, 2026-11-25; A-AUDIO-04)
 
-Describes main with the park `docs/audio/pending/friends-sound/` applied. **Nobody has listened to any of it.**
+Describes main from `7bfbfe6a` (`friends-sound.md`). **Nobody has listened to any of it.**
 
 ## The settings
 
@@ -39,7 +39,7 @@ orb-combat-ex.x86_64 --headless -- --audio-proof                       # the Lin
 orb-combat-ex.console.exe --headless -- --audio-proof                  # the Windows program
 ```
 
-An official release program takes no `--script` and no scene path ("compiled without support for path overrides"), so the second form needs the four-line argument in `render/core/boot_entry.gd` (grant in the park).
+An official release program takes no `--script` and no scene path ("compiled without support for path overrides"), so the second form uses the `--audio-proof` argument in `render/core/boot_entry.gd`.
 
 **Results (this PC):** a Windows release export passed all 14 lines (`docs/audio/runs/friends-sound/`). Linux was **not** run here; the CI step runs it.
 
