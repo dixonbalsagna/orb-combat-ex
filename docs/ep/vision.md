@@ -1915,3 +1915,5 @@ Still open: the sound question (the ten-minute listen), the deletion promise, Or
 **Orb (2026-11-25, evening, on the homework):**
 - On "split the screen a moment sooner": "the images provided are kind of hard to judge, I need to see it in action. The latest build I played had some split screen issues that I would like improved eventually. keep working on this solution."
 - On "two quick ones for the friends' build": "go with recommended, as long as the solution is modern and accommodating. go with recommendations on the sounds, I want a lot of improvements to our sounds and music to occur during alpha."
+
+**Orb (2026-11-25, evening):** "ok, keep working full power on the alpha build"
