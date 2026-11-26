@@ -9,4 +9,5 @@
 | First run, numbers only (no window) | ran clean on Orb's zip; its frame rates are not a window's | `first-run-headless.md` |
 | First run with a window | **waiting for Orb's click** (`tools/first-run/FIRST-RUN.cmd`) | `homework/Files/first-run/` |
 | Linux first run | PASS, every step; the keys close the game (run 45777933506, fixed script, same game) | `linux-first-run-45777933506.md` |
+| Linux soak, 7,200 s | PASS, 7 of 7; resident 384 to 600 MiB over 12 match starts, still rising slowly at the end (run 45773552777) | `linux-soak-7200.md` |
 | Build record of Orb's zips | made by the EP with the one command | `homework/Files/desktop/ac4ba152-ORB-PRIVATE/build-record.txt` |
