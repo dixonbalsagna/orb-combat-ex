@@ -56,6 +56,7 @@ func _init() -> void:
 	_shaft()
 	_repeats()
 	_furrow()
+	_swap()
 	_settle()
 	_clamps()
 	_cliff()
@@ -176,6 +177,47 @@ func _repeats() -> void:
 
 
 ## The furrow: a glancing impact makes a crater plus a short trench behind it, along its heading; a straight-down blow makes none; off, none.
+## Simulation's WorldStore.swapBlocks (the intro's two entrance blocks change places): the store is then what pushing the blocks in the other order would have made, and every superseded index still points at the record it named.
+func _supNames(S) -> Dictionary:   # record id (its t, slot 8) -> the id of the record it supersedes (0 for none)
+	var out: Dictionary = {}
+	for k in range(int(S.storeN)):
+		var o: int = k * WorldStore.STRIDE
+		var s: int = int(S.store[o + WorldStore.O_SUP])
+		out[int(S.store[o + 8])] = int(S.store[s * WorldStore.STRIDE + 8]) if s >= 0 else 0
+	return out
+
+
+func _swap() -> void:
+	print("a block swap keeps what it supersedes")
+	var dirs: Array = [[0.6, 0.0, 0.8], [0.0, 0.6, 0.8], [0.8, 0.6, 0.0], [0.0, 0.8, 0.6], [0.6, 0.8, 0.0]]
+	var sups: Array = [-1, 0, -1, 2, 1]   # before the swap: block A is records 0 and 1 (1 supersedes 0), block B is 2, 3 and 4 (3 supersedes 2, 4 supersedes 1 in the other block)
+	var S := _mk()
+	var base: int = int(S.storeN)
+	ok(base == 0, "the match starts with an empty store")
+	for k in range(5):
+		WorldStore.add(S, dirs[k][0], dirs[k][1], dirs[k][2], 100.0, 10.0, 5.0, 1000.0, 0, 0, float(k + 1), 0, int(sups[k]))
+	var before: Dictionary = _supNames(S)
+	WorldStore.swapBlocks(S, 2)
+	var after: Dictionary = _supNames(S)
+	ok(before == after and int(S.storeN) == 5, "after the swap every superseded index points at the same record (%s)" % str(after))
+	# the store pushed in the other order: B, then A, the superseded indices written for it
+	var R := _mk()
+	var order: Array = [2, 3, 4, 0, 1]
+	for k in range(5):
+		var o2: int = int(order[k])
+		var s2: int = int(sups[o2])
+		var ns: int = -1 if s2 < 0 else (s2 + 3 if s2 < 2 else s2 - 2)
+		WorldStore.add(R, dirs[o2][0], dirs[o2][1], dirs[o2][2], 100.0, 10.0, 5.0, 1000.0, 0, 0, float(o2 + 1), 0, ns)
+	var same: bool = R.storeHash == S.storeHash and int(R.storeN) == int(S.storeN)
+	for i in range(int(S.storeN) * WorldStore.STRIDE):
+		if S.store[i] != R.store[i]:
+			same = false
+	ok(same, "and it is the store, and the hash, that pushing the blocks in the swapped order makes")
+	# control: a pointer left where it was (an O_SUP the swap did not move) names another record, so the row above can fail
+	S.store[4 * WorldStore.STRIDE + WorldStore.O_SUP] = float(sups[1])   # the last record is block A's second: it named record 0 before the swap and names record 3 after it
+	ok(_supNames(S) != before, "control: an index left unmoved names another record")
+
+
 func _furrow() -> void:
 	print("the furrow")
 	WorldCraters.setGlobe(-2080.0, 960.0, 1.25, 0, true)

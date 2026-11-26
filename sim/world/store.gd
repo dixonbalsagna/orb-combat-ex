@@ -123,14 +123,9 @@ static func _index(S) -> Dictionary:
 
 
 ## Appends one record (kind first) to S's store, keeps the index current and the hash folded; returns its index or -1 when the store is full.
-## Each kind's record length, as add, addCrack, addScorch and addTrench push it: the running hash folds that many numbers.
-const LEN: Array = [12, 11, 9, 11]
-
-
-## The records [0, mid) and [mid, n) change places, and the running hash is folded again from the first record, each at its
-## kind's length (Simulation's grant, GW1b: SimIntro keeps the two entrance craters in the order of the start spots whoever
-## landed first, and a landing's dig can add more than its crater). The index is dropped and rebuilt on its next read;
-## SimField's memos see the new hash and rebuild.
+## The records [0, mid) and [mid, n) change places (Simulation's grant, GW1b: SimIntro keeps the two entrance craters in the order of the start spots whoever landed first, and a landing's dig can add more than its crater). With the
+## planet store (globe-step2) a record folds all STRIDE of its numbers into the hash and carries O_SUP, the index of the record it supersedes: the running hash is folded again from the first record over the whole stride, as _push folds
+## it, and every O_SUP is moved with the records it names (a head record moves up by n - mid, a tail record down by mid). The index is dropped and rebuilt on its next read; SimField's memos see the new hash and rebuild.
 static func swapBlocks(S, mid: int) -> void:
 	var n: int = int(S.storeN)
 	if mid <= 0 or mid >= n:
@@ -147,7 +142,10 @@ static func swapBlocks(S, mid: int) -> void:
 	var h: int = 0
 	for i in range(n):
 		var o: int = i * STRIDE
-		h = _fold(h, Array(S.store.slice(o, o + int(LEN[int(S.store[o])]))))   # (the store is packed; the fold takes an Array)
+		var s: int = int(S.store[o + O_SUP])
+		if s >= 0:   # the record it supersedes moved with its block
+			S.store[o + O_SUP] = float(s + (n - mid) if s < mid else s - mid)
+		h = _fold(h, Array(S.store.slice(o, o + STRIDE)))   # (the store is packed; the fold takes Array; _push folds all STRIDE numbers)
 	S.storeHash = h
 	_ix.erase(S.get_instance_id())
 
