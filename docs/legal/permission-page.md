@@ -45,6 +45,12 @@ The build's About and how-to text (`ui/data/howto.json:98`, and the same words o
 
 > **License:** all rights are reserved during the Alpha. See "What you may do with Orb Combat EX". Whether the code is made public is decided at Beta.
 
+**The public site's line (RL-281).** The permission page is written for testers and is not on the public site, so the site's line drops the pointer:
+
+> **License:** all rights are reserved during the Alpha. Whether the code is made public is decided at Beta.
+
+The game's line above keeps the pointer: a testers' package carries the page as WHAT-YOU-MAY-DO.txt.
+
 The link text on the notices entry stays "Licenses, notices and privacy" (page-fixed-lines.md). Tools' public-words scan adds the new line; the old line is removed from its expected list in the same change.
 
 ## Notes for Legal's own record
