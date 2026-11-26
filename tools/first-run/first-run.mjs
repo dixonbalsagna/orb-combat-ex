@@ -59,6 +59,20 @@ export function parseLoad(text) {
   return { pairBakeMs: bake ? Number(bake[1]) : null, poses: bake ? Number(bake[2]) : null, drainedAtTick: drained ? Number(drained[1]) : null };
 }
 
+/**
+ * The game's own empty settings for a run, under `base`: the only thing written is that the How to play card has been seen. Why: on a new profile that card comes up after the flashing-effects warning and holds the
+ * match, so the keys of steps.json go nowhere (found 2026-11-25); and the run must not read or change the settings and saved matches of the person at the PC. The warning itself is shown every session and is
+ * not touched. Returns the environment to start the program with (the game's data folder follows APPDATA on Windows and XDG_DATA_HOME on Linux).
+ */
+export function ownProfile(base) {
+  const env = { APPDATA: join(base, 'appdata'), LOCALAPPDATA: join(base, 'localappdata'), XDG_DATA_HOME: join(base, 'xdg') };
+  for (const dir of [join(env.APPDATA, 'Godot', 'app_userdata', 'Orb Combat EX'), join(env.XDG_DATA_HOME, 'godot', 'app_userdata', 'Orb Combat EX')]) {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'ui_prefs.json'), JSON.stringify({ howto_seen: true }));
+  }
+  mkdirSync(env.LOCALAPPDATA, { recursive: true });
+  return env;
+}
 /** The sizes to run, from sizes.json's table and the --size value: [{ name, args, waiting }]. `all` is every row; an unknown name is an error. Pure. */
 export function sizesFor(table, wanted) {
   const rows = table.sizes || {};
@@ -92,6 +106,7 @@ export function reportText(r) {
   L.push(`# First run, ${r.date}`, '');
   L.push(`Build: ${r.build.version || '?'} (commit ${r.build.commit || '?'}, ${r.build.date || '?'}). Machine: ${r.machine.cpu}, ${r.machine.gpu || 'graphics card not read'}, ${r.machine.ramGb} GB, ${r.machine.os}. Window ${r.window || 'none (headless)'}.`, '');
   L.push(`**${r.runs.some((x) => x.headless) ? 'Numbers pipeline only (no window): the frame rates below are NOT a window\'s.' : failed ? `${failed} step(s) did not go as planned (below).` : 'Every step went as planned.'}** A performance reading, never a flash reading.`, '');
+  L.push('The game ran with its own empty settings (only the How to play card marked as seen): your settings and saved matches were not read or changed, so the match is the fixed first one.', '');
   for (const run of r.runs) {
     L.push(`## Size: ${run.size}`, '');
     if (run.waiting) { L.push(`Not offered by this build (${run.waiting}). Nothing was run for it.`, ''); continue; }
@@ -161,11 +176,11 @@ function helper(action, args) {
   return doc || { ok: false, error: String(r.stderr || r.stdout || r.error || 'no answer').trim().slice(0, 160) };
 }
 
-async function runOne({ exe, size, seed, headless, frames, limitS, outDir, steps, quitCheck }) {
+async function runOne({ exe, size, seed, headless, frames, limitS, outDir, steps, quitCheck, profile }) {
   const run = { size: size.name, waiting: '', steps: [], fps: null, load: null, loading: {}, closed: null, headless, wallS: null };
   const args = [...(headless ? ['--headless'] : ['--resolution', '1280x720']), '--print-fps', '--', `--seed=${seed}`, ...(headless ? [`--frames=${frames}`] : []), ...size.args];
   const t0 = Date.now();
-  const child = spawn(exe, args, { cwd: dirname(exe), stdio: ['ignore', 'pipe', 'pipe'], windowsHide: false });
+  const child = spawn(exe, args, { cwd: dirname(exe), env: { ...process.env, ...ownProfile(profile) }, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: false });
   try { setPriority(child.pid, osConstants.priority.PRIORITY_BELOW_NORMAL); } catch { /* gone */ }
   let log = '', exited = false, exitedAt = null;
   const keep = (d) => { log += d; if (log.length > 4e6) log = log.slice(-2e6); };
@@ -269,7 +284,7 @@ async function main() {
     const runs = [];
     for (const size of sizes) {
       if (!size.args) { runs.push({ size: size.name, waiting: size.waiting || 'its arguments are not set in sizes.json', steps: [] }); continue; }
-      runs.push(await runOne({ exe, size, seed: Number(opt('--seed', 4)), headless, frames: Number(opt('--frames', 1800)), limitS: Number(opt('--limit', 600)), outDir, steps: stepsDoc.steps, quitCheck: !a.includes('--no-quit-check') }));
+      runs.push(await runOne({ exe, size, profile: join(scratch, 'profile-' + size.name), seed: Number(opt('--seed', 4)), headless, frames: Number(opt('--frames', 1800)), limitS: Number(opt('--limit', 600)), outDir, steps: stepsDoc.steps, quitCheck: !a.includes('--no-quit-check') }));
     }
     const r = { date: new Date().toISOString().slice(0, 10), build, machine: machine(), window: headless ? null : '1280x720', runs };
     for (const f of readdirSync(outDir)) if (f === '_probe.png') rmSync(join(outDir, f), { force: true });

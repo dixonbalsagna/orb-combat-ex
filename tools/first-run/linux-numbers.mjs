@@ -6,11 +6,11 @@
 // capture of the display (RL-270 condition 3); the report is text and numbers only. A performance reading, never a flash reading, never counted toward G4, G21 or a flash number (condition 4).
 // Refuses to run unless GITHUB_ACTIONS is "true" and a virtual display is named (condition 2: it will not press a key on a person's screen). Node built-ins; xdotool on the runner.
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { cpus, homedir, totalmem, release } from 'node:os';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { cpus, tmpdir, totalmem, release } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fpsStats, parseFps, parseLoad, reportText, stepProblems } from './first-run.mjs';
+import { fpsStats, ownProfile, parseFps, parseLoad, reportText, stepProblems } from './first-run.mjs';
 import { cleanPaths } from '../record-paths.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -67,7 +67,9 @@ async function main() {
   const slow = Math.max(1, Number(opt('--slow', 3)));
   const t0 = Date.now();
   const at = () => `${((Date.now() - t0) / 1000).toFixed(0)} s`;
-  const child = spawn(exe, ['--rendering-driver', 'opengl3', '--audio-driver', 'Dummy', '--resolution', '1280x720', '--print-fps', '--', `--seed=${opt('--seed', 4)}`], { cwd: dirname(exe), stdio: ['ignore', 'pipe', 'pipe'] });
+  // its own empty settings (the How to play card marked seen): on a new profile that card comes up after the warning and holds the match, and the keys go nowhere
+  const profile = ownProfile(mkdtempSync(join(tmpdir(), 'linux-first-run-')));
+  const child = spawn(exe, ['--rendering-driver', 'opengl3', '--audio-driver', 'Dummy', '--resolution', '1280x720', '--print-fps', '--', `--seed=${opt('--seed', 4)}`], { cwd: dirname(exe), env: { ...process.env, ...profile }, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = '', exited = false, exitedAt = 0;
   child.stdout.on('data', (d) => { log += d; }); child.stderr.on('data', (d) => { log += d; });
   child.on('close', () => { exited = true; exitedAt = Date.now(); });
@@ -102,7 +104,7 @@ async function main() {
     add({ id: s.id, what: s.what, ok: !err, detail: `at ${at()}${err ? ': ' + err : s.human ? ': Return pressed by the workflow on the virtual display' : keys.length ? `: ${keys.length} key(s)` : ''}` });
   }
   // the match was built: the program prints its pair-bake line when a match's pieces are made (the first run's keys may have met a game that never left the warning)
-  const dataRoot = join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'godot', 'app_userdata');
+  const dataRoot = join(profile.XDG_DATA_HOME, 'godot', 'app_userdata');
   const files = dataFiles(dataRoot);
   const logFile = files.find((f) => /logs[/]godot[.]log$/.test(f.path));
   const gameLog = logFile ? readFileSync(join(dataRoot, logFile.path), 'utf8').split(/\r?\n/).filter((l) => l.trim() && !/Project FPS:/.test(l)).slice(-80).map((l) => cleanPaths(l).slice(0, 220)) : ['(no godot.log in the data folder)'];

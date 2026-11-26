@@ -5,7 +5,9 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { xdotoolKeys, refusal, timeline, ownLines, dataFiles, matchInData } from './linux-numbers.mjs';
-import { parseFps, fpsStats, parseLoad, sizesFor, stepProblems, reportText } from './first-run.mjs';
+import { parseFps, fpsStats, parseLoad, sizesFor, stepProblems, reportText, ownProfile } from './first-run.mjs';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 const HERE = dirname(fileURLToPath(import.meta.url));
 let bad = 0, n = 0;
 const check = (name, ok, extra) => { n++; if (!ok) { bad++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -24,7 +26,24 @@ check('a missing load line is null', parseLoad('nothing').pairBakeMs === null);
 
 const table = JSON.parse(readFileSync(join(HERE, 'sizes.json'), 'utf8'));
 const all = sizesFor(table, 'all');
-check('every size is a row of the table; default has arguments, small, medium and big wait until GW1c sets them', all.length === 4 && all[0].args !== null && all.slice(1).every((s) => s.args === null && /GW1c/.test(s.waiting)));
+check('every size is a row of the table; default and medium have arguments, small and big wait until they are offered', all.length === 4 && ['default', 'medium'].every((n) => Array.isArray(all.find((s) => s.name === n).args)) && ['small', 'big'].every((n) => { const s = all.find((x) => x.name === n); return s.args === null && /only medium/.test(s.waiting); }), JSON.stringify(all));
+{
+  const sizesData = JSON.parse(readFileSync(join(HERE, '..', '..', 'data', 'biomes', 'sizes.json'), 'utf8'));
+  const offered = Object.keys(sizesData.sizes).filter((k) => sizesData.sizes[k].offered);
+  check('the table agrees with the sizes the game offers: an offered size has arguments, a hidden one of these has none', ['small', 'medium', 'big'].every((n) => offered.includes(n) === Array.isArray(table.sizes[n].args)), 'offered: ' + offered.join());
+}
+{
+  const base = mkdtempSync(join(tmpdir(), 'first-run-profile-'));
+  const env = ownProfile(base);
+  const read = (...p) => JSON.parse(readFileSync(join(...p, 'ui_prefs.json'), 'utf8'));
+  const win = read(env.APPDATA, 'Godot', 'app_userdata', 'Orb Combat EX'), lin = read(env.XDG_DATA_HOME, 'godot', 'app_userdata', 'Orb Combat EX');
+  const name = readFileSync(join(HERE, '..', '..', 'project.godot'), 'utf8').includes('config/name=' + String.fromCharCode(34) + 'Orb Combat EX' + String.fromCharCode(34));
+  const key = readFileSync(join(HERE, '..', '..', 'ui', 'hud', 'ui_hud.gd'), 'utf8').includes('get_bool(' + String.fromCharCode(34) + 'howto_seen');
+  check('the run gets its own settings with the card marked seen, in the folder the game uses on each platform, under the base given', win.howto_seen === true && lin.howto_seen === true && Object.keys(win).length === 1 && env.APPDATA.startsWith(base) && env.XDG_DATA_HOME.startsWith(base) && name && key);
+  rmSync(base, { recursive: true, force: true });
+  const sources = ['first-run.mjs', 'linux-numbers.mjs'].map((f) => readFileSync(join(HERE, f), 'utf8'));
+  check('both scripts start the program with those settings', sources[0].includes('...ownProfile(profile)') && sources[1].includes('...profile }') && sources[1].includes('ownProfile(mkdtempSync('));
+}
 let threw = false; try { sizesFor(table, 'huge'); } catch { threw = true; }
 check('a size that is not a row is refused', threw);
 check('a comma list picks rows in order', sizesFor(table, 'medium, default').map((s) => s.name).join() === 'medium,default');
