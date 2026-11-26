@@ -26,10 +26,10 @@ A private Alpha test of an early fighting game. It is rough, it will break, and 
 ## Your privacy
 
 - **Nothing leaves your PC unless you send it.** The game collects and sends nothing about you. (The two-PC mode opens a link between two computers on your home network only when you start it.)
-- **Downloading uses an itch.io account.** To get your key you claim it with a free itch.io account. itch.io is a separate service run by another company, with its own rules and privacy policy. It will see that you downloaded the game, and Orb will see your itch.io account name. Use an account name with no personal details if you prefer. The game itself collects and sends nothing about you.
+- **Downloading uses itch.io.** You download the game through itch.io, a separate service run by another company, with its own rules and privacy policy. It will see your download. If you claim your key with a free itch.io account, Orb will see your account name, so use one with no personal details if you prefer. The game itself collects and sends nothing about you.
 - **Reports go to Orb's private Discord server.** You choose what to send and when. Discord is a separate service run by another company, with its own rules and privacy policy; it will see what you post, and the people in the server can see your Discord name and your report. Please put no personal details in a report: no real name, address, email, or account names, and nothing you would not want other testers to read. If you attach a file, glance at it first.
-- **What is in the report folder.** Your saved matches and copies of the game's own log files. The game removes folder paths, your account name and your PC's name from those copies, but it can't promise to catch everything, so check before you send. Orb may use AI tools to read what you send and find the problem.
-- If you want your reports deleted, tell Orb. Orb will delete your report files and messages from the report server, and Orb's own copies, within 14 days. Discord may keep copies under its own rules, and Orb cannot remove what someone else has already saved.
+- **What is in the report folder.** Your saved matches and copies of the game's own log files. The game removes folder paths, your account name and your PC's name from those copies, but it can't promise to catch everything, so check before you send. What you send is read with the help of AI services run by another company, so its contents leave Orb's computer.
+- If you want your reports deleted, tell Orb. Orb will delete your report files and messages from the report server, and Orb's own copies, within 14 days. Discord and those AI services may keep copies under their own rules, and Orb cannot remove what someone else has already saved.
 
 ## Credits and notices
 

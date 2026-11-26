@@ -93,6 +93,6 @@ Conditions:
 ## The restricted itch.io page: the account line and the page settings (RL-271, RL-272; 2026-11-23)
 
 **The account line, fixed wording, placed on the page above the download buttons and repeated in the tester note's privacy section:**
-> To download, you claim your key with a free itch.io account. itch.io is a separate service run by another company, with its own rules and privacy policy. It will see that you downloaded the game, and Orb will see your itch.io account name. Use an account name with no personal details if you prefer. The game itself collects and sends nothing about you.
+> You download the game through itch.io, a separate service run by another company, with its own rules and privacy policy. It will see your download. If you claim your key with a free itch.io account, Orb will see your account name, so use one with no personal details if you prefer. The game itself collects and sends nothing about you.
 
 **Page settings that must be off (kept private, so no tester's words or names appear there):** comments, ratings and the community tab; devlog posts; any public download counter or "who downloaded" display; any link to a report channel. The words "private test" appear only by what the page is, with no invite link.

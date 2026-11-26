@@ -17,12 +17,14 @@ Legal, 2026-11-25. A screen, not legal advice. For the private Discord server wh
 
 **Files you download from the channel** go only into `.private\testers\` inside the project (that folder is never uploaded). Put your friends' names and account names in `.private\testers\names.txt`, one to a line: the project's checker then fails if a name slips into any project file. Without that file, names are not checked.
 
+**The line the game's package needs:** put one line in `.private\testers\report-channel.txt` that describes the channel in plain words, for example `the private test channel you were invited to with your key`. No link, address, handle or name. A package for friends cannot be made without it.
+
 ## The question: may we promise a friend that their reports are deleted if they ask?
 
 **Legal's recommendation: yes.** It costs a few minutes, and in some countries a person can ask for this anyway.
 
 **If yes, the words the friend gets are:**
-> If you ask, Orb will delete your report files and messages from the report server, and Orb's own copies, within 14 days. Discord is a separate company and may keep copies under its own rules, and Orb cannot remove what someone else has already saved.
+> If you ask, Orb will delete your report files and messages from the report server, and Orb's own copies, within 14 days. Reports are read with the help of AI services run by another company. Discord and those services may keep copies under their own rules, and Orb cannot remove what someone else has already saved.
 
 **And you do this when asked:**
 - Search the server for their name and delete each of their messages and files. Do it before or after they leave: leaving doesn't remove them.
