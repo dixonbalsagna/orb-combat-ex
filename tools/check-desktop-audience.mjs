@@ -1,14 +1,11 @@
-// The desktop build's audience rule, checked on the workflow's text (Legal RL-262, docs/legal/desktop-build-rulings.md section 3; Tools, 2026-11-14).
+// The desktop build workflow keeps nothing and makes no testers' package, checked on its text (Legal RL-262; the EP's decision of 2026-11-25; Tools).
 //   node tools/check-desktop-audience.mjs [--file .github/workflows/desktop-builds.yml]      exit 0 when the rule holds, 1 with the problems named
-// The rule: an owner-private run (the default audience) keeps NOTHING as a run file. So (1) the input `audience` exists with the two values and owner-private as its default; (2) every
-// `actions/upload-artifact` step is gated by `if: inputs.audience == 'outside-testers'`, on the step or on its job; (3) every job that downloads an artifact (the Windows-runner jobs, which
-// need the Windows zip an owner-private run never uploads) is gated the same way on the job; (4) the step that reads Orb's recorded yes is gated the same way; (5) no step publishes
-// (a release, Pages or itch.io). A text check: the workflow is YAML and this reads its lines, with no parser (node built-ins only).
+// The rule: a run file on a public repository is a public download, and the testers' report-channel line is kept out of git and out of repository secrets, so testers' packages are made on Orb's PC
+// (tools/desktop-local-build.mjs --audience testers). So in this workflow: (1) the input `audience` has the one value owner-private; (2) no step uploads or downloads an artifact; (3) no step publishes (a release,
+// Pages or itch.io); (4) nothing passes --testers or asks for Orb's yes, and --notice names only the owner notice. A text check: it reads the workflow's lines, with no parser (node built-ins only).
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const GATE = /inputs\.audience\s*==\s*'outside-testers'/;
 
 /** Splits the jobs and steps out of a workflow's text: [{ job, header, steps: [{ text, line }] }]. Pure. */
 export function jobsOf(text) {
@@ -29,37 +26,33 @@ export function jobsOf(text) {
   return out;
 }
 
-/** Problems with the audience rule in a workflow's text (empty when it holds). Pure. */
+/** Problems with the rule in a workflow's text (empty when it holds). Pure. */
 export function problems(text) {
   const out = [];
-  // 1. the input
   const inp = /^      audience:\s*\n((?:        .*\n?)+)/m.exec(text);
   if (!inp) out.push('there is no `audience` input');
   else {
     const b = inp[1];
-    if (!/type:\s*choice/.test(b) || !/- owner-private/.test(b) || !/- outside-testers/.test(b)) out.push('the `audience` input is not a choice of owner-private and outside-testers');
-    if (!/default:\s*owner-private/.test(b)) out.push('the `audience` input does not default to owner-private (the safe side)');
+    const options = [...b.matchAll(/^          - (\S+)\s*$/gm)].map((m) => m[1]);
+    if (!/type:\s*choice/.test(b) || options.join() !== 'owner-private') out.push(`the \`audience\` input is not a choice of owner-private alone (found: ${options.join(', ') || 'none'})`);
+    if (!/default:\s*owner-private/.test(b)) out.push('the `audience` input does not default to owner-private');
   }
   const jobs = jobsOf(text);
   if (!jobs.length) out.push('no jobs found in the workflow');
   for (const j of jobs) {
-    const jobGated = j.header.some((l) => /^    if:/.test(l) && GATE.test(l));
     for (const s of j.steps) {
-      const name = /name:\s*(.*)/.exec(s.text)?.[1] || (/uses:\s*(\S+)/.exec(s.text)?.[1] ?? 'a step');
-      const stepGated = s.text.split('\n').some((l) => /^\s*(?:- )?if:/.test(l) && GATE.test(l));
-      if (/uses:\s*actions\/upload-artifact@/.test(s.text) && !(stepGated || jobGated)) out.push(`${j.job} (line ${s.line}): an upload-artifact step is not gated by \`inputs.audience == 'outside-testers'\` (an owner-private run would keep a file)`);
-      // an outside-testers package carries the site's active notice, never the owner's: `--notice` may be passed only inside an owner-private branch, and only with the owner notice file
       const code = s.text.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
-      for (const l of code.split(String.fromCharCode(10))) {
+      const at = `${j.job} (line ${s.line})`;
+      if (/uses:\s*actions\/(upload|download)-artifact@/.test(code)) out.push(`${at}: an artifact step: this workflow keeps nothing (RL-262; testers' packages are made on Orb's PC)`);
+      if (/uses:\s*(softprops\/action-gh-release|actions\/deploy-pages|actions\/upload-pages-artifact|manleydev\/butler|josephbmanley\/butler)/.test(code) || /\bbutler push\b|gh release (create|upload)/.test(code)) out.push(`${at}: a publishing step`);
+      // the words "--audience testers" in a message that says where the testers' package is made are not the flag
+      if (/(^|\s|=\()--testers(\s|\)|$)/m.test(code)) out.push(`${at}: --testers: a testers' package is never made by this workflow`);
+      if (/orbs_yes|ORBS_YES/.test(code)) out.push(`${at}: Orb's yes is asked for here: the testers' route is the local build`);
+      for (const l of code.split('\n')) {
         const m = /--notice\s+(\S+)/.exec(l);
-        if (!m) continue;
-        if (m[1].replace(/[^A-Za-z0-9_.-]/g, '') !== 'site-interim-owner.json') out.push(`${j.job} (line ${s.line}): --notice names ${m[1]}, not the owner notice file (tools/site-interim-owner.json)`);
-        if (!/"\$\{AUDIENCE\}"\s*=\s*"owner-private"/.test(l)) out.push(`${j.job} (line ${s.line}): --notice is passed on a line that does not test for owner-private (an outside-testers package must carry the site's active notice)`);
+        if (m && m[1].replace(/[^A-Za-z0-9_.-]/g, '') !== 'site-interim-owner.json') out.push(`${at}: --notice names ${m[1]}, not the owner notice file (tools/site-interim-owner.json)`);
       }
-      if (/Refuse without Orb's recorded yes/.test(s.text) && !(stepGated || jobGated)) out.push(`${j.job} (line ${s.line}): the recorded-yes step is not gated to outside-testers (an owner-private run has no approval file)`);
-      if (/uses:\s*(softprops\/action-gh-release|actions\/deploy-pages|actions\/upload-pages-artifact|manleydev\/butler|josephbmanley\/butler)/.test(s.text) || /\bbutler push\b|gh release (create|upload)/.test(s.text)) out.push(`${j.job} (line ${s.line}): ${name}: a publishing step (release, Pages or itch.io) has no place in this workflow (RL-262)`);
     }
-    if (j.steps.some((s) => /uses:\s*actions\/download-artifact@/.test(s.text)) && !jobGated) out.push(`${j.job}: the job downloads an artifact and is not gated by \`inputs.audience == 'outside-testers'\` (an owner-private run uploads none)`);
   }
   return out;
 }
@@ -70,6 +63,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const file = i >= 0 ? resolve(argv[i + 1]) : join(dirname(fileURLToPath(import.meta.url)), '..', '.github', 'workflows', 'desktop-builds.yml');
   const p = problems(readFileSync(file, 'utf8'));
   for (const x of p) console.error('desktop audience check: ' + x);
-  console.log(p.length ? `desktop audience check FAILED: ${p.length} problem(s)` : 'desktop audience check ok: owner-private is the default, every upload and download is gated to outside-testers, the recorded-yes step too, nothing publishes');
+  console.log(p.length ? `desktop audience check FAILED: ${p.length} problem(s)` : 'desktop audience check ok: owner-private is the only audience, nothing is uploaded, downloaded or published, and no testers\' package is made here');
   process.exit(p.length ? 1 : 0);
 }

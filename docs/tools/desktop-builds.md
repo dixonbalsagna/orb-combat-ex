@@ -1,38 +1,34 @@
 # Desktop test builds: Windows, Linux and macOS (Tools, 2026-10-28)
 
-Owner: Tools. Brief: the EP, 2026-10-28 (ADR 0011, PC first). Re-cut on 2026-10-28 for Legal's RL-203, RL-204 and RL-205. One manual workflow builds the game for the three PC platforms from a commit, packs each as a folder a tester can unpack and run, checks what a Linux runner can check, and uploads three artifacts. Nothing is signed or notarized (zero budget).
+Owner: Tools. Brief: the EP, 2026-10-28 (ADR 0011, PC first). Re-cut on 2026-10-28 for Legal's RL-203, RL-204 and RL-205, and on 2026-11-25 for the EP's decision below. Nothing is signed or notarized (zero budget).
 
-**These are test builds, not releases.** Under Legal's RL-203 a run exists only after Orb says yes in one sentence naming desktop test builds (the 1 November renewal can carry it); the files are kept one day and the EP deletes the run once the testers have them; no link, post or mention anywhere; nothing from a run is a release, a Legal pass or a store build.
+**These are test builds, not releases,** and **no build is ever a run file** (the EP, 2026-11-25): a run file on a public repository is a public download, and the testers' report-channel line is kept out of git and out of repository secrets. So there are two routes:
 
-## Starting it
+| For | How | What comes out |
+| :--- | :--- | :--- |
+| **Outside testers** | **On Orb's PC:** `node tools/desktop-local-build.mjs --audience testers --builds-yes <date>` | Windows `.zip` and Linux `.tar.gz` in `homework/Files/desktop/<commit8>-testers/` |
+| Orb and Orb 2 | On Orb's PC: `node tools/desktop-local-build.mjs` | the same pair, named ORB-PRIVATE |
+| Proof that a commit builds | `gh workflow run desktop-builds.yml -f audience=owner-private` | nothing is kept: the run exports, packs, checks and plays |
 
-GitHub, **Actions**, **Desktop builds**, **Run workflow**. Two audiences (Legal RL-262, `docs/legal/desktop-build-rulings.md`; added 2026-11-14):
+Legal's rulings (RL-262, `docs/legal/desktop-build-rulings.md`) allowed a one-day run file for outside testers; the decision is stricter and that path is gone from the workflow. Its section 3 still describes the old path (Legal's page).
 
-- **`owner-private`** (the default): `gh workflow run desktop-builds.yml -f audience=owner-private`. For Orb and Orb 2 only. **No approval file is needed and nothing is uploaded**: the run exports, packs and checks the build (route scan, notices, lock, the Linux bench's gameplay hash) to prove it can be made, and its summary says nothing was kept. The Windows-runner jobs are skipped (they need the Windows zip, which this audience never uploads). The file for Orb and Orb 2 is made on Orb's own PC with `tools/desktop-package.mjs` and moves by drive or private message.
-- **`outside-testers`**: `gh workflow run desktop-builds.yml -f audience=outside-testers -f orbs_yes=<date>`. Needs Orb's recorded yes (below), keeps three packages one day, runs the Windows jobs.
+## The testers' package, on Orb's PC
 
-Both audiences refuse: a commit that is not on main, a package check that fails, and a feedback target that is a public issue (`ui/data/send.json`). `node tools/check-desktop-audience.mjs` (in CI) fails when an upload or download step is not gated to `outside-testers`. Inputs:
+It refuses before anything is built unless the commit is **on main** and holds **Orb's recorded yes** (`docs/ep/approvals/desktop-test-builds.txt`: `date:` equal to `--builds-yes`, 0 to 30 days old, a `scope:` naming desktop test builds, `recorded-by:`). Before the slow part it refuses unless the testers' words are final (below) and the report channel is filled. Then: Reduce flashing locked on, the testers' menu (modes testers cannot use hidden), `routes --testers`, export, the Windows program's bench against the project's hash, pack, unpack, `verify --locked --testers`. The record (`build-record.txt`) has no folder paths and no report-channel line; commit it under `docs/tools/runs/<commit8>/` so `tools/store/itch-push.mjs` can find the checksums. No macOS package.
+
+**Not played:** the Linux program, which is what a Steam Deck runs. It is an ELF and this PC cannot start it, and no runner ever sees this package. A person starts it on a Deck or another Linux machine before it is handed on. The owner-private workflow run plays a Linux export of the same commit, but not these bytes (the testers' menu differs).
+
+## The workflow
+
+GitHub, **Actions**, **Desktop builds**, **Run workflow**. One audience, `owner-private`; anything else is refused with the command above. It refuses a commit that is not on main, a package check that fails, and a feedback target that is a public issue (`ui/data/send.json`). `node tools/check-desktop-audience.mjs` (in CI) fails if an upload, a download, a publishing step, `--testers` or a second audience comes back. Inputs:
 
 | Input | Default | What it does |
 |---|---|---|
-| `audience` | `owner-private` | `owner-private` or `outside-testers` (above). |
-| `orbs_yes` | empty | `outside-testers` only: the date (YYYY-MM-DD) of Orb's yes naming desktop test builds. The approval step refuses a run without a date that matches the recorded file. |
+| `audience` | `owner-private` | The only value. |
 | `ref` | the commit the workflow was started on | Any commit, branch or tag to build. |
 | `frames` | `2400` | Ticks the Linux bench plays before it prints the gameplay hash. |
 
-There is no input to unlock Reduce flashing: the builds are always locked. A run takes about 15 to 20 minutes on a runner (the templates download is 1.28 GB; the three exports are about 30 seconds in all; the Linux bench about a minute).
-
-## Where the artifacts land, and for how long
-
-The run's page, under **Artifacts**, three of them, named for the commit, **kept 1 day** (RL-203 condition 1):
-
-| Artifact | Holds | Size (a 2026-10-28 build) |
-|---|---|---|
-| `orb-combat-ex-windows-x86_64-<sha>` | `orb-combat-ex-windows-x86_64.zip`, `SHA256SUMS.txt` | the exe is about 118 MB |
-| `orb-combat-ex-linux-x86_64-<sha>` | `orb-combat-ex-linux-x86_64.tar.gz`, `SHA256SUMS.txt` | the binary is about 82 MB |
-| `orb-combat-ex-macos-universal-<sha>` | `orb-combat-ex-macos-universal.zip`, `SHA256SUMS.txt` | about 65 MB zipped (an Intel slice and an Apple silicon slice) |
-
-GitHub wraps an artifact in a zip of its own: download it, unzip it once, and the game's archive is inside. The Linux one is a `.tar.gz` on purpose: an artifact zip drops the executable bit, a tar keeps it. The repository is public, so anyone signed in to GitHub can download a run's artifacts while they exist: that is why the run waits for Orb's yes and keeps them a day.
+There is no input to unlock Reduce flashing: the builds are always locked. A run takes about 15 to 20 minutes on a runner (the templates download is 1.28 GB).
 
 ## What each holds
 
@@ -77,7 +73,7 @@ The Windows exe has Godot's default icon and no file-version fields (`modify_res
 
 ## To do next (needs people)
 
-- Orb's yes, in one sentence naming desktop test builds (RL-203); then the EP dispatches with `orbs_yes`.
+- Orb's yes, in one sentence naming desktop test builds (RL-203), recorded by the EP; then the testers' package is made on Orb's PC.
 - A Windows PC and a Mac that did not build it: open each, get past the warning with the README's steps, reach the first screen. Until then those two builds are structure-checked only.
 - Legal: the bundle id and app name stay placeholders until the formal title search (RL-205).
 
@@ -87,10 +83,9 @@ The Windows exe has Godot's default icon and no file-version fields (`modify_res
 
 ## The Windows jobs and the Linux still (A-TOOLS-13 and spike S5, 2026-11-14)
 
-- **`windows-bench`** (in `desktop-builds.yml`, after the `desktop` job, so behind the same lock): a Windows runner downloads the Windows zip the first job packed, unpacks it, runs the exe headless through the same bench match (`--seed=4 --frames=<frames> --bench`) and compares its gameplay hash with the Linux build's, which the first job hands over as an output. A different hash, or none, fails the run. It uploads nothing.
-- **`windows-still`** (same file, same lock): the exe is started with a window on the runner's own desktop, through ANGLE (`--rendering-driver opengl3_angle`, Direct3D with software WARP when there is no GPU, which a hosted runner has not), and one still of the screen is taken and kept for a day. NEVER run on a runner before the first dispatch: whether the window opens there is exactly what this job finds out. If it does not stay up for 30 seconds or the still is nearly one colour it fails, and its summary shows what the game printed.
+- **`windows-bench` and `windows-still` are gone** (2026-11-25): they downloaded the zip that only the removed outside-testers path uploaded.
 - **`linux-still.yml`** (spike S5, dispatch only, its own file; not one of the desktop workflows, so it never uploads the binary): exports the Linux preset of a commit, starts it under Xvfb with the Compatibility renderer on software GL, and keeps one still. The one page of what was tried, what it cost and what it shows (`docs/tools/s5-linux-still.md`) is written from its first run.
-- **`windows-local`** (same file, `owner-private` only; the EP, 2026-11-21): the first two jobs need the Windows zip, which only an outside-testers run uploads, so on the owner-private route they never run. This job makes the Windows exe **on a Windows runner** (Godot 4.7.2's Windows editor and the Windows release template, each SHA-512 checked), so no artifact crosses and nothing is uploaded (Legal RL-262), starts it, plays the same bench match through the console wrapper of the same export and compares its gameplay hash with the Linux job's (a job output, text), then starts the windowed exe on the runner's desktop and measures one still of the screen. **The still is not kept** (a kept file is an upload): the summary says whether the game stayed up for 30 s, how many distinct colours the screen had, and shows the game's first lines. Never run on a runner before: the first dispatch is its test, and the still step is the likeliest to need a fix (a hosted runner has no GPU and WARP is untested here). `tools/check-desktop-audience.mjs` holds: the job has no upload or download step.
+- **`windows-local`** (in `desktop-builds.yml`; the EP, 2026-11-21): makes the Windows exe **on a Windows runner** (Godot 4.7.2's Windows editor and the Windows release template, each SHA-512 checked), so no artifact crosses and nothing is uploaded (Legal RL-262), starts it, plays the same bench match through the console wrapper of the same export and compares its gameplay hash with the Linux job's (a job output, text), then starts the windowed exe on the runner's desktop and measures one still of the screen. **The still is not kept** (a kept file is an upload): the summary says whether the game stayed up for 30 s, how many distinct colours the screen had, and shows the game's first lines. Never run on a runner before: the first dispatch is its test, and the still step is the likeliest to need a fix (a hosted runner has no GPU and WARP is untested here). `tools/check-desktop-audience.mjs` holds: the job has no upload or download step.
 - The hash comparison across Windows, Linux and the project's own bench is what A-TOOLS-13 asks for beside the still; the seed-only planet comparison across the two platforms stays with World's digest tool (the brief's amendment), read beside S5.
 
 ## The owner-private build on Orb's own PC: one command (A-TOOLS-01, 2026-11-14)
@@ -126,4 +121,4 @@ An outside-testers package carries its own README.txt and NOTICES.txt words from
 1. **The words are a draft** (`"draft": true`) until Orb has seen them and the EP records the yes. Then, in one commit: set `draft` false.
 2. **The report channel is not filled.** Git holds only `[REPORT CHANNEL, given with your key]`. Orb writes one line, a plain description of the private channel, in `.private/testers/report-channel.txt` (git-ignored), or `--channel-file <file>` names another. A missing line, a placeholder, two lines, a link, an invite, an address or a handle is refused.
 
-**Not solved:** a run of `desktop-builds.yml` with `audience=outside-testers` has no such file on the runner, so it stops at its text step even after the words are final. Either the testers' packages are made on Orb's PC, or the line reaches the runner some other way (a repository secret), which needs a decision: a run file on a public repository is a public download for its one day.
+**Where the package is made (the EP, 2026-11-25):** on Orb's PC, never by the workflow ("The testers' package, on Orb's PC", above).

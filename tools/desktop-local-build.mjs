@@ -14,6 +14,12 @@
 // It refuses (exit 1) at the first step that fails and says which. It writes: <out>/orb-combat-ex-ORB-PRIVATE-windows-x86_64-<commit8>.zip and/or ...-linux-x86_64-<commit8>.tar.gz, their SHA-256 and a build-record.txt
 // (with this PC's folder paths taken out: tools/record-paths.mjs, so the record can go into the repository). Default <out>:
 // homework/Files/desktop/<commit8>-ORB-PRIVATE (git-ignored). The file is for Orb and Orb 2 only: it moves by a drive, the home network or a private message, never a public link.
+// THE TESTERS' PACKAGE (A2, 2026-11-25; the EP: made on Orb's PC, never a run file and never a repository secret):
+//   node tools/desktop-local-build.mjs --audience testers --builds-yes <date> [--channel-file <file>] [--commit <rev>] [--platform ...]
+// The same steps with these differences. It refuses before anything is built unless the commit is on main and holds Orb's recorded yes (docs/ep/approvals/desktop-test-builds.txt, dated as typed, 0 to 30 days
+// old), and, before the slow part, unless the testers' words are final (tools/site-tester.json) and the report-channel line is filled (.private/testers/report-channel.txt, git-ignored, read from your folder and
+// never written into the record). The testers' menu hides the modes testers cannot use. The files are orb-combat-ex-windows-x86_64.zip and orb-combat-ex-linux-x86_64.tar.gz in
+// homework/Files/desktop/<commit8>-testers, the names tools/store/itch-push.mjs reads. Nothing is uploaded: the upload is Orb's, by hand.
 // Godot runs at below-normal priority and headless (no window). Node built-ins, git, tar and PowerShell only.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -24,6 +30,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cleanPaths } from './record-paths.mjs';
 import { folderEntries, readTarGz, targz } from './lib/targz.mjs';
+import { APPROVALS, approvalProblems } from './store/itch-push.mjs';
+import { CHANNEL_FILE } from './desktop-package.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OWNER_NOTICE = 'site-interim-owner.json';
@@ -31,10 +39,19 @@ const PRESETS = { windows: 'Windows Desktop', linux: 'Linux' };
 const PROGRAMS = { windows: 'orb-combat-ex.exe', linux: 'orb-combat-ex.x86_64' };
 
 /** The names of the package, from the commit. Pure. `zip` is the archive's name whatever its kind (.zip for Windows, .tar.gz for Linux). */
-export function names(commit8, platform = 'windows') {
-  const folder = `orb-combat-ex-ORB-PRIVATE-${platform}-x86_64`;
-  const zip = `${folder}-${commit8}.${platform === 'linux' ? 'tar.gz' : 'zip'}`;
-  return { folder, zip, archive: zip, defaultOut: join(REPO, 'homework', 'Files', 'desktop', `${commit8}-ORB-PRIVATE`) };
+export function names(commit8, platform = 'windows', audience = 'owner') {
+  const testers = audience === 'testers';
+  const folder = testers ? `orb-combat-ex-${platform}-x86_64` : `orb-combat-ex-ORB-PRIVATE-${platform}-x86_64`;
+  const zip = `${folder}${testers ? '' : '-' + commit8}.${platform === 'linux' ? 'tar.gz' : 'zip'}`;
+  return { folder, zip, archive: zip, defaultOut: join(REPO, 'homework', 'Files', 'desktop', `${commit8}-${testers ? 'testers' : 'ORB-PRIVATE'}`) };
+}
+
+/** Why a testers' package may not be made from this commit (empty when it may). `approval` is the approval file's text in that commit, null when the commit does not hold it. Pure. */
+export function testersRefusals({ onMain, approval, typed, today }) {
+  const out = [];
+  if (!onMain) out.push('the commit is not on main: a testers\' package is made of a commit on main only (Legal RL-262)');
+  out.push(...approvalProblems('builds', approval, typed, today));
+  return out;
 }
 
 /** The platforms a --platform value names; null when it names none. Pure. */
@@ -75,6 +92,9 @@ async function main() {
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const platforms = platformsOf(opt('--platform', 'both'));
   if (!platforms) { console.error('desktop-local-build: --platform is windows, linux or both'); process.exit(2); }
+  const audience = opt('--audience', 'owner');
+  if (audience !== 'owner' && audience !== 'testers') { console.error('desktop-local-build: --audience is owner (the default) or testers'); process.exit(2); }
+  const testers = audience === 'testers';
   if (process.platform === 'darwin') { console.error('desktop-local-build: Windows and Linux hosts only for now'); process.exit(2); }
   const rev = opt('--commit', 'HEAD');
   const frames = String(opt('--frames', '2400'));
@@ -84,11 +104,17 @@ async function main() {
   const sha = r.stdout.trim(), c8 = sha.slice(0, 8), date = git('log', '-1', '--format=%cs', sha).stdout.trim();
   const mtime = Number(git('log', '-1', '--format=%ct', sha).stdout.trim()) || 0;
   const onMain = git('merge-base', '--is-ancestor', sha, 'main').status === 0;
-  const out = resolve(opt('--out', names(c8).defaultOut));
+  const out = resolve(opt('--out', names(c8, 'windows', audience).defaultOut));
+  if (testers) {
+    const approval = git('show', `${sha}:${APPROVALS.builds.file}`);
+    const refused = testersRefusals({ onMain, approval: approval.status === 0 ? approval.stdout : null, typed: opt('--builds-yes'), today: new Date().toISOString().slice(0, 10) });
+    if (refused.length) { for (const p of refused) console.error(`desktop-local-build REFUSED: ${p}`); process.exit(1); }
+  }
+  const channelFile = resolve(opt('--channel-file') || join(REPO, CHANNEL_FILE));
   const godot = godotExe(opt('--godot'));
-  const scratch = mkdtempSync(join(tmpdir(), 'orb-private-build-'));
+  const scratch = mkdtempSync(join(tmpdir(), testers ? 'orb-testers-build-' : 'orb-private-build-'));
   const tree = join(scratch, 'tree');
-  const rec = [`Owner-private desktop build (tools/desktop-local-build.mjs), ${platforms.join(' and ')}`, `commit ${sha} (${date}); ${onMain ? 'on main' : 'NOT on main (a local owner-private build may be of any commit)'}`, `made ${new Date().toISOString()}`, `made on ${process.platform === 'win32' ? 'Windows' : 'Linux'}`, ''];
+  const rec = [`${testers ? "Testers' desktop package" : 'Owner-private desktop build'} (tools/desktop-local-build.mjs), ${platforms.join(' and ')}`, `commit ${sha} (${date}); ${onMain ? 'on main' : 'NOT on main (a local owner-private build may be of any commit)'}`, `made ${new Date().toISOString()}`, `made on ${process.platform === 'win32' ? 'Windows' : 'Linux'}`, ...(testers ? [`Orb's recorded yes of ${opt('--builds-yes')} (${APPROVALS.builds.file} in this commit)`] : []), ''];
   const step = (name, ok, detail = '') => { const line = `${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ': ' + detail : ''}`; console.log(line); rec.push(line); if (!ok) { fail(name); } };
   const fail = (name) => { writeRecord(); console.error(`desktop-local-build FAILED at: ${name} (scratch copy kept for a look: ${scratch})`); process.exit(1); };
   // the record is cleaned of this PC's folder paths as it is written (tools/record-paths.mjs): the scratch folder is <scratch>, a user's folder <user>
@@ -113,13 +139,17 @@ async function main() {
       console.log('TEST ONLY: tools/desktop-package.mjs copied from the working tree');
     }
     const toolText = readFileSync(pkgTool, 'utf8');
+    if (testers && !toolText.includes('fillChannel')) step('this commit\'s packaging tool knows the testers\' words', false, 'it is older than the testers\' package: build a newer commit');
     if (!toolText.includes('PRIVATE_LINE')) step('this commit\'s packaging tool knows the ORB-PRIVATE line', false, 'it is older than the owner-private change: build a newer commit');
     const node = (args, cwd = tree) => run(process.execPath, args, { cwd });
     let x = await node([pkgTool, 'lock', '--root', tree]); step('lock Reduce flashing on (scratch copy only)', x.code === 0, x.out.trim().split(/\r?\n/).pop());
+    if (testers) { x = await node([pkgTool, 'testers', '--root', tree]); step('the testers\' menu: modes testers cannot use are hidden (scratch copy only)', x.code === 0, x.out.trim().split(/\r?\n/).pop()); }
     x = await node([pkgTool, 'version', '--root', tree]); step('version number into the export presets', x.code === 0, x.out.trim().split(/\r?\n/).pop());
-    x = await node([pkgTool, 'routes', '--root', tree, '--no-testers']); step('routes check (lock, bypass words, no net/, feedback target)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 160));
+    x = await node([pkgTool, 'routes', '--root', tree, testers ? '--testers' : '--no-testers']); step('routes check (lock, bypass words, no net/, feedback target)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 160));
     x = await node([join(tree, 'tools', 'write-build-info.mjs'), '--commit', sha, '--date', date]); step('build_info.json written', x.code === 0, x.out.trim());
     const info = JSON.parse(readFileSync(join(tree, 'build_info.json'), 'utf8'));
+    // before the slow part: a draft, or a missing or placeholder report channel, stops here. The README it makes is thrown away; neither the line nor the README goes into the record
+    if (testers) { x = await node([pkgTool, 'text', '--platform', 'windows', '--out', join(scratch, 'preflight'), '--build-info', join(tree, 'build_info.json'), '--testers', '--channel-file', channelFile]); step('the testers\' words are final and the report channel is filled', x.code === 0, x.code === 0 ? '' : x.out.trim().split(/\r?\n/).pop().slice(0, 300)); rmSync(join(scratch, 'preflight'), { recursive: true, force: true }); }
 
     x = await run(godot, ['--headless', '--path', tree, '--import'], { below: true, limitMs: 10 * 60 * 1000 }); step('import', x.code === 0, `exit ${x.code}`);
     // the project's own bench: the hash every exported program must print (the same game data, the same seed)
@@ -128,7 +158,7 @@ async function main() {
     step('the project\'s own bench prints a gameplay hash', !!h1, h1 || 'none');
 
     for (const platform of platforms) {
-      const n = names(c8, platform), program = PROGRAMS[platform];
+      const n = names(c8, platform, audience), program = PROGRAMS[platform];
       const exp = join(scratch, 'export-' + platform); mkdirSync(exp, { recursive: true });
       const bin = join(exp, program);
       x = await run(godot, ['--headless', '--path', tree, '--export-release', PRESETS[platform], bin], { below: true });
@@ -140,14 +170,14 @@ async function main() {
         step(`the ${platform} program's bench prints the same gameplay hash as the project's`, !!h1 && h1 === h2, `${h1 || 'none'} | ${h2 || 'none'}`);
         benchLine = `bench ${h2} (the program was played here)`;
       } else {
-        benchLine = `bench: the ${platform} program was NOT played on this PC (it is not a ${process.platform === 'win32' ? 'Windows' : 'Linux'} program); the project's own bench here printed ${h1}, and the desktop-builds.yml run plays the Linux program on a Linux runner and compares its hash`;
+        benchLine = `bench: the ${platform} program was NOT played on this PC (it is not a ${process.platform === 'win32' ? 'Windows' : 'Linux'} program); the project's own bench here printed ${h1}${testers ? '. NOBODY HAS STARTED THIS PROGRAM: a person starts it on its own kind of machine before it is handed on' : ', and the desktop-builds.yml run plays the Linux program on a Linux runner and compares its hash'}`;
         console.log(`note ${benchLine}`);
         rec.push(`note ${benchLine}`);
       }
 
       const pkg = join(scratch, 'pkg-' + platform, n.folder); mkdirSync(pkg, { recursive: true });
-      const notice = ['--notice', OWNER_NOTICE, '--private'];
-      x = await node([pkgTool, 'text', '--platform', platform, '--out', pkg, '--build-info', join(tree, 'build_info.json'), ...notice]); step(`${platform}: README.txt, NOTICES.txt and build_info.json (owner notice, ORB-PRIVATE line)`, x.code === 0, x.out.trim().split(/\r?\n/).pop());
+      const notice = testers ? [] : ['--notice', OWNER_NOTICE, '--private'];
+      x = await node([pkgTool, 'text', '--platform', platform, '--out', pkg, '--build-info', join(tree, 'build_info.json'), ...(testers ? ['--testers', '--channel-file', channelFile] : notice)]); step(`${platform}: README.txt, NOTICES.txt and build_info.json (${testers ? "the testers' words" : 'owner notice, ORB-PRIVATE line'})`, x.code === 0, x.out.trim().split(/\r?\n/).pop());
       cpSync(bin, join(pkg, program));
       mkdirSync(out, { recursive: true });
       const archive = join(out, n.archive);
@@ -167,18 +197,19 @@ async function main() {
         const tx = existsSync(winTar) && process.platform === 'win32' ? spawnSync(winTar, ['-xzf', archive, '-C', chk], { encoding: 'utf8' }) : spawnSync('tar', ['-xzf', archive, '-C', chk], { encoding: 'utf8' });
         step('linux: unpacked somewhere new with the system tar, the way a player does', tx.status === 0, tx.status === 0 ? '' : String(tx.stderr).slice(0, 160));
       }
-      x = await node([pkgTool, 'verify', '--platform', platform, '--dir', join(chk, n.folder), '--commit', sha, '--locked', '--no-testers', ...notice]); step(`${platform}: the folder verifies (files, magic bytes, embedded pck, notices, lock, ORB-PRIVATE line)`, x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 200));
+      x = await node([pkgTool, 'verify', '--platform', platform, '--dir', join(chk, n.folder), '--commit', sha, '--locked', testers ? '--testers' : '--no-testers', ...notice]); step(`${platform}: the folder verifies (files, magic bytes, embedded pck, notices, lock, ${testers ? "the testers' words and menu" : 'ORB-PRIVATE line'})`, x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 200));
 
       const sum = sha256(archive);
       writeFileSync(join(out, `${n.archive}.sha256.txt`), `${sum}  ${n.archive}\n`);
       rec.push('', `file ${n.archive}`, `size ${statSync(archive).size} bytes`, `sha256 ${sum}`, `version ${info.version || 'none'}`, benchLine, '');
       results.push({ platform, archive, sum, size: statSync(archive).size });
     }
-    rec.push('For Orb and Orb 2 only. Move it by a drive, the home network or a private message. Never a public link.');
+    const closing = testers ? `For named outside testers, through the restricted page only; the upload is Orb's, by hand. Commit this record under docs/tools/runs/${c8}/ so tools/store/itch-push.mjs can find the sums. Never a public link.` : 'For Orb and Orb 2 only. Move it by a drive, the home network or a private message. Never a public link.';
+    rec.push(closing);
     writeRecord();
     if (testOnly) console.log("\nTEST ONLY: this package used the working tree's packaging tool and is not a build of the commit alone: do not hand it on.");
     for (const q of results) console.log(`\nDONE (${q.platform}): ${q.archive}\n  sha256 ${q.sum}\n  ${q.size} bytes; commit ${c8}; version ${info.version || 'none'}`);
-    console.log('\n  for Orb and Orb 2 only: a drive, the home network or a private message, never a public link');
+    console.log(`\n  ${closing}`);
   } finally {
     if (!a.includes('--keep-scratch') && !process.exitCode) { try { rmSync(scratch, { recursive: true, force: true }); } catch { /* left for the OS */ } }
   }
