@@ -6,6 +6,19 @@ Camera, 2026-11-07. CD-04 asks for two things:
 
 This park does both. It was paused at the EP's word (pacing) on 2026-11-07, before the cut-step table and the reduced-mode analyser reading.
 
+## 2026-11-26: SCROLL_MAX_REDUCED stays at 0.045 (the EP's call)
+
+- **What changed:** `cd04.patch` is now sha1 ca7451b1. It is the same as b0ab4bfb except one line: `SCROLL_MAX_REDUCED` stays at 0.045, and its comment cites the saved reading. CD-04 allows a higher value "justified with a saved reading". The reading is `docs/camera/runs/54474b97/cd04-gw1c/readings.txt`.
+- **Why:** at 0.03 the reduced readings got worse at 1024x768. AI seed 3 went from OVER GATE to FAIL, and rushcity from 3.5 to 4. Collapse got better. At 0.045, with the cut gate in, every reading is the same as without cd04.
+- **What the park still does:** the cut gate, CD-04's other half, still asks the register before every hard cut.
+- **Gates, all pass** (`docs/camera/runs/54474b97/cd04-gw1c/gates-045.txt`):
+  - every camera check, including cut_register 73;
+  - split_sweep, pane, seam and determinism;
+  - the golden is unchanged.
+- **What changes on screen:** at small and medium, no collapse frame changes. On big, 88 to 140 frames change in each mode, where cuts now wait for the register.
+- **Applies:** strict on main 4db9917b, after split-line and door-holds.
+- Legal has been told (the EP).
+
 ## 2026-11-25: un-paused, brought current on the GW1c stack
 
 - **Apply after the GW1c stack and `../gw1c-door-holds/`** (the A2 order): `git -c core.autocrlf=false apply cd04.patch` (sha1 b0ab4bfb; the code is unchanged from cb4d7363).

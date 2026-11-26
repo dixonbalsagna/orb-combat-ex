@@ -1,5 +1,5 @@
 diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
-index 8b7c213..076434b 100644
+index 8b7c213..af822ec 100644
 --- a/render/camera/camera_params.gd
 +++ b/render/camera/camera_params.gd
 @@ -147,7 +147,7 @@ const SCROLL_CAP: float = 0.045          # the limiter: a pane's focus moves at
@@ -7,7 +7,7 @@ index 8b7c213..076434b 100644
  const CAP_LAG: float = 0.14              # ... and gives way when the fighter is this far (of the width) from the focus: from there he is followed at his speed
  const SCROLL_MAX: float = 0.045          # the scroll governor: the scenery crosses the screen no faster than this much of its width a tick ...
 -const SCROLL_MAX_REDUCED: float = 0.045   # ... and this much under reduced motion or reduced flashing (0.03 for Tools' flash analyser until director step 1, 2026-10-22: the flash work is paused and the shipped mode zoomed fighters out to 25 px)
-+const SCROLL_MAX_REDUCED: float = 0.03    # ... and this much under reduced motion or reduced flashing (restored 2026-11-07 for the audit's CD-04: 0.045 since 2026-10-22, "while the flash work is paused"; the readings are in docs/camera/runs/d41ce393/cd-04)
++const SCROLL_MAX_REDUCED: float = 0.045   # ... and this much under reduced motion or reduced flashing. Kept at 0.045 for the audit's CD-04 (2026-11-26, the EP's call) on the saved reading docs/camera/runs/54474b97/cd04-gw1c/readings.txt: at 0.03 rushcity and AI seed 3 read worse at 1024x768 (AI seed 3 OVER GATE to FAIL), collapse better; at 0.045 with the cut gate every reading is as before
  const BRAWL_FOCUS_TAU: float = 0.05       # the one view follows a brawl's centre eased with this time constant (its drift as the lead)
  const BRAWL_RELEASE: float = 0.5         # and eases back to the pair's middle over this long when the brawl ends
  const ZIP_RELEASE: float = 0.6          # after a hold the frame eases back to the live pair for this long
