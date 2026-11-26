@@ -1,0 +1,63 @@
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 91b4225..4fd4636 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -450,6 +450,7 @@ func _match_setup(seed: int = 0) -> Dictionary:
+ ## The computer's level, from the start menu's choice (UI: the menu config's ai_level). It is part of every match's setup after the menu has run ("aiLevel", read by SimCore), so New match
+ ## and Play again keep it; "" until then, when the setup carries none and the match runs at the data's own level.
+ var _ai_level: String = ""
++var _size_picked: String = ""   # the menu's size row at the last Start (World's sizes.json): New match keeps it (_planet_setup); "" before any Start
+ 
+ 
+ func _ai_part() -> Dictionary:
+@@ -486,9 +487,12 @@ func _publish_probe() -> void:
+ func _planet_setup() -> Dictionary:
+ 	if not _planet_next.is_empty():
+ 		return _planet_next.duplicate()
++	var out: Dictionary = {}
+ 	if args.has("planet"):
+-		return {"planet": int(args["planet"]), "touch": int(args.get("touch", 3))}
+-	return {}
++		out = {"planet": int(args["planet"]), "touch": int(args.get("touch", 3))}
++	if _size_picked != "" and (not out.is_empty() or WorldDefault.planetDefault()):
++		out["planetSize"] = _size_picked   # New match keeps the size picked at Start, as it keeps the computer's level (Play again sends the Start's choices again); only where the match is a planet (planet_part's own rule)
++	return out
+ 
+ 
+ ## The planet a menu's choices name, as the match's setup keys (planet, planetGen, touch, arena); {} while they name none (the menu has no such choice yet: the campaign's and the planet picker's
+@@ -518,6 +522,7 @@ func _on_menu_changed(cfg: Dictionary) -> void:
+ func _on_loading_back() -> void:
+ 	host.cancel_load()
+ 	ui_hud.hide_loading()
++	_size_picked = str(host.setup_used.get("planetSize", "")) if _match_ever else ""   # Back drops the Start's size: a New match plays the size of the match still under the menu, and the demo match below plays the planet as the boot does
+ 	if not _match_ever:
+ 		start_match(fresh_seed())   # the load was the session's first match: the menu opens over the demo match the game starts with, as at boot
+ 	ui_hud.show_start_menu(false)
+@@ -1403,6 +1408,7 @@ func _on_menu_started(cfg: Dictionary) -> void:
+ 	_menu_seed = sd
+ 	_planet_next = planet_part(cfg)
+ 	_ai_level = str(cfg.get("ai_level", ""))
++	_size_picked = str(cfg.get("planet_size", ""))
+ 	_slots = [str(cfg["p1_fighter"]), str(cfg["p2_fighter"])] if (cfg.has("p1_fighter") and cfg.has("p2_fighter")) else []
+ 	if bool(cfg.get("intros", true)):
+ 		start_match(sd, ai)
+diff --git a/render/core/sim_host.gd b/render/core/sim_host.gd
+index b8f55b4..a894f5f 100644
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -145,11 +145,13 @@ func _started(su: Dictionary, remember: bool) -> void:
+ 	_oprev = _ocur
+ 
+ 
+-## What a planet's making depends on, for telling a choice that changed from one that did not: the planet, its generation, the touch-down and the arena. "" when the setup names no planet.
++## What a planet's making depends on, for telling a choice that changed from one that did not: the planet, its generation, the touch-down, the arena and the size. The size goes in as its columns
++## (WorldPlanetSize.colsOf: the planet is made at them, and World's planet memo is keyed by them), so an unnamed size and "medium" are one key, and a menu's size changed is a choice that changed. "" when
++## the setup names no planet.
+ static func planet_key(setup: Dictionary) -> String:
+ 	if not setup.has("planet"):
+ 		return ""
+-	return "%s/%d/%s/%s" % [str(setup.planet), SimPlanetLoad.genOf(setup), str(setup.get("touch", 0)), var_to_str(setup.get("arena", {}))]
++	return "%s/%d/%s/%s/%d" % [str(setup.planet), SimPlanetLoad.genOf(setup), str(setup.get("touch", 0)), var_to_str(setup.get("arena", {})), WorldPlanetSize.colsOf(setup)]
+ 
+ 
+ ## The planet's seed is known (the player has picked it in the menu) before the match starts: begin making it now, a slice a frame (prefetch_step), while they choose. Called again with what the menu
