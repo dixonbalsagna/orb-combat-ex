@@ -1,0 +1,36 @@
+# mats-tracked (Rendering, 2026-11-26) on main dac1e0ec: mt0 = main, mt1 = mt0 + the change (scratch mats_untrack.py, sha1 2d889fcd)
+mats untrack applied
+the diff: 40 lines, sha1 d5d3f75e
+import errors: mt0 0, mt1 0
+## the probe on mt0 (six matches through main, the split attached, each read after its load and 120 ticks)
+match 1 (seed 1): pane 0 tracked 16; pane 1 tracked 14; earlier fields alive 0 of 0; wet layers 48 (0.14 MiB of a 2.39 MiB bound); static memory +4.0 MiB
+match 2 (seed 2): pane 0 tracked 18; pane 1 tracked 14; earlier fields alive 1 of 1; wet layers 51 (0.15 MiB of a 2.39 MiB bound); static memory +5.2 MiB
+match 3 (seed 3): pane 0 tracked 20; pane 1 tracked 14; earlier fields alive 1 of 2; wet layers 52 (0.16 MiB of a 2.39 MiB bound); static memory +5.2 MiB
+match 4 (seed 4): pane 0 tracked 22; pane 1 tracked 14; earlier fields alive 1 of 3; wet layers 52 (0.16 MiB of a 2.39 MiB bound); static memory +5.4 MiB
+match 5 (seed 5): pane 0 tracked 24; pane 1 tracked 14; earlier fields alive 1 of 4; wet layers 52 (0.16 MiB of a 2.39 MiB bound); static memory +5.7 MiB
+match 6 (seed 6): pane 0 tracked 26; pane 1 tracked 14; earlier fields alive 1 of 5; wet layers 52 (0.16 MiB of a 2.39 MiB bound); static memory +6.0 MiB
+## the probe on mt1 (six matches through main, the split attached, each read after its load and 120 ticks)
+match 1 (seed 1): pane 0 tracked 14; pane 1 tracked 14; earlier fields alive 0 of 0; wet layers 48 (0.14 MiB of a 2.39 MiB bound); static memory +4.0 MiB
+match 2 (seed 2): pane 0 tracked 14; pane 1 tracked 14; earlier fields alive 1 of 1; wet layers 50 (0.15 MiB of a 2.39 MiB bound); static memory +5.1 MiB
+match 3 (seed 3): pane 0 tracked 14; pane 1 tracked 14; earlier fields alive 1 of 2; wet layers 52 (0.16 MiB of a 2.39 MiB bound); static memory +5.2 MiB
+match 4 (seed 4): pane 0 tracked 14; pane 1 tracked 14; earlier fields alive 1 of 3; wet layers 52 (0.16 MiB of a 2.39 MiB bound); static memory +5.4 MiB
+match 5 (seed 5): pane 0 tracked 14; pane 1 tracked 14; earlier fields alive 1 of 4; wet layers 52 (0.16 MiB of a 2.39 MiB bound); static memory +5.7 MiB
+match 6 (seed 6): pane 0 tracked 14; pane 1 tracked 14; earlier fields alive 1 of 5; wet layers 52 (0.16 MiB of a 2.39 MiB bound); static memory +6.0 MiB
+mt0 export 0, errors 0
+mt1 export 0, errors 0
+golden.json: mt1 byte-identical to mt0
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+drawn_check exit 0: drawn check passed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+# medium's collapse, worst of 4 readings, both modes
+## mt0
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 541s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 525s, worst of 4 readings (1024x768 at scale 1)
+## mt1
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 539s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 522s, worst of 4 readings (1024x768 at scale 1)

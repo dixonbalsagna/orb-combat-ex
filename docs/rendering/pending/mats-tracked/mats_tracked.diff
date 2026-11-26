@@ -1,0 +1,40 @@
+diff --git a/render/core/mats.gd b/render/core/mats.gd
+index 38d01b8..bea9611 100644
+--- a/render/core/mats.gd
++++ b/render/core/mats.gd
+@@ -137,7 +137,8 @@ func clear() -> void:
+ 
+ ## Register a material (built elsewhere) whose shader bends with the planet curvature and fogs into the sky.
+ func track(m: ShaderMaterial) -> void:
+-	_tracked.append(m)
++	if not _tracked.has(m):   # once: a material tracked again is only brought up to date
++		_tracked.append(m)
+ 	m.set_shader_parameter("bend", _bend)
+ 	m.set_shader_parameter("cam_dist", _dist)
+ 	m.set_shader_parameter("pan_haze", _haze)
+@@ -147,6 +148,11 @@ func track(m: ShaderMaterial) -> void:
+ 		m.set_shader_parameter(k, _sky[k])
+ 
+ 
++## A tracked material its owner has let go (RenderTileGround.drop): it leaves the pushes, and what it holds (its textures) goes with it.
++func untrack(m: ShaderMaterial) -> void:
++	_tracked.erase(m)
++
++
+ ## This pane's planet curvature for the frame (render/shaders/bend.gdshaderinc): bend and the camera's distance to the
+ ## fighter plane, pushed to every bending material when they change.
+ ## How far the planet's bend lowers a point at camera-relative x and depth z this frame: the CPU twin of bent_world()
+diff --git a/render/core/tile_ground.gd b/render/core/tile_ground.gd
+index 4320dda..62334b8 100644
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -383,6 +383,9 @@ func _look_ahead(S: SimState, tk: int) -> void:
+ ## The planet is being built again, so its copies are going: this drive ends with them.
+ func drop() -> void:
+ 	field.forget_wants(get_instance_id())
++	for m in [mat, water_mat]:   # the next match's ground tracks its own: these kept the old field's textures in the pane's RenderMats (QA's hour run)
++		if m != null:
++			pane.mats.untrack(m)
+ 	if _node != null:
+ 		_node.queue_free()
+ 		_node = null
