@@ -3,13 +3,13 @@ extends Node
 ## override.cfg there, so the shipped program and its pck are exactly the ones a player gets; only this autoload is added, from outside.
 ## What it does: lets the game's computer-against-computer match run, starts the next one (the next seed) a few seconds after a KO or a no contest, prints a SOAK line every few seconds, and after
 ## --soak-seconds asks the tree to quit (what "Close the game" does), so the clean close is part of the run. It reads the game; it never writes the sim.
-## Options after "--": --soak-seconds=7200 --soak-sample=10 --soak-seed=1 --soak-cap=900 (a match longer than this many sim seconds is dropped and the next starts).
+## Options after "--": --soak-seconds=7200 --soak-sample=10 --soak-seed=1 --soak-cap=600 (a match longer than this many sim seconds is dropped and the next starts).
 
 
 var secs: float = 7200.0
 var every: float = 10.0
 var seed_next: int = 1
-var cap: float = 900.0
+var cap: float = 600.0
 
 var _main: Node = null
 var _t0: int = 0

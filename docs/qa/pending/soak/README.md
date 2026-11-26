@@ -28,6 +28,7 @@ The package is Orb's private build: it stays in scratch, is never committed and 
 | The run marker is gone after the close |
 | No `SCRIPT ERROR` line |
 | Median at least 58 game ticks a second after the start |
+| Enough match starts to read growth between matches: `seconds / (cap * 1.5 + 60)` of them (7 in a two-hour run at the 600 s cap, which is the default; not asked of a run too short for two) |
 
 Reported, with no pass line (QA does not invent a budget): memory after warm-up, at the end, at most, its slope an hour, and **memory and object count at each match start** (growth across matches is the leak signal; growth within one match is the world filling with craters and damage); worst frame; object, node, resource and orphan counts; `ERROR` and `WARNING` lines. Performance owns the memory budget.
 

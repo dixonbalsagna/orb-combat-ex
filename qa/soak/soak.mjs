@@ -1,5 +1,5 @@
 // The two-hour soak of the built desktop program (QA; EP, path job 14). Windows and Linux.
-//   node qa/soak/soak.mjs --package <zip | tar.gz | unpacked folder> [--seconds 7200] [--sample 10] [--seed 1] [--cap 900] [--max-fps 60] [--out <folder>] [--keep]
+//   node qa/soak/soak.mjs --package <zip | tar.gz | unpacked folder> [--seconds 7200] [--sample 10] [--seed 1] [--cap 600] [--max-fps 60] [--out <folder>] [--keep]
 // The package is the one tools/desktop-local-build.mjs makes. It is unpacked into a scratch folder, and the program runs exactly as shipped: the only addition is an override.cfg beside it naming
 // soak_probe.gd (this folder) as an autoload, which starts computer-against-computer matches back to back, prints SOAK lines and quits after --seconds (qa/soak/soak_probe.gd).
 // Headless (no window), below-normal priority, with its data folders moved into the scratch folder (never the real ones). The harness watches: the process's memory from outside (working set and
@@ -13,6 +13,7 @@ import { tmpdir, setPriority, constants as osConstants } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cleanPaths } from '../../tools/record-paths.mjs';
+import { splitter } from './split-lines.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PROGRAMS = ['orb-combat-ex.exe', 'orb-combat-ex.x86_64'];
@@ -21,7 +22,7 @@ const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const pkg = opt('--package', null);
 if (!pkg || !existsSync(pkg)) { console.error('soak: --package <zip | tar.gz | folder> is needed (tools/desktop-local-build.mjs makes it)'); process.exit(2); }
-const seconds = Number(opt('--seconds', 7200)), every = Number(opt('--sample', 10)), seed = Number(opt('--seed', 1)), cap = Number(opt('--cap', 900)), maxFps = Number(opt('--max-fps', 60));
+const seconds = Number(opt('--seconds', 7200)), every = Number(opt('--sample', 10)), seed = Number(opt('--seed', 1)), cap = Number(opt('--cap', 600)), maxFps = Number(opt('--max-fps', 60));
 const out = resolve(opt('--out', join(tmpdir(), 'orb-soak-' + new Date().toISOString().replace(/[:.]/g, '-'))));
 const keep = argv.includes('--keep');
 
@@ -69,20 +70,18 @@ const args = ['--headless', '--max-fps', String(maxFps), '--', '--frames=2000000
 console.log(`soak: ${program.split(/[\\/]/).pop()} for ${seconds} s (sample ${every} s), build ${build.commit ? build.commit.slice(0, 8) : 'unknown'}; scratch ${scratch}`);
 const child = spawn(program, args, { cwd: gameDir, env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 try { setPriority(child.pid, osConstants.priority.PRIORITY_BELOW_NORMAL); } catch { /* gone */ }
-let partial = '';
-const take = (d) => {
-  gameLog.write(d);
-  partial += d;
-  const parts = partial.split(/\r?\n/);
-  partial = parts.pop();
-  for (const l of parts) {
-    lines.push(l);
-    if (lines.length > 200000) lines.splice(0, 100000);
-    if (l.startsWith('SOAK') && !l.startsWith('SOAK sample')) console.log('  ' + l);
-  }
+const onLine = (l) => {
+  lines.push(l);
+  if (lines.length > 200000) lines.splice(0, 100000);
+  if (l.startsWith('SOAK') && !l.startsWith('SOAK sample')) console.log('  ' + l);
 };
-child.stdout.on('data', take);
-child.stderr.on('data', take);
+// One line buffer a stream (split-lines.mjs says why).
+const streams = [child.stdout, child.stderr].map((stream) => {
+  const cut = splitter(onLine);
+  stream.setEncoding('utf8');
+  stream.on('data', (d) => { gameLog.write(d); cut.take(d); });
+  return cut;
+});
 
 // memory from outside
 let sampler = null, linuxTimer = null;
@@ -115,7 +114,7 @@ const exit = await new Promise((done) => { child.on('close', (code, signal) => d
 clearTimeout(limit);
 if (linuxTimer) clearInterval(linuxTimer);
 if (sampler) { try { sampler.kill(); } catch { /* gone */ } }
-if (partial) lines.push(partial);
+for (const s of streams) s.end();
 await new Promise((r) => gameLog.end(r));
 const wall = (Date.now() - t0) / 1000;
 
@@ -150,7 +149,10 @@ const f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : 'n/a');
 
 // the first two samples carry the boot and the first match's start
 const steady = samples.slice(2);
-const ticksMed = med(steady.map((s) => s.ticksPerSec));
+const ticksMed = med(steady.map((s) => s.ticksPerSec).filter(Number.isFinite));
+// A long run must change matches several times, or growth between matches is never read. A match is at most --cap sim seconds, about 1.5 times that on the clock (holds and cut-ins), plus a minute to spare.
+const matchStarts = started.length + 1;
+const startsWanted = Math.floor(seconds / (cap * 1.5 + 60));
 
 const checks = [
   ['the program found the game and played the computer against itself', samples.length > 0 && aiBoth, `${samples.length} samples`],
@@ -159,6 +161,7 @@ const checks = [
   ['the run marker is gone after the close', markers.length === 0, markers.length ? `${markers.length} left` : 'none left'],
   ['no SCRIPT ERROR line printed',scriptErrors.length === 0, scriptErrors.length ? `${scriptErrors.reduce((a, e) => a + e[1], 0)} lines, ${scriptErrors.length} kinds` : 'none'],
   ['the game kept up: median at least 58 ticks a second after the start', Number.isFinite(ticksMed) && ticksMed >= 58, `median ${f1(ticksMed)}`],
+  ['the run changed matches often enough to read growth between them', startsWanted < 2 || matchStarts >= startsWanted, startsWanted < 2 ? `not asked of a run this short (${matchStarts} started)` : `${matchStarts} started, at least ${startsWanted} wanted`],
 ];
 
 const matches = ended.length;
@@ -166,9 +169,9 @@ const matches = ended.length;
 const boundaries = started.map((l) => ({ ...kv(l), match: Number((/match (\d+) started/.exec(l) || [])[1]) })).filter((m) => Number.isFinite(m.t)).map((m) => { const at = memory.find((x) => x.t >= m.t + 20); return { match: m.match, t: m.t, objects: m.objects, workingMiB: at ? at.workingMiB : NaN, privateMiB: at ? at.privateMiB : NaN }; });
 const sum = {
   program: program.split(/[\\/]/).pop(), build, platform: process.platform, seconds, wallSeconds: Math.round(wall), exit, hung,
-  matches: { started: started.length + 1, ended: matches, byHow: ended.reduce((a, e) => ((a[e.how] = (a[e.how] || 0) + 1), a), {}), medianSimSeconds: med(ended.map((e) => e.simSeconds)) },
+  matches: { started: matchStarts, ended: matches, byHow: ended.reduce((a, e) => ((a[e.how] = (a[e.how] || 0) + 1), a), {}), medianSimSeconds: med(ended.map((e) => e.simSeconds)) },
   memory: { samples: memory.length, warmupSeconds: warm, workingMiB: { afterWarmup: first('workingMiB'), end: last('workingMiB'), max: Math.max(0, ...memory.map((m) => m.workingMiB)), slopeMiBPerHour: slope('workingMiB') }, privateMiB: { afterWarmup: first('privateMiB'), end: last('privateMiB'), max: Math.max(0, ...memory.map((m) => m.privateMiB)), slopeMiBPerHour: slope('privateMiB') } },
-  frames: { fpsMedian: med(steady.map((s) => s.fps)), ticksPerSecMedian: ticksMed, ticksPerSecP5: pct(steady.map((s) => s.ticksPerSec), 0.05), worstFrameMsMedian: med(steady.map((s) => s.worstFrameMs)), worstFrameMsMax: Math.max(0, ...steady.map((s) => s.worstFrameMs)), processMsMedian: med(steady.map((s) => s.processMs)) },
+  frames: { fpsMedian: med(steady.map((s) => s.fps)), ticksPerSecMedian: ticksMed, ticksPerSecP5: pct(steady.map((s) => s.ticksPerSec), 0.05), worstFrameMsMedian: med(steady.map((s) => s.worstFrameMs)), worstFrameMsMax: Math.max(0, ...steady.map((s) => s.worstFrameMs).filter(Number.isFinite)), processMsMedian: med(steady.map((s) => s.processMs)) },
   objects: Object.fromEntries(['objects', 'nodes', 'resources', 'orphans'].map((k) => [k, { afterStart: steady.length ? steady[0][k] : null, end: samples.length ? samples[samples.length - 1][k] : null, max: Math.max(0, ...samples.map((s) => s[k] || 0)) }])),
   boundaries,
   log: { scriptErrors: scriptErrors.slice(0, 20), errors: errors.slice(0, 20), warnings: warnings.slice(0, 20), engineLogFound: !!engineLog, reportFolder: reportLogs },
