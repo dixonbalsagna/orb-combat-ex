@@ -1,0 +1,23 @@
+# GB-010 (QA) and the feet over consecutive matches (Rendering, 2026-11-26). Trees in Rendering's scratch, on main 0d9af28a:
+# u0 = the un-hide candidate (docs/rendering/runs/0d9af28a/unhide-build.txt); u2 = u0 + Camera's rig line (SplitRig.reset re-samples _pl);
+# u3 = u2 + ground_link.diff's planet_view.gd line (sha1 2e01b13c).
+# The probe (scratch gb010_probe2.gd): through main with SplitView attached, three matches of 1800 ticks; per pane: the ground's link to the tile field,
+# store craters drawn twice (an unheld entry with a store record), and GroundField.ground_at off the fighter plane against the tile ground's own height.
+# The feet check: render/tools/feet_check.gd (the marks-baked park's, with --size/--split), ten seeds one after another, 1800 ticks each, split attached.
+# Before u2/u3: the feet on u0 at small and big (u0 has neither the rig line nor the link fix):
+## small (exit 1, 211 s)
+FAIL 10 seeds: 2070 standing samples, 4 over 8 units (0.2%, at most 3%), the worst 37.6 (at most 25)
+## big (exit 1, 350 s)
+FAIL 10 seeds: 3623 standing samples, 25 over 8 units (0.7%, at most 3%), the worst 42.4 (at most 25)
+== u2 (three matches, 1800 ticks each, the split attached)
+match 1 (seed 1, tick 1800, 5 craters, store 6): pane 0: ground -92875 (shared false), ground.tile_field NULL, planet.tile_field set, held 2 store craters drawn twice (unheld with a record): 3; ground_at off the plane vs the tile ground: max 579.1 units over 65 points
+match 2 (seed 2, tick 1800, 2 craters, store 2): pane 0: ground -92875 (shared false), ground.tile_field NULL, planet.tile_field set, held 2 store craters drawn twice (unheld with a record): 0; ground_at off the plane vs the tile ground: max 611.5 units over 65 points
+match 3 (seed 3, tick 1800, 2 craters, store 3): pane 0: ground -92875 (shared false), ground.tile_field NULL, planet.tile_field set, held 2 store craters drawn twice (unheld with a record): 0; ground_at off the plane vs the tile ground: max 1020.4 units over 65 points
+== u3 (three matches, 1800 ticks each, the split attached)
+match 1 (seed 1, tick 1800, 5 craters, store 6): pane 0: ground -92875 (shared false), ground.tile_field set, planet.tile_field set, held 5 store craters drawn twice (unheld with a record): 0; ground_at off the plane vs the tile ground: max 0.0 units over 65 points
+match 2 (seed 2, tick 1800, 2 craters, store 2): pane 0: ground -92875 (shared false), ground.tile_field set, planet.tile_field set, held 2 store craters drawn twice (unheld with a record): 0; ground_at off the plane vs the tile ground: max 0.0 units over 65 points
+match 3 (seed 3, tick 1800, 2 craters, store 3): pane 0: ground -92875 (shared false), ground.tile_field set, planet.tile_field set, held 2 store craters drawn twice (unheld with a record): 0; ground_at off the plane vs the tile ground: max 0.0 units over 65 points
+## feet medium (u3, ten consecutive matches, split) exit 0 (269 s): ok   10 seeds: 3511 standing samples, 0 over 8 units (0.0%, at most 3%), the worst 4.2 (at most 25)
+## feet small (u3, ten consecutive matches, split) exit 0 (206 s): ok   10 seeds: 2070 standing samples, 0 over 8 units (0.0%, at most 3%), the worst 1.2 (at most 25)
+## feet big (u3, ten consecutive matches, split) exit 0 (360 s): ok   10 seeds: 3623 standing samples, 21 over 8 units (0.6%, at most 3%), the worst 10.0 (at most 25)
+FAIL seed 8: 522 standing samples, 21 over 8 units, the worst 10.0 (0 outside every pane, not read)

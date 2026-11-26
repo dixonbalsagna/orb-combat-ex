@@ -1,0 +1,73 @@
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -279,7 +279,7 @@
+ func _bs_begin(S: SimState) -> bool:
+ 	tile_field = null   # the tile ground's: a build starts it again, once its copies are made
+ 	_tile_for = null
+-	if ground != null:
++	if ground != null and source == null:   # a second pane's ground is its source's, already linked this match by its build (GB-010)
+ 		ground.tile_field = null
+ 	for c in _copies:
+ 		remove_child(c)
+--- /dev/null
++++ b/render/tools/ground_link_check.gd
+@@ -0,0 +1,59 @@
++extends SceneTree
++## The ground keeps its tile field across matches (QA's GB-010): through the game's own main with the split attached (as the game has it), three
++## matches one after another; after each match's load and a few ticks, every pane's planet has a tile field and its ground is linked to it (a second
++## pane shares its source's ground, so both read the same field). A ground with no tile field holds no store crater (each drawn twice) and reads the
++## strip's arena heights off the fighter plane (the crowds, the panes).
++## --negative-control: the second pane's view clears the shared ground's link after the second match's load, as it did before the fix; the row must fail.
++##   godot --headless --path . --script res://render/tools/ground_link_check.gd [-- --negative-control]
++
++const SEEDS: Array = [1, 2, 3]
++const TICKS: int = 120
++var main: Node
++var negative: bool = false
++
++
++func _initialize() -> void:
++	negative = OS.get_cmdline_user_args().has("--negative-control")
++	var vpn := SubViewport.new()
++	vpn.size = Vector2i(1280, 720)
++	root.add_child(vpn)
++	main = load("res://render/main.tscn").instantiate()
++	main.manual = true
++	vpn.add_child(main)
++	_run.call_deferred()
++
++
++func _run() -> void:
++	await process_frame
++	main.started = true
++	if not RenderTileGround.on:
++		print("ground link check FAILED: the tile ground is off (it needs the globe ground on, or --tiles)")
++		quit(1)
++		return
++	main.split_view = SplitView.new()
++	main.add_child(main.split_view)
++	main.split_view.attach(main)
++	var fails: int = 0
++	for m in range(SEEDS.size()):
++		main.start_match(int(SEEDS[m]), {"p1": true, "p2": true})
++		while main.host.loading():
++			main.frame(1.0 / 60.0)
++		if negative and m == 1 and main.panes.size() > 1 and main.panes[1] != null:
++			main.panes[1].planet.ground.tile_field = null   # the old second pane's _bs_begin, on the shared ground
++		for k in range(TICKS):
++			main.frame(1.0 / 60.0)
++		var line: String = ""
++		var ok: bool = true
++		for pi in range(main.panes.size()):
++			var pw = main.panes[pi]
++			if pw == null:
++				continue
++			var P: PlanetView = pw.planet
++			var linked: bool = P.tile_field != null and P.ground != null and P.ground.tile_field == P.tile_field
++			ok = ok and linked
++			line += " pane %d %s" % [pi, "linked" if linked else ("NO tile field" if P.tile_field == null else ("ground UNLINKED" if P.ground.tile_field == null else "ground on ANOTHER field"))]
++		print("%s match %d (seed %d, tick %d):%s" % ["ok  " if ok else "FAIL", m + 1, int(SEEDS[m]), main.host.ticks, line])
++		if not ok:
++			fails += 1
++	print("ground link check %s" % ("passed" if fails == 0 else "FAILED (%d of %d matches)" % [fails, SEEDS.size()]))
++	quit(0 if fails == 0 else 1)
