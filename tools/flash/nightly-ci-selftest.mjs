@@ -100,7 +100,8 @@ check('the report is a table with a verdict line', /^clip +primary +red +area-15
   const worseReal = atReal.map((r) => ({ ...r })); worseReal[0] = row(EXPECTED[0], real[EXPECTED[0]].primary + 0.5, real[EXPECTED[0]].red, real[EXPECTED[0]].area15, real[EXPECTED[0]].twoSec);
   check('the real baseline: half a step worse on one clip is red', judge(worseReal, { baseline: real }).code === 4);
   const cn = real['collapse-normal'];
-  check('the real baseline records collapse-normal at its five-night value, 2 on the primary, area and memory readings, so a slip to 2.5 is red (the EP, 2026-11-21: no allowance)', cn.primary === 2 && cn.area15 === 2 && cn.twoSec === 2 && judge([row('collapse-normal', 2.5, 0, 2, 2)], { baseline: real, expected: ['collapse-normal'] }).code === 4 && judge([row('collapse-normal', 2, 0, 2, 2)], { baseline: real, expected: ['collapse-normal'] }).code === 0);
+  check('the real baseline records collapse-normal at what it reads (2 primary and area, 1.5 memory, re-recorded 2026-11-26), so a slip to 2.5 is red (the EP, 2026-11-21: no allowance)', cn.primary === 2 && cn.area15 === 2 && cn.twoSec === 1.5 && judge([row('collapse-normal', 2.5, 0, 2, 1.5)], { baseline: real, expected: ['collapse-normal'] }).code === 4);
+  check('the real baseline keeps collapse-reduced at 3 and under: its reading of 4 is not recorded, so the nightly stays red on it', real['collapse-reduced'].primary === 3 && judge([row('collapse-reduced', 4, 0, 4, 3)], { baseline: real, expected: ['collapse-reduced'] }).code === 4);
 }
 
 // the command, end to end, on a folder of summary files

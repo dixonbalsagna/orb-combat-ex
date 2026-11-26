@@ -1,0 +1,131 @@
+diff --git a/tools/ci-budgets.json b/tools/ci-budgets.json
+index df6513e4..d87d71f9 100644
+--- a/tools/ci-budgets.json
++++ b/tools/ci-budgets.json
+@@ -10,10 +10,10 @@
+     "godot-parity": { "limitMin": 45, "budgetMin": 30, "measuredMin": "14.3", "runs": "45069273235" },
+     "godot-parity-b": { "limitMin": 45, "budgetMin": 30, "measuredMin": "16.4", "runs": "45069273235" },
+     "godot-parity-c": { "limitMin": 45, "budgetMin": 30, "measuredMin": "18.6", "runs": "45069273235" },
+-    "godot-sim": { "limitMin": 45, "budgetMin": 30, "measuredMin": "estimate after moving the hold answer and cross end checks out: 18 to 20, about 27 on a slow runner (before: 28.4, 33.1, 32.5 and a cancel at 45.2)", "runs": "45766752131, 45773515546, 45777928586, 45784210995" },
+-    "godot-roll-render": { "limitMin": 45, "budgetMin": 30, "measuredMin": "estimate with the hold answer check (7.3 to 12.9) moved in: 17 to 21, about 25 on a slow runner (before: 9.2 to 11.1)", "runs": "45766752131, 45773515546, 45777928586, 45784210995" },
++    "godot-sim": { "limitMin": 45, "budgetMin": 30, "measuredMin": "19 (after the 2026-11-26 rebalance; before: 28 to 45, one cancel)", "runs": "45873916749" },
++    "godot-roll-render": { "limitMin": 45, "budgetMin": 30, "measuredMin": "18 (with the hold answer check, moved in 2026-11-26)", "runs": "45873916749" },
+     "godot-roll-render-b": { "limitMin": 45, "budgetMin": 30, "measuredMin": "13.9", "runs": "45069273235" },
+-    "godot-roll-render-c": { "limitMin": 60, "budgetMin": 40, "measuredMin": "estimate with the cross end check (3.5 to 5.7) moved in: about 11 to 15 (before: 6.6 to 9.4)", "runs": "45766752131, 45773515546, 45777928586, 45784210995" },
++    "godot-roll-render-c": { "limitMin": 60, "budgetMin": 40, "measuredMin": "8 (with the cross end check, moved in 2026-11-26)", "runs": "45873916749" },
+     "godot-audio-vfx": { "limitMin": 30, "budgetMin": 20, "measuredMin": "5.9", "runs": "45069273235" },
+     "godot-vfx-hash": { "limitMin": 60, "budgetMin": 40, "measuredMin": "19.2 (18.2 on d168a518 as a step of godot-audio-vfx; over 21 and cancelled with it on bce578a7)", "runs": "45069273235" },
+     "net": { "limitMin": 45, "budgetMin": 30, "measuredMin": "was 31.1 over the budget of 30 (desync 9.4, spectator 1.6, transport 5.3, rollback AIs 5.2, sim AI 4.9, depth 2.8, planet2 about 1.4); after the rebalance expected about 22, from the same steps", "runs": "45069273235" },
+diff --git a/tools/flash/nightly-baseline.json b/tools/flash/nightly-baseline.json
+index acabf5a4..67d55548 100644
+--- a/tools/flash/nightly-baseline.json
++++ b/tools/flash/nightly-baseline.json
+@@ -1,25 +1,25 @@
+ {
+-  "_about": "The nightly flash reading's RECORDED VALUES (the EP, 2026-11-21): each clip's four readings (primary, red, area-15% and two-second memory) as the worst of the six scheduled nights of 15 to 20 November 2026 (collapse-normal excepted: the EP recorded it at its five-night value, 2 on the primary, area and memory readings, with no allowance, so the one noisy night of 19 November is NOT in it) (runs 43711627577, 43870618754, 44094333781, 44311081706, 44533410579, 44741476400; all on commit 09aa0f44; docs/tools/runs/09aa0f44/flash-nightly-scheduled-2026-11-15-to-20.md). tools/flash/nightly-ci.mjs --baseline turns the nightly red when a clip reads WORSE than its recorded value on any of the four, when a clip has no recorded value, or when a reading is missing; it is green only when every clip equals or beats its recorded value. This file is read ONLY by the nightly: the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line and do not use it. Several of these values are OVER the line of 3 (the clash clips, signature reduced): they are recorded as they are, so the nightly says nothing new about them until they get worse. Update a value by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.",
+-  "recorded": "2026-11-21",
+-  "basis": "the worst of the six nights per reading (clash-night-normal: of five, 16 Nov was not read), except collapse-normal: its five-night value, 2 / 2 / 2 (the EP, 2026-11-21: no allowance; a noisy night going red is the tripwire doing its job and a slip from 2 to 3 must show). The one night it read 3 / 3 / 4, 19 Nov, is left out on purpose. rushcity-normal and rushcity-reduced (2026-11-21, the EP: main fails them and the nightly says so honestly) are recorded from the local full reading of main d168a518 (hardware, 960x540, the nightly page words; the window the runner reads picks the same events and the same four numbers), NOT from a scheduled night: the first scheduled nights may read differently in software, and a value is changed only by hand with the EP's word.",
++  "_about": "The nightly flash reading's RECORDED VALUES (the EP, 2026-11-21; re-recorded 2026-11-26, see `basis`). tools/flash/nightly-ci.mjs --baseline turns the nightly red when a clip reads WORSE than its recorded value on any of the four, when a clip has no recorded value, or when a reading is missing; it is green only when every clip equals or beats its recorded value. This file is read ONLY by the nightly: the outside-tester gate (G21), the release pass and the take-down line of 3 read the absolute line and do not use it. rushcity is recorded at 3, over our gate of 2.5 and on the line of 3: the nightly says nothing new about it until it gets worse. Update a value by hand, with the EP's word, when a clip reads better and stays better; never to follow a clip that reads worse.",
++  "recorded": "2026-11-26",
++  "basis": "the worse of two dispatched nightlies on d9bc2f07 (runs 45873938790 and 45873942592; they read the same on every figure), the first with the re-cut windows after GB-010 (docs/tools/runs/d9bc2f07/flash-nightly-baseline.md). collapse-reduced is NOT re-recorded: it reads 4 / 4 / 3 (primary, area, two-second memory), worse than the value kept here and over the take-down line of 3, and a value is never changed to follow a clip that reads worse: the nightly stays red on it until it is fixed or explained.",
+   "clips": {
+     "clash-normal": {
+-      "primary": 4.5,
++      "primary": 0,
+       "red": 0,
+-      "area15": 4.5,
+-      "twoSec": 4.5
++      "area15": 0,
++      "twoSec": 0
+     },
+     "clash-reduced": {
+-      "primary": 6.5,
++      "primary": 0,
+       "red": 0,
+-      "area15": 6.5,
+-      "twoSec": 6.5
++      "area15": 0,
++      "twoSec": 0
+     },
+     "collapse-normal": {
+       "primary": 2,
+       "red": 0,
+       "area15": 2,
+-      "twoSec": 2
++      "twoSec": 1.5
+     },
+     "collapse-reduced": {
+       "primary": 3,
+@@ -28,40 +28,40 @@
+       "twoSec": 2.5
+     },
+     "signature-normal": {
+-      "primary": 3,
++      "primary": 2,
+       "red": 0,
+-      "area15": 2.5,
+-      "twoSec": 2.5
++      "area15": 2,
++      "twoSec": 0.5
+     },
+     "signature-reduced": {
+-      "primary": 4,
++      "primary": 1,
+       "red": 0,
+-      "area15": 5,
+-      "twoSec": 2.5
++      "area15": 1,
++      "twoSec": 0.5
+     },
+     "clash-night-normal": {
+-      "primary": 3.5,
++      "primary": 0,
+       "red": 0,
+-      "area15": 4.5,
+-      "twoSec": 3.5
++      "area15": 0,
++      "twoSec": 0
+     },
+     "clash-night-reduced": {
+-      "primary": 5.5,
++      "primary": 0,
+       "red": 0,
+-      "area15": 5.5,
+-      "twoSec": 5.5
++      "area15": 0,
++      "twoSec": 0
+     },
+     "rushcity-normal": {
+-      "primary": 4.5,
++      "primary": 3,
+       "red": 0,
+-      "area15": 6,
+-      "twoSec": 4.5
++      "area15": 3,
++      "twoSec": 2.5
+     },
+     "rushcity-reduced": {
+-      "primary": 5.5,
++      "primary": 3,
+       "red": 0,
+-      "area15": 7,
+-      "twoSec": 5.5
++      "area15": 3,
++      "twoSec": 2
+     }
+   }
+ }
+diff --git a/tools/flash/nightly-ci-selftest.mjs b/tools/flash/nightly-ci-selftest.mjs
+index 2a45302a..89578856 100644
+--- a/tools/flash/nightly-ci-selftest.mjs
++++ b/tools/flash/nightly-ci-selftest.mjs
+@@ -100,7 +100,8 @@ check('the report is a table with a verdict line', /^clip +primary +red +area-15
+   const worseReal = atReal.map((r) => ({ ...r })); worseReal[0] = row(EXPECTED[0], real[EXPECTED[0]].primary + 0.5, real[EXPECTED[0]].red, real[EXPECTED[0]].area15, real[EXPECTED[0]].twoSec);
+   check('the real baseline: half a step worse on one clip is red', judge(worseReal, { baseline: real }).code === 4);
+   const cn = real['collapse-normal'];
+-  check('the real baseline records collapse-normal at its five-night value, 2 on the primary, area and memory readings, so a slip to 2.5 is red (the EP, 2026-11-21: no allowance)', cn.primary === 2 && cn.area15 === 2 && cn.twoSec === 2 && judge([row('collapse-normal', 2.5, 0, 2, 2)], { baseline: real, expected: ['collapse-normal'] }).code === 4 && judge([row('collapse-normal', 2, 0, 2, 2)], { baseline: real, expected: ['collapse-normal'] }).code === 0);
++  check('the real baseline records collapse-normal at what it reads (2 primary and area, 1.5 memory, re-recorded 2026-11-26), so a slip to 2.5 is red (the EP, 2026-11-21: no allowance)', cn.primary === 2 && cn.area15 === 2 && cn.twoSec === 1.5 && judge([row('collapse-normal', 2.5, 0, 2, 1.5)], { baseline: real, expected: ['collapse-normal'] }).code === 4);
++  check('the real baseline keeps collapse-reduced at 3 and under: its reading of 4 is not recorded, so the nightly stays red on it', real['collapse-reduced'].primary === 3 && judge([row('collapse-reduced', 4, 0, 4, 3)], { baseline: real, expected: ['collapse-reduced'] }).code === 4);
+ }
+ 
+ // the command, end to end, on a folder of summary files
