@@ -22,6 +22,8 @@
           "arenaCols": { "type": "integer", "minimum": 600, "description": "The longest ring a fight is played on (on a field world: the planet's own round)." },
           "bakeStride": { "type": "integer", "minimum": 1, "description": "The bake's spacing in 128-unit nodes." },
           "offered": { "type": "boolean", "description": "A size a player can reach: in the menu's list, and what a setup's planetSize can name. A size that is not offered plays medium, with an error (held)." },
+          "spawnReach": { "type": "number", "minimum": 0, "description": "The spawn is within this many units of a place (0 or missing: none)." },
+          "maxBuildingShare": { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "No building taller than this share of the planet's radius (tiny and small): structures stay under the play height." },
           "places": {
             "type": "object",
             "description": "planet.json numbers this size changes: the place counts and the ring's minimums.",

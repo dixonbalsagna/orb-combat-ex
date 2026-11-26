@@ -42,6 +42,8 @@ static var G_REPOSE: float = 1.25
 static var G_REPEATS: int = 0
 static var G_SETTLE: bool = true
 static var G_FURROW: bool = false
+static var G_FLATTEN: bool = false      # a crater's bowl is cut on a level floor: the hills under it do not stay inside it (docs/world/crater-flatten.md)
+static var G_FLATTEN_FADE: float = 1.45 # ... fully flat inside the lip, easing back to the ground by this many radii
 static var G_SETTLE_G: bool = false   # grooves (trenches, scars) settle to the angle of repose too: off until step 3 (trench widths by force), see globe-step2.md
 
 
@@ -79,6 +81,24 @@ static func setSettleGrooves(on_: bool) -> void:
 	if not _loaded:
 		_load()
 	G_SETTLE_G = on_
+
+
+static func globeFlatten() -> bool:
+	if not _loaded:
+		_load()
+	return G_FLATTEN
+
+
+static func globeFlattenFade() -> float:
+	if not _loaded:
+		_load()
+	return G_FLATTEN_FADE
+
+
+static func setFlatten(on_: bool) -> void:
+	if not _loaded:
+		_load()
+	G_FLATTEN = on_
 
 
 static func globeFurrow() -> bool:
@@ -154,6 +174,8 @@ static func _load() -> void:
 	G_REPEATS = 0
 	G_SETTLE = true
 	G_FURROW = false
+	G_FLATTEN = false
+	G_FLATTEN_FADE = 1.45
 	G_SETTLE_G = false
 	for k in range(WorldGround.LOOKS.size()):
 		_shapes.append(NONE)
@@ -197,7 +219,7 @@ static func _load() -> void:
 			_errors.append("craters.json: meteor needs eMult (at least 1) and rMax (at least 600)")
 	if j.has("globe"):
 		var gl = j.globe
-		if not (gl is Dictionary) or float(gl.get("floor", -1.0)) >= 0.0 or float(gl.get("ceil", 1.0)) <= 0.0 or float(gl.get("repose", 1.25)) < 0.5 or int(gl.get("repeats", 0)) < 0 or int(gl.get("repeats", 0)) > 8:
+		if not (gl is Dictionary) or float(gl.get("floor", -1.0)) >= 0.0 or float(gl.get("ceil", 1.0)) <= 0.0 or float(gl.get("repose", 1.25)) < 0.5 or int(gl.get("repeats", 0)) < 0 or int(gl.get("repeats", 0)) > 8 or float(gl.get("flattenFade", 1.45)) <= 1.0 or float(gl.get("flattenFade", 1.45)) > 2.0:
 			_errors.append("craters.json: globe is {floor below 0, ceil above 0, repose at least 0.5, repeats 0 to 8, settle}")
 	if not _errors.is_empty():
 		for k in range(_shapes.size()):
@@ -210,6 +232,8 @@ static func _load() -> void:
 		G_REPEATS = int(j.globe.get("repeats", 0))
 		G_SETTLE = bool(j.globe.get("settle", true))
 		G_FURROW = bool(j.globe.get("furrow", false))
+		G_FLATTEN = bool(j.globe.get("flatten", false))
+		G_FLATTEN_FADE = float(j.globe.get("flattenFade", 1.45))
 		G_SETTLE_G = bool(j.globe.get("settleGrooves", false))
 	_d = j
 	_parsed = j

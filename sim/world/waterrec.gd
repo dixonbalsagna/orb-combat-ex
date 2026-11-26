@@ -112,7 +112,7 @@ static func lakeOf(P: WorldPlanet.Planet, F: WorldField.Field, circ: Dictionary,
 		var dy: float = (d[1] - q[1]) * R
 		var dz: float = (d[2] - q[2]) * R
 		far2 = maxf(far2, dx * dx + dy * dy + dz * dz)
-	return {"k": "lake", "id": id, "c": q, "r": sqrt(far2) + 2.0 * float(F.N > 0) * (38400.0 / float(F.N)), "level": level, "nodes": nodes, "face": face}
+	return {"k": "lake", "id": id, "c": q, "r": sqrt(far2) + 2.0 * float(F.N > 0) * (float(SimConst.PLANET_NC) * SimConst.COL / 4.0 / float(F.N)), "level": level, "nodes": nodes, "face": face}
 
 
 ## The depth of a lake record's water at a point whose ground is h (units; 0 when the lake does not hold the point).

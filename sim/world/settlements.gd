@@ -449,6 +449,7 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
 		di += 1
 	assignPeople(out, float(s.pop_share))
 	for b in out:
+		b.h = WorldPlanetSize.capHeight(b.h)   # a small planet's buildings stay under its play height (sizes.json maxBuildingShare; medium's are as they were)
 		b.floors = WorldBrunt.floorCount(b.h)
 		var h0: float = b.h / WS
 		b.maxhp = h0 * (6.0 if b.kind == "tower" else 3.0) * b.hp_mult

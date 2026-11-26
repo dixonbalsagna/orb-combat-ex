@@ -210,6 +210,9 @@ static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float
 	var sum: float = 0.0
 	var groove: float = 0.0
 	var lip: float = 0.0
+	var flat: bool = WorldCraters.globeFlatten()
+	var fk: int = -1        # the crater whose level floor holds here most (flatten)
+	var fw: float = 0.0
 	for k in lst:
 		if k == skip or (not sup.is_empty() and sup.has(k)):
 			continue
@@ -230,6 +233,12 @@ static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float
 			var u: float = d / S.store[o + 4]
 			if u < 2.0:
 				sum += WorldCrater.profile(u, S.store[o + 5], S.store[o + 6])
+				if flat and kd == KIND_CRATER and u < WorldCraters.globeFlattenFade():   # the weight of the level floor: 1 inside the lip, easing to 0 at flattenFade
+					var fu: float = 1.0 - clampf((u - 1.0) / (WorldCraters.globeFlattenFade() - 1.0), 0.0, 1.0)
+					var wk: float = fu * fu * (3.0 - 2.0 * fu)
+					if wk > fw:
+						fw = wk
+						fk = k
 		elif kd == KIND_HEAP:
 			var uh: float = d / S.store[o + 4]
 			if uh < 1.0:
@@ -242,6 +251,8 @@ static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float
 				groove = minf(groove, -S.store[o + 5] * ts * ts)
 	# A groove is cut to its depth below the ground: where the marks are below the original ground (sum <= 0) it takes the lower of the two, where they stand above it (a rim, an apron, a heap) it cuts down from there.
 	# The lower of the two alone left a cliff as high as the rim at the groove's edge, where the groove (about 0) took over from a rim (up to 0.4 of a bowl's depth).
+	if fk >= 0:   # the level floor: the ground there is the ground at the crater's centre, not the hills under the bowl (delta = w x (the centre's ground - the ground here); the bowl's profile is already in sum)
+		sum += fw * (_centreGround(S, ent, fk) - _fieldH(S, qx, qy, qz))
 	var h: float = ((minf(sum, groove) if sum <= 0.0 else sum + groove) if groove < 0.0 else sum) + lip
 	return clampf(h, WorldCraters.globeFloor(), WorldCraters.globeCeil())
 
@@ -593,3 +604,27 @@ static func _chord(S, o: int, q: Array, R: float) -> float:
 	var dy: float = (q[1] - S.store[o + 2]) * R
 	var dz: float = (q[2] - S.store[o + 3]) * R
 	return sqrt(dx * dx + dy * dy + dz * dz)
+
+
+## The field's own ground at a unit direction, as SimField reads it before the store (the field and World's records, the finest level): what a level floor is measured against. Pure in the planet and the records.
+static func _fieldH(S, qx: float, qy: float, qz: float) -> float:
+	var P: WorldPlanet.Planet = WorldPlanet.make(int(S.planetRing.seed))
+	var F = WorldField.of(P)
+	WorldField.sample(F, qx, qy, qz, 1)
+	var h: float = F.oh
+	if not S.fieldRecs.is_empty():
+		h = WorldField.applyRecords(S, qx, qy, qz, h)
+	return h
+
+
+## The ground at crater k's centre before the store (memoised in the derived index: a pure function of the record and the field, so a rebuild finds the same number).
+static func _centreGround(S, ent: Dictionary, k: int) -> float:
+	var fc: Dictionary = ent.get("fc", {})
+	if not ent.has("fc"):
+		ent["fc"] = fc
+	if fc.has(k):
+		return fc[k]
+	var o: int = k * STRIDE
+	var h: float = _fieldH(S, S.store[o + 1], S.store[o + 2], S.store[o + 3])
+	fc[k] = h
+	return h

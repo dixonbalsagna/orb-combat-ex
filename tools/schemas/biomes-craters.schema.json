@@ -48,7 +48,7 @@
     "globe": {
       "type": "object",
       "description": "The planet store's rules for a mark (WorldCraters.globe*; docs/world/globe-step2.md). Optional: missing, the defaults are these numbers with repeats 0. Read whether or not the module is on.",
-      "required": ["floor", "ceil", "repose", "repeats", "settle", "settleGrooves", "furrow"],
+      "required": ["floor", "ceil", "repose", "repeats", "settle", "settleGrooves", "furrow", "flatten", "flattenFade"],
       "additionalProperties": false,
       "patternProperties": { "^_": { "type": "string" } },
       "properties": {
@@ -58,7 +58,9 @@
         "repeats": { "type": "integer", "minimum": 0, "maximum": 8 },
         "settle": { "type": "boolean" },
         "settleGrooves": { "type": "boolean" },
-        "furrow": { "type": "boolean" }
+        "furrow": { "type": "boolean" },
+        "flatten": { "type": "boolean" },
+        "flattenFade": { "type": "number", "exclusiveMinimum": 1, "maximum": 2 }
       }
     },
     "classes": {

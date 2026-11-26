@@ -9,14 +9,16 @@
     "rMax": 6100.0
   },
   "globe": {
-    "_about": "The planet store's rules for a mark (docs/world/globe-step2.md; terrain-globe-plan.md 4.3), read whether or not the module is on. floor and ceil hold the store's ground between them (the strip's -260 and +120 x 8). repose: the wall slope past which a new crater settles wider and shallower (volume kept). repeats: how many times a blow on one spot grows its crater into the old one (0 is off: each blow digs its own, held by the shaft cap; the radius factor is brunt.json repeatCraterGrow). settle: the settling on or off. settleGrooves: a trench or scar is also widened to the angle of repose (off: Camera's chase_rush_check moves with it; step 3 sets trench widths by force). furrow: a glancing impact also cuts a short trench behind it along its heading (off until step 3's trenches are looked at).",
+    "_about": "The planet store's rules for a mark (docs/world/globe-step2.md; terrain-globe-plan.md 4.3), read whether or not the module is on. floor and ceil hold the store's ground between them (the strip's -260 and +120 x 8). repose: the wall slope past which a new crater settles wider and shallower (volume kept). repeats: how many times a blow on one spot grows its crater into the old one (0 is off: each blow digs its own, held by the shaft cap; the radius factor is brunt.json repeatCraterGrow). settle: the settling on or off. settleGrooves: a trench or scar is also widened to the angle of repose (off: Camera's chase_rush_check moves with it; step 3 sets trench widths by force). flatten: a crater is cut on a level floor, the height of the ground at its centre, so the hills under the bowl do not stay inside it (fully level inside the lip, easing back to the ground by flattenFade radii; docs/world/crater-flatten.md; off until Rendering has seen it). furrow: a glancing impact also cuts a short trench behind it along its heading (off until step 3's trenches are looked at).",
     "floor": -2080.0,
     "ceil": 960.0,
     "repose": 1.25,
     "repeats": 0,
     "settle": true,
     "settleGrooves": false,
-    "furrow": false
+    "furrow": false,
+    "flatten": false,
+    "flattenFade": 1.45
   },
   "classes": {
     "paving": { "radius": 1.0, "depth": 1.0, "rim": 1.0, "steep": 1.0, "cracks": "slabs_tilted", "ejecta": "slab_chunks" },

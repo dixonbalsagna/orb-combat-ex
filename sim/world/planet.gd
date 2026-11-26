@@ -907,10 +907,22 @@ static func meets(c: Dictionary, e: Dictionary, relaxed: bool) -> bool:
 
 ## ===================================================================== the picker
 ## A touch-down point from the draw `touch` (an integer): uniform on the sphere, redrawn (up to touchTries) until it is on land when touchLand is 1.
+## The distance in units from a unit direction to the nearest place's edge (the arc to its centre less its radius); a large number for a planet with no places.
+static func nearestPlace(P: Planet, p: Array) -> float:
+	var near: float = 1.0e30
+	for i in range(P.n):
+		var dot: float = maxf(-1.0, minf(1.0, p[0] * P.px[i] + p[1] * P.py[i] + p[2] * P.pz[i]))
+		near = minf(near, P.R * acosf(dot) - P.rad[i])
+	return near
+
+
 static func touchPoint(P: Planet, touch: int) -> Array:
 	var c: Dictionary = P.c
 	var tries: int = int(c.touchTries) if int(c.touchLand) != 0 else 1
 	var p: Array = []
+	var reach: float = WorldPlanetSize.spawnReach()
+	var best: Array = []
+	var bestD: float = 1.0e30
 	for k in range(tries):
 		var a: float = SimRng.keyed(P.seed, "touch-a", touch * 64 + k)
 		var b: float = SimRng.keyed(P.seed, "touch-b", touch * 64 + k)
@@ -919,8 +931,15 @@ static func touchPoint(P: Planet, touch: int) -> Array:
 			return p
 		surfAt(P, p[0], p[1], p[2])
 		if P.outH >= 0.0 and P.outB != BIO_SEA_ICE:
-			return p
-	return p
+			if reach <= 0.0:
+				return p
+			var dn: float = nearestPlace(P, p)   # a size that asks it (sizes.json spawnReach): the spawn is within a launch's reach of a place, else the nearest of the tries
+			if dn <= reach:
+				return p
+			if dn < bestD:
+				bestD = dn
+				best = p
+	return best if not best.is_empty() else p
 
 
 ## The candidate circles through T, in a seeded order: through each standing city, and randomBearings of random bearing. Each is {n, u, v, idx} (idx: the order drawn).

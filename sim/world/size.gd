@@ -51,6 +51,8 @@ static func _load() -> void:
 			_errors.append("sizes.json: %s: cols is a multiple of 64 (a face edge, cols / 16 nodes of 128 units, is a multiple of 4 so the bake lines up)" % k)
 		if int(r.arenaCols) < 600 or int(r.arenaCols) > cols or int(r.arenaCols) % 8 != 0:
 			_errors.append("sizes.json: %s: arenaCols is 600 to cols, a multiple of 8" % k)
+		if r.has("maxBuildingShare") and (float(r.maxBuildingShare) <= 0.0 or float(r.maxBuildingShare) > 1.0):
+			_errors.append("sizes.json: %s: maxBuildingShare is above 0 and at most 1" % k)
 		if int(r.bakeStride) < 1 or (cols / 16) % int(r.bakeStride) != 0:
 			_errors.append("sizes.json: %s: bakeStride divides the face edge's nodes (cols / 16)" % k)
 	if not _errors.is_empty():
@@ -141,6 +143,31 @@ static func bakeStrideFor(cols: int) -> int:
 		if int(_d.sizes[k].cols) == cols:
 			return int(_d.sizes[k].bakeStride)
 	return 4
+
+
+## A building's height held to this size's share of the planet's radius (sizes.json maxBuildingShare), else as it is: medium and every size without the key return h itself, bit for bit.
+static func capHeight(h: float) -> float:
+	if not _loaded:
+		_load()
+	if SimConst.PLANET_NC == SimConst.PLANET_NC_MEDIUM or _d.is_empty():
+		return h
+	for k in _names:
+		if int(_d.sizes[k].cols) == SimConst.PLANET_NC:
+			var sh: float = float(_d.sizes[k].get("maxBuildingShare", 0.0))
+			return h if sh <= 0.0 else minf(h, sh * float(SimConst.PLANET_NC) * SimConst.COL / (2.0 * SimMathx.PI))
+	return h
+
+
+## How near a place the spawn must be on this size, in units (sizes.json spawnReach: a base launch's reach, 6,600), or 0 for none (medium: its touch points are as they were).
+static func spawnReach() -> float:
+	if not _loaded:
+		_load()
+	if SimConst.PLANET_NC == SimConst.PLANET_NC_MEDIUM or _d.is_empty():
+		return 0.0
+	for k in _names:
+		if int(_d.sizes[k].cols) == SimConst.PLANET_NC:
+			return float(_d.sizes[k].get("spawnReach", 0.0))
+	return 0.0
 
 
 ## The planet.json numbers this size changes (the places: cities, towns and the ring's minimums), or {} for medium: merged over P.c when the planet is made.

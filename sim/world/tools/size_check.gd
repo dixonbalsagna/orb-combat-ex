@@ -178,6 +178,42 @@ func _init() -> void:
 	var Sx := _match(_setup("enormous"), 30)
 	ok(Sx.planetNC == 4800, "a size the data does not have plays medium")
 	SimCore.dispose(Sx)
+	print("buildings stay under a small planet's play height (Game Design, planet-sizes.md)")
+	for nm in ["tiny", "small", "medium", "big"]:
+		var Sb := _match(_setup(nm), 30)
+		var tallest: float = 0.0
+		for b in Sb.buildings:
+			tallest = maxf(tallest, float(b.h))
+		var Rr: float = float(Sb.planetNC) * SimConst.COL / (2.0 * SimMathx.PI)
+		var share: float = 0.3 if (nm == "tiny" or nm == "small") else 0.0   # Game Design's ruling (planet-sizes.md), not the data's word for it: the data must meet it
+		if share > 0.0:
+			ok(tallest <= share * Rr + 1.0e-6 and tallest > 0.0, "%s: the tallest of %d buildings is %.0f, within %.0f (%.1f of the radius %.0f)" % [nm, Sb.buildings.size(), tallest, share * Rr, share, Rr])
+		else:
+			ok(tallest > 4000.0, "%s: no cap, the tallest building is %.0f (the data's landmarks stand as they were)" % [nm, tallest])
+		SimCore.dispose(Sb)
+	print("the spawn pair is within a launch of a town or city, at every size")
+	var reach: float = 6600.0   # a base send reach (planet-overhaul.md 4.3)
+	var unreached: int = 0
+	var combos: int = 0
+	var worst: float = 0.0
+	for nm in offered:
+		SimConst.setPlanet(WorldPlanetSize.colsOf({"planet": 7, "planetSize": nm}))
+		WorldClimate.useGen(3)
+		for pl in WorldDefault.K_POOL:
+			var P: WorldPlanet.Planet = WorldPlanet.make(pl)
+			for tc in WorldDefault.K_TOUCHES:
+				var T: Array = WorldPlanet.touchPoint(P, tc)
+				var near: float = 1.0e30
+				for i in range(P.n):
+					var dot: float = clampf(T[0] * P.px[i] + T[1] * P.py[i] + T[2] * P.pz[i], -1.0, 1.0)
+					near = minf(near, P.R * acos(dot) - P.rad[i])
+				combos += 1
+				worst = maxf(worst, near)
+				if near > reach:
+					unreached += 1
+					print("     %s planet %d touch %d: the nearest place is %.0f from the spawn" % [nm, pl, tc, near])
+	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
+	ok(unreached == 0, "%d spawns (5 sizes x the pool's planets x touches): all within a base launch's reach (%.0f) of a place; the farthest is %.0f" % [combos, reach, worst])
 	print("the host's loader (strict) makes a planet at its size")
 	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
 	SimPlanetLoad.strict = true
