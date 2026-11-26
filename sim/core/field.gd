@@ -97,7 +97,7 @@ static func _planet(seed: int, gen: int):
 
 ## The hash a gen 3 setup adds to the replay's data and so to the match key: the bake's, and keySample seeded canonical nodes', each read fresh from the planet's function and as this machine holds it, so a build that computes the field differently, or a cache that stale, is refused at the handshake. Finishes the bake if it isn't yet (a replay's header, a tool's); a host's load has done it.
 static func keyHash(seed: int, gen: int = 3) -> String:
-	var k: int = seed * 4 + gen
+	var k: int = (seed * 4 + gen) ^ ((SimConst.PLANET_NC - SimConst.PLANET_NC_MEDIUM) << 40)   # the planet's size is in the key (medium's is as it was)
 	var c = _keyOf.get(k)
 	if c != null:
 		return c

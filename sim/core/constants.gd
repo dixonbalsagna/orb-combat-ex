@@ -18,12 +18,19 @@ const TRAV_LAUNCH: float = 6.0 # horizontal launch speed multiplier (impact dama
 const BOOST_NEAR: float = 1500.0   # free-flight boost starts when the opponent is farther than this ...
 const BOOST_FAR: float = 12000.0   # ... and is full at this separation
 const COL: float = 32.0        # terrain column width (0.43 fighter heights)
-const PLANET_NC: int = 4800    # the planet's circumference in columns: fixed (the planet is 4,800 columns round whatever the arena is)
+const PLANET_NC_MEDIUM: int = 4800   # medium, today's planet: 4,800 columns round
+static var PLANET_NC: int = 4800     # the planet's circumference in columns: a match's setting (WorldPlanetSize; setPlanet at the top of newMatch), medium unless its setup names a size. The arena is never longer
 ## The arena's length (docs/world/shifting-arena-design.md): the planet's great circle by default, or a smaller ring of a planet's plane through the pair. Set once at the top
 ## of newMatch from setup.arena (its columns), so a match always sets it and none is stale; absent means the planet's own 4,800.
 static var W: float = 9600.0 * PS   # the arena's length: x wraps into [0, W)
 static var NC: int = 4800           # number of terrain columns (W / COL)
 static var HALF: float = 9600.0 * PS / 2.0    # the largest shortest-arc separation
+
+
+## The planet's size for this match (World, docs/world/planet-sizes.md): its columns round. COL does not change, so a bigger planet is more ground and a smaller one less. Medium is byte for byte today's.
+static func setPlanet(cols: int) -> void:
+	PLANET_NC = cols
+	SimField.R = float(cols) * COL / SimMathx.TAU
 
 
 static func setArena(cols: int) -> void:

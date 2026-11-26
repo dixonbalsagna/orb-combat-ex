@@ -108,6 +108,7 @@ class MatchJob extends RefCounted:
 			return true
 		pieces += 1
 		if phase > 0:   # the match's statics, as the head set them (another sim may have stepped since)
+			SimConst.setPlanet(S.planetNC)
 			SimConst.setArena(S.arenaCols)
 			WorldBiomes.planetCols = planetCols
 			WorldBiomes.fineCols = fineCols
@@ -158,7 +159,9 @@ static func _mHead(J: MatchJob) -> void:
 		DirAI.level = DirAI.levelOf(setup)
 	S.game.seed = float(J.seed & 0xFFFFFFFF)
 	S.rng = SimRng.new(J.seed & 0xFFFFFFFF)
-	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
+	S.planetNC = WorldPlanetSize.colsOf(setup)   # the planet's size in columns (World, data/biomes/sizes.json): medium's 4,800 unless the setup names a size
+	SimConst.setPlanet(S.planetNC)
+	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's own round (the size's cap past big)
 	SimConst.setArena(S.arenaCols)
 	WorldBiomes.planetCols = PackedByteArray()
 	WorldBiomes.fineCols = PackedByteArray()
@@ -318,7 +321,7 @@ static func _mEnd(J: MatchJob) -> void:
 static func _arenaCols(setup: Dictionary) -> int:
 	var arena = setup.get("arena", null)
 	if arena == null:
-		return SimConst.PLANET_NC
+		return mini(SimConst.PLANET_NC, WorldPlanetSize.arenaCap(SimConst.PLANET_NC))
 	var n = arena.get("cols", null) if arena is Dictionary else null
 	var ok: bool = setup.has("planet") and (n is int or n is float) and float(n) == floorf(float(n)) and float(n) >= 600.0 and float(n) <= float(SimConst.PLANET_NC) and int(n) % 8 == 0
 	if not ok:
@@ -339,6 +342,8 @@ static func step(S: SimState, inputs = null) -> bool:
 
 
 static func _step(S: SimState, inputs) -> bool:
+	if SimConst.PLANET_NC != S.planetNC:
+		SimConst.setPlanet(S.planetNC)
 	if SimConst.NC != S.arenaCols or WorldBiomes.worldId != S.worldId:   # the arena's length and a planet's biomes are statics: a match takes its own again, whatever another match has built since (two sims alive in one process)
 		SimConst.setArena(S.arenaCols)
 		WorldBiomes.planetCols = S.planetCols
