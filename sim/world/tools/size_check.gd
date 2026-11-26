@@ -191,6 +191,32 @@ func _init() -> void:
 		else:
 			ok(tallest > 4000.0, "%s: no cap, the tallest building is %.0f (the data's landmarks stand as they were)" % [nm, tallest])
 		SimCore.dispose(Sb)
+	print("... and on the plan path (plans everywhere on: the places are laid by plan and memoised; a medium match first, then the small ones)")
+	WorldPlan.everywhereOverride = 1
+	var Smed := _match(_setup("medium"), 30)
+	SimCore.dispose(Smed)
+	for nm in ["tiny", "small"]:
+		var Sp := _match(_setup(nm), 30)
+		var tall: float = 0.0
+		for b in Sp.buildings:
+			tall = maxf(tall, float(b.h))
+		var Rp: float = float(Sp.planetNC) * SimConst.COL / (2.0 * SimMathx.PI)
+		ok(Sp.buildings.size() > 0 and tall <= 0.3 * Rp + 1.0e-6, "%s, plans on after a medium match: the tallest of %d buildings is %.0f, within %.0f" % [nm, Sp.buildings.size(), tall, 0.3 * Rp])
+		var h1: String = str(SimHash.stateHash(Sp).gameplay)
+		SimCore.dispose(Sp)
+		var Sq := _match(_setup(nm), 30)
+		ok(str(SimHash.stateHash(Sq).gameplay) == h1, "%s, plans on: the same setup plays the same match twice" % nm)
+		SimCore.dispose(Sq)
+	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
+	var P7 := WorldPlanet.make(7)
+	var km: String = WorldPlan.placesKey(P7)
+	var ks: Array = []
+	for nm in ["tiny", "small", "big", "huge"]:
+		SimConst.setPlanet(WorldPlanetSize.colsOf({"planet": 7, "planetSize": nm}))
+		ks.append(WorldPlan.placesKey(P7))
+	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
+	ok(not km.contains("cols") and WorldPlan.placesKey(P7) == km and ks.size() == 4 and ks[0] != km and ks[1] != km and ks[2] != km and ks[3] != km and ks[0] != ks[1] and ks[2] != ks[3], "the kept places' key carries the size when it is not medium (medium's is as it was), so a tiny planet never reads a medium planet's towers")
+	WorldPlan.everywhereOverride = -1
 	print("the spawn pair is within a launch of a town or city, at every size")
 	var reach: float = 6600.0   # a base send reach (planet-overhaul.md 4.3)
 	var unreached: int = 0

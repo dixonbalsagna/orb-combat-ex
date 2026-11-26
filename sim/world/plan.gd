@@ -83,7 +83,12 @@ const PLACES_REV: int = 2   # 2: the layouts the kept places hold are made for t
 
 
 static func placesKey(P: WorldPlanet.Planet) -> String:
-	return "places|rev %d|seed %d|%s|%s|%s|%s" % [PLACES_REV, P.seed, WorldPlanet.dataHash(3), WorldField.dataHash(), WorldSettle.dataHash(), str(Engine.get_version_info().get("string", ""))]
+	return "places|rev %d|seed %d|%s|%s|%s|%s%s" % [PLACES_REV, P.seed, WorldPlanet.dataHash(3), WorldField.dataHash(), WorldSettle.dataHash(), str(Engine.get_version_info().get("string", "")), _sizeTag()]
+
+
+## The planet's size in a key when it is not medium (the places are laid on the size's own ring and capped to its play height: docs/world/planet-sizes.md); medium's keys are as they were.
+static func _sizeTag() -> String:
+	return "" if SimConst.PLANET_NC == SimConst.PLANET_NC_MEDIUM else "|cols %d" % SimConst.PLANET_NC
 
 
 static func placesCached() -> bool:
@@ -133,7 +138,7 @@ static func yawOf(P: WorldPlanet.Planet, id: int) -> float:
 static func geometry(P: WorldPlanet.Planet, id: int, shift: float = 0.0) -> Dictionary:
 	# The shift is in the key exactly (its bits), not to the nearest 8 units: the layout is a pure function of the shift it is made for, so a memo hit gives what a fresh make would. With the shift rounded in the key, a layout made for
 	# 1.7 (the first ring's aligned shift) answered a call for 0 (a free place's) or the reverse, whichever came first: a world read back from the places cache differed from a fresh one in the last bits (docs/world/field-cache-determinism.md).
-	var key: String = "%d/%d/%d/%s/%s/%d" % [P.seed, id, int(P.kind[id]), WorldSettle.dataHash(), WorldField.dataHash(), (int(round(shift / 8.0)) if shiftBucketOverride else PackedFloat64Array([shift]).to_byte_array().decode_s64(0))]
+	var key: String = "%d/%d/%d/%s/%s/%d%s" % [P.seed, id, int(P.kind[id]), WorldSettle.dataHash(), WorldField.dataHash(), (int(round(shift / 8.0)) if shiftBucketOverride else PackedFloat64Array([shift]).to_byte_array().decode_s64(0)), _sizeTag()]
 	if _memo.has(key):
 		return _memo[key]
 	var NC: int = SimConst.NC
