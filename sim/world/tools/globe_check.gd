@@ -51,6 +51,7 @@ func _liveMaxR(S: SimState) -> float:
 func _init() -> void:
 	negative = OS.get_cmdline_user_args().has("--negative-control")
 	WorldGlobe.blind = negative
+	WorldPin.shipped()   # GW1a: OFF-PATH by construction: this check was written for the world before GW1a (an ordinary blow's dig cap of 600, the sea's level carried as 0 by water v1), so it plays the old path, energy model and dash off and water v2 off; docs/world/pins-and-the-model.md
 	_slots()
 	_shaft()
 	_repeats()
