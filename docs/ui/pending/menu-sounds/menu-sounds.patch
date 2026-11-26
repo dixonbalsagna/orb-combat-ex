@@ -1,5 +1,5 @@
 --- a/ui/hud/ui_hud.gd	2026-11-25 21:18:33.578880700 -0800
-+++ b/ui/hud/ui_hud.gd	2026-11-25 21:27:47.932900700 -0800
++++ b/ui/hud/ui_hud.gd	2026-11-25 22:14:54.225640200 -0800
 @@ -1248,6 +1248,7 @@
  func howto_action(act: String) -> void:
  	if not _howto_open:
@@ -12,7 +12,7 @@
  func menu_action(act: String) -> void:
  	if not (_notice_open and _menu_kind):
  		return
-+	AudioVoices.ui("confirm" if act == "accept" else ("back" if act == "back" else "move"))   # the menus' sounds (Audio's call lines, docs/audio/pending/friends-sound); silent until there is audio
++	AudioVoices.ui("confirm" if act == "accept" else ("back" if act == "back" else "move"))   # the menus' sounds (Audio's call lines, docs/audio/friends-sound.md); silent until there is audio
  	var rows: Array = _menu_rows()
  	_menu_focus = clampi(_menu_focus, 0, rows.size() - 1)
  	var row: String = str(rows[_menu_focus])
@@ -67,7 +67,7 @@
  		"minus", "left":
  			_settings_step(i, -1)
 --- a/ui/tools/hud_check.gd	2026-11-25 21:18:33.624486500 -0800
-+++ b/ui/tools/hud_check.gd	2026-11-25 21:27:16.504035900 -0800
++++ b/ui/tools/hud_check.gd	2026-11-25 22:14:54.226643000 -0800
 @@ -97,6 +97,7 @@
  	await _menus_world_rules()
  	await _pad_tip_rules()
@@ -80,7 +80,7 @@
  	UiData.set_feature("split_line_choice", null)
  
  
-+# --- The menus' sounds (Audio's call lines; docs/audio/pending/friends-sound/README.md) ------------------------------------------------------
++# --- The menus' sounds (Audio's call lines; docs/audio/friends-sound.md) ------------------------------------------------------
 +
 +## Stands in for the audio node: it keeps the names of the sounds the menus ask for.
 +class _MenuSoundSpy extends AudioVoices:

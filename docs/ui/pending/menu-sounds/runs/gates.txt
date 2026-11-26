@@ -1,6 +1,4 @@
-two-fighter ratchet FAILED: 367 places name exactly two fighters, the baseline is 365. Files that grew:
-  audio/audio_scene.gd: 0 to 2
-Fix: take the second fighter from the list (S.fighters, the roster) instead of fighters[0], fighters[1], SimRoster.opp or S.dirS.ex. Do not raise the baseline.
+two-fighter ratchet ok: 365 against a baseline of 365
 fighter-specific code: 0 places (energy 0, stamina 0, body 0, forms 0); the baseline is 0
 326 files checked, 0 errors, 2 warnings
 content screen: 10040 text files of 11265 scanned, 0 failing hit(s), 0 warning(s)
