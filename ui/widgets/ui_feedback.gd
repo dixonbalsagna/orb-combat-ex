@@ -84,6 +84,19 @@ static func platform_line(info: Dictionary) -> String:
 	return "%s%s" % [info.get("os", ""), ", mobile" if bool(info.get("mobile", false)) else ""]
 
 
+## The world a match plays on, from the host's report context (`world`: WorldDefault.describe(S), {planet: the seed or 0 for the hand-made arena, gen, cols}); "" when the context has none. `full` is the report's line, else the short one the
+## pause menu and the match-over card carry. (A-WORLD-14, GW1b.)
+static func world_line(world, full: bool) -> String:
+	if not (world is Dictionary) or (world as Dictionary).is_empty():
+		return ""
+	var w: Dictionary = world
+	if int(w.get("planet", 0)) == 0:
+		return UiData.t("prompt.world_arena")
+	if full:
+		return UiData.fmt("prompt.world_full", {"planet": int(w["planet"]), "gen": int(w.get("gen", 0)), "cols": int(w.get("cols", 0))})
+	return UiData.fmt("prompt.world_short", {"planet": int(w["planet"])})
+
+
 ## A test's stand-in for build_info.json (empty: the file is read). The game never sets it.
 static var info_override: Dictionary = {}
 
@@ -216,6 +229,7 @@ static func build_report(ctx: Dictionary, tags: Array, notes: String, env: Dicti
 		str(word("title")),
 		"%s: %s" % [word("build"), build],
 		"%s: %s" % [word("seed"), seed_s],
+		"%s: %s" % [word("world"), world_line(ctx.get("world"), true)] if world_line(ctx.get("world"), true) != "" else "%s: %s" % [word("world"), unk],
 		"%s: %s" % [word("setup"), setup],
 		"%s: %s" % [word("time"), tm],
 		"%s: %s" % [word("screen"), screen],

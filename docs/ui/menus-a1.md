@@ -36,3 +36,15 @@ One small line in the quiet colour at the foot of the rail, under the hint strip
 ## 8. Tiny windows
 
 A window too small to lay out can make a width or a height negative; Godot answers `Rect2.encloses` or `intersects` on such a rectangle with an ERROR line on every frame (the headless mode smoke's). The plans of the start menu, the pause menu, Settings and the turn card ask `UiRail.holds` and `UiRail.meets` instead, which say no for a negative rectangle, so such a plan simply does not fit. `hud_check` plans at 0 by 0, 1 by 1, 64 by 64, 160 by 90 and 320 by 180.
+
+## 9. The first match, across sessions (GW1b; World's A-WORLD-01, decision 2)
+
+The host plays the fixed planet for the first match a player ever starts and draws the planet for the later ones. The flag is kept in the settings store (`UiPrefs`, key `played_match`), not for the session: `UiHud.first_match_played()` says whether a match has been started before, and the HUD sets it right after the host has been told (Start, and Play again), so the host still reads "no match yet" while it makes the first one. The host's grant uses it in place of its session flag.
+
+## 10. Which planet (GW1b)
+
+The host's report context gains `world` (`WorldDefault.describe(S)`: planet seed or 0 for the hand-made arena, generation, columns). The pause menu's and the match-over card's detail card say "Planet 7" (quiet colour, with the other lines); the saved match record carries `world`; the report says "World: Planet 7, generator 3, 4800 columns around" (or "The hand-made arena", or "unknown" where the host gave none). Words for Orb: "Planet {planet}", "The hand-made arena", "Planet {planet}, generator {gen}, {cols} columns around".
+
+## 11. The planet size row (GW1c)
+
+A cycle row "Planet size" in "Set up the match", after the fighters: the sizes World offers (`data/biomes/sizes.json`, `offered` true, in its order; today Tiny, Small, Medium, Big, Huge), Medium first, with Left and Right (or A) stepping and wrapping and "Planet size: Medium" in the "This match" card. The choice is `planet_size` in the menu config (saved with the other choices) and the host sets the setup key `planetSize` from it. The row and its line in the "This match" card appear only when there is a choice: two offered sizes or more (`UiModes.size_row()`). With no sizes file, or with ONE offered size (GW1c lands with Medium alone; the others are `offered: false`), there is no row and no line: a cycle row of one choice would step to itself and look like a control that does nothing. The menu config still carries `planet_size` (the one size, Medium), which the host sends as `planetSize`; a named Medium plays the same as an unnamed one (World). Words for Orb: "Planet size", "Tiny", "Small", "Medium", "Big", "Huge".

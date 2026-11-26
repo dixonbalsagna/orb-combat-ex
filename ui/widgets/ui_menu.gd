@@ -115,6 +115,8 @@ static func rows_page(page: String, cfg: Dictionary, mid_match: bool, not_now: b
 			else:
 				out.append("ai")
 			out.append("f2")
+			if UiModes.size_row():
+				out.append("psize")   # the planet's size (World's sizes.json), when there is a choice of two or more
 			out.append_array(checks())
 			out.append_array(["start", "back"])
 	return out
@@ -469,8 +471,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var fs_val: int = int(m["fs_val"])
 	var fs_small: int = int(m["fs_small"])
 	var floor_px: int = int(UiLook.text_floor)
-	# The title block.
-	var top: float = maxf(vp.y * 0.07, 28.0 * cs)
+	var top: float = maxf(vp.y * 0.07, 28.0 * cs) if page != PAGE_SETUP else maxf(vp.y * 0.04, 20.0 * cs)   # the setup has the most rows: its header sits higher
 	var title: String = UiData.t("prompt.setup_title") if page == PAGE_SETUP else UiData.t("prompt.rail_start_title")
 	var title_lines: PackedStringArray = UiText.wrap(title, fs_title, rw - x0 * 2.0)
 	var lh_title: float = UiText.height(fs_title) * 1.1
@@ -501,7 +502,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 					need += UiText.width(str(o[1]), fs_o) + opt_pad * 2.0 + gap
 				need += 16.0 * cs
 			elif _is_cycle(id1):
-				need += _widest_fighter(fs_o) + maxf(rh * 1.0, 48.0) + 16.0 * cs
+				need += _widest_cycle(id1, fs_o) + maxf(rh * 1.0, 48.0) + 16.0 * cs
 			else:
 				need += tog_w + 16.0 * cs
 			if need > row_w:
@@ -535,7 +536,7 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 		elif _is_cycle(id2):
 			var chev: float = maxf(h * 0.5, 24.0)
 			var ex2: float = r.end.x - maxf(h * 0.25, 10.0)
-			var vw: float = _widest_fighter(fs_o2)
+			var vw: float = _widest_cycle(id2, fs_o2)
 			var right_r := Rect2(ex2 - chev, r.position.y, chev, h)
 			var value_r := Rect2(right_r.position.x - vw, r.position.y, vw, h)
 			var left_r := Rect2(value_r.position.x - chev, r.position.y, chev, h)
@@ -587,6 +588,8 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	if page == PAGE_SETUP:
 		you_val = UiData.display_name(str(cfg.get("p1_fighter", ""))) + ", " + you_val
 		against_val = UiData.display_name(str(cfg.get("p2_fighter", ""))) + ", " + against_val
+		if UiModes.size_row():
+			kv.append([word("psize"), UiModes.size_label(str(cfg.get("planet_size", "")))])
 	kv.append([UiData.t("prompt.rail_you"), you_val])
 	kv.append([UiData.t("prompt.rail_against"), against_val])
 	var note_text: String = ""
@@ -678,13 +681,15 @@ static func _is_radio(id: String) -> bool:
 
 ## A row that steps through a list (the fighters): its label, then the chosen one between two arrows.
 static func _is_cycle(id: String) -> bool:
-	return id in ["f1", "f2"]
+	return id in ["f1", "f2", "psize"]
 
 
 ## A rail row's label: the fighter rows say whose they are ("Computer's fighter" when the computer plays).
 static func _label(id: String, cfg: Dictionary) -> String:
 	if id == "f2":
 		return word("f2" if int(cfg.get("players", 1)) == 2 else "fc")
+	if id == "psize":
+		return word("psize")
 	return word(id)
 
 
@@ -693,6 +698,16 @@ static func _widest_fighter(fs: int) -> float:
 	var w: float = 0.0
 	for id in UiModes.fighters():
 		w = maxf(w, UiText.width(UiData.display_name(str(id)), fs))
+	return w + 12.0
+
+
+## The widest value of a cycle row: a fighter's name, or a size's word.
+static func _widest_cycle(id: String, fs: int) -> float:
+	if id != "psize":
+		return _widest_fighter(fs)
+	var w: float = 0.0
+	for s in UiModes.sizes():
+		w = maxf(w, UiText.width(UiModes.size_label(str(s)), fs))
 	return w + 12.0
 
 
@@ -736,6 +751,7 @@ static func draw_rail(ci: CanvasItem, p: Dictionary) -> void:
 		UiRail.draw_row_text(ci, rs, _label(id, cfg), "", lit, fs, int(p["fs_val"]))
 		if _is_cycle(id):
 			var fkey: String = str(cfg.get("p1_fighter" if id == "f1" else "p2_fighter", ""))
+			var cycle_text: String = UiModes.size_label(str(cfg.get("planet_size", ""))) if id == "psize" else UiData.display_name(fkey)
 			var dimc: Color = Color(dark, 0.8) if lit else Color(dim, 0.95)
 			var inkc: Color = dark if lit else ink
 			for itc in p["items"]:
@@ -749,7 +765,7 @@ static func draw_rail(ci: CanvasItem, p: Dictionary) -> void:
 					"right":
 						UiIcons.chevron(ci, rcs.get_center(), rcs.size.y * 0.18, 1.0, maxf(2.0, cs * 2.5), dimc)
 					"value":
-						UiText.draw(ci, UiData.display_name(fkey), Vector2(rcs.get_center().x, rcs.get_center().y + float(fs_o) * 0.35), fs_o, inkc, 0)
+						UiText.draw(ci, cycle_text, Vector2(rcs.get_center().x, rcs.get_center().y + float(fs_o) * 0.35), fs_o, inkc, 0)
 		elif _is_radio(id):
 			var chosen: String = str(int(cfg.get("players", 1))) if id == "players" else (level_of(cfg.get("ai_level", DEFAULT_LEVEL)) if id == "ai" else str(cfg.get(id, "kb")))
 			for it in p["items"]:

@@ -17,6 +17,7 @@
     "title": "ORB COMBAT EX - PLAYTEST FEEDBACK",
     "build": "Build",
     "seed": "Seed",
+    "world": "World",
     "setup": "Setup",
     "time": "Match time",
     "screen": "Screen",

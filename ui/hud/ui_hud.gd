@@ -153,6 +153,7 @@ var _lane_sent: Array = [Color(0, 0, 0, 0), Color(0, 0, 0, 0)]
 var _l_pmenu: UiLayer
 var _pm_open := false
 var _pm_confirm := false              # New match is asking "Start a new match?"
+var _pm_world := ""                  # which planet this match plays on (the host's report context), read when the pause card opens
 var _pm_quit := false                 # the pause card is asking "Close the game?"
 var _pm_focus := 0                    # index into UiPause.ids(_pm_confirm)
 var _pm_down := ""                    # the button a press started on (a release over the same one chooses it)
@@ -502,6 +503,16 @@ func _anchor(slot: int) -> Dictionary:
 		a = anchor_fn.call(slot)
 		_anchor_memo[slot] = a
 	return a
+
+
+## Whether this player has started a match before, kept across sessions in the settings store (UiPrefs): the host plays the fixed planet for the first match ever and a draw after it (A-WORLD-01, decision 2).
+func first_match_played() -> bool:
+	return bool(UiPrefs.get_value("played_match", false))
+
+
+func mark_match_played() -> void:
+	if not first_match_played():
+		UiPrefs.set_value("played_match", true)
 
 
 ## The menus' clock moves with the game's when the game runs, and by real time when it does not (the pause menu, the start menu: the host advances the HUD by 0), so a menu always slides in.
@@ -1656,6 +1667,8 @@ func _menu_load() -> void:
 		_menu_cfg["p1_fighter"] = UiModes.fighter_of(s.get("p1_fighter", pair[0]), 0)
 		_menu_cfg["p2_fighter"] = UiModes.fighter_of(s.get("p2_fighter", pair[1]), 1)
 		_menu_cfg["mode"] = str(s.get("mode", ""))
+		if not UiModes.sizes().is_empty():
+			_menu_cfg["planet_size"] = UiModes.size_of(s.get("planet_size", UiModes.size_default()))
 		_menu_fix_pair()
 
 
@@ -1815,6 +1828,8 @@ func _menu_activate(row: String) -> void:
 			_menu_cfg["ai_level"] = UiMenu.level_step(str(_menu_cfg.get("ai_level", UiMenu.DEFAULT_LEVEL)), 1, true)
 		"f1", "f2":
 			_menu_fighter_step(row, 1)
+		"psize":
+			_menu_cfg["planet_size"] = UiModes.size_step(str(_menu_cfg.get("planet_size", "")), 1)
 		_:
 			if UiMenu.CHECKS.has(row):
 				_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
@@ -1837,6 +1852,8 @@ func _menu_page_action(act: String, row: String, rows: Array) -> void:
 				_menu_cfg["ai_level"] = UiMenu.level_step(str(_menu_cfg.get("ai_level", UiMenu.DEFAULT_LEVEL)), d, false)
 			elif row == "f1" or row == "f2":
 				_menu_fighter_step(row, d)
+			elif row == "psize":
+				_menu_cfg["planet_size"] = UiModes.size_step(str(_menu_cfg.get("planet_size", "")), d)
 			elif UiMenu.CHECKS.has(row):
 				_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
 		"accept":
@@ -1921,7 +1938,10 @@ func _menu_press(h: Dictionary) -> void:
 			_menu_focus = prs.find(row)
 		match str(h.get("kind", "")):
 			"cycle":
-				_menu_fighter_step(row, int(h["value"]))
+				if row == "psize":
+					_menu_cfg["planet_size"] = UiModes.size_step(str(_menu_cfg.get("planet_size", "")), int(h["value"]))
+				else:
+					_menu_fighter_step(row, int(h["value"]))
 				_menu_invalidate()
 			"radio":
 				if row == "ai":
@@ -1978,6 +1998,7 @@ func _menu_start() -> void:
 	_over_shown = false
 	_over_t = 0.0
 	menu_started.emit(cfg)
+	mark_match_played()   # after the host has read the flag: this was the first match
 	hide_photo_notice(false)
 
 
@@ -2376,6 +2397,7 @@ func show_pause_menu(over: bool = false) -> void:
 		return
 	_pm_over = over
 	_pm_open = true
+	_pm_world = UiFeedback.world_line((feedback_context()).get("world"), false)
 	_pm_confirm = false
 	_pm_quit = false
 	_pm_focus = 0
@@ -2418,7 +2440,7 @@ func pause_menu_plan() -> Dictionary:
 		_pm_seen = _pm_focus
 		_pm_bar_t0 = _ut
 	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "quit_ask": _pm_quit, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "notice": unplug_notice(), "where": report_where(),
-		"device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _pm_t0, "prev": _pm_prev, "bar_since": _ut - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else "", "version": _version_line(_pm_over)})
+		"device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _pm_t0, "prev": _pm_prev, "bar_since": _ut - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else "", "version": _version_line(_pm_over), "world": _pm_world})
 
 
 func _paint_pmenu(ci: CanvasItem) -> void:
@@ -2459,6 +2481,7 @@ func pause_menu_choose(id: String) -> void:
 				if UiData.feature("versus_flow"):
 					again_cfg["intros"] = false   # a rematch is one press from the next fight: no intro (the saved choice stays as it was for the menu)
 				menu_started.emit(again_cfg)   # the same choices, a new match
+				mark_match_played()
 		"new_yes":
 			_pm_close("new")
 			new_match_requested.emit()
@@ -3859,7 +3882,7 @@ func match_record() -> Dictionary:
 	var winner_name: String = ""
 	if hub.winner >= 0 and hub.winner < hub.models.size():
 		winner_name = str((hub.models[hub.winner] as UiFighterModel).name)
-	return {"schema": "orb-combat-match-record/1", "saved_at": Time.get_unix_time_from_system(), "build": {"commit": str(ctx.get("commit", "")), "date": str(ctx.get("date", ""))}, "seed": ctx.get("seed", ""), "setup": str(ctx.get("setup", "")),
+	return {"schema": "orb-combat-match-record/1", "saved_at": Time.get_unix_time_from_system(), "build": {"commit": str(ctx.get("commit", "")), "date": str(ctx.get("date", ""))}, "world": ctx.get("world", {}), "seed": ctx.get("seed", ""), "setup": str(ctx.get("setup", "")),
 		"match_time": snappedf(hub.t_now, 0.1), "over": hub.match_over, "winner": winner_name, "settings": UiFeedback.settings_line(opts), "note": _fb_text.text}
 
 

@@ -94,6 +94,7 @@ func _run() -> void:
 	await _pause_clock_rules()
 	await _menus_a1_rules()
 	await _menus_a1_extra_rules()
+	await _menus_world_rules()
 	await _save_reason_rules()
 	await _boot_load_menu_rules()
 	await _plain_words_rules()
@@ -11933,3 +11934,136 @@ func _report_logs_rules() -> void:
 	for d in [dir, rep, mk, "user://test_x28_empty"]:
 		if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(d)):
 			_x28_rm_dir(d)
+
+
+# --- The first match across sessions, the world line, the planet size row (GW1b, GW1c; docs/ui/menus-a1.md sections 9 to 11) -------------------
+
+func _menus_world_rules() -> void:
+	UiData.set_feature("menus_rail", true)
+	UiData.set_feature("menu_modes", true)
+	var lay := UiLayout.new()
+	lay.compute(Vector2(1280, 800), false)
+	# The world line: short, full, the arena, and nothing.
+	var w7 := {"planet": 7, "gen": 3, "cols": 4800}
+	_ok(UiFeedback.world_line(w7, false) == "Planet 7" and UiFeedback.world_line(w7, true) == "Planet 7, generator 3, 4800 columns around" and UiFeedback.world_line({"planet": 0, "gen": 1, "cols": 0}, false) == "The hand-made arena" and UiFeedback.world_line({}, true) == "" and UiFeedback.world_line(null, false) == "", "world line: 'Planet 7', 'Planet 7, generator 3, 4800 columns around', the arena, and nothing without one")
+	var rep: String = UiFeedback.build_report({"commit": "abc", "seed": 5, "world": w7, "setup": "a vs b"}, [], "", {})
+	var rep_none: String = UiFeedback.build_report({"commit": "abc", "seed": 5, "setup": "a vs b"}, [], "", {})
+	_ok(rep.contains("World: Planet 7, generator 3, 4800 columns around") and rep_none.contains("World: unknown"), "world line: the report names the world (and says unknown where the host gave none)")
+	# The planet size row.
+	UiModes.sizes_override = []
+	var cfg := {"players": 1, "p1": "kb", "p2": "kb", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true, "p1_fighter": "PROTAGONIST", "p2_fighter": "RIVAL", "planet_size": "medium"}
+	var none_rows: Array = UiMenu.rows_page("setup", cfg, false, false)
+	UiModes.sizes_override = ["tiny", "small", "medium", "big", "huge"]
+	var rows: Array = UiMenu.rows_page("setup", cfg, false, false)
+	_ok(not none_rows.has("psize") and rows.slice(0, 5) == ["p1", "f1", "ai", "f2", "psize"] and UiModes.size_default() == "medium" and UiModes.size_of("nope") == "medium" and UiModes.size_of("huge") == "huge" and UiModes.size_step("huge", 1) == "tiny" and UiModes.size_step("tiny", -1) == "huge" and UiModes.size_label("big") == "Big" and UiModes.size_label("tiny") == "Tiny", "planet size: no row without sizes; with five it follows the computer's fighter; the default is medium, a size the data lacks becomes medium, the steps wrap, the words are Tiny to Huge")
+	# One offered size (GW1c lands with Medium alone): no row and no summary line, the cfg still carries the size; two sizes: both.
+	UiModes.sizes_override = ["medium"]
+	var one_rows: Array = UiMenu.rows_page("setup", cfg, false, false)
+	var one_plan: Dictionary = UiMenu.plan(Vector2(1280, 800), lay.s, 1.0, false, {"focus": 0, "cfg": cfg, "not_now": false, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "safe": Rect2(), "page": "setup", "version": "Version 0.1.7"})
+	var one_kv: PackedStringArray = PackedStringArray((one_plan["kv"] as Array).map(func(kv): return str(kv[0])))
+	_ok(not UiModes.size_row() and not one_rows.has("psize") and not one_kv.has("Planet size") and one_rows.slice(0, 4) == ["p1", "f1", "ai", "f2"], "planet size: with ONE offered size the setup has no size row and the This match card no size line (%s)" % str(one_rows))
+	UiModes.sizes_override = ["small", "medium"]
+	var two_rows: Array = UiMenu.rows_page("setup", cfg, false, false)
+	var two_plan: Dictionary = UiMenu.plan(Vector2(1280, 800), lay.s, 1.0, false, {"focus": 0, "cfg": cfg, "not_now": false, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "safe": Rect2(), "page": "setup", "version": "Version 0.1.7"})
+	var two_kv: PackedStringArray = PackedStringArray((two_plan["kv"] as Array).map(func(kv): return str(kv[0])))
+	_ok(UiModes.size_row() and two_rows.has("psize") and two_kv.has("Planet size"), "planet size: with TWO offered sizes (or more) the row and the This match line are there")
+	UiModes.sizes_override = ["medium"]
+	var hud1 := UiHud.new()
+	hud1.size = Vector2(1280, 800)
+	root.add_child(hud1)
+	await process_frame
+	hud1.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud1.show_start_menu(false)
+	hud1._menu_activate("solo")
+	_ok(str(hud1.menu_config().get("planet_size", "")) == "medium" and not (hud1.menu_plan()["rows"] as Array).has("psize") and (hud1.menu_plan()["rows"] as Array).has("start"), "planet size (hud): with one offered size the cfg still carries planet_size medium (a Start sends it), and the setup has no size row")
+	hud1.queue_free()
+	await process_frame
+	UiModes.sizes_override = ["tiny", "small", "medium", "big", "huge"]
+	for sz in [Vector2(1280, 720), Vector2(1280, 800), Vector2(1920, 1080), Vector2(1366, 768)]:
+		var lay2 := UiLayout.new()
+		lay2.compute(sz, false)
+		for mode in [1, 2]:
+			var c2: Dictionary = cfg.duplicate()
+			c2["players"] = mode
+			var p: Dictionary = UiMenu.plan(sz, lay2.s, 1.0, false, {"focus": 0, "cfg": c2, "not_now": false, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "safe": Rect2(), "page": "setup", "version": "Version 0.1.7"})
+			var hits_ok := true
+			for it in p["items"]:
+				if str(UiMenu.hit(p, (it["rect"] as Rect2).get_center()).get("row", "")) != str(it["row"]):
+					hits_ok = false
+			_ok(bool(p["fits"]) and hits_ok and (p["rows"] as Array).has("psize"), "planet size: the setup with the size row (and the version line) fits at %dx%d for %d player%s with every control a target" % [int(sz.x), int(sz.y), mode, "" if mode == 1 else "s"])
+	# In the HUD: the row steps by the pad, only its own value changes, and the choice is sent.
+	UiPrefs.path = "user://ui_prefs_test_world.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 800)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	var started: Array = []
+	var flag_at_emit: Array = []
+	hud.menu_started.connect(func(c):
+		started.append(c)
+		flag_at_emit.append(hud.first_match_played()))
+	_ok(not hud.first_match_played(), "first match: a new player has not played one")
+	hud.show_start_menu(false)
+	hud._menu_activate("solo")
+	var srows: Array = hud.menu_plan()["rows"]
+	var pi: int = srows.find("psize")
+	var cfg_before: Dictionary = hud.menu_config()
+	hud._menu_go("setup", pi)
+	var e := InputEventJoypadButton.new()
+	e.button_index = JOY_BUTTON_DPAD_RIGHT
+	e.pressed = true
+	hud._unhandled_input(e)
+	var cfg_after: Dictionary = hud.menu_config()
+	var only_size := true
+	for k in cfg_before:
+		if str(cfg_before[k]) != str(cfg_after.get(k, "")) and k != "planet_size":
+			only_size = false
+	_ok(str(cfg_before["planet_size"]) == "medium" and str(cfg_after["planet_size"]) == "big" and only_size and (hud.menu_plan()["rows"] as Array) == srows, "planet size (hud): Right on the size row goes from medium to big, changes nothing else and leaves the rows alone")
+	hud._menu_go("setup", srows.find("start"))
+	hud._unhandled_input(_world_press(JOY_BUTTON_A))
+	_ok(started.size() == 1 and str((started[0] as Dictionary).get("planet_size", "")) == "big" and flag_at_emit == [false] and hud.first_match_played(), "planet size (hud): Start sends the size, the host sees no first match played yet while it reads it, and the flag is set after")
+	# Across sessions: another HUD with the same settings store knows it; "Play again" and later menus see a played match.
+	var hud2 := UiHud.new()
+	hud2.size = Vector2(1280, 800)
+	root.add_child(hud2)
+	await process_frame
+	_ok(hud2.first_match_played() and bool(UiPrefs.get_value("played_match", false)), "first match (hud): a second session with the same settings store knows a match was played")
+	hud2.queue_free()
+	# The saved menu choice comes back.
+	hud.show_start_menu(false)
+	_ok(str(hud.menu_config().get("planet_size", "")) == "big", "planet size (hud): the saved size is the one the menu opens on")
+	hud.hide_photo_notice(false)
+	# The world line on the pause menu and the match-over card, and in the record.
+	hud.feedback_fn = func() -> Dictionary: return {"seed": 5, "world": {"planet": 7, "gen": 3, "cols": 4800}}
+	hud.show_pause_menu()
+	var pp: Dictionary = hud.pause_menu_plan()
+	var detail: String = " ".join(PackedStringArray(pp["facts_lines"]))
+	_ok(detail.contains("Planet 7") and bool(pp["fits"]), "world line (hud): the pause menu's card says which planet this is (%s)" % detail)
+	hud._pm_close("test")
+	hud.show_pause_menu(true)
+	var po: Dictionary = hud.pause_menu_plan()
+	_ok(" ".join(PackedStringArray(po["facts_lines"])).contains("Planet 7"), "world line (hud): so does the match-over card")
+	hud._pm_close("test")
+	_ok(hud.match_record().get("world", {}) == {"planet": 7, "gen": 3, "cols": 4800}, "world line (hud): the saved match record carries the world")
+	hud.feedback_fn = Callable()
+	hud.show_pause_menu()
+	_ok(not " ".join(PackedStringArray(hud.pause_menu_plan()["facts_lines"])).contains("Planet"), "world line (hud): a host that gives none shows no line")
+	hud._pm_close("test")
+	hud.queue_free()
+	UiModes.sizes_override = []
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)
+
+
+func _world_press(button: int) -> InputEventJoypadButton:
+	var e := InputEventJoypadButton.new()
+	e.button_index = button
+	e.pressed = true
+	return e

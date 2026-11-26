@@ -308,6 +308,9 @@ static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> Dicti
 	var foot_texts: Array = []
 	if status != "":
 		foot_texts.append(status)
+	var world_text: String = str(st.get("world", "")) if not confirm else ""   # which planet this is (GW1b: the seed line)
+	if world_text != "":
+		foot_texts.append(world_text)
 	if where_text != "":
 		foot_texts.append(where_text)
 	var widest_word: float = 0.0
