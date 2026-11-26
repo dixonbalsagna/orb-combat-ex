@@ -96,6 +96,8 @@ var tile_field: RenderTileField = null   # main's --tiles: the ground in depth i
 var crater_gen: int = 0                  # counts the craters' uploads: the tile field looks at what stands in them
 var water_version: int = 0           # counts the changes to the water (rebuilt, or S.water moved): the planet view's water chunks follow it
 var _ncr: int = 0
+var _store_seen: int = -1         # the store's length the held rule last looked at (_held_late)
+var _hold_ready: bool = false     # whether the held rule could hold then (the tile ground attached and the sim's frame set: a build's first rebuild runs before)
 var _first = null
 var _last = null
 var _cdepth: float = 0.0             # the sum of the records' depths at the last update: a record deepened where it lies changes it
@@ -135,6 +137,8 @@ func rebuild(S: SimState) -> void:
 	_claimed.clear()
 	for idx in range(S.craters.size()):
 		_add(S, idx)
+	_store_seen = int(S.storeN)   # what this build matched the store with (_held_late): a build before the held rule could hold is looked at again
+	_hold_ready = tile_field != null and S.frame != null
 	for i in range(SimConst.NC):
 		_g_col(S, i)
 	dirty.fill(1)
@@ -177,6 +181,14 @@ func update(S: SimState, heat: PackedFloat32Array, heat_changed: bool) -> bool:
 			_last = S.craters[n - 1]
 			cchg = true
 		else:
+			_heat = heat
+			rebuild(S)
+			return true
+	var hold_ready: bool = tile_field != null and S.frame != null
+	if (int(S.storeN) != _store_seen or hold_ready != _hold_ready):
+		_store_seen = int(S.storeN)
+		_hold_ready = hold_ready
+		if _held_late(S):   # an entry seen before its store record, or before the held rule could hold: build the rows again, so the store's bowl isn't drawn twice
 			_heat = heat
 			rebuild(S)
 			return true
@@ -519,6 +531,22 @@ func _add(S: SimState, idx: int) -> void:
 		for k in range(K - 1, slot, -1):
 			lists[k * nc + i] = lists[(k - 1) * nc + i]
 		lists[slot * nc + i] = float(idx)
+
+
+## Whether an entry the rows keep (held 0) now has a store record of its own time and radius that no entry has claimed: it was added before its
+## record was there (the frame saw the dig before the store took it), and the tile ground draws that record's bowl as well.
+func _held_late(S: SimState) -> bool:
+	if tile_field == null or S.frame == null or int(S.storeN) == 0:
+		return false
+	for idx in range(mini(held.size(), S.craters.size())):
+		if held[idx] != 0:
+			continue
+		var c = S.craters[idx]
+		for k in range(int(S.storeN)):
+			var o: int = k * WorldStore.STRIDE
+			if int(S.store[o]) == WorldStore.KIND_CRATER and not _claimed.has(k) and absf(S.store[o + 8] - float(c.t)) < 1.0e-6 and absf(S.store[o + 4] - float(c.r)) < 1.0e-3:
+				return true
+	return false
 
 
 ## Is S.craters[idx] World's store's, on the tile ground of a field world: a crater record in the store of the same time
