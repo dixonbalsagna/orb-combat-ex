@@ -1,0 +1,65 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 2b4100f..bc71226 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -29,6 +29,9 @@ const MIN_SPLIT_AGE: float = 1.2       # before a dissolve merge
+ const MIN_MERGED_AGE: float = 0.8      # before splitting again
+ const MIN_OUT_OF_FRAME_AGE: float = 0.25   # ... or this, when a fighter is already out of the one view
+ const CLOSING_LOOKAHEAD: float = 0.4   # do not open if the fighters will be back over the split line by then
++const SPLIT_LOOKAHEAD: float = 0.35    # a pair flying apart (SPLIT_LOOK_RATE) is judged on the size it will have this many seconds on: the split comes before the shared view has zoomed out for it
++const SPLIT_LOOK_RATE: float = 1500.0  # ... from this separation speed, units a second, smoothed (KNOCK_APART_RATE's)
++const SPLIT_LOOK_FROM: float = 3.0     # ... and neither this nor the shared view's ordinary zoom-out in a match's first seconds:the opening's framing is Orb's own question (split_sweep's OPENING_PLANET_CEIL), not this rule's
+ const SEP_RATE_TAU: float = 0.15        # the separation rate the one view zooms ahead for is smoothed over this
+ const SLAM_ZOOM_RATE: float = 3.0       # the slam's zoom rate cap, e-folds a second (it was unlimited: 17 and more)
+ const ZOOM_OUT_LOOKAHEAD: float = 0.3  # the one-view camera zooms for the separation it will have this soon, if growing
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index e6a6d2a..ac8fb13 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -885,7 +885,14 @@ func _update_trigger(S: SimState) -> void:
+ 		return
+ 	_view_lost = _outside_one_view(S) if sep < 0.5 else false
+ 	if not split_wanted:
+-		_below_t = _below_t + DT if r_now < rs else 0.0
++		# A pair flying apart fast: the size it will have SPLIT_LOOKAHEAD on. Below the line, the split waits the ordinary dwell only.
++		var look_below: bool = false
++		if split_lookahead and time >= CamParams.SPLIT_LOOK_FROM and _sep_rate > CamParams.SPLIT_LOOK_RATE and r_now >= rs:
++			var ad_s: float = minf(SimConst.HALF, ad + _sep_rate * CamParams.SPLIT_LOOKAHEAD)
++			look_below = CamParams.BODY_H * zoom_u(vw, vh, ad_s, _pair_dy(A, B), maxf(A.tier, B.tier)) / vh < rs
++			if look_below:
++				split_look_ticks += 1
++		_below_t = _below_t + DT if (r_now < rs or look_below) else 0.0
+ 		var out_of_frame: bool = _view_lost
+ 		# The hybrid launch rule: when the human knocked the opponent out of the shared view, stay with the human instead
+ 		# of splitting; the impact cut follows (camera-v2.md section 3).
+@@ -903,7 +910,7 @@ func _update_trigger(S: SimState) -> void:
+ 		# While they are still moving apart the shared zoom-out holds a little longer (a wide "flying around the world" beat).
+ 		# It runs only between the split line and the floor: below the floor the shared view cannot zoom out any more.
+ 		var floor_r: float = maxf(CamParams.R_FLOOR, CamParams.MIN_PX / vh)
+-		var dwell: float = CamParams.SPLIT_DWELL + (CamParams.WIDE_HOLD if _sep_rate > 500.0 and r_now > floor_r else 0.0)
++		var dwell: float = CamParams.SPLIT_DWELL + (CamParams.WIDE_HOLD if _sep_rate > 500.0 and r_now > floor_r and not look_below else 0.0)
+ 		if r_now <= floor_r or CamParams.BODY_H * _mz / vh <= floor_r * 1.02:
+ 			dwell = 0.0   # (the one view drawn at its floor, the governor's zoom-out for speed included: holding can't zoom out any more)
+ 		if r_now < maxf(rs, minf(CamParams.R_SPLIT * _split_k, rm)) and _drawn_off(S):   # (at the later line: still the standard line here, under the merge line)
+@@ -3608,6 +3615,9 @@ var _many_pzf: Array = [1.0, 1.0]                       # pane i's zoom factor f
+ var _many_pull: Array = [0.0, 0.0]                      # pane i's focus pull toward them, world units
+ var _many_partner: int = 1                              # the one's partner for framing: the nearest of the others, with a hold
+ var _many_marks: Array = []                             # the bodies outside the frame this tick, [slot, side]
++var split_lookahead: bool = true                        # a pair flying apart fast splits on the size it will have (CamParams.SPLIT_LOOKAHEAD), after the ordinary dwell: the shared view no longer zooms out two or three times just before it splits (the pump, Orb's "zoom jumps"; docs/camera/pending/a2-pump). Off: as before
++var merged_out_ordinary: bool = true                    # the shared view zooms out at the ordinary comfort rate outside a transition (it had the transition's, 4% a tick); the scroll governor's zoom-out for speed keeps the faster one. Off: as before
++var split_look_ticks: int = 0                           # (ticks the coming separation counted for the split, for the tests)
+ var merge_lookahead: bool = true                        # a pair moving apart fast is not merged on its present separation (docs/camera/rushcity.md); on since 2026-10-16 (rushcity: 2.5 / 3.5 / 1 -> 2 / 2 / 1)
+ var vkeep: bool = true   # the one view keeps both chests inside VKEEP_TOP..VKEEP_BOT of the height (straight on)
+ var struggle_brink: bool = true          # within the struggle framing: at the brink, frame the meeting point and the losing fighter (docs/camera/feel.md step 5)
+@@ -4217,7 +4227,10 @@ func _update_cameras(S: SimState) -> void:
+ 			kzm = maxf(km, 1.0 - exp(-DT / CamParams.GOV_TAU))
+ 		var dzm: float = (log(mt.z) - log(_mz)) * kzm
+ 		var capm: float = (CamParams.SLAM_ZOOM_RATE if stiff else CamParams.ZOOM_RATE_TRANS) * DT
+-		dzm = clampf(dzm, -capm, capm)
++		var capm_out: float = capm
++		if merged_out_ordinary and not transition and not _gov_bind_m and time >= CamParams.SPLIT_LOOK_FROM and _pk_phase == "":   # (not the peak launch's own framing)
++			capm_out = CamParams.ZOOM_RATE * DT   # (zooming out for a pair that parts: the ordinary rate; a fighter who leaves the frame opens the split)
++		dzm = clampf(dzm, -capm_out, capm)
+ 		if merge_zoom_limit and not reduced_motion and _merging_now():
+ 			dzm = minf(dzm, CamParams.MZ_RATE)
+ 		_mz = exp(log(_mz) + dzm)

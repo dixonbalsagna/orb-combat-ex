@@ -1,0 +1,14 @@
+# a2-pump and a2-zoom-in readings (EP only). Medium, worst of 4 (960x540 and 1024x768 at scale 1 and 2), Tools' run-pixels, one capture at a time, below normal.
+# base: k4 (collapse/rushcity normal) and k2 (reduced; k4 at standard is k2 to the bit).
+k2medr  collapse-reduced : 960x540 s1 1/1/1 @293 | 960x540 s2 1/2/1 @293 | 1024x768 s1 1/1/1.5 @547 | 1024x768 s2 1/1/1.5 @151
+k6medr  collapse-reduced : 960x540 s1 1/1/1 @293 | 960x540 s2 1/2/1 @293 | 1024x768 s1 1/1/1.5 @547 | 1024x768 s2 1/1/1.5 @151
+k7medr  collapse-reduced : 960x540 s1 1/1/1 @293 | 960x540 s2 2/2/1 @141 | 1024x768 s1 1/1/1.5 @547 | 1024x768 s2 1/1/1.5 @151
+k4medn  collapse-normal  : 960x540 s1 1/1/1 @163 | 960x540 s2 1/1/1 @162 | 1024x768 s1 1/1/1 @248 | 1024x768 s2 1/1/1 @248
+k6medn  collapse-normal  : 960x540 s1 1/1/1 @163 | 960x540 s2 1/1/1 @162 | 1024x768 s1 1/1/1 @248 | 1024x768 s2 1/1/1 @248
+k7medn  collapse-normal  : 960x540 s1 1/1/1 @163 | 960x540 s2 1/1/1 @162 | 1024x768 s1 1/1/1 @248 | 1024x768 s2 1/1/1 @248
+k2rcr   rushcity-reduced : 960x540 s1 2.5/2.5/3 @697 | 960x540 s2 3/3/3 @574 | 1024x768 s1 3.5/3.5/3.5 @697 | 1024x768 s2 4/4/3.5 @574
+k6rcr   rushcity-reduced : 960x540 s1 2.5/2.5/3 @697 | 960x540 s2 2.5/3/3 @697 | 1024x768 s1 4/4/3.5 @574 | 1024x768 s2 4/4/3.5 @574
+k7rcr   rushcity-reduced : 960x540 s1 3/3/3 @574 | 960x540 s2 3/3/3 @574 | 1024x768 s1 3.5/4/4 @981 | 1024x768 s2 3.5/4/3.5 @980
+k4rcn   rushcity-normal  : 960x540 s1 3/3.5/3 @316 | 960x540 s2 3/3.5/3 @574 | 1024x768 s1 3.5/3.5/3 @697 | 1024x768 s2 3.5/3.5/3 @697
+k6rcn   rushcity-normal  : 960x540 s1 2.5/3.5/3 @412 | 960x540 s2 3/3.5/3 @316 | 1024x768 s1 3.5/3.5/3 @980 | 1024x768 s2 3.5/3.5/3 @980
+k7rcn   rushcity-normal  : 960x540 s1 2.5/3.5/3 @412 | 960x540 s2 3/3.5/3 @316 | 1024x768 s1 3.5/3.5/3 @980 | 1024x768 s2 3.5/4/3 @980

@@ -16,3 +16,10 @@ small    split_sweep     FAIL  crossing start staredown 72: a fighter within 0.0
 big      own_pane_check  own_pane_check: 12 checks passed 
 big      split_sweep     split sweep passed 
 small    crossing (main only) FAIL  crossing start: a fighter within 0.095 of the screen edge FAIL  crossing start: the camera was outside the avenue on 6 of 20 closing ticks crossing start                     one view, edge margin 0.095 of the width, smallest 0.094 of the height, 0 dips, 0 cuts in the look, 6 of 20 closing ticks off the avenue crossing start staredown 72        one view, edge margin 0.094 of the width, smallest 0.094 of the height, 0 dips, 0 cuts in the look, 6 of 20 closing ticks off the avenue dolly crossing                     midpoint 0.000 of the width from the centre, camera outside the avenue on 0 
+
+## The small crossing rows: arena-only (the EP, 2026-11-26)
+split_sweep's "crossing start" and "crossing start staredown 72" play the hand-made arena (WorldPin.arena), whose lanes and demo crossing
+start sit at fixed places (47,000 to 53,000 units). The scratch --planet=small forced small's round (2,560 columns) onto that arena, so the
+table lay past the round and the AI walked off instead of rushing: a scene the game cannot make. The gate never plays these rows at a size.
+On the planet the setup "start": "crossing" is not honoured at any size (the planet's own start wins; at small no crossing is found), so
+there is no per-size crossing to stage. The rows stay arena-only; no ask to World or Simulation for now.

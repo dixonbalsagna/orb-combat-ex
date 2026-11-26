@@ -1,0 +1,46 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index ac8fb13..d4bac00 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -3617,6 +3617,7 @@ var _many_partner: int = 1                              # the one's partner for
+ var _many_marks: Array = []                             # the bodies outside the frame this tick, [slot, side]
+ var split_lookahead: bool = true                        # a pair flying apart fast splits on the size it will have (CamParams.SPLIT_LOOKAHEAD), after the ordinary dwell: the shared view no longer zooms out two or three times just before it splits (the pump, Orb's "zoom jumps"; docs/camera/pending/a2-pump). Off: as before
+ var merged_out_ordinary: bool = true                    # the shared view zooms out at the ordinary comfort rate outside a transition (it had the transition's, 4% a tick); the scroll governor's zoom-out for speed keeps the faster one. Off: as before
++var zoom_in_ordinary: bool = true                       # a pane zooming in while the split opens or closes, and the shared view zooming in outside a transition (after a slam's join), take the ordinary comfort rate (docs/camera/pending/a2-zoom-in). The slam's door and the shots keep theirs. Off: as before
+ var split_look_ticks: int = 0                           # (ticks the coming separation counted for the split, for the tests)
+ var merge_lookahead: bool = true                        # a pair moving apart fast is not merged on its present separation (docs/camera/rushcity.md); on since 2026-10-16 (rushcity: 2.5 / 3.5 / 1 -> 2 / 2 / 1)
+ var vkeep: bool = true   # the one view keeps both chests inside VKEEP_TOP..VKEEP_BOT of the height (straight on)
+@@ -4185,8 +4186,11 @@ func _update_cameras(S: SimState) -> void:
+ 		var kz: float = 1.0 - exp(-DT / tau_z)
+ 		var dz: float = (log(zt) - log(_zo[i])) * kz
+ 		var cap: float = (CamParams.SLAM_ZOOM_RATE if stiff else zrate) * DT
++		var cap_in_z: float = cap
++		if zoom_in_ordinary and not stiff and solo_kind == "" and solo_w < 0.001 and sep > 0.001 and sep < 0.999:
++			cap_in_z = CamParams.ZOOM_RATE * DT   # (the split opening or closing: a pane zooms in at the ordinary rate)
+ 		_zr_pane[i] = zrate
+-		dz = clampf(dz, -cap, cap)
++		dz = clampf(dz, -cap, cap_in_z)
+ 		if lh_ph == 1:
+ 			dz = 0.0   # the frame is held: no zoom either (a zoom is the whole picture moving)
+ 		elif lh_ph == 2:
+@@ -4230,7 +4234,10 @@ func _update_cameras(S: SimState) -> void:
+ 		var capm_out: float = capm
+ 		if merged_out_ordinary and not transition and not _gov_bind_m and time >= CamParams.SPLIT_LOOK_FROM and _pk_phase == "":   # (not the peak launch's own framing)
+ 			capm_out = CamParams.ZOOM_RATE * DT   # (zooming out for a pair that parts: the ordinary rate; a fighter who leaves the frame opens the split)
+-		dzm = clampf(dzm, -capm_out, capm)
++		var capm_in: float = capm
++		if zoom_in_ordinary and not transition and _pk_phase == "":
++			capm_in = CamParams.ZOOM_RATE * DT   # (after a slam's join, or a pair coming together: the ordinary rate)
++		dzm = clampf(dzm, -capm_out, capm_in)
+ 		if merge_zoom_limit and not reduced_motion and _merging_now():
+ 			dzm = minf(dzm, CamParams.MZ_RATE)
+ 		_mz = exp(log(_mz) + dzm)
+@@ -4321,6 +4328,8 @@ func _outputs(S: SimState) -> void:
+ 		if _oz_valid:
+ 			var cap: float = (CamParams.SLAM_ZOOM_RATE if slam_now else CamParams.ZOOM_RATE_TRANS) * DT
+ 			var cap_up: float = cap
++			if zoom_in_ordinary and not slam_now and solo_kind == "" and sep > 0.001 and sep < 0.999:
++				cap_up = minf(cap_up, CamParams.ZOOM_RATE * DT)   # (the split opening or closing: the drawn zoom comes in at the ordinary rate)
+ 			if merge_zoom_limit and not reduced_motion and _merging_now():
+ 				cap_up = minf(cap, CamParams.READ_MZ if readable else CamParams.MZ_RATE)
+ 			if _sw_ticks >= CamParams.SWING_SHOT_TICKS and S.fighters[i].state == "launched":

@@ -1,0 +1,83 @@
+# a2-pump (k6) and a2-zoom-in (k7), 2026-11-26. Camera.
+# k4 = main 54474b97 + GW1c stack + gw1c-door-holds + cd04 (built at SCROLL_MAX_REDUCED 0.03, before the EP's 0.045) + a2-split-line; k6 = k4 + pump_fix.py; k7 = k6 + zoomin_fix.py.
+# The parks are cut on the landing order (main aeaabfdf + reset-frame + door-holds + cd04 at 0.045): the same code change, checked line for line.
+
+## The pump counter (zj_probe.py: seeds 3, 10, 17 to the KO, the rig as shipped, Reduce flashing on; zj_pump.py)
+zj_k4_standard.log cap ticks 865 pumps 22
+  pumps with a zoom-out of 1.5x or more: 15 [('3', 2.78, 0.81, 0.41, 0.44, 'opening'), ('3', 6.53, 0.52, 0.33, 0.42, 'opening'), ('3', 76.4, 1.12, 0.51, 0.49, 'merged'), ('3', 79.13, 0.96, 0.32, 0.54, 'opening'), ('3', 83.3, 1.1, 0.48, 0.81, 'merged'), ('3', 101.72, 1.12, 0.64, 0.65, 'merged'), ('3', 111.35, 1.01, 0.5, 0.7, 'merged'), ('10', 12.45, 1.1, 0.42, 0.58, 'merged')]
+zj_k6_standard.log cap ticks 778 pumps 13
+  pumps with a zoom-out of 1.5x or more: 6 [('3', 2.78, 0.81, 0.41, 0.42, 'opening'), ('3', 6.55, 0.51, 0.34, 0.41, 'opening'), ('3', 101.72, 1.12, 0.66, 0.66, 'merged'), ('10', 150.75, 1.11, 0.46, 0.5, 'split'), ('10', 155.78, 1.11, 0.47, 0.5, 'split'), ('17', 34.95, 1.13, 0.65, 0.72, 'opening')]
+zj_k7_standard.log cap ticks 584 pumps 12
+  pumps with a zoom-out of 1.5x or more: 5 [('3', 2.78, 0.81, 0.41, 0.41, 'opening'), ('3', 101.72, 1.12, 0.66, 0.62, 'merged'), ('10', 150.75, 1.11, 0.46, 0.49, 'split'), ('10', 155.78, 1.11, 0.47, 0.5, 'split'), ('17', 34.95, 1.13, 0.65, 0.66, 'opening')]
+
+## Gates: k6
+import: 0 errors
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+cut_register_check     cut_register_check: 73 checks passed 
+flight_shots_check     flight_shots_check: 662 checks passed 
+launch_shots_check     launch_shots_check: 937 checks passed 
+own_pane_check         own_pane_check: 12 checks passed 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed 
+split_sweep later      split sweep passed 
+own_pane later         own_pane_check: 12 checks passed 
+split_sweep sooner     split sweep passed 
+own_pane sooner        own_pane_check: 12 checks passed 
+pane      pane check passed  | script errors 0
+seam      seam sweep passed  | script errors 0
+det       determinism passed  | script errors 0
+golden 989878d6d335
+export: 9 files, 0 errors
+gates-done
+
+## Gates: k7
+import: 0 errors
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+cut_register_check     cut_register_check: 73 checks passed 
+flight_shots_check     flight_shots_check: 662 checks passed 
+launch_shots_check     launch_shots_check: 937 checks passed 
+own_pane_check         own_pane_check: 12 checks passed 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed 
+split_sweep later      split sweep passed 
+own_pane later         own_pane_check: 12 checks passed 
+split_sweep sooner     split sweep passed 
+own_pane sooner        own_pane_check: 12 checks passed 
+pane      pane check passed  | script errors 0
+seam      seam sweep passed  | script errors 0
+det       determinism passed  | script errors 0
+golden 989878d6d335
+export: 9 files, 0 errors
+gates-done
+
+## clip_digest --clips=collapse, against k4 (changed frames by mode)
+k6 small 960x540:     493 normal     588 reduced 
+k6 small 1024x768:     586 normal     576 reduced 
+k6 medium 960x540:     155 normal     185 reduced 
+k6 medium 1024x768:     164 normal     196 reduced 
+k6 big 960x540:     495 normal     538 reduced 
+k6 big 1024x768:     794 normal     807 reduced 
+k7 small 960x540:     718 normal     838 reduced 
+k7 small 1024x768:     758 normal     756 reduced 
+k7 medium 960x540:     186 normal     419 reduced 
+k7 medium 1024x768:     266 normal     375 reduced 
+k7 big 960x540:     587 normal     609 reduced 
+k7 big 1024x768:     872 normal     894 reduced 
