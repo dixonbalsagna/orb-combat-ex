@@ -181,10 +181,12 @@ jobs:
           # the words the README carries: an owner-private build carries the OWNER-APPROVED notice (tools/site-interim-owner.json, Orb's own, final); an outside-testers package carries the site's active notice
           # (tools/site.json interim.notice), which must be final, and is refused while it is a draft (Legal RL-204). No other value is ever passed (tools/check-desktop-audience.mjs).
           notice=(); if [ "${AUDIENCE}" = "owner-private" ]; then notice=(--notice site-interim-owner.json --private); fi
+          # an outside-testers package takes the testers' own words (tools/site-tester.json, RL-264) and is refused while they are a draft or the report-channel line is unfilled
+          words=("${notice[@]}"); if [ "${AUDIENCE}" = "outside-testers" ]; then words=(--testers); fi
           declare -A dir=( [windows]=orb-combat-ex-windows-x86_64 [linux]=orb-combat-ex-linux-x86_64 [macos]=orb-combat-ex-macos-universal )
           for p in windows linux macos; do
             mkdir -p "${pkg}/${dir[$p]}"
-            node tools/desktop-package.mjs text --platform "${p}" --out "${pkg}/${dir[$p]}" --build-info build_info.json "${notice[@]}"
+            node tools/desktop-package.mjs text --platform "${p}" --out "${pkg}/${dir[$p]}" --build-info build_info.json "${words[@]}"
           done
           cp "${exp}/windows/orb-combat-ex.exe" "${pkg}/${dir[windows]}/"
           cp "${exp}/linux/orb-combat-ex.x86_64" "${pkg}/${dir[linux]}/"

@@ -1,11 +1,11 @@
 // Self-test of tools/desktop-package.mjs: the README and NOTICES text, the Reduce flashing lock edit and its guard, and the package check, on small synthetic packages (a real Windows, Linux or macOS
 // build is 80 to 170 MB; the check takes its size floor as an option here). No Godot, no network. CI runs it.
 //   node tools/desktop-package-selftest.mjs
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setTestersPackage, testersMenu, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
+import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setTestersPackage, testersMenu, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, TESTER_NOTICE, REPORT_SLOT, channelProblem, readChannel, testerShapeProblems, fillChannel, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -279,6 +279,47 @@ try {
     }));
     check('routes: no macOS preset is found', R({ presets: realPresets.split('[preset.2]')[0] }).some((m) => /no "macOS" preset/.test(m)));
     check('routes: the command exits 1 on the repository as it stands (features.json is unlocked in the repository; the workflow locks its own checkout) and says why', (() => { const r = spawnSync(process.execPath, [join(here, 'desktop-package.mjs'), 'routes', '--root', repo], { encoding: 'utf8' }); return r.status === 1 && /lock_reduce_flashing is not true/.test(r.stderr); })());
+  }
+
+  // the testers' words and the report channel (A2, Legal RL-264)
+  {
+    const t = JSON.parse(readFileSync(join(here, TESTER_NOTICE), 'utf8'));
+    const everyString = [t.gate.heading, ...t.gate.blocks.map((b) => b.p), t.gate.under, t.gate.ai, ...t.tester.flatMap((x) => [x.h, x.p]), t.credits, t.notices_header];
+    check("testers' words: git holds the placeholder, once, in the third section, and no other square brackets anywhere (a real channel never goes in git)", testerShapeProblems(t).length === 0 && t.tester[2].p.split(REPORT_SLOT).length === 2 && everyString.join(' ').split('[').length === 2 && typeof t.draft === 'boolean', JSON.stringify(testerShapeProblems(t)));
+    const norm = (x) => x.toLowerCase().split(/\s+/).join(' ');
+    const page = norm(readFileSync(join(here, '..', 'docs', 'legal', 'tester-folder-notices.md'), 'utf8'));
+    const missing = everyString.filter((x) => !page.includes(norm(x)));
+    check("testers' words: every string is on Legal's page word for word (docs/legal/tester-folder-notices.md)", missing.length === 0, missing.join(' | '));
+    const GOOD = 'the private test channel you were invited to with your key';
+    check('report channel: a plain description passes', channelProblem(GOOD) === null);
+    const NL = String.fromCharCode(10);
+    const bad = [[null, /no report-channel line/], ['   ', /no report-channel line/], [REPORT_SLOT, /placeholder/], ['[the channel, later]', /placeholder/], ['the channel at https://example.org/x', /link/], ['our server discord.gg/abcdef', /link/], ['write to someone@example.invalid', /link|handle/], ['the channel of tester#1234', /handle/], ['two lines' + NL + 'of words here', /more than one line/], ['chat', /8 to 160/]];
+    const wrong = bad.filter(([line, re]) => !re.test(channelProblem(line) || '')).map(([line]) => String(line));
+    check('report channel: a missing line, a placeholder, a link, an invite, an address, a handle, two lines and a word too short are each refused and said why', wrong.length === 0, wrong.join(' | '));
+    const cf = join(tmp, 'report-channel.txt');
+    writeFileSync(cf, String.fromCharCode(0xfeff) + GOOD + String.fromCharCode(13, 10));
+    check("report channel: the file's line is read (a byte order mark and a Windows line ending dropped); no file reads as none", readChannel(cf) === GOOD && readChannel(join(tmp, 'nope.txt')) === null);
+    const filled = fillChannel({ ...t, draft: false }, GOOD);
+    check('report channel: filled in once; the committed words are not changed by it', filled.tester[2].p.includes(': ' + GOOD + '.') && !filled.tester[2].p.includes(REPORT_SLOT) && t.tester[2].p.includes(REPORT_SLOT));
+    const throwsWith = (fn, re) => { try { fn(); return false; } catch (e) { return re.test(e.message); } };
+    check('report channel: the package words are refused with no line, with the placeholder, and when the file in git already holds a real channel', throwsWith(() => fillChannel(t, null), /refused: there is no report-channel line/) && throwsWith(() => fillChannel(t, REPORT_SLOT), /refused: .*placeholder/) && throwsWith(() => fillChannel(filled, GOOD), /git never holds a real channel/));
+    const readme = readmeText('windows', filled, info);
+    const at = ['BEFORE YOU PLAY: FLASHING EFFECTS', 'HOW THIS GAME WAS MADE', 'WHO THIS BUILD IS FOR', 'WHAT YOU MAY DO', 'PRIVACY', 'WHAT LEAVES YOUR COMPUTER', 'HOW TO RUN', 'CREDITS AND LICENSES'].map((h) => readme.indexOf(NL + h));
+    check("testers' README: Legal's sections in Legal's order, with no placeholder left", at.every((v, i) => v > 0 && (i === 0 || v > at[i - 1])) && !readme.includes('[REPORT CHANNEL'), at.join());
+    const T = (over = {}) => V('windows', winLike('windows', { readme, notices: noticesText(lic, t.notices_header), extra: '"testers_package": true "testers": false', ...over }), { testers: true, locked: true, noticeObject: { ...t, draft: false } });
+    check("testers' package: a whole one passes the check", T().length === 0, JSON.stringify(T()));
+    check("testers' package: the placeholder left in README.txt is refused", has(T({ readme: readme.replace(GOOD, REPORT_SLOT) }), /still holds the report-channel placeholder/));
+    check("testers' package: a link in the channel line is refused", has(T({ readme: readme.replace(GOOD, 'https://example.org/invite') }), /holds a link/));
+    check("testers' package: a missing section, a changed section and a missing channel paragraph are found", has(T({ readme: readme.replace('WHAT YOU MAY DO', 'WHAT YOU CAN DO') }), /What you may do/) && has(T({ readme: readme.replace('named adult friend', 'friend') }), /Who this build is for/) && has(T({ readme: readme.replace('WHAT LEAVES YOUR COMPUTER', 'SENDING') }), /What leaves your computer/));
+    check("testers' package: NOTICES.txt without the header paragraph is found", has(T({ notices: noticesText(lic) }), /header paragraph/));
+    check("testers' package: a README with the owner's words instead is found", has(T({ readme: readmeText('windows', notice, info) }), /Who this build is for/));
+    const out = join(tmp, 'text-testers');
+    const bi = join(tmp, 'bi.json');
+    writeFileSync(bi, JSON.stringify(info));
+    const C = (...more) => spawnSync(process.execPath, [join(here, 'desktop-package.mjs'), 'text', '--platform', 'windows', '--out', out, '--build-info', bi, '--testers', ...more], { encoding: 'utf8' });
+    const r = C('--channel-file', join(tmp, 'no-channel.txt'));
+    check('the command: text --testers is refused (a draft until Orb has seen the words; after that, no channel line) and writes nothing', r.status === 1 && (t.draft ? /still a draft/ : /no report-channel line/).test(r.stderr) && !existsSync(out), r.stderr);
+    check('the command: text --testers takes neither --private nor --notice', C('--private').status === 1 && C('--notice', 'site-interim-owner.json').status === 1 && !existsSync(out));
   }
 
   // the command, end to end on a synthetic package

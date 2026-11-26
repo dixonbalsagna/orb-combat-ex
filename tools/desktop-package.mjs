@@ -6,6 +6,9 @@
 //   node tools/desktop-package.mjs lock   --root <exported tree>
 //        sets lock_reduce_flashing true in <root>/ui/data/features.json, the same one-word edit the site's export makes (tools/site-pin.mjs, Legal RL-156): the interim's terms hold for a
 //        download too. It edits a checkout in place, so it runs only on a CI checkout (GITHUB_ACTIONS=true) or on a root that is not this repository.
+//   node tools/desktop-package.mjs text --platform <p> --out <dir> --testers [--channel-file <file>]
+//        the outside-testers words (tools/site-tester.json, Legal RL-264). Refused while that file is a draft, and refused while the report-channel line is missing or a placeholder: the real line is Orb's, one line
+//        in the git-ignored .private/testers/report-channel.txt, never in git. `verify --testers` reads the package against the same words.
 //   node tools/desktop-package.mjs testers --root <exported tree>
 //        (path to Alpha 1 job 14) sets testers_package true in <root>/ui/data/features.json: the menu then hides the modes whose testers flag is false in ui/data/modes.json (the campaign, the network row). The
 //        outside-testers package only; Orb's own build shows every row. `routes` and `verify` take --testers or --no-testers and check the tree and the packed data agree with the audience.
@@ -39,6 +42,51 @@ export function activeNotice(toolsDir = HERE, noticeFile = null) {   // noticeFi
   if (t.draft !== false) throw new Error(`${f} is still a draft: Legal's words are not in, so no download is packed with them`);
   if (!t.gate || !t.gate.heading || !Array.isArray(t.gate.blocks) || !t.gate.blocks.length || !t.gate.ai) throw new Error(`${f} has no flashing notice or no AI line in its "gate"`);
   return t;
+}
+
+// The outside-testers package has its own words (tools/site-tester.json, Legal RL-264) and one line only Orb has: where a tester sends a report. Git holds the placeholder and never the real line; the real one
+// is read when the package is made from a git-ignored file, and a package is refused while the line is still the placeholder, is missing, or holds a link, an address, a handle or more than one line.
+export const TESTER_NOTICE = 'site-tester.json';
+export const REPORT_SLOT = '[REPORT CHANNEL, given with your key]';
+export const CHANNEL_FILE = '.private/testers/report-channel.txt';
+
+/** Why a report-channel line cannot go in a package, or null. Pure. */
+export function channelProblem(line) {
+  if (typeof line !== 'string' || !line.trim()) return 'there is no report-channel line';
+  const t = line.trim();
+  if (/[\r\n]/.test(t)) return 'the report-channel line is more than one line';
+  if (/\[|\]|REPORT CHANNEL/i.test(t)) return 'the report-channel line is still a placeholder';
+  if (/:\/\/|www\.|discord(app)?\.(gg|com)|\b[a-z0-9-]+\.(com|net|org|io|gg|me|app|dev|uk)\b/i.test(t)) return 'the report-channel line holds a link or a web address (a package file is passed around: describe the channel in plain words)';
+  if (/@|#\d{3,}/.test(t)) return 'the report-channel line holds an email address or a handle';
+  if (t.length < 8 || t.length > 160) return 'the report-channel line is not 8 to 160 characters';
+  return null;
+}
+
+/** The channel file's text with blank lines dropped (a second line is then refused by channelProblem), or null when there is no file or it is empty. */
+export function readChannel(file = join(REPO, CHANNEL_FILE)) {
+  if (!existsSync(file)) return null;
+  return readFileSync(file, 'utf8').replace(/^\uFEFF/, '').split('\n').map((l) => l.trim()).filter(Boolean).join('\n') || null;
+}
+
+/** Problems with the testers' notice's own shape. Pure. */
+export function testerShapeProblems(t) {
+  const out = [];
+  const keys = Array.isArray(t && t.tester) ? t.tester.map((x) => x && x.key).join(',') : '';
+  if (keys !== 'who,may,leaves') out.push('the testers\' notice does not hold its three sections (who, may, leaves) in that order');
+  else if (t.tester.some((x) => !x.h || !x.p)) out.push('a section of the testers\' notice has no heading or no words');
+  if (!t || !t.credits || !t.notices_header) out.push('the testers\' notice has no credits or no NOTICES header paragraph');
+  return out;
+}
+
+/** The testers' notice with the report channel filled in. Refuses a notice with the wrong shape, and a line that is missing, a placeholder or not allowed. Pure. */
+export function fillChannel(t, channel) {
+  const shape = testerShapeProblems(t);
+  if (shape.length) throw new Error(shape.join('; '));
+  const leaves = t.tester[2];
+  if (leaves.p.split(REPORT_SLOT).length !== 2) throw new Error(`the "${leaves.h}" section of the testers' notice does not hold the placeholder "${REPORT_SLOT}" exactly once (git never holds a real channel)`);
+  const bad = channelProblem(channel);
+  if (bad) throw new Error(`the testers' package is refused: ${bad}. Orb writes one line (a plain description of the private report channel) in ${CHANNEL_FILE}, which git ignores.`);
+  return { ...t, tester: [t.tester[0], t.tester[1], { ...leaves, p: leaves.p.replace(REPORT_SLOT, () => channel.trim()) }] };
 }
 
 // Legal's RL-204 (docs/legal/page-fixed-lines.md, addendum 2026-10-28): exact public words. A change to any of them is a new ruling; the self-test holds each against that file.
@@ -93,22 +141,24 @@ export function readmeText(platform, notice, info, opts = {}) {
     'HOW THIS GAME WAS MADE',
     g.ai,
     '',
+    ...(notice.tester ? notice.tester.slice(0, 2).flatMap((x) => [x.h.toUpperCase(), x.p, '']) : []),
     'PRIVACY',
     PRIVACY,
     '',
+    ...(notice.tester ? notice.tester.slice(2).flatMap((x) => [x.h.toUpperCase(), x.p, '']) : []),
     ...RUN[platform],
     '',
-    'LICENSES',
-    '  NOTICES.txt in this folder holds the license and copyright text of the Godot Engine this game runs on, the font it ships and the engine\'s other components.',
+    ...(notice.tester ? ['CREDITS AND LICENSES', notice.credits] : ['LICENSES', '  NOTICES.txt in this folder holds the license and copyright text of the Godot Engine this game runs on, the font it ships and the engine\'s other components.']),
     '',
   ];
   return lines.join('\n');
 }
 
 /** NOTICES.txt from tools/site-licences.json (the structure build-site.mjs's About page reads). Pure. */
-export function noticesText(lic) {
+export function noticesText(lic, header = null) {
   if (!lic || !lic.license_text || !lic.licenses) throw new Error('tools/site-licences.json has no license_text or licenses (run tools/site_licences.gd)');
   const out = [];
+  if (header) out.push(header, '');
   out.push('GODOT ENGINE', `This game runs on the Godot Engine ${lic.godot_version} (godotengine.org), under its MIT License:`, '', lic.license_text, '');
   const fonts = (lic.copyright || []).filter((x) => /open sans/i.test(x.name));
   out.push('OPEN SANS');
@@ -345,7 +395,21 @@ export function verifyDir(platform, dir, o = {}) {
     if (info && o.commit && !String(o.commit).toLowerCase().startsWith(String(info.commit))) out.push(`build_info.json names commit ${info.commit}, the build is of ${o.commit}`);
   }
   let notice = null;
-  try { notice = activeNotice(HERE, o.notice || null); } catch (e) { out.push(e.message); }
+  // an outside-testers package is read against the testers' own words (o.noticeObject: the self-test's, since the committed file is a draft until Orb has seen it)
+  try { notice = o.noticeObject || activeNotice(HERE, o.notice || (o.testers ? TESTER_NOTICE : null)); } catch (e) { out.push(e.message); }
+  if (o.testers && notice) out.push(...testerShapeProblems(notice));
+  if (o.testers && notice && !testerShapeProblems(notice).length && has('README.txt')) {
+    const r = readFileSync(join(dir, 'README.txt'), 'utf8');
+    for (const x of notice.tester.slice(0, 2)) if (!r.includes(`${x.h.toUpperCase()}\n${x.p}\n`)) out.push(`README.txt does not carry the "${x.h}" section word for word (RL-264)`);
+    // the third section: Legal's words around the one line only Orb has, which must be filled and allowed
+    const leaves = notice.tester[2], [before, after] = leaves.p.split(REPORT_SLOT);
+    const head3 = `${leaves.h.toUpperCase()}\n`, i = r.indexOf(head3), para = i < 0 ? '' : r.slice(i + head3.length).split('\n')[0];
+    if (/\[REPORT CHANNEL/i.test(r)) out.push('README.txt still holds the report-channel placeholder: an outside-testers package cannot be made before Orb\'s report channel exists (RL-264)');
+    else if (!after || !para.startsWith(before) || !para.endsWith(after)) out.push(`README.txt does not carry the "${leaves.h}" section word for word (RL-264)`);
+    else { const bad = channelProblem(para.slice(before.length, para.length - after.length)); if (bad) out.push(`README.txt: ${bad}`); }
+    if (!r.includes(notice.credits)) out.push('README.txt does not carry the testers\' credits and licenses paragraph');
+  }
+  if (o.testers && notice && notice.notices_header && has('NOTICES.txt') && !readFileSync(join(dir, 'NOTICES.txt'), 'utf8').startsWith(notice.notices_header)) out.push('NOTICES.txt does not start with the testers\' header paragraph (RL-264)');
   if (has('README.txt') && notice) {
     const r = readFileSync(join(dir, 'README.txt'), 'utf8');
     if (!r.includes(notice.gate.ai)) out.push('README.txt does not carry the AI line word for word');
@@ -359,7 +423,7 @@ export function verifyDir(platform, dir, o = {}) {
     if (platform === 'windows' && !r.includes(WINDOWS_WARN)) out.push("README.txt does not carry Legal's Windows warning sentences word for word (RL-204)");
     if (/exactly what the project built/i.test(r)) out.push('README.txt still says "exactly what the project built", an assurance Legal removed (RL-204)');
     if (platform === 'macos' && !r.includes(XATTR_LEAD)) out.push(`README.txt does not carry Legal's lead-in to the xattr step: "${XATTR_LEAD}" (RL-204)`);
-    if (!r.includes(`${NL}LICENSES${NL}`) || /LICENCES|licence/i.test(r)) out.push('README.txt spells license the British way: the heading is LICENSES and the text "license" (RL-204, public strings are American)');
+    if (!r.includes(`${NL}${o.testers ? 'CREDITS AND LICENSES' : 'LICENSES'}${NL}`) || /LICENCES|licence/i.test(r)) out.push(`README.txt spells license the British way: the heading is ${o.testers ? 'CREDITS AND LICENSES' : 'LICENSES'} and the text "license" (RL-204, public strings are American)`);
     const bad = NO_ASSURANCE.filter((w) => new RegExp(`(^|[^A-Za-z-])${w}($|[^A-Za-z-])`, 'i').test(r));
     if (bad.length) out.push(`README.txt uses ${bad.map((w) => '"' + w + '"').join(', ')}: no assurance word may appear in the package (RL-204)`);
   }
@@ -453,9 +517,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       let info;
       try { info = JSON.parse(readFileSync(infoFile, 'utf8')); } catch (e) { throw new Error(`${infoFile} could not be read (node tools/write-build-info.mjs first): ${e.message}`); }
       const lic = JSON.parse(readFileSync(join(HERE, 'site-licences.json'), 'utf8'));
+      const testers = args.includes('--testers');
+      if (testers && (args.includes('--private') || opt('--notice'))) throw new Error('--testers takes no --private and no --notice: an outside-testers package carries the testers\' own words');
+      // both refusals come before any file is written: a draft notice, then a report channel that is missing or still the placeholder
+      const words = testers ? fillChannel(activeNotice(HERE, TESTER_NOTICE), readChannel(opt('--channel-file') ? resolve(opt('--channel-file')) : undefined)) : activeNotice(HERE, opt('--notice') || null);
       mkdirSync(out, { recursive: true });
-      writeFileSync(join(out, 'README.txt'), readmeText(platform, activeNotice(HERE, opt('--notice') || null), info, { private: args.includes('--private') }));
-      writeFileSync(join(out, 'NOTICES.txt'), noticesText(lic));
+      writeFileSync(join(out, 'README.txt'), readmeText(platform, words, info, { private: args.includes('--private') }));
+      writeFileSync(join(out, 'NOTICES.txt'), noticesText(lic, words.notices_header || null));
       writeFileSync(join(out, 'build_info.json'), JSON.stringify(info) + '\n');
       console.log(`desktop package: README.txt, NOTICES.txt and build_info.json (${info.commit}, ${info.date}) written to ${out} for ${platform}`);
     } else if (cmd === 'routes') {
