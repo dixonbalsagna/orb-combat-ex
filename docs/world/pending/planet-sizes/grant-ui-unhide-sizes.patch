@@ -1,0 +1,28 @@
+diff --git a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+index e6655c0..8fd05d5 100644
+--- a/ui/tools/hud_check.gd
++++ b/ui/tools/hud_check.gd
+@@ -11289,7 +11289,7 @@ func _menus_a1_rules() -> void:
+ 				cross_why = "rows changed on %s with %s" % [lit, str(dir)]
+ 			for k in before_cfg:
+ 				if str(before_cfg[k]) != str(after_cfg.get(k, "")):
+-					var own: bool = (k == lit) or (lit == "ai" and k == "ai_level") or ((lit == "f1" or lit == "f2") and (k == "p1_fighter" or k == "p2_fighter"))   # a fighter step onto the other player's fighter swaps the two (no mirror pick): the one exception, and the rows never change
++					var own: bool = (k == lit) or (lit == "ai" and k == "ai_level") or (lit == "psize" and k == "planet_size") or ((lit == "f1" or lit == "f2") and (k == "p1_fighter" or k == "p2_fighter"))   # a fighter step onto the other player's fighter swaps the two (no mirror pick): the one exception, and the rows never change
+ 					if not own:
+ 						cross_ok = false
+ 						cross_why = "%s changed %s with %s" % [lit, str(k), str(dir)]
+@@ -11959,12 +11959,12 @@ func _menus_world_rules() -> void:
+ 	var rep_none: String = UiFeedback.build_report({"commit": "abc", "seed": 5, "setup": "a vs b"}, [], "", {})
+ 	_ok(rep.contains("World: Planet 7, generator 3, 4800 columns around") and rep_none.contains("World: unknown"), "world line: the report names the world (and says unknown where the host gave none)")
+ 	# The planet size row.
+-	UiModes.sizes_override = []
++	UiModes.sizes_override = ["medium"]   # one offered size: not the shipped list, which now offers more (an empty stand-in reads the file)
+ 	var cfg := {"players": 1, "p1": "kb", "p2": "kb", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true, "p1_fighter": "PROTAGONIST", "p2_fighter": "RIVAL", "planet_size": "medium"}
+ 	var none_rows: Array = UiMenu.rows_page("setup", cfg, false, false)
+ 	UiModes.sizes_override = ["tiny", "small", "medium", "big", "huge"]
+ 	var rows: Array = UiMenu.rows_page("setup", cfg, false, false)
+-	_ok(not none_rows.has("psize") and rows.slice(0, 5) == ["p1", "f1", "ai", "f2", "psize"] and UiModes.size_default() == "medium" and UiModes.size_of("nope") == "medium" and UiModes.size_of("huge") == "huge" and UiModes.size_step("huge", 1) == "tiny" and UiModes.size_step("tiny", -1) == "huge" and UiModes.size_label("big") == "Big" and UiModes.size_label("tiny") == "Tiny", "planet size: no row without sizes; with five it follows the computer's fighter; the default is medium, a size the data lacks becomes medium, the steps wrap, the words are Tiny to Huge")
++	_ok(not none_rows.has("psize") and rows.slice(0, 5) == ["p1", "f1", "ai", "f2", "psize"] and UiModes.size_default() == "medium" and UiModes.size_of("nope") == "medium" and UiModes.size_of("huge") == "huge" and UiModes.size_step("huge", 1) == "tiny" and UiModes.size_step("tiny", -1) == "huge" and UiModes.size_label("big") == "Big" and UiModes.size_label("tiny") == "Tiny", "planet size: no row with one size; with five it follows the computer's fighter; the default is medium, a size the data lacks becomes medium, the steps wrap, the words are Tiny to Huge")
+ 	# One offered size (GW1c lands with Medium alone): no row and no summary line, the cfg still carries the size; two sizes: both.
+ 	UiModes.sizes_override = ["medium"]
+ 	var one_rows: Array = UiMenu.rows_page("setup", cfg, false, false)

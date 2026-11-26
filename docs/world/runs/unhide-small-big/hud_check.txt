@@ -1,0 +1,7 @@
+--- main's data, main's hud_check: exit 0, no FAIL
+--- flipped data, main's hud_check:
+FAIL  a1 menus (hud): on every row of the setup, in all four directions: Up and Down wrap at both ends, and Left or Right changes only the lit row's own value (a fighter step may swap the two fighters) and never the rows (psize changed planet_size with 14)
+FAIL  planet size: no row without sizes; with five it follows the computer's fighter; the default is medium, a size the data lacks becomes medium, the steps wrap, the words are Tiny to Huge
+hud exit 1
+--- flipped data, with grant-ui-unhide-sizes.patch: exit 0, 0 FAIL
+--- main's data, with the grant: 0 FAIL

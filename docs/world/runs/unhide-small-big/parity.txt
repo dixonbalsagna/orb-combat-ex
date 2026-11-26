@@ -1,0 +1,7 @@
+ok rows: 88
+Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+ok    the intro phase (golden)
+ok    composed intros (golden)
+ok    planet worlds (golden)
+golden check passed
+parity exit 0

@@ -1,0 +1,5 @@
+  FAIL  as shipped, small, medium and big are offered, smallest first; tiny, huge and colossal are held (["medium"])
+  FAIL  small, medium, big, a setup that names no size and a setup with no planet are not held, and huge is
+  FAIL  flipping tiny and huge to offered in memory (the one data edit each) makes tiny play as tiny (1,280 columns) and huge as huge (19,200) without the way in, and the menu's list five
+  FAIL  control: the raw table does differ with small and big held again, so the row above compares two different tables
+SIZES: 4 check(s) failed

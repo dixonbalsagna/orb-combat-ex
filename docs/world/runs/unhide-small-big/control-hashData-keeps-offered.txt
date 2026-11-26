@@ -1,0 +1,3 @@
+  FAIL  the flip moves no hash: a medium match's state hash at tick 120, the size table as a data hash reads it (hashData), and the replay data hash of a setup naming medium and of a setup naming no size are unchanged
+  FAIL  small and big coming back moved no hash: with them held again (as GW1c shipped, medium alone) a medium match's state hash at tick 120, hashData and the replay data hash of a setup naming medium and of one naming none are what they are with them offered
+SIZES: 2 check(s) failed

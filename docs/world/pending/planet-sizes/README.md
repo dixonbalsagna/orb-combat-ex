@@ -72,3 +72,31 @@ After the gate: Rendering's tile work, UI's row, Performance's readings. Then th
 **2026-11-21:** World's meteor grant is taken out of the GW1c list (VFX's lands instead). The stage runs of `docs/world/planet-stack-recut.md` used World's only to make the scratch tree compile.
 
 **2026-11-23 (the GW1c gate red, `validate.js --self-test`: "coverage: biomes-sizes.schema.json: at least three invalid cases, has 0"):** `grant-tools-sizes-cases.patch` (Tools' file, `tools/fixtures/cases.json`): five invalid cases for `biomes-sizes.schema.json` (`sizes-unknown-top-key`, `sizes-offered-not-boolean`, `sizes-missing-offered`, `sizes-building-share-zero`, `sizes-spawn-reach-negative`), appended after the `/random/enabled` case, in the file's own shape. Applies after UI's `schema-feedback-world.patch` (checked both with it and on bare HEAD). On the full GW1c stack (`docs/ep/reviews/GW1c-stack.txt`, 22 pieces, strict) plus UI's grant: before, self-test 10170 of 10171 (that one coverage row); after, **10177 of 10177**, `validate` 325 files 0 errors. Negative control (the `minimum` of `spawnReach` removed): the matching case fails. **Tools already parks six cases for the same schema (`docs/tools/pending/world-schema-cases/`, ids `biomes-sizes-*`): land one of the two, not both** (they append at the same line; Tools' hunk fails after this one). The `sizes-*` ids differ from Tools', so nothing collides by name.
+
+## Small and big coming back (parked 2026-11-26, the EP's order; NOT applied to main)
+
+**`unhide-small-big.diff`**: `data/biomes/sizes.json` `offered: true` for **small and big** (and its `_about` sentence), with `size_check`'s rows for that state. **Tiny, huge and colossal stay held.** Cut on HEAD; two files.
+
+**It lands with `grant-ui-unhide-sizes.patch`** (UI's `ui/tools/hud_check.gd`, three lines): with the flip alone, UI's HUD check fails 2 rows. One read the shipped file as the list with no sizes; the other did not know that Left and Right on the size row change `planet_size`. Both are test gaps the one-size build hid. The grant passes with the flip and without it, so it can land first.
+
+**It lands only when Camera's and Rendering's readings on the combined tree pass** (Rendering's sky-handover takes small to a pass; Camera's door-holds does the same for big).
+
+**Run on the flipped tree** (records `docs/world/runs/unhide-small-big/`): all 96 World checks, the golden check (unmoved), `validate` and its self-test, and the HUD check with the grant. **What the check proves with it** (`SIZES`): small, medium and big are offered; tiny, huge and colossal play medium with an error; a match naming tiny is the medium match byte for byte; the replay rows (now at tiny); **small and big coming back moved no hash on the landed code** (with them held again, as GW1c shipped, a medium match's state at tick 120, `hashData` and the replay data hash of a setup naming medium or naming none are the same), with a control that the raw tables differ; every offered size's spawn is within reach of a place.
+
+**What a player sees change:** the setup page gains a "Planet size" row with three choices (the HUD hides it only while one size is offered). Medium's play and the golden do not move.
+
+### Before the flip, or with it (the un-hide list of `docs/ep/reviews/GW1c-medium-prelanding.md`, read against the landed code)
+
+| # | What | Whose | Bites the small-and-big flip? |
+| :--- | :--- | :--- | :--- |
+| 1 | **The planet made ahead ignores the size.** `SimHost.planet_key` (`render/core/sim_host.gd`) is planet, generation, touch-down and arena, with no size. The menu prefetches for the choice; picking another size leaves the key the same, so Start can take up the job made for the size picked before. "New match" from the pause menu (`render/core/main.gd`, `new_match_requested`) also names no size and plays medium. Read from the code; not run | Rendering / Simulation | **Yes. Do this first**: it is the one a player can walk into from the menu |
+| 2 | **Relief-cap rows: stamp only the played size.** A replay's header and the online match key take the whole size table (`hashData`, `sim/core/replay.gd`), so any edit to one size's numbers (`relief-cap-data.diff`: small's and tiny's height caps) changes the stamp of every match that names a size, medium from the menu included. Hash the played size's row only, with a check row that edits another size's row and shows the stamp still | Simulation | The flip itself moves no stamp. **Small's height cap does**, so this goes before the cap rows. Decide with Camera and Rendering whether their small reading wants the cap: it is not in this diff |
+| 3 | **Nothing calls `WorldPlanetSize.isHeld`.** A saved match naming a held size plays medium and fails later, or passes if it has no checkpoints | UI and Simulation | Not for small and big (they stop being held). Still needed before a saved-match loader or an online lobby reaches players |
+| 4 | **The override scan** (`size_check`) trusts any path with `tests` or `tools` in it, and the exports do not leave `render/camera/tests/` out. Nothing there sets `heldOverride` today | World (the scan), Tools (the export filters) | No: a guard to tighten |
+| 5 | **Huge and colossal cannot be drawn.** `render/core/tile_field.gd` keeps 800 picture layers and never frees the coarsest; huge needs 864, colossal 3,456 (medium 54, big 216) | Rendering | No: they stay held. Before either is offered |
+| 6 | The menu's own reading of `sizes.json` is tested only through stand-in lists, never against the shipped file (`ui/tools/hud_check.gd`) | UI | **Yes, in part**: the flip turns two rows red (the grant above fixes them). A row against the shipped file is still worth having |
+| 7 | The camera fixes for small and for big | Camera, Rendering | The gate on this diff |
+
+Words to change when it lands (not in the diff, not World's): `docs/ui/menus-a1.md` (it says medium alone) and the status rows that say big and small are held.
+
+**`relief-cap-gw1c/relief-cap-data.diff` does not apply on top of this flip** (its context is small's held row). It needs a re-cut when its turn comes, after item 2.
