@@ -44,6 +44,8 @@ static var G_SETTLE: bool = true
 static var G_FURROW: bool = false
 static var G_FLATTEN: bool = false      # a crater's bowl is cut on a level floor: the hills under it do not stay inside it (docs/world/crater-flatten.md)
 static var G_FLATTEN_FADE: float = 1.45 # ... fully flat inside the lip, easing back to the ground by this many radii
+static var T_ON: bool = false           # an impact's energy takes its tier from a table (T_E) instead of 25 percent a tier, with the energy model off (A-WORLD-06; docs/world/crater-tiers.md)
+static var T_E: PackedFloat64Array = PackedFloat64Array([1.0, 1.25, 1.5, 1.75])   # ... the energy multipliers of tiers 1 to 4 (radius goes with the square root)
 static var G_SETTLE_G: bool = false   # grooves (trenches, scars) settle to the angle of repose too: off until step 3 (trench widths by force), see globe-step2.md
 
 
@@ -87,6 +89,37 @@ static func globeFlatten() -> bool:
 	if not _loaded:
 		_load()
 	return G_FLATTEN
+
+
+## An impact's energy multiplier at a tier, from the table (tiers 1 to 4, linear between): the table's own number at a whole tier. Read only with tierOn().
+static func tierEnergy(tier: float) -> float:
+	if not _loaded:
+		_load()
+	var t: float = clampf(tier, 1.0, 4.0) - 1.0
+	if t >= 3.0:
+		return T_E[3]
+	var i: int = int(t)
+	return T_E[i] + (T_E[i + 1] - T_E[i]) * (t - float(i))
+
+
+static func tierOn() -> bool:
+	if not _loaded:
+		_load()
+	return T_ON
+
+
+static func tierTable() -> PackedFloat64Array:
+	if not _loaded:
+		_load()
+	return T_E
+
+
+## Tests only: the tier table on or off, and its numbers, without the file.
+static func setTier(on_: bool, table: PackedFloat64Array) -> void:
+	if not _loaded:
+		_load()
+	T_ON = on_
+	T_E = table
 
 
 static func globeFlattenFade() -> float:
@@ -177,6 +210,8 @@ static func _load() -> void:
 	G_FLATTEN = false
 	G_FLATTEN_FADE = 1.45
 	G_SETTLE_G = false
+	T_ON = false
+	T_E = PackedFloat64Array([1.0, 1.25, 1.5, 1.75])
 	for k in range(WorldGround.LOOKS.size()):
 		_shapes.append(NONE)
 	var f := FileAccess.open(PATH, FileAccess.READ)
@@ -217,6 +252,18 @@ static func _load() -> void:
 		var mt = j.meteor
 		if not (mt is Dictionary) or float(mt.get("eMult", 0.0)) < 1.0 or float(mt.get("rMax", 0.0)) < 600.0:
 			_errors.append("craters.json: meteor needs eMult (at least 1) and rMax (at least 600)")
+	if j.has("tier"):
+		var tr = j.tier
+		var te = tr.get("energy", []) if tr is Dictionary else []
+		var te_ok: bool = tr is Dictionary and tr.get("on", null) is bool and te is Array and te.size() == 4
+		if te_ok:
+			for q in range(4):
+				if not (te[q] is float or te[q] is int) or float(te[q]) < 1.0 or float(te[q]) > 100.0 or (q > 0 and float(te[q]) < float(te[q - 1])):
+					te_ok = false
+			if te_ok and float(te[0]) != 1.0:
+				te_ok = false
+		if not te_ok:
+			_errors.append("craters.json: tier is {on, energy: four multipliers from 1.0, none falling}")
 	if j.has("globe"):
 		var gl = j.globe
 		if not (gl is Dictionary) or float(gl.get("floor", -1.0)) >= 0.0 or float(gl.get("ceil", 1.0)) <= 0.0 or float(gl.get("repose", 1.25)) < 0.5 or int(gl.get("repeats", 0)) < 0 or int(gl.get("repeats", 0)) > 8 or float(gl.get("flattenFade", 1.45)) <= 1.0 or float(gl.get("flattenFade", 1.45)) > 2.0:
@@ -225,6 +272,9 @@ static func _load() -> void:
 		for k in range(_shapes.size()):
 			_shapes[k] = NONE
 		return
+	if j.has("tier"):
+		T_ON = bool(j.tier.on)
+		T_E = PackedFloat64Array([float(j.tier.energy[0]), float(j.tier.energy[1]), float(j.tier.energy[2]), float(j.tier.energy[3])])
 	if j.has("globe"):
 		G_FLOOR = float(j.globe.get("floor", -2080.0))
 		G_CEIL = float(j.globe.get("ceil", 960.0))

@@ -45,6 +45,17 @@
         "rMax": { "type": "number", "minimum": 600, "maximum": 8320 }
       }
     },
+    "tier": {
+      "type": "object",
+      "description": "An impact's energy by tier with the energy model off (WorldCraters.tier*; docs/world/crater-tiers.md). Optional: missing, it is off (25 percent a tier). on: the table is read; energy: the multipliers of tiers 1 to 4, from 1.0, none falling (Game Design: 1, 2.1, 4.3, 9 for a radius of 1, 1.45, 2.07, 3).",
+      "required": ["on", "energy"],
+      "additionalProperties": false,
+      "patternProperties": { "^_": { "type": "string" } },
+      "properties": {
+        "on": { "type": "boolean" },
+        "energy": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "number", "minimum": 1, "maximum": 100 } }
+      }
+    },
     "globe": {
       "type": "object",
       "description": "The planet store's rules for a mark (WorldCraters.globe*; docs/world/globe-step2.md). Optional: missing, the defaults are these numbers with repeats 0. Read whether or not the module is on.",

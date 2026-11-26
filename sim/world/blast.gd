@@ -64,6 +64,28 @@ static func shotHit(S: SimState, slot: int, kind: String, x: float, y: float, z:
 	return r
 
 
+## The shot rule under the energy model (crater-tiers, C-02 of the GW1c readiness review): with it on, a shot's crater is the kind's base times 12.25 to the shooter's level; with it off (shipped: no key in blast.json) it is
+## the kind's base times tierEnergy[tier] whatever the model, exactly as the 9 November build and main have it. blast.json "shotModel" is the row that turns it on (a crater-size change on Orb's path: a hash window, and a side-by-side of
+## a top-tier shot's crater against the 9 November build first).
+static var shotModelOverride: int = -1   # tests only: -1 the data's shotModel, 0 off, 1 on
+
+
+static func shotModelOn() -> bool:
+	if shotModelOverride >= 0:
+		return shotModelOverride == 1
+	return bool(data().get("shotModel", false))
+
+
+## A shot's crater energy: the kind's own base (craterETap to craterE by charge), times, with the energy model off, the shooter's tier from tierEnergy (data/biomes/blast.json), and, with it on, the model's
+## 12.25 to the level (SimPower.energyTop ^ level): a fresh base fighter's shot is the base, a top-tier fighter's at full power digs 3.5 times the radius, as a beam's groove does (Game Design, docs/design/buildings.md
+## section 9; A-WORLD-06). Pure: f needs tier and power.
+static func craterEnergy(S: SimState, f, k: Dictionary, charge: float) -> float:
+	var e: float = lerpf(float(k.get("craterETap", k.craterE)), float(k.craterE), charge)
+	if S.powerOn and shotModelOn():
+		return e * SimDetMath.pow(SimPower.energyTop, SimPower.level(f))
+	return e * float(data().tierEnergy[clampi(int(f.tier), 1, 4) - 1])
+
+
 static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1, shooter = null) -> Dictionary:
 	var res := {"crater": null, "levelled": 0}
 	var D: Dictionary = data()
@@ -78,7 +100,7 @@ static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: floa
 		return res
 	var g: float = WorldTerrain.groundY(S, x, z)
 	var sp: float = maxf(SimDetMath.hypot(vx, vy), 0.000001)
-	var E: float = lerpf(float(k.get("craterETap", k.craterE)), float(k.craterE), charge) * float(D.tierEnergy[ti])
+	var E: float = craterEnergy(S, f, k, charge)
 	var air: float = maxf(0.0, y - g)   # a burst above the ground (a mine in the air, a shot that ran out of life): the bowl fades with the height
 	if air > 0.0:
 		E *= maxf(0.0, 1.0 - air / (float(k.get("airReach", 6.0)) * 75.0))

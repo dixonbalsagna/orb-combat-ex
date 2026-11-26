@@ -8,6 +8,11 @@
     "eMult": 9.0,
     "rMax": 6100.0
   },
+  "tier": {
+    "_about": "An impact's energy by the shooter's tier when the energy model is off (A-WORLD-06; docs/world/crater-tiers.md; Game Design, docs/design/buildings.md section 6.2): the multipliers of tiers 1 to 4, linear between. 1, 2.1, 4.3 and 9 make the crater's radius 1, 1.45, 2.07 and 3 times (X-14: three times at the top tier). With the model on the model decides and this is not read. on false is today's 25 percent a tier (1.32 times at tier 4). Shots (blast.json tierEnergy) take the same numbers.",
+    "on": false,
+    "energy": [1.0, 2.1, 4.3, 9.0]
+  },
   "globe": {
     "_about": "The planet store's rules for a mark (docs/world/globe-step2.md; terrain-globe-plan.md 4.3), read whether or not the module is on. floor and ceil hold the store's ground between them (the strip's -260 and +120 x 8). repose: the wall slope past which a new crater settles wider and shallower (volume kept). repeats: how many times a blow on one spot grows its crater into the old one (0 is off: each blow digs its own, held by the shaft cap; the radius factor is brunt.json repeatCraterGrow). settle: the settling on or off. settleGrooves: a trench or scar is also widened to the angle of repose (off: Camera's chase_rush_check moves with it; step 3 sets trench widths by force). flatten: a crater is cut on a level floor, the height of the ground at its centre, so the hills under the bowl do not stay inside it (fully level inside the lip, easing back to the ground by flattenFade radii; docs/world/crater-flatten.md; off until Rendering has seen it). furrow: a glancing impact also cuts a short trench behind it along its heading (off until step 3's trenches are looked at).",
     "floor": -2080.0,

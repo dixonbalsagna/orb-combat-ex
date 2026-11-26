@@ -113,6 +113,7 @@
         "^_": true
       }
     },
+    "shotModel": { "type": "boolean", "description": "With the energy model on, a shot's crater is the kind's base times 12.25 to the shooter's level (crater-tiers). Absent or false: the base times tierEnergy[tier] whatever the model, as the 9 November build." },
     "tierEnergy": {
       "type": "array",
       "minItems": 4,

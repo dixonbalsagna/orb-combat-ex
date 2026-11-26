@@ -53,7 +53,8 @@ func _init() -> void:
 	ok(not off.powerOn and on.powerOn, "the setup's power switch is the match's (off %s, on %s)" % [str(off.powerOn), str(on.powerOn)])
 	# craters: the energy of the send, no tier term, no ordinary cap
 	var e_old: float = WorldCrater.impactEnergy(900.0, 4.0)
-	ok(is_equal_approx(e_old, 1.75) and is_equal_approx(WorldCrater.impactEnergy(900.0, 4.0, off), 1.75), "off: tier 4 at 900 a second is E 1.75, as before (%.2f)" % e_old)
+	var e_tier4: float = WorldCraters.tierEnergy(4.0) if WorldCraters.tierOn() else 1.75   # the tier term: 25 percent a tier, or A-WORLD-06's table (craters.json tier) when it is on
+	ok(is_equal_approx(e_old, e_tier4) and is_equal_approx(WorldCrater.impactEnergy(900.0, 4.0, off), e_tier4), "off: tier 4 at 900 a second is E %.2f, as before (%.2f)" % [e_tier4, e_old])
 	ok(is_equal_approx(WorldCrater.impactEnergy(900.0, 4.0, on), 1.0) and is_equal_approx(WorldCrater.impactEnergy(2700.0, 1.0, on), 9.0), "on: no tier term (900 is E 1, 2,700 is E 9)")
 	var r_off = WorldCrater.dig(off, off.fighters[0].x, 100.0, off.fighters[0], "impact", 0.0, 1.0, false)
 	var r_on = WorldCrater.dig(on, on.fighters[0].x, 100.0, on.fighters[0], "impact", 0.0, 1.0, false)

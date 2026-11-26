@@ -83,10 +83,15 @@ static func beamPower(A) -> float:
 
 
 ## sp is the unboosted speed: the launch's horizontal traversal factor is divided out before the energy is taken.
-## The energy of a body hitting the ground at speed sp: v squared, times (1 + IMPACT_TIER_E per tier above 1). With S given and its power model on (S.powerOn: docs/design/power-scale.md) the tier term is gone, since the level is already in the speed: one path, nothing counted twice.
+## The energy of a body hitting the ground at speed sp: v squared, times (1 + IMPACT_TIER_E per tier above 1), or, with craters.json tier on, times the tier table's multiplier (1, 2.1, 4.3, 9: a radius of 1, 1.45, 2.07 and 3 times; A-WORLD-06).
+## With S given and its power model on (S.powerOn: docs/design/power-scale.md) the tier term is gone, since the level is already in the speed: one path, nothing counted twice.
 static func impactEnergy(sp: float, tier: float, S: SimState = null) -> float:
 	var v: float = sp / IMPACT_SPEED_REF
-	return v * v * (1.0 if (S != null and S.powerOn) else 1.0 + IMPACT_TIER_E * (tier - 1.0))
+	if S == null or not S.powerOn:
+		if WorldCraters.tierOn():
+			return v * v * WorldCraters.tierEnergy(tier)
+		return v * v * (1.0 + IMPACT_TIER_E * (tier - 1.0))
+	return v * v * 1.0
 
 
 static func powerupEnergy(tier: float) -> float:

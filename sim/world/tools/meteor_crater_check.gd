@@ -33,6 +33,7 @@ func _run(model: bool) -> void:
 			planet = int(a.substr(9))
 		elif a.begins_with("--touch="):
 			touch = int(a.substr(8))
+	WorldCraters.setTier(false, WorldCraters.tierTable())   # the 25 percent a tier these numbers were taken at (A-WORLD-06's tier table has its own check, tier_ratio_check)
 	var E: float = WorldCrater.impactEnergy(8570.0, 4.0)
 	var want_r: float = minf(WorldCraters.meteorRMax(), WorldCrater.R_BASE * sqrt(E * WorldCraters.meteorEMult()))
 	ok(is_equal_approx(WorldCraters.meteorEMult(), 9.0) and is_equal_approx(WorldCraters.meteorRMax(), 6100.0), "the data's first values: eMult 9, rMax 6,100")
