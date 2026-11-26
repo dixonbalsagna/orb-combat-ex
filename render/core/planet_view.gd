@@ -279,7 +279,7 @@ func stand_opening(S: SimState, every: bool) -> bool:
 func _bs_begin(S: SimState) -> bool:
 	tile_field = null   # the tile ground's: a build starts it again, once its copies are made
 	_tile_for = null
-	if ground != null:
+	if ground != null and source == null:   # a second pane's ground is its source's, already linked this match by its build (GB-010)
 		ground.tile_field = null
 	for c in _copies:
 		remove_child(c)
