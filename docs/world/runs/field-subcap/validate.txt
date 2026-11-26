@@ -1,0 +1,2 @@
+326 files checked, 0 errors, 2 warnings
+self-test: 10191 of 10191 checks passed

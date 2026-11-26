@@ -1,0 +1,14 @@
+RM ended match=1 how=capped simSeconds=600.0 t=691
+listsEmptiedMiB=32.45
+["static sim/core/field.gd:_ctF.h",2.07]
+["static sim/core/field.gd:_ctF.sbOld",1.83]
+["static sim/core/field.gd:_ctF.shOld",1.83]
+["static sim/core/field.gd:_ctF.sh",1.47]
+["static sim/core/field.gd:_ctF.sb",1.47]
+["static sim/core/field.gd:_ctF.rf",0.52]
+["static sim/core/field.gd:_ctF.f",0.52]
+["static sim/core/field.gd:_ctF.b",0.52]
+["static sim/core/field.gd:_ctF.extraSub",0.31]
+["static sim/core/field.gd:_ctF.extra",0.23]
+["static sim/core/field.gd:_ctF.extraSubH",0.16]
+["static sim/core/field.gd:_ctF.extraSubB",0.16]

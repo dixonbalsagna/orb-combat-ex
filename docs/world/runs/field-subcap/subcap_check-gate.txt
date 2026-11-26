@@ -1,0 +1,10 @@
+  ok    the records are on, and a generation is 150000 entries as shipped
+  ok    control: unbounded, the walk of 504 refined cells leaves 9795 entries in sh and never turns
+  ok    ... and the pool's list holds each of its 9079 nodes once, with the planet's own values (so the pool file is what it was)
+  ok    every height, biome and fine biome is bit for bit the same, both passes (0 of 15120 values differ; 48 turns, 18158 sub-node reads against 9079)
+  ok    the tables stay within two generations: at most 403 in sh and 806 in sh and the old one (unbounded: 9795), 48 turns
+  ok    ... and the pool's list is whole and right whatever the tables forgot (373 nodes, those of the first generation)
+  ok    900 ticks with nothing dropped and with a generation of 50 end in the same state (70 turns; 3139 sub-node reads against 3139)
+SUBCAP: 0 check(s) failed
+gate: godot --script res://sim/world/tools/field_subcap_check.gd: no SCRIPT ERROR lines
+gate: godot --script res://sim/world/tools/field_subcap_check.gd: the verdict line reports no failures

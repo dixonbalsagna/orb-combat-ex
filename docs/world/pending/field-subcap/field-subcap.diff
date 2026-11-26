@@ -1,0 +1,260 @@
+diff --git a/sim/world/field.gd b/sim/world/field.gd
+index 08a74b2..9a438bf 100644
+--- a/sim/world/field.gd
++++ b/sim/world/field.gd
+@@ -79,6 +79,11 @@ class Field extends RefCounted:
+ 	var rf := PackedByteArray()   # a cell's state: 0 not decided, 1 plain, 2 refined
+ 	var sh: Dictionary = {}       # sub-node key -> height (float64 of the exact read; the canonical ones are the canonical node's)
+ 	var sb: Dictionary = {}       # sub-node key -> stored biome | fine biome << 8
++	var shOld: Dictionary = {}    # the generation before sh and sb (_turnSubs): read again from here, never written
++	var sbOld: Dictionary = {}
++	var extraSubH := PackedFloat32Array()   # extraSub's values as the pool file holds them, kept apart so a turn cannot take them from under WorldFieldPool.store
++	var extraSubB := PackedInt32Array()
++	var turns: int = 0            # how many times the sub-node tables have turned (a count for tools)
+ 	var refined: int = 0          # cells refined so far (a count for tools)
+ 	var subReads: int = 0
+ 
+@@ -273,12 +278,34 @@ static func ensure(F: Field, face: int, i: int, j: int) -> int:
+ 
+ 
+ ## ===================================================================== the records: exact sub-nodes where the ground is creased
++## sh and sb are a cache of the planet's own values, so they may forget: nothing a result depends on is in them, only time. They are held in two generations. When sh reaches SUB_GEN entries (at the start of a read,
++## never between a key and its use) it becomes the old generation and a new one starts; an entry read again is carried over without being computed; what a whole generation did not read is dropped, and read from the
++## planet again if asked, bit for bit the same. So a field holds at most about 2 x SUB_GEN sub-nodes however long and however many the matches (about 64 bytes an entry in each of the two tables: at most some 37 MiB a field at 150,000, about what one long match held before). A five-minute match computes about 200,000, so it turns once and drops nothing: entries are only dropped at the second turn.
++const SUB_GEN: int = 150000
++static var subGenOverride: int = 0   # tests only: above 0, this generation size (field_subcap_check; a very large one is the old unbounded table)
++
++
++static func _turnSubs(F: Field) -> void:
++	if F.sh.size() < (subGenOverride if subGenOverride > 0 else SUB_GEN):
++		return
++	F.shOld = F.sh
++	F.sbOld = F.sb
++	F.sh = {}
++	F.sb = {}
++	F.turns += 1
++
++
+ ## Sub-node (i4, j4) of a face at `sub` times the canonical resolution: a canonical node where both are multiples of sub, else the planet's function read there (the direction by dirOf at cells * sub, so a
+-## sub-node on a cell's edge is the same point, to the bit, from either cell). Returns its key in F.sh and F.sb.
++## sub-node on a cell's edge is the same point, to the bit, from either cell). Returns its key in F.sh and F.sb (in the current generation: read it before the next _turnSubs).
+ static func _subKey(F: Field, face: int, i4: int, j4: int) -> int:
+ 	var key: int = (face * F.S4 + j4) * F.S4 + i4
+ 	if F.sh.has(key):
+ 		return key
++	var old = F.shOld.get(key)
++	if old != null:   # the generation before had it: carried over, not computed
++		F.sh[key] = old
++		F.sb[key] = F.sbOld[key]
++		return key
+ 	if i4 % F.sub == 0 and j4 % F.sub == 0:
+ 		var idx: int = ensure(F, face, i4 / F.sub, j4 / F.sub)
+ 		F.sh[key] = F.h[idx]
+@@ -288,8 +315,10 @@ static func _subKey(F: Field, face: int, i4: int, j4: int) -> int:
+ 		F.sh[key] = float(PackedFloat32Array([_vh])[0])   # as a column stores it
+ 		F.sb[key] = _vb | (_vf << 8)
+ 		F.subReads += 1
+-		if F.extraSub.size() < WorldFieldPool.CAP:
++		if F.turns == 0 and F.extraSub.size() < WorldFieldPool.CAP:   # the pool takes what the first generation reads (after a turn a dropped node read again would be listed twice)
+ 			F.extraSub.append(key)
++			F.extraSubH.append(F.sh[key])
++			F.extraSubB.append(F.sb[key])
+ 	return key
+ 
+ 
+@@ -336,6 +365,7 @@ static func shore() -> float:
+ 
+ ## A refined cell's ground at (u, v) in it: the two triangles of the sub-cell the point is in, from the exact sub-nodes. Sets oh, ob and ofine (the nearest sub-node's).
+ static func _sampleRefined(F: Field, face: int, i0: int, j0: int, u: float, v: float) -> void:
++	_turnSubs(F)
+ 	var sub: int = F.sub
+ 	var fa: float = u * float(sub)
+ 	var fb: float = v * float(sub)
+@@ -365,6 +395,7 @@ static func _sampleRefined(F: Field, face: int, i0: int, j0: int, u: float, v: f
+ 
+ ## The difference between the exact sub-nodes along one edge of a cell (e: 0 the v = 0 edge, 1 the v = 1, 2 the u = 0, 3 the u = 1) and the straight line between the corners, at t along it, in units.
+ static func _edgeDelta(F: Field, face: int, i0: int, j0: int, e: int, t: float) -> float:
++	_turnSubs(F)
+ 	var sub: int = F.sub
+ 	var ca: float
+ 	var cb: float
+diff --git a/sim/world/field_pool.gd b/sim/world/field_pool.gd
+index fce0bdb..4270ecc 100644
+--- a/sim/world/field_pool.gd
++++ b/sim/world/field_pool.gd
+@@ -62,10 +62,12 @@ static func load(F: WorldField.Field) -> bool:
+ 			F.f[idx[k]] = ff[k]
+ 			F.extra.append(idx[k])
+ 	for k in range(ns):
+-		if not F.sh.has(skeys[k]):
++		if F.turns == 0 and not F.sh.has(skeys[k]):
+ 			F.sh[skeys[k]] = sh[k]
+ 			F.sb[skeys[k]] = sbv[k]
+ 			F.extraSub.append(skeys[k])
++			F.extraSubH.append(sh[k])
++			F.extraSubB.append(sbv[k])
+ 	F.poolLoaded = nc + ns
+ 	return nc + ns > 0
+ 
+@@ -97,15 +99,8 @@ static func store(F: WorldField.Field) -> void:
+ 	out.append_array(hh.to_byte_array())
+ 	out.append_array(bb)
+ 	out.append_array(ff)
+-	var sk := PackedInt64Array()
+-	var sh := PackedFloat32Array()
+-	var sbv := PackedInt32Array()
+-	for key in F.extraSub:
+-		sk.append(key)
+-		sh.append(F.sh[key])
+-		sbv.append(F.sb[key])
+-	out.append_array(sk.to_byte_array())
+-	out.append_array(sh.to_byte_array())
+-	out.append_array(sbv.to_byte_array())
++	out.append_array(F.extraSub.to_byte_array())   # the keys and their values as they were read (extraSubH, extraSubB): the tables they came from may have turned since
++	out.append_array(F.extraSubH.to_byte_array())
++	out.append_array(F.extraSubB.to_byte_array())
+ 	WorldFieldCache.writeBlob(keyOf(F), out)
+ 	F.poolLoaded = nc + ns
+diff --git a/sim/world/tools/field_subcap_check.gd b/sim/world/tools/field_subcap_check.gd
+new file mode 100644
+index 0000000..82516e5
+--- /dev/null
++++ b/sim/world/tools/field_subcap_check.gd
+@@ -0,0 +1,130 @@
++extends SceneTree
++# The sub-node tables are a bounded cache (World, 2026-11-26; sim/world/field.gd, _turnSubs). From the repo root:
++#   godot --headless --path . --script res://sim/world/tools/field_subcap_check.gd -- [--negative-control]
++# QA's hour run found Field.sh and Field.sb growing without end (19 MiB each after one 600 s match): every sub-node ever read stayed. They are now held in two generations of at most SUB_GEN entries, the older
++# dropped. Proves: with a very small generation the ground read at every point is bit for bit what it is with nothing ever dropped, read twice over (so dropped nodes read again are the same); the tables stay
++# within two generations while the unbounded ones keep growing; the pool's own list and values are right whatever the tables forgot; and two matches, one turning constantly, one never, are the same state.
++# --negative-control never turns: the size row must then fail.
++var fails: int = 0
++var negative: bool = false
++const SMALL: int = 400           # a generation small enough that the walk below turns many times
++const NEVER: int = 1 << 30
++const CELLS: int = 500           # refined cells walked
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func _field() -> WorldField.Field:
++	WorldClimate.useGen(3)
++	WorldPlanet.forget()
++	WorldField.forget()
++	return WorldField.of(WorldPlanet.make(7))
++
++
++## Refined cells of the planet's six faces, in a fixed order.
++func _cells(F: WorldField.Field) -> Array:
++	var out: Array = []
++	for face in range(6):
++		var n: int = 0
++		for j in range(1, F.N - 2, 3):
++			for i in range(1, F.N - 2, 3):
++				if n < CELLS / 6 + 1 and WorldField.cellRefined(F, face, i, j):
++					out.append([face, i, j])
++					n += 1
++	return out
++
++
++## The ground at points inside each refined cell and in the plain cell beside it (which reads the shared edge: _edgeDelta), twice over in the same order.
++func _walk(F: WorldField.Field, cells: Array) -> Array:
++	var out: Array = []
++	var peak: Array = [0, 0]
++	for pass_ in range(2):
++		for c in cells:
++			var face: int = c[0]
++			for p in [[0.13, 0.31], [0.62, 0.44], [0.91, 0.87], [1.5, 0.5], [0.5, -0.5]]:
++				var d: Array = WorldField.dirOf(face, int((float(c[1]) + p[0]) * 16.0), int((float(c[2]) + p[1]) * 16.0), F.N * 16)
++				WorldField.sample(F, d[0], d[1], d[2])
++				out.append(F.oh)
++				out.append(F.ob)
++				out.append(F.ofine)
++				peak[0] = maxi(peak[0], F.sh.size())
++				peak[1] = maxi(peak[1], F.sh.size() + F.shOld.size())
++	return [out, peak]
++
++
++## The key's own value read fresh from the planet's function, as the tables and the pool hold it.
++func _fresh(F: WorldField.Field, key: int) -> Array:
++	var i4: int = key % F.S4
++	var r: int = key / F.S4
++	var j4: int = r % F.S4
++	var face: int = r / F.S4
++	if i4 % F.sub == 0 and j4 % F.sub == 0:
++		return []
++	WorldField._read(F, WorldField.dirOf(face, i4, j4, F.N * F.sub))
++	return [PackedFloat32Array([WorldField._vh])[0], WorldField._vb | (WorldField._vf << 8)]
++
++
++func _poolOk(F: WorldField.Field) -> bool:
++	if F.extraSub.size() != F.extraSubH.size() or F.extraSub.size() != F.extraSubB.size():
++		return false
++	var seen: Dictionary = {}
++	for k in range(F.extraSub.size()):
++		var key: int = F.extraSub[k]
++		if seen.has(key):
++			return false
++		seen[key] = true
++		if k % 7 == 0:
++			var f: Array = _fresh(F, key)
++			if f.is_empty() or F.extraSubH[k] != f[0] or F.extraSubB[k] != f[1]:
++				return false
++	return true
++
++
++func _matchHash(gen: int) -> Array:
++	WorldClimate.useGen(3)
++	WorldPlanet.forget()
++	WorldField.forget()
++	WorldField.subGenOverride = gen
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 5, {"p1": true, "p2": true}, {"intro": false, "planet": 7, "touch": 3, "planetGen": 3})
++	for t in range(900):
++		SimCore.step(S)
++	var F = WorldField.of(WorldPlanet.make(7))
++	var out: Array = [str(SimHash.stateHash(S).gameplay), int(F.turns), int(F.subReads)]
++	SimCore.dispose(S)
++	return out
++
++
++func _init() -> void:
++	negative = OS.get_cmdline_user_args().has("--negative-control")
++	ok(WorldField.dataErrors().is_empty() and bool(WorldField.data().refine.enabled) and WorldField.SUB_GEN >= 10000, "the records are on, and a generation is %d entries as shipped" % WorldField.SUB_GEN)
++	print("the ground, with nothing dropped and with a generation of %d" % SMALL)
++	WorldField.subGenOverride = NEVER
++	var A: WorldField.Field = _field()
++	var cells: Array = _cells(A)
++	var a: Array = _walk(A, cells)
++	var grown: int = A.sh.size()
++	ok(cells.size() > 100 and grown > 6 * SMALL and A.turns == 0, "control: unbounded, the walk of %d refined cells leaves %d entries in sh and never turns" % [cells.size(), grown])
++	ok(_poolOk(A), "... and the pool's list holds each of its %d nodes once, with the planet's own values (so the pool file is what it was)" % A.extraSub.size())
++	WorldField.subGenOverride = NEVER if negative else SMALL
++	var B: WorldField.Field = _field()
++	_cells(B)
++	var b: Array = _walk(B, cells)
++	var diff: int = 0
++	for i in range(a[0].size()):
++		if a[0][i] != b[0][i]:
++			diff += 1
++	ok(a[0].size() == b[0].size() and diff == 0, "every height, biome and fine biome is bit for bit the same, both passes (%d of %d values differ; %d turns, %d sub-node reads against %d)" % [diff, a[0].size(), B.turns, B.subReads, A.subReads])
++	ok(b[1][0] <= SMALL + 24 and b[1][1] <= 2 * SMALL + 48 and B.turns >= 4, "the tables stay within two generations: at most %d in sh and %d in sh and the old one (unbounded: %d), %d turns" % [b[1][0], b[1][1], grown, B.turns])
++	ok(_poolOk(B), "... and the pool's list is whole and right whatever the tables forgot (%d nodes, those of the first generation)" % B.extraSub.size())
++	print("two matches")
++	var m1: Array = _matchHash(NEVER)
++	var m2: Array = _matchHash(50)
++	ok(m1[0] == m2[0] and m1[1] == 0 and m2[1] > 0, "900 ticks with nothing dropped and with a generation of 50 end in the same state (%d turns; %d sub-node reads against %d)" % [m2[1], m2[2], m1[2]])
++	WorldField.subGenOverride = 0
++	print("SUBCAP: %d check(s) failed%s" % [fails, " (negative control)" if negative else ""])
++	quit(0)
+diff --git a/sim/world/tools/field_subcap_check.gd.uid b/sim/world/tools/field_subcap_check.gd.uid
+new file mode 100644
+index 0000000..83438c5
+--- /dev/null
++++ b/sim/world/tools/field_subcap_check.gd.uid
+@@ -0,0 +1 @@
++uid://bubs11e5xw1ql

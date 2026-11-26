@@ -1,0 +1,10 @@
+RM ended match=1 how=ko simSeconds=455.5 t=542
+listsEmptiedMiB=63.43
+["static sim/core/field.gd:_ctF.sb",19.13]
+["static sim/core/field.gd:_ctF.sh",19.13]
+["static sim/core/field.gd:_ctF.h",2.07]
+["static sim/core/field.gd:_ctF.b",0.52]
+["static sim/core/field.gd:_ctF.rf",0.52]
+["static sim/core/field.gd:_ctF.f",0.52]
+["static sim/core/field.gd:_ctF.extraSub",0.47]
+["static sim/core/field.gd:_ctF.extra",0.23]

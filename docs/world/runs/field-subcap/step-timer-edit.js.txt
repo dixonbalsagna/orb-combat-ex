@@ -1,0 +1,8 @@
+// Scratch step timer for the long-match runs (never in a tree): the sim host's own cost of each tick, every 1800 ticks, with the field's table sizes.
+const fs = require('fs');
+const f = process.argv[2] + '/render/core/sim_host.gd';
+let t = fs.readFileSync(f, 'utf8'); const crlf = t.includes('\r\n'); t = t.replace(/\r\n/g, '\n');
+function r(a, b) { if (t.split(a).length !== 2) throw new Error('anchor ' + a.slice(0, 80)); t = t.replace(a, () => b); }
+r('var tick_usec: int = 0          # cost of the last SimCore.step', 'var tick_usec: int = 0          # cost of the last SimCore.step\nvar _scT := PackedInt64Array()\nvar _scN: int = 0');
+r('\t\t\thub.resume()\n\tvar t1: int = Time.get_ticks_usec()\n', '\t\t\thub.resume()\n\tvar t1: int = Time.get_ticks_usec()\n\t_scT.append(t1 - t0)\n\t_scN += 1\n\tif _scT.size() >= 1800:\n\t\tvar sc: Array = Array(_scT)\n\t\tsc.sort()\n\t\tvar sum: int = 0\n\t\tfor v in sc:\n\t\t\tsum += v\n\t\tvar info: String = ""\n\t\tfor k in WorldField._fields:\n\t\t\tvar F = WorldField._fields[k]\n\t\t\tinfo += " sh=%d old=%d reads=%d sub=%d turns=%s" % [F.sh.size(), F.shOld.size() if "shOld" in F else 0, F.reads, F.subReads, str(F.turns) if "turns" in F else "-"]\n\t\tprint("SCSTAT ticks=%d T=%.0f mean=%.0f p50=%d p99=%d p999=%d max=%d%s" % [_scN, S.T, float(sum) / sc.size(), sc[sc.size() / 2], sc[int(sc.size() * 0.99)], sc[int(sc.size() * 0.999)], sc[sc.size() - 1], info])\n\t\t_scT.clear()\n');
+fs.writeFileSync(f, crlf ? t.replace(/\n/g, '\r\n') : t); console.log('instrumented', f);

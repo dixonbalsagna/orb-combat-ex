@@ -1,0 +1,13 @@
+diff --git a/tools/world-checks.json b/tools/world-checks.json
+index cc44e54..75b9969 100644
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -7,7 +7,7 @@
+     "power_world_check",
+     "memory_model_check",
+     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
+-    "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
++    "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "field_subcap_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
+     "default_gate_check",
+     "land_check", "minecheck", "noise_check", "planet_check", "planet_world_check", "props_check", "repeat_check", "ringpick_check", "rivers_check", "sea_rules_check",
+     "beam_grid_check",

@@ -1,0 +1,32 @@
+SCSTAT ticks=1800 T=22 mean=1027 p50=891 p99=4713 p999=21988 max=23166 sh=24376 old=0 reads=118914 sub=22177 turns=-
+SCSTAT ticks=3600 T=48 mean=815 p50=755 p99=3593 p999=5766 max=18912 sh=66679 old=0 reads=118914 sub=61038 turns=-
+SCSTAT ticks=5400 T=75 mean=1088 p50=835 p99=4213 p999=14694 max=16859 sh=69748 old=0 reads=119362 sub=63841 turns=-
+SCSTAT ticks=7200 T=103 mean=856 p50=733 p99=4303 p999=5558 max=5802 sh=89713 old=0 reads=127220 sub=82342 turns=-
+SCSTAT ticks=9000 T=126 mean=920 p50=826 p99=4241 p999=5526 max=5623 sh=126920 old=0 reads=129484 sub=116831 turns=-
+SCSTAT ticks=10800 T=154 mean=923 p50=828 p99=3485 p999=5613 max=12059 sh=153306 old=0 reads=152729 sub=141139 turns=-
+SCSTAT ticks=12600 T=180 mean=952 p50=907 p99=3033 p999=4004 max=4446 sh=154561 old=0 reads=153222 sub=142287 turns=-
+SCSTAT ticks=14400 T=208 mean=1200 p50=1021 p99=4443 p999=6040 max=6290 sh=155861 old=0 reads=177296 sub=143448 turns=-
+SCSTAT ticks=16200 T=237 mean=1045 p50=919 p99=4264 p999=5762 max=6145 sh=179241 old=0 reads=193529 sub=165060 turns=-
+SCSTAT ticks=18000 T=262 mean=979 p50=977 p99=3274 p999=4786 max=5560 sh=190898 old=0 reads=198246 sub=175797 turns=-
+SCSTAT ticks=19800 T=289 mean=920 p50=882 p99=2456 p999=3765 max=3768 sh=190899 old=0 reads=199075 sub=175798 turns=-
+SCSTAT ticks=21600 T=316 mean=1033 p50=974 p99=3313 p999=6129 max=10960 sh=210777 old=0 reads=204180 sub=194153 turns=-
+SCSTAT ticks=23400 T=342 mean=980 p50=904 p99=3394 p999=7056 max=9051 sh=211349 old=0 reads=204180 sub=194722 turns=-
+SCSTAT ticks=25200 T=367 mean=1083 p50=904 p99=7420 p999=14154 max=14569 sh=211443 old=0 reads=204666 sub=194815 turns=-
+SCSTAT ticks=27000 T=393 mean=1610 p50=1584 p99=4422 p999=10831 max=15018 sh=229968 old=0 reads=205521 sub=211894 turns=-
+SCSTAT ticks=28800 T=419 mean=1399 p50=1184 p99=4689 p999=18369 max=19143 sh=237148 old=0 reads=205624 sub=218573 turns=-
+SCSTAT ticks=30600 T=446 mean=1052 p50=931 p99=3491 p999=5496 max=6638 sh=237256 old=0 reads=205624 sub=218668 turns=-
+SCSTAT ticks=32400 T=472 mean=837 p50=804 p99=2684 p999=3915 max=4420 sh=237277 old=0 reads=205624 sub=218684 turns=-
+SCSTAT ticks=34200 T=498 mean=896 p50=884 p99=2872 p999=4378 max=4523 sh=237288 old=0 reads=205624 sub=218693 turns=-
+SCSTAT ticks=36000 T=527 mean=1604 p50=1085 p99=6578 p999=18043 max=18131 sh=259609 old=0 reads=220581 sub=239459 turns=-
+SCSTAT ticks=37800 T=554 mean=1006 p50=862 p99=3936 p999=6687 max=9487 sh=275754 old=0 reads=230531 sub=254511 turns=-
+RM ended match=1 how=ko simSeconds=566.4 t=658
+SCSTAT ticks=39600 T=6 mean=1051 p50=817 p99=5645 p999=16975 max=51677 sh=281423 old=0 reads=242387 sub=259728 turns=-
+listsEmptiedMiB=60.45
+["static sim/core/field.gd:_ctF.sh",17.18]
+["static sim/core/field.gd:_ctF.sb",17.18]
+["static sim/core/field.gd:_ctF.h",2.07]
+["static sim/core/field.gd:_ctF.rf",0.52]
+["static sim/core/field.gd:_ctF.f",0.52]
+["static sim/core/field.gd:_ctF.b",0.52]
+["static sim/core/field.gd:_ctF.extraSub",0.47]
+["static sim/core/field.gd:_ctF.extra",0.23]
