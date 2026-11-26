@@ -1,0 +1,71 @@
+extends SceneTree
+# soak_sim_probe.gd: the sim alone, the soak's way (qa/soak/soak_probe.gd): one SimState reused, matches back to back on the next
+# seed, the host's default world (WorldDefault.apply(.., true): the fixed planet), the computer on both sides, each to its KO or
+# CAP sim seconds. After each match start and at each match end: the engine's memory, the object count, the static caches' sizes,
+# and every container field of the state whose size changed since the same point of the last match. No rendering, no host idle work.
+
+const MATCHES: int = 13
+const CAP: float = 300.0
+var _prev: Dictionary = {}
+
+
+func _mib() -> String:
+	return "%.1f" % (float(OS.get_static_memory_usage()) / 1048576.0)
+
+
+func _sz(v) -> int:
+	match typeof(v):
+		TYPE_ARRAY, TYPE_DICTIONARY:
+			return v.size()
+		TYPE_PACKED_BYTE_ARRAY:
+			return v.size()
+		TYPE_PACKED_INT32_ARRAY, TYPE_PACKED_FLOAT32_ARRAY:
+			return v.size() * 4
+		TYPE_PACKED_INT64_ARRAY, TYPE_PACKED_FLOAT64_ARRAY:
+			return v.size() * 8
+		TYPE_PACKED_STRING_ARRAY:
+			return v.size()
+	return -1
+
+
+func _caches() -> String:
+	var parts: Array = [
+		"planets %d" % WorldPlanet._planets.size(), "slices %d" % WorldPlanet._slices.size(), "fields %d" % WorldField._fields.size(),
+		"keyOf %d" % SimField._keyOf.size(), "cr %d" % SimField._cr.size(), "rise %d" % SimField._rise.size(), "bHave %d" % SimField._bHave.size(),
+		"storeIx %d" % WorldStore._ix.size(), "waterIx %d" % WorldWaterRec._ix.size(), "epochPlans %d" % WorldEpoch._plans.size(),
+		"epochJobs %d" % WorldEpoch._jobs.size(), "far %d" % WorldCollateral._far.size(), "planMemo %d" % WorldPlan._memo.size(),
+		"tmD %d" % DirLaunch._tmD.size(), "introFlat %d" % SimIntro._flat.size(), "fighterHashes %d" % FighterData._hashes.size()]
+	return ", ".join(parts)
+
+
+func _state(S, at: String) -> void:
+	var grew: Array = []
+	for p in S.get_property_list():
+		var n: String = p.name
+		if not (int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE):
+			continue
+		var s: int = _sz(S.get(n))
+		if s < 0:
+			continue
+		var k: String = at + ":" + n
+		if _prev.has(k) and int(_prev[k]) != s:
+			grew.append("%s %d->%d" % [n, int(_prev[k]), s])
+		_prev[k] = s
+	print("  state fields changed since the last %s: %s" % [at, ", ".join(grew) if not grew.is_empty() else "none"])
+
+
+func _init() -> void:
+	var S := SimCore.createSim()
+	for m in range(MATCHES):
+		var seed: int = 2 + m
+		var su: Dictionary = WorldDefault.apply({}, seed, true)
+		SimCore.newMatch(S, seed, {"p1": true, "p2": true}, su)
+		print("match %d seed %d START mem %s MiB, objects %d; %s" % [m + 1, seed, _mib(), int(Performance.get_monitor(Performance.OBJECT_COUNT)), _caches()])
+		_state(S, "start")
+		while S.game.ko == null and float(S.T) < CAP:
+			SimCore.step(S)
+		print("match %d END how=%s T %.1f mem %s MiB, objects %d; craters %d, storeN %d" % [m + 1, "ko" if S.game.ko != null else "capped", float(S.T), _mib(), int(Performance.get_monitor(Performance.OBJECT_COUNT)), S.craters.size(), int(S.storeN)])
+		_state(S, "end")
+	SimCore.dispose(S)
+	print("after dispose mem %s MiB, objects %d; %s" % [_mib(), int(Performance.get_monitor(Performance.OBJECT_COUNT)), _caches()])
+	quit(0)

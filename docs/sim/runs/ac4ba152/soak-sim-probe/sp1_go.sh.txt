@@ -1,0 +1,18 @@
+#!/bin/sh
+# sp1_go.sh <scratchpad>: the sim-only soak probe (EP, 2026-11-26) on a clean export of ac4ba152 (0.1.1). ONE Godot, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/sp1o"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
+rm -rf "${NS:?}/sp1o"; mkdir -p "$O" "$NS/sp1app"; export APPDATA="$(cygpath -w "$NS/sp1app")"
+[ -e "$NS/sp1" ] && { echo "sp1 exists"; exit 1; }
+mkdir -p "$NS/sp1"
+git -C "$R" -c core.autocrlf=false archive ac4ba152 | tar -x -C "$NS/sp1"
+cd "$NS/sp1" || exit 1
+case "$(pwd -P)" in */scratchpad/sp1) ;; *) echo refusing; exit 1 ;; esac
+cp "$NS/kick/soak_sim_probe.gd" ./soak_sim_probe.gd
+timeout 900 "$G" --headless --path . --import > "$O/import.txt" 2>&1; echo "import $?; parse errors $(grep -c 'Parse Error' "$O/import.txt")"
+s=$(date +%s); timeout 2400 "$G" --headless --path . --script res://soak_sim_probe.gd > "$O/probe.txt" 2>&1; echo "probe: exit $? in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR' "$O/probe.txt")"
+grep -E "^match|^  state|^after|SCRIPT ERROR|ERROR" "$O/probe.txt" | cut -c1-600
+echo sp1 done

@@ -1,0 +1,13 @@
+#!/bin/sh
+# sp2_go.sh <scratchpad>: pass 2 of the sim-only soak probe, on sp1 (ac4ba152): S.out drained after each step as the host does. ONE Godot, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+G="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/sp1o"
+export APPDATA="$(cygpath -w "$NS/sp1app")"
+cd "$NS/sp1" || exit 1
+case "$(pwd -P)" in */scratchpad/sp1) ;; *) echo refusing; exit 1 ;; esac
+cp "$NS/kick/soak_sim_probe2.gd" ./soak_sim_probe2.gd
+s=$(date +%s); timeout 1800 "$G" --headless --path . --script res://soak_sim_probe2.gd > "$O/probe2.txt" 2>&1; echo "probe 2: exit $? in $(( $(date +%s) - s )) s; script errors $(grep -c 'SCRIPT ERROR' "$O/probe2.txt")"
+grep -E "^match|^  match|^  state|^after|SCRIPT ERROR" "$O/probe2.txt" | cut -c1-400
+echo sp2 done
