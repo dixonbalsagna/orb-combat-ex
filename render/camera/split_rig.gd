@@ -409,6 +409,7 @@ var _started: bool = false
 
 func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_line_k = _line_target()   # a new match takes the split line at once
+	_pl = CamPlaces.frame_of(S) if swing_view else PackedFloat64Array()   # the new match's sim frame, as cut() takes it: the first frame was placed through the last match's (the tile ground popped for a frame on Play again; Rendering, 2026-11-26)
 	vw = maxf(p_vw, 2.0)   # a view of no size (a page still loading, a hidden pane) must not leave a zero in the zoom maths
 	vh = maxf(p_vh, 2.0)
 	var A = S.fighters[0]
