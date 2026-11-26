@@ -1,0 +1,11 @@
+# frame-bench at big and medium (Rendering, 2026-11-26) on the un-hide candidate's bench export (u0b, main 0d9af28a: docs/rendering/runs/0d9af28a/unhide-build.txt), collapse scene, 1280x720, auto mode
+# driver: a scratch copy of docs/perf/tools/frame-bench.mjs that waits for the scene's first tick (big's load ran past the 120-frame warm-up in the first run) and keeps every row; the size through the scratch page word size= with WorldPlanetSize.heldOverride; GPU: ANGLE D3D11 on the PC's NVIDIA card
+# 'fill us' is the tile field's fill timer, which on a capture reads the steady work clock (capture-steady), so it is not a timing here
+== big exit 0
+big collapse x1: frame p50 28.6 p95 57.9 p99 111.9 max 183.8 ms | tick 1.5 view 16.1 | draws 132 | particles 18 | load 24/31/35% valid by the load rule
+== medium exit 0
+medium collapse x1: frame p50 23.6 p95 41 p99 60 max 93.1 ms | tick 1 view 14.3 | draws 143 | particles 14 | load 23/31/38% INVALID: machine saturated before or after the run (all > 60% or capture cores > 70%); an upper bound only
+big: first tick 1 after 46 s; ticks reached 721; frame ms p50 28.6 p95 57.9 p99 111.9 max 183.8; tick p50 1.5; view p50 16.1 p95 25.1; draws p50 132; tile pool used max 294 of 800; fill us median 5120 p95 5120 max 5120; tiles drawn median 51 max 93; cpu ms/frame 37.056; load 24/31/35; valid by the load rule
+medium: first tick 1 after 26.6 s; ticks reached 721; frame ms p50 23.6 p95 41 p99 60 max 93.1; tick p50 1; view p50 14.3 p95 21.3; draws p50 143; tile pool used max 156 of 800; fill us median 5120 p95 5120 max 5120; tiles drawn median 21 max 71; cpu ms/frame 28.594; load 23/31/38; INVALID: machine saturated before or after the run (all > 60% or capture cores > 70%); an upper bound only
+# pacing (frames over 33 ms / over 50 ms, of 600): big 154 / 56, medium 77 / 12 (the stopped earlier big run: 151 / 53)
+# an earlier big run (stopped before medium, INVALID by the load rule): big collapse x1: frame p50 28.8 p95 56.1 p99 118.9 max 169.4 ms | tick 1.4 view 16.5 | draws 132 | particles 18 | load 20/30/57% INVALID: machine saturated before or after the run (all > 60% or captur
