@@ -6,6 +6,11 @@ class_name CamParams
 # --- the trigger (section 2) ---
 const R_SPLIT: float = 0.055           # split when a fighter's height falls under this fraction of vh (Orb decides; 0.035 until director step 1, 2026-10-22: no one view under 40 px at 720p)
 const R_MERGE: float = 0.07            # merge when it stays above this (Orb decides; 0.047 until director step 1)
+# The player's split line (option camera_split_line: later, standard, sooner; Orb's build first). Standard is R_SPLIT above; the
+# others replace it, and R_MERGE moves by the same ratio. The beam struggle's line and the pixel floors (MIN_PX) don't move.
+const SPLIT_LINE_LATER: float = 0.040   # later: one picture longer, a fighter down to about 1/25 of the height (a friend's ask, vision.md)
+const SPLIT_LINE_SOONER: float = 0.077  # sooner: a fighter stays at least about 1/13 of the height before the split (Orb's "raise")
+const SPLIT_LINE_EASE: float = 2.0      # a change of setting mid-match moves the lines over this many seconds per unit of the factor
 const SPLIT_POWER_EASE: float = 8.0     # split_ignores_power: the whole lowering (0 to 1) would take this long, seconds; power 1 to 4 is under 1.5 s of it
 const R_BEAM_MIN: float = 0.032        # a beam struggle keeps the merged wide shot down to this
 const MIN_PX: float = 18.0             # under 600 px of screen height the split line is at least this many pixels

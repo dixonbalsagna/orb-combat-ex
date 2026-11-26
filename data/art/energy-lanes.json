@@ -302,7 +302,7 @@
             "worst": 34.4
           },
           "tritan": {
-            "worst": 34.3
+            "worst": 34
           }
         }
       }
@@ -448,7 +448,7 @@
             "worst": 35.7
           },
           "tritan": {
-            "worst": 33.9
+            "worst": 34
           }
         }
       }
@@ -563,16 +563,16 @@
         },
         "sprite_with_keyline": {
           "default": {
-            "worst": 36.1
+            "worst": 36.6
           },
           "protan": {
             "worst": 36.1
           },
           "deutan": {
-            "worst": 36.1
+            "worst": 36.5
           },
           "tritan": {
-            "worst": 36.1
+            "worst": 36.3
           }
         }
       }

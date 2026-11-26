@@ -18,6 +18,7 @@ const KNOWN: Dictionary = {"clash/1": 52, "signature/1": 48, "launchai/1": 35}
 var clips: Array = ["clash", "signature", "launchai"]
 var modes: Array = ["normal", "reduced"]
 var measure: bool = false
+var split_line: String = "standard"   # --split-line=later|standard|sooner: the player's option, through main as the game sets it
 var fails: int = 0
 var checks: int = 0
 
@@ -30,6 +31,8 @@ func _initialize() -> void:
 			modes = Array(a.substr(8).split(","))
 		elif a == "--measure":
 			measure = true
+		elif a.begins_with("--split-line="):
+			split_line = a.substr(13)
 	super._initialize()
 
 
@@ -38,6 +41,7 @@ func _run() -> void:
 	var sv := SplitView.new()
 	main.split_view = sv
 	main.add_child(sv)
+	main.ui_hud.opts["camera_split_line"] = split_line
 	main._sync_split_options()
 	sv.attach(main)
 	main.host.vfx.auto_quality = false

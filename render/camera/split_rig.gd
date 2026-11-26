@@ -117,6 +117,9 @@ var _lg_box: Array = [0.0, 0.0, 0.0, 0.0]   # the zip's frame: x0, x1 (from _lg_
 var _lg_cap: float = -1.0e9              # the hold never runs past this time
 var eased_merge: bool = true              # the panes open and close with a hard edge and a whole line, no blend between two pictures (Orb, 2026-10-18; docs/camera/split-vision.md). Off: the old soft seam
 var split_ignores_power: bool = false      # the view splits at the same distance at any power: power widens the shot but doesn't bring the split sooner (docs/camera/split-vision.md). Off: none of it runs
+static var split_line_default: String = "standard"   # what a new rig starts with (the checks' --split-line=; the game sets split_line from UI's option)
+var split_line: String = split_line_default   # the player's split line: "later", "standard" or "sooner" (CamParams.SPLIT_LINE_*); anything else is standard
+var _line_k: float = -1.0                  # the split and merge lines' factor for split_line, eased (-1: not set yet, taken at once)
 var _split_k: float = 1.0                  # with split_ignores_power, how much the split and merge lines are lowered for the shot's power
 var feather_mode: int = 0                # the feathered sweep of a layout change: 0 off (the default), 1 only under reduced flashing or reduced motion, 2 always
 var _gov_arm_until: float = -1.0e9       # the scroll governor is armed (at a charge's cue) until this time ...
@@ -405,6 +408,7 @@ var _started: bool = false
 # ---------------------------------------------------------------------------------------------------- public
 
 func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+	_line_k = _line_target()   # a new match takes the split line at once
 	vw = maxf(p_vw, 2.0)   # a view of no size (a page still loading, a hidden pane) must not leave a zero in the zoom maths
 	vh = maxf(p_vh, 2.0)
 	var A = S.fighters[0]
@@ -779,14 +783,38 @@ func _metric(S: SimState) -> float:
 
 
 func _r_split() -> float:
-	return maxf(CamParams.R_SPLIT * _split_k, CamParams.MIN_PX / vh)
+	return maxf(CamParams.R_SPLIT * _split_k * _line_f(), CamParams.MIN_PX / vh)
 
 
 func _r_merge() -> float:
-	return maxf(CamParams.R_MERGE * _split_k, CamParams.MIN_PX * CamParams.R_MERGE / CamParams.R_SPLIT / vh)
+	return maxf(CamParams.R_MERGE * _split_k * _line_f(), CamParams.MIN_PX * CamParams.R_MERGE / CamParams.R_SPLIT / vh)
+
+
+## The split line's factor for the player's setting: 1 at standard, so the standard game is unchanged to the bit.
+func _line_target() -> float:
+	match split_line:
+		"later":
+			return CamParams.SPLIT_LINE_LATER / CamParams.R_SPLIT
+		"sooner":
+			return CamParams.SPLIT_LINE_SOONER / CamParams.R_SPLIT
+	return 1.0
+
+
+func _line_f() -> float:
+	return _line_k if _line_k > 0.0 else _line_target()
+
+
+## Each tick: a change of setting mid-match eases the lines over (CamParams.SPLIT_LINE_EASE), never in one step.
+func _ease_line() -> void:
+	var k: float = _line_target()
+	if _line_k <= 0.0:
+		_line_k = k
+	elif _line_k != k:
+		_line_k = move_toward(_line_k, k, DT / CamParams.SPLIT_LINE_EASE)
 
 
 func _update_trigger(S: SimState) -> void:
+	_ease_line()
 	if reveal_w > 0.0 and not split_wanted:
 		return   # the reveal's low angle needs more height for the pair: that isn't a reason to split
 	if _pk_phase != "" and _pk_phase != "back":
@@ -847,7 +875,7 @@ func _update_trigger(S: SimState) -> void:
 		var dwell: float = CamParams.SPLIT_DWELL + (CamParams.WIDE_HOLD if _sep_rate > 500.0 and r_now > floor_r else 0.0)
 		if r_now <= floor_r or CamParams.BODY_H * _mz / vh <= floor_r * 1.02:
 			dwell = 0.0   # (the one view drawn at its floor, the governor's zoom-out for speed included: holding can't zoom out any more)
-		if r_now < rs and _drawn_off(S):
+		if r_now < maxf(rs, minf(CamParams.R_SPLIT * _split_k, rm)) and _drawn_off(S):   # (at the later line: still the standard line here, under the merge line)
 			dwell = 0.0   # (a fighter off the one view drawn: its zoom lags the aimed one, so the aimed picture can hold him while the screen doesn't)
 		var held: bool = nocut_hold and not out_of_frame and not knocked_apart and _no_cut(S)
 		if held and _below_t >= dwell and age_ok and guard_ok:

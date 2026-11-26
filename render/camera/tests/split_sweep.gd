@@ -121,6 +121,8 @@ func _initialize() -> void:
 			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
 		elif a == "--render":
 			render_mode = true
+		elif a.begins_with("--split-line="):
+			SplitRig.split_line_default = a.substr(13)   # every rig the sweep makes plays the player's split line
 		elif a.begins_with("--dump="):
 			var dp: PackedStringArray = a.substr(7).split(":")
 			dump_label = dp[0]

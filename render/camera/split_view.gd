@@ -311,6 +311,14 @@ func set_panel_mode(v: String) -> void:
 		main.split_rig.panel_mode = v if v in ["full", "still", "off"] else "full"
 
 
+## The player's split line: "later" (one picture longer), "standard" or "sooner" (the split comes while the fighters are
+## bigger). Option name for UI: `camera_split_line`, a choice of later, standard and sooner, default standard (Orb's build
+## first, behind UI's feature flag). A change mid-match eases the lines (CamParams.SPLIT_LINE_EASE).
+func set_split_line(v: String) -> void:
+	if main != null:
+		main.split_rig.split_line = v if v in ["later", "standard", "sooner"] else "standard"
+
+
 ## A cut under Reduce flashing or reduced motion cross-dissolves (default on); false keeps the old dip. Build-time switch.
 func set_cut_dissolve(on: bool) -> void:
 	cut_dissolve = on
