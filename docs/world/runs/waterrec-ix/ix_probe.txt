@@ -1,0 +1,13 @@
+IX after 5 ticks: records 1460 {"lake":6,"lot":1400,"platform":54}, lake nodes 6641
+IX after 5 ticks: grid boxes 9975 (ints 21819), coarse boxes 1372 (ints 2015), merged boxes 33 (record refs 125; lake refs 25, which reach 34788 lake nodes between them), wide 61
+IX after 5 ticks: census of _ix [6266416, 138676, 1]; of fieldRecs [3051320, 65127, 1460]; of grid+bgrid alone [821592, 35183, 2]
+IX after 2400 ticks (40 s): records 1460 {"lake":6,"lot":1400,"platform":54}, lake nodes 6641
+IX after 2400 ticks (40 s): grid boxes 9975 (ints 21819), coarse boxes 1372 (ints 2015), merged boxes 431 (record refs 1711; lake refs 159, which reach 258376 lake nodes between them), wide 61
+IX after 2400 ticks (40 s): census of _ix [22893720, 412136, 1]; of fieldRecs [3051320, 65127, 1460]; of grid+bgrid alone [821592, 35183, 2]
+IX after the whole sphere is read: records 1460 {"lake":6,"lot":1400,"platform":54}, lake nodes 6641
+IX after the whole sphere is read: grid boxes 9975 (ints 21819), coarse boxes 1372 (ints 2015), merged boxes 10084 (record refs 29256; lake refs 910, which reach 1748609 lake nodes between them), wide 61
+IX after the whole sphere is read: census of _ix [156124900, 2702201, 1]; of fieldRecs [3051320, 65127, 1460]; of grid+bgrid alone [821592, 35183, 2]
+MEM freed by clearing merged: 2388360 bytes; by grid and bgrid: 1907552 bytes; by the rest of the entry: 2308 bytes; total 4.10 MiB (static memory 150.4 MiB before)
+MEM a deep copy of fieldRecs (1460 records) costs 3.12 MiB
+--- the same without the whole-sphere read (40 s of a match):
+MEM freed by clearing merged: 115624 bytes; by grid and bgrid: 1907552 bytes; by the rest of the entry: 2308 bytes; total 1.93 MiB (static memory 147.9 MiB before)

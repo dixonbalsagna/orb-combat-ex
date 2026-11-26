@@ -1,0 +1,76 @@
+extends SceneTree
+# Scratch (World, 2026-11-26): what WorldWaterRec._ix really holds on the default planet, and what the soak census counts it as.
+const FIELD: Dictionary = {"intro": false, "planet": 7, "touch": 3, "planetGen": 3}
+
+
+func _census(v) -> Array:
+	var C = load("res://sim/world/tools/soak_census_probe.gd").new()
+	var out: Dictionary = {}
+	C._add(out, "x", v)
+	return out.get("x", [int(out.get("_total", 0)), 0, 0])
+
+
+func _report(S: SimState, label: String) -> void:
+	var ent: Dictionary = WorldWaterRec._ix.get(S.get_instance_id(), {})
+	if ent.is_empty():
+		print("IX ", label, ": no entry")
+		return
+	var gi: int = 0
+	for k in ent.grid:
+		gi += ent.grid[k].size()
+	var bi: int = 0
+	for k in ent.bgrid:
+		bi += ent.bgrid[k].size()
+	var mr: int = 0
+	var lakeRefs: int = 0
+	var seenNodes: int = 0
+	for k in ent.merged:
+		mr += ent.merged[k].size()
+		for rec in ent.merged[k]:
+			if rec.get("k", "") == "lake":
+				lakeRefs += 1
+				seenNodes += (rec.nodes as Dictionary).size()
+	var kinds: Dictionary = {}
+	var nodes: int = 0
+	for rec in S.fieldRecs:
+		var kd: String = str(rec.get("k", "?"))
+		kinds[kd] = int(kinds.get(kd, 0)) + 1
+		if kd == "lake":
+			nodes += (rec.nodes as Dictionary).size()
+	print("IX %s: records %d %s, lake nodes %d" % [label, S.fieldRecs.size(), JSON.stringify(kinds), nodes])
+	print("IX %s: grid boxes %d (ints %d), coarse boxes %d (ints %d), merged boxes %d (record refs %d; lake refs %d, which reach %d lake nodes between them), wide %d" % [label, ent.grid.size(), gi, ent.bgrid.size(), bi, ent.merged.size(), mr, lakeRefs, seenNodes, ent.wide.size()])
+	print("IX %s: census of _ix %s; of fieldRecs %s; of grid+bgrid alone %s" % [label, str(_census(WorldWaterRec._ix)), str(_census(S.fieldRecs)), str(_census([ent.grid, ent.bgrid]))])
+
+
+func _init() -> void:
+	WorldClimate.useGen(3)
+	WorldPlanet.forget()
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": true, "p2": true}, FIELD)
+	for t in range(5):
+		SimCore.step(S)
+	_report(S, "after 5 ticks")
+	for t in range(2395):
+		SimCore.step(S)
+	_report(S, "after 2400 ticks (40 s)")
+	# the worst case: the whole sphere read (what a renderer bake of every tile would do), so merged holds every box a read can ask for
+	for i in range(721):
+		var la: float = -PI / 2.0 + PI * float(i) / 720.0
+		var nlon: int = maxi(1, int(1440.0 * cos(la)))
+		for j in range(nlon):
+			var lo: float = TAU * float(j) / float(nlon)
+			WorldWaterRec.near(S, cos(la) * cos(lo), cos(la) * sin(lo), sin(la))
+	_report(S, "after the whole sphere is read")
+	var m0: int = OS.get_static_memory_usage()
+	var keep: Dictionary = WorldWaterRec._ix.get(S.get_instance_id(), {})
+	var mg: Dictionary = keep.get("merged", {})
+	mg.clear()
+	var m1: int = OS.get_static_memory_usage()
+	keep.erase("grid")
+	keep.erase("bgrid")
+	var m2: int = OS.get_static_memory_usage()
+	WorldWaterRec._ix.clear()
+	keep = {}
+	var m3: int = OS.get_static_memory_usage()
+	print("MEM freed by clearing merged: %d bytes; by grid and bgrid: %d bytes; by the rest of the entry: %d bytes; total %.2f MiB (static memory %.1f MiB before)" % [m0 - m1, m1 - m2, m2 - m3, float(m0 - m3) / 1048576.0, float(m0) / 1048576.0])
+	quit(0)
