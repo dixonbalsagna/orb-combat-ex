@@ -1,0 +1,193 @@
+diff --git a/.github/workflows/linux-soak.yml b/.github/workflows/linux-soak.yml
+new file mode 100644
+index 00000000..2f8e54ea
+--- /dev/null
++++ b/.github/workflows/linux-soak.yml
+@@ -0,0 +1,102 @@
++# The two-hour soak of the Linux program: STABILITY AND MEMORY NUMBERS ONLY (QA's harness, qa/soak/soak.mjs; moved here by Tools, 2026-11-25). By hand only (workflow_dispatch). About 125 runner minutes a run.
++# Legal RL-279 (docs/legal/review-log.md): yes, to a headless soak. The conditions the EP set from it, and where each is kept here:
++#   1 always --headless, no display of any kind, virtual or otherwise: no X server is installed or started; soak.mjs passes --headless. A headless run draws nothing and the game never raises the flashing notice
++#     in one (UiHud.notice_auto_allowed refuses a headless display), so no person's eyes and no warning are passed by;
++#   2 the build is made the shipped way: the same lock and route scan as the desktop builds, no skip switch, test flag or build option added. The soak probe is never packed (qa/ is outside every export): the
++#     harness loads it from outside, by an override.cfg beside a copy of the program on this runner, and the step after the export fails if its name is in the program;
++#   3 dispatch only, of a commit on main. Nothing is captured, and no program is kept or uploaded. What is published is text and numbers (summary.md, summary.json, samples.csv), only after
++#     tools/report-scan.mjs has found no account name, machine name or user path in them; if it finds one, nothing is published and the run fails;
++#   4 a stability and memory reading only. It is not a flash reading and counts toward no flash gate, not G6 and not G23 (a person still starts the testers' program on a Linux machine).
++# About --frames, which soak.mjs passes: in a locked build it CANNOT skip the flashing notice (the words that skip it are refused: UiHud.bypass_allowed, RL-206). What it does here is skip the How to play card.
++name: Linux soak (two hours, headless, numbers only)
++
++on:
++  workflow_dispatch:
++    inputs:
++      ref:
++        description: 'Commit, branch or tag to build (empty: the commit this workflow was started on); it must be on main'
++        required: false
++        default: ''
++      seconds:
++        description: 'Soak length in seconds, 60 to 8400 (a first try: 600)'
++        required: false
++        default: '7200'
++
++permissions:
++  contents: read
++
++defaults:
++  run:
++    shell: bash
++
++jobs:
++  soak:
++    name: Linux build, computer against computer, headless
++    runs-on: ubuntu-24.04
++    timeout-minutes: 160
++    env:
++      SECONDS_ASKED: ${{ inputs.seconds }}
++    steps:
++      - name: The soak length is a number from 60 to 8400
++        run: |
++          if ! printf '%s' "${SECONDS_ASKED}" | grep -Eq '^[0-9]{2,4}$' || [ "${SECONDS_ASKED}" -lt 60 ] || [ "${SECONDS_ASKED}" -gt 8400 ]; then echo "seconds must be a number from 60 to 8400"; exit 1; fi
++      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          ref: ${{ inputs.ref }}
++          persist-credentials: false
++      - name: Refuse a commit that is not on main (RL-262)
++        env:
++          GH_TOKEN: ${{ github.token }}
++        run: |
++          sha=$(git rev-parse HEAD)
++          st=$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${sha}" --jq .status)
++          if [ "${st}" != "identical" ] && [ "${st}" != "behind" ]; then echo "only a commit on main is built (the compare says '${st}')"; exit 1; fi
++      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
++        with:
++          node-version: '24.19.0'
++      - uses: ./.github/actions/setup-godot
++        with:
++          linux-templates: 'true'
++      - name: Lock Reduce flashing on (the same one-word edit the desktop builds make)
++        run: node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"
++      - name: Refuse unless the lock holds and no flag reaches normal mode
++        run: node tools/desktop-package.mjs routes --root "${GITHUB_WORKSPACE}"
++      - name: Import project
++        run: '"$GODOT" --headless --path . --import'
++      - name: Write build_info.json
++        run: node tools/write-build-info.mjs --commit "$(git rev-parse HEAD)"
++      - name: Export Linux (release)
++        run: |
++          mkdir -p "${RUNNER_TEMP}/export/linux"
++          "$GODOT" --headless --path . --export-release "Linux" "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
++          chmod +x "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
++          cp build_info.json "${RUNNER_TEMP}/export/linux/"
++      - name: The soak probe is not in the program (RL-279 condition 2)
++        run: |
++          if grep -a -q "soak_probe" "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"; then echo "the exported program names the soak probe: qa/ must stay out of every export"; exit 1; fi
++      - name: Soak (headless; no display, no capture)
++        run: node qa/soak/soak.mjs --package "${RUNNER_TEMP}/export/linux" --seconds "${SECONDS_ASKED}" --out "${RUNNER_TEMP}/soak"
++      # only the three number files, and only after the scan: the engine's and the program's own logs stay on the runner and are thrown away with it
++      - name: Scan the numbers for account names and paths, then show them
++        id: scan
++        if: always()
++        run: |
++          mkdir -p "${RUNNER_TEMP}/numbers"
++          for f in summary.md summary.json samples.csv; do cp "${RUNNER_TEMP}/soak/${f}" "${RUNNER_TEMP}/numbers/"; done
++          node tools/report-scan.mjs "${RUNNER_TEMP}/numbers"
++          {
++            echo '### Linux soak: stability and memory numbers only (no flash reading, no gate: RL-279)'
++            echo
++            cat "${RUNNER_TEMP}/numbers/summary.md"
++          } >> "$GITHUB_STEP_SUMMARY"
++      - name: Keep the numbers (text only; never the program)
++        if: always() && steps.scan.outcome == 'success'
++        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
++        with:
++          name: soak-numbers
++          path: |
++            ${{ runner.temp }}/numbers/summary.md
++            ${{ runner.temp }}/numbers/summary.json
++            ${{ runner.temp }}/numbers/samples.csv
++          retention-days: 14
++          if-no-files-found: error
+diff --git a/docs/qa/pending/soak/linux-soak.yml b/docs/qa/pending/soak/linux-soak.yml
+deleted file mode 100644
+index 66bfafcc..00000000
+--- a/docs/qa/pending/soak/linux-soak.yml
++++ /dev/null
+@@ -1,79 +0,0 @@
+-# PROPOSED, not live (QA, path job 14): the two-hour soak's Linux half. It would go to .github/workflows/ (Tools' path) after Legal's word (it runs the build headless with main's --frames switch, which also skips
+-# the first-run card and the flashing notice; there is no display, nothing is captured and no program is kept or uploaded). Dispatch only. About 125 runner minutes a run; the repository is public.
+-# The build steps mirror linux-first-run.yml (lock, routes check, import, build_info, export "Linux"); the pinned action versions are the same.
+-name: Linux soak (two hours, headless, numbers only)
+-
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      ref:
+-        description: 'Commit, branch or tag to build (empty: the commit this workflow was started on); it must be on main'
+-        required: false
+-        default: ''
+-      seconds:
+-        description: 'Soak length in seconds'
+-        required: false
+-        default: '7200'
+-
+-permissions:
+-  contents: read
+-
+-defaults:
+-  run:
+-    shell: bash
+-
+-jobs:
+-  soak:
+-    name: Linux build, computer against computer, headless
+-    runs-on: ubuntu-24.04
+-    timeout-minutes: 160
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          ref: ${{ inputs.ref }}
+-          persist-credentials: false
+-      - name: Refuse a commit that is not on main (RL-262)
+-        env:
+-          GH_TOKEN: ${{ github.token }}
+-        run: |
+-          sha=$(git rev-parse HEAD)
+-          st=$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${sha}" --jq .status)
+-          if [ "${st}" != "identical" ] && [ "${st}" != "behind" ]; then echo "only a commit on main is built (the compare says '${st}')"; exit 1; fi
+-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+-        with:
+-          node-version: '24.19.0'
+-      - uses: ./.github/actions/setup-godot
+-        with:
+-          linux-templates: 'true'
+-      - name: Lock Reduce flashing on (the same one-word edit the desktop builds make)
+-        run: node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"
+-      - name: Refuse unless the lock holds and no flag reaches normal mode
+-        run: node tools/desktop-package.mjs routes --root "${GITHUB_WORKSPACE}"
+-      - name: Import project
+-        run: '"$GODOT" --headless --path . --import'
+-      - name: Write build_info.json
+-        run: node tools/write-build-info.mjs --commit "$(git rev-parse HEAD)"
+-      - name: Export Linux (release)
+-        run: |
+-          mkdir -p "${RUNNER_TEMP}/export/linux"
+-          "$GODOT" --headless --path . --export-release "Linux" "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
+-          chmod +x "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
+-          cp build_info.json "${RUNNER_TEMP}/export/linux/"
+-      - name: Soak (headless; no display, no capture)
+-        env:
+-          SECONDS_ASKED: ${{ inputs.seconds }}
+-        run: |
+-          rc=0
+-          node qa/soak/soak.mjs --package "${RUNNER_TEMP}/export/linux" --seconds "${SECONDS_ASKED:-7200}" --out "${RUNNER_TEMP}/soak" || rc=$?
+-          { echo '### Linux soak, numbers only'; echo; cat "${RUNNER_TEMP}/soak/summary.md"; } >> "$GITHUB_STEP_SUMMARY" || true
+-          exit "${rc}"
+-      - name: Keep the numbers (text only; never the program)
+-        if: always()
+-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+-        with:
+-          name: soak-numbers
+-          path: |
+-            ${{ runner.temp }}/soak/summary.md
+-            ${{ runner.temp }}/soak/summary.json
+-            ${{ runner.temp }}/soak/samples.csv
+-          retention-days: 14
