@@ -37,8 +37,17 @@ const CRACK_WIDTH: float = 24.0      # a crack's half width in units: full inten
 static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid, sup}: the derived index (sup: the records another supersedes, a pure function of the store)
 
 
+## The grid's box key: the box's three indices offset so none is negative. The offset is 64 (medium's: the planet's radius is 24 boxes) and grows with a bigger planet's radius, so no two boxes share a key (a record listed twice in a merged list would count twice).
+static var _koff: int = 64
+static var _koffNC: int = 0
+
+
 static func _key(ix: int, iy: int, iz: int) -> int:
-	return ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)
+	if _koffNC != SimConst.PLANET_NC:
+		_koffNC = SimConst.PLANET_NC
+		_koff = maxi(64, int(ceil(float(SimConst.PLANET_NC) * SimConst.COL / (2.0 * SimMathx.PI) / BOX)) + 2)
+	var m: int = _koff * 2
+	return ((ix + _koff) * m + (iy + _koff)) * m + (iz + _koff)
 
 
 static func _box(v: float) -> int:

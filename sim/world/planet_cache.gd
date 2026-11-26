@@ -18,7 +18,8 @@ static func enabled() -> bool:
 
 
 static func keyOf(seed: int) -> String:
-	return "%s|planet|seed %d|rev %d" % [WorldFieldCache.baseKey(), seed, CODE_REV]
+	var size: String = "" if SimConst.PLANET_NC == SimConst.PLANET_NC_MEDIUM else "|cols %d" % SimConst.PLANET_NC   # medium's key is as it was (its blobs stay good); another size has its own
+	return "%s|planet|seed %d|rev %d%s" % [WorldFieldCache.baseKey(), seed, CODE_REV, size]
 
 
 ## The made planet's pieces as one payload.

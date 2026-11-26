@@ -476,6 +476,10 @@
       "schema": "biomes-contact.schema.json"
     },
     {
+      "match": "data/biomes/sizes.json",
+      "schema": "biomes-sizes.schema.json"
+    },
+    {
       "match": "data/biomes/blast.json",
       "schema": "biomes-blast.schema.json"
     },

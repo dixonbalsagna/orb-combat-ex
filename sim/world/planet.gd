@@ -324,10 +324,15 @@ class Planet extends RefCounted:
 	var platesBJob = null                    # their make in steps (WorldPlateB.step): the state it has reached
 
 
+## The memo's key: the seed and the generation, and the planet's size when it is not medium (a planet is a pure function of its seed, the data and its size: docs/world/planet-sizes.md). Medium's key is today's.
+static func _key(seed: int, gn: int) -> int:
+	return (seed * 4 + gn) ^ ((SimConst.PLANET_NC - SimConst.PLANET_NC_MEDIUM) << 40)
+
+
 ## Memoised by the seed: the planet is a pure function of it and of the data.
 static func make(seed: int) -> Planet:
 	var gn: int = WorldClimate.genNow()
-	var key: int = seed * 4 + gn
+	var key: int = _key(seed, gn)
 	if _planets.has(key):
 		return _planets[key]
 	var P: Planet = _newPlanet(seed, gn)
@@ -354,6 +359,12 @@ static func _newPlanet(seed: int, gn: int) -> Planet:
 			P.c[k] = WorldClimate.data().planet[k]
 		if WorldLand.plateB():   # Research's B plates make taller ground: the mountain line moves up (climate.json b, window 13)
 			P.c["mountainAbove"] = float(WorldClimate.data().b.mountainAbove)
+	if SimConst.PLANET_NC != SimConst.PLANET_NC_MEDIUM:   # a size's own place counts and ring minimums (data/biomes/sizes.json places)
+		var pl: Dictionary = WorldPlanetSize.placesFor(SimConst.PLANET_NC)
+		if not pl.is_empty():
+			P.c = P.c.duplicate()
+			for k in pl:
+				P.c[k] = pl[k]
 	P.L = float(SimConst.PLANET_NC) * SimConst.COL
 	P.R = P.L / (2.0 * SimMathx.PI)
 	return P
@@ -381,7 +392,7 @@ class PlanetJob extends RefCounted:
 	func _init(sd: int) -> void:
 		seed = sd
 		var gn: int = WorldClimate.genNow()
-		key = sd * 4 + gn
+		key = WorldPlanet._key(sd, gn)
 		if WorldPlanet._planets.has(key):
 			P = WorldPlanet._planets[key]
 			done = true
@@ -444,7 +455,7 @@ class PlanetJob extends RefCounted:
 ## Whether make(seed) would find the planet made (by the generation planets are made by now): a host's load step asks
 ## before a match's start (SimPlanetLoad).
 static func isMade(seed: int) -> bool:
-	return _planets.has(seed * 4 + WorldClimate.genNow())
+	return _planets.has(_key(seed, WorldClimate.genNow()))
 
 
 static func makeJob(seed: int) -> PlanetJob:
@@ -1219,7 +1230,7 @@ class RingJob extends RefCounted:
 
 ## The slice memoised outside the sim state: keyed by the planet, the touch, the pick index and the data hash. The read is pure, so the cache cannot change a match.
 static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedByteArray(), relaxed: bool = false, side: int = 1) -> Slice:
-	var key: String = "%d/%d/%s/%d/%s/%d/%d" % [seed, touch, str(standing.hex_encode()), 1 if relaxed else 0, dataHash(), SimConst.NC, side]
+	var key: String = "%d/%d/%s/%d/%s/%d/%d" % [seed, touch, str(standing.hex_encode()), 1 if relaxed else 0, dataHash(), SimConst.NC + (SimConst.PLANET_NC - SimConst.PLANET_NC_MEDIUM) * 65536, side]
 	if _slices.has(key):
 		return _slices[key]
 	var P: Planet = make(seed)
@@ -1260,7 +1271,7 @@ class SliceJob extends RefCounted:
 		standing = st
 		relaxed = rel
 		side = sd2
-		key = "%d/%d/%s/%d/%s/%d/%d" % [sd, tch, str(st.hex_encode()), 1 if rel else 0, WorldPlanet.dataHash(), SimConst.NC, sd2]
+		key = "%d/%d/%s/%d/%s/%d/%d" % [sd, tch, str(st.hex_encode()), 1 if rel else 0, WorldPlanet.dataHash(), SimConst.NC + (SimConst.PLANET_NC - SimConst.PLANET_NC_MEDIUM) * 65536, sd2]
 		if WorldPlanet._slices.has(key):
 			slice = WorldPlanet._slices[key]
 			done = true

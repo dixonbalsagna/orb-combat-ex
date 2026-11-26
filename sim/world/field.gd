@@ -131,10 +131,12 @@ static func _load() -> void:
 
 
 static func cells() -> int:
-	return int(data().get("cells", 300))
+	return int(data().get("cells", 300)) * SimConst.PLANET_NC / SimConst.PLANET_NC_MEDIUM   # the nodes stay 128 units apart whatever the planet's size
 
 
 static func bakeStride() -> int:
+	if SimConst.PLANET_NC != SimConst.PLANET_NC_MEDIUM:
+		return WorldPlanetSize.bakeStrideFor(SimConst.PLANET_NC)
 	return int(data().get("bakeStride", 4))
 
 

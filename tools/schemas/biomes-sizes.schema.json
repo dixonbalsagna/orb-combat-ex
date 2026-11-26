@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-sizes",
+  "title": "biomes.sizes/1",
+  "description": "data/biomes/sizes.json: the planet sizes a match can pick (WorldPlanetSize; docs/world/planet-sizes.md). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. The loader also checks the rules JSON Schema cannot: cols a multiple of 64, arenaCols 600 to cols and a multiple of 8, bakeStride dividing cols / 16, and the default being medium's 4,800.",
+  "type": "object",
+  "required": ["schema", "_about", "default", "sizes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "biomes.sizes/1" },
+    "_about": { "type": "string" },
+    "default": { "type": "string", "description": "The size a setup that names none plays: medium." },
+    "sizes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["cols", "arenaCols", "bakeStride", "offered"],
+        "additionalProperties": false,
+        "properties": {
+          "cols": { "type": "integer", "minimum": 1280, "description": "The planet's columns round (a column is 32 units)." },
+          "arenaCols": { "type": "integer", "minimum": 600, "description": "The longest ring a fight is played on (on a field world: the planet's own round)." },
+          "bakeStride": { "type": "integer", "minimum": 1, "description": "The bake's spacing in 128-unit nodes." },
+          "offered": { "type": "boolean", "description": "A size a player can reach: in the menu's list, and what a setup's planetSize can name. A size that is not offered plays medium, with an error (held)." },
+          "places": {
+            "type": "object",
+            "description": "planet.json numbers this size changes: the place counts and the ring's minimums.",
+            "additionalProperties": false,
+            "properties": {
+              "cities": { "type": "integer", "minimum": 0 },
+              "towns": { "type": "integer", "minimum": 0 },
+              "minCities": { "type": "integer", "minimum": 0 },
+              "minTowns": { "type": "integer", "minimum": 0 },
+              "relaxCities": { "type": "integer", "minimum": 0 },
+              "relaxTowns": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}
