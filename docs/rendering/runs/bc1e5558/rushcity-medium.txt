@@ -1,0 +1,11 @@
+# rushcity at medium (Rendering, 2026-11-25), worst of 4 readings (960x540 and 1024x768, scale 1 and 2), both modes, tiles on, one run each
+# f29 = main bc1e5558 + the 29 pieces of docs/ep/reviews/GW1c-stack.txt (what lands); f29x = f29 + tile-marks; m0 = main 31531cb2 as it is
+## f29
+rushcity-normal: FAIL, primary 3.5 general 0 red, area-15% 5, 2 s memory 3.5, 0 dips, 619s, worst of 4 readings (960x540 at scale 1)
+rushcity-reduced: FAIL, primary 3.5 general 0 red, area-15% 4, 2 s memory 3.5, 0 dips, 611s, worst of 4 readings (960x540 at scale 1)
+## f29x
+rushcity-normal: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 3.5, 0 dips, 632s, worst of 4 readings (1024x768 at scale 1)
+rushcity-reduced: FAIL, primary 3.5 general 0 red, area-15% 3.5, 2 s memory 4, 0 dips, 608s, worst of 4 readings (1024x768 at scale 1)
+## m0
+rushcity-normal: FAIL, primary 3.5 general 0 red, area-15% 5, 2 s memory 3.5, 0 dips, 601s, worst of 4 readings (960x540 at scale 1)
+rushcity-reduced: FAIL, primary 3.5 general 0 red, area-15% 4, 2 s memory 3.5, 0 dips, 589s, worst of 4 readings (960x540 at scale 1)
