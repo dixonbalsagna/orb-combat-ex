@@ -35,6 +35,8 @@ static func page_count(first_run: bool = false) -> int:
 ## Whether an About-page sentence named by its icon is shown: the privacy line for the feedback target in use (none, github, or a private mailto or form),
 ## and any other `about_` item while its flag in features.json is on.
 static func about_shown(icon_name: String) -> bool:
+	if icon_name == "about_fulltexts":
+		return true   # the pointer to the licence texts page: no flag (the layout leaves it out only where the page would not fit)
 	if icon_name.begins_with("about_privacy_"):
 		return icon_name == "about_privacy_" + privacy_kind()
 	return UiData.feature(icon_name)
@@ -173,6 +175,8 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			continue
 		if icon_name == "rh_beam" and tight and cols == 1:
 			continue   # a line the legend also says, left out of the narrowest column once the page is laid out tight and still would not fit (a phone held upright)
+		if icon_name == "about_fulltexts" and tight and cols == 1:
+			continue   # a pointer to the next page, not a notice: left out in the narrowest column once the page would not fit (a phone held upright; RL-265's longer licence line)
 		if icon_name == "rh_vanish" and not UiData.feature("vanish_live"):
 			continue   # the vanish is off the first press (it is only the dodge today): no line for it
 		if icon_name.begins_with("rh_") and (not UiData.feature("right_hand") or device == "kbd" or touch):

@@ -191,7 +191,7 @@ Mark column: **keep**, **rewrite** (Narrative drafts), or **cut**. A flag in the
 | # | Text | Key | Mark |
 | ---: | :-- | :-- | :-- |
 | 113 | License and privacy | `howto:pages.5.title` | |
-| 114 | License: not chosen yet. All rights reserved for now. | `howto:pages.5.items.0.text` | |
+| 114 | License: all rights are reserved during the Alpha. See "What you may do with Orb Combat EX". Whether the code is made public is decided at Beta. | `howto:pages.5.items.0.text` | |
 | 115 | Made with Godot Engine. Copyright (c) 2014-present Godot Engine contributors; copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur. Released under the MIT license. | `howto:pages.5.items.1.text` | |
 | 116 | The font is Open Sans. Copyright 2020 The Open Sans Project Authors. Released under the SIL Open Font License 1.1. | `howto:pages.5.items.2.text` | |
 | 117 | The full license texts, and the licenses of the other parts built into the engine, are on the next page. | `howto:pages.5.items.3.text` | |
