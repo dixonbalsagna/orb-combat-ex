@@ -75,6 +75,7 @@ var opts: Dictionary = {
 	"control_hints": "auto",   # the legend of the player's controls: auto (match start and first matches), always, off
 	"control_scheme": "",      # "" = the scheme of the player's own layout (ui/data/hints.json); a layout id forces one (a preview or a test)
 	"camera_panels": "full",   # Camera's panel cut-ins (rule-of-cool row 11): full, still or off; the host calls SplitView.set_panel_mode on option_changed
+	"camera_split_line": "standard",   # how soon the screen splits: later, standard or sooner (Camera reads it; the Settings row shows only with the feature split_line_choice)
 	"camera_zoom": 7,          # Camera's framing, 0 to 10 (render/camera reads it from these opts); the HUD only carries it
 	"camera_shake": 2,         # Camera's shake, 0 to 10 (an accessibility option); the HUD only carries it
 	"pad_preset": "arena",     # the pad layout in use (arena or simple-pad); the host keeps it equal to SimInputHub.pad_preset
@@ -2821,6 +2822,8 @@ func load_saved_options() -> void:
 			if k == "reduce_flashing" and UiData.rf_locked():
 				sv = true   # a saved Off from before the lock is ignored
 			_saved_opts[k] = sv
+			if k == "camera_split_line" and not UiData.feature("split_line_choice"):
+				continue   # the row is not offered in this build: the camera hears Standard, and the saved choice stays in the file for a build that offers it
 			set_option(k, sv)
 
 

@@ -514,6 +514,17 @@
         "off"
       ]
     },
+    "camera_split_line": {
+      "default": "standard",
+      "group": "display",
+      "label": "[Špĺííţ šçŕééééñ]",
+      "help": "[Ŵĥééñ ţĥéé šçŕééééñ špĺííţš ííñ ţŵöö ááš ţĥéé fííĝĥţééŕš fĺýý áápááŕţ. Šööööñééŕ ķéééépš ţĥéé fííĝĥţééŕš bííĝĝééŕ; Ĺááţééŕ ķéééépš bööţĥ ííñ ööñéé pííçţüüŕéé ĺööñĝééŕ. ~~~~~~~~~~~~]",
+      "choices": [
+        "later",
+        "standard",
+        "sooner"
+      ]
+    },
     "pad_preset": {
       "default": "arena",
       "group": "controls",

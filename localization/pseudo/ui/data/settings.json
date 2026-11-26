@@ -108,7 +108,8 @@
         "camera_launch_follow",
         "world_turning",
         "camera_panels",
-        "split_solo"
+        "split_solo",
+        "camera_split_line"
       ]
     },
     {
@@ -167,7 +168,8 @@
     }
   ],
   "needs": {
-    "touch_preset": "touch_full"
+    "touch_preset": "touch_full",
+    "camera_split_line": "split_line_choice"
   },
   "hidden": [
     "glyph_style"
@@ -414,6 +416,11 @@
       "full": "[Füĺĺ]",
       "still": "[Šţíĺĺ]",
       "off": "[Öff]"
+    },
+    "camera_split_line": {
+      "later": "[Ĺáţéŕ]",
+      "standard": "[Šţááñďáŕď]",
+      "sooner": "[Šööñéŕ]"
     },
     "thickness": {
       "0.75": "[Ţĥíñ]",

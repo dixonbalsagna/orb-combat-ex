@@ -97,6 +97,7 @@ func _run() -> void:
 	await _menus_world_rules()
 	await _pad_tip_rules()
 	await _menu_sound_rules()
+	await _split_line_rules()
 	await _save_reason_rules()
 	await _boot_load_menu_rules()
 	await _plain_words_rules()
@@ -12218,6 +12219,73 @@ func _menu_sound_rules() -> void:
 	UiPrefs.path = "user://ui_prefs.json"
 	UiData.set_feature("menus_rail", false)
 	UiData.set_feature("menu_modes", false)
+
+
+# --- The Split screen row: how soon the screen splits (docs/ui/split-setting.md) -----------------------------------------------------------
+
+func _split_line_row() -> Dictionary:
+	for r in UiSettings.rows():
+		if str(r["key"]) == "camera_split_line":
+			return r
+	return {}
+
+
+func _split_line_hud() -> UiHud:
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 800)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.load_saved_options()
+	return hud
+
+
+func _split_line_rules() -> void:
+	var od: Dictionary = UiData.options()["camera_split_line"]
+	UiPrefs.path = "user://ui_prefs_test_splitline.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var hud: UiHud = await _split_line_hud()
+	_ok(od["default"] == "standard" and od["choices"] == ["later", "standard", "sooner"] and od["group"] == "display" and hud.opts["camera_split_line"] == "standard", "split screen: Later, Standard or Sooner, Standard by default")
+	UiData.set_feature("split_line_choice", false)
+	_ok(_split_line_row().is_empty(), "split screen: with the flag off the row is not on the Settings screen")
+	UiData.set_feature("split_line_choice", true)
+	var r: Dictionary = _split_line_row()
+	var in_camera := false
+	for sec in UiData.settings()["sections"]:
+		if sec["id"] == "camera" and (sec["items"] as Array).has("camera_split_line"):
+			in_camera = true
+	_ok(not r.is_empty() and bool(r["enabled"]) and r["kind"] == UiSettings.CHOICE and str(r["label"]) == "Split screen" and in_camera, "split screen: with the flag on the Camera section lists the row, live")
+	_ok(UiSettings.value_word(r, hud.opts) == "Standard" and UiSettings.stepped(r, hud.opts, 1) == "sooner" and UiSettings.stepped(r, hud.opts, -1) == "later", "split screen: it reads Standard, with Sooner to one side and Later to the other")
+	var bad := PackedStringArray()
+	for sz in [Vector2(1280, 720), Vector2(1280, 800), Vector2(1920, 1080)]:
+		var lay := UiLayout.new()
+		lay.compute(sz, false)
+		var idx: int = UiSettings.rows().find(_split_line_row())
+		var p: Dictionary = UiSettings.plan(sz, lay.s, 1.0, false, {"focus": idx, "scroll": 0.0}, hud.opts)
+		if idx < 0 or not bool(p["fits"]):
+			bad.append(str(sz))
+	_ok(bad.is_empty(), "split screen: the screen still fits with the row focused and its help below, at 1280x720, 1280x800 and 1920x1080 (%s)" % str(bad))
+	hud.settings_set("camera_split_line", "sooner")
+	hud.queue_free()
+	await process_frame
+	var again: UiHud = await _split_line_hud()
+	_ok(again.opts["camera_split_line"] == "sooner" and UiSettings.value_word(_split_line_row(), again.opts) == "Sooner", "split screen: the choice is remembered in a later session")
+	again.queue_free()
+	await process_frame
+	# A build that does not offer the row: the camera hears Standard, and the choice is not lost from the file.
+	UiData.set_feature("split_line_choice", false)
+	var off: UiHud = await _split_line_hud()
+	var heard: String = str(off.opts["camera_split_line"])
+	off.settings_set("camera_zoom", 6)
+	var kept: String = str((UiPrefs.get_value("options", {}) as Dictionary).get("camera_split_line", ""))
+	_ok(heard == "standard" and kept == "sooner", "split screen: with the flag off a saved choice is not applied (%s) and stays in the settings file after another change (%s)" % [heard, kept])
+	off.queue_free()
+	await process_frame
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
+	UiData.set_feature("split_line_choice", null)
 
 
 # --- Keyboard works, a controller is recommended (decision 20, second half; docs/ui/menus-a1.md section 12) ----------------------------------
