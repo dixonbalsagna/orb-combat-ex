@@ -376,6 +376,8 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/peak_retry_check.gd'
       - name: Camera peak shot check (the peak launch shot)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/peak_shot_check.gd'
+      - name: "Camera reset frame check (a following match's first frame is placed on its own sim frame, not the last match's)"
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/reset_frame_check.gd'
       - name: Camera split share check (the split share)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/split_share_check.gd'
       - name: Camera split vision check (the split view)
