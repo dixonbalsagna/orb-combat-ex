@@ -1,0 +1,17 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+pair bake: 263 ms, 809 poses
+seed 4 (spaced profile, 5400 ticks): cues with a pose: tell 13, overextend 10, turn_read 3, glance 6, brace 6, catch 1, reset 1
+    cues left to their owners: exposed 10, swing_place 16, recover 17, whiff_recover 3, bind 5, recoil 1, clean_parry 1
+seed 4: gameplay hash with poses d2034df1ed5d2f6f, without d2034df1ed5d2f6f
+seed 12345 (spaced profile, 5400 ticks): cues with a pose: catch 8, guard_set 1, tell 8, overextend 3, turn_read 5, glance 4, brace 4, reset 1
+    cues left to their owners: swing_place 12, exposed 3, recover 11, parry 3, whiff_recover 5, bind 5, clean_parry 1
+seed 12345: gameplay hash with poses 8c1ea1047f1eb40c, without 8c1ea1047f1eb40c
+Cue check  34 checks
+
+cue check passed
+ERROR: 6 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+WARNING: 8193 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 13 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

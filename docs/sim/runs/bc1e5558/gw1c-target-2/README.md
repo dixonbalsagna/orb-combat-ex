@@ -32,7 +32,7 @@ Everything else matches the first target byte for byte: the tick-0 entries, the 
 | :--- | :--- | :--- |
 | import | exit 0, no parse error | `records/import.txt` |
 | golden, cold then warm | one file, no script errors | `records/run.log`, `records/golden_cold.txt`, `records/golden_warm.txt` |
-| parity through `tools/gate.mjs` | **not run yet**: Orb's safe pause on 2026-11-23 stopped the runner before parity | to do first on restart |
-| Rendering's 15 | **not run yet**, for the same reason | to do on restart |
+| **parity through `tools/gate.mjs`** against this golden | **exit 0, 88 rows, 0 FAIL, golden check passed, no SCRIPT ERROR lines** (2026-11-25) | `records/parity.txt`, `records/run-restart.log` |
+| Rendering's 15 | all pass (2026-11-25) | `records/render15/` |
 
-The runner was stopped by its own PID between the cold golden and parity. The cold golden ran to its end, and the warm golden and the moves were run after it (`records/g1c2_finish.sh.txt`).
+On 2026-11-23, Orb's safe pause stopped the runner by its own PID between the cold golden and parity. The cold golden ran to its end, and the warm golden and the moves were run after it (`records/g1c2_finish.sh.txt`). Parity and Rendering's 15 ran on the same tree on 2026-11-25, after the restart (`records/g1c2_par.sh.txt`). Its `golden.json` was checked equal to this target first.

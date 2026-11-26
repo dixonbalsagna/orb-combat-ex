@@ -1,0 +1,11 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+pair bake: 261 ms, 809 poses
+gameplay hash without and with the compositor: cbddb4c46ecf23cf, cbddb4c46ecf23cf; frames presented 1812
+Pane check  58 checks
+
+pane check passed
+WARNING: 283 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 9 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

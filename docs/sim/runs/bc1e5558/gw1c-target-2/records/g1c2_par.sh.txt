@@ -1,0 +1,18 @@
+#!/bin/sh
+# g1c2_par.sh <scratchpad>: the restart (EP, 2026-11-25): parity through gate.mjs and Rendering's 15 on g1c2 (bc1e5558 + the 28 lines),
+# whose golden.json is target 2 (2e8cdeaa). ONE Godot job at a time, below normal.
+set -u
+powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'"
+GW="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+NS="${1:?scratchpad}"; O="$NS/g1co2"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
+export APPDATA="$(cygpath -w "$NS/g1c2app")"
+cd "$NS/g1c2" || exit 1
+cmp -s sim/core/test/golden.json "$R/docs/sim/runs/bc1e5558/gw1c-target-2/golden-target.json" && echo "golden.json = target 2" || { echo "golden.json is NOT target 2"; exit 1; }
+s=$(date +%s); node tools/gate.mjs -- "$GW" --headless --path . --script res://sim/core/tools/parity.gd > "$O/parity.txt" 2>&1; echo "parity: exit $? in $(( $(date +%s) - s )) s; $(grep 'golden check\|SCRIPT ERROR lines' "$O/parity.txt" | tail -2 | tr '\n' ' ' | cut -c1-200)"
+grep -n "^FAIL" "$O/parity.txt" | head -10 | cut -c1-240
+echo "rows ok $(grep -c '^ok' "$O/parity.txt"), FAIL $(grep -c '^FAIL' "$O/parity.txt")"
+echo "== Rendering's 15"
+rm -rf "${NS:?}/g1co2/rg"
+sh "$NS/n/rgates.sh" "$NS/g1c2" "$O/rg"
+echo par done
