@@ -10,6 +10,8 @@
     "schema": { "const": "biomes.sizes/1" },
     "_about": { "type": "string" },
     "default": { "type": "string", "description": "The size a setup that names none plays: medium." },
+    "reliefRef": { "type": "number", "minimum": 1000, "maximum": 100000, "description": "The tallest height the planet's relief makes (units): a size's relief cap scales the heights from its knee up to here into the band under its cap; higher is the cap. Needed only where a size has maxReliefShare." },
+    "reliefTop": { "type": "number", "minimum": 1000, "maximum": 100000, "description": "The tallest relief on medium, where nothing is capped (6,739): each altitude line (mountain, highland, volcanic floor, the ice dome's rock, the temperature's lapse) of a capped size is medium's scaled by its cap over this (Art's ruling, docs/art/relief-cap-ruling.md)." },
     "sizes": {
       "type": "object",
       "minProperties": 1,
@@ -23,6 +25,8 @@
           "bakeStride": { "type": "integer", "minimum": 1, "description": "The bake's spacing in 128-unit nodes." },
           "offered": { "type": "boolean", "description": "A size a player can reach: in the menu's list, and what a setup's planetSize can name. A size that is not offered plays medium, with an error (held)." },
           "spawnReach": { "type": "number", "minimum": 0, "description": "The spawn is within this many units of a place (0 or missing: none)." },
+          "maxReliefShare": { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "The land's height is held to this share of the planet's radius (tiny and small; absent: as it is). Heights above the knee are scaled into the band under the cap, in proportion." },
+          "reliefKnee": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1, "description": "Where the squeeze begins, as a share of the cap (default 0.6): heights under it are their own." },
           "maxBuildingShare": { "type": "number", "exclusiveMinimum": 0, "maximum": 1, "description": "No building taller than this share of the planet's radius (tiny and small): structures stay under the play height." },
           "places": {
             "type": "object",

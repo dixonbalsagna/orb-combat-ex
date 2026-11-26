@@ -21,6 +21,7 @@
     "wall_hold_check",
     "world_default_check",
     "struggle_meet_check",
+    "relief_cap_check",
     "struggle_dir_check",
     "bystanders_check",
     "globe_check",
