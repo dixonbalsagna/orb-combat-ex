@@ -8,5 +8,5 @@
 | Mode smoke, Linux, solo and two | PASS, 24 steps each | `mode-smoke-linux-ci-45773515546.txt` |
 | First run, numbers only (no window) | ran clean on Orb's zip; its frame rates are not a window's | `first-run-headless.md` |
 | First run with a window | **waiting for Orb's click** (`tools/first-run/FIRST-RUN.cmd`) | `homework/Files/first-run/` |
-| Linux first run | to be re-taken with the fixed script (the first, run 45773667206, used the old one and closed by the window manager only) | to come |
+| Linux first run | PASS, every step; the keys close the game (run 45777933506, fixed script, same game) | `linux-first-run-45777933506.md` |
 | Build record of Orb's zips | made by the EP with the one command | `homework/Files/desktop/ac4ba152-ORB-PRIVATE/build-record.txt` |
