@@ -1,0 +1,44 @@
+# GB-010 + tick0-craters (Rendering, 2026-11-26) on main 1c443b9e: gl0 = main, gl1 = gl0 + ground_link.diff (sha1 2e01b13c) + held_recheck.diff (sha1 ea8dcb51)
+ground_link.diff: applies strict
+held_recheck.diff: applies strict after it
+import errors: gl0 0, gl1 0
+gl0 export 0, errors 0
+gl1 export 0, errors 0
+golden.json: gl1 byte-identical to gl0
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+drawn_check exit 0: drawn check passed
+ground_link_check  exit 0: ground link check passed
+ground_link_check --negative-control exit 1: ground link check FAILED (1 of 3 matches)
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+# medium's collapse, worst of 4 readings (960x540 and 1024x768, scale 1 and 2), both modes
+## gl0 (gl0_medium)
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 615s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 618s, worst of 4 readings (1024x768 at scale 1)
+## gl1 (gl1_medium)
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 614s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 605s, worst of 4 readings (1024x768 at scale 1)
+# the reel, reduced, 960x540, every frame to tick 600
+## gl0 (gl0_reel)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 135s, worst of 2 readings (960x540 at scale 1)
+## gl1 (gl1_reel)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 132s, worst of 2 readings (960x540 at scale 1)
+reel ticks where the frames differ (pixels off by more than 2, over 50): 1-1 (max 832), 3-5 (max 148), 7-7 (max 221), 9-12 (max 163), 35-38 (max 258), 45-47 (max 120), 159-179 (max 426), 186-217 (max 3295), 221-240 (max 207)
+gif: craters.gif, 52 frames of 963x277, 2301 KB
+# Added after the run: the same check and a probe on gl0 (main) and gl1, and the reel in the game's build order
+ground_link_check on gl0 (main, without the fix): ground link check FAILED (3 of 3 matches)
+  FAIL match 1 (seed 1, tick 120): pane 0 ground UNLINKED pane 1 ground UNLINKED
+  FAIL match 2 (seed 2, tick 120): pane 0 ground UNLINKED pane 1 ground UNLINKED
+  FAIL match 3 (seed 3, tick 120): pane 0 ground UNLINKED pane 1 ground UNLINKED
+the game's own path (scratch game_link_probe.gd: main as the game boots it, not manual: the demo match in pieces, the split attached when it is built; then start_match as the menu's Start; each read after its build and 120 ticks):
+  gl0: boot demo match (tick 126, 1 craters, store 1, split true): pane 0 linked, unheld with a store record 0; pane 1 linked, unheld with a store record 0;
+  gl0: second match (as a Start) (tick 126, 2 craters, store 2, split true): pane 0 ground UNLINKED, unheld with a store record 0; pane 1 ground UNLINKED, unheld with a store record 0;
+  gl1: boot demo match (tick 126, 2 craters, store 2, split true): pane 0 linked, unheld with a store record 0; pane 1 linked, unheld with a store record 0;
+  gl1: second match (as a Start) (tick 126, 1 craters, store 1, split true): pane 0 linked, unheld with a store record 0; pane 1 linked, unheld with a store record 0;
+the reel with its match started in pieces (scratch page word stepped=1, SimHost.stepped_start): reel ticks where the frames differ (pixels off by more than 2, over 50): 1-1 (max 832), 3-5 (max 148), 7-7 (max 221), 9-12 (max 163), 35-38 (max 258), 45-47 (max 120), 159-179 (max 426), 186-217 (max 3295), 221-240 (max 207)
+  the same ticks as the reel without it: the capture's boot (whole, the split attached at once) does not lose the link, so no capture shows GB-010 yet
+  ("unheld with a store record" asks GroundField._store_holds, which holds nothing without the tile field, so it reads 0 on an unlinked ground: there every store crater is drawn twice; runs/0d9af28a/gb010-feet.txt counts it from the store)
