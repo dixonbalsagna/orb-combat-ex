@@ -1,5 +1,7 @@
 # Park: A-WORLD-06, crater width by tier, with its ratio check (World, 2026-11-14; EP order, Game Design's ruling in docs/design/buildings.md section 6.2)
 
+**Code and check-list line landed in GW1c (2026-11-25); those two patches are removed from this folder. Still parked: the two data rows, `crater-tiers-data.diff` and `crater-tiers-shots-data.diff` (a hash window each; row B also needs a look).**
+
 The rule, the numbers and what the check asserts: `docs/world/crater-tiers.md`. Runs: `docs/world/runs/crater-tiers/`.
 
 | File | What |

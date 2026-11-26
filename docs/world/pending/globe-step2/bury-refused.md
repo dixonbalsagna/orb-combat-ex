@@ -1,5 +1,7 @@
 # Park: a hard impact still buries on dented ground, and a refused dig sends crater_refused (World, 2026-11-23)
 
+**Landed in GW1c (2026-11-25): the diff and both grants (25cfc527, 602fef37, 1d9b1e1f), Simulation's golden target 2 (c741c4ec) and VFX's `crater_refused` play (960d5a28). The patches are removed from this folder.**
+
 Found by Combat from the code (EP, 2026-11-23): the shaft cap of globe-step2 refuses a dig on ground already as dented as the blow can dig (`d < MIN_DEPTH`, no crater). `contact.gd` buries a fighter only against a crater it dug, and only when that crater is deep enough (`depth / 75 >= K_EMB_MIN * threshold`). So a hard slam onto an old crater, or onto a smaller one the cap lets it dig only a little into, did not bury him. Orb said yes to burying (vision.md:514). VFX's addition: a refused dig sent no `crater` event, so the ejecta arc, rim dust, `blast.on_crater` and the biome burst were all lost.
 
 **One follow-on diff, cut on the end of the stack** (all 24 pieces of `docs/ep/reviews/GW1c-stack.txt`), applied **last of the world pieces**: no earlier piece is re-cut, and the five later pieces that touch `crater.gd` keep their context.

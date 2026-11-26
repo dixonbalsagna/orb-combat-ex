@@ -1,5 +1,7 @@
 # Park (GW1c): the relief cap of the small planet sizes (World, 2026-11-20; Art's ruling: 0.3 of the radius on tiny and small; re-cut after the stand-in's review, RC-01 to RC-06)
 
+**Code and check-list line landed in GW1c (2026-11-25); those two patches are removed from this folder. Still parked: `relief-cap-data.diff` (the tiny and small height caps), which waits for small's un-hide.**
+
 **The keys ship OFF.** The code patch changes nothing a player sees; the data row that turns the cap on is separate and waits for Rendering's stills of tiny and small in the default look, Art's word on the flat tops and the crease at the knee, and a side-by-side. Records: `docs/world/runs/relief-cap/`.
 
 ## Files, and what each stacks on (RC-05)
