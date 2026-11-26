@@ -40,7 +40,7 @@ The testers' route must refuse:
 
 The package's record (commit, checks, file names and checksums, no folder paths) is committed under `docs/tools/runs/<commit8>/`. The program files themselves are never committed.
 
-**Not proven by any of this:** the Linux program in the testers' package cannot be started on Orb's Windows PC, and no runner ever sees it. A person starts it on a Deck or another Linux machine before any key goes out (gate G23).
+**Not proven by any of this:** the Linux program in the testers' package cannot be started on Orb's Windows PC, and no runner ever sees it. A trusted friend with a Linux machine starts it, up to the flashing notice, before any other Linux or Deck key goes out (gate G23, RL-280).
 
 ## 4. The approval line Orb is asked to record (RL-263)
 
