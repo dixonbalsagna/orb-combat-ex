@@ -1,0 +1,26 @@
+SOAK start seconds=7200 sample=10 seed=1 cap=600
+SOAK main found after 11571 ms; computer plays both: true
+SOAK match 1 started seed=15361973 (the game's own boot match)
+SOAK match 1 ended how=capped winnerSlot=-1 simSeconds=600.0
+SOAK match 2 started t=704 seed=2 objects=17908 computer plays both: true
+SOAK match 2 ended how=ko winnerSlot=0 simSeconds=594.0
+SOAK match 3 started t=1386 seed=3 objects=17983 computer plays both: true
+SOAK match 3 ended how=capped winnerSlot=-1 simSeconds=600.0
+SOAK match 4 started t=2065 seed=4 objects=18012 computer plays both: true
+SOAK match 4 ended how=capped winnerSlot=-1 simSeconds=600.0
+SOAK match 5 started t=2751 seed=5 objects=18063 computer plays both: true
+SOAK match 5 ended how=ko winnerSlot=0 simSeconds=486.3
+SOAK match 6 started t=3310 seed=6 objects=18109 computer plays both: true
+SOAK match 6 ended how=capped winnerSlot=-1 simSeconds=600.0
+SOAK match 7 started t=3988 seed=7 objects=18153 computer plays both: true
+SOAK match 7 ended how=ko winnerSlot=1 simSeconds=516.6
+SOAK match 8 started t=4581 seed=8 objects=18163 computer plays both: true
+SOAK match 8 ended how=capped winnerSlot=-1 simSeconds=600.0
+SOAK match 9 started t=5264 seed=9 objects=18192 computer plays both: true
+SOAK match 9 ended how=ko winnerSlot=1 simSeconds=452.9
+SOAK match 10 started t=5792 seed=10 objects=18225 computer plays both: true
+SOAK match 10 ended how=ko winnerSlot=1 simSeconds=512.8
+SOAK match 11 started t=6378 seed=11 objects=18254 computer plays both: true
+SOAK match 11 ended how=ko winnerSlot=1 simSeconds=467.1
+SOAK match 12 started t=6920 seed=12 objects=18278 computer plays both: true
+SOAK quit why=time matches=12 wallSeconds=7200

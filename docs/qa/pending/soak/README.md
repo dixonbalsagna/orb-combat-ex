@@ -1,6 +1,6 @@
 # The two-hour soak of the built desktop program (parked; QA, path job 14, 2026-11-25)
 
-**State:** the harness is built (`qa/soak/soak.mjs`, `qa/soak/soak_probe.gd`) and proved on today's main (20a483d8) on Windows. **The real two-hour run waits for the GW1c commit**, in a quiet window, at below-normal priority. The Linux half is the workflow `.github/workflows/linux-soak.yml` (Tools'; Legal RL-279).
+**State:** the harness is built (`qa/soak/soak.mjs`, `qa/soak/soak_probe.gd`). **The two-hour runs on ac4ba152 (GW1c, 0.1.1) are done, Windows and Linux: all checks pass; memory grew** (`docs/qa/readings/soak-two-hours.md`). The Linux half is the workflow `.github/workflows/linux-soak.yml` (Tools'; Legal RL-279).
 
 ## Running it
 
