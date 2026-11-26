@@ -22,4 +22,4 @@ SESSION (a pad on the start menu, presses and the lit row):
   B on the question -> page modes, lit row quit
   A on Close the game -> page quit, lit row quit_yes
   bridge ok: 11393 events consumed over 4200 ticks
-hud_check: 8681 checks, 0 failed
+hud_check: 8684 checks, 0 failed
