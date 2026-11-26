@@ -130,3 +130,30 @@ Records: `docs/qa/runs/ac4ba152/hunt/` (`real-memory-*.txt`, `real_probe2.gd.txt
 - Not a leak in the sense of memory nobody can reach: it is a cache with no limit. Static memory was still rising at the sixth match.
 
 **Withdrawn:** my earlier "sh and sb level off by about 120 sim seconds, 5 MiB each" came from one short run.
+
+## The fix confirmed: World's field-subcap on d9bc2f07 (2026-11-26, the same five-match run)
+
+World's fix holds `sh` and `sb` in two generations of at most 150,000 sub-nodes each (`sim/world/field.gd`). Same method, same machine, editor build, headless, below normal, 600-sim-second matches. The build also carries Rendering's ground-link fix (GB-010); Rendering's `_tracked` fix was not in it. The final take-apart came at match 7's start here (after six matches; match 1 ended early), at match 6's start before (after five). Records: `docs/qa/runs/d9bc2f07/hour/`.
+
+| Static memory at each match's start, MiB | m1 | m2 | m3 | m4 | m5 | m6 | m7 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Before (ac4ba152) | 254 | 356 | 391 | 427 | 432 | 466 | |
+| After (d9bc2f07) | 254 | 344 | 345 | 367 | 367 | 368 | 351 |
+
+| Taken apart at the end, MiB | Before, after 5 matches | After, after 6 matches |
+| :--- | ---: | ---: |
+| Static, all | 434.0 | **319.4** |
+| In lists, dictionaries and packed arrays | 151.3 | 58.7 |
+| Freed with the scene | 12.4 | 11.4 |
+| Left after both | 246.8 | 226.0 |
+| `Field.sh` + `Field.sb` | 124.3 | 13.8 |
+| `Field.shOld` + `Field.sbOld` (the older generation) | none | 18.3 |
+| **The sub-node tables together** | **124.3** | **32.1** |
+| `RenderMats._tracked` | 0.85 | 1.03 |
+
+**Reading.**
+- **The field tables level off, and so does the process:** from match 2 on, match starts stay between 344 and 368 MiB, with the seventh at 351. Before, they rose every match to 466.
+- The tables held 32 MiB at this reading against 124 before.
+- The 4.6 MiB a match that stayed unnamed does not show here either: what is left after emptying everything is 226.0 MiB against 228.5 after one match on the old build (two different builds, so a rough comparison).
+- `_tracked` still creeps up (1.03 MiB), as expected until Rendering's fix lands.
+- **Not read here:** the release program (the two-hour soak on the next build is that), and what the bound costs in read time.
