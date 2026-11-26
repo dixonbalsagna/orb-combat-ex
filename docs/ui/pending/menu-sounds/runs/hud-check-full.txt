@@ -1,0 +1,25 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  crown up in 27% of the scripted fight (any fighter)
+  scenario hero_vs_proud      cards<=2 barks<=2 { "cards_shown": 2, "cards_merged": 1, "cards_dropped": 0, "cards_evicted": 0, "cards_withheld": 2, "barks_shown": 3, "barks_cut": 0, "barks_suppressed": 0, "toasts_skipped": 0, "max_cards_visible": 1, "max_barks_visible": 2, "events": 23, "faces_shown": 3, "faces_capped": 0, "banners_move_name": 0 }
+  scenario empress_vs_cyborg  cards<=2 barks<=2 { "cards_shown": 4, "cards_merged": 0, "cards_dropped": 0, "cards_evicted": 0, "cards_withheld": 0, "barks_shown": 2, "barks_cut": 0, "barks_suppressed": 0, "toasts_skipped": 1, "max_cards_visible": 2, "max_barks_visible": 2, "events": 15, "faces_shown": 2, "faces_capped": 0, "banners_move_name": 0 }
+  scenario placeholders       cards<=1 barks<=1 { "cards_shown": 1, "cards_merged": 0, "cards_dropped": 0, "cards_evicted": 0, "cards_withheld": 0, "barks_shown": 0, "barks_cut": 0, "barks_suppressed": 0, "toasts_skipped": 0, "max_cards_visible": 1, "max_barks_visible": 0, "events": 5, "faces_shown": 0, "faces_capped": 0, "banners_move_name": 0 }
+  scenario stress             cards<=2 barks<=2 { "cards_shown": 8, "cards_merged": 1, "cards_dropped": 0, "cards_evicted": 3, "cards_withheld": 7, "barks_shown": 3, "barks_cut": 2, "barks_suppressed": 0, "toasts_skipped": 1, "max_cards_visible": 4, "max_barks_visible": 2, "events": 110, "faces_shown": 3, "faces_capped": 0, "banners_move_name": 0 }
+  scenario controls           cards<=1 barks<=1 { "cards_shown": 0, "cards_merged": 0, "cards_dropped": 0, "cards_evicted": 0, "cards_withheld": 0, "barks_shown": 0, "barks_cut": 0, "barks_suppressed": 0, "toasts_skipped": 0, "max_cards_visible": 0, "max_barks_visible": 0, "events": 13, "faces_shown": 0, "faces_capped": 0, "banners_move_name": 0 }
+  split cost: over 300 frames of a moving split, 150 layer redraws (50 of them chips)
+SESSION (a pad on the start menu, presses and the lit row):
+  opened -> page modes, lit row solo
+  D-pad up from the top -> page modes, lit row quit
+  D-pad down from the last -> page modes, lit row solo
+  D-pad down to couch_2v2 -> page modes, lit row couch_2v2
+  A on it (coming) -> page modes, lit row couch_2v2
+  A on the first mode -> page setup, lit row p1
+  D-pad right on Player 1 fighter -> page setup, lit row f1
+  B -> page modes, lit row solo
+  A on the second mode -> page setup, lit row p1
+  A on Start -> page setup, lit row start
+  A on Quit -> page quit, lit row quit_no
+  B on the question -> page modes, lit row quit
+  A on Close the game -> page quit, lit row quit_yes
+  bridge ok: 11393 events consumed over 4200 ticks
+hud_check: 8681 checks, 0 failed
