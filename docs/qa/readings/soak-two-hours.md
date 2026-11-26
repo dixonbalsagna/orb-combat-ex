@@ -60,3 +60,21 @@ The same matches 3 to 11 were played on both (see above), so the change-by-chang
 - **Objects track each other** (correlation of the steps 0.94): about 35 more are kept per match, and how many depends on what the match did, not on the platform.
 - **Memory steps do not** (correlation 0.24), though the totals are close (241 and 217 MiB). The same matches gave a large step on one platform and a small one on the other. That reads like buffers or pools growing in lumps when they cross a size, not like one particular match event costing memory; QA infers this and has not shown it.
 - Both end with small rises (1 to 2 MiB into match 12), which is not enough to call it level: both had small rises earlier and then larger ones.
+
+## The faster hunt (EP's order, 2026-11-26): what grows, per match change and per minute of play
+
+Four short arms on the same build (Windows, headless, below normal, other sessions' engine jobs running; every arm passed the soak's checks). `soak.mjs` now has `--census` (every field of the match state, the replay recorder, the host, the game scene and 1,580 script statics, sized at each match's start and end; the sizes are estimates that rank, not the process's memory) and `--same-seed`. Records: `docs/qa/runs/ac4ba152/hunt/`.
+
+| Arm | What | Process memory |
+| :--- | :--- | :--- |
+| A | 40-sim-second matches, a new seed each, 20 min (21 starts) | 410 → 464 MiB over the first changes, **then flat** (463.6 for the last matches); per match 5.68 MiB in the first half, **0.16 in the second** |
+| B | the same, but **the same seed** every match, 12 min (13 starts) | 436 → 448 MiB, then flat; 2.96 then **0.20** MiB a match |
+| C | as A with the census, 15 min (16 starts) | 441 → 456 MiB, then flat; 2.49 then 0.16 |
+| D | **one long match**, 10 min, census each minute | **404 → 462 MiB (+58)** over nine minutes of play, still rising at the end |
+
+**Reading.**
+- **Per match change, short matches: no leak seen.** After the first few matches the process stops growing (about 0.2 MiB a match, within a reading's step), with new seeds or the same one. In the census, the state, the recorder and the statics climb by no more than a fraction of a MiB over 13 changes (`anim_data.gd:mirrors` 0.16 to 0.40 and `intro.gd:_flat` 0.08 to 0.17 the largest).
+- **Per minute of play: memory climbs.** In the long match about 5 to 6 MiB a minute on average, in steps. The census accounts for most of it: **`main.pane.planet` (the render side's planet view) +36 MiB** (15.9 → 51.8), the world's water-record index `sim/world/waterrec.gd:_ix` +7 MiB, VFX's `host.vfx` +2.7 MiB, then small pose, text and lure memos under 0.3 MiB each. No match-state field grew enough to list.
+- **The planet view is not emptied at a new match:** in arm C its size at a match's start rose from 24.8 to 32.5 MiB over 13 short matches.
+- **One very large store:** `waterrec.gd:_ix` holds about 136 MiB (estimate) from the first census, as one entry rebuilt for each match. It is not a leak; it is the largest single thing found, and freeing and rebuilding it at every change may be one reason the process keeps a high-water mark (not shown).
+- **Not accounted for:** the two-hour run grew about 240 MiB. These arms show where growth comes from (long matches, and what the planet view keeps), not that the two together add up to 240. A census over an hour of long matches would say.

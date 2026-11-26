@@ -1,5 +1,5 @@
 // The two-hour soak of the built desktop program (QA; EP, path job 14). Windows and Linux.
-//   node qa/soak/soak.mjs --package <zip | tar.gz | unpacked folder> [--seconds 7200] [--sample 10] [--seed 1] [--cap 600] [--max-fps 60] [--out <folder>] [--keep]
+//   node qa/soak/soak.mjs --package <zip | tar.gz | unpacked folder> [--seconds 7200] [--sample 10] [--seed 1] [--cap 600] [--max-fps 60] [--out <folder>] [--keep] [--census [--census-every 60]] [--same-seed]
 // The package is the one tools/desktop-local-build.mjs makes. It is unpacked into a scratch folder, and the program runs exactly as shipped: the only addition is an override.cfg beside it naming
 // soak_probe.gd (this folder) as an autoload, which starts computer-against-computer matches back to back, prints SOAK lines and quits after --seconds (qa/soak/soak_probe.gd).
 // Headless (no window), below-normal priority, with its data folders moved into the scratch folder (never the real ones). The harness watches: the process's memory from outside (working set and
@@ -53,6 +53,18 @@ try { build = JSON.parse(readFileSync(join(gameDir, 'build_info.json'), 'utf8'))
 const probeDir = join(scratch, 'probe');
 mkdirSync(probeDir, { recursive: true });
 copyFileSync(join(HERE, 'soak_probe.gd'), join(probeDir, 'soak_probe.gd'));
+// The store census (soak_census.gd): the names of the game's top-level static vars are read from the build's own commit (the exported program keeps no source to read them from).
+const census = argv.includes('--census'), sameSeed = argv.includes('--same-seed');
+let censusArg = [];
+if (census) {
+  copyFileSync(join(HERE, 'soak_census.gd'), join(probeDir, 'soak_census.gd'));
+  const rev = build.commit || 'HEAD';
+  const g = spawnSync('git', ['-C', join(HERE, '..', '..'), 'grep', '-E', '^static var [A-Za-z_0-9]+', rev, '--', 'sim', 'render', 'ui', 'audio'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const names = String(g.stdout || '').split('\n').map((l) => /^[^:]+:([^:]+):static var ([A-Za-z_0-9]+)/.exec(l)).filter((m) => m && !m[1].includes('/tools/')).map((m) => `res://${m[1]}|${m[2]}`);
+  if (!names.length) { console.error('soak: --census needs the repository with the build commit (git grep found no static var)'); process.exit(1); }
+  writeFileSync(join(probeDir, 'statics.txt'), names.join('\n') + '\n');
+  censusArg = [`--soak-census=${join(probeDir, 'statics.txt').replace(/\\/g, '/')}`, `--soak-census-every=${Number(opt('--census-every', 0))}`];
+}
 writeFileSync(join(gameDir, 'override.cfg'), `[autoload]\n\nSoakProbe="*${join(probeDir, 'soak_probe.gd').replace(/\\/g, '/')}"\n`);
 const data = join(scratch, 'data');
 const env = { ...process.env, APPDATA: join(data, 'appdata'), LOCALAPPDATA: join(data, 'localappdata'), XDG_DATA_HOME: join(data, 'xdg'), HOME: join(data, 'home') };
@@ -66,14 +78,14 @@ const memory = [];   // { t, workingMiB, privateMiB }
 const t0 = Date.now();
 // --frames=<huge> is main's own switch for a scripted run. Here it only skips the How to play card, which would hold the match. It does not skip the flashing notice: a locked build refuses the words that
 // would (UiHud.bypass_allowed, RL-206), and a headless run never raises the notice at all (UiHud.notice_auto_allowed). Headless always (RL-279: a run with any display is not covered).
-const args = ['--headless', '--max-fps', String(maxFps), '--', '--frames=2000000000', `--soak-seconds=${seconds}`, `--soak-sample=${every}`, `--soak-seed=${seed}`, `--soak-cap=${cap}`];
+const args = ['--headless', '--max-fps', String(maxFps), '--', '--frames=2000000000', `--soak-seconds=${seconds}`, `--soak-sample=${every}`, `--soak-seed=${seed}`, `--soak-cap=${cap}`, ...(sameSeed ? ['--soak-same-seed'] : []), ...censusArg];
 console.log(`soak: ${program.split(/[\\/]/).pop()} for ${seconds} s (sample ${every} s), build ${build.commit ? build.commit.slice(0, 8) : 'unknown'}; scratch ${scratch}`);
 const child = spawn(program, args, { cwd: gameDir, env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 try { setPriority(child.pid, osConstants.priority.PRIORITY_BELOW_NORMAL); } catch { /* gone */ }
 const onLine = (l) => {
   lines.push(l);
   if (lines.length > 200000) lines.splice(0, 100000);
-  if (l.startsWith('SOAK') && !l.startsWith('SOAK sample')) console.log('  ' + l);
+  if (l.startsWith('SOAK') && !l.startsWith('SOAK sample') && !l.startsWith('SOAK census t=')) console.log('  ' + l);
 };
 // One line buffer a stream (split-lines.mjs says why).
 const streams = [child.stdout, child.stderr].map((stream) => {
@@ -196,6 +208,10 @@ const clean = (s) => cleanPaths(s);
 writeFileSync(join(out, 'summary.md'), clean(md.join('\n')) + '\n');
 writeFileSync(join(out, 'summary.json'), clean(JSON.stringify(sum, null, 1)) + '\n');
 writeFileSync(join(out, 'game.log'), clean(logText));
+if (census) {
+  const taken = lines.map((l) => /^SOAK census t=(\d+) match=(\d+) when=(\w+) ms=(\d+) data=(\{.*\})$/.exec(l)).filter(Boolean).map((m) => ({ t: Number(m[1]), match: Number(m[2]), when: m[3], ms: Number(m[4]), data: JSON.parse(m[5]) }));
+  writeFileSync(join(out, 'census.json'), clean(JSON.stringify(taken)) + '\n');
+}
 writeFileSync(join(out, 'stdout.log'), clean(lines.join('\n')) + '\n');   // what the program printed (a crash may leave the engine log empty)
 const cols = ['t', 'match', 'simT', 'fps', 'ticksPerSec', 'worstFrameMs', 'processMs', 'objects', 'nodes', 'resources', 'orphans'];
 writeFileSync(join(out, 'samples.csv'), [cols.join(','), ...samples.map((s) => cols.map((c) => s[c]).join(','))].join('\n') + '\n\n' + ['t,workingMiB,privateMiB', ...memory.map((m) => `${m.t.toFixed(0)},${m.workingMiB.toFixed(1)},${m.privateMiB.toFixed(1)}`)].join('\n') + '\n');

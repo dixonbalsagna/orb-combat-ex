@@ -3,7 +3,8 @@ extends Node
 ## override.cfg there, so the shipped program and its pck are exactly the ones a player gets; only this autoload is added, from outside.
 ## What it does: lets the game's computer-against-computer match run, starts the next one (the next seed) a few seconds after a KO or a no contest, prints a SOAK line every few seconds, and after
 ## --soak-seconds asks the tree to quit (what "Close the game" does), so the clean close is part of the run. It reads the game; it never writes the sim.
-## Options after "--": --soak-seconds=7200 --soak-sample=10 --soak-seed=1 --soak-cap=600 (a match longer than this many sim seconds is dropped and the next starts).
+## Options after "--": --soak-seconds=7200 --soak-sample=10 --soak-seed=1 --soak-cap=600 (a match longer than this many sim seconds is dropped and the next starts), --soak-same-seed (every later match
+## the same seed), --soak-census=<names file> (the store census, soak_census.gd).
 
 
 var secs: float = 7200.0
@@ -24,6 +25,11 @@ var _last_ticks: int = -1
 var _tick_moved: int = 0
 var _window_ticks: int = 0
 var _done: bool = false
+var same_seed: bool = false      # --soak-same-seed: every later match uses --soak-seed itself (a planet and openings already seen)
+var census_file: String = ""     # --soak-census=<names file>: the store census (soak_census.gd beside this file) 20 s into each match and at its end
+var census_every: float = 0.0    # --soak-census-every=<s>: also take it every so many seconds through a match (growth per minute of play)
+var _census = null
+var _census_at: int = -1         # when the census of the running match is due (msec), -1 for none
 
 
 func _ready() -> void:
@@ -39,6 +45,12 @@ func _ready() -> void:
 			seed_next = int(a.substr(12))
 		elif a.begins_with("--soak-cap="):
 			cap = float(a.substr(11))
+		elif a == "--soak-same-seed":
+			same_seed = true
+		elif a.begins_with("--soak-census="):
+			census_file = a.substr(14)
+		elif a.begins_with("--soak-census-every="):
+			census_every = float(a.substr(20))
 	_t0 = Time.get_ticks_msec()
 	_last_sample = _t0
 	_tick_moved = _t0
@@ -91,6 +103,21 @@ func _find_main() -> void:
 		print("SOAK main found after %d ms; computer plays both: %s" % [Time.get_ticks_msec() - _t0, str(f[0].ai != null and f[1].ai != null)])
 		_match = 1
 		print("SOAK match 1 started seed=%d (the game's own boot match)" % int(cs.host.seed))
+		if census_file != "":
+			var here: String = get_script().resource_path.get_base_dir()
+			_census = load(here.path_join("soak_census.gd")).new()
+			print("SOAK census ready statics=%d" % _census.setup(FileAccess.get_file_as_string(census_file).split("\n", false)))
+			_census_at = Time.get_ticks_msec() + 20000
+
+
+func _take_census(when: String, now: int) -> void:
+	if _census == null:
+		return
+	var t0: int = Time.get_ticks_msec()
+	var data: Dictionary = _census.take(_main)
+	print("SOAK census t=%.0f match=%d when=%s ms=%d data=%s" % [(now - _t0) / 1000.0, _match, when, Time.get_ticks_msec() - t0, JSON.stringify(data)])
+	_tick_moved = Time.get_ticks_msec()
+	_last_usec = 0   # the census's own long frame is not the game's worst frame
 
 
 ## Whether the match ended without a KO: UI's event hub reads the ending (ui/core/ui_event_hub.gd no_contest). The director's own getter is not called from here (see above).
@@ -105,9 +132,13 @@ func _drive(S, now: int) -> void:
 	if _starting:
 		if not over and float(S.T) < 5.0:
 			_starting = false
+			_census_at = now + 20000
 			var f = S.fighters
 			print("SOAK match %d started t=%.0f seed=%d objects=%d computer plays both: %s" % [_match, (now - _t0) / 1000.0, int(_main.host.seed), int(Performance.get_monitor(Performance.OBJECT_COUNT)), str(f[0].ai != null and f[1].ai != null)])
 		return
+	if _census_at >= 0 and now >= _census_at:
+		_census_at = now + int(census_every * 1000.0) if census_every > 0.0 else -1
+		_take_census("start" if float(S.T) < 30.0 else "mid", now)
 	var capped: bool = float(S.T) >= cap
 	if not over and not capped:
 		_over_since = -1
@@ -118,13 +149,15 @@ func _drive(S, now: int) -> void:
 		var who: int = -1
 		if S.game.ko != null:
 			who = 1 if S.game.ko == S.fighters[0] else 0
-		print("SOAK match %d ended how=%s winnerSlot=%d simSeconds=%.1f" % [_match, how, who, float(S.T)])
+		print("SOAK match %d ended how=%s winnerSlot=%d simSeconds=%.1f t=%.0f" % [_match, how, who, float(S.T), (now - _t0) / 1000.0])
+		_take_census("end", now)
 	if now - _over_since < 4000:
 		return
 	_over_since = -1
 	_starting = true
 	_match += 1
-	seed_next += 1
+	if not same_seed:
+		seed_next += 1
 	_main.start_match(seed_next)
 
 

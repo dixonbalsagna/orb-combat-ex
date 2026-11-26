@@ -1,0 +1,41 @@
+match start_MiB end_MiB within change_after seconds_played
+2 441.2 433.3 -7.9 0.0 53
+3 433.3 442.2 8.9 11.0 53
+4 453.2 450.3 -2.9 0.0 50
+5 450.3 453.9 3.6 0.3 50
+6 454.2 454.8 0.6 0.0 54
+7 454.8 454.8 0.0 0.0 51
+8 454.8 454.9 0.1 3.7 51
+9 458.6 455.0 -3.6 0.0 53
+10 455.0 455.4 0.4 3.7 51
+11 459.1 455.9 -3.2 0.0 52
+12 455.9 456.0 0.1 0.0 54
+13 456.0 456.0 0.0 0.0 53
+14 456.0 456.0 0.0 3.7 51
+15 459.7 456.0 -3.7 3.7 54
+matches 14 (from 2 to 15); within: mean -0.54 total -7.6; at change: mean 1.86 total 26.1; per match 1.32
+first half per match 2.49, second half 0.16; end of run MiB 456.0
+censuses 30; starts from match 2: 2 3 4 5 6 7 8 9 10 11 12 13 14 15; walk ms 1258-1902; truncated false
+total estimated MiB at each start: 216.1 219.7 224.2 224.6 225.4 225.5 225.2 225.9 225.0 225.7 225.1 225.4 226.3 225.5
+
+largest stores at the last start (MiB, estimate): name | last | min..max | late third - early third | mean growth within a match | top entries first->last
+static sim/world/waterrec.gd:_ix | 136.13 | 136.10..138.01 | -0.34 | 0.91 | 1->1
+main.pane.planet | 32.46 | 24.80..32.55 | 4.15 | 0.77 | -1->-1
+static sim/world/plan.gd:_memo | 10.17 | 10.17..10.17 | 0.00 | 0.00 | 54->54
+S.buildings | 6.25 | 6.25..6.25 | 0.00 | 0.00 | 3835->3835
+main.inset | 5.48 | 4.14..5.77 | 0.27 | -0.46 | -1->-1
+host.audio_cues | 5.23 | 5.23..5.23 | 0.00 | 0.00 | -1->-1
+main.panes | 4.29 | 4.28..4.29 | 0.01 | -0.00 | 2->2
+static render/anim/anim_data.gd:raw | 3.44 | 3.44..3.44 | 0.00 | 0.00 | 1090->1090
+
+stores that grew most across matches (late third minus early third, MiB):
+main.pane.planet | 4.147 | 24.798 -> 32.457 | within 0.766 | top -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+main.inset | 0.274 | 4.145 -> 5.476 | within -0.457 | top -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+static render/anim/anim_data.gd:mirrors | 0.167 | 0.157 -> 0.395 | within 0.012 | top 87,108,126,138,150,165,174,177,180,186,195,201,213,219
+static sim/core/intro.gd:_flat | 0.069 | 0.075 -> 0.165 | within 0.000 | top 11,12,13,14,15,16,17,18,19,20,21,21,22,23
+host.vfx | 0.028 | 0.164 -> 0.178 | within 0.212 | top -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+static render/anim/render_anim.gd:_fighters | 0.017 | 0.232 -> 0.224 | within 0.054 | top 2,2,2,2,2,2,2,2,2,2,2,2,2,2
+main.panes | 0.005 | 4.279 -> 4.288 | within -0.000 | top 2,2,2,2,2,2,2,2,2,2,2,2,2,2
+static sim/core/field.gd:_bHave | 0.005 | 0.243 -> 0.243 | within 0.003 | top 3987,3928,3844,3867,3990,3986,3986,3839,3985,3988,3973,3989,4012,3986
+static sim/director/launch.gd:_pmCol | 0.003 | 0.110 -> 0.116 | within 0.000 | top 4800,4800,4800,4800,4800,4800,4800,4800,4800,4800,4800,4800,4800,4800
+main.pane.mats | 0.003 | 0.005 -> 0.009 | within 0.000 | top -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1

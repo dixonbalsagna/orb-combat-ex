@@ -18,6 +18,10 @@ The package is Orb's private build: it stays in scratch, is never committed and 
 - The probe lets the computer play both fighters, starts the next seed a few seconds after a KO or no contest (or at `--cap` sim seconds), prints a sample every `--sample` seconds, and after `--seconds` asks the game to quit, as "Close the game" does.
 - The harness reads memory from outside (a release program reports none of its own), the exit code, the run marker, everything the program printed, and the report folder. A run 5 minutes past its time is stopped by its process id and called a hang. A failed run keeps its scratch folder, engine logs included.
 
+## Hunting memory growth
+
+`--census` adds `soak_census.gd`: 20 s into each match and at its end it sizes every field of the match state, the replay recorder, the host and the game scene, and every top-level static var of the game's scripts (names read from the build's commit, so it needs the repository), and writes `census.json`. It only reads, takes 1 to 2 s a time, and its byte figures are estimates. `--census-every 60` also takes it through a long match. `--same-seed` replays one seed, to tell caches filling up from a leak. Do not read memory growth off a census run and a plain run as if they were the same run.
+
 ## What passes and what is only reported
 
 | Check (exit 1 if any fails) |

@@ -1,0 +1,5 @@
+SOAK start seconds=600 sample=2 seed=1 cap=600
+SOAK main found after 11155 ms; computer plays both: true
+SOAK match 1 started seed=3454679 (the game's own boot match)
+SOAK census ready statics=1580
+SOAK quit why=time matches=1 wallSeconds=600
