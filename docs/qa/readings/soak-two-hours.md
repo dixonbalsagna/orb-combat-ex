@@ -45,3 +45,18 @@
 ## Records
 
 `docs/qa/runs/ac4ba152/`: `soak-windows-2h-summary.md`, `soak-windows-2h-samples.csv`, `soak-windows-2h-matches.txt`, `soak-windows-2h-load.txt`, `soak-linux-2h-summary.md` (cut from the run's log; its samples are in the run's `soak-numbers` artifact, not downloaded).
+
+## Windows against Linux, match change by match change (added 2026-11-26)
+
+The same matches 3 to 11 were played on both (see above), so the change-by-change differences can be set side by side. Each figure is the rise from one match's start to the next.
+
+| Into match | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | Total |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Objects, Windows | 75 | 29 | 51 | 46 | 44 | 10 | 29 | 33 | 29 | 24 | 370 |
+| Objects, Linux | 72 | 38 | 41 | 37 | 41 | 7 | 20 | 33 | 35 | 23 | 347 |
+| Memory MiB, Windows | 66.1 | 17.3 | 7.8 | 47.4 | 27.3 | 3.9 | 1.6 | 46.4 | 22.5 | 1.1 | 241.4 |
+| Memory MiB, Linux | 17.2 | 42.9 | 19.8 | 43.8 | 53.6 | 5.2 | 14.6 | 4.8 | 12.4 | 2.4 | 216.7 |
+
+- **Objects track each other** (correlation of the steps 0.94): about 35 more are kept per match, and how many depends on what the match did, not on the platform.
+- **Memory steps do not** (correlation 0.24), though the totals are close (241 and 217 MiB). The same matches gave a large step on one platform and a small one on the other. That reads like buffers or pools growing in lumps when they cross a size, not like one particular match event costing memory; QA infers this and has not shown it.
+- Both end with small rises (1 to 2 MiB into match 12), which is not enough to call it level: both had small rises earlier and then larger ones.
