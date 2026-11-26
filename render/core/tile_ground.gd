@@ -714,3 +714,39 @@ func _profile(S: SimState, cam_x: float, width: float) -> void:
 	_prof_img.set_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
 	_prof_tex.update(_prof_img)
 	mat.set_shader_parameter("plane_span", half)
+
+
+## What the mesh draws at planet direction d (Camera's drawn-ground sampler, GW1c): the tile field's ground there under the foreground rule, from the
+## values this pane last gave its material (its frame, camera and profile). Read only: it writes nothing, wants no tile and starts no fill.
+## y: a ground of the caller's, else the field's (height_at). The vertex stage also adds the strip rows' dent and a bowl, which only lower the ground.
+func drawn_at(d: Vector3, y: float = NAN) -> float:
+	return fore_at(field.height_at(d) if is_nan(y) else y, chart(d))
+
+
+## tile_chart's twin (tile_read.gdshaderinc): d's place in this pane's chart, along the view and toward the camera, in units.
+func chart(d: Vector3) -> Vector2:
+	var x: float = d.dot(_hd)
+	var z: float = d.dot(_sd)
+	var q: float = sqrt(x * x + z * z)
+	var k: float = atan2(q, d.dot(_pv)) / q if q > 1.0e-5 else 1.0
+	return Vector2(x, z) * k * _reff
+
+
+## tile_fore's twin (tile_read.gdshaderinc): ground y at chart point p, held at or under the sight line from the lens to the line's own ground when it
+## lies in front of the fighter plane. A uniform this material doesn't hold reads as the shader's default.
+func fore_at(y: float, p: Vector2) -> float:
+	if p.y <= 0.0 or mat == null:
+		return y
+	var fcv = mat.get_shader_parameter("fore_cam")
+	if fcv == null:
+		return y   # no camera yet: the pane hasn't drawn
+	var fc: Vector3 = fcv
+	var spv = mat.get_shader_parameter("plane_span")
+	var span: float = float(spv) if spv != null else 3000.0
+	var fdv = mat.get_shader_parameter("fore_drop")
+	var drop: float = float(fdv) if fdv != null else RenderLook.FORE_DROP
+	var t: float = minf(p.y / fc.z, 0.95)
+	var pu: float = clampf((p.x / (1.0 - t) + span) / (2.0 * span), 0.0, 1.0) * 63.0
+	var ua: int = int(pu)
+	var pl: float = lerpf(_prof[ua], _prof[mini(ua + 1, 63)], pu - float(ua))
+	return minf(y, lerpf(pl, fc.y, t) - drop * p.y)
