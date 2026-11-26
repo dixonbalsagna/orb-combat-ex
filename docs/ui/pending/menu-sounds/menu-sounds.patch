@@ -1,6 +1,6 @@
---- a/ui/hud/ui_hud.gd	2026-11-25 21:18:33.578880700 -0800
-+++ b/ui/hud/ui_hud.gd	2026-11-25 22:14:54.225640200 -0800
-@@ -1248,6 +1248,7 @@
+--- a/ui/hud/ui_hud.gd	2026-11-25 23:15:07.530498800 -0800
++++ b/ui/hud/ui_hud.gd	2026-11-25 23:15:07.579560200 -0800
+@@ -1247,6 +1247,7 @@
  func howto_action(act: String) -> void:
  	if not _howto_open:
  		return
@@ -8,7 +8,7 @@
  	match act:
  		"next":
  			if _howto_page >= UiHowto.page_count(_howto_first) - 1:
-@@ -1893,6 +1894,7 @@
+@@ -1892,6 +1893,7 @@
  func menu_action(act: String) -> void:
  	if not (_notice_open and _menu_kind):
  		return
@@ -16,7 +16,7 @@
  	var rows: Array = _menu_rows()
  	_menu_focus = clampi(_menu_focus, 0, rows.size() - 1)
  	var row: String = str(rows[_menu_focus])
-@@ -1941,6 +1943,7 @@
+@@ -1940,6 +1942,7 @@
  
  func _menu_press(h: Dictionary) -> void:
  	var row: String = str(h.get("row", ""))
@@ -24,7 +24,7 @@
  	if _menu_page != "":
  		var prs: Array = _menu_rows()
  		if prs.has(row):
-@@ -2525,6 +2528,7 @@
+@@ -2524,6 +2527,7 @@
  func pause_menu_action(act: String) -> void:
  	if not _pm_open:
  		return
@@ -32,7 +32,7 @@
  	var p: Dictionary = pause_menu_plan()
  	var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2, _pm_over, _pm_quit)
  	_pm_focus = clampi(_pm_focus, 0, list.size() - 1)
-@@ -2623,6 +2627,7 @@
+@@ -2622,6 +2626,7 @@
  				var started: String = _pm_down
  				_pm_down = ""
  				if id != "" and id == started:
@@ -40,7 +40,7 @@
  					pause_menu_choose(id)
  	get_viewport().set_input_as_handled()
  
-@@ -2861,6 +2866,7 @@
+@@ -2858,6 +2863,7 @@
  func settings_action(act: String) -> void:
  	if not _set_open:
  		return
@@ -48,7 +48,7 @@
  	var fo: Array = UiSettings.focusable(UiSettings.rows())
  	var at: int = fo.find(_set_focus)
  	match act:
-@@ -2942,6 +2948,8 @@
+@@ -2939,6 +2945,8 @@
  	if h.is_empty():
  		return
  	var part: String = str(h["part"])
@@ -57,7 +57,7 @@
  	if part == "close":
  		hide_settings()
  		return
-@@ -2986,6 +2994,8 @@
+@@ -2983,6 +2991,8 @@
  	if d.is_empty() or str(d["mode"]) != "tap" or bool(d["moved"]):
  		return
  	var i: int = int(d["row"])
@@ -66,18 +66,18 @@
  	match str(d["part"]):
  		"minus", "left":
  			_settings_step(i, -1)
---- a/ui/tools/hud_check.gd	2026-11-25 21:18:33.624486500 -0800
-+++ b/ui/tools/hud_check.gd	2026-11-25 22:14:54.226643000 -0800
-@@ -97,6 +97,7 @@
+--- a/ui/tools/hud_check.gd	2026-11-25 23:15:07.549059700 -0800
++++ b/ui/tools/hud_check.gd	2026-11-25 23:15:07.637892000 -0800
+@@ -96,6 +96,7 @@
+ 	await _menus_a1_extra_rules()
  	await _menus_world_rules()
  	await _pad_tip_rules()
- 	await _split_line_rules()
 +	await _menu_sound_rules()
  	await _save_reason_rules()
  	await _boot_load_menu_rules()
  	await _plain_words_rules()
-@@ -12145,6 +12146,148 @@
- 	UiData.set_feature("split_line_choice", null)
+@@ -12077,6 +12078,148 @@
+ 	return e
  
  
 +# --- The menus' sounds (Audio's call lines; docs/audio/friends-sound.md) ------------------------------------------------------

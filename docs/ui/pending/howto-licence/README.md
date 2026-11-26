@@ -21,7 +21,7 @@ The line is about two lines longer, and the page stopped fitting its card at 156
 
 ## Order
 
-Applies after the GW1c stack (`docs/ep/reviews/GW1c-stack.txt`) and `pad-recommended`. On main alone, every file applies except `docs/ui/strings.md`, which is generated (`python ui/tools/strings_inventory.py`); hud_check was not run that way.
+Next landing, second of four: after `pad-recommended`. Applies strictly in that order on ac4ba152 (GW1c landed; checked 2026-11-25, patch unchanged).
 
 ## Proof (data folder pointed away from Orb's)
 

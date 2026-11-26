@@ -1,6 +1,0 @@
-# On the full GW1c stack (docs/ep/reviews/GW1c-stack.txt on bc1e5558) with grant/schema-feedback-world.patch
-325 files checked, 0 errors, 2 warnings
-FAIL  coverage: biomes-sizes.schema.json: at least three invalid cases
-      has 0
-self-test: 10170 of 10171 checks passed, 1 FAILED
-  parser 330 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 197; data cases 8402

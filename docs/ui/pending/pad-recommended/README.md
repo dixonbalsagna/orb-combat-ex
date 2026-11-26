@@ -1,6 +1,6 @@
 # pad-recommended (UI & UX, 2026-11-25): the keyboard works, a controller is recommended (decision 20, second half)
 
-Parked, not landed. **It lands after GW1c**: it is cut to apply after the whole stack in `docs/ep/reviews/GW1c-stack.txt` (which includes `a1-world-menu`).
+Parked, not landed. GW1c has landed (ac4ba152). **Next landing, first of four:** this, then `howto-licence`, `menu-sounds`, `menus-a1-sizes`; all four apply strictly in that order on ac4ba152 (checked 2026-11-25; patch unchanged).
 
 ## What the player sees
 
@@ -17,7 +17,7 @@ On the first visit to the list of modes only, one quiet line under the list, in 
 
 `pad-recommended.patch` (7 files): `ui/hud/ui_hud.gd`, `ui/widgets/ui_menu.gd`, `ui/data/terms.json` (one word, `prompt.pad_tip`), the pseudo-locale, `docs/ui/strings.md`, `docs/ui/menus-a1.md` (section 12), `ui/tools/hud_check.gd` (`_pad_tip_rules`). No grant.
 
-**Applies:** strict after the GW1c stack on HEAD 7720b10b. **Not on main alone**: `terms.json`, `strings.md`, `menus-a1.md` and `hud_check.gd` do not apply, because `a1-world-menu` changes the same places (`ui_hud.gd` and `ui_menu.gd` do apply). It is meant to land after GW1c; say if a main-only cut is wanted.
+**Applies:** strictly on ac4ba152 (GW1c landed). The proof below was taken on the GW1c stack on 7720b10b, before it landed.
 
 ## Proof (GW1c stack plus this patch; data folder pointed away from Orb's)
 
