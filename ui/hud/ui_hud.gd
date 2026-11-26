@@ -1247,6 +1247,7 @@ func mark_howto_seen() -> void:
 func howto_action(act: String) -> void:
 	if not _howto_open:
 		return
+	AudioVoices.ui("back" if act == "close" else "move")
 	match act:
 		"next":
 			if _howto_page >= UiHowto.page_count(_howto_first) - 1:
@@ -1892,6 +1893,7 @@ func _menu_invalidate() -> void:
 func menu_action(act: String) -> void:
 	if not (_notice_open and _menu_kind):
 		return
+	AudioVoices.ui("confirm" if act == "accept" else ("back" if act == "back" else "move"))   # the menus' sounds (Audio's call lines, docs/audio/friends-sound.md); silent until there is audio
 	var rows: Array = _menu_rows()
 	_menu_focus = clampi(_menu_focus, 0, rows.size() - 1)
 	var row: String = str(rows[_menu_focus])
@@ -1940,6 +1942,7 @@ func menu_action(act: String) -> void:
 
 func _menu_press(h: Dictionary) -> void:
 	var row: String = str(h.get("row", ""))
+	AudioVoices.ui("back" if row == "back" else "confirm")
 	if _menu_page != "":
 		var prs: Array = _menu_rows()
 		if prs.has(row):
@@ -2524,6 +2527,7 @@ func pause_menu_choose(id: String) -> void:
 func pause_menu_action(act: String) -> void:
 	if not _pm_open:
 		return
+	AudioVoices.ui("confirm" if act == "accept" else ("back" if act == "back" else "move"))
 	var p: Dictionary = pause_menu_plan()
 	var list: Array = UiPause.ids(_pm_confirm, _humans() >= 2, _pm_over, _pm_quit)
 	_pm_focus = clampi(_pm_focus, 0, list.size() - 1)
@@ -2622,6 +2626,7 @@ func _pause_input(event: InputEvent) -> void:
 				var started: String = _pm_down
 				_pm_down = ""
 				if id != "" and id == started:
+					AudioVoices.ui("confirm")   # a click or tap says what Enter says
 					pause_menu_choose(id)
 	get_viewport().set_input_as_handled()
 
@@ -2858,6 +2863,7 @@ func _settings_accept(i: int) -> void:
 func settings_action(act: String) -> void:
 	if not _set_open:
 		return
+	AudioVoices.ui("back" if act == "close" else ("confirm" if act == "accept" else "move"))
 	var fo: Array = UiSettings.focusable(UiSettings.rows())
 	var at: int = fo.find(_set_focus)
 	match act:
@@ -2939,6 +2945,8 @@ func _settings_press(pos: Vector2) -> void:
 	if h.is_empty():
 		return
 	var part: String = str(h["part"])
+	if part == "close" or part == "tab" or part == "track":
+		AudioVoices.ui("back" if part == "close" else "move")
 	if part == "close":
 		hide_settings()
 		return
@@ -2983,6 +2991,8 @@ func _settings_release() -> void:
 	if d.is_empty() or str(d["mode"]) != "tap" or bool(d["moved"]):
 		return
 	var i: int = int(d["row"])
+	if ["minus", "left", "plus", "right", "tap", "button", "row"].has(str(d["part"])):
+		AudioVoices.ui("confirm" if ["tap", "button", "row"].has(str(d["part"])) else "move")
 	match str(d["part"]):
 		"minus", "left":
 			_settings_step(i, -1)

@@ -96,6 +96,7 @@ func _run() -> void:
 	await _menus_a1_extra_rules()
 	await _menus_world_rules()
 	await _pad_tip_rules()
+	await _menu_sound_rules()
 	await _save_reason_rules()
 	await _boot_load_menu_rules()
 	await _plain_words_rules()
@@ -12075,6 +12076,148 @@ func _world_press(button: int) -> InputEventJoypadButton:
 	e.button_index = button
 	e.pressed = true
 	return e
+
+
+# --- The menus' sounds (Audio's call lines; docs/audio/friends-sound.md) ------------------------------------------------------
+
+## Stands in for the audio node: it keeps the names of the sounds the menus ask for.
+class _MenuSoundSpy extends AudioVoices:
+	var got := PackedStringArray()
+
+	func play(cue: AudioCues.Cue, _cam_x: float, _zoom: float = 1.0) -> bool:
+		got.append(cue.sound.trim_prefix("ui."))
+		return true
+
+
+## What one call asks for, as a list of names.
+func _asked(spy: _MenuSoundSpy, call: Callable) -> Array:
+	spy.got = PackedStringArray()
+	call.call()
+	return Array(spy.got)
+
+
+## A mouse click (press and release) at a point, as a tap also arrives.
+func _menu_click(hud: UiHud, at: Vector2) -> void:
+	for down in [true, false]:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.pressed = down
+		e.position = at
+		hud._unhandled_input(e)
+
+
+## The middle of the first visible Settings control of one of these kinds.
+func _menu_ctl(hud: UiHud, kinds: Array) -> Vector2:
+	var p: Dictionary = hud.settings_plan()
+	for rec in p["rows"]:
+		if rec["kind"] == UiSettings.HEADING or not bool(rec["enabled"]) or not (p["body"] as Rect2).encloses(rec["rect"]):
+			continue
+		for k in kinds:
+			if (rec["ctl"] as Dictionary).has(k):
+				return (rec["ctl"][k] as Rect2).get_center()
+	return Vector2(-1.0, -1.0)
+
+
+func _menu_sound_hud() -> UiHud:
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 800)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	return hud
+
+
+func _menu_sound_rules() -> void:
+	UiData.set_feature("menus_rail", true)
+	UiData.set_feature("menu_modes", true)
+	UiPrefs.path = "user://ui_prefs_test_menusound.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var spy := _MenuSoundSpy.new()
+	root.add_child(spy)
+	await process_frame
+	var hud: UiHud = await _menu_sound_hud()
+	# Nothing is open: the five calls ask for nothing.
+	var idle: Array = _asked(spy, func():
+		hud.menu_action("down")
+		hud.pause_menu_action("down")
+		hud.settings_action("down")
+		hud.howto_action("next"))
+	_ok(idle.is_empty(), "menu sounds: with no menu open, nothing is asked for (%s)" % str(idle))
+	# The start menu.
+	hud.show_start_menu(false)
+	_ok(_asked(spy, func(): hud.menu_action("down")) == ["move"] and _asked(spy, func(): hud.menu_action("up")) == ["move"] and _asked(spy, func(): hud.menu_action("accept")) == ["confirm"] and _asked(spy, func(): hud.menu_action("back")) == ["back"], "menu sounds: the start menu says move, confirm and back")
+	_ok(_asked(spy, func(): hud._menu_press({"row": "back", "kind": "button"})) == ["back"] and _asked(spy, func(): hud._menu_press({"row": "solo", "kind": "button"})) == ["confirm"], "menu sounds: a click on Back says back, on anything else confirm")
+	hud.queue_free()
+	await process_frame
+	# The pause menu, by its call and by a real key (one press, one sound).
+	hud = await _menu_sound_hud()
+	hud.show_pause_menu()
+	var key := InputEventKey.new()
+	key.keycode = KEY_DOWN
+	key.pressed = true
+	_ok(_asked(spy, func(): hud.pause_menu_action("down")) == ["move"] and _asked(spy, func(): hud._unhandled_input(key)) == ["move"], "menu sounds: the pause menu says move once for one press")
+	hud.pause_menu_action("up")
+	hud.pause_menu_action("up")
+	_ok(_asked(spy, func(): hud.pause_menu_action("back")) == ["back"], "menu sounds: backing out of the pause menu says back")
+	hud.show_pause_menu()
+	_ok(_asked(spy, func(): hud.pause_menu_action("accept")) == ["confirm"], "menu sounds: choosing in the pause menu says confirm")
+	hud.queue_free()
+	await process_frame
+	# Settings: one sound for a row, a tab, a change and the close.
+	hud = await _menu_sound_hud()
+	hud.show_settings()
+	var said: Array = [_asked(spy, func(): hud.settings_action("down")), _asked(spy, func(): hud.settings_action("tab_next")), _asked(spy, func(): hud.settings_action("right")), _asked(spy, func(): hud.settings_action("accept")), _asked(spy, func(): hud.settings_action("close"))]
+	_ok(said == [["move"], ["move"], ["move"], ["confirm"], ["back"]], "menu sounds: Settings says move (row, tab, change), confirm and back, once each (%s)" % str(said))
+	hud.queue_free()
+	await process_frame
+	# Clicks and taps in the pause menu and in Settings, which pass through none of the five calls.
+	hud = await _menu_sound_hud()
+	hud.show_pause_menu()
+	var entry: Rect2 = Rect2()
+	for it in hud.pause_menu_plan()["items"]:
+		if str(it["id"]) == "howto":
+			entry = it["rect"]
+	var missed: Array = _asked(spy, func(): _menu_click(hud, Vector2(3.0, 3.0)))
+	var clicked: Array = _asked(spy, func(): _menu_click(hud, entry.get_center()))
+	_ok(entry.size.x > 0.0 and missed.is_empty() and clicked == ["confirm"] and hud.is_howto_open(), "menu sounds: a click on a pause menu entry says confirm once; a click on nothing is silent (%s, %s)" % [str(clicked), str(missed)])
+	hud.queue_free()
+	await process_frame
+	hud = await _menu_sound_hud()
+	hud.show_settings()
+	var tab_at: Vector2 = (hud.settings_plan()["tabs"][1]["rect"] as Rect2).get_center()
+	var by_tab: Array = _asked(spy, func(): _menu_click(hud, tab_at))
+	var step_at: Vector2 = _menu_ctl(hud, ["right", "plus"])
+	var by_step: Array = _asked(spy, func(): _menu_click(hud, step_at))
+	var track_at: Vector2 = _menu_ctl(hud, ["track"])
+	var by_track: Array = _asked(spy, func(): _menu_click(hud, track_at))
+	_ok(by_tab == ["move"] and step_at.x >= 0.0 and by_step == ["move"] and track_at.x >= 0.0 and by_track == ["move"], "menu sounds: in Settings a click on a tab, an arrow or a slider says move once (%s)" % str([by_tab, by_step, by_track]))
+	var tabs: Array = hud.settings_plan()["tabs"]
+	_menu_click(hud, (tabs[0]["rect"] as Rect2).get_center())
+	var tap_at: Vector2 = _menu_ctl(hud, ["tap"])
+	for k in range(1, tabs.size()):
+		if tap_at.x >= 0.0:
+			break
+		_menu_click(hud, (tabs[k]["rect"] as Rect2).get_center())
+		tap_at = _menu_ctl(hud, ["tap"])
+	var by_tap: Array = _asked(spy, func(): _menu_click(hud, tap_at))
+	var by_close: Array = _asked(spy, func(): _menu_click(hud, (hud.settings_plan()["close"] as Rect2).get_center()))
+	_ok(tap_at.x >= 0.0 and by_tap == ["confirm"] and by_close == ["back"] and not hud.is_settings_open(), "menu sounds: a click on a switch says confirm and on the cross back (%s, %s)" % [str(by_tap), str(by_close)])
+	hud.queue_free()
+	await process_frame
+	# How to play.
+	hud = await _menu_sound_hud()
+	hud.show_howto(false, 0)
+	_ok(_asked(spy, func(): hud.howto_action("next")) == ["move"] and _asked(spy, func(): hud.howto_action("back")) == ["move"] and _asked(spy, func(): hud.howto_action("close")) == ["back"], "menu sounds: How to play says move for its pages and back on closing")
+	hud.queue_free()
+	spy.queue_free()
+	await process_frame
+	_ok(not AudioVoices.ui("move"), "menu sounds: with no audio node the call is safe and plays nothing")
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)
 
 
 # --- Keyboard works, a controller is recommended (decision 20, second half; docs/ui/menus-a1.md section 12) ----------------------------------
