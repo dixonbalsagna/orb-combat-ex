@@ -1,0 +1,9 @@
+# a2-split-line readings (EP only), 2026-11-25. The collapse clip at medium, worst of 4 (960x540 and 1024x768 at scale 1 and 2), Tools' run-pixels (guarded launcher, below normal, one capture at a time).
+# page words: size=medium&line=<later|sooner>; the scratch hook sets UI's camera_split_line before the clip. Sooner from k3 (the fix is a no-op at sooner: the drawn-off line is max(0.077, min(0.055, 0.098)) = 0.077); later from k4.
+# Standard, for comparison: k2 (with cd04) reduced, k1 normal (cd04 changes no medium normal frame).
+standard k2medr    collapse-reduced: PASS, primary 1 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 599s, worst of 4 readings (960x540 at scale 2)
+standard k1medn    collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 657s, worst of 4 readings (960x540 at scale 1)
+sooner   k3soonr   collapse-reduced: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1.5, 0 dips, 646s, worst of 4 readings (1024x768 at scale 1)
+sooner   k3soonn   collapse-normal: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 1, 0 dips, 663s, worst of 4 readings (960x540 at scale 2)
+later    k4latr    collapse-reduced: PASS, primary 1 general 0 red, area-15% 2, 2 s memory 1, 0 dips, 605s, worst of 4 readings (960x540 at scale 2)
+later    k4latn    collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 636s, worst of 4 readings (960x540 at scale 1)

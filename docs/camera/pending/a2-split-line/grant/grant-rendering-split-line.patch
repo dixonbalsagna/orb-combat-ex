@@ -1,0 +1,12 @@
+diff --git a/render/core/main.gd b/render/core/main.gd
+index a325a69..91b4225 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -1171,6 +1171,7 @@ func _sync_split_options() -> void:
+ 		split_view.set_zoom_pref(float(o.get("camera_zoom", CamParams.ZOOM_PREF_DEFAULT)))
+ 		split_view.set_shake_pref(float(o.get("camera_shake", CamParams.SHAKE_PREF_DEFAULT)))
+ 		split_view.set_launch_follow(String(o.get("camera_launch_follow", "auto")))
++		split_view.set_split_line(String(o.get("camera_split_line", "standard")))
+ 		# The panel cut-ins: at VFX's lowest quality a live strip becomes a still one. Measured, a strip held up costs
+ 		# about 0.45 ms on desktop and about 3 ms on the web at a 4x CPU slowdown; a still strip costs nothing.
+ 		var panels: String = String(o.get("camera_panels", "full"))
