@@ -1,0 +1,60 @@
+# tile-marks (fix 1) on the 29-piece final GW1c tree (Rendering, 2026-11-25): f29 = main bc1e5558 + the 29 pieces of docs/ep/reviews/GW1c-stack.txt, strict,
+# in order, the EP's way (a scratch git repo, core.autocrlf=false, core.eol=lf); f29x = f29 + tile_marks.diff (sha1 7641d955829c).
+piece 1: ok docs/world/pending/globe-step2/grant-tools-lint.patch
+piece 2: ok docs/world/pending/globe-step2/globe-step2.diff
+piece 3: ok docs/world/pending/globe-step2/grant-simulation-field.patch
+piece 4: ok docs/world/pending/planet-sizes/grant-simulation-sizes.patch
+piece 5: ok docs/world/pending/planet-sizes/planet-sizes.diff
+piece 6: ok docs/architecture/pending/replay-sizes/replay-sizes.patch
+piece 7: ok docs/rendering/pending/planet-sizes/grant-world-field-size-key.patch
+piece 8: ok docs/vfx/pending/planet-sizes-meteor/apply.patch
+piece 9: ok docs/world/pending/gw1c-world/gw1c-world.diff
+piece 10: ok docs/world/pending/gw1c-world/gw1c-world-fix.diff
+piece 11: ok docs/world/pending/store-parts/store-parts.diff
+piece 12: ok docs/world/pending/box-key-20bit/box-key-20bit.diff
+piece 13: ok docs/world/pending/crater-tiers/crater-tiers.diff
+piece 14: ok docs/world/pending/crater-tiers/grant-tools-crater-tiers.patch
+piece 15: ok docs/world/pending/relief-cap-gw1c/relief-cap.diff
+piece 16: ok docs/world/pending/relief-cap-gw1c/grant-tools-relief-cap.patch
+piece 17: ok docs/world/pending/globe-step2/globe-check-pin.diff
+piece 18: ok docs/world/pending/globe-step2/swap-blocks-gw1c.diff
+piece 19: ok docs/rendering/pending/planet-sizes/sizes_tiles.diff
+piece 20: ok docs/rendering/pending/drawn-at/drawn_at.diff
+piece 21: ok docs/ui/pending/a1-world-menu/world-menu.patch
+piece 22: ok docs/rendering/pending/world-menu-merge/world_menu_merged.diff
+piece 23: ok docs/ui/pending/a1-world-menu/grant/schema-feedback-world.patch
+piece 24: ok docs/tools/pending/world-schema-cases/world-schema-cases.patch
+piece 25: ok docs/camera/pending/gw1c-keep-human-vertical/gw1c-keep-human-vertical.patch
+piece 26: ok docs/world/pending/globe-step2/grant-simulation-crater-refused.patch
+piece 27: ok docs/world/pending/globe-step2/bury-refused.diff
+piece 28: ok docs/world/pending/globe-step2/grant-tools-bury-check.patch
+piece 29: ok docs/vfx/pending/crater-refused/apply.patch
+pieces applied: 29 of 29
+sizes offered: 1
+f29 import errors 0
+tile_marks.diff: applies strict after the 29 pieces (after VFX's crater-refused)
+f29x import errors 0
+f29 export 0, errors 0
+f29x export 0, errors 0
+golden.json: f29x byte-identical to f29
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+# medium's collapse, worst of 4 readings (960x540 and 1024x768, scale 1 and 2), both modes, no size word (the only offered size)
+## f29 medium
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 622s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 602s, worst of 4 readings (960x540 at scale 2)
+## f29x medium
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 600s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 571s, worst of 4 readings (1024x768 at scale 1)
+# the look gate: frames at 960x540 (every frame kept), side-by-sides git-ignored in docs/rendering/img/sizes/tile-marks/
+frames f29 - to tick 200: collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 0.5, 0 dips, 65s, worst of 2 readings 
+frames f29x - to tick 200: collapse-reduced: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 0.5, 0 dips, 64s, worst of 2 readings 
+frames g0c tiny to tick 830: collapse-reduced: FAIL, primary 6 general 0 red, area-15% 7.5, 2 s memory 5, 0 dips, 134s, worst of 2 readings
+frames g2c tiny to tick 830: collapse-reduced: FAIL, primary 4.5 general 0 red, area-15% 4.5, 2 s memory 1, 0 dips, 134s, worst of 2 readin
+gif: fix1-medium-29.gif, 41 frames of 963x277, 1866 KB
+gif: fix1-tiny-cap-on.gif, 36 frames of 963x277, 1033 KB

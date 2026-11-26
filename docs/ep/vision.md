@@ -1917,3 +1917,5 @@ Still open: the sound question (the ten-minute listen), the deletion promise, Or
 - On "two quick ones for the friends' build": "go with recommended, as long as the solution is modern and accommodating. go with recommendations on the sounds, I want a lot of improvements to our sounds and music to occur during alpha."
 
 **Orb (2026-11-25, evening):** "ok, keep working full power on the alpha build"
+
+**Orb (2026-11-25, evening), asked whether Orb or Orb 2 has a Steam Deck or Linux machine:** "I don't have access to a linux device, only two windows PCs on my network, I have some trusted friends I can contact when the steam deck build is necessary, one of them may actually run a linux PC, I'm fairly certain he has a fairly niche operating system"
