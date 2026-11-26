@@ -255,6 +255,20 @@
         "cols": { "type": "integer", "minimum": 0, "maximum": 480 }
       }
     },
+    "flood": {
+      "type": "object",
+      "description": "B1 on the planet store (WorldFill.floodLevelFor; docs/world/globe-step2.md). Optional: missing, off.",
+      "required": ["enabled", "minDug", "reach", "radii", "bearings"],
+      "additionalProperties": false,
+      "patternProperties": { "^_": { "type": "string" } },
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "minDug": { "type": "number", "exclusiveMinimum": 0 },
+        "reach": { "type": "number", "exclusiveMinimum": 0 },
+        "radii": { "type": "integer", "minimum": 1 },
+        "bearings": { "type": "integer", "minimum": 1, "maximum": 8 }
+      }
+    },
     "floor": {
       "type": "object",
       "required": [

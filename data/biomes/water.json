@@ -63,5 +63,13 @@
   },
   "floor": {
     "enabled": true
+  },
+  "flood": {
+    "_about": "B1 on the planet store (docs/world/globe-step2.md; terrain-globe-plan.md 4.3). enabled: a crater, trench or groove dug minDug or more deep looks once for a source of water (the sea, a lake, the biome's table) at radii radii and bearings bearings out to reach units beyond its own radius, and holds water at that level (WorldFill.floodLevelFor; the level goes in the record). Off: no record holds water and the module is as it was.",
+    "enabled": false,
+    "minDug": 6.0,
+    "reach": 1150.0,
+    "radii": 4,
+    "bearings": 8
   }
 }

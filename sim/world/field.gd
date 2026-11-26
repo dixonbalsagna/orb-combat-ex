@@ -704,8 +704,9 @@ static func applyRecords(S, qx: float, qy: float, qz: float, h: float, planet = 
 
 ## The water the records hold at a unit direction whose ground (after applyRecords) is `h`: the deepest of the lakes and rivers there, in units; 0 for none. The sea is not a record: it is derived from the ground.
 static func recordWater(S, qx: float, qy: float, qz: float, h: float, planet = null) -> float:
+	var flood: float = WorldFill.floodDepth(S, qx, qy, qz, h)   # the water the holes the fight dug hold (B1; 0 with water.json flood off)
 	if S.fieldRecs.is_empty():
-		return 0.0
+		return flood
 	var best: float = 0.0
 	var lakeBest: float = 0.0
 	var lakeLevel: float = 1.0e30
@@ -725,7 +726,7 @@ static func recordWater(S, qx: float, qy: float, qz: float, h: float, planet = n
 			var bl: Array = WorldWaterRec.riverBed(P, rec, qx, qy, qz)
 			if not bl.is_empty():
 				best = maxf(best, float(bl[1]) - h)
-	return maxf(best, lakeBest)
+	return maxf(maxf(best, lakeBest), flood)
 
 
 ## The bake hash's hasher at its start (the text _hashBake begins with): the bake folds each node in as it comes, in bake order, so the hash is ready the moment the last node is, with no call of its own.

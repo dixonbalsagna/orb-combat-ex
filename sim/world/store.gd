@@ -18,13 +18,23 @@ const KIND_CRATER: int = 0
 const KIND_CRACK: int = 1
 const KIND_SCORCH: int = 2
 const KIND_TRENCH: int = 3
+const KIND_SCAR: int = 5             # a directed beam groove A to B: a groove cut to its depth, like a trench (nothing makes one yet: terrain step 3)
+const KIND_HEAP: int = 6             # a rubble cone at a planet point (nothing makes one yet: step 5)
+const KIND_MERGE: int = 7            # appended at the cap for older small marks far from every fighter (nothing makes one yet: step 6); a bowl, read as a crater
 const STRIDE: int = 16
+## The numbers every record keeps at the end of its 16 (terrain-globe-plan.md 4.2), all folded into storeHash with the rest of the record:
+const O_LIP: int = 11                # a trench's or scar's lip height: the raised bank at its edge (0 until step 3)
+const O_MAT: int = 12                # a crater's material class, a code into WorldGround.LOOKS (0 until craters-by-material feeds it)
+const O_REP: int = 13                # a crater's repeat count: 0 for a first blow, one more than the record it supersedes
+const O_WATER: int = 14              # the level this record's water stands at (B1, WorldFill.levelFor), DRY when it has no source
+const O_SUP: int = 15                # the record this one supersedes, or -1 for none
+const DRY: float = -1.0e9            # the water slot of a record that holds none
 const MAX: int = 16384               # records; add refuses past it
 const BOX: float = 1024.0            # the grid's box, in units
 const REACH_R: float = 2.0           # a crater reaches this many bowl radii (the apron ends at 1 + RIM_OUT)
 const CRACK_WIDTH: float = 24.0      # a crack's half width in units: full intensity within it, falling to nothing at twice it
 
-static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid}: the derived index
+static var _ix: Dictionary = {}      # state instance id -> {n, hash, grid, sup}: the derived index (sup: the records another supersedes, a pure function of the store)
 
 
 static func _key(ix: int, iy: int, iz: int) -> int:
@@ -62,7 +72,7 @@ static func _list(grid: Dictionary, S, k: int) -> void:
 			var c3: float = S.store[o + 1 + a] * R
 			lo[a] = c3 - reach3
 			hi[a] = c3 + reach3
-	elif kind == KIND_CRACK or kind == KIND_TRENCH:
+	elif kind == KIND_CRACK or kind == KIND_TRENCH or kind == KIND_SCAR:
 		var reach: float = S.store[o + 8] * 2.0
 		for a in range(3):
 			var p: float = S.store[o + 1 + a] * R
@@ -90,9 +100,13 @@ static func _index(S) -> Dictionary:
 	var ent: Dictionary = _ix.get(id, {})
 	if ent.is_empty() or int(ent.n) != int(S.storeN) or int(ent.hash) != int(S.storeHash):
 		var grid: Dictionary = {}
+		var sup: Dictionary = {}
 		for k in range(int(S.storeN)):
 			_list(grid, S, k)
-		ent = {"n": int(S.storeN), "hash": int(S.storeHash), "grid": grid}
+			var sk: int = int(S.store[k * STRIDE + O_SUP])
+			if sk >= 0:
+				sup[sk] = true
+		ent = {"n": int(S.storeN), "hash": int(S.storeHash), "grid": grid, "sup": sup}
 		if _ix.size() > 16:
 			_ix.clear()
 		_ix[id] = ent
@@ -138,28 +152,43 @@ static func _push(S, rec: Array) -> int:
 	if _ix.has(id):
 		var e: Dictionary = _ix[id]
 		live = int(e.n) == n and int(e.hash) == int(S.storeHash)
+	var full: Array = []   # all STRIDE numbers, the slots at their defaults (no water, supersedes nothing) when the caller gave fewer: what is folded into the hash is what is stored
 	for k in range(STRIDE):
-		S.store.append(float(rec[k]) if k < rec.size() else 0.0)
+		if k < rec.size():
+			full.append(float(rec[k]))
+		else:
+			full.append(DRY if k == O_WATER else (-1.0 if k == O_SUP else 0.0))
+	for k in range(STRIDE):
+		S.store.append(full[k])
 	var h0: int = int(S.storeHash)
-	S.storeHash = _fold(h0, rec)
+	S.storeHash = _fold(h0, full)
 	S.storeN = n + 1
 	if S is SimState:   # (a check's fake state has no line)
-		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again
+		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again (a record that supersedes another reaches at least as far as it, so its reach is the union)
 	if live:
 		var ent: Dictionary = _ix[id]
 		_list(ent.grid, S, n)
+		if full[O_SUP] >= 0.0:
+			ent.sup[int(full[O_SUP])] = true
 		ent.n = n + 1
 		ent.hash = int(S.storeHash)
 	return n
 
 
 ## Adds a crater at the unit direction (px, py, pz) to S's store; returns its index, or -1 when the store is full (the caller keeps its S.deform write then). `cause`: 0 impact, 1 beam, 2 powerup, 3 other.
-static func add(S, px: float, py: float, pz: float, r: float, depth: float, rim: float, energy: float, cause: int, owner: int, t: float, special: int) -> int:
-	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner])
+## sup: the record this one supersedes (a repeat blow grown into the old crater), or -1; rep: its repeat count; water: the level its water stands at (WorldFill.levelFor), or DRY; mat: its material class.
+static func add(S, px: float, py: float, pz: float, r: float, depth: float, rim: float, energy: float, cause: int, owner: int, t: float, special: int, sup: int = -1, rep: int = 0, water: float = DRY, mat: int = 0) -> int:
+	return _push(S, [KIND_CRATER, px, py, pz, r, depth, rim, energy, t, special, cause, owner, mat, rep, water, sup])
 
 
-## The height the store adds at a unit direction: the sum of every crater's bowl, rim and apron there.
+## The height the store adds at a unit direction: the bowls, rims and aprons of the craters (and merged marks) there, a heap's cone, the deepest groove of the trenches, scars and scorch (grooves never sum) and the
+## highest lip of a trench; a record another supersedes is not read. Held between the floor and the ceiling (the strip's, craters.json globe).
 static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
+	return heightDeltaX(S, qx, qy, qz, -1)
+
+
+## heightDelta as if record `skip` were not in the store (the shaft cap and the settling read the ground without the record the new crater supersedes). -1 skips nothing.
+static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float:
 	if int(S.storeN) == 0:
 		return 0.0
 	var R: float = _R()
@@ -168,30 +197,44 @@ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
 	if not ent.grid.has(key):
 		return 0.0
 	var lst: PackedInt32Array = ent.grid[key]
+	var sup: Dictionary = ent.sup
 	var sum: float = 0.0
 	var groove: float = 0.0
+	var lip: float = 0.0
 	for k in lst:
+		if k == skip or (not sup.is_empty() and sup.has(k)):
+			continue
 		var o: int = k * STRIDE
 		var kd: int = int(S.store[o])
-		if kd == KIND_TRENCH:
+		if kd == KIND_TRENCH or kd == KIND_SCAR:
 			groove = minf(groove, _trench(S, o, qx, qy, qz, R))
+			if S.store[o + O_LIP] > 0.0:
+				lip = maxf(lip, _lip(S, o, qx, qy, qz, R))
 			continue
-		if kd != KIND_CRATER and kd != KIND_SCORCH:
+		if kd != KIND_CRATER and kd != KIND_SCORCH and kd != KIND_MERGE and kd != KIND_HEAP:
 			continue
 		var dx: float = (qx - S.store[o + 1]) * R
 		var dy: float = (qy - S.store[o + 2]) * R
 		var dz: float = (qz - S.store[o + 3]) * R
 		var d: float = sqrt(dx * dx + dy * dy + dz * dz)
-		if kd == KIND_CRATER:
+		if kd == KIND_CRATER or kd == KIND_MERGE:
 			var u: float = d / S.store[o + 4]
 			if u < 2.0:
 				sum += WorldCrater.profile(u, S.store[o + 5], S.store[o + 6])
+		elif kd == KIND_HEAP:
+			var uh: float = d / S.store[o + 4]
+			if uh < 1.0:
+				var th: float = 1.0 - uh * uh
+				sum += S.store[o + 5] * th * th
 		else:
 			var us: float = d / S.store[o + 4]
 			if us < 1.0:
 				var ts: float = 1.0 - us * us
 				groove = minf(groove, -S.store[o + 5] * ts * ts)
-	return minf(sum, groove) if groove < 0.0 else sum
+	# A groove is cut to its depth below the ground: where the marks are below the original ground (sum <= 0) it takes the lower of the two, where they stand above it (a rim, an apron, a heap) it cuts down from there.
+	# The lower of the two alone left a cliff as high as the rim at the groove's edge, where the groove (about 0) took over from a rim (up to 0.4 of a bowl's depth).
+	var h: float = ((minf(sum, groove) if sum <= 0.0 else sum + groove) if groove < 0.0 else sum) + lip
+	return clampf(h, WorldCraters.globeFloor(), WorldCraters.globeCeil())
 
 
 ## ===================================================================== cracks
@@ -313,8 +356,93 @@ static func layScorch(S, pointOfX: Callable) -> int:
 ## ===================================================================== trenches
 ## The groove a knockback slide cuts along its path (WorldCrater.carveSegment): from planet point a to b, `depth` deep (a target, never exceeded), `halfWidth` wide. The ground is the lower of the craters' sum and the
 ## deepest trench or scorch groove there (heightDelta). Returns the record's index, or -1 when the store is full.
-static func addTrench(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int) -> int:
-	return _push(S, [KIND_TRENCH, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner])
+## lip: the height of the raised bank at its edge (0: none, as ever); water: the level its water stands at (WorldFill.levelForSegment), or DRY.
+static func addTrench(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int, lip: float = 0.0, water: float = DRY) -> int:
+	var sg: Array = WorldGlobe.settleGroove(depth, halfWidth)   # a groove on the planet is never a wall: widened to the angle of repose (craters.json globe.repose)
+	depth = sg[0]
+	halfWidth = sg[1]
+	return _push(S, [KIND_TRENCH, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner, lip, 0.0, 0.0, water, -1.0])
+
+
+## A directed beam groove from planet point a to b (KIND_SCAR): the same groove as a trench (depth cut to its target, never summed), `halfWidth` wide. Nothing writes one yet (terrain step 3).
+static func addScar(S, a: Array, b: Array, depth: float, halfWidth: float, t: float, owner: int, lip: float = 0.0, water: float = DRY) -> int:
+	var sg: Array = WorldGlobe.settleGroove(depth, halfWidth)
+	depth = sg[0]
+	halfWidth = sg[1]
+	return _push(S, [KIND_SCAR, a[0], a[1], a[2], b[0], b[1], b[2], depth, halfWidth, t, owner, lip, 0.0, 0.0, water, -1.0])
+
+
+## A rubble cone at planet point p (KIND_HEAP): `height` at the centre falling to nothing at `radius`, held to a slope of 1 in 1 (the cone is height x (1 - u^2)^2, steepest at 1.54 height / radius). Nothing writes one yet (step 5).
+static func addHeap(S, p: Array, radius: float, height: float, t: float, owner: int) -> int:
+	return _push(S, [KIND_HEAP, p[0], p[1], p[2], radius, minf(height, radius / 1.54), 0.0, 0.0, t, 0.0, 3.0, owner, 0.0, 0.0, DRY, -1.0])
+
+
+## A merged mark (KIND_MERGE): a bowl standing for older small marks (step 6); read as a crater.
+static func addMerge(S, p: Array, r: float, depth: float, rim: float, t: float) -> int:
+	return _push(S, [KIND_MERGE, p[0], p[1], p[2], r, depth, rim, 0.0, t, 0.0, 3.0, -1.0, 0.0, 0.0, DRY, -1.0])
+
+
+## The index of the newest crater a blow at unit direction (qx, qy, qz) repeats: an impact crater (not superseded) whose centre is within `frac` of its own radius of the point, or -1.
+static func recentImpact(S, qx: float, qy: float, qz: float, frac: float) -> int:
+	if int(S.storeN) == 0:
+		return -1
+	var R: float = _R()
+	var ent: Dictionary = _index(S)
+	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
+	if not ent.grid.has(key):
+		return -1
+	var best: int = -1
+	for k in ent.grid[key]:
+		var o: int = k * STRIDE
+		if int(S.store[o]) != KIND_CRATER or int(S.store[o + 10]) != 0 or ent.sup.has(k) or k <= best:
+			continue
+		var dx: float = (qx - S.store[o + 1]) * R
+		var dy: float = (qy - S.store[o + 2]) * R
+		var dz: float = (qz - S.store[o + 3]) * R
+		if sqrt(dx * dx + dy * dy + dz * dz) <= frac * S.store[o + 4]:
+			best = k
+	return best
+
+
+## A record's centre (for a segment, its start) and its radius (a crater's, a trench's half width).
+static func centreOf(S, k: int) -> Array:
+	var o: int = k * STRIDE
+	return [S.store[o + 1], S.store[o + 2], S.store[o + 3]]
+
+
+static func radiusOf(S, k: int) -> float:
+	var o: int = k * STRIDE
+	return S.store[o + 8] if int(S.store[o]) == KIND_TRENCH or int(S.store[o]) == KIND_SCAR else S.store[o + 4]
+
+
+static func repeatsOf(S, k: int) -> int:
+	return int(S.store[k * STRIDE + O_REP])
+
+
+## The level record k's water stands at, or DRY.
+static func waterOf(S, k: int) -> float:
+	return S.store[k * STRIDE + O_WATER]
+
+
+## True when another record supersedes record k.
+static func superseded(S, k: int) -> bool:
+	return _index(S).sup.has(k)
+
+
+## The records whose reach touches the unit direction (their indices, in order, the superseded ones left out): what is under a point, for the water's level and a check's reading.
+static func at(S, qx: float, qy: float, qz: float) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	if int(S.storeN) == 0:
+		return out
+	var R: float = _R()
+	var ent: Dictionary = _index(S)
+	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
+	if not ent.grid.has(key):
+		return out
+	for k in ent.grid[key]:
+		if not ent.sup.has(k):
+			out.append(k)
+	return out
 
 
 ## The trench groove at a unit direction (<= 0): -depth x the smoothed fall-off over the half width, the deepest of the trenches reaching it.
@@ -351,3 +479,108 @@ static func _trench(S, o: int, qx: float, qy: float, qz: float, R: float) -> flo
 		return 0.0
 	var s: float = 1.0 - u * u
 	return -S.store[o + 7] * s * s
+
+
+## The raised bank at the edge of a groove (a trench's or a scar's lip slot): `lip` high on a ring from 0.85 to 1.6 half widths from the segment, a parabola with its crest at 1.225 half widths.
+static func _lip(S, o: int, qx: float, qy: float, qz: float, R: float) -> float:
+	var ex: float = S.store[o + 4] - S.store[o + 1]
+	var ey: float = S.store[o + 5] - S.store[o + 2]
+	var ez: float = S.store[o + 6] - S.store[o + 3]
+	var e2: float = ex * ex + ey * ey + ez * ez
+	var t: float = 0.0
+	if e2 > 1.0e-24:
+		t = clampf(((qx - S.store[o + 1]) * ex + (qy - S.store[o + 2]) * ey + (qz - S.store[o + 3]) * ez) / e2, 0.0, 1.0)
+	var dx: float = (qx - (S.store[o + 1] + ex * t)) * R
+	var dy: float = (qy - (S.store[o + 2] + ey * t)) * R
+	var dz: float = (qz - (S.store[o + 3] + ez * t)) * R
+	var u: float = sqrt(dx * dx + dy * dy + dz * dz) / S.store[o + 8]
+	if u <= 0.85 or u >= 1.6:
+		return 0.0
+	var w: float = (u - 0.85) / 0.75
+	return S.store[o + O_LIP] * 4.0 * w * (1.0 - w)
+
+
+## The distance in units from the unit direction to a segment record's line (a trench's or a scar's A to B).
+static func _segDist(S, o: int, qx: float, qy: float, qz: float, R: float) -> float:
+	var ex: float = S.store[o + 4] - S.store[o + 1]
+	var ey: float = S.store[o + 5] - S.store[o + 2]
+	var ez: float = S.store[o + 6] - S.store[o + 3]
+	var e2: float = ex * ex + ey * ey + ez * ez
+	var t: float = 0.0
+	if e2 > 1.0e-24:
+		t = clampf(((qx - S.store[o + 1]) * ex + (qy - S.store[o + 2]) * ey + (qz - S.store[o + 3]) * ez) / e2, 0.0, 1.0)
+	var dx: float = (qx - (S.store[o + 1] + ex * t)) * R
+	var dy: float = (qy - (S.store[o + 2] + ey * t)) * R
+	var dz: float = (qz - (S.store[o + 3] + ez * t)) * R
+	return sqrt(dx * dx + dy * dy + dz * dz)
+
+
+## True when the unit direction is inside record k's hole: within a crater's lip, or within a groove's half width of its line.
+static func _inside(S, k: int, qx: float, qy: float, qz: float, R: float) -> bool:
+	var o: int = k * STRIDE
+	var kd: int = int(S.store[o])
+	if kd == KIND_TRENCH or kd == KIND_SCAR:
+		return _segDist(S, o, qx, qy, qz, R) < S.store[o + 8]
+	if kd == KIND_CRATER or kd == KIND_MERGE:
+		var dx: float = (qx - S.store[o + 1]) * R
+		var dy: float = (qy - S.store[o + 2]) * R
+		var dz: float = (qz - S.store[o + 3]) * R
+		return sqrt(dx * dx + dy * dy + dz * dz) < S.store[o + 4]
+	return false
+
+
+## The level the water stands at in the holes that reach the unit direction (the highest of the records there that hold water), or DRY. A record holds water only if WorldFill.floodLevelFor found a source when it was made.
+static func waterLevelAt(S, qx: float, qy: float, qz: float) -> float:
+	if int(S.storeN) == 0:
+		return DRY
+	var R: float = _R()
+	var ent: Dictionary = _index(S)
+	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
+	if not ent.grid.has(key):
+		return DRY
+	var best: float = DRY
+	for k in ent.grid[key]:
+		var lv: float = S.store[k * STRIDE + O_WATER]
+		if lv <= DRY * 0.5 or ent.sup.has(k) or lv <= best:
+			continue
+		if _inside(S, k, qx, qy, qz, R):
+			best = lv
+	return best
+
+
+## The level of the highest water held by a record whose hole overlaps a new one of radius `radius` at unit direction q (their reaches closer than the two radii together), or DRY: a trench cut on from a flooded one, or a bowl dug in a flooded crater, takes its level.
+static func overlappingWater(S, q: Array, radius: float) -> float:
+	if int(S.storeN) == 0:
+		return DRY
+	var R: float = _R()
+	var ent: Dictionary = _index(S)
+	var best: float = DRY
+	var seen: Dictionary = {}
+	var cx: float = q[0] * R
+	var cy: float = q[1] * R
+	var cz: float = q[2] * R
+	for ix in range(_box(cx - radius), _box(cx + radius) + 1):
+		for iy in range(_box(cy - radius), _box(cy + radius) + 1):
+			for iz in range(_box(cz - radius), _box(cz + radius) + 1):
+				var key: int = _key(ix, iy, iz)
+				if not ent.grid.has(key):
+					continue
+				for k in ent.grid[key]:
+					if seen.has(k):
+						continue
+					seen[k] = true
+					var o: int = k * STRIDE
+					var lv: float = S.store[o + O_WATER]
+					if lv <= DRY * 0.5 or ent.sup.has(k) or lv <= best:
+						continue
+					var d: float = _segDist(S, o, q[0], q[1], q[2], R) if (int(S.store[o]) == KIND_TRENCH or int(S.store[o]) == KIND_SCAR) else _chord(S, o, q, R)
+					if d < radius + radiusOf(S, k):
+						best = lv
+	return best
+
+
+static func _chord(S, o: int, q: Array, R: float) -> float:
+	var dx: float = (q[0] - S.store[o + 1]) * R
+	var dy: float = (q[1] - S.store[o + 2]) * R
+	var dz: float = (q[2] - S.store[o + 3]) * R
+	return sqrt(dx * dx + dy * dy + dz * dz)

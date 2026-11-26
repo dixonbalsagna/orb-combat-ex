@@ -181,18 +181,41 @@ static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx:
 
 
 static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
-	if kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
+	_gQ = []
+	_gSup = -1
+	_gRep = 0
+	if _globeLive(S):   # on the planet store a blow repeats the crater it lands on by the store's records, at its planet point (WorldCraters globe.repeats), not by the strip's x
+		if kind == "impact" and not meteor and WorldCraters.globeRepeats() > 0:
+			var q0: Array = _pointOf(S, x)
+			var j: int = WorldStore.recentImpact(S, q0[0], q0[1], q0[2], 0.5) if not q0.is_empty() else -1
+			var rcapH: float = R_MAX if (special or S.powerOn) else ORD_R_MAX   # what this blow can dig at most: it never repeats a crater bigger than that (the grown record must reach as far as the one it supersedes: a blow cannot shrink a big crater)
+			if j >= 0 and WorldStore.repeatsOf(S, j) < WorldCraters.globeRepeats() and WorldStore.radiusOf(S, j) <= rcapH:
+				var rmul: float = shape[WorldCraters.S_R] if shape.size() > 0 else 1.0
+				var need: float = WorldStore.radiusOf(S, j) * float(WorldBrunt.cfg().repeatCraterGrow) / (R_BASE * rmul)
+				need = need * need / (SPECIAL_E_MULT if special else 1.0)
+				energy = maxf(energy, need)
+				_gQ = WorldStore.centreOf(S, j)   # the dig moves to the old crater's own centre
+				_gSup = j
+				_gRep = WorldStore.repeatsOf(S, j) + 1
+				SimField.strip(S, _gQ[0], _gQ[1], _gQ[2])
+				x = SimField.sx
+	elif kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
 		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
 		x = rp[0]
 		energy = rp[1]
 	if not S.depthOn:
-		return _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
+		var rn = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
+		_gQ = []
+		_gSup = -1
+		return rn
 	var zz: float = z
 	if is_nan(zz):
 		zz = float(cause.z) if (cause != null and "z" in cause) else 0.0
 	var k: int = WorldTerrain.enterRow(S, WorldTerrain.rowOfZ(zz))
 	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
 	WorldTerrain.leaveRow(S, k)
+	_gQ = []
+	_gSup = -1
 	if rec != null and k >= 0 and not _lastLive:   # a crater held in the planet store has no strip rows to dig: its bowl is radial about its planet point
 		_digNeighbours(S, rec, k, shape[WorldCraters.S_STEEP] if shape.size() > 0 else 1.0)
 	return rec
@@ -203,6 +226,31 @@ static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, 
 ## as ever UNTIL the state has a frame (S.frame, Simulation's read-through): then the ground is the field plus the store, and the deform write stops so the bowl is not counted twice (`_lastLive`, read by dig).
 static var pointHook: Callable = Callable()
 static var _lastLive: bool = false
+static var _gQ: Array = []      # the dig's planet point when a repeat moved it to the old crater's centre (set by _digRead, read by _dig and _record, cleared after)
+static var _gSup: int = -1      # ... the store record the new crater supersedes
+static var _gRep: int = 0       # ... and its repeat count
+
+
+## A glancing impact's furrow on the planet store: a TRENCH record from the crater's centre back along the heading (the strip's SKID_ numbers: full length 1.1 R at a horizontal share of 0.85, none under 0.35, a third of the bowl's depth), a column wide.
+static func _furrow(S: SimState, q: Array, xw: float, R: float, d: float, dirx: float, cause, lv: float) -> void:
+	var ax: float = absf(dirx)
+	if ax <= SKID_DIRX_MIN:
+		return
+	var kk: float = minf(1.0, (ax - SKID_DIRX_MIN) / (SKID_DIRX_FULL - SKID_DIRX_MIN))
+	var len: float = SKID_LEN_R * R * kk
+	var dir: float = 1.0 if dirx > 0.0 else -1.0
+	var qb: Array = _pointOf(S, SimWrap.wrap(xw - dir * len))
+	if qb.is_empty():
+		return
+	var depth: float = d * SKID_DEPTH_FRAC * kk
+	if depth < MIN_DEPTH:
+		return
+	WorldStore.addTrench(S, q, qb, depth, SimConst.COL, S.T, int(_slot(S, cause)), 0.0, lv)
+
+
+## True when a crater dug on S goes to the planet store with the line's read-through on: the ground there is the field plus the store (no strip bowl), so the rules of the round planet apply to it (WorldGlobe).
+static func _globeLive(S: SimState) -> bool:
+	return S.planetGen >= 3 and ("store" in S) and ("frame" in S) and S.frame != null and int(S.storeN) < WorldStore.MAX
 
 
 static func _pointOf(S: SimState, x: float) -> Array:
@@ -220,14 +268,14 @@ static func _pointOf(S: SimState, x: float) -> Array:
 
 
 ## Adds the crater to the store; true when it is held there. Nothing happens off gen 3 or on a state without the store's fields.
-static func _record(S: SimState, xw: float, R: float, d: float, hr: float, E: float, kind: String, cause, special: bool) -> bool:
+static func _record(S: SimState, xw: float, R: float, d: float, hr: float, E: float, kind: String, cause, special: bool, qp: Array = [], sup: int = -1, rep: int = 0, lv: float = WorldStore.DRY) -> bool:
 	if S.planetGen < 3 or not ("store" in S):
 		return false
-	var q: Array = _pointOf(S, xw)
+	var q: Array = qp if not qp.is_empty() else _pointOf(S, xw)
 	if q.is_empty():
 		return false
 	var ci: int = 0 if kind == "impact" else (1 if kind == "beam" else (2 if kind == "powerup" else 3))
-	return WorldStore.add(S, q[0], q[1], q[2], R, d, hr, E, ci, int(_slot(S, cause)), S.T, 1 if special else 0) >= 0
+	return WorldStore.add(S, q[0], q[1], q[2], R, d, hr, E, ci, int(_slot(S, cause)), S.T, 1 if special else 0, sup, rep, lv) >= 0
 
 
 ## The bowl's shape at u (in R) inside the lip is t * t, 1 at the centre and 0 at the lip, for t = 1 - u^2 today; steep (craters.json) changes the power of u.
@@ -296,9 +344,18 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	var xw: float = SimWrap.wrap(x)
 	var c0: int = _col(xw)
 	var y0: float = WorldTerrain.groundY(S, xw)
-	var nr: int = int(round(RING_K * R / COL))
-	var ring: float = (S.deform[(c0 - nr + NC) % NC] + S.deform[(c0 + nr) % NC]) * 0.5
-	var relief: float = ring - S.deform[c0]
+	var glob: bool = _globeLive(S)   # on the planet store the relief is the ring against the centre in the store's ground, without the record this one supersedes (WorldGlobe); on the strip it is the strip's two columns
+	var qg: Array = []
+	if glob:
+		qg = _gQ if not _gQ.is_empty() else _pointOf(S, xw)
+		glob = not qg.is_empty()
+	var relief: float
+	if glob:
+		relief = WorldGlobe.relief(S, qg, RING_K * R, _gSup)
+	else:
+		var nr: int = int(round(RING_K * R / COL))
+		var ring: float = (S.deform[(c0 - nr + NC) % NC] + S.deform[(c0 + nr) % NC]) * 0.5
+		relief = ring - S.deform[c0]
 	var dRaw: float = R0 * DEPTH_RATIO * sD * (GRAZE_MIN + (1.0 - GRAZE_MIN) * clampf(vert, 0.0, 1.0))
 	var d: float = minf(dRaw, RELIEF_MAX_RATIO * R0 * sD - relief)
 	if d < MIN_DEPTH:
@@ -307,13 +364,23 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	var volFrac: float = RIM_VOL_LOW + (RIM_VOL_HIGH - RIM_VOL_LOW) * rt * rt * (3.0 - 2.0 * rt)
 	var dt: float = d / sD   # the depth today's bowl would have had, for today's rim
 	var hr: float = minf(dt * volFrac * RIM_H_PER_VOL, RIM_DEPTH_MAX * dt) * sRim
+	if glob and WorldCraters.globeSettle():   # the wall eased to the angle of repose: wider and shallower, the volume kept, held to the cap and the shaft cap again
+		var st: Array = WorldGlobe.settle(S, qg, R, d, hr, rcap, RELIEF_MAX_RATIO * R0 * sD, relief, _gSup)
+		R = st[0]
+		d = st[1]
+		hr = st[2]
+		if d < MIN_DEPTH:
+			return null
 	var n: int = int(ceil(R * (1.0 + RIM_OUT) / COL)) + 1
 	var minG: float = 1e9
-	var stored: bool = _record(S, xw, R, d, hr, E, kind, cause, special)
+	var lv: float = WorldFill.floodLevelFor(S, qg, R, d) if glob else WorldStore.DRY   # B1: where water could come from (off unless water.json flood.enabled)
+	var stored: bool = _record(S, xw, R, d, hr, E, kind, cause, special, qg if glob else [], _gSup if glob else -1, _gRep if glob else 0, lv)
 	var live: bool = stored and ("frame" in S) and S.frame != null   # the read-through reads the store: no strip bowl
 	_lastLive = live
 	if live:
 		minG = y0 - d
+		if glob and kind == "impact" and WorldCraters.globeFurrow():   # the furrow: a glancing blow makes a short trench behind it, along the true heading, through the rim (terrain-globe-plan.md 4.3)
+			_furrow(S, qg, xw, R, d, dirx, cause, lv)
 	var pre := PackedFloat32Array()   # the deform before this crater, for the furrow's target
 	pre.resize(2 * n + 1)
 	var pinD: PackedByteArray = WorldStructures.pinned(S, c0, n)   # the rim and apron skip footings (T4 extended)
@@ -621,7 +688,8 @@ static func _carveSegment(S: SimState, xa: float, xb: float, depth: float, paved
 		var ta: Array = _pointOf(S, SimWrap.wrap(xa))
 		var tb: Array = _pointOf(S, SimWrap.wrap(xb))
 		if not ta.is_empty() and not tb.is_empty():
-			tlive = WorldStore.addTrench(S, ta, tb, depth, SimConst.COL, S.T, -1) >= 0 and ("frame" in S) and S.frame != null
+			var tlv: float = WorldFill.floodLevelForSegment(S, ta, tb, depth, SimConst.COL) if S.planetGen >= 3 else WorldStore.DRY   # B1: a trench cut on from the coast fills along its length (off unless water.json flood.enabled)
+			tlive = WorldStore.addTrench(S, ta, tb, depth, SimConst.COL, S.T, -1, 0.0, tlv) >= 0 and ("frame" in S) and S.frame != null
 	var base: PackedFloat32Array = S.base
 	var dfm: PackedFloat32Array = S.deform
 	var crk: PackedFloat32Array = S.crack

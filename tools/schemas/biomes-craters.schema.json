@@ -45,6 +45,22 @@
         "rMax": { "type": "number", "minimum": 600, "maximum": 8320 }
       }
     },
+    "globe": {
+      "type": "object",
+      "description": "The planet store's rules for a mark (WorldCraters.globe*; docs/world/globe-step2.md). Optional: missing, the defaults are these numbers with repeats 0. Read whether or not the module is on.",
+      "required": ["floor", "ceil", "repose", "repeats", "settle", "settleGrooves", "furrow"],
+      "additionalProperties": false,
+      "patternProperties": { "^_": { "type": "string" } },
+      "properties": {
+        "floor": { "type": "number", "exclusiveMaximum": 0 },
+        "ceil": { "type": "number", "exclusiveMinimum": 0 },
+        "repose": { "type": "number", "minimum": 0.5 },
+        "repeats": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "settle": { "type": "boolean" },
+        "settleGrooves": { "type": "boolean" },
+        "furrow": { "type": "boolean" }
+      }
+    },
     "classes": {
       "type": "object",
       "description": "One row per look class (WorldGround.LOOKS); a class without a row digs today's bowl.",

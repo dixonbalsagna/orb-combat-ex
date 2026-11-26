@@ -37,6 +37,11 @@ static var K_DOUSE: float = 0.3
 static var K_SURF_ON: bool = false
 static var K_SURF_TICKS: int = 30
 static var K_FLOOR_ON: bool = false
+static var K_FLOOD_ON: bool = false        # B1 on the planet store (water.json flood.enabled): a hole dug with a source of water near it holds water at the source's level
+static var K_FLOOD_MINDUG: float = 6.0     # a hole dug less than this deep looks for no source
+static var K_FLOOD_REACH: float = 1150.0   # the source is looked for this far (plus the hole's own radius) from its centre
+static var K_FLOOD_RADII: int = 4          # ... at this many radii
+static var K_FLOOD_BEARINGS: int = 8       # ... on this many of WorldGlobe's bearings (8 at most)
 
 
 static func data() -> Dictionary:
@@ -157,6 +162,8 @@ static func _load() -> void:
 			_errors.append("water.json: table names %s, which climate.json does not have" % String(k))
 	if j.has("surface") and (not (j.surface is Dictionary) or int(j.surface.ticks) < 2):
 		_errors.append("water.json: surface is {enabled, ticks} with ticks at least 2")
+	if j.has("flood") and (not (j.flood is Dictionary) or float(j.flood.get("minDug", 0.0)) <= 0.0 or float(j.flood.get("reach", 0.0)) <= 0.0 or int(j.flood.get("radii", 0)) < 1 or int(j.flood.get("bearings", 0)) < 1 or int(j.flood.get("bearings", 0)) > 8):
+		_errors.append("water.json: flood is {enabled, minDug above 0, reach above 0, radii at least 1, bearings 1 to 8}")
 	var fp: String = floorProblem(j, _dropWaterOn() if j.has("floor") and j.floor is Dictionary and bool(j.floor.get("enabled", false)) else true)
 	if fp != "":
 		_errors.append(fp)
@@ -190,6 +197,104 @@ static func _load() -> void:
 	K_SURF_ON = bool(j.surface.enabled) if j.has("surface") else false
 	K_SURF_TICKS = int(j.surface.ticks) if j.has("surface") else 30
 	K_FLOOR_ON = bool(j.floor.enabled) if j.has("floor") else false
+	K_FLOOD_ON = bool(j.flood.enabled) if j.has("flood") else false
+	K_FLOOD_MINDUG = float(j.flood.minDug) if j.has("flood") else 6.0
+	K_FLOOD_REACH = float(j.flood.reach) if j.has("flood") else 1150.0
+	K_FLOOD_RADII = int(j.flood.radii) if j.has("flood") else 4
+	K_FLOOD_BEARINGS = int(j.flood.bearings) if j.has("flood") else 8
+
+
+## ===================================================================== B1 on the planet store (terrain-globe-plan.md 4.3; docs/world/low-impact-water.md section 3)
+## When a crater, a trench or a groove is dug at least flood.minDug deep it looks once for a source of water round it: the sea (the base field under the shore line), a lake (World's lake records), or the biome's water
+## table (water.json table, at the hole itself), at flood.bearings bearings and flood.radii radii out to flood.reach beyond its own radius. It also takes the level of any record that overlaps it and already holds water (the lowest level wins: water finds the lowest it is connected to),
+## so a trench cut on from the coast fills along its length and a bowl dug in a flooded crater fills. The level goes into the record's own water slot (hashed, truncated with the store by a rollback); no source leaves
+## the slot DRY and the hole dry. The read is WorldStore.waterLevelAt: the level less the ground there, where positive, inside the hole (floodDepth). Pure in the store and the field; never trapping, slowing or
+## hurting anyone (Game Design 23b rows 15, 17). Off unless water.json flood.enabled.
+
+static func floodOn() -> bool:
+	if not _loaded:
+		_load()
+	return K_FLOOD_ON
+
+
+## Tests only: set the flood without the file.
+static func setFlood(on_: bool) -> void:
+	if not _loaded:
+		_load()
+	K_FLOOD_ON = on_
+
+
+## The level a source of water at unit direction p stands at (the field's own ground there, never the store's holes), or DRY: the sea at its level, a lake at its surface, a wet biome's table below the ground.
+static func floodSource(S, p: Array, tableToo: bool) -> float:
+	if S.planetRing == null or not (S.planetRing is Dictionary) or S.planetRing.is_empty() or not S.planetRing.has("seed"):
+		return WorldStore.DRY
+	var P: WorldPlanet.Planet = WorldPlanet.make(int(S.planetRing.seed))
+	var F = WorldField.of(P)
+	WorldField.sample(F, p[0], p[1], p[2], 1)
+	var h: float = F.oh
+	var fine: int = F.ofine
+	if not S.fieldRecs.is_empty():
+		h = WorldField.applyRecords(S, p[0], p[1], p[2], h)
+	if h < WorldWater.SHORE_WET:
+		return WorldWater.SEA_LEVEL
+	var rd: float = WorldField.recordWater(S, p[0], p[1], p[2], h)   # (the flood's own term is not in it: floodDepth reads the store, and h here is the field's)
+	if rd > 0.0:
+		return h + rd
+	if tableToo:
+		var td: float = tableDepth(WorldClimate.fineName(fine))
+		if td != NONE and not bool(_tableD[WorldClimate.fineName(fine)][1]):
+			return h - td
+	return WorldStore.DRY
+
+
+## The lower of two levels, DRY being none: water finds the lowest level it is connected to (a hole beside the sea and a lake on the hill holds the sea's level, not the lake's).
+static func _lower(a: float, b: float) -> float:
+	if b <= WorldStore.DRY * 0.5:
+		return a
+	if a <= WorldStore.DRY * 0.5:
+		return b
+	return minf(a, b)
+
+
+## The level a hole of radius R and depth d dug at unit direction q holds water at, or DRY. Off, or too shallow, or with no source: DRY.
+static func floodLevelFor(S, q: Array, R: float, d: float) -> float:
+	if not floodOn() or d < K_FLOOD_MINDUG:
+		return WorldStore.DRY
+	var lv: float = WorldStore.overlappingWater(S, q, R)
+	lv = _lower(lv, floodSource(S, q, true))
+	var b: Array = WorldGlobe.basis(q)
+	for ri in range(K_FLOOD_RADII):
+		var rr: float = (R + K_FLOOD_REACH) * float(ri + 1) / float(K_FLOOD_RADII)
+		for bi in range(K_FLOOD_BEARINGS):
+			lv = _lower(lv, floodSource(S, WorldGlobe.pointAt(q, b, bi, rr), false))
+	return lv
+
+
+## The same for a groove from planet point a to b, half width hw, cut depth deep: the search is round its middle, out to its half length and its width.
+static func floodLevelForSegment(S, a: Array, b: Array, depth: float, hw: float) -> float:
+	if not floodOn() or depth < K_FLOOD_MINDUG:
+		return WorldStore.DRY
+	var mx: float = a[0] + b[0]
+	var my: float = a[1] + b[1]
+	var mz: float = a[2] + b[2]
+	var mn: float = sqrt(mx * mx + my * my + mz * mz)
+	if mn < 1.0e-9:
+		return WorldStore.DRY
+	var m: Array = [mx / mn, my / mn, mz / mn]
+	var ex: float = b[0] - a[0]
+	var ey: float = b[1] - a[1]
+	var ez: float = b[2] - a[2]
+	var half: float = 0.5 * sqrt(ex * ex + ey * ey + ez * ez) * SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
+	var lv: float = _lower(floodLevelFor(S, m, half + hw, depth), floodSource(S, a, true))
+	return _lower(lv, floodSource(S, b, true))
+
+
+## The depth of the flood at unit direction q whose ground (the field's and the store's) is h: the level of the water held in the holes there, less h, where positive; 0 for none. Read by WorldField.recordWater.
+static func floodDepth(S, qx: float, qy: float, qz: float, h: float) -> float:
+	if not floodOn() or int(S.storeN) == 0:
+		return 0.0
+	var lv: float = WorldStore.waterLevelAt(S, qx, qy, qz)
+	return maxf(0.0, lv - h) if lv > WorldStore.DRY * 0.5 else 0.0
 
 
 ## Water shallower than this at x is waded: a body passing through it is not dragged or sunk (it still skims). False with water v2 off, unless the floor is on: wade.below is the floor's line too (rulings 2026-10-30 row 4).

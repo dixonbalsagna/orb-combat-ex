@@ -20,9 +20,11 @@
     "struggle_meet_check",
     "struggle_dir_check",
     "bystanders_check",
+    "globe_check",
     "floor_walk_probe"
   ],
   "leaveOut": {
+    "globe_audit": "soak: 40 AI matches on gen 3 planets, steps over 1 body height in the store ground (the goal 0 to 6 a match); minutes long, run by hand at below-normal priority",
     "pin": "helper: WorldPin.shipped() sets main's pre-GW1a data in memory for the checks that test the old path, no verdict",
     "b_heights": "measurement: prints percentiles of dry land on B plates, no verdict",
     "calm_digest": "measurement: prints the calm turn's swap tick and gameplay hashes, no verdict",

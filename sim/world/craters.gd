@@ -34,6 +34,80 @@ static var K_ON: bool = false
 static var K_BUILT: bool = false
 static var K_SCALES: bool = true
 static var _shapes: Array = []   # per look code: the shape, or an empty array for no row (today's bowl)
+## The planet store's rules for a mark (craters.json globe, optional; terrain-globe-plan.md 4.3). floor and ceil hold the store's ground (the strip's -260 and +120 x WS); repose is the wall slope past which a new crater
+## settles wider and shallower; repeats is how many times a blow on one spot grows the crater (0: off, each blow digs its own, held by the shaft cap) and grow the radius factor each asks (brunt.json repeatCraterGrow).
+static var G_FLOOR: float = -2080.0
+static var G_CEIL: float = 960.0
+static var G_REPOSE: float = 1.25
+static var G_REPEATS: int = 0
+static var G_SETTLE: bool = true
+static var G_FURROW: bool = false
+static var G_SETTLE_G: bool = false   # grooves (trenches, scars) settle to the angle of repose too: off until step 3 (trench widths by force), see globe-step2.md
+
+
+static func globeFloor() -> float:
+	if not _loaded:
+		_load()
+	return G_FLOOR
+
+
+static func globeCeil() -> float:
+	if not _loaded:
+		_load()
+	return G_CEIL
+
+
+static func globeRepose() -> float:
+	if not _loaded:
+		_load()
+	return G_REPOSE
+
+
+static func globeRepeats() -> int:
+	if not _loaded:
+		_load()
+	return G_REPEATS
+
+
+static func globeSettleGrooves() -> bool:
+	if not _loaded:
+		_load()
+	return G_SETTLE_G and G_SETTLE
+
+
+static func setSettleGrooves(on_: bool) -> void:
+	if not _loaded:
+		_load()
+	G_SETTLE_G = on_
+
+
+static func globeFurrow() -> bool:
+	if not _loaded:
+		_load()
+	return G_FURROW
+
+
+static func setFurrow(on_: bool) -> void:
+	if not _loaded:
+		_load()
+	G_FURROW = on_
+
+
+static func globeSettle() -> bool:
+	if not _loaded:
+		_load()
+	return G_SETTLE
+
+
+## Tests only: set the globe rules without the file (the two-way checks run the same dig with repeats off and on).
+static func setGlobe(floor_: float, ceil_: float, repose: float, repeats: int, settle: bool) -> void:
+	if not _loaded:
+		_load()
+	G_FLOOR = floor_
+	G_CEIL = ceil_
+	G_REPOSE = repose
+	G_REPEATS = repeats
+	G_SETTLE = settle
 
 
 static func data() -> Dictionary:
@@ -74,6 +148,13 @@ static func _load() -> void:
 	_errors = []
 	_d = {}
 	_shapes = []
+	G_FLOOR = -2080.0
+	G_CEIL = 960.0
+	G_REPOSE = 1.25
+	G_REPEATS = 0
+	G_SETTLE = true
+	G_FURROW = false
+	G_SETTLE_G = false
 	for k in range(WorldGround.LOOKS.size()):
 		_shapes.append(NONE)
 	var f := FileAccess.open(PATH, FileAccess.READ)
@@ -114,10 +195,22 @@ static func _load() -> void:
 		var mt = j.meteor
 		if not (mt is Dictionary) or float(mt.get("eMult", 0.0)) < 1.0 or float(mt.get("rMax", 0.0)) < 600.0:
 			_errors.append("craters.json: meteor needs eMult (at least 1) and rMax (at least 600)")
+	if j.has("globe"):
+		var gl = j.globe
+		if not (gl is Dictionary) or float(gl.get("floor", -1.0)) >= 0.0 or float(gl.get("ceil", 1.0)) <= 0.0 or float(gl.get("repose", 1.25)) < 0.5 or int(gl.get("repeats", 0)) < 0 or int(gl.get("repeats", 0)) > 8:
+			_errors.append("craters.json: globe is {floor below 0, ceil above 0, repose at least 0.5, repeats 0 to 8, settle}")
 	if not _errors.is_empty():
 		for k in range(_shapes.size()):
 			_shapes[k] = NONE
 		return
+	if j.has("globe"):
+		G_FLOOR = float(j.globe.get("floor", -2080.0))
+		G_CEIL = float(j.globe.get("ceil", 960.0))
+		G_REPOSE = float(j.globe.get("repose", 1.25))
+		G_REPEATS = int(j.globe.get("repeats", 0))
+		G_SETTLE = bool(j.globe.get("settle", true))
+		G_FURROW = bool(j.globe.get("furrow", false))
+		G_SETTLE_G = bool(j.globe.get("settleGrooves", false))
 	_d = j
 	_parsed = j
 	K_ON = bool(j.enabled)
