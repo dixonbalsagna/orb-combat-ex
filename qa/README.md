@@ -131,3 +131,7 @@ Create `qa/tests/<name>.test.js`, use `require('../lib/check')('name')`, call `t
 ## Known issues
 
 See the defects table in `baseline-p0.md` (QA-001 to QA-005). QA-001 (`newMatch()` not resetting the launch history) is fixed in the prototype, so a match is a pure function of its seed and the harness no longer works around anything.
+
+## The desktop soak
+
+`qa/soak/soak.mjs` runs the built desktop program, computer against computer, headless, for two hours, and reports memory, ticks a second, errors and whether it closed cleanly. Plan, trial results and limits: `docs/qa/pending/soak/README.md`.
