@@ -31,7 +31,7 @@
  		budget_us = maxi(budget_us, RenderLook.TILE_ASK_US)
 +	if field_world:
 +		_marks_ask()
- 	while Time.get_ticks_usec() - t0 < budget_us:
+ 	while clock_us() - t0 < budget_us:
 +		if _job_key < 0 and not _rebake.is_empty():
 +			var rk: int = _rebake.pop_front()
 +			_rebake_set.erase(rk)
@@ -54,7 +54,7 @@
 +			off_tex.update(_off_img)
  	_foot_slice(t0, budget_us)
  	_crater_slice()
- 	fill_us = Time.get_ticks_usec() - t0
+ 	fill_us = clock_us() - t0
 @@ -439,6 +461,7 @@
  	_job_t.resize(TEX * TEX)
  	_job_any_wet = false
@@ -63,19 +63,18 @@
  	if field_world:
  		_job_recs = _records_reach(k)
  		_job_wet = true   # level 0 too: in fast flight it lies under the fight for much of a crossing, and a lake without its water reads as a brown table
-@@ -539,6 +562,11 @@
+@@ -539,6 +562,10 @@
  			if place_w > 0.0 and not _has_pads:
  				var col: float = px / SimConst.COL
  				h = lerpf(h, lerpf(float(_S.base[pc]), float(_S.base[(pc + 1) % SimConst.NC]), col - floor(col)), place_w)
 +	if _job_marks:
-+		# The store's grooves (scorch, trench): heightDelta less the craters' sum, which the vertex stage's bowls draw (A1 clipping).
-+		var pt: Vector2 = WorldStore.parts(_S, dp[0], dp[1], dp[2])
-+		if pt.y < 0.0:
-+			h += minf(pt.x, pt.y) - pt.x
++		# The store's marks less the sum the vertex stage's bowls draw (A1 clipping): grooves and lips, through World's one formula, float64 throughout.
++		var pp: PackedFloat64Array = WorldStore.parts(_S, dp[0], dp[1], dp[2])
++		h += WorldStore.combine(pp[0], pp[1], pp[2]) - pp[0]
  	if _job_recs and _job_wet and place_w < 0.5:
  		wet = WorldField.recordWater(_S, dp[0], dp[1], dp[2], h)
  	if place_w > 0.5:
-@@ -556,7 +584,9 @@
+@@ -556,7 +583,9 @@
  
  
  func _store() -> void:
@@ -86,7 +85,7 @@
  	if slot < 0:
  		_job_key = -1   # the view moved on while it was filling, and took the last layer
  		return
-@@ -573,6 +603,7 @@
+@@ -573,6 +602,7 @@
  	ids.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RGBA8, _job_c), slot)
  	if ((_job_key >> 3) & 7) > 0 and _job_on_line():
  		stale_off()
@@ -94,7 +93,7 @@
  	_job_key = -1
  
  
-@@ -673,11 +704,7 @@
+@@ -673,11 +703,7 @@
  			stale_off()
  	# The columns under every body first, whatever the budget: a fighter never stands on a column the table hasn't read
  	# (the start, a finer tile, the line turning), or his feet are drawn on the table's last value (A1 clipping).
@@ -107,7 +106,7 @@
  	var c0: int = int(floor(x / SimConst.COL)) - OFF_N / 2
  	var done: int = 0
  	for q in range(OFF_REACH):
-@@ -694,20 +721,118 @@
+@@ -694,20 +720,118 @@
  		off_tex.update(_off_img)
  
  
@@ -189,7 +188,7 @@
 +	var t: float = fx / SimConst.COL - float(fc)
 +	var d: Vector3 = dir_at(fx, float(f.z) if "z" in f else 0.0, _S.frame)
 +	var g: float = SimField.col(_S, posmod(fc, SimConst.NC)) * (1.0 - t) + SimField.col(_S, posmod(fc + 1, SimConst.NC)) * t   # the ground he stands on, store and all, as WorldTerrain.groundY reads it
-+	var b: float = g - WorldStore.parts(_S, d.x, d.y, d.z).x
++	var b: float = g - WorldStore.parts(_S, d.x, d.y, d.z)[0]
 +	var r: float = maxf(height_at(d), 0.0) - (b if b >= WorldWater.SHORE_WET else maxf(b, 0.0))
 +	var out: Array = []
 +	for c in [fc, fc + (1 if t >= 0.5 else -1)]:
@@ -230,12 +229,12 @@
  	return true
  
  
-@@ -716,7 +841,7 @@
+@@ -716,7 +840,7 @@
  ## WorldStore.heightDelta there. The strip's deform is drawn by the rows, so it isn't in either.
  func _stand_ground(col: int, d: Vector3) -> float:
  	var g: float = 0.5 * (SimField.col(_S, col) + SimField.col(_S, (col + 1) % SimConst.NC))
 -	return g - WorldStore.heightDelta(_S, d.x, d.y, d.z)
-+	return g - WorldStore.parts(_S, d.x, d.y, d.z).x   # less the craters' sum only: the tiles carry the grooves (a groove not yet baked: he stands on the drawn, undug ground)
++	return g - WorldStore.parts(_S, d.x, d.y, d.z)[0]   # less the craters' sum only: the tiles carry the grooves (a groove not yet baked: he stands on the drawn, undug ground)
  
  
  func _sim_ground(d: Vector3) -> float:
@@ -297,7 +296,7 @@
  	_cb_a.resize(RenderLook.TILE_BOWLS)
 --- /dev/null
 +++ b/render/tools/feet_check.gd
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,155 @@
 +extends SceneTree
 +## The feet check (Rendering, A1 clipping; the stand-in's planet design §6): a fighter's feet as drawn against the ground as drawn,
 +## computer against computer on the tile ground, through the game's own main with its own setup (so the opening plays), every frame
@@ -307,11 +306,15 @@
 +##   his feet as drawn: the sim's y plus the lift the shared placement gives him (RenderTileField.lift, the shader's twin).
 +## Passes when no sample is more than WORST units off either way and at most SHARE of them are more than OVER off.
 +## Needs the tile ground on (the globe ground by default, or --tiles). A long gate: about 20 minutes, run it at below-normal priority.
-+##   godot --headless --path . --script res://render/tools/feet_check.gd [-- --seeds=1,2,... --ticks=1800]
++##   godot --headless --path . --script res://render/tools/feet_check.gd [-- --seeds=1,2,... --ticks=1800 --size=small --split]
++## --size: World's planetSize (a size the data holds plays as named: WorldPlanetSize.heldOverride, a tool's way in). --split: the split screen attached,
++## as the game has it, each fighter read through the pane nearest him (at big the panes part, and the single view's tiles are not his).
 +
 +var main: Node
 +var seeds: Array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 +var ticks: int = 1800
++var SIZE: String = ""   # --size: the planet size to play (World's setup key planetSize)
++var SPLIT: bool = false   # --split: the split screen attached, as the game has it (main attaches it unless --nosplit); each fighter read through the pane nearest him
 +const OVER: float = 8.0
 +const WORST: float = 25.0
 +const SHARE: float = 0.03   # a ratchet (the EP, 2026-11-14): 4% while feet stood on grooves the tiles didn't draw, 3% once a body's own column took his own lift, then lower
@@ -321,8 +324,12 @@
 +	for a in OS.get_cmdline_user_args():
 +		if a.begins_with("--seeds="):
 +			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
++		elif a.begins_with("--size="):
++			SIZE = a.substr(7)
 +		elif a.begins_with("--ticks="):
 +			ticks = int(a.substr(8))
++		elif a == "--split":
++			SPLIT = true
 +	var vpn := SubViewport.new()
 +	vpn.size = Vector2i(1280, 720)
 +	root.add_child(vpn)
@@ -374,11 +381,17 @@
 +		print("feet check FAILED: the tile ground is off (it needs the globe ground on, or --tiles)")
 +		quit(1)
 +		return
++	if SPLIT:
++		main.split_view = SplitView.new()
++		main.add_child(main.split_view)
++		main.split_view.attach(main)
 +	var n_all: int = 0
 +	var n_over: int = 0
 +	var worst: float = 0.0
 +	for seed in seeds:
-+		main.start_match(seed, {"p1": true, "p2": true})
++		if SIZE != "":
++			WorldPlanetSize.heldOverride = true   # a size the data holds plays as named (a tool may; World's size_check)
++		main.start_match(seed, {"p1": true, "p2": true}, {"planetSize": SIZE} if SIZE != "" else null)
 +		while main.host.loading():
 +			main.frame(1.0 / 60.0)
 +		var S: SimState = main.host.S
@@ -389,19 +402,38 @@
 +		var n: int = 0
 +		var over: int = 0
 +		var w: float = 0.0
++		var off_pane: int = 0   # --split: samples of a fighter outside every rendered pane's view (no picture shows his feet)
 +		while main.host.ticks < t_end and not (S.game.ko != null and S.game.koT > 3.0):
 +			main.frame(1.0 / 60.0)
 +			if main.host.loading() or S != main.host.S:
 +				break
-+			var tg = pane._tiles
-+			if tg == null or tf == null:
-+				continue
 +			var fr = RenderTileGround._shown_frame(S)
 +			for F in S.fighters:
 +				var x: float = float(F.x)
 +				var foot: float = float(F.y)
 +				var z: float = float(F.z) if "z" in F else 0.0
 +				if absf(foot - WorldTerrain.groundY(S, x)) > 1.0:
++					continue
++				if SPLIT:
++					# the pane whose camera is nearest him, of the panes the split renders this frame (SplitFrame.active): a pane not rendered keeps its last
++					# camera and bowls, perhaps a match old
++					var bd: float = INF
++					var lf = main.split_view.last_frame
++					for k in range(main.panes.size()):
++						var pw = main.panes[k]
++						if pw == null or pw._tiles == null or (lf != null and k < lf.active.size() and not bool(lf.active[k])):
++							continue
++						var dd: float = absf(SimWrap.sdx(pw.view_cam_x, x))
++						if dd < bd:
++							bd = dd
++							pane = pw
++					if bd > pane.cam_rig.half_width(1280.0) * 1.25:
++						off_pane += 1
++						continue
++					P = pane.planet
++					tf = P.tile_field
++				var tg = pane._tiles
++				if tg == null or tf == null:
 +					continue
 +				var d: Vector3 = tf.dir_at(x, z, fr)
 +				var xw: float = SimWrap.wrap(x)
@@ -412,7 +444,7 @@
 +				w = maxf(w, gap)
 +				if gap > OVER:
 +					over += 1
-+		print("%s seed %d: %d standing samples, %d over %.0f units, the worst %.1f" % ["ok  " if (w <= WORST and float(over) <= SHARE * float(maxi(n, 1))) else "FAIL", seed, n, over, OVER, w])
++		print("%s seed %d: %d standing samples, %d over %.0f units, the worst %.1f%s" % ["ok  " if (w <= WORST and float(over) <= SHARE * float(maxi(n, 1))) else "FAIL", seed, n, over, OVER, w, (" (%d outside every pane, not read)" % off_pane) if SPLIT else ""])
 +		n_all += n
 +		n_over += over
 +		worst = maxf(worst, w)

@@ -1,0 +1,15 @@
+# marks-baked (re-cut on main 663b7c45, the store-parts form, feet_check with --size and --split): mb0 = main + feet_ground.diff, mb1 = mb0 + marks_baked.diff
+feet_ground.diff: applies strict on main 663b7c45
+marks_baked.diff (re-cut, sha1 00aaf9f8): applies strict after it
+import errors: mb0 0, mb1 0
+golden.json: mb1 byte-identical to mb0
+golden.json: byte-identical to main's committed file
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+drawn_check exit 0: drawn check passed
+feet_check (medium, ten seeds) exit 0, 225 s: ok   10 seeds: 3542 standing samples, 8 over 8 units (0.2%, at most 3%), the worst 14.9 (at most 25)
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
