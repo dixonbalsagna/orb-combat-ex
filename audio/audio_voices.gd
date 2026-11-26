@@ -228,6 +228,9 @@ static func _effect_index(bus: int, cls: String) -> int:
 
 
 ## Create the buses and the master limiter named in mix.json (once; safe to call again).
+## The limiter is a look-ahead one: what is quieter than threshold_db is played (ceiling_db - threshold_db) louder, and what is
+## louder is turned down smoothly so nothing passes ceiling_db. (Godot's old AudioEffectLimiter gave the same lift but flattened
+## every wave above the threshold into something near a square: distortion on every stacked hit; audio/tools/mix_check.gd.)
 static func setup_buses(m: Dictionary) -> void:
 	for b in m.buses:
 		var idx: int = AudioServer.get_bus_index(b.name)
@@ -243,11 +246,29 @@ static func setup_buses(m: Dictionary) -> void:
 		_mix_db[String(b.name)] = float(b.volume_db)
 		AudioServer.set_bus_volume_db(idx, float(b.volume_db) + user_db(String(b.name)))
 	AudioServer.set_bus_volume_db(0, user_db("Master"))
-	if _effect_index(0, "AudioEffectLimiter") == -1 and m.has("master_limiter"):
-		var lim := AudioEffectLimiter.new()
-		lim.threshold_db = float(m.master_limiter.threshold_db)
+	if _effect_index(0, "AudioEffectHardLimiter") == -1 and m.has("master_limiter"):
+		var lim := AudioEffectHardLimiter.new()
+		lim.pre_gain_db = float(m.master_limiter.ceiling_db) - float(m.master_limiter.threshold_db)
 		lim.ceiling_db = float(m.master_limiter.ceiling_db)
 		AudioServer.add_bus_effect(0, lim)
+
+
+## A menu's sound: "move", "confirm" or "back" (data/scene_cues.json `menu`). UI calls it; it needs no match and no sim.
+## False when there is no audio node yet, the menu sounds are off or the name is not one of them.
+static func ui(name: String) -> bool:
+	if _inst == null or not is_instance_valid(_inst):
+		return false
+	var M: Dictionary = _inst.bank.scene.get("menu", {})
+	if not bool(M.get("enabled", false)) or not M.has(name) or typeof(M[name]) != TYPE_DICTIONARY:
+		return false
+	var c := AudioCues.Cue.new()
+	c.sound = String(M[name].sound)
+	c.gain_db = float(M[name].gain_db)
+	c.priority = int(M.priority)
+	c.bus = String(M.bus)
+	c.cls = String(M.cls)
+	c.cap = int(M.cap)
+	return _inst.play(c, 0.0, 1.0)      # x 0 heard from 0: in the middle, at full level
 
 
 ## One line of what the audio is doing, for the page's audio log (?audiolog=1). Read-only: it changes nothing and is safe to call
@@ -303,7 +324,7 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 	bank.last_ask_ms = Time.get_ticks_msec()      # the cue traffic: the warm-up's budget reads it when the host has not said
 	if cue.sound == "" and cue.stop_group != "":
 		return stop_group(cue.stop_group, cue.fade_ms)
-	if web != null and web.blocked() and not cue.update:
+	if web != null and web.blocked() and not cue.update and not cue.loop:
 		held += 1      # the page's context is not running: a Godot player would start on the engine's frozen context and stay "playing" until it wakes, filling the pool (the 29% drops of 2026-11-07) and then sounding all at once
 		return false
 	var dx: float = 0.0 if cue.ambient else SimWrap.sdx(cam_x, cue.x)

@@ -563,6 +563,10 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/web_policy_check.gd'
       - name: Audio world check
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/world_check.gd'
+      - name: Audio scene check (the wind bed, the building sounds and the menu sounds)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/tools/scene_check.gd'
+      - name: Audio proof from the project (a fixed list of sounds comes out of the mixer, not silent, not clipped; A-AUDIO-04)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://audio/audio_proof_main.gd'
       - name: VFX effects check (the effects that have no picture test)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/vfx/tools/effects_check.gd'
 

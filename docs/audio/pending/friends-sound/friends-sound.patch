@@ -1,5 +1,5 @@
 diff --git a/audio/audio_bank.gd b/audio/audio_bank.gd
-index 5af64cd..1f03cad 100644
+index 5af64cd..1d6ab5b 100644
 --- a/audio/audio_bank.gd
 +++ b/audio/audio_bank.gd
 @@ -15,6 +15,7 @@ const TUG_PATH := "res://audio/data/tug_cues.json"
@@ -18,15 +18,15 @@ index 5af64cd..1f03cad 100644
  var _cache: Dictionary = {}       # "id#variant" -> AudioStreamWAV
  var render_ms: Dictionary = {}    # "id#variant" -> milliseconds it took to render
  var _queue: Array = []            # [id, variant] pairs still to render for warm_step()
-@@ -33,7 +35,7 @@ var _wq: Array = []               # [id, variant] pairs still to render for the
- ## The common hits, named by Performance's phone probe as the cues lost most (impact.light, impact.light.lite, impact.heavy, energy.bolt, then
+@@ -34,7 +36,7 @@ var _wq: Array = []               # [id, variant] pairs still to render for the
  ## crater, whiff, medium): FIRST are the cheap ones (about 85 ms of CPU in all at 1x), rendered in the run's first slice and before anything
  ## else; SECOND are the dear ones (heavy, crater, medium, the blast), right after the intro's babble and grunts. Within a rank: this order.
--const WARM_FIRST := ["impact.light", "impact.light.lite", "impact.whiff", "impact.guard", "impact.absorbed", "energy.bolt", "energy.bolt.lite", "windup.medium", "ui.launcher",
-+const WARM_FIRST := ["ui.move", "ui.confirm", "ui.back", "impact.light", "impact.light.lite", "impact.whiff", "impact.guard", "impact.absorbed", "energy.bolt", "energy.bolt.lite", "windup.medium", "ui.launcher",
- 	"launcher.rest", "perfect.tick", "perfect.tok", "perfect.break", "charge.tick.light", "charge.tick.heavy", "energy.gather", "double.charge"]
+ const WARM_FIRST := ["impact.light", "impact.light.lite", "impact.whiff", "impact.guard", "impact.absorbed", "energy.bolt", "energy.bolt.lite", "windup.medium", "ui.launcher",
+-	"launcher.rest", "perfect.tick", "perfect.tok", "perfect.break", "charge.tick.light", "charge.tick.heavy", "energy.gather", "double.charge"]
++	"launcher.rest", "perfect.tick", "perfect.tok", "perfect.break", "charge.tick.light", "charge.tick.heavy", "energy.gather", "double.charge", "ui.move", "ui.confirm", "ui.back"]
  const WARM_SECOND := ["impact.medium", "impact.heavy", "impact.crater", "energy.blast", "windup.heavy", "impact.double", "impact.medium.grind", "charge.hum", "charge.hum.y"]
  signal warmed                     # the async warm-up has rendered everything it was given
+ var boot_slice_us: int = 120000   # the run's first slice, inside warm() at boot: long enough for the FIRST set at 1x (a block of 0.1 s in a boot of 25 s or more)
 @@ -61,6 +63,7 @@ func _init() -> void:
  	_tug_on = bool(tug.get("enabled", false))
  	drones.merge(load_json(CARRY_PATH).get("drones", {}))
@@ -335,10 +335,10 @@ index 0000000..142e2cd
 +uid://d2caf6yau2mbr
 diff --git a/audio/audio_scene.gd b/audio/audio_scene.gd
 new file mode 100644
-index 0000000..0130c4e
+index 0000000..001db84
 --- /dev/null
 +++ b/audio/audio_scene.gd
-@@ -0,0 +1,187 @@
+@@ -0,0 +1,195 @@
 +class_name AudioScene
 +extends RefCounted
 +## The sound around the fight (docs/audio/friends-sound.md): one quiet wind bed and the buildings. Reads the sim's state and
@@ -450,12 +450,20 @@ index 0000000..0130c4e
 +	return c
 +
 +
++## The middle of the fight's bodies, from the list: each one's shortest arc from the first, averaged, and their mean height.
 +func _pair(S: SimState) -> Vector2:
-+	var a = S.fighters[0]
-+	if S.fighters.size() < 2:
-+		return Vector2(a.x, a.y)
-+	var b = S.fighters[1]
-+	return Vector2(SimWrap.wrap(a.x + SimWrap.sdx(a.x, b.x) * 0.5), (a.y + b.y) * 0.5)
++	var from_x: float = 0.0
++	var dx: float = 0.0
++	var y: float = 0.0
++	var n: int = 0
++	for f in S.fighters:
++		if n == 0:
++			from_x = f.x
++		dx += SimWrap.sdx(from_x, f.x)
++		y += f.y
++		n += 1
++	var k: float = float(maxi(n, 1))
++	return Vector2(SimWrap.wrap(from_x + dx / k), y / k)
 +
 +
 +# ---- the buildings

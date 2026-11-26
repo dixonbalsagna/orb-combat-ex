@@ -15,6 +15,7 @@ var fails: int = 0
 func _initialize() -> void:
 	bank = AudioBank.new()
 	cues = AudioCues.new(bank)
+	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
 	_run.call_deferred()
 
 

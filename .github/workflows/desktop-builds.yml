@@ -125,6 +125,9 @@ jobs:
       - name: The exported Linux binary's bench (it boots headless and plays)
         working-directory: ${{ runner.temp }}/export/linux
         run: 'node "${GITHUB_WORKSPACE}/tools/gate.mjs" -- ./orb-combat-ex.x86_64 --headless --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-linux.txt"'
+      - name: The exported Linux binary makes sound (a fixed list of cues out of its own mixer, not silent, not clipped; A-AUDIO-04)
+        working-directory: ${{ runner.temp }}/export/linux
+        run: 'node "${GITHUB_WORKSPACE}/tools/gate.mjs" -- ./orb-combat-ex.x86_64 --headless -- --audio-proof | tee "${RUNNER_TEMP}/audio-proof-linux.txt"'
       - name: The two gameplay hashes match
         id: hashes
         run: |
@@ -262,6 +265,9 @@ jobs:
       - name: The exported Windows build starts and plays the bench match
         working-directory: ${{ runner.temp }}/export/windows
         run: './orb-combat-ex.console.exe --headless --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-windows.txt"'
+      - name: The Windows build makes sound (the same fixed list of cues; A-AUDIO-04)
+        working-directory: ${{ runner.temp }}/export/windows
+        run: './orb-combat-ex.console.exe --headless -- --audio-proof | tee "${RUNNER_TEMP}/audio-proof-windows.txt"'
       - name: The Windows and Linux gameplay hashes match
         run: |
           w=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-windows.txt" || true)

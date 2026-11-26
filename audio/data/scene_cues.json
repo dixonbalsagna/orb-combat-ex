@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "note": "The friends' build sounds around the fight (docs/audio/friends-sound.md): one quiet wind bed, buildings (hit, windows, a part giving, floors falling, a collapse) and the menu (move, confirm, back). Each has its own `enabled`. `sounds` are ImpactSynth recipes as in impacts.json; `beds` are AmbienceSynth loops as in world_cues.json. The wind stands down when the biome beds are switched on (world_cues.json). All our own synthesis, low and chunky (Orb, 2026-10-16).",
+  "wind": {
+    "enabled": true,
+    "sound": "amb.wind",
+    "bus": "Ambience",
+    "gain_db": -8.0,
+    "alt_db": 4.0,
+    "alt_ref": 900.0,
+    "duck_db": -6.0,
+    "duck_per_damage": 0.0125,
+    "duck_decay_s": 2.2,
+    "start_db": -40.0,
+    "fade_ms": 2400,
+    "update_every": 20,
+    "ramp_ms": 700,
+    "priority": 95
+  },
+  "buildings": {
+    "enabled": true,
+    "gain_db_per_ln": 3.0,
+    "count_db_max": 5.0,
+    "ref_height": 300.0,
+    "pitch_exp": -0.12,
+    "pitch_min": 0.75,
+    "pitch_max": 1.2,
+    "hit": {"sound": "build.hit", "gain_db": -3.0, "priority": 57, "cls": "build.hit", "cap": 2, "cooldown_ticks": 5, "caption": "[building hit]", "ratio_db": {"punch": 0.0, "wall": 0.0, "heavy": 0.0, "pancake": 0.0, "collapse": 0.0, "wreck": 0.0, "crack": -3.0, "dent": -6.0}},
+    "glass": {"sound": "build.glass", "gain_db": -8.0, "priority": 36, "cls": "build.glass", "cap": 2, "cooldown_ticks": 18, "caption": "[windows break]"},
+    "crack": {"sound": "build.crack", "gain_db": -5.0, "priority": 48, "cls": "build.crack", "cap": 2, "cooldown_ticks": 14, "caption": "[wall breaks]"},
+    "floors": {"sound": "build.floors", "gain_db": -2.0, "priority": 64, "cls": "build.floors", "cap": 2, "cooldown_ticks": 20, "caption": "[floors falling]"},
+    "fall": {"sound": "build.fall", "gain_db": 0.0, "priority": 72, "cls": "build.fall", "cap": 3, "cooldown_ticks": 12, "caption": "[building collapses]"}
+  },
+  "menu": {
+    "enabled": true,
+    "bus": "Alert",
+    "priority": 90,
+    "cls": "ui",
+    "cap": 2,
+    "move": {"sound": "ui.move", "gain_db": -6.0},
+    "confirm": {"sound": "ui.confirm", "gain_db": -3.0},
+    "back": {"sound": "ui.back", "gain_db": -4.0}
+  },
+  "beds": {
+    "wind": {
+      "rate": 6000,
+      "seconds": 10,
+      "seed": 211,
+      "peak_db": -14,
+      "layers": [
+        {"type": "gust", "filter": "lp", "lo": 220, "hi": 520, "q": 0.7, "cycles": [2, 3], "amps": [1, 0.5], "floor": 0.35, "sharp": 1.4, "lo_gain": 0.7, "gain": 1.0},
+        {"type": "gust", "filter": "lp", "lo": 380, "hi": 640, "q": 0.7, "cycles": [5], "amps": [1], "floor": 0.1, "sharp": 2.5, "lo_gain": 0.6, "gain": 0.25}
+      ]
+    }
+  },
+  "sounds": {
+    "build.hit": {"rate": 24000, "variants": 3, "drive": 0.3, "peak_db": -5, "jitter": {"f": 0.08, "t60": 0.12, "gain": 0.1}, "layers": [
+      {"type": "tone", "f": 110, "f_to": 48, "tau": 0.04, "attack": 0.002, "t60": 0.34, "gain": 1.0, "drive": 0.5, "h2": 0.25},
+      {"type": "noise", "filter": "lp", "f": 700, "f_to": 220, "tau": 0.1, "q": 0.7, "attack": 0.002, "t60": 0.24, "gain": 0.8},
+      {"type": "grains", "rate0": 120, "tau": 0.15, "len": 0.3, "f": [180, 700], "t60": 0.035, "gain": 0.45, "at": 0.02, "click": 0.15}
+    ]},
+    "build.crack": {"rate": 24000, "variants": 3, "drive": 0.2, "peak_db": -7, "jitter": {"f": 0.1, "t60": 0.12, "gain": 0.12}, "layers": [
+      {"type": "noise", "filter": "lp", "f": 900, "f_to": 300, "tau": 0.07, "q": 0.7, "attack": 0.002, "t60": 0.2, "gain": 0.8},
+      {"type": "grains", "rate0": 200, "tau": 0.09, "len": 0.26, "f": [220, 900], "t60": 0.025, "gain": 0.65, "click": 0.2},
+      {"type": "tone", "f": 95, "f_to": 60, "tau": 0.05, "attack": 0.002, "t60": 0.22, "gain": 0.7, "h2": 0.2}
+    ]},
+    "build.glass": {"rate": 24000, "variants": 3, "drive": 0, "peak_db": -12, "jitter": {"f": 0.1, "t60": 0.15, "gain": 0.12}, "layers": [
+      {"type": "grains", "rate0": 190, "tau": 0.12, "len": 0.34, "f": [550, 1350], "t60": 0.045, "gain": 0.5, "click": 0.05},
+      {"type": "noise", "filter": "bp", "f": 850, "q": 1.0, "attack": 0.002, "t60": 0.11, "gain": 0.3},
+      {"type": "tone", "f": 130, "f_to": 80, "tau": 0.03, "attack": 0.002, "t60": 0.12, "gain": 0.7}
+    ]},
+    "build.floors": {"rate": 24000, "variants": 2, "drive": 0.25, "peak_db": -4, "jitter": {"f": 0.08, "t60": 0.1, "gain": 0.1}, "layers": [
+      {"type": "tone", "f": 90, "f_to": 42, "tau": 0.05, "attack": 0.002, "t60": 0.3, "gain": 0.8, "h2": 0.2},
+      {"type": "tone", "f": 85, "f_to": 40, "tau": 0.05, "attack": 0.002, "t60": 0.3, "gain": 0.85, "at": 0.16, "h2": 0.2},
+      {"type": "tone", "f": 80, "f_to": 38, "tau": 0.05, "attack": 0.002, "t60": 0.34, "gain": 0.9, "at": 0.3, "h2": 0.2},
+      {"type": "tone", "f": 72, "f_to": 34, "tau": 0.06, "attack": 0.002, "t60": 0.6, "gain": 1.0, "at": 0.41, "drive": 0.4, "h2": 0.25},
+      {"type": "rumble", "lp": 170, "attack": 0.02, "t60": 1.2, "gain": 0.9},
+      {"type": "grains", "rate0": 150, "tau": 0.5, "len": 0.95, "f": [140, 600], "t60": 0.04, "gain": 0.45, "at": 0.05, "click": 0.15}
+    ]},
+    "build.fall": {"rate": 24000, "variants": 2, "drive": 0.25, "peak_db": -4, "jitter": {"f": 0.08, "t60": 0.1, "gain": 0.1}, "layers": [
+      {"type": "rumble", "lp": 150, "attack": 0.06, "t60": 2.0, "wobble": 0.4, "wobble_hz": 6, "gain": 1.0},
+      {"type": "tone", "f": 66, "f_to": 32, "tau": 0.3, "attack": 0.01, "t60": 1.2, "gain": 0.75, "at": 0.04, "h2": 0.25},
+      {"type": "noise", "filter": "lp", "f": 520, "f_to": 160, "tau": 0.5, "q": 0.7, "attack": 0.05, "t60": 1.4, "gain": 0.55},
+      {"type": "grains", "rate0": 170, "tau": 0.7, "len": 1.7, "f": [120, 520], "t60": 0.05, "gain": 0.45, "at": 0.08, "click": 0.1},
+      {"type": "tone", "f": 74, "f_to": 36, "tau": 0.06, "attack": 0.003, "t60": 0.55, "gain": 0.7, "at": 0.55, "drive": 0.4, "h2": 0.2}
+    ]},
+    "ui.move": {"rate": 24000, "variants": 1, "drive": 0, "peak_db": -16, "layers": [
+      {"type": "tone", "f": 300, "f_to": 260, "tau": 0.02, "attack": 0.002, "t60": 0.06, "gain": 1.0, "h2": 0.3},
+      {"type": "noise", "filter": "lp", "f": 800, "q": 0.7, "attack": 0.001, "t60": 0.02, "gain": 0.2}
+    ]},
+    "ui.confirm": {"rate": 24000, "variants": 1, "drive": 0, "peak_db": -12, "layers": [
+      {"type": "tone", "f": 220, "f_to": 210, "tau": 0.05, "attack": 0.002, "t60": 0.09, "gain": 0.85, "h2": 0.3},
+      {"type": "tone", "f": 330, "f_to": 315, "tau": 0.05, "attack": 0.002, "t60": 0.15, "gain": 1.0, "h2": 0.25, "at": 0.065}
+    ]},
+    "ui.back": {"rate": 24000, "variants": 1, "drive": 0, "peak_db": -13, "layers": [
+      {"type": "tone", "f": 300, "f_to": 285, "tau": 0.05, "attack": 0.002, "t60": 0.08, "gain": 0.9, "h2": 0.3},
+      {"type": "tone", "f": 200, "f_to": 185, "tau": 0.05, "attack": 0.002, "t60": 0.15, "gain": 1.0, "h2": 0.3, "at": 0.065}
+    ]}
+  }
+}

@@ -1,6 +1,6 @@
 # The friends'-build sound set (Audio and Music, 2026-11-25; parked)
 
-Built against main `935056c0`, checked again on `cb748e09`. Audio only; nothing writes the sim (state hash identical with and without the mapper on seeds 301, 302, 305). **Nobody has heard it.**
+Built against main `935056c0`; re-cut and checked on `c3dabf8e` (the first cut raised the two-fighter ratchet by 2: `audio_scene.gd` now takes the fight's bodies from the list, bit-identical on 14,416 compared positions; baseline untouched). Audio only; nothing writes the sim (state hash identical with and without the mapper on seeds 301, 302, 305). **Nobody has heard it.**
 
 ## What it adds
 
@@ -26,7 +26,7 @@ Also commit with it: `docs/audio/listening-sheet.md`, `docs/audio/desktop-sound.
 
 ## Checked (clean export of main with all four applied)
 
-Import clean; the 14 audio checks and the host check pass; the proof passes; `node tools/validate.js` 0 errors; Tools' workflow, desktop-audience and check-table checks pass. A Windows release export ran `--audio-proof` and passed. Not run: Linux, the web build, `hud_check`.
+With Tools' `docs/tools/pending/audio-scene-cases` park too (apply after patch 2): all 29 node lines of `ci.yml`'s data job pass (two-fighter ratchet 365/365, fighter-specific 0/0); import clean; the 14 audio checks and the host check pass; the proof passes. A Windows release export ran `--audio-proof` and passed. Not run: Linux, the web build, `hud_check`.
 
 Six older checks (`brawl`, `carry`, `coop`, `moments`, `tug`, `world`) assert exact cue lists and saw the new wind loop; each now switches the wind off for its own mapper, with a comment. `scene_check` and `sets_check` run with the data as shipped.
 

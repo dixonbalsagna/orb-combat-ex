@@ -15,6 +15,7 @@ const TUG_PATH := "res://audio/data/tug_cues.json"
 const CUES_PATH := "res://audio/data/cues.json"
 const CARRY_PATH := "res://audio/data/carry_cues.json"
 const WORLD_PATH := "res://audio/data/world_cues.json"
+const SCENE_PATH := "res://audio/data/scene_cues.json"
 
 var impacts: Dictionary = {}
 var grunts: Dictionary = {}
@@ -23,6 +24,7 @@ var drones: Dictionary = {}       # tug_cues.json `drones`: seamless loops (ids 
 var _tug_on: bool = false       # tug_cues.json `enabled`: the drones are warmed only when the struggle is switched on
 var world: Dictionary = {}         # world_cues.json: the ambience beds (ids amb.<name>) and the surface sounds (ids surf.<surface>.hit and .slide)
 var flashes: Dictionary = {}      # flash_cues.json: the 12 head-flash cues and the four sound families
+var scene: Dictionary = {}        # scene_cues.json: the building and menu sounds (impact recipes) and the wind bed (amb.wind)
 var _cache: Dictionary = {}       # "id#variant" -> AudioStreamWAV
 var render_ms: Dictionary = {}    # "id#variant" -> milliseconds it took to render
 var _queue: Array = []            # [id, variant] pairs still to render for warm_step()
@@ -34,7 +36,7 @@ var _wq: Array = []               # [id, variant] pairs still to render for the 
 ## crater, whiff, medium): FIRST are the cheap ones (about 85 ms of CPU in all at 1x), rendered in the run's first slice and before anything
 ## else; SECOND are the dear ones (heavy, crater, medium, the blast), right after the intro's babble and grunts. Within a rank: this order.
 const WARM_FIRST := ["impact.light", "impact.light.lite", "impact.whiff", "impact.guard", "impact.absorbed", "energy.bolt", "energy.bolt.lite", "windup.medium", "ui.launcher",
-	"launcher.rest", "perfect.tick", "perfect.tok", "perfect.break", "charge.tick.light", "charge.tick.heavy", "energy.gather", "double.charge"]
+	"launcher.rest", "perfect.tick", "perfect.tok", "perfect.break", "charge.tick.light", "charge.tick.heavy", "energy.gather", "double.charge", "ui.move", "ui.confirm", "ui.back"]
 const WARM_SECOND := ["impact.medium", "impact.heavy", "impact.crater", "energy.blast", "windup.heavy", "impact.double", "impact.medium.grind", "charge.hum", "charge.hum.y"]
 signal warmed                     # the async warm-up has rendered everything it was given
 var boot_slice_us: int = 120000   # the run's first slice, inside warm() at boot: long enough for the FIRST set at 1x (a block of 0.1 s in a boot of 25 s or more)
@@ -61,6 +63,7 @@ func _init() -> void:
 	_tug_on = bool(tug.get("enabled", false))
 	drones.merge(load_json(CARRY_PATH).get("drones", {}))
 	world = load_json(WORLD_PATH)
+	scene = load_json(SCENE_PATH)
 
 
 static func load_json(path: String) -> Dictionary:
@@ -115,6 +118,8 @@ func flash_ids(voices: Array = []) -> Array:
 func ids() -> Array:
 	var out: Array = []
 	for k in impacts.get("sounds", {}):
+		out.append(k)
+	for k in scene.get("sounds", {}):
 		out.append(k)
 	for v in grunts.get("voices", {}):
 		for g in grunts.voices[v].gestures:
@@ -207,6 +212,8 @@ func extra_ids() -> Array:
 	if bool(world.get("enabled", false)):
 		for k in world.get("sounds", {}):
 			out.append(String(k))      # the surfaces; the beds are warmed by the host for the ring (AudioWorld.warm_beds)
+	elif bool(scene.get("wind", {}).get("enabled", false)):
+		out.append(String(scene.wind.sound))      # the one wind bed (AudioScene); it stands down when the biome beds are on
 	return out
 
 
@@ -460,7 +467,8 @@ func _warm_run() -> void:
 ## The recipe for an id, or an empty dictionary.
 func _recipe(id: String) -> Dictionary:
 	if id.begins_with("amb."):
-		return world.get("beds", {}).get(id.substr(4), {})
+		var bed: String = id.substr(4)
+		return scene.get("beds", {}).get(bed, world.get("beds", {}).get(bed, {}))
 	if id.begins_with("surf."):
 		return world.get("sounds", {}).get(id, {})
 	if id.begins_with("drone."):
@@ -493,4 +501,4 @@ func _recipe(id: String) -> Dictionary:
 		var voice: String = parts[1]
 		var gesture: String = ".".join(parts.slice(2))
 		return grunts.get("voices", {}).get(voice, {}).get("gestures", {}).get(gesture, {})
-	return impacts.get("sounds", {}).get(id, {})
+	return impacts.get("sounds", {}).get(id, scene.get("sounds", {}).get(id, {}))

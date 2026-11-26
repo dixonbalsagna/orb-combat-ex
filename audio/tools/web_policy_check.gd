@@ -108,6 +108,12 @@ func _run() -> void:
 	var act0: int = v.active()
 	ok(not v.play(nr, 0.0, 1.0) and w.plays.size() == before and v.held == held0 + 1 and v.active() == act0, "while the page's context is not running the cue is held: nothing is queued for a click, no Godot player starts on the frozen engine context, and it is counted as held, not dropped")
 	ok(v.dropped == 0, "a held cue is not a drop")
+	var bed := cue("impact.heavy")
+	bed.loop = true
+	bed.group = "policy.bed"
+	ok(v.play(bed, 0.0, 1.0) and v.held == held0 + 1, "a loop is not held: it takes one Godot voice and sounds when the page wakes (a held loop would never start)")
+	v.stop_group("policy.bed", 0)
+	await process_frame
 	w.is_running = true
 
 	print("3. the voices' rules hold for page voices")

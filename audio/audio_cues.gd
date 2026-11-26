@@ -49,6 +49,7 @@ var world: AudioWorld                   # biome sound: the beds and the surfaces
 var tug: AudioTug                     # the beam struggle's (audio_tug.gd), parked behind data/tug_cues.json `enabled`
 var coop: AudioCoop                   # the brink's call, the clash push, the pad's refusal knock, the charge stages (audio_coop.gd), parked behind data/coop_cues.json `enabled`
 var moments: AudioMoments             # a beam's charge and fire, the KO, the big blows, a launch, the meteor's landing (audio_moments.gd), parked behind data/moment_cues.json `enabled`
+var scene: AudioScene                 # the wind bed and the buildings (audio_scene.gd), switches in data/scene_cues.json
 
 
 func _init(p_bank: AudioBank = null) -> void:
@@ -60,6 +61,7 @@ func _init(p_bank: AudioBank = null) -> void:
 	world = AudioWorld.new(self)
 	moments = AudioMoments.new(self)
 	coop = AudioCoop.new(self)
+	scene = AudioScene.new(self)
 	reset(1)
 
 
@@ -74,6 +76,7 @@ func reset(p_seed: int) -> void:
 	world.reset()
 	moments.reset()
 	coop.reset()
+	scene.reset()
 
 
 ## One tick's events, in order. Returns the cues to play.
@@ -106,6 +109,7 @@ func consume(S: SimState, events: Array) -> Array:
 	tug.after(S, out)
 	carry.after(S, out)
 	world.consume(S, events, out)
+	scene.consume(S, events, out)
 	return out
 
 

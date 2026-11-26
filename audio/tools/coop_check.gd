@@ -14,6 +14,7 @@ var fails: int = 0
 func _initialize() -> void:
 	bank = AudioBank.new()
 	cues = AudioCues.new(bank)
+	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
 	_run.call_deferred()
 
 
@@ -103,6 +104,7 @@ func _run() -> void:
 	var T2 := SimCore.createSim()
 	SimCore.newMatch(T2, 7, {}, {"fights": 2})
 	var cm := AudioCues.new(bank)
+	cm.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
 	cm.coop.cfg["enabled"] = true
 	cm.reset(7)
 	ok(T2.stage != null and T2.stage.fights.size() == 2 and T2.stage.cur == 0, "a two-fight match, fight 0 in S")
@@ -116,6 +118,7 @@ func _run() -> void:
 	ok(cm.consume_others(T2, [[cue("beam_fire", "", 1), cue("stick_refused", "right", 1, {"source": "ki"}), cue("stick_stage", "2", 1, {"k": 2.0, "n": 6.0})]]).is_empty(), "nothing else in another fight is heard (its distant mix is a proposal)")
 	ok(cm.consume_others(T2, []).is_empty(), "an empty list is nothing")
 	var one := AudioCues.new(bank)
+	one.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
 	one.coop.cfg["enabled"] = true
 	ok(one.consume_others(S, [[cue("brink_call", "p1", 0)]]).is_empty(), "a match of one fight reads no other list")
 	SimCore.dispose(T2)
@@ -184,6 +187,7 @@ func _run() -> void:
 			var M := SimCore.createSim()
 			SimCore.newMatch(M, sd)
 			var cx := AudioCues.new(bank)
+			cx.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
 			cx.coop.cfg["enabled"] = true
 			cx.reset(sd)
 			var t: int = 0
@@ -219,6 +223,7 @@ func _run() -> void:
 		var M2 := SimCore.createSim()
 		SimCore.newMatch(M2, sd, {"p1": true, "p2": true, "p3": true, "p4": true}, {"intro": false, "fights": 2, "cross": true})
 		var c2 := AudioCues.new(bank)
+		c2.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
 		c2.coop.cfg["enabled"] = true
 		c2.reset(sd)
 		var t2: int = 0

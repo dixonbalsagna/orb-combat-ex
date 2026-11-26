@@ -39,6 +39,7 @@ func _initialize() -> void:
 			max_ticks = int(a.substr(8))
 	bank = AudioBank.new()
 	cues = AudioCues.new(bank)
+	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
 	_run.call_deferred()
 
 
@@ -710,6 +711,7 @@ func _run_match(sd: int, with_world: bool, setup: Dictionary = {}) -> Array:
 	var M := SimCore.createSim()
 	SimCore.newMatch(M, sd, {}, setup)
 	var c := AudioCues.new(bank)
+	c.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
 	c.world.cfg["enabled"] = with_world
 	c.reset(sd)
 	var spent: int = 0

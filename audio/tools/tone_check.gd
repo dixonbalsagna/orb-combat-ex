@@ -43,6 +43,14 @@ const LIMITS: Dictionary = {
 	"block.perfect": [450.0, 0.02],
 	"drone.coil": [300.0, 0.01],
 	"arena.shift": [450.0, 0.02],
+	"build.hit": [750.0, 0.06],
+	"build.crack": [800.0, 0.07],
+	"build.glass": [1000.0, 0.08],
+	"build.floors": [400.0, 0.02],
+	"build.fall": [800.0, 0.07],
+	"ui.move": [500.0, 0.02],
+	"ui.confirm": [500.0, 0.02],
+	"ui.back": [500.0, 0.02],
 }
 var fails: int = 0
 
@@ -139,7 +147,7 @@ func spectrum(bank: AudioBank, id: String) -> Array:
 func _run() -> void:
 	var bank := AudioBank.new()
 	print("%-22s %9s   %s" % ["sound", "heard", "centroid and share of the heard energy: under 250 | 250-1k | 1-2k | 2-4k | over 4k  (first 64 ms)"])
-	var ids: Array = ["impact.light", "impact.light.lite", "impact.medium", "impact.medium.grind", "impact.heavy", "impact.guard", "impact.double", "impact.absorbed", "impact.whiff", "energy.bolt", "energy.blast", "charge.tick.heavy", "charge.tick.light", "charge.hum", "perfect.tok", "ui.launcher", "tug.pulse", "tug.surge", "tug.lock", "tug.fall", "drone.bed.lo", "drone.bed.hi", "tug.tock", "tug.tick", "tug.crack", "grip.clasp", "grip.creak", "grip.thud", "grip.refuse", "form.ready", "brake.skid", "rush.whoosh", "block.perfect", "drone.coil", "arena.shift"]
+	var ids: Array = ["impact.light", "impact.light.lite", "impact.medium", "impact.medium.grind", "impact.heavy", "impact.guard", "impact.double", "impact.absorbed", "impact.whiff", "energy.bolt", "energy.blast", "charge.tick.heavy", "charge.tick.light", "charge.hum", "perfect.tok", "ui.launcher", "tug.pulse", "tug.surge", "tug.lock", "tug.fall", "drone.bed.lo", "drone.bed.hi", "tug.tock", "tug.tick", "tug.crack", "grip.clasp", "grip.creak", "grip.thud", "grip.refuse", "form.ready", "brake.skid", "rush.whoosh", "block.perfect", "drone.coil", "arena.shift", "build.hit", "build.crack", "build.glass", "build.floors", "build.fall", "ui.move", "ui.confirm", "ui.back"]
 	for id in ids:
 		if not bank.has_sound(id):
 			continue

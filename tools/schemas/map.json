@@ -764,6 +764,10 @@
       "schema": "audio-world-cues.schema.json"
     },
     {
+      "match": "audio/data/scene_cues.json",
+      "schema": "audio-scene-cues.schema.json"
+    },
+    {
       "match": "data/fight/catastrophe.json",
       "schema": "fight-catastrophe.schema.json"
     },
