@@ -1,65 +1,95 @@
 {
-  "_why": "The window each clip is read at in the runner's nightly (the EP's decision of 2026-11-14: a runner cannot read a whole clip, so each clip is read as a window at its worst moment, collapse at 60 ticks; the full reading stays a local run on Orb's PC). skip is run-pixels.mjs's --skip (ticks run without a picture first; the window starts at tick skip + 1). A clip with no entry is read from tick 1 for defaultTicks, the speed trial's way. 'from' says how the moment was found: an entry that has not been measured says so. tools/flash/nightly-windows.mjs --check reads this file. capMin is the clip's time cap in minutes (default defaultCapMin): the ticks skipped before a window cost time too, about 2.2 s a tick on a runner (run 43580079641: a skip of 950 plus 76 captured ticks used the 45 minutes), so a window far into a clip needs a longer cap than its captured ticks do. The analyser counts no change in the first 60 frames of a clip (its warm-up) and the two-second memory reading in the first 120, so a window needs more than 61 ticks, and about 120 ticks of lead-in before the moment it is meant to catch.",
+  "_why": "The window each clip is read at in the runner's nightly (the EP's decision of 2026-11-14: a runner cannot read a whole clip, so each clip is read as a window at its worst moment, collapse at 60 ticks; the full reading stays a local run on Orb's PC). skip is run-pixels.mjs's --skip (ticks run without a picture first; the window starts at tick skip + 1). A clip with no entry is read from tick 1 for defaultTicks, the speed trial's way. 'from' says how the moment was found: an entry that has not been measured says so. tools/flash/nightly-windows.mjs --check reads this file. capMin is the clip's time cap in minutes (default defaultCapMin): the ticks skipped before a window cost time too, about 2.2 s a tick on a runner (run 43580079641: a skip of 950 plus 76 captured ticks used the 45 minutes), so a window far into a clip needs a longer cap than its captured ticks do. The analyser counts no change in the first 60 frames of a clip (its warm-up) and the two-second memory reading in the first 120, so a window needs more than 61 ticks, and about 120 ticks of lead-in before the moment it is meant to catch. Each window names what it `holds`; tools/flash/window-check.mjs (in CI) fails when the headless run no longer has that event in the window's counted part (after a clip's first 60 frames).",
   "defaultTicks": 120,
   "clips": {
     "collapse-normal": {
-      "skip": 990,
-      "ticks": 180,
+      "skip": 0,
+      "ticks": 300,
       "capMin": 210,
-      "from": "Measured 2026-11-14 (hardware, 960x540, f1f91f45): full clip PASS at primary 2, worst second events at ticks 1111, 1132, 1145, 1151; the window (180 ticks from 991, with the 120 ticks of lead the memory reading needs) read the same ticks, the same primary 2 and memory 2. Not measured on a runner: collapse costs 20 to 50 s a tick there plus about 2 s a skipped tick, so the cap is 210 minutes."
+      "holds": [
+        "building_fall"
+      ],
+      "from": "2026-11-26, game of main 4db9917b: buildings fall at ticks 93, 243 and 543 only; the window holds the first two and the full clip's worst second (local reading, hardware 960x540: window 1 / 0 / 1 / 1, the full clip 1). Replaces ticks 991 to 1170, which held no falling building."
     },
     "collapse-reduced": {
-      "skip": 1340,
-      "ticks": 160,
+      "skip": 0,
+      "ticks": 300,
       "capMin": 210,
-      "from": "Measured 2026-11-14 (hardware, 960x540, f1f91f45): full clip OVER our gate at primary 3 (memory 2.5), worst second events at ticks 1465 to 1499, the end of the clip (the worst moment may run on past tick 1500); the window (160 ticks from 1341) read the same ticks, primary 3 and memory 2.5. A window of 130 from 1371 read the same primary but a memory of 1: the memory reading ignores its first 120 frames. Not measured on a runner (cap 210 minutes)."
+      "holds": [
+        "building_fall"
+      ],
+      "from": "as collapse-normal (window 1 / 0 / 1 / 0.5, the full clip 1). Replaces ticks 1341 to 1500, which held no falling building."
     },
     "clash-normal": {
-      "skip": 950,
-      "ticks": 170,
+      "skip": 0,
+      "ticks": 240,
       "capMin": 150,
-      "from": "ticks 951 to 1120 (170): the full local reading of clash-normal (960x540, hardware, 2026-11-14, HEAD 97df40b8 export) has its worst second at ticks 1075 to 1113 and a two-second memory of 4; this window read the same ticks (one a tick off), the same primary 4.5 and a memory of 4.5. A window from tick 1011 (125 ticks) read the same worst second but a memory of 0.5, because the memory reading ignores its first 120 frames: so the window starts at 951. Cost on a runner: about 35 minutes of skipped ticks plus about 23 of captured ones. Run 43585295274 (software rendering on a runner, cap 90 min) read this window in 5173 s (86 min): primary 4.5, two-second memory 4.5, the same as the hardware full reading; the cap is now 150 because three other clash windows of the same run timed out at 90."
+      "holds": [
+        "beam_outcome:CLASH"
+      ],
+      "from": "2026-11-26, game of main 4db9917b with the changed clash scene (nothing for 90 ticks, so the clash at tick 140 is past the uncounted first 60). The window is the first beam clash, on one screen: local reading (hardware, 960x540) 1 / 0 / 1 / 1, normal and reduced. NOT the clip's worst second: the full clip reads 2.5 at ticks 1454 to 1495 (a melee in split screen), which the nightly does not read. The second clash (tick 1140) happens in split screen with no flare. Replaces ticks 951 to 1120, which held no clash from about 11-21 on."
     },
     "clash-reduced": {
-      "skip": 950,
-      "ticks": 170,
+      "skip": 0,
+      "ticks": 240,
       "capMin": 150,
-      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
+      "holds": [
+        "beam_outcome:CLASH"
+      ],
+      "from": "as clash-normal (read locally in both modes)"
     },
     "clash-night-normal": {
-      "skip": 950,
-      "ticks": 170,
+      "skip": 0,
+      "ticks": 240,
       "capMin": 150,
-      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
+      "holds": [
+        "beam_outcome:CLASH"
+      ],
+      "from": "as clash-normal (same scene and seed; the night sky not read locally)"
     },
     "clash-night-reduced": {
-      "skip": 950,
-      "ticks": 170,
+      "skip": 0,
+      "ticks": 240,
       "capMin": 150,
-      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
+      "holds": [
+        "beam_outcome:CLASH"
+      ],
+      "from": "as clash-normal (same scene and seed; the night sky not read locally)"
     },
     "signature-normal": {
       "skip": 0,
       "ticks": 180,
       "capMin": 100,
+      "holds": [
+        "beam_outcome"
+      ],
       "from": "Measured 2026-11-14 (hardware, 960x540, export of f1f91f45): the full clip reads its worst second at ticks 76 to 129 (events 76, 82, 110, 114, 125, 127, 129), so the window starts at tick 1 and runs 180 ticks. The reading is on the line of 3 and moves by half a flash to one flash from run to run: the full clip read 3.5 and then 3, the window read 3, 2.5 and 2.5 (the reduced window matched its full reading exactly). Treat a signature window as a tripwire within one flash of the line, not as the clip's number."
     },
     "signature-reduced": {
       "skip": 0,
       "ticks": 180,
       "capMin": 100,
+      "holds": [
+        "beam_outcome"
+      ],
       "from": "Measured 2026-11-14 (hardware, 960x540, export of f1f91f45): the full clip reads its worst second at ticks 78 to 125 (events 78, 81, 82, 86, 112, 115, 125), so the window starts at tick 1 and runs 180 ticks. The reading is on the line of 3 and moves by half a flash to one flash from run to run: the full clip read 3.5 and then 3, the window read 3, 2.5 and 2.5 (the reduced window matched its full reading exactly). Treat a signature window as a tripwire within one flash of the line, not as the clip's number."
     },
     "rushcity-normal": {
       "skip": 640,
       "ticks": 240,
       "capMin": 150,
+      "holds": [
+        "shot_hit"
+      ],
       "from": "Measured 2026-11-21 (hardware, 960x540, export of main d168a518, nightly page words, machine load 21 to 56 percent, 12 frames a second): the full clip FAILS at primary 4.5, area-15% 6, two-second memory 4.5, red 0; the worst second is ticks 761 to 815 (events 761, 785, 787, 789, 796, 799, 807, 810, 815). The window of 240 ticks from 641 (120 ticks of lead-in for the memory) picks the same events (121 to 175 of the window) and the same four readings, 4.5 / 0 / 6 / 4.5. Cost on a runner not measured: 640 skipped ticks at about 2.2 s is about 24 minutes, then 240 captured ticks; capMin 150 allows about 2 minutes a captured tick."
     },
     "rushcity-reduced": {
       "skip": 640,
       "ticks": 240,
       "capMin": 150,
+      "holds": [
+        "shot_hit"
+      ],
       "from": "Measured 2026-11-21 (same export, same machine and words): the full clip FAILS at primary 5.5, area-15% 7, two-second memory 5.5, red 0; the worst second is ticks 785 to 841 (events 785, 787, 789, 796, 799, 807, 809, 815, 825, 839, 841). The window of 240 ticks from 641 picks the same events and the same readings, 5.5 / 0 / 7 / 5.5. Same cost note as rushcity-normal."
     }
   },

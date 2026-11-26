@@ -323,6 +323,27 @@ func _stick(dev: int, x: float) -> void:
 	main.host.hub.pad_stick(dev, v, 0.0)
 
 
+## The clash: both human, ki kept full, both firing the signature together from range, so beams meet more than once and inside the measured window. Nothing for the first 90 ticks (a clip's first 60 frames
+## count no change); then 380 ticks of RT held with B every 30, and 120 ticks let go, walking apart, so the next signature is a fresh press from range. Changed 2026-11-26: held from tick 0 and never let go, the
+## buttons gave one clash and then melee (the nightly's window held no clash). The same in tools/flash/flash_worst.gd and render/tools/flash_capture.gd (the drift check).
+func _clash(t: int, S: SimState) -> void:
+	for f in S.fighters:
+		f.ki = 100.0
+	var u: int = (t - 90) % 500
+	var on: bool = t >= 90 and u < 380
+	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
+	if t >= 90 and u >= 380 and absf(dx) < 900.0:
+		_stick(0, -signf(dx))
+		_stick(1, signf(dx))
+	else:
+		_walk(S, 1500.0)
+	# the signature is the power layer's B (arena layout: RT held, then B); a base B is the heavy since the three-strength brawl
+	_btn(0, "rt", on)
+	_btn(1, "rt", on)
+	_btn(0, "east", on and u % 30 >= 3 and u % 30 < 15)
+	_btn(1, "east", on and u % 30 >= 3 and u % 30 < 15)
+
+
 func _walk(S: SimState, near: float) -> void:
 	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)   # b minus a: positive when fighter 1 is to the right
 	var far: bool = absf(dx) > near
@@ -341,15 +362,8 @@ func drive(sc: String, t: int, S: SimState) -> void:
 			if t == 0:
 				_to_the_city(S)
 			_mash(t, S)
-		"clash":        # both human, ki kept full, both firing the signature together every 30 ticks
-			_walk(S, 1500.0)
-			for f in S.fighters:
-				f.ki = 100.0
-			# the signature is the power layer's B (arena layout: RT held, then B); a base B is the heavy since the three-strength brawl
-			_btn(0, "rt", true)
-			_btn(1, "rt", true)
-			_btn(0, "east", t % 30 < 12)
-			_btn(1, "east", t % 30 < 12)
+		"clash":
+			_clash(t, S)
 		"signature":    # player one firing the signature on a cycle against the AI
 			_signature(t, S)
 		"signaturecity":    # the same, started beside the tallest tower

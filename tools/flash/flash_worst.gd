@@ -5,7 +5,7 @@ extends SceneTree
 ##   mashcity    the same mash in the re-laid city: the fighters set down beside its tallest tower, the towers at their backs (Rendering, docs/rendering/lanes-camera-flash.md clip 1)
 ##   signaturecity  the signature scene started beside the tallest tower of the re-laid city (Legal's list, RL-128)
 ##   rushcity    P1 sprints along the front street past the towers and the crowd, turning every 150 ticks; the AI fights him (camera travel at speed over contrasty scenery)
-##   clash       both human, ki kept full, both firing the signature together every 30 ticks, so beams meet
+##   clash       both human, ki kept full, both firing the signature together from range, again and again, so beams meet (_clash)
 ##   signature   P1 human firing the signature on a cycle against the AI
 ##   transform   AI against AI, the form made ready for both at fixed ticks three times (tier 1 to 4: the game never goes past 4), so the transformation plays through again and again
 ##   collapse    AI against AI, with building collapses staged in the sim's own way (WorldStructures.explode through a row of towers, again and again)
@@ -35,6 +35,7 @@ var slots_override: Array = []
 var seed_override: Array = []
 var held: Dictionary = {}        # key code -> true: what this tool has pressed, so a key is only sent when it changes
 var events: Dictionary = {}      # event type (and beam_outcome:kind) -> count, for the run being played
+var marks: Dictionary = {}       # the ticks of the events a nightly window is there to hold (tools/flash/window-check.mjs): "beam_outcome:<kind>", "building_fall", "shot_hit", "sig"
 var body_on: Array = [false, false]
 var body_starts: Array = [[], []]   # per fighter, the ticks at which the body hit flash began (by the rule Rendering uses)
 var failed: bool = false
@@ -173,11 +174,17 @@ func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = []) 
 	_release_all()
 	_claim_pads(ai)
 	events.clear()
+	marks.clear()
 	body_on = [false, false]
 	body_starts = [[], []]
 	var cb := func(evs: Array, _lines: Array):
 		for e in evs:
 			events[e.type] = int(events.get(e.type, 0)) + 1
+			var mark: String = "beam_outcome:%s" % str(e.kind) if e.type == "beam_outcome" else ("sig" if e.type == "attack" and str(e.kind) == "sig" else (str(e.type) if e.type in ["building_fall", "shot_hit"] else ""))
+			if mark != "":
+				if not marks.has(mark):
+					marks[mark] = []
+				marks[mark].append(host.ticks)
 			if e.type == "beam_outcome":
 				var k: String = "beam_outcome:%s" % str(e.kind)
 				events[k] = int(events.get(k, 0)) + 1
@@ -211,7 +218,7 @@ func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = []) 
 	var sm: Dictionary = fl.summary()
 	return {
 		"scenario": sc, "seed": seed, "slots": [str(host.S.fighters[0].id), str(host.S.fighters[1].id)], "reduced": reduced, "reduced_seen": reduced_seen, "reduce_flashing": rf_seen, "flash_calm": calm_seen, "ticks": host.ticks, "cap": sm["cap"],
-		"rows": fl.log_rows(), "asked": int(sm["granted"]) + int(sm["refused"]), "summary": sm, "events": events.duplicate(),
+		"rows": fl.log_rows(), "asked": int(sm["granted"]) + int(sm["refused"]), "summary": sm, "events": events.duplicate(), "marks": marks.duplicate(true),
 		"proxy": {"body_hit": {"seconds": RenderLook.HIT_FLASH_S, "worst_per_fighter": [_worst_starts(body_starts[0]), _worst_starts(body_starts[1])], "worst_flashes_per_second": maxi(_worst_starts(body_starts[0]), _worst_starts(body_starts[1])), "starts": [body_starts[0].size(), body_starts[1].size()]}},
 	}
 
@@ -284,6 +291,27 @@ static func _tap(t: int, gap: int, phase: int) -> bool:
 	return ((t + phase) % gap) < 2
 
 
+## The clash: both human, ki kept full, both firing the signature together from range, so beams meet more than once and inside the measured window. Nothing for the first 90 ticks (a clip's first 60 frames
+## count no change); then 380 ticks of RT held with B every 30, and 120 ticks let go, walking apart, so the next signature is a fresh press from range. Changed 2026-11-26: held from tick 0 and never let go, the
+## buttons gave one clash and then melee (the nightly's window held no clash). The same in tools/flash/flash_worst.gd and render/tools/flash_capture.gd (the drift check).
+func _clash(t: int, S: SimState) -> void:
+	for f in S.fighters:
+		f.ki = 100.0
+	var u: int = (t - 90) % 500
+	var on: bool = t >= 90 and u < 380
+	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
+	if t >= 90 and u >= 380 and absf(dx) < 900.0:
+		_stick(0, -signf(dx))
+		_stick(1, signf(dx))
+	else:
+		_walk(S, 1500.0)
+	# the signature is the power layer's B (arena layout: RT held, then B); a base B is the heavy since the three-strength brawl
+	_btn(0, "rt", on)
+	_btn(1, "rt", on)
+	_btn(0, "east", on and u % 30 >= 3 and u % 30 < 15)
+	_btn(1, "east", on and u % 30 >= 3 and u % 30 < 15)
+
+
 func _walk(S: SimState, near: float) -> void:
 	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)   # b minus a: positive when fighter 1 is to the right
 	var far: bool = absf(dx) > near
@@ -300,14 +328,7 @@ func _drive(sc: String, t: int, S: SimState) -> void:
 				_to_the_city(S)
 			_mash(t, S)
 		"clash":
-			_walk(S, 1500.0)
-			for f in S.fighters:
-				f.ki = 100.0
-			# the signature is the power layer's B (arena layout: RT held, then B); a base B is the heavy since the three-strength brawl
-			_btn(0, "rt", true)
-			_btn(1, "rt", true)
-			_btn(0, "east", t % 30 < 12)
-			_btn(1, "east", t % 30 < 12)
+			_clash(t, S)
 		"signature":
 			_signature(t, S)
 		"signaturecity":

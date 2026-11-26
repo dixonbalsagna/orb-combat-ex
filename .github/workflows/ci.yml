@@ -187,7 +187,7 @@ jobs:
       - name: Scheduled flash reading verdict self-test (the take-down line of 3 on every reading, red read directly, a missing clip is never a pass)
         run: node tools/flash/nightly-ci-selftest.mjs
       - name: Nightly flash windows (the data file is whole and no window runs past a clip; the options the workflow reads)
-        run: node tools/flash/nightly-windows-selftest.mjs && node tools/flash/nightly-windows.mjs --check
+        run: node tools/flash/nightly-windows-selftest.mjs && node tools/flash/nightly-windows.mjs --check && node tools/flash/window-check-selftest.mjs
       - name: Four-readings self-test (a clip captured at two sizes and read at two scales, the worst counts, the AI-seed clips staged; Legal RL-209)
         run: node tools/flash/readings-selftest.mjs
       - name: Pixel run self-test (the real run-pixels.mjs against stand-in capture and analysis, four readings, the folders, the staged seed clips, --sizes, --capture-only)
@@ -279,6 +279,9 @@ jobs:
           path: ${{ runner.temp }}/flash
       - name: Recount the register's log (every scenario of the required set, from all five sets)
         run: node tools/flash/check-log.js "${RUNNER_TEMP}/flash"
+      - name: Each nightly window still holds the event it is there to read (the headless runs against tools/flash/nightly-windows.json)
+        if: always()
+        run: node tools/flash/window-check.mjs "${RUNNER_TEMP}/flash"
 
   # The GDScript port against the JS reference sim's golden vectors, plus the render
   # checks. The sim job above does not set GODOT, so `npm test --prefix sim` skips its
