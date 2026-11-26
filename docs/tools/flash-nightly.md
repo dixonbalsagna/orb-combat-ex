@@ -128,3 +128,7 @@ A window reads whatever is at its ticks. When the game changes, the moment it wa
 - It says the event is there, not that the window is the clip's worst second. That is still a local full reading.
 - **The clash scene changed:** nothing for 90 ticks, then the signature held in cycles of 500, so beams meet twice (ticks 140 and 1140) and the first is past the uncounted start. The second meets in split screen, where no flare shows.
 - Re-measure the windows after any change that moves the matches, and re-record the baseline from nightly runs after that (by hand, with the EP's word).
+
+## Software readings draw no buildings (2026-11-26)
+
+The runner draws in software (SwiftShader). There `building.gdshader` draws no building at all, so every software reading of a clip with buildings on screen is of bare ground and sky, not of the game (`docs/rendering/runs/d9bc2f07/flash-software.txt`). Collapse-reduced read 4 on the runner and 1 on a card for the same window. Until Rendering's fix lands, treat the collapse and rushcity readings (and any clip showing buildings) as invalid; the baseline file carries the warning and every night's page prints it. After the fix: two dispatched nightlies, then re-record.
