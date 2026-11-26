@@ -1,6 +1,6 @@
 # The two-hour soak of the built desktop program (parked; QA, path job 14, 2026-11-25)
 
-**State:** the harness is built (`qa/soak/soak.mjs`, `qa/soak/soak_probe.gd`) and proved on today's main (20a483d8) on Windows. **The real two-hour run waits for the GW1c commit**, in a quiet window, at below-normal priority. The Linux half is a draft workflow (`linux-soak.yml` here), not live and never run.
+**State:** the harness is built (`qa/soak/soak.mjs`, `qa/soak/soak_probe.gd`) and proved on today's main (20a483d8) on Windows. **The real two-hour run waits for the GW1c commit**, in a quiet window, at below-normal priority. The Linux half is the workflow `.github/workflows/linux-soak.yml` (Tools'; Legal RL-279).
 
 ## Running it
 
@@ -48,10 +48,11 @@ Reported, with no pass line (QA does not invent a budget): memory after warm-up,
 ## Limits
 
 - Headless: no graphics card memory, no drivers, no real frame rate on a screen, and no sound device. A soak with a window, played by a person or on a spare PC, is a different test.
-- `--frames=2000000000` is passed to the program (main's own switch for scripted runs): without it the first-run card holds the match for a key press. It also skips the flashing notice. There is no display here, and the package locks Reduce flashing on.
+- `--frames=2000000000` is passed to the program (main's own switch for scripted runs). **It only skips the How to play card**, which would otherwise hold the match for a key press. It does not skip the flashing notice: a locked build refuses the words that would (`UiHud.bypass_allowed`, RL-206), and a headless run never raises the notice at all (`UiHud.notice_auto_allowed`).
+- Legal allows the soak, on this PC and in CI, under RL-279's conditions: `--headless` always (a run with any display is not covered), no new switch or code that skips the notice, the probe and its `override.cfg` stay in the scratch copy, only text and numbers kept or uploaded, and the result is a stability and memory reading only (it counts toward no flash gate).
 - The probe's computer is the game's default level; no person's play, menus or pause are exercised.
-- **Linux is untested.** The harness has the Linux branches (`tar`, `/proc/<pid>/status`), but no Linux machine here has run them.
+- **Linux was not tried by this trial.** The harness has the Linux branches (`tar`, `/proc/<pid>/status`); no Linux machine here can run them, so the CI workflow is their first run.
 
-## The Linux half (`linux-soak.yml`)
+## The Linux half (`.github/workflows/linux-soak.yml`)
 
-A dispatch-only workflow that builds a commit on main the way `linux-first-run.yml` does and soaks it headless for two hours: no display, nothing captured, only text and numbers uploaded, no program kept (RL-262). The repository is public, so the runner minutes (about 125 a run) cost nothing. It passes `tools/check-workflows.mjs`. Before it goes live: Legal's word on the `--frames` switch (RL-270 covered a virtual display and a pressed key, not this), then Tools moves it into `.github/workflows/`.
+Tools' dispatch-only workflow (it started from QA's draft): it builds a commit on main the way `linux-first-run.yml` does and soaks it headless with `qa/soak/soak.mjs`: no display, nothing captured, only text and numbers uploaded, no program kept (RL-262, RL-279). The repository is public, so the runner minutes (about 125 for a two-hour run) cost nothing.

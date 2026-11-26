@@ -63,7 +63,8 @@ const gameLog = createWriteStream(join(scratch, 'stdout.log'));
 const lines = [];
 const memory = [];   // { t, workingMiB, privateMiB }
 const t0 = Date.now();
-// --frames=<huge> is main's own switch for a scripted run: no first-run card and no flashing notice to hold the match (the package locks Reduce flashing on regardless).
+// --frames=<huge> is main's own switch for a scripted run. Here it only skips the How to play card, which would hold the match. It does not skip the flashing notice: a locked build refuses the words that
+// would (UiHud.bypass_allowed, RL-206), and a headless run never raises the notice at all (UiHud.notice_auto_allowed). Headless always (RL-279: a run with any display is not covered).
 const args = ['--headless', '--max-fps', String(maxFps), '--', '--frames=2000000000', `--soak-seconds=${seconds}`, `--soak-sample=${every}`, `--soak-seed=${seed}`, `--soak-cap=${cap}`];
 console.log(`soak: ${program.split(/[\\/]/).pop()} for ${seconds} s (sample ${every} s), build ${build.commit ? build.commit.slice(0, 8) : 'unknown'}; scratch ${scratch}`);
 const child = spawn(program, args, { cwd: gameDir, env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
