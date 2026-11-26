@@ -4,3 +4,17 @@ k1medr  collapse-reduced  : 960x540 s1 p1 a1 m1 @546 | 960x540 s2 p2 a2 m1 @144 
 k2medr  collapse-reduced  : 960x540 s1 p1 a1 m1 @293 | 960x540 s2 p1 a2 m1 @293 | 1024x768 s1 p1 a1 m1.5 @547 | 1024x768 s2 p1 a1 m1.5 @151
 k1rcr   rushcity-reduced  : 960x540 s1 p3 a3.5 m3 @574 | 960x540 s2 p3 a3.5 m3 @574 | 1024x768 s1 p3.5 a3.5 m3.5 @697 | 1024x768 s2 p3.5 a3.5 m3.5 @697
 k2rcr   rushcity-reduced  : 960x540 s1 p2.5 a2.5 m3 @697 | 960x540 s2 p3 a3 m3 @574 | 1024x768 s1 p3.5 a3.5 m3.5 @697 | 1024x768 s2 p4 a4 m3.5 @574
+
+## Rushcity's tick 574 (1024x768 scale 2), attributed. k5 = k2 with SCROLL_MAX_REDUCED back at 0.045 (cd04's cut gate kept).
+k5rcr   rushcity-reduced : 960x540 s1 p3 a3.5 m3.5 @574 | 960x540 s2 p3 a3.5 m3.5 @574 | 1024x768 s1 p3.5 a3.5 m3.5 @697 | 1024x768 s2 p3.5 a3.5 m3.5 @697
+k5medr  collapse-reduced : 960x540 s1 p1 a1 m1 @546 | 960x540 s2 p2 a2 m1 @144 | 1024x768 s1 p1 a1 m1.5 @547 | 1024x768 s2 p1 a1 m1.5 @547
+k5 reads as k1 in both clips, reading for reading: the cut gate changes neither clip; the scroll limit at 0.03 is what moves both.
+Events at 1024x768 s2, ticks 540-720: k1 has 598-, 601-, 608+, 616+; k2 has 598-, 601-, 605+, 609-, 613+ (one more pair). Frames 598-616: the same continuous pan across the houses in both, k2's a little behind (the 0.03 limit), no cut, no snap. The slower crossing splits one counted change into two.
+
+## AI seed 3, reduced, medium (run-pixels --seeds 3 --clip ai-3-reduced): k1 against k2
+k1ai3r  ai-3-reduced : 960x540 s1 p3 a3 m2 @3399 | 960x540 s2 p3 a3 m2 @3400 | 1024x768 s1 p2 a3 m2 @527 | 1024x768 s2 p2 a3 m2 @527
+k2ai3r  ai-3-reduced : 960x540 s1 p3 a3 m2 @3399 | 960x540 s2 p3 a3 m2 @3400 | 1024x768 s1 p2 a3 m2 @527 | 1024x768 s2 p3 a4 m2 @527
+k1 OVER GATE 3/3/2; k2 FAIL 3/4/2: at 1024x768 s2 the area-15% count has one more change at 573 (1.11 of the threshold), then 576.
+
+## The look gate (docs/camera/img/default-view-stack/cd04-look/, ignored: fighters)
+collapse-reduced-dh-vs-cd04 (t151, 293, 390, 547, 700, 1000; GIF) and ai3-reduced-dh-vs-cd04 (t500, 527, 540, 1200, 2400, 3399; GIF 400-700). The same pictures; at collapse 151 the base's panes show neither fighter where cd04's show both; at 293 cd04 frames the pair a little wider. No cut, fade, dissolve or blur.
