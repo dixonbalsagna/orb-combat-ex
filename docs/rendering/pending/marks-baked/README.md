@@ -65,9 +65,21 @@ It is a long gate, about 4 minutes at medium, so run it below normal priority. T
 
 **The EP's feet gate group needs this park:** `feet_check.gd` is not on main until it lands.
 
+## The look items (closed 2026-11-26)
+
+- **C-18, the default-look side-by-side of this form:** `runs/663b7c45/marks-baked-look.txt`, on main 663b7c45 + feet-ground, without and with this.
+  - The flash readings are identical with and without it, both modes, on collapse and the city signature. The city signature's failure is main's own, the same on both.
+  - In the reels (default look, every frame), the beam's grooves and the slides' trenches are drawn as dug ground and the fighters stand in them. Before, they were flat pale facets.
+  - No tower is drawn differently, except that a near building's see-through follows the fighters, who now stand lower in the groove.
+  - Side-by-sides are git-ignored in `img/sizes/marks-baked/`.
+- **C-04, the tower's four frames:** `runs/6a30b4c9/c04-tower.txt`. Read on Orb's replay with scratch logs, in the build as played and with the parks.
+  - The tower is drawn the same in both: stage, floor mask, floor cuts, footing, base, spread waves, blow-outs and marks.
+  - The gaps are the see-through around the beam's target: a 70-pixel circle cut in the tower in front of him, showing its rooms between floor plates. It sits at his chest as drawn.
+  - With the parks he stands on the drawn groove, 64 to 82 units higher than as played, where he stood sunk into ground without the groove. So the circle sits on the tower's floors.
+  - The footing guess was wrong: no tower's footing differs. This is the occlusion following the corrected body, not a fault in this park.
+  - The look of a see-through cut is Camera's and Art's creative rule.
+
 ## Owed before it lands
 
-- **C-04, the tower:** in Orb's-replay side-by-side (`runs/6a30b4c9/feet-orb-side-by-side.txt`), a tower behind the fight shows dark gaps between floors for four frames (ticks 5,210 to 5,240), with the feet parks only. VFX's `hash_check` gives identical hashes with and without them, so it is drawing. The likely cause is the beam's groove under the tower, now drawn, taking the tower's footing down. To settle it: read the tower's footing and drawn base at those ticks, with and without.
-- **C-18, a default-look side-by-side** of this form: this re-cut has none of its own.
 - **The web rebake cost** in a quiet window (Performance). The footprint ask queues more tiles per mark. The big frame-bench (`runs/0d9af28a/frame-bench-big.txt`, with this park in the candidate) shows the pool at most 294 of 800, but the fill's time is not readable on a capture (it runs on the steady clock).
 - **A dependency (World):** with the shipped data, the sum is crater bowls only, the vertex stage's share. Before `globe.flatten`, heaps, merges or `repeats` get producers, the split needs a fourth part from World (the crater bowls alone), or the vertex stage must draw the rest.

@@ -1,0 +1,35 @@
+# marks-baked's look gate (Rendering, 2026-11-26): mb0 = main 663b7c45 + feet_ground.diff, mb1 = mb0 + marks_baked.diff (sha1 00aaf9f8)
+mb0 export 0, errors 0
+mb1 export 0, errors 0
+# flash readings, worst of 4 (960x540 and 1024x768, scale 1 and 2), both modes
+## mb0 (mb0_flash)
+signaturecity-normal: FAIL, primary 11 general 0 red, area-15% 12, 2 s memory 8, 0 dips, 470s, worst of 4 readings (1024x768 at scale 1)
+signaturecity-reduced: FAIL, primary 10 general 0 red, area-15% 11, 2 s memory 7, 0 dips, 456s, worst of 4 readings (1024x768 at scale 2)
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 544s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 535s, worst of 4 readings (1024x768 at scale 1)
+## mb1 (mb1_flash)
+signaturecity-normal: FAIL, primary 11 general 0 red, area-15% 12, 2 s memory 8, 0 dips, 472s, worst of 4 readings (1024x768 at scale 1)
+signaturecity-reduced: FAIL, primary 10 general 0 red, area-15% 11, 2 s memory 7, 0 dips, 457s, worst of 4 readings (1024x768 at scale 2)
+collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 534s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 523s, worst of 4 readings (1024x768 at scale 1)
+# the reels in the default look (reduced), 960x540, every frame
+## mb0 (mb0_reel)
+signaturecity-reduced: FAIL, primary 8 general 0 red, area-15% 9, 2 s memory 7, 0 dips, 202s, worst of 2 readings (960x540 at scale 2)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 208s, worst of 2 readings (960x540 at scale 1)
+## mb1 (mb1_reel)
+signaturecity-reduced: FAIL, primary 8 general 0 red, area-15% 10, 2 s memory 7, 0 dips, 194s, worst of 2 readings (960x540 at scale 2)
+collapse-reduced: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 210s, worst of 2 readings (960x540 at scale 1)
+collapse-reduced: 1500 frames, 41 alike; ticks where the frames differ (over 50 pixels off by more than 2): 8-88 (max 2423), 91-138 (max 2541), 141-183 (max 3024), 188-191 (max 206), 194-206 (max 398), 208-225 (max 311), 228-238 (max 160), 241-275 (max 394), 280-281 (max 58), 287-408 (max 348), 410-419 (max 80), 427-427 (max 75), 430-1500 (max 30138)
+signaturecity-reduced: 1500 frames, 7 alike; ticks where the frames differ (over 50 pixels off by more than 2): 8-1500 (max 87419)
+# the side-by-sides (made by hand after the run: the script's loop lost its list to node's stdin), git-ignored, docs/rendering/img/sizes/marks-baked/:
+#   signaturecity-1 (ticks 300 to 380, stills 300, 340, 380): the beam's groove under the fighters is drawn, dug and darker, and they stand in it; before, the
+#     street ran flat under them. The framing, the buildings and the crowd are the same.
+#   signaturecity-2 (890 to 950, stills 900, 916, 940; the reel's largest difference after 346): the trench is drawn as dug ground with its walls; before, it was
+#     flat pale facets with hard edges. The fighters stand lower, in it. The patch by the right-hand building is the trench's back wall, not the building.
+#   signaturecity-3 (1300 to 1360, stills 1315, 1351): the near building's dithered see-through (it keeps a fighter in view behind it) covers more of its face
+#     with the park: it follows the fighters, who now stand lower in the groove. Both builds show it; no floor or gap changes on any tower.
+#   collapse-1 (440 to 500, stills 446, 471, 492; the collapse reel's largest): a slide's trench at the left drawn as a terrace of dug ground; before, jagged
+#     light and dark wedges. collapse-2 (660 to 720, still 692): the same ground later.
+# the towers: a scan of every second frame's upper band (rows 40 to 200) for pixels off by more than 8 found no tower drawn differently except through the
+#   see-through above; no floor gaps in either reel.
+# flash: identical readings with and without the park on all four clips (the city signature's failure is main's own, the same on both).

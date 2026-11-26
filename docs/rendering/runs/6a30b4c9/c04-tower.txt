@@ -1,0 +1,44 @@
+# C-04, the tower's four frames of gaps (Rendering, 2026-11-26): read on Orb's 16:46 play of 9 November (a private file), the build as played against
+# the same build with the feet parks as they were then (the trees of feet-orb-side-by-side.txt rebuilt: git archive 6a30b4c9 + the kept build's sim, data
+# and net + Tools' patchMain; + feet_lift.py + marks_baked.py). Each with scratch logs pushed to the page (never parked), through a scratch copy of Tools'
+# blackbox-clip that saves them; ticks 5190 to 5250 (the beam of 5220). Pictures (fighters, git-ignored): docs/rendering/img/sizes/c04/.
+#
+# What the logs show, five passes, the two builds side by side:
+#  1. Every _set_building of a tower (floors >= FLOORS_MIN), ticks 5195 to 5250: the damaged towers (553, 556, 557, 560, 604, 549) are set at the same ticks
+#     with the same stage, floor mask, hit points, floor cuts (none cleared), footing, base and base part, and the same stage-spread waves. The parks add five
+#     redraws of whole towers (448, 493, 559, 600, 607: stage 0, nothing cut) whose footing moved.
+#  2. Window blow-outs: none in either build in the window (no entry, no wave, no window written with panes out). The spread clock: identical.
+#  3. Held-blow marks: none on any tower in either build.
+#  4. Open floors: not asked for in either build.
+#  5. The see-through holes (pane_world.set_holes, OCCL_HOLE): the beam's target (Loupe, fighter 2) has a round hole of 70 px in both builds, cutting what
+#     stands nearer the camera than his chest. Its place is his chest AS DRAWN: with the parks he stands on the beam's groove, drawn (64 to 82 units higher
+#     than as played, where the groove was not drawn and he stood sunk into the ground). The table:
+#    # tick | Loupe's hole as played: chest (x, y), radius px, view distance | with the parks | chest higher by
+#    5220 | (390, 291) 70.0 px 3028 | (390, 355) 70.0 px 3030 | 64
+#    5221 | (386, 325) 70.0 px 2973 | (386, 355) 70.0 px 2974 | 30
+#    5222 | (368, 361) 70.0 px 2919 | (368, 434) 70.0 px 2922 | 74
+#    5223 | (337, 393) 70.0 px 2866 | (337, 453) 70.0 px 2869 | 59
+#    5224 | (293, 420) 70.0 px 2813 | (293, 454) 70.0 px 2815 | 34
+#    5225 | (246, 438) 70.0 px 2763 | (246, 513) 70.0 px 2767 | 75
+#    5226 | (215, 459) 70.0 px 2714 | (215, 539) 70.0 px 2719 | 80
+#    5227 | (202, 481) 70.0 px 2666 | (202, 562) 70.0 px 2672 | 81
+#    5228 | (206, 500) 70.0 px 2619 | (206, 581) 70.0 px 2625 | 81
+#    5229 | (225, 518) 70.0 px 2572 | (225, 597) 70.0 px 2578 | 79
+#    5230 | (235, 533) 70.0 px 2525 | (235, 596) 70.0 px 2530 | 64
+#    5231 | (234, 548) 70.0 px 2479 | (234, 629) 70.0 px 2487 | 81
+#    5232 | (229, 562) 70.0 px 2435 | (229, 641) 70.0 px 2443 | 79
+#    5233 | (228, 575) 70.0 px 2392 | (228, 653) 70.0 px 2399 | 78
+#    5234 | (227, 584) 70.0 px 2349 | (227, 661) 70.0 px 2356 | 77
+#    5235 | (226, 590) 70.0 px 2306 | (226, 670) 70.0 px 2314 | 80
+#    5236 | (226, 583) 70.0 px 2264 | (226, 664) 70.0 px 2273 | 82
+#
+# So the gaps are the see-through: a 70-pixel circle cut in the tower that stands in front of Loupe, showing its inside (the dark rooms between light floor
+# plates, building.gdshader's cut look). With the parks the circle sits on the tower's floors, higher by his lift; as played it sat lower, over a different
+# part (the scattered dark holes in the as-played frames). Both builds cut the tower; the parks only move the cut with the fighter's corrected height.
+# The tower itself is drawn the same in both. Not a fault in the parks: the occlusion feature follows the body as the ground now draws it.
+#
+# On the form that lands (main 663b7c45 + feet-ground + marks-baked): Orb's replay needs the 9 November sim, so it can't be played on it. The look gate on
+# that form (runs/663b7c45/marks-baked-look.txt, signaturecity-3) shows the same behaviour in today's look: the near building's see-through (now a dithered
+# cut, not rooms and plates) follows the fighters, who stand lower in the groove; no tower drawn differently otherwise, no floor gaps.
+# The look of a see-through cut (rooms and plates then, dither now) is Camera's and Art's creative rule (Orb, docs/ep/vision.md: gaps between floors without
+# supports), not the feet parks'.
