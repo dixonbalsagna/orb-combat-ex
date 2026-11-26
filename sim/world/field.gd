@@ -252,7 +252,7 @@ static func _read(F: Field, d: Array) -> void:
 		hh += (WorldPlanet._fbm(P.R, d[0], d[1], d[2], c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp
 	elif bb == WorldPlanet.BIO_ICE_SHEET and hh > 100.0:
 		hh += (WorldPlanet._fbm(P.R, d[0], d[1], d[2], c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
-	_vh = hh
+	_vh = WorldPlanetSize.reliefClamp(hh)   # the detail above is added after the relief cap: never over it
 	_vb = bb
 	_vf = P.outF if P.outF >= 0 else bb
 

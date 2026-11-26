@@ -428,7 +428,7 @@ static func _climTM(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: f
 	# the latitude wobbles by up to jit (a slow noise), so the belts of climate are wavy and not ruled lines
 	var yj: float = SimMathx.jclamp(py + (WorldPlanet._fbm(P.R, px, py, pz, _kJitScale, 2, P.seed + _kJitSeed) - 0.5) * 2.0 * _kJit, -1.0, 1.0)
 	var cl: float = sqrt(maxf(0.0, 1.0 - yj * yj))
-	var T: float = _kEq * SimDetMath.pow(cl, _kPow) - _kLapse * maxf(h, 0.0) / _kHScale
+	var T: float = _kEq * SimDetMath.pow(cl, _kPow) - _kLapse * maxf(h, 0.0) / (_kHScale * WorldPlanetSize.linesScaleFor(P))   # the lapse of a capped size follows its lines (WorldPlanetSize.linesScale: 1.0 where there is no cap)
 	T += (WorldPlanet._fbm(P.R, px, py, pz, _kNScale, _kNOct, P.seed + _kTSeed) - 0.5) * 2.0 * _kNAmp
 	var G: Grid = gridOf(P)
 	var M: float = _kWBand * bandWet(yj) + _kWAdv * advAt(G, px, py, pz)
@@ -447,7 +447,8 @@ static func plain(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: flo
 		_load()
 	var onB: bool = WorldLand.plateB()   # Research's B plates: their volcanic score makes the volcanic fields, in place of the noise (window 13)
 	var bv: bool = onB and WorldPlateB.volcAt(P, px, py, pz) > WorldPlateB.K.volcanic
-	var above: float = P.c.mountainAbove
+	var ls: float = WorldPlanetSize.linesScaleFor(P)   # the altitude lines of a capped size are those of medium scaled by its cap over 6,739 (1.0: as they are)
+	var above: float = P.c.mountainAbove * ls
 	if h > above and not bv:
 		P.outF = F_MOUNTAINS
 		return WorldPlanet.BIO_MOUNTAINS
@@ -459,9 +460,9 @@ static func plain(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: flo
 		fine = F_VOLCANIC
 	elif h > above:
 		fine = F_MOUNTAINS
-	elif not onB and h >= _kVHMin and WorldPlanet._fbm(P.R, px, py, pz, _kVScale, _kVOct, P.seed + _kVSeed) > _kVAbove:
+	elif not onB and h >= _kVHMin * ls and WorldPlanet._fbm(P.R, px, py, pz, _kVScale, _kVOct, P.seed + _kVSeed) > _kVAbove:
 		fine = F_VOLCANIC
-	elif h >= (_kHighB if onB else _kHighH):
+	elif h >= (_kHighB if onB else _kHighH) * ls:
 		fine = F_HIGHLAND
 	elif h < _kBeachH:
 		fine = F_BEACH

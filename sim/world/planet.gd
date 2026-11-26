@@ -53,8 +53,8 @@ static func dataHash(gen: int = 0) -> String:
 	if not _cLoaded:
 		_cLoad()
 	if (gen if gen > 0 else WorldClimate.genNow()) >= 2:
-		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash() + ("/r" + WorldRivers.dataHash() if WorldRivers.enabled() else "") + ("/f" + WorldField.dataHash() if (gen if gen > 0 else WorldClimate.genNow()) >= 3 else "")   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json; a gen 3 planet's follow field.json as well
-	return _cHash
+		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash() + ("/r" + WorldRivers.dataHash() if WorldRivers.enabled() else "") + ("/f" + WorldField.dataHash() if (gen if gen > 0 else WorldClimate.genNow()) >= 3 else "") + WorldPlanetSize.reliefKey()   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json; a gen 3 planet's follow field.json as well
+	return _cHash + WorldPlanetSize.reliefKey()
 
 
 static func _cLoad() -> void:
@@ -301,6 +301,8 @@ class Planet extends RefCounted:
 	var seed: int = 0
 	var R: float = 0.0
 	var L: float = 0.0
+	var peak: float = 0.0                    # the tallest capped peak (WorldPlanetSize.tallestCapped), kept once computed
+	var peakVer: int = -1                    # the cap version it was computed for
 	var c: Dictionary = {}
 	var n: int = 0                           # places
 	var kind := PackedByteArray()
@@ -526,7 +528,7 @@ static func _plainBiome(P: Planet, px: float, py: float, pz: float, h: float) ->
 	var c: Dictionary = P.c
 	if h < 0.0:
 		return BIO_OCEAN
-	if h > c.mountainAbove:
+	if h > c.mountainAbove * WorldPlanetSize.linesScaleFor(P):
 		return BIO_MOUNTAINS
 	var s: int = P.seed
 	var w: float = _fbm(P.R, px, py, pz, c.wetScale, int(c.wetOct), s + int(c.sWet))
@@ -545,7 +547,7 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
 	var s: int = P.seed
 	var y: float = py
 	P.outF = -1
-	var base: float = ground(P, px, py, pz)
+	var base: float = WorldPlanetSize.reliefCap(ground(P, px, py, pz))   # the relief cap of a small size (sizes.json maxReliefShare): the height the biome reads and the ground stands at; its altitude lines are scaled with it (WorldPlanetSize.linesScale)
 	var polarY: float = c.polarY
 	if P.gen >= 2:
 		polarY += WorldLand.polarWob(P, px, py, pz)   # a ragged edge to the polar zone, not a ruled latitude (window 3)
@@ -590,9 +592,10 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
 		var h: float = c.domeBase + mm * c.domeMul + (_fbm(P.R, px, py, pz, c.domeReliefScale, int(c.domeReliefOct), s + int(c.sSouthRelief)) - 0.5) * c.domeReliefAmp
 		if h < c.shelfH:
 			h = c.shelfH   # the continent never dips below the shelf it stands on
+		h = WorldPlanetSize.reliefCap(h)
 		P.outH = h
 		P.outB = BIO_ICE_SHEET
-		if h > c.rockHeight and _fbm(P.R, px, py, pz, c.rockScale, int(c.rockOct), s + int(c.sRock)) > c.rockNoise:
+		if h > c.rockHeight * WorldPlanetSize.linesScaleFor(P) and _fbm(P.R, px, py, pz, c.rockScale, int(c.rockOct), s + int(c.sRock)) > c.rockNoise:
 			P.outB = BIO_MOUNTAINS
 		return
 	if m > c.shelfFrom:
@@ -1133,8 +1136,9 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 			g = WorldLand.shape(P, qx, qy, qz, g)
 			if absf(qy) < polarY0 + WorldLand.polarWob(P, qx, qy, qz):
 				P.outF = -1
-				P.outH = g
-				P.outB = WorldClimate.plain(P, qx, qy, qz, g)
+				var gc: float = WorldPlanetSize.reliefCap(g)   # the fast path sets the height itself and does not pass through surfAt: the cap here too, and the biome reads the capped height
+				P.outH = gc
+				P.outB = WorldClimate.plain(P, qx, qy, qz, gc)
 				done = true
 		if not done:
 			surfAt(P, qx, qy, qz)
@@ -1144,7 +1148,7 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 			h += (_fbm(R, qx, qy, qz, detailScale, detailOct, dseed) - 0.5) * detailAmp
 		elif b == BIO_ICE_SHEET and h > 100.0:
 			h += (_fbm(R, qx, qy, qz, detailScale, detailOct, dseed) - 0.5) * detailAmp * detailSheet
-		S.heights[i] = h
+		S.heights[i] = WorldPlanetSize.reliefClamp(h)   # the detail above is added after the cap: never over it
 		S.biomes[i] = b
 		if fine2:
 			S.fine[i] = P.outF if P.outF >= 0 else b

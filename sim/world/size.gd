@@ -53,6 +53,14 @@ static func _load() -> void:
 			_errors.append("sizes.json: %s: arenaCols is 600 to cols, a multiple of 8" % k)
 		if r.has("maxBuildingShare") and (float(r.maxBuildingShare) <= 0.0 or float(r.maxBuildingShare) > 1.0):
 			_errors.append("sizes.json: %s: maxBuildingShare is above 0 and at most 1" % k)
+		if r.has("maxReliefShare") and (float(r.maxReliefShare) <= 0.0 or float(r.maxReliefShare) > 1.0):
+			_errors.append("sizes.json: %s: maxReliefShare is above 0 and at most 1" % k)
+		if j.has("reliefTop") and float(j.reliefTop) < 1000.0:
+			_errors.append("sizes.json: reliefTop is at least 1,000 (the tallest relief on medium, 6,739)")
+		if r.has("reliefKnee") and (float(r.reliefKnee) <= 0.0 or float(r.reliefKnee) >= 1.0):
+			_errors.append("sizes.json: %s: reliefKnee is above 0 and under 1" % k)
+		if r.has("maxReliefShare") and float(r.get("reliefKnee", 0.7)) * float(r.maxReliefShare) * float(r.cols) * SimConst.COL / (2.0 * SimMathx.PI) >= float(j.get("reliefRef", 11000.0)):
+			_errors.append("sizes.json: %s: the knee (reliefKnee x the cap) must be under reliefRef" % k)
 		if int(r.bakeStride) < 1 or (cols / 16) % int(r.bakeStride) != 0:
 			_errors.append("sizes.json: %s: bakeStride divides the face edge's nodes (cols / 16)" % k)
 	if not _errors.is_empty():
@@ -143,6 +151,128 @@ static func bakeStrideFor(cols: int) -> int:
 		if int(_d.sizes[k].cols) == cols:
 			return int(_d.sizes[k].bakeStride)
 	return 4
+
+
+## The relief cap (GW1c; sizes.json maxReliefShare, reliefKnee, reliefRef; docs/world/pending/relief-cap-gw1c). The relief is the same absolute height at every size, so on a small ball it is a share of the radius no planet can carry
+## (tiny's tallest is 1.03 of its radius). A size with maxReliefShare holds the land's height to that share of its radius: heights up to the knee (reliefKnee x the cap) are their own, heights from the knee to reliefRef (the tallest the
+## relief makes: 11,000 covers the quick-match planets, planet 3 reaches 10,344) are scaled into the knee-to-cap band in proportion (so the tops keep their shape and taper, and no plateau forms), and anything above reliefRef is the cap. Monotone, and the biomes are read from the
+## capped height, and the altitude lines are scaled with it (linesScale). Medium and every size without the key: the height itself, bit for bit.
+static var _rcNC: int = -1
+static var _rcCap: float = 0.0
+static var _rcKnee: float = 0.0
+static var _rcScale: float = 1.0
+static var _rcTop: float = 6739.0    # reliefTop: the tallest relief on medium, where nothing is capped
+static var _rcVer: int = 0           # bumped each time the cap's numbers are read again: a planet's tallest capped peak is kept against it
+static var reliefOff: bool = false   # tests only: no cap at any size (the negative control)
+static var linesOff: bool = false    # tests only: the cap on, the altitude lines not scaled (the old lines: the negative control of the biome row)
+static var linesByCap: bool = false  # tests only: the lines scaled by the cap over reliefTop, Art's first ruling (the squeeze only approaches the cap, so every line sat above the tops: the negative control)
+
+
+static func _rcLoad() -> void:
+	if not _loaded:
+		_load()
+	_rcNC = SimConst.PLANET_NC
+	_rcCap = 0.0
+	_rcVer += 1
+	_rcTop = float(_d.get("reliefTop", 6739.0)) if not _d.is_empty() else 6739.0
+	if reliefOff or SimConst.PLANET_NC == SimConst.PLANET_NC_MEDIUM or _d.is_empty():
+		return
+	for k in _names:
+		if int(_d.sizes[k].cols) == SimConst.PLANET_NC:
+			var sh: float = float(_d.sizes[k].get("maxReliefShare", 0.0))
+			if sh <= 0.0:
+				return
+			_rcCap = sh * float(SimConst.PLANET_NC) * SimConst.COL / (2.0 * SimMathx.PI)
+			_rcKnee = float(_d.sizes[k].get("reliefKnee", 0.7)) * _rcCap
+			_rcScale = (_rcCap - _rcKnee) / (float(_d.get("reliefRef", 11000.0)) - _rcKnee)
+			return
+
+
+## Tests only: the lines unscaled with the cap on (the old lines), or scaled by the cap (Art's first ruling).
+static func setLinesOff(off: bool) -> void:
+	linesOff = off
+
+
+static func setLinesByCap(on: bool) -> void:
+	linesByCap = on
+
+
+## Tests only: switch the cap off or on and make the next read look at the size again.
+static func setReliefOff(off: bool) -> void:
+	reliefOff = off
+	_rcNC = -1
+
+
+## Tests only: the data's cap keys were changed in memory (a check that turns the cap on, or moves the knee): read the size again.
+static func reloadRelief() -> void:
+	_rcNC = -1
+
+
+## The planet's land height under this size's relief cap (the ground a fighter stands on and the tiles draw).
+static func reliefCap(h: float) -> float:
+	if _rcNC != SimConst.PLANET_NC:
+		_rcLoad()
+	if _rcCap <= 0.0 or h <= _rcKnee:
+		return h
+	return minf(_rcCap, _rcKnee + (h - _rcKnee) * _rcScale)
+
+
+## The height as the field and a column hold it, which adds a surface detail after the cap: never over the cap (the cap is a limit, the detail would put a peak a few units over it). No cap at this size: h itself.
+static func reliefClamp(h: float) -> float:
+	if _rcNC != SimConst.PLANET_NC:
+		_rcLoad()
+	return h if _rcCap <= 0.0 else minf(h, _rcCap)
+
+
+## A planet's tallest capped peak, in units (0 where there is no cap): the planet's tallest ground (the highest cell of its climate grid, the gen 2 planet's own relief; a gen 1 planet has no grid and takes reliefTop) put through the cap. The squeeze only
+## approaches the cap, so the real tops are under it (planet 7: about 1,591 on tiny and 3,225 on small, against caps of 1,956 and 3,911). Computed once per planet and kept on it (and read again when the cap's numbers are); a pure function of the
+## planet. Rendering's snow line is 0.997 of it (Art, 2026-11-22).
+static func tallestCapped(P) -> float:
+	if _rcNC != SimConst.PLANET_NC:
+		_rcLoad()
+	if _rcCap <= 0.0:
+		return 0.0
+	if P.peakVer != _rcVer:
+		var top: float = _rcTop
+		if P.gen >= 2:
+			var G = WorldClimate.gridOf(P)
+			top = -1.0e30
+			for v in G.ht:
+				top = maxf(top, float(v))
+		P.peak = reliefCap(top)
+		P.peakVer = _rcVer
+	return P.peak
+
+
+## The scale of the altitude lines on a capped size (Art's ruling, docs/art/relief-cap-ruling.md, with its follow-up of 2026-11-22): the mountain line, the highland line, the volcanic floor, the rock line of the ice dome and the temperature's lapse
+## with height are each placed by the CAPPED height, and each line of medium (where nothing is capped) is scaled by the planet's own tallest capped peak over reliefTop (6,739, the tallest relief on medium), so one share of the tallest ground at every
+## size: the highest capped peak reaches the same snow line and the same fraction of a slope is pale rock. 1.0 where there is no cap (medium, big, huge, and every size while the keys are off): the lines as they are, bit for bit. The beach and the
+## wetland lines are near the sea, under the knee, and stay.
+static func linesScaleFor(P) -> float:
+	if _rcNC != SimConst.PLANET_NC:
+		_rcLoad()
+	if _rcCap <= 0.0 or linesOff:
+		return 1.0
+	if linesByCap:
+		return _rcCap / _rcTop
+	return tallestCapped(P) / _rcTop
+
+
+## The relief cap's part of a planet's data key (WorldPlanet.dataHash, so the saved planets, the replay's key and the laid-places memo carry it): "" where this size has no cap (medium, big, huge, and every size while the keys are off: the key is then
+## exactly what it was), else the cap, the knee and the ref.
+static func reliefKey() -> String:
+	if _rcNC != SimConst.PLANET_NC:
+		_rcLoad()
+	if _rcCap <= 0.0:
+		return ""
+	return "/rc" + SimMathx.fixed(_rcCap, 3) + "/" + SimMathx.fixed(_rcKnee, 3) + "/" + SimMathx.fixed(float(_d.get("reliefRef", 11000.0)), 1) + "/" + SimMathx.fixed(float(_d.get("reliefTop", 6739.0)), 1)   # SimMathx.fixed, not a printf float: the lint's sim-text-float rule (Windows and Linux round an exact half differently)
+
+
+## The cap in units at the size bound now (0: none).
+static func reliefCapUnits() -> float:
+	if _rcNC != SimConst.PLANET_NC:
+		_rcLoad()
+	return _rcCap
 
 
 ## A building's height held to this size's share of the planet's radius (sizes.json maxBuildingShare), else as it is: medium and every size without the key return h itself, bit for bit.
