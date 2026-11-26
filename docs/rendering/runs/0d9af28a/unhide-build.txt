@@ -1,0 +1,45 @@
+# the un-hide candidate (Rendering's scratch, 2026-11-26) on main 0d9af28a
+piece ok   camera/pending/a2-split-line/split-line.patch (sha1 c293c869)
+piece ok   camera/pending/a2-split-line/grant/grant-rendering-split-line.patch (sha1 777fa747)
+piece ok   ui/pending/split-setting/split-setting.patch (sha1 ebd0a426)
+piece ok   camera/pending/gw1c-door-holds/gw1c-door-holds.patch (sha1 fba137e3)
+piece ok   rendering/pending/sky-handover/sky_handover.diff (sha1 b867f87a)
+piece ok   rendering/pending/feet-ground/feet_ground.diff (sha1 4aa3ecc4)
+piece ok   tg/marks_baked.recut.diff (sha1 00aaf9f8)
+piece ok   rendering/pending/rows-interp/rows_interp.diff (sha1 b36ee1a9)
+piece ok   rendering/pending/fore-clamp/fore_fix.diff (sha1 353a4cb2)
+cd04: not in (the folder's cd04.patch is b0ab4bfb, not the re-cut ca7451b1)
+u0 import errors 0
+size word (held too) added
+hook applied
+perf hook added
+tile hook added
+u0b import errors 0
+u0b export 0, errors 0
+# the feet check on u0 (render/tools/feet_check.gd, ten seeds, 1800 ticks each, the split attached): a sample is a fighter standing; over = more than 8 units off
+## small (exit 1, 211 s)
+ok   seed 1: 248 standing samples, 0 over 8 units, the worst 1.0 (0 outside every pane, not read)
+ok   seed 2: 82 standing samples, 1 over 8 units, the worst 14.9 (0 outside every pane, not read)
+ok   seed 3: 405 standing samples, 1 over 8 units, the worst 16.8 (0 outside every pane, not read)
+ok   seed 4: 31 standing samples, 0 over 8 units, the worst 2.3 (0 outside every pane, not read)
+ok   seed 5: 168 standing samples, 1 over 8 units, the worst 18.8 (0 outside every pane, not read)
+ok   seed 6: 878 standing samples, 0 over 8 units, the worst 1.2 (0 outside every pane, not read)
+ok   seed 7: 110 standing samples, 0 over 8 units, the worst 1.8 (0 outside every pane, not read)
+ok   seed 8: 18 standing samples, 0 over 8 units, the worst 0.8 (0 outside every pane, not read)
+ok   seed 9: 83 standing samples, 0 over 8 units, the worst 2.9 (0 outside every pane, not read)
+FAIL seed 10: 47 standing samples, 1 over 8 units, the worst 37.6 (0 outside every pane, not read)
+FAIL 10 seeds: 2070 standing samples, 4 over 8 units (0.2%, at most 3%), the worst 37.6 (at most 25)
+feet check FAILED
+## big (exit 1, 350 s)
+ok   seed 1: 73 standing samples, 0 over 8 units, the worst 0.9 (0 outside every pane, not read)
+ok   seed 2: 129 standing samples, 0 over 8 units, the worst 1.1 (0 outside every pane, not read)
+ok   seed 3: 474 standing samples, 0 over 8 units, the worst 3.9 (0 outside every pane, not read)
+ok   seed 4: 295 standing samples, 0 over 8 units, the worst 1.0 (0 outside every pane, not read)
+FAIL seed 5: 440 standing samples, 1 over 8 units, the worst 37.1 (0 outside every pane, not read)
+ok   seed 6: 536 standing samples, 1 over 8 units, the worst 8.9 (0 outside every pane, not read)
+ok   seed 7: 269 standing samples, 1 over 8 units, the worst 8.8 (0 outside every pane, not read)
+FAIL seed 8: 522 standing samples, 21 over 8 units, the worst 10.0 (0 outside every pane, not read)
+ok   seed 9: 373 standing samples, 0 over 8 units, the worst 7.3 (0 outside every pane, not read)
+FAIL seed 10: 512 standing samples, 1 over 8 units, the worst 42.4 (0 outside every pane, not read)
+FAIL 10 seeds: 3623 standing samples, 25 over 8 units (0.7%, at most 3%), the worst 42.4 (at most 25)
+feet check FAILED
