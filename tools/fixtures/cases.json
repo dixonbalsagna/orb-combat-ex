@@ -3237,6 +3237,22 @@
       }
     },
     {
+      "id": "feedback-empty-report-world",
+      "schema": "ui-feedback.schema.json",
+      "mutate": [
+        {
+          "file": "ui/data/feedback.json",
+          "set": {
+            "/report/world": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/report/world"
+      }
+    },
+    {
       "id": "feedback-empty-button",
       "schema": "ui-feedback.schema.json",
       "mutate": [
