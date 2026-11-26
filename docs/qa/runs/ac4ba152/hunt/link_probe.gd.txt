@@ -1,0 +1,33 @@
+extends Node
+## Scratch (QA, 2026-11-26): is the ground still linked to the tile field in matches 1, 2 and 3? Ends each match at 8 sim seconds; reads only.
+var _main: Node = null
+var _match: int = 1
+var _said: int = 0
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+
+func _process(_d: float) -> void:
+	if _main == null:
+		var cs = get_tree().current_scene
+		if cs != null and "host" in cs and cs.host != null and cs.host.S != null:
+			_main = cs
+		return
+	var host = _main.host
+	if host.match_job != null or host.load_job != null or host.S.fighters.size() < 2:
+		return
+	if float(host.S.T) >= 4.0 and _said < _match:
+		_said = _match
+		var a: Array = []
+		for i in range(_main.panes.size()):
+			var pv = _main.panes[i].planet
+			a.append("pane%d tile_field=%s ground.tile_field=%s same=%s" % [i, "set" if pv.tile_field != null else "NULL", "set" if pv.ground.tile_field != null else "NULL", str(pv.ground.tile_field == pv.tile_field)])
+		print("LINK match=%d simT=%.1f %s" % [_match, float(host.S.T), " | ".join(a)])
+		if _match >= 3:
+			get_tree().quit(0)
+			return
+	if float(host.S.T) >= 8.0 and _said == _match and _match < 3:
+		_match += 1
+		_main.start_match(1 + _match)

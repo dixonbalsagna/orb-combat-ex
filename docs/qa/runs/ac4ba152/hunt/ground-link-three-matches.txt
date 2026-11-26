@@ -1,0 +1,3 @@
+LINK match=1 simT=4.0 pane0 tile_field=set ground.tile_field=set same=true | pane1 tile_field=set ground.tile_field=set same=true
+LINK match=2 simT=4.0 pane0 tile_field=set ground.tile_field=NULL same=false | pane1 tile_field=set ground.tile_field=NULL same=false
+LINK match=3 simT=4.0 pane0 tile_field=set ground.tile_field=NULL same=false | pane1 tile_field=set ground.tile_field=NULL same=false

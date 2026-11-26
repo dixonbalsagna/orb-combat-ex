@@ -1,0 +1,5 @@
+SOAK match 1 started seed=3340161 (the game's own boot match)
+SOAK match 1 ended how=capped winnerSlot=-1 simSeconds=130.0 t=173
+SOAK match 2 started t=178 seed=2 objects=18069 computer plays both: true
+SOAK match 2 ended how=capped winnerSlot=-1 simSeconds=130.0 t=340
+SOAK match 3 started t=346 seed=3 objects=18118 computer plays both: true

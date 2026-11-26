@@ -63,7 +63,7 @@ The same matches 3 to 11 were played on both (see above), so the change-by-chang
 
 ## The faster hunt (EP's order, 2026-11-26): what grows, per match change and per minute of play
 
-Four short arms on the same build (Windows, headless, below normal, other sessions' engine jobs running; every arm passed the soak's checks). `soak.mjs` now has `--census` (every field of the match state, the replay recorder, the host, the game scene and 1,580 script statics, sized at each match's start and end; the sizes are estimates that rank, not the process's memory) and `--same-seed`. Records: `docs/qa/runs/ac4ba152/hunt/`.
+Four short arms on the same build (Windows, headless, below normal, other sessions' engine jobs running; every arm passed the soak's checks). `soak.mjs` now has `--census` (every field of the match state, the replay recorder, the host, the game scene and 1,580 script statics, sized at each match's start and end; the sizes are estimates, within about a factor of two of real memory since the fix below, not the process's memory) and `--same-seed`. Records: `docs/qa/runs/ac4ba152/hunt/`.
 
 | Arm | What | Process memory |
 | :--- | :--- | :--- |
@@ -72,9 +72,31 @@ Four short arms on the same build (Windows, headless, below normal, other sessio
 | C | as A with the census, 15 min (16 starts) | 441 → 456 MiB, then flat; 2.49 then 0.16 |
 | D | **one long match**, 10 min, census each minute | **404 → 462 MiB (+58)** over nine minutes of play, still rising at the end |
 
-**Reading.**
-- **Per match change, short matches: no leak seen.** After the first few matches the process stops growing (about 0.2 MiB a match, within a reading's step), with new seeds or the same one. In the census, the state, the recorder and the statics climb by no more than a fraction of a MiB over 13 changes (`anim_data.gd:mirrors` 0.16 to 0.40 and `intro.gd:_flat` 0.08 to 0.17 the largest).
-- **Per minute of play: memory climbs.** In the long match about 5 to 6 MiB a minute on average, in steps. The census accounts for most of it: **`main.pane.planet` (the render side's planet view) +36 MiB** (15.9 → 51.8), the world's water-record index `sim/world/waterrec.gd:_ix` +7 MiB, VFX's `host.vfx` +2.7 MiB, then small pose, text and lure memos under 0.3 MiB each. No match-state field grew enough to list.
-- **The planet view is not emptied at a new match:** in arm C its size at a match's start rose from 24.8 to 32.5 MiB over 13 short matches.
-- **One very large store:** `waterrec.gd:_ix` holds about 136 MiB (estimate) from the first census, as one entry rebuilt for each match. It is not a leak; it is the largest single thing found, and freeing and rebuilding it at every change may be one reason the process keeps a high-water mark (not shown).
-- **Not accounted for:** the two-hour run grew about 240 MiB. These arms show where growth comes from (long matches, and what the planet view keeps), not that the two together add up to 240. A census over an hour of long matches would say.
+**Reading (corrected 2026-11-26: the first version's store sizes were wrong; see "The correction" below. The process memory figures above were measured from outside and stand).**
+- **Per match change, short matches: no leak seen.** After the first few matches the process stops growing (about 0.2 MiB a match, within a reading's step), with new seeds or the same one.
+- **Per minute of play: memory climbs.** About 5 to 6 MiB a minute on average in the long match, in steps.
+- **Not accounted for:** the two-hour run grew about 240 MiB. What is named below is a few tens of MiB.
+
+## The correction (World's measurement, then QA's)
+
+- **The census counted shared lists once for every reference.** World measured the water-record index `sim/world/waterrec.gd:_ix` against real memory: **1.93 MiB** 40 s into a match and **4.10 MiB** at the very worst, not 136 (`docs/world/runs/waterrec-ix/`). The census now counts each list and dictionary once, by identity; it then reads the index at 1.95 MiB. **Withdrawn:** "one very large store", and the idea that freeing it holds the process's high-water mark.
+- **Withdrawn:** "`main.pane.planet` +36 MiB, not emptied at a new match". It was the same error, and it charged to the planet view what the view only refers to. The saved `arm-C` and `arm-D` census files and `arm-C-split.txt`'s store table are from the faulty census: do not quote their sizes.
+
+## What grows, checked against real memory (editor build of ac4ba152, static memory before and after emptying each field)
+
+| Field | Whose | Over a match | Emptying it frees | Kept at a new match? |
+| :--- | :--- | :--- | :--- | :--- |
+| `sim/world/field.gd` `Field.sh` (sub-node heights) | World (the renderer reaches it as `tile_field._F`) | 0.5 → 5.10 MiB by about 100 to 120 s, then level | **5.10 MiB** | **Yes**: fields are cached by planet seed, three kept |
+| `sim/world/field.gd` `Field.sb` (sub-node biome) | World | the same | **5.10 MiB** | **Yes**, the same |
+| `render/core/tile_field.gd` `_hs` (tile heights) | Rendering | 0.2 → 1.5 to 2.0 MiB; a pool of 800 layers bounds it | 1.45 to 2.05 MiB | No: a new tile field each match |
+| `tile_field.gd` `_wets` | Rendering | 0.15 → 0.44 MiB, bounded the same way | 0.29 to 0.44 MiB | No |
+
+- **The planet view itself does not grow:** its own larger lists are set up with the match (`_parts` 4.1 MiB and `_win` 1.8 MiB freed; the rest under 1 MiB each).
+- Everything listed above and the field's fixed lists came to 25.5 MiB of 270 MiB static after 163 sim seconds of one match; static memory rose 29 MiB in that time, of which `sh` and `sb` are about 9. **The rest of the rise is not named.**
+- With three planets cached, `sh` and `sb` can hold about 30 MiB between them; this fits arm A levelling off after its first few matches, but QA has not shown that it is the reason.
+
+## Found on the way: a bug (GB-010)
+
+From the second match on, neither pane's `ground` is linked to its `tile_field` (match 1: linked; matches 2 and 3: null). `qa/known-bugs.md` GB-010, with the cause in the code; what a player sees from it is not verified.
+
+Records: `docs/qa/runs/ac4ba152/hunt/` (`real-memory-*.txt`, `real_probe2.gd.txt`, `ground-link-three-matches.txt`, `planet-fixed-*`).

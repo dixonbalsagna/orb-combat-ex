@@ -1,0 +1,12 @@
+censuses: t31 m1 start | t61 m1 mid | t91 m1 mid | t121 m1 mid | t151 m1 mid | t173 m1 end | t198 m2 start | t228 m2 mid | t258 m2 mid | t288 m2 mid | t318 m2 mid | t340 m2 end
+prefix total MiB per census: 16.47 21.16 22.03 22.56 26.36 27.76 26.76 26.87 27.40 31.18 32.02 33.98
+
+fields that moved by more than 20 KiB (KiB per census; top entries; elements):
+_bin_field
+  KiB 0 0 0 0 0 0 18671 18785 19331 23197 24058 26058
+  top 0 0 0 0 0 0 -1 -1 -1 -1 -1 -1
+ground
+  KiB 9083 13888 14776 15313 19199 20638 949 949 949 949 949 949
+  top -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+
+not listed (under the 4 KiB floor or steady): 39

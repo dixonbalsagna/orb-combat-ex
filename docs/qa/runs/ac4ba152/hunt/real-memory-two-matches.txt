@@ -1,0 +1,45 @@
+REAL main t=14
+REAL t=14 match=1 simT=0.0 staticMiB=241.0 tileField=true | pane0 groundLinked=true sharesGround=true sharesTiles=true ; pane1 groundLinked=true sharesGround=true sharesTiles=true
+REAL tiles t=14 _hs=0.22(800) _wets=0.15(800)
+REAL ground t=14 lists=0.11(28800)
+REAL t=44 match=1 simT=20.1 staticMiB=254.4 tileField=true | pane0 groundLinked=true sharesGround=true sharesTiles=true ; pane1 groundLinked=true sharesGround=true sharesTiles=true
+REAL tiles t=44 _hs=0.52(800) _wets=0.20(800)
+REAL ground t=44 lists=0.11(28800)
+REAL t=67 match=1 simT=40.0 staticMiB=260.4 tileField=true | pane0 groundLinked=true sharesGround=true sharesTiles=true ; pane1 groundLinked=true sharesGround=true sharesTiles=true
+REAL tiles t=67 _hs=0.72(800) _wets=0.20(800)
+REAL ground t=67 lists=0.11(28800)
+REAL t=86 match=2 simT=8.5 staticMiB=262.7 tileField=true | pane0 groundLinked=false sharesGround=true sharesTiles=true ; pane1 groundLinked=false sharesGround=true sharesTiles=true
+REAL tiles t=86 _hs=0.50(800) _wets=0.21(800)
+REAL ground t=86 lists=0.11(28800)
+REAL t=116 match=2 simT=34.8 staticMiB=268.6 tileField=true | pane0 groundLinked=false sharesGround=true sharesTiles=true ; pane1 groundLinked=false sharesGround=true sharesTiles=true
+REAL tiles t=116 _hs=0.83(800) _wets=0.22(800)
+REAL ground t=116 lists=0.11(28800)
+REAL t=146 match=2 simT=61.4 staticMiB=269.2 tileField=true | pane0 groundLinked=false sharesGround=true sharesTiles=true ; pane1 groundLinked=false sharesGround=true sharesTiles=true
+REAL tiles t=146 _hs=0.90(800) _wets=0.22(800)
+REAL ground t=146 lists=0.11(28800)
+REAL t=176 match=2 simT=87.0 staticMiB=270.1 tileField=true | pane0 groundLinked=false sharesGround=true sharesTiles=true ; pane1 groundLinked=false sharesGround=true sharesTiles=true
+REAL tiles t=176 _hs=1.04(800) _wets=0.24(800)
+REAL ground t=176 lists=0.11(28800)
+REAL t=206 match=2 simT=114.7 staticMiB=276.3 tileField=true | pane0 groundLinked=false sharesGround=true sharesTiles=true ; pane1 groundLinked=false sharesGround=true sharesTiles=true
+REAL tiles t=206 _hs=1.30(800) _wets=0.28(800)
+REAL ground t=206 lists=0.11(28800)
+REAL t=236 match=2 simT=138.1 staticMiB=285.3 tileField=true | pane0 groundLinked=false sharesGround=true sharesTiles=true ; pane1 groundLinked=false sharesGround=true sharesTiles=true
+REAL tiles t=236 _hs=1.74(800) _wets=0.31(800)
+REAL ground t=236 lists=0.11(28800)
+REAL t=260 match=2 simT=160.0 staticMiB=290.3 tileField=true | pane0 groundLinked=false sharesGround=true sharesTiles=true ; pane1 groundLinked=false sharesGround=true sharesTiles=true
+REAL tiles t=260 _hs=2.01(800) _wets=0.41(800)
+REAL ground t=260 lists=0.11(28800)
+REAL field tile_field._hs type=28 censusMiB=2.01 freedMiB=2.05
+REAL field tile_field._wets type=28 censusMiB=0.41 freedMiB=0.44
+REAL field ground.lists type=32 censusMiB=0.11 freedMiB=0.11
+REAL field planet._parts type=28 censusMiB=3.06 freedMiB=4.09
+REAL field planet._win type=28 censusMiB=1.84 freedMiB=1.84
+REAL field planet._bld_seen type=28 censusMiB=0.53 freedMiB=0.91
+REAL field planet._ft_dirs type=28 censusMiB=0.48 freedMiB=0.85
+REAL field planet._drawn type=28 censusMiB=0.35 freedMiB=0.74
+REAL field planet._foot type=28 censusMiB=0.18 freedMiB=0.09
+REAL field planet._cut type=28 censusMiB=0.14 freedMiB=0.00
+REAL field planet._stub_tex type=28 censusMiB=0.14 freedMiB=0.00
+REAL field planet._inst type=28 censusMiB=0.12 freedMiB=0.39
+REAL field planet._blown type=28 censusMiB=0.09 freedMiB=0.09
+REAL freed by emptying those fields MiB=11.46 of static MiB=290.3

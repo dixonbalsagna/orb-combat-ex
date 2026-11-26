@@ -34,6 +34,60 @@ func _fields(o: Object) -> PackedStringArray:
 	return out
 
 
+## A Dictionary or an Array is counted once, by identity, however many lists refer to it (World, 2026-11-26: counting each reference read a 4 MiB index as 136 MiB). GDScript gives a container no id, so the
+## ones seen are bucketed by a shallow signature (cheap: the size and the first entries' plain values) and compared with is_same inside the bucket.
+var _boxes: Dictionary = {}      # signature -> [containers seen with it]
+
+
+func _mix(h: int, x) -> int:
+	return (h * 1000003) ^ (hash(x) if typeof(x) < TYPE_OBJECT else typeof(x))
+
+
+func _sig(v) -> int:
+	var h: int = v.size() * 31 + typeof(v)
+	var n: int = 0
+	if typeof(v) == TYPE_DICTIONARY:
+		for k in v:
+			h = _mix(_mix(h, k), v[k])
+			n += 1
+			if n >= 16:
+				break
+		return h
+	for x in v:
+		if typeof(x) == TYPE_DICTIONARY:
+			h = (h * 1000003) ^ x.size()
+			var m: int = 0
+			for k in x:
+				h = _mix(h, x[k])
+				m += 1
+				if m >= 6:
+					break
+		elif typeof(x) == TYPE_ARRAY:
+			h = (h * 1000003) ^ x.size()
+			if not x.is_empty():
+				h = _mix(h, x[0])
+		else:
+			h = _mix(h, x)
+		n += 1
+		if n >= 16:
+			break
+	return h
+
+
+## True the first time this very container is met in a walk.
+func _first(v) -> bool:
+	var s: int = _sig(v)
+	var seen = _boxes.get(s)
+	if seen == null:
+		_boxes[s] = [v]
+		return true
+	for o in seen:
+		if is_same(o, v):
+			return false
+	seen.append(v)
+	return true
+
+
 ## [estimated bytes, elements] are added to _b and _c: no array is made per value, so the walk itself allocates little.
 var _b: int = 0
 var _c: int = 0
@@ -70,12 +124,16 @@ func _size(v, depth: int) -> void:
 				_b += 32 + 4 * s.length()
 			_c += v.size()
 		TYPE_ARRAY:
+			if not v.is_empty() and not _first(v):
+				return
 			_b += 24 * v.size()
 			_c += v.size()
 			for x in v:
 				if typeof(x) >= TYPE_STRING:
 					_size(x, depth + 1)
 		TYPE_DICTIONARY:
+			if not v.is_empty() and not _first(v):
+				return
 			_b += 64 * v.size()
 			_c += v.size()
 			for k in v:
@@ -124,10 +182,11 @@ func _add(out: Dictionary, label: String, v) -> void:
 ## The census of one moment. `main` is the game's main scene.
 func take(main) -> Dictionary:
 	_seen.clear()
+	_boxes.clear()
 	_left = BUDGET
 	var out: Dictionary = {}
 	var host = main.host
-	var roots: Array = [["S.", host.S, []], ["recorder.", host.recorder, []], ["host.", host, ["S", "recorder"]], ["main.pane.", main.pane, []], ["main.", main, ["host", "pane"]]]
+	var roots: Array = [["S.", host.S, []], ["recorder.", host.recorder, []], ["host.", host, ["S", "recorder"]], ["main.pane.planet.", main.pane.planet, []], ["main.pane.", main.pane, ["planet"]], ["main.", main, ["host", "pane"]]]
 	for root in roots:
 		_seen[root[1].get_instance_id()] = true
 	for root in roots:

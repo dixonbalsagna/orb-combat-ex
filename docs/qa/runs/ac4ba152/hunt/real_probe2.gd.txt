@@ -1,0 +1,157 @@
+extends Node
+## Scratch (QA, 2026-11-26): the planet view against real memory, in an editor (debug) build where OS.get_static_memory_usage works. Match 1 is ended at --first-cap sim seconds, match 2 plays on.
+## Every 30 s: static memory, the size of each field of the tile field and the ground, and whether each pane's ground is still linked to its tile field. At --real-at seconds each field of the tile field,
+## the ground and the planet view is emptied one by one, the static memory freed is read beside the census estimate, and the game quits in the same frame. Destructive on purpose; nothing is kept.
+
+var at_s: float = 260.0
+var first_cap: float = 40.0
+var _t0: int = 0
+var _next: int = 0
+var _main: Node = null
+var _done: bool = false
+var _match: int = 1
+var _census = null
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	process_priority = 100000   # after the game's own work in the frame: nothing draws the emptied view before the quit
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--real-at="):
+			at_s = float(a.substr(10))
+		elif a.begins_with("--first-cap="):
+			first_cap = float(a.substr(12))
+	_t0 = Time.get_ticks_msec()
+	_census = load("<repo>/qa/soak/soak_census.gd").new()
+
+
+func _mib(n: int) -> float:
+	return n / 1048576.0
+
+
+func _estimate(o: Object, f: String) -> int:
+	_census._seen.clear()
+	_census._boxes.clear()
+	_census._left = _census.BUDGET
+	_census._seen[o.get_instance_id()] = true
+	var out: Dictionary = {}
+	_census._add(out, "x", o.get(f))
+	return int(out.get("_total", 0))
+
+
+func _vars(o: Object) -> Array:
+	var names: Array = []
+	for p in o.get_property_list():
+		if int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			names.append(str(p.name))
+	return names
+
+
+## The fields of an object that hold at least 64 KiB, objects left out (their own fields are listed where they matter).
+func _held(o: Object) -> String:
+	var parts: Array = []
+	for f in _vars(o):
+		if typeof(o.get(f)) == TYPE_OBJECT:
+			continue
+		var b: int = _estimate(o, f)
+		if b >= 65536:
+			var v = o.get(f)
+			parts.append("%s=%.2f(%d)" % [f, _mib(b), v.size() if typeof(v) >= TYPE_DICTIONARY else 0])
+	return " ".join(parts)
+
+
+func _objects(now: float, tf) -> void:
+	var parts: Array = []
+	for f in _vars(tf):
+		var v = tf.get(f)
+		if typeof(v) == TYPE_OBJECT and v != null and f != "_S" and f != "ground":
+			var b: int = _estimate(tf, f)
+			if b >= 65536:
+				parts.append("%s=%.2f[%s]" % [f, _mib(b), _held(v)])
+	print("REAL tileobjects t=%.0f %s" % [now, " ".join(parts)])
+
+
+func _report(now: float) -> void:
+	var panes: Array = _main.panes
+	var links: Array = []
+	for i in range(panes.size()):
+		var pv = panes[i].planet
+		links.append("pane%d groundLinked=%s sharesGround=%s sharesTiles=%s" % [i, str(pv.ground != null and pv.ground.tile_field != null and pv.ground.tile_field == pv.tile_field), str(pv.ground == panes[0].planet.ground), str(pv.tile_field == panes[0].planet.tile_field)])
+	print("REAL t=%.0f match=%d simT=%.1f staticMiB=%.1f tileField=%s | %s" % [now, _match, float(_main.host.S.T), _mib(OS.get_static_memory_usage()), str(_main.pane.planet.tile_field != null), " ; ".join(links)])
+	var pl = _main.pane.planet
+	if pl.tile_field != null:
+		print("REAL tiles t=%.0f %s" % [now, _held(pl.tile_field)])
+		_objects(now, pl.tile_field)
+	print("REAL ground t=%.0f %s" % [now, _held(pl.ground)])
+
+
+func _clear(o: Object, label: String) -> void:
+	var names: Array = []
+	var est: Dictionary = {}
+	for f in _vars(o):
+		if typeof(o.get(f)) != TYPE_OBJECT:
+			var b: int = _estimate(o, f)
+			if b >= 65536:
+				names.append(f)
+				est[f] = b
+	names.sort_custom(func(a, b): return est[a] > est[b])
+	for f in names:
+		var m0: int = OS.get_static_memory_usage()
+		var v = o.get(f)
+		var kind: int = typeof(v)
+		match kind:
+			TYPE_ARRAY, TYPE_DICTIONARY:
+				v.clear()
+			TYPE_PACKED_BYTE_ARRAY:
+				o.set(f, PackedByteArray())
+			TYPE_PACKED_INT32_ARRAY:
+				o.set(f, PackedInt32Array())
+			TYPE_PACKED_FLOAT32_ARRAY:
+				o.set(f, PackedFloat32Array())
+			TYPE_PACKED_FLOAT64_ARRAY:
+				o.set(f, PackedFloat64Array())
+			TYPE_PACKED_VECTOR3_ARRAY:
+				o.set(f, PackedVector3Array())
+		v = null
+		print("REAL field %s.%s type=%d censusMiB=%.2f freedMiB=%.2f" % [label, f, kind, _mib(est[f]), _mib(m0 - OS.get_static_memory_usage())])
+
+
+func _process(_d: float) -> void:
+	if _done:
+		return
+	var now: float = (Time.get_ticks_msec() - _t0) / 1000.0
+	if _main == null:
+		var cs = get_tree().current_scene
+		if cs != null and "host" in cs and cs.host != null and cs.host.S != null and cs.host.S.fighters.size() >= 2 and cs.host.match_job == null:
+			_main = cs
+			print("REAL main t=%.0f" % now)
+		return
+	var host = _main.host
+	if host.match_job != null or host.load_job != null or host.S.fighters.size() < 2:
+		return
+	if _match == 1 and float(host.S.T) >= first_cap:
+		_report(now)
+		_match = 2
+		_next = int(now) + 20
+		_main.start_match(2)
+		return
+	if now >= _next:
+		_report(now)
+		_next = int(now) + 30
+	if now < at_s:
+		return
+	_done = true
+	_report(now)
+	var pl = _main.pane.planet
+	var total0: int = OS.get_static_memory_usage()
+	if pl.tile_field != null:
+		for f in _vars(pl.tile_field):
+			var v = pl.tile_field.get(f)
+			if typeof(v) == TYPE_OBJECT and v != null and f != "_S" and f != "ground":
+				_clear(v, "tile_field." + f)
+		_clear(pl.tile_field, "tile_field")
+	_clear(pl.ground, "ground")
+	_clear(pl, "planet")
+	var left: int = OS.get_static_memory_usage()
+	print("REAL freed by emptying those fields MiB=%.2f of static MiB=%.1f" % [_mib(total0 - left), _mib(total0)])
+	get_tree().quit(0)
