@@ -314903,6 +314903,102 @@
         "rule": "type",
         "pointer": "/random/enabled"
       }
+    },
+    {
+      "id": "biomes-sizes-unknown-key",
+      "schema": "biomes-sizes.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/extra": 1
+          },
+          "file": "data/biomes/sizes.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "biomes-sizes-medium-cols-too-small",
+      "schema": "biomes-sizes.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/sizes/medium/cols": 100
+          },
+          "file": "data/biomes/sizes.json"
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/sizes/medium/cols"
+      }
+    },
+    {
+      "id": "biomes-sizes-missing-offered",
+      "schema": "biomes-sizes.schema.json",
+      "mutate": [
+        {
+          "del": [
+            "/sizes/medium/offered"
+          ],
+          "file": "data/biomes/sizes.json"
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/sizes/medium"
+      }
+    },
+    {
+      "id": "biomes-sizes-places-unknown-key",
+      "schema": "biomes-sizes.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/sizes/tiny/places/hamlets": 3
+          },
+          "file": "data/biomes/sizes.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sizes/tiny/places/hamlets"
+      }
+    },
+    {
+      "id": "biomes-sizes-offered-not-boolean",
+      "schema": "biomes-sizes.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/sizes/big/offered": "yes"
+          },
+          "file": "data/biomes/sizes.json"
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sizes/big/offered"
+      }
+    },
+    {
+      "id": "biomes-sizes-bakestride-zero",
+      "schema": "biomes-sizes.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/sizes/big/bakeStride": 0
+          },
+          "file": "data/biomes/sizes.json"
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/sizes/big/bakeStride"
+      }
     }
   ],
   "text": [
