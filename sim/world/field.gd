@@ -79,6 +79,11 @@ class Field extends RefCounted:
 	var rf := PackedByteArray()   # a cell's state: 0 not decided, 1 plain, 2 refined
 	var sh: Dictionary = {}       # sub-node key -> height (float64 of the exact read; the canonical ones are the canonical node's)
 	var sb: Dictionary = {}       # sub-node key -> stored biome | fine biome << 8
+	var shOld: Dictionary = {}    # the generation before sh and sb (_turnSubs): read again from here, never written
+	var sbOld: Dictionary = {}
+	var extraSubH := PackedFloat32Array()   # extraSub's values as the pool file holds them, kept apart so a turn cannot take them from under WorldFieldPool.store
+	var extraSubB := PackedInt32Array()
+	var turns: int = 0            # how many times the sub-node tables have turned (a count for tools)
 	var refined: int = 0          # cells refined so far (a count for tools)
 	var subReads: int = 0
 
@@ -273,11 +278,33 @@ static func ensure(F: Field, face: int, i: int, j: int) -> int:
 
 
 ## ===================================================================== the records: exact sub-nodes where the ground is creased
+## sh and sb are a cache of the planet's own values, so they may forget: nothing a result depends on is in them, only time. They are held in two generations. When sh reaches SUB_GEN entries (at the start of a read,
+## never between a key and its use) it becomes the old generation and a new one starts; an entry read again is carried over without being computed; what a whole generation did not read is dropped, and read from the
+## planet again if asked, bit for bit the same. So a field holds at most about 2 x SUB_GEN sub-nodes however long and however many the matches (about 64 bytes an entry in each of the two tables: at most some 37 MiB a field at 150,000, about what one long match held before). A five-minute match computes about 200,000, so it turns once and drops nothing: entries are only dropped at the second turn.
+const SUB_GEN: int = 150000
+static var subGenOverride: int = 0   # tests only: above 0, this generation size (field_subcap_check; a very large one is the old unbounded table)
+
+
+static func _turnSubs(F: Field) -> void:
+	if F.sh.size() < (subGenOverride if subGenOverride > 0 else SUB_GEN):
+		return
+	F.shOld = F.sh
+	F.sbOld = F.sb
+	F.sh = {}
+	F.sb = {}
+	F.turns += 1
+
+
 ## Sub-node (i4, j4) of a face at `sub` times the canonical resolution: a canonical node where both are multiples of sub, else the planet's function read there (the direction by dirOf at cells * sub, so a
-## sub-node on a cell's edge is the same point, to the bit, from either cell). Returns its key in F.sh and F.sb.
+## sub-node on a cell's edge is the same point, to the bit, from either cell). Returns its key in F.sh and F.sb (in the current generation: read it before the next _turnSubs).
 static func _subKey(F: Field, face: int, i4: int, j4: int) -> int:
 	var key: int = (face * F.S4 + j4) * F.S4 + i4
 	if F.sh.has(key):
+		return key
+	var old = F.shOld.get(key)
+	if old != null:   # the generation before had it: carried over, not computed
+		F.sh[key] = old
+		F.sb[key] = F.sbOld[key]
 		return key
 	if i4 % F.sub == 0 and j4 % F.sub == 0:
 		var idx: int = ensure(F, face, i4 / F.sub, j4 / F.sub)
@@ -288,8 +315,10 @@ static func _subKey(F: Field, face: int, i4: int, j4: int) -> int:
 		F.sh[key] = float(PackedFloat32Array([_vh])[0])   # as a column stores it
 		F.sb[key] = _vb | (_vf << 8)
 		F.subReads += 1
-		if F.extraSub.size() < WorldFieldPool.CAP:
+		if F.turns == 0 and F.extraSub.size() < WorldFieldPool.CAP:   # the pool takes what the first generation reads (after a turn a dropped node read again would be listed twice)
 			F.extraSub.append(key)
+			F.extraSubH.append(F.sh[key])
+			F.extraSubB.append(F.sb[key])
 	return key
 
 
@@ -336,6 +365,7 @@ static func shore() -> float:
 
 ## A refined cell's ground at (u, v) in it: the two triangles of the sub-cell the point is in, from the exact sub-nodes. Sets oh, ob and ofine (the nearest sub-node's).
 static func _sampleRefined(F: Field, face: int, i0: int, j0: int, u: float, v: float) -> void:
+	_turnSubs(F)
 	var sub: int = F.sub
 	var fa: float = u * float(sub)
 	var fb: float = v * float(sub)
@@ -365,6 +395,7 @@ static func _sampleRefined(F: Field, face: int, i0: int, j0: int, u: float, v: f
 
 ## The difference between the exact sub-nodes along one edge of a cell (e: 0 the v = 0 edge, 1 the v = 1, 2 the u = 0, 3 the u = 1) and the straight line between the corners, at t along it, in units.
 static func _edgeDelta(F: Field, face: int, i0: int, j0: int, e: int, t: float) -> float:
+	_turnSubs(F)
 	var sub: int = F.sub
 	var ca: float
 	var cb: float

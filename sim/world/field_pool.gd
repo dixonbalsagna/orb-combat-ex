@@ -62,10 +62,12 @@ static func load(F: WorldField.Field) -> bool:
 			F.f[idx[k]] = ff[k]
 			F.extra.append(idx[k])
 	for k in range(ns):
-		if not F.sh.has(skeys[k]):
+		if F.turns == 0 and not F.sh.has(skeys[k]):
 			F.sh[skeys[k]] = sh[k]
 			F.sb[skeys[k]] = sbv[k]
 			F.extraSub.append(skeys[k])
+			F.extraSubH.append(sh[k])
+			F.extraSubB.append(sbv[k])
 	F.poolLoaded = nc + ns
 	return nc + ns > 0
 
@@ -97,15 +99,8 @@ static func store(F: WorldField.Field) -> void:
 	out.append_array(hh.to_byte_array())
 	out.append_array(bb)
 	out.append_array(ff)
-	var sk := PackedInt64Array()
-	var sh := PackedFloat32Array()
-	var sbv := PackedInt32Array()
-	for key in F.extraSub:
-		sk.append(key)
-		sh.append(F.sh[key])
-		sbv.append(F.sb[key])
-	out.append_array(sk.to_byte_array())
-	out.append_array(sh.to_byte_array())
-	out.append_array(sbv.to_byte_array())
+	out.append_array(F.extraSub.to_byte_array())   # the keys and their values as they were read (extraSubH, extraSubB): the tables they came from may have turned since
+	out.append_array(F.extraSubH.to_byte_array())
+	out.append_array(F.extraSubB.to_byte_array())
 	WorldFieldCache.writeBlob(keyOf(F), out)
 	F.poolLoaded = nc + ns
