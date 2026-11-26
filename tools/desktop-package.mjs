@@ -7,7 +7,7 @@
 //        sets lock_reduce_flashing true in <root>/ui/data/features.json, the same one-word edit the site's export makes (tools/site-pin.mjs, Legal RL-156): the interim's terms hold for a
 //        download too. It edits a checkout in place, so it runs only on a CI checkout (GITHUB_ACTIONS=true) or on a root that is not this repository.
 //   node tools/desktop-package.mjs text --platform <p> --out <dir> --testers [--channel-file <file>]
-//        the outside-testers words (tools/site-tester.json, Legal RL-264). Refused while that file is a draft, and refused while the report-channel line is missing or a placeholder: the real line is Orb's, one line
+//        the outside-testers words (tools/site-tester.json, Legal RL-264), and Legal's permission page as WHAT-YOU-MAY-DO.txt (RL-265). Refused while that file is a draft, and refused while the report-channel line is missing or a placeholder: the real line is Orb's, one line
 //        in the git-ignored .private/testers/report-channel.txt, never in git. `verify --testers` reads the package against the same words.
 //   node tools/desktop-package.mjs testers --root <exported tree>
 //        (path to Alpha 1 job 14) sets testers_package true in <root>/ui/data/features.json: the menu then hides the modes whose testers flag is false in ui/data/modes.json (the campaign, the network row). The
@@ -49,6 +49,10 @@ export function activeNotice(toolsDir = HERE, noticeFile = null) {   // noticeFi
 export const TESTER_NOTICE = 'site-tester.json';
 export const REPORT_SLOT = '[REPORT CHANNEL, given with your key]';
 export const CHANNEL_FILE = '.private/testers/report-channel.txt';
+export const PERMISSION_FILE = 'WHAT-YOU-MAY-DO.txt';   // Legal's permission page (RL-265), beside README.txt: the game's licence line points a player to it by its title
+
+/** The permission file's text, from the testers\' notice. Pure. */
+export function permissionText(t) { return t.permission.join('\n') + '\n'; }
 
 /** Why a report-channel line cannot go in a package, or null. Pure. */
 export function channelProblem(line) {
@@ -74,6 +78,7 @@ export function testerShapeProblems(t) {
   const keys = Array.isArray(t && t.tester) ? t.tester.map((x) => x && x.key).join(',') : '';
   if (keys !== 'who,may,leaves') out.push('the testers\' notice does not hold its three sections (who, may, leaves) in that order');
   else if (t.tester.some((x) => !x.h || !x.p)) out.push('a section of the testers\' notice has no heading or no words');
+  if (!t || !Array.isArray(t.permission) || !t.permission.some((l) => l) || t.permission.some((l) => typeof l !== 'string')) out.push('the testers\' notice has no permission page');
   if (!t || !t.credits || !t.notices_header) out.push('the testers\' notice has no credits or no NOTICES header paragraph');
   return out;
 }
@@ -409,6 +414,10 @@ export function verifyDir(platform, dir, o = {}) {
     else { const bad = channelProblem(para.slice(before.length, para.length - after.length)); if (bad) out.push(`README.txt: ${bad}`); }
     if (!r.includes(notice.credits)) out.push('README.txt does not carry the testers\' credits and licenses paragraph');
   }
+  if (o.testers && notice && !testerShapeProblems(notice).length) {
+    if (!has(PERMISSION_FILE)) out.push(`${PERMISSION_FILE} is missing from the package: the permission page ships beside README.txt (RL-265)`);
+    else if (readFileSync(join(dir, PERMISSION_FILE), 'utf8').split('\r').join('') !== permissionText(notice)) out.push(`${PERMISSION_FILE} is not Legal's permission page word for word`);
+  }
   if (o.testers && notice && notice.notices_header && has('NOTICES.txt') && !readFileSync(join(dir, 'NOTICES.txt'), 'utf8').startsWith(notice.notices_header)) out.push('NOTICES.txt does not start with the testers\' header paragraph (RL-264)');
   if (has('README.txt') && notice) {
     const r = readFileSync(join(dir, 'README.txt'), 'utf8');
@@ -524,6 +533,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       mkdirSync(out, { recursive: true });
       writeFileSync(join(out, 'README.txt'), readmeText(platform, words, info, { private: args.includes('--private') }));
       writeFileSync(join(out, 'NOTICES.txt'), noticesText(lic, words.notices_header || null));
+      if (testers) writeFileSync(join(out, PERMISSION_FILE), permissionText(words));
       writeFileSync(join(out, 'build_info.json'), JSON.stringify(info) + '\n');
       console.log(`desktop package: README.txt, NOTICES.txt and build_info.json (${info.commit}, ${info.date}) written to ${out} for ${platform}`);
     } else if (cmd === 'routes') {

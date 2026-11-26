@@ -300,7 +300,7 @@ writeFileSync(
 </head>
 <body>
 <h1>Orb Combat EX</h1>
-<p>Free to play. The build runs in your browser. Built with AI tools under one person's direction; license not chosen yet, all rights reserved for now.</p>
+<p>Free to play. The build runs in your browser. Built with AI tools under one person's direction. License: all rights are reserved during the Alpha. See "What you may do with Orb Combat EX". Whether the code is made public is decided at Beta.</p>
 <ul>
   <li><a href="play/">Play the Godot build</a> (work in progress)</li>
 </ul>

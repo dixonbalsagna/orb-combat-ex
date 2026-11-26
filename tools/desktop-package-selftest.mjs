@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setTestersPackage, testersMenu, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, TESTER_NOTICE, REPORT_SLOT, channelProblem, readChannel, testerShapeProblems, fillChannel, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
+import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setTestersPackage, testersMenu, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, PERMISSION_FILE, permissionText, TESTER_NOTICE, REPORT_SLOT, channelProblem, readChannel, testerShapeProblems, fillChannel, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -306,12 +306,25 @@ try {
     const readme = readmeText('windows', filled, info);
     const at = ['BEFORE YOU PLAY: FLASHING EFFECTS', 'HOW THIS GAME WAS MADE', 'WHO THIS BUILD IS FOR', 'WHAT YOU MAY DO', 'PRIVACY', 'WHAT LEAVES YOUR COMPUTER', 'HOW TO RUN', 'CREDITS AND LICENSES'].map((h) => readme.indexOf(NL + h));
     check("testers' README: Legal's sections in Legal's order, with no placeholder left", at.every((v, i) => v > 0 && (i === 0 || v > at[i - 1])) && !readme.includes('[REPORT CHANNEL'), at.join());
-    const T = (over = {}) => V('windows', winLike('windows', { readme, notices: noticesText(lic, t.notices_header), extra: '"testers_package": true "testers": false', ...over }), { testers: true, locked: true, noticeObject: { ...t, draft: false } });
+    const T = (over = {}) => {
+      const d = winLike('windows', { readme, notices: noticesText(lic, t.notices_header), extra: '"testers_package": true "testers": false', ...over });
+      if (over.permission !== null) writeFileSync(join(d, PERMISSION_FILE), over.permission ?? permissionText(t));
+      return V('windows', d, { testers: true, locked: true, noticeObject: { ...t, draft: false } });
+    };
     check("testers' package: a whole one passes the check", T().length === 0, JSON.stringify(T()));
     check("testers' package: the placeholder left in README.txt is refused", has(T({ readme: readme.replace(GOOD, REPORT_SLOT) }), /still holds the report-channel placeholder/));
     check("testers' package: a link in the channel line is refused", has(T({ readme: readme.replace(GOOD, 'https://example.org/invite') }), /holds a link/));
     check("testers' package: a missing section, a changed section and a missing channel paragraph are found", has(T({ readme: readme.replace('WHAT YOU MAY DO', 'WHAT YOU CAN DO') }), /What you may do/) && has(T({ readme: readme.replace('named adult friend', 'friend') }), /Who this build is for/) && has(T({ readme: readme.replace('WHAT LEAVES YOUR COMPUTER', 'SENDING') }), /What leaves your computer/));
     check("testers' package: NOTICES.txt without the header paragraph is found", has(T({ notices: noticesText(lic) }), /header paragraph/));
+    check("testers' package: the permission page missing or changed is found", has(T({ permission: null }), /WHAT-YOU-MAY-DO\.txt is missing/) && has(T({ permission: permissionText(t).replace('without asking Orb first', 'freely') }), /not Legal's permission page/));
+    {
+      const md = readFileSync(join(here, '..', 'docs', 'legal', 'permission-page.md'), 'utf8').split(String.fromCharCode(13)).join('');
+      const from = md.indexOf('**What you may do with Orb Combat EX during the Alpha**'), to = md.indexOf(NL + '---', from);
+      const page = md.slice(from, to).split('**').join('').split(NL).map((l) => l.trimEnd());
+      while (page.length && !page[page.length - 1]) page.pop();
+      check("the permission file is Legal's page, line for line, both ways (docs/legal/permission-page.md)", from >= 0 && to > from && JSON.stringify(t.permission) === JSON.stringify(page) && !t.permission.join(' ').includes('['), `${t.permission.length} lines against ${page.length}`);
+      check("the permission file is titled as the game's line points to it, with no assurance word", t.permission[0].startsWith('What you may do with Orb Combat EX') && PERMISSION_FILE === 'WHAT-YOU-MAY-DO.txt' && NO_ASSURANCE.every((w) => !new RegExp(`(^|[^A-Za-z-])${w}($|[^A-Za-z-])`, 'i').test(permissionText(t))));
+    }
     check("testers' package: a README with the owner's words instead is found", has(T({ readme: readmeText('windows', notice, info) }), /Who this build is for/));
     const out = join(tmp, 'text-testers');
     const bi = join(tmp, 'bi.json');

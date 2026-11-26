@@ -1,0 +1,153 @@
+diff --git a/docs/tools/desktop-builds.md b/docs/tools/desktop-builds.md
+index ce8f59f0..12b5b3f3 100644
+--- a/docs/tools/desktop-builds.md
++++ b/docs/tools/desktop-builds.md
+@@ -116,7 +116,7 @@ It stops at the first failing step and names it. It writes the zip, `<zip>.sha25
+ 
+ ## The testers' words and the report channel (A2, 2026-11-25)
+ 
+-An outside-testers package carries its own README.txt and NOTICES.txt words from `tools/site-tester.json` (Legal RL-264, `docs/legal/tester-folder-notices.md`, held word for word by the self-test), not the site's notice. `desktop-package.mjs text --testers` makes them and `verify --testers` reads a package against them. Two things refuse the package today, both on purpose:
++An outside-testers package carries its own README.txt and NOTICES.txt words from `tools/site-tester.json` (Legal RL-264, `docs/legal/tester-folder-notices.md`, held word for word by the self-test), not the site's notice. The folder also holds `WHAT-YOU-MAY-DO.txt`, Legal's permission page (`docs/legal/permission-page.md`, RL-265), which the game's licence line points to. `desktop-package.mjs text --testers` makes them and `verify --testers` reads a package against them. Two things refuse the package today, both on purpose:
+ 
+ 1. **The words are a draft** (`"draft": true`) until Orb has seen them and the EP records the yes. Then, in one commit: set `draft` false.
+ 2. **The report channel is not filled.** Git holds only `[REPORT CHANNEL, given with your key]`. Orb writes one line, a plain description of the private channel, in `.private/testers/report-channel.txt` (git-ignored), or `--channel-file <file>` names another. A missing line, a placeholder, two lines, a link, an invite, an address or a handle is refused.
+diff --git a/tools/desktop-package-selftest.mjs b/tools/desktop-package-selftest.mjs
+index 452ba513..256bd6ab 100644
+--- a/tools/desktop-package-selftest.mjs
++++ b/tools/desktop-package-selftest.mjs
+@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
+ import { tmpdir } from 'node:os';
+ import { join, resolve } from 'node:path';
+ import { spawnSync } from 'node:child_process';
+-import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setTestersPackage, testersMenu, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, TESTER_NOTICE, REPORT_SLOT, channelProblem, readChannel, testerShapeProblems, fillChannel, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
++import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setTestersPackage, testersMenu, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, PERMISSION_FILE, permissionText, TESTER_NOTICE, REPORT_SLOT, channelProblem, readChannel, testerShapeProblems, fillChannel, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
+ 
+ let ran = 0, failed = 0;
+ const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
+@@ -306,12 +306,25 @@ try {
+     const readme = readmeText('windows', filled, info);
+     const at = ['BEFORE YOU PLAY: FLASHING EFFECTS', 'HOW THIS GAME WAS MADE', 'WHO THIS BUILD IS FOR', 'WHAT YOU MAY DO', 'PRIVACY', 'WHAT LEAVES YOUR COMPUTER', 'HOW TO RUN', 'CREDITS AND LICENSES'].map((h) => readme.indexOf(NL + h));
+     check("testers' README: Legal's sections in Legal's order, with no placeholder left", at.every((v, i) => v > 0 && (i === 0 || v > at[i - 1])) && !readme.includes('[REPORT CHANNEL'), at.join());
+-    const T = (over = {}) => V('windows', winLike('windows', { readme, notices: noticesText(lic, t.notices_header), extra: '"testers_package": true "testers": false', ...over }), { testers: true, locked: true, noticeObject: { ...t, draft: false } });
++    const T = (over = {}) => {
++      const d = winLike('windows', { readme, notices: noticesText(lic, t.notices_header), extra: '"testers_package": true "testers": false', ...over });
++      if (over.permission !== null) writeFileSync(join(d, PERMISSION_FILE), over.permission ?? permissionText(t));
++      return V('windows', d, { testers: true, locked: true, noticeObject: { ...t, draft: false } });
++    };
+     check("testers' package: a whole one passes the check", T().length === 0, JSON.stringify(T()));
+     check("testers' package: the placeholder left in README.txt is refused", has(T({ readme: readme.replace(GOOD, REPORT_SLOT) }), /still holds the report-channel placeholder/));
+     check("testers' package: a link in the channel line is refused", has(T({ readme: readme.replace(GOOD, 'https://example.org/invite') }), /holds a link/));
+     check("testers' package: a missing section, a changed section and a missing channel paragraph are found", has(T({ readme: readme.replace('WHAT YOU MAY DO', 'WHAT YOU CAN DO') }), /What you may do/) && has(T({ readme: readme.replace('named adult friend', 'friend') }), /Who this build is for/) && has(T({ readme: readme.replace('WHAT LEAVES YOUR COMPUTER', 'SENDING') }), /What leaves your computer/));
+     check("testers' package: NOTICES.txt without the header paragraph is found", has(T({ notices: noticesText(lic) }), /header paragraph/));
++    check("testers' package: the permission page missing or changed is found", has(T({ permission: null }), /WHAT-YOU-MAY-DO\.txt is missing/) && has(T({ permission: permissionText(t).replace('without asking Orb first', 'freely') }), /not Legal's permission page/));
++    {
++      const md = readFileSync(join(here, '..', 'docs', 'legal', 'permission-page.md'), 'utf8').split(String.fromCharCode(13)).join('');
++      const from = md.indexOf('**What you may do with Orb Combat EX during the Alpha**'), to = md.indexOf(NL + '---', from);
++      const page = md.slice(from, to).split('**').join('').split(NL).map((l) => l.trimEnd());
++      while (page.length && !page[page.length - 1]) page.pop();
++      check("the permission file is Legal's page, line for line, both ways (docs/legal/permission-page.md)", from >= 0 && to > from && JSON.stringify(t.permission) === JSON.stringify(page) && !t.permission.join(' ').includes('['), `${t.permission.length} lines against ${page.length}`);
++      check("the permission file is titled as the game's line points to it, with no assurance word", t.permission[0].startsWith('What you may do with Orb Combat EX') && PERMISSION_FILE === 'WHAT-YOU-MAY-DO.txt' && NO_ASSURANCE.every((w) => !new RegExp(`(^|[^A-Za-z-])${w}($|[^A-Za-z-])`, 'i').test(permissionText(t))));
++    }
+     check("testers' package: a README with the owner's words instead is found", has(T({ readme: readmeText('windows', notice, info) }), /Who this build is for/));
+     const out = join(tmp, 'text-testers');
+     const bi = join(tmp, 'bi.json');
+diff --git a/tools/desktop-package.mjs b/tools/desktop-package.mjs
+index b4d2797e..0fba9309 100644
+--- a/tools/desktop-package.mjs
++++ b/tools/desktop-package.mjs
+@@ -7,7 +7,7 @@
+ //        sets lock_reduce_flashing true in <root>/ui/data/features.json, the same one-word edit the site's export makes (tools/site-pin.mjs, Legal RL-156): the interim's terms hold for a
+ //        download too. It edits a checkout in place, so it runs only on a CI checkout (GITHUB_ACTIONS=true) or on a root that is not this repository.
+ //   node tools/desktop-package.mjs text --platform <p> --out <dir> --testers [--channel-file <file>]
+-//        the outside-testers words (tools/site-tester.json, Legal RL-264). Refused while that file is a draft, and refused while the report-channel line is missing or a placeholder: the real line is Orb's, one line
++//        the outside-testers words (tools/site-tester.json, Legal RL-264), and Legal's permission page as WHAT-YOU-MAY-DO.txt (RL-265). Refused while that file is a draft, and refused while the report-channel line is missing or a placeholder: the real line is Orb's, one line
+ //        in the git-ignored .private/testers/report-channel.txt, never in git. `verify --testers` reads the package against the same words.
+ //   node tools/desktop-package.mjs testers --root <exported tree>
+ //        (path to Alpha 1 job 14) sets testers_package true in <root>/ui/data/features.json: the menu then hides the modes whose testers flag is false in ui/data/modes.json (the campaign, the network row). The
+@@ -49,6 +49,10 @@ export function activeNotice(toolsDir = HERE, noticeFile = null) {   // noticeFi
+ export const TESTER_NOTICE = 'site-tester.json';
+ export const REPORT_SLOT = '[REPORT CHANNEL, given with your key]';
+ export const CHANNEL_FILE = '.private/testers/report-channel.txt';
++export const PERMISSION_FILE = 'WHAT-YOU-MAY-DO.txt';   // Legal's permission page (RL-265), beside README.txt: the game's licence line points a player to it by its title
++
++/** The permission file's text, from the testers\' notice. Pure. */
++export function permissionText(t) { return t.permission.join('\n') + '\n'; }
+ 
+ /** Why a report-channel line cannot go in a package, or null. Pure. */
+ export function channelProblem(line) {
+@@ -74,6 +78,7 @@ export function testerShapeProblems(t) {
+   const keys = Array.isArray(t && t.tester) ? t.tester.map((x) => x && x.key).join(',') : '';
+   if (keys !== 'who,may,leaves') out.push('the testers\' notice does not hold its three sections (who, may, leaves) in that order');
+   else if (t.tester.some((x) => !x.h || !x.p)) out.push('a section of the testers\' notice has no heading or no words');
++  if (!t || !Array.isArray(t.permission) || !t.permission.some((l) => l) || t.permission.some((l) => typeof l !== 'string')) out.push('the testers\' notice has no permission page');
+   if (!t || !t.credits || !t.notices_header) out.push('the testers\' notice has no credits or no NOTICES header paragraph');
+   return out;
+ }
+@@ -409,6 +414,10 @@ export function verifyDir(platform, dir, o = {}) {
+     else { const bad = channelProblem(para.slice(before.length, para.length - after.length)); if (bad) out.push(`README.txt: ${bad}`); }
+     if (!r.includes(notice.credits)) out.push('README.txt does not carry the testers\' credits and licenses paragraph');
+   }
++  if (o.testers && notice && !testerShapeProblems(notice).length) {
++    if (!has(PERMISSION_FILE)) out.push(`${PERMISSION_FILE} is missing from the package: the permission page ships beside README.txt (RL-265)`);
++    else if (readFileSync(join(dir, PERMISSION_FILE), 'utf8').split('\r').join('') !== permissionText(notice)) out.push(`${PERMISSION_FILE} is not Legal's permission page word for word`);
++  }
+   if (o.testers && notice && notice.notices_header && has('NOTICES.txt') && !readFileSync(join(dir, 'NOTICES.txt'), 'utf8').startsWith(notice.notices_header)) out.push('NOTICES.txt does not start with the testers\' header paragraph (RL-264)');
+   if (has('README.txt') && notice) {
+     const r = readFileSync(join(dir, 'README.txt'), 'utf8');
+@@ -524,6 +533,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
+       mkdirSync(out, { recursive: true });
+       writeFileSync(join(out, 'README.txt'), readmeText(platform, words, info, { private: args.includes('--private') }));
+       writeFileSync(join(out, 'NOTICES.txt'), noticesText(lic, words.notices_header || null));
++      if (testers) writeFileSync(join(out, PERMISSION_FILE), permissionText(words));
+       writeFileSync(join(out, 'build_info.json'), JSON.stringify(info) + '\n');
+       console.log(`desktop package: README.txt, NOTICES.txt and build_info.json (${info.commit}, ${info.date}) written to ${out} for ${platform}`);
+     } else if (cmd === 'routes') {
+diff --git a/tools/site-tester.json b/tools/site-tester.json
+index fa3e06f2..cccdae90 100644
+--- a/tools/site-tester.json
++++ b/tools/site-tester.json
+@@ -1,5 +1,5 @@
+ {
+-  "_why": "The outside-testers package's own words (README.txt and NOTICES.txt), copied word for word from Legal's docs/legal/tester-folder-notices.md (A-LEGAL-02 support, RL-264); tools/desktop-package-selftest.mjs holds every string against that page. \"draft\": true until Orb has seen the words and the EP has recorded the yes, so `desktop-package.mjs text --testers` refuses. Only placeholders live here: the report channel line stays \"[REPORT CHANNEL, given with your key]\" in git for ever; the real line is read at packaging time from the git-ignored .private/testers/report-channel.txt (one line: a plain description, no link, address, handle or name), and a package cannot be made without it. No tester's name or anything from a tester ever goes in this file (RL-267).",
++  "_why": "The outside-testers package's own words (README.txt and NOTICES.txt), copied word for word from Legal's docs/legal/tester-folder-notices.md (A-LEGAL-02 support, RL-264); tools/desktop-package-selftest.mjs holds every string against that page. \"permission\" is Legal's permission page (docs/legal/permission-page.md, RL-265), written beside README.txt as WHAT-YOU-MAY-DO.txt. \"draft\": true until Orb has seen the words and the EP has recorded the yes, so `desktop-package.mjs text --testers` refuses. Only placeholders live here: the report channel line stays \"[REPORT CHANNEL, given with your key]\" in git for ever; the real line is read at packaging time from the git-ignored .private/testers/report-channel.txt (one line: a plain description, no link, address, handle or name), and a package cannot be made without it. No tester's name or anything from a tester ever goes in this file (RL-267).",
+   "draft": true,
+   "title": "Orb Combat EX (working title)",
+   "gate": {
+@@ -17,5 +17,37 @@
+     { "key": "leaves", "h": "What leaves your computer", "p": "Nothing leaves your computer unless you send it. The game does not send reports by itself. To report a problem, use Send feedback or Save this match in the game. They put files in a report folder on your computer: your match, and copies of the game's own log files. The game also copies its logs there after a run that did not close properly. It removes folder paths and your account and computer names from those log copies, but it may not catch everything, so look at a file before you send it. Send it yourself to Orb's private report channel: [REPORT CHANNEL, given with your key]. That channel is a service run by another company, with its own rules and privacy policy, and the people in it can read your report and see your name there. What you send is also read with the help of AI services run by another company, so its contents leave Orb's computer. Please put no personal details in a report: no real name, address, email or account names. If you ask, Orb will delete your report files and messages from the report channel, and Orb's own copies, within 14 days. Those services may keep copies under their own rules, and Orb cannot remove what someone else has already saved." }
+   ],
+   "credits": "Orb Combat EX is made by Orb, with AI tools as described above. NOTICES.txt in this folder holds the license and copyright text of the Godot Engine this game runs on (MIT License), the font it ships (Open Sans, SIL Open Font License 1.1) and the engine's other components. Thank you for testing.",
++  "permission": [
++    "What you may do with Orb Combat EX during the Alpha",
++    "",
++    "Thank you for testing. Here is what you may do, in plain words.",
++    "",
++    "You may:",
++    "- play the build on your own computer or Steam Deck;",
++    "- tell Orb what you think, in reports, chat or conversation;",
++    "- record or screenshot a problem to show Orb, and send it to Orb only;",
++    "- suggest ideas, fixes, drawings or sounds (see \"If you send something\", below).",
++    "",
++    "You may not:",
++    "- post, stream or share footage or screenshots of the build anywhere public, or send them to anyone else, without asking Orb first;",
++    "- give the build, its files or your download key to anyone;",
++    "- copy, sell, rent or re-upload the game or any part of it;",
++    "- change the game and share the changed version;",
++    "- take its art, writing, sound or code and use it somewhere else;",
++    "- use its name, characters or look to promote or sell anything;",
++    "- feed its art, writing or code to an AI model to train it.",
++    "",
++    "Why it is this way. Orb Combat EX is an early, private test, and some of it is not ready for the public. All rights in the game, its art, writing, sound, code and name are reserved for now. That is the plain default, and it keeps every option open for later. It is not a reflection on you.",
++    "",
++    "What comes later. Orb will decide about public code at Beta, the next stage. A later version of this page will say what players may do when the game is public, such as streaming and making videos. Nothing here promises any of it.",
++    "",
++    "If you send something. If you send an idea, a fix, a drawing or a sound, you let Orb use it in the game, and Orb will credit you if you wish. You keep your own copy and your credit. You are not owed payment unless you and Orb agree it first. For anything bigger than an idea (code, art or sound you made), Orb will ask you to agree to a short contributor note first.",
++    "",
++    "Credits. The game runs on the Godot Engine (MIT License) and uses the Open Sans font (SIL Open Font License 1.1), among other parts. Their notices are in the build, on the licenses screen, and in NOTICES.txt in your folder.",
++    "",
++    "How the game was made. Orb Combat EX is a one-person project. Orb directs it, and AI tools write the code and draft the art, animation, dialogue and design documents. Nothing in the game is generated by AI while you play: the fight director and the world are ordinary game code.",
++    "",
++    "Questions or a problem. Tell Orb through the private report channel that came with your key."
++  ],
+   "notices_header": "This file holds the license and copyright text for the third-party software this game contains. They apply to those parts only. The game's own code, art, writing, sound and name are not under any of these licenses: all rights in them are reserved by their owner."
+ }

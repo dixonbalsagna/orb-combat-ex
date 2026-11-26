@@ -116,7 +116,7 @@ It stops at the first failing step and names it. It writes the zip, `<zip>.sha25
 
 ## The testers' words and the report channel (A2, 2026-11-25)
 
-An outside-testers package carries its own README.txt and NOTICES.txt words from `tools/site-tester.json` (Legal RL-264, `docs/legal/tester-folder-notices.md`, held word for word by the self-test), not the site's notice. `desktop-package.mjs text --testers` makes them and `verify --testers` reads a package against them. Two things refuse the package today, both on purpose:
+An outside-testers package carries its own README.txt and NOTICES.txt words from `tools/site-tester.json` (Legal RL-264, `docs/legal/tester-folder-notices.md`, held word for word by the self-test), not the site's notice. The folder also holds `WHAT-YOU-MAY-DO.txt`, Legal's permission page (`docs/legal/permission-page.md`, RL-265), which the game's licence line points to. `desktop-package.mjs text --testers` makes them and `verify --testers` reads a package against them. Two things refuse the package today, both on purpose:
 
 1. **The words are a draft** (`"draft": true`) until Orb has seen them and the EP records the yes. Then, in one commit: set `draft` false.
 2. **The report channel is not filled.** Git holds only `[REPORT CHANNEL, given with your key]`. Orb writes one line, a plain description of the private channel, in `.private/testers/report-channel.txt` (git-ignored), or `--channel-file <file>` names another. A missing line, a placeholder, two lines, a link, an invite, an address or a handle is refused.

@@ -1,5 +1,5 @@
 {
-  "_why": "The outside-testers package's own words (README.txt and NOTICES.txt), copied word for word from Legal's docs/legal/tester-folder-notices.md (A-LEGAL-02 support, RL-264); tools/desktop-package-selftest.mjs holds every string against that page. \"draft\": true until Orb has seen the words and the EP has recorded the yes, so `desktop-package.mjs text --testers` refuses. Only placeholders live here: the report channel line stays \"[REPORT CHANNEL, given with your key]\" in git for ever; the real line is read at packaging time from the git-ignored .private/testers/report-channel.txt (one line: a plain description, no link, address, handle or name), and a package cannot be made without it. No tester's name or anything from a tester ever goes in this file (RL-267).",
+  "_why": "The outside-testers package's own words (README.txt and NOTICES.txt), copied word for word from Legal's docs/legal/tester-folder-notices.md (A-LEGAL-02 support, RL-264); tools/desktop-package-selftest.mjs holds every string against that page. \"permission\" is Legal's permission page (docs/legal/permission-page.md, RL-265), written beside README.txt as WHAT-YOU-MAY-DO.txt. \"draft\": true until Orb has seen the words and the EP has recorded the yes, so `desktop-package.mjs text --testers` refuses. Only placeholders live here: the report channel line stays \"[REPORT CHANNEL, given with your key]\" in git for ever; the real line is read at packaging time from the git-ignored .private/testers/report-channel.txt (one line: a plain description, no link, address, handle or name), and a package cannot be made without it. No tester's name or anything from a tester ever goes in this file (RL-267).",
   "draft": true,
   "title": "Orb Combat EX (working title)",
   "gate": {
@@ -17,5 +17,37 @@
     { "key": "leaves", "h": "What leaves your computer", "p": "Nothing leaves your computer unless you send it. The game does not send reports by itself. To report a problem, use Send feedback or Save this match in the game. They put files in a report folder on your computer: your match, and copies of the game's own log files. The game also copies its logs there after a run that did not close properly. It removes folder paths and your account and computer names from those log copies, but it may not catch everything, so look at a file before you send it. Send it yourself to Orb's private report channel: [REPORT CHANNEL, given with your key]. That channel is a service run by another company, with its own rules and privacy policy, and the people in it can read your report and see your name there. What you send is also read with the help of AI services run by another company, so its contents leave Orb's computer. Please put no personal details in a report: no real name, address, email or account names. If you ask, Orb will delete your report files and messages from the report channel, and Orb's own copies, within 14 days. Those services may keep copies under their own rules, and Orb cannot remove what someone else has already saved." }
   ],
   "credits": "Orb Combat EX is made by Orb, with AI tools as described above. NOTICES.txt in this folder holds the license and copyright text of the Godot Engine this game runs on (MIT License), the font it ships (Open Sans, SIL Open Font License 1.1) and the engine's other components. Thank you for testing.",
+  "permission": [
+    "What you may do with Orb Combat EX during the Alpha",
+    "",
+    "Thank you for testing. Here is what you may do, in plain words.",
+    "",
+    "You may:",
+    "- play the build on your own computer or Steam Deck;",
+    "- tell Orb what you think, in reports, chat or conversation;",
+    "- record or screenshot a problem to show Orb, and send it to Orb only;",
+    "- suggest ideas, fixes, drawings or sounds (see \"If you send something\", below).",
+    "",
+    "You may not:",
+    "- post, stream or share footage or screenshots of the build anywhere public, or send them to anyone else, without asking Orb first;",
+    "- give the build, its files or your download key to anyone;",
+    "- copy, sell, rent or re-upload the game or any part of it;",
+    "- change the game and share the changed version;",
+    "- take its art, writing, sound or code and use it somewhere else;",
+    "- use its name, characters or look to promote or sell anything;",
+    "- feed its art, writing or code to an AI model to train it.",
+    "",
+    "Why it is this way. Orb Combat EX is an early, private test, and some of it is not ready for the public. All rights in the game, its art, writing, sound, code and name are reserved for now. That is the plain default, and it keeps every option open for later. It is not a reflection on you.",
+    "",
+    "What comes later. Orb will decide about public code at Beta, the next stage. A later version of this page will say what players may do when the game is public, such as streaming and making videos. Nothing here promises any of it.",
+    "",
+    "If you send something. If you send an idea, a fix, a drawing or a sound, you let Orb use it in the game, and Orb will credit you if you wish. You keep your own copy and your credit. You are not owed payment unless you and Orb agree it first. For anything bigger than an idea (code, art or sound you made), Orb will ask you to agree to a short contributor note first.",
+    "",
+    "Credits. The game runs on the Godot Engine (MIT License) and uses the Open Sans font (SIL Open Font License 1.1), among other parts. Their notices are in the build, on the licenses screen, and in NOTICES.txt in your folder.",
+    "",
+    "How the game was made. Orb Combat EX is a one-person project. Orb directs it, and AI tools write the code and draft the art, animation, dialogue and design documents. Nothing in the game is generated by AI while you play: the fight director and the world are ordinary game code.",
+    "",
+    "Questions or a problem. Tell Orb through the private report channel that came with your key."
+  ],
   "notices_header": "This file holds the license and copyright text for the third-party software this game contains. They apply to those parts only. The game's own code, art, writing, sound and name are not under any of these licenses: all rights in them are reserved by their owner."
 }
