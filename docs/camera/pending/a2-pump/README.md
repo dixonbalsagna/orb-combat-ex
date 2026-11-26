@@ -2,6 +2,12 @@
 
 Camera, 2026-11-26. This fixes Orb's "zoom jumps" (A2 issue c) and helps "splits or joins abruptly". The EP's go covers parts 1 and 2 as one park.
 
+**HELD (the EP, 2026-11-26): out of the small-and-big window.**
+- On the window's tree it tips two collapse clips over the gate: small reduced reads 3 / 3 / 1.5 at tick 354, and big normal 3 / 3 / 3 at tick 530. Without it, both pass at exactly 2.5. The record is `docs/camera/runs/d9bc2f07/window-gate/readings.txt`.
+- **Rule 2** (the shared view's ordinary zoom-out) does all the pump work and alone moves both clips. It shifts a split's timing by a tick or two where those clips have no headroom.
+- **Rule 1** (the lookahead) does nothing measurable.
+- **Next:** after VFX's headroom work on those two moments (the blast at 390, the beam's glow at 530 to 555), the park is re-cut with rule 2 alone and re-read at small, big and medium in both modes.
+
 **Apply on the landing order:** main, then `../reset-frame/`, `../gw1c-door-holds/`, `../cd04/` (at 0.045). Then `git -c core.autocrlf=false apply a2-pump.patch` (sha1 f319fd15, 65 lines). Two files, mine: `render/camera/split_rig.gd`, `camera_params.gd`. Records: `docs/camera/runs/54474b97/a2-pump/` (the hunt is in `docs/camera/runs/54474b97/zoom-hunt/`).
 
 ## What was wrong
