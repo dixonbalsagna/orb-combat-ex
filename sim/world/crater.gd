@@ -186,6 +186,8 @@ static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx:
 
 
 static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
+	refusal = {}
+	sitDepth = 0.0
 	_gQ = []
 	_gSup = -1
 	_gRep = 0
@@ -208,19 +210,23 @@ static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, 
 		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
 		x = rp[0]
 		energy = rp[1]
+	var zz: float = z
+	if is_nan(zz):
+		zz = float(cause.z) if (S.depthOn and cause != null and "z" in cause) else 0.0
 	if not S.depthOn:
 		var rn = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
 		_gQ = []
 		_gSup = -1
+		if rn == null and not refusal.is_empty():
+			SimFx.craterRefused(S, refusal, kind, 0.0)
 		return rn
-	var zz: float = z
-	if is_nan(zz):
-		zz = float(cause.z) if (cause != null and "z" in cause) else 0.0
 	var k: int = WorldTerrain.enterRow(S, WorldTerrain.rowOfZ(zz))
 	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
 	WorldTerrain.leaveRow(S, k)
 	_gQ = []
 	_gSup = -1
+	if rec == null and not refusal.is_empty():
+		SimFx.craterRefused(S, refusal, kind, zz)
 	if rec != null and k >= 0 and not _lastLive:   # a crater held in the planet store has no strip rows to dig: its bowl is radial about its planet point
 		_digNeighbours(S, rec, k, shape[WorldCraters.S_STEEP] if shape.size() > 0 else 1.0)
 	return rec
@@ -231,6 +237,38 @@ static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, 
 ## as ever UNTIL the state has a frame (S.frame, Simulation's read-through): then the ground is the field plus the store, and the deform write stops so the bowl is not counted twice (`_lastLive`, read by dig).
 static var pointHook: Callable = Callable()
 static var _lastLive: bool = false
+
+## The last dig's refusal (the bury fix, GW1c): when a blow that would have dug on fresh ground is refused because the spot is already as dented as it can dig (the shaft cap, or the settling taking the bowl under MIN_DEPTH), the
+## numbers of that refusal: x, y (the ground there), r (the blow's radius), depth (the dent already there: the relief), dig (the depth this blow would have dug on fresh ground), energy. Empty after every dig that was not refused, and for a blow too weak to dig on fresh ground.
+## Not state: it is written and read inside one call sequence (dig, then the contact that asked for it) and rebuilt by every dig. A refusal digs nothing and stores nothing; it sends crater_refused (SimFx) and lets the contact bury.
+static var refusal: Dictionary = {}
+
+## The depth of the bowl a fighter driven in by the last dig sits in: the dent that was there plus what this blow dug, never more than this blow would dig on fresh ground (0.26 of the radius is the most a spot holds, a blow
+## digs 0.22 at most). On fresh ground it is the dug depth exactly; on a dented spot it is the whole bowl, so a hard impact is as hard as it is whatever the cap left it to dig (a blow that dug 6 on top of a 120 dent buries as
+## a fresh one would). Set by every dig, 0 for a blow too weak to dig on fresh ground.
+static var sitDepth: float = 0.0
+
+
+static func _refused(xw: float, y0: float, R: float, relief: float, E: float, dRaw: float) -> void:
+	if dRaw >= MIN_DEPTH:
+		refusal = {"x": xw, "y": y0, "r": R, "depth": maxf(relief, 0.0), "dig": dRaw, "energy": E}
+		sitDepth = minf(dRaw, maxf(relief, 0.0))
+
+
+## The bowl a refused blow buries against, as the contact reads a crater (depth, y, r, energy), after a refused dig; null when the last dig was not refused. Not a record: nothing is stored or sent from it. Its depth is the dent
+## already there (the relief) but never more than this blow would have dug on fresh ground (sitDepth), so the embed threshold still asks how hard the impact was, as it does for a bowl it digs: a soft slam into a deep old crater
+## does not bury, a hard one buries exactly when it would have on fresh ground. y is set so y - depth is the ground as it stands now (the floor of the old bowl, read at the contact), where a buried fighter sits.
+static func refusalBowl(S: SimState):
+	if refusal.is_empty():
+		return null
+	var b := SimState.Crater.new()
+	b.x = float(refusal.x)
+	b.depth = sitDepth
+	b.y = WorldTerrain.groundY(S, b.x) + b.depth
+	b.r = float(refusal.r)
+	b.energy = float(refusal.energy)
+	b.cause = "impact"
+	return b
 static var _gQ: Array = []      # the dig's planet point when a repeat moved it to the old crater's centre (set by _digRead, read by _dig and _record, cleared after)
 static var _gSup: int = -1      # ... the store record the new crater supersedes
 static var _gRep: int = 0       # ... and its repeat count
@@ -364,18 +402,22 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	var dRaw: float = R0 * DEPTH_RATIO * sD * (GRAZE_MIN + (1.0 - GRAZE_MIN) * clampf(vert, 0.0, 1.0))
 	var d: float = minf(dRaw, RELIEF_MAX_RATIO * R0 * sD - relief)
 	if d < MIN_DEPTH:
+		_refused(xw, y0, R, relief, E, dRaw)
 		return null
 	var rt: float = clampf((E - RIM_E_LOW) / (RIM_E_HIGH - RIM_E_LOW), 0.0, 1.0)
 	var volFrac: float = RIM_VOL_LOW + (RIM_VOL_HIGH - RIM_VOL_LOW) * rt * rt * (3.0 - 2.0 * rt)
 	var dt: float = d / sD   # the depth today's bowl would have had, for today's rim
 	var hr: float = minf(dt * volFrac * RIM_H_PER_VOL, RIM_DEPTH_MAX * dt) * sRim
+	var Rb: float = R   # the blow's own radius, for a refusal's event (the settling may widen R)
 	if glob and WorldCraters.globeSettle():   # the wall eased to the angle of repose: wider and shallower, the volume kept, held to the cap and the shaft cap again
 		var st: Array = WorldGlobe.settle(S, qg, R, d, hr, rcap, RELIEF_MAX_RATIO * R0 * sD, relief, _gSup)
 		R = st[0]
 		d = st[1]
 		hr = st[2]
 		if d < MIN_DEPTH:
+			_refused(xw, y0, Rb, relief, E, dRaw)
 			return null
+	sitDepth = minf(dRaw, maxf(relief, 0.0) + d)
 	var n: int = int(ceil(R * (1.0 + RIM_OUT) / COL)) + 1
 	var minG: float = 1e9
 	var lv: float = WorldFill.floodLevelFor(S, qg, R, d) if glob else WorldStore.DRY   # B1: where water could come from (off unless water.json flood.enabled)
