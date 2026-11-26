@@ -80,11 +80,13 @@ export function judge(rows, { expected = EXPECTED, line = TAKE_DOWN_LINE, baseli
 }
 
 /** The table, one line a clip, plus the verdict line. */
-export function report(j, line = TAKE_DOWN_LINE) {
+export function report(j, line = TAKE_DOWN_LINE, warning = null) {
   const head = `${'clip'.padEnd(20)} ${'primary'.padStart(7)} ${'red'.padStart(4)} ${'area-15%'.padStart(8)} ${'2 s mem'.padStart(8)}`;
   const body = j.rows.map((r) => `${r.id.padEnd(20)} ${String(r.primary).padStart(7)} ${String(r.red).padStart(4)} ${String(r.area15 === null ? 'n/a' : r.area15).padStart(8)} ${String(r.twoSec === null ? 'n/a' : r.twoSec).padStart(8)}`);
   const verdict = { 0: j.baseline ? 'every clip equals or beats its recorded value' : 'flash reading clean', 1: `TAKE-DOWN LINE (${line}) CROSSED`, 2: 'A CLIP WAS NOT READ (never a pass)', 3: `FINDING: over our gate of ${OUR_GATE}, within the line`, 4: 'A CLIP READS WORSE THAN ITS RECORDED VALUE', 5: 'A CLIP HAS NO RECORDED VALUE (a new clip)' }[j.code];
-  return [head, ...body, ...j.lines, ...j.problems, `nightly flash reading: ${verdict}`].join('\n');
+  // `warning`: the baseline file's invalid_note, said above the table and again beside the verdict, so a night's page cannot be read without it. It changes no verdict.
+  const w = warning ? [`WARNING: ${warning}`, ''] : [];
+  return [...w, head, ...body, ...j.lines, ...j.problems, `nightly flash reading: ${verdict}${warning ? ' (see the WARNING above: readings of buildings are invalid)' : ''}`].join('\n');
 }
 
 /** Every run-pixels summary.json under `where` (a folder, searched one level down too, or a file), the rows concatenated. */
@@ -112,13 +114,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!where) { console.error('usage: node tools/flash/nightly-ci.mjs <folder with summary.json files, or one summary.json> [--md <file>] [--line 3] [--expect id,id] [--baseline <file>]'); process.exit(2); }
   const line = Number(opt('--line', TAKE_DOWN_LINE));
   const expected = opt('--expect') ? opt('--expect').split(',') : EXPECTED;
-  let baseline = null;
+  let baseline = null, warning = null;
   if (opt('--baseline')) {
-    try { baseline = JSON.parse(readFileSync(resolve(opt('--baseline')), 'utf8')).clips; } catch (e) { console.error(`nightly-ci: the baseline ${opt('--baseline')} cannot be read: ${e.message}`); process.exit(2); }
+    try { const whole = JSON.parse(readFileSync(resolve(opt('--baseline')), 'utf8')); baseline = whole.clips; warning = typeof whole.invalid_note === 'string' ? whole.invalid_note : null; } catch (e) { console.error(`nightly-ci: the baseline ${opt('--baseline')} cannot be read: ${e.message}`); process.exit(2); }
     if (!baseline || typeof baseline !== 'object') { console.error('nightly-ci: the baseline has no "clips" object'); process.exit(2); }
   }
   const j = judge(readSummaries(where), { expected, line, baseline });
-  const text = report(j, line);
+  const text = report(j, line, warning);
   console.log(text);
   if (opt('--md')) writeFileSync(resolve(opt('--md')), '```\n' + text + '\n```\n');
   if (process.env.GITHUB_ACTIONS && j.code === 3) for (const m of j.problems) console.log(`::warning::${m}`);

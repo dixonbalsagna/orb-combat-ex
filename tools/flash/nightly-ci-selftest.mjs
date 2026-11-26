@@ -104,6 +104,15 @@ check('the report is a table with a verdict line', /^clip +primary +red +area-15
   check('the real baseline keeps collapse-reduced at 3 and under: its reading of 4 is not recorded, so the nightly stays red on it', real['collapse-reduced'].primary === 3 && judge([row('collapse-reduced', 4, 0, 4, 3)], { baseline: real, expected: ['collapse-reduced'] }).code === 4);
 }
 
+{
+  // the baseline's invalid_note is said on the night's page and changes no verdict
+  const real = JSON.parse(readFileSync(join(here, 'nightly-baseline.json'), 'utf8'));
+  const night = EXPECTED.map((id) => row(id, real.clips[id].primary, real.clips[id].red, real.clips[id].area15, real.clips[id].twoSec));
+  const j = judge(night, { baseline: real.clips });
+  const text = report(j, 3, real.invalid_note || null);
+  check('the baseline says which readings are invalid, the page says it above the table and beside the verdict, and the verdict code is the same', typeof real.invalid_note === 'string' && /no building/.test(real.invalid_note) && text.startsWith('WARNING: SOFTWARE READINGS OF BUILDINGS ARE INVALID') && /readings of buildings are invalid\)$/.test(text) && j.code === 0 && !/WARNING/.test(report(j, 3)));
+}
+
 // the command, end to end, on a folder of summary files
 const d = mkdtempSync(join(tmpdir(), 'nightly-ci-'));
 try {
