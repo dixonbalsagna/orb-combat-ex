@@ -270,6 +270,54 @@ func _clamps() -> void:
 	WorldStore.addScar(V, q, q2, 30.0, 60.0, 6.0, 0, 12.0)
 	ok(WorldStore.heightDelta(V, mid[0], mid[1], mid[2]) >= -30.0 - 1.0e-9, "a groove crossed again is no deeper than its target")
 
+	# parts and combine: heightDelta is combine(parts) at every point, and the three parts are each read (Rendering's tiles carry heightDelta less the marks' sum)
+	var W := _mk()
+	_hit(W, x, 0.2)
+	WorldStore.addScar(W, q, q2, 30.0, 60.0, 5.0, 0, 12.0)
+	WorldStore.addHeap(W, mid, 150.0, 80.0, 5.0, 0)
+	var same: bool = true
+	var seen: Array = [0, 0, 0]
+	var cnt: int = 0
+	for i in range(0, 41):
+		var pa: Array = WorldGlobe.pointAt(q, b, 0, 25.0 * float(i) - 60.0)
+		for k in range(-8, 9):
+			var p: Array = WorldGlobe.pointAt(pa, b, 2, 20.0 * float(k))
+			var pt: PackedFloat64Array = WorldStore.parts(W, p[0], p[1], p[2])
+			var px: PackedFloat64Array = WorldStore.partsX(W, p[0], p[1], p[2], 0)
+			cnt += 1
+			if WorldStore.heightDelta(W, p[0], p[1], p[2]) != WorldStore.combine(pt[0], pt[1], pt[2]) or WorldStore.heightDeltaX(W, p[0], p[1], p[2], 0) != WorldStore.combine(px[0], px[1], px[2]):
+				same = false
+			if pt[0] != 0.0:
+				seen[0] += 1
+			if pt[1] < 0.0:
+				seen[1] += 1
+			if pt[2] > 0.0:
+				seen[2] += 1
+	ok(same, "heightDelta is combine(parts) at all %d points, and heightDeltaX(skip) is combine(partsX(skip))" % cnt)
+	ok(int(seen[0]) > 20 and int(seen[1]) > 20 and int(seen[2]) > 5, "the marks' sum, the groove and the lip are each read (%d, %d, %d points)" % [int(seen[0]), int(seen[1]), int(seen[2])])
+	# bowls: the crater records' profile alone: the same crater and scar without the heap read the same sum, which is the bowls with the heap; a merged mark is in the sum and not in the bowls
+	var W2 := _mk()
+	_hit(W2, x, 0.2)
+	WorldStore.addScar(W2, q, q2, 30.0, 60.0, 5.0, 0, 12.0)
+	var bowls_ok: bool = true
+	var heap_seen: int = 0
+	for i in range(0, 41):
+		var pa2: Array = WorldGlobe.pointAt(q, b, 0, 25.0 * float(i) - 60.0)
+		for k in range(-8, 9):
+			var p2: Array = WorldGlobe.pointAt(pa2, b, 2, 20.0 * float(k))
+			var pw: PackedFloat64Array = WorldStore.parts(W, p2[0], p2[1], p2[2])
+			var pn: PackedFloat64Array = WorldStore.parts(W2, p2[0], p2[1], p2[2])
+			if pw[3] != pn[0] or pw[3] != pn[3]:
+				bowls_ok = false
+			if pw[0] != pw[3]:
+				heap_seen += 1
+	ok(bowls_ok and heap_seen > 5, "the bowls part is the craters' profile alone: with the heap added it is the sum without it, and the heap is in the sum and not in the bowls (%d points)" % heap_seen)
+	var pm: PackedFloat64Array = WorldStore.parts(U, q[0], q[1], q[2])
+	ok(absf(pm[0] + 40.0) < 1.0e-9 and pm[3] == 0.0, "a merged mark is in the sum and not in the bowls (%.1f, %.1f)" % [pm[0], pm[3]])
+	var E := _mk()
+	var pe: PackedFloat64Array = WorldStore.parts(E, q[0], q[1], q[2])
+	ok(pe.size() == 4 and pe[0] == 0.0 and pe[1] == 0.0 and pe[2] == 0.0 and pe[3] == 0.0 and WorldStore.combine(pe[0], pe[1], pe[2]) == 0.0, "an empty store has no parts")
+
 
 ## A groove through a rim leaves no cliff at its edge.
 func _cliff() -> void:

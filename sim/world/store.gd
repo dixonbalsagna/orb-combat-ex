@@ -198,6 +198,44 @@ static func heightDelta(S, qx: float, qy: float, qz: float) -> float:
 
 ## heightDelta as if record `skip` were not in the store (the shaft cap and the settling read the ground without the record the new crater supersedes). -1 skips nothing.
 static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float:
+	var sum: float = _scan(S, qx, qy, qz, skip)
+	return combine(sum, _pg, _pl)
+
+
+## heightDelta's parts at a unit direction, read only, before they are combined: [sum, groove, lip, bowls]. sum: the marks' sum (the bowls, rims and aprons of the craters and merged marks, a heap's cone, and, with craters.json
+## globe.flatten on, the level floor's lift); groove: the deepest groove (trench, scar, scorch; 0 for none); lip: the highest lip of a trench; bowls: the crater records' profile alone (what a vertex stage that draws craters
+## draws: no merged mark, no heap, no flatten lift), so sum - bowls is what the tiles must carry besides the grooves. `combine` turns the first three into the height; heightDelta is combine(parts).
+## Rendering (A1): the tiles carry heightDelta less the sum, the part the vertex stage's bowls do not draw. Not clamped here (combine holds the floor and the ceiling). A PackedFloat64Array, not a Vector3: a Vector3 is
+## 32-bit and the store's height is read at 64 bits.
+static func parts(S, qx: float, qy: float, qz: float) -> PackedFloat64Array:
+	return partsX(S, qx, qy, qz, -1)
+
+
+## parts as if record `skip` were not in the store, as heightDeltaX.
+static func partsX(S, qx: float, qy: float, qz: float, skip: int) -> PackedFloat64Array:
+	var sum: float = _scan(S, qx, qy, qz, skip)
+	return PackedFloat64Array([sum, _pg, _pl, _pb])
+
+
+## The height three parts make: a groove is cut to its depth below the ground: where the marks are below the original ground (sum <= 0) it takes the lower of the two, where they stand above it (a rim, an apron, a heap) it
+## cuts down from there; the lip is added; held between the floor and the ceiling (craters.json globe). The one place the formula is written.
+static func combine(sum: float, groove: float, lip: float) -> float:
+	var h: float = ((minf(sum, groove) if sum <= 0.0 else sum + groove) if groove < 0.0 else sum) + lip
+	return clampf(h, WorldCraters.globeFloor(), WorldCraters.globeCeil())
+
+
+## The deepest groove, the highest lip and the crater bowls alone of the last _scan (its other results: the sum is the return value). Written at the very end of a scan, after any read inside it, and read at once by the caller: no
+## allocation on the height's hot path.
+static var _pg: float = 0.0
+static var _pl: float = 0.0
+static var _pb: float = 0.0   # the crater records' profile alone (partsX's fourth)
+
+
+## The one scan of the records at a point (heightDeltaX and partsX are its two readers): returns the marks' sum and leaves the groove and the lip in _pg and _pl.
+static func _scan(S, qx: float, qy: float, qz: float, skip: int) -> float:
+	_pg = 0.0
+	_pl = 0.0
+	_pb = 0.0
 	if int(S.storeN) == 0:
 		return 0.0
 	var R: float = _R()
@@ -210,6 +248,7 @@ static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float
 	var sum: float = 0.0
 	var groove: float = 0.0
 	var lip: float = 0.0
+	var bowls: float = 0.0
 	var flat: bool = WorldCraters.globeFlatten()
 	var fk: int = -1        # the crater whose level floor holds here most (flatten)
 	var fw: float = 0.0
@@ -232,7 +271,10 @@ static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float
 		if kd == KIND_CRATER or kd == KIND_MERGE:
 			var u: float = d / S.store[o + 4]
 			if u < 2.0:
-				sum += WorldCrater.profile(u, S.store[o + 5], S.store[o + 6])
+				var pu: float = WorldCrater.profile(u, S.store[o + 5], S.store[o + 6])
+				sum += pu
+				if kd == KIND_CRATER:
+					bowls += pu
 				if flat and kd == KIND_CRATER and u < WorldCraters.globeFlattenFade():   # the weight of the level floor: 1 inside the lip, easing to 0 at flattenFade
 					var fu: float = 1.0 - clampf((u - 1.0) / (WorldCraters.globeFlattenFade() - 1.0), 0.0, 1.0)
 					var wk: float = fu * fu * (3.0 - 2.0 * fu)
@@ -249,12 +291,13 @@ static func heightDeltaX(S, qx: float, qy: float, qz: float, skip: int) -> float
 			if us < 1.0:
 				var ts: float = 1.0 - us * us
 				groove = minf(groove, -S.store[o + 5] * ts * ts)
-	# A groove is cut to its depth below the ground: where the marks are below the original ground (sum <= 0) it takes the lower of the two, where they stand above it (a rim, an apron, a heap) it cuts down from there.
-	# The lower of the two alone left a cliff as high as the rim at the groove's edge, where the groove (about 0) took over from a rim (up to 0.4 of a bowl's depth).
+	# (combine: the lower of the groove and the marks alone left a cliff as high as the rim at the groove's edge, where the groove (about 0) took over from a rim (up to 0.4 of a bowl's depth).)
 	if fk >= 0:   # the level floor: the ground there is the ground at the crater's centre, not the hills under the bowl (delta = w x (the centre's ground - the ground here); the bowl's profile is already in sum)
 		sum += fw * (_centreGround(S, ent, fk) - _fieldH(S, qx, qy, qz))
-	var h: float = ((minf(sum, groove) if sum <= 0.0 else sum + groove) if groove < 0.0 else sum) + lip
-	return clampf(h, WorldCraters.globeFloor(), WorldCraters.globeCeil())
+	_pg = groove   # set last: the flatten above reads the field, which may read the store again
+	_pl = lip
+	_pb = bowls
+	return sum
 
 
 ## ===================================================================== cracks
