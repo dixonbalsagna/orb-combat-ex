@@ -1,6 +1,6 @@
-# Desktop builds: who may get one, what the workflow must refuse, and the approval line (A-TOOLS-01 and A-LEGAL-02 support; RL-262, RL-263)
+# Desktop builds: who may get one, how each is made, and the approval line (A-TOOLS-01 and A-LEGAL-02 support; RL-262, RL-263)
 
-Legal, 2026-11-13, written against def3445a. A screen, not legal advice. Tools may quote the conditions in the workflow's comments.
+Legal, 2026-11-13, written against def3445a; sections 2 to 4 brought up to date 2026-11-25 (RL-277, RL-278). A screen, not legal advice.
 
 ## 1. A build for Orb and the trusted second player, before any outside yes (RL-262)
 
@@ -19,27 +19,28 @@ Legal, 2026-11-13, written against def3445a. A screen, not legal advice. Tools m
 
 Why: GitHub lets anyone signed in with read access to a repository download its run files ([GitHub: download workflow artifacts](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts)), and every signed-in account can read a public repository; third-party sites even offer the files without logging in ([nightly.link](https://nightly.link/)). So a game program kept as a run file on a public repository is **a public download** for as long as it is kept (90 days by default). Reading GitHub's page, I am inferring that "anyone signed in" covers a public repo; the page does not say it in so many words.
 
-So the rules for the workflow are:
-- **No upload at all for an owner-private build.** The workflow may build and check, but must not keep the program as a run file or a release asset.
-- **A locked outside-tester package may be kept as a run file** only when all of: Orb's recorded yes is in the commit being built (section 3); the lock flag is true (Reduce flashing locked on); the route scan and notices pass; `retention-days: 1` (RL-203's rule stands: the EP deletes the run once the testers have the files); and nothing links to it. It is a public download for that one day, which is why it must be the locked, noticed package and why it waits for the yes.
-- **No release asset, GitHub Pages copy or itch.io push from a workflow** unless Orb or the EP does it by hand (the itch.io upload is Orb's, one sitting).
+So the rules are (as they stand from 2026-11-25, RL-277):
+- **No workflow uploads a game program, locked or not.** A workflow may build and check, but keeps nothing: no run file, no release asset.
+- **Testers' packages are made on Orb's PC only.** The allowance this page first gave (a locked package kept as a run file for one day, after Orb's yes) is withdrawn by the EP's decision and is no longer in the workflow. Bringing it back needs a new ruling.
+- **No GitHub Pages copy or itch.io push from a workflow;** the itch.io upload is Orb's, by hand, in one sitting.
 
-## 3. The workflow's exact conditions (for Tools to code, RL-262)
+## 3. The two routes and what each must refuse (RL-262 as narrowed by RL-277)
 
-Add one input, `audience`, with two values:
-
-| `audience` | Needs `docs/ep/approvals/desktop-test-builds.txt` | Lock flag | Upload |
+| For | How it is made | Needs `docs/ep/approvals/desktop-test-builds.txt` | What leaves Orb's PC |
 |---|---|---|---|
-| `owner-private` | No | Any, but see below | **Refuse any upload step** (the job fails if one would run) |
-| `outside-testers` | **Yes**, as it checks today (a date, a scope line, a recorded-by line, 0 to 30 days old, in the commit being built) | Must be **true** | One artifact, `retention-days: 1` |
+| Outside testers | On Orb's PC: `node tools/desktop-local-build.mjs --audience testers --builds-yes <date>` | **Yes,** in the commit being built (date equal to the one typed, 0 to 30 days old, a scope line, a recorded-by line) | Only Orb's own upload to the restricted page (RL-261, RL-272) |
+| Orb and Orb 2 | On Orb's PC: the same script with no audience (files named ORB-PRIVATE) | No | A drive, the home network or a direct private message (section 1) |
+| Proof that a commit builds | The desktop workflow, owner-private only | No | Nothing: no upload |
 
-And for **both** audiences the workflow must still refuse:
-- a build whose package check does not pass (route scan, notice, README and NOTICES words, no `net/*`);
-- a build with a feedback target that is a public issue link (`ui/data/send.json`);
-- a build made from a ref that is not a commit on main;
-- any publishing step (release, Pages, itch.io).
+The testers' route must refuse:
+- a commit that is not on main, and anything from the working tree (it builds the committed files only);
+- a missing, old or mismatched approval file;
+- testers' words still marked draft (`tools/site-tester.json`), or a report-channel line that is missing, a placeholder, or holds a link, address or handle (the line stays in `.private/testers/`, never in git or a build record);
+- a build whose checks fail (Reduce flashing locked on, the route scan, README and NOTICES words, no `net/*`, no public-issue feedback target).
 
-Quote for the workflow comment: "owner-private builds are made locally and never uploaded; only a locked outside-tester package, after Orb's recorded yes, may be kept as a run file, for one day (Legal RL-262)."
+The package's record (commit, checks, file names and checksums, no folder paths) is committed under `docs/tools/runs/<commit8>/`. The program files themselves are never committed.
+
+**Not proven by any of this:** the Linux program in the testers' package cannot be started on Orb's Windows PC, and no runner ever sees it. A person starts it on a Deck or another Linux machine before any key goes out (gate G23).
 
 ## 4. The approval line Orb is asked to record (RL-263)
 
@@ -53,4 +54,4 @@ ends: 30 days after the date above, then ask again
 conditions: every gate in docs/legal/outside-tester-gates.md is green for the commit being built; the package is locked, noticed and checked; one named adult per key; nothing public
 ```
 
-What the workflow reads: `date:` (YYYY-MM-DD, must equal the typed date, 0 to 30 days old), a `scope:` line containing "desktop test builds", and a `recorded-by:` line with text. The `ends:` and `conditions:` lines are for people; the workflow ignores them. The file is committed in the commit being built.
+What the testers' build script reads (and the upload script, with the page's own approval file, RL-272): `date:` (YYYY-MM-DD, must equal the typed date, 0 to 30 days old), a `scope:` line containing "desktop test builds", and a `recorded-by:` line with text. The `ends:` and `conditions:` lines are for people. The file must be committed in the commit being built.
