@@ -158,6 +158,7 @@ const LUNGE_HOLD_MAX: float = 1.6         # and never longer than this: a lunge 
 const LUNGE_FOCUS_LEAD: float = 0.1       # the one view's focus may lean toward the lunger by this share of the width
 const KNOCK_APART_RATE: float = 1500.0  # a chased fighter flying apart this fast (units a second, smoothed) opens the split at once
 const KEEP_HUMAN_IN: float = 0.05      # the one view, its drawn zoom lagging its own: the one human's chest kept this much of the width inside the frame
+const KEEP_HUMAN_IN_Y: float = 0.05    # ... and this much of the height inside its top and bottom
 const T_OPEN_URGENT: float = 0.20       # the split opens this fast when a fighter has left the shared view or one was knocked away
 const T_CLOSE: float = 0.55
 const SLAM_WINDOW: float = 0.8         # a rush this close to its end starts the lean
