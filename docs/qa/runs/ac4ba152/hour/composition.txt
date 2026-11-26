@@ -1,0 +1,39 @@
+B, match by match (MiB): when | match | t | static | census (script data, estimate) | engine-held for the scene (estimate) | objects
+start | 1 | 37 | 253.9 | 60.4 | 6.94 | 13606
+end | 1 | 695 | 315.5 | 99.7 | 7.33 | 13951
+start | 2 | 721 | 356.0 | 99.6 | 7.22 | 13866
+end | 2 | 1380 | 365.1 | 135.4 | 7.55 | 14059
+start | 3 | 1406 | 391.3 | 133.3 | 7.26 | 13986
+end | 3 | 2061 | 401.7 | 151.9 | 7.59 | 14047
+start | 4 | 2088 | 427.2 | 148.8 | 7.47 | 14017
+end | 4 | 2749 | 406.4 | 157.9 | 7.40 | 14078
+start | 5 | 2775 | 432.2 | 152.5 | 7.22 | 14022
+end | 5 | 3310 | 436.8 | 191.1 | 7.34 | 14108
+start | 6 | 3336 | 465.6 | 188.9 | 7.22 | 14100
+match=1 how=ko simSeconds=595.6 t=693
+match=2 how=ko simSeconds=594.0 t=1378
+match=3 how=capped simSeconds=600.0 t=2059
+match=4 how=capped simSeconds=600.0 t=2747
+match=5 how=ko simSeconds=486.3 t=3308
+
+composition (static MiB, read by emptying): baseline at match 2 start | hour run at match 6 start | difference | per match (4)
+static, all | 327.7 | 434.0 | 106.3 | 26.57
+held in lists, dictionaries and packed arrays | 63.7 | 151.3 | 87.6 | 21.91
+freed with the scene | 12.2 | 12.4 | 0.2 | 0.06
+left after both | 228.5 | 246.8 | 18.3 | 4.59
+
+stores (freed MiB): store | baseline | hour run | difference
+static sim/core/field.gd:_ctF.sh | 19.12 | 62.15 | 43.03
+static sim/core/field.gd:_ctF.sb | 19.12 | 62.15 | 43.03
+RenderTileField._wets | 1.38 | 2.15 | 0.77
+RenderMats._tracked | 0.14 | 0.85 | 0.71
+static sim/director/launch.gd:_pmCol | 0.15 | 0.23 | 0.08
+RenderTileField._hs | 3.05 | 3.12 | 0.07
+AnimPose.q | 0.87 | 0.90 | 0.03
+static sim/core/field.gd:_ctF.h | 2.07 | 2.07 | 0.00
+PlanetView._win | 1.84 | 1.84 | 0.00
+PlanetView._ft_dirs | 0.85 | 0.85 | 0.00
+ParticleView._buf | 0.82 | 0.82 | 0.00
+static sim/core/field.gd:_ctF.rf | 0.52 | 0.52 | 0.00
+shrank: none
+sum of rows: baseline 60.1 hour 147.8

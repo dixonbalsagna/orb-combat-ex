@@ -100,3 +100,33 @@ Four short arms on the same build (Windows, headless, below normal, other sessio
 From the second match on, neither pane's `ground` is linked to its `tile_field` (match 1: linked; matches 2 and 3: null). `qa/known-bugs.md` GB-010, with the cause in the code; what a player sees from it is not verified.
 
 Records: `docs/qa/runs/ac4ba152/hunt/` (`real-memory-*.txt`, `real_probe2.gd.txt`, `ground-link-three-matches.txt`, `planet-fixed-*`).
+
+## The hour of long matches, real memory beside the census (EP's order, 2026-11-26): the growth is named
+
+**How.** The editor build of ac4ba152, headless, below normal, isolated (`qa/soak/real-memory.mjs` with `real_probe.gd`): real static memory, the fixed census and an estimate of what the engine holds outside scripts, at each match's start and end. Matches capped at 600 sim seconds. At the end the memory is taken apart: every list, dictionary and packed array is emptied one by one, then the whole scene freed, and what each gives back is read. A baseline run does the same after one match. Records: `docs/qa/runs/ac4ba152/hour/`.
+
+**Static memory at each match's start (MiB):** 254, 356, 391, 427, 432, 466 (matches 1 to 6). The census (script data) at the same points: 60, 100, 133, 149, 153, 189. The scene's meshes, textures and audio stay at about 7.
+
+| Static memory, MiB | after 1 match (baseline) | after 5 matches | difference | per match |
+| :--- | ---: | ---: | ---: | ---: |
+| All | 327.7 | 434.0 | **+106.3** | 26.6 |
+| In lists, dictionaries and packed arrays | 63.7 | 151.3 | **+87.6** | 21.9 |
+| Freed with the scene | 12.2 | 12.4 | +0.2 | 0.1 |
+| Left after both (engine, code, anything else) | 228.5 | 246.8 | +18.3 | 4.6 |
+
+| Store (static memory freed by emptying it) | baseline | after 5 matches | difference |
+| :--- | ---: | ---: | ---: |
+| **World's field, `Field.sh`** (`sim/world/field.gd`; reached by `sim/core/field.gd` `_ctF`) | 19.12 | **62.15** | **+43.03** |
+| **World's field, `Field.sb`** | 19.12 | **62.15** | **+43.03** |
+| `RenderTileField._wets` | 1.38 | 2.15 | +0.77 |
+| `RenderMats._tracked` (render/core/mats.gd) | 0.14 | 0.85 | +0.71 |
+| everything else | | | under 0.1 each |
+
+**Reading.**
+- **`Field.sh` and `Field.sb` are 86 of the 106 MiB (81%).** They are the field's sub-node tables: an entry is added for every new fine-ground point read (`_subKey`) and none is removed; only the pool's `extra` lists have a limit. **Every match plays the same planet** (`data/biomes/world.json`: planet 7, random off), so one field is reused and its tables go on growing for as long as the program runs.
+- **This fits the two-hour release soak:** 22 to 24 MiB a match there (Windows 527 → 769 and Linux 384 → 600 over ten match changes), 21.9 a match in lists here. It also fits arm A levelling off: short matches from the same start read little new ground. (A fit across two builds, not a measurement on the release program.)
+- **Not named:** 18 MiB over four matches (4.6 a match) stays after the lists are emptied and the scene freed.
+- **Small, but it only grows:** `RenderMats._tracked` (+0.7 MiB over four matches).
+- Not a leak in the sense of memory nobody can reach: it is a cache with no limit. Static memory was still rising at the sixth match.
+
+**Withdrawn:** my earlier "sh and sb level off by about 120 sim seconds, 5 MiB each" came from one short run.
