@@ -6677,9 +6677,9 @@ func _meteor() -> void:
 	var fb := MeteorFrame.make(1.0, 0.0, 0.0, 0.0, cos(alpha), -sin(alpha), 1000.0)
 	var qa: PackedFloat64Array = VfxMeteor.place(fa, 4000.0, 0.0)
 	var vb: Vector2 = VfxMeteor.unplace(fb, qa[0], qa[1], qa[2])
-	var ang: float = 3000.0 / VfxMeteor.R_PLANET
-	var z_expect: float = VfxMeteor.R_PLANET * asin(sin(ang) * sin(alpha))
-	_check(absf(absf(vb.y) - absf(z_expect)) < 1e-6 * VfxMeteor.R_PLANET and vb.x != 4000.0, "turning the frame about its pivot moves a far point in depth by R asin(sin a sin turn) (%.1f against %.1f) and along the line" % [vb.y, z_expect])
+	var ang: float = 3000.0 / SimField.R
+	var z_expect: float = SimField.R * asin(sin(ang) * sin(alpha))
+	_check(absf(absf(vb.y) - absf(z_expect)) < 1e-6 * SimField.R and vb.x != 4000.0, "turning the frame about its pivot moves a far point in depth by R asin(sin a sin turn) (%.1f against %.1f) and along the line" % [vb.y, z_expect])
 	var MP := VfxMeteor.new()
 	MP.frame_override = fa
 	fp.x = 1000.0
