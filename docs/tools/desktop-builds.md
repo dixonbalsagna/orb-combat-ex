@@ -122,3 +122,7 @@ An outside-testers package carries its own README.txt and NOTICES.txt words from
 2. **The report channel is not filled.** Git holds only `[REPORT CHANNEL, given with your key]`. Orb writes one line, a plain description of the private channel, in `.private/testers/report-channel.txt` (git-ignored), or `--channel-file <file>` names another. A missing line, a placeholder, two lines, a link, an invite, an address or a handle is refused.
 
 **Where the package is made (the EP, 2026-11-25):** on Orb's PC, never by the workflow ("The testers' package, on Orb's PC", above).
+
+## Feature switches in Orb's own build (2026-11-26)
+
+`node tools/desktop-local-build.mjs --feature split_line_choice=on` (repeatable, `=on` or `=off`) builds with a `ui/data/features.json` switch other than main's. Owner-private only: refused for `--audience testers`. Only the scratch copy is edited; the lock and routes checks run on the result; the record says `NOT EXACTLY MAIN` and names each switch, `build_info.json` holds them under `features`, and each is read back from the built program. `lock_reduce_flashing`, `reduce_flashing`, `capture_hook` and `testers_package` cannot be changed this way. The files go to `homework/Files/desktop/<commit8>-ORB-PRIVATE-switches/` with names ending `-switches`, so the first run keeps taking the plain build.

@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { names, hashLine, platformsOf, canPlay, testersRefusals } from './desktop-local-build.mjs';
+import { names, hashLine, platformsOf, canPlay, testersRefusals, featureArgs, applyFeatures, packedHas, FIXED_FEATURES } from './desktop-local-build.mjs';
 import { ARCHIVES } from './store/itch-push.mjs';
 let bad = 0, n = 0;
 const check = (name, ok, extra) => { n++; if (!ok) { bad++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -28,5 +28,23 @@ check("the record is cleaned of this PC's folder paths as it is written, and the
 check("a testers' build asks for the yes before it copies the commit, checks words and channel before the import, and takes no owner notice", src.indexOf('testersRefusals({ onMain') < src.indexOf("mkdtempSync(join(tmpdir()") && src.indexOf("'preflight'") < src.indexOf("'--import'") && /const notice = testers \? \[\] :/.test(src));
 const wf = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'desktop-local-build.mjs'), 'utf8');
 check('the report channel line is only ever a file path here: it is not read into the record', !/readChannel|readFileSync\(channelFile/.test(wf));
+// the feature switches (--feature name=on|off)
+const FA = (...a) => featureArgs(a, 'owner');
+check('--feature reads name=on and name=off, more than once', JSON.stringify(FA('--feature', 'split_line_choice=on', '--platform', 'windows', '--feature', 'swing=off').features) === JSON.stringify([{ name: 'split_line_choice', on: true }, { name: 'swing', on: false }]) && FA().features.length === 0 && FA().problems.length === 0);
+check('a testers\' package takes no switch at all', /always exactly main/.test(featureArgs(['--feature', 'split_line_choice=on'], 'testers').problems.join()) && featureArgs(['--platform', 'both'], 'testers').problems.length === 0);
+check('a bad value, no value, the = form, a name twice and the fixed switches are refused', [['--feature', 'swing=yes'], ['--feature'], ['--feature=swing=on'], ['--feature', 'swing=on', '--feature', 'swing=off'], ...FIXED_FEATURES.map((f) => ['--feature', f + '=off'])].every((a) => featureArgs(a, 'owner').problems.length === 1));
+const featuresPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'ui', 'data', 'features.json');
+const real = readFileSync(featuresPath, 'utf8');
+const done = applyFeatures(real, [{ name: 'split_line_choice', on: true }]);
+const NL = String.fromCharCode(10);
+const diff = done.text.split(NL).filter((l, i) => l !== real.split(NL)[i]);
+check('one switch changes one line of the real features.json and nothing else (the note that names it is left alone)', diff.length === 1 && /"split_line_choice": true/.test(diff[0]) && JSON.parse(done.text).features.split_line_choice === true && done.changed[0].was === JSON.parse(real).features.split_line_choice && JSON.parse(done.text).note === JSON.parse(real).note, diff.join('|').slice(0, 200));
+let threw = 0; for (const f of [{ name: 'no_such_switch', on: true }, { name: 'note', on: true }]) { try { applyFeatures(real, [f]); } catch { threw++; } }
+check('a name that is not a switch of this commit is refused', threw === 2);
+check('the built program is read back: the switch as asked, and not also the other way', packedHas(Buffer.from('x {"split_line_choice": true} y'), { name: 'split_line_choice', on: true }) && !packedHas(Buffer.from('{"split_line_choice": false}'), { name: 'split_line_choice', on: true }) && !packedHas(Buffer.from('nothing'), { name: 'split_line_choice', on: true }));
+const sw = names('148f4e16', 'windows', 'owner', true);
+check('a switched build is filed apart, and the first run\'s search for the newest private zip does not take it', sw.archive.endsWith('-148f4e16-switches.zip') && sw.defaultOut.endsWith('148f4e16-ORB-PRIVATE-switches') && !/ORB-PRIVATE-windows-x86_64-[0-9a-f]+\.zip$/.test(sw.archive) && /ORB-PRIVATE-windows-x86_64-[0-9a-f]+\.zip$/.test(names('148f4e16').archive) && names('148f4e16', 'windows', 'testers', true).archive === 'orb-combat-ex-windows-x86_64.zip');
+check('the switches go in after the lock and before the routes check, and the refusal comes before the commit is copied', src.indexOf("'lock', '--root'") < src.indexOf('applyFeatures(readFileSync(ff') && src.indexOf('applyFeatures(readFileSync(ff') < src.indexOf("'routes', '--root'") && src.indexOf('featureArgs(a, audience)') < src.indexOf('mkdtempSync(join(tmpdir()'));
+check('the first run still looks for the plain private zip', readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'first-run', 'first-run.mjs'), 'utf8').includes('ORB-PRIVATE-windows-x86_64-[0-9a-f]+'));
 console.log(`desktop-local-build selftest: ${n} checks, ${bad} failed`);
 process.exit(bad ? 1 : 0);

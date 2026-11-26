@@ -20,6 +20,10 @@
 // old), and, before the slow part, unless the testers' words are final (tools/site-tester.json) and the report-channel line is filled (.private/testers/report-channel.txt, git-ignored, read from your folder and
 // never written into the record). The testers' menu hides the modes testers cannot use. The files are orb-combat-ex-windows-x86_64.zip and orb-combat-ex-linux-x86_64.tar.gz in
 // homework/Files/desktop/<commit8>-testers, the names tools/store/itch-push.mjs reads. Nothing is uploaded: the upload is Orb's, by hand.
+// FEATURE SWITCHES (the EP, 2026-11-26): --feature <name>=on|off (repeatable) builds with a ui/data/features.json switch that main keeps otherwise (Orb's split-screen setting: --feature split_line_choice=on).
+// OWNER-PRIVATE ONLY: refused for --audience testers, so a friends' package is always exactly main. Only the scratch copy's features.json is edited, never the repository's; the lock and the routes check run on the
+// result; the record and build_info.json name every switch changed, and each is read back from the built program. The safety switches cannot be changed this way (the Reduce flashing lock and row, the capture
+// hook, testers_package). Such a build is filed apart (<commit8>-ORB-PRIVATE-switches, its archives ending -switches) so the first run and the tools keep taking the plain build.
 // Godot runs at below-normal priority and headless (no window). Node built-ins, git, tar and PowerShell only.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -39,13 +43,53 @@ const PRESETS = { windows: 'Windows Desktop', linux: 'Linux' };
 const PROGRAMS = { windows: 'orb-combat-ex.exe', linux: 'orb-combat-ex.x86_64' };
 
 /** The names of the package, from the commit. Pure. `zip` is the archive's name whatever its kind (.zip for Windows, .tar.gz for Linux). */
-export function names(commit8, platform = 'windows', audience = 'owner') {
+export function names(commit8, platform = 'windows', audience = 'owner', switched = false) {
   const testers = audience === 'testers';
+  const mark = switched && !testers ? '-switches' : '';
   const folder = testers ? `orb-combat-ex-${platform}-x86_64` : `orb-combat-ex-ORB-PRIVATE-${platform}-x86_64`;
-  const zip = `${folder}${testers ? '' : '-' + commit8}.${platform === 'linux' ? 'tar.gz' : 'zip'}`;
-  return { folder, zip, archive: zip, defaultOut: join(REPO, 'homework', 'Files', 'desktop', `${commit8}-${testers ? 'testers' : 'ORB-PRIVATE'}`) };
+  const zip = `${folder}${testers ? '' : '-' + commit8 + mark}.${platform === 'linux' ? 'tar.gz' : 'zip'}`;
+  return { folder, zip, archive: zip, defaultOut: join(REPO, 'homework', 'Files', 'desktop', `${commit8}-${testers ? 'testers' : 'ORB-PRIVATE'}${mark}`) };
 }
 
+/** Switches that --feature never changes: they keep a build safe or say who it is for. */
+export const FIXED_FEATURES = ['lock_reduce_flashing', 'reduce_flashing', 'capture_hook', 'testers_package'];
+
+/** The --feature <name>=on|off arguments: { features: [{ name, on }], problems: [] }. `audience` testers takes none. Pure. */
+export function featureArgs(args, audience) {
+  const features = [], problems = [];
+  args.forEach((x, i) => {
+    if (x.startsWith('--feature=')) { problems.push('--feature takes its value as the next word: --feature name=on'); return; }
+    if (x !== '--feature') return;
+    const m = /^([a-z][a-z0-9_]*)=(on|off)$/.exec(args[i + 1] || '');
+    if (!m) { problems.push(`--feature needs name=on or name=off (got "${args[i + 1] || ''}")`); return; }
+    if (FIXED_FEATURES.includes(m[1])) problems.push(`--feature cannot change ${m[1]}: it is one of the fixed switches (${FIXED_FEATURES.join(', ')})`);
+    else if (features.some((f) => f.name === m[1])) problems.push(`--feature names ${m[1]} twice`);
+    else features.push({ name: m[1], on: m[2] === 'on' });
+  });
+  if (features.length && audience === 'testers') problems.push('--feature is refused for a testers\' package: it is always exactly main');
+  return { features, problems };
+}
+
+/** features.json's text with the switches set: { text, changed: [{ name, on, was }] }. Only the one true or false of each named switch under "features" is replaced. Throws on a name that is not a switch. Pure. */
+export function applyFeatures(text, features) {
+  const doc = JSON.parse(text).features || {};
+  let out = String(text);
+  const changed = [];
+  for (const f of features) {
+    if (typeof doc[f.name] !== 'boolean') throw new Error(`ui/data/features.json has no switch "${f.name}" (true or false) in this commit`);
+    const re = new RegExp(`^([ \\t]*"${f.name}"[ \\t]*:[ \\t]*)(true|false)`, 'gm');
+    if ((out.match(re) || []).length !== 1) throw new Error(`ui/data/features.json: the line of "${f.name}" was not found exactly once`);
+    out = out.replace(re, (all, lead) => lead + String(f.on));
+    changed.push({ name: f.name, on: f.on, was: doc[f.name] });
+  }
+  return { text: out, changed };
+}
+
+/** Whether the built program's bytes hold the switch as asked (the packed features.json is text inside it). Pure. */
+export function packedHas(bytes, f) {
+  const b = bytes.toString('latin1');
+  return new RegExp(`"${f.name}"\\s*:\\s*${f.on}`).test(b) && !new RegExp(`"${f.name}"\\s*:\\s*${!f.on}`).test(b);
+}
 /** Why a testers' package may not be made from this commit (empty when it may). `approval` is the approval file's text in that commit, null when the commit does not hold it. Pure. */
 export function testersRefusals({ onMain, approval, typed, today }) {
   const out = [];
@@ -95,6 +139,9 @@ async function main() {
   const audience = opt('--audience', 'owner');
   if (audience !== 'owner' && audience !== 'testers') { console.error('desktop-local-build: --audience is owner (the default) or testers'); process.exit(2); }
   const testers = audience === 'testers';
+  const { features, problems: featureProblems } = featureArgs(a, audience);
+  if (featureProblems.length) { for (const p of featureProblems) console.error(`desktop-local-build REFUSED: ${p}`); process.exit(2); }
+  const switched = features.length > 0;
   if (process.platform === 'darwin') { console.error('desktop-local-build: Windows and Linux hosts only for now'); process.exit(2); }
   const rev = opt('--commit', 'HEAD');
   const frames = String(opt('--frames', '2400'));
@@ -104,7 +151,7 @@ async function main() {
   const sha = r.stdout.trim(), c8 = sha.slice(0, 8), date = git('log', '-1', '--format=%cs', sha).stdout.trim();
   const mtime = Number(git('log', '-1', '--format=%ct', sha).stdout.trim()) || 0;
   const onMain = git('merge-base', '--is-ancestor', sha, 'main').status === 0;
-  const out = resolve(opt('--out', names(c8, 'windows', audience).defaultOut));
+  const out = resolve(opt('--out', names(c8, 'windows', audience, switched).defaultOut));
   if (testers) {
     const approval = git('show', `${sha}:${APPROVALS.builds.file}`);
     const refused = testersRefusals({ onMain, approval: approval.status === 0 ? approval.stdout : null, typed: opt('--builds-yes'), today: new Date().toISOString().slice(0, 10) });
@@ -143,11 +190,18 @@ async function main() {
     if (!toolText.includes('PRIVATE_LINE')) step('this commit\'s packaging tool knows the ORB-PRIVATE line', false, 'it is older than the owner-private change: build a newer commit');
     const node = (args, cwd = tree) => run(process.execPath, args, { cwd });
     let x = await node([pkgTool, 'lock', '--root', tree]); step('lock Reduce flashing on (scratch copy only)', x.code === 0, x.out.trim().split(/\r?\n/).pop());
+    let changed = [];
+    if (switched) {
+      const ff = join(tree, 'ui', 'data', 'features.json');
+      try { const r2 = applyFeatures(readFileSync(ff, 'utf8'), features); writeFileSync(ff, r2.text); changed = r2.changed; } catch (e) { step('the switches asked for are set (scratch copy only)', false, e.message); }
+      for (const f of changed) step(`SWITCH ${f.name} ${f.on ? 'on' : 'off'} in this build (main: ${f.was ? 'on' : 'off'}; scratch copy only)`, true);
+    }
     if (testers) { x = await node([pkgTool, 'testers', '--root', tree]); step('the testers\' menu: modes testers cannot use are hidden (scratch copy only)', x.code === 0, x.out.trim().split(/\r?\n/).pop()); }
     x = await node([pkgTool, 'version', '--root', tree]); step('version number into the export presets', x.code === 0, x.out.trim().split(/\r?\n/).pop());
     x = await node([pkgTool, 'routes', '--root', tree, testers ? '--testers' : '--no-testers']); step('routes check (lock, bypass words, no net/, feedback target)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 160));
     x = await node([join(tree, 'tools', 'write-build-info.mjs'), '--commit', sha, '--date', date]); step('build_info.json written', x.code === 0, x.out.trim());
     const info = JSON.parse(readFileSync(join(tree, 'build_info.json'), 'utf8'));
+    if (switched) { info.features = Object.fromEntries(changed.map((f) => [f.name, f.on])); writeFileSync(join(tree, 'build_info.json'), JSON.stringify(info) + '\n'); step('build_info.json names the switches changed', true, JSON.stringify(info.features)); }
     // before the slow part: a draft, or a missing or placeholder report channel, stops here. The README it makes is thrown away; neither the line nor the README goes into the record
     if (testers) { x = await node([pkgTool, 'text', '--platform', 'windows', '--out', join(scratch, 'preflight'), '--build-info', join(tree, 'build_info.json'), '--testers', '--channel-file', channelFile]); step('the testers\' words are final and the report channel is filled', x.code === 0, x.code === 0 ? '' : x.out.trim().split(/\r?\n/).pop().slice(0, 300)); rmSync(join(scratch, 'preflight'), { recursive: true, force: true }); }
 
@@ -158,7 +212,7 @@ async function main() {
     step('the project\'s own bench prints a gameplay hash', !!h1, h1 || 'none');
 
     for (const platform of platforms) {
-      const n = names(c8, platform, audience), program = PROGRAMS[platform];
+      const n = names(c8, platform, audience, switched), program = PROGRAMS[platform];
       const exp = join(scratch, 'export-' + platform); mkdirSync(exp, { recursive: true });
       const bin = join(exp, program);
       x = await run(godot, ['--headless', '--path', tree, '--export-release', PRESETS[platform], bin], { below: true });
@@ -178,6 +232,7 @@ async function main() {
       const pkg = join(scratch, 'pkg-' + platform, n.folder); mkdirSync(pkg, { recursive: true });
       const notice = testers ? [] : ['--notice', OWNER_NOTICE, '--private'];
       x = await node([pkgTool, 'text', '--platform', platform, '--out', pkg, '--build-info', join(tree, 'build_info.json'), ...(testers ? ['--testers', '--channel-file', channelFile] : notice)]); step(`${platform}: README.txt, NOTICES.txt and build_info.json (${testers ? "the testers' words" : 'owner notice, ORB-PRIVATE line'})`, x.code === 0, x.out.trim().split(/\r?\n/).pop());
+      if (switched) { const bytes = readFileSync(bin); for (const f of changed) step(`${platform}: the built program holds ${f.name} ${f.on ? 'on' : 'off'}`, packedHas(bytes, f)); }
       cpSync(bin, join(pkg, program));
       mkdirSync(out, { recursive: true });
       const archive = join(out, n.archive);
@@ -205,6 +260,7 @@ async function main() {
       results.push({ platform, archive, sum, size: statSync(archive).size });
     }
     const closing = testers ? `For named outside testers, through the restricted page only; the upload is Orb's, by hand. Commit this record under docs/tools/runs/${c8}/ so tools/store/itch-push.mjs can find the sums. Never a public link.` : 'For Orb and Orb 2 only. Move it by a drive, the home network or a private message. Never a public link.';
+    if (switched) rec.push(`NOT EXACTLY MAIN: this build has ${changed.map((f) => `${f.name} ${f.on ? 'on' : 'off'}`).join(', ')}.`);
     rec.push(closing);
     writeRecord();
     if (testOnly) console.log("\nTEST ONLY: this package used the working tree's packaging tool and is not a build of the commit alone: do not hand it on.");
