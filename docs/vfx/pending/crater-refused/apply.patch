@@ -1,0 +1,190 @@
+diff --git a/data/vfx/earth.json b/data/vfx/earth.json
+index b70922b..ce0e915 100644
+--- a/data/vfx/earth.json
++++ b/data/vfx/earth.json
+@@ -13,5 +13,6 @@
+   "bounce": { "vn_ref": 1500, "chunks": 4, "dust": 2 },
+   "leave": { "speed_ref": 2500, "chunks_lip": 6, "chunks_heap": 8, "chunks_cliff": 4, "chunks_crest": 0, "chunks_bounce": 2, "dust": 2 },
+   "settle": { "tumble_dust": 2, "journey_dust": 3, "wall_chunks": 8, "capped_scale": 1.5 },
++  "refused": {"_note": "A blow that lands on or near an earlier crater digs nothing (World's GW1c crater rule) and sends `crater_refused`: the ejecta and rim dust at this share of a crater's (count_k of the chunks and puffs, speed_k of their speed, at least min_chunks and min_dust), no bowl, no cracks, no biome column, no blast tier-amp: the contact's own dust, chips and rings stay as they are.", "count_k": 0.5, "speed_k": 0.8, "min_chunks": 2, "min_dust": 3},
+   "skid": { "min_speed": 500, "rate_per_s": 14, "dust_every": 3, "speed_ref": 2500 }
+ }
+diff --git a/render/vfx/earth.gd b/render/vfx/earth.gd
+index 24cc09d..87ae559 100644
+--- a/render/vfx/earth.gd
++++ b/render/vfx/earth.gd
+@@ -17,6 +17,7 @@ const DEFAULTS: Dictionary = {
+ 	"leave": {"speed_ref": 2500.0, "chunks_lip": 6, "chunks_heap": 8, "chunks_cliff": 4, "chunks_crest": 0, "chunks_bounce": 2, "dust": 2},
+ 	"settle": {"tumble_dust": 2, "journey_dust": 3, "wall_chunks": 8, "capped_scale": 1.5},
+ 	"skid": {"min_speed": 500.0, "rate_per_s": 14.0, "dust_every": 3, "speed_ref": 2500.0},
++	"refused": {"count_k": 0.5, "speed_k": 0.8, "min_chunks": 2.0, "min_dust": 3.0},
+ }
+ 
+ static var _data: Dictionary = {}
+@@ -27,6 +28,8 @@ var biomefx: VfxBiome = null     # set by the hub while the biome effects are on
+ var deb_made: int = 0          # counters for the tests
+ var flames_made: int = 0
+ var contact_made: int = 0      # chunks and puffs thrown for contact events
++var refused_made: int = 0      # ... of them, for refused craters (`crater_refused`)
++var refused_events: int = 0
+ var contact_events: int = 0
+ var dust_made: int = 0
+ var entrance_now: bool = false   # this tick holds an entrance landing: the other effects of its tick (the crater's ejecta and dust) are quiet and short, so the dust clears by the staredown
+@@ -329,17 +332,18 @@ func on_dust(e, keep_mul: float = 1.0) -> void:
+ 
+ ## A crater (the sim's `crater` event): the ejecta thrown out of the bowl as tumbling chunks of its own earth, and the dust that
+ ## lifts off the rim, as Rendering's ImpactFx drew them as squares. More and bigger with the energy.
+-func on_crater_ejecta(e, S: SimState = null) -> void:
++func on_crater_ejecta(e, S: SimState = null, count_k: float = 1.0, speed_k: float = 1.0, min_chunks: int = 3, min_dust: int = 4) -> void:
+ 	var x: float = float(e.x)
+ 	var biome: String = VfxPalette.biome_key(x)
+ 	var E: float = float(e.energy)
+ 	var r: float = float(e.r)
+ 	var z: float = float(e.get("z") if e.get("z") != null else 0.0)
+-	_bfx(S, "crater", x, float(e.y), z, 0.0, clampf(E / 10.0, 0.4, 2.0), int(e.owner) if e.get("owner") != null else -1)
++	if count_k >= 1.0:
++		_bfx(S, "crater", x, float(e.y), z, 0.0, clampf(E / 10.0, 0.4, 2.0), int(e.owner) if e.get("owner") != null else -1)      # a refused crater has no biome column: the contact's own is the picture
+ 	var tones: Array = tones_for_surface("soil", x)
+ 	var sws: float = sqrt(SimConst.WS)             # the sim's world-scale factor for speeds of things thrown by world-scale events
+-	var sp: float = (260.0 + 90.0 * sqrt(maxf(E, 0.0))) * sws
+-	var nch: int = clampi(int(3.0 + E * 1.0), 3, 16)      # was up to 30: a hundred chunks in the air for two seconds is a churn the analyser counts (ai seed 38, tick 3500)
++	var sp: float = (260.0 + 90.0 * sqrt(maxf(E, 0.0))) * sws * speed_k
++	var nch: int = clampi(int(round((3.0 + E * 1.0) * count_k)), min_chunks, 16)      # was up to 30: a hundred chunks in the air for two seconds is a churn the analyser counts (ai seed 38, tick 3500)
+ 	for k in range(nch):
+ 		var off: float = debris._rd.range_(-0.6, 0.6) * r
+ 		var vx: float = (1.0 if off >= 0.0 else -1.0) * debris._rd.range_(0.3, 1.0) * sp
+@@ -349,7 +353,7 @@ func on_crater_ejecta(e, S: SimState = null) -> void:
+ 		if debris._rd.next() < _q():
+ 			debris.chunk(x + off, float(e.y) + 6.0, z + 6.0, vx, vy, sz, life, tones, 2, 10.0)
+ 			contact_made += 1
+-	var nd: int = clampi(int(4.0 + r / 20.0), 4, 18)
++	var nd: int = clampi(int(round((4.0 + r / 20.0) * count_k)), min_dust, 18)
+ 	for k in range(nd):
+ 		var side: float = 1.0 if k % 2 == 0 else -1.0
+ 		var sz: float = debris._rd.range_(18.0, 36.0)
+@@ -358,6 +362,15 @@ func on_crater_ejecta(e, S: SimState = null) -> void:
+ 			contact_made += 1
+ 
+ 
++## A blow that dug nothing (World's `crater_refused`: x, y, energy, r; no record): the crater's ejecta and rim dust at a share of its strength (data/vfx/earth.json `refused`), so a hard slam on an old crater still throws earth
++## off the spot. No bowl, no cracks, no biome column and no blast tier-amp (those are the crater's own); the contact event's dust, chips and rings are drawn as for any slam. Render only.
++func on_crater_refused(e, S: SimState = null) -> void:
++	refused_events += 1
++	var before: int = contact_made
++	on_crater_ejecta(e, S, p("refused", "count_k"), p("refused", "speed_k"), int(p("refused", "min_chunks")), int(p("refused", "min_dust")))
++	refused_made += contact_made - before
++
++
+ ## Where a knockback slide stopped (the `slide` event: x1, w, energy, variant): a heavier burst of dust and chunks off the
+ ## end berm.
+ func on_slide_end(S: SimState, e) -> void:
+diff --git a/render/vfx/tools/effects_check.gd b/render/vfx/tools/effects_check.gd
+index 554be72..d8d867d 100644
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -233,6 +233,7 @@ func _run() -> void:
+ 	_beam_front()
+ 	_other_fights()
+ 	_shared_register()
++	_crater_refused()
+ 	_ghost_from_parts()
+ 	_clash_wave()
+ 	_shot_from_outside()
+@@ -7727,6 +7728,44 @@ func _ghost_from_parts() -> void:
+ 	SimCore.dispose(S)
+ 
+ 
++## A blow that dug nothing (World's `crater_refused`: x, y, energy, r): the ejecta and rim dust at a share of a crater's, no bowl, no cracks, no biome column, no tier-amp; render only.
++func _crater_refused() -> void:
++	print("a refused crater")
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 6)
++	var x: float = SimWrap.wrap(S.fighters[0].x + 400.0)
++	var gy: float = WorldTerrain.groundY(S, x)
++	var refused := VfxMock.ev("crater_refused", {"x": x, "y": gy, "energy": 14.0, "r": 220.0})
++	var crater := VfxMock.ev("crater", {"x": x, "y": gy, "r": 220.0, "depth": 60.0, "energy": 14.0, "cause": "impact", "owner": 0.0, "special": 0.0, "rim": 20.0, "z": 0.0})
++	var run := func(evs: Array, earth: bool) -> VfxHub:
++		var h := VfxHub.new()
++		h.reset(S, 6)
++		h.px_per_unit = 0.3
++		h.earth_enabled = earth
++		S.fighters[0].tier = 3.0
++		_tick(S, h, evs)
++		return h
++	var hr: VfxHub = run.call([refused], true)
++	var hc: VfxHub = run.call([crater], true)
++	var minp: int = int(VfxEarth.p("refused", "min_chunks")) + int(VfxEarth.p("refused", "min_dust"))
++	_check(hr.earth.refused_events == 1 and hr.earth.refused_made >= minp, "a refused crater throws ejecta and rim dust (%d pieces, at least %d)" % [hr.earth.refused_made, minp])
++	_check(hr.earth.refused_made < hc.earth.contact_made and float(hr.earth.refused_made) >= 0.3 * float(hc.earth.contact_made), "at a share of a crater's (%d against %d)" % [hr.earth.refused_made, hc.earth.contact_made])
++	_check(hr.biomefx.columns == 0 and hr.biomefx.stars == 0 and hr.debris.bits.filter(func(b): return b.kind == VfxDebris.STAR).size() == 0, "no biome column and no burst star: those are the crater's own")
++	_check(hr.crack_sets.size() + hr.crack_pending.size() == 0 and hr.holes.is_empty(), "no cracks and no holes: there is no bowl")
++	_check(hc.earth.refused_events == 0 and hc.earth.refused_made == 0, "a real crater is not counted as a refused one")
++	var ho: VfxHub = run.call([refused], false)
++	_check(ho.earth.refused_events == 0 and ho.debris.bits.size() < hr.debris.bits.size(), "with the earth effects off a refused crater draws nothing of its own")
++	var hr2: VfxHub = run.call([refused], true)
++	var same: bool = hr2.debris.bits.size() == hr.debris.bits.size()
++	if same:
++		for i in range(hr.debris.bits.size()):
++			same = same and hr.debris.bits[i].x == hr2.debris.bits[i].x and hr.debris.bits[i].vy == hr2.debris.bits[i].vy
++	_check(same, "the same refused crater gives the same bits")
++	var hl: VfxHub = run.call([VfxMock.ev("crater_refused", {"x": x, "y": gy, "energy": 0.6, "r": 60.0})], true)
++	_check(hl.earth.refused_made >= minp and hl.earth.refused_made <= hr.earth.refused_made, "a small blow still throws the least (%d, from %d)" % [hl.earth.refused_made, hr.earth.refused_made])
++	SimCore.dispose(S)
++
++
+ ## What Rendering and Camera ask the register in a word (docs/vfx/shared-register.md): `ask_form` (full, calm, later) for the other fight's drawn effects, and `ask_cut` for a hard cut that changes most of the screen (CD-04).
+ func _hard_cuts_and_forms() -> void:
+ 	var white := Color(1.0, 1.0, 1.0)
+diff --git a/render/vfx/vfx_hub.gd b/render/vfx/vfx_hub.gd
+index 6987f28..6bc35ff 100644
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -560,6 +560,9 @@ func _consume(S: SimState, events: Array) -> void:
+ 						react.on_crater(S, e, self)
+ 					if blast_enabled:
+ 						blast.on_crater(S, e, debris, fx_now(S), blast_powerup_enabled, xform.forms)
++				"crater_refused":
++					if earth_enabled:
++						earth.on_crater_refused(e, S)      # the dig was refused (an earlier crater is there): its ejecta and rim dust at a share, nothing of the bowl
+ 				"beamSplash":
+ 					if water_enabled:
+ 						debris.z_shift = float(_g(e, "z", 0.0))
+diff --git a/tools/schemas/vfx-earth.schema.json b/tools/schemas/vfx-earth.schema.json
+index c885650..f157542 100644
+--- a/tools/schemas/vfx-earth.schema.json
++++ b/tools/schemas/vfx-earth.schema.json
+@@ -251,6 +251,34 @@
+         "^_": true
+       }
+     },
++    "refused": {
++      "type": "object",
++      "description": "A refused crater (World's `crater_refused`): the ejecta and rim dust at this share of a crater's.",
++      "properties": {
++        "count_k": {
++          "type": "number",
++          "exclusiveMinimum": 0,
++          "maximum": 1
++        },
++        "speed_k": {
++          "type": "number",
++          "exclusiveMinimum": 0,
++          "maximum": 1
++        },
++        "min_chunks": {
++          "type": "integer",
++          "minimum": 0
++        },
++        "min_dust": {
++          "type": "integer",
++          "minimum": 0
++        }
++      },
++      "additionalProperties": false,
++      "patternProperties": {
++        "^_": true
++      }
++    },
+     "skid": {
+       "type": "object",
+       "description": "A skid.",

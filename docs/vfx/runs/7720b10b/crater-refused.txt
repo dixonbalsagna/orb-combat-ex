@@ -1,0 +1,15 @@
+crater-refused on the final GW1c stack (28 pieces, docs/ep/reviews/GW1c-stack.txt; main 8eecb1ac code unchanged since) with VFX's park applied last (apply.patch sha1 c6931f4793e9f876508fe3d1f462a4116f61525c), 2026-11-23 and 2026-11-25
+
+validate: 325 files checked, 0 errors, 2 warnings
+effects_check: 1190 ok, 0 FAIL; effects check passed
+hash_check (default seeds 12345, 4, 7, 1): hash check passed; 985 s; effects ran: max trail strength 1.00, 2300 marks spawned, 235140 ribbon segments drawn in 86406 ticks
+
+flash analyser, the repeated-slam scene (craterspot, six slams, seed 12345, 700 ticks, 960x540), before = the stack without the park, after = with it:
+== before_reduced
+cr2_out_before_reduced (reduced)    700   480x270        1    0         1        1     0/2     0  PASS
+== after_reduced
+cr2_out_after_reduced (reduced)    700   480x270        1    0         1        1     0/2     0  PASS
+== before_normal
+cr2_out_before_normal         700   480x270        2    0         2      0.5     0/4     0  PASS
+== after_normal
+cr2_out_after_normal          700   480x270        2    0         2        1     0/4     0  PASS

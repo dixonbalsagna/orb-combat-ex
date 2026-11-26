@@ -27,3 +27,4 @@ eac8673e0b71  docs/tools/pending/world-schema-cases/world-schema-cases.patch
 d64450fcd60e  docs/world/pending/globe-step2/grant-simulation-crater-refused.patch
 57e8b15dfffe  docs/world/pending/globe-step2/bury-refused.diff
 f410cc78fe3c  docs/world/pending/globe-step2/grant-tools-bury-check.patch
+c6931f4793e9  docs/vfx/pending/crater-refused/apply.patch
