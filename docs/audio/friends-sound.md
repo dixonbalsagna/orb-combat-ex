@@ -17,7 +17,7 @@ Listening: `listening-sheet.md`. Desktop settings and the proof: `desktop-sound.
 
 ## The menu call
 
-`AudioVoices.ui(name)` is static, safe before audio exists, and returns false when it plays nothing. UI's calls (UI's park `docs/ui/pending/menu-sounds/` adds them):
+`AudioVoices.ui(name)` is static, safe before audio exists, and returns false when it plays nothing. UI's calls (landed in `ui/hud/ui_hud.gd`, commit 7fe2ed9b):
 
 | Where (`ui/hud/ui_hud.gd`) | Line |
 | :--- | :--- |
