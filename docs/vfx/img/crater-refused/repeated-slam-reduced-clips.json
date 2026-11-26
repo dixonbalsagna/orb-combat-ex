@@ -1,0 +1,21 @@
+{
+  "left": {
+    "scenario": "craterspot",
+    "seed": 12345,
+    "seedPlayed": 12345,
+    "slots": null,
+    "pairing": "default",
+    "variant": 0
+  },
+  "right": {
+    "scenario": "craterspot",
+    "seed": 12345,
+    "seedPlayed": 12345,
+    "slots": null,
+    "pairing": "default",
+    "variant": 0
+  },
+  "leftDir": "C:/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/ea6bb020-cc36-4a6d-a6c9-2b604d01280b/scratchpad/cr2_out_before_reduced",
+  "rightDir": "C:/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/ea6bb020-cc36-4a6d-a6c9-2b604d01280b/scratchpad/cr2_out_after_reduced",
+  "sameMatch": true
+}

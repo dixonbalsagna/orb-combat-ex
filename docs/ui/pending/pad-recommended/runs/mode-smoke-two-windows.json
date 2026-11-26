@@ -1,0 +1,134 @@
+{
+  "input": "pad",
+  "mode": "two",
+  "natural_result": false,
+  "pass": true,
+  "platform": "windows",
+  "steps": [
+    {
+      "detail": "page 'modes', rows: solo,versus,couch_2v2,horde,practice,custom_planet,lan,campaign,quit; the HUD's screen (1280.0, 800.0), window (1280, 800), A1 menus on: true, features menu_modes true menus_rail true",
+      "name": "the start menu opens on the list of modes (opened by the smoke: a headless run has no window)",
+      "ok": true
+    },
+    {
+      "detail": "rows: solo,versus,couch_2v2,horde,practice,custom_planet,lan,campaign,quit",
+      "name": "the list of modes has a 'quit' row",
+      "ok": true
+    },
+    {
+      "detail": "",
+      "name": "a mode that is not built ('couch_2v2') cannot be started: A leaves the list on screen",
+      "ok": true
+    },
+    {
+      "detail": "lit: versus",
+      "name": "the mode row 'versus' is reached with the D-pad",
+      "ok": true
+    },
+    {
+      "detail": "players 2, page setup",
+      "name": "A opens the setup for two people",
+      "ok": true
+    },
+    {
+      "detail": "player 1 RIVAL (was PROTAGONIST), player 2 PROTAGONIST",
+      "name": "a fighter is picked with the D-pad and the two players never hold the same one",
+      "ok": true
+    },
+    {
+      "detail": "",
+      "name": "intros are off (a match that starts at once)",
+      "ok": true
+    },
+    {
+      "detail": "",
+      "name": "the row 'start' is reached with the D-pad",
+      "ok": true
+    },
+    {
+      "detail": "tick 31",
+      "name": "a match is running: the tick advances",
+      "ok": true
+    },
+    {
+      "detail": "p1 human true, p2 human true",
+      "name": "the match is of the mode: the bodies' AI flags",
+      "ok": true
+    },
+    {
+      "detail": "played [\"RIVAL\", \"PROTAGONIST\"], picked [\"RIVAL\", \"PROTAGONIST\"]",
+      "name": "the match starts with the picked fighters",
+      "ok": true
+    },
+    {
+      "detail": "ticks 600",
+      "name": "the match plays 600 ticks and has a result (ended by the smoke with SimDamage.ko: a result card is what is under test, not the finisher)",
+      "ok": true
+    },
+    {
+      "detail": "rows: again,save,menu,feedback,quit",
+      "name": "the match-over card opens with its rows, Quit among them",
+      "ok": true
+    },
+    {
+      "detail": "tick 812, seed 16279273 to 2540165",
+      "name": "a rematch ('again', chosen with the pad) starts a new match that runs",
+      "ok": true
+    },
+    {
+      "detail": "",
+      "name": "the second match plays on for 120 ticks",
+      "ok": true
+    },
+    {
+      "detail": "rows: resume,howto,settings,feedback,about,p2_leave,menu,new,quit",
+      "name": "Start on the pad opens the pause menu, Quit among its rows",
+      "ok": true
+    },
+    {
+      "detail": "rows quit_yes,quit_no, lit quit_no",
+      "name": "Quit on the pause menu asks 'Close the game?' with Stay lit",
+      "ok": true
+    },
+    {
+      "detail": "",
+      "name": "B on the question stays: the pause menu is back and the game is still running",
+      "ok": true
+    },
+    {
+      "detail": "reached true, pause open false, start menu open true, lit menu",
+      "name": "'menu' goes back to the list of modes",
+      "ok": true
+    },
+    {
+      "detail": "page quit, lit quit_no",
+      "name": "Quit asks 'Close the game?' with Stay lit",
+      "ok": true
+    },
+    {
+      "detail": "",
+      "name": "B on the question stays: the list of modes is back and the game is still running",
+      "ok": true
+    },
+    {
+      "detail": "",
+      "name": "B on the list of modes goes back to the match",
+      "ok": true
+    },
+    {
+      "detail": "pause open true, reached quit true, rows quit_yes,quit_no, lit quit_yes",
+      "name": "Start, Quit and the question's 'Close the game' row are reached with the pad",
+      "ok": true
+    },
+    {
+      "detail": "quit_requested fired; the program must now end by itself",
+      "name": "the game is told to close when 'Close the game' is answered with the pad",
+      "ok": true
+    }
+  ],
+  "window": "1280x800",
+  "commit": "padtip-stack",
+  "checked": "pass",
+  "problems": [],
+  "notBuilt": []
+}

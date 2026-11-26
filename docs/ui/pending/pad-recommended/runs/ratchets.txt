@@ -1,0 +1,2 @@
+two-fighter ratchet ok: 365 against a baseline of 365
+fighter-specific code: 0 places (energy 0, stamina 0, body 0, forms 0); the baseline is 0
