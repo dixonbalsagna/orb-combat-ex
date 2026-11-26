@@ -118,3 +118,13 @@ These are higher than Rendering's B-20 numbers (3.5 and 4.5). I have not compare
 **The baseline records main's FAIL as it is** (4.5 / 0 / 6 / 4.5 and 5.5 / 0 / 7 / 5.5). The nightly judges "worse than recorded", so it is green on these clips while they read the same or better and red when one reads worse, is new or is not read. A fix that lowers a reading is noted as better; lowering the recorded value is by hand, with the EP's word. The values come from the hardware full reading, not from a scheduled night: the first scheduled nights read the window in software and may differ by a flash either way (signature's did), and then the EP decides whether to re-record.
 
 **Not proven:** the cost of the window on a runner (640 skipped ticks at about 2.2 s is about 24 minutes, then 240 captured ticks at an unmeasured software rate; capMin 150 against a job limit of 300), and the first scheduled reading of these two clips.
+
+## The windows go stale, and the check that says so (2026-11-26)
+
+A window reads whatever is at its ticks. When the game changes, the moment it was chosen for moves, and a low reading then means nothing: from about 21 November the four clash windows held no clash and the two collapse windows no falling building, and the nightly stayed green.
+
+- **Each window now names what it `holds`** (`beam_outcome:CLASH`, `beam_outcome`, `building_fall`, `shot_hit`), and `tools/flash/flash_worst.gd` records the tick of each.
+- **`tools/flash/window-check.mjs`** (CI, the flash count job) fails when a window's counted part (after a clip's first 60 frames) no longer holds its event, and says at which ticks it does happen.
+- It says the event is there, not that the window is the clip's worst second. That is still a local full reading.
+- **The clash scene changed:** nothing for 90 ticks, then the signature held in cycles of 500, so beams meet twice (ticks 140 and 1140) and the first is past the uncounted start. The second meets in split screen, where no flare shows.
+- Re-measure the windows after any change that moves the matches, and re-record the baseline from nightly runs after that (by hand, with the EP's word).
