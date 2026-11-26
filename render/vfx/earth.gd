@@ -17,6 +17,7 @@ const DEFAULTS: Dictionary = {
 	"leave": {"speed_ref": 2500.0, "chunks_lip": 6, "chunks_heap": 8, "chunks_cliff": 4, "chunks_crest": 0, "chunks_bounce": 2, "dust": 2},
 	"settle": {"tumble_dust": 2, "journey_dust": 3, "wall_chunks": 8, "capped_scale": 1.5},
 	"skid": {"min_speed": 500.0, "rate_per_s": 14.0, "dust_every": 3, "speed_ref": 2500.0},
+	"refused": {"count_k": 0.5, "speed_k": 0.8, "min_chunks": 2.0, "min_dust": 3.0},
 }
 
 static var _data: Dictionary = {}
@@ -27,6 +28,8 @@ var biomefx: VfxBiome = null     # set by the hub while the biome effects are on
 var deb_made: int = 0          # counters for the tests
 var flames_made: int = 0
 var contact_made: int = 0      # chunks and puffs thrown for contact events
+var refused_made: int = 0      # ... of them, for refused craters (`crater_refused`)
+var refused_events: int = 0
 var contact_events: int = 0
 var dust_made: int = 0
 var entrance_now: bool = false   # this tick holds an entrance landing: the other effects of its tick (the crater's ejecta and dust) are quiet and short, so the dust clears by the staredown
@@ -329,17 +332,18 @@ func on_dust(e, keep_mul: float = 1.0) -> void:
 
 ## A crater (the sim's `crater` event): the ejecta thrown out of the bowl as tumbling chunks of its own earth, and the dust that
 ## lifts off the rim, as Rendering's ImpactFx drew them as squares. More and bigger with the energy.
-func on_crater_ejecta(e, S: SimState = null) -> void:
+func on_crater_ejecta(e, S: SimState = null, count_k: float = 1.0, speed_k: float = 1.0, min_chunks: int = 3, min_dust: int = 4) -> void:
 	var x: float = float(e.x)
 	var biome: String = VfxPalette.biome_key(x)
 	var E: float = float(e.energy)
 	var r: float = float(e.r)
 	var z: float = float(e.get("z") if e.get("z") != null else 0.0)
-	_bfx(S, "crater", x, float(e.y), z, 0.0, clampf(E / 10.0, 0.4, 2.0), int(e.owner) if e.get("owner") != null else -1)
+	if count_k >= 1.0:
+		_bfx(S, "crater", x, float(e.y), z, 0.0, clampf(E / 10.0, 0.4, 2.0), int(e.owner) if e.get("owner") != null else -1)      # a refused crater has no biome column: the contact's own is the picture
 	var tones: Array = tones_for_surface("soil", x)
 	var sws: float = sqrt(SimConst.WS)             # the sim's world-scale factor for speeds of things thrown by world-scale events
-	var sp: float = (260.0 + 90.0 * sqrt(maxf(E, 0.0))) * sws
-	var nch: int = clampi(int(3.0 + E * 1.0), 3, 16)      # was up to 30: a hundred chunks in the air for two seconds is a churn the analyser counts (ai seed 38, tick 3500)
+	var sp: float = (260.0 + 90.0 * sqrt(maxf(E, 0.0))) * sws * speed_k
+	var nch: int = clampi(int(round((3.0 + E * 1.0) * count_k)), min_chunks, 16)      # was up to 30: a hundred chunks in the air for two seconds is a churn the analyser counts (ai seed 38, tick 3500)
 	for k in range(nch):
 		var off: float = debris._rd.range_(-0.6, 0.6) * r
 		var vx: float = (1.0 if off >= 0.0 else -1.0) * debris._rd.range_(0.3, 1.0) * sp
@@ -349,13 +353,22 @@ func on_crater_ejecta(e, S: SimState = null) -> void:
 		if debris._rd.next() < _q():
 			debris.chunk(x + off, float(e.y) + 6.0, z + 6.0, vx, vy, sz, life, tones, 2, 10.0)
 			contact_made += 1
-	var nd: int = clampi(int(4.0 + r / 20.0), 4, 18)
+	var nd: int = clampi(int(round((4.0 + r / 20.0) * count_k)), min_dust, 18)
 	for k in range(nd):
 		var side: float = 1.0 if k % 2 == 0 else -1.0
 		var sz: float = debris._rd.range_(18.0, 36.0)
 		if debris._rd.next() < _q():
 			debris.dust_puff(biome, x + side * r * debris._rd.range_(0.8, 1.25), float(e.y) + float(e.get("rim") if e.get("rim") != null else 0.0) + debris._rd.range_(0.0, 20.0), z + debris._rd.range_(2.0, 24.0), side * debris._rd.range_(20.0, 90.0) * sws, debris._rd.range_(20.0, 110.0) * sws * (0.5 if entrance_now else 1.0), sz * 1.2, sz * 2.6, debris._rd.range_(1.2, 2.4) * _lk(), k % 3)
 			contact_made += 1
+
+
+## A blow that dug nothing (World's `crater_refused`: x, y, energy, r; no record): the crater's ejecta and rim dust at a share of its strength (data/vfx/earth.json `refused`), so a hard slam on an old crater still throws earth
+## off the spot. No bowl, no cracks, no biome column and no blast tier-amp (those are the crater's own); the contact event's dust, chips and rings are drawn as for any slam. Render only.
+func on_crater_refused(e, S: SimState = null) -> void:
+	refused_events += 1
+	var before: int = contact_made
+	on_crater_ejecta(e, S, p("refused", "count_k"), p("refused", "speed_k"), int(p("refused", "min_chunks")), int(p("refused", "min_dust")))
+	refused_made += contact_made - before
 
 
 ## Where a knockback slide stopped (the `slide` event: x1, w, energy, variant): a heavier burst of dust and chunks off the

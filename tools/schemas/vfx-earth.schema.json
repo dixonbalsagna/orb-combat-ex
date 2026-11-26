@@ -251,6 +251,34 @@
         "^_": true
       }
     },
+    "refused": {
+      "type": "object",
+      "description": "A refused crater (World's `crater_refused`): the ejecta and rim dust at this share of a crater's.",
+      "properties": {
+        "count_k": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "speed_k": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "min_chunks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "min_dust": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
     "skid": {
       "type": "object",
       "description": "A skid.",

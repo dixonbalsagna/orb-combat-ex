@@ -233,6 +233,7 @@ func _run() -> void:
 	_beam_front()
 	_other_fights()
 	_shared_register()
+	_crater_refused()
 	_ghost_from_parts()
 	_clash_wave()
 	_shot_from_outside()
@@ -7724,6 +7725,44 @@ func _ghost_from_parts() -> void:
 	var h2 := VfxHub.new()
 	h2.reset(S, 5)
 	_check(h2.fx_view == null and h2.ghosts.fx_src == null, "with no host the hub has no view and the tally counts down as before")
+	SimCore.dispose(S)
+
+
+## A blow that dug nothing (World's `crater_refused`: x, y, energy, r): the ejecta and rim dust at a share of a crater's, no bowl, no cracks, no biome column, no tier-amp; render only.
+func _crater_refused() -> void:
+	print("a refused crater")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var x: float = SimWrap.wrap(S.fighters[0].x + 400.0)
+	var gy: float = WorldTerrain.groundY(S, x)
+	var refused := VfxMock.ev("crater_refused", {"x": x, "y": gy, "energy": 14.0, "r": 220.0})
+	var crater := VfxMock.ev("crater", {"x": x, "y": gy, "r": 220.0, "depth": 60.0, "energy": 14.0, "cause": "impact", "owner": 0.0, "special": 0.0, "rim": 20.0, "z": 0.0})
+	var run := func(evs: Array, earth: bool) -> VfxHub:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.px_per_unit = 0.3
+		h.earth_enabled = earth
+		S.fighters[0].tier = 3.0
+		_tick(S, h, evs)
+		return h
+	var hr: VfxHub = run.call([refused], true)
+	var hc: VfxHub = run.call([crater], true)
+	var minp: int = int(VfxEarth.p("refused", "min_chunks")) + int(VfxEarth.p("refused", "min_dust"))
+	_check(hr.earth.refused_events == 1 and hr.earth.refused_made >= minp, "a refused crater throws ejecta and rim dust (%d pieces, at least %d)" % [hr.earth.refused_made, minp])
+	_check(hr.earth.refused_made < hc.earth.contact_made and float(hr.earth.refused_made) >= 0.3 * float(hc.earth.contact_made), "at a share of a crater's (%d against %d)" % [hr.earth.refused_made, hc.earth.contact_made])
+	_check(hr.biomefx.columns == 0 and hr.biomefx.stars == 0 and hr.debris.bits.filter(func(b): return b.kind == VfxDebris.STAR).size() == 0, "no biome column and no burst star: those are the crater's own")
+	_check(hr.crack_sets.size() + hr.crack_pending.size() == 0 and hr.holes.is_empty(), "no cracks and no holes: there is no bowl")
+	_check(hc.earth.refused_events == 0 and hc.earth.refused_made == 0, "a real crater is not counted as a refused one")
+	var ho: VfxHub = run.call([refused], false)
+	_check(ho.earth.refused_events == 0 and ho.debris.bits.size() < hr.debris.bits.size(), "with the earth effects off a refused crater draws nothing of its own")
+	var hr2: VfxHub = run.call([refused], true)
+	var same: bool = hr2.debris.bits.size() == hr.debris.bits.size()
+	if same:
+		for i in range(hr.debris.bits.size()):
+			same = same and hr.debris.bits[i].x == hr2.debris.bits[i].x and hr.debris.bits[i].vy == hr2.debris.bits[i].vy
+	_check(same, "the same refused crater gives the same bits")
+	var hl: VfxHub = run.call([VfxMock.ev("crater_refused", {"x": x, "y": gy, "energy": 0.6, "r": 60.0})], true)
+	_check(hl.earth.refused_made >= minp and hl.earth.refused_made <= hr.earth.refused_made, "a small blow still throws the least (%d, from %d)" % [hl.earth.refused_made, hr.earth.refused_made])
 	SimCore.dispose(S)
 
 

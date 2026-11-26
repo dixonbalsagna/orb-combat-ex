@@ -560,6 +560,9 @@ func _consume(S: SimState, events: Array) -> void:
 						react.on_crater(S, e, self)
 					if blast_enabled:
 						blast.on_crater(S, e, debris, fx_now(S), blast_powerup_enabled, xform.forms)
+				"crater_refused":
+					if earth_enabled:
+						earth.on_crater_refused(e, S)      # the dig was refused (an earlier crater is there): its ejecta and rim dust at a share, nothing of the bowl
 				"beamSplash":
 					if water_enabled:
 						debris.z_shift = float(_g(e, "z", 0.0))
