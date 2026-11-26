@@ -51,6 +51,7 @@ var _hdp := Vector3.ZERO
 var _sdp := Vector3.ZERO
 var _turn_sent: float = 1.0e9
 var _reff: float = -1.0
+var _l0: int = -1             # the level 0 the materials hold (tile_l0)
 var _drawn: int = 0
 var _buf := PackedFloat32Array()
 var _prof_wait: int = 0
@@ -183,6 +184,10 @@ func apply(host: SimHost, cam_x: float, vp: Vector2) -> void:
 	mat.set_shader_parameter("hd0", _hd0)
 	mat.set_shader_parameter("sd0", _sd0)
 	mat.set_shader_parameter("strip_x", SimWrap.wrap(cam_x))
+	if _l0 != RenderTileField.LEVEL0:   # the vertex stage's level 0 (tile_read.gdshaderinc tile_l0): the planet's size, set when it changes
+		_l0 = RenderTileField.LEVEL0
+		mat.set_shader_parameter("tile_l0", float(_l0))
+		water_mat.set_shader_parameter("tile_l0", float(_l0))
 	for wk in ["pv", "pv0", "hd", "sd", "hd0", "sd0", "pvp", "hdp", "sdp", "strip_x"]:
 		water_mat.set_shader_parameter(wk, mat.get_shader_parameter(wk))
 	for k in ["wl_mul", "wl_add", "fore_cam"]:
@@ -621,7 +626,7 @@ static func _center(f: int, n: int, i: int, j: int) -> Vector3:
 
 func _walk(f: int, L: int, i: int, j: int, cam_d: float) -> void:
 	var n: int = RenderTileField.level_n(L)
-	var w: float = 12800.0 / float(1 << L)
+	var w: float = RenderTileField.edge() / float(RenderTileField.level_n(L))   # a tile's width at level L, at the planet's size (12,800 / 2^L at medium)
 	var c: Vector3 = _center(f, n, i, j)
 	var a: float = atan2(c.cross(_pv).length(), c.dot(_pv))
 	var d: float = a * field.R

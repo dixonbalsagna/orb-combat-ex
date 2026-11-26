@@ -14,6 +14,7 @@ uniform vec3 sdp = vec3(0.0, 0.0, 1.0);
 uniform float strip_x = 0.0;
 uniform sampler2D plane_tex : filter_nearest, repeat_disable;
 uniform float plane_span = 3000.0;
+uniform float tile_l0 = 3.0;      // level 0's tiles to a face edge (RenderTileField.LEVEL0: by the planet's size, 3 at medium)
 uniform int cb_n = 0;              // the bowls near the camera, from World's store (RenderTileGround._bowls)
 uniform vec4 cb_a[16];             // its planet direction, its radius
 uniform vec4 cb_b[16];             // its depth, its rim, when it was made
@@ -66,7 +67,7 @@ void tile_node(mat4 m, vec4 c, vec2 uv, out vec3 dir, out float skirt, out float
 	dir = tile_dir(n, u, wv, st);
 	layer = int(c.r + 0.01);
 	float dl = floor(c.a / 16.0);
-	dsize = 2.0 / (3.0 * pow(2.0, dl));
+	dsize = 2.0 / (tile_l0 * pow(2.0, dl));
 	vec2 d0xy = floor((place.xy + vec2(1.0)) / dsize + 0.001) * dsize - vec2(1.0);
 	vec2 dg = (st - d0xy) / dsize * 25.0 + vec2(1.0);   // on the layer: the ring outside the tile is its first row
 	ivec2 i0 = ivec2(floor(dg));
