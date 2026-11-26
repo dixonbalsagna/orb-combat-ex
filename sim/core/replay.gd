@@ -275,6 +275,11 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(WorldCampaign.dataHash())
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
 	if setup.has("planet"):   # a planet's world: World's planet data, by the generation this setup plays (WorldClimate.genFor: never the one in force, for a header is made before a match)
+		var nc0: int = SimConst.PLANET_NC
+		SimConst.setPlanet(WorldPlanetSize.colsOf(setup))   # the planet's size the setup plays (World's sizes.json): a header is made, and checked, at the match's own size whatever the host's static holds (it is put back below)
+		if setup.has("planetSize"):   # ... and the size table, for a setup that names a size (an unnamed one, medium, hashes as before)
+			h.text("planetSize")
+			FighterData._canon(h, WorldPlanetSize.hashData())   # the table without `offered`: un-hiding a held size moves no replay's header (World's hold, 2026-11-23)
 		var gen: int = WorldClimate.genFor(setup)
 		if gen >= 3:   # a field world: the swing's data, the bake's hash and 64 seeded canonical nodes, so a build that computes them differently is refused at the handshake
 			h.text(SimField.dataHash())
@@ -288,6 +293,7 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		if WorldEpoch.enabled(setup):   # when and how the ring turns, on either generation: only rings.json's turn block, for the rest picks a run's ring before the setup exists
 			h.text("rings.turn")
 			FighterData._canon(h, WorldRingPick.cfg().turn)
+		SimConst.setPlanet(nc0)
 	if SimInputData.right_stick_on():   # the intent's second word is in the hash and the entries: a replay made with the switch on plays only with it on, and the other way round (a match with it off reads none of it)
 		h.text("rightStick")
 	if setup.has("pushMode"):   # each player's push in a beam struggle (DirBeam.pushModes): both ends of a link must agree

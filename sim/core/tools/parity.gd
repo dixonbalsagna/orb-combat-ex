@@ -115,6 +115,7 @@ func _init() -> void:
 	check("the intro phase (golden)", "" if SimGolden.introHash() == g.get("intro", "") else "differs")
 	check("composed intros (golden)", "" if SimGolden.introComposedHash() == g.get("introComposed", "") else "differs")
 	check("replay module", _replayModule())
+	check("a replay of a sized planet plays in a host bound to another size", _replaySizes())
 	check("a replay of the default world names its planet", _replayWorld())
 	var tm: int = Time.get_ticks_usec()
 	check("matches", _matches(g))
@@ -3622,6 +3623,54 @@ func _replayWorld() -> String:
 	var r: Dictionary = SimReplay.play(rp)
 	if not r.ok:
 		return "the default world's replay, played with the mode back on %s: %s at tick %d" % [str(m0), r.reason, int(r.firstBadTick)]
+	return ""
+
+
+## World's planet sizes (A1): a replay of a match on a tiny planet, played by a host whose static size was last bound to
+## medium (another match), plays to its last tick; its header is the same taken at either static; a changed size table
+## refuses it as data, and a flip of a size's `offered` doesn't (the header reads WorldPlanetSize.hashData); and the host's
+## static is as it was after each. Tiny is held (World's hold, 2026-11-23): the row runs with the test-only
+## WorldPlanetSize.heldOverride on, and puts it back.
+func _replaySizes() -> String:
+	var ho: bool = WorldPlanetSize.heldOverride
+	WorldPlanetSize.heldOverride = true
+	var r: String = _replaySizesRun()
+	WorldPlanetSize.heldOverride = ho
+	return r
+
+
+func _replaySizesRun() -> String:
+	var su := {"planet": 7, "touch": 1, "planetGen": 3, "intro": false, "planetSize": "tiny"}
+	var S := SimCore.createSim()
+	var rec := SimReplay.recorder(S, 7, {"p1": true, "p2": true}, su)
+	for t in range(60):
+		rec.step([null, null])
+	var rp: Dictionary = rec.finish()
+	SimCore.dispose(S)
+	var M := SimCore.createSim()
+	SimCore.newMatch(M, 3, {"p1": true, "p2": true}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
+	SimCore.dispose(M)
+	var nc0: int = SimConst.PLANET_NC
+	if SimReplay.dataHash(rp.setup) != String(rp.data):
+		return "a tiny planet's header taken again with the static at %d differs" % nc0
+	if SimConst.PLANET_NC != nc0:
+		return "the header moved the host's static size (%d to %d)" % [nc0, SimConst.PLANET_NC]
+	var r: Dictionary = SimReplay.play(rp)
+	if not r.ok:
+		return "a tiny planet's replay played by a host at %d: %s at tick %d" % [nc0, r.reason, int(r.firstBadTick)]
+	var d: Dictionary = WorldPlanetSize.data()
+	var was = d.get("default")
+	d["probe"] = 1
+	var moved: bool = SimReplay.dataHash(rp.setup) != String(rp.data)
+	d.erase("probe")
+	if not moved or d.get("default") != was:
+		return "a changed size table does not move a sized replay's header"
+	var off0: bool = bool(d.sizes.tiny.offered)
+	d.sizes.tiny.offered = not off0
+	var flipped: bool = SimReplay.dataHash(rp.setup) != String(rp.data)
+	d.sizes.tiny.offered = off0
+	if flipped:
+		return "un-hiding a size moves a sized replay's header (it must read WorldPlanetSize.hashData, the table without offered)"
 	return ""
 
 
