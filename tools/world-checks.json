@@ -25,6 +25,7 @@
     "struggle_dir_check",
     "bystanders_check",
     "globe_check",
+    "bury_check",
     "floor_walk_probe"
   ],
   "leaveOut": {
