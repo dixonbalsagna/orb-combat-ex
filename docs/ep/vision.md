@@ -1909,3 +1909,5 @@ Orb's correction (2026-11-14, verbatim): "its late and I counted wrong, it was f
 Still open: the sound question (the ten-minute listen), the deletion promise, Orb's own actions, and anything public, any tester approval, spend or Legal flag.)
 
 **Orb (2026-11-23, about 20:20 PST):** "bring everything to a pause safely, I want to start back up tomorrow"
+
+**Orb (2026-11-25, about 17:10 PST):** "lets get going, I want that first alpha version"
