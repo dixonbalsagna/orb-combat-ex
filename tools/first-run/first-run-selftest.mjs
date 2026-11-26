@@ -71,5 +71,6 @@ check('the frame-rate timeline buckets by ten seconds', timeline(Array.from({ le
 const NLN = String.fromCharCode(10);
 check("the program's own lines leave out the frame-rate line, cap the count and take folder paths out", ownLines(['Project FPS: 9 (1 mspf)', 'a line', 'at C:/Users/someone/x', ''].join(NLN)).length === 2 && !ownLines('at C:/Users/someone/x').join('').includes('someone') && ownLines(Array(100).fill('x').join(NLN), 40).length === 40);
 check('a match shows in the data folder by a field cache or a report, and a bare data folder does not', matchInData([{ path: 'Orb Combat EX/field-cache/a.wfc', size: 1 }]) && matchInData([{ path: 'Orb Combat EX/reports/x.json', size: 1 }]) && !matchInData([{ path: 'Orb Combat EX/logs/godot.log', size: 1 }]) && !matchInData([]) && dataFiles('/no/such/folder').length === 0);
+check('the keys closing the program is a row that can fail the run, and the window manager stays as the fallback that reports', ln.includes("add({ id: 'quit-keys'") && ln.includes('ok: keysClosed, detail') && !ln.includes('reported only') && ln.includes("press(['ALT_F4']") && ln.includes('process.exit(run.steps.some((s) => !s.ok) ? 1 : 0)'));
 console.log(`first-run selftest: ${n} checks, ${bad} failed`);
 process.exit(bad ? 1 : 0);

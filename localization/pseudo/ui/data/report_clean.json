@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "note": "What the report folder does with the game logs (docs/ui/report-logs.md, X-28): the two logs it copies, how much of each, the marker (one file per running game, run-marker-<process id>.txt) that says a run did not close properly, and the patterns that clean a copy before it is written. patterns and allow_lines mirror tools/report-scan.json (Tools; tools/ is not in an export, so the game reads this copy; hud_check fails if the two differ). Order matters: a user folder is cut before a drive path is looked for.",
+  "tail_bytes": 204800,
+  "this_run": "log-this-run.log",
+  "last_run": "log-last-run.log",
+  "marker": "run-marker",
+  "header": "[Ţĥííš çööpýý ööf ţĥéé ĝááméé ĺööĝ ŵááš çüüţ ţöö ííţš ĺáášţ 200 ĶB, ááñď fööĺďééŕ pááţĥš, ááççööüüñţ ááñď PÇ ñáámééš, éémááííĺ ááñď ñééţŵööŕķ ááďďŕééššééš ŵééŕéé ŕéémöövééď fŕööm ííţ. ~~~~~~~~~~~~~~~]",
+  "names": {
+    "user": "<user>",
+    "pc": "<removed>"
+  },
+  "patterns": [
+    {
+      "id": "windowsUserFolder",
+      "rx": "[A-Za-z]:[\\\\/]+Users[\\\\/]+[^\\\\/\\s\"'<>|:*?]+",
+      "mark": "<user>"
+    },
+    {
+      "id": "posixHome",
+      "rx": "(?:/[a-z])?/(?:Users|home)/[^/\\s\"'<>|:*?]+",
+      "mark": "<user>"
+    },
+    {
+      "id": "driveRoot",
+      "rx": "\\b[A-Za-z]:[\\\\/][^\\s\"']{2,}",
+      "mark": "<path>"
+    },
+    {
+      "id": "uncShare",
+      "rx": "\\\\\\\\[A-Za-z0-9_.-]+\\\\[A-Za-z0-9_.$-]+",
+      "mark": "<removed>"
+    },
+    {
+      "id": "email",
+      "rx": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",
+      "mark": "<removed>"
+    },
+    {
+      "id": "ipv4",
+      "rx": "\\b(?!127\\.0\\.0\\.1\\b)(?!0\\.0\\.0\\.0\\b)(?:\\d{1,3}\\.){3}\\d{1,3}\\b",
+      "mark": "<removed>"
+    },
+    {
+      "id": "mac",
+      "rx": "\\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\\b",
+      "mark": "<removed>"
+    }
+  ],
+  "allow_lines": [
+    "^Godot Engine v[\\d.]+",
+    "^Vulkan |^OpenGL ES|^Mesa |^Requested V-Sync"
+  ]
+}

@@ -1,0 +1,53 @@
+diff --git a/docs/tools/first-run.md b/docs/tools/first-run.md
+index c1f80a48..cd0cd6e1 100644
+--- a/docs/tools/first-run.md
++++ b/docs/tools/first-run.md
+@@ -25,7 +25,7 @@ Numbers: **frames a second** (the program's own `--print-fps` line, one a second
+ 
+ ## The size
+ 
+-`FIRST-RUN.cmd` passes its arguments on: `FIRST-RUN.cmd --size medium`, `--size small,medium,big`, `--size all`. `tools/first-run/sizes.json` has a row per size; today only `default` has arguments. Small, medium and big are `null` and are reported "not offered by this build" until GW1c lands the sizes and whoever lands them fills their rows (the arguments to add after `--`; if a size is chosen by a menu row instead, the step keys in `steps.json` gain it). Several sizes run one after another, each a full run with its own report section.
++`FIRST-RUN.cmd` passes its arguments on: `FIRST-RUN.cmd --size medium`, `--size small,medium,big`, `--size all`. `tools/first-run/sizes.json` has a row per size; `default` and `medium` (the one size offered since GW1c) have arguments. Small and big are `null` and are reported "not offered by this build" until they are offered again and whoever offers them fills their rows (the arguments to add after `--`; if a size is chosen by a menu row instead, the step keys in `steps.json` gain it). Several sizes run one after another, each a full run with its own report section.
+ 
+ ## The numbers pipeline without a window
+ 
+@@ -41,6 +41,8 @@ Numbers: **frames a second** (the program's own `--print-fps` line, one a second
+ - **Not proven: the window half.** `tools/first-run/window.ps1` (the still of the program's window; the keys) parses and has never been run against a game window: no session opens a Godot window. Whether the still shows the game and not black (a GPU window grabbed from the screen), whether the keys reach the game, and whether the draft steps walk the real menus are what the first click finds out. A first-click failure is a line in the report, not a lost run.
+ - Not built: the Linux half (the path page says it runs in CI under the virtual display). The script's number half would run under Xvfb as it is; its stills and keys need xdotool and a screen grabber, and a workflow, which is a CI change for the EP to rule on.
+ 
+-## The Linux numbers half closes by the window manager (2026-11-24)
++## Closing on Linux (2026-11-25)
+ 
+-On the Linux runner (`linux-first-run.yml`) the pause, Quit and "Close the game" keys did not close the game in six dispatches, while Alt+F4 did (run 45305205835): the match is built, the game runs about 14 frames a second under software GL, and it closes when its window manager asks. By the EP's ruling the numbers half now closes the program that way, reports the keys route as a row that never fails the run (`quit-keys`), and leaves the proof of the pause menu's Quit to the mode smoke, which passes on both platforms. **Why the keys did not close it is not known**: the game writes nothing about the pause or the quit, and the run takes no picture. Do not read the Linux first run as proof that Quit works on Linux.
++The numbers half must close the program with its own keys (pause, Quit, "Close the game"): the `quit-keys` row fails the run if they do not. If they do not, the script then asks the window manager (Alt+F4) and the `program-closes` row says whether that worked.
++
++**Why earlier runs did not close by keys:** a runner's profile is new, so the How to play card came up after the warning and held the match; every key went nowhere (runs 45305205835 to 45773667206). Both first-run scripts now start the game with their own settings, only that card marked as seen. Run 45777933506 closed by the keys. A person pausing and closing on a real Deck is still its own check.
+diff --git a/tools/first-run/first-run-selftest.mjs b/tools/first-run/first-run-selftest.mjs
+index 46c14bd7..1f546d32 100644
+--- a/tools/first-run/first-run-selftest.mjs
++++ b/tools/first-run/first-run-selftest.mjs
+@@ -71,5 +71,6 @@ check('the frame-rate timeline buckets by ten seconds', timeline(Array.from({ le
+ const NLN = String.fromCharCode(10);
+ check("the program's own lines leave out the frame-rate line, cap the count and take folder paths out", ownLines(['Project FPS: 9 (1 mspf)', 'a line', 'at C:/Users/someone/x', ''].join(NLN)).length === 2 && !ownLines('at C:/Users/someone/x').join('').includes('someone') && ownLines(Array(100).fill('x').join(NLN), 40).length === 40);
+ check('a match shows in the data folder by a field cache or a report, and a bare data folder does not', matchInData([{ path: 'Orb Combat EX/field-cache/a.wfc', size: 1 }]) && matchInData([{ path: 'Orb Combat EX/reports/x.json', size: 1 }]) && !matchInData([{ path: 'Orb Combat EX/logs/godot.log', size: 1 }]) && !matchInData([]) && dataFiles('/no/such/folder').length === 0);
++check('the keys closing the program is a row that can fail the run, and the window manager stays as the fallback that reports', ln.includes("add({ id: 'quit-keys'") && ln.includes('ok: keysClosed, detail') && !ln.includes('reported only') && ln.includes("press(['ALT_F4']") && ln.includes('process.exit(run.steps.some((s) => !s.ok) ? 1 : 0)'));
+ console.log(`first-run selftest: ${n} checks, ${bad} failed`);
+ process.exit(bad ? 1 : 0);
+diff --git a/tools/first-run/linux-numbers.mjs b/tools/first-run/linux-numbers.mjs
+index 47579454..f395fa14 100644
+--- a/tools/first-run/linux-numbers.mjs
++++ b/tools/first-run/linux-numbers.mjs
+@@ -112,10 +112,10 @@ async function main() {
+   add({ id: 'match-built', what: 'a match was built after the keys (the program printed its pair-bake line, or its data folder holds a field cache or a report)', ok: built, detail: built ? `at ${at()}` : 'no pair-bake line and no field cache or report in the data folder: the keys did not get the game past its first screens' });
+   const t1 = Date.now();
+   for (let i = 0; i < 40 && !exited; i++) await sleep(250);
+-  // the EP's ruling (run 45305205835: Alt+F4 closed the game when the keys had not): the numbers half closes the program by the window manager. The keys route is REPORTED and does not fail the run: the pause menu's
+-  // Quit and "Close the game" are proven by the mode smoke on both platforms, so this run need not prove them again.
++  // The keys must close the program (the EP, 2026-11-25: they do since the run has its own settings; before, the How to play card of a new profile held the match). A failure of this row fails the run. The window
++  // manager's close stays as the fallback below: it then says whether the program can close at all.
+   const keysClosed = exited;
+-  add({ id: 'quit-keys', what: 'the pause, Quit and "Close the game" keys close the program within 10 s (reported only, never a failure of this run)', ok: true, detail: keysClosed ? `closed ${((exitedAt - t1) / 1000).toFixed(1)} s after the last key` : 'did NOT close by the keys (not counted: the mode smoke proves the pause menu\'s Quit)' });
++  add({ id: 'quit-keys', what: 'the pause, Quit and "Close the game" keys close the program within 10 s', ok: keysClosed, detail: keysClosed ? (exitedAt <= t1 ? 'closed as the last key was handled' : `closed ${((exitedAt - t1) / 1000).toFixed(1)} s after the last key`) : 'did NOT close by the keys' });
+   if (!exited) {
+     const wf = spawnSync('xdotool', ['getwindowfocus', 'getwindowname'], { encoding: 'utf8' });
+     focus();

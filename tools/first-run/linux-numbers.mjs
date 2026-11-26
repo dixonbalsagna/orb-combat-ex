@@ -112,10 +112,10 @@ async function main() {
   add({ id: 'match-built', what: 'a match was built after the keys (the program printed its pair-bake line, or its data folder holds a field cache or a report)', ok: built, detail: built ? `at ${at()}` : 'no pair-bake line and no field cache or report in the data folder: the keys did not get the game past its first screens' });
   const t1 = Date.now();
   for (let i = 0; i < 40 && !exited; i++) await sleep(250);
-  // the EP's ruling (run 45305205835: Alt+F4 closed the game when the keys had not): the numbers half closes the program by the window manager. The keys route is REPORTED and does not fail the run: the pause menu's
-  // Quit and "Close the game" are proven by the mode smoke on both platforms, so this run need not prove them again.
+  // The keys must close the program (the EP, 2026-11-25: they do since the run has its own settings; before, the How to play card of a new profile held the match). A failure of this row fails the run. The window
+  // manager's close stays as the fallback below: it then says whether the program can close at all.
   const keysClosed = exited;
-  add({ id: 'quit-keys', what: 'the pause, Quit and "Close the game" keys close the program within 10 s (reported only, never a failure of this run)', ok: true, detail: keysClosed ? `closed ${((exitedAt - t1) / 1000).toFixed(1)} s after the last key` : 'did NOT close by the keys (not counted: the mode smoke proves the pause menu\'s Quit)' });
+  add({ id: 'quit-keys', what: 'the pause, Quit and "Close the game" keys close the program within 10 s', ok: keysClosed, detail: keysClosed ? (exitedAt <= t1 ? 'closed as the last key was handled' : `closed ${((exitedAt - t1) / 1000).toFixed(1)} s after the last key`) : 'did NOT close by the keys' });
   if (!exited) {
     const wf = spawnSync('xdotool', ['getwindowfocus', 'getwindowname'], { encoding: 'utf8' });
     focus();

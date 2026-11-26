@@ -25,7 +25,7 @@ Numbers: **frames a second** (the program's own `--print-fps` line, one a second
 
 ## The size
 
-`FIRST-RUN.cmd` passes its arguments on: `FIRST-RUN.cmd --size medium`, `--size small,medium,big`, `--size all`. `tools/first-run/sizes.json` has a row per size; today only `default` has arguments. Small, medium and big are `null` and are reported "not offered by this build" until GW1c lands the sizes and whoever lands them fills their rows (the arguments to add after `--`; if a size is chosen by a menu row instead, the step keys in `steps.json` gain it). Several sizes run one after another, each a full run with its own report section.
+`FIRST-RUN.cmd` passes its arguments on: `FIRST-RUN.cmd --size medium`, `--size small,medium,big`, `--size all`. `tools/first-run/sizes.json` has a row per size; `default` and `medium` (the one size offered since GW1c) have arguments. Small and big are `null` and are reported "not offered by this build" until they are offered again and whoever offers them fills their rows (the arguments to add after `--`; if a size is chosen by a menu row instead, the step keys in `steps.json` gain it). Several sizes run one after another, each a full run with its own report section.
 
 ## The numbers pipeline without a window
 
@@ -41,6 +41,8 @@ Numbers: **frames a second** (the program's own `--print-fps` line, one a second
 - **Not proven: the window half.** `tools/first-run/window.ps1` (the still of the program's window; the keys) parses and has never been run against a game window: no session opens a Godot window. Whether the still shows the game and not black (a GPU window grabbed from the screen), whether the keys reach the game, and whether the draft steps walk the real menus are what the first click finds out. A first-click failure is a line in the report, not a lost run.
 - Not built: the Linux half (the path page says it runs in CI under the virtual display). The script's number half would run under Xvfb as it is; its stills and keys need xdotool and a screen grabber, and a workflow, which is a CI change for the EP to rule on.
 
-## The Linux numbers half closes by the window manager (2026-11-24)
+## Closing on Linux (2026-11-25)
 
-On the Linux runner (`linux-first-run.yml`) the pause, Quit and "Close the game" keys did not close the game in six dispatches, while Alt+F4 did (run 45305205835): the match is built, the game runs about 14 frames a second under software GL, and it closes when its window manager asks. By the EP's ruling the numbers half now closes the program that way, reports the keys route as a row that never fails the run (`quit-keys`), and leaves the proof of the pause menu's Quit to the mode smoke, which passes on both platforms. **Why the keys did not close it is not known**: the game writes nothing about the pause or the quit, and the run takes no picture. Do not read the Linux first run as proof that Quit works on Linux.
+The numbers half must close the program with its own keys (pause, Quit, "Close the game"): the `quit-keys` row fails the run if they do not. If they do not, the script then asks the window manager (Alt+F4) and the `program-closes` row says whether that worked.
+
+**Why earlier runs did not close by keys:** a runner's profile is new, so the How to play card came up after the warning and held the match; every key went nowhere (runs 45305205835 to 45773667206). Both first-run scripts now start the game with their own settings, only that card marked as seen. Run 45777933506 closed by the keys. A person pausing and closing on a real Deck is still its own check.

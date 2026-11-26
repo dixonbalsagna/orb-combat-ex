@@ -96,12 +96,15 @@ function surfaceOf(key) {
 // remap), not ids.
 const WORD_PATHS = [/^terms:caption\./, /^feedback:report\./, /^settings:remap\.move_steps\./];
 
+// Data the log cleaner reads, not words: its patterns, the lines it lets through and the marks it leaves. The file's one sentence (`header`, written atop a cleaned log copy) IS words and stays in.
+const DATA_PATHS = [/^report_clean:(patterns|allow_lines|names)\./];
+
 function walkData(file, value, trail, out) {
   if (typeof value === 'string') {
     const leaf = trail[trail.length - 1];
     const key = `${file}:${trail.join('.')}`;
     const ok = file === 'glyphs' ? glyphIsText(value) : WORD_PATHS.some((re) => re.test(key)) ? /\p{L}/u.test(value) : isText(value);
-    if (ok) out.push({ key, leaf: String(leaf), trail, text: value });
+    if (ok && !DATA_PATHS.some((re) => re.test(key))) out.push({ key, leaf: String(leaf), trail, text: value });
     return;
   }
   if (Array.isArray(value)) {
@@ -535,6 +538,7 @@ function selfTest() {
   walkData('t', { note: 'skip me', a: { label: 'Keep me', id: 'x_y', _about: 'skip', choices: ['off', 'On air'] } }, [], rows);
   ok(rows.length === 1 && rows[0].key === 't:a.label', 'notes, ids and choices are left out of data');
   const inv = inventory();
+  ok(inv.rows.filter((r) => r.file === 'ui/data/report_clean.json').map((r) => r.key).join() === 'report_clean:header', 'of the log cleaner\'s file only the sentence is collected as words, not its patterns or marks');
   ok(inv.rows.length > 500, `the live tree has its strings (${inv.rows.length})`);
   ok(inv.rows.some((r) => r.key === 'terms:prompt.menu_notice' && r.legal), 'the in-game notice is marked as Legal\'s');
   ok(inv.rows.some((r) => r.source === 'code' && r.text === 'Preparing the graphics'), 'the boot line is found');
