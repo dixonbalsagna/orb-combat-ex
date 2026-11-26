@@ -248,6 +248,20 @@ try {
         check('testers: a tree with no testers_package flag is refused, not guessed at', threw);
       } finally { rmSync(d, { recursive: true, force: true }); }
     }
+    {
+      // the sound proof's argument (--audio-proof): the real entry passes; moved, not returning, read elsewhere, or a proof that loads the picture, is found
+      const entry = readFileSync(join(repo, 'render', 'core', 'boot_entry.gd'), 'utf8').split(String.fromCharCode(13)).join('');
+      const proof = readFileSync(join(repo, 'audio', 'audio_proof.gd'), 'utf8');
+      const NL = String.fromCharCode(10), T = String.fromCharCode(9);
+      const withEntry = (text, more = {}) => R({ files: { 'render/core/boot_entry.gd': text, ...more } }).filter((m) => /audio-proof|audio_proof/.test(m));
+      const branch = entry.slice(entry.indexOf(T + 'if OS.get_cmdline_user_args().has(' + String.fromCharCode(34) + '--audio-proof'), entry.indexOf(T + 'if _direct():'));
+      check('audio proof: the entry in the tree has the branch, and it passes', branch.includes('return') && withEntry(entry).length === 0, JSON.stringify(withEntry(entry)));
+      const moved = entry.replace(branch, '').replace(T + 'add_child(RenderBoot.line', branch + T + 'add_child(RenderBoot.line');
+      check('audio proof: the branch moved after the scene load is found', moved !== entry && withEntry(moved).some((m) => /not the first thing/.test(m)));
+      check('audio proof: a branch that does not return, and a second read of the argument, are found', withEntry(entry.replace(T + T + 'return' + NL, '')).length === 1 && withEntry(entry + NL + 'var again: bool = OS.get_cmdline_user_args().has(' + String.fromCharCode(34) + '--audio-proof' + String.fromCharCode(34) + ')' + NL).length === 1);
+      check('audio proof: another script reading it, and a proof that loads the picture, are found', R({ files: { 'ui/hud/ui_hud.gd': readFileSync(join(repo, 'ui', 'hud', 'ui_hud.gd'), 'utf8') + NL + 'var p := ' + String.fromCharCode(34) + '--audio-proof' + String.fromCharCode(34) + NL } }).some((m) => /read outside the game's entry/.test(m)) && withEntry(entry, { 'audio/audio_proof.gd': proof + NL + 'var m := load(' + String.fromCharCode(34) + 'res://render/main.tscn' + String.fromCharCode(34) + ')' + NL }).some((m) => /must reach no match/.test(m)));
+      check('audio proof: a tree that reads the argument nowhere has nothing to hold', withEntry(entry.replace(branch, '')).length === 0);
+    }
     check('routes: the six words are the reviewed ones', SIX_WORDS.join(',') === 'bench,frames,shot,nonotice,flashcap,study');
     const hud = readFileSync(join(repo, 'ui', 'hud', 'ui_hud.gd'), 'utf8'), main = readFileSync(join(repo, 'render', 'core', 'main.gd'), 'utf8');
     const sendReal = readFileSync(join(repo, 'ui', 'data', 'send.json'), 'utf8');

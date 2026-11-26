@@ -245,6 +245,23 @@ export function presetsOf(text) {
 
 const globToRegex = (g) => new RegExp('^' + g.replace(/[.+^${}()|[\]\\]/g, String.fromCharCode(92) + '$&').replace(/\*/g, '.*'));
 
+export const PROOF_ARG = '--audio-proof';
+const PROOF_BRANCH = /^func _ready\(\) -> void:\n\tif OS\.get_cmdline_user_args\(\)\.has\("--audio-proof"\):\n\t\tadd_child\(load\("res:\/\/audio\/audio_proof\.gd"\)\.new\(\)\)[^\n]*\n\t\treturn\n/m;
+
+/** Problems with the sound proof's argument (empty when it holds, or when no packed script reads it). `read` gives a file's text or null. */
+export function audioProofProblems(read, scripts) {
+  const entry = 'render/core/boot_entry.gd', proof = 'audio/audio_proof.gd';
+  const code = (rel) => (read(rel) || '').split('\r').join('').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+  const readers = [...new Set([entry, ...scripts])].filter((rel) => code(rel).includes(PROOF_ARG));
+  if (!readers.length) return [];
+  const out = [];
+  const others = readers.filter((rel) => rel !== entry);
+  if (others.length) out.push(`${PROOF_ARG} is read outside the game's entry (${others.join(', ')}): only ${entry} may read it`);
+  const text = code(entry);
+  if (!PROOF_BRANCH.test(text) || text.split(PROOF_ARG).length !== 2) out.push(`${entry}: the ${PROOF_ARG} branch is not the first thing _ready() does, returning at once: after the game is loaded it would be a run with no flashing notice`);
+  if (/res:\/\/render\//.test(code(proof))) out.push(`${proof} loads something under res://render/: the sound proof must reach no match and no picture`);
+  return out;
+}
 /** Problems that would make a desktop test build refuse to run (an array of strings; empty when every check holds). `o.files` overrides file texts by relative path (a test). */
 export function routeProblems(root, o = {}) {
   const out = [];
@@ -266,6 +283,9 @@ export function routeProblems(root, o = {}) {
   else if (got.join(',') !== SIX_WORDS.join(',')) out.push(`ui/hud/ui_hud.gd BYPASS_WORDS is [${got.join(', ')}], the reviewed six are [${SIX_WORDS.join(', ')}]: a changed word is a new review (RL-203)`);
   //    and a locked build without the capture hook refuses all of them, on a desktop too (RL-206): bypass_allowed() must open with the lock test and `return false`
   if (hud && !/static func bypass_allowed\(\) -> bool:\r?\n[ \t]*if UiData\.rf_locked\(\) and not UiData\.feature\("capture_hook"\):\r?\n[ \t]*return false\r?\n/.test(hud)) out.push('ui/hud/ui_hud.gd: bypass_allowed() does not begin `if UiData.rf_locked() and not UiData.feature("capture_hook"):` then `return false`: on a desktop the six words would skip the flashing notice in a locked build (RL-206)');
+  // 3b. the sound proof (A-AUDIO-04; the EP's tripwire, 2026-11-25): `-- --audio-proof` is no skip switch only because its branch is the FIRST thing the game's entry does and returns before the game is loaded.
+  //     Moved later it would be a run that reaches the match with no notice shown, so the branch's place is held, no other script reads the argument, and the proof loads nothing of the game's picture.
+  for (const m of audioProofProblems(read, packedScripts(root, o))) out.push(m);
   // 4. the capture hook can never attach off the web, and the six words and every other argument reach no write of the lock, the option, the register or the debug key:
   //    the only statement that reads an argument and also names a flash word is the hook's own guarded line
   const files = packedScripts(root, o);
@@ -541,7 +561,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       if (!root) usage();
       const problems = routeProblems(root, { testers: args.includes('--testers') ? true : args.includes('--no-testers') ? false : undefined });
       if (problems.length) { for (const p of problems) console.error(`desktop routes check FAILED: ${p}`); process.exit(1); }
-      console.log('desktop routes check ok: the route scan is clean; the lock is true and the capture hook false in features.json; the six bypass words are the reviewed ones and reach no write of the lock; no command-line or page argument reaches the option, the register or a debug key; no network class is packed and net/ is excluded from the three desktop presets.');
+      console.log('desktop routes check ok: the route scan is clean; the lock is true and the capture hook false in features.json; the six bypass words are the reviewed ones and reach no write of the lock; no command-line or page argument reaches the option, the register or a debug key; the sound proof argument returns before the game is loaded; no network class is packed and net/ is excluded from the three desktop presets.');
     } else if (cmd === 'astc') {
       const root = opt('--root') ? resolve(opt('--root')) : null;
       if (!root) usage();
