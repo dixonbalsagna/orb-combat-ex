@@ -25,17 +25,17 @@ static func _R() -> float:
 	return SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
 
 
-## The grid's box key: the box's three indices offset so none is negative. The offset is 64 (medium's: the planet's radius is 24 boxes) and grows with a bigger planet's radius, so no two boxes share a key (a record listed twice in a merged list would count twice).
-static var _koff: int = 64
-static var _koffNC: int = 0
+## The grid's box key: the box's three indices packed 20 bits each, offset so none is negative. It is exact for any box within 524,288 boxes of the centre (half a billion units), so no planet size and no reach can give two boxes one key (the offset that grew with the radius left a margin of two boxes, and a record is listed out to twice its own radius: at huge a crater wider than about 1,280 units near an axis listed past it, and from about 2,300 its key was a real box's on the far side; GW1c readiness C-24). The same packing as SimField's box key. A key is only looked up, never walked or hashed, so its values change nothing a match computes.
+const _KOFF: int = 1 << 19
+const _KM: int = 1 << 20
+static var oldKeyOffset: int = 0   # tests only: above 0, the old key (this offset, twice its width an index), so a check can show the aliasing the packing removes (size_check --negative-control)
 
 
 static func _key(ix: int, iy: int, iz: int) -> int:
-	if _koffNC != SimConst.PLANET_NC:
-		_koffNC = SimConst.PLANET_NC
-		_koff = maxi(64, int(ceil(float(SimConst.PLANET_NC) * SimConst.COL / (2.0 * SimMathx.PI) / BOX)) + 2)
-	var m: int = _koff * 2
-	return ((ix + _koff) * m + (iy + _koff)) * m + (iz + _koff)
+	if oldKeyOffset > 0:
+		var m: int = oldKeyOffset * 2
+		return ((ix + oldKeyOffset) * m + (iy + oldKeyOffset)) * m + (iz + oldKeyOffset)
+	return ((ix + _KOFF) * _KM + (iy + _KOFF)) * _KM + (iz + _KOFF)
 
 
 static func _box2(v: float) -> int:

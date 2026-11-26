@@ -258,8 +258,8 @@ func _init() -> void:
 	print("a big planet's store")
 	var Sh := _match(_setup("huge"), 5)
 	if negative:
-		WorldStore._koff = 64
-		WorldStore._koffNC = SimConst.PLANET_NC
+		WorldStore.oldKeyOffset = 64   # the old key with medium's offset: the rows below must see the aliasing
+		WorldWaterRec.oldKeyOffset = 64
 	var f = Sh.fighters[0]
 	var xa: float = SimWrap.wrap(f.x + 900.0)
 	var xb: float = SimWrap.wrap(xa + SimConst.W * 0.5)   # half way round the planet's great circle
@@ -272,7 +272,49 @@ func _init() -> void:
 		ok(WorldStore.at(Sh, qa[0], qa[1], qa[2]).size() == 1 and WorldStore.at(Sh, qb[0], qb[1], qb[2]).size() == 1, "each place's box lists its own record only (no aliasing across the planet)")
 		ok(absf(WorldStore.heightDelta(Sh, qa[0], qa[1], qa[2]) + ra.depth) < 1.0e-6 and absf(WorldStore.heightDelta(Sh, qb[0], qb[1], qb[2]) + rb.depth) < 1.0e-6, "each centre reads its own bowl's depth")
 	# the keys of two boxes the huge planet has, (0, 33, 0) and (1, -95, 0): with the medium's offset of 64 they are the same key (a record in one would be read at the other)
-	ok(WorldStore._key(0, 33, 0) != WorldStore._key(1, -95, 0) and WorldStore._key(95, -95, 95) != WorldStore._key(-95, 95, -95), "two boxes of the huge planet that a 64 offset would give one key have two (offset %d)" % WorldStore._koff)
+	ok(WorldStore._key(0, 33, 0) != WorldStore._key(1, -95, 0) and WorldStore._key(95, -95, 95) != WorldStore._key(-95, 95, -95), "two boxes of the huge planet that a 64 offset would give one key have two (the store's key)")
+	ok(WorldWaterRec._key(0, 33, 0) != WorldWaterRec._key(1, -95, 0) and WorldWaterRec._key(95, -95, 95) != WorldWaterRec._key(-95, 95, -95), "and in the water records' grid")
+	# C-24: the pair the old offset of 98 (huge's radius in boxes and two more) gave one key, (0, 100, 0) and (1, -96, 0), a box two past the radius and a real one on the far side; and no two boxes of three slabs through the planet, out to 112 boxes (colossal's radius is 190), share a key in either grid
+	ok(WorldStore._key(0, 100, 0) != WorldStore._key(1, -96, 0) and WorldWaterRec._key(0, 100, 0) != WorldWaterRec._key(1, -96, 0), "two boxes past huge's radius that its old offset of 98 gave one key have two (both grids)")
+	WorldStore.oldKeyOffset = 98
+	WorldWaterRec.oldKeyOffset = 98
+	var sameOld: bool = WorldStore._key(0, 100, 0) == WorldStore._key(1, -96, 0) and WorldWaterRec._key(0, 100, 0) == WorldWaterRec._key(1, -96, 0)
+	WorldStore.oldKeyOffset = 64 if negative else 0
+	WorldWaterRec.oldKeyOffset = 64 if negative else 0
+	ok(sameOld, "(the pair is real: with the old offset of 98 those two boxes had one key, in both grids)")
+	var seenS: Dictionary = {}
+	var seenW: Dictionary = {}
+	var dupS: int = 0
+	var dupW: int = 0
+	for iz in [-112, 0, 111]:
+		for ix in range(-112, 112):
+			for iy in range(-112, 112):
+				var kst: int = WorldStore._key(ix, iy, iz)
+				var kw: int = WorldWaterRec._key(ix, iy, iz)
+				if seenS.has(kst):
+					dupS += 1
+				seenS[kst] = true
+				if seenW.has(kw):
+					dupW += 1
+				seenW[kw] = true
+	ok(dupS == 0 and dupW == 0, "no two boxes share a key in three slabs of 224 x 224 boxes (112 boxes either way from the centre): %d shared in the store, %d in the water records" % [dupS, dupW])
 	SimCore.dispose(Sh)
+	# the field memo (Rendering's grant-world-field-size-key): a planet's field at one size is not its field at another (its lattice has cells() nodes to an edge); a memo keyed by the seed alone returned the first size's field for the second, and the sim read the wrong ground at any size but the first made
+	print("the field memo is keyed by the size")
+	WorldClimate.useGen(3)
+	WorldField.forget()
+	WorldPlanet.forget()
+	SimConst.setPlanet(1280)
+	var Pt := WorldPlanet.make(7)
+	var Ft: WorldField.Field = WorldField.of(Pt)
+	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
+	var Pm := WorldPlanet.make(7)
+	var Fm: WorldField.Field = WorldField.of(Pm)
+	ok(Ft != Fm and Ft.N != Fm.N and Fm.P == Pm, "a field made at tiny (%d nodes an edge) is not returned for medium (%d): two fields, each its own planet's" % [Ft.N, Fm.N])
+	SimConst.setPlanet(1280)
+	ok(WorldField.of(Pt) == Ft, "and asking again at tiny gives the tiny field back (the memo holds both)")
+	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
+	WorldField.forget()
+	WorldPlanet.forget()
 	print("SIZES: %d check(s) failed%s" % [fails, " (negative control)" if negative else ""])
 	quit(0)
