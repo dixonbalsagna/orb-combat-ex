@@ -1,0 +1,1074 @@
+diff --git a/audio/audio_bank.gd b/audio/audio_bank.gd
+index 5af64cd..1f03cad 100644
+--- a/audio/audio_bank.gd
++++ b/audio/audio_bank.gd
+@@ -15,6 +15,7 @@ const TUG_PATH := "res://audio/data/tug_cues.json"
+ const CUES_PATH := "res://audio/data/cues.json"
+ const CARRY_PATH := "res://audio/data/carry_cues.json"
+ const WORLD_PATH := "res://audio/data/world_cues.json"
++const SCENE_PATH := "res://audio/data/scene_cues.json"
+ 
+ var impacts: Dictionary = {}
+ var grunts: Dictionary = {}
+@@ -23,6 +24,7 @@ var drones: Dictionary = {}       # tug_cues.json `drones`: seamless loops (ids
+ var _tug_on: bool = false       # tug_cues.json `enabled`: the drones are warmed only when the struggle is switched on
+ var world: Dictionary = {}         # world_cues.json: the ambience beds (ids amb.<name>) and the surface sounds (ids surf.<surface>.hit and .slide)
+ var flashes: Dictionary = {}      # flash_cues.json: the 12 head-flash cues and the four sound families
++var scene: Dictionary = {}        # scene_cues.json: the building and menu sounds (impact recipes) and the wind bed (amb.wind)
+ var _cache: Dictionary = {}       # "id#variant" -> AudioStreamWAV
+ var render_ms: Dictionary = {}    # "id#variant" -> milliseconds it took to render
+ var _queue: Array = []            # [id, variant] pairs still to render for warm_step()
+@@ -33,7 +35,7 @@ var _wq: Array = []               # [id, variant] pairs still to render for the
+ ## The common hits, named by Performance's phone probe as the cues lost most (impact.light, impact.light.lite, impact.heavy, energy.bolt, then
+ ## crater, whiff, medium): FIRST are the cheap ones (about 85 ms of CPU in all at 1x), rendered in the run's first slice and before anything
+ ## else; SECOND are the dear ones (heavy, crater, medium, the blast), right after the intro's babble and grunts. Within a rank: this order.
+-const WARM_FIRST := ["impact.light", "impact.light.lite", "impact.whiff", "impact.guard", "impact.absorbed", "energy.bolt", "energy.bolt.lite", "windup.medium", "ui.launcher",
++const WARM_FIRST := ["ui.move", "ui.confirm", "ui.back", "impact.light", "impact.light.lite", "impact.whiff", "impact.guard", "impact.absorbed", "energy.bolt", "energy.bolt.lite", "windup.medium", "ui.launcher",
+ 	"launcher.rest", "perfect.tick", "perfect.tok", "perfect.break", "charge.tick.light", "charge.tick.heavy", "energy.gather", "double.charge"]
+ const WARM_SECOND := ["impact.medium", "impact.heavy", "impact.crater", "energy.blast", "windup.heavy", "impact.double", "impact.medium.grind", "charge.hum", "charge.hum.y"]
+ signal warmed                     # the async warm-up has rendered everything it was given
+@@ -61,6 +63,7 @@ func _init() -> void:
+ 	_tug_on = bool(tug.get("enabled", false))
+ 	drones.merge(load_json(CARRY_PATH).get("drones", {}))
+ 	world = load_json(WORLD_PATH)
++	scene = load_json(SCENE_PATH)
+ 
+ 
+ static func load_json(path: String) -> Dictionary:
+@@ -116,6 +119,8 @@ func ids() -> Array:
+ 	var out: Array = []
+ 	for k in impacts.get("sounds", {}):
+ 		out.append(k)
++	for k in scene.get("sounds", {}):
++		out.append(k)
+ 	for v in grunts.get("voices", {}):
+ 		for g in grunts.voices[v].gestures:
+ 			out.append("voice.%s.%s" % [v, g])
+@@ -207,6 +212,8 @@ func extra_ids() -> Array:
+ 	if bool(world.get("enabled", false)):
+ 		for k in world.get("sounds", {}):
+ 			out.append(String(k))      # the surfaces; the beds are warmed by the host for the ring (AudioWorld.warm_beds)
++	elif bool(scene.get("wind", {}).get("enabled", false)):
++		out.append(String(scene.wind.sound))      # the one wind bed (AudioScene); it stands down when the biome beds are on
+ 	return out
+ 
+ 
+@@ -460,7 +467,8 @@ func _warm_run() -> void:
+ ## The recipe for an id, or an empty dictionary.
+ func _recipe(id: String) -> Dictionary:
+ 	if id.begins_with("amb."):
+-		return world.get("beds", {}).get(id.substr(4), {})
++		var bed: String = id.substr(4)
++		return scene.get("beds", {}).get(bed, world.get("beds", {}).get(bed, {}))
+ 	if id.begins_with("surf."):
+ 		return world.get("sounds", {}).get(id, {})
+ 	if id.begins_with("drone."):
+@@ -493,4 +501,4 @@ func _recipe(id: String) -> Dictionary:
+ 		var voice: String = parts[1]
+ 		var gesture: String = ".".join(parts.slice(2))
+ 		return grunts.get("voices", {}).get(voice, {}).get("gestures", {}).get(gesture, {})
+-	return impacts.get("sounds", {}).get(id, {})
++	return impacts.get("sounds", {}).get(id, scene.get("sounds", {}).get(id, {}))
+diff --git a/audio/audio_cues.gd b/audio/audio_cues.gd
+index a82f5ef..566cb4d 100644
+--- a/audio/audio_cues.gd
++++ b/audio/audio_cues.gd
+@@ -49,6 +49,7 @@ var world: AudioWorld                   # biome sound: the beds and the surfaces
+ var tug: AudioTug                     # the beam struggle's (audio_tug.gd), parked behind data/tug_cues.json `enabled`
+ var coop: AudioCoop                   # the brink's call, the clash push, the pad's refusal knock, the charge stages (audio_coop.gd), parked behind data/coop_cues.json `enabled`
+ var moments: AudioMoments             # a beam's charge and fire, the KO, the big blows, a launch, the meteor's landing (audio_moments.gd), parked behind data/moment_cues.json `enabled`
++var scene: AudioScene                 # the wind bed and the buildings (audio_scene.gd), switches in data/scene_cues.json
+ 
+ 
+ func _init(p_bank: AudioBank = null) -> void:
+@@ -60,6 +61,7 @@ func _init(p_bank: AudioBank = null) -> void:
+ 	world = AudioWorld.new(self)
+ 	moments = AudioMoments.new(self)
+ 	coop = AudioCoop.new(self)
++	scene = AudioScene.new(self)
+ 	reset(1)
+ 
+ 
+@@ -74,6 +76,7 @@ func reset(p_seed: int) -> void:
+ 	world.reset()
+ 	moments.reset()
+ 	coop.reset()
++	scene.reset()
+ 
+ 
+ ## One tick's events, in order. Returns the cues to play.
+@@ -106,6 +109,7 @@ func consume(S: SimState, events: Array) -> Array:
+ 	tug.after(S, out)
+ 	carry.after(S, out)
+ 	world.consume(S, events, out)
++	scene.consume(S, events, out)
+ 	return out
+ 
+ 
+diff --git a/audio/audio_proof.gd b/audio/audio_proof.gd
+new file mode 100644
+index 0000000..e69d8cd
+--- /dev/null
++++ b/audio/audio_proof.gd
+@@ -0,0 +1,191 @@
++extends Node
++## Does this program make sound? (docs/audio/desktop-sound.md; A-AUDIO-04.) Plays a fixed list of the game's own sounds through
++## the game's own voices and buses, records what the engine's mixer puts out (an AudioEffectCapture at the end of the Master
++## bus, so after the limiter), and checks each: not silent, not clipped, about the right length. It also drives test tones
++## through the master limiter: a quiet one must be lifted cleanly, a very loud one held under the ceiling without being squared.
++## It works with no sound card (the engine's dummy driver mixes all the same), so it proves the program, its data and the mixer;
++## it does NOT prove that a given machine's speakers play it. Kept out of audio/tools/ so that it is in an exported program.
++##   from the project:      godot --headless --path . --script res://audio/audio_proof_main.gd
++##   the shipped program:   <the program> --headless -- --audio-proof
++## (The second needs render/core/boot_entry.gd to add this node for that argument: an official release program takes no
++## --script and no scene path.) It quits by itself, with exit code 1 on a failure, in about 15 seconds.
++
++const LIST: Array = ["impact.light", "impact.heavy", "impact.crater", "energy.blast", "voice.protagonist.effort.heavy", "build.hit", "build.fall", "ui.confirm"]
++const FLOOR: float = 0.02              # a sound is "there" while it is within 34 dB of its own peak
++const SILENT_DB: float = -45.0         # a peak under this is silence
++
++var bank: AudioBank
++var voices: AudioVoices
++var cap: AudioEffectCapture
++var ceiling_db: float = -1.0
++var fails: int = 0
++
++
++func _ready() -> void:
++	_run.call_deferred()
++
++
++func ok(cond: bool, msg: String) -> void:
++	print("  %s  %s" % ["ok  " if cond else "FAIL", msg])
++	if not cond:
++		fails += 1
++
++
++## Everything the Master put out over `secs` of real time (both channels, the louder of the two per frame).
++func record(secs: float) -> PackedFloat32Array:
++	var out := PackedFloat32Array()
++	var t0: int = Time.get_ticks_msec()
++	while Time.get_ticks_msec() - t0 < int(secs * 1000.0):
++		await get_tree().process_frame
++		var n: int = cap.get_frames_available()
++		if n > 0:
++			for v in cap.get_buffer(n):
++				out.append(v.x if absf(v.x) >= absf(v.y) else v.y)
++	return out
++
++
++## Wait for the last sound to end, then start the recording clean.
++func quiet() -> void:
++	var t0: int = Time.get_ticks_msec()
++	while voices.active() > 0 and Time.get_ticks_msec() - t0 < 4000:
++		await get_tree().process_frame
++	await record(0.2)
++	cap.clear_buffer()
++
++
++static func peak_of(b: PackedFloat32Array) -> float:
++	var p: float = 0.0
++	for v in b:
++		p = maxf(p, absf(v))
++	return p
++
++
++## Seconds from the first to the last sample within 34 dB of the peak.
++static func span(b: PackedFloat32Array, rate: float) -> float:
++	var p: float = peak_of(b) * FLOOR
++	var first: int = -1
++	var last: int = -1
++	for i in range(b.size()):
++		if absf(b[i]) > p:
++			if first < 0:
++				first = i
++			last = i
++	return 0.0 if first < 0 else float(last - first + 1) / rate
++
++
++static func clipped(b: PackedFloat32Array) -> int:
++	var n: int = 0
++	for v in b:
++		if absf(v) >= 0.999:
++			n += 1
++	return n
++
++
++func cue(id: String, gain_db: float, group: String = "") -> AudioCues.Cue:
++	var c := AudioCues.Cue.new()
++	c.sound = id
++	c.gain_db = gain_db
++	c.priority = 90
++	c.bus = "Sfx"
++	c.group = group
++	return c
++
++
++func tone(secs: float, amp: float) -> AudioStreamWAV:
++	var rate: int = 44100
++	var n: int = int(rate * secs)
++	var bytes := PackedByteArray()
++	bytes.resize(n * 2)
++	for i in range(n):
++		bytes.encode_s16(i * 2, int(amp * sin(TAU * 220.0 * float(i) / rate) * 32767.0))
++	var w := AudioStreamWAV.new()
++	w.format = AudioStreamWAV.FORMAT_16_BITS
++	w.mix_rate = rate
++	w.data = bytes
++	return w
++
++
++func _run() -> void:
++	bank = AudioBank.new()
++	voices = AudioVoices.new(bank)
++	add_child(voices)
++	await get_tree().process_frame
++	var mix_rate: float = AudioServer.get_mix_rate()
++	var build: String = "?"
++	if FileAccess.file_exists("res://build_info.json"):
++		var j = JSON.parse_string(FileAccess.get_file_as_string("res://build_info.json"))
++		if j is Dictionary:
++			build = str(j.get("commit", j.get("sha", "?")))
++	ceiling_db = float(voices.mix.master_limiter.ceiling_db)
++	print("audio proof: %s | %s | %s | Godot %s | driver %s %d Hz | build %s" % [OS.get_name(), "exported program" if OS.has_feature("template") else "editor build", Engine.get_architecture_name(),
++		Engine.get_version_info().string, AudioServer.get_driver_name(), int(mix_rate), build])
++	cap = AudioEffectCapture.new()
++	cap.buffer_length = 6.0
++	AudioServer.add_bus_effect(0, cap)
++	var sfx: int = AudioServer.get_bus_index("Sfx")
++
++	print("1. the master limiter")
++	var p := AudioStreamPlayer.new()
++	p.bus = "Sfx"
++	add_child(p)
++	var lift: float = float(voices.mix.master_limiter.ceiling_db) - float(voices.mix.master_limiter.threshold_db)
++	for row in [[-18.0, 0.0], [-1.0, 8.0]]:
++		await quiet()
++		p.stream = tone(0.5, db_to_linear(float(row[0])))
++		p.volume_db = float(row[1])
++		p.play()
++		var rec: PackedFloat32Array = await record(0.8)
++		var pk: float = linear_to_db(maxf(peak_of(rec), 1e-6))
++		var sq: float = 0.0
++		var cnt: int = 0
++		for v in rec:
++			if absf(v) > peak_of(rec) * FLOOR:
++				sq += v * v
++				cnt += 1
++		var crest: float = pk - linear_to_db(maxf(sqrt(sq / maxf(cnt, 1)), 1e-6))      # 3 dB for a sine, 0 for a square
++		var into: float = float(row[0]) + float(row[1])
++		var want: float = minf(into + lift, ceiling_db)
++		ok(absf(pk - want) <= 0.6 and crest >= 2.5, "a tone at %+.0f dB comes out at %+.1f dB (wanted %+.1f) and keeps its shape (crest %.1f dB; a squared wave is 0)" % [into, pk, want, crest])
++	p.queue_free()
++
++	print("2. the sounds")
++	print("     %-34s %8s %8s %8s" % ["sound", "peak dB", "length", "expected"])
++	for id in LIST:
++		if not bank.has_sound(id):
++			ok(false, "no such sound " + id)
++			continue
++		var src: PackedFloat32Array = bank.buffer(id, 0)
++		bank.stream(id, 0)
++		var expect: float = span(src, float(bank.rate_of(id)))
++		await quiet()
++		var took: bool = voices.play(cue(id, 0.0), 0.0, 1.0)
++		var rec: PackedFloat32Array = await record(expect + 0.5)
++		var pk: float = linear_to_db(maxf(peak_of(rec), 1e-6))
++		var got: float = span(rec, mix_rate)
++		var line: String = "%-34s %8.1f %7.2fs %7.2fs" % [id, pk, got, expect]
++		ok(took and pk > SILENT_DB and pk <= ceiling_db + 0.1 and clipped(rec) == 0 and absf(got - expect) <= maxf(0.3 * expect, 0.08), line)
++
++	await quiet()
++	for i in range(8):
++		voices.play(cue("impact.heavy", 6.0), 0.0, 1.0)
++	voices.play(cue("impact.crater", 6.0), 0.0, 1.0)
++	var pile: PackedFloat32Array = await record(1.2)
++	var pile_db: float = linear_to_db(maxf(peak_of(pile), 1e-6))
++	ok(pile_db > -6.0 and pile_db <= ceiling_db + 0.1 and clipped(pile) == 0, "nine loud sounds at once come out at %+.1f dB, under the ceiling, nothing clipped" % pile_db)
++
++	await quiet()
++	var wind: AudioCues.Cue = cue("amb.wind", -8.0, "wind")
++	wind.bus = "Ambience"
++	wind.loop = true
++	wind.ambient = true
++	var took_wind: bool = voices.play(wind, 0.0, 1.0)
++	var rec2: PackedFloat32Array = await record(2.0)
++	var wdb: float = linear_to_db(maxf(peak_of(rec2), 1e-6))
++	ok(took_wind and wdb > -60.0 and wdb < -10.0, "the wind loop is there and quiet (%+.1f dB)" % wdb)
++	voices.stop_group("wind", 0)
++
++	await quiet()
++	var rest: PackedFloat32Array = await record(0.4)
++	ok(linear_to_db(maxf(peak_of(rest), 1e-6)) < SILENT_DB, "and silence when nothing is asked for")
++	print("\naudio proof %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
++	get_tree().quit(1 if fails > 0 else 0)
+diff --git a/audio/audio_proof.gd.uid b/audio/audio_proof.gd.uid
+new file mode 100644
+index 0000000..e3f4cbf
+--- /dev/null
++++ b/audio/audio_proof.gd.uid
+@@ -0,0 +1 @@
++uid://cri4mpemqxpw3
+diff --git a/audio/audio_proof_main.gd b/audio/audio_proof_main.gd
+new file mode 100644
+index 0000000..0a1a9bb
+--- /dev/null
++++ b/audio/audio_proof_main.gd
+@@ -0,0 +1,11 @@
++extends SceneTree
++## The sound proof (audio/audio_proof.gd) from the project, with no game:
++##   godot --headless --path . --script res://audio/audio_proof_main.gd
++
++
++func _initialize() -> void:
++	_add.call_deferred()
++
++
++func _add() -> void:
++	root.add_child(load("res://audio/audio_proof.gd").new())
+diff --git a/audio/audio_proof_main.gd.uid b/audio/audio_proof_main.gd.uid
+new file mode 100644
+index 0000000..142e2cd
+--- /dev/null
++++ b/audio/audio_proof_main.gd.uid
+@@ -0,0 +1 @@
++uid://d2caf6yau2mbr
+diff --git a/audio/audio_scene.gd b/audio/audio_scene.gd
+new file mode 100644
+index 0000000..0130c4e
+--- /dev/null
++++ b/audio/audio_scene.gd
+@@ -0,0 +1,187 @@
++class_name AudioScene
++extends RefCounted
++## The sound around the fight (docs/audio/friends-sound.md): one quiet wind bed and the buildings. Reads the sim's state and
++## events, never writes them, and draws nothing from the sim's RNG. Created and called by AudioCues; numbers and switches in
++## data/scene_cues.json (the menu sounds there are played by AudioVoices.ui, not from here).
++##
++## The wind is one looped voice: started low, faded to its level, then moved a few times a second: louder high above the
++## ground, quieter while blows are landing. It stands down when the biome beds are on (data/world_cues.json).
++##
++## Buildings: building_hit and floor_hit (a blow into one), building_stage (windows out; a part gone or a shell),
++## floors_fall (a stack coming down) and building_fall (a collapse; a blast's ripple carries its own delay). An area blast
++## can send a score of these in one tick, so each kind makes at most one cue a tick (the one nearest the fighters), louder
++## for more of them, with a short wait before the next.
++
++const PATH := "res://audio/data/scene_cues.json"
++const GROUP := "wind"
++const KINDS: Array = ["hit", "glass", "crack", "floors", "fall"]
++
++var cfg: Dictionary = {}
++var cues                                    # AudioCues
++
++var _wind_on: bool = false                  # the loop has been asked for in this match
++var _duck: float = 0.0                      # 0..1+: how much the fight is holding the wind down
++var _duck_tick: int = 0
++var _next_upd: int = 0
++var _next_ok: Dictionary = {}               # kind -> the tick it may sound again
++var _due: Array = []                        # {tick, cue}: a collapse that comes after its blast's ripple
++
++
++func _init(p_cues) -> void:
++	cues = p_cues
++	cfg = AudioBank.load_json(PATH)
++
++
++func reset() -> void:
++	_wind_on = false
++	_duck = 0.0
++	_duck_tick = 0
++	_next_upd = 0
++	_next_ok.clear()
++	_due.clear()
++
++
++func wind_enabled() -> bool:
++	return bool(cfg.get("wind", {}).get("enabled", false)) and not (cues.world != null and cues.world.enabled())
++
++
++func buildings_enabled() -> bool:
++	return bool(cfg.get("buildings", {}).get("enabled", false))
++
++
++## One tick: its events (S.out.fx), the cues appended to out.
++func consume(S: SimState, events: Array, out: Array) -> void:
++	if buildings_enabled():
++		_buildings(S, events, out)
++	if wind_enabled():
++		_wind(S, events, out)
++
++
++# ---- the wind
++
++func _wind(S: SimState, events: Array, out: Array) -> void:
++	var W: Dictionary = cfg.wind
++	var dt: int = maxi(S.tick - _duck_tick, 0)
++	_duck_tick = S.tick
++	if dt > 0 and _duck > 0.0:
++		_duck *= exp(-float(dt) / (float(W.duck_decay_s) * 60.0))
++	for e in events:
++		if String(e.type) == "damage":
++			_duck += float(e.amount) * float(W.duck_per_damage)
++	if not _wind_on:
++		_wind_on = true
++		_next_upd = S.tick + int(W.update_every)
++		var start = _level(S, 0)
++		var target: float = start.gain_db
++		start.gain_db = float(W.start_db)
++		out.append(start)
++		var up = _level(S, int(W.fade_ms))
++		up.gain_db = target
++		up.update = true
++		out.append(up)
++		_next_upd = S.tick + int(ceil(float(W.fade_ms) * 0.06))     # let the fade finish before the first move
++		return
++	# An update goes on every beat, moved or not: if the loop had to wait for its sound to be rendered, the next one sets its level.
++	if S.tick >= _next_upd:
++		_next_upd = S.tick + int(W.update_every)
++		var u = _level(S, int(W.ramp_ms))
++		u.update = true
++		out.append(u)
++
++
++func _level(S: SimState, ramp_ms: int):
++	var W: Dictionary = cfg.wind
++	var p: Vector2 = _pair(S)
++	var alt: float = clampf((p.y - WorldTerrain.groundY(S, p.x)) / float(W.alt_ref), 0.0, 1.0)
++	var c = cues.Cue.new()
++	c.sound = String(W.sound)
++	c.gain_db = float(W.gain_db) + float(W.alt_db) * alt + float(W.duck_db) * clampf(_duck, 0.0, 1.0)
++	c.x = p.x
++	c.y = p.y
++	c.bus = String(W.bus)
++	c.priority = int(W.priority)
++	c.cls = "amb.wind"
++	c.cap = 1
++	c.group = GROUP
++	c.ambient = true
++	c.loop = true
++	c.ramp_ms = ramp_ms
++	return c
++
++
++func _pair(S: SimState) -> Vector2:
++	var a = S.fighters[0]
++	if S.fighters.size() < 2:
++		return Vector2(a.x, a.y)
++	var b = S.fighters[1]
++	return Vector2(SimWrap.wrap(a.x + SimWrap.sdx(a.x, b.x) * 0.5), (a.y + b.y) * 0.5)
++
++
++# ---- the buildings
++
++func _buildings(S: SimState, events: Array, out: Array) -> void:
++	if not _due.is_empty():
++		var keep: Array = []
++		for d in _due:
++			if S.tick >= int(d.tick):
++				out.append(d.cue)
++			else:
++				keep.append(d)
++		_due = keep
++	var seen: Dictionary = {}               # kind -> {n, x, y, h, db, delay, far}
++	for e in events:
++		match String(e.type):
++			"building_hit":
++				_note(S, seen, "hit", float(e.x), float(e.y), float(e.h), _outcome_db(String(e.outcome)), 0.0, 1.0)
++			"floor_hit":
++				_note(S, seen, "hit", float(e.x), float(e.y), 0.0, _outcome_db(String(e.outcome)), 0.0, 1.0)
++			"building_stage":
++				var to: int = int(e.to)
++				if to == 1:
++					_note(S, seen, "glass", float(e.x), float(e.y) + float(e.h) * 0.5, float(e.h), 0.0, 0.0, 1.0)
++				elif to == 2 or to == 3:
++					_note(S, seen, "crack", float(e.x), float(e.y) + float(e.h) * 0.5, float(e.h), 0.0, 0.0, 1.0)
++			"floors_fall":
++				_note(S, seen, "floors", float(e.x), WorldTerrain.groundY(S, float(e.x)), 0.0, 0.0, 0.0, 1.0)
++			"building_fall":
++				# depth carries the building's height (SimFx.buildingFall); n folds in the implodes past the event cap
++				_note(S, seen, "fall", float(e.x), WorldTerrain.groundY(S, float(e.x)), float(e.depth), 0.0, float(e.delay), maxf(float(e.n), 1.0))
++	if seen.is_empty():
++		return
++	var B: Dictionary = cfg.buildings
++	for kind in KINDS:
++		if not seen.has(kind) or S.tick < int(_next_ok.get(kind, 0)):
++			continue
++		var s: Dictionary = seen[kind]
++		var R: Dictionary = B[kind]
++		_next_ok[kind] = S.tick + int(R.cooldown_ticks)
++		var gain: float = float(R.gain_db) + float(s.db) + minf(float(B.gain_db_per_ln) * log(float(s.n)), float(B.count_db_max))
++		var pitch: float = 1.0
++		if float(s.h) > 0.0:
++			pitch = clampf(pow(float(s.h) / float(B.ref_height), float(B.pitch_exp)), float(B.pitch_min), float(B.pitch_max))
++		var c = cues.make_cue(String(R.sound), float(s.x), float(s.y), gain, pitch, int(R.priority), "Sfx", String(R.cls), int(R.cap), String(R.get("caption", "")), S)
++		if float(s.delay) > 0.0:
++			_due.append({"tick": S.tick + int(round(float(s.delay) * 60.0)), "cue": c})
++		else:
++			out.append(c)
++
++
++## Gather one event of a kind: count them, and keep the one nearest the fighters (the loudest outcome's trim with it).
++func _note(S: SimState, seen: Dictionary, kind: String, x: float, y: float, h: float, db: float, delay: float, n: float) -> void:
++	var far: float = absf(SimWrap.sdx(_pair(S).x, x))
++	if not seen.has(kind):
++		seen[kind] = {"n": n, "x": x, "y": y, "h": h, "db": db, "delay": delay, "far": far}
++		return
++	var s: Dictionary = seen[kind]
++	s.n = float(s.n) + n
++	s.db = maxf(float(s.db), db)
++	if far < float(s.far):
++		s.x = x
++		s.y = y
++		s.h = h
++		s.delay = delay
++		s.far = far
++
++
++func _outcome_db(outcome: String) -> float:
++	return float(cfg.buildings.hit.ratio_db.get(outcome, 0.0))
+diff --git a/audio/audio_scene.gd.uid b/audio/audio_scene.gd.uid
+new file mode 100644
+index 0000000..213f6d7
+--- /dev/null
++++ b/audio/audio_scene.gd.uid
+@@ -0,0 +1 @@
++uid://bo2qjj7jpbykl
+diff --git a/audio/audio_voices.gd b/audio/audio_voices.gd
+index 991755f..d9b4f44 100644
+--- a/audio/audio_voices.gd
++++ b/audio/audio_voices.gd
+@@ -228,6 +228,9 @@ static func _effect_index(bus: int, cls: String) -> int:
+ 
+ 
+ ## Create the buses and the master limiter named in mix.json (once; safe to call again).
++## The limiter is a look-ahead one: what is quieter than threshold_db is played (ceiling_db - threshold_db) louder, and what is
++## louder is turned down smoothly so nothing passes ceiling_db. (Godot's old AudioEffectLimiter gave the same lift but flattened
++## every wave above the threshold into something near a square: distortion on every stacked hit; audio/tools/mix_check.gd.)
+ static func setup_buses(m: Dictionary) -> void:
+ 	for b in m.buses:
+ 		var idx: int = AudioServer.get_bus_index(b.name)
+@@ -243,13 +246,31 @@ static func setup_buses(m: Dictionary) -> void:
+ 		_mix_db[String(b.name)] = float(b.volume_db)
+ 		AudioServer.set_bus_volume_db(idx, float(b.volume_db) + user_db(String(b.name)))
+ 	AudioServer.set_bus_volume_db(0, user_db("Master"))
+-	if _effect_index(0, "AudioEffectLimiter") == -1 and m.has("master_limiter"):
+-		var lim := AudioEffectLimiter.new()
+-		lim.threshold_db = float(m.master_limiter.threshold_db)
++	if _effect_index(0, "AudioEffectHardLimiter") == -1 and m.has("master_limiter"):
++		var lim := AudioEffectHardLimiter.new()
++		lim.pre_gain_db = float(m.master_limiter.ceiling_db) - float(m.master_limiter.threshold_db)
+ 		lim.ceiling_db = float(m.master_limiter.ceiling_db)
+ 		AudioServer.add_bus_effect(0, lim)
+ 
+ 
++## A menu's sound: "move", "confirm" or "back" (data/scene_cues.json `menu`). UI calls it; it needs no match and no sim.
++## False when there is no audio node yet, the menu sounds are off or the name is not one of them.
++static func ui(name: String) -> bool:
++	if _inst == null or not is_instance_valid(_inst):
++		return false
++	var M: Dictionary = _inst.bank.scene.get("menu", {})
++	if not bool(M.get("enabled", false)) or not M.has(name) or typeof(M[name]) != TYPE_DICTIONARY:
++		return false
++	var c := AudioCues.Cue.new()
++	c.sound = String(M[name].sound)
++	c.gain_db = float(M[name].gain_db)
++	c.priority = int(M.priority)
++	c.bus = String(M.bus)
++	c.cls = String(M.cls)
++	c.cap = int(M.cap)
++	return _inst.play(c, 0.0, 1.0)      # x 0 heard from 0: in the middle, at full level
++
++
+ ## One line of what the audio is doing, for the page's audio log (?audiolog=1). Read-only: it changes nothing and is safe to call
+ ## every second. Godot's side: cues played and dropped, voices sounding, cues lost or waiting for the warm-up, the output's rate and
+ ## latency, the Master bus's peak (the mixer's real output level in Stream mode; -200 means nothing is being mixed), the player's three
+@@ -303,7 +324,7 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
+ 	bank.last_ask_ms = Time.get_ticks_msec()      # the cue traffic: the warm-up's budget reads it when the host has not said
+ 	if cue.sound == "" and cue.stop_group != "":
+ 		return stop_group(cue.stop_group, cue.fade_ms)
+-	if web != null and web.blocked() and not cue.update:
++	if web != null and web.blocked() and not cue.update and not cue.loop:
+ 		held += 1      # the page's context is not running: a Godot player would start on the engine's frozen context and stay "playing" until it wakes, filling the pool (the 29% drops of 2026-11-07) and then sounding all at once
+ 		return false
+ 	var dx: float = 0.0 if cue.ambient else SimWrap.sdx(cam_x, cue.x)
+diff --git a/audio/data/scene_cues.json b/audio/data/scene_cues.json
+new file mode 100644
+index 0000000..42f5d91
+--- /dev/null
++++ b/audio/data/scene_cues.json
+@@ -0,0 +1,100 @@
++{
++  "schema": 1,
++  "note": "The friends' build sounds around the fight (docs/audio/friends-sound.md): one quiet wind bed, buildings (hit, windows, a part giving, floors falling, a collapse) and the menu (move, confirm, back). Each has its own `enabled`. `sounds` are ImpactSynth recipes as in impacts.json; `beds` are AmbienceSynth loops as in world_cues.json. The wind stands down when the biome beds are switched on (world_cues.json). All our own synthesis, low and chunky (Orb, 2026-10-16).",
++  "wind": {
++    "enabled": true,
++    "sound": "amb.wind",
++    "bus": "Ambience",
++    "gain_db": -8.0,
++    "alt_db": 4.0,
++    "alt_ref": 900.0,
++    "duck_db": -6.0,
++    "duck_per_damage": 0.0125,
++    "duck_decay_s": 2.2,
++    "start_db": -40.0,
++    "fade_ms": 2400,
++    "update_every": 20,
++    "ramp_ms": 700,
++    "priority": 95
++  },
++  "buildings": {
++    "enabled": true,
++    "gain_db_per_ln": 3.0,
++    "count_db_max": 5.0,
++    "ref_height": 300.0,
++    "pitch_exp": -0.12,
++    "pitch_min": 0.75,
++    "pitch_max": 1.2,
++    "hit": {"sound": "build.hit", "gain_db": -3.0, "priority": 57, "cls": "build.hit", "cap": 2, "cooldown_ticks": 5, "caption": "[building hit]", "ratio_db": {"punch": 0.0, "wall": 0.0, "heavy": 0.0, "pancake": 0.0, "collapse": 0.0, "wreck": 0.0, "crack": -3.0, "dent": -6.0}},
++    "glass": {"sound": "build.glass", "gain_db": -8.0, "priority": 36, "cls": "build.glass", "cap": 2, "cooldown_ticks": 18, "caption": "[windows break]"},
++    "crack": {"sound": "build.crack", "gain_db": -5.0, "priority": 48, "cls": "build.crack", "cap": 2, "cooldown_ticks": 14, "caption": "[wall breaks]"},
++    "floors": {"sound": "build.floors", "gain_db": -2.0, "priority": 64, "cls": "build.floors", "cap": 2, "cooldown_ticks": 20, "caption": "[floors falling]"},
++    "fall": {"sound": "build.fall", "gain_db": 0.0, "priority": 72, "cls": "build.fall", "cap": 3, "cooldown_ticks": 12, "caption": "[building collapses]"}
++  },
++  "menu": {
++    "enabled": true,
++    "bus": "Alert",
++    "priority": 90,
++    "cls": "ui",
++    "cap": 2,
++    "move": {"sound": "ui.move", "gain_db": -6.0},
++    "confirm": {"sound": "ui.confirm", "gain_db": -3.0},
++    "back": {"sound": "ui.back", "gain_db": -4.0}
++  },
++  "beds": {
++    "wind": {
++      "rate": 6000,
++      "seconds": 10,
++      "seed": 211,
++      "peak_db": -14,
++      "layers": [
++        {"type": "gust", "filter": "lp", "lo": 220, "hi": 520, "q": 0.7, "cycles": [2, 3], "amps": [1, 0.5], "floor": 0.35, "sharp": 1.4, "lo_gain": 0.7, "gain": 1.0},
++        {"type": "gust", "filter": "lp", "lo": 380, "hi": 640, "q": 0.7, "cycles": [5], "amps": [1], "floor": 0.1, "sharp": 2.5, "lo_gain": 0.6, "gain": 0.25}
++      ]
++    }
++  },
++  "sounds": {
++    "build.hit": {"rate": 24000, "variants": 3, "drive": 0.3, "peak_db": -5, "jitter": {"f": 0.08, "t60": 0.12, "gain": 0.1}, "layers": [
++      {"type": "tone", "f": 110, "f_to": 48, "tau": 0.04, "attack": 0.002, "t60": 0.34, "gain": 1.0, "drive": 0.5, "h2": 0.25},
++      {"type": "noise", "filter": "lp", "f": 700, "f_to": 220, "tau": 0.1, "q": 0.7, "attack": 0.002, "t60": 0.24, "gain": 0.8},
++      {"type": "grains", "rate0": 120, "tau": 0.15, "len": 0.3, "f": [180, 700], "t60": 0.035, "gain": 0.45, "at": 0.02, "click": 0.15}
++    ]},
++    "build.crack": {"rate": 24000, "variants": 3, "drive": 0.2, "peak_db": -7, "jitter": {"f": 0.1, "t60": 0.12, "gain": 0.12}, "layers": [
++      {"type": "noise", "filter": "lp", "f": 900, "f_to": 300, "tau": 0.07, "q": 0.7, "attack": 0.002, "t60": 0.2, "gain": 0.8},
++      {"type": "grains", "rate0": 200, "tau": 0.09, "len": 0.26, "f": [220, 900], "t60": 0.025, "gain": 0.65, "click": 0.2},
++      {"type": "tone", "f": 95, "f_to": 60, "tau": 0.05, "attack": 0.002, "t60": 0.22, "gain": 0.7, "h2": 0.2}
++    ]},
++    "build.glass": {"rate": 24000, "variants": 3, "drive": 0, "peak_db": -12, "jitter": {"f": 0.1, "t60": 0.15, "gain": 0.12}, "layers": [
++      {"type": "grains", "rate0": 190, "tau": 0.12, "len": 0.34, "f": [550, 1350], "t60": 0.045, "gain": 0.5, "click": 0.05},
++      {"type": "noise", "filter": "bp", "f": 850, "q": 1.0, "attack": 0.002, "t60": 0.11, "gain": 0.3},
++      {"type": "tone", "f": 130, "f_to": 80, "tau": 0.03, "attack": 0.002, "t60": 0.12, "gain": 0.7}
++    ]},
++    "build.floors": {"rate": 24000, "variants": 2, "drive": 0.25, "peak_db": -4, "jitter": {"f": 0.08, "t60": 0.1, "gain": 0.1}, "layers": [
++      {"type": "tone", "f": 90, "f_to": 42, "tau": 0.05, "attack": 0.002, "t60": 0.3, "gain": 0.8, "h2": 0.2},
++      {"type": "tone", "f": 85, "f_to": 40, "tau": 0.05, "attack": 0.002, "t60": 0.3, "gain": 0.85, "at": 0.16, "h2": 0.2},
++      {"type": "tone", "f": 80, "f_to": 38, "tau": 0.05, "attack": 0.002, "t60": 0.34, "gain": 0.9, "at": 0.3, "h2": 0.2},
++      {"type": "tone", "f": 72, "f_to": 34, "tau": 0.06, "attack": 0.002, "t60": 0.6, "gain": 1.0, "at": 0.41, "drive": 0.4, "h2": 0.25},
++      {"type": "rumble", "lp": 170, "attack": 0.02, "t60": 1.2, "gain": 0.9},
++      {"type": "grains", "rate0": 150, "tau": 0.5, "len": 0.95, "f": [140, 600], "t60": 0.04, "gain": 0.45, "at": 0.05, "click": 0.15}
++    ]},
++    "build.fall": {"rate": 24000, "variants": 2, "drive": 0.25, "peak_db": -4, "jitter": {"f": 0.08, "t60": 0.1, "gain": 0.1}, "layers": [
++      {"type": "rumble", "lp": 150, "attack": 0.06, "t60": 2.0, "wobble": 0.4, "wobble_hz": 6, "gain": 1.0},
++      {"type": "tone", "f": 66, "f_to": 32, "tau": 0.3, "attack": 0.01, "t60": 1.2, "gain": 0.75, "at": 0.04, "h2": 0.25},
++      {"type": "noise", "filter": "lp", "f": 520, "f_to": 160, "tau": 0.5, "q": 0.7, "attack": 0.05, "t60": 1.4, "gain": 0.55},
++      {"type": "grains", "rate0": 170, "tau": 0.7, "len": 1.7, "f": [120, 520], "t60": 0.05, "gain": 0.45, "at": 0.08, "click": 0.1},
++      {"type": "tone", "f": 74, "f_to": 36, "tau": 0.06, "attack": 0.003, "t60": 0.55, "gain": 0.7, "at": 0.55, "drive": 0.4, "h2": 0.2}
++    ]},
++    "ui.move": {"rate": 24000, "variants": 1, "drive": 0, "peak_db": -16, "layers": [
++      {"type": "tone", "f": 300, "f_to": 260, "tau": 0.02, "attack": 0.002, "t60": 0.06, "gain": 1.0, "h2": 0.3},
++      {"type": "noise", "filter": "lp", "f": 800, "q": 0.7, "attack": 0.001, "t60": 0.02, "gain": 0.2}
++    ]},
++    "ui.confirm": {"rate": 24000, "variants": 1, "drive": 0, "peak_db": -12, "layers": [
++      {"type": "tone", "f": 220, "f_to": 210, "tau": 0.05, "attack": 0.002, "t60": 0.09, "gain": 0.85, "h2": 0.3},
++      {"type": "tone", "f": 330, "f_to": 315, "tau": 0.05, "attack": 0.002, "t60": 0.15, "gain": 1.0, "h2": 0.25, "at": 0.065}
++    ]},
++    "ui.back": {"rate": 24000, "variants": 1, "drive": 0, "peak_db": -13, "layers": [
++      {"type": "tone", "f": 300, "f_to": 285, "tau": 0.05, "attack": 0.002, "t60": 0.08, "gain": 0.9, "h2": 0.3},
++      {"type": "tone", "f": 200, "f_to": 185, "tau": 0.05, "attack": 0.002, "t60": 0.15, "gain": 1.0, "h2": 0.3, "at": 0.065}
++    ]}
++  }
++}
+diff --git a/audio/tools/brawl_check.gd b/audio/tools/brawl_check.gd
+index 58d56a7..784d2a3 100644
+--- a/audio/tools/brawl_check.gd
++++ b/audio/tools/brawl_check.gd
+@@ -14,6 +14,7 @@ var fails: int = 0
+ func _initialize() -> void:
+ 	bank = AudioBank.new()
+ 	cues = AudioCues.new(bank)
++	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	_run.call_deferred()
+ 
+ 
+diff --git a/audio/tools/carry_check.gd b/audio/tools/carry_check.gd
+index 4d7548d..310ed4c 100644
+--- a/audio/tools/carry_check.gd
++++ b/audio/tools/carry_check.gd
+@@ -15,6 +15,7 @@ var fails: int = 0
+ func _initialize() -> void:
+ 	bank = AudioBank.new()
+ 	cues = AudioCues.new(bank)
++	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	_run.call_deferred()
+ 
+ 
+diff --git a/audio/tools/coop_check.gd b/audio/tools/coop_check.gd
+index 80b3c72..b816d62 100644
+--- a/audio/tools/coop_check.gd
++++ b/audio/tools/coop_check.gd
+@@ -14,6 +14,7 @@ var fails: int = 0
+ func _initialize() -> void:
+ 	bank = AudioBank.new()
+ 	cues = AudioCues.new(bank)
++	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	_run.call_deferred()
+ 
+ 
+@@ -103,6 +104,7 @@ func _run() -> void:
+ 	var T2 := SimCore.createSim()
+ 	SimCore.newMatch(T2, 7, {}, {"fights": 2})
+ 	var cm := AudioCues.new(bank)
++	cm.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	cm.coop.cfg["enabled"] = true
+ 	cm.reset(7)
+ 	ok(T2.stage != null and T2.stage.fights.size() == 2 and T2.stage.cur == 0, "a two-fight match, fight 0 in S")
+@@ -116,6 +118,7 @@ func _run() -> void:
+ 	ok(cm.consume_others(T2, [[cue("beam_fire", "", 1), cue("stick_refused", "right", 1, {"source": "ki"}), cue("stick_stage", "2", 1, {"k": 2.0, "n": 6.0})]]).is_empty(), "nothing else in another fight is heard (its distant mix is a proposal)")
+ 	ok(cm.consume_others(T2, []).is_empty(), "an empty list is nothing")
+ 	var one := AudioCues.new(bank)
++	one.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	one.coop.cfg["enabled"] = true
+ 	ok(one.consume_others(S, [[cue("brink_call", "p1", 0)]]).is_empty(), "a match of one fight reads no other list")
+ 	SimCore.dispose(T2)
+@@ -184,6 +187,7 @@ func _run() -> void:
+ 			var M := SimCore.createSim()
+ 			SimCore.newMatch(M, sd)
+ 			var cx := AudioCues.new(bank)
++			cx.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 			cx.coop.cfg["enabled"] = true
+ 			cx.reset(sd)
+ 			var t: int = 0
+@@ -219,6 +223,7 @@ func _run() -> void:
+ 		var M2 := SimCore.createSim()
+ 		SimCore.newMatch(M2, sd, {"p1": true, "p2": true, "p3": true, "p4": true}, {"intro": false, "fights": 2, "cross": true})
+ 		var c2 := AudioCues.new(bank)
++		c2.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 		c2.coop.cfg["enabled"] = true
+ 		c2.reset(sd)
+ 		var t2: int = 0
+diff --git a/audio/tools/moments_check.gd b/audio/tools/moments_check.gd
+index e4925c3..bf76a7d 100644
+--- a/audio/tools/moments_check.gd
++++ b/audio/tools/moments_check.gd
+@@ -14,6 +14,7 @@ var fails: int = 0
+ func _initialize() -> void:
+ 	bank = AudioBank.new()
+ 	cues = AudioCues.new(bank)
++	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	_run.call_deferred()
+ 
+ 
+@@ -133,6 +134,7 @@ func _run() -> void:
+ 		var M := SimCore.createSim()
+ 		SimCore.newMatch(M, sd)
+ 		var cm := AudioCues.new(bank)
++		cm.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 		cm.moments.cfg["enabled"] = true
+ 		cm.reset(sd)
+ 		var t: int = 0
+diff --git a/audio/tools/scene_check.gd b/audio/tools/scene_check.gd
+new file mode 100644
+index 0000000..892d418
+--- /dev/null
++++ b/audio/tools/scene_check.gd
+@@ -0,0 +1,197 @@
++extends SceneTree
++## The friends' build sounds (docs/audio/friends-sound.md; audio/audio_scene.gd, AudioVoices.ui, data/scene_cues.json): the new
++## sounds render and are not silent or clipped; the wind starts quiet, fades up, keeps moving and stands down when the biome beds
++## are on; building events become one cue a kind a tick; a collapse waits for its ripple; the menu call plays; switched off, the
++## cues are exactly what they were. Staged events and seeded matches; no sound device. From the repo root:
++##   godot --headless --path . --script res://audio/tools/scene_check.gd
++## Exit code 1 on a failure.
++
++var bank: AudioBank
++var fails: int = 0
++
++
++class Ev:
++	var type: String = ""
++	var x: float = 0.0
++	var y: float = 0.0
++	var h: float = 0.0
++	var depth: float = 0.0
++	var delay: float = 0.0
++	var n: float = 0.0
++	var to: float = 0.0
++	var outcome: String = ""
++	var amount: float = 0.0
++
++
++func _initialize() -> void:
++	bank = AudioBank.new()
++	_run.call_deferred()
++
++
++func ok(cond: bool, msg: String) -> void:
++	print("  %s  %s" % ["ok  " if cond else "FAIL", msg])
++	if not cond:
++		fails += 1
++
++
++func ev(type: String, x: float, more: Dictionary = {}) -> Ev:
++	var e := Ev.new()
++	e.type = type
++	e.x = x
++	for k in more:
++		e.set(k, more[k])
++	return e
++
++
++func scene_cues(M: SimState, cm: AudioCues, events: Array) -> Array:
++	var out: Array = []
++	cm.scene.consume(M, events, out)
++	return out
++
++
++func _run() -> void:
++	print("1. the new sounds")
++	var ids: Array = []
++	for k in bank.scene.sounds:
++		ids.append(String(k))
++	ids.append("amb.wind")
++	var bad: PackedStringArray = PackedStringArray()
++	var ms: float = 0.0
++	for id in ids:
++		for v in range(bank.variants(id)):
++			var b: PackedFloat32Array = bank.buffer(id, v)
++			bank.stream(id, v)
++			ms += float(bank.render_ms.get("%s#%d" % [id, v], 0.0))
++			var peak: float = 0.0
++			for s in b:
++				peak = maxf(peak, absf(s))
++			var secs: float = float(b.size()) / bank.rate_of(id)
++			if peak < 0.05 or peak > 0.99 or secs <= 0.02 or secs > 12.0:
++				bad.append("%s#%d peak %.2f %.2f s" % [id, v, peak, secs])
++	ok(bad.is_empty(), "%d sounds render, none silent or clipped (%.0f ms to render) %s" % [ids.size(), ms, ", ".join(bad)])
++	ok(bank.ids().has("build.fall") and bank.ids().has("ui.move") and bank.extra_ids().has("amb.wind"), "the warm-up renders them ahead of a match")
++
++	var M := SimCore.createSim()
++	SimCore.newMatch(M, 7, {}, {})
++	var here: float = M.fighters[0].x
++
++	print("2. the wind")
++	var cm := AudioCues.new(bank)
++	cm.reset(7)
++	ok(cm.scene.wind_enabled(), "the wind is on in the data")
++	var first: Array = scene_cues(M, cm, [])
++	ok(first.size() == 2 and first[0].loop and first[0].ambient and first[0].gain_db <= -39.0 and first[1].update and first[1].gain_db > -20.0 and first[1].gain_db < 0.0,
++		"one loop, started at %.0f dB and faded to %.0f dB" % [first[0].gain_db if first.size() > 0 else 0.0, first[1].gain_db if first.size() > 1 else 0.0])
++	var ups: int = 0
++	var starts: int = 0
++	var quiet_db: float = 0.0
++	var loud_db: float = 0.0
++	for t in range(600):
++		M.tick += 1
++		var evs: Array = []
++		if t >= 300 and t % 10 == 0:
++			evs.append(ev("damage", here, {"amount": 60.0}))
++		for c in scene_cues(M, cm, evs):
++			if c.group != "wind":
++				continue
++			if c.update:
++				ups += 1
++				if t < 300:
++					loud_db = c.gain_db
++				else:
++					quiet_db = c.gain_db
++			else:
++				starts += 1
++	ok(starts == 0 and ups >= 20 and quiet_db < loud_db - 3.0, "it keeps one voice, moves %d times in 10 s, and drops from %.0f to %.0f dB while blows land" % [ups, loud_db, quiet_db])
++	cm.world.cfg["enabled"] = true
++	ok(not cm.scene.wind_enabled(), "with the biome beds on, the wind stands down")
++	cm.world.cfg["enabled"] = false
++
++	print("3. the buildings")
++	cm.reset(7)
++	cm.scene.cfg.wind["enabled"] = false
++	M.tick = 1000
++	var burst: Array = []
++	for i in range(19):
++		burst.append(ev("building_stage", here + 40.0 * i, {"to": 3.0, "h": 120.0}))
++	for i in range(5):
++		burst.append(ev("building_stage", here + 40.0 * i, {"to": 1.0, "h": 400.0}))
++	var cs: Array = scene_cues(M, cm, burst)
++	var names: Array = []
++	for c in cs:
++		names.append(c.sound)
++	ok(cs.size() == 2 and names.has("build.crack") and names.has("build.glass"), "24 stage events in one tick make 2 cues: %s" % str(names))
++	var again: Array = scene_cues(M, cm, burst)
++	ok(again.is_empty(), "the same again the next tick makes none (a short wait for each kind)")
++	M.tick += 60
++	cs = scene_cues(M, cm, [ev("building_hit", here, {"h": 300.0, "outcome": "punch"}), ev("floor_hit", here, {"outcome": "dent"}), ev("floors_fall", here, {"n": 6.0})])
++	names = []
++	for c in cs:
++		names.append(c.sound)
++	ok(cs.size() == 2 and names.has("build.hit") and names.has("build.floors"), "a blow into a building and a stack falling: %s" % str(names))
++	M.tick += 60
++	var now: Array = scene_cues(M, cm, [ev("building_fall", here, {"depth": 900.0, "delay": 0.5, "n": 1.0})])
++	var early: int = 0
++	var landed: Array = []
++	for t in range(40):
++		M.tick += 1
++		var got: Array = scene_cues(M, cm, [])
++		if got.size() > 0 and t < 28:
++			early += 1
++		landed.append_array(got)
++	ok(now.is_empty() and early == 0 and landed.size() == 1 and landed[0].sound == "build.fall" and landed[0].pitch < 0.95,
++		"a tall collapse sounds after its half-second ripple, lower for its height (pitch %.2f)" % (landed[0].pitch if landed.size() > 0 else 0.0))
++
++	print("4. the menu")
++	var vo := AudioVoices.new(bank)
++	root.add_child(vo)
++	await process_frame
++	var p0: int = vo.played
++	var m_ok: bool = AudioVoices.ui("move") and AudioVoices.ui("confirm") and AudioVoices.ui("back")
++	ok(m_ok and vo.played == p0 + 3, "move, confirm and back each take a voice")
++	ok(not AudioVoices.ui("enabled") and not AudioVoices.ui("nothing"), "a name that is not a menu sound plays nothing")
++	vo.bank.scene.menu["enabled"] = false
++	ok(not AudioVoices.ui("move"), "switched off in the data, the call does nothing")
++	vo.bank.scene.menu["enabled"] = true
++	var lim: int = AudioVoices._effect_index(0, "AudioEffectHardLimiter")
++	ok(lim >= 0 and AudioVoices._effect_index(0, "AudioEffectLimiter") == -1, "the master has the look-ahead limiter and not the old one")
++	vo.queue_free()
++	SimCore.dispose(M)
++
++	print("5. seeded matches")
++	var counts: Dictionary = {}
++	var per_s_max: int = 0
++	var changed: String = ""
++	var total: int = 0
++	for sd in [301, 303, 305]:
++		var A := SimCore.createSim()
++		SimCore.newMatch(A, sd, {}, {"power": true, "dash": true})
++		var on := AudioCues.new(bank)
++		on.reset(sd)
++		var off := AudioCues.new(bank)
++		off.reset(sd)
++		off.scene.cfg.wind["enabled"] = false
++		off.scene.cfg.buildings["enabled"] = false
++		var window: Array = []
++		for t in range(3600):
++			SimCore.step(A)
++			var a_out: Array = on.consume(A, A.out.fx)
++			var b_out: Array = off.consume(A, A.out.fx)
++			for c in a_out:
++				if c.sound.begins_with("build."):
++					counts[c.sound] = int(counts.get(c.sound, 0)) + 1
++					window.append(t)
++					total += 1
++			while not window.is_empty() and window[0] <= t - 60:
++				window.pop_front()
++			per_s_max = maxi(per_s_max, window.size())
++			for c in b_out:
++				if c.sound.begins_with("build.") or c.sound == "amb.wind":
++					changed = "a scene cue with the switches off"
++			A.out.fx.clear()
++			A.out.feed.clear()
++		SimCore.dispose(A)
++	ok(changed == "", "switched off, no wind and no building cue is made %s" % changed)
++	ok(per_s_max <= 8, "at most %d building cues in any one second; over 3 minutes of matches: %s" % [per_s_max, str(counts) if total > 0 else "none (no building was touched)"])
++	print("\nscene check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
++	quit(1 if fails > 0 else 0)
+diff --git a/audio/tools/scene_check.gd.uid b/audio/tools/scene_check.gd.uid
+new file mode 100644
+index 0000000..faf3619
+--- /dev/null
++++ b/audio/tools/scene_check.gd.uid
+@@ -0,0 +1 @@
++uid://cfkwoi5jot1e2
+diff --git a/audio/tools/tone_check.gd b/audio/tools/tone_check.gd
+index 3f333bb..0eab361 100644
+--- a/audio/tools/tone_check.gd
++++ b/audio/tools/tone_check.gd
+@@ -43,6 +43,14 @@ const LIMITS: Dictionary = {
+ 	"block.perfect": [450.0, 0.02],
+ 	"drone.coil": [300.0, 0.01],
+ 	"arena.shift": [450.0, 0.02],
++	"build.hit": [750.0, 0.06],
++	"build.crack": [800.0, 0.07],
++	"build.glass": [1000.0, 0.08],
++	"build.floors": [400.0, 0.02],
++	"build.fall": [800.0, 0.07],
++	"ui.move": [500.0, 0.02],
++	"ui.confirm": [500.0, 0.02],
++	"ui.back": [500.0, 0.02],
+ }
+ var fails: int = 0
+ 
+@@ -139,7 +147,7 @@ func spectrum(bank: AudioBank, id: String) -> Array:
+ func _run() -> void:
+ 	var bank := AudioBank.new()
+ 	print("%-22s %9s   %s" % ["sound", "heard", "centroid and share of the heard energy: under 250 | 250-1k | 1-2k | 2-4k | over 4k  (first 64 ms)"])
+-	var ids: Array = ["impact.light", "impact.light.lite", "impact.medium", "impact.medium.grind", "impact.heavy", "impact.guard", "impact.double", "impact.absorbed", "impact.whiff", "energy.bolt", "energy.blast", "charge.tick.heavy", "charge.tick.light", "charge.hum", "perfect.tok", "ui.launcher", "tug.pulse", "tug.surge", "tug.lock", "tug.fall", "drone.bed.lo", "drone.bed.hi", "tug.tock", "tug.tick", "tug.crack", "grip.clasp", "grip.creak", "grip.thud", "grip.refuse", "form.ready", "brake.skid", "rush.whoosh", "block.perfect", "drone.coil", "arena.shift"]
++	var ids: Array = ["impact.light", "impact.light.lite", "impact.medium", "impact.medium.grind", "impact.heavy", "impact.guard", "impact.double", "impact.absorbed", "impact.whiff", "energy.bolt", "energy.blast", "charge.tick.heavy", "charge.tick.light", "charge.hum", "perfect.tok", "ui.launcher", "tug.pulse", "tug.surge", "tug.lock", "tug.fall", "drone.bed.lo", "drone.bed.hi", "tug.tock", "tug.tick", "tug.crack", "grip.clasp", "grip.creak", "grip.thud", "grip.refuse", "form.ready", "brake.skid", "rush.whoosh", "block.perfect", "drone.coil", "arena.shift", "build.hit", "build.crack", "build.glass", "build.floors", "build.fall", "ui.move", "ui.confirm", "ui.back"]
+ 	for id in ids:
+ 		if not bank.has_sound(id):
+ 			continue
+diff --git a/audio/tools/tug_check.gd b/audio/tools/tug_check.gd
+index 4040534..47943d1 100644
+--- a/audio/tools/tug_check.gd
++++ b/audio/tools/tug_check.gd
+@@ -15,6 +15,7 @@ var fails: int = 0
+ func _initialize() -> void:
+ 	bank = AudioBank.new()
+ 	cues = AudioCues.new(bank)
++	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	_run.call_deferred()
+ 
+ 
+diff --git a/audio/tools/web_policy_check.gd b/audio/tools/web_policy_check.gd
+index 7feb39c..ac31e46 100644
+--- a/audio/tools/web_policy_check.gd
++++ b/audio/tools/web_policy_check.gd
+@@ -108,6 +108,12 @@ func _run() -> void:
+ 	var act0: int = v.active()
+ 	ok(not v.play(nr, 0.0, 1.0) and w.plays.size() == before and v.held == held0 + 1 and v.active() == act0, "while the page's context is not running the cue is held: nothing is queued for a click, no Godot player starts on the frozen engine context, and it is counted as held, not dropped")
+ 	ok(v.dropped == 0, "a held cue is not a drop")
++	var bed := cue("impact.heavy")
++	bed.loop = true
++	bed.group = "policy.bed"
++	ok(v.play(bed, 0.0, 1.0) and v.held == held0 + 1, "a loop is not held: it takes one Godot voice and sounds when the page wakes (a held loop would never start)")
++	v.stop_group("policy.bed", 0)
++	await process_frame
+ 	w.is_running = true
+ 
+ 	print("3. the voices' rules hold for page voices")
+diff --git a/audio/tools/world_check.gd b/audio/tools/world_check.gd
+index 25250e7..35b6c47 100644
+--- a/audio/tools/world_check.gd
++++ b/audio/tools/world_check.gd
+@@ -39,6 +39,7 @@ func _initialize() -> void:
+ 			max_ticks = int(a.substr(8))
+ 	bank = AudioBank.new()
+ 	cues = AudioCues.new(bank)
++	cues.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	_run.call_deferred()
+ 
+ 
+@@ -710,6 +711,7 @@ func _run_match(sd: int, with_world: bool, setup: Dictionary = {}) -> Array:
+ 	var M := SimCore.createSim()
+ 	SimCore.newMatch(M, sd, {}, setup)
+ 	var c := AudioCues.new(bank)
++	c.scene.cfg.wind["enabled"] = false      # this check counts its own set's cues; the wind loop is scene_check's
+ 	c.world.cfg["enabled"] = with_world
+ 	c.reset(sd)
+ 	var spent: int = 0

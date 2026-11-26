@@ -1,0 +1,20 @@
+A Windows release export (main 935056c0 + the friends-sound park), run on the dev PC 2026-11-25 as:  orb-combat-ex.exe --headless -- --audio-proof   (exit 0)
+
+audio proof: Windows | exported program | x86_64 | Godot 4.7.2-stable (official) | driver Dummy 44100 Hz | build ?
+1. the master limiter
+  ok    a tone at -18 dB comes out at -13.0 dB (wanted -13.0) and keeps its shape (crest 3.0 dB; a squared wave is 0)
+  ok    a tone at +7 dB comes out at -1.0 dB (wanted -1.0) and keeps its shape (crest 3.0 dB; a squared wave is 0)
+2. the sounds
+     sound                               peak dB   length expected
+  ok    impact.light                          -11.6    0.08s    0.08s
+  ok    impact.heavy                           -5.6    0.68s    0.68s
+  ok    impact.crater                          -4.6    1.57s    1.57s
+  ok    energy.blast                           -5.6    0.57s    0.57s
+  ok    voice.protagonist.effort.heavy         -9.6    0.24s    0.24s
+  ok    build.hit                              -7.6    0.28s    0.28s
+  ok    build.fall                             -6.6    1.74s    1.74s
+  ok    ui.confirm                            -14.6    0.15s    0.15s
+  ok    nine loud sounds at once come out at -1.0 dB, under the ceiling, nothing clipped
+  ok    the wind loop is there and quiet (-29.6 dB)
+  ok    and silence when nothing is asked for
+audio proof passed

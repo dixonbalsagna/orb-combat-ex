@@ -1,0 +1,28 @@
+# cd04 brought current, 2026-11-25. k2 = k1 (main 54474b97 + GW1c stack 28 pieces + gw1c-door-holds fba137e3) + docs/camera/pending/cd04/cd04.patch (b0ab4bfb).
+# Godot 4.7.2 --headless, below normal, one at a time.
+
+## Camera checks and split_sweep on k2
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+cut_register_check     cut_register_check: 73 checks passed 
+flight_shots_check     flight_shots_check: 662 checks passed 
+launch_shots_check     launch_shots_check: 937 checks passed 
+own_pane_check         own_pane_check: 12 checks passed 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed 
+
+## clip_digest --clips=collapse, k2 against k1 (changed frames by mode)
+small 960x540:     742 reduced 
+small 1024x768:     842 reduced 
+medium 960x540:     445 reduced 
+medium 1024x768:     446 reduced 
+big 960x540:     140 normal     586 reduced 
+big 1024x768:      88 normal     542 reduced 

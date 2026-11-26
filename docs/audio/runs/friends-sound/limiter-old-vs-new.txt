@@ -1,0 +1,21 @@
+Godot's old limiter (AudioEffectLimiter, threshold -6, ceiling -1) against the look-ahead one as now set up (AudioEffectHardLimiter, pre-gain 5, ceiling -1), headless.
+A 220 Hz tone. 'out sine-level' above 'out peak' means the wave has been flattened (a fully square wave reads peak + 3).
+
+none     in -18.0 dB  out peak -18.00  out sine-level -18.01  frames 40960
+none     in -12.0 dB  out peak -12.00  out sine-level -12.01  frames 40960
+none     in  -6.0 dB  out peak  -6.00  out sine-level  -6.01  frames 40960
+none     in  -1.0 dB  out peak  -1.00  out sine-level  -1.01  frames 36864
+none     in  +4.0 dB  out peak  +4.00  out sine-level  +3.99  frames 40960
+none     in  +9.0 dB  out peak  +9.00  out sine-level  +8.99  frames 36864
+limiter  in -18.0 dB  out peak -13.00  out sine-level -13.01  frames 40960
+limiter  in -12.0 dB  out peak  -7.00  out sine-level  -7.01  frames 36864
+limiter  in  -6.0 dB  out peak  -1.00  out sine-level  -0.83  frames 36864
+limiter  in  -1.0 dB  out peak  -1.00  out sine-level  +0.80  frames 36864
+limiter  in  +4.0 dB  out peak  -1.00  out sine-level  +1.38  frames 36864
+limiter  in  +9.0 dB  out peak  -1.00  out sine-level  +1.67  frames 40960
+hard     in -18.0 dB  out peak -13.00  out sine-level -13.01  frames 36864
+hard     in -12.0 dB  out peak  -7.00  out sine-level  -7.01  frames 40960
+hard     in  -6.0 dB  out peak  -1.00  out sine-level  -1.01  frames 36864
+hard     in  -1.0 dB  out peak  -1.00  out sine-level  -1.01  frames 37376
+hard     in  +4.0 dB  out peak  -1.00  out sine-level  -1.01  frames 36864
+hard     in  +9.0 dB  out peak  -1.00  out sine-level  -1.01  frames 40960

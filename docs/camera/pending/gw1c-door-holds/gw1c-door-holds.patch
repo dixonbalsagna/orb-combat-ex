@@ -11,7 +11,7 @@ index b3c783b..94b1c73 100644
  # --- orientation and the swap (section 5) ---
  const HYST_M: float = 0.02             # antipode margin, fraction of W
 diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
-index c464d9b..324d554 100644
+index c464d9b..8b0ae2f 100644
 --- a/render/camera/split_rig.gd
 +++ b/render/camera/split_rig.gd
 @@ -688,6 +688,25 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
@@ -78,7 +78,7 @@ index c464d9b..324d554 100644
  		_slam_slot = -1
  		sep = 0.0
  		e = 0.0
-@@ -3478,6 +3507,17 @@ var launch_hold: bool = false
+@@ -3478,6 +3507,12 @@ var launch_hold: bool = false
  var _lh: Array = [0, 0]                                # 0 none, 1 holding the frame, 2 panning to him
  var _lh_gone: Array = [0, 0]
  var slam_off: bool = false                             # no divider slam UNDER REDUCED FLASHING (or reduced motion): a rush's contact merges the panes the ordinary way (docs/camera/buildings-in-frame.md sections 14 and 15); off by default
@@ -87,16 +87,11 @@ index c464d9b..324d554 100644
 +var _slam_p: float = 0.0                               # how far the door has shut, 0..1 (it only grows while slam_door_holds)
 +var _handed: int = -1                                  # this tick's handover (the pane whose picture the one view took), for the frame below
 +var _slam_heir: int = -1                               # the pane that had the screen as the door shut: the one view (pane 0) goes on from its drawn camera
-+var slam_budget: bool = true                           # under Reduce flashing (or reduced motion) the travel budget (TRAVEL_MAX_REDUCED) holds while a slam (its lean and its door)
-+                                                       # moves the picture, and until the picture has caught up: the collapse clip at small read 3 / 4 on
-+                                                       # the rusher's pane scrolling at 0.05 of the width a tick into the door (docs/camera/pending/gw1c-door-holds). Off: as before
-+var _sb_on: bool = false                               # the slam's budget is holding this tick
-+var slam_budget_ticks: int = 0                         # ticks it held (for the tests)
 +var slam_door_held: int = 0                            # ticks a door was held against a re-timed rush (for the tests)
  var merge_zoom_limit: bool = false                      # the zoom comes in slowly while the panes merge (docs/camera/buildings-in-frame.md section 13); off by default
  var _pair_near: bool = false                           # the pair is within MZ_NEAR of each other (for the merge zoom limit)
  var _lh_dist: Array = [0.0, 0.0]                       # the width a fast body has covered since he became fast (the rule engages at LH_ENGAGE_W)
-@@ -4115,9 +4155,30 @@ func _update_cameras(S: SimState) -> void:
+@@ -4115,9 +4150,30 @@ func _update_cameras(S: SimState) -> void:
  	_outputs(S)
  
  
@@ -127,34 +122,3 @@ index c464d9b..324d554 100644
  	# a shot handing the screen to another pane this tick (the slot a shot takes changed): the only step an anchor's ease takes in; a layout's
  	# change of sides or divider has its own rules and lands at once
  	var handover: bool = e_slot != _ho_eslot or solo_slot != _ho_solo
-@@ -4304,8 +4365,29 @@ func _pane_shown(i: int) -> bool:
- ## for him; at most once in TRAVEL_COOL. A cut costs a flash, a subject off the screen none (measured: a cut added a pair of
- ## 25,000 to 50,000-pixel changes to a clip that passed). A cut, a pane that is hidden, a first frame, a cut-in's camera, a
- ## composed intro, the fold and a zip are not limited.
-+## Whether the slam's budget holds this tick: a slam (its lean and its door) is moving the picture, or a shown pane's drawn camera is
-+## still catching up with its target after one (so it lets go only when nothing would jump). Not an ordinary split's opening or
-+## closing: an escape must be followed (split_sweep's escape rows).
-+func _slam_budget_on() -> bool:
-+	if not slam_budget or travel_budget or not (flash_reduced or reduced_motion) or not _od_valid:
-+		return false
-+	if _slam_slot >= 0:
-+		return true
-+	if not _sb_on:
-+		return false
-+	var pm: float = _punch_mult()
-+	for i in range(2):
-+		var o: Vector3 = _outs[i]
-+		if _pane_shown(i) and bool(_od_shown[i]) and _travel(_od[i], Vector3(o.x, o.y, o.z * pm)) > CamParams.TRAVEL_CATCH:
-+			return true
-+	return false
-+
-+
- func _travel_budget(S: SimState) -> void:
--	if not travel_budget:
-+	_sb_on = _slam_budget_on()
-+	if _sb_on:
-+		slam_budget_ticks += 1
-+	if not travel_budget and not _sb_on:
- 		for i in range(2):
- 			_od[i] = _outs[i]
- 			_od_shown[i] = _pane_shown(i)

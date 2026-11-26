@@ -1,0 +1,92 @@
+# gw1c-door-holds re-cut: gates. k0 = main 54474b97 + the GW1c stack (28 pieces) + scratch capture switches; k1 = k0 + gw1c-door-holds.patch (fba137e3).
+# Each: Godot 4.7.2 --headless --path <tree> --script res://<script> (below normal, one at a time).
+
+## Camera checks and split_sweep (render/camera/tests/*_check.gd, split_sweep.gd)
+### k1
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+flight_shots_check     flight_shots_check: 662 checks passed 
+launch_shots_check     launch_shots_check: 937 checks passed 
+own_pane_check         own_pane_check: 12 checks passed 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed 
+### k0
+chase_rush_check       chase_rush_check: 130 checks passed 
+cross_ko_check         cross_ko_check: 21 checks passed 
+flight_shots_check     flight_shots_check: 662 checks passed 
+launch_shots_check     launch_shots_check: 937 checks passed 
+own_pane_check         own_pane_check: 12 checks passed 
+peak_retry_check       peak_retry_check: 1 check passed 
+peak_shot_check        peak_shot_check: 24 checks passed 
+split_share_check      split_share_check: 26 checks passed 
+split_vision_check     split_vision_check: 13 checks passed 
+swing_fight_check      swing_fight_check: 10 checks passed 
+swing_places_check     swing_places_check: 33 checks passed 
+swing_read_check       swing_read_check: 14420 checks passed 
+swing_real_check       swing_real_check: 48 checks passed 
+swing_shot_check       swing_shot_check: 164 checks passed 
+split_sweep            split sweep passed 
+
+## Rendering's render gates (docs/rendering/runs/31531cb2/tile-marks-gates.txt) and the golden (res://sim/core/tools/golden.gd)
+### k1
+open      open check passed  | script errors 0
+depth     depth check passed  | script errors 0
+shape     shape check passed  | script errors 0
+patch     patch check passed  | script errors 0
+pane      pane check passed  | script errors 0
+stage     stage check passed  | script errors 0
+lane      lane check passed  | script errors 0
+ground    ground check passed  | script errors 0
+after     after check passed  | script errors 0
+sky       sky check passed  | script errors 0
+flashreg  flash register check passed  | script errors 0
+hudwords  hud words check passed  | script errors 0
+seam      seam sweep passed  | script errors 0
+detintro  determinism passed  | script errors 0
+det       determinism passed  | script errors 0
+flight    flight check passed  | script errors 0
+city       | script errors 0
+cue       cue check passed  | script errors 0
+flash     flash check passed  | script errors 0
+golden 989878d6d335
+city_check: ok 7, FAIL 0 (prints no summary line)
+### k0
+open      open check passed  | script errors 0
+depth     depth check passed  | script errors 0
+shape     shape check passed  | script errors 0
+patch     patch check passed  | script errors 0
+pane      pane check passed  | script errors 0
+stage     stage check passed  | script errors 0
+lane      lane check passed  | script errors 0
+ground    ground check passed  | script errors 0
+after     after check passed  | script errors 0
+sky       sky check passed  | script errors 0
+flashreg  flash register check passed  | script errors 0
+hudwords  hud words check passed  | script errors 0
+seam      seam sweep passed  | script errors 0
+detintro  determinism passed  | script errors 0
+det       determinism passed  | script errors 0
+flight    flight check passed  | script errors 0
+city       | script errors 0
+cue       cue check passed  | script errors 0
+flash     flash check passed  | script errors 0
+golden 989878d6d335
+city_check: ok 7, FAIL 0
+k1 against k0: the same, line for line; the golden 989878d6d335 on both.
+
+## clip_digest --clips=collapse --size=<s> --vp=<vp>, k1 against k0
+small 960x540: differs (264 lines)
+small 1024x768: differs (316 lines)
+medium 960x540: differs (60 lines)
+medium 1024x768: differs (284 lines)
+big 960x540: same
+big 1024x768: differs (412 lines)
+Medium differs, so the medium collapse clip is captured on both trees in both modes: readings.txt.

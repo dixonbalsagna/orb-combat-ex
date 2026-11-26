@@ -4,9 +4,27 @@ Camera, 2026-11-07. CD-04 asks for two things:
 1. SCROLL_MAX_REDUCED back at 0.03, or a higher value justified with a saved reading.
 2. The hard cuts that change most of the screen asking the flash register.
 
-This park does both. **Paused at the EP's word (pacing) before the cut-step table and the reduced-mode analyser reading.** Those come after Sunday's play-test, so CD-04's "Done when" (3), the next pin reading 3 or less in reduced mode, isn't shown yet.
+This park does both. It was paused at the EP's word (pacing) on 2026-11-07, before the cut-step table and the reduced-mode analyser reading.
 
-**Apply on main** (cut on d41ce393; `git apply --check --cached` passes on e9216c1a): `git -c core.autocrlf=false apply cd04.patch` (sha1 cb4d7363).
+## 2026-11-25: un-paused, brought current on the GW1c stack
+
+- **Apply after the GW1c stack and `../gw1c-door-holds/`** (the A2 order): `git -c core.autocrlf=false apply cd04.patch` (sha1 b0ab4bfb; the code is unchanged from cb4d7363).
+  - The old patch applied to the stack alone with offsets only.
+  - On top of door-holds, one line clashed: the context line `_mark_cut("relocate", true)` sits next to the door-holds handover block in `step`. This cut is the same change on top of door-holds.
+- **VFX's shared register has landed** (`flashes.ask_cut` is on main), so the park takes that path.
+- **Gates on the stack + door-holds + cd04** (`docs/camera/runs/54474b97/cd04-gw1c/gates.txt`):
+  - every camera check passes, `cut_register_check` 73 of 73;
+  - chase_rush and flight_shots now pass too (vkeep and land-release are on main);
+  - split_sweep passes.
+- **What changes:**
+  - the collapse clip's reduced frames at every size (the default look: the governor at 0.03, cuts that wait);
+  - normal frames only on big (88 to 140 frames).
+- **Still owed:**
+  1. The reduced readings: collapse and rushcity at medium, k1 against k2 (queued).
+  2. The look gate, since the default look changes.
+  3. The cut-step table (below).
+
+The original page follows (cut on d41ce393).
 - Files: `render/camera/split_rig.gd`, `render/camera/split_view.gd`, `render/camera/camera_params.gd` and a new `render/camera/tests/cut_register_check.gd`, all mine.
 - The two-fighter ratchet is unchanged (365).
 - It works with or without VFX's shared-register park (`docs/vfx/pending/shared-register`). It uses `flashes.ask_cut` when the register has it, else the register's plain `ask`, weighed the same way. Either can land first.

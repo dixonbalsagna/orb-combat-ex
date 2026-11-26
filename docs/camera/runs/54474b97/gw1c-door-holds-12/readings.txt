@@ -1,0 +1,16 @@
+# gw1c-door-holds re-cut (parts 1 and 2: the door holds, the handover; slam_budget off). Camera, 2026-11-25.
+# k0 = main 54474b97 + the GW1c stack's 28 pieces (docs/ep/reviews/GW1c-stack.txt order; relief-cap-data off) + scratch capture switches (size word with WorldPlanetSize.heldOverride; clip_digest --size/--vp).
+# k1 = k0 + docs/camera/pending/gw1c-door-holds/gw1c-door-holds.patch (sha1 fba137e3).
+# Captures: node tools/flash/run-pixels.mjs --dir <web export of k0|k1> --path "/index.html?flashcap=1&size=<size>" --out <dir> --jobs 1 --keep --clip-timeout 2400 --clip collapse-<mode>
+# (Tools' guarded launcher, below normal, one capture at a time). Worst of 4 readings: 960x540 and 1024x768 at scale 1 and 2.
+
+k0bigr    collapse-reduced: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 2, 0 dips, 761s, worst of 4 readings (1024x768 at scale 1)
+k1bigr    collapse-reduced: PASS, primary 2.5 general 0 red, area-15% 2.5, 2 s memory 1.5, 0 dips, 736s, worst of 4 readings (1024x768 at scale 1)
+k0bign    collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 697s, worst of 4 readings (960x540 at scale 2)
+k1bign    collapse-normal: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 698s, worst of 4 readings (960x540 at scale 2)
+k1smallr  collapse-reduced: FAIL, primary 3 general 0 red, area-15% 4, 2 s memory 2, 0 dips, 624s, worst of 4 readings (1024x768 at scale 1)
+k0medr    collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 640s, worst of 4 readings (960x540 at scale 2)
+k1medr    collapse-reduced: PASS, primary 2 general 0 red, area-15% 2, 2 s memory 1.5, 0 dips, 648s, worst of 4 readings (960x540 at scale 2)
+k0medn    collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 613s, worst of 4 readings (960x540 at scale 1)
+k1medn    collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 657s, worst of 4 readings (960x540 at scale 1)
+Medium: no worse (the same readings in both modes).

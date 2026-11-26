@@ -1,0 +1,6 @@
+# cd04 reduced readings, 2026-11-25 (EP only). k1 = stack + door-holds; k2 = k1 + cd04. Medium (size=medium), Tools' run-pixels, one capture at a time, below normal.
+# per reading: size, scale, primary, area-15%, 2 s memory, worst tick
+k1medr  collapse-reduced  : 960x540 s1 p1 a1 m1 @546 | 960x540 s2 p2 a2 m1 @144 | 1024x768 s1 p1 a1 m1.5 @547 | 1024x768 s2 p1 a1 m1.5 @547
+k2medr  collapse-reduced  : 960x540 s1 p1 a1 m1 @293 | 960x540 s2 p1 a2 m1 @293 | 1024x768 s1 p1 a1 m1.5 @547 | 1024x768 s2 p1 a1 m1.5 @151
+k1rcr   rushcity-reduced  : 960x540 s1 p3 a3.5 m3 @574 | 960x540 s2 p3 a3.5 m3 @574 | 1024x768 s1 p3.5 a3.5 m3.5 @697 | 1024x768 s2 p3.5 a3.5 m3.5 @697
+k2rcr   rushcity-reduced  : 960x540 s1 p2.5 a2.5 m3 @697 | 960x540 s2 p3 a3 m3 @574 | 1024x768 s1 p3.5 a3.5 m3.5 @697 | 1024x768 s2 p4 a4 m3.5 @574

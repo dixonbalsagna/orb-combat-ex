@@ -1,0 +1,14 @@
+diff --git a/render/core/boot_entry.gd b/render/core/boot_entry.gd
+index 22a87ec..64285da 100644
+--- a/render/core/boot_entry.gd
++++ b/render/core/boot_entry.gd
+@@ -45,6 +45,9 @@ var _shown: bool = false   # a frame has been drawn since the last load (frame_p
+ 
+ 
+ func _ready() -> void:
++	if OS.get_cmdline_user_args().has("--audio-proof"):
++		add_child(load("res://audio/audio_proof.gd").new())   # Audio's check that this program makes sound (A-AUDIO-04); it quits by itself
++		return
+ 	if _direct():
+ 		_main.call_deferred()
+ 		return
