@@ -348,7 +348,7 @@ static func sig(p: Dictionary) -> Array:
 	if p.has("rail"):
 		var rc: Dictionary = p["cfg"]
 		return ["rail", str(p.get("page", "")), str(rc.get("p1_fighter", "")), str(rc.get("p2_fighter", "")), str(p.get("version", "")), int((p["rail_rect"] as Rect2).size.x), int(p["vp_y"]), int(float(p["cs"]) * 100.0), int(p["focus"]), int(p["fs"]), int(rc.get("players", 1)), str(rc.get("p1", "")), str(rc.get("p2", "")), str(rc.get("ai_level", "")),
-			bool(rc.get("intros", true)), bool(rc.get("reduce_flashing", true)), bool(rc.get("shake", true)), bool(rc.get("captions", true)), bool(rc.get("guide", true)), str(p["note_text"]), p["device"], p["style"],
+			bool(rc.get("intros", true)), bool(rc.get("reduce_flashing", true)), bool(rc.get("shake", true)), bool(rc.get("captions", true)), bool(rc.get("guide", true)), str(p["note_text"]), str(p.get("tip_lines", PackedStringArray())), p["device"], p["style"],
 			int(float(p["slide"]) * 40.0), int(float(p["bar_t"]) * 40.0), int(float(p["bar_y"])), bool(p["bar_vis"])]
 	var c: Rect2 = p["card"]
 	var cfg: Dictionary = p["cfg"]
@@ -948,6 +948,20 @@ static func rail_list_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> 
 	var version: String = str(st.get("version", ""))
 	var ver: Dictionary = UiRail.version_block(vp, x0, fs_small, version)
 	var hint_top: float = vp.y - maxf(vp.y * 0.04, 12.0) - hint_lh * float(hint_lines.size()) - float(ver["h"])
+	# One quiet line under the list of modes (the first visit: a controller feels best), in the help text's ink; where there is no room for it, it is left out (it never makes the page not fit).
+	var tip_lines := PackedStringArray()
+	var tip_pos := Vector2()
+	var tip_lh: float = UiText.height(fs_small) * 1.25
+	var tip: String = str(st.get("tip", ""))
+	if page == PAGE_MODES and tip != "":
+		var wrapped := PackedStringArray()   # a sentence starts its own line
+		var parts: PackedStringArray = tip.split(". ")
+		for si in range(parts.size()):
+			wrapped.append_array(UiText.wrap(parts[si] + ("." if si < parts.size() - 1 else ""), fs_small, rw - x0 * 2.0))
+		var th: float = tip_lh * float(wrapped.size())
+		if rows_end + gap * 2.0 + th + gap <= hint_top:
+			tip_lines = wrapped
+			tip_pos = Vector2(x0, rows_end + gap * 2.0 + UiText.ascent(fs_small))
 	# The card for the lit row, on the right.
 	var margin: float = maxf(vp.x * 0.04, 24.0)
 	var cw: float = minf(vp.x - rw - margin * 2.0, 560.0 * maxf(cs, 1.0))
@@ -984,7 +998,7 @@ static func rail_list_plan(vp: Vector2, s: float, dp: float, st: Dictionary) -> 
 	return {"rail": true, "page": page, "card": Rect2(Vector2.ZERO, vp), "rail_rect": rail, "title": title, "title_lines": title_lines, "title_pos": title_pos, "kicker": UiData.t("prompt.rail_kicker"), "kicker_pos": Vector2(x0, top + UiText.ascent(fs_kicker)), "lh_title": lh_title,
 		"items": items, "rows": list, "row_boxes": row_boxes, "row_ys": row_ys, "rail_ids": list, "radio_rows": [], "fs": fs_r, "fs_o": fs_val, "fs_s": fs_small, "fs_kicker": fs_kicker, "fs_title": fs_title, "fs_val": fs_val, "fs_n": fs_n, "fs_b": fs_r,
 		"fits": fits, "tm": tm, "pad": cp, "gap": gap, "cs": cs, "focus": focus, "touch": false, "cfg": cfg, "stack": false, "total_h": vp.y, "area_h": vp.y, "x0": x0, "tog": Vector2.ZERO,
-		"labels": labels, "values": values, "enabled": enabled, "card_rect": card, "card_kicker": card_kicker, "card_lines": card_lines, "mid": mid, "note_text": "", "version": version, "version_pos": version_pos,
+		"labels": labels, "values": values, "enabled": enabled, "card_rect": card, "card_kicker": card_kicker, "card_lines": card_lines, "mid": mid, "note_text": "", "version": version, "version_pos": version_pos, "tip_lines": tip_lines, "tip_pos": tip_pos, "tip_lh": tip_lh,
 		"hints": entries, "hint_lines": hint_lines, "hint_gh": hint_gh, "hint_fs": fs_small, "hint_top": hint_top, "hint_lh": hint_lh, "device": device, "style": style, "vp_y": vp.y,
 		"slide": UiRail.slide(float(st.get("since", 99.0)), reduced), "bar_t": 1.0 if (reduced or prev < 0) else clampf(bar_since / UiRail.BAR_SECS, 0.0, 1.0),
 		"bar_y": UiRail.bar_y(row_ys, focus, prev, bar_since, reduced), "bar_vis": true}
@@ -1022,6 +1036,10 @@ static func draw_list_rail(ci: CanvasItem, p: Dictionary) -> void:
 	for ln in p["hint_lines"]:
 		UiRail.draw_hints(ci, entries.slice(int(ln[0]), int(ln[1])), float(p["x0"]) + off, hy, float(p["hint_gh"]), int(p["hint_fs"]), float(p["gap"]) * 3.0, 1.0)
 		hy += float(p["hint_lh"])
+	var tp2: Vector2 = (p.get("tip_pos", Vector2()) as Vector2) + shift
+	for line in p.get("tip_lines", PackedStringArray()):
+		UiText.draw(ci, str(line), tp2, int(p["fs_s"]), dim, -1)
+		tp2.y += float(p["tip_lh"])
 	var cr: Rect2 = p["card_rect"]
 	if cr.size.x > 0.0:
 		UiRail.draw_card(ci, Rect2(cr.position + Vector2(coff, 0.0), cr.size), str(p["card_kicker"]), p["card_lines"], int(p["fs_kicker"]), int(p["fs_n"]), cs)

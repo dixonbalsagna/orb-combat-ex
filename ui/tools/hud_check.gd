@@ -95,6 +95,7 @@ func _run() -> void:
 	await _menus_a1_rules()
 	await _menus_a1_extra_rules()
 	await _menus_world_rules()
+	await _pad_tip_rules()
 	await _save_reason_rules()
 	await _boot_load_menu_rules()
 	await _plain_words_rules()
@@ -12067,3 +12068,96 @@ func _world_press(button: int) -> InputEventJoypadButton:
 	e.button_index = button
 	e.pressed = true
 	return e
+
+
+# --- Keyboard works, a controller is recommended (decision 20, second half; docs/ui/menus-a1.md section 12) ----------------------------------
+
+func _pad_tip_hud(pads: int) -> UiHud:
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 800)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud._pads_test = pads
+	return hud
+
+
+func _pad_tip_text(hud: UiHud) -> String:
+	return " ".join(PackedStringArray(hud.menu_plan().get("tip_lines", PackedStringArray())))
+
+
+func _pad_tip_rules() -> void:
+	var words := "You can play with a keyboard or a controller. A controller feels best."
+	UiData.set_feature("menus_rail", true)
+	UiData.set_feature("menu_modes", true)
+	UiPrefs.path = "user://ui_prefs_test_padtip.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	# The first visit, no controller: the line is there, once.
+	var hud: UiHud = await _pad_tip_hud(0)
+	hud.show_start_menu(false)
+	var p: Dictionary = hud.menu_plan()
+	_ok(str(p.get("page", "")) == "modes" and _pad_tip_text(hud) == words and bool(p["fits"]), "pad tip: the first visit to the list of modes says '%s' (%s)" % [words, _pad_tip_text(hud)])
+	_ok(float((p["tip_pos"] as Vector2).y) > float((p["items"] as Array)[-1]["rect"].end.y) and float((p["tip_pos"] as Vector2).y) < float(p["hint_top"]) and (p["tip_pos"] as Vector2).x < float((p["rail_rect"] as Rect2).size.x), "pad tip: it sits under the list, above the button hints, in the rail")
+	_ok(bool(UiPrefs.get_value("pad_tip_seen", false)), "pad tip: it is remembered as seen")
+	hud._menu_activate("solo")
+	hud._menu_activate("back")
+	_ok(str(hud.menu_plan().get("page", "")) == "modes" and _pad_tip_text(hud) == "", "pad tip: going on to the setup and Back does not bring it back")
+	hud.hide_photo_notice(false)
+	hud.show_start_menu(false)
+	_ok(_pad_tip_text(hud) == "", "pad tip: the next time the menu opens it is not there")
+	hud.queue_free()
+	await process_frame
+	var again: UiHud = await _pad_tip_hud(0)
+	again.show_start_menu(false)
+	_ok(_pad_tip_text(again) == "", "pad tip: nor in a later session with the same settings store")
+	again.queue_free()
+	await process_frame
+	# With a controller plugged in: never, and the menu opens with its button hints.
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var padded: UiHud = await _pad_tip_hud(1)
+	padded.show_start_menu(false)
+	_ok(_pad_tip_text(padded) == "" and str(padded.menu_plan()["device"]) == "pad", "pad tip: with a controller plugged in it is not shown, and the menu opens with the controller's hints (%s)" % str(padded.menu_plan()["device"]))
+	_ok(bool(UiPrefs.get_value("pad_tip_seen", false)), "pad tip: that was the first visit, so a later one without the controller does not show it either")
+	padded.queue_free()
+	await process_frame
+	# The hints follow the device last used; a plugged-in controller during the line hides it.
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var h: UiHud = await _pad_tip_hud(0)
+	h.show_start_menu(false)
+	_ok(str(h.menu_plan()["device"]) == "kbd" and _pad_tip_text(h) == words, "pad tip: with no controller the menu opens with the keys' hints and the line")
+	var press := InputEventJoypadButton.new()
+	press.button_index = JOY_BUTTON_DPAD_DOWN
+	press.pressed = true
+	h._pads_test = 1
+	h._unhandled_input(press)
+	_ok(str(h.menu_plan()["device"]) == "pad" and _pad_tip_text(h) == "", "pad tip: a press on a controller turns the hints to the controller's and takes the line away")
+	var key := InputEventKey.new()
+	key.keycode = KEY_DOWN
+	key.pressed = true
+	h._unhandled_input(key)
+	_ok(str(h.menu_plan()["device"]) == "kbd", "pad tip: a key turns them back to the keys'")
+	h.queue_free()
+	await process_frame
+	# Where it fits, and the page itself never stops fitting because of it.
+	var bad := PackedStringArray()
+	var shown := PackedStringArray()
+	for sz in [Vector2(1280, 720), Vector2(1280, 800), Vector2(1920, 1080), Vector2(1366, 768), Vector2(1024, 600)]:
+		var lay := UiLayout.new()
+		lay.compute(sz, false)
+		for mid in [false, true]:
+			var st := {"page": "modes", "tip": words, "mid_match": mid, "cfg": {}, "focus": 0, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "not_now": false, "version": "Version 0.1.7"}
+			var with_tip: Dictionary = UiMenu.rail_list_plan(sz, lay.s, 1.0, st)
+			var st2: Dictionary = st.duplicate()
+			st2["tip"] = ""
+			var without: Dictionary = UiMenu.rail_list_plan(sz, lay.s, 1.0, st2)
+			if bool(with_tip["fits"]) != bool(without["fits"]):
+				bad.append("%s mid %s" % [str(sz), str(mid)])
+			if PackedStringArray(with_tip["tip_lines"]).size() > 0:
+				shown.append("%dx%d%s" % [int(sz.x), int(sz.y), " mid" if mid else ""])
+	_ok(bad.is_empty() and shown.has("1280x800") and shown.has("1920x1080") and shown.has("1280x720"), "pad tip: it never changes whether the list fits, and is shown at 1280x720, 1280x800 and 1920x1080 (shown at %s; changed at %s)" % [str(shown), str(bad)])
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
+	UiData.set_feature("menus_rail", false)
+	UiData.set_feature("menu_modes", false)

@@ -1690,6 +1690,12 @@ func show_start_menu(mid_match: bool = false) -> void:
 	_menu_mid = mid_match
 	_menu_focus = 0
 	_menu_page = UiMenu.PAGE_MODES if _menu_modes_on() else ""
+	# With a controller plugged in the menu opens with its button hints, else the keys'; the first visit to the list of modes (only) says a controller feels best, unless one is plugged in.
+	_set_device = "pad" if _pads_connected() > 0 else "kbd"
+	_menu_tip = false
+	if _menu_page == UiMenu.PAGE_MODES and not bool(UiPrefs.get_value("pad_tip_seen", false)):
+		_menu_tip = _pads_connected() == 0
+		UiPrefs.set_value("pad_tip_seen", true)
 	_menu_version = _version_line(false)
 	_menu_t0 = _ut
 	_menu_seen = 0
@@ -1730,7 +1736,7 @@ func menu_plan() -> Dictionary:
 		_menu_prev = _menu_seen
 		_menu_seen = _menu_focus
 		_menu_bar_t0 = _ut
-	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed(), "device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _menu_t0, "prev": _menu_prev, "bar_since": _ut - _menu_bar_t0, "reduced": bool(opts["reduced_motion"]), "page": _menu_page, "version": _menu_version})
+	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"tip": UiData.t("prompt.pad_tip") if (_menu_tip and _menu_page == UiMenu.PAGE_MODES and _pads_connected() == 0) else "", "focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed(), "device": _set_device, "style": str(opts["glyph_style"]), "since": _ut - _menu_t0, "prev": _menu_prev, "bar_since": _ut - _menu_bar_t0, "reduced": bool(opts["reduced_motion"]), "page": _menu_page, "version": _menu_version})
 
 
 func _menu_rows() -> Array:
@@ -1782,6 +1788,8 @@ func _version_line(with_build: bool = false) -> String:
 
 ## Go to a page of the start menu with the lit row at `focus`; the lit bar does not slide across the change.
 func _menu_go(page: String, focus: int) -> void:
+	if page != UiMenu.PAGE_MODES:
+		_menu_tip = false   # the line is for the first visit: once the player goes on, it does not come back
 	_menu_page = page
 	_menu_focus = focus
 	_menu_seen = focus
@@ -2003,12 +2011,21 @@ func _menu_start() -> void:
 
 
 var _menu_via_pad := false   # the last press in the start menu came from a pad (a key clears it)
+var _menu_tip := false       # this visit to the list of modes shows the one line "a controller feels best" (the first visit only, remembered; never with a controller plugged in)
+
+
+## The start menu's button hints name the device last used (as the pause menu's and Settings' already do).
+func _menu_hint_device(d: String) -> void:
+	if _set_device != d:
+		_set_device = d
+		_menu_invalidate()
 
 
 func _menu_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		if event.pressed and not event.echo:
 			_menu_via_pad = false
+			_menu_hint_device("kbd")
 			match event.keycode:
 				KEY_UP, KEY_W:
 					menu_action("up")
@@ -2025,6 +2042,7 @@ func _menu_input(event: InputEvent) -> void:
 	elif event is InputEventJoypadButton:
 		if event.pressed:
 			_menu_via_pad = true
+			_menu_hint_device("pad")   # the button hints follow the device last used (a stick push arrives here as the d-pad)
 			match event.button_index:
 				JOY_BUTTON_DPAD_UP:
 					menu_action("up")   # wraps like Down does (A-UI-06): Up from the top is the last row, Down from the last is the first
