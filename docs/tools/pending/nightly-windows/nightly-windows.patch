@@ -1,0 +1,376 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 367dea6c..e72eb436 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -187,7 +187,7 @@ jobs:
+       - name: Scheduled flash reading verdict self-test (the take-down line of 3 on every reading, red read directly, a missing clip is never a pass)
+         run: node tools/flash/nightly-ci-selftest.mjs
+       - name: Nightly flash windows (the data file is whole and no window runs past a clip; the options the workflow reads)
+-        run: node tools/flash/nightly-windows-selftest.mjs && node tools/flash/nightly-windows.mjs --check
++        run: node tools/flash/nightly-windows-selftest.mjs && node tools/flash/nightly-windows.mjs --check && node tools/flash/window-check-selftest.mjs
+       - name: Four-readings self-test (a clip captured at two sizes and read at two scales, the worst counts, the AI-seed clips staged; Legal RL-209)
+         run: node tools/flash/readings-selftest.mjs
+       - name: Pixel run self-test (the real run-pixels.mjs against stand-in capture and analysis, four readings, the folders, the staged seed clips, --sizes, --capture-only)
+@@ -279,6 +279,9 @@ jobs:
+           path: ${{ runner.temp }}/flash
+       - name: Recount the register's log (every scenario of the required set, from all five sets)
+         run: node tools/flash/check-log.js "${RUNNER_TEMP}/flash"
++      - name: Each nightly window still holds the event it is there to read (the headless runs against tools/flash/nightly-windows.json)
++        if: always()
++        run: node tools/flash/window-check.mjs "${RUNNER_TEMP}/flash"
+ 
+   # The GDScript port against the JS reference sim's golden vectors, plus the render
+   # checks. The sim job above does not set GODOT, so `npm test --prefix sim` skips its
+diff --git a/docs/tools/flash-nightly.md b/docs/tools/flash-nightly.md
+index a2525db0..7295fdee 100644
+--- a/docs/tools/flash-nightly.md
++++ b/docs/tools/flash-nightly.md
+@@ -118,3 +118,13 @@ These are higher than Rendering's B-20 numbers (3.5 and 4.5). I have not compare
+ **The baseline records main's FAIL as it is** (4.5 / 0 / 6 / 4.5 and 5.5 / 0 / 7 / 5.5). The nightly judges "worse than recorded", so it is green on these clips while they read the same or better and red when one reads worse, is new or is not read. A fix that lowers a reading is noted as better; lowering the recorded value is by hand, with the EP's word. The values come from the hardware full reading, not from a scheduled night: the first scheduled nights read the window in software and may differ by a flash either way (signature's did), and then the EP decides whether to re-record.
+ 
+ **Not proven:** the cost of the window on a runner (640 skipped ticks at about 2.2 s is about 24 minutes, then 240 captured ticks at an unmeasured software rate; capMin 150 against a job limit of 300), and the first scheduled reading of these two clips.
++
++## The windows go stale, and the check that says so (2026-11-26)
++
++A window reads whatever is at its ticks. When the game changes, the moment it was chosen for moves, and a low reading then means nothing: from about 21 November the four clash windows held no clash and the two collapse windows no falling building, and the nightly stayed green.
++
++- **Each window now names what it `holds`** (`beam_outcome:CLASH`, `beam_outcome`, `building_fall`, `shot_hit`), and `tools/flash/flash_worst.gd` records the tick of each.
++- **`tools/flash/window-check.mjs`** (CI, the flash count job) fails when a window's counted part (after a clip's first 60 frames) no longer holds its event, and says at which ticks it does happen.
++- It says the event is there, not that the window is the clip's worst second. That is still a local full reading.
++- **The clash scene changed:** nothing for 90 ticks, then the signature held in cycles of 500, so beams meet twice (ticks 140 and 1140) and the first is past the uncounted start. The second meets in split screen, where no flare shows.
++- Re-measure the windows after any change that moves the matches, and re-record the baseline from nightly runs after that (by hand, with the EP's word).
+diff --git a/tools/flash/flash_worst.gd b/tools/flash/flash_worst.gd
+index 82150be6..3457e8c5 100644
+--- a/tools/flash/flash_worst.gd
++++ b/tools/flash/flash_worst.gd
+@@ -5,7 +5,7 @@ extends SceneTree
+ ##   mashcity    the same mash in the re-laid city: the fighters set down beside its tallest tower, the towers at their backs (Rendering, docs/rendering/lanes-camera-flash.md clip 1)
+ ##   signaturecity  the signature scene started beside the tallest tower of the re-laid city (Legal's list, RL-128)
+ ##   rushcity    P1 sprints along the front street past the towers and the crowd, turning every 150 ticks; the AI fights him (camera travel at speed over contrasty scenery)
+-##   clash       both human, ki kept full, both firing the signature together every 30 ticks, so beams meet
++##   clash       both human, ki kept full, both firing the signature together from range, again and again, so beams meet (_clash)
+ ##   signature   P1 human firing the signature on a cycle against the AI
+ ##   transform   AI against AI, the form made ready for both at fixed ticks three times (tier 1 to 4: the game never goes past 4), so the transformation plays through again and again
+ ##   collapse    AI against AI, with building collapses staged in the sim's own way (WorldStructures.explode through a row of towers, again and again)
+@@ -35,6 +35,7 @@ var slots_override: Array = []
+ var seed_override: Array = []
+ var held: Dictionary = {}        # key code -> true: what this tool has pressed, so a key is only sent when it changes
+ var events: Dictionary = {}      # event type (and beam_outcome:kind) -> count, for the run being played
++var marks: Dictionary = {}       # the ticks of the events a nightly window is there to hold (tools/flash/window-check.mjs): "beam_outcome:<kind>", "building_fall", "shot_hit", "sig"
+ var body_on: Array = [false, false]
+ var body_starts: Array = [[], []]   # per fighter, the ticks at which the body hit flash began (by the rule Rendering uses)
+ var failed: bool = false
+@@ -173,11 +174,17 @@ func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = [])
+ 	_release_all()
+ 	_claim_pads(ai)
+ 	events.clear()
++	marks.clear()
+ 	body_on = [false, false]
+ 	body_starts = [[], []]
+ 	var cb := func(evs: Array, _lines: Array):
+ 		for e in evs:
+ 			events[e.type] = int(events.get(e.type, 0)) + 1
++			var mark: String = "beam_outcome:%s" % str(e.kind) if e.type == "beam_outcome" else ("sig" if e.type == "attack" and str(e.kind) == "sig" else (str(e.type) if e.type in ["building_fall", "shot_hit"] else ""))
++			if mark != "":
++				if not marks.has(mark):
++					marks[mark] = []
++				marks[mark].append(host.ticks)
+ 			if e.type == "beam_outcome":
+ 				var k: String = "beam_outcome:%s" % str(e.kind)
+ 				events[k] = int(events.get(k, 0)) + 1
+@@ -211,7 +218,7 @@ func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = [])
+ 	var sm: Dictionary = fl.summary()
+ 	return {
+ 		"scenario": sc, "seed": seed, "slots": [str(host.S.fighters[0].id), str(host.S.fighters[1].id)], "reduced": reduced, "reduced_seen": reduced_seen, "reduce_flashing": rf_seen, "flash_calm": calm_seen, "ticks": host.ticks, "cap": sm["cap"],
+-		"rows": fl.log_rows(), "asked": int(sm["granted"]) + int(sm["refused"]), "summary": sm, "events": events.duplicate(),
++		"rows": fl.log_rows(), "asked": int(sm["granted"]) + int(sm["refused"]), "summary": sm, "events": events.duplicate(), "marks": marks.duplicate(true),
+ 		"proxy": {"body_hit": {"seconds": RenderLook.HIT_FLASH_S, "worst_per_fighter": [_worst_starts(body_starts[0]), _worst_starts(body_starts[1])], "worst_flashes_per_second": maxi(_worst_starts(body_starts[0]), _worst_starts(body_starts[1])), "starts": [body_starts[0].size(), body_starts[1].size()]}},
+ 	}
+ 
+@@ -284,6 +291,27 @@ static func _tap(t: int, gap: int, phase: int) -> bool:
+ 	return ((t + phase) % gap) < 2
+ 
+ 
++## The clash: both human, ki kept full, both firing the signature together from range, so beams meet more than once and inside the measured window. Nothing for the first 90 ticks (a clip's first 60 frames
++## count no change); then 380 ticks of RT held with B every 30, and 120 ticks let go, walking apart, so the next signature is a fresh press from range. Changed 2026-11-26: held from tick 0 and never let go, the
++## buttons gave one clash and then melee (the nightly's window held no clash). The same in tools/flash/flash_worst.gd and render/tools/flash_capture.gd (the drift check).
++func _clash(t: int, S: SimState) -> void:
++	for f in S.fighters:
++		f.ki = 100.0
++	var u: int = (t - 90) % 500
++	var on: bool = t >= 90 and u < 380
++	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
++	if t >= 90 and u >= 380 and absf(dx) < 900.0:
++		_stick(0, -signf(dx))
++		_stick(1, signf(dx))
++	else:
++		_walk(S, 1500.0)
++	# the signature is the power layer's B (arena layout: RT held, then B); a base B is the heavy since the three-strength brawl
++	_btn(0, "rt", on)
++	_btn(1, "rt", on)
++	_btn(0, "east", on and u % 30 >= 3 and u % 30 < 15)
++	_btn(1, "east", on and u % 30 >= 3 and u % 30 < 15)
++
++
+ func _walk(S: SimState, near: float) -> void:
+ 	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)   # b minus a: positive when fighter 1 is to the right
+ 	var far: bool = absf(dx) > near
+@@ -300,14 +328,7 @@ func _drive(sc: String, t: int, S: SimState) -> void:
+ 				_to_the_city(S)
+ 			_mash(t, S)
+ 		"clash":
+-			_walk(S, 1500.0)
+-			for f in S.fighters:
+-				f.ki = 100.0
+-			# the signature is the power layer's B (arena layout: RT held, then B); a base B is the heavy since the three-strength brawl
+-			_btn(0, "rt", true)
+-			_btn(1, "rt", true)
+-			_btn(0, "east", t % 30 < 12)
+-			_btn(1, "east", t % 30 < 12)
++			_clash(t, S)
+ 		"signature":
+ 			_signature(t, S)
+ 		"signaturecity":
+diff --git a/tools/flash/nightly-windows.json b/tools/flash/nightly-windows.json
+index 412814de..d1cd4f1b 100644
+--- a/tools/flash/nightly-windows.json
++++ b/tools/flash/nightly-windows.json
+@@ -1,65 +1,95 @@
+ {
+-  "_why": "The window each clip is read at in the runner's nightly (the EP's decision of 2026-11-14: a runner cannot read a whole clip, so each clip is read as a window at its worst moment, collapse at 60 ticks; the full reading stays a local run on Orb's PC). skip is run-pixels.mjs's --skip (ticks run without a picture first; the window starts at tick skip + 1). A clip with no entry is read from tick 1 for defaultTicks, the speed trial's way. 'from' says how the moment was found: an entry that has not been measured says so. tools/flash/nightly-windows.mjs --check reads this file. capMin is the clip's time cap in minutes (default defaultCapMin): the ticks skipped before a window cost time too, about 2.2 s a tick on a runner (run 43580079641: a skip of 950 plus 76 captured ticks used the 45 minutes), so a window far into a clip needs a longer cap than its captured ticks do. The analyser counts no change in the first 60 frames of a clip (its warm-up) and the two-second memory reading in the first 120, so a window needs more than 61 ticks, and about 120 ticks of lead-in before the moment it is meant to catch.",
++  "_why": "The window each clip is read at in the runner's nightly (the EP's decision of 2026-11-14: a runner cannot read a whole clip, so each clip is read as a window at its worst moment, collapse at 60 ticks; the full reading stays a local run on Orb's PC). skip is run-pixels.mjs's --skip (ticks run without a picture first; the window starts at tick skip + 1). A clip with no entry is read from tick 1 for defaultTicks, the speed trial's way. 'from' says how the moment was found: an entry that has not been measured says so. tools/flash/nightly-windows.mjs --check reads this file. capMin is the clip's time cap in minutes (default defaultCapMin): the ticks skipped before a window cost time too, about 2.2 s a tick on a runner (run 43580079641: a skip of 950 plus 76 captured ticks used the 45 minutes), so a window far into a clip needs a longer cap than its captured ticks do. The analyser counts no change in the first 60 frames of a clip (its warm-up) and the two-second memory reading in the first 120, so a window needs more than 61 ticks, and about 120 ticks of lead-in before the moment it is meant to catch. Each window names what it `holds`; tools/flash/window-check.mjs (in CI) fails when the headless run no longer has that event in the window's counted part (after a clip's first 60 frames).",
+   "defaultTicks": 120,
+   "clips": {
+     "collapse-normal": {
+-      "skip": 990,
+-      "ticks": 180,
++      "skip": 0,
++      "ticks": 300,
+       "capMin": 210,
+-      "from": "Measured 2026-11-14 (hardware, 960x540, f1f91f45): full clip PASS at primary 2, worst second events at ticks 1111, 1132, 1145, 1151; the window (180 ticks from 991, with the 120 ticks of lead the memory reading needs) read the same ticks, the same primary 2 and memory 2. Not measured on a runner: collapse costs 20 to 50 s a tick there plus about 2 s a skipped tick, so the cap is 210 minutes."
++      "holds": [
++        "building_fall"
++      ],
++      "from": "2026-11-26, game of main 4db9917b: buildings fall at ticks 93, 243 and 543 only; the window holds the first two and the full clip's worst second (local reading, hardware 960x540: window 1 / 0 / 1 / 1, the full clip 1). Replaces ticks 991 to 1170, which held no falling building."
+     },
+     "collapse-reduced": {
+-      "skip": 1340,
+-      "ticks": 160,
++      "skip": 0,
++      "ticks": 300,
+       "capMin": 210,
+-      "from": "Measured 2026-11-14 (hardware, 960x540, f1f91f45): full clip OVER our gate at primary 3 (memory 2.5), worst second events at ticks 1465 to 1499, the end of the clip (the worst moment may run on past tick 1500); the window (160 ticks from 1341) read the same ticks, primary 3 and memory 2.5. A window of 130 from 1371 read the same primary but a memory of 1: the memory reading ignores its first 120 frames. Not measured on a runner (cap 210 minutes)."
++      "holds": [
++        "building_fall"
++      ],
++      "from": "as collapse-normal (window 1 / 0 / 1 / 0.5, the full clip 1). Replaces ticks 1341 to 1500, which held no falling building."
+     },
+     "clash-normal": {
+-      "skip": 950,
+-      "ticks": 170,
++      "skip": 0,
++      "ticks": 240,
+       "capMin": 150,
+-      "from": "ticks 951 to 1120 (170): the full local reading of clash-normal (960x540, hardware, 2026-11-14, HEAD 97df40b8 export) has its worst second at ticks 1075 to 1113 and a two-second memory of 4; this window read the same ticks (one a tick off), the same primary 4.5 and a memory of 4.5. A window from tick 1011 (125 ticks) read the same worst second but a memory of 0.5, because the memory reading ignores its first 120 frames: so the window starts at 951. Cost on a runner: about 35 minutes of skipped ticks plus about 23 of captured ones. Run 43585295274 (software rendering on a runner, cap 90 min) read this window in 5173 s (86 min): primary 4.5, two-second memory 4.5, the same as the hardware full reading; the cap is now 150 because three other clash windows of the same run timed out at 90."
++      "holds": [
++        "beam_outcome:CLASH"
++      ],
++      "from": "2026-11-26, game of main 4db9917b with the changed clash scene (nothing for 90 ticks, so the clash at tick 140 is past the uncounted first 60). The window is the first beam clash, on one screen: local reading (hardware, 960x540) 1 / 0 / 1 / 1, normal and reduced. NOT the clip's worst second: the full clip reads 2.5 at ticks 1454 to 1495 (a melee in split screen), which the nightly does not read. The second clash (tick 1140) happens in split screen with no flare. Replaces ticks 951 to 1120, which held no clash from about 11-21 on."
+     },
+     "clash-reduced": {
+-      "skip": 950,
+-      "ticks": 170,
++      "skip": 0,
++      "ticks": 240,
+       "capMin": 150,
+-      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
++      "holds": [
++        "beam_outcome:CLASH"
++      ],
++      "from": "as clash-normal (read locally in both modes)"
+     },
+     "clash-night-normal": {
+-      "skip": 950,
+-      "ticks": 170,
++      "skip": 0,
++      "ticks": 240,
+       "capMin": 150,
+-      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
++      "holds": [
++        "beam_outcome:CLASH"
++      ],
++      "from": "as clash-normal (same scene and seed; the night sky not read locally)"
+     },
+     "clash-night-reduced": {
+-      "skip": 950,
+-      "ticks": 170,
++      "skip": 0,
++      "ticks": 240,
+       "capMin": 150,
+-      "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
++      "holds": [
++        "beam_outcome:CLASH"
++      ],
++      "from": "as clash-normal (same scene and seed; the night sky not read locally)"
+     },
+     "signature-normal": {
+       "skip": 0,
+       "ticks": 180,
+       "capMin": 100,
++      "holds": [
++        "beam_outcome"
++      ],
+       "from": "Measured 2026-11-14 (hardware, 960x540, export of f1f91f45): the full clip reads its worst second at ticks 76 to 129 (events 76, 82, 110, 114, 125, 127, 129), so the window starts at tick 1 and runs 180 ticks. The reading is on the line of 3 and moves by half a flash to one flash from run to run: the full clip read 3.5 and then 3, the window read 3, 2.5 and 2.5 (the reduced window matched its full reading exactly). Treat a signature window as a tripwire within one flash of the line, not as the clip's number."
+     },
+     "signature-reduced": {
+       "skip": 0,
+       "ticks": 180,
+       "capMin": 100,
++      "holds": [
++        "beam_outcome"
++      ],
+       "from": "Measured 2026-11-14 (hardware, 960x540, export of f1f91f45): the full clip reads its worst second at ticks 78 to 125 (events 78, 81, 82, 86, 112, 115, 125), so the window starts at tick 1 and runs 180 ticks. The reading is on the line of 3 and moves by half a flash to one flash from run to run: the full clip read 3.5 and then 3, the window read 3, 2.5 and 2.5 (the reduced window matched its full reading exactly). Treat a signature window as a tripwire within one flash of the line, not as the clip's number."
+     },
+     "rushcity-normal": {
+       "skip": 640,
+       "ticks": 240,
+       "capMin": 150,
++      "holds": [
++        "shot_hit"
++      ],
+       "from": "Measured 2026-11-21 (hardware, 960x540, export of main d168a518, nightly page words, machine load 21 to 56 percent, 12 frames a second): the full clip FAILS at primary 4.5, area-15% 6, two-second memory 4.5, red 0; the worst second is ticks 761 to 815 (events 761, 785, 787, 789, 796, 799, 807, 810, 815). The window of 240 ticks from 641 (120 ticks of lead-in for the memory) picks the same events (121 to 175 of the window) and the same four readings, 4.5 / 0 / 6 / 4.5. Cost on a runner not measured: 640 skipped ticks at about 2.2 s is about 24 minutes, then 240 captured ticks; capMin 150 allows about 2 minutes a captured tick."
+     },
+     "rushcity-reduced": {
+       "skip": 640,
+       "ticks": 240,
+       "capMin": 150,
++      "holds": [
++        "shot_hit"
++      ],
+       "from": "Measured 2026-11-21 (same export, same machine and words): the full clip FAILS at primary 5.5, area-15% 7, two-second memory 5.5, red 0; the worst second is ticks 785 to 841 (events 785, 787, 789, 796, 799, 807, 809, 815, 825, 839, 841). The window of 240 ticks from 641 picks the same events and the same readings, 5.5 / 0 / 7 / 5.5. Same cost note as rushcity-normal."
+     }
+   },
+diff --git a/tools/flash/selftest.js b/tools/flash/selftest.js
+index bc563c01..e3e6dd44 100644
+--- a/tools/flash/selftest.js
++++ b/tools/flash/selftest.js
+@@ -277,7 +277,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
+     // the scripted presses: the same buttons on the same ticks in both (a layout change that moves a button is made in both; 2026-10-11 the signature became RT + B and the web clips played no signature)
+     const presses = (txt) => {
+       const m = txt.match(/func _?drive\(sc: String[\s\S]*?\n(?=func |## )/);
+-      return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trim()).filter((l) => /^(_btn|_walk|_mash|_signature|_rush|_ready_forms|_stage_collapse|_to_the_city|for f in S\.fighters|f\.ki|S\.fighters\[)/.test(l)) : null;
++      return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trim()).filter((l) => /^(_clash|_btn|_walk|_mash|_signature|_rush|_ready_forms|_stage_collapse|_to_the_city|for f in S\.fighters|f\.ki|S\.fighters\[)/.test(l)) : null;
+     };
+     const pm = presses(mine), pt = presses(theirs);
+     check("Rendering's capture hook presses the same buttons on the same ticks as flash_worst.gd", !!pm && !!pt && JSON.stringify(pm) === JSON.stringify(pt), JSON.stringify([pm && pm.length, pt && pt.length]));
+@@ -292,7 +292,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
+     check('the launch hold switch (hold=1 on the web hook, --hold on flash_worst.gd) sets the same rule', /"hold"/.test(theirs) && /set_launch_hold\(true\)/.test(theirs) && /--hold/.test(mine) && /set_launch_hold\(true\)/.test(mine));
+     check('the merge-zoom switch (mergezoom=1 on the web hook, --merge-zoom on flash_worst.gd) sets the same rule', theirs.includes('"mergezoom"') && theirs.includes('set_merge_zoom_limit(true)') && /--merge-zoom/.test(mine) && mine.includes('set_merge_zoom_limit(true)'));
+     check('the hook reads its page switches from location.search itself (main.parse_args keeps only URL_ARGS, so budget=1 and hold=1 never reached main.args) and reports what it applied', theirs.includes('_page_flag("budget")') && theirs.includes('_page_flag("hold")') && theirs.includes('location.search') && theirs.includes('__flashcap.switches'));
+-    for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms', '_mash', '_signature', '_rush', '_mash_dummy', '_ring', '_launch_ai', '_blast_dummy', '_walk_in', '_apply_variant']) {
++    for (const name of ['_clash', '_to_the_city', '_stage_collapse', '_ready_forms', '_mash', '_signature', '_rush', '_mash_dummy', '_ring', '_launch_ai', '_blast_dummy', '_walk_in', '_apply_variant']) {
+       const a = fn(mine, name), b = fn(theirs, name);
+       check(`Rendering's capture hook stages the same collapse ${name} as flash_worst.gd`, !!a && !!b && JSON.stringify(a) === JSON.stringify(b), JSON.stringify([a && a.length, b && b.length]));
+     }
+diff --git a/tools/flash/window-check-selftest.mjs b/tools/flash/window-check-selftest.mjs
+new file mode 100644
+index 00000000..c41d552c
+--- /dev/null
++++ b/tools/flash/window-check-selftest.mjs
+@@ -0,0 +1,26 @@
++// Self-test of tools/flash/window-check.mjs: a window that holds passes; the faults it exists for are found; the real windows file names what each clip holds.   node tools/flash/window-check-selftest.mjs
++import { readFileSync } from 'node:fs';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { runFileOf, ticksOf, windowProblems } from './window-check.mjs';
++
++const HERE = dirname(fileURLToPath(import.meta.url));
++let ran = 0, failed = 0;
++const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
++const run = { marks: { 'beam_outcome:CLASH': [140, 1140], building_fall: [93, 93, 543], shot_hit: [760] } };
++const w = { skip: 1010, ticks: 240, holds: ['beam_outcome:CLASH'] };
++check('a window with the event in its counted part holds', windowProblems('clash-normal', w, run).length === 0);
++check('the fault of the clash nights: the window has no clash, and the ticks where it does happen are said', /no beam_outcome:CLASH in the counted part .*ticks 1011 to 1120.*140, 1140/.test(windowProblems('clash-normal', { skip: 950, ticks: 170, holds: ['beam_outcome:CLASH'] }, run).join()));
++check('an event inside the window but within its first 60 frames does not count', windowProblems('x-normal', { skip: 1100, ticks: 200, holds: ['beam_outcome:CLASH'] }, run).length === 1 && windowProblems('x-normal', { skip: 1079, ticks: 200, holds: ['beam_outcome:CLASH'] }, run).length === 0);
++check('every named event is asked for', windowProblems('x-normal', { skip: 0, ticks: 200, holds: ['building_fall', 'shot_hit'] }, run).length === 1);
++check('"beam_outcome" takes any outcome and not another name that starts alike', ticksOf({ 'beam_outcome:HIT': [95], beam_outcomes: [1] }, 'beam_outcome').join() === '95');
++check('no holds, no run file and a run with no marks are failures', [windowProblems('a-normal', { skip: 0, ticks: 100 }, run), windowProblems('a-normal', w, null), windowProblems('a-normal', w, {})].every((p) => p.length === 1));
++const sources = JSON.parse(readFileSync(join(HERE, 'sources.json'), 'utf8'));
++check('a night clip reads its base scene\'s run', runFileOf('clash-night-reduced', sources) === 'flash-clash-reduced.json' && runFileOf('collapse-normal', sources) === 'flash-collapse-normal.json' && runFileOf('nomode', sources) === null);
++const windows = JSON.parse(readFileSync(join(HERE, 'nightly-windows.json'), 'utf8')).clips;
++check('every nightly window names what it holds and is longer than the uncounted part', Object.entries(windows).every(([, x]) => Array.isArray(x.holds) && x.holds.length && x.ticks > 61), Object.entries(windows).filter(([, x]) => !x.holds).map(([k]) => k).join());
++check('the clash windows hold a clash and the collapse windows a fall', ['clash-normal', 'clash-reduced', 'clash-night-normal', 'clash-night-reduced'].every((k) => windows[k].holds.includes('beam_outcome:CLASH')) && ['collapse-normal', 'collapse-reduced'].every((k) => windows[k].holds.includes('building_fall')));
++const gd = readFileSync(join(HERE, 'flash_worst.gd'), 'utf8');
++check('flash_worst.gd records the marks and writes them', gd.includes('marks.clear()') && gd.includes('"marks": marks.duplicate(true)') && ['"building_fall"', '"shot_hit"', '"beam_outcome:%s"', '"sig"'].every((x) => gd.includes(x)));
++console.log(failed ? `window check self-test FAILED: ${failed} of ${ran}` : `window check self-test ok: ${ran} checks`);
++process.exit(failed ? 1 : 0);
+diff --git a/tools/flash/window-check.mjs b/tools/flash/window-check.mjs
+new file mode 100644
+index 00000000..29211e08
+--- /dev/null
++++ b/tools/flash/window-check.mjs
+@@ -0,0 +1,64 @@
++// Does each nightly window still hold the thing it is there to read? (Tools, 2026-11-26; the EP's yes after the clash windows read no clash for five nights.)
++//   node tools/flash/window-check.mjs <folder of flash_worst.gd run files> [--windows <file>]
++// The nightly reads each clip only in a window of ticks (tools/flash/nightly-windows.json). When the game changes, the moment moves and the window goes on reading whatever is there: a low reading then means
++// nothing. flash_worst.gd records the tick of each such event ("marks"); this reads them. Each window names what it `holds` ("beam_outcome:CLASH", "beam_outcome" for any outcome, "building_fall",
++// "shot_hit", "sig"), and each named event must happen in the part of the window that counts: after the clip's first 60 frames, which count no change (wcag.js H). A missing run file, a window that names
++// nothing and a run with no marks are failures, never passes. It reads the headless run, not the pixels: it says the event is there, not that the window is its worst moment (that is a local full reading).
++// Exit 0 every window holds, 1 one does not (each is named), 2 usage. Node built-ins only.
++import { existsSync, readFileSync } from 'node:fs';
++import { dirname, join, resolve } from 'node:path';
++import { fileURLToPath, pathToFileURL } from 'node:url';
++
++const HERE = dirname(fileURLToPath(import.meta.url));
++export const WARMUP = 60;   // wcag.js H: the first 60 frames of a clip count no change
++
++/** The headless run file of a nightly clip id: { file } (a night clip reads its base scene's run). Pure. */
++export function runFileOf(id, sources) {
++  const m = /^(.*)-(normal|reduced)$/.exec(id);
++  if (!m) return null;
++  const night = (sources.nightClips || []).find((n) => n.id === m[1]);
++  return `flash-${night ? night.base : m[1]}-${m[2]}.json`;
++}
++
++/** The ticks of a held event in a run's marks; "beam_outcome" takes every outcome. Pure. */
++export function ticksOf(marks, held) {
++  return Object.entries(marks || {}).filter(([k]) => k === held || k.startsWith(held + ':')).flatMap(([, v]) => v).sort((a, b) => a - b);
++}
++
++/** Problems with one clip's window against its run (empty when it holds). `w` = the window's entry, `run` the run file's content or null. Pure. */
++export function windowProblems(id, w, run) {
++  if (!Array.isArray(w.holds) || !w.holds.length) return [`${id}: the window names nothing it holds ("holds" in tools/flash/nightly-windows.json)`];
++  if (!run) return [`${id}: the headless run file is missing: nothing was read`];
++  if (!run.marks) return [`${id}: the run has no event marks (an older flash_worst.gd)`];
++  const from = w.skip + WARMUP + 1, to = w.skip + w.ticks;
++  const out = [];
++  for (const held of w.holds) {
++    const all = ticksOf(run.marks, held);
++    if (!all.some((t) => t >= from && t <= to)) {
++      const uniq = [...new Set(all)];
++      out.push(`${id}: no ${held} in the counted part of its window (ticks ${from} to ${to}); in the whole run it happens at ${uniq.length ? uniq.slice(0, 12).join(', ') + (uniq.length > 12 ? ', ...' : '') : 'no tick at all'}`);
++    }
++  }
++  return out;
++}
++
++if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
++  const a = process.argv.slice(2);
++  const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
++  const folder = a.find((x, i) => !x.startsWith('--') && a[i - 1] !== '--windows');
++  if (!folder) { console.error('usage: node tools/flash/window-check.mjs <folder of flash_worst run files> [--windows <file>]'); process.exit(2); }
++  const windows = JSON.parse(readFileSync(resolve(opt('--windows', join(HERE, 'nightly-windows.json'))), 'utf8')).clips;
++  const sources = JSON.parse(readFileSync(join(HERE, 'sources.json'), 'utf8'));
++  let bad = 0;
++  for (const [id, w] of Object.entries(windows)) {
++    const f = runFileOf(id, sources);
++    const path = f ? join(resolve(folder), f) : null;
++    const run = path && existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : null;
++    const p = windowProblems(id, w, run);
++    for (const x of p) console.log('FAIL ' + x);
++    if (!p.length) console.log(`ok   ${id}: ${w.holds.join(', ')} in ticks ${w.skip + WARMUP + 1} to ${w.skip + w.ticks}`);
++    bad += p.length ? 1 : 0;
++  }
++  console.log(bad ? `window check FAILED: ${bad} of ${Object.keys(windows).length} nightly windows do not hold what they are there to read` : `window check ok: all ${Object.keys(windows).length} nightly windows hold their event`);
++  process.exit(bad ? 1 : 0);
++}
