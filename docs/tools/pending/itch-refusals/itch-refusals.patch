@@ -1,0 +1,280 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index abdc192..a4abd6a 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -180,6 +180,8 @@ jobs:
+         run: node tools/flash/compare-frames-selftest.mjs
+       - name: Desktop package self-test (the README and notices of a download, the Reduce flashing lock edit, the package check)
+         run: node tools/desktop-package-selftest.mjs
++      - name: 'Page upload refusals self-test (the checks only: no approval, no record, a failing package, CI; the script can send nothing)'
++        run: node tools/store/itch-push-selftest.mjs
+       - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
+         run: node tools/flash/nightly-selftest.mjs
+       - name: Scheduled flash reading verdict self-test (the take-down line of 3 on every reading, red read directly, a missing clip is never a pass)
+diff --git a/docs/tools/store-page-checklist.md b/docs/tools/store-page-checklist.md
+index e6eb0f9..1f9ec7f 100644
+--- a/docs/tools/store-page-checklist.md
++++ b/docs/tools/store-page-checklist.md
+@@ -61,7 +61,9 @@ For Alpha 1 the only page is **the restricted, key-only itch.io page** that Lega
+ - **Settings that stay off (RL-272 (b)):** comments, ratings, the community tab, the devlog, any public download or "who downloaded" display, any link to the report channel. Checked with a logged-out browser and on the dashboard.
+ - **Legal reads the finished page** (store-copy-screen rules: franchise lookalikes, "tested", photosensitivity words, the AI line, the account line) **before the first key is sent**; the read is saved as a gate row under `docs/legal/runs/<commit8>/` (RL-272 (c)). Tools runs `node tools/content-screen.mjs` over the copy kept in the repository.
+ 
+-## 5. The upload script (planned; **not written** until Orb says yes to the page)
++## 5. The upload script (**the refusals are written; the upload is not**, until Orb says yes to the page)
++
++**Built (2026-11-25), refusals only:** `node tools/store/itch-push.mjs --dir <folder with the two archives> --builds-yes <date> --page-yes <date>`. It sends nothing, runs no upload tool and refuses `--push`. The approval files are read from the last commit, each with its own typed date; the checksums must be in a committed record under `docs/tools/runs/<commit>/`; each archive must pass `verify --locked --testers`; the page is named by one line `account/page` in the git-ignored `.private/store/itch-target.txt`, so the account name stays off the repository. `--rollback` takes an earlier version's archives. The bullets below are the full plan.
+ 
+ `tools/store/itch-push.mjs`, run by Orb on Orb's PC with itch.io's own command-line tool, [butler](https://itch.io/docs/butler/pushing) (installed by Orb; the API key is in Orb's environment and never in a file, a log or the repository).
+ 
+diff --git a/tools/store/itch-push-selftest.mjs b/tools/store/itch-push-selftest.mjs
+new file mode 100644
+index 0000000..f7e77dc
+--- /dev/null
++++ b/tools/store/itch-push-selftest.mjs
+@@ -0,0 +1,80 @@
++// Self-test of tools/store/itch-push.mjs: every refusal with made-up approval files, archives and records, the one clean dry run, and a guard that the script cannot send anything. Nothing contacts itch.
++//   node tools/store/itch-push-selftest.mjs
++import { createHash } from 'node:crypto';
++import { spawnSync } from 'node:child_process';
++import { readFileSync } from 'node:fs';
++import { join } from 'node:path';
++import { APPROVALS, ARCHIVES, approvalProblems, ciProblem, judge, readTarget, versionProblems } from './itch-push.mjs';
++
++let ran = 0, failed = 0;
++const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
++const NL = String.fromCharCode(10);
++const lines = (...l) => l.join(NL) + NL;
++const has = (list, re) => list.some((m) => re.test(m));
++
++const pageYes = lines('date: 2026-12-10', 'scope: the restricted, key-only itch.io page under the working title, for named adult outside testers, free, no promotion', 'recorded-by: Executive Producer, on Orb\'s word', 'ends: 30 days after', 'conditions: RL-261');
++const buildsYes = lines('date: 2026-12-08', 'scope: desktop test builds (Windows and Linux) for named outside testers, through a private download page only', 'recorded-by: Executive Producer, on Orb\'s word');
++const today = '2026-12-12';
++check('an approval in Legal\'s form passes: the page\'s own scope line and the builds\'', approvalProblems('page', pageYes, '2026-12-10', today).length === 0 && approvalProblems('builds', buildsYes, '2026-12-08', today).length === 0, JSON.stringify(approvalProblems('page', pageYes, '2026-12-10', today)));
++check('the page scope may also read as RL-272 names it', approvalProblems('page', pageYes.replace('restricted, key-only itch.io page', 'restricted itch.io page'), '2026-12-10', today).length === 0);
++check('a file that is not committed is not a yes', has(approvalProblems('page', null, '2026-12-10', today), /no committed docs\/ep\/approvals\/restricted-itch-page\.txt/));
++check('neither file approves the other', has(approvalProblems('page', buildsYes, '2026-12-08', today), /does not name the restricted itch\.io page/) && has(approvalProblems('builds', pageYes, '2026-12-10', today), /does not name desktop test builds/));
++check('a typed date that is not the recorded one, or no typed date, is refused', has(approvalProblems('builds', buildsYes, '2026-12-09', today), /is not the one typed/) && has(approvalProblems('builds', buildsYes, undefined, today), /--builds-yes must be the date/));
++check('a yes 31 days old or dated tomorrow is refused; 30 days old passes', has(approvalProblems('builds', buildsYes, '2026-12-08', '2027-01-08'), /31 days old/) && has(approvalProblems('builds', buildsYes, '2026-12-08', '2026-12-07'), /-1 days old/) && approvalProblems('builds', buildsYes, '2026-12-08', '2027-01-07').length === 0);
++check('no recorded-by line, or an empty one, is refused', has(approvalProblems('page', pageYes.replace(/recorded-by:.*/, 'recorded-by:'), '2026-12-10', today), /no recorded-by/));
++check('CI is refused, either variable', /CI/.test(ciProblem({ GITHUB_ACTIONS: 'true' })) && /CI/.test(ciProblem({ CI: '1' })) && ciProblem({}) === null);
++check('the page name: one line account/page', readTarget('some-one/orb-page' + NL).target === 'some-one/orb-page' && /not named/.test(readTarget(null).problem) && ['a/b:windows', 'https://x.itch.io/y', 'a/b' + NL + 'c/d', 'justone', ''].every((x) => !!readTarget(x).problem));
++
++const log = lines('# Changelog', '', '## 0.1.8 (2026-12-09, abcdef12)', '', 'For players', 'A faster start.', '', 'For the team', '- x', '', '## 0.1.7 (2026-12-01, 1234abcd)', '', 'For players', 'First test build.', '', 'For the team', '- y');
++const info = (v = '0.1.8', commit = 'abcdef1') => ({ commit, version: v });
++const both = (a, b = a) => ({ windows: a, linux: b });
++check('versions: the top entry with its players\' line passes', versionProblems(both(info()), log).length === 0, JSON.stringify(versionProblems(both(info()), log)));
++check('versions: two commits, two versions, an older version, no players\' line and no entry are refused', has(versionProblems(both(info(), info('0.1.8', 'fffffff')), log), /different commits/) && has(versionProblems(both(info(), info('0.1.7')), log), /same version/) && has(versionProblems(both(info('0.1.7')), log), /top entry is 0\.1\.8/) && has(versionProblems(both(info()), log.replace('A faster start.', '(to be written: plain words, what a player sees that is new)')), /no line for players/) && has(versionProblems(both(info()), '# Changelog'), /no entry/));
++check('versions: --rollback takes an earlier entry and refuses the newest and an unknown one', versionProblems(both(info('0.1.7')), log, { rollback: true }).length === 0 && has(versionProblems(both(info()), log, { rollback: true }), /newest version/) && has(versionProblems(both(info('0.0.9')), log, { rollback: true }), /no entry for version 0\.0\.9/));
++
++// the whole judgement, with every way out replaced
++const bytes = { windows: Buffer.from('a zip'), linux: Buffer.from('a tar') };
++const sha = (b) => createHash('sha256').update(b).digest('hex');
++const world = (over = {}) => ({
++  env: {}, today,
++  committed: (p) => ({ [APPROVALS.page.file]: pageYes, [APPROVALS.builds.file]: buildsYes })[p] ?? null,
++  targetText: 'some-one/orb-page', changelog: log,
++  archive: (f) => (f.endsWith('.zip') ? bytes.windows : bytes.linux),
++  recorded: (s, c) => c === 'abcdef1' && (s === sha(bytes.windows) || s === sha(bytes.linux)),
++  unpack: (c) => ({ dir: c, info: info() }),
++  verify: () => [],
++  ...over,
++});
++const opts = (over = {}) => ({ dir: 'x', pageYes: '2026-12-10', buildsYes: '2026-12-08', ...over });
++const J = (o = {}, w = {}) => judge(opts(o), world(w));
++const clean = J();
++check('all holding: no problem, and the plan names both channels, the sums and the version', clean.problems.length === 0 && clean.plan.length === 2 && clean.plan[0].includes('some-one/orb-page:windows as version 0.1.8') && clean.plan[1].includes(sha(bytes.linux)) && clean.plan[1].includes(':linux'), JSON.stringify(clean));
++check('in CI: the one refusal, and nothing else is read', (() => { const r = J({}, { env: { GITHUB_ACTIONS: 'true' }, committed: () => { throw new Error('read'); } }); return r.problems.length === 1 && /CI/.test(r.problems[0]) && r.plan.length === 0; })());
++check('--push is refused even with everything else holding, and plans nothing', (() => { const r = J({ push: true }); return r.problems.length === 1 && /not written/.test(r.problems[0]) && r.plan.length === 0; })());
++check('without either approval file: each is named', (() => { const r = J({}, { committed: () => null }); return has(r.problems, /restricted-itch-page\.txt/) && has(r.problems, /desktop-test-builds\.txt/) && r.plan.length === 0; })());
++check('with one approval only, the other still refuses (RL-272)', (() => { const only = (k) => J({}, { committed: (p) => (p === APPROVALS[k].file ? (k === 'page' ? pageYes : buildsYes) : null) }); return only('page').problems.length === 1 && has(only('page').problems, /desktop-test-builds/) && only('builds').problems.length === 1 && has(only('builds').problems, /restricted-itch-page/); })());
++check('an archive that is missing, does not unpack, is not recorded or fails the package check is refused', has(J({}, { archive: (f) => (f.endsWith('.zip') ? null : bytes.linux) }).problems, /windows-x86_64\.zip is not in the folder/) && has(J({}, { unpack: () => ({ problem: 'does not unpack' }) }).problems, /does not unpack/) && has(J({}, { recorded: () => false }).problems, /in no committed record/) && has(J({}, { verify: () => ['desktop package FAILED (windows): README.txt still holds the report-channel placeholder'] }).problems, /report-channel placeholder/));
++check('no --dir and no page name are refused', has(J({ dir: null }).problems, /no --dir/) && has(J({}, { targetText: null }).problems, /not named/));
++check('the two archive names are the workflow\'s', (() => { const wf = readFileSync(join(import.meta.dirname, '..', '..', '.github', 'workflows', 'desktop-builds.yml'), 'utf8'); return Object.values(ARCHIVES).every((n) => wf.includes(n)); })());
++
++// it cannot send anything: no network module, no upload tool, and the only programs it starts are git, tar, unzip and node
++{
++  const src = readFileSync(join(import.meta.dirname, 'itch-push.mjs'), 'utf8');
++  const code = src.split(NL).filter((l) => !l.trim().startsWith('//')).join(NL);
++  const modules = [...code.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
++  check('the script imports no network module', modules.every((m) => !/^(node:)?(http|https|http2|net|tls|dgram|dns)$/.test(m)) && !/\bfetch\s*\(|\bimport\s*\(|\brequire\s*\(|WebSocket/.test(code), modules.join());
++  const started = [...code.matchAll(/(?<![.A-Za-z])(?:spawnSync|execFileSync|spawn|exec|execFile|execSync)\(([^,()]+(?:\([^()]*\))?)/g)].map((m) => m[1].trim());
++  check('it starts only git, tar, unzip and node, and never the upload tool', started.length > 0 && started.every((x) => ["'git'", 'winTar', "'unzip'", "'tar'", 'process.execPath'].includes(x)) && !/butler/i.test(code), started.join(' | '));
++}
++// the command itself, in this repository: refused (the approvals are not recorded), and refused in CI
++{
++  const cli = join(import.meta.dirname, 'itch-push.mjs');
++  const env = { ...process.env }; delete env.CI; delete env.GITHUB_ACTIONS;
++  const r = spawnSync(process.execPath, [cli, '--dir', join(import.meta.dirname, 'no-such-folder'), '--builds-yes', '2026-12-08', '--page-yes', '2026-12-10'], { encoding: 'utf8', env });
++  check('the command exits 1 on a missing folder and says nothing was sent', r.status === 1 && /Nothing was sent/.test(r.stderr) && /is not in the folder/.test(r.stderr), r.stderr);
++  const c = spawnSync(process.execPath, [cli, '--dir', '.'], { encoding: 'utf8', env: { ...env, GITHUB_ACTIONS: 'true' } });
++  check('the command exits 1 in CI', c.status === 1 && /running in CI/.test(c.stderr), c.stderr);
++  check('an unknown word is a usage error', spawnSync(process.execPath, [cli, '--yes-really'], { encoding: 'utf8', env }).status === 2 && spawnSync(process.execPath, [cli], { encoding: 'utf8', env }).status === 2);
++}
++console.log(failed ? `itch-push self-test FAILED: ${failed} of ${ran}` : `itch-push self-test ok: ${ran} checks`);
++process.exit(failed ? 1 : 0);
+diff --git a/tools/store/itch-push.mjs b/tools/store/itch-push.mjs
+new file mode 100644
+index 0000000..5975956
+--- /dev/null
++++ b/tools/store/itch-push.mjs
+@@ -0,0 +1,160 @@
++// The upload to the restricted, key-only itch.io page: THE REFUSALS ONLY (Tools, 2026-11-25; A2 job 4; docs/tools/store-page-checklist.md section 5; Legal RL-261, RL-262, RL-272).
++// This script sends nothing. It runs no upload tool and opens no connection: it answers "may these two files go up, and where would they go?". The upload itself is not written: `--push` is refused until the
++// page is approved (the EP). The upload is Orb's, by hand, on Orb's PC; it never runs in CI.
++//
++//   node tools/store/itch-push.mjs --dir <folder> --builds-yes <date> --page-yes <date> [--target-file <file>] [--rollback]
++//
++// <folder> holds orb-combat-ex-windows-x86_64.zip and orb-combat-ex-linux-x86_64.tar.gz of one commit. It refuses unless ALL of:
++//   - it is not running in CI;
++//   - both approval files are COMMITTED (read from HEAD, so a file written on the day and not committed is not a yes): docs/ep/approvals/restricted-itch-page.txt (a scope line naming the restricted itch.io page)
++//     and docs/ep/approvals/desktop-test-builds.txt (a scope line naming desktop test builds), each with the date typed here, 0 to 30 days old, and a recorded-by line. Neither approves the other (RL-272);
++//   - each archive's SHA-256 is in a committed record under docs/tools/runs/<commit>/;
++//   - each archive unpacks and passes `desktop-package.mjs verify --locked --testers` (the testers' words, a filled report channel, Reduce flashing locked, the testers' menu, no net/);
++//   - both name the same commit and version, and the version is the changelog's top entry with its line for players written (--rollback: any earlier entry, pushed as "<version>-rollback");
++//   - the page is named: one line "account/page" in the git-ignored .private/store/itch-target.txt. The account name stays off the repository. Two channels only: windows and linux.
++// Exit 0: every check holds (a dry run; nothing was sent). 1: refused, every reason printed. 2: usage. Node built-ins, git, the system's tar or unzip.
++import { createHash } from 'node:crypto';
++import { execFileSync, spawnSync } from 'node:child_process';
++import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join, resolve } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { entriesOf, PLACEHOLDER } from '../version.mjs';
++
++const HERE = dirname(fileURLToPath(import.meta.url));
++const REPO = resolve(HERE, '..', '..');
++export const ARCHIVES = { windows: 'orb-combat-ex-windows-x86_64.zip', linux: 'orb-combat-ex-linux-x86_64.tar.gz' };
++export const CHANNELS = ['windows', 'linux'];
++export const TARGET_FILE = '.private/store/itch-target.txt';
++export const APPROVALS = {
++  page: { file: 'docs/ep/approvals/restricted-itch-page.txt', scope: /restricted(, key-only,?)? itch\.io page/i, what: 'the restricted itch.io page', option: '--page-yes' },   // RL-272 asks for "restricted itch.io page"; its own scope line says "restricted, key-only itch.io page": both read
++  builds: { file: 'docs/ep/approvals/desktop-test-builds.txt', scope: /desktop test builds/i, what: 'desktop test builds', option: '--builds-yes' },
++};
++const MAX_AGE_DAYS = 30;
++
++/** Why CI refuses, or null. Pure. */
++export function ciProblem(env) {
++  return env.GITHUB_ACTIONS || env.CI ? 'this is running in CI: no workflow pushes to itch.io (RL-262); the upload is Orb\'s, by hand' : null;
++}
++
++/** Problems with one approval file's committed text (null: the file is not committed). `typed` is the date given on the command line, `today` yyyy-mm-dd. Pure. */
++export function approvalProblems(kind, text, typed, today) {
++  const a = APPROVALS[kind];
++  if (text === null || text === undefined) return [`there is no committed ${a.file}: Orb's recorded yes to ${a.what} is missing`];
++  const out = [];
++  const line = (k) => { const m = new RegExp(`^${k}:[ \\t]*(.*)$`, 'm').exec(String(text).split('\r').join('')); return m ? m[1].trim() : null; };
++  const date = line('date');
++  if (!typed || !/^\d{4}-\d{2}-\d{2}$/.test(typed)) out.push(`${a.option} must be the date (yyyy-mm-dd) of Orb's yes to ${a.what}`);
++  else if (date !== typed) out.push(`${a.file}: its date (${date || 'none'}) is not the one typed with ${a.option} (${typed})`);
++  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) out.push(`${a.file} has no "date: yyyy-mm-dd" line`);
++  else {
++    const age = Math.round((Date.parse(today) - Date.parse(date)) / 86400000);
++    if (age < 0 || age > MAX_AGE_DAYS) out.push(`${a.file}: the yes of ${date} is ${age} days old (0 to ${MAX_AGE_DAYS} allowed): ask Orb again`);
++  }
++  if (!a.scope.test(line('scope') || '')) out.push(`${a.file} does not name ${a.what} in its scope: line`);
++  if (!line('recorded-by')) out.push(`${a.file} has no recorded-by: line`);
++  return out;
++}
++
++/** The page's name from the target file's text: { target } or { problem }. Pure. */
++export function readTarget(text) {
++  if (text === null || text === undefined) return { problem: `the page is not named: write one line "account/page" in ${TARGET_FILE} (git ignores it)` };
++  const lines = String(text).replace(/^\uFEFF/, '').split('\n').map((l) => l.trim()).filter(Boolean);
++  if (lines.length !== 1 || !/^[a-z0-9_-]+\/[a-z0-9_-]+$/.test(lines[0])) return { problem: `${TARGET_FILE} must hold exactly one line "account/page" in small letters, digits, - and _ (no address, no channel)` };
++  return { target: lines[0] };
++}
++
++/** Problems with the two packages' build_info against the changelog. infos: { windows: {commit, version}, linux: {...} }. Pure. */
++export function versionProblems(infos, logText, { rollback = false } = {}) {
++  const out = [];
++  const w = infos.windows, l = infos.linux;
++  if (!w || !l) return ['a package has no readable build_info.json'];
++  if (w.commit !== l.commit) out.push(`the two archives are of different commits (${w.commit} and ${l.commit})`);
++  if (!w.version || w.version !== l.version) out.push(`the two archives do not name the same version (${w.version || 'none'} and ${l.version || 'none'})`);
++  const es = entriesOf(logText);
++  if (!es.length) { out.push('docs/tools/changelog.md has no entry: the build has not been numbered (node tools/version.mjs --next)'); return out; }
++  const e = es.find((x) => x.version === w.version);
++  if (!rollback && es[0].version !== w.version) out.push(`the archives are version ${w.version || 'none'}, the changelog's top entry is ${es[0].version}: not the build being released (to go back to an earlier one use --rollback)`);
++  else if (rollback && !e) out.push(`--rollback: the changelog has no entry for version ${w.version || 'none'}`);
++  else if (rollback && es[0].version === w.version) out.push('--rollback: these archives are the newest version, not an earlier one');
++  if (e && (!e.players || e.players === PLACEHOLDER)) out.push(`the changelog entry for ${e.version} has no line for players yet (Orb reads it first)`);
++  return out;
++}
++
++/** What a push would be, in words. Pure. */
++export function plan(target, version, sums, { rollback = false } = {}) {
++  return CHANNELS.map((c) => `WOULD PUSH ${ARCHIVES[c]} (sha256 ${sums[c]}) to ${target}:${c} as version ${version}${rollback ? '-rollback' : ''}`);
++}
++
++/** Every refusal that holds, in one list, with the plan when there is none. `deps` are the only ways this reaches outside itself (the self-test replaces them). */
++export function judge(opts, deps) {
++  const ci = ciProblem(deps.env);
++  if (ci) return { problems: [ci], plan: [] };
++  const problems = [];
++  if (opts.push) problems.push('--push: the upload is not written. It waits for the page to be approved; until then this script only checks');
++  problems.push(...approvalProblems('page', deps.committed(APPROVALS.page.file), opts.pageYes, deps.today));
++  problems.push(...approvalProblems('builds', deps.committed(APPROVALS.builds.file), opts.buildsYes, deps.today));
++  const t = readTarget(deps.targetText);
++  if (t.problem) problems.push(t.problem);
++  const sums = {}, infos = {};
++  if (!opts.dir) problems.push('no --dir with the two archives');
++  else {
++    for (const c of CHANNELS) {
++      const bytes = deps.archive(join(opts.dir, ARCHIVES[c]));
++      if (!bytes) { problems.push(`${ARCHIVES[c]} is not in the folder`); continue; }
++      sums[c] = createHash('sha256').update(bytes).digest('hex');
++      const u = deps.unpack(c, join(opts.dir, ARCHIVES[c]));
++      if (u.problem) { problems.push(`${ARCHIVES[c]}: ${u.problem}`); continue; }
++      infos[c] = u.info;
++      if (!u.info || !/^[0-9a-f]{7}$/.test(String(u.info.commit))) { problems.push(`${ARCHIVES[c]}: no commit in its build_info.json`); continue; }
++      if (!deps.recorded(sums[c], u.info.commit)) problems.push(`${ARCHIVES[c]}: its SHA-256 ${sums[c]} is in no committed record under docs/tools/runs/${u.info.commit}*/: these are not the recorded files`);
++      problems.push(...deps.verify(c, u.dir, u.info.commit).map((p) => `${ARCHIVES[c]}: ${p}`));
++    }
++    if (infos.windows && infos.linux) problems.push(...versionProblems(infos, deps.changelog, opts));
++  }
++  return { problems, plan: problems.length ? [] : plan(t.target, infos.windows.version, sums, opts) };
++}
++
++// ---- the real world ----
++function git(...a) { try { return execFileSync('git', ['-C', REPO, ...a], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return null; } }
++
++export function realDeps(opts, scratch) {
++  const winTar = join(process.env.SystemRoot || 'C:/Windows', 'System32', 'tar.exe');
++  const targetFile = opts.targetFile ? resolve(opts.targetFile) : join(REPO, TARGET_FILE);
++  return {
++    env: process.env,
++    today: new Date().toISOString().slice(0, 10),
++    committed: (path) => git('show', `HEAD:${path}`),
++    targetText: existsSync(targetFile) ? readFileSync(targetFile, 'utf8') : null,
++    changelog: existsSync(join(REPO, 'docs', 'tools', 'changelog.md')) ? readFileSync(join(REPO, 'docs', 'tools', 'changelog.md'), 'utf8') : '',
++    archive: (f) => (existsSync(f) ? readFileSync(f) : null),
++    recorded: (sum, commit) => !!git('grep', '-l', '-F', sum, 'HEAD', '--', `docs/tools/runs/${commit}*`),
++    unpack: (channel, file) => {
++      const to = join(scratch, channel);
++      mkdirSync(to, { recursive: true });
++      const r = process.platform === 'win32' ? spawnSync(winTar, ['-xf', file, '-C', to], { encoding: 'utf8' }) : channel === 'windows' ? spawnSync('unzip', ['-q', file, '-d', to], { encoding: 'utf8' }) : spawnSync('tar', ['-xzf', file, '-C', to], { encoding: 'utf8' });
++      if (r.status !== 0) return { problem: 'does not unpack' };
++      const dir = join(to, ARCHIVES[channel].replace(/\.(zip|tar\.gz)$/, ''));
++      try { return { dir, info: JSON.parse(readFileSync(join(dir, 'build_info.json'), 'utf8')) }; } catch { return { problem: 'holds no folder with a build_info.json' }; }
++    },
++    verify: (channel, dir, commit) => {
++      const r = spawnSync(process.execPath, [join(REPO, 'tools', 'desktop-package.mjs'), 'verify', '--platform', channel, '--dir', dir, '--commit', commit, '--locked', '--testers'], { encoding: 'utf8' });
++      return r.status === 0 ? [] : String(r.stderr || 'the package check did not run').split('\n').map((l) => l.trim()).filter(Boolean);
++    },
++  };
++}
++
++if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
++  const a = process.argv.slice(2);
++  const opt = (n) => { const i = a.indexOf(n); return i >= 0 ? a[i + 1] : undefined; };
++  const known = ['--dir', '--builds-yes', '--page-yes', '--target-file', '--rollback', '--push'];
++  const odd = a.filter((x, i) => !known.includes(x) && !['--dir', '--builds-yes', '--page-yes', '--target-file'].includes(a[i - 1]));
++  if (odd.length || !a.length) { console.error('usage: node tools/store/itch-push.mjs --dir <folder> --builds-yes <date> --page-yes <date> [--target-file <file>] [--rollback]   (it checks; it sends nothing)'); process.exit(2); }
++  const opts = { dir: opt('--dir') ? resolve(opt('--dir')) : null, buildsYes: opt('--builds-yes'), pageYes: opt('--page-yes'), targetFile: opt('--target-file'), rollback: a.includes('--rollback'), push: a.includes('--push') };
++  const scratch = mkdtempSync(join(tmpdir(), 'itch-check-'));
++  let r;
++  try { r = judge(opts, realDeps(opts, scratch)); } finally { rmSync(scratch, { recursive: true, force: true }); }
++  if (r.problems.length) { for (const p of r.problems) console.error(`itch-push REFUSED: ${p}`); console.error('Nothing was sent.'); process.exit(1); }
++  for (const l of r.plan) console.log(l);
++  console.log('Every check holds. DRY RUN: nothing was sent (the upload is not written).');
++}
