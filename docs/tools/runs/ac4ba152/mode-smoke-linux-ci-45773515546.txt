@@ -1,0 +1,57 @@
+Mode smoke on Linux (Tools; GW1c, build 0.1.1, commit ac4ba152): CI run 45773515546, job step "Mode smoke (solo and two people, to a result, a rematch and back to the menu)", ubuntu-24.04, headless.
+Taken from the run's log (the JSON results are the run's own artifact "mode-smoke" and were not downloaded).
+
+ok    the start menu opens on the list of modes (opened by the smoke: a headless run has no window)  (page 'modes', rows: solo,versus,couch_2v2,horde,practice,custom_planet,lan,campaign,quit; the HUD's screen (1280.0, 800.0), window (1280, 800), A1 menus on: true, features menu_modes true menus_rail true)
+ok    the list of modes has a 'quit' row  (rows: solo,versus,couch_2v2,horde,practice,custom_planet,lan,campaign,quit)
+ok    a mode that is not built ('couch_2v2') cannot be started: A leaves the list on screen
+ok    the mode row 'solo' is reached with the D-pad  (lit: solo)
+ok    A opens the setup for one person against the computer  (players 1, page setup)
+ok    a fighter is picked with the D-pad and the two players never hold the same one  (player 1 RIVAL (was PROTAGONIST), player 2 PROTAGONIST)
+ok    intros are off (a match that starts at once)
+ok    the row 'start' is reached with the D-pad
+ok    a match is running: the tick advances  (tick 31)
+ok    the match is of the mode: the bodies' AI flags  (p1 human true, p2 human false)
+ok    the match starts with the picked fighters  (played ["RIVAL", "PROTAGONIST"], picked ["RIVAL", "PROTAGONIST"])
+ok    the match plays 600 ticks and has a result (ended by the smoke with SimDamage.ko: a result card is what is under test, not the finisher)  (ticks 600)
+ok    the match-over card opens with its rows, Quit among them  (rows: again,save,menu,feedback,quit)
+ok    a rematch ('again', chosen with the pad) starts a new match that runs  (tick 812, seed 12271557 to 7777133)
+ok    the second match plays on for 120 ticks
+ok    Start on the pad opens the pause menu, Quit among its rows  (rows: resume,howto,settings,feedback,about,p2_leave,menu,new,quit)
+ok    Quit on the pause menu asks 'Close the game?' with Stay lit  (rows quit_yes,quit_no, lit quit_no)
+ok    B on the question stays: the pause menu is back and the game is still running
+ok    'menu' goes back to the list of modes  (reached true, pause open false, start menu open true, lit menu)
+ok    Quit asks 'Close the game?' with Stay lit  (page quit, lit quit_no)
+ok    B on the question stays: the list of modes is back and the game is still running
+ok    B on the list of modes goes back to the match
+ok    Start, Quit and the question's 'Close the game' row are reached with the pad  (pause open true, reached quit true, rows quit_yes,quit_no, lit quit_yes)
+ok    the game is told to close when 'Close the game' is answered with the pad  (quit_requested fired; the program must now end by itself)
+mode_smoke: solo on Linux: 24 steps, 0 failed
+mode-smoke: result saved: <user>/work/_temp/mode-smoke/mode-smoke-solo-linux.json
+mode-smoke: solo on linux: PASS
+ok    the start menu opens on the list of modes (opened by the smoke: a headless run has no window)  (page 'modes', rows: solo,versus,couch_2v2,horde,practice,custom_planet,lan,campaign,quit; the HUD's screen (1280.0, 800.0), window (1280, 800), A1 menus on: true, features menu_modes true menus_rail true)
+ok    the list of modes has a 'quit' row  (rows: solo,versus,couch_2v2,horde,practice,custom_planet,lan,campaign,quit)
+ok    a mode that is not built ('couch_2v2') cannot be started: A leaves the list on screen
+ok    the mode row 'versus' is reached with the D-pad  (lit: versus)
+ok    A opens the setup for two people  (players 2, page setup)
+ok    a fighter is picked with the D-pad and the two players never hold the same one  (player 1 RIVAL (was PROTAGONIST), player 2 PROTAGONIST)
+ok    intros are off (a match that starts at once)
+ok    the row 'start' is reached with the D-pad
+ok    a match is running: the tick advances  (tick 31)
+ok    the match is of the mode: the bodies' AI flags  (p1 human true, p2 human true)
+ok    the match starts with the picked fighters  (played ["RIVAL", "PROTAGONIST"], picked ["RIVAL", "PROTAGONIST"])
+ok    the match plays 600 ticks and has a result (ended by the smoke with SimDamage.ko: a result card is what is under test, not the finisher)  (ticks 600)
+ok    the match-over card opens with its rows, Quit among them  (rows: again,save,menu,feedback,quit)
+ok    a rematch ('again', chosen with the pad) starts a new match that runs  (tick 812, seed 11115269 to 5800589)
+ok    the second match plays on for 120 ticks
+ok    Start on the pad opens the pause menu, Quit among its rows  (rows: resume,howto,settings,feedback,about,p2_leave,menu,new,quit)
+ok    Quit on the pause menu asks 'Close the game?' with Stay lit  (rows quit_yes,quit_no, lit quit_no)
+ok    B on the question stays: the pause menu is back and the game is still running
+ok    'menu' goes back to the list of modes  (reached true, pause open false, start menu open true, lit menu)
+ok    Quit asks 'Close the game?' with Stay lit  (page quit, lit quit_no)
+ok    B on the question stays: the list of modes is back and the game is still running
+ok    B on the list of modes goes back to the match
+ok    Start, Quit and the question's 'Close the game' row are reached with the pad  (pause open true, reached quit true, rows quit_yes,quit_no, lit quit_yes)
+ok    the game is told to close when 'Close the game' is answered with the pad  (quit_requested fired; the program must now end by itself)
+mode_smoke: two on Linux: 24 steps, 0 failed
+mode-smoke: result saved: <user>/work/_temp/mode-smoke/mode-smoke-two-linux.json
+mode-smoke: two on linux: PASS
