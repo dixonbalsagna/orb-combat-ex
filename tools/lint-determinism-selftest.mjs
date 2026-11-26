@@ -15,6 +15,8 @@ for (const [src, rule] of [
   ['var a = sin(x)', 'engine-trig'], ['var a = cos(x) * 2', 'engine-trig'], ['return tan(x)', 'engine-trig'], ['var a = asin(x)', 'engine-trig'], ['var a = acos(x)', 'engine-trig'],
   ['var a = atan(x)', 'engine-trig'], ['var a = atan2(y, x)', 'engine-trig'], ['var r = deg_to_rad(d)', 'engine-trig'], ['var d = rad_to_deg(r)', 'engine-trig'], ['var a = sin (x)', 'engine-trig'],
   ['var a = float(d) * PI / 180.0', 'engine-pi'], ['return r - TAU * floorf(r)', 'engine-pi'], ['x = -PI', 'engine-pi'], ['y = 2.0*PI', 'engine-pi'],
+  ['var a = pow(x, 2.0)', 'engine-math'], ['var a = pow (x, 1.0 / 3.0)', 'engine-math'], ['return exp(-t)', 'engine-math'], ['var a = log(x) * 2.0', 'engine-math'], ['var a = 1.0 + pow(x, y) * exp(z)', 'engine-math'],
+  ['var v = Vector3(1, 2, 3)', 'engine-vector3'], ['var v: Vector3 = p', 'engine-vector3'], ['var z = Vector3.ZERO', 'engine-vector3'], ['func f(a: Vector3) -> Vector3:', 'engine-vector3'],
   ['var r = randf()', 'engine-random'], ['var r = randi() % 4', 'engine-random'], ['var r = randf_range(0, 1)', 'engine-random'], ['randomize()', 'engine-random'], ['list.shuffle()', 'engine-random'],
   ['var x = list.pick_random()', 'engine-random'], ['var g = RandomNumberGenerator.new()', 'engine-random'],
   ['var t = Time.get_ticks_msec()', 'engine-clock'], ['var t = OS.get_ticks_msec()', 'engine-clock'], ['var t = OS.get_unix_time()', 'engine-clock'], ['var n = Engine.get_frames_drawn()', 'engine-clock'],
@@ -27,6 +29,8 @@ for (const src of [
   'var a = SimDetMath.sin(x)', 'var a = SimDetMath.cos(x) + SimDetMath.atan2(y, x)', 'var p = SimMathx.PI', 'var r = rng.randf()', 'var r = SimRng.keyed(seed, "k", 3)', 'var a = WorldPlanet.acosf(x)', 'var a = asinf(x)',
   'var a = atanf(y / x)', 'var t = _PI * 2.0', 'var pi = 3', 'var spin = 1', 'var cost = 2', 'var tanned = 1', 'var randfoo = 1', 'var mess = "no sin( here, nor PI, nor randf()"', "var m = 'cos(x) and Time.get_ticks_msec()'",
   '# sin(x) PI randf() Time.now', 'var a = 1   # was sin(x) once', 'static func sin(x: float) -> float:', 'func cos(x) -> float:', 'func tan(x):', 'static func atan2(y: float, x: float) -> float:',
+  'var a = SimDetMath.pow(x, 2.0)', 'var a = SimDetMath.exp(-t) + SimDetMath.log(x)', 'static func pow(x: float, y: float) -> float:', 'static func exp(x: float) -> float:', 'static func log(S: SimState, f) -> void:', 'DirAlchemy.log(S, A, 3)',
+  'var power = 1', 'var logn = 2', 'var expo = 3', 'var a = sqrt(x)', 'var a = x.pow(2)', 'var v = Vector3i(1, 2, 3)', 'var mess = "pow(x) Vector3 exp(1) log(2)"', '# pow(x) exp(y) log(z) Vector3', 'var my_Vector3 = 1',
   'var timer = 0', 'var t = tick * DT', 'var a = d.length()', 'var ti = Mathx.PI', 'var x = self.sin_table[3]',
 ]) check(`not found: ${src}`, found(src).length === 0, found(src).join(','));
 

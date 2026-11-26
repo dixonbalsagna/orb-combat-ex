@@ -7,6 +7,8 @@
 // (exit 1) on a bare use of:
 //   trig       sin cos tan asin acos atan atan2 sinh cosh tanh deg_to_rad rad_to_deg
 //   constants  PI TAU
+//   power/log  pow exp log (the engine's powers and logs differ in the last bit between platforms: SimDetMath.pow / exp / log are ours; sqrt is exact and passes)
+//   float32    Vector3 (three float32s: planet points are three plain floats; Vector3i is integers and passes)
 //   random     randf randi randf_range randi_range randfn rand_range randomize shuffle (a bare call or Array.shuffle / pick_random)  -- the sim has SimRng
 //   clock      Time.<anything>, OS.get_ticks_msec, OS.get_ticks_usec, OS.get_unix_time, OS.get_system_time_*, OS.delay_*, Engine.get_frames_drawn, Engine.get_physics_frames
 //   text       sim-text-float: a printf float in a string ("%.1f", "%+.2f", "%5.2f", "%.0f"): the Windows printf rounds an exact half away from zero and the Linux and web ones to even ("%.1f" % -22.25 reads
@@ -26,9 +28,12 @@ const SKIP_DIRS = new Set(['tools', 'test']);
 
 const TRIG = ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh', 'deg_to_rad', 'rad_to_deg'];
 const RANDOM = ['randf', 'randi', 'randf_range', 'randi_range', 'randfn', 'rand_range', 'randomize'];
+const MATH = ['pow', 'exp', 'log'];
 const NOT_AFTER = '(?<![.\\w$])';   // not a method of something, not part of a longer name
 const RULES = [
   { id: 'engine-trig', re: new RegExp(`${NOT_AFTER}(${TRIG.join('|')})\\s*\\(`), what: "the engine's trig", use: 'SimDetMath' },
+  { id: 'engine-math', re: new RegExp(`${NOT_AFTER}(${MATH.join('|')})\\s*\\(`), what: "the engine's pow, exp or log", use: 'SimDetMath.pow / exp / log' },
+  { id: 'engine-vector3', re: /(?<![.\w$])Vector3(?!\w)/, sig: true, what: "a Vector3 (three float32s)", use: 'three plain floats, or an Array' },
   { id: 'engine-pi', re: new RegExp(`${NOT_AFTER}(PI|TAU)(?![\\w(])`), what: "the engine's PI/TAU", use: 'SimMathx.PI / SimMathx.TAU' },
   { id: 'engine-random', re: new RegExp(`${NOT_AFTER}(${RANDOM.join('|')})\\s*\\(`), what: "the engine's random numbers", use: 'SimRng' },
   { id: 'engine-random', re: /\.(shuffle|pick_random)\s*\(/, what: "the engine's random shuffle/pick (Array.shuffle, pick_random)", use: 'SimRng' },
@@ -68,11 +73,11 @@ export function scan(text) {
   for (let n = 0; n < lines.length; n++) {
     // a function definition ("static func sin(x: float) -> float:") is not a use: take its head off, and look at what follows it on the line
     const code = parts[n].code.replace(DEF_HEAD, ' ');
-    if (!code.trim()) continue;
+    if (!code.trim() && !parts[n].code.includes('Vector3')) continue;   // (a rule marked sig looks at the definition's head too: a Vector3 in a signature is a use)
     const here = parts[n].comment, above = n > 0 && !parts[n - 1].code.trim() ? parts[n - 1].comment : '';
     const waived = (WAIVER.test(here) || WAIVER.test(above));
     for (const r of RULES) {
-      const m = r.re.exec(r.raw ? lines[n].slice(0, parts[n].cut) : code.replace(/^\s*func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], ]+)?\s*:/, ' '));
+      const m = r.re.exec(r.raw ? lines[n].slice(0, parts[n].cut) : r.sig ? parts[n].code : code.replace(/^\s*func\s+\w+\s*\([^)]*\)\s*(->\s*[\w\[\], ]+)?\s*:/, ' '));
       if (m && !waived) out.push({ line: n + 1, rule: r.id, what: r.what, use: r.use, text: lines[n].trim().slice(0, 140), found: m[0].trim() });
     }
     // a waiver without a reason is itself a finding
