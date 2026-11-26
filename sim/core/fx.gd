@@ -98,6 +98,14 @@ static func crater(S: SimState, c) -> void:
 	e.rim = c.rim; e.skid = c.skid; e.owner = c.owner; e.special = c.special > 0.5
 
 
+## World's refused dig (GW1c, the shaft cap): a blow that would have dug on fresh ground landed on ground already as dented as it can dig, so no crater, no record, no bowl and no cracks, but the blow was big.
+## x, y (the ground there), z; r the blow's own radius, energy its energy, depth the dent already there (the relief), cause the kind of blow ("impact", "beam", "powerup", "explode"...). The renderers
+## play a reduced ejecta, rim dust and burst from it; nothing reads it back.
+static func craterRefused(S: SimState, rf: Dictionary, cause: String, z: float) -> void:
+	var e := _ev(S, "crater_refused")
+	e.x = float(rf.x); e.y = float(rf.y); e.z = z; e.r = float(rf.r); e.depth = float(rf.depth); e.energy = float(rf.energy); e.cause = cause
+
+
 ## A beam sample scorched the ground: x, ground height, groove width, the beam-power scalar, the variant and the owner.
 ## A knockback slide ended (world/slide.gd): the whole trench, start to end.
 static func slideEvent(S: SimState, r) -> void:
