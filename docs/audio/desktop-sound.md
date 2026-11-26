@@ -41,6 +41,6 @@ orb-combat-ex.console.exe --headless -- --audio-proof                  # the Win
 
 An official release program takes no `--script` and no scene path ("compiled without support for path overrides"), so the second form uses the `--audio-proof` argument in `render/core/boot_entry.gd`.
 
-**Results (this PC):** a Windows release export passed all 14 lines (`docs/audio/runs/friends-sound/`). Linux was **not** run here; the CI step runs it.
+**Results (this PC):** a Windows release export passed all 14 lines (`docs/audio/runs/friends-sound/`). **CI:** the exported Linux and Windows programs of `7bfbfe6a` both passed, with identical peaks and lengths (Desktop builds run 45767037480; `docs/audio/runs/7bfbfe6a/`).
 
 **What it does not prove:** headless uses the engine's dummy audio driver. The program, its data and its mixer are proved; **that a given machine's speakers play it is not**. The nearest checks for that are Orb's listening pass (Windows) and the friends' Deck questions (`docs/audio/listening-sheet.md`).

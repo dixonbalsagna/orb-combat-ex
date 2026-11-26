@@ -36,5 +36,5 @@ Listening: `listening-sheet.md`. Desktop settings and the proof: `desktop-sound.
 
 - Building events are rare in the computer's own matches (12 cues in 3 minutes), so a listening pass may not reach "a building coming down" without a set-up.
 - The wind's level and every new recipe are guesses until Orb listens.
-- The proof uses the engine's dummy audio driver: it does not prove that a device plays sound.
+- The proof uses the engine's dummy audio driver: it does not prove that a device plays sound. It passed on the exported Linux and Windows programs in CI (`runs/7bfbfe6a/`).
 - Not run: the web build.
