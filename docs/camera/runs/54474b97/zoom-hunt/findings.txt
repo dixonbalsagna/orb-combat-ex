@@ -1,0 +1,29 @@
+# Zoom-jump hunt (Orb's issue c), 2026-11-25. Camera.
+# Probe: zj_probe.py builds render/camera/tests/zj_probe.gd from split_sweep.gd: long AI matches (seeds 3, 10, 17, up to 10,800 ticks, to the KO), the rig as shipped (no travel budget, the flash bundle, Reduce flashing on), slot 0 seen as the human.
+# Logged: per pane with a real share of the screen, a zoom step over 2% a tick or a zoom-speed change over 0.8% a tick. zj_pump.py finds the pumps: a zoom-out in the one view followed within 0.6 s by a zoom-in.
+# Trees: k1 = main 54474b97 + GW1c stack + door-holds; k4 = k1 + cd04 + a2-split-line (at each setting).
+
+zj_k1_red.log cap ticks 755 pumps 21
+  pumps with a zoom-out of 1.5x or more: 12 [('3', 2.78, 0.81, 0.41, 0.61, 'opening'), ('3', 76.4, 1.12, 0.51, 0.49, 'merged'), ('3', 79.13, 0.96, 0.32, 0.75, 'opening'), ('3', 83.3, 1.1, 0.48, 0.81, 'merged'), ('3', 101.72, 1.12, 0.64, 0.65, 'merged'), ('3', 111.35, 1.01, 0.5, 0.7, 'merged'), ('10', 12.45, 1.11, 0.42, 0.58, 'merged'), ('10', 113.1, 1.13, 0.51, 0.56, 'opening')]
+zj_k4_standard.log cap ticks 865 pumps 22
+  pumps with a zoom-out of 1.5x or more: 15 [('3', 2.78, 0.81, 0.41, 0.44, 'opening'), ('3', 6.53, 0.52, 0.33, 0.42, 'opening'), ('3', 76.4, 1.12, 0.51, 0.49, 'merged'), ('3', 79.13, 0.96, 0.32, 0.54, 'opening'), ('3', 83.3, 1.1, 0.48, 0.81, 'merged'), ('3', 101.72, 1.12, 0.64, 0.65, 'merged'), ('3', 111.35, 1.01, 0.5, 0.7, 'merged'), ('10', 12.45, 1.1, 0.42, 0.58, 'merged')]
+zj_k4_sooner.log cap ticks 930 pumps 17
+  pumps with a zoom-out of 1.5x or more: 14 [('3', 2.78, 0.81, 0.41, 0.44, 'opening'), ('3', 6.53, 0.52, 0.33, 0.42, 'opening'), ('3', 76.4, 1.12, 0.51, 0.65, 'merged'), ('3', 79.1, 1.08, 0.33, 0.57, 'opening'), ('3', 101.72, 1.12, 0.64, 0.65, 'merged'), ('3', 111.35, 1.01, 0.5, 0.7, 'merged'), ('10', 12.45, 1.1, 0.42, 0.58, 'merged'), ('10', 13.27, 0.66, 0.44, 0.82, 'merged')]
+zj_k4_later.log cap ticks 819 pumps 21
+  pumps with a zoom-out of 1.5x or more: 15 [('3', 2.78, 0.81, 0.41, 0.44, 'opening'), ('3', 6.53, 0.52, 0.33, 0.42, 'opening'), ('3', 76.4, 1.12, 0.51, 0.49, 'merged'), ('3', 79.13, 0.96, 0.32, 0.54, 'opening'), ('3', 83.3, 1.1, 0.48, 0.81, 'merged'), ('3', 101.72, 1.12, 0.64, 0.65, 'merged'), ('3', 111.35, 1.01, 0.5, 0.7, 'merged'), ('10', 12.45, 1.1, 0.42, 0.58, 'merged')]
+
+## Seed 3, 79.1 to 80.1 s (k1): the one view zooms out at the cap 0.96 -> 0.32 in 0.45 s, the split opens, both panes zoom in at the cap 0.32 -> 0.70 in 0.4 s
+t=79.133 pane 0 dz -0.0325 ddz 0.0164 z 0.929 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.150 pane 0 dz -0.0400 ddz 0.0075 z 0.892 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.167 pane 0 dz -0.0400 ddz 0.0000 z 0.857 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.183 pane 0 dz -0.0400 ddz 0.0000 z 0.824 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.300 pane 0 dz -0.0400 ddz 0.0000 z 0.622 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.317 pane 0 dz -0.0400 ddz 0.0000 z 0.598 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.333 pane 0 dz -0.0400 ddz 0.0000 z 0.575 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.350 pane 0 dz -0.0400 ddz 0.0000 z 0.552 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.367 pane 0 dz -0.0400 ddz 0.0000 z 0.530 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.383 pane 0 dz -0.0400 ddz 0.0000 z 0.510 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.500 pane 0 dz -0.0400 ddz 0.0000 z 0.385 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.517 pane 0 dz -0.0400 ddz 0.0000 z 0.370 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.533 pane 0 dz -0.0400 ddz 0.0000 z 0.356 mode merged solo  sep 0.00 e 0.00 cause other
+t=79.550 pane 0 dz -0.0400 ddz 0.0000 z 0.342 mode merged solo  sep 0.00 e 0.00 cause other
