@@ -22,3 +22,10 @@ g4smallr  collapse-reduced : 960x540 s1 3/3/1.5 @354 | 960x540 s2 1.5/2.5/1.5 @8
 g4bign    collapse-normal  : 960x540 s1 1.5/1.5/1.5 @83 | 960x540 s2 1.5/2/1.5 @83 | 1024x768 s1 3/3/1.5 @530 | 1024x768 s2 3/3/3 @530
 Small reduced events 300-420: g0 354-, 357+, 368+, 381+, 391-, 395+; g1 354-, 358+, 367- (1.50 of the threshold), 368+, 381+, 391-, 395+. Frames: the same split, the divider a little apart.
 Rule 2 does the pump's work and alone moves both clips; rule 1 does nothing measurable. Both clips read 2.5 without the park.
+
+## Big with buildings (2026-11-26): g5 = main d9bc2f07 + s443 less a2-pump + Rendering's building-swiftshader (af4facc3)
+Every earlier big reading drew no buildings (20,168 instances over the card's 16,384 texture width). g5's frames show the city; g0's show bare ground at the same ticks.
+g5bigr   collapse-reduced : 960x540 s1 1.5/2/2 @696 | 960x540 s2 2/2/2 @946 | 1024x768 s1 2/2.5/2 @1098 | 1024x768 s2 2/2/1 @1099
+g5bign   collapse-normal  : 960x540 s1 1.5/2/1 @81 | 960x540 s2 2/2/1 @756 | 1024x768 s1 2/2.5/1 @793 | 1024x768 s2 2/2.5/1 @794
+big      own_pane_check  own_pane_check: 12 checks passed 
+big      split_sweep     split sweep passed 
