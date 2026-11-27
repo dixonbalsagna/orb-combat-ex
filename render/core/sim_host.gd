@@ -145,11 +145,13 @@ func _started(su: Dictionary, remember: bool) -> void:
 	_oprev = _ocur
 
 
-## What a planet's making depends on, for telling a choice that changed from one that did not: the planet, its generation, the touch-down and the arena. "" when the setup names no planet.
+## What a planet's making depends on, for telling a choice that changed from one that did not: the planet, its generation, the touch-down, the arena and the size. The size goes in as its columns
+## (WorldPlanetSize.colsOf: the planet is made at them, and World's planet memo is keyed by them), so an unnamed size and "medium" are one key, and a menu's size changed is a choice that changed. "" when
+## the setup names no planet.
 static func planet_key(setup: Dictionary) -> String:
 	if not setup.has("planet"):
 		return ""
-	return "%s/%d/%s/%s" % [str(setup.planet), SimPlanetLoad.genOf(setup), str(setup.get("touch", 0)), var_to_str(setup.get("arena", {}))]
+	return "%s/%d/%s/%s/%d" % [str(setup.planet), SimPlanetLoad.genOf(setup), str(setup.get("touch", 0)), var_to_str(setup.get("arena", {})), WorldPlanetSize.colsOf(setup)]
 
 
 ## The planet's seed is known (the player has picked it in the menu) before the match starts: begin making it now, a slice a frame (prefetch_step), while they choose. Called again with what the menu
