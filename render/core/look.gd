@@ -598,6 +598,8 @@ const TILE_POSE_MARGIN: float = 500.0      # a building this near the sim's pose
 const TILE_BAND := Vector3(-150.0, -30.0, 150.0)
 ## The bowls the tile ground draws from World's store: how many, nearest the camera (the vertex stage's array), how often the choice is made again, and the seconds a new one takes to open.
 const TILE_BOWLS: int = 16
+const BOWL_FEET_REACH: float = 300.0    # a bowl this far past its reach from a body is drawn before the nearest to the camera (4 body heights)
+const BOWL_FEET_LIFT: float = 30.0      # a body this near the ground stands in a bowl dug under it: drawn open at once
 const TILE_BOWL_FRAMES: int = 15
 const TILE_BOWL_OPEN: float = 0.25
 ## Art's crater (docs/art/crater-look.md). CRATER_RINGS: depth of the lip, the outer wall's end, the inner wall's end; below .w of slope it's floor.

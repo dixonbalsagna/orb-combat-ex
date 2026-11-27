@@ -72,6 +72,13 @@ var _job_at: int = 0
 var _job_recs: bool = false
 var _job_wet: bool = false
 var _job_band: bool = false
+var _job_marks: bool = false        # the job's nodes take the store's grooves (a field world, level 1 and finer, a store with marks)
+var _marks_n: int = 0               # the store's records read for rebakes
+var _rebake: Array = []             # tile keys a new mark reaches, filled before any new tile
+var _rebake_set: Dictionary = {}
+var rebakes: int = 0                # for tools: the tiles baked again
+var _restale: bool = false          # a tile was stored after this frame's lift reads: read the bodies' columns again
+var _body_cols: Dictionary = {}     # the columns holding a body's own lift (_body_at): read at their middle again once he's gone
 var _has_pads: bool = false
 var _urgent_until: int = 0
 var _ask_list: Array = []            # tiles asked for ahead of the camera, level 1 first
@@ -422,7 +429,15 @@ func fill(budget_us: int) -> void:
 			budget_us = maxi(budget_us, RenderLook.TILE_FILL_US * RenderLook.TILE_URGENT_X)
 	elif _frame < _ask_until and not _ask_list.is_empty():
 		budget_us = maxi(budget_us, RenderLook.TILE_ASK_US)
+	if field_world:
+		_marks_ask()
 	while clock_us() - t0 < budget_us:
+		if _job_key < 0 and not _rebake.is_empty():
+			var rk: int = _rebake.pop_front()
+			_rebake_set.erase(rk)
+			if _layer.has(rk):
+				rebakes += 1
+				_start(rk)
 		if _job_key < 0:
 			var best: int = -1
 			var bd: float = INF
@@ -449,6 +464,13 @@ func fill(budget_us: int) -> void:
 			_start(best)
 		if not _fill_job(t0, budget_us):
 			break
+	if _restale and _S != null and _S.frame != null and not _off.is_empty():
+		_restale = false
+		_bodies_off()
+		if _off_dirty:
+			_off_dirty = false
+			_off_img.set_data(OFF_N, 1, false, Image.FORMAT_RGF, _off.to_byte_array())
+			off_tex.update(_off_img)
 	_foot_slice(t0, budget_us)
 	_crater_slice()
 	fill_us = clock_us() - t0
@@ -462,6 +484,7 @@ func _start(k: int) -> void:
 	_job_t.resize(TEX * TEX)
 	_job_any_wet = false
 	_job_c.resize(TEX * TEX * 4)
+	_job_marks = field_world and ((k >> 3) & 7) >= 1 and int(_S.storeN) > 0
 	if field_world:
 		_job_recs = _records_reach(k)
 		_job_wet = true   # level 0 too: in fast flight it lies under the fight for much of a crossing, and a lake without its water reads as a brown table
@@ -574,6 +597,10 @@ func _field_node(f: int, n: int, i: int, j: int, a: int, b: int) -> Array:
 			if place_w > 0.0 and not _has_pads:
 				var col: float = px / SimConst.COL
 				h = lerpf(h, lerpf(float(_S.base[pc]), float(_S.base[(pc + 1) % SimConst.NC]), col - floor(col)), place_w)
+	if _job_marks:
+		# The store's marks less the sum the vertex stage's bowls draw (A1 clipping): grooves and lips, through World's one formula, float64 throughout.
+		var pp: PackedFloat64Array = WorldStore.parts(_S, dp[0], dp[1], dp[2])
+		h += WorldStore.combine(pp[0], pp[1], pp[2]) - pp[0]
 	if _job_recs and _job_wet and place_w < 0.5:
 		wet = WorldField.recordWater(_S, dp[0], dp[1], dp[2], h)
 	if place_w > 0.5:
@@ -591,7 +618,9 @@ func _field_node(f: int, n: int, i: int, j: int, a: int, b: int) -> Array:
 
 
 func _store() -> void:
-	var slot: int = _free_slot()
+	var slot: int = int(_layer.get(_job_key, -1))   # a rebake: the tile's own slot
+	if slot < 0:
+		slot = _free_slot()
 	if slot < 0:
 		_job_key = -1   # the view moved on while it was filling, and took the last layer
 		return
@@ -608,6 +637,7 @@ func _store() -> void:
 	ids.update_layer(Image.create_from_data(TEX, TEX, false, Image.FORMAT_RGBA8, _job_c), slot)
 	if ((_job_key >> 3) & 7) > 0 and _job_on_line():
 		stale_off()
+		_restale = true
 	_job_key = -1
 
 
@@ -708,11 +738,7 @@ func keep_off(x: float, budget: int) -> void:
 			stale_off()
 	# The columns under every body first, whatever the budget: a fighter never stands on a column the table hasn't read
 	# (the start, a finer tile, the line turning), or his feet are drawn on the table's last value (A1 clipping).
-	var bodies: Array = SimStage.bodies(_S) if _S.stage != null else _S.fighters
-	for f in bodies:
-		var fc: int = int(floor(SimWrap.wrap(float(f.x)) / SimConst.COL))
-		for dc in [0, -1, 1]:
-			_off_read(posmod(fc + dc, SimConst.NC))
+	_bodies_off()
 	var c0: int = int(floor(x / SimConst.COL)) - OFF_N / 2
 	var done: int = 0
 	for q in range(OFF_REACH):
@@ -729,20 +755,118 @@ func keep_off(x: float, budget: int) -> void:
 		off_tex.update(_off_img)
 
 
+## The store's new records: a groove (scorch, trench) or a crater asks again for every tile it reaches at level 1 and finer,
+## over its whole footprint (a half width either way of its point or segment; a crater: its reach). A crater too, since the
+## tiles take the grooves less the craters' sum. A rollback that shortens the store starts the count again.
+func _marks_ask() -> void:
+	var n: int = int(_S.storeN)
+	if n < _marks_n:
+		_marks_n = 0
+	while _marks_n < n:
+		var o: int = _marks_n * WorldStore.STRIDE
+		_marks_n += 1
+		var kd: int = int(_S.store[o])
+		var pts: Array = []
+		var reach: float = 0.0
+		if kd == WorldStore.KIND_SCORCH:
+			pts = [Vector3(_S.store[o + 1], _S.store[o + 2], _S.store[o + 3])]
+			reach = float(_S.store[o + 4])
+		elif kd == WorldStore.KIND_CRATER:
+			pts = [Vector3(_S.store[o + 1], _S.store[o + 2], _S.store[o + 3])]
+			reach = 2.0 * float(_S.store[o + 4])
+		elif kd == WorldStore.KIND_TRENCH:
+			var a := Vector3(_S.store[o + 1], _S.store[o + 2], _S.store[o + 3])
+			var b := Vector3(_S.store[o + 4], _S.store[o + 5], _S.store[o + 6])
+			pts = [a, (a + b).normalized(), b]
+			reach = float(_S.store[o + 8])
+		else:
+			continue
+		# its whole footprint, at each level: points every half tile along it (a disc's centre, a trench from end to end) and
+		# across it to its reach, corners included, so no tile it crosses is missed
+		var a0: Vector3 = (pts[0] as Vector3).normalized()
+		var b0: Vector3 = (pts[pts.size() - 1] as Vector3).normalized()
+		var run: float = acos(clampf(a0.dot(b0), -1.0, 1.0)) * R
+		for L in range(1, LEVELS):
+			var step: float = 0.5 * 38400.0 / float(level_n(L))
+			var na: int = int(ceil(run / step))
+			var nr: int = int(ceil(reach / step))
+			for ia in range(na + 1):
+				var c: Vector3 = a0.slerp(b0, float(ia) / float(na)) if na > 0 else a0
+				var t1: Vector3 = c.cross(Vector3.UP if absf(c.y) < 0.9 else Vector3.RIGHT).normalized()
+				var t2: Vector3 = c.cross(t1)
+				for u in range(-nr, nr + 1):
+					for v in range(-nr, nr + 1):
+						var du: float = clampf(float(u) * step, -reach, reach)
+						var dv: float = clampf(float(v) * step, -reach, reach)
+						if du * du + dv * dv > (reach + step) * (reach + step):
+							continue
+						var k: int = key_at((c + (t1 * du + t2 * dv) / R).normalized(), L)
+						if _layer.has(k) and not _rebake_set.has(k):
+							_rebake_set[k] = true
+							_rebake.append(k)
+
+
+## The columns under every body, read if they aren't yet (keep_off, and again after a tile is stored).
+func _bodies_off() -> void:
+	var bodies: Array = SimStage.bodies(_S) if _S.stage != null else _S.fighters
+	var now: Dictionary = {}
+	for f in bodies:
+		var fx: float = SimWrap.wrap(float(f.x))
+		var fc: int = int(floor(fx / SimConst.COL))
+		for dc in [0, -1, 1]:
+			_off_read(posmod(fc + dc, SimConst.NC))
+		for c in _body_at(f, fx, fc):
+			now[c] = true
+	for c in _body_cols:
+		if not now.has(c):
+			_off_read(int(c), true)   # he's gone: the column's middle again
+	_body_cols = now
+
+
+## A body's own column, and the neighbour he's nearest, take the lift read at his own place rather than at the column's middle:
+## the lift is looked up by column (lift(), globe_place), and in a narrow trench the drawn ground changes by tens of units
+## across one column. Every frame, for every body, on a field world (the strip's table reads its ground exactly). Whatever else
+## stands in those columns takes his. Returns the columns written.
+func _body_at(f, fx: float, fc: int) -> Array:
+	if not field_world:
+		return []
+	var t: float = fx / SimConst.COL - float(fc)
+	var d: Vector3 = dir_at(fx, float(f.z) if "z" in f else 0.0, _S.frame)
+	var g: float = SimField.col(_S, posmod(fc, SimConst.NC)) * (1.0 - t) + SimField.col(_S, posmod(fc + 1, SimConst.NC)) * t   # the ground he stands on, store and all, as WorldTerrain.groundY reads it
+	var b: float = g - WorldStore.parts(_S, d.x, d.y, d.z)[0]
+	var r: float = maxf(height_at(d), 0.0) - (b if b >= WorldWater.SHORE_WET else maxf(b, 0.0))
+	var out: Array = []
+	for c in [fc, fc + (1 if t >= 0.5 else -1)]:
+		var col: int = posmod(c, SimConst.NC)
+		var idx: int = col % OFF_N
+		if _off_col[idx] != col:
+			continue
+		out.append(col)
+		# the lift, and the ground the fade compares him with: on a trench's wall over a column whose middle is its floor, he read as flying
+		if _off[idx * 2] != r or _off[idx * 2 + 1] != g:
+			_off[idx * 2] = r
+			_off[idx * 2 + 1] = g
+			_off_dirty = true
+	return out
+
+
 ## One column of the table, if it isn't read for that column yet: the drawn ground there less the ground he stands on. False
 ## when it was read already.
-func _off_read(col: int) -> bool:
+func _off_read(col: int, force: bool = false) -> bool:
 	var idx: int = col % OFF_N
-	if _off_col[idx] == col:
+	if _off_col[idx] == col and not force:
 		return false
 	_off_col[idx] = col
 	var cx: float = (float(col) + 0.5) * SimConst.COL
 	var d: Vector3 = dir_at(cx, 0.0, _S.frame)
 	var b: float = float(_S.base[col]) if not field_world else _stand_ground(col, d)
+	var r0: float = _off[idx * 2]
+	var g0: float = _off[idx * 2 + 1]
 	# Dry ground below sea level is drawn at the sea's level; past the shore he's on the water either way.
 	_off[idx * 2] = maxf(height_at(d), 0.0) - (b if b >= WorldWater.SHORE_WET else maxf(b, 0.0))
-	_off[idx * 2 + 1] = b
-	_off_dirty = true
+	_off[idx * 2 + 1] = b if not field_world else 0.5 * (SimField.col(_S, col) + SimField.col(_S, (col + 1) % SimConst.NC))   # the ground he stands on, for the fade: a body over it by TILE_LIFT_FROM is flying
+	if _off[idx * 2] != r0 or _off[idx * 2 + 1] != g0:
+		_off_dirty = true
 	return true
 
 
@@ -751,7 +875,7 @@ func _off_read(col: int) -> bool:
 ## WorldStore.heightDelta there. The strip's deform is drawn by the rows, so it isn't in either.
 func _stand_ground(col: int, d: Vector3) -> float:
 	var g: float = 0.5 * (SimField.col(_S, col) + SimField.col(_S, (col + 1) % SimConst.NC))
-	return g - WorldStore.heightDelta(_S, d.x, d.y, d.z)
+	return g - WorldStore.parts(_S, d.x, d.y, d.z)[0]   # less the craters' sum only: the tiles carry the grooves (a groove not yet baked: he stands on the drawn, undug ground)
 
 
 func _sim_ground(d: Vector3) -> float:

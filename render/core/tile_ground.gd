@@ -256,6 +256,17 @@ func _fill_slice() -> int:
 	return clampi(RenderLook.TILE_FILL_US + int(RenderLook.TILE_FILL_ROOM * (float(RenderLook.TILE_FILL_TARGET_US) - _fill_dt)), RenderLook.TILE_FILL_US, RenderLook.TILE_FILL_MAX_US)
 
 
+## Is a bowl at q, radius r, under a body on the ground? Then it's drawn open at once: the sim digs it at once, and an opening
+## drawn under him has his feet in the ground for a quarter second (A1 clipping).
+func _under_feet(S: SimState, q: Vector3, r: float) -> bool:
+	for f in (SimStage.bodies(S) if S.stage != null else S.fighters):
+		if float(f.y) - WorldTerrain.groundY(S, float(f.x)) > RenderLook.BOWL_FEET_LIFT:
+			continue
+		if field.dir_at(float(f.x), float(f.z) if "z" in f else 0.0, S.frame).distance_to(q) * field.R < r * (1.0 + WorldCrater.RIM_OUT):
+			return true
+	return false
+
+
 ## The bowls the vertex stage draws: World's store is append-only, so a frame reads only what's new, and the nearest few to the camera are chosen again now and then. A rollback that shortens the store starts the list again.
 ## A bowl opens over TILE_BOWL_OPEN from when the render first saw it, by its own clock (_clock): the record's time is the sim's
 ## clock, which stands at 0 through the opening, so the first-meteor landing's craters never opened while the fighters stood in
@@ -270,19 +281,33 @@ func _bowls(S: SimState) -> void:
 	while _cb_seen < S.storeN:
 		var o: int = _cb_seen * WorldStore.STRIDE
 		if int(S.store[o]) == WorldStore.KIND_CRATER:
-			var made: float = _clock - RenderLook.TILE_BOWL_OPEN - 1.0 if _cb_fresh else _clock - maxf(S.T - float(S.store[o + 8]), 0.0)
+			var made: float = _clock - RenderLook.TILE_BOWL_OPEN - 1.0 if (_cb_fresh or _under_feet(S, Vector3(S.store[o + 1], S.store[o + 2], S.store[o + 3]), float(S.store[o + 4]))) else _clock - maxf(S.T - float(S.store[o + 8]), 0.0)
 			_cb.append([S.store[o + 1], S.store[o + 2], S.store[o + 3], S.store[o + 4], S.store[o + 5], S.store[o + 6], made])
 			fresh = true
 		_cb_seen += 1
 	_cb_fresh = false
+	# A bowl still opening snaps open once a body stands in it: the sim dug it at once (A1 clipping).
+	for e in _cb:
+		if float(e[6]) > _clock - RenderLook.TILE_BOWL_OPEN and _under_feet(S, Vector3(e[0], e[1], e[2]), float(e[3])):
+			e[6] = _clock - RenderLook.TILE_BOWL_OPEN - 1.0
+			fresh = true
 	_cb_due -= 1
 	if not fresh and _cb_due > 0:
 		return
 	_cb_due = RenderLook.TILE_BOWL_FRAMES
 	var near: Array = []
+	var feet: Array = []   # where the bodies stand: a bowl under one is drawn before any nearer the camera (A1 clipping)
+	for f in (SimStage.bodies(S) if S.stage != null else S.fighters):
+		feet.append(field.dir_at(float(f.x), float(f.z) if "z" in f else 0.0, S.frame))
 	for k in range(_cb.size()):
 		var e: Array = _cb[k]
-		near.append([_pv.distance_squared_to(Vector3(e[0], e[1], e[2])), k])
+		var q := Vector3(e[0], e[1], e[2])
+		var dd: float = _pv.distance_squared_to(q)
+		for fd in feet:
+			if (fd as Vector3).distance_to(q) * field.R < 2.0 * float(e[3]) + RenderLook.BOWL_FEET_REACH:
+				dd -= 16.0   # before every bowl by distance alone (a squared chord is under 4)
+				break
+		near.append([dd, k])
 	near.sort()
 	var n: int = mini(near.size(), RenderLook.TILE_BOWLS)
 	_cb_a.resize(RenderLook.TILE_BOWLS)
