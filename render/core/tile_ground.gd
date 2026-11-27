@@ -409,6 +409,9 @@ func _look_ahead(S: SimState, tk: int) -> void:
 ## The planet is being built again, so its copies are going: this drive ends with them.
 func drop() -> void:
 	field.forget_wants(get_instance_id())
+	for m in [mat, water_mat]:   # the next match's ground tracks its own: these kept the old field's textures in the pane's RenderMats (QA's hour run)
+		if m != null:
+			pane.mats.untrack(m)
 	if _node != null:
 		_node.queue_free()
 		_node = null

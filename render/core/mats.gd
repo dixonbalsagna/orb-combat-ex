@@ -137,7 +137,8 @@ func clear() -> void:
 
 ## Register a material (built elsewhere) whose shader bends with the planet curvature and fogs into the sky.
 func track(m: ShaderMaterial) -> void:
-	_tracked.append(m)
+	if not _tracked.has(m):   # once: a material tracked again is only brought up to date
+		_tracked.append(m)
 	m.set_shader_parameter("bend", _bend)
 	m.set_shader_parameter("cam_dist", _dist)
 	m.set_shader_parameter("pan_haze", _haze)
@@ -145,6 +146,11 @@ func track(m: ShaderMaterial) -> void:
 	m.set_shader_parameter("pan_ground", _haze_ground)
 	for k in _sky:
 		m.set_shader_parameter(k, _sky[k])
+
+
+## A tracked material its owner has let go (RenderTileGround.drop): it leaves the pushes, and what it holds (its textures) goes with it.
+func untrack(m: ShaderMaterial) -> void:
+	_tracked.erase(m)
 
 
 ## This pane's planet curvature for the frame (render/shaders/bend.gdshaderinc): bend and the camera's distance to the
