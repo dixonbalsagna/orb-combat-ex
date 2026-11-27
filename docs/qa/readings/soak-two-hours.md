@@ -157,3 +157,27 @@ World's fix holds `sh` and `sb` in two generations of at most 150,000 sub-nodes 
 - The 4.6 MiB a match that stayed unnamed does not show here either: what is left after emptying everything is 226.0 MiB against 228.5 after one match on the old build (two different builds, so a rough comparison).
 - `_tracked` still creeps up (1.03 MiB), as expected until Rendering's fix lands.
 - **Not read here:** the release program (the two-hour soak on the next build is that), and what the bound costs in read time.
+
+## The final memory proof: two-hour soaks on 5dbd89ca (2026-11-26 to 27), against 0.1.1 (ac4ba152)
+
+5dbd89ca carries World's field-subcap and Rendering's mats-tracked fix (and the ground-link fix). Windows: Orb's switches zip (hash checked; `split_line_choice` on, otherwise main), this PC, below normal, quiet (load 2.4% on average, 10% at most). Linux: `linux-soak.yml` run 45923171447, plain main, read from its log. Same harness settings as the 0.1.1 runs. Matches 2 to 11 ended the same way and at the same sim times as on 0.1.1, on each platform, so the same matches are being compared. Both builds still say version 0.1.1.
+
+**All seven checks pass on both** (60.0 ticks a second, no SCRIPT ERROR, quit when asked, exit 0, marker gone).
+
+| MiB 20 s into the match | m2 | m3 | m4 | m5 | m6 | m7 | m8 | m9 | m10 | m11 | m12 | end |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Windows 0.1.1 | 527 | 593 | 611 | 618 | 666 | 693 | 697 | 699 | 745 | 768 | 769 | 766 |
+| **Windows 5dbd89ca** | 483 | 487 | 489 | 487 | 491 | 510 | 507 | 508 | 509 | 506 | 507 | **504** |
+| Linux 0.1.1 | 384 | 401 | 444 | 464 | 507 | 561 | 566 | 581 | 586 | 598 | 600 | 600 |
+| **Linux 5dbd89ca** | 382 | 382 | 385 | 387 | 387 | 387 | 387 | 387 | 387 | 387 | 383 | **383** |
+
+| After the 720 s warm-up | 0.1.1 | 5dbd89ca |
+| :--- | ---: | ---: |
+| Windows: growth to the end / slope | +239 MiB / 130 MiB an hour | +23 MiB / 15.5 MiB an hour |
+| Linux: growth to the end / slope | +217 / 142 | +1.5 / 0.8 |
+
+**Reading.** **The memory growth is gone.** Linux is flat. On Windows there is one step of about 19 MiB at the 7th match and nothing after it (506 to 510 MiB from the 7th to the 12th). Objects at match starts climb as before (17,884 to 18,063, about 18 a match here against 35 before); resources and nodes are flat.
+
+**Also seen:** closing the program mid-match printed, at exit only, `8,224 ObjectDB instances were leaked`, `14 resources still in use` and 6 dummy textures, on both platforms (0.1.1's runs printed 302 or 304 and 10). The first trial saw the larger set on a mid-match close too, so it seems to depend on the moment of closing; not looked into.
+
+Records: `docs/qa/runs/5dbd89ca/`.
