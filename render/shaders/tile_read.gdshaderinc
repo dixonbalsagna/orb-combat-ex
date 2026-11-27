@@ -138,6 +138,11 @@ float tile_fore(float y, vec2 p) {
 	float t = min(p.y / fore_cam.z, 0.95);
 	float pu = clamp((p.x / (1.0 - t) + plane_span) / (2.0 * plane_span), 0.0, 1.0) * 63.0;
 	int ua = int(pu);
-	float pl = mix(texelFetch(plane_tex, ivec2(ua, 0), 0).r, texelFetch(plane_tex, ivec2(min(ua + 1, 63), 0), 0).r, pu - float(ua));
-	return min(y, mix(pl, fore_cam.y, t) - fore_drop * p.y);
+	// near the lens a vertex's step spans many of the profile's points (the read is at p.x / (1 - t)): read the lowest within a window that
+	// grows with that spread (rows 1 to 4: 1, 2, 4, 8 points either side; RenderTileGround._profile), so neighbours agree and nothing folds
+	int pr = clamp(int(floor(log2(1.0 / (1.0 - t)) + 0.5)), 0, 4);
+	float pl = mix(texelFetch(plane_tex, ivec2(ua, pr), 0).r, texelFetch(plane_tex, ivec2(min(ua + 1, 63), pr), 0).r, pu - float(ua));
+	// past where t stops (0.95 of the way to the lens) the line stops dropping too: the mesh runs on past the camera, and a vertex there held ever
+	// lower pulled the triangles reaching it into steep teeth along the frame's bottom edge
+	return min(y, mix(pl, fore_cam.y, t) - fore_drop * min(p.y, 0.95 * fore_cam.z));
 }

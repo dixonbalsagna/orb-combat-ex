@@ -115,6 +115,9 @@ void vertex() {
 	v_pv = vec2(strip_x + p.x, p.y);
 	v_back = clamp((z_front - p.y) / (z_front - z_band_back), 0.0, 1.0);
 	float y = tile_fore(h, p);   // the real bed under the sea and a lake: the water sheet lies over it (water_tile.gdshader)
+	if (y < h - 0.5) {
+		v_grad = vec2(0.0);   // held under the sight line: lit as the flat ground it is drawn as, not as the slope it was
+	}
 	v_h = y;
 	y -= skirt * mod(INSTANCE_CUSTOM.a, 16.0) * 1000.0 * 0.05;
 	float rr = globe_r + y;

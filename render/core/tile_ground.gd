@@ -72,6 +72,7 @@ var _world_mats: Array = []
 var _chunks: Array = []
 var _chunk_x: float = 1.0e18
 var _prof := PackedFloat32Array()
+var _prof_rows := PackedFloat32Array()   # the profile and four rows of its lowest within 1, 2, 4 and 8 points either side (tile_fore's window)
 var _prof_img: Image
 var _prof_tex: ImageTexture
 var _q := PackedFloat32Array()
@@ -452,7 +453,8 @@ func _make_tiles() -> void:
 	mat.set_shader_parameter("hts", field.hts)
 	mat.set_shader_parameter("ids", field.ids)
 	_prof.resize(64)
-	_prof_img = Image.create_from_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
+	_prof_rows.resize(64 * 5)
+	_prof_img = Image.create_from_data(64, 5, false, Image.FORMAT_RF, _prof_rows.to_byte_array())
 	_prof_tex = ImageTexture.create_from_image(_prof_img)
 	mat.set_shader_parameter("plane_tex", _prof_tex)
 	water_mat = ShaderMaterial.new()
@@ -736,7 +738,16 @@ func _profile(S: SimState, cam_x: float, width: float) -> void:
 		var h: float = field.height_at(pd)
 		# A dent on the line is the sim's, not the tile's: on a field world it's in the store, and a read of the sim's ground here would cost a cold column every time a swing moves the frame.
 		_prof[k] = 0.0 if h < 0.0 else (h + minf(WorldStore.heightDelta(S, pd.x, pd.y, pd.z), 0.0) if field.field_world else minf(h, WorldTerrain.groundY(S, SimWrap.wrap(cam_x + along))))
-	_prof_img.set_data(64, 1, false, Image.FORMAT_RF, _prof.to_byte_array())
+	for k in range(64):
+		_prof_rows[k] = _prof[k]
+	for r in range(1, 5):
+		var w: int = 1 << (r - 1)
+		for k in range(64):
+			var lo: float = _prof[k]
+			for q in range(maxi(k - w, 0), mini(k + w, 63) + 1):
+				lo = minf(lo, _prof[q])
+			_prof_rows[r * 64 + k] = lo
+	_prof_img.set_data(64, 5, false, Image.FORMAT_RF, _prof_rows.to_byte_array())
 	_prof_tex.update(_prof_img)
 	mat.set_shader_parameter("plane_span", half)
 

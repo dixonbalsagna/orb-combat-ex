@@ -151,11 +151,19 @@ void vertex() {
 	if (ww_n > 0) {
 		surf += max(water_drama(xw, z0).x, -0.6 * max(surf - h, 0.0));   // a ring (never below the floor)
 	}
-	float ground = tile_fore(cb_n > 0 ? h + tile_bowls(dir) : h, p);   // a bowl below the water's top floods
+	float ground0 = cb_n > 0 ? h + tile_bowls(dir) : h;
+	float ground = tile_fore(ground0, p);   // a bowl below the water's top floods
 	v_ok = surf < fore_cam.y ? 1.0 : 0.0;   // a lens under the water's top doesn't draw the sheet: from below it's a flat wall across the frame
+	float surf0 = surf;
 	surf = tile_fore(surf, p);
 	v_under = 0.0;
 	v_depth = surf - ground;
+	if (surf0 > ground0 + 0.5 && surf < surf0 - 0.5) {
+		// wet, and held under the sight line: the bed and the top were held to the same line, which drew no water there (a river read as two bands with
+		// its bank between). The sheet stays a unit over its bed, with the depth it had for its colour. A dry place is never moved (that flooded the land).
+		surf = max(surf, ground + 1.0);
+		v_depth = max(surf - ground, surf0 - ground0);
+	}
 	float rr = globe_r + surf - skirt * mod(INSTANCE_CUSTOM.a, 16.0) * 1000.0 * 0.05;
 	vec4 bw = vec4(rr * dot(dir, hd), rr * dot(dir, pv) - globe_r, rr * dot(dir, sd), 1.0);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
