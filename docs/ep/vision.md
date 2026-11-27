@@ -1919,3 +1919,5 @@ Still open: the sound question (the ten-minute listen), the deletion promise, Or
 **Orb (2026-11-25, evening):** "ok, keep working full power on the alpha build"
 
 **Orb (2026-11-25, evening), asked whether Orb or Orb 2 has a Steam Deck or Linux machine:** "I don't have access to a linux device, only two windows PCs on my network, I have some trusted friends I can contact when the steam deck build is necessary, one of them may actually run a linux PC, I'm fairly certain he has a fairly niche operating system"
+
+**Orb (2026-11-27, about 05:00 PST):** "apparently theres one working session. can you bring everything safely to a halt?"
