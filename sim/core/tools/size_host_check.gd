@@ -1,0 +1,101 @@
+extends SceneTree
+## The planet size through the game's host and main (World's sizes.json; item 1 of the un-hide list, docs/world/pending/planet-sizes/README.md), headless:
+##   key        SimHost.planet_key names the size: an unnamed size and "medium" are one key, small, medium and big are three
+##   prefetch   with SimPlanetLoad.strict on (the game's), a size changed in the menu starts the planet made ahead over, at the new size; the same size again leaves it
+##   start      Start takes up the planet made ahead only when it was made for Start's own size
+##   new match  the main scene: after the menu's Start with big, a New match (start_match with no setup, as the pause menu's New match and N do) plays big; after a Start with
+##              medium it plays medium; before any Start it plays the boot's planet (no size named)
+## Run from the repo root (import once first):  godot --headless --path . --script res://sim/core/tools/size_host_check.gd
+## Exits 0 when every check passes, and ends on the verdict line "SIZE HOST: N check(s) failed" (tools/gate.mjs --verdict).
+
+var fails: int = 0
+var checks: int = 0
+
+
+func _ok(cond: bool, what: String) -> void:
+	checks += 1
+	print(("ok    " if cond else "FAIL  ") + what)
+	if not cond:
+		fails += 1
+
+
+func _sized(setup: Dictionary, size: String) -> Dictionary:
+	var out: Dictionary = setup.duplicate()
+	out["planetSize"] = size
+	return out
+
+
+func _initialize() -> void:
+	_run.call_deferred()
+
+
+func _run() -> void:
+	var cols: Dictionary = {}
+	for n in ["small", "medium", "big"]:
+		cols[n] = WorldPlanetSize.colsOf({"planet": 1, "planetSize": n})
+	print("sizes offered: %s; columns %s" % [str(WorldPlanetSize.data().sizes.keys().filter(func(k): return bool(WorldPlanetSize.data().sizes[k].offered))), str(cols)])
+	_ok(cols.small != cols.medium and cols.big != cols.medium and cols.small != cols.big, "the three offered sizes have three column counts")
+
+	# key
+	var cold := {"intro": false, "planet": 4242, "planetGen": 2, "arena": {"cols": 2400}}
+	var k0: String = SimHost.planet_key(cold)
+	_ok(k0 != "" and k0 == SimHost.planet_key(_sized(cold, "medium")), "key: an unnamed size and medium are one key")
+	_ok(SimHost.planet_key(_sized(cold, "big")) != k0, "key: big is another key")
+	_ok(SimHost.planet_key(_sized(cold, "small")) != k0 and SimHost.planet_key(_sized(cold, "small")) != SimHost.planet_key(_sized(cold, "big")), "key: small is a third")
+	_ok(SimHost.planet_key({"intro": false}) == "", "key: a setup that names no planet has none")
+
+	# prefetch
+	var was: bool = SimPlanetLoad.strict
+	SimPlanetLoad.strict = true
+	var pre := SimHost.new()
+	pre.prefetch(cold)
+	var a: SimPlanetLoad.Job = pre.pre_job
+	_ok(a != null and int(a._nc) == int(cols.medium), "prefetch: medium starts making ahead at medium's columns")
+	pre.prefetch_step()
+	pre.prefetch(_sized(cold, "big"))
+	var b: SimPlanetLoad.Job = pre.pre_job
+	_ok(b != null and b != a and int(b._nc) == int(cols.big), "prefetch: the size changed to big starts over, at big's columns (got %s)" % (str(b._nc) if b != null else "none"))
+	pre.prefetch(_sized(cold, "big"))
+	_ok(pre.pre_job == b, "prefetch: big again leaves the work as it is")
+	pre.prefetch(_sized(cold, "small"))
+	_ok(pre.pre_job != null and pre.pre_job != b and int(pre.pre_job._nc) == int(cols.small), "prefetch: and small starts over at small's columns")
+
+	# start: the work made ahead is taken up only for Start's own size
+	var c := SimHost.new()
+	c.prefetch(cold)
+	var made_medium: SimPlanetLoad.Job = c.pre_job
+	c.prefetch_step()
+	c.new_match(7, {}, _sized(cold, "big"))
+	_ok(c.loading() and c.load_job != null and c.load_job != made_medium and int(c.load_job._nc) == int(cols.big), "start: Start with big after medium was made ahead loads big, not medium's work")
+	var d := SimHost.new()
+	d.prefetch(_sized(cold, "big"))
+	var made_big: SimPlanetLoad.Job = d.pre_job
+	d.prefetch_step()
+	d.new_match(7, {}, _sized(cold, "big"))
+	_ok(d.loading() and d.load_job == made_big, "start: Start with big after big was made ahead takes up that work")
+	SimPlanetLoad.strict = was
+
+	# new match: the main scene (a tool's: strict stays off, so a cold planet is made inside the start)
+	var vp := SubViewport.new()
+	vp.size = Vector2i(1280, 720)
+	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	root.add_child(vp)
+	var main = load("res://render/main.tscn").instantiate()
+	main.manual = true
+	vp.add_child(main)
+	await process_frame
+	main.manual = false
+	var t0: int = Time.get_ticks_msec()
+	main.start_match(1201)
+	_ok(not main.host.setup_used.has("planetSize") and int(WorldDefault.describe(main.host.S).cols) == int(cols.medium), "new match: before any Start, a New match names no size and plays medium (cols %d)" % int(WorldDefault.describe(main.host.S).cols))
+	main._on_menu_started({"players": 1, "p1": "kb", "p2": "kb", "intros": false, "planet_size": "big"})
+	_ok(str(main.host.setup_used.get("planetSize", "")) == "big" and int(WorldDefault.describe(main.host.S).cols) == int(cols.big), "new match: Start with big plays big (cols %d)" % int(WorldDefault.describe(main.host.S).cols))
+	main.start_match(1202)
+	_ok(str(main.host.setup_used.get("planetSize", "")) == "big" and int(WorldDefault.describe(main.host.S).cols) == int(cols.big), "new match: a New match after it keeps big (setup %s, cols %d)" % [str(main.host.setup_used.get("planetSize", "none")), int(WorldDefault.describe(main.host.S).cols)])
+	main._on_menu_started({"players": 1, "p1": "kb", "p2": "kb", "intros": true, "planet_size": "medium"})
+	main.start_match(1203)
+	_ok(str(main.host.setup_used.get("planetSize", "")) == "medium" and int(WorldDefault.describe(main.host.S).cols) == int(cols.medium), "new match: after a Start with medium (intros on), a New match plays medium")
+	print("(the main scene's matches took %d ms)" % (Time.get_ticks_msec() - t0))
+	print("\nsize_host_check: %s (%d checks)" % ["passed" if fails == 0 else "%d failed" % fails, checks])
+	print("SIZE HOST: %d check(s) failed" % fails)   # the verdict line tools/gate.mjs --verdict reads
+	quit(0 if fails == 0 else 1)
