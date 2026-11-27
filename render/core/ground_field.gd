@@ -278,7 +278,11 @@ func offset_at(S: SimState, i: int, xw: float, z: float) -> float:
 	var w: float = groove_half(S.scorch[i], trench[i])
 	var t: float = clampf(1.0 - z * z / (w * w), 0.0, 1.0)
 	var r: float = S.rubble[i] if i < S.rubble.size() else 0.0
-	return s + (g[i] - r) * t * t + r * heap(z, rub_lo[i], rub_hi[i])
+	# the residual between this column's start and the next's, as the sim interpolates its deform (WorldTerrain.groundY); at a column's start, as before
+	var j: int = (i + 1) % SimConst.NC
+	var rj: float = S.rubble[j] if j < S.rubble.size() else 0.0
+	var f: float = fposmod(xw, SimConst.COL) / SimConst.COL
+	return s + lerpf(g[i] - r, g[j] - rj, f) * t * t + r * heap(z, rub_lo[i], rub_hi[i])
 
 
 ## The heap's share in depth (1 on its range, easing to 0 over RenderLook.RUBBLE_EDGE beyond): the CPU twin of

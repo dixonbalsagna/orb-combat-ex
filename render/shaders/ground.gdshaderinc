@@ -189,8 +189,10 @@ vec3 ground_offset4(int i, float xw, float z, out float closed) {
 	if (t > 0.0) {
 		float gl = gf(il, 2) - gf(il, 17);
 		float gr = gf(ir, 2) - gf(ir, 17);
-		float g = gf(i, 2) - r;
-		s += vec3(g * t * t, (gr - gl) / (2.0 * col_w) * t * t, -4.0 * g * t * z / (w * w));
+		// between this column's start and the next's, as the sim interpolates its deform (WorldTerrain.groundY; GroundField.offset_at); at a start, as before
+		float g0 = gf(i, 2) - r;
+		float g = mix(g0, gr, fract(xw / col_w));
+		s += vec3(g * t * t, (gr - g0) / col_w * t * t, -4.0 * g * t * z / (w * w));
 	}
 	if (r > 0.0) {
 		vec2 h = heap_at(z, gf(i, 18), gf(i, 19));
