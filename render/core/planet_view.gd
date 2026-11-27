@@ -225,6 +225,7 @@ func _bs_tiles(S: SimState) -> bool:
 		_tf_i = 0
 		_tf_first = true
 		ground.tile_field = tile_field
+		ground.rebuild(S)   # the rows were built before the tile field (_bs_share): a crater already made must be found to be the store's (GroundField.held), or the rows draw it twice
 		tile_field.ground = ground
 		for tm in trees.meshes:
 			tile_field.add_feet(tm[1])
