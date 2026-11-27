@@ -1,0 +1,24 @@
+# building-swiftshader (Rendering, 2026-11-26) on main 6da8c6ec: iw0 = main, iw1 = main + the change (scratch inst_wrap.py, sha1 97a815cb)
+inst wrap applied
+the diff: 460 lines, sha1 af4facc3
+import errors: iw0 0, iw1 0
+iw0 export errors 0
+iw1 export errors 0
+iw1 page console (card): 6 lines, shader errors 0
+iw1 page console (sw): 6 lines, shader errors 0
+golden.json: iw1 byte-identical to iw0
+render gates exit 0: 20 of 20
+open exit 0 depth exit 0 shape exit 0 patch exit 0 pane exit 0 stage exit 0 lane exit 0 ground exit 0 after exit 0 sky exit 0 flashreg exit 0 hudwords exit 0 seam exit 0 detintro exit 0 det exit 0 flight exit 0 city exit 0 cue exit 0 flash exit 0 splitsweep exit 0 gatesdone 
+# stills, ticks 1-32, the nightly's world (planet 7), reduced, 960x540
+## iw0 (st_sw0): collapse-reduced: CAPTURE FAILED: ENOENT: no such file or directory, open 'C:\Users\<user>\AppData\Local\Temp\claude\C--Users-<user>-Documents-Claude-Proj-Breakers-Like\60bff52c-aca9-42c4-84d7-962a03e56ad3\scratchpad\ln\tgst\iw\st_sw0\collapse-reduced\analysis-s1.json' 
+## iw1 (st_sw1): collapse-reduced: CAPTURE FAILED: ENOENT: no such file or directory, open 'C:\Users\<user>\AppData\Local\Temp\claude\C--Users-<user>-Documents-Claude-Proj-Breakers-Like\60bff52c-aca9-42c4-84d7-962a03e56ad3\scratchpad\ln\tgst\iw\st_sw1\collapse-reduced\analysis-s1.json' 
+## iw1 (st_hw1): collapse-reduced: CAPTURE FAILED: ENOENT: no such file or directory, open 'C:\Users\<user>\AppData\Local\Temp\claude\C--Users-<user>-Documents-Claude-Proj-Breakers-Like\60bff52c-aca9-42c4-84d7-962a03e56ad3\scratchpad\ln\tgst\iw\st_hw1\collapse-reduced\analysis-s1.json' 
+## iw0 (st_hw0): collapse-reduced: CAPTURE FAILED: ENOENT: no such file or directory, open 'C:\Users\<user>\AppData\Local\Temp\claude\C--Users-<user>-Documents-Claude-Proj-Breakers-Like\60bff52c-aca9-42c4-84d7-962a03e56ad3\scratchpad\ln\tgst\iw\st_hw0\collapse-reduced\analysis-s1.json' 
+# medium's collapse on the card, worst of 4 readings, both modes
+## iw0 (med0): collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 546s, worst of 4 readings (960x540 at scale 1) collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 534s, worst of 4 readings (1024x768 at scale 1) 
+## iw1 (med1): collapse-normal: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 1, 0 dips, 545s, worst of 4 readings (960x540 at scale 1) collapse-reduced: PASS, primary 1 general 0 red, area-15% 1.5, 2 s memory 1.5, 0 dips, 537s, worst of 4 readings (1024x768 at scale 1) 
+# the nightly's window under software rendering (Tools' command), on iw1
+## iw1 (nw_sw1): collapse-reduced: PASS, primary 1 general 0 red, area-15% 1, 2 s memory 0.5, 0 dips, 2093s, worst of 2 readings (960x540 at scale 1) 
+# The four stills' "CAPTURE FAILED" lines are the flash analysis only (32 ticks are fewer than its warm-up): the frames were captured, every one, and
+# read by hand. Tick 30 (git-ignored: docs/rendering/img/sizes/building-swiftshader/stills-t30.png): under SwiftShader main draws no building and iw1 the
+# city as the card does; on the card iw0 and iw1 are pixel-identical, 0 of 32 frames differing.
