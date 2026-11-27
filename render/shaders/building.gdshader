@@ -196,18 +196,38 @@ vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
 
 varying vec2 v_gz;   // the tile ground: x past the near line, for a hard clip there (globe_near); y the depth from the camera as drawn (VERTEX is the flat plan place)
 
+// The per-instance textures wrap at their width (PlanetView.INST_W): instance id's texel of row r is at (id % w, (id / w) * rows + r).
+// One texel an instance in a single row went past the 8,192 texels SwiftShader allows a texture (planet 7: 9,266 instances).
+vec4 stub_at(int id) {
+	ivec2 s = textureSize(stub_tex, 0);
+	int i = clamp(id, 0, s.x * s.y - 1);
+	return texelFetch(stub_tex, ivec2(i % s.x, i / s.x), 0);
+}
+
+vec4 cut_at(int id) {
+	ivec2 s = textureSize(cut_tex, 0);
+	int i = clamp(id, 0, s.x * s.y - 1);
+	return texelFetch(cut_tex, ivec2(i % s.x, i / s.x), 0);
+}
+
+vec4 win_at(int id, int row) {
+	ivec2 s = textureSize(win_tex, 0);
+	int i = clamp(id, 0, s.x * (s.y / 13) - 1);
+	return texelFetch(win_tex, ivec2(i % s.x, (i / s.x) * 13 + row), 0);
+}
+
 void vertex() {
 	vi_inst = float(INSTANCE_ID);
-	vec4 so = texelFetch(stub_tex, ivec2(min(INSTANCE_ID, textureSize(stub_tex, 0).x - 1), 0), 0);
+	vec4 so = stub_at(INSTANCE_ID);
 	float stub = so.r;
 	vi_open = so.gba;
-	vec4 c = texelFetch(cut_tex, ivec2(min(INSTANCE_ID, textureSize(cut_tex, 0).x - 1), 0), 0);
+	vec4 c = cut_at(INSTANCE_ID);
 	float top_floor = floor(c.z / 16384.0);
 	vi_cut = vec4(c.x, c.y, c.z - top_floor * 16384.0, c.w);
-	int id = min(INSTANCE_ID, textureSize(win_tex, 0).x - 1);
+	int id = INSTANCE_ID;
 	// The part's shape: the box's top is narrowed (a taper) or sloped down to one side (a lean). A plain box (1, 1, 0)
 	// is left as it is, to the bit.
-	vec4 sh = texelFetch(win_tex, ivec2(id, 2), 0);
+	vec4 sh = win_at(id, 2);
 	vec3 n0 = NORMAL;
 	vec3 v0 = VERTEX;
 	vec3 mv = VERTEX;
@@ -238,21 +258,21 @@ void vertex() {
 	if (globe_r > 0.0) {
 		v_gz.x = globe_near(w.z, globe_view_z(w.xyz), 1.0);
 		// The building's own base, so a part stacked on another (a roof, a crown) comes down with it and doesn't hang in the air.
-		w.y = globe_tower(MODEL_MATRIX[3].xyz, w.xyz, min(top - length(MODEL_MATRIX[1].xyz), texelFetch(win_tex, ivec2(id, 1), 0).x), top, max(length(MODEL_MATRIX[0].xyz), length(MODEL_MATRIX[2].xyz)), 0.5 * length(MODEL_MATRIX[2].xyz));
+		w.y = globe_tower(MODEL_MATRIX[3].xyz, w.xyz, min(top - length(MODEL_MATRIX[1].xyz), win_at(id, 1).x), top, max(length(MODEL_MATRIX[0].xyz), length(MODEL_MATRIX[2].xyz)), 0.5 * length(MODEL_MATRIX[2].xyz));
 	}
 	v_wy = w.y;
-	vi_win = texelFetch(win_tex, ivec2(id, 0), 0);
-	vec4 wb = texelFetch(win_tex, ivec2(id, 1), 0);
+	vi_win = win_at(id, 0);
+	vec4 wb = win_at(id, 1);
 	bool zface = abs(n0.z) > 0.5;
 	float sx = length(MODEL_MATRIX[0].xyz);
 	float sz = length(MODEL_MATRIX[2].xyz);
 	vi_winb = vec3(wb.x, wb.y, float(INSTANCE_ID) + (zface ? 0.0 : 0.5));
 	v_face = vec4(zface ? v0.x * sx : v0.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(n0.y) < 0.5 ? 1.0 : 0.0), v0.x * sx);
 	vi_dmg = vec3(wb.z, min(top, stubbed), sx);
-	vec4 fr4 = texelFetch(win_tex, ivec2(id, 4), 0);
+	vec4 fr4 = win_at(id, 4);
 	vi_look = vec4(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0), fr4.w);
 	vi_frame = vec2(fr4.x, fr4.y + 4.0 * fr4.z);   // the core's state, and four times what rows 5 to 12 hold (1 marks, 2 a stage spreading, 4 a second wave inside it, 8 a blow-out's wave)
-	vec4 shl = texelFetch(win_tex, ivec2(id, 3), 0);
+	vec4 shl = win_at(id, 3);
 	vi_shell = vec4(MODEL_MATRIX[3].x + shl.x, MODEL_MATRIX[3].z + shl.y, shl.z, shl.w);
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
@@ -407,9 +427,9 @@ void fragment() {
 	// The per-instance and per-face values, rebuilt from plain varyings (no flat varyings: they cost the old GPUs a
 	// rewrite of every draw's index buffer). The masks are read again; the small integers are rounded.
 	int inst = int(vi_inst + 0.5);
-	vec4 cmask = texelFetch(cut_tex, ivec2(min(inst, textureSize(cut_tex, 0).x - 1), 0), 0);
+	vec4 cmask = cut_at(inst);
 	vec4 v_cut = vec4(cmask.x, cmask.y, cmask.z - floor(cmask.z / 16384.0) * 16384.0, cmask.w);
-	vec4 v_win = texelFetch(win_tex, ivec2(min(inst, textureSize(win_tex, 0).x - 1), 0), 0);
+	vec4 v_win = win_at(inst, 0);
 	vec2 v_base = vec2(vi_base.x, round(vi_base.y));
 	float v_back = vi_back > 0.5 ? 1.0 : 0.0;
 	vec3 v_winb = vec3(vi_winb.x, round(vi_winb.y), round(vi_winb.z * 2.0) * 0.5);
@@ -465,7 +485,7 @@ void fragment() {
 	bool f_wave = mod(floor(fxf * 0.5), 2.0) > 0.5;
 	bool f_wave2 = mod(floor(fxf * 0.25), 2.0) > 0.5;
 	bool f_blow = fxf > 7.5;
-	int iid = min(int(bid), textureSize(win_tex, 0).x - 1);
+	int iid = int(bid);
 	float toward_z = v_shell.y + (v_shell.y < 0.0 ? v_shell.w : -v_shell.w);   // the shell's face toward the fighter plane
 	float px_area = spread_area * VIEWPORT_SIZE.x * VIEWPORT_SIZE.y / 786432.0 / PI;
 	float lag = 1.0;
@@ -493,14 +513,14 @@ void fragment() {
 		lag += spread_lag * win_hash(vec3(bid, blk.x + 40.0 * fract(v_winb.z), blk.y));
 	}
 	if (f_wave) {
-		vec4 sp = texelFetch(win_tex, ivec2(iid, 5), 0);
+		vec4 sp = win_at(iid, 5);
 		float sn = floor(sp.a * 0.25 + 0.01);
 		vec2 dp = at_px - screen_px(VIEW_MATRIX, PROJECTION_MATRIX, bent_world(mat4(1.0), vec3(v_shell.x + sp.x, v_winb.x + sp.y, toward_z)).xyz, VIEWPORT_SIZE);
 		if (dot(dp, dp) * lag * lag > px_area * max(spread_now - sp.z, 0.0) / max(sn, 1.0)) {
 			st = sp.a - 4.0 * sn;   // the wave has not reached this pixel: the stage before
 		} else if (f_wave2) {
 			// A later change spreads inside the first wave as a second one (row 10): outside it, the stage between.
-			vec4 s2 = texelFetch(win_tex, ivec2(iid, 10), 0);
+			vec4 s2 = win_at(iid, 10);
 			float n2 = floor(s2.a * 0.25 + 0.01);
 			vec2 d2 = at_px - screen_px(VIEW_MATRIX, PROJECTION_MATRIX, bent_world(mat4(1.0), vec3(v_shell.x + s2.x, v_winb.x + s2.y, toward_z)).xyz, VIEWPORT_SIZE);
 			if (dot(d2, d2) * lag * lag > px_area * max(spread_now - s2.z, 0.0) / max(n2, 1.0)) {
@@ -585,7 +605,7 @@ void fragment() {
 			float cell_y = v_winb.x + (floor(fr) + 0.5) / v_look.y * v_win.w;
 			vec3 pc = pw + (zf ? vec3(cell_u, 0.0, 0.0) : vec3(0.0, 0.0, cell_u));
 			for (int i = 0; i < 4; i++) {
-				vec4 run = texelFetch(win_tex, ivec2(iid, 6 + i), 0);
+				vec4 run = win_at(iid, 6 + i);
 				if (run.x < 0.5) {
 					break;
 				}
@@ -635,9 +655,9 @@ void fragment() {
 		// Floors VFX's blow-out has just put out (rows 11 and 12): their panes go as a wave from where the building
 		// was hit, like a stage.
 		if (f_blow && kf >= 0.0 && kf < v_winb.y) {
-			vec4 bm = texelFetch(win_tex, ivec2(iid, 11), 0);
+			vec4 bm = win_at(iid, 11);
 			if (bit_on(kf, bm.xyz)) {
-				vec4 bw = texelFetch(win_tex, ivec2(iid, 12), 0);
+				vec4 bw = win_at(iid, 12);
 				vec2 db = at_px - screen_px(VIEW_MATRIX, PROJECTION_MATRIX, bent_world(mat4(1.0), vec3(v_shell.x + bw.x, v_winb.x + bw.y, toward_z)).xyz, VIEWPORT_SIZE);
 				mk_pane = mk_pane || dot(db, db) * lag * lag <= px_area * max(spread_now - bw.z, 0.0) / max(bw.a, 1.0);
 			}

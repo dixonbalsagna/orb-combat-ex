@@ -143,16 +143,16 @@ func _marks_and_spread(S: SimState, P: PlanetView) -> void:
 	b.fdmg[4] = 0.25 * s4
 	b.hp -= 1.0
 	P.refresh(S, false)
-	var run: Color = img.get_pixel(k0, 6)
-	_expect(_stage(P, bi) == 2 and img.get_pixel(k0, 4).b == 1.0 and int(run.r) % 64 == 3 and (int(run.r) >> 6) % 64 == 2 and absf(run.g - 0.5) < 0.001 and absf(run.b) == 1.0 and run.a < -1.0e5 and img.get_pixel(k0, 7) == none and img.get_pixel(k0, 5) == none and P._spread.is_empty() and P._busy.is_empty(), "a tower with two floors damaged and no event carries one mark, whole at once: floors 3 and 4, the heavier's share, and nothing spreads (%s)" % str(run))
+	var run: Color = PlanetView.inst_get(img, k0, 6, 13)
+	_expect(_stage(P, bi) == 2 and PlanetView.inst_get(img, k0, 4, 13).b == 1.0 and int(run.r) % 64 == 3 and (int(run.r) >> 6) % 64 == 2 and absf(run.g - 0.5) < 0.001 and absf(run.b) == 1.0 and run.a < -1.0e5 and PlanetView.inst_get(img, k0, 7, 13) == none and PlanetView.inst_get(img, k0, 5, 13) == none and P._spread.is_empty() and P._busy.is_empty(), "a tower with two floors damaged and no event carries one mark, whole at once: floors 3 and 4, the heavier's share, and nothing spreads (%s)" % str(run))
 	var same: bool = true
 	for k in ix:
-		same = same and img.get_pixel(k, 6) == run and img.get_pixel(k, 4).b == 1.0
+		same = same and PlanetView.inst_get(img, k, 6, 13) == run and PlanetView.inst_get(img, k, 4, 13).b == 1.0
 	_expect(same, "... the same on each of its %d parts" % ix.size())
 	b.fdmg.fill(0.0)
 	b.hp = b.maxhp
 	P.refresh(S, false)
-	_expect(_stage(P, bi) == 0 and img.get_pixel(k0, 4).b == 0.0 and img.get_pixel(k0, 6) == none and not P._marks.has(bi), "its damage put back, the mark is gone: nothing is remembered")
+	_expect(_stage(P, bi) == 0 and PlanetView.inst_get(img, k0, 4, 13).b == 0.0 and PlanetView.inst_get(img, k0, 6, 13) == none and not P._marks.has(bi), "its damage put back, the mark is gone: nothing is remembered")
 	# A wall slam from the left, with its events.
 	S.tick = 600
 	var y: float = WorldStructures.baseY(S, b) + 4.0 * fh
@@ -161,37 +161,37 @@ func _marks_and_spread(S: SimState, P: PlanetView) -> void:
 	b.fdmg[4] = 0.25 * s4
 	b.hp -= 1.0
 	P.refresh(S, false)
-	run = img.get_pixel(k0, 6)
-	var sp: Color = img.get_pixel(k0, 5)
-	_expect(img.get_pixel(k0, 4).b == 3.0 and run.b == -1.0 and run.a == 600.0 and int(run.r) >> 12 >= 1, "a wall slam from the left, with its events: the mark is on the left side and grows from this tick (%s)" % str(run))
+	run = PlanetView.inst_get(img, k0, 6, 13)
+	var sp: Color = PlanetView.inst_get(img, k0, 5, 13)
+	_expect(PlanetView.inst_get(img, k0, 4, 13).b == 3.0 and run.b == -1.0 and run.a == 600.0 and int(run.r) >> 12 >= 1, "a wall slam from the left, with its events: the mark is on the left side and grows from this tick (%s)" % str(run))
 	_expect(P._spread.has(bi) and absf(sp.r - (-0.5 * b.w - shx)) < 0.01 and absf(sp.g - 4.0 * fh) < 0.01 and sp.b == 600.0 and int(sp.a) % 4 == 0 and int(sp.a) >> 2 >= 1, "... and its stage spreads from the stage before (0), from the left edge at the hit's height (%s)" % str(sp))
 	S.tick = 600 + RenderLook.SPREAD_TICKS
 	P.refresh(S, false)
-	_expect(img.get_pixel(k0, 4).b == 1.0 and img.get_pixel(k0, 5) == none and img.get_pixel(k0, 6).a < -1.0e5 and P._busy.is_empty() and P._spread.is_empty(), "after RenderLook.SPREAD_TICKS (%d) the spread is over: the building as it stands, its mark whole" % RenderLook.SPREAD_TICKS)
+	_expect(PlanetView.inst_get(img, k0, 4, 13).b == 1.0 and PlanetView.inst_get(img, k0, 5, 13) == none and PlanetView.inst_get(img, k0, 6, 13).a < -1.0e5 and P._busy.is_empty() and P._spread.is_empty(), "after RenderLook.SPREAD_TICKS (%d) the spread is over: the building as it stands, its mark whole" % RenderLook.SPREAD_TICKS)
 	# A heavier blow on the same floors.
 	S.tick = 1000
 	P.consume([_ev("floor_hit", bi, {"floor": 3, "outcome": "dent", "ux": 1.0, "y": y})], S.T)
 	b.fdmg[3] = 0.8 * s3
 	b.hp -= 1.0
 	P.refresh(S, false)
-	run = img.get_pixel(k0, 6)
+	run = PlanetView.inst_get(img, k0, 6, 13)
 	_expect(absf(run.g - 0.8) < 0.001 and absf(run.b + 1.5) < 0.001 and run.a == 1000.0 and not P._spread.has(bi) and P._busy.has(bi), "a heavier blow on the same floors: the mark grows from the share it had (0.5) to its new one (0.8) from this tick; its stage has not changed, so no stage spreads (%s)" % str(run))
 	S.tick = 900
 	P.refresh(S, false)
-	run = img.get_pixel(k0, 6)
+	run = PlanetView.inst_get(img, k0, 6, 13)
 	_expect(P._busy.is_empty() and run.a < -1.0e5 and run.b == -1.0, "the tick gone back (a seek): everything settles at once (%s)" % str(run))
 	# The floor breaks: World clears it and forgets its damage.
 	b.fmask = int(b.fmask) & ~(1 << 3)
 	b.fdmg[3] = 0.0
 	P.refresh(S, false)
-	run = img.get_pixel(k0, 6)
-	_expect(int(run.r) % 64 == 4 and (int(run.r) >> 6) % 64 == 1 and absf(run.g - 0.25) < 0.001 and run.b == -1.0 and img.get_pixel(k0, 7) == none, "a floor that breaks is a cleared floor, not a mark: the mark is the floor that still stands (%s)" % str(run))
+	run = PlanetView.inst_get(img, k0, 6, 13)
+	_expect(int(run.r) % 64 == 4 and (int(run.r) >> 6) % 64 == 1 and absf(run.g - 0.25) < 0.001 and run.b == -1.0 and PlanetView.inst_get(img, k0, 7, 13) == none, "a floor that breaks is a cleared floor, not a mark: the mark is the floor that still stands (%s)" % str(run))
 	# A lodge: the body's place.
 	S.tick = 3000
 	P.consume([_ev("building_hit", bi, {"outcome": "punch", "ux": 1.0, "y": y}), _ev("building_stage", bi, {"cx": b.x}), _ev("lodge", bi, {"x": b.x + 0.2 * b.w, "y": y})], S.T)
 	b.hp = b.maxhp * 0.2
 	P.refresh(S, false)
-	sp = img.get_pixel(k0, 5)
+	sp = PlanetView.inst_get(img, k0, 5, 13)
 	_expect(_stage(P, bi) == 3 and absf(sp.r - (0.2 * b.w - shx)) < 0.01 and absf(sp.g - 4.0 * fh) < 0.01 and sp.b == 3000.0 and int(sp.a) % 4 == 2, "a lodge that takes it to a shell: the stage spreads from where the body lies, from the stage before (2) (%s)" % str(sp))
 	# A blast beside a house.
 	var hb = S.buildings[hi]
@@ -202,8 +202,8 @@ func _marks_and_spread(S: SimState, P: PlanetView) -> void:
 	P.consume([_ev("building_stage", hi, {"cx": hb.x + 1000.0})], S.T)
 	hb.hp = hb.maxhp * 0.2
 	P.refresh(S, false)
-	sp = img.get_pixel(hk, 5)
-	_expect(_stage(P, hi) == 3 and img.get_pixel(hk, 4).b == 2.0 and absf(sp.r - (0.5 * hb.w - hshx)) < 0.01 and sp.g == 0.0 and sp.b == 3100.0 and int(sp.a) % 4 == 0 and int(sp.a) >> 2 == 1, "a blast to the right of a house takes it to a shell: the stage spreads from its right edge at its foot, with the whole area a tick though the tower's spread is still going (%s)" % str(sp))
+	sp = PlanetView.inst_get(img, hk, 5, 13)
+	_expect(_stage(P, hi) == 3 and PlanetView.inst_get(img, hk, 4, 13).b == 2.0 and absf(sp.r - (0.5 * hb.w - hshx)) < 0.01 and sp.g == 0.0 and sp.b == 3100.0 and int(sp.a) % 4 == 0 and int(sp.a) >> 2 == 1, "a blast to the right of a house takes it to a shell: the stage spreads from its right edge at its foot, with the whole area a tick though the tower's spread is still going (%s)" % str(sp))
 	hb.hp = 0.0
 	hb.alive = false
 	P.refresh(S, false)
@@ -220,38 +220,38 @@ func _marks_and_spread(S: SimState, P: PlanetView) -> void:
 	P.consume([_ev("building_stage", ti, {"cx": t.x - 900.0})], S.T)
 	t.hp = t.maxhp * 0.8
 	P.refresh(S, false)
-	var w1: Color = img.get_pixel(tk, 5)
-	_expect(_stage(P, ti) == 1 and img.get_pixel(tk, 4).b == 2.0 and w1.b == 5000.0 and int(w1.a) % 4 == 0 and img.get_pixel(tk, 10) == none, "a blast takes a tower to stage 1: one wave from the stage before (0) (%s)" % str(w1))
+	var w1: Color = PlanetView.inst_get(img, tk, 5, 13)
+	_expect(_stage(P, ti) == 1 and PlanetView.inst_get(img, tk, 4, 13).b == 2.0 and w1.b == 5000.0 and int(w1.a) % 4 == 0 and PlanetView.inst_get(img, tk, 10, 13) == none, "a blast takes a tower to stage 1: one wave from the stage before (0) (%s)" % str(w1))
 	_expect(P._drops.has(ti) and absf(float(P._drawn[ti][0]) - h_full) < 0.01 and WorldStructures.curH(t) < h_full - 50.0, "... and its top, which the sim brought %.0f units lower, is still where it was: it comes down at a set speed" % (h_full - WorldStructures.curH(t)))
 	S.tick = 5003
 	var blast_y: float = WorldStructures.baseY(S, t) + 220.0
 	P.consume([_ev("building_stage", ti, {"cx": t.x - 900.0}), _ev("crater", -1, {"x": t.x - 900.0, "y": blast_y})], S.T)
 	t.hp = t.maxhp * 0.5
 	P.refresh(S, false)
-	var w2: Color = img.get_pixel(tk, 10)
-	_expect(_stage(P, ti) == 2 and img.get_pixel(tk, 4).b == 6.0 and img.get_pixel(tk, 5) == w1 and w2.b == 5003.0 and int(w2.a) % 4 == 1 and absf(w2.g - 220.0) < 0.01 and w1.g == 0.0, "its second three ticks later, with its crater: the first wave is kept as it was, and the new stage spreads inside it as a second wave from the stage between (1), from the blast's own height (%s)" % str(w2))
+	var w2: Color = PlanetView.inst_get(img, tk, 10, 13)
+	_expect(_stage(P, ti) == 2 and PlanetView.inst_get(img, tk, 4, 13).b == 6.0 and PlanetView.inst_get(img, tk, 5, 13) == w1 and w2.b == 5003.0 and int(w2.a) % 4 == 1 and absf(w2.g - 220.0) < 0.01 and w1.g == 0.0, "its second three ticks later, with its crater: the first wave is kept as it was, and the new stage spreads inside it as a second wave from the stage between (1), from the blast's own height (%s)" % str(w2))
 	var d3: float = PlanetView.dropped(3.0, false)
 	_expect(absf(float(P._drawn[ti][0]) - (h_full - d3)) < 0.01 and d3 > 0.0 and d3 < 15.0, "... and its top has come down %.2f units in three ticks, on the way to its new height" % d3)
 	S.tick = 5000 + RenderLook.SPREAD_TICKS
 	P.refresh(S, false)
-	_expect(img.get_pixel(tk, 4).b == 2.0 and img.get_pixel(tk, 5).b == 5003.0 and int(img.get_pixel(tk, 5).a) % 4 == 1 and img.get_pixel(tk, 10) == none and P._busy.has(ti), "the first wave over, the second goes on alone")
+	_expect(PlanetView.inst_get(img, tk, 4, 13).b == 2.0 and PlanetView.inst_get(img, tk, 5, 13).b == 5003.0 and int(PlanetView.inst_get(img, tk, 5, 13).a) % 4 == 1 and PlanetView.inst_get(img, tk, 10, 13) == none and P._busy.has(ti), "the first wave over, the second goes on alone")
 	S.tick = 5003 + RenderLook.SPREAD_TICKS
 	P.refresh(S, false)
-	_expect(img.get_pixel(tk, 4).b == 0.0 and img.get_pixel(tk, 5) == none and not P._busy.has(ti) and not P._drops.has(ti) and absf(float(P._drawn[ti][0]) - WorldStructures.curH(t)) < 0.01, "... and when that is over the tower is as it stands, at its own height")
+	_expect(PlanetView.inst_get(img, tk, 4, 13).b == 0.0 and PlanetView.inst_get(img, tk, 5, 13) == none and not P._busy.has(ti) and not P._drops.has(ti) and absf(float(P._drawn[ti][0]) - WorldStructures.curH(t)) < 0.01, "... and when that is over the tower is as it stands, at its own height")
 	t.hp = t.maxhp * 0.3
 	P.refresh(S, false)
 	_expect(not P._drops.has(ti) and absf(float(P._drawn[ti][0]) - WorldStructures.curH(t)) < 0.01 and not P._spread.has(ti), "hit points lowered with no event (a seek): its height and its stage change at once")
 	# A blow-out: the floors it puts out go as a wave.
 	S.tick = 6000
-	var before: Color = img.get_pixel(tk, 0)
+	var before: Color = PlanetView.inst_get(img, tk, 0, 13)
 	P.blow_windows(S, [{"b": ti, "at": S.T, "strength": 0.5, "lo": 0, "hi": 0}])
-	var fresh: Color = img.get_pixel(tk, 11)
-	var bw: Color = img.get_pixel(tk, 12)
-	_expect(P._blowing.has(ti) and img.get_pixel(tk, 0) == before and fresh.r + fresh.g + fresh.b > 0.0 and img.get_pixel(tk, 4).b == 8.0 and bw.b == 6000.0 and P._blown[ti] != 0, "a blow-out's floors are kept from the first row's mask and written as a wave from this tick (%s, %s)" % [str(fresh), str(bw)])
+	var fresh: Color = PlanetView.inst_get(img, tk, 11, 13)
+	var bw: Color = PlanetView.inst_get(img, tk, 12, 13)
+	_expect(P._blowing.has(ti) and PlanetView.inst_get(img, tk, 0, 13) == before and fresh.r + fresh.g + fresh.b > 0.0 and PlanetView.inst_get(img, tk, 4, 13).b == 8.0 and bw.b == 6000.0 and P._blown[ti] != 0, "a blow-out's floors are kept from the first row's mask and written as a wave from this tick (%s, %s)" % [str(fresh), str(bw)])
 	S.tick = 6000 + RenderLook.SPREAD_TICKS
 	P.refresh(S, false)
-	var after: Color = img.get_pixel(tk, 0)
-	_expect(not P._blowing.has(ti) and after.r == fresh.r and after.g == fresh.g and after.b == fresh.b and img.get_pixel(tk, 11) == none and img.get_pixel(tk, 4).b == 0.0, "... and when the wave is over they are in the first row's mask")
+	var after: Color = PlanetView.inst_get(img, tk, 0, 13)
+	_expect(not P._blowing.has(ti) and after.r == fresh.r and after.g == fresh.g and after.b == fresh.b and PlanetView.inst_get(img, tk, 11, 13) == none and PlanetView.inst_get(img, tk, 4, 13).b == 0.0, "... and when the wave is over they are in the first row's mask")
 
 
 ## The stage PlanetView wrote for the shader (win_tex's second texel, blue).

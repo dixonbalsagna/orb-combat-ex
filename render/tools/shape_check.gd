@@ -208,8 +208,8 @@ func _run() -> void:
 		P.refresh(S, false)
 		var base: float = WorldStructures.baseY(S, b)
 		var cimg: Image = P._cut[0]
-		var body_cut: Color = cimg.get_pixel(step, 0)
-		var skirt_cut: Color = cimg.get_pixel((P._inst[step] as PackedInt32Array)[1], 0)
+		var body_cut: Color = PlanetView.inst_get(cimg, step, 0, 1)
+		var skirt_cut: Color = PlanetView.inst_get(cimg, (P._inst[step] as PackedInt32Array)[1], 0, 1)
 		_expect(is_equal_approx(P._top[tall], base + WorldStructures.curH(b)) and body_cut.a > 0.0 and skirt_cut.a == body_cut.a and skirt_cut.r == body_cut.r and int(skirt_cut.b / 16384.0) <= int(body_cut.b / 16384.0), "a tower at half its hit points is drawn to the sim's height (%.0f of %.0f); a stepped tower with three floors out opens them in its skirt as in its body" % [WorldStructures.curH(b), b.h])
 	else:
 		_expect(false, "this world has a tall tower and a stepped one in the front row to try")

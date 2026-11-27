@@ -116,7 +116,7 @@ func _texel(bi: int, j: int = -1) -> Color:
 	var P: PlanetView = main.planet
 	var st: Array = P._stub_tex0 if P._row0[bi] >= 0 else P._stub_tex
 	var part: int = RenderShapes.shell(P._parts[bi]) if j < 0 else j
-	return (st[0] as Image).get_pixel((P._inst[bi] as PackedInt32Array)[part], 0)
+	return PlanetView.inst_get(st[0], (P._inst[bi] as PackedInt32Array)[part], 0, 1)
 
 
 ## How many ticks of a run turned anything.
@@ -335,17 +335,17 @@ func _run() -> void:
 	_expect(not PlanetView.lobby_ok(tower) and k_first < 1.0 and k_cut == 0.0 and p_cut == 1.0 and P.lobby_share(ti) == 0.0 and P.patch_share(ti) == 1.0 and _texel(ti).g == 0.0, "the tower's ground floor cleared by a brunt: the lobby starts to shut at once (%.0f%% two ticks on) and is shut, the tower takes the patch, and with the pair gone and back behind it, it does not open" % (100.0 * k_first))
 	# What holds a cleared floor up: the core's state by the hit points, on the tower's own texel.
 	var wi: int = (P._inst[ti] as PackedInt32Array)[0]
-	var fr0: Color = (P._win[0] as Image).get_pixel(wi, 4)
+	var fr0: Color = PlanetView.inst_get(P._win[0], wi, 4, 13)
 	tower.hp = tower.maxhp * (RenderLook.CORE_HP.x - 0.05)
 	_ticks(2)
-	var fr1: Color = (P._win[0] as Image).get_pixel(wi, 4)
+	var fr1: Color = PlanetView.inst_get(P._win[0], wi, 4, 13)
 	tower.hp = tower.maxhp * (RenderLook.CORE_HP.y - 0.05)
 	_ticks(2)
-	var fr2: Color = (P._win[0] as Image).get_pixel(wi, 4)
+	var fr2: Color = PlanetView.inst_get(P._win[0], wi, 4, 13)
 	tower.hp = hp_was
 	tower.fmask = mask_was
 	_ticks(2)
-	var frame_ok: bool = fr0.r == 0.0 and fr0.g == 0.0 and fr1.g == 1.0 and fr2.g == 2.0 and (P._win[0] as Image).get_pixel(wi, 4).g == 0.0
+	var frame_ok: bool = fr0.r == 0.0 and fr0.g == 0.0 and fr1.g == 1.0 and fr2.g == 2.0 and PlanetView.inst_get(P._win[0], wi, 4, 13).g == 0.0
 	if stepped != null:
 		# A stepped tower: its skirts are outermost from the ground, its core only above the taller skirt.
 		var sps: Array = P._parts[int(stepped.idx)]
@@ -356,7 +356,7 @@ func _run() -> void:
 		tops.sort_custom(func(p, q): return p[0] > q[0])
 		frame_ok = frame_ok and tops.size() == 3 and tops[0][2] == 0.0 and tops[1][2] == tops[0][1] and tops[2][2] == tops[1][1]
 		for j in range(sps.size()):
-			frame_ok = frame_ok and absf((P._win[0] as Image).get_pixel((P._inst[int(stepped.idx)] as PackedInt32Array)[j], 4).r - RenderShapes.outer_from(sps, j)) < 0.5
+			frame_ok = frame_ok and absf(PlanetView.inst_get(P._win[0], (P._inst[int(stepped.idx)] as PackedInt32Array)[j], 4, 13).r - RenderShapes.outer_from(sps, j)) < 0.5
 	_expect(frame_ok, "what holds a cleared floor up: the tower's wall is its outermost from the ground; its core reads whole, cracked under %.0f%% of its hit points and broken under %.0f%%; a stepped tower's widest skirt is outermost from the ground, the next from the first one's top, its core from the second's" % [100.0 * RenderLook.CORE_HP.x, 100.0 * RenderLook.CORE_HP.y])
 	# Camera's cut flag, from the frame's clear to the pane's request.
 	var given: Dictionary = {"only": 1, "radius_px": 40.0}
@@ -379,7 +379,7 @@ func _run() -> void:
 			if float(pj2[RenderShapes.Y0]) <= 0.0 and (int(pj2[RenderShapes.FLAGS]) & RenderShapes.ROOF) == 0 and absf(float(pj2[RenderShapes.X])) <= 1.0 and absf(float(pj2[RenderShapes.Z])) <= 1.0:
 				widest = widest and float(pj2[RenderShapes.W]) * float(pj2[RenderShapes.D]) <= float(ps[sh][RenderShapes.W]) * float(ps[sh][RenderShapes.D])
 			marks = marks and (_texel(si, j).g == (1.0 if j == sh else -1.0))
-		var wt: Color = (P._win[0] as Image).get_pixel((P._inst[si] as PackedInt32Array)[0], 3)
+		var wt: Color = PlanetView.inst_get(P._win[0], (P._inst[si] as PackedInt32Array)[0], 3, 13)
 		_expect(P.lobby_share(si) == 1.0 and widest and marks and sh != 0 and absf(wt.b - 0.5 * float(ps[sh][RenderShapes.W])) < 0.01 and absf(wt.a - 0.5 * float(ps[sh][RenderShapes.D])) < 0.01, "a stepped tower (%s, %d parts): its lobby is open, its widest part on the ground is the shell that carries the colonnade (part %d, not the core), every other part is marked as inside it, and each part knows the shell's footprint (%.0f by %.0f)" % ["a landmark" if int(stepped.landmark) != 0 else "plain", ps.size(), sh, 2.0 * wt.b, 2.0 * wt.a])
 	else:
 		_expect(true, "(no stepped tower in the front block of this world: the shell is not checked)")

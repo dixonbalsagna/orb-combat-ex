@@ -1679,8 +1679,8 @@ func _set_building(S: SimState, bi: int, b, h: float) -> int:
 		var cut: Color = Color(0, 0, 0, 0)
 		if b.alive and not sp.is_empty() and float(p[RenderShapes.Y0]) <= 0.0 and (int(p[RenderShapes.FLAGS]) & (RenderShapes.PLAIN | RenderShapes.ROOF)) == 0:
 			cut = floor_cut(b) if j == 0 else floor_cut_to(b, int(round(float(sp[1]) / WorldBrunt.floorH(b))) - 1)
-		if (ct[0] as Image).get_pixel(k, 0) != cut:
-			(ct[0] as Image).set_pixel(k, 0, cut)
+		if (ct[0] as Image).get_pixelv(inst_xy(k, 0, 1)) != cut:
+			(ct[0] as Image).set_pixelv(inst_xy(k, 0, 1), cut)
 			ct[2] = true
 		if sp.is_empty():
 			mm.set_instance_transform(k, _hidden(b.x))
@@ -1795,21 +1795,21 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 			if spans is Array:
 				up = float(spans[j][1]) if not (spans[j] as Array).is_empty() else 0.0
 			else:
-				up = img.get_pixel(k, 1).g * fh
+				up = img.get_pixelv(inst_xy(k, 1, 13)).g * fh
 		var c := Color(base, ceilf(up / maxf(fh, 1.0)), float(dr[1]), float(RenderShapes.rows(fh)))
 		var s := Color(float(p[RenderShapes.TX]), float(p[RenderShapes.TZ]), float(p[RenderShapes.LEAN]), float(int(p[RenderShapes.LOOKX]) if int(p[RenderShapes.LOOKX]) >= 0 else _look[bi]))
 		var f := Color(float(sh[RenderShapes.X]) - float(p[RenderShapes.X]), float(sh[RenderShapes.Z]) - float(p[RenderShapes.Z]), 0.5 * float(sh[RenderShapes.W]), 0.5 * float(sh[RenderShapes.D]))
 		var fr := Color(RenderShapes.outer_from(ps, j), core, flags, _city[bi])
-		if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c or img.get_pixel(k, 2) != s or img.get_pixel(k, 3) != f or img.get_pixel(k, 4) != fr:
-			img.set_pixel(k, 0, a)
-			img.set_pixel(k, 1, c)
-			img.set_pixel(k, 2, s)
-			img.set_pixel(k, 3, f)
-			img.set_pixel(k, 4, fr)
+		if img.get_pixelv(inst_xy(k, 0, 13)) != a or img.get_pixelv(inst_xy(k, 1, 13)) != c or img.get_pixelv(inst_xy(k, 2, 13)) != s or img.get_pixelv(inst_xy(k, 3, 13)) != f or img.get_pixelv(inst_xy(k, 4, 13)) != fr:
+			img.set_pixelv(inst_xy(k, 0, 13), a)
+			img.set_pixelv(inst_xy(k, 1, 13), c)
+			img.set_pixelv(inst_xy(k, 2, 13), s)
+			img.set_pixelv(inst_xy(k, 3, 13), f)
+			img.set_pixelv(inst_xy(k, 4, 13), fr)
 			wt[2] = true
 		for i in range(8):
-			if img.get_pixel(k, 5 + i) != more[i]:
-				img.set_pixel(k, 5 + i, more[i])
+			if img.get_pixelv(inst_xy(k, 5 + i, 13)) != more[i]:
+				img.set_pixelv(inst_xy(k, 5 + i, 13), more[i])
 				wt[2] = true
 
 
@@ -2493,9 +2493,9 @@ func set_stubs(S: SimState, want: Dictionary, soft: Dictionary = {}, gone: Dicti
 		var row0: bool = _row0[bi] >= 0
 		var st: Array = _stub_tex0 if row0 else _stub_tex
 		for k in _inst[bi]:   # every part of the building is cut down with it
-			var px: Color = (st[0] as Image).get_pixel(k, 0)
+			var px: Color = (st[0] as Image).get_pixelv(inst_xy(k, 0, 1))
 			if absf(px.r - y) > 0.01:
-				(st[0] as Image).set_pixel(k, 0, Color(y, px.g, px.b, px.a))
+				(st[0] as Image).set_pixelv(inst_xy(k, 0, 1), Color(y, px.g, px.b, px.a))
 				changed[1 if row0 else 0] = true
 	for bi in done:
 		_stub_live.erase(bi)
@@ -2611,9 +2611,9 @@ func _put_open(bi: int, k: float, top: float, p: float) -> int:
 	var hit: int = -1
 	for j in range(ix.size()):
 		var g: float = k if j == shell else -k
-		var px: Color = (st[0] as Image).get_pixel(ix[j], 0)
+		var px: Color = (st[0] as Image).get_pixelv(inst_xy(ix[j], 0, 1))
 		if absf(px.g - g) > 0.0001 or absf(px.b - top) > 0.01 or absf(px.a - p) > 0.0001:
-			(st[0] as Image).set_pixel(ix[j], 0, Color(px.r, g, top, p))
+			(st[0] as Image).set_pixelv(inst_xy(ix[j], 0, 1), Color(px.r, g, top, p))
 			hit = 1 if row0 else 0
 	return hit
 
@@ -2860,23 +2860,48 @@ func _building_mat() -> ShaderMaterial:
 ## tick and the sharing of their wave). The fifth row's blue says which are there: 1 marks, 2 a spread, 4 its second
 ## wave, 8 a blow-out's wave.
 static func _win_texture(n: int) -> Array:
-	var img := Image.create_empty(maxi(1, n), 13, false, Image.FORMAT_RGBAF)
+	var sz: Vector2i = inst_size(n, 13)
+	var img := Image.create_empty(sz.x, sz.y, false, Image.FORMAT_RGBAF)
 	img.fill(Color(0, 0, 0, 0))
-	img.fill_rect(Rect2i(0, 2, maxi(1, n), 1), Color(1.0, 1.0, 0.0, 0.0))
+	for band in range(sz.y / 13):
+		img.fill_rect(Rect2i(0, band * 13 + 2, sz.x, 1), Color(1.0, 1.0, 0.0, 0.0))
 	return [img, ImageTexture.create_from_image(img), false]
 
 
-## A one-row float texture of floor cuts, one texel an instance: [image, texture, dirty].
+## The per-instance float textures (win_tex, cut_tex, stub_tex) wrap at INST_W texels: instance k's texel of row r (of `rows` an
+## instance) is at inst_xy(k, r, rows). One texel an instance in a single row was 9,266 wide on planet 7, past the 8,192 a texture may
+## be under SwiftShader (the nightly runner's software GL) or on a GPU with that cap: the texture failed and every building drew nothing.
+const INST_W: int = 4096
+
+
+static func inst_xy(k: int, row: int, rows: int) -> Vector2i:
+	return Vector2i(k % INST_W, (k / INST_W) * rows + row)
+
+
+## The size of a per-instance texture of n instances, `rows` rows each.
+static func inst_size(n: int, rows: int) -> Vector2i:
+	var m: int = maxi(1, n)
+	return Vector2i(mini(m, INST_W), ((m + INST_W - 1) / INST_W) * rows)
+
+
+## Instance k's texel of row r in a per-instance image (the checks read them this way).
+static func inst_get(img: Image, k: int, row: int, rows: int) -> Color:
+	return img.get_pixelv(inst_xy(k, row, rows))
+
+
+## A float texture of floor cuts, one texel an instance (inst_xy, one row): [image, texture, dirty].
 static func _cut_texture(n: int) -> Array:
-	var img := Image.create_empty(maxi(1, n), 1, false, Image.FORMAT_RGBAF)
+	var sz: Vector2i = inst_size(n, 1)
+	var img := Image.create_empty(sz.x, sz.y, false, Image.FORMAT_RGBAF)
 	img.fill(Color(0, 0, 0, 0))
 	return [img, ImageTexture.create_from_image(img), false]
 
 
-## A one-row float texture of a material's per-pane cuts, one texel an instance: r its stub height (whole), g and b
+## A float texture of a material's per-pane cuts, one texel an instance (inst_xy, one row): r its stub height (whole), g and b
 ## its open floors (none, and a building that never opens any): [image, texture].
 static func _stub_texture(m: ShaderMaterial, n: int) -> Array:
-	var img := Image.create_empty(maxi(1, n), 1, false, Image.FORMAT_RGBAF)
+	var sz: Vector2i = inst_size(n, 1)
+	var img := Image.create_empty(sz.x, sz.y, false, Image.FORMAT_RGBAF)
 	img.fill(Color(STUB_WHOLE, 0.0, OPEN_OFF, 0.0))
 	var tex := ImageTexture.create_from_image(img)
 	m.set_shader_parameter("stub_tex", tex)
