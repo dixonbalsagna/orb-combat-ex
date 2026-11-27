@@ -366,6 +366,8 @@ jobs:
       # Camera's checks (A-CAMERA-01; Camera's answer via the EP, 2026-11-14): about 215 s in all on a PC. split_sweep (633 s) runs nightly instead (.github/workflows/camera-nightly.yml).
       - name: Camera cross ko check (a KO across the seam)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/cross_ko_check.gd'
+      - name: "Camera cut register check (every hard cut asks the flash register first; a refusal eases or holds, with no jump in its place)"
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/cut_register_check.gd'
       - name: Camera flight shots check (the flight shots)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/flight_shots_check.gd'
       - name: Camera launch shots check (the launch shots)
