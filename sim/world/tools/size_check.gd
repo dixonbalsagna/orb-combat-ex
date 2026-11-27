@@ -51,27 +51,27 @@ func _scan(dir: String, hits: Array) -> void:
 		n = d.get_next()
 
 
-## The held sizes (tiny, small, huge and colossal as the data ships: offered false) are not reachable, and un-hiding one moves nothing else. Runs first, before any row sets heldOverride.
+## The held sizes (tiny, huge and colossal as the data ships: offered false) are not reachable, and un-hiding one moves nothing else. Runs first, before any row sets heldOverride.
 func _held_rows() -> void:
 	print("held sizes are unreachable")
 	var quiet0: bool = FighterData.quiet
 	FighterData.quiet = true   # nameOf's error is the point of these rows: it is counted (heldHits), not printed
-	var held: Array = ["tiny", "small", "big", "huge", "colossal"]
+	var held: Array = ["tiny", "huge", "colossal"]
 	var hits0: int = WorldPlanetSize.heldHits
 	var allMedium: bool = true
 	for nm in held:
 		if WorldPlanetSize.nameOf(_setup(nm)) != "medium" or WorldPlanetSize.colsOf(_setup(nm)) != 4800 or not WorldPlanetSize.isHeld(_setup(nm)):
 			allMedium = false
-	ok(allMedium and WorldPlanetSize.heldHits == hits0 + 10, "as shipped, a setup naming tiny, small, big, huge or colossal plays medium (4,800 columns), and each of the %d asks was refused with an error (counted: %d)" % [10, WorldPlanetSize.heldHits - hits0])
-	var Sh1 := _match(_setup("small"), 120)
+	ok(allMedium and WorldPlanetSize.heldHits == hits0 + 6, "as shipped, a setup naming tiny, huge or colossal plays medium (4,800 columns), and each of the %d asks was refused with an error (counted: %d)" % [6, WorldPlanetSize.heldHits - hits0])
+	var Sh1 := _match(_setup("tiny"), 120)
 	var Sm1 := _match(_setup("medium"), 120)
-	ok(Sh1.planetNC == 4800 and SimHash.stateHash(Sh1).gameplay == SimHash.stateHash(Sm1).gameplay, "a match that names small, as shipped, is the medium match byte for byte (planetNC %d, hash at tick 120)" % Sh1.planetNC)
+	ok(Sh1.planetNC == 4800 and SimHash.stateHash(Sh1).gameplay == SimHash.stateHash(Sm1).gameplay, "a match that names tiny, as shipped, is the medium match byte for byte (planetNC %d, hash at tick 120)" % Sh1.planetNC)
 	SimCore.dispose(Sh1)
 	SimCore.dispose(Sm1)
-	ok(not WorldPlanetSize.isHeld(_setup("medium")) and WorldPlanetSize.isHeld(_setup("big")) and not WorldPlanetSize.isHeld({"planet": 7}) and not WorldPlanetSize.isHeld({"planetSize": "small"}), "medium, a setup that names no size and a setup with no planet are not held, and big is")
+	ok(not WorldPlanetSize.isHeld(_setup("medium")) and not WorldPlanetSize.isHeld(_setup("small")) and not WorldPlanetSize.isHeld(_setup("big")) and WorldPlanetSize.isHeld(_setup("huge")) and not WorldPlanetSize.isHeld({"planet": 7}) and not WorldPlanetSize.isHeld({"planetSize": "tiny"}), "small, medium, big, a setup that names no size and a setup with no planet are not held, and huge is")
 	print("a replay that names a held size")
 	WorldPlanetSize.heldOverride = true   # the way in, for the recording only
-	var su: Dictionary = _setup("small")
+	var su: Dictionary = _setup("tiny")
 	var Sr := _match(su, 60)
 	var h60: String = str(SimHash.stateHash(Sr).gameplay)
 	for t in range(60):
@@ -82,20 +82,20 @@ func _held_rows() -> void:
 	rp.checkpoints = [[60, h60]]
 	rp.final = h120
 	var opened: Dictionary = SimReplay.play(rp)
-	ok(bool(opened.ok), "control: with the way in open the replay of 120 ticks at small plays back faithfully (so a failure below is the hold's)")
+	ok(bool(opened.ok), "control: with the way in open the replay of 120 ticks at tiny plays back faithfully (so a failure below is the hold's)")
 	WorldPlanetSize.heldOverride = false
 	var hits1: int = WorldPlanetSize.heldHits
 	var res: Dictionary = SimReplay.play(rp)
 	ok(WorldPlanetSize.heldHits > hits1 and not bool(res.ok) and ["checkpoint", "final", "data"].has(String(res.reason)), "as shipped, the same replay is NOT a quiet success: the error is raised (held asks +%d) and SimReplay.play fails it (reason %s, first bad tick %d)" % [WorldPlanetSize.heldHits - hits1, str(res.reason), int(res.firstBadTick)])
-	print("  note: SimReplay.refusal(header only) for that replay (made at small with the way in open, checked as shipped): '%s'" % SimReplay.refusal(rp))
+	print("  note: SimReplay.refusal(header only) for that replay (made at tiny with the way in open, checked as shipped): '%s'" % SimReplay.refusal(rp))
 	WorldPlanetSize.heldOverride = true
-	var rp3: Dictionary = SimReplay.header(5, su, {"p1": false, "p2": false}, 30)   # an unfinished one: under a second, no checkpoint, no final hash, made at small
+	var rp3: Dictionary = SimReplay.header(5, su, {"p1": false, "p2": false}, 30)   # an unfinished one: under a second, no checkpoint, no final hash, made at tiny
 	WorldPlanetSize.heldOverride = false
 	var res3: Dictionary = SimReplay.play(rp3)
 	print("  note: the same, 30 ticks with no checkpoint and no final hash: SimReplay.play ok %s, reason '%s' (with ok true only the error says so; refusing a held size at the header is WorldPlanetSize.isHeld(setup), a later item for UI and Simulation)" % [str(res3.ok), str(res3.reason)])
-	var rp2: Dictionary = SimReplay.header(5, su, {"p1": false, "p2": false}, 30)   # made while small is held: the match that ran was medium
+	var rp2: Dictionary = SimReplay.header(5, su, {"p1": false, "p2": false}, 30)   # made while tiny is held: the match that ran was medium
 	var res2: Dictionary = SimReplay.play(rp2)
-	print("  note: a replay made while small is held records the match that ran (medium): SimReplay.play ok %s (faithful to what ran; the error is raised)" % str(res2.ok))
+	print("  note: a replay made while tiny is held records the match that ran (medium): SimReplay.play ok %s (faithful to what ran; the error is raised)" % str(res2.ok))
 	print("nothing draws a size")
 	var mode0: String = WorldDefault.mode()
 	var rnd0: bool = WorldDefault.K_RANDOM
@@ -123,17 +123,32 @@ func _held_rows() -> void:
 	var raw0: String = JSON.stringify(WorldPlanetSize.data())
 	var dh0: String = SimReplay.dataHash(_setup("medium"))
 	var dhm0: String = SimReplay.dataHash({"intro": false, "planet": 7, "touch": 1, "planetGen": 3})
-	for nm in ["tiny", "small", "big", "huge"]:
+	for nm in ["tiny", "huge"]:
 		WorldPlanetSize.data().sizes[nm].offered = true
-	var flipped: bool = WorldPlanetSize.names(true).size() == 5 and WorldPlanetSize.nameOf(_setup("small")) == "small" and WorldPlanetSize.colsOf(_setup("small")) == 2560 and WorldPlanetSize.nameOf(_setup("big")) == "big" and WorldPlanetSize.colsOf(_setup("big")) == 9600 and not WorldPlanetSize.isHeld(_setup("small")) and not WorldPlanetSize.isHeld(_setup("big"))
+	var flipped: bool = WorldPlanetSize.names(true).size() == 5 and WorldPlanetSize.nameOf(_setup("tiny")) == "tiny" and WorldPlanetSize.colsOf(_setup("tiny")) == 1280 and WorldPlanetSize.nameOf(_setup("huge")) == "huge" and WorldPlanetSize.colsOf(_setup("huge")) == 19200 and not WorldPlanetSize.isHeld(_setup("tiny")) and not WorldPlanetSize.isHeld(_setup("huge"))
 	var Mh1 := _match(_setup("medium"), 120)
 	var hm1: String = str(SimHash.stateHash(Mh1).gameplay)
 	SimCore.dispose(Mh1)
-	ok(flipped, "flipping tiny, small, big and huge to offered in memory (the one data edit each) makes small play as small (2,560 columns) and big as big (9,600) without the way in, and the menu's list five")
+	ok(flipped, "flipping tiny and huge to offered in memory (the one data edit each) makes tiny play as tiny (1,280 columns) and huge as huge (19,200) without the way in, and the menu's list five")
 	ok(hm1 == hm0 and JSON.stringify(WorldPlanetSize.hashData()) == tbl0 and SimReplay.dataHash(_setup("medium")) == dh0 and SimReplay.dataHash({"intro": false, "planet": 7, "touch": 1, "planetGen": 3}) == dhm0, "the flip moves no hash: a medium match's state hash at tick 120, the size table as a data hash reads it (hashData), and the replay data hash of a setup naming medium and of a setup naming no size are unchanged")
 	ok(JSON.stringify(WorldPlanetSize.data()) != raw0, "control: the raw table does differ after the flip (so hashData, which leaves offered out, is what keeps the hash still)")
-	for nm in ["tiny", "small", "big", "huge"]:
+	for nm in ["tiny", "huge"]:
 		WorldPlanetSize.data().sizes[nm].offered = false
+	# the flip that brought small and big back, read backwards on the landed code: with them held again (as GW1c shipped) every hash is what it is with them offered
+	for nm in ["small", "big"]:
+		WorldPlanetSize.data().sizes[nm].offered = false
+	var heldAgain: bool = WorldPlanetSize.names(true) == ["medium"] and WorldPlanetSize.nameOf(_setup("small")) == "medium" and WorldPlanetSize.nameOf(_setup("big")) == "medium"
+	var Mg := _match(_setup("medium"), 120)
+	var hg: String = str(SimHash.stateHash(Mg).gameplay)
+	SimCore.dispose(Mg)
+	var tblg: String = JSON.stringify(WorldPlanetSize.hashData())
+	var rawg: String = JSON.stringify(WorldPlanetSize.data())
+	var dhg: String = SimReplay.dataHash(_setup("medium"))
+	var dhgm: String = SimReplay.dataHash({"intro": false, "planet": 7, "touch": 1, "planetGen": 3})
+	for nm in ["small", "big"]:
+		WorldPlanetSize.data().sizes[nm].offered = true
+	ok(heldAgain and hg == hm0 and tblg == tbl0 and dhg == dh0 and dhgm == dhm0, "small and big coming back moved no hash: with them held again (as GW1c shipped, medium alone) a medium match's state hash at tick 120, hashData and the replay data hash of a setup naming medium and of one naming none are what they are with them offered")
+	ok(rawg != raw0, "control: the raw table does differ with small and big held again, so the row above compares two different tables")
 	FighterData.quiet = quiet0
 
 
@@ -143,7 +158,7 @@ func _init() -> void:
 	ok(WorldPlanetSize.dataErrors().is_empty(), "sizes.json loads clean (%s)" % str(WorldPlanetSize.dataErrors()))
 	var offered: Array = WorldPlanetSize.names(true)
 	var all5: Array = ["tiny", "small", "medium", "big", "huge"]
-	ok(offered == ["medium"], "as shipped, only medium is offered; tiny, small, big, huge and colossal are held (%s)" % str(offered))
+	ok(offered == ["small", "medium", "big"], "as shipped, small, medium and big are offered, smallest first; tiny, huge and colossal are held (%s)" % str(offered))
 	ok(WorldPlanetSize.names().size() == 6 and WorldPlanetSize.names().slice(0, 5) == all5 and WorldPlanetSize.names()[5] == "colossal", "the data has the five sizes smallest first, and the sixth, colossal, which is data that is off")
 	ok(WorldPlanetSize.colsOf({"planet": 7, "planetSize": "medium"}) == 4800 and WorldPlanetSize.colsOf({"planet": 7}) == 4800 and WorldPlanetSize.colsOf({"planetSize": "huge"}) == 4800, "medium is 4,800; no size, or no planet to size, is medium")
 	_held_rows()
@@ -239,7 +254,7 @@ func _init() -> void:
 					unreached += 1
 					print("     %s planet %d touch %d: the nearest place is %.0f from the spawn" % [nm, pl, tc, near])
 	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
-	ok(unreached == 0, "%d spawns (5 sizes x the pool's planets x touches): all within a base launch's reach (%.0f) of a place; the farthest is %.0f" % [combos, reach, worst])
+	ok(unreached == 0, "%d spawns (the offered sizes x the pool's planets x touches): all within a base launch's reach (%.0f) of a place; the farthest is %.0f" % [combos, reach, worst])
 	print("the host's loader (strict) makes a planet at its size")
 	SimConst.setPlanet(SimConst.PLANET_NC_MEDIUM)
 	SimPlanetLoad.strict = true
