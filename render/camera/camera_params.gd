@@ -175,6 +175,7 @@ const SLAM_STIFF_RAMP: float = 0.06    # the slam's stiff filters come in over t
 const SLAM_TAU: float = 0.03           # stiff pane filters during the slam
 const SLAM_FLASH: float = 0.08
 const SLAM_CANCEL: float = 0.25
+const SLAM_HEIR_E: float = 0.9      # the door had shut this far (the rusher's pane held all but a twentieth of the screen) when the contact came: the one view goes on from his pane's picture (SplitRig._slam_handover)
 
 # --- orientation and the swap (section 5) ---
 const HYST_M: float = 0.02             # antipode margin, fraction of W
