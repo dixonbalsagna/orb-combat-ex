@@ -45,6 +45,7 @@ var force_reduced: bool = false     # tools: reduced motion whatever the player'
 var reduced_motion: bool = false:   # the player's option (main sets it every frame); force_reduced wins
 	set(v):
 		reduced_motion = v or force_reduced
+		_tell_register()
 var cracks_enabled: bool = VfxLook.CRACKS_DEFAULT   # ground cracks: off in the live build until they are approved
 var destruction_enabled: bool = VfxLook.DESTRUCTION_DEFAULT   # shrapnel, collapse dust and holes: off in the live build until approved
 var embers_enabled: bool = VfxLook.EMBERS_DEFAULT   # scorch embers by beam variant: off until Rendering stops drawing its own
@@ -87,6 +88,7 @@ var px_per_unit: float = 1.3                    # pixels per world unit at 1024 
 var reduced_flashing: bool = false:             # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn. LOCKED ON while the other fights' effects are (RL-249 (6))
 	set(v):
 		reduced_flashing = v or (other_fights_enabled and calm_lock)
+		_tell_register()
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
 var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
 var blastcloud := VfxBlastCloud.new()          # the catastrophe tier's blast cloud: stem, cap, dust wall and the one fireball light (blast_cloud.gd, cloud_view.gd), on its cue
@@ -192,7 +194,7 @@ func reset(S: SimState, p_seed: int) -> void:
 	ghosts.reset()
 	_vision_sig = ""
 	if not shares_register:
-		flashes.reset()
+		flashes.reset(reduced_motion or reduced_flashing)
 	press.flash_sink = flashes
 	inreach.registry = flashes
 	zip.flashes = flashes
@@ -223,6 +225,12 @@ func reset(S: SimState, p_seed: int) -> void:
 	_last_slide = null
 	_fell = [false, false]
 	_intro_seen = false
+
+
+## The register learns the reduced setting the moment it is set, not at its next tick: Camera's hard cuts ask it before the hub's consume (CD-04).
+func _tell_register() -> void:
+	if flashes != null and not shares_register:
+		flashes.reduced = reduced_motion or reduced_flashing
 
 
 ## Once per displayed frame with its wall-clock time: the automatic quality step. Below 42 fps for 2 s drops a level;

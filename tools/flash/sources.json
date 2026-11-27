@@ -13,7 +13,8 @@
     "cut_in_panel",
     "transform_cut",
     "double_hit",
-    "biome_star"
+    "biome_star",
+    "hard_cut"
   ],
   "reserved": [
     "body_hit",

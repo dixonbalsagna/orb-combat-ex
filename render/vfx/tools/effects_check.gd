@@ -7830,6 +7830,38 @@ func _hard_cuts_and_forms() -> void:
 			if t % 20 == 0:
 				Rm.ask_cut("insert", 1.0, 0.3, t)
 		_check(Rm.worst_weight_from_log() <= (VfxFlashRegistry.BUDGET_REDUCED if mode else VfxFlashRegistry.BUDGET) + 1e-9 and int(Rm.summary()["refused"]) > 0, "%s: a whole-screen cut every 20 ticks for 10 s: the worst second weighs %.2f (limit %.1f), %d cuts eased or held" % ["reduced" if mode else "normal", Rm.worst_weight_from_log(), VfxFlashRegistry.BUDGET_REDUCED if mode else VfxFlashRegistry.BUDGET, int(Rm.summary()["refused"])])
+	# before the first tick: Camera's hard cuts ask ahead of the register's first begin_tick (CD-04), so the setting is on the register from reset() and from the moment it is set
+	var Rb := VfxFlashRegistry.new()
+	Rb.reset(true)
+	var b1: Dictionary = Rb.ask_cut("side_swap", 1.0, 0.4, 1)
+	var b2: Dictionary = Rb.ask_cut("relocate", 1.0, 0.4, 1)
+	_check(b1["form"] == "cut" and b2["form"] != "cut" and Rb.sum_in_window() <= VfxFlashRegistry.BUDGET_REDUCED + 1e-9, "an ask before the first begin_tick is judged reduced when reset says so: one whole-screen cut, the second told %s (%.2f)" % [b2["form"], Rb.sum_in_window()])
+	var Sv := SimCore.createSim()
+	SimCore.newMatch(Sv, 4)
+	for how in ["flashing set before reset", "flashing set after reset", "motion forced after reset", "off"]:
+		var hv := VfxHub.new()
+		if how == "flashing set before reset":
+			hv.reduced_flashing = true
+		hv.reset(Sv, 4)
+		if how == "flashing set after reset":
+			hv.reduced_flashing = true
+		if how == "motion forced after reset":
+			hv.force_reduced = true
+			hv.reduced_motion = false
+		var v1: Dictionary = hv.flashes.ask_cut("side_swap", 1.0, 0.4, 1)
+		var v2: Dictionary = hv.flashes.ask_cut("relocate", 1.0, 0.4, 1)
+		if how == "off":
+			_check(v1["form"] == "cut" and v2["form"] == "cut", "setting off: both cuts asked before the first tick are cut, on the normal budget (%.1f)" % hv.flashes.sum_in_window())
+		else:
+			_check(v1["form"] == "cut" and v2["form"] != "cut" and hv.flashes.sum_in_window() <= VfxFlashRegistry.BUDGET_REDUCED + 1e-9, "the hub's register, %s: asks before the first begin_tick are judged reduced (second %s, %.2f)" % [how, v2["form"], hv.flashes.sum_in_window()])
+	var main_h := VfxHub.new()
+	main_h.reset(Sv, 4)
+	var feeder := VfxHub.new()
+	feeder.reset(Sv, 4)
+	feeder.adopt_register(main_h.flashes, 1)
+	feeder.reduced_flashing = true
+	_check(not main_h.flashes.reduced, "a feeder hub's setting never changes the screen's register: that is the main hub's")
+	SimCore.dispose(Sv)
 
 ## The front of a beam that travels (docs/vfx/beam-front.md; Game Design row 40): while a beam's head is on its way out (`Beam.p` under 1) the head is drawn as the fighter's own energy head in the beam's language, on the tip of the body; a finished one draws none.
 func _beam_front() -> void:

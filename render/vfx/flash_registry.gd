@@ -87,7 +87,7 @@ const DEFAULT_WEIGHT: Dictionary = {
 	"explosion": 1.0, "transform": 1.0, "beam": 1.0, "beam_clash": 1.0, "far_impact": 0.03, "hard_cut": 1.0,
 }
 
-var reduced: bool = false           # reduced motion or the reduced-flashing setting: set by the hub every tick
+var reduced: bool = false           # reduced motion or the reduced-flashing setting: set by the hub at reset(), the moment either setting is set, and every tick
 var cam_dist: float = 0.0           # the camera's distance to the fighters' plane in units (the hub's), 0 = unknown: ppu_at is ppu
 var ppu: float = 1.3                # pixels per world unit at 1024 by 768 on the fighters' plane: the host sets it from the camera (hub.px_per_unit); the close framing is about 1.3
 var now: int = 0                    # the clock, in ticks
@@ -109,8 +109,9 @@ var calm_unfit: int = 0             # ... and the ones that did not fit (left un
 var own_total_refused: int = 0      # the own fight's asks the gate over the sum refused (the check wants none in the 2v2 scenes)
 
 
-func reset() -> void:
-	reduced = false
+## `p_reduced` is the setting now: an ask may come before the first begin_tick (Camera's hard cuts do, CD-04), and it is judged on the same budget as every later one.
+func reset(p_reduced: bool = false) -> void:
+	reduced = p_reduced
 	now = 0
 	channel = 0
 	seen.clear()

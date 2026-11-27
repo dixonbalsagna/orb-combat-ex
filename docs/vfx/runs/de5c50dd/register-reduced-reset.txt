@@ -1,0 +1,59 @@
+register-reduced-reset gates, on a scratch copy of de5c50dd with apply.patch and grant-tools-hard-cut-source.patch (2026-11-26)
+
+BEFORE (main as is; collapse, 120 ticks)
+scenario    mode       seed  ticks  asks  granted  weight/budget  big/cap  count/cap  result
+collapse    normal    12345    120     4        4       2.00/2.5      2/3        2/6  ok
+collapse    reduced   12345    120     4        3         2.00/1      2/1        2/3  FAIL: 2.00 of weight in the 60 ticks from 0 (budget 1); 2 flashes of weight 0.5 or more in 60 ticks (cap 1)
+
+GATES
+effects_check exit 0 ok 1196 fail 0
+hash_check exit 0
+cut_register_check exit 0
+validate exit 0
+content_screen exit 0
+flash_worst collapse exit 0
+flash_worst mashcity exit 0
+flash_worst clashcity exit 0
+flash_worst signaturecity exit 0
+flash_worst rushcity exit 0
+flash_worst plumedesert exit 0
+flash_worst plumeice exit 0
+flash_worst plumevolc exit 0
+flash_worst signaturedummy exit 0
+check-log exit 0
+
+effects_check: new rows
+  ok   an ask before the first begin_tick is judged reduced when reset says so: one whole-screen cut, the second told ease (1.00)
+  ok   the hub's register, flashing set before reset: asks before the first begin_tick are judged reduced (second ease, 1.00)
+  ok   the hub's register, flashing set after reset: asks before the first begin_tick are judged reduced (second ease, 1.00)
+  ok   the hub's register, motion forced after reset: asks before the first begin_tick are judged reduced (second ease, 1.00)
+  ok   setting off: both cuts asked before the first tick are cut, on the normal budget (2.0)
+  ok   a feeder hub's setting never changes the screen's register: that is the main hub's
+
+hash_check (default seeds): hash check passed
+cut_register_check: 73 checks passed
+326 files checked, 0 errors, 2 warnings
+
+AFTER: the nine scenes CI failed, full length, both modes (flash_worst.gd then check-log.js)
+scenario    mode       seed  ticks  asks  granted  weight/budget  big/cap  count/cap  result
+clashcity   normal    12345   1500    44       42       2.00/2.5      2/3        4/6  ok
+clashcity   reduced   12345   1500    43        1         1.00/1      1/1        1/3  ok
+collapse    normal    12345   1500   108       66       2.48/2.5      2/3        6/6  ok
+collapse    reduced   12345   1500   133        7         1.00/1      1/1        1/3  ok
+mashcity    normal    12345   1800    62       59       2.00/2.5      2/3        3/6  ok
+mashcity    reduced   12345   1800    62        1         1.00/1      1/1        1/3  ok
+plumedesert normal    12345   1500    23       21       2.00/2.5      2/3        2/6  ok
+plumedesert reduced   12345   1500    23        1         1.00/1      1/1        1/3  ok
+plumeice    normal    12345   1500    23       21       2.00/2.5      2/3        2/6  ok
+plumeice    reduced   12345   1500    23        1         1.00/1      1/1        1/3  ok
+plumevolc   normal    12345   1500    23       21       2.00/2.5      2/3        2/6  ok
+plumevolc   reduced   12345   1500    23        1         1.00/1      1/1        1/3  ok
+rushcity    normal    12345   1500    52       51       2.00/2.5      2/3        6/6  ok
+rushcity    reduced   12345   1500    50       21         1.00/1      1/1        3/3  ok
+signaturecity normal    12345   1500   132       89       2.30/2.5      2/3        6/6  ok
+signaturecity reduced   12345   1500   183        3         1.00/1      1/1        1/3  ok
+signaturedummy normal    12345   5400   376      280       2.30/2.5      2/3        6/6  ok
+signaturedummy normal    12345   5400   318      237       2.00/2.5      2/3        6/6  ok
+signaturedummy reduced   12345   5400   619       14         1.00/1      1/1        3/3  ok
+signaturedummy reduced   12345   5400   483       14         1.00/1      1/1        2/3  ok
+flash count passed: in no window of 60 ticks does the weighted register grant more than 2.5 of weight (1 under reduced flashing), more than 3 flashes of weight 0.5 or more (1 reduced) or more than 6 flashes (3 reduced) in 20 runs. This is the register's count of the sources that ask it; it is not a luminance measurement and not a clearance.

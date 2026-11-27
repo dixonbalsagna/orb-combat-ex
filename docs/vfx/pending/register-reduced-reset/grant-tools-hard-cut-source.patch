@@ -1,0 +1,14 @@
+diff --git a/tools/flash/sources.json b/tools/flash/sources.json
+index dc931be..fa16907 100644
+--- a/tools/flash/sources.json
++++ b/tools/flash/sources.json
+@@ -13,7 +13,8 @@
+     "cut_in_panel",
+     "transform_cut",
+     "double_hit",
+-    "biome_star"
++    "biome_star",
++    "hard_cut"
+   ],
+   "reserved": [
+     "body_hit",
