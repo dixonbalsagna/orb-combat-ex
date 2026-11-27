@@ -924,6 +924,10 @@ func render_view(a: float) -> void:
 				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
 				panes[i].vis_plane = split_frame.visible_half_plane(i) if split_frame.has_method("visible_half_plane") else {}   # Camera's: the split's culling
 				panes[i].near_lobbies = bool(split_rig.get("depth_dolly")) if split_rig != null else false   # Camera's depth follow: its rule for a near tower goes with it
+				if i > 0:   # the sky goes with the camera: this pane's leaves the first pane's as the panes open and is the first pane's again when they join
+					var sq: float = clampf(float(split_frame.sep), 0.0, 1.0)
+					panes[i].sky_lead = panes[0]
+					panes[i].sky_own = sq * sq * sq * (sq * (sq * 6.0 - 15.0) + 10.0)   # smootherstep, the panes' own blend (SplitFrame.sep)
 				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch, _roll(a))
 				if float(split_frame.cam_z[i]) > zmax:
 					zmax = float(split_frame.cam_z[i])

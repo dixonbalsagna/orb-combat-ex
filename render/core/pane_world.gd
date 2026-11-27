@@ -91,6 +91,9 @@ var _react := PackedFloat32Array()         # per fighter: the sky's reaction to 
 var _react_t: float = -1.0
 var _sky_mat: ShaderMaterial
 var _sky_st: Dictionary = {}               # this pane's place in the dynamic sky (SkyDrive.pane)
+var sky_lead: PaneWorld = null             # in a split, the first pane (main.gd): this pane's sky leaves the lead's as the panes open and comes back to it as they join
+var sky_own: float = 1.0                   # how much of this pane's sky is its own: SplitFrame.sep's smootherstep (main.gd); 0 is the lead's sky to the bit
+var _sky_mixed: bool = false               # the sky was a blend with the lead's last frame (so the next frame sets its own colours again)
 var _wl_body: Array = []                   # the world's light on the fighters' bodies, [mul, add] (SkyDrive.world_at)
 var _wl_seen: Array = []                   # the world's light this pane last handed on (SkyDrive.world, shared by every pane)
 
@@ -271,13 +274,29 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 ## colours for its place round the planet, the drift and the mood, rate limited, to the sky and to every material that
 ## fogs toward it; the stars' strength; and the glow of up to two wrecked towns on its screen.
 func _sky_drive(host: SimHost, a: float, cam_x: float) -> void:
-	var out: Dictionary = host.sky.pane(_sky_st, cam_x, (float(host.ticks) + a) * SimConst.DT)
-	if out.changed:
+	var t_now: float = (float(host.ticks) + a) * SimConst.DT
+	var lead_st: Dictionary = sky_lead._sky_st if sky_lead != null and sky_lead != self else {}
+	# The sky goes with the camera (Camera's split plan): a pane that was not being drawn leads off from the lead's sky, not a snap to its own.
+	if not lead_st.is_empty() and (_sky_st.is_empty() or is_nan(float(_sky_st.get("t", NAN))) or t_now - float(_sky_st.t) > 0.5 or t_now < float(_sky_st.t)):
+		_sky_st = lead_st.duplicate(true)
+	var out: Dictionary = host.sky.pane(_sky_st, cam_x, t_now)
+	var cols: Array = out.cols
+	var star_low: float = out.star_low
+	var sp: float = float(_sky_st.p)
+	var mixing: bool = not lead_st.is_empty() and sky_own < 1.0 and lead_st.has("cols")
+	if mixing:   # the lead's colours, blended toward this pane's own as the panes open; at sky_own 0 the lead's to the bit
+		cols = []
 		for bi in range(4):
-			_sky_mat.set_shader_parameter(SkyDrive.UNIFORMS[bi], out.cols[bi])
-			mats.set_sky(SkyDrive.UNIFORMS[bi], out.cols[bi])
-		_sky_mat.set_shader_parameter("star_low", out.star_low)
-		_sky_mat.set_shader_parameter("star_turn", RenderLook.STAR_TURN * float(_sky_st.p))
+			cols.append((lead_st.cols[bi] as Color).lerp(out.cols[bi], sky_own))
+		star_low = lerpf(float(lead_st.star_low), out.star_low, sky_own)
+		sp = float(lead_st.p) + (fposmod(sp - float(lead_st.p) + 0.5, 1.0) - 0.5) * sky_own
+	if out.changed or mixing or _sky_mixed:
+		for bi in range(4):
+			_sky_mat.set_shader_parameter(SkyDrive.UNIFORMS[bi], cols[bi])
+			mats.set_sky(SkyDrive.UNIFORMS[bi], cols[bi])
+		_sky_mat.set_shader_parameter("star_low", star_low)
+		_sky_mat.set_shader_parameter("star_turn", RenderLook.STAR_TURN * sp)
+	_sky_mixed = mixing
 	if host.sky.world != _wl_seen:   # the world's light, one for every pane (SkyDrive._light)
 		_wl_seen = host.sky.world
 		planet.set_world_light(host.sky.world, host.sky.win)
