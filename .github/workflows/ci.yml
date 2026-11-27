@@ -528,6 +528,8 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd'
       - name: Cross end check, negative control (a fallen body left standing must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd -- --negative-control'
+      - name: 'Size host check (the planet made ahead is keyed by its size; New match keeps the picked size; Simulation size-host)'
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/size_host_check.gd'
 
 
   # The audio and VFX checks (A-CODE-04: the owners' answers, 2026-11-14): each is a headless script that ends with a non-zero exit when a check fails; tools/gate.mjs adds the SCRIPT ERROR count.
