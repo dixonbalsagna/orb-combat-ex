@@ -125,6 +125,12 @@ var feather_mode: int = 0                # the feathered sweep of a layout chang
 var _gov_arm_until: float = -1.0e9       # the scroll governor is armed (at a charge's cue) until this time ...
 var _gov_arm_speed: float = 0.0          # ... as if the view were already moving this fast (units a second)
 var flash_ask: Callable = Callable()     # (source, area as a fraction of the screen, step) -> whether the flash register grants it; SplitView sets it
+var flash_cut: Callable = Callable()     # (why, area, step) -> {form: cut | ease | wait, wait}: the register's answer for a hard cut (VFX's ask_cut, CD-04); SplitView sets it
+var flash_note: Callable = Callable()    # (source, area): a cut the register is told of without asking (only a cut that skipped the gate: none should); SplitView sets it
+var cut_asked: int = 0                    # hard cuts that asked the register (CD-04) ...
+var cut_refused: int = 0                  # ... the refusals (the cut eased or waited instead)
+var cut_unasked: int = 0                  # ... and cuts made without asking (a check fails on any)
+var _cut_hold_until: Dictionary = {}       # why -> time: a refused cut waits this long before it asks again
 var _tf_calm: bool = false               # this transformation's break is calm: no hard cut (the register refused it, or reduced flashing)
 var _tf_w: float = 0.0                   # the hero angle's weight: 0 level, 1 the low angle (the gather eases it in, the settle cranes up)
 var _tf_p0: float = 0.0                  # the angle the shot took over (an angle shot still easing), eased from, not jumped
@@ -633,6 +639,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 			cut = true
 		elif String(_ef(ev, "type", "")) == "arena_turn" and turn_cut and not intro_active:
 			cut = true   # the ring's turn: every camera snaps to the wide on its tick (_read_events starts the wide)
+	if cut and _cut_gate("relocate") != "cut":
+		cut = false   # refused by the register: no snap; the follow catches up (a whip, or a cut when there's room)
 	if swing_view:
 		_pl = CamPlaces.frame_of(S)
 	_read_events(S, events)
@@ -676,9 +684,12 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_pitch_now = pitch_deg + (_shot_pitch + swing_angle if _shot_pitch > 0.0 else minf(_shot_pitch, minf(swing_angle, _rv_ang)))
 	var d_pitch: float = absf(_pitch_now - _last_pitch)
 	if d_pitch > 0.01:
-		_last_pitch = _pitch_now
 		if d_pitch > CamParams.PITCH_CUT_DEG:
-			_mark_cut("angle")   # a jump of angle is a cut (an authored shot's); an eased tilt (an angle shot, the turn's way back) is a move
+			if _cut_gate("angle") == "cut":
+				_mark_cut("angle", true)   # a jump of angle is a cut (an authored shot's); an eased tilt (an angle shot, the turn's way back) is a move
+			else:
+				_pitch_now = _last_pitch + clampf(_pitch_now - _last_pitch, -0.9 * CamParams.PITCH_CUT_DEG, 0.9 * CamParams.PITCH_CUT_DEG)   # refused: a tilt, eased
+		_last_pitch = _pitch_now
 	_update_trigger(S)
 	_update_layout()
 	_update_pushes()
@@ -692,7 +703,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_cut_fade = maxf(0.0, _cut_fade - DT)
 	_prev = _cur
 	if cut:
-		_mark_cut("relocate")   # a relocation is a cut for the foreground's state too
+		_mark_cut("relocate", true)   # a relocation is a cut for the foreground's state too
 	_cur = _make_frame(S)
 	_cur.cut = cut or _cut_now
 	if _handed >= 1:
@@ -1139,12 +1150,15 @@ func _update_orientation(S: SimState) -> void:
 	if cand != 0 and _flip_age >= CamParams.FLIP_DWELL and not merging:
 		var hidden: bool = (e >= CamParams.INSTANT_SWAP_E and sliver <= 0.0)
 		var full: bool = sep >= 0.999 and _slam_slot < 0
-		if (sep <= 0.02 and e <= 0.02) or hidden:
+		var swap_now: bool = (sep <= 0.02 and e <= 0.02) or hidden
+		if swap_now and _cut_gate("side_swap", 1.0) != "cut":
+			pass   # refused by the register: the sides swap later
+		elif swap_now:
 			sigma_u = cand
 			sigma_shown = cand
 			_flip_age = 0.0
 			theta = _theta_of(sigma_shown, phi)
-			_mark_cut("side_swap")   # the divider is all but invisible here: the frame is not interpolated into the new sides
+			_mark_cut("side_swap", true)   # the divider is all but invisible here: the frame is not interpolated into the new sides
 		elif full:
 			sigma_u = cand
 			_flip_age = 0.0
@@ -1452,9 +1466,12 @@ func _rush_far(S: SimState, ra: int, rt: int) -> bool:
 
 
 func _rush_pin_now(ra: int) -> void:
+	if _cut_gate("rush_pin", _pane_area(ra)) != "cut":
+		_nopin_until[ra] = time + 0.5   # refused by the register: no pin; his pane follows the rush at the chase's limits
+		return
 	_rush_pin[ra] = true
 	rush_cuts += 1
-	_mark_cut("rush_pin")
+	_mark_cut("rush_pin", true)
 	if reduced_motion:
 		_cut_fade = CamParams.REDUCED_CUT_FADE
 
@@ -1815,8 +1832,14 @@ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = nu
 	# A shot that takes the screen from another fighter's pane while that pane still holds it (a launch chase ending
 	# has e_hold keeping its pane up for the ease back; a transformation then begins on the other fighter) hands over
 	# with a cut: easing from one fighter's pane to the other's moved the divider 0.4 of the width in a tick.
-	if not cut_in and S != null and e > 0.02 and e_slot >= 0 and e_slot != slot:
+	var handover: bool = not cut_in and S != null and e > 0.02 and e_slot >= 0 and e_slot != slot
+	if handover:
 		cut_in = true
+	if cut_in and S != null and _cut_gate("intro" if kind == "intro" else "solo_cut_in") != "cut":
+		if (kind == "launch" or kind == "hold") and sep < 0.5 and not handover:
+			cut_in = false   # refused by the register: the launch's eased take-over below
+		else:
+			return   # refused, and no eased form (a hand-over from the other pane, a shot of its own): no shot
 		if reduced_motion:
 			_cut_fade = CamParams.REDUCED_CUT_FADE   # (the rig's value for SplitFrame.fade: nothing draws it, a cut is plain)
 	solo_kind = kind
@@ -1848,7 +1871,7 @@ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = nu
 		e = 1.0
 		_snap_focus(S, slot)
 		_zo[slot] = _own_zoom_target(S, slot)
-		_mark_cut("solo_cut_in")
+		_mark_cut("intro" if kind == "intro" else "solo_cut_in", true)
 	elif (kind == "launch" or kind == "hold") and S != null and sep < 0.5:
 		var lf = S.fighters[slot]
 		solo_w = 1.0
@@ -1980,10 +2003,15 @@ func _update_solo(S: SimState) -> void:
 		"launch":
 			if solo_phase == "follow":
 				if f.state != "launched" or _journey_end_evt[solo_slot]:
-					solo_phase = "land"
-					_land_t = 0.0
-					if reduced_motion:
-						_snap_focus(S, solo_slot)
+					# The motion setting holds the frame through the flight and cuts to where he lands: a cut (it moved the picture up to
+					# 5.6 widths with no cut named, so nothing asked the register: cut_register_check), so it asks. Refused, the frame holds
+					# (the setting has no move) and asks again when the register has room.
+					if not reduced_motion or _cut_gate("motion_setting", _pane_area(solo_slot)) == "cut":
+						solo_phase = "land"
+						_land_t = 0.0
+						if reduced_motion:
+							_snap_focus(S, solo_slot)
+							_mark_cut("motion_setting", true)
 				elif solo_t >= CamParams.MAX_FOLLOW:
 					_end_solo(S)
 			elif solo_phase == "land":
@@ -1997,10 +2025,10 @@ func _update_solo(S: SimState) -> void:
 			# On the attacker until the impact (a building hit, or the landing, or the cap), then the cut to the victim.
 			var v: int = _launch_victim
 			if v < 0 or _impact_evt[v] or S.fighters[v].state != "launched" or solo_t >= CamParams.HOLD_MAX:
-				if v >= 0:
+				if v >= 0 and _cut_gate("hold_to_victim") == "cut":
 					_start_cut(S, v)
 				else:
-					_end_solo(S)
+					_end_solo(S)   # (refused by the register: the hold ends, and the layout eases back to the victim's pane)
 		"cut":
 			if solo_t >= CamParams.CUT_SHOT:
 				_launch_victim = -1
@@ -2302,7 +2330,7 @@ func _start_cut(S: SimState, v: int) -> void:
 	_launch_anchor_y = 0.62
 	_snap_focus(S, v)
 	_zo[v] = _own_zoom_target(S, v)
-	_mark_cut("hold_to_victim")
+	_mark_cut("hold_to_victim", true)
 
 
 ## A camera-only cut-in (a building smash, a crippling moment): a hard cut to a fixed or followed view for `dur` seconds,
@@ -2321,6 +2349,8 @@ func _start_overlay(kind: String, slot: int, pt: Vector3, r0: float, r1: float, 
 			recent += 1
 	if rationed and recent >= CamParams.OV_MAX_PER_MIN:
 		return
+	if _cut_gate("insert") != "cut":
+		return   # refused by the register: no insert, the live frame goes on
 	_ov_kind = kind
 	_ov_t = 0.0
 	_ov_dur = dur
@@ -2333,7 +2363,7 @@ func _start_overlay(kind: String, slot: int, pt: Vector3, r0: float, r1: float, 
 		if _ov_times.size() > 12:
 			_ov_times.pop_front()
 		cut_ins += 1
-	_mark_cut("insert")
+	_mark_cut("insert", true)
 
 
 func _overlay_cam(S: SimState) -> Vector3:
@@ -2369,9 +2399,9 @@ func _transform_beats(S: SimState) -> void:
 		# The break's hard cut is a whole-frame change (a shot size). It asks the flash register as the break begins; refused,
 		# or under reduced flashing, the break is calm: the same beats, the zoom easing (not snapped) and no cut.
 		if _tf_ver == "full" and ph == "break":
-			_tf_calm = flash_reduced or (flash_ask.is_valid() and not bool(flash_ask.call("transform_cut", 1.0, 0.4)))
+			_tf_calm = flash_reduced or _cut_gate("transform") != "cut"
 		if _tf_ver == "full" and ph == "break" and not _tf_calm:
-			_mark_cut("transform")
+			_mark_cut("transform", true)
 			_snap_focus(S, solo_slot)
 			_zo[solo_slot] = _own_zoom_target(S, solo_slot)
 		elif _tf_ver != "full":
@@ -2438,7 +2468,7 @@ func _cut_dip() -> void:
 
 
 func _intro_cut(S: SimState, slot: int) -> void:
-	_mark_cut("intro")
+	_mark_cut("intro", true)   # (asked: _begin_solo's gate, or the caller's)
 	intro_cuts += 1
 	if reduced_motion:
 		_cut_fade = CamParams.REDUCED_CUT_FADE
@@ -2489,6 +2519,8 @@ func _intro_fall(S: SimState, a: int, ground_y: float, top_y: float) -> void:
 	if a < 0 or a > 1:
 		return
 	intro_active = true
+	if reduced_motion and _cut_gate("intro") != "cut":
+		return   # refused by the register: the camera stays, and he drops into the frame
 	if reduced_motion:
 		# The camera does not fall with him: it waits, level and still, on the spot he will land on, and he drops into frame.
 		var f = S.fighters[a]
@@ -2504,7 +2536,10 @@ func _intro_fall(S: SimState, a: int, ground_y: float, top_y: float) -> void:
 	_in_phase = "fall"
 	_in_slot = a
 	_in_fall_h = maxf(top_y - ground_y, 1.0)
+	var n_ask: int = cut_refused
 	_begin_solo("intro", a, 5, 0.0, S, true)
+	if cut_refused > n_ask:
+		return   # refused by the register: no fall shot
 	_shot_pitch = 0.0
 	_intro_cut(S, a)
 
@@ -2518,7 +2553,10 @@ func _intro_land(S: SimState, a: int, crater_r: float) -> void:
 	_in_crater_r = crater_r
 	if _ov_kind == "intro":
 		_ov_kind = ""
+	var n_ask: int = cut_refused
 	_begin_solo("intro", a, 5, 0.0, S, true)
+	if cut_refused > n_ask:
+		return   # refused by the register: no landing shot
 	_shot_pitch = 0.0
 	_zo[a] = _own_zoom_target(S, a)
 	_shot_pitch = 0.0 if reduced_motion else _low_pitch(CamParams.INTRO_LAND_PITCH, CamParams.INTRO_LAND_ANCHOR_Y)
@@ -2551,8 +2589,11 @@ func _force_merged(S: SimState) -> void:
 
 
 func _intro_to_two_shot(S: SimState) -> void:
-	_force_merged(S)
 	_in_phase = "stare"
+	if _cut_gate("intro") != "cut":
+		_end_solo(S)   # refused by the register: the two-shot eases in
+		return
+	_force_merged(S)
 	_intro_cut(S, -1)
 	_snap_cameras(S)
 
@@ -2569,10 +2610,12 @@ func _intro_clock(S: SimState, kind: String) -> void:
 		return
 	intro_active = false
 	var was_solo: bool = solo_kind == "intro"
-	if was_solo or kind == "skip" or _in_phase != "stare":
+	if (was_solo or kind == "skip" or _in_phase != "stare") and _cut_gate("intro") != "cut":
+		_end_solo(S)   # refused by the register: the fight's framing eases in
+	elif was_solo or kind == "skip" or _in_phase != "stare":
 		_force_merged(S)
 		_snap_cameras(S)
-		_mark_cut("intro")
+		_mark_cut("intro", true)
 		_cut_dip()
 	_in_phase = ""
 	if kind == "skip":
@@ -2612,13 +2655,17 @@ func _update_intro(S: SimState) -> void:
 	if _in_phase == "stare" and left == CamParams.INTRO_FACE_LEAD:
 		_in_phase = "face"
 		_in_slot = 0
+		var n0: int = cut_refused
 		_begin_solo("intro", 0, 5, 0.0, S, true)
 		_shot_pitch = 0.0
-		_intro_cut(S, 0)
+		if cut_refused == n0:
+			_intro_cut(S, 0)
 	elif _in_phase == "face" and _in_slot == 0 and left == CamParams.INTRO_FACE_LEAD - CamParams.INTRO_FACE_TICKS:
 		_in_slot = 1
+		var n1: int = cut_refused
 		_begin_solo("intro", 1, 5, 0.0, S, true)
-		_intro_cut(S, 1)
+		if cut_refused == n1:
+			_intro_cut(S, 1)
 	elif _in_phase == "face" and _in_slot == 1 and left == CamParams.INTRO_FACE_LEAD - 2 * CamParams.INTRO_FACE_TICKS:
 		_intro_to_two_shot(S)
 
@@ -2777,9 +2824,9 @@ func _update_pushes() -> void:
 			_wide_t = -1.0
 	if _ov_kind != "":
 		_ov_t += DT
-		if _ov_t >= _ov_dur:
+		if _ov_t >= _ov_dur and _cut_gate("insert") == "cut":   # refused: the insert holds until there's room (the register's window frees it within a second)
 			_ov_kind = ""
-			_mark_cut("insert")
+			_mark_cut("insert", true)
 			_oz_valid = false   # the cut back is a cut: the drawn zoom does not ease down from the close-up (a fighter 1,700 units away was off the screen for 0.3 s while it did)
 	for i in range(2):
 		if _hit_t[i] >= 0.0:
@@ -4461,8 +4508,8 @@ func _travel_budget(S: SimState) -> void:
 				var morphing: bool = sep > 0.001 and sep < 0.999
 				var cool: float = CamParams.TRAVEL_COOL_MORPH if morphing else CamParams.TRAVEL_COOL
 				var due: bool = leaving and time - float(_tb_cut_t[i]) >= cool and (morphing or float(_tb_lost[i]) >= CamParams.TRAVEL_WAIT)
-				if due:
-					_mark_cut("travel_safety")
+				if due and _cut_gate("travel_safety", _pane_area(i)) == "cut":   # refused: the budget keeps holding the picture back, and asks again when there's room
+					_mark_cut("travel_safety", true)
 					_cut_dip()
 					_tb_cut_t[i] = time
 					travel_cuts += 1
@@ -5212,16 +5259,56 @@ func _turn_pitch() -> float:
 
 
 ## Every cut says why (CamParams.CUT_REASONS; docs/camera/launch-director.md): the reason's written down, and launch_shots_check fails one that has none.
-func _mark_cut(why: String) -> void:
+func _mark_cut(why: String, asked: bool = false) -> void:
 	_cut_now = true
 	cut_why = why
+	if asked:
+		return
+	cut_unasked += 1   # (every caller asks through _cut_gate; this is the safety net, counted, and told to the register)
+	if flash_note.is_valid():
+		flash_note.call("cut_" + why, 1.0)
+
+
+## A hard cut changes most of the screen, so it asks the flash register first (the audit's CD-04; VFX's ask_cut): "cut" is
+## granted; "ease" means no room soon, and the caller takes its eased form (a whip, the eased take-over, a pitch move); "wait"
+## means room within `wait` ticks, and the caller holds. A refused cut doesn't ask again before the register's wait (at least
+## CUT_HOLD_MIN ticks), so a hold doesn't fill the log. `area` is the share of the screen the cut changes; the step comes from
+## CamParams.CUT_STEP (measured), -1 when there's no reading. No register (a tool's stand-in): granted.
+func _cut_gate(why: String, area: float = 1.0) -> String:
+	if not flash_cut.is_valid() and not flash_ask.is_valid():
+		return "cut"
+	cut_asked += 1
+	if float(_cut_hold_until.get(why, -1.0)) > time + 1.0e-6:
+		cut_refused += 1
+		return "wait"
+	var step: float = float(CamParams.CUT_STEP.get(why, -1.0))
+	var r: Dictionary
+	if flash_cut.is_valid():
+		r = flash_cut.call(why, clampf(area, 0.0, 1.0), step)
+	else:
+		r = {"form": "cut" if bool(flash_ask.call("cut_" + why, clampf(area, 0.0, 1.0), step)) else "ease", "wait": 0}
+	var form: String = String(r.get("form", "cut"))
+	if form != "cut":
+		cut_refused += 1
+		_cut_hold_until[why] = time + float(maxi(int(r.get("wait", 0)), CamParams.CUT_HOLD_MIN)) * DT
+	return form
+
+
+## The share of the screen pane i shows now (for a cut's area): all of it in one view or while it has the screen, else its part.
+func _pane_area(i: int) -> float:
+	if sep < 0.5 or (e > 0.5 and e_slot == i):
+		return 1.0
+	return clampf(0.5 if e <= 0.02 else (1.0 - e if e_slot != i else e), 0.0, 1.0)
 
 
 ## A catch-up the follow cannot make (a fighter a screen and more from his anchor: the lag bound, a rush ended early, a launch
 ## hold let go). Up to WHIP_MAX widths it is a crisp whip of WHIP_TICKS (Orb, 2026-10-22: no instant move without a reason; "the
 ## framing target jumped" is not one, Research). Farther, a move would only smear: a cut, the space has changed.
 func _catch_up(i: int, f, dist_w: float) -> void:
-	if dist_w <= CamParams.WHIP_MAX and not reduced_motion:
+	var refused: bool = (dist_w > CamParams.WHIP_MAX or reduced_motion) and _cut_gate("far_catch_up", _pane_area(i)) != "cut"
+	if refused and reduced_motion:
+		return   # refused by the register, and the motion setting has no whip: held, and cut when there's room
+	if (dist_w <= CamParams.WHIP_MAX and not reduced_motion) or refused:
 		_wp_t[i] = 0
 		_wp_x0[i] = _fx[i]
 		_wp_y0[i] = _fy[i]
@@ -5229,7 +5316,7 @@ func _catch_up(i: int, f, dist_w: float) -> void:
 		return
 	_fx[i] = f.x
 	_fy[i] = f.y + CamParams.CHEST
-	_mark_cut("far_catch_up")
+	_mark_cut("far_catch_up", true)
 	_cut_dip()
 
 
@@ -5459,10 +5546,13 @@ func _peak_begin(S: SimState, i: int) -> void:
 		_end_solo(S)
 	if split_wanted:
 		_set_split(false, "peak")
-	if _swing_cuts():
+	if _swing_cuts() and _cut_gate("motion_setting") != "cut":
+		_pk_phase = ""   # refused by the register: the motion setting has no eased form, so no peak shot
+		_pk_ended = "register"
+	elif _swing_cuts():
 		_pk_w = top
 		_pk_mix = 1.0
-		_mark_cut("motion_setting")   # a cut to the widest on the blow
+		_mark_cut("motion_setting", true)   # a cut to the widest on the blow
 
 
 func _peak_end(why: String, back: float) -> void:
@@ -5476,11 +5566,11 @@ func _peak_end(why: String, back: float) -> void:
 func _peak_reduced(S: SimState) -> void:
 	peak_width = _pk_w
 	_pk_place = CamParams.PEAK_PLACE_HANG
-	if _pk_phase == "hold" or _pk_phase == "back":
+	if (_pk_phase == "hold" or _pk_phase == "back") and _cut_gate("motion_setting") == "cut":   # refused: the wide holds until there's room
 		_pk_phase = ""
 		_pk_mix = 0.0
 		peak_width = 0.0
-		_mark_cut("motion_setting")
+		_mark_cut("motion_setting", true)
 
 
 ## The reveal: a fighter flying fast for REVEAL_AFTER, with room left, opens out and comes back, so the flight goes low, wide, low. It's the shot of a long flight only, and
@@ -5737,11 +5827,10 @@ func _swing_motion(S: SimState, sw: Dictionary, d_rad: float) -> void:
 	var small: bool = cause == "small" or absf(to_go) < CamParams.SWING_SMALL
 	var free: bool = time - _sw_cut_t >= CamParams.SWING_CUT_GAP
 	var had: float = swing_shown   # what the sim's turn this tick doesn't move on the screen
-	if started and not small and (cause == "launch" or (cause == "chase" and free)):
-		swing_shown = to_go   # shown already at the end bearing: a cut on the action
+	if started and not small and (cause == "launch" or (cause == "chase" and free)) and _swing_cut():
+		swing_shown = to_go   # shown already at the end bearing: a cut on the action (refused by the register: the world holds, below)
 		_sw_held = true
 		_sw_due = false
-		_swing_cut()
 	else:
 		_sw_held = true   # still: the world holds, and the sim runs on behind it
 		swing_shown = had - d_rad
@@ -5750,25 +5839,26 @@ func _swing_motion(S: SimState, sw: Dictionary, d_rad: float) -> void:
 			swing_shown = 0.0
 			_sw_held = false
 			_sw_due = false
-		elif done and _sw_cause == "form" and free:
+		elif done and _sw_cause == "form" and free and _swing_cut():
 			swing_shown = 0.0   # the new bearing comes in as a cut at the pause's end
 			_sw_held = false
 			_sw_due = false
-			_swing_cut()
 		elif _swing_past_limit(S, off):
 			_sw_due = true
-		if _sw_due and S.dirS.stop > 0.0 and free:
+		if _sw_due and S.dirS.stop > 0.0 and free and _swing_cut():
 			swing_shown = 0.0
 			_sw_held = false
 			_sw_due = false
-			_swing_cut()
 	_sw_cause = cause
 
 
-## A plain cut: the frame isn't interpolated into, and nothing dissolves.
-func _swing_cut() -> void:
-	_mark_cut("motion_setting")
+## A plain cut: the frame isn't interpolated into, and nothing dissolves. False when the register refuses it (the world holds).
+func _swing_cut() -> bool:
+	if _cut_gate("motion_setting") != "cut":
+		return false
+	_mark_cut("motion_setting", true)
 	_sw_cut_t = time
+	return true
 
 
 ## Whether a standing fighter's ground has parted from what's shown: about r x slope x angle, against what a foot can show (Rendering

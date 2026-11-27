@@ -152,7 +152,7 @@ const SCROLL_CAP: float = 0.045          # the limiter: a pane's focus moves at 
 const CAP_MAX: int = 20                  # ... for at most this many ticks in one onset ...
 const CAP_LAG: float = 0.14              # ... and gives way when the fighter is this far (of the width) from the focus: from there he is followed at his speed
 const SCROLL_MAX: float = 0.045          # the scroll governor: the scenery crosses the screen no faster than this much of its width a tick ...
-const SCROLL_MAX_REDUCED: float = 0.045   # ... and this much under reduced motion or reduced flashing (0.03 for Tools' flash analyser until director step 1, 2026-10-22: the flash work is paused and the shipped mode zoomed fighters out to 25 px)
+const SCROLL_MAX_REDUCED: float = 0.045   # ... and this much under reduced motion or reduced flashing. Kept at 0.045 for the audit's CD-04 (2026-11-26, the EP's call) on the saved reading docs/camera/runs/54474b97/cd04-gw1c/readings.txt: at 0.03 rushcity and AI seed 3 read worse at 1024x768 (AI seed 3 OVER GATE to FAIL), collapse better; at 0.045 with the cut gate every reading is as before
 const BRAWL_FOCUS_TAU: float = 0.05       # the one view follows a brawl's centre eased with this time constant (its drift as the lead)
 const BRAWL_RELEASE: float = 0.5         # and eases back to the pair's middle over this long when the brawl ends
 const ZIP_RELEASE: float = 0.6          # after a hold the frame eases back to the live pair for this long
@@ -434,6 +434,10 @@ const PEAK_PASS_FROM: float = 0.8        # the focus passes to the landing as th
 const PEAK_PASS_TO: float = 1.2
 const PEAK_PASS_AHEAD: float = 0.5       # just short of where he's going: this many seconds of his sideways speed ahead of him
 # Why a cut is a cut (Orb, 2026-10-22: no instant move without a reason from real cinematography; docs/camera/director.md section 11)
+## Each hard cut's luminance step where it changes the frame (the change in relative luminance, for the flash register's ask_cut; -1 unknown: weighed by its area alone).
+## Measured on recorded clips (docs/camera/runs/d41ce393/cd-04/cut-steps.txt); a reason with no reading stays -1.
+const CUT_STEP: Dictionary = {}
+const CUT_HOLD_MIN: int = 6               # a refused cut doesn't ask again for at least this many ticks (the register says when there's room)
 const CUT_REASONS: Dictionary = {
 	"angle": "an authored shot's angle, on its beat",
 	"relocate": "a change of space: the sim moved the pair",

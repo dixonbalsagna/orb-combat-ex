@@ -111,6 +111,8 @@ func attach(m) -> void:
 		_solo.visible = true
 	main.compositor = self
 	main.split_rig.flash_ask = Callable(self, "ask_register")
+	main.split_rig.flash_cut = Callable(self, "ask_cut")
+	main.split_rig.flash_note = Callable(self, "note_register")
 	_on_resized()
 
 
@@ -157,6 +159,29 @@ func ask_register(source: String, area: float, step: float = -1.0) -> bool:
 	if h.get("vfx") == null or h.vfx.get("flashes") == null:
 		return true
 	return bool(h.vfx.flashes.ask(source, Color(0.3, 0.3, 0.35), int(h.S.tick), area * 1024.0 * 768.0, step))
+
+
+## A hard cut's ask (CD-04): the register's ask_cut (VFX's shared register) when it has one, else a plain ask weighed the same way.
+## {form: cut | ease | wait, wait}. A host with no register grants it.
+func ask_cut(why: String, area: float, step: float = -1.0) -> Dictionary:
+	if main == null or main.get("host") == null:
+		return {"form": "cut", "wait": 0}
+	var h = main.host
+	if h.get("vfx") == null or h.vfx.get("flashes") == null:
+		return {"form": "cut", "wait": 0}
+	if h.vfx.flashes.has_method("ask_cut"):
+		return h.vfx.flashes.ask_cut(why, area, step, int(h.S.tick))
+	return {"form": "cut" if ask_register("cut_" + why, area, step) else "ease", "wait": 0}
+
+
+## A cut the register is told of without asking (the rig's safety net; none should reach it). A host with no register: nothing.
+func note_register(source: String, area: float) -> void:
+	if main == null or main.get("host") == null:
+		return
+	var h = main.host
+	if h.get("vfx") == null or h.vfx.get("flashes") == null:
+		return
+	h.vfx.flashes.note(source, int(h.S.tick), area * 1024.0 * 768.0)
 
 
 ## The dolly (docs/camera/city-in-depth.md section 6): the camera's focus plane follows the pair's depth, so a fight in the middle
