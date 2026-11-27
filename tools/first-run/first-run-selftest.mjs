@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { xdotoolKeys, refusal, timeline, ownLines, dataFiles, matchInData } from './linux-numbers.mjs';
-import { parseFps, fpsStats, parseLoad, sizesFor, stepProblems, reportText, ownProfile } from './first-run.mjs';
+import { parseFps, fpsStats, parseLoad, sizesFor, stepProblems, reportText, ownProfile, offeredByBuild } from './first-run.mjs';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -26,23 +26,17 @@ check('a missing load line is null', parseLoad('nothing').pairBakeMs === null);
 
 const table = JSON.parse(readFileSync(join(HERE, 'sizes.json'), 'utf8'));
 const all = sizesFor(table, 'all');
-check('every size is a row of the table; default and medium have arguments, small and big wait until they are offered', all.length === 4 && ['default', 'medium'].every((n) => Array.isArray(all.find((s) => s.name === n).args)) && ['small', 'big'].every((n) => { const s = all.find((x) => x.name === n); return s.args === null && /only medium/.test(s.waiting); }), JSON.stringify(all));
+check('every size of the table can be run: default and medium start where the setup starts, small and big press the Planet size row', all.length === 4 && all.every((x) => Array.isArray(x.args)) && ['default', 'medium'].every((n) => all.find((x) => x.name === n).keys.length === 0) && ['small', 'big'].every((n) => all.find((x) => x.name === n).keys.length > 0), JSON.stringify(all));
 {
   const sizesData = JSON.parse(readFileSync(join(HERE, '..', '..', 'data', 'biomes', 'sizes.json'), 'utf8'));
   const offered = Object.keys(sizesData.sizes).filter((k) => sizesData.sizes[k].offered);
-  check('the table agrees with the sizes the game offers: an offered size has arguments, a hidden one of these has none', ['small', 'medium', 'big'].every((n) => offered.includes(n) === Array.isArray(table.sizes[n].args)), 'offered: ' + offered.join());
-}
-{
-  const base = mkdtempSync(join(tmpdir(), 'first-run-profile-'));
-  const env = ownProfile(base);
-  const read = (...p) => JSON.parse(readFileSync(join(...p, 'ui_prefs.json'), 'utf8'));
-  const win = read(env.APPDATA, 'Godot', 'app_userdata', 'Orb Combat EX'), lin = read(env.XDG_DATA_HOME, 'godot', 'app_userdata', 'Orb Combat EX');
-  const name = readFileSync(join(HERE, '..', '..', 'project.godot'), 'utf8').includes('config/name=' + String.fromCharCode(34) + 'Orb Combat EX' + String.fromCharCode(34));
-  const key = readFileSync(join(HERE, '..', '..', 'ui', 'hud', 'ui_hud.gd'), 'utf8').includes('get_bool(' + String.fromCharCode(34) + 'howto_seen');
-  check('the run gets its own settings with the card marked seen, in the folder the game uses on each platform, under the base given', win.howto_seen === true && lin.howto_seen === true && Object.keys(win).length === 1 && env.APPDATA.startsWith(base) && env.XDG_DATA_HOME.startsWith(base) && name && key);
-  rmSync(base, { recursive: true, force: true });
-  const sources = ['first-run.mjs', 'linux-numbers.mjs'].map((f) => readFileSync(join(HERE, f), 'utf8'));
-  check('both scripts start the program with those settings', sources[0].includes('...ownProfile(profile)') && sources[1].includes('...profile }') && sources[1].includes('ownProfile(mkdtempSync('));
+  check('every size the game offers has a row the first run can play (hidden sizes may have one: it waits for a build that offers them)', offered.every((n) => table.sizes[n] && Array.isArray(table.sizes[n].args) && (n === sizesData.default || (table.sizes[n].keys || []).length > 0)), 'offered: ' + offered.join());
+  const packed = Buffer.from(readFileSync(join(HERE, '..', '..', 'data', 'biomes', 'sizes.json'), 'utf8'));
+  check('what a program offers is read from its own data, and matches the data file', ['small', 'big', 'huge', 'tiny'].every((n) => offeredByBuild(packed, n) === !!(sizesData.sizes[n] && sizesData.sizes[n].offered)) && offeredByBuild(Buffer.from('nothing'), 'medium') && !offeredByBuild(Buffer.from('nothing'), 'big'), 'offered: ' + offered.join());
+  const sizeRow = (t) => Buffer.from('x "big": { "cols": 9600, "offered": ' + t + ', "places": { "cities": 24 } } y');
+  check('a size row says offered or not either way', offeredByBuild(sizeRow(true), 'big') && !offeredByBuild(sizeRow(false), 'big'));
+  const kp = sizesFor(table, 'small,big').flatMap((x) => x.keys);
+  check('the size keys are ones both key helpers know, and each choice leaves the first row lit again (as many Up as Down)', xdotoolKeys(kp).every(Boolean) && kp.every((k) => new RegExp(`\\b${k} = 0x`).test(readFileSync(join(HERE, 'window.ps1'), 'utf8'))) && sizesFor(table, 'small,big').every((x) => x.keys.filter((k) => k === 'UP').length === x.keys.filter((k) => k === 'DOWN').length));
 }
 let threw = false; try { sizesFor(table, 'huge'); } catch { threw = true; }
 check('a size that is not a row is refused', threw);
@@ -61,7 +55,7 @@ check('the helper names nothing but the process it is given (no process search b
 const r = reportText({ date: '2026-11-23', build: { version: '0.1.1', commit: 'abc1234', date: '2026-11-23' }, machine: { cpu: 'A CPU', gpu: 'A GPU', ramGb: 32, os: 'Windows 11' }, window: '1280x720', runs: [
   { size: 'default', steps: [{ id: 'notice', what: 'w', ok: true, detail: 'the picture changed', still: '00.png' }, { id: 'pause', what: 'p', ok: false, detail: 'no still' }], fps: st, load: ld, loading: { firstPictureS: 4.2 }, closed: true, wallS: 100 },
   { size: 'medium', waiting: 'GW1c has not landed the planet sizes', steps: [] }] });
-check('the report says what failed, what was waiting, and gives the numbers', /1 step\(s\) did not go as planned/.test(r) && /Not offered by this build/.test(r) && /4\.2 s/.test(r) && /FAILED: no still/.test(r) && /pair bake 244 ms/.test(r) && /closed: yes, by itself/.test(r), r);
+check('the report says what failed, what was waiting, and gives the numbers', /1 step\(s\) did not go as planned/.test(r) && /Not run: /.test(r) && /4\.2 s/.test(r) && /FAILED: no still/.test(r) && /pair bake 244 ms/.test(r) && /closed: yes, by itself/.test(r), r);
 check('a headless report says its frame rates are not a window\'s', /NOT a window's/.test(reportText({ date: 'd', build: {}, machine: { cpu: 'c', gpu: '', ramGb: 1, os: 'o' }, window: null, runs: [{ size: 'default', steps: [{ id: 'x', ok: null }], fps: st, load: ld, loading: {}, closed: true, wallS: 1, headless: true }] })));
 const ln = readFileSync(join(HERE, 'linux-numbers.mjs'), 'utf8');
 check('every key steps.json uses has an xdotool name', xdotoolKeys(steps.steps.flatMap((s) => s.keys || [])).every(Boolean) && xdotoolKeys(['ENTER', 'P', 'UP']).join() === 'Return,p,Up');

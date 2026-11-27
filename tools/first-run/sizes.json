@@ -1,21 +1,43 @@
 {
-  "_about": "The planet sizes the first run can be asked for (--size small|medium|big|default|all; tools/first-run/first-run.mjs). `args`: the arguments added after `--` on the program's command line (a list), or null when this build cannot be asked for that size. Since GW1c only medium is offered (data/biomes/sizes.json), and it is the one the build starts with; small and big stay null until they are offered again (then: a menu row chooses the size, so steps.json gains the keys for it and the row gets an empty list). A size whose args are null is reported as 'not offered by this build' and nothing is run for it.",
+  "_about": "The planet sizes the first run can be asked for (--size small|medium|big|default|all; tools/first-run/first-run.mjs). A size is chosen the way a player chooses it, with the setup's \"Planet size\" row (a locked build takes no argument for it): `keys` are pressed after the fighter pick and before Start, with the setup's first row lit before and after (four Down to the row, Left to the smaller size or Right to the bigger one from Medium, four Up back). `args`: extra arguments for the program (none needed today). A row is used only on a build that offers the size: the script reads that from the program's own data and otherwise reports 'not offered by this build'.",
   "sizes": {
     "default": {
       "args": [],
-      "what": "the planet this build starts with"
+      "what": "the planet this build starts with (medium)"
     },
     "small": {
-      "args": null,
-      "waiting": "small is hidden until its fixes land: only medium is offered"
+      "args": [],
+      "keys": [
+        "DOWN",
+        "DOWN",
+        "DOWN",
+        "DOWN",
+        "LEFT",
+        "UP",
+        "UP",
+        "UP",
+        "UP"
+      ],
+      "what": "one Left on the Planet size row"
     },
     "medium": {
       "args": [],
-      "what": "the only size this build offers, and the one it starts with"
+      "what": "the size the setup starts on"
     },
     "big": {
-      "args": null,
-      "waiting": "big is hidden until its fixes land: only medium is offered"
+      "args": [],
+      "keys": [
+        "DOWN",
+        "DOWN",
+        "DOWN",
+        "DOWN",
+        "RIGHT",
+        "UP",
+        "UP",
+        "UP",
+        "UP"
+      ],
+      "what": "one Right on the Planet size row"
     }
   }
 }

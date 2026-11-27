@@ -73,12 +73,17 @@ export function ownProfile(base) {
   mkdirSync(env.LOCALAPPDATA, { recursive: true });
   return env;
 }
+/** Whether the program offers a size on its setup row: its packed data/biomes/sizes.json (text inside the program) has the row with "offered": true. `default` and `medium` are what the setup starts on. Pure. */
+export function offeredByBuild(bytes, name) {
+  if (name === 'default' || name === 'medium') return true;
+  return new RegExp(`"${name}"\\s*:\\s*\\{[^{}]*"offered"\\s*:\\s*true`).test(Buffer.from(bytes).toString('latin1'));
+}
 /** The sizes to run, from sizes.json's table and the --size value: [{ name, args, waiting }]. `all` is every row; an unknown name is an error. Pure. */
 export function sizesFor(table, wanted) {
   const rows = table.sizes || {};
   const names = wanted === 'all' ? Object.keys(rows) : String(wanted).split(',').map((s) => s.trim()).filter(Boolean);
   for (const n of names) if (!rows[n]) throw new Error(`--size "${n}" is not a row of sizes.json (${Object.keys(rows).join(', ')})`);
-  return names.map((n) => ({ name: n, args: Array.isArray(rows[n].args) ? rows[n].args.map(String) : null, waiting: rows[n].waiting || '', what: rows[n].what || '' }));
+  return names.map((n) => ({ name: n, args: Array.isArray(rows[n].args) ? rows[n].args.map(String) : null, keys: Array.isArray(rows[n].keys) ? rows[n].keys.map(String) : [], waiting: rows[n].waiting || '', what: rows[n].what || '' }));
 }
 
 const KEYS = ['ENTER', 'ESC', 'SPACE', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'P', 'F1', 'TAB'];
@@ -109,7 +114,7 @@ export function reportText(r) {
   L.push('The game ran with its own empty settings (only the How to play card marked as seen): your settings and saved matches were not read or changed, so the match is the fixed first one.', '');
   for (const run of r.runs) {
     L.push(`## Size: ${run.size}`, '');
-    if (run.waiting) { L.push(`Not offered by this build (${run.waiting}). Nothing was run for it.`, ''); continue; }
+    if (run.waiting) { L.push(`Not run: ${run.waiting}. Nothing was run for it.`, ''); continue; }
     if (run.steps && run.steps.length) {
       L.push('| Step | What | Result | Still |', '| :--- | :--- | :--- | :--- |');
       for (const s of run.steps) L.push(`| ${s.id} | ${s.what || ''} | ${s.ok === null ? 'skipped' : s.ok ? 'ok' : 'FAILED'}${s.detail ? ': ' + s.detail : ''} | ${s.still || ''} |`);
@@ -225,6 +230,8 @@ async function runOne({ exe, size, seed, headless, frames, limitS, outDir, steps
           detail = changed ? 'the picture changed' : 'nobody acted in time';
           if (!changed) { add({ id: s.id, what: s.what, ok: false, detail }); continue; }
         }
+        // the planet size is picked before Start, with the setup's own row (sizes.json)
+        if (s.id === 'match-start' && (size.keys || []).length) { const k = helper('keys', ['-ProcessId', String(child.pid), '-Keys', size.keys.join(',')]); if (!k.ok) detail = 'size keys: ' + (k.error || 'failed'); await sleep(1200); const f = join(outDir, `03b-size-${size.name}.png`); helper('capture', ['-ProcessId', String(child.pid), '-Out', f]); }
         if ((s.keys || []).length) { const k = helper('keys', ['-ProcessId', String(child.pid), '-Keys', s.keys.join(',')]); if (!k.ok) detail = (detail ? detail + '; ' : '') + 'keys: ' + (k.error || 'failed'); }
         await sleep(Number(s.settleMs ?? 1500));
         let still = '', ok = true;
@@ -284,6 +291,8 @@ async function main() {
     const runs = [];
     for (const size of sizes) {
       if (!size.args) { runs.push({ size: size.name, waiting: size.waiting || 'its arguments are not set in sizes.json', steps: [] }); continue; }
+      if (headless && size.keys.length) { runs.push({ size: size.name, waiting: 'a size is picked on the menu: it needs a window (without one the run would play medium)', steps: [] }); continue; }
+      if (!offeredByBuild(readFileSync(exe), size.name)) { runs.push({ size: size.name, waiting: 'this program does not offer it', steps: [] }); continue; }
       runs.push(await runOne({ exe, size, profile: join(scratch, 'profile-' + size.name), seed: Number(opt('--seed', 4)), headless, frames: Number(opt('--frames', 1800)), limitS: Number(opt('--limit', 600)), outDir, steps: stepsDoc.steps, quitCheck: !a.includes('--no-quit-check') }));
     }
     const r = { date: new Date().toISOString().slice(0, 10), build, machine: machine(), window: headless ? null : '1280x720', runs };
