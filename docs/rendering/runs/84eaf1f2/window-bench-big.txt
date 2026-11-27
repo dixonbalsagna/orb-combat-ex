@@ -1,0 +1,30 @@
+# big's frame-bench on the small-and-big window with building-swiftshader (Rendering, 2026-11-26), main 84eaf1f2, the window rebuilt from the pending folders:
+piece ok   camera/pending/gw1c-door-holds/gw1c-door-holds.patch (sha1 fba137e3)
+piece ok   camera/pending/cd04/cd04.patch (sha1 ca7451b1)
+piece ok   rendering/pending/sky-handover/sky_handover.diff (sha1 b867f87a)
+piece ok   rendering/pending/feet-ground/feet_ground.diff (sha1 4aa3ecc4)
+piece ok   rendering/pending/marks-baked/marks_baked.diff (sha1 00aaf9f8)
+piece ok   rendering/pending/rows-interp/rows_interp.diff (sha1 b36ee1a9)
+piece ok   rendering/pending/fore-clamp/fore_fix.diff (sha1 353a4cb2)
+piece ok   world/pending/planet-sizes/unhide-small-big.diff (sha1 209ce1f8)
+piece ok   world/pending/planet-sizes/grant-ui-unhide-sizes.patch (sha1 ab651a5b)
+piece ok   architecture/pending/size-host/grant-rendering-size-host.patch (sha1 3b0c22f2)
+piece ok   architecture/pending/size-host/size-host-check.patch (sha1 f731354d)
+piece ok   tools/pending/first-run-sizes/first-run-sizes.patch (sha1 92e35bcb)
+piece ok   rendering/pending/building-swiftshader/building_swiftshader.diff (sha1 af4facc3)
+wb0 import errors 0
+size word (held too) added
+hook applied
+tile hook added
+wbb import errors 0, export errors 0
+the page's console on the card: shader errors 0
+== big: big collapse x1: frame p50 24.5 p95 48.1 p99 90.5 max 154.6 ms | tick 1.1 view 14.2 | draws 132 | particles 18 | load 17/32/34% valid by the load rule
+== medium: medium collapse x1: frame p50 20 p95 34.3 p99 51 max 76.9 ms | tick 0.8 view 12.8 | draws 143 | particles 14 | load 27/29/36% valid by the load rule
+big: first tick after 40 s; frame ms p50 24.5 p95 48.1 p99 90.5 max 154.6; over 33 ms 128, over 50 ms 20 (of 600); tick p50 1.1; view p50 14.2 p95 22.3; draws p50 132; primitives p50 407054; tile pool used max 294 of 800; tiles drawn median 51 max 93; cpu ms/frame 35.026; load 17/32/34; valid by the load rule
+medium: first tick after 24.1 s; frame ms p50 20 p95 34.3 p99 51 max 76.9; over 33 ms 54, over 50 ms 7 (of 600); tick p50 0.8; view p50 12.8 p95 17.7; draws p50 143; primitives p50 287872; tile pool used max 156 of 800; tiles drawn median 21 max 71; cpu ms/frame 23.776; load 27/29/36; valid by the load rule
+# a card still at big (ticks 1-40, collapse reduced), to see the buildings stand
+still at big: 40 frames
+# The still at big, tick 20 (git-ignored: docs/rendering/img/sizes/building-swiftshader/card-big-before-after-t20.png): the window candidate before the
+# park (u0b) draws no building at big; with it the towers stand. The draw count is the same (132: a building row is one multimesh draw whatever stands in
+# it); the primitives tell it: 407,054 at big with the park, 287,872 at medium. The earlier big bench (runs/0d9af28a/frame-bench-big.txt, p50 28.6 on
+# a busier machine, no buildings) is superseded.
