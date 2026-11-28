@@ -57,7 +57,7 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 
 | # | Rule | Numbers | Why |
 | ---: | :--- | :--- | :--- |
-| R1 | **In the mid band, B still held when the lunge's crouch ends stays and charges where he stands.** A tap lunges as now. **The stick's hold does the same** by its own stages, and a quick flick lunges | The crouch: B's 10 ticks, the stick's 6 (`bands.lunge.windupTicks`). No new wait: the crouch runs either way, and the button is read at its end | E2 holds: a tap is one blow, a hold is one attack. Melee press feel holds: every press is a blow. The far band already works this way (a hold is a charge) |
+| R1 | **In the mid band, B still held when the lunge's crouch ends stays and charges where he stands** (the stick: at its dwell, 12, §2d). A tap lunges as now. **The stick's hold does the same** by its own stages, and a quick flick lunges | The crouch: B's 10 ticks, the stick's 6 (`bands.lunge.windupTicks`). No new wait: the crouch runs either way, and the button is read at its end | E2 holds: a tap is one blow, a hold is one attack. Melee press feel holds: every press is a blow. The far band already works this way (a hold is a charge) |
 | R2 | **The charge keeps its clock from the press:** first flash at 32, full at 44, released by itself at 70 | Unchanged | The 70-tick release is the melee heavy's own rule (`press-decides.md`). It stops a charge held in place from becoming a stall. E47's "never fired by itself" is the energy family's, not this |
 | R3 | **While charging in place he moves at half speed** on the left stick. A dodge tap or a guard press drops it for nothing. His armour is as in a brawl | E45's half speed, E46's drop | It matches every other charge in the game (E45 and E46). Backing off while charging is spacing, which is the point. Control first (E1): it can always be dropped |
 | R4 | **Released at full (or at 70), it flies to him and lands** | Its own keys, `charge.inPlace.fullFlight`: reach **12.5 bh** (the mid band's edge) over at most **14 ticks**, so at most about 4,000 units a second (the old lunge's speed, inside Camera's whip line). The brawl's `chargeClose` (3 and 6 bh over 12 ticks) is untouched | Pillar 3: the full charge closes the gap. As `chargeClose` already says, stepping back doesn't beat it; a dodge, a guard or a perfect block does, so the release is the tell |
@@ -123,6 +123,37 @@ From Encounter's brief 1 report (`docs/director/pending/grab-charge/README.md`, 
 
 **(d) Brawl endings clearing a charge: no.** C5 replaces it.
 
+### 2d. When he plants: read from Orb's thumbs (2026-11-28, Controls' `docs/controls/charge-in-place-pad-read.md`)
+
+Controls measured how long Orb's own presses lasted in five saved plays (7 to 9 November).
+
+**B: the 10-tick crouch stays.**
+- 80 in 100 of Orb's B presses are over by tick 10, so they lunge as taps. 12 in 100 are real holds (31 ticks and up).
+- **The look starts 4 ticks after the plant (tick 14), as Controls asks.**
+  - The rule doesn't change: he plants at 10, with half speed and the clock from the press.
+  - The pose and aura wait 4 ticks, so a slow tap let go by then never flashes a charge that vanishes.
+  - That's Animation's and VFX's, on the view side.
+  - It's a held start, not a fade: the look comes on at 14 as it would have at 10.
+
+**The stick: it plants at its own dwell, 12 ticks, not at the 6-tick crouch** (Controls' first ask, in R1's place for the stick).
+- **What Controls found:**
+  - 81 in 100 of Orb's stick presses are still out at tick 6.
+  - 39 in 100 are quick strikes by the strike stick's own law (let go before its 12-tick `dwell`), yet they would plant, drop to half speed and lunge late.
+  - The same press also buzzes "Hold longer".
+  - So two flicks that feel the same would act differently, and a third of ordinary flicks would flicker a charge.
+- **The rule:**
+  - At the crouch's end (6), a stick still out but held under 12 ticks waits, holding the crouch: no half speed, no look, no cue.
+  - Let go before 12 and he lunges at once, with no second crouch.
+  - Reach 12 and he plants (half speed, the clock from the press, as R1 to R3).
+  - A flick of 6 or less is unchanged.
+- **Why:** one line between a flick and a charge for the stick, everywhere: its own `strike.dwell`. E2 holds (a tap is one blow, a hold is one attack), and the stick never says "flick" in one place and "charge" in another. A 7-to-11-tick flick lunges up to 5 ticks later than a 6-tick one. It lunges on the thumb's return, which is where the hand expects it.
+- **The fallback** (plant at 6, but show no pose, aura, cue or feed until 12, and treat a release before 12 as a plain lunge) **is acceptable for the trial only if the rule above isn't a small change.** Encounter says which. It keeps a hidden half-speed step, so it isn't what gets adopted.
+- **"Hold longer"** shouldn't buzz on a mid-band stick press under 12, since that press is a flick that lunges and hits. That's Controls' to map.
+
+**A plant cue for both, from Encounter: `charge_plant`.**
+- A one-tick event on the tick he plants (B at 10, the stick at 12), with the charger as actor and `b` or `stick` as its text.
+- Controls maps it to a light pulse, and may hold the pulse to match the look's 4 ticks if slow B taps buzz. It's an event only, with no marker on screen.
+
 ## 3. Fleeing (directive §3): ruled now, built in brief 5
 
 | # | The rule | Ruling | Why |
@@ -152,7 +183,7 @@ From Encounter's brief 1 report (`docs/director/pending/grab-charge/README.md`, 
   "grab": { "reachAtPress": "catchOnly", "missLockout": false, "fullChargeProof": true },
   "charge": {
     "full": "lastReachableStage", "fullStoppedBy": ["heavy", "launcher", "beam"], "sweetTicks": 6, "sweetReachBh": 0.5,
-    "inPlace": { "bands": ["mid"], "holdPastCrouch": true, "moveMul": 0.5, "fullFlight": { "reachBh": 12.5, "maxTicks": 14 }, "beforeFull": "lunge", "pastBand": "farCharge" },
+    "inPlace": { "bands": ["mid"], "holdPastCrouch": true, "stickPlantAtDwell": true, "moveMul": 0.5, "fullFlight": { "reachBh": 12.5, "maxTicks": 14 }, "beforeFull": "lunge", "pastBand": "farCharge" },
     "heavyWindOnArrival": true,
     "outlivesBrawl": true
   }
@@ -160,6 +191,7 @@ From Encounter's brief 1 report (`docs/director/pending/grab-charge/README.md`, 
 ```
 - `outlivesBrawl` (C5): a brawl ending doesn't clear a held charge. It runs on with its clock, price, half speed and armour, and where it started decides its release (a brawl's keeps `brawl.chargeClose`; an in-place one keeps `inPlace`).
 - `inPlace` (§2b): in the mid band, B or the stick still held when the lunge's crouch ends charges where he stands.
+  - `stickPlantAtDwell` (§2d): the stick plants at `strike.dwell` (12), not at the crouch's end. A stick still out at the crouch's end but under the dwell waits in the crouch; let go before the dwell and it lunges at once.
   - `moveMul` 0.5 is his speed meanwhile.
   - `fullFlight` is the full (or 70-tick) release's flight to him.
   - `beforeFull` `"lunge"`: an earlier release lunges at `bands.lunge.speed`, with no second crouch.
