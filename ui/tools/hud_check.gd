@@ -103,6 +103,7 @@ func _run() -> void:
 	await _plain_words_rules()
 	await _launch_marks_rules()
 	await _tug_rules()
+	await _struggle_record_rules()
 	await _cut_rules()
 	await _loading_rules()
 	await _minimal_hud_rules()
@@ -8668,6 +8669,36 @@ func _launch_marks_rules() -> void:
 	await process_frame
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
 	UiPrefs.path = "user://ui_prefs.json"
+
+
+# --- A plain beam is not a struggle (only the struggle's own cues open the record) ------------------------------------------------------------
+
+func _struggle_record_rules() -> void:
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var made := PackedStringArray()
+	for kind in ["beam_fire", "beam_stage", "beam_aim", "beam_arrive", "beam_late", "beam_shove", "beam_stopped", "beam_wide", "beam_clash_end", "beam_miss", "beam_touch", "beam_inside", "beam_meet"]:
+		hud.hub.tug = {}
+		hud.consume({"type": "cue", "kind": kind, "actor": 0, "target": 1, "text": ""})
+		if not hud.hub.tug.is_empty() or hud._struggle_holds_chips():
+			made.append(kind)
+	_ok(made.is_empty(), "struggle record: a plain beam's cues open no struggle, so they take no pointer chip and quiet no legend (%s)" % str(made))
+	var opened := PackedStringArray()
+	for kind in ["beam_struggle", "beam_pulse", "beam_surge", "beam_stray", "beam_end"]:
+		hud.hub.tug = {}
+		hud.consume({"type": "cue", "kind": kind, "actor": 0, "target": 1, "text": "start" if kind == "beam_struggle" else ""})
+		if hud.hub.tug.is_empty():
+			opened.append(kind)
+	_ok(opened.is_empty() and UiEventHub.STRUGGLE_CUES.size() == 5, "struggle record: the struggle's five cues still reach it (%s missed)" % str(opened))
+	hud.hub.tug = {}
+	hud.consume({"type": "cue", "kind": "beam_struggle", "actor": 0, "target": 1, "text": "start", "n": 400})
+	hud.consume({"type": "cue", "kind": "beam_fire", "actor": 1, "text": ""})
+	_ok(not hud.hub.tug.is_empty() and int(hud.hub.tug["a"]) == 0 and str(hud.hub.tug["end"]) == "" and hud._struggle_holds_chips(), "struggle record: another beam's cue during a struggle leaves it as it is")
+	hud.queue_free()
+	await process_frame
 
 
 func _tug_rules() -> void:

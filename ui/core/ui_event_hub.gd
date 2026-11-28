@@ -85,6 +85,7 @@ func _cap(text: String, secs: float) -> void:
 
 
 const TUG_END_HOLD := 1.0        # seconds the end of a struggle stays drawn
+const STRUGGLE_CUES: Array = ["beam_struggle", "beam_pulse", "beam_surge", "beam_stray", "beam_end"]   # the cues that belong to a beam struggle; every other beam_ cue is not one
 var hint: Dictionary = {}        # the tutorial's hint line: {id, key, text, kind (hint, nudge, done), age}
 var beats: Dictionary = {}       # tutorial beat id to state (start, done, skipped)
 var keep_hints: bool = false     # accessibility: a hint stays up after its beat is done, until the next one
@@ -499,8 +500,8 @@ func consume(e) -> void:
 					match_over = true   # there is no KO, so the match-over card is the next screen: it opens at once (UiHud), with no winner
 			elif ck == "beam_charge" or ck == "beam_window":
 				_on_alert_cue(ck, d)
-			elif ck.begins_with("beam_"):
-				_on_tug_cue(ck, d)
+			elif STRUGGLE_CUES.has(ck):
+				_on_tug_cue(ck, d)   # only the struggle's own cues: a plain beam's (beam_fire, beam_stage, beam_aim and the rest) must not open a struggle record
 			elif ck == "miss":
 				_on_miss(m, d)
 			elif ck == "energy_land" and m != null:
