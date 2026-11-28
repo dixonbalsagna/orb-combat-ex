@@ -1053,7 +1053,7 @@ static func _opFinisher(S: SimState, ex, a) -> void:
 	var W = ex.A if a.w == "A" else ex.D
 	var L = ex.D if a.w == "A" else ex.A
 	W.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(W.x, L.x)), W.face)
-	SimFx.banner(S, "FINISHER", W.aura, 1.2)
+	SimFx.banner(S, "FINISHER", W.aura, 1.2, SimFx.slotOf(S, W))
 	SimFx.finisherStart(S, W, L, DirData.finisherDur(W))
 	SimEvents.feed(S, W.name + " FINISHER", L.name + " is on the brink")
 
@@ -1087,7 +1087,7 @@ static func _opContest(S: SimState, ex, a) -> void:
 	SimFx.finisherContest(S, L, chance, survived)
 	SimEvents.feed(S, L.name + (" SURVIVES" if survived else " FALLS"), "finisher contest, survival chance " + SimMathx.jstr(SimMathx.jround(chance * 100.0)) + "%")
 	if survived:
-		SimFx.banner(S, L.name + " HOLDS ON", L.aura, 1.2)
+		SimFx.banner(S, L.name + " HOLDS ON", L.aura, 1.2, SimFx.slotOf(S, L))
 		_closeOnSurvival(S, L)
 		SimWounds.onContestSurvived(S, L)   # S4: Second Wind
 	else:
@@ -1206,7 +1206,7 @@ static func _opContestBranch(S: SimState, ex, a) -> void:
 	SimFx.finisherContest(S, L, chance, survived)
 	SimEvents.feed(S, L.name + (" SURVIVES" if survived else " FALLS"), "finisher contest, survival chance " + SimMathx.jstr(SimMathx.jround(chance * 100.0)) + "%")
 	if survived:
-		SimFx.banner(S, L.name + " HOLDS ON", L.aura, 1.2)
+		SimFx.banner(S, L.name + " HOLDS ON", L.aura, 1.2, SimFx.slotOf(S, L))
 		_closeOnSurvival(S, L)
 		SimWounds.onContestSurvived(S, L)   # S4: Second Wind
 	DirData.scheduleOutcome(ex, W, not survived)

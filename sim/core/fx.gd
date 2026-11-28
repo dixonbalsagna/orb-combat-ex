@@ -15,16 +15,23 @@ static func _ev(S: SimState, type: String) -> SimState.FxEvent:
 
 ## L0 (fight lanes): every positioned event carries z, the depth it happens at (0 is the fighter plane). The emitters
 ## that take a position take z last, 0 by default; the ones that take a fighter read his.
-static func spark(S: SimState, x: float, y: float, n: int, col: String, spd: float, z: float = 0.0) -> void:
+## The owner tag (the Look Profile, L2; docs/ep/proposals/look-profile-spec.md section 3, rule 4): an effect raised in a fighter's aura colour carries that fighter's slot in `owner`, so the
+## drawing side finds his look by slot, not by colour. It is for drawing only: `owner` is not in FX_FIELDS for after, charge, ring, spark or banner, so the digest never reads it (as the
+## launch event's `tier`). -1 (the default) is an effect in a colour of its own. The aura-coloured callers pass slotOf(S, f); afterimage and chargeFx tag themselves.
+static func slotOf(S: SimState, f) -> float:
+	return float(S.fighters.find(f))
+
+
+static func spark(S: SimState, x: float, y: float, n: int, col: String, spd: float, z: float = 0.0, owner: float = -1.0) -> void:
 	var e := _ev(S, "spark")
-	e.x = x; e.y = y; e.n = n; e.z = z
+	e.x = x; e.y = y; e.n = n; e.z = z; e.owner = owner
 	e.col = col if col != "" else "#fff3c0"
 	e.spd = spd if spd != 0.0 else 500.0
 
 
-static func ring(S: SimState, x: float, y: float, gr: float, col: String, life: float, r0: float, z: float = 0.0) -> void:
+static func ring(S: SimState, x: float, y: float, gr: float, col: String, life: float, r0: float, z: float = 0.0, owner: float = -1.0) -> void:
 	var e := _ev(S, "ring")
-	e.x = x; e.y = y; e.gr = gr; e.z = z
+	e.x = x; e.y = y; e.gr = gr; e.z = z; e.owner = owner
 	e.col = col if col != "" else "#ffffff"
 	e.life = life if life != 0.0 else 0.5
 	e.r0 = r0 if r0 != 0.0 else 10.0
@@ -56,12 +63,12 @@ static func fire(S: SimState, x: float, y: float, n: int, z: float = 0.0) -> voi
 ## An afterimage of f: 0.45 s for a dodge or escape, 0.16 s for each tick of a rush trail.
 static func afterimage(S: SimState, f, life: float = 0.45) -> void:
 	var e := _ev(S, "after")
-	e.x = f.x; e.y = f.y; e.z = f.z; e.life = life; e.col = f.aura; e.face = f.face
+	e.x = f.x; e.y = f.y; e.z = f.z; e.life = life; e.col = f.aura; e.face = f.face; e.owner = slotOf(S, f)
 
 
-static func banner(S: SimState, text: String, col: String, dur: float) -> void:
+static func banner(S: SimState, text: String, col: String, dur: float, owner: float = -1.0) -> void:
 	var e := _ev(S, "banner")
-	e.text = text
+	e.text = text; e.owner = owner
 	e.col = col if col != "" else "#ffffff"
 	e.dur = dur if dur != 0.0 else 1.3
 
@@ -88,7 +95,7 @@ static func shake(S: SimState, k: float, x: float, z: float = 0.0) -> void:
 ## A charging fighter's aura, once per charging tick (the consumer rolls its sparks and dust).
 static func chargeFx(S: SimState, f, ground: float) -> void:
 	var e := _ev(S, "charge")
-	e.x = f.x; e.y = f.y; e.z = f.z; e.col = f.aura; e.ground = ground
+	e.x = f.x; e.y = f.y; e.z = f.z; e.col = f.aura; e.ground = ground; e.owner = slotOf(S, f)
 
 
 ## A crater was dug (world/crater.gd): the persistent record's fields, as the render side needs them.

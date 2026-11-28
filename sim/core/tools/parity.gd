@@ -86,6 +86,7 @@ func _init() -> void:
 	check("a clash's meeting point", _clashMid())
 	check("SimMathx.PI and TAU", _piTau())
 	check("a number with decimals reads the same on every platform", _fixedText())
+	check("the aura effects carry their fighter's slot, outside the hash (the Look Profile's owner tag)", _auraOwners())
 	check("the blow cue's run stays out of the hash", _cueRun())
 	check("the run's rare boons", _boons())
 	check("the catastrophe's blast cloud and ash", _cata())
@@ -5970,6 +5971,85 @@ func _piTau() -> String:
 ## zero, glibc and musl to even: the swing planner's feed line read "-22.3" on Windows and "-22.2" on Linux, CI
 ## 2026-11-22), and every other value reads as printf prints it. On Linux and the web these rows hold with or without the
 ## fix; on Windows they fail without it.
+## The Look Profile's owner tag (L2; docs/ep/proposals/look-profile-spec.md section 3, rule 4): after, charge and the ring, spark and banner raised in a fighter's aura colour carry his
+## slot in FxEvent.owner, for drawing only. 1: the tag never reaches the digest (the five types hashed with their owners set and cleared read the same; a colour changed does not, so the
+## comparison can fail), and the power-up's banner, ring and spark carry it. 2: in two seeded matches (the default planet and the arena, the computer on both sides), every tagged event's colour is its owner's aura, and with the two auras
+## different, every event of the five types in a fighter's aura carries his slot (an aura-coloured caller left untagged fails here).
+const AURA_TYPES: Array = ["after", "charge", "ring", "spark", "banner"]
+
+
+func _auraOwners() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 31, {"p1": true, "p2": true}, {"world": "arena", "intro": false})
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	S.out.fx.clear()
+	SimFx.afterimage(S, f0)
+	SimFx.chargeFx(S, f1, 100.0)
+	SimFx.ring(S, f0.x, f0.y, 500.0, f0.aura, 0.5, 10.0, f0.z, SimFx.slotOf(S, f0))
+	SimFx.spark(S, f1.x, f1.y, 8, f1.aura, 600.0, f1.z, SimFx.slotOf(S, f1))
+	SimFx.banner(S, "TAG", f1.aura, 1.0, SimFx.slotOf(S, f1))
+	var evs: Array = S.out.fx.duplicate()
+	var want: Array = [0.0, 1.0, 0.0, 1.0, 1.0]
+	for i in range(evs.size()):
+		if evs[i].type != AURA_TYPES[i] or float(evs[i].owner) != float(want[i]):
+			return "the emitter of %s tags owner %s, not %s" % [AURA_TYPES[i], str(evs[i].owner), str(want[i])]
+	var h1 := SimHash.Hasher.new()
+	SimHash.hashFx(h1, evs)
+	for e in evs:
+		e.owner = -1.0
+	var h2 := SimHash.Hasher.new()
+	SimHash.hashFx(h2, evs)
+	if h1.hex() != h2.hex():
+		return "the owner tag reaches the effects' digest (%s with it, %s without)" % [h1.hex(), h2.hex()]
+	evs[2].col = "#123456"
+	var h3 := SimHash.Hasher.new()
+	SimHash.hashFx(h3, evs)
+	if h3.hex() == h2.hex():
+		return "the control failed: a ring's colour changed and the effects' digest did not"
+	S.out.fx.clear()
+	SimFighter.tierUp(S, f1)   # the power-up's banner, ring and spark (sim/core/fighter.gd), which a short match may never reach
+	var up: int = 0
+	for e in S.out.fx:
+		if AURA_TYPES.has(e.type) and String(e.col) == String(f1.aura):
+			if float(e.owner) != 1.0:
+				return "the power-up's %s carries owner %s, not 1" % [e.type, str(e.owner)]
+			up += 1
+	if up < 3:
+		return "the power-up raised %d effects in its fighter's aura, not its banner, ring and spark" % up
+	SimCore.dispose(S)
+	var seen: Dictionary = {}
+	for t in AURA_TYPES:
+		seen[t] = 0
+	for run in [[32, {}], [33, {"world": "arena"}]]:
+		var M := SimCore.createSim()
+		SimCore.newMatch(M, int(run[0]), {"p1": true, "p2": true}, run[1])
+		var auras: Array = [String(M.fighters[0].aura), String(M.fighters[1].aura)]
+		var apart: bool = auras[0] != auras[1]
+		for k in range(3600):
+			SimCore.step(M)
+			for e in M.out.fx:
+				if not AURA_TYPES.has(e.type):
+					continue
+				var o: int = int(e.owner)
+				if o >= 0:
+					if o >= M.fighters.size() or String(e.col) != String(M.fighters[o].aura):
+						return "seed %d tick %d: a %s tagged owner %d is coloured %s, not that fighter's aura" % [int(run[0]), M.tick, e.type, o, String(e.col)]
+					seen[e.type] = int(seen[e.type]) + 1
+				elif apart and auras.has(String(e.col)):
+					return "seed %d tick %d: a %s in fighter %d's aura (%s) carries no owner" % [int(run[0]), M.tick, e.type, auras.find(String(e.col)), String(e.col)]
+			M.out.fx.clear()
+			M.out.feed.clear()
+		SimCore.dispose(M)
+	var total: int = 0
+	for t in AURA_TYPES:
+		total += int(seen[t])
+	print("  owner tags seen in the two matches: %s" % str(seen))
+	if total == 0:
+		return "no tagged effect in two matches: the match half of the row read nothing"
+	return ""
+
+
 func _fixedText() -> String:
 	var rows: Array = [[0.25, 1, "0.2"], [-22.25, 1, "-22.2"], [22.75, 1, "22.8"], [1.25, 1, "1.2"], [-0.25, 1, "-0.2"], [2.5, 0, "2"],
 		[3.5, 0, "4"], [-0.5, 0, "-0"], [0.125, 2, "0.12"], [0.375, 2, "0.38"], [-0.0625, 3, "-0.062"], [1234.5, 0, "1234"],

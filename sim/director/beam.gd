@@ -23,7 +23,7 @@ static func opBeamCharge(S: SimState, ex, args) -> void:
 	if not still or A.beamCharge == null:   # (a stick's hold has been charging already)
 		A.beamCharge = S.T
 	DirBeamPlay.chargeCue(S, ex, true)
-	SimFx.banner(S, A.sigName.to_upper(), A.aura, 1.1)
+	SimFx.banner(S, A.sigName.to_upper(), A.aura, 1.1, SimFx.slotOf(S, A))
 	if still:
 		A.vx = 0.0
 		A.vy = 0.0
@@ -33,7 +33,7 @@ static func opBeamCharge(S: SimState, ex, args) -> void:
 		r.px = DirBeamPlay.standoffX(S, A, D, r.py)
 		r.end = S.T + 0.55
 		A.rush = r
-	SimFx.ring(S, A.x, A.y + 40.0, 260.0, A.aura, 0.8, 10.0)
+	SimFx.ring(S, A.x, A.y + 40.0, 260.0, A.aura, 0.8, 10.0, 0.0, SimFx.slotOf(S, A))
 	# Step 2b: an AI defender may answer the beam, by the same rule as a player: its own signature (45 ki and the cooldown
 	# over), or else a heavy blast (40 ki). How often is its difficulty (control-rules.md §10); the press comes in the tell.
 	var answers: bool = false

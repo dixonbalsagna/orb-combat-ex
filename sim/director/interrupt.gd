@@ -511,7 +511,7 @@ static func burst(S: SimState, f) -> bool:
 	f.act.burstCool = int(c.cooldownTicks)
 	DirBury.burstOut(S, f)   # a buried fighter's burst throws him out of his crater
 	DirRally.burstOut(S, f)   # 23d: it breaks his daze, and ends a rally's flight
-	SimFx.ring(S, f.x, f.y + 34.0, float(c.rangeBh) * BH * 2.0, f.aura, 0.5, 14.0)
+	SimFx.ring(S, f.x, f.y + 34.0, float(c.rangeBh) * BH * 2.0, f.aura, 0.5, 14.0, 0.0, SimFx.slotOf(S, f))
 	if o.input.guard and o.stunTicks <= 0:
 		f.stunTicks = maxi(f.stunTicks, int(c.baitStaggerTicks))
 		SimFx.cue(S, f, "burst_absorbed", "", "")

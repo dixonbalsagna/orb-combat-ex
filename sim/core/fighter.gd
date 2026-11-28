@@ -33,10 +33,10 @@ static func floorFor(S: SimState, f, x: float, z: float, from: float = NAN, xo: 
 static func tierUp(S: SimState, f) -> void:
 	S.world.maxTier = maxf(S.world.maxTier, f.tier)
 	SimMood.onForm(S, f)   # a form step may raise the act, and it adds the mood's form impulse
-	SimFx.banner(S, f.name + " POWERS UP  TIER " + SimMathx.jstr(f.tier), f.aura, 1.4)
+	SimFx.banner(S, f.name + " POWERS UP  TIER " + SimMathx.jstr(f.tier), f.aura, 1.4, SimFx.slotOf(S, f))
 	var g: float = WorldTerrain.groundY(S, f.x, f.z)   # at his depth (the plane's when depth is off)
-	SimFx.ring(S, f.x, f.y + 34.0, 1300.0, f.aura, 0.8, 20.0, f.z)
-	SimFx.spark(S, f.x, f.y + 34.0, 20, f.aura, 700.0, f.z)
+	SimFx.ring(S, f.x, f.y + 34.0, 1300.0, f.aura, 0.8, 20.0, f.z, SimFx.slotOf(S, f))
+	SimFx.spark(S, f.x, f.y + 34.0, 20, f.aura, 700.0, f.z, SimFx.slotOf(S, f))
 	SimFx.shake(S, 14.0, f.x, f.z)
 	if f.y < g + 140.0:
 		WorldCrater.dig(S, f.x, WorldCrater.powerupEnergy(f.tier), f, "powerup")

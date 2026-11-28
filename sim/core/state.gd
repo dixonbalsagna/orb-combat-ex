@@ -875,7 +875,7 @@ class FxEvent:
 	var loser: float = -1.0      # ko
 	var region: String = ""       # wounds: head, core, arms or legs
 	var stage: int = 0            # wounds: 0 fresh, 1 bruised, 2 battered, 3 broken
-	var owner: float = -1.0      # crater and scorch: firing fighter's slot, or -1
+	var owner: float = -1.0      # crater and scorch: firing fighter's slot, or -1; after, charge and the aura-coloured ring, spark and banner: the fighter whose aura it is (drawing only, outside FX_FIELDS: SimFx.slotOf)
 	var special: bool = false    # crater: a special blow (the big marks)
 	var x1: float = 0.0          # slide: where it ended
 	var pop: float = 0.0         # slide: civilians it killed
