@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Energy Toy</title>
+<style>
+  :root { --bg:#0e1118; --panel:#161b26; --line:#2a3242; --text:#dfe6f3; --dim:#8a96ad; --acc:#7fc4ff;
+          --common:#9aa7bd; --rare:#5fb0ff; --exotic:#c58bff; --mythic:#ffcf5a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui, Segoe UI, sans-serif; }
+  #app { display:grid; grid-template-columns:minmax(0,1fr) 400px; gap:12px; padding:12px; height:100vh; }
+  #stageWrap { display:flex; flex-direction:column; gap:8px; min-width:0; }
+  #stage { position:relative; width:100%; aspect-ratio:16/9; background:#000; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  #stage canvas { width:100%; height:100%; display:block; }
+  .tag { position:absolute; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:#c9d4e8; background:rgba(10,13,20,.55); padding:2px 8px; border-radius:4px; pointer-events:none; }
+  #bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  button, select, input[type=file]::file-selector-button { background:#222a3a; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font:inherit; cursor:pointer; }
+  button:hover { border-color:var(--acc); }
+  button.big { padding:8px 14px; font-weight:600; }
+  button.on { background:#2f4a6b; border-color:var(--acc); }
+  #side { overflow-y:auto; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+  h1 { font-size:16px; margin:0 0 2px; } h2 { font-size:13px; margin:14px 0 6px; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; }
+  .hint { color:var(--dim); font-size:12px; }
+  .tiers { display:flex; gap:4px; } .tiers button { flex:1; padding:6px 4px; }
+  .t-common { color:var(--common); } .t-rare { color:var(--rare); } .t-exotic { color:var(--exotic); } .t-mythic { color:var(--mythic); }
+  .layer { border:1px solid var(--line); border-radius:8px; padding:8px; margin:8px 0; background:#131824; }
+  .layer header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-weight:600; }
+  .menus { display:grid; grid-template-columns:1fr 1fr; gap:6px; } .menus label { font-size:11px; color:var(--dim); display:block; }
+  .menus select { width:100%; padding:5px 6px; }
+  option:disabled { color:#5d667a; }
+  .sl { display:grid; grid-template-columns:96px 1fr 44px; gap:6px; align-items:center; margin-top:5px; font-size:12px; }
+  .sl .track { position:relative; } .sl input { width:100%; margin:0; display:block; }
+  .sl .zones { height:3px; border-radius:2px; margin-top:1px; display:flex; overflow:hidden; }
+  .sl .zones i { display:block; height:100%; }
+  .sl .val { text-align:right; color:var(--dim); font-variant-numeric:tabular-nums; }
+  .sl.locked { opacity:.45; }
+  .row { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:6px 0; }
+  textarea { width:100%; height:150px; background:#0c0f16; color:#cfe0ff; border:1px solid var(--line); border-radius:6px; font:12px/1.35 ui-monospace, Consolas, monospace; padding:6px; }
+  #toast { position:absolute; left:50%; bottom:10px; transform:translateX(-50%); background:rgba(14,17,24,.9); border:1px solid var(--line); border-radius:6px; padding:6px 12px; font-size:13px; display:none; }
+  #fail { position:absolute; inset:0; display:none; padding:20px; background:#111; color:#ffb4b4; white-space:pre-wrap; font:12px ui-monospace, Consolas, monospace; overflow:auto; }
+  footer { margin-top:14px; color:var(--dim); font-size:11px; }
+  @media (max-width: 1000px) { #app { grid-template-columns:1fr; height:auto; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stageWrap">
+    <div id="stage">
+      <canvas id="c"></canvas>
+      <div class="tag" style="left:8px;top:8px">Aura</div>
+      <div class="tag" style="left:calc(50% + 8px);top:8px">Beam</div>
+      <div class="tag" style="left:calc(50% + 8px);top:calc(50% + 8px)">Blast</div>
+      <div id="toast"></div>
+      <div id="fail"></div>
+    </div>
+    <div id="bar">
+      <button class="big" id="bRandom" title="A brand-new look from everything unlocked">Random</button>
+      <button class="big" id="bMutate" title="Nudge this look a little; sometimes swaps one choice">Mutate</button>
+      <button id="bBack" title="Go back one step">Back</button>
+      <button id="bPause">Pause</button>
+      <span class="hint">Preset</span><select id="preset"></select>
+      <span class="hint">Quality</span><select id="quality"><option value="0.5">Low</option><option value="0.75" selected>Medium</option><option value="1">High</option></select>
+      <span class="hint" id="fps"></span>
+    </div>
+    <div class="hint">One recipe drives all three: the aura round the figure, the beam and the hovering blast. Change a layer on the right, or press Random and Mutate until something surprises you.</div>
+  </div>
+  <div id="side">
+    <h1>Energy Toy</h1>
+    <div class="hint">Build a look from layers. Each layer is a shape, a behaviour, a material and a colour.</div>
+
+    <h2>Preview campaign unlocks</h2>
+    <div class="tiers" id="tiers"></div>
+    <div class="hint" id="tierHint"></div>
+
+    <h2>Blend two looks</h2>
+    <div class="row">
+      <button id="bA">Keep as A</button><button id="bB">Keep as B</button>
+      <input id="blend" type="range" min="0" max="1" step="0.01" value="0" style="flex:1" disabled>
+    </div>
+    <div class="hint" id="blendHint">Keep one look as A and another as B, then drag to find what lies between.</div>
+
+    <h2>Whole look</h2>
+    <div id="globals"></div>
+
+    <h2>Layers</h2>
+    <div id="layers"></div>
+    <div class="row"><button id="bAdd">Add a layer</button></div>
+
+    <h2>Save and load</h2>
+    <div class="row">
+      <input id="name" type="text" placeholder="Name this look" style="flex:1;background:#0c0f16;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px">
+      <button id="bSave">Save file</button>
+    </div>
+    <div class="row"><input id="file" type="file" accept=".json,application/json"></div>
+    <textarea id="json" spellcheck="false"></textarea>
+    <div class="row"><button id="bApply">Use this text</button><button id="bCopy">Copy</button></div>
+    <footer>A look-only prototype: nothing here is physics. Made with AI assistance (Claude).</footer>
+  </div>
+</div>
+
+<!-- The catalogue: every menu entry, slider range, palette and preset, with its rarity tier. Data, not code. -->
+<script type="application/json" id="catalog">
+{
+  "format": "orb-energy-catalog", "version": 1,
+  "tiers": ["common", "rare", "exotic", "mythic"],
+  "maxLayers": 5,
+  "shapes": [
+    {"id":"shell","code":0,"name":"Shell","tier":"common","about":"a glowing skin"},
+    {"id":"sparks","code":1,"name":"Sparks","tier":"common","about":"short bright streaks"},
+    {"id":"rings","code":3,"name":"Waves and rings","tier":"common","about":"bands that travel"},
+    {"id":"cloud","code":4,"name":"Cloud","tier":"common","about":"a billowing mass"},
+    {"id":"drops","code":5,"name":"Falling particles","tier":"common","about":"soft round motes"},
+    {"id":"arcs","code":2,"name":"Lightning arcs","tier":"rare","about":"jagged bolts"},
+    {"id":"forms","code":6,"name":"Little forms","tier":"rare","about":"atoms, crystals, glyphs"},
+    {"id":"shards","code":9,"name":"Shards","tier":"rare","about":"flat angular facets"},
+    {"id":"filaments","code":7,"name":"Filaments","tier":"exotic","about":"fine combed strands"},
+    {"id":"lattice","code":8,"name":"Ghost lattice","tier":"exotic","about":"two ring sets that beat against each other"},
+    {"id":"helix","code":10,"name":"Twin helix","tier":"mythic","about":"two strands winding round each other"}
+  ],
+  "behaviours": [
+    {"id":"jump","code":0,"name":"Jump off the body","tier":"common"},
+    {"id":"ripple","code":2,"name":"Ripple out","tier":"common"},
+    {"id":"float","code":3,"name":"Float above the head","tier":"common"},
+    {"id":"rain","code":4,"name":"Rain down","tier":"common"},
+    {"id":"hug","code":6,"name":"Cling and vibrate","tier":"common"},
+    {"id":"arc","code":1,"name":"Arc between points","tier":"rare"},
+    {"id":"orbit","code":5,"name":"Orbit","tier":"rare"},
+    {"id":"wander","code":7,"name":"Erratic","tier":"exotic"},
+    {"id":"ascend","code":8,"name":"Inverted: rise instead of fall","tier":"exotic"},
+    {"id":"implode","code":9,"name":"Inverted: pulled inward","tier":"exotic"},
+    {"id":"rewind","code":10,"name":"Inverted: runs backward, with echoes","tier":"mythic"}
+  ],
+  "materials": [
+    {"id":"glow","code":0,"name":"Soft glow","tier":"common"},
+    {"id":"smoke","code":1,"name":"Smoky fluid","tier":"common"},
+    {"id":"crackle","code":3,"name":"Crackle","tier":"common"},
+    {"id":"plasma","code":2,"name":"Plasma","tier":"rare"},
+    {"id":"ink","code":8,"name":"Inked","tier":"rare"},
+    {"id":"dark","code":4,"name":"Dark energy","tier":"exotic"},
+    {"id":"prism","code":5,"name":"Prism","tier":"exotic"},
+    {"id":"shimmer","code":6,"name":"Heat shimmer","tier":"exotic"},
+    {"id":"negative","code":7,"name":"Negative","tier":"mythic"}
+  ],
+  "palettes": [
+    {"id":"azure","name":"Azure","tier":"common","a":[0.45,0.65,0.9],"b":[0.45,0.33,0.1],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"ember","name":"Ember","tier":"common","a":[0.9,0.5,0.2],"b":[0.1,0.4,0.2],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"gold","name":"Gold","tier":"common","a":[0.95,0.75,0.3],"b":[0.05,0.2,0.25],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"viridian","name":"Viridian","tier":"common","a":[0.3,0.8,0.4],"b":[0.3,0.2,0.3],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"violet","name":"Violet","tier":"common","a":[0.6,0.3,0.85],"b":[0.35,0.3,0.15],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"rose","name":"Rose","tier":"common","a":[0.9,0.4,0.6],"b":[0.1,0.4,0.3],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"moon","name":"Moonlight","tier":"common","a":[0.8,0.85,0.9],"b":[0.2,0.15,0.1],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"riptide","name":"Riptide","tier":"rare","a":[0.5,0.5,0.6],"b":[0.5,0.5,0.4],"c":[1,1,1],"d":[0.5,0.1,0.0]},
+    {"id":"dusk","name":"Dusk","tier":"rare","a":[0.6,0.4,0.5],"b":[0.4,0.3,0.4],"c":[1,1,0.5],"d":[0.0,0.6,0.5]},
+    {"id":"spectrum","name":"Spectrum","tier":"exotic","a":[0.5,0.5,0.5],"b":[0.5,0.5,0.5],"c":[1,1,1],"d":[0.0,0.33,0.67]},
+    {"id":"blacklight","name":"Blacklight","tier":"exotic","a":[0.3,0.1,0.6],"b":[0.3,0.1,0.4],"c":[1,2,1],"d":[0.5,0.5,0.5]},
+    {"id":"anomaly","name":"Anomaly","tier":"mythic","a":[0.5,0.5,0.5],"b":[0.5,0.5,0.5],"c":[2,3,1],"d":[0.1,0.5,0.9]}
+  ],
+  "sliders": [
+    {"id":"power","name":"Power","def":0.7,"step":0.01,"ranges":[{"tier":"common","min":0.1,"max":1}]},
+    {"id":"size","name":"Size","def":1,"step":0.01,"ranges":[{"tier":"common","min":0.5,"max":1.5},{"tier":"rare","min":0.3,"max":2},{"tier":"exotic","min":0.3,"max":3}]},
+    {"id":"speed","name":"Speed","def":0.8,"step":0.01,"ranges":[{"tier":"common","min":0,"max":1.2},{"tier":"rare","min":0,"max":2},{"tier":"exotic","min":0,"max":3}]},
+    {"id":"density","name":"Amount","def":0.8,"step":0.01,"ranges":[{"tier":"common","min":0.2,"max":1},{"tier":"rare","min":0.2,"max":1.6},{"tier":"exotic","min":0.2,"max":2}]},
+    {"id":"reach","name":"Reach","def":0.8,"step":0.01,"ranges":[{"tier":"common","min":0.3,"max":1},{"tier":"rare","min":0.3,"max":1.5},{"tier":"exotic","min":0.3,"max":2}]},
+    {"id":"erratic","name":"Erratic","def":0,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0.25},{"tier":"rare","min":0,"max":0.5},{"tier":"exotic","min":0,"max":1}]},
+    {"id":"vibrate","name":"Vibrate","def":0,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0.3},{"tier":"rare","min":0,"max":1}]},
+    {"id":"detail","name":"Detail","def":0.5,"step":0.01,"ranges":[{"tier":"common","min":0,"max":1}]},
+    {"id":"form","name":"Form","def":0.1,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0.33},{"tier":"rare","min":0,"max":0.66},{"tier":"exotic","min":0,"max":1}],"about":"for Little forms: atoms, then crystals, then glyphs"},
+    {"id":"spin","name":"Spin","def":0,"step":0.01,"ranges":[{"tier":"common","min":-0.3,"max":0.3},{"tier":"rare","min":-1,"max":1},{"tier":"exotic","min":-2,"max":2}]},
+    {"id":"hue","name":"Colour shift","def":0,"step":0.01,"ranges":[{"tier":"common","min":0,"max":1}]},
+    {"id":"spread","name":"Colour range","def":0.4,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0.6},{"tier":"rare","min":0,"max":1},{"tier":"exotic","min":0,"max":2}]},
+    {"id":"cycle","name":"Colour drift","def":0,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0},{"tier":"mythic","min":0,"max":1}]}
+  ],
+  "globals": [
+    {"id":"trail","name":"Trails","def":0.3,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0.4},{"tier":"rare","min":0,"max":0.8},{"tier":"exotic","min":0,"max":1}]}
+  ],
+  "presets": [
+    {"format":"orb-energy-recipe","version":1,"name":"Blue jump-sparks","trail":0.25,"layers":[
+      {"shape":"sparks","behaviour":"jump","material":"glow","palette":"azure","seed":3,"sliders":{"power":0.95,"size":0.8,"speed":1.1,"density":1,"reach":1,"erratic":0.2,"vibrate":0,"detail":0.6,"form":0.1,"spin":0,"hue":0,"spread":0.6,"cycle":0}},
+      {"shape":"shell","behaviour":"hug","material":"glow","palette":"azure","seed":8,"sliders":{"power":0.3,"size":0.7,"speed":0.6,"density":0.8,"reach":0.8,"erratic":0,"vibrate":0.1,"detail":0.5,"form":0.1,"spin":0,"hue":0,"spread":0.2,"cycle":0}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Black plasma waves","trail":0.45,"layers":[
+      {"shape":"rings","behaviour":"arc","material":"dark","palette":"violet","seed":5,"sliders":{"power":1,"size":1.3,"speed":0.8,"density":0.7,"reach":1.5,"erratic":0.1,"vibrate":0,"detail":0.35,"form":0.1,"spin":0.3,"hue":0.1,"spread":0.5,"cycle":0}},
+      {"shape":"arcs","behaviour":"arc","material":"plasma","palette":"violet","seed":11,"sliders":{"power":0.75,"size":1.2,"speed":0.8,"density":1,"reach":1.2,"erratic":0.3,"vibrate":0,"detail":0.7,"form":0.1,"spin":0,"hue":0.15,"spread":0.5,"cycle":0}},
+      {"shape":"cloud","behaviour":"ripple","material":"dark","palette":"violet","seed":2,"sliders":{"power":0.6,"size":1.1,"speed":0.5,"density":0.8,"reach":0.9,"erratic":0,"vibrate":0,"detail":0.5,"form":0.1,"spin":0,"hue":0,"spread":0.3,"cycle":0}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Golden cloud, green atom rain","trail":0.08,"layers":[
+      {"shape":"cloud","behaviour":"float","material":"smoke","palette":"gold","seed":4,"sliders":{"power":1,"size":0.8,"speed":0.5,"density":1,"reach":0.9,"erratic":0,"vibrate":0,"detail":0.5,"form":0.1,"spin":0,"hue":0.3,"spread":0.5,"cycle":0}},
+      {"shape":"forms","behaviour":"rain","material":"glow","palette":"viridian","seed":9,"sliders":{"power":0.9,"size":0.9,"speed":0.45,"density":1.1,"reach":0.9,"erratic":0,"vibrate":0.8,"detail":0.5,"form":0.1,"spin":0.2,"hue":0.2,"spread":0.5,"cycle":0}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Corona","trail":0.3,"layers":[
+      {"shape":"filaments","behaviour":"ripple","material":"plasma","palette":"ember","seed":6,"sliders":{"power":0.9,"size":1,"speed":0.7,"density":0.9,"reach":0.75,"erratic":0.1,"vibrate":0,"detail":0.5,"form":0.1,"spin":0.2,"hue":0.2,"spread":0.6,"cycle":0}},
+      {"shape":"drops","behaviour":"ascend","material":"glow","palette":"gold","seed":1,"sliders":{"power":0.7,"size":0.8,"speed":0.8,"density":0.8,"reach":1,"erratic":0.3,"vibrate":0,"detail":0.5,"form":0.1,"spin":0,"hue":0.3,"spread":0.4,"cycle":0}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Halo script","trail":0.15,"layers":[
+      {"shape":"forms","behaviour":"orbit","material":"glow","palette":"moon","seed":7,"sliders":{"power":0.9,"size":0.9,"speed":0.5,"density":1.6,"reach":0.8,"erratic":0,"vibrate":0,"detail":0.5,"form":0.9,"spin":0.2,"hue":0.3,"spread":0.3,"cycle":0}},
+      {"shape":"rings","behaviour":"hug","material":"prism","palette":"spectrum","seed":2,"sliders":{"power":0.6,"size":1.2,"speed":0.4,"density":0.6,"reach":1.2,"erratic":0,"vibrate":0,"detail":0.3,"form":0.1,"spin":0,"hue":0,"spread":1,"cycle":0}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Backward helix","trail":0.6,"layers":[
+      {"shape":"helix","behaviour":"rewind","material":"prism","palette":"anomaly","seed":5,"sliders":{"power":0.9,"size":1,"speed":0.8,"density":1,"reach":1.2,"erratic":0.2,"vibrate":0,"detail":0.5,"form":0.1,"spin":0.5,"hue":0,"spread":1,"cycle":0.4}},
+      {"shape":"drops","behaviour":"implode","material":"glow","palette":"moon","seed":3,"sliders":{"power":0.7,"size":0.9,"speed":0.7,"density":0.9,"reach":1.2,"erratic":0.3,"vibrate":0,"detail":0.5,"form":0.1,"spin":0,"hue":0.2,"spread":0.4,"cycle":0}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Ghost lattice","trail":0.2,"layers":[
+      {"shape":"lattice","behaviour":"hug","material":"negative","palette":"moon","seed":3,"sliders":{"power":0.8,"size":1,"speed":0.6,"density":1,"reach":1.6,"erratic":0,"vibrate":0,"detail":0.5,"form":0.1,"spin":0,"hue":0,"spread":0.4,"cycle":0}},
+      {"shape":"shards","behaviour":"orbit","material":"ink","palette":"riptide","seed":6,"sliders":{"power":0.7,"size":1,"speed":0.5,"density":1.2,"reach":0.9,"erratic":0,"vibrate":0,"detail":0.5,"form":0.1,"spin":0.4,"hue":0.1,"spread":0.8,"cycle":0}}]}
+  ]
+}
+</script>
+
+<script>
+'use strict';
+// ---------------------------------------------------------------------------------------------------------------------
+// Shaders. GLSL ES 3.00, written to port to Godot's shading language: only uniforms, plain functions and loops with
+// fixed bounds. One pass draws every layer of the recipe for all three panels; a second pass puts it over the backdrop.
+// ---------------------------------------------------------------------------------------------------------------------
+const VERT = `#version 300 es
+out vec2 vUv;
+void main(){ vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); vUv = p; gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
+
+const COMMON = `#version 300 es
+precision highp float;
+uniform vec2 uRes;
+float h11(float p){ p = fract(p * .1031); p *= p + 33.33; p *= p + p; return fract(p); }
+float h21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+vec2 h22(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  return mix(mix(h21(i), h21(i + vec2(1., 0.)), f.x), mix(h21(i + vec2(0., 1.)), h21(i + vec2(1., 1.)), f.x), f.y); }
+float fbm(vec2 p){ float a = .5, s = 0.; for(int i = 0; i < 4; i++){ s += a * vnoise(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p + 3.7; a *= .5; } return s; }
+float n1(float x){ float i = floor(x), f = fract(x); f = f * f * (3. - 2. * f); return mix(h11(i), h11(i + 1.), f); }
+float fbm1(float x){ return .5 * n1(x) + .25 * n1(x * 2.03 + 7.) + .125 * n1(x * 4.01 + 3.) + .0625 * n1(x * 8.1 + 1.); }
+float sdCap(vec2 p, vec2 a, vec2 b, float r){ vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.); return length(pa - ba * h) - r; }
+float smin(float a, float b, float k){ float h = clamp(.5 + .5 * (b - a) / k, 0., 1.); return mix(b, a, h) - k * h * (1. - h); }
+// the plain stand-in figure: a head, a body, two arms, two legs
+float figure(vec2 p){
+  float d = length(p - vec2(0., .44)) - .105;
+  d = smin(d, sdCap(p, vec2(0., .27), vec2(0., -.02), .115), .05);
+  p.x = abs(p.x);
+  d = smin(d, sdCap(p, vec2(.15, .27), vec2(.26, -.03), .045), .04);
+  d = smin(d, sdCap(p, vec2(.065, -.08), vec2(.11, -.52), .055), .04);
+  return d;
+}
+// three panels in one picture: 0 the aura (left half), 1 the beam (top right), 2 the blast (bottom right)
+int panelOf(vec2 uv){ return uv.x < .5 ? 0 : (uv.y >= .5 ? 1 : 2); }
+vec2 localOf(vec2 uv, int pn){
+  float asp = uRes.x / uRes.y;
+  if(pn == 0) return vec2((uv.x - .25) * asp, uv.y - .5) * 2.;
+  if(pn == 1) return vec2((uv.x - .75) * asp, uv.y - .75) * 4.;
+  return vec2((uv.x - .75) * asp, uv.y - .25) * 4.;
+}
+float panelMask(vec2 uv, int pn){
+  vec2 a = vec2(0.), b = vec2(.5, 1.);
+  if(pn == 1){ a = vec2(.5, .5); b = vec2(1., 1.); } else if(pn == 2){ a = vec2(.5, 0.); b = vec2(1., .5); }
+  vec2 e = min(uv - a, b - uv);
+  return smoothstep(0., .014, min(e.x, e.y));
+}
+const vec2 FIG0 = vec2(0., -.12);      // the aura panel's figure: where, and how big
+const float FIGS = 1.15;
+const vec2 BEAM0 = vec2(-.9, .1);      // the beam's start
+const vec2 FIG1 = vec2(-1.36, -.22);   // the small figure firing it
+const vec2 BALL0 = vec2(0., -.05);
+`;
+
+const LAYERS = COMMON + `
+in vec2 vUv;
+layout(location = 0) out vec4 o0;   // rgb light, a darkness
+layout(location = 1) out vec4 o1;   // xy bend of the backdrop, z negative
+uniform sampler2D uPrev;
+uniform float uTime, uDt, uTrail;
+uniform int uCount;
+uniform vec4 uA[5];   // shape, behaviour, material, seed
+uniform vec4 uB[5];   // power, size, speed, amount
+uniform vec4 uC[5];   // reach, erratic, vibrate, detail
+uniform vec4 uD[5];   // form, spin, colour shift, colour range
+uniform vec4 uE[5];   // colour drift, blend weight, -, -
+uniform vec3 uPa[5], uPb[5], uPc[5], uPd[5];   // cosine palette: a + b * cos(2 pi (c t + d))
+
+struct Geo { float d; vec2 c; vec2 cp; vec2 top; float R; float al; float flow; };
+
+vec3 pal(int i, float t){ return clamp(uPa[i] + uPb[i] * cos(6.2831853 * (uPc[i] * t + uPd[i])), 0., 1.); }
+
+// what the layers wrap round in each panel: the figure, the beam, the ball
+Geo geoOf(vec2 p, int pn){
+  Geo g; g.flow = 0.;
+  if(pn == 0){
+    g.d = figure((p - FIG0) / FIGS) * FIGS;
+    g.c = vec2(0., -.1);
+    vec2 a = vec2(0., -.45), b = vec2(0., .35); vec2 pa = p - a, ba = b - a;
+    g.cp = a + ba * clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
+    g.top = vec2(0., .52); g.R = .55;
+    float an = atan(p.x, p.y - g.c.y);
+    g.al = (abs(an) + .22 * sin(an)) * g.R;   // mirrored, then skewed: no seam under the body, and the two sides still differ
+  } else if(pn == 1){
+    g.d = min(length(p - BEAM0) - .15, sdCap(p, BEAM0, vec2(2.2, BEAM0.y), .075));
+    g.c = vec2(.2, BEAM0.y);
+    g.cp = vec2(clamp(p.x, BEAM0.x, 2.2), BEAM0.y);
+    g.top = vec2(.2, .28); g.R = .32;
+    g.al = p.x; g.flow = 1.;
+  } else {
+    g.d = length(p - BALL0) - .32;
+    g.c = BALL0; g.cp = BALL0; g.top = BALL0 + vec2(0., .36); g.R = .34;
+    float an = atan(p.x - BALL0.x, p.y - BALL0.y);
+    g.al = (abs(an) + .22 * sin(an)) * g.R;
+  }
+  return g;
+}
+
+// BEHAVIOUR: where the pattern lives (q), which way it travels (mv) and where it fades (env)
+void behave(int bh, vec2 p, Geo g, float T, float reach, float seed, float spin, out vec2 q, out vec2 mv, out float env){
+  float d = g.d, dd = max(g.d, 0.);
+  q = vec2(g.al, d); mv = vec2(0.); env = 1.;
+  if(bh == 0){            // jump off the body
+    mv = vec2(0., -.55);
+    float gate = smoothstep(.3, .7, vnoise(vec2(g.al * 2.5 + seed, T * .6)));
+    env = exp(-dd / (.2 * reach)) * step(-.04, d) * (.35 + .65 * gate);
+  } else if(bh == 1){     // arc between points
+    q.y = d - .07 * reach * sin(g.al * 7. + T * 1.5 + seed);
+    mv = vec2(-.45, 0.);
+    env = smoothstep(.26 * reach, 0., abs(q.y - .08 * reach)) * step(-.06, d);
+  } else if(bh == 2){     // ripple out
+    mv = vec2(0., -.4);
+    env = exp(-dd / (.27 * reach)) * step(-.02, d);
+  } else if(bh == 3){     // float above the head
+    vec2 A = g.top + vec2(.04 * sin(T * .6 + seed), .2 + .03 * sin(T * .9));
+    q = p - A; mv = vec2(-.08, 0.);
+    env = smoothstep(1., .25, length(q * vec2(1., 1.7)) / (.42 * reach));
+  } else if(bh == 4){     // rain down
+    vec2 A = g.top + vec2(0., .2);
+    q = p - A; mv = vec2(0., .6);
+    env = smoothstep(.5 * reach, .1 * reach, abs(q.x)) * smoothstep(.06, -.1, q.y) * smoothstep(-1.7 * reach, -.7 * reach, q.y);
+  } else if(bh == 8){     // inverted: rise instead of fall
+    q = p - g.top; mv = vec2(0., -.6);
+    env = smoothstep(.75 * reach, .12 * reach, abs(q.x)) * smoothstep(.6 * reach, 0., q.y) * smoothstep(-1.6, -1.1, q.y);
+  } else if(bh == 5){     // orbit, seen at a tilt, passing behind the body
+    float a = spin * .5; vec2 r = mat2(cos(a), -sin(a), sin(a), cos(a)) * (p - g.c); r.y *= 2.6;
+    float rad = length(r), oR = g.R * (.8 + .6 * reach);
+    q = vec2(atan(r.y, r.x) * oR, rad - oR); mv = vec2(-1.1, 0.);
+    env = smoothstep(.24, 0., abs(q.y));
+    if(r.y > 0.) env *= smoothstep(-.01, .03, d) * .6;
+  } else if(bh == 6){     // cling and vibrate
+    env = smoothstep(.34 * reach, 0., abs(d - .03));
+  } else if(bh == 7){     // erratic: the whole pattern wanders
+    q = p + .35 * vec2(vnoise(p * 1.3 + vec2(T * .7, seed)) - .5, vnoise(p * 1.3 + vec2(seed, -T * .6) + 9.) - .5);
+    mv = vec2(.25 * sin(seed * 7.), .2 * cos(seed * 5.));
+    env = exp(-dd / (.28 * reach));
+  } else if(bh == 9){     // inverted: pulled inward
+    mv = vec2(0., .55);
+    env = exp(-dd / (.26 * reach)) * step(-.02, d) * smoothstep(0., .05, dd + .02);
+  } else {                // inverted: runs backward (T is negative here), with echoes
+    q.y = d - .05 * reach * sin(g.al * 5. + T * 1.2 + seed);
+    mv = vec2(.3, -.4);
+    env = exp(-dd / (.28 * reach)) * step(-.03, d);
+  }
+  mv.x += spin * .5 - .6 * g.flow;   // along the beam everything also streams away from the hand
+}
+
+// small moving bodies: sparks (streak > 0) and round motes (streak == 0)
+float parts(vec2 q, vec2 off, vec2 mv, float cs, float prob, float streak, float err, float vib, float T, float seed, float rad, out float hsh){
+  vec2 u = (q + off) / cs; vec2 id = floor(u), f = fract(u);
+  vec2 dir = length(mv) > .001 ? normalize(mv) : vec2(0., 1.);
+  float m = 0.; hsh = .5;
+  for(int y = -1; y <= 1; y++) for(int x = -1; x <= 1; x++){
+    vec2 o = vec2(float(x), float(y)); vec2 cid = id + o;
+    vec2 h = h22(cid + seed * 17.);
+    if(h.x > prob) continue;
+    vec2 c = o + .5 + .4 * (h22(cid + 3.1 + seed) - .5);
+    c += err * 1.1 * vec2(vnoise(vec2(h.x * 40., T * 2.6)) - .5, vnoise(vec2(h.y * 40., T * 2.6 + 5.)) - .5);
+    c += vib * .09 * vec2(sin(T * 55. + h.x * 40.), cos(T * 49. + h.y * 40.));
+    vec2 r = f - c;
+    float along = dot(r, dir), side = dot(r, vec2(-dir.y, dir.x));
+    float dl = length(vec2(max(abs(along) - streak, 0.), side));
+    float v = smoothstep(rad, 0., dl) * (.55 + .45 * sin(h.y * 6.283 + T * (1.5 + h.x * 2.)));
+    if(v > m){ m = v; hsh = h.y; }
+  }
+  return m;
+}
+
+// little forms: an atom with electrons, a crystal, a glyph
+float glyph(vec2 r, float form, float h, float T){
+  float v = 0.;
+  if(form < .34){
+    v = smoothstep(.075, .03, length(r));
+    for(int k = 0; k < 3; k++){
+      float a = float(k) * 1.0472 + h * 3.; mat2 R = mat2(cos(a), -sin(a), sin(a), cos(a)); vec2 e = R * r;
+      v = max(v, smoothstep(.04, 0., abs(length(e * vec2(1., 2.8)) - .29)) * .65);
+      float ea = T * (3. + float(k)) + h * 10.;
+      v = max(v, smoothstep(.07, .02, length(e - vec2(cos(ea), sin(ea) / 2.8) * .29)));
+    }
+  } else if(form < .67){
+    float di = abs(r.x) * 1.4 + abs(r.y) - .3;
+    v = smoothstep(.04, 0., abs(di));
+    v = max(v, smoothstep(.025, 0., abs(r.x)) * step(di, 0.) * .6);
+    v = max(v, smoothstep(.025, 0., abs(r.y + .06)) * step(di, 0.) * .6);
+  } else {
+    for(int k = 0; k < 3; k++){
+      vec2 a = (floor(h22(vec2(h * 91. + float(k), 1.)) * 3.) - 1.) * .2;
+      vec2 b = (floor(h22(vec2(h * 57. + float(k), 2.)) * 3.) - 1.) * .2;
+      v = max(v, smoothstep(.04, .005, sdCap(r, a, b, 0.)));
+    }
+    v = max(v, .5 * smoothstep(.03, 0., abs(length(r) - .36)));
+  }
+  return v;
+}
+float forms(vec2 q, vec2 off, float cs, float prob, float form, float err, float vib, float T, float seed, out float hsh){
+  vec2 u = (q + off) / cs; vec2 id = floor(u), f = fract(u);
+  vec2 h = h22(id + seed * 13.); hsh = h.y;
+  if(h.x > prob) return 0.;
+  vec2 c = .5 + .16 * (h22(id + 7.7) - .5);
+  c += err * .12 * vec2(vnoise(vec2(h.x * 40., T * 2.6)) - .5, vnoise(vec2(h.y * 40., T * 2.6 + 5.)) - .5);
+  c += vib * .035 * vec2(sin(T * 55. + h.x * 40.), cos(T * 49. + h.y * 40.));
+  vec2 r = f - c; float a = T * (h.x - .5);
+  r = mat2(cos(a), -sin(a), sin(a), cos(a)) * r;
+  return glyph(r, form, h.y, T);
+}
+
+// lightning: a path with a fractal sideways wobble, re-drawn a little over twice a second with a cross-fade (never a hard blink)
+float bolts(vec2 q, float T, float spd, float size, float reach, float dens, float det, float seed, bool leap, float err, out float hsh){
+  float st = T * min(1.2 + spd * .6, 2.6); float k0 = floor(st), fr = fract(st);
+  float m = 0.; hsh = .5;
+  for(int e = 0; e < 2; e++){
+    float kk = k0 + float(e);
+    float w = (e == 0) ? cos(fr * 1.5708) : sin(fr * 1.5708); w *= w;
+    for(int j = 0; j < 4; j++){
+      vec2 h = h22(vec2(kk * 7. + float(j) * 13., seed * 31. + float(j)));
+      if(float(j) > dens * 2.) continue;
+      float x0 = (h.x * 2. - 1.) * 1.6, t, hgt, envl;
+      if(leap){ t = q.y / (reach * .9 * (.5 + h.y)); hgt = q.x - x0; envl = t * 1.2 + .1; }
+      else { t = (q.x - x0) / ((.35 + .5 * h.y) * size); hgt = q.y - reach * .45 * sin(3.14159 * clamp(t, 0., 1.)); envl = sin(3.14159 * clamp(t, 0., 1.)); }
+      if(t < 0. || t > 1.) continue;
+      float disp = (fbm1(t * 5. + kk * 3. + float(j) * 9. + seed) - .47) * .5 * size * (.4 + det) * envl;
+      disp += err * .25 * (vnoise(vec2(t * 14., kk + T * 3.)) - .5) * envl;
+      float dist = abs(hgt - disp);
+      float v = w * clamp(.010 / (dist + .004), 0., 1.) * (leap ? (1. - t) : 1.);
+      if(v > m){ m = v; hsh = h.y; }
+    }
+  }
+  return m;
+}
+
+vec3 voro(vec2 x){
+  vec2 n = floor(x), f = fract(x); float f1 = 8., f2 = 8., hid = 0.;
+  for(int j = -1; j <= 1; j++) for(int i = -1; i <= 1; i++){
+    vec2 g = vec2(float(i), float(j)); vec2 r = g + h22(n + g) - f; float d = dot(r, r);
+    if(d < f1){ f2 = f1; f1 = d; hid = h21(n + g + .5); } else if(d < f2){ f2 = d; }
+  }
+  return vec3(sqrt(f1), sqrt(f2), hid);
+}
+
+// SHAPE: how much energy is at this point, 0 to about 1
+float shapeF(int sh, vec2 q, vec2 mv, float T, vec4 B, vec4 C, vec4 D, float seed, Geo g, vec2 p, int bh, float err, float vib, out float hsh){
+  float size = B.y, spd = B.z, dens = B.w, reach = C.x, det = C.w;
+  vec2 off = mv * T * spd;
+  hsh = .5;
+  bool body = !(bh == 3 || bh == 4 || bh == 8 || bh == 7);
+  if(sh == 0){
+    float n = fbm((q + off) * vec2(3., 5.) / size + seed);
+    hsh = n;
+    return (body ? exp(-max(g.d, 0.) / (.11 * size)) * step(-.05, g.d) : 1.) * (.45 + .75 * n);
+  }
+  if(sh == 1) return 1.5 * parts(q, off, mv, .06 * size, dens * .42, .14 + det * .22, err, vib, T, seed, .11, hsh);
+  if(sh == 5) return parts(q, off, mv, .055 * size, dens * .45, 0., err, vib, T, seed, .2, hsh);
+  if(sh == 2){
+    bool leap = !(bh == 1 || bh == 5 || bh == 6 || bh == 10);
+    vec2 qb = q; if(bh == 3 || bh == 4) qb.y = -qb.y;
+    return bolts(qb, T, spd, size, reach, dens, det, seed, leap, err, hsh);
+  }
+  if(sh == 3){
+    float k = 6. * dens / size;                                  // bands per unit
+    vec2 dn = abs(mv.y) >= abs(mv.x) ? vec2(0., 1.) : vec2(.45, 1.);
+    float vel = clamp(dot(mv, dn) * spd, -2.5 / k, 2.5 / k);     // never more than 2.5 bands a second past one spot
+    float ph = (dot(q, dn) + vel * T) * k * 6.2831853 + err * 4. * vnoise(q * 3. + T * .5);
+    hsh = fract(ph / 6.2831853);
+    return pow(.5 + .5 * sin(ph), 1. + det * 6.) * (.7 + .3 * sin(q.x * k * 4. + ph * .37));
+  }
+  if(sh == 4){
+    vec2 u = (q + off * .5) * 2.4 / size + seed;
+    float f = fbm(u + 1.5 * vec2(fbm(u + vec2(0., T * .15)), fbm(u + vec2(5.2, -T * .12))));
+    hsh = f;
+    return smoothstep(.42 - .16 * dens, .8, f) * 1.3;
+  }
+  if(sh == 6) return forms(q, off, .2 * size, dens * .6, D.x, err, vib, T, seed, hsh);
+  if(sh == 7){
+    float k = 40. * dens / size;
+    float wv = fbm(vec2(q.x * 3., (q.y + off.y) * 1.2) + off * .3 + seed);
+    hsh = wv;
+    return pow(abs(sin(q.x * k + 4. * wv + off.x * k)), 18. - det * 9.) * (.4 + .6 * fbm(vec2(q.x * 8., q.y * 2.) + off));
+  }
+  if(sh == 8){
+    float k = 24. * dens / size, sp = min(spd * .12, .25);        // the offset drifts slowly: the wide beat it makes must not pulse fast
+    vec2 c2 = g.c + .1 * size * vec2(cos(T * sp + seed), sin(T * sp * 1.3 + seed));
+    float g1 = .5 + .5 * sin(length(p - g.c) * k * 6.2831853), g2 = .5 + .5 * sin(length(p - c2) * k * 1.06 * 6.2831853);
+    hsh = g1;
+    return pow(g1 * g2, 2.6 - det);
+  }
+  if(sh == 9){
+    vec3 v = voro((q + off) * 7. / size + seed);
+    hsh = v.z;
+    return step(v.z, dens * .5) * (.35 + .65 * fract(v.z * 7.3)) * smoothstep(0., .07, v.y - v.x);
+  }
+  // twin helix
+  float k = 9. / size, A = .09 * reach, y0 = body ? .1 * reach : 0.;
+  float s = sin((q.x + off.x) * k + off.y * 3.);
+  float m = smoothstep(.022, 0., abs(q.y - y0 - A * s)) + smoothstep(.022, 0., abs(q.y - y0 + A * s));
+  float rung = smoothstep(.07, 0., abs(fract((q.x + off.x) * k / 6.2831853 * 4.) - .5)) * step(abs(q.y - y0), A * abs(s));
+  hsh = .5 + .5 * s;
+  return min(m, 1.) + rung * .45 * dens;
+}
+
+void main(){
+  vec2 uv = vUv; int pn = panelOf(uv); vec2 p0 = localOf(uv, pn);
+  vec3 L = vec3(0.); float Dk = 0.; vec2 Rf = vec2(0.); float Ng = 0.;
+  for(int i = 0; i < 5; i++){
+    if(i >= uCount) break;
+    vec4 A = uA[i], B = uB[i], C = uC[i], D = uD[i], E = uE[i];
+    int sh = int(A.x + .5), bh = int(A.y + .5), mt = int(A.z + .5); float seed = A.w;
+    float pw0 = B.x * E.y; if(pw0 < .003) continue;
+    float vib = max(C.z, bh == 6 ? .5 : 0.), err = max(C.y, bh == 7 ? .6 : 0.);
+    vec2 p = p0 + vib * .010 * vec2(sin(uTime * 57. + seed * 3.), cos(uTime * 51. + seed * 5.));
+    Geo g = geoOf(p, pn);
+    float T = (bh == 10) ? -uTime : uTime;
+    int reps = (bh == 10) ? 2 : 1;
+    for(int e = 0; e < 2; e++){
+      if(e >= reps) break;
+      float Te = T + float(e) * .28, pw = pw0 * ((e == 0) ? 1. : .45);
+      vec2 q, mv; float env;
+      behave(bh, p, g, Te, C.x, seed, D.y, q, mv, env);
+      if(env < .004) continue;
+      float hsh;
+      float m = clamp(shapeF(sh, q, mv, Te, B, C, D, seed, g, p, bh, err, vib, hsh) * env, 0., 1.5);
+      if(m < .004) continue;
+      vec2 off = mv * Te * B.z;
+      float tc = D.z + D.w * (m * .6 + hsh * .4) + E.x * uTime * .05;
+      vec3 col = pal(i, tc);
+      // MATERIAL: what that energy is made of
+      if(mt == 0){ L += col * pow(m, 1.3) * pw; }
+      else if(mt == 1){
+        float s = fbm((q + off * .6) * 3.2 + 1.3 * vec2(fbm(q * 2. + vec2(0., uTime * .12)), fbm(q * 2. + 7.)));
+        float ms = m * smoothstep(.2, .65, s);
+        L += col * ms * 1.5 * pw; Dk = max(Dk, ms * .3 * pw);
+      }
+      else if(mt == 2){
+        float r = 1. - abs(2. * fbm((q + off) * 4. + uTime * .1) - 1.); r *= r;
+        L += (col * m * (.35 + 1.1 * r) + vec3(1.) * pow(m, 3.) * .45 * r) * pw;
+      }
+      else if(mt == 3){
+        vec3 v = voro((q + off * .5) * (7. + C.w * 8.));
+        L += col * (smoothstep(.09, 0., v.y - v.x) * smoothstep(.05, .4, m) * 1.4 + m * .12) * pw;
+      }
+      else if(mt == 4){
+        Dk = max(Dk, smoothstep(.15, .5, m) * .97 * pw);
+        L += col * smoothstep(.22, 0., abs(m - .3)) * .9 * pw;
+      }
+      else if(mt == 5){
+        vec3 irid = .5 + .5 * cos(6.2831853 * (m * 1.5 + tc + vec3(0., .33, .67)));
+        L += mix(col, irid, .7) * m * pw;
+      }
+      else if(mt == 6){
+        Rf += vec2(sin(q.y * 38. + uTime * 5.), cos(q.x * 38. - uTime * 4.)) * m * pw;
+        L += col * m * .2 * pw;
+      }
+      else if(mt == 7){
+        Ng = max(Ng, smoothstep(.2, .45, m) * pw);
+        L += col * smoothstep(.15, 0., abs(m - .3)) * .6 * pw;
+      }
+      else {
+        L += col * (floor(m * 4. + .5) / 4.) * .9 * pw;
+        Dk = max(Dk, smoothstep(.06, .12, m) * smoothstep(.24, .16, m) * .75 * pw);
+      }
+    }
+  }
+  // the beam's and the blast's own core takes the first layer's colour (or goes black for dark energy)
+  if(pn != 0 && uCount > 0){
+    Geo g = geoOf(p0, pn);
+    float core = smoothstep(.02, -.05, g.d) * uE[0].y;
+    if(int(uA[0].z + .5) == 4 || int(uA[0].z + .5) == 7) Dk = max(Dk, core * .95);
+    else L += mix(pal(0, uD[0].z + .3), vec3(1.), .45) * core * .85;
+  }
+  // trails: last frame drifts upward (along the beam in its panel), bends a little and fades
+  vec2 fl = vec2(0., .035) + .02 * vec2(vnoise(uv * 6. + uTime * .2) - .5, vnoise(uv * 6. + 9. - uTime * .2) - .5);
+  if(pn == 1) fl = vec2(.06, .008);
+  vec4 prev = texture(uPrev, uv - fl * uDt * 3.);
+  float decay = uTrail < .01 ? 0. : exp(-uDt / (.04 + uTrail * 1.2)) * .99;
+  float pm = panelMask(uv, pn);
+  o0 = vec4(max(L, prev.rgb * decay), max(Dk, prev.a * decay)) * pm;
+  o1 = vec4(clamp(Rf, -1., 1.) * .5 + .5, Ng * pm, 1.);
+}`;
+
+const COMPOSITE = COMMON + `
+in vec2 vUv;
+out vec4 o;
+uniform sampler2D uL, uX;
+uniform float uLim;
+vec3 backdrop(vec2 p, int pn){
+  vec3 c = mix(vec3(.10, .12, .17), vec3(.21, .25, .34), smoothstep(-1., 1., p.y));
+  float gy = -.82;
+  float hl = gy + .2 + .1 * sin(p.x * 2.3 + float(pn) * 2.) + .05 * sin(p.x * 5.1 + 1.);
+  c = mix(c, vec3(.15, .18, .25), smoothstep(hl + .01, hl - .01, p.y) * .8);
+  c = mix(c, vec3(.12, .13, .16), smoothstep(gy + .01, gy - .01, p.y));
+  vec2 gq = abs(fract(p * 4.) - .5);
+  c += smoothstep(.47, .5, max(gq.x, gq.y)) * .03;
+  return c;
+}
+void main(){
+  vec2 uv = vUv; int pn = panelOf(uv);
+  vec4 X = texture(uX, uv);
+  vec2 p = localOf(uv + (X.xy - .5) * .05, pn);
+  vec3 c = backdrop(p, pn);
+  float fd = 9.;
+  if(pn == 0) fd = figure((p - FIG0) / FIGS) * FIGS;
+  else if(pn == 1){ fd = figure((p - FIG1) / .8) * .8; fd = smin(fd, sdCap(p, FIG1 + vec2(.12, .21), BEAM0 - vec2(.1, 0.), .034), .03); }
+  float fm = smoothstep(.006, -.006, fd);
+  vec4 Lt = texture(uL, uv);
+  vec3 L = Lt.rgb * uLim;
+  vec3 fc = mix(vec3(.17, .18, .22), vec3(.31, .33, .38), smoothstep(-.7, .6, p.y));
+  fc += (L / (1. + L)) * .5 * smoothstep(-.045, 0., fd);        // the aura lights the figure's edge
+  c = mix(c, fc, fm);
+  c *= 1. - Lt.a * .93 * (1. - .6 * fm);                       // dark energy takes light away
+  c += (L / (1. + L)) * (1. - .88 * fm);
+  c = mix(c, vec3(.62) - c * .9, X.z * .9 * uLim * (1. - fm));              // negative: a gentle inversion, never a white field
+  c = min(c, vec3(.94));
+  c *= mix(.55, 1., panelMask(uv, pn));
+  o = vec4(c, 1.);
+}`;
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Data and recipe operations
+// ---------------------------------------------------------------------------------------------------------------------
+const CAT = JSON.parse(document.getElementById('catalog').textContent);
+const TIERS = CAT.tiers, MAXL = CAT.maxLayers;
+const tierIx = (t) => Math.max(0, TIERS.indexOf(t));
+const byId = (list, id) => list.find((e) => e.id === id) || list[0];
+const MENUS = { shape: CAT.shapes, behaviour: CAT.behaviours, material: CAT.materials, palette: CAT.palettes };
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const $ = (id) => document.getElementById(id);
+
+let unlocked = 0;                 // index into TIERS: everything at or below it is unlocked
+let recipe = null, slotA = null, slotB = null, paused = false;
+const history = [];
+
+function rangeOf(def, tier) {     // the widest range among the unlocked tiers
+  let lo = null, hi = null;
+  for (const r of def.ranges) if (tierIx(r.tier) <= tier) { lo = lo === null ? r.min : Math.min(lo, r.min); hi = hi === null ? r.max : Math.max(hi, r.max); }
+  return [lo, hi];
+}
+const fullRange = (def) => rangeOf(def, TIERS.length - 1);
+const allowed = (list, tier) => list.filter((e) => tierIx(e.tier) <= tier);
+function pick(list, tier) {       // random, leaning toward the rarer things that are unlocked
+  const ok = allowed(list, tier); const w = ok.map((e) => 1 + tierIx(e.tier) * 1.2); let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < ok.length; i++) { r -= w[i]; if (r <= 0) return ok[i].id; } return ok[ok.length - 1].id;
+}
+function newLayer() {
+  const sliders = {}; for (const s of CAT.sliders) sliders[s.id] = s.def;
+  return { shape: 'shell', behaviour: 'hug', material: 'glow', palette: 'azure', seed: Math.floor(rnd(1, 99)), sliders };
+}
+function randomLayer(tier) {
+  const L = newLayer();
+  for (const k of Object.keys(MENUS)) L[k] = pick(MENUS[k], tier);
+  for (const s of CAT.sliders) { const [lo, hi] = rangeOf(s, tier); L.sliders[s.id] = +rnd(lo, hi).toFixed(2); }
+  L.sliders.power = +rnd(0.55, 1).toFixed(2);
+  if (Math.random() < 0.6) L.sliders.erratic = +(L.sliders.erratic * 0.3).toFixed(2);
+  if (Math.random() < 0.6) L.sliders.vibrate = +(L.sliders.vibrate * 0.3).toFixed(2);
+  return L;
+}
+function randomRecipe(tier) {
+  const n = 2 + Math.floor(Math.random() * (tier >= 2 ? 2.4 : 1.6));   // two to four layers: one layer alone is rarely a surprise
+  const [lo, hi] = rangeOf(CAT.globals[0], tier);
+  return { format: 'orb-energy-recipe', version: 1, name: 'Random find', trail: +rnd(lo, hi).toFixed(2), layers: Array.from({ length: n }, () => randomLayer(tier)) };
+}
+function mutate(r, tier) {
+  const m = JSON.parse(JSON.stringify(r));
+  for (const L of m.layers) for (const s of CAT.sliders) {
+    const [lo, hi] = rangeOf(s, tier); if (hi <= lo) continue;
+    L.sliders[s.id] = +clamp(L.sliders[s.id] + (Math.random() - 0.5) * 0.3 * (hi - lo), lo, hi).toFixed(2);
+  }
+  if (Math.random() < 0.4) { const L = m.layers[Math.floor(Math.random() * m.layers.length)]; const k = Object.keys(MENUS)[Math.floor(Math.random() * 4)]; L[k] = pick(MENUS[k], tier); }
+  if (Math.random() < 0.12 && m.layers.length < 4) m.layers.push(randomLayer(tier));
+  else if (Math.random() < 0.08 && m.layers.length > 1) m.layers.splice(Math.floor(Math.random() * m.layers.length), 1);
+  m.name = (r.name || 'Look').replace(/ \(changed\)$/, '') + ' (changed)';
+  return m;
+}
+// Blend: sliders and colours slide smoothly; the four choices switch at different points along the way, so the middle
+// holds hybrids neither end has (A's shape with B's behaviour, and so on).
+function blend(a, b, k) {
+  const out = { format: 'orb-energy-recipe', version: 1, name: `${a.name || 'A'} x ${b.name || 'B'}`, trail: +(a.trail + (b.trail - a.trail) * k).toFixed(3), layers: [] };
+  const at = { behaviour: 0.3, palette: 0.42, shape: 0.55, material: 0.7 };
+  for (let i = 0; i < Math.max(a.layers.length, b.layers.length); i++) {
+    const la = a.layers[i], lb = b.layers[i];
+    if (la && lb) {
+      const L = { seed: k < 0.5 ? la.seed : lb.seed, sliders: {} };
+      for (const key of Object.keys(at)) L[key] = k < at[key] ? la[key] : lb[key];
+      for (const s of CAT.sliders) L.sliders[s.id] = +(la.sliders[s.id] + (lb.sliders[s.id] - la.sliders[s.id]) * k).toFixed(3);
+      const pa = byId(CAT.palettes, la.palette), pb = byId(CAT.palettes, lb.palette);
+      L.mix = { a: [], b: [], c: [], d: [] };
+      for (const ch of 'abcd') for (let j = 0; j < 3; j++) L.mix[ch][j] = pa[ch][j] + (pb[ch][j] - pa[ch][j]) * k;
+      out.layers.push(L);
+    } else {
+      const L = JSON.parse(JSON.stringify(la || lb)); L.sliders.power = +(L.sliders.power * (la ? 1 - k : k)).toFixed(3); out.layers.push(L);
+    }
+  }
+  return out;
+}
+function tierNeeded(r) {
+  let t = 0;
+  for (const L of r.layers) {
+    for (const k of Object.keys(MENUS)) t = Math.max(t, tierIx(byId(MENUS[k], L[k]).tier));
+    for (const s of CAT.sliders) { const v = L.sliders[s.id]; for (let i = 0; i < TIERS.length; i++) { const [lo, hi] = rangeOf(s, i); if (v >= lo - 1e-6 && v <= hi + 1e-6) { t = Math.max(t, i); break; } } }
+  }
+  return t;
+}
+function fitToTier(r, tier) {     // when unlocks are switched down: swap locked choices for the first common one, pull sliders into range
+  for (const L of r.layers) {
+    for (const k of Object.keys(MENUS)) if (tierIx(byId(MENUS[k], L[k]).tier) > tier) L[k] = allowed(MENUS[k], tier)[0].id;
+    for (const s of CAT.sliders) { const [lo, hi] = rangeOf(s, tier); L.sliders[s.id] = clamp(L.sliders[s.id], lo, hi); }
+    delete L.mix;
+  }
+  const [lo, hi] = rangeOf(CAT.globals[0], tier); r.trail = clamp(r.trail, lo, hi);
+}
+function clean(obj) {             // accept a loaded recipe: fill gaps, drop what the catalogue does not know
+  if (!obj || !Array.isArray(obj.layers) || !obj.layers.length) throw new Error('This is not an energy recipe: it has no layers.');
+  const r = { format: 'orb-energy-recipe', version: 1, name: String(obj.name || 'Loaded look').slice(0, 60), trail: clamp(Number(obj.trail) || 0, 0, 1), layers: [] };
+  for (const src of obj.layers.slice(0, MAXL)) {
+    const L = newLayer();
+    for (const k of Object.keys(MENUS)) if (MENUS[k].some((e) => e.id === src[k])) L[k] = src[k];
+    L.seed = Number(src.seed) || L.seed;
+    for (const s of CAT.sliders) { const v = Number(src.sliders && src.sliders[s.id]); const [lo, hi] = fullRange(s); if (Number.isFinite(v)) L.sliders[s.id] = clamp(v, lo, hi); }
+    r.layers.push(L);
+  }
+  return r;
+}
+function exportable(r) { const o = JSON.parse(JSON.stringify(r)); for (const L of o.layers) delete L.mix; return o; }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The panel
+// ---------------------------------------------------------------------------------------------------------------------
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => { t.style.display = 'none'; }, 3200); }
+function setRecipe(r, opts = {}) {
+  if (recipe && !opts.noHistory) { history.push(JSON.stringify(recipe)); if (history.length > 60) history.shift(); }
+  recipe = r;
+  if (!opts.keepTier) { const need = tierNeeded(r); if (need > unlocked) { unlocked = need; toast(`This look uses ${TIERS[need]} unlocks, so the preview is switched up to show it.`); } }
+  if (!opts.fromBlend) { $('blend').value = 0; }
+  presetSel.value = '';
+  buildUI();
+}
+function sliderRow(def, value, onInput) {
+  const [flo, fhi] = fullRange(def), [lo, hi] = rangeOf(def, unlocked);
+  const row = document.createElement('div'); row.className = 'sl' + (hi <= lo ? ' locked' : '');
+  const nextTier = def.ranges.find((r) => tierIx(r.tier) > unlocked);
+  row.title = (def.about ? def.about + '. ' : '') + (nextTier ? `More of this unlocks at ${nextTier.tier}.` : '');
+  const name = document.createElement('span'); name.textContent = def.name + (nextTier ? ' 🔒' : '');
+  const track = document.createElement('div'); track.className = 'track';
+  const inp = document.createElement('input'); inp.type = 'range'; inp.min = flo; inp.max = fhi; inp.step = def.step; inp.value = value;
+  const zones = document.createElement('div'); zones.className = 'zones';
+  const span = fhi - flo || 1; let pos = flo;   // colour the track by the tier that opens each part of it
+  const cuts = [...new Set(def.ranges.flatMap((r) => [r.min, r.max]).concat([flo, fhi]))].sort((a, b) => a - b);
+  for (let i = 0; i < cuts.length - 1; i++) {
+    const mid = (cuts[i] + cuts[i + 1]) / 2; let t = TIERS.length - 1;
+    for (let j = 0; j < TIERS.length; j++) { const [a, b] = rangeOf(def, j); if (a !== null && mid >= a && mid <= b) { t = j; break; } }
+    const seg = document.createElement('i'); seg.style.width = ((cuts[i + 1] - cuts[i]) / span * 100) + '%';
+    seg.style.background = `var(--${TIERS[t]})`; seg.style.opacity = t <= unlocked ? 0.9 : 0.25; zones.appendChild(seg); pos = cuts[i + 1];
+  }
+  const val = document.createElement('span'); val.className = 'val'; val.textContent = (+value).toFixed(2);
+  inp.addEventListener('input', () => {
+    const v = clamp(+inp.value, lo, hi); if (v !== +inp.value) inp.value = v;
+    val.textContent = v.toFixed(2); onInput(v); syncJson();
+  });
+  track.append(inp, zones); row.append(name, track, val); return row;
+}
+function menuSelect(label, list, value, onChange) {
+  const wrap = document.createElement('div'); const lab = document.createElement('label'); lab.textContent = label;
+  const sel = document.createElement('select');
+  for (let t = 0; t < TIERS.length; t++) {
+    const items = list.filter((e) => tierIx(e.tier) === t); if (!items.length) continue;
+    const grp = document.createElement('optgroup'); grp.label = TIERS[t][0].toUpperCase() + TIERS[t].slice(1) + (t > unlocked ? ' (locked)' : '');
+    for (const e of items) { const o = document.createElement('option'); o.value = e.id; o.textContent = (t > unlocked ? '🔒 ' : '') + e.name; o.disabled = t > unlocked; grp.appendChild(o); }
+    sel.appendChild(grp);
+  }
+  sel.value = value; sel.className = 't-' + byId(list, value).tier;
+  sel.addEventListener('change', () => { onChange(sel.value); sel.className = 't-' + byId(list, sel.value).tier; syncJson(); });
+  wrap.append(lab, sel); return wrap;
+}
+function buildUI() {
+  const tiers = $('tiers'); tiers.textContent = '';
+  TIERS.forEach((t, i) => {
+    const b = document.createElement('button'); b.textContent = t[0].toUpperCase() + t.slice(1); b.className = 't-' + t + (i <= unlocked ? ' on' : '');
+    b.addEventListener('click', () => { history.push(JSON.stringify(recipe)); unlocked = i; fitToTier(recipe, unlocked); buildUI(); });
+    tiers.appendChild(b);
+  });
+  $('tierHint').textContent = unlocked === 0 ? 'A new player has the common choices. Press a tier to see what the campaign would add; locked choices show greyed.'
+    : `Showing a player who has earned ${TIERS.slice(1, unlocked + 1).join(', ')} rewards. Random and Mutate now reach into them.`;
+  const gl = $('globals'); gl.textContent = '';
+  gl.appendChild(sliderRow(CAT.globals[0], recipe.trail, (v) => { recipe.trail = v; }));
+  const box = $('layers'); box.textContent = '';
+  recipe.layers.forEach((L, i) => {
+    const el = document.createElement('div'); el.className = 'layer';
+    const head = document.createElement('header'); const ttl = document.createElement('span'); ttl.textContent = `Layer ${i + 1}`;
+    const tools = document.createElement('span');
+    const again = document.createElement('button'); again.textContent = 'Shuffle'; again.title = 'Re-roll this layer only';
+    again.addEventListener('click', () => { const r = JSON.parse(JSON.stringify(recipe)); r.layers[i] = randomLayer(unlocked); setRecipe(r, { keepTier: true }); });
+    const rm = document.createElement('button'); rm.textContent = 'Remove'; rm.disabled = recipe.layers.length < 2;
+    rm.addEventListener('click', () => { const r = JSON.parse(JSON.stringify(recipe)); r.layers.splice(i, 1); setRecipe(r, { keepTier: true }); });
+    tools.append(again, ' ', rm); head.append(ttl, tools); el.appendChild(head);
+    const menus = document.createElement('div'); menus.className = 'menus';
+    menus.append(
+      menuSelect('Shape', CAT.shapes, L.shape, (v) => { L.shape = v; }),
+      menuSelect('Behaviour', CAT.behaviours, L.behaviour, (v) => { L.behaviour = v; }),
+      menuSelect('Material', CAT.materials, L.material, (v) => { L.material = v; }),
+      menuSelect('Colour', CAT.palettes, L.palette, (v) => { L.palette = v; delete L.mix; }));
+    el.appendChild(menus);
+    for (const s of CAT.sliders) el.appendChild(sliderRow(s, L.sliders[s.id], (v) => { L.sliders[s.id] = v; }));
+    box.appendChild(el);
+  });
+  $('bAdd').disabled = recipe.layers.length >= MAXL;
+  $('name').value = recipe.name || '';
+  syncJson();
+}
+function syncJson() { $('json').value = JSON.stringify(exportable(recipe), null, 1); }
+
+$('bRandom').addEventListener('click', () => setRecipe(randomRecipe(unlocked), { keepTier: true }));
+$('bMutate').addEventListener('click', () => setRecipe(mutate(exportable(recipe), unlocked), { keepTier: true }));
+$('bBack').addEventListener('click', () => { if (history.length) setRecipe(JSON.parse(history.pop()), { noHistory: true }); });
+$('bPause').addEventListener('click', () => { paused = !paused; $('bPause').textContent = paused ? 'Play' : 'Pause'; });
+$('bAdd').addEventListener('click', () => { const r = JSON.parse(JSON.stringify(recipe)); r.layers.push(randomLayer(unlocked)); setRecipe(r, { keepTier: true }); });
+$('name').addEventListener('input', () => { recipe.name = $('name').value; syncJson(); });
+function blendReady() { const ok = !!(slotA && slotB); $('blend').disabled = !ok; $('blendHint').textContent = ok ? `A is "${slotA.name}", B is "${slotB.name}". Drag to blend.` : (slotA ? `A is "${slotA.name}". Now make another look and keep it as B.` : $('blendHint').textContent); }
+$('bA').addEventListener('click', () => { slotA = exportable(recipe); blendReady(); toast('Kept as A.'); });
+$('bB').addEventListener('click', () => { slotB = exportable(recipe); blendReady(); toast('Kept as B.'); });
+$('blend').addEventListener('input', () => { if (slotA && slotB) { recipe = blend(slotA, slotB, +$('blend').value); presetSel.value = ''; buildUI(); } });
+$('blend').addEventListener('pointerdown', () => { if (recipe) history.push(JSON.stringify(exportable(recipe))); });
+$('bSave').addEventListener('click', () => {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(exportable(recipe), null, 1)], { type: 'application/json' }));
+  a.download = (recipe.name || 'energy-look').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+function loadText(txt) { try { setRecipe(clean(JSON.parse(txt))); toast('Loaded.'); } catch (e) { toast('Could not read that: ' + e.message); } }
+$('file').addEventListener('change', (ev) => { const f = ev.target.files[0]; if (f) f.text().then(loadText); ev.target.value = ''; });
+$('bApply').addEventListener('click', () => loadText($('json').value));
+$('bCopy').addEventListener('click', () => { $('json').select(); try { navigator.clipboard.writeText($('json').value); toast('Copied.'); } catch (e) { document.execCommand('copy'); } });
+const presetSel = $('preset');
+{ const o = document.createElement('option'); o.value = ''; o.textContent = 'Your own look'; presetSel.appendChild(o); }
+CAT.presets.forEach((p, i) => { const o = document.createElement('option'); o.value = i; o.textContent = p.name; presetSel.appendChild(o); });
+presetSel.addEventListener('change', () => { if (presetSel.value !== '') { const i = +presetSel.value; setRecipe(clean(CAT.presets[i])); presetSel.value = i; } });
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Drawing
+// ---------------------------------------------------------------------------------------------------------------------
+window.__status = { ok: false, err: '', fps: 0, frames: 0 };
+const canvas = $('c');
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+function fail(msg) { window.__status.err = msg; const f = $('fail'); f.style.display = 'block'; f.textContent = 'The preview could not start.\n\n' + msg; }
+function compile(type, src) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+function program(fs) {
+  const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, VERT)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(p, info.name); }
+  return { p, u };
+}
+let progL, progC, bufs = null, small = null, W = 0, H = 0, flip = 0, lim = 1, floatOK = false;
+function tex(w, h, half) {
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  if (half) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.HALF_FLOAT, null);
+  else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return t;
+}
+function makeBuffers() {
+  const q = +$('quality').value, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const cw = Math.max(320, Math.round(canvas.clientWidth * dpr)), ch = Math.max(180, Math.round(canvas.clientHeight * dpr));
+  if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
+  const w = Math.min(1600, Math.round(cw * q)), h = Math.round(w * ch / cw);
+  if (bufs && w === W && h === H) return;
+  if (bufs) for (const b of bufs) { gl.deleteTexture(b.light); gl.deleteTexture(b.aux); gl.deleteFramebuffer(b.fbo); }
+  W = w; H = h; bufs = [];
+  for (let i = 0; i < 2; i++) {
+    const b = { light: tex(w, h, floatOK), aux: tex(w, h, false), fbo: gl.createFramebuffer() };
+    gl.bindFramebuffer(gl.FRAMEBUFFER, b.fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, b.light, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, b.aux, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('the drawing buffer could not be made');
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+    bufs.push(b);
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+const N = 5, fA = new Float32Array(N * 4), fB = new Float32Array(N * 4), fC = new Float32Array(N * 4), fD = new Float32Array(N * 4), fE = new Float32Array(N * 4);
+const fPa = new Float32Array(N * 3), fPb = new Float32Array(N * 3), fPc = new Float32Array(N * 3), fPd = new Float32Array(N * 3);
+function pack() {
+  const n = Math.min(recipe.layers.length, N);
+  for (let i = 0; i < n; i++) {
+    const L = recipe.layers[i], s = L.sliders, pal = L.mix || byId(CAT.palettes, L.palette);
+    fA.set([byId(CAT.shapes, L.shape).code, byId(CAT.behaviours, L.behaviour).code, byId(CAT.materials, L.material).code, L.seed % 97], i * 4);
+    fB.set([s.power, s.size, s.speed, s.density], i * 4);
+    fC.set([s.reach, s.erratic, s.vibrate, s.detail], i * 4);
+    fD.set([s.form, s.spin, s.hue, s.spread], i * 4);
+    fE.set([s.cycle, 1, 0, 0], i * 4);
+    fPa.set(pal.a, i * 3); fPb.set(pal.b, i * 3); fPc.set(pal.c, i * 3); fPd.set(pal.d, i * 3);
+  }
+  return n;
+}
+let time = 0, last = 0, frames = 0, fpsT = 0, fpsN = 0, slow = 0;
+const px = new Uint8Array(32 * 18 * 4);
+function drawComposite() {
+  gl.useProgram(progC.p);
+  gl.uniform2f(progC.u.uRes, W, H); gl.uniform1f(progC.u.uLim, lim);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, bufs[flip].light); gl.uniform1i(progC.u.uL, 0);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, bufs[flip].aux); gl.uniform1i(progC.u.uX, 1);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000)); last = now;
+  if (!recipe) return;
+  try { makeBuffers(); } catch (e) { fail(e.message); return; }
+  if (!paused) time += dt;
+  const src = bufs[flip], dst = bufs[1 - flip];
+  gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fbo); gl.viewport(0, 0, W, H);
+  gl.useProgram(progL.p);
+  const n = pack(), u = progL.u;
+  gl.uniform2f(u.uRes, W, H); gl.uniform1f(u.uTime, time); gl.uniform1f(u.uDt, paused ? 0 : dt); gl.uniform1f(u.uTrail, recipe.trail); gl.uniform1i(u.uCount, n);
+  gl.uniform4fv(u.uA, fA); gl.uniform4fv(u.uB, fB); gl.uniform4fv(u.uC, fC); gl.uniform4fv(u.uD, fD); gl.uniform4fv(u.uE, fE);
+  gl.uniform3fv(u.uPa, fPa); gl.uniform3fv(u.uPb, fPb); gl.uniform3fv(u.uPc, fPc); gl.uniform3fv(u.uPd, fPd);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src.light); gl.uniform1i(u.uPrev, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  flip = 1 - flip;
+  // The brightness limiter: a few times a second, read a thumbnail; if more than a quarter of the picture is bright, ease the
+  // energy's light down, slowly, and ease it back when the picture calms. It never snaps.
+  if (frames % 12 === 0) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, small.fbo); gl.viewport(0, 0, 32, 18); drawComposite();
+    gl.readPixels(0, 0, 32, 18, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    let bright = 0; for (let i = 0; i < px.length; i += 4) if (0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2] > 150) bright++;
+    const frac = bright / (32 * 18);
+    lim = frac > 0.25 ? Math.max(0.25, lim * Math.max(0.8, 0.25 / frac)) : Math.min(1, lim + 0.04);
+    window.__status.bright = +frac.toFixed(3); window.__status.lim = +lim.toFixed(2);
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height); drawComposite();
+  frames++; fpsN++; window.__status.frames = frames;
+  if (now - fpsT > 1000) {
+    const f = Math.round(fpsN * 1000 / (now - fpsT)); window.__status.fps = f; $('fps').textContent = f + ' frames a second'; fpsT = now; fpsN = 0;
+    slow = (f < 45 && !paused && !document.hidden) ? slow + 1 : 0;
+    const qs = $('quality');
+    if (slow >= 3 && qs.selectedIndex > 0) { qs.selectedIndex -= 1; W = 0; slow = 0; toast('The picture was running slowly, so quality was turned down one step.'); }
+  }
+}
+function start() {
+  if (!gl) { fail('This browser has no WebGL 2. Chrome on a PC from the last several years has it; check that hardware acceleration is on.'); return; }
+  try {
+    floatOK = !!gl.getExtension('EXT_color_buffer_float');
+    progL = program(LAYERS); progC = program(COMPOSITE);
+    gl.bindVertexArray(gl.createVertexArray());
+    small = { tex: tex(32, 18, false), fbo: gl.createFramebuffer() };
+    gl.bindFramebuffer(gl.FRAMEBUFFER, small.fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, small.tex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+  } catch (e) { fail(String(e.message || e)); return; }
+  $('quality').addEventListener('change', () => { W = 0; });
+  const qs = new URLSearchParams(location.search);     // ?preset=2 opens on the third preset; ?random=3 on a random look with every tier unlocked
+  const p0 = clamp(parseInt(qs.get('preset') || '0', 10) || 0, 0, CAT.presets.length - 1);
+  setRecipe(clean(CAT.presets[p0]), { noHistory: true });
+  presetSel.value = p0;
+  if (qs.has('random')) { unlocked = clamp(parseInt(qs.get('random'), 10) || 0, 0, TIERS.length - 1); setRecipe(randomRecipe(unlocked), { keepTier: true }); }
+  window.__status.ok = true;
+  window.__toy = { preset: (i) => setRecipe(clean(CAT.presets[i])), random: (t) => { unlocked = t; setRecipe(randomRecipe(t), { keepTier: true }); }, get recipe() { return recipe; },
+    mix: (i, j, k) => { slotA = clean(CAT.presets[i]); slotB = clean(CAT.presets[j]); blendReady(); $('blend').value = k; unlocked = TIERS.length - 1; recipe = blend(slotA, slotB, k); buildUI(); } };
+  requestAnimationFrame((t) => { last = t; fpsT = t; frame(t); });
+}
+start();
+</script>
+</body>
+</html>
