@@ -1,0 +1,203 @@
+TURN PROBE level easy, seeds [1, 2, 3, 4, 5], cap 36000 ticks; swing.json enabled true, calmTurn enabled true
+MATCH seed 1: world planet (planet 7, gen 3), field world true, epoch ring false; cap at 540 s
+  turntable swings asked: 36 (planned 460.7 deg in all), rests 34, swing_place cues 34, nudge cues 0; the swing state's count 36
+    swing brawl -9.4 deg 72 ticks @7s
+    swing small 4.5 deg 14 ticks @18s
+    swing small -4.5 deg 14 ticks @35s
+    swing small -4.5 deg 14 ticks @46s
+    swing brawl 3.0 deg 34 ticks @57s
+    swing small -4.5 deg 14 ticks @62s
+    swing small 4.5 deg 14 ticks @83s
+    swing small -4.5 deg 14 ticks @104s
+    swing brawl 28.7 deg 187 ticks @111s
+    swing small 4.5 deg 14 ticks @121s
+    swing chase -102.8 deg 153 ticks @127s
+    swing small -4.5 deg 14 ticks @183s
+    swing small -4.5 deg 14 ticks @197s
+    swing small 4.5 deg 14 ticks @241s
+    swing chase -8.5 deg 30 ticks @261s
+    swing small 4.5 deg 14 ticks @268s
+    swing small 4.5 deg 14 ticks @291s
+    swing form 24.7 deg 65 ticks @294s
+    swing brawl 16.7 deg 86 ticks @294s
+    swing small 4.5 deg 14 ticks @308s
+    swing small 8.0 deg 24 ticks @324s
+    swing small -4.5 deg 14 ticks @350s
+    swing small 4.5 deg 14 ticks @388s
+    swing chase -97.5 deg 146 ticks @395s
+    swing small -4.5 deg 14 ticks @411s
+    swing form -6.8 deg 30 ticks @431s
+    swing brawl -3.2 deg 15 ticks @432s
+    swing small 8.0 deg 24 ticks @443s
+    swing small 4.5 deg 14 ticks @452s
+    swing small 4.5 deg 14 ticks @463s
+    swing small 4.5 deg 14 ticks @483s
+    swing launch 4.9 deg 30 ticks @489s
+    swing small 4.5 deg 14 ticks @504s
+    swing brawl 34.8 deg 225 ticks @513s
+    swing small -4.5 deg 14 ticks @518s
+    swing chase -9.2 deg 30 ticks @525s
+  calm turns: 0 cue(s); epoch turns made -
+MATCH seed 2: world planet (planet 7, gen 3), field world true, epoch ring false; cap at 538 s
+  turntable swings asked: 38 (planned 524.3 deg in all), rests 35, swing_place cues 35, nudge cues 0; the swing state's count 38
+    swing brawl -6.3 deg 53 ticks @2s
+    swing small -4.5 deg 14 ticks @35s
+    swing small -4.5 deg 14 ticks @44s
+    swing brawl -24.8 deg 164 ticks @58s
+    swing small 4.5 deg 14 ticks @59s
+    swing small -4.5 deg 14 ticks @69s
+    swing small 4.5 deg 14 ticks @98s
+    swing brawl 6.2 deg 53 ticks @115s
+    swing small 4.5 deg 14 ticks @116s
+    swing chase -68.3 deg 107 ticks @135s
+    swing small 8.0 deg 24 ticks @143s
+    swing chase 103.9 deg 154 ticks @152s
+    swing small 4.5 deg 14 ticks @156s
+    swing small -4.5 deg 14 ticks @198s
+    swing small 4.5 deg 14 ticks @223s
+    swing small -4.5 deg 14 ticks @232s
+    swing small 4.5 deg 14 ticks @245s
+    swing small 4.5 deg 14 ticks @255s
+    swing small -4.5 deg 14 ticks @279s
+    swing form -17.1 deg 50 ticks @291s
+    swing brawl -7.1 deg 30 ticks @292s
+    swing small 4.5 deg 14 ticks @304s
+    swing small 4.5 deg 14 ticks @312s
+    swing small 4.5 deg 14 ticks @325s
+    swing chase 78.5 deg 120 ticks @342s
+    swing small -4.5 deg 14 ticks @359s
+    swing small -4.5 deg 14 ticks @380s
+    swing small -4.5 deg 14 ticks @399s
+    swing form 10.5 deg 36 ticks @428s
+    swing brawl 4.5 deg 18 ticks @429s
+    swing form -28.7 deg 73 ticks @438s
+    swing brawl -26.8 deg 156 ticks @438s
+    swing small 4.5 deg 14 ticks @442s
+    swing small 4.5 deg 14 ticks @461s
+    swing brawl 3.6 deg 37 ticks @462s
+    swing small -4.5 deg 14 ticks @476s
+    swing small -8.0 deg 24 ticks @484s
+    swing chase -23.0 deg 46 ticks @487s
+  calm turns: 0 cue(s); epoch turns made -
+MATCH seed 3: world planet (planet 7, gen 3), field world true, epoch ring false; cap at 541 s
+  turntable swings asked: 33 (planned 357.4 deg in all), rests 33, swing_place cues 33, nudge cues 0; the swing state's count 33
+    swing small -8.0 deg 24 ticks @11s
+    swing brawl -8.9 deg 69 ticks @19s
+    swing small -4.5 deg 14 ticks @29s
+    swing small 8.0 deg 24 ticks @32s
+    swing small -4.5 deg 14 ticks @41s
+    swing brawl -6.3 deg 53 ticks @49s
+    swing small 4.5 deg 14 ticks @60s
+    swing brawl 29.9 deg 195 ticks @77s
+    swing small -4.5 deg 14 ticks @92s
+    swing small -8.0 deg 24 ticks @97s
+    swing small -4.5 deg 14 ticks @105s
+    swing small 4.5 deg 14 ticks @114s
+    swing small -4.5 deg 14 ticks @159s
+    swing chase 46.2 deg 77 ticks @174s
+    swing launch -14.8 deg 30 ticks @203s
+    swing small -4.5 deg 14 ticks @213s
+    swing small -4.5 deg 14 ticks @232s
+    swing launch 8.9 deg 30 ticks @247s
+    swing small 4.5 deg 14 ticks @279s
+    swing small -4.5 deg 14 ticks @303s
+    swing small -8.0 deg 24 ticks @306s
+    swing small -8.0 deg 24 ticks @319s
+    swing small -4.5 deg 14 ticks @335s
+    swing small -4.5 deg 14 ticks @343s
+    swing small 4.5 deg 14 ticks @369s
+    swing small -4.5 deg 14 ticks @381s
+    swing small 4.5 deg 14 ticks @392s
+    swing small 4.5 deg 14 ticks @425s
+    swing small -4.5 deg 14 ticks @457s
+    swing small -4.5 deg 14 ticks @465s
+    swing form -60.0 deg 135 ticks @475s
+    swing form 16.8 deg 49 ticks @488s
+    swing chase -40.1 deg 69 ticks @520s
+  calm turns: 0 cue(s); epoch turns made -
+MATCH seed 4: world planet (planet 7, gen 3), field world true, epoch ring false; cap at 542 s
+  turntable swings asked: 42 (planned 835.1 deg in all), rests 38, swing_place cues 38, nudge cues 0; the swing state's count 42
+    swing chase 122.1 deg 178 ticks @5s
+    swing small -4.5 deg 14 ticks @30s
+    swing brawl -36.7 deg 236 ticks @36s
+    swing small -4.5 deg 14 ticks @42s
+    swing brawl 5.6 deg 49 ticks @64s
+    swing small -8.0 deg 24 ticks @79s
+    swing small 4.5 deg 14 ticks @97s
+    swing chase 48.0 deg 80 ticks @107s
+    swing small -4.5 deg 14 ticks @133s
+    swing small -4.5 deg 14 ticks @143s
+    swing small 4.5 deg 14 ticks @160s
+    swing chase -4.2 deg 30 ticks @176s
+    swing form 67.6 deg 151 ticks @213s
+    swing brawl 48.1 deg 274 ticks @214s
+    swing small 4.5 deg 14 ticks @223s
+    swing small -4.5 deg 14 ticks @238s
+    swing small 4.5 deg 14 ticks @259s
+    swing small -4.5 deg 14 ticks @275s
+    swing chase 3.1 deg 30 ticks @305s
+    swing small -4.5 deg 14 ticks @313s
+    swing small -4.5 deg 14 ticks @330s
+    swing form -58.7 deg 133 ticks @336s
+    swing brawl -55.1 deg 319 ticks @336s
+    swing small 4.5 deg 14 ticks @353s
+    swing chase 80.2 deg 122 ticks @364s
+    swing brawl -25.8 deg 170 ticks @388s
+    swing small -4.5 deg 14 ticks @399s
+    swing small -4.5 deg 14 ticks @415s
+    swing brawl -43.0 deg 273 ticks @424s
+    swing small 4.5 deg 14 ticks @438s
+    swing small 4.5 deg 14 ticks @450s
+    swing chase -16.7 deg 38 ticks @457s
+    swing small 4.5 deg 14 ticks @463s
+    swing small -4.5 deg 14 ticks @473s
+    swing form 81.1 deg 178 ticks @482s
+    swing brawl 11.6 deg 55 ticks @484s
+    swing small 4.5 deg 14 ticks @491s
+    swing form -9.9 deg 35 ticks @500s
+    swing brawl -6.3 deg 30 ticks @500s
+    swing small -4.5 deg 14 ticks @513s
+    swing brawl 4.3 deg 42 ticks @524s
+    swing small -4.5 deg 14 ticks @533s
+  calm turns: 0 cue(s); epoch turns made -
+MATCH seed 5: world planet (planet 7, gen 3), field world true, epoch ring false; cap at 539 s
+  turntable swings asked: 34 (planned 477.2 deg in all), rests 33, swing_place cues 33, nudge cues 0; the swing state's count 34
+    swing brawl -6.3 deg 53 ticks @2s
+    swing small -4.5 deg 14 ticks @7s
+    swing small -8.0 deg 24 ticks @22s
+    swing brawl 2.2 deg 30 ticks @43s
+    swing small -4.5 deg 14 ticks @54s
+    swing chase 90.8 deg 137 ticks @81s
+    swing small -4.5 deg 14 ticks @91s
+    swing small -4.5 deg 14 ticks @129s
+    swing small -4.5 deg 14 ticks @145s
+    swing form 69.6 deg 155 ticks @159s
+    swing small -4.5 deg 14 ticks @183s
+    swing small -8.0 deg 24 ticks @199s
+    swing small -4.5 deg 14 ticks @213s
+    swing small -4.5 deg 14 ticks @232s
+    swing small -4.5 deg 14 ticks @252s
+    swing small -4.5 deg 14 ticks @263s
+    swing small -8.0 deg 24 ticks @281s
+    swing form -30.0 deg 75 ticks @295s
+    swing launch 2.0 deg 30 ticks @309s
+    swing small -4.5 deg 14 ticks @322s
+    swing small 4.5 deg 14 ticks @337s
+    swing chase 58.3 deg 93 ticks @394s
+    swing small -8.0 deg 24 ticks @402s
+    swing chase -78.8 deg 121 ticks @411s
+    swing small 4.5 deg 14 ticks @417s
+    swing form 7.3 deg 30 ticks @430s
+    swing brawl 6.6 deg 44 ticks @430s
+    swing small -4.5 deg 14 ticks @439s
+    swing small -4.5 deg 14 ticks @454s
+    swing brawl 9.1 deg 70 ticks @482s
+    swing small 4.5 deg 14 ticks @503s
+    swing brawl 3.2 deg 34 ticks @510s
+    swing small -4.5 deg 14 ticks @511s
+    swing small -4.5 deg 14 ticks @537s
+  calm turns: 0 cue(s); epoch turns made -
+TURN PROBE done
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+easy exit 0

@@ -1,0 +1,68 @@
+extends SceneTree
+## Scratch probe (Encounter, brief 3 item 1): which turn system runs in a default match. Computer against computer on the game's own
+## default world for each seed (WorldDefault.apply, as main._match_setup does), to a KO or the cap. Prints, per match: whether the match is
+## a field world (S.frame: the turntable can run) and whether it has an epoch ring (S.epoch: the calm turn can run); every swing_start
+## (the turntable: cause, planned degrees, ticks) and swing_rest; every calm_turn cue; and the fight's bearing change over the match.
+##   godot --headless --path <tree> --script res://sim/director/tools/turn_probe.gd -- --level=easy --seeds=1,2,3 --ticks=36000
+
+var level: String = "easy"
+var seeds: Array = [1, 2, 3]
+var cap: int = 36000
+
+
+func _heading(S: SimState) -> Array:
+	var fr = S.frame
+	return [fr.tx, fr.ty, fr.tz, fr.px, fr.py, fr.pz] if fr != null else []
+
+
+func _init() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--level="):
+			level = a.substr(8)
+		elif a.begins_with("--seeds="):
+			seeds = Array(a.substr(8).split(",")).map(func(x): return int(x))
+		elif a.begins_with("--ticks="):
+			cap = int(a.substr(8))
+	print("TURN PROBE level %s, seeds %s, cap %d ticks; swing.json enabled %s, calmTurn enabled %s" % [level, str(seeds), cap, str(DirSwing.enabled()), str(DirCalm.cfg().get("enabled", false))])
+	for sd in seeds:
+		var su: Dictionary = WorldDefault.apply({"intro": false, "aiLevel": level}, int(sd))
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, int(sd), {"p1": true, "p2": true}, su)
+		var starts: Array = []
+		var rests: int = 0
+		var calm: Array = []
+		var places: int = 0
+		var nudges: int = 0
+		var t: int = 0
+		var koAt: int = -1
+		while t < cap:
+			SimCore.step(S, [null, null])
+			for e in S.out.fx:
+				if e.type == "swing_start":
+					starts.append("%s %.1f deg %d ticks @%.0fs" % [String(e.kind), float(e.amount), int(e.dur), S.T])
+				elif e.type == "swing_rest":
+					rests += 1
+				elif e.type == "cue" and String(e.kind) == "calm_turn":
+					calm.append("%s %s @%.0fs" % [String(e.text), String(e.source), S.T])
+				elif e.type == "cue" and String(e.kind) == "swing_place":
+					places += 1
+				elif e.type == "cue" and String(e.kind) == "swing_nudge":
+					nudges += 1
+			S.out.fx.clear()
+			S.out.feed.clear()
+			t += 1
+			if S.game.ko != null and koAt < 0:
+				koAt = t
+			if koAt >= 0 and t > koAt + 240:
+				break
+		var sumDeg: float = 0.0
+		for s in starts:
+			sumDeg += absf(float(String(s).split(" ")[1]))
+		print("MATCH seed %d: world %s (planet %s, gen %s), field world %s, epoch ring %s; %s at %.0f s" % [int(sd), "planet" if su.has("planet") else "arena", str(su.get("planet", "-")), str(su.get("planetGen", "-")), str(S.frame != null), str(S.epoch != null), "KO" if koAt >= 0 else "cap", S.T])
+		print("  turntable swings asked: %d (planned %.1f deg in all), rests %d, swing_place cues %d, nudge cues %d; the swing state's count %s" % [starts.size(), sumDeg, rests, places, nudges, str(S.swing.n) if S.swing != null else "-"])
+		for s in starts:
+			print("    swing " + String(s))
+		print("  calm turns: %d cue(s)%s; epoch turns made %s" % [calm.size(), (" " + ", ".join(calm)) if not calm.is_empty() else "", str(S.epoch.n) if S.epoch != null else "-"])
+		SimCore.dispose(S)
+	print("TURN PROBE done")
+	quit(0)
