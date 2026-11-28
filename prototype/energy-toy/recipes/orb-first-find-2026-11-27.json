@@ -1,0 +1,52 @@
+{
+ "format": "orb-energy-recipe",
+ "version": 1,
+ "name": "Random find (changed) x Random find (changed)",
+ "trail": 0,
+ "layers": [
+  {
+   "seed": 86,
+   "sliders": {
+    "power": 0.87,
+    "size": 2.362,
+    "speed": 1.428,
+    "density": 1.792,
+    "reach": 0.444,
+    "erratic": 0.426,
+    "vibrate": 0.16,
+    "detail": 0.124,
+    "form": 0.924,
+    "spin": 1.542,
+    "hue": 0.298,
+    "spread": 0.668,
+    "cycle": 0.898
+   },
+   "behaviour": "arc",
+   "palette": "anomaly",
+   "shape": "filaments",
+   "material": "prism"
+  },
+  {
+   "shape": "shell",
+   "behaviour": "hug",
+   "material": "ink",
+   "palette": "anomaly",
+   "seed": 69,
+   "sliders": {
+    "power": 0.55,
+    "size": 3,
+    "speed": 2.71,
+    "density": 1.86,
+    "reach": 1.09,
+    "erratic": 0.06,
+    "vibrate": 0.73,
+    "detail": 0.9,
+    "form": 0.56,
+    "spin": -0.75,
+    "hue": 0.06,
+    "spread": 1.46,
+    "cycle": 0.18
+   }
+  }
+ ]
+}

@@ -1941,3 +1941,5 @@ Still open: the sound question (the ten-minute listen), the deletion promise, Or
 - Beam damage while inside it, dodge stays free: "I need to see how the new system impacts the way beams are handled, this might be a big problem to solve"
 - Struggle push (hold the right stick toward, flick on the pulse): "I like recommended, I just haven't gotten the hang of it at all. again, this might become a big problem to solve very shortly."
 - Taking the fight to the city: "Try it first (Recommended)"
+
+**Orb (2026-11-27 ~18:35, after playing the energy toy):** "just playing around with it for a minute and I'm extremely satisfied with this two-layer aura I got. I really like the possibilities this toy has. I'm excited to see this improved on and expanded." (The recipe Orb shared, a blend of two random finds: prism filaments arcing plus an inked shell, both on the mythic "anomaly" palette, is kept at prototype/energy-toy/recipes/orb-first-find-2026-11-27.json.)
