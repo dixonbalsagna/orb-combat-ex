@@ -184,6 +184,10 @@ jobs:
         run: node tools/store/itch-push-selftest.mjs
       - name: 'Trial switches (the list of Orb trial build fits this tree, and the self-test of its read-back)'
         run: node tools/trial-switches-selftest.mjs && node tools/trial-switches.mjs --check
+      - name: 'Game launches (no new script starts the game outside tools/godot-run.sh, so no run reaches a real data folder; the launcher self-test)'
+        run: node tools/lint-godot-launch-selftest.mjs && node tools/lint-godot-launch.mjs
+      - name: 'Data-folder guard (runs from the project keep to the dev folder; a built program keeps the folder players have)'
+        run: node tools/userdata-guard-check.mjs --self-test && node tools/userdata-guard-check.mjs
       - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
         run: node tools/flash/nightly-selftest.mjs
       - name: Scheduled flash reading verdict self-test (the take-down line of 3 on every reading, red read directly, a missing clip is never a pass)
@@ -305,6 +309,8 @@ jobs:
       # A fresh clone has no class cache: the import pass registers the class_name scripts.
       - name: Import project
         run: '"$GODOT" --headless --path . --import'
+      - name: A run from the project keeps its data away from the player's folder
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://tools/userdata/userdata_check.gd'
       - name: GDScript parity
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/parity.gd'
       - name: Web parity's compare self-test (a custom build of the same version passes, anything else fails)

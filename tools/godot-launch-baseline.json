@@ -1,0 +1,29 @@
+{
+  "_about": "Scripts that started the game outside tools/godot-run.sh before the rule (2026-11-28). Only gets shorter: node tools/lint-godot-launch.mjs.",
+  "files": [
+    "docs/perf/tools/make-audit-sites.mjs",
+    "docs/perf/tools/make-desktop-export.mjs",
+    "docs/perf/tools/make-stage-tree.mjs",
+    "docs/perf/tools/native-cpu-bench.ps1",
+    "docs/perf/tools/orb-native-bench.ps1",
+    "docs/perf/tools/stage-run.mjs",
+    "docs/perf/tools/stage-web.mjs",
+    "docs/perf/tools/swing-bench/gdrun.mjs",
+    "docs/research/world-catastrophe/tools/rerun.sh",
+    "tools/capture/right-stick-analyse.mjs",
+    "tools/check-site-hook-selftest.mjs",
+    "tools/crash/crash-check.mjs",
+    "tools/feel/lib.mjs",
+    "tools/first-run/first-run.mjs",
+    "tools/flash/check-clip.mjs",
+    "tools/flash/interim-run.sh",
+    "tools/preview/bisect.mjs",
+    "tools/preview/blackbox-verify.mjs",
+    "tools/preview/preview.mjs",
+    "tools/preview/stack-preview.mjs",
+    "tools/preview/stack.mjs",
+    "tools/setup.ps1",
+    "tools/site-pin.mjs",
+    "tools/world-checks.mjs"
+  ]
+}

@@ -2,6 +2,12 @@
 S="${S:?set S to a scratch folder}"; T="${T:?set T to a gate tag}"; H="$(cd "$(dirname "$0")" && pwd)"; R="$(git -C "$H" rev-parse --show-toplevel)"
 G="${GODOT:?set GODOT to the Godot console exe}"
 export GODOT=$G
+# No run of the gate touches a person's game data: the engine is started through tools/godot-run.sh (its folders in $S/$T-userdata), and the node tools that start it themselves inherit the two variables
+# that decide where user:// is.
+export ORB_RUN_DATA="$S/$T-userdata" ORB_GODOT_EXE="$G"
+L="$R/tools/godot-run.sh"
+eval "$(bash "$L" --print-env)"
+G="$L"
 cd "$S/$T"; O="$S/$T-sim"; rm -rf "${O:?}"; mkdir -p "$O"; : > "$O/r.txt"
 "$H/render-gates.sh" "$S/$T" "$S/$T-out"
 echo "render $(grep -c 'exit 0' $S/$T-out/results.txt) passed; $(grep -v 'exit 0' $S/$T-out/results.txt | tr '\n' ' ')" >> "$O/r.txt"

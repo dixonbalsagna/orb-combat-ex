@@ -1,6 +1,9 @@
 #!/bin/bash
 # Rendering's gates, for run-gate.sh. Usage: render-gates.sh <tree> <out>. Needs GODOT in the environment.
-G="${GODOT:?set GODOT to the Godot console exe}"
+: "${GODOT:?set GODOT to the Godot console exe}"
+# every run through tools/godot-run.sh, so none touches a person's game data
+G="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)/tools/godot-run.sh"
+export ORB_GODOT_EXE="${ORB_GODOT_EXE:-$GODOT}" ORB_RUN_DATA="${ORB_RUN_DATA:-$2-userdata}"
 cd "$1" || exit 1
 O="$2"; mkdir -p "$O"
 "$G" --headless --path . --import > "$O/import.log" 2>&1

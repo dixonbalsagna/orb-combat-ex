@@ -9,6 +9,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { userdataEnv } from '../lib/userdata.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -35,7 +36,7 @@ export function readResult(doc, mode) {
 
 /** The isolated environment for one run: the data folder of the game on each platform pointed into `dir`. Pure. */
 export function isolatedEnv(base, dir) {
-  return { ...base, APPDATA: join(dir, 'appdata'), LOCALAPPDATA: join(dir, 'localappdata'), XDG_DATA_HOME: join(dir, 'xdg'), HOME: join(dir, 'home') };
+  return userdataEnv(dir, base);
 }
 
 function opt(argv, name, dflt = null) { const i = argv.indexOf(name); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : dflt; }

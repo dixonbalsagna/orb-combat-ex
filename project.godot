@@ -6,6 +6,10 @@ config_version=5
 [application]
 
 config/name="Orb Combat EX"
+; A run from the project (the engine's editor build: every check, bench and headless run) keeps its data in a "dev" folder; a built program keeps the player's folder as before (Tools, 2026-11-28;
+; tools/userdata-guard-check.mjs holds these two lines).
+config/use_custom_user_dir.editor=true
+config/custom_user_dir_name.editor="Godot/app_userdata/Orb Combat EX dev"
 run/main_scene="res://render/boot_entry.tscn"
 config/features=PackedStringArray("4.7")
 

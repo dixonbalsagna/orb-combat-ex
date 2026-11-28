@@ -41,6 +41,7 @@ import { folderEntries, readTarGz, targz } from './lib/targz.mjs';
 import { APPROVALS, approvalProblems } from './store/itch-push.mjs';
 import { CHANNEL_FILE } from './desktop-package.mjs';
 import { applyRows, choose, readBack, readList } from './trial-switches.mjs';
+import { userdataEnv } from './lib/userdata.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OWNER_NOTICE = 'site-interim-owner.json';
@@ -131,10 +132,7 @@ function godotExe(given) {
 }
 
 /** The environment of a bench run of the game: every folder the game may write to (its user data) is inside `scratch`, so a build never touches the data folder of the person who builds. Pure. */
-export function playEnv(scratch, env = process.env) {
-  const at = (n) => join(scratch, 'userdata', n);
-  return { ...env, APPDATA: at('roaming'), LOCALAPPDATA: at('local'), HOME: at('home'), XDG_DATA_HOME: at('xdg') };
-}
+export function playEnv(scratch, env = process.env) { return userdataEnv(join(scratch, 'userdata'), env); }
 
 function run(cmd, args, { cwd, limitMs = 10 * 60 * 1000, below = false, env } = {}) {
   return new Promise((ok) => {

@@ -1,20 +1,21 @@
-# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-23)
+# The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-28)
 
-277 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **200 run in CI**, 20 more run in the landing gate only, 2 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
+292 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **212 run in CI**, 23 more run in the landing gate only, 2 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
 
 | Folder | Scripts | CI | Gate only | Not run | Unreviewed |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| audio/tools | 15 | 13 | 1 | 1 | 0 |
+| audio/tools | 16 | 14 | 1 | 1 | 0 |
 | net/tools | 10 | 10 | 0 | 0 | 0 |
 | render/anim/tools | 4 | 0 | 1 | 1 | 2 |
-| render/camera/tests | 14 | 14 | 0 | 0 | 0 |
-| render/tools | 25 | 5 | 15 | 0 | 5 |
+| render/camera/tests | 16 | 16 | 0 | 0 | 0 |
+| render/tools | 28 | 5 | 18 | 0 | 5 |
 | render/vfx/tools | 2 | 2 | 0 | 0 | 0 |
-| sim/core/tools | 16 | 12 | 0 | 0 | 4 |
+| sim/core/tools | 17 | 13 | 0 | 0 | 4 |
 | sim/director/tools | 48 | 10 | 1 | 0 | 37 |
 | sim/input/test | 46 | 45 | 1 | 0 | 0 |
-| sim/world/tools | 89 | 89 | 0 | 0 | 0 |
+| sim/world/tools | 96 | 96 | 0 | 0 | 0 |
 | tools/l10n | 1 | 0 | 0 | 0 | 1 |
+| tools/userdata | 1 | 1 | 0 | 0 | 0 |
 | ui/tools | 7 | 0 | 1 | 0 | 6 |
 
 ## Every script
@@ -28,6 +29,7 @@
 | audio/tools/coop_check.gd | CI |  |
 | audio/tools/host_check.gd | GATE |  |
 | audio/tools/moments_check.gd | CI |  |
+| audio/tools/scene_check.gd | CI |  |
 | audio/tools/sets_check.gd | CI |  |
 | audio/tools/status_check.gd | CI |  |
 | audio/tools/tone_check.gd | CI |  |
@@ -52,11 +54,13 @@
 | render/anim/tools/water_tile_check.gd | NOT RUN | Animation's (docs/animation/water-tile-check.md, the EP's brief of 2026-11-20): on the GW1b stack its `dry` row fails by itself (4 of 161 places up to 31.9 units from the drawn ground) and its `lake` and `shore` rows are findings of World's open lake and shore faults (GW2), so a CI line would be red from the first run. Run by hand with --strict; wire it when Animation and World have cleared the dry row (Tools, 2026-11-21). |
 | render/camera/tests/chase_rush_check.gd | CI |  |
 | render/camera/tests/cross_ko_check.gd | CI |  |
+| render/camera/tests/cut_register_check.gd | CI |  |
 | render/camera/tests/flight_shots_check.gd | CI |  |
 | render/camera/tests/launch_shots_check.gd | CI |  |
 | render/camera/tests/own_pane_check.gd | CI |  |
 | render/camera/tests/peak_retry_check.gd | CI |  |
 | render/camera/tests/peak_shot_check.gd | CI |  |
+| render/camera/tests/reset_frame_check.gd | CI |  |
 | render/camera/tests/split_share_check.gd | CI |  |
 | render/camera/tests/split_vision_check.gd | CI |  |
 | render/camera/tests/swing_fight_check.gd | CI |  |
@@ -71,10 +75,13 @@
 | render/tools/cue_check.gd | GATE |  |
 | render/tools/cull_check.gd | UNREVIEWED |  |
 | render/tools/depth_check.gd | GATE |  |
+| render/tools/drawn_check.gd | GATE |  |
+| render/tools/feet_check.gd | GATE |  |
 | render/tools/flash_check.gd | GATE |  |
 | render/tools/flash_reg_check.gd | GATE |  |
 | render/tools/flight_check.gd | GATE |  |
 | render/tools/ground_check.gd | GATE |  |
+| render/tools/ground_link_check.gd | GATE |  |
 | render/tools/hud_words_check.gd | GATE |  |
 | render/tools/lake_water_check.gd | CI |  |
 | render/tools/lane_check.gd | GATE |  |
@@ -106,6 +113,7 @@
 | sim/core/tools/power_check.gd | CI |  |
 | sim/core/tools/rec_check.gd | CI |  |
 | sim/core/tools/replay_xproc_check.gd | CI + gate |  |
+| sim/core/tools/size_host_check.gd | CI |  |
 | sim/core/tools/two_states_check.gd | CI + gate |  |
 | sim/director/tools/a_press_check.gd | UNREVIEWED |  |
 | sim/director/tools/aim_throw_check.gd | CI |  |
@@ -209,6 +217,7 @@
 | sim/world/tools/blockcheck.gd | CI + gate |  |
 | sim/world/tools/brunt_check.gd | CI + gate |  |
 | sim/world/tools/burial_check.gd | CI + gate |  |
+| sim/world/tools/bury_check.gd | CI |  |
 | sim/world/tools/bystanders_check.gd | CI |  |
 | sim/world/tools/cache_warm_check.gd | CI |  |
 | sim/world/tools/calm_read_check.gd | CI |  |
@@ -216,6 +225,7 @@
 | sim/world/tools/climate_check.gd | CI + gate |  |
 | sim/world/tools/collateral_check.gd | CI + gate |  |
 | sim/world/tools/control_check.gd | CI + gate |  |
+| sim/world/tools/crater_flatten_check.gd | CI |  |
 | sim/world/tools/craters_check.gd | CI |  |
 | sim/world/tools/deepencheck.gd | CI + gate |  |
 | sim/world/tools/default_gate_check.gd | CI |  |
@@ -238,6 +248,7 @@
 | sim/world/tools/field_plan_check.gd | CI |  |
 | sim/world/tools/field_records_check.gd | CI |  |
 | sim/world/tools/field_scorch_check.gd | CI |  |
+| sim/world/tools/field_subcap_check.gd | CI |  |
 | sim/world/tools/field_trench_check.gd | CI |  |
 | sim/world/tools/field_water_check.gd | CI |  |
 | sim/world/tools/fill_check.gd | CI + gate |  |
@@ -245,6 +256,7 @@
 | sim/world/tools/floor_check.gd | CI + gate |  |
 | sim/world/tools/floor_rise_check.gd | CI |  |
 | sim/world/tools/gen2_state_check.gd | CI + gate |  |
+| sim/world/tools/globe_check.gd | CI |  |
 | sim/world/tools/ground_check.gd | CI + gate |  |
 | sim/world/tools/ground_props_check.gd | CI |  |
 | sim/world/tools/host_check.gd | CI + gate |  |
@@ -268,11 +280,13 @@
 | sim/world/tools/props_check.gd | CI + gate |  |
 | sim/world/tools/props_wet_check.gd | CI + gate |  |
 | sim/world/tools/relax_check.gd | CI |  |
+| sim/world/tools/relief_cap_check.gd | CI |  |
 | sim/world/tools/repeat_check.gd | CI + gate |  |
 | sim/world/tools/ringpick_check.gd | CI + gate |  |
 | sim/world/tools/rivers_check.gd | CI + gate |  |
 | sim/world/tools/sea_rules_check.gd | CI + gate |  |
 | sim/world/tools/sites_check.gd | CI + gate |  |
+| sim/world/tools/size_check.gd | CI |  |
 | sim/world/tools/skate_check.gd | CI + gate |  |
 | sim/world/tools/stagecheck.gd | CI + gate |  |
 | sim/world/tools/step_check.gd | CI |  |
@@ -284,6 +298,7 @@
 | sim/world/tools/surface_follow_check.gd | CI |  |
 | sim/world/tools/switchon_check.gd | CI + gate |  |
 | sim/world/tools/through_check.gd | CI |  |
+| sim/world/tools/tier_ratio_check.gd | CI |  |
 | sim/world/tools/wall_check.gd | CI + gate |  |
 | sim/world/tools/wall_hold_check.gd | CI |  |
 | sim/world/tools/water_read_check.gd | CI |  |
@@ -291,6 +306,7 @@
 | sim/world/tools/world_default_check.gd | CI |  |
 | sim/world/tools/wrecks_check.gd | CI + gate |  |
 | tools/l10n/overflow_check.gd | UNREVIEWED |  |
+| tools/userdata/userdata_check.gd | CI |  |
 | ui/tools/difficulty_check.gd | UNREVIEWED |  |
 | ui/tools/frame_cost_check.gd | UNREVIEWED |  |
 | ui/tools/hud_check.gd | GATE |  |
