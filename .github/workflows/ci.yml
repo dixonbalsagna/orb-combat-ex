@@ -182,6 +182,8 @@ jobs:
         run: node tools/desktop-package-selftest.mjs
       - name: 'Page upload refusals self-test (the checks only: no approval, no record, a failing package, CI; the script can send nothing)'
         run: node tools/store/itch-push-selftest.mjs
+      - name: 'Trial switches (the list of Orb trial build fits this tree, and the self-test of its read-back)'
+        run: node tools/trial-switches-selftest.mjs && node tools/trial-switches.mjs --check
       - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
         run: node tools/flash/nightly-selftest.mjs
       - name: Scheduled flash reading verdict self-test (the take-down line of 3 on every reading, red read directly, a missing clip is never a pass)

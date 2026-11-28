@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { names, hashLine, platformsOf, canPlay, testersRefusals, featureArgs, applyFeatures, packedHas, FIXED_FEATURES } from './desktop-local-build.mjs';
+import { names, hashLine, platformsOf, canPlay, testersRefusals, featureArgs, applyFeatures, packedHas, FIXED_FEATURES, trialArg, playEnv } from './desktop-local-build.mjs';
 import { ARCHIVES } from './store/itch-push.mjs';
 let bad = 0, n = 0;
 const check = (name, ok, extra) => { n++; if (!ok) { bad++; console.log(`FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -46,5 +46,8 @@ const sw = names('148f4e16', 'windows', 'owner', true);
 check('a switched build is filed apart, and the first run\'s search for the newest private zip does not take it', sw.archive.endsWith('-148f4e16-switches.zip') && sw.defaultOut.endsWith('148f4e16-ORB-PRIVATE-switches') && !/ORB-PRIVATE-windows-x86_64-[0-9a-f]+\.zip$/.test(sw.archive) && /ORB-PRIVATE-windows-x86_64-[0-9a-f]+\.zip$/.test(names('148f4e16').archive) && names('148f4e16', 'windows', 'testers', true).archive === 'orb-combat-ex-windows-x86_64.zip');
 check('the switches go in after the lock and before the routes check, and the refusal comes before the commit is copied', src.indexOf("'lock', '--root'") < src.indexOf('applyFeatures(readFileSync(ff') && src.indexOf('applyFeatures(readFileSync(ff') < src.indexOf("'routes', '--root'") && src.indexOf('featureArgs(a, audience)') < src.indexOf('mkdtempSync(join(tmpdir()'));
 check('the first run still looks for the plain private zip', readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'first-run', 'first-run.mjs'), 'utf8').includes('ORB-PRIVATE-windows-x86_64-[0-9a-f]+'));
+check('--trial: none, all, a list; testers refused; the = form and twice refused', trialArg([], 'owner').wanted === null && trialArg(['--trial'], 'owner').wanted === 'all' && trialArg(['--trial', '--platform', 'windows'], 'owner').wanted === 'all' && trialArg(['--trial', 'a,b'], 'owner').wanted === 'a,b' && /always exactly main/.test(trialArg(['--trial'], 'testers').problems.join()) && trialArg(['--trial=a'], 'owner').problems.length === 1 && trialArg(['--trial', '--trial'], 'owner').problems.length === 1);
+check('the trial list is the commit\'s own, applied before the routes check and read back from the program after the export', /readList\(tree\)/.test(src) && src.indexOf('applyRows(tree, trialChosen)') < src.indexOf("'routes', '--root'") && src.indexOf('readBack(readFileSync(bin)') > src.indexOf("'--export-release'"));
+check('both bench runs keep the game\'s data folders inside the scratch folder', (() => { const e = playEnv('S', { APPDATA: 'C:/real', PATH: 'p' }); return e.PATH === 'p' && ['APPDATA', 'LOCALAPPDATA', 'HOME', 'XDG_DATA_HOME'].every((k) => e[k].startsWith('S')); })() && src.split("'--bench'], {").length === 3 && (src.match(/'--bench'\], \{[^}]*env: playEnv\(scratch\)/g) || []).length === 2);
 console.log(`desktop-local-build selftest: ${n} checks, ${bad} failed`);
 process.exit(bad ? 1 : 0);

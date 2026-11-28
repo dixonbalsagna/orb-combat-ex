@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { APPROVALS, ARCHIVES, approvalProblems, ciProblem, judge, readTarget, versionProblems } from './itch-push.mjs';
+import { APPROVALS, ARCHIVES, approvalProblems, ciProblem, cmdFile, judge, readTarget, versionProblems } from './itch-push.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -50,7 +50,17 @@ const J = (o = {}, w = {}) => judge(opts(o), world(w));
 const clean = J();
 check('all holding: no problem, and the plan names both channels, the sums and the version', clean.problems.length === 0 && clean.plan.length === 2 && clean.plan[0].includes('some-one/orb-page:windows as version 0.1.8') && clean.plan[1].includes(sha(bytes.linux)) && clean.plan[1].includes(':linux'), JSON.stringify(clean));
 check('in CI: the one refusal, and nothing else is read', (() => { const r = J({}, { env: { GITHUB_ACTIONS: 'true' }, committed: () => { throw new Error('read'); } }); return r.problems.length === 1 && /CI/.test(r.problems[0]) && r.plan.length === 0; })());
-check('--push is refused even with everything else holding, and plans nothing', (() => { const r = J({ push: true }); return r.problems.length === 1 && /not written/.test(r.problems[0]) && r.plan.length === 0; })());
+check('--push is refused even with everything else holding, and plans nothing', (() => { const r = J({ push: true }); return r.problems.length === 1 && /never uploads/.test(r.problems[0]) && r.plan.length === 0; })());
+// the file Orb runs by hand
+{
+  const c = cmdFile({ node: 'C:/n/node.exe', script: 'C:/r e/tools/store/itch-push.mjs', dir: join('C:', 'o ut'), args: ['--dir', 'C:/o ut', '--builds-yes', '2026-12-08', '--page-yes', '2026-12-10'], target: 'some-one/orb-page', version: '0.1.8' });
+  const L = c.split('\r\n');
+  const at = (re) => L.findIndex((l) => re.test(l));
+  check('the upload file checks again before anything is sent, stops when a check fails, pushes Windows then Linux with the version, and pauses first', at(/^pause$/) < at(/itch-push\.mjs" "--dir"/) && at(/itch-push\.mjs"/) < at(/^if errorlevel 1 \( echo\. & echo A check failed/) && at(/A check failed/) < at(/^butler push/) && at(/:windows --userversion 0\.1\.8$/) < at(/linux-channel" some-one\/orb-page:linux --userversion 0\.1\.8$/) && L.filter((l) => l.startsWith('butler push')).length === 2 && L[L.length - 2] === 'pause', c);
+  check('the roll-back file says so and pushes as <version>-rollback', /ROLL BACK/.test(cmdFile({ node: 'n', script: 's', dir: 'd', args: [], target: 'a/b', version: '0.1.7', rollback: true })) && (cmdFile({ node: 'n', script: 's', dir: 'd', args: [], target: 'a/b', version: '0.1.7', rollback: true }).match(/--userversion 0\.1\.7-rollback/g) || []).length === 2);
+  const bad = (o) => { try { cmdFile({ node: 'n', script: 's', dir: 'd', args: [], target: 'a/b', version: '0.1.7', ...o }); return false; } catch { return true; } };
+  check('a path with a quote or a percent sign, a page name or a version of another shape is refused', bad({ dir: 'a"b' }) && bad({ dir: '%x%' }) && bad({ target: 'a/b & del' }) && bad({ version: '1 & x' }));
+}
 check('without either approval file: each is named', (() => { const r = J({}, { committed: () => null }); return has(r.problems, /restricted-itch-page\.txt/) && has(r.problems, /desktop-test-builds\.txt/) && r.plan.length === 0; })());
 check('with one approval only, the other still refuses (RL-272)', (() => { const only = (k) => J({}, { committed: (p) => (p === APPROVALS[k].file ? (k === 'page' ? pageYes : buildsYes) : null) }); return only('page').problems.length === 1 && has(only('page').problems, /desktop-test-builds/) && only('builds').problems.length === 1 && has(only('builds').problems, /restricted-itch-page/); })());
 check('an archive that is missing, does not unpack, is not recorded or fails the package check is refused', has(J({}, { archive: (f) => (f.endsWith('.zip') ? null : bytes.linux) }).problems, /windows-x86_64\.zip is not in the folder/) && has(J({}, { unpack: () => ({ problem: 'does not unpack' }) }).problems, /does not unpack/) && has(J({}, { recorded: () => false }).problems, /in no committed record/) && has(J({}, { verify: () => ['desktop package FAILED (windows): README.txt still holds the report-channel placeholder'] }).problems, /report-channel placeholder/));
@@ -64,7 +74,7 @@ check('the two archive names are the workflow\'s', (() => { const wf = readFileS
   const modules = [...code.matchAll(/from '([^']+)'/g)].map((m) => m[1]);
   check('the script imports no network module', modules.every((m) => !/^(node:)?(http|https|http2|net|tls|dgram|dns)$/.test(m)) && !/\bfetch\s*\(|\bimport\s*\(|\brequire\s*\(|WebSocket/.test(code), modules.join());
   const started = [...code.matchAll(/(?<![.A-Za-z])(?:spawnSync|execFileSync|spawn|exec|execFile|execSync)\(([^,()]+(?:\([^()]*\))?)/g)].map((m) => m[1].trim());
-  check('it starts only git, tar, unzip and node, and never the upload tool', started.length > 0 && started.every((x) => ["'git'", 'winTar', "'unzip'", "'tar'", 'process.execPath'].includes(x)) && !/butler/i.test(code), started.join(' | '));
+  check('it starts only git, tar, unzip and node, and never the upload tool (its name is only in the text of the file Orb runs)', started.length > 0 && started.every((x) => ["'git'", 'winTar', "'unzip'", "'tar'", 'process.execPath'].includes(x)) && !code.split(NL).some((l) => /butler/i.test(l) && /(spawn|exec)[A-Za-z]*\(/.test(l)), started.join(' | '));
 }
 // the command itself, in this repository: refused (the approvals are not recorded), and refused in CI
 {

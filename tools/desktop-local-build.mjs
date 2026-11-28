@@ -24,18 +24,23 @@
 // OWNER-PRIVATE ONLY: refused for --audience testers, so a friends' package is always exactly main. Only the scratch copy's features.json is edited, never the repository's; the lock and the routes check run on the
 // result; the record and build_info.json name every switch changed, and each is read back from the built program. The safety switches cannot be changed this way (the Reduce flashing lock and row, the capture
 // hook, testers_package). Such a build is filed apart (<commit8>-ORB-PRIVATE-switches, its archives ending -switches) so the first run and the tools keep taking the plain build.
+// THE TRIAL BUILD (the EP, 2026-11-28): --trial [id,id] turns on the switches of tools/trial-switches.json (all of them when none is named): the data keys that are off on main and on in the build Orb plays.
+// Owner-private only, scratch copy only, like --feature (the two can be given together). After each export every row of the list is read back out of the built program's own data: the ones asked for must
+// be on and all the others off. The record and build_info.json name them.
+//   node tools/desktop-local-build.mjs --trial
 // Godot runs at below-normal priority and headless (no window). Node built-ins, git, tar and PowerShell only.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir, constants as osConstants } from 'node:os';
 import { setPriority } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cleanPaths } from './record-paths.mjs';
 import { folderEntries, readTarGz, targz } from './lib/targz.mjs';
 import { APPROVALS, approvalProblems } from './store/itch-push.mjs';
 import { CHANNEL_FILE } from './desktop-package.mjs';
+import { applyRows, choose, readBack, readList } from './trial-switches.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OWNER_NOTICE = 'site-interim-owner.json';
@@ -90,6 +95,16 @@ export function packedHas(bytes, f) {
   const b = bytes.toString('latin1');
   return new RegExp(`"${f.name}"\\s*:\\s*${f.on}`).test(b) && !new RegExp(`"${f.name}"\\s*:\\s*${!f.on}`).test(b);
 }
+/** The --trial argument: { wanted: 'all' | 'a,b' | null, problems }. `audience` testers takes none. Pure. */
+export function trialArg(args, audience) {
+  const i = args.indexOf('--trial');
+  if (args.some((x) => x.startsWith('--trial='))) return { wanted: null, problems: ['--trial takes its list as the next word: --trial id,id'] };
+  if (i < 0) return { wanted: null, problems: [] };
+  if (args.indexOf('--trial', i + 1) >= 0) return { wanted: null, problems: ['--trial is given twice'] };
+  const next = args[i + 1];
+  const wanted = next === undefined || next.startsWith('--') ? 'all' : next;
+  return { wanted, problems: audience === 'testers' ? ['--trial is refused for a testers\' package: it is always exactly main'] : [] };
+}
 /** Why a testers' package may not be made from this commit (empty when it may). `approval` is the approval file's text in that commit, null when the commit does not hold it. Pure. */
 export function testersRefusals({ onMain, approval, typed, today }) {
   const out = [];
@@ -115,9 +130,15 @@ function godotExe(given) {
   return found;
 }
 
-function run(cmd, args, { cwd, limitMs = 10 * 60 * 1000, below = false } = {}) {
+/** The environment of a bench run of the game: every folder the game may write to (its user data) is inside `scratch`, so a build never touches the data folder of the person who builds. Pure. */
+export function playEnv(scratch, env = process.env) {
+  const at = (n) => join(scratch, 'userdata', n);
+  return { ...env, APPDATA: at('roaming'), LOCALAPPDATA: at('local'), HOME: at('home'), XDG_DATA_HOME: at('xdg') };
+}
+
+function run(cmd, args, { cwd, limitMs = 10 * 60 * 1000, below = false, env } = {}) {
   return new Promise((ok) => {
-    const child = spawn(cmd, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    const child = spawn(cmd, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
     if (below) { try { setPriority(child.pid, osConstants.priority.PRIORITY_BELOW_NORMAL); } catch { /* gone */ } }
     let out = '';
     const keep = (d) => { out += d; if (out.length > 2e6) out = out.slice(-1e6); };   // bounded: the tail is what matters
@@ -140,8 +161,9 @@ async function main() {
   if (audience !== 'owner' && audience !== 'testers') { console.error('desktop-local-build: --audience is owner (the default) or testers'); process.exit(2); }
   const testers = audience === 'testers';
   const { features, problems: featureProblems } = featureArgs(a, audience);
-  if (featureProblems.length) { for (const p of featureProblems) console.error(`desktop-local-build REFUSED: ${p}`); process.exit(2); }
-  const switched = features.length > 0;
+  const { wanted: trialWanted, problems: trialProblems } = trialArg(a, audience);
+  if (featureProblems.length || trialProblems.length) { for (const p of [...featureProblems, ...trialProblems]) console.error(`desktop-local-build REFUSED: ${p}`); process.exit(2); }
+  const switched = features.length > 0 || trialWanted !== null;
   if (process.platform === 'darwin') { console.error('desktop-local-build: Windows and Linux hosts only for now'); process.exit(2); }
   const rev = opt('--commit', 'HEAD');
   const frames = String(opt('--frames', '2400'));
@@ -190,24 +212,37 @@ async function main() {
     if (!toolText.includes('PRIVATE_LINE')) step('this commit\'s packaging tool knows the ORB-PRIVATE line', false, 'it is older than the owner-private change: build a newer commit');
     const node = (args, cwd = tree) => run(process.execPath, args, { cwd });
     let x = await node([pkgTool, 'lock', '--root', tree]); step('lock Reduce flashing on (scratch copy only)', x.code === 0, x.out.trim().split(/\r?\n/).pop());
-    let changed = [];
-    if (switched) {
+    let changed = [], trialRows = [], trialChosen = [];
+    if (features.length) {
       const ff = join(tree, 'ui', 'data', 'features.json');
       try { const r2 = applyFeatures(readFileSync(ff, 'utf8'), features); writeFileSync(ff, r2.text); changed = r2.changed; } catch (e) { step('the switches asked for are set (scratch copy only)', false, e.message); }
       for (const f of changed) step(`SWITCH ${f.name} ${f.on ? 'on' : 'off'} in this build (main: ${f.was ? 'on' : 'off'}; scratch copy only)`, true);
+    }
+    // the trial switches: the COMMIT's list (it travels with the switches it names), applied to the scratch copy
+    if (trialWanted !== null) {
+      let lines = [];
+      try {
+        const list = readList(tree);
+        if (list.problems.length) throw new Error(list.problems.join('; '));
+        trialRows = list.rows; trialChosen = choose(trialRows, trialWanted);
+        const clash = trialChosen.find((r) => features.some((f) => r.file === 'ui/data/features.json' && r.path.join('.') === `features.${f.name}`));
+        if (clash) throw new Error(`${clash.id} is named by --trial and by --feature: name it once`);
+        lines = applyRows(tree, trialChosen);
+      } catch (e) { step('the trial switches are set (scratch copy only)', false, e.message); }
+      for (const l of lines) step(`TRIAL ${l} (scratch copy only)`, true);
     }
     if (testers) { x = await node([pkgTool, 'testers', '--root', tree]); step('the testers\' menu: modes testers cannot use are hidden (scratch copy only)', x.code === 0, x.out.trim().split(/\r?\n/).pop()); }
     x = await node([pkgTool, 'version', '--root', tree]); step('version number into the export presets', x.code === 0, x.out.trim().split(/\r?\n/).pop());
     x = await node([pkgTool, 'routes', '--root', tree, testers ? '--testers' : '--no-testers']); step('routes check (lock, bypass words, no net/, feedback target)', x.code === 0, x.out.trim().split(/\r?\n/).pop().slice(0, 160));
     x = await node([join(tree, 'tools', 'write-build-info.mjs'), '--commit', sha, '--date', date]); step('build_info.json written', x.code === 0, x.out.trim());
     const info = JSON.parse(readFileSync(join(tree, 'build_info.json'), 'utf8'));
-    if (switched) { info.features = Object.fromEntries(changed.map((f) => [f.name, f.on])); writeFileSync(join(tree, 'build_info.json'), JSON.stringify(info) + '\n'); step('build_info.json names the switches changed', true, JSON.stringify(info.features)); }
+    if (switched) { if (trialWanted !== null) info.trial = trialChosen.map((r) => r.id); info.features = Object.fromEntries(changed.map((f) => [f.name, f.on])); writeFileSync(join(tree, 'build_info.json'), JSON.stringify(info) + '\n'); step('build_info.json names the switches changed', true, JSON.stringify({ features: info.features, trial: info.trial })); }
     // before the slow part: a draft, or a missing or placeholder report channel, stops here. The README it makes is thrown away; neither the line nor the README goes into the record
     if (testers) { x = await node([pkgTool, 'text', '--platform', 'windows', '--out', join(scratch, 'preflight'), '--build-info', join(tree, 'build_info.json'), '--testers', '--channel-file', channelFile]); step('the testers\' words are final and the report channel is filled', x.code === 0, x.code === 0 ? '' : x.out.trim().split(/\r?\n/).pop().slice(0, 300)); rmSync(join(scratch, 'preflight'), { recursive: true, force: true }); }
 
     x = await run(godot, ['--headless', '--path', tree, '--import'], { below: true, limitMs: 10 * 60 * 1000 }); step('import', x.code === 0, `exit ${x.code}`);
     // the project's own bench: the hash every exported program must print (the same game data, the same seed)
-    const b1 = await run(godot, ['--headless', '--path', tree, '--fixed-fps', '60', '--', '--seed=4', `--frames=${frames}`, '--bench'], { below: true });
+    const b1 = await run(godot, ['--headless', '--path', tree, '--fixed-fps', '60', '--', '--seed=4', `--frames=${frames}`, '--bench'], { below: true, env: playEnv(scratch) });
     const h1 = hashLine(b1.out);
     step('the project\'s own bench prints a gameplay hash', !!h1, h1 || 'none');
 
@@ -219,7 +254,7 @@ async function main() {
       step(`export "${PRESETS[platform]}" (release, Compatibility, x86_64, pck embedded)`, x.code === 0 && existsSync(bin), existsSync(bin) ? `${statSync(bin).size} bytes` : `exit ${x.code}: ${x.out.trim().split(/\r?\n/).pop()}`);
       let benchLine = '';
       if (canPlay(platform, process.platform)) {
-        const b2 = await run(bin, ['--headless', '--fixed-fps', '60', '--', '--seed=4', `--frames=${frames}`, '--bench'], { cwd: exp, below: true });
+        const b2 = await run(bin, ['--headless', '--fixed-fps', '60', '--', '--seed=4', `--frames=${frames}`, '--bench'], { cwd: exp, below: true, env: playEnv(scratch) });
         const h2 = hashLine(b2.out);
         step(`the ${platform} program's bench prints the same gameplay hash as the project's`, !!h1 && h1 === h2, `${h1 || 'none'} | ${h2 || 'none'}`);
         benchLine = `bench ${h2} (the program was played here)`;
@@ -233,13 +268,20 @@ async function main() {
       const notice = testers ? [] : ['--notice', OWNER_NOTICE, '--private'];
       x = await node([pkgTool, 'text', '--platform', platform, '--out', pkg, '--build-info', join(tree, 'build_info.json'), ...(testers ? ['--testers', '--channel-file', channelFile] : notice)]); step(`${platform}: README.txt, NOTICES.txt and build_info.json (${testers ? "the testers' words" : 'owner notice, ORB-PRIVATE line'})`, x.code === 0, x.out.trim().split(/\r?\n/).pop());
       if (switched) { const bytes = readFileSync(bin); for (const f of changed) step(`${platform}: the built program holds ${f.name} ${f.on ? 'on' : 'off'}`, packedHas(bytes, f)); }
+      if (trialWanted !== null) {
+        let back = { ok: false, problems: ['the pack was not read'], lines: [] };
+        try { back = readBack(readFileSync(bin), trialRows, trialChosen); } catch (e) { back = { ok: false, problems: [e.message], lines: [] }; }
+        for (const l of back.lines) { console.log(`     ${l}`); rec.push(`     ${platform}: ${l}`); }
+        step(`${platform}: read from the built program: the ${trialChosen.length} trial switch(es) asked for are on and the other ${trialRows.length - trialChosen.length} off`, back.ok, back.problems.join('; ').slice(0, 300));
+      }
       cpSync(bin, join(pkg, program));
       mkdirSync(out, { recursive: true });
       const archive = join(out, n.archive);
       rmSync(archive, { force: true });
       const chk = join(scratch, 'check-' + platform); mkdirSync(chk, { recursive: true });
       if (platform === 'windows') {
-        const z = ps(`Compress-Archive -Path '${pkg}' -DestinationPath '${archive}' -CompressionLevel Optimal`);
+        // Windows' own tar writes the zip's names with forward slashes, as the zip format has it; PowerShell 5.1's Compress-Archive writes backslashes, which other unzippers (and so an upload tool that unpacks) may take as part of a name
+        const z = existsSync(winTar) ? spawnSync(winTar, ['-a', '-cf', archive, '-C', dirname(pkg), basename(pkg)], { encoding: 'utf8' }) : ps(`Compress-Archive -Path '${pkg}' -DestinationPath '${archive}' -CompressionLevel Optimal`);
         step('windows: zipped', z.status === 0 && existsSync(archive), existsSync(archive) ? `${statSync(archive).size} bytes` : String(z.stderr).slice(0, 160));
         const u = ps(`Expand-Archive -Path '${archive}' -DestinationPath '${chk}' -Force`);
         step('windows: unzipped somewhere new, the way a player does', u.status === 0, '');
@@ -260,7 +302,7 @@ async function main() {
       results.push({ platform, archive, sum, size: statSync(archive).size });
     }
     const closing = testers ? `For named outside testers, through the restricted page only; the upload is Orb's, by hand. Commit this record under docs/tools/runs/${c8}/ so tools/store/itch-push.mjs can find the sums. Never a public link.` : 'For Orb and Orb 2 only. Move it by a drive, the home network or a private message. Never a public link.';
-    if (switched) rec.push(`NOT EXACTLY MAIN: this build has ${changed.map((f) => `${f.name} ${f.on ? 'on' : 'off'}`).join(', ')}.`);
+    if (switched) rec.push(`NOT EXACTLY MAIN: this build has ${[...changed.map((f) => `${f.name} ${f.on ? 'on' : 'off'}`), ...trialChosen.map((r) => `${r.id} on (trial)`)].join(', ')}.`);
     rec.push(closing);
     writeRecord();
     if (testOnly) console.log("\nTEST ONLY: this package used the working tree's packaging tool and is not a build of the commit alone: do not hand it on.");

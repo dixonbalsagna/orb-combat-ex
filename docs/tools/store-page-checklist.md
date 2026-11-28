@@ -61,7 +61,9 @@ For Alpha 1 the only page is **the restricted, key-only itch.io page** that Lega
 - **Settings that stay off (RL-272 (b)):** comments, ratings, the community tab, the devlog, any public download or "who downloaded" display, any link to the report channel. Checked with a logged-out browser and on the dashboard.
 - **Legal reads the finished page** (store-copy-screen rules: franchise lookalikes, "tested", photosensitivity words, the AI line, the account line) **before the first key is sent**; the read is saved as a gate row under `docs/legal/runs/<commit8>/` (RL-272 (c)). Tools runs `node tools/content-screen.mjs` over the copy kept in the repository.
 
-## 5. The upload script (**the refusals are written; the upload is not**, until Orb says yes to the page)
+## 5. The upload and the roll-back (written; **nothing uploads without Orb running the file**)
+
+`itch-push.mjs ... --write-cmd` writes `UPLOAD.cmd` (with `--rollback`: `ROLLBACK.cmd`) beside the archives, only when every check holds. Orb runs it by hand; it checks again first, then calls butler: the Windows zip as it is to `:windows`, the Linux `.tar.gz` inside a folder of its own to `:linux`, both with `--userversion`. Not yet seen on any page: the spare-page rehearsal (X-31) must show that the Linux file arrives as it is and that the roll-back reads right.
 
 **Built (2026-11-25), refusals only:** `node tools/store/itch-push.mjs --dir <folder with the two archives> --builds-yes <date> --page-yes <date>`. It sends nothing, runs no upload tool and refuses `--push`. The approval files are read from the last commit, each with its own typed date; the checksums must be in a committed record under `docs/tools/runs/<commit>/`; each archive must pass `verify --locked --testers`; the page is named by one line `account/page` in the git-ignored `.private/store/itch-target.txt`, so the account name stays off the repository. `--rollback` takes an earlier version's archives. The bullets below are the full plan.
 

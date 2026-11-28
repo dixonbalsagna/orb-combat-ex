@@ -126,3 +126,9 @@ An outside-testers package carries its own README.txt and NOTICES.txt words from
 ## Feature switches in Orb's own build (2026-11-26)
 
 `node tools/desktop-local-build.mjs --feature split_line_choice=on` (repeatable, `=on` or `=off`) builds with a `ui/data/features.json` switch other than main's. Owner-private only: refused for `--audience testers`. Only the scratch copy is edited; the lock and routes checks run on the result; the record says `NOT EXACTLY MAIN` and names each switch, `build_info.json` holds them under `features`, and each is read back from the built program. `lock_reduce_flashing`, `reduce_flashing`, `capture_hook` and `testers_package` cannot be changed this way. The files go to `homework/Files/desktop/<commit8>-ORB-PRIVATE-switches/` with names ending `-switches`, so the first run keeps taking the plain build.
+
+## Orb's trial build (2026-11-28)
+
+    node tools/desktop-local-build.mjs --trial
+
+Builds the owner-private pair with every switch of `tools/trial-switches.json` on (name some to turn on only those: `--trial split_line_choice`). A trial switch is a value in a data file that is off on main and on in Orb's build; its row is added by whoever lands the switch, in the same change. After each export the rows are read out of the built program's own data: those asked for must be on, all others off, and the build fails otherwise. The record says `NOT EXACTLY MAIN`, `build_info.json` holds `trial`, and the files go to `homework/Files/desktop/<commit8>-ORB-PRIVATE-switches/`. Refused for testers. `node tools/trial-switches.mjs --list` shows the rows; `--check` (in CI) fails when a row no longer fits the tree and notes one main has turned on.

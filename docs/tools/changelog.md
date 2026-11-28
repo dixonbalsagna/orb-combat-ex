@@ -2,6 +2,60 @@
 
 One entry for every build handed to a person (a kept build, a desktop build, a test build), newest on top. `node tools/version.mjs --next` adds the entry and raises the build counter in `tools/version.json` together, in the commit that is built. Each entry has two parts: **For players** in plain words, which Orb reads before it is used anywhere (no team nicknames, what a player presses and sees), and **For the team**, the commit subjects since the last entry. Build 0 means no build has been numbered yet.
 
+## 0.1.2 (2026-11-28, 0afd8f05)
+
+For players
+- You can choose a small or big planet as well as medium: "Planet size" in "Set up the match".
+- The menus now make quiet sounds.
+- Craters no longer show doubled rims and bowls after the first match.
+- Pressing Play again no longer makes the ground jump for a moment.
+- When a camera jump would add to flashing, the camera now moves smoothly to the new view instead. Reduce flashing counts this from the first moment of a match.
+- On your first visit to the list of modes, with no controller plugged in, one line says a controller feels best. The start menu's hints follow a controller once you use one.
+- A long session uses less memory.
+
+For the team
+- EP: record Orb's restart and customization lead for the stand-in (2026-11-28)
+- Energy toy pass 2: float-above becomes a beam crest and blast crown; new shapes, behaviours, materials, colours, sliders, presets
+- EP: keep Orb's first energy-toy find and record Orb's reaction (2026-11-27)
+- EP: Orb's answers on the combat overhaul directive (beam trial first, struggle taught in play, city swing)
+- Stand-in: combat overhaul directive (beams, ballistic hybrid, anti-flee, grab, angle and camera) from Orb's 0.1.1 notes
+- EP: record Orb's 0.1.1 play notes and beam/dodge/flee ask (2026-11-27)
+- QA: GB-011, lakes end in standing walls of water over towns (Orb's report)
+- Energy toy: one-page look builder for Orb (aura, beam, blast from one recipe; tiers in data)
+- EP: record Orb's energy toy ask (2026-11-27)
+- EP: record Orb's energy customization ask (2026-11-27)
+- EP: record Orb's energy overhaul ask (2026-11-27)
+- EP: record Orb's halt of 2026-11-27 morning
+- QA: two-hour soaks on 5dbd89ca, the memory growth is gone (Windows 15.5 MiB/h against 130, Linux 0.8 against 142)
+- VFX: the flash register knows Reduce flashing from reset, so cuts asked before the first tick are judged on the reduced budget; hard_cut listed as a counted source (Tools' grant). Fixes CI red on 5dbd89ca
+- Tools: remove two landed park folders
+- Tools: CI runs Camera's cut_register_check
+- EP: the render gates run the feet check at medium, small and big
+- Rendering: small-and-big window, building-swiftshader (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Tools: small-and-big window, first-run-sizes (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- World: small-and-big window, planet-sizes (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- World: small-and-big window, planet-sizes (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Tools: small-and-big window, ci-size-host (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Simulation: small-and-big window, size-host (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Simulation: small-and-big window, size-host (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Rendering: small-and-big window, mats-tracked (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Rendering: small-and-big window, fore-clamp (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Rendering: small-and-big window, rows-interp (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Rendering: small-and-big window, marks-baked (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Rendering: small-and-big window, feet-ground (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Rendering: small-and-big window, sky-handover (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Camera: small-and-big window, cd04 (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Camera: small-and-big window, gw1c-door-holds (gates s443/s443b/s443c: render 24/24 with feet at three sizes, golden unchanged, camera checks, world 97/97, smoke, data job 0; Camera's readings pass at small and big)
+- Camera: big passes collapse in both modes with its buildings drawn (building-swiftshader in the window)
+- Rendering: big's frame-bench on the window's tree with buildings drawn (p50 24.5 ms, p95 48.1; medium 20.0 / 34.3)
+- Rendering: park building-swiftshader (per-instance textures wrap at 4,096 texels, so software rendering and smaller-limit cards draw the city; pixel-identical on the card)
+- Tools: park first-run-sizes (small and big picked with the Planet size row; lands with the flip)
+- Tools: the nightly page's software-readings section; remove two landed park folders
+- Tools: the nightly warns that software readings of clips with buildings are invalid until Rendering's shader fix
+- Rendering: the nightly's collapse-reduced 4 is software rendering drawing no buildings (building.gdshader under SwiftShader); the card reads 1
+- Camera: a2-pump marked held until collapse at small and big has headroom
+- ...and 64 more
+
 ## 0.1.1 (2026-11-25, 558270b2)
 
 For players

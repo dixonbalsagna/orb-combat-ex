@@ -1,0 +1,14 @@
+{
+  "_about": "The trial switches of Orb's trial build: switches that are off on main and on in the build Orb plays (node tools/desktop-local-build.mjs --trial). Owner-private only; a testers' package is always exactly main. One row a switch: id, what it is in plain words, owner, and the data key it flips: file (under data/ or ui/data/), path, from (main's value), to (the trial's value); `more` for further keys of the same switch ({path, from, to, file?}); `needs` for rows that must be on with it. A switch has to be a value in a data file: the build reads it back out of the built program, and a constant inside a script cannot be read there. Add a row in the same change that lands the switch; take it out when main turns it on (tools/trial-switches.mjs --check says so). Check: node tools/trial-switches.mjs --check.",
+  "rows": [
+    {
+      "id": "split_line_choice",
+      "what": "the Settings row Split screen (Later, Standard, Sooner): how soon the screen splits",
+      "owner": "Camera and UI",
+      "file": "ui/data/features.json",
+      "path": ["features", "split_line_choice"],
+      "from": false,
+      "to": true
+    }
+  ]
+}

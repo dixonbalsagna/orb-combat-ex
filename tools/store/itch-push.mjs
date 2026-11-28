@@ -1,8 +1,13 @@
 // The upload to the restricted, key-only itch.io page: THE REFUSALS ONLY (Tools, 2026-11-25; A2 job 4; docs/tools/store-page-checklist.md section 5; Legal RL-261, RL-262, RL-272).
-// This script sends nothing. It runs no upload tool and opens no connection: it answers "may these two files go up, and where would they go?". The upload itself is not written: `--push` is refused until the
-// page is approved (the EP). The upload is Orb's, by hand, on Orb's PC; it never runs in CI.
+// This script sends nothing. It runs no upload tool and opens no connection: it answers "may these two files go up, and where would they go?", and with --write-cmd, once every check holds, it writes the
+// upload as a file Orb runs by hand (UPLOAD.cmd, or ROLLBACK.cmd with --rollback), in the folder of the archives. That file first runs these checks again and stops if one fails, then calls itch.io's own
+// tool (butler, installed and signed in by Orb). Nothing here ever starts it. The upload is Orb's, by hand, on Orb's PC; it never runs in CI.
 //
-//   node tools/store/itch-push.mjs --dir <folder> --builds-yes <date> --page-yes <date> [--target-file <file>] [--rollback]
+//   node tools/store/itch-push.mjs --dir <folder> --builds-yes <date> --page-yes <date> [--target-file <file>] [--rollback] [--write-cmd]
+// THE ONE-STEP ROLL-BACK: the same line with --rollback --write-cmd and --dir naming the PREVIOUS accepted build's folder, then run ROLLBACK.cmd there. itch.io has no "go back" command: an earlier build is
+// pushed again, as "<version>-rollback".
+// How each file goes up (butler's page says a .zip is unpacked on upload and says nothing of .tar.gz or of the executable bit from Windows): the Windows zip as it is; the Linux .tar.gz inside a folder of its
+// own, so the file arrives as it is and keeps its executable bit. Both to be seen on the spare page before a friend gets a key.
 //
 // <folder> holds orb-combat-ex-windows-x86_64.zip and orb-combat-ex-linux-x86_64.tar.gz of one commit. It refuses unless ALL of:
 //   - it is not running in CI;
@@ -15,7 +20,7 @@
 // Exit 0: every check holds (a dry run; nothing was sent). 1: refused, every reason printed. 2: usage. Node built-ins, git, the system's tar or unzip.
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -86,12 +91,39 @@ export function plan(target, version, sums, { rollback = false } = {}) {
   return CHANNELS.map((c) => `WOULD PUSH ${ARCHIVES[c]} (sha256 ${sums[c]}) to ${target}:${c} as version ${version}${rollback ? '-rollback' : ''}`);
 }
 
+/** The upload (or roll-back) file Orb runs by hand, as text. It re-runs the checks first and stops when they fail. `dir`, `node` and `script` are paths on Orb\'s PC; `args` the checking arguments. Pure. */
+export function cmdFile({ node, script, dir, args, target, version, rollback = false }) {
+  for (const p of [node, script, dir]) if (/["%\r\n]/.test(p)) throw new Error(`a path with a quote, a percent sign or a line break cannot go in a command file: ${p}`);
+  if (!/^[a-z0-9_-]+\/[a-z0-9_-]+$/.test(target)) throw new Error('the page name is not account/page');
+  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('the version is not a.b.c');
+  const v = `${version}${rollback ? '-rollback' : ''}`;
+  const linux = join(dir, 'linux-channel');
+  const q = (x) => `"${x}"`;
+  const lines = [
+    '@echo off',
+    `rem ${rollback ? 'ROLL BACK' : 'UPLOAD'} of version ${v} to the restricted itch.io page. Written by tools/store/itch-push.mjs after every check held. Run it by hand; it checks again first.`,
+    `echo ${rollback ? 'Rolling back' : 'Uploading'} version ${v} to ${target}. Close this window now to stop.`,
+    'pause',
+    [node, script, ...args].map(q).join(' '),
+    'if errorlevel 1 ( echo. & echo A check failed: nothing was uploaded. & pause & exit /b 1 )',
+    `if not exist ${q(linux)} mkdir ${q(linux)}`,
+    `copy /y ${q(join(dir, ARCHIVES.linux))} ${q(linux)} >nul`,
+    'if errorlevel 1 ( echo The Linux file could not be copied: nothing was uploaded. & pause & exit /b 1 )',
+    `butler push ${q(join(dir, ARCHIVES.windows))} ${target}:windows --userversion ${v}`,
+    'if errorlevel 1 ( echo The Windows upload FAILED. Nothing else was uploaded. & pause & exit /b 1 )',
+    `butler push ${q(linux)} ${target}:linux --userversion ${v}`,
+    'if errorlevel 1 ( echo The Linux upload FAILED: the Windows file IS up. Run this file again, or roll back. & pause & exit /b 1 )',
+    `echo. & echo Both files were sent as version ${v}. Check the page.`,
+    'pause',
+  ];
+  return lines.join('\r\n') + '\r\n';
+}
 /** Every refusal that holds, in one list, with the plan when there is none. `deps` are the only ways this reaches outside itself (the self-test replaces them). */
 export function judge(opts, deps) {
   const ci = ciProblem(deps.env);
   if (ci) return { problems: [ci], plan: [] };
   const problems = [];
-  if (opts.push) problems.push('--push: the upload is not written. It waits for the page to be approved; until then this script only checks');
+  if (opts.push) problems.push('--push: this script never uploads. With --write-cmd it writes the upload as a file you run by hand');
   problems.push(...approvalProblems('page', deps.committed(APPROVALS.page.file), opts.pageYes, deps.today));
   problems.push(...approvalProblems('builds', deps.committed(APPROVALS.builds.file), opts.buildsYes, deps.today));
   const t = readTarget(deps.targetText);
@@ -112,7 +144,7 @@ export function judge(opts, deps) {
     }
     if (infos.windows && infos.linux) problems.push(...versionProblems(infos, deps.changelog, opts));
   }
-  return { problems, plan: problems.length ? [] : plan(t.target, infos.windows.version, sums, opts) };
+  return { problems, plan: problems.length ? [] : plan(t.target, infos.windows.version, sums, opts), target: t.target, version: problems.length ? null : infos.windows.version };
 }
 
 // ---- the real world ----
@@ -147,14 +179,21 @@ export function realDeps(opts, scratch) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const a = process.argv.slice(2);
   const opt = (n) => { const i = a.indexOf(n); return i >= 0 ? a[i + 1] : undefined; };
-  const known = ['--dir', '--builds-yes', '--page-yes', '--target-file', '--rollback', '--push'];
+  const known = ['--dir', '--builds-yes', '--page-yes', '--target-file', '--rollback', '--push', '--write-cmd'];
   const odd = a.filter((x, i) => !known.includes(x) && !['--dir', '--builds-yes', '--page-yes', '--target-file'].includes(a[i - 1]));
-  if (odd.length || !a.length) { console.error('usage: node tools/store/itch-push.mjs --dir <folder> --builds-yes <date> --page-yes <date> [--target-file <file>] [--rollback]   (it checks; it sends nothing)'); process.exit(2); }
+  if (odd.length || !a.length) { console.error('usage: node tools/store/itch-push.mjs --dir <folder> --builds-yes <date> --page-yes <date> [--target-file <file>] [--rollback] [--write-cmd]   (it checks; it sends nothing)'); process.exit(2); }
   const opts = { dir: opt('--dir') ? resolve(opt('--dir')) : null, buildsYes: opt('--builds-yes'), pageYes: opt('--page-yes'), targetFile: opt('--target-file'), rollback: a.includes('--rollback'), push: a.includes('--push') };
   const scratch = mkdtempSync(join(tmpdir(), 'itch-check-'));
   let r;
   try { r = judge(opts, realDeps(opts, scratch)); } finally { rmSync(scratch, { recursive: true, force: true }); }
   if (r.problems.length) { for (const p of r.problems) console.error(`itch-push REFUSED: ${p}`); console.error('Nothing was sent.'); process.exit(1); }
   for (const l of r.plan) console.log(l);
-  console.log('Every check holds. DRY RUN: nothing was sent (the upload is not written).');
+  if (a.includes('--write-cmd')) {
+    const name = opts.rollback ? 'ROLLBACK.cmd' : 'UPLOAD.cmd';
+    // the same checks, run again by the file itself: the arguments as given, without --write-cmd
+    const again = a.filter((x) => x !== '--write-cmd').map((x, i, all) => (all[i - 1] === '--dir' ? opts.dir : all[i - 1] === '--target-file' ? resolve(x) : x));
+    writeFileSync(join(opts.dir, name), cmdFile({ node: process.execPath, script: fileURLToPath(import.meta.url), dir: opts.dir, args: again, target: r.target, version: r.version, rollback: opts.rollback }));
+    console.log(`Wrote ${join(opts.dir, name)}: run it by hand when you mean to ${opts.rollback ? 'roll back' : 'upload'}.`);
+  }
+  console.log('Every check holds. This script sent nothing.');
 }
