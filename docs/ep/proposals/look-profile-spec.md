@@ -502,3 +502,9 @@ What I would tell the EP, weighing the package plan (`docs/ep/reviews/A2-sprint.
 - **Five Opus reviewers** then attacked the first draft against the code (separation and network; the port; the data model; Orb's rules, legibility and the menu; the plan), and **five checkers** tried to refute every larger finding: about 1.5M tokens. 59 findings. Of the 42 larger ones: 27 confirmed, 15 lowered, none thrown out. I checked seven of the confirmed ones by hand and all held.
 - **What the review changed:** how a look is found (by slot, not by colour, across 18 call sites); the owner tag on effect events; the replay field written outside the simulation; a travelling form that fits one packet; a proof that actually runs the look path; beam width and aura size kept as the game's; the transformation's own aura; shimmer and "Negative" cut from version 1; brightness capped per emitter; the skeleton's real owner; the shots batch split; closed schemas for the repo's files; the seed promise made honest; rewards that cannot strand a save; the pad map (Start is Back); same-fighter picks kept off; the fighter's kit kept the fighter's; the marks-to-auras work; owners corrected; and the plan stated as a proposal with a size, not as agreed alpha work.
 - **Not done:** no second review of this draft. Nothing here was run.
+
+## Orb's answers (2026-11-28, about 02:00; verbatim in docs/ep/vision.md)
+
+1. **The toy wins.** Everything the toy makes is allowed, within the limits of section 5.
+2. **The fighter keeps their beam's shape, width and struggle.** Looks change texture, colour and movement.
+3. **Everything is unlocked for the alpha.** Tiers are only shown. The earn-by-playing rules (3, 10 and 25 matches) are not built for the alpha; the reward file's shape stays, so the campaign can use it later.
