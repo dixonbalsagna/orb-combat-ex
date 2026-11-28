@@ -57,3 +57,11 @@ The file-by-file log above stopped at 2026-09-29 while the project kept shipping
 | Design documents and plans | `docs/` | AI-written, Orb directing | Claude Code | Orb's verbatim answers in `docs/ep/vision.md` are Orb's own words | Undecided |
 
 "Human-made" is not a recorded origin for any row. A claim of "edited by Orb" or "written by Orb" needs the diff or file named here first.
+
+## The energy toy and its catalogue (added 2026-11-28, RL-286; ADR 0007)
+
+- **What:** `prototype/energy-toy/index.html` (shaders, catalogue, ten presets) and its README.
+- **Made:** with AI assistance (Claude), by Orb's stand-in on Orb's brief of 2026-11-27 (`docs/ep/vision.md`).
+- **Orb's first find** (`recipes/orb-first-find-2026-11-27.json`): Orb's own choice among the toy's pieces.
+- **Third-party code inside:** LR-026 and LR-027 in `licence-register.md` (MIT; notice owed).
+- **Names:** screened in `look-profile-screen.md`.
