@@ -1,0 +1,57 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+LAUNCH PROBE level easy, seeds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], cap 18000; R 24446
+MATCH seed 1: field true, cap at 272 s, launches 0
+  L seed 2 @9483 T1 UPPERCUT t 2.27 s fits 100 deg; eye 713; in view: none
+MATCH seed 2: field true, cap at 270 s, launches 1
+  L seed 3 @706 T1 SMASH ACROSS t 1.88 s fits 77 deg; eye 1564; in view: none
+  L seed 3 @2096 T1 DRIVE DOWN t 0.43 s fits 0 deg; eye 973; in view: none
+  L seed 3 @6367 T1 SMASH ACROSS t 2.78 s fits 131 deg; eye 2180; in view: none
+  L seed 3 @13490 T2 DRIVE DOWN t 0.85 s fits 15 deg; eye 3731; in view: none
+  L seed 3 @16360 T2 PROP SMASH t 1.77 s fits 70 deg; eye 1996; in view: none
+MATCH seed 3: field true, cap at 271 s, launches 5
+  L seed 4 @5086 T1 SMASH ACROSS t 3.32 s fits 163 deg; eye 4437; in view: town#18 d 10467 turn -68 FITS, town#20 d 14701 turn -91 FITS
+MATCH seed 4: field true, cap at 274 s, launches 1
+  L seed 5 @1456 T1 DRIVE DOWN t 0.48 s fits 1 deg; eye 1751; in view: none
+  L seed 5 @13354 T2 SMASH ACROSS t 3.48 s fits 173 deg; eye 3796; in view: none
+MATCH seed 5: field true, cap at 269 s, launches 2
+  L seed 6 @1892 T1 DRIVE DOWN t 0.33 s fits 0 deg; eye 1571; in view: none
+  L seed 6 @12558 T2 PROP SMASH t 0.60 s fits 4 deg; eye 226; in view: town#46 d 17617 turn -87
+  L seed 6 @16989 T2 SMASH ACROSS t 1.40 s fits 48 deg; eye 1057; in view: town#46 d 17782 turn -90
+MATCH seed 6: field true, cap at 269 s, launches 3
+  L seed 7 @2383 T1 DRIVE DOWN t 0.32 s fits 0 deg; eye 2839; in view: none
+  L seed 7 @11662 T2 CLIFFSIDE t 1.67 s fits 64 deg; eye 3007; in view: town#35 d 19544 turn 79, town#44 d 11370 turn 113
+  L seed 7 @17954 T2 SMASH ACROSS t 3.30 s fits 162 deg; eye 3269; in view: city#3 d 9546 turn 114 FITS, town#22 d 19692 turn 66 FITS, town#43 d 17522 turn 85 FITS
+MATCH seed 7: field true, cap at 271 s, launches 3
+  L seed 8 @4125 T1 SMASH ACROSS t 1.98 s fits 83 deg; eye 2489; in view: none
+MATCH seed 8: field true, cap at 271 s, launches 1
+  L seed 9 @1487 T1 UPPERCUT t 2.92 s fits 139 deg; eye 1517; in view: none
+  L seed 9 @3799 T1 PROP SMASH t 0.58 s fits 3 deg; eye 1638; in view: none
+  L seed 9 @3888 T1 UPPERCUT t 2.72 s fits 127 deg; eye 1494; in view: none
+  L seed 9 @4755 T1 CLIFFSIDE t 0.03 s fits 6 deg; eye 525; in view: town#29 d 13750 turn -98
+  L seed 9 @7109 T1 CLIFFSIDE t 0.68 s fits 7 deg; eye 1194; in view: city#5 d 4305 turn -91, town#38 d 17803 turn -82
+  L seed 9 @11317 T1 PROP SMASH t 0.70 s fits 7 deg; eye 3197; in view: town#38 d 17190 turn -90
+MATCH seed 9: field true, cap at 269 s, launches 6
+  L seed 10 @4925 T1 DRIVE DOWN t 0.52 s fits 2 deg; eye 1533; in view: none
+  L seed 10 @8497 T1 SMASH ACROSS t 2.45 s fits 111 deg; eye 2837; in view: none
+  L seed 10 @17671 T2 SMASH ACROSS t 2.35 s fits 105 deg; eye 3511; in view: none
+MATCH seed 10: field true, cap at 273 s, launches 3
+  L seed 11 @13657 T2 DRIVE DOWN t 0.95 s fits 21 deg; eye 2230; in view: city#9 d 14919 turn 91
+  L seed 11 @14296 T2 DRIVE DOWN t 1.43 s fits 50 deg; eye 3169; in view: town#29 d 16791 turn -96
+  L seed 11 @16970 T2 CLIFFSIDE t 2.60 s fits 120 deg; eye 3085; in view: town#29 d 16542 turn 82 FITS
+  L seed 11 @17628 T2 SKIM ASHORE t 2.48 s fits 113 deg; eye 3209; in view: town#29 d 15834 turn 94 FITS
+MATCH seed 11: field true, cap at 271 s, launches 4
+MATCH seed 12: field true, cap at 270 s, launches 0
+SUMMARY easy: launches 29; flight s: p10 0.33 p50 1.67 p90 3.30 max 3.48; >= 1.67 s 14, >= 2.1 s 11; kinds { "UPPERCUT": 3, "SMASH ACROSS": 9, "DRIVE DOWN": 8, "PROP SMASH": 4, "CLIFFSIDE": 4, "SKIM ASHORE": 1 }; a place in view 12, one that fits 4
+  KIND CLIFFSIDE T1: n 2, mean 0.36 s, min 0.03, max 0.68
+  KIND CLIFFSIDE T2: n 2, mean 2.13 s, min 1.67, max 2.60
+  KIND DRIVE DOWN T1: n 5, mean 0.42 s, min 0.32, max 0.52
+  KIND DRIVE DOWN T2: n 3, mean 1.08 s, min 0.85, max 1.43
+  KIND PROP SMASH T1: n 2, mean 0.64 s, min 0.58, max 0.70
+  KIND PROP SMASH T2: n 2, mean 1.18 s, min 0.60, max 1.77
+  KIND SKIM ASHORE T2: n 1, mean 2.48 s, min 2.48, max 2.48
+  KIND SMASH ACROSS T1: n 5, mean 2.48 s, min 1.88, max 3.32
+  KIND SMASH ACROSS T2: n 4, mean 2.63 s, min 1.40, max 3.48
+  KIND UPPERCUT T1: n 3, mean 2.63 s, min 2.27, max 2.92
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

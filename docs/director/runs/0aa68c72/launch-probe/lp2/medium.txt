@@ -1,0 +1,97 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+LAUNCH PROBE level medium, seeds [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], cap 18000; R 24446
+  L seed 1 @1220 T1 SMASH ACROSS t 1.78 s fits 71 deg; eye 1374; in view: none
+  L seed 1 @3952 T1 UPPERCUT t 3.17 s fits 154 deg; eye 1104; in view: none
+  L seed 1 @12704 T2 DRIVE DOWN t 1.15 s fits 33 deg; eye 3231; in view: town#29 d 15626 turn -115
+  L seed 1 @15403 T2 SKIM ASHORE t 1.32 s fits 43 deg; eye 643; in view: none
+MATCH seed 1: field true, cap at 263 s, launches 4
+  L seed 2 @3602 T1 SMASH ACROSS t 1.80 s fits 72 deg; eye 2453; in view: none
+  L seed 2 @9447 T2 CLIFFSIDE t 1.97 s fits 82 deg; eye 1824; in view: none
+  L seed 2 @10512 T2 SMASH ACROSS t 2.37 s fits 106 deg; eye 2109; in view: none
+  L seed 2 @12413 T2 DRIVE DOWN t 0.28 s fits 0 deg; eye 1153; in view: none
+  L seed 2 @15667 T2 TREE LINE t 0.67 s fits 6 deg; eye 215; in view: none
+  L seed 2 @16926 T2 BUILDING SMASH t 0.55 s fits 3 deg; eye 692; in view: town#32 d 8880 turn -72
+MATCH seed 2: field true, cap at 267 s, launches 6
+  L seed 3 @7162 T1 UPPERCUT t 2.77 s fits 130 deg; eye 2265; in view: none
+  L seed 3 @7777 T1 PROP SMASH t 0.15 s fits 2 deg; eye 2346; in view: none
+  L seed 3 @10283 T2 DOWNHILL t 2.93 s fits 140 deg; eye 3401; in view: none
+MATCH seed 3: field true, cap at 263 s, launches 3
+  L seed 4 @780 T1 BUILDING SMASH t 1.31 s fits 43 deg; eye 1757; in view: city#9 d 19886 turn 71
+  L seed 4 @2060 T1 PROP SMASH t 1.35 s fits 45 deg; eye 1980; in view: city#9 d 19836 turn -104
+  L seed 4 @3091 T1 DRIVE DOWN t 0.38 s fits 0 deg; eye 1557; in view: city#9 d 19970 turn -103
+  L seed 4 @4152 T1 PROP SMASH t 0.88 s fits 17 deg; eye 1538; in view: none
+  L seed 4 @10298 T1 DRIVE DOWN t 1.53 s fits 56 deg; eye 3028; in view: city#10 d 3490 turn -113
+  L seed 4 @13894 T2 BUILDING SMASH t 1.18 s fits 35 deg; eye 911; in view: city#8 d 17700 turn 101
+  L seed 4 @14547 T2 SMASH ACROSS t 2.10 s fits 90 deg; eye 734; in view: city#8 d 17927 turn 115
+MATCH seed 4: field true, cap at 267 s, launches 7
+  L seed 5 @3197 T1 DRIVE DOWN t 0.62 s fits 4 deg; eye 1289; in view: city#9 d 19947 turn 87, town#29 d 12064 turn 66
+  L seed 5 @12946 T2 SMASH ACROSS t 2.87 s fits 136 deg; eye 3708; in view: none
+MATCH seed 5: field true, cap at 263 s, launches 2
+  L seed 6 @4515 T1 DRIVE DOWN t 0.40 s fits 0 deg; eye 2432; in view: town#44 d 1006 turn -79
+  L seed 6 @7990 T1 UPPERCUT t 4.00 s fits 204 deg; eye 3324; in view: none
+  L seed 6 @11301 T2 DRIVE DOWN t 1.27 s fits 40 deg; eye 2817; in view: none
+  L seed 6 @15693 T2 TREE LINE t 0.22 s fits 1 deg; eye 1720; in view: none
+  L seed 6 @17740 T3 CRATER SLAM t 0.18 s fits 2 deg; eye 2681; in view: none
+MATCH seed 6: field true, cap at 263 s, launches 5
+  L seed 7 @4834 T1 SMASH ACROSS t 1.92 s fits 79 deg; eye 2949; in view: none
+  L seed 7 @12559 T2 DRIVE DOWN t 1.10 s fits 30 deg; eye 2510; in view: town#32 d 18280 turn -97
+  L seed 7 @15874 T3 BUILDING SMASH t 2.61 s fits 121 deg; eye 303; in view: city#2 d 18383 turn -68 FITS, town#32 d 19086 turn -111 FITS
+  L seed 7 @16331 T3 SMASH ACROSS t 1.67 s fits 64 deg; eye 301; in view: city#2 d 17396 turn -69, town#32 d 19342 turn -113
+MATCH seed 7: field true, cap at 263 s, launches 4
+  L seed 8 @2918 T1 DOWNHILL t 2.58 s fits 119 deg; eye 2818; in view: none
+  L seed 8 @6515 T1 TREE LINE t 1.38 s fits 47 deg; eye 561; in view: none
+  L seed 8 @7829 T1 PROP SMASH t 0.63 s fits 5 deg; eye 188; in view: none
+  L seed 8 @11728 T2 UPPERCUT t 4.00 s fits 204 deg; eye 247; in view: city#10 d 16059 turn 90 FITS
+MATCH seed 8: field true, cap at 268 s, launches 4
+  L seed 9 @863 T1 PROP SMASH t 0.93 s fits 20 deg; eye 2043; in view: none
+  L seed 9 @6870 T1 DRIVE DOWN t 0.83 s fits 14 deg; eye 1438; in view: town#29 d 13471 turn 66
+  L seed 9 @8832 T2 BUILDING SMASH t 0.74 s fits 9 deg; eye 1945; in view: none
+  L seed 9 @13725 T2 UPPERCUT t 4.00 s fits 204 deg; eye 318; in view: none
+  L seed 9 @14488 T3 DRIVE DOWN t 0.62 s fits 4 deg; eye 2630; in view: town#44 d 7294 turn 109
+  L seed 9 @15346 T3 SMASH ACROSS t 3.38 s fits 167 deg; eye 3358; in view: town#44 d 7260 turn 68 FITS
+MATCH seed 9: field true, cap at 260 s, launches 6
+  L seed 10 @2171 T1 DRIVE DOWN t 0.70 s fits 7 deg; eye 1985; in view: none
+  L seed 10 @3103 T1 SMASH ACROSS t 2.00 s fits 84 deg; eye 1223; in view: none
+  L seed 10 @5036 T1 UPPERCUT t 2.50 s fits 114 deg; eye 2905; in view: none
+  L seed 10 @7499 T1 DRIVE DOWN t 0.07 s fits 5 deg; eye 2156; in view: none
+  L seed 10 @8783 T1 SKIM ASHORE t 2.23 s fits 98 deg; eye 3809; in view: town#20 d 4680 turn -87 FITS
+  L seed 10 @13086 T2 DRIVE DOWN t 1.05 s fits 27 deg; eye 3092; in view: none
+  L seed 10 @14006 T2 SMASH ACROSS t 2.53 s fits 116 deg; eye 2007; in view: none
+MATCH seed 10: field true, cap at 268 s, launches 7
+  L seed 11 @2874 T1 PROP SMASH t 0.80 s fits 12 deg; eye 1783; in view: none
+  L seed 11 @5133 T1 DRIVE DOWN t 0.22 s fits 1 deg; eye 1694; in view: none
+  L seed 11 @14908 T3 CRATER SLAM t 0.38 s fits 0 deg; eye 1441; in view: none
+MATCH seed 11: field true, cap at 261 s, launches 3
+  L seed 12 @137 T1 SMASH ACROSS t 1.70 s fits 66 deg; eye 1319; in view: none
+  L seed 12 @5451 T1 DRIVE DOWN t 0.50 s fits 1 deg; eye 1326; in view: none
+  L seed 12 @7455 T1 DRIVE DOWN t 0.53 s fits 2 deg; eye 1246; in view: none
+  L seed 12 @9044 T1 SMASH ACROSS t 2.43 s fits 110 deg; eye 3556; in view: none
+  L seed 12 @10235 T2 DRIVE DOWN t 0.85 s fits 15 deg; eye 3086; in view: none
+  L seed 12 @11611 T2 DRIVE DOWN t 1.28 s fits 41 deg; eye 2712; in view: city#8 d 17838 turn -72
+  L seed 12 @15029 T2 UPPERCUT t 4.00 s fits 204 deg; eye 1102; in view: city#10 d 3460 turn -77 FITS
+  L seed 12 @16802 T2 SMASH ACROSS t 1.67 s fits 64 deg; eye 713; in view: none
+MATCH seed 12: field true, cap at 267 s, launches 8
+SUMMARY medium: launches 59; flight s: p10 0.28 p50 1.31 p90 3.17 max 4.00; >= 1.67 s 23, >= 2.1 s 16; kinds { "SMASH ACROSS": 13, "UPPERCUT": 7, "DRIVE DOWN": 18, "SKIM ASHORE": 2, "CLIFFSIDE": 1, "TREE LINE": 3, "BUILDING SMASH": 5, "PROP SMASH": 6, "DOWNHILL": 2, "CRATER SLAM": 2 }; a place in view 20, one that fits 5
+  KIND BUILDING SMASH T1: n 1, mean 1.31 s, min 1.31, max 1.31
+  KIND BUILDING SMASH T2: n 3, mean 0.83 s, min 0.55, max 1.18
+  KIND BUILDING SMASH T3: n 1, mean 2.61 s, min 2.61, max 2.61
+  KIND CLIFFSIDE T2: n 1, mean 1.97 s, min 1.97, max 1.97
+  KIND CRATER SLAM T3: n 2, mean 0.28 s, min 0.18, max 0.38
+  KIND DOWNHILL T1: n 1, mean 2.58 s, min 2.58, max 2.58
+  KIND DOWNHILL T2: n 1, mean 2.93 s, min 2.93, max 2.93
+  KIND DRIVE DOWN T1: n 10, mean 0.58 s, min 0.07, max 1.53
+  KIND DRIVE DOWN T2: n 7, mean 1.00 s, min 0.28, max 1.28
+  KIND DRIVE DOWN T3: n 1, mean 0.62 s, min 0.62, max 0.62
+  KIND PROP SMASH T1: n 6, mean 0.79 s, min 0.15, max 1.35
+  KIND SKIM ASHORE T1: n 1, mean 2.23 s, min 2.23, max 2.23
+  KIND SKIM ASHORE T2: n 1, mean 1.32 s, min 1.32, max 1.32
+  KIND SMASH ACROSS T1: n 6, mean 1.94 s, min 1.70, max 2.43
+  KIND SMASH ACROSS T2: n 5, mean 2.31 s, min 1.67, max 2.87
+  KIND SMASH ACROSS T3: n 2, mean 2.52 s, min 1.67, max 3.38
+  KIND TREE LINE T1: n 1, mean 1.38 s, min 1.38, max 1.38
+  KIND TREE LINE T2: n 2, mean 0.44 s, min 0.22, max 0.67
+  KIND UPPERCUT T1: n 4, mean 3.11 s, min 2.50, max 4.00
+  KIND UPPERCUT T2: n 3, mean 4.00 s, min 4.00, max 4.00
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

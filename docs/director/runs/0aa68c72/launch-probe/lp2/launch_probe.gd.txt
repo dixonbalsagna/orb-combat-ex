@@ -1,0 +1,102 @@
+extends SceneTree
+## Scratch probe (Encounter, brief 3's launch swing): how long today's launches fly, and how often a built place lies behind the fight
+## inside Camera's lens at a launch, with the turn it would need and whether that turn fits the flight under the core's rate law.
+## Needs the scratch hook in DirSwing.atSend (probeOn / probe). Computer against computer on each seed's default world.
+##   bash tools/godot-run.sh --path <tree> --script res://sim/director/tools/launch_probe.gd -- --level=medium --seeds=1,2 --ticks=18000
+
+var level: String = "medium"
+var seeds: Array = [1, 2, 3]
+var cap: int = 18000
+const HALF: float = 25.5    # Camera's lens: tan 15 x 16/9, about 25.5 degrees each side across the screen
+
+
+func _init() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--level="):
+			level = a.substr(8)
+		elif a.begins_with("--seeds="):
+			seeds = Array(a.substr(8).split(",")).map(func(x): return int(x))
+		elif a.begins_with("--ticks="):
+			cap = int(a.substr(8))
+	DirSwing.probeOn = true
+	var R: float = SimField.R
+	print("LAUNCH PROBE level %s, seeds %s, cap %d; R %.0f" % [level, str(seeds), cap, R])
+	var all: Array = []
+	for sd in seeds:
+		var su: Dictionary = WorldDefault.apply({"intro": false, "aiLevel": level}, int(sd))
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, int(sd), {"p1": true, "p2": true}, su)
+		R = SimField.R
+		var t: int = 0
+		var koAt: int = -1
+		DirSwing.probe.clear()
+		var n0: int = 0
+		while t < cap:
+			SimCore.step(S, [null, null])
+			while n0 < DirSwing.probe.size():
+				var e: Dictionary = DirSwing.probe[n0]
+				n0 += 1
+				if S.frame == null:
+					continue
+				var fr: Dictionary = DirSwing._frame(S, float(e.ax))
+				var P = DirSwing._planet(S)
+				var side: int = 1 if float(e.face) >= 0.0 else -1
+				var fits: float = SimSwing.mostFor(float(e.t) - DirSwing._restSec(), "launch")
+				var seen: Array = []
+				for pl in DirSwing.places(S, P, fr, 20000.0):
+					var phi: float = float(pl.phi)
+					if phi >= 0.0 or absf(phi + 90.0) > HALF:
+						continue
+					var turn: float = DirSwing._turnFor(phi, side)
+					seen.append("%s#%d d %.0f turn %.0f%s" % [String(pl.kind), int(pl.id), float(pl.d), turn, " FITS" if absf(turn) <= fits else ""])
+				var row := "T%d %s t %.2f s fits %.0f deg; eye %.0f; in view: %s" % [int(e.tier), String(e.name), float(e.t), fits, maxf(float(e.aAlt), float(e.dAlt)), ", ".join(seen) if not seen.is_empty() else "none"]
+				print("  L seed %d @%d %s" % [int(sd), int(e.tick), row])
+				all.append({"name": String(e.name), "t": float(e.t), "fits": fits, "seen": seen, "tier": int(e.tier)})
+			S.out.fx.clear()
+			S.out.feed.clear()
+			t += 1
+			if S.game.ko != null and koAt < 0:
+				koAt = t
+			if koAt >= 0 and t > koAt + 240:
+				break
+		print("MATCH seed %d: field %s, %s at %.0f s, launches %d" % [int(sd), str(S.frame != null), "KO" if koAt >= 0 else "cap", S.T, n0])
+		SimCore.dispose(S)
+	var ts: Array = []
+	var kinds: Dictionary = {}
+	var withView: int = 0
+	var withFit: int = 0
+	for a in all:
+		ts.append(float(a.t))
+		kinds[a.name] = int(kinds.get(a.name, 0)) + 1
+		if not (a.seen as Array).is_empty():
+			withView += 1
+			for s in a.seen:
+				if String(s).ends_with("FITS"):
+					withFit += 1
+					break
+	ts.sort()
+	var q := func(p: float) -> float: return float(ts[mini(ts.size() - 1, int(p * ts.size()))]) if not ts.is_empty() else -1.0
+	var over17: int = 0
+	var over21: int = 0
+	for x in ts:
+		if float(x) >= 1.67:
+			over17 += 1
+		if float(x) >= 2.1:
+			over21 += 1
+	print("SUMMARY %s: launches %d; flight s: p10 %.2f p50 %.2f p90 %.2f max %.2f; >= 1.67 s %d, >= 2.1 s %d; kinds %s; a place in view %d, one that fits %d" % [level, ts.size(), q.call(0.1), q.call(0.5), q.call(0.9), float(ts[ts.size() - 1]) if not ts.is_empty() else -1.0, over17, over21, str(kinds), withView, withFit])
+	var tab: Dictionary = {}
+	for a in all:
+		var k: String = "%s T%d" % [String(a.name), int(a.tier)]
+		if not tab.has(k):
+			tab[k] = []
+		(tab[k] as Array).append(float(a.t))
+	var ks: Array = tab.keys()
+	ks.sort()
+	for k in ks:
+		var v: Array = tab[k]
+		v.sort()
+		var sum: float = 0.0
+		for x in v:
+			sum += float(x)
+		print("  KIND %s: n %d, mean %.2f s, min %.2f, max %.2f" % [k, v.size(), sum / v.size(), float(v[0]), float(v[v.size() - 1])])
+	quit(0)
