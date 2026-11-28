@@ -43,6 +43,9 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 **Rule texts brought into line under the switch:**
 - **`energy-overhaul.md` E45 and E125** are amended there.
 - **The kits' answer lists** (`energy-movesets.md` and the four kit pages, Combat's) should read **"a grab only before full"** for the energy grabs' answer to a held charge.
+- **A thrown energy grab that meets a full charge** (2026-11-28, Combat's question): it breaks on him as it does on a dodge (E62). There's no catch and nothing is staged, and the charge goes on.
+  - **The thrower isn't opened** beyond the throw's own frames: from range, the grab's energy and its frames are its price, and an open window there does nothing the charger could reach.
+  - **Thrown from inside a light's reach, it's G2's miss: open 20 ticks,** so the energy grab is never the safe way to test a full charge up close.
 - **Combat's note on the throw at the time:** from even, every throw is the leader's at the time, at 60 as at 45. From one ahead (a guard or a wind-up caught), the earned throw still comes on the second pulse. A third pulse for the earned throw from even isn't in this brief.
 
 **Together:** a charge started with room is safe from everything cheap once it's full. One started at arm's length can still be grabbed or out-timed before it's full. That's the spacing Orb asked for, and pillar 3 still holds.
