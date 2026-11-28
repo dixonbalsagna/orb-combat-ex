@@ -10,6 +10,7 @@ import { INTERIM_WAIVES } from './flash/release-pass.mjs';
 import { scanPack, unallowed } from './site-name-scan.mjs';
 import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
 import { aboutPage, gateOverlay } from './site-interim.mjs';
+import { inProgram, loadSnippets, noticeSection } from './third-party.mjs';
 
 const here = import.meta.dirname;
 let ran = 0, failed = 0;
@@ -635,6 +636,11 @@ try {
     const words = JSON.parse(readFileSync(join(here, 'site-interim-owner.json'), 'utf8'));
     const lic = JSON.parse(readFileSync(join(here, 'site-licences.json'), 'utf8'));
     const html = aboutPage(words, lic, { play: '../play/', privacy: null });
+    {   // RL-289: other people's code the published build holds is credited on the About page, from the build's own pack
+      const mit = loadSnippets().filter((r) => r.license);
+      const withThird = aboutPage(words, lic, { play: '../play/', privacy: null }, noticeSection(inProgram(Buffer.from(mit.map((r) => r.marker).join(' ')), loadSnippets())));
+      check('the About page credits each snippet the build holds, with the MIT words, and says nothing of it when it holds none', mit.length >= 1 && mit.every((r) => withThird.includes(r.author) && withThird.includes('Shader code by other people')) && /Permission is hereby granted/.test(withThird) && !html.includes('Shader code by other people'));
+    }
     const offlineWords = JSON.stringify(JSON.parse(readFileSync(join(here, 'site-notice-offline.json'), 'utf8')).blocks);
     check("the About page carries Legal's engine line (the version, a custom web build) and never calls the engine official outside the licence texts", /Built with the Godot Engine \(version 4\.\d+\.\d+\), in a custom web build\./.test(html) && !/official/i.test(html.replace(/<pre>[\s\S]*?<\/pre>/g, '')), (html.match(/Built with[^<]*/) || [''])[0]);
     check('the About page carries the long contact route and the offline notice the short form (Legal RL-256: the public issues page, no personal address)', /github\.com\/dixonbalsagna\/orb-combat-ex\/issues/.test(html) && /open an issue on our public GitHub page/.test(html) && offlineWords.includes('open an issue at github.com/dixonbalsagna/orb-combat-ex/issues'));

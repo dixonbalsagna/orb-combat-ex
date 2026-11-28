@@ -26,6 +26,7 @@ import { verify as verifyReleasePass, interimOf } from './flash/release-pass.mjs
 import { aboutPage, gateOverlay, GATE_SCRIPT } from './site-interim.mjs';
 import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
 import { shellSnippet, injectShell } from './lib/audio-shell.mjs';
+import { inProgram, loadSnippets, noticeSection } from './third-party.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -135,7 +136,11 @@ if (config.interim) {
   // the holding page (the plain notice) is /, /bench/, /band/ and /404.html: no game, no link, and where "Not now" goes
   const holding = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice.json'), 'utf8')));
   for (const where of ['index.html', 'bench/index.html', 'band/index.html', '404.html']) put(where, holding);
-  put('about/index.html', aboutPage(text, lic, { play: '../play/', privacy: config.crumbs === true ? CRUMBS_PRIVACY : null }));
+  // other people's code the published build holds (read from its own pack), credited on the About page (RL-289); the in-game licenses screen carries it too
+  const pck = join(webDir, 'index.pck');
+  const held = existsSync(pck) ? inProgram(readFileSync(pck), loadSnippets()) : [];
+  for (const r of held.filter((x) => !x.license)) console.log(`WARNING: the web build holds code with no known terms (${r.title}, tools/third-party.json row ${r.id}): to be replaced before it is public (RL-292)`);
+  put('about/index.html', aboutPage(text, lic, { play: '../play/', privacy: config.crumbs === true ? CRUMBS_PRIVACY : null }, noticeSection(held)));
   console.log(`site built in ${outDir}: INTERIM (${owner ? 'owner-approved: ' + owner + (I.expires ? ', until ' + I.expires : ', no expiry') : I.legal + ', until ' + I.expires}): /play/ behind the click-through; /, /bench/, /band/ and /404.html are the holding page; /about/ has the notices`);
   process.exit(0);
 }

@@ -1,5 +1,13 @@
 # Getting a reading from the Linux build: options (Tools, 2026-11-28; a study, nothing installed)
 
+## Ruled since (Legal, 2026-11-28, RL-298 to RL-301)
+
+- **WSL counts**, and so does **the USB stick** (the closest to a player's Linux machine). A **runner's reading does not**; it is worth running as the trial of the method.
+- Conditions on any reading that counts: the testers' own file with its checksum, the lock check on that file and the headless result equal to the build record's; every frame from the program itself, none dropped; a picture check beside it (a missing building or effect voids it); a hidden display; frames stay on Orb's PC. The WSL install needs Orb's yes.
+- Orb or Orb 2 starting the testers' program from the stick and closing it at the warning **meets G23** too.
+- **The Windows half** must be read from the testers' own Windows file on one of Orb's PCs (a window at a time Orb chooses, the second PC, or a hidden window that passes the picture check). No Windows key goes out before it.
+- The trial of the method is `.github/workflows/linux-reading.yml` (by hand; nothing kept).
+
 ## Two different things are owed
 
 | Gate | What it needs | Who |

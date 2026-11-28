@@ -188,6 +188,10 @@ jobs:
         run: node tools/clips/trial-clips-selftest.mjs
       - name: "Other people's code (no unlisted copy of a listed snippet, so every package carries its notice)"
         run: node tools/third-party.mjs --check
+      - name: "The licenses screen's copy of those credits is current (UI's generator)"
+        run: node ui/tools/third_party_notices.mjs --check
+      - name: 'Linux first-start kit (the script a person runs for G23, tried with a stand-in program)'
+        run: node tools/first-run/linux-first-start-selftest.mjs
       - name: 'Game launches (no new script starts the game outside tools/godot-run.sh, so no run reaches a real data folder; the launcher self-test)'
         run: node tools/lint-godot-launch-selftest.mjs && node tools/lint-godot-launch.mjs
       - name: 'Data-folder guard (runs from the project keep to the dev folder; a built program keeps the folder players have)'

@@ -1,0 +1,162 @@
+# Can a flash reading be taken from the Linux program itself? (Tools, 2026-11-28; docs/tools/linux-reading-options.md, option 2; gate G21 asks for such a reading.)
+# By hand only (workflow_dispatch). A METHOD PROOF: nothing gates on it, nothing deploys, and it is NOT the G21 reading, which must be of the very package friends get (this builds its own from a commit):
+# Legal RL-299 says a runner does not count, and is worth running as the trial of the method with the lock on and nothing kept. A reading over the line here is a real fault to fix; a pass here clears nothing.
+# The job builds the Linux program with Reduce flashing locked (the same edits the testers' build makes, and the same route check), has the program play its own computer match under a virtual display
+# on software GL while the engine writes every frame (--write-movie, a fixed 60 a second), and runs the project's frame analyser on those frames. NO FRAME, CLIP OR PROGRAM IS KEPT: a public
+# repository's artifacts can be downloaded by others. Kept for a day: the analyser's numbers, counts about the frames and the program's own lines.
+# The job FAILS when the method fails (no frames, too few, the analyser cannot read them, a frame set that is flat). A reading that is not PASS does not fail it: it is said, loudly, in the summary.
+name: Linux reading (method proof)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit, branch or tag to build (empty: the commit this workflow was started on)'
+        required: false
+        default: ''
+      ticks:
+        description: 'Frames the program plays before it ends, at a fixed 60 a second (the first few are loading, then one tick a frame)'
+        required: false
+        default: '1500'
+      seed:
+        description: 'Seed of the computer match'
+        required: false
+        default: '12345'
+      size:
+        description: 'Window size WxH'
+        required: false
+        default: '1024x768'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash   # GitHub's `bash` is `bash --noprofile --norc -eo pipefail {0}`
+
+jobs:
+  reading:
+    name: Frames from the Linux program, read by the analyser
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      TICKS: ${{ inputs.ticks || '1500' }}
+      SEED: ${{ inputs.seed || '12345' }}
+      SIZE: ${{ inputs.size || '1024x768' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - uses: ./.github/actions/setup-godot
+        with:
+          linux-templates: 'true'
+      - name: Refuse a run that could not mean anything
+        run: |
+          [[ "${TICKS}" =~ ^[0-9]+$ ]] && [ "${TICKS}" -ge 120 ] && [ "${TICKS}" -le 7200 ] || { echo "ticks must be a number from 120 to 7200"; exit 1; }
+          [[ "${SEED}" =~ ^[0-9]+$ ]] || { echo "seed must be a number"; exit 1; }
+          [[ "${SIZE}" =~ ^[0-9]{3,4}x[0-9]{3,4}$ ]] || { echo "size must be WxH"; exit 1; }
+      - name: Lock Reduce flashing on and set the testers' menu (the edits the testers' build makes)
+        run: |
+          node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"
+          node tools/desktop-package.mjs testers --root "${GITHUB_WORKSPACE}"
+      - name: Refuse unless the lock holds and no flag reaches normal mode
+        run: node tools/desktop-package.mjs routes --root "${GITHUB_WORKSPACE}" --testers
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Write build_info.json
+        run: node tools/write-build-info.mjs --commit "$(git rev-parse HEAD)"
+      - name: Export Linux (release, Compatibility, x86_64, pck embedded)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/export/linux" "${RUNNER_TEMP}/out"
+          "$GODOT" --headless --path . --export-release "Linux" "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
+          chmod +x "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
+          sha256sum "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64" | cut -d' ' -f1 > "${RUNNER_TEMP}/out/program.sha256"
+      - name: The program's headless test prints its result (what a real reading's record must match to the build record's)
+        run: |
+          cd "${RUNNER_TEMP}/export/linux"
+          ./orb-combat-ex.x86_64 --headless --fixed-fps 60 -- --seed=4 --frames=2400 --bench > "${RUNNER_TEMP}/out/bench.txt" 2>&1
+          grep -m1 '^gameplay hash at tick' "${RUNNER_TEMP}/out/bench.txt" | tee "${RUNNER_TEMP}/out/run.txt"
+      - name: A virtual display and the software GL it needs
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 libxcursor1 libxi6 libxrandr2 libxinerama1 libxkbcommon0 imagemagick
+      - name: The program plays its computer match and writes every frame
+        run: |
+          mkdir -p "${RUNNER_TEMP}/frames"
+          cd "${RUNNER_TEMP}/export/linux"
+          Xvfb :99 -screen 0 1920x1200x24 > "${RUNNER_TEMP}/out/xvfb.txt" 2>&1 &
+          xvfb_pid=$!
+          sleep 3
+          export DISPLAY=:99
+          start=$(date +%s)
+          code=0
+          timeout 3600 ./orb-combat-ex.x86_64 --rendering-driver opengl3 --audio-driver Dummy --resolution "${SIZE}" \
+            --write-movie "${RUNNER_TEMP}/frames/frame.png" --fixed-fps 60 -- --seed="${SEED}" --frames="${TICKS}" --bench > "${RUNNER_TEMP}/out/game.txt" 2>&1 || code=$?
+          kill "${xvfb_pid}" 2>/dev/null || true
+          echo "the program ended with ${code} after $(( $(date +%s) - start )) s" | tee -a "${RUNNER_TEMP}/out/run.txt"
+          head -n 20 "${RUNNER_TEMP}/out/game.txt"
+          tail -n 12 "${RUNNER_TEMP}/out/game.txt"
+          test "${code}" = "0"
+      - name: Are the frames there, and not flat?
+        run: |
+          n=$(find "${RUNNER_TEMP}/frames" -name 'frame*.png' | wc -l)
+          echo "frames written: ${n} of ${TICKS} asked" | tee -a "${RUNNER_TEMP}/out/run.txt"
+          # a real reading needs EVERY frame (RL-298): whether this run wrote them all is said here, and only a gross shortfall fails the proof
+          if [ "${n}" -ge "${TICKS}" ]; then echo "every frame written: yes"; else echo "every frame written: NO, $(( TICKS - n )) missing"; fi | tee -a "${RUNNER_TEMP}/out/run.txt"
+          grep -m1 'Movie Maker mode enabled' "${RUNNER_TEMP}/out/game.txt" | tee -a "${RUNNER_TEMP}/out/run.txt" || true
+          grep -m1 -iE 'OpenGL API|renderer' "${RUNNER_TEMP}/out/game.txt" | tee -a "${RUNNER_TEMP}/out/run.txt" || true
+          test "${n}" -ge $(( TICKS * 9 / 10 ))
+          # five frames spread over the run: size and colour count (a program that draws nothing writes flat pictures). Numbers only: no picture is kept.
+          mapfile -t all < <(find "${RUNNER_TEMP}/frames" -name 'frame*.png' | sort)
+          most=0
+          for i in 1 3 5 7 9; do
+            f="${all[$(( n * i / 10 ))]}"
+            line=$(identify -format '%wx%h, %k colours, mean %[fx:mean]' "${f}")
+            echo "frame at $(( i * 10 ))%: ${line}" | tee -a "${RUNNER_TEMP}/out/run.txt"
+            k=$(identify -format '%k' "${f}"); [ "${k}" -gt "${most}" ] && most="${k}"
+          done
+          test "${most}" -gt 64
+      - name: The analyser reads the frames
+        run: |
+          echo "{\"scenario\": \"linux-program-ai-${SEED}\", \"reduced\": true, \"fps\": 60}" > "${RUNNER_TEMP}/frames/clip.json"
+          start=$(date +%s)
+          code=0
+          node tools/flash/analyse-frames.js "${RUNNER_TEMP}/frames" --scale 1 --json "${RUNNER_TEMP}/out/analysis.json" > "${RUNNER_TEMP}/out/analysis.txt" 2>&1 || code=$?
+          cat "${RUNNER_TEMP}/out/analysis.txt"
+          echo "the analyser ended with ${code} after $(( $(date +%s) - start )) s" | tee -a "${RUNNER_TEMP}/out/run.txt"
+          # 0: no failure found. 1: a reading that is not PASS (a result, not a broken method). Anything else: the method failed.
+          test "${code}" = "0" || test "${code}" = "1"
+          test -s "${RUNNER_TEMP}/out/analysis.json"
+          if [ "${code}" = "1" ]; then echo "::warning::the reading of this build's own match is NOT PASS: see the summary"; fi
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '### Linux reading, method proof (not the G21 reading)'
+            echo
+            echo "- commit $(git rev-parse --short HEAD), seed ${SEED}, ${TICKS} frames, window ${SIZE}, Reduce flashing locked"
+            echo "- program sha256: $(cat "${RUNNER_TEMP}/out/program.sha256" 2>/dev/null || echo 'not built')"
+            sed 's/^/- /' "${RUNNER_TEMP}/out/run.txt" 2>/dev/null || true
+            echo
+            echo '```'
+            cat "${RUNNER_TEMP}/out/analysis.txt" 2>/dev/null || echo 'the analyser did not run'
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY" "${RUNNER_TEMP}/out/summary.md" > /dev/null || true
+      - name: Keep the numbers and the program's lines (one day; no frame, clip or program)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: linux-reading
+          path: |
+            ${{ runner.temp }}/out/summary.md
+            ${{ runner.temp }}/out/run.txt
+            ${{ runner.temp }}/out/analysis.txt
+            ${{ runner.temp }}/out/game.txt
+            ${{ runner.temp }}/out/bench.txt
+            ${{ runner.temp }}/out/xvfb.txt
+          retention-days: 1
+          if-no-files-found: warn

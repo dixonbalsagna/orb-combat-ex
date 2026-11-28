@@ -43,7 +43,7 @@ ${bodyHtml}
 
 /** The About page: this build, the AI line, privacy, flashing effects, the two notices, then the engine's own licence and copyright text (tools/site-licences.json, written by
  *  tools/site_licences.gd). It links to the gate and to the holding page and to nothing else. */
-export function aboutPage(text, lic, links) {
+export function aboutPage(text, lic, links, third = '') {   // third: tools/third-party.mjs noticeSection, for other people's code the published build holds (RL-289)
   const parts = [];
   parts.push(`<h1>${esc(text.about.heading)}</h1>`);
   // with the freeze breadcrumbs on (tools/site-crumbs.mjs) the Privacy paragraph is Legal's switch-on paragraph; off, the words file's own
@@ -61,6 +61,9 @@ export function aboutPage(text, lic, links) {
     parts.push(`<p>${esc(c.name)}: copyright ${esc((p.copyright || []).join('; '))}. Licensed under the SIL Open Font License, Version 1.1 (OFL-1.1):</p>`);
   }
   if (lic.licenses && lic.licenses['OFL-1.1']) parts.push(`<pre>${esc(lic.licenses['OFL-1.1'])}</pre>`);
+  if (third) {   // the section's first line is its heading in capitals; the page makes its own
+    parts.push('<h2>Shader code by other people</h2>', `<pre>${esc(third.split(/\r?\n/).slice(1).join(String.fromCharCode(10)).trim())}</pre>`);
+  }
   parts.push('<h2>Other components in the engine</h2>');
   parts.push('<p class="small">The components the Godot Engine itself lists, with their copyright holders and licenses. The license texts follow.</p>');
   const rows = [];
