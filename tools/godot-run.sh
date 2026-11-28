@@ -6,12 +6,15 @@
 #   bash tools/godot-run.sh --program <exported program> -- --seed=4 --bench           a built program, kept away the same way
 #   eval "$(bash tools/godot-run.sh --print-env)"                                     for tools that start the engine themselves: moves user:// for everything this shell starts
 #   bash tools/godot-run.sh --where                                                   the data folder this shell's runs use
+#   bash tools/godot-run.sh --fresh <anything above>                                  a NEW EMPTY data folder for this run (or ORB_FRESH=1): for gates and shards, below
 #
 # What it does: every folder the game writes to (APPDATA, LOCALAPPDATA, HOME, USERPROFILE and the XDG folders) is moved inside a scratch folder of this session, then the engine REPLACES this shell
 # (exec: a `timeout` or a stop reaches the engine itself, and its output and exit code are its own).
 #   ORB_RUN_DATA    the scratch data folder (default: <temp>/orb-run-data/<session id>); kept between runs of a session, so a planet baked once is not baked again. Delete it to start clean.
 #   ORB_GODOT_EXE   the engine (default: GODOT when it is not this script, then the usual 4.7.2 console build on this PC, then `godot` on the PATH)
-# An export needs the engine's export templates, which live under the real APPDATA: they are hard-linked (or copied) into the scratch folder, read there, never written.
+# A reused data folder keeps the game's caches, and those are keyed by DATA, NOT CODE: a gate or a shard that must see what the code does now takes a fresh folder (--fresh), or a moved golden can pass.
+# An export needs the engine's export templates, which live under the real APPDATA: that one folder's files are hard-linked into the run's data folder (copied only for an export, when a link cannot be made),
+# read there, never written; nothing else of the real folder is touched. They are found even when this shell's environment has been moved already: ORB_TEMPLATES, then this environment's, then the OS's own answer.
 set -u
 refuse() { echo "godot-run REFUSED: $*" >&2; exit 2; }
 self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
@@ -20,9 +23,12 @@ posix() { if [ "$win" = 1 ]; then cygpath -u "$1"; else printf '%s' "$1"; fi; }
 native() { if [ "$win" = 1 ]; then cygpath -w "$1"; else printf '%s' "$1"; fi; }
 lower() { printf '%s' "$1" | tr 'A-Z\\' 'a-z/'; }
 
+fresh="${ORB_FRESH:-}"
+if [ "${1:-}" = "--fresh" ]; then fresh=1; shift; fi
 data="${ORB_RUN_DATA:-${TMPDIR:-/tmp}/orb-run-data/${CLAUDE_CODE_SESSION_ID:-shell}}"
 data="$(posix "$data")"
 case "$data" in /*) ;; *) data="$(pwd)/$data" ;; esac
+[ -n "$fresh" ] && [ "$fresh" != 0 ] && data="${data%/}/fresh-$(date +%Y%m%d-%H%M%S)-$$-$RANDOM"
 
 # the folders that hold a person's real game data on this machine, as the environment says NOW (before anything is moved)
 real_roaming="${APPDATA:+$(posix "$APPDATA")}"
@@ -35,6 +41,35 @@ case "$(lower "$data")" in */app_userdata*) case "$(lower "$data")" in *orb-run-
 
 if [ "${1:-}" = "--where" ]; then native "$data"; echo; exit 0; fi
 mkdir -p "$data/appdata" "$data/localappdata" "$data/home" "$data/xdg" "$data/xdgconfig" "$data/xdgcache" || refuse "the scratch data folder cannot be made: $data"
+
+# the installed export templates, wherever this shell's environment points now
+os_templates() {
+  if [ "$win" = 1 ]; then printf '%s/Godot/export_templates' "$(cygpath -u -F 26 2>/dev/null)"; return; fi
+  h="$(getent passwd "$(id -u)" 2>/dev/null | cut -d: -f6)"; [ -n "$h" ] && printf '%s/.local/share/godot/export_templates' "$h"
+}
+templates() {
+  for c in "${ORB_TEMPLATES:-}" "${real_roaming:+$real_roaming/Godot/export_templates}" "$real_xdg/godot/export_templates" "$(os_templates)"; do
+    [ -n "$c" ] || continue
+    c="$(posix "$c")"
+    for v in "$c"/*/; do [ -d "$v" ] && [ -n "$(ls "$v" 2>/dev/null)" ] && { printf '%s' "$c"; return 0; }; done
+  done
+  return 1
+}
+# put_templates [copy]: hard-link each installed template file into the run's data folder; with "copy", copy one that cannot be linked
+put_templates() {
+  src="$(templates)" || return 1
+  if [ "$win" = 1 ]; then dst="$data/appdata/Godot/export_templates"; else dst="$data/xdg/godot/export_templates"; fi
+  for v in "$src"/*/; do
+    v="${v%/}"; [ -d "$v" ] || continue; mkdir -p "$dst/${v##*/}"
+    for f in "$v"/*; do
+      [ -f "$f" ] || continue; t="$dst/${v##*/}/${f##*/}"; [ -e "$t" ] && continue
+      ln "$f" "$t" 2>/dev/null && continue
+      [ "${1:-}" = copy ] && cp "$f" "$t"
+    done
+  done
+  return 0
+}
+put_templates || true   # every run: a tool started under this environment may export, and finds them here
 if [ "${1:-}" = "--print-env" ]; then
   # only the two that decide where user:// is: a shell's git, npm and the rest keep their own settings
   printf "export APPDATA='%s' XDG_DATA_HOME='%s'\n" "$(native "$data/appdata")" "$(native "$data/xdg")"
@@ -65,14 +100,7 @@ for a in "$@"; do
   esac
 done
 
-if [ "$exporting" = 1 ]; then
-  if [ -n "$real_roaming" ]; then src="$real_roaming/Godot/export_templates"; dst="$data/appdata/Godot/export_templates"; else src="$real_xdg/godot/export_templates"; dst="$data/xdg/godot/export_templates"; fi
-  [ -d "$src" ] || refuse "no export templates under $src"
-  for v in "$src"/*/; do
-    v="${v%/}"; mkdir -p "$dst/${v##*/}"
-    for f in "$v"/*; do [ -f "$f" ] || continue; t="$dst/${v##*/}/${f##*/}"; [ -e "$t" ] || ln "$f" "$t" 2>/dev/null || cp "$f" "$t"; done
-  done
-fi
+if [ "$exporting" = 1 ]; then put_templates copy || refuse "no export templates found (ORB_TEMPLATES, $real_roaming/Godot/export_templates, $real_xdg/godot/export_templates, or the OS's own folder)"; fi
 
 export APPDATA="$(native "$data/appdata")" LOCALAPPDATA="$(native "$data/localappdata")" HOME="$(native "$data/home")" USERPROFILE="$(native "$data/home")"
 export XDG_DATA_HOME="$(native "$data/xdg")" XDG_CONFIG_HOME="$(native "$data/xdgconfig")" XDG_CACHE_HOME="$(native "$data/xdgcache")"
