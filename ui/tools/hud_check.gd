@@ -73,6 +73,7 @@ func _run() -> void:
 	await _display_name_rules()
 	await _about_rules()
 	await _licences_rules()
+	_third_party_rules()
 	await _first_run_rules()
 	await _rename_rules()
 	await _press_mark_rules()
@@ -9826,6 +9827,44 @@ func _first_run_rules() -> void:
 	hud.hide_howto()
 	hud.queue_free()
 	await process_frame
+
+
+# --- Shader code by other people on the licences page (docs/ui/third-party-notices.md; Legal RL-289, RL-295) -----------------------------
+
+func _third_party_rules() -> void:
+	var list: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tools/third-party.json"))   # Tools' list, the source of truth (a development tree has it; a package does not)
+	var third: Dictionary = UiLicences.third_party()
+	var text: String = str(third.get("text", ""))
+	var page: String = UiLicences.full_text()
+	var held: Array = []
+	var missing := PackedStringArray()
+	var extra := PackedStringArray()
+	for r in (list as Dictionary).get("snippets", []):
+		var in_game := false
+		for f in r["files"]:
+			if FileAccess.file_exists("res://" + str(f)) and FileAccess.get_file_as_string("res://" + str(f)).contains(str(r["marker"])):
+				in_game = true
+		var licensed: bool = r.get("license") != null
+		if in_game and licensed:
+			held.append(str(r["id"]))
+			for want in [str(r["title"]), str(r["author"]), str(r["copyright"]), str(r["source"])]:
+				if not page.contains(want):
+					missing.append("%s: %s" % [str(r["id"]), want])
+		elif text.contains(str(r["title"])):
+			extra.append(str(r["id"]))
+		if text.contains(str(r["marker"])):
+			extra.append(str(r["id"]) + " (its code)")
+	_ok(missing.is_empty(), "third party: every credited snippet still in the game is on the licences page with its title, author, copyright and address (%s; missing %s)" % [str(held), str(missing)])
+	_ok(extra.is_empty(), "third party: the page credits nothing that is gone or has no known terms, and carries no line of code (%s)" % str(extra))
+	if held.is_empty():
+		_ok(text == "", "third party: with no credited code left the page has no such section")
+		return
+	var at: int = page.find(str(third.get("title", "?")))
+	_ok(at > 0 and at < page.find("Components built into Godot Engine") and page.contains("Permission is hereby granted") and text.contains("used under the MIT License") and text.contains("THE SOFTWARE IS PROVIDED \"AS IS\""), "third party: the section sits after Godot's own license, with the MIT license's words in full")
+	var narrow := ""
+	for ln in UiLicences.lines(300.0, 16):
+		narrow += str(ln[1]) + " "
+	_ok(narrow.contains("Inigo Quilez") or not held.has("quilez-smin"), "third party: the names survive the wrapping at 300 px")
 
 
 # --- The third-party licences page: the engine's own texts, scrolling ----------------------------------------------------------------------

@@ -5,6 +5,10 @@ extends RefCounted
 ## rest). The engine itself supplies them (Engine.get_license_text, get_copyright_info, get_license_info), as its licence terms ask, so the page is
 ## always the true text for the engine version in the build and nothing is pasted into our data. About 90,000 characters, so the page scrolls.
 
+## Code by other people that is in the game (not part of the engine): the shipped copy of tools/third-party.json's notices, written by ui/tools/third_party_notices.mjs
+## (docs/ui/third-party-notices.md; Legal RL-289). tools/ is not packed, so the game reads this one.
+const THIRD_PARTY := "res://ui/notices/third_party.json"
+
 static var _blocks: Array = []
 static var _lines_key := ""
 static var _lines: Array = []
@@ -17,6 +21,10 @@ static func blocks() -> Array:
 	var out: Array = []
 	out.append([true, "Godot Engine"])
 	out.append([false, Engine.get_license_text().strip_edges()])
+	var third: Dictionary = third_party()
+	if str(third.get("text", "")) != "":
+		out.append([true, str(third.get("title", ""))])   # near the top: these are the notices that are ours to show, not the engine's own
+		out.append([false, str(third["text"])])
 	out.append([true, "Components built into Godot Engine"])
 	for c in Engine.get_copyright_info():
 		var parts: PackedStringArray = []
@@ -32,6 +40,14 @@ static func blocks() -> Array:
 		out.append([false, str(info[k]).strip_edges()])
 	_blocks = out
 	return out
+
+
+## The shipped notices file, or {} when there is none (the page then has the engine's texts alone).
+static func third_party() -> Dictionary:
+	if not FileAccess.file_exists(THIRD_PARTY):
+		return {}
+	var v = JSON.parse_string(FileAccess.get_file_as_string(THIRD_PARTY))
+	return v if v is Dictionary else {}
 
 
 ## The whole text as one string (what a test compares with the engine's own).
