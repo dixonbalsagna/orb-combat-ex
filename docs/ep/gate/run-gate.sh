@@ -4,8 +4,10 @@ G="${GODOT:?set GODOT to the Godot console exe}"
 export GODOT=$G
 # No run of the gate touches a person's game data: the engine is started through tools/godot-run.sh (its folders in $S/$T-userdata), and the node tools that start it themselves inherit the two variables
 # that decide where user:// is.
-export ORB_RUN_DATA="$S/$T-userdata" ORB_GODOT_EXE="$G"
+# A NEW data folder every gate run: the caches in it are keyed by data, not code, so a reused one can pass a golden that moved (World, 2026-11-28).
 L="$R/tools/godot-run.sh"
+export ORB_GODOT_EXE="$G" ORB_FRESH=
+export ORB_RUN_DATA="$(ORB_RUN_DATA="$S/$T-userdata" bash "$L" --fresh --where)"
 eval "$(bash "$L" --print-env)"
 G="$L"
 cd "$S/$T"; O="$S/$T-sim"; rm -rf "${O:?}"; mkdir -p "$O"; : > "$O/r.txt"
