@@ -8,6 +8,9 @@ extends SceneTree
 ## One line, ORBS <json>: wins by slot, draws, timeouts, beams fired by slot (the cue beam_fire), flicks, hits landed by slot, the names in each slot, the win list by match with the fighters' names, the median length and the data hash. Read-only with respect to sim/.
 const QaPlanet = preload("res://qa/godot/qa_planet.gd")
 const Chk = preload("res://qa/godot/checklist_core.gd")
+const Combat = preload("res://qa/godot/combat_core.gd")
+var combat = null   # --combat: the combat-overhaul baselines (combat_core.gd)
+var ai_level: String = ""   # --level=easy|medium|hard: setup.aiLevel as the start menu sets it, on the game's own default world (no QA_PLANET needed)
 
 var hub: SimInputHub
 var held: Array = [{}, {}]
@@ -50,6 +53,13 @@ func _init() -> void:
 			dbg = true
 		elif a == "--pace":
 			pace_probe = true
+		elif a.begins_with("--level="):
+			ai_level = a.substr(8)
+		elif a == "--combat":
+			combat = Combat.new()
+		elif a.begins_with("--trace="):
+			if combat != null:
+				combat.trace_every = int(a.substr(8))
 		else:
 			pos.append(a)
 	var n: int = int(pos[0]) if pos.size() > 0 else 10
@@ -85,6 +95,8 @@ func _init() -> void:
 		var chk = Chk.new()
 		chk.begin(S)
 		pbpend.clear()
+		if combat != null:
+			combat.start()
 		var st: Array = []
 		for i in range(2):
 			st.append({"next": 20 + 7 * i, "rsTo": -1, "aim": Vector2.ZERO, "lbTo": -1, "foeOpen": false, "foeT": -100, "bAt": (every + rng.randi_range(-every / 5, every / 5)) if every > 0 else -1, "bPhase": 0, "bUntil": -1})
@@ -108,6 +120,9 @@ func _init() -> void:
 			if (Time.get_ticks_msec() - t0) / 1000.0 > wall:
 				break
 		lens.append(float(S.tick) / 60.0)
+		if combat != null:
+			combat.end(S, result)
+			print("CMB " + JSON.stringify(combat.matches[-1]))   # one line a match: the engine cuts a printed line at 64 KB
 		var cr: Dictionary = chk.result()
 		for ck in cr:
 			var cs: Dictionary = chk_seen.get(ck, {"seen": 0, "ticks": []})
@@ -130,7 +145,7 @@ func _init() -> void:
 	lens.sort()
 	var med: float = lens[lens.size() / 2] if lens.size() > 0 else 0.0
 	var out := {"arm": arm, "n": n, "done": done, "budgetStopped": stopped, "winsBySlot": wins, "draws": draws, "timeouts": timeouts, "beamsBySlot": beams, "beamSources": src, "checklist": chk_seen, "otherBeams": other_log, "flicksBySlot": flicks, "hitsBySlot": hits, "namesSlots": names, "solo": solo, "mode": mode, "perfectBlock": pbres, "beamEvery": every, "beamHold": hold,
-		"medianSec": snappedf(med, 0.1), "pace": pace, "dataHash": str(SimReplay.dataHash({})), "matches": by_match}
+		"medianSec": snappedf(med, 0.1), "pace": pace, "combatMatches": combat.matches.size() if combat != null else 0, "dataHash": str(SimReplay.dataHash({})), "matches": by_match}
 	print("ORBS " + JSON.stringify(out))
 	quit()
 
@@ -140,6 +155,8 @@ func _make(seed_: int, arm: String, solo: bool = false) -> SimState:
 	held = [{}, {}]
 	var su: Dictionary = QaPlanet.setup(seed_, hub.setup())
 	su["intro"] = false
+	if ai_level != "":
+		su["aiLevel"] = ai_level
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed_, {"p1": false, "p2": solo}, su)
 	SimGolden.applyArm(arm, S.fighters)
@@ -164,6 +181,10 @@ func _btn(i: int, name: String, down: bool) -> void:
 
 
 func _drive(i: int, S: SimState, t: int, st: Dictionary, rng: RandomNumberGenerator, every: int, hold: int) -> void:
+	if mode == "flee" or mode == "idle":   # validation of the flying-away count: fly straight away from the rival, or press nothing at all
+		var away: float = -signf(SimWrap.sdx(S.fighters[i].x, S.fighters[1 - i].x))
+		hub.pad_stick(i, away if mode == "flee" else 0.0, 0.0)
+		return
 	if mode == "charge" or mode == "tap" or mode == "masher":
 		_drive_attack(i, S, t, st, rng)
 		return
@@ -294,6 +315,9 @@ func _step(S: SimState, t: int, st: Array, beams: Array, flicks: Array, hits: Ar
 		else:
 			hub.resume()
 	chk.feed(S, t, its)
+	if combat != null:
+		combat.holding = held[0].has("east") or (solo and int(st[0].bPhase) != 0)
+		combat.feed(S)
 	if pace_probe and solo and t % 10 == 0:
 		_pace_sample(S)
 	for e in S.out.fx:

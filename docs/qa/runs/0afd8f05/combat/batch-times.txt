@@ -1,0 +1,12 @@
+kit easy start 02:14:25 isolated-all5 USERPROFILE=u
+kit easy done 02:42:25
+kit medium start 02:42:25 isolated-all5 USERPROFILE=u
+kit medium done 03:08:20
+charge easy start 03:08:20 isolated-all5 USERPROFILE=u
+charge easy done 03:15:38
+charge medium start 03:15:38 isolated-all5 USERPROFILE=u
+charge medium done 03:24:23
+beams easy start 03:24:23 isolated-all5 USERPROFILE=u
+beams easy done 03:37:33
+beams medium start 03:37:33 isolated-all5 USERPROFILE=u
+beams medium done 03:46:13

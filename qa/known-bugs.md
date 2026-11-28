@@ -231,6 +231,30 @@ QA has no band for any of the three yet. For GB-005 the harness already counts b
 **Cause (read, not tested by a fix).** `sim/world/waterrec.gd` `lakeOf` floods a lake from its lowest cell and cuts the flood at `maxr` (twice the lake's width on the line, 800 to 6,000 units; its comment: "a leak is cut here"), at `MAX_NODES`, and at nodes another lake claimed. Beyond the cut the ground can be far below the lake's level and is dry, so the water ends in a face. `recordWater` is what both the sim and the tile renderer read.
 **Effect.** Visible slabs of water in towns, in every match that goes there. Whether fighters or bodies behave wrongly inside that water is not checked.
 
+### GB-012: The ground looks too flat in the foreground
+
+**Reported by:** Orb, 2026-11-27, after playing 0.1.1 (build 5dbd89ca): "ground looks strange, like too flat in the foreground, like its being culled for the camera or something" (`docs/ep/vision.md`).
+**Verdict:** **not yet reproduced by QA** (no still or seed with the note). Open.
+**Owner:** Rendering (the EP, 2026-11-28: Rendering is on it). **Horizon:** web. **Closing step:** Rendering's fix with a side-by-side against the reference build; Orb's look.
+
+### GB-013: Craters seem split in half
+
+**Reported by:** Orb, 2026-11-27, after playing 0.1.1 (5dbd89ca): "craters seem split in half" (`docs/ep/vision.md`).
+**Verdict:** **not yet reproduced by QA**. Open.
+**Owner:** Rendering. **Horizon:** web. **Closing step:** Rendering's fix; a still of a crater on the tile ground before and after.
+
+### GB-014: Terrain destruction leaves jagged triangles
+
+**Reported by:** Orb, 2026-11-27, after playing 0.1.1 (5dbd89ca): "terrain destruction results in jagged triangles, i want these fixed" (`docs/ep/vision.md`). Orb offered more screenshots.
+**Verdict:** **not yet reproduced by QA**. Open.
+**Owner:** Rendering. **Horizon:** web. **Closing step:** Rendering's fix; stills of dug ground before and after.
+
+### GB-015: The computer spams the grab while the player charges
+
+**Reported by:** Orb, 2026-11-27, after playing 0.1.1 (5dbd89ca): "i don't really want to move to medium, mostly because of the way grab works ... the computer spams it when I'm trying to charge up attacks" (`docs/ep/vision.md`).
+**Verdict:** **confirmed as a pattern** with scripted players on 0afd8f05 (`docs/qa/readings/combat-baseline.md`): every computer grab try (5,230 in 640 matches) began while the player was winding or charging a heavy; a player who keeps charging is tried 6.6 times a minute, and three heavies in a row are grabbed at least once 72.5% of the time on Easy.
+**Owner:** Encounter (the EP, 2026-11-28); rules from Game Design (the `grabCharge` switch). **Horizon:** web. **Closing step:** the grab and charge retune (brief 1) judged against the baseline, then Orb's play.
+
 ## Problems Orb reported in play, 2026-11-01 to 2026-11-09 (the 52 of `docs/ep/alpha/audit-2026-11-13/reads/RR-08.md`)
 
 Added 2026-11-14 (A-QA-03). Numbers `PR-001` to `PR-052` are RR-08's rows 1 to 52. Statuses are QA's reading from the records named; "not re-read at HEAD" means QA has not opened the thing since the report, so the status is the report's. **Severity** (A-QA-07): **S1 Blocker** a tester cannot start, finish, leave or report (a menu or pause that does not show, a crash, a lost save); **S2 Major** a fight moment the game promises fails or misleads, or control is taken from the player; **S3 Minor** looks or feels wrong and play goes on; **S4 Polish**. The proposed criterion X-35 reads S1 as "no open one on the candidate" and S2 as "every open one seen by Orb and carried by name". **Horizon** is the earliest release the bug blocks (private: Orb's own PC and LAN; web: a public page or pin; store: a store page). **Closing step** for every row: open it at its pin and at HEAD (read the code, data or a replay), mark it fixed with the commit, or leave it open with what is left.

@@ -18,8 +18,10 @@ for (let k = 0; k < chunks; k++) {
   const c = spawn(GODOT, ['--headless', '--path', root, '--script', script, '--', String(n), String(seed), ...extra], { stdio: ['ignore', 'pipe', 'pipe'] });
   try { os.setPriority(c.pid, os.constants.priority.PRIORITY_BELOW_NORMAL); } catch (e) { /* stays at the priority it has */ }
   kids.push(c);
-  c.stdout.on('data', d => { for (const l of String(d).split('\n')) if (/^(GAUNTLET|ORBS|STICKPLAY|RECORDS|MEM|SCRIPT ERROR|ERROR)/.test(l)) o.write(l + '\n'); });
-  c.stderr.on('data', d => { for (const l of String(d).split('\n')) if (/SCRIPT ERROR/.test(l)) o.write(l + '\n'); });
-  c.on('exit', code => { o.write(`EXIT ${code} matches ${n} seed ${seed}\n`); o.end(); if (--left === 0) process.exit(0); });
+  // Whole lines only: the pipe hands over blocks (64 KB at most) that end mid-line, so each stream keeps the unfinished tail for the next block.
+  const lines = (stream, keep) => { let rest = ''; stream.setEncoding('utf8'); stream.on('data', d => { rest += d; const parts = rest.split('\n'); rest = parts.pop(); for (const l of parts) if (keep.test(l)) o.write(l.replace(/\r$/, '') + '\n'); }); return () => { if (keep.test(rest)) o.write(rest + '\n'); rest = ''; }; };
+  const endOut = lines(c.stdout, /^(GAUNTLET|ORBS|CMB|STICKPLAY|RECORDS|MEM|SCRIPT ERROR|ERROR)/);
+  const endErr = lines(c.stderr, /SCRIPT ERROR/);
+  c.on('close', code => { endOut(); endErr(); o.write(`EXIT ${code} matches ${n} seed ${seed}\n`); o.end(); if (--left === 0) o.on('finish', () => process.exit(0)); });
 }
 process.on('SIGINT', () => { for (const c of kids) { try { c.kill(); } catch (e) { /* done */ } } process.exit(1); });

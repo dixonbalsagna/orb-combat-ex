@@ -1,0 +1,33 @@
+# Lost wind-ups on Medium, 4 kit matches (seeds 1-4), what happened on the tick (diagnostic copy of the tree; combat_core with a lost record)
+lost player heavies 19
+19  tick
+18  exchange_end
+17  rush
+17  feed:BRAWL ENDS
+15  feed:RIVAL FLIGHT STRIKE
+13  brawl_end:flight(me)
+3  zip_light:line
+3  zip_light:zip
+2  brawl_end:flight
+2  zip_light:over
+2  zip_light:under
+1  zip_heavy:under
+1  spark
+1  shake
+1  damage
+1  region_stage
+1  region_broken
+1  brink_enter
+1  last_stand_ready
+1  brawl_end:break(me)
+1  act_change
+1  brawl_end:beam(me)
+1  attack
+1  beam_stage:2
+1  scorch
+1  dust
+1  feed:RIVAL SIG vs AGGRESSIVE
+1  zip_big:parting
+1  zip_light:parting
+1  zip_heavy:parting
+1  zip_heavy:over
