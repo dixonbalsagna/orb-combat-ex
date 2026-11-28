@@ -1,6 +1,6 @@
 # Backlog (draft): one table keyed by register id
 
-_Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Production Operations drafts). Built for 2026-11-23 by tools/build-tracker.mjs from the audit's register (270 rows), the tracker's status and the corrective plan of 2026-11-07. Rows marked † are held to the EP's tables (see milestones.md). Status words as in the tracker; "not placed" is a row outside the milestones (the nice-to-have pool, or after Alpha)._
+_Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Production Operations drafts). Built for 2026-11-28 by tools/build-tracker.mjs from the audit's register (270 rows), the tracker's status and the corrective plan of 2026-11-07. Rows marked † are held to the EP's tables (see milestones.md). Status words as in the tracker; "not placed" is a row outside the milestones (the nice-to-have pool, or after Alpha)._
 
 **What is still missing from this draft.** The sources the EP passes: the EP's owed-by-owner list, QA's bug list (the register notes it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09: row A-QA-03) and the list of parked folders (494 uncommitted paths under pending/). Anything in those that has no register row goes in the last table, with a source and an owner; nothing is dropped.
 
@@ -45,7 +45,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-NET-05 | A1 | simulation-engine | S | major | landed |  | A replay carries a hash of its data, its format and its input version but no build id, so a replay from a… |
 | A-PERF-04 | A1 | performance-platform | S | major | not started |  | Nothing about frame rate, loading or memory has been measured on the build Orb last played, and no windowed… |
 | A-PERF-06 | A1 | performance-platform | S | major | not started |  | No loading time is on file for the desktop game with menus, the tile ground and generated planets; the last… |
-| A-PERF-07 | A1 | performance-platform | S | major | not started |  | Memory has never been measured on a desktop build, and growth over time is marked not measured, so the soak's… |
+| A-PERF-07 | A1 | performance-platform | S | major | landed |  | Memory has never been measured on a desktop build, and growth over time is marked not measured, so the soak's… |
 | A-PERF-08 | A1 | rendering-techart | S | major | briefed |  | The game sets no window: there is no display section in the project file and no fullscreen, resolution,… |
 | A-PROCESS-01 | A1 | production-ops | S | major | landed |  | No written change-control rule for the feature freeze and no ideas log exist, and the EP's playbook points to… |
 | A-PROCESS-02 | A1 | ep | S | major | reported |  | There is no single backlog: open work sits in the corrective plan, the EP's messages and per-machine memory… |
@@ -92,7 +92,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-AUDIO-04 | A2 | audio-music | S | major | not started |  | Sound on the Alpha's platforms (a Windows desktop build, Linux, the Steam Deck) is not evidenced: every proof… |
 | A-CAMERA-02 † | A2 | camera | S | major | reported | CD-04 | (see the full table) |
 | A-CAMERA-03 | A2 | camera | S | major | not started |  | No camera test or saved record runs at the Steam Deck's 1280 by 800: every camera test fixes 1280 by 720, and… |
-| A-CONTROLS-03 | A2 | controls-feel | S | major | not started |  | A pad unplugged mid-match does not pause or show a notice: player two's fighter is handed to the computer and… |
+| A-CONTROLS-03 | A2 | controls-feel | S | major | landed |  | A pad unplugged mid-match does not pause or show a notice: player two's fighter is handed to the computer and… |
 | A-CONTROLS-07 | A2 | controls-feel | S | major | not started |  | The Steam Deck's built-in controls have never been tried: no run on a Deck or through Steam's pad layer is on… |
 | A-CONTROLS-08 | A2 | performance-platform | S | minor | not started |  | The press-to-picture latency record is not current: it measures the browser build with keyboard presses on 22… |
 | A-LEGAL-01 † | A2 | camera | XL | blocker | reported | CD-04 | (see the full table) |
@@ -111,7 +111,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-PERF-01 | A2 | performance-platform | M | blocker | not started |  | No Linux build has ever drawn a picture or run on a Steam Deck, so whether it starts, whether every shader… |
 | A-PERF-03 | A2 | performance-platform | M | blocker | not started |  | There is no one-click bench a Deck tester can run that saves a file: the existing kits are Windows batch and… |
 | A-PERF-05 | A2 | rendering-techart | M | major | not started |  | The frame spikes Orb has felt since 2026-11-01 are still open: two causes were fixed on main but never… |
-| A-QA-02 | A2 | qa-balance | M | blocker | not started |  | No soak test exists for the Godot game: nothing records crashes, hangs, script errors over hours or memory… |
+| A-QA-02 | A2 | qa-balance | M | blocker | landed |  | No soak test exists for the Godot game: nothing records crashes, hangs, script errors over hours or memory… |
 | A-QA-11 | A2 | qa-balance | S | minor | not started |  | Five older bug entries (GB-002, GB-003, GB-005, GB-006, GB-007) are open or fixed but never re-checked in… |
 | A-RENDER-02 | A2 | rendering-techart | M | major | not started |  | Two look bugs from Orb's play of 6a30b4c9, fighters clipping into the ground and a row of three humps in a… |
 | A-RENDER-03 | A2 | rendering-techart | S | major | not started |  | A thick black diagonal line across the whole picture, found when Tools replayed Orb's 'hump of ocean water'… |
@@ -120,7 +120,7 @@ _Draft for the Executive Producer, who owns and commits it (row A-PROCESS-02; Pr
 | A-TEXT-01 | A2 | ui-ux | S | major | not started |  | No record shows that Orb has seen the menu, how-to, hint, notice or settings text: the strings list made for… |
 | A-TOOLS-02 | A2 | tools-pipeline | M | blocker | not started |  | Nothing for itch.io exists: no page set-up note, key procedure, channel names, upload script or rehearsal… |
 | A-TOOLS-03 | A2 | tools-pipeline | S | blocker | not started |  | No rollback procedure or release checklist exists, so nothing says how testers are returned to the previous… |
-| A-TOOLS-04 | A2 | tools-pipeline | M | blocker | not started |  | Nothing captures a crash or a hang: no game code writes a file when the game dies, the project sets no… |
+| A-TOOLS-04 | A2 | tools-pipeline | M | blocker | landed |  | Nothing captures a crash or a hang: no game code writes a file when the game dies, the project sets no… |
 | A-TOOLS-05 | A2 | tools-pipeline | M | blocker | not started |  | The one-press report folder works only on Orb's PC: its launcher is a Windows command file that runs Node… |
 | A-TOOLS-06 | A2 | legal-ip | S | major | not started |  | The desktop package rules were written for private test builds and conflict with an Alpha on itch.io: files… |
 | A-UI-03 † | A2 | rendering-techart | S | major | not started |  | (see the full table) |
@@ -323,4 +323,4 @@ From the corrective plan: none. Every item without a closing entry, or with an o
 
 **From QA's bug list** (qa/known-bugs.md; the register's row A-QA-03 says it holds 1 of the 52 problems Orb reported from 2026-11-01 to 2026-11-09, so it is not the whole bug list). Entries: KB-001 to KB-006 (the pinned prototype, open as coded, no release blocked) and GB-001 to GB-009. Not closed: GB-003 camera jolt on a knock-away (with Camera), GB-004 a design call, GB-005 mountain tumbles (with World), GB-007 rocks round a fast fighter (not reproduced), GB-009 the blaster's balance. Fixed but not re-verified in play: GB-002, GB-006. None has a register row; they are listed apart until QA's rows A-QA-03 and A-QA-07 re-read the list against the played build.
 
-**From the parked folders** (docs/*/pending, file counts read 2026-11-23): accessibility 0, animation 30, architecture 30, art 6, audio 66, camera 86, combat 151, controls 55, director 180, narrative 20, net 6, perf 0, rendering 162, tools 164, ui 36, vfx 60, world 69 (1121 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.
+**From the parked folders** (docs/*/pending, file counts read 2026-11-28): accessibility 0, animation 30, architecture 33, art 6, audio 66, camera 99, combat 151, controls 55, director 189, legal 2, narrative 20, net 6, perf 0, qa 5, rendering 142, tools 173, ui 41, vfx 65, world 60 (1143 files in all). A parked folder is not proof of unlanded work (grep main first); the EP's A-PROCESS-03 sorts them by owner.

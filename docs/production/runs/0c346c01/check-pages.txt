@@ -1,0 +1,39 @@
+PASS  change-control: the six steps of the push are numbered 1 to 6
+PASS  change-control: has the rule for after A4
+PASS  change-control: has the rule for after the freeze
+PASS  change-control: has the standing exception
+PASS  change-control: has the spike rule
+PASS  change-control: has "now" needs all three conditions
+PASS  change-control: has the playbook pointer (rule 9)
+PASS  change-control: has a status line saying the post-freeze half waits on decision 23
+PASS  change-control: points to the ideas log and the special-moves note
+PASS  ideas-log: section A has exactly the path's seven first entries
+PASS  ideas-log: the seven entries are the absorb, debris, power-up contest, slipstream, flick, wind-up throw and co-op synergy, in the path's order
+PASS  ideas-log: every entry has date, who, words, EP's line, size, fingerprint and Orb's answer (8 cells)
+PASS  ideas-log: the absorb's line is the path's (next milestone only if the stamina loop's first measurement is in, else after Alpha)
+PASS  ideas-log: the other six lines are "After Alpha", as the path says
+PASS  ideas-log: Orb's answer is "Not asked yet" on every entry (nothing answered by the log)
+PASS  risk-register: 24 live risks
+PASS  risk-register: every risk has an owner, an early sign, a guard and a standing
+PASS  risk-register: every owner names a director or the EP
+PASS  risk-register: has risk 1 of the path (main cannot be made the played game)
+PASS  risk-register: has risk 2 of the path (the Steam Deck)
+PASS  risk-register: has risk 3 of the path (the fight rework)
+PASS  risk-register: has watched: the outside-tester gate list on the globe ground
+PASS  risk-register: has watched: the horde on a Deck
+PASS  risk-register: has watched: the wait for people
+PASS  risk-register: has watched: the year-end holidays
+PASS  risk-register: has added: outside testers
+PASS  risk-register: has added: LAN
+PASS  risk-register: has added: the weekly token limit
+PASS  risk-register: has added: the single Executive Producer session
+PASS  risk-register: has happened: CI broken for 38 pushes
+PASS  risk-register: all 11 old rows are kept with a fate, a date and a reason
+PASS  risk-register: happened risks each say what changed
+PASS  risk-register: the old rows about parked mechanics (4 and 7) are closed with a date
+PASS  change-control.md: no held word
+PASS  ideas-log.md: no held word
+PASS  risk-register.md: no held word
+PASS  token-record.md: no held word
+PASS  done-tests.md: no held word
+38 of 38 checks pass

@@ -24,3 +24,7 @@ The plan's paperwork, so the Executive Producer can steer and Orb can see where 
 4. Save the output under docs/production/runs/<sha>/ when the EP commits.
 
 No Godot, no browser, no dependencies: Node only.
+
+## Lanes (added 2026-11-28)
+
+`status.json` holds `lanes` (the package, fight and look lanes: item, what, owner, state, evidence, held mark), `landed` (landings with commits) and `history` (dated EP status messages, kept but not rendered; only `notes` reach the pages). Update a lane row there and rebuild. A held row appears only on milestone-rows.md.

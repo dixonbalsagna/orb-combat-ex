@@ -24,6 +24,26 @@
 
 **Reading, EP status 6 (Sat 14 Nov, 07:50 PST):** all-models 74%, Fable 87%; the Fable reset still waits on Orb.
 
+**Reading, EP status Mon 23 Nov 12:55 PST (week from Fri 20 Nov 19:00):** all-models 65% with 4 days 6 hours left in the week; Fable meter not given. (Start-of-week figures not given.)
+
+**Reading, EP status Mon 23 Nov 14:53 PST (week from Fri 20 Nov 19:00):** all-models 68% with 4 days 4 hours left (about 1.5 points an hour, too fast; new briefs limited to the critical path); Fable meter not given.
+
+**Reading, EP status Mon 23 Nov 16:53 PST (week from Fri 20 Nov 19:00):** all-models 70% with 4 days 2 hours left; Fable meter not given.
+
+**Reading, EP status Mon 23 Nov 18:53 PST (week from Fri 20 Nov 19:00):** all-models 71% with 4 days left (about 0.5 points an hour now); Fable meter not given.
+
+**Reading, EP status Wed 25 Nov 22:53 PST (week from Fri 20 Nov 19:00):** all-models 77% with 1 day 20 hours left; Fable meter not given.
+
+**Reading, EP status Thu 26 Nov 02:53 PST (week from Fri 20 Nov 19:00):** all-models 80% with 1 day 16 hours left (critical path only); Fable meter not given.
+
+**Reading, EP status Thu 26 Nov 12:53 PST (week from Fri 20 Nov 19:00):** all-models 83% with 1 day 6 hours left; Fable meter not given.
+
+**Week from Fri 20 Nov 19:00, closed:** the last reading given is 83% all-models (Thu 26 Nov 12:53, 1 day 6 hours before the reset). The end reading and the Fable meter were not given.
+
+**Week from Fri 27 Nov 19:00, Reading (Sat 28 Nov 04:30):** all-models 8%. Fable meter, tokens briefed and rows landed: not given.
+
+**An extra reset (Orb, Sat 28 Nov 01:00):** Orb has a free weekly reset to use before 10 December, the day it expires. Not yet used on any record. Orb presses it.
+
 ## The rate basis the EP gave (to convert tokens to meter points)
 
 - About **1.6 all-models points per 1M tokens on the largest (Fable) model**; about **1 point per 1M on the smaller models** most directors run on. (The audit measured the first: 11 points for 7.0M tokens.)

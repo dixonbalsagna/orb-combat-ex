@@ -1,61 +1,118 @@
 # Milestone tracker
 
-_Live page. Last built from status.json for **2026-11-23**. It is rebuilt every two days when the Executive Producer sends status (tools/build-tracker.mjs; nothing on this page is typed by hand except the words in status.json). Production Operations keeps it; the Executive Producer is the only source of status._
+_Live page. Last built from status.json for **2026-11-28**. It is rebuilt every two days when the Executive Producer sends status (tools/build-tracker.mjs; nothing on this page is typed by hand except the words in status.json). Production Operations keeps it; the Executive Producer is the only source of status._
 
 **Nothing on this page decides anything.** The path to Alpha (docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md) is the audit's recommendation. Orb accepted the first group of the path's decisions on 2026-11-13 (table below); every other milestone, size and week range stays a recommendation until Orb approves it.
 
 ## Where the project is
 
-**Milestone A1, "Main is the game Orb plays".** 77 rows: 14 not started, 5 briefed, 11 reported, 47 landed.
+**Milestone A1, "Main is the game Orb plays".** 77 rows: 13 not started, 5 briefed, 11 reported, 48 landed.
 
-**Budget.** A1 runs on up to about 40% of this week's meter (the week reset Fri 13 Nov 19:00). The audit used about 26 points, so the old 66% pause is replaced by the EP's reset rule: a reset is pressed at about 85% on the all-models meter or 90% on the Fable meter (Orb only reported that a reset clears both pools). The path puts A1 at about 55M tokens over 2 to 4 weeks, plus about 12M for the planet scope the EP added.
+**Budget.** The week reset Fri 27 Nov 19:00. All-models meter 8% at 04:30 Sat 28 Nov (EP). Orb has a free extra weekly reset to use before 10 December. Weekly figures: token-record.md.
 
-**Waves.** From tonight: Tools, Simulation, UI, Encounter, World and Rendering build in scratch copies; Game Design, Production Ops and Legal write papers; the stand-in designs and reviews; the EP does the working tree. From Saturday 14 Nov: Camera and VFX (the safety readings, captures one at a time), Controls, Audio, Combat (spike S4), QA (first readings), Performance (desktop frame and load readings, quiet windows only) and Netcode.
+**Waves.** Wave 1 from Sat 28 Nov: combat directive briefs 1 to 3, GB-011, the picture faults, build 0.1.2 and QA's baseline, with the stand-in on the Look Profile. 
 
-**Note.** GitHub access is back: everything is pushed (0d21624b and later).
+**Note.** A1's finish line, at 25 November (docs/ep/reviews/A2-sprint.md): 16 of 44 exit parts met, 21 once the medium planet landed with its five records. No newer count has been made. The row counts above are the register's 77 rows, a different count.
 
-**Note.** The stand-in's reading of A1's finish line (docs/ep/reviews/A1-exit-status.md, 2026-11-23, main 0d21624b): the finish line breaks into 44 parts: 13 met (5 on 20 Nov), 18 in main but not proven (11), 7 waiting to go in (21), 6 not started (7). Six of the seven waiting are the planet work (GW1c). Most of the 18 close with records taken once on the commit where the planet work lands. The tracker's row counts above are the register's 77 rows, a different count.
-
-**Note.** GW1b landed on main (EP, Sun 22 Nov 08:45 PST): 7b69eafc..b624340a, 55 park commits, the planet flip as its own commit and uid files; gated on the s427 stack (render 19/19, golden equals Simulation's GW1b re-record, World list 90/90, CI checks clean). The round planet is now the default world; launch travel 1.5 and flat-out 3,500 are main's own values. Switch-diff against the 9 November build is still 0 of 5. X-06 is in its final scripted read (off main).
-
-**Note.** GW1a landed on main: b20020b4..b0e20f9a (25 per-owner commits plus uid, Tools' retire and World's ground re-pin). Gate clean on the s423 full run and s424 targeted re-runs. Golden equals the target. Switch-diff against the 9 November build: 0 of 5 data rows. The 22 rows it closes are marked landed with their commits (mapping confirmed 2026-11-20).
-
-**Note.** Rows now in main from the 9 November build: S-01 travel 2.0, S-02 Art biomes, S-03 menu_modes ON, M-04 memory under the model (inert), S-05 and S-42 saves never pruned. Next: Orb's first desktop build from this main, then GW1b (20 steps, planet flip last).
-
-**Note.** Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde): trials T1 to T6 reported; Encounter's S3 row stays briefed until the trial clip.
-
-**Note.** Batch B1 (A-NET-05, the build id in a replay) landed before GW1.
-
-**Note.** Also landed on the night of 20 to 21 November (EP): S-04 (0da7b774, UI), S-06 (Tools, page words), lan-report-where (cef2fa06, Netcode), and a CI split. No register row named for them.
+**Note.** Landed windows: GW1a, GW1b (the round planet is the default world), GW1c (build 0.1.1, ac4ba152) and the small-and-big window (26 Nov).
 
 | Milestone | What it proves | Rows | Not started | Briefed | Reported | Landed | Tokens (path) | Weeks (path) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A1 (now) | Main is the game Orb plays | 77 | 14 | 5 | 11 | 47 | 55M | 2 to 4 |
-| A2 | Safe to hand out; two real Steam Decks have run it | 41 | 37 | 2 | 2 | 0 | 34M | 2 to 4 |
+| A1 (now) | Main is the game Orb plays | 77 | 13 | 5 | 11 | 48 | 55M | 2 to 4 |
+| A2 | Safe to hand out; two real Steam Decks have run it | 41 | 34 | 2 | 2 | 3 | 34M | 2 to 4 |
 | A3 | The fight's new rules, and LAN inside the game | 27 | 25 | 0 | 2 | 0 | 53M | 3 to 5 |
 | A4 | Horde, teams, your own planet, the whole fighter | 19 | 19 | 0 | 0 | 0 | 57M | 2 to 3 |
 | A5 | A newcomer on a Deck, alone; the last numbers settle | 16 | 16 | 0 | 0 | 0 | 16M | 1.5 to 3 |
 | A6 | The Alpha candidate, frozen | 0 | 0 | 0 | 0 | 0 | 13M | 2.5 to 5 |
 
-**Switch rows still differing between main and the 9 November build: 0 of 5** (2026-11-22; EP status (Sun 08:45 PST): GW1b landed; switch-diff against the 9 November build still 0 of 5). The Executive Producer reports this count every 2 days; the next is due 2026-11-24. It must reach 0 for A-CODE-01 to close.
+**Switch rows still differing between main and the 9 November build: 0 of 5** (2026-11-22). The count reached zero with GW1a, so it is no longer reported.
 
-| Date | Still differing | Of | Note |
-| --- | --- | --- | --- |
-| 2026-11-13 | 72 | 92 | audit baseline 8901d351, as the path reports it |
-| 2026-11-14 | 69 | 87 | data rows, read by tools/preview/switch-diff.mjs (EP status 1); nothing has landed on the game yet, GW1a lands as one window. The count basis changed from the audit's 92 switch rows to 87 data rows |
-| 2026-11-14 | 69 | 87 | EP status 2 (Sat 02:50 PST): unchanged; GW1a moves it. Blocking GW1a: Rendering's look parks, the energy-on pins, Tools' report-hook re-cut, Sim's B1 header builder |
-| 2026-11-14 | 69 | 87 | EP status 3 (Sat 03:50 PST): unchanged. GW1a blockers: World's pins park and Rendering's after_check pin; B1 waits on Sim's header builder |
-| 2026-11-14 | 69 | 87 | EP status 4 (Sat 04:50 PST): unchanged. GW1a blockers: World's checks park, Sim's gates park, Rendering's foot-slice split |
-| 2026-11-14 | 69 | 87 | EP status 5 (Sat 05:50 PST): unchanged. GW1a blockers: Sim's gates park and VFX's hash_check grant approval |
-| 2026-11-14 | 69 | 87 | EP status 6 (Sat 07:50 PST): unchanged, moves at GW1a. GW1a is being assembled: a manifest of 33 steps applies clean. Open gaps: Simulation's data-fight-gw1a (five fight rows, bisecting a residual golden difference, interrupts.json), Tools' switch-row retirement and ui-modes cases |
-| 2026-11-20 | 0 | 5 | EP status (Fri 23:55 PST): GW1a landed (b20020b4..b0e20f9a: 25 per-owner commits, uid, Tools' retire, World's ground re-pin); gate clean on the s423 full run and s424 targeted re-runs; golden equals the target. The basis changed again: 5 data rows remain after Tools' retirement of the settled rows (was 69 of 87 before GW1a) |
-| 2026-11-22 | 0 | 5 | EP status (Sun 08:45 PST): GW1b landed; switch-diff against the 9 November build still 0 of 5 |
+## The path to the alpha now: three lanes
+
+As of 28 November, from git (HEAD 0c346c01), the park folders and the Executive Producer's brief of that day. "Gating" and "in build" are the EP's words; "not seen" means no commit or park was found, not that no work exists.
+
+### The package lane (A2: a safe package in two friends' hands)
+
+_Source: docs/ep/reviews/A2-sprint.md_
+
+| Item | What | Owner | State | Evidence, or what it waits on |
+| --- | --- | --- | --- | --- |
+| A2-1 | Land the medium planet (GW1c) and take the five records on it | EP; Tools, Simulation, Camera | part landed | GW1c landed, build 0.1.1 (ac4ba152); CI build, mode test and first-run records (0c87f354); golden (c741c4ec). No saved record seen for Camera's own chase check. |
+| A2-2 | Camera's picture window: safeguards, door fixes, the split-sooner switch | Camera; Rendering | landed | split-screen setting (b784d33c, cb0dc8b8, 79edc744); safeguards and door fixes in the small-and-big window (0e3b7db3, fbf33d4c, 85f49886). Orb has not said which split they want. |
+| A2-4 | The package chain: testers' words file, refusals, upload and roll-back | Tools | landed, rehearsal owed | 2d2153a8, 186aa252, 6f2e3164, b154aea2. The rehearsal waits on Orb's store page sitting. |
+| A2-5 | The two-hour soak, Windows and Linux | QA; Tools | landed | harness (2701e69c), Linux workflow started by hand (cae303f2), both pass (7570ccd6); the memory growth is gone (68d5b9f3). |
+| A2-6 | The one-press bench a friend runs on a Deck | Performance | not seen | No commit seen since the A2 page. |
+| A2-7 | UI's package batch: report panel on the pad, settings survive a restart, AI line, the lines for Orb to mark | UI; Legal | part landed | the controller line (b46730eb) and the licence line (34868086) landed. No commit seen for the other four pieces. |
+| A2-8 | The tester guide, one-page sheet and final note | QA, Legal | draft | testers' words and the permission page are drafts until Orb reads them (43de88fe, cee7d108). |
+| A2-9 | The friends' sound set | Audio; UI | landed, listen owed | 7bfbfe6a; menu sounds (7fe2ed9b). Orb's ten-minute listen is owed. |
+| A2-10 | The three unexplained picture faults | Rendering | not matched | Picture fixes landed 26 Nov (d605de5a, 7efff59e, fe51f77b); no record seen that ties them to the page's three. |
+| A2-11 | The accessibility checklist and its record | Accessibility | not seen | No commit seen since the A2 page. |
+| A2-12 | Legal's gate page current and the candidate's record folder | Legal, EP | part landed | gate page current (b181b934), G23 added (cb748e09). No record folder seen. |
+| A2-13 | The two-pad checklist run and signed | Controls; Orb and Orb 2 | not seen | Needs two people at pads. |
+| A2-14 | The shot list as one data file | Community, Tools | not seen | No commit seen since the A2 page. |
+| A2-15 | The candidate: one commit, every gate green, a record for each | EP, Legal, Tools | not started | Waits on the jobs above. |
+| A2-16 | Orb's line, the upload, the keys, the friends' evening | Orb | waiting on Orb | After the candidate and Orb's sittings. |
+
+_1 more job of this lane is listed only on the full table (milestone-rows.md); it carries no question for Orb._
+
+### The fight lane (the combat overhaul directive and the reported picture and grab faults)
+
+_Source: docs/ep/proposals/combat-overhaul-directive.md, section 6; qa/known-bugs.md_
+
+| Item | What | Owner | State | Evidence, or what it waits on |
+| --- | --- | --- | --- | --- |
+| Brief 1 | Grab and charge retune | Game Design, Encounter; Combat reviews | parked, gating | rules landed (876fe030, 566d1481, d90932b9), review (193891f0); Encounter's park docs/director/pending/grab-charge (not committed); off on main. Waits on: its gate, then Orb's judgement of the clip. |
+| Brief 2 | The beam you can read (a trial) | Encounter; Game Design, VFX, UI, Audio | parked, gating | park docs/director/pending/beam-trial (not committed), applies on top of brief 1; off on main. VFX, UI and Audio parts: no park seen. Orb must see it before it is adopted. |
+| Brief 3 | Which turn ran, then the visible swing and the never-lost camera rules | Encounter, World, Camera | in build | the first item is answered (b15eaa15): 0.1.1 ran the turntable, swings mostly 4.5 to 8 degrees. The swing and camera rules are not parked. |
+| Brief 4 | Ballistic shots, steps 1 to 3 (lands off) | Simulation, Game Design | not started | No commit or park seen. |
+| Brief 5 | Wind and the flee rules | Simulation, Game Design | ruled, not built | flee rules ruled (876fe030). Waits on: brief 1 judged. |
+| Brief 6 | The beam as a stream of segments | Simulation, Encounter | not started | Waits on: briefs 2 and 4. |
+| GB-011 | Lakes end in walls of water, with houses under them | World; Rendering, Tools | parked | docs/world/pending/gb011-lakes (not committed, not applied). QA: the fault is in the world data; that it is what Orb saw is likely, not proven. |
+| GB-012 | The ground looks too flat in the foreground | Rendering | open | Not yet reproduced by QA (d0d08177). |
+| GB-013 | Craters seem split in half | Rendering | open | Not yet reproduced by QA (d0d08177). |
+| GB-014 | Destroyed terrain leaves jagged triangles | Rendering | open | Not yet reproduced by QA (d0d08177). |
+| GB-015 | The computer spams the grab while the player charges | Encounter; Game Design | open, answered by brief 1 | Confirmed as a pattern by QA's scripted baseline (d0d08177). Closes when brief 1 is judged and Orb has played it. |
+
+### The look lane (the Look Profile: auras and energy you can shape)
+
+_Source: docs/ep/proposals/look-profile-spec.md, section 9. Orb, 28 Nov: everything is unlocked for the alpha. The spec says the work sits in no milestone, and that stopping after L3 means nothing below it is briefed._
+
+| Item | What | Owner | State | Evidence, or what it waits on |
+| --- | --- | --- | --- | --- |
+| L1 | The full catalogue, limits and schemas | VFX, Game Design, Tools | not started | Waits on: Orb keeping L3. |
+| L2 | The look carried in a replay | Simulation, VFX, Tools | not started | Waits on: Orb keeping L3. |
+| L3 | The trial: one aura | VFX; Animation, Rendering | briefed | EP, 28 Nov. No park seen yet. |
+| L4 | Shots through the shader; beam colour and pattern from the look | VFX | not started | Waits on: L1. |
+| L5 | The Style screen and the saved looks | UI; Rendering, Narrative | not started | Waits on: L3 kept; the preview's beam after L4. |
+| L6 | Legal's rows | Legal | not started | Goes with L1. |
+| L7 | Default looks for the two fighters; the creative rulebook's first page | Art, Animation | not started | Goes with L1. |
+| L8 | A soak of 200 random looks | QA | not started | Waits on: L4. |
+| L9 | The beam as one ribbon with the full shader | not named in the spec | after the alpha | Waits on: the segment brief (brief 6). |
+| L10 | Lingering trails, shimmer, "Negative" | not named in the spec | after the alpha | Waits on: Orb finding the first version lacking. |
+| L11 | The look sent over LAN | not named in the spec | after the alpha | Waits on: LAN reaching players. |
+| L12 | Campaign rewards, per-tier overrides, sharing | not named in the spec | after the alpha | Waits on: a campaign, decision 17, Legal. |
+| L13 | The cost reading for L3 | Performance | not started | Goes with L3; needs a quiet window. |
+| L14 | Reduced motion and colour-vision settings through the look | Accessibility, VFX | not started | Goes with L4. |
+| L15 | The creator's next parts, colours first | Art | after the alpha | Waits on: Art's second body colour. |
+
+### Landed since 25 November
+
+| When | What | Commits |
+| --- | --- | --- |
+| 25 Nov | The first-alpha package work: testers' words and refusals, upload checks, soak harness, Legal's gate page, the friends' sound set | 2d2153a8, 186aa252, 6f2e3164, 2701e69c, b181b934, 7bfbfe6a |
+| 25 Nov night | GW1c, the medium round planet, with its golden and build 0.1.1; records on it | c741c4ec, ac4ba152, 0c87f354 |
+| 26 Nov early | Controller and licence lines, menu sounds, tile marks; the split-screen setting; both two-hour soaks pass stability | b46730eb, 34868086, 7fe2ed9b, cbb6a7d0, b784d33c, 7570ccd6 |
+| 26 Nov 10:09 | Fix landing: the Play-again pop, craters drawn twice after a second match, the soak memory growth | d605de5a, 7efff59e, fe51f77b, d3de6d8c |
+| 26 Nov 17:28 | The small-and-big window: small, medium and big planets offered, with feet, ground and camera work | 85b2b9b2, 4f9ba150, 2a0cbd78, 0e3b7db3, 3db4a4f8 |
+| 26 Nov evening | QA's two-hour soaks show the memory growth gone | 68d5b9f3 |
+| 27 Nov | Orb's 0.1.1 notes, GB-011, the energy toy, the combat overhaul directive | cca3f716, 70be9487, db612611, 6f5609bc, d6508a28 |
+| 28 Nov | Grab, charge and flee rules; 0.1.2 one-command trial build; the Look Profile spec; the game launcher that keeps Orb's data safe; QA's combat baseline and GB-012 to GB-015 | 876fe030, d90932b9, b154aea2, a82fdb64, 0f08eb9a, d0d08177 |
 
 ## What could move the date
 
 The three risks the path names (full list, owners, early signs and guards in risk-register.md):
 
-1. **Main cannot simply be made into the game Orb plays.** 69 of 87 data rows differ, patches that exist only in a preview tool and checks that have never run on the configuration Orb plays. If this takes three weeks instead of one and a half, everything moves by the difference. Watch: the count above, every two days.
+1. **Main cannot simply be made into the game Orb plays.** Closed on the data count: it reached zero with GW1a.
 2. **The Steam Deck says no to something** (a graphics driver, a frame rate under 30, text too small, controls not arriving as a pad). Watch: spike S5 in A1, the first real session in A2.
 3. **The fight rework is a class bigger than estimated** (the beam, the signature inputs, the stamina loop and the gravity well all change the same code). Watch: spikes S1 and S2 in A1 and the stop rule at A3's midpoint.
 
@@ -116,7 +173,7 @@ The builds, play files, reports and clips Orb keeps are about 2.9 GB in one git-
 
 **What Orb can play.** The first desktop build of their own game: a Windows program that opens on the left-panel menus, on the round planet, with the pad as Orb plays it and flight at 3500. The start menu lists the modes that exist today, lets each player pick a fighter, and has a Quit row.
 
-**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 14 not started, 5 briefed, 11 reported, 47 landed.
+**Size (the path's estimate).** 55M (the sprint adds about 12M for the planet, terrain, destruction and clipping scope); 2 to 4 weeks. **Rows:** 77: 13 not started, 5 briefed, 11 reported, 48 landed.
 
 **Golden window.** GW1 "Main is the game" (12 rows: A-AI-05, A-AI-10, A-CODE-01, A-COMBAT-05, A-COMBAT-11, A-COMBAT-14, A-CONTROLS-02, A-CONTROLS-04, A-ENERGY-04, A-ENERGY-05, A-MODES-07, A-WORLD-01). GW1a: the golden record is made first on the kept 9 November build's own data as the target; the switch groups land one owner at a time (pad, computer opponent, match-ending rules, round planet, camera, look, sound sets, left-panel menus), each with its own gate run and side-by-side; A-CODE-01 closes when main reproduces the target bit for bit. GW1b, straight after: the riders (backburnered meters set to zero, the two stray-beam fixes, the computer's perfect-block fix, flight 3500), then one re-record. GW1c, after GW1b: the planet scope Orb added (five sizes, terrain step 2, destruction, clipping), its own window. A-NET-05 (the build id in a replay) lands before the window.
 
@@ -154,7 +211,7 @@ _None open that this milestone needs._
 | game-design | 3 | 0 | 0 | 0 | 3 |
 | legal-ip | 1 | 0 | 0 | 0 | 1 |
 | orb | 2 | 0 | 0 | 0 | 2 |
-| performance-platform | 3 | 3 | 0 | 0 | 0 |
+| performance-platform | 3 | 2 | 0 | 0 | 1 |
 | production-ops | 3 | 0 | 0 | 0 | 3 |
 | qa-balance | 9 | 0 | 0 | 6 | 3 |
 | rendering-techart | 3 | 0 | 1 | 0 | 2 |
@@ -247,7 +304,7 @@ _None open that this milestone needs._
 | --- | --- | --- | --- | --- | --- |
 | A-PERF-04 | Nothing about frame rate, loading or memory has been measured on the build Orb last played, and no windowed native… | S |  | not started | wave 2, from Saturday 14 Nov |
 | A-PERF-06 | No loading time is on file for the desktop game with menus, the tile ground and generated planets; the last native… | S |  | not started | wave 2, from Saturday 14 Nov |
-| A-PERF-07 | Memory has never been measured on a desktop build, and growth over time is marked not measured, so the soak's 10%… | S |  | not started | wave 2, from Saturday 14 Nov |
+| A-PERF-07 | Memory has never been measured on a desktop build, and growth over time is marked not measured, so the soak's 10%… | S |  | landed | 68d5b9f3 — Desktop memory and its growth over two hours are measured and saved on both platforms (Windows 15.5 MiB an hour against 130 before). From git, 28 Nov. |
 
 **production-ops** (3)
 
@@ -325,11 +382,11 @@ _None open that this milestone needs._
 | --- | --- | --- | --- | --- | --- |
 | A-WORLD-01 | On main the round planet is not the game's world: a match with no planet setup key plays the old hand-made arena, the… | M | GW1 | landed | 3aaac98c — The flip: the round planet is the world every match starts on. Also df0e5942, 2917d4e4, aef24cf1, 139a4613, 37ac9a46, 991af282, d43cc312. GW1b landed (7b69eafc..b624340a); mapping confirmed by the EP, 2026-11-22 (gw1b-row-mapping-draft.md). |
 
-**Added since the path, outside the register** (5 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They land as window GW1c, after GW1b.
+**Added since the path, outside the register** (5 items; they have no register row, so they are listed apart and not counted in the 77 rows above). They belong to window GW1c; each shows its own state.
 
 | Item | Owner | What | Status | Evidence | Where it came from |
 | --- | --- | --- | --- | --- | --- |
-| ADD-A1-01 | world-environment | Five selectable planet sizes (World, with Simulation and Performance): from World's six, five are picked; each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window. | reported | 3b6e89b5 (World, five sizes) and 7321f49b (Sim, replay sizes); GD ruling a046f3d9; Netcode pricing cf909e93 | Orb, 2026-11-13 night (ideas-log ID-22) |
+| ADD-A1-01 | world-environment | Selectable planet sizes (Orb counts A1 with small, medium and big): each generates, plays and holds the shipped quality on Orb's PC, and its frame cost is read in a quiet window. | reported | ac4ba152 (medium, GW1c); 85b2b9b2 and 3db4a4f8 (small, medium and big offered, 26 Nov) | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-02 | world-environment | Terrain (World, with Camera): terrain step 2 (globe-step2) re-cut so Camera's chase check passes, then the path's terrain rows. | not started | planned in docs/ep/sprints/A1-sprint.md | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-03 | world-environment | Destruction (World, with VFX): craters and trenches drawn where you stand, and buildings breaking at every tier without the rebound Orb saw. | reported | 5263c1a6 (plan); GW1b riders 088264b3 (wall cone) and 78081692 (bounce count) | Orb, 2026-11-13 night (ideas-log ID-22) |
 | ADD-A1-04 | rendering-techart | Clipping (Rendering, with Animation): fighters' feet meet the drawn ground, and no fighter sinks into a crater or a building. | reported | ff02e386 (clipping); e7d544ea (foot slice, GW1a); the clipping re-cut, feet 1.0% | Orb, 2026-11-13 night (ideas-log ID-22) |
@@ -343,7 +400,7 @@ _None open that this milestone needs._
 
 **What Orb can play.** The same game as A1 (no rule changes, so A1 replays still play), now as the package a tester would get: a notice before play, the AI disclosure on the first screen, a report that saves from the pad on any PC, and a crash file if the game dies. Orb also does the ten-minute listening pass.
 
-**Size (the path's estimate).** 34M (includes a 6M fix reserve for what the first tester round finds); 2 to 4 (the top of the range is the wait for Orb's account actions and two friends' evenings) weeks. **Rows:** 41: 37 not started, 2 briefed, 2 reported, 0 landed.
+**Size (the path's estimate).** 34M (includes a 6M fix reserve for what the first tester round finds); 2 to 4 (the top of the range is the wait for Orb's account actions and two friends' evenings) weeks. **Rows:** 41: 34 not started, 2 briefed, 2 reported, 3 landed.
 
 **Golden window.** none. No rule changes: a replay saved on the A1 build still plays on A2's.
 
@@ -374,14 +431,14 @@ _None open that this milestone needs._
 - **accessibility-localization** (1): A-ACCESS-01
 - **audio-music** (2): A-AUDIO-03, A-AUDIO-04
 - **camera** (1): A-CAMERA-03
-- **controls-feel** (2): A-CONTROLS-03, A-CONTROLS-07
+- **controls-feel** (2): A-CONTROLS-03 [landed], A-CONTROLS-07
 - **ep** (1): A-ACCESS-04
 - **legal-ip** (4): A-LEGAL-03 [briefed], A-LEGAL-05, A-LEGAL-12, A-TOOLS-06
 - **orb** (1): A-LEGAL-07
 - **performance-platform** (3): A-CONTROLS-08, A-PERF-01, A-PERF-03
-- **qa-balance** (2): A-QA-02, A-QA-11
+- **qa-balance** (2): A-QA-02 [landed], A-QA-11
 - **rendering-techart** (4): A-PERF-05, A-RENDER-02, A-RENDER-03, A-RENDER-08
-- **tools-pipeline** (9): A-LEGAL-06, A-MARKET-01, A-MARKET-02, A-MARKET-03, A-MARKET-07, A-TOOLS-02, A-TOOLS-03, A-TOOLS-04, A-TOOLS-05
+- **tools-pipeline** (9): A-LEGAL-06, A-MARKET-01, A-MARKET-02, A-MARKET-03, A-MARKET-07, A-TOOLS-02, A-TOOLS-03, A-TOOLS-04 [landed], A-TOOLS-05
 - **ui-ux** (5): A-ACCESS-02, A-LEGAL-13, A-TEXT-01, A-UI-07, A-UI-10
 
 _6 more rows of this milestone are listed only on the full table (milestone-rows.md); they carry no question for Orb._

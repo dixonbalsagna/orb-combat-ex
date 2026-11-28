@@ -148,13 +148,28 @@ function milestoneSection(m) {
 function addedSection(ms) {
   const a = (status.added || []).filter(x => x.milestone === ms);
   if (!a.length) return '';
-  return `\n\n**Added since the path, outside the register** (${a.length} items; they have no register row, so they are listed apart and not counted in the ${rows[ms].length} rows above). They land as window GW1c, after GW1b.\n\n` +
+  return `\n\n**Added since the path, outside the register** (${a.length} items; they have no register row, so they are listed apart and not counted in the ${rows[ms].length} rows above). They belong to window GW1c; each shows its own state.\n\n` +
     table(['Item', 'Owner', 'What', 'Status', 'Evidence', 'Where it came from'], a.map(x => [x.id, x.owner, x.what, x.status, x.ref, x.source]));
+}
+
+// ---- the three lanes (status.lanes) and what has landed (status.landed) ----
+function lanesSection(full) {
+  const parts = [`## The path to the alpha now: three lanes\n\n${status.lanes.note}`];
+  for (const l of status.lanes.list) {
+    const shown = l.rows.filter(r => full || !r[5]);
+    const held = l.rows.length - shown.length;
+    parts.push(`### ${l.title}\n\n_Source: ${l.source}_\n\n` +
+      table(['Item', 'What', 'Owner', 'State', 'Evidence, or what it waits on'], shown.map(r => [r[5] ? r[0] + ' †' : r[0], r[1], r[2], r[3], r[4]])) +
+      (held ? `\n\n_${held} more job of this lane is listed only on the full table (milestone-rows.md); it carries no question for Orb._` : ''));
+  }
+  parts.push(`### Landed since 25 November\n\n` + table(['When', 'What', 'Commits'], status.landed));
+  return parts.join('\n\n');
 }
 
 function switchSection() {
   const s = status.switchRows;
   const last = s[s.length - 1];
+  if (last.count === 0) return `**Switch rows still differing between main and the 9 November build: 0 of ${last.of}** (${last.date}). The count reached zero with GW1a, so it is no longer reported.`;
   const next = new Date(last.date + 'T00:00:00Z');
   next.setUTCDate(next.getUTCDate() + status.switchRowsEveryDays);
   return `**Switch rows still differing between main and the 9 November build: ${last.count} of ${last.of}** (${last.date}; ${last.note}). The Executive Producer reports this count every ${status.switchRowsEveryDays} days; the next is due ${next.toISOString().slice(0, 10)}. It must reach 0 for A-CODE-01 to close.\n\n` +
@@ -175,7 +190,8 @@ const orbPage = [
   `_Live page. Last built from status.json for **${status.asOf}**. It is rebuilt every two days when the Executive Producer sends status (tools/build-tracker.mjs; nothing on this page is typed by hand except the words in status.json). Production Operations keeps it; the Executive Producer is the only source of status._`,
   `**Nothing on this page decides anything.** The path to Alpha (docs/ep/alpha/audit-2026-11-13/04-path-to-alpha.md) is the audit's recommendation. Orb accepted the first group of the path's decisions on 2026-11-13 (table below); every other milestone, size and week range stays a recommendation until Orb approves it.`,
   `## Where the project is\n\n**Milestone A1, "${MILESTONES[0].title}".** ${a1.length} rows: ${count(a1, 'not started')} not started, ${count(a1, 'briefed')} briefed, ${count(a1, 'reported')} reported, ${count(a1, 'landed')} landed.\n\n**Budget.** ${status.budget.line}\n\n**Waves.** ${status.waves.wave1} ${status.waves.wave2}${notesText}\n\n${summaryTable()}\n\n${switchSection()}`,
-  `## What could move the date\n\nThe three risks the path names (full list, owners, early signs and guards in risk-register.md):\n\n1. **Main cannot simply be made into the game Orb plays.** 69 of 87 data rows differ, patches that exist only in a preview tool and checks that have never run on the configuration Orb plays. If this takes three weeks instead of one and a half, everything moves by the difference. Watch: the count above, every two days.\n2. **The Steam Deck says no to something** (a graphics driver, a frame rate under 30, text too small, controls not arriving as a pad). Watch: spike S5 in A1, the first real session in A2.\n3. **The fight rework is a class bigger than estimated** (the beam, the signature inputs, the stamina loop and the gravity well all change the same code). Watch: spikes S1 and S2 in A1 and the stop rule at A3's midpoint.\n\nAlso watched: the wait for people (two friends, twice), the weekly token limit, one Executive Producer session holding the project's state, and the year-end holidays, which fall inside every range and are not counted.`,
+  lanesSection(false),
+  `## What could move the date\n\nThe three risks the path names (full list, owners, early signs and guards in risk-register.md):\n\n1. **Main cannot simply be made into the game Orb plays.** Closed on the data count: it reached zero with GW1a.\n2. **The Steam Deck says no to something** (a graphics driver, a frame rate under 30, text too small, controls not arriving as a pad). Watch: spike S5 in A1, the first real session in A2.\n3. **The fight rework is a class bigger than estimated** (the beam, the signature inputs, the stamina loop and the gravity well all change the same code). Watch: spikes S1 and S2 in A1 and the stop rule at A3's midpoint.\n\nAlso watched: the wait for people (two friends, twice), the weekly token limit, one Executive Producer session holding the project's state, and the year-end holidays, which fall inside every range and are not counted.`,
   `## Orb's decisions, in the path's numbering\n\n${table(['#', 'Decision', 'Needed before', 'Status', 'Orb\'s words'], decRows.map(r => [r[0], r[1], r[2], r[3], r[4] || '(not answered yet)']))}`,
   `## Words used on this page\n\n${GLOSSARY.map(g => `- **${g[0]}:** ${g[1]}.`).join('\n')}\n\n**Status words.** _not started_: no brief has gone out. _briefed_: the director has the brief (or the Executive Producer is doing it). _reported_: the director has reported and the work is parked or the paper written, not yet on main. _landed_: on main, with the commit id shown. A status can be traced to a commit or a report: the Evidence column says which.`,
   backupSection(),
@@ -188,6 +204,7 @@ const orbPage = [
 const fullPage = [
   `# Milestone rows: the full table`,
   `_Built from status.json for ${status.asOf} by tools/build-tracker.mjs, with every row of milestones A1 to A6 (${seen.size} rows). This is the Executive Producer's table; milestones.md is the page for Orb and leaves out the rows marked †, which carry no question for Orb. Status words: not started, briefed, reported, landed (a landed row shows its commit). "Needs" lists the rows this row waits for. "Window" is the golden window the row lands in. Size: S about 0.25M tokens, M about 1.2M, L about 4M, XL about 8M (the register's classes)._`,
+  lanesSection(true),
   ...MILESTONES.map(m => `## ${m.id}. ${m.title} — ${rows[m.id].length} rows\n\n${rows[m.id].length ? rowsByOwner(m.id, true) : '_No register row closes here._'}${addedSection(m.id)}`),
 ].join('\n\n') + '\n';
 
@@ -247,6 +264,10 @@ check('every A1 row appears exactly once on the page for Orb', idsIn(orbPage, ro
 check('Orb\'s page lists every row except the held ones (counts add up)', MILESTONES.every(m => orbList(m.id).length + rows[m.id].filter(x => heldRows(x.id)).length === rows[m.id].length), '');
 check('no held word appears on the page for Orb', !HELD.test(orbPage), (orbPage.match(HELD) || [''])[0]);
 check('the full table marks every held row', rows.A2.filter(x => heldRows(x.id)).every(x => new RegExp(`^\\| ${x.id}[^|]*†`, 'm').test(fullPage)), '');
+
+check('three lanes: 16 package jobs, briefs 1 to 6 and GB-011 to GB-015, L1 to L15', status.lanes.list.map(l => l.rows.length).join() === '16,11,15', status.lanes.list.map(l => l.rows.length).join());
+check('every lane row has an owner and a state', status.lanes.list.every(l => l.rows.every(r => r[2] && r[3] && r[4])), '');
+check('every lane row not held is on both pages', status.lanes.list.every(l => l.rows.every(r => fullPage.includes('| ' + r[0]) && (r[5] || orbPage.includes('| ' + r[0] + ' |')))), '');
 
 // ---- write and report ----
 if (!checkOnly) {
