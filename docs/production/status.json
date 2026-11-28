@@ -640,11 +640,11 @@
     }
   },
   "notes": [
-    "A1's finish line, at 25 November (docs/ep/reviews/A2-sprint.md): 16 of 44 exit parts met, 21 once the medium planet landed with its five records. No newer count has been made. The row counts above are the register's 77 rows, a different count.",
+    "A1's finish line, at 25 November (docs/ep/reviews/A2-sprint.md): 16 of 44 exit parts met, 21 once the medium planet landed with its five records. No newer count has been made (EP, 28 November). The row counts above are the register's 77 rows, a different count.",
     "Landed windows: GW1a, GW1b (the round planet is the default world), GW1c (build 0.1.1, ac4ba152) and the small-and-big window (26 Nov)."
   ],
   "lanes": {
-    "note": "As of 28 November, from git (HEAD 0c346c01), the park folders and the Executive Producer's brief of that day. \"Gating\" and \"in build\" are the EP's words; \"not seen\" means no commit or park was found, not that no work exists.",
+    "note": "As of 28 November, from git (HEAD c3d703cb), the park folders and the Executive Producer's two messages of that day. A park is finished work waiting outside main; it lands as code and its folder is then deleted. \"Gate\" and \"in build\" are the EP's words; \"not seen\" means no commit or park was found, not that no work exists.",
     "list": [
       {
         "id": "package",
@@ -775,22 +775,22 @@
             "Brief 1",
             "Grab and charge retune",
             "Game Design, Encounter; Combat reviews",
-            "parked, gating",
-            "rules landed (876fe030, 566d1481, d90932b9), review (193891f0); Encounter's park docs/director/pending/grab-charge (not committed); off on main. Waits on: its gate, then Orb's judgement of the clip."
+            "parked, in the EP's gate",
+            "rules landed (876fe030, 566d1481, d90932b9), review (193891f0); Encounter's park docs/director/pending/grab-charge; off on main. Then Orb judges the clip."
           ],
           [
             "Brief 2",
             "The beam you can read (a trial)",
             "Encounter; Game Design, VFX, UI, Audio",
-            "parked, gating",
-            "park docs/director/pending/beam-trial (not committed), applies on top of brief 1; off on main. VFX, UI and Audio parts: no park seen. Orb must see it before it is adopted."
+            "parked, in the EP's gate",
+            "park docs/director/pending/beam-trial, applies on top of brief 1; off on main. VFX, UI and Audio parts: no park seen. Orb must see it before it is adopted."
           ],
           [
             "Brief 3",
             "Which turn ran, then the visible swing and the never-lost camera rules",
             "Encounter, World, Camera",
             "in build",
-            "the first item is answered (b15eaa15): 0.1.1 ran the turntable, swings mostly 4.5 to 8 degrees. The swing and camera rules are not parked."
+            "which turn ran is answered (b15eaa15): 0.1.1 ran the turntable, swings mostly 4.5 to 8 degrees. In build: camera rules (rule 1 to about 8 body heights; rule 3 parked) and the landmark swing (Encounter, with World's landmark function; spec 96c3ba97)."
           ],
           [
             "Brief 4",
@@ -817,8 +817,8 @@
             "GB-011",
             "Lakes end in walls of water, with houses under them",
             "World; Rendering, Tools",
-            "parked",
-            "docs/world/pending/gb011-lakes (not committed, not applied). QA: the fault is in the world data; that it is what Orb saw is likely, not proven."
+            "parked, waiting for a re-record window",
+            "docs/world/pending/gb011-lakes; look views (f07ecf33). QA: the fault is in the world data; that it is what Orb saw is likely, not proven."
           ],
           [
             "GB-012",
@@ -1002,8 +1002,8 @@
     ],
     [
       "28 Nov",
-      "Grab, charge and flee rules; 0.1.2 one-command trial build; the Look Profile spec; the game launcher that keeps Orb's data safe; QA's combat baseline and GB-012 to GB-015",
-      "876fe030, d90932b9, b154aea2, a82fdb64, 0f08eb9a, d0d08177"
+      "Grab, charge and flee rules; 0.1.2 one-command trial build; the Look Profile spec; the game launcher that keeps Orb's data safe; QA's combat baseline and GB-012 to GB-015; the three lanes on this tracker; Art's creative rulebook page 1; QA runners keep their own data folder",
+      "876fe030, d90932b9, b154aea2, a82fdb64, 0f08eb9a, d0d08177, c3d703cb, 4fe64b97, e50fd39e"
     ]
   ],
   "history": [

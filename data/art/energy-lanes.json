@@ -456,31 +456,31 @@
     "empress": {
       "name": "The Empress",
       "family": "ivory with a deep gold rim (lines, not balls)",
-      "light_colour": "#fffefa",
+      "light_colour": "#cccdbf",
       "kinds": {
         "bolt": {
           "core": "#ddd6c7",
-          "main": "#fffefa",
+          "main": "#cccdbf",
           "edge": "#6b4c0e"
         },
         "lob": {
           "core": "#ddd6c7",
-          "main": "#fffbee",
+          "main": "#cbcab8",
           "edge": "#6b4c0e"
         },
         "beam": {
           "core": "#ddd6c7",
-          "main": "#ffffff",
+          "main": "#cbcdc1",
           "edge": "#7a560e"
         },
         "grab": {
           "core": "#ddd6c7",
-          "main": "#fffaf0",
+          "main": "#cacaba",
           "edge": "#5e420c"
         },
         "trap": {
           "core": "#ddd6c7",
-          "main": "#fff7e6",
+          "main": "#c9c7b4",
           "edge": "#6b4c0e"
         }
       },
@@ -490,89 +490,112 @@
         "red_ok": true,
         "main_alone": {
           "default": {
-            "worst": 4.2,
-            "biome": "ice_sheet",
+            "worst": 6.7,
+            "biome": "sea_ice",
             "at": "ground lit at noon",
-            "kind": "grab",
+            "kind": "beam",
             "below_need": [
-              "ice_sheet",
               "sea_ice",
+              "ice_sheet",
+              "mountains",
+              "highland",
+              "tundra",
               "beach",
-              "desert"
+              "savanna",
+              "desert",
+              "plains",
+              "wetland"
             ]
           },
           "protan": {
-            "worst": 4.3,
-            "biome": "ice_sheet",
-            "at": "ground lit at noon",
-            "kind": "grab",
+            "worst": 2.6,
+            "biome": "sea_ice",
+            "at": "ground lit at sunset",
+            "kind": "trap",
             "below_need": [
-              "ice_sheet",
               "sea_ice",
-              "beach"
+              "ice_sheet",
+              "highland",
+              "mountains",
+              "savanna",
+              "beach",
+              "tundra",
+              "wetland"
             ]
           },
           "deutan": {
-            "worst": 4.2,
-            "biome": "ice_sheet",
-            "at": "ground lit at noon",
-            "kind": "grab",
+            "worst": 4,
+            "biome": "sea_ice",
+            "at": "ground lit at sunset",
+            "kind": "trap",
             "below_need": [
-              "ice_sheet",
               "sea_ice",
-              "beach"
+              "ice_sheet",
+              "highland",
+              "mountains",
+              "savanna",
+              "beach",
+              "tundra",
+              "desert",
+              "wetland"
             ]
           },
           "tritan": {
-            "worst": 3.6,
-            "biome": "ice_sheet",
+            "worst": 5.6,
+            "biome": "sea_ice",
             "at": "ground lit at noon",
-            "kind": "grab",
+            "kind": "beam",
             "below_need": [
-              "ice_sheet",
               "sea_ice",
-              "beach"
+              "ice_sheet",
+              "tundra",
+              "beach",
+              "mountains",
+              "highland",
+              "wetland",
+              "savanna",
+              "desert"
             ]
           }
         },
         "sprite": {
           "default": {
-            "worst": 27.2,
+            "worst": 22.5,
             "biome": "beach",
-            "at": "ground mid dawn",
-            "kind": "trap"
+            "at": "rock lit golden",
+            "kind": "beam"
           },
           "protan": {
-            "worst": 27.6,
+            "worst": 22.9,
             "biome": "beach",
-            "at": "ground mid dawn",
-            "kind": "trap"
+            "at": "subsoil noon",
+            "kind": "beam"
           },
           "deutan": {
-            "worst": 26.4,
-            "biome": "mountains",
-            "at": "rock lit sunset",
-            "kind": "trap"
+            "worst": 21.1,
+            "biome": "ocean",
+            "at": "vegetation lit noon",
+            "kind": "beam"
           },
           "tritan": {
-            "worst": 26.9,
-            "biome": "tundra",
-            "at": "secondary mid sunset",
+            "worst": 22.3,
+            "biome": "savanna",
+            "at": "ground lit dawn",
             "kind": "beam"
           }
         },
         "sprite_with_keyline": {
           "default": {
-            "worst": 36.1
+            "worst": 32.7
           },
           "protan": {
-            "worst": 35.5
+            "worst": 32.3
           },
           "deutan": {
-            "worst": 35.9
+            "worst": 32.5
           },
           "tritan": {
-            "worst": 35.4
+            "worst": 32.6
           }
         }
       }
@@ -598,10 +621,10 @@
     {
       "a": "protagonist",
       "b": "empress",
-      "default": 28.7,
-      "protan": 22.2,
+      "default": 26.8,
+      "protan": 24.2,
       "deutan": 28.1,
-      "tritan": 28.8
+      "tritan": 25.3
     },
     {
       "a": "rival",
@@ -614,24 +637,24 @@
     {
       "a": "rival",
       "b": "empress",
-      "default": 62.7,
-      "protan": 57.3,
-      "deutan": 57,
-      "tritan": 56.2
+      "default": 60,
+      "protan": 54.3,
+      "deutan": 51.1,
+      "tritan": 47.7
     },
     {
       "a": "cyborg",
       "b": "empress",
-      "default": 29.1,
-      "protan": 29.5,
-      "deutan": 25.8,
-      "tritan": 28.7
+      "default": 26,
+      "protan": 22.8,
+      "deutan": 21.4,
+      "tritan": 23.7
     }
   ],
   "_distinct_minimum": {
-    "default": 28.7,
-    "protan": 22.2,
-    "deutan": 24.1,
-    "tritan": 28.7
+    "default": 26,
+    "protan": 22.8,
+    "deutan": 21.4,
+    "tritan": 23.7
   }
 }

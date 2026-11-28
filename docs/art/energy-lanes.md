@@ -40,11 +40,11 @@ Each kind has a **core** (the bright centre), a **main** (the colour a player na
 
 | Kind | Core | Main | Edge |
 |---|---|---|---|
-| Bolt | #ddd6c7 | #fffefa | #6b4c0e |
-| Lob | #ddd6c7 | #fffbee | #6b4c0e |
-| Beam | #ddd6c7 | #ffffff | #7a560e |
-| Grab | #ddd6c7 | #fffaf0 | #5e420c |
-| Trap | #ddd6c7 | #fff7e6 | #6b4c0e |
+| Bolt | #ddd6c7 | #cccdbf | #6b4c0e |
+| Lob | #ddd6c7 | #cbcab8 | #6b4c0e |
+| Beam | #ddd6c7 | #cbcdc1 | #7a560e |
+| Grab | #ddd6c7 | #cacaba | #5e420c |
+| Trap | #ddd6c7 | #c9c7b4 | #6b4c0e |
 
 - **Protagonist.** Cyan on the bolt, sliding to azure on the beam (the hue moves with the kind's size, so the family reads at a glance). The old placeholder (#22d3ee) is the cyan of the bolt, made slightly deeper (#10c2ea).
 - **Rival.** Deep violet on the bolt, magenta on the beam. Darker than the placeholder (#8a3cff) on purpose: against the Protagonist's pale cyan it is the lightness gap that survives deutan and protan sight.
@@ -62,7 +62,7 @@ Each kind has a **core** (the bright centre), a **main** (the colour a player na
 | protagonist | 25.9 | 20.7 | 25.1 | 18.2 | 8.7 (ocean) | 10.4 | 9.3 | 6.6 |
 | rival | 31.4 | 28.1 | 28.3 | 27.6 | 13.4 (tundra) | 3 | 1.7 | 9.2 |
 | cyborg | 27.6 | 26.6 | 25.8 | 26.4 | 5.8 (desert) | 1.9 | 3.7 | 4.7 |
-| empress | 27.2 | 27.6 | 26.4 | 26.9 | 4.2 (ice_sheet) | 4.3 | 4.2 | 3.6 |
+| empress | 22.5 | 22.9 | 21.1 | 22.3 | 6.7 (sea_ice) | 2.6 | 4 | 5.6 |
 
 **Why the main colour alone cannot always pass.** A search over every hue (`art/concepts/energy/search.mjs`) shows only light cyan to light violet (hues about 200 to 330, lightness 0.7 or more) clears 20 against all 15 biomes with one colour; oranges and golds top out at about 8 to 9 against the desert, savanna and beach ground at the golden hours, and ivory at about 6 against snow and ice. The Rival's deep violet (lightness about 0.4 to 0.5) misses against dark water and dark ground on purpose: a light violet sat 15.6 from the Protagonist's cyan under deutan sight (need 20), and the lightness gap is what keeps them apart. All four lanes are therefore judged as a whole: the hot pale core separates from dark ground, the dark edge from pale or warm ground. A small or fast sprite (a thin Empress line, a Cyborg slag shard) is the risk: VFX should keep the dark edge at least 2 px at fight size, and not drop the keyline.
 
@@ -72,16 +72,16 @@ Each kind has a **core** (the bright centre), a **main** (the colour a player na
 |---|---|---|---|---|
 | protagonist / rival | 35.7 | 27.2 | 24.1 | 31.4 |
 | protagonist / cyborg | 50.3 | 47.6 | 51.6 | 54 |
-| protagonist / empress | 28.7 | 22.2 | 28.1 | 28.8 |
+| protagonist / empress | 26.8 | 24.2 | 28.1 | 25.3 |
 | rival / cyborg | 56.8 | 60.2 | 58.7 | 31.7 |
-| rival / empress | 62.7 | 57.3 | 57 | 56.2 |
-| cyborg / empress | 29.1 | 29.5 | 25.8 | 28.7 |
+| rival / empress | 60 | 54.3 | 51.1 | 47.7 |
+| cyborg / empress | 26 | 22.8 | 21.4 | 23.7 |
 
-Smallest: default 28.7, protan 22.2, deutan 24.1, tritan 28.7.
+Smallest: default 26, protan 22.8, deutan 21.4, tritan 23.7.
 
 ## 3. For other directors
 
-- **Combat:** the four `light.colour` values in `energy.*.json` become the `light_colour` of each lane (the bolt main): protagonist #10c2ea, rival #4420c4, cyborg #f58a22, empress #fffefa. The Empress's `/colour` (#d81f3c) goes to the ivory main of her bolt. Per kind colours are in `data/art/energy-lanes.json` (`lanes.<id>.kinds.<bolt|lob|beam|grab|trap>.{core,main,edge}`).
+- **Combat:** the four `light.colour` values in `energy.*.json` become the `light_colour` of each lane (the bolt main): protagonist #10c2ea, rival #4420c4, cyborg #f58a22, empress #cccdbf. The Empress's `/colour` (#d81f3c) goes to the ivory main of her bolt. Per kind colours are in `data/art/energy-lanes.json` (`lanes.<id>.kinds.<bolt|lob|beam|grab|trap>.{core,main,edge}`).
 - **VFX:** flat fills in this order, edge then main then core, inside a keyline of at least 1 px; never dim by the world light; burst frames above 3 a second use the main and the edge only, peak frames use the core (Legal fx09: peak frames white-hot below the red ratio, which the cores are).
 - **Legal:** please check the lanes against fx09 and e15 and the saturated-red rule; the numbers are in the data.
 - **Tools:** a draft schema is in `docs/art/pending/art-energy-lanes.schema.json` (the file warns "no schema" until it is adopted). Underscore keys are free-form.

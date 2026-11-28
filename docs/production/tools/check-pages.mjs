@@ -36,7 +36,7 @@ check('ideas-log: Orb\'s answer is "Not asked yet" on every entry (nothing answe
 // ---- risk-register.md (criterion 5) ----
 const rr = read('risk-register.md');
 const risks = tableRows(rr, 'R-');
-check('risk-register: 24 live risks', risks.length === 24, `found ${risks.length}`);
+check('risk-register: 27 live risks', risks.length === 27, `found ${risks.length}`);
 const bad = risks.filter(r => { const c = cells(r); return c.length !== 7 || !c[3] || !c[4] || !c[5] || !c[6]; }).map(r => cells(r)[0]);
 check('risk-register: every risk has an owner, an early sign, a guard and a standing', bad.length === 0, bad.join(' '));
 const owners = risks.map(r => cells(r)[3]);

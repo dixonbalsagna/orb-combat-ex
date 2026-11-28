@@ -12,7 +12,7 @@ _Live page. Last built from status.json for **2026-11-28**. It is rebuilt every 
 
 **Waves.** Wave 1 from Sat 28 Nov: combat directive briefs 1 to 3, GB-011, the picture faults, build 0.1.2 and QA's baseline, with the stand-in on the Look Profile. 
 
-**Note.** A1's finish line, at 25 November (docs/ep/reviews/A2-sprint.md): 16 of 44 exit parts met, 21 once the medium planet landed with its five records. No newer count has been made. The row counts above are the register's 77 rows, a different count.
+**Note.** A1's finish line, at 25 November (docs/ep/reviews/A2-sprint.md): 16 of 44 exit parts met, 21 once the medium planet landed with its five records. No newer count has been made (EP, 28 November). The row counts above are the register's 77 rows, a different count.
 
 **Note.** Landed windows: GW1a, GW1b (the round planet is the default world), GW1c (build 0.1.1, ac4ba152) and the small-and-big window (26 Nov).
 
@@ -29,7 +29,7 @@ _Live page. Last built from status.json for **2026-11-28**. It is rebuilt every 
 
 ## The path to the alpha now: three lanes
 
-As of 28 November, from git (HEAD 0c346c01), the park folders and the Executive Producer's brief of that day. "Gating" and "in build" are the EP's words; "not seen" means no commit or park was found, not that no work exists.
+As of 28 November, from git (HEAD c3d703cb), the park folders and the Executive Producer's two messages of that day. A park is finished work waiting outside main; it lands as code and its folder is then deleted. "Gate" and "in build" are the EP's words; "not seen" means no commit or park was found, not that no work exists.
 
 ### The package lane (A2: a safe package in two friends' hands)
 
@@ -61,13 +61,13 @@ _Source: docs/ep/proposals/combat-overhaul-directive.md, section 6; qa/known-bug
 
 | Item | What | Owner | State | Evidence, or what it waits on |
 | --- | --- | --- | --- | --- |
-| Brief 1 | Grab and charge retune | Game Design, Encounter; Combat reviews | parked, gating | rules landed (876fe030, 566d1481, d90932b9), review (193891f0); Encounter's park docs/director/pending/grab-charge (not committed); off on main. Waits on: its gate, then Orb's judgement of the clip. |
-| Brief 2 | The beam you can read (a trial) | Encounter; Game Design, VFX, UI, Audio | parked, gating | park docs/director/pending/beam-trial (not committed), applies on top of brief 1; off on main. VFX, UI and Audio parts: no park seen. Orb must see it before it is adopted. |
-| Brief 3 | Which turn ran, then the visible swing and the never-lost camera rules | Encounter, World, Camera | in build | the first item is answered (b15eaa15): 0.1.1 ran the turntable, swings mostly 4.5 to 8 degrees. The swing and camera rules are not parked. |
+| Brief 1 | Grab and charge retune | Game Design, Encounter; Combat reviews | parked, in the EP's gate | rules landed (876fe030, 566d1481, d90932b9), review (193891f0); Encounter's park docs/director/pending/grab-charge; off on main. Then Orb judges the clip. |
+| Brief 2 | The beam you can read (a trial) | Encounter; Game Design, VFX, UI, Audio | parked, in the EP's gate | park docs/director/pending/beam-trial, applies on top of brief 1; off on main. VFX, UI and Audio parts: no park seen. Orb must see it before it is adopted. |
+| Brief 3 | Which turn ran, then the visible swing and the never-lost camera rules | Encounter, World, Camera | in build | which turn ran is answered (b15eaa15): 0.1.1 ran the turntable, swings mostly 4.5 to 8 degrees. In build: camera rules (rule 1 to about 8 body heights; rule 3 parked) and the landmark swing (Encounter, with World's landmark function; spec 96c3ba97). |
 | Brief 4 | Ballistic shots, steps 1 to 3 (lands off) | Simulation, Game Design | not started | No commit or park seen. |
 | Brief 5 | Wind and the flee rules | Simulation, Game Design | ruled, not built | flee rules ruled (876fe030). Waits on: brief 1 judged. |
 | Brief 6 | The beam as a stream of segments | Simulation, Encounter | not started | Waits on: briefs 2 and 4. |
-| GB-011 | Lakes end in walls of water, with houses under them | World; Rendering, Tools | parked | docs/world/pending/gb011-lakes (not committed, not applied). QA: the fault is in the world data; that it is what Orb saw is likely, not proven. |
+| GB-011 | Lakes end in walls of water, with houses under them | World; Rendering, Tools | parked, waiting for a re-record window | docs/world/pending/gb011-lakes; look views (f07ecf33). QA: the fault is in the world data; that it is what Orb saw is likely, not proven. |
 | GB-012 | The ground looks too flat in the foreground | Rendering | open | Not yet reproduced by QA (d0d08177). |
 | GB-013 | Craters seem split in half | Rendering | open | Not yet reproduced by QA (d0d08177). |
 | GB-014 | Destroyed terrain leaves jagged triangles | Rendering | open | Not yet reproduced by QA (d0d08177). |
@@ -106,7 +106,7 @@ _Source: docs/ep/proposals/look-profile-spec.md, section 9. Orb, 28 Nov: everyth
 | 26 Nov 17:28 | The small-and-big window: small, medium and big planets offered, with feet, ground and camera work | 85b2b9b2, 4f9ba150, 2a0cbd78, 0e3b7db3, 3db4a4f8 |
 | 26 Nov evening | QA's two-hour soaks show the memory growth gone | 68d5b9f3 |
 | 27 Nov | Orb's 0.1.1 notes, GB-011, the energy toy, the combat overhaul directive | cca3f716, 70be9487, db612611, 6f5609bc, d6508a28 |
-| 28 Nov | Grab, charge and flee rules; 0.1.2 one-command trial build; the Look Profile spec; the game launcher that keeps Orb's data safe; QA's combat baseline and GB-012 to GB-015 | 876fe030, d90932b9, b154aea2, a82fdb64, 0f08eb9a, d0d08177 |
+| 28 Nov | Grab, charge and flee rules; 0.1.2 one-command trial build; the Look Profile spec; the game launcher that keeps Orb's data safe; QA's combat baseline and GB-012 to GB-015; the three lanes on this tracker; Art's creative rulebook page 1; QA runners keep their own data folder | 876fe030, d90932b9, b154aea2, a82fdb64, 0f08eb9a, d0d08177, c3d703cb, 4fe64b97, e50fd39e |
 
 ## What could move the date
 

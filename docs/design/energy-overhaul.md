@@ -487,7 +487,7 @@ Orb: "make sure there is a fun and cool replacement for the beam function this w
 
 **The pick is the Driver, a working name for Narrative.** It gives a clean grammar: **B sends him, in both layers. The stick puts him where you aim, or draws a beam. Y covers the ground.**
 
-- **E125. The hold.** RB + B held past its decision point of 20 ticks, with levels at 30, 54 and 84 (E42's ticks, cues and half-speed flight). E45 and E46 stand: he's armoured against lights from level 1, a heavy or a grab ends it, and a dodge or guard drops it for nothing. **Under `grabCharge`:** a grab ends it only before full (the last level he can reach), and a heavy, a launcher or a beam at any level (E45). Let go before level 1 and it's the tap. It's the same gather either way.
+- **E125. The hold.** RB + B held past its decision point of 20 ticks, with levels at 30, 54 and 84 (E42's ticks, cues and half-speed flight). E45 and E46 stand: he's armoured against lights from level 1, a heavy or a grab ends it, and a dodge or guard drops it for nothing. **Under `grabCharge`:** a grab ends it only before full (the last level he can reach), and a heavy, a launcher or a beam at any level (E45). **Not in the grab-charge trial (2026-11-28):** today any exchange start drops the Driver, and its armour from level 1 was never built, so the armour and the `grabCharge` line wait for their own step (D1, `grab-and-charges.md` §2c). Let go before level 1 and it's the tap. It's the same gather either way.
 - **E126. The shot.** Straight, fast and narrow, with no root: he keeps flying as it leaves, unlike a beam.
 
 | Level | Charged at | Worth, of a heavy | Ki | On a clean hit | Recoil on the shooter |

@@ -46,6 +46,7 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 - **A thrown energy grab that meets a full charge** (2026-11-28, Combat's question): it breaks on him as it does on a dodge (E62). There's no catch and nothing is staged, and the charge goes on.
   - **The thrower isn't opened** beyond the throw's own frames: from range, the grab's energy and its frames are its price, and an open window there does nothing the charger could reach.
   - **Thrown from inside a light's reach, it's G2's miss: open 20 ticks,** so the energy grab is never the safe way to test a full charge up close.
+  - **Waiting (§2c, b):** the sim has no thrown energy grab and no charged lob yet, so this rule has nothing to attach to until they're built.
 - **Combat's note on the throw at the time:** from even, every throw is the leader's at the time, at 60 as at 45. From one ahead (a guard or a wind-up caught), the earned throw still comes on the second pulse. A third pulse for the earned throw from even isn't in this brief.
 
 ### 2b. The charge at range: hold to charge in place (2026-11-28, Encounter's probe; EP's option 1)
@@ -71,6 +72,56 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 **For the timing table (§5):** `chargeClose` already carries a full release up to 6 bh. So Combat's C2 arithmetic (a defender about 3 bh back by full) may already be answered; the table shows it.
 
 **Together:** a charge started with room is safe from everything cheap once it's full. One started at arm's length can still be grabbed or out-timed before it's full. That's the spacing Orb asked for, and pillar 3 still holds.
+
+### 2c. Encounter's build and QA's baseline: five answers (2026-11-28)
+
+From Encounter's brief 1 report (`docs/director/pending/grab-charge/README.md`, "Not built") and QA's baseline (`docs/qa/readings/combat-baseline.md`, d0d08177).
+
+**C5. A brawl's end doesn't end a charge (new, under `grabCharge`).**
+- **What QA found:**
+  - On Medium, the kit player lost 458 of 619 interrupted heavies with the brawl, not to a blow or a grab.
+  - In a four-match diagnostic, 17 of 19 such losses were the brawl ending, 15 of them with the computer starting a flight strike on that tick.
+  - Encounter's (d) is the same rule: every brawl ending clears a charge today (the rival's burst, boost-away, flight strike, Driver or signature start, or the pair walking apart past `breakBh`).
+- **Ruled on the charger's state, not the computer's choice.**
+  - A rule in the computer would leave the same hole for a human rival, who can end a brawl with a flight strike on purpose.
+  - A brawl ending isn't a blow. It shouldn't do what C3 lets only a heavy, a launcher or a beam do.
+- **When the brawl ends while he holds the charge, the charge goes on:**
+  - on the same clock (full at 44, released by itself at 70), with the price already paid;
+  - at half speed (R3), with its armour (E45 before full, C3 at full).
+  - If a brawl starts again, it takes the charge back on the same clock (the existing hand-over).
+- **Where it started decides its release.**
+  - A brawl's charge keeps the brawl's release wherever he is: `chargeClose`, 3 bh at the first flash and 6 at full, over at most 12 ticks.
+  - One started in place (R1) keeps R4 to R6.
+  - Room is what buys the long flight. C2's target stays meaningful too: a defender who walked out escapes a charge held too long.
+- **What still ends it:**
+  - a blow, by its weight (E45 before full, C3 at full);
+  - a beam's touch;
+  - a send or set piece that takes him (a launch, a throw, a slam, a struggle);
+  - anything he does himself other than moving and holding (a dodge, a guard press, a burst, a flight strike, a signature, a Driver);
+  - a KO.
+- **The flight strike, then: the computer keeps its choice.** Its blow meets the charge like any other blow:
+  - a light goes through for its damage;
+  - a medium stops it only before tick 20;
+  - a heavy stops it.
+  - A flight strike that loops away leaves the charger free to release into it if it's in reach.
+- **The cost:** charging gets stronger again, on top of G2 and G7. QA's X-06 read (§5) covers it, with the same levers.
+
+**(a) The Driver: later, a step of its own (D1).**
+- Today any exchange start drops it (`driver.gd:89-91`), and E125's "armoured against lights from level 1" was never built.
+- Making it live inside an exchange touches every exchange start, so it isn't in this trial. The trial judges the heavy, where Orb's complaint and QA's numbers are.
+- **In the trial the Driver keeps today's rules,** and Orb's clip doesn't use it.
+- **D1, briefed after Orb's verdict on the trial:**
+  - an exchange that starts while he holds the Driver doesn't drop it;
+  - it builds E125 as written, with C3 at full ("full" is the last level he can pay for) and C5's brawl endings.
+
+**(b) The thrown energy grab: waiting.** The sim has no thrown energy grab and no charged lob (`rally.gd:33-35`). The rule in §2 stands, and it's attached when they're built. Nothing changes in the trial.
+
+**(c) R5 for B lands as a tapped heavy: accepted for the trial on one condition.**
+- **No price is kept for a stage that doesn't land.** A B let go between the first flash (32) and full (44) either lands at the stage it reached, as the stick's does, or gives back the first flash's price. Encounter picks the smaller change.
+- R5 as written (it lands at its stage) is what gets adopted with the switch.
+- A release before 32 is a tapped heavy either way, which is right.
+
+**(d) Brawl endings clearing a charge: no.** C5 replaces it.
 
 ## 3. Fleeing (directive §3): ruled now, built in brief 5
 
@@ -102,10 +153,12 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
   "charge": {
     "full": "lastReachableStage", "fullStoppedBy": ["heavy", "launcher", "beam"], "sweetTicks": 6, "sweetReachBh": 0.5,
     "inPlace": { "bands": ["mid"], "holdPastCrouch": true, "moveMul": 0.5, "fullFlight": { "reachBh": 12.5, "maxTicks": 14 }, "beforeFull": "lunge", "pastBand": "farCharge" },
-    "heavyWindOnArrival": true
+    "heavyWindOnArrival": true,
+    "outlivesBrawl": true
   }
 }
 ```
+- `outlivesBrawl` (C5): a brawl ending doesn't clear a held charge. It runs on with its clock, price, half speed and armour, and where it started decides its release (a brawl's keeps `brawl.chargeClose`; an in-place one keeps `inPlace`).
 - `inPlace` (§2b): in the mid band, B or the stick still held when the lunge's crouch ends charges where he stands.
   - `moveMul` 0.5 is his speed meanwhile.
   - `fullFlight` is the full (or 70-tick) release's flight to him.
@@ -162,7 +215,10 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 - a charge begun at 8 bh completes against a lunge begun on the same tick, and one begun at 2 bh does not;
 - match length on Easy and Medium stays in QA's band.
 
-**Two more:**
+**The "before" for every row is QA's baseline** (`docs/qa/readings/combat-baseline.md`, d0d08177). For example: every computer grab try there (5,230) began while the player was winding or charging a heavy, and on Easy a charge-only player had 72.5% of three-heavy runs grabbed.
+
+**Three more:**
+- **C5:** on Medium, the kit player's heavies "lost with the brawl" (458 of 619 on the baseline) fall to the KO and set-piece cases only. Every flight strike blow that stops a charge is a heavy, or a medium before tick 20.
 - **The stall:** clinch ticks per minute at Easy and Medium, at least halved.
 - **X-06's one-note bands** (`gauntlet-plan.md`): the charge-only pad at most 80% at Easy and at most 55% at Medium.
   - **This is the risk.** A grab-proof full charge and fewer answers both help a pad that only charges.

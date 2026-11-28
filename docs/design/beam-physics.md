@@ -113,3 +113,18 @@ Orb picked A on 9 November ("A sounds good"). These settle the trial's five depa
 **Also, from the trial's risks:**
 - **The ground stops a beam.** A beam aimed into the ground spends itself where it enters, carving a groove and crater there. It doesn't run on underground, so nobody is hit through a hill or mountain: "it hits only what it touches". Towers it goes through, as Orb agreed on 11-01, because a building is a thing it breaks.
 - **The signature** joins the beam in space at its top stage, with the inputs Orb named (RT + RB + a flick for the energy signature). It goes in A-COMBAT-02 (GW2), so it isn't the one beam that still finds you.
+
+## The trial's struggle: a band that settles (2026-11-28, Encounter's beam trial)
+
+**Encounter's finding:** with the trial's numbers, 40 of 100 held struggles against Easy end in a draw (the beams detonate), by today's `drawBand` 0.1. That band is too wide for the trial's steps. A held pulse moves the point 0.03 and a surge 0.10, so a fighter a whole surge ahead (0.6) still ends inside 0.1 of the middle, and that counts as a draw.
+
+**Ruling: under the trial, `drawBand` 0.015, half a held pulse.**
+- **The beams detonate only when the struggle is truly even:** both holding at equal power, or every surge traded.
+- **Otherwise the side the point is on when the pulses run out loses:** half the other beam, no launch (today's "time" ending). The point reaching him is the overwhelm, as today.
+- **Data:** `interrupts.json` `beamPlays.space.struggle.drawBand` 0.015 (Encounter's file; the trial's struggle numbers lay over `beamStruggle`'s). `beamStruggle.drawBand` stays 0.1 on main, because the trial replaces today's struggle and moving the golden for it isn't worth it.
+- **Why:** Orb's question for the clip is "Can you tell who is winning, and why?" A draw answers neither. The point's side at the end does: the meeting point shows it, and holding and catching pulses are what moved it. The detonation stays as the even struggle's set piece, rare enough now to mean something.
+- **The acceptance still reads** (directive §1), now with almost no draws:
+  - a script that only holds beats Easy 40 to 60 times in 100;
+  - flooding presses does no better than holding.
+  - The check reports its draws, and a handful is expected.
+  - **If holding wins more than 60,** the lever is Easy's `aiHit`, up 0.05 at a time (it's Easy's own number). **Fewer than 40,** down. The band stays.

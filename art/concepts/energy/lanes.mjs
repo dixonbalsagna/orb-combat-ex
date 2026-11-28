@@ -26,7 +26,7 @@ export const LANES = {
   },
   empress: {
     name: 'The Empress', family: 'ivory with a deep gold rim (lines, not balls)',
-    bolt: L('#ddd6c7', '#fffefa', '#6b4c0e'), lob: L('#ddd6c7', '#fffbee', '#6b4c0e'), beam: L('#ddd6c7', '#ffffff', '#7a560e'), grab: L('#ddd6c7', '#fffaf0', '#5e420c'), trap: L('#ddd6c7', '#fff7e6', '#6b4c0e'),
+    bolt: L('#ddd6c7', '#cccdbf', '#6b4c0e'), lob: L('#ddd6c7', '#cbcab8', '#6b4c0e'), beam: L('#ddd6c7', '#cbcdc1', '#7a560e'), grab: L('#ddd6c7', '#cacaba', '#5e420c'), trap: L('#ddd6c7', '#c9c7b4', '#6b4c0e'),
   },
 };
 
