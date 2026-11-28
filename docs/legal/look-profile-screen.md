@@ -64,7 +64,7 @@ Pass, default on. Looks hold no text or pictures, so there is nothing to moderat
 
 ## 7. The shape rows have moved (RL-288)
 
-Confirmed in one line: the shape, pose and look rows of `energy-overhaul-screen.md` section 1, and the flame, gold and white aura rows of `rule-of-cool-screen.md`, are creative rules under Orb (RL-258), and Orb has answered that the toy wins.
+**Confirmed:** the older shape and look rows (no ring above the head, no twisting beam, no ball in the hand, the other shape, pose and look rows of `energy-overhaul-screen.md` section 1, and the flame, gold and white aura rows of `rule-of-cool-screen.md`) are Art's creative direction under Orb, in `docs/art/creative-rulebook.md`, and not a Legal gate (Orb, 2026-11-07; RL-258). **No shape row stays Legal's.** What does stay Legal's among the rulebook's lines is player safety: the flash, red-share, repetition and brightness limits are not Art's to relax alone.
 
 Legal keeps: names and call-outs, likeness of a **whole character**, trademarks, copied assets, and player safety (flash and brightness, including a white-hot core, through the spec's door test). A single piece is never a likeness problem. What Legal screens is a **shipped** preset or fighter default as a whole (L7: send the two defaults). A player's own mix is theirs. Hair and body parts (L15) come back when designed.
 
