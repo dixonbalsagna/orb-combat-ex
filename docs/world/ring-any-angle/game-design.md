@@ -674,4 +674,43 @@ On `docs/qa/cloud-reports/2026-11-06-city-step-one.md`. First values, unplayed. 
 - landmark swings past 20° on a launch the planner aimed at a target: **0**;
 - the directive's acceptance: with a city in view, a launch ends with that city in the fight's plane in at least 8 of 10 seeded tries.
 
-**Still to rule: the launch kind when a landmark is picked.** Encounter: the swing fits only flights of about 1.7 to 2.4 s. So when a landmark is picked, a neutral or up launch should lean toward the long kinds (the uppercut). **Ruled when Encounter's flight-time numbers arrive** (each kind's flight time by tier and row, and today's shares). It will be a score term in the planner, not a forced pick, and the variety rows still bound it (no one kind over half of launches).
+**The launch kind when a landmark is picked: ruled below (§16a).**
+
+### 16a. The long-kind bias (2026-11-28, Encounter's probe, `docs/director/runs/0aa68c72/launch-probe/`)
+
+**What the probe shows** (main, computer against computer, Easy and Medium, 88 launches):
+- A turn needs 1.67 s of flight at the lens's near edge (64°) and 2.1 s straight behind (90°).
+- **Only two kinds with no target carry it:** UPPERCUT (11% of launches, 3.24 s, always fits) and SMASH ACROSS (25%, 2.33 s, fits the near edge 21 of 22 times and straight behind 12 of 22).
+- DRIVE DOWN, the most common kind (30%, 0.72 s), never fits.
+- A built place came up behind the fight inside the lens at 32 of 88 launches. One that fitted the launch actually chosen came up at only 9.
+
+**Ruling: a fit term in the planner, behind `swing.json` `landmark.enabled`.**
+- **When the swing has a landmark for this launch,** it gives the planner the flight time its turn needs (T, at the rate law). Each candidate **with no target** whose own planned flight lasts at least T gets a bonus by the landmark's kind:
+  - **a city +30, a town +20, a peak +10;**
+  - for the best landmark that candidate fits, once.
+- **Use the plan's own flight time,** not the kind's average. A SMASH ACROSS that fits gets the bonus and one that doesn't gets nothing, which is what the probe's 12 of 22 straight behind asks for.
+- **What stays as it is:**
+  - **Candidates with a target** (BUILDING SMASH, CLIFFSIDE, PROP SMASH, TREE LINE, MOUNTAINSIDE, aimed sends) keep their scores and can still win. That's the directive's "unless the launch is aimed elsewhere".
+  - **The stick's lean** still picks the family (up, across, down). A player who holds down gets DRIVE DOWN and no landmark swing: his choice wins.
+  - **Noise, variety and personality** stay as they are. The care term still scores the landing.
+- **The same for every fighter.** The term reads only T and the candidate's plan, not tension or places (Legal's RL-213 to RL-216 shape).
+- **Why +30:**
+  - A fitting UPPERCUT (10, or 22 near the ground) or SMASH ACROSS (8 and up) has to beat DRIVE DOWN (18 in the air, plus 4 a tier, plus its depth term), with noise of 8.
+  - +30 does that nearly always.
+  - It can still lose to the repeat penalty (20 for the same kind as the last launch) or to a strong aimed target. Both are fair: variety, and "aimed elsewhere".
+- **Shares, roughly** (landmark-fitting moments are about a third of launches): UPPERCUT to about 20 to 25%, SMASH ACROSS to about 30%, DRIVE DOWN down to about 20%. No kind is near half.
+
+**Data:** `launch.json` `landmarkFit` (Encounter's file):
+```json
+"landmarkFit": { "bonus": { "city": 30, "town": 20, "peak": 10 }, "_note": "Game Design, ring-any-angle/game-design.md section 16a: read only while swing.json landmark.enabled. A candidate with no target whose planned flight lasts at least the swing's needed turn time gets the bonus of the best landmark it fits, once" }
+```
+
+**The acceptance** (the directive's 8 of 10, made countable):
+- **The tries:** a neutral stick, a city behind the fight inside the lens, and nothing to aim at in the blow's cone within reach. In those, at least 8 of 10 seeded tries end with the city in the fight's plane.
+- **Also reported, with no band:** the same with a target in the cone (how often the city still wins), and the kind shares over the batch. No kind may be over half.
+- **If it's under 8 of 10, the levers in order:**
+  1. the city's bonus up 5 at a time, to at most 45;
+  2. then the repeat penalty halved for a candidate that fits, when a landmark is picked.
+  - Never a forced pick, and never the cone.
+
+**"By tier and row":** one row per kind with its tiers is what I meant. Tier 4 not coming up is fine: a higher tier's launch flies further, so it can only fit more.
