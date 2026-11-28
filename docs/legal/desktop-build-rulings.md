@@ -55,3 +55,16 @@ conditions: every gate in docs/legal/outside-tester-gates.md is green for the co
 ```
 
 What the testers' build script reads (and the upload script, with the page's own approval file, RL-272): `date:` (YYYY-MM-DD, must equal the typed date, 0 to 30 days old), a `scope:` line containing "desktop test builds", and a `recorded-by:` line with text. The `ends:` and `conditions:` lines are for people. The file must be committed in the commit being built.
+
+## 5. The old test-build rules for the Alpha on itch.io: kept, changed or retired (A-TOOLS-06; RL-291)
+
+| Old rule (the first desktop workflow) | Now | What holds for the Alpha |
+|---|---|---|
+| A build's files are kept as a run file for one day | **Retired** (RL-277) | No run file at all. Testers' packages stay on Orb's PC; the last accepted one is kept until the next is accepted, for the roll-back |
+| The EP deletes the run after the testers have the files | **Retired** (RL-277) | There is no run to delete. If the test ends, Orb removes the files from the page (RL-261) |
+| No link, post or mention anywhere | **Changed** (RL-261, RL-271) | The restricted page and one key each go to named adult friends only. Nothing public: no listing, link, post, video or promotion |
+| Orb's recorded yes, under 30 days old | **Kept** (RL-263, RL-272) | Needed to build the testers' package, and again at upload with the page's own approval file. Both at most 30 days old |
+| No network play in the package | **Kept** (RL-204, G19) | The testers' package holds no network code. The two-PC kit is for Orb and Orb 2 only. A build for outsiders with network code comes to Legal first, and its privacy words are rewritten |
+| Nothing built is a release, a Legal pass or a store build | **Kept** | A testers' package is a private Alpha hand-out. It clears no gate by existing, and no store step follows from it |
+
+A build for nobody's hands (the owner-private build, or the workflow's proof run) needs no yes. The testers' package does, even before it is handed out.
