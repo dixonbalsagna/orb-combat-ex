@@ -1,0 +1,34 @@
+extends SceneTree
+# Scratch (QA, 2026-11-27): buildings of the default planet that stand in the planet's own water (lake, river or sea), as the sim reads it at their own point, before any fight.
+func _init() -> void:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": true, "p2": true}, {"intro": false, "planet": 7, "touch": 3, "planetGen": 3})
+	for t in range(5):
+		SimCore.step(S)
+	print("W bDir ", S.bDir.size(), " buildings ", S.buildings.size(), " records ", S.fieldRecs.size())
+	var wet: Array = []
+	var sea: int = 0
+	for i in range(S.buildings.size()):
+		var q: Array = [S.bDir[3 * i], S.bDir[3 * i + 1], S.bDir[3 * i + 2]]
+		var h: float = SimField.buildingGround(S, i)
+		var d: float = WorldField.recordWater(S, q[0], q[1], q[2], h)
+		if h < 0.0:
+			sea += 1
+		if d > 5.0 or h < -5.0:
+			var b = S.buildings[i]
+			wet.append({"i": i, "x": b.x, "z": b.z, "h": h, "rec": d, "sea": maxf(0.0, -h), "bh": b.h, "kind": b.kind, "q": q})
+	print("W buildings with ground below sea level: ", sea, "; with lake/river water over 5 or sea over 5: ", wet.size())
+	var places: Dictionary = {}
+	for u in wet:
+		var k: int = int(u.x / 4000.0)
+		if not places.has(k):
+			places[k] = {"n": 0, "maxrec": 0.0, "maxsea": 0.0, "kinds": {}}
+		places[k].n += 1
+		places[k].maxrec = maxf(places[k].maxrec, u.rec)
+		places[k].maxsea = maxf(places[k].maxsea, u.sea)
+	for k in places:
+		print("W stretch x %d..%d: %d buildings in water; deepest lake/river %.0f, deepest sea %.0f" % [k * 4000, k * 4000 + 4000, places[k].n, places[k].maxrec, places[k].maxsea])
+	wet.sort_custom(func(a, b): return maxf(a.rec, a.sea) > maxf(b.rec, b.sea))
+	for u in wet.slice(0, 6):
+		print("W b%d x=%.0f z=%.0f ground=%.0f lake/river depth=%.0f sea depth=%.0f building height=%.0f kind=%s" % [u.i, u.x, u.z, u.h, u.rec, u.sea, u.bh, str(u.kind)])
+	quit(0)

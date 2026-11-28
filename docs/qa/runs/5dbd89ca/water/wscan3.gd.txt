@@ -1,0 +1,39 @@
+extends SceneTree
+# Scratch (QA, 2026-11-27): around the drowned houses, does the lake water end in a vertical wall? Samples depth every 50 units across x and z; a "wall" is water over 100 deep with the next sample dry.
+func _water(S: SimState, x: float, z: float) -> Array:
+	SimField.placeAt(S, x, z)
+	var q: Array = [SimField.ox, SimField.oy, SimField.oz]
+	var h: float = SimField.atDepth(S, x, z)
+	return [WorldField.recordWater(S, q[0], q[1], q[2], h), h]
+
+
+func _init() -> void:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": true, "p2": true}, {"intro": false, "planet": 7, "touch": 3, "planetGen": 3})
+	for t in range(5):
+		SimCore.step(S)
+	var STEP: float = 50.0
+	for site in [["houses near x 22,400", 22800.0, -850.0], ["houses near x 50,800", 50780.0, 5200.0]]:
+		var walls: Array = []
+		var wet: int = 0
+		var n: int = 0
+		for ix in range(-40, 41):
+			for iz in range(-50, 51):
+				var x: float = site[1] + ix * STEP
+				var z: float = site[2] + iz * STEP
+				var a: Array = _water(S, x, z)
+				n += 1
+				if a[0] > 0.0:
+					wet += 1
+				if a[0] <= 100.0:
+					continue
+				for d in [[STEP, 0.0], [-STEP, 0.0], [0.0, STEP], [0.0, -STEP]]:
+					var b: Array = _water(S, x + d[0], z + d[1])
+					if b[0] == 0.0 and b[1] < a[1] + a[0] - 100.0:   # dry next door although its ground is well below the water's level
+						walls.append([a[0] + a[1] - b[1], x, z, a[0], a[1], b[1], d])
+						break
+		walls.sort_custom(func(p, q): return p[0] > q[0])
+		print("W %s: %d of %d samples wet; places where the water stops over lower dry ground (a standing wall of water over 100 high): %d" % [site[0], wet, n, walls.size()])
+		for w in walls.slice(0, 3):
+			print("W   at x=%.0f z=%.0f: water %.0f deep on ground %.0f (level %.0f); 50 units on, ground %.0f and dry: a face %.0f high" % [w[1], w[2], w[3], w[4], w[3] + w[4], w[5], w[0]])
+	quit(0)

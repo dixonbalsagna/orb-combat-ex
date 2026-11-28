@@ -1,0 +1,36 @@
+W bDir 11505 buildings 3835 records 1460
+W buildings with ground below sea level: 85; with lake/river water over 5 or sea over 5: 110
+W stretch x 132000..136000: 8 buildings in water; deepest lake/river 0, deepest sea 66
+W stretch x 136000..140000: 9 buildings in water; deepest lake/river 0, deepest sea 72
+W stretch x 140000..144000: 4 buildings in water; deepest lake/river 0, deepest sea 185
+W stretch x 144000..148000: 18 buildings in water; deepest lake/river 0, deepest sea 79
+W stretch x 112000..116000: 2 buildings in water; deepest lake/river 0, deepest sea 61
+W stretch x 100000..104000: 4 buildings in water; deepest lake/river 0, deepest sea 71
+W stretch x 108000..112000: 3 buildings in water; deepest lake/river 0, deepest sea 33
+W stretch x 104000..108000: 4 buildings in water; deepest lake/river 0, deepest sea 63
+W stretch x 152000..156000: 2 buildings in water; deepest lake/river 0, deepest sea 61
+W stretch x 0..4000: 1 buildings in water; deepest lake/river 0, deepest sea 12
+W stretch x 128000..132000: 3 buildings in water; deepest lake/river 0, deepest sea 63
+W stretch x 116000..120000: 3 buildings in water; deepest lake/river 0, deepest sea 71
+W stretch x 120000..124000: 4 buildings in water; deepest lake/river 0, deepest sea 53
+W stretch x 124000..128000: 5 buildings in water; deepest lake/river 0, deepest sea 51
+W stretch x 48000..52000: 30 buildings in water; deepest lake/river 456, deepest sea 0
+W stretch x 20000..24000: 7 buildings in water; deepest lake/river 611, deepest sea 48
+W stretch x 16000..20000: 1 buildings in water; deepest lake/river 0, deepest sea 7
+W stretch x 12000..16000: 2 buildings in water; deepest lake/river 0, deepest sea 35
+W b3647 x=22406 z=-894 ground=378 lake/river depth=611 sea depth=0 building height=299 kind=house
+W b3643 x=22700 z=-817 ground=394 lake/river depth=596 sea depth=0 building height=243 kind=house
+W b3640 x=23015 z=-842 ground=397 lake/river depth=592 sea depth=0 building height=469 kind=house
+W b3637 x=23262 z=-749 ground=414 lake/river depth=576 sea depth=0 building height=355 kind=house
+W b3115 x=50764 z=5400 ground=233 lake/river depth=456 sea depth=0 building height=314 kind=house
+W b3112 x=50798 z=5064 ground=269 lake/river depth=420 sea depth=0 building height=312 kind=house
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+W houses near x 22,400: 1727 of 8181 samples wet; places where the water stops over lower dry ground (a standing wall of water over 100 high): 128
+W   at x=24300 z=-1050: water 1497 deep on ground 566 (level 2062); 50 units on, ground 534 and dry: a face 1529 high
+W   at x=24550 z=-1300: water 1467 deep on ground 596 (level 2062); 50 units on, ground 555 and dry: a face 1508 high
+W   at x=24350 z=-1050: water 1451 deep on ground 611 (level 2062); 50 units on, ground 562 and dry: a face 1500 high
+W houses near x 50,800: 4205 of 8181 samples wet; places where the water stops over lower dry ground (a standing wall of water over 100 high): 84
+W   at x=52730 z=4550: water 493 deep on ground 196 (level 689); 50 units on, ground 197 and dry: a face 492 high
+W   at x=52680 z=4600: water 491 deep on ground 198 (level 689); 50 units on, ground 197 and dry: a face 492 high
+W   at x=52780 z=4550: water 495 deep on ground 194 (level 689); 50 units on, ground 197 and dry: a face 492 high
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

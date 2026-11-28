@@ -220,6 +220,17 @@ QA has no band for any of the three yet. For GB-005 the harness already counts b
 **Effect (from the code; no one has looked at a screen).** `render/core/ground_field.gd` `ground_at()` off the fighter plane then reads the old arena heights in place of the tile ground's, and `_store_holds()` answers false. `ground_at()` is used for heights in depth by `pane_world.gd` (around lines 992 and 1100 to 1122), `planet_view.gd` and `crowd_flight.gd`. What a player sees from this is **not verified**; any session of two matches or more has it.
 **Test to add once fixed.** Start two matches headless; assert every pane's `ground.tile_field == tile_field`.
 
+### GB-011: Lakes end in standing walls of water, with houses under them ("large cubes of water where it shouldn't be")
+
+**Reported by:** Orb, 2026-11-27, playing (screenshot: a town with a flat-topped, stepped block of water standing among and over the houses). The build, seed and place of the screenshot are not known.
+**Verdict:** **the fault is in the world data; that it is what Orb saw is likely, not proven.** On 5dbd89ca, the default planet (planet 7, touch 3, generation 3, the one every match plays), before any fight (`docs/qa/runs/5dbd89ca/water/water-scan.txt`, scripts beside it):
+- near line x 22,400 to 23,300, houses 243 to 469 tall stand under 576 to 611 units of lake water; near x 50,800, 30 buildings stand in lake or river water up to 456 deep;
+- sampled every 50 units, the water stops over lower dry ground in 128 places near the first site (faces up to about 1,500 high, level 2,062) and 84 near the second (about 490 high, level 689);
+- apart from these, 85 buildings of 3,835 have ground below sea level.
+**Horizon:** web. **Closing step:** World bounds or drains lakes so no water face stands over dry ground and no building is under a lake, with a check over the planet pool.
+**Cause (read, not tested by a fix).** `sim/world/waterrec.gd` `lakeOf` floods a lake from its lowest cell and cuts the flood at `maxr` (twice the lake's width on the line, 800 to 6,000 units; its comment: "a leak is cut here"), at `MAX_NODES`, and at nodes another lake claimed. Beyond the cut the ground can be far below the lake's level and is dry, so the water ends in a face. `recordWater` is what both the sim and the tile renderer read.
+**Effect.** Visible slabs of water in towns, in every match that goes there. Whether fighters or bodies behave wrongly inside that water is not checked.
+
 ## Problems Orb reported in play, 2026-11-01 to 2026-11-09 (the 52 of `docs/ep/alpha/audit-2026-11-13/reads/RR-08.md`)
 
 Added 2026-11-14 (A-QA-03). Numbers `PR-001` to `PR-052` are RR-08's rows 1 to 52. Statuses are QA's reading from the records named; "not re-read at HEAD" means QA has not opened the thing since the report, so the status is the report's. **Severity** (A-QA-07): **S1 Blocker** a tester cannot start, finish, leave or report (a menu or pause that does not show, a crash, a lost save); **S2 Major** a fight moment the game promises fails or misleads, or control is taken from the player; **S3 Minor** looks or feels wrong and play goes on; **S4 Polish**. The proposed criterion X-35 reads S1 as "no open one on the candidate" and S2 as "every open one seen by Orb and carried by name". **Horizon** is the earliest release the bug blocks (private: Orb's own PC and LAN; web: a public page or pin; store: a store page). **Closing step** for every row: open it at its pin and at HEAD (read the code, data or a replay), mark it fixed with the commit, or leave it open with what is left.
