@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { loadSnippets, noticeProblems, noticeSection, MIT_TEXT } from './third-party.mjs';
 import { activeNotice, PRIVATE_LINE, readmeText, noticesText, lockReduceFlashing, setTestersPackage, testersMenu, setVersionFields, lockGuard, enableAstcImport, verifyDir, routeProblems, presetsOf, NAMES, SIX_WORDS, PERMISSION_FILE, permissionText, TESTER_NOTICE, REPORT_SLOT, channelProblem, readChannel, testerShapeProblems, fillChannel, WINDOWS_WARN, XATTR_LEAD, PRIVACY, NO_ASSURANCE } from './desktop-package.mjs';
 
 let ran = 0, failed = 0;
@@ -85,7 +86,7 @@ try {
     check('lock: the command locks an export without .git', ok.status === 0 && /"lock_reduce_flashing": true/.test(feat(plain)), ok.stderr);
     // the EP's case: an export that runs its OWN copy of the script on itself (its tools folder is in it)
     const own = mkTree(false); mkdirSync(join(own, 'tools'), { recursive: true });
-    for (const n of ['desktop-package.mjs', 'site-routes.mjs']) writeFileSync(join(own, 'tools', n), readFileSync(join(here, n)));
+    for (const n of ['desktop-package.mjs', 'site-routes.mjs', 'third-party.mjs']) writeFileSync(join(own, 'tools', n), readFileSync(join(here, n)));
     const self = spawnSync(process.execPath, [join(own, 'tools', 'desktop-package.mjs'), 'lock', '--root', own], { encoding: 'utf8', env });
     check('lock: an export running its own copy of the script on itself is a scratch tree, not refused', self.status === 0 && /"lock_reduce_flashing": true/.test(feat(own)), self.stderr);
   }
@@ -197,6 +198,21 @@ try {
     check('windows: README.txt carries Legal\'s replacement sentences word for word', readmeText('windows', notice, info).includes(WINDOWS_WARN));
     check('macos: the xattr step opens with Legal\'s lead-in', readmeText('macos', notice, info).includes(`4. ${XATTR_LEAD}  xattr -dr`));
     check('the licence-text bodies may say "compliant" (the MPL does); the words we wrote around them may not', /compliant/i.test(noticesText(lic)) && !verifyDir('linux', winLike('linux'), MIN).some((m) => /NOTICES.txt uses/.test(m)));
+    // other people's code the program holds (RL-289, RL-292): the notice must be in NOTICES.txt, and code with no known terms keeps a testers' package back
+    {
+      const snippets = loadSnippets(), mit = snippets.filter((r) => r.license), none = snippets.filter((r) => !r.license);
+      const holding = (r) => ` ${r.map((x) => x.marker).join(' ')} `;
+      const withNotice = noticesText(lic, null, noticeSection(mit));
+      check('NOTICES.txt carries each credit, its copyright line and the MIT words', mit.length >= 1 && mit.every((r) => withNotice.includes(r.author) && withNotice.includes(r.copyright)) && withNotice.includes(MIT_TEXT) && !noticesText(lic).includes(mit[0].author));
+      for (const p of ['windows', 'linux', 'macos']) {
+        const mk = (over) => (p === 'macos' ? mac(over) : winLike(p, over));
+        check(`${p}: a program holding the code, with its notice, passes`, !has(V(p, mk({ extra: holding(mit), notices: withNotice })), /RL-289/));
+        check(`${p}: a program holding the code without its notice is refused, each snippet by name`, mit.every((r) => has(V(p, mk({ extra: holding([r]) })), new RegExp(`does not carry the notice for the .* by ${r.author}`))));
+        check(`${p}: a program holding none of it needs no notice`, !has(V(p, mk({})), /RL-289/));
+        if (none.length) check(`${p}: code with no known terms keeps a testers' package back, and not an owner's`, has(V(p, mk({ extra: holding(none), notices: withNotice }), { testers: true }), /no known terms/) && !has(V(p, mk({ extra: holding(none), notices: withNotice }), { testers: false }), /no known terms/));
+      }
+      check('a notice that names the code without the licence words is not enough', noticeProblems(mit, mit.map((r) => `${r.title} ${r.author} ${r.copyright}`).join('\n')).length === mit.length);
+    }
     // the package check refuses a README or NOTICES that breaks them
     for (const p of ['windows', 'linux', 'macos']) {
       const mk = (readme) => (p === 'macos' ? mac({ readme }) : winLike(p, { readme }));

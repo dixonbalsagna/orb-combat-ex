@@ -62,3 +62,21 @@ Every GIF and WebM has a **strip under the picture** (never over it, nothing cov
 ## For sessions (token note)
 
 Run the command and read `index.txt`; do not open the pictures. A batch of clips costs the command and its report. Only Pillow (`python`, already on this PC) is needed besides Node; nothing else was installed.
+
+## Trial clips: moves that are not landed yet (2026-11-28)
+
+For a move Orb judges before it is on main. A **trial web export** (the committed tree, plus parks, plus trial switches) plays **short seeded scenes with scripted pads**, and the clip has the button strip under the picture: which button, and tap, hold or mash, one band for each pad that matters, with a caption. Reduce flashing is ON (the default look).
+
+```
+node tools/clips/trial-web.mjs --out <scratch folder> --switches grab_charge,beam_trial --park docs/director/pending/grab-charge --park docs/director/pending/beam-trial
+node tools/clips/trial-clips.mjs probe  --build <scratch folder>                    headless: does each scene do what its caption says?
+node tools/clips/trial-clips.mjs record --build <scratch folder> --out <folder>     the clips, as GIF and WebM (real speed)
+```
+
+- Leave `--park` out once the park is landed. Switches are rows of `tools/trial-switches.json` as the built tree has it.
+- A clip is a file of `tools/clips/trial/`: segments, each with a caption, a window of ticks, a **scene** (where the two are set down, and pad events at a tick or a few ticks after one of the sim's cues) and what the probe must see (`expect`, `never`). The scene format is at the top of `tools/clips/script_driver.gd`.
+- The scenes are staged: the two are put down at a stated distance, and a second pad is scripted (or handed to the computer). The inputs go through the real pad path, and the sim is not edited.
+- The build adds the scene to the capture hook in its **scratch copy only**; nothing of this is in the game. `trial.json` in the build folder records the commit, the patches (with their sha1s) and the switches.
+- **Always probe before recording**, and again after any re-cut of a park: a scene's timing can stop meaning what its caption says.
+- Before a clip is shown: `node tools/flash/check-clip.mjs --clip collapse-normal,collapse-reduced --site <build>/web`, beside the same commit without the parks.
+- Self-test (CI): `node tools/clips/trial-clips-selftest.mjs` (it fails when the capture hook changes under the scene lines).

@@ -1,0 +1,103 @@
+{
+ "name": "beam-1-out-early",
+ "title": "The beam: stepping out early",
+ "switches": [
+  "grab_charge",
+  "beam_trial"
+ ],
+ "labels": {
+  "0": "YOU",
+  "1": "RIVAL"
+ },
+ "segments": [
+  {
+   "caption": "Out EARLY: dash up (LT + stick) as the beam fires. No damage.",
+   "from": 40,
+   "to": 220,
+   "scene": {
+    "seed": 11,
+    "level": "easy",
+    "computer": [
+     false,
+     false
+    ],
+    "ticks": 230,
+    "place": {
+     "gapUnits": 1500,
+     "air": 600,
+     "ki": 100,
+     "pin": 40
+    },
+    "events": [
+     {
+      "at": 60,
+      "pad": 1,
+      "b": "rb",
+      "down": true
+     },
+     {
+      "at": 62,
+      "pad": 1,
+      "rs": [
+       "to",
+       0
+      ]
+     },
+     {
+      "at": 110,
+      "pad": 1,
+      "rs": [
+       0,
+       0
+      ]
+     },
+     {
+      "at": 116,
+      "pad": 1,
+      "b": "rb",
+      "down": false
+     },
+     {
+      "after": "beam_fire@1",
+      "d": 2,
+      "pad": 0,
+      "ls": [
+       0,
+       1
+      ]
+     },
+     {
+      "after": "beam_fire@1",
+      "d": 2,
+      "pad": 0,
+      "trig": "lt",
+      "v": 1
+     },
+     {
+      "after": "beam_fire@1",
+      "d": 42,
+      "pad": 0,
+      "trig": "lt",
+      "v": 0
+     },
+     {
+      "after": "beam_fire@1",
+      "d": 42,
+      "pad": 0,
+      "ls": [
+       0,
+       0
+      ]
+     }
+    ]
+   },
+   "expect": [
+    "beam_fire@1",
+    "beam_outcome:DODGE@1"
+   ],
+   "never": [
+    "beam_touch@0"
+   ]
+  }
+ ]
+}

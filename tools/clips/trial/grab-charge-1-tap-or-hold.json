@@ -1,0 +1,84 @@
+{
+ "name": "grab-charge-1-tap-or-hold",
+ "title": "From range: tap B or hold B",
+ "switches": [
+  "grab_charge"
+ ],
+ "labels": {
+  "0": "YOU"
+ },
+ "segments": [
+  {
+   "caption": "1. From range: TAP B. You lunge in and hit.",
+   "from": 40,
+   "to": 170,
+   "scene": {
+    "seed": 11,
+    "level": "easy",
+    "computer": [
+     false,
+     false
+    ],
+    "ticks": 180,
+    "place": {
+     "gapBh": 8,
+     "ki": 100
+    },
+    "events": [
+     {
+      "pad": 0,
+      "b": "east",
+      "down": true,
+      "at": 60
+     },
+     {
+      "pad": 0,
+      "b": "east",
+      "down": false,
+      "at": 63
+     }
+    ]
+   },
+   "expect": [
+    "damage@-1"
+   ]
+  },
+  {
+   "caption": "2. From range: HOLD B. You charge where you stand, let go when full, fly in.",
+   "from": 40,
+   "to": 200,
+   "scene": {
+    "seed": 11,
+    "level": "easy",
+    "computer": [
+     false,
+     false
+    ],
+    "ticks": 210,
+    "place": {
+     "gapBh": 8,
+     "ki": 100
+    },
+    "events": [
+     {
+      "pad": 0,
+      "b": "east",
+      "down": true,
+      "at": 60
+     },
+     {
+      "after": "charge_full@0",
+      "d": 4,
+      "pad": 0,
+      "b": "east",
+      "down": false
+     }
+    ]
+   },
+   "expect": [
+    "charge_full@0",
+    "damage@-1"
+   ]
+  }
+ ]
+}

@@ -1,12 +1,12 @@
 # The check and test scripts (A-CODE-04; written by `node tools/check-scripts-table.mjs --write`, 2026-11-28)
 
-292 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **212 run in CI**, 23 more run in the landing gate only, 2 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
+293 scripts (`*_check.gd`, `*check.gd`, `*_test.gd` outside docs/). **213 run in CI**, 23 more run in the landing gate only, 2 are deliberately not run (reason given), **55 unreviewed** (their owners have not said yet; the number may only go down: `unreviewedMax` in tools/check-scripts.json).
 
 | Folder | Scripts | CI | Gate only | Not run | Unreviewed |
 | :--- | ---: | ---: | ---: | ---: | ---: |
 | audio/tools | 16 | 14 | 1 | 1 | 0 |
 | net/tools | 10 | 10 | 0 | 0 | 0 |
-| render/anim/tools | 4 | 0 | 1 | 1 | 2 |
+| render/anim/tools | 5 | 1 | 1 | 1 | 2 |
 | render/camera/tests | 16 | 16 | 0 | 0 | 0 |
 | render/tools | 28 | 5 | 18 | 0 | 5 |
 | render/vfx/tools | 2 | 2 | 0 | 0 | 0 |
@@ -50,6 +50,7 @@
 | net/tools/word_check.gd | CI |  |
 | render/anim/tools/anim_check.gd | GATE |  |
 | render/anim/tools/bake_check.gd | UNREVIEWED |  |
+| render/anim/tools/capsule_check.gd | CI |  |
 | render/anim/tools/socket_check.gd | UNREVIEWED |  |
 | render/anim/tools/water_tile_check.gd | NOT RUN | Animation's (docs/animation/water-tile-check.md, the EP's brief of 2026-11-20): on the GW1b stack its `dry` row fails by itself (4 of 161 places up to 31.9 units from the drawn ground) and its `lake` and `shore` rows are findings of World's open lake and shore faults (GW2), so a CI line would be red from the first run. Run by hand with --strict; wire it when Animation and World have cleared the dry row (Tools, 2026-11-21). |
 | render/camera/tests/chase_rush_check.gd | CI |  |

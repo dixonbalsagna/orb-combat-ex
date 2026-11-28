@@ -184,6 +184,10 @@ jobs:
         run: node tools/store/itch-push-selftest.mjs
       - name: 'Trial switches (the list of Orb trial build fits this tree, and the self-test of its read-back)'
         run: node tools/trial-switches-selftest.mjs && node tools/trial-switches.mjs --check
+      - name: 'Trial clips (the clip files are well formed; the scene lines still fit the capture hook)'
+        run: node tools/clips/trial-clips-selftest.mjs
+      - name: "Other people's code (no unlisted copy of a listed snippet, so every package carries its notice)"
+        run: node tools/third-party.mjs --check
       - name: 'Game launches (no new script starts the game outside tools/godot-run.sh, so no run reaches a real data folder; the launcher self-test)'
         run: node tools/lint-godot-launch-selftest.mjs && node tools/lint-godot-launch.mjs
       - name: 'Data-folder guard (runs from the project keep to the dev folder; a built program keeps the folder players have)'
@@ -508,6 +512,8 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/cover_water_check.gd'
       - name: Lake water (a ring with lakes draws water across the interior, in hard depth steps; none without lakes)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/lake_water_check.gd'
+      - name: Animation capsules (the ten capsules round the posed body hold the body, read only)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/anim/tools/capsule_check.gd'
       # One mode a run through the real main scene, by row name: start menu, players, start, a match, a result card, a rematch, the pause menu and the way back (A-MODES-08). A step that fails fails the job; a run with no result file does too.
       - name: Mode smoke (solo and two people, to a result, a rematch and back to the menu)
         run: 'node tools/smoke/mode-smoke.mjs --godot "$GODOT" --out "${RUNNER_TEMP}/mode-smoke"'

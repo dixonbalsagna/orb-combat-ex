@@ -133,8 +133,8 @@ export function eventMatcher(name, aliases) {
 }
 
 /** One scene run on an open hook page: steps the match tick by tick, takes pictures where the requests ask, returns when every request is done. A request: { name, dir, from, frames, step } or { name, dir, event: { name, nth, before, after }, step }. */
-export async function runScene(page, { scene, seed, W, H, requests, aliases, maxTicks, onStep }) {
-  await page.eval(`window.__flashcap.start(${JSON.stringify(scene)}, { reduced: false, seed: ${Number(seed)} })`, true);
+export async function runScene(page, { scene, seed, W, H, requests, aliases, maxTicks, onStep, reduced = false }) {
+  await page.eval(`window.__flashcap.start(${JSON.stringify(scene)}, { reduced: ${!!reduced}, seed: ${Number(seed)} })`, true);
   const seen = [];   // every logged event, [tick, type, kind, x]; seen.pad: the pad rows of the button strip
   const padRows = []; seen.pad = padRows;
   for (const q of requests) { mkdirSync(q.dir, { recursive: true }); q.done = false; q.taken = []; q.hits = 0; q.te = -1; if (q.event) q.match = eventMatcher(q.event.name, aliases); else q.last = q.from + (q.frames - 1) * q.step; }

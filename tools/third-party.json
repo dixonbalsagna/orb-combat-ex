@@ -1,0 +1,43 @@
+{
+  "_about": "Code in the game that other people wrote, for the notices in a package (Legal RL-289, RL-292 to RL-296; docs/legal/licence-register.md LR-026 to LR-028). One row a snippet: \"marker\" is a line of the code itself (how a built program and the tree are searched), \"files\" where it is today. A row with a license puts its notice into NOTICES.txt of any package whose program holds the marker, and the package check refuses the package without it. A row with \"license\": null has no terms we know: an outside-testers package holding it is refused until the code is replaced. Take a row out when no copy is left (node tools/third-party.mjs --check says so). Headers read at the source: Quilez, the statement on https://iquilezles.org/articles/ (2026-11-28); Hoskins, the header as quoted with its copyright line in a published copy that names the Shadertoy original, which sits behind a bot check (2026-11-28). WTFPL code (LR-028) asks for no notice and has no row.",
+  "snippets": [
+    {
+      "id": "hoskins-hash",
+      "title": "\"Hash without Sine\" shader hash functions",
+      "author": "David Hoskins",
+      "source": "https://www.shadertoy.com/view/4djSRW",
+      "license": "MIT",
+      "copyright": "Copyright (c)2014 David Hoskins.",
+      "marker": "vec3(0.1031, 0.1030, 0.0973)",
+      "files": ["render/shaders/building.gdshader", "render/shaders/fighter_body.gdshaderinc"]
+    },
+    {
+      "id": "quilez-smin",
+      "title": "Polynomial smooth minimum shader function",
+      "author": "Inigo Quilez",
+      "source": "https://iquilezles.org/articles/smin/",
+      "license": "MIT",
+      "copyright": "Copyright (c) Inigo Quilez.",
+      "marker": "mix(b, a, h) - k * h * (1.0 - h)",
+      "files": ["render/vfx/shaders/transform.gdshader"]
+    },
+    {
+      "id": "unlicensed-hash",
+      "title": "Two-line shader hash (source and terms unconfirmed)",
+      "author": "unconfirmed",
+      "source": "",
+      "license": null,
+      "marker": "vec2(123.34, 456.21)",
+      "files": [
+        "render/shaders/sky.gdshader",
+        "render/vfx/shaders/beam_core.gdshaderinc",
+        "render/vfx/shaders/beam_scar.gdshader",
+        "render/vfx/shaders/clash_core.gdshaderinc",
+        "render/vfx/shaders/cloud_curves.gdshaderinc",
+        "render/vfx/shaders/dust.gdshader",
+        "render/vfx/shaders/energy_head.gdshader",
+        "render/vfx/shaders/meteor.gdshader"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+ "name": "beam-3-struggle",
+ "title": "The beam struggle: hold toward, flick on the pulse",
+ "switches": [
+  "grab_charge",
+  "beam_trial"
+ ],
+ "labels": {
+  "0": "YOU",
+  "1": "RIVAL"
+ },
+ "segments": [
+  {
+   "caption": "HOLD the right stick toward the rival, FLICK it on each pulse. The rival only holds.",
+   "from": 40,
+   "to": 470,
+   "scene": {
+    "seed": 11,
+    "level": "easy",
+    "computer": [
+     false,
+     false
+    ],
+    "ticks": 480,
+    "place": {
+     "gapUnits": 2600,
+     "air": 600,
+     "ki": 100,
+     "pin": 40
+    },
+    "events": [
+     {
+      "at": 60,
+      "pad": 1,
+      "b": "rb",
+      "down": true
+     },
+     {
+      "at": 62,
+      "pad": 1,
+      "rs": [
+       "to",
+       0
+      ]
+     },
+     {
+      "at": 110,
+      "pad": 1,
+      "rs": [
+       0,
+       0
+      ]
+     },
+     {
+      "at": 116,
+      "pad": 1,
+      "b": "rb",
+      "down": false
+     },
+     {
+      "at": 60,
+      "pad": 0,
+      "b": "rb",
+      "down": true
+     },
+     {
+      "at": 62,
+      "pad": 0,
+      "rs": [
+       "to",
+       0
+      ]
+     },
+     {
+      "at": 110,
+      "pad": 0,
+      "rs": [
+       0,
+       0
+      ]
+     },
+     {
+      "at": 116,
+      "pad": 0,
+      "b": "rb",
+      "down": false
+     },
+     {
+      "after": "beam_meet",
+      "d": 4,
+      "pad": 0,
+      "rs": [
+       "to",
+       0
+      ]
+     },
+     {
+      "after": "beam_meet",
+      "d": 4,
+      "pad": 1,
+      "rs": [
+       "to",
+       0
+      ]
+     },
+     {
+      "after": "beam_pulse",
+      "d": 26,
+      "repeat": 6,
+      "gap": 30,
+      "pad": 0,
+      "rs": [
+       0,
+       0
+      ]
+     },
+     {
+      "after": "beam_pulse",
+      "d": 30,
+      "repeat": 6,
+      "gap": 30,
+      "pad": 0,
+      "rs": [
+       "to",
+       0
+      ]
+     }
+    ]
+   },
+   "expect": [
+    "beam_meet",
+    "beam_pulse",
+    "beam_surge:sharp@0",
+    "beam_end:overwhelmed@0"
+   ]
+  }
+ ]
+}

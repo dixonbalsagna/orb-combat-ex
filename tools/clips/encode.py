@@ -28,7 +28,7 @@ def _font(size):
     return ImageFont.load_default()
 
 
-def draw_strip(width, st):
+def draw_row(width, st):
     """The button strip: one band under the picture (never over it) with the pad's controls, lit while pressed, and a word under a lit one: tap, hold or mash. st is the frame's state from make.mjs: {LS: [x, y], X: 'tap'|'hold'|'mash'|null, ..., RS: {dir, level, g}}."""
     from PIL import ImageDraw
     im = Image.new('RGB', (width, STRIP_H), BG)
@@ -43,7 +43,7 @@ def draw_strip(width, st):
             d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=OFF if True else TXT, fill=(28, 33, 44))
             if k == 'LS':
                 x, y = (st.get('LS') or [0, 0])
-                px, py = cx + int(max(-1, min(1, x)) * (r - 4)), cy + int(max(-1, min(1, y)) * (r - 4))
+                px, py = cx + int(max(-1, min(1, x)) * (r - 4)), cy - int(max(-1, min(1, y)) * (r - 4))   # the pad's y is up, the picture's is down
                 lit = abs(x) > 0.15 or abs(y) > 0.15
                 d.ellipse((px - 3, py - 3, px + 3, py + 3), fill=LIT if lit else OFF)
                 g = None
@@ -65,7 +65,7 @@ def draw_strip(width, st):
                         d.ellipse((cx - 3, cy - 3, cx + 3, cy + 3), fill=col)
                 lvl = int(rs.get('level') or 0)
                 for j in range(min(lvl, 3)):
-                    d.rectangle((cx - 10 + j * 8, cy + 11, cx - 6 + j * 8, cy + 12), fill=FACE['Y'])
+                    d.rectangle((cx - 10 + j * 8, cy - 13, cx - 6 + j * 8, cy - 12), fill=FACE['Y'])   # above the stick: under it is the word
         else:
             g = st.get(k)
             col = (FACE[k] if k in FACE else LIT) if g else OFF
@@ -81,6 +81,38 @@ def draw_strip(width, st):
     return im
 
 
+CAPTION_H = 22
+LABEL_W = 56
+
+
+def draw_strip(width, st):
+    """One pad's band (st as draw_row takes it), or several: st = {rows: [(label, state)], caption}: a caption line, then one labelled band for each pad."""
+    from PIL import ImageDraw
+    if 'rows' not in st:
+        return draw_row(width, st)
+    top = CAPTION_H if st.get('caption') else 0
+    im = Image.new('RGB', (width, top + STRIP_H * len(st['rows'])), BG)
+    d = ImageDraw.Draw(im)
+    if top:
+        d.text((8, 3), st['caption'], font=_font(14), fill=(255, 255, 255))
+    for i, (label, row) in enumerate(st['rows']):
+        y = top + STRIP_H * i
+        im.paste(draw_row(width - LABEL_W, row), (LABEL_W, y))
+        d.text((8, y + 8), label, font=_font(11), fill=TXT)
+        d.line((0, y, width, y), fill=OFF)
+    return im
+
+
+def load_strips(path):
+    """The strip file as one state per frame: {frames: [...]} (one pad), or {rows: [{label, frames}], captions: [...]} (several pads, a caption)."""
+    j = json.load(open(path))
+    if 'rows' not in j:
+        return j['frames']
+    n = len(j['rows'][0]['frames'])
+    caps = j.get('captions') or [''] * n
+    return [{'caption': caps[i], 'rows': [(r['label'], r['frames'][i]) for r in j['rows']]} for i in range(n)]
+
+
 def prep(frames, crop, width, blur, strips=None):
     out = []
     for n, f in enumerate(frames):
@@ -93,7 +125,7 @@ def prep(frames, crop, width, blur, strips=None):
             im = im.filter(ImageFilter.GaussianBlur(blur))
         if strips is not None and n < len(strips):
             bar = draw_strip(im.size[0], strips[n])
-            both = Image.new('RGB', (im.size[0], im.size[1] + STRIP_H))
+            both = Image.new('RGB', (im.size[0], im.size[1] + bar.size[1]))
             both.paste(im, (0, 0))
             both.paste(bar, (0, im.size[1]))
             im = both
@@ -169,7 +201,7 @@ def main():
     crop = tuple(int(x) for x in o.crop.split(',')) if o.crop else None
     strips = None
     if o.strip:
-        strips = json.load(open(o.strip))['frames']
+        strips = load_strips(o.strip)
         if len(strips) != len(names):
             print(json.dumps({'error': 'the strip has %d states for %d frames' % (len(strips), len(names))})); sys.exit(1)
     frames = prep([Image.open(os.path.join(o.src, n)) for n in names], crop, o.width, o.blur, strips)

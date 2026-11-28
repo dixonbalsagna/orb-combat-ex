@@ -1,0 +1,110 @@
+{
+ "name": "grab-charge-2-room-or-arms-length",
+ "title": "Arm's length or room: the rival answers your charge with a heavy",
+ "switches": [
+  "grab_charge"
+ ],
+ "labels": {
+  "0": "YOU",
+  "1": "RIVAL"
+ },
+ "segments": [
+  {
+   "caption": "1. Charging at arm's length: the rival's heavy lands first.",
+   "from": 40,
+   "to": 210,
+   "scene": {
+    "seed": 11,
+    "level": "easy",
+    "computer": [
+     false,
+     false
+    ],
+    "ticks": 220,
+    "place": {
+     "gapBh": 0,
+     "ki": 100
+    },
+    "events": [
+     {
+      "pad": 0,
+      "b": "east",
+      "down": true,
+      "at": 60
+     },
+     {
+      "after": "charge_full@0",
+      "d": 4,
+      "pad": 0,
+      "b": "east",
+      "down": false
+     },
+     {
+      "pad": 1,
+      "b": "east",
+      "down": true,
+      "at": 74
+     },
+     {
+      "pad": 1,
+      "b": "east",
+      "down": false,
+      "at": 76
+     }
+    ]
+   },
+   "expect": [
+    "damage@-1"
+   ]
+  },
+  {
+   "caption": "2. Same charge, same answer, from room: you are full first and land it.",
+   "from": 40,
+   "to": 230,
+   "scene": {
+    "seed": 11,
+    "level": "easy",
+    "computer": [
+     false,
+     false
+    ],
+    "ticks": 240,
+    "place": {
+     "gapBh": 8,
+     "ki": 100
+    },
+    "events": [
+     {
+      "pad": 0,
+      "b": "east",
+      "down": true,
+      "at": 60
+     },
+     {
+      "after": "charge_full@0",
+      "d": 4,
+      "pad": 0,
+      "b": "east",
+      "down": false
+     },
+     {
+      "pad": 1,
+      "b": "east",
+      "down": true,
+      "at": 74
+     },
+     {
+      "pad": 1,
+      "b": "east",
+      "down": false,
+      "at": 76
+     }
+    ]
+   },
+   "expect": [
+    "charge_full@0",
+    "damage@-1"
+   ]
+  }
+ ]
+}

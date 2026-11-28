@@ -37,6 +37,7 @@ One folder per archive, and in it:
 - **The game.** Windows: `orb-combat-ex.exe` (release, Compatibility renderer, x86_64, the game's data embedded). Linux: `orb-combat-ex.x86_64` (the same, ELF). macOS: `Orb Combat EX.app` (release, universal, the data in `Contents/Resources/Orb Combat EX.pck`, Godot's ad-hoc signature in `_CodeSignature`; the bundle id is a placeholder, RL-205).
 - **`README.txt`**: the commit and date; the flashing notice and the AI line **word for word from the site's active notice file** (`tools/site.json` `interim.notice`; a draft is refused); Legal's PRIVACY section (RL-204); how to run it on that platform; the heading LICENSES. Legal's other words (the Windows warning sentences, the `xattr` lead-in) are constants in `tools/desktop-package.mjs`, and the self-test holds each against Legal's addendum in `docs/legal/page-fixed-lines.md`.
 - **`NOTICES.txt`**: the Godot Engine license and copyright, the Open Sans license and the engine's other components, from `tools/site-licences.json`.
+  - **Other people's code in the game** (RL-289, RL-292) is listed in `tools/third-party.json`. A listed snippet that the packaged tree holds gets its credit, copyright line and the MIT words into NOTICES.txt; the package check reads the built program itself and refuses it when a notice is missing, and refuses a testers' package that holds code with no known terms. `node tools/third-party.mjs --check` (CI) fails on an unlisted copy of a listed snippet and says when a row's code is gone. It cannot find code nobody has listed.
 - **`build_info.json`**: `{"commit": "<sha7>", "date": "<date>"}`.
 
 **No assurance words.** The package check refuses "safe", "tested", "verified", "virus-free" and "compliant" in README.txt and in the text we wrote around the licenses. The license texts themselves are other people's and stay as published (the Mozilla license says "compliant" once, in NOTICES.txt).
@@ -55,7 +56,7 @@ After the exports, on each unpacked archive (`desktop-package.mjs verify --locke
 
 The Linux binary is also **played** headless (`--seed=4 --frames=2400 --bench`) and must print the project's own gameplay hash (`d4f6342a1009bdbc` at tick 2400 on 2026-10-28). **The Windows and macOS builds are read, not run** (a Linux runner cannot start them); the Windows exe was played headless on Orb's PC and printed the same hash.
 
-**Not checked by the workflow, kept by people** (RL-203 conditions 2 and 4 to 6): that the commit passes what a pin move passes (a nightly on it, the signature clip and the collapse clip in both modes, reduced, within 2.5 / 3 / 2); that nothing links to or mentions the run; that nothing from it is called a release. The EP deletes the run after the testers have the files.
+**Not checked by the workflow, kept by people** (RL-203 conditions 2 and 4 to 6): that the commit passes what a pin move passes (a nightly on it, the signature clip and the collapse clip in both modes, reduced, within 2.5 / 3 / 2); that nothing links to or mentions the run; that nothing from it is called a release. The old rules about a run's files are retired or changed for the Alpha (RL-291, `docs/legal/desktop-build-rulings.md` section 5): there are no run files and nothing to delete.
 
 ## The macOS app is unsigned
 

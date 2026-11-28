@@ -20,9 +20,10 @@
 //        compiled in. It cannot RUN a Windows or macOS build on a Linux runner, and says so in its last line.
 // Exit 0 when all hold, 1 when one does not, 2 on a usage error.
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join, resolve, sep } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scanRoutes } from './site-routes.mjs';
+import { inProgram, inTree, loadSnippets, noticeProblems, noticeSection } from './third-party.mjs';
 
 const HERE = import.meta.dirname;
 const REPO = resolve(HERE, '..');
@@ -160,7 +161,7 @@ export function readmeText(platform, notice, info, opts = {}) {
 }
 
 /** NOTICES.txt from tools/site-licences.json (the structure build-site.mjs's About page reads). Pure. */
-export function noticesText(lic, header = null) {
+export function noticesText(lic, header = null, third = '') {   // third: tools/third-party.mjs noticeSection, for other people's code the game holds (RL-289)
   if (!lic || !lic.license_text || !lic.licenses) throw new Error('tools/site-licences.json has no license_text or licenses (run tools/site_licences.gd)');
   const out = [];
   if (header) out.push(header, '');
@@ -169,6 +170,7 @@ export function noticesText(lic, header = null) {
   out.push('OPEN SANS');
   for (const c of fonts) for (const p of c.parts) out.push(`${c.name}: copyright ${(p.copyright || []).join('; ')}. Licensed under the SIL Open Font License, Version 1.1 (OFL-1.1):`);
   if (lic.licenses['OFL-1.1']) out.push('', lic.licenses['OFL-1.1']);
+  if (third) out.push('', third);
   out.push('', 'OTHER COMPONENTS IN THE ENGINE', 'The components the Godot Engine itself lists, with their copyright holders and licenses. The license texts follow.', '');
   for (const c of lic.copyright || []) {
     if (/^godot engine$/i.test(c.name)) continue;
@@ -469,7 +471,7 @@ export function verifyDir(platform, dir, o = {}) {
     const badN = NO_ASSURANCE.filter((w) => new RegExp(`(^|[^A-Za-z-])${w}($|[^A-Za-z-])`, 'i').test(own));
     if (badN.length) out.push(`NOTICES.txt uses ${badN.map((w) => '"' + w + '"').join(', ')} outside the licence texts (RL-204)`);
   }
-  // the game: where it is, its magic, and the pck
+  // the game: where it is, its magic, and the pck (then, below, the notices owed for what that pck holds)
   let lockHolder = null;
   if (platform === 'windows' || platform === 'linux') {
     const f = NAMES[platform];
@@ -529,6 +531,11 @@ export function verifyDir(platform, dir, o = {}) {
     else if (!o.testers && !off) out.push("testers_package is true in this package, which is not the testers' package: Orb's own build shows every row");
     if (o.testers && !/"testers"\s*:\s*false/.test(b)) out.push('the package holds no mode row with testers false: the flag would hide nothing (ui/data/modes.json is not in the package, or every row is open)');
   }
+  // other people's code the program holds, and the notices owed for it (RL-289, RL-292): read from the program itself, so no build route can leave them out
+  if (lockHolder) {
+    const held = inProgram(readFileSync(lockHolder), o.snippets || loadSnippets());
+    if (held.length) out.push(...noticeProblems(held, has('NOTICES.txt') ? readFileSync(join(dir, 'NOTICES.txt'), 'utf8') : '', { testers: !!o.testers }));
+  }
   return out;
 }
 
@@ -552,7 +559,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       const words = testers ? fillChannel(activeNotice(HERE, TESTER_NOTICE), readChannel(opt('--channel-file') ? resolve(opt('--channel-file')) : undefined)) : activeNotice(HERE, opt('--notice') || null);
       mkdirSync(out, { recursive: true });
       writeFileSync(join(out, 'README.txt'), readmeText(platform, words, info, { private: args.includes('--private') }));
-      writeFileSync(join(out, 'NOTICES.txt'), noticesText(lic, words.notices_header || null));
+      // other people's code that the tree being packaged holds (the tree is the one build_info.json was written in)
+      const root = existsSync(join(dirname(infoFile), 'render')) ? dirname(infoFile) : REPO;
+      const found = inTree(root);
+      const held = loadSnippets().filter((r) => found.get(r.id).length);
+      writeFileSync(join(out, 'NOTICES.txt'), noticesText(lic, words.notices_header || null, noticeSection(held)));
       if (testers) writeFileSync(join(out, PERMISSION_FILE), permissionText(words));
       writeFileSync(join(out, 'build_info.json'), JSON.stringify(info) + '\n');
       console.log(`desktop package: README.txt, NOTICES.txt and build_info.json (${info.commit}, ${info.date}) written to ${out} for ${platform}`);
