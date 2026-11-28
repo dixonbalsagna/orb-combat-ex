@@ -275,3 +275,5 @@ Hard's scripted read is reported only.
 **And its perfect block (2026-11-23):** **the idle dummy skips `perfectVsHeavy` too.** An idle dummy does nothing, so a held charge always connects in practice. Learning that a full charge can be blocked belongs to the dummy set to "standard AI" or to a guard toggle (`modes.md`), where the player chose it.
 
 **Under `grabCharge` (2026-11-28, `grab-and-charges.md` G6 and G7):** the hold-break bonus of 2026-11-21 is reversed (worth 1.0, and noRegrab starts). The hold answer drops to Easy {420, [0, 0.15, 0.4]} and Medium {300, [0, 0.3, 0.6]}, with no close-in step, grabs at 35 in 100 of the answers in reach and before full, and never two grab answers running. A full charge is grab-proof. On main, with the switch off, everything above stands. X-06's one-note bands are re-read with it on.
+
+**Amended the same day on Combat's review:** the answers that aren't a grab are split slip / give ground / guard (Easy 0.5 / 0.3 / 0.2, Medium 0.55 / 0.3 / 0.15, Hard 0.6 / 0.3 / 0.1). This replaces 2026-11-21's "never guard, never step out" under the switch.

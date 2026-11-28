@@ -7,6 +7,13 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 
 **Everything here sits behind one switch, `grabCharge`, off on main and on in Orb's private build** (§4). The flee rules (§3) are brief 5's: they get their own switch, `flee`, so Orb judges one change at a time.
 
+**Amended the same day on Combat's review** (`docs/combat/grab-and-charges-review.md`), which kept the ruling with four fixes:
+- G1 applies only where A is the catch, and its miss starts no lockout.
+- G7's non-grab answers are split three ways.
+- C3 counts the launcher as a heavy and says what "full" means for staged charges.
+- E45 and E125 are amended under the switch.
+- **C2 waits for the timing table and is not in the first trial.**
+
 **What the code says today** (read for this page, beyond the directive):
 - **The clinch judges only two pulses.** Pulses come every 20 ticks and a pulse is judged on the tick after its 4-tick window closes. So with `clinch.max` 60, the third pulse (closing at tick 65) is never judged. Today's clinch is two pummel contests followed by 15 dead ticks.
 - **The computer's "fly-in" is a walk.** Its close-in step against a hold is the giving-ground step (5 bh a second), so it closes at most about 1.5 bh before the charge's first flash. The stall Orb felt is mainly the hold answer's grab in reach (Easy: 30 in 100 on a second hold, 65 on a third), plus the clinch's length and the 90-tick lockout.
@@ -16,22 +23,27 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 
 | # | The number | Ruling | Why |
 | ---: | :--- | :--- | :--- |
-| G1 | **Reach 0.6 bh** (a light's) | **Kept, and read at the press as well.** A press of A out of reach starts no tell: it misses at once, leaving him open its 20 ticks (`catch.whiffOpen`), and the lockout starts | Equal to a light's reach keeps "blows beat grabs": anything that can grab you can be hit first. Reading it at the press is the directive's "no flying grab", for players and the computer alike. A grab is the one move that doesn't close the gap; it's the close-range answer, and pillar 3's other attacks still always arrive |
+| G1 | **Reach 0.6 bh** (a light's) | **Kept, and read at the press as well, only where A is the catch:** in a brawl, and in the close band where A starts one (`stick-lands.md`, "near, A grabs"). There, an A out of reach starts no tell: it misses at once and leaves him open its 20 ticks (`catch.whiffOpen`). **That miss starts no lockout** (amended): only a catch whose tell began is an attempt. **In the middle and far bands A stays the taunt,** untouched. **The kits' thrown energy grabs** (Harbour Net, Rank Ring, Banner Snare, Crane Hook) aren't the catch, and G1 never applies to them | Equal to a light's reach keeps "blows beat grabs": anything that can grab you can be hit first. Reading it at the press is the directive's "no flying grab". The computer never presses out of reach (G7), so the lockout on a miss would only ever have hit players: one stray A would have locked the button for 3 s on top of the open window, which already pays for the miss. The lockout is there against grab loops, and a miss isn't one. Orb sees it in play like everything here, but I'm not unsure about it |
 | G2 | **The full charge against the grab's tell** (directive: released during the tell, the charge lands as a counter-hit) | **Changed: a full charge is grab-proof.** A catch that lands on a fighter whose charge is full fails as a miss: the catcher is open 20 ticks and the charge goes on. Released inside the tell, the charge stops the grab as any landing blow does (already the rule). **No counter-hit multiplier** | A 10-tick tell is shorter than a human's reaction, so "release in the tell" rewards a guess, not a read. Grab-proof rewards the commitment of reaching full, which is what Orb asked for. The open catcher is the payoff. A new damage multiplier would be one more number to balance on every attack. Before full, a grab still stops the wind-up, as today |
 | G3 | **The clinch: 60 ticks at most** (directive: 36) | **Changed: 45.** Both pulses are still judged (at 20 and 40), and the 15 dead ticks go. At the time, the leader throws (`timeThrows`), and at even both part 1.5 bh, as today | 36 leaves one pulse, which turns the clinch Orb chose ("rule in favor of clinch") into a coin flip. 45 is today's contest with nothing cut but the idle tail: a quarter shorter and still a contest |
 | G4 | **It ends in motion** | **Accepted as today's rule.** Every throw already sends (across 8 bh, up 4 bh and open, down buried 20 ticks), and the even part separates the pair | Nothing to add. The bury is the opening that starts a chain (Orb: "a way to set up combo chains") |
 | G5 | **The gap between grabs: lockout 90, noRegrab 120** | **Accepted: 180 and 240.** The lockout counts from every attempt, misses included | Three seconds between attempts is still plenty for a grab that sets up chains, and it ends the loop Orb saw |
 | G6 | **The hold-break: worth 1.5 throws, and no noRegrab** (my ruling of 2026-11-21) | **Reversed under the switch: worth 1.0, and noRegrab starts,** as for any throw | That bonus made the grab the computer's main answer to a held charge (X-06), and Orb's play shows that answer is the stall. A catch on a wind-up already starts the clinch one ahead, so the bonus paid twice |
-| G7 | **The computer's answer to a held charge** (directive: Easy 15 and 40 in 100, Medium 30 and 60, and never a grab answering two holds running) | **Accepted, plus three rules.** (a) **No close-in step:** it grabs only from inside reach. (b) **Of the answers drawn in reach and before full, 35 in 100 are grabs and the rest slip the release and punish.** (c) **Never a grab answering two holds running,** counting its other grab-on-a-heavy path (`grapple.catch`) too. **Hard keeps 0.95**, under the same three rules | Orb's "the computer spams it when I'm trying to charge". The slip is a timing answer: the charge meets nothing and the charger is punished, without freezing the match. Hard waits for a human read, as before |
+| G7 | **The computer's answer to a held charge** (directive: Easy 15 and 40 in 100, Medium 30 and 60, and never a grab answering two holds running) | **Accepted, plus three rules.** (a) **No close-in step:** it grabs only from inside reach. (b) **Of the answers drawn in reach and before full, 35 in 100 are grabs.** (c) **Never a grab answering two holds running,** counting its other grab-on-a-heavy path (`grapple.catch`) too. (d) **Every answer that isn't a grab is split three ways** (amended): **slip** the release and punish, **give ground** (its existing step back), or **guard**. Easy 0.5 / 0.3 / 0.2, Medium 0.55 / 0.3 / 0.15, Hard 0.6 / 0.3 / 0.1. **Hard keeps 0.95**, under the same rules | Orb's "the computer spams it when I'm trying to charge". The slip is a timing answer: the charge meets nothing and the charger is punished, without freezing the match. **The split is Combat's point:** after a send, the dodge is already 41 to 50% of what follows, so all slips would make the computer one-note. A guard against a charge loses to it (B beats the guard), and that's on purpose: it shows the triangle, mostly on Easy. This replaces 2026-11-21's "never guard, never step out" under the switch. Hard waits for a human read, as before |
 
 ## 2. Charges: spacing and timing (directive §4, "Charges")
 
 | # | The number | Ruling | Why |
 | ---: | :--- | :--- | :--- |
 | C1 | **The mid-band lunge: 4,000 units a second, at least 3 ticks** | **Accepted: 2,600 and 8.** From the mid band's edge to where an approach ends (2.5 bh out), travel goes from about 12 ticks to about 18, before the crouch | It makes every mid-band approach readable, which serves Orb's "players never feel lost" as much as the charge. **Said plainly:** against a charge it buys only a few ticks, because the blow's own wind-up dominates. G2 and G7 do the protecting |
-| C2 | **The leash: the defender gives ground 2.4 bh** | **Accepted: 4.** Only against a wind-up or a charge, as today | It's the defender's spacing answer instead of a grab: step back out of a charge's reach. It only bites on a charge held past full, since 4 bh takes about 0.8 s at 5 bh a second. So holding to fish costs distance, and releasing on time doesn't |
-| C3 | **Once full, only a heavy or a beam stops it** | **Accepted, for every stop:** not a grab (G2), not a quick stick strike's stun, not two quick lights, not a bolt or a blast below a beam. They still hit for their damage through the armour | Spacing and timing: a heavy needs 28 ticks of wind-up, so it only stops a full charge held too long. A beam costs 45 energy. Everything cheap stops a charge only before it's full, as today (a medium before tick 20; a grab before full) |
+| C2 | **The leash: the defender gives ground 2.4 bh** | **Waits (amended): not in the first trial; the leash stays 2.4.** The target holds: **an on-time full charge lands on a defender who backs off from his reaction time, and a charge held 20 ticks past full doesn't.** The timing table (§5) sets the leash from that. **If an on-time charge misses even at 2.4, the lever is the timed release's reach (C4), not the leash** | Combat's arithmetic: backing at 5 bh a second, a defender is about 3 bh away by full, against a charged reach of 1.5 (2.0 on time). Orb's one full charge on 9 November missed because the rival walked out of reach. And the brawl lets go past `breakBh` 4.5, raw distance, so a leash of 4 past striking distance could end the brawl. Nobody has measured it, so it doesn't go to Orb untested |
+| C3 | **Once full, only a heavy or a beam stops it** | **Accepted, for every stop:** not a grab (G2), not a quick stick strike's stun, not two quick lights, not a bolt or a blast below a beam. They still hit for their damage through the armour. **A launcher counts as a heavy** (amended): it's a B, the stagger's and launch-anywhere's alike, so it stops a full charge. **"Full" for a staged charge** (the stick's hold, the Driver's levels, a lob's or a beam's charge) **is the last stage he can reach at that moment,** by his energy and form. Before it, each charge keeps its own stop rules | Spacing and timing: a heavy needs 28 ticks of wind-up, so it only stops a full charge held too long. A beam costs 45 energy. Everything cheap stops a charge only before it's full, as today (a medium before tick 20; a grab before full). "The last stage he can reach" is Combat's suggestion: a fighter who can't afford the top stage is full at the one he can, so the rule doesn't depend on a stage he'll never get to |
 | C4 | **The timed release: within 6 ticks of full, half a body height further** | **Accepted: `sweetTicks` 6, `sweetReachBh` 0.5** (reach 1.5 → 2.0). The cue is the full flash that's already there: **no new marker** | It rewards releasing on time and pairs with C2: on time it reaches; fished, the defender has stepped away |
+
+**Rule texts brought into line under the switch:**
+- **`energy-overhaul.md` E45 and E125** are amended there.
+- **The kits' answer lists** (`energy-movesets.md` and the four kit pages, Combat's) should read **"a grab only before full"** for the energy grabs' answer to a held charge.
+- **Combat's note on the throw at the time:** from even, every throw is the leader's at the time, at 60 as at 45. From one ahead (a guard or a wind-up caught), the earned throw still comes on the second pulse. A third pulse for the earned throw from even isn't in this brief.
 
 **Together:** a charge started with room is safe from everything cheap once it's full. One started at arm's length can still be grabbed or out-timed before it's full. That's the spacing Orb asked for, and pillar 3 still holds.
 
@@ -59,13 +71,15 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
     "grapple.noRegrab": 240,
     "grapple.throw.holdBreak": {},
     "bands.lunge.speed": 2600,
-    "bands.lunge.minTicks": 8,
-    "brawl.give.leashBh": 4
+    "bands.lunge.minTicks": 8
   },
-  "grab": { "reachAtPress": true, "fullChargeProof": true },
-  "charge": { "fullStoppedBy": ["heavy", "beam"], "sweetTicks": 6, "sweetReachBh": 0.5 }
+  "grab": { "reachAtPress": "catchOnly", "missLockout": false, "fullChargeProof": true },
+  "charge": { "full": "lastReachableStage", "fullStoppedBy": ["heavy", "launcher", "beam"], "sweetTicks": 6, "sweetReachBh": 0.5 }
 }
 ```
+- `reachAtPress` `"catchOnly"`: read only where A is the catch (a brawl, or the close band where A starts one). The middle and far bands' taunt and the kits' energy grabs never read it.
+- `missLockout` false: a miss at the press costs `catch.whiffOpen` only. A tell that began is an attempt and starts `grapple.lockout`, as today.
+- **C2's `"brawl.give.leashBh"` isn't in the set** until the timing table names its value.
 
 **`ai.json` `grabCharge`** (read by the same switch):
 ```json
@@ -74,7 +88,11 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
     "levels.easy.brawl.holdAnswer": { "windowTicks": 420, "byCount": [0, 0.15, 0.4] },
     "levels.medium.brawl.holdAnswer": { "windowTicks": 300, "byCount": [0, 0.3, 0.6] }
   },
-  "holdGrab": { "closeIn": false, "share": 0.35, "notTwiceRunning": true }
+  "holdGrab": { "closeIn": false, "share": 0.35, "notTwiceRunning": true },
+  "holdOther": {
+    "_note": "the hold answers that aren't a grab: [slip, giveGround, guard], one keyed draw an answer. giveGround is its existing step back; guard is held until the blow lands",
+    "easy": [0.5, 0.3, 0.2], "medium": [0.55, 0.3, 0.15], "hard": [0.6, 0.3, 0.1]
+  }
 }
 ```
 `grapple.throw.holdBreak` set to `{}` is "absent" by its own note: a hold-break is any other throw.
@@ -93,7 +111,13 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 
 ## 5. What QA reads with `grabCharge` on, against off, on the same seeds
 
-**First, a timing table** (Encounter or QA, before the batch; the directive's numbers were never played). For a heavy charge begun at 1, 2, 4 and 8 bh: the tick each answer lands, set against full at 44. The answers: the computer's grab, a medium, a heavy, a quick stick strike, and a mid-band heavy lunge.
+**First, a timing table** (Encounter or QA, before the batch; the directive's numbers were never played).
+- **The answers:** for a heavy charge begun at 1, 2, 4 and 8 bh, the tick each answer lands, set against full at 44. The answers are the computer's grab, a medium, a heavy, a launcher, a quick stick strike, and a mid-band heavy lunge.
+- **The backing defender (C2):** he gives ground from his reaction time, straight away at 5 bh a second.
+  - Read it with the leash at 2.4 and at 4, and with the charger following and not following.
+  - **For each, does the release land?** On time (within 6 ticks of full), and 20 ticks past full.
+  - Report the raw distance against `breakBh` 4.5 too.
+  - **C2 goes on at the largest leash** where the on-time release lands and the late one doesn't. If none does, the lever is C4's reach.
 
 **Then the directive's acceptance, with G3's 45:**
 - a full charge is never stopped by a grab;
@@ -107,6 +131,13 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
 - **The stall:** clinch ticks per minute at Easy and Medium, at least halved.
 - **X-06's one-note bands** (`gauntlet-plan.md`): the charge-only pad at most 80% at Easy and at most 55% at Medium.
   - **This is the risk.** A grab-proof full charge and fewer answers both help a pad that only charges.
-  - **If it fails, the levers in order:** first, the slip's share at the third hold (byCount's last entry back toward 0.65 and 0.9, all slips once a grab was used); then `holdGrab.share`. **Never** the grab's reach, and never the grab-proof rule.
+  - **QA reads the charge-only pad first, before the clip goes to Orb** (Combat: it already won 60 of 60 on the 9 November build, A-AI-10).
+  - **If it fails, the levers in order:**
+    1. `holdOther`'s guard share down to 0, since the guard is the gift;
+    2. byCount's last entry back toward 0.65 and 0.9;
+    3. `holdGrab.share`.
+  - **Never** the grab's reach, and never the grab-proof rule.
+
+**Encounter's build check keeps Combat's nine grapple moments** (`grab-and-charges-review.md`, "What Encounter's build must not lose"): catch, clinch, throw; blows beat grabs in the tell; a grab beats a guard, one ahead on a guard or a wind-up before full; the throws by stick; the reversal; the tech and the perfect catch; a stray voids the next pummel; each fighter's throws and looks, picked by personality; and "refused" on an A in the lockout.
 
 **Orb's clip:** the directive's thirty seconds twice, with the buttons drawn. One question: "Does charging feel earned now?"
