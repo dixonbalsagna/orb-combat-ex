@@ -3,7 +3,7 @@ extends SceneTree
 ## to a JSON file: outcome, collateral, tiers, time by biome, tempo (exchange lengths and gaps), director events read from the
 ## feed, every fx event type counted, and the wounds/hazard events kept in order. qa/godot/bands.js turns the records into
 ## band checks. Read-only with respect to sim/: it only calls the sim's public functions.
-##   godot --headless --path . --script res://qa/godot/records.gd -- <matches> <baseSeed> --arm=default --out=<abs path> [--capsec=900] [--cap=<tick safety>]
+##   bash tools/godot-run.sh --path . --script res://qa/godot/records.gd -- <matches> <baseSeed> --arm=default --out=<abs path> [--capsec=900] [--cap=<tick safety>]
 ## Match i uses seed baseSeed+i. Arms are the sim's own (SimGolden.applyArm): default, swap, mirror-villain, mirror-hero, each with -flip.
 
 const QaPlanet = preload("res://qa/godot/qa_planet.gd")
@@ -53,7 +53,7 @@ func _init() -> void:
 	var n: int = int(pos[0]) if pos.size() > 0 else 10
 	var base: int = int(pos[1]) if pos.size() > 1 else 1
 	if out == "" or not (arm.trim_suffix("-flip") in ["default", "swap", "mirror-villain", "mirror-hero"]):
-		print("usage: godot --headless --path . --script res://qa/godot/records.gd -- <matches> <baseSeed> --arm=<arm> --out=<file> [--capsec=<sim seconds>] [--cap=<ticks>]")
+		print("usage: bash tools/godot-run.sh --path . --script res://qa/godot/records.gd -- <matches> <baseSeed> --arm=<arm> --out=<file> [--capsec=<sim seconds>] [--cap=<ticks>]")
 		quit(2)
 		return
 	if level != "":

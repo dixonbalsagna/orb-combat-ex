@@ -1,7 +1,7 @@
 extends SceneTree
 ## The charge-outcome read (EP brief 2026-11-08, the beam baseline; Orb: "charging up attacks can still feel like they're interrupted arbitrarily"): replays a black box file (the page's orb-first-play json) on the tree the page
 ## was built from and lists every charge of slot 0, how it ended and what ended it.
-##   godot --headless --path <tree> --script res://qa/godot/charge_trace.gd -- <file.json>
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/charge_trace.gd -- <file.json>
 ## Two kinds of charge, by slot 0:
 ##  HEAVY: a held B or Y that went past its wind-up into a charge (cue windup:charge; DirBrawl._windTick). Its end is the cue windup:end, whose k says how: 1 thrown, 2 stopped by a blow, 3 lost to a stagger or the brawl's end,
 ##   4 a miss. When thrown, who threw it: the player (the button came up before the end) or the sim (the button was still down: the hold's maximum, charge.maxTicks). full: charge_full was seen.

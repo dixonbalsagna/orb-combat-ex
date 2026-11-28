@@ -1,7 +1,7 @@
 extends SceneTree
 ## QA's scripted player on Orb's scheme, both slots (sprint A1, A-QA-09): two pads on the real input hub play whole seeded matches against each other, each one as Orb plays: the right thumb flicks a strike (three ticks out, one every 30 to 48 ticks),
 ## LB is HELD from the foe's wind-up until contact (his windup end cue, a blow taken, or 90 ticks), the left stick walks at the foe, and the right stick beam is thrown at a stated pace.
-##   godot --headless --path <tree copy with qa/godot/qa_planet.gd> --script res://qa/godot/orbs_player.gd -- <matches> <baseSeed> [--solo] [--arm=default|swap|default-flip|swap-flip] [--beamevery=420] [--beamhold=50] [--capsec=900] [--wall=300] [--budget=3600]
+##   bash tools/godot-run.sh --path <tree copy with qa/godot/qa_planet.gd> --script res://qa/godot/orbs_player.gd -- <matches> <baseSeed> [--solo] [--arm=default|swap|default-flip|swap-flip] [--beamevery=420] [--beamhold=50] [--capsec=900] [--wall=300] [--budget=3600]
 ## THE BEAM, at a stated pace: every --beamevery ticks (default 420, 7 s; a jitter of up to a fifth either way from the seed) a pad holds RB and leans the right stick toward the foe for --beamhold ticks (default 50: stage 3 comes at about 46), lets the stick go to
 ## fire, and RB a few ticks after. No other pace than that one; --beamevery=0 turns the beam off (the strikes and the guard alone).
 ## The arm is QA's own (records.gd): `swap` puts each fighter in the other's slot, so a win rate by FIGHTER is read from default and swap together. The setup is QaPlanet's (QA_PLANET) and `intro` false, power model as the setup says.

@@ -2,7 +2,7 @@ extends SceneTree
 ## The scripted masher (docs/design/control-rules.md section 6, QA bands): a human slot pressing light every `gap` ticks and
 ## nothing else (and, with --forms=1, the transform input when a form is ready), against the AI at one level. It plays seeded matches on the live sim through the real input path (a v2 human
 ## slot) and prints one JSON line: how many the masher won, lost, timed out, and the median match length.
-##   godot --headless --path . --script res://qa/godot/masher.gd -- <matches> <baseSeed> --level=easy|medium|hard [--gap=8] [--clock=tick|live] [--capsec=900]
+##   bash tools/godot-run.sh --path . --script res://qa/godot/masher.gd -- <matches> <baseSeed> --level=easy|medium|hard [--gap=8] [--clock=tick|live] [--capsec=900]
 ## The masher takes slot 0 in odd seeds and slot 1 in even ones, so the spawn side and the slot cancel. Read-only with respect to sim/.
 const QaPlanet = preload("res://qa/godot/qa_planet.gd")   # QA_PLANET: a planet ring (qa_planet.gd)
 
@@ -38,7 +38,7 @@ func _init() -> void:
 	var n: int = int(pos[0]) if pos.size() > 0 else 20
 	var base: int = int(pos[1]) if pos.size() > 1 else 1
 	if not (level in ["easy", "medium", "hard", ""]):
-		print("usage: godot --headless --path . --script res://qa/godot/masher.gd -- <matches> <baseSeed> --level=easy|medium|hard [--gap=8] [--capsec=900]")
+		print("usage: bash tools/godot-run.sh --path . --script res://qa/godot/masher.gd -- <matches> <baseSeed> --level=easy|medium|hard [--gap=8] [--capsec=900]")
 		quit(2)
 		return
 	SimInputData.load_and_apply()

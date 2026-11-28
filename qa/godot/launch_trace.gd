@@ -1,7 +1,7 @@
 extends SceneTree
 ## Replays a black box file (the page's orb-first-play json) on the tree the page was built from and lists every launch: who sent whom, the director's plan, the sent body's direction as the sim set it (ux, uy), where he actually went
 ## (his displacement over the next ticks, wrapped) and what slot 0's controls said around the blow (left stick, right-stick direction, the last non-neutral reading in the ticks before).
-##   godot --headless --path <tree> --script res://qa/godot/launch_trace.gd -- <file.json> [look-ahead ticks, default 24]
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/launch_trace.gd -- <file.json> [look-ahead ticks, default 24]
 ## LAUNCH lines: tick, sender -> sent, plan, speed, ux uy, side (the sent body's side of the sender: + is the sender's +x), displacement after N ticks (dx, dy), slot 0's last stick reading. Read-only.
 
 func _init() -> void:

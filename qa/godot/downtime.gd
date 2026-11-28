@@ -13,7 +13,7 @@ extends SceneTree
 ## the fighters spend there), as the mean over all counted time, and the median and 90th percentile across matches, for two setups:
 ##   ai: the AI against the AI (default arm), and press: a pressing script (flies at the rival, a light every `gap` live ticks, takes his forms)
 ##   against the medium AI (the same player as sim/director/tools/brawl_probe.gd, with the `waited` field).
-##   godot --headless --path . --script res://qa/godot/downtime.gd -- <matches> <baseSeed> [--setup=ai|press|both] [--level=medium] [--gap=8] [--mix=1]
+##   bash tools/godot-run.sh --path . --script res://qa/godot/downtime.gd -- <matches> <baseSeed> [--setup=ai|press|both] [--level=medium] [--gap=8] [--mix=1]
 ## --mix=1 is the mixing presser (melee-press-feel.md section 9f, as Encounter's brawl probe has it): once two blows of his string have landed he closes about half his
 ## strings with an ender, a tapped heavy. The brawl's length and share are read on him: the median and 90th percentile of a brawl (at most 20 s), and the share of fight time in a brawl.
 ## Read-only with respect to sim/.

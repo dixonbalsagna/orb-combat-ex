@@ -4,7 +4,7 @@ extends SceneTree
 ## human slot). Each scripted player keeps the press log the sim will keep (SimPressRead, Controls' classifier and thresholds
 ## from data/input/timing.json `read`) and reports what the classifier reads, how many of its presses were on the beat, and
 ## how its exchanges ended, so the same script measures today's sim (no timing rules: expect no edge) and the agency-pass sim.
-##   godot --headless --path . --script res://qa/godot/players.gd -- <matches> <baseSeed> --a=<spec> --b=<spec> [--capsec=900] [--wall=300] [--budget=3600]
+##   bash tools/godot-run.sh --path . --script res://qa/godot/players.gd -- <matches> <baseSeed> --a=<spec> --b=<spec> [--capsec=900] [--wall=300] [--budget=3600]
 ## Hard caps, so a run cannot hang: --capsec ends a match at that sim time, --wall ends a match after that many real seconds (recorded as a timeout, and counted in wallCapped),
 ## --budget stops starting matches after that many real seconds (budgetStopped; n is then the matches run and requested the matches asked for).
 ## A spec is kind[:key=value...]:

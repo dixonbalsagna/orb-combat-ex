@@ -1,7 +1,7 @@
 extends SceneTree
 ## Approach time with keepTop on and off (EP's order of 2026-11-01, read 3; Simulation's park docs/architecture/pending/kick-keep-top): a player flies flat out (stick and dash held) at an idle rival from a gap,
 ## and the ticks to reach 1,500 units (where a blow starts) and 300 units are read, with the kick on. Same start, same match seed, only SimKick.keepTop differs.
-##   godot --headless --path . --script res://qa/godot/approach.gd -- [--gaps=3000,6500,12000,24000] [--seeds=5]
+##   bash tools/godot-run.sh --path . --script res://qa/godot/approach.gd -- [--gaps=3000,6500,12000,24000] [--seeds=5]
 ## The kick and keepTop are Simulation's (SimKick); this reads them and writes nothing in sim/. Prints one APPROACH JSON line.
 
 

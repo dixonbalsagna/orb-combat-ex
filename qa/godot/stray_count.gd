@@ -1,7 +1,7 @@
 extends SceneTree
 ## Stray stick beams in a saved play (EP brief 2026-11-13, Encounter's stray-beams acceptance 3; A-COMBAT-05): replays a black box file (the page's orb-first-play json) on the tree it was built from and counts, for slot 0, the stick
 ## beams that waited and fired after a new press, and the refusals beside them. The park's `ownMove.dropOnPress` is set for the run, so one tree gives both arms.
-##   godot --headless --path <tree> --script res://qa/godot/stray_count.gd -- <file.json> --drop=0|1
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/stray_count.gd -- <file.json> --drop=0|1
 ## A stick beam is slot 0's `beam_stage` cue; LATE = slot 0 pressed anything else after the stick came to rest and before the beam fired (a face button, the guard, a dodge, RT, a new stick strike, the context, the transform, Escape).
 ## Lines: FIRE (every stick beam of slot 0: tick, the release tick, the gap, the presses between), REFUSED (every `stick_refused` beam cue of slot 0 by its source), SUMMARY. With drop=1 the run leaves the saved match at the first press that
 ## the rule changes (the world differs from there on); the counts after that are the same inputs on a different match and are marked.

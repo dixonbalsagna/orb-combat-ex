@@ -1,6 +1,6 @@
 extends SceneTree
 ## The Alpha match checklist (X-13) on saved play files: replays each black box file on the tree it was built from and prints which of the criterion's ten things the match showed (qa/godot/checklist_core.gd has the test of each).
-##   godot --headless --path <tree> --script res://qa/godot/checklist.gd -- <file.json> [<file.json> ...]
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/checklist.gd -- <file.json> [<file.json> ...]
 ## Lines: CHECKLIST <file> <ticks> ticks (<minutes> min), then one ITEM line each: seen or NOT SEEN, the tick it was first seen and a detail; then CHECKLIST_SUMMARY with the count seen. Scripted matches use orbs_player.gd, which prints the same items. Read-only.
 const Core = preload("res://qa/godot/checklist_core.gd")
 

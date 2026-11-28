@@ -1,7 +1,7 @@
 extends SceneTree
 ## QA's scan of a planet list (qa_planet.gd): builds every planet at every touch of QA_PLANET (the same setup a match gets) and names each pair whose slice fails,
 ## the matches of which would fall back to the hand-made world. Exit code 3 when any does.
-##   QA_PLANET="gen=2;planets=...;touches=...;cols=2400" godot --headless --path <root> -s qa/godot/planet_scan.gd
+##   QA_PLANET="gen=2;planets=...;touches=...;cols=2400" bash tools/godot-run.sh --path <root> -s qa/godot/planet_scan.gd
 
 
 const QaPlanet = preload("res://qa/godot/qa_planet.gd")

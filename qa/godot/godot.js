@@ -5,14 +5,15 @@ const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { runEnv, engineFromEnv } = require('../lib/userdata');
 
 // QA_GODOT_ROOT points the runner at another checkout of the project (for example a git archive of an earlier commit) to compare sims.
 const ROOT = process.env.QA_GODOT_ROOT ? path.resolve(process.env.QA_GODOT_ROOT) : path.join(__dirname, '..', '..');
 
-// $GODOT, then godot / godot4 on PATH, then the usual Windows install folders (docs/tools/README.md).
+// $ORB_GODOT_EXE or $GODOT, then godot / godot4 on PATH, then the usual Windows install folders (docs/tools/README.md).
 function findGodot() {
   const cands = [];
-  if (process.env.GODOT) cands.push(process.env.GODOT);
+  if (engineFromEnv()) cands.push(engineFromEnv());
   cands.push('godot', 'godot4');
   if (process.platform === 'win32' && process.env.LOCALAPPDATA) {
     const base = path.join(process.env.LOCALAPPDATA, 'Programs', 'Godot');
@@ -21,7 +22,7 @@ function findGodot() {
     }
   }
   for (const c of cands) {
-    const r = spawnSync(c, ['--version'], { encoding: 'utf8' });
+    const r = spawnSync(c, ['--version'], { encoding: 'utf8', env: runEnv() });
     if (!r.error && r.status === 0 && /^4\./.test((r.stdout || '').trim())) return { exe: c, version: r.stdout.trim() };
   }
   return null;
@@ -56,7 +57,7 @@ function runRecords({ arm = 'default', base = 1, count = 100, jobs = Math.max(1,
   const t0 = Date.now();
   return Promise.all(blocks.map(b => new Promise((resolve, reject) => {
     const args = ['--headless', '--path', ROOT, '--script', 'res://qa/godot/records.gd', '--', String(b.n), String(b.start), `--arm=${arm}`, `--out=${b.out.replace(/\\/g, '/')}`, `--capsec=${capSec}`].concat(level ? [`--level=${level}`] : []).concat(startMode ? [`--start=${startMode}`] : []);
-    const p = guard(spawn(g.exe, args, { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, args, { env: runEnv(), stdio: ['ignore', 'pipe', 'pipe'] }));
     let err = '';
     p.stdout.on('data', d => { err += d; }); p.stderr.on('data', d => { err += d; });
     p.on('error', reject);
@@ -69,4 +70,4 @@ function runRecords({ arm = 'default', base = 1, count = 100, jobs = Math.max(1,
   }, e => { fs.rmSync(dir, { recursive: true, force: true }); throw e; });
 }
 
-module.exports = { findGodot, godot, runRecords, guard, ROOT };
+module.exports = { findGodot, godot, runRecords, guard, runEnv, ROOT };

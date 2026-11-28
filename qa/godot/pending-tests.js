@@ -131,7 +131,7 @@ const tests = [
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { godot, ROOT } = require('./godot');
+const { godot, runEnv, ROOT } = require('./godot');
 const STAGE_C = [
   ['SC1', 'Weight starts light', 'press_ack'], ['SC2', 'Weight sticks across exchanges', 'press_ack'], ['SC3', 'No-op on the current weight (press_ack weight_light once)', 'press_ack'],
   ['SC4', 'Same-tick light and heavy: heavy wins', 'press_ack'], ['SC5', 'Heavy fallback to light when ki is short (press_ack weight_fallback)', 'press_ack'],
@@ -150,7 +150,7 @@ for (const [id, title, needs] of STAGE_C) {
       if (!files.length) return { status: 'PENDING', detail: `events present, but sim/input/test/c${id.slice(2).padStart(2, '0')}_*.gd is not written yet` };
       const g = godot(); assert.ok(g, 'Godot not found');
       for (const f of files) {
-        const r = spawnSync(g.exe, ['--headless', '--path', ROOT, '--script', 'res://sim/input/test/' + path.basename(f)], { encoding: 'utf8', timeout: 300000 });
+        const r = spawnSync(g.exe, ['--headless', '--path', ROOT, '--script', 'res://sim/input/test/' + path.basename(f)], { encoding: 'utf8', timeout: 300000, env: runEnv() });
         assert.strictEqual(r.status, 0, `${path.basename(f)} exited ${r.status}: ${(r.stdout || '').split('\n').filter(l => /FAIL|ERROR/i.test(l)).slice(0, 2).join(' | ')}`);
       }
       return `${files.length} script(s) passed`;

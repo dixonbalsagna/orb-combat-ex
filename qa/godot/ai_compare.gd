@@ -1,6 +1,6 @@
 extends SceneTree
 ## Does slot 0's recorded intent match what the sim's own AI would choose from the same state? (a black box file played on the tree it was built from)
-##   godot --headless --path <tree> --script res://qa/godot/ai_compare.gd -- <file.json> <from> <to> [<from2> <to2> ...]
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/ai_compare.gd -- <file.json> <from> <to> [<from2> <to2> ...]
 ## For each tick in a range: snapshot the state, make slot 0 the sim's AI (SimCore.toggleAI), step once with no intent for it, read the intent the AI chose (the fighter's input), restore the snapshot, and step for real with the recorded intent.
 ## Prints per range: ticks compared, the share where the buttons agree, the share where the left stick agrees within 0.2 on both axes, and the share where both agree. Read-only (the real timeline is never changed).
 

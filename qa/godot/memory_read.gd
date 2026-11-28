@@ -1,7 +1,7 @@
 extends SceneTree
 ## A memory reading at 5 and 30 minutes of computer-against-computer play (sprint A1, A-PERF-07, for Performance): plays seeded AI v AI matches one after another on the sim alone (no window) and prints the process's static memory, the object count and the
 ## orphan nodes at each mark of cumulative sim time, so a leak shows as a climb. Matches are disposed between runs, as the game does.
-##   godot --headless --path <tree copy with qa/godot/qa_planet.gd> --script res://qa/godot/memory_read.gd -- [--marks=5,30] [--level=easy|medium|hard] [--base=1]
+##   bash tools/godot-run.sh --path <tree copy with qa/godot/qa_planet.gd> --script res://qa/godot/memory_read.gd -- [--marks=5,30] [--level=easy|medium|hard] [--base=1]
 ## Lines: MEM <json> at every mark and a first line at tick 0; a last line MEMDONE. Static memory is the engine's own count (OS.get_static_memory_usage), in MiB; headless has no video memory, so this is the process's CPU-side memory only. Read-only with respect to sim/.
 const QaPlanet = preload("res://qa/godot/qa_planet.gd")
 

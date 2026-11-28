@@ -4,7 +4,7 @@ extends SceneTree
 ##   rtb    RT held (stance mask bit 4) at the charge, no stick beam: RT + B
 ##   other  anything else: B alone, B with the dodge or a stance held, a face-button combination, a stale queued signature
 ## Each `other` is listed with its tick and slot 0's last 12 ticks of buttons, so it can be read.
-##   godot --headless --path <tree> --script res://qa/godot/x17_count.gd -- <file.json> [<file.json> ...]
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/x17_count.gd -- <file.json> [<file.json> ...]
 ## Lines: X17 <file> stick N, rtb N, other N, then OTHER lines; the last line is X17 TOTAL. Read-only.
 
 func _init() -> void:

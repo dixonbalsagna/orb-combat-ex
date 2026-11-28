@@ -6,7 +6,7 @@
 // Run it in a scratch export with the feel switch on (data/fight/flight.json "enabled": true) for the launch curve; with it off the row reads the build as it is.
 try { if (process.env.QA_PRIORITY !== 'normal') require('os').setPriority(0, require('os').constants.priority.PRIORITY_BELOW_NORMAL); } catch (e) { /* the run goes on at the priority it has */ }
 const fs = require('fs'), { spawn } = require('child_process');
-const { godot, guard, ROOT } = require('./godot');
+const { godot, guard, runEnv, ROOT } = require('./godot');
 
 const arg = (k, d) => { const a = process.argv.slice(2).find(x => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : d; };
 const seeds = parseInt(arg('seeds', '12'), 10), base = parseInt(arg('base', '1'), 10), ticks = parseInt(arg('ticks', '3600'), 10), jobs = parseInt(arg('jobs', '3'), 10);
@@ -16,7 +16,7 @@ function one(seed) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://render/camera/tests/launch_probe.gd', '--', `--seed=${seed}`, `--ticks=${ticks}`, '--verbose', ...extra], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://render/camera/tests/launch_probe.gd', '--', `--seed=${seed}`, `--ticks=${ticks}`, '--verbose', ...extra], { env: runEnv(), stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);

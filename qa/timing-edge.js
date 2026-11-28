@@ -11,7 +11,7 @@ try { if (process.env.QA_PRIORITY !== 'normal') require('os').setPriority(0, req
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { godot, guard, ROOT } = require('./godot/godot');
+const { godot, guard, runEnv, ROOT } = require('./godot/godot');
 const S = require('../prototype/tools/stats');
 
 const args = process.argv.slice(2), val = (k, d) => { const a = args.find(x => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : d; };
@@ -92,7 +92,7 @@ function run(m) {
   const g = godot();
   if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
   return new Promise((resolve, reject) => {
-    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(N), String(BASE), `--a=${m[1]}`, `--b=${m[2]}`], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String(N), String(BASE), `--a=${m[1]}`, `--b=${m[2]}`], { env: runEnv(), stdio: ['ignore', 'pipe', 'pipe'] }));
     let out = '';
     p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
     p.on('error', reject);

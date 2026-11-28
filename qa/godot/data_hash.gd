@@ -1,7 +1,7 @@
 extends SceneTree
 ## The data hash a tree reads (A-AI-04, EP brief 2026-11-13): prints SimReplay.dataHash for a setup, so a saved reading names the packed data it ran on. With a black box file as the argument, the setup is the file's own and the line also
 ## says whether the hash equals the file's `data`, which shows the tree is the build's.
-##   godot --headless --path <tree> --script res://qa/godot/data_hash.gd -- [<file.json>]
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/data_hash.gd -- [<file.json>]
 ## Prints one line: DATAHASH <hash> [file <hash>, match|DIFFERENT]. Read-only.
 func _init() -> void:
 	SimInputData.load_and_apply()

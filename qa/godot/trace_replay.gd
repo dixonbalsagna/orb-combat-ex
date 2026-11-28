@@ -1,6 +1,6 @@
 extends SceneTree
 ## Replays a black box file (the page's orb-first-play json, or a bare replay) through the sim as SimReplay.play does, on the tree the page was built from, and traces slot 0: the intent it was fed and what it did.
-##   godot --headless --path <tree> --script res://qa/godot/trace_replay.gd -- <file.json> <from tick> <to tick>
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/trace_replay.gd -- <file.json> <from tick> <to tick>
 ## TRACE lines for ticks in the range where slot 0 did something or its intent was not neutral; AFTERRELEASE: slot 0 blows, stick strikes and chases more than 20 ticks after every control was let go (a stuck-input or auto-attack check); UNPROMPTED: the same 90 ticks after a press. Read-only.
 
 func _init() -> void:

@@ -14,6 +14,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cleanPaths } from '../../tools/record-paths.mjs';
 import { splitter } from './split-lines.mjs';
+import { userdataEnv, USERDATA_VARS } from '../../tools/lib/userdata.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PROGRAMS = ['orb-combat-ex.exe', 'orb-combat-ex.x86_64'];
@@ -67,8 +68,8 @@ if (census) {
 }
 writeFileSync(join(gameDir, 'override.cfg'), `[autoload]\n\nSoakProbe="*${join(probeDir, 'soak_probe.gd').replace(/\\/g, '/')}"\n`);
 const data = join(scratch, 'data');
-const env = { ...process.env, APPDATA: join(data, 'appdata'), LOCALAPPDATA: join(data, 'localappdata'), XDG_DATA_HOME: join(data, 'xdg'), HOME: join(data, 'home') };
-for (const k of ['appdata', 'localappdata', 'xdg', 'home']) mkdirSync(join(data, k), { recursive: true });
+const env = userdataEnv(data);
+for (const k of USERDATA_VARS) mkdirSync(env[k], { recursive: true });
 
 // ---------------------------------------------------------------- run
 mkdirSync(out, { recursive: true });

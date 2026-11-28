@@ -1,6 +1,6 @@
 // Real memory beside the census, over long matches (QA; qa/soak/real_probe.gd). The EDITOR build, headless, on a scratch copy of a commit; below normal; its data folders in scratch.
 //   node qa/soak/real-memory.mjs --tree <imported scratch copy> --commit <rev> --seconds <limit> [--cap 600] [--final-match 2 | --final-after 3300] [--godot <exe>] --out <folder>
-// --tree is `git archive <rev> | tar -x` with `godot --headless --path <tree> --import` run once. The only things added to it are the override.cfg, the probe, the census and the list of static names,
+// --tree is `git archive <rev> | tar -x` with `bash tools/godot-run.sh --path <tree> --import` run once. The only things added to it are the override.cfg, the probe, the census and the list of static names,
 // all in <tree>/qa_scratch; override.cfg is removed again afterwards. The run ends itself after the final reading; --seconds is the limit after which it is stopped by its process id.
 import { spawn, spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -9,6 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cleanPaths } from '../../tools/record-paths.mjs';
 import { splitter } from './split-lines.mjs';
+import { userdataEnv, USERDATA_VARS } from '../../tools/lib/userdata.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -30,10 +31,11 @@ writeFileSync(join(scratch, 'statics.txt'), names.join('\n') + '\n');
 writeFileSync(join(tree, 'override.cfg'), `[autoload]\n\nRealProbe="*${fwd(join(scratch, 'real_probe.gd'))}"\n`);
 mkdirSync(out, { recursive: true });
 const data = join(out, 'userdata');
-for (const k of ['appdata', 'localappdata']) mkdirSync(join(data, k), { recursive: true });
+const env = userdataEnv(data);
+for (const k of USERDATA_VARS) mkdirSync(env[k], { recursive: true });
 const args = ['--headless', '--path', tree, '--max-fps', '60', '--', '--frames=2000000000', `--rm-cap=${Number(opt('--cap', 600))}`, `--rm-names=${fwd(join(scratch, 'statics.txt'))}`,
   ...(opt('--final-match', null) ? [`--rm-final-match=${opt('--final-match', null)}`] : []), ...(opt('--final-after', null) ? [`--rm-final-after=${opt('--final-after', null)}`] : [])];
-const child = spawn(godot, args, { env: { ...process.env, APPDATA: join(data, 'appdata'), LOCALAPPDATA: join(data, 'localappdata') }, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+const child = spawn(godot, args, { env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 try { setPriority(child.pid, osConstants.priority.PRIORITY_BELOW_NORMAL); } catch { /* gone */ }
 const lines = [];
 const streams = [child.stdout, child.stderr].map((s) => {

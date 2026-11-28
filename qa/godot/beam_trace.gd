@@ -1,6 +1,6 @@
 extends SceneTree
 ## Replays a black box file (the page's orb-first-play json) on the tree the page was built from and lists every beam event of the match with the two fighters' places and slot 0's intent at that tick.
-##   godot --headless --path <tree> --script res://qa/godot/beam_trace.gd -- <file.json> [from tick] [to tick]
+##   bash tools/godot-run.sh --path <tree> --script res://qa/godot/beam_trace.gd -- <file.json> [from tick] [to tick]
 ## BEAM lines: tick, kind, text, actor, both fighters (x offset in wrapped distance from slot 0, height, depth z, state, tier), slot 0's intent as the sim read it (buttons, rs state, triggers' stance mask) and the ticks since slot 0's last
 ## signature press, held B or right-stick start. BEAMOUT lines: beam_outcome events. PRESSES: slot 0's signature, B-held and right-stick starts with the tick. Read-only: nothing is written.
 
