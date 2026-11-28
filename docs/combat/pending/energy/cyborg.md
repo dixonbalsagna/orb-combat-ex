@@ -41,6 +41,7 @@ Held past the gather, the grille opens one pair of slats per level, each a brigh
 - **The catch** (E63, at most 40 ticks). The hook catches round his arms or torso, never throat, face or hair (e13), with hit-stop 5. The line goes taut and the winch ticks. The foe struggles against it, keeping half his nudge, and can't guard or fire. No slow motion, zoom or taunt over him.
 - **The payoff, A: the throw.** He takes the line in both hands and heaves his chassis through a third of a turn, feet planted, swinging the foe round and letting go. It is a launch through the planner, 6 bh along the stick (E66). X, Y or B instead fires that shot into him (E65). No finisher starts on a bound fighter.
 - **Answers** (E62, E64): it beats a guard; a dodge tap in its last 8 ticks slips it; a shot of trade power 2 or more knocks it down in flight; a blow in his wind-up stops it. Caught, each press takes 4 ticks off (one counted every 6 ticks), and RT's burst breaks it after 12. It never reels anyone in.
+- **Against a held charge, under `grabCharge`** (E45, E125, `grab-and-charges.md` C3): the grab ends it only before it's full, full being the last level the charger can reach. A full charge is ended only by a heavy, a launcher or a beam. With the switch off, a grab ends a charge at any level, as E45 has it.
 
 - **The call-out (Legal ln06):** one per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it. Nothing is said over the rest of the catch, the payoff or a kneel.
 
@@ -64,3 +65,12 @@ Near occupied buildings his beam and his lob's burst widen to 1.3 (E113), and hi
 Settled by §20: no level-3 gate and no ×0.8 wind-ups; forms may move charge levels up to 10% and speeds up to 20% inside E81, and his limiter stays looks and sound (item 8). No trap goes through a guard: a guard takes Scrap Pit at the guard's rate, with no drop (item 9).
 
 2. **The rolling lob against a high flyer** reaches only 3 bh up. Is that fine for a ground tool?
+
+## Section 21 of the energy overhaul (2026-11-01)
+
+These replace anything above where they differ. Paper and parked data only: nothing's built.
+
+- **The beam moved whole to the stick.** Furnace Vent is RB + stick now, with the same lengths, worth, ki, power, carry, sweep and struggle, on the stick's ticks of 12, 30 and 54 (E120 to E122). No button press becomes a beam.
+- **B tapped** keeps its look. It flies straight and fast, inside 24 ticks from any range, at where he is at release (E124).
+- **B held is the Driver:** Wrecker Swing, driven. The frame's levels, ki and recoil are E125 to E128. At level 2 it's his own form, **the bank:** the same bolt ricochets once off a wall, a heap or the ground, at x0.85, on a line forecast as it leaves. It never splits (RL-225). A slug of scrap from the chest grille, speed x0.9, never a maw. He's kicked back with one clawed arm leading, and the chest plate slams shut.
+- **Y's burst** is E123's for every fighter: 2.5 bh tapped and 3.5 at level 1. Wider bursts cost more structures, so QA reads the band.

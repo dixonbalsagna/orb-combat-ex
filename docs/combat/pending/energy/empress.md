@@ -32,6 +32,7 @@ Combat and Choreography, 2026-10-23. Fitted to Game Design's frame (`docs/design
 - **Held, place (E61):** held past 14 ticks, the release sets the furled staves where the stick points, up to 6 bh off, standing furled as a snare that springs when he comes within its reach (her snare's arming, reach and flare). It counts as her one snare.
 - **The frame's:** throw within 30 ticks; catch at most 40; X, Y or B in the catch fires that shot; the way out is his presses (4 ticks each) or RT's burst (E64); 10 and 14 ki; the lockouts.
 - **Answers (E62):** a dodge tap in the throw's last 8 ticks; any shot of power 2 or more that meets the bundle in flight; a blow on her in her wind-up. It beats a guard.
+- **Against a held charge, under `grabCharge`** (E45, E125, `grab-and-charges.md` C3): the grab ends it only before it's full, full being the last level the charger can reach. A full charge is ended only by a heavy, a launcher or a beam. With the switch off, a grab ends a charge at any level, as E45 has it.
 - **Reads:** one bundle tumbling in flight, then four staves standing still in the world. Broken, the banners tear loose and the staves topple and burn out. Never swords, rods or strings, never a dome, and it never shrinks.
 
 - **The call-out (Legal ln06):** one per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it. Nothing is said over the rest of the catch, the payoff or a kneel.
@@ -66,3 +67,13 @@ Settled by Game Design's §20:
 
 1. Game Design: `moveset-rules.md` §8.2 gives revision 10 "+50% reach", past E81's 20% band; here revision 10 adds the held grab's place instead. moveset-rules also lists her revisions twice in different orders: lines 193 to 196 run Field, Executive, Council, Final Approved, and lines 360 to 363 run Field, Council, Executive, Final Approved. This kit follows the numbered list, which Narrative shares.
 2. Legal: the JSON's list: the crown, the seam, the staves and the kneel, the beam's source, and slam lines that must not echo "kneel before ...".
+
+## Section 21 of the energy overhaul (2026-11-01)
+
+These replace anything above where they differ. Paper and parked data only: nothing's built.
+
+- **The beam moved whole to the stick.** Hem Sweep is RB + stick now, with the same lengths, worth, ki, power, carry, sweep and struggle, on the stick's ticks of 12, 30 and 54 (E120 to E122). No button press becomes a beam.
+- **B tapped** keeps its look. It flies straight and fast, inside 24 ticks from any range, at where he is at release (E124).
+- **B held is the Driver:** Throne Quake, driven. The frame's levels, ki and recoil are E125 to E128. At level 2 it's his own form, **the ground line:** it runs along the ground from her stamp as a seam, rears up under him 8 bh short, and leaves a crack. It comes at revision 9, with the rest of her energy kit. She's kicked back with the blade arm leading, the hem whipping past her.
+- **Velvet Rope** no longer fires a beam (E121). Crossed, it flares and snaps a kinetic shot along itself, post to post: the Driver's bolt shape along the rope's line, with no hand pose (RL-225). Then it swings shut. Same worth and knock-back. It can be traded, and it can't open a struggle.
+- **Y's burst** is E123's for every fighter: 2.5 bh tapped and 3.5 at level 1. Wider bursts cost more structures, so QA reads the band.

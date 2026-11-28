@@ -46,6 +46,7 @@ Everything fires from the heel of an open palm that turns from edge to flat as i
 - **The payoff, the yank (A in the catch).** He hauls hand over hand, then makes one big haul past his ear, elbow first, and the rival is pulled into reach. The brawl starts with the Protagonist's blow. X, Y or B in the catch fires that shot into the held rival instead (E65).
 - **The way out (E64).** Each press the rival makes takes 4 ticks off, with one counted every 6 ticks. RT's burst breaks the net after its first 12 ticks. A torn net whips back and burns out in sparks, and the slack cools to dull blue and crumbles.
 - **Answers to the throw (E62).** A dodge tap in its last 8 ticks, a shot of trade power 2 or more in flight, or a blow on him in his wind-up. It beats a guard. **In reach,** his hand closes the net at once.
+- **Against a held charge, under `grabCharge`** (E45, E125, `grab-and-charges.md` C3): the grab ends it only before it's full, full being the last level the charger can reach. A full charge is ended only by a heavy, a launcher or a beam. With the switch off, a grab ends a charge at any level, as E45 has it.
 
 - **The call-out (Legal ln06):** one per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it. Nothing is said over the rest of the catch, the payoff or a kneel.
 - **The tow line is a thin cord** (Legal, Addendum 3), never a rope or a chain.
@@ -81,3 +82,13 @@ Settled by the amended frame: E96 makes a struggle look change looks only, so th
 3. Parked and cut, as they were not in the frame: bolts that wear a guard open ("the read"), and his beam capped at level 2 near people at high anguish. Wanted as templates?
 
 **For Legal:** the names; the beam's palm turning from edge to flat with the rear hand open and back; the net cast by an open hand gripping the tow line (no "OK"-sign hand); and the underhand scoop from a kneel.
+
+## Section 21 of the energy overhaul (2026-11-01)
+
+These replace anything above where they differ. Paper and parked data only: nothing's built.
+
+- **The beam moved whole to the stick.** Breakwater is RB + stick now, with the same lengths, worth, ki, power, carry, sweep and struggle, on the stick's ticks of 12, 30 and 54 (E120 to E122). No button press becomes a beam.
+- **B tapped** keeps its look. It flies straight and fast, inside 24 ticks from any range, at where he is at release (E124).
+- **B held is the Driver:** Whole Palm, driven. The frame's levels, ki and recoil are E125 to E128. At level 2 it's his own form, **the shove:** extra knock-back (12 bh) and a crater at 0.6. An open-handed shove across the distance, the widest of the four, worth a heavy's multiples at 1.0, speed x0.9. He's kicked back with the palm arm leading, the rear hand open.
+- **Y's burst** is E123's for every fighter: 2.5 bh tapped and 3.5 at level 1. Near occupied buildings his narrowing (E113) still applies.
+- **The long yank (E145):** up to about 50 bh it's the 12-tick snap. Past that the net reels both of them in and they meet in the middle, in at most about 65 ticks, at up to about 13,000 u/s each. RT's burst breaks the reel, and then they're two fighters flying at each other. Past about 375 bh the reel lets go at 65 ticks and an ordinary approach finishes it. Not built.

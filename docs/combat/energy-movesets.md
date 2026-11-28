@@ -2,6 +2,8 @@
 
 Owner: Combat and Choreography. Date: 2026-10-23. Paper and parked data (`pending/energy/`); nothing is built.
 
+**2026-11-01:** `docs/design/energy-overhaul.md` §21 moved the beams to the right stick, made Y explosive and B kinetic, and turned B's hold into the Driver. The table below follows it. Text further down that says "hold B for the beam" is replaced by §21.
+
 **Orb** ("Energy attacks overhaul", `docs/ep/vision.md`, eab5a846) asked for:
 - energy attacks per fighter along light, medium, heavy and grab: rapid-fire small shots, explosive lobs, the most devastating techniques, and a grab each fighter treats differently ("maybe someone has an energy net, someone has an energy ring");
 - guard combined with energy leaving mines or traps;
@@ -34,9 +36,10 @@ Each fighter's page is in `pending/energy/` (`protagonist.md`, `rival.md`, `empr
 | **X, the bolt** | Knuckle Flick: tight cyan sparks, speed ×1.1 | Pin Volley: needles, speed ×1.15, worth ×0.9; the stream opens with a backhand fan | Silk Slivers: upright slivers, ×1.15, sprayed vertically only | Rivet Spray: hot rivets, speed ×0.9, worth ×1.1, an 8° cone |
 | **Y, the lob, and its level 2** | Pier Lob: an underhand scoop on a high 40-tick arc. **Bounces** once toward the foe and bursts again at half | Stair Split: a hexagonal slab on a low 32-tick arc. **Splits** into three that hop toward him 8 ticks apart | Crown Toss: a crown tumbling end over end on a high 40-tick arc. **Clings** to torso, back or arm and goes off 20 ticks later | Slag Roll: slag hammered off the chest plate on a high 40-tick arc. **Rolls** up to 4 bh along the ground, then bursts |
 | **B tapped, the heavy blast** | Whole Palm: one palm driven heel-first, the other open and away | Rank Breaker: a straight punch sends a ram of stacked plates, worth ×1.1 | Throne Quake: a heel stamp sends a seam that opens into a lens of light | Wrecker Swing: a forearm swing knocks a jagged slab out of the grille |
-| **B held, the beam** | Breakwater: broad (×1.2) and slow (32°/s), a blunt front; **pushes as a wall** | Lance Sheaf: thin straight parallel lances (×0.85, 34°/s); **tightens and presses** | Hem Sweep: the thinnest (×0.4) and the fastest sweep (38°/s); **bows like an overdrawn wire** when losing | Furnace Vent: ragged jets from the chest grille merge into one column (×0.9, the slowest at 26°/s); **sputters and surges** |
+| **B held, the Driver** (§21; working names) | Whole Palm, driven: the widest. **The shove:** 12 bh and less crater | Rank Breaker, driven: the thinnest and fastest. **The pierce:** through the first thing it meets | Throne Quake, driven: a seam that rears under him. **The ground line:** it leaves a crack | Wrecker Swing, driven: a slug from the grille. **The bank:** one bounce |
+| **Stick, the beam** (RB + stick, §21) | Breakwater: broad (×1.2) and slow (32°/s), a blunt front; **pushes as a wall** | Lance Sheaf: thin straight parallel lances (×0.85, 34°/s); **tightens and presses** | Hem Sweep: the thinnest (×0.4) and the fastest sweep (38°/s); **bows like an overdrawn wire** when losing | Furnace Vent: ragged jets from the chest grille merge into one column (×0.9, the slowest at 26°/s); **sputters and surges** |
 | **A, the grab** | Harbour Net: a wide, slow **net**; **the yank** into reach | Rank Ring: a thin **ring** round arms and torso; **the bind** | Banner Snare: a **cage** of four banner staves; **the slam**, landing him on one knee | Crane Hook: a hook on a cable, **a lash**; **the throw**, 6 bh along the stick |
-| **The trap** | Trip Pillar: a stone **pillar** rises 3 bh and throws him up and away from people | Pressure Plate: **his own**, a fan of needles fired up | Velvet Rope: a **line** that fires her level-1 beam and swings shut like a gate | Scrap Pit: a **field**, clamps and plates around a pit that holds and drops |
+| **The trap** | Trip Pillar: a stone **pillar** rises 3 bh and throws him up and away from people | Pressure Plate: **his own**, a fan of needles fired up | Velvet Rope: a **line** that snaps a kinetic shot along itself and swings shut like a gate | Scrap Pit: a **field**, clamps and plates around a pit that holds and drops |
 | **Snare; spark and blast mines** (Narrative) | Harbour Hammock; Flint Mine, Scorch Cup | Open Loop; Standing Pin, Hanging Plate | Furled Banners; Hanging Sliver, Resting Crown | Cable Coil; Ticking Rivet, Slag Clot |
 | **Forms** | Looks only: hotter | His pride; open question | Base form: the bolt, the spark mine and her orders; revision 9 adds the lob, the heavy blast, the beam, the grab, the rope and the rest; 10 the held place; 11 Cling | Looks only: the limiter's sputter clears in the final form |
 
@@ -79,6 +82,7 @@ Every energy grab shares the frame:
 - a catch of at most 40 ticks;
 - a way out by the defender's own presses, each taking 4 ticks off the hold, or RT's burst after 12 ticks;
 - a payoff the grabber picks by pressing A. Pressing X, Y or B instead fires that shot into the held foe.
+- **against a held charge, under `grabCharge`** (E45, E125, `grab-and-charges.md` C3): a grab ends it only before it's full, full being the last level the charger can reach. Once full, only a heavy, a launcher or a beam ends it. With the switch off, a grab ends a charge at any level.
 
 | Fighter | The look | The payoff the director stages |
 | :--- | :--- | :--- |
@@ -97,7 +101,7 @@ A trap is laid from the guard (LB + RB), so the director stages the laying as a 
 | :--- | :--- | :--- |
 | **The Protagonist** | A pillar | A solid slab of ground or stone a few bh tall rises over several ticks and throws whoever trips it up and away (never a light beam, never around a body; Legal e14). It moves the fight off people, and as the carer's it holds while a person is in its burst (E79) |
 | **The Rival** | A pressure plate | Crossed, it fires a fan of needles up from the ground: area denial |
-| **The Empress** | A line | Crossed, it fires her level-1 beam along itself |
+| **The Empress** | A line | Crossed, it snaps a kinetic shot along itself |
 | **The Demon Cyborg** | A field | **Scrap Pit:** clamps and plates around a pit that holds and drops a passing fighter (no chewing, no teeth; Legal e14) |
 
 The spark and blast mines (X and Y with LB) are everyone's, and only their look is a fighter's. The snare (A with LB) is each fighter's grab, laid.

@@ -32,6 +32,7 @@ His barrage made one: a straight, parallel, unrotating sheaf of straight beams, 
 - **Payoff, the bind (A in the catch):** the loop pulls tight and he is held where he is. The Rival's next shot lands as on an open fighter, full worth and reel. The bind ends when that shot lands, or when the catch's 40 ticks end, whichever comes first. X, Y or B in the catch fire straight into him instead (E65). No slow motion, zoom or taunt over a bound fighter, and no finisher on one.
 - **Held variant, aim (E61):** A is a hold from 14 ticks (E14). The stick leads the throw up to 4 bh ahead along his travel, as a lob's landing, and the loop flies to where he will be. If he isn't there it closes on empty air and fizzles. 14 ki.
 - **Answers (E62, E64):** it beats a guard. It loses to a dodge tap in its last 8 ticks, to a shot of trade power 2 or more that meets it in flight, and to a blow on the Rival in his wind-up. Caught, each press takes 4 ticks off the hold (one counted every 6 ticks), and RT's burst breaks it after 12 ticks. The aimed throw is answered by changing course after it leaves his hand.
+- **Against a held charge, under `grabCharge`** (E45, E125, `grab-and-charges.md` C3): the grab ends it only before it's full, full being the last level the charger can reach. A full charge is ended only by a heavy, a launcher or a beam. With the switch off, a grab ends a charge at any level, as E45 has it.
 
 - **The call-out (Legal ln06):** one per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it. Nothing is said over the rest of the catch, the payoff or a kneel.
 
@@ -67,3 +68,12 @@ His barrage made one: a straight, parallel, unrotating sheaf of straight beams, 
 Settled by §20: a shot fired inside the bind lands as on an open fighter if it arrives within 6 ticks of the catch's end (item 3), and the plate's fan is one area hit, drawn as needles (item 4).
 
 1. What crashes his pride? That belongs to the forms, outside this page.
+
+## Section 21 of the energy overhaul (2026-11-01)
+
+These replace anything above where they differ. Paper and parked data only: nothing's built.
+
+- **The beam moved whole to the stick.** Lance Sheaf is RB + stick now, with the same lengths, worth, ki, power, carry, sweep and struggle, on the stick's ticks of 12, 30 and 54 (E120 to E122). No button press becomes a beam.
+- **B tapped** keeps its look. It flies straight and fast, inside 24 ticks from any range, at where he is at release (E124).
+- **B held is the Driver:** Rank Breaker, driven. The frame's levels, ki and recoil are E125 to E128. At level 2 it's his own form, **the pierce:** it goes through the first shot, mine or wall it meets and carries on at x0.8. The thinnest and fastest, speed x1.15, hit width x0.7, worth x1.1. He's kicked back with the straight arm leading, the rear fist closed. RL-225's open rear hand needs Legal's word, since he keeps no palm.
+- **Y's burst** is E123's for every fighter: 2.5 bh tapped and 3.5 at level 1. Wider bursts cost more structures, so QA reads the band.
