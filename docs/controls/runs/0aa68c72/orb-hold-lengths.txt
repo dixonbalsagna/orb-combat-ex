@@ -1,0 +1,6 @@
+How long the held controls stayed down in saved plays of 7 to 9 November (orb-first-play 20261107-1229, 20261108-1714 and -1726, 20261109-1625 and -1646), slot 0, ticks of 1/60 s, no stance layer held for B and Y; the right stick off RB (stick) and with RB (stickRB). Aggregates only: nothing of a play file is printed or copied. Tool: a scratch read of the replay's packed intents (SimReplay.join, SimIntent.unpack/unpack2), Godot 4.7.2 through tools/godot-run.sh, below normal.
+
+HOLDS B: n=811 median=8  buckets {"1-6":154,"11":26,"12-15":27,"16-30":14,"31+":99,"7":122,"8-10":369}
+HOLDS Y: n=658 median=7  buckets {"1-6":280,"11":7,"12-15":6,"16-30":2,"31+":8,"7":139,"8-10":216}
+HOLDS stick: n=120 median=10  buckets {"1-6":23,"11":9,"12-15":7,"16-30":16,"31+":27,"7":9,"8-10":29}
+HOLDS stickRB: n=39 median=28  buckets {"1-6":3,"11":0,"12-15":3,"16-30":9,"31+":19,"7":1,"8-10":4}

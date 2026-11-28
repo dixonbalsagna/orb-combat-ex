@@ -1,0 +1,17 @@
+Beam struggle rumble, on main 0aa68c72 + beam-struggle-rumble.patch. Godot 4.7.2 headless through tools/godot-run.sh, one at a time, below normal (the machine was at full load).
+
+beam_trial_rumble_test: 25 checks, 0 failed
+haptics_test: 80 checks, 0 failed
+charge_lost_test: 45 checks, 0 failed
+impact_haptics_test: 58 / 0 failed; stage_haptics_test: 30 / 0; stage_cue_test: 25 / 0; full_send_haptic_test: 14 / 0; refusals_test: 97 / 0; refusal_cue_test: 52 / 0; brake_ready_test: 15 / 0; push_stick_test: 34 / 0
+
+Control: haptics.gd with beam_trial_on() forced to false, beam_trial_rumble_test: 25 checks, 9 failed:
+FAIL  on: the switch reads on
+FAIL  on: a pulse is a thud on both pads: []
+FAIL  on: a count-in pulse is softer (0.6)
+FAIL  on: one holder: the hum on that pad only: []
+FAIL  on: both hold: both hum
+FAIL  on: a caught surge is struggle_catch (never under 0.7) and the other still feels pushed: ["struggle_push@0", "struggle_pushed@1"]
+FAIL  on: a sharp one is at least as strong
+FAIL  on: the count-in moves nothing: nothing from the name path
+FAIL  on: a count-in press on the pulse is a light tick on the presser only: []
