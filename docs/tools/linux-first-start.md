@@ -8,6 +8,8 @@ One script for the first person to start the Linux build (RL-280): it **checks t
 
 It sends nothing, deletes nothing, and records no name, computer name, system name or folder path.
 
+**Optional since 2026-11-28:** the USB-stick route (`linux-usb-kit.md`) runs this same script as its first part and covers G23, so no friend is needed for it.
+
 ## Who runs it
 
 The trusted friend (RL-280), **or Orb or Orb 2 from a Linux USB stick** on their own PC: RL-300 says that meets G23 too, so the friend need not go first.

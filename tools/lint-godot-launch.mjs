@@ -13,7 +13,9 @@ export const BASELINE = 'tools/godot-launch-baseline.json';
 const EXT = /\.(sh|bash|mjs|cjs|js|ps1|cmd|bat|py)$/i;
 const SKIP = new Set(['tools/godot-run.sh', 'tools/lib/userdata.mjs', 'tools/lint-godot-launch.mjs', 'tools/lint-godot-launch-selftest.mjs', 'qa/lib/userdata.js',
   // not a run of the team's: the script a person runs on their own machine for their first start (gate G23), which must start their copy as they would; its self-test runs it with a stand-in program
-  'tools/first-run/linux-first-start.sh']);
+  'tools/first-run/linux-first-start.sh',
+  // the same for the USB-stick reading: run on a live Linux system, not on a machine of the team's, with the testers' own file
+  'tools/first-run/linux-usb-reading.sh']);
 
 // "--headless" handed over as a word of its own is the surest sign (every run here has it); a browser's "--headless=new" is not it.
 const STARTS = {

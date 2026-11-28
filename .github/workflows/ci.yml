@@ -192,6 +192,8 @@ jobs:
         run: node ui/tools/third_party_notices.mjs --check
       - name: 'Linux first-start kit (the script a person runs for G23, tried with a stand-in program)'
         run: node tools/first-run/linux-first-start-selftest.mjs
+      - name: 'Linux USB-stick reading kit (the drive is made and its script run with a stand-in program and hidden screen)'
+        run: node tools/first-run/linux-usb-kit-selftest.mjs
       - name: 'Game launches (no new script starts the game outside tools/godot-run.sh, so no run reaches a real data folder; the launcher self-test)'
         run: node tools/lint-godot-launch-selftest.mjs && node tools/lint-godot-launch.mjs
       - name: 'Data-folder guard (runs from the project keep to the dev folder; a built program keeps the folder players have)'

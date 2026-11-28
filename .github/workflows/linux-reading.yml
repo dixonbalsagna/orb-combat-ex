@@ -84,34 +84,46 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 libxcursor1 libxi6 libxrandr2 libxinerama1 libxkbcommon0 imagemagick
-      - name: The program plays its computer match and writes every frame
+      - name: Pack it as the testers' archive is packed, and make the stick's folder with the project's own kit
         run: |
-          mkdir -p "${RUNNER_TEMP}/frames"
-          cd "${RUNNER_TEMP}/export/linux"
+          mkdir -p "${RUNNER_TEMP}/pack"
+          RUNNER_PACK="${RUNNER_TEMP}/pack" RUNNER_EXPORT="${RUNNER_TEMP}/export/linux" node --input-type=module -e '
+            import { writeFileSync, readFileSync } from "node:fs";
+            import { createHash } from "node:crypto";
+            import { folderEntries, targz } from "./tools/lib/targz.mjs";
+            const name = "orb-combat-ex-linux-x86_64.tar.gz", out = process.env.RUNNER_PACK;
+            const bytes = targz(folderEntries(process.env.RUNNER_EXPORT, "orb-combat-ex-linux-x86_64", ["orb-combat-ex.x86_64"]));
+            writeFileSync(`${out}/${name}`, bytes);
+            const bench = readFileSync(process.env.RUNNER_PACK + "/../out/run.txt", "utf8").split("\n").find((l) => l.startsWith("gameplay hash"));
+            writeFileSync(`${out}/build-record.txt`, `file ${name}\nsize ${bytes.length} bytes\nsha256 ${createHash("sha256").update(bytes).digest("hex")}\nversion trial\nbench ${bench}\n`);
+          '
+          node tools/first-run/linux-usb-kit.mjs --record "${RUNNER_TEMP}/pack/build-record.txt" --archive "${RUNNER_TEMP}/pack/orb-combat-ex-linux-x86_64.tar.gz" --out "${RUNNER_TEMP}/drive"
+      - name: Run the kit as on a stick (the first start, then the match recorded on a hidden screen)
+        run: |
           Xvfb :99 -screen 0 1920x1200x24 > "${RUNNER_TEMP}/out/xvfb.txt" 2>&1 &
-          xvfb_pid=$!
+          desk_pid=$!   # stands in for the person's desktop in part 1; part 2 makes its own hidden screen
           sleep 3
-          export DISPLAY=:99
           start=$(date +%s)
           code=0
-          timeout 3600 ./orb-combat-ex.x86_64 --rendering-driver opengl3 --audio-driver Dummy --resolution "${SIZE}" \
-            --write-movie "${RUNNER_TEMP}/frames/frame.png" --fixed-fps 60 -- --seed="${SEED}" --frames="${TICKS}" --bench > "${RUNNER_TEMP}/out/game.txt" 2>&1 || code=$?
-          kill "${xvfb_pid}" 2>/dev/null || true
-          echo "the program ended with ${code} after $(( $(date +%s) - start )) s" | tee -a "${RUNNER_TEMP}/out/run.txt"
-          head -n 20 "${RUNNER_TEMP}/out/game.txt"
-          tail -n 12 "${RUNNER_TEMP}/out/game.txt"
-          test "${code}" = "0"
+          printf '\ny\n' | DISPLAY=:99 ORB_READING_FRAMES="${TICKS}" ORB_READING_SEEDS="${SEED}" ORB_READING_SIZE="${SIZE}" timeout 4000 sh "${RUNNER_TEMP}/drive/RUN-READING.sh" > "${RUNNER_TEMP}/out/kit.txt" 2>&1 || code=$?
+          kill "${desk_pid}" 2>/dev/null || true
+          cat "${RUNNER_TEMP}/out/kit.txt"
+          echo "the kit ended with ${code} after $(( $(date +%s) - start )) s" | tee -a "${RUNNER_TEMP}/out/run.txt"
+          cat "${RUNNER_TEMP}/drive/first-start-result.txt" "${RUNNER_TEMP}/drive/reading/record.txt" >> "${RUNNER_TEMP}/out/run.txt" 2>/dev/null || true
+          cp "${RUNNER_TEMP}/drive/reading/seed-${SEED}/game.log" "${RUNNER_TEMP}/out/game.txt" 2>/dev/null || true
+          # a kit that stopped because a match came short has still recorded: the next step says by how much. One that never got to the recording fails here.
+          test "${code}" = "0" || grep -q "^match ${SEED}:" "${RUNNER_TEMP}/drive/reading/record.txt"
       - name: Are the frames there, and not flat?
         run: |
-          n=$(find "${RUNNER_TEMP}/frames" -name 'frame*.png' | wc -l)
+          frames="${RUNNER_TEMP}/drive/reading/seed-${SEED}/frames"
+          n=$(find "${frames}" -name 'frame*.png' | wc -l)
           echo "frames written: ${n} of ${TICKS} asked" | tee -a "${RUNNER_TEMP}/out/run.txt"
           # a real reading needs EVERY frame (RL-298): whether this run wrote them all is said here, and only a gross shortfall fails the proof
           if [ "${n}" -ge "${TICKS}" ]; then echo "every frame written: yes"; else echo "every frame written: NO, $(( TICKS - n )) missing"; fi | tee -a "${RUNNER_TEMP}/out/run.txt"
           grep -m1 'Movie Maker mode enabled' "${RUNNER_TEMP}/out/game.txt" | tee -a "${RUNNER_TEMP}/out/run.txt" || true
-          grep -m1 -iE 'OpenGL API|renderer' "${RUNNER_TEMP}/out/game.txt" | tee -a "${RUNNER_TEMP}/out/run.txt" || true
           test "${n}" -ge $(( TICKS * 9 / 10 ))
           # five frames spread over the run: size and colour count (a program that draws nothing writes flat pictures). Numbers only: no picture is kept.
-          mapfile -t all < <(find "${RUNNER_TEMP}/frames" -name 'frame*.png' | sort)
+          mapfile -t all < <(find "${frames}" -name 'frame*.png' | sort)
           most=0
           for i in 1 3 5 7 9; do
             f="${all[$(( n * i / 10 ))]}"
@@ -122,10 +134,9 @@ jobs:
           test "${most}" -gt 64
       - name: The analyser reads the frames
         run: |
-          echo "{\"scenario\": \"linux-program-ai-${SEED}\", \"reduced\": true, \"fps\": 60}" > "${RUNNER_TEMP}/frames/clip.json"
           start=$(date +%s)
           code=0
-          node tools/flash/analyse-frames.js "${RUNNER_TEMP}/frames" --scale 1 --json "${RUNNER_TEMP}/out/analysis.json" > "${RUNNER_TEMP}/out/analysis.txt" 2>&1 || code=$?
+          node tools/flash/analyse-frames.js "${RUNNER_TEMP}/drive/reading/seed-${SEED}/frames" --scale 1 --json "${RUNNER_TEMP}/out/analysis.json" > "${RUNNER_TEMP}/out/analysis.txt" 2>&1 || code=$?
           cat "${RUNNER_TEMP}/out/analysis.txt"
           echo "the analyser ended with ${code} after $(( $(date +%s) - start )) s" | tee -a "${RUNNER_TEMP}/out/run.txt"
           # 0: no failure found. 1: a reading that is not PASS (a result, not a broken method). Anything else: the method failed.
@@ -157,6 +168,7 @@ jobs:
             ${{ runner.temp }}/out/analysis.txt
             ${{ runner.temp }}/out/game.txt
             ${{ runner.temp }}/out/bench.txt
+            ${{ runner.temp }}/out/kit.txt
             ${{ runner.temp }}/out/xvfb.txt
           retention-days: 1
           if-no-files-found: warn
