@@ -32,7 +32,9 @@ Orb wants white-hot looks. The rule keeps one thing: **a hit must stay readable,
 6. **Over a pale sky or snow** the core carries the dark edge (`#0a0d14`) or the pale one the contrast table picks (spec section 5), so a near-white core never vanishes.
 7. **Decoration stays under the core:** at most 40 percent as bright (section 5), so it can never take the core's or the hit's place.
 
-*A fault to fix, not to ship:* the cores in `data/art/energy-lanes.json` are above this cap (Protagonist `#f4faff` L\* 98, rival `#ffe8fb` 94, Cyborg `#fff4cc` 96, Empress `#ffffff` 100). The renderer does not read them today (it lightens the lane colour, capped at 86), but nobody may start reading them as they are.
+*Fixed 2026-11-28:* the cores in `data/art/energy-lanes.json` (and its source, `art/concepts/energy/lanes.mjs`) are now all at L\* 86 or under.
+
+*Still open:* the Empress's **main** colours are near-white (`#fffefa`, beam `#ffffff`), so her beam's body is brighter than its own core and uses the white that rule 3 keeps for the game. Her lane needs an ivory body under L\* 86 before her beam is drawn from it.
 
 ### The hero and the rival: a pair (brief L7, first part)
 

@@ -10,41 +10,41 @@ Each kind has a **core** (the bright centre), a **main** (the colour a player na
 
 | Kind | Core | Main | Edge |
 |---|---|---|---|
-| Bolt | #f2fdff | #10c2ea | #0b7fb8 |
-| Lob | #ecfaff | #1eb0f4 | #0e6cc4 |
-| Beam | #f4faff | #2e90f2 | #0d58c4 |
-| Grab | #ecfcff | #1ca6f4 | #0c78c0 |
-| Trap | #e8f5ff | #2a9cf4 | #0f62bc |
+| Bolt | #ced9db | #10c2ea | #0b7fb8 |
+| Lob | #cbd9de | #1eb0f4 | #0e6cc4 |
+| Beam | #d2d7dc | #2e90f2 | #0d58c4 |
+| Grab | #cad9dc | #1ca6f4 | #0c78c0 |
+| Trap | #ccd8e2 | #2a9cf4 | #0f62bc |
 
 ### The Rival: violet to magenta
 
 | Kind | Core | Main | Edge |
 |---|---|---|---|
-| Bolt | #f0e6ff | #4420c4 | #2e0c78 |
-| Lob | #f6e6ff | #5c1ca8 | #3c0c6c |
-| Beam | #ffe8fb | #80127e | #5a0c64 |
-| Grab | #f4e6ff | #521ab4 | #340c78 |
-| Trap | #eee4ff | #4c20ac | #300c70 |
+| Bolt | #dcd2eb | #4420c4 | #2e0c78 |
+| Lob | #e1d1ea | #5c1ca8 | #3c0c6c |
+| Beam | #e7d0e3 | #80127e | #5a0c64 |
+| Grab | #dfd2ea | #521ab4 | #340c78 |
+| Trap | #dcd2ed | #4c20ac | #300c70 |
 
 ### The Demon Cyborg: molten slag oranges, with scrap-metal grey (wreckage and metal only)
 
 | Kind | Core | Main | Edge |
 |---|---|---|---|
-| Bolt | #ffe9b0 | #f58a22 | #4a2e20 |
-| Lob | #ffe0a0 | #e8821e | #47291d |
-| Beam | #fff4cc | #fa9a2e | #4a2e20 |
-| Grab | #ffe4a8 | #ec8a24 | #46291c |
-| Trap | #ffdc98 | #e07c1e | #40261a |
+| Bolt | #ead59d | #f58a22 | #4a2e20 |
+| Lob | #f2d394 | #e8821e | #47291d |
+| Beam | #e1d7b0 | #fa9a2e | #4a2e20 |
+| Grab | #eed499 | #ec8a24 | #46291c |
+| Trap | #f5d28f | #e07c1e | #40261a |
 
 ### The Empress: ivory with a deep gold rim (lines, not balls)
 
 | Kind | Core | Main | Edge |
 |---|---|---|---|
-| Bolt | #ffffff | #fffefa | #6b4c0e |
-| Lob | #ffffff | #fffbee | #6b4c0e |
-| Beam | #ffffff | #ffffff | #7a560e |
-| Grab | #ffffff | #fffaf0 | #5e420c |
-| Trap | #ffffff | #fff7e6 | #6b4c0e |
+| Bolt | #ddd6c7 | #fffefa | #6b4c0e |
+| Lob | #ddd6c7 | #fffbee | #6b4c0e |
+| Beam | #ddd6c7 | #ffffff | #7a560e |
+| Grab | #ddd6c7 | #fffaf0 | #5e420c |
+| Trap | #ddd6c7 | #fff7e6 | #6b4c0e |
 
 - **Protagonist.** Cyan on the bolt, sliding to azure on the beam (the hue moves with the kind's size, so the family reads at a glance). The old placeholder (#22d3ee) is the cyan of the bolt, made slightly deeper (#10c2ea).
 - **Rival.** Deep violet on the bolt, magenta on the beam. Darker than the placeholder (#8a3cff) on purpose: against the Protagonist's pale cyan it is the lightness gap that survives deutan and protan sight.
@@ -59,10 +59,10 @@ Each kind has a **core** (the bright centre), a **main** (the colour a player na
 
 | Lane | Sprite default | protan | deutan | tritan | Main alone default (worst biome) | protan | deutan | tritan |
 |---|---|---|---|---|---|---|---|---|
-| protagonist | 31.4 | 21.2 | 27 | 20.7 | 8.7 (ocean) | 10.4 | 9.3 | 6.6 |
-| rival | 34.4 | 29.8 | 30.3 | 30.3 | 13.4 (tundra) | 3 | 1.7 | 9.2 |
-| cyborg | 29.7 | 28.7 | 28.7 | 27.6 | 5.8 (desert) | 1.9 | 3.7 | 4.7 |
-| empress | 28.1 | 28.2 | 26.8 | 26.9 | 4.2 (ice_sheet) | 4.3 | 4.2 | 3.6 |
+| protagonist | 25.9 | 20.7 | 25.1 | 18.2 | 8.7 (ocean) | 10.4 | 9.3 | 6.6 |
+| rival | 31.4 | 28.1 | 28.3 | 27.6 | 13.4 (tundra) | 3 | 1.7 | 9.2 |
+| cyborg | 27.6 | 26.6 | 25.8 | 26.4 | 5.8 (desert) | 1.9 | 3.7 | 4.7 |
+| empress | 27.2 | 27.6 | 26.4 | 26.9 | 4.2 (ice_sheet) | 4.3 | 4.2 | 3.6 |
 
 **Why the main colour alone cannot always pass.** A search over every hue (`art/concepts/energy/search.mjs`) shows only light cyan to light violet (hues about 200 to 330, lightness 0.7 or more) clears 20 against all 15 biomes with one colour; oranges and golds top out at about 8 to 9 against the desert, savanna and beach ground at the golden hours, and ivory at about 6 against snow and ice. The Rival's deep violet (lightness about 0.4 to 0.5) misses against dark water and dark ground on purpose: a light violet sat 15.6 from the Protagonist's cyan under deutan sight (need 20), and the lightness gap is what keeps them apart. All four lanes are therefore judged as a whole: the hot pale core separates from dark ground, the dark edge from pale or warm ground. A small or fast sprite (a thin Empress line, a Cyborg slag shard) is the risk: VFX should keep the dark edge at least 2 px at fight size, and not drop the keyline.
 

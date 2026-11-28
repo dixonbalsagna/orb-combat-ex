@@ -13,20 +13,20 @@ const L = (core, main, edge) => ({ core, main, edge });
 export const LANES = {
   protagonist: {
     name: 'The Protagonist', family: 'cyan to azure',
-    bolt: L('#f2fdff', '#10c2ea', '#0b7fb8'), lob: L('#ecfaff', '#1eb0f4', '#0e6cc4'), beam: L('#f4faff', '#2e90f2', '#0d58c4'), grab: L('#ecfcff', '#1ca6f4', '#0c78c0'), trap: L('#e8f5ff', '#2a9cf4', '#0f62bc'),
+    bolt: L('#ced9db', '#10c2ea', '#0b7fb8'), lob: L('#cbd9de', '#1eb0f4', '#0e6cc4'), beam: L('#d2d7dc', '#2e90f2', '#0d58c4'), grab: L('#cad9dc', '#1ca6f4', '#0c78c0'), trap: L('#ccd8e2', '#2a9cf4', '#0f62bc'),
   },
   rival: {
     name: 'The Rival', family: 'violet to magenta',
-    bolt: L('#f0e6ff', '#4420c4', '#2e0c78'), lob: L('#f6e6ff', '#5c1ca8', '#3c0c6c'), beam: L('#ffe8fb', '#80127e', '#5a0c64'), grab: L('#f4e6ff', '#521ab4', '#340c78'), trap: L('#eee4ff', '#4c20ac', '#300c70'),
+    bolt: L('#dcd2eb', '#4420c4', '#2e0c78'), lob: L('#e1d1ea', '#5c1ca8', '#3c0c6c'), beam: L('#e7d0e3', '#80127e', '#5a0c64'), grab: L('#dfd2ea', '#521ab4', '#340c78'), trap: L('#dcd2ed', '#4c20ac', '#300c70'),
   },
   cyborg: {
     name: 'The Demon Cyborg', family: 'molten slag oranges, with scrap-metal grey (wreckage and metal only)',
-    bolt: L('#ffe9b0', '#f58a22', '#4a2e20'), lob: L('#ffe0a0', '#e8821e', '#47291d'), beam: L('#fff4cc', '#fa9a2e', '#4a2e20'), grab: L('#ffe4a8', '#ec8a24', '#46291c'), trap: L('#ffdc98', '#e07c1e', '#40261a'),
+    bolt: L('#ead59d', '#f58a22', '#4a2e20'), lob: L('#f2d394', '#e8821e', '#47291d'), beam: L('#e1d7b0', '#fa9a2e', '#4a2e20'), grab: L('#eed499', '#ec8a24', '#46291c'), trap: L('#f5d28f', '#e07c1e', '#40261a'),
     metal: { light: '#a6abb3', mid: '#767c86', dark: '#4a4f58' },
   },
   empress: {
     name: 'The Empress', family: 'ivory with a deep gold rim (lines, not balls)',
-    bolt: L('#ffffff', '#fffefa', '#6b4c0e'), lob: L('#ffffff', '#fffbee', '#6b4c0e'), beam: L('#ffffff', '#ffffff', '#7a560e'), grab: L('#ffffff', '#fffaf0', '#5e420c'), trap: L('#ffffff', '#fff7e6', '#6b4c0e'),
+    bolt: L('#ddd6c7', '#fffefa', '#6b4c0e'), lob: L('#ddd6c7', '#fffbee', '#6b4c0e'), beam: L('#ddd6c7', '#ffffff', '#7a560e'), grab: L('#ddd6c7', '#fffaf0', '#5e420c'), trap: L('#ddd6c7', '#fff7e6', '#6b4c0e'),
   },
 };
 

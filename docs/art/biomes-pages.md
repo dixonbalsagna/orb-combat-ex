@@ -292,10 +292,10 @@ Open grey-green lichen ground, snow in the hollows, stunted scrub and boulders; 
 | Part | Lit | Mid | Shade |
 |---|---|---|---|
 | Ground | #7a9a59 | #738868 | #53664c |
-| Rock | #787878 | #6e6e74 | #4a4a52 |
+| Rock | #8c8270 | #777472 | #504d4e |
 | Vegetation | #768a55 | #5f7248 | #46563a |
 
-Subsoil (what a crater shows) #5a5448; secondary cover #aeae7f; trunk #4a3a2c; water shallow #3c7884, deep #3b6276; accent #e4ecf0; sky at noon #4a88c4 (top) to #cadce8 (horizon); far land #a1b1ac, #90a095, #7e8d7a; from orbit #a1ac96.
+Subsoil (what a crater shows) #5a5448; secondary cover #aeae7f; trunk #4a3a2c; water shallow #3c7884, deep #3b6276; accent #e4ecf0; sky at noon #4a88c4 (top) to #cadce8 (horizon); far land #a2b2ac, #91a195, #7f8e7a; from orbit #a1ac96.
 
 **Ground profile:** hummock, amplitude 22 units over about 380; far land: hills. **Cover:** krummholz (6 per 1,200 units, 30 to 70 units tall); snowpatch (6 per 1,200 units, 8 to 16 units tall); boulder (5 per 1,200 units, 24 to 70 units tall); tuft (10 per 1,200 units, 10 to 24 units tall); shrub (3 per 1,200 units, 20 to 40 units tall).
 
@@ -307,7 +307,7 @@ Subsoil (what a crater shows) #5a5448; secondary cover #aeae7f; trunk #4a3a2c; w
 
 **Destruction:** A snow burst: a pale powder cloud that rises and falls, white and blue crystal shards, dark soil clods under it.
 
-**Readability:** worst aura 24.2 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 22.3 (rule 15).
+**Readability:** worst aura 24.7 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 22.1 (rule 15).
 
 **Transitions:**
 - to Mountains: Bare rock above, lichen and stunted scrub below, snow in the folds.

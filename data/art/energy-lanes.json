@@ -16,27 +16,27 @@
       "light_colour": "#10c2ea",
       "kinds": {
         "bolt": {
-          "core": "#f2fdff",
+          "core": "#ced9db",
           "main": "#10c2ea",
           "edge": "#0b7fb8"
         },
         "lob": {
-          "core": "#ecfaff",
+          "core": "#cbd9de",
           "main": "#1eb0f4",
           "edge": "#0e6cc4"
         },
         "beam": {
-          "core": "#f4faff",
+          "core": "#d2d7dc",
           "main": "#2e90f2",
           "edge": "#0d58c4"
         },
         "grab": {
-          "core": "#ecfcff",
+          "core": "#cad9dc",
           "main": "#1ca6f4",
           "edge": "#0c78c0"
         },
         "trap": {
-          "core": "#e8f5ff",
+          "core": "#ccd8e2",
           "main": "#2a9cf4",
           "edge": "#0f62bc"
         }
@@ -98,42 +98,42 @@
         },
         "sprite": {
           "default": {
-            "worst": 31.4,
+            "worst": 25.9,
+            "biome": "beach",
+            "at": "water shallow noon",
+            "kind": "grab"
+          },
+          "protan": {
+            "worst": 20.7,
             "biome": "beach",
             "at": "water shallow noon",
             "kind": "trap"
           },
-          "protan": {
-            "worst": 21.2,
-            "biome": "sea_ice",
-            "at": "ground lit dawn",
-            "kind": "bolt"
-          },
           "deutan": {
-            "worst": 27,
-            "biome": "sea_ice",
-            "at": "ground lit dawn",
-            "kind": "bolt"
+            "worst": 25.1,
+            "biome": "beach",
+            "at": "water shallow noon",
+            "kind": "trap"
           },
           "tritan": {
-            "worst": 20.7,
+            "worst": 18.2,
             "biome": "plains",
-            "at": "ground lit noon",
-            "kind": "grab"
+            "at": "secondary mid noon",
+            "kind": "bolt"
           }
         },
         "sprite_with_keyline": {
           "default": {
-            "worst": 34.7
+            "worst": 31.9
           },
           "protan": {
-            "worst": 34.8
+            "worst": 31.8
           },
           "deutan": {
-            "worst": 34.7
+            "worst": 31.6
           },
           "tritan": {
-            "worst": 35.1
+            "worst": 31.9
           }
         }
       }
@@ -144,27 +144,27 @@
       "light_colour": "#4420c4",
       "kinds": {
         "bolt": {
-          "core": "#f0e6ff",
+          "core": "#dcd2eb",
           "main": "#4420c4",
           "edge": "#2e0c78"
         },
         "lob": {
-          "core": "#f6e6ff",
+          "core": "#e1d1ea",
           "main": "#5c1ca8",
           "edge": "#3c0c6c"
         },
         "beam": {
-          "core": "#ffe8fb",
+          "core": "#e7d0e3",
           "main": "#80127e",
           "edge": "#5a0c64"
         },
         "grab": {
-          "core": "#f4e6ff",
+          "core": "#dfd2ea",
           "main": "#521ab4",
           "edge": "#340c78"
         },
         "trap": {
-          "core": "#eee4ff",
+          "core": "#dcd2ed",
           "main": "#4c20ac",
           "edge": "#300c70"
         }
@@ -267,42 +267,42 @@
         },
         "sprite": {
           "default": {
-            "worst": 34.4,
+            "worst": 31.4,
             "biome": "taiga",
             "at": "rock lit noon",
-            "kind": "trap"
+            "kind": "beam"
           },
           "protan": {
-            "worst": 29.8,
-            "biome": "ocean",
-            "at": "sea lit golden",
-            "kind": "bolt"
+            "worst": 28.1,
+            "biome": "forest",
+            "at": "water shallow noon",
+            "kind": "beam"
           },
           "deutan": {
-            "worst": 30.3,
+            "worst": 28.3,
             "biome": "beach",
-            "at": "water shallow golden",
-            "kind": "trap"
+            "at": "water shallow noon",
+            "kind": "beam"
           },
           "tritan": {
-            "worst": 30.3,
+            "worst": 27.6,
             "biome": "plains",
-            "at": "rock lit golden",
+            "at": "rock lit sunset",
             "kind": "beam"
           }
         },
         "sprite_with_keyline": {
           "default": {
-            "worst": 34.6
+            "worst": 33.1
           },
           "protan": {
-            "worst": 33.6
+            "worst": 31.8
           },
           "deutan": {
-            "worst": 34.4
+            "worst": 31.9
           },
           "tritan": {
-            "worst": 34
+            "worst": 32.1
           }
         }
       }
@@ -313,27 +313,27 @@
       "light_colour": "#f58a22",
       "kinds": {
         "bolt": {
-          "core": "#ffe9b0",
+          "core": "#ead59d",
           "main": "#f58a22",
           "edge": "#4a2e20"
         },
         "lob": {
-          "core": "#ffe0a0",
+          "core": "#f2d394",
           "main": "#e8821e",
           "edge": "#47291d"
         },
         "beam": {
-          "core": "#fff4cc",
+          "core": "#e1d7b0",
           "main": "#fa9a2e",
           "edge": "#4a2e20"
         },
         "grab": {
-          "core": "#ffe4a8",
+          "core": "#eed499",
           "main": "#ec8a24",
           "edge": "#46291c"
         },
         "trap": {
-          "core": "#ffdc98",
+          "core": "#f5d28f",
           "main": "#e07c1e",
           "edge": "#40261a"
         }
@@ -413,42 +413,42 @@
         },
         "sprite": {
           "default": {
-            "worst": 29.7,
-            "biome": "plains",
+            "worst": 27.6,
+            "biome": "tundra",
             "at": "rock lit golden",
             "kind": "bolt"
           },
           "protan": {
-            "worst": 28.7,
-            "biome": "tundra",
-            "at": "secondary mid dawn",
-            "kind": "lob"
+            "worst": 26.6,
+            "biome": "mountains",
+            "at": "secondary mid noon",
+            "kind": "bolt"
           },
           "deutan": {
-            "worst": 28.7,
-            "biome": "plains",
-            "at": "rock lit golden",
-            "kind": "lob"
+            "worst": 25.8,
+            "biome": "tundra",
+            "at": "secondary mid dawn",
+            "kind": "beam"
           },
           "tritan": {
-            "worst": 27.6,
+            "worst": 26.4,
             "biome": "savanna",
             "at": "ground mid dawn",
-            "kind": "lob"
+            "kind": "bolt"
           }
         },
         "sprite_with_keyline": {
           "default": {
-            "worst": 35.6
+            "worst": 33.3
           },
           "protan": {
-            "worst": 34.7
+            "worst": 32.7
           },
           "deutan": {
-            "worst": 35.7
+            "worst": 33.6
           },
           "tritan": {
-            "worst": 34
+            "worst": 32.6
           }
         }
       }
@@ -459,27 +459,27 @@
       "light_colour": "#fffefa",
       "kinds": {
         "bolt": {
-          "core": "#ffffff",
+          "core": "#ddd6c7",
           "main": "#fffefa",
           "edge": "#6b4c0e"
         },
         "lob": {
-          "core": "#ffffff",
+          "core": "#ddd6c7",
           "main": "#fffbee",
           "edge": "#6b4c0e"
         },
         "beam": {
-          "core": "#ffffff",
+          "core": "#ddd6c7",
           "main": "#ffffff",
           "edge": "#7a560e"
         },
         "grab": {
-          "core": "#ffffff",
+          "core": "#ddd6c7",
           "main": "#fffaf0",
           "edge": "#5e420c"
         },
         "trap": {
-          "core": "#ffffff",
+          "core": "#ddd6c7",
           "main": "#fff7e6",
           "edge": "#6b4c0e"
         }
@@ -537,22 +537,22 @@
         },
         "sprite": {
           "default": {
-            "worst": 28.1,
-            "biome": "desert",
-            "at": "ground lit dawn",
-            "kind": "beam"
+            "worst": 27.2,
+            "biome": "beach",
+            "at": "ground mid dawn",
+            "kind": "trap"
           },
           "protan": {
-            "worst": 28.2,
-            "biome": "savanna",
-            "at": "water shallow noon",
-            "kind": "beam"
+            "worst": 27.6,
+            "biome": "beach",
+            "at": "ground mid dawn",
+            "kind": "trap"
           },
           "deutan": {
-            "worst": 26.8,
-            "biome": "beach",
-            "at": "rock lit noon",
-            "kind": "beam"
+            "worst": 26.4,
+            "biome": "mountains",
+            "at": "rock lit sunset",
+            "kind": "trap"
           },
           "tritan": {
             "worst": 26.9,
@@ -563,16 +563,16 @@
         },
         "sprite_with_keyline": {
           "default": {
-            "worst": 36.6
-          },
-          "protan": {
             "worst": 36.1
           },
+          "protan": {
+            "worst": 35.5
+          },
           "deutan": {
-            "worst": 36.5
+            "worst": 35.9
           },
           "tritan": {
-            "worst": 36.3
+            "worst": 35.4
           }
         }
       }
