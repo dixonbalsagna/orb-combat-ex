@@ -48,6 +48,28 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
   - **Thrown from inside a light's reach, it's G2's miss: open 20 ticks,** so the energy grab is never the safe way to test a full charge up close.
 - **Combat's note on the throw at the time:** from even, every throw is the leader's at the time, at 60 as at 45. From one ahead (a guard or a wind-up caught), the earned throw still comes on the second pulse. A third pulse for the earned throw from even isn't in this brief.
 
+### 2b. The charge at range: hold to charge in place (2026-11-28, Encounter's probe; EP's option 1)
+
+**Encounter's finding:** there was no charge at range. B held at 8 bh was a heavy lunge that then charged at arm's length. A heavy's wind-up ran during its lunge, so a rival's heavy landed at press + 32 from 2 bh and from 8 bh alike. Distance bought nothing against a heavy.
+
+**Ruling: yes, option 1, under `grabCharge`.**
+
+| # | Rule | Numbers | Why |
+| ---: | :--- | :--- | :--- |
+| R1 | **In the mid band, B still held when the lunge's crouch ends stays and charges where he stands.** A tap lunges as now. **The stick's hold does the same** by its own stages, and a quick flick lunges | The crouch: B's 10 ticks, the stick's 6 (`bands.lunge.windupTicks`). No new wait: the crouch runs either way, and the button is read at its end | E2 holds: a tap is one blow, a hold is one attack. Melee press feel holds: every press is a blow. The far band already works this way (a hold is a charge) |
+| R2 | **The charge keeps its clock from the press:** first flash at 32, full at 44, released by itself at 70 | Unchanged | The 70-tick release is the melee heavy's own rule (`press-decides.md`). It stops a charge held in place from becoming a stall. E47's "never fired by itself" is the energy family's, not this |
+| R3 | **While charging in place he moves at half speed** on the left stick. A dodge tap or a guard press drops it for nothing. His armour is as in a brawl | E45's half speed, E46's drop | It matches every other charge in the game (E45 and E46). Backing off while charging is spacing, which is the point. Control first (E1): it can always be dropped |
+| R4 | **Released at full (or at 70), it flies to him and lands** | Its own keys, `charge.inPlace.fullFlight`: reach **12.5 bh** (the mid band's edge) over at most **14 ticks**, so at most about 4,000 units a second (the old lunge's speed, inside Camera's whip line). The brawl's `chargeClose` (3 and 6 bh over 12 ticks) is untouched | Pillar 3: the full charge closes the gap. As `chargeClose` already says, stepping back doesn't beat it; a dodge, a guard or a perfect block does, so the release is the tell |
+| R5 | **Released before full, it lunges in at the lunge's speed** (2,600, no second crouch) and lands as the stage it reached | Uses C1's lunge | One press, one attack, and it still arrives. An early release from range is slow and readable, so it can be answered |
+| R6 | **If he has backed into the far band by the release,** it flies as the far band's heavy charge does | `bands.charge.heavy` (3,000 a second, 30 to 84 ticks) | Attacks always arrive; from that far it's a long flight anyone can read |
+| R7 | **A heavy pressed from the mid band starts its 28-tick wind-up when its lunge arrives,** not during it. Lights and mediums are unchanged | `heavyWindOnArrival` | This is what makes room buy time. From 2 bh (close band, no lunge) a reacted heavy lands at about 42, just before full at 44. From the mid band it lands at least 10 + travel ticks later, after full. So room beats a heavy and arm's length doesn't. The cost: every heavy from range is slower by its travel, about 0.15 to 0.3 s. That fits the heavy's character (slow, committed), and QA's match-length band is the check |
+
+**What a mid-band charge still loses to:** a beam (always); a rival who closes to the close band himself and grabs or hits before full; a slip, a dodge or a perfect block timed to the release. A guard loses to it (B beats the guard).
+
+**On the pad:** tap B and he lunges and hits. Hold B and he crouches, plants and glows with the existing flashes. Let go and he flies in. **No new marker.** Orb judges it in the clip; it's a control change.
+
+**For the timing table (§5):** `chargeClose` already carries a full release up to 6 bh. So Combat's C2 arithmetic (a defender about 3 bh back by full) may already be answered; the table shows it.
+
 **Together:** a charge started with room is safe from everything cheap once it's full. One started at arm's length can still be grabbed or out-timed before it's full. That's the spacing Orb asked for, and pillar 3 still holds.
 
 ## 3. Fleeing (directive §3): ruled now, built in brief 5
@@ -77,9 +99,19 @@ Owner: Game Design. 2026-11-28, on the EP's wave 1 brief after Orb's restart. So
     "bands.lunge.minTicks": 8
   },
   "grab": { "reachAtPress": "catchOnly", "missLockout": false, "fullChargeProof": true },
-  "charge": { "full": "lastReachableStage", "fullStoppedBy": ["heavy", "launcher", "beam"], "sweetTicks": 6, "sweetReachBh": 0.5 }
+  "charge": {
+    "full": "lastReachableStage", "fullStoppedBy": ["heavy", "launcher", "beam"], "sweetTicks": 6, "sweetReachBh": 0.5,
+    "inPlace": { "bands": ["mid"], "holdPastCrouch": true, "moveMul": 0.5, "fullFlight": { "reachBh": 12.5, "maxTicks": 14 }, "beforeFull": "lunge", "pastBand": "farCharge" },
+    "heavyWindOnArrival": true
+  }
 }
 ```
+- `inPlace` (§2b): in the mid band, B or the stick still held when the lunge's crouch ends charges where he stands.
+  - `moveMul` 0.5 is his speed meanwhile.
+  - `fullFlight` is the full (or 70-tick) release's flight to him.
+  - `beforeFull` `"lunge"`: an earlier release lunges at `bands.lunge.speed`, with no second crouch.
+  - `pastBand` `"farCharge"`: if he's in the far band by the release, it flies as `bands.charge.heavy`.
+- `heavyWindOnArrival`: a heavy pressed from the mid band starts its wind-up when its lunge arrives.
 - `reachAtPress` `"catchOnly"`: read only where A is the catch (a brawl, or the close band where A starts one). The middle and far bands' taunt and the kits' energy grabs never read it.
 - `missLockout` false: a miss at the press costs `catch.whiffOpen` only. A tell that began is an attempt and starts `grapple.lockout`, as today.
 - **C2's `"brawl.give.leashBh"` isn't in the set** until the timing table names its value.
