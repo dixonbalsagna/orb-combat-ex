@@ -12,4 +12,5 @@ func _init() -> void:
 		print("userdata_check PASSED: a run from the project keeps its data in \"%s\"" % DEV)
 	else:
 		print("userdata_check FAILED: a run from the project must use \"%s\", not \"%s\"" % [DEV, dir.get_file()])
+	print("USERDATA CHECK: %d check(s) failed" % (0 if ok else 1))   # the verdict line tools/gate.mjs --verdict reads
 	quit(0 if ok else 1)
