@@ -212,3 +212,9 @@ Orb's decision 6: keep the comeback as a rule for every fighter, set every other
 | 28 | **The ruling stands:** nothing new on screen. **Draft question 1 isn't asked now.** If UI later proposes a thin line, it goes behind the look gate, and Orb's eye decides then |
 
 **None of section 11's three draft questions goes to Orb:** rows 9, 13 and 28 settle them.
+
+## 13. Fleeing (2026-11-28, `grab-and-charges.md` §3; built in brief 5 behind `flee`)
+
+- **Row 13 changes:** flat-out flight costs stamina within 60 bh of the nearest rival, **or at any distance while it is opening the gap.** Crossing a big planet toward a rival stays free; fleeing doesn't become free past 4,500 units.
+- **§2's resting line changes.** Read "away from the fight" as **out of the running exchange (row 4), spending nothing, and not opening the gap by his own flight.** Breaking away and then standing, circling or closing still rests (§7's valve). Running doesn't.
+- **"Opening the gap"** means: free and under his own control, with at least 600 units a second of his velocity along the shortest arc away from the rival. Sends never count. The energy and turned-back rules that use it are in `grab-and-charges.md` §3.
