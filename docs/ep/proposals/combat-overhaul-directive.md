@@ -213,3 +213,9 @@ At most three, each one line, each with what I think Orb would pick.
 ## What was not read
 
 `grapple.gd`, `ai.gd` and `zip.gd` in full; the stamina spec past its first sections; the beam trial's later sections; the camera park patches; how the HUD draws the dodge cue. No number here has been played. Durations and percentages in the acceptance lists are targets to rule, not measurements.
+
+## Orb's answers (2026-11-27, about 18:25; verbatim in docs/ep/vision.md)
+
+1. **Beams:** not yet a go. Orb wants to SEE how the new beam changes play first. So the readable-beam brief starts with a playable trial build (switch off on main) and a clip, before anything lands.
+2. **Struggles:** the recommendation is liked, but Orb hasn't got the hang of the current one at all. So the brief must teach it in play: the pulse visible on the beam, a count-in, and a practice prompt. Orb judges it by playing, not from a clip.
+3. **The city:** try the automatic swing first, with no new button.
