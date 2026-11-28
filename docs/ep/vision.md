@@ -1943,3 +1943,5 @@ Still open: the sound question (the ten-minute listen), the deletion promise, Or
 - Taking the fight to the city: "Try it first (Recommended)"
 
 **Orb (2026-11-27 ~18:35, after playing the energy toy):** "just playing around with it for a minute and I'm extremely satisfied with this two-layer aura I got. I really like the possibilities this toy has. I'm excited to see this improved on and expanded." (The recipe Orb shared, a blend of two random finds: prism filaments arcing plus an inked shell, both on the mythic "anomaly" palette, is kept at prototype/energy-toy/recipes/orb-first-find-2026-11-27.json.)
+
+**Orb (2026-11-27 ~18:45, typed in the stand-in's session, relayed verbatim):** "with fifteen minutes left, can you update and enhance the toy with more effects in every catergory, and some fixes? the biggest fix I'd like to see is the "float over head" floats over the beam: this doesn't look intended, I'd like the effects from "floats over head" to carry over to the beam and the energy ball in a less literal way. please overhaul this toy and implement improvements, updates, more content, deadline before 7pm"

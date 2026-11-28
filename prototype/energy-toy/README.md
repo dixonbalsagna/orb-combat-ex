@@ -14,7 +14,7 @@ One preview window with three pictures, all drawn from the same recipe:
 
 ## How to play with it
 
-- **Preset** (under the picture): seven looks to start from. The first three are Orb's own examples: blue sparks that jump off the body, arcing black plasma waves, and a small golden cloud above the head that rains vibrating green atoms.
+- **Preset** (under the picture): ten looks to start from. The first three are Orb's own examples: blue sparks that jump off the body, arcing black plasma waves, and a small golden cloud above the head that rains vibrating green atoms.
 - **Random:** a brand-new look made from everything that is unlocked.
 - **Mutate:** nudges every slider a little, and sometimes swaps one choice or adds a layer. Press it over and over to wander away from a look you like.
 - **Back:** undoes the last step, so nothing is lost by pressing Random.
@@ -57,6 +57,21 @@ Slider ranges that widen with tier:
 | Trails | 0 to 0.4 | to 0.8 | to 1 | |
 
 Power, Detail and Colour shift are common across their whole range.
+
+**Added in the second pass (2026-11-27, Orb's ask):**
+
+| | Common | Rare | Exotic | Mythic |
+| :--- | :--- | :--- | :--- | :--- |
+| **Shape** | Glints (four-pointed stars) | Chevrons | Honeycomb | |
+| **Behaviour** | Breathe in and out | Spiral arms | Swarm that circles you | Stop and go |
+| **Material** | Ember | Frost, Neon outline | | Starry void |
+| **Colour** | Coral, Glacier | Venom, Molten | Aurora | Eclipse |
+| **Slider: Twist** | -0.2 to 0.2 | -0.6 to 0.6 | -1.5 to 1.5 | |
+| **Slider: Warp** | 0 to 0.3 | to 0.6 | to 1 | |
+
+Three more presets: Frost crown, Neon honeycomb, Void swarm.
+
+**"Float above the head" and "Rain down" now adapt to what they are on.** Round the figure they are as before: a cloud over the head, rain falling from it. On the beam, the floating layer rides along the top of the beam as a crest that streams with it, and rain is shed all along its length. On the blast, the floating layer sits on top as a crown, and rain drips from underneath.
 
 **The tiers live in data, not code.** They are in the block marked `id="catalog"` near the top of `index.html`: each menu entry has a `"tier"`, and each slider has a list of `"ranges"`, one per tier. Moving an entry to another tier, or adding a palette or a preset, is an edit to that block only.
 

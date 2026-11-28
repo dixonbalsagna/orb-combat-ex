@@ -106,6 +106,9 @@
   "tiers": ["common", "rare", "exotic", "mythic"],
   "maxLayers": 5,
   "shapes": [
+    {"id":"glints","code":13,"name":"Glints","tier":"common","about":"four-pointed stars"},
+    {"id":"chevrons","code":11,"name":"Chevrons","tier":"rare","about":"rows of arrowheads"},
+    {"id":"honeycomb","code":12,"name":"Honeycomb","tier":"exotic","about":"a six-sided mesh"},
     {"id":"shell","code":0,"name":"Shell","tier":"common","about":"a glowing skin"},
     {"id":"sparks","code":1,"name":"Sparks","tier":"common","about":"short bright streaks"},
     {"id":"rings","code":3,"name":"Waves and rings","tier":"common","about":"bands that travel"},
@@ -119,6 +122,10 @@
     {"id":"helix","code":10,"name":"Twin helix","tier":"mythic","about":"two strands winding round each other"}
   ],
   "behaviours": [
+    {"id":"breathe","code":12,"name":"Breathe in and out","tier":"common"},
+    {"id":"spiral","code":11,"name":"Spiral arms","tier":"rare"},
+    {"id":"swarm","code":13,"name":"Swarm that circles you","tier":"exotic"},
+    {"id":"stopgo","code":14,"name":"Stop and go","tier":"mythic"},
     {"id":"jump","code":0,"name":"Jump off the body","tier":"common"},
     {"id":"ripple","code":2,"name":"Ripple out","tier":"common"},
     {"id":"float","code":3,"name":"Float above the head","tier":"common"},
@@ -132,6 +139,10 @@
     {"id":"rewind","code":10,"name":"Inverted: runs backward, with echoes","tier":"mythic"}
   ],
   "materials": [
+    {"id":"ember","code":9,"name":"Ember","tier":"common"},
+    {"id":"frost","code":10,"name":"Frost","tier":"rare"},
+    {"id":"neon","code":11,"name":"Neon outline","tier":"rare"},
+    {"id":"void","code":12,"name":"Starry void","tier":"mythic"},
     {"id":"glow","code":0,"name":"Soft glow","tier":"common"},
     {"id":"smoke","code":1,"name":"Smoky fluid","tier":"common"},
     {"id":"crackle","code":3,"name":"Crackle","tier":"common"},
@@ -143,6 +154,12 @@
     {"id":"negative","code":7,"name":"Negative","tier":"mythic"}
   ],
   "palettes": [
+    {"id":"coral","name":"Coral","tier":"common","a":[0.95,0.5,0.45],"b":[0.05,0.35,0.3],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"glacier","name":"Glacier","tier":"common","a":[0.65,0.85,0.95],"b":[0.3,0.15,0.05],"c":[1,1,1],"d":[0.5,0.5,0.5]},
+    {"id":"venom","name":"Venom","tier":"rare","a":[0.55,0.75,0.2],"b":[0.35,0.25,0.2],"c":[1,1,2],"d":[0.5,0.5,0.3]},
+    {"id":"molten","name":"Molten","tier":"rare","a":[0.8,0.35,0.1],"b":[0.2,0.35,0.1],"c":[1,1,1],"d":[0.5,0.55,0.6]},
+    {"id":"aurora","name":"Aurora","tier":"exotic","a":[0.3,0.7,0.6],"b":[0.3,0.3,0.4],"c":[1,1,2],"d":[0.6,0.5,0.2]},
+    {"id":"eclipse","name":"Eclipse","tier":"mythic","a":[0.5,0.3,0.2],"b":[0.5,0.3,0.2],"c":[1,1.5,2],"d":[0.5,0.5,0.5]},
     {"id":"azure","name":"Azure","tier":"common","a":[0.45,0.65,0.9],"b":[0.45,0.33,0.1],"c":[1,1,1],"d":[0.5,0.5,0.5]},
     {"id":"ember","name":"Ember","tier":"common","a":[0.9,0.5,0.2],"b":[0.1,0.4,0.2],"c":[1,1,1],"d":[0.5,0.5,0.5]},
     {"id":"gold","name":"Gold","tier":"common","a":[0.95,0.75,0.3],"b":[0.05,0.2,0.25],"c":[1,1,1],"d":[0.5,0.5,0.5]},
@@ -169,7 +186,9 @@
     {"id":"spin","name":"Spin","def":0,"step":0.01,"ranges":[{"tier":"common","min":-0.3,"max":0.3},{"tier":"rare","min":-1,"max":1},{"tier":"exotic","min":-2,"max":2}]},
     {"id":"hue","name":"Colour shift","def":0,"step":0.01,"ranges":[{"tier":"common","min":0,"max":1}]},
     {"id":"spread","name":"Colour range","def":0.4,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0.6},{"tier":"rare","min":0,"max":1},{"tier":"exotic","min":0,"max":2}]},
-    {"id":"cycle","name":"Colour drift","def":0,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0},{"tier":"mythic","min":0,"max":1}]}
+    {"id":"cycle","name":"Colour drift","def":0,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0},{"tier":"mythic","min":0,"max":1}]},
+    {"id":"twist","name":"Twist","def":0,"step":0.01,"ranges":[{"tier":"common","min":-0.2,"max":0.2},{"tier":"rare","min":-0.6,"max":0.6},{"tier":"exotic","min":-1.5,"max":1.5}]},
+    {"id":"warp","name":"Warp","def":0,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0.3},{"tier":"rare","min":0,"max":0.6},{"tier":"exotic","min":0,"max":1}]}
   ],
   "globals": [
     {"id":"trail","name":"Trails","def":0.3,"step":0.01,"ranges":[{"tier":"common","min":0,"max":0.4},{"tier":"rare","min":0,"max":0.8},{"tier":"exotic","min":0,"max":1}]}
@@ -196,7 +215,16 @@
       {"shape":"drops","behaviour":"implode","material":"glow","palette":"moon","seed":3,"sliders":{"power":0.7,"size":0.9,"speed":0.7,"density":0.9,"reach":1.2,"erratic":0.3,"vibrate":0,"detail":0.5,"form":0.1,"spin":0,"hue":0.2,"spread":0.4,"cycle":0}}]},
     {"format":"orb-energy-recipe","version":1,"name":"Ghost lattice","trail":0.2,"layers":[
       {"shape":"lattice","behaviour":"hug","material":"negative","palette":"moon","seed":3,"sliders":{"power":0.8,"size":1,"speed":0.6,"density":1,"reach":1.6,"erratic":0,"vibrate":0,"detail":0.5,"form":0.1,"spin":0,"hue":0,"spread":0.4,"cycle":0}},
-      {"shape":"shards","behaviour":"orbit","material":"ink","palette":"riptide","seed":6,"sliders":{"power":0.7,"size":1,"speed":0.5,"density":1.2,"reach":0.9,"erratic":0,"vibrate":0,"detail":0.5,"form":0.1,"spin":0.4,"hue":0.1,"spread":0.8,"cycle":0}}]}
+      {"shape":"shards","behaviour":"orbit","material":"ink","palette":"riptide","seed":6,"sliders":{"power":0.7,"size":1,"speed":0.5,"density":1.2,"reach":0.9,"erratic":0,"vibrate":0,"detail":0.5,"form":0.1,"spin":0.4,"hue":0.1,"spread":0.8,"cycle":0}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Frost crown","trail":0.15,"layers":[
+      {"shape":"glints","behaviour":"float","material":"frost","palette":"glacier","seed":4,"sliders":{"power":1,"size":1,"speed":0.6,"density":1.5,"reach":1.1,"spread":0.5,"hue":0.1}},
+      {"shape":"shell","behaviour":"breathe","material":"frost","palette":"glacier","seed":7,"sliders":{"power":0.6,"size":0.9,"speed":0.5,"density":0.8,"reach":1,"spread":0.5,"hue":0.1}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Neon honeycomb","trail":0.2,"layers":[
+      {"shape":"honeycomb","behaviour":"hug","material":"neon","palette":"aurora","seed":3,"sliders":{"power":0.95,"size":1.2,"speed":0.5,"density":0.8,"reach":1.6,"spread":0.9,"hue":0.1}},
+      {"shape":"chevrons","behaviour":"spiral","material":"neon","palette":"coral","seed":6,"sliders":{"power":0.7,"size":1,"speed":0.8,"density":0.8,"reach":1.2,"spread":0.5,"hue":0.1}}]},
+    {"format":"orb-energy-recipe","version":1,"name":"Void swarm","trail":0.4,"layers":[
+      {"shape":"cloud","behaviour":"swarm","material":"void","palette":"eclipse","seed":5,"sliders":{"power":1,"size":1,"speed":0.6,"density":1,"reach":1.5,"spread":0.8,"hue":0.1}},
+      {"shape":"glints","behaviour":"stopgo","material":"ember","palette":"molten","seed":2,"sliders":{"power":0.85,"size":0.9,"speed":0.9,"density":1.2,"reach":1.2,"spread":0.5,"hue":0.1}}]}
   ]
 }
 </script>
@@ -265,7 +293,7 @@ uniform vec4 uA[5];   // shape, behaviour, material, seed
 uniform vec4 uB[5];   // power, size, speed, amount
 uniform vec4 uC[5];   // reach, erratic, vibrate, detail
 uniform vec4 uD[5];   // form, spin, colour shift, colour range
-uniform vec4 uE[5];   // colour drift, blend weight, -, -
+uniform vec4 uE[5];   // colour drift, blend weight, twist, warp
 uniform vec3 uPa[5], uPb[5], uPc[5], uPd[5];   // cosine palette: a + b * cos(2 pi (c t + d))
 
 struct Geo { float d; vec2 c; vec2 cp; vec2 top; float R; float al; float flow; };
@@ -313,14 +341,30 @@ void behave(int bh, vec2 p, Geo g, float T, float reach, float seed, float spin,
   } else if(bh == 2){     // ripple out
     mv = vec2(0., -.4);
     env = exp(-dd / (.27 * reach)) * step(-.02, d);
-  } else if(bh == 3){     // float above the head
-    vec2 A = g.top + vec2(.04 * sin(T * .6 + seed), .2 + .03 * sin(T * .9));
-    q = p - A; mv = vec2(-.08, 0.);
-    env = smoothstep(1., .25, length(q * vec2(1., 1.7)) / (.42 * reach));
-  } else if(bh == 4){     // rain down
-    vec2 A = g.top + vec2(0., .2);
-    q = p - A; mv = vec2(0., .6);
-    env = smoothstep(.5 * reach, .1 * reach, abs(q.x)) * smoothstep(.06, -.1, q.y) * smoothstep(-1.7 * reach, -.7 * reach, q.y);
+  } else if(bh == 3){     // float above the head; on a beam it rides the top as a crest, on a blast it sits as a crown
+    if(g.flow > .5){
+      q = vec2(p.x, p.y - BEAM0.y - .2 - .04 * sin(p.x * 3. - T * 2.)); mv = vec2(-.5, 0.);
+      env = smoothstep(1., .2, abs(q.y) / (.17 * reach)) * smoothstep(BEAM0.x - .05, BEAM0.x + .35, p.x);
+    } else if(g.R < .4){
+      q = vec2(g.al, d - .09); mv = vec2(-.12, 0.);
+      env = smoothstep(.17 * reach, 0., abs(q.y)) * smoothstep(-.05, .55, (p.y - g.c.y) / max(length(p - g.c), .001));
+    } else {
+      vec2 A = g.top + vec2(.04 * sin(T * .6 + seed), .2 + .03 * sin(T * .9));
+      q = p - A; mv = vec2(-.08, 0.);
+      env = smoothstep(1., .25, length(q * vec2(1., 1.7)) / (.42 * reach));
+    }
+  } else if(bh == 4){     // rain down; a beam sheds it all along its length, a blast drips it from underneath
+    if(g.flow > .5){
+      q = vec2(p.x, p.y - BEAM0.y - .2); mv = vec2(0., .6);
+      env = smoothstep(.06, -.1, q.y) * smoothstep(-1.2 * reach, -.35 * reach, q.y) * smoothstep(BEAM0.x - .05, BEAM0.x + .35, p.x);
+    } else if(g.R < .4){
+      q = p - g.c - vec2(0., .1); mv = vec2(0., .6);
+      env = smoothstep(.42 * reach, .08 * reach, abs(q.x)) * smoothstep(.06, -.1, q.y) * smoothstep(-1.1 * reach, -.45 * reach, q.y);
+    } else {
+      vec2 A = g.top + vec2(0., .2);
+      q = p - A; mv = vec2(0., .6);
+      env = smoothstep(.5 * reach, .1 * reach, abs(q.x)) * smoothstep(.06, -.1, q.y) * smoothstep(-1.7 * reach, -.7 * reach, q.y);
+    }
   } else if(bh == 8){     // inverted: rise instead of fall
     q = p - g.top; mv = vec2(0., -.6);
     env = smoothstep(.75 * reach, .12 * reach, abs(q.x)) * smoothstep(.6 * reach, 0., q.y) * smoothstep(-1.6, -1.1, q.y);
@@ -339,6 +383,19 @@ void behave(int bh, vec2 p, Geo g, float T, float reach, float seed, float spin,
   } else if(bh == 9){     // inverted: pulled inward
     mv = vec2(0., .55);
     env = exp(-dd / (.26 * reach)) * step(-.02, d) * smoothstep(0., .05, dd + .02);
+  } else if(bh == 11){    // spiral arms
+    q = vec2(g.al + d * 2.2, d); mv = vec2(-.35, -.25);
+    env = exp(-dd / (.3 * reach)) * step(-.03, d);
+  } else if(bh == 12){    // breathe: a band that swells and settles
+    q = vec2(g.al, d - reach * (.12 + .09 * sin(T * 2.2 + seed)));
+    env = smoothstep(.12 * reach, 0., abs(q.y)) * step(-.03, d);
+  } else if(bh == 13){    // swarm: gathers into a knot that circles the body
+    vec2 A = g.c + g.R * 1.25 * vec2(cos(T * .9 + seed), .7 * sin(T * 1.3 + seed));
+    q = p - A; mv = vec2(.2, .15);
+    env = smoothstep(1., .2, length(q) / (.34 * reach));
+  } else if(bh == 14){    // stop and go (T arrives already stepped)
+    mv = vec2(-.3, -.45);
+    env = exp(-dd / (.3 * reach)) * step(-.03, d);
   } else {                // inverted: runs backward (T is negative here), with echoes
     q.y = d - .05 * reach * sin(g.al * 5. + T * 1.2 + seed);
     mv = vec2(.3, -.4);
@@ -444,7 +501,7 @@ float shapeF(int sh, vec2 q, vec2 mv, float T, vec4 B, vec4 C, vec4 D, float see
   float size = B.y, spd = B.z, dens = B.w, reach = C.x, det = C.w;
   vec2 off = mv * T * spd;
   hsh = .5;
-  bool body = !(bh == 3 || bh == 4 || bh == 8 || bh == 7);
+  bool body = !(bh == 3 || bh == 4 || bh == 8 || bh == 7 || bh == 13);
   if(sh == 0){
     float n = fbm((q + off) * vec2(3., 5.) / size + seed);
     hsh = n;
@@ -490,6 +547,29 @@ float shapeF(int sh, vec2 q, vec2 mv, float T, vec4 B, vec4 C, vec4 D, float see
     hsh = v.z;
     return step(v.z, dens * .5) * (.35 + .65 * fract(v.z * 7.3)) * smoothstep(0., .07, v.y - v.x);
   }
+  if(sh == 11){           // chevrons
+    vec2 u = (q + off) * 9. * dens / size;
+    float c = abs(fract(u.y + abs(fract(u.x * .5) - .5) * 1.4) - .5);
+    hsh = fract(floor(u.y) * .37);
+    return smoothstep(.16 + det * .1, .04, c);
+  }
+  if(sh == 12){           // honeycomb
+    vec2 u = (q + off * .4) * 9. / size; vec2 r = vec2(1., 1.732), hh = r * .5;
+    vec2 a = mod(u, r) - hh, b = mod(u - hh, r) - hh;
+    vec2 gq = dot(a, a) < dot(b, b) ? a : b;
+    float e = .5 - max(abs(gq.x), dot(abs(gq), normalize(r)));
+    hsh = h21(floor((u - gq) * 2. + .5));
+    return smoothstep(.05 + .04 * det, 0., e) + step(hsh, dens * .25) * .5;
+  }
+  if(sh == 13){           // glints: four-pointed stars
+    vec2 u = (q + off) / (.11 * size); vec2 id = floor(u), f = fract(u) - .5;
+    vec2 h = h22(id + seed * 11.); hsh = h.y;
+    if(h.x > dens * .5) return 0.;
+    f -= .25 * (h - .5);
+    f += err * .2 * vec2(vnoise(vec2(h.x * 40., T * 2.6)) - .5, vnoise(vec2(h.y * 40., T * 2.6 + 5.)) - .5);
+    float tw = .5 + .5 * sin(T * (2. + h.x * 2.) + h.y * 6.283);
+    return clamp(.012 / (abs(f.x * f.y) + .012) * smoothstep(.45, .1, length(f)) * tw, 0., 1.2);
+  }
   // twin helix
   float k = 9. / size, A = .09 * reach, y0 = body ? .1 * reach : 0.;
   float s = sin((q.x + off.x) * k + off.y * 3.);
@@ -511,12 +591,15 @@ void main(){
     vec2 p = p0 + vib * .010 * vec2(sin(uTime * 57. + seed * 3.), cos(uTime * 51. + seed * 5.));
     Geo g = geoOf(p, pn);
     float T = (bh == 10) ? -uTime : uTime;
+    if(bh == 14){ float sx = uTime * 1.5; T = (floor(sx) + smoothstep(0., .4, fract(sx))) / 1.5; }
     int reps = (bh == 10) ? 2 : 1;
     for(int e = 0; e < 2; e++){
       if(e >= reps) break;
       float Te = T + float(e) * .28, pw = pw0 * ((e == 0) ? 1. : .45);
       vec2 q, mv; float env;
       behave(bh, p, g, Te, C.x, seed, D.y, q, mv, env);
+      q.x += E.z * q.y * 4.;                                                                  // twist
+      q += E.w * .22 * (vec2(vnoise(q * 3. + Te * .3), vnoise(q * 3. + 7. - Te * .3)) - .5);   // warp
       if(env < .004) continue;
       float hsh;
       float m = clamp(shapeF(sh, q, mv, Te, B, C, D, seed, g, p, bh, err, vib, hsh) * env, 0., 1.5);
@@ -555,6 +638,22 @@ void main(){
         Ng = max(Ng, smoothstep(.2, .45, m) * pw);
         L += col * smoothstep(.15, 0., abs(m - .3)) * .6 * pw;
       }
+      else if(mt == 9){    // ember: a hot core that cools outward
+        L += mix(col * .7, vec3(1., .85, .6), smoothstep(.45, 1., m)) * m * 1.1 * pw;
+      }
+      else if(mt == 10){   // frost: pale facets
+        vec3 v = voro((q + off * .3) * 9.);
+        L += mix(col, vec3(.85, .95, 1.), .55) * m * (.35 + .65 * v.z) * smoothstep(0., .08, v.y - v.x) * pw;
+      }
+      else if(mt == 11){   // neon: only the outline
+        L += col * (smoothstep(.12, 0., abs(m - .45)) * 1.3 + m * .06) * pw;
+      }
+      else if(mt == 12){   // void: darkness with points of light in it
+        Dk = max(Dk, smoothstep(.1, .45, m) * .9 * pw);
+        vec2 sq = (q + off * .2) * 30.;
+        float st = step(.965, h21(floor(sq))) * smoothstep(.35, .05, length(fract(sq) - .5));
+        L += (col * st * 1.6 * smoothstep(.2, .5, m) + col * smoothstep(.2, 0., abs(m - .25)) * .5) * pw;
+      }
       else {
         L += col * (floor(m * 4. + .5) / 4.) * .9 * pw;
         Dk = max(Dk, smoothstep(.06, .12, m) * smoothstep(.24, .16, m) * .75 * pw);
@@ -565,7 +664,7 @@ void main(){
   if(pn != 0 && uCount > 0){
     Geo g = geoOf(p0, pn);
     float core = smoothstep(.02, -.05, g.d) * uE[0].y;
-    if(int(uA[0].z + .5) == 4 || int(uA[0].z + .5) == 7) Dk = max(Dk, core * .95);
+    if(int(uA[0].z + .5) == 4 || int(uA[0].z + .5) == 7 || int(uA[0].z + .5) == 12) Dk = max(Dk, core * .95);
     else L += mix(pal(0, uD[0].z + .3), vec3(1.), .45) * core * .85;
   }
   // trails: last frame drifts upward (along the beam in its panel), bends a little and fades
@@ -891,7 +990,7 @@ function pack() {
     fB.set([s.power, s.size, s.speed, s.density], i * 4);
     fC.set([s.reach, s.erratic, s.vibrate, s.detail], i * 4);
     fD.set([s.form, s.spin, s.hue, s.spread], i * 4);
-    fE.set([s.cycle, 1, 0, 0], i * 4);
+    fE.set([s.cycle, 1, s.twist, s.warp], i * 4);
     fPa.set(pal.a, i * 3); fPb.set(pal.b, i * 3); fPc.set(pal.c, i * 3); fPd.set(pal.d, i * 3);
   }
   return n;
