@@ -323,6 +323,7 @@ Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These
 
 **Two readings and a risk on Encounter's launch cone (2026-11-15, `pending/launch-cone/`):** on Orb's 9 November data, 26 of 37 aimed launches went more than 20° off the blow's line (the worst 140°), and with the rider 0 of 18.
 1. **Confirmed:** the blow's line is the line before any turn of the world, so a launch's own swing turn is capped at the cone. The swing's other causes (the chase, the brawl, the story) still turn the world.
+   - **Amended 2026-11-28 (brief 3):** behind `swing.json` `landmark.enabled`, a launch with no target of its own may take a landmark swing past the cone. A launch aimed at a target keeps the cap. See `docs/world/ring-any-angle/game-design.md` §16.
 2. **Confirmed:** on a plan-streets world, walking him to a front-row wall off the line is the street turn's job (§10). Walking him to a wall that's on the line still aims at it.
 3. **The risk (no building offered while a running swing has more than 20° left to turn, 4 of 10 staged runs):** **measure the cone from the blow's actual line at the contact tick, wherever the running swing has got to by then. The turn still to come doesn't refuse candidates,** because reading 1 caps any further turn the launch itself adds. If nothing is in the cone, the launch flies its own line, which is always right.
 

@@ -655,3 +655,23 @@ On `docs/qa/cloud-reports/2026-11-06-city-step-one.md`. First values, unplayed. 
 - **The row doesn't widen.** Timing moves a swing earlier or later and never raises the total. A gap of two a match says that isn't true in the build.
 
 **4. The civilian base, noted as a result.** AI against AI, the people lost in the places reached read **8.0%** (7.1 to 8.8), with the levers 4.4 to 7.2%. That's under the band's 12% floor before any lever. **It's a result, not a fault, and nothing tunes toward it** (RL-214, RL-247). Nothing about bystanders changes. The band's top stays the guard: no match went over 30% in 360. If fights feel too clean, the answer stays structures and ground, as ruled on 2026-11-02, **never the people.**
+
+## 16. The landmark swing and the launch cone (2026-11-28, brief 3; Encounter's `docs/director/launch-swing-world-needs.md`)
+
+**The question.** The launch cone (`launch.json` `knockBack.wall.wallCone` 20, `buildings.md` §10) caps every launch's own swing at 20°. That's why 0.1.1's launch swings were all under 20°. Brief 3 wants a launch to swing toward the biggest landmark in view, and a city in view sits 64 to 116° off the line. Encounter plans that, behind `swing.json` `landmark.enabled` (off on main), the landmark swing ignores the cone, while the cone keeps aiming walls.
+
+**Ruling: confirmed, for launches with no target of their own.**
+- **Under `landmark.enabled`, a launch's landmark swing isn't capped by the cone.** Camera's rate law (60° a second) and the never-lost rules still hold, and the directive's floor of 20° stands.
+- **The cone keeps governing what a launch is aimed at,** as now: walls, a BUILDING SMASH, a MOUNTAINSIDE, any aimed send, measured from the blow's line at the contact tick (`buildings.md` §10, reading 3).
+- **A launch the planner aimed at a target keeps the 20° cap.** The planner picks first, and the landmark swing runs only when the picked candidate has no target. Two reasons:
+  - It's the directive's own condition: the city wins "unless the launch is aimed elsewhere".
+  - A bigger turn during the flight would carry the aimed target off his line. That's why `swing.gd` caps it today.
+- **Why it's safe to lift the cap there:** the cone was written against background ricochets, a fighter flung off into the depth to hit a wall. A landmark swing turns the world behind the fighters, so on screen he still flies the way the blow sent him, and the city comes round into the fight's plane. That's the feature Orb asked for (Taking the fight to the city: try the automatic swing first).
+- **If no landmark fits the flight** (the turn can't finish at the rate law), the swing takes the next one that does: a city, then a town, then a peak. If none fits, there's no landmark swing. There's never a swing under 20°, and never one left half-turned.
+
+**QA's rows (with `landmark.enabled` on):**
+- launches **aimed** more than 20° off the blow's line: still **0**;
+- landmark swings past 20° on a launch the planner aimed at a target: **0**;
+- the directive's acceptance: with a city in view, a launch ends with that city in the fight's plane in at least 8 of 10 seeded tries.
+
+**Still to rule: the launch kind when a landmark is picked.** Encounter: the swing fits only flights of about 1.7 to 2.4 s. So when a landmark is picked, a neutral or up launch should lean toward the long kinds (the uppercut). **Ruled when Encounter's flight-time numbers arrive** (each kind's flight time by tier and row, and today's shares). It will be a score term in the planner, not a forced pick, and the variety rows still bound it (no one kind over half of launches).
