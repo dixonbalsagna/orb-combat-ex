@@ -24,7 +24,7 @@
 - A gate or a shard that starts the game several times takes **one** new folder and keeps it for that run: `export ORB_RUN_DATA="$(bash tools/godot-run.sh --fresh --where)"` before the first start (docs/ep/gate does this).
 - Old `fresh-*` folders stay in the temp folder until it is cleaned; each is small except for the caches it baked.
 
-**The ratchet** (`tools/lint-godot-launch.mjs`, CI): a new script under `tools/` or `docs/*/tools` that starts the game any other way fails. Older ones are listed in `tools/godot-launch-baseline.json`; the list only gets shorter.
+**The ratchet** (`tools/lint-godot-launch.mjs`, CI): a new script under `tools/`, `qa/` or `docs/*/tools` that starts the game any other way fails. Older ones are listed in `tools/godot-launch-baseline.json`; the list only gets shorter. Under `qa/` the way through is QA's own `runEnv()` (qa/lib/userdata.js), on every call that starts the engine; no QA script is on the list.
 
 **The guard** (two `.editor` lines in `project.godot`; `tools/userdata-guard-check.mjs`): a run from the project, launcher or not, keeps its data, logs included, in `app_userdata/Orb Combat EX dev`. A built program keeps `app_userdata/Orb Combat EX`, as before.
 

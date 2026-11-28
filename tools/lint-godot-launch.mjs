@@ -1,4 +1,5 @@
-// A ratchet (Tools, 2026-11-28): no NEW script under tools/ or docs/*/tools may start the game except through the launcher (tools/godot-run.sh) or, in node, with the environment of tools/lib/userdata.mjs.
+// A ratchet (Tools, 2026-11-28): no NEW script under tools/, qa/ or docs/*/tools may start the game except through the launcher (tools/godot-run.sh) or, in node, with the environment of tools/lib/userdata.mjs
+// (under qa/, QA's own qa/lib/userdata.js, which uses it).
 // The scripts that did before this rule are listed in tools/godot-launch-baseline.json; the list may only get shorter.
 //   node tools/lint-godot-launch.mjs            check (CI)
 //   node tools/lint-godot-launch.mjs --write    rewrite the baseline (only ever to remove names: a name that is not already there is refused)
@@ -10,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const REPO = resolve(fileURLToPath(new URL('..', import.meta.url)));
 export const BASELINE = 'tools/godot-launch-baseline.json';
 const EXT = /\.(sh|bash|mjs|cjs|js|ps1|cmd|bat|py)$/i;
-const SKIP = new Set(['tools/godot-run.sh', 'tools/lib/userdata.mjs', 'tools/lint-godot-launch.mjs', 'tools/lint-godot-launch-selftest.mjs']);
+const SKIP = new Set(['tools/godot-run.sh', 'tools/lib/userdata.mjs', 'tools/lint-godot-launch.mjs', 'tools/lint-godot-launch-selftest.mjs', 'qa/lib/userdata.js']);
 
 // "--headless" handed over as a word of its own is the surest sign (every run here has it); a browser's "--headless=new" is not it.
 const STARTS = {
@@ -19,6 +20,7 @@ const STARTS = {
   power: [/--headless(?![=\w-])/, /&\s*\$\{?(env:)?godot[a-z_]*\}?/i, /Start-Process[^\n]*godot/i, /Godot_v[^\s"']*\.exe["']?\s+--?[a-z]/],
   python: [/['"]--headless['"]/, /(subprocess\.(run|Popen|call|check_output)|os\.system)\s*\([^\n]*godot/i],
 };
+const QA_START = [/\b(spawn|spawnSync|execFile|execFileSync)\s*\(\s*(g\.exe|GODOT|godot\w*|engine\w*|exe|c)\s*,/, /\b(spawn|spawnSync|execFile|execFileSync|exec|execSync)\s*\([^\n]*(['"`]--headless['"`]|process\.env\.GODOT)/];
 const family = (f) => (/\.(sh|bash)$/i.test(f) ? 'shell' : /\.(ps1|cmd|bat)$/i.test(f) ? 'power' : /\.py$/i.test(f) ? 'python' : 'node');
 
 /** Does this file's text start the game, and does it do so through the launcher? { starts, through }. Pure. */
@@ -26,8 +28,11 @@ export function readScript(name, text) {
   const fam = family(name);
   const comment = fam === 'node' ? /^\s*(\/\/|\*|\/\*)/ : fam === 'power' ? /^\s*(#|rem\b|::)/i : /^\s*#/;
   const code = text.split(/\r?\n/).filter((l) => !comment.test(l)).join('\n');
-  const starts = code.split('\n').some((l) => STARTS[fam].some((re) => re.test(l)));
-  const through = fam === 'node' ? /from\s+['"][./]*(lib\/)?userdata\.mjs['"]|from\s+['"][^'"]*\/lib\/userdata\.mjs['"]|godot-run\.sh/.test(code) : /godot-run\.sh/.test(code);
+  const starts = code.split('\n').some((l) => STARTS[fam].some((re) => re.test(l))) || (name.startsWith('qa/') && fam === 'node' && code.split('\n').some((l) => QA_START.some((re) => re.test(l))));
+  // QA's scripts share one helper (runEnv, from qa/lib/userdata.js, often re-exported by qa/godot/godot.js), so a file that asks for it is not enough: EVERY call that starts the engine must hand it over, on its own line
+  const qaCalls = name.startsWith('qa/') && fam === 'node' ? code.split('\n').filter((l) => QA_START.some((re) => re.test(l))) : [];
+  const qaOwn = qaCalls.length > 0 && qaCalls.every((l) => /\benv:\s*runEnv\s*\(/.test(l));
+  const through = qaOwn || (fam === 'node' ? /from\s+['"][./]*(lib\/)?userdata\.mjs['"]|from\s+['"][^'"]*\/lib\/userdata\.mjs['"]|godot-run\.sh/.test(code) : /godot-run\.sh/.test(code));
   return { starts, through };
 }
 
@@ -62,6 +67,7 @@ function toolsFolders(dir, out) {
 
 export function offenders(root = REPO) {
   const files = walk(join(root, 'tools'), []);   // docs/tools is the Tools director's pages: it is searched below like any docs/<x>/tools
+  walk(join(root, 'qa'), files);
   for (const d of toolsFolders(join(root, 'docs'), [])) walk(d, files);
   const out = [];
   for (const p of files) {
